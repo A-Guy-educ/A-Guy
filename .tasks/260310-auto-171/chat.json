@@ -68,6 +68,794 @@
           "timestamp": "2026-03-10T11:09:02.877Z"
         }
       ]
+    },
+    {
+      "stage": "spec",
+      "sessionId": "ses_328888c09ffe3VhsGChDbVV1lV",
+      "startedAt": "2026-03-10T11:17:35.862Z",
+      "messages": [
+        {
+          "role": "user",
+          "stage": "spec",
+          "text": "\"CRITICAL: This is a SPEC-ONLY pipeline. DO NOT create branches, commits, or pull requests. DO NOT modify any code files. Only read from and write to the /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260310-auto-171/ directory.\n\nTask ID: 260310-auto-171\n\n\nRead these files for context:\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260310-auto-171/task.md\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260310-auto-171/task.json\n\nWrite your output to /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260310-auto-171/spec.md\"",
+          "tools": [],
+          "timestamp": "2026-03-10T11:17:35.880Z",
+          "model": "{\"providerID\":\"openai\",\"modelID\":\"gpt-5.2\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "spec",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:17:35.941Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "spec",
+          "text": "",
+          "tools": [
+            "task",
+            "task"
+          ],
+          "timestamp": "2026-03-10T11:17:51.988Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "spec",
+          "text": "",
+          "tools": [
+            "apply_patch"
+          ],
+          "timestamp": "2026-03-10T11:18:59.693Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "spec",
+          "text": "Created `/Users/bot/actions-work/A-Guy/A-Guy/.tasks/260310-auto-171/spec.md` with a complete requirements spec (FR/NFR), acceptance criteria, guardrails, out-of-scope, and open questions for the Course Studying Page redesign aligned to the provided Figma.",
+          "tools": [],
+          "timestamp": "2026-03-10T11:19:52.677Z"
+        }
+      ]
+    },
+    {
+      "stage": "gap",
+      "sessionId": "ses_328864f4cffeZpbRWEl4C6DX6Q",
+      "startedAt": "2026-03-10T11:20:02.483Z",
+      "messages": [
+        {
+          "role": "user",
+          "stage": "gap",
+          "text": "\"CRITICAL: This is a SPEC-ONLY pipeline. DO NOT create branches, commits, or pull requests. DO NOT modify any code files. Only read from and write to the /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260310-auto-171/ directory.\n\nTask ID: 260310-auto-171\n\n\nRead these files for context:\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260310-auto-171/spec.md\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260310-auto-171/task.json\n\nWrite your output to /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260310-auto-171/gap.md\"",
+          "tools": [],
+          "timestamp": "2026-03-10T11:20:02.504Z",
+          "model": "{\"providerID\":\"minimax-coding-plan\",\"modelID\":\"MiniMax-M2.5\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:20:02.564Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "Now I need to explore the codebase to understand the existing patterns and identify gaps. Let me search for existing studying page, components, and related patterns.",
+          "tools": [
+            "glob",
+            "glob",
+            "grep"
+          ],
+          "timestamp": "2026-03-10T11:20:19.593Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read",
+            "glob",
+            "glob"
+          ],
+          "timestamp": "2026-03-10T11:20:28.854Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:20:35.838Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "Now let me check the package.json for animation libraries, i18n setup, and existing components.",
+          "tools": [
+            "grep",
+            "glob",
+            "grep"
+          ],
+          "timestamp": "2026-03-10T11:20:47.736Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:20:57.836Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "grep",
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:21:04.917Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-10T11:21:12.952Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-10T11:21:25.632Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-10T11:21:32.256Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "Now I have a comprehensive understanding of the codebase. Let me write the gap analysis based on my findings.",
+          "tools": [
+            "write"
+          ],
+          "timestamp": "2026-03-10T11:21:38.684Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "Now I need to update the spec.md with the new requirements I identified:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:23:16.068Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-10T11:23:36.195Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-10T11:23:58.363Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-10T11:24:22.461Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-10T11:24:30.726Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-10T11:24:50.580Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:24:59.218Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-10T11:25:05.356Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:25:22.297Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "I've completed the gap analysis. Here's a summary of what I found:\n\n## Gap Analysis Summary\n\nI identified **12 gaps** between the spec and the existing codebase:\n\n### Critical Gaps (Must Fix)\n1. **Missing Animation Library** - No framer-motion installed, only tailwindcss-animate for simple CSS animations\n2. **No Mode-Based Theming System** - Need ModeContext provider for Study/Hint/Practice/Test color shifts\n3. **No Split-Pane Workspace Layout** - Current study page uses simple grid, need new layout\n4. **No Glassmorphism Patterns** - Need blur/opacity tokens and fallback classes\n5. **No High-Radius Corner Tokens** - Need 24px+ radius classes\n\n### High Priority Gaps\n6. **No Slide-In Chat Panel** - Existing ChatInterface is static, need animation wrapper\n7. **No Mobile Bottom Sheet** - Need snap points, drag affordance, etc.\n8. **No Practice Mode Flip Cards** - Existing ExerciseCard is static\n9. **Open Questions Unanswered** - 10 questions need resolution before implementation\n\n### Medium Priority Gaps\n10. **Missing i18n Keys** - Need translation key planning\n11. **No Focus Trap Patterns** - Need for dialogs/bottom sheets\n\n## Changes Made to Spec\n\nAdded **8 new requirements**:\n- FR-025 to FR-032 covering animation library, mode theming, glassmorphism, radius tokens, chat animation, bottom sheet, timer, and flip cards\n- NFR-007 requiring open questions resolution\n- NFR-008 requiring i18n planning\n\nUpdated existing requirements:\n- NFR-003 (accessibility) - Added focus trap requirements\n- NFR-004 (reduced motion) - Clarified animation handling\n- Added animation library and mode theming to guardrails\n\nThe gap.md has been written to `.tasks/260310-auto-171/gap.md` and spec.md has been updated accordingly.",
+          "tools": [],
+          "timestamp": "2026-03-10T11:25:32.373Z"
+        }
+      ]
+    },
+    {
+      "stage": "gsd-research",
+      "sessionId": "ses_32880c61cffeyY7hjy3oMGfT8E",
+      "startedAt": "2026-03-10T11:26:05.284Z",
+      "messages": [
+        {
+          "role": "user",
+          "stage": "gsd-research",
+          "text": "\"Task ID: 260310-auto-171\n\n\nRead these files for context:\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260310-auto-171/spec.md\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260310-auto-171/clarified.md\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260310-auto-171/task.json\n\nWrite your output to /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260310-auto-171/gsd-research.md\"",
+          "tools": [],
+          "timestamp": "2026-03-10T11:26:05.300Z",
+          "model": "{\"providerID\":\"anthropic\",\"modelID\":\"claude-sonnet-4-20250514\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "I'll read the task context files and analyze the codebase to provide research findings for this GSD task.",
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:26:05.357Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "Now I'll analyze the existing course studying page and related components to understand the current implementation patterns.",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-10T11:26:20.446Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-10T11:26:23.437Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-10T11:26:25.969Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:26:28.271Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:26:31.761Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:26:36.283Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:26:40.081Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-10T11:26:42.636Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:26:45.997Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:26:49.169Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:26:52.510Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:26:55.130Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:26:58.932Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:27:01.620Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "Now let me examine the design system and theming approach to understand how the current theming works:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:27:04.076Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:27:08.814Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-10T11:27:13.037Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:27:16.098Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "Now let me explore the existing animation and interaction patterns:",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-10T11:27:19.750Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:27:23.355Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-10T11:27:27.219Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "Now let me look at the existing resizable pane component that's currently being used:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:27:30.293Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "Let me also check the ExerciseRenderer component to understand how exercises are currently rendered:",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-10T11:27:34.493Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-10T11:27:38.844Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:27:43.029Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:27:47.389Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:27:50.206Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "Let me examine the current i18n structure to understand how translations are organized:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:27:53.228Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-10T11:27:57.021Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-10T11:27:59.745Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-10T11:28:02.365Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:28:05.963Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "Now let me find where messages/translations are stored:",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-10T11:28:13.949Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-10T11:28:17.013Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:28:20.444Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "Perfect! Now I have enough context about the codebase. Let me write the research findings to the specified output file:",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-10T11:28:23.887Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-10T11:28:28.676Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-research",
+          "text": "The research analysis is complete. I've provided a comprehensive review of the codebase for implementing the Course Studying page redesign, focusing on:\n\n**Key Findings:**\n- Existing split-pane architecture can be extended rather than rebuilt\n- No mode-based theming system exists - needs to be created\n- Framer-motion dependency missing and required for complex animations\n- Strong i18n infrastructure already in place\n- Current design system needs extension for glassmorphism and larger radii\n\n**Critical Implementation Path:**\n- New variant approach recommended (parallel implementation)\n- Mode context provider needed for CSS custom property injection  \n- Systematic design token extension vs scattered hardcoded values\n- Progressive enhancement strategy for glassmorphism fallbacks\n\n**Main Technical Constraints:**\n- Must preserve existing A-Guy chat integration and exercise validation\n- RTL support required throughout\n- Reduced motion accessibility compliance\n- Mobile safe-area handling for bottom sheet\n\nThe research provides actionable guidance for the planning phase with specific file paths, dependency requirements, and implementation strategies aligned with the existing codebase architecture.",
+          "tools": [],
+          "timestamp": "2026-03-10T11:29:19.400Z"
+        }
+      ]
+    },
+    {
+      "stage": "gsd-plan",
+      "sessionId": "ses_3287d9508ffeaCmHEsZyK1YjLK",
+      "startedAt": "2026-03-10T11:29:34.455Z",
+      "messages": [
+        {
+          "role": "user",
+          "stage": "gsd-plan",
+          "text": "\"Task ID: 260310-auto-171\n\n\nTask Type: implement_feature\n\n\nRead these files for context:\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260310-auto-171/spec.md\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260310-auto-171/clarified.md\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260310-auto-171/task.json\n- /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260310-auto-171/rerun-feedback.md\n\nWrite your output to /Users/bot/actions-work/A-Guy/A-Guy/.tasks/260310-auto-171/plan.md\"",
+          "tools": [],
+          "timestamp": "2026-03-10T11:29:34.472Z",
+          "model": "{\"providerID\":\"anthropic\",\"modelID\":\"claude-opus-4-6\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-plan",
+          "text": "",
+          "tools": [
+            "read",
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:29:34.532Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-plan",
+          "text": "Now let me explore the existing codebase to understand the current studying page, components, and design system.",
+          "tools": [
+            "task",
+            "webfetch"
+          ],
+          "timestamp": "2026-03-10T11:29:49.143Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-plan",
+          "text": "Now let me look at a few key files more closely to understand the exact patterns needed.",
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:33:22.466Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-plan",
+          "text": "",
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:33:27.860Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-plan",
+          "text": "Now let me check the ExerciseWorkspace and globals.css for the full picture:",
+          "tools": [
+            "read",
+            "grep",
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:33:33.408Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-plan",
+          "text": "Now I have comprehensive context. Let me write the plan.",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:33:39.897Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-plan",
+          "text": "Now I have enough context to write a comprehensive plan. Let me write it.",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-10T11:33:43.456Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-plan",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:33:47.867Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-plan",
+          "text": "Now I have all the context needed. Let me write the comprehensive plan:",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-10T11:33:51.623Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-plan",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-10T11:33:56.376Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-plan",
+          "text": "Now I have all the context. Let me write the comprehensive implementation plan:",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-10T11:33:59.500Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-plan",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:34:02.727Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-plan",
+          "text": "Now I have comprehensive understanding. Time to write the plan.",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-10T11:34:05.554Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-plan",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-10T11:37:10.473Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gsd-plan",
+          "text": "The plan has been written successfully to `/Users/bot/actions-work/A-Guy/A-Guy/.tasks/260310-auto-171/plan.md` (711 lines).\n\nThe plan contains **15 implementation steps** covering:\n\n1. **Install framer-motion + extend design tokens** (glassmorphism, radii, mode colors)\n2. **ModeContext provider + mode toggle** (Study/Hint/Practice/Test with URL sync)\n3. **i18n translation keys** (all new UI elements in en + he)\n4. **Contextual navigation sidebar** (circular progress, pill items, RTL)\n5. **Content canvas + master workspace layout** (max-w-4xl, mode backgrounds)\n6. **Exercise rendering integration** (mode-aware, state preservation)\n7. **New variant route** (`/courses/.../study`) wiring\n8. **Hint/Ask chat slide-in panel** (glassmorphism, RTL-aware, streaming/errors)\n9. **Practice mode interactive cards** (3D lift, flip transitions)\n10. **Test mode timer + navigation restrictions** (floating timer, confirmation dialogs)\n11. **Mobile bottom sheet** (snap points, drag, safe-area)\n12. **Interactive inputs + transitions** (radios, checkboxes, textareas, animation variants)\n13. **Persona switching + celebrations** (cross-fade, correct-answer pulse)\n14. **RTL + accessibility audit** (keyboard nav, ARIA, contrast, focus management)\n15. **Quality gates + validation** (typecheck, lint, build, visual verification)\n\nEach step includes files to touch, exact behavior, tests, and acceptance criteria mapped to spec requirements. The plan also documents 10 assumptions and 10 risks with mitigations.",
+          "tools": [],
+          "timestamp": "2026-03-10T11:37:14.705Z"
+        }
+      ]
     }
   ]
 }

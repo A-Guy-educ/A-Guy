@@ -517,5 +517,47 @@
     },
     "loading": "Loading...",
     "generateButton": "Build Focus Plan"
+  },
+  "studyMode": {
+    "study": "Study",
+    "hint": "Hint",
+    "practice": "Practice",
+    "test": "Test",
+    "toggleLabel": "Study Mode",
+    "timer": {
+      "label": "Test Timer",
+      "pause": "Pause",
+      "resume": "Resume",
+      "remaining": "Time Remaining"
+    },
+    "sidebar": {
+      "label": "Lesson Navigation",
+      "progress": "Progress",
+      "exercises": "Exercises",
+      "collapse": "Collapse sidebar",
+      "expand": "Expand sidebar"
+    },
+    "bottomSheet": {
+      "label": "Navigation",
+      "dragHandle": "Drag to resize"
+    },
+    "practiceCard": {
+      "flip": "Flip card",
+      "front": "Question",
+      "back": "Answer"
+    },
+    "chat": {
+      "panelLabel": "AI Tutor Chat",
+      "hintPolicy": "Hint Mode",
+      "askPolicy": "Ask Mode",
+      "policyIndicator": "Response policy: {policy}",
+      "slideIn": "Open chat",
+      "slideOut": "Close chat"
+    },
+    "testMode": {
+      "restrictedNav": "Navigation is restricted during test mode",
+      "confirmLeave": "Are you sure you want to leave the test?",
+      "timerExpired": "Time is up!"
+    }
   }
 }

@@ -47,6 +47,34 @@ export const boxShadow = {
   modal: '0 10px 25px -5px rgb(0 0 0 / 0.15)',
   dropdown: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -1px rgb(0 0 0 / 0.06)',
   'focus-ring': '0 0 0 3px hsl(var(--ring) / 0.5)',
+
+  // Glassmorphism shadows for study mode
+  glass: '0 4px 30px rgba(0, 0, 0, 0.1)',
+  'glass-hover': '0 8px 40px rgba(0, 0, 0, 0.15)',
+  // 3D lift effects for practice cards
+  '3d-lift': '0 10px 30px rgba(0, 0, 0, 0.15)',
+  '3d-lift-hover': '0 20px 40px rgba(0, 0, 0, 0.2)',
+}
+
+/**
+ * Backdrop Blur
+ * Glassmorphism blur levels
+ */
+export const backdropBlur = {
+  'glass-sm': '8px',
+  'glass-md': '12px',
+  'glass-lg': '16px',
+}
+
+/**
+ * Border Radius
+ * Extended radius tokens for soft geometry
+ */
+export const borderRadius = {
+  // Standard Tailwind radii (extended)
+  '3xl': '20px',
+  '4xl': '24px',
+  '5xl': '32px',
 }
 
 /**
@@ -137,4 +165,6 @@ export default {
   transitionDuration,
   borderWidth,
   opacity,
+  backdropBlur,
+  borderRadius,
 }

@@ -55,19 +55,24 @@ const config = {
       transitionDuration: designTokens.transitionDuration,
       borderWidth: designTokens.borderWidth,
       opacity: designTokens.opacity,
+      backdropBlur: designTokens.backdropBlur,
+      borderRadius: {
+        ...designTokens.borderRadius,
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
+        xl: 'calc(var(--radius) + 4px)',
+        '2xl': 'calc(var(--radius) + 8px)',
+        '3xl': designTokens.borderRadius['3xl'],
+        '4xl': designTokens.borderRadius['4xl'],
+        '5xl': designTokens.borderRadius['5xl'],
+      },
 
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'gradient-shift': 'gradient-shift 8s ease infinite',
         shimmer: 'shimmer 1.5s ease-in-out infinite',
-      },
-      borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
-        xl: 'calc(var(--radius) + 4px)',
-        '2xl': 'calc(var(--radius) + 8px)',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
@@ -76,6 +81,14 @@ const config = {
           'linear-gradient(135deg, hsl(var(--primary) / 0.1), hsl(var(--accent) / 0.05))',
       },
       colors: {
+        // Study mode colors (CSS custom properties set dynamically)
+        mode: {
+          bg: 'hsl(var(--mode-bg) / <alpha-value>)',
+          accent: 'hsl(var(--mode-accent) / <alpha-value>)',
+          'accent-fg': 'hsl(var(--mode-accent-fg) / <alpha-value>)',
+          surface: 'hsl(var(--mode-surface) / <alpha-value>)',
+          border: 'hsl(var(--mode-border) / <alpha-value>)',
+        },
         accent: {
           DEFAULT: 'hsl(var(--accent))',
           foreground: 'hsl(var(--accent-foreground))',

@@ -517,5 +517,45 @@
     },
     "loading": "טוען...",
     "generateButton": "בנה תכנית מיקוד"
+  },
+  "studyMode": {
+    "study": "למידה",
+    "hint": "רמז",
+    "practice": "תרגול",
+    "test": "מבחן",
+    "toggleLabel": "מצב למידה",
+    "timer": {
+      "label": "טיימר מבחן",
+      "pause": "השהה",
+      "resume": "המשך",
+      "remaining": "זמן נותר"
+    },
+    "sidebar": {
+      "label": "ניווט בשיעור",
+      "progress": "התקדמות",
+      "exercises": "תרגילים",
+      "collapse": "כווץ סרגל צד",
+      "expand": "הרחב סרגל צד"
+    },
+    "bottomSheet": {
+      "label": "ניווט",
+      "dragHandle": "גרור לשינוי גודל"
+    },
+    "practiceCard": "הפוך כרטיס",
+    "front": "שאלה",
+    "back": "תשובה",
+    "chat": {
+      "panelLabel": "צ'אט מורה AI",
+      "hintPolicy": "מצב רמז",
+      "askPolicy": "מצב שאלה",
+      "policyIndicator": "מדיניות תגובה: {policy}",
+      "slideIn": "פתח צ'אט",
+      "slideOut": "סגור צ'אט"
+    },
+    "testMode": {
+      "restrictedNav": "הניווט מוגבל במהלך מבחן",
+      "confirmLeave": "האם אתה בטוח שברצונך לצאת מהמבחן?",
+      "timerExpired": "הזמן נגמר!"
+    }
   }
 }

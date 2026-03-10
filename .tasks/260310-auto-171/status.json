@@ -4,18 +4,51 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-10T11:07:21.339Z",
-  "updatedAt": "2026-03-10T11:09:21.865Z",
-  "state": "paused",
-  "cursor": null,
+  "updatedAt": "2026-03-10T11:37:33.588Z",
+  "state": "running",
+  "cursor": "spec",
   "stages": {
     "taskify": {
-      "state": "paused",
+      "state": "completed",
       "retries": 0,
       "startedAt": "2026-03-10T11:07:23.114Z",
-      "completedAt": "2026-03-10T11:09:15.956Z",
+      "completedAt": "2026-03-10T11:17:30.739Z",
       "outputFile": "taskify.md"
+    },
+    "spec": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-10T11:17:30.821Z",
+      "completedAt": "2026-03-10T11:19:59.869Z",
+      "outputFile": "spec.md"
+    },
+    "gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-10T11:19:59.889Z",
+      "completedAt": "2026-03-10T11:26:02.671Z",
+      "outputFile": "gap.md"
+    },
+    "gsd-research": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-10T11:26:02.693Z",
+      "completedAt": "2026-03-10T11:29:31.856Z",
+      "outputFile": "gsd-research.md"
+    },
+    "gsd-plan": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-10T11:29:31.877Z",
+      "completedAt": "2026-03-10T11:37:30.421Z",
+      "outputFile": "gsd-plan.md"
+    },
+    "gsd-execute": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-10T11:37:33.505Z"
     }
   },
   "issueNumber": 785,
-  "completedAt": "2026-03-10T11:09:21.865Z"
+  "branchName": "feat/260310-auto-785-course-studying-page-redesign"
 }

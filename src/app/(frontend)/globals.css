@@ -197,6 +197,64 @@
   }
 }
 
+/* Study Mode CSS Custom Properties */
+[data-study-mode='study'] {
+  --mode-bg: 245 100% 98%;
+  --mode-accent: 231 76% 60%;
+  --mode-accent-fg: 0 0% 100%;
+  --mode-surface: 240 100% 99%;
+  --mode-border: 231 76% 90%;
+}
+
+[data-study-mode='hint'] {
+  --mode-bg: 271 100% 98%;
+  --mode-accent: 271 91% 65%;
+  --mode-accent-fg: 0 0% 100%;
+  --mode-surface: 271 100% 99%;
+  --mode-border: 271 91% 90%;
+}
+
+[data-study-mode='practice'] {
+  --mode-bg: 152 100% 97%;
+  --mode-accent: 152 69% 45%;
+  --mode-accent-fg: 0 0% 100%;
+  --mode-surface: 152 100% 99%;
+  --mode-border: 152 69% 90%;
+}
+
+[data-study-mode='test'] {
+  --mode-bg: 25 100% 97%;
+  --mode-accent: 25 95% 55%;
+  --mode-accent-fg: 0 0% 100%;
+  --mode-surface: 25 100% 99%;
+  --mode-border: 25 95% 90%;
+}
+
+/* Glassmorphism utility classes */
+.glass-surface {
+  background: hsl(var(--mode-surface) / 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid hsl(var(--mode-border) / 0.2);
+}
+
+/* Fallback for browsers without backdrop-filter support */
+@supports not (backdrop-filter: blur(1px)) {
+  .glass-surface {
+    background: hsl(var(--mode-surface) / 0.95);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 @layer utilities {
   /* Smooth scrolling for anchor links */
   html {
