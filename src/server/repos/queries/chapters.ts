@@ -4,6 +4,7 @@ import type { Where } from 'payload'
 import configPromise from '@payload-config'
 
 import type { ContentLocale } from '@/server/payload/fields/contentLocale'
+import { localeWhereClause } from '@/server/payload/fields/contentLocale'
 
 export const queryChaptersByCourse = cache(async ({ courseId }: { courseId: string }) => {
   const payload = await getPayload({ config: configPromise })
@@ -120,7 +121,7 @@ export const queryChaptersByGrade = cache(
     ]
 
     if (locale) {
-      conditions.push({ locale: { equals: locale } })
+      conditions.push(localeWhereClause(locale))
     }
 
     // Find course for this grade

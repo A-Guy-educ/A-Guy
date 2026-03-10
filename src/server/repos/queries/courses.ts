@@ -4,6 +4,7 @@ import type { Where } from 'payload'
 import { cache } from 'react'
 
 import type { ContentLocale } from '@/server/payload/fields/contentLocale'
+import { localeWhereClause } from '@/server/payload/fields/contentLocale'
 
 export const queryCourseBySlug = cache(
   async ({ slug, locale }: { slug: string; locale?: ContentLocale }) => {
@@ -16,7 +17,7 @@ export const queryCourseBySlug = cache(
     ]
 
     if (locale) {
-      conditions.push({ locale: { equals: locale } })
+      conditions.push(localeWhereClause(locale))
     }
 
     const result = await payload.find({
@@ -38,7 +39,7 @@ export const queryPublishedCourses = cache(async (locale?: ContentLocale) => {
   const conditions: Where[] = [{ status: { equals: 'published' } }, { isActive: { equals: true } }]
 
   if (locale) {
-    conditions.push({ locale: { equals: locale } })
+    conditions.push(localeWhereClause(locale))
   }
 
   const result = await payload.find({

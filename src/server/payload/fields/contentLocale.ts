@@ -1,4 +1,4 @@
-import type { Field } from 'payload'
+import type { Field, Where } from 'payload'
 
 /**
  * Content-level locale constants — independent of UI i18n (src/i18n/config.ts).
@@ -26,4 +26,17 @@ export const contentLocaleField: Field = {
     position: 'sidebar',
     description: 'Content language',
   },
+}
+
+/**
+ * Build a Payload Where clause that matches documents with the given locale
+ * OR documents that were created before the locale field existed (field missing).
+ *
+ * This prevents queries from returning zero results when existing documents
+ * haven't been backfilled with the locale field yet.
+ */
+export function localeWhereClause(locale: ContentLocale): Where {
+  return {
+    or: [{ locale: { equals: locale } }, { locale: { exists: false } }],
+  }
 }
