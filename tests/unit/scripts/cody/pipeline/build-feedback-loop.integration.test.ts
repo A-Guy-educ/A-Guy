@@ -8,10 +8,18 @@ import type { PipelineContext, PostAction } from '../../../../../scripts/cody/en
  * Integration tests verifying all 4 problems are fixed end-to-end
  */
 describe('Feedback Loop Integration', () => {
-  const IMPL_STAGES = ['architect', 'plan-gap', 'build', 'commit', 'verify', 'autofix', 'pr']
+  const IMPL_STAGES = [
+    'gsd-plan',
+    'gsd-research',
+    'gsd-execute',
+    'commit',
+    'verify',
+    'autofix',
+    'pr',
+  ]
 
-  describe('P1: Build post-action has inner retry', () => {
-    it('build stage definition uses run-quality-with-autofix (not raw run-tsc)', () => {
+  describe('P1: gsd-execute post-action has inner retry', () => {
+    it('gsd-execute stage definition uses run-quality-with-autofix (not raw run-tsc)', () => {
       const mockCtx = {
         taskId: 'test',
         taskDir: '/tmp/test',
@@ -21,7 +29,7 @@ describe('Feedback Loop Integration', () => {
         backend: { name: 'test', spawn: () => ({}) as unknown },
       } as PipelineContext
       const pipeline = buildPipeline('impl', 'standard', false, mockCtx)
-      const buildDef = pipeline.stages.get('build')
+      const buildDef = pipeline.stages.get('gsd-execute')
 
       expect(buildDef).toBeDefined()
       expect(buildDef!.postActions).toBeDefined()
@@ -33,9 +41,9 @@ describe('Feedback Loop Integration', () => {
     })
   })
 
-  describe('P2: Build agent reads rerun-feedback.md', () => {
-    it('build context includes rerun-feedback.md', () => {
-      expect(STAGE_CONTEXT_FILES.build).toContain('rerun-feedback.md')
+  describe('P2: gsd-execute agent reads rerun-feedback.md', () => {
+    it('gsd-execute context includes rerun-feedback.md', () => {
+      expect(STAGE_CONTEXT_FILES['gsd-execute']).toContain('rerun-feedback.md')
     })
 
     it('autofix context includes build-errors.md', () => {
@@ -43,29 +51,29 @@ describe('Feedback Loop Integration', () => {
     })
   })
 
-  describe('P3: Supervisor rerun backs up to architect', () => {
-    it('rerun --from=build --feedback backs up to architect', () => {
-      expect(resolveRerunFromStage('build', 'fix type error', IMPL_STAGES)).toBe('architect')
+  describe('P3: Supervisor rerun backs up to gsd-plan', () => {
+    it('rerun --from=gsd-execute --feedback backs up to gsd-plan', () => {
+      expect(resolveRerunFromStage('gsd-execute', 'fix type error', IMPL_STAGES)).toBe('gsd-plan')
     })
 
-    it('rerun --from=build without feedback stays at build', () => {
-      expect(resolveRerunFromStage('build', undefined, IMPL_STAGES)).toBe('build')
+    it('rerun --from=gsd-execute without feedback stays at gsd-execute', () => {
+      expect(resolveRerunFromStage('gsd-execute', undefined, IMPL_STAGES)).toBe('gsd-execute')
     })
 
-    it('rerun --from=verify --feedback backs up to architect', () => {
-      expect(resolveRerunFromStage('verify', 'lint errors', IMPL_STAGES)).toBe('architect')
+    it('rerun --from=verify --feedback backs up to gsd-plan', () => {
+      expect(resolveRerunFromStage('verify', 'lint errors', IMPL_STAGES)).toBe('gsd-plan')
     })
   })
 
   describe('P4: Feedback flow continuity', () => {
-    it('architect reads rerun-feedback.md (existing behavior preserved)', () => {
-      expect(STAGE_CONTEXT_FILES.architect).toContain('rerun-feedback.md')
+    it('gsd-plan reads rerun-feedback.md (existing behavior preserved)', () => {
+      expect(STAGE_CONTEXT_FILES['gsd-plan']).toContain('rerun-feedback.md')
     })
 
     it('all impl stages after architect are in correct order', () => {
       // Verify the pipeline order makes architect run before build
-      expect(IMPL_STAGES.indexOf('architect')).toBeLessThan(IMPL_STAGES.indexOf('build'))
-      expect(IMPL_STAGES.indexOf('plan-gap')).toBeLessThan(IMPL_STAGES.indexOf('build'))
+      expect(IMPL_STAGES.indexOf('gsd-plan')).toBeLessThan(IMPL_STAGES.indexOf('gsd-execute'))
+      expect(IMPL_STAGES.indexOf('gsd-research')).toBeLessThan(IMPL_STAGES.indexOf('gsd-execute'))
     })
   })
 })

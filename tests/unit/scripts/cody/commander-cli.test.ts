@@ -100,9 +100,9 @@ describe('commander-based CLI parsing', () => {
     expect(result.feedback).toBe('fix the tests')
   })
 
-  it('parses --from stage correctly', () => {
+  it('parses --from stage correctly (alias resolves)', () => {
     const result = parseCliArgs(['--from', 'build'])
-    expect(result.fromStage).toBe('build')
+    expect(result.fromStage).toBe('gsd-execute')
   })
 
   it('parses --version correctly', () => {

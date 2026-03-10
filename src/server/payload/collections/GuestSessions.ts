@@ -16,7 +16,7 @@
  * Lifetime:
  * - Sliding TTL: 7 days of inactivity extends expiration
  * - Hard Cap: 30 days absolute maximum
- * - Status: active | expired | revoked (claimed by user)
+ * - Status: active | claiming | revoked (claimed by user)
  */
 import type { Access, CollectionConfig } from 'payload'
 
@@ -133,7 +133,7 @@ export const GuestSessions: CollectionConfig = {
       type: 'select',
       options: [
         { label: 'Active', value: 'active' },
-        { label: 'Expired', value: 'expired' },
+        { label: 'Claiming', value: 'claiming' },
         { label: 'Revoked', value: 'revoked' },
       ],
       defaultValue: 'active',
@@ -141,7 +141,7 @@ export const GuestSessions: CollectionConfig = {
       index: true,
       admin: {
         description:
-          'Session status: active = usable, expired = past TTL, revoked = claimed by user',
+          'Session status: active = usable, claiming = upgrade in progress, revoked = claimed by user',
       },
     },
     {

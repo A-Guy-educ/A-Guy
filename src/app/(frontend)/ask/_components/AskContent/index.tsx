@@ -5,7 +5,7 @@ import { getUserProfile } from '@/client/state/localStorage/userProfile'
 import { ChatInterface } from '@/ui/web/chat'
 import { logger } from '@/infra/utils/logger'
 import { Loader2 } from 'lucide-react'
-import { useTranslations } from '@/ui/web/providers/I18n'
+import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { ExerciseWorkspace } from '@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseWorkspace'
 import { AskPrimaryContent } from '../AskPrimaryContent'
 
@@ -16,6 +16,7 @@ interface AskContentProps {
 
 export function AskContent({ conversationContextKey }: AskContentProps) {
   const t = useTranslations('homepage.ask')
+  const locale = useLocale()
   const [courseId, setCourseId] = useState<string>('')
   const [isLoading, setIsLoading] = useState(true)
 
@@ -28,7 +29,9 @@ export function AskContent({ conversationContextKey }: AskContentProps) {
       }
 
       try {
-        const response = await fetch(`/api/chapters/by-grade?grade=${profile.gradeLevel}`)
+        const response = await fetch(
+          `/api/chapters/by-grade?grade=${profile.gradeLevel}&locale=${locale}`,
+        )
         if (response.ok) {
           const data = await response.json()
           const courseIdFromData = data.courseId || ''
@@ -52,7 +55,7 @@ export function AskContent({ conversationContextKey }: AskContentProps) {
     }
 
     loadCourse()
-  }, [])
+  }, [locale])
 
   if (isLoading) {
     return (

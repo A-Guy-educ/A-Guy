@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { MessageSquare, Sparkles } from 'lucide-react'
 import { getUserProfile } from '@/client/state/localStorage/userProfile'
 import { useExamCountdown } from '@/client/hooks/useExamCountdown'
-import { useTranslations } from '@/ui/web/providers/I18n'
+import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { cn } from '@/infra/utils/ui'
 import { logger } from '@/infra/utils/logger'
@@ -28,6 +28,7 @@ interface CourseInfo {
 export function AskConversationGrid() {
   const t = useTranslations('coursePage')
   const ts = useTranslations('study')
+  const locale = useLocale()
   const router = useRouter()
   const [conversations, setConversations] = useState<ConversationItem[]>([])
   const [courseInfo, setCourseInfo] = useState<CourseInfo | null>(null)
@@ -65,7 +66,9 @@ export function AskConversationGrid() {
       }
 
       try {
-        const res = await fetch(`/api/chapters/by-grade?grade=${profile.gradeLevel}`)
+        const res = await fetch(
+          `/api/chapters/by-grade?grade=${profile.gradeLevel}&locale=${locale}`,
+        )
         if (res.ok) {
           const data = await res.json()
           const courseId = data.courseId || ''
@@ -96,7 +99,7 @@ export function AskConversationGrid() {
     }
 
     loadData()
-  }, [])
+  }, [locale])
 
   if (isLoading) {
     return (

@@ -112,7 +112,7 @@ export function CodyStatusBanner({
 
   if (state.status === 'idle') {
     return (
-      <div className="flex items-center gap-3 px-6 py-3 border-b border-border bg-muted/30">
+      <div className="flex items-center gap-3 px-6 py-3 border-b border-white/[0.06] bg-white/[0.02]">
         <span className="relative flex h-2.5 w-2.5">
           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
         </span>
@@ -131,7 +131,7 @@ export function CodyStatusBanner({
       : -1
 
     return (
-      <div className="px-6 py-4 border-b border-border bg-blue-500/5">
+      <div className="px-6 py-4 border-b border-white/[0.06] bg-blue-500/[0.06]">
         {/* Top row: status + issue info */}
         <div className="flex items-center gap-3 mb-3">
           <span className="relative flex h-2.5 w-2.5">
@@ -213,7 +213,7 @@ export function CodyStatusBanner({
 
   if (state.status === 'gate-waiting') {
     return (
-      <div className="flex items-center gap-3 px-6 py-3 border-b border-border bg-yellow-500/5">
+      <div className="flex items-center gap-3 px-6 py-3 border-b border-white/[0.06] bg-amber-500/[0.06]">
         <span className="relative flex h-2.5 w-2.5">
           <span className="animate-pulse absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75" />
           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-500" />
@@ -246,7 +246,7 @@ export function CodyStatusBanner({
 
   // failed
   return (
-    <div className="flex items-center gap-3 px-6 py-3 border-b border-border bg-destructive/5">
+    <div className="flex items-center gap-3 px-6 py-3 border-b border-white/[0.06] bg-red-500/[0.06]">
       <span className="relative flex h-2.5 w-2.5">
         <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
       </span>

@@ -8,36 +8,44 @@ import { describe, it, expect } from 'vitest'
 import { resolveRerunFromStage } from '../../../../scripts/cody/rerun-utils'
 
 describe('resolveRerunFromStage', () => {
-  const IMPL_STAGES = ['architect', 'plan-gap', 'build', 'commit', 'verify', 'autofix', 'pr']
+  const IMPL_STAGES = [
+    'gsd-research',
+    'gsd-plan',
+    'gsd-execute',
+    'commit',
+    'verify',
+    'autofix',
+    'pr',
+  ]
 
-  it('backs up to architect when feedback provided and from=build', () => {
-    const result = resolveRerunFromStage('build', 'fix the type error', IMPL_STAGES)
-    expect(result).toBe('architect')
+  it('backs up to gsd-plan when feedback provided and from=gsd-execute', () => {
+    const result = resolveRerunFromStage('gsd-execute', 'fix the type error', IMPL_STAGES)
+    expect(result).toBe('gsd-plan')
   })
 
-  it('backs up to architect when feedback provided and from=verify', () => {
+  it('backs up to gsd-plan when feedback provided and from=verify', () => {
     const result = resolveRerunFromStage('verify', 'lint errors found', IMPL_STAGES)
-    expect(result).toBe('architect')
+    expect(result).toBe('gsd-plan')
   })
 
-  it('backs up to architect when feedback provided and from=commit', () => {
+  it('backs up to gsd-plan when feedback provided and from=commit', () => {
     const result = resolveRerunFromStage('commit', 'push failed', IMPL_STAGES)
-    expect(result).toBe('architect')
+    expect(result).toBe('gsd-plan')
   })
 
-  it('stays at architect when feedback provided and from=architect', () => {
-    const result = resolveRerunFromStage('architect', 'revise the plan', IMPL_STAGES)
-    expect(result).toBe('architect')
+  it('stays at gsd-plan when feedback provided and from=gsd-plan', () => {
+    const result = resolveRerunFromStage('gsd-plan', 'revise the plan', IMPL_STAGES)
+    expect(result).toBe('gsd-plan')
   })
 
   it('keeps fromStage unchanged when NO feedback provided', () => {
-    const result = resolveRerunFromStage('build', undefined, IMPL_STAGES)
-    expect(result).toBe('build')
+    const result = resolveRerunFromStage('gsd-execute', undefined, IMPL_STAGES)
+    expect(result).toBe('gsd-execute')
   })
 
   it('keeps fromStage unchanged when feedback is empty string', () => {
-    const result = resolveRerunFromStage('build', '', IMPL_STAGES)
-    expect(result).toBe('build')
+    const result = resolveRerunFromStage('gsd-execute', '', IMPL_STAGES)
+    expect(result).toBe('gsd-execute')
   })
 
   it('keeps fromStage for spec stages even with feedback (spec stages not in impl list)', () => {
@@ -45,8 +53,8 @@ describe('resolveRerunFromStage', () => {
     expect(result).toBe('taskify')
   })
 
-  it('keeps fromStage for plan-gap (already before build, after architect)', () => {
-    const result = resolveRerunFromStage('plan-gap', 'feedback', IMPL_STAGES)
-    expect(result).toBe('plan-gap')
+  it('keeps fromStage for gsd-research (already before gsd-execute, after gsd-plan)', () => {
+    const result = resolveRerunFromStage('gsd-research', 'feedback', IMPL_STAGES)
+    expect(result).toBe('gsd-research')
   })
 })

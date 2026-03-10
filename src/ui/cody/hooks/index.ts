@@ -28,9 +28,9 @@ export interface UseCodyTasksOptions {
   /**
    * Auto-refresh interval based on task state.
    * - 'auto': Uses smart polling based on running tasks
-   * - 'idle': 30s interval when no tasks are running
-   * - 'board': 10s interval when tasks are on board
-   * - 'active': 5s interval when viewing active task
+   * - 'idle': 60s interval when no tasks are running
+   * - 'board': 30s interval when tasks are on board
+   * - 'active': 15s interval when viewing active task
    * - false: Disable auto-refresh
    */
   refetchInterval?: 'auto' | 'idle' | 'board' | 'active' | false
@@ -38,8 +38,8 @@ export interface UseCodyTasksOptions {
 
 /**
  * Determine polling interval based on current task data.
- * - Active tasks (building/retrying/gate-waiting): poll every 10s
- * - All idle: poll every 30s
+ * - Active tasks (building/retrying/gate-waiting): poll every 30s
+ * - All idle: poll every 60s
  */
 function getSmartInterval(tasks: CodyTask[] | undefined): number {
   if (!tasks || tasks.length === 0) return POLLING_INTERVALS.idle
@@ -68,7 +68,8 @@ export function useCodyTasks(options: UseCodyTasksOptions = {}) {
       return POLLING_INTERVALS[refetchInterval]
     },
     refetchIntervalInBackground: false, // Don't poll when tab is hidden
-    refetchOnWindowFocus: true, // Refresh immediately when user tabs back
+    refetchOnWindowFocus: 'always', // Refresh when user tabs back (even if not stale)
+    staleTime: 30_000, // 30s — prevents rapid re-fetches from invalidations; polling handles freshness
     retry: (failureCount, error) => {
       if (error instanceof RateLimitError) return false
       if (error instanceof NoTokenError) return false
@@ -106,15 +107,15 @@ export function useTaskDetails(issueNumber: number | null, actorLogin?: string) 
     queryKey: queryKeys.taskDetails(issueNumber ?? -1),
     queryFn: () => codyApi.tasks.get(issueNumber!),
     enabled: !!issueNumber,
-    staleTime: 5 * 1000, // 5 seconds - reduced for faster assignee updates
+    staleTime: 60_000, // 60s — assignee updates are reflected via list polling; detail is fetched on select
   })
 
-  // Mutations for task actions
+  // Mutations for task actions — only invalidate the detail query, not the task list.
+  // The task list refreshes via polling; double-invalidation wastes API quota.
   const executeMutation = useMutation({
     mutationFn: () => codyApi.tasks.execute(issueNumber!, actorLogin),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.taskDetails(issueNumber!) })
-      queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
     },
   })
 
@@ -122,7 +123,6 @@ export function useTaskDetails(issueNumber: number | null, actorLogin?: string) 
     mutationFn: () => codyApi.tasks.close(issueNumber!, actorLogin),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.taskDetails(issueNumber!) })
-      queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
     },
   })
 
@@ -130,7 +130,6 @@ export function useTaskDetails(issueNumber: number | null, actorLogin?: string) 
     mutationFn: () => codyApi.tasks.reopen(issueNumber!, actorLogin),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.taskDetails(issueNumber!) })
-      queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
     },
   })
 
@@ -138,7 +137,6 @@ export function useTaskDetails(issueNumber: number | null, actorLogin?: string) 
     mutationFn: () => codyApi.tasks.abort(issueNumber!, actorLogin),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.taskDetails(issueNumber!) })
-      queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
     },
   })
 
@@ -248,7 +246,9 @@ export function useTaskActions({
   }
 
   const handleSuccess = (label: string) => () => {
-    queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
+    // Only invalidate the specific task detail — task list refreshes via polling.
+    // This prevents mutations from triggering 3+ GitHub API calls per action.
+    queryClient.invalidateQueries({ queryKey: queryKeys.taskDetails(issueNumber) })
     toast.success(label)
     onSuccess?.()
   }

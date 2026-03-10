@@ -4,6 +4,8 @@ import { EmptyLessonPlaceholder } from './_components/EmptyLessonPlaceholder'
 import type { Media } from '@/payload-types'
 import { SystemParams } from '@/infra/config/system-params'
 import { resolveAccessType } from '@/server/constants/access-types'
+import { getSystemLocale } from '@/i18n/server-locale'
+import { isValidContentLocale } from '@/server/payload/fields/contentLocale'
 import { queryCourseBySlug } from '@/server/repos/queries/courses'
 import { queryExercisesByLesson } from '@/server/repos/queries/exercises'
 import { queryLessonBySlug } from '@/server/repos/queries/lessons'
@@ -29,9 +31,11 @@ interface LessonPageProps {
 
 export default async function LessonPage({ params }: LessonPageProps) {
   const { courseSlug, chapterSlug, lessonSlug } = await params
+  const locale = await getSystemLocale()
+  const contentLocale = isValidContentLocale(locale) ? locale : undefined
 
   const [course, lesson] = await Promise.all([
-    queryCourseBySlug({ slug: courseSlug }),
+    queryCourseBySlug({ slug: courseSlug, locale: contentLocale }),
     queryLessonBySlug({ slug: lessonSlug }),
   ])
 
@@ -186,9 +190,11 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
 export async function generateMetadata({ params }: LessonPageProps) {
   const { courseSlug, chapterSlug, lessonSlug } = await params
+  const locale = await getSystemLocale()
+  const contentLocale = isValidContentLocale(locale) ? locale : undefined
 
   const [course, lesson] = await Promise.all([
-    queryCourseBySlug({ slug: courseSlug }),
+    queryCourseBySlug({ slug: courseSlug, locale: contentLocale }),
     queryLessonBySlug({ slug: lessonSlug }),
   ])
 

@@ -7,17 +7,21 @@ import configPromise from '@payload-config'
 import type { Lesson } from '@/payload-types'
 import { DEFAULT_PAGE_ACCESS_TYPE } from '@/server/constants/access-types'
 import { SystemParams } from '@/infra/config/system-params'
+import { isValidContentLocale } from '@/server/payload/fields/contentLocale'
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
   const grade = searchParams.get('grade')
+  const localeParam = searchParams.get('locale')
 
   if (!grade) {
     return NextResponse.json({ error: 'Grade parameter is required' }, { status: 400 })
   }
 
+  const locale = localeParam && isValidContentLocale(localeParam) ? localeParam : undefined
+
   try {
-    const chapters = await queryChaptersByGrade({ gradeLevel: grade })
+    const chapters = await queryChaptersByGrade({ gradeLevel: grade, locale })
     const course = chapters[0]?.course
     const courseObj = typeof course === 'object' && course !== null ? course : null
     const courseSlug = courseObj && 'slug' in courseObj ? (courseObj.slug as string) : ''

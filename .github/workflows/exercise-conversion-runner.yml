@@ -11,8 +11,8 @@ name: Exercise Conversion Runner
 
 on:
   schedule:
-    # Run every 5 minutes
-    - cron: '*/5 * * * *'
+    # Run every 15 minutes (reduced from 5 to save CI resources)
+    - cron: '*/15 * * * *'
   workflow_dispatch:
     # Allow manual trigger from GitHub UI
 

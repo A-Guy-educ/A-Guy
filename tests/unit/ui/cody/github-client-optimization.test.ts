@@ -38,9 +38,9 @@ describe('POLLING_INTERVALS', () => {
       'utf-8',
     )
     // Verify polling intervals are defined
-    expect(constantsContent).toContain('idle: 60000')
-    expect(constantsContent).toContain('board: 30000')
-    expect(constantsContent).toContain('active: 15000')
+    expect(constantsContent).toContain('idle: 60_000')
+    expect(constantsContent).toContain('board: 30_000')
+    expect(constantsContent).toContain('active: 15_000')
   })
 })
 

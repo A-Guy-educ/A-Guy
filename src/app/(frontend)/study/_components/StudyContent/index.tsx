@@ -9,7 +9,7 @@ import {
   getEffectiveLessonType,
   type LessonType,
 } from '@/server/constants/lesson-types'
-import { useTranslations } from '@/ui/web/providers/I18n'
+import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import type { Chapter, Lesson } from '@/payload-types'
 import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
@@ -38,6 +38,7 @@ interface StudyContentProps {
 export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentProps) {
   const t = useTranslations('coursePage')
   const ts = useTranslations('study')
+  const locale = useLocale()
   const [chapters, setChapters] = useState<ChapterWithLessons[]>([])
   const [courseInfo, setCourseInfo] = useState<CourseInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -51,7 +52,9 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
       }
 
       try {
-        const res = await fetch(`/api/chapters/by-grade?grade=${profile.gradeLevel}`)
+        const res = await fetch(
+          `/api/chapters/by-grade?grade=${profile.gradeLevel}&locale=${locale}`,
+        )
         if (res.ok) {
           const data = await res.json()
           setChapters(data.chapters || [])
@@ -74,7 +77,7 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
     }
 
     loadData()
-  }, [])
+  }, [locale])
 
   if (isLoading) {
     return (

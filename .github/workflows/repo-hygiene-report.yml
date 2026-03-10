@@ -2,8 +2,8 @@ name: Repo Hygiene Report (Daily)
 
 on:
   schedule:
-    # Daily at 02:45 UTC
-    - cron: '45 2 * * *'
+    # Daily at 08:00 UTC (spread from 02:45 to reduce contention)
+    - cron: '0 8 * * *'
   workflow_dispatch: {}
 
 permissions:

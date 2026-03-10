@@ -510,7 +510,7 @@ describe('pipeline stage definitions', () => {
 
   it('should include plan-gap and commit in ALL_IMPL_STAGE_NAMES', async () => {
     const { ALL_IMPL_STAGE_NAMES } = await import('../../../../scripts/cody/pipeline-utils')
-    expect(ALL_IMPL_STAGE_NAMES).toContain('plan-gap')
+    expect(ALL_IMPL_STAGE_NAMES).toContain('gsd-research')
     expect(ALL_IMPL_STAGE_NAMES).toContain('commit')
   })
 
@@ -521,16 +521,17 @@ describe('pipeline stage definitions', () => {
 
   it('should have correct stage order', async () => {
     const { ALL_IMPL_STAGE_NAMES } = await import('../../../../scripts/cody/pipeline-utils')
-    const architectIdx = ALL_IMPL_STAGE_NAMES.indexOf('architect')
-    const planGapIdx = ALL_IMPL_STAGE_NAMES.indexOf('plan-gap')
-    const buildIdx = ALL_IMPL_STAGE_NAMES.indexOf('build')
+    const gsdPlanIdx = ALL_IMPL_STAGE_NAMES.indexOf('gsd-plan')
+    const gsdResearchIdx = ALL_IMPL_STAGE_NAMES.indexOf('gsd-research')
+    const gsdExecuteIdx = ALL_IMPL_STAGE_NAMES.indexOf('gsd-execute')
     const commitIdx = ALL_IMPL_STAGE_NAMES.indexOf('commit')
     const verifyIdx = ALL_IMPL_STAGE_NAMES.indexOf('verify')
 
-    // architect < plan-gap < build < commit < verify
-    expect(architectIdx).toBeLessThan(planGapIdx)
-    expect(planGapIdx).toBeLessThan(buildIdx)
-    expect(buildIdx).toBeLessThan(commitIdx)
+    // gsd-research < gsd-plan < gsd-execute < commit < verify
+    // Note: actual order is gsd-research, gsd-plan, gsd-execute
+    expect(gsdResearchIdx).toBeLessThan(gsdPlanIdx)
+    expect(gsdPlanIdx).toBeLessThan(gsdExecuteIdx)
+    expect(gsdExecuteIdx).toBeLessThan(commitIdx)
     expect(commitIdx).toBeLessThan(verifyIdx)
   })
 
@@ -638,7 +639,7 @@ describe('input_quality in task.json', () => {
     ...VALID_TASK,
     input_quality: {
       level: 'detailed_plan',
-      skip_stages: ['spec', 'architect'],
+      skip_stages: ['spec', 'gsd-plan'],
       reasoning: 'Input contains step-by-step plan with file paths and test cases.',
     },
   }
@@ -709,14 +710,14 @@ describe('input_quality in task.json', () => {
       expect(result.errors[0]).toContain('gap')
     })
 
-    it('should reject plan-gap in skip_stages (plan-gap must always run)', () => {
+    it('should reject gsd-execute in skip_stages (gsd-execute must always run)', () => {
       const task = {
         ...VALID_TASK,
-        input_quality: { level: 'good_spec', skip_stages: ['plan-gap'], reasoning: 'test' },
+        input_quality: { level: 'good_spec', skip_stages: ['gsd-execute'], reasoning: 'test' },
       }
       const result = validateTask(task)
       expect(result.valid).toBe(false)
-      expect(result.errors[0]).toContain('plan-gap')
+      expect(result.errors[0]).toContain('gsd-execute')
     })
 
     it('should accept spec and architect in skip_stages', () => {
@@ -724,7 +725,7 @@ describe('input_quality in task.json', () => {
         ...VALID_TASK,
         input_quality: {
           level: 'detailed_plan',
-          skip_stages: ['spec', 'architect'],
+          skip_stages: ['spec', 'gsd-plan'],
           reasoning: 'test',
         },
       }
@@ -1029,8 +1030,8 @@ describe('getImplPipeline', () => {
     expect(pipeline).toHaveLength(8)
     const flatNames = flattenPipeline(pipeline)
     expect(flatNames).toEqual([
-      'architect',
-      'build',
+      'gsd-plan',
+      'gsd-execute',
       'commit',
       'review',
       'fix',
@@ -1045,7 +1046,7 @@ describe('getImplPipeline', () => {
       await import('../../../../scripts/cody/pipeline-utils')
     const pipeline = getImplPipeline('lightweight')
     const flatNames = flattenPipeline(pipeline)
-    expect(flatNames).not.toContain('plan-gap')
+    expect(flatNames).not.toContain('gsd-research')
   })
 })
 
@@ -1053,9 +1054,9 @@ describe('getAllImplStageNames', () => {
   it('standard profile returns full flattened list', async () => {
     const { getAllImplStageNames } = await import('../../../../scripts/cody/pipeline-utils')
     const names = getAllImplStageNames('standard')
-    expect(names).toContain('architect')
-    expect(names).toContain('plan-gap')
-    expect(names).toContain('build')
+    expect(names).toContain('gsd-plan')
+    expect(names).toContain('gsd-research')
+    expect(names).toContain('gsd-execute')
     expect(names).toContain('commit')
     expect(names).toContain('verify')
     expect(names).toContain('pr')
@@ -1065,8 +1066,8 @@ describe('getAllImplStageNames', () => {
     const { getAllImplStageNames } = await import('../../../../scripts/cody/pipeline-utils')
     const names = getAllImplStageNames('lightweight')
     expect(names).toEqual([
-      'architect',
-      'build',
+      'gsd-plan',
+      'gsd-execute',
       'commit',
       'review',
       'fix',

@@ -1,4 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
+import { getSystemLocale } from '@/i18n/server-locale'
+import { isValidContentLocale } from '@/server/payload/fields/contentLocale'
 import { queryCourseBySlug } from '@/server/repos/queries/courses'
 import { queryLessonBySlug } from '@/server/repos/queries/lessons'
 import {
@@ -55,9 +57,11 @@ async function resolveExercise(lessonId: string, param: string) {
 
 export default async function ExercisePage({ params }: ExercisePageProps) {
   const { courseSlug, chapterSlug, lessonSlug, exerciseSlug } = await params
+  const locale = await getSystemLocale()
+  const contentLocale = isValidContentLocale(locale) ? locale : undefined
 
   const [course, lesson] = await Promise.all([
-    queryCourseBySlug({ slug: courseSlug }),
+    queryCourseBySlug({ slug: courseSlug, locale: contentLocale }),
     queryLessonBySlug({ slug: lessonSlug }),
   ])
 
@@ -114,9 +118,11 @@ export default async function ExercisePage({ params }: ExercisePageProps) {
 
 export async function generateMetadata({ params }: ExercisePageProps) {
   const { courseSlug, chapterSlug, lessonSlug, exerciseSlug } = await params
+  const locale = await getSystemLocale()
+  const contentLocale = isValidContentLocale(locale) ? locale : undefined
 
   const [course, lesson] = await Promise.all([
-    queryCourseBySlug({ slug: courseSlug }),
+    queryCourseBySlug({ slug: courseSlug, locale: contentLocale }),
     queryLessonBySlug({ slug: lessonSlug }),
   ])
 

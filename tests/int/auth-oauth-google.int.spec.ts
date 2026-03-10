@@ -5,6 +5,7 @@ import { encrypt, decrypt, generateSecret } from '@/infra/auth/oauth_crypto'
 
 describe('Google OAuth Integration', () => {
   let payload: Payload
+  const createdUserIds: string[] = []
 
   beforeAll(async () => {
     // Ensure PAYLOAD_SECRET is set for crypto operations
@@ -81,6 +82,7 @@ describe('Google OAuth Integration', () => {
         },
       })
 
+      createdUserIds.push(user.id)
       expect(user.id).toBeDefined()
       expect(user.email).toBe(testEmail)
       expect(user.googleSub).toBeDefined()
@@ -110,6 +112,7 @@ describe('Google OAuth Integration', () => {
           oauthLoginSecretEnc: encryptedSecret,
         },
       })
+      createdUserIds.push(user1.id)
 
       // Try to create second user with same googleSub
 
@@ -153,6 +156,7 @@ describe('Google OAuth Integration', () => {
           oauthLoginSecretEnc: encryptedSecret,
         },
       })
+      createdUserIds.push(createdUser.id)
 
       const foundUsers = await payload.find({
         collection: 'users',
@@ -184,6 +188,7 @@ describe('Google OAuth Integration', () => {
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)) as any
+      createdUserIds.push(emailUser.id)
 
       // Check for collision (simulating OAuth callback logic)
       const existingByEmail = await payload.find({
@@ -207,7 +212,7 @@ describe('Google OAuth Integration', () => {
       const emailPassword = 'original-password-123'
       const googleSub = `google-link-${Date.now()}`
 
-      // Create email/password user first
+      // Create email/password user first (tracked for cleanup)
       const emailUser = (await payload.create({
         collection: 'users',
         data: {
@@ -218,6 +223,7 @@ describe('Google OAuth Integration', () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)) as any
 
+      createdUserIds.push(emailUser.id)
       expect(emailUser.googleSub).toBeUndefined()
 
       // Simulate OAuth callback linking (without replacing password)
@@ -295,6 +301,7 @@ describe('Google OAuth Integration', () => {
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)) as any
+      createdUserIds.push(user.id)
 
       // Decrypt and login (simulating OAuth callback)
       const decryptedSecret = decrypt(encryptedSecret)
@@ -312,6 +319,17 @@ describe('Google OAuth Integration', () => {
   })
 
   afterAll(async () => {
+    // Safety net: clean up any users that weren't deleted inline
+    if (payload) {
+      for (const userId of createdUserIds) {
+        try {
+          await payload.delete({ collection: 'users', id: userId, overrideAccess: true })
+        } catch {
+          // May already be deleted by inline cleanup
+        }
+      }
+    }
+
     // Close DB connection to prevent connection leaks
     if (payload?.db?.destroy) {
       await payload.db.destroy()

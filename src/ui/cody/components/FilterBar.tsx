@@ -62,7 +62,7 @@ export function FilterBar({
   filteredCount,
 }: FilterBarProps) {
   return (
-    <div className="flex items-center gap-3 px-4 md:px-6 py-2 border-b border-border bg-muted/30">
+    <div className="flex items-center gap-3 px-4 md:px-6 py-2 border-b border-white/[0.06] bg-white/[0.02]">
       {/* Date filter */}
       <Select value={dateFilter} onValueChange={onDateFilterChange}>
         <SelectTrigger className="w-full md:w-36">

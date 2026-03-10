@@ -1,5 +1,6 @@
 import type { Payload } from 'payload'
 import { ChatRole } from '@/infra/llm/chat-message-role'
+import type { TestDataTracker } from '../helpers/test-data-tracker'
 
 export interface ConversationMessageInput {
   role?: ChatRole
@@ -42,11 +43,17 @@ export function buildConversationData(input: ConversationFactoryInput) {
   }
 }
 
-export async function createConversation(payload: Payload, input: ConversationFactoryInput) {
-  return payload.create({
+export async function createConversation(
+  payload: Payload,
+  input: ConversationFactoryInput,
+  tracker?: TestDataTracker,
+) {
+  const conversation = await payload.create({
     collection: 'conversations',
     data: buildConversationData(input),
     draft: false,
     overrideAccess: true,
   })
+  tracker?.track('conversations', conversation.id)
+  return conversation
 }

@@ -77,10 +77,6 @@ const nextConfig = {
 
     return webpackConfig
   },
-  eslint: {
-    // ESLint runs in CI and pre-push hooks; skip during next build to reduce memory usage
-    ignoreDuringBuilds: true,
-  },
   env: {
     NEXT_PUBLIC_APP_VERSION: process.env.npm_package_version || 'dev',
   },

@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Payload } from 'payload'
 import { DEFAULT_CONTENT } from '@/server/payload/collections/Exercises/defaults'
+import type { TestDataTracker } from '../helpers/test-data-tracker'
 
 export interface ContextHierarchy {
   categoryId: string
@@ -10,7 +12,10 @@ export interface ContextHierarchy {
   cleanup: () => Promise<void>
 }
 
-export async function createContextHierarchy(payload: Payload): Promise<ContextHierarchy> {
+export async function createContextHierarchy(
+  payload: Payload,
+  tracker?: TestDataTracker,
+): Promise<ContextHierarchy> {
   const timestamp = Date.now()
 
   const category = await payload.create({
@@ -74,6 +79,13 @@ export async function createContextHierarchy(payload: Payload): Promise<ContextH
     } as any,
     overrideAccess: true,
   })
+
+  // Register with tracker if provided
+  tracker?.track('exercises', exercise.id)
+  tracker?.track('lessons', lesson.id)
+  tracker?.track('chapters', chapter.id)
+  tracker?.track('courses', course.id)
+  tracker?.track('categories', category.id)
 
   const cleanup = async () => {
     await payload.delete({ collection: 'exercises', id: exercise.id, overrideAccess: true })

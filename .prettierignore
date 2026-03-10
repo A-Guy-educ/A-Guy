@@ -28,3 +28,4 @@ src/app/(payload)/admin/importMap.js
 .opencode/**
 docs/ai/indexes/*.json
 public/sitemap*.xml
+mixpanelstuff/**

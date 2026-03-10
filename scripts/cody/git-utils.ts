@@ -638,6 +638,17 @@ export function commitAndPush(
 
 export type StagingStrategy = 'task-only' | 'tracked+task' | 'all'
 
+/**
+ * Files that are always excluded from task-only commits (internal state markers).
+ */
+const TASK_FILES_ALWAYS_EXCLUDE = ['gate-*.md', 'rerun-feedback.consumed.md']
+
+/**
+ * Debug artifacts — only committed when the pipeline fails (black box data).
+ * On success these add noise to PRs; on failure they're essential for diagnosis.
+ */
+const TASK_FILES_DEBUG_ONLY = ['*-events.jsonl', '*-stderr.log']
+
 export interface CommitPipelineFilesOptions {
   /** Task directory path */
   taskDir: string
@@ -659,6 +670,8 @@ export interface CommitPipelineFilesOptions {
   isCI?: boolean
   /** Whether this is a dry run */
   dryRun?: boolean
+  /** Whether the pipeline has failed — includes debug artifacts (*-events.jsonl, *-stderr.log) */
+  pipelineFailed?: boolean
 }
 
 export interface CommitPipelineFilesResult {
@@ -689,6 +702,7 @@ export function commitPipelineFiles(
     cwd = process.cwd(),
     isCI = false,
     dryRun = false,
+    pipelineFailed = false,
   } = options
 
   // Skip in dry-run mode
@@ -755,6 +769,25 @@ export function commitPipelineFiles(
           // Ignore staging errors - silent fail is ok
         }
         break
+    }
+
+    // 3b. Unstage excluded task artifacts to keep PRs clean
+    // Always exclude gate markers; only include debug artifacts on failure
+    if (stagingStrategy === 'task-only' || stagingStrategy === 'tracked+task') {
+      const excludePatterns = [
+        ...TASK_FILES_ALWAYS_EXCLUDE,
+        ...(!pipelineFailed ? TASK_FILES_DEBUG_ONLY : []),
+      ]
+      for (const pattern of excludePatterns) {
+        try {
+          execFileSync('git', ['reset', 'HEAD', '--', path.join(taskDir, pattern)], {
+            cwd,
+            stdio: 'pipe',
+          })
+        } catch {
+          // Pattern may not match any staged files — that's fine
+        }
+      }
     }
 
     // 4. Commit using execFileSync to prevent shell injection (BUG-5 fix)

@@ -11,6 +11,7 @@ import type { Payload } from 'payload'
 // Mock logger to avoid console output during tests
 vi.mock('@/infra/utils/logger', () => ({
   logger: {
+    debug: vi.fn(),
     info: vi.fn(),
     error: vi.fn(),
     warn: vi.fn(),
@@ -33,12 +34,19 @@ vi.mock('@payload-config', () => ({
 
 // Mock guest-session module - we need to track if payload is passed to these functions
 const mockGetGuestSessionByToken = vi.fn()
+const mockGetGuestSessionByTokenForClaim = vi.fn()
 const mockRevokeGuestSession = vi.fn()
+const mockAcquireClaimLock = vi.fn()
+const mockCompleteClaimLock = vi.fn()
 const mockClearGuestSessionCookie = vi.fn()
 
 vi.mock('@/server/services/guest-session', () => ({
   getGuestSessionByToken: (...args: unknown[]) => mockGetGuestSessionByToken(...args),
+  getGuestSessionByTokenForClaim: (...args: unknown[]) =>
+    mockGetGuestSessionByTokenForClaim(...args),
   revokeGuestSession: (...args: unknown[]) => mockRevokeGuestSession(...args),
+  acquireClaimLock: (...args: unknown[]) => mockAcquireClaimLock(...args),
+  completeClaimLock: (...args: unknown[]) => mockCompleteClaimLock(...args),
   clearGuestSessionCookie: (...args: unknown[]) => mockClearGuestSessionCookie(...args),
 }))
 
@@ -71,7 +79,28 @@ describe('guest-session-upgrade service - Transaction Safety', () => {
       messageCount: 0,
     })
 
+    mockGetGuestSessionByTokenForClaim.mockResolvedValue({
+      id: 'session-123',
+      tokenHash: 'hash123',
+      expiresAt: new Date(Date.now() + 86400000).toISOString(),
+      status: 'active',
+      messageCount: 0,
+    })
+
     mockRevokeGuestSession.mockResolvedValue({
+      id: 'session-123',
+      status: 'revoked',
+    })
+
+    mockAcquireClaimLock.mockResolvedValue({
+      locked: true,
+      session: {
+        id: 'session-123',
+        status: 'claiming',
+      },
+    })
+
+    mockCompleteClaimLock.mockResolvedValue({
       id: 'session-123',
       status: 'revoked',
     })
@@ -88,8 +117,10 @@ describe('guest-session-upgrade service - Transaction Safety', () => {
 
     mockPayloadUpdate.mockResolvedValue({})
 
+    // Default count is 0 (simulating successful transfer)
+    // Tests that need different behavior will override
     mockPayloadCount.mockResolvedValue({
-      totalDocs: 3,
+      totalDocs: 0,
     })
 
     // Re-import to get fresh module with cleared mocks
@@ -120,7 +151,7 @@ describe('guest-session-upgrade service - Transaction Safety', () => {
 
     it('should return claimed count of 0 when no guest session exists', async () => {
       // Override mock to return null (no session)
-      mockGetGuestSessionByToken.mockResolvedValue(null)
+      mockGetGuestSessionByTokenForClaim.mockResolvedValue(null)
 
       const claimWithPayload = guestSessionUpgrade.claimGuestConversations as unknown as (
         payload: Payload,
@@ -140,6 +171,11 @@ describe('guest-session-upgrade service - Transaction Safety', () => {
 
   describe('hasPendingGuestConversations accepts payload parameter', () => {
     it('should accept payload as first argument and use it for database operations', async () => {
+      // Override count to return > 0 (there are pending conversations)
+      mockPayloadCount.mockResolvedValue({
+        totalDocs: 2,
+      })
+
       // Call with payload as first argument
       const checkWithPayload = guestSessionUpgrade.hasPendingGuestConversations as unknown as (
         payload: Payload,
@@ -157,7 +193,7 @@ describe('guest-session-upgrade service - Transaction Safety', () => {
     })
 
     it('should return false when no guest session exists', async () => {
-      mockGetGuestSessionByToken.mockResolvedValue(null)
+      mockGetGuestSessionByTokenForClaim.mockResolvedValue(null)
 
       const checkWithPayload = guestSessionUpgrade.hasPendingGuestConversations as unknown as (
         payload: Payload,
@@ -189,7 +225,7 @@ describe('guest-session-upgrade service - Transaction Safety', () => {
   })
 
   describe('claimGuestConversations passes payload to inner calls', () => {
-    it('should pass payload to getGuestSessionByToken', async () => {
+    it('should pass payload to getGuestSessionByTokenForClaim', async () => {
       const claimWithPayload = guestSessionUpgrade.claimGuestConversations as unknown as (
         payload: Payload,
         userId: string,
@@ -199,17 +235,17 @@ describe('guest-session-upgrade service - Transaction Safety', () => {
 
       await claimWithPayload(mockPayload, 'user-123', 'test-token', new Headers())
 
-      // Before fix: mockGetGuestSessionByToken receives only token (not payload)
-      // After fix: mockGetGuestSessionByToken receives payload as first arg
-      expect(mockGetGuestSessionByToken).toHaveBeenCalled()
-      const callArgs = mockGetGuestSessionByToken.mock.calls[0]
+      // Before fix: mockGetGuestSessionByTokenForClaim receives only token (not payload)
+      // After fix: mockGetGuestSessionByTokenForClaim receives payload as first arg
+      expect(mockGetGuestSessionByTokenForClaim).toHaveBeenCalled()
+      const callArgs = mockGetGuestSessionByTokenForClaim.mock.calls[0]
       // After fix: first argument should be payload
       expect(callArgs[0]).toBe(mockPayload)
       // Second argument should be the token
       expect(callArgs[1]).toBe('test-token')
     })
 
-    it('should pass payload to revokeGuestSession', async () => {
+    it('should pass payload to acquireClaimLock and completeClaimLock', async () => {
       const claimWithPayload = guestSessionUpgrade.claimGuestConversations as unknown as (
         payload: Payload,
         userId: string,
@@ -219,16 +255,19 @@ describe('guest-session-upgrade service - Transaction Safety', () => {
 
       await claimWithPayload(mockPayload, 'user-123', 'test-token', new Headers())
 
-      // Before fix: mockRevokeGuestSession receives (sessionId, userId) - NO payload
-      // After fix: mockRevokeGuestSession receives (payload, sessionId, userId)
-      expect(mockRevokeGuestSession).toHaveBeenCalled()
-      const callArgs = mockRevokeGuestSession.mock.calls[0]
-      // After fix: first argument should be payload
-      expect(callArgs[0]).toBe(mockPayload)
-      // Second argument should be session id
-      expect(callArgs[1]).toBe('session-123')
-      // Third argument should be user id
-      expect(callArgs[2]).toBe('user-123')
+      // After fix: acquireClaimLock receives (payload, sessionId, userId)
+      expect(mockAcquireClaimLock).toHaveBeenCalled()
+      const lockCallArgs = mockAcquireClaimLock.mock.calls[0]
+      expect(lockCallArgs[0]).toBe(mockPayload)
+      expect(lockCallArgs[1]).toBe('session-123')
+      expect(lockCallArgs[2]).toBe('user-123')
+
+      // After fix: completeClaimLock receives (payload, sessionId, userId)
+      expect(mockCompleteClaimLock).toHaveBeenCalled()
+      const completeCallArgs = mockCompleteClaimLock.mock.calls[0]
+      expect(completeCallArgs[0]).toBe(mockPayload)
+      expect(completeCallArgs[1]).toBe('session-123')
+      expect(completeCallArgs[2]).toBe('user-123')
     })
 
     it('should use payload for conversation updates', async () => {
@@ -241,13 +280,13 @@ describe('guest-session-upgrade service - Transaction Safety', () => {
 
       await claimWithPayload(mockPayload, 'user-123', 'test-token', new Headers())
 
-      // Verify payload.update was called for each conversation
-      expect(mockPayloadUpdate).toHaveBeenCalledTimes(2)
+      // Verify payload.update was called (bulk update with where clause)
+      expect(mockPayloadUpdate).toHaveBeenCalledTimes(1)
     })
   })
 
   describe('hasPendingGuestConversations passes payload to inner calls', () => {
-    it('should pass payload to getGuestSessionByToken', async () => {
+    it('should pass payload to getGuestSessionByTokenForClaim', async () => {
       const checkWithPayload = guestSessionUpgrade.hasPendingGuestConversations as unknown as (
         payload: Payload,
         sessionToken: string,
@@ -256,8 +295,8 @@ describe('guest-session-upgrade service - Transaction Safety', () => {
       await checkWithPayload(mockPayload, 'test-token')
 
       // After fix: should pass payload as first argument
-      expect(mockGetGuestSessionByToken).toHaveBeenCalled()
-      const callArgs = mockGetGuestSessionByToken.mock.calls[0]
+      expect(mockGetGuestSessionByTokenForClaim).toHaveBeenCalled()
+      const callArgs = mockGetGuestSessionByTokenForClaim.mock.calls[0]
       expect(callArgs[0]).toBe(mockPayload)
       expect(callArgs[1]).toBe('test-token')
     })

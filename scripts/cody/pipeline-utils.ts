@@ -33,10 +33,10 @@ export const VALID_INPUT_QUALITY_LEVELS = [
 ] as const
 
 // Stages that cannot be skipped (gap analysis always runs)
-export const NON_SKIPPABLE_STAGES = ['gap', 'plan-gap', 'build', 'commit', 'verify', 'pr'] as const
+export const NON_SKIPPABLE_STAGES = ['gap', 'gsd-execute', 'commit', 'verify', 'pr'] as const
 
 // Stages that CAN be skipped when input quality is high
-export const SKIPPABLE_STAGES = ['spec', 'architect'] as const
+export const SKIPPABLE_STAGES = ['spec', 'gsd-plan', 'gsd-research'] as const
 
 export interface InputQuality {
   level: (typeof VALID_INPUT_QUALITY_LEVELS)[number]
@@ -56,12 +56,12 @@ export const COMPLEXITY_MAX = 100
  * Stages with threshold 0 always run. Higher thresholds = only complex tasks.
  *
  * Tiers (stages activate at their individual thresholds, not all at tier boundary):
- *   1-9:   "Trivial"      → taskify, build, commit, fix, commit-fix, verify, pr
- *   10-19: "Simple"        → + architect (10)
+ *   1-9:   "Trivial"      → taskify, gsd-execute, commit, fix, commit-fix, verify, pr
+ *   10-19: "Simple"        → + gsd-plan (10)
  *   20-34: "Moderate"      → + spec (20)
  *   30+:   "Moderate+"     → + review (30)
  *   35-39: "Complex"       → + gap (35)
- *   40-49: "Complex"       → + plan-gap (40)
+ *   35-39: "Complex"       → + gsd-research (35)
  *   60+:   "Very Complex"  → + clarify (60)
  */
 export const STAGE_COMPLEXITY_THRESHOLDS: Record<string, number> = {
@@ -69,9 +69,9 @@ export const STAGE_COMPLEXITY_THRESHOLDS: Record<string, number> = {
   spec: 20,
   gap: 35,
   clarify: 60,
-  architect: 10,
-  'plan-gap': 40,
-  build: 0,
+  'gsd-research': 35,
+  'gsd-plan': 10,
+  'gsd-execute': 0,
   commit: 0,
   review: 30,
   fix: 0,
@@ -767,8 +767,9 @@ const STAGE_OUTPUT_MAP: Record<string, string> = {
   taskify: 'task.json',
   gap: 'gap.md',
   clarify: 'questions.md',
-  architect: 'plan.md',
-  'plan-gap': 'plan-gap.md',
+  'gsd-research': 'gsd-research.md',
+  'gsd-plan': 'plan.md',
+  'gsd-execute': 'build.md',
   commit: 'commit.md',
   autofix: 'autofix.md',
 }
@@ -806,8 +807,9 @@ const DRY_RUN_OUTPUTS: Record<string, (taskId: string) => string> = {
   spec: (taskId) => `# Spec (dry-run)\n\nMock spec for ${taskId}.\n`,
   gap: (taskId) => `# Gap Analysis (dry-run)\n\nNo gaps identified for ${taskId}.\n`,
   clarify: (taskId) => `# Questions (dry-run)\n\n1. Mock question for ${taskId}?\n`,
-  architect: (taskId) => `# Plan (dry-run)\n\nMock plan for ${taskId}.\n`,
-  build: (taskId) => `# Build (dry-run)\n\nMock build output for ${taskId}.\n`,
+  'gsd-research': (taskId) => `# GSD Research (dry-run)\n\nMock research for ${taskId}.\n`,
+  'gsd-plan': (taskId) => `# Plan (dry-run)\n\nMock plan for ${taskId}.\n`,
+  'gsd-execute': (taskId) => `# Build (dry-run)\n\nMock build output for ${taskId}.\n`,
   test: (taskId) => `# Test (dry-run)\n\nMock test output for ${taskId}.\n`,
   verify: (taskId) => `# Verify (dry-run)\n\nResult: PASS\n\nMock verification for ${taskId}.\n`,
   commit: (taskId) => `# Commit (dry-run)
@@ -870,14 +872,14 @@ export function flattenPipeline(stages: PipelineStage[]): string[] {
  * Implementation pipeline stages with parallel groups.
  *
  * Flow:
- *   architect → plan-gap → build → commit(scripted) →
+ *   gsd-research → gsd-plan → gsd-execute → commit(scripted) →
  *   verify (scripted) → pr
  * Note: test-writer subagent is invoked by build agent per plan step (TDD)
  */
 export const IMPL_PIPELINE: PipelineStage[] = [
-  'architect',
-  'plan-gap',
-  'build',
+  'gsd-research',
+  'gsd-plan',
+  'gsd-execute',
   'commit',
   'review',
   'fix',
@@ -897,13 +899,13 @@ export const ALL_IMPL_STAGE_NAMES = flattenPipeline(IMPL_PIPELINE)
  * Lightweight implementation pipeline stages.
  *
  * Flow:
- *   architect → build → commit → verify → pr
+ *   gsd-plan → gsd-execute → commit → verify → pr
  *
- * Skipped: plan-gap (saves 1-2 LLM calls)
+ * Skipped: gsd-research (saves 1-2 LLM calls)
  */
 export const LIGHTWEIGHT_IMPL_PIPELINE: PipelineStage[] = [
-  'architect',
-  'build',
+  'gsd-plan',
+  'gsd-execute',
   'commit',
   'review',
   'fix',
