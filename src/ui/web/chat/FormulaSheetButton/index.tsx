@@ -30,14 +30,28 @@ interface FormulaSheetData {
 interface FormulaSheetButtonProps {
   lessonId: string
   disabled?: boolean
-  onOpen?: (data: FormulaSheetData) => void
+  isOpen?: boolean
+  onToggle?: () => void
+  onData?: (data: FormulaSheetData) => void
 }
 
-export function FormulaSheetButton({ lessonId, disabled, onOpen }: FormulaSheetButtonProps) {
+export function FormulaSheetButton({
+  lessonId,
+  disabled,
+  isOpen = false,
+  onToggle,
+  onData,
+}: FormulaSheetButtonProps) {
   const t = useTranslations('courses')
-  const [isOpen, setIsOpen] = useState(false)
   const [sheet, setSheet] = useState<FormulaSheetData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+
+  // Pass sheet data to parent when available
+  useEffect(() => {
+    if (sheet && onData) {
+      onData(sheet)
+    }
+  }, [sheet, onData])
 
   // Fetch formula sheet data - called unconditionally
   useEffect(() => {
@@ -95,10 +109,8 @@ export function FormulaSheetButton({ lessonId, disabled, onOpen }: FormulaSheetB
   }
 
   const handleClick = () => {
-    const newIsOpen = !isOpen
-    setIsOpen(newIsOpen)
-    if (newIsOpen && onOpen) {
-      onOpen(sheet)
+    if (onToggle) {
+      onToggle()
     }
   }
 
@@ -111,6 +123,7 @@ export function FormulaSheetButton({ lessonId, disabled, onOpen }: FormulaSheetB
         'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
         'bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20',
         disabled && 'opacity-50 cursor-not-allowed',
+        isOpen && 'bg-primary/20 ring-2 ring-primary/30',
       )}
       aria-label={t('formulaSheet')}
     >

@@ -534,9 +534,12 @@ export function ChatInterface({
         <div className="flex-grow-0 flex-shrink-0 px-5 pt-3">
           <FormulaSheetButton
             lessonId={lessonId}
-            onOpen={(data) => {
+            isOpen={formulaSheetOpen}
+            onToggle={() => {
+              setFormulaSheetOpen(!formulaSheetOpen)
+            }}
+            onData={(data) => {
               setFormulaSheetData(data)
-              setFormulaSheetOpen(true)
             }}
           />
         </div>

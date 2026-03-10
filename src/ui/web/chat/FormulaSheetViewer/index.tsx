@@ -35,6 +35,20 @@ export function FormulaSheetViewer({ sheet, isOpen, onClose }: FormulaSheetViewe
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
+  // Handle escape key to close
+  useEffect(() => {
+    if (!isOpen) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
+
   // Don't render if not open or no sheet
   if (!isOpen || !sheet) {
     return null
@@ -115,8 +129,14 @@ export function FormulaSheetViewer({ sheet, isOpen, onClose }: FormulaSheetViewe
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-background border border-border shadow-lg rounded-xl w-full max-w-3xl h-[85vh] flex flex-col">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      onClick={onClose}
+    >
+      <div
+        className="bg-background border border-border shadow-lg rounded-xl w-full max-w-3xl h-[85vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         {content}
       </div>
     </div>

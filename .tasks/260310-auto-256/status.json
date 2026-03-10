@@ -4,7 +4,7 @@
   "mode": "fix",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-10T13:25:23.667Z",
-  "updatedAt": "2026-03-10T13:29:04.452Z",
+  "updatedAt": "2026-03-10T13:29:06.999Z",
   "state": "running",
   "cursor": "review",
   "stages": {
@@ -13,19 +13,14 @@
       "retries": 0,
       "startedAt": "2026-03-10T13:25:23.752Z",
       "completedAt": "2026-03-10T13:29:04.450Z",
-      "outputFile": "review.md",
-      "issuesFound": true,
-      "reviewSummary": {
-        "critical": 0,
-        "major": 2,
-        "minor": 2
-      }
+      "outputFile": "review.md"
     },
     "fix": {
-      "state": "pending",
+      "state": "running",
       "retries": 0,
       "fixAttempt": 0,
-      "maxFixAttempts": 2
+      "maxFixAttempts": 2,
+      "startedAt": "2026-03-10T13:29:06.999Z"
     },
     "commit-fix": {
       "state": "pending",
