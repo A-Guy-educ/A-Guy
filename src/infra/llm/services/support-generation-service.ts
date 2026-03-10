@@ -50,7 +50,19 @@ export async function generateSupport(
       payload,
     )
 
+    logger.info(
+      { rawLength: result.text.length, raw: result.text.slice(0, 500) },
+      '[Support Generation] Raw LLM response',
+    )
     const parsed = parseLLMResponse(result.text, input.targetFields)
+    logger.info(
+      {
+        hasHints: !!parsed.hints?.length,
+        hasSolution: !!parsed.solution,
+        hasFullSolution: !!parsed.fullSolution,
+      },
+      '[Support Generation] Parsed fields',
+    )
     return { success: true, data: parsed }
   } catch (error) {
     logger.error({ err: error }, '[Support Generation] LLM call failed')

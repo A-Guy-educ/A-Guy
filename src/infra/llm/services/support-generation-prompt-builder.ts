@@ -11,7 +11,7 @@ export interface SupportPromptInput {
 }
 
 export function buildSupportUserPrompt(input: SupportPromptInput): string {
-  const { block, exerciseTitle, targetFields } = input
+  const { block, exerciseTitle } = input
   const parts: string[] = []
 
   if (exerciseTitle) {
@@ -34,7 +34,7 @@ export function buildSupportUserPrompt(input: SupportPromptInput): string {
   }
 
   parts.push('')
-  parts.push(`Generate the following fields: ${targetFields.join(', ')}`)
+  parts.push('Return a JSON object with ALL three keys: "hints", "solution", "fullSolution".')
 
   return parts.join('\n')
 }

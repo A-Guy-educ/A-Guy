@@ -65,7 +65,7 @@ export function useGenerateSupport({
 
         const generated = data.data?.generated
         if (generated) {
-          applyGenerated(generated, onChange)
+          applyGenerated(generated, overwrite, onChange)
           onExpandPanel()
         }
       } catch {
@@ -83,6 +83,7 @@ export function useGenerateSupport({
 function applyGenerated(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   generated: any,
+  overwrite: boolean,
   onChange: (
     field: 'hint' | 'solution' | 'fullSolution',
     value: InlineRichText | undefined,
@@ -91,11 +92,17 @@ function applyGenerated(
   if (generated.hints?.length) {
     const hintText = generated.hints.map((h: string, i: number) => `${i + 1}. ${h}`).join('\n')
     onChange('hint', createRichText(hintText))
+  } else if (overwrite) {
+    onChange('hint', undefined)
   }
   if (generated.solution) {
     onChange('solution', createRichText(generated.solution))
+  } else if (overwrite) {
+    onChange('solution', undefined)
   }
   if (generated.fullSolution) {
     onChange('fullSolution', createRichText(generated.fullSolution))
+  } else if (overwrite) {
+    onChange('fullSolution', undefined)
   }
 }
