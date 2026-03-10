@@ -152,7 +152,7 @@ describe('Exercise Queries', () => {
         sort: 'order',
         limit: 1000,
         pagination: false,
-        depth: 1,
+        depth: 0,
       })
     })
 
@@ -188,7 +188,7 @@ describe('Exercise Queries', () => {
           sort: 'order',
           limit: 1000,
           pagination: false,
-          depth: 1,
+          depth: 0,
         }),
       )
     })
