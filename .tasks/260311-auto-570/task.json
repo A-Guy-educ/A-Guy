@@ -1,0 +1,31 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "medium",
+  "confidence": 0.85,
+  "primary_domain": "frontend",
+  "scope": [
+    "lesson chat component",
+    "math rendering (KaTeX/MathJax)"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The codebase already has KaTeX or MathJax available (referenced in project docs)",
+    "The chat component displays content but lacks math rendering integration",
+    "This is a display-only bug with no backend changes needed"
+  ],
+  "review_questions": [
+    "Which specific chat component needs to be updated to render math expressions?",
+    "Is there an existing pattern in the codebase for rendering math content that should be reused?"
+  ],
+  "complexity": 22,
+  "complexity_reasoning": "Scope: 8 (1-2 frontend files for chat component). Risk: 6 (UI display bug, non-critical). Novelty: 5 (following existing math rendering pattern). Cross-Domain: 0 (frontend only). Ambiguity: 3 (clear intent, need to locate component). Dependencies: 0 (self-contained). Total: 22",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Task contains clear bug report with steps to reproduce, expected result (math formatted), and actual result (plain text). This provides sufficient context to identify the fix needed."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
