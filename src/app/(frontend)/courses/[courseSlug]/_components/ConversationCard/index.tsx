@@ -10,6 +10,7 @@ interface ConversationCardProps {
   subtitle?: string
   onClick: () => void
   onDelete: () => void
+  accentColor?: string
 }
 
 export function ConversationCard({
@@ -18,17 +19,19 @@ export function ConversationCard({
   subtitle,
   onClick,
   onDelete,
+  accentColor,
 }: ConversationCardProps) {
   const t = useTranslations('coursePage')
 
   return (
     <div
       className={cn(
-        'bg-card rounded-3xl p-6 shadow-card',
+        'bg-card rounded-2xl overflow-hidden p-6 shadow-sm',
         'flex items-center justify-between',
-        'border border-transparent hover:border-primary/20',
+        'border border-border/40',
         'transition-all cursor-pointer',
       )}
+      style={{ borderTopWidth: 3, borderTopColor: accentColor ?? 'hsl(var(--primary))' }}
       onClick={onClick}
       role="button"
       tabIndex={0}

@@ -17,11 +17,12 @@ interface ConversationSummary {
 
 interface AskTabProps {
   courseId: string
+  accentColor?: string
 }
 
 const PAGE_SIZE = 10
 
-export function AskTab({ courseId }: AskTabProps) {
+export function AskTab({ courseId, accentColor }: AskTabProps) {
   const t = useTranslations('coursePage')
   const router = useRouter()
   const [conversations, setConversations] = useState<ConversationSummary[]>([])
@@ -101,6 +102,7 @@ export function AskTab({ courseId }: AskTabProps) {
           subtitle={`${conv.messageCount} messages`}
           onClick={() => router.push(`/ask?conversationId=${conv.id}`)}
           onDelete={() => handleDelete(conv.id)}
+          accentColor={accentColor}
         />
       ))}
 

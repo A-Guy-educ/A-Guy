@@ -63,8 +63,12 @@ export function CoursePageContent({
             tabColor={TAB_COLORS[activeTab]}
           />
         )}
-        {activeTab === 'ask' && <AskTab courseId={course.id} />}
-        {activeTab === 'exams' && <ExamsTab courseId={course.id} />}
+        {activeTab === 'ask' && (
+          <AskTab courseId={course.id} accentColor={TAB_COLORS[activeTab].stroke} />
+        )}
+        {activeTab === 'exams' && (
+          <ExamsTab courseId={course.id} accentColor={TAB_COLORS[activeTab].stroke} />
+        )}
 
         {/* Footer actions with divider */}
         <div className="mt-16 pt-8 border-t border-border">

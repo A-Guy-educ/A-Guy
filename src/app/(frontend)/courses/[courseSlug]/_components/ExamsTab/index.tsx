@@ -8,9 +8,10 @@ import { AddExamDialog } from '../AddExamDialog'
 
 interface ExamsTabProps {
   courseId: string
+  accentColor?: string
 }
 
-export function ExamsTab({ courseId }: ExamsTabProps) {
+export function ExamsTab({ courseId, accentColor }: ExamsTabProps) {
   const t = useTranslations('coursePage')
   const { upcomingExams, pastExams, addExam, removeExam } = useExamCountdown(courseId)
 
@@ -57,6 +58,7 @@ export function ExamsTab({ courseId }: ExamsTabProps) {
                 daysLeftText={t('daysLeft').replace('{days}', String(days))}
                 onDelete={() => removeExam(exam.id)}
                 deleteText={t('deleteExam')}
+                accentColor={accentColor}
               />
             )
           })}
@@ -75,6 +77,7 @@ export function ExamsTab({ courseId }: ExamsTabProps) {
                 isPast
                 onDelete={() => removeExam(exam.id)}
                 deleteText={t('deleteExam')}
+                accentColor={accentColor}
               />
             ))}
           </div>
@@ -91,6 +94,7 @@ function ExamCard({
   isPast,
   onDelete,
   deleteText,
+  accentColor,
 }: {
   label?: string
   date: string
@@ -98,9 +102,13 @@ function ExamCard({
   isPast?: boolean
   onDelete: () => void
   deleteText: string
+  accentColor?: string
 }) {
   return (
-    <div className="bg-card rounded-2xl p-5 shadow-card border border-border flex flex-col gap-2">
+    <div
+      className="bg-card rounded-2xl overflow-hidden p-5 shadow-sm border border-border/40 flex flex-col gap-2"
+      style={{ borderTopWidth: 3, borderTopColor: accentColor ?? 'hsl(var(--primary))' }}
+    >
       <div className="flex items-start justify-between">
         <div>
           {label && <p className="text-sm font-bold text-card-foreground">{label}</p>}
@@ -112,7 +120,9 @@ function ExamCard({
         </button>
       </div>
       {!isPast && daysLeftText && (
-        <span className="text-xs font-bold text-primary">{daysLeftText}</span>
+        <span className="text-xs font-bold" style={{ color: accentColor ?? 'hsl(var(--primary))' }}>
+          {daysLeftText}
+        </span>
       )}
     </div>
   )
