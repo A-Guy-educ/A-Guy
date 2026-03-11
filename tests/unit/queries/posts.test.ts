@@ -93,7 +93,7 @@ describe('Post Queries', () => {
       expect(result).toEqual(mockResult)
       expect(mockPayload.find).toHaveBeenCalledWith({
         collection: 'posts',
-        where: { status: { equals: 'published' } },
+        where: { _status: { equals: 'published' } },
         sort: '-createdAt',
         page: 1,
         limit: 10,
@@ -112,7 +112,7 @@ describe('Post Queries', () => {
 
       expect(mockPayload.find).toHaveBeenCalledWith({
         collection: 'posts',
-        where: { status: { equals: 'published' } },
+        where: { _status: { equals: 'published' } },
         sort: '-createdAt',
         page: 1,
         limit: 12,
@@ -271,7 +271,7 @@ describe('Post Queries', () => {
       expect(result).toEqual(mockPosts)
       expect(mockPayload.find).toHaveBeenCalledWith({
         collection: 'posts',
-        where: { status: { equals: 'published' } },
+        where: { _status: { equals: 'published' } },
         select: { slug: true, updatedAt: true },
         limit: 1000,
         pagination: false,
