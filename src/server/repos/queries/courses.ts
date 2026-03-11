@@ -1,9 +1,9 @@
 import configPromise from '@payload-config'
-import { unstable_cache } from 'next/cache'
 import { getPayload } from 'payload'
 import type { Where } from 'payload'
 
 import type { ContentLocale } from '@/server/payload/fields/contentLocale'
+import { safeCache } from './cache-utils'
 
 const QUERY_CACHE_TTL = 60 // seconds — cached across requests via Next.js Data Cache
 
@@ -39,7 +39,7 @@ export const queryCourseBySlug = async ({
   slug: string
   locale?: ContentLocale
 }) => {
-  const cached = unstable_cache(_queryCourseBySlug, ['course-by-slug', slug, locale ?? ''], {
+  const cached = safeCache(_queryCourseBySlug, ['course-by-slug', slug, locale ?? ''], {
     revalidate: QUERY_CACHE_TTL,
     tags: ['courses'],
   })
@@ -69,7 +69,7 @@ const _queryPublishedCourses = async (locale?: string) => {
 }
 
 export const queryPublishedCourses = async (locale?: ContentLocale) => {
-  const cached = unstable_cache(_queryPublishedCourses, ['published-courses', locale ?? ''], {
+  const cached = safeCache(_queryPublishedCourses, ['published-courses', locale ?? ''], {
     revalidate: QUERY_CACHE_TTL,
     tags: ['courses'],
   })

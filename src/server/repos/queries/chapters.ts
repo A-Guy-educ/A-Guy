@@ -2,9 +2,8 @@ import { cache } from 'react'
 import { getPayload } from 'payload'
 import type { Where } from 'payload'
 import configPromise from '@payload-config'
-import { unstable_cache } from 'next/cache'
-
 import type { ContentLocale } from '@/server/payload/fields/contentLocale'
+import { safeCache } from './cache-utils'
 
 const QUERY_CACHE_TTL = 60 // seconds
 
@@ -44,7 +43,7 @@ const _queryChaptersByCourse = async (courseId: string) => {
 }
 
 export const queryChaptersByCourse = async ({ courseId }: { courseId: string }) => {
-  const cached = unstable_cache(_queryChaptersByCourse, ['chapters-by-course', courseId], {
+  const cached = safeCache(_queryChaptersByCourse, ['chapters-by-course', courseId], {
     revalidate: QUERY_CACHE_TTL,
     tags: ['chapters'],
   })
@@ -79,7 +78,7 @@ const _queryChaptersByCourseDirectly = async (courseId: string) => {
 }
 
 export const queryChaptersByCourseDirectly = async ({ courseId }: { courseId: string }) => {
-  const cached = unstable_cache(
+  const cached = safeCache(
     _queryChaptersByCourseDirectly,
     ['chapters-by-course-direct', courseId],
     { revalidate: QUERY_CACHE_TTL, tags: ['chapters'] },

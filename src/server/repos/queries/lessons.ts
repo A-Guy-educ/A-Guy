@@ -1,8 +1,8 @@
 import { cache } from 'react'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
-import { unstable_cache } from 'next/cache'
 import { queryChaptersByCourse } from './chapters'
+import { safeCache } from './cache-utils'
 
 const QUERY_CACHE_TTL = 60 // seconds
 
@@ -60,7 +60,7 @@ const _queryLessonsByChapter = async (chapterId: string) => {
 }
 
 export const queryLessonsByChapter = async ({ chapterId }: { chapterId: string }) => {
-  const cached = unstable_cache(_queryLessonsByChapter, ['lessons-by-chapter', chapterId], {
+  const cached = safeCache(_queryLessonsByChapter, ['lessons-by-chapter', chapterId], {
     revalidate: QUERY_CACHE_TTL,
     tags: ['lessons'],
   })
@@ -95,7 +95,7 @@ const _queryLessonsByChapterDirectly = async (chapterId: string) => {
 }
 
 export const queryLessonsByChapterDirectly = async ({ chapterId }: { chapterId: string }) => {
-  const cached = unstable_cache(
+  const cached = safeCache(
     _queryLessonsByChapterDirectly,
     ['lessons-by-chapter-direct', chapterId],
     { revalidate: QUERY_CACHE_TTL, tags: ['lessons'] },
@@ -235,7 +235,7 @@ const _queryLessonsByCourse = async (courseId: string) => {
 }
 
 export const queryLessonsByCourse = async ({ courseId }: { courseId: string }) => {
-  const cached = unstable_cache(_queryLessonsByCourse, ['lessons-by-course', courseId], {
+  const cached = safeCache(_queryLessonsByCourse, ['lessons-by-course', courseId], {
     revalidate: QUERY_CACHE_TTL,
     tags: ['lessons'],
   })
@@ -279,10 +279,9 @@ const _queryLessonsByCourseDirectly = async (courseId: string) => {
 }
 
 export const queryLessonsByCourseDirectly = async ({ courseId }: { courseId: string }) => {
-  const cached = unstable_cache(
-    _queryLessonsByCourseDirectly,
-    ['lessons-by-course-direct', courseId],
-    { revalidate: QUERY_CACHE_TTL, tags: ['lessons'] },
-  )
+  const cached = safeCache(_queryLessonsByCourseDirectly, ['lessons-by-course-direct', courseId], {
+    revalidate: QUERY_CACHE_TTL,
+    tags: ['lessons'],
+  })
   return cached(courseId)
 }
