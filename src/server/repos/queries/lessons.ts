@@ -1,12 +1,15 @@
 import { cache } from 'react'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
+import { unstable_cache } from 'next/cache'
 import { queryChaptersByCourse } from './chapters'
 
-export const queryLessonsByChapter = cache(async ({ chapterId }: { chapterId: string }) => {
+const QUERY_CACHE_TTL = 60 // seconds
+
+const _queryLessonsByChapter = async (chapterId: string) => {
   const payload = await getPayload({ config: configPromise })
 
-  // First verify the chapter is published+active and its course is published+active
+  // Verify the chapter is published+active and its course is published+active
   const chapterResult = await payload.findByID({
     collection: 'chapters',
     id: chapterId,
@@ -20,7 +23,6 @@ export const queryLessonsByChapter = cache(async ({ chapterId }: { chapterId: st
   }
 
   // Verify parent chapter's course is published+active (hierarchy invariant)
-  // chapterResult.course is an ID when using depth: 0
   const courseId =
     typeof chapterResult.course === 'string' ? chapterResult.course : chapterResult.course?.id
 
@@ -42,21 +44,9 @@ export const queryLessonsByChapter = cache(async ({ chapterId }: { chapterId: st
     collection: 'lessons',
     where: {
       and: [
-        {
-          chapter: {
-            equals: chapterId,
-          },
-        },
-        {
-          status: {
-            equals: 'published',
-          },
-        },
-        {
-          isActive: {
-            equals: true,
-          },
-        },
+        { chapter: { equals: chapterId } },
+        { status: { equals: 'published' } },
+        { isActive: { equals: true } },
       ],
     },
     sort: 'order',
@@ -67,7 +57,15 @@ export const queryLessonsByChapter = cache(async ({ chapterId }: { chapterId: st
   })
 
   return result.docs
-})
+}
+
+export const queryLessonsByChapter = async ({ chapterId }: { chapterId: string }) => {
+  const cached = unstable_cache(_queryLessonsByChapter, ['lessons-by-chapter', chapterId], {
+    revalidate: QUERY_CACHE_TTL,
+    tags: ['lessons'],
+  })
+  return cached(chapterId)
+}
 
 export const queryLessonBySlug = cache(async ({ slug }: { slug: string }) => {
   const payload = await getPayload({ config: configPromise })
@@ -76,21 +74,9 @@ export const queryLessonBySlug = cache(async ({ slug }: { slug: string }) => {
     collection: 'lessons',
     where: {
       and: [
-        {
-          slug: {
-            equals: slug,
-          },
-        },
-        {
-          status: {
-            equals: 'published',
-          },
-        },
-        {
-          isActive: {
-            equals: true,
-          },
-        },
+        { slug: { equals: slug } },
+        { status: { equals: 'published' } },
+        { isActive: { equals: true } },
       ],
     },
     limit: 1,
@@ -142,12 +128,11 @@ export const queryLessonBySlug = cache(async ({ slug }: { slug: string }) => {
 
 /**
  * Get all lessons for a course, organized by chapters
- * This is a helper function to maintain backward compatibility while transitioning to chapter-based hierarchy
  */
-export const queryLessonsByCourse = cache(async ({ courseId }: { courseId: string }) => {
+const _queryLessonsByCourse = async (courseId: string) => {
   const payload = await getPayload({ config: configPromise })
 
-  // First verify the course is published+active (hierarchy invariant)
+  // Verify the course is published+active (hierarchy invariant)
   const courseResult = await payload.findByID({
     collection: 'courses',
     id: courseId,
@@ -162,7 +147,6 @@ export const queryLessonsByCourse = cache(async ({ courseId }: { courseId: strin
 
   const chapters = await queryChaptersByCourse({ courseId })
 
-  // Get all lessons for all chapters in this course
   const chapterIds = chapters.map((chapter) => chapter.id)
 
   if (chapterIds.length === 0) {
@@ -173,21 +157,9 @@ export const queryLessonsByCourse = cache(async ({ courseId }: { courseId: strin
     collection: 'lessons',
     where: {
       and: [
-        {
-          chapter: {
-            in: chapterIds,
-          },
-        },
-        {
-          status: {
-            equals: 'published',
-          },
-        },
-        {
-          isActive: {
-            equals: true,
-          },
-        },
+        { chapter: { in: chapterIds } },
+        { status: { equals: 'published' } },
+        { isActive: { equals: true } },
       ],
     },
     sort: 'order',
@@ -198,4 +170,12 @@ export const queryLessonsByCourse = cache(async ({ courseId }: { courseId: strin
   })
 
   return result.docs
-})
+}
+
+export const queryLessonsByCourse = async ({ courseId }: { courseId: string }) => {
+  const cached = unstable_cache(_queryLessonsByCourse, ['lessons-by-course', courseId], {
+    revalidate: QUERY_CACHE_TTL,
+    tags: ['lessons'],
+  })
+  return cached(courseId)
+}
