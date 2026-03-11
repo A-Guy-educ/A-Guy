@@ -1,5 +1,7 @@
 import { HealthBadge } from '@/ui/web/components/HealthBadge'
 
+export const dynamic = 'force-dynamic'
+
 export default function ApiStatusPage() {
   return (
     <div className="container mx-auto py-10">
