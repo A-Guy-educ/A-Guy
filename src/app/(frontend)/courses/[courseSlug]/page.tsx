@@ -4,8 +4,8 @@ import { notFound } from 'next/navigation'
 import { getSystemLocale } from '@/i18n/server-locale'
 import { isValidContentLocale } from '@/server/payload/fields/contentLocale'
 import { queryCourseBySlug } from '@/server/repos/queries/courses'
-import { queryChaptersByCourse } from '@/server/repos/queries/chapters'
-import { queryLessonsByCourse } from '@/server/repos/queries/lessons'
+import { queryChaptersByCourseDirectly } from '@/server/repos/queries/chapters'
+import { queryLessonsByCourseDirectly } from '@/server/repos/queries/lessons'
 import { SystemParams } from '@/infra/config/system-params'
 import { isAuthenticatedServer } from '@/server/utils/access-gate-server'
 import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
@@ -22,17 +22,18 @@ export default async function CoursePage({ params }: CoursePageProps) {
   const { courseSlug } = await params
   const locale = await getSystemLocale()
   const contentLocale = isValidContentLocale(locale) ? locale : undefined
-  const course = await queryCourseBySlug({ slug: courseSlug, locale: contentLocale })
+  // Fetch course + system params in parallel (saves ~100ms vs sequential)
+  const [course, gatedDelayMs, gatedWarningMs] = await Promise.all([
+    queryCourseBySlug({ slug: courseSlug, locale: contentLocale }),
+    SystemParams.getGatedDelayMs(),
+    SystemParams.getGatedWarningMs(),
+  ])
 
   if (!course) {
     notFound()
   }
 
   const courseAccessType = course.pageAccessType ?? 'free'
-  const [gatedDelayMs, gatedWarningMs] = await Promise.all([
-    SystemParams.getGatedDelayMs(),
-    SystemParams.getGatedWarningMs(),
-  ])
 
   if (courseAccessType === 'mandatory' && !(await isAuthenticatedServer())) {
     return (
@@ -47,9 +48,10 @@ export default async function CoursePage({ params }: CoursePageProps) {
     )
   }
 
+  // Use Direct variants — course is already verified above, skip redundant re-validation
   const [chapters, lessons] = await Promise.all([
-    queryChaptersByCourse({ courseId: course.id }),
-    queryLessonsByCourse({ courseId: course.id }),
+    queryChaptersByCourseDirectly({ courseId: course.id }),
+    queryLessonsByCourseDirectly({ courseId: course.id }),
   ])
 
   return (

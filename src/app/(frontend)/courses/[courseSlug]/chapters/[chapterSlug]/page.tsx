@@ -5,7 +5,7 @@ import { getSystemLocale } from '@/i18n/server-locale'
 import { isValidContentLocale } from '@/server/payload/fields/contentLocale'
 import { queryCourseBySlug } from '@/server/repos/queries/courses'
 import { queryChapterBySlug } from '@/server/repos/queries/chapters'
-import { queryLessonsByChapter } from '@/server/repos/queries/lessons'
+import { queryLessonsByChapterDirectly } from '@/server/repos/queries/lessons'
 import { SystemParams } from '@/infra/config/system-params'
 import { isAuthenticatedServer } from '@/server/utils/access-gate-server'
 import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
@@ -28,9 +28,12 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
   const locale = await getSystemLocale()
   const contentLocale = isValidContentLocale(locale) ? locale : undefined
 
-  const [course, chapter] = await Promise.all([
+  // Fetch course + chapter + system params all in parallel
+  const [course, chapter, gatedDelayMs, gatedWarningMs] = await Promise.all([
     queryCourseBySlug({ slug: courseSlug, locale: contentLocale }),
     queryChapterBySlug({ slug: chapterSlug }),
+    SystemParams.getGatedDelayMs(),
+    SystemParams.getGatedWarningMs(),
   ])
 
   if (!course || !chapter) {
@@ -45,10 +48,6 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
   }
 
   const courseAccessType = course.pageAccessType ?? 'free'
-  const [gatedDelayMs, gatedWarningMs] = await Promise.all([
-    SystemParams.getGatedDelayMs(),
-    SystemParams.getGatedWarningMs(),
-  ])
 
   // Server-side block: for mandatory mode, don't render content for unauthenticated users
   if (courseAccessType === 'mandatory' && !(await isAuthenticatedServer())) {
@@ -64,7 +63,8 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
     )
   }
 
-  const lessons = await queryLessonsByChapter({ chapterId: chapter.id })
+  // Use Direct variant — chapter + course already verified above
+  const lessons = await queryLessonsByChapterDirectly({ chapterId: chapter.id })
 
   return (
     <AccessGateProvider

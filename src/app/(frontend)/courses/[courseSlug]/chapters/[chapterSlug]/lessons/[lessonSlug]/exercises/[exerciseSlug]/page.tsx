@@ -2,7 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 import { getSystemLocale } from '@/i18n/server-locale'
 import { isValidContentLocale } from '@/server/payload/fields/contentLocale'
 import { queryCourseBySlug } from '@/server/repos/queries/courses'
-import { queryLessonBySlug } from '@/server/repos/queries/lessons'
+import { queryLessonBySlugDirectly } from '@/server/repos/queries/lessons'
 import {
   queryExerciseById,
   queryExerciseBySlug,
@@ -62,7 +62,7 @@ export default async function ExercisePage({ params }: ExercisePageProps) {
 
   const [course, lesson] = await Promise.all([
     queryCourseBySlug({ slug: courseSlug, locale: contentLocale }),
-    queryLessonBySlug({ slug: lessonSlug }),
+    queryLessonBySlugDirectly({ slug: lessonSlug }),
   ])
 
   if (!course || !lesson) {
@@ -123,7 +123,7 @@ export async function generateMetadata({ params }: ExercisePageProps) {
 
   const [course, lesson] = await Promise.all([
     queryCourseBySlug({ slug: courseSlug, locale: contentLocale }),
-    queryLessonBySlug({ slug: lessonSlug }),
+    queryLessonBySlugDirectly({ slug: lessonSlug }),
   ])
 
   if (!course || !lesson) {

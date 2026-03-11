@@ -51,6 +51,42 @@ export const queryChaptersByCourse = async ({ courseId }: { courseId: string }) 
   return cached(courseId)
 }
 
+/**
+ * Fetch chapters for a course WITHOUT re-validating the parent course.
+ * Use ONLY from pages that have already verified the course is published+active.
+ * Saves 1 DB query per call vs queryChaptersByCourse.
+ */
+const _queryChaptersByCourseDirectly = async (courseId: string) => {
+  const payload = await getPayload({ config: configPromise })
+
+  const result = await payload.find({
+    collection: 'chapters',
+    where: {
+      and: [
+        { course: { equals: courseId } },
+        { status: { equals: 'published' } },
+        { isActive: { equals: true } },
+      ],
+    },
+    sort: 'order',
+    limit: 1000,
+    pagination: false,
+    depth: 1,
+    overrideAccess: false,
+  })
+
+  return result.docs
+}
+
+export const queryChaptersByCourseDirectly = async ({ courseId }: { courseId: string }) => {
+  const cached = unstable_cache(
+    _queryChaptersByCourseDirectly,
+    ['chapters-by-course-direct', courseId],
+    { revalidate: QUERY_CACHE_TTL, tags: ['chapters'] },
+  )
+  return cached(courseId)
+}
+
 export const queryChapterBySlug = cache(async ({ slug }: { slug: string }) => {
   const payload = await getPayload({ config: configPromise })
 

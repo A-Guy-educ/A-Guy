@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import { getSystemLocale } from '@/i18n/server-locale'
 import { isValidContentLocale } from '@/server/payload/fields/contentLocale'
 import { queryCourseBySlug } from '@/server/repos/queries/courses'
-import { queryLessonBySlug } from '@/server/repos/queries/lessons'
+import { queryLessonBySlugDirectly } from '@/server/repos/queries/lessons'
 import type { Metadata } from 'next'
 import { CompleteContent } from './CompleteContent'
 
@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: CompletePageProps): Promise<M
 
   const [course, lesson] = await Promise.all([
     queryCourseBySlug({ slug: courseSlug, locale: contentLocale }),
-    queryLessonBySlug({ slug: lessonSlug }),
+    queryLessonBySlugDirectly({ slug: lessonSlug }),
   ])
 
   if (!course || !lesson) {
@@ -56,7 +56,7 @@ export default async function CompletePage({ params }: CompletePageProps) {
 
   const [course, lesson] = await Promise.all([
     queryCourseBySlug({ slug: courseSlug, locale: contentLocale }),
-    queryLessonBySlug({ slug: lessonSlug }),
+    queryLessonBySlugDirectly({ slug: lessonSlug }),
   ])
 
   if (!course || !lesson) {

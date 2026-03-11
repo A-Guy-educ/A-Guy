@@ -8,7 +8,7 @@ import { getSystemLocale } from '@/i18n/server-locale'
 import { isValidContentLocale } from '@/server/payload/fields/contentLocale'
 import { queryCourseBySlug } from '@/server/repos/queries/courses'
 import { queryExercisesByLesson } from '@/server/repos/queries/exercises'
-import { queryLessonBySlug } from '@/server/repos/queries/lessons'
+import { queryLessonBySlugDirectly } from '@/server/repos/queries/lessons'
 import { queryMediaByIds } from '@/server/repos/queries/media'
 import { isAuthenticatedServer } from '@/server/utils/access-gate-server'
 import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
@@ -34,9 +34,11 @@ export default async function LessonPage({ params }: LessonPageProps) {
   const locale = await getSystemLocale()
   const contentLocale = isValidContentLocale(locale) ? locale : undefined
 
+  // Use Direct variant — page validates hierarchy below, skip redundant DB checks
+  // Saves 2 DB queries (chapter + course validation) inside queryLessonBySlug
   const [course, lesson] = await Promise.all([
     queryCourseBySlug({ slug: courseSlug, locale: contentLocale }),
-    queryLessonBySlug({ slug: lessonSlug }),
+    queryLessonBySlugDirectly({ slug: lessonSlug }),
   ])
 
   if (!course || !lesson) {
@@ -193,9 +195,11 @@ export async function generateMetadata({ params }: LessonPageProps) {
   const locale = await getSystemLocale()
   const contentLocale = isValidContentLocale(locale) ? locale : undefined
 
+  // Use Direct variant — page validates hierarchy below, skip redundant DB checks
+  // Saves 2 DB queries (chapter + course validation) inside queryLessonBySlug
   const [course, lesson] = await Promise.all([
     queryCourseBySlug({ slug: courseSlug, locale: contentLocale }),
-    queryLessonBySlug({ slug: lessonSlug }),
+    queryLessonBySlugDirectly({ slug: lessonSlug }),
   ])
 
   if (!course || !lesson) {
