@@ -4,7 +4,7 @@ import { cn } from '@/infra/utils/ui'
 import { GeistMono } from 'geist/font/mono'
 import { GeistSans } from 'geist/font/sans'
 import { Assistant } from 'next/font/google'
-import React from 'react'
+import React, { Suspense } from 'react'
 
 import { loadConfigValues } from '@/infra/config/runtime'
 import { isPasswordLoginEnabled } from '@/infra/config/system-params'
@@ -81,7 +81,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <I18nProvider allMessages={allMessages}>
           <Providers>
             <PasswordLoginProvider enabled={passwordLoginEnabled}>
-              <RouteLoadingIndicator />
+              <Suspense fallback={null}>
+                <RouteLoadingIndicator />
+              </Suspense>
               <LayoutClient />
               <AdminBar
                 adminBarProps={{

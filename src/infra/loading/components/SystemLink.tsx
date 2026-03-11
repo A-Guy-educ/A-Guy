@@ -1,6 +1,6 @@
 'use client'
 
-import React, { forwardRef, useCallback, useState } from 'react'
+import React, { forwardRef, Suspense, useCallback, useState } from 'react'
 import Link, { type LinkProps } from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { cn } from '@/infra/utils/ui'
@@ -21,7 +21,28 @@ interface SystemLinkProps extends LinkProps {
  *
  * Use this for all navigation links to provide consistent loading feedback
  */
-export const SystemLink = forwardRef<HTMLAnchorElement, SystemLinkProps>(function SystemLink(
+export const SystemLink = forwardRef<HTMLAnchorElement, SystemLinkProps>(
+  function SystemLink(props, ref) {
+    return (
+      <Suspense fallback={<SystemLinkFallback {...props} ref={ref} />}>
+        <SystemLinkInner {...props} ref={ref} />
+      </Suspense>
+    )
+  },
+)
+
+/** Fallback: plain Next.js Link without loading state (used during static prerender) */
+const SystemLinkFallback = forwardRef<HTMLAnchorElement, SystemLinkProps>(
+  function SystemLinkFallback({ href, onClick, children, className, ...props }, ref) {
+    return (
+      <Link ref={ref} href={href} onClick={onClick} className={className} {...props}>
+        {children}
+      </Link>
+    )
+  },
+)
+
+const SystemLinkInner = forwardRef<HTMLAnchorElement, SystemLinkProps>(function SystemLinkInner(
   { href, onClick, children, className, ...props },
   ref,
 ) {
