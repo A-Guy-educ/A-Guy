@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-10T14:51:48.470Z",
-  "updatedAt": "2026-03-11T14:33:37.175Z",
+  "updatedAt": "2026-03-11T14:56:54.797Z",
   "state": "running",
   "cursor": "spec",
   "stages": {
@@ -44,11 +44,17 @@
       "outputFile": "gsd-plan.md"
     },
     "gsd-execute": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-11T14:33:37.101Z",
+      "completedAt": "2026-03-11T14:48:56.101Z",
+      "outputFile": "gsd-execute.md"
+    },
+    "commit": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-11T14:33:37.101Z"
+      "startedAt": "2026-03-11T14:56:54.797Z"
     }
   },
-  "issueNumber": 782,
-  "branchName": "feat/260310-auto-782-allow-viewing-and-editing-json-con"
+  "issueNumber": 782
 }
