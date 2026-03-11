@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-10T14:51:48.470Z",
-  "updatedAt": "2026-03-11T14:56:54.797Z",
+  "updatedAt": "2026-03-11T14:59:49.929Z",
   "state": "running",
   "cursor": "spec",
   "stages": {
@@ -51,9 +51,23 @@
       "outputFile": "gsd-execute.md"
     },
     "commit": {
-      "state": "running",
+      "state": "completed",
       "retries": 0,
-      "startedAt": "2026-03-11T14:56:54.797Z"
+      "startedAt": "2026-03-11T14:56:54.797Z",
+      "completedAt": "2026-03-11T14:56:56.856Z"
+    },
+    "review": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-11T14:56:56.878Z",
+      "completedAt": "2026-03-11T14:59:49.928Z",
+      "outputFile": "review.md",
+      "issuesFound": true,
+      "reviewSummary": {
+        "critical": 2,
+        "major": 3,
+        "minor": 26
+      }
     }
   },
   "issueNumber": 782
