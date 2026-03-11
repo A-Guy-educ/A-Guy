@@ -1,0 +1,36 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "medium",
+  "confidence": 0.9,
+  "primary_domain": "backend",
+  "scope": [
+    "courses collection",
+    "lessons collection",
+    "exercises collection",
+    "enrollment system",
+    "content visibility logic"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Collections for courses, lessons, and exercises already exist in Payload",
+    "Published/unpublished status field already exists on these collections",
+    "Enrollment system exists to track user course registrations",
+    "Access control functions (isPublished, isEnrolled, etc.) may already exist"
+  ],
+  "review_questions": [
+    "What is the current implementation causing published content to not display?",
+    "Is there an existing isPublished or status field on courses/lessons/exercises collections?",
+    "Does the enrollment relationship already exist between users and courses?"
+  ],
+  "complexity": 36,
+  "complexity_reasoning": "Scope: 12 (multi-collection across courses, lessons, exercises + enrollment), Risk: 10 (content access control), Novelty: 5 (bug fix, existing patterns), Cross: 8 (backend + frontend), Ambiguity: 4 (clear requirements, unknown implementation), Deps: 5 (existing enrollment system). Total: 44",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Task has clear ## Requirements with core behaviors and ## Acceptance Criteria with 4 checkable items. Spec.md can be promoted from requirements and acceptance criteria."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

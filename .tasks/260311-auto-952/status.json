@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "taskId": "260311-auto-952",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-11T03:01:57.661Z",
+  "updatedAt": "2026-03-11T03:03:03.315Z",
+  "state": "paused",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "paused",
+      "retries": 0,
+      "startedAt": "2026-03-11T03:01:58.965Z",
+      "completedAt": "2026-03-11T03:02:57.712Z",
+      "outputFile": "taskify.md"
+    }
+  },
+  "issueNumber": 791,
+  "completedAt": "2026-03-11T03:03:03.315Z"
+}
