@@ -1,5 +1,5 @@
 import { notFound, redirect } from 'next/navigation'
-import { getSystemLocale } from '@/i18n/server-locale'
+import { defaultLocale } from '@/i18n/config'
 import { isValidContentLocale } from '@/server/payload/fields/contentLocale'
 import { queryCourseBySlug } from '@/server/repos/queries/courses'
 import { queryLessonBySlugDirectly } from '@/server/repos/queries/lessons'
@@ -11,6 +11,8 @@ import {
 import { queryMediaByIds } from '@/server/repos/queries/media'
 import { extractAllMediaIds } from '@/ui/web/exerciserenderer/utils/extractMediaIds'
 import { ExercisesPager } from '../../_components/ExercisesPager'
+
+export const revalidate = 300 // ISR: revalidate every 5 minutes
 
 const OBJECT_ID_REGEX = /^[0-9a-fA-F]{24}$/
 
@@ -57,8 +59,7 @@ async function resolveExercise(lessonId: string, param: string) {
 
 export default async function ExercisePage({ params }: ExercisePageProps) {
   const { courseSlug, chapterSlug, lessonSlug, exerciseSlug } = await params
-  const locale = await getSystemLocale()
-  const contentLocale = isValidContentLocale(locale) ? locale : undefined
+  const contentLocale = isValidContentLocale(defaultLocale) ? defaultLocale : undefined
 
   const [course, lesson] = await Promise.all([
     queryCourseBySlug({ slug: courseSlug, locale: contentLocale }),
@@ -118,8 +119,7 @@ export default async function ExercisePage({ params }: ExercisePageProps) {
 
 export async function generateMetadata({ params }: ExercisePageProps) {
   const { courseSlug, chapterSlug, lessonSlug, exerciseSlug } = await params
-  const locale = await getSystemLocale()
-  const contentLocale = isValidContentLocale(locale) ? locale : undefined
+  const contentLocale = isValidContentLocale(defaultLocale) ? defaultLocale : undefined
 
   const [course, lesson] = await Promise.all([
     queryCourseBySlug({ slug: courseSlug, locale: contentLocale }),

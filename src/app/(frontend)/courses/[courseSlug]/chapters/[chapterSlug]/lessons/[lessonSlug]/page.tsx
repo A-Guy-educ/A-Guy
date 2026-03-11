@@ -4,13 +4,12 @@ import { EmptyLessonPlaceholder } from './_components/EmptyLessonPlaceholder'
 import type { Media } from '@/payload-types'
 import { SystemParams } from '@/infra/config/system-params'
 import { resolveAccessType } from '@/server/constants/access-types'
-import { getSystemLocale } from '@/i18n/server-locale'
+import { defaultLocale } from '@/i18n/config'
 import { isValidContentLocale } from '@/server/payload/fields/contentLocale'
 import { queryCourseBySlug } from '@/server/repos/queries/courses'
 import { queryExercisesByLesson } from '@/server/repos/queries/exercises'
 import { queryLessonBySlugDirectly } from '@/server/repos/queries/lessons'
 import { queryMediaByIds } from '@/server/repos/queries/media'
-import { isAuthenticatedServer } from '@/server/utils/access-gate-server'
 import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
 import { ChatInterface } from '@/ui/web/chat'
 import { extractAllMediaIds } from '@/ui/web/exerciserenderer/utils/extractMediaIds'
@@ -20,6 +19,8 @@ import { notFound } from 'next/navigation'
 import { ExercisesPager } from './_components/ExercisesPager'
 import { LessonAnalytics } from './_components/LessonAnalytics'
 import { ExerciseWorkspace } from './exercises/[exerciseSlug]/_components/ExerciseWorkspace'
+
+export const revalidate = 300 // ISR: revalidate every 5 minutes
 
 interface LessonPageProps {
   params: Promise<{
@@ -31,8 +32,7 @@ interface LessonPageProps {
 
 export default async function LessonPage({ params }: LessonPageProps) {
   const { courseSlug, chapterSlug, lessonSlug } = await params
-  const locale = await getSystemLocale()
-  const contentLocale = isValidContentLocale(locale) ? locale : undefined
+  const contentLocale = isValidContentLocale(defaultLocale) ? defaultLocale : undefined
 
   // Use Direct variant — page validates hierarchy below, skip redundant DB checks
   // Saves 2 DB queries (chapter + course validation) inside queryLessonBySlug
@@ -64,26 +64,11 @@ export default async function LessonPage({ params }: LessonPageProps) {
   const effectiveAccessType = resolveAccessType(lesson.accessType, course.accessType)
 
   // Run independent queries in parallel to avoid sequential waterfall
-  const [gatedDelayMs, gatedWarningMs, isAuthenticated, exercises] = await Promise.all([
+  const [gatedDelayMs, gatedWarningMs, exercises] = await Promise.all([
     SystemParams.getGatedDelayMs(),
     SystemParams.getGatedWarningMs(),
-    effectiveAccessType === 'mandatory' ? isAuthenticatedServer() : Promise.resolve(true),
     queryExercisesByLesson({ lessonId: lesson.id }),
   ])
-
-  // Server-side block: for mandatory mode, don't render content for unauthenticated users
-  if (effectiveAccessType === 'mandatory' && !isAuthenticated) {
-    return (
-      <AccessGateProvider
-        accessType={effectiveAccessType}
-        courseSlug={courseSlug}
-        gatedDelayMs={gatedDelayMs}
-        gatedWarningMs={gatedWarningMs}
-      >
-        <div className="min-h-screen" />
-      </AccessGateProvider>
-    )
-  }
 
   // Use lesson-scoped chat context to keep history stable across refreshes
   const chatLessonId = lesson.id
@@ -192,8 +177,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
 export async function generateMetadata({ params }: LessonPageProps) {
   const { courseSlug, chapterSlug, lessonSlug } = await params
-  const locale = await getSystemLocale()
-  const contentLocale = isValidContentLocale(locale) ? locale : undefined
+  const contentLocale = isValidContentLocale(defaultLocale) ? defaultLocale : undefined
 
   // Use Direct variant — page validates hierarchy below, skip redundant DB checks
   // Saves 2 DB queries (chapter + course validation) inside queryLessonBySlug

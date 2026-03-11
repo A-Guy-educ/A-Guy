@@ -7,7 +7,7 @@ import type { Footer } from '@/payload-types'
 import { ThemeSelector } from '@/ui/web/providers/Theme/ThemeSelector'
 import { CMSLink } from '@/ui/web/Link'
 import { TelescopeLogo } from '@/ui/web/TelescopeLogo'
-import { getSystemLocale } from '@/i18n/server-locale'
+import { defaultLocale } from '@/i18n/config'
 import { getNavItemsForLocale } from '@/ui/web/nav-variants'
 
 /**
@@ -21,8 +21,7 @@ function VersionDisplay({ version }: { version: string }) {
 export async function Footer() {
   const footerData: Footer = await getCachedGlobal('footer', 1)()
   const version = process.env.NEXT_PUBLIC_APP_VERSION || 'dev'
-  const systemLocale = await getSystemLocale()
-  const navItems = getNavItemsForLocale(footerData, systemLocale)
+  const navItems = getNavItemsForLocale(footerData, defaultLocale)
 
   return (
     <footer className="mt-auto border-t border-border bg-footer text-card-foreground relative z-0">

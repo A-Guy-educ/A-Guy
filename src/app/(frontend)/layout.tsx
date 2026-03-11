@@ -18,8 +18,7 @@ import { PasswordLoginProvider } from '@/ui/web/providers/PasswordLoginProvider'
 import { InitTheme } from '@/ui/web/providers/Theme/InitTheme'
 import { RouteLoadingIndicator } from '@/infra/loading/components/RouteLoadingIndicator'
 
-import { defaultLocale, getDirection } from '@/i18n/config'
-import { getSystemLocale } from '@/i18n/server-locale'
+import { defaultLocale, getDirection, locales } from '@/i18n/config'
 import { I18nProvider } from '@/ui/web/providers/I18n'
 import { getPayload } from 'payload'
 import config from '@payload-config'
@@ -33,13 +32,20 @@ const assistant = Assistant({
   variable: '--font-assistant',
 })
 
-async function getMessages(locale: string) {
-  try {
-    return (await import(`../../../src/i18n/${locale}.json`, { with: { type: 'json' } })).default
-  } catch {
-    return (await import(`../../../src/i18n/${defaultLocale}.json`, { with: { type: 'json' } }))
-      .default
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function getAllMessages(): Promise<Record<string, any>> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result: Record<string, any> = {}
+  for (const locale of locales) {
+    try {
+      result[locale] = (
+        await import(`../../../src/i18n/${locale}.json`, { with: { type: 'json' } })
+      ).default
+    } catch {
+      // Skip locales with missing files
+    }
   }
+  return result
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -47,9 +53,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // This avoids static-to-dynamic conversion errors
   const isEnabled = false
 
-  const locale = await getSystemLocale()
-  const messages = await getMessages(locale)
-  const dir = getDirection(locale)
+  // Use defaultLocale for server render — client-side I18nProvider reads the
+  // NEXT_LOCALE cookie and updates <html lang/dir> on hydration.
+  // This avoids calling cookies()/headers() which would force every page to
+  // be dynamically rendered on every request.
+  const dir = getDirection(defaultLocale)
+
+  const allMessages = await getAllMessages()
 
   const payload = await getPayload({ config })
   await loadConfigValues(payload)
@@ -59,7 +69,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html
       className={cn(GeistSans.variable, GeistMono.variable, assistant.variable)}
       dir={dir}
-      lang={locale}
+      lang={defaultLocale}
       suppressHydrationWarning
     >
       <head>
@@ -68,7 +78,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
       </head>
       <body>
-        <I18nProvider locale={locale} messages={messages}>
+        <I18nProvider allMessages={allMessages}>
           <Providers>
             <PasswordLoginProvider enabled={passwordLoginEnabled}>
               <RouteLoadingIndicator />
