@@ -27,7 +27,7 @@ export const queryPublishedPosts = cache(
     const result = await payload.find({
       collection: 'posts',
       where: {
-        status: {
+        _status: {
           equals: 'published',
         },
       },
@@ -91,7 +91,7 @@ export const queryAllPostsForSitemap = cache(async () => {
   const result = await payload.find({
     collection: 'posts',
     where: {
-      status: {
+      _status: {
         equals: 'published',
       },
     },
