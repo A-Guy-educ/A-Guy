@@ -39,7 +39,7 @@ const chatConfigData = {
     openaiCompatibleApiBase: 'https://api.openai.com/v1',
   },
   defaultModels: {
-    gemini: 'gemini-2.0-flash-001',
+    gemini: 'gemini-3.1-flash-lite-preview',
     openaiCompatible: 'gpt-4o',
   },
   chatSettings: {
@@ -52,7 +52,7 @@ const chatConfigData = {
   // Model settings - replaces hardcoded MODEL_REGISTRY
   models: {
     exerciseChat: {
-      gemini: 'gemini-2.0-flash-001',
+      gemini: 'gemini-3.1-flash-lite-preview',
       openaiCompatible: 'MiniMax-M2.1',
       maxOutputTokens: 2048,
       capabilities: ['multimodal', 'chat'],

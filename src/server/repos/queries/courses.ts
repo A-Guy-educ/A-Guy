@@ -3,11 +3,12 @@ import { getPayload } from 'payload'
 import type { Where } from 'payload'
 
 import type { ContentLocale } from '@/server/payload/fields/contentLocale'
+import { localeWhereClause } from '@/server/payload/fields/contentLocale'
 import { safeCache } from './cache-utils'
 
 const QUERY_CACHE_TTL = 60 // seconds — cached across requests via Next.js Data Cache
 
-const _queryCourseBySlug = async (slug: string, locale?: string) => {
+const _queryCourseBySlug = async (slug: string, locale?: ContentLocale) => {
   const payload = await getPayload({ config: configPromise })
 
   const conditions: Where[] = [
@@ -17,7 +18,7 @@ const _queryCourseBySlug = async (slug: string, locale?: string) => {
   ]
 
   if (locale) {
-    conditions.push({ locale: { equals: locale } })
+    conditions.push(localeWhereClause(locale))
   }
 
   const result = await payload.find({
@@ -46,13 +47,13 @@ export const queryCourseBySlug = async ({
   return cached(slug, locale)
 }
 
-const _queryPublishedCourses = async (locale?: string) => {
+const _queryPublishedCourses = async (locale?: ContentLocale) => {
   const payload = await getPayload({ config: configPromise })
 
   const conditions: Where[] = [{ status: { equals: 'published' } }, { isActive: { equals: true } }]
 
   if (locale) {
-    conditions.push({ locale: { equals: locale } })
+    conditions.push(localeWhereClause(locale))
   }
 
   const result = await payload.find({

@@ -50,7 +50,7 @@ export const LLM_PROVIDER_URLS = {
 
 // Default models
 export const LLM_DEFAULT_MODELS = {
-  GEMINI: 'gemini-2.0-flash-001',
+  GEMINI: 'gemini-3.1-flash-lite-preview',
   OPENAI: 'gpt-4o',
 } as const
 

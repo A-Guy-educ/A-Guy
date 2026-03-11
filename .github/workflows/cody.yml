@@ -135,11 +135,12 @@ jobs:
       # Add reaction to acknowledge command (shows instantly on the comment)
       - name: Acknowledge command with reaction
         if: github.event_name == 'issue_comment' && steps.safety.outputs.valid == 'true'
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh api repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions \
-            -X POST -f content=eyes
+            -X POST -f content=eyes || true
 
       # Parse command: dispatch inputs forwarded, comment body passed to orchestrator
       - name: Parse command inputs

@@ -15,7 +15,7 @@ describe('GenkitConfigResolver', () => {
       const mockPayload = createMockPayload()
       const config = await resolveGenkitConfig('EXERCISE_CHAT', undefined, mockPayload)
 
-      expect(config.model).toBe('googleai/gemini-3.1-pro')
+      expect(config.model).toBe('googleai/gemini-3.1-flash-lite-preview')
       expect(config.temperature).toBeDefined()
       expect(config.maxOutputTokens).toBeDefined()
     })

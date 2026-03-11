@@ -3,6 +3,7 @@ import { getPayload } from 'payload'
 import type { Where } from 'payload'
 import configPromise from '@payload-config'
 import type { ContentLocale } from '@/server/payload/fields/contentLocale'
+import { localeWhereClause } from '@/server/payload/fields/contentLocale'
 import { safeCache } from './cache-utils'
 
 const QUERY_CACHE_TTL = 60 // seconds
@@ -141,7 +142,7 @@ export const queryChaptersByGrade = cache(
     ]
 
     if (locale) {
-      conditions.push({ locale: { equals: locale } })
+      conditions.push(localeWhereClause(locale))
     }
 
     // Find course for this grade
