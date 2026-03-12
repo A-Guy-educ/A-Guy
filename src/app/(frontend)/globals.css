@@ -530,3 +530,24 @@ math-field:focus-within {
 .aguy-text-highlight-8 {
   color: hsl(var(--text-highlight-8));
 }
+
+/* Document Mode Print Styles */
+@media print {
+  .document-mode {
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+
+  nav,
+  header,
+  footer,
+  [data-no-print] {
+    display: none !important;
+  }
+
+  body {
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+}

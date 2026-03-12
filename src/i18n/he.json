@@ -470,6 +470,11 @@
       "contact": "צור קשר"
     }
   },
+  "exercises": {
+    "printDocument": "הדפסה",
+    "documentMode": "תצוגת מסמך",
+    "interactiveMode": "תצוגה אינטראקטיבית"
+  },
   "studyPlan": {
     "pageTitle": "תוכנית 7 ימי המיקוד",
     "pageSubtitle": "השבוע הקריטי ביותר להצלחה בבחינה",

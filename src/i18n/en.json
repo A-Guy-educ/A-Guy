@@ -470,6 +470,11 @@
       "contact": "Contact Us"
     }
   },
+  "exercises": {
+    "printDocument": "Print",
+    "documentMode": "Document View",
+    "interactiveMode": "Interactive View"
+  },
   "studyPlan": {
     "pageTitle": "7-Day Focus Plan",
     "pageSubtitle": "The most critical week for exam success",

@@ -32,6 +32,7 @@ import { UserProgress } from '@/server/payload/collections/UserProgress'
 import { Users } from '@/server/payload/collections/Users'
 import { UserSettings } from '@/server/payload/collections/UserSettings'
 import { importExerciseFromImage } from '@/server/payload/endpoints/exercises/import-from-image'
+import { importExerciseFromLatex } from '@/server/payload/endpoints/exercises/import-from-latex'
 import { importExerciseFromLesson } from '@/server/payload/endpoints/exercises/import-from-lesson'
 import { defaultLexical } from '@/server/payload/fields/defaultLexical'
 import { pdfToExercisesTask } from '@/server/payload/jobs/pdf-to-exercises-task'
@@ -192,6 +193,11 @@ export default buildConfig({
         }
         return importExerciseFromImage(req)
       },
+    },
+    {
+      path: '/exercises/import-latex',
+      method: 'post',
+      handler: (req: PayloadRequest) => importExerciseFromLatex(req),
     },
   ],
   jobs: {
