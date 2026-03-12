@@ -1,4 +1,5 @@
 import { notFound, redirect } from 'next/navigation'
+import { Suspense } from 'react'
 import { getSystemLocale } from '@/i18n/server-locale'
 import { isValidContentLocale } from '@/server/payload/fields/contentLocale'
 import { queryCourseBySlug } from '@/server/repos/queries/courses'
@@ -11,6 +12,8 @@ import {
 import { queryMediaByIds } from '@/server/repos/queries/media'
 import { extractAllMediaIds } from '@/ui/web/exerciserenderer/utils/extractMediaIds'
 import { ExercisesPager } from '../../_components/ExercisesPager'
+import { DocumentModeToggle } from '@/ui/web/shared/DocumentModeToggle'
+import { DocumentModeWrapper } from '@/ui/web/shared/DocumentModeWrapper'
 
 const OBJECT_ID_REGEX = /^[0-9a-fA-F]{24}$/
 
@@ -25,6 +28,7 @@ interface ExercisePageProps {
     lessonSlug: string
     exerciseSlug: string
   }>
+  searchParams: Promise<{ mode?: string }>
 }
 
 async function resolveExercise(lessonId: string, param: string) {
@@ -55,8 +59,10 @@ async function resolveExercise(lessonId: string, param: string) {
   return { exercise: null, mode: 'not-found' as const }
 }
 
-export default async function ExercisePage({ params }: ExercisePageProps) {
+export default async function ExercisePage({ params, searchParams }: ExercisePageProps) {
   const { courseSlug, chapterSlug, lessonSlug, exerciseSlug } = await params
+  const { mode } = await searchParams
+  const isDocumentMode = mode === 'document'
   const locale = await getSystemLocale()
   const contentLocale = isValidContentLocale(locale) ? locale : undefined
 
@@ -102,7 +108,7 @@ export default async function ExercisePage({ params }: ExercisePageProps) {
 
   const mediaMap = await queryMediaByIds(extractAllMediaIds(exercises))
 
-  return (
+  const pager = (
     <ExercisesPager
       exercises={exercises}
       lessonTitle={lesson.title}
@@ -113,6 +119,17 @@ export default async function ExercisePage({ params }: ExercisePageProps) {
       lessonId={lesson.id}
       mediaMap={mediaMap}
     />
+  )
+
+  return (
+    <>
+      <div className="fixed top-4 end-4 z-50 print:hidden">
+        <Suspense>
+          <DocumentModeToggle />
+        </Suspense>
+      </div>
+      {isDocumentMode ? <DocumentModeWrapper>{pager}</DocumentModeWrapper> : pager}
+    </>
   )
 }
 
