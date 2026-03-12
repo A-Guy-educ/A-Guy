@@ -8,6 +8,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import type { CodyTask } from '../types'
+import { filterTasksByView, getViewModeCounts } from '../utils'
 import { TaskList } from './TaskList'
 
 import { CreateTaskDialog } from './CreateTaskDialog'
@@ -292,20 +293,10 @@ export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
   const totalCount = tasks.length
 
   // View mode counts — backlog = open column, running = everything else
-  const backlogCount = tasks.filter((t) => t.column === 'open').length
-  const runningCount = tasks.length - backlogCount
+  const { runningCount, backlogCount } = getViewModeCounts(tasks)
 
   // Filter tasks by view mode, then by status and label (combined with AND logic)
-  const filteredTasks = tasks.filter((task) => {
-    // View mode filter — primary split
-    if (viewMode === 'backlog' && task.column !== 'open') return false
-    if (viewMode === 'running' && task.column === 'open') return false
-    // Status filter
-    if (statusFilter !== 'all' && task.column !== statusFilter) return false
-    // Label filter
-    if (labelFilter !== 'all' && !task.labels.includes(labelFilter)) return false
-    return true
-  })
+  const filteredTasks = filterTasksByView(tasks, { viewMode, statusFilter, labelFilter })
 
   // Check for specific errors
   const isRateLimited = error instanceof RateLimitError
