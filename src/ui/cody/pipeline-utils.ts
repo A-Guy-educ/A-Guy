@@ -13,6 +13,7 @@ import type { CodyPipelineStatus, StageStatus } from './types'
  */
 export const stageLabels: Record<string, string> = {
   taskify: 'Analyzing',
+  gap: 'Gap Analysis',
   clarify: 'Clarifying',
   architect: 'Architecting',
   'plan-gap': 'Reviewing Plan',

@@ -4608,7 +4608,7 @@
       "type": "component",
       "domain": "cody",
       "patterns": ["pipeline-status", "tailwind-component", "client-component"],
-      "aiSummary": "Pipeline status visualization",
+      "aiSummary": "Vertical stepper pipeline status for narrow sidebar",
       "dependencies": ["react", "lucide-react"]
     },
     "src/ui/cody/components/RiskBadge.tsx": {
@@ -5714,7 +5714,7 @@
     }
   },
   "metadata": {
-    "generatedAt": "2026-03-12T19:57:07.036Z",
+    "generatedAt": "2026-03-12T20:15:04.419Z",
     "totalFiles": 507,
     "totalPatterns": 169
   }
