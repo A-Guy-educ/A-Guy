@@ -62,8 +62,19 @@ const _queryPublishedCourses = async (locale?: ContentLocale) => {
     sort: 'order',
     limit: 1000,
     pagination: false,
-    depth: 1,
+    depth: 0,
     overrideAccess: false,
+    select: {
+      title: true,
+      slug: true,
+      description: true,
+      courseLabel: true,
+      order: true,
+      status: true,
+      isActive: true,
+      pageAccessType: true,
+      accessType: true,
+    },
   })
 
   return result.docs

@@ -46,7 +46,7 @@ describe('Exercise Queries', () => {
       expect(mockPayload.findByID).toHaveBeenCalledWith({
         collection: 'exercises',
         id: 'exercise-1',
-        depth: 2,
+        depth: 0,
       })
     })
 
@@ -109,7 +109,7 @@ describe('Exercise Queries', () => {
       expect(mockPayload.findByID).toHaveBeenCalledWith({
         collection: 'exercises',
         id: 'exercise-1',
-        depth: 2,
+        depth: 0,
       })
     })
   })

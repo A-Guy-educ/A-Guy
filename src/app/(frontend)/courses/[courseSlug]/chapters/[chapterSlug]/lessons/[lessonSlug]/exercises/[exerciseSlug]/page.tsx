@@ -40,8 +40,9 @@ async function resolveExercise(lessonId: string, param: string) {
     const exerciseById = await queryExerciseById({ id: param })
 
     if (exerciseById) {
-      const exerciseLesson = typeof exerciseById.lesson === 'string' ? null : exerciseById.lesson
-      if (exerciseLesson && exerciseLesson.id === lessonId) {
+      const exerciseLessonId =
+        typeof exerciseById.lesson === 'string' ? exerciseById.lesson : exerciseById.lesson?.id
+      if (exerciseLessonId && exerciseLessonId === lessonId) {
         if (exerciseById.slug) {
           return {
             exercise: exerciseById,

@@ -13,7 +13,7 @@ import { Button } from '@/ui/web/components/button'
 import { SafeHtml } from '@/ui/web/SafeHtml'
 
 interface CourseCardProps {
-  course: Course
+  course: Pick<Course, 'id' | 'title' | 'description' | 'courseLabel' | 'slug'>
   isOwned?: boolean
 }
 

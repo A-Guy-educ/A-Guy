@@ -666,23 +666,24 @@ async function handleContextScopedChat(
   // Get recent window and retrieve memories
   const recentMessages = getRecentWindow(allMessages as Message[])
 
-  const memoryResult = await retrieveMemories(
-    req.payload,
-    ownerId,
-    conversationId,
-    context.contextKey,
-    recentMessages,
-    logger as Logger,
-  )
-
-  // Fetch lesson context and compose system instructions
-  const lessonContext = await fetchLessonContextForContext(
-    req.payload,
-    context,
-    { id: ownerId },
-    logger as Logger,
-    validated.courseId,
-  )
+  // Fetch memories and lesson context in parallel (independent operations)
+  const [memoryResult, lessonContext] = await Promise.all([
+    retrieveMemories(
+      req.payload,
+      ownerId,
+      conversationId,
+      context.contextKey,
+      recentMessages,
+      logger as Logger,
+    ),
+    fetchLessonContextForContext(
+      req.payload,
+      context,
+      { id: ownerId },
+      logger as Logger,
+      validated.courseId,
+    ),
+  ])
 
   let composedInstructions
   try {

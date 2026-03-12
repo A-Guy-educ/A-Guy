@@ -28,7 +28,7 @@ export const queryExerciseById = cache(async ({ id }: { id: string }) => {
     const exercise = await payload.findByID({
       collection: 'exercises',
       id,
-      depth: 2,
+      depth: 0,
     })
 
     return exercise
@@ -48,7 +48,7 @@ export const queryExerciseBySlug = cache(
         and: [{ lesson: { equals: lessonId } }, { slug: { equals: slug } }],
       },
       limit: 1,
-      depth: 2,
+      depth: 0,
     })
 
     return result.docs[0] || null
