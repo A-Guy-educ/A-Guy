@@ -80,7 +80,7 @@ export function CoursePageContent({
             </button>
             <SystemLink
               href="/study-plan"
-              className="flex items-center justify-center gap-2 text-sm font-bold text-white bg-[#7C1D2A] px-6 py-3 rounded-full shadow-lg hover:opacity-90 transition-all"
+              className="flex items-center justify-center gap-2 text-sm font-bold text-primary-foreground bg-primary px-6 py-3 rounded-full shadow-lg hover:opacity-90 transition-all"
             >
               <GraduationCap className="w-4 h-4" />
               {t('upcomingExam')}

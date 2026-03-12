@@ -183,6 +183,18 @@
 }
 
 @layer base {
+  :root,
+  [data-theme='light'],
+  [data-theme='dark'] {
+    /* Course tab accent colors */
+    --tab-learn: 217 91% 60%; /* Blue */
+    --tab-practice: 0 72% 51%; /* Red */
+    --tab-exams: 142 71% 45%; /* Green */
+    --tab-ask: 271 91% 65%; /* Purple */
+  }
+}
+
+@layer base {
   * {
     @apply border-border;
   }

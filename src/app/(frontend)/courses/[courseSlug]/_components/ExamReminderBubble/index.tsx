@@ -12,7 +12,7 @@ export function ExamReminderBubble({ daysUntil }: ExamReminderBubbleProps) {
 
   return (
     <div className="flex justify-center mt-4 animate-in fade-in">
-      <span className="bg-[#7C1D2A] text-white text-sm font-bold px-6 py-2 rounded-full">
+      <span className="bg-primary text-primary-foreground text-sm font-bold px-6 py-2 rounded-full">
         {message}
       </span>
     </div>

@@ -148,7 +148,7 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
               <BarChart3 className="w-4 h-4" />
               {t('statsAndPerformance')}
             </button>
-            <button className="flex items-center justify-center gap-2 text-sm font-bold text-white bg-[#7C1D2A] px-6 py-3 rounded-full shadow-lg hover:opacity-90 transition-all">
+            <button className="flex items-center justify-center gap-2 text-sm font-bold text-primary-foreground bg-primary px-6 py-3 rounded-full shadow-lg hover:opacity-90 transition-all">
               <GraduationCap className="w-4 h-4" />
               {t('upcomingExam')}
             </button>
@@ -180,7 +180,7 @@ function ExamReminderBubble({ courseId }: { courseId: string }) {
 
   return (
     <div className="flex justify-center mt-4 animate-in fade-in">
-      <span className="bg-[#7C1D2A] text-white text-sm font-bold px-6 py-2 rounded-full">
+      <span className="bg-primary text-white text-sm font-bold px-6 py-2 rounded-full">
         {message}
       </span>
     </div>

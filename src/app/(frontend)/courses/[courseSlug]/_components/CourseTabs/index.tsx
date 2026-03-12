@@ -6,10 +6,10 @@ import { useTranslations } from '@/ui/web/providers/I18n'
 export type CourseTab = 'learn' | 'practice' | 'ask' | 'exams'
 
 export const TAB_COLORS: Record<CourseTab, { text: string; stroke: string }> = {
-  learn: { text: '#2563eb', stroke: '#2563eb' },
-  practice: { text: '#b91c1c', stroke: '#b91c1c' },
-  exams: { text: '#10b981', stroke: '#10b981' },
-  ask: { text: '#8b5cf6', stroke: '#8b5cf6' },
+  learn: { text: 'hsl(var(--tab-learn))', stroke: 'hsl(var(--tab-learn))' },
+  practice: { text: 'hsl(var(--tab-practice))', stroke: 'hsl(var(--tab-practice))' },
+  exams: { text: 'hsl(var(--tab-exams))', stroke: 'hsl(var(--tab-exams))' },
+  ask: { text: 'hsl(var(--tab-ask))', stroke: 'hsl(var(--tab-ask))' },
 }
 
 interface CourseTabsProps {
