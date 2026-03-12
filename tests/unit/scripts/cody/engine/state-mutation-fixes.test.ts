@@ -248,9 +248,9 @@ describe('full pipeline mode', () => {
     expect(stageNames).toContain('gap')
 
     // Should ALSO have impl stages (THIS IS THE FIX)
-    expect(stageNames).toContain('gsd-plan')
-    expect(stageNames).toContain('gsd-research')
-    expect(stageNames).toContain('gsd-execute')
+    expect(stageNames).toContain('architect')
+    expect(stageNames).toContain('plan-gap')
+    expect(stageNames).toContain('build')
     expect(stageNames).toContain('commit')
     expect(stageNames).toContain('verify')
     expect(stageNames).toContain('pr')

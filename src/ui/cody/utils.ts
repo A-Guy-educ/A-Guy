@@ -42,3 +42,49 @@ export function formatRelativeTime(date: string | Date): string {
 
   return then.toLocaleDateString()
 }
+
+// ============ View Mode Filtering ============
+
+import type { CodyTask } from './types'
+import type { ViewMode } from './components/FilterBar'
+
+export interface ViewModeFilterOptions {
+  viewMode: ViewMode
+  statusFilter: string
+  labelFilter: string
+}
+
+/**
+ * Filter tasks by view mode, then by status and label (combined with AND logic).
+ * - 'running' view: excludes tasks in 'open' column
+ * - 'backlog' view: only tasks in 'open' column
+ * Status and label filters apply within the selected view.
+ */
+export function filterTasksByView(tasks: CodyTask[], options: ViewModeFilterOptions): CodyTask[] {
+  const { viewMode, statusFilter, labelFilter } = options
+  return tasks.filter((task) => {
+    // View mode filter — primary split
+    if (viewMode === 'backlog' && task.column !== 'open') return false
+    if (viewMode === 'running' && task.column === 'open') return false
+    // Status filter
+    if (statusFilter !== 'all' && task.column !== statusFilter) return false
+    // Label filter
+    if (labelFilter !== 'all' && !task.labels.includes(labelFilter)) return false
+    return true
+  })
+}
+
+/**
+ * Compute view mode counts from task list.
+ * Backlog = tasks in 'open' column. Running = everything else.
+ */
+export function getViewModeCounts(tasks: CodyTask[]): {
+  runningCount: number
+  backlogCount: number
+} {
+  const backlogCount = tasks.filter((t) => t.column === 'open').length
+  return {
+    backlogCount,
+    runningCount: tasks.length - backlogCount,
+  }
+}

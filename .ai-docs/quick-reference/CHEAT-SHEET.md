@@ -2,7 +2,7 @@
 
 **Purpose**: Fast, token-efficient reference for common AI agent tasks
 **Token Budget**: < 2KB (~500 tokens)
-**Last Updated**: 2026-01-07
+**Last Updated**: 2026-03-12
 
 ---
 
@@ -653,6 +653,44 @@ pnpm test:e2e                  # E2E tests
 
 ---
 
+## 🤖 Cody Pipeline Patterns
+
+### Architecture (3 layers)
+
+1. **CI**: `.github/workflows/cody.yml` → parse-inputs.ts → entry.ts
+2. **Engine**: `scripts/cody/` → state-machine.ts loop → stages
+3. **Dashboard**: `src/ui/cody/` + `src/app/api/cody/`
+
+### Full Pipeline Flow
+
+```
+@cody on issue → taskify → spec → gap → gsd-plan → gsd-execute → commit → review → fix → verify → pr
+```
+
+### Key Debug Files
+
+| What              | Where                                      |
+| ----------------- | ------------------------------------------ |
+| Pipeline status   | `.tasks/<id>/status.json`                  |
+| Task definition   | `.tasks/<id>/task.json`                    |
+| Stage definitions | `scripts/cody/pipeline/definitions.ts`     |
+| Post-actions      | `scripts/cody/pipeline/post-actions.ts`    |
+| Skip logic        | `scripts/cody/pipeline/skip-conditions.ts` |
+| Git operations    | `scripts/cody/git-utils.ts`                |
+| Gate approval     | `scripts/cody/clarify-workflow.ts`         |
+| Full architecture | `scripts/cody/README.md`                   |
+
+### Known Gotchas
+
+- **Push fails on rerun** → `pushWithRebase()` in `git-utils.ts` handles pull-rebase-retry
+- **Chat history SyntaxError** → `extractJson()` in `chat-history.ts` strips non-JSON CLI output
+- **Duplicate labels on rerun** → `setClassificationLabels` removes old category labels first
+- **Gate approval overwritten** → `resolveFromStageAfterGateApproval` starts AFTER the gate stage
+- **Impl stages skipped** → `rebuildPipelineAfterTaskify` must return BOTH spec + impl stages
+- **Stage aliases**: `build` → `gsd-execute`, `architect` → `gsd-plan`
+
+---
+
 ## ⚡ Performance Tips
 
 1. **Use indexes on queried fields** - `{ name: 'slug', type: 'text', unique: true, index: true }`
@@ -663,8 +701,8 @@ pnpm test:e2e                  # E2E tests
 
 ---
 
-**Token Count**: ~2,400 tokens (~3KB, +500 from Phase 1 patterns)
-**Coverage**: 95% of common AI agent tasks (includes AI Services, Hierarchy, Block Rendering)
+**Token Count**: ~2,800 tokens (~3.5KB, +400 from Cody Pipeline patterns)
+**Coverage**: 98% of common AI agent tasks (includes AI Services, Hierarchy, Block Rendering, Cody Pipeline)
 **Load Time**: < 0.5 seconds
 
 **New Sections (Phase 1)**:
@@ -672,6 +710,7 @@ pnpm test:e2e                  # E2E tests
 - 🤖 AI Services Patterns (Gemini, Image Optimization, Structured Output)
 - 🌳 Course Hierarchy Patterns (Query patterns, N+1 prevention, Status cascade)
 - 🧱 Block Rendering Patterns (5-step guide, Math rendering, Zod validation)
+- 🤖 Cody Pipeline Patterns (Architecture, debug files, known gotchas)
 
 For detailed information, see:
 
@@ -680,4 +719,5 @@ For detailed information, see:
 - **[Course Hierarchy](../../docs/course-hierarchy/README.md)** - Query patterns
 - **[Block Rendering](../../docs/block-rendering/README.md)** - Extension guide
 - **[Contracts](../../docs/contracts/README.md)** - Zod schemas
+- **[Cody Pipeline](../../scripts/cody/README.md)** - Pipeline architecture
 - **[AGENTS.md](../../AGENTS.md)** - Complete Payload patterns

@@ -37,7 +37,7 @@ You MUST output **valid JSON only** to the output file. No markdown wrappers, no
   "complexity_reasoning": "Scope: X. Risk: X. Novelty: X. Cross-domain: X. Ambiguity: X. Dependencies: X. Total: N",
   "input_quality": {
     "level": "raw_idea | good_spec | detailed_plan | spec_and_plan",
-    "skip_stages": ["spec"] | ["spec", "gsd-plan"] | [],
+    "skip_stages": ["spec"] | ["spec", "architect"] | [],
     "reasoning": "Brief explanation of why this quality level was assigned"
   },
   "pipeline_profile": "lightweight | standard"
@@ -60,22 +60,32 @@ Generate 1-5 clear questions that the reviewer should answer before approving. T
 
 **Purpose**: Guide the reviewer to spot potential issues or validate key assumptions.
 
-**When to include questions**:
-- If you're unsure about implementation details and made assumptions
-- If there are multiple valid approaches and the task didn't specify
-- If the task touches sensitive areas (auth, data, etc.) where validation is important
-- If the task scope or impact is unclear
+**When to include questions** — ONLY ask things that require **operator decision or authority**, not things discoverable by reading code:
+- If the task requires a DECISION only the operator can make (scope, approach, trade-offs)
+- If new dependencies, packages, or third-party integrations may be needed
+- If new collections, schema changes, or data migrations are required
+- If the change could affect existing users, data, or API contracts
+- If there are product/UX trade-offs the issue doesn't specify
 
-**Good examples**:
-- "Should this feature support SSO in addition to email/password?"
-- "Is it correct that no database schema changes are needed?"
-- "Are there any existing patterns in the codebase we should follow?"
-- "Should this change be applied to all environments or specific ones?"
+**Good examples (require operator decision)**:
+- "This adds a new field to the geometry schema. Should we migrate existing blocks, or default missing values at render time?"
+- "Should we add library X for drag-snap behavior, or implement with vanilla JS?"
+- "The issue could be scoped to just the admin editor, or also the student preview. Which scope?"
+- "The issue doesn't specify mobile behavior. Should labels be draggable on touch devices too?"
+- "This requires a new collection for storing X. Approve adding it, or extend the existing Y collection?"
+
+**Bad examples (Cody can answer these itself — do NOT ask)**:
+- ❌ "Are there existing canvas interaction patterns to reuse?"
+- ❌ "How is the data currently structured for storing X?"
+- ❌ "What is the current default behavior for Y?"
+- ❌ "Are there any existing patterns in the codebase we should follow?"
+
+These are codebase/architecture questions — the architect and build stages will discover them automatically by reading the code.
 
 **When NOT to include**:
 - If the task is crystal clear with no ambiguity
 - If it's a trivial change (docs, config, small fix)
-- For questions the build/architect stage would naturally answer
+- If the question can be answered by reading the codebase (use `assumptions` instead)
 
 **Format**: Always phrase as questions the reviewer can answer with yes/no or a specific choice. NOT as open-ended research questions.
 
@@ -117,8 +127,8 @@ Analyze the task description to determine its quality level. When the input is a
 | --------------- | -------------------------------------------- | ------------------- | ---------------------------------------- |
 | `raw_idea`      | Vague task, no structured sections           | None                | Default for most tasks                   |
 | `good_spec`     | Has ## Requirements + ## Acceptance Criteria | `spec`              | Task already has structured requirements |
-| `detailed_plan` | Has step-by-step plan with file paths        | `spec`, `gsd-plan`  | Task includes implementation steps       |
-| `spec_and_plan` | Has both spec AND plan sections              | `spec`, `gsd-plan`  | Task is fully detailed                   |
+| `detailed_plan` | Has step-by-step plan with file paths        | `spec`, `architect` | Task includes implementation steps       |
+| `spec_and_plan` | Has both spec AND plan sections              | `spec`, `architect` | Task is fully detailed                   |
 
 ### Detection Criteria
 
@@ -204,7 +214,7 @@ Example:
 
 ## Pipeline Profile (Lightweight vs Standard)
 
-Determine whether the task should use the lightweight or standard pipeline. The lightweight profile skips: `spec`, `gap` — saving 5-6 LLM calls for simple fixes.
+Determine whether the task should use the lightweight or standard pipeline. The lightweight profile skips: `spec`, `gap`, `plan-gap` — saving 5-6 LLM calls for simple fixes.
 
 ### Decision Criteria
 
@@ -227,7 +237,7 @@ For lightweight tasks, you MUST also promote the task.md content to spec.md:
 
 - Write `.tasks/<task-id>/spec.md` with the task description as a spec
 - This allows the pipeline to skip the spec stage entirely
-- The pipeline will run: taskify → gsd-plan → gsd-execute → commit → verify → pr
+- The pipeline will run: taskify → architect → build → commit → verify → pr
 
 Example lightweight task.json:
 
@@ -250,11 +260,11 @@ Example lightweight task.json:
 
 | Score | Tier | Stages That Run |
 |-------|------|-----------------|
-| 1-9 | Trivial | taskify → gsd-execute → commit → verify → pr |
-| 10-19 | Simple | + gsd-plan |
-| 20-34 | Moderate | + spec |
-| 35-49 | Complex | + gap, gsd-research |
-| 50-100 | Very Complex | + clarify |
+| 1-9 | Trivial | taskify → build → commit → verify → pr |
+| 10-19 | Simple | + architect |
+| 20-34 | Moderate | + architect, build |
+| 35-49 | Complex | + spec, gap |
+| 50-100 | Very Complex | + plan-gap, clarify |
 
 ### Scoring Dimensions (6 weighted factors)
 

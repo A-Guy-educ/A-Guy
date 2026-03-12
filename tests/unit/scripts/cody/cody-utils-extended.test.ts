@@ -101,7 +101,7 @@ describe('parseCommentBody', () => {
     expect(result.success).toBe(true)
     expect(result.input?.mode).toBe('rerun')
     expect(result.input?.taskId).toBe('260218-task')
-    expect(result.input?.fromStage).toBe('gsd-execute')
+    expect(result.input?.fromStage).toBe('build')
     expect(result.input?.feedback).toBe('fix')
   })
 
@@ -169,15 +169,14 @@ describe('parseCommentBody', () => {
   })
 
   it('should accept valid --from stages', () => {
-    // New GSD stage names
     const validStages = [
       'taskify',
       'spec',
       'gap',
       'clarify',
-      'gsd-research',
-      'gsd-plan',
-      'gsd-execute',
+      'architect',
+      'plan-gap',
+      'build',
       'commit',
       'verify',
       'autofix',
@@ -187,19 +186,6 @@ describe('parseCommentBody', () => {
       const result = parseCommentBody(`/cody rerun 260218-task --from ${stage}`)
       expect(result.success).toBe(true)
       expect(result.input?.fromStage).toBe(stage)
-    }
-  })
-
-  it('should accept old stage names as aliases and resolve them', () => {
-    const aliases: Record<string, string> = {
-      architect: 'gsd-plan',
-      'plan-gap': 'gsd-plan',
-      build: 'gsd-execute',
-    }
-    for (const [oldName, newName] of Object.entries(aliases)) {
-      const result = parseCommentBody(`/cody rerun 260218-task --from ${oldName}`)
-      expect(result.success).toBe(true)
-      expect(result.input?.fromStage).toBe(newName)
     }
   })
 
@@ -301,9 +287,9 @@ describe('parseCliArgs', () => {
     expect(result.feedback).toBe('some feedback')
   })
 
-  it('should parse --from build with valid stage (resolves alias)', () => {
+  it('should parse --from build with valid stage', () => {
     const result = parseCliArgs(['--task-id', '260218-task', '--from', 'build'])
-    expect(result.fromStage).toBe('gsd-execute')
+    expect(result.fromStage).toBe('build')
   })
 
   it('should throw for --from banana (invalid stage)', () => {
@@ -968,15 +954,15 @@ describe('isValidMode', () => {
 })
 
 describe('isValidStage', () => {
-  it('should accept all valid stages (new GSD names)', () => {
+  it('should accept all valid stages', () => {
     const stages = [
       'taskify',
       'spec',
       'gap',
       'clarify',
-      'gsd-research',
-      'gsd-plan',
-      'gsd-execute',
+      'architect',
+      'plan-gap',
+      'build',
       'commit',
       'autofix',
       'verify',
@@ -985,12 +971,6 @@ describe('isValidStage', () => {
     for (const stage of stages) {
       expect(isValidStage(stage)).toBe(true)
     }
-  })
-
-  it('should accept old stage names as aliases', () => {
-    expect(isValidStage('architect')).toBe(true)
-    expect(isValidStage('plan-gap')).toBe(true)
-    expect(isValidStage('build')).toBe(true)
   })
 
   it('should reject invalid stages', () => {
@@ -1029,7 +1009,7 @@ describe('--fresh and --is-pull-request CLI flags', () => {
   it('should combine --fresh with --from', () => {
     const result = parseCliArgs(['--task-id', '260218-test', '--fresh', '--from', 'build'])
     expect(result.fresh).toBe(true)
-    expect(result.fromStage).toBe('gsd-execute')
+    expect(result.fromStage).toBe('build')
   })
 
   it('should default fresh to undefined when FRESH env var is not set', () => {
@@ -1059,7 +1039,7 @@ describe('parseCommentBody --fresh flag', () => {
     const result = parseCommentBody('/cody rerun 260218-task --fresh --from build')
     expect(result.success).toBe(true)
     expect(result.input?.fresh).toBe(true)
-    expect(result.input?.fromStage).toBe('gsd-execute')
+    expect(result.input?.fromStage).toBe('build')
   })
 
   it('should not set fresh when not provided', () => {

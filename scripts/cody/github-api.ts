@@ -560,8 +560,29 @@ export function setClassificationLabels(
     return
   }
 
+  // Build list of stale labels to remove (old labels in same category as new ones)
+  const labelsToRemove: string[] = []
+  const allCategoryLabels: ReadonlyArray<readonly string[]> = [
+    TASK_TYPE_LABELS,
+    RISK_LABELS,
+    COMPLEXITY_LABELS,
+    DOMAIN_LABELS,
+  ]
+  for (const category of allCategoryLabels) {
+    const newInCategory = labels.filter((l) => category.includes(l as never))
+    if (newInCategory.length > 0) {
+      // Remove all OTHER labels in this category
+      const stale = category.filter((l) => !newInCategory.includes(l))
+      labelsToRemove.push(...stale)
+    }
+  }
+
   try {
-    execFileSync('gh', ['issue', 'edit', String(issueNumber), '--add-label', labels.join(',')], {
+    const args = ['issue', 'edit', String(issueNumber), '--add-label', labels.join(',')]
+    if (labelsToRemove.length > 0) {
+      args.push('--remove-label', labelsToRemove.join(','))
+    }
+    execFileSync('gh', args, {
       stdio: ['inherit', 'inherit', 'inherit'],
       timeout: GH_API_TIMEOUT,
     })

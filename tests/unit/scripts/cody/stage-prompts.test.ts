@@ -46,15 +46,15 @@ describe('stage-prompts', () => {
   })
 
   describe('ALL_STAGES', () => {
-    it('should contain all stages including gap, gsd stages, commit, autofix', () => {
+    it('should contain all stages including gap, plan-gap, commit, autofix', () => {
       const stages = [...ALL_STAGES]
       expect(stages).toContain('taskify')
       expect(stages).toContain('spec')
       expect(stages).toContain('gap')
       expect(stages).toContain('clarify')
-      expect(stages).toContain('gsd-research')
-      expect(stages).toContain('gsd-plan')
-      expect(stages).toContain('gsd-execute')
+      expect(stages).toContain('architect')
+      expect(stages).toContain('plan-gap')
+      expect(stages).toContain('build')
       expect(stages).toContain('commit')
       expect(stages).toContain('verify')
       expect(stages).toContain('review')
@@ -76,18 +76,17 @@ describe('stage-prompts', () => {
       expect(STAGE_CONTEXT_FILES.spec).toEqual(['task.md', 'task.json'])
       expect(STAGE_CONTEXT_FILES.gap).toEqual(['spec.md', 'task.json'])
       expect(STAGE_CONTEXT_FILES.clarify).toEqual(['task.md', 'spec.md'])
-      expect(STAGE_CONTEXT_FILES['gsd-research']).toEqual(['spec.md', 'clarified.md', 'task.json'])
-      expect(STAGE_CONTEXT_FILES['gsd-plan']).toEqual([
+      expect(STAGE_CONTEXT_FILES.architect).toEqual([
         'spec.md',
         'clarified.md',
-        'task.json',
         'rerun-feedback.md',
       ])
-      expect(STAGE_CONTEXT_FILES['gsd-execute']).toEqual([
+      expect(STAGE_CONTEXT_FILES['plan-gap']).toEqual(['spec.md', 'plan.md', 'task.json'])
+      expect(STAGE_CONTEXT_FILES.build).toEqual([
         'spec.md',
         'clarified.md',
         'plan.md',
-        'task.json',
+        'plan-gap.md',
         'rerun-feedback.md',
       ])
       expect(STAGE_CONTEXT_FILES.commit).toEqual(['task.json'])
@@ -119,7 +118,7 @@ describe('stage-prompts', () => {
     })
 
     it('should include rerun-feedback.md in build context for supervisor feedback', () => {
-      expect(STAGE_CONTEXT_FILES['gsd-execute']).toContain('rerun-feedback.md')
+      expect(STAGE_CONTEXT_FILES.build).toContain('rerun-feedback.md')
     })
 
     it('should have an entry for every stage in ALL_STAGES', () => {
@@ -151,9 +150,9 @@ describe('stage-prompts', () => {
   describe('getImplStages', () => {
     it('should return full implementation stage list (default standard profile)', () => {
       expect(getImplStages()).toEqual([
-        'gsd-research',
-        'gsd-plan',
-        'gsd-execute',
+        'architect',
+        'plan-gap',
+        'build',
         'commit',
         'review',
         'fix',
@@ -165,8 +164,8 @@ describe('stage-prompts', () => {
 
     it('should return reduced stage list for lightweight profile (no plan-gap)', () => {
       expect(getImplStages('lightweight')).toEqual([
-        'gsd-plan',
-        'gsd-execute',
+        'architect',
+        'build',
         'commit',
         'review',
         'fix',
@@ -178,9 +177,9 @@ describe('stage-prompts', () => {
 
     it('should return full stage list for standard profile', () => {
       expect(getImplStages('standard')).toEqual([
-        'gsd-research',
-        'gsd-plan',
-        'gsd-execute',
+        'architect',
+        'plan-gap',
+        'build',
         'commit',
         'review',
         'fix',
@@ -214,7 +213,7 @@ describe('stage-prompts', () => {
       for (const stage of nonSpecStages) {
         const instruction = stageInstructions[stage]('260219-test')
         // Build stage intentionally has implementation instructions
-        if (stage === 'gsd-execute') {
+        if (stage === 'build') {
           expect(instruction).toContain('IMPLEMENTATION STAGE')
         } else if (stage === 'review') {
           expect(instruction).toContain('CODE REVIEW STAGE')
@@ -251,7 +250,7 @@ describe('stage-prompts', () => {
     })
 
     it('should include "Read these files" section when stage has context files', () => {
-      const prompt = buildStagePrompt(mockInput, 'gsd-execute')
+      const prompt = buildStagePrompt(mockInput, 'build')
       expect(prompt).toContain('Read these files for context:')
     })
 

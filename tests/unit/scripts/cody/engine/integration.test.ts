@@ -186,7 +186,7 @@ describe('Cody Pipeline State Machine Integration', () => {
 
       const pipeline = createMockPipeline([
         { name: 'taskify', outcome: 'completed' },
-        { name: 'gsd-execute', outcome: 'completed' },
+        { name: 'build', outcome: 'completed' },
       ])
 
       // Run pipeline - should complete successfully
@@ -194,7 +194,7 @@ describe('Cody Pipeline State Machine Integration', () => {
 
       expect(result.state).toBe('completed')
       expect(result.stages['taskify']?.state).toBe('completed')
-      expect(result.stages['gsd-execute']?.state).toBe('completed')
+      expect(result.stages['build']?.state).toBe('completed')
     })
 
     it('should stop execution after first failure', async () => {
@@ -280,7 +280,7 @@ describe('Cody Pipeline State Machine Integration', () => {
 
       const pipeline = createMockPipeline([
         { name: 'taskify', outcome: 'completed' },
-        { name: 'gsd-execute', outcome: 'completed' },
+        { name: 'build', outcome: 'completed' },
       ])
 
       // Run pipeline again - taskify should be skipped, but build should run
@@ -289,7 +289,7 @@ describe('Cody Pipeline State Machine Integration', () => {
       // taskify should not have been executed again (it was already completed)
       expect(executedStages).not.toContain('taskify')
       // build should have been executed (it wasn't completed yet)
-      expect(executedStages).toContain('gsd-execute')
+      expect(executedStages).toContain('build')
     })
   })
 
@@ -428,18 +428,18 @@ describe('Cody Pipeline State Machine Integration', () => {
       expect(result.state).toBe('completed')
 
       // Always-run stages SHOULD complete (dryRun marks them completed)
-      expect(result.stages['gsd-execute']?.state).toBe('completed')
+      expect(result.stages['build']?.state).toBe('completed')
       expect(result.stages['commit']?.state).toBe('completed')
       expect(result.stages['verify']?.state).toBe('completed')
       expect(result.stages['pr']?.state).toBe('completed')
 
       // architect (threshold 10) should be skipped at score 5
-      expect(result.stages['gsd-plan']?.state).toBe('skipped')
-      expect(result.stages['gsd-plan']?.skipped).toContain('Complexity 5')
+      expect(result.stages['architect']?.state).toBe('skipped')
+      expect(result.stages['architect']?.skipped).toContain('Complexity 5')
 
       // plan-gap (threshold 50) should be skipped
-      expect(result.stages['gsd-research']?.state).toBe('skipped')
-      expect(result.stages['gsd-research']?.skipped).toContain('Complexity 5')
+      expect(result.stages['plan-gap']?.state).toBe('skipped')
+      expect(result.stages['plan-gap']?.skipped).toContain('Complexity 5')
     })
 
     it('should run architect for simple complexity (score 15)', async () => {
@@ -467,14 +467,14 @@ describe('Cody Pipeline State Machine Integration', () => {
       expect(result.state).toBe('completed')
 
       // architect (threshold 10) SHOULD run at score 15
-      expect(result.stages['gsd-plan']?.state).toBe('completed')
+      expect(result.stages['architect']?.state).toBe('completed')
 
       // plan-gap (threshold 50) should be skipped
-      expect(result.stages['gsd-research']?.state).toBe('skipped')
-      expect(result.stages['gsd-research']?.skipped).toContain('Complexity 15')
+      expect(result.stages['plan-gap']?.state).toBe('skipped')
+      expect(result.stages['plan-gap']?.skipped).toContain('Complexity 15')
 
       // build, commit, verify, pr should all complete
-      expect(result.stages['gsd-execute']?.state).toBe('completed')
+      expect(result.stages['build']?.state).toBe('completed')
       expect(result.stages['commit']?.state).toBe('completed')
       expect(result.stages['verify']?.state).toBe('completed')
       expect(result.stages['pr']?.state).toBe('completed')
@@ -505,9 +505,9 @@ describe('Cody Pipeline State Machine Integration', () => {
       expect(result.state).toBe('completed')
 
       // At score 60, ALL stages should complete (all thresholds met)
-      expect(result.stages['gsd-plan']?.state).toBe('completed')
-      expect(result.stages['gsd-research']?.state).toBe('completed')
-      expect(result.stages['gsd-execute']?.state).toBe('completed')
+      expect(result.stages['architect']?.state).toBe('completed')
+      expect(result.stages['plan-gap']?.state).toBe('completed')
+      expect(result.stages['build']?.state).toBe('completed')
       expect(result.stages['commit']?.state).toBe('completed')
       expect(result.stages['verify']?.state).toBe('completed')
       // No complexity-based skips anywhere
@@ -542,9 +542,9 @@ describe('Cody Pipeline State Machine Integration', () => {
       expect(result.state).toBe('completed')
 
       // All stages should complete — no complexity-based skipping
-      expect(result.stages['gsd-plan']?.state).toBe('completed')
-      expect(result.stages['gsd-research']?.state).toBe('completed')
-      expect(result.stages['gsd-execute']?.state).toBe('completed')
+      expect(result.stages['architect']?.state).toBe('completed')
+      expect(result.stages['plan-gap']?.state).toBe('completed')
+      expect(result.stages['build']?.state).toBe('completed')
       expect(result.stages['commit']?.state).toBe('completed')
       expect(result.stages['verify']?.state).toBe('completed')
 

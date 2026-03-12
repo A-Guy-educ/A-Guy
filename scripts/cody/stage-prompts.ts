@@ -31,9 +31,9 @@ export const ALL_STAGES = [
   'spec',
   'gap',
   'clarify',
-  'gsd-research',
-  'gsd-plan',
-  'gsd-execute',
+  'architect',
+  'plan-gap',
+  'build',
   'commit',
   'review',
   'fix',
@@ -71,9 +71,9 @@ export const STAGE_CONTEXT_FILES: Record<Stage, string[]> = {
   spec: ['task.md', 'task.json'],
   gap: ['spec.md', 'task.json'],
   clarify: ['task.md', 'spec.md'],
-  'gsd-research': ['spec.md', 'clarified.md', 'task.json'],
-  'gsd-plan': ['spec.md', 'clarified.md', 'task.json', 'rerun-feedback.md'],
-  'gsd-execute': ['spec.md', 'clarified.md', 'plan.md', 'task.json', 'rerun-feedback.md'],
+  architect: ['spec.md', 'clarified.md', 'rerun-feedback.md'],
+  'plan-gap': ['spec.md', 'plan.md', 'task.json'],
+  build: ['spec.md', 'clarified.md', 'plan.md', 'plan-gap.md', 'rerun-feedback.md'],
   commit: ['task.json'],
   review: ['review.md', 'build.md', 'plan.md', 'spec.md', 'clarified.md'],
   fix: [
@@ -126,11 +126,11 @@ export const stageInstructions: Record<Stage, (taskId: string) => string> = {
     return specOnlyInstructionTemplate(taskDir)
   },
 
-  'gsd-research': () => ``,
+  architect: () => ``,
 
-  'gsd-plan': () => ``,
+  'plan-gap': () => ``,
 
-  'gsd-execute': () => `CRITICAL: IMPLEMENTATION STAGE - NOT DOCUMENTATION
+  build: () => `CRITICAL: IMPLEMENTATION STAGE - NOT DOCUMENTATION
 
 You must ACTUALLY IMPLEMENT the code changes, not just document them.
 
@@ -224,7 +224,7 @@ export function buildStagePrompt(input: CodyInput, stage: string, feedback?: str
 
   // Add task_type for stages that need it (architect, build)
   const taskTypeSection =
-    stage === 'gsd-plan' || stage === 'gsd-execute' ? `\nTask Type: ${taskType}` : ''
+    stage === 'architect' || stage === 'build' ? `\nTask Type: ${taskType}` : ''
 
   const outputFile = stageOutputFile(taskDir, stage)
 
