@@ -650,6 +650,18 @@ async function runFixMode(ctx: PipelineContext): Promise<void> {
     input.feedback = 'Fix requested via @cody fix command'
   }
 
+  // Enrich feedback with PR review context when triggered from a PR
+  if (input.isPullRequest && input.issueNumber) {
+    const { getPRReviewFeedback } = await import('./github-api')
+    // issueNumber is the PR number when isPullRequest is true
+    const prNumber = input.issueNumber
+    const prFeedback = getPRReviewFeedback(prNumber)
+    if (prFeedback) {
+      logger.info(`Enriching fix feedback with PR #${prNumber} review context`)
+      input.feedback = `${input.feedback}\n\n${prFeedback}`
+    }
+  }
+
   // Write feedback to file
   const feedbackPath = path.join(taskDir, 'rerun-feedback.md')
   fs.writeFileSync(

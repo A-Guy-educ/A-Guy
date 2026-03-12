@@ -728,6 +728,11 @@ export function parseCliArgs(argv: string[]): CodyInput {
     input.commentBody = process.env.COMMENT_BODY
   }
 
+  // Read IS_PULL_REQUEST from env (set by workflow for PR comments and PR review triggers)
+  if (!cliSet.has('isPullRequest') && process.env.IS_PULL_REQUEST === 'true') {
+    input.isPullRequest = true
+  }
+
   // Determine local mode: explicitly set or auto-detect from GITHUB_ACTIONS
   // Use process.env directly (not getEnv()) for test compatibility
   if (input.local === undefined) {

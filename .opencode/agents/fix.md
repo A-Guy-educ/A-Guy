@@ -20,6 +20,11 @@ You are the **Fixer**. Your job is to apply MINIMAL, targeted fixes to resolve i
 3. Apply minimal fixes — do NOT refactor or rewrite working code
 4. Write `fix-summary.md` with your changes
 
+**PR Review Context**: When triggered by a PR review (change request), `rerun-feedback.md` contains:
+- The reviewer's change request message (under `## Change Request`)
+- Inline code comments with file paths and line numbers (under `## Inline Comments`)
+Address ALL reviewer feedback points. Inline comments include exact file:line locations — use them.
+
 ## Standard Fix Workflow (implement_feature, refactor, etc.)
 
 1. Read the issue reports (review.md, verify-failures.md, rerun-feedback.md)
