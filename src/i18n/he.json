@@ -471,9 +471,7 @@
     }
   },
   "exercises": {
-    "printDocument": "הדפסה",
-    "documentMode": "תצוגת מסמך",
-    "interactiveMode": "תצוגה אינטראקטיבית"
+    "printDocument": "הדפסה"
   },
   "studyPlan": {
     "pageTitle": "תוכנית 7 ימי המיקוד",

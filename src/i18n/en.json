@@ -471,9 +471,7 @@
     }
   },
   "exercises": {
-    "printDocument": "Print",
-    "documentMode": "Document View",
-    "interactiveMode": "Interactive View"
+    "printDocument": "Print"
   },
   "studyPlan": {
     "pageTitle": "7-Day Focus Plan",
