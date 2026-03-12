@@ -166,7 +166,7 @@ export function useNotebookChat({
 
       try {
         const retryDelayMs = 500
-        const maxRetries = 10
+        const maxRetries = 3
         let attempt = 0
         let result = (
           await Promise.all([apiService.getConversation(contextKey), minLoadingTime])

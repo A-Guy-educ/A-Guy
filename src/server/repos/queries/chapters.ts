@@ -157,7 +157,7 @@ export const queryChaptersByGrade = cache(
     const course = courseResult.docs?.[0]
     if (!course) return []
 
-    // Reuse existing function
-    return queryChaptersByCourse({ courseId: course.id })
+    // Course already verified as published+active above, skip redundant check
+    return queryChaptersByCourseDirectly({ courseId: course.id })
   },
 )

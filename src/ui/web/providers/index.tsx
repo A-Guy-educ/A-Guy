@@ -1,5 +1,6 @@
 import React, { Suspense } from 'react'
 
+import { UserProvider } from '@/client/providers/UserProvider'
 import { HeaderThemeProvider } from './HeaderTheme'
 import { ThemeProvider } from './Theme'
 import { AnalyticsProvider } from '@/infra/analytics/providers/AnalyticsProvider'
@@ -11,7 +12,9 @@ export const Providers: React.FC<{
     <ThemeProvider>
       <Suspense fallback={null}>
         <AnalyticsProvider>
-          <HeaderThemeProvider>{children}</HeaderThemeProvider>
+          <UserProvider>
+            <HeaderThemeProvider>{children}</HeaderThemeProvider>
+          </UserProvider>
         </AnalyticsProvider>
       </Suspense>
     </ThemeProvider>

@@ -2,6 +2,7 @@
 
 import type { User } from '@/payload-types'
 import { useCallback, useEffect, useState } from 'react'
+import { useUserContext } from '@/client/providers/UserProvider'
 
 interface UseCurrentUserReturn {
   user: User | null
@@ -10,7 +11,14 @@ interface UseCurrentUserReturn {
   refetch: () => Promise<void>
 }
 
+/**
+ * Hook to access the current user.
+ * When rendered inside a UserProvider (frontend layout), shares a single
+ * /api/users/me fetch across all consumers.
+ * When rendered outside (e.g. Payload admin pages), falls back to its own fetch.
+ */
 export function useCurrentUser(): UseCurrentUserReturn {
+  const shared = useUserContext()
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
@@ -37,17 +45,24 @@ export function useCurrentUser(): UseCurrentUserReturn {
     }
   }, [])
 
-  // Fetch on mount
+  // Only fetch independently when no provider is available
   useEffect(() => {
-    fetchUser()
-  }, [fetchUser])
+    if (!shared) {
+      fetchUser()
+    }
+  }, [shared, fetchUser])
 
-  // Listen for auth changes (login/logout)
   useEffect(() => {
-    const handleAuthChange = () => fetchUser()
-    window.addEventListener('auth:changed', handleAuthChange)
-    return () => window.removeEventListener('auth:changed', handleAuthChange)
-  }, [fetchUser])
+    if (!shared) {
+      const handleAuthChange = () => fetchUser()
+      window.addEventListener('auth:changed', handleAuthChange)
+      return () => window.removeEventListener('auth:changed', handleAuthChange)
+    }
+  }, [shared, fetchUser])
+
+  if (shared) {
+    return shared
+  }
 
   return { user, isLoading, error, refetch: fetchUser }
 }

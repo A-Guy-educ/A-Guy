@@ -34,44 +34,45 @@ export async function GET(request: NextRequest) {
         ? (courseObj.pageAccessType ?? DEFAULT_PAGE_ACCESS_TYPE)
         : DEFAULT_PAGE_ACCESS_TYPE
 
-    // Fetch all lessons for all chapters (batch query for efficiency)
+    // Fetch lessons + system params in parallel (independent of each other)
     const chapterIds = chapters.map((chapter) => chapter.id)
-    let lessons: Lesson[] = []
 
-    if (chapterIds.length > 0) {
+    const fetchLessons = async () => {
+      if (chapterIds.length === 0) return []
       const payload = await getPayload({ config: configPromise })
       const lessonsResult = await payload.find({
         collection: 'lessons',
         where: {
           and: [
-            {
-              chapter: {
-                in: chapterIds,
-              },
-            },
-            {
-              status: {
-                equals: 'published',
-              },
-            },
-            {
-              isActive: {
-                equals: true,
-              },
-            },
+            { chapter: { in: chapterIds } },
+            { status: { equals: 'published' } },
+            { isActive: { equals: true } },
           ],
         },
         sort: 'order',
         limit: 1000,
         pagination: false,
         depth: 0,
+        select: {
+          title: true,
+          slug: true,
+          chapter: true,
+          order: true,
+          type: true,
+        },
       })
-      lessons = lessonsResult.docs
+      return lessonsResult.docs as Lesson[]
     }
+
+    const [lessons, gatedDelayMs, gatedWarningMs] = await Promise.all([
+      fetchLessons(),
+      SystemParams.getGatedDelayMs(),
+      SystemParams.getGatedWarningMs(),
+    ])
 
     // Group lessons by chapter
     const lessonsByChapter: Record<string, Lesson[]> = {}
-    lessons.forEach((lesson) => {
+    for (const lesson of lessons) {
       const chapterId = typeof lesson.chapter === 'string' ? lesson.chapter : lesson.chapter?.id
       if (chapterId) {
         if (!lessonsByChapter[chapterId]) {
@@ -79,18 +80,13 @@ export async function GET(request: NextRequest) {
         }
         lessonsByChapter[chapterId].push(lesson)
       }
-    })
+    }
 
     // Attach lessons to chapters
     const chaptersWithLessons = chapters.map((chapter) => ({
       ...chapter,
       lessons: lessonsByChapter[chapter.id] || [],
     }))
-
-    const [gatedDelayMs, gatedWarningMs] = await Promise.all([
-      SystemParams.getGatedDelayMs(),
-      SystemParams.getGatedWarningMs(),
-    ])
 
     const response = NextResponse.json({
       chapters: chaptersWithLessons,
