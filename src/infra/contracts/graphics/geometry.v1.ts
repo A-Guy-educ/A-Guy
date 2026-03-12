@@ -23,6 +23,8 @@ const GeometryPointSchema = z.object({
   position: PositionEnumSchema.optional(),
   fontSize: z.number().positive().optional(),
   visible: z.boolean().optional(),
+  color: ColorStringSchema.optional(),
+  size: z.number().int().min(1).max(5).optional(),
 })
 
 /** Line label */

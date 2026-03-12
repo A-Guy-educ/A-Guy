@@ -157,9 +157,18 @@ function syncPoints(
     newIds.add(elemId)
     const existing = elementsRef.current.get(elemId)
 
+    const pointColor = point.color ?? '#000000'
+    const pointSize = point.size ?? 4
+
     if (existing && existing.moveTo) {
       existing.moveTo([point.x, point.y])
-      existing.setAttribute({ visible: point.visible !== false, name: point.name })
+      existing.setAttribute({
+        visible: point.visible !== false,
+        name: point.name,
+        fillColor: pointColor,
+        strokeColor: pointColor,
+        size: pointSize,
+      })
     } else {
       if (existing) {
         board.removeObject(existing)
@@ -167,7 +176,9 @@ function syncPoints(
       }
       const el = board.create('point', [point.x, point.y], {
         name: point.name,
-        size: 4,
+        size: pointSize,
+        fillColor: pointColor,
+        strokeColor: pointColor,
         visible: point.visible !== false,
         withLabel: true,
         label: { fontSize: point.fontSize || 14 },

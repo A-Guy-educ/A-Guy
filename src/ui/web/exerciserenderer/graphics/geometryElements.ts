@@ -25,10 +25,14 @@ function mapPosition(pos?: string): string {
 function renderPoints(board: JXG.Board, points: PointSpec[]): Map<string, any> {
   const pointMap = new Map<string, any>()
   for (const p of points) {
+    const pointColor = p.color ?? '#000000'
     const pt = board.create('point', [p.x, p.y], {
       name: p.name,
       fixed: true,
       visible: p.visible !== false,
+      fillColor: pointColor,
+      strokeColor: pointColor,
+      size: p.size ?? 4,
       label: { position: mapPosition(p.position), fontSize: p.fontSize ?? 14 },
     })
     pointMap.set(p.name, pt)
