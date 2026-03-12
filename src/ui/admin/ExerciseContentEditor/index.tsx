@@ -21,6 +21,7 @@ import { QuestionBlockWrapper } from './editors/QuestionBlockWrapper'
 import { TableEditor } from './editors/TableEditor'
 import { TrueFalseEditor } from './editors/TrueFalseEditor'
 import { deepCloneBlock } from './utils'
+import { LatexImportSection } from './LatexImportSection'
 
 /**
  * Exercise Content Editor - Strict Flat Blocks
@@ -323,6 +324,8 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
           <div className="editor-badge">Flat Blocks</div>
         </div>
       </div>
+
+      <LatexImportSection />
 
       {isMobile ? (
         <>
