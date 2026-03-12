@@ -15,6 +15,7 @@ import type { CodyTask, GitHubComment, ColumnId, CodyPipelineStatus } from '../t
 import { ALL_STAGES } from '../constants'
 import { calculatePipelineProgress, stageLabels, formatElapsed } from '../pipeline-utils'
 import { PipelineStatus } from './PipelineStatus'
+import { ConfirmDialog } from './ConfirmDialog'
 import { CommentEditor } from './CommentEditor'
 import { CommentList } from './CommentList'
 import { AssigneePicker, type AssigneeChangeEvent } from './AssigneePicker'
@@ -151,15 +152,23 @@ function TabButton({
   label,
   icon: Icon,
   count,
+  tabId,
+  panelId,
 }: {
   active: boolean
   onClick: () => void
   label: string
   icon: React.ElementType
   count?: number
+  tabId?: string
+  panelId?: string
 }) {
   return (
     <button
+      role="tab"
+      id={tabId}
+      aria-selected={active}
+      aria-controls={panelId}
       onClick={onClick}
       className={cn(
         'relative flex items-center gap-1.5 px-3.5 py-2.5 text-[13px] font-medium transition-all duration-200',
@@ -369,6 +378,9 @@ function OverflowMenu({
   const [open, setOpen] = useState(false)
   const btnRef = useRef<HTMLButtonElement>(null)
   const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null)
+  const [confirmAction, setConfirmAction] = useState<
+    ReturnType<typeof getOverflowActions>[0] | null
+  >(null)
 
   const handleToggle = useCallback(() => {
     if (!open && btnRef.current) {
@@ -419,7 +431,9 @@ function OverflowMenu({
               const isActionPending = pendingAction === action.pendingKey
               const handleClick = () => {
                 if (action.confirmMessage) {
-                  if (!confirm(action.confirmMessage)) return
+                  setConfirmAction(action)
+                  setOpen(false)
+                  return
                 }
                 action.onClick()
                 setOpen(false)
@@ -448,6 +462,17 @@ function OverflowMenu({
             })}
           </div>
         </>
+      )}
+      {confirmAction && (
+        <ConfirmDialog
+          open={true}
+          title={confirmAction.label}
+          description={confirmAction.confirmMessage!}
+          confirmLabel={confirmAction.label}
+          variant={confirmAction.destructive ? 'destructive' : 'default'}
+          onConfirm={() => confirmAction.onClick()}
+          onClose={() => setConfirmAction(null)}
+        />
       )}
     </>
   )
@@ -839,7 +864,10 @@ export function TaskDetail({
 
   // --- Tab Bar ---
   const tabBar = (
-    <div className="flex border-b border-white/[0.08] shrink-0 overflow-x-auto bg-black/10">
+    <div
+      role="tablist"
+      className="flex border-b border-white/[0.08] shrink-0 overflow-x-auto bg-black/10"
+    >
       {tabs.map(({ key, label, icon, count }) => (
         <TabButton
           key={key}
@@ -855,6 +883,8 @@ export function TaskDetail({
           label={label}
           icon={icon}
           count={count}
+          tabId={`task-tab-${key}`}
+          panelId={`task-panel-${key}`}
         />
       ))}
     </div>
@@ -864,7 +894,12 @@ export function TaskDetail({
   const tabContent = (
     <>
       {effectiveTab === 'description' && hasDescription && (
-        <div className="p-5 md:p-6 overflow-y-auto overflow-x-hidden h-full bg-white/[0.03]">
+        <div
+          role="tabpanel"
+          id="task-panel-description"
+          aria-labelledby="task-tab-description"
+          className="p-5 md:p-6 overflow-y-auto overflow-x-hidden h-full bg-white/[0.03]"
+        >
           <div className="max-w-3xl min-w-0">
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
               {task.body!}
@@ -873,7 +908,12 @@ export function TaskDetail({
         </div>
       )}
       {effectiveTab === 'comments' && (
-        <div className="flex flex-col h-full">
+        <div
+          role="tabpanel"
+          id="task-panel-comments"
+          aria-labelledby="task-tab-comments"
+          className="flex flex-col h-full"
+        >
           <div className="flex-1 overflow-y-auto p-4 bg-white/[0.03]">
             <CommentList comments={fullDetails?.comments || []} loading={isDetailsFetching} />
           </div>
@@ -1020,6 +1060,7 @@ export function TaskDetail({
             variant="ghost"
             size="sm"
             onClick={onClose}
+            aria-label="Back to task list"
             className="h-9 w-9 p-0 -ml-1 shrink-0 text-muted-foreground/60"
           >
             <ArrowLeft className="w-4.5 h-4.5" />
@@ -1037,6 +1078,7 @@ export function TaskDetail({
             size="sm"
             onClick={handleRefresh}
             disabled={isRefreshing}
+            aria-label="Refresh task"
             className="h-9 w-9 p-0 shrink-0 text-muted-foreground/50"
           >
             <RefreshCw
@@ -1133,6 +1175,7 @@ export function TaskDetail({
                 size="sm"
                 onClick={handleRefresh}
                 disabled={isRefreshing}
+                aria-label="Refresh task"
                 className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-muted-foreground"
               >
                 <RefreshCw
@@ -1147,6 +1190,7 @@ export function TaskDetail({
               variant="ghost"
               size="sm"
               onClick={onClose}
+              aria-label="Close task detail"
               className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-muted-foreground"
             >
               <XCircle className="w-3.5 h-3.5" />

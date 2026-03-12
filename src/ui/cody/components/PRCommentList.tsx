@@ -17,9 +17,10 @@ import { formatRelativeTime } from '../utils'
 interface PRCommentListProps {
   prNumber: number
   className?: string
+  onCountChange?: (count: number) => void
 }
 
-export function PRCommentList({ prNumber, className }: PRCommentListProps) {
+export function PRCommentList({ prNumber, className, onCountChange }: PRCommentListProps) {
   const [comments, setComments] = useState<PRComment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -32,7 +33,10 @@ export function PRCommentList({ prNumber, className }: PRCommentListProps) {
     prsApi
       .comments(prNumber)
       .then((data) => {
-        if (!cancelled) setComments(data)
+        if (!cancelled) {
+          setComments(data)
+          onCountChange?.(data.length)
+        }
       })
       .catch((err) => {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load comments')
@@ -44,7 +48,7 @@ export function PRCommentList({ prNumber, className }: PRCommentListProps) {
     return () => {
       cancelled = true
     }
-  }, [prNumber])
+  }, [prNumber, onCountChange])
 
   if (loading) {
     return (

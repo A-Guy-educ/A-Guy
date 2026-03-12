@@ -22,6 +22,8 @@ import {
   MessageSquare,
   BookOpen,
   Loader2,
+  AlertCircle,
+  RefreshCw,
 } from 'lucide-react'
 import { Button } from '@/ui/web/components/button'
 import {
@@ -52,7 +54,9 @@ export function PreviewModal({ task, onClose, onMerge, isMerging }: PreviewModal
   const [changes, setChanges] = useState<FileChange[]>([])
   const [documents, setDocuments] = useState<TaskDocument[]>([])
   const [loading, setLoading] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [selectedDoc, setSelectedDoc] = useState<TaskDocument | null>(null)
+  const [commentCount, setCommentCount] = useState<number | null>(null)
 
   const pr = task.associatedPR
 
@@ -73,6 +77,7 @@ export function PreviewModal({ task, onClose, onMerge, isMerging }: PreviewModal
     if (!pr) return
     let cancelled = false
     setLoading(true)
+    setLoadError(null)
 
     const loadData = async () => {
       try {
@@ -87,6 +92,7 @@ export function PreviewModal({ task, onClose, onMerge, isMerging }: PreviewModal
         // comments tab loads its own data via PRCommentList
       } catch (err) {
         console.error('[PreviewModal] Error loading data:', err)
+        if (!cancelled) setLoadError(err instanceof Error ? err.message : 'Failed to load data')
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -108,14 +114,14 @@ export function PreviewModal({ task, onClose, onMerge, isMerging }: PreviewModal
     }
   }, [documents]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Close on Escape
+  // Close on Escape — skip if selectedDoc is open (Dialog handles its own Escape)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape' && !selectedDoc) onClose()
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [onClose])
+  }, [onClose, selectedDoc])
 
   // Sync tab + doc from URL on browser back/forward
   useEffect(() => {
@@ -160,10 +166,10 @@ export function PreviewModal({ task, onClose, onMerge, isMerging }: PreviewModal
   const totalAdditions = changes.reduce((s, f) => s + f.additions, 0)
   const totalDeletions = changes.reduce((s, f) => s + f.deletions, 0)
 
-  const tabs: Array<{ key: PreviewTab; label: string; icon: typeof GitBranch }> = [
+  const tabs: Array<{ key: PreviewTab; label: string; icon: typeof GitBranch; count?: number }> = [
     { key: 'changes', label: 'Changes', icon: GitBranch },
     { key: 'docs', label: 'Docs', icon: BookOpen },
-    { key: 'comments', label: 'Comments', icon: MessageSquare },
+    { key: 'comments', label: 'Comments', icon: MessageSquare, count: commentCount ?? undefined },
   ]
 
   return (
@@ -233,10 +239,14 @@ export function PreviewModal({ task, onClose, onMerge, isMerging }: PreviewModal
       )}
 
       {/* Tab bar */}
-      <div className="shrink-0 flex border-b border-zinc-800 bg-zinc-950/50">
-        {tabs.map(({ key, label, icon: Icon }) => (
+      <div role="tablist" className="shrink-0 flex border-b border-zinc-800 bg-zinc-950/50">
+        {tabs.map(({ key, label, icon: Icon, count }) => (
           <button
             key={key}
+            role="tab"
+            id={`preview-tab-${key}`}
+            aria-selected={activeTab === key}
+            aria-controls={`preview-panel-${key}`}
             onClick={() => {
               setActiveTab(key)
               const base = `/cody/${task.issueNumber}/preview`
@@ -255,16 +265,48 @@ export function PreviewModal({ task, onClose, onMerge, isMerging }: PreviewModal
             {key === 'changes' && changes.length > 0 && (
               <span className="text-xs text-zinc-600 ml-1">{changes.length}</span>
             )}
+            {key !== 'changes' && count !== undefined && count > 0 && (
+              <span
+                className={cn(
+                  'text-xs px-1.5 py-0.5 rounded-full tabular-nums ml-0.5',
+                  activeTab === key ? 'bg-blue-500/20 text-blue-300' : 'bg-zinc-800 text-zinc-500',
+                )}
+              >
+                {count}
+              </span>
+            )}
           </button>
         ))}
       </div>
 
       {/* Tab content */}
-      <div className="flex-1 min-h-0 overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto pb-20">
         {/* Changes tab */}
         {activeTab === 'changes' && (
-          <div className="p-4">
-            {loading ? (
+          <div
+            role="tabpanel"
+            id="preview-panel-changes"
+            aria-labelledby="preview-tab-changes"
+            className="p-4"
+          >
+            {loadError ? (
+              <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  {loadError}
+                </div>
+                <button
+                  onClick={() => {
+                    setLoadError(null)
+                    setActiveTab('changes')
+                  }}
+                  className="inline-flex items-center gap-1 text-xs text-red-400 hover:text-red-300"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  Retry
+                </button>
+              </div>
+            ) : loading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-5 h-5 animate-spin text-zinc-500" />
               </div>
@@ -329,8 +371,30 @@ export function PreviewModal({ task, onClose, onMerge, isMerging }: PreviewModal
 
         {/* Docs tab */}
         {activeTab === 'docs' && (
-          <div className="p-4">
-            {loading ? (
+          <div
+            role="tabpanel"
+            id="preview-panel-docs"
+            aria-labelledby="preview-tab-docs"
+            className="p-4"
+          >
+            {loadError ? (
+              <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  {loadError}
+                </div>
+                <button
+                  onClick={() => {
+                    setLoadError(null)
+                    setActiveTab('docs')
+                  }}
+                  className="inline-flex items-center gap-1 text-xs text-red-400 hover:text-red-300"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  Retry
+                </button>
+              </div>
+            ) : loading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-5 h-5 animate-spin text-zinc-500" />
               </div>
@@ -378,8 +442,13 @@ export function PreviewModal({ task, onClose, onMerge, isMerging }: PreviewModal
 
         {/* Comments tab */}
         {activeTab === 'comments' && (
-          <div className="p-4">
-            <PRCommentList prNumber={pr.number} />
+          <div
+            role="tabpanel"
+            id="preview-panel-comments"
+            aria-labelledby="preview-tab-comments"
+            className="p-4"
+          >
+            <PRCommentList prNumber={pr.number} onCountChange={setCommentCount} />
           </div>
         )}
       </div>

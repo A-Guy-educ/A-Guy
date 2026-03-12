@@ -13,6 +13,7 @@ import { SPEC_STAGES, IMPL_STAGES } from '../constants'
 import { StageErrorDetail } from './StageErrorDetail'
 import { Check, Circle, Loader2, X, Pause } from 'lucide-react'
 import { stageLabels, getStageTooltip } from '../pipeline-utils'
+import { SimpleTooltip } from './SimpleTooltip'
 
 interface PipelineStatusProps {
   status: CodyPipelineStatus
@@ -107,59 +108,62 @@ function StageRow({ stage, data, expandable, expanded, onToggle }: StageRowProps
   const label = stageLabels[stage] || stage
   const elapsed = data?.elapsed
 
+  const tooltipContent = getStageTooltip(stage, data)
+
   return (
     <div className="relative">
       {/* Row content */}
-      <div
-        className={cn(
-          'flex items-center gap-2 py-0.5 group',
-          expandable && 'cursor-pointer hover:bg-white/5 rounded px-1 -mx-1',
-        )}
-        title={getStageTooltip(stage, data)}
-        onClick={expandable ? onToggle : undefined}
-      >
-        {/* Icon */}
-        <div className="w-4 h-4 flex items-center justify-center shrink-0 relative z-10">
-          {state === 'completed' && <Check className="w-3.5 h-3.5 text-emerald-500" />}
-          {state === 'running' && <Loader2 className="w-3.5 h-3.5 text-blue-400 animate-spin" />}
-          {state === 'paused' && <Pause className="w-3 h-3 text-yellow-400" />}
-          {state === 'gate-waiting' && <Pause className="w-3 h-3 text-yellow-400" />}
-          {(state === 'failed' || state === 'timeout') && (
-            <X className="w-3.5 h-3.5 text-red-400" />
-          )}
-          {state === 'skipped' && <Circle className="w-2.5 h-2.5 text-zinc-600" />}
-          {state === 'pending' && <Circle className="w-2.5 h-2.5 text-zinc-700" />}
-        </div>
-
-        {/* Label */}
-        <span
+      <SimpleTooltip content={tooltipContent} side="right">
+        <div
           className={cn(
-            'text-xs truncate flex-1',
-            state === 'completed' && 'text-zinc-400',
-            state === 'running' && 'text-blue-400 font-medium',
-            state === 'paused' && 'text-yellow-400 font-medium',
-            state === 'gate-waiting' && 'text-yellow-400 font-medium',
-            (state === 'failed' || state === 'timeout') && 'text-red-400',
-            state === 'skipped' && 'text-zinc-600 line-through',
-            state === 'pending' && 'text-zinc-600',
+            'flex items-center gap-2 py-0.5 group',
+            expandable && 'cursor-pointer hover:bg-white/5 rounded px-1 -mx-1',
           )}
+          onClick={expandable ? onToggle : undefined}
         >
-          {label}
-        </span>
+          {/* Icon */}
+          <div className="w-4 h-4 flex items-center justify-center shrink-0 relative z-10">
+            {state === 'completed' && <Check className="w-3.5 h-3.5 text-emerald-500" />}
+            {state === 'running' && <Loader2 className="w-3.5 h-3.5 text-blue-400 animate-spin" />}
+            {state === 'paused' && <Pause className="w-3 h-3 text-yellow-400" />}
+            {state === 'gate-waiting' && <Pause className="w-3 h-3 text-yellow-400" />}
+            {(state === 'failed' || state === 'timeout') && (
+              <X className="w-3.5 h-3.5 text-red-400" />
+            )}
+            {state === 'skipped' && <Circle className="w-2.5 h-2.5 text-zinc-600" />}
+            {state === 'pending' && <Circle className="w-2.5 h-2.5 text-zinc-700" />}
+          </div>
 
-        {/* Duration (completed stages only) */}
-        {state === 'completed' && elapsed && (
-          <span className="text-[10px] text-zinc-600 font-mono tabular-nums">
-            {formatDuration(elapsed * 1000)}
+          {/* Label */}
+          <span
+            className={cn(
+              'text-xs truncate flex-1',
+              state === 'completed' && 'text-zinc-400',
+              state === 'running' && 'text-blue-400 font-medium',
+              state === 'paused' && 'text-yellow-400 font-medium',
+              state === 'gate-waiting' && 'text-yellow-400 font-medium',
+              (state === 'failed' || state === 'timeout') && 'text-red-400',
+              state === 'skipped' && 'text-zinc-600 line-through',
+              state === 'pending' && 'text-zinc-600',
+            )}
+          >
+            {label}
           </span>
-        )}
 
-        {/* Running indicator */}
-        {state === 'running' && <span className="text-[10px] text-blue-400/70">running</span>}
+          {/* Duration (completed stages only) */}
+          {state === 'completed' && elapsed && (
+            <span className="text-[10px] text-zinc-600 font-mono tabular-nums">
+              {formatDuration(elapsed * 1000)}
+            </span>
+          )}
 
-        {/* Expand chevron for failed stages */}
-        {expandable && <span className="text-zinc-500">{expanded ? '−' : '+'}</span>}
-      </div>
+          {/* Running indicator */}
+          {state === 'running' && <span className="text-[10px] text-blue-400/70">running</span>}
+
+          {/* Expand chevron for failed stages */}
+          {expandable && <span className="text-zinc-500">{expanded ? '−' : '+'}</span>}
+        </div>
+      </SimpleTooltip>
 
       {/* Expanded error detail for failed stages */}
       {expandable && expanded && (state === 'failed' || state === 'timeout') && data?.error && (

@@ -11,6 +11,7 @@ import type { CodyTask } from '../types'
 import { Button } from '@/ui/web/components/button'
 import { MergeButton } from './MergeButton'
 import { FixRequestDialog } from './FixRequestDialog'
+import { ConfirmDialog } from './ConfirmDialog'
 import { XCircle, Wrench, Loader2 } from 'lucide-react'
 import { tasksApi } from '../api'
 import { useGitHubIdentity } from '../hooks/useGitHubIdentity'
@@ -33,6 +34,7 @@ export function PreviewActions({
   className,
 }: PreviewActionsProps) {
   const [showFixDialog, setShowFixDialog] = useState(false)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [isCancelling, setIsCancelling] = useState(false)
   const { githubUser } = useGitHubIdentity()
 
@@ -40,7 +42,6 @@ export function PreviewActions({
   if (!pr) return null
 
   const handleCancelPR = async () => {
-    if (!confirm('Close this PR? The branch will remain but the PR will be closed.')) return
     setIsCancelling(true)
     try {
       await tasksApi.closePR(task.issueNumber, githubUser?.login)
@@ -98,7 +99,7 @@ export function PreviewActions({
         <Button
           variant="outline"
           size="sm"
-          onClick={handleCancelPR}
+          onClick={() => setShowCancelConfirm(true)}
           disabled={isCancelling}
           className="gap-1.5 text-red-400 border-red-500/30 hover:bg-red-500/10 ml-auto"
         >
@@ -116,6 +117,16 @@ export function PreviewActions({
         onClose={() => setShowFixDialog(false)}
         onSubmit={handleFixSubmit}
         prNumber={pr.number}
+      />
+
+      <ConfirmDialog
+        open={showCancelConfirm}
+        title="Close PR"
+        description="Close this PR? The branch will remain but the PR will be closed."
+        confirmLabel="Close PR"
+        variant="destructive"
+        onConfirm={handleCancelPR}
+        onClose={() => setShowCancelConfirm(false)}
       />
     </>
   )

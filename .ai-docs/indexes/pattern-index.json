@@ -196,8 +196,10 @@
         "src/ui/cody/components/CommentBox.tsx",
         "src/ui/cody/components/CommentEditor.tsx",
         "src/ui/cody/components/CommentList.tsx",
+        "src/ui/cody/components/ConfirmDialog.tsx",
         "src/ui/cody/components/CreateTaskDialog.tsx",
         "src/ui/cody/components/EnvironmentToolbar.tsx",
+        "src/ui/cody/components/ErrorBoundary.tsx",
         "src/ui/cody/components/FilterBar.tsx",
         "src/ui/cody/components/FixRequestDialog.tsx",
         "src/ui/cody/components/GitHubUserPickerDialog.tsx",
@@ -315,8 +317,14 @@
       "pattern": "dashboard-page",
       "description": "No description available",
       "files": [
+        "src/app/(cody)/cody/[issueNumber]/comments/page.tsx",
         "src/app/(cody)/cody/[issueNumber]/page.tsx",
+        "src/app/(cody)/cody/[issueNumber]/preview/comments/page.tsx",
+        "src/app/(cody)/cody/[issueNumber]/preview/docs/page.tsx",
         "src/app/(cody)/cody/[issueNumber]/preview/page.tsx",
+        "src/app/(cody)/cody/bug/page.tsx",
+        "src/app/(cody)/cody/chat/page.tsx",
+        "src/app/(cody)/cody/new/page.tsx",
         "src/app/(cody)/cody/page.tsx"
       ]
     },
@@ -361,6 +369,7 @@
         "src/ui/cody/components/CodyStatusBanner.tsx",
         "src/ui/cody/components/CommentEditor.tsx",
         "src/ui/cody/components/CommentList.tsx",
+        "src/ui/cody/components/ConfirmDialog.tsx",
         "src/ui/cody/components/CreateTaskDialog.tsx",
         "src/ui/cody/components/FilterBar.tsx",
         "src/ui/cody/components/MergeApprovalDialog.tsx",
@@ -1446,6 +1455,11 @@
       "description": "No description available",
       "files": ["src/ui/cody/components/CommentList.tsx"]
     },
+    "confirm-dialog": {
+      "pattern": "confirm-dialog",
+      "description": "No description available",
+      "files": ["src/ui/cody/components/ConfirmDialog.tsx"]
+    },
     "create-task-dialog": {
       "pattern": "create-task-dialog",
       "description": "No description available",
@@ -1455,6 +1469,11 @@
       "pattern": "environment-toolbar",
       "description": "No description available",
       "files": ["src/ui/cody/components/EnvironmentToolbar.tsx"]
+    },
+    "error-boundary": {
+      "pattern": "error-boundary",
+      "description": "No description available",
+      "files": ["src/ui/cody/components/ErrorBoundary.tsx"]
     },
     "filter-bar": {
       "pattern": "filter-bar",
@@ -1638,12 +1657,36 @@
       "aiSummary": "Client-side providers wrapper for Cody dashboard (QueryClientProvider)",
       "dependencies": ["@tanstack/react-query", "react"]
     },
+    "src/app/(cody)/cody/[issueNumber]/comments/page.tsx": {
+      "path": "src/app/(cody)/cody/[issueNumber]/comments/page.tsx",
+      "type": "page",
+      "domain": "cody",
+      "patterns": ["dashboard-page"],
+      "aiSummary": "Cody dashboard with task detail on Comments tab via URL /cody/[n]/comments",
+      "dependencies": ["next/navigation", "next"]
+    },
     "src/app/(cody)/cody/[issueNumber]/page.tsx": {
       "path": "src/app/(cody)/cody/[issueNumber]/page.tsx",
       "type": "page",
       "domain": "cody",
       "patterns": ["dashboard-page"],
       "aiSummary": "Cody dashboard with a specific task pre-selected via URL",
+      "dependencies": ["next/navigation", "next"]
+    },
+    "src/app/(cody)/cody/[issueNumber]/preview/comments/page.tsx": {
+      "path": "src/app/(cody)/cody/[issueNumber]/preview/comments/page.tsx",
+      "type": "page",
+      "domain": "cody",
+      "patterns": ["dashboard-page"],
+      "aiSummary": "Cody dashboard with preview modal on Comments tab via URL /cody/[n]/preview/comments",
+      "dependencies": ["next/navigation", "next"]
+    },
+    "src/app/(cody)/cody/[issueNumber]/preview/docs/page.tsx": {
+      "path": "src/app/(cody)/cody/[issueNumber]/preview/docs/page.tsx",
+      "type": "page",
+      "domain": "cody",
+      "patterns": ["dashboard-page"],
+      "aiSummary": "Cody dashboard with preview modal on Docs tab via URL /cody/[n]/preview/docs",
       "dependencies": ["next/navigation", "next"]
     },
     "src/app/(cody)/cody/[issueNumber]/preview/page.tsx": {
@@ -1654,6 +1697,22 @@
       "aiSummary": "Cody dashboard with preview modal pre-opened via URL /cody/[n]/preview",
       "dependencies": ["next/navigation", "next"]
     },
+    "src/app/(cody)/cody/bug/page.tsx": {
+      "path": "src/app/(cody)/cody/bug/page.tsx",
+      "type": "page",
+      "domain": "cody",
+      "patterns": ["dashboard-page"],
+      "aiSummary": "Cody dashboard with bug report dialog pre-opened via URL /cody/bug",
+      "dependencies": ["next/navigation", "next"]
+    },
+    "src/app/(cody)/cody/chat/page.tsx": {
+      "path": "src/app/(cody)/cody/chat/page.tsx",
+      "type": "page",
+      "domain": "cody",
+      "patterns": ["dashboard-page"],
+      "aiSummary": "Cody dashboard with chat panel pre-opened via URL /cody/chat",
+      "dependencies": ["next/navigation", "next"]
+    },
     "src/app/(cody)/cody/error.tsx": {
       "path": "src/app/(cody)/cody/error.tsx",
       "type": "error-boundary",
@@ -1661,6 +1720,14 @@
       "patterns": ["next-error-boundary", "client-component"],
       "aiSummary": "Error boundary for the Cody dashboard — catches runtime errors and lets the user retry",
       "dependencies": ["react", "lucide-react"]
+    },
+    "src/app/(cody)/cody/new/page.tsx": {
+      "path": "src/app/(cody)/cody/new/page.tsx",
+      "type": "page",
+      "domain": "cody",
+      "patterns": ["dashboard-page"],
+      "aiSummary": "Cody dashboard with create task dialog pre-opened via URL /cody/new",
+      "dependencies": ["next/navigation", "next"]
     },
     "src/app/(cody)/cody/page.tsx": {
       "path": "src/app/(cody)/cody/page.tsx",
@@ -4544,7 +4611,7 @@
       "domain": "cody",
       "patterns": ["cody-dashboard", "client-component"],
       "aiSummary": "Main dashboard component with responsive layout — Sheet for mobile controls and task detail",
-      "dependencies": ["react", "lucide-react", "@tanstack/react-query", "sonner"]
+      "dependencies": ["react", "@tanstack/react-query", "sonner"]
     },
     "src/ui/cody/components/CodyStatusBanner.tsx": {
       "path": "src/ui/cody/components/CodyStatusBanner.tsx",
@@ -4578,6 +4645,14 @@
       "aiSummary": "Component to display comments with markdown rendering",
       "dependencies": ["react", "react-markdown", "remark-gfm"]
     },
+    "src/ui/cody/components/ConfirmDialog.tsx": {
+      "path": "src/ui/cody/components/ConfirmDialog.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["confirm-dialog", "tailwind-component", "client-component"],
+      "aiSummary": "Reusable confirmation dialog replacing native confirm() calls with accessible modal",
+      "dependencies": []
+    },
     "src/ui/cody/components/CreateTaskDialog.tsx": {
       "path": "src/ui/cody/components/CreateTaskDialog.tsx",
       "type": "component",
@@ -4594,13 +4669,21 @@
       "aiSummary": "Toolbar with Dev/Prod site links and Publish button with confirmation dialog",
       "dependencies": ["react", "lucide-react"]
     },
+    "src/ui/cody/components/ErrorBoundary.tsx": {
+      "path": "src/ui/cody/components/ErrorBoundary.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["error-boundary", "client-component"],
+      "aiSummary": "React error boundary that catches render errors and shows a \"Something went wrong\" fallback",
+      "dependencies": ["react", "lucide-react"]
+    },
     "src/ui/cody/components/FilterBar.tsx": {
       "path": "src/ui/cody/components/FilterBar.tsx",
       "type": "component",
       "domain": "cody",
       "patterns": ["filter-bar", "tailwind-component", "client-component"],
       "aiSummary": "Dedicated filter sub-header bar for Cody dashboard with view toggle, date, status, and label filters",
-      "dependencies": []
+      "dependencies": ["lucide-react"]
     },
     "src/ui/cody/components/FixRequestDialog.tsx": {
       "path": "src/ui/cody/components/FixRequestDialog.tsx",
@@ -5785,8 +5868,8 @@
     }
   },
   "metadata": {
-    "generatedAt": "2026-03-12T21:28:06.797Z",
-    "totalFiles": 512,
-    "totalPatterns": 173
+    "generatedAt": "2026-03-12T23:19:17.769Z",
+    "totalFiles": 520,
+    "totalPatterns": 175
   }
 }

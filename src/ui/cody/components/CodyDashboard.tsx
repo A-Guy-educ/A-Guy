@@ -33,7 +33,16 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/ui/web/components/sheet'
-import { MessageSquare, Bug, Menu, RefreshCw, Bell, Globe } from 'lucide-react'
+import {
+  MessageSquare,
+  Bug,
+  Menu,
+  RefreshCw,
+  Bell,
+  Globe,
+  AlertCircle,
+  X as XIcon,
+} from 'lucide-react'
 import { useCodyTasks, queryKeys } from '../hooks'
 import { useBrowserNotifications } from '../hooks/useBrowserNotifications'
 import { useMediaQuery } from '@/server/payload/hooks/useMediaQuery'
@@ -41,6 +50,7 @@ import { RateLimitError, NoTokenError, tasksApi, codyApi } from '../api'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { EnvironmentToolbar } from './EnvironmentToolbar'
+import { ErrorBoundary } from './ErrorBoundary'
 import { GitHubUserPickerDialog } from './GitHubUserPickerDialog'
 import { useGitHubIdentity } from '../hooks/useGitHubIdentity'
 import { Avatar, AvatarFallback, AvatarImage } from '@/ui/web/components/avatar'
@@ -58,14 +68,46 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
   const [selectedIssueNumber, setSelectedIssueNumber] = useState<number | null>(null)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showBugDialog, setShowBugDialog] = useState(false)
-  const [dateFilter, setDateFilter] = useState<string>('30d')
-  const [labelFilter, setLabelFilter] = useState<string>('all')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [viewMode, setViewMode] = useState<ViewMode>('running')
+  const [dateFilter, setDateFilter] = useState<string>(() => {
+    if (typeof window === 'undefined') return '30d'
+    return new URLSearchParams(window.location.search).get('date') ?? '30d'
+  })
+  const [labelFilter, setLabelFilter] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'all'
+    return new URLSearchParams(window.location.search).get('label') ?? 'all'
+  })
+  const [statusFilter, setStatusFilter] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'all'
+    return new URLSearchParams(window.location.search).get('status') ?? 'all'
+  })
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    if (typeof window === 'undefined') return 'running'
+    const v = new URLSearchParams(window.location.search).get('view')
+    return (v === 'backlog' ? 'backlog' : 'running') as ViewMode
+  })
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [showMobileDetail, setShowMobileDetail] = useState(false)
   const [showMobileChat, setShowMobileChat] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
+  const [errorDismissed, setErrorDismissed] = useState(false)
+  const [searchQuery, setSearchQuery] = useState<string>(() => {
+    if (typeof window === 'undefined') return ''
+    return new URLSearchParams(window.location.search).get('q') ?? ''
+  })
+  const [debouncedSearch, setDebouncedSearch] = useState(searchQuery)
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value)
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current)
+    searchDebounceRef.current = setTimeout(() => setDebouncedSearch(value), 300)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current)
+    }
+  }, [])
 
   // md breakpoint = 768px — below this is "mobile"
   const isDesktop = useMediaQuery('(min-width: 768px)')
@@ -251,8 +293,27 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
   useEffect(() => {
     if (tasks.length > 0) {
       checkTaskChanges(tasks)
+      setErrorDismissed(false) // Reset banner dismissal on successful fetch
     }
   }, [tasks, dataUpdatedAt, checkTaskChanges])
+
+  // Persist filter state in URL params
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (dateFilter !== '30d') params.set('date', dateFilter)
+    else params.delete('date')
+    if (statusFilter !== 'all') params.set('status', statusFilter)
+    else params.delete('status')
+    if (labelFilter !== 'all') params.set('label', labelFilter)
+    else params.delete('label')
+    if (viewMode !== 'running') params.set('view', viewMode)
+    else params.delete('view')
+    if (debouncedSearch) params.set('q', debouncedSearch)
+    else params.delete('q')
+    const search = params.toString()
+    const newUrl = window.location.pathname + (search ? `?${search}` : '')
+    window.history.replaceState(null, '', newUrl)
+  }, [dateFilter, statusFilter, labelFilter, viewMode, debouncedSearch])
 
   // Get unique labels from tasks (excluding internal/system labels)
   const availableLabels = Array.from(new Set(tasks.flatMap((task) => task.labels)))
@@ -299,7 +360,14 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
   const { runningCount, backlogCount } = getViewModeCounts(tasks)
 
   // Filter tasks by view mode, then by status and label (combined with AND logic)
-  const filteredTasks = filterTasksByView(tasks, { viewMode, statusFilter, labelFilter })
+  const baseFilteredTasks = filterTasksByView(tasks, { viewMode, statusFilter, labelFilter })
+  const filteredTasks = useMemo(() => {
+    if (!debouncedSearch.trim()) return baseFilteredTasks
+    const q = debouncedSearch.toLowerCase()
+    return baseFilteredTasks.filter(
+      (t) => t.title.toLowerCase().includes(q) || String(t.issueNumber).includes(q),
+    )
+  }, [baseFilteredTasks, debouncedSearch])
 
   // Check for specific errors
   const isRateLimited = error instanceof RateLimitError
@@ -529,26 +597,7 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
   // Show identity picker if no GitHub user is selected yet
   const showIdentityPicker = identityLoaded && !githubUser
 
-  // Rate limit error display
-  if (isRateLimited) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center max-w-md p-6">
-          <div className="text-6xl mb-4">⏳</div>
-          <h2 className="text-xl font-semibold text-foreground mb-2">GitHub API Rate Limited</h2>
-          <p className="text-muted-foreground mb-4">
-            Too many requests to GitHub. Please wait before refreshing.
-          </p>
-          {retryAfter && <p className="text-sm text-yellow-500 mb-4">Retry after: {retryAfter}</p>}
-          <Button onClick={() => refetch()} variant="outline">
-            Retry Now
-          </Button>
-        </div>
-      </div>
-    )
-  }
-
-  // No token error display
+  // No token error — full-page (can't function without token)
   if (isNoToken) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -564,338 +613,381 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
     )
   }
 
-  // Generic error display
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center max-w-md p-6">
-          <div className="text-6xl mb-4">⚠️</div>
-          <h2 className="text-xl font-semibold text-foreground mb-2">Unable to Load Tasks</h2>
-          <p className="text-muted-foreground mb-4">{error.message}</p>
-          <Button onClick={() => refetch()}>Retry</Button>
-        </div>
-      </div>
-    )
-  }
+  // Build an inline error banner message for rate limit / generic errors
+  const errorBannerMessage = !errorDismissed
+    ? isRateLimited
+      ? `GitHub API rate limited${retryAfter ? ` — retry after ${retryAfter}` : ''}`
+      : error
+        ? error.message
+        : null
+    : null
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
-      {/* GitHub identity picker — forced on first visit */}
-      <GitHubUserPickerDialog
-        open={showIdentityPicker}
-        collaborators={collaborators}
-        isLoading={collaboratorsLoading}
-        onSelect={setGitHubUser}
-      />
-      {/* Preview Modal — full-screen overlay */}
-      {showPreview && selectedTask && (
-        <PreviewModal
-          task={selectedTask}
-          onClose={handleClosePreview}
-          onMerge={() => handleMerge(selectedTask)}
-          isMerging={!!(mergingTaskId === selectedTask.id)}
+    <ErrorBoundary>
+      <div className="flex h-screen bg-background overflow-hidden">
+        {/* GitHub identity picker — forced on first visit */}
+        <GitHubUserPickerDialog
+          open={showIdentityPicker}
+          collaborators={collaborators}
+          isLoading={collaboratorsLoading}
+          onSelect={setGitHubUser}
         />
-      )}
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* When a task is selected, TaskDetail takes over the entire left column */}
-        {selectedTask ? (
-          <TaskDetail
+        {/* Preview Modal — full-screen overlay */}
+        {showPreview && selectedTask && (
+          <PreviewModal
             task={selectedTask}
-            onClose={() => handleTaskSelect(null)}
-            onRefresh={refetch}
-            onApproveReview={handleMerge}
-            isMerging={!!(selectedTask && mergingTaskId === selectedTask.id)}
-            onOpenPreview={() => selectedTask && handleOpenPreview(selectedTask)}
+            onClose={handleClosePreview}
+            onMerge={() => handleMerge(selectedTask)}
+            isMerging={!!(mergingTaskId === selectedTask.id)}
           />
-        ) : (
-          <>
-            {/* Header — action buttons only, no filters */}
-            <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-white/[0.06] bg-black/20">
-              <h1 className="text-lg md:text-xl font-semibold text-foreground">Cody Operations</h1>
-
-              {/* Desktop controls */}
-              <div className="hidden md:flex items-center gap-3">
-                {/* GitHub identity badge */}
-                {githubUser && (
-                  <SimpleTooltip
-                    content={`Logged in as @${githubUser.login} — click to switch`}
-                    side="bottom"
-                  >
-                    <button
-                      type="button"
-                      onClick={clearGitHubUser}
-                      className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-accent transition-colors"
-                    >
-                      <Avatar className="h-5 w-5">
-                        <AvatarImage src={githubUser.avatar_url} alt={githubUser.login} />
-                        <AvatarFallback>{githubUser.login[0]?.toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                      <span className="text-xs text-muted-foreground">@{githubUser.login}</span>
-                    </button>
-                  </SimpleTooltip>
-                )}
-
-                {/* Notification status */}
-                {notificationsSupported && (
-                  <SimpleTooltip
-                    content={
-                      notificationPermission === 'granted'
-                        ? 'Notifications enabled'
-                        : 'Enable notifications'
-                    }
-                    side="bottom"
-                  >
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => Notification.requestPermission()}
-                      className={
-                        notificationPermission === 'granted'
-                          ? 'text-green-500'
-                          : 'text-muted-foreground'
-                      }
-                    >
-                      <Bell className="w-4 h-4" />
-                    </Button>
-                  </SimpleTooltip>
-                )}
-                <SimpleTooltip content="Refresh tasks" side="bottom">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => refetch()}
-                    disabled={isFetching}
-                    className="gap-1"
-                  >
-                    <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
-                  </Button>
-                </SimpleTooltip>
-                <SimpleTooltip content="Report a bug" side="bottom">
-                  <Button variant="outline" onClick={handleOpenBug}>
-                    <Bug className="w-4 h-4 mr-2" />
-                    Report Bug
-                  </Button>
-                </SimpleTooltip>
-                <SimpleTooltip content="Create new task" side="bottom">
-                  <Button onClick={handleOpenCreate}>+ New Task</Button>
-                </SimpleTooltip>
-              </div>
-
-              {/* Mobile hamburger */}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="md:hidden"
-                onClick={() => setShowMobileMenu(true)}
-              >
-                <Menu className="w-5 h-5" />
-              </Button>
-            </div>
-
-            {/* Filter Sub-header — desktop only, separate component */}
-            <div className="hidden md:block">
-              <FilterBar
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
-                dateFilter={dateFilter}
-                onDateFilterChange={setDateFilter}
-                statusFilter={statusFilter}
-                onStatusFilterChange={setStatusFilter}
-                labelFilter={labelFilter}
-                onLabelFilterChange={setLabelFilter}
-                availableLabels={availableLabels}
-                labelCounts={labelCounts}
-                statusCounts={statusCounts}
-                totalCount={totalCount}
-                filteredCount={filteredTasks.length}
-                runningCount={runningCount}
-                backlogCount={backlogCount}
-              />
-            </div>
-
-            {/* Environment Toolbar */}
-            <EnvironmentToolbar />
-
-            {/* Cody Status Banner */}
-            <CodyStatusBanner tasks={tasks} isFetching={isFetching} dataUpdatedAt={dataUpdatedAt} />
-
-            {/* Task List */}
-            <div className="flex-1 min-h-0 overflow-y-auto">
-              {isLoading && tasks.length === 0 ? (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-muted-foreground">Loading...</div>
-                </div>
-              ) : (
-                <TaskList
-                  tasks={filteredTasks}
-                  selectedTask={selectedTask}
-                  executingTaskId={executingTaskId}
-                  mergingTaskId={mergingTaskId}
-                  onTaskSelect={handleTaskSelect}
-                  onExecuteTask={handleExecuteTask}
-                  onStopTask={handleStopTask}
-                  onApproveReview={handleMerge}
-                  onTaskHover={handleTaskHover}
-                  collaborators={collaborators}
-                  onAssign={(issueNumber, assignees) =>
-                    assignMutation.mutate({ issueNumber, assignees })
-                  }
-                  onUnassign={(issueNumber, assignees) =>
-                    unassignMutation.mutate({ issueNumber, assignees })
-                  }
-                  onOpenPreview={handleOpenPreview}
-                />
-              )}
-            </div>
-          </>
         )}
-      </div>
-
-      {/* Desktop: Chat Panel (right side, always visible) */}
-      <div className="hidden md:block w-[400px] border-l border-border">
-        <CodyChat selectedTask={selectedTask} />
-      </div>
-
-      {/* Mobile Menu Sheet */}
-      <Sheet open={showMobileMenu} onOpenChange={setShowMobileMenu}>
-        <SheetContent side="right" className="w-[280px] p-0">
-          <SheetHeader className="px-4 pt-4 pb-2">
-            <SheetTitle>Menu</SheetTitle>
-            <SheetDescription className="sr-only">Dashboard controls and filters</SheetDescription>
-          </SheetHeader>
-          <div className="flex flex-col gap-3 px-4 pb-4">
-            {/* GitHub identity */}
-            {githubUser && (
-              <button
-                type="button"
-                onClick={() => {
-                  clearGitHubUser()
-                  setShowMobileMenu(false)
-                }}
-                className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-accent transition-colors border border-border"
-              >
-                <Avatar className="h-6 w-6">
-                  <AvatarImage src={githubUser.avatar_url} alt={githubUser.login} />
-                  <AvatarFallback>{githubUser.login[0]?.toUpperCase()}</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col items-start">
-                  <span className="text-sm font-medium">@{githubUser.login}</span>
-                  <span className="text-xs text-muted-foreground">Tap to switch</span>
-                </div>
-              </button>
-            )}
-
-            {/* Chat */}
-            <Button
-              variant="outline"
-              className="w-full justify-start gap-2"
-              onClick={() => {
-                setShowMobileMenu(false)
-                handleOpenChat()
-              }}
-            >
-              <MessageSquare className="w-4 h-4" />
-              Chat with Cody
-            </Button>
-
-            {/* Filters */}
-            <div className="space-y-2">
-              <span className="text-xs font-medium text-muted-foreground uppercase">Filters</span>
-              {mobileFilterControls}
-            </div>
-
-            {/* Environment Links */}
-            <div className="space-y-2 pt-2 border-t border-border">
-              <span className="text-xs font-medium text-muted-foreground uppercase">
-                Environment
-              </span>
-              <a href={SITE_URLS.dev} target="_blank" rel="noopener noreferrer" className="block">
-                <Button variant="outline" className="w-full justify-start gap-2">
-                  <Globe className="w-4 h-4" />
-                  Dev Site
-                </Button>
-              </a>
-              <a href={SITE_URLS.prod} target="_blank" rel="noopener noreferrer" className="block">
-                <Button variant="outline" className="w-full justify-start gap-2">
-                  <Globe className="w-4 h-4" />
-                  Prod Site
-                </Button>
-              </a>
-            </div>
-
-            {/* Actions */}
-            <div className="space-y-2 pt-2 border-t border-border">
-              <span className="text-xs font-medium text-muted-foreground uppercase">Actions</span>
-              <Button
-                variant="outline"
-                className="w-full justify-start gap-2"
-                onClick={() => {
-                  setShowMobileMenu(false)
-                  handleOpenBug()
-                }}
-              >
-                <Bug className="w-4 h-4" />
-                Report Bug
-              </Button>
-              <Button
-                className="w-full"
-                onClick={() => {
-                  setShowMobileMenu(false)
-                  handleOpenCreate()
-                }}
-              >
-                + New Task
-              </Button>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      {/* Mobile Task Detail Sheet — only rendered on mobile */}
-      {!isDesktop && (
-        <Sheet
-          open={showMobileDetail && !!selectedTask}
-          onOpenChange={(open) => {
-            if (!open) {
-              handleTaskSelect(null)
-            }
-          }}
-        >
-          <SheetContent side="right" className="w-full sm:w-[400px] p-0" hideClose>
-            <SheetHeader className="sr-only">
-              <SheetTitle>Task Details</SheetTitle>
-              <SheetDescription>View and manage task details</SheetDescription>
-            </SheetHeader>
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* When a task is selected, TaskDetail takes over the entire left column */}
+          {selectedTask ? (
             <TaskDetail
               task={selectedTask}
               onClose={() => handleTaskSelect(null)}
               onRefresh={refetch}
               onApproveReview={handleMerge}
               isMerging={!!(selectedTask && mergingTaskId === selectedTask.id)}
+              onOpenPreview={() => selectedTask && handleOpenPreview(selectedTask)}
             />
-          </SheetContent>
-        </Sheet>
-      )}
+          ) : (
+            <>
+              {/* Header — action buttons only, no filters */}
+              <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-white/[0.06] bg-black/20">
+                <h1 className="text-lg md:text-xl font-semibold text-foreground">
+                  Cody Operations
+                </h1>
 
-      {/* Mobile Chat Sheet — only rendered on mobile */}
-      {!isDesktop && (
-        <Sheet open={showMobileChat} onOpenChange={handleCloseChat}>
-          <SheetContent side="right" className="w-full sm:w-[400px] p-0">
-            <SheetHeader className="sr-only">
-              <SheetTitle>Chat with Cody</SheetTitle>
-              <SheetDescription>AI assistant chat</SheetDescription>
+                {/* Desktop controls */}
+                <div className="hidden md:flex items-center gap-3">
+                  {/* GitHub identity badge */}
+                  {githubUser && (
+                    <SimpleTooltip
+                      content={`Logged in as @${githubUser.login} — click to switch`}
+                      side="bottom"
+                    >
+                      <button
+                        type="button"
+                        onClick={clearGitHubUser}
+                        className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-accent transition-colors"
+                      >
+                        <Avatar className="h-5 w-5">
+                          <AvatarImage src={githubUser.avatar_url} alt={githubUser.login} />
+                          <AvatarFallback>{githubUser.login[0]?.toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <span className="text-xs text-muted-foreground">@{githubUser.login}</span>
+                      </button>
+                    </SimpleTooltip>
+                  )}
+
+                  {/* Notification status */}
+                  {notificationsSupported && (
+                    <SimpleTooltip
+                      content={
+                        notificationPermission === 'granted'
+                          ? 'Notifications enabled'
+                          : 'Enable notifications'
+                      }
+                      side="bottom"
+                    >
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => Notification.requestPermission()}
+                        aria-label={
+                          notificationPermission === 'granted'
+                            ? 'Notifications enabled'
+                            : 'Enable notifications'
+                        }
+                        className={
+                          notificationPermission === 'granted'
+                            ? 'text-green-500'
+                            : 'text-muted-foreground'
+                        }
+                      >
+                        <Bell className="w-4 h-4" />
+                      </Button>
+                    </SimpleTooltip>
+                  )}
+                  <SimpleTooltip content="Refresh tasks" side="bottom">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => refetch()}
+                      disabled={isFetching}
+                      aria-label="Refresh tasks"
+                      className="gap-1"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
+                    </Button>
+                  </SimpleTooltip>
+                  <SimpleTooltip content="Report a bug" side="bottom">
+                    <Button variant="outline" onClick={handleOpenBug}>
+                      <Bug className="w-4 h-4 mr-2" />
+                      Report Bug
+                    </Button>
+                  </SimpleTooltip>
+                  <SimpleTooltip content="Create new task" side="bottom">
+                    <Button onClick={handleOpenCreate}>+ New Task</Button>
+                  </SimpleTooltip>
+                </div>
+
+                {/* Mobile hamburger */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label="Open menu"
+                  className="md:hidden"
+                  onClick={() => setShowMobileMenu(true)}
+                >
+                  <Menu className="w-5 h-5" />
+                </Button>
+              </div>
+
+              {/* Filter Sub-header — desktop only, separate component */}
+              <div className="hidden md:block">
+                <FilterBar
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
+                  dateFilter={dateFilter}
+                  onDateFilterChange={setDateFilter}
+                  statusFilter={statusFilter}
+                  onStatusFilterChange={setStatusFilter}
+                  labelFilter={labelFilter}
+                  onLabelFilterChange={setLabelFilter}
+                  availableLabels={availableLabels}
+                  labelCounts={labelCounts}
+                  statusCounts={statusCounts}
+                  totalCount={totalCount}
+                  filteredCount={filteredTasks.length}
+                  runningCount={runningCount}
+                  backlogCount={backlogCount}
+                  searchQuery={searchQuery}
+                  onSearchChange={handleSearchChange}
+                />
+              </div>
+
+              {/* Environment Toolbar */}
+              <EnvironmentToolbar />
+
+              {/* Error banner (rate limit / generic errors — dismissible, stale data still shown) */}
+              {errorBannerMessage && (
+                <div className="flex items-center gap-3 px-4 py-2.5 bg-red-500/10 border-b border-red-500/20 text-sm text-red-400">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span className="flex-1">{errorBannerMessage}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs text-red-400 hover:bg-red-500/10 shrink-0"
+                    onClick={() => refetch()}
+                  >
+                    Retry
+                  </Button>
+                  <button
+                    onClick={() => setErrorDismissed(true)}
+                    className="text-red-400 hover:text-red-300"
+                    aria-label="Dismiss error"
+                  >
+                    <XIcon className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+
+              {/* Cody Status Banner */}
+              <CodyStatusBanner
+                tasks={tasks}
+                isFetching={isFetching}
+                dataUpdatedAt={dataUpdatedAt}
+              />
+
+              {/* Task List */}
+              <div className="flex-1 min-h-0 overflow-y-auto">
+                {isLoading && tasks.length === 0 ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-muted-foreground">Loading...</div>
+                  </div>
+                ) : (
+                  <TaskList
+                    tasks={filteredTasks}
+                    selectedTask={selectedTask}
+                    executingTaskId={executingTaskId}
+                    mergingTaskId={mergingTaskId}
+                    onTaskSelect={handleTaskSelect}
+                    onExecuteTask={handleExecuteTask}
+                    onStopTask={handleStopTask}
+                    onApproveReview={handleMerge}
+                    onTaskHover={handleTaskHover}
+                    collaborators={collaborators}
+                    onAssign={(issueNumber, assignees) =>
+                      assignMutation.mutate({ issueNumber, assignees })
+                    }
+                    onUnassign={(issueNumber, assignees) =>
+                      unassignMutation.mutate({ issueNumber, assignees })
+                    }
+                    onOpenPreview={handleOpenPreview}
+                    onCreateTask={handleOpenCreate}
+                  />
+                )}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Desktop: Chat Panel (right side, always visible) */}
+        <div className="hidden md:block w-[400px] border-l border-border">
+          <CodyChat selectedTask={selectedTask} />
+        </div>
+
+        {/* Mobile Menu Sheet */}
+        <Sheet open={showMobileMenu} onOpenChange={setShowMobileMenu}>
+          <SheetContent side="right" className="w-[280px] p-0">
+            <SheetHeader className="px-4 pt-4 pb-2">
+              <SheetTitle>Menu</SheetTitle>
+              <SheetDescription className="sr-only">
+                Dashboard controls and filters
+              </SheetDescription>
             </SheetHeader>
-            <CodyChat selectedTask={selectedTask} />
+            <div className="flex flex-col gap-3 px-4 pb-4">
+              {/* GitHub identity */}
+              {githubUser && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    clearGitHubUser()
+                    setShowMobileMenu(false)
+                  }}
+                  className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-accent transition-colors border border-border"
+                >
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={githubUser.avatar_url} alt={githubUser.login} />
+                    <AvatarFallback>{githubUser.login[0]?.toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col items-start">
+                    <span className="text-sm font-medium">@{githubUser.login}</span>
+                    <span className="text-xs text-muted-foreground">Tap to switch</span>
+                  </div>
+                </button>
+              )}
+
+              {/* Chat */}
+              <Button
+                variant="outline"
+                className="w-full justify-start gap-2"
+                onClick={() => {
+                  setShowMobileMenu(false)
+                  handleOpenChat()
+                }}
+              >
+                <MessageSquare className="w-4 h-4" />
+                Chat with Cody
+              </Button>
+
+              {/* Filters */}
+              <div className="space-y-2">
+                <span className="text-xs font-medium text-muted-foreground uppercase">Filters</span>
+                {mobileFilterControls}
+              </div>
+
+              {/* Environment Links */}
+              <div className="space-y-2 pt-2 border-t border-border">
+                <span className="text-xs font-medium text-muted-foreground uppercase">
+                  Environment
+                </span>
+                <a href={SITE_URLS.dev} target="_blank" rel="noopener noreferrer" className="block">
+                  <Button variant="outline" className="w-full justify-start gap-2">
+                    <Globe className="w-4 h-4" />
+                    Dev Site
+                  </Button>
+                </a>
+                <a
+                  href={SITE_URLS.prod}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block"
+                >
+                  <Button variant="outline" className="w-full justify-start gap-2">
+                    <Globe className="w-4 h-4" />
+                    Prod Site
+                  </Button>
+                </a>
+              </div>
+
+              {/* Actions */}
+              <div className="space-y-2 pt-2 border-t border-border">
+                <span className="text-xs font-medium text-muted-foreground uppercase">Actions</span>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start gap-2"
+                  onClick={() => {
+                    setShowMobileMenu(false)
+                    handleOpenBug()
+                  }}
+                >
+                  <Bug className="w-4 h-4" />
+                  Report Bug
+                </Button>
+                <Button
+                  className="w-full"
+                  onClick={() => {
+                    setShowMobileMenu(false)
+                    handleOpenCreate()
+                  }}
+                >
+                  + New Task
+                </Button>
+              </div>
+            </div>
           </SheetContent>
         </Sheet>
-      )}
 
-      {/* Create Dialog */}
-      <CreateTaskDialog open={showCreateDialog} onClose={handleCloseCreate} onCreated={refetch} />
+        {/* Mobile Task Detail Sheet — only rendered on mobile */}
+        {!isDesktop && (
+          <Sheet
+            open={showMobileDetail && !!selectedTask}
+            onOpenChange={(open) => {
+              if (!open) {
+                handleTaskSelect(null)
+              }
+            }}
+          >
+            <SheetContent side="right" className="w-full sm:w-[400px] p-0" hideClose>
+              <SheetHeader className="sr-only">
+                <SheetTitle>Task Details</SheetTitle>
+                <SheetDescription>View and manage task details</SheetDescription>
+              </SheetHeader>
+              <TaskDetail
+                task={selectedTask}
+                onClose={() => handleTaskSelect(null)}
+                onRefresh={refetch}
+                onApproveReview={handleMerge}
+                isMerging={!!(selectedTask && mergingTaskId === selectedTask.id)}
+              />
+            </SheetContent>
+          </Sheet>
+        )}
 
-      {/* Bug Report Dialog */}
-      <BugReportDialog open={showBugDialog} onClose={handleCloseBug} onCreated={refetch} />
-    </div>
+        {/* Mobile Chat Sheet — only rendered on mobile */}
+        {!isDesktop && (
+          <Sheet open={showMobileChat} onOpenChange={handleCloseChat}>
+            <SheetContent side="right" className="w-full sm:w-[400px] p-0">
+              <SheetHeader className="sr-only">
+                <SheetTitle>Chat with Cody</SheetTitle>
+                <SheetDescription>AI assistant chat</SheetDescription>
+              </SheetHeader>
+              <CodyChat selectedTask={selectedTask} />
+            </SheetContent>
+          </Sheet>
+        )}
+
+        {/* Create Dialog */}
+        <CreateTaskDialog open={showCreateDialog} onClose={handleCloseCreate} onCreated={refetch} />
+
+        {/* Bug Report Dialog */}
+        <BugReportDialog open={showBugDialog} onClose={handleCloseBug} onCreated={refetch} />
+      </div>
+    </ErrorBoundary>
   )
 }

@@ -37,6 +37,7 @@ import {
   AlertCircle,
   RefreshCw,
   Eye,
+  Inbox,
 } from 'lucide-react'
 
 interface TaskListProps {
@@ -53,6 +54,7 @@ interface TaskListProps {
   onUnassign?: (issueNumber: number, assignees: string[]) => void
   collaborators?: { login: string; avatar_url: string }[]
   onOpenPreview?: (task: CodyTask) => void
+  onCreateTask?: () => void
 }
 
 // ── Status colors — single source of truth ──
@@ -131,6 +133,7 @@ export function TaskList({
   onAssign,
   onUnassign: _onUnassign,
   onOpenPreview,
+  onCreateTask,
   collaborators = [],
 }: TaskListProps) {
   const handleTaskClick = useCallback(
@@ -144,8 +147,21 @@ export function TaskList({
 
   if (tasks.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-muted-foreground">No tasks found</p>
+      <div className="flex flex-col items-center justify-center h-full gap-4 text-center px-6">
+        <div className="w-14 h-14 rounded-2xl bg-white/[0.03] ring-1 ring-white/[0.06] flex items-center justify-center">
+          <Inbox className="w-6 h-6 text-muted-foreground/40" />
+        </div>
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-foreground">No tasks found</p>
+          <p className="text-xs text-muted-foreground">
+            Tasks you create or that are assigned to Cody will appear here.
+          </p>
+        </div>
+        {onCreateTask && (
+          <Button size="sm" onClick={onCreateTask}>
+            + New Task
+          </Button>
+        )}
       </div>
     )
   }
@@ -178,7 +194,6 @@ export function TaskList({
               colors.bg,
               isSelected && cn('bg-white/[0.06] border-l-2', colors.border),
               isHardStop && 'ring-1 ring-red-500/30 ring-inset',
-              task.column === 'done' && !isSelected && 'opacity-50 hover:opacity-80',
             )}
           >
             {/* Main row */}
@@ -187,7 +202,14 @@ export function TaskList({
               <div className="shrink-0">{statusIcon[task.column]}</div>
 
               {/* Content — title + meta */}
-              <div className="flex-1 min-w-0">
+              <div
+                className={cn(
+                  'flex-1 min-w-0',
+                  task.column === 'done' &&
+                    !isSelected &&
+                    'opacity-50 group-hover:opacity-80 transition-opacity',
+                )}
+              >
                 {/* Title row */}
                 <div className="flex items-center gap-2.5">
                   <h3 className="text-[15px] font-medium text-zinc-100 truncate flex-1">
@@ -252,7 +274,7 @@ export function TaskList({
                       content={<SubStatusTooltipContent type="timeout" />}
                       side="bottom"
                     >
-                      <span className="hidden sm:inline-flex items-center gap-0.5 font-semibold text-orange-400 cursor-default">
+                      <span className="inline-flex items-center gap-0.5 font-semibold text-orange-400 cursor-default">
                         <Clock className="w-3 h-3" />
                         Timeout
                       </span>
@@ -263,7 +285,7 @@ export function TaskList({
                       content={<SubStatusTooltipContent type="exhausted" />}
                       side="bottom"
                     >
-                      <span className="hidden sm:inline-flex items-center gap-0.5 font-semibold text-red-400 cursor-default">
+                      <span className="inline-flex items-center gap-0.5 font-semibold text-red-400 cursor-default">
                         <RefreshCw className="w-3 h-3" />
                         Exhausted
                       </span>
@@ -271,7 +293,7 @@ export function TaskList({
                   )}
                   {task.isSupervisorError && (
                     <SimpleTooltip content={<SubStatusTooltipContent type="error" />} side="bottom">
-                      <span className="hidden sm:inline-flex items-center gap-0.5 font-semibold text-red-400 cursor-default">
+                      <span className="inline-flex items-center gap-0.5 font-semibold text-red-400 cursor-default">
                         <AlertCircle className="w-3 h-3" />
                         Error
                       </span>
@@ -314,13 +336,8 @@ export function TaskList({
                 </div>
               </div>
 
-              {/* Actions — fade in on hover */}
-              <div
-                className={cn(
-                  'hidden sm:flex items-center gap-1 shrink-0 transition-opacity duration-100',
-                  'opacity-100',
-                )}
-              >
+              {/* Actions */}
+              <div className="hidden sm:flex items-center gap-1 shrink-0">
                 {hasPR && onOpenPreview && (
                   <SimpleTooltip content="Open PR preview" side="bottom">
                     <Button
@@ -330,6 +347,7 @@ export function TaskList({
                         e.stopPropagation()
                         onOpenPreview(task)
                       }}
+                      aria-label="Open PR preview"
                       className="h-7 w-7 p-0 text-emerald-400 hover:bg-emerald-500/20"
                     >
                       <Eye className="w-3.5 h-3.5" />
@@ -354,6 +372,7 @@ export function TaskList({
                         if (task.column === 'building') onStopTask?.(task)
                         else if (canExecute) onExecuteTask?.(task.id)
                       }}
+                      aria-label={task.column === 'building' ? 'Stop task' : 'Run task'}
                       className={cn(
                         'h-7 w-7 p-0 cursor-pointer disabled:opacity-50',
                         task.column === 'building'
@@ -417,7 +436,7 @@ export function TaskList({
               task.pipeline &&
               (task.pipeline.currentStage ||
                 Object.keys(task.pipeline.stages || {}).length > 0) && (
-                <div className="hidden sm:block pb-3 px-4 pl-[52px]">
+                <div className="pb-3 px-4 pl-[52px] sm:block hidden">
                   <MiniPipelineProgress task={task} variant="bar" />
                 </div>
               )}

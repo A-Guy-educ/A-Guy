@@ -6,6 +6,7 @@ import { Globe, Paperclip, X, Image as ImageIcon, FileText, FileCode } from 'luc
 import { AGENTS, type AgentId } from '../agents'
 import type { CodyTask } from '../types'
 import type { ChatMessage, ChatSession } from '../chat-types'
+import { ConfirmDialog } from './ConfirmDialog'
 
 const AGENT_LIST = Object.values(AGENTS).map(({ id, name, description, icon, capabilities }) => ({
   id,
@@ -112,6 +113,7 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([])
   const [selectedAgent, setSelectedAgent] = useState<AgentId>('dashboard-manager')
   const [showAgentDropdown, setShowAgentDropdown] = useState(false)
+  const [showClearConfirm, setShowClearConfirm] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -260,11 +262,7 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
     setToolCalls([])
   }
 
-  const handleClearHistory = () => {
-    if (messages.length === 0) return
-    const confirmed = window.confirm('Clear conversation history?')
-    if (!confirmed) return
-
+  const executeClearHistory = () => {
     // Clear global chat from localStorage when clearing history in non-task mode
     if (!isTaskMode) {
       saveGlobalHistory(emptyHistory())
@@ -837,13 +835,23 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
         {/* Clear history link */}
         {messages.length > 0 && !loading && (
           <button
-            onClick={handleClearHistory}
+            onClick={() => setShowClearConfirm(true)}
             className="mt-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             Clear history
           </button>
         )}
       </div>
+
+      <ConfirmDialog
+        open={showClearConfirm}
+        title="Clear history"
+        description="Clear conversation history? This cannot be undone."
+        confirmLabel="Clear"
+        variant="destructive"
+        onConfirm={executeClearHistory}
+        onClose={() => setShowClearConfirm(false)}
+      />
     </div>
   )
 }
