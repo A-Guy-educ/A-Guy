@@ -19,7 +19,7 @@ function mapPosition(pos?: string): string {
     r: 'right',
     m: 'top',
   }
-  return map[pos || 'tr'] || 'urt'
+  return map[pos || 'r'] || 'right'
 }
 
 function renderPoints(board: JXG.Board, points: PointSpec[]): Map<string, any> {

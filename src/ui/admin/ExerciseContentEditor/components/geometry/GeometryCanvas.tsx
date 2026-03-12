@@ -22,12 +22,33 @@ interface GeometryCanvasProps {
   onMultiPointMoved?: (updates: PointUpdate[]) => void
   onCanvasClick?: (x: number, y: number) => void
   onTextMoved?: (index: number, x: number, y: number) => void
+  onPointLabelMoved?: (name: string, position: string) => void
 }
 
 const DISPLAY_WIDTH = 420
 const DISPLAY_HEIGHT = 320
 
 const round1 = (n: number) => Math.round(n * 10) / 10
+
+function mapLabelPosition(pos?: string): string {
+  const map: Record<string, string> = {
+    tr: 'urt',
+    tl: 'ult',
+    br: 'lrt',
+    bl: 'llft',
+    t: 'top',
+    b: 'bot',
+    l: 'left',
+    r: 'right',
+  }
+  return map[pos || 'r'] || 'right'
+}
+
+function angleToLabelPosition(angleDeg: number): string {
+  const normalized = ((angleDeg % 360) + 360) % 360
+  const idx = Math.round(normalized / 45) % 8
+  return ['r', 'tr', 't', 'tl', 'l', 'bl', 'b', 'br'][idx]
+}
 
 export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
   id,
@@ -39,6 +60,7 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
   onMultiPointMoved,
   onCanvasClick,
   onTextMoved,
+  onPointLabelMoved,
 }) => {
   const boardRef = useRef<JXGBoard | null>(null)
   const isSyncingRef = useRef(false)
@@ -49,11 +71,13 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
   const onPointMovedRef = useRef(onPointMoved)
   const onMultiPointMovedRef = useRef(onMultiPointMoved)
   const onTextMovedRef = useRef(onTextMoved)
+  const onPointLabelMovedRef = useRef(onPointLabelMoved)
   modeRef.current = interactionMode
   onCanvasClickRef.current = onCanvasClick
   onPointMovedRef.current = onPointMoved
   onMultiPointMovedRef.current = onMultiPointMoved
   onTextMovedRef.current = onTextMoved
+  onPointLabelMovedRef.current = onPointLabelMoved
 
   const syncToBoard = useCallback(() => {
     const board = boardRef.current
@@ -66,7 +90,16 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
       const existingIds = new Set(elementsRef.current.keys())
       const newIds = new Set<string>()
 
-      syncPoints(board, geometry, newIds, elementsRef, isSyncingRef, isDraggingRef, onPointMovedRef)
+      syncPoints(
+        board,
+        geometry,
+        newIds,
+        elementsRef,
+        isSyncingRef,
+        isDraggingRef,
+        onPointMovedRef,
+        onPointLabelMovedRef,
+      )
       syncSegments(board, geometry, newIds, elementsRef)
       syncLineLabels(board, geometry, newIds, elementsRef)
       syncCircles(board, geometry, newIds, elementsRef)
@@ -143,6 +176,14 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
   )
 }
 
+type LabelEl = {
+  X: () => number
+  Y: () => number
+  setAttribute: (attrs: Record<string, unknown>) => void
+  on: (event: string, handler: () => void) => void
+}
+type PointElWithLabel = { X: () => number; Y: () => number; label?: LabelEl }
+
 function syncPoints(
   board: JXGBoard,
   geometry: GeometrySpecV1,
@@ -151,6 +192,7 @@ function syncPoints(
   isSyncingRef: React.MutableRefObject<boolean>,
   isDraggingRef: React.MutableRefObject<boolean>,
   onPointMovedRef: React.RefObject<((name: string, x: number, y: number) => void) | undefined>,
+  onPointLabelMovedRef: React.RefObject<((name: string, position: string) => void) | undefined>,
 ) {
   for (const point of geometry.elements.points) {
     const elemId = `point-${point.name}`
@@ -159,6 +201,7 @@ function syncPoints(
 
     const pointColor = point.color ?? '#000000'
     const pointSize = point.size ?? 4
+    const labelPos = mapLabelPosition(point.position)
 
     if (existing && existing.moveTo) {
       existing.moveTo([point.x, point.y])
@@ -169,6 +212,10 @@ function syncPoints(
         strokeColor: pointColor,
         size: pointSize,
       })
+      const existingLabel = (existing as unknown as PointElWithLabel).label
+      if (existingLabel) {
+        existingLabel.setAttribute({ position: labelPos })
+      }
     } else {
       if (existing) {
         board.removeObject(existing)
@@ -181,7 +228,7 @@ function syncPoints(
         strokeColor: pointColor,
         visible: point.visible !== false,
         withLabel: true,
-        label: { fontSize: point.fontSize || 14 },
+        label: { position: labelPos, fontSize: point.fontSize || 14 },
       })
       el.on('drag', () => {
         if (isSyncingRef.current) return
@@ -191,6 +238,26 @@ function syncPoints(
       el.on('up', () => {
         isDraggingRef.current = false
       })
+
+      const elWithLabel = el as unknown as PointElWithLabel
+      const labelEl = elWithLabel.label
+      if (labelEl) {
+        labelEl.setAttribute({ fixed: false })
+        labelEl.on('drag', () => {
+          if (isSyncingRef.current) return
+          isDraggingRef.current = true
+        })
+        labelEl.on('up', () => {
+          const dx = labelEl.X() - elWithLabel.X()
+          const dy = labelEl.Y() - elWithLabel.Y()
+          const angleDeg = Math.atan2(dy, dx) * (180 / Math.PI)
+          const snapped = angleToLabelPosition(angleDeg)
+          labelEl.setAttribute({ position: mapLabelPosition(snapped) })
+          onPointLabelMovedRef.current?.(point.name, snapped)
+          isDraggingRef.current = false
+        })
+      }
+
       elementsRef.current.set(elemId, el)
     }
   }

@@ -13,6 +13,19 @@ interface PointsPanelProps {
 }
 
 const DEFAULT_POINT_SIZE = 1
+const DEFAULT_POINT_POSITION = 'r' as const
+
+const COMPASS_CELLS = [
+  { pos: 'tl', arrow: '↖' },
+  { pos: 't', arrow: '↑' },
+  { pos: 'tr', arrow: '↗' },
+  { pos: 'l', arrow: '←' },
+  { pos: null, arrow: '' },
+  { pos: 'r', arrow: '→' },
+  { pos: 'bl', arrow: '↙' },
+  { pos: 'b', arrow: '↓' },
+  { pos: 'br', arrow: '↘' },
+] as const
 
 const nextPointName = (points: GeoPoint[]): string => {
   const names = new Set(points.map((p) => p.name))
@@ -32,6 +45,7 @@ export const PointsPanel: React.FC<PointsPanelProps> = ({ points, onChange }) =>
       visible: true,
       color: DEFAULT_TEXT_COLOR,
       size: DEFAULT_POINT_SIZE,
+      position: DEFAULT_POINT_POSITION,
     }
     onChange([...points, newPoint])
   }
@@ -108,6 +122,50 @@ export const PointsPanel: React.FC<PointsPanelProps> = ({ points, onChange }) =>
                   })
                 }}
               />
+            </div>
+            <div className="panel-field">
+              <span className="panel-field-label">Label</span>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, 20px)',
+                  gap: 2,
+                }}
+              >
+                {COMPASS_CELLS.map((cell, i) =>
+                  cell.pos ? (
+                    <button
+                      key={cell.pos}
+                      type="button"
+                      title={cell.pos}
+                      onClick={() =>
+                        handleUpdate(index, {
+                          position: cell.pos as GeoPoint['position'],
+                        })
+                      }
+                      style={{
+                        width: 20,
+                        height: 20,
+                        padding: 0,
+                        fontSize: 11,
+                        border: '1px solid #ccc',
+                        borderRadius: 3,
+                        cursor: 'pointer',
+                        background:
+                          (point.position ?? DEFAULT_POINT_POSITION) === cell.pos
+                            ? '#3b82f6'
+                            : '#f5f5f5',
+                        color:
+                          (point.position ?? DEFAULT_POINT_POSITION) === cell.pos ? '#fff' : '#333',
+                      }}
+                    >
+                      {cell.arrow}
+                    </button>
+                  ) : (
+                    <span key={i} style={{ width: 20, height: 20 }} />
+                  ),
+                )}
+              </div>
             </div>
             <label className="panel-checkbox-label" style={{ fontSize: '0.75rem' }}>
               <input

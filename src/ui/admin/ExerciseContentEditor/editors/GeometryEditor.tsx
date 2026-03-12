@@ -61,7 +61,20 @@ export const GeometryEditor: React.FC<GeometryEditorProps> = ({ block, onChange 
     (x: number, y: number) => {
       const nextIndex = geo.elements.points.length + 1
       const name = String.fromCharCode(64 + nextIndex) // A, B, C, ...
-      updateElements({ points: [...geo.elements.points, { name, x, y }] })
+      updateElements({
+        points: [...geo.elements.points, { name, x, y, position: 'r' as const }],
+      })
+    },
+    [geo.elements.points, updateElements],
+  )
+
+  const handlePointLabelMoved = useCallback(
+    (name: string, position: string) => {
+      type PointPosition = GeometrySpecV1['elements']['points'][number]['position']
+      const newPoints = geo.elements.points.map((p) =>
+        p.name === name ? { ...p, position: position as PointPosition } : p,
+      )
+      updateElements({ points: newPoints })
     },
     [geo.elements.points, updateElements],
   )
@@ -181,6 +194,7 @@ export const GeometryEditor: React.FC<GeometryEditorProps> = ({ block, onChange 
             onPointAdded={handlePointAdded}
             onGridToggle={handleGridToggle}
             onTextMoved={handleTextMoved}
+            onPointLabelMoved={handlePointLabelMoved}
           />
         </div>
       </div>
