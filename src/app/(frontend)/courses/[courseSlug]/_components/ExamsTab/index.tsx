@@ -106,24 +106,29 @@ function ExamCard({
 }) {
   return (
     <div
-      className="bg-card rounded-2xl overflow-hidden p-5 shadow-sm border border-border/40 flex flex-col gap-2"
+      className="rounded-2xl overflow-hidden border border-border/40 shadow-sm"
       style={{ borderTopWidth: 3, borderTopColor: accentColor ?? 'hsl(var(--primary))' }}
     >
-      <div className="flex items-start justify-between">
-        <div>
-          {label && <p className="text-sm font-bold text-card-foreground">{label}</p>}
-          <p className="text-xs text-muted-foreground">{date}</p>
+      <div className="bg-card p-5 flex flex-col gap-2">
+        <div className="flex items-start justify-between">
+          <div>
+            {label && <p className="text-sm font-bold text-card-foreground">{label}</p>}
+            <p className="text-xs text-muted-foreground">{date}</p>
+          </div>
+          <button onClick={onDelete} className="text-muted-foreground hover:text-destructive p-1">
+            <Trash2 className="w-4 h-4" />
+            <span className="sr-only">{deleteText}</span>
+          </button>
         </div>
-        <button onClick={onDelete} className="text-muted-foreground hover:text-destructive p-1">
-          <Trash2 className="w-4 h-4" />
-          <span className="sr-only">{deleteText}</span>
-        </button>
+        {!isPast && daysLeftText && (
+          <span
+            className="text-xs font-bold"
+            style={{ color: accentColor ?? 'hsl(var(--primary))' }}
+          >
+            {daysLeftText}
+          </span>
+        )}
       </div>
-      {!isPast && daysLeftText && (
-        <span className="text-xs font-bold" style={{ color: accentColor ?? 'hsl(var(--primary))' }}>
-          {daysLeftText}
-        </span>
-      )}
     </div>
   )
 }
