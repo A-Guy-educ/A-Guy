@@ -24,6 +24,7 @@ import {
   createGapValidator,
   createPlanGapValidator,
   createBuildValidator,
+  createDocsValidator,
 } from './validators'
 import {
   skipIfInputQuality,
@@ -378,10 +379,16 @@ No critical gaps identified. Plan was refined in-place.
     timeout: STAGE_TIMEOUTS.docs ?? DEFAULT_TIMEOUT,
     maxRetries: 1,
     minComplexity: STAGE_COMPLEXITY_THRESHOLDS.docs,
+    shouldSkip: (ctx) => {
+      const complexitySkip = skipIfBelowComplexity(ctx, 'docs')
+      if (complexitySkip.shouldSkip) return complexitySkip
+      return { shouldSkip: false }
+    },
+    validator: createDocsValidator(),
     postActions: [
       {
         type: 'commit-task-files',
-        stagingStrategy: 'task-only',
+        stagingStrategy: 'tracked+task',
         push: true,
         ensureBranch: false,
       },

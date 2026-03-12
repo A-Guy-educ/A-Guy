@@ -40,6 +40,7 @@ export const ALL_STAGES = [
   'commit-fix',
   'verify',
   'autofix',
+  'docs',
   'pr',
 ] as const
 
@@ -89,6 +90,7 @@ export const STAGE_CONTEXT_FILES: Record<Stage, string[]> = {
   'commit-fix': ['fix-summary.md', 'verify-failures.md'],
   verify: [], // scripted — no LLM prompt needed
   autofix: ['verify.md', 'build-errors.md'],
+  docs: ['build.md', 'task.json', 'review.md'],
   pr: [], // scripted — no LLM prompt needed
 }
 
@@ -172,6 +174,11 @@ Write fix-summary.md summarizing what you changed.`,
   // Scripted stages — these prompts are never sent to an LLM
   verify: () => ``,
   autofix: () => ``,
+  docs: () => `DOCUMENTATION STAGE
+
+You are updating project documentation based on task changes.
+DO NOT modify source code files — only documentation files (.md, .json indexes).
+Write docs.md as your output summarizing documentation changes.`,
   pr: () => ``,
 }
 

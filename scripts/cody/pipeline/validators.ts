@@ -109,3 +109,27 @@ export function createBuildValidator(): (outputFile: string) => ValidationResult
     return { valid: true }
   }
 }
+
+/**
+ * Create a validator for the docs stage.
+ * Validates docs.md was written with minimum content.
+ */
+export function createDocsValidator(): (outputFile: string) => ValidationResult {
+  return (outputFile: string) => {
+    if (!fs.existsSync(outputFile)) {
+      return {
+        valid: false,
+        error: 'docs.md must exist in the task directory',
+      }
+    }
+    const content = fs.readFileSync(outputFile, 'utf-8')
+    const minLength = 100
+    if (content.length < minLength) {
+      return {
+        valid: false,
+        error: `docs.md must have at least ${minLength} characters of content`,
+      }
+    }
+    return { valid: true }
+  }
+}
