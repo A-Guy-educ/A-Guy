@@ -558,11 +558,14 @@ export async function POST(req: NextRequest) {
 
   try {
     // Validate environment
-    const githubToken = process.env.GITHUB_TOKEN
+    const githubToken = process.env.GH_PAT || process.env.GITHUB_TOKEN
     const geminiApiKey = process.env.GEMINI_API_KEY
 
     if (!githubToken) {
-      return NextResponse.json({ error: 'GITHUB_TOKEN is not configured' }, { status: 503 })
+      return NextResponse.json(
+        { error: 'GitHub token is not configured (set GH_PAT or GITHUB_TOKEN)' },
+        { status: 503 },
+      )
     }
 
     if (!geminiApiKey) {
