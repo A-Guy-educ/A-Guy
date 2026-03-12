@@ -557,7 +557,10 @@ export function TaskDetail({
     refetch,
     isFetching: isDetailsFetching,
   } = useTaskDetails(task?.issueNumber ?? null, actorLogin)
-  const [activeTab, setActiveTab] = useState<'description' | 'comments'>('description')
+  const [activeTab, setActiveTab] = useState<'description' | 'comments'>(() => {
+    if (typeof window === 'undefined') return 'description'
+    return window.location.pathname.endsWith('/comments') ? 'comments' : 'description'
+  })
   const [retryContext, setRetryContext] = useState('')
   const [showRetryContext, setShowRetryContext] = useState(false)
   const [showMobileExtra, setShowMobileExtra] = useState(false)
@@ -579,10 +582,26 @@ export function TaskDetail({
     }
   }, [])
 
+  // Sync tab from URL on browser back/forward
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname
+      // Only handle if we're on a task detail URL
+      if (!/\/cody\/\d+/.test(path)) return
+      // Don't handle preview URLs — parent manages those
+      if (path.includes('/preview')) return
+
+      setActiveTab(path.endsWith('/comments') ? 'comments' : 'description')
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
   useEffect(() => {
     setCompletedActions(new Set())
     setShowMobileExtra(false)
-    setActiveTab('description')
+    setActiveTab(window.location.pathname.endsWith('/comments') ? 'comments' : 'description')
   }, [task?.issueNumber])
 
   const retryWithContext = useRetryWithContext({
@@ -825,7 +844,14 @@ export function TaskDetail({
         <TabButton
           key={key}
           active={effectiveTab === key}
-          onClick={() => setActiveTab(key)}
+          onClick={() => {
+            setActiveTab(key)
+            if (task) {
+              const base = `/cody/${task.issueNumber}`
+              const path = key === 'description' ? base : `${base}/${key}`
+              window.history.pushState(null, '', path)
+            }
+          }}
           label={label}
           icon={icon}
           count={count}

@@ -49,9 +49,10 @@ import { SITE_URLS } from '../constants'
 
 interface CodyDashboardProps {
   initialIssueNumber?: number
+  initialModal?: 'new' | 'bug' | 'chat'
 }
 
-export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
+export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboardProps) {
   const initialIssueRef = useRef(initialIssueNumber)
   // #1: Track selection by issue number, derive task from query data
   const [selectedIssueNumber, setSelectedIssueNumber] = useState<number | null>(null)
@@ -316,6 +317,18 @@ export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
   // Helper: check if URL is a preview URL
   const isPreviewUrl = () => /\/cody\/\d+\/preview/.test(window.location.pathname)
 
+  // Helper: detect modal route from URL
+  const getModalFromUrl = (): 'new' | 'bug' | 'chat' | null => {
+    const path = window.location.pathname
+    if (path === '/cody/new') return 'new'
+    if (path === '/cody/bug') return 'bug'
+    if (path === '/cody/chat') return 'chat'
+    return null
+  }
+
+  // Helper: push base /cody URL (used when closing modals)
+  const pushCodyBase = () => window.history.pushState(null, '', '/cody')
+
   // Open preview modal with URL sync
   const handleOpenPreview = useCallback((task: CodyTask) => {
     setSelectedIssueNumber(task.issueNumber)
@@ -330,6 +343,37 @@ export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
       window.history.pushState(null, '', `/cody/${selectedIssueNumber}`)
     }
   }, [selectedIssueNumber])
+
+  // Open/close modal dialogs with URL sync
+  const handleOpenCreate = useCallback(() => {
+    setShowCreateDialog(true)
+    window.history.pushState(null, '', '/cody/new')
+  }, [])
+
+  const handleCloseCreate = useCallback(() => {
+    setShowCreateDialog(false)
+    pushCodyBase()
+  }, [])
+
+  const handleOpenBug = useCallback(() => {
+    setShowBugDialog(true)
+    window.history.pushState(null, '', '/cody/bug')
+  }, [])
+
+  const handleCloseBug = useCallback(() => {
+    setShowBugDialog(false)
+    pushCodyBase()
+  }, [])
+
+  const handleOpenChat = useCallback(() => {
+    setShowMobileChat(true)
+    window.history.pushState(null, '', '/cody/chat')
+  }, [])
+
+  const handleCloseChat = useCallback((open: boolean) => {
+    setShowMobileChat(open)
+    if (!open) pushCodyBase()
+  }, [])
 
   // Task selection — uses pushState for browser history support
   const handleTaskSelect = useCallback(
@@ -351,6 +395,15 @@ export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
 
   // Auto-select task from URL on initial load
   useEffect(() => {
+    // Check for modal routes on initial load
+    const modal = initialModal || getModalFromUrl()
+    if (modal) {
+      if (modal === 'new') setShowCreateDialog(true)
+      else if (modal === 'bug') setShowBugDialog(true)
+      else if (modal === 'chat') setShowMobileChat(true)
+      return
+    }
+
     // Check for preview URL on initial load
     if (isPreviewUrl()) {
       const issueNum = getIssueFromUrl()
@@ -379,6 +432,21 @@ export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
   // Browser back/forward — listen to popstate and sync selected task
   useEffect(() => {
     const handlePopState = () => {
+      // Close all modals first
+      setShowCreateDialog(false)
+      setShowBugDialog(false)
+      setShowMobileChat(false)
+      setShowPreview(false)
+
+      // Check for modal routes
+      const modal = getModalFromUrl()
+      if (modal) {
+        if (modal === 'new') setShowCreateDialog(true)
+        else if (modal === 'bug') setShowBugDialog(true)
+        else if (modal === 'chat') setShowMobileChat(true)
+        return
+      }
+
       if (isPreviewUrl()) {
         const issueNum = getIssueFromUrl()
         if (issueNum) {
@@ -387,7 +455,7 @@ export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
         }
         return
       }
-      setShowPreview(false)
+
       const issueNum = getIssueFromUrl()
       if (issueNum) {
         const match = tasks.find((t) => t.issueNumber === issueNum)
@@ -604,13 +672,13 @@ export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
                   </Button>
                 </SimpleTooltip>
                 <SimpleTooltip content="Report a bug" side="bottom">
-                  <Button variant="outline" onClick={() => setShowBugDialog(true)}>
+                  <Button variant="outline" onClick={handleOpenBug}>
                     <Bug className="w-4 h-4 mr-2" />
                     Report Bug
                   </Button>
                 </SimpleTooltip>
                 <SimpleTooltip content="Create new task" side="bottom">
-                  <Button onClick={() => setShowCreateDialog(true)}>+ New Task</Button>
+                  <Button onClick={handleOpenCreate}>+ New Task</Button>
                 </SimpleTooltip>
               </div>
 
@@ -724,7 +792,7 @@ export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
               className="w-full justify-start gap-2"
               onClick={() => {
                 setShowMobileMenu(false)
-                setShowMobileChat(true)
+                handleOpenChat()
               }}
             >
               <MessageSquare className="w-4 h-4" />
@@ -764,7 +832,7 @@ export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
                 className="w-full justify-start gap-2"
                 onClick={() => {
                   setShowMobileMenu(false)
-                  setShowBugDialog(true)
+                  handleOpenBug()
                 }}
               >
                 <Bug className="w-4 h-4" />
@@ -774,7 +842,7 @@ export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
                 className="w-full"
                 onClick={() => {
                   setShowMobileMenu(false)
-                  setShowCreateDialog(true)
+                  handleOpenCreate()
                 }}
               >
                 + New Task
@@ -812,7 +880,7 @@ export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
 
       {/* Mobile Chat Sheet — only rendered on mobile */}
       {!isDesktop && (
-        <Sheet open={showMobileChat} onOpenChange={setShowMobileChat}>
+        <Sheet open={showMobileChat} onOpenChange={handleCloseChat}>
           <SheetContent side="right" className="w-full sm:w-[400px] p-0">
             <SheetHeader className="sr-only">
               <SheetTitle>Chat with Cody</SheetTitle>
@@ -824,18 +892,10 @@ export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
       )}
 
       {/* Create Dialog */}
-      <CreateTaskDialog
-        open={showCreateDialog}
-        onClose={() => setShowCreateDialog(false)}
-        onCreated={refetch}
-      />
+      <CreateTaskDialog open={showCreateDialog} onClose={handleCloseCreate} onCreated={refetch} />
 
       {/* Bug Report Dialog */}
-      <BugReportDialog
-        open={showBugDialog}
-        onClose={() => setShowBugDialog(false)}
-        onCreated={refetch}
-      />
+      <BugReportDialog open={showBugDialog} onClose={handleCloseBug} onCreated={refetch} />
     </div>
   )
 }

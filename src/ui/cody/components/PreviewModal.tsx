@@ -42,13 +42,31 @@ interface PreviewModalProps {
 }
 
 export function PreviewModal({ task, onClose, onMerge, isMerging }: PreviewModalProps) {
-  const [activeTab, setActiveTab] = useState<PreviewTab>('changes')
+  const [activeTab, setActiveTab] = useState<PreviewTab>(() => {
+    if (typeof window === 'undefined') return 'changes'
+    const path = window.location.pathname
+    if (path.endsWith('/docs')) return 'docs'
+    if (path.endsWith('/comments')) return 'comments'
+    return 'changes'
+  })
   const [changes, setChanges] = useState<FileChange[]>([])
   const [documents, setDocuments] = useState<TaskDocument[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedDoc, setSelectedDoc] = useState<TaskDocument | null>(null)
 
   const pr = task.associatedPR
+
+  // URL sync for doc viewer dialog
+  const openDoc = (doc: TaskDocument) => {
+    setSelectedDoc(doc)
+    const base = `/cody/${task.issueNumber}/preview/docs`
+    window.history.pushState(null, '', `${base}?doc=${encodeURIComponent(doc.name)}`)
+  }
+
+  const closeDoc = () => {
+    setSelectedDoc(null)
+    window.history.pushState(null, '', `/cody/${task.issueNumber}/preview/docs`)
+  }
 
   // Load tab data on demand
   useEffect(() => {
@@ -80,6 +98,16 @@ export function PreviewModal({ task, onClose, onMerge, isMerging }: PreviewModal
     }
   }, [activeTab, pr, task.id])
 
+  // Auto-open doc from URL ?doc= param
+  useEffect(() => {
+    if (documents.length === 0) return
+    const docParam = new URLSearchParams(window.location.search).get('doc')
+    if (docParam && !selectedDoc) {
+      const match = documents.find((d) => d.name === docParam)
+      if (match) setSelectedDoc(match)
+    }
+  }, [documents]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Close on Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -88,6 +116,32 @@ export function PreviewModal({ task, onClose, onMerge, isMerging }: PreviewModal
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [onClose])
+
+  // Sync tab + doc from URL on browser back/forward
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname
+      // If navigated away from preview entirely, parent handles it
+      if (!path.includes('/preview')) return
+
+      // Sync tab
+      if (path.endsWith('/docs')) setActiveTab('docs')
+      else if (path.endsWith('/comments')) setActiveTab('comments')
+      else setActiveTab('changes')
+
+      // Sync doc dialog
+      const docParam = new URLSearchParams(window.location.search).get('doc')
+      if (docParam) {
+        const match = documents.find((d) => d.name === docParam)
+        setSelectedDoc(match || null)
+      } else {
+        setSelectedDoc(null)
+      }
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [documents])
 
   if (!pr) {
     return (
@@ -183,7 +237,12 @@ export function PreviewModal({ task, onClose, onMerge, isMerging }: PreviewModal
         {tabs.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
-            onClick={() => setActiveTab(key)}
+            onClick={() => {
+              setActiveTab(key)
+              const base = `/cody/${task.issueNumber}/preview`
+              const path = key === 'changes' ? base : `${base}/${key}`
+              window.history.pushState(null, '', path)
+            }}
             className={cn(
               'flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-colors border-b-2',
               activeTab === key
@@ -283,7 +342,7 @@ export function PreviewModal({ task, onClose, onMerge, isMerging }: PreviewModal
                   {documents.map((doc) => (
                     <button
                       key={doc.name}
-                      onClick={() => setSelectedDoc(doc)}
+                      onClick={() => openDoc(doc)}
                       className="w-full flex items-center gap-2 p-3 hover:bg-zinc-800/50 rounded text-left border border-zinc-800"
                     >
                       <FileText className="w-4 h-4 text-zinc-500" />
@@ -292,7 +351,12 @@ export function PreviewModal({ task, onClose, onMerge, isMerging }: PreviewModal
                   ))}
                 </div>
 
-                <Dialog open={!!selectedDoc} onOpenChange={(open) => !open && setSelectedDoc(null)}>
+                <Dialog
+                  open={!!selectedDoc}
+                  onOpenChange={(open) => {
+                    if (!open) closeDoc()
+                  }}
+                >
                   <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
                     <DialogHeader>
                       <DialogTitle>{selectedDoc?.name}</DialogTitle>
