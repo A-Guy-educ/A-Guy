@@ -85,10 +85,39 @@ Common updates:
 - <gotchas, decisions made, things to watch out for>
 ```
 
+## Step 4: Write Structured Memory Item
+
+**REQUIRED OUTPUT**: Write `memory.json` in the task directory (alongside docs.md).
+
+This is a structured version of the memory file that the reflect stage will use for cross-task pattern detection.
+
+```json
+{
+  "taskId": "<task-id from task.json>",
+  "date": "<current ISO date>",
+  "summary": "<same as docs.md Summary section>",
+  "domain": "<primary_domain from task.json>",
+  "taskType": "<task_type from task.json>",
+  "patterns": ["<pattern-slug-1>", "<pattern-slug-2>"],
+  "filesChanged": ["<path1>", "<path2>"],
+  "gotchas": ["<lessons learned>"],
+  "reusableCode": [
+    {"path": "<file>", "description": "<what it provides>"}
+  ]
+}
+```
+
+**Pattern identification tips:**
+- Architectural: `payload-collection`, `api-endpoint`, `react-component`
+- Integration: `stripe-webhook`, `gemini-ai`, `blob-upload`
+- Code: `zod-validation`, `access-control`, `tdd-workflow`
+- Use kebab-case, be specific but generalizable
+
 ## Rules
 
 1. **DO NOT modify source code** — only documentation files
 2. **DO NOT run `pnpm ai:generate-patterns` or `pnpm ai:generate-docs`** — these are expensive and run separately
 3. **DO NOT create docs for trivial changes** — a one-line bug fix doesn't need a new README
 4. **ALWAYS write docs.md** — even if no project docs were updated
-5. **Be concise** — future agents will read this; don't pad it
+5. **ALWAYS write memory.json** — even for trivial tasks (with minimal patterns)
+6. **Be concise** — future agents will read this; don't pad it

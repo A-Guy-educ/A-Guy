@@ -700,7 +700,7 @@ pnpm test:e2e                  # E2E tests
 ### Full Pipeline Flow
 
 ```
-@cody on issue → taskify → gap → gsd-plan → gsd-execute → commit → review → fix → verify → pr
+@cody on issue → taskify → gap → architect → plan-gap → build → commit → review → fix → commit → verify → docs → reflect → pr
 ```
 
 ### Key Debug Files
@@ -709,6 +709,8 @@ pnpm test:e2e                  # E2E tests
 | ----------------- | ------------------------------------------ |
 | Pipeline status   | `.tasks/<id>/status.json`                  |
 | Task definition   | `.tasks/<id>/task.json`                    |
+| Task memory       | `.tasks/<id>/memory.json`                  |
+| Knowledge base    | `.ai-docs/knowledge/index.json`            |
 | Stage definitions | `scripts/cody/pipeline/definitions.ts`     |
 | Post-actions      | `scripts/cody/pipeline/post-actions.ts`    |
 | Skip logic        | `scripts/cody/pipeline/skip-conditions.ts` |

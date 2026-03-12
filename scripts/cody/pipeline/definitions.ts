@@ -24,6 +24,7 @@ import {
   createPlanGapValidator,
   createBuildValidator,
   createDocsValidator,
+  createReflectValidator,
 } from './validators'
 import {
   skipIfInputQuality,
@@ -50,6 +51,7 @@ export const IMPL_ORDER_STANDARD: PipelineStep[] = [
   'commit',
   'verify',
   'docs',
+  'reflect',
   'pr',
 ]
 export const IMPL_ORDER_LIGHTWEIGHT: PipelineStep[] = [
@@ -61,11 +63,20 @@ export const IMPL_ORDER_LIGHTWEIGHT: PipelineStep[] = [
   'commit',
   'verify',
   'docs',
+  'reflect',
   'pr',
 ]
 
 // Fix-only pipeline order for @cody fix mode
-export const FIX_ORDER: PipelineStep[] = ['review', 'fix', 'commit', 'verify', 'docs', 'pr']
+export const FIX_ORDER: PipelineStep[] = [
+  'review',
+  'fix',
+  'commit',
+  'verify',
+  'docs',
+  'reflect',
+  'pr',
+]
 
 // ============================================================================
 // Stage Definitions
@@ -354,6 +365,30 @@ No critical gaps identified. Plan was refined in-place.
       return { shouldSkip: false }
     },
     validator: createDocsValidator(),
+    postActions: [
+      {
+        type: 'commit-task-files',
+        stagingStrategy: 'tracked+task',
+        push: true,
+        ensureBranch: false,
+      },
+    ],
+  })
+
+  // reflect stage - post-task learning: pattern extraction, knowledge base update, skill creation
+  stages.set('reflect', {
+    name: 'reflect',
+    type: 'agent',
+    timeout: STAGE_TIMEOUTS.reflect ?? DEFAULT_TIMEOUT,
+    maxRetries: 0, // Best-effort — failure doesn't block PR
+    advisory: true, // Non-critical stage
+    minComplexity: STAGE_COMPLEXITY_THRESHOLDS.reflect,
+    shouldSkip: (ctx) => {
+      const complexitySkip = skipIfBelowComplexity(ctx, 'reflect')
+      if (complexitySkip.shouldSkip) return complexitySkip
+      return { shouldSkip: false }
+    },
+    validator: createReflectValidator(),
     postActions: [
       {
         type: 'commit-task-files',

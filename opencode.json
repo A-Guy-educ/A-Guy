@@ -74,6 +74,10 @@
     "fix": {
       "model": "minimax-coding-plan/MiniMax-M2.5",
       "description": "Targeted fixes for issues found by review or verify stages"
+    },
+    "reflect": {
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Post-task reflection - extracts patterns, updates knowledge base, creates skills when patterns repeat"
     }
   },
   "mcp": {

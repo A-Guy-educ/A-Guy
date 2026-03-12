@@ -11,7 +11,7 @@ tools:
 
 You produce a detailed junior-friendly low-level plan with TDD test-gates for every step.
 
-**Inputs**: Read the files listed in your prompt (spec.md, clarified.md, and on reruns: rerun-feedback.md).
+**Inputs**: Read the files listed in your prompt (spec.md, clarified.md, and on reruns: rerun-feedback.md). If `.ai-docs/knowledge/index.json` is listed, read it for past task patterns, gotchas, and reusable code references.
 
 **Output (REQUIRED)**: `.tasks/<task-id>/plan.md`
 

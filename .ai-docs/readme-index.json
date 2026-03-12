@@ -308,6 +308,21 @@
       "wordCount": 575
     },
     {
+      "path": "docs/self-growing-pipeline/README.md",
+      "title": "Self-Growing Pipeline",
+      "sections": [
+        "Architecture",
+        "Current Implementation",
+        "Files",
+        "Future: Self-Creating Subagents",
+        "Future: Dynamic MCP Integration",
+        "Metrics & Monitoring"
+      ],
+      "relativeUrl": "self-growing-pipeline/README.md",
+      "category": "self-growing-pipeline",
+      "wordCount": 824
+    },
+    {
       "path": "src/app/README.md",
       "title": "Application Routes",
       "sections": ["Structure", "Patterns", "Key Files", "Common Tasks", "Related"],
@@ -549,8 +564,8 @@
     }
   ],
   "metadata": {
-    "generatedAt": "2026-03-12T19:57:07.081Z",
-    "totalReadmes": 32,
+    "generatedAt": "2026-03-12T20:53:55.918Z",
+    "totalReadmes": 33,
     "categories": {
       ".claude": 1,
       "root": 1,
@@ -565,6 +580,7 @@
       "exercise-import": 1,
       "exercises": 1,
       "features": 1,
+      "self-growing-pipeline": 1,
       "eslint-plugin-aguy": 1,
       "scripts": 3,
       "src/app": 1,

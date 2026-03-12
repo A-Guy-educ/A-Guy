@@ -50,6 +50,7 @@ export const STAGE_TIMEOUTS: Record<string, number> = {
   fix: ms('20m'),
   verify: ms('10m'),
   docs: ms('10m'),
+  reflect: ms('10m'),
   pr: ms('5m'),
   autofix: ms('15m'),
 }

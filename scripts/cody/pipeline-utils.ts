@@ -75,6 +75,7 @@ export const STAGE_COMPLEXITY_THRESHOLDS: Record<string, number> = {
   fix: 0,
   verify: 0,
   docs: 15, // Runs for simple+ tasks (complexity >= 10)
+  reflect: 15, // Runs alongside docs for simple+ tasks
   pr: 0,
 }
 
@@ -881,6 +882,7 @@ export const IMPL_PIPELINE: PipelineStage[] = [
   'fix',
   'commit',
   'verify',
+  'reflect',
   'pr',
 ]
 
@@ -907,6 +909,7 @@ export const LIGHTWEIGHT_IMPL_PIPELINE: PipelineStage[] = [
   'fix',
   'commit',
   'verify',
+  'reflect',
   'pr',
 ]
 

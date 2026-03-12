@@ -514,9 +514,9 @@ describe('pipeline stage definitions', () => {
     expect(ALL_IMPL_STAGE_NAMES).toContain('commit')
   })
 
-  it('should have exactly 9 impl stages', async () => {
+  it('should have exactly 10 impl stages', async () => {
     const { ALL_IMPL_STAGE_NAMES } = await import('../../../../scripts/cody/pipeline-utils')
-    expect(ALL_IMPL_STAGE_NAMES).toHaveLength(9)
+    expect(ALL_IMPL_STAGE_NAMES).toHaveLength(10)
   })
 
   it('should have correct stage order', async () => {
@@ -1017,16 +1017,16 @@ describe('getImplPipeline', () => {
   it('returns full pipeline for standard profile', async () => {
     const { getImplPipeline } = await import('../../../../scripts/cody/pipeline-utils')
     const pipeline = getImplPipeline('standard')
-    // Standard pipeline should have 9 entries (with review/fix/commit (second))
-    expect(pipeline).toHaveLength(9)
+    // Standard pipeline should have 10 entries (with reflect)
+    expect(pipeline).toHaveLength(10)
   })
 
   it('returns reduced pipeline for lightweight profile (no plan-gap)', async () => {
     const { getImplPipeline, flattenPipeline } =
       await import('../../../../scripts/cody/pipeline-utils')
     const pipeline = getImplPipeline('lightweight')
-    // Lightweight should have 8 entries (with review/fix/commit (second))
-    expect(pipeline).toHaveLength(8)
+    // Lightweight should have 9 entries (with reflect)
+    expect(pipeline).toHaveLength(9)
     const flatNames = flattenPipeline(pipeline)
     expect(flatNames).toEqual([
       'architect',
@@ -1036,6 +1036,7 @@ describe('getImplPipeline', () => {
       'fix',
       'commit',
       'verify',
+      'reflect',
       'pr',
     ])
   })
@@ -1072,6 +1073,7 @@ describe('getAllImplStageNames', () => {
       'fix',
       'commit',
       'verify',
+      'reflect',
       'pr',
     ])
   })

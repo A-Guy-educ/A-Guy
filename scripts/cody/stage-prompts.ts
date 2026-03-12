@@ -39,6 +39,7 @@ export const ALL_STAGES = [
   'verify',
   'autofix',
   'docs',
+  'reflect',
   'pr',
 ] as const
 
@@ -87,6 +88,7 @@ export const STAGE_CONTEXT_FILES: Record<Stage, string[]> = {
   verify: [], // scripted — no LLM prompt needed
   autofix: ['verify.md', 'build-errors.md'],
   docs: ['build.md', 'task.json', 'review.md'],
+  reflect: ['docs.md', 'build.md', 'task.json', 'review.md'],
   pr: [], // scripted — no LLM prompt needed
 }
 
@@ -168,6 +170,12 @@ Write fix-summary.md summarizing what you changed.`,
 You are updating project documentation based on task changes.
 DO NOT modify source code files — only documentation files (.md, .json indexes).
 Write docs.md as your output summarizing documentation changes.`,
+  reflect: () => `REFLECT STAGE — Pipeline Self-Learning
+
+You are extracting patterns and knowledge from this completed task.
+DO NOT modify source code — only knowledge files (.ai-docs/knowledge/) and skill files (.agents/skills/).
+Also read the cross-task knowledge base: .ai-docs/knowledge/index.json
+Write reflect.md as your output and memory.json as structured memory.`,
   pr: () => ``,
 }
 
@@ -217,7 +225,17 @@ export function buildStagePrompt(input: CodyInput, stage: string, feedback?: str
   const contextFiles = STAGE_CONTEXT_FILES[stage as Stage] || []
   const fileList = contextFiles.map((f) => `- ${taskDir}/${f}`).join('\n')
 
-  const filesSection = contextFiles.length > 0 ? `\nRead these files for context:\n${fileList}` : ''
+  // For reflect and architect stages, also include the cross-task knowledge base
+  const knowledgePath = path.join(process.cwd(), '.ai-docs', 'knowledge', 'index.json')
+  const knowledgeSection =
+    (stage === 'reflect' || stage === 'architect') && fs.existsSync(knowledgePath)
+      ? `\n- ${knowledgePath}`
+      : ''
+
+  const filesSection =
+    contextFiles.length > 0 || knowledgeSection
+      ? `\nRead these files for context:\n${fileList}${knowledgeSection}`
+      : ''
 
   // Add task_type for stages that need it (architect, build)
   const taskTypeSection =
