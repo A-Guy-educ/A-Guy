@@ -216,7 +216,7 @@ describe('stage-prompts', () => {
         if (stage === 'build') {
           expect(instruction).toContain('IMPLEMENTATION STAGE')
         } else if (stage === 'review') {
-          expect(instruction).toContain('CODE REVIEW STAGE')
+          expect(instruction).toContain('CODE REVIEW')
         } else if (stage === 'fix') {
           expect(instruction).toContain('TARGETED FIX STAGE')
         } else {
