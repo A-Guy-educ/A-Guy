@@ -14,7 +14,7 @@ import { CreateTaskDialog } from './CreateTaskDialog'
 import { BugReportDialog } from './BugReportDialog'
 import { CodyChat } from './CodyChat'
 import { CodyStatusBanner } from './CodyStatusBanner'
-import { FilterBar, DATE_FILTERS, STATUS_FILTERS } from './FilterBar'
+import { FilterBar, ViewToggle, DATE_FILTERS, STATUS_FILTERS, type ViewMode } from './FilterBar'
 import { TaskDetail } from './TaskDetail'
 import { Button } from '@/ui/web/components/button'
 import {
@@ -58,6 +58,7 @@ export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
   const [dateFilter, setDateFilter] = useState<string>('30d')
   const [labelFilter, setLabelFilter] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [viewMode, setViewMode] = useState<ViewMode>('running')
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [showMobileDetail, setShowMobileDetail] = useState(false)
   const [showMobileChat, setShowMobileChat] = useState(false)
@@ -290,8 +291,15 @@ export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
 
   const totalCount = tasks.length
 
-  // Filter tasks by label, status, and date (combined with AND logic)
+  // View mode counts — backlog = open column, running = everything else
+  const backlogCount = tasks.filter((t) => t.column === 'open').length
+  const runningCount = tasks.length - backlogCount
+
+  // Filter tasks by view mode, then by status and label (combined with AND logic)
   const filteredTasks = tasks.filter((task) => {
+    // View mode filter — primary split
+    if (viewMode === 'backlog' && task.column !== 'open') return false
+    if (viewMode === 'running' && task.column === 'open') return false
     // Status filter
     if (statusFilter !== 'all' && task.column !== statusFilter) return false
     // Label filter
@@ -369,6 +377,13 @@ export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
   // Mobile filter controls — rendered inside the mobile menu Sheet
   const mobileFilterControls = (
     <>
+      {/* View toggle */}
+      <ViewToggle
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        runningCount={runningCount}
+        backlogCount={backlogCount}
+      />
       {/* Date filter */}
       <Select value={dateFilter} onValueChange={setDateFilter}>
         <SelectTrigger className="w-full">
@@ -572,6 +587,8 @@ export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
             {/* Filter Sub-header — desktop only, separate component */}
             <div className="hidden md:block">
               <FilterBar
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
                 dateFilter={dateFilter}
                 onDateFilterChange={setDateFilter}
                 statusFilter={statusFilter}
@@ -583,6 +600,8 @@ export function CodyDashboard({ initialIssueNumber }: CodyDashboardProps) {
                 statusCounts={statusCounts}
                 totalCount={totalCount}
                 filteredCount={filteredTasks.length}
+                runningCount={runningCount}
+                backlogCount={backlogCount}
               />
             </div>
 
