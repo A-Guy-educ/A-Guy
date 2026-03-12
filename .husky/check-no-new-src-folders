@@ -3,7 +3,7 @@
 # This enforces the project's src/ folder structure
 
 # Allowed directories under src/ (hardcoded for hook - must match actual structure)
-allowed_dirs="app client i18n infra server ui"
+allowed_dirs="app client i18n infra lib server ui"
 
 # Get newly added (A) directories under src/
 new_src_dirs=$(git diff --cached --name-only --diff-filter=A | grep '^src/[^/]*/' | sed 's|^src/||' | cut -d'/' -f1 | sort -u || true)
