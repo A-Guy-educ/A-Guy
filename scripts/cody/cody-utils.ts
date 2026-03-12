@@ -13,7 +13,6 @@ import { randomInt } from 'crypto'
 
 import { ALL_STAGES } from './stage-prompts'
 import { discoverTaskIdFromIssue } from './github-api'
-import { STAGE_ALIASES, resolveStageAlias } from './rerun-utils'
 
 // ============================================================================
 // Types
@@ -92,7 +91,7 @@ export interface StageStatus {
 const VALID_MODES = ['spec', 'impl', 'rerun', 'fix', 'full', 'status'] as const
 
 // VALID_STAGES derived from stage-prompts to avoid duplication
-const VALID_STAGES = [...ALL_STAGES, ...Object.keys(STAGE_ALIASES)]
+const VALID_STAGES = [...ALL_STAGES]
 
 // Pipeline-ordered stage list for sorting (avoids `as any` cast on readonly tuple)
 const STAGE_ORDER: readonly string[] = ALL_STAGES
@@ -473,7 +472,7 @@ export function parseCliArgs(argv: string[]): CodyInput {
     if (!isValidStage(stage)) {
       throw new Error(`Invalid stage: ${stage}. Valid: ${VALID_STAGES.join(', ')}`)
     }
-    input.fromStage = resolveStageAlias(stage)
+    input.fromStage = stage
     cliSet.add('fromStage')
   }
 
@@ -932,7 +931,7 @@ export function parseCommentBody(body: string, issueNumber?: number): ParseComme
       fresh = true
       i++
     } else if (opt === '--from' && options[i + 1]) {
-      fromStage = resolveStageAlias(options[i + 1])
+      fromStage = options[i + 1]
       // Validate from stage
       if (!isValidStage(fromStage)) {
         return {

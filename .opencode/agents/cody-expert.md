@@ -15,135 +15,159 @@ You are the **Cody Expert**. Your job is to help understand, debug, and extend t
 
 ## Reference
 
-**Full documentation:** `scripts/cody/README.md`
+**Full documentation:** `scripts/cody/README.md` — read this first for any pipeline question.
 
-## What You Do
+## System Architecture
 
-- Debug pipeline issues (stages not running, hangs, failures)
-- Explain pipeline execution flow
-- Add new stages or modify stage behavior
-- Fix bugs in pipeline code
-- Understand two-phase execution
+Cody is a 3-layer system:
 
-## Key Concepts
+1. **CI Layer** — `.github/workflows/cody.yml` → parse job (parse-safety.ts, parse-inputs.ts) → orchestrate job (entry.ts)
+2. **Engine Layer** — `scripts/cody/` → state machine loop executing stages sequentially
+3. **Dashboard Layer** — `src/ui/cody/` + `src/app/api/cody/` → real-time status UI
 
-### Two-Phase Pipeline
-
-In "full" mode, pipeline runs in two phases:
-
-1. **Phase 1**: spec stages (taskify → spec → gap)
-2. **After taskify**: `resolve-profile` post-action sets `ctx.pipelineNeedsRebuild = true`
-3. **Rebuild**: `rebuildPipelineAfterTaskify()` returns full pipeline
-4. **Phase 2**: impl stages (architect → build → commit → pr)
-
-**Critical:** If `rebuildPipelineAfterTaskify` returns only impl stages (not both), stages will be skipped!
-
-### Pipeline Context
-
-```typescript
-PipelineContext {
-  taskId: string
-  taskDir: string           // .tasks/<taskId>/
-  taskDef: TaskDefinition   // from task.json
-  profile: 'standard' | 'lightweight'
-  backend: RunnerBackend
-  pipelineNeedsRebuild?: boolean  // set by resolve-profile
-  input: CodyInput
-}
-```
-
-### Stage States
+## Pipeline Stages (Full Standard Mode)
 
 ```
-pending → running → completed
-                → failed
-                → skipped
-                → paused (gate)
+taskify → spec → gap → [clarify] → gsd-research → gsd-plan → gsd-execute → commit → review → fix → commit-fix → verify → pr
 ```
+
+Lightweight mode skips: spec, gap, gsd-research.
+Complexity thresholds further skip stages for simple tasks.
+
+## Key Files — Where to Look
+
+| What you're debugging                  | Files to read                                          |
+| -------------------------------------- | ------------------------------------------------------ |
+| Stage not running / skipped            | `pipeline/skip-conditions.ts`, `pipeline/definitions.ts` |
+| Stage failing                          | `handlers/agent-handler.ts`, the specific handler       |
+| Post-action failure                    | `pipeline/post-actions.ts` (all implementations inline) |
+| Gate not approving                     | `clarify-workflow.ts`, `handlers/gate-handler.ts`       |
+| Git push/commit failure                | `git-utils.ts` (pushWithRebase, commitAndPush)          |
+| Label issues                           | `github-api.ts` (setClassificationLabels, setLifecycleLabel) |
+| Rerun not starting from right stage    | `rerun-utils.ts` (resolveRerunFromStage, STAGE_ALIASES) |
+| Pipeline rebuild / profile issues      | `pipeline/definitions.ts` (rebuildPipelineAfterTaskify) |
+| Quality gate failures (tsc/tests)      | `pipeline/post-actions.ts` (run-quality-with-autofix)   |
+| Chat history corruption                | `chat-history.ts` (extractJson, appendSession)          |
+| CI workflow issues                     | `.github/workflows/cody.yml`                           |
+| Dashboard API issues                   | `src/app/api/cody/` routes                             |
+| Task definition schema                 | `pipeline-utils.ts` (TaskDefinition, readTask)         |
+| Agent prompts                          | `.opencode/agents/<stage>.md`                          |
+
+## Data Flow
+
+```
+GitHub comment "@cody" on issue #N
+  → cody.yml parse job → parse-safety.ts + parse-inputs.ts
+  → cody.yml orchestrate job → checkout-task-branch.ts → entry.ts
+  → entry.ts builds PipelineContext, calls runPipeline()
+  → state-machine.ts loop: for each stage → shouldSkip → preExecute → handler → postActions → writeState
+  → Output: feature branch, PR, status.json, issue comments
+```
+
+## State Machine Loop
+
+```
+while (true):
+  if ctx.pipelineNeedsRebuild: pipeline = rebuildPipeline(ctx)
+  nextStep = resolveNextStep(state, pipeline)
+  if not nextStep: break
+  executeStep(nextStep)
+  writeState()
+  if failed or paused: break
+```
+
+## Two-Phase Execution (Full Mode)
+
+1. Spec stages run: taskify → spec → gap
+2. After taskify: `resolve-profile` post-action sets `ctx.pipelineNeedsRebuild = true`
+3. `rebuildPipelineAfterTaskify()` returns BOTH spec + impl stages
+4. Engine skips completed spec stages, continues with impl stages
+
+**Bug pattern:** If rebuild returns only impl stages, completed spec stages are missing → engine tries to run them again.
+
+## Gate System
+
+1. `check-gate` post-action in `post-actions.ts` posts formatted comment on issue
+2. Pipeline throws `PipelinePausedError` → state = paused
+3. Operator posts `@cody approve` → next run calls `handleGateApproval()` in `clarify-workflow.ts`
+4. Pipeline resumes from the next stage after the gate (NOT the gate stage itself)
+
+Control modes: `auto` (skip gates), `supervised` (gate on medium+), `gated` (always gate)
+
+## Rerun Flow
+
+1. `resolveRerunFromStage()` in `rerun-utils.ts` handles:
+   - Stage alias resolution: `build` → `gsd-execute`, `architect` → `gsd-plan`
+   - Feedback routing: if feedback provided and fromStage is after gsd-plan, backs up to gsd-plan
+2. All stages before fromStage stay completed
+3. fromStage and later reset to pending
+
+## Known Bugs & Fixes (reference when debugging)
+
+| Bug | Root Cause | Fix Location |
+| --- | ---------- | ------------ |
+| Push rejected on rerun | Bare `git push` without pull-rebase | `git-utils.ts` → `pushWithRebase()` |
+| Chat history SyntaxError | Non-JSON prefix in opencode CLI output | `chat-history.ts` → `extractJson()` |
+| Duplicate risk labels | `setClassificationLabels` didn't remove old labels | `github-api.ts` → removes stale category labels |
+| Runner workspace dirty | Self-hosted runner retains state | `cody.yml` cleanup step + `git clean -ffdx` |
+| Gate approval overwritten | `resetFromStage` reset the approved stage | `rerun-utils.ts` → `resolveFromStageAfterGateApproval()` |
+| Impl stages never run | `rebuildPipelineAfterTaskify` returned only impl | `definitions.ts` → returns spec + impl combined |
 
 ## Debug Checklist
 
 When pipeline doesn't work:
 
 1. **Check status.json:**
-
    ```bash
-   cat .tasks/<task-id>/status.json
+   cat .tasks/<task-id>/status.json | jq '{state, cursor, stages: (.stages | to_entries[] | "\(.key): \(.value.state)")}'
    ```
 
-2. **Check which stages completed:**
-
+2. **Check which stages ran vs skipped:**
    ```bash
-   cat .tasks/<task-id>/status.json | jq '.stages'
+   cat .tasks/<task-id>/status.json | jq '.stages | to_entries[] | select(.value.state != "pending")'
    ```
 
-3. **Check if rebuild happened:**
-   - Look for `ctx.pipelineNeedsRebuild` in post-actions
-   - Verify `rebuildPipelineAfterTaskify` returns both spec + impl
-
-4. **Check git log:**
+3. **Check task.json for risk/complexity/profile:**
    ```bash
-   git log --oneline .tasks/<task-id>/
+   cat .tasks/<task-id>/task.json | jq '{task_type, risk_level, complexity, pipeline_profile}'
    ```
 
-## Common Issues
+4. **Check if rebuild happened:**
+   - Look in logs for `pipelineNeedsRebuild`
+   - Verify `resolve-profile` post-action ran after taskify
 
-| Issue                      | Cause                                           | Fix                                  |
-| -------------------------- | ----------------------------------------------- | ------------------------------------ |
-| Impl stages never run      | `rebuildPipelineAfterTaskify` returns only impl | Return spec + impl combined          |
-| Stage skipped unexpectedly | `shouldSkip` returns true                       | Check skip-conditions.ts             |
-| Pipeline hangs at gate     | Waiting for approval                            | Add `@cody approve` comment          |
-| State not persisting       | `writeState` not called                         | Ensure state written after each step |
-
-## Add New Stage
-
-1. **Add to stage order** in `pipeline/definitions.ts`:
-
-   ```typescript
-   export const SPEC_ORDER_STANDARD = ['taskify', 'spec', 'gap', 'clarify']
-   export const IMPL_ORDER_STANDARD = ['architect', 'plan-gap', 'build', ...]
+5. **Check git state:**
+   ```bash
+   git log --oneline -5 .tasks/<task-id>/
+   git branch --show-current
+   git status
    ```
 
-2. **Define stage** in `createStageDefinitions()`:
-
-   ```typescript
-   stages.set('newStage', {
-     type: 'agent',
-     timeout: 60000,
-     maxRetries: 2,
-     shouldSkip: (ctx) => skipIfInputQuality(ctx, 'newStage'),
-     postActions: [...],
-     validator: createValidator(ctx),
-   })
+6. **Check GitHub Actions run:**
+   ```bash
+   gh run view <run-id> --log-failed
    ```
 
-3. **Add handler** in `handlers/` (if agent type)
+## Task Files
 
-## Key Files
-
-| File                                    | Purpose                   |
-| --------------------------------------- | ------------------------- |
-| `scripts/cody/README.md`                | Full documentation        |
-| `scripts/cody/entry.ts`                 | Entry point, mode routing |
-| `scripts/cody/engine/state-machine.ts`  | Execution loop            |
-| `scripts/cody/pipeline/definitions.ts`  | Stage definitions         |
-| `scripts/cody/pipeline/post-actions.ts` | Post-stage actions        |
-| `scripts/cody/cody-utils.ts`            | Utilities                 |
-
-## Tools Available
-
-- **bash**: Run commands, check git log, read status
-- **read**: Read source files, status.json, task files
-- **write**: Create/update files
-- **edit**: Modify existing files
+All in `.tasks/<task-id>/`:
+- `task.md` — issue body (input)
+- `task.json` — structured task definition (from taskify)
+- `spec.md`, `gap.md`, `plan.md` — stage outputs
+- `status.json` — pipeline state
+- `gate-taskify.md`, `gate-architect.md` — gate pause markers
+- `rerun-feedback.md` — operator feedback for reruns
+- `verify-failures.md` — formatted test/lint failures
+- `chat.json` — trimmed agent conversation history
 
 ## Output
 
 When helping with pipeline issues:
 
-1. Explain what's happening
-2. Identify root cause
-3. Provide fix
-4. Suggest test to verify
+1. Read the relevant source files to understand the problem
+2. Explain what's happening clearly
+3. Identify root cause
+4. Provide specific fix (file + line numbers)
+5. Suggest test to verify the fix
 
 **STOP CONDITION**: You provide a complete answer with fix or explanation.

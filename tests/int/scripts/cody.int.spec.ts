@@ -160,7 +160,7 @@ describe('orchestrator integration', () => {
 
       expect(input.mode).toBe('rerun')
       expect(input.feedback).toBe('Build failed due to type errors in src/api/test.ts')
-      expect(input.fromStage).toBe('gsd-execute') // 'build' alias resolves to 'gsd-execute'
+      expect(input.fromStage).toBe('build')
     })
   })
 
@@ -291,11 +291,11 @@ describe('orchestrator integration', () => {
       expect(stageOutputFile(TEST_TASK_DIR, 'clarify')).toBe(
         path.join(TEST_TASK_DIR, 'questions.md'),
       )
-      expect(stageOutputFile(TEST_TASK_DIR, 'gsd-plan')).toBe(path.join(TEST_TASK_DIR, 'plan.md'))
-      expect(stageOutputFile(TEST_TASK_DIR, 'gsd-execute')).toBe(
-        path.join(TEST_TASK_DIR, 'build.md'),
+      expect(stageOutputFile(TEST_TASK_DIR, 'architect')).toBe(path.join(TEST_TASK_DIR, 'plan.md'))
+      expect(stageOutputFile(TEST_TASK_DIR, 'build')).toBe(path.join(TEST_TASK_DIR, 'build.md'))
+      expect(stageOutputFile(TEST_TASK_DIR, 'plan-gap')).toBe(
+        path.join(TEST_TASK_DIR, 'plan-gap.md'),
       )
-      expect(stageOutputFile(TEST_TASK_DIR, 'test')).toBe(path.join(TEST_TASK_DIR, 'test.md'))
       expect(stageOutputFile(TEST_TASK_DIR, 'verify')).toBe(path.join(TEST_TASK_DIR, 'verify.md'))
       expect(stageOutputFile(TEST_TASK_DIR, 'auditor')).toBe(path.join(TEST_TASK_DIR, 'auditor.md'))
     })
@@ -462,9 +462,9 @@ describe('orchestrator integration', () => {
       expect(SPEC_ONLY_STAGES).toContain('clarify')
 
       // Impl pipeline should have all GSD stages and commit/review/fix/verify/pr
-      expect(ALL_IMPL_STAGE_NAMES).toContain('gsd-research')
-      expect(ALL_IMPL_STAGE_NAMES).toContain('gsd-plan')
-      expect(ALL_IMPL_STAGE_NAMES).toContain('gsd-execute')
+      expect(ALL_IMPL_STAGE_NAMES).toContain('architect')
+      expect(ALL_IMPL_STAGE_NAMES).toContain('plan-gap')
+      expect(ALL_IMPL_STAGE_NAMES).toContain('build')
       expect(ALL_IMPL_STAGE_NAMES).toContain('commit')
       expect(ALL_IMPL_STAGE_NAMES).toContain('verify')
       expect(ALL_IMPL_STAGE_NAMES).toContain('pr')

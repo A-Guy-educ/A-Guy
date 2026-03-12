@@ -82,18 +82,6 @@
     "commit-fix": {
       "model": "minimax-coding-plan/MiniMax-M2.5",
       "description": "Commits fix changes after the fix stage"
-    },
-    "gsd-research": {
-      "model": "anthropic/claude-sonnet-4-20250514",
-      "description": "GSD research phase - parallel codebase analysis"
-    },
-    "gsd-plan": {
-      "model": "anthropic/claude-opus-4-6",
-      "description": "GSD planning phase - plan creation + checker loop"
-    },
-    "gsd-execute": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
-      "description": "GSD execution phase - implements plan (same model as old build)"
     }
   },
   "mcp": {

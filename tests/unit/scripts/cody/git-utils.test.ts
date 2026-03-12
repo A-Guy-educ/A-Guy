@@ -38,6 +38,7 @@ import {
   BRANCH_PREFIX_MAP,
   commitPipelineFiles,
   deriveBranchName,
+  pushWithRebase,
 } from '../../../../scripts/cody/git-utils'
 
 // ============================================================================
@@ -1750,5 +1751,162 @@ describe('commitPipelineFiles artifact exclusion', () => {
 
       expect(commitCalled).toBe(true)
     })
+  })
+})
+
+// ============================================================================
+// pushWithRebase — pull-rebase-retry on push rejection
+// ============================================================================
+
+describe('pushWithRebase', () => {
+  beforeEach(() => {
+    vi.mocked(childProcess.execFileSync).mockClear()
+  })
+
+  it('should succeed on first push attempt', () => {
+    vi.mocked(childProcess.execFileSync).mockReturnValue(Buffer.from(''))
+
+    const result = pushWithRebase('/test/cwd')
+
+    expect(result).toBe(true)
+    // Should have called push once
+    expect(childProcess.execFileSync).toHaveBeenCalledWith(
+      'git',
+      ['push', '-u', 'origin', 'HEAD'],
+      expect.objectContaining({ cwd: '/test/cwd' }),
+    )
+    // Should NOT have called pull --rebase
+    const calls = vi.mocked(childProcess.execFileSync).mock.calls
+    const pullCalls = calls.filter((c) => c[0] === 'git' && c[1]?.includes('pull'))
+    expect(pullCalls).toHaveLength(0)
+  })
+
+  it('should pull-rebase-retry when first push is rejected', () => {
+    let pushCount = 0
+    vi.mocked(childProcess.execFileSync).mockImplementation((cmd, args) => {
+      if (cmd === 'git' && args?.[0] === 'push') {
+        pushCount++
+        if (pushCount === 1) {
+          throw new Error('failed to push some refs')
+        }
+      }
+      return Buffer.from('')
+    })
+
+    const result = pushWithRebase('/test/cwd')
+
+    expect(result).toBe(true)
+
+    const calls = vi.mocked(childProcess.execFileSync).mock.calls
+    // Should have called push twice (first rejected, then succeeded)
+    const pushCalls = calls.filter((c) => c[0] === 'git' && c[1]?.[0] === 'push')
+    expect(pushCalls).toHaveLength(2)
+
+    // Should have called pull --rebase in between
+    const pullCalls = calls.filter(
+      (c) => c[0] === 'git' && c[1]?.[0] === 'pull' && c[1]?.includes('--rebase'),
+    )
+    expect(pullCalls).toHaveLength(1)
+  })
+
+  it('should return false when push fails even after rebase', () => {
+    vi.mocked(childProcess.execFileSync).mockImplementation((cmd, args) => {
+      if (cmd === 'git' && args?.[0] === 'push') {
+        throw new Error('failed to push some refs')
+      }
+      return Buffer.from('')
+    })
+
+    const result = pushWithRebase('/test/cwd')
+
+    expect(result).toBe(false)
+  })
+
+  it('should return false when rebase itself fails (e.g., conflict)', () => {
+    vi.mocked(childProcess.execFileSync).mockImplementation((cmd, args) => {
+      if (cmd === 'git' && args?.[0] === 'push') {
+        throw new Error('failed to push some refs')
+      }
+      if (cmd === 'git' && args?.[0] === 'pull') {
+        throw new Error('CONFLICT: merge conflict in src/file.ts')
+      }
+      return Buffer.from('')
+    })
+
+    const result = pushWithRebase('/test/cwd')
+
+    expect(result).toBe(false)
+  })
+
+  it('should use provided env for all git commands', () => {
+    vi.mocked(childProcess.execFileSync).mockReturnValue(Buffer.from(''))
+    const customEnv = { ...process.env, HUSKY: '0', CUSTOM: 'true' }
+
+    pushWithRebase('/test/cwd', customEnv)
+
+    expect(childProcess.execFileSync).toHaveBeenCalledWith(
+      'git',
+      ['push', '-u', 'origin', 'HEAD'],
+      expect.objectContaining({ env: customEnv }),
+    )
+  })
+})
+
+// ============================================================================
+// commitPipelineFiles — push-rebase integration
+// ============================================================================
+
+describe('commitPipelineFiles push-rebase integration', () => {
+  beforeEach(() => {
+    vi.mocked(childProcess.execFileSync).mockClear()
+    vi.mocked(childProcess.execSync).mockClear()
+  })
+
+  it('should retry push with rebase when remote has diverged', () => {
+    let pushCount = 0
+    vi.mocked(childProcess.execFileSync).mockImplementation((cmd, args) => {
+      if (cmd === 'git' && args?.[0] === 'push') {
+        pushCount++
+        if (pushCount === 1) {
+          throw new Error('Updates were rejected because the remote contains work')
+        }
+      }
+      return Buffer.from('')
+    })
+
+    const result = commitPipelineFiles({
+      taskDir: '.tasks/260218-test',
+      taskId: '260218-test',
+      message: 'ci(cody): commit task files',
+      push: true,
+    })
+
+    // Should succeed — rebase + retry push worked
+    expect(result.success).toBe(true)
+    expect(result.pushed).toBe(true)
+  })
+
+  it('should report push failure but still return committed=true', () => {
+    vi.mocked(childProcess.execFileSync).mockImplementation((cmd, args) => {
+      if (cmd === 'git' && args?.[0] === 'push') {
+        throw new Error('failed to push some refs')
+      }
+      if (cmd === 'git' && args?.[0] === 'pull') {
+        throw new Error('CONFLICT')
+      }
+      return Buffer.from('')
+    })
+
+    const result = commitPipelineFiles({
+      taskDir: '.tasks/260218-test',
+      taskId: '260218-test',
+      message: 'ci(cody): commit task files',
+      push: true,
+    })
+
+    // Commit succeeded but push failed
+    expect(result.success).toBe(true)
+    expect(result.committed).toBe(true)
+    expect(result.pushed).toBe(false)
   })
 })

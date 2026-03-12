@@ -367,7 +367,7 @@ describe('TaskDefinitionSchema', () => {
       }
     })
 
-    it('should reject non-skippable stages in skip_stages (commit)', () => {
+    it('should reject non-skippable stages in skip_stages (plan-gap)', () => {
       const raw = {
         task_type: 'implement_feature',
         risk_level: 'medium',
@@ -378,7 +378,7 @@ describe('TaskDefinitionSchema', () => {
         assumptions: [],
         input_quality: {
           level: 'good_spec',
-          skip_stages: ['commit'],
+          skip_stages: ['plan-gap'],
           reasoning: 'Test',
         },
       }
@@ -388,12 +388,12 @@ describe('TaskDefinitionSchema', () => {
       expect(result.success).toBe(false)
       if (!result.success) {
         expect(
-          result.error.issues.some((i) => i.message.includes('Cannot skip stage "commit"')),
+          result.error.issues.some((i) => i.message.includes('Cannot skip stage "plan-gap"')),
         ).toBe(true)
       }
     })
 
-    it('should reject non-skippable stages in skip_stages (gsd-execute)', () => {
+    it('should reject non-skippable stages in skip_stages (build)', () => {
       const raw = {
         task_type: 'implement_feature',
         risk_level: 'medium',
@@ -404,7 +404,7 @@ describe('TaskDefinitionSchema', () => {
         assumptions: [],
         input_quality: {
           level: 'good_spec',
-          skip_stages: ['gsd-execute'],
+          skip_stages: ['build'],
           reasoning: 'Test',
         },
       }
@@ -414,7 +414,7 @@ describe('TaskDefinitionSchema', () => {
       expect(result.success).toBe(false)
       if (!result.success) {
         expect(
-          result.error.issues.some((i) => i.message.includes('Cannot skip stage "gsd-execute"')),
+          result.error.issues.some((i) => i.message.includes('Cannot skip stage "build"')),
         ).toBe(true)
       }
     })

@@ -557,14 +557,14 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
       input.fromStage = resolveFromStageAfterGateApproval(gateApprovedStage, tempOrder)
       logger.info(`  ℹ️ Gate approved at ${gateApprovedStage} — resuming from ${input.fromStage}`)
     } else {
-      input.fromStage = pausedStage || getLastFailedStage(input.taskId) || 'gsd-execute'
+      input.fromStage = pausedStage || getLastFailedStage(input.taskId) || 'build'
     }
   }
 
   // P3 fix: Back up to architect when feedback provided so plan can be revised
   const implStageOrder = flattenPipelineOrder(IMPL_ORDER_STANDARD)
   const resolvedFrom = resolveRerunFromStage(
-    input.fromStage || 'gsd-execute',
+    input.fromStage || 'build',
     input.feedback,
     implStageOrder,
   )
@@ -616,7 +616,7 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
   const stageOrder = flattenPipelineOrder(pipeline.order)
 
   // Fix 5: Validate fromStage exists in the resolved pipeline order
-  const fromStage = input.fromStage || 'gsd-execute'
+  const fromStage = input.fromStage || 'build'
   if (!stageOrder.includes(fromStage)) {
     throw new Error(
       `Stage "${fromStage}" not found in rerun pipeline. Valid stages: ${stageOrder.join(', ')}`,

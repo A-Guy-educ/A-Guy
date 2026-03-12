@@ -10,22 +10,6 @@ import { spawn, type ChildProcess } from 'child_process'
 import { getEnv } from './env'
 
 // ============================================================================
-// Env Var Cleaning
-// ============================================================================
-
-/**
- * Strip OpenCode session env vars to prevent "Session not found" errors
- * when spawning new opencode processes from within an existing session.
- */
-function cleanOpenCodeEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
-  const cleaned = { ...env }
-  delete cleaned.OPENCODE
-  delete cleaned.OPENCODE_PID
-  delete cleaned.OPENCODE_SERVER_PASSWORD
-  return cleaned
-}
-
-// ============================================================================
 // Types
 // ============================================================================
 
@@ -54,7 +38,7 @@ export class GitHubRunner implements RunnerBackend {
         cwd,
         // Pipe stdout for JSON parsing (sessionID extraction), pipe stderr for capture
         stdio: ['ignore', 'pipe', 'pipe'], // stdin=ignore prevents opencode blocking on stdin read
-        env: cleanOpenCodeEnv(env),
+        env,
       },
     )
   }
@@ -76,7 +60,7 @@ export class LocalRunner implements RunnerBackend {
       // Pipe stdout for JSON parsing (sessionID extraction), pipe stderr for capture
       stdio: ['ignore', 'pipe', 'pipe'], // stdin=ignore prevents opencode blocking on stdin read
       env: {
-        ...cleanOpenCodeEnv(env),
+        ...env,
         AGENT: stage,
         MODEL: env.MODEL,
       },

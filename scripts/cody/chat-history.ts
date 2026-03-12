@@ -117,6 +117,29 @@ function trimSession(
 }
 
 // ============================================================================
+// Helper: Extract JSON object from potentially noisy CLI output
+// ============================================================================
+
+/**
+ * Extract a JSON object from CLI output that may contain non-JSON lines
+ * (e.g., progress messages, "Exporting session:" prefix, warnings).
+ * Finds the first '{' and last '}' and parses the substring between them.
+ */
+export function extractJson(output: string): unknown {
+  const firstBrace = output.indexOf('{')
+  const lastBrace = output.lastIndexOf('}')
+
+  if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+    throw new SyntaxError(
+      `No JSON object found in output (length=${output.length}, first 200 chars: ${output.slice(0, 200)})`,
+    )
+  }
+
+  const jsonStr = output.slice(firstBrace, lastBrace + 1)
+  return JSON.parse(jsonStr)
+}
+
+// ============================================================================
 // Helper: Load existing chat history
 // ============================================================================
 
@@ -174,9 +197,11 @@ export async function appendSession(
       stdio: ['pipe', 'pipe', 'pipe'],
       cwd: process.cwd(),
       maxBuffer: 50 * 1024 * 1024, // 50MB — session exports can be very large
-    }).replace(/^Exporting session:.*\n/, '') // Remove the "Exporting session:" line
+    })
 
-    const rawExport = JSON.parse(output)
+    // Extract JSON from potentially noisy CLI output (may contain
+    // "Exporting session:" prefix, progress messages, or other non-JSON lines)
+    const rawExport = extractJson(output) as Parameters<typeof trimSession>[0]
 
     // Trim to compact format
     const session = trimSession(rawExport, stage)

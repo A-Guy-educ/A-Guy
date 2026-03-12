@@ -10,6 +10,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { codyApi, RateLimitError, NoTokenError } from '../api'
 import type { CodyTask } from '../types'
+import type { ViewMode } from '../components/FilterBar'
 import { POLLING_INTERVALS } from '../constants'
 
 // Query keys
@@ -26,8 +27,13 @@ export interface UseCodyTasksOptions {
   days?: number
   includeDetails?: boolean
   /**
+   * Current view mode — 'running' or 'backlog'.
+   * When 'backlog', polling slows to 120s since backlog tasks change rarely.
+   */
+  viewMode?: ViewMode
+  /**
    * Auto-refresh interval based on task state.
-   * - 'auto': Uses smart polling based on running tasks
+   * - 'auto': Uses smart polling based on running tasks and view mode
    * - 'idle': 60s interval when no tasks are running
    * - 'board': 30s interval when tasks are on board
    * - 'active': 15s interval when viewing active task
@@ -37,12 +43,19 @@ export interface UseCodyTasksOptions {
 }
 
 /**
- * Determine polling interval based on current task data.
- * - Active tasks (building/retrying/gate-waiting): poll every 30s
- * - All idle: poll every 60s
+ * Determine polling interval based on current task data and view mode.
+ * - Backlog view: poll every 120s (tasks change rarely)
+ * - Running view with active tasks (building/retrying/gate-waiting): poll every 30s
+ * - Running view, all idle: poll every 60s
  */
-function getSmartInterval(tasks: CodyTask[] | undefined): number {
+export function getSmartInterval(
+  tasks: CodyTask[] | undefined,
+  viewMode: ViewMode = 'running',
+): number {
   if (!tasks || tasks.length === 0) return POLLING_INTERVALS.idle
+
+  // Backlog view — slow polling since these tasks change rarely
+  if (viewMode === 'backlog') return POLLING_INTERVALS.backlog
 
   const hasActive = tasks.some(
     (t) => t.column === 'building' || t.column === 'retrying' || t.column === 'gate-waiting',
@@ -52,7 +65,7 @@ function getSmartInterval(tasks: CodyTask[] | undefined): number {
 }
 
 export function useCodyTasks(options: UseCodyTasksOptions = {}) {
-  const { days, includeDetails = false, refetchInterval = 'auto' } = options
+  const { days, includeDetails = false, viewMode = 'running', refetchInterval = 'auto' } = options
 
   return useQuery({
     queryKey: queryKeys.tasks(days, includeDetails),
@@ -62,7 +75,7 @@ export function useCodyTasks(options: UseCodyTasksOptions = {}) {
 
       // Smart auto mode: inspect data to decide interval
       if (refetchInterval === 'auto') {
-        return getSmartInterval(query.state.data)
+        return getSmartInterval(query.state.data, viewMode)
       }
 
       return POLLING_INTERVALS[refetchInterval]

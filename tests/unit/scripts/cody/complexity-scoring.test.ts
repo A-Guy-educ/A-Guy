@@ -93,9 +93,9 @@ describe('complexity scoring constants', () => {
       'spec',
       'gap',
       'clarify',
-      'gsd-research',
-      'gsd-plan',
-      'gsd-execute',
+      'architect',
+      'plan-gap',
+      'build',
       'commit',
       'verify',
       'pr',
@@ -108,7 +108,7 @@ describe('complexity scoring constants', () => {
 
   it('always-run stages have threshold 0', () => {
     expect(STAGE_COMPLEXITY_THRESHOLDS.taskify).toBe(0)
-    expect(STAGE_COMPLEXITY_THRESHOLDS['gsd-execute']).toBe(0)
+    expect(STAGE_COMPLEXITY_THRESHOLDS.build).toBe(0)
     expect(STAGE_COMPLEXITY_THRESHOLDS.commit).toBe(0)
     expect(STAGE_COMPLEXITY_THRESHOLDS.verify).toBe(0)
     expect(STAGE_COMPLEXITY_THRESHOLDS.pr).toBe(0)
@@ -118,18 +118,16 @@ describe('complexity scoring constants', () => {
     expect(STAGE_COMPLEXITY_THRESHOLDS.spec).toBeGreaterThan(0)
     expect(STAGE_COMPLEXITY_THRESHOLDS.gap).toBeGreaterThan(0)
     expect(STAGE_COMPLEXITY_THRESHOLDS.clarify).toBeGreaterThan(0)
-    expect(STAGE_COMPLEXITY_THRESHOLDS['gsd-plan']).toBeGreaterThan(0)
-    expect(STAGE_COMPLEXITY_THRESHOLDS['gsd-research']).toBeGreaterThan(0)
+    expect(STAGE_COMPLEXITY_THRESHOLDS.architect).toBeGreaterThan(0)
+    expect(STAGE_COMPLEXITY_THRESHOLDS['plan-gap']).toBeGreaterThan(0)
   })
 
   it('thresholds increase monotonically for core stages', () => {
-    // gsd-plan (10) < spec (20) < gap (35) = gsd-research (35) < clarify (60)
-    expect(STAGE_COMPLEXITY_THRESHOLDS['gsd-plan']).toBeLessThan(STAGE_COMPLEXITY_THRESHOLDS.spec)
+    // architect (10) < spec (20) < gap (35) < plan-gap (40) < clarify (60)
+    expect(STAGE_COMPLEXITY_THRESHOLDS.architect).toBeLessThan(STAGE_COMPLEXITY_THRESHOLDS.spec)
     expect(STAGE_COMPLEXITY_THRESHOLDS.spec).toBeLessThan(STAGE_COMPLEXITY_THRESHOLDS.gap)
-    expect(STAGE_COMPLEXITY_THRESHOLDS.gap).toBeLessThanOrEqual(
-      STAGE_COMPLEXITY_THRESHOLDS['gsd-research'],
-    )
-    expect(STAGE_COMPLEXITY_THRESHOLDS['gsd-research']).toBeLessThan(
+    expect(STAGE_COMPLEXITY_THRESHOLDS.gap).toBeLessThan(STAGE_COMPLEXITY_THRESHOLDS['plan-gap'])
+    expect(STAGE_COMPLEXITY_THRESHOLDS['plan-gap']).toBeLessThan(
       STAGE_COMPLEXITY_THRESHOLDS.clarify,
     )
   })
@@ -171,37 +169,37 @@ describe('getStagesForComplexity', () => {
   it('trivial (score 5) → only always-run stages', () => {
     const stages = getStagesForComplexity(5)
     expect(stages).toContain('taskify')
-    expect(stages).toContain('gsd-execute')
+    expect(stages).toContain('build')
     expect(stages).toContain('commit')
     expect(stages).toContain('verify')
     expect(stages).toContain('pr')
     // Should NOT include optional stages
     expect(stages).not.toContain('spec')
     expect(stages).not.toContain('gap')
-    expect(stages).not.toContain('gsd-plan')
+    expect(stages).not.toContain('architect')
     expect(stages).not.toContain('clarify')
   })
 
-  it('simple (score 15) → + gsd-plan', () => {
+  it('simple (score 15) → + architect', () => {
     const stages = getStagesForComplexity(15)
-    expect(stages).toContain('gsd-plan')
+    expect(stages).toContain('architect')
     expect(stages).not.toContain('spec')
     expect(stages).not.toContain('gap')
   })
 
   it('moderate (score 25) → + spec', () => {
     const stages = getStagesForComplexity(25)
-    expect(stages).toContain('gsd-plan')
+    expect(stages).toContain('architect')
     expect(stages).toContain('spec')
     expect(stages).not.toContain('gap')
   })
 
-  it('complex (score 40) → + spec, gap, gsd-research', () => {
+  it('complex (score 40) → + spec, gap, plan-gap', () => {
     const stages = getStagesForComplexity(40)
     expect(stages).toContain('spec')
     expect(stages).toContain('gap')
-    expect(stages).toContain('gsd-plan')
-    expect(stages).toContain('gsd-research')
+    expect(stages).toContain('architect')
+    expect(stages).toContain('plan-gap')
     expect(stages).not.toContain('clarify')
   })
 
@@ -210,9 +208,9 @@ describe('getStagesForComplexity', () => {
     expect(stages).toContain('spec')
     expect(stages).toContain('gap')
     expect(stages).toContain('clarify')
-    expect(stages).toContain('gsd-plan')
-    expect(stages).toContain('gsd-research')
-    expect(stages).toContain('gsd-execute')
+    expect(stages).toContain('architect')
+    expect(stages).toContain('plan-gap')
+    expect(stages).toContain('build')
     expect(stages).toContain('commit')
     expect(stages).toContain('verify')
     expect(stages).toContain('pr')
@@ -459,21 +457,21 @@ describe('skipIfBelowComplexity', () => {
     expect(result.shouldSkip).toBe(false)
   })
 
-  it('complexity 15, stage gsd-plan (threshold 10) → does not skip', () => {
+  it('complexity 15, stage architect (threshold 10) → does not skip', () => {
     const ctx = createCtx(15)
-    const result = skipIfBelowComplexity(ctx, 'gsd-plan')
+    const result = skipIfBelowComplexity(ctx, 'architect')
     expect(result.shouldSkip).toBe(false)
   })
 
-  it('complexity 5, stage gsd-plan (threshold 10) → skips', () => {
+  it('complexity 5, stage architect (threshold 10) → skips', () => {
     const ctx = createCtx(5)
-    const result = skipIfBelowComplexity(ctx, 'gsd-plan')
+    const result = skipIfBelowComplexity(ctx, 'architect')
     expect(result.shouldSkip).toBe(true)
   })
 
   it('always-run stages (threshold 0) → never skips', () => {
     const ctx = createCtx(1)
-    expect(skipIfBelowComplexity(ctx, 'gsd-execute').shouldSkip).toBe(false)
+    expect(skipIfBelowComplexity(ctx, 'build').shouldSkip).toBe(false)
     expect(skipIfBelowComplexity(ctx, 'commit').shouldSkip).toBe(false)
     expect(skipIfBelowComplexity(ctx, 'verify').shouldSkip).toBe(false)
     expect(skipIfBelowComplexity(ctx, 'pr').shouldSkip).toBe(false)
@@ -489,26 +487,24 @@ describe('skipIfBelowComplexity', () => {
 describe('end-to-end complexity pipeline routing', () => {
   it('trivial bug (score 8) → minimal pipeline', () => {
     const stages = getStagesForComplexity(8)
-    expect(stages).toEqual(
-      expect.arrayContaining(['taskify', 'gsd-execute', 'commit', 'verify', 'pr']),
-    )
+    expect(stages).toEqual(expect.arrayContaining(['taskify', 'build', 'commit', 'verify', 'pr']))
     expect(stages).not.toContain('spec')
     expect(stages).not.toContain('gap')
-    expect(stages).not.toContain('gsd-plan')
+    expect(stages).not.toContain('architect')
     expect(stages).not.toContain('clarify')
-    expect(stages).not.toContain('gsd-research')
+    expect(stages).not.toContain('plan-gap')
   })
 
-  it('simple fix (score 15) → adds gsd-plan only', () => {
+  it('simple fix (score 15) → adds architect only', () => {
     const stages = getStagesForComplexity(15)
-    expect(stages).toContain('gsd-plan')
+    expect(stages).toContain('architect')
     expect(stages).not.toContain('spec')
     expect(stages).not.toContain('gap')
   })
 
   it('moderate feature (score 28) → adds spec but not gap', () => {
     const stages = getStagesForComplexity(28)
-    expect(stages).toContain('gsd-plan')
+    expect(stages).toContain('architect')
     expect(stages).toContain('spec')
     expect(stages).not.toContain('gap')
   })
@@ -517,8 +513,8 @@ describe('end-to-end complexity pipeline routing', () => {
     const stages = getStagesForComplexity(42)
     expect(stages).toContain('spec')
     expect(stages).toContain('gap')
-    expect(stages).toContain('gsd-plan')
-    expect(stages).toContain('gsd-research')
+    expect(stages).toContain('architect')
+    expect(stages).toContain('plan-gap')
     expect(stages).not.toContain('clarify')
   })
 
@@ -527,9 +523,9 @@ describe('end-to-end complexity pipeline routing', () => {
     expect(stages).toContain('spec')
     expect(stages).toContain('gap')
     expect(stages).toContain('clarify')
-    expect(stages).toContain('gsd-plan')
-    expect(stages).toContain('gsd-research')
-    expect(stages).toContain('gsd-execute')
+    expect(stages).toContain('architect')
+    expect(stages).toContain('plan-gap')
+    expect(stages).toContain('build')
     expect(stages).toContain('commit')
     expect(stages).toContain('verify')
     expect(stages).toContain('pr')
@@ -627,23 +623,23 @@ describe('definitions.ts skip chain integration', () => {
     expect(result.shouldSkip).toBe(false)
   })
 
-  it('gsd-plan stage skips at complexity 5 (threshold 10)', () => {
+  it('architect stage skips at complexity 5 (threshold 10)', () => {
     const ctx = createPipelineCtx(5)
     const pipeline = buildPipeline('full', 'standard', true, ctx)
-    const gsdPlanStage = pipeline.stages.get('gsd-plan')!
+    const architectStage = pipeline.stages.get('architect')!
 
-    const result = gsdPlanStage.shouldSkip!(ctx)
+    const result = architectStage.shouldSkip!(ctx)
     expect(result.shouldSkip).toBe(true)
     expect(result.reason).toContain('Complexity 5')
   })
 
-  it('gsd-plan stage passes complexity but checks spec_only fallback (score 15)', () => {
+  it('architect stage passes complexity but checks spec_only fallback (score 15)', () => {
     const ctx = createPipelineCtx(15)
     // Not spec_only, so should not skip
     const pipeline = buildPipeline('full', 'standard', true, ctx)
-    const gsdPlanStage = pipeline.stages.get('gsd-plan')!
+    const architectStage = pipeline.stages.get('architect')!
 
-    const result = gsdPlanStage.shouldSkip!(ctx)
+    const result = architectStage.shouldSkip!(ctx)
     expect(result.shouldSkip).toBe(false)
   })
 
@@ -658,13 +654,13 @@ describe('definitions.ts skip chain integration', () => {
     expect(result.reason).toContain('Complexity 10')
   })
 
-  it('gsd-execute stage has NO complexity skip (always-run, threshold 0)', () => {
+  it('build stage has NO complexity skip (always-run, threshold 0)', () => {
     const ctx = createPipelineCtx(1)
     const pipeline = buildPipeline('full', 'standard', true, ctx)
-    const gsdExecuteStage = pipeline.stages.get('gsd-execute')!
+    const buildStage = pipeline.stages.get('build')!
 
     // Build only checks input_quality, not complexity
-    const result = gsdExecuteStage.shouldSkip!(ctx)
+    const result = buildStage.shouldSkip!(ctx)
     expect(result.shouldSkip).toBe(false)
   })
 
@@ -673,7 +669,7 @@ describe('definitions.ts skip chain integration', () => {
     const pipeline = buildPipeline('full', 'standard', true, ctx)
 
     // All optional stages should NOT be skipped by complexity
-    for (const stageName of ['spec', 'gap', 'clarify', 'gsd-plan', 'gsd-research']) {
+    for (const stageName of ['spec', 'gap', 'clarify', 'architect', 'plan-gap']) {
       const stage = pipeline.stages.get(stageName)!
       if (stage.shouldSkip) {
         const result = stage.shouldSkip(ctx)

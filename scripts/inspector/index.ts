@@ -25,6 +25,9 @@ async function main(): Promise<void> {
   const token = process.env.GH_TOKEN || ''
   const dryRun = process.env.DRY_RUN === 'true'
 
+  // Parse optional config
+  const watchdogIssue = process.env.WATCHDOG_ISSUE ? Number(process.env.WATCHDOG_ISSUE) : undefined
+
   // Validate required env vars
   if (!repo) {
     logger.error('Missing required environment variable: REPO')
@@ -37,6 +40,14 @@ async function main(): Promise<void> {
   }
 
   logger.info({ repo, dryRun }, 'Starting Inspector')
+
+  // Warn about missing optional config
+  if (!watchdogIssue) {
+    logger.warn('WATCHDOG_ISSUE not set — digest reports will be skipped')
+  }
+  if (!process.env.MINIMAX_API_KEY) {
+    logger.warn('MINIMAX_API_KEY not set — failure analysis will use fallback mode')
+  }
 
   // Create plugin registry
   const registry = createPluginRegistry()
@@ -52,6 +63,7 @@ async function main(): Promise<void> {
     dryRun,
     stateFile: `${process.cwd()}/.inspector/state.json`,
     plugins: registry.getAll(),
+    watchdogIssue,
   }
 
   // Run Inspector

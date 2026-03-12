@@ -262,27 +262,33 @@
     },
     {
       "path": "scripts/cody/README.md",
-      "title": "Cody Pipeline",
+      "title": "Cody Pipeline — Architecture Reference",
       "sections": [
+        "System Overview",
+        "End-to-End Data Flow",
         "Trigger",
         "Pipeline Modes",
-        "Two-Phase Execution",
+        "Two-Phase Execution (Full Mode)",
         "Profiles",
-        "Stage Inputs/Outputs",
-        "Key Files",
+        "Stage Architecture",
+        "Post-Action System",
+        "Gate System",
+        "Rerun & Recovery",
+        "Complexity-Based Stage Routing",
+        "Quality Gates (gsd-execute post-action)",
+        "File Map",
         "Task Files",
         "State Machine",
-        "Post-Actions",
-        "Gates",
-        "Error Handling",
+        "CI Layer (.github/workflows/cody.yml)",
+        "Dashboard Layer",
+        "Known Gotchas & Bugs Fixed",
+        "Debug",
         "Add New Stage",
-        "Important Context",
-        "Key Functions",
-        "Debug"
+        "Key Types"
       ],
       "relativeUrl": "scripts/cody/README.md",
       "category": "scripts",
-      "wordCount": 534
+      "wordCount": 2129
     },
     {
       "path": "scripts/README.md",
@@ -543,7 +549,7 @@
     }
   ],
   "metadata": {
-    "generatedAt": "2026-03-06T12:42:14.711Z",
+    "generatedAt": "2026-03-12T14:16:41.746Z",
     "totalReadmes": 32,
     "categories": {
       ".claude": 1,
