@@ -288,7 +288,7 @@
       ],
       "relativeUrl": "scripts/cody/README.md",
       "category": "scripts",
-      "wordCount": 2133
+      "wordCount": 2155
     },
     {
       "path": "scripts/README.md",
@@ -320,7 +320,7 @@
       ],
       "relativeUrl": "self-growing-pipeline/README.md",
       "category": "self-growing-pipeline",
-      "wordCount": 824
+      "wordCount": 838
     },
     {
       "path": "src/app/README.md",
@@ -564,7 +564,7 @@
     }
   ],
   "metadata": {
-    "generatedAt": "2026-03-13T15:23:24.177Z",
+    "generatedAt": "2026-03-13T17:05:58.024Z",
     "totalReadmes": 33,
     "categories": {
       ".claude": 1,

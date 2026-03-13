@@ -63,7 +63,8 @@ describe('stage-prompts', () => {
       expect(stages).toContain('docs')
       expect(stages).toContain('pr')
       expect(stages).toContain('test')
-      expect(stages).toHaveLength(15)
+      expect(stages).not.toContain('reflect')
+      expect(stages).toHaveLength(14)
     })
   })
 
@@ -151,7 +152,7 @@ describe('stage-prompts', () => {
 
   describe('getImplStages', () => {
     it('should return full implementation stage list (default standard profile)', () => {
-      // docs + reflect are deferred to inspector (deferred-stages plugin)
+      // docs is deferred to inspector (deferred-stages plugin); reflect removed
       expect(getImplStages()).toEqual([
         'architect',
         'plan-gap',
@@ -167,7 +168,7 @@ describe('stage-prompts', () => {
     })
 
     it('should return reduced stage list for lightweight profile (no plan-gap)', () => {
-      // docs + reflect are deferred to inspector (deferred-stages plugin)
+      // docs is deferred to inspector (deferred-stages plugin); reflect removed
       expect(getImplStages('lightweight')).toEqual([
         'architect',
         'test',
@@ -182,7 +183,7 @@ describe('stage-prompts', () => {
     })
 
     it('should return full stage list for standard profile', () => {
-      // docs + reflect are deferred to inspector (deferred-stages plugin)
+      // docs is deferred to inspector (deferred-stages plugin); reflect removed
       expect(getImplStages('standard')).toEqual([
         'architect',
         'plan-gap',
@@ -214,7 +215,7 @@ describe('stage-prompts', () => {
       }
     })
 
-    it('should return empty strings for non-spec stages (except build, review, fix, docs, reflect)', () => {
+    it('should return empty strings for non-spec stages (except build, review, fix, docs)', () => {
       const nonSpecStages = ALL_STAGES.filter(
         (s) => !SPEC_STAGES.includes(s as (typeof SPEC_STAGES)[number]),
       )
@@ -229,8 +230,6 @@ describe('stage-prompts', () => {
           expect(instruction).toContain('TARGETED FIX STAGE')
         } else if (stage === 'docs') {
           expect(instruction).toContain('DOCUMENTATION STAGE')
-        } else if (stage === 'reflect') {
-          expect(instruction).toContain('REFLECT STAGE')
         } else if (stage === 'test') {
           expect(instruction).toContain('TDD RED PHASE')
         } else {

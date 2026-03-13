@@ -459,7 +459,7 @@ async function executeParallelStep(
 
       // Propagate sessionId for downstream stage forking.
       // Note: with parallel stages, the last one to complete "wins" — non-deterministic.
-      // This is acceptable because parallel stages are currently advisory (docs/reflect)
+      // This is acceptable because parallel stages are currently advisory (test/build)
       // and sequential stages have a stable last-writer guarantee.
       if (stageResult.sessionId) {
         ctx.lastSessionId = stageResult.sessionId

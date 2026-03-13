@@ -25,7 +25,6 @@ import {
   createBuildValidator,
   createDocsValidator,
   createTestValidator,
-  createReflectValidator,
 } from './validators'
 import {
   skipIfInputQuality,
@@ -351,7 +350,9 @@ No critical gaps identified. Plan was refined in-place.
     ],
   })
 
-  // docs stage - updates documentation related to the task changes
+  // docs stage - deferred to nightly inspector (Knowledge Gardener plugin).
+  // Kept here so the state machine can execute it if triggered directly (e.g., manual rerun).
+  // Complexity threshold raised to 30 (moderate+) — trivial/simple tasks skip docs.
   stages.set('docs', {
     name: 'docs',
     type: 'agent',
@@ -364,30 +365,6 @@ No critical gaps identified. Plan was refined in-place.
       return { shouldSkip: false }
     },
     validator: createDocsValidator(),
-    postActions: [
-      {
-        type: 'commit-task-files',
-        stagingStrategy: 'tracked+task',
-        push: true,
-        ensureBranch: false,
-      },
-    ],
-  })
-
-  // reflect stage - post-task learning: pattern extraction, knowledge base update, skill creation
-  stages.set('reflect', {
-    name: 'reflect',
-    type: 'agent',
-    timeout: STAGE_TIMEOUTS.reflect ?? DEFAULT_TIMEOUT,
-    maxRetries: 0, // Best-effort — failure doesn't block PR
-    advisory: true, // Non-critical stage
-    minComplexity: STAGE_COMPLEXITY_THRESHOLDS.reflect,
-    shouldSkip: (ctx) => {
-      const complexitySkip = skipIfBelowComplexity(ctx, 'reflect')
-      if (complexitySkip.shouldSkip) return complexitySkip
-      return { shouldSkip: false }
-    },
-    validator: createReflectValidator(),
     postActions: [
       {
         type: 'commit-task-files',

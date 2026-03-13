@@ -75,8 +75,7 @@ export const STAGE_COMPLEXITY_THRESHOLDS: Record<string, number> = {
   review: 30,
   fix: 0,
   verify: 0,
-  docs: 15, // Runs for simple+ tasks (complexity >= 10)
-  reflect: 15, // Runs alongside docs for simple+ tasks
+  docs: 30, // Runs for moderate+ tasks (complexity >= 30) — deferred to nightly inspector
   pr: 0,
 }
 
@@ -874,7 +873,7 @@ export function flattenPipeline(stages: PipelineStage[]): string[] {
  *   architect → plan-gap → build → commit(scripted) →
  *   verify (scripted) → pr
  * Note: test-writer subagent is invoked by build agent per plan step (TDD)
- * Note: docs + reflect are deferred to inspector (deferred-stages plugin)
+ * Note: docs is deferred to nightly inspector (Knowledge Gardener plugin); reflect removed
  */
 export const IMPL_PIPELINE: PipelineStage[] = [
   'architect',

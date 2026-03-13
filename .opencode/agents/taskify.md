@@ -262,7 +262,7 @@ Example lightweight task.json:
 |-------|------|-----------------|
 | 1-9 | Trivial | taskify → build → commit → verify → pr (always-run stages only) |
 | 10-14 | Simple | + architect |
-| 15-19 | Simple+ | + docs + reflect |
+| 15-19 | Simple+ | (no additional stages) |
 | 20-29 | Moderate | (no additional stages at this threshold) |
 | 30-34 | Moderate+ | + review |
 | 35-39 | Complex | + gap (writes spec.md + gap.md) |

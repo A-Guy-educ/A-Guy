@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "description": "Cross-task knowledge base for Cody pipeline self-learning. Updated by the reflect stage after each task.",
+  "description": "Cross-task knowledge base for Cody pipeline self-learning. Updated by the Knowledge Gardener nightly inspector plugin.",
   "entries": [
     {
       "taskId": "260313-auto-657",

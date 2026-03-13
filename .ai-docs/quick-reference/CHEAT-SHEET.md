@@ -702,7 +702,7 @@ pnpm test:e2e                  # E2E tests
 ```
 @cody on issue → taskify → gap → architect → plan-gap → build → commit → review → fix → commit → verify → pr
                                                                                                           ↓
-                                                           (deferred, via inspector) → docs → reflect
+                                                           (deferred, via inspector, complexity ≥ 30) → docs
 ```
 
 ### Key Debug Files

@@ -70,8 +70,9 @@ Output:
 | `rerun` | Resume from last failure/pause point                               |
 | `fix`   | review → fix → commit → verify → pr (targeted fix mode)            |
 
-> **Note**: `docs` and `reflect` stages are deferred to the inspector (`cody-deferred-stages` plugin).
-> After a task's PR is merged, the inspector triggers them sequentially via `cody.yml rerun --from=docs`.
+> **Note**: `docs` stage is deferred to the inspector (`cody-deferred-stages` plugin) for tasks with complexity ≥ 30.
+> After a task's PR is merged, the inspector triggers it via `cody.yml rerun --from=docs`.
+> The `reflect` stage has been removed — its functionality is subsumed by the Knowledge Gardener nightly inspector plugin.
 
 ## Two-Phase Execution (Full Mode)
 

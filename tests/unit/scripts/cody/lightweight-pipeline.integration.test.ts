@@ -181,7 +181,7 @@ describe('lightweight pipeline integration', () => {
       expect(flatNames).toContain('commit')
       expect(flatNames).toContain('verify')
       expect(flatNames).toContain('pr')
-      // docs + reflect are deferred to inspector (not in live pipeline)
+      // docs is deferred to inspector (not in live pipeline); reflect removed
       expect(flatNames).not.toContain('docs')
       expect(flatNames).not.toContain('reflect')
     })

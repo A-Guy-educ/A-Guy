@@ -515,7 +515,7 @@ describe('pipeline stage definitions', () => {
   })
 
   it('should have exactly 10 impl stages', async () => {
-    // docs + reflect are deferred to inspector (deferred-stages plugin)
+    // docs is deferred to inspector (deferred-stages plugin); reflect removed
     const { ALL_IMPL_STAGE_NAMES } = await import('../../../../scripts/cody/pipeline-utils')
     expect(ALL_IMPL_STAGE_NAMES).toHaveLength(10)
   })
@@ -1018,7 +1018,7 @@ describe('getImplPipeline', () => {
   it('returns full pipeline for standard profile', async () => {
     const { getImplPipeline } = await import('../../../../scripts/cody/pipeline-utils')
     const pipeline = getImplPipeline('standard')
-    // Standard pipeline should have 9 entries (docs + reflect deferred to inspector)
+    // Standard pipeline should have 9 entries (docs deferred to inspector; reflect removed)
     expect(pipeline).toHaveLength(9)
   })
 
@@ -1026,7 +1026,7 @@ describe('getImplPipeline', () => {
     const { getImplPipeline, flattenPipeline } =
       await import('../../../../scripts/cody/pipeline-utils')
     const pipeline = getImplPipeline('lightweight')
-    // Lightweight should have 8 entries (docs + reflect deferred to inspector)
+    // Lightweight should have 8 entries (docs deferred to inspector; reflect removed)
     expect(pipeline).toHaveLength(8)
     const flatNames = flattenPipeline(pipeline)
     expect(flatNames).toEqual([
@@ -1064,7 +1064,7 @@ describe('getAllImplStageNames', () => {
   })
 
   it('lightweight profile returns flat list without plan-gap', async () => {
-    // docs + reflect are deferred to inspector (deferred-stages plugin)
+    // docs is deferred to inspector (deferred-stages plugin); reflect removed
     const { getAllImplStageNames } = await import('../../../../scripts/cody/pipeline-utils')
     const names = getAllImplStageNames('lightweight')
     expect(names).toEqual([

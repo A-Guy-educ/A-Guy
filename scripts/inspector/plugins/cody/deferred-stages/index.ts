@@ -2,14 +2,17 @@
  * @fileType plugin
  * @domain inspector
  * @pattern deferred-stages-plugin
- * @ai-summary Runs docs then reflect sequentially for tasks that completed PR but missed those stages
+ * @ai-summary Runs docs for tasks (complexity ≥ 30) that completed PR but missed that stage
  *
- * Docs + reflect were removed from the live pipeline to save 4-10 min and 2 LLM calls per run.
- * This inspector plugin picks up completed tasks and triggers the deferred stages via
+ * Docs was removed from the live pipeline to save 2-5 min and 1 LLM call per run.
+ * This inspector plugin picks up completed tasks and triggers the docs stage via
  * `cody.yml` workflow dispatch with `mode=rerun from_stage=docs`.
  *
- * Sequential guarantee: triggering from docs means the pipeline runs docs THEN reflect in order,
- * fixing the race condition that existed when they ran in parallel.
+ * Complexity gate: only tasks with complexity ≥ 30 are eligible (matching the review threshold).
+ * Low-complexity tasks (< 30) skip docs entirely.
+ *
+ * Note: reflect stage has been removed from the pipeline. Knowledge Gardener (nightly inspector)
+ * subsumes reflect functionality.
  */
 
 import * as fs from 'fs'
@@ -29,13 +32,51 @@ interface TaskStatus {
   stages?: Record<string, StageEntry>
 }
 
+interface TaskJson {
+  complexity?: number
+}
+
 /**
- * Check if a task has completed PR but is missing docs/reflect outputs.
+ * Read complexity from task.json. Returns 0 if not found or invalid.
+ */
+function getTaskComplexity(taskDir: string): number {
+  const taskJsonPath = path.join(taskDir, 'task.json')
+  try {
+    if (fs.existsSync(taskJsonPath)) {
+      const data = JSON.parse(fs.readFileSync(taskJsonPath, 'utf-8')) as TaskJson
+      if (typeof data.complexity === 'number') {
+        return data.complexity
+      }
+    }
+  } catch {
+    // Ignore errors, return 0 (below threshold)
+  }
+  return 0
+}
+
+/** Minimum complexity for docs to run via nightly inspector */
+export const DOCS_COMPLEXITY_THRESHOLD = 30
+
+/**
+ * Check if a task has completed PR but is missing docs output,
+ * and meets the complexity threshold.
+ *
  * A task is eligible if:
  *   1. The `pr` stage is completed (pipeline finished)
- *   2. Neither docs nor reflect stage is completed
+ *   2. The `docs` stage is not completed
+ *   3. docs.md output file does not already exist
+ *   4. Task complexity is ≥ DOCS_COMPLEXITY_THRESHOLD (30)
  */
-function isEligibleForDeferredStages(taskDir: string, status: TaskStatus): boolean {
+function isEligibleForDeferredDocs(
+  taskDir: string,
+  status: TaskStatus,
+  complexity: number,
+): boolean {
+  // Must meet complexity threshold
+  if (complexity < DOCS_COMPLEXITY_THRESHOLD) {
+    return false
+  }
+
   const stages = status.stages || {}
 
   // Must have completed pr stage
@@ -60,22 +101,22 @@ function isEligibleForDeferredStages(taskDir: string, status: TaskStatus): boole
 }
 
 /**
- * Trigger cody.yml workflow to run docs → reflect for a task.
+ * Trigger cody.yml workflow to run docs for a task.
  */
-function createDeferredStagesAction(taskId: string, _ctx: InspectorContext): ActionRequest {
+function createDeferredDocsAction(taskId: string, _ctx: InspectorContext): ActionRequest {
   return {
     plugin: 'cody-deferred-stages',
     type: 'trigger-deferred-stages',
     target: taskId,
     urgency: 'info',
-    title: `Run deferred docs+reflect for ${taskId}`,
-    detail: `Task ${taskId} completed PR but is missing docs/reflect. Triggering sequential deferred stages.`,
+    title: `Run deferred docs for ${taskId}`,
+    detail: `Task ${taskId} completed PR but is missing docs. Triggering deferred docs stage.`,
     // Dedup: don't retrigger the same task within 6 hours
     dedupKey: `deferred-stages:${taskId}`,
     dedupWindowMinutes: 360,
     async execute(execCtx: InspectorContext): Promise<{ success: boolean; message?: string }> {
       if (execCtx.dryRun) {
-        execCtx.log.info({ taskId }, '[dry-run] Would trigger cody.yml for deferred stages')
+        execCtx.log.info({ taskId }, '[dry-run] Would trigger cody.yml for deferred docs stage')
         return { success: true, message: 'dry-run: skipped' }
       }
 
@@ -85,11 +126,11 @@ function createDeferredStagesAction(taskId: string, _ctx: InspectorContext): Act
           mode: 'rerun',
           from_stage: 'docs',
         })
-        execCtx.log.info({ taskId }, 'Triggered cody.yml for deferred docs+reflect stages')
-        return { success: true, message: `Triggered deferred stages for ${taskId}` }
+        execCtx.log.info({ taskId }, 'Triggered cody.yml for deferred docs stage')
+        return { success: true, message: `Triggered deferred docs for ${taskId}` }
       } catch (error) {
         const msg = error instanceof Error ? error.message : String(error)
-        execCtx.log.error({ taskId, error: msg }, 'Failed to trigger deferred stages')
+        execCtx.log.error({ taskId, error: msg }, 'Failed to trigger deferred docs stage')
         return { success: false, message: msg }
       }
     },
@@ -97,13 +138,13 @@ function createDeferredStagesAction(taskId: string, _ctx: InspectorContext): Act
 }
 
 /**
- * Deferred Stages plugin - runs docs then reflect for tasks that completed the pipeline.
+ * Deferred Stages plugin - runs docs for tasks (complexity ≥ 30) that completed the pipeline.
  *
  * Runs every 6th cycle (~30 min) to batch up multiple completed tasks.
  */
 export const deferredStagesPlugin: InspectorPlugin = {
   name: 'cody-deferred-stages',
-  description: 'Trigger docs + reflect for tasks that completed PR but missed those stages',
+  description: 'Trigger docs for tasks (complexity ≥ 30) that completed PR but missed that stage',
   domain: 'cody',
   schedule: { every: 6 }, // Every 6th cycle = every ~30 min
 
@@ -144,7 +185,9 @@ export const deferredStagesPlugin: InspectorPlugin = {
         continue
       }
 
-      if (!isEligibleForDeferredStages(taskDir, status)) {
+      const complexity = getTaskComplexity(taskDir)
+
+      if (!isEligibleForDeferredDocs(taskDir, status, complexity)) {
         // If PR is completed, mark as processed so we don't keep checking
         const stages = status.stages || {}
         const prStage = stages['pr']
@@ -154,8 +197,8 @@ export const deferredStagesPlugin: InspectorPlugin = {
         continue
       }
 
-      ctx.log.info({ taskId }, 'Task eligible for deferred docs+reflect stages')
-      actions.push(createDeferredStagesAction(taskId, ctx))
+      ctx.log.info({ taskId, complexity }, 'Task eligible for deferred docs stage')
+      actions.push(createDeferredDocsAction(taskId, ctx))
 
       // Mark as processed so we only trigger once per task
       processedTasks.push(taskId)
