@@ -649,21 +649,46 @@ export function parseCliArgs(argv: string[]): CodyInput {
   // Only process --mode at the end when it comes AFTER --comment-body
   const processModeLast = modeArgIndex > commentBodyArgIndex && commentBodyArgIndex >= 0
 
-  for (const arg of argv) {
-    if (!arg.startsWith('-')) {
-      // Check if it's a valid mode
-      if (isValidMode(arg)) {
-        input.mode = arg
-        cliSet.add('mode')
-        continue
-      }
-      // Otherwise treat as file path (if it looks like a path)
-      if (arg.includes('/') || arg.includes('.') || arg.includes('-')) {
-        input.file = arg
-        cliSet.add('file')
-        cliSet.add('taskId') // --file triggers taskId auto-generation
-        continue
-      }
+  // Options that consume the next arg as their value (--key <value> format)
+  const optionsWithValues = new Set([
+    '--task-id',
+    '--mode',
+    '--file',
+    '--issue-number',
+    '--from',
+    '--feedback',
+    '--complexity',
+    '--comment-body',
+    '--comment-body-env',
+    '--version',
+    '--trigger-type',
+    '--run-id',
+    '--run-url',
+  ])
+
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i]
+
+    // Skip values that belong to --key <value> options
+    if (arg.startsWith('--') && optionsWithValues.has(arg) && i + 1 < argv.length) {
+      i++ // skip the next arg (option value)
+      continue
+    }
+    // Skip flags and unknown options
+    if (arg.startsWith('-')) continue
+
+    // Check if it's a valid mode
+    if (isValidMode(arg)) {
+      input.mode = arg
+      cliSet.add('mode')
+      continue
+    }
+    // Otherwise treat as file path (if it looks like a path)
+    if (arg.includes('/') || arg.includes('.') || arg.includes('-')) {
+      input.file = arg
+      cliSet.add('file')
+      cliSet.add('taskId') // --file triggers taskId auto-generation
+      continue
     }
   }
 

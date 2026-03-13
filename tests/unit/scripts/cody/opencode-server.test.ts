@@ -217,3 +217,66 @@ describe('waitForHealthy', () => {
     expect(mockFetch).toHaveBeenCalledTimes(2)
   })
 })
+
+// Import verifyClientAttach after the mocks are set up
+import { verifyClientAttach } from '../../../../scripts/cody/opencode-server'
+
+describe('verifyClientAttach', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    // resolveOpenCodeBinary is called by verifyClientAttach
+    // Mock fs.existsSync for the binary resolution
+    ;(fs.existsSync as ReturnType<typeof vi.fn>).mockReturnValue(true)
+  })
+
+  it('should return true when client connects successfully (model error is fine)', () => {
+    // execFileSync throws with a model error (exit code 1) but no instance error
+    const error = new Error('command failed') as Error & { stderr: Buffer; stdout: Buffer }
+    error.stderr = Buffer.from('Error: Model not found: some-model')
+    error.stdout = Buffer.from('{"type":"error","error":{"name":"ModelError"}}')
+    ;(execFileSync as ReturnType<typeof vi.fn>).mockImplementation(
+      (cmd: string, args: string[]) => {
+        if (args?.includes('--version')) return '1.2.21'
+        throw error
+      },
+    )
+
+    expect(verifyClientAttach('http://127.0.0.1:4097', '/tmp/test-data')).toBe(true)
+  })
+
+  it('should return false when instance context not found', () => {
+    const error = new Error('command failed') as Error & { stderr: Buffer; stdout: Buffer }
+    error.stderr = Buffer.from('No context found for instance')
+    error.stdout = Buffer.from('')
+    ;(execFileSync as ReturnType<typeof vi.fn>).mockImplementation(
+      (cmd: string, args: string[]) => {
+        if (args?.includes('--version')) return '1.2.21'
+        throw error
+      },
+    )
+
+    expect(verifyClientAttach('http://127.0.0.1:4097', '/tmp/test-data')).toBe(false)
+  })
+
+  it('should return true when execFileSync succeeds (no output issues)', () => {
+    ;(execFileSync as ReturnType<typeof vi.fn>).mockImplementation(
+      (cmd: string, args: string[]) => {
+        if (args?.includes('--version')) return '1.2.21'
+        return '{"type":"session.created"}'
+      },
+    )
+
+    expect(verifyClientAttach('http://127.0.0.1:4097', '/tmp/test-data')).toBe(true)
+  })
+
+  it('should return false when stdout contains instance error', () => {
+    ;(execFileSync as ReturnType<typeof vi.fn>).mockImplementation(
+      (cmd: string, args: string[]) => {
+        if (args?.includes('--version')) return '1.2.21'
+        return 'No context found for instance'
+      },
+    )
+
+    expect(verifyClientAttach('http://127.0.0.1:4097', '/tmp/test-data')).toBe(false)
+  })
+})

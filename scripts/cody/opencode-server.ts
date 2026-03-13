@@ -53,6 +53,40 @@ export function resolveOpenCodeBinary(): string {
   }
   return 'opencode'
 }
+/**
+ * Verify that `opencode run --attach` can find the server instance.
+ * Returns true if the client can connect, false otherwise.
+ * This catches the "No context found for instance" error early.
+ */
+export function verifyClientAttach(url: string, dataDir: string): boolean {
+  try {
+    const binary = resolveOpenCodeBinary()
+    // Use a minimal prompt that will immediately error with a model issue
+    // (which is fine — we just need to confirm it doesn't fail with
+    // "No context found for instance")
+    const result = execFileSync(binary, ['run', '--attach', url, '--format', 'json', 'ping'], {
+      env: { ...process.env, XDG_DATA_HOME: dataDir },
+      timeout: 15_000,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      cwd: process.cwd(),
+    })
+    // If we get here, the command ran (it will likely error with model config issues, but that's fine)
+    const output = result.toString()
+    return !output.includes('No context found for instance')
+  } catch (err: unknown) {
+    // The command will exit non-zero (model errors etc), check stderr for the specific instance error
+    const stderr = (err as { stderr?: Buffer })?.stderr?.toString() || ''
+    const stdout = (err as { stdout?: Buffer })?.stdout?.toString() || ''
+    if (
+      stderr.includes('No context found for instance') ||
+      stdout.includes('No context found for instance')
+    ) {
+      return false
+    }
+    // Any other error means the attach itself worked (model/agent errors are expected)
+    return true
+  }
+}
 
 // ============================================================================
 // Server Lifecycle
@@ -102,6 +136,14 @@ export async function startServer(
 
   try {
     const binary = resolveOpenCodeBinary()
+
+    // Log version for diagnostics (helps debug CI issues)
+    try {
+      const ver = execFileSync(binary, ['--version'], { encoding: 'utf-8', timeout: 5000 }).trim()
+      logger.info(`  OpenCode binary: ${binary} (v${ver})`)
+    } catch {
+      logger.info(`  OpenCode binary: ${binary} (version unknown)`)
+    }
     const child = spawn(
       binary,
       ['serve', '--port', String(port), '--print-logs', '--log-level', 'WARN'],
@@ -146,6 +188,17 @@ export async function startServer(
     }
 
     logger.info(`  ✅ OpenCode server ready at ${url}`)
+
+    // Smoke-test the client attach to ensure the instance record is accessible.
+    // Some environments (CI with older opencode versions) may have the server healthy
+    // but the client can't find the instance context via XDG_DATA_HOME.
+    const attachOk = verifyClientAttach(url, dataDir)
+    if (!attachOk) {
+      logger.warn('  ⚠️ Client --attach smoke test failed, falling back to non-server mode')
+      await stopServer({ process: child, url, port, dataDir })
+      return null
+    }
+
     return { process: child, url, port, dataDir }
   } catch (err) {
     logger.warn({ err }, 'Failed to start OpenCode server')
