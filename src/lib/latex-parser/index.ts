@@ -83,7 +83,16 @@ export function parseLatexToBlocks(latex: string): ParseResult {
 
     if (token.type === 'environment') {
       const envName = token.name ?? ''
-      const inner = token.value ?? ''
+      // Extract inner content (strip \begin{envName} and \end{envName} tags)
+      const raw = token.value ?? ''
+      const beginTag = `\\begin{${envName}}`
+      const endTag = `\\end{${envName}}`
+      const innerStart = raw.indexOf(beginTag)
+      const innerEnd = raw.lastIndexOf(endTag)
+      const inner =
+        innerStart !== -1 && innerEnd > innerStart
+          ? raw.slice(innerStart + beginTag.length, innerEnd)
+          : raw
 
       if (envName === 'questions') {
         processQuestionsEnv(inner, blocks, warnings, token.line)
