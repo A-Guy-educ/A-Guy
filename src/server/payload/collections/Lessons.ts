@@ -110,6 +110,7 @@ export const Lessons: CollectionConfig = {
       required: true,
       defaultValue: 0,
       min: 0,
+      index: true,
       admin: {
         description: 'Sort order within the course',
       },
