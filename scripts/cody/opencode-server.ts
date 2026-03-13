@@ -77,12 +77,22 @@ export function verifyClientAttach(url: string, dataDir: string): boolean {
     // The command will exit non-zero (model errors etc), check stderr for the specific instance error
     const stderr = (err as { stderr?: Buffer })?.stderr?.toString() || ''
     const stdout = (err as { stdout?: Buffer })?.stdout?.toString() || ''
+    const combined = stderr + stdout
+
+    // Fail on known indicators that the server instance is not accessible
     if (
-      stderr.includes('No context found for instance') ||
-      stdout.includes('No context found for instance')
+      combined.includes('No context found for instance') ||
+      combined.includes('Unexpected error, check log file')
     ) {
       return false
     }
+
+    // Also fail if the command timed out (15s) — the attach should respond quickly
+    const errObj = err as { killed?: boolean; signal?: string; code?: string }
+    if (errObj.killed || errObj.signal === 'SIGTERM' || errObj.code === 'ETIMEDOUT') {
+      return false
+    }
+
     // Any other error means the attach itself worked (model/agent errors are expected)
     return true
   }

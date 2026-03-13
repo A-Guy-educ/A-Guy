@@ -279,4 +279,39 @@ describe('verifyClientAttach', () => {
 
     expect(verifyClientAttach('http://127.0.0.1:4097', '/tmp/test-data')).toBe(false)
   })
+
+  it('should return false when command times out (killed by timeout)', () => {
+    const error = new Error('command failed') as Error & {
+      stderr: Buffer
+      stdout: Buffer
+      killed: boolean
+      signal: string
+    }
+    error.stderr = Buffer.from('')
+    error.stdout = Buffer.from('')
+    error.killed = true
+    error.signal = 'SIGTERM'
+    ;(execFileSync as ReturnType<typeof vi.fn>).mockImplementation(
+      (cmd: string, args: string[]) => {
+        if (args?.includes('--version')) return '1.2.21'
+        throw error
+      },
+    )
+
+    expect(verifyClientAttach('http://127.0.0.1:4097', '/tmp/test-data')).toBe(false)
+  })
+
+  it('should return false when stderr contains "Unexpected error, check log file"', () => {
+    const error = new Error('command failed') as Error & { stderr: Buffer; stdout: Buffer }
+    error.stderr = Buffer.from('Unexpected error, check log file at /tmp/opencode.log')
+    error.stdout = Buffer.from('')
+    ;(execFileSync as ReturnType<typeof vi.fn>).mockImplementation(
+      (cmd: string, args: string[]) => {
+        if (args?.includes('--version')) return '1.2.21'
+        throw error
+      },
+    )
+
+    expect(verifyClientAttach('http://127.0.0.1:4097', '/tmp/test-data')).toBe(false)
+  })
 })

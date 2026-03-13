@@ -229,6 +229,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install OpenCode CLI
+        run: |
+          curl -fsSL https://opencode.ai/install | bash
+          echo "$HOME/.opencode/bin" >> $GITHUB_PATH
+          $HOME/.opencode/bin/opencode --version || echo "Warning: opencode install failed"
+
       - name: Run parse-inputs validation
         env:
           GH_TOKEN: ${{ github.token }}
