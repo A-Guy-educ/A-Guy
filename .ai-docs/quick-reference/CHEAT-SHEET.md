@@ -725,7 +725,7 @@ pnpm test:e2e                  # E2E tests
 - **Duplicate labels on rerun** → `setClassificationLabels` removes old category labels first
 - **Gate approval overwritten** → `resolveFromStageAfterGateApproval` starts AFTER the gate stage
 - **Impl stages skipped** → `rebuildPipelineAfterTaskify` must return BOTH spec + impl stages
-- **Stage aliases**: `build` → `gsd-execute`, `architect` → `gsd-plan`
+- **Stage names**: `architect` (planning), `plan-gap` (gap analysis), `build` (implementation)
 
 ---
 

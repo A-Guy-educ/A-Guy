@@ -15,7 +15,7 @@ Cody is a 3-layer system:
 ├──────────────────────────────────────────────────────────────────┤
 │  2. ENGINE LAYER — State machine (scripts/cody/)                 │
 │     Entry: entry.ts → state-machine.ts loop                      │
-│     Stages: taskify → gap → gsd-plan → gsd-execute → pr         │
+│     Stages: taskify → gap → architect → build → pr              │
 │     Output: code changes, PRs, status.json                       │
 ├──────────────────────────────────────────────────────────────────┤
 │  3. DASHBOARD LAYER — Next.js UI (src/ui/cody/, src/app/api/cody)│
@@ -41,7 +41,7 @@ cody.yml orchestrate job:
 state-machine.ts loop:
   for each stage in pipeline order:
     1. shouldSkip? → skip if conditions met
-    2. preExecute? → e.g., ensureFeatureBranch for gsd-execute
+    2. preExecute? → e.g., ensureFeatureBranch for build
     3. handler.execute() → runs agent (LLM) or script
     4. postActions → validate, commit, check gates
     5. writeState() → persist to .tasks/<id>/status.json
@@ -65,7 +65,7 @@ Output:
 | Mode    | Stages                                                                      |
 | ------- | --------------------------------------------------------------------------- |
 | `spec`  | taskify → gap → clarify                                                     |
-| `impl`  | gsd-research → gsd-plan → gsd-execute → commit → review → fix → verify → pr |
+| `impl`  | architect → plan-gap → build → commit → review → fix → verify → pr           |
 | `full`  | spec + impl (two-phase, with pipeline rebuild after taskify)                |
 | `rerun` | Resume from last failure/pause point                                        |
 | `fix`   | review → fix → commit → verify → pr (targeted fix mode)                     |
@@ -81,8 +81,8 @@ Output:
 
 ## Profiles
 
-- `standard`: Full pipeline (includes gap, gsd-research)
-- `lightweight`: Skips gap, gsd-research (for simple bug fixes, refactors)
+- `standard`: Full pipeline (includes gap, plan-gap)
+- `lightweight`: Skips gap, plan-gap (for simple bug fixes, refactors)
 
 Profile resolved in `resolve-profile` post-action based on:
 
@@ -108,9 +108,9 @@ Profile resolved in `resolve-profile` post-action based on:
 | spec         | agent    | task.json         | spec.md      | —                                                                   |
 | gap          | agent    | spec.md           | gap.md       | —                                                                   |
 | clarify      | agent    | spec.md           | clarified.md | —                                                                   |
-| gsd-research | agent    | spec+gap          | research.md  | —                                                                   |
-| gsd-plan     | agent    | research+spec+gap | plan.md      | archive-rerun-feedback, check-gate                                  |
-| gsd-execute  | agent    | plan.md           | code changes | validate-src, validate-build, commit, quality-autofix               |
+| architect    | agent    | spec+gap+clarified | plan.md      | archive-rerun-feedback, check-gate                                  |
+| plan-gap     | agent    | plan.md+spec+gap   | plan-gap.md  | validate-plan-exists                                                |
+| build        | agent    | plan.md            | code changes | validate-src, validate-build, commit, quality-autofix               |
 | commit       | git      | staged files      | commit hash  | —                                                                   |
 | review       | agent    | code diff         | review.md    | analyze-review-findings, commit                                     |
 | fix          | agent    | review.md         | code fixes   | commit, clear-verify-failures                                       |
@@ -149,7 +149,7 @@ Post-actions run after a stage completes. Defined per-stage in `definitions.ts`.
 | `resolve-profile`           | Determine standard/lightweight profile, trigger rebuild      |
 | `check-gate`                | Post gate comment, pause if awaiting approval                |
 | `commit-task-files`         | Commit + push task files or tracked files to remote          |
-| `archive-rerun-feedback`    | Move rerun-feedback.md to archive after gsd-plan consumes it |
+| `archive-rerun-feedback`    | Move rerun-feedback.md to archive after architect consumes it |
 | `validate-src-changes`      | Ensure build agent actually modified source files            |
 | `validate-build-content`    | Validate build output quality                                |
 | `run-quality-with-autofix`  | Run tsc + tests, retry with autofix agent if they fail       |
@@ -173,7 +173,7 @@ Gates pause the pipeline for human approval:
 | ------------ | -------------------------------------- |
 | `auto`       | Skip gates, run to completion          |
 | `supervised` | Gate only on medium/high risk          |
-| `gated`      | Always gate after taskify and gsd-plan |
+| `gated`      | Always gate after taskify and architect |
 
 Control mode resolved dynamically per gate via `resolveControlMode(taskDef, inputControlMode)`.
 
@@ -182,11 +182,11 @@ Control mode resolved dynamically per gate via `resolveControlMode(taskDef, inpu
 ### Rerun from failure
 
 ```
-@cody rerun <task-id> --from gsd-execute
+@cody rerun <task-id> --from build
 ```
 
-1. `resolveRerunFromStage()` resolves stage aliases (`build` → `gsd-execute`)
-2. If feedback is provided and fromStage is after gsd-plan, backs up to gsd-plan
+1. `resolveRerunFromStage()` resolves the fromStage name
+2. If feedback is provided and fromStage is after architect, backs up to architect
 3. All stages before fromStage stay completed, fromStage resets to pending
 4. Pipeline resumes from that point
 
@@ -200,13 +200,9 @@ Control mode resolved dynamically per gate via `resolveControlMode(taskDef, inpu
 2. The approved stage itself is NOT reset (would overwrite the approval)
 3. Pipeline continues from the next stage
 
-### Stage aliases (backward compatibility)
+### Stage names
 
-| Old Name    | New Name      |
-| ----------- | ------------- |
-| `architect` | `gsd-plan`    |
-| `plan-gap`  | `gsd-plan`    |
-| `build`     | `gsd-execute` |
+The current pipeline uses `architect`, `plan-gap`, and `build` directly. No stage aliases are needed.
 
 ## Complexity-Based Stage Routing
 
@@ -214,15 +210,15 @@ The taskify agent assigns a complexity score (1-100). Stages have minimum comple
 
 | Complexity | Tier         | Stages that run                      |
 | ---------- | ------------ | ------------------------------------ |
-| 1-9        | trivial      | gsd-plan → gsd-execute → commit → pr |
-| 10-19      | simple       | gsd-plan → gsd-execute → commit → pr |
-| 20-34      | moderate     | + spec, gap, review                  |
-| 35-49      | complex      | + gsd-research, clarify              |
+| 1-9        | trivial      | architect → build → commit → pr      |
+| 10-19      | simple       | architect → build → commit → pr      |
+| 20-34      | moderate     | + gap, plan-gap, review              |
+| 35-49      | complex      | + clarify                            |
 | 50+        | very complex | All stages + quality model profile   |
 
-## Quality Gates (gsd-execute post-action)
+## Quality Gates (build post-action)
 
-After gsd-execute commits code, `run-quality-with-autofix` runs:
+After build commits code, `run-quality-with-autofix` runs:
 
 1. TypeScript check (`pnpm -s tsc --noEmit`)
 2. Unit tests (`pnpm -s test:unit`)
@@ -311,15 +307,16 @@ Generated in `.tasks/<task-id>/`:
 | `spec.md`            | After spec         | Generated specification             |
 | `gap.md`             | After gap          | Gap analysis                        |
 | `clarified.md`       | After clarify      | Clarified requirements              |
-| `plan.md`            | After gsd-plan     | Implementation plan                 |
-| `gsd-execute.md`     | After gsd-execute  | Build output log                    |
+| `plan.md`            | After architect    | Implementation plan                 |
+| `plan-gap.md`        | After plan-gap     | Plan gap analysis                   |
+| `build.md`           | After build        | Build output log                    |
 | `review.md`          | After review       | Code review findings                |
 | `commit.md`          | After commit       | Commit details                      |
 | `status.json`        | Throughout         | Pipeline state (V2 format)          |
 | `chat.json`          | After agent stages | Trimmed chat history                |
 | `gate-taskify.md`    | At taskify gate    | Gate pause marker                   |
-| `gate-architect.md`  | At gsd-plan gate   | Gate pause marker                   |
-| `rerun-feedback.md`  | On rerun           | Operator feedback for plan revision |
+| `gate-architect.md`  | At architect gate  | Gate pause marker                   |
+| `rerun-feedback.md`  | On rerun           | Operator feedback for plan revision  |
 | `verify-failures.md` | On verify failure  | Formatted test/lint failures        |
 
 ## State Machine
@@ -477,10 +474,10 @@ cat .tasks/<task-id>/status.json | jq '.stages | to_entries[] | select(.value.st
 cat .tasks/<task-id>/task.json | jq '{task_type, risk_level, complexity, pipeline_profile}'
 
 # Resume from specific stage
-@cody rerun <task-id> --from gsd-execute
+@cody rerun <task-id> --from build
 
 # Resume with feedback
-@cody rerun <task-id> --from gsd-plan --feedback "Use the existing Button component"
+@cody rerun <task-id> --from architect --feedback "Use the existing Button component"
 
 # Check git log for task
 git log --oneline .tasks/<task-id>/
