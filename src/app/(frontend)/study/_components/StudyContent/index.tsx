@@ -16,6 +16,7 @@ import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { ProgressCircle } from '@/ui/web/shared/ProgressCircle'
 import { cn } from '@/infra/utils/ui'
 import { logger } from '@/infra/utils/logger'
+import type { StudyData } from '@/server/repos/queries/study-data'
 
 interface ChapterWithLessons extends Chapter {
   lessons: Lesson[]
@@ -33,17 +34,39 @@ interface CourseInfo {
 
 interface StudyContentProps {
   lessonType?: LessonType
+  /** When provided, skips the client-side API call entirely */
+  prefetchedData?: StudyData | null
 }
 
-export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentProps) {
+export function StudyContent({
+  lessonType = DEFAULT_LESSON_TYPE,
+  prefetchedData,
+}: StudyContentProps) {
   const t = useTranslations('coursePage')
   const ts = useTranslations('study')
   const locale = useLocale()
-  const [chapters, setChapters] = useState<ChapterWithLessons[]>([])
-  const [courseInfo, setCourseInfo] = useState<CourseInfo | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
 
+  const hasPrefetched = prefetchedData !== undefined
+  const [chapters, setChapters] = useState<ChapterWithLessons[]>(prefetchedData?.chapters ?? [])
+  const [courseInfo, setCourseInfo] = useState<CourseInfo | null>(
+    prefetchedData
+      ? {
+          courseSlug: prefetchedData.courseSlug,
+          courseId: prefetchedData.courseId,
+          courseTitle: prefetchedData.courseTitle,
+          courseLabel: prefetchedData.courseLabel,
+          coursePageAccessType: prefetchedData.coursePageAccessType,
+          gatedDelayMs: prefetchedData.gatedDelayMs,
+          gatedWarningMs: prefetchedData.gatedWarningMs,
+        }
+      : null,
+  )
+  const [isLoading, setIsLoading] = useState(!hasPrefetched)
+
+  // Only fetch client-side when no prefetched data (fallback for direct navigation)
   useEffect(() => {
+    if (hasPrefetched) return
+
     async function loadData() {
       const profile = getUserProfile()
       if (!profile?.gradeLevel) {
@@ -77,7 +100,7 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
     }
 
     loadData()
-  }, [locale])
+  }, [locale, hasPrefetched])
 
   if (isLoading) {
     return (
