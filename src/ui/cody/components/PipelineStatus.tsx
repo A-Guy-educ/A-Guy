@@ -2,32 +2,22 @@
  * @fileType component
  * @domain cody
  * @pattern pipeline-status
- * @ai-summary Pipeline status visualization
+ * @ai-summary Vertical stepper pipeline status for narrow sidebar
  */
 'use client'
 
 import { useState } from 'react'
-import { cn } from '../utils'
+import { cn, formatDuration } from '../utils'
 import type { CodyPipelineStatus, StageStatus } from '../types'
 import { SPEC_STAGES, IMPL_STAGES } from '../constants'
 import { StageErrorDetail } from './StageErrorDetail'
-import { ChevronDown, ChevronRight } from 'lucide-react'
-import { getStageTooltip } from '../pipeline-utils'
+import { Check, Circle, Loader2, X, Pause } from 'lucide-react'
+import { stageLabels, getStageTooltip } from '../pipeline-utils'
+import { SimpleTooltip } from './SimpleTooltip'
 
 interface PipelineStatusProps {
   status: CodyPipelineStatus
   className?: string
-}
-
-const stageIcons: Record<string, string> = {
-  completed: '✅',
-  failed: '❌',
-  running: '🔄',
-  pending: '⏳',
-  skipped: '⚪',
-  'gate-waiting': '🚫',
-  paused: '⏸️',
-  timeout: '⏰',
 }
 
 export function PipelineStatus({ status, className }: PipelineStatusProps) {
@@ -46,29 +36,25 @@ export function PipelineStatus({ status, className }: PipelineStatusProps) {
   )
 
   return (
-    <div className={cn('space-y-4', className)}>
+    <div className={cn('space-y-3', className)}>
       {/* Spec Pipeline */}
       <div>
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2">
-          Spec Pipeline
-        </h3>
-        <div className="flex items-center gap-1 flex-wrap">
-          {SPEC_STAGES.map((stage, index) => {
+        <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+          Spec
+        </h4>
+        <div className="border-l border-zinc-700/50 ml-[7px] pl-3 space-y-0.5">
+          {SPEC_STAGES.map((stage) => {
             const stageData = status.stages[stage]
             const isFailed = stageData?.state === 'failed' || stageData?.state === 'timeout'
             return (
-              <div key={stage} className="flex items-center">
-                <StageIndicator
-                  stage={stage}
-                  data={stageData}
-                  expandable={isFailed}
-                  expanded={expandedStages[stage] || false}
-                  onToggle={() => toggleStage(stage)}
-                />
-                {index < SPEC_STAGES.length - 1 && (
-                  <span className="mx-1 text-muted-foreground">→</span>
-                )}
-              </div>
+              <StageRow
+                key={stage}
+                stage={stage}
+                data={stageData}
+                expandable={isFailed}
+                expanded={expandedStages[stage] || false}
+                onToggle={() => toggleStage(stage)}
+              />
             )
           })}
         </div>
@@ -76,38 +62,26 @@ export function PipelineStatus({ status, className }: PipelineStatusProps) {
 
       {/* Implementation Pipeline */}
       <div>
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase mb-2">
-          Implementation Pipeline
-        </h3>
-        <div className="flex items-center gap-1 flex-wrap">
-          {IMPL_STAGES.map((stage, index) => {
+        <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+          Implementation
+        </h4>
+        <div className="border-l border-zinc-700/50 ml-[7px] pl-3 space-y-0.5">
+          {IMPL_STAGES.map((stage) => {
             const stageData = status.stages[stage]
             const isFailed = stageData?.state === 'failed' || stageData?.state === 'timeout'
             return (
-              <div key={stage} className="flex items-center">
-                <StageIndicator
-                  stage={stage}
-                  data={stageData}
-                  expandable={isFailed}
-                  expanded={expandedStages[stage] || false}
-                  onToggle={() => toggleStage(stage)}
-                />
-                {index < IMPL_STAGES.length - 1 && (
-                  <span className="mx-1 text-muted-foreground">→</span>
-                )}
-              </div>
+              <StageRow
+                key={stage}
+                stage={stage}
+                data={stageData}
+                expandable={isFailed}
+                expanded={expandedStages[stage] || false}
+                onToggle={() => toggleStage(stage)}
+              />
             )
           })}
         </div>
       </div>
-
-      {/* Current Stage */}
-      {status.currentStage && (
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-muted-foreground">Current:</span>
-          <span className="text-foreground font-medium">{status.currentStage}</span>
-        </div>
-      )}
 
       {/* Error Details - show for failed/timeout stages */}
       {failedStage && (
@@ -121,7 +95,7 @@ export function PipelineStatus({ status, className }: PipelineStatusProps) {
   )
 }
 
-interface StageIndicatorProps {
+interface StageRowProps {
   stage: string
   data?: StageStatus
   expandable?: boolean
@@ -129,28 +103,74 @@ interface StageIndicatorProps {
   onToggle?: () => void
 }
 
-function StageIndicator({ stage, data, expandable, expanded, onToggle }: StageIndicatorProps) {
+function StageRow({ stage, data, expandable, expanded, onToggle }: StageRowProps) {
   const state = data?.state || 'pending'
-  const icon = stageIcons[state] || '⏳'
-  const isFailed = state === 'failed' || state === 'timeout'
+  const label = stageLabels[stage] || stage
+  const elapsed = data?.elapsed
+
+  const tooltipContent = getStageTooltip(stage, data)
 
   return (
-    <div
-      className={cn(
-        'flex flex-col items-center px-2 py-1 rounded',
-        state === 'running' && 'bg-blue-500/20',
-        isFailed && 'bg-red-500/20 cursor-pointer hover:bg-red-500/30',
-        state === 'completed' && 'bg-green-500/20',
+    <div className="relative">
+      {/* Row content */}
+      <SimpleTooltip content={tooltipContent} side="right">
+        <div
+          className={cn(
+            'flex items-center gap-2 py-0.5 group',
+            expandable && 'cursor-pointer hover:bg-white/5 rounded px-1 -mx-1',
+          )}
+          onClick={expandable ? onToggle : undefined}
+        >
+          {/* Icon */}
+          <div className="w-4 h-4 flex items-center justify-center shrink-0 relative z-10">
+            {state === 'completed' && <Check className="w-3.5 h-3.5 text-emerald-500" />}
+            {state === 'running' && <Loader2 className="w-3.5 h-3.5 text-blue-400 animate-spin" />}
+            {state === 'paused' && <Pause className="w-3 h-3 text-yellow-400" />}
+            {state === 'gate-waiting' && <Pause className="w-3 h-3 text-yellow-400" />}
+            {(state === 'failed' || state === 'timeout') && (
+              <X className="w-3.5 h-3.5 text-red-400" />
+            )}
+            {state === 'skipped' && <Circle className="w-2.5 h-2.5 text-zinc-600" />}
+            {state === 'pending' && <Circle className="w-2.5 h-2.5 text-zinc-700" />}
+          </div>
+
+          {/* Label */}
+          <span
+            className={cn(
+              'text-xs truncate flex-1',
+              state === 'completed' && 'text-zinc-400',
+              state === 'running' && 'text-blue-400 font-medium',
+              state === 'paused' && 'text-yellow-400 font-medium',
+              state === 'gate-waiting' && 'text-yellow-400 font-medium',
+              (state === 'failed' || state === 'timeout') && 'text-red-400',
+              state === 'skipped' && 'text-zinc-600 line-through',
+              state === 'pending' && 'text-zinc-600',
+            )}
+          >
+            {label}
+          </span>
+
+          {/* Duration (completed stages only) */}
+          {state === 'completed' && elapsed && (
+            <span className="text-[10px] text-zinc-600 font-mono tabular-nums">
+              {formatDuration(elapsed * 1000)}
+            </span>
+          )}
+
+          {/* Running indicator */}
+          {state === 'running' && <span className="text-[10px] text-blue-400/70">running</span>}
+
+          {/* Expand chevron for failed stages */}
+          {expandable && <span className="text-zinc-500">{expanded ? '−' : '+'}</span>}
+        </div>
+      </SimpleTooltip>
+
+      {/* Expanded error detail for failed stages */}
+      {expandable && expanded && (state === 'failed' || state === 'timeout') && data?.error && (
+        <div className="ml-5 mt-1 mb-2 text-xs text-red-400 bg-red-500/10 rounded p-2 border border-red-500/20">
+          {data.error}
+        </div>
       )}
-      title={getStageTooltip(stage, data)}
-      onClick={expandable ? onToggle : undefined}
-    >
-      <div className="flex items-center gap-1">
-        <span className="text-lg">{icon}</span>
-        {expandable &&
-          (expanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />)}
-      </div>
-      <span className="text-xs text-muted-foreground">{stage}</span>
     </div>
   )
 }

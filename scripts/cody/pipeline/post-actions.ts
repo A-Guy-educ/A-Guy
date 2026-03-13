@@ -371,6 +371,11 @@ export async function executePostAction(
               : ''
             const output = stdout + stderr + (err.message || '')
             logger.info(`   ✗ ${gate.name} failed`)
+            // Log truncated error output for CI debugging (full output goes to build-errors.md)
+            const truncated = output.slice(-2000).trim()
+            if (truncated) {
+              logger.info(`   Error output (last 2000 chars):\n${truncated}`)
+            }
             return { ...gate, passed: false, error: output }
           }
         })
@@ -453,8 +458,8 @@ export async function executePostAction(
       // Record feedback loop metrics in status.json for observability (immutable update)
       if (completedLoops > 0) {
         const currentState = _state
-        if (currentState && currentState.stages?.['gsd-execute']) {
-          const updatedState = updateStage(currentState, 'gsd-execute', {
+        if (currentState && currentState.stages?.build) {
+          const updatedState = updateStage(currentState, 'build', {
             feedbackLoops: completedLoops,
             feedbackErrors: Array.from(encounteredErrors),
           })
@@ -638,7 +643,7 @@ ${description}
 `
   }
 
-  if (stage === 'gsd-plan' || stage === 'gsd-research') {
+  if (stage === 'architect' || stage === 'plan-gap') {
     // Build stage reads plan.md; plan-gap validator checks plan.md exists
     return `# ${title} (promoted)
 

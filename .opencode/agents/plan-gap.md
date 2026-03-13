@@ -44,6 +44,34 @@ You do NOT write code. You **DO edit plan.md** to fix gaps.
 - Are the proposed changes consistent with project patterns?
 - Is the scope reasonable (not over-engineered)?
 
+### Reuse Validation (CRITICAL)
+
+Check that the plan leverages existing project code instead of reinventing:
+
+- **Access control**: Does the plan create new access functions? Check if `src/server/payload/access/` already has what's needed (adminOnly, authenticated, authenticatedOrPublished, publishedAndActive, etc.)
+- **Hooks**: Does the plan create new hooks? Check `src/server/payload/hooks/` for existing ones.
+- **Utilities**: Does the plan create new helpers? Check `src/infra/utils/` first.
+- **Validation**: Does the plan create new schemas? Check `src/infra/utils/validation/common-schemas.ts`.
+- **Components**: Does the plan create new UI components? Check if shadcn/ui or existing components in `src/ui/` work.
+
+If the plan creates something that already exists:
+1. **Edit plan.md** to replace "Create new X" with "Reuse existing X from `<path>`"
+2. Document in plan-gap.md under a `## Reuse Corrections` section
+
+### Feasibility Assessment (NEW — CRITICAL)
+
+Go beyond "does the plan cover the spec" and ask "can this plan actually be executed?":
+
+- **Do referenced files exist?** — Use Glob/Read to verify every file path in the plan. If a file doesn't exist and isn't marked as NEW, flag it.
+- **Are proposed imports valid?** — Check that functions/classes the plan says to import actually exist in the referenced modules.
+- **Is step ordering correct?** — Verify dependencies: if Step 3 imports from a file created in Step 5, flag the ordering.
+- **Are test commands runnable?** — Verify test file paths and test runner commands match project setup (vitest, not jest; pnpm, not npm).
+- **Time budget realistic?** — Each step should be 10-30 min. Flag steps that seem too large (touching >5 files) or too small (trivial rename).
+
+If ANY feasibility issue is found:
+1. Edit plan.md to fix it (reorder steps, correct paths, split oversized steps)
+2. Document the fix in plan-gap.md under 
+
 ## Report Format
 
 Write to: `.tasks/<taskId>/plan-gap.md`

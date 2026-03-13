@@ -5,16 +5,16 @@
  * @ai-summary Main Cody dashboard page with Kanban board and AI chat
  */
 import { redirect } from 'next/navigation'
-import type { Metadata } from 'next'
 import { CodyDashboard } from '@/ui/cody/components/CodyDashboard'
 import { getMeUser } from '@/infra/utils/getMeUser'
-
 import { AccountRole } from '@/infra/auth/roles'
+import { buildCodyMetadata } from './metadata'
 
-export const metadata: Metadata = {
+export const metadata = buildCodyMetadata({
   title: 'Cody Operations Dashboard',
-  description: 'Developer operations dashboard for monitoring Cody CI build agent',
-}
+  description: 'Monitor and manage AI coding agent tasks, pipelines, and deployments',
+  path: '/cody',
+})
 
 export default async function CodyPage() {
   const { user } = await getMeUser()

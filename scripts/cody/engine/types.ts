@@ -20,6 +20,12 @@ export interface StageResult {
   reason?: string
   retries: number
   outputFile?: string
+  /** Token usage for this stage */
+  tokenUsage?: { input: number; output: number; cacheRead: number }
+  /** Cost in USD for this stage */
+  cost?: number
+  /** OpenCode session ID for this stage */
+  sessionId?: string
 }
 
 // ============================================================================
@@ -88,10 +94,14 @@ export interface PipelineContext {
   taskDir: string
   input: CodyInput
   taskDef: TaskDefinition | null
-  profile: 'standard' | 'lightweight'
+  profile: 'standard' | 'lightweight' | 'turbo'
   backend: RunnerBackend
   // Set by resolve-profile post-action to signal engine to rebuild pipeline
   pipelineNeedsRebuild?: boolean
+  /** URL of the running OpenCode server (e.g., 'http://localhost:4097') */
+  serverUrl?: string
+  /** Most recent agent stage's sessionID — downstream stages fork from this */
+  lastSessionId?: string
 }
 
 // Note: NO controlMode field — each gate resolves it dynamically via
@@ -124,6 +134,12 @@ export interface StageStateV2 {
     major: number
     minor: number
   }
+  /** Token usage for cost tracking */
+  tokenUsage?: { input: number; output: number; cacheRead: number }
+  /** Cost in USD */
+  cost?: number
+  /** OpenCode session ID for rerun recovery */
+  sessionId?: string
 }
 
 export interface PipelineStateV2 {
@@ -142,6 +158,8 @@ export interface PipelineStateV2 {
   issueNumber?: number
   /** Git branch name created for this task (set after ensureFeatureBranch) */
   branchName?: string
+  /** Total accumulated cost across all stages in USD */
+  totalCost?: number
 }
 
 // Zod schema for PipelineStateV2
@@ -158,6 +176,7 @@ export const PipelineStateV2Schema: z.ZodType<PipelineStateV2> = z.object({
   cursor: z.string().nullable(),
   issueNumber: z.number().optional(),
   branchName: z.string().optional(),
+  totalCost: z.number().optional(),
   stages: z.record(
     z.string(),
     z.object({
@@ -181,6 +200,15 @@ export const PipelineStateV2Schema: z.ZodType<PipelineStateV2> = z.object({
           minor: z.number(),
         })
         .optional(),
+      tokenUsage: z
+        .object({
+          input: z.number(),
+          output: z.number(),
+          cacheRead: z.number(),
+        })
+        .optional(),
+      cost: z.number().optional(),
+      sessionId: z.string().optional(),
     }),
   ),
 })

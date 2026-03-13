@@ -386,6 +386,41 @@ function getHookSafeEnv(): NodeJS.ProcessEnv {
 }
 
 /**
+ * Push to origin with automatic pull-rebase-retry on rejection.
+ * Handles the case where the remote branch has been updated by a previous
+ * pipeline run (e.g., gate approval pushed new commits before rerun started).
+ *
+ * @returns true if push succeeded, false if it failed even after rebase
+ */
+export function pushWithRebase(cwd: string, env?: NodeJS.ProcessEnv): boolean {
+  const pushEnv = env || getHookSafeEnv()
+  const pushOpts = { cwd, stdio: 'inherit' as const, env: pushEnv, timeout: 120_000 }
+
+  try {
+    execFileSync('git', ['push', '-u', 'origin', 'HEAD'], pushOpts)
+    return true
+  } catch {
+    // Push rejected — remote has new commits. Pull with rebase and retry.
+    logger.info('[push] Push rejected, pulling with rebase...')
+    try {
+      execFileSync('git', ['pull', '--rebase', 'origin', 'HEAD'], {
+        cwd,
+        stdio: 'inherit',
+        timeout: 120_000,
+        env: pushEnv,
+      })
+      execFileSync('git', ['push', '-u', 'origin', 'HEAD'], pushOpts)
+      logger.info('[push] Push succeeded after rebase')
+      return true
+    } catch (rebaseError: unknown) {
+      const msg = rebaseError instanceof Error ? rebaseError.message : String(rebaseError)
+      logger.error(`[push] Push failed after rebase: ${msg}`)
+      return false
+    }
+  }
+}
+
+/**
  * Derive conventional commit type from task type.
  */
 export function deriveCommitType(taskType: string): string {
@@ -608,12 +643,16 @@ export function commitAndPush(
       .trim()
       .slice(0, 7)
 
-    // Push — use hook-safe env to skip pre-push hooks
-    execFileSync('git', ['push', '-u', 'origin', 'HEAD'], {
-      cwd: workDir,
-      stdio: 'inherit',
-      env: hookSafeEnv,
-    })
+    // Push with automatic rebase-retry on rejection (fixes rejected pushes on reruns)
+    const pushed = pushWithRebase(workDir, hookSafeEnv)
+    if (!pushed) {
+      return {
+        hash,
+        branch,
+        success: false,
+        message: `Committed (${hash}) but push failed after rebase`,
+      }
+    }
 
     return {
       hash,
@@ -640,8 +679,23 @@ export type StagingStrategy = 'task-only' | 'tracked+task' | 'all'
 
 /**
  * Files that are always excluded from task-only commits (internal state markers).
+ * NOTE: OpenCode runtime file patterns here must be kept in sync with
+ * the .gitignore entries under "OpenCode runtime files (per-task isolated data dirs)".
  */
-const TASK_FILES_ALWAYS_EXCLUDE = ['gate-*.md', 'rerun-feedback.consumed.md']
+const TASK_FILES_ALWAYS_EXCLUDE = [
+  'gate-*.md',
+  'rerun-feedback.consumed.md',
+  // OpenCode runtime files (only opencode.db is committed for session reuse)
+  'opencode-data/opencode/opencode.db-wal',
+  'opencode-data/opencode/opencode.db-shm',
+  'opencode-data/opencode/snapshot/',
+  'opencode-data/opencode/logs/',
+  'opencode-data/opencode/auth.json',
+  'opencode-data/opencode/bin/',
+  'opencode-data/opencode/tool-output/',
+  'opencode-data/opencode/storage/',
+  'opencode-data/opencode/worktree/',
+]
 
 /**
  * Debug artifacts — only committed when the pipeline fails (black box data).
@@ -810,18 +864,17 @@ export function commitPipelineFiles(
       throw commitError
     }
 
-    // 5. Optionally push
+    // 5. Optionally push (with rebase-retry on rejection)
     // Use hook-safe env to skip pre-push hooks (e.g., Prettier/verify)
     // which may fail on unrelated files and block the pipeline
     let pushed = false
     if (push) {
-      execFileSync('git', ['push', '-u', 'origin', 'HEAD'], {
-        cwd,
-        stdio: 'inherit',
-        env: hookSafeEnv,
-      })
-      pushed = true
-      logger.info(`[commit] Pushed to origin`)
+      pushed = pushWithRebase(cwd, hookSafeEnv)
+      if (pushed) {
+        logger.info(`[commit] Pushed to origin`)
+      } else {
+        logger.error(`[commit] Push failed — remote may have diverged`)
+      }
     }
 
     return { success: true, message: 'Committed successfully', committed, pushed }

@@ -5,6 +5,12 @@
  * @ai-summary New CLI entry point for Cody pipeline state machine
  */
 
+// Load .env before anything else so GH_PAT, API keys, etc. are available.
+// In CI, environment variables are injected by the workflow — this is a no-op
+// if .env doesn't exist (dotenv silently skips missing files).
+import { config as loadEnv } from 'dotenv'
+loadEnv({ path: '.env' })
+
 import * as fs from 'fs'
 import ms from 'ms'
 import * as path from 'path'
@@ -26,12 +32,38 @@ import { readTask } from './pipeline-utils'
 import type { PipelineContext } from './engine/types'
 import { runPipeline } from './engine/state-machine'
 import { resolvePipelineForMode, createRebuildCallback } from './engine/pipeline-resolver'
-import { flattenPipelineOrder, IMPL_ORDER_STANDARD, FIX_ORDER } from './pipeline/definitions'
+import { flattenPipelineOrder } from './pipeline/definitions'
 import { stateToV1 } from './engine/status'
 import { PipelinePausedError } from './engine/types'
 import { resolveRerunFromStage, resolveFromStageAfterGateApproval } from './rerun-utils'
+import { startServer, stopServer, checkpointDb, findLastSessionId } from './opencode-server'
+import type { OpenCodeServer } from './opencode-server'
 import { ensureTaskMarkerComment, postComment } from './github-api'
 import { formatStatusComment } from './cody-utils'
+
+// ============================================================================
+// OpenCode Server Lifecycle
+// ============================================================================
+
+/** Module-level reference to the OpenCode server for cleanup in signal handlers */
+let openCodeServer: OpenCodeServer | null = null
+
+/**
+ * Gracefully shut down the OpenCode server, checkpoint the DB, and clear the reference.
+ * Safe to call multiple times (idempotent).
+ */
+async function shutdownOpenCodeServer(taskDir?: string): Promise<void> {
+  if (!openCodeServer) return
+  const server = openCodeServer
+  openCodeServer = null
+
+  await stopServer(server)
+
+  // Checkpoint WAL into main DB so it's self-contained for git commits
+  if (taskDir) {
+    checkpointDb(taskDir)
+  }
+}
 
 // ============================================================================
 // Shared Helpers
@@ -195,6 +227,15 @@ Examples:
     } catch (err) {
       logger.error({ err }, `  Failed to update status`)
     }
+    // Kill OpenCode server before exiting (sync-safe: just send SIGTERM).
+    // We cannot await stopServer() or checkpointDb() here — the signal context
+    // limits async work. The WAL checkpoint is skipped on forced shutdown;
+    // SQLite will recover the WAL automatically on the next open.
+    if (openCodeServer?.process && !openCodeServer.process.killed) {
+      openCodeServer.process.kill('SIGTERM')
+      openCodeServer = null
+    }
+
     process.exit(128 + (signal === 'SIGTERM' ? 15 : 2))
   }
 
@@ -239,6 +280,33 @@ Examples:
     backend,
   }
 
+  // Start OpenCode server for persistent sessions across stages
+  // Graceful degradation: if startup fails, pipeline runs without server (cold-boot each stage)
+  if (input.mode !== 'status') {
+    const server = await startServer(taskDir)
+    if (server) {
+      openCodeServer = server
+      ctx.serverUrl = server.url
+      logger.info(`  OpenCode server available at ${server.url}`)
+
+      // On rerun: recover lastSessionId from previous pipeline state
+      if (input.mode === 'rerun') {
+        const { loadState } = await import('./engine/status')
+        const existingState = loadState(input.taskId)
+        if (existingState) {
+          const pipelineOrder = flattenPipelineOrder(
+            resolvePipelineForMode('full', ctx.profile, false, ctx).order,
+          )
+          const lastSid = findLastSessionId(existingState.stages, pipelineOrder)
+          if (lastSid) {
+            ctx.lastSessionId = lastSid
+            logger.info(`  Recovered session ${lastSid} from previous run`)
+          }
+        }
+      }
+    }
+  }
+
   try {
     switch (input.mode) {
       case 'spec':
@@ -264,7 +332,8 @@ Examples:
     }
   } catch (error) {
     if (error instanceof PipelinePausedError) {
-      // Pipeline paused - handled internally
+      // Pipeline paused — still need to shut down server and checkpoint DB
+      await shutdownOpenCodeServer(taskDir)
       return
     }
 
@@ -280,6 +349,9 @@ Examples:
 
     const errorMsg = error instanceof Error ? error.message : String(error)
     logger.error({ err: error }, `\n❌ Cody failed: ${errorMsg}`)
+
+    // Shutdown OpenCode server before committing (ensures DB is checkpointed)
+    await shutdownOpenCodeServer(taskDir)
 
     // Commit task files on failure — includes debug artifacts (*-events.jsonl, *-stderr.log)
     // for post-mortem diagnosis. On success these are excluded to keep PRs clean.
@@ -312,6 +384,14 @@ Examples:
     }
     process.exit(1)
   }
+
+  // Success path: shutdown OpenCode server and checkpoint DB
+  await shutdownOpenCodeServer(taskDir)
+
+  // Explicitly exit on success.  Without this the process may hang if
+  // the OpenCode server left orphan listeners, timers, or file handles
+  // that keep the Node event loop alive.
+  process.exit(0)
 }
 
 /**
@@ -437,6 +517,16 @@ async function runImplMode(ctx: PipelineContext): Promise<void> {
 async function runFullMode(ctx: PipelineContext): Promise<void> {
   logger.info('Running FULL Cody pipeline (spec + impl)...\n')
 
+  // FIX: If a previous run left state as failed/completed, delete it so the
+  // pipeline starts fresh.  Without this, runPipeline() sees the terminal state
+  // in status.json and returns immediately without executing any stages.
+  const { loadState: loadSt2, deleteState } = await import('./engine/status')
+  const prevState = loadSt2(ctx.taskId)
+  if (prevState && (prevState.state === 'failed' || prevState.state === 'completed')) {
+    logger.info(`  Previous run state: ${prevState.state} — resetting for fresh full-mode run`)
+    deleteState(ctx.taskId)
+  }
+
   // R4: Ensure task.md exists before running pipeline
   await ensureTaskMd(ctx)
 
@@ -557,22 +647,27 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
       input.fromStage = resolveFromStageAfterGateApproval(gateApprovedStage, tempOrder)
       logger.info(`  ℹ️ Gate approved at ${gateApprovedStage} — resuming from ${input.fromStage}`)
     } else {
-      input.fromStage = pausedStage || getLastFailedStage(input.taskId) || 'gsd-execute'
+      input.fromStage = pausedStage || getLastFailedStage(input.taskId) || 'build'
     }
   }
 
-  // P3 fix: Back up to architect when feedback provided so plan can be revised
-  const implStageOrder = flattenPipelineOrder(IMPL_ORDER_STANDARD)
-  const resolvedFrom = resolveRerunFromStage(
-    input.fromStage || 'gsd-execute',
-    input.feedback,
-    implStageOrder,
-  )
-  if (resolvedFrom !== input.fromStage) {
-    logger.info(
-      `  ℹ️ Feedback provided — backing up from ${input.fromStage} to ${resolvedFrom} for plan revision`,
-    )
-    input.fromStage = resolvedFrom
+  // G37: Read task definition for profile resolution
+  let taskDef = null
+  try {
+    taskDef = readTask(taskDir)
+  } catch {
+    logger.warn('Could not read task.json for profile resolution, using default')
+  }
+  ctx.taskDef = taskDef
+  if (taskDef) {
+    const { resolvePipelineProfile } = await import('./pipeline-utils')
+    ctx.profile = resolvePipelineProfile(taskDef)
+  }
+
+  // --turbo flag: hard override to turbo profile
+  if (ctx.input.turbo) {
+    ctx.profile = 'turbo'
+    logger.info('⚡ Turbo mode: forcing turbo profile')
   }
 
   // Default feedback
@@ -595,28 +690,23 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
   logger.info(`Feedback: ${input.feedback}`)
   logger.info(`From stage: ${input.fromStage}\n`)
 
-  // G37: Read task definition for profile resolution
-  // Fix 4: Wrap in try/catch to handle missing/invalid task.json gracefully
-  let taskDef = null
-  try {
-    taskDef = readTask(taskDir)
-  } catch {
-    logger.warn('Could not read task.json for profile resolution, using default')
-  }
-  ctx.taskDef = taskDef
-  if (taskDef) {
-    const { resolvePipelineProfile } = await import('./pipeline-utils')
-    ctx.profile = resolvePipelineProfile(taskDef)
-  }
-
-  // For rerun, we need to delete the files manually since the engine won't do it
-  // The status.ts resetFromStage handles this but we need to call it
-  // R3: Use dynamic stage order from pipeline definition instead of hardcoded array
+  // H2 fix: resolve pipeline BEFORE resolveRerunFromStage so we use profile-aware
+  // impl stage order. Previously hardcoded IMPL_ORDER_STANDARD which caused turbo
+  // rerun with feedback to back up to 'architect' (doesn't exist in turbo).
   const pipeline = resolvePipelineForMode('rerun', ctx.profile, false, ctx)
   const stageOrder = flattenPipelineOrder(pipeline.order)
 
+  // P3 fix: Back up to architect when feedback provided so plan can be revised
+  const resolvedFrom = resolveRerunFromStage(input.fromStage || 'build', input.feedback, stageOrder)
+  if (resolvedFrom !== input.fromStage) {
+    logger.info(
+      `  \u2139\ufe0f Feedback provided \u2014 backing up from ${input.fromStage} to ${resolvedFrom} for plan revision`,
+    )
+    input.fromStage = resolvedFrom
+  }
+
   // Fix 5: Validate fromStage exists in the resolved pipeline order
-  const fromStage = input.fromStage || 'gsd-execute'
+  const fromStage = input.fromStage || 'build'
   if (!stageOrder.includes(fromStage)) {
     throw new Error(
       `Stage "${fromStage}" not found in rerun pipeline. Valid stages: ${stageOrder.join(', ')}`,
@@ -650,6 +740,18 @@ async function runFixMode(ctx: PipelineContext): Promise<void> {
     input.feedback = 'Fix requested via @cody fix command'
   }
 
+  // Enrich feedback with PR review context when triggered from a PR
+  if (input.isPullRequest && input.issueNumber) {
+    const { getPRReviewFeedback } = await import('./github-api')
+    // issueNumber is the PR number when isPullRequest is true
+    const prNumber = input.issueNumber
+    const prFeedback = getPRReviewFeedback(prNumber)
+    if (prFeedback) {
+      logger.info(`Enriching fix feedback with PR #${prNumber} review context`)
+      input.feedback = `${input.feedback}\n\n${prFeedback}`
+    }
+  }
+
   // Write feedback to file
   const feedbackPath = path.join(taskDir, 'rerun-feedback.md')
   fs.writeFileSync(
@@ -670,6 +772,17 @@ async function runFixMode(ctx: PipelineContext): Promise<void> {
     ctx.profile = resolvePipelineProfile(taskDef)
   }
 
+  // --turbo flag: hard override to turbo profile
+  if (ctx.input.turbo) {
+    ctx.profile = 'turbo'
+    logger.info('⚡ Turbo mode: forcing turbo profile')
+  }
+
+  // C2+M3 fix: resolve pipeline FIRST so we use the correct order for state init
+  // This handles turbo (FIX_ORDER_TURBO) and parallel groups correctly
+  const pipeline = resolvePipelineForMode('fix', ctx.profile, false, ctx)
+  const fixStages = flattenPipelineOrder(pipeline.order)
+
   // Load existing state or create new one
   const {
     loadState: loadSt2,
@@ -680,12 +793,17 @@ async function runFixMode(ctx: PipelineContext): Promise<void> {
 
   let state = loadSt2(input.taskId)
 
-  // If no existing state, create fresh state with FIX_ORDER stages
+  // If no existing state, create fresh state with resolved fix pipeline stages
   if (!state) {
     state = initSt(ctx, 'fix')
-    for (const stageName of FIX_ORDER) {
-      if (typeof stageName === 'string') {
-        state = updStage(state, stageName, { state: 'pending', retries: 0 })
+    // C2 fix: handle both string stages and parallel groups
+    for (const step of pipeline.order) {
+      if (typeof step === 'string') {
+        state = updStage(state, step, { state: 'pending', retries: 0 })
+      } else if ('parallel' in step) {
+        for (const s of step.parallel) {
+          state = updStage(state, s, { state: 'pending', retries: 0 })
+        }
       }
     }
     writeSt2(input.taskId, state)
@@ -699,17 +817,17 @@ async function runFixMode(ctx: PipelineContext): Promise<void> {
     maxFixAttempts: 2,
   })
 
-  // Also ensure commit-fix and verify are pending
-  state = updStage(state, 'commit-fix', { state: 'pending' })
+  // Also ensure verify is pending
   state = updStage(state, 'verify', { state: 'pending' })
-  state = updStage(state, 'review', { state: 'pending' })
+  // Only init review if it's in this pipeline (turbo fix skips it)
+  if (fixStages.includes('review')) {
+    state = updStage(state, 'review', { state: 'pending' })
+  }
 
-  // Set initial cursor
-  state = { ...state, cursor: 'review', state: 'running' }
+  // Set initial cursor to first stage in the fix pipeline
+  const firstFixStage = fixStages[0] || 'fix'
+  state = { ...state, cursor: firstFixStage, state: 'running' }
   writeSt2(input.taskId, state)
-
-  // Build pipeline for fix mode - resolvePipelineForMode maps 'fix' to FIX_ORDER
-  const pipeline = resolvePipelineForMode('fix', ctx.profile, false, ctx)
 
   // Run pipeline - it will find the first pending stage (review) and continue
   const finalState = await runPipeline(ctx, pipeline)

@@ -40,8 +40,8 @@ Not all stages need an expensive model. Lightweight stages use a faster/cheaper 
 
 | Model            | Used For                           | Cost    |
 | ---------------- | ---------------------------------- | ------- |
-| MiniMax-M2.5     | architect, build                   | Default |
-| Gemini 2.5 Flash | plan-gap, commit, autofix          | Fast    |
+| MiniMax-M2.5     | gap, architect, build              | Default |
+| Claude Opus 4.6  | plan-gap                           | Quality |
 
 Override with `OPENCODE_MODEL` env var to force a specific model for all stages.
 

@@ -230,8 +230,8 @@ describe('getLastFailedStage', () => {
       JSON.stringify({
         taskId: '260219-test',
         stages: {
-          'gsd-plan': { state: 'completed', retries: 0 },
-          'gsd-execute': { state: 'completed', retries: 0 },
+          architect: { state: 'completed', retries: 0 },
+          build: { state: 'completed', retries: 0 },
         },
       }),
     )
@@ -246,15 +246,15 @@ describe('getLastFailedStage', () => {
       JSON.stringify({
         taskId: '260219-test',
         stages: {
-          'gsd-plan': { state: 'completed', retries: 0 },
-          'gsd-execute': { state: 'failed', retries: 1, error: 'Build failed' },
+          architect: { state: 'completed', retries: 0 },
+          build: { state: 'failed', retries: 1, error: 'Build failed' },
           verify: { state: 'completed', retries: 0 },
         },
       }),
     )
 
     const result = getLastFailedStage('260219-test')
-    expect(result).toBe('gsd-execute')
+    expect(result).toBe('build')
   })
 
   it('should return the last stage when multiple stages failed', () => {
@@ -263,8 +263,8 @@ describe('getLastFailedStage', () => {
       JSON.stringify({
         taskId: '260219-test',
         stages: {
-          'gsd-plan': { state: 'failed', retries: 1 },
-          'gsd-execute': { state: 'failed', retries: 1 },
+          architect: { state: 'failed', retries: 1 },
+          build: { state: 'failed', retries: 1 },
           verify: { state: 'failed', retries: 1 },
         },
       }),
@@ -280,13 +280,13 @@ describe('getLastFailedStage', () => {
       JSON.stringify({
         taskId: '260219-test',
         stages: {
-          'gsd-execute': { state: 'timeout', retries: 1 },
+          build: { state: 'timeout', retries: 1 },
         },
       }),
     )
 
     const result = getLastFailedStage('260219-test')
-    expect(result).toBe('gsd-execute')
+    expect(result).toBe('build')
   })
 
   it('should return null when stages object is missing', () => {
@@ -326,8 +326,8 @@ describe('getLastPausedStage', () => {
       JSON.stringify({
         taskId: '260219-test',
         stages: {
-          'gsd-plan': { state: 'completed', retries: 0 },
-          'gsd-execute': { state: 'completed', retries: 0 },
+          architect: { state: 'completed', retries: 0 },
+          build: { state: 'completed', retries: 0 },
         },
       }),
     )
@@ -343,14 +343,14 @@ describe('getLastPausedStage', () => {
         taskId: '260219-test',
         stages: {
           taskify: { state: 'completed', retries: 0 },
-          'gsd-plan': { state: 'paused', retries: 0 },
-          'gsd-execute': { state: 'pending', retries: 0 },
+          architect: { state: 'paused', retries: 0 },
+          build: { state: 'pending', retries: 0 },
         },
       }),
     )
 
     const result = getLastPausedStage('260219-test')
-    expect(result).toBe('gsd-plan')
+    expect(result).toBe('architect')
   })
 
   it('should return the last paused stage when multiple are paused', () => {
@@ -360,14 +360,14 @@ describe('getLastPausedStage', () => {
         taskId: '260219-test',
         stages: {
           taskify: { state: 'paused', retries: 0 },
-          'gsd-plan': { state: 'paused', retries: 0 },
-          'gsd-execute': { state: 'pending', retries: 0 },
+          architect: { state: 'paused', retries: 0 },
+          build: { state: 'pending', retries: 0 },
         },
       }),
     )
 
     const result = getLastPausedStage('260219-test')
-    expect(result).toBe('gsd-plan') // last one
+    expect(result).toBe('architect') // last one
   })
 
   it('should handle v2 format with version field', () => {
@@ -378,13 +378,13 @@ describe('getLastPausedStage', () => {
         taskId: '260219-test',
         stages: {
           taskify: { state: 'completed', retries: 0 },
-          'gsd-plan': { state: 'paused', retries: 0 },
+          architect: { state: 'paused', retries: 0 },
         },
       }),
     )
 
     const result = getLastPausedStage('260219-test')
-    expect(result).toBe('gsd-plan')
+    expect(result).toBe('architect')
   })
 })
 

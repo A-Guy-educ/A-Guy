@@ -14,10 +14,6 @@
       "model": "anthropic/claude-opus-4-6",
       "description": "Planning tasks, architecture design, complex problem solving"
     },
-    "spec": {
-      "model": "openai/gpt-5.2",
-      "description": "Spec writing, API design, documentation"
-    },
     "clarify": {
       "model": "openai/gpt-5.2",
       "description": "Collects operator questions and answers"
@@ -31,7 +27,7 @@
       "description": "Analyzes spec.md for gaps, missing info, and inconsistencies"
     },
     "plan-gap": {
-      "model": "openai/gpt-5.3-codex",
+      "model": "anthropic/claude-opus-4-6",
       "description": "Analyzes plan for gaps vs spec and codebase, auto-revises plan"
     },
     "autofix": {
@@ -79,21 +75,13 @@
       "model": "minimax-coding-plan/MiniMax-M2.5",
       "description": "Targeted fixes for issues found by review or verify stages"
     },
-    "commit-fix": {
+    "reflect": {
       "model": "minimax-coding-plan/MiniMax-M2.5",
-      "description": "Commits fix changes after the fix stage"
+      "description": "Post-task reflection - extracts patterns, updates knowledge base, creates skills when patterns repeat"
     },
-    "gsd-research": {
-      "model": "anthropic/claude-sonnet-4-20250514",
-      "description": "GSD research phase - parallel codebase analysis"
-    },
-    "gsd-plan": {
-      "model": "anthropic/claude-opus-4-6",
-      "description": "GSD planning phase - plan creation + checker loop"
-    },
-    "gsd-execute": {
+    "e2e-test-writer": {
       "model": "minimax-coding-plan/MiniMax-M2.5",
-      "description": "GSD execution phase - implements plan (same model as old build)"
+      "description": "Writes Playwright E2E tests for UI changes. Tests committed but NOT run in pipeline — CI runs them on PR."
     }
   },
   "mcp": {

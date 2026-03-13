@@ -8,30 +8,31 @@
 import { spawn, type ChildProcess } from 'child_process'
 
 import { getEnv } from './env'
-
-// ============================================================================
-// Env Var Cleaning
-// ============================================================================
-
-/**
- * Strip OpenCode session env vars to prevent "Session not found" errors
- * when spawning new opencode processes from within an existing session.
- */
-function cleanOpenCodeEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
-  const cleaned = { ...env }
-  delete cleaned.OPENCODE
-  delete cleaned.OPENCODE_PID
-  delete cleaned.OPENCODE_SERVER_PASSWORD
-  return cleaned
-}
+import { resolveOpenCodeBinary } from './opencode-server'
 
 // ============================================================================
 // Types
 // ============================================================================
 
+/** Options passed to runner.spawn() for server mode */
+export interface RunnerSpawnOptions {
+  /** URL of running OpenCode server to attach to */
+  serverUrl?: string
+  /** Session ID to fork from (requires serverUrl) */
+  sessionId?: string
+  /** XDG_DATA_HOME directory — must match the server's data dir for instance lookup */
+  dataDir?: string
+}
+
 export interface RunnerBackend {
   name: string
-  spawn(stage: string, prompt: string, env: NodeJS.ProcessEnv, cwd: string): ChildProcess
+  spawn(
+    stage: string,
+    prompt: string,
+    env: NodeJS.ProcessEnv,
+    cwd: string,
+    options?: RunnerSpawnOptions,
+  ): ChildProcess
 }
 
 // ============================================================================
@@ -41,22 +42,50 @@ export interface RunnerBackend {
 export class GitHubRunner implements RunnerBackend {
   name = 'opencode-github'
 
-  spawn(stage: string, prompt: string, env: NodeJS.ProcessEnv, cwd: string): ChildProcess {
-    // Use opencode run --agent instead of opencode github run
-    // opencode github run does NOT support --agent flag and ignores AGENT env var
-    // opencode run supports --agent which loads correct agent from opencode.json
-    // OIDC auth still works in CI (reads ACTIONS_ID_TOKEN_REQUEST_TOKEN from env)
-    // Use --format json to get sessionID in output for chat history capture
-    return spawn(
-      'pnpm',
-      ['exec', 'opencode', 'run', '--agent', stage, '--format', 'json', prompt],
-      {
+  spawn(
+    stage: string,
+    prompt: string,
+    env: NodeJS.ProcessEnv,
+    cwd: string,
+    options?: RunnerSpawnOptions,
+  ): ChildProcess {
+    // When attaching to a running server, use the real opencode binary directly.
+    // `pnpm exec opencode` resolves to the old opencode-ai npm package which
+    // doesn't support --agent + --attach properly. The real binary is installed
+    // via `curl -fsSL https://opencode.ai/install | bash` to ~/.opencode/bin/.
+    // XDG_DATA_HOME must match the server's data dir for instance lookup.
+    if (options?.serverUrl) {
+      const args = [
+        'run',
+        '--agent',
+        stage,
+        '--format',
+        'json',
+        '--attach',
+        options.serverUrl,
+        '--dir',
         cwd,
-        // Pipe stdout for JSON parsing (sessionID extraction), pipe stderr for capture
-        stdio: ['ignore', 'pipe', 'pipe'], // stdin=ignore prevents opencode blocking on stdin read
-        env: cleanOpenCodeEnv(env),
-      },
-    )
+      ]
+      if (options.sessionId) args.push('--session', options.sessionId, '--fork')
+      args.push(prompt)
+      return spawn(resolveOpenCodeBinary(), args, {
+        cwd,
+        stdio: ['ignore', 'pipe', 'pipe'],
+        env: {
+          ...env,
+          ...(options.dataDir ? { XDG_DATA_HOME: options.dataDir } : {}),
+        },
+      })
+    }
+
+    // Without server: use pnpm exec for backward compatibility
+    const args = ['exec', 'opencode', 'run', '--agent', stage, '--format', 'json']
+    args.push(prompt)
+    return spawn('pnpm', args, {
+      cwd,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env,
+    })
   }
 }
 
@@ -67,16 +96,51 @@ export class GitHubRunner implements RunnerBackend {
 export class LocalRunner implements RunnerBackend {
   name = 'opencode-local'
 
-  spawn(stage: string, prompt: string, env: NodeJS.ProcessEnv, cwd: string): ChildProcess {
-    // Local runner uses pnpm ocode run --agent <stage> [prompt]
-    // Prompt is passed as positional arg (same as GitHubRunner)
-    // Use --format json to get sessionID in output for chat history capture
-    return spawn('pnpm', ['ocode', 'run', '--agent', stage, '--format', 'json', prompt], {
+  spawn(
+    stage: string,
+    prompt: string,
+    env: NodeJS.ProcessEnv,
+    cwd: string,
+    options?: RunnerSpawnOptions,
+  ): ChildProcess {
+    // When attaching to a running server, use the real opencode binary directly.
+    // `pnpm ocode` resolves to `pnpm exec opencode` which uses the old opencode-ai
+    // npm package. The real binary supports --agent + --attach properly.
+    // XDG_DATA_HOME must match the server's data dir for instance lookup.
+    if (options?.serverUrl) {
+      const args = [
+        'run',
+        '--agent',
+        stage,
+        '--format',
+        'json',
+        '--attach',
+        options.serverUrl,
+        '--dir',
+        cwd,
+      ]
+      if (options.sessionId) args.push('--session', options.sessionId, '--fork')
+      args.push(prompt)
+      return spawn(resolveOpenCodeBinary(), args, {
+        cwd,
+        stdio: ['ignore', 'pipe', 'pipe'],
+        env: {
+          ...env,
+          ...(options.dataDir ? { XDG_DATA_HOME: options.dataDir } : {}),
+          AGENT: stage,
+          MODEL: env.MODEL,
+        },
+      })
+    }
+
+    // Without server: use pnpm ocode for backward compatibility
+    const args = ['ocode', 'run', '--agent', stage, '--format', 'json']
+    args.push(prompt)
+    return spawn('pnpm', args, {
       cwd,
-      // Pipe stdout for JSON parsing (sessionID extraction), pipe stderr for capture
-      stdio: ['ignore', 'pipe', 'pipe'], // stdin=ignore prevents opencode blocking on stdin read
+      stdio: ['ignore', 'pipe', 'pipe'],
       env: {
-        ...cleanOpenCodeEnv(env),
+        ...env,
         AGENT: stage,
         MODEL: env.MODEL,
       },

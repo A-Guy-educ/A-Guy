@@ -1,5 +1,5 @@
 # Cody - Runs multi-agent pipeline in CI via OpenCode GitHub mode
-# Triggers: workflow_dispatch, issue_comment (@cody <subcommand>), push to dev/main (smoke test)
+# Triggers: workflow_dispatch, issue_comment (@cody <subcommand>), pull_request_review (changes_requested), push to dev/main (smoke test)
 
 name: cody
 
@@ -36,13 +36,13 @@ on:
         type: string
         default: ''
       runner:
-        description: 'Where to run: self-hosted (default) or github-hosted'
+        description: 'Where to run: github-hosted (default) or self-hosted'
         required: false
         type: choice
         options:
           - github-hosted
           - self-hosted
-        default: 'self-hosted'
+        default: 'github-hosted'
       version:
         description: 'Pipeline version (branch, tag, or commit). Overrides CODY_DEFAULT_VERSION'
         required: false
@@ -61,9 +61,12 @@ on:
   issue_comment:
     types: [created]
 
+  pull_request_review:
+    types: [submitted]
+
 # Concurrency: task_id for dispatch, issue.number for comments
 concurrency:
-  group: cody-${{ github.event.inputs.task_id || github.event.issue.number || github.sha }}
+  group: cody-${{ github.event.inputs.task_id || github.event.issue.number || github.event.pull_request.number || github.sha }}
   cancel-in-progress: false
 
 # Permissions: parse job needs write for error comments, orchestrate job needs more
@@ -82,7 +85,9 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'issue_comment' &&
        (contains(github.event.comment.body, '@cody') ||
-        contains(github.event.comment.body, '/cody')))
+        contains(github.event.comment.body, '/cody'))) ||
+      (github.event_name == 'pull_request_review' &&
+       github.event.review.state == 'changes_requested')
     env:
       GH_TOKEN: ${{ github.token }}
       CODY_DEFAULT_VERSION: cody-v1
@@ -161,7 +166,11 @@ jobs:
           # Comment inputs (for orchestrator to parse)
           COMMENT_BODY: ${{ github.event.comment.body }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
-          IS_PULL_REQUEST: ${{ github.event.issue.pull_request != null }}
+          IS_PULL_REQUEST: ${{ github.event.issue.pull_request != null || github.event_name == 'pull_request_review' }}
+          # PR review inputs (for pull_request_review trigger)
+          PR_REVIEW_STATE: ${{ github.event.review.state || '' }}
+          PR_REVIEW_BODY: ${{ github.event.review.body || '' }}
+          PR_NUMBER: ${{ github.event.pull_request.number || '' }}
           # GitHub context (needed by script to detect trigger type)
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           # Default version (can be overridden by explicit --version in command)
@@ -198,6 +207,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git identity
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -212,6 +228,12 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Install OpenCode CLI
+        run: |
+          curl -fsSL https://opencode.ai/install | bash
+          echo "$HOME/.opencode/bin" >> $GITHUB_PATH
+          $HOME/.opencode/bin/opencode --version || echo "Warning: opencode install failed"
 
       - name: Run parse-inputs validation
         env:
@@ -265,7 +287,7 @@ jobs:
   orchestrate:
     needs: parse
     if: needs.parse.outputs.valid == 'true'
-    runs-on: ${{ needs.parse.outputs.runner == 'self-hosted' && 'self-hosted' || (needs.parse.outputs.runner == 'github-hosted' && 'ubuntu-latest' || 'self-hosted') }}
+    runs-on: ${{ needs.parse.outputs.runner == 'self-hosted' && 'self-hosted' || 'ubuntu-latest' }}
     timeout-minutes: 120
     permissions:
       id-token: write # OpenCode GitHub App OIDC
@@ -288,16 +310,28 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: 'pnpm'
 
-      - name: Configure pnpm to use local store
+      - name: Configure pnpm to use local store (self-hosted only)
+        if: needs.parse.outputs.runner == 'self-hosted'
         run: |
-          # Use the local pnpm store on the runner (avoid GitHub cache download)
+          # Use the local pnpm store on the self-hosted runner (avoid GitHub cache download)
           echo "PNPM_HOME=/Users/bot/Library/pnpm" >> $GITHUB_ENV
           echo "STORE_DIR=/Users/bot/Library/pnpm/store/v10" >> $GITHUB_ENV
           echo "/Users/bot/Library/pnpm" >> $GITHUB_PATH
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      # Install the real OpenCode CLI binary (v1.2.x) from opencode.ai.
+      # The npm package (opencode-ai) does NOT properly support --attach/serve.
+      # This gives us ~/.opencode/bin/opencode which does.
+      - name: Install OpenCode CLI
+        run: |
+          curl -fsSL https://opencode.ai/install | bash
+          echo "$HOME/.opencode/bin" >> $GITHUB_PATH
+          # Verify it's installed and print version for diagnostics
+          $HOME/.opencode/bin/opencode --version || echo "Warning: opencode install may have failed"
 
       - name: Checkout feature branch if exists
         if: needs.parse.outputs.task_id != '' || needs.parse.outputs.fresh == 'true'
@@ -366,6 +400,7 @@ jobs:
           TRIGGER_TYPE: ${{ needs.parse.outputs.trigger_type }}
           COMMENT_BODY: ${{ needs.parse.outputs.comment_body }}
           VERSION: ${{ needs.parse.outputs.version }}
+          IS_PULL_REQUEST: ${{ needs.parse.outputs.is_pull_request }}
 
           # GitHub context
           RUN_ID: ${{ github.run_id }}

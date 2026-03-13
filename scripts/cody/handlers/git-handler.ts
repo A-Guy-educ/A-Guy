@@ -22,15 +22,10 @@ export class GitCommitHandler implements StageHandler {
     const result = runCommitStage(_ctx.taskDir, outputFile)
 
     if (!result.success) {
-      // "No changes" after a build stage means the build agent didn't implement anything.
-      // This is a safety net — validate-src-changes post-action should catch this first.
+      // "No changes" is OK — fix/autofix may produce no file changes.
+      // Real "empty build" errors are caught by validate-src-changes post-action.
       if (result.message.includes('No changes')) {
-        return {
-          outcome: 'failed',
-          reason:
-            'No changes to commit after build stage — build agent may not have implemented code changes',
-          retries: 0,
-        }
+        return { outcome: 'completed', retries: 0 }
       }
       return {
         outcome: 'failed',
@@ -43,25 +38,6 @@ export class GitCommitHandler implements StageHandler {
       outcome: 'completed',
       retries: 0,
     }
-  }
-}
-
-/**
- * Tolerant commit handler for commit-fix stage.
- * Treats "No changes" as completed (not failed), since fix stage
- * may produce no file changes if review found only minor issues
- * or if the fix was applied but resulted in identical code.
- */
-export class GitCommitFixHandler implements StageHandler {
-  async execute(ctx: PipelineContext, def: StageDefinition): Promise<StageResult> {
-    const handler = new GitCommitHandler()
-    const result = await handler.execute(ctx, def)
-
-    // Treat "No changes" as success instead of failure
-    if (result.outcome === 'failed' && result.reason?.includes('No changes')) {
-      return { outcome: 'completed', retries: 0 }
-    }
-    return result
   }
 }
 

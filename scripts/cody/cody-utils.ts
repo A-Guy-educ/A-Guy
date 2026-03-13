@@ -13,7 +13,6 @@ import { randomInt } from 'crypto'
 
 import { ALL_STAGES } from './stage-prompts'
 import { discoverTaskIdFromIssue } from './github-api'
-import { STAGE_ALIASES, resolveStageAlias } from './rerun-utils'
 
 // ============================================================================
 // Types
@@ -47,6 +46,8 @@ export interface CodyInput {
   isPullRequest?: boolean
   // Force create new PR (new branch) - ignores existing PR
   fresh?: boolean
+  // Turbo mode: forces minimal pipeline (build→commit→verify→pr), CLI-only flag
+  turbo?: boolean
 }
 
 export interface CodyPipelineStatus {
@@ -67,6 +68,8 @@ export interface CodyPipelineStatus {
   controlMode?: 'auto' | 'risk-gated' | 'hard-stop'
   gatePoint?: string
   botCommentId?: number
+  /** Total accumulated cost across all stages in USD */
+  totalCost?: number
 }
 
 export interface StageStatus {
@@ -78,11 +81,13 @@ export interface StageStatus {
   outputFile?: string
   skipped?: string // Reason for skip (e.g., 'input_quality')
   error?: string
-  // Token usage for cost tracking (schema only - not populated)
+  // Token usage for cost tracking
   tokenUsage?: {
     input: number
     output: number
   }
+  /** Cost in USD */
+  cost?: number
 }
 
 // ============================================================================
@@ -92,7 +97,7 @@ export interface StageStatus {
 const VALID_MODES = ['spec', 'impl', 'rerun', 'fix', 'full', 'status'] as const
 
 // VALID_STAGES derived from stage-prompts to avoid duplication
-const VALID_STAGES = [...ALL_STAGES, ...Object.keys(STAGE_ALIASES)]
+const VALID_STAGES = [...ALL_STAGES]
 
 // Pipeline-ordered stage list for sorting (avoids `as any` cast on readonly tuple)
 const STAGE_ORDER: readonly string[] = ALL_STAGES
@@ -473,7 +478,7 @@ export function parseCliArgs(argv: string[]): CodyInput {
     if (!isValidStage(stage)) {
       throw new Error(`Invalid stage: ${stage}. Valid: ${VALID_STAGES.join(', ')}`)
     }
-    input.fromStage = resolveStageAlias(stage)
+    input.fromStage = stage
     cliSet.add('fromStage')
   }
 
@@ -644,21 +649,46 @@ export function parseCliArgs(argv: string[]): CodyInput {
   // Only process --mode at the end when it comes AFTER --comment-body
   const processModeLast = modeArgIndex > commentBodyArgIndex && commentBodyArgIndex >= 0
 
-  for (const arg of argv) {
-    if (!arg.startsWith('-')) {
-      // Check if it's a valid mode
-      if (isValidMode(arg)) {
-        input.mode = arg
-        cliSet.add('mode')
-        continue
-      }
-      // Otherwise treat as file path (if it looks like a path)
-      if (arg.includes('/') || arg.includes('.') || arg.includes('-')) {
-        input.file = arg
-        cliSet.add('file')
-        cliSet.add('taskId') // --file triggers taskId auto-generation
-        continue
-      }
+  // Options that consume the next arg as their value (--key <value> format)
+  const optionsWithValues = new Set([
+    '--task-id',
+    '--mode',
+    '--file',
+    '--issue-number',
+    '--from',
+    '--feedback',
+    '--complexity',
+    '--comment-body',
+    '--comment-body-env',
+    '--version',
+    '--trigger-type',
+    '--run-id',
+    '--run-url',
+  ])
+
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i]
+
+    // Skip values that belong to --key <value> options
+    if (arg.startsWith('--') && optionsWithValues.has(arg) && i + 1 < argv.length) {
+      i++ // skip the next arg (option value)
+      continue
+    }
+    // Skip flags and unknown options
+    if (arg.startsWith('-')) continue
+
+    // Check if it's a valid mode
+    if (isValidMode(arg)) {
+      input.mode = arg
+      cliSet.add('mode')
+      continue
+    }
+    // Otherwise treat as file path (if it looks like a path)
+    if (arg.includes('/') || arg.includes('.') || arg.includes('-')) {
+      input.file = arg
+      cliSet.add('file')
+      cliSet.add('taskId') // --file triggers taskId auto-generation
+      continue
     }
   }
 
@@ -723,6 +753,11 @@ export function parseCliArgs(argv: string[]): CodyInput {
   // Store raw comment body for gate approval detection (only for comment triggers)
   if (!input.commentBody && process.env.COMMENT_BODY && input.triggerType === 'comment') {
     input.commentBody = process.env.COMMENT_BODY
+  }
+
+  // Read IS_PULL_REQUEST from env (set by workflow for PR comments and PR review triggers)
+  if (!cliSet.has('isPullRequest') && process.env.IS_PULL_REQUEST === 'true') {
+    input.isPullRequest = true
   }
 
   // Determine local mode: explicitly set or auto-detect from GITHUB_ACTIONS
@@ -932,7 +967,7 @@ export function parseCommentBody(body: string, issueNumber?: number): ParseComme
       fresh = true
       i++
     } else if (opt === '--from' && options[i + 1]) {
-      fromStage = resolveStageAlias(options[i + 1])
+      fromStage = options[i + 1]
       // Validate from stage
       if (!isValidStage(fromStage)) {
         return {
@@ -1029,14 +1064,37 @@ export function formatStatusComment(
     lines.push(`✅ Cody completed for \`${input.taskId}\`!`)
     lines.push(`Mode: ${input.mode}`)
 
-    // Add per-stage timing for completed pipeline
+    // Add per-stage table with timing and cost
     const completedStages = Object.entries(status.stages)
+    const hasCostData = completedStages.some(([, s]) => s.cost !== undefined && s.cost > 0)
+
     if (completedStages.length > 0) {
       lines.push('')
-      for (const [stage, stageStatus] of completedStages) {
-        const icon = stageStatus.state === 'completed' ? '✅' : '❌'
-        const elapsed = stageStatus.elapsed ? ` (${formatDuration(stageStatus.elapsed)})` : ''
-        lines.push(`  ${icon} ${stage}${elapsed}`)
+      if (hasCostData) {
+        // Full table with cost column
+        lines.push('| Stage | Status | Duration | Cost |')
+        lines.push('|-------|--------|----------|------|')
+        for (const [stage, stageStatus] of completedStages) {
+          const icon =
+            stageStatus.state === 'completed' ? '✅' : stageStatus.state === 'skipped' ? '⏭️' : '❌'
+          const elapsed = stageStatus.elapsed ? formatDuration(stageStatus.elapsed) : '—'
+          const cost =
+            stageStatus.cost !== undefined && stageStatus.cost > 0
+              ? `$${stageStatus.cost.toFixed(4)}`
+              : '—'
+          lines.push(`| ${stage} | ${icon} | ${elapsed} | ${cost} |`)
+        }
+        // Total row
+        if (status.totalCost !== undefined && status.totalCost > 0) {
+          lines.push(`| **Total** | | | **$${status.totalCost.toFixed(4)}** |`)
+        }
+      } else {
+        // Simple list without cost (backward compat)
+        for (const [stage, stageStatus] of completedStages) {
+          const icon = stageStatus.state === 'completed' ? '✅' : '❌'
+          const elapsed = stageStatus.elapsed ? ` (${formatDuration(stageStatus.elapsed)})` : ''
+          lines.push(`  ${icon} ${stage}${elapsed}`)
+        }
       }
     }
   } else if (status.state === 'paused') {

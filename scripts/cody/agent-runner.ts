@@ -16,6 +16,30 @@ import { createRunner, type RunnerBackend } from './runner-backend'
 import { logger } from './logger'
 
 // ============================================================================
+// Model Resolution
+// ============================================================================
+
+/** Cache for opencode.json model config */
+let opencodeConfigCache: { agent?: Record<string, { model?: string }> } | null = null
+
+/**
+ * Get the model name for a stage from opencode.json
+ */
+function getStageModel(stage: string): string {
+  if (!opencodeConfigCache) {
+    try {
+      const configPath = path.resolve(process.cwd(), 'opencode.json')
+      if (fs.existsSync(configPath)) {
+        opencodeConfigCache = JSON.parse(fs.readFileSync(configPath, 'utf-8'))
+      }
+    } catch {
+      opencodeConfigCache = {}
+    }
+  }
+  return opencodeConfigCache?.agent?.[stage]?.model ?? 'unknown'
+}
+
+// ============================================================================
 // Configuration
 // ============================================================================
 
@@ -43,22 +67,20 @@ export const STAGE_TIMEOUTS: Record<string, number> = {
   spec: ms('15m'),
   gap: ms('15m'),
   clarify: ms('10m'),
-  'gsd-research': ms('20m'),
-  'gsd-plan': ms('30m'),
-  'gsd-execute': ms('45m'),
+  architect: ms('30m'),
+  build: ms('45m'),
+  'plan-gap': ms('15m'),
+  test: ms('20m'),
   review: ms('15m'),
   fix: ms('20m'),
-  'commit-fix': ms('2m'),
   verify: ms('10m'),
+  docs: ms('10m'),
   pr: ms('5m'),
   autofix: ms('15m'),
 }
 
 /** LLM-specific timeout - max time to wait for LLM API response (3 minutes) */
 export const LLM_TIMEOUT = ms('3m')
-
-/** Progress heartbeat interval - log progress every 30 seconds */
-export const HEARTBEAT_INTERVAL = ms('30s')
 
 // ============================================================================
 // Types
@@ -90,6 +112,12 @@ export interface AgentRunnerOptions {
   /** Content validation function to run after output file is detected.
    *  On validation failure, the output file is deleted and the agent is retried with the error in the prompt. */
   validateOutput?: (outputFile: string) => ValidationResult
+  /** URL of running OpenCode server (for --attach mode) */
+  serverUrl?: string
+  /** Session ID to fork from (for session continuation) */
+  sessionId?: string
+  /** XDG_DATA_HOME directory for OpenCode server mode (must match server's data dir) */
+  dataDir?: string
 }
 
 export interface AgentRunResult {
@@ -100,6 +128,10 @@ export interface AgentRunResult {
   validationErrors?: string[]
   /** Session ID from opencode for chat history capture */
   sessionId?: string
+  /** Accumulated token usage across all steps */
+  tokenUsage?: { input: number; output: number; cacheRead: number }
+  /** Accumulated cost in USD across all steps */
+  cost?: number
 }
 
 // ============================================================================
@@ -197,7 +229,12 @@ function findOutputFile(taskDir: string, expectedBase: string, outputExt: string
  * Returns the formatted string, or null to skip (for noisy/unimportant events).
  * Also extracts sessionID from events when found.
  */
-export function formatJsonEvent(line: string): { display: string | null; sessionId?: string } {
+export function formatJsonEvent(line: string): {
+  display: string | null
+  sessionId?: string
+  stepTokens?: { input: number; output: number; cacheRead: number }
+  stepCost?: number
+} {
   try {
     const event = JSON.parse(line)
     const type: string = event.type
@@ -215,11 +252,15 @@ export function formatJsonEvent(line: string): { display: string | null; session
         const cost = event.part?.cost ?? 0
         const reason = event.part?.reason || ''
         const cached = event.part?.tokens?.cache?.read || 0
+        const inputTokens = event.part?.tokens?.input || 0
+        const outputTokens = event.part?.tokens?.output || 0
         const costStr = typeof cost === 'number' && cost > 0 ? ` · $${cost.toFixed(4)}` : ''
         const cacheStr = cached > 0 ? ` · ${cached} cached` : ''
         return {
           display: `  ✅ Step done (${tokens} tok${cacheStr}${costStr}) [${reason}]`,
           sessionId,
+          stepTokens: { input: inputTokens, output: outputTokens, cacheRead: cached },
+          stepCost: typeof cost === 'number' ? cost : 0,
         }
       }
 
@@ -234,6 +275,15 @@ export function formatJsonEvent(line: string): { display: string | null; session
           return { display: `  🔧 ${tool}${titleStr}${exitStr}`, sessionId }
         }
         return { display: null, sessionId } // Skip pending/running states
+      }
+
+      case 'text': {
+        // Agent reasoning — complete thought blocks (not char-by-char deltas)
+        // Typically 6-17 per stage, ~100-200 chars each — not noisy
+        const text = (event.part?.text || '').trim()
+        if (!text) return { display: null, sessionId }
+        const truncated = text.length > 300 ? text.slice(0, 297) + '...' : text
+        return { display: `  💭 ${truncated}`, sessionId }
       }
 
       case 'text_delta':
@@ -255,6 +305,23 @@ export function formatJsonEvent(line: string): { display: string | null; session
     if (!trimmed) return { display: null }
     return { display: trimmed }
   }
+}
+
+/**
+ * Format a timestamp as HH:MM:SS for log prefixing.
+ */
+function formatTimestamp(): string {
+  const now = new Date()
+  return [now.getHours(), now.getMinutes(), now.getSeconds()]
+    .map((n) => String(n).padStart(2, '0'))
+    .join(':')
+}
+
+/**
+ * Prefix a display line with [stage HH:MM:SS] for log context.
+ */
+function prefixLogLine(stage: string, display: string): string {
+  return `[${stage} ${formatTimestamp()}] ${display.trimStart()}`
 }
 
 /**
@@ -288,6 +355,9 @@ export function runAgentWithFileWatch(
     cwd = process.cwd(),
     backend = createRunner(),
     validateOutput,
+    serverUrl,
+    sessionId,
+    dataDir,
   } = options
 
   // Resolve timeout
@@ -331,8 +401,16 @@ export function runAgentWithFileWatch(
       // Build the prompt for the stage (rebuilt each attempt to include feedback)
       const prompt = buildStagePrompt(input, stage, feedback)
 
+      // Log the model being used for this stage
+      const model = getStageModel(stage)
+      logger.info(`  🤖 Running ${stage} with model: ${model}`)
+
       // Spawn using the configured backend (local or GitHub)
-      currentChild = backend.spawn(stage, prompt, agentEnv, cwd)
+      currentChild = backend.spawn(stage, prompt, agentEnv, cwd, {
+        serverUrl,
+        sessionId,
+        dataDir,
+      })
 
       // Explicitly close stdin to prevent opencode from waiting for input
       if (currentChild.stdin) {
@@ -342,8 +420,9 @@ export function runAgentWithFileWatch(
       let resolved = false
       let timeoutTimer: NodeJS.Timeout | null = null
       let stdoutBuffer = ''
-      let heartbeatTimer: NodeJS.Timeout | null = null
       let extractedSessionId: string | undefined
+      const accumulatedTokens = { input: 0, output: 0, cacheRead: 0 }
+      let accumulatedCost = 0
       // Write raw JSON events to artifact file for full debugging
       let jsonLogFd: number | null = null
       try {
@@ -412,9 +491,19 @@ export function runAgentWithFileWatch(
               extractedSessionId = result.sessionId
             }
 
+            // Accumulate token/cost data from step_finish events
+            if (result.stepTokens) {
+              accumulatedTokens.input += result.stepTokens.input
+              accumulatedTokens.output += result.stepTokens.output
+              accumulatedTokens.cacheRead += result.stepTokens.cacheRead
+            }
+            if (result.stepCost) {
+              accumulatedCost += result.stepCost
+            }
+
             // Display formatted output
             if (result.display) {
-              process.stderr.write(result.display + '\n')
+              process.stderr.write(prefixLogLine(stage, result.display) + '\n')
             }
           }
 
@@ -466,8 +555,6 @@ export function runAgentWithFileWatch(
         if (resolved) return
         resolved = true
 
-        // Clear heartbeat timer
-        if (heartbeatTimer) clearInterval(heartbeatTimer)
         if (timeoutTimer) clearTimeout(timeoutTimer)
 
         // Flush remaining stdout buffer
@@ -480,7 +567,7 @@ export function runAgentWithFileWatch(
             extractedSessionId = lastResult.sessionId
           }
           if (lastResult.display) {
-            process.stderr.write(lastResult.display + '\n')
+            process.stderr.write(prefixLogLine(stage, lastResult.display) + '\n')
           }
         }
 
@@ -512,23 +599,25 @@ export function runAgentWithFileWatch(
         }
         // Remove exit cleanup handler (FD already closed)
         process.removeListener('exit', cleanupFd)
-        resolve({ ...result, retries, validationErrors, sessionId: extractedSessionId })
+        const tokenUsage =
+          accumulatedTokens.input > 0 || accumulatedTokens.output > 0
+            ? accumulatedTokens
+            : undefined
+        const cost = accumulatedCost > 0 ? accumulatedCost : undefined
+        resolve({
+          ...result,
+          retries,
+          validationErrors,
+          sessionId: extractedSessionId,
+          tokenUsage,
+          cost,
+        })
       }
 
       // Parse output file path
       const outputExt = path.extname(outputFile)
       const expectedBase = path.basename(outputFile, outputExt)
       const taskDirForPoll = path.dirname(outputFile)
-
-      // Progress heartbeat - log progress every 30s to detect hangs
-      const heartbeatStartTime = Date.now()
-      heartbeatTimer = setInterval(() => {
-        const elapsed = Date.now() - heartbeatStartTime
-        const stageLabel = stage || 'unknown'
-        logger.info(
-          `  💓 Still working on stage '${stageLabel}' (${elapsed / 1000 / 60} min elapsed)...`,
-        )
-      }, HEARTBEAT_INTERVAL)
 
       // Timeout (uses remaining time to prevent accumulation across retries)
       timeoutTimer = setTimeout(() => {

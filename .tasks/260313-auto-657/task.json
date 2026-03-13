@@ -1,0 +1,25 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "frontend",
+  "scope": [
+    "lesson introduction container component",
+    "CSS styling"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "There is an existing lesson introduction component that needs styling updates",
+    "The fix involves CSS max-width and padding changes"
+  ],
+  "review_questions": [],
+  "complexity": 17,
+  "complexity_reasoning": "Scope: Single component CSS change (5). Risk: Low, UI-only styling fix (3). Novelty: Following existing patterns, simple CSS tweak (3). Cross: Single domain frontend only (3). Ambiguity: Clear intent, component location to discover (4). Dependencies: Self-contained, no external services (2). Total: 17",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Input contains clear bug description with Steps to Reproduce, Expected Result (with specific dimensions), and Actual Result. The requirements are well-specified with exact dimensions for desktop (1200-1280px) and mobile (16-20px padding)."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}

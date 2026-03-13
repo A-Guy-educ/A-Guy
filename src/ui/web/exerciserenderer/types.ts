@@ -10,9 +10,17 @@ import type {
   MatchingOption,
   MatchingPair,
   SvgHotspot,
+  MediaBlock,
 } from '@/server/payload/collections/Exercises/types'
 
-export type { QuestionMatchingBlock, SvgBlock, MatchingOption, MatchingPair, SvgHotspot }
+export type {
+  QuestionMatchingBlock,
+  SvgBlock,
+  MatchingOption,
+  MatchingPair,
+  SvgHotspot,
+  MediaBlock,
+}
 
 export type PreviewMode = 'student' | 'debug'
 
@@ -163,7 +171,7 @@ export interface HtmlBlock {
   html: string
 }
 
-export type ContentBlock = RichTextBlock | HtmlBlock | QuestionBlock | SvgBlock
+export type ContentBlock = RichTextBlock | HtmlBlock | QuestionBlock | SvgBlock | MediaBlock
 
 /**
  * Help system state per question

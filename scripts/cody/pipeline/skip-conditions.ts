@@ -21,11 +21,7 @@ export function skipIfInputQuality(ctx: PipelineContext, stageName: string): Ski
   }
 
   const skipStages = taskDef.input_quality.skip_stages
-  if (
-    !skipStages.includes(
-      stageName as 'spec' | 'gap' | 'clarify' | 'gsd-research' | 'gsd-plan' | 'gsd-execute',
-    )
-  ) {
+  if (!skipStages.includes(stageName as 'gap' | 'clarify' | 'architect' | 'plan-gap' | 'build')) {
     return { shouldSkip: false }
   }
 

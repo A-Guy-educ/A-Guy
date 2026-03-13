@@ -7,15 +7,14 @@
 
 // ============ Pipeline Stages ============
 
-export const SPEC_STAGES = ['taskify', 'spec', 'clarify'] as const
+export const SPEC_STAGES = ['taskify', 'gap', 'clarify'] as const
 export const IMPL_STAGES = [
-  'gsd-research',
-  'gsd-plan',
-  'gsd-execute',
+  'architect',
+  'plan-gap',
+  'build',
   'commit',
   'review',
   'fix',
-  'commit-fix',
   'verify',
   'pr',
 ] as const
@@ -61,6 +60,7 @@ export const POLLING_INTERVALS = {
   idle: 60_000, // 60s - no running tasks
   board: 30_000, // 30s - has running tasks
   active: 15_000, // 15s - selected task is running
+  backlog: 120_000, // 120s - backlog view, tasks change rarely
 } as const
 
 // ============ Branch Prefixes ============

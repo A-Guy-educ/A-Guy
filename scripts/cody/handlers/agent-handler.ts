@@ -7,6 +7,7 @@
 
 import { logger } from '../logger'
 import * as fs from 'fs'
+import * as path from 'path'
 
 import type { PipelineContext, StageDefinition, StageResult } from '../engine/types'
 import { runAgentWithFileWatch } from '../agent-runner'
@@ -27,6 +28,10 @@ export class AgentHandler implements StageHandler {
       backend: ctx.backend,
       validateOutput: def.validator,
       maxRetries: def.maxRetries,
+      serverUrl: ctx.serverUrl,
+      sessionId: ctx.lastSessionId,
+      // XDG_DATA_HOME must match the server's data dir for instance lookup
+      dataDir: ctx.serverUrl ? path.join(ctx.taskDir, 'opencode-data') : undefined,
     })
 
     // Map result to StageResult
@@ -48,6 +53,9 @@ export class AgentHandler implements StageHandler {
             outcome: 'completed',
             retries: result.retries,
             outputFile: `${def.name}.md`,
+            tokenUsage: result.tokenUsage,
+            cost: result.cost,
+            sessionId: result.sessionId,
           }
         }
       }
@@ -62,17 +70,23 @@ export class AgentHandler implements StageHandler {
     // Success - try to save chat history
     if (result.sessionId) {
       try {
-        await appendSession(ctx.taskDir, def.name, result.sessionId)
+        await appendSession(ctx.taskDir, def.name, result.sessionId, ctx.serverUrl)
       } catch (err) {
         // Non-fatal — don't fail the stage if chat export fails
         logger.warn({ err, stage: def.name }, 'Failed to save chat history')
       }
+
+      // Propagate sessionId for downstream stage forking
+      ctx.lastSessionId = result.sessionId
     }
 
     return {
       outcome: 'completed',
       retries: result.retries,
       outputFile: `${def.name}.md`,
+      tokenUsage: result.tokenUsage,
+      cost: result.cost,
+      sessionId: result.sessionId,
     }
   }
 }

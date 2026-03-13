@@ -6,6 +6,7 @@
  */
 
 import { logger } from './logger'
+import { getComplexityTier } from './pipeline-utils'
 import { execFileSync } from 'child_process'
 
 // ============================================================================
@@ -272,6 +273,111 @@ export function discoverTaskIdFromIssue(issueNumber: number): string | null {
   }
 }
 
+// ============================================================================
+// PR Review Functions
+// ============================================================================
+
+/**
+ * Fetch PR review feedback: the latest "changes requested" review body +
+ * all inline review comments. Returns formatted markdown suitable for
+ * writing to rerun-feedback.md.
+ *
+ * Uses `gh api` to fetch PR reviews and review comments.
+ * Returns null if no change-request reviews or comments found.
+ */
+export function getPRReviewFeedback(prNumber: number): string | null {
+  if (!prNumber) return null
+
+  const repo = process.env.GITHUB_REPOSITORY
+  if (!repo) {
+    logger.warn('getPRReviewFeedback: GITHUB_REPOSITORY not set')
+    return null
+  }
+
+  const sections: string[] = []
+
+  // 1. Get the latest "changes_requested" review body
+  try {
+    const reviewsOutput = execFileSync(
+      'gh',
+      [
+        'api',
+        `repos/${repo}/pulls/${prNumber}/reviews`,
+        '--jq',
+        '[.[] | select(.state == "CHANGES_REQUESTED")] | last | {body: .body, user: .user.login, submitted_at: .submitted_at}',
+      ],
+      { encoding: 'utf-8', timeout: GH_API_TIMEOUT },
+    )
+    const review = JSON.parse(reviewsOutput.trim())
+    if (review?.body) {
+      sections.push(`## Change Request from @${review.user}\n\n${review.body}`)
+    }
+  } catch (error) {
+    logger.warn({ err: error }, `Failed to fetch PR reviews for #${prNumber}`)
+  }
+
+  // 2. Get inline review comments (code-level feedback)
+  try {
+    const commentsOutput = execFileSync(
+      'gh',
+      [
+        'api',
+        `repos/${repo}/pulls/${prNumber}/comments`,
+        '--jq',
+        '[.[] | {path: .path, line: .line, body: .body, user: .user.login}]',
+      ],
+      { encoding: 'utf-8', timeout: GH_API_TIMEOUT },
+    )
+    const comments = JSON.parse(commentsOutput.trim()) as Array<{
+      path: string
+      line: number | null
+      body: string
+      user: string
+    }>
+
+    if (comments.length > 0) {
+      const commentLines = comments.map((c) => {
+        const location = c.line ? `${c.path}:${c.line}` : c.path
+        return `- **${location}** (@${c.user}): ${c.body}`
+      })
+      const header = '## Inline Comments'
+      sections.push(header + '\n\n' + commentLines.join('\n'))
+    }
+  } catch (error) {
+    logger.warn({ err: error }, `Failed to fetch PR review comments for #${prNumber}`)
+  }
+
+  if (sections.length === 0) return null
+
+  return sections.join('\n\n')
+}
+
+/**
+ * Discover the PR number associated with the current branch.
+ * Uses `gh pr view` which finds the PR for the current HEAD branch.
+ * Returns null if no PR exists.
+ */
+export function getCurrentPRNumber(): number | null {
+  try {
+    const output = execFileSync('gh', ['pr', 'view', '--json', 'number', '--jq', '.number'], {
+      encoding: 'utf-8',
+      timeout: GH_API_TIMEOUT,
+    })
+    const num = parseInt(output.trim(), 10)
+    return isNaN(num) ? null : num
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Discover the task ID from a PR by checking bot comments on the PR.
+ * PRs are issues in GitHub's API, so we can reuse discoverTaskIdFromIssue.
+ */
+export function discoverTaskIdFromPR(prNumber: number): string | null {
+  return discoverTaskIdFromIssue(prNumber)
+}
+
 /**
  * Extract the gate comment body from a gate-*.md file.
  * The file is written as: `# Gate Request\n\n${formatGateComment(...)}\n`
@@ -534,14 +640,16 @@ export function setClassificationLabels(
     }
   }
 
-  // Map complexity to complexity:* label
+  // Map complexity to complexity:* label (uses getComplexityTier for single source of truth)
   if (taskDef.complexity !== undefined) {
+    const tier = getComplexityTier(taskDef.complexity)
     let label: string
-    if (taskDef.complexity <= 30) {
+    if (tier === 'trivial' || tier === 'simple') {
       label = 'complexity:simple'
-    } else if (taskDef.complexity <= 60) {
+    } else if (tier === 'moderate') {
       label = 'complexity:moderate'
     } else {
+      // complex or very_complex
       label = 'complexity:complex'
     }
     labels.push(label)
@@ -560,8 +668,29 @@ export function setClassificationLabels(
     return
   }
 
+  // Build list of stale labels to remove (old labels in same category as new ones)
+  const labelsToRemove: string[] = []
+  const allCategoryLabels: ReadonlyArray<readonly string[]> = [
+    TASK_TYPE_LABELS,
+    RISK_LABELS,
+    COMPLEXITY_LABELS,
+    DOMAIN_LABELS,
+  ]
+  for (const category of allCategoryLabels) {
+    const newInCategory = labels.filter((l) => category.includes(l as never))
+    if (newInCategory.length > 0) {
+      // Remove all OTHER labels in this category
+      const stale = category.filter((l) => !newInCategory.includes(l))
+      labelsToRemove.push(...stale)
+    }
+  }
+
   try {
-    execFileSync('gh', ['issue', 'edit', String(issueNumber), '--add-label', labels.join(',')], {
+    const args = ['issue', 'edit', String(issueNumber), '--add-label', labels.join(',')]
+    if (labelsToRemove.length > 0) {
+      args.push('--remove-label', labelsToRemove.join(','))
+    }
+    execFileSync('gh', args, {
       stdio: ['inherit', 'inherit', 'inherit'],
       timeout: GH_API_TIMEOUT,
     })

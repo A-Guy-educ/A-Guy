@@ -48,3 +48,15 @@ scripts/browser-agent/.env
 
 # GSD planning state (ephemeral, regenerated per run)
 .planning/
+
+# OpenCode runtime files (per-task isolated data dirs)
+# Only opencode.db is committed for session continuation across reruns
+.tasks/*/opencode-data/opencode/opencode.db-wal
+.tasks/*/opencode-data/opencode/opencode.db-shm
+.tasks/*/opencode-data/opencode/snapshot/
+.tasks/*/opencode-data/opencode/logs/
+.tasks/*/opencode-data/opencode/auth.json
+.tasks/*/opencode-data/opencode/bin/
+.tasks/*/opencode-data/opencode/tool-output/
+.tasks/*/opencode-data/opencode/storage/
+.tasks/*/opencode-data/opencode/worktree/

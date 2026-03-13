@@ -108,7 +108,14 @@ describe('CRITICAL 5: chat-history uses execFileSync', () => {
       path.join(process.cwd(), 'scripts/cody/chat-history.ts'),
       'utf-8',
     )
-    expect(source).toContain("execFileSync('pnpm', ['exec', 'opencode', 'export', sessionId]")
+    // Two branches: server mode uses resolved opencode binary, non-server uses pnpm exec
+    // Both use execFileSync with args array (no shell injection)
+    expect(source).toContain("execFileSync('pnpm', args,")
+    expect(source).toContain('execFileSync(resolveOpenCodeBinary(), args,')
+    expect(source).toContain("['exec', 'opencode', 'export', sessionId]")
+    // Server mode: opencode export does NOT support --attach, just reads from DB via XDG_DATA_HOME
+    expect(source).toContain("['export', sessionId]")
+    expect(source).toContain('XDG_DATA_HOME')
     expect(source).not.toMatch(/\bexecSync\(/)
   })
 

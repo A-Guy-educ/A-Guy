@@ -13,7 +13,7 @@ import {
   fetchComments,
   findTaskBranch,
   getStatusFromBranch,
-  findAssociatedPR,
+  findAssociatedPRByIssueNumber,
   fetchWorkflowRuns,
 } from '@/ui/cody/github-client'
 import { parseAllComments } from '@/ui/cody/task-parser'
@@ -140,7 +140,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ task
         const [runs, branch, associatedPR] = await Promise.all([
           fetchWorkflowRuns({ perPage: 50 }),
           findTaskBranch(taskId),
-          findAssociatedPR(taskId),
+          findAssociatedPRByIssueNumber(issueNumberFromUrl),
         ])
 
         const workflowRun = runs.find((r) => r.html_url.includes(issueNumberFromUrl.toString()))
@@ -200,7 +200,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ task
         }
 
         // Get associated PR
-        const associatedPR = await findAssociatedPR(taskId)
+        const associatedPR = await findAssociatedPRByIssueNumber(issue.number)
 
         // Build task
         const task = buildCodyTask({
