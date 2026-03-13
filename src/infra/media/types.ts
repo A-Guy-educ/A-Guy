@@ -42,6 +42,8 @@ export const MIME_ALLOWLISTS: Record<MediaType, string[]> = {
     'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     'text/plain',
     'text/csv',
+    'text/x-tex',
+    'application/x-tex',
   ],
   [MediaType.External]: [], // No file upload
   [MediaType.Other]: [], // Catch-all
