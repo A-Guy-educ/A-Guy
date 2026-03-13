@@ -19,7 +19,8 @@ export async function importExerciseFromLatex(req: PayloadRequest): Promise<Resp
     return Response.json({ success: false, error: 'Authentication required' }, { status: 401 })
   }
 
-  const body = await new Response(req.body).json()
+  // Body is pre-parsed by the Next.js route wrapper and attached as req.json
+  const body = (req as PayloadRequest & { json?: unknown }).json
   const parsed = ImportLatexSchema.safeParse(body)
   if (!parsed.success) {
     return Response.json({ success: false, error: parsed.error.message }, { status: 400 })

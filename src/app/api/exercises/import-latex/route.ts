@@ -17,6 +17,7 @@ export async function POST(request: NextRequest) {
     const payload = await getPayload({ config })
     const { user } = await payload.auth({ headers: request.headers })
 
+    const body = await request.json()
     const payloadRequest: PayloadRequest = {
       payload,
       user: user || undefined,
@@ -24,6 +25,7 @@ export async function POST(request: NextRequest) {
       headers: request.headers,
       routeParams: {},
       context: {},
+      json: body,
     } as PayloadRequest
 
     return await importExerciseFromLatex(payloadRequest)
