@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-13T15:37:13.098Z",
-  "updatedAt": "2026-03-13T16:21:27.394Z",
+  "updatedAt": "2026-03-13T16:36:22.982Z",
   "state": "running",
   "cursor": "gap",
   "stages": {
@@ -54,11 +54,23 @@
       "skipped": "Complexity 45 (complex) below threshold 50 for plan-gap"
     },
     "build": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-13T16:21:27.377Z",
+      "completedAt": "2026-03-13T16:34:37.899Z",
+      "outputFile": "build.md",
+      "tokenUsage": {
+        "input": 69676,
+        "output": 12229,
+        "cacheRead": 6414152
+      },
+      "sessionId": "ses_317ff42f5ffeCERF1LUI4mt2y8"
+    },
+    "commit": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-13T16:21:27.377Z"
+      "startedAt": "2026-03-13T16:36:22.982Z"
     }
   },
-  "issueNumber": 781,
-  "branchName": "feat/260313-auto-781-support-multiple-graph-coordinate-"
+  "issueNumber": 781
 }
