@@ -175,7 +175,7 @@ export function ExercisesPager({
       <Progress value={progressPercent} className="h-1.5 rounded-none" />
 
       <main className="flex-1 overflow-y-auto">
-        <div className="container mx-auto px-4 sm:px-6 py-8 md:py-12 max-w-3xl">
+        <div className="container mx-auto px-4 sm:px-6 py-8 md:py-12 max-w-7xl">
           {pageState.type === 'intro' && (
             <div className="space-y-8">
               <header className="text-center">
@@ -196,7 +196,7 @@ export function ExercisesPager({
                 <h2 className="text-2xl font-medium mb-4 text-foreground">
                   {t('exercisesPagerWelcome')}
                 </h2>
-                <p className="text-muted-foreground mb-10 text-base leading-relaxed max-w-md mx-auto">
+                <p className="text-muted-foreground mb-10 text-base leading-relaxed max-w-2xl mx-auto">
                   {t('exercisesPagerIntroDescriptionPart1')} {totalExercises}{' '}
                   {t('exercisesPagerIntroDescriptionPart2')}
                 </p>
@@ -242,7 +242,7 @@ export function ExercisesPager({
                   <SafeHtml
                     html={introDescription}
                     enableProse
-                    className="prose-lg max-w-md mx-auto mb-8 text-muted-foreground leading-relaxed text-start [&_ul]:list-inside [&_ol]:list-inside"
+                    className="prose-lg max-w-2xl mx-auto mb-8 text-muted-foreground leading-relaxed text-start [&_ul]:list-inside [&_ol]:list-inside"
                   />
                 )}
 
@@ -289,7 +289,7 @@ export function ExercisesPager({
                 <h2 className="text-2xl font-medium mb-4 text-foreground">
                   {t('exercisesPagerCompletedTitle')}
                 </h2>
-                <p className="text-muted-foreground mb-10 text-base leading-relaxed max-w-md mx-auto">
+                <p className="text-muted-foreground mb-10 text-base leading-relaxed max-w-2xl mx-auto">
                   {t('exercisesPagerCompletedDescription')}
                 </p>
 

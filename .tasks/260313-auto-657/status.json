@@ -4,15 +4,43 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-13T15:02:29.939Z",
-  "updatedAt": "2026-03-13T15:02:31.535Z",
+  "updatedAt": "2026-03-13T15:06:25.223Z",
   "state": "running",
   "cursor": null,
   "stages": {
     "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-13T15:02:31.535Z",
+      "completedAt": "2026-03-13T15:03:56.214Z",
+      "outputFile": "taskify.md",
+      "tokenUsage": {
+        "input": 5197,
+        "output": 2223,
+        "cacheRead": 264995
+      },
+      "sessionId": "ses_3184783c5ffe5if41pRTpyJaNH"
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-13T15:04:08.568Z",
+      "completedAt": "2026-03-13T15:06:25.127Z",
+      "outputFile": "architect.md",
+      "tokenUsage": {
+        "input": 13,
+        "output": 5245,
+        "cacheRead": 618802
+      },
+      "cost": 0.8636535,
+      "sessionId": "ses_318460a90ffeMGIkwypztHDesc"
+    },
+    "build": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-13T15:02:31.535Z"
+      "startedAt": "2026-03-13T15:06:25.147Z"
     }
   },
-  "issueNumber": 738
+  "issueNumber": 738,
+  "branchName": "fix/260313-auto-738-lesson-introduction-container-is-t"
 }
