@@ -267,6 +267,7 @@
         "src/ui/web/exerciserenderer/components/HelpSystem/index.tsx",
         "src/ui/web/exerciserenderer/components/MediaAttachments/index.tsx",
         "src/ui/web/exerciserenderer/components/QuestionCard/index.tsx",
+        "src/ui/web/exerciserenderer/components/VideoPlayer/index.tsx",
         "src/ui/web/exerciserenderer/context/MediaMapContext.tsx",
         "src/ui/web/exerciserenderer/graphics/JSXGraphBoard.tsx",
         "src/ui/web/exerciserenderer/hooks/useHelpSystem.ts",
@@ -332,6 +333,11 @@
       "pattern": "next-error-boundary",
       "description": "No description available",
       "files": ["src/app/(cody)/cody/error.tsx"]
+    },
+    "metadata-helper": {
+      "pattern": "metadata-helper",
+      "description": "No description available",
+      "files": ["src/app/(cody)/cody/metadata.ts"]
     },
     "route-group": {
       "pattern": "route-group",
@@ -424,6 +430,7 @@
         "src/ui/web/exerciserenderer/components/HelpSystem/HelpSystemButtons.tsx",
         "src/ui/web/exerciserenderer/components/MediaAttachments/index.tsx",
         "src/ui/web/exerciserenderer/components/QuestionCard/index.tsx",
+        "src/ui/web/exerciserenderer/components/VideoPlayer/index.tsx",
         "src/ui/web/exerciserenderer/graphics/JSXGraphBoard.tsx",
         "src/ui/web/exerciserenderer/questions/MatchingQuestion/MatchingItem.tsx",
         "src/ui/web/exerciserenderer/questions/McqQuestion/index.tsx",
@@ -523,6 +530,7 @@
         "src/ui/web/chat/ChatErrorSurface/index.tsx",
         "src/ui/web/chat/ChatInterface/index.tsx",
         "src/ui/web/exerciserenderer/ExerciseRenderer/index.tsx",
+        "src/ui/web/exerciserenderer/components/VideoPlayer/index.tsx",
         "src/ui/web/header/MobileMenu/MobileMenuAuthSection.tsx",
         "src/ui/web/header/MobileMenu/index.tsx",
         "src/ui/web/header/Nav/index.tsx",
@@ -1703,7 +1711,7 @@
       "domain": "cody",
       "patterns": ["dashboard-page"],
       "aiSummary": "Cody dashboard with bug report dialog pre-opened via URL /cody/bug",
-      "dependencies": ["next/navigation", "next"]
+      "dependencies": ["next/navigation"]
     },
     "src/app/(cody)/cody/chat/page.tsx": {
       "path": "src/app/(cody)/cody/chat/page.tsx",
@@ -1711,7 +1719,7 @@
       "domain": "cody",
       "patterns": ["dashboard-page"],
       "aiSummary": "Cody dashboard with chat panel pre-opened via URL /cody/chat",
-      "dependencies": ["next/navigation", "next"]
+      "dependencies": ["next/navigation"]
     },
     "src/app/(cody)/cody/error.tsx": {
       "path": "src/app/(cody)/cody/error.tsx",
@@ -1721,13 +1729,21 @@
       "aiSummary": "Error boundary for the Cody dashboard — catches runtime errors and lets the user retry",
       "dependencies": ["react", "lucide-react"]
     },
+    "src/app/(cody)/cody/metadata.ts": {
+      "path": "src/app/(cody)/cody/metadata.ts",
+      "type": "utility",
+      "domain": "cody",
+      "patterns": ["metadata-helper"],
+      "aiSummary": "Shared metadata builders for Cody dashboard routes with OG/Twitter tags",
+      "dependencies": ["next"]
+    },
     "src/app/(cody)/cody/new/page.tsx": {
       "path": "src/app/(cody)/cody/new/page.tsx",
       "type": "page",
       "domain": "cody",
       "patterns": ["dashboard-page"],
       "aiSummary": "Cody dashboard with create task dialog pre-opened via URL /cody/new",
-      "dependencies": ["next/navigation", "next"]
+      "dependencies": ["next/navigation"]
     },
     "src/app/(cody)/cody/page.tsx": {
       "path": "src/app/(cody)/cody/page.tsx",
@@ -1735,7 +1751,7 @@
       "domain": "cody",
       "patterns": ["dashboard-page"],
       "aiSummary": "Main Cody dashboard page with Kanban board and AI chat",
-      "dependencies": ["next/navigation", "next"]
+      "dependencies": ["next/navigation"]
     },
     "src/app/(cody)/layout.tsx": {
       "path": "src/app/(cody)/layout.tsx",
@@ -4738,7 +4754,7 @@
       "type": "component",
       "domain": "cody",
       "patterns": ["pipeline-progress", "tailwind-component", "client-component"],
-      "aiSummary": "Compact pipeline progress indicator with two variants: \"inline\" (dot-separated text for metadata line) and \"bar\" (full progress bar for dedicated row)",
+      "aiSummary": "Compact pipeline progress indicator with two variants: \"inline\" (dot-separated text for metadata line) and \"bar\" (full progress bar for dedicated row). Both variants always render 12 dots — one per stage — for visual consistency across all tasks.",
       "dependencies": ["react", "lucide-react"]
     },
     "src/ui/cody/components/PRCommentList.tsx": {
@@ -5402,6 +5418,14 @@
       "aiSummary": "",
       "dependencies": ["react", "lucide-react"]
     },
+    "src/ui/web/exerciserenderer/components/VideoPlayer/index.tsx": {
+      "path": "src/ui/web/exerciserenderer/components/VideoPlayer/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
     "src/ui/web/exerciserenderer/context/MediaMapContext.tsx": {
       "path": "src/ui/web/exerciserenderer/context/MediaMapContext.tsx",
       "type": "unknown",
@@ -5868,8 +5892,8 @@
     }
   },
   "metadata": {
-    "generatedAt": "2026-03-12T23:19:17.769Z",
-    "totalFiles": 520,
-    "totalPatterns": 175
+    "generatedAt": "2026-03-13T18:51:39.057Z",
+    "totalFiles": 522,
+    "totalPatterns": 176
   }
 }
