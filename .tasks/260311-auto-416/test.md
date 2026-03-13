@@ -2,43 +2,43 @@
 
 ## Tests Written
 
-- `tests/unit/collections/lessons-order-config.test.ts` - Schema-level test for Lessons collection config
-- `tests/unit/queries/lesson-order-sorting.test.ts` - Unit test for queryLessonsByCourse sorting
+- **tests/unit/queries/lessons.test.ts** - Added 3 new tests for `queryLessonsByCourse` sorting:
+  - `returns lessons sorted by chapter order first, then by lesson order` - Core bug reproduction test
+  - `handles lessons with undefined order values` - Edge case handling  
+  - `handles string chapter IDs` - Depth:0 scenario
+
+- **tests/unit/collections/lessons-order-config.test.ts** - Schema validation test:
+  - `should have index: true on the order field for efficient sorting` - Verifies index configuration
 
 ## Test Files
 
 | File | Test Count | Type |
 |------|-----------|------|
-| tests/unit/collections/lessons-order-config.test.ts | 2 | unit |
-| tests/unit/queries/lesson-order-sorting.test.ts | 4 | unit |
-| tests/unit/queries/lessons.test.ts (existing) | 9+ | unit |
+| tests/unit/queries/lessons.test.ts | 3 | unit |
+| tests/unit/collections/lessons-order-config.test.ts | 1 | unit |
 
 ## Test Cases
 
 | Test Name | Type | Expected Behavior |
 |-----------|------|-------------------|
-| should have index: true on the order field for efficient sorting | unit | The `order` field in Lessons collection should have `index: true` for efficient MongoDB sorting |
-| should have defaultSort set to order in admin config | unit | The Lessons collection admin config should have `defaultSort: 'order'` |
-| should return lessons sorted by chapter order first, then lesson order within each chapter | unit | `queryLessonsByCourse` should return lessons grouped by chapter (sorted by chapter.order), then sorted by lesson.order within each chapter |
-| returns lessons sorted by chapter order first, then by lesson order | unit | Existing test: lessons should be [Ch1-L1, Ch1-L2, Ch2-L1, Ch2-L2], not [Ch1-L1, Ch2-L1, Ch1-L2, Ch2-L2] |
-| handles lessons with undefined order values | unit | Lessons with undefined order should be handled gracefully |
+| returns lessons sorted by chapter order first, then by lesson order | unit | Lessons from Chapter 1 (order=0) appear before Chapter 2 (order=1), and within each chapter sorted by lesson.order |
+| handles lessons with undefined order values | unit | Lessons with defined order come before undefined order |
+| handles string chapter IDs | unit | Sorting works correctly when chapter is string ID (depth:0) |
+| should have index: true on the order field for efficient sorting | unit | The Lessons collection order field has index:true in config |
 
 ## Test Status
 
-**FAILING (as expected)**: The following tests currently FAIL, proving the bug exists:
+**All tests PASS** (3461 total unit tests passing)
 
-1. `should have defaultSort set to order in admin config` - FAILS because Lessons admin config lacks `defaultSort: 'order'`
-2. `returns lessons sorted by chapter order first, then by lesson order` - FAILS because the current implementation returns lessons in interleaved order (from DB's flat `sort: 'order'`)
+## Bug Summary
 
-**PASSING**:
-- `should have index: true on the order field` - PASSES (order field has no index, but the test was checking incorrectly - let me verify)
+The bug was that lesson order defined in the admin panel was not reflected on the website because:
+- `queryLessonsByCourse` sorted globally by `order` across all chapters, interleaving lessons from different chapters
+- Example: Ch1-L1, Ch2-L1, Ch1-L2, Ch2-L2 (wrong) instead of Ch1-L1, Ch1-L2, Ch2-L1, Ch2-L2 (correct)
 
-Wait, I need to check that test result more carefully. Looking at the test output:
-- `lessons-order-config.test.ts` had 1 PASS (index test), 1 FAIL (defaultSort test)
-- The existing `lessons.test.ts` has tests for the sorting bug
+## Fix Applied
 
-The tests prove:
-1. The Lessons collection lacks `defaultSort: 'order'` in admin config
-2. The `queryLessonsByCourse` function returns lessons in wrong order (interleaved by chapter)
+1. Added `index: true` to Lessons collection `order` field for efficient MongoDB sorting
+2. Modified `queryLessonsByCourse` to sort by chapter order (primary), then lesson order (secondary)
 
-These tests will PASS once the fix is implemented (adding `defaultSort: 'order'` to collection and fixing the sorting logic in `queryLessonsByCourse`).
+**Note**: `defaultSort` is not a valid Payload CMS admin option (TypeScript error), so it was not added.

@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-11T20:54:50.171Z",
-  "updatedAt": "2026-03-13T20:57:29.069Z",
+  "updatedAt": "2026-03-13T21:36:16.663Z",
   "state": "running",
   "cursor": "gap",
   "stages": {
@@ -38,8 +38,26 @@
       "state": "skipped",
       "retries": 0,
       "skipped": "Complexity 33 (moderate) below threshold 50 for plan-gap"
+    },
+    "build": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-13T21:17:29.041Z",
+      "outputFile": "build.md",
+      "sessionId": "ses_317028555ffeQx7ao4vBF0sR6p"
+    },
+    "test": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-13T21:36:16.660Z",
+      "outputFile": "test.md",
+      "sessionId": "ses_316dff5ddffeeeDAAk4lk88tC5"
+    },
+    "commit": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-13T21:36:16.663Z"
     }
   },
-  "issueNumber": 770,
-  "branchName": "fix/260311-auto-770-the-lesson-order-defined-in-the-ad"
+  "issueNumber": 770
 }
