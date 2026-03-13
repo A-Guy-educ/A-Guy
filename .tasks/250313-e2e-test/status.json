@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-13T10:34:03.323Z",
-  "updatedAt": "2026-03-13T10:35:07.228Z",
+  "updatedAt": "2026-03-13T10:36:44.506Z",
   "state": "running",
   "cursor": null,
   "stages": {
@@ -27,10 +27,22 @@
       "skipped": "Complexity 3 (trivial) below threshold 10 for architect"
     },
     "build": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-13T10:35:07.112Z",
+      "completedAt": "2026-03-13T10:36:17.726Z",
+      "outputFile": "build.md",
+      "tokenUsage": {
+        "input": 6615,
+        "output": 1169,
+        "cacheRead": 426978
+      },
+      "sessionId": "ses_3193c599affe1Y2IQmNhLDm702"
+    },
+    "commit": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-13T10:35:07.112Z"
+      "startedAt": "2026-03-13T10:36:44.505Z"
     }
-  },
-  "branchName": "feat/250313-e2e-create-a-file-srcinfrautilsgreetts-that"
+  }
 }
