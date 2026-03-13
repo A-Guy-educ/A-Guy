@@ -30,7 +30,7 @@ export function createGitHubClient(repo: string, token: string, patToken?: strin
 
   return {
     postComment(issueNumber: number, body: string): void {
-      gh(['issue', 'comment', String(issueNumber), '--body-file', '-'], body)
+      gh(['issue', 'comment', String(issueNumber), '--repo', repo, '--body-file', '-'], body)
     },
 
     getIssue(issueNumber: number): { body: string | null; title: string | null } {
@@ -96,11 +96,11 @@ export function createGitHubClient(repo: string, token: string, patToken?: strin
     },
 
     addLabel(issueNumber: number, label: string): void {
-      gh(['issue', 'add-label', String(issueNumber), label])
+      gh(['issue', 'add-label', String(issueNumber), '--repo', repo, label])
     },
 
     removeLabel(issueNumber: number, label: string): void {
-      gh(['issue', 'remove-label', String(issueNumber), label])
+      gh(['issue', 'remove-label', String(issueNumber), '--repo', repo, label])
     },
 
     setLifecycleLabel(issueNumber: number, label: string): void {

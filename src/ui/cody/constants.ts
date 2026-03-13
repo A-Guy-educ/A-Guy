@@ -7,7 +7,7 @@
 
 // ============ Pipeline Stages ============
 
-export const SPEC_STAGES = ['taskify', 'spec', 'clarify'] as const
+export const SPEC_STAGES = ['taskify', 'gap', 'clarify'] as const
 export const IMPL_STAGES = [
   'architect',
   'plan-gap',
@@ -15,7 +15,6 @@ export const IMPL_STAGES = [
   'commit',
   'review',
   'fix',
-  'commit-fix',
   'verify',
   'pr',
 ] as const

@@ -133,36 +133,6 @@ export function StageErrorDetail({
                       </div>
                     </div>
                   ))}
-
-                  {/* Show all jobs from workflow run */}
-                  {checkRuns.map((check, i) => (
-                    <div
-                      key={`all-${i}`}
-                      className="flex items-center justify-between p-2 bg-muted/30 rounded"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={
-                            check.conclusion === 'success'
-                              ? 'text-green-500'
-                              : check.conclusion === 'failure'
-                                ? 'text-red-500'
-                                : 'text-yellow-500'
-                          }
-                        >
-                          {check.conclusion === 'success'
-                            ? '✓'
-                            : check.conclusion === 'failure'
-                              ? '✗'
-                              : '⏳'}
-                        </span>
-                        <span className="text-sm">{check.name}</span>
-                      </div>
-                      <Badge variant="outline" className="text-xs capitalize">
-                        {check.status}
-                      </Badge>
-                    </div>
-                  ))}
                 </>
               ) : (
                 <p className="text-sm text-muted-foreground">No check runs found for this run.</p>

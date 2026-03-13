@@ -41,6 +41,7 @@ const actionSchema = z.object({
     'assign',
     'unassign',
     'comment',
+    'fix',
   ]),
   feedback: z.string().optional(),
   fromStage: z.string().optional(),
@@ -268,6 +269,25 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
         }
         await postComment(issueNumber, comment)
         return NextResponse.json({ success: true, message: 'Comment posted' })
+      }
+
+      case 'fix': {
+        if (!comment) {
+          return NextResponse.json({ error: 'Fix description is required' }, { status: 400 })
+        }
+        const associatedPR = await findAssociatedPR(taskId)
+        if (!associatedPR) {
+          return NextResponse.json({ error: 'No associated PR found' }, { status: 404 })
+        }
+        const fixBody = withActor(
+          `@cody fix
+
+${comment}`,
+          actor,
+        )
+        await postComment(associatedPR.number, fixBody)
+        clearCache()
+        return NextResponse.json({ success: true, message: 'Fix requested on PR' })
       }
 
       default:

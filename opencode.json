@@ -14,10 +14,6 @@
       "model": "anthropic/claude-opus-4-6",
       "description": "Planning tasks, architecture design, complex problem solving"
     },
-    "spec": {
-      "model": "openai/gpt-5.2",
-      "description": "Spec writing, API design, documentation"
-    },
     "clarify": {
       "model": "openai/gpt-5.2",
       "description": "Collects operator questions and answers"
@@ -79,9 +75,13 @@
       "model": "minimax-coding-plan/MiniMax-M2.5",
       "description": "Targeted fixes for issues found by review or verify stages"
     },
-    "commit-fix": {
+    "reflect": {
       "model": "minimax-coding-plan/MiniMax-M2.5",
-      "description": "Commits fix changes after the fix stage"
+      "description": "Post-task reflection - extracts patterns, updates knowledge base, creates skills when patterns repeat"
+    },
+    "e2e-test-writer": {
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Writes Playwright E2E tests for UI changes. Tests committed but NOT run in pipeline — CI runs them on PR."
     }
   },
   "mcp": {

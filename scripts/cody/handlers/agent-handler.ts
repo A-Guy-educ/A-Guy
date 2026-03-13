@@ -48,6 +48,8 @@ export class AgentHandler implements StageHandler {
             outcome: 'completed',
             retries: result.retries,
             outputFile: `${def.name}.md`,
+            tokenUsage: result.tokenUsage,
+            cost: result.cost,
           }
         }
       }
@@ -73,6 +75,8 @@ export class AgentHandler implements StageHandler {
       outcome: 'completed',
       retries: result.retries,
       outputFile: `${def.name}.md`,
+      tokenUsage: result.tokenUsage,
+      cost: result.cost,
     }
   }
 }

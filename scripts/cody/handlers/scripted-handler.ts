@@ -30,6 +30,10 @@ export class ScriptedVerifyHandler implements StageHandler {
     const startTime = Date.now()
     const totalTimeout = def.timeout ?? DEFAULT_TIMEOUT
 
+    // Accumulate token/cost across autofix iterations
+    const accTokens = { input: 0, output: 0, cacheRead: 0 }
+    let accCost = 0
+
     // Run initial verify
     const verifyResult = runVerifyStage(outputFile, undefined, def.timeout)
 
@@ -78,6 +82,16 @@ export class ScriptedVerifyHandler implements StageHandler {
         remaining, // H2 FIX: Pass remaining time instead of full timeout
         { backend: ctx.backend },
       )
+
+      // Accumulate token/cost from autofix agent
+      if (autofixResult.tokenUsage) {
+        accTokens.input += autofixResult.tokenUsage.input
+        accTokens.output += autofixResult.tokenUsage.output
+        accTokens.cacheRead += autofixResult.tokenUsage.cacheRead
+      }
+      if (autofixResult.cost) {
+        accCost += autofixResult.cost
+      }
 
       if (!autofixResult.succeeded) {
         logger.error(`  ❌ Autofix agent failed (attempt ${attempt})`)
@@ -149,10 +163,15 @@ export class ScriptedVerifyHandler implements StageHandler {
       }
     }
 
+    const tokenUsage = accTokens.input > 0 || accTokens.output > 0 ? accTokens : undefined
+    const cost = accCost > 0 ? accCost : undefined
+
     return {
       outcome: 'completed',
       retries: 0,
       outputFile: `${def.name}.md`,
+      tokenUsage,
+      cost,
     }
   }
 }

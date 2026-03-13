@@ -28,7 +28,7 @@ Cody is a 3-layer system:
 ## Pipeline Stages (Full Standard Mode)
 
 ```
-taskify → spec → gap → [clarify] → gsd-research → gsd-plan → gsd-execute → commit → review → fix → commit-fix → verify → pr
+taskify → spec → gap → [clarify] → gsd-research → gsd-plan → gsd-execute → commit → review → fix → commit → verify → pr
 ```
 
 Lightweight mode skips: spec, gap, gsd-research.

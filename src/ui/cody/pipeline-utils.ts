@@ -13,7 +13,7 @@ import type { CodyPipelineStatus, StageStatus } from './types'
  */
 export const stageLabels: Record<string, string> = {
   taskify: 'Analyzing',
-  spec: 'Writing Spec',
+  gap: 'Gap Analysis',
   clarify: 'Clarifying',
   architect: 'Architecting',
   'plan-gap': 'Reviewing Plan',
@@ -21,7 +21,6 @@ export const stageLabels: Record<string, string> = {
   commit: 'Committing',
   review: 'Reviewing',
   fix: 'Fixing',
-  'commit-fix': 'Committing Fix',
   verify: 'Verifying',
   pr: 'Creating PR',
   autofix: 'Auto-fixing',
@@ -32,7 +31,6 @@ export const stageLabels: Record<string, string> = {
  */
 export const stageMaxDurations: Record<string, number> = {
   taskify: 10 * 60 * 1000,
-  spec: 15 * 60 * 1000,
   clarify: 10 * 60 * 1000,
   architect: 30 * 60 * 1000,
   'plan-gap': 15 * 60 * 1000,
@@ -40,7 +38,6 @@ export const stageMaxDurations: Record<string, number> = {
   commit: 5 * 60 * 1000,
   review: 15 * 60 * 1000,
   fix: 20 * 60 * 1000,
-  'commit-fix': 2 * 60 * 1000,
   verify: 15 * 60 * 1000,
   pr: 5 * 60 * 1000,
   autofix: 15 * 60 * 1000,

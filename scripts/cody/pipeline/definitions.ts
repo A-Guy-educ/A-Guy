@@ -20,10 +20,11 @@ import { readTask } from '../pipeline-utils'
 import { setBranchName, loadState } from '../engine/status'
 import { execFileSync } from 'child_process'
 import {
-  createSpecValidator,
   createGapValidator,
   createPlanGapValidator,
   createBuildValidator,
+  createDocsValidator,
+  createReflectValidator,
 } from './validators'
 import {
   skipIfInputQuality,
@@ -38,7 +39,7 @@ import { STAGE_COMPLEXITY_THRESHOLDS } from '../pipeline-utils'
 // Pipeline Orders
 // ============================================================================
 
-export const SPEC_ORDER_STANDARD: string[] = ['taskify', 'spec', 'gap', 'clarify']
+export const SPEC_ORDER_STANDARD: string[] = ['taskify', 'gap', 'clarify']
 export const SPEC_ORDER_LIGHTWEIGHT: string[] = ['taskify', 'clarify']
 export const IMPL_ORDER_STANDARD: PipelineStep[] = [
   'architect',
@@ -47,8 +48,9 @@ export const IMPL_ORDER_STANDARD: PipelineStep[] = [
   'commit',
   'review',
   'fix',
-  'commit-fix',
+  'commit',
   'verify',
+  { parallel: ['docs', 'reflect'] },
   'pr',
 ]
 export const IMPL_ORDER_LIGHTWEIGHT: PipelineStep[] = [
@@ -57,13 +59,21 @@ export const IMPL_ORDER_LIGHTWEIGHT: PipelineStep[] = [
   'commit',
   'review',
   'fix',
-  'commit-fix',
+  'commit',
   'verify',
+  { parallel: ['docs', 'reflect'] },
   'pr',
 ]
 
 // Fix-only pipeline order for @cody fix mode
-export const FIX_ORDER: PipelineStep[] = ['review', 'fix', 'commit-fix', 'verify', 'pr']
+export const FIX_ORDER: PipelineStep[] = [
+  'review',
+  'fix',
+  'commit',
+  'verify',
+  { parallel: ['docs', 'reflect'] },
+  'pr',
+]
 
 // ============================================================================
 // Stage Definitions
@@ -97,22 +107,7 @@ function createStageDefinitions(ctx: PipelineContext): Map<string, StageDefiniti
     ],
   })
 
-  // spec stage
-  stages.set('spec', {
-    name: 'spec',
-    type: 'agent',
-    timeout: STAGE_TIMEOUTS.spec ?? DEFAULT_TIMEOUT,
-    maxRetries: 1,
-    minComplexity: STAGE_COMPLEXITY_THRESHOLDS.spec,
-    shouldSkip: (ctx) => {
-      const complexitySkip = skipIfBelowComplexity(ctx, 'spec')
-      if (complexitySkip.shouldSkip) return complexitySkip
-      return skipIfInputQuality(ctx, 'spec')
-    },
-    validator: createSpecValidator(ctx),
-  })
-
-  // gap stage
+  // gap stage (also writes spec.md — spec stage was merged into gap)
   stages.set('gap', {
     name: 'gap',
     type: 'agent',
@@ -327,21 +322,6 @@ No critical gaps identified. Plan was refined in-place.
     ],
   })
 
-  // commit-fix stage - commits the fix changes before verify
-  stages.set('commit-fix', {
-    name: 'commit-fix',
-    type: 'git',
-    timeout: STAGE_TIMEOUTS['commit-fix'] ?? DEFAULT_TIMEOUT,
-    maxRetries: 0,
-    shouldSkip: (ctx) => {
-      const state = loadState(ctx.taskId)
-      if (state?.stages?.fix?.state === 'skipped') {
-        return { shouldSkip: true, reason: 'Fix was skipped, nothing to commit' }
-      }
-      return { shouldSkip: false }
-    },
-  })
-
   // commit stage
   stages.set('commit', {
     name: 'commit',
@@ -365,6 +345,53 @@ No critical gaps identified. Plan was refined in-place.
         push: false,
         ensureBranch: false,
         localOnly: true,
+      },
+    ],
+  })
+
+  // docs stage - updates documentation related to the task changes
+  stages.set('docs', {
+    name: 'docs',
+    type: 'agent',
+    timeout: STAGE_TIMEOUTS.docs ?? DEFAULT_TIMEOUT,
+    maxRetries: 1,
+    minComplexity: STAGE_COMPLEXITY_THRESHOLDS.docs,
+    shouldSkip: (ctx) => {
+      const complexitySkip = skipIfBelowComplexity(ctx, 'docs')
+      if (complexitySkip.shouldSkip) return complexitySkip
+      return { shouldSkip: false }
+    },
+    validator: createDocsValidator(),
+    postActions: [
+      {
+        type: 'commit-task-files',
+        stagingStrategy: 'tracked+task',
+        push: true,
+        ensureBranch: false,
+      },
+    ],
+  })
+
+  // reflect stage - post-task learning: pattern extraction, knowledge base update, skill creation
+  stages.set('reflect', {
+    name: 'reflect',
+    type: 'agent',
+    timeout: STAGE_TIMEOUTS.reflect ?? DEFAULT_TIMEOUT,
+    maxRetries: 0, // Best-effort — failure doesn't block PR
+    advisory: true, // Non-critical stage
+    minComplexity: STAGE_COMPLEXITY_THRESHOLDS.reflect,
+    shouldSkip: (ctx) => {
+      const complexitySkip = skipIfBelowComplexity(ctx, 'reflect')
+      if (complexitySkip.shouldSkip) return complexitySkip
+      return { shouldSkip: false }
+    },
+    validator: createReflectValidator(),
+    postActions: [
+      {
+        type: 'commit-task-files',
+        stagingStrategy: 'tracked+task',
+        push: true,
+        ensureBranch: false,
       },
     ],
   })
@@ -412,7 +439,7 @@ export function rebuildPipelineAfterTaskify(
  */
 export function buildPipeline(
   mode: 'spec' | 'impl' | 'full' | 'rerun',
-  profile: 'standard' | 'lightweight',
+  profile: 'standard' | 'lightweight' | 'turbo',
   clarify: boolean,
   ctx: PipelineContext,
 ): PipelineDefinition {

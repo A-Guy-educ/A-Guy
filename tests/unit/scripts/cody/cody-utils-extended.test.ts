@@ -171,7 +171,6 @@ describe('parseCommentBody', () => {
   it('should accept valid --from stages', () => {
     const validStages = [
       'taskify',
-      'spec',
       'gap',
       'clarify',
       'architect',
@@ -957,7 +956,6 @@ describe('isValidStage', () => {
   it('should accept all valid stages', () => {
     const stages = [
       'taskify',
-      'spec',
       'gap',
       'clarify',
       'architect',

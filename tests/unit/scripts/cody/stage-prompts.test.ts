@@ -34,14 +34,14 @@ describe('stage-prompts', () => {
   // ===========================================================================
 
   describe('SPEC_STAGES', () => {
-    it('should contain taskify, spec, gap, clarify', () => {
-      expect([...SPEC_STAGES]).toEqual(['taskify', 'spec', 'gap', 'clarify'])
+    it('should contain taskify, gap, clarify (spec merged into gap)', () => {
+      expect([...SPEC_STAGES]).toEqual(['taskify', 'gap', 'clarify'])
     })
   })
 
   describe('SCRIPTED_STAGES', () => {
     it('should contain verify, commit, pr', () => {
-      expect([...SCRIPTED_STAGES]).toEqual(['verify', 'commit', 'commit-fix', 'pr'])
+      expect([...SCRIPTED_STAGES]).toEqual(['verify', 'commit', 'pr'])
     })
   })
 
@@ -49,7 +49,7 @@ describe('stage-prompts', () => {
     it('should contain all stages including gap, plan-gap, commit, autofix', () => {
       const stages = [...ALL_STAGES]
       expect(stages).toContain('taskify')
-      expect(stages).toContain('spec')
+      expect(stages).not.toContain('spec') // spec merged into gap
       expect(stages).toContain('gap')
       expect(stages).toContain('clarify')
       expect(stages).toContain('architect')
@@ -59,8 +59,8 @@ describe('stage-prompts', () => {
       expect(stages).toContain('verify')
       expect(stages).toContain('review')
       expect(stages).toContain('fix')
-      expect(stages).toContain('commit-fix')
       expect(stages).toContain('autofix')
+      expect(stages).toContain('docs')
       expect(stages).toContain('pr')
       expect(stages).toHaveLength(14)
     })
@@ -73,8 +73,7 @@ describe('stage-prompts', () => {
   describe('STAGE_CONTEXT_FILES', () => {
     it('should map stages to their correct file lists', () => {
       expect(STAGE_CONTEXT_FILES.taskify).toEqual(['task.md'])
-      expect(STAGE_CONTEXT_FILES.spec).toEqual(['task.md', 'task.json'])
-      expect(STAGE_CONTEXT_FILES.gap).toEqual(['spec.md', 'task.json'])
+      expect(STAGE_CONTEXT_FILES.gap).toEqual(['task.md', 'task.json'])
       expect(STAGE_CONTEXT_FILES.clarify).toEqual(['task.md', 'spec.md'])
       expect(STAGE_CONTEXT_FILES.architect).toEqual([
         'spec.md',
@@ -87,6 +86,7 @@ describe('stage-prompts', () => {
         'clarified.md',
         'plan.md',
         'plan-gap.md',
+        'context.md',
         'rerun-feedback.md',
       ])
       expect(STAGE_CONTEXT_FILES.commit).toEqual(['task.json'])
@@ -97,6 +97,7 @@ describe('stage-prompts', () => {
         'review.md',
         'build.md',
         'plan.md',
+        'context.md',
         'spec.md',
         'clarified.md',
       ])
@@ -107,10 +108,10 @@ describe('stage-prompts', () => {
         'fix-summary.md',
         'build.md',
         'plan.md',
+        'context.md',
         'spec.md',
         'clarified.md',
       ])
-      expect(STAGE_CONTEXT_FILES['commit-fix']).toEqual(['fix-summary.md', 'verify-failures.md'])
     })
 
     it('should include build-errors.md in autofix context for build stage feedback', () => {
@@ -134,16 +135,16 @@ describe('stage-prompts', () => {
   // ===========================================================================
 
   describe('getSpecStages', () => {
-    it('should return taskify, spec, gap for default standard profile (clarify not included)', () => {
-      expect(getSpecStages()).toEqual(['taskify', 'spec', 'gap'])
+    it('should return taskify, gap for default standard profile (clarify not included)', () => {
+      expect(getSpecStages()).toEqual(['taskify', 'gap'])
     })
 
     it('should return only taskify for lightweight profile', () => {
       expect(getSpecStages('lightweight')).toEqual(['taskify'])
     })
 
-    it('should return taskify, spec, gap for standard profile (no clarify)', () => {
-      expect(getSpecStages('standard')).toEqual(['taskify', 'spec', 'gap'])
+    it('should return taskify, gap for standard profile (no clarify)', () => {
+      expect(getSpecStages('standard')).toEqual(['taskify', 'gap'])
     })
   })
 
@@ -156,8 +157,10 @@ describe('stage-prompts', () => {
         'commit',
         'review',
         'fix',
-        'commit-fix',
+        'commit',
         'verify',
+        'docs',
+        'reflect',
         'pr',
       ])
     })
@@ -169,8 +172,10 @@ describe('stage-prompts', () => {
         'commit',
         'review',
         'fix',
-        'commit-fix',
+        'commit',
         'verify',
+        'docs',
+        'reflect',
         'pr',
       ])
     })
@@ -183,8 +188,10 @@ describe('stage-prompts', () => {
         'commit',
         'review',
         'fix',
-        'commit-fix',
+        'commit',
         'verify',
+        'docs',
+        'reflect',
         'pr',
       ])
     })
@@ -206,7 +213,7 @@ describe('stage-prompts', () => {
       }
     })
 
-    it('should return empty strings for non-spec stages (except build, review, fix)', () => {
+    it('should return empty strings for non-spec stages (except build, review, fix, docs, reflect)', () => {
       const nonSpecStages = ALL_STAGES.filter(
         (s) => !SPEC_STAGES.includes(s as (typeof SPEC_STAGES)[number]),
       )
@@ -216,9 +223,13 @@ describe('stage-prompts', () => {
         if (stage === 'build') {
           expect(instruction).toContain('IMPLEMENTATION STAGE')
         } else if (stage === 'review') {
-          expect(instruction).toContain('CODE REVIEW STAGE')
+          expect(instruction).toContain('CODE REVIEW')
         } else if (stage === 'fix') {
           expect(instruction).toContain('TARGETED FIX STAGE')
+        } else if (stage === 'docs') {
+          expect(instruction).toContain('DOCUMENTATION STAGE')
+        } else if (stage === 'reflect') {
+          expect(instruction).toContain('REFLECT STAGE')
         } else {
           expect(instruction).toBe('')
         }

@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/ui/web/components/select'
 import { cn } from '../utils'
+import { Search } from 'lucide-react'
 
 export type ViewMode = 'running' | 'backlog'
 
@@ -51,6 +52,8 @@ export interface FilterBarProps {
   filteredCount: number
   runningCount: number
   backlogCount: number
+  searchQuery?: string
+  onSearchChange?: (value: string) => void
 }
 
 export { DATE_FILTERS, STATUS_FILTERS }
@@ -113,6 +116,8 @@ export function FilterBar({
   filteredCount,
   runningCount,
   backlogCount,
+  searchQuery = '',
+  onSearchChange,
 }: FilterBarProps) {
   return (
     <div className="flex items-center gap-3 px-4 md:px-6 py-2 border-b border-white/[0.06] bg-white/[0.02]">
@@ -123,6 +128,20 @@ export function FilterBar({
         runningCount={runningCount}
         backlogCount={backlogCount}
       />
+
+      {/* Search input */}
+      {onSearchChange && (
+        <div className="relative flex items-center">
+          <Search className="absolute left-2.5 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Search tasks…"
+            className="h-8 pl-8 pr-3 text-xs rounded-md bg-white/[0.04] border border-white/[0.08] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-white/20 w-40"
+          />
+        </div>
+      )}
 
       {/* Date filter */}
       <Select value={dateFilter} onValueChange={onDateFilterChange}>

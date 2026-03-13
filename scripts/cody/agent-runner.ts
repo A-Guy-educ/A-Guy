@@ -48,8 +48,9 @@ export const STAGE_TIMEOUTS: Record<string, number> = {
   'plan-gap': ms('15m'),
   review: ms('15m'),
   fix: ms('20m'),
-  'commit-fix': ms('2m'),
   verify: ms('10m'),
+  docs: ms('10m'),
+  reflect: ms('10m'),
   pr: ms('5m'),
   autofix: ms('15m'),
 }
@@ -100,6 +101,10 @@ export interface AgentRunResult {
   validationErrors?: string[]
   /** Session ID from opencode for chat history capture */
   sessionId?: string
+  /** Accumulated token usage across all steps */
+  tokenUsage?: { input: number; output: number; cacheRead: number }
+  /** Accumulated cost in USD across all steps */
+  cost?: number
 }
 
 // ============================================================================
@@ -197,7 +202,12 @@ function findOutputFile(taskDir: string, expectedBase: string, outputExt: string
  * Returns the formatted string, or null to skip (for noisy/unimportant events).
  * Also extracts sessionID from events when found.
  */
-export function formatJsonEvent(line: string): { display: string | null; sessionId?: string } {
+export function formatJsonEvent(line: string): {
+  display: string | null
+  sessionId?: string
+  stepTokens?: { input: number; output: number; cacheRead: number }
+  stepCost?: number
+} {
   try {
     const event = JSON.parse(line)
     const type: string = event.type
@@ -215,11 +225,15 @@ export function formatJsonEvent(line: string): { display: string | null; session
         const cost = event.part?.cost ?? 0
         const reason = event.part?.reason || ''
         const cached = event.part?.tokens?.cache?.read || 0
+        const inputTokens = event.part?.tokens?.input || 0
+        const outputTokens = event.part?.tokens?.output || 0
         const costStr = typeof cost === 'number' && cost > 0 ? ` · $${cost.toFixed(4)}` : ''
         const cacheStr = cached > 0 ? ` · ${cached} cached` : ''
         return {
           display: `  ✅ Step done (${tokens} tok${cacheStr}${costStr}) [${reason}]`,
           sessionId,
+          stepTokens: { input: inputTokens, output: outputTokens, cacheRead: cached },
+          stepCost: typeof cost === 'number' ? cost : 0,
         }
       }
 
@@ -344,6 +358,8 @@ export function runAgentWithFileWatch(
       let stdoutBuffer = ''
       let heartbeatTimer: NodeJS.Timeout | null = null
       let extractedSessionId: string | undefined
+      const accumulatedTokens = { input: 0, output: 0, cacheRead: 0 }
+      let accumulatedCost = 0
       // Write raw JSON events to artifact file for full debugging
       let jsonLogFd: number | null = null
       try {
@@ -410,6 +426,16 @@ export function runAgentWithFileWatch(
             // Extract sessionId from first event that has it
             if (result.sessionId && !extractedSessionId) {
               extractedSessionId = result.sessionId
+            }
+
+            // Accumulate token/cost data from step_finish events
+            if (result.stepTokens) {
+              accumulatedTokens.input += result.stepTokens.input
+              accumulatedTokens.output += result.stepTokens.output
+              accumulatedTokens.cacheRead += result.stepTokens.cacheRead
+            }
+            if (result.stepCost) {
+              accumulatedCost += result.stepCost
             }
 
             // Display formatted output
@@ -512,7 +538,19 @@ export function runAgentWithFileWatch(
         }
         // Remove exit cleanup handler (FD already closed)
         process.removeListener('exit', cleanupFd)
-        resolve({ ...result, retries, validationErrors, sessionId: extractedSessionId })
+        const tokenUsage =
+          accumulatedTokens.input > 0 || accumulatedTokens.output > 0
+            ? accumulatedTokens
+            : undefined
+        const cost = accumulatedCost > 0 ? accumulatedCost : undefined
+        resolve({
+          ...result,
+          retries,
+          validationErrors,
+          sessionId: extractedSessionId,
+          tokenUsage,
+          cost,
+        })
       }
 
       // Parse output file path

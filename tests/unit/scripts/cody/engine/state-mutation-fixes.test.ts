@@ -242,9 +242,8 @@ describe('full pipeline mode', () => {
     // Full mode should include ALL stages, not just spec
     const stageNames = Array.from(pipeline.stages.keys())
 
-    // Should have spec stages
+    // Should have spec stages (spec merged into gap)
     expect(stageNames).toContain('taskify')
-    expect(stageNames).toContain('spec')
     expect(stageNames).toContain('gap')
 
     // Should ALSO have impl stages (THIS IS THE FIX)

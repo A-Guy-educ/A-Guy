@@ -15,9 +15,9 @@ import type { CodyTask, GitHubComment, ColumnId, CodyPipelineStatus } from '../t
 import { ALL_STAGES } from '../constants'
 import { calculatePipelineProgress, stageLabels, formatElapsed } from '../pipeline-utils'
 import { PipelineStatus } from './PipelineStatus'
+import { ConfirmDialog } from './ConfirmDialog'
 import { CommentEditor } from './CommentEditor'
 import { CommentList } from './CommentList'
-import { TaskPreviewTab } from './TaskPreviewTab'
 import { AssigneePicker, type AssigneeChangeEvent } from './AssigneePicker'
 import { MergeButton } from './MergeButton'
 import { SimpleTooltip } from './SimpleTooltip'
@@ -49,11 +49,10 @@ import {
   Info,
   FileText,
   MessageSquare,
-  GitBranch,
-  BookOpen,
   MoreHorizontal,
   Timer,
   ArrowLeft,
+  Eye,
 } from 'lucide-react'
 
 interface TaskDetailProps {
@@ -62,6 +61,7 @@ interface TaskDetailProps {
   task: CodyTask | null
   onClose?: () => void
   onRefresh?: () => void
+  onOpenPreview?: () => void
 }
 
 interface FullTaskDetails extends CodyTask {
@@ -152,15 +152,23 @@ function TabButton({
   label,
   icon: Icon,
   count,
+  tabId,
+  panelId,
 }: {
   active: boolean
   onClick: () => void
   label: string
   icon: React.ElementType
   count?: number
+  tabId?: string
+  panelId?: string
 }) {
   return (
     <button
+      role="tab"
+      id={tabId}
+      aria-selected={active}
+      aria-controls={panelId}
       onClick={onClick}
       className={cn(
         'relative flex items-center gap-1.5 px-3.5 py-2.5 text-[13px] font-medium transition-all duration-200',
@@ -370,6 +378,9 @@ function OverflowMenu({
   const [open, setOpen] = useState(false)
   const btnRef = useRef<HTMLButtonElement>(null)
   const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null)
+  const [confirmAction, setConfirmAction] = useState<
+    ReturnType<typeof getOverflowActions>[0] | null
+  >(null)
 
   const handleToggle = useCallback(() => {
     if (!open && btnRef.current) {
@@ -420,7 +431,9 @@ function OverflowMenu({
               const isActionPending = pendingAction === action.pendingKey
               const handleClick = () => {
                 if (action.confirmMessage) {
-                  if (!confirm(action.confirmMessage)) return
+                  setConfirmAction(action)
+                  setOpen(false)
+                  return
                 }
                 action.onClick()
                 setOpen(false)
@@ -449,6 +462,17 @@ function OverflowMenu({
             })}
           </div>
         </>
+      )}
+      {confirmAction && (
+        <ConfirmDialog
+          open={true}
+          title={confirmAction.label}
+          description={confirmAction.confirmMessage!}
+          confirmLabel={confirmAction.label}
+          variant={confirmAction.destructive ? 'destructive' : 'default'}
+          onConfirm={() => confirmAction.onClick()}
+          onClose={() => setConfirmAction(null)}
+        />
       )}
     </>
   )
@@ -542,6 +566,7 @@ export function TaskDetail({
   onRefresh,
   onApproveReview,
   isMerging: externalIsMerging,
+  onOpenPreview,
 }: TaskDetailProps) {
   const { githubUser } = useGitHubIdentity()
   const actorLogin = githubUser?.login
@@ -557,9 +582,10 @@ export function TaskDetail({
     refetch,
     isFetching: isDetailsFetching,
   } = useTaskDetails(task?.issueNumber ?? null, actorLogin)
-  const [activeTab, setActiveTab] = useState<'description' | 'comments' | 'changes' | 'docs'>(
-    'description',
-  )
+  const [activeTab, setActiveTab] = useState<'description' | 'comments'>(() => {
+    if (typeof window === 'undefined') return 'description'
+    return window.location.pathname.endsWith('/comments') ? 'comments' : 'description'
+  })
   const [retryContext, setRetryContext] = useState('')
   const [showRetryContext, setShowRetryContext] = useState(false)
   const [showMobileExtra, setShowMobileExtra] = useState(false)
@@ -581,10 +607,26 @@ export function TaskDetail({
     }
   }, [])
 
+  // Sync tab from URL on browser back/forward
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname
+      // Only handle if we're on a task detail URL
+      if (!/\/cody\/\d+/.test(path)) return
+      // Don't handle preview URLs — parent manages those
+      if (path.includes('/preview')) return
+
+      setActiveTab(path.endsWith('/comments') ? 'comments' : 'description')
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
   useEffect(() => {
     setCompletedActions(new Set())
     setShowMobileExtra(false)
-    setActiveTab('description')
+    setActiveTab(window.location.pathname.endsWith('/comments') ? 'comments' : 'description')
   }, [task?.issueNumber])
 
   const retryWithContext = useRetryWithContext({
@@ -638,7 +680,6 @@ export function TaskDetail({
 
   const hasDescription = task.body && task.body.trim().length > 0
   const commentsCount = fullDetails?.comments?.length || 0
-  const hasPR = !!task.associatedPR
   const showPipelineTimeline =
     task.pipeline &&
     (task.pipeline.state === 'running' || task.pipeline.state === 'paused') &&
@@ -815,8 +856,6 @@ export function TaskDetail({
       ? [{ key: 'description' as const, label: 'Description', icon: FileText }]
       : []),
     { key: 'comments' as const, label: 'Comments', icon: MessageSquare, count: commentsCount },
-    ...(hasPR ? [{ key: 'changes' as const, label: 'Changes', icon: GitBranch }] : []),
-    ...(hasPR ? [{ key: 'docs' as const, label: 'Docs', icon: BookOpen }] : []),
   ]
 
   // Compute effective tab: if current tab was removed (e.g. no PR → no Changes/Docs), fallback
@@ -825,15 +864,27 @@ export function TaskDetail({
 
   // --- Tab Bar ---
   const tabBar = (
-    <div className="flex border-b border-white/[0.08] shrink-0 overflow-x-auto bg-black/10">
+    <div
+      role="tablist"
+      className="flex border-b border-white/[0.08] shrink-0 overflow-x-auto bg-black/10"
+    >
       {tabs.map(({ key, label, icon, count }) => (
         <TabButton
           key={key}
           active={effectiveTab === key}
-          onClick={() => setActiveTab(key)}
+          onClick={() => {
+            setActiveTab(key)
+            if (task) {
+              const base = `/cody/${task.issueNumber}`
+              const path = key === 'description' ? base : `${base}/${key}`
+              window.history.pushState(null, '', path)
+            }
+          }}
           label={label}
           icon={icon}
           count={count}
+          tabId={`task-tab-${key}`}
+          panelId={`task-panel-${key}`}
         />
       ))}
     </div>
@@ -843,7 +894,12 @@ export function TaskDetail({
   const tabContent = (
     <>
       {effectiveTab === 'description' && hasDescription && (
-        <div className="p-5 md:p-6 overflow-y-auto overflow-x-hidden h-full bg-white/[0.03]">
+        <div
+          role="tabpanel"
+          id="task-panel-description"
+          aria-labelledby="task-tab-description"
+          className="p-5 md:p-6 overflow-y-auto overflow-x-hidden h-full bg-white/[0.03]"
+        >
           <div className="max-w-3xl min-w-0">
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
               {task.body!}
@@ -852,7 +908,12 @@ export function TaskDetail({
         </div>
       )}
       {effectiveTab === 'comments' && (
-        <div className="flex flex-col h-full">
+        <div
+          role="tabpanel"
+          id="task-panel-comments"
+          aria-labelledby="task-tab-comments"
+          className="flex flex-col h-full"
+        >
           <div className="flex-1 overflow-y-auto p-4 bg-white/[0.03]">
             <CommentList comments={fullDetails?.comments || []} loading={isDetailsFetching} />
           </div>
@@ -860,11 +921,6 @@ export function TaskDetail({
             <CommentEditor issueNumber={task.issueNumber} onCommentPosted={() => refetch()} />
           </div>
           {retryWithContextBlock}
-        </div>
-      )}
-      {(effectiveTab === 'changes' || effectiveTab === 'docs') && (
-        <div className="p-4 overflow-y-auto h-full bg-white/[0.03]">
-          <TaskPreviewTab task={task} activeTab={effectiveTab as 'changes' | 'docs'} />
         </div>
       )}
     </>
@@ -928,29 +984,17 @@ export function TaskDetail({
           Workflow
         </a>
       )}
-      {task.previewUrl && (
-        <SimpleTooltip
-          content={
-            <div className="space-y-1">
-              <p className="text-xs font-semibold">🔗 Preview Available</p>
-              <p className="text-xs text-muted-foreground">
-                Click to open the deployed preview in a new tab
-              </p>
-            </div>
-          }
-          side="bottom"
+      {task.associatedPR && onOpenPreview && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onOpenPreview()
+          }}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 hover:text-emerald-200 transition-all duration-150 shrink-0 border border-emerald-500/20 cursor-pointer"
         >
-          <a
-            href={task.previewUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 hover:text-emerald-200 transition-all duration-150 shrink-0 border border-emerald-500/20"
-          >
-            <ExternalLink className="w-3 h-3" />
-            Preview
-          </a>
-        </SimpleTooltip>
+          <Eye className="w-3 h-3" />
+          Preview
+        </button>
       )}
     </>
   )
@@ -1016,6 +1060,7 @@ export function TaskDetail({
             variant="ghost"
             size="sm"
             onClick={onClose}
+            aria-label="Back to task list"
             className="h-9 w-9 p-0 -ml-1 shrink-0 text-muted-foreground/60"
           >
             <ArrowLeft className="w-4.5 h-4.5" />
@@ -1033,6 +1078,7 @@ export function TaskDetail({
             size="sm"
             onClick={handleRefresh}
             disabled={isRefreshing}
+            aria-label="Refresh task"
             className="h-9 w-9 p-0 shrink-0 text-muted-foreground/50"
           >
             <RefreshCw
@@ -1129,6 +1175,7 @@ export function TaskDetail({
                 size="sm"
                 onClick={handleRefresh}
                 disabled={isRefreshing}
+                aria-label="Refresh task"
                 className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-muted-foreground"
               >
                 <RefreshCw
@@ -1143,6 +1190,7 @@ export function TaskDetail({
               variant="ghost"
               size="sm"
               onClick={onClose}
+              aria-label="Close task detail"
               className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-muted-foreground"
             >
               <XCircle className="w-3.5 h-3.5" />

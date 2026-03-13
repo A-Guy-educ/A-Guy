@@ -15,6 +15,7 @@ import type {
   BoardsResponse,
   CollaboratorsResponse,
   ActionResponse,
+  PRComment,
 } from './types'
 
 const API_BASE = '/api/cody'
@@ -220,6 +221,23 @@ export const tasksApi = {
     return handleResponse(res)
   },
 
+  fixRequest: async (
+    issueNumber: number,
+    fixDescription: string,
+    actorLogin?: string,
+  ): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'fix',
+        comment: fixDescription,
+        ...(actorLogin && { actorLogin }),
+      }),
+    })
+    return handleResponse(res)
+  },
+
   approve: async (task: CodyTask, actorLogin?: string): Promise<ActionResponse> => {
     if (!task.associatedPR) {
       throw new Error('No PR associated with this task')
@@ -295,6 +313,23 @@ export const prsApi = {
     hasConflicts: boolean
   }> => {
     const res = await fetch(`${API_BASE}/prs/status?prNumber=${prNumber}`)
+    return handleResponse(res)
+  },
+  comments: async (prNumber: number): Promise<PRComment[]> => {
+    const res = await fetch(`${API_BASE}/prs/comments?prNumber=${prNumber}`)
+    const data = await handleResponse<{ comments: PRComment[] }>(res)
+    return data.comments
+  },
+  postComment: async (
+    prNumber: number,
+    body: string,
+    actorLogin?: string,
+  ): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/prs/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prNumber, body, ...(actorLogin && { actorLogin }) }),
+    })
     return handleResponse(res)
   },
 }

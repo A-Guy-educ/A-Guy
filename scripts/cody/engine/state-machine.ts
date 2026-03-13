@@ -542,6 +542,8 @@ async function handleStageResult(
       completedAt: new Date().toISOString(),
       retries: result.retries,
       outputFile: result.outputFile,
+      tokenUsage: result.tokenUsage,
+      cost: result.cost,
     })
 
     // Run post-actions if defined
@@ -591,14 +593,13 @@ async function handleStageResult(
           logger.warn(`Failed to write verify-failures.md: ${writeErr}`)
         }
 
-        // Increment fix attempt and reset fix, commit-fix, verify to pending
+        // Increment fix attempt and reset fix + verify to pending
         const newFixAttempt = currentAttempt + 1
         state = updateStage(state, 'fix', {
           state: 'pending',
           fixAttempt: newFixAttempt,
           maxFixAttempts: maxAttempts,
         })
-        state = updateStage(state, 'commit-fix', { state: 'pending' })
         state = updateStage(state, 'verify', { state: 'pending' })
         writeState(ctx.taskId, state)
 

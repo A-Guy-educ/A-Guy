@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "description": "Cross-task knowledge base for Cody pipeline self-learning. Updated by the reflect stage after each task.",
+  "entries": [],
+  "patternFrequency": {},
+  "skillsCreated": [],
+  "lastUpdated": null
+}

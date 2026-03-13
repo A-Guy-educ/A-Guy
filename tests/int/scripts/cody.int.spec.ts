@@ -456,12 +456,12 @@ describe('orchestrator integration', () => {
       const { SPEC_ONLY_STAGES, ALL_IMPL_STAGE_NAMES } =
         await import('../../../scripts/cody/pipeline-utils')
 
-      // Spec pipeline should have spec, gap, and clarify stages
-      expect(SPEC_ONLY_STAGES).toContain('spec')
+      // Spec-only stages are the stages between taskify and impl (gap, clarify)
+      // Note: 'spec' was renamed to 'taskify' and is NOT in SPEC_ONLY_STAGES
       expect(SPEC_ONLY_STAGES).toContain('gap')
       expect(SPEC_ONLY_STAGES).toContain('clarify')
 
-      // Impl pipeline should have all GSD stages and commit/review/fix/verify/pr
+      // Impl pipeline should have all GSD stages, review/fix cycle, docs/reflect, and commit/verify/pr
       expect(ALL_IMPL_STAGE_NAMES).toContain('architect')
       expect(ALL_IMPL_STAGE_NAMES).toContain('plan-gap')
       expect(ALL_IMPL_STAGE_NAMES).toContain('build')
@@ -470,8 +470,10 @@ describe('orchestrator integration', () => {
       expect(ALL_IMPL_STAGE_NAMES).toContain('pr')
       expect(ALL_IMPL_STAGE_NAMES).toContain('review')
       expect(ALL_IMPL_STAGE_NAMES).toContain('fix')
-      expect(ALL_IMPL_STAGE_NAMES).toContain('commit-fix')
-      expect(ALL_IMPL_STAGE_NAMES).toHaveLength(9)
+      expect(ALL_IMPL_STAGE_NAMES).toContain('docs')
+      expect(ALL_IMPL_STAGE_NAMES).toContain('reflect')
+      // 11 stages: architect, plan-gap, build, commit, review, fix, commit, verify, docs, reflect, pr
+      expect(ALL_IMPL_STAGE_NAMES).toHaveLength(11)
     })
 
     it('excludes auditor on rerun', async () => {

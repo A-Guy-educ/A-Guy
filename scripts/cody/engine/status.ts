@@ -176,11 +176,20 @@ export function completeState(
 ): PipelineStateV2 {
   const now = new Date().toISOString()
 
+  // Compute total cost across all stages
+  let totalCost = 0
+  for (const stage of Object.values(state.stages)) {
+    if (stage.cost) {
+      totalCost += stage.cost
+    }
+  }
+
   return {
     ...state,
     state: finalState,
     completedAt: now,
     updatedAt: now,
+    ...(totalCost > 0 ? { totalCost } : {}),
   }
 }
 
@@ -395,6 +404,10 @@ export function stateToV1(state: PipelineStateV2): CodyPipelineStatus {
       outputFile: stage.outputFile,
       skipped: stage.skipped,
       error: stage.error,
+      tokenUsage: stage.tokenUsage
+        ? { input: stage.tokenUsage.input, output: stage.tokenUsage.output }
+        : undefined,
+      cost: stage.cost,
     }
   }
 
@@ -416,5 +429,6 @@ export function stateToV1(state: PipelineStateV2): CodyPipelineStatus {
     controlMode: undefined,
     gatePoint: undefined,
     botCommentId: undefined,
+    totalCost: state.totalCost,
   }
 }

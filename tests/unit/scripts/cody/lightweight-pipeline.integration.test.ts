@@ -104,13 +104,13 @@ describe('lightweight pipeline integration', () => {
   })
 
   describe('getImplPipeline for lightweight', () => {
-    it('returns exactly 5 stages', async () => {
+    it('returns exactly 9 stages', async () => {
       const { getImplPipeline } = await import('../../../../scripts/cody/pipeline-utils')
 
       const pipeline = getImplPipeline('lightweight')
 
-      // Should be: architect, build, commit, review, fix, commit-fix, verify, pr (8 stages)
-      expect(pipeline).toHaveLength(8)
+      // Should be: architect, build, commit, review, fix, commit, verify, {docs+reflect}, pr (9 elements, 10 flattened)
+      expect(pipeline).toHaveLength(9)
     })
 
     it('returns stages in correct order', async () => {
@@ -126,8 +126,10 @@ describe('lightweight pipeline integration', () => {
         'commit',
         'review',
         'fix',
-        'commit-fix',
+        'commit',
         'verify',
+        'docs',
+        'reflect',
         'pr',
       ])
     })
@@ -154,16 +156,16 @@ describe('lightweight pipeline integration', () => {
   })
 
   describe('LIGHTWEIGHT_IMPL_PIPELINE constant', () => {
-    it('flattens to 5 stage names', async () => {
+    it('flattens to 10 stage names', async () => {
       const { LIGHTWEIGHT_IMPL_PIPELINE, flattenPipeline } =
         await import('../../../../scripts/cody/pipeline-utils')
 
       const flatNames = flattenPipeline(LIGHTWEIGHT_IMPL_PIPELINE)
 
-      expect(flatNames).toHaveLength(8)
+      expect(flatNames).toHaveLength(10)
     })
 
-    it('contains architect, build, commit, review, fix, commit-fix, verify, pr', async () => {
+    it('contains architect, build, commit, review, fix, commit, verify, docs, reflect, pr', async () => {
       const { LIGHTWEIGHT_IMPL_PIPELINE, flattenPipeline } =
         await import('../../../../scripts/cody/pipeline-utils')
 
@@ -174,8 +176,10 @@ describe('lightweight pipeline integration', () => {
       expect(flatNames).toContain('commit')
       expect(flatNames).toContain('review')
       expect(flatNames).toContain('fix')
-      expect(flatNames).toContain('commit-fix')
+      expect(flatNames).toContain('commit')
       expect(flatNames).toContain('verify')
+      expect(flatNames).toContain('reflect')
+      expect(flatNames).toContain('docs')
       expect(flatNames).toContain('pr')
     })
 
@@ -219,20 +223,20 @@ describe('standard pipeline integration', () => {
   })
 
   describe('getSpecStagesForProfile for standard', () => {
-    it('returns taskify, spec, gap when clarify is false', async () => {
+    it('returns taskify, gap when clarify is false', async () => {
       const { getSpecStagesForProfile } = await import('../../../../scripts/cody/pipeline-utils')
 
       const stages = getSpecStagesForProfile('standard', false)
 
-      expect(stages).toEqual(['taskify', 'spec', 'gap'])
+      expect(stages).toEqual(['taskify', 'gap'])
     })
 
-    it('returns taskify, spec, gap, clarify when clarify is true', async () => {
+    it('returns taskify, gap, clarify when clarify is true', async () => {
       const { getSpecStagesForProfile } = await import('../../../../scripts/cody/pipeline-utils')
 
       const stages = getSpecStagesForProfile('standard', true)
 
-      expect(stages).toEqual(['taskify', 'spec', 'gap', 'clarify'])
+      expect(stages).toEqual(['taskify', 'gap', 'clarify'])
     })
   })
 
@@ -272,14 +276,14 @@ describe('standard pipeline integration', () => {
   })
 
   describe('IMPL_PIPELINE constant', () => {
-    it('flattens to 6 stage names', async () => {
+    it('flattens to 11 stage names', async () => {
       const { IMPL_PIPELINE, flattenPipeline } =
         await import('../../../../scripts/cody/pipeline-utils')
 
       const flatNames = flattenPipeline(IMPL_PIPELINE)
 
-      // Should be: architect, plan-gap, build, commit, review, fix, commit-fix, verify, pr (9 stages)
-      expect(flatNames).toHaveLength(9)
+      // Should be: architect, plan-gap, build, commit, review, fix, commit, verify, docs, reflect, pr (11 stages)
+      expect(flatNames).toHaveLength(11)
     })
 
     it('contains all heavyweight stages', async () => {
@@ -313,15 +317,17 @@ describe('end-to-end pipeline selection', () => {
     const implPipeline = getImplPipeline(profile)
     const implStages = flattenPipeline(implPipeline)
 
-    // Should be: architect, build, commit, review, fix, commit-fix, verify, pr
+    // Should be: architect, build, commit, review, fix, commit, verify, docs, reflect, pr
     expect(implStages).toEqual([
       'architect',
       'build',
       'commit',
       'review',
       'fix',
-      'commit-fix',
+      'commit',
       'verify',
+      'docs',
+      'reflect',
       'pr',
     ])
 
@@ -341,7 +347,7 @@ describe('end-to-end pipeline selection', () => {
 
     // Step 2: Get spec stages
     const specStages = getSpecStagesForProfile(profile, false)
-    expect(specStages).toEqual(['taskify', 'spec', 'gap'])
+    expect(specStages).toEqual(['taskify', 'gap'])
 
     // Step 3: Get impl pipeline
     const implPipeline = getImplPipeline(profile)
@@ -362,8 +368,7 @@ describe('end-to-end pipeline selection', () => {
     expect(lightweightSpecStages).not.toContain('spec')
     expect(lightweightSpecStages).not.toContain('gap')
 
-    // Standard should have spec and gap
-    expect(standardSpecStages).toContain('spec')
+    // Standard should have gap (spec merged into gap)
     expect(standardSpecStages).toContain('gap')
   })
 
@@ -419,7 +424,6 @@ describe('rebuildPipelineAfterTaskify', () => {
 
     // Should contain spec stages (completed from first phase)
     expect(flatOrder).toContain('taskify')
-    expect(flatOrder).toContain('spec')
     expect(flatOrder).toContain('gap')
 
     // Should also contain impl stages (to run after taskify)

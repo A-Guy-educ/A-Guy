@@ -134,13 +134,13 @@ describe('setClassificationLabels', () => {
     // Added labels
     expect(addedLabels).toContain('type:feature')
     expect(addedLabels).toContain('risk:low')
-    expect(addedLabels).toContain('complexity:simple')
+    expect(addedLabels).toContain('complexity:moderate')
     expect(addedLabels).toContain('domain:backend')
 
     // Removed labels should NOT include the ones we're adding
     expect(removedLabels).not.toContain('type:feature')
     expect(removedLabels).not.toContain('risk:low')
-    expect(removedLabels).not.toContain('complexity:simple')
+    expect(removedLabels).not.toContain('complexity:moderate')
     expect(removedLabels).not.toContain('domain:backend')
 
     // But should include competing labels
