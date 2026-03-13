@@ -4,15 +4,15 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-13T18:06:15.381Z",
-  "updatedAt": "2026-03-13T18:07:57.689Z",
-  "state": "paused",
-  "cursor": null,
+  "updatedAt": "2026-03-13T19:48:45.450Z",
+  "state": "running",
+  "cursor": "gap",
   "stages": {
     "taskify": {
-      "state": "paused",
+      "state": "completed",
       "retries": 0,
       "startedAt": "2026-03-13T18:06:16.483Z",
-      "completedAt": "2026-03-13T18:07:53.720Z",
+      "completedAt": "2026-03-13T19:40:03.912Z",
       "outputFile": "taskify.md",
       "tokenUsage": {
         "input": 4892,
@@ -20,8 +20,40 @@
         "cacheRead": 223158
       },
       "sessionId": "ses_3179f43ceffe5nUkP6m4v248HH"
+    },
+    "gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-13T19:40:03.921Z",
+      "completedAt": "2026-03-13T19:44:35.122Z",
+      "outputFile": "gap.md",
+      "tokenUsage": {
+        "input": 223230,
+        "output": 6435,
+        "cacheRead": 1828416
+      },
+      "sessionId": "ses_31749645bffe92yzxWY8vkS4BR"
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-13T19:44:35.124Z",
+      "completedAt": "2026-03-13T19:48:43.766Z",
+      "outputFile": "architect.md",
+      "tokenUsage": {
+        "input": 17,
+        "output": 12870,
+        "cacheRead": 1727465
+      },
+      "cost": 2.00958625,
+      "sessionId": "ses_317454755ffeADM4pLAAVKMaHy"
+    },
+    "plan-gap": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 45 (complex) below threshold 50 for plan-gap"
     }
   },
   "issueNumber": 780,
-  "completedAt": "2026-03-13T18:07:57.689Z"
+  "branchName": "feat/260313-auto-780-control-graph-display-size-in-exer"
 }
