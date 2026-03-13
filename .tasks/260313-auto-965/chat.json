@@ -59,6 +59,459 @@
           "timestamp": "2026-03-13T18:08:29.080Z"
         }
       ]
+    },
+    {
+      "stage": "gap",
+      "sessionId": "ses_31796e104ffe78WBKVFy8P3L1D",
+      "startedAt": "2026-03-13T18:15:29.275Z",
+      "messages": [
+        {
+          "role": "user",
+          "stage": "gap",
+          "text": "\"CRITICAL: This is a SPEC-ONLY pipeline. DO NOT create branches, commits, or pull requests. DO NOT modify any code files. Only read from and write to the /home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-965/ directory.\n\nTask ID: 260313-auto-965\n\n\nRead these files for context:\n- /home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-965/task.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-965/task.json\n\nWrite your output to /home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-965/gap.md\"",
+          "tools": [],
+          "timestamp": "2026-03-13T18:15:29.297Z",
+          "model": "{\"providerID\":\"minimax-coding-plan\",\"modelID\":\"MiniMax-M2.5\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T18:15:29.389Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "Now I need to explore the codebase to find the existing Graph Editor components and understand the patterns. Let me search for graph-related files.",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-13T18:15:52.219Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T18:16:02.743Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-13T18:16:14.750Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T18:16:37.457Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T18:16:39.996Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T18:16:49.151Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T18:17:01.935Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T18:17:10.525Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T18:17:15.092Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-13T18:17:23.953Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "Now I have a clear picture of the codebase. Let me write the spec.md and then identify the gaps.",
+          "tools": [
+            "write"
+          ],
+          "timestamp": "2026-03-13T18:17:26.662Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "Now let me write the gap.md file with the identified gaps:",
+          "tools": [
+            "write"
+          ],
+          "timestamp": "2026-03-13T18:17:47.793Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "I have completed the task. Here's a summary:\n\n## Summary\n\n### Spec Written\nI created `/home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-965/spec.md` with 8 Feature Requirements:\n\n1. **FR-001**: Automatic Range Calculation by Default - graphs should auto-calculate visible range based on plotted content\n2. **FR-002**: Manual Range Override Mode - toggle to switch between auto and manual\n3. **FR-003**: Manual Range Input Fields - xMin, xMax, yMin, yMax inputs\n4. **FR-004**: Min-Max Validation - enforce min < max for both axes\n5. **FR-005**: Numeric Value Validation - only numeric values allowed\n6. **FR-006**: Empty Grid Warning - warn if range excludes all graphs\n7. **FR-007**: Frontend Rendering Integration - settings saved and rendered correctly\n8. **FR-008**: Viewport Schema Extension - add viewportMode field to schema\n\n### Gap Analysis\nFound **6 gaps** in the existing codebase:\n\n1. **Critical**: Missing `viewportMode` field in AxisSpecV1 schema (axis.v1.ts)\n2. **Critical**: No auto/manual toggle in AxisConfigPanel (admin UI)\n3. **High**: No Min < Max validation in input fields\n4. **High**: No numeric validation (current code silently converts to 0)\n5. **Medium**: No empty grid warning logic\n6. **High**: No automatic viewport calculation (hardcoded -10 to 10 defaults)\n\nThe spec was updated to address all gaps with specific requirements for each issue found.",
+          "tools": [],
+          "timestamp": "2026-03-13T18:18:24.544Z"
+        }
+      ]
+    },
+    {
+      "stage": "architect",
+      "sessionId": "ses_31793e941ffeM7TFEOzoQFKkY4",
+      "startedAt": "2026-03-13T18:18:43.774Z",
+      "messages": [
+        {
+          "role": "user",
+          "stage": "architect",
+          "text": "\"CRITICAL: This is a SPEC-ONLY pipeline. DO NOT create branches, commits, or pull requests. DO NOT modify any code files. Only read from and write to the /home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-965/ directory.\n\nTask ID: 260313-auto-965\n\n\nRead these files for context:\n- /home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-965/task.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-965/task.json\n\nWrite your output to /home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-965/gap.md\"",
+          "tools": [],
+          "timestamp": "2026-03-13T18:15:29.297Z",
+          "model": "{\"providerID\":\"minimax-coding-plan\",\"modelID\":\"MiniMax-M2.5\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T18:15:29.389Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now I need to explore the codebase to find the existing Graph Editor components and understand the patterns. Let me search for graph-related files.",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-13T18:15:52.219Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T18:16:02.743Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-13T18:16:14.750Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T18:16:37.457Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T18:16:39.996Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T18:16:49.151Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T18:17:01.935Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T18:17:10.525Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T18:17:15.092Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-13T18:17:23.953Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now I have a clear picture of the codebase. Let me write the spec.md and then identify the gaps.",
+          "tools": [
+            "write"
+          ],
+          "timestamp": "2026-03-13T18:17:26.662Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now let me write the gap.md file with the identified gaps:",
+          "tools": [
+            "write"
+          ],
+          "timestamp": "2026-03-13T18:17:47.793Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "I have completed the task. Here's a summary:\n\n## Summary\n\n### Spec Written\nI created `/home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-965/spec.md` with 8 Feature Requirements:\n\n1. **FR-001**: Automatic Range Calculation by Default - graphs should auto-calculate visible range based on plotted content\n2. **FR-002**: Manual Range Override Mode - toggle to switch between auto and manual\n3. **FR-003**: Manual Range Input Fields - xMin, xMax, yMin, yMax inputs\n4. **FR-004**: Min-Max Validation - enforce min < max for both axes\n5. **FR-005**: Numeric Value Validation - only numeric values allowed\n6. **FR-006**: Empty Grid Warning - warn if range excludes all graphs\n7. **FR-007**: Frontend Rendering Integration - settings saved and rendered correctly\n8. **FR-008**: Viewport Schema Extension - add viewportMode field to schema\n\n### Gap Analysis\nFound **6 gaps** in the existing codebase:\n\n1. **Critical**: Missing `viewportMode` field in AxisSpecV1 schema (axis.v1.ts)\n2. **Critical**: No auto/manual toggle in AxisConfigPanel (admin UI)\n3. **High**: No Min < Max validation in input fields\n4. **High**: No numeric validation (current code silently converts to 0)\n5. **Medium**: No empty grid warning logic\n6. **High**: No automatic viewport calculation (hardcoded -10 to 10 defaults)\n\nThe spec was updated to address all gaps with specific requirements for each issue found.",
+          "tools": [],
+          "timestamp": "2026-03-13T18:18:24.544Z"
+        },
+        {
+          "role": "user",
+          "stage": "architect",
+          "text": "\"Task ID: 260313-auto-965\n\n\nTask Type: implement_feature\n\n\nRead these files for context:\n- /home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-965/spec.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-965/clarified.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-965/rerun-feedback.md\n- /home/runner/work/A-Guy/A-Guy/.ai-docs/knowledge/index.json\n\nWrite your output to /home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-965/plan.md\"",
+          "tools": [],
+          "timestamp": "2026-03-13T18:18:43.883Z",
+          "model": "{\"providerID\":\"anthropic\",\"modelID\":\"claude-opus-4-6\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "I'll start by reading all the required context files and exploring the codebase.",
+          "tools": [
+            "read",
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T18:18:43.898Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now let me explore the codebase to verify paths and understand patterns:",
+          "tools": [
+            "read",
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T18:18:48.550Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "read",
+            "glob",
+            "glob"
+          ],
+          "timestamp": "2026-03-13T18:18:53.006Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T18:18:57.960Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now let me check the existing CSS for the admin editor and look at the geometry editor for any patterns I might need to follow:",
+          "tools": [
+            "read",
+            "glob"
+          ],
+          "timestamp": "2026-03-13T18:19:03.623Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T18:19:08.492Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now let me check for existing CSS patterns for validation/warning UI elements and understand the existing `panel-field` patterns:",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-13T18:19:12.379Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T18:19:17.050Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now let me also check the `vitest.config` and look at test patterns:",
+          "tools": [
+            "glob",
+            "read"
+          ],
+          "timestamp": "2026-03-13T18:19:19.888Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T18:19:24.016Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now let me check the geometry.v1 schema for comparison patterns (specifically for viewport/canvas config):",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T18:19:28.450Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now I have all the context I need. Let me check if there are any existing plan files from a previous run:",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-13T18:19:32.887Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Good — this is the first plan. Now I'll write the plan.md and context.md:",
+          "tools": [
+            "invalid"
+          ],
+          "timestamp": "2026-03-13T18:19:36.900Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T18:21:12.538Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T18:22:38.807Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now let me verify both files were written correctly:",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T18:23:05.890Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Both files are written. Here's a summary of the plan:\n\n## Plan Summary (6 Steps)\n\n1. **Step 1 — Schema Extension** (~10 min): Add `viewportMode: 'auto' | 'manual'` to `AxisSpecV1Schema` in `axis.v1.ts`. Backward compatible via `.default('auto').optional()`. Tests in existing `axis-spec.int.spec.ts`.\n\n2. **Step 2 — Viewport Utilities** (~25 min): Create `src/infra/utils/graphics/viewport-utils.ts` with 4 pure functions: `calculateAutoViewport`, `validateViewportRange`, `checkGraphVisibility`, `resolveViewport`. 10 unit tests covering all cases.\n\n3. **Step 3 — AxisConfigPanel UI** (~30 min): Major update to add auto/manual checkbox toggle, show/hide viewport fields, inline validation errors (min≥max, non-numeric), and empty-grid warning banner. New CSS classes for error/warning styling. 6 component tests.\n\n4. **Step 4 — Admin Canvas** (~10 min): Update `AxisCanvas.tsx` bbox computation to use `resolveViewport()` instead of hardcoded fallbacks.\n\n5. **Step 5 — Student Renderer** (~10 min): Update `AxisRenderer/index.tsx` boundingBox to use `resolveViewport()`. 3 component tests for manual/auto/backward-compat.\n\n6. **Step 6 — Quality Gates** (~5 min): Generate types, typecheck, lint, run all tests.",
+          "tools": [],
+          "timestamp": "2026-03-13T18:23:10.230Z"
+        }
+      ]
     }
   ]
 }
