@@ -18,9 +18,53 @@ import {
   createIssue,
   uploadIssueAttachment,
 } from '@/ui/cody/github-client'
-import type { CodyTask, ColumnId, GitHubIssue, GitHubPR, WorkflowRun } from '@/ui/cody/types'
+import type {
+  CodyTask,
+  ColumnId,
+  GitHubIssue,
+  GitHubPR,
+  WorkflowRun,
+  CodyPipelineStatus,
+} from '@/ui/cody/types'
 
-// Map GitHub issue state to column using agent labels, workflow runs, and PR status
+/**
+ * Derive column from live pipeline status.
+ * Pipeline state is more accurate than GitHub labels (no propagation delay).
+ * Called first when pipeline data is available; label-based fallback used otherwise.
+ */
+export function deriveColumnFromPipeline(pipeline: CodyPipelineStatus): ColumnId {
+  switch (pipeline.state) {
+    case 'running':
+      return 'building'
+    case 'paused':
+      return 'gate-waiting'
+    case 'completed':
+      return 'review'
+    case 'failed':
+    case 'timeout':
+      return 'failed'
+    default:
+      return 'building'
+  }
+}
+
+/**
+ * Derive gate type from pipeline controlMode, falling back to label names.
+ * Pipeline data is preferred since labels may lag by 10–30 s.
+ */
+export function deriveGateType(
+  pipeline?: CodyPipelineStatus | null,
+  labelNames?: string[],
+): 'hard-stop' | 'risk-gated' | undefined {
+  if (pipeline?.controlMode === 'hard-stop') return 'hard-stop'
+  if (pipeline?.controlMode === 'risk-gated') return 'risk-gated'
+  if (labelNames?.includes('hard-stop')) return 'hard-stop'
+  if (labelNames?.includes('risk-gated')) return 'risk-gated'
+  return undefined
+}
+
+// Map GitHub issue state to column using agent labels, workflow runs, and PR status.
+// Used as fallback when no live pipeline data is available.
 // Priority: cody:failed/done > gate labels > cody:planning/building > active runs > completed runs > PR > other labels
 function getColumnForIssue(
   issue: GitHubIssue,
@@ -198,14 +242,14 @@ export async function GET(req: NextRequest) {
           }
         }
 
-        const column = getColumnForIssue(issue, workflowRun ?? undefined, pr ?? null)
+        // Pipeline state is authoritative when available (no label-propagation delay).
+        // Fall back to label/workflow-based derivation when pipeline data is absent.
+        const column = pipelineStatus
+          ? deriveColumnFromPipeline(pipelineStatus)
+          : getColumnForIssue(issue, workflowRun ?? undefined, pr ?? null)
 
-        // Derive gate type from labels (set by pipeline)
-        const gateType = labelNames.includes('hard-stop')
-          ? 'hard-stop'
-          : labelNames.includes('risk-gated')
-            ? 'risk-gated'
-            : undefined
+        // Derive gate type: prefer pipeline controlMode, fall back to labels
+        const gateType = deriveGateType(pipelineStatus, labelNames)
 
         return {
           id: taskId ? `${taskId}-${issue.number}` : issue.number.toString(),
