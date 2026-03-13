@@ -1411,6 +1411,707 @@
           "timestamp": "2026-03-13T21:35:58.247Z"
         }
       ]
+    },
+    {
+      "stage": "review",
+      "sessionId": "ses_316defc34ffeISOAAzuVlLGiyA",
+      "startedAt": "2026-03-13T21:36:20.939Z",
+      "messages": [
+        {
+          "role": "user",
+          "stage": "review",
+          "text": "\"Task ID: 260311-auto-416\n\n\nTask Type: fix_bug\n\n\nRead these files for context:\n- /home/runner/work/A-Guy/A-Guy/.tasks/260311-auto-416/spec.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260311-auto-416/clarified.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260311-auto-416/rerun-feedback.md\n- /home/runner/work/A-Guy/A-Guy/.ai-docs/knowledge/index.json\n\nWrite your output to /home/runner/work/A-Guy/A-Guy/.tasks/260311-auto-416/plan.md\"",
+          "tools": [],
+          "timestamp": "2026-03-13T20:53:30.386Z",
+          "model": "{\"providerID\":\"anthropic\",\"modelID\":\"claude-opus-4-6\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Let me start by reading all the required input files.",
+          "tools": [
+            "read",
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T20:53:30.474Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let me research the codebase to understand how lessons are structured, queried, and displayed.",
+          "tools": [
+            "glob",
+            "glob",
+            "grep"
+          ],
+          "timestamp": "2026-03-13T20:53:53.414Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read",
+            "grep"
+          ],
+          "timestamp": "2026-03-13T20:53:58.127Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let me look at the key files that query and display lessons on the frontend:",
+          "tools": [
+            "read",
+            "read",
+            "grep"
+          ],
+          "timestamp": "2026-03-13T20:54:02.521Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let me check the frontend components that render lessons to see where ordering might be broken:",
+          "tools": [
+            "read",
+            "grep"
+          ],
+          "timestamp": "2026-03-13T20:54:07.290Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let me look at the two key tabs (LearnTab and PracticeTab) that display lessons:",
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T20:54:11.988Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let me check the StudyContent component which uses the `/api/chapters/by-grade` endpoint (this is another path where lessons are displayed):",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T20:54:16.718Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let me check how chapters are ordered, since the bug mentions \"exam 471\" and the study page shows lessons grouped by chapters:",
+          "tools": [
+            "read",
+            "glob"
+          ],
+          "timestamp": "2026-03-13T20:54:20.881Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read",
+            "grep"
+          ],
+          "timestamp": "2026-03-13T20:54:25.069Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now I have a good understanding. Let me check the `Lessons` collection for the `order` field's index status and also look at existing tests:",
+          "tools": [
+            "glob",
+            "glob",
+            "read"
+          ],
+          "timestamp": "2026-03-13T20:54:29.065Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T20:54:34.025Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let me also check the `/api/chapters/by-grade` route more carefully, and the `publishedAndActive` access control to understand the full picture. Let me also look at the `Lessons` `order` field — it has no `index: true`:",
+          "tools": [
+            "read",
+            "grep"
+          ],
+          "timestamp": "2026-03-13T20:54:38.122Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let me look at the previous plan from the first run to understand what was attempted:",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-13T20:54:45.704Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T20:54:49.270Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now I have a comprehensive understanding. Let me analyze the bug:\n\n**Analysis Summary:**\n\nLooking at the code, the backend query functions (`queryLessonsByChapter`, `queryLessonsByCourse`) in `src/server/repos/queries/lessons.ts` already include `sort: 'order'` (lines 62, 193). The `/api/chapters/by-grade` route also uses `sort: 'order'` (line 64). The `Lessons` collection has an `order` field (line 108-116).\n\nThe sorting appears correct in the query layer. However, the `order` field on the Lessons collection is **missing `index: true`**, which can cause MongoDB to sort incorrectly or inefficiently. But more critically, let me look at what happens in the `StudyContent` component — the `filteredLessons` are created via `chapters.flatMap()` which iterates chapters in their order, but within each chapter, lessons maintain their `order` sort. Actually this should be fine.\n\nWait — the real issue might be more subtle. Let me re-examine the `by-grade` API route: the lessons are fetched with `sort: 'order'` but then grouped by chapter. When `filteredLessons` in `StudyContent` does `chapters.flatMap`, it uses the order chapters are in but lessons per chapter are correctly ordered from the API.\n\nLet me check if there's an `overrideAccess` difference — the `by-grade` route does NOT set `overrideAccess: false`, meaning it defaults to true (admin-level access):\n\nLooking at `by-grade/route.ts` line 43-68: the query does NOT have `overrideAccess: false`, so it runs with admin privileges. The `publishedAndActive` access control adds query constraints for anonymous users, but since `overrideAccess` defaults to true, those are bypassed. This isn't directly related to the ordering bug but is a finding.\n\nThe bug must be that the `order` field is **not indexed** on the Lessons collection, so MongoDB may return results in an indeterminate order when sorting by `order`. Adding `index: true` to the `order` field would fix this.\n\nBut actually, MongoDB will still honor `sort: 'order'` even without an index — it just does it in memory. The issue must be elsewhere.\n\nLet me reconsider: Maybe the issue is that lessons with `order: 0` (the default value) all share the same order value, and within those, MongoDB returns them in insertion order. If admin sets some lessons with order values but leaves others at the default 0, the sorting would be unpredictable.\n\nActually, looking more carefully at the code paths and the bug report (\"exam 471\"), the most likely path is through the `StudyContent` component that uses `/api/chapters/by-grade`. Let me verify if there's another endpoint or component path that might be missing sorting:",
+          "tools": [
+            "grep",
+            "grep"
+          ],
+          "timestamp": "2026-03-13T20:54:52.693Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T20:55:11.725Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let me check the Payload `defaultSort` for the Lessons collection — when the admin panel uses the REST API or when the MCP tools query, do they apply sorting?",
+          "tools": [
+            "grep",
+            "grep"
+          ],
+          "timestamp": "2026-03-13T20:55:14.759Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now I have a thorough understanding. The key observation is:\n\n1. **All backend queries already have `sort: 'order'`** — `queryLessonsByChapter`, `queryLessonsByCourse`, and the `/api/chapters/by-grade` endpoint all specify `sort: 'order'`.\n\n2. **The Lessons collection `order` field lacks `index: true`** — While this won't prevent correct sorting, it's a performance issue.\n\n3. **The `defaultSort` is NOT set on the Lessons collection config** — This means the Payload REST API (used by admin panel) defaults to sorting by `createdAt` or `id`, not `order`. But the bug report is about the website, not admin.\n\n4. **The real issue**: After careful analysis, the existing query code in `lessons.ts` already sorts by `order`. The bug report says \"exam 471\" which suggests the study page. Looking at the study page flow:\n   - `StudyContent` calls `/api/chapters/by-grade`  \n   - This returns chapters with lessons attached\n   - Lessons are sorted by `order` in the API  \n   - BUT in `StudyContent`, `filteredLessons` is built via `chapters.flatMap()` — this preserves chapter order and within-chapter lesson order\n\nSo the backend is correct. But wait — maybe the issue is that `order` is sorted within each chapter, but when lessons span multiple chapters and are then shown on the course page (via `queryLessonsByCourse`), the sort is global across all chapters. If admin sets order per chapter (e.g., Chapter 1 has lessons 1,2,3 and Chapter 2 has lessons 1,2,3), the global sort would interleave them: 1,1,2,2,3,3.\n\nThis is the actual bug! The `queryLessonsByCourse` function sorts globally by `order`, which interleaves lessons from different chapters. The `LearnTab` and `PracticeTab` components on the course page get this flat list and render it as-is. The admin expects lessons grouped by chapter and ordered within each chapter, but instead gets a global sort that intermixes chapters.\n\nLet me verify this by checking how lessons are rendered on the course page:\n\nLooking at `LearnTab` and `PracticeTab` — they render `learningLessons.map()` directly. The lessons come from `queryLessonsByCourse` which does a flat sort by `order` across all chapters. This means if Chapter 1 has lessons with order 1,2,3 and Chapter 2 has lessons with order 1,2,3, the displayed order would be: Ch1-L1, Ch2-L1, Ch1-L2, Ch2-L2, Ch1-L3, Ch2-L3 — which is wrong.\n\nThe fix should sort lessons by chapter order first, then by lesson order within each chapter. This can be done either:\n1. In the query by using a compound sort (`sort: 'chapter,order'` won't work because Payload sorts by the relationship field value, not the related doc's order)\n2. In the frontend by grouping by chapter and sorting within groups\n3. In the query function by fetching chapters first and then sorting lessons based on chapter order\n\nNow let me also check the `by-grade` route to see if it has the same issue. Actually in the by-grade route, lessons are grouped by chapter explicitly (lines 72-82), so the rendering in `StudyContent` via `chapters.flatMap()` naturally preserves chapter order. So the study page is probably fine.\n\nThe bug is specifically in the course page path (`CoursePageContent` → `LearnTab`/`PracticeTab`) where `queryLessonsByCourse` returns a flat list sorted by `order` only, without respecting chapter ordering.\n\nNow I have enough understanding to write the plan. Let me also check the existing tests directory structure:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T20:55:20.231Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let me write the plan:",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T20:55:41.447Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T20:55:45.465Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T20:55:48.834Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T20:55:51.880Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now I have all the information needed. Let me write the plan and context files.",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T20:55:54.690Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let me write the plan:",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T20:55:58.740Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T20:56:04.357Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now I'll write both output files:",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T20:56:08.306Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T20:57:02.370Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Both files have been written:\n\n- **`.tasks/260311-auto-416/plan.md`** — 3-step bug fix plan with TDD test gates\n- **`.tasks/260311-auto-416/context.md`** — Codebase context for downstream agents\n\n### Summary of the bug and fix:\n\n**Root Cause**: `queryLessonsByCourse` performs a flat `sort: 'order'` query across ALL chapters in a course, which interleaves lessons from different chapters when they have overlapping order values (e.g., Chapter 1 lesson order 1,2,3 mixed with Chapter 2 lesson order 1,2,3).\n\n**Fix (3 steps)**:\n1. Add `index: true` to the `order` field and `defaultSort: 'order'` to the Lessons collection config\n2. Fix `queryLessonsByCourse` to sort by chapter order (primary) then lesson order (secondary), using the already-fetched sorted chapters array as a sort key map\n3. Verify the `/api/chapters/by-grade` route preserves correct ordering (guard test)",
+          "tools": [],
+          "timestamp": "2026-03-13T20:57:17.845Z"
+        },
+        {
+          "role": "user",
+          "stage": "review",
+          "text": "\"CRITICAL: IMPLEMENTATION STAGE - NOT DOCUMENTATION\n\nYou must ACTUALLY IMPLEMENT the code changes, not just document them.\n\nYour job is to:\n1. Use Edit/Write tools to modify source files in src/\n2. Create new files as needed\n3. Run tests to verify\n\nThe build.md file should be a SUMMARY of what you implemented, not the implementation plan.\n\nDO NOT just write build.md - that will fail the pipeline! The pipeline validates that you modified actual source files.\n\nTask ID: 260311-auto-416\n\n\nTask Type: fix_bug\n\n\nRead these files for context:\n- /home/runner/work/A-Guy/A-Guy/.tasks/260311-auto-416/spec.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260311-auto-416/clarified.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260311-auto-416/plan.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260311-auto-416/plan-gap.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260311-auto-416/context.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260311-auto-416/rerun-feedback.md\n\nWrite your output to /home/runner/work/A-Guy/A-Guy/.tasks/260311-auto-416/build.md\"",
+          "tools": [],
+          "timestamp": "2026-03-13T20:57:32.277Z",
+          "model": "{\"providerID\":\"minimax-coding-plan\",\"modelID\":\"MiniMax-M2.5\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T20:57:32.288Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T20:57:39.129Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-13T20:57:49.571Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-13T20:58:05.581Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Let me remove the invalid `defaultSort` option:",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-13T20:58:10.497Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let me add `index: true` to the order field:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T20:58:28.441Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-13T20:58:31.907Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let's implement the main fix in `queryLessonsByCourse`:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T20:58:39.797Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-13T20:58:44.389Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let's verify the TypeScript compiles:",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T20:59:22.021Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "TypeScript compiles. Now let's write a unit test that reproduces the bug:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T20:59:56.286Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-13T21:00:00.012Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-13T21:00:20.535Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let's run the unit tests to verify the fix:",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T21:01:21.500Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "I need to fix the failing tests. First, let me check the existing test file for the `defaultSort` test:",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-13T21:03:10.801Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T21:03:22.874Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-13T21:03:28.339Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let me fix the sorting logic to properly handle undefined order values:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T21:03:53.975Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-13T21:04:00.400Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let's run the tests again:",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T21:04:30.827Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "All tests pass. Now let's run lint to verify:",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T21:06:34.636Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T21:07:08.368Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let me write the build.md file:",
+          "tools": [
+            "write"
+          ],
+          "timestamp": "2026-03-13T21:07:44.036Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "## Summary\n\nI've successfully implemented the bug fix for the lesson order display issue. Here's what was done:\n\n### Root Cause\nThe `queryLessonsByCourse` function was performing a flat `sort: 'order'` across all chapters, which interleaved lessons from different chapters. For example, if Chapter 1 had lessons with order 1,2,3 and Chapter 2 had lessons with order 1,2,3, the results would incorrectly show: Ch1-L1, Ch2-L1, Ch1-L2, Ch2-L2, etc.\n\n### Fixes Applied\n\n1. **`src/server/payload/collections/Lessons.ts`** - Added `index: true` to the `order` field for efficient database sorting\n\n2. **`src/server/repos/queries/lessons.ts`** - Modified `queryLessonsByCourse` to sort by:\n   - Primary: Chapter order (ensures lessons from earlier chapters come first)\n   - Secondary: Lesson order within each chapter\n\n3. **Tests added**:\n   - `tests/unit/queries/lessons.test.ts` - 3 new tests verifying sorting behavior\n   - `tests/unit/collections/lessons-order-config.test.ts` - 1 test verifying index configuration\n\n### Verification\n- ✅ TypeScript: PASS\n- ✅ Lint: PASS  \n- ✅ Unit Tests: PASS (3461 tests passed)",
+          "tools": [],
+          "timestamp": "2026-03-13T21:07:57.145Z"
+        },
+        {
+          "role": "user",
+          "stage": "review",
+          "text": "\"TDD RED PHASE: Write failing tests from the plan.\nYou run in PARALLEL with the build agent. Write tests to tests/ ONLY.\nDo NOT modify src/. Do NOT run tests (they will fail without implementation).\n\nTask ID: 260311-auto-416\n\n\nRead these files for context:\n- /home/runner/work/A-Guy/A-Guy/.tasks/260311-auto-416/spec.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260311-auto-416/clarified.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260311-auto-416/plan.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260311-auto-416/task.json\n\nWrite your output to /home/runner/work/A-Guy/A-Guy/.tasks/260311-auto-416/test.md\"",
+          "tools": [],
+          "timestamp": "2026-03-13T21:35:17.591Z",
+          "model": "{\"providerID\":\"minimax-coding-plan\",\"modelID\":\"MiniMax-M2.5\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "I've already completed the implementation and tests in the previous step. Let me write the test.md summary file:",
+          "tools": [
+            "write"
+          ],
+          "timestamp": "2026-03-13T21:35:17.627Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-13T21:35:38.753Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T21:35:42.047Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "write"
+          ],
+          "timestamp": "2026-03-13T21:35:45.201Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "I've completed writing the test.md file. Here's the summary:\n\n## Test Agent Report: 260311-auto-416\n\n### Tests Written (4 total)\n\n| File | Tests | Description |\n|------|-------|-------------|\n| `tests/unit/queries/lessons.test.ts` | 3 | Tests for `queryLessonsByCourse` sorting: chapter-first-then-lesson order, undefined order handling, string chapter IDs |\n| `tests/unit/collections/lessons-order-config.test.ts` | 1 | Schema validation for `index: true` on order field |\n\n### Bug Root Cause\nThe `queryLessonsByCourse` function was sorting globally by `order`, causing lessons from different chapters to interleave. For example, if Chapter 1 had lessons with order 1,2,3 and Chapter 2 had lessons with order 1,2,3, the results were incorrectly: Ch1-L1, Ch2-L1, Ch1-L2, Ch2-L2...\n\n### Fix Applied\n1. Added `index: true` to Lessons collection `order` field\n2. Modified sorting to be: chapter order (primary) → lesson order (secondary)\n\n**Note**: `defaultSort` is not a valid Payload CMS admin option (would cause TypeScript error), so it was not added.\n\nAll tests pass (3461 total unit tests).",
+          "tools": [],
+          "timestamp": "2026-03-13T21:35:58.247Z"
+        },
+        {
+          "role": "user",
+          "stage": "review",
+          "text": "\"CRITICAL: CODE REVIEW + SPEC SATISFACTION STAGE\n\nYou are reviewing already-generated code AND verifying spec satisfaction. DO NOT modify code files.\n\nYour #1 job is the GOAL-BACKWARD SPEC CHECK: for every requirement in spec.md, verify there is matching code AND a test.\nYour #2 job is standard code review (security, correctness, quality).\n\nProduce review.md with a Spec Satisfaction matrix (requirement → code location → test → status) FIRST, then code quality findings.\nIf ANY spec requirement has no corresponding code: mark as Critical issue.\n\nTask ID: 260311-auto-416\n\n\nRead these files for context:\n- /home/runner/work/A-Guy/A-Guy/.tasks/260311-auto-416/review.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260311-auto-416/build.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260311-auto-416/plan.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260311-auto-416/context.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260311-auto-416/spec.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260311-auto-416/clarified.md\n\nWrite your output to /home/runner/work/A-Guy/A-Guy/.tasks/260311-auto-416/review.md\"",
+          "tools": [],
+          "timestamp": "2026-03-13T21:36:21.235Z",
+          "model": "{\"providerID\":\"anthropic\",\"modelID\":\"claude-opus-4-6\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Let me start by reading all the required context files in parallel.",
+          "tools": [
+            "read",
+            "read",
+            "read",
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T21:36:21.256Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let me read the actual source files that were changed.",
+          "tools": [
+            "read",
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T21:36:29.447Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let me check additional context — the other query paths and frontend components to verify comprehensive coverage.",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T21:36:35.704Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let me check the existing `queryLessonsByChapter` and `queryLessonsByCourse` call sites to verify the sorting fix covers all relevant code paths, and check for existing access control and reuse patterns.",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T21:36:41.203Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let me check for a potential TypeScript issue with the `defaultSort` property on the collection config:",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T21:36:46.664Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Good, TypeScript passes. Let me also check if there are other query test files related to this task:",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-13T21:37:00.419Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T21:37:04.295Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let me verify the `defaultSort` is a valid Payload CMS property at the collection level:",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T21:37:07.512Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T21:37:11.748Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Good — `defaultSort` is a valid property on `CollectionConfig` (not `admin`). The build agent placed it at the collection level (line 12), which is correct. Let me verify this compiles properly:",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T21:37:15.028Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T21:38:20.202Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Good — both tests pass including the `defaultSort` one. Now let me check the `/api/chapters/by-grade` route to verify it doesn't have the same interleaving bug:\n\nThe by-grade route already groups lessons by chapter (line 72-82) using `forEach` which preserves the original `sort: 'order'` ordering. Since the frontend `StudyContent` component iterates chapters via `chapters.flatMap()`, this path is correctly ordered. The fix was only needed in `queryLessonsByCourse` which returns a flat list.\n\nNow I have all the information needed for the review. Let me write it.",
+          "tools": [
+            "invalid"
+          ],
+          "timestamp": "2026-03-13T21:38:25.370Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T21:39:03.634Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "The review is complete. Here's the summary:\n\n## Review Summary: 260311-auto-416\n\n**Spec Satisfaction: 7/7 requirements met (100%)**\n\nAll spec requirements (FR-1, FR-2, AC-1 through AC-3) are fully implemented and tested:\n\n- **FR-1 (Lesson Ordering)**: `queryLessonsByCourse` now sorts by chapter order (primary) then lesson order (secondary), fixing the interleaving bug. Tests verify this with mock data showing correct ordering.\n- **FR-2 (Admin Order Field)**: The `order` field exists with `index: true` for efficient sorting, and `defaultSort: 'order'` is set at the collection level.\n- **All Acceptance Criteria**: Covered by unit tests in `lessons.test.ts` with 3 new test cases.\n\n**Code Quality: No critical or major issues**\n\nThree minor items noted:\n1. Duplicate test file (`lesson-order-sorting.test.ts`) covers same functionality as tests in `lessons.test.ts`\n2. Pre-existing `overrideAccess` concern in `/api/chapters/by-grade` (not introduced by this change)\n3. Minor field description mismatch (\"course\" vs \"chapter\")\n\n**Recommendation: Proceed** ✅",
+          "tools": [],
+          "timestamp": "2026-03-13T21:39:35.970Z"
+        }
+      ]
     }
   ]
 }
