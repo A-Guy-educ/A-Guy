@@ -223,6 +223,7 @@
         "src/ui/cody/hooks/useGitHubIdentity.ts",
         "src/ui/cody/hooks/usePRCIStatus.ts",
         "src/ui/cody/hooks/usePublish.ts",
+        "src/ui/cody/hooks/useRemoteStatus.ts",
         "src/ui/web/AdminBar/index.tsx",
         "src/ui/web/Card/index.tsx",
         "src/ui/web/CommandPalette.tsx",
@@ -607,6 +608,8 @@
         "src/app/api/cody/prs/route.ts",
         "src/app/api/cody/prs/status/route.ts",
         "src/app/api/cody/publish/route.ts",
+        "src/app/api/cody/remote/exec/route.ts",
+        "src/app/api/cody/remote/status/route.ts",
         "src/app/api/cody/tasks/[taskId]/actions/route.ts",
         "src/app/api/cody/tasks/[taskId]/docs/route.ts",
         "src/app/api/cody/tasks/[taskId]/route.ts",
@@ -717,6 +720,16 @@
       "pattern": "publish",
       "description": "No description available",
       "files": ["src/app/api/cody/publish/route.ts"]
+    },
+    "proxy-endpoint": {
+      "pattern": "proxy-endpoint",
+      "description": "No description available",
+      "files": ["src/app/api/cody/remote/exec/route.ts"]
+    },
+    "health-check": {
+      "pattern": "health-check",
+      "description": "No description available",
+      "files": ["src/app/api/cody/remote/status/route.ts"]
     },
     "task-actions-api": {
       "pattern": "task-actions-api",
@@ -1597,7 +1610,7 @@
     "custom-hooks": {
       "pattern": "custom-hooks",
       "description": "No description available",
-      "files": ["src/ui/cody/hooks/index.ts"]
+      "files": ["src/ui/cody/hooks/index.ts", "src/ui/cody/hooks/useRemoteStatus.ts"]
     },
     "browser-notifications": {
       "pattern": "browser-notifications",
@@ -1618,6 +1631,11 @@
       "pattern": "usePublish",
       "description": "No description available",
       "files": ["src/ui/cody/hooks/usePublish.ts"]
+    },
+    "config": {
+      "pattern": "config",
+      "description": "No description available",
+      "files": ["src/ui/cody/remote-config.ts"]
     },
     "task-parser": {
       "pattern": "task-parser",
@@ -2565,6 +2583,22 @@
       "patterns": ["publish", "api-endpoint"],
       "aiSummary": "Create a GitHub issue with 'publish' label to trigger dev→main PR workflow",
       "dependencies": ["next/server", "@octokit/rest"]
+    },
+    "src/app/api/cody/remote/exec/route.ts": {
+      "path": "src/app/api/cody/remote/exec/route.ts",
+      "type": "api-endpoint",
+      "domain": "cody",
+      "patterns": ["proxy-endpoint", "api-endpoint"],
+      "aiSummary": "Proxy endpoint that forwards exec/read/write/ls actions to the remote dev agent",
+      "dependencies": ["next/server"]
+    },
+    "src/app/api/cody/remote/status/route.ts": {
+      "path": "src/app/api/cody/remote/status/route.ts",
+      "type": "api-endpoint",
+      "domain": "cody",
+      "patterns": ["health-check", "api-endpoint"],
+      "aiSummary": "Health check for the remote dev agent — returns online/offline status",
+      "dependencies": ["next/server"]
     },
     "src/app/api/cody/tasks/[taskId]/actions/route.ts": {
       "path": "src/app/api/cody/tasks/[taskId]/actions/route.ts",
@@ -4932,12 +4966,28 @@
       "aiSummary": "Hook for publishing dev to production (creates issue with publish label)",
       "dependencies": ["@tanstack/react-query", "sonner"]
     },
+    "src/ui/cody/hooks/useRemoteStatus.ts": {
+      "path": "src/ui/cody/hooks/useRemoteStatus.ts",
+      "type": "hooks",
+      "domain": "cody",
+      "patterns": ["custom-hooks", "client-component"],
+      "aiSummary": "React Query hook for polling remote dev agent status",
+      "dependencies": ["@tanstack/react-query"]
+    },
     "src/ui/cody/pipeline-utils.ts": {
       "path": "src/ui/cody/pipeline-utils.ts",
       "type": "utility",
       "domain": "cody",
       "patterns": ["pipeline-progress"],
       "aiSummary": "Shared pipeline progress utilities — stage labels, progress calculation, elapsed formatting, tooltips",
+      "dependencies": []
+    },
+    "src/ui/cody/remote-config.ts": {
+      "path": "src/ui/cody/remote-config.ts",
+      "type": "utility",
+      "domain": "cody",
+      "patterns": ["config"],
+      "aiSummary": "Parses REMOTE_DEV_USERS env var to enable per-user remote dev agent access",
       "dependencies": []
     },
     "src/ui/cody/task-parser.ts": {
@@ -5907,8 +5957,8 @@
     }
   },
   "metadata": {
-    "generatedAt": "2026-03-13T19:43:59.651Z",
-    "totalFiles": 523,
-    "totalPatterns": 177
+    "generatedAt": "2026-03-13T21:00:01.120Z",
+    "totalFiles": 527,
+    "totalPatterns": 180
   }
 }

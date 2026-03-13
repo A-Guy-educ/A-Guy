@@ -308,6 +308,21 @@
       "wordCount": 575
     },
     {
+      "path": "scripts/remote-agent/README.md",
+      "title": "Remote Dev Agent",
+      "sections": [
+        "Architecture",
+        "Setup",
+        "npm Scripts",
+        "Endpoints",
+        "Security",
+        "Environment Variables (Remote Mac)"
+      ],
+      "relativeUrl": "scripts/remote-agent/README.md",
+      "category": "scripts",
+      "wordCount": 350
+    },
+    {
       "path": "docs/self-growing-pipeline/README.md",
       "title": "Self-Growing Pipeline",
       "sections": [
@@ -564,8 +579,8 @@
     }
   ],
   "metadata": {
-    "generatedAt": "2026-03-13T17:05:58.024Z",
-    "totalReadmes": 33,
+    "generatedAt": "2026-03-13T21:00:01.189Z",
+    "totalReadmes": 34,
     "categories": {
       ".claude": 1,
       "root": 1,
@@ -582,7 +597,7 @@
       "features": 1,
       "self-growing-pipeline": 1,
       "eslint-plugin-aguy": 1,
-      "scripts": 3,
+      "scripts": 4,
       "src/app": 1,
       "src/client": 1,
       "src/infra": 3,
