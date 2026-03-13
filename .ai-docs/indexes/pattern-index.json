@@ -217,6 +217,7 @@
         "src/ui/cody/components/TaskDetail.tsx",
         "src/ui/cody/components/TaskDetailDialog.tsx",
         "src/ui/cody/components/TaskList.tsx",
+        "src/ui/cody/components/WorkflowRunsPopover.tsx",
         "src/ui/cody/hooks/index.ts",
         "src/ui/cody/hooks/useBrowserNotifications.ts",
         "src/ui/cody/hooks/useGitHubIdentity.ts",
@@ -389,6 +390,7 @@
         "src/ui/cody/components/TaskDetail.tsx",
         "src/ui/cody/components/TaskList.tsx",
         "src/ui/cody/components/TaskTypeBadge.tsx",
+        "src/ui/cody/components/WorkflowRunsPopover.tsx",
         "src/ui/cody/utils.ts",
         "src/ui/web/AdminBar/index.tsx",
         "src/ui/web/Card/index.tsx",
@@ -1576,6 +1578,11 @@
       "pattern": "task-list",
       "description": "No description available",
       "files": ["src/ui/cody/components/TaskList.tsx"]
+    },
+    "popover": {
+      "pattern": "popover",
+      "description": "No description available",
+      "files": ["src/ui/cody/components/WorkflowRunsPopover.tsx"]
     },
     "tooltip-content": {
       "pattern": "tooltip-content",
@@ -4853,6 +4860,14 @@
       "aiSummary": "Task type badge",
       "dependencies": []
     },
+    "src/ui/cody/components/WorkflowRunsPopover.tsx": {
+      "path": "src/ui/cody/components/WorkflowRunsPopover.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["popover", "tailwind-component", "client-component"],
+      "aiSummary": "Popover pill listing all workflow runs for a task with status icon, relative time, branch, and external link",
+      "dependencies": ["react", "lucide-react"]
+    },
     "src/ui/cody/components/tooltip-content.tsx": {
       "path": "src/ui/cody/components/tooltip-content.tsx",
       "type": "component",
@@ -5892,8 +5907,8 @@
     }
   },
   "metadata": {
-    "generatedAt": "2026-03-13T18:59:20.790Z",
-    "totalFiles": 522,
-    "totalPatterns": 176
+    "generatedAt": "2026-03-13T19:19:09.807Z",
+    "totalFiles": 523,
+    "totalPatterns": 177
   }
 }
