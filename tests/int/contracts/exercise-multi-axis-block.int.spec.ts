@@ -75,9 +75,7 @@ describe('QuestionMultiAxisBlockSchema', () => {
     const multiAxisBlock = {
       id: 'ma1',
       type: 'question_multi_axis',
-      graphs: [
-        { id: 'g1', label: '', axis: createValidAxisSpec(), order: 1 },
-      ],
+      graphs: [{ id: 'g1', label: '', axis: createValidAxisSpec(), order: 1 }],
     }
     expect(() => ContentBlockSchema.parse(multiAxisBlock)).toThrow()
   })
@@ -87,9 +85,7 @@ describe('QuestionMultiAxisBlockSchema', () => {
       id: 'ma1',
       type: 'question_multi_axis',
       textPosition: 'below',
-      graphs: [
-        { id: 'g1', label: 'גרף 1', axis: createValidAxisSpec(), order: 1 },
-      ],
+      graphs: [{ id: 'g1', label: 'גרף 1', axis: createValidAxisSpec(), order: 1 }],
     }
     expect(() => ContentBlockSchema.parse(multiAxisBlock)).not.toThrow()
   })
@@ -98,9 +94,7 @@ describe('QuestionMultiAxisBlockSchema', () => {
     const multiAxisBlock = {
       id: 'ma1',
       type: 'question_multi_axis',
-      graphs: [
-        { id: 'g1', label: 'גרף 1', axis: createValidAxisSpec(), order: 1 },
-      ],
+      graphs: [{ id: 'g1', label: 'גרף 1', axis: createValidAxisSpec(), order: 1 }],
     }
     expect(() => ContentBlockSchema.parse(multiAxisBlock)).not.toThrow()
   })
