@@ -79,6 +79,8 @@ export const Media: CollectionConfig = {
       'application/vnd.openxmlformats-officedocument.presentationml.presentation',
       'text/*',
       'application/x-tex',
+      'application/x-latex',
+      'application/octet-stream',
       '.tex',
     ],
     // NOTE: imageSizes disabled - causes issues with Vercel Blob plugin
