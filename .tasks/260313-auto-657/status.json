@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-13T15:02:29.939Z",
-  "updatedAt": "2026-03-13T15:06:25.223Z",
+  "updatedAt": "2026-03-13T15:11:06.822Z",
   "state": "running",
   "cursor": null,
   "stages": {
@@ -36,11 +36,23 @@
       "sessionId": "ses_318460a90ffeMGIkwypztHDesc"
     },
     "build": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-13T15:06:25.147Z",
+      "completedAt": "2026-03-13T15:10:36.367Z",
+      "outputFile": "build.md",
+      "tokenUsage": {
+        "input": 32954,
+        "output": 2716,
+        "cacheRead": 1000365
+      },
+      "sessionId": "ses_31843f4b1ffeMvxhaH37weG1tZ"
+    },
+    "commit": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-13T15:06:25.147Z"
+      "startedAt": "2026-03-13T15:11:06.822Z"
     }
   },
-  "issueNumber": 738,
-  "branchName": "fix/260313-auto-738-lesson-introduction-container-is-t"
+  "issueNumber": 738
 }
