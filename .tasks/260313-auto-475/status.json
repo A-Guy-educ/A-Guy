@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-13T18:06:15.381Z",
-  "updatedAt": "2026-03-13T19:48:45.450Z",
+  "updatedAt": "2026-03-13T20:33:24.545Z",
   "state": "running",
   "cursor": "gap",
   "stages": {
@@ -52,8 +52,26 @@
       "state": "skipped",
       "retries": 0,
       "skipped": "Complexity 45 (complex) below threshold 50 for plan-gap"
+    },
+    "test": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-13T20:03:43.909Z",
+      "outputFile": "test.md",
+      "sessionId": "ses_3174175e7ffeTpeNyuwxTjDhye"
+    },
+    "build": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-13T20:03:43.909Z",
+      "outputFile": "build.md",
+      "sessionId": "ses_3174174dfffeN2alkuCAwKsCLU"
+    },
+    "commit": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-13T20:33:24.545Z"
     }
   },
-  "issueNumber": 780,
-  "branchName": "feat/260313-auto-780-control-graph-display-size-in-exer"
+  "issueNumber": 780
 }
