@@ -1,0 +1,21 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "low",
+  "confidence": 1,
+  "primary_domain": "backend",
+  "scope": [
+    "src/infra/utils/greet.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [],
+  "review_questions": [],
+  "complexity": 3,
+  "complexity_reasoning": "Scope: 3 (single file, ~10 lines). Risk: 3 (simple utility, no security concerns). Novelty: 3 (basic function pattern). Cross-domain: 0 (single domain). Ambiguity: 0 (crystal clear). Dependencies: 0 (self-contained). Total: 9",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Task specifies exact file path (src/infra/utils/greet.ts), function signature (greet(name: string): string), return format (Hello, ${name}!), and requirements (JSDoc, TypeScript types). Clear and actionable."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}
