@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-13T18:06:56.723Z",
-  "updatedAt": "2026-03-13T18:23:24.579Z",
+  "updatedAt": "2026-03-13T18:45:15.311Z",
   "state": "running",
   "cursor": "gap",
   "stages": {
@@ -52,8 +52,26 @@
       "state": "skipped",
       "retries": 0,
       "skipped": "Complexity 44 (complex) below threshold 50 for plan-gap"
+    },
+    "test": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-13T18:43:24.534Z",
+      "outputFile": "test.md",
+      "sessionId": "ses_3178f94a7ffeR0z1REb3hgMIwr"
+    },
+    "build": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-13T18:43:24.534Z",
+      "outputFile": "build.md",
+      "sessionId": "ses_3178f9624ffew4bGup5FLk5LDB"
+    },
+    "commit": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-13T18:45:15.311Z"
     }
   },
-  "issueNumber": 777,
-  "branchName": "feat/260313-auto-777-configure-graph-display-range-x-an"
+  "issueNumber": 777
 }
