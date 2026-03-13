@@ -21,6 +21,7 @@ import { CommentList } from './CommentList'
 import { AssigneePicker, type AssigneeChangeEvent } from './AssigneePicker'
 import { MergeButton } from './MergeButton'
 import { SimpleTooltip } from './SimpleTooltip'
+import { WorkflowRunsPopover } from './WorkflowRunsPopover'
 import { Button } from '@/ui/web/components/button'
 import { Badge } from '@/ui/web/components/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/ui/web/components/avatar'
@@ -31,7 +32,6 @@ import {
   GitPullRequest,
   ExternalLink,
   Clock,
-  Play,
   CheckCircle,
   XCircle,
   AlertTriangle,
@@ -973,16 +973,7 @@ export function TaskDetail({
         </a>
       )}
       {task.workflowRun && (
-        <a
-          href={task.workflowRun.html_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/[0.08] text-zinc-300 hover:bg-white/[0.12] hover:text-white transition-all duration-150 shrink-0 border border-white/[0.1]"
-        >
-          <Play className="w-3 h-3" />
-          Workflow
-        </a>
+        <WorkflowRunsPopover taskTitle={task.title} fallbackRun={task.workflowRun} />
       )}
       {task.associatedPR && onOpenPreview && (
         <button
@@ -1414,29 +1405,29 @@ export function TaskDetail({
             PR #{task.associatedPR.number}
           </a>
         )}
-        {task.previewUrl && (
-          <SimpleTooltip
-            content={
-              <div className="space-y-1">
-                <p className="text-xs font-semibold">🔗 Preview Available</p>
-                <p className="text-xs text-muted-foreground">
-                  Click to open the deployed preview in a new tab
-                </p>
-              </div>
-            }
-            side="bottom"
+        {task.associatedPR && onOpenPreview && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onOpenPreview()
+            }}
+            className="h-9 inline-flex items-center gap-1.5 px-3 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors shrink-0 cursor-pointer"
           >
-            <a
-              href={task.previewUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="h-9 inline-flex items-center gap-1.5 px-3 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors shrink-0"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              Preview
-            </a>
-          </SimpleTooltip>
+            <Eye className="w-3.5 h-3.5" />
+            Preview
+          </button>
+        )}
+        {task.previewUrl && (
+          <a
+            href={task.previewUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="h-9 inline-flex items-center gap-1.5 px-3 rounded-full text-xs font-medium bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shrink-0"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            Deploy
+          </a>
         )}
 
         {/* Spacer */}

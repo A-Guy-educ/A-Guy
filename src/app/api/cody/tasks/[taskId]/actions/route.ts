@@ -19,7 +19,7 @@ import {
   addLabels,
   removeLabel,
   closePR,
-  findAssociatedPR,
+  findAssociatedPRByIssueNumber,
   findTaskBranch,
   deleteBranch,
   clearCache,
@@ -132,7 +132,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
 
       case 'close': {
         // Close PR if exists
-        const pr = await findAssociatedPR(taskId)
+        const pr = await findAssociatedPRByIssueNumber(issueNumber)
         if (pr) {
           await closePR(pr.number)
         }
@@ -163,7 +163,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
 
       case 'close-pr': {
         // Find the associated PR for this task
-        const pr = await findAssociatedPR(taskId)
+        const pr = await findAssociatedPRByIssueNumber(issueNumber)
         if (!pr) {
           return NextResponse.json({ error: 'No associated PR found' }, { status: 404 })
         }
@@ -177,7 +177,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
         const branchName = await findTaskBranch(taskId)
 
         // Close PR if exists
-        const pr = await findAssociatedPR(taskId)
+        const pr = await findAssociatedPRByIssueNumber(issueNumber)
         if (pr) {
           await closePR(pr.number)
         }
@@ -275,7 +275,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
         if (!comment) {
           return NextResponse.json({ error: 'Fix description is required' }, { status: 400 })
         }
-        const associatedPR = await findAssociatedPR(taskId)
+        const associatedPR = await findAssociatedPRByIssueNumber(issueNumber)
         if (!associatedPR) {
           return NextResponse.json({ error: 'No associated PR found' }, { status: 404 })
         }
