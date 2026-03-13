@@ -15,6 +15,8 @@ import type {
   BoardsResponse,
   CollaboratorsResponse,
   ActionResponse,
+  PRComment,
+  WorkflowRun,
 } from './types'
 
 const API_BASE = '/api/cody'
@@ -220,6 +222,23 @@ export const tasksApi = {
     return handleResponse(res)
   },
 
+  fixRequest: async (
+    issueNumber: number,
+    fixDescription: string,
+    actorLogin?: string,
+  ): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'fix',
+        comment: fixDescription,
+        ...(actorLogin && { actorLogin }),
+      }),
+    })
+    return handleResponse(res)
+  },
+
   approve: async (task: CodyTask, actorLogin?: string): Promise<ActionResponse> => {
     if (!task.associatedPR) {
       throw new Error('No PR associated with this task')
@@ -297,6 +316,23 @@ export const prsApi = {
     const res = await fetch(`${API_BASE}/prs/status?prNumber=${prNumber}`)
     return handleResponse(res)
   },
+  comments: async (prNumber: number): Promise<PRComment[]> => {
+    const res = await fetch(`${API_BASE}/prs/comments?prNumber=${prNumber}`)
+    const data = await handleResponse<{ comments: PRComment[] }>(res)
+    return data.comments
+  },
+  postComment: async (
+    prNumber: number,
+    body: string,
+    actorLogin?: string,
+  ): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/prs/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prNumber, body, ...(actorLogin && { actorLogin }) }),
+    })
+    return handleResponse(res)
+  },
 }
 // ============ Task Documents API ============
 
@@ -329,6 +365,19 @@ export const collaboratorsApi = {
   },
 }
 
+// ============ Workflows API ============
+
+export const workflowsApi = {
+  list: async (params?: { status?: string }): Promise<WorkflowRun[]> => {
+    const searchParams = new URLSearchParams()
+    if (params?.status) searchParams.set('status', params.status)
+    const url = `${API_BASE}/workflows${searchParams.toString() ? `?${searchParams}` : ''}`
+    const res = await fetch(url)
+    const data = await handleResponse<{ runs: WorkflowRun[] }>(res)
+    return data.runs
+  },
+}
+
 // ============ Publish API ============
 
 export const publishApi = {
@@ -349,5 +398,6 @@ export const codyApi = {
   taskDocs: taskDocsApi,
   boards: boardsApi,
   collaborators: collaboratorsApi,
+  workflows: workflowsApi,
   publish: publishApi.publish,
 }

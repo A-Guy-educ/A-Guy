@@ -74,6 +74,23 @@ pnpm test:unit
 3. Look at similar test files in the project for reference
 4. Fix the issue and re-run tests
 
+### Deviation Protocol (When Plan Is Wrong)
+
+If you discover a plan step is **incorrect** during implementation (wrong file path, API doesn't exist, function signature is different, dependency doesn't work as described), do NOT stop or fail. Instead:
+
+1. **Document the deviation** — Note what the plan said vs. what you found
+2. **Implement the correct approach** — Use your judgment to achieve the step's intent
+3. **Continue with remaining steps** — Adapt subsequent steps if they depend on the deviated one
+4. **Report in build.md** — Add a  section listing each deviation
+
+**Example deviation entry:**
+createAccesssrc/server/payload/access/factory.tscreateAccessbuildAccessControlcreateAccessbuildAccessControl
+
+**Rules for deviations:**
+- NEVER deviate from the spec — only from the plan's implementation details
+- NEVER expand scope — deviations should achieve the same goal differently
+- ALWAYS document — undocumented deviations are bugs
+
 ### CRITICAL: Never Weaken Tests
 
 When tests fail, you have exactly **two options**:
@@ -125,6 +142,35 @@ Before writing ANY code or tests, you MUST read existing files to understand the
 
 **NEVER assume** an export exists without checking. Always verify first.
 
+### 1.1b CRITICAL: Search Before Creating (DRY Principle)
+
+Before creating ANY new file (utility, helper, hook, access control, component), you MUST search for existing code first:
+
+1. **Access control**: Check `src/server/payload/access/` — functions like `adminOnly`, `authenticated`, `authenticatedOrPublished`, `publishedAndActive` already exist. NEVER recreate these.
+2. **Hooks**: Check `src/server/payload/hooks/` — `populatePublishedAt`, `validateLocaleUniqueness`, etc.
+3. **Validation schemas**: Check `src/infra/utils/validation/common-schemas.ts` for reusable Zod schemas.
+4. **Utilities**: Search `src/infra/utils/` before writing helpers for dates, URLs, logging, deep merge, etc.
+5. **UI components**: Check `src/ui/` — both shadcn components and feature components in `src/ui/web/`.
+6. **Test helpers**: Check `src/infra/utils/test/` for existing test utilities.
+
+**Rules:**
+- If existing code does 80%+ of what you need → **extend it**, don't create a parallel version
+- If you create a new utility, place it where similar utilities live (not in the feature directory)
+- NEVER duplicate access control functions — import from `src/server/payload/access/`
+- NEVER duplicate validation helpers — import from `src/infra/utils/validation/`
+- NEVER create a new logger — import from `src/infra/utils/logger`
+- Copy-pasted blocks > 5 lines → extract into a shared function
+
+### 1.1c Code Quality Standards
+
+- **No `any` types** — use proper TypeScript types. Import from `@/payload-types` for generated types.
+- **Small functions** — max ~50 lines. Extract helpers with clear names.
+- **Named constants** — `const MAX_RETRIES = 3` not magic `3`.
+- **Early returns** — guard clause pattern. Max 3 levels of nesting.
+- **Descriptive names** — `fetchUserProgress()` not `getData()`. Verb-noun for functions.
+- **Error handling** — every async op needs try/catch. No silent failures.
+- **Immutability** — `{ ...obj, key: value }` not `obj.key = value`.
+
 ### 1.2 CRITICAL: Using the Edit Tool
 
 When using the Edit tool to modify existing files:
@@ -170,6 +216,10 @@ Write to: `.tasks/<taskId>/build.md`
 ## Tests Written
 
 - <list of test files expected to exist>
+
+## Deviations
+
+- <list any plan deviations, or "None — plan followed exactly">
 
 ## Quality
 
@@ -222,6 +272,12 @@ Invoke these subagents when working in their specific domains:
 
 **When:** After implementing any code, before quality checks
 **What to ask:** "Review for TypeScript compliance, import aliases, and general code quality."
+
+### @e2e-test-writer
+
+**When:** After implementing UI changes to components in `src/ui/web/`, `src/app/(frontend)/`, or pages/routes
+**What to ask:** "Write a Playwright E2E test for the UI change I just implemented. The component/page is at <path>, visible at route <url>. Test that <user-facing behavior>."
+**Note:** The E2E test is committed but NOT run in the pipeline. CI runs it on PR. Only invoke for user-visible UI changes, not internal refactors.
 
 ### @cody-expert
 

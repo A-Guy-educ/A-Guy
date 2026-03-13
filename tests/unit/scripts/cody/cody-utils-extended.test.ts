@@ -101,7 +101,7 @@ describe('parseCommentBody', () => {
     expect(result.success).toBe(true)
     expect(result.input?.mode).toBe('rerun')
     expect(result.input?.taskId).toBe('260218-task')
-    expect(result.input?.fromStage).toBe('gsd-execute')
+    expect(result.input?.fromStage).toBe('build')
     expect(result.input?.feedback).toBe('fix')
   })
 
@@ -169,15 +169,13 @@ describe('parseCommentBody', () => {
   })
 
   it('should accept valid --from stages', () => {
-    // New GSD stage names
     const validStages = [
       'taskify',
-      'spec',
       'gap',
       'clarify',
-      'gsd-research',
-      'gsd-plan',
-      'gsd-execute',
+      'architect',
+      'plan-gap',
+      'build',
       'commit',
       'verify',
       'autofix',
@@ -187,19 +185,6 @@ describe('parseCommentBody', () => {
       const result = parseCommentBody(`/cody rerun 260218-task --from ${stage}`)
       expect(result.success).toBe(true)
       expect(result.input?.fromStage).toBe(stage)
-    }
-  })
-
-  it('should accept old stage names as aliases and resolve them', () => {
-    const aliases: Record<string, string> = {
-      architect: 'gsd-plan',
-      'plan-gap': 'gsd-plan',
-      build: 'gsd-execute',
-    }
-    for (const [oldName, newName] of Object.entries(aliases)) {
-      const result = parseCommentBody(`/cody rerun 260218-task --from ${oldName}`)
-      expect(result.success).toBe(true)
-      expect(result.input?.fromStage).toBe(newName)
     }
   })
 
@@ -262,6 +247,9 @@ describe('parseCliArgs', () => {
     process.env = { ...originalEnv }
     // Default: pretend we're NOT in GH Actions so local defaults to true
     delete process.env.GITHUB_ACTIONS
+    // Remove CI-injected task IDs so parseCliArgs tests run in clean env
+    delete process.env.TASK_ID
+    delete process.env.DISPATCH_TASK_ID
     // Reset env cache so the above process.env changes are picked up
     resetEnv()
     // Mock discoverTaskIdFromIssue's execFileSync calls to return no result
@@ -301,9 +289,9 @@ describe('parseCliArgs', () => {
     expect(result.feedback).toBe('some feedback')
   })
 
-  it('should parse --from build with valid stage (resolves alias)', () => {
+  it('should parse --from build with valid stage', () => {
     const result = parseCliArgs(['--task-id', '260218-task', '--from', 'build'])
-    expect(result.fromStage).toBe('gsd-execute')
+    expect(result.fromStage).toBe('build')
   })
 
   it('should throw for --from banana (invalid stage)', () => {
@@ -340,11 +328,6 @@ describe('parseCliArgs', () => {
   })
 
   it('should auto-generate task-id when not provided (format YYMMDD-auto-NNN)', () => {
-    // Skip this test in CI since TASK_ID is provided via env
-    if (process.env.TASK_ID) {
-      return
-    }
-
     const result = parseCliArgs(['--mode', 'full'])
     // The date prefix comes from new Date().toISOString() — we just verify the pattern
     // Counter is now 3 digits (100-999) from crypto.randomInt
@@ -353,10 +336,6 @@ describe('parseCliArgs', () => {
   })
 
   it('should generate task-id from --file path/to/feature.md', () => {
-    // Skip this test in CI since TASK_ID is provided via env
-    if (process.env.TASK_ID) {
-      return
-    }
     vi.spyOn(Date.prototype, 'toISOString').mockReturnValue('2026-02-18T12:00:00.000Z')
 
     const result = parseCliArgs(['--file', 'path/to/my-feature.md'])
@@ -390,10 +369,6 @@ describe('parseCliArgs', () => {
   })
 
   it('should discover task-id from issue when triggerType is comment', () => {
-    // Skip this test in CI since TASK_ID is provided via env
-    if (process.env.TASK_ID) {
-      return
-    }
     // Mock discoverTaskIdFromIssue to find a task
     vi.mocked(childProcess.execFileSync).mockReturnValue(
       '🎯 Task created: `260218-discovered-task`\n\nCody will now process this task.',
@@ -442,10 +417,6 @@ describe('parseCliArgs', () => {
   })
 
   it('should handle positional file path argument', () => {
-    // Skip this test in CI since TASK_ID is provided via env
-    if (process.env.TASK_ID) {
-      return
-    }
     vi.spyOn(Date.prototype, 'toISOString').mockReturnValue('2026-02-18T12:00:00.000Z')
 
     const result = parseCliArgs(['path/to/file.md'])
@@ -968,15 +939,14 @@ describe('isValidMode', () => {
 })
 
 describe('isValidStage', () => {
-  it('should accept all valid stages (new GSD names)', () => {
+  it('should accept all valid stages', () => {
     const stages = [
       'taskify',
-      'spec',
       'gap',
       'clarify',
-      'gsd-research',
-      'gsd-plan',
-      'gsd-execute',
+      'architect',
+      'plan-gap',
+      'build',
       'commit',
       'autofix',
       'verify',
@@ -985,12 +955,6 @@ describe('isValidStage', () => {
     for (const stage of stages) {
       expect(isValidStage(stage)).toBe(true)
     }
-  })
-
-  it('should accept old stage names as aliases', () => {
-    expect(isValidStage('architect')).toBe(true)
-    expect(isValidStage('plan-gap')).toBe(true)
-    expect(isValidStage('build')).toBe(true)
   })
 
   it('should reject invalid stages', () => {
@@ -1029,7 +993,7 @@ describe('--fresh and --is-pull-request CLI flags', () => {
   it('should combine --fresh with --from', () => {
     const result = parseCliArgs(['--task-id', '260218-test', '--fresh', '--from', 'build'])
     expect(result.fresh).toBe(true)
-    expect(result.fromStage).toBe('gsd-execute')
+    expect(result.fromStage).toBe('build')
   })
 
   it('should default fresh to undefined when FRESH env var is not set', () => {
@@ -1059,7 +1023,7 @@ describe('parseCommentBody --fresh flag', () => {
     const result = parseCommentBody('/cody rerun 260218-task --fresh --from build')
     expect(result.success).toBe(true)
     expect(result.input?.fresh).toBe(true)
-    expect(result.input?.fromStage).toBe('gsd-execute')
+    expect(result.input?.fromStage).toBe('build')
   })
 
   it('should not set fresh when not provided', () => {

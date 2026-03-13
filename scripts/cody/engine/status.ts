@@ -86,6 +86,19 @@ export function writeState(taskId: string, state: PipelineStateV2): void {
 }
 
 /**
+ * Delete the status.json file for a task.
+ * Used by `full` mode to discard failed/completed state from a previous run
+ * so that the pipeline starts fresh instead of short-circuiting.
+ */
+export function deleteState(taskId: string): void {
+  const statusFile = getStatusFilePath(taskId)
+  if (fs.existsSync(statusFile)) {
+    fs.unlinkSync(statusFile)
+    logger.info(`Deleted previous status.json for ${taskId} (fresh full-mode run)`)
+  }
+}
+
+/**
  * Initialize a fresh v2 state
  */
 export function initState(ctx: PipelineContext, mode: string): PipelineStateV2 {
@@ -176,11 +189,20 @@ export function completeState(
 ): PipelineStateV2 {
   const now = new Date().toISOString()
 
+  // Compute total cost across all stages
+  let totalCost = 0
+  for (const stage of Object.values(state.stages)) {
+    if (stage.cost) {
+      totalCost += stage.cost
+    }
+  }
+
   return {
     ...state,
     state: finalState,
     completedAt: now,
     updatedAt: now,
+    ...(totalCost > 0 ? { totalCost } : {}),
   }
 }
 
@@ -395,6 +417,10 @@ export function stateToV1(state: PipelineStateV2): CodyPipelineStatus {
       outputFile: stage.outputFile,
       skipped: stage.skipped,
       error: stage.error,
+      tokenUsage: stage.tokenUsage
+        ? { input: stage.tokenUsage.input, output: stage.tokenUsage.output }
+        : undefined,
+      cost: stage.cost,
     }
   }
 
@@ -416,5 +442,6 @@ export function stateToV1(state: PipelineStateV2): CodyPipelineStatus {
     controlMode: undefined,
     gatePoint: undefined,
     botCommentId: undefined,
+    totalCost: state.totalCost,
   }
 }

@@ -262,27 +262,33 @@
     },
     {
       "path": "scripts/cody/README.md",
-      "title": "Cody Pipeline",
+      "title": "Cody Pipeline — Architecture Reference",
       "sections": [
+        "System Overview",
+        "End-to-End Data Flow",
         "Trigger",
         "Pipeline Modes",
-        "Two-Phase Execution",
+        "Two-Phase Execution (Full Mode)",
         "Profiles",
-        "Stage Inputs/Outputs",
-        "Key Files",
+        "Stage Architecture",
+        "Post-Action System",
+        "Gate System",
+        "Rerun & Recovery",
+        "Complexity-Based Stage Routing",
+        "Quality Gates (build post-action)",
+        "File Map",
         "Task Files",
         "State Machine",
-        "Post-Actions",
-        "Gates",
-        "Error Handling",
+        "CI Layer (.github/workflows/cody.yml)",
+        "Dashboard Layer",
+        "Known Gotchas & Bugs Fixed",
+        "Debug",
         "Add New Stage",
-        "Important Context",
-        "Key Functions",
-        "Debug"
+        "Key Types"
       ],
       "relativeUrl": "scripts/cody/README.md",
       "category": "scripts",
-      "wordCount": 534
+      "wordCount": 2155
     },
     {
       "path": "scripts/README.md",
@@ -300,6 +306,21 @@
       "relativeUrl": "scripts/README.md",
       "category": "scripts",
       "wordCount": 575
+    },
+    {
+      "path": "docs/self-growing-pipeline/README.md",
+      "title": "Self-Growing Pipeline",
+      "sections": [
+        "Architecture",
+        "Current Implementation",
+        "Files",
+        "Future: Self-Creating Subagents",
+        "Future: Dynamic MCP Integration",
+        "Metrics & Monitoring"
+      ],
+      "relativeUrl": "self-growing-pipeline/README.md",
+      "category": "self-growing-pipeline",
+      "wordCount": 838
     },
     {
       "path": "src/app/README.md",
@@ -543,8 +564,8 @@
     }
   ],
   "metadata": {
-    "generatedAt": "2026-03-06T12:42:14.711Z",
-    "totalReadmes": 32,
+    "generatedAt": "2026-03-13T17:05:58.024Z",
+    "totalReadmes": 33,
     "categories": {
       ".claude": 1,
       "root": 1,
@@ -559,6 +580,7 @@
       "exercise-import": 1,
       "exercises": 1,
       "features": 1,
+      "self-growing-pipeline": 1,
       "eslint-plugin-aguy": 1,
       "scripts": 3,
       "src/app": 1,

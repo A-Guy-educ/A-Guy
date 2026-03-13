@@ -19,7 +19,13 @@ import { ensureFeatureBranch } from '../git-utils'
 import { readTask } from '../pipeline-utils'
 import { setBranchName, loadState } from '../engine/status'
 import { execFileSync } from 'child_process'
-import { createSpecValidator, createGapValidator, createBuildValidator } from './validators'
+import {
+  createGapValidator,
+  createPlanGapValidator,
+  createBuildValidator,
+  createDocsValidator,
+  createTestValidator,
+} from './validators'
 import {
   skipIfInputQuality,
   skipIfClarifyDisabled,
@@ -28,39 +34,37 @@ import {
   skipIfBelowComplexity,
 } from './skip-conditions'
 import { STAGE_COMPLEXITY_THRESHOLDS } from '../pipeline-utils'
-import { prepareGsdEnvironment } from '../gsd-bridge'
-import { logger } from '../logger'
 
 // ============================================================================
 // Pipeline Orders
 // ============================================================================
 
-export const SPEC_ORDER_STANDARD: string[] = ['taskify', 'spec', 'gap', 'clarify']
+export const SPEC_ORDER_STANDARD: string[] = ['taskify', 'gap', 'clarify']
 export const SPEC_ORDER_LIGHTWEIGHT: string[] = ['taskify', 'clarify']
 export const IMPL_ORDER_STANDARD: PipelineStep[] = [
-  'gsd-research',
-  'gsd-plan',
-  'gsd-execute',
+  'architect',
+  'plan-gap',
+  { parallel: ['test', 'build'] },
   'commit',
   'review',
   'fix',
-  'commit-fix',
+  'commit',
   'verify',
   'pr',
 ]
 export const IMPL_ORDER_LIGHTWEIGHT: PipelineStep[] = [
-  'gsd-plan',
-  'gsd-execute',
+  'architect',
+  { parallel: ['test', 'build'] },
   'commit',
   'review',
   'fix',
-  'commit-fix',
+  'commit',
   'verify',
   'pr',
 ]
 
 // Fix-only pipeline order for @cody fix mode
-export const FIX_ORDER: PipelineStep[] = ['review', 'fix', 'commit-fix', 'verify', 'pr']
+export const FIX_ORDER: PipelineStep[] = ['review', 'fix', 'commit', 'verify', 'pr']
 
 // ============================================================================
 // Stage Definitions
@@ -94,22 +98,7 @@ function createStageDefinitions(ctx: PipelineContext): Map<string, StageDefiniti
     ],
   })
 
-  // spec stage
-  stages.set('spec', {
-    name: 'spec',
-    type: 'agent',
-    timeout: STAGE_TIMEOUTS.spec ?? DEFAULT_TIMEOUT,
-    maxRetries: 1,
-    minComplexity: STAGE_COMPLEXITY_THRESHOLDS.spec,
-    shouldSkip: (ctx) => {
-      const complexitySkip = skipIfBelowComplexity(ctx, 'spec')
-      if (complexitySkip.shouldSkip) return complexitySkip
-      return skipIfInputQuality(ctx, 'spec')
-    },
-    validator: createSpecValidator(ctx),
-  })
-
-  // gap stage
+  // gap stage (also writes spec.md — spec stage was merged into gap)
   stages.set('gap', {
     name: 'gap',
     type: 'agent',
@@ -150,58 +139,17 @@ function createStageDefinitions(ctx: PipelineContext): Map<string, StageDefiniti
     },
   })
 
-  // gsd-research stage — GSD research phase (replaces part of old architect)
-  stages.set('gsd-research', {
-    name: 'gsd-research',
+  // architect stage
+  stages.set('architect', {
+    name: 'architect',
     type: 'agent',
-    timeout: STAGE_TIMEOUTS['gsd-research'] ?? DEFAULT_TIMEOUT,
+    timeout: STAGE_TIMEOUTS.architect ?? DEFAULT_TIMEOUT,
     maxRetries: 1,
-    minComplexity: STAGE_COMPLEXITY_THRESHOLDS['gsd-research'],
+    minComplexity: STAGE_COMPLEXITY_THRESHOLDS.architect,
     shouldSkip: (ctx) => {
-      const complexitySkip = skipIfBelowComplexity(ctx, 'gsd-research')
+      const complexitySkip = skipIfBelowComplexity(ctx, 'architect')
       if (complexitySkip.shouldSkip) return complexitySkip
       return skipIfSpecOnly(ctx)
-    },
-    preExecute: async (ctx) => {
-      // Prepare GSD environment — clean previous state, write config.json
-      const complexity = ctx.taskDef?.complexity ?? 35
-      try {
-        prepareGsdEnvironment(process.cwd(), complexity)
-        logger.info(`  GSD environment prepared (complexity=${complexity})`)
-      } catch (error) {
-        const msg = error instanceof Error ? error.message : String(error)
-        throw new Error(`GSD research preExecute failed: ${msg}`)
-      }
-    },
-  })
-
-  // gsd-plan stage — GSD planning phase (replaces architect)
-  stages.set('gsd-plan', {
-    name: 'gsd-plan',
-    type: 'agent',
-    timeout: STAGE_TIMEOUTS['gsd-plan'] ?? DEFAULT_TIMEOUT,
-    maxRetries: 1,
-    minComplexity: STAGE_COMPLEXITY_THRESHOLDS['gsd-plan'],
-    shouldSkip: (ctx) => {
-      const complexitySkip = skipIfBelowComplexity(ctx, 'gsd-plan')
-      if (complexitySkip.shouldSkip) return complexitySkip
-      return skipIfSpecOnly(ctx)
-    },
-    preExecute: async (ctx) => {
-      // If gsd-research was skipped, prepare GSD environment here
-      const configPath = path.join(process.cwd(), '.planning', 'config.json')
-      if (!fs.existsSync(configPath)) {
-        const complexity = ctx.taskDef?.complexity ?? 10
-        try {
-          prepareGsdEnvironment(process.cwd(), complexity)
-          logger.info(
-            `  GSD environment prepared in gsd-plan (research was skipped, complexity=${complexity})`,
-          )
-        } catch (error) {
-          const msg = error instanceof Error ? error.message : String(error)
-          throw new Error(`GSD plan preExecute failed: ${msg}`)
-        }
-      }
     },
     postActions: [
       { type: 'archive-rerun-feedback' },
@@ -209,15 +157,63 @@ function createStageDefinitions(ctx: PipelineContext): Map<string, StageDefiniti
     ],
   })
 
-  // gsd-execute stage — GSD execution phase (replaces build)
-  // Has preExecute for ensureFeatureBranch (same as old build stage)
-  stages.set('gsd-execute', {
-    name: 'gsd-execute',
+  // plan-gap stage
+  stages.set('plan-gap', {
+    name: 'plan-gap',
     type: 'agent',
-    timeout: STAGE_TIMEOUTS['gsd-execute'] ?? DEFAULT_TIMEOUT,
+    timeout: STAGE_TIMEOUTS['plan-gap'] ?? DEFAULT_TIMEOUT,
     maxRetries: 1,
-    minComplexity: STAGE_COMPLEXITY_THRESHOLDS['gsd-execute'],
-    shouldSkip: (ctx) => skipIfInputQuality(ctx, 'gsd-execute'),
+    minComplexity: STAGE_COMPLEXITY_THRESHOLDS['plan-gap'],
+    shouldSkip: (ctx) => {
+      const complexitySkip = skipIfBelowComplexity(ctx, 'plan-gap')
+      if (complexitySkip.shouldSkip) return complexitySkip
+      return skipIfInputQuality(ctx, 'plan-gap')
+    },
+    postActions: [{ type: 'validate-plan-exists' }],
+    validator: createPlanGapValidator(ctx),
+    fallbackOnMissingOutput: (ctx) => {
+      // If agent edited plan.md but forgot to write plan-gap.md, create a fallback
+      const planFile = path.join(ctx.taskDir, 'plan.md')
+      if (fs.existsSync(planFile)) {
+        return `# Plan Gap Analysis: ${ctx.taskId}
+
+## Summary
+
+- Gaps Found: 0
+- Plan Revised: Yes (agent edited plan.md directly)
+
+## Changes Made to Plan
+
+Agent revised plan.md but did not produce a separate gap report.
+See plan.md for the revised plan.
+
+## No Gaps Found
+
+No critical gaps identified. Plan was refined in-place.
+`
+      }
+      return null
+    },
+  })
+
+  // test stage — TDD red phase: writes failing tests in parallel with build
+  stages.set('test', {
+    name: 'test',
+    type: 'agent',
+    timeout: STAGE_TIMEOUTS.test ?? DEFAULT_TIMEOUT,
+    maxRetries: 1,
+    minComplexity: STAGE_COMPLEXITY_THRESHOLDS.test,
+    shouldSkip: (ctx) => skipIfInputQuality(ctx, 'test'),
+    validator: createTestValidator(),
+  })
+  // build stage - has preExecute for ensureFeatureBranch (G20)
+  stages.set('build', {
+    name: 'build',
+    type: 'agent',
+    timeout: STAGE_TIMEOUTS.build ?? DEFAULT_TIMEOUT,
+    maxRetries: 1,
+    minComplexity: STAGE_COMPLEXITY_THRESHOLDS.build,
+    shouldSkip: (ctx) => skipIfInputQuality(ctx, 'build'),
     preExecute: async (ctx) => {
       if (!ctx.input.dryRun) {
         try {
@@ -243,7 +239,7 @@ function createStageDefinitions(ctx: PipelineContext): Map<string, StageDefiniti
           }
         } catch (error) {
           const msg = error instanceof Error ? error.message : String(error)
-          throw new Error(`gsd-execute preExecute failed: ${msg}`)
+          throw new Error(`Build stage preExecute failed: ${msg}`)
         }
       }
     },
@@ -251,6 +247,7 @@ function createStageDefinitions(ctx: PipelineContext): Map<string, StageDefiniti
       { type: 'validate-src-changes' },
       { type: 'validate-build-content' },
       // Commit code BEFORE quality gates so work is preserved even if gates fail.
+      // Without this, a gate failure means all build agent work is lost.
       {
         type: 'commit-task-files',
         stagingStrategy: 'tracked+task',
@@ -326,21 +323,6 @@ function createStageDefinitions(ctx: PipelineContext): Map<string, StageDefiniti
     ],
   })
 
-  // commit-fix stage - commits the fix changes before verify
-  stages.set('commit-fix', {
-    name: 'commit-fix',
-    type: 'git',
-    timeout: STAGE_TIMEOUTS['commit-fix'] ?? DEFAULT_TIMEOUT,
-    maxRetries: 0,
-    shouldSkip: (ctx) => {
-      const state = loadState(ctx.taskId)
-      if (state?.stages?.fix?.state === 'skipped') {
-        return { shouldSkip: true, reason: 'Fix was skipped, nothing to commit' }
-      }
-      return { shouldSkip: false }
-    },
-  })
-
   // commit stage
   stages.set('commit', {
     name: 'commit',
@@ -364,6 +346,31 @@ function createStageDefinitions(ctx: PipelineContext): Map<string, StageDefiniti
         push: false,
         ensureBranch: false,
         localOnly: true,
+      },
+    ],
+  })
+
+  // docs stage - deferred to nightly inspector (Knowledge Gardener plugin).
+  // Kept here so the state machine can execute it if triggered directly (e.g., manual rerun).
+  // Complexity threshold raised to 30 (moderate+) — trivial/simple tasks skip docs.
+  stages.set('docs', {
+    name: 'docs',
+    type: 'agent',
+    timeout: STAGE_TIMEOUTS.docs ?? DEFAULT_TIMEOUT,
+    maxRetries: 1,
+    minComplexity: STAGE_COMPLEXITY_THRESHOLDS.docs,
+    shouldSkip: (ctx) => {
+      const complexitySkip = skipIfBelowComplexity(ctx, 'docs')
+      if (complexitySkip.shouldSkip) return complexitySkip
+      return { shouldSkip: false }
+    },
+    validator: createDocsValidator(),
+    postActions: [
+      {
+        type: 'commit-task-files',
+        stagingStrategy: 'tracked+task',
+        push: true,
+        ensureBranch: false,
       },
     ],
   })
@@ -411,7 +418,7 @@ export function rebuildPipelineAfterTaskify(
  */
 export function buildPipeline(
   mode: 'spec' | 'impl' | 'full' | 'rerun',
-  profile: 'standard' | 'lightweight',
+  profile: 'standard' | 'lightweight' | 'turbo',
   clarify: boolean,
   ctx: PipelineContext,
 ): PipelineDefinition {

@@ -335,6 +335,14 @@ async function executeParallelStep(
     return state
   }
 
+  // Dry-run: mark all parallel stages as completed without running
+  if (ctx.input.dryRun) {
+    for (const stageName of stagesToRun) {
+      state = updateStage(state, stageName, { state: 'completed', retries: 0 })
+    }
+    return state
+  }
+
   const results = await Promise.allSettled(
     stagesToRun.map(async (stageName) => {
       const def = pipeline.stages.get(stageName)
@@ -446,11 +454,20 @@ async function executeParallelStep(
         completedAt: new Date().toISOString(),
         retries: stageResult.retries,
         outputFile: stageResult.outputFile,
+        sessionId: stageResult.sessionId,
       })
+
+      // Propagate sessionId for downstream stage forking.
+      // Note: with parallel stages, the last one to complete "wins" — non-deterministic.
+      // This is acceptable because parallel stages are currently advisory (test/build)
+      // and sequential stages have a stable last-writer guarantee.
+      if (stageResult.sessionId) {
+        ctx.lastSessionId = stageResult.sessionId
+      }
 
       // R8: Run post-actions for completed parallel stages
       const def = pipeline.stages.get(stageName)
-      if (def?.postActions) {
+      if (def?.postActions && !ctx.input.dryRun) {
         try {
           for (const action of def.postActions) {
             await executePostAction(ctx, action, state)
@@ -542,7 +559,15 @@ async function handleStageResult(
       completedAt: new Date().toISOString(),
       retries: result.retries,
       outputFile: result.outputFile,
+      tokenUsage: result.tokenUsage,
+      cost: result.cost,
+      sessionId: result.sessionId,
     })
+
+    // Propagate sessionId for downstream stage forking
+    if (result.sessionId) {
+      ctx.lastSessionId = result.sessionId
+    }
 
     // Run post-actions if defined
     if (def.postActions) {
@@ -591,14 +616,13 @@ async function handleStageResult(
           logger.warn(`Failed to write verify-failures.md: ${writeErr}`)
         }
 
-        // Increment fix attempt and reset fix, commit-fix, verify to pending
+        // Increment fix attempt and reset fix + verify to pending
         const newFixAttempt = currentAttempt + 1
         state = updateStage(state, 'fix', {
           state: 'pending',
           fixAttempt: newFixAttempt,
           maxFixAttempts: maxAttempts,
         })
-        state = updateStage(state, 'commit-fix', { state: 'pending' })
         state = updateStage(state, 'verify', { state: 'pending' })
         writeState(ctx.taskId, state)
 

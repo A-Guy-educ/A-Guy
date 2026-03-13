@@ -2,9 +2,45 @@
 
 **Purpose**: Fast, token-efficient reference for common AI agent tasks
 **Token Budget**: < 2KB (~500 tokens)
-**Last Updated**: 2026-01-07
+**Last Updated**: 2026-03-12
 
 ---
+
+## ⭐ Code Quality & Reuse Principles (ALWAYS FOLLOW)
+
+**These principles apply to ALL code-writing agents. They are non-negotiable.**
+
+### Search Before Creating (DRY)
+
+Before creating ANY new file, function, or component — **search for existing code first**:
+
+| What you need      | Search here FIRST             | Examples                                                                       |
+| ------------------ | ----------------------------- | ------------------------------------------------------------------------------ |
+| Access control     | `src/server/payload/access/`  | `adminOnly`, `authenticated`, `authenticatedOrPublished`, `publishedAndActive` |
+| Hooks              | `src/server/payload/hooks/`   | `populatePublishedAt`, `validateLocaleUniqueness`                              |
+| Validation schemas | `src/infra/utils/validation/` | `common-schemas.ts`, `zodToPayloadError`                                       |
+| Utilities          | `src/infra/utils/`            | `logger`, `formatDateTime`, `deepMerge`, `getMediaUrl`, `http`                 |
+| UI components      | `src/ui/`                     | shadcn components, existing web/admin components                               |
+| Test helpers       | `src/infra/utils/test/`       | `mongodb-container`, `test-db-constraint`                                      |
+
+**Rules:**
+
+- If existing code does 80%+ of what you need → **extend it**, don't create a parallel version
+- If you create a new utility, place it where similar utilities live — not in the feature directory
+- NEVER duplicate access control functions — import from `src/server/payload/access/`
+- NEVER create a new logger — import from `src/infra/utils/logger`
+- Copy-pasted blocks > 5 lines → extract into a shared function
+
+### Code Quality Standards
+
+- **No `any` types** — use proper TypeScript types. Import from `@/payload-types` for generated types.
+- **Small functions** — max ~50 lines. Extract helpers with clear names.
+- **Named constants** — `const MAX_RETRIES = 3` not magic `3`.
+- **Early returns** — guard clause pattern. Max 3 levels of nesting.
+- **Descriptive names** — `fetchUserProgress()` not `getData()`. Verb-noun for functions.
+- **Error handling** — every async op needs try/catch. No silent failures.
+- **Immutability** — `{ ...obj, key: value }` not `obj.key = value`.
+- **`@/` imports** — never relative imports across directories.
 
 ## 🏗️ Collection Patterns
 
@@ -653,6 +689,48 @@ pnpm test:e2e                  # E2E tests
 
 ---
 
+## 🤖 Cody Pipeline Patterns
+
+### Architecture (3 layers)
+
+1. **CI**: `.github/workflows/cody.yml` → parse-inputs.ts → entry.ts
+2. **Engine**: `scripts/cody/` → state-machine.ts loop → stages
+3. **Dashboard**: `src/ui/cody/` + `src/app/api/cody/`
+
+### Full Pipeline Flow
+
+```
+@cody on issue → taskify → gap → architect → plan-gap → build → commit → review → fix → commit → verify → pr
+                                                                                                          ↓
+                                                           (deferred, via inspector, complexity ≥ 30) → docs
+```
+
+### Key Debug Files
+
+| What              | Where                                      |
+| ----------------- | ------------------------------------------ |
+| Pipeline status   | `.tasks/<id>/status.json`                  |
+| Task definition   | `.tasks/<id>/task.json`                    |
+| Task memory       | `.tasks/<id>/memory.json`                  |
+| Knowledge base    | `.ai-docs/knowledge/index.json`            |
+| Stage definitions | `scripts/cody/pipeline/definitions.ts`     |
+| Post-actions      | `scripts/cody/pipeline/post-actions.ts`    |
+| Skip logic        | `scripts/cody/pipeline/skip-conditions.ts` |
+| Git operations    | `scripts/cody/git-utils.ts`                |
+| Gate approval     | `scripts/cody/clarify-workflow.ts`         |
+| Full architecture | `scripts/cody/README.md`                   |
+
+### Known Gotchas
+
+- **Push fails on rerun** → `pushWithRebase()` in `git-utils.ts` handles pull-rebase-retry
+- **Chat history SyntaxError** → `extractJson()` in `chat-history.ts` strips non-JSON CLI output
+- **Duplicate labels on rerun** → `setClassificationLabels` removes old category labels first
+- **Gate approval overwritten** → `resolveFromStageAfterGateApproval` starts AFTER the gate stage
+- **Impl stages skipped** → `rebuildPipelineAfterTaskify` must return BOTH spec + impl stages
+- **Stage names**: `architect` (planning), `plan-gap` (gap analysis), `build` (implementation)
+
+---
+
 ## ⚡ Performance Tips
 
 1. **Use indexes on queried fields** - `{ name: 'slug', type: 'text', unique: true, index: true }`
@@ -663,8 +741,8 @@ pnpm test:e2e                  # E2E tests
 
 ---
 
-**Token Count**: ~2,400 tokens (~3KB, +500 from Phase 1 patterns)
-**Coverage**: 95% of common AI agent tasks (includes AI Services, Hierarchy, Block Rendering)
+**Token Count**: ~2,800 tokens (~3.5KB, +400 from Cody Pipeline patterns)
+**Coverage**: 98% of common AI agent tasks (includes AI Services, Hierarchy, Block Rendering, Cody Pipeline)
 **Load Time**: < 0.5 seconds
 
 **New Sections (Phase 1)**:
@@ -672,6 +750,7 @@ pnpm test:e2e                  # E2E tests
 - 🤖 AI Services Patterns (Gemini, Image Optimization, Structured Output)
 - 🌳 Course Hierarchy Patterns (Query patterns, N+1 prevention, Status cascade)
 - 🧱 Block Rendering Patterns (5-step guide, Math rendering, Zod validation)
+- 🤖 Cody Pipeline Patterns (Architecture, debug files, known gotchas)
 
 For detailed information, see:
 
@@ -680,4 +759,5 @@ For detailed information, see:
 - **[Course Hierarchy](../../docs/course-hierarchy/README.md)** - Query patterns
 - **[Block Rendering](../../docs/block-rendering/README.md)** - Extension guide
 - **[Contracts](../../docs/contracts/README.md)** - Zod schemas
+- **[Cody Pipeline](../../scripts/cody/README.md)** - Pipeline architecture
 - **[AGENTS.md](../../AGENTS.md)** - Complete Payload patterns
