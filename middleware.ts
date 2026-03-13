@@ -7,18 +7,8 @@ import {
   getLocaleFromSubdomain,
 } from './src/i18n/config'
 
-/** File extensions that should be redirected to Vercel Blob CDN instead of proxied */
-const STREAMABLE_EXTENSIONS = new Set([
-  '.mp4',
-  '.mov',
-  '.webm',
-  '.avi',
-  '.mp3',
-  '.wav',
-  '.ogg',
-  '.m4a',
-  '.aac',
-])
+/** File extensions that should NOT be redirected (need same-origin for viewers) */
+const PROXY_ONLY_EXTENSIONS = new Set(['.pdf'])
 
 /**
  * Extract the Vercel Blob base URL from the storage token.
@@ -33,8 +23,9 @@ function getBlobBaseUrl(): string | null {
 }
 
 /**
- * Redirect large streamable media files (video/audio) directly to Vercel Blob CDN.
- * This avoids proxying through the serverless function which causes timeouts for large files.
+ * Redirect media files directly to Vercel Blob CDN instead of proxying through serverless.
+ * Only PDFs are kept proxied (same-origin requirement for PDF viewer).
+ * Everything else (images, video, audio) redirects to the CDN for fast loading.
  */
 function handleMediaRedirect(request: NextRequest): NextResponse | null {
   const { pathname } = request.nextUrl
@@ -44,7 +35,7 @@ function handleMediaRedirect(request: NextRequest): NextResponse | null {
   if (!filename) return null
 
   const ext = filename.slice(filename.lastIndexOf('.')).toLowerCase()
-  if (!STREAMABLE_EXTENSIONS.has(ext)) return null
+  if (PROXY_ONLY_EXTENSIONS.has(ext)) return null
 
   const blobBaseUrl = getBlobBaseUrl()
   if (!blobBaseUrl) return null
@@ -73,7 +64,7 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const host = request.headers.get('host') || ''
 
-  // Redirect streamable media (video/audio) to Vercel Blob CDN to avoid proxy timeouts
+  // Redirect media files (images, video, audio) to Vercel Blob CDN — only PDFs stay proxied
   const mediaRedirect = handleMediaRedirect(request)
   if (mediaRedirect) return mediaRedirect
 
@@ -145,7 +136,7 @@ export const config = {
   matcher: [
     // Locale handling (excludes api, admin, static assets)
     '/((?!api|admin|_next|_static|.*\\..*).*)',
-    // Media proxy redirect (video/audio → Blob CDN to avoid serverless timeouts)
+    // Media redirect (all except PDF → Blob CDN to skip serverless proxy)
     '/api/media/file/:path*',
   ],
 }

@@ -131,33 +131,46 @@ export const queryChapterBySlug = cache(async ({ slug }: { slug: string }) => {
 /**
  * Fetch chapters by grade level (filters by courseLabel)
  */
-export const queryChaptersByGrade = cache(
-  async ({ gradeLevel, locale }: { gradeLevel: string; locale?: ContentLocale }) => {
-    const payload = await getPayload({ config: configPromise })
+const _queryChaptersByGrade = async (gradeLevel: string, locale?: ContentLocale) => {
+  const payload = await getPayload({ config: configPromise })
 
-    const conditions: Where[] = [
-      { courseLabel: { equals: gradeLevel } },
-      { status: { equals: 'published' } },
-      { isActive: { equals: true } },
-    ]
+  const conditions: Where[] = [
+    { courseLabel: { equals: gradeLevel } },
+    { status: { equals: 'published' } },
+    { isActive: { equals: true } },
+  ]
 
-    if (locale) {
-      conditions.push(localeWhereClause(locale))
-    }
+  if (locale) {
+    conditions.push(localeWhereClause(locale))
+  }
 
-    // Find course for this grade
-    const courseResult = await payload.find({
-      collection: 'courses',
-      where: { and: conditions },
-      limit: 1,
-      pagination: false,
-      overrideAccess: false,
-    })
+  // Find course for this grade — depth:0 avoids populating relationships
+  const courseResult = await payload.find({
+    collection: 'courses',
+    where: { and: conditions },
+    limit: 1,
+    pagination: false,
+    depth: 0,
+    overrideAccess: false,
+  })
 
-    const course = courseResult.docs?.[0]
-    if (!course) return []
+  const course = courseResult.docs?.[0]
+  if (!course) return []
 
-    // Course already verified as published+active above, skip redundant check
-    return queryChaptersByCourseDirectly({ courseId: course.id })
-  },
-)
+  // Course already verified as published+active above, skip redundant check
+  return queryChaptersByCourseDirectly({ courseId: course.id })
+}
+
+export const queryChaptersByGrade = async ({
+  gradeLevel,
+  locale,
+}: {
+  gradeLevel: string
+  locale?: ContentLocale
+}) => {
+  const cached = safeCache(_queryChaptersByGrade, ['chapters-by-grade', gradeLevel, locale ?? ''], {
+    revalidate: QUERY_CACHE_TTL,
+    tags: ['chapters'],
+  })
+  return cached(gradeLevel, locale)
+}
