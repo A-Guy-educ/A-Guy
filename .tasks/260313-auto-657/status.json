@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-13T15:02:29.939Z",
-  "updatedAt": "2026-03-13T15:11:06.822Z",
+  "updatedAt": "2026-03-13T15:11:52.029Z",
   "state": "running",
   "cursor": null,
   "stages": {
@@ -49,9 +49,27 @@
       "sessionId": "ses_31843f4b1ffeMvxhaH37weG1tZ"
     },
     "commit": {
-      "state": "running",
+      "state": "completed",
       "retries": 0,
-      "startedAt": "2026-03-13T15:11:06.822Z"
+      "startedAt": "2026-03-13T15:11:06.822Z",
+      "completedAt": "2026-03-13T15:11:08.800Z"
+    },
+    "review": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 17 (simple) below threshold 30 for review"
+    },
+    "fix": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "No issues to fix"
+    },
+    "verify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-13T15:11:08.862Z",
+      "completedAt": "2026-03-13T15:11:52.029Z",
+      "outputFile": "verify.md"
     }
   },
   "issueNumber": 738

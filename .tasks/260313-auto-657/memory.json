@@ -1,0 +1,16 @@
+{
+  "taskId": "260313-auto-657",
+  "date": "2026-03-13",
+  "summary": "Fixed lesson introduction container width in ExercisesPager component - changed outer container from max-w-3xl (768px) to max-w-7xl (1280px) and inner content from max-w-md (448px) to max-w-2xl (672px)",
+  "domain": "frontend",
+  "taskType": "fix_bug",
+  "patterns": ["css-styling", "frontend-bugfix", "tailwind-utilities"],
+  "filesChanged": [
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ExercisesPager/index.tsx"
+  ],
+  "gotchas": [
+    "ExercisesPager has 4 page states (intro, about, exercise, outro) - width change only affects intro/about/outro, not exercise state which uses ExerciseWorkspace",
+    "Mobile padding was already correct (px-4 = 16px) - only desktop max-width needed fixing"
+  ],
+  "reusableCode": []
+}
