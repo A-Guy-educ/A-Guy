@@ -4,15 +4,15 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-13T18:11:40.190Z",
-  "updatedAt": "2026-03-13T18:13:09.391Z",
-  "state": "paused",
-  "cursor": null,
+  "updatedAt": "2026-03-13T19:45:51.893Z",
+  "state": "running",
+  "cursor": "gap",
   "stages": {
     "taskify": {
-      "state": "paused",
+      "state": "completed",
       "retries": 0,
       "startedAt": "2026-03-13T18:11:41.571Z",
-      "completedAt": "2026-03-13T18:13:03.437Z",
+      "completedAt": "2026-03-13T19:39:00.300Z",
       "outputFile": "taskify.md",
       "tokenUsage": {
         "input": 3041,
@@ -20,8 +20,32 @@
         "cacheRead": 145747
       },
       "sessionId": "ses_3179a5040ffecLa6W2nJqjOWgD"
+    },
+    "gap": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 21 (moderate) below threshold 35 for gap"
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-13T19:39:00.312Z",
+      "completedAt": "2026-03-13T19:45:50.037Z",
+      "outputFile": "architect.md",
+      "tokenUsage": {
+        "input": 32,
+        "output": 19095,
+        "cacheRead": 2080066
+      },
+      "cost": 2.1171867500000006,
+      "sessionId": "ses_3174a5b2bffeKonGQesL8IRtHZ"
+    },
+    "plan-gap": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 21 (moderate) below threshold 50 for plan-gap"
     }
   },
   "issueNumber": 762,
-  "completedAt": "2026-03-13T18:13:09.391Z"
+  "branchName": "fix/260313-auto-762-documentpdf-not-displayed-on-deskt"
 }

@@ -59,6 +59,850 @@
           "timestamp": "2026-03-13T18:12:46.094Z"
         }
       ]
+    },
+    {
+      "stage": "architect",
+      "sessionId": "ses_3174a5b2bffeKonGQesL8IRtHZ",
+      "startedAt": "2026-03-13T19:39:04.277Z",
+      "messages": [
+        {
+          "role": "user",
+          "stage": "architect",
+          "text": "\"Task ID: 260313-auto-110\n\n\nTask Type: fix_bug\n\n\nRead these files for context:\n- /home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-110/spec.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-110/clarified.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-110/rerun-feedback.md\n- /home/runner/work/A-Guy/A-Guy/.ai-docs/knowledge/index.json\n\nWrite your output to /home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-110/plan.md\"",
+          "tools": [],
+          "timestamp": "2026-03-13T19:39:04.299Z",
+          "model": "{\"providerID\":\"anthropic\",\"modelID\":\"claude-opus-4-6\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Let me start by reading all the required input files.",
+          "tools": [
+            "read",
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:39:04.412Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "The spec.md and clarified.md files don't exist. Let me check what files are available in the task directory and look for alternative spec files.",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:39:25.835Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:39:28.878Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now I understand the bug. Let me check the chat.json for any previous architect output and explore the codebase to find the PDF/document viewer component.",
+          "tools": [
+            "read",
+            "grep",
+            "grep"
+          ],
+          "timestamp": "2026-03-13T19:39:32.890Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "I found the key files. Let me read the main PDF rendering components more carefully.",
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:39:37.882Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now let me look at where PDFMedia is used in lesson views, and look at the pdfjs-viewer API route and where PDF is displayed for lessons:",
+          "tools": [
+            "grep",
+            "glob",
+            "glob"
+          ],
+          "timestamp": "2026-03-13T19:39:42.461Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:39:47.986Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Let me look at how lesson pages use these components, and check the PDFEmbed component (it seems it's a different approach), plus the resizable pane:",
+          "tools": [
+            "grep",
+            "glob"
+          ],
+          "timestamp": "2026-03-13T19:39:51.791Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "grep",
+            "grep"
+          ],
+          "timestamp": "2026-03-13T19:39:56.844Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:40:01.324Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now let me look at the ExerciseWorkspace component and the ResizablePane to understand the desktop layout:",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:40:04.251Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now let me check the pdfjs infrastructure more closely, the validator, and the media types:",
+          "tools": [
+            "glob",
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:40:09.746Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:40:14.600Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now let me check how the PDF.js renderer works and the template loader, which generates the HTML for the iframe:",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:40:17.399Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now let me check how the `useMediaQuery` hook works to understand the desktop/mobile detection, which is key to understanding why it works on mobile but not desktop:",
+          "tools": [
+            "read",
+            "glob"
+          ],
+          "timestamp": "2026-03-13T19:40:21.214Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now let me look at how `SplitPaneLayout` renders on desktop. On desktop, it uses `ResizablePane` with `orientation=\"horizontal\"` which creates a left/right split. On mobile, it uses the viewMode toggle. The key issue is the height of the PDF container. Let me look more closely:",
+          "tools": [
+            "grep",
+            "grep"
+          ],
+          "timestamp": "2026-03-13T19:40:25.212Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now I see a potential issue. The PDFMedia iframe uses `h-full` (height: 100%), but whether it actually gets a height depends on the parent. Let me trace through the layout chain on desktop:\n\n1. **ExerciseWorkspace**: `<div className=\"fixed inset-0 ... flex flex-col overflow-hidden\">` → This gives a full-viewport height container.\n2. **SplitPaneLayout** on desktop: Uses `ResizablePane` with `orientation=\"horizontal\"` → flex-row layout. The first pane has `overflow-hidden relative min-h-0` with a percentage-based flex.\n3. Inside the first pane: `<div className=\"h-full overflow-hidden\">` → This passes h-full to primaryContent.\n4. **primaryContent** (from page.tsx): `<div className=\"w-full h-full flex flex-col\">` → each file wrapper: `<div className=\"w-full h-full flex-shrink-0\">` → `<div className=\"border rounded-lg overflow-hidden bg-card shadow-lg h-full\">` → `<MediaComponent resource={file} className=\"w-full h-full\" htmlElement={null} />`\n5. **MediaComponent** with `htmlElement={null}` → Renders via Fragment (no wrapper div), so the PDFMedia is rendered directly.\n6. **PDFMedia**: `<div className=\"w-full h-full\">` → `<iframe className=\"w-full h-full border-0\">`\n\nThe `h-full` chain needs to propagate all the way. Let me check if there's any broken link in the chain. The `flex flex-col` with `flex-shrink-0` children using `h-full` is suspect. In a flex column, `h-full` means 100% of parent, but parent doesn't have an explicit height since it relies on `flex-col`.\n\nWait, more importantly, there's a layout issue in the lesson page's `primaryContent`. Look:\n\n```tsx\nconst primaryContent = (\n    <div className=\"w-full h-full flex flex-col\">\n      {validFiles.map((file, index) => (\n        <div key={file.id} className=\"w-full h-full flex-shrink-0\">\n```\n\nThis creates a `flex flex-col` container with `h-full` children. If there are multiple files, each child wants 100% height but `flex-shrink-0` prevents them from shrinking. This would cause overflow, but that should still work.\n\nFor a single file, the child is `h-full` inside a `flex flex-col` with `h-full`. This should work if the chain is unbroken.\n\nLet me check the `ResizablePane` first pane more carefully and the SplitPaneLayout desktop path:\n\nIn ResizablePane (desktop):\n- Container: `flex flex-row overflow-hidden` with `className=\"flex-1\"` from SplitPaneLayout\n- First pane: `<div style={{ flex: '0 0 ${firstPaneSize}%' }} className=\"overflow-hidden relative min-h-0\">`\n\nThe first pane uses `min-h-0` which is good for flexbox. But the content inside it:\n```tsx\n<div className=\"h-full overflow-hidden\">{primaryContent}</div>\n```\n\nThis div wraps primaryContent and uses `h-full`. The parent has an explicit flex sizing so this should work.\n\nLet me look more carefully. The issue could be that the iframe inside `PDFMedia` doesn't get proper height. `h-full` on an iframe means 100% of parent's height. Let me check the full chain on desktop step by step:\n\n```\nExerciseWorkspace: fixed inset-0, flex flex-col → full viewport\n  SplitPaneLayout: flex-1 → takes remaining space after header\n    ResizablePane: flex flex-row overflow-hidden, flex-1 → takes all space\n      First pane: flex: 0 0 50%, overflow-hidden, min-h-0 → explicit width, height from parent\n        <div class=\"h-full overflow-hidden\"> → 100% of pane height ✅\n          primaryContent: <div class=\"w-full h-full flex flex-col\"> → 100% ✅\n            file wrapper: <div class=\"w-full h-full flex-shrink-0\"> → 100% ✅\n              border wrapper: <div class=\"border rounded-lg overflow-hidden bg-card shadow-lg h-full\"> → 100% ✅\n                MediaComponent with htmlElement={null} → Fragment, no wrapper ✅\n                  PDFMedia: <div class=\"w-full h-full\"> → 100% ✅\n                    <iframe class=\"w-full h-full border-0\"> → should be 100% ✅\n```\n\nThis chain looks like it should work. Let me look more closely at the mobile side to understand what's different. On mobile, the SplitPaneLayout doesn't use ResizablePane. It uses a different layout:\n\n```\nMobile: viewMode === 'PDF'\n  <div class=\"overflow-hidden relative flex-1\"> → primaryContent here\n```\n\nOn mobile the primary content gets `flex-1` (takes remaining space). On desktop it gets `flex: 0 0 ${firstPaneSize}%` which should also work.\n\nWait, maybe the issue isn't with the layout at all. Let me re-read the bug report. \"Document viewer appears blank.\" Could this be related to the pdfjs-viewer API route itself not working properly on desktop Chrome? Perhaps it's a `Content-Disposition` or security header issue.\n\nLet me check the RESPONSE_HEADERS more closely:\n\nThe response headers include:\n- `Content-Disposition: inline` ✅\n- `X-Content-Type-Options: nosniff` ✅\n\nBut there's no `X-Frame-Options` header set. Modern Chrome might have different iframe handling.\n\nActually, let me think about this differently. The PDFMedia component uses:\n```\nconst viewerUrl = `/api/pdfjs-viewer?file=${encodeURIComponent(pdfUrl)}&v=4.4.168`\n```\n\nAnd the PDFEmbed component uses:\n```\nsrc={pdfUrl}\n```\n\nThe PDFEmbed has a `style={{ height: '841px', marginTop: '-41px' }}` which gives it an explicit height. PDFMedia uses `h-full` which requires the parent chain to provide height.\n\nWait - let me check the `PDFEmbed` component. Is `PDFEmbed` actually used anywhere currently? Let me search:",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-13T19:40:32.610Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "`PDFEmbed` is not imported anywhere — it's unused. So the issue is only with `PDFMedia`.\n\nLet me re-examine this. The bug says it's blank on desktop Chrome but works on mobile. There are a few possible causes:\n\n1. **Height collapse on desktop** — the `h-full` chain may break somewhere on desktop but work on mobile because mobile uses `flex-1`\n2. **PDF.js viewer loading issue on desktop** — maybe the PDF.js viewer HTML has a CSS issue that makes it invisible on desktop\n3. **Content Security Policy or iframe sandbox issue** — different behavior on desktop vs mobile\n\nLet me look at this more carefully. On mobile, the `SplitPaneLayout` doesn't use `ResizablePane` — it directly renders primaryContent. The primary content div gets `flex-1` class. On desktop, it goes through `ResizablePane`. \n\nActually, wait. Let me re-read `SplitPaneLayout` for desktop. The desktop path is:\n```tsx\n<ResizablePane orientation=\"horizontal\" defaultSize={defaultSize} ...>\n  <div className=\"h-full overflow-hidden\">{primaryContent}</div>\n  <div className=\"bg-background flex flex-col overflow-hidden h-full\">{chatContent}</div>\n</ResizablePane>\n```\n\nAnd in `ResizablePane`, the first pane is:\n```tsx\n<div style={{ flex: `0 0 ${firstPaneSize}%` }} className=\"overflow-hidden relative min-h-0\">\n  {children[0]}\n</div>\n```\n\nSo on desktop, the pane uses `flex: 0 0 X%` for width, but there's no explicit height or height flex. The parent is `flex flex-row`, so height comes from the container. The container has `className=\"flex-1\"` from SplitPaneLayout.\n\nActually this should work. Both panes inherit the height from the flex-row container. Let me think about what else could cause a blank display specifically on desktop Chrome...\n\nLet me check if there's any `display: none` or conditional rendering based on device/screen size:",
+          "tools": [
+            "grep",
+            "grep"
+          ],
+          "timestamp": "2026-03-13T19:41:04.477Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Let me now check the actual rendering. The ResizablePane uses `flex-row` and the first pane has `overflow-hidden`. This means the first pane's height comes from the parent's height (cross-axis in flex-row). The parent is `flex overflow-hidden` and has `className=\"flex-1\"` which should give it the full remaining height.\n\nWait, the `flex: 0 0 X%` sets the width (since it's flex-row). But there's no explicit height on the first pane div. It uses `min-h-0` and `overflow-hidden`. The height should be determined by the flex container's cross-axis alignment (default is `stretch`), so both children stretch to the container's height.\n\nActually, `min-h-0` is NEEDED in flexbox to allow content to shrink below its intrinsic size. Without it, content can overflow. With it, content can be properly contained. This is actually correct for scrollable content.\n\nLet me look at the problem differently. Perhaps the issue is that the iframe within the PDF viewer page is rendered with `overflow: hidden !important` on the body (set by the inline CSS in renderer.ts):\n\n```css\nbody {\n  margin: 0 !important;\n  padding: 0 !important;\n  overflow: hidden !important;\n}\n```\n\nThis might not be the issue. Let me check if there's a `min-width: 0` issue. In a flex-row layout, children default to `min-width: auto`, which prevents them from shrinking below their content's intrinsic minimum width. But the `overflow-hidden` should set `min-width: 0` implicitly.\n\nActually, let me reconsider. Let me trace from the container down more carefully on desktop:\n\n```\nExerciseWorkspace:\n  <div class=\"fixed inset-0 bg-background z-50 flex flex-col overflow-hidden\">\n    <ExerciseHeader /> → some fixed height\n    <SplitPaneLayout class=\"flex-1\">\n```\n\nSplitPaneLayout on desktop:\n```\n<div class=\"flex flex-col overflow-hidden flex-1\">\n  <ResizablePane orientation=\"horizontal\" class=\"flex-1\">\n```\n\nResizablePane:\n```\n<div ref class=\"flex flex-row overflow-hidden flex-1\">\n  <div style=\"flex: 0 0 70%\" class=\"overflow-hidden relative min-h-0\">\n    <!-- child 0: <div class=\"h-full overflow-hidden\">{primaryContent}</div> -->\n  </div>\n  <div class=\"resizer\">...</div>\n  <div class=\"flex-1 overflow-hidden relative min-h-0\">\n    <!-- child 1 -->\n  </div>\n</div>\n```\n\nIn this chain: the outer ExerciseWorkspace is `fixed inset-0`, so full viewport. It's `flex flex-col`. The SplitPaneLayout gets `flex-1`, so it takes all remaining height after the header. SplitPaneLayout wraps in `flex flex-col overflow-hidden`. ResizablePane gets `flex-1` so it takes all available height. ResizablePane is `flex flex-row overflow-hidden`.\n\nIn the flex-row container, both children should stretch to the container's height (default `align-items: stretch`). The first pane should get the full height.\n\nInside the first pane:\n```\n<div class=\"h-full overflow-hidden\"> → primaryContent\n  <div class=\"w-full h-full flex flex-col\">  → from lesson page\n    <div class=\"w-full h-full flex-shrink-0\"> → file wrapper\n      <div class=\"border rounded-lg overflow-hidden bg-card shadow-lg h-full\"> → border wrapper\n        [Fragment] → no DOM element from Media\n          <div class=\"w-full h-full\"> → PDFMedia outer div\n            <iframe class=\"w-full h-full border-0\"> → the actual iframe\n```\n\nAll using `h-full` which cascades from the pane. This SHOULD work.\n\nBUT WAIT — there's a critical problem with `flex-shrink-0` in combination with `h-full` in a `flex flex-col` container!\n\nThe `primaryContent` div is `flex flex-col`. The child file wrapper has `h-full` (= 100% of parent) AND `flex-shrink-0`. In a `flex-col` container, `h-full` means 100% of the container's height. But `flex-shrink-0` means the item won't shrink. If there are multiple files, each wanting 100% height, they overflow. But even with a single file, the combination of `flex-col` + `h-full` child should work fine.\n\nActually, I think I need to look at this from a different angle. Let me check if the issue might be that the `flex flex-col` with one `h-full` child causes the child to be height 0 on desktop. In a `flex flex-col` container, children get their natural height by default. If the child has `h-full`, it should be 100% of the parent. But the parent itself (`w-full h-full flex flex-col`) gets its height from ITS parent which has `h-full overflow-hidden`.\n\nHmm, I think the chain should work. Let me look at another possibility: the `overflow-hidden` on the `h-full overflow-hidden` wrapper might clip the iframe.\n\nActually, let me look at this from the PDFEmbed perspective. That component (currently unused) has:\n```tsx\nstyle={{ height: '841px', marginTop: '-41px' }}\n```\n\nThis uses a FIXED HEIGHT (`841px`) for the iframe. The PDFMedia component uses `h-full` which requires height to cascade from parents. If the height chain breaks anywhere, the iframe would have 0 height and appear blank.\n\nLet me check if there's a specific CSS issue with iframe + h-full in a deep flexbox nesting. Actually, the issue could be simpler than I think:\n\nThe PDF viewer iframe on the lesson page goes through the Media component (which uses `htmlElement={null}` → Fragment). So the PDFMedia div is the direct child of the `border rounded-lg overflow-hidden bg-card shadow-lg h-full` div.\n\nI think the real issue might be in the `overflow-hidden` on the `<div className=\"border rounded-lg overflow-hidden bg-card shadow-lg h-full\">`. Combined with the `h-full` on everything, and the flex-col layout, the content might be clipped.\n\nLet me check an existing test for hints:",
+          "tools": [
+            "glob",
+            "glob",
+            "glob"
+          ],
+          "timestamp": "2026-03-13T19:41:17.729Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Let me also look if there are existing tests for PDFMedia or the media component:",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-13T19:41:48.316Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now let me look at the ExercisesPager to understand the mobile layout flow that WORKS:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:41:51.253Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "I see something very relevant here. In the ExercisesPager (which works for exercises), the `primaryContent` passed to `ExerciseWorkspace` starts with:\n```tsx\n<div className=\"h-full flex flex-col\">\n  <div className=\"flex-1 overflow-y-auto min-h-0\">\n```\n\nThis uses `flex-1 overflow-y-auto min-h-0` which properly takes available height and allows scrolling.\n\nBut the lesson page's `primaryContent` for PDF files is:\n```tsx\n<div className=\"w-full h-full flex flex-col\">\n  {validFiles.map((file, index) => (\n    <div key={file.id} className=\"w-full h-full flex-shrink-0\">\n      ...\n        <MediaComponent resource={file} className=\"w-full h-full\" htmlElement={null} />\n```\n\nThe file wrapper div has `h-full flex-shrink-0`. In a `flex flex-col` parent with `h-full`, `h-full` on a child means 100% of the parent height. With `flex-shrink-0`, it won't shrink. But there's no `min-h-0` on the flex-col parent, and the child is `h-full` not `flex-1`.\n\nActually, on further thought, on mobile when there's a document (Case 2 in the lesson page), it also uses `ExerciseWorkspace` with the same `primaryContent`. So the same code runs on both desktop and mobile. The difference is in `SplitPaneLayout`:\n- **Desktop**: Uses `ResizablePane` → `flex flex-row` → first pane: `style=\"flex: 0 0 X%\"` with `overflow-hidden min-h-0`\n- **Mobile**: `viewMode === 'PDF'` → first content div: `flex-1` (when chat not expanded), or `flex: 0 0 X%` (when chat expanded)\n\nOn both paths, the primary content should get the same treatment. Hmm.\n\nActually wait, I just realized something. Let me re-check how the useMediaQuery hook works during initial SSR/hydration. It returns `false` initially (matches === null → false). So `isDesktop` is `false` during initial render. This means on desktop, the component first renders the MOBILE layout, then switches to desktop layout after the useEffect runs.\n\nCould this cause an issue where the PDF iframe loads in the mobile layout, and when switching to desktop layout, the iframe loses its content? Actually, React should just re-render the children in the new layout. But the iframe gets remounted if it moves to a different position in the React tree, which would cause it to reload.\n\nActually, this is critical! During the first render:\n- `isDesktop = false` (from useMediaQuery initial value)\n- Mobile layout renders\n- After useEffect: `isDesktop = true` (on desktop)\n- Desktop layout renders (completely different JSX tree)\n\nThis means:\n1. First render (SSR): Mobile layout with primary content\n2. Hydration: Mobile layout\n3. useEffect triggers: `isDesktop` becomes `true`\n4. Re-render: Desktop layout\n\nThe **iframe is remounted** because the SplitPaneLayout returns completely different JSX trees for desktop vs mobile. On desktop, the primary content goes inside `<ResizablePane>` → first pane. On mobile, it's in a direct div.\n\nBut that should just cause the iframe to reload, not be permanently blank. Unless there's a timing/race condition.\n\nLet me think about this differently. The bug says \"always reproducible\" on desktop Chrome, \"visible on mobile.\" Let me look for a more structural issue.\n\nActually, let me check whether on desktop the `overflow-hidden` clipping might be causing the issue. The ResizablePane first pane has `overflow-hidden`. Its child is `<div className=\"h-full overflow-hidden\">`. The primaryContent div has `overflow-hidden` at the border wrapper level. That's 3 levels of `overflow-hidden`.\n\nBut more importantly — look at the `flex flex-col` on the primaryContent wrapper from the lesson page:\n\n```tsx\n<div className=\"w-full h-full flex flex-col\">\n```\n\nIn a flex-col layout, if the content (the child div) wants to be `h-full`, the parent needs a defined height. The parent IS `h-full`, and its parent (the `h-full overflow-hidden` in ResizablePane) also should have height from the flex layout.\n\nWait, I just realized there might be a min-height issue. In CSS, when you have nested flex containers, the default `min-height: auto` on flex items can prevent children from shrinking below their content size. The `min-h-0` class on the first pane of ResizablePane helps, but the wrapping `<div className=\"h-full overflow-hidden\">` doesn't have `min-h-0`.\n\nHowever, `overflow-hidden` implicitly sets `min-width: 0` and `min-height: 0` in flex contexts. So that should be fine.\n\nOK, let me take a completely different approach. Let me check if the `flex flex-col` on the primary content wrapper combined with `flex-shrink-0` on the child might be creating a situation where the parent collapses to 0 height on desktop. The `flex-shrink-0` is there for multi-file scenarios, but for single files it shouldn't matter because there's nothing to shrink against.\n\nActually, I think I've found it. The issue might be more subtle. Let me re-examine the lesson page's primaryContent:\n\n```tsx\nconst primaryContent = (\n    <div className=\"w-full h-full flex flex-col\">\n      {validFiles.map((file, index) => (\n        <div key={file.id} className=\"w-full h-full flex-shrink-0\">\n          {index > 0 && (\n            <div className=\"h-0.5 my-8 flex-shrink-0 bg-gradient-to-r ...\" />\n          )}\n          <div className=\"border rounded-lg overflow-hidden bg-card shadow-lg h-full\">\n            <MediaComponent resource={file} className=\"w-full h-full\" htmlElement={null} />\n          </div>\n        </div>\n      ))}\n    </div>\n  )\n```\n\nThe file wrapper div (`w-full h-full flex-shrink-0`) contains the border div (`border rounded-lg overflow-hidden bg-card shadow-lg h-full`) which contains the PDFMedia (`w-full h-full` wrapper + `w-full h-full border-0` iframe).\n\nThe issue on desktop: The file wrapper has `h-full` — which means 100% of the flex-col parent. But the flex-col parent's height is defined by `h-full` which is 100% of its parent. In a flex-col container, a child with `h-full` should inherit the parent's computed height.\n\nBut wait — I just noticed the file wrapper has `h-full` but is NOT a flex child with `flex-1`. It's a regular block child in a `flex flex-col` container. With `h-full`, it takes 100% of the parent's height. With `flex-shrink-0`, it won't shrink. The parent's height comes from `h-full` on itself.\n\nHmm, but I realize I need to trace the `h-full` chain more carefully through the EXACT CSS. In the ResizablePane's first pane div:\n- `style={{ flex: '0 0 70%' }}` → sets flex width to 70%, and makes this a flex item\n- `className=\"overflow-hidden relative min-h-0\"` → overflow hidden, relative positioning, min-height: 0\n\nThe `min-h-0` is critical. Without it, the flex item would have `min-height: auto` which could be the content's intrinsic height. With `min-h-0`, the flex item can shrink to 0.\n\nBut the height of this item in a `flex-row` container is determined by `align-items: stretch` (default). So it stretches to the container's height. Good.\n\nInside it:\n```\n<div class=\"h-full overflow-hidden\"> (from SplitPaneLayout desktop)\n```\nThis takes 100% of the pane's height. ✅\n\nInside that:\n```\n<div class=\"w-full h-full flex flex-col\"> (primaryContent wrapper from lesson page)\n```\nThis also takes 100% height and sets up flex-col. ✅\n\nInside that (flex-col child):\n```\n<div class=\"w-full h-full flex-shrink-0\"> (file wrapper)\n```\nHere's where it gets interesting. In a `flex-col` container, `h-full` (height: 100%) means 100% of the container's height. The container's height IS 100% of the parent (which is the pane's height). So the file wrapper wants to be 100% of the pane height. And `flex-shrink-0` means it won't shrink.\n\nThis should result in the file wrapper being exactly the pane's height, which is correct for a single file. For multiple files, they'd each want 100% and overflow.\n\nInside the file wrapper:\n```\n<div class=\"border rounded-lg overflow-hidden bg-card shadow-lg h-full\">\n```\n`h-full` → 100% of file wrapper's height. ✅\n\nInside that:\n```\nPDFMedia: <div class=\"w-full h-full\">\n  <iframe class=\"w-full h-full border-0\" />\n```\nBoth `h-full`. ✅\n\nSo the chain SHOULD work. But wait—I just realized there could be an issue with `flex-shrink-0` in the flex-col context. In a `flex-col` container, the child's height is determined by:\n1. Its explicit height (via `h-full` → 100%)\n2. Its flex-basis (not set, defaults to `auto`)\n3. Its flex-shrink behavior (0 → don't shrink)\n\nWhen a flex-col child has `h-full` AND `flex-shrink-0`, the child takes 100% of the parent's height. If the parent has a defined height (via `h-full` cascade), this should work.\n\nI'm starting to think the bug might not be in the CSS/layout at all. Let me check another hypothesis: maybe the PDF.js viewer HTML/JS has a bug where it doesn't properly size itself in certain iframe dimensions (wider than tall, as on desktop where it shares space with the chat pane).\n\nOr maybe the issue is with the `body { overflow: hidden !important; }` CSS injected into the PDF.js viewer. If the PDF.js viewer expects to scroll within the body, and we hide the overflow, the content might be invisible.\n\nActually, let me look at the `#viewerContainer` and `#mainContainer` styles:\n```css\n#viewerContainer {\n  padding: 0 !important;\n}\n#mainContainer {\n  padding: 0 !important;\n}\n```\n\nThese remove padding but don't affect sizing. The `body { overflow: hidden !important; }` is more concerning — PDF.js typically scrolls within the viewer container, not the body. But this shouldn't cause a blank display.\n\nLet me re-think. The bug says \"appears blank\" not \"content is cropped\" or \"content is scrolled away\". Blank suggests the iframe isn't rendering anything visible. Possible causes:\n1. The iframe has 0 width or 0 height\n2. The PDF.js viewer fails to load the PDF file\n3. The PDF.js viewer loads but renders at wrong size\n4. Something intercepts/blocks the iframe on desktop\n\nActually, looking at the PDF.js viewer flow again:\n1. PDFMedia builds: `/api/pdfjs-viewer?file=${encodeURIComponent(pdfUrl)}&v=4.4.168`\n2. The pdfjs-viewer API route validates the URL and returns HTML\n3. PDF.js reads `window.location.search` to get the `file` parameter\n4. But wait — **PDF.js reads the file parameter from the iframe's URL**\n\nThis is the key point in the comments:\n```\n// Note: The file URL is already passed via the iframe's query string (?file=...)\n// PDF.js viewer reads the file parameter from window.location.search natively\n```\n\nBut look at the iframe's `src`:\n```\n/api/pdfjs-viewer?file=${encodeURIComponent(pdfUrl)}&v=4.4.168\n```\n\nThe pdfjs-viewer API route serves the HTML, and the HTML includes the PDF.js viewer. PDF.js, when running inside the iframe, reads `window.location.search` which would be `?file=<encoded-url>&v=4.4.168`. So PDF.js would try to load the file from that URL.\n\nNow, on desktop, if the PDF URL is a Blob URL (Vercel Blob), the PDF.js viewer needs to be able to fetch it. The viewer HTML has `<base href=\"${CDN_BASE}/web/\">` which sets the base URL. But relative URLs in the PDF.js viewer scripts (like `../build/pdf.mjs`) are rewritten to absolute CDN URLs.\n\nThe PDF file URL itself comes from the query parameter. If it's a relative URL like `/api/media/file/...` or a blob URL, it should be accessible from within the iframe.\n\nActually wait — there's a subtle issue here. The iframe loads from `/api/pdfjs-viewer?file=...`. The page sets `<base href=\"${CDN_BASE}/web/\">`. If the PDF.js viewer tries to resolve the `file` parameter as a relative URL, the `<base>` tag would change the resolution! A relative URL like `/api/media/file/...` would NOT be affected by base href (it's absolute-path-relative). But a URL without a leading slash could be affected.\n\nLet me look at how `pdfUrl` is computed in PDFMedia:\n```tsx\nconst pdfUrl = React.useMemo(() => {\n    if (resource && typeof resource === 'object') {\n      const { filename, url } = resource\n      if (url) {\n        return url.startsWith('http://') || url.startsWith('https://') ? url : url\n      }\n      return filename ? `/media/${filename}` : null\n    }\n    return null\n  }, [resource])\n```\n\nThe URL is passed as-is whether it's absolute (http/https) or relative. For Vercel Blob storage, URLs would be `https://...blob.vercel-storage.com/...`. For local dev, they might be `/api/...` or `/media/...`.\n\nIn production, PDFs stored in Vercel Blob would have URLs like `https://...blob.vercel-storage.com/...`. These get `encodeURIComponent`'d in the iframe src, and PDF.js would try to fetch them.\n\nHmm, let me check whether there's a CORS issue. The PDF.js viewer HTML is served from the same origin (via `/api/pdfjs-viewer`). But the PDF file is on Vercel Blob. CORS would need to be configured on the Blob CDN to allow requests from the viewer.\n\nBut the bug says it works on mobile! Same browser (Chrome), same URL, same CORS configuration. Unless there's some difference in how mobile Chrome handles CORS.\n\nWait — actually the bug says \"Chrome\" for desktop but doesn't specify the mobile browser. It could be Safari on mobile where the behavior is different.\n\nActually, let me re-read the bug report:\n- **Environment**: prod\n- **Browser**: Chrome\n- **Bug**: Document viewer appears blank on Desktop Chrome\n- **Works**: visible on mobile for the same user\n\nIf CORS were the issue, it would fail on both desktop and mobile. Unless mobile uses a completely different code path.\n\nHmm, wait. Looking at `SplitPaneLayout` again:\n\nOn **mobile** (isDesktop = false), the viewMode defaults to 'PDF', and the primary content div has:\n```\nclassName=\"overflow-hidden relative flex-1\"\n```\n\n`flex-1` means `flex: 1 1 0%` which gives it a flex-basis of 0 and allows growing. This means the div will take all available space in the flex column.\n\nOn **desktop** (isDesktop = true), the primaryContent goes through:\n```\n<ResizablePane orientation=\"horizontal\">\n  <div className=\"h-full overflow-hidden\">{primaryContent}</div>\n```\n\nAnd in ResizablePane, the first pane:\n```\n<div style={{ flex: `0 0 ${firstPaneSize}%` }} className=\"overflow-hidden relative min-h-0\">\n  {children[0]}\n</div>\n```\n\nSo on desktop, the `h-full overflow-hidden` div gets its height from the first pane (which stretches to the row container's height). The first pane's width is set by `flex: 0 0 X%`.\n\nI think the issue might be simpler: the ResizablePane container might not have a proper height. Let me trace again:\n\n```\nExerciseWorkspace: fixed inset-0, flex flex-col\n  ExerciseHeader: some height\n  SplitPaneLayout className=\"flex-1\": \n    Desktop path:\n      <div className=\"flex flex-col overflow-hidden flex-1\">  ← *** this is from SplitPaneLayout\n        <ResizablePane className=\"flex-1\">\n          <div className=\"flex flex-row overflow-hidden flex-1\">  ← ResizablePane container\n```\n\nWait, the SplitPaneLayout desktop path returns:\n```tsx\n<div className={cn('flex flex-col overflow-hidden', className)}>\n  <ResizablePane ...>\n```\n\nwhere `className=\"flex-1\"` from ExerciseWorkspace. So:\n```\n<div class=\"flex flex-col overflow-hidden flex-1\">\n  <ResizablePane className=\"flex-1\">\n    <div class=\"flex flex-row overflow-hidden flex-1\">\n```\n\nThe outer div is `flex flex-col overflow-hidden flex-1`. ResizablePane has `className=\"flex-1\"`. So the ResizablePane container gets `flex-1` within the `flex-col` parent. This should give it all available height.\n\nThe ResizablePane container is `flex flex-row overflow-hidden flex-1`. Its children:\n- First pane: `flex: 0 0 X%`, `overflow-hidden relative min-h-0`\n- Resizer: shrink-0\n- Second pane: `flex-1 overflow-hidden relative min-h-0`\n\nIn this `flex-row` layout, the height of the children is determined by the container's height (via `align-items: stretch`). The container's height is from `flex-1` in the `flex-col` parent.\n\nI believe the chain is solid. Let me consider another possibility: could there be a CSS conflict or a specific Chrome version issue with the PDF.js viewer itself?\n\nActually, I think I need to look at this from the user's perspective. The user opens a lesson with a document. On desktop Chrome, the document viewer is blank. On mobile, it works. This \"always\" reproduces.\n\nLet me check if there's maybe a `Content-Security-Policy` header that blocks the iframe on desktop but not mobile:",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-13T19:41:55.003Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-13T19:43:27.488Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-13T19:43:30.354Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-13T19:43:33.289Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:43:35.575Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "No CSP headers set. No X-Frame-Options. So that's not the issue.\n\nLet me now look at this from a completely different angle. The bug says it works on mobile. On mobile, **if the lesson has content files AND no V3 exercises**, it also uses `ExerciseWorkspace` with the same `primaryContent`. So the exact same code runs:\n\n```tsx\n// Case 2: Document exists -> Keep existing behavior with ExerciseWorkspace\nconst primaryContent = (\n    <div className=\"w-full h-full flex flex-col\">\n      ...\n```\n\nBoth mobile and desktop use `ExerciseWorkspace` → `SplitPaneLayout`. The difference is:\n- **Mobile**: SplitPaneLayout renders the mobile path with `flex-1` on the primary content container\n- **Desktop**: SplitPaneLayout renders `ResizablePane` with `orientation=\"horizontal\"`\n\nIn the mobile path, the primary content container is a direct child of the flex-col main container with `flex-1`. In the desktop path, the primary content goes through `ResizablePane` with its own `flex-row` layout.\n\nI think the actual issue might be in the height calculation for the iframe. On mobile, the iframe is in a `flex-1` container inside a `flex-col` layout — the height is explicitly set by the flex algorithm. On desktop, the iframe is in a `h-full` chain that depends on every ancestor having a defined height.\n\nLet me check a specific case: the `overflow-hidden` on the `h-full overflow-hidden` div wrapping primaryContent in the desktop path. Could this be causing the iframe to collapse?\n\nActually, I just want to verify my hypothesis by checking if there's an existing E2E test or screenshot that might show the issue:",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-13T19:43:40.740Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "OK, I've done enough research. Let me now synthesize my findings and write the plan. Based on my analysis, the most likely root cause is a **height collapse issue** in the desktop layout path. The PDF iframe uses `h-full` (height: 100%) throughout the chain, but on desktop the ResizablePane creates a complex nested flex layout where the height might not properly propagate to the iframe.\n\nThe key difference between desktop and mobile:\n- **Mobile**: Primary content container gets `flex-1` (directly participates in flex sizing)\n- **Desktop**: Primary content is wrapped in `<div className=\"h-full overflow-hidden\">` inside a ResizablePane first pane that uses `flex: 0 0 X%` for width in a `flex-row` layout\n\nThe `h-full` chain on desktop passes through:\n1. ResizablePane first pane (height from `align-items: stretch` in flex-row)\n2. `<div className=\"h-full overflow-hidden\">` wrapper\n3. primaryContent `<div className=\"w-full h-full flex flex-col\">`  \n4. file wrapper `<div className=\"w-full h-full flex-shrink-0\">`\n5. border wrapper `<div className=\"...h-full\">`\n6. PDFMedia `<div className=\"w-full h-full\">`\n7. iframe `className=\"w-full h-full border-0\"`\n\nThe problem is that `h-full` (height: 100%) in a flex-col container can be tricky. The file wrapper div has both `h-full` and `flex-shrink-0`, and the parent flex-col container's height needs to be explicitly resolved for `h-full` to work. If at any point the height resolves to `auto` or `0`, the entire chain collapses.\n\nNow let me write the plan and context files.",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T19:43:52.801Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now let me write the plan.md:",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T19:44:04.231Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Now write context.md:",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T19:45:10.181Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "architect",
+          "text": "Both files have been written. Let me do a quick self-review:\n\n**Self-Review Checklist:**\n\n1. **Spec coverage** — ✅ The bug report describes PDF blank on desktop Chrome, works on mobile. The plan addresses the height chain collapse that causes blank display on desktop while mobile works (different layout path).\n\n2. **Step ordering** — ✅ Steps 1-3 are independent CSS fixes (can be done in any order). Step 4 creates tests. Step 5 verifies quality gates. Tests are written after fixes which is noted in the step descriptions — the TDD pattern here is: write reproduction test → verify it fails → apply fix → verify it passes.\n\n3. **File path accuracy** — ✅ All paths verified via Glob/Read during research.\n\n4. **Reuse check** — ✅ No new utilities created. Only CSS class changes using existing Tailwind utilities.\n\n5. **Test feasibility** — ✅ Uses vitest (not jest), pnpm (not npm). Test file path follows project conventions.\n\n6. **Step size** — ✅ Each step touches 1 file, 10-15 min each. Total ~1 hour.\n\nThe plan and context files are written at `.tasks/260313-auto-110/plan.md` and `.tasks/260313-auto-110/context.md`.",
+          "tools": [],
+          "timestamp": "2026-03-13T19:45:36.606Z"
+        }
+      ]
+    },
+    {
+      "stage": "test",
+      "sessionId": "ses_31744191fffersl13Synpi7cCI",
+      "startedAt": "2026-03-13T19:45:54.400Z",
+      "messages": [
+        {
+          "role": "user",
+          "stage": "test",
+          "text": "\"Task ID: 260313-auto-110\n\n\nTask Type: fix_bug\n\n\nRead these files for context:\n- /home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-110/spec.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-110/clarified.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-110/rerun-feedback.md\n- /home/runner/work/A-Guy/A-Guy/.ai-docs/knowledge/index.json\n\nWrite your output to /home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-110/plan.md\"",
+          "tools": [],
+          "timestamp": "2026-03-13T19:39:04.299Z",
+          "model": "{\"providerID\":\"anthropic\",\"modelID\":\"claude-opus-4-6\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "Let me start by reading all the required input files.",
+          "tools": [
+            "read",
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:39:04.412Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "The spec.md and clarified.md files don't exist. Let me check what files are available in the task directory and look for alternative spec files.",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:39:25.835Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "",
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:39:28.878Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "Now I understand the bug. Let me check the chat.json for any previous architect output and explore the codebase to find the PDF/document viewer component.",
+          "tools": [
+            "read",
+            "grep",
+            "grep"
+          ],
+          "timestamp": "2026-03-13T19:39:32.890Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "I found the key files. Let me read the main PDF rendering components more carefully.",
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:39:37.882Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "Now let me look at where PDFMedia is used in lesson views, and look at the pdfjs-viewer API route and where PDF is displayed for lessons:",
+          "tools": [
+            "grep",
+            "glob",
+            "glob"
+          ],
+          "timestamp": "2026-03-13T19:39:42.461Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:39:47.986Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "Let me look at how lesson pages use these components, and check the PDFEmbed component (it seems it's a different approach), plus the resizable pane:",
+          "tools": [
+            "grep",
+            "glob"
+          ],
+          "timestamp": "2026-03-13T19:39:51.791Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "",
+          "tools": [
+            "grep",
+            "grep"
+          ],
+          "timestamp": "2026-03-13T19:39:56.844Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:40:01.324Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "Now let me look at the ExerciseWorkspace component and the ResizablePane to understand the desktop layout:",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:40:04.251Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "Now let me check the pdfjs infrastructure more closely, the validator, and the media types:",
+          "tools": [
+            "glob",
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:40:09.746Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:40:14.600Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "Now let me check how the PDF.js renderer works and the template loader, which generates the HTML for the iframe:",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:40:17.399Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "Now let me check how the `useMediaQuery` hook works to understand the desktop/mobile detection, which is key to understanding why it works on mobile but not desktop:",
+          "tools": [
+            "read",
+            "glob"
+          ],
+          "timestamp": "2026-03-13T19:40:21.214Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "Now let me look at how `SplitPaneLayout` renders on desktop. On desktop, it uses `ResizablePane` with `orientation=\"horizontal\"` which creates a left/right split. On mobile, it uses the viewMode toggle. The key issue is the height of the PDF container. Let me look more closely:",
+          "tools": [
+            "grep",
+            "grep"
+          ],
+          "timestamp": "2026-03-13T19:40:25.212Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "Now I see a potential issue. The PDFMedia iframe uses `h-full` (height: 100%), but whether it actually gets a height depends on the parent. Let me trace through the layout chain on desktop:\n\n1. **ExerciseWorkspace**: `<div className=\"fixed inset-0 ... flex flex-col overflow-hidden\">` → This gives a full-viewport height container.\n2. **SplitPaneLayout** on desktop: Uses `ResizablePane` with `orientation=\"horizontal\"` → flex-row layout. The first pane has `overflow-hidden relative min-h-0` with a percentage-based flex.\n3. Inside the first pane: `<div className=\"h-full overflow-hidden\">` → This passes h-full to primaryContent.\n4. **primaryContent** (from page.tsx): `<div className=\"w-full h-full flex flex-col\">` → each file wrapper: `<div className=\"w-full h-full flex-shrink-0\">` → `<div className=\"border rounded-lg overflow-hidden bg-card shadow-lg h-full\">` → `<MediaComponent resource={file} className=\"w-full h-full\" htmlElement={null} />`\n5. **MediaComponent** with `htmlElement={null}` → Renders via Fragment (no wrapper div), so the PDFMedia is rendered directly.\n6. **PDFMedia**: `<div className=\"w-full h-full\">` → `<iframe className=\"w-full h-full border-0\">`\n\nThe `h-full` chain needs to propagate all the way. Let me check if there's any broken link in the chain. The `flex flex-col` with `flex-shrink-0` children using `h-full` is suspect. In a flex column, `h-full` means 100% of parent, but parent doesn't have an explicit height since it relies on `flex-col`.\n\nWait, more importantly, there's a layout issue in the lesson page's `primaryContent`. Look:\n\n```tsx\nconst primaryContent = (\n    <div className=\"w-full h-full flex flex-col\">\n      {validFiles.map((file, index) => (\n        <div key={file.id} className=\"w-full h-full flex-shrink-0\">\n```\n\nThis creates a `flex flex-col` container with `h-full` children. If there are multiple files, each child wants 100% height but `flex-shrink-0` prevents them from shrinking. This would cause overflow, but that should still work.\n\nFor a single file, the child is `h-full` inside a `flex flex-col` with `h-full`. This should work if the chain is unbroken.\n\nLet me check the `ResizablePane` first pane more carefully and the SplitPaneLayout desktop path:\n\nIn ResizablePane (desktop):\n- Container: `flex flex-row overflow-hidden` with `className=\"flex-1\"` from SplitPaneLayout\n- First pane: `<div style={{ flex: '0 0 ${firstPaneSize}%' }} className=\"overflow-hidden relative min-h-0\">`\n\nThe first pane uses `min-h-0` which is good for flexbox. But the content inside it:\n```tsx\n<div className=\"h-full overflow-hidden\">{primaryContent}</div>\n```\n\nThis div wraps primaryContent and uses `h-full`. The parent has an explicit flex sizing so this should work.\n\nLet me look more carefully. The issue could be that the iframe inside `PDFMedia` doesn't get proper height. `h-full` on an iframe means 100% of parent's height. Let me check the full chain on desktop step by step:\n\n```\nExerciseWorkspace: fixed inset-0, flex flex-col → full viewport\n  SplitPaneLayout: flex-1 → takes remaining space after header\n    ResizablePane: flex flex-row overflow-hidden, flex-1 → takes all space\n      First pane: flex: 0 0 50%, overflow-hidden, min-h-0 → explicit width, height from parent\n        <div class=\"h-full overflow-hidden\"> → 100% of pane height ✅\n          primaryContent: <div class=\"w-full h-full flex flex-col\"> → 100% ✅\n            file wrapper: <div class=\"w-full h-full flex-shrink-0\"> → 100% ✅\n              border wrapper: <div class=\"border rounded-lg overflow-hidden bg-card shadow-lg h-full\"> → 100% ✅\n                MediaComponent with htmlElement={null} → Fragment, no wrapper ✅\n                  PDFMedia: <div class=\"w-full h-full\"> → 100% ✅\n                    <iframe class=\"w-full h-full border-0\"> → should be 100% ✅\n```\n\nThis chain looks like it should work. Let me look more closely at the mobile side to understand what's different. On mobile, the SplitPaneLayout doesn't use ResizablePane. It uses a different layout:\n\n```\nMobile: viewMode === 'PDF'\n  <div class=\"overflow-hidden relative flex-1\"> → primaryContent here\n```\n\nOn mobile the primary content gets `flex-1` (takes remaining space). On desktop it gets `flex: 0 0 ${firstPaneSize}%` which should also work.\n\nWait, maybe the issue isn't with the layout at all. Let me re-read the bug report. \"Document viewer appears blank.\" Could this be related to the pdfjs-viewer API route itself not working properly on desktop Chrome? Perhaps it's a `Content-Disposition` or security header issue.\n\nLet me check the RESPONSE_HEADERS more closely:\n\nThe response headers include:\n- `Content-Disposition: inline` ✅\n- `X-Content-Type-Options: nosniff` ✅\n\nBut there's no `X-Frame-Options` header set. Modern Chrome might have different iframe handling.\n\nActually, let me think about this differently. The PDFMedia component uses:\n```\nconst viewerUrl = `/api/pdfjs-viewer?file=${encodeURIComponent(pdfUrl)}&v=4.4.168`\n```\n\nAnd the PDFEmbed component uses:\n```\nsrc={pdfUrl}\n```\n\nThe PDFEmbed has a `style={{ height: '841px', marginTop: '-41px' }}` which gives it an explicit height. PDFMedia uses `h-full` which requires the parent chain to provide height.\n\nWait - let me check the `PDFEmbed` component. Is `PDFEmbed` actually used anywhere currently? Let me search:",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-13T19:40:32.610Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "`PDFEmbed` is not imported anywhere — it's unused. So the issue is only with `PDFMedia`.\n\nLet me re-examine this. The bug says it's blank on desktop Chrome but works on mobile. There are a few possible causes:\n\n1. **Height collapse on desktop** — the `h-full` chain may break somewhere on desktop but work on mobile because mobile uses `flex-1`\n2. **PDF.js viewer loading issue on desktop** — maybe the PDF.js viewer HTML has a CSS issue that makes it invisible on desktop\n3. **Content Security Policy or iframe sandbox issue** — different behavior on desktop vs mobile\n\nLet me look at this more carefully. On mobile, the `SplitPaneLayout` doesn't use `ResizablePane` — it directly renders primaryContent. The primary content div gets `flex-1` class. On desktop, it goes through `ResizablePane`. \n\nActually, wait. Let me re-read `SplitPaneLayout` for desktop. The desktop path is:\n```tsx\n<ResizablePane orientation=\"horizontal\" defaultSize={defaultSize} ...>\n  <div className=\"h-full overflow-hidden\">{primaryContent}</div>\n  <div className=\"bg-background flex flex-col overflow-hidden h-full\">{chatContent}</div>\n</ResizablePane>\n```\n\nAnd in `ResizablePane`, the first pane is:\n```tsx\n<div style={{ flex: `0 0 ${firstPaneSize}%` }} className=\"overflow-hidden relative min-h-0\">\n  {children[0]}\n</div>\n```\n\nSo on desktop, the pane uses `flex: 0 0 X%` for width, but there's no explicit height or height flex. The parent is `flex flex-row`, so height comes from the container. The container has `className=\"flex-1\"` from SplitPaneLayout.\n\nActually this should work. Both panes inherit the height from the flex-row container. Let me think about what else could cause a blank display specifically on desktop Chrome...\n\nLet me check if there's any `display: none` or conditional rendering based on device/screen size:",
+          "tools": [
+            "grep",
+            "grep"
+          ],
+          "timestamp": "2026-03-13T19:41:04.477Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "Let me now check the actual rendering. The ResizablePane uses `flex-row` and the first pane has `overflow-hidden`. This means the first pane's height comes from the parent's height (cross-axis in flex-row). The parent is `flex overflow-hidden` and has `className=\"flex-1\"` which should give it the full remaining height.\n\nWait, the `flex: 0 0 X%` sets the width (since it's flex-row). But there's no explicit height on the first pane div. It uses `min-h-0` and `overflow-hidden`. The height should be determined by the flex container's cross-axis alignment (default is `stretch`), so both children stretch to the container's height.\n\nActually, `min-h-0` is NEEDED in flexbox to allow content to shrink below its intrinsic size. Without it, content can overflow. With it, content can be properly contained. This is actually correct for scrollable content.\n\nLet me look at the problem differently. Perhaps the issue is that the iframe within the PDF viewer page is rendered with `overflow: hidden !important` on the body (set by the inline CSS in renderer.ts):\n\n```css\nbody {\n  margin: 0 !important;\n  padding: 0 !important;\n  overflow: hidden !important;\n}\n```\n\nThis might not be the issue. Let me check if there's a `min-width: 0` issue. In a flex-row layout, children default to `min-width: auto`, which prevents them from shrinking below their content's intrinsic minimum width. But the `overflow-hidden` should set `min-width: 0` implicitly.\n\nActually, let me reconsider. Let me trace from the container down more carefully on desktop:\n\n```\nExerciseWorkspace:\n  <div class=\"fixed inset-0 bg-background z-50 flex flex-col overflow-hidden\">\n    <ExerciseHeader /> → some fixed height\n    <SplitPaneLayout class=\"flex-1\">\n```\n\nSplitPaneLayout on desktop:\n```\n<div class=\"flex flex-col overflow-hidden flex-1\">\n  <ResizablePane orientation=\"horizontal\" class=\"flex-1\">\n```\n\nResizablePane:\n```\n<div ref class=\"flex flex-row overflow-hidden flex-1\">\n  <div style=\"flex: 0 0 70%\" class=\"overflow-hidden relative min-h-0\">\n    <!-- child 0: <div class=\"h-full overflow-hidden\">{primaryContent}</div> -->\n  </div>\n  <div class=\"resizer\">...</div>\n  <div class=\"flex-1 overflow-hidden relative min-h-0\">\n    <!-- child 1 -->\n  </div>\n</div>\n```\n\nIn this chain: the outer ExerciseWorkspace is `fixed inset-0`, so full viewport. It's `flex flex-col`. The SplitPaneLayout gets `flex-1`, so it takes all remaining height after the header. SplitPaneLayout wraps in `flex flex-col overflow-hidden`. ResizablePane gets `flex-1` so it takes all available height. ResizablePane is `flex flex-row overflow-hidden`.\n\nIn the flex-row container, both children should stretch to the container's height (default `align-items: stretch`). The first pane should get the full height.\n\nInside the first pane:\n```\n<div class=\"h-full overflow-hidden\"> → primaryContent\n  <div class=\"w-full h-full flex flex-col\">  → from lesson page\n    <div class=\"w-full h-full flex-shrink-0\"> → file wrapper\n      <div class=\"border rounded-lg overflow-hidden bg-card shadow-lg h-full\"> → border wrapper\n        [Fragment] → no DOM element from Media\n          <div class=\"w-full h-full\"> → PDFMedia outer div\n            <iframe class=\"w-full h-full border-0\"> → the actual iframe\n```\n\nAll using `h-full` which cascades from the pane. This SHOULD work.\n\nBUT WAIT — there's a critical problem with `flex-shrink-0` in combination with `h-full` in a `flex flex-col` container!\n\nThe `primaryContent` div is `flex flex-col`. The child file wrapper has `h-full` (= 100% of parent) AND `flex-shrink-0`. In a `flex-col` container, `h-full` means 100% of the container's height. But `flex-shrink-0` means the item won't shrink. If there are multiple files, each wanting 100% height, they overflow. But even with a single file, the combination of `flex-col` + `h-full` child should work fine.\n\nActually, I think I need to look at this from a different angle. Let me check if the issue might be that the `flex flex-col` with one `h-full` child causes the child to be height 0 on desktop. In a `flex flex-col` container, children get their natural height by default. If the child has `h-full`, it should be 100% of the parent. But the parent itself (`w-full h-full flex flex-col`) gets its height from ITS parent which has `h-full overflow-hidden`.\n\nHmm, I think the chain should work. Let me look at another possibility: the `overflow-hidden` on the `h-full overflow-hidden` wrapper might clip the iframe.\n\nActually, let me look at this from the PDFEmbed perspective. That component (currently unused) has:\n```tsx\nstyle={{ height: '841px', marginTop: '-41px' }}\n```\n\nThis uses a FIXED HEIGHT (`841px`) for the iframe. The PDFMedia component uses `h-full` which requires height to cascade from parents. If the height chain breaks anywhere, the iframe would have 0 height and appear blank.\n\nLet me check if there's a specific CSS issue with iframe + h-full in a deep flexbox nesting. Actually, the issue could be simpler than I think:\n\nThe PDF viewer iframe on the lesson page goes through the Media component (which uses `htmlElement={null}` → Fragment). So the PDFMedia div is the direct child of the `border rounded-lg overflow-hidden bg-card shadow-lg h-full` div.\n\nI think the real issue might be in the `overflow-hidden` on the `<div className=\"border rounded-lg overflow-hidden bg-card shadow-lg h-full\">`. Combined with the `h-full` on everything, and the flex-col layout, the content might be clipped.\n\nLet me check an existing test for hints:",
+          "tools": [
+            "glob",
+            "glob",
+            "glob"
+          ],
+          "timestamp": "2026-03-13T19:41:17.729Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "Let me also look if there are existing tests for PDFMedia or the media component:",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-13T19:41:48.316Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "Now let me look at the ExercisesPager to understand the mobile layout flow that WORKS:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:41:51.253Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "I see something very relevant here. In the ExercisesPager (which works for exercises), the `primaryContent` passed to `ExerciseWorkspace` starts with:\n```tsx\n<div className=\"h-full flex flex-col\">\n  <div className=\"flex-1 overflow-y-auto min-h-0\">\n```\n\nThis uses `flex-1 overflow-y-auto min-h-0` which properly takes available height and allows scrolling.\n\nBut the lesson page's `primaryContent` for PDF files is:\n```tsx\n<div className=\"w-full h-full flex flex-col\">\n  {validFiles.map((file, index) => (\n    <div key={file.id} className=\"w-full h-full flex-shrink-0\">\n      ...\n        <MediaComponent resource={file} className=\"w-full h-full\" htmlElement={null} />\n```\n\nThe file wrapper div has `h-full flex-shrink-0`. In a `flex flex-col` parent with `h-full`, `h-full` on a child means 100% of the parent height. With `flex-shrink-0`, it won't shrink. But there's no `min-h-0` on the flex-col parent, and the child is `h-full` not `flex-1`.\n\nActually, on further thought, on mobile when there's a document (Case 2 in the lesson page), it also uses `ExerciseWorkspace` with the same `primaryContent`. So the same code runs on both desktop and mobile. The difference is in `SplitPaneLayout`:\n- **Desktop**: Uses `ResizablePane` → `flex flex-row` → first pane: `style=\"flex: 0 0 X%\"` with `overflow-hidden min-h-0`\n- **Mobile**: `viewMode === 'PDF'` → first content div: `flex-1` (when chat not expanded), or `flex: 0 0 X%` (when chat expanded)\n\nOn both paths, the primary content should get the same treatment. Hmm.\n\nActually wait, I just realized something. Let me re-check how the useMediaQuery hook works during initial SSR/hydration. It returns `false` initially (matches === null → false). So `isDesktop` is `false` during initial render. This means on desktop, the component first renders the MOBILE layout, then switches to desktop layout after the useEffect runs.\n\nCould this cause an issue where the PDF iframe loads in the mobile layout, and when switching to desktop layout, the iframe loses its content? Actually, React should just re-render the children in the new layout. But the iframe gets remounted if it moves to a different position in the React tree, which would cause it to reload.\n\nActually, this is critical! During the first render:\n- `isDesktop = false` (from useMediaQuery initial value)\n- Mobile layout renders\n- After useEffect: `isDesktop = true` (on desktop)\n- Desktop layout renders (completely different JSX tree)\n\nThis means:\n1. First render (SSR): Mobile layout with primary content\n2. Hydration: Mobile layout\n3. useEffect triggers: `isDesktop` becomes `true`\n4. Re-render: Desktop layout\n\nThe **iframe is remounted** because the SplitPaneLayout returns completely different JSX trees for desktop vs mobile. On desktop, the primary content goes inside `<ResizablePane>` → first pane. On mobile, it's in a direct div.\n\nBut that should just cause the iframe to reload, not be permanently blank. Unless there's a timing/race condition.\n\nLet me think about this differently. The bug says \"always reproducible\" on desktop Chrome, \"visible on mobile.\" Let me look for a more structural issue.\n\nActually, let me check whether on desktop the `overflow-hidden` clipping might be causing the issue. The ResizablePane first pane has `overflow-hidden`. Its child is `<div className=\"h-full overflow-hidden\">`. The primaryContent div has `overflow-hidden` at the border wrapper level. That's 3 levels of `overflow-hidden`.\n\nBut more importantly — look at the `flex flex-col` on the primaryContent wrapper from the lesson page:\n\n```tsx\n<div className=\"w-full h-full flex flex-col\">\n```\n\nIn a flex-col layout, if the content (the child div) wants to be `h-full`, the parent needs a defined height. The parent IS `h-full`, and its parent (the `h-full overflow-hidden` in ResizablePane) also should have height from the flex layout.\n\nWait, I just realized there might be a min-height issue. In CSS, when you have nested flex containers, the default `min-height: auto` on flex items can prevent children from shrinking below their content size. The `min-h-0` class on the first pane of ResizablePane helps, but the wrapping `<div className=\"h-full overflow-hidden\">` doesn't have `min-h-0`.\n\nHowever, `overflow-hidden` implicitly sets `min-width: 0` and `min-height: 0` in flex contexts. So that should be fine.\n\nOK, let me take a completely different approach. Let me check if the `flex flex-col` on the primary content wrapper combined with `flex-shrink-0` on the child might be creating a situation where the parent collapses to 0 height on desktop. The `flex-shrink-0` is there for multi-file scenarios, but for single files it shouldn't matter because there's nothing to shrink against.\n\nActually, I think I've found it. The issue might be more subtle. Let me re-examine the lesson page's primaryContent:\n\n```tsx\nconst primaryContent = (\n    <div className=\"w-full h-full flex flex-col\">\n      {validFiles.map((file, index) => (\n        <div key={file.id} className=\"w-full h-full flex-shrink-0\">\n          {index > 0 && (\n            <div className=\"h-0.5 my-8 flex-shrink-0 bg-gradient-to-r ...\" />\n          )}\n          <div className=\"border rounded-lg overflow-hidden bg-card shadow-lg h-full\">\n            <MediaComponent resource={file} className=\"w-full h-full\" htmlElement={null} />\n          </div>\n        </div>\n      ))}\n    </div>\n  )\n```\n\nThe file wrapper div (`w-full h-full flex-shrink-0`) contains the border div (`border rounded-lg overflow-hidden bg-card shadow-lg h-full`) which contains the PDFMedia (`w-full h-full` wrapper + `w-full h-full border-0` iframe).\n\nThe issue on desktop: The file wrapper has `h-full` — which means 100% of the flex-col parent. But the flex-col parent's height is defined by `h-full` which is 100% of its parent. In a flex-col container, a child with `h-full` should inherit the parent's computed height.\n\nBut wait — I just noticed the file wrapper has `h-full` but is NOT a flex child with `flex-1`. It's a regular block child in a `flex flex-col` container. With `h-full`, it takes 100% of the parent's height. With `flex-shrink-0`, it won't shrink. The parent's height comes from `h-full` on itself.\n\nHmm, but I realize I need to trace the `h-full` chain more carefully through the EXACT CSS. In the ResizablePane's first pane div:\n- `style={{ flex: '0 0 70%' }}` → sets flex width to 70%, and makes this a flex item\n- `className=\"overflow-hidden relative min-h-0\"` → overflow hidden, relative positioning, min-height: 0\n\nThe `min-h-0` is critical. Without it, the flex item would have `min-height: auto` which could be the content's intrinsic height. With `min-h-0`, the flex item can shrink to 0.\n\nBut the height of this item in a `flex-row` container is determined by `align-items: stretch` (default). So it stretches to the container's height. Good.\n\nInside it:\n```\n<div class=\"h-full overflow-hidden\"> (from SplitPaneLayout desktop)\n```\nThis takes 100% of the pane's height. ✅\n\nInside that:\n```\n<div class=\"w-full h-full flex flex-col\"> (primaryContent wrapper from lesson page)\n```\nThis also takes 100% height and sets up flex-col. ✅\n\nInside that (flex-col child):\n```\n<div class=\"w-full h-full flex-shrink-0\"> (file wrapper)\n```\nHere's where it gets interesting. In a `flex-col` container, `h-full` (height: 100%) means 100% of the container's height. The container's height IS 100% of the parent (which is the pane's height). So the file wrapper wants to be 100% of the pane height. And `flex-shrink-0` means it won't shrink.\n\nThis should result in the file wrapper being exactly the pane's height, which is correct for a single file. For multiple files, they'd each want 100% and overflow.\n\nInside the file wrapper:\n```\n<div class=\"border rounded-lg overflow-hidden bg-card shadow-lg h-full\">\n```\n`h-full` → 100% of file wrapper's height. ✅\n\nInside that:\n```\nPDFMedia: <div class=\"w-full h-full\">\n  <iframe class=\"w-full h-full border-0\" />\n```\nBoth `h-full`. ✅\n\nSo the chain SHOULD work. But wait—I just realized there could be an issue with `flex-shrink-0` in the flex-col context. In a `flex-col` container, the child's height is determined by:\n1. Its explicit height (via `h-full` → 100%)\n2. Its flex-basis (not set, defaults to `auto`)\n3. Its flex-shrink behavior (0 → don't shrink)\n\nWhen a flex-col child has `h-full` AND `flex-shrink-0`, the child takes 100% of the parent's height. If the parent has a defined height (via `h-full` cascade), this should work.\n\nI'm starting to think the bug might not be in the CSS/layout at all. Let me check another hypothesis: maybe the PDF.js viewer HTML/JS has a bug where it doesn't properly size itself in certain iframe dimensions (wider than tall, as on desktop where it shares space with the chat pane).\n\nOr maybe the issue is with the `body { overflow: hidden !important; }` CSS injected into the PDF.js viewer. If the PDF.js viewer expects to scroll within the body, and we hide the overflow, the content might be invisible.\n\nActually, let me look at the `#viewerContainer` and `#mainContainer` styles:\n```css\n#viewerContainer {\n  padding: 0 !important;\n}\n#mainContainer {\n  padding: 0 !important;\n}\n```\n\nThese remove padding but don't affect sizing. The `body { overflow: hidden !important; }` is more concerning — PDF.js typically scrolls within the viewer container, not the body. But this shouldn't cause a blank display.\n\nLet me re-think. The bug says \"appears blank\" not \"content is cropped\" or \"content is scrolled away\". Blank suggests the iframe isn't rendering anything visible. Possible causes:\n1. The iframe has 0 width or 0 height\n2. The PDF.js viewer fails to load the PDF file\n3. The PDF.js viewer loads but renders at wrong size\n4. Something intercepts/blocks the iframe on desktop\n\nActually, looking at the PDF.js viewer flow again:\n1. PDFMedia builds: `/api/pdfjs-viewer?file=${encodeURIComponent(pdfUrl)}&v=4.4.168`\n2. The pdfjs-viewer API route validates the URL and returns HTML\n3. PDF.js reads `window.location.search` to get the `file` parameter\n4. But wait — **PDF.js reads the file parameter from the iframe's URL**\n\nThis is the key point in the comments:\n```\n// Note: The file URL is already passed via the iframe's query string (?file=...)\n// PDF.js viewer reads the file parameter from window.location.search natively\n```\n\nBut look at the iframe's `src`:\n```\n/api/pdfjs-viewer?file=${encodeURIComponent(pdfUrl)}&v=4.4.168\n```\n\nThe pdfjs-viewer API route serves the HTML, and the HTML includes the PDF.js viewer. PDF.js, when running inside the iframe, reads `window.location.search` which would be `?file=<encoded-url>&v=4.4.168`. So PDF.js would try to load the file from that URL.\n\nNow, on desktop, if the PDF URL is a Blob URL (Vercel Blob), the PDF.js viewer needs to be able to fetch it. The viewer HTML has `<base href=\"${CDN_BASE}/web/\">` which sets the base URL. But relative URLs in the PDF.js viewer scripts (like `../build/pdf.mjs`) are rewritten to absolute CDN URLs.\n\nThe PDF file URL itself comes from the query parameter. If it's a relative URL like `/api/media/file/...` or a blob URL, it should be accessible from within the iframe.\n\nActually wait — there's a subtle issue here. The iframe loads from `/api/pdfjs-viewer?file=...`. The page sets `<base href=\"${CDN_BASE}/web/\">`. If the PDF.js viewer tries to resolve the `file` parameter as a relative URL, the `<base>` tag would change the resolution! A relative URL like `/api/media/file/...` would NOT be affected by base href (it's absolute-path-relative). But a URL without a leading slash could be affected.\n\nLet me look at how `pdfUrl` is computed in PDFMedia:\n```tsx\nconst pdfUrl = React.useMemo(() => {\n    if (resource && typeof resource === 'object') {\n      const { filename, url } = resource\n      if (url) {\n        return url.startsWith('http://') || url.startsWith('https://') ? url : url\n      }\n      return filename ? `/media/${filename}` : null\n    }\n    return null\n  }, [resource])\n```\n\nThe URL is passed as-is whether it's absolute (http/https) or relative. For Vercel Blob storage, URLs would be `https://...blob.vercel-storage.com/...`. For local dev, they might be `/api/...` or `/media/...`.\n\nIn production, PDFs stored in Vercel Blob would have URLs like `https://...blob.vercel-storage.com/...`. These get `encodeURIComponent`'d in the iframe src, and PDF.js would try to fetch them.\n\nHmm, let me check whether there's a CORS issue. The PDF.js viewer HTML is served from the same origin (via `/api/pdfjs-viewer`). But the PDF file is on Vercel Blob. CORS would need to be configured on the Blob CDN to allow requests from the viewer.\n\nBut the bug says it works on mobile! Same browser (Chrome), same URL, same CORS configuration. Unless there's some difference in how mobile Chrome handles CORS.\n\nWait — actually the bug says \"Chrome\" for desktop but doesn't specify the mobile browser. It could be Safari on mobile where the behavior is different.\n\nActually, let me re-read the bug report:\n- **Environment**: prod\n- **Browser**: Chrome\n- **Bug**: Document viewer appears blank on Desktop Chrome\n- **Works**: visible on mobile for the same user\n\nIf CORS were the issue, it would fail on both desktop and mobile. Unless mobile uses a completely different code path.\n\nHmm, wait. Looking at `SplitPaneLayout` again:\n\nOn **mobile** (isDesktop = false), the viewMode defaults to 'PDF', and the primary content div has:\n```\nclassName=\"overflow-hidden relative flex-1\"\n```\n\n`flex-1` means `flex: 1 1 0%` which gives it a flex-basis of 0 and allows growing. This means the div will take all available space in the flex column.\n\nOn **desktop** (isDesktop = true), the primaryContent goes through:\n```\n<ResizablePane orientation=\"horizontal\">\n  <div className=\"h-full overflow-hidden\">{primaryContent}</div>\n```\n\nAnd in ResizablePane, the first pane:\n```\n<div style={{ flex: `0 0 ${firstPaneSize}%` }} className=\"overflow-hidden relative min-h-0\">\n  {children[0]}\n</div>\n```\n\nSo on desktop, the `h-full overflow-hidden` div gets its height from the first pane (which stretches to the row container's height). The first pane's width is set by `flex: 0 0 X%`.\n\nI think the issue might be simpler: the ResizablePane container might not have a proper height. Let me trace again:\n\n```\nExerciseWorkspace: fixed inset-0, flex flex-col\n  ExerciseHeader: some height\n  SplitPaneLayout className=\"flex-1\": \n    Desktop path:\n      <div className=\"flex flex-col overflow-hidden flex-1\">  ← *** this is from SplitPaneLayout\n        <ResizablePane className=\"flex-1\">\n          <div className=\"flex flex-row overflow-hidden flex-1\">  ← ResizablePane container\n```\n\nWait, the SplitPaneLayout desktop path returns:\n```tsx\n<div className={cn('flex flex-col overflow-hidden', className)}>\n  <ResizablePane ...>\n```\n\nwhere `className=\"flex-1\"` from ExerciseWorkspace. So:\n```\n<div class=\"flex flex-col overflow-hidden flex-1\">\n  <ResizablePane className=\"flex-1\">\n    <div class=\"flex flex-row overflow-hidden flex-1\">\n```\n\nThe outer div is `flex flex-col overflow-hidden flex-1`. ResizablePane has `className=\"flex-1\"`. So the ResizablePane container gets `flex-1` within the `flex-col` parent. This should give it all available height.\n\nThe ResizablePane container is `flex flex-row overflow-hidden flex-1`. Its children:\n- First pane: `flex: 0 0 X%`, `overflow-hidden relative min-h-0`\n- Resizer: shrink-0\n- Second pane: `flex-1 overflow-hidden relative min-h-0`\n\nIn this `flex-row` layout, the height of the children is determined by the container's height (via `align-items: stretch`). The container's height is from `flex-1` in the `flex-col` parent.\n\nI believe the chain is solid. Let me consider another possibility: could there be a CSS conflict or a specific Chrome version issue with the PDF.js viewer itself?\n\nActually, I think I need to look at this from the user's perspective. The user opens a lesson with a document. On desktop Chrome, the document viewer is blank. On mobile, it works. This \"always\" reproduces.\n\nLet me check if there's maybe a `Content-Security-Policy` header that blocks the iframe on desktop but not mobile:",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-13T19:41:55.003Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-13T19:43:27.488Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-13T19:43:30.354Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-13T19:43:33.289Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:43:35.575Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "No CSP headers set. No X-Frame-Options. So that's not the issue.\n\nLet me now look at this from a completely different angle. The bug says it works on mobile. On mobile, **if the lesson has content files AND no V3 exercises**, it also uses `ExerciseWorkspace` with the same `primaryContent`. So the exact same code runs:\n\n```tsx\n// Case 2: Document exists -> Keep existing behavior with ExerciseWorkspace\nconst primaryContent = (\n    <div className=\"w-full h-full flex flex-col\">\n      ...\n```\n\nBoth mobile and desktop use `ExerciseWorkspace` → `SplitPaneLayout`. The difference is:\n- **Mobile**: SplitPaneLayout renders the mobile path with `flex-1` on the primary content container\n- **Desktop**: SplitPaneLayout renders `ResizablePane` with `orientation=\"horizontal\"`\n\nIn the mobile path, the primary content container is a direct child of the flex-col main container with `flex-1`. In the desktop path, the primary content goes through `ResizablePane` with its own `flex-row` layout.\n\nI think the actual issue might be in the height calculation for the iframe. On mobile, the iframe is in a `flex-1` container inside a `flex-col` layout — the height is explicitly set by the flex algorithm. On desktop, the iframe is in a `h-full` chain that depends on every ancestor having a defined height.\n\nLet me check a specific case: the `overflow-hidden` on the `h-full overflow-hidden` div wrapping primaryContent in the desktop path. Could this be causing the iframe to collapse?\n\nActually, I just want to verify my hypothesis by checking if there's an existing E2E test or screenshot that might show the issue:",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-13T19:43:40.740Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "OK, I've done enough research. Let me now synthesize my findings and write the plan. Based on my analysis, the most likely root cause is a **height collapse issue** in the desktop layout path. The PDF iframe uses `h-full` (height: 100%) throughout the chain, but on desktop the ResizablePane creates a complex nested flex layout where the height might not properly propagate to the iframe.\n\nThe key difference between desktop and mobile:\n- **Mobile**: Primary content container gets `flex-1` (directly participates in flex sizing)\n- **Desktop**: Primary content is wrapped in `<div className=\"h-full overflow-hidden\">` inside a ResizablePane first pane that uses `flex: 0 0 X%` for width in a `flex-row` layout\n\nThe `h-full` chain on desktop passes through:\n1. ResizablePane first pane (height from `align-items: stretch` in flex-row)\n2. `<div className=\"h-full overflow-hidden\">` wrapper\n3. primaryContent `<div className=\"w-full h-full flex flex-col\">`  \n4. file wrapper `<div className=\"w-full h-full flex-shrink-0\">`\n5. border wrapper `<div className=\"...h-full\">`\n6. PDFMedia `<div className=\"w-full h-full\">`\n7. iframe `className=\"w-full h-full border-0\"`\n\nThe problem is that `h-full` (height: 100%) in a flex-col container can be tricky. The file wrapper div has both `h-full` and `flex-shrink-0`, and the parent flex-col container's height needs to be explicitly resolved for `h-full` to work. If at any point the height resolves to `auto` or `0`, the entire chain collapses.\n\nNow let me write the plan and context files.",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T19:43:52.801Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "Now let me write the plan.md:",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T19:44:04.231Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "Now write context.md:",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T19:45:10.181Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "Both files have been written. Let me do a quick self-review:\n\n**Self-Review Checklist:**\n\n1. **Spec coverage** — ✅ The bug report describes PDF blank on desktop Chrome, works on mobile. The plan addresses the height chain collapse that causes blank display on desktop while mobile works (different layout path).\n\n2. **Step ordering** — ✅ Steps 1-3 are independent CSS fixes (can be done in any order). Step 4 creates tests. Step 5 verifies quality gates. Tests are written after fixes which is noted in the step descriptions — the TDD pattern here is: write reproduction test → verify it fails → apply fix → verify it passes.\n\n3. **File path accuracy** — ✅ All paths verified via Glob/Read during research.\n\n4. **Reuse check** — ✅ No new utilities created. Only CSS class changes using existing Tailwind utilities.\n\n5. **Test feasibility** — ✅ Uses vitest (not jest), pnpm (not npm). Test file path follows project conventions.\n\n6. **Step size** — ✅ Each step touches 1 file, 10-15 min each. Total ~1 hour.\n\nThe plan and context files are written at `.tasks/260313-auto-110/plan.md` and `.tasks/260313-auto-110/context.md`.",
+          "tools": [],
+          "timestamp": "2026-03-13T19:45:36.606Z"
+        },
+        {
+          "role": "user",
+          "stage": "test",
+          "text": "\"TDD RED PHASE: Write failing tests from the plan.\nYou run in PARALLEL with the build agent. Write tests to tests/ ONLY.\nDo NOT modify src/. Do NOT run tests (they will fail without implementation).\n\nTask ID: 260313-auto-110\n\n\nRead these files for context:\n- /home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-110/spec.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-110/clarified.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-110/plan.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-110/task.json\n\nWrite your output to /home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-110/test.md\"",
+          "tools": [],
+          "timestamp": "2026-03-13T19:45:54.693Z",
+          "model": "{\"providerID\":\"minimax-coding-plan\",\"modelID\":\"MiniMax-M2.5\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:45:54.717Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "Let me check existing test patterns to write tests in the correct style:",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-13T19:46:11.623Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:46:17.787Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:46:24.992Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-13T19:46:30.966Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-13T19:46:38.017Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-13T19:46:43.581Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:46:46.479Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:46:51.740Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:46:55.213Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "I see from the source that:\n1. **PDFMedia** (line 44) already has `min-h-0` - so that's already fixed!\n2. **SplitPaneLayout** (line 145) is `<div className=\"h-full overflow-hidden\">{primaryContent}</div>` - missing `min-h-0`\n\nThe bug fix must be partially complete. Let me check the lesson page:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:47:01.267Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "I can see from the source code that:\n1. **Lesson page** (lines 151, 153): Already has `min-h-0` and uses `flex-1 min-h-0` \n2. **PDFMedia** (line 44): Already has `min-h-0`\n3. **SplitPaneLayout** (line 145): Missing `min-h-0`\n\nSo most of the fix is already applied! The only remaining fix is SplitPaneLayout line 145. Now I'll write the tests. Let me create the test file:",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T19:47:09.849Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "Now I'll create the test file that verifies the expected CSS classes. Since the build hasn't implemented the SplitPaneLayout fix yet, that test will fail:",
+          "tools": [
+            "write"
+          ],
+          "timestamp": "2026-03-13T19:47:32.100Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "",
+          "tools": [
+            "write"
+          ],
+          "timestamp": "2026-03-13T19:48:12.072Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-13T19:48:47.883Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T19:48:53.026Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T19:49:46.919Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T19:49:51.232Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T19:50:02.969Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T19:50:13.459Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T19:50:18.336Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "The test.md file has been written. Let me verify the final content:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T19:50:23.108Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "test",
+          "text": "The Test Agent has completed writing the tests. Here's a summary:\n\n## Summary\n\n**Tests Created:**\n- `tests/unit/components/PDFMedia.test.tsx` - 7 unit tests\n\n**Test Coverage:**\n1. ✅ PDFMedia renders iframe with PDF.js viewer URL\n2. ✅ PDFMedia wrapper has min-h-0 (already fixed in source)\n3. ✅ PDFMedia renders null when no URL available\n4. ❌ **SplitPaneLayout desktop wrapper has min-h-0** - **FAILS** (needs fix)\n5. ✅ Lesson page uses flex-1 min-h-0 (already fixed in source)\n6. ✅ Documentation test for complete fix chain\n\n**Key Finding:**\nMost of the bug fix was already applied in the source code:\n- ✅ PDFMedia (line 44): has `min-h-0` \n- ✅ Lesson page (lines 151, 153): has `min-h-0` and uses `flex-1 min-h-0`\n- ❌ **SplitPaneLayout (line 145)**: **missing** `min-h-0`\n\nThe only remaining fix needed is to add `min-h-0` to the SplitPaneLayout desktop primary content wrapper at line 145. The test I wrote will fail until the build agent implements this fix.",
+          "tools": [],
+          "timestamp": "2026-03-13T19:50:38.137Z"
+        }
+      ]
     }
   ]
 }
