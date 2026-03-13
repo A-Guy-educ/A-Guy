@@ -5,11 +5,17 @@
  * @ai-summary Converts raw LaTeX source to markdown+math for rendering via MathMarkdown
  */
 
-/** Strip LaTeX preamble commands that have no visual output */
+/** Strip LaTeX preamble: everything before \begin{document} + the command itself, and \end{document} */
 function stripPreamble(latex: string): string {
-  const preambleCommands =
-    /\\(documentclass|usepackage|pagestyle|setlength|geometry|fancyhf|renewcommand|newcommand|title|author|date|maketitle|begin\{document\}|end\{document\})\b[^\n]*/g
-  return latex.replace(preambleCommands, '')
+  let result = latex
+  const beginDoc = result.indexOf('\\begin{document}')
+  if (beginDoc !== -1) {
+    result = result.slice(beginDoc + '\\begin{document}'.length)
+  }
+  result = result.replace(/\\end\{document\}/g, '')
+  const inlineCommands =
+    /\\(documentclass|usepackage|pagestyle|setlength|geometry|fancyhf|renewcommand|newcommand|title|author|date|maketitle)\b[^\n]*/g
+  return result.replace(inlineCommands, '')
 }
 
 /** Convert sectioning commands to markdown headings */

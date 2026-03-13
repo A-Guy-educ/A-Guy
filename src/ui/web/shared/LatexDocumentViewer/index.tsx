@@ -34,8 +34,9 @@ export function LatexDocumentViewer({
 
   return (
     <div
+      dir="ltr"
       className={cn(
-        'bg-background border-border mx-auto max-w-4xl rounded-lg border shadow-lg',
+        'bg-background border-border mx-auto max-w-4xl rounded-lg border shadow-lg overflow-auto',
         className,
       )}
     >
