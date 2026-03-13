@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "taskId": "260313-auto-657",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-13T15:02:29.939Z",
+  "updatedAt": "2026-03-13T15:02:31.535Z",
+  "state": "running",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-13T15:02:31.535Z"
+    }
+  },
+  "issueNumber": 738
+}
