@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-13T18:11:40.190Z",
-  "updatedAt": "2026-03-13T19:45:51.893Z",
+  "updatedAt": "2026-03-13T19:58:19.134Z",
   "state": "running",
   "cursor": "gap",
   "stages": {
@@ -44,8 +44,26 @@
       "state": "skipped",
       "retries": 0,
       "skipped": "Complexity 21 (moderate) below threshold 50 for plan-gap"
+    },
+    "test": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-13T19:56:34.599Z",
+      "outputFile": "test.md",
+      "sessionId": "ses_31744191fffersl13Synpi7cCI"
+    },
+    "build": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-13T19:56:34.599Z",
+      "outputFile": "build.md",
+      "sessionId": "ses_3174417bdffeE0Qe4EiXi2XP3i"
+    },
+    "commit": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-13T19:58:19.134Z"
     }
   },
-  "issueNumber": 762,
-  "branchName": "fix/260313-auto-762-documentpdf-not-displayed-on-deskt"
+  "issueNumber": 762
 }
