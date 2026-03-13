@@ -1,0 +1,3 @@
+# Task
+
+Smoke test task

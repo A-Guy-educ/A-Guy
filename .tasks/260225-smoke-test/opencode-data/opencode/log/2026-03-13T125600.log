@@ -1,0 +1,1 @@
+INFO  2026-03-13T12:56:00 +393ms service=default version=0.0.0-dev-202603021929 args=["run","--attach","http://127.0.0.1:4097","--format","json","ping"] opencode
