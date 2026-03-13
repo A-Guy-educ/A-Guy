@@ -651,9 +651,19 @@ export function parseCliArgs(argv: string[]): CodyInput {
 
   // Options that consume the next arg as their value (--key <value> format)
   const optionsWithValues = new Set([
-    '--task-id', '--mode', '--file', '--issue-number', '--from', '--feedback',
-    '--complexity', '--comment-body', '--comment-body-env', '--version',
-    '--trigger-type', '--run-id', '--run-url',
+    '--task-id',
+    '--mode',
+    '--file',
+    '--issue-number',
+    '--from',
+    '--feedback',
+    '--complexity',
+    '--comment-body',
+    '--comment-body-env',
+    '--version',
+    '--trigger-type',
+    '--run-id',
+    '--run-url',
   ])
 
   for (let i = 0; i < argv.length; i++) {
