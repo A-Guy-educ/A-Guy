@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-13T15:17:29.240Z",
-  "updatedAt": "2026-03-13T15:22:21.403Z",
+  "updatedAt": "2026-03-13T15:48:15.676Z",
   "state": "running",
   "cursor": null,
   "stages": {
@@ -37,11 +37,23 @@
       "skipped": "Complexity 7 (trivial) below threshold 50 for plan-gap"
     },
     "build": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-13T15:22:21.325Z",
+      "completedAt": "2026-03-13T15:24:11.543Z",
+      "outputFile": "build.md",
+      "tokenUsage": {
+        "input": 8527,
+        "output": 995,
+        "cacheRead": 345560
+      },
+      "sessionId": "ses_318355da6ffeqZRr4CqA1Jh4gc"
+    },
+    "commit": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-13T15:22:21.325Z"
+      "startedAt": "2026-03-13T15:48:15.676Z"
     }
   },
-  "issueNumber": 802,
-  "branchName": "feat/260313-auto-802-create-a-simple-utility-file-srcin"
+  "issueNumber": 802
 }

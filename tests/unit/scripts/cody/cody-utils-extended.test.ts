@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import * as childProcess from 'child_process'
 
 // Mock child_process and fs before importing the module
 vi.mock('child_process', () => ({
@@ -32,8 +33,12 @@ vi.mock('../../../../scripts/cody/logger', () => ({
   createStageLogger: vi.fn().mockReturnValue(mockLogger),
 }))
 
+// Mock github-api to control discoverTaskIdFromIssue behavior
+vi.mock('../../../../scripts/cody/github-api', () => ({
+  discoverTaskIdFromIssue: vi.fn(),
+}))
+
 import * as fs from 'fs'
-import * as childProcess from 'child_process'
 
 import {
   parseCommentBody,
@@ -53,6 +58,7 @@ import {
   type CodyPipelineStatus,
 } from '../../../../scripts/cody/cody-utils'
 import { resetEnv } from '../../../../scripts/cody/env'
+import { discoverTaskIdFromIssue } from '../../../../scripts/cody/github-api'
 
 // ---------------------------------------------------------------------------
 // parseCommentBody
