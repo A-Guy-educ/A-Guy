@@ -335,6 +335,14 @@ async function executeParallelStep(
     return state
   }
 
+  // Dry-run: mark all parallel stages as completed without running
+  if (ctx.input.dryRun) {
+    for (const stageName of stagesToRun) {
+      state = updateStage(state, stageName, { state: 'completed', retries: 0 })
+    }
+    return state
+  }
+
   const results = await Promise.allSettled(
     stagesToRun.map(async (stageName) => {
       const def = pipeline.stages.get(stageName)
@@ -459,7 +467,7 @@ async function executeParallelStep(
 
       // R8: Run post-actions for completed parallel stages
       const def = pipeline.stages.get(stageName)
-      if (def?.postActions) {
+      if (def?.postActions && !ctx.input.dryRun) {
         try {
           for (const action of def.postActions) {
             await executePostAction(ctx, action, state)

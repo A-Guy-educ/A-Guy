@@ -46,6 +46,7 @@ export const STAGE_TIMEOUTS: Record<string, number> = {
   architect: ms('30m'),
   build: ms('45m'),
   'plan-gap': ms('15m'),
+  test: ms('20m'),
   review: ms('15m'),
   fix: ms('20m'),
   verify: ms('10m'),

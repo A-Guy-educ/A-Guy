@@ -14,6 +14,7 @@ import {
   validatePlanGapReport,
   validateBuildReport,
   validateSpecContent,
+  validateTestReport,
 } from '../content-validators'
 
 /**
@@ -141,6 +142,23 @@ export function createReflectValidator(): (outputFile: string) => ValidationResu
       return {
         valid: false,
         error: `reflect.md must have at least ${minLength} characters of content`,
+      }
+    }
+    return { valid: true }
+  }
+}
+
+/**
+ * Create a validator for the test stage.
+ * Validates test.md contains test case sections.
+ */
+export function createTestValidator(): (outputFile: string) => ValidationResult {
+  return (outputFile: string) => {
+    const content = fs.readFileSync(outputFile, 'utf-8')
+    if (!validateTestReport(content)) {
+      return {
+        valid: false,
+        error: 'test.md must contain ## Tests Written, ## Test Cases, or ## Test Files section',
       }
     }
     return { valid: true }

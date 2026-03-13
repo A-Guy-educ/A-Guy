@@ -69,6 +69,7 @@ export const STAGE_COMPLEXITY_THRESHOLDS: Record<string, number> = {
   clarify: 60,
   architect: 10,
   'plan-gap': 50, // Raised: architect now self-reviews; plan-gap only runs on very complex tasks
+  test: 0,
   build: 0,
   commit: 0,
   review: 30,
@@ -770,6 +771,7 @@ const STAGE_OUTPUT_MAP: Record<string, string> = {
   'plan-gap': 'plan-gap.md',
   commit: 'commit.md',
   autofix: 'autofix.md',
+  test: 'test.md',
 }
 
 export function stageOutputFile(taskDir: string, stage: string): string {
@@ -877,7 +879,7 @@ export function flattenPipeline(stages: PipelineStage[]): string[] {
 export const IMPL_PIPELINE: PipelineStage[] = [
   'architect',
   'plan-gap',
-  'build',
+  { parallel: ['test', 'build'] },
   'commit',
   'review',
   'fix',
@@ -904,7 +906,7 @@ export const ALL_IMPL_STAGE_NAMES = flattenPipeline(IMPL_PIPELINE)
  */
 export const LIGHTWEIGHT_IMPL_PIPELINE: PipelineStage[] = [
   'architect',
-  'build',
+  { parallel: ['test', 'build'] },
   'commit',
   'review',
   'fix',

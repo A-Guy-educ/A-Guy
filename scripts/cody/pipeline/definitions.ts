@@ -24,6 +24,7 @@ import {
   createPlanGapValidator,
   createBuildValidator,
   createDocsValidator,
+  createTestValidator,
   createReflectValidator,
 } from './validators'
 import {
@@ -44,7 +45,7 @@ export const SPEC_ORDER_LIGHTWEIGHT: string[] = ['taskify', 'clarify']
 export const IMPL_ORDER_STANDARD: PipelineStep[] = [
   'architect',
   'plan-gap',
-  'build',
+  { parallel: ['test', 'build'] },
   'commit',
   'review',
   'fix',
@@ -54,7 +55,7 @@ export const IMPL_ORDER_STANDARD: PipelineStep[] = [
 ]
 export const IMPL_ORDER_LIGHTWEIGHT: PipelineStep[] = [
   'architect',
-  'build',
+  { parallel: ['test', 'build'] },
   'commit',
   'review',
   'fix',
@@ -196,6 +197,16 @@ No critical gaps identified. Plan was refined in-place.
     },
   })
 
+  // test stage — TDD red phase: writes failing tests in parallel with build
+  stages.set('test', {
+    name: 'test',
+    type: 'agent',
+    timeout: STAGE_TIMEOUTS.test ?? DEFAULT_TIMEOUT,
+    maxRetries: 1,
+    minComplexity: STAGE_COMPLEXITY_THRESHOLDS.test,
+    shouldSkip: (ctx) => skipIfInputQuality(ctx, 'test'),
+    validator: createTestValidator(),
+  })
   // build stage - has preExecute for ensureFeatureBranch (G20)
   stages.set('build', {
     name: 'build',

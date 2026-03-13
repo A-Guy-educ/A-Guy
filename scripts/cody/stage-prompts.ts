@@ -32,6 +32,7 @@ export const ALL_STAGES = [
   'clarify',
   'architect',
   'plan-gap',
+  'test',
   'build',
   'commit',
   'review',
@@ -72,6 +73,7 @@ export const STAGE_CONTEXT_FILES: Record<Stage, string[]> = {
   clarify: ['task.md', 'spec.md'],
   architect: ['spec.md', 'clarified.md', 'rerun-feedback.md'],
   'plan-gap': ['spec.md', 'plan.md', 'task.json'],
+  test: ['spec.md', 'clarified.md', 'plan.md', 'task.json'],
   build: ['spec.md', 'clarified.md', 'plan.md', 'plan-gap.md', 'context.md', 'rerun-feedback.md'],
   commit: ['task.json'],
   review: ['review.md', 'build.md', 'plan.md', 'context.md', 'spec.md', 'clarified.md'],
@@ -125,6 +127,10 @@ export const stageInstructions: Record<Stage, (taskId: string) => string> = {
   architect: () => ``,
 
   'plan-gap': () => ``,
+
+  test: () => `TDD RED PHASE: Write failing tests from the plan.
+You run in PARALLEL with the build agent. Write tests to tests/ ONLY.
+Do NOT modify src/. Do NOT run tests (they will fail without implementation).`,
 
   build: () => `CRITICAL: IMPLEMENTATION STAGE - NOT DOCUMENTATION
 

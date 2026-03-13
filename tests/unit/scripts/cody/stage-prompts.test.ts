@@ -62,7 +62,8 @@ describe('stage-prompts', () => {
       expect(stages).toContain('autofix')
       expect(stages).toContain('docs')
       expect(stages).toContain('pr')
-      expect(stages).toHaveLength(14)
+      expect(stages).toContain('test')
+      expect(stages).toHaveLength(15)
     })
   })
 
@@ -154,6 +155,7 @@ describe('stage-prompts', () => {
       expect(getImplStages()).toEqual([
         'architect',
         'plan-gap',
+        'test',
         'build',
         'commit',
         'review',
@@ -168,6 +170,7 @@ describe('stage-prompts', () => {
       // docs + reflect are deferred to inspector (deferred-stages plugin)
       expect(getImplStages('lightweight')).toEqual([
         'architect',
+        'test',
         'build',
         'commit',
         'review',
@@ -183,6 +186,7 @@ describe('stage-prompts', () => {
       expect(getImplStages('standard')).toEqual([
         'architect',
         'plan-gap',
+        'test',
         'build',
         'commit',
         'review',
@@ -227,6 +231,8 @@ describe('stage-prompts', () => {
           expect(instruction).toContain('DOCUMENTATION STAGE')
         } else if (stage === 'reflect') {
           expect(instruction).toContain('REFLECT STAGE')
+        } else if (stage === 'test') {
+          expect(instruction).toContain('TDD RED PHASE')
         } else {
           expect(instruction).toBe('')
         }

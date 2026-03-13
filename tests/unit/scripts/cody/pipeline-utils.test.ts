@@ -514,10 +514,10 @@ describe('pipeline stage definitions', () => {
     expect(ALL_IMPL_STAGE_NAMES).toContain('commit')
   })
 
-  it('should have exactly 9 impl stages', async () => {
+  it('should have exactly 10 impl stages', async () => {
     // docs + reflect are deferred to inspector (deferred-stages plugin)
     const { ALL_IMPL_STAGE_NAMES } = await import('../../../../scripts/cody/pipeline-utils')
-    expect(ALL_IMPL_STAGE_NAMES).toHaveLength(9)
+    expect(ALL_IMPL_STAGE_NAMES).toHaveLength(10)
   })
 
   it('should have correct stage order', async () => {
@@ -1031,6 +1031,7 @@ describe('getImplPipeline', () => {
     const flatNames = flattenPipeline(pipeline)
     expect(flatNames).toEqual([
       'architect',
+      'test',
       'build',
       'commit',
       'review',
@@ -1068,6 +1069,7 @@ describe('getAllImplStageNames', () => {
     const names = getAllImplStageNames('lightweight')
     expect(names).toEqual([
       'architect',
+      'test',
       'build',
       'commit',
       'review',

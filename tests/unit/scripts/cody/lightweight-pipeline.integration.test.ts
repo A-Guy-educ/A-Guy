@@ -123,6 +123,7 @@ describe('lightweight pipeline integration', () => {
 
       expect(flatNames).toEqual([
         'architect',
+        'test',
         'build',
         'commit',
         'review',
@@ -162,7 +163,7 @@ describe('lightweight pipeline integration', () => {
       const flatNames = flattenPipeline(LIGHTWEIGHT_IMPL_PIPELINE)
 
       // docs + reflect deferred to inspector; removed from live pipeline
-      expect(flatNames).toHaveLength(8)
+      expect(flatNames).toHaveLength(9)
     })
 
     it('contains architect, build, commit, review, fix, commit, verify, pr', async () => {
@@ -172,6 +173,7 @@ describe('lightweight pipeline integration', () => {
       const flatNames = flattenPipeline(LIGHTWEIGHT_IMPL_PIPELINE)
 
       expect(flatNames).toContain('architect')
+      expect(flatNames).toContain('test')
       expect(flatNames).toContain('build')
       expect(flatNames).toContain('commit')
       expect(flatNames).toContain('review')
@@ -285,7 +287,7 @@ describe('standard pipeline integration', () => {
 
       // Should be: architect, plan-gap, build, commit, review, fix, commit, verify, pr (9 stages)
       // docs + reflect deferred to inspector (deferred-stages plugin)
-      expect(flatNames).toHaveLength(9)
+      expect(flatNames).toHaveLength(10)
     })
 
     it('contains all heavyweight stages', async () => {
@@ -323,6 +325,7 @@ describe('end-to-end pipeline selection', () => {
     // docs + reflect are deferred to inspector (deferred-stages plugin)
     expect(implStages).toEqual([
       'architect',
+      'test',
       'build',
       'commit',
       'review',
