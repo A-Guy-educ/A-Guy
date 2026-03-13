@@ -86,6 +86,19 @@ export function writeState(taskId: string, state: PipelineStateV2): void {
 }
 
 /**
+ * Delete the status.json file for a task.
+ * Used by `full` mode to discard failed/completed state from a previous run
+ * so that the pipeline starts fresh instead of short-circuiting.
+ */
+export function deleteState(taskId: string): void {
+  const statusFile = getStatusFilePath(taskId)
+  if (fs.existsSync(statusFile)) {
+    fs.unlinkSync(statusFile)
+    logger.info(`Deleted previous status.json for ${taskId} (fresh full-mode run)`)
+  }
+}
+
+/**
  * Initialize a fresh v2 state
  */
 export function initState(ctx: PipelineContext, mode: string): PipelineStateV2 {

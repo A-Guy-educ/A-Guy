@@ -387,6 +387,11 @@ Examples:
 
   // Success path: shutdown OpenCode server and checkpoint DB
   await shutdownOpenCodeServer(taskDir)
+
+  // Explicitly exit on success.  Without this the process may hang if
+  // the OpenCode server left orphan listeners, timers, or file handles
+  // that keep the Node event loop alive.
+  process.exit(0)
 }
 
 /**
@@ -511,6 +516,16 @@ async function runImplMode(ctx: PipelineContext): Promise<void> {
  */
 async function runFullMode(ctx: PipelineContext): Promise<void> {
   logger.info('Running FULL Cody pipeline (spec + impl)...\n')
+
+  // FIX: If a previous run left state as failed/completed, delete it so the
+  // pipeline starts fresh.  Without this, runPipeline() sees the terminal state
+  // in status.json and returns immediately without executing any stages.
+  const { loadState: loadSt2, deleteState } = await import('./engine/status')
+  const prevState = loadSt2(ctx.taskId)
+  if (prevState && (prevState.state === 'failed' || prevState.state === 'completed')) {
+    logger.info(`  Previous run state: ${prevState.state} — resetting for fresh full-mode run`)
+    deleteState(ctx.taskId)
+  }
 
   // R4: Ensure task.md exists before running pipeline
   await ensureTaskMd(ctx)

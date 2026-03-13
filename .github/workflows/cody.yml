@@ -315,6 +315,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Install the real OpenCode CLI binary (v1.2.x) from opencode.ai.
+      # The npm package (opencode-ai) does NOT properly support --attach/serve.
+      # This gives us ~/.opencode/bin/opencode which does.
+      - name: Install OpenCode CLI
+        run: |
+          curl -fsSL https://opencode.ai/install | bash
+          echo "$HOME/.opencode/bin" >> $GITHUB_PATH
+          # Verify it's installed and print version for diagnostics
+          $HOME/.opencode/bin/opencode --version || echo "Warning: opencode install may have failed"
+
       - name: Checkout feature branch if exists
         if: needs.parse.outputs.task_id != '' || needs.parse.outputs.fresh == 'true'
         env:
