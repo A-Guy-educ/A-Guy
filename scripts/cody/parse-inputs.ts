@@ -123,7 +123,7 @@ export function parseDispatchInputs(): ParseOutputs {
     trigger_type: 'dispatch',
     comment_body: '',
     valid: 'true',
-    runner: process.env.DISPATCH_RUNNER || 'self-hosted',
+    runner: process.env.DISPATCH_RUNNER || 'github-hosted',
     version: process.env.DISPATCH_VERSION || process.env.CODY_DEFAULT_VERSION || '',
     fresh: process.env.FRESH || '',
   }
@@ -322,7 +322,7 @@ export function parsePRReviewInputs(): ParseOutputs {
     trigger_type: 'pr_review',
     comment_body: '',
     valid: 'true',
-    runner: 'self-hosted',
+    runner: 'github-hosted',
     version: process.env.CODY_DEFAULT_VERSION || '',
     fresh: '',
   }
@@ -350,7 +350,7 @@ export function getDefaultOutputs(): ParseOutputs {
     trigger_type: '',
     comment_body: '',
     valid: 'false',
-    runner: 'self-hosted',
+    runner: 'github-hosted',
     version: process.env.CODY_DEFAULT_VERSION || '',
     fresh: '',
   }

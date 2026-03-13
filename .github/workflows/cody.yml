@@ -36,13 +36,13 @@ on:
         type: string
         default: ''
       runner:
-        description: 'Where to run: self-hosted (default) or github-hosted'
+        description: 'Where to run: github-hosted (default) or self-hosted'
         required: false
         type: choice
         options:
           - github-hosted
           - self-hosted
-        default: 'self-hosted'
+        default: 'github-hosted'
       version:
         description: 'Pipeline version (branch, tag, or commit). Overrides CODY_DEFAULT_VERSION'
         required: false
@@ -287,7 +287,7 @@ jobs:
   orchestrate:
     needs: parse
     if: needs.parse.outputs.valid == 'true'
-    runs-on: ${{ needs.parse.outputs.runner == 'self-hosted' && 'self-hosted' || (needs.parse.outputs.runner == 'github-hosted' && 'ubuntu-latest' || 'self-hosted') }}
+    runs-on: ${{ needs.parse.outputs.runner == 'self-hosted' && 'self-hosted' || 'ubuntu-latest' }}
     timeout-minutes: 120
     permissions:
       id-token: write # OpenCode GitHub App OIDC
@@ -310,10 +310,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: 'pnpm'
 
-      - name: Configure pnpm to use local store
+      - name: Configure pnpm to use local store (self-hosted only)
+        if: needs.parse.outputs.runner == 'self-hosted'
         run: |
-          # Use the local pnpm store on the runner (avoid GitHub cache download)
+          # Use the local pnpm store on the self-hosted runner (avoid GitHub cache download)
           echo "PNPM_HOME=/Users/bot/Library/pnpm" >> $GITHUB_ENV
           echo "STORE_DIR=/Users/bot/Library/pnpm/store/v10" >> $GITHUB_ENV
           echo "/Users/bot/Library/pnpm" >> $GITHUB_PATH

@@ -150,6 +150,7 @@ describe('stage-prompts', () => {
 
   describe('getImplStages', () => {
     it('should return full implementation stage list (default standard profile)', () => {
+      // docs + reflect are deferred to inspector (deferred-stages plugin)
       expect(getImplStages()).toEqual([
         'architect',
         'plan-gap',
@@ -159,13 +160,12 @@ describe('stage-prompts', () => {
         'fix',
         'commit',
         'verify',
-        'docs',
-        'reflect',
         'pr',
       ])
     })
 
     it('should return reduced stage list for lightweight profile (no plan-gap)', () => {
+      // docs + reflect are deferred to inspector (deferred-stages plugin)
       expect(getImplStages('lightweight')).toEqual([
         'architect',
         'build',
@@ -174,13 +174,12 @@ describe('stage-prompts', () => {
         'fix',
         'commit',
         'verify',
-        'docs',
-        'reflect',
         'pr',
       ])
     })
 
     it('should return full stage list for standard profile', () => {
+      // docs + reflect are deferred to inspector (deferred-stages plugin)
       expect(getImplStages('standard')).toEqual([
         'architect',
         'plan-gap',
@@ -190,8 +189,6 @@ describe('stage-prompts', () => {
         'fix',
         'commit',
         'verify',
-        'docs',
-        'reflect',
         'pr',
       ])
     })

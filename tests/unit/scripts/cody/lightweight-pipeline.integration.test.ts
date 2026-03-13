@@ -104,13 +104,14 @@ describe('lightweight pipeline integration', () => {
   })
 
   describe('getImplPipeline for lightweight', () => {
-    it('returns exactly 9 stages', async () => {
+    it('returns exactly 8 stages', async () => {
       const { getImplPipeline } = await import('../../../../scripts/cody/pipeline-utils')
 
       const pipeline = getImplPipeline('lightweight')
 
-      // Should be: architect, build, commit, review, fix, commit, verify, {docs+reflect}, pr (9 elements, 10 flattened)
-      expect(pipeline).toHaveLength(9)
+      // Should be: architect, build, commit, review, fix, commit, verify, pr (8 elements)
+      // docs + reflect are deferred to inspector (deferred-stages plugin)
+      expect(pipeline).toHaveLength(8)
     })
 
     it('returns stages in correct order', async () => {
@@ -128,8 +129,6 @@ describe('lightweight pipeline integration', () => {
         'fix',
         'commit',
         'verify',
-        'docs',
-        'reflect',
         'pr',
       ])
     })
@@ -156,16 +155,17 @@ describe('lightweight pipeline integration', () => {
   })
 
   describe('LIGHTWEIGHT_IMPL_PIPELINE constant', () => {
-    it('flattens to 10 stage names', async () => {
+    it('flattens to 8 stage names', async () => {
       const { LIGHTWEIGHT_IMPL_PIPELINE, flattenPipeline } =
         await import('../../../../scripts/cody/pipeline-utils')
 
       const flatNames = flattenPipeline(LIGHTWEIGHT_IMPL_PIPELINE)
 
-      expect(flatNames).toHaveLength(10)
+      // docs + reflect deferred to inspector; removed from live pipeline
+      expect(flatNames).toHaveLength(8)
     })
 
-    it('contains architect, build, commit, review, fix, commit, verify, docs, reflect, pr', async () => {
+    it('contains architect, build, commit, review, fix, commit, verify, pr', async () => {
       const { LIGHTWEIGHT_IMPL_PIPELINE, flattenPipeline } =
         await import('../../../../scripts/cody/pipeline-utils')
 
@@ -178,9 +178,10 @@ describe('lightweight pipeline integration', () => {
       expect(flatNames).toContain('fix')
       expect(flatNames).toContain('commit')
       expect(flatNames).toContain('verify')
-      expect(flatNames).toContain('reflect')
-      expect(flatNames).toContain('docs')
       expect(flatNames).toContain('pr')
+      // docs + reflect are deferred to inspector (not in live pipeline)
+      expect(flatNames).not.toContain('docs')
+      expect(flatNames).not.toContain('reflect')
     })
 
     it('does not contain plan-gap or autofix', async () => {
@@ -276,14 +277,15 @@ describe('standard pipeline integration', () => {
   })
 
   describe('IMPL_PIPELINE constant', () => {
-    it('flattens to 11 stage names', async () => {
+    it('flattens to 9 stage names', async () => {
       const { IMPL_PIPELINE, flattenPipeline } =
         await import('../../../../scripts/cody/pipeline-utils')
 
       const flatNames = flattenPipeline(IMPL_PIPELINE)
 
-      // Should be: architect, plan-gap, build, commit, review, fix, commit, verify, docs, reflect, pr (11 stages)
-      expect(flatNames).toHaveLength(11)
+      // Should be: architect, plan-gap, build, commit, review, fix, commit, verify, pr (9 stages)
+      // docs + reflect deferred to inspector (deferred-stages plugin)
+      expect(flatNames).toHaveLength(9)
     })
 
     it('contains all heavyweight stages', async () => {
@@ -317,7 +319,8 @@ describe('end-to-end pipeline selection', () => {
     const implPipeline = getImplPipeline(profile)
     const implStages = flattenPipeline(implPipeline)
 
-    // Should be: architect, build, commit, review, fix, commit, verify, docs, reflect, pr
+    // Should be: architect, build, commit, review, fix, commit, verify, pr
+    // docs + reflect are deferred to inspector (deferred-stages plugin)
     expect(implStages).toEqual([
       'architect',
       'build',
@@ -326,8 +329,6 @@ describe('end-to-end pipeline selection', () => {
       'fix',
       'commit',
       'verify',
-      'docs',
-      'reflect',
       'pr',
     ])
 

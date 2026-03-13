@@ -12,6 +12,8 @@ import { createPluginRegistry } from './plugins/registry'
 import { healthCheckPlugin } from './plugins/cody/health-check/index'
 import { auditPlugin } from './plugins/cody/audit/index'
 import { failureAnalysisPlugin } from './plugins/cody/failure-analysis/index'
+import { deferredStagesPlugin } from './plugins/cody/deferred-stages/index'
+import { docsSyncPlugin } from './plugins/docs-sync/index'
 import type { InspectorConfig } from './core/types'
 
 const logger = pino({ level: 'info' })
@@ -56,6 +58,8 @@ async function main(): Promise<void> {
   registry.register(healthCheckPlugin)
   registry.register(failureAnalysisPlugin)
   registry.register(auditPlugin)
+  registry.register(deferredStagesPlugin)
+  registry.register(docsSyncPlugin)
 
   // Create config
   const config: InspectorConfig = {

@@ -872,6 +872,7 @@ export function flattenPipeline(stages: PipelineStage[]): string[] {
  *   architect → plan-gap → build → commit(scripted) →
  *   verify (scripted) → pr
  * Note: test-writer subagent is invoked by build agent per plan step (TDD)
+ * Note: docs + reflect are deferred to inspector (deferred-stages plugin)
  */
 export const IMPL_PIPELINE: PipelineStage[] = [
   'architect',
@@ -882,7 +883,6 @@ export const IMPL_PIPELINE: PipelineStage[] = [
   'fix',
   'commit',
   'verify',
-  { parallel: ['docs', 'reflect'] },
   'pr',
 ]
 
@@ -900,6 +900,7 @@ export const ALL_IMPL_STAGE_NAMES = flattenPipeline(IMPL_PIPELINE)
  *   architect → build → commit → verify → pr
  *
  * Skipped: plan-gap (saves 1-2 LLM calls)
+ * Note: docs + reflect are deferred to inspector (deferred-stages plugin)
  */
 export const LIGHTWEIGHT_IMPL_PIPELINE: PipelineStage[] = [
   'architect',
@@ -909,7 +910,6 @@ export const LIGHTWEIGHT_IMPL_PIPELINE: PipelineStage[] = [
   'fix',
   'commit',
   'verify',
-  { parallel: ['docs', 'reflect'] },
   'pr',
 ]
 

@@ -50,7 +50,6 @@ export const IMPL_ORDER_STANDARD: PipelineStep[] = [
   'fix',
   'commit',
   'verify',
-  { parallel: ['docs', 'reflect'] },
   'pr',
 ]
 export const IMPL_ORDER_LIGHTWEIGHT: PipelineStep[] = [
@@ -61,19 +60,11 @@ export const IMPL_ORDER_LIGHTWEIGHT: PipelineStep[] = [
   'fix',
   'commit',
   'verify',
-  { parallel: ['docs', 'reflect'] },
   'pr',
 ]
 
 // Fix-only pipeline order for @cody fix mode
-export const FIX_ORDER: PipelineStep[] = [
-  'review',
-  'fix',
-  'commit',
-  'verify',
-  { parallel: ['docs', 'reflect'] },
-  'pr',
-]
+export const FIX_ORDER: PipelineStep[] = ['review', 'fix', 'commit', 'verify', 'pr']
 
 // ============================================================================
 // Stage Definitions

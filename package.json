@@ -27,7 +27,6 @@
     "ai:generate-all-indexes": "pnpm run ai:generate-readme-index && pnpm run ai:generate-route-index && pnpm run ai:generate-collection-slug-map",
     "ai:validate-indexes": "pnpm tsx scripts/validate-indexes.ts",
     "docs:links:fix": "pnpm tsx scripts/doc-link-fixer.ts",
-    "nightly-docs": "pnpm tsx scripts/nightly-docs/index.ts",
     "deps:security:report": "pnpm tsx scripts/deps-security-report.ts",
     "repo:hygiene:report": "pnpm tsx scripts/repo-hygiene-report.ts",
     "mcp:discover-tools": "pnpm tsx scripts/admin-chat-mcp_discover-tools.ts",

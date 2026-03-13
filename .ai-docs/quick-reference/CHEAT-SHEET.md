@@ -700,7 +700,9 @@ pnpm test:e2e                  # E2E tests
 ### Full Pipeline Flow
 
 ```
-@cody on issue → taskify → gap → architect → plan-gap → build → commit → review → fix → commit → verify → docs → reflect → pr
+@cody on issue → taskify → gap → architect → plan-gap → build → commit → review → fix → commit → verify → pr
+                                                                                                          ↓
+                                                           (deferred, via inspector) → docs → reflect
 ```
 
 ### Key Debug Files

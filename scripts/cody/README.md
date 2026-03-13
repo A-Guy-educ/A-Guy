@@ -70,6 +70,9 @@ Output:
 | `rerun` | Resume from last failure/pause point                               |
 | `fix`   | review → fix → commit → verify → pr (targeted fix mode)            |
 
+> **Note**: `docs` and `reflect` stages are deferred to the inspector (`cody-deferred-stages` plugin).
+> After a task's PR is merged, the inspector triggers them sequentially via `cody.yml rerun --from=docs`.
+
 ## Two-Phase Execution (Full Mode)
 
 1. **Phase 1**: Spec stages run (taskify → gap)
