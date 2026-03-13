@@ -6,10 +6,11 @@ import type { ParseResult } from '@/lib/latex-parser/types'
 
 interface LatexQuickImportProps {
   lessonId?: string
+  exerciseId?: string
   onImportSuccess?: (exerciseId: string) => void
 }
 
-export function LatexQuickImport({ lessonId, onImportSuccess }: LatexQuickImportProps) {
+export function LatexQuickImport({ lessonId, exerciseId, onImportSuccess }: LatexQuickImportProps) {
   const [latex, setLatex] = useState('')
   const [preview, setPreview] = useState<ParseResult | null>(null)
   const [importing, setImporting] = useState(false)
@@ -34,14 +35,14 @@ export function LatexQuickImport({ lessonId, onImportSuccess }: LatexQuickImport
       const response = await fetch('/api/exercises/import-latex', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ latex, lessonId }),
+        body: JSON.stringify({ latex, lessonId, exerciseId }),
       })
       const data = await response.json()
       if (!response.ok || !data.success) {
         setError(data.error || 'Import failed')
         return
       }
-      setSuccess(`Exercise created: ${data.data.exerciseId}`)
+      setSuccess(exerciseId ? `Exercise updated` : `Exercise created: ${data.data.exerciseId}`)
       onImportSuccess?.(data.data.exerciseId)
       setLatex('')
       setPreview(null)

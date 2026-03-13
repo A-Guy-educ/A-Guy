@@ -12,6 +12,7 @@ import { logger } from '@/infra/utils/logger'
 const ImportLatexSchema = z.object({
   latex: z.string().min(1).max(500_000),
   lessonId: z.string().min(1),
+  exerciseId: z.string().min(1).optional(),
 })
 
 export async function importExerciseFromLatex(req: PayloadRequest): Promise<Response> {
@@ -26,7 +27,7 @@ export async function importExerciseFromLatex(req: PayloadRequest): Promise<Resp
     return Response.json({ success: false, error: parsed.error.message }, { status: 400 })
   }
 
-  const { latex, lessonId } = parsed.data
+  const { latex, lessonId, exerciseId } = parsed.data
   const reqLogger = logger.child({ requestId: crypto.randomUUID() })
 
   try {
@@ -47,6 +48,23 @@ export async function importExerciseFromLatex(req: PayloadRequest): Promise<Resp
 
   if (result.blocks.length === 0) {
     return Response.json({ success: false, error: 'No parseable content found' }, { status: 422 })
+  }
+
+  if (exerciseId) {
+    // Update existing exercise with parsed blocks
+    const updated = await req.payload.update({
+      collection: 'exercises',
+      id: exerciseId,
+      data: {
+        content: { blocks: result.blocks },
+      },
+      draft: true,
+    })
+    reqLogger.info({ exerciseId: updated.id }, 'Exercise updated from LaTeX')
+    return Response.json({
+      success: true,
+      data: { exerciseId: updated.id, warnings: result.warnings },
+    })
   }
 
   const exercise = await req.payload.create({

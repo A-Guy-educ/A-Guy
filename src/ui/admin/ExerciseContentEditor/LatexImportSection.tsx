@@ -1,11 +1,12 @@
 'use client'
 
 import { LatexQuickImport } from '@/ui/admin/LatexQuickImport'
-import { useFormFields } from '@payloadcms/ui'
+import { useDocumentInfo, useFormFields } from '@payloadcms/ui'
 import React from 'react'
 
 export function LatexImportSection() {
   const [showLatexImport, setShowLatexImport] = React.useState(false)
+  const { id: exerciseId } = useDocumentInfo()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const lessonField = useFormFields(([fields]) => fields['lesson'] as any)
@@ -35,6 +36,7 @@ export function LatexImportSection() {
         <div style={{ marginTop: '8px' }}>
           <LatexQuickImport
             lessonId={lessonId}
+            exerciseId={typeof exerciseId === 'string' ? exerciseId : exerciseId?.toString()}
             onImportSuccess={() => {
               window.location.reload()
             }}

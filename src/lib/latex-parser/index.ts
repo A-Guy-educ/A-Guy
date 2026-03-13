@@ -43,6 +43,103 @@ function tryMcqMatchers(text: string): ContentBlock | null {
   return parseExamClsMcq(text) ?? parseEnumitemMcq(text) ?? parseInlineMcq(text)
 }
 
+/** Preamble-only command names that should be silently skipped */
+const PREAMBLE_COMMANDS = new Set([
+  'documentclass', 'usepackage', 'pagestyle', 'setlength', 'geometry',
+  'fancyhf', 'renewcommand', 'newcommand', 'title', 'author', 'date', 'maketitle',
+])
+
+/**
+ * Processes a list of tokens into ContentBlocks.
+ * Extracted so it can recurse for `document` and `questions` environments.
+ */
+function processTokens(
+  tokens: import('@/lib/latex-parser/types').LatexToken[],
+  blocks: ContentBlock[],
+  warnings: ParseWarning[],
+): void {
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i]
+
+    if (token.type === 'environment') {
+      const envName = token.name ?? ''
+
+      if (envName === 'document') {
+        // Pass-through: process children as top-level tokens
+        if (token.children?.length) {
+          processTokens(token.children, blocks, warnings)
+        }
+      } else if (envName === 'questions') {
+        // Extract inner content (strip \begin{envName} and \end{envName} tags)
+        const inner = extractInner(token)
+        processQuestionsEnv(inner, blocks, warnings, token.line)
+      } else {
+        const inner = extractInner(token)
+        const mcq = tryMcqMatchers(inner)
+        if (mcq) {
+          blocks.push(mcq)
+        } else {
+          blocks.push(makeRichTextBlock(inner || token.value))
+          warnings.push({
+            line: token.line,
+            message: `Unrecognized environment: ${envName}`,
+            rawLatex: token.value,
+          })
+        }
+      }
+    } else if (token.type === 'math') {
+      const val = token.value
+      if (val.startsWith('$$') && val.endsWith('$$')) {
+        blocks.push(makeLatexBlock(val.slice(2, -2).trim()))
+      } else {
+        blocks.push(makeRichTextBlock(val))
+      }
+    } else if (token.type === 'command') {
+      const cmdName = token.name ?? ''
+      if (PREAMBLE_COMMANDS.has(cmdName)) {
+        // Skip preamble commands that leaked through
+      } else if (cmdName === 'section') {
+        const titleMatch = /\\section\{([^}]*)\}/.exec(token.value)
+        const title = titleMatch ? titleMatch[1] : token.value
+        blocks.push(makeRichTextBlock(`## ${title}`))
+      } else if (cmdName === 'question') {
+        const lookahead: string[] = [token.value]
+        let j = i + 1
+        while (j < tokens.length && tokens[j].name === 'choices') {
+          lookahead.push(tokens[j].value)
+          j++
+        }
+        const combined = lookahead.join('\n')
+        const mcq = parseExamClsMcq(combined)
+        if (mcq) {
+          blocks.push(mcq)
+          i = j - 1
+        } else {
+          blocks.push(makeRichTextBlock(token.value))
+        }
+      }
+    } else if (token.type === 'text') {
+      const text = token.value.trim()
+      if (text) {
+        blocks.push(makeRichTextBlock(text))
+      }
+    }
+  }
+}
+
+/** Extract inner content from an environment token (strip begin/end tags) */
+function extractInner(token: import('@/lib/latex-parser/types').LatexToken): string {
+  const envName = token.name ?? ''
+  const raw = token.value ?? ''
+  const beginTag = `\\begin{${envName}}`
+  const endTag = `\\end{${envName}}`
+  const innerStart = raw.indexOf(beginTag)
+  const innerEnd = raw.lastIndexOf(endTag)
+  return innerStart !== -1 && innerEnd > innerStart
+    ? raw.slice(innerStart + beginTag.length, innerEnd)
+    : raw
+}
+
 /**
  * Parses a LaTeX string into a list of ContentBlocks.
  *
@@ -76,81 +173,15 @@ export function parseLatexToBlocks(latex: string): ParseResult {
     }
   }
 
-  const tokens = tokenize(latex)
-
-  for (let i = 0; i < tokens.length; i++) {
-    const token = tokens[i]
-
-    if (token.type === 'environment') {
-      const envName = token.name ?? ''
-      // Extract inner content (strip \begin{envName} and \end{envName} tags)
-      const raw = token.value ?? ''
-      const beginTag = `\\begin{${envName}}`
-      const endTag = `\\end{${envName}}`
-      const innerStart = raw.indexOf(beginTag)
-      const innerEnd = raw.lastIndexOf(endTag)
-      const inner =
-        innerStart !== -1 && innerEnd > innerStart
-          ? raw.slice(innerStart + beginTag.length, innerEnd)
-          : raw
-
-      if (envName === 'questions') {
-        processQuestionsEnv(inner, blocks, warnings, token.line)
-      } else {
-        // Try all MCQ matchers on the full environment value
-        const mcq = tryMcqMatchers(inner)
-        if (mcq) {
-          blocks.push(mcq)
-        } else {
-          blocks.push(makeRichTextBlock(inner || token.value))
-          warnings.push({
-            line: token.line,
-            message: `Unrecognized environment: ${envName}`,
-            rawLatex: token.value,
-          })
-        }
-      }
-    } else if (token.type === 'math') {
-      // Strip $$ delimiters for display math; pass inline math as rich_text
-      const val = token.value
-      if (val.startsWith('$$') && val.endsWith('$$')) {
-        const inner = val.slice(2, -2).trim()
-        blocks.push(makeLatexBlock(inner))
-      } else {
-        blocks.push(makeRichTextBlock(val))
-      }
-    } else if (token.type === 'command') {
-      const cmdName = token.name ?? ''
-      if (cmdName === 'section') {
-        // Extract section title from \section{...}
-        const titleMatch = /\\section\{([^}]*)\}/.exec(token.value)
-        const title = titleMatch ? titleMatch[1] : token.value
-        blocks.push(makeRichTextBlock(`## ${title}`))
-      } else if (cmdName === 'question') {
-        // Standalone \question outside a questions env — look ahead for a choices env
-        const lookahead: string[] = [token.value]
-        let j = i + 1
-        while (j < tokens.length && tokens[j].name === 'choices') {
-          lookahead.push(tokens[j].value)
-          j++
-        }
-        const combined = lookahead.join('\n')
-        const mcq = parseExamClsMcq(combined)
-        if (mcq) {
-          blocks.push(mcq)
-          i = j - 1 // skip consumed tokens
-        } else {
-          blocks.push(makeRichTextBlock(token.value))
-        }
-      }
-      // Other commands (subsection, label, etc.) are silently ignored
-    } else if (token.type === 'text') {
-      const text = token.value.trim()
-      if (text) {
-        blocks.push(makeRichTextBlock(text))
-      }
-    }
+  // Strip preamble before \begin{document} to avoid orphan text tokens
+  let source = latex
+  const beginDocIdx = source.indexOf('\\begin{document}')
+  if (beginDocIdx !== -1) {
+    source = source.slice(beginDocIdx)
   }
+
+  const tokens = tokenize(source)
+  processTokens(tokens, blocks, warnings)
 
   return { blocks, warnings, errors: [] }
 }
