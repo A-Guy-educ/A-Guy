@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "taskId": "260225-smoke-test",
+  "sessions": [
+    {
+      "stage": "taskify",
+      "sessionId": "ses_3189b4f44ffeNZn4fxdA48837N",
+      "startedAt": "2026-03-13T13:31:01.691Z",
+      "messages": [
+        {
+          "role": "user",
+          "stage": "taskify",
+          "text": "\"CRITICAL: This is a SPEC-ONLY pipeline. DO NOT create branches, commits, or pull requests. DO NOT modify any code files. Only read from and write to the /home/runner/work/A-Guy/A-Guy/.tasks/260225-smoke-test/ directory.\n\nTask ID: 260225-smoke-test\n\n\nRead these files for context:\n- /home/runner/work/A-Guy/A-Guy/.tasks/260225-smoke-test/task.md\n\nWrite your output to /home/runner/work/A-Guy/A-Guy/.tasks/260225-smoke-test/task.json\"",
+          "tools": [],
+          "timestamp": "2026-03-13T13:31:01.766Z",
+          "model": "{\"providerID\":\"minimax-coding-plan\",\"modelID\":\"MiniMax-M2.5\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "taskify",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T13:31:01.955Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "taskify",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T13:31:25.654Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "taskify",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-13T13:31:46.842Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "taskify",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-13T13:32:03.836Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "taskify",
+          "text": "Task completed. The task.json has been written with:\n\n- **task_type**: `ops` (smoke tests are operational tasks)\n- **risk_level**: `low` (testing activities)\n- **confidence**: `0.3` (low due to vague description)\n- **primary_domain**: `devops`\n- **complexity**: `5` (simple/trivial)\n- **input_quality**: `raw_idea` (minimal description \"Smoke test task\")\n- **pipeline_profile**: `lightweight` (ops task with low risk)\n\nReview questions added to help clarify the scope:\n1. What system/component should the smoke test cover?\n2. What are the key success criteria?\n3. Automated or manual?",
+          "tools": [],
+          "timestamp": "2026-03-13T13:32:06.520Z"
+        }
+      ]
+    }
+  ]
+}

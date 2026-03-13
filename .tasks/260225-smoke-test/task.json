@@ -1,0 +1,28 @@
+{
+  "task_type": "ops",
+  "risk_level": "low",
+  "confidence": 0.3,
+  "primary_domain": "devops",
+  "scope": [
+    "smoke-test"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "This is a standard smoke test task for the A-Guy platform",
+    "Smoke test will validate basic system functionality"
+  ],
+  "review_questions": [
+    "What system or component should the smoke test cover?",
+    "What are the key success criteria for this smoke test?",
+    "Should this be an automated or manual smoke test?"
+  ],
+  "complexity": 5,
+  "complexity_reasoning": "Scope: 2 (single test task), Risk: 1 (low-risk testing), Novelty: 2 (standard pattern), Cross: 0 (single domain), Ambiguity: 9 (very vague), Deps: 0 (self-contained). Total: 14",
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Task description is minimal: 'Smoke test task' with no requirements, acceptance criteria, or implementation details. Cannot determine what specifically needs to be tested."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}
