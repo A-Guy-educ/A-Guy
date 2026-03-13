@@ -71,6 +71,16 @@ export interface StateStore {
   save(): void
 }
 
+export interface WorkflowRun {
+  id: number
+  status: string
+  conclusion: string | null
+  createdAt: string
+  updatedAt: string
+  headBranch: string
+  event: string
+}
+
 export interface GitHubClient {
   postComment(issueNumber: number, body: string): void
   getIssue(issueNumber: number): { body: string | null; title: string | null }
@@ -81,6 +91,15 @@ export interface GitHubClient {
   setLifecycleLabel(issueNumber: number, label: string): void
   closeIssue(issueNumber: number, reason?: string): void
   getIssueComments(issueNumber: number): IssueComment[]
+  /** List completed workflow runs for the given workflow file */
+  listWorkflowRuns(
+    workflow: string,
+    opts?: { per_page?: number; status?: string; branch?: string },
+  ): WorkflowRun[]
+  /** Create a new GitHub issue and return its number, or null on failure */
+  createIssue(title: string, body: string, labels: string[]): number | null
+  /** Search issues by query string — returns matching issue stubs */
+  searchIssues(query: string): IssueInfo[]
 }
 
 export interface IssueInfo {

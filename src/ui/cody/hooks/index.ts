@@ -19,6 +19,7 @@ export const queryKeys = {
   taskDetails: (issueNumber: number) => ['cody-task', issueNumber] as const,
   boards: ['cody-boards'] as const,
   collaborators: ['cody-collaborators'] as const,
+  workflowRuns: ['cody-workflow-runs'] as const,
 }
 
 // ============ useCodyTasks ============
@@ -164,6 +165,26 @@ export function useTaskDetails(issueNumber: number | null, actorLogin?: string) 
     isReopening: reopenMutation.isPending,
     isAborting: abortMutation.isPending,
   }
+}
+
+// ============ useWorkflowRuns ============
+
+/**
+ * Fetches all workflow runs and optionally filters them by task title.
+ * The /api/cody/workflows endpoint returns up to 20 runs (no per-task filter server-side),
+ * so we filter client-side by matching display_title against the provided taskTitle.
+ */
+export function useWorkflowRuns(taskTitle?: string) {
+  return useQuery({
+    queryKey: queryKeys.workflowRuns,
+    queryFn: () => codyApi.workflows.list(),
+    select: (runs) => {
+      if (!taskTitle) return runs
+      return runs.filter((run) => run.display_title === taskTitle)
+    },
+    staleTime: 30_000,
+    enabled: !!taskTitle,
+  })
 }
 
 // ============ useCreateTask ============

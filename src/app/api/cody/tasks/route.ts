@@ -18,10 +18,54 @@ import {
   createIssue,
   uploadIssueAttachment,
 } from '@/ui/cody/github-client'
-import type { CodyTask, ColumnId, GitHubIssue, GitHubPR, WorkflowRun } from '@/ui/cody/types'
+import type {
+  CodyTask,
+  ColumnId,
+  GitHubIssue,
+  GitHubPR,
+  WorkflowRun,
+  CodyPipelineStatus,
+} from '@/ui/cody/types'
 
-// Map GitHub issue state to column using agent labels, workflow runs, and PR status
-// Priority: agent:* labels (set by Cody pipeline) > active workflow runs > gate labels > completed runs > PR status > other labels
+/**
+ * Derive column from live pipeline status.
+ * Pipeline state is more accurate than GitHub labels (no propagation delay).
+ * Called first when pipeline data is available; label-based fallback used otherwise.
+ */
+export function deriveColumnFromPipeline(pipeline: CodyPipelineStatus): ColumnId {
+  switch (pipeline.state) {
+    case 'running':
+      return 'building'
+    case 'paused':
+      return 'gate-waiting'
+    case 'completed':
+      return 'review'
+    case 'failed':
+    case 'timeout':
+      return 'failed'
+    default:
+      return 'building'
+  }
+}
+
+/**
+ * Derive gate type from pipeline controlMode, falling back to label names.
+ * Pipeline data is preferred since labels may lag by 10–30 s.
+ */
+export function deriveGateType(
+  pipeline?: CodyPipelineStatus | null,
+  labelNames?: string[],
+): 'hard-stop' | 'risk-gated' | undefined {
+  if (pipeline?.controlMode === 'hard-stop') return 'hard-stop'
+  if (pipeline?.controlMode === 'risk-gated') return 'risk-gated'
+  if (labelNames?.includes('hard-stop')) return 'hard-stop'
+  if (labelNames?.includes('risk-gated')) return 'risk-gated'
+  return undefined
+}
+
+// Map GitHub issue state to column using agent labels, workflow runs, and PR status.
+// Used as fallback when no live pipeline data is available.
+// Priority: cody:failed/done > gate labels > cody:planning/building > active runs > completed runs > PR > other labels
 function getColumnForIssue(
   issue: GitHubIssue,
   workflowRun?: WorkflowRun,
@@ -29,30 +73,31 @@ function getColumnForIssue(
 ): ColumnId {
   const labelNames = issue.labels.map((l) => l.name.toLowerCase())
 
-  // 1. Cody lifecycle labels (highest priority — set by the pipeline state machine)
-  if (labelNames.includes('cody:planning') || labelNames.includes('cody:building'))
-    return 'building'
+  // 1. Terminal lifecycle labels (highest priority)
   if (labelNames.includes('cody:failed')) return 'failed'
   // cody:done = pipeline finished, PR created → task goes to review (not done)
   // Task is only truly "done" when the PR is merged and the issue is closed
   if (labelNames.includes('cody:done') || labelNames.includes('cody:review')) return 'review'
 
-  // 2. Active workflow run takes priority over gate labels
-  // This ensures the dashboard shows "Building" even if risk-gated/hard-stop labels
-  // are still present (they are removed mid-run after approval)
+  // 2. Gate labels — pipeline paused waiting for approval.
+  // Must be checked BEFORE cody:planning/cody:building and in_progress workflow,
+  // because the pipeline keeps running (polling for approval) while gated,
+  // and the cody:planning label is never removed when a gate fires.
+  if (labelNames.includes('hard-stop') || labelNames.includes('risk-gated')) return 'gate-waiting'
+
+  // 3. Cody active-work labels (only reached when NOT gated)
+  if (labelNames.includes('cody:planning') || labelNames.includes('cody:building'))
+    return 'building'
+
+  // 4. Active workflow run (only reached when NOT gated and no cody:* label)
   if (workflowRun?.status === 'in_progress') return 'building'
 
-  // 3. Explicit state labels (only checked when no active workflow run)
+  // 5. Explicit state labels (only checked when no active workflow run)
   if (labelNames.includes('failed')) return 'failed'
   if (labelNames.includes('gate-waiting')) return 'gate-waiting'
   if (labelNames.includes('retrying')) return 'retrying'
 
-  // 3b. Pipeline gate labels (set by pipeline when hitting gates)
-  // These are now checked AFTER active workflow runs to prevent stale gate labels
-  // from hiding active pipeline progress
-  if (labelNames.includes('hard-stop') || labelNames.includes('risk-gated')) return 'gate-waiting'
-
-  // 4. Workflow run completed status
+  // 6. Workflow run completed status
   if (workflowRun?.status === 'completed') {
     // Also handle timed_out and cancelled as failures
     if (
@@ -63,15 +108,15 @@ function getColumnForIssue(
       return 'failed'
   }
 
-  // 5. Associated PR (always fetched via bulk)
+  // 7. Associated PR (always fetched via bulk)
   if (associatedPR && !associatedPR.merged_at) return 'review'
 
-  // 6. Other labels
+  // 8. Other labels
   if (labelNames.includes('released')) return 'done'
   if (labelNames.includes('in-progress') || labelNames.includes('building')) return 'building'
   if (labelNames.includes('review') || labelNames.includes('pr')) return 'review'
 
-  // 7. Default to open
+  // 9. Default to open
   return 'open'
 }
 
@@ -197,14 +242,14 @@ export async function GET(req: NextRequest) {
           }
         }
 
-        const column = getColumnForIssue(issue, workflowRun ?? undefined, pr ?? null)
+        // Pipeline state is authoritative when available (no label-propagation delay).
+        // Fall back to label/workflow-based derivation when pipeline data is absent.
+        const column = pipelineStatus
+          ? deriveColumnFromPipeline(pipelineStatus)
+          : getColumnForIssue(issue, workflowRun ?? undefined, pr ?? null)
 
-        // Derive gate type from labels (set by pipeline)
-        const gateType = labelNames.includes('hard-stop')
-          ? 'hard-stop'
-          : labelNames.includes('risk-gated')
-            ? 'risk-gated'
-            : undefined
+        // Derive gate type: prefer pipeline controlMode, fall back to labels
+        const gateType = deriveGateType(pipelineStatus, labelNames)
 
         return {
           id: taskId ? `${taskId}-${issue.number}` : issue.number.toString(),

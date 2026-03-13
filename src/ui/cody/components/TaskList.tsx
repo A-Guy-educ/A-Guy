@@ -174,7 +174,9 @@ export function TaskList({
         const isExecuting = executingTaskId === task.id
         const hasPR = !!task.associatedPR
         const isHardStop = task.column === 'gate-waiting' && task.gateType === 'hard-stop'
-        const isActive = task.column === 'building' || task.column === 'retrying'
+        // gate-waiting tasks also show pipeline progress (they're paused mid-pipeline)
+        const isActive =
+          task.column === 'building' || task.column === 'retrying' || task.column === 'gate-waiting'
         const colors = statusColors[task.column]
         const gateLabel =
           task.column === 'gate-waiting' && task.gateType === 'hard-stop'
@@ -267,9 +269,11 @@ export function TaskList({
                     </SimpleTooltip>
                   )}
 
+                  {/* Active pipeline progress — inline dots + stage label */}
                   {isActive && <MiniPipelineProgress task={task} variant="inline" />}
 
-                  {task.isTimeout && (
+                  {/* Non-pipeline sub-statuses (only shown when NOT active pipeline) */}
+                  {!isActive && task.isTimeout && (
                     <SimpleTooltip
                       content={<SubStatusTooltipContent type="timeout" />}
                       side="bottom"
@@ -280,7 +284,7 @@ export function TaskList({
                       </span>
                     </SimpleTooltip>
                   )}
-                  {task.isExhausted && (
+                  {!isActive && task.isExhausted && (
                     <SimpleTooltip
                       content={<SubStatusTooltipContent type="exhausted" />}
                       side="bottom"
@@ -291,7 +295,7 @@ export function TaskList({
                       </span>
                     </SimpleTooltip>
                   )}
-                  {task.isSupervisorError && (
+                  {!isActive && task.isSupervisorError && (
                     <SimpleTooltip content={<SubStatusTooltipContent type="error" />} side="bottom">
                       <span className="inline-flex items-center gap-0.5 font-semibold text-red-400 cursor-default">
                         <AlertCircle className="w-3 h-3" />
@@ -431,15 +435,14 @@ export function TaskList({
               </div>
             </div>
 
-            {/* Pipeline progress row */}
-            {isActive &&
-              task.pipeline &&
-              (task.pipeline.currentStage ||
-                Object.keys(task.pipeline.stages || {}).length > 0) && (
-                <div className="pb-3 px-4 pl-[52px] sm:block hidden">
-                  <MiniPipelineProgress task={task} variant="bar" />
-                </div>
-              )}
+            {/* Pipeline progress row — shown for building, retrying, and gate-waiting tasks.
+                Gate-waiting tasks show paused state (yellow dots) so the user can see
+                exactly where in the pipeline approval was requested. */}
+            {isActive && (
+              <div className="pb-3 px-4 pl-[52px] sm:block hidden">
+                <MiniPipelineProgress task={task} variant="bar" />
+              </div>
+            )}
           </div>
         )
       })}

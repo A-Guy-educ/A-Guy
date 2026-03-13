@@ -461,17 +461,18 @@ describe('orchestrator integration', () => {
       expect(SPEC_ONLY_STAGES).toContain('gap')
       expect(SPEC_ONLY_STAGES).toContain('clarify')
 
-      // Impl pipeline should have architect, plan-gap, build, review/fix cycle, and commit/verify/pr
+      // Impl pipeline should have architect, plan-gap, test+build (parallel), review/fix cycle, and commit/verify/pr
       expect(ALL_IMPL_STAGE_NAMES).toContain('architect')
       expect(ALL_IMPL_STAGE_NAMES).toContain('plan-gap')
+      expect(ALL_IMPL_STAGE_NAMES).toContain('test')
       expect(ALL_IMPL_STAGE_NAMES).toContain('build')
       expect(ALL_IMPL_STAGE_NAMES).toContain('commit')
       expect(ALL_IMPL_STAGE_NAMES).toContain('verify')
       expect(ALL_IMPL_STAGE_NAMES).toContain('pr')
       expect(ALL_IMPL_STAGE_NAMES).toContain('review')
       expect(ALL_IMPL_STAGE_NAMES).toContain('fix')
-      // 9 stages: architect, plan-gap, build, commit, review, fix, commit, verify, pr
-      expect(ALL_IMPL_STAGE_NAMES).toHaveLength(9)
+      // 10 stages: architect, plan-gap, test, build, commit, review, fix, commit, verify, pr
+      expect(ALL_IMPL_STAGE_NAMES).toHaveLength(10)
     })
 
     it('excludes auditor on rerun', async () => {

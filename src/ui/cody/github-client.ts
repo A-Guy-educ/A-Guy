@@ -792,6 +792,71 @@ export async function findAssociatedPR(taskId: string): Promise<GitHubPR | null>
 }
 
 /**
+ * Find the PR associated with a GitHub issue number.
+ * Uses the bulk open-PR list (cached) + branch name pattern matching.
+ * This is the preferred method — findAssociatedPR(taskId) only works
+ * for branches named exactly {prefix}/{taskId}, which fails for
+ * Cody-generated branches like fix/260312-auto-781-title.
+ */
+export async function findAssociatedPRByIssueNumber(issueNumber: number): Promise<GitHubPR | null> {
+  const cacheKey = `pr:issue:${issueNumber}`
+  const cached = getCached<GitHubPR | null>(cacheKey)
+  if (cached !== null) return cached
+
+  // 1. Check open PRs (fast, uses cached bulk list)
+  const openPRs = await fetchOpenPRs()
+  const issueStr = String(issueNumber)
+
+  for (const pr of openPRs) {
+    // Match by branch name pattern: {prefix}/{YYMMDD}-auto-{issueNumber}-{title}
+    // or {prefix}/{issueNumber}-{title}
+    const branchMatch = pr.head.ref.match(/\/(\d{3,})-/)
+    if (branchMatch && branchMatch[1] === issueStr) {
+      setCache(cacheKey, CACHE_TTL.prs, pr)
+      return pr
+    }
+    // Match by PR title "Closes #NNN"
+    const closesMatch = pr.title.match(/(?:closes|fixes|resolves)\s+#(\d+)/i)
+    if (closesMatch && closesMatch[1] === issueStr) {
+      setCache(cacheKey, CACHE_TTL.prs, pr)
+      return pr
+    }
+  }
+
+  // 2. Fallback: find branch by issue number and look up PR by head ref
+  const branch = await findBranchByIssueNumber(issueNumber)
+  if (branch) {
+    const octokit = getOctokit()
+    try {
+      const { data } = await octokit.pulls.list({
+        owner: GITHUB_OWNER,
+        repo: GITHUB_REPO,
+        head: `${GITHUB_OWNER}:${branch}`,
+        state: 'open',
+      })
+      if (data.length > 0) {
+        const pr: GitHubPR = {
+          id: data[0].id,
+          number: data[0].number,
+          title: data[0].title,
+          state: data[0].state,
+          head: { ref: data[0].head.ref, sha: data[0].head.sha },
+          merged_at: data[0].merged_at,
+          html_url: data[0].html_url,
+        }
+        setCache(cacheKey, CACHE_TTL.prs, pr)
+        return pr
+      }
+    } catch {
+      // Fall through
+    }
+  }
+
+  setCache(cacheKey, CACHE_TTL.prs, null)
+  return null
+}
+
+/**
  * Fetch comments for a PR
  */
 export async function fetchPRComments(prNumber: number): Promise<PRComment[]> {

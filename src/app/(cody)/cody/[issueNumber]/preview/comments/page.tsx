@@ -9,10 +9,20 @@ import type { Metadata } from 'next'
 import { CodyDashboard } from '@/ui/cody/components/CodyDashboard'
 import { getMeUser } from '@/infra/utils/getMeUser'
 import { AccountRole } from '@/infra/auth/roles'
+import { buildTaskMetadata } from '../../../metadata'
 
-export const metadata: Metadata = {
-  title: 'Cody Operations Dashboard — Comments',
-  description: 'Developer operations dashboard for monitoring Cody CI build agent',
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ issueNumber: string }>
+}): Promise<Metadata> {
+  const { issueNumber } = await params
+  const parsed = parseInt(issueNumber, 10)
+  if (isNaN(parsed)) return { title: 'Cody Operations Dashboard' }
+  return buildTaskMetadata(parsed, {
+    suffix: 'Comments',
+    path: `/cody/${parsed}/preview/comments`,
+  })
 }
 
 export default async function CodyPreviewCommentsPage({

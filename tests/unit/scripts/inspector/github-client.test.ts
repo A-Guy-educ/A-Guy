@@ -131,4 +131,94 @@ describe('createGitHubClient', () => {
       expect(() => client.postComment(42, 'test')).not.toThrow()
     })
   })
+
+  describe('listWorkflowRuns', () => {
+    it('should call gh api with workflow file and status filter', () => {
+      const runs = [
+        {
+          id: 1,
+          status: 'completed',
+          conclusion: 'success',
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:18:00Z',
+          headBranch: 'dev',
+          event: 'workflow_dispatch',
+        },
+      ]
+      mockExecFileSync.mockReturnValue(JSON.stringify(runs))
+
+      const client = createGitHubClient('owner/repo', 'fake-token')
+      const result = client.listWorkflowRuns('cody.yml', { per_page: 50, status: 'completed' })
+
+      expect(result).toHaveLength(1)
+      expect(result[0].conclusion).toBe('success')
+      const args = mockExecFileSync.mock.calls[0][1] as string[]
+      expect(args).toContain('api')
+      expect(args.some((a: string) => a.includes('cody.yml'))).toBe(true)
+    })
+
+    it('should return empty array when gh returns empty output', () => {
+      mockExecFileSync.mockReturnValue('')
+      const client = createGitHubClient('owner/repo', 'fake-token')
+      expect(client.listWorkflowRuns('cody.yml')).toEqual([])
+    })
+
+    it('should return empty array when gh returns invalid JSON', () => {
+      mockExecFileSync.mockReturnValue('not json')
+      const client = createGitHubClient('owner/repo', 'fake-token')
+      expect(client.listWorkflowRuns('cody.yml')).toEqual([])
+    })
+  })
+
+  describe('createIssue', () => {
+    it('should pass title and labels to gh CLI', () => {
+      mockExecFileSync.mockReturnValue('https://github.com/owner/repo/issues/99')
+
+      const client = createGitHubClient('owner/repo', 'fake-token')
+      const result = client.createIssue('Bug title', 'Bug body', ['bug', 'cody:improvement'])
+
+      expect(result).toBe(99)
+      const args = mockExecFileSync.mock.calls[0][1] as string[]
+      expect(args).toContain('issue')
+      expect(args).toContain('create')
+      expect(args).toContain('Bug title')
+      expect(args).toContain('bug')
+      expect(args).toContain('cody:improvement')
+    })
+
+    it('should return null when gh returns no URL', () => {
+      mockExecFileSync.mockReturnValue('')
+      const client = createGitHubClient('owner/repo', 'fake-token')
+      expect(client.createIssue('title', 'body', [])).toBeNull()
+    })
+  })
+
+  describe('searchIssues', () => {
+    it('should return parsed issues from gh search response', () => {
+      const issues = [
+        {
+          number: 5,
+          title: 'Found issue',
+          labels: ['cody:improvement'],
+          updatedAt: '2026-01-01T00:00:00Z',
+        },
+      ]
+      mockExecFileSync.mockReturnValue(JSON.stringify(issues))
+
+      const client = createGitHubClient('owner/repo', 'fake-token')
+      const result = client.searchIssues('failure stage:build')
+
+      expect(result).toHaveLength(1)
+      expect(result[0].number).toBe(5)
+      const args = mockExecFileSync.mock.calls[0][1] as string[]
+      expect(args).toContain('api')
+      expect(args.some((a: string) => a.includes('search/issues'))).toBe(true)
+    })
+
+    it('should return empty array on failure', () => {
+      mockExecFileSync.mockReturnValue('')
+      const client = createGitHubClient('owner/repo', 'fake-token')
+      expect(client.searchIssues('test query')).toEqual([])
+    })
+  })
 })

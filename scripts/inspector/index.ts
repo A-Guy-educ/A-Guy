@@ -14,6 +14,10 @@ import { auditPlugin } from './plugins/cody/audit/index'
 import { failureAnalysisPlugin } from './plugins/cody/failure-analysis/index'
 import { deferredStagesPlugin } from './plugins/cody/deferred-stages/index'
 import { docsSyncPlugin } from './plugins/docs-sync/index'
+import { zombieReaperPlugin } from './plugins/cody/zombie-reaper/index'
+import { successTrackerPlugin } from './plugins/cody/success-tracker/index'
+import { failureMinerPlugin } from './plugins/cody/failure-miner/index'
+import { knowledgeGardenerPlugin } from './plugins/cody/knowledge-gardener/index'
 import type { InspectorConfig } from './core/types'
 
 const logger = pino({ level: 'info' })
@@ -60,6 +64,10 @@ async function main(): Promise<void> {
   registry.register(auditPlugin)
   registry.register(deferredStagesPlugin)
   registry.register(docsSyncPlugin)
+  registry.register(zombieReaperPlugin)
+  registry.register(successTrackerPlugin)
+  registry.register(failureMinerPlugin)
+  registry.register(knowledgeGardenerPlugin)
 
   // Create config
   const config: InspectorConfig = {

@@ -6,7 +6,7 @@
  */
 
 import { ALL_STAGES } from './constants'
-import type { CodyPipelineStatus, StageStatus } from './types'
+import type { CodyPipelineStatus, CodyTask, StageStatus } from './types'
 
 /**
  * Human-readable labels for each pipeline stage
@@ -160,4 +160,125 @@ export function getStageProgressTooltip(
   if (isPaused) status = '⏸ Paused'
 
   return `${label}: ${status}`
+}
+
+// ══════════════════════════════════════════════════════
+// PIPELINE DISPLAY STATE — single source of truth for
+// what MiniPipelineProgress and TaskList should render
+// ══════════════════════════════════════════════════════
+
+/**
+ * Discriminated union describing exactly what to render for a task's pipeline progress.
+ * Centralises all branching so both inline and bar variants render identically.
+ */
+export type PipelineDisplayState =
+  | {
+      kind: 'stage-progress'
+      /** 0-based index in ALL_STAGES of the current running stage */
+      stageIndex: number
+      /** Human-readable label, e.g. "Building" */
+      label: string
+      /** 1-based step number */
+      stepNumber: number
+      /** Total stages count */
+      totalStages: number
+    }
+  | {
+      kind: 'gate-paused'
+      /** 0-based index of the stage the pipeline is paused at */
+      stageIndex: number
+      /** Gate type when known */
+      gateType?: 'hard-stop' | 'risk-gated'
+      /** Stage label at pause point */
+      label: string
+    }
+  | {
+      /** Pipeline has started but currentStage not yet written — show shimmer */
+      kind: 'starting'
+    }
+  | {
+      /** No pipeline data — workflow run status is the best we have */
+      kind: 'no-data'
+      workflowStatus?: 'queued' | 'in_progress' | 'completed' | string
+    }
+
+/**
+ * Derive the single canonical display state for a task's progress.
+ *
+ * Priority order:
+ * 1. pipeline.state === 'paused'  → gate-paused
+ * 2. pipeline running + currentStage → stage-progress
+ * 3. pipeline running, no currentStage → starting (just kicked off)
+ * 4. No pipeline → no-data (use workflow run status as fallback text)
+ */
+export function derivePipelineDisplayState(task: CodyTask): PipelineDisplayState {
+  const pipeline = task.pipeline
+  const gateType = task.gateType
+
+  // Case 1: Pipeline is paused at a gate (regardless of task.column — may lag)
+  if (pipeline?.state === 'paused') {
+    // Find the highest completed/running stage as the pause point
+    let pauseIdx = -1
+    for (const [stageName, stageData] of Object.entries(pipeline.stages || {})) {
+      if (stageData.state !== 'pending') {
+        const idx = ALL_STAGES.indexOf(stageName as (typeof ALL_STAGES)[number])
+        if (idx > pauseIdx) pauseIdx = idx
+      }
+    }
+    // currentStage is more reliable if set
+    if (pipeline.currentStage) {
+      const idx = ALL_STAGES.indexOf(pipeline.currentStage as (typeof ALL_STAGES)[number])
+      if (idx >= 0) pauseIdx = idx
+    }
+    const label =
+      pauseIdx >= 0 ? stageLabels[ALL_STAGES[pauseIdx]] || ALL_STAGES[pauseIdx] : 'Approval'
+    return { kind: 'gate-paused', stageIndex: pauseIdx, gateType, label }
+  }
+
+  // Case 2: Pipeline running with a known current stage
+  if (pipeline?.state === 'running' && pipeline.currentStage) {
+    const stageIndex = ALL_STAGES.indexOf(pipeline.currentStage as (typeof ALL_STAGES)[number])
+    const label = stageLabels[pipeline.currentStage] || pipeline.currentStage
+    const totalStages = ALL_STAGES.length
+    const stepNumber = stageIndex >= 0 ? stageIndex + 1 : 1
+    return { kind: 'stage-progress', stageIndex, label, stepNumber, totalStages }
+  }
+
+  // Case 3: Pipeline running but currentStage not yet set (just started)
+  if (pipeline?.state === 'running') {
+    return { kind: 'starting' }
+  }
+
+  // Case 4: No pipeline data — fall back to workflow run status
+  return { kind: 'no-data', workflowStatus: task.workflowRun?.status }
+}
+
+/**
+ * Return a concise one-line sub-status description for a task in the task list.
+ * Used to replace the ad-hoc inline status elements with a consistent format.
+ *
+ * Examples:
+ *   "Building · 6/12"
+ *   "Awaiting approval at Architecting"
+ *   "Starting pipeline..."
+ *   "Running"
+ */
+export function getTaskSubStatusText(task: CodyTask): string {
+  const state = derivePipelineDisplayState(task)
+  const total = ALL_STAGES.length
+
+  switch (state.kind) {
+    case 'stage-progress':
+      return `${state.label} · ${state.stepNumber}/${total}`
+    case 'gate-paused':
+      return `Awaiting approval${state.label ? ` at ${state.label}` : ''}`
+    case 'starting':
+      return 'Starting pipeline...'
+    case 'no-data': {
+      const wf = state.workflowStatus
+      if (wf === 'queued') return 'Queued...'
+      if (wf === 'in_progress') return 'Running'
+      return 'Starting...'
+    }
+  }
 }

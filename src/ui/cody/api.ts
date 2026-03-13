@@ -16,6 +16,7 @@ import type {
   CollaboratorsResponse,
   ActionResponse,
   PRComment,
+  WorkflowRun,
 } from './types'
 
 const API_BASE = '/api/cody'
@@ -364,6 +365,19 @@ export const collaboratorsApi = {
   },
 }
 
+// ============ Workflows API ============
+
+export const workflowsApi = {
+  list: async (params?: { status?: string }): Promise<WorkflowRun[]> => {
+    const searchParams = new URLSearchParams()
+    if (params?.status) searchParams.set('status', params.status)
+    const url = `${API_BASE}/workflows${searchParams.toString() ? `?${searchParams}` : ''}`
+    const res = await fetch(url)
+    const data = await handleResponse<{ runs: WorkflowRun[] }>(res)
+    return data.runs
+  },
+}
+
 // ============ Publish API ============
 
 export const publishApi = {
@@ -384,5 +398,6 @@ export const codyApi = {
   taskDocs: taskDocsApi,
   boards: boardsApi,
   collaborators: collaboratorsApi,
+  workflows: workflowsApi,
   publish: publishApi.publish,
 }
