@@ -1,0 +1,31 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.85,
+  "primary_domain": "backend",
+  "scope": [
+    "Admin UI: Raw Data view for exercise JSON",
+    "Access control: Advanced Content Editor role only",
+    "Backend: JSON structure validation (content-only changes)",
+    "Error handling: Syntax error and structural change detection",
+    "Rollback: Revert to last valid state on failure"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Exercise collection exists in Payload CMS",
+    "Advanced Content Editor role exists or can be added to existing roles",
+    "Backend validation can use schema matching or deep-diff algorithms"
+  ],
+  "review_questions": [],
+  "complexity": 54,
+  "complexity_reasoning": "Scope: 12 (4-6 files across admin + backend). Risk: 12 (access control + data validation). Novelty: 12 (new JSON structure validation pattern). Cross-domain: 8 (backend + admin UI). Ambiguity: 5 (validation method unspecified). Dependencies: 5 (depends on exercise collection). Total: 54",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "architect"
+    ],
+    "reasoning": "Input contains ## Core Requirements with 4 numbered sections and ## Acceptance Criteria with 8 checkable items. Clear user stories and acceptance criteria present."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
