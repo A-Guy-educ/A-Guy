@@ -1,0 +1,30 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "medium",
+  "confidence": 0.85,
+  "primary_domain": "frontend",
+  "scope": [
+    "chat voice TTS",
+    "lesson chat feature"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "There is a TTS/voice service configured for the lesson chat feature",
+    "Voice settings can be modified through configuration or code",
+    "The task involves finding and updating the current voice settings to a more natural one"
+  ],
+  "review_questions": [
+    "Which TTS provider/service is currently being used for chat voice?",
+    "What specific voice model should be used as the replacement for a more natural sound?",
+    "Are there any browser compatibility or performance considerations for the new voice?"
+  ],
+  "complexity": 32,
+  "complexity_reasoning": "Scope: 8 (find TTS config in chat module), Risk: 8 (user experience change), Novelty: 6 (configuring existing service), Cross-Domain: 3 (frontend only), Ambiguity: 5 (clear intent, need to find implementation), Dependencies: 2 (self-contained). Total: 32",
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Task is a bug report with clear problem statement but no structured requirements or implementation plan. Contains steps to reproduce, expected/actual results, but architect stage will need to discover TTS implementation details from codebase."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
