@@ -1,0 +1,29 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "medium",
+  "confidence": 0.15,
+  "primary_domain": "backend",
+  "scope": [
+    "unknown - issue #813 context not available"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Issue #813 exists in the repository but no description was provided in task.md",
+    "prev-run directory is empty - no previous artifacts available for context",
+    "This is a fix for an existing implementation as stated in task.md",
+    "The fix relates to some bug in the codebase identified by issue #813"
+  ],
+  "review_questions": [
+    "What specific bug or issue is this fix targeting?",
+    "Are there any error messages, logs, or expected vs actual behavior that can help identify the fix scope?"
+  ],
+  "complexity": 12,
+  "complexity_reasoning": "Scope: 2 (unknown - no files or components identified), Risk: 8 (fixes have unknown risk until context known), Novelty: 2 (fix is by definition following existing pattern), Cross: 0 (domain unknown), Ambiguity: 9 (no details provided about what to fix), Deps: 1 (unknown dependencies). Total: 22 → capped at 12 due to unknown scope",
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Task contains only 'Fix requested via @cody fix command' with no specific details about what bug needs fixing. No requirements, acceptance criteria, or implementation steps provided."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
