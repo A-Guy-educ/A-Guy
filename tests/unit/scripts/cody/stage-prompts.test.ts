@@ -90,6 +90,8 @@ describe('stage-prompts', () => {
         'plan-gap.md',
         'context.md',
         'rerun-feedback.md',
+        'build-errors.md',
+        'review.md',
       ])
       expect(STAGE_CONTEXT_FILES.commit).toEqual(['task.json'])
       expect(STAGE_CONTEXT_FILES.verify).toEqual([])
