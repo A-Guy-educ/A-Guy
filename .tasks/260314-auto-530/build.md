@@ -22,10 +22,14 @@
 
 ## Tests Written
 
-- All existing tests pass (3584 tests passed)
-- TypeScript compilation passes (`pnpm -s tsc --noEmit`)
-- Lint passes (`pnpm lint`)
 - Integration tests for exercise content blocks pass (`tests/int/contracts/exercise-content-blocks.int.spec.ts`)
+
+## Known Limitations
+
+- Unit tests for AxisRenderer and AxisEditor could not be created because:
+  - AxisRenderer uses ResizeObserver which is not fully supported in jsdom test environment
+  - AxisEditor imports JSXGraphBoard which has CSS dependencies that cannot be resolved in jsdom
+  - These tests would need to be E2E tests run in a real browser environment
 
 ## Deviations
 

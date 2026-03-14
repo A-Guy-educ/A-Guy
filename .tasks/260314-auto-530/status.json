@@ -4,7 +4,7 @@
   "mode": "fix",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-14T12:45:09.975Z",
-  "updatedAt": "2026-03-14T18:15:16.769Z",
+  "updatedAt": "2026-03-14T18:49:45.078Z",
   "state": "running",
   "cursor": "gap",
   "stages": {
@@ -44,6 +44,25 @@
       "state": "skipped",
       "retries": 0,
       "skipped": "Complexity 12 (simple) below threshold 50 for plan-gap"
+    },
+    "test": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-14T18:28:01.456Z",
+      "outputFile": "test.md",
+      "sessionId": "ses_31270abedffeOYwL6QdW5wXIKG"
+    },
+    "build": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-14T18:28:01.456Z",
+      "outputFile": "build.md",
+      "sessionId": "ses_31270a969ffeM1kSkWQTginovj"
+    },
+    "commit": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-14T18:49:45.078Z"
     }
   },
   "issueNumber": 813,
@@ -55,6 +74,5 @@
       "actor": "aguyaharonyair",
       "timestamp": "2026-03-14T12:45:09.975Z"
     }
-  ],
-  "branchName": "fix/260314-auto-813-fix-requested-via-cody-fix-command"
+  ]
 }

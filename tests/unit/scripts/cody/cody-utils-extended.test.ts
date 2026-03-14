@@ -1003,8 +1003,18 @@ describe('--fresh and --is-pull-request CLI flags', () => {
   })
 
   it('should default isPullRequest to undefined', () => {
-    const result = parseCliArgs(['--task-id', '260218-test'])
-    expect(result.isPullRequest).toBeUndefined()
+    const original = process.env.IS_PULL_REQUEST
+    delete process.env.IS_PULL_REQUEST
+    try {
+      const result = parseCliArgs(['--task-id', '260218-test'])
+      expect(result.isPullRequest).toBeUndefined()
+    } finally {
+      if (original !== undefined) {
+        process.env.IS_PULL_REQUEST = original
+      } else {
+        delete process.env.IS_PULL_REQUEST
+      }
+    }
   })
 })
 
