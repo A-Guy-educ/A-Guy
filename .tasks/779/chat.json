@@ -9,12 +9,12 @@
         {
           "role": "user",
           "text": "what's this issue is about ?",
-          "timestamp": "2026-03-14T19:29:32.202Z"
+          "timestamp": "2026-03-14T19:35:06.367Z"
         },
         {
           "role": "assistant",
           "text": "This issue (#779) is a feature request for the Admin Editor that allows content authors to control how graphs and their accompanying explanatory text are laid out and presented to students.\n\nHere is a breakdown of what the issue entails:\n\n### Core Requirements\n1. **Layout Options:** Authors need the ability to choose from four distinct layouts:\n   * Text above, Graph below\n   * Text below, Graph above\n   * Text to the right, Graph to the left\n   * Text to the left, Graph to the right\n2. **Default State:** Whenever a new graph component is created, it must default to the **\"Text to the right, Graph to the left\"** layout.\n3. **Strict Responsiveness:** This is a crucial constraint—the chosen layout must be strictly respected across all devices. For example, if a side-by-side layout (Text Left/Right) is selected, it must **remain side-by-side on mobile devices** (like when rotated to landscape mode) rather than automatically collapsing into a vertical stacked layout.\n4. **End-User Presentation:** The layout chosen by the admin must be saved and accurately reflect how the content is rendered to students on the frontend (lessons or exercises).\n\n### Acceptance Criteria\nTo consider this task complete, the following must be true:\n- [ ] Authors can select between the 4 layout options in the admin graph editor.\n- [ ] \"Text right, Graph left\" is the default layout for new graphs.\n- [ ] The selected layout is accurately reflected on the frontend for students.\n- [ ] Side-by-side layouts remain side-by-side on mobile/landscape screens and do not force-stack vertically.\n- [ ] Settings persist correctly after saving and reloading the admin page.\n\nIn short, it's about giving admins precise, persistent visual control over the text-to-graph relationship and ensuring that layout doesn't break or unexpectedly wrap on mobile screens. A pull request (#810) is currently open and in review for this feature.",
-          "timestamp": "2026-03-14T19:29:32.202Z"
+          "timestamp": "2026-03-14T19:35:06.367Z"
         }
       ]
     }
