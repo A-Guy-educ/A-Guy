@@ -273,8 +273,11 @@ export async function getStatusFromBranch(
  * don't match the issue number, so we can't guess the task ID from the issue.
  * Instead, we list .tasks/ on the branch and find the newest YYMMDD-prefixed directory.
  */
-export async function findStatusOnBranch(branch: string): Promise<CodyPipelineStatus | null> {
-  const cacheKey = `status:discover:${branch}`
+export async function findStatusOnBranch(
+  branch: string,
+  issueNumber?: number,
+): Promise<CodyPipelineStatus | null> {
+  const cacheKey = `status:discover:${branch}:${issueNumber ?? 'any'}`
   const cached = getCached<CodyPipelineStatus>(cacheKey)
   if (cached) return cached
 
@@ -298,10 +301,15 @@ export async function findStatusOnBranch(branch: string): Promise<CodyPipelineSt
       .sort()
       .reverse() // Newest first (YYMMDD sorts chronologically)
 
-    // Try the newest task directory first (check up to 3)
+    // Try the newest task directory first (check up to 3).
+    // When issueNumber is provided, skip status files belonging to different issues
+    // (branches can accumulate status.json files from multiple pipeline runs).
     for (const taskDir of taskDirs.slice(0, 3)) {
       const status = await getStatusFromBranch(taskDir, branch)
-      if (status) return status
+      if (status) {
+        if (issueNumber && status.issueNumber && status.issueNumber !== issueNumber) continue
+        return status
+      }
     }
   } catch (error: any) {
     if (error.status !== 404) {
