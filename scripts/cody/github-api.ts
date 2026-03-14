@@ -387,7 +387,15 @@ export function getLinkedIssueFromPR(prNumber: number): number | null {
   try {
     const output = execFileSync(
       'gh',
-      ['pr', 'view', String(prNumber), '--json', 'closingIssuesReferences', '--jq', '.[0].number'],
+      [
+        'pr',
+        'view',
+        String(prNumber),
+        '--json',
+        'closingIssuesReferences',
+        '--jq',
+        '.closingIssuesReferences[0].number',
+      ],
       { encoding: 'utf-8', timeout: GH_API_TIMEOUT },
     ).trim()
     return output ? parseInt(output, 10) : null
