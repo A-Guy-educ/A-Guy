@@ -1283,6 +1283,27 @@ export function TaskDetail({
             </div>
           )}
 
+          {/* Issue Owner */}
+          {task.pipeline?.issueCreator && (
+            <div className="space-y-2">
+              <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-0.5">
+                Issue Owner
+              </h4>
+              <div className="flex items-center gap-2 px-0.5">
+                <Avatar className="h-5 w-5 shrink-0">
+                  <AvatarImage
+                    src={`https://github.com/${task.pipeline.issueCreator}.png?size=40`}
+                    alt={task.pipeline.issueCreator}
+                  />
+                  <AvatarFallback className="text-[9px]">
+                    {task.pipeline.issueCreator[0]?.toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-xs text-foreground">@{task.pipeline.issueCreator}</span>
+              </div>
+            </div>
+          )}
+
           {/* Actor History */}
           {task.pipeline?.actorHistory && task.pipeline.actorHistory.length > 0 && (
             <div className="space-y-2">

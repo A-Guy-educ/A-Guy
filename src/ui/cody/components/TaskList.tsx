@@ -256,6 +256,25 @@ export function TaskList({
                           </span>
                         </SimpleTooltip>
                       )}
+                    {task.pipeline?.issueCreator &&
+                      task.pipeline.issueCreator !== task.pipeline?.triggeredByLogin && (
+                        <SimpleTooltip
+                          content={`Issue owner @${task.pipeline.issueCreator}`}
+                          side="bottom"
+                        >
+                          <span className="inline-block">
+                            <Avatar className="h-5 w-5 ring-2 ring-[#0d1117] opacity-80">
+                              <AvatarImage
+                                src={`https://github.com/${task.pipeline.issueCreator}.png?size=40`}
+                                alt={task.pipeline.issueCreator}
+                              />
+                              <AvatarFallback className="text-[8px] bg-blue-900 text-blue-200">
+                                {task.pipeline.issueCreator[0]?.toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          </span>
+                        </SimpleTooltip>
+                      )}
                   </div>
                 </div>
 
