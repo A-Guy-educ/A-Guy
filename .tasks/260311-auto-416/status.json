@@ -1,0 +1,84 @@
+{
+  "version": 2,
+  "taskId": "260311-auto-416",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-11T20:54:50.171Z",
+  "updatedAt": "2026-03-13T21:39:47.489Z",
+  "state": "running",
+  "cursor": "gap",
+  "stages": {
+    "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-11T20:54:51.598Z",
+      "completedAt": "2026-03-13T20:53:26.339Z",
+      "outputFile": "taskify.md"
+    },
+    "gap": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 33 (moderate) below threshold 35 for gap"
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-13T20:53:26.347Z",
+      "completedAt": "2026-03-13T20:57:26.851Z",
+      "outputFile": "architect.md",
+      "tokenUsage": {
+        "input": 29,
+        "output": 9758,
+        "cacheRead": 1851025
+      },
+      "cost": 1.7129449999999997,
+      "sessionId": "ses_317063583ffe67C46Twv3lVGYx"
+    },
+    "plan-gap": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 33 (moderate) below threshold 50 for plan-gap"
+    },
+    "build": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-13T21:17:29.041Z",
+      "outputFile": "build.md",
+      "sessionId": "ses_317028555ffeQx7ao4vBF0sR6p"
+    },
+    "test": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-13T21:36:16.660Z",
+      "outputFile": "test.md",
+      "sessionId": "ses_316dff5ddffeeeDAAk4lk88tC5"
+    },
+    "commit": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-13T21:36:16.663Z",
+      "completedAt": "2026-03-13T21:36:18.902Z"
+    },
+    "review": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-13T21:36:18.905Z",
+      "completedAt": "2026-03-13T21:39:47.488Z",
+      "outputFile": "review.md",
+      "tokenUsage": {
+        "input": 15,
+        "output": 5533,
+        "cacheRead": 2244305
+      },
+      "cost": 2.3914150000000003,
+      "sessionId": "ses_316defc34ffeISOAAzuVlLGiyA",
+      "issuesFound": true,
+      "reviewSummary": {
+        "critical": 318,
+        "major": 318,
+        "minor": 318
+      }
+    }
+  },
+  "issueNumber": 770
+}

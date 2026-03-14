@@ -9,6 +9,7 @@ import { formatSlug } from '../fields/formatSlug'
 
 export const Lessons: CollectionConfig = {
   slug: 'lessons',
+  defaultSort: 'order',
   access: {
     create: adminOnly,
     delete: adminOnly,
@@ -110,6 +111,7 @@ export const Lessons: CollectionConfig = {
       required: true,
       defaultValue: 0,
       min: 0,
+      index: true,
       admin: {
         description: 'Sort order within the course',
       },
