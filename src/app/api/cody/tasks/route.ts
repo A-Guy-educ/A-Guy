@@ -216,13 +216,15 @@ export async function GET(req: NextRequest) {
         // (has an active workflow run or cody:building/cody:planning labels).
         let pipelineStatus = undefined
         const labelNames = issue.labels.map((l) => l.name.toLowerCase())
-        // Fetch pipeline for tasks that are actively building, recently failed, or paused at a gate
+        // Fetch pipeline for tasks that are actively building, recently failed, paused at a gate,
+        // or have a previous cody:done (in case a fix was requested)
         const isLikelyActive =
           workflowRun?.status === 'in_progress' ||
           workflowRun?.status === 'queued' ||
           labelNames.includes('cody:building') ||
           labelNames.includes('cody:planning') ||
           labelNames.includes('cody:failed') ||
+          labelNames.includes('cody:done') ||
           labelNames.includes('hard-stop') ||
           labelNames.includes('risk-gated')
 
