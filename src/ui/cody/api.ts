@@ -36,7 +36,9 @@ export class RateLimitError extends Error {
 }
 
 export class NoTokenError extends Error {
-  constructor(message = 'GITHUB_TOKEN is not configured') {
+  constructor(
+    message = 'GitHub token is not configured. Set CODY_BOT_TOKEN or GITHUB_TOKEN in environment variables.',
+  ) {
     super(message)
     this.name = 'NoTokenError'
   }

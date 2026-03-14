@@ -76,7 +76,15 @@ describe('getLinkedIssueFromPR', () => {
     expect(result).toBe(780)
     expect(childProcess.execFileSync).toHaveBeenCalledWith(
       'gh',
-      ['pr', 'view', '813', '--json', 'closingIssuesReferences', '--jq', '.[0].number'],
+      [
+        'pr',
+        'view',
+        '813',
+        '--json',
+        'closingIssuesReferences',
+        '--jq',
+        '.closingIssuesReferences[0].number',
+      ],
       expect.objectContaining({ encoding: 'utf-8' }),
     )
   })
