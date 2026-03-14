@@ -278,6 +278,7 @@ Examples:
     taskDef: null,
     profile: 'standard',
     backend,
+    actor: input.actor,
   }
 
   // Start OpenCode server for persistent sessions across stages

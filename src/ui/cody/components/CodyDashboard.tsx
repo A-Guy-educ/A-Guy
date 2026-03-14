@@ -51,7 +51,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { EnvironmentToolbar } from './EnvironmentToolbar'
 import { ErrorBoundary } from './ErrorBoundary'
-import { GitHubUserPickerDialog } from './GitHubUserPickerDialog'
 import { useGitHubIdentity } from '../hooks/useGitHubIdentity'
 import { Avatar, AvatarFallback, AvatarImage } from '@/ui/web/components/avatar'
 import { SimpleTooltip } from './SimpleTooltip'
@@ -137,16 +136,11 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
     [selectedIssueNumber, tasks],
   )
 
-  // GitHub identity (localStorage — forced on first visit)
-  const {
-    githubUser,
-    isLoaded: identityLoaded,
-    setGitHubUser,
-    clearGitHubUser,
-  } = useGitHubIdentity()
+  // GitHub identity — verified via OAuth session cookie
+  const { githubUser, clearGitHubUser } = useGitHubIdentity()
 
-  // Fetch collaborators for assignee picker + identity picker
-  const { data: collaborators = [], isLoading: collaboratorsLoading } = useQuery({
+  // Fetch collaborators for assignee picker
+  const { data: collaborators = [] } = useQuery({
     queryKey: ['cody-collaborators'],
     queryFn: () => codyApi.collaborators.list(),
     staleTime: 10 * 60 * 1000, // 10 minutes
@@ -594,9 +588,6 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
     </>
   )
 
-  // Show identity picker if no GitHub user is selected yet
-  const showIdentityPicker = identityLoaded && !githubUser
-
   // No token error — full-page (can't function without token)
   if (isNoToken) {
     return (
@@ -625,13 +616,6 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
   return (
     <ErrorBoundary>
       <div className="flex h-screen bg-background overflow-hidden">
-        {/* GitHub identity picker — forced on first visit */}
-        <GitHubUserPickerDialog
-          open={showIdentityPicker}
-          collaborators={collaborators}
-          isLoading={collaboratorsLoading}
-          onSelect={setGitHubUser}
-        />
         {/* Preview Modal — full-screen overlay */}
         {showPreview && selectedTask && (
           <PreviewModal
@@ -666,7 +650,7 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
                   {/* GitHub identity badge */}
                   {githubUser && (
                     <SimpleTooltip
-                      content={`Logged in as @${githubUser.login} — click to switch`}
+                      content={`Logged in as @${githubUser.login} — click to log out`}
                       side="bottom"
                     >
                       <button

@@ -1261,6 +1261,68 @@ export function TaskDetail({
               </div>
             </div>
           )}
+
+          {/* Triggered by */}
+          {task.pipeline?.triggeredByLogin && (
+            <div className="space-y-2">
+              <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-0.5">
+                Triggered by
+              </h4>
+              <div className="flex items-center gap-2 px-0.5">
+                <Avatar className="h-5 w-5 shrink-0">
+                  <AvatarImage
+                    src={`https://github.com/${task.pipeline.triggeredByLogin}.png?size=40`}
+                    alt={task.pipeline.triggeredByLogin}
+                  />
+                  <AvatarFallback className="text-[9px]">
+                    {task.pipeline.triggeredByLogin[0]?.toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-xs text-foreground">@{task.pipeline.triggeredByLogin}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Actor History */}
+          {task.pipeline?.actorHistory && task.pipeline.actorHistory.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-0.5">
+                Activity
+              </h4>
+              <div className="space-y-2">
+                {task.pipeline.actorHistory.slice(-8).map((event, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <Avatar className="h-4 w-4 shrink-0 mt-0.5">
+                      <AvatarImage
+                        src={`https://github.com/${event.actor}.png?size=32`}
+                        alt={event.actor}
+                      />
+                      <AvatarFallback className="text-[8px]">
+                        {event.actor[0]?.toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="text-[11px] text-foreground leading-tight">
+                        <span className="font-medium">@{event.actor}</span>{' '}
+                        <span className="text-muted-foreground">
+                          {event.action === 'pipeline-triggered'
+                            ? 'triggered'
+                            : event.action === 'gate-approved'
+                              ? `approved ${event.stage ?? ''} gate`
+                              : event.action === 'gate-rejected'
+                                ? `rejected ${event.stage ?? ''} gate`
+                                : event.action.replace(/-/g, ' ')}
+                        </span>
+                      </p>
+                      <p className="text-[10px] text-muted-foreground/70 mt-0.5">
+                        {formatRelativeTime(event.timestamp)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

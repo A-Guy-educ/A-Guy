@@ -7,6 +7,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { requireCodyAuth } from '@/ui/cody/auth'
 
 import {
   postComment,
@@ -58,7 +59,8 @@ function withActor(message: string, actor?: string): string {
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
-  // Skip auth check for now - open access for testing
+  const authResult = await requireCodyAuth(req)
+  if (authResult instanceof NextResponse) return authResult
 
   try {
     const { taskId } = await params

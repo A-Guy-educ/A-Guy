@@ -24,7 +24,7 @@ import {
   setClassificationLabels,
   setProfileLabel,
 } from '../github-api'
-import { updateStage, completeState, writeState } from '../engine/status'
+import { updateStage, completeState, writeState, appendActorEvent } from '../engine/status'
 import { classifyError, formatErrorsAsMarkdown } from './error-classifier'
 import { runAgentWithFileWatch, STAGE_TIMEOUTS, DEFAULT_TIMEOUT } from '../agent-runner'
 
@@ -180,6 +180,15 @@ export async function executePostAction(
       if (ctx.input.issueNumber) {
         removeIssueLabel(ctx.input.issueNumber, GATE_LABELS.HARD_STOP)
         removeIssueLabel(ctx.input.issueNumber, GATE_LABELS.RISK_GATED)
+      }
+      // Record gate approval actor event
+      if (ctx.actor && _state) {
+        appendActorEvent(ctx.taskId, _state, {
+          action: 'gate-approved',
+          actor: ctx.actor,
+          timestamp: new Date().toISOString(),
+          stage: action.gate,
+        })
       }
       break
     }

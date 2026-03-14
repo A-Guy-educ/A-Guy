@@ -6,6 +6,7 @@
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
+import { requireCodyAuth } from '@/ui/cody/auth'
 
 import {
   fetchIssues,
@@ -121,7 +122,8 @@ function getColumnForIssue(
 }
 
 export async function GET(req: NextRequest) {
-  // Skip auth check for now - open access for testing
+  const authResult = await requireCodyAuth(req)
+  if (authResult instanceof NextResponse) return authResult
 
   const { searchParams } = new URL(req.url)
   const board = searchParams.get('board') || 'all'
@@ -353,7 +355,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  // Skip auth check for now - open access for testing
+  const authResult = await requireCodyAuth(req)
+  if (authResult instanceof NextResponse) return authResult
 
   try {
     const body = await req.json()

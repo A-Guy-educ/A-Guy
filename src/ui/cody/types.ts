@@ -38,6 +38,18 @@ export interface CheckRunResult {
   html_url?: string
 }
 
+/** A single entry in the pipeline actor audit trail */
+export interface ActorEvent {
+  /** Action type: pipeline-triggered, gate-approved, gate-rejected, etc. */
+  action: string
+  /** GitHub login of the person who performed the action */
+  actor: string
+  /** ISO timestamp */
+  timestamp: string
+  /** Stage name, if action is stage-specific */
+  stage?: string
+}
+
 export interface CodyPipelineStatus {
   taskId: string
   mode: string
@@ -55,6 +67,10 @@ export interface CodyPipelineStatus {
   runUrl?: string
   controlMode?: 'auto' | 'risk-gated' | 'hard-stop'
   gatePoint?: string
+  /** GitHub login of the person who triggered this pipeline run */
+  triggeredByLogin?: string
+  /** Audit trail of actor actions (capped at 50 entries) */
+  actorHistory?: ActorEvent[]
 }
 
 // ============ Task Definition ============

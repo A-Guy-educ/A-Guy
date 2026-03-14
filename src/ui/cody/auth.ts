@@ -2,11 +2,15 @@
  * @fileType utility
  * @domain cody
  * @pattern auth
- * @ai-summary Dashboard authentication middleware using Payload
+ * @ai-summary Dashboard authentication middleware.
+ *   requireCodyAuth: GitHub OAuth session (any repo collaborator) — used for Cody API routes.
+ *   requireDashboardAuth / requireAuth: Legacy Payload-based auth — kept for backward compat.
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
+import { verifyCodySession } from '@/infra/auth/cody_session'
+import type { CodyGitHubIdentity } from '@/infra/auth/cody_session'
 
 /**
  * Require dashboard authentication using Payload
@@ -69,4 +73,19 @@ export async function requireAuth(req: NextRequest): Promise<NextResponse | null
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   return null
+}
+
+/**
+ * Require GitHub OAuth session for Cody API routes.
+ * Returns the verified GitHubIdentity, or a 401 NextResponse if not authenticated.
+ * Use this instead of requireAuth for routes that should be accessible to any repo collaborator.
+ */
+export async function requireCodyAuth(
+  req: NextRequest,
+): Promise<{ identity: CodyGitHubIdentity } | NextResponse> {
+  const identity = await verifyCodySession(req)
+  if (!identity) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  return { identity }
 }

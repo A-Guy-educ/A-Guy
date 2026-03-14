@@ -24,7 +24,7 @@ vi.mock('@/ui/cody/github-client', () => ({
 }))
 
 vi.mock('@/ui/cody/auth', () => ({
-  requireAuth: vi.fn(() => null), // Skip auth for tests
+  requireCodyAuth: vi.fn(() => null), // Skip auth for tests
 }))
 
 // Import after mocks
