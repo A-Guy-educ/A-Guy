@@ -74,17 +74,34 @@ function getColumnForIssue(
 ): ColumnId {
   const labelNames = issue.labels.map((l) => l.name.toLowerCase())
 
+  // 0. Check PR labels — when a fix/rerun is requested on a completed issue,
+  // the PR gets new labels (risk-gated, cody:failed, cody:building) that reflect
+  // the current state more accurately than the stale issue labels.
+  const prLabelNames = associatedPR?.labels?.map((l) => l.toLowerCase()) ?? []
+
   // 1. Terminal lifecycle labels (highest priority)
-  if (labelNames.includes('cody:failed')) return 'failed'
+  if (labelNames.includes('cody:failed') && !prLabelNames.includes('risk-gated')) return 'failed'
   // cody:done = pipeline finished, PR created → task goes to review (not done)
-  // Task is only truly "done" when the PR is merged and the issue is closed
-  if (labelNames.includes('cody:done') || labelNames.includes('cody:review')) return 'review'
+  // Task is only truly "done" when the PR is merged and the issue is closed.
+  // BUT: if the PR has active labels (gate, building, failed), those take precedence —
+  // a fix/rerun was requested after the original pipeline completed.
+  if (labelNames.includes('cody:done') || labelNames.includes('cody:review')) {
+    // Check if PR has labels indicating active work (fix/rerun in progress)
+    if (prLabelNames.includes('hard-stop') || prLabelNames.includes('risk-gated'))
+      return 'gate-waiting'
+    if (prLabelNames.includes('cody:building') || prLabelNames.includes('cody:planning'))
+      return 'building'
+    if (prLabelNames.includes('cody:failed')) return 'failed'
+    return 'review'
+  }
 
   // 2. Gate labels — pipeline paused waiting for approval.
   // Must be checked BEFORE cody:planning/cody:building and in_progress workflow,
   // because the pipeline keeps running (polling for approval) while gated,
   // and the cody:planning label is never removed when a gate fires.
   if (labelNames.includes('hard-stop') || labelNames.includes('risk-gated')) return 'gate-waiting'
+  if (prLabelNames.includes('hard-stop') || prLabelNames.includes('risk-gated'))
+    return 'gate-waiting'
 
   // 3. Cody active-work labels (only reached when NOT gated)
   if (labelNames.includes('cody:planning') || labelNames.includes('cody:building'))
@@ -214,17 +231,20 @@ export async function GET(req: NextRequest) {
         // Fetch pipeline status for tasks with active workflows or pipeline labels.
         // Only attempts branch discovery for tasks likely to have pipeline data
         // (has an active workflow run or cody:building/cody:planning labels).
+        // Also checks PR labels — when a fix/rerun is requested on a completed issue,
+        // the PR gets gate/active labels while the issue still has cody:done.
         let pipelineStatus = undefined
         const labelNames = issue.labels.map((l) => l.name.toLowerCase())
-        // Fetch pipeline for tasks that are actively building, recently failed, or paused at a gate
+        const prLabelNames = pr?.labels?.map((l) => l.toLowerCase()) ?? []
+        const allLabels = [...labelNames, ...prLabelNames]
         const isLikelyActive =
           workflowRun?.status === 'in_progress' ||
           workflowRun?.status === 'queued' ||
-          labelNames.includes('cody:building') ||
-          labelNames.includes('cody:planning') ||
-          labelNames.includes('cody:failed') ||
-          labelNames.includes('hard-stop') ||
-          labelNames.includes('risk-gated')
+          allLabels.includes('cody:building') ||
+          allLabels.includes('cody:planning') ||
+          allLabels.includes('cody:failed') ||
+          allLabels.includes('hard-stop') ||
+          allLabels.includes('risk-gated')
 
         if (isLikelyActive && issue.number) {
           const branch = await findBranchByIssueNumber(issue.number)
@@ -238,20 +258,28 @@ export async function GET(req: NextRequest) {
             // Pipeline generates random task IDs (e.g., 260306-auto-330) that don't
             // match the issue number, so we need to discover the actual directory.
             if (!status) {
-              status = await findStatusOnBranch(branch)
+              status = await findStatusOnBranch(branch, issue.number)
             }
             if (status) pipelineStatus = status
           }
         }
 
-        // Pipeline state is authoritative when available (no label-propagation delay).
-        // Fall back to label/workflow-based derivation when pipeline data is absent.
-        const column = pipelineStatus
-          ? deriveColumnFromPipeline(pipelineStatus)
-          : getColumnForIssue(issue, workflowRun ?? undefined, pr ?? null)
+        // Column derivation: pipeline status is authoritative when fresh,
+        // BUT PR labels (gate, building, failed) take precedence because they
+        // reflect the current state more accurately than stale status.json files.
+        // When PR has gate labels, trust them over potentially-stale pipeline state.
+        let column: ColumnId
+        if (pipelineStatus && prLabelNames.some((l) => ['hard-stop', 'risk-gated'].includes(l))) {
+          // PR has gate labels — derive from labels, ignore stale pipeline state
+          column = getColumnForIssue(issue, workflowRun ?? undefined, pr ?? null)
+        } else {
+          column = pipelineStatus
+            ? deriveColumnFromPipeline(pipelineStatus)
+            : getColumnForIssue(issue, workflowRun ?? undefined, pr ?? null)
+        }
 
-        // Derive gate type: prefer pipeline controlMode, fall back to labels
-        const gateType = deriveGateType(pipelineStatus, labelNames)
+        // Derive gate type: prefer pipeline controlMode, fall back to issue+PR labels
+        const gateType = deriveGateType(pipelineStatus, allLabels)
 
         return {
           id: taskId ? `${taskId}-${issue.number}` : issue.number.toString(),

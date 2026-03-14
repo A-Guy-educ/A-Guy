@@ -87,7 +87,7 @@ function InlineVariant({
         <span className={cn('inline-flex items-center gap-1', className)}>
           <StageDots currentIndex={displayState.stageIndex} state="paused" size="inline" />
           <Pause className="w-3 h-3 text-yellow-400" />
-          <span className="text-xs text-yellow-400 font-medium">Approval</span>
+          <span className="text-xs text-yellow-400 font-medium">Awaiting {displayState.label}</span>
         </span>
       )
 
@@ -159,7 +159,9 @@ function BarVariant({
         <div className={cn('flex items-center gap-2', className)}>
           <StageDots currentIndex={displayState.stageIndex} state="paused" size="bar" />
           <Pause className="w-3 h-3 text-yellow-400" />
-          <span className="text-[11px] text-yellow-400 font-medium">Awaiting approval</span>
+          <span className="text-[11px] text-yellow-400 font-medium">
+            Awaiting {displayState.label}
+          </span>
           <ElapsedBadge since={pipeline?.startedAt} />
         </div>
       )

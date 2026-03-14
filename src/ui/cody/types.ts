@@ -207,6 +207,7 @@ export interface GitHubPR {
   head: { ref: string; sha: string }
   merged_at: string | null
   html_url: string
+  labels?: string[]
   ciStatus?: 'pending' | 'success' | 'failure' | 'running'
   mergeable?: boolean
 }
