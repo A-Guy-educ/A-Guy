@@ -2,7 +2,7 @@
  * @fileType component
  * @domain cody
  * @pattern preview-actions
- * @ai-summary Sticky action bar for Preview: Merge, Cancel PR, Fix
+ * @ai-summary Sticky action bar for Preview: Approve UI, Approve PR, Merge, Fix, Cancel PR
  */
 'use client'
 
@@ -12,7 +12,14 @@ import { Button } from '@/ui/web/components/button'
 import { MergeButton } from './MergeButton'
 import { FixRequestDialog } from './FixRequestDialog'
 import { ConfirmDialog } from './ConfirmDialog'
-import { XCircle, Wrench, Loader2 } from 'lucide-react'
+import {
+  XCircle,
+  Wrench,
+  Loader2,
+  CheckCircle,
+  GitPullRequest,
+  SquareSplitHorizontal,
+} from 'lucide-react'
 import { tasksApi } from '../api'
 import { useGitHubIdentity } from '../hooks/useGitHubIdentity'
 import { toast } from 'sonner'
@@ -38,13 +45,18 @@ export function PreviewActions({
   const [isCancelling, setIsCancelling] = useState(false)
   const { githubUser } = useGitHubIdentity()
 
+  const actorLogin = githubUser?.login
+
+  // Check if UI is already approved
+  const isUIApproved = task.labels?.includes('ui-approved')
+
   const pr = task.associatedPR
   if (!pr) return null
 
   const handleCancelPR = async () => {
     setIsCancelling(true)
     try {
-      await tasksApi.closePR(task.issueNumber, githubUser?.login)
+      await tasksApi.closePR(task.issueNumber, actorLogin)
       toast.success('PR closed')
       onCancelPR()
     } catch (err) {
@@ -56,11 +68,50 @@ export function PreviewActions({
 
   const handleFixSubmit = async (description: string) => {
     try {
-      await tasksApi.fixRequest(task.issueNumber, description, githubUser?.login)
+      await tasksApi.fixRequest(task.issueNumber, description, actorLogin)
       toast.success('Fix requested — Cody will work on it')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to request fix')
       throw err // re-throw so dialog keeps open
+    }
+  }
+
+  const handleApproveUI = async () => {
+    try {
+      await tasksApi.approveUI(task.issueNumber, actorLogin)
+      toast.success('Preview UI approved')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to approve UI')
+    }
+  }
+
+  const handleApprovePR = async () => {
+    try {
+      await tasksApi.approvePR(task.issueNumber, actorLogin)
+      toast.success('PR approved')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to approve PR')
+    }
+  }
+
+  const handleSplitView = () => {
+    if (!task.previewUrl) {
+      toast.error('No preview URL available')
+      return
+    }
+    // Open preview in a new window
+    const previewWindow = window.open(
+      task.previewUrl,
+      'preview-window',
+      'width=800,height=900,left=400,top=100',
+    )
+    if (previewWindow) {
+      toast.message('Preview opened', {
+        description: 'Resize your browser window to the left half for side-by-side view',
+        duration: 5000,
+      })
+    } else {
+      toast.error('Failed to open preview. Check popup blocker.')
     }
   }
 
@@ -72,6 +123,48 @@ export function PreviewActions({
           className,
         )}
       >
+        {/* Approve UI */}
+        {isUIApproved ? (
+          <div className="flex items-center gap-1.5 text-emerald-400">
+            <CheckCircle className="w-3.5 h-3.5" />
+            <span className="text-xs hidden sm:inline">UI Approved</span>
+          </div>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleApproveUI}
+            className="gap-1.5 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
+          >
+            <CheckCircle className="w-3.5 h-3.5" />
+            Approve UI
+          </Button>
+        )}
+
+        {/* Approve PR */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleApprovePR}
+          className="gap-1.5 text-purple-400 border-purple-500/30 hover:bg-purple-500/10"
+        >
+          <GitPullRequest className="w-3.5 h-3.5" />
+          Approve PR
+        </Button>
+
+        {/* Split View */}
+        {task.previewUrl && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSplitView}
+            className="gap-1.5 text-blue-400 border-blue-500/30 hover:bg-blue-500/10"
+          >
+            <SquareSplitHorizontal className="w-3.5 h-3.5" />
+            Split View
+          </Button>
+        )}
+
         {/* Merge */}
         <div className="flex items-center gap-1.5">
           <MergeButton

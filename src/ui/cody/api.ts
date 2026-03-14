@@ -192,6 +192,24 @@ export const tasksApi = {
     return handleResponse(res)
   },
 
+  approveUI: async (issueNumber: number, actorLogin?: string): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'approve-ui', ...(actorLogin && { actorLogin }) }),
+    })
+    return handleResponse(res)
+  },
+
+  approvePR: async (issueNumber: number, actorLogin?: string): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'approve-pr', ...(actorLogin && { actorLogin }) }),
+    })
+    return handleResponse(res)
+  },
+
   comment: async (
     issueNumber: number,
     comment: string,
