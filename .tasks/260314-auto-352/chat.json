@@ -95,6 +95,1055 @@
           "timestamp": "2026-03-14T21:06:54.620Z"
         }
       ]
+    },
+    {
+      "stage": "gap",
+      "sessionId": "ses_311c70770ffeFnzFpTH1hnpkVY",
+      "startedAt": "2026-03-14T21:20:37.007Z",
+      "messages": [
+        {
+          "role": "user",
+          "stage": "gap",
+          "text": "\"CRITICAL: This is a SPEC-ONLY pipeline. DO NOT create branches, commits, or pull requests. DO NOT modify any code files. Only read from and write to the /home/runner/work/A-Guy/A-Guy/.tasks/260314-auto-352/ directory.\n\nTask ID: 260314-auto-352\n\n\nRead these files for context:\n- /home/runner/work/A-Guy/A-Guy/.tasks/260314-auto-352/task.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260314-auto-352/task.json\n\nWrite your output to /home/runner/work/A-Guy/A-Guy/.tasks/260314-auto-352/gap.md\"",
+          "tools": [],
+          "timestamp": "2026-03-14T21:20:37.026Z",
+          "model": "{\"providerID\":\"minimax-coding-plan\",\"modelID\":\"MiniMax-M2.5\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:20:37.115Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "Now let me explore the codebase to understand the existing patterns and find gaps in the specification.",
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:21:00.280Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:21:09.663Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:21:15.335Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "Now let me check the UI layer patterns:",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:21:20.768Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:21:33.814Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "glob",
+            "glob"
+          ],
+          "timestamp": "2026-03-14T21:21:40.117Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "Let me check the build agent to understand the pattern:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:21:47.168Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:21:50.669Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:21:53.571Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:21:56.669Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-14T21:22:00.051Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:22:03.247Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "Now I have enough information. Let me write the spec.md and then analyze gaps:",
+          "tools": [
+            "write"
+          ],
+          "timestamp": "2026-03-14T21:22:14.276Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-14T21:23:01.666Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:23:04.392Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "Now let me explore more to identify gaps in the specification:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:23:07.724Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:23:12.547Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:23:24.281Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-14T21:23:28.041Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:23:37.380Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "Now I have a comprehensive understanding of the codebase. Let me identify the gaps and update the spec:\n\n**Key Gaps Found:**\n\n1. **Entry.ts mode switch** - The spec doesn't explicitly mention adding the 'merge' case to the mode switch at L319\n2. **Pipeline-resolver type** - The function signature needs to include 'merge' \n3. **stage-prompts.ts** - Need to add resolve-conflicts to stageInstructions record\n4. **checkout-task-branch.ts** - Has its own local mergeDefaultBranch that returns boolean already\n\nLet me update the spec:",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-14T21:23:40.470Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:24:17.332Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-14T21:24:20.620Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "Now let me write the gap.md file:",
+          "tools": [
+            "write"
+          ],
+          "timestamp": "2026-03-14T21:24:29.009Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:25:05.924Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:25:09.487Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "gap",
+          "text": "I have completed the gap analysis. Here's a summary:\n\n## Summary\n\n**Task**: Smart Resolve Conflicts - Implementing intelligent merge conflict resolution for the Cody pipeline\n\n**Gaps Found**: 5\n\n### Key Gaps Identified and Fixed:\n\n1. **Entry.ts Mode Switch (Critical)** - The main switch statement at L319 needed explicit merge case addition\n2. **Pipeline-Resolver Type (Critical)** - The `resolvePipelineForMode()` function signature needed 'merge' added to the mode union type\n3. **stage-prompts.ts Missing Instructions (High)** - The `stageInstructions` record needed a `resolve-conflicts` entry\n4. **checkout-task-branch.ts Implementation (Medium)** - Acknowledged that this file has its own local `mergeDefaultBranch()` function returning boolean\n5. **TaskDetail.tsx Button Placement (Medium)** - Added specific details about button location and conditions\n\n### Spec Updates Made:\n- Added detailed function signatures for conflict-utils.ts\n- Added explicit requirements for mode type in pipeline-resolver\n- Added explicit switch case requirement in entry.ts\n- Added stageInstructions entry requirement\n- Added Guardrails section (backward compatibility, git permissions, validation)\n- Added Out of Scope section\n\nThe spec.md now contains 178 lines with detailed requirements, acceptance criteria, guardrails, and out-of-scope items. The gap.md documents all identified gaps and how the spec was revised.",
+          "tools": [],
+          "timestamp": "2026-03-14T21:25:17.984Z"
+        }
+      ]
+    },
+    {
+      "stage": "plan-gap",
+      "sessionId": "ses_311b9ed03ffeToKAYR2Nvii144",
+      "startedAt": "2026-03-14T21:34:55.740Z",
+      "messages": [
+        {
+          "role": "user",
+          "stage": "plan-gap",
+          "text": "\"CRITICAL: This is a SPEC-ONLY pipeline. DO NOT create branches, commits, or pull requests. DO NOT modify any code files. Only read from and write to the /home/runner/work/A-Guy/A-Guy/.tasks/260314-auto-352/ directory.\n\nTask ID: 260314-auto-352\n\n\nRead these files for context:\n- /home/runner/work/A-Guy/A-Guy/.tasks/260314-auto-352/task.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260314-auto-352/task.json\n\nWrite your output to /home/runner/work/A-Guy/A-Guy/.tasks/260314-auto-352/gap.md\"",
+          "tools": [],
+          "timestamp": "2026-03-14T21:20:37.026Z",
+          "model": "{\"providerID\":\"minimax-coding-plan\",\"modelID\":\"MiniMax-M2.5\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:20:37.115Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Now let me explore the codebase to understand the existing patterns and find gaps in the specification.",
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:21:00.280Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:21:09.663Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:21:15.335Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Now let me check the UI layer patterns:",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:21:20.768Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:21:33.814Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "glob",
+            "glob"
+          ],
+          "timestamp": "2026-03-14T21:21:40.117Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Let me check the build agent to understand the pattern:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:21:47.168Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:21:50.669Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:21:53.571Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:21:56.669Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-14T21:22:00.051Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:22:03.247Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Now I have enough information. Let me write the spec.md and then analyze gaps:",
+          "tools": [
+            "write"
+          ],
+          "timestamp": "2026-03-14T21:22:14.276Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-14T21:23:01.666Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:23:04.392Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Now let me explore more to identify gaps in the specification:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:23:07.724Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:23:12.547Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:23:24.281Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-14T21:23:28.041Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:23:37.380Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Now I have a comprehensive understanding of the codebase. Let me identify the gaps and update the spec:\n\n**Key Gaps Found:**\n\n1. **Entry.ts mode switch** - The spec doesn't explicitly mention adding the 'merge' case to the mode switch at L319\n2. **Pipeline-resolver type** - The function signature needs to include 'merge' \n3. **stage-prompts.ts** - Need to add resolve-conflicts to stageInstructions record\n4. **checkout-task-branch.ts** - Has its own local mergeDefaultBranch that returns boolean already\n\nLet me update the spec:",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-14T21:23:40.470Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:24:17.332Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-14T21:24:20.620Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Now let me write the gap.md file:",
+          "tools": [
+            "write"
+          ],
+          "timestamp": "2026-03-14T21:24:29.009Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:25:05.924Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:25:09.487Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "I have completed the gap analysis. Here's a summary:\n\n## Summary\n\n**Task**: Smart Resolve Conflicts - Implementing intelligent merge conflict resolution for the Cody pipeline\n\n**Gaps Found**: 5\n\n### Key Gaps Identified and Fixed:\n\n1. **Entry.ts Mode Switch (Critical)** - The main switch statement at L319 needed explicit merge case addition\n2. **Pipeline-Resolver Type (Critical)** - The `resolvePipelineForMode()` function signature needed 'merge' added to the mode union type\n3. **stage-prompts.ts Missing Instructions (High)** - The `stageInstructions` record needed a `resolve-conflicts` entry\n4. **checkout-task-branch.ts Implementation (Medium)** - Acknowledged that this file has its own local `mergeDefaultBranch()` function returning boolean\n5. **TaskDetail.tsx Button Placement (Medium)** - Added specific details about button location and conditions\n\n### Spec Updates Made:\n- Added detailed function signatures for conflict-utils.ts\n- Added explicit requirements for mode type in pipeline-resolver\n- Added explicit switch case requirement in entry.ts\n- Added stageInstructions entry requirement\n- Added Guardrails section (backward compatibility, git permissions, validation)\n- Added Out of Scope section\n\nThe spec.md now contains 178 lines with detailed requirements, acceptance criteria, guardrails, and out-of-scope items. The gap.md documents all identified gaps and how the spec was revised.",
+          "tools": [],
+          "timestamp": "2026-03-14T21:25:17.984Z"
+        },
+        {
+          "role": "user",
+          "stage": "plan-gap",
+          "text": "\"Task ID: 260314-auto-352\n\n\nTask Type: implement_feature\n\n\nRead these files for context:\n- /home/runner/work/A-Guy/A-Guy/.tasks/260314-auto-352/spec.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260314-auto-352/clarified.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260314-auto-352/rerun-feedback.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260314-auto-352/prev-run/plan.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260314-auto-352/prev-run/build.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260314-auto-352/prev-run/review.md\n- /home/runner/work/A-Guy/A-Guy/.ai-docs/knowledge/index.json\n\nWrite your output to /home/runner/work/A-Guy/A-Guy/.tasks/260314-auto-352/plan.md\"",
+          "tools": [],
+          "timestamp": "2026-03-14T21:25:32.474Z",
+          "model": "{\"providerID\":\"anthropic\",\"modelID\":\"claude-opus-4-6\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "I'll start by reading all the context files in parallel.",
+          "tools": [
+            "read",
+            "read",
+            "read",
+            "read",
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:25:32.491Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Now let me explore the actual codebase to verify file paths and understand patterns. Let me read the key files in parallel.",
+          "tools": [
+            "read",
+            "read",
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:25:41.781Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read",
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:25:49.401Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:25:55.274Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:26:00.084Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:26:05.707Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Now let me check the dashboard UI components for conflicts:",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:26:10.207Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Now let me check the TaskDetail for the header actions area and the `.github/workflows/cody.yml`:",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:26:15.544Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Now let me look at the existing agent file pattern and the existing definitions for stage timeout/post-actions:",
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:26:21.299Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Now let me look at the `buildPipeline()` function to understand how modes map to orders:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:26:28.309Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:26:32.813Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Now let me look at the entry.ts imports and a few more patterns:",
+          "tools": [
+            "read",
+            "grep"
+          ],
+          "timestamp": "2026-03-14T21:26:36.790Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "grep",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:26:43.016Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Let me check the existing action handlers in the route to see the pattern for `fix` action (which triggers workflow):",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:26:48.537Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:26:53.728Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Now I have a thorough understanding of the codebase. Let me also check that the `STAGE_TIMEOUTS` includes what we need:",
+          "tools": [
+            "grep",
+            "glob"
+          ],
+          "timestamp": "2026-03-14T21:26:57.693Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:27:03.131Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Now I have all the information I need. Let me check a couple more things for complete research — looking at `getTaskDir` usage in entry.ts and the pipeline-utils for constants:",
+          "tools": [
+            "grep",
+            "grep"
+          ],
+          "timestamp": "2026-03-14T21:27:06.718Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-14T21:27:12.009Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:27:16.032Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:27:19.886Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Now I have all the context needed. Let me also check the `test` stage to understand test patterns:",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-14T21:27:24.372Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:27:28.251Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Now I have a complete picture. Let me also check for `TaskDetail` component imports to verify `GitMerge` availability:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:27:32.776Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:27:36.912Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Good — `GitMerge` is NOT in the imports. Need to add it. Now I have everything. Let me write the plan:",
+          "tools": [
+            "invalid"
+          ],
+          "timestamp": "2026-03-14T21:27:41.094Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-14T21:30:27.106Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Now let me write context.md:",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-14T21:33:34.537Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Now let me verify both files were written:",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-14T21:34:30.042Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Both files are written successfully. Let me do a quick self-review:\n\n**Self-review checklist:**\n\n1. **Spec coverage** — Every spec requirement has a corresponding plan step:\n   - Step 1 → Spec Step 1 (conflict-utils + mergeDefaultBranch)\n   - Step 2 → Spec Step 2 (merge-resolve agent)  \n   - Step 3 → Spec Step 3 (pipeline stage + display)\n   - Step 4 → Spec Step 4 (merge mode)\n   - Step 5 → Spec Steps 5+6 (fix bug + checkout-task-branch)\n   - Step 6 → Spec Step 7-9 API portion\n   - Step 7 → Spec Step 7-9 types/hooks portion\n   - Step 8 → Spec Step 7-9 UI portion + Step 10 tooltips\n   - Step 9 → Spec Step 10 workflow\n\n2. **Step ordering** — Dependencies flow correctly:\n   - Step 1 creates conflict-utils (used by Steps 3-5)\n   - Step 2 creates agent file (referenced by Step 3)\n   - Step 3 registers stage + pipeline orders (used by Steps 4-5)\n   - Steps 4-5 wire up entry points\n   - Steps 6-8 are dashboard, independent of pipeline\n   - Step 9 is docs/config\n\n3. **File path accuracy** — All paths verified via Read/Glob during research ✅\n\n4. **Reuse check** — Using existing `triggerWorkflow()`, `handleSuccess/Error()`, `withActor()`, `usePRCIStatus`, etc. No unnecessary new utilities ✅\n\n5. **Test feasibility** — Using vitest (not jest), `pnpm -s tsc --noEmit` for typecheck ✅\n\n6. **Step size** — Each step is 10-25 min, max ~5 files per step ✅\n\n7. **Clarified.md feedback incorporated** — \n   - Stale marker detection (Step 3 shouldSkip checks both marker AND git merge state) ✅\n   - Merge moved after taskDir resolution in runFixMode (Step 5) ✅\n   - User-facing docs noted (Step 9) ✅",
+          "tools": [],
+          "timestamp": "2026-03-14T21:34:33.681Z"
+        },
+        {
+          "role": "user",
+          "stage": "plan-gap",
+          "text": "\"Task ID: 260314-auto-352\n\n\nRead these files for context:\n- /home/runner/work/A-Guy/A-Guy/.tasks/260314-auto-352/spec.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260314-auto-352/plan.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260314-auto-352/task.json\n\nWrite your output to /home/runner/work/A-Guy/A-Guy/.tasks/260314-auto-352/plan-gap.md\"",
+          "tools": [],
+          "timestamp": "2026-03-14T21:34:55.964Z",
+          "model": "{\"providerID\":\"anthropic\",\"modelID\":\"claude-opus-4-6\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "I'll read all three context files in parallel first.",
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:34:55.983Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Now let me explore the codebase to validate file paths, imports, and patterns referenced in the plan.",
+          "tools": [
+            "read",
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:35:03.881Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:35:10.663Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:35:15.848Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:35:22.465Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Now let me check the access control functions, existing hooks directory, and verify the pipeline-resolver import patterns:",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:35:27.600Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Now let me check the `buildPipeline` function to understand how the merge mode case in the resolver would work:",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:35:32.755Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Now let me check the access control and hooks for the existing patterns used by the dashboard:",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:35:37.495Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Now let me check the `checkout-task-branch.ts` behavior after conflict more carefully, and the `test` stage pattern to understand the `'test'` vs `'resolve-conflicts'` ordering question:",
+          "tools": [
+            "grep",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:35:42.464Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Now let me check a critical point — the `checkout-task-branch.ts` local `mergeDefaultBranch` already does `merge --abort`. The plan Step 5 says to keep that behavior. But there's a subtlety: after the local `mergeDefaultBranch` returns false (having aborted the merge), if we proceed with `process.exit(0)` instead of `process.exit(1)`, the pipeline will continue but the conflicts are already aborted. So the pipeline's resolve-conflicts stage won't have actual merge conflicts to resolve. Let me verify:",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:35:48.600Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "This is critical. I now see the issue: `checkout-task-branch.ts` runs as a separate script in CI BEFORE the main entry.ts. Its `mergeDefaultBranch()` already aborts the merge on conflict. So if we just remove the `process.exit(1)`, the merge is aborted, the script continues to `process.exit(0)`, and then `entry.ts` runs — but there are no merge conflicts in the working tree because they were aborted. The plan's `runMergeMode()` would then attempt `mergeDefaultBranch(cwd, { leaveConflicts: true })` which would correctly detect conflicts, but only in `merge` mode. For `fix` mode, `entry.ts` also needs to call merge with `leaveConflicts: true`.\n\nLet me also check if `checkout-task-branch.ts` has the same function signature or if it uses the imported one:",
+          "tools": [
+            "grep",
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:35:56.913Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Good — confirmed `checkout-task-branch.ts` has its OWN local `mergeDefaultBranch()` (L92-101) and does NOT import from `git-utils.ts`. This is a standalone script. Now let me check the `test` stage handling — does `IMPL_STAGES` in `constants.ts` include `test`?",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-14T21:36:06.799Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-14T21:36:11.936Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "No `test` in constants.ts's `IMPL_STAGES`. The `IMPL_STAGES` in `constants.ts` does NOT include `test` (it's: `architect, plan-gap, build, commit, review, fix, verify, pr`). But the server-side `ALL_STAGES` in `stage-prompts.ts` includes `test`. This is fine — the dashboard constants only include stages that appear as visible steps.\n\nNow let me check if there's the `test` stage missing from `stageLabels`:\n\nThe `stageLabels` doesn't have `test` either. Good — the plan doesn't need `test` in stageLabels. But it needs `resolve-conflicts`.\n\nNow I have all the info I need. Let me check one more critical thing — the `stage-prompts.ts` typing. `ALL_STAGES` is `as const` and `Stage` is derived from it. Adding `'resolve-conflicts'` will change the `Stage` type, and `STAGE_CONTEXT_FILES` and `stageInstructions` are `Record<Stage, ...>`, so they'll need the new key:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:36:16.327Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Now I have complete understanding. Let me write the gap analysis, identifying issues and fixing the plan.\n\nFirst, let me re-read the plan.md so I have exact content for edits:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:36:26.334Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Now I have enough context. Let me identify the issues and fix the plan.\n\n**Critical issue found**: The `checkout-task-branch.ts` change has a logic flaw. The local `mergeDefaultBranch()` at L92-101 calls `git merge --abort` on conflict, then returns `false`. If we just remove `process.exit(1)`, the code falls through to `process.exit(0)` at L292. So the working tree is clean (merge aborted), and when `entry.ts` later calls `mergeDefaultBranch(cwd, { leaveConflicts: true })`, that will RE-attempt the merge and leave conflicts. This is actually fine for `merge` mode and `fix` mode since they both call `mergeDefaultBranch` with `leaveConflicts: true`. But there's an edge case: for `rerun` and `impl` modes that don't explicitly call `mergeDefaultBranch`, the `resolve-conflicts` stage will be skipped since no marker is written. Actually, looking more carefully, this is correct behavior — the `resolve-conflicts` stage auto-skips when there's no marker, and the `build` stage's `preExecute` calls `ensureFeatureBranch()` which calls `mergeDefaultBranch()` (L270) without `leaveConflicts`, so it would throw. But that's the existing behavior. The new `resolve-conflicts` prepended to impl orders would be skipped (no marker), and then build's preExecute would attempt merge and throw if there are conflicts. This is actually a gap — for non-merge and non-fix modes, conflicts from checkout-task-branch are silently aborted and then re-encountered at build stage.\n\nHowever, this is consistent with the spec's out of scope: only merge and fix modes are targeted. Let me now fix the plan.",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-14T21:36:31.741Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Now let me fix another issue — the `constants.ts` `IMPL_STAGES` is `as const`, and adding `resolve-conflicts` changes the type. Let me also check that the plan correctly handles the fact that adding to `IMPL_STAGES` changes the `ImplStage` type and `AllStage` type:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-14T21:36:51.704Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Good. Adding `'resolve-conflicts'` to `IMPL_STAGES` changes `ImplStage` and `AllStage` — this is fine, no other code should break since these types are structural.\n\nNow let me fix the second issue: the plan says the `stageInstructions` entry takes `(taskId: string) => string` but the actual signature differs slightly — some take `(taskId)` and others take `()`. Let me verify:\n\nThe `stageInstructions` is `Record<Stage, (taskId: string) => string>` — all entries take `taskId` even if they don't use it. The plan's step 3 says \"returns instruction to read merge-conflicts.md and resolve conflicts\" which is correct, but doesn't specify the function signature. This is fine since the type enforces it.\n\nNow let me check one more thing — the `'test'` stage is in `ALL_STAGES` in `stage-prompts.ts` but NOT in `IMPL_STAGES` in `constants.ts`. This means the `resolve-conflicts` stage should also follow this pattern — it should be in the server-side `ALL_STAGES` but could optionally be excluded from the dashboard's `IMPL_STAGES` if it's not always visible. However, the plan adds it to `IMPL_STAGES` which means the dashboard will always show it as a pipeline step. This is actually fine for the dashboard's progress indicator.\n\nLet me now look at one more potential issue — `stageInstructions` in stage-prompts is typed as `Record<Stage, ...>`. Adding `'resolve-conflicts'` to `ALL_STAGES` means `Stage` includes it, so we MUST add it to both `STAGE_CONTEXT_FILES` and `stageInstructions` or TypeScript will error. The plan handles this correctly.\n\nNow let me write the plan-gap.md:",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-14T21:36:57.024Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Let me verify the file was written:",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-14T21:37:56.004Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "plan-gap",
+          "text": "Both outputs are complete:\n\n1. **plan.md edited** — Fixed Step 5's `checkout-task-branch.ts` section with a detailed sequencing explanation of how the abort → re-merge flow works across scripts.\n\n2. **plan-gap.md written** — Documents 3 gaps found (1 medium, 2 low), with full feasibility verification covering:\n   - All 30+ file paths verified against actual codebase\n   - All imports verified (existing and new)\n   - Step ordering verified for dependency correctness\n   - Reuse patterns verified (no unnecessary new code)\n   - Test commands verified (vitest, pnpm)",
+          "tools": [],
+          "timestamp": "2026-03-14T21:38:01.145Z"
+        }
+      ]
     }
   ]
 }
