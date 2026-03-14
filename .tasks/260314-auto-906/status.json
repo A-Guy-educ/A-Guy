@@ -1,0 +1,29 @@
+{
+  "version": 2,
+  "taskId": "260314-auto-906",
+  "mode": "fix",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-14T13:43:16.862Z",
+  "updatedAt": "2026-03-14T13:44:57.054Z",
+  "state": "failed",
+  "cursor": "taskify",
+  "stages": {
+    "taskify": {
+      "state": "failed",
+      "retries": 0,
+      "startedAt": "2026-03-14T13:43:16.869Z",
+      "error": "Invalid task.json: task.json validation failed:\n  • Invalid primary_domain: \"unknown\". Must be one of: backend, frontend, infra, data, llm, devops, product"
+    }
+  },
+  "issueNumber": 811,
+  "triggeredBy": "aguyaharonyair",
+  "issueCreator": "aguyaharonyair",
+  "actorHistory": [
+    {
+      "action": "pipeline-triggered",
+      "actor": "aguyaharonyair",
+      "timestamp": "2026-03-14T13:43:16.862Z"
+    }
+  ],
+  "completedAt": "2026-03-14T13:44:57.054Z"
+}
