@@ -1790,7 +1790,7 @@
       "domain": "cody",
       "patterns": ["route-group", "tailwind-component"],
       "aiSummary": "Root layout for Cody dashboard — reuses frontend fonts, theme, and CSS without Header/Footer/i18n",
-      "dependencies": ["react", "geist/font/mono", "geist/font/sans", "next/font/google"]
+      "dependencies": ["react", "next", "geist/font/mono", "geist/font/sans", "next/font/google"]
     },
     "src/app/(frontend)/LayoutClient.tsx": {
       "path": "src/app/(frontend)/LayoutClient.tsx",
@@ -2604,7 +2604,7 @@
       "domain": "cody",
       "patterns": ["publish", "api-endpoint"],
       "aiSummary": "Create a GitHub issue with 'publish' label to trigger dev→main PR workflow",
-      "dependencies": ["next/server", "@octokit/rest"]
+      "dependencies": ["next/server"]
     },
     "src/app/api/cody/remote/exec/route.ts": {
       "path": "src/app/api/cody/remote/exec/route.ts",
@@ -2652,7 +2652,7 @@
       "domain": "cody",
       "patterns": ["approve-gate", "api-endpoint", "validated-endpoint"],
       "aiSummary": "Approve a gate - merge PR, delete branch, close issue, remove labels via GitHub API",
-      "dependencies": ["next/server", "@octokit/rest", "zod"]
+      "dependencies": ["next/server", "zod"]
     },
     "src/app/api/cody/tasks/approve-review/route.ts": {
       "path": "src/app/api/cody/tasks/approve-review/route.ts",
@@ -2660,7 +2660,7 @@
       "domain": "cody",
       "patterns": ["approve-review", "api-endpoint"],
       "aiSummary": "Approve a PR review and merge it via GitHub API (Octokit).",
-      "dependencies": ["next/server", "@octokit/rest"]
+      "dependencies": ["next/server"]
     },
     "src/app/api/cody/tasks/route.ts": {
       "path": "src/app/api/cody/tasks/route.ts",
@@ -4857,8 +4857,8 @@
       "type": "component",
       "domain": "cody",
       "patterns": ["preview-actions", "tailwind-component", "client-component"],
-      "aiSummary": "Sticky action bar for Preview: Merge, Cancel PR, Fix",
-      "dependencies": ["react", "lucide-react", "sonner"]
+      "aiSummary": "Sticky action bar for Preview: Approve UI, Approve PR, Merge, Fix, Cancel PR",
+      "dependencies": ["react", "sonner"]
     },
     "src/ui/cody/components/PreviewModal.tsx": {
       "path": "src/ui/cody/components/PreviewModal.tsx",
@@ -5995,7 +5995,7 @@
     }
   },
   "metadata": {
-    "generatedAt": "2026-03-14T11:32:40.357Z",
+    "generatedAt": "2026-03-14T15:28:06.813Z",
     "totalFiles": 531,
     "totalPatterns": 179
   }

@@ -12,7 +12,7 @@ import { prsApi, taskDocsApi } from '../api'
 import { PreviewActions } from './PreviewActions'
 import { PRCommentList } from './PRCommentList'
 import { MarkdownViewer } from './MarkdownViewer'
-import { cn } from '../utils'
+import { cn, getPreviewBypassUrl } from '../utils'
 import {
   ArrowLeft,
   GitPullRequest,
@@ -24,6 +24,7 @@ import {
   Loader2,
   AlertCircle,
   RefreshCw,
+  Monitor,
 } from 'lucide-react'
 import { Button } from '@/ui/web/components/button'
 import {
@@ -34,7 +35,7 @@ import {
   DialogDescription,
 } from '@/ui/web/components/dialog'
 
-type PreviewTab = 'changes' | 'docs' | 'comments'
+type PreviewTab = 'preview' | 'changes' | 'docs' | 'comments'
 
 interface PreviewModalProps {
   task: CodyTask
@@ -47,6 +48,7 @@ export function PreviewModal({ task, onClose, onMerge, isMerging }: PreviewModal
   const [activeTab, setActiveTab] = useState<PreviewTab>(() => {
     if (typeof window === 'undefined') return 'changes'
     const path = window.location.pathname
+    if (path.endsWith('/preview')) return 'preview'
     if (path.endsWith('/docs')) return 'docs'
     if (path.endsWith('/comments')) return 'comments'
     return 'changes'
@@ -57,8 +59,21 @@ export function PreviewModal({ task, onClose, onMerge, isMerging }: PreviewModal
   const [loadError, setLoadError] = useState<string | null>(null)
   const [selectedDoc, setSelectedDoc] = useState<TaskDocument | null>(null)
   const [commentCount, setCommentCount] = useState<number | null>(null)
+  const [previewView, setPreviewView] = useState<'web' | 'admin'>('web')
 
   const pr = task.associatedPR
+
+  // Get preview URL based on current view (web or admin)
+  const getPreviewUrl = () => {
+    if (!task.previewUrl) return null
+    const baseUrl = task.previewUrl
+    if (previewView === 'admin') {
+      // Ensure single slash between base URL and /admin
+      const normalized = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl
+      return `${normalized}/admin`
+    }
+    return baseUrl
+  }
 
   // URL sync for doc viewer dialog
   const openDoc = (doc: TaskDocument) => {
@@ -131,7 +146,8 @@ export function PreviewModal({ task, onClose, onMerge, isMerging }: PreviewModal
       if (!path.includes('/preview')) return
 
       // Sync tab
-      if (path.endsWith('/docs')) setActiveTab('docs')
+      if (path.endsWith('/preview')) setActiveTab('preview')
+      else if (path.endsWith('/docs')) setActiveTab('docs')
       else if (path.endsWith('/comments')) setActiveTab('comments')
       else setActiveTab('changes')
 
@@ -167,6 +183,7 @@ export function PreviewModal({ task, onClose, onMerge, isMerging }: PreviewModal
   const totalDeletions = changes.reduce((s, f) => s + f.deletions, 0)
 
   const tabs: Array<{ key: PreviewTab; label: string; icon: typeof GitBranch; count?: number }> = [
+    { key: 'preview', label: 'Preview', icon: Monitor },
     { key: 'changes', label: 'Changes', icon: GitBranch },
     { key: 'docs', label: 'Docs', icon: BookOpen },
     { key: 'comments', label: 'Comments', icon: MessageSquare, count: commentCount ?? undefined },
@@ -193,17 +210,6 @@ export function PreviewModal({ task, onClose, onMerge, isMerging }: PreviewModal
         <span className="text-sm text-zinc-500 truncate hidden sm:inline">{pr.title}</span>
 
         <div className="ml-auto flex items-center gap-2">
-          {task.previewUrl && (
-            <a
-              href={task.previewUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/20 transition-colors"
-            >
-              <ExternalLink className="w-3 h-3" />
-              Preview
-            </a>
-          )}
           <a
             href={pr.html_url}
             target="_blank"
@@ -215,28 +221,6 @@ export function PreviewModal({ task, onClose, onMerge, isMerging }: PreviewModal
           </a>
         </div>
       </div>
-
-      {/* Preview deployment banner */}
-      {task.previewUrl && (
-        <div className="shrink-0 flex items-center gap-3 px-4 py-2.5 border-b border-zinc-800 bg-emerald-500/[0.04]">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-            <span className="text-xs text-emerald-400 font-medium truncate">Deployment ready</span>
-            <span className="text-xs text-zinc-600 truncate hidden sm:inline">
-              {task.previewUrl.replace(/^https?:\/\//, '')}
-            </span>
-          </div>
-          <a
-            href={task.previewUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/20 transition-colors shrink-0"
-          >
-            <ExternalLink className="w-3 h-3" />
-            Open Preview
-          </a>
-        </div>
-      )}
 
       {/* Tab bar */}
       <div role="tablist" className="shrink-0 flex border-b border-zinc-800 bg-zinc-950/50">
@@ -281,6 +265,65 @@ export function PreviewModal({ task, onClose, onMerge, isMerging }: PreviewModal
 
       {/* Tab content */}
       <div className="flex-1 min-h-0 overflow-y-auto pb-20">
+        {/* Preview tab - iframe */}
+        {activeTab === 'preview' && (
+          <div className="h-full flex flex-col">
+            {/* Preview actions header */}
+            {task.previewUrl && (
+              <div className="shrink-0 flex items-center justify-between gap-2 px-4 py-2.5 border-b border-zinc-800 bg-zinc-900/50">
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setPreviewView('web')}
+                    className={cn(
+                      'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
+                      previewView === 'web'
+                        ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
+                        : 'text-zinc-400 hover:text-white hover:bg-zinc-800',
+                    )}
+                  >
+                    Web
+                  </button>
+                  <button
+                    onClick={() => setPreviewView('admin')}
+                    className={cn(
+                      'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
+                      previewView === 'admin'
+                        ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
+                        : 'text-zinc-400 hover:text-white hover:bg-zinc-800',
+                    )}
+                  >
+                    Admin
+                  </button>
+                </div>
+                <a
+                  href={getPreviewBypassUrl(getPreviewUrl()) || undefined}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/20 transition-colors"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  Open
+                </a>
+              </div>
+            )}
+            {/* iframe */}
+            <div className="flex-1 min-h-0">
+              {task.previewUrl ? (
+                <iframe
+                  src={getPreviewBypassUrl(getPreviewUrl()) || undefined}
+                  title="Preview Deployment"
+                  className="w-full h-full border-0 bg-white"
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-zinc-500">No preview URL available</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Changes tab */}
         {activeTab === 'changes' && (
           <div

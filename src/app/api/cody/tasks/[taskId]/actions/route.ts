@@ -24,6 +24,7 @@ import {
   findTaskBranch,
   deleteBranch,
   clearCache,
+  getOctokit,
 } from '@/ui/cody/github-client'
 
 const actionSchema = z.object({
@@ -308,13 +309,8 @@ ${comment}`,
         if (!associatedPR) {
           return NextResponse.json({ error: 'No associated PR found' }, { status: 404 })
         }
-        // Use Octokit to approve the PR
-        const { Octokit } = await import('@octokit/rest')
-        const token = process.env.GITHUB_TOKEN
-        if (!token) {
-          return NextResponse.json({ error: 'GITHUB_TOKEN not configured' }, { status: 500 })
-        }
-        const octokit = new Octokit({ auth: token })
+        // Use shared getOctokit (supports both CODY_BOT_TOKEN and GITHUB_TOKEN)
+        const octokit = getOctokit()
         const OWNER = 'A-Guy-educ'
         const REPO = 'A-Guy'
         try {

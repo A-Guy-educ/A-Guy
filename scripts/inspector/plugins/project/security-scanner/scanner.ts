@@ -93,11 +93,17 @@ export function scanRoutesForMissingAuth(rootDir: string): SecurityFinding[] {
 
     const severity: Severity = hasMutationMethod ? 'critical' : 'high'
 
+    // Convert to API path: src/app/api/cody/tasks/[taskId]/route.ts -> /api/cody/tasks/:taskId
+    const apiPath = relativePath
+      .replace(/^src\/app\/api\//, '/api/')
+      .replace(/\/route\.ts$/, '')
+      .replace(/\[([^\]]+)\]/g, ':$1')
+
     findings.push({
       rule: 'missing-auth',
       severity,
       file: relativePath,
-      message: `Route without authentication: ${path.basename(path.dirname(relativePath))}`,
+      message: `Route without authentication: ${apiPath}`,
       detail: hasMutationMethod
         ? 'Route has mutation methods (POST/PUT/PATCH/DELETE) but no authentication'
         : 'Route has no authentication check',

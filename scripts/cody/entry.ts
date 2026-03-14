@@ -27,7 +27,7 @@ import { preflight } from './preflight'
 import { createRunner } from './runner-backend'
 import { logger, createStageLogger } from './logger'
 import { handleClarification } from './clarify-workflow'
-import { commitPipelineFiles } from './git-utils'
+import { commitPipelineFiles, mergeDefaultBranch } from './git-utils'
 import { readTask } from './pipeline-utils'
 
 import type { PipelineContext } from './engine/types'
@@ -743,6 +743,17 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
 async function runFixMode(ctx: PipelineContext): Promise<void> {
   const { input } = ctx
   logger.info('Running Cody FIX pipeline (full pipeline with original task context)...\n')
+
+  // ===========================================================================
+  // Step 0: Merge default branch to get latest fixes
+  // ===========================================================================
+  if (input.isPullRequest) {
+    try {
+      mergeDefaultBranch(process.cwd())
+    } catch (error) {
+      logger.error({ error }, 'Failed to merge default branch, continuing anyway')
+    }
+  }
 
   // ===========================================================================
   // Step 1: Resolve original task ID from PR → issue → original task

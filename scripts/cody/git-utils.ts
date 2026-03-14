@@ -171,7 +171,7 @@ export function getDefaultBranch(cwd: string = process.cwd()): string {
  * This keeps the feature branch up-to-date with the latest changes from dev.
  * If a merge conflict occurs, aborts the merge and throws an error.
  */
-function mergeDefaultBranch(cwd: string): void {
+export function mergeDefaultBranch(cwd: string): void {
   const defaultBranch = getDefaultBranch(cwd)
   logger.info(`[branch] Merging latest ${defaultBranch} into current branch`)
   try {

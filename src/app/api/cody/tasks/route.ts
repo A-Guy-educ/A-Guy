@@ -335,12 +335,21 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    // Check for missing token
-    if (error?.message?.includes('GITHUB_TOKEN not configured')) {
+    // Check for missing token - match both old and new error message formats from getOctokit()
+    // Old: "GITHUB_TOKEN not configured"
+    // New: "Neither CODY_BOT_TOKEN nor GITHUB_TOKEN is configured"
+    // Both contain "TOKEN" and "configured"
+    const isNoTokenError =
+      error?.message?.includes('TOKEN') &&
+      error?.message?.includes('configured') &&
+      (error?.message?.includes('GITHUB_TOKEN') || error?.message?.includes('CODY_BOT_TOKEN'))
+
+    if (isNoTokenError) {
       return NextResponse.json(
         {
           error: 'no_token',
-          message: 'GITHUB_TOKEN is not configured',
+          message:
+            'GitHub token is not configured. Set CODY_BOT_TOKEN or GITHUB_TOKEN in environment variables.',
         },
         { status: 401 },
       )

@@ -596,7 +596,8 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
           <div className="text-6xl mb-4">⚠️</div>
           <h2 className="text-xl font-semibold text-foreground mb-2">Unable to Load Tasks</h2>
           <p className="text-muted-foreground mb-4">
-            GITHUB_TOKEN is not configured. Please add it to your environment variables.
+            {error?.message ||
+              'GitHub token is not configured. Set CODY_BOT_TOKEN or GITHUB_TOKEN in environment variables.'}
           </p>
           <Button onClick={() => refetch()}>Retry</Button>
         </div>
