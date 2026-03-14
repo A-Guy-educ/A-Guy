@@ -4,15 +4,15 @@
   "mode": "fix",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-14T12:45:09.975Z",
-  "updatedAt": "2026-03-14T12:47:10.364Z",
-  "state": "paused",
-  "cursor": "taskify",
+  "updatedAt": "2026-03-14T18:15:16.769Z",
+  "state": "running",
+  "cursor": "gap",
   "stages": {
     "taskify": {
-      "state": "paused",
+      "state": "completed",
       "retries": 0,
       "startedAt": "2026-03-14T12:45:09.981Z",
-      "completedAt": "2026-03-14T12:47:05.496Z",
+      "completedAt": "2026-03-14T18:11:23.864Z",
       "outputFile": "taskify.md",
       "tokenUsage": {
         "input": 70289,
@@ -20,6 +20,30 @@
         "cacheRead": 572928
       },
       "sessionId": "ses_3139ee561ffeHvbSnhARhgyzZp"
+    },
+    "gap": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 12 (simple) below threshold 35 for gap"
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-14T18:11:23.879Z",
+      "completedAt": "2026-03-14T18:15:14.676Z",
+      "outputFile": "architect.md",
+      "tokenUsage": {
+        "input": 29,
+        "output": 9058,
+        "cacheRead": 2110983
+      },
+      "cost": 1.8970114999999999,
+      "sessionId": "ses_312743873ffeireDrD33asYK1Q"
+    },
+    "plan-gap": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 12 (simple) below threshold 50 for plan-gap"
     }
   },
   "issueNumber": 813,
@@ -32,5 +56,5 @@
       "timestamp": "2026-03-14T12:45:09.975Z"
     }
   ],
-  "completedAt": "2026-03-14T12:47:10.364Z"
+  "branchName": "fix/260314-auto-813-fix-requested-via-cody-fix-command"
 }

@@ -226,6 +226,7 @@ export interface QuestionAxisBlock {
   type: 'question_axis'
   prompt: InlineRichText
   axis: AxisSpecV1
+  displaySize?: 'small' | 'medium' | 'large' | 'full'
   answer?: QuestionAnswer
   hint?: InlineRichText
   solution?: InlineRichText
