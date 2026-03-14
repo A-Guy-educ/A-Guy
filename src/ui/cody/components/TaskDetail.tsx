@@ -1123,7 +1123,36 @@ export function TaskDetail({
                 branchName={task.associatedPR.head.ref}
                 isMerging={externalIsMerging ?? false}
                 onMerge={() => onApproveReview(task)}
+                labels={task.labels}
               />
+            )}
+
+            {/* Approve UI button - when task has PR and UI not yet approved */}
+            {task.associatedPR && !task.labels?.includes('ui-approved') && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1.5 text-xs font-medium rounded-lg text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
+                onClick={() => taskActions.approveUI?.()}
+                disabled={taskActions.isPending}
+              >
+                <CheckCircle className="w-3 h-3" />
+                Approve UI
+              </Button>
+            )}
+
+            {/* Approve PR button - when task has PR */}
+            {task.associatedPR && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1.5 text-xs font-medium rounded-lg text-purple-400 border-purple-500/30 hover:bg-purple-500/10"
+                onClick={() => taskActions.approvePR?.()}
+                disabled={taskActions.isPending}
+              >
+                <GitPullRequest className="w-3 h-3" />
+                Approve PR
+              </Button>
             )}
 
             {/* Contextual primary action */}
@@ -1440,7 +1469,36 @@ export function TaskDetail({
             branchName={task.associatedPR.head.ref}
             isMerging={externalIsMerging ?? false}
             onMerge={() => onApproveReview(task)}
+            labels={task.labels}
           />
+        )}
+
+        {/* Approve UI button - mobile */}
+        {task.associatedPR && !task.labels?.includes('ui-approved') && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9 gap-1.5 text-xs font-medium shrink-0 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
+            onClick={() => taskActions.approveUI?.()}
+            disabled={taskActions.isPending}
+          >
+            <CheckCircle className="w-3.5 h-3.5" />
+            Approve UI
+          </Button>
+        )}
+
+        {/* Approve PR button - mobile */}
+        {task.associatedPR && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9 gap-1.5 text-xs font-medium shrink-0 text-purple-400 border-purple-500/30 hover:bg-purple-500/10"
+            onClick={() => taskActions.approvePR?.()}
+            disabled={taskActions.isPending}
+          >
+            <GitPullRequest className="w-3.5 h-3.5" />
+            Approve PR
+          </Button>
         )}
 
         {/* Primary action */}

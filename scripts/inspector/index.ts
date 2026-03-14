@@ -18,6 +18,8 @@ import { zombieReaperPlugin } from './plugins/cody/zombie-reaper/index'
 import { successTrackerPlugin } from './plugins/cody/success-tracker/index'
 import { failureMinerPlugin } from './plugins/cody/failure-miner/index'
 import { knowledgeGardenerPlugin } from './plugins/cody/knowledge-gardener/index'
+import { securityScannerPlugin } from './plugins/project/security-scanner/index'
+import { apiSurfaceAuditorPlugin } from './plugins/project/api-surface/index'
 import type { InspectorConfig } from './core/types'
 
 const logger = pino({ level: 'info' })
@@ -70,6 +72,8 @@ async function main(): Promise<void> {
   registry.register(successTrackerPlugin)
   registry.register(failureMinerPlugin)
   registry.register(knowledgeGardenerPlugin)
+  registry.register(securityScannerPlugin)
+  registry.register(apiSurfaceAuditorPlugin)
 
   // Create config
   const config: InspectorConfig = {

@@ -43,6 +43,8 @@ const actionSchema = z.object({
     'unassign',
     'comment',
     'fix',
+    'approve-ui',
+    'approve-pr',
   ]),
   feedback: z.string().optional(),
   fromStage: z.string().optional(),
@@ -290,6 +292,51 @@ ${comment}`,
         await postComment(associatedPR.number, fixBody)
         clearCache()
         return NextResponse.json({ success: true, message: 'Fix requested on PR' })
+      }
+
+      case 'approve-ui': {
+        // Mark the preview UI as visually approved
+        await addLabels(issueNumber, ['ui-approved'])
+        await postComment(issueNumber, withActor('✅ Preview UI approved', actor))
+        clearCache()
+        return NextResponse.json({ success: true, message: 'Preview UI approved' })
+      }
+
+      case 'approve-pr': {
+        // Find associated PR and approve the review (without merging)
+        const associatedPR = await findAssociatedPRByIssueNumber(issueNumber)
+        if (!associatedPR) {
+          return NextResponse.json({ error: 'No associated PR found' }, { status: 404 })
+        }
+        // Use Octokit to approve the PR
+        const { Octokit } = await import('@octokit/rest')
+        const token = process.env.GITHUB_TOKEN
+        if (!token) {
+          return NextResponse.json({ error: 'GITHUB_TOKEN not configured' }, { status: 500 })
+        }
+        const octokit = new Octokit({ auth: token })
+        const OWNER = 'A-Guy-educ'
+        const REPO = 'A-Guy'
+        try {
+          await octokit.pulls.createReview({
+            owner: OWNER,
+            repo: REPO,
+            pull_number: associatedPR.number,
+            event: 'APPROVE',
+            body: `✅ PR approved${actor ? ` by @${actor}` : ''} via Cody dashboard.`,
+          })
+        } catch (error: unknown) {
+          // May fail if already approved - that's ok
+          const msg = error instanceof Error ? error.message : String(error)
+          if (!msg.includes('already approved')) {
+            console.warn('[Cody] PR approval note:', msg)
+          }
+        }
+        // Add pr-approved label for merge button to check
+        await addLabels(issueNumber, ['pr-approved'])
+        await postComment(issueNumber, withActor('✅ PR approved', actor))
+        clearCache()
+        return NextResponse.json({ success: true, message: 'PR approved' })
       }
 
       default:
