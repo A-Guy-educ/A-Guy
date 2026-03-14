@@ -284,6 +284,25 @@ Invoke these subagents when working in their specific domains:
 **When:** Working on the Cody pipeline itself (`scripts/cody/**`, `.opencode/agents/**`, `.github/workflows/cody.yml`)
 **What to ask:** "Explain the pipeline architecture. How does the state machine work? What's the version system? Debug this pipeline issue."
 
+## Test Infrastructure
+
+- **Test runner**: vitest (NOT jest)
+- **Unit test config**: `vitest.config.unit.mts`
+- **Run unit tests**: `pnpm test:unit`
+- **DOM testing**: This project does NOT use testing-library/jest-dom. Use vitest's built-in matchers.
+- **For React component tests**: Check `tests/unit/ui/` for existing patterns before writing new ones.
+
+## Test Debugging Budget
+
+If tests fail 3 times in a row with the SAME infrastructure error (missing module, config issue, matcher not found), STOP debugging. Instead:
+
+1. Mark the test as `it.skip('TODO: requires test infrastructure fix')`
+2. Verify the feature via `tsc --noEmit` (type-safe compilation)
+3. Document the skipped test in `build.md` under "Known Limitations"
+4. Move on to the next task
+
+**Why**: Debugging test infrastructure wastes time that should be spent on the actual feature. A skipped test is better than a timeout with zero output.
+
 ## Skills (Workflow Automation)
 
 ### Install Recommended Skills First

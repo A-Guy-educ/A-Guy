@@ -6,7 +6,7 @@
  *
  * Queries GitHub Actions API for cody.yml workflow runs over 7 and 30 days.
  * Calculates success rate, average duration, and trend direction.
- * Posts digest to Slack and/or the watchdog issue.
+ * Posts digest to Slack and/or the digest issue.
  * Triggers a warning action if the 7-day success rate drops >15pp below 30-day.
  */
 
@@ -87,23 +87,23 @@ export const successTrackerPlugin: InspectorPlugin = {
       })
     }
 
-    // Watchdog issue action
-    if (ctx.watchdogIssue) {
+    // Digest issue action
+    if (ctx.digestIssue) {
       actions.push({
         plugin: 'success-tracker',
-        type: 'watchdog-digest',
+        type: 'digest',
         urgency,
-        title: 'Cody metrics watchdog digest',
+        title: 'Cody metrics digest',
         detail: `7d: ${report.sevenDay.successRate}% | 30d: ${report.thirtyDay.successRate}% | trend: ${report.trendDirection}`,
-        dedupKey: 'success-tracker:watchdog-daily',
+        dedupKey: 'success-tracker:digest-daily',
         dedupWindowMinutes: DEDUP_WINDOW_MINUTES,
         async execute(execCtx: InspectorContext): Promise<{ success: boolean; message?: string }> {
-          if (!execCtx.watchdogIssue) {
-            return { success: false, message: 'Watchdog issue not configured at execution time' }
+          if (!execCtx.digestIssue) {
+            return { success: false, message: 'Digest issue not configured at execution time' }
           }
           const markdown = formatMarkdownReport(report, execCtx.cycleNumber)
-          execCtx.github.postComment(execCtx.watchdogIssue, markdown)
-          return { success: true, message: 'Watchdog digest posted' }
+          execCtx.github.postComment(execCtx.digestIssue, markdown)
+          return { success: true, message: 'Digest posted' }
         },
       })
     }

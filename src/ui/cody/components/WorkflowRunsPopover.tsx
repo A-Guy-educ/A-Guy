@@ -60,19 +60,25 @@ interface WorkflowRunsPopoverProps {
 export function WorkflowRunsPopover({ taskTitle, fallbackRun }: WorkflowRunsPopoverProps) {
   const [open, setOpen] = useState(false)
   const btnRef = useRef<HTMLButtonElement>(null)
-  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null)
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number; alignRight: boolean } | null>(
+    null,
+  )
 
   const { data: runs, isLoading } = useWorkflowRuns(open ? taskTitle : undefined)
 
   // Display runs from query when open; fall back to single run from task data
   const displayRuns: WorkflowRun[] = runs ?? (fallbackRun ? [fallbackRun] : [])
 
+  const POPOVER_WIDTH = 224 // w-56
+
   const handleToggle = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation()
       if (!open && btnRef.current) {
         const rect = btnRef.current.getBoundingClientRect()
-        setMenuPos({ top: rect.bottom, left: rect.right })
+        // If not enough space to the right, align right edge of popover to right edge of button
+        const alignRight = rect.left + POPOVER_WIDTH > window.innerWidth - 8
+        setMenuPos({ top: rect.bottom, left: rect.left, alignRight })
       }
       setOpen((prev) => !prev)
     },
@@ -105,14 +111,19 @@ export function WorkflowRunsPopover({ taskTitle, fallbackRun }: WorkflowRunsPopo
           <div className="fixed inset-0 z-[100]" onClick={() => setOpen(false)} />
           {/* Popover — fixed positioning to escape overflow:hidden parents */}
           <div
-            className="fixed z-[101] w-72 bg-popover/95 backdrop-blur-xl border border-white/[0.06] rounded-xl shadow-2xl shadow-black/30 py-1.5 overflow-hidden"
+            className="fixed z-[101] w-56 bg-popover/95 backdrop-blur-xl border border-white/[0.06] rounded-xl shadow-2xl shadow-black/30 py-1.5 overflow-hidden"
             style={
               menuPos
-                ? { top: menuPos.top + 4, right: window.innerWidth - menuPos.left }
+                ? menuPos.alignRight
+                  ? {
+                      top: menuPos.top + 4,
+                      right: window.innerWidth - menuPos.left - (btnRef.current?.offsetWidth ?? 0),
+                    }
+                  : { top: menuPos.top + 4, left: menuPos.left }
                 : undefined
             }
           >
-            <div className="px-3 py-1.5 text-[11px] font-semibold text-zinc-500 uppercase tracking-wider border-b border-white/[0.06] mb-1">
+            <div className="px-3 py-1 text-[10px] font-semibold text-zinc-500 uppercase tracking-wider border-b border-white/[0.06] mb-0.5">
               Workflow Runs
             </div>
 
@@ -123,7 +134,7 @@ export function WorkflowRunsPopover({ taskTitle, fallbackRun }: WorkflowRunsPopo
             ) : displayRuns.length === 0 ? (
               <div className="px-3 py-3 text-xs text-zinc-500">No runs found</div>
             ) : (
-              <div className="max-h-64 overflow-y-auto">
+              <div className="max-h-48 overflow-y-auto">
                 {displayRuns.map((run) => (
                   <a
                     key={run.id}
@@ -131,11 +142,11 @@ export function WorkflowRunsPopover({ taskTitle, fallbackRun }: WorkflowRunsPopo
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="flex items-start gap-2.5 px-3 py-2 hover:bg-white/[0.04] transition-colors group"
+                    className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/[0.04] transition-colors group"
                   >
-                    <span className="mt-0.5">{getRunIcon(run)}</span>
+                    {getRunIcon(run)}
                     <div className="flex-1 min-w-0">
-                      <div className={cn('text-[12px] font-medium truncate', getRunColor(run))}>
+                      <div className={cn('text-[11px] font-medium truncate', getRunColor(run))}>
                         {run.status === 'in_progress'
                           ? 'Running'
                           : run.status === 'queued'
@@ -143,19 +154,15 @@ export function WorkflowRunsPopover({ taskTitle, fallbackRun }: WorkflowRunsPopo
                             : run.conclusion
                               ? run.conclusion.charAt(0).toUpperCase() + run.conclusion.slice(1)
                               : 'Unknown'}
-                      </div>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        {run.head_branch && (
-                          <span className="text-[11px] text-zinc-500 truncate max-w-[120px]">
-                            {run.head_branch}
-                          </span>
-                        )}
-                        <span className="text-[11px] text-zinc-600">
+                        <span className="text-zinc-600 font-normal ml-1.5">
                           {formatRelativeTime(run.created_at)}
                         </span>
                       </div>
+                      {run.head_branch && (
+                        <div className="text-[10px] text-zinc-600 truncate">{run.head_branch}</div>
+                      )}
                     </div>
-                    <ExternalLink className="w-3 h-3 text-zinc-600 group-hover:text-zinc-400 transition-colors shrink-0 mt-0.5" />
+                    <ExternalLink className="w-2.5 h-2.5 text-zinc-600 group-hover:text-zinc-400 transition-colors shrink-0" />
                   </a>
                 ))}
               </div>

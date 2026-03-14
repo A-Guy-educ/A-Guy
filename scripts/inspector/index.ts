@@ -18,6 +18,8 @@ import { zombieReaperPlugin } from './plugins/cody/zombie-reaper/index'
 import { successTrackerPlugin } from './plugins/cody/success-tracker/index'
 import { failureMinerPlugin } from './plugins/cody/failure-miner/index'
 import { knowledgeGardenerPlugin } from './plugins/cody/knowledge-gardener/index'
+import { securityScannerPlugin } from './plugins/project/security-scanner/index'
+import { apiSurfaceAuditorPlugin } from './plugins/project/api-surface/index'
 import type { InspectorConfig } from './core/types'
 
 const logger = pino({ level: 'info' })
@@ -32,7 +34,9 @@ async function main(): Promise<void> {
   const dryRun = process.env.DRY_RUN === 'true'
 
   // Parse optional config
-  const watchdogIssue = process.env.WATCHDOG_ISSUE ? Number(process.env.WATCHDOG_ISSUE) : undefined
+  const digestIssue = process.env.INSPECTOR_DIGEST_ISSUE
+    ? Number(process.env.INSPECTOR_DIGEST_ISSUE)
+    : undefined
 
   // Validate required env vars
   if (!repo) {
@@ -48,8 +52,8 @@ async function main(): Promise<void> {
   logger.info({ repo, dryRun }, 'Starting Inspector')
 
   // Warn about missing optional config
-  if (!watchdogIssue) {
-    logger.warn('WATCHDOG_ISSUE not set — digest reports will be skipped')
+  if (!digestIssue) {
+    logger.warn('INSPECTOR_DIGEST_ISSUE not set — digest reports will be skipped')
   }
   if (!process.env.MINIMAX_API_KEY) {
     logger.warn('MINIMAX_API_KEY not set — failure analysis will use fallback mode')
@@ -68,6 +72,8 @@ async function main(): Promise<void> {
   registry.register(successTrackerPlugin)
   registry.register(failureMinerPlugin)
   registry.register(knowledgeGardenerPlugin)
+  registry.register(securityScannerPlugin)
+  registry.register(apiSurfaceAuditorPlugin)
 
   // Create config
   const config: InspectorConfig = {
@@ -75,7 +81,7 @@ async function main(): Promise<void> {
     dryRun,
     stateFile: `${process.cwd()}/.inspector/state.json`,
     plugins: registry.getAll(),
-    watchdogIssue,
+    digestIssue,
   }
 
   // Run Inspector

@@ -379,6 +379,32 @@ export function discoverTaskIdFromPR(prNumber: number): string | null {
 }
 
 /**
+ * Get the issue number linked to a PR via "Closes #XXX" in the PR description.
+ * Used in fix mode to find the original issue from a PR.
+ */
+export function getLinkedIssueFromPR(prNumber: number): number | null {
+  if (!prNumber) return null
+  try {
+    const output = execFileSync(
+      'gh',
+      [
+        'pr',
+        'view',
+        String(prNumber),
+        '--json',
+        'closingIssuesReferences',
+        '--jq',
+        '.closingIssuesReferences[0].number',
+      ],
+      { encoding: 'utf-8', timeout: GH_API_TIMEOUT },
+    ).trim()
+    return output ? parseInt(output, 10) : null
+  } catch {
+    return null
+  }
+}
+
+/**
  * Extract the gate comment body from a gate-*.md file.
  * The file is written as: `# Gate Request\n\n${formatGateComment(...)}\n`
  * This function strips the `# Gate Request\n\n` prefix and trims trailing whitespace,

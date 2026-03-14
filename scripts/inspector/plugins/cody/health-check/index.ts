@@ -223,9 +223,9 @@ export function createDigestAction(
   tasks: EvaluatedTask[],
   ctx: InspectorContext,
 ): ActionRequest | null {
-  // Guard: skip digest when WATCHDOG_ISSUE is not configured
-  if (!ctx.watchdogIssue) {
-    ctx.log.warn('WATCHDOG_ISSUE not configured — skipping digest')
+  // Guard: skip digest when INSPECTOR_DIGEST_ISSUE is not configured
+  if (!ctx.digestIssue) {
+    ctx.log.warn('INSPECTOR_DIGEST_ISSUE not configured — skipping digest')
     return null
   }
 
@@ -280,7 +280,7 @@ export function createDigestAction(
       }
 
       ctx.github.postComment(
-        ctx.watchdogIssue!,
+        ctx.digestIssue!,
         `## 🐕 Inspector Digest\n\n${table}\n\n_Cycle ${ctx.cycleNumber}_`,
       )
       return { success: true, message: 'Digest posted' }

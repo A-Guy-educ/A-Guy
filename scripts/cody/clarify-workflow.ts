@@ -381,7 +381,12 @@ export function handleGateApproval(
     if (latestApproval.status) {
       // User replied with approve/reject - write the approved file
       if (latestApproval.status === 'approved') {
-        safeWriteFile(approvedPath, `# Gate Approved\n\nApproved at ${gatePoint} gate.\n`)
+        const approvedBy = input.actor || 'unknown'
+        const approvedAt = new Date().toISOString()
+        safeWriteFile(
+          approvedPath,
+          `# Gate Approved\n\nApproved at ${gatePoint} gate.\nApproved by: @${approvedBy}\nApproved at: ${approvedAt}\n`,
+        )
         // If there's also answer content in the comment, create clarified.md
         if (latestApproval.answerContent) {
           const clarifiedPath = path.join(taskDir, 'clarified.md')
@@ -390,7 +395,11 @@ export function handleGateApproval(
         return 'approved'
       } else {
         // Write rejection marker
-        safeWriteFile(requestPath, `# Gate Rejected\n\nRejected at ${gatePoint} gate.\n`)
+        const rejectedBy = input.actor || 'unknown'
+        safeWriteFile(
+          requestPath,
+          `# Gate Rejected\n\nRejected at ${gatePoint} gate.\nRejected by: @${rejectedBy}\n`,
+        )
         return 'rejected'
       }
     }
@@ -398,7 +407,12 @@ export function handleGateApproval(
 
   // If we have approval in current trigger
   if (approval.status === 'approved') {
-    safeWriteFile(approvedPath, `# Gate Approved\n\nApproved at ${gatePoint} gate.\n`)
+    const approvedBy = input.actor || 'unknown'
+    const approvedAt = new Date().toISOString()
+    safeWriteFile(
+      approvedPath,
+      `# Gate Approved\n\nApproved at ${gatePoint} gate.\nApproved by: @${approvedBy}\nApproved at: ${approvedAt}\n`,
+    )
     // If there's also answer content in the comment, create clarified.md
     if (approval.answerContent) {
       const clarifiedPath = path.join(taskDir, 'clarified.md')
@@ -406,7 +420,11 @@ export function handleGateApproval(
     }
     return 'approved'
   } else if (approval.status === 'rejected') {
-    safeWriteFile(requestPath, `# Gate Rejected\n\nRejected at ${gatePoint} gate.\n`)
+    const rejectedBy = input.actor || 'unknown'
+    safeWriteFile(
+      requestPath,
+      `# Gate Rejected\n\nRejected at ${gatePoint} gate.\nRejected by: @${rejectedBy}\n`,
+    )
     return 'rejected'
   }
 

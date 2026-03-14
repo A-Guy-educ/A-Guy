@@ -8,7 +8,7 @@ import type { Metadata } from 'next'
 import { fetchIssue } from '@/ui/cody/github-client'
 
 const SITE_NAME = 'Cody Operations Dashboard'
-const BASE_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'https://www.dev.aguy.co.il'
+const BASE_URL = process.env.CODY_PUBLIC_SERVER_URL || 'https://www.dev.aguy.co.il'
 
 /** Build base metadata with OG + Twitter tags for static cody pages */
 export function buildCodyMetadata(options: {

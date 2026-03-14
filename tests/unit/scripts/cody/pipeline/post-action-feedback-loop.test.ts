@@ -13,7 +13,7 @@ vi.mock('child_process', () => ({
 const mockRunAgent = vi.fn()
 vi.mock('../../../../../scripts/cody/agent-runner', () => ({
   runAgentWithFileWatch: (...args: unknown[]) => mockRunAgent(...args),
-  STAGE_TIMEOUTS: { autofix: 300000 },
+  STAGE_TIMEOUTS: { autofix: 300000, build: 2700000 },
   DEFAULT_TIMEOUT: 600000,
 }))
 
@@ -91,7 +91,7 @@ describe('run-quality-with-autofix post-action', () => {
     expect(mockRunAgent).not.toHaveBeenCalled()
   })
 
-  it('runs autofix when tsc fails, then retries and passes', async () => {
+  it('runs build agent when tsc fails, then retries and passes', async () => {
     let tscCallCount = 0
     mockExecFileSync.mockImplementation((program: string, args: string[] | undefined) => {
       const argsArr = args || []
@@ -113,7 +113,7 @@ describe('run-quality-with-autofix post-action', () => {
 
     await executePostAction(ctx, action, null)
 
-    // Autofix was called once
+    // Build agent was called once
     expect(mockRunAgent).toHaveBeenCalledTimes(1)
     // build-errors.md was written
     expect(fs.writeFileSync).toHaveBeenCalledWith(
@@ -139,7 +139,7 @@ describe('run-quality-with-autofix post-action', () => {
     const ctx = makeCtx()
 
     await expect(executePostAction(ctx, action, null)).rejects.toThrow(
-      /Quality gates failed after 2 autofix attempts/,
+      /Quality gates failed after 2 build agent fix attempts/,
     )
     expect(mockRunAgent).toHaveBeenCalledTimes(2)
   })
@@ -155,7 +155,7 @@ describe('run-quality-with-autofix post-action', () => {
     expect(mockRunAgent).not.toHaveBeenCalled()
   })
 
-  it('only re-runs failed gates, not passing ones', async () => {
+  it('re-runs all gates after build agent fix (catches regressions)', async () => {
     const commandCalls: string[] = []
     let tscCallCount = 0
     mockExecFileSync.mockImplementation((program: string, args: string[] | undefined) => {
@@ -180,10 +180,10 @@ describe('run-quality-with-autofix post-action', () => {
     await executePostAction(ctx, action, null)
 
     // First run: both gates called (tsc fails, tests pass)
-    // Re-run: only tsc called (it was the only failure)
+    // Re-run: ALL gates re-run (build agent fix might break previously passing gates)
     const tscCalls = commandCalls.filter((c) => c.includes('tsc'))
     const testCalls = commandCalls.filter((c) => c.includes('test:unit'))
     expect(tscCalls).toHaveLength(2) // initial + retry
-    expect(testCalls).toHaveLength(1) // initial only, not retried
+    expect(testCalls).toHaveLength(2) // initial + retry (all gates re-run)
   })
 })

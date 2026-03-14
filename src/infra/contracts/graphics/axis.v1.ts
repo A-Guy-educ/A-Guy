@@ -31,6 +31,9 @@ const AxesSchema = z.object({
   }),
 })
 
+/** Viewport mode: auto (calculate from content) or manual (user-defined) */
+const ViewportModeSchema = z.enum(['auto', 'manual']).default('auto').optional()
+
 /** Viewport bounds (optional) */
 const ViewportSchema = z
   .object({
@@ -162,6 +165,7 @@ export const AxisSpecV1Schema = z
     units: z.number().positive(),
     grid: GridSchema,
     axes: AxesSchema,
+    viewportMode: ViewportModeSchema,
     viewport: ViewportSchema,
     elements: ElementsSchema,
     interactionSpec: InteractionSpecSchema,
@@ -170,3 +174,6 @@ export const AxisSpecV1Schema = z
 
 /** Inferred TypeScript type */
 export type AxisSpecV1 = z.infer<typeof AxisSpecV1Schema>
+
+/** Viewport mode type */
+export type ViewportMode = 'auto' | 'manual'

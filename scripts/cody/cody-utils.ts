@@ -48,6 +48,17 @@ export interface CodyInput {
   fresh?: boolean
   // Turbo mode: forces minimal pipeline (build→commit→verify→pr), CLI-only flag
   turbo?: boolean
+  /** GitHub login of the person who triggered this pipeline run (from GITHUB_ACTOR env var) */
+  actor?: string
+  /** GitHub login of the person who created the issue (from ISSUE_CREATOR env var) */
+  issueCreator?: string
+}
+
+export interface ActorEvent {
+  action: string
+  actor: string
+  timestamp: string
+  stage?: string
 }
 
 export interface CodyPipelineStatus {
@@ -70,6 +81,12 @@ export interface CodyPipelineStatus {
   botCommentId?: number
   /** Total accumulated cost across all stages in USD */
   totalCost?: number
+  /** GitHub login of the person who triggered this pipeline run */
+  triggeredByLogin?: string
+  /** GitHub login of the person who created the issue (the "owner") */
+  issueCreator?: string
+  /** Audit trail of actor actions (capped at 50 entries) */
+  actorHistory?: ActorEvent[]
 }
 
 export interface StageStatus {
@@ -382,6 +399,7 @@ export {
   discoverTaskIdFromIssue,
   extractGateCommentBody,
   ensureTaskMarkerComment,
+  getLinkedIssueFromPR,
 } from './github-api'
 
 // ============================================================================
@@ -758,6 +776,16 @@ export function parseCliArgs(argv: string[]): CodyInput {
   // Read IS_PULL_REQUEST from env (set by workflow for PR comments and PR review triggers)
   if (!cliSet.has('isPullRequest') && process.env.IS_PULL_REQUEST === 'true') {
     input.isPullRequest = true
+  }
+
+  // Read GITHUB_ACTOR — the GitHub login of the person who triggered the workflow
+  if (!cliSet.has('actor') && process.env.GITHUB_ACTOR) {
+    input.actor = process.env.GITHUB_ACTOR
+  }
+
+  // Read ISSUE_CREATOR — the GitHub login of the person who created the issue
+  if (!cliSet.has('issueCreator') && process.env.ISSUE_CREATOR) {
+    input.issueCreator = process.env.ISSUE_CREATOR
   }
 
   // Determine local mode: explicitly set or auto-detect from GITHUB_ACTIONS

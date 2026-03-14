@@ -44,7 +44,7 @@ export function formatSlackMessage(report: TrackerReport): string {
 }
 
 /**
- * Format a full markdown table for the watchdog issue.
+ * Format a full markdown table for the digest issue.
  */
 export function formatMarkdownReport(report: TrackerReport, cycleNumber: number): string {
   const { sevenDay: s, thirtyDay: t } = report

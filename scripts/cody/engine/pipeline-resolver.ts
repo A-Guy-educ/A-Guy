@@ -9,7 +9,7 @@ import type { PipelineDefinition, PipelineContext } from '../engine/types'
 import {
   buildPipeline,
   rebuildPipelineAfterTaskify as rebuildFromDefinitions,
-  FIX_ORDER,
+  FIX_FULL_ORDER,
 } from '../pipeline/definitions'
 
 /**
@@ -31,9 +31,10 @@ export function resolvePipelineForMode(
       // Rerun needs BOTH spec and impl stages to support resuming from any stage
       return buildPipeline('rerun', profile, clarify, ctx)
     case 'fix': {
-      // Fix mode uses FIX_ORDER (review → fix → commit → verify → pr)
+      // Fix mode uses FIX_FULL_ORDER (taskify → architect → plan-gap → build → ... → pr)
+      // This runs the full pipeline with previous artifacts as context
       const fixPipeline = buildPipeline('full', profile, clarify, ctx)
-      return { stages: fixPipeline.stages, order: FIX_ORDER }
+      return { stages: fixPipeline.stages, order: FIX_FULL_ORDER }
     }
     case 'status':
       // No pipeline for status mode

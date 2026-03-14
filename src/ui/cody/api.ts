@@ -36,7 +36,9 @@ export class RateLimitError extends Error {
 }
 
 export class NoTokenError extends Error {
-  constructor(message = 'GITHUB_TOKEN is not configured') {
+  constructor(
+    message = 'GitHub token is not configured. Set CODY_BOT_TOKEN or GITHUB_TOKEN in environment variables.',
+  ) {
     super(message)
     this.name = 'NoTokenError'
   }
@@ -188,6 +190,24 @@ export const tasksApi = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'reject', ...(actorLogin && { actorLogin }) }),
+    })
+    return handleResponse(res)
+  },
+
+  approveUI: async (issueNumber: number, actorLogin?: string): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'approve-ui', ...(actorLogin && { actorLogin }) }),
+    })
+    return handleResponse(res)
+  },
+
+  approvePR: async (issueNumber: number, actorLogin?: string): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'approve-pr', ...(actorLogin && { actorLogin }) }),
     })
     return handleResponse(res)
   },
@@ -390,6 +410,65 @@ export const publishApi = {
     return handleResponse(res)
   },
 }
+// ============ Remote Dev API ============
+
+export interface RemoteExecPayload {
+  command?: string
+  path?: string
+  content?: string
+  cwd?: string
+}
+
+export interface RemoteExecResult {
+  stdout?: string
+  stderr?: string
+  exitCode?: number | null
+  content?: string
+  entries?: Array<{ name: string; type: string; size?: number }>
+  truncated?: boolean
+  success?: boolean
+  error?: string
+}
+
+export interface RemoteStatus {
+  configured: boolean
+  online: boolean
+  funnelUrl?: string
+}
+
+type RemoteAction = 'exec' | 'read' | 'write' | 'ls'
+
+export const remoteApi = {
+  /**
+   * Check if the remote dev agent is online for the given user.
+   */
+  status: async (actorLogin: string): Promise<RemoteStatus> => {
+    const res = await fetch(
+      `${API_BASE}/remote/status?actorLogin=${encodeURIComponent(actorLogin)}`,
+    )
+    if (res.status === 404) {
+      return { configured: false, online: false }
+    }
+    return handleResponse<RemoteStatus>(res)
+  },
+
+  /**
+   * Execute an action on the remote dev agent.
+   */
+  exec: async (
+    actorLogin: string,
+    action: RemoteAction,
+    payload: RemoteExecPayload,
+  ): Promise<RemoteExecResult> => {
+    const res = await fetch(`${API_BASE}/remote/exec`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ actorLogin, action, payload }),
+    })
+    return handleResponse<RemoteExecResult>(res)
+  },
+}
+
 // ============ Combined API ============
 
 export const codyApi = {
@@ -400,4 +479,5 @@ export const codyApi = {
   collaborators: collaboratorsApi,
   workflows: workflowsApi,
   publish: publishApi.publish,
+  remote: remoteApi,
 }

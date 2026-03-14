@@ -16,6 +16,30 @@ import { createRunner, type RunnerBackend } from './runner-backend'
 import { logger } from './logger'
 
 // ============================================================================
+// Model Resolution
+// ============================================================================
+
+/** Cache for opencode.json model config */
+let opencodeConfigCache: { agent?: Record<string, { model?: string }> } | null = null
+
+/**
+ * Get the model name for a stage from opencode.json
+ */
+function getStageModel(stage: string): string {
+  if (!opencodeConfigCache) {
+    try {
+      const configPath = path.resolve(process.cwd(), 'opencode.json')
+      if (fs.existsSync(configPath)) {
+        opencodeConfigCache = JSON.parse(fs.readFileSync(configPath, 'utf-8'))
+      }
+    } catch {
+      opencodeConfigCache = {}
+    }
+  }
+  return opencodeConfigCache?.agent?.[stage]?.model ?? 'unknown'
+}
+
+// ============================================================================
 // Configuration
 // ============================================================================
 
@@ -376,6 +400,10 @@ export function runAgentWithFileWatch(
 
       // Build the prompt for the stage (rebuilt each attempt to include feedback)
       const prompt = buildStagePrompt(input, stage, feedback)
+
+      // Log the model being used for this stage
+      const model = getStageModel(stage)
+      logger.info(`  🤖 Running ${stage} with model: ${model}`)
 
       // Spawn using the configured backend (local or GitHub)
       currentChild = backend.spawn(stage, prompt, agentEnv, cwd, {

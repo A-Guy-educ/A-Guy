@@ -60,7 +60,7 @@ export async function runInspector(config: InspectorConfig): Promise<InspectorRe
     runTimestamp: timestamp,
     cycleNumber,
     slack,
-    watchdogIssue: config.watchdogIssue,
+    digestIssue: config.digestIssue,
   }
 
   // Clean up expired dedup entries (older than 24 hours)

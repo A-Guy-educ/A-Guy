@@ -6,6 +6,7 @@
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
+import { requireCodyAuth } from '@/ui/cody/auth'
 
 import {
   fetchIssue,
@@ -119,7 +120,8 @@ function buildCodyTask(options: {
 }
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
-  // Skip auth for now - open access for testing
+  const authResult = await requireCodyAuth(req)
+  if (authResult instanceof NextResponse) return authResult
 
   try {
     const { taskId } = await params

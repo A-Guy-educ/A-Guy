@@ -7,6 +7,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { requireCodyAuth } from '@/ui/cody/auth'
 
 import {
   postComment,
@@ -23,6 +24,7 @@ import {
   findTaskBranch,
   deleteBranch,
   clearCache,
+  getOctokit,
 } from '@/ui/cody/github-client'
 
 const actionSchema = z.object({
@@ -42,6 +44,8 @@ const actionSchema = z.object({
     'unassign',
     'comment',
     'fix',
+    'approve-ui',
+    'approve-pr',
   ]),
   feedback: z.string().optional(),
   fromStage: z.string().optional(),
@@ -58,7 +62,8 @@ function withActor(message: string, actor?: string): string {
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
-  // Skip auth check for now - open access for testing
+  const authResult = await requireCodyAuth(req)
+  if (authResult instanceof NextResponse) return authResult
 
   try {
     const { taskId } = await params
@@ -288,6 +293,46 @@ ${comment}`,
         await postComment(associatedPR.number, fixBody)
         clearCache()
         return NextResponse.json({ success: true, message: 'Fix requested on PR' })
+      }
+
+      case 'approve-ui': {
+        // Mark the preview UI as visually approved
+        await addLabels(issueNumber, ['ui-approved'])
+        await postComment(issueNumber, withActor('✅ Preview UI approved', actor))
+        clearCache()
+        return NextResponse.json({ success: true, message: 'Preview UI approved' })
+      }
+
+      case 'approve-pr': {
+        // Find associated PR and approve the review (without merging)
+        const associatedPR = await findAssociatedPRByIssueNumber(issueNumber)
+        if (!associatedPR) {
+          return NextResponse.json({ error: 'No associated PR found' }, { status: 404 })
+        }
+        // Use shared getOctokit (supports both CODY_BOT_TOKEN and GITHUB_TOKEN)
+        const octokit = getOctokit()
+        const OWNER = 'A-Guy-educ'
+        const REPO = 'A-Guy'
+        try {
+          await octokit.pulls.createReview({
+            owner: OWNER,
+            repo: REPO,
+            pull_number: associatedPR.number,
+            event: 'APPROVE',
+            body: `✅ PR approved${actor ? ` by @${actor}` : ''} via Cody dashboard.`,
+          })
+        } catch (error: unknown) {
+          // May fail if already approved - that's ok
+          const msg = error instanceof Error ? error.message : String(error)
+          if (!msg.includes('already approved')) {
+            console.warn('[Cody] PR approval note:', msg)
+          }
+        }
+        // Add pr-approved label for merge button to check
+        await addLabels(issueNumber, ['pr-approved'])
+        await postComment(issueNumber, withActor('✅ PR approved', actor))
+        clearCache()
+        return NextResponse.json({ success: true, message: 'PR approved' })
       }
 
       default:

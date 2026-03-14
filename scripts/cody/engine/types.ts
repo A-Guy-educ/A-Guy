@@ -68,6 +68,11 @@ export interface StageDefinition {
    * Returns the fallback content to write, or null to proceed with normal retry/fail.
    */
   fallbackOnMissingOutput?: (ctx: PipelineContext) => string | null
+  /**
+   * Override the agent name used by opencode. Defaults to stage name.
+   * Used when a stage should run a different agent (e.g., fix stage runs build agent).
+   */
+  agentName?: string
 }
 
 // ============================================================================
@@ -102,6 +107,8 @@ export interface PipelineContext {
   serverUrl?: string
   /** Most recent agent stage's sessionID — downstream stages fork from this */
   lastSessionId?: string
+  /** GitHub login of the person who triggered this run (from GITHUB_ACTOR env var) */
+  actor?: string
 }
 
 // Note: NO controlMode field — each gate resolves it dynamically via
@@ -142,6 +149,18 @@ export interface StageStateV2 {
   sessionId?: string
 }
 
+/** A single actor event in the pipeline audit trail */
+export interface ActorEvent {
+  /** Action type: pipeline-triggered, gate-approved, gate-rejected, stage-retried, etc. */
+  action: string
+  /** GitHub login of the person who performed the action */
+  actor: string
+  /** ISO timestamp */
+  timestamp: string
+  /** Stage name, if action is stage-specific */
+  stage?: string
+}
+
 export interface PipelineStateV2 {
   version: 2
   taskId: string
@@ -160,6 +179,12 @@ export interface PipelineStateV2 {
   branchName?: string
   /** Total accumulated cost across all stages in USD */
   totalCost?: number
+  /** GitHub login of the person who triggered this pipeline run */
+  triggeredBy?: string
+  /** GitHub login of the person who created the issue (the "owner") */
+  issueCreator?: string
+  /** Audit trail of actor actions. Capped at 50 entries (oldest dropped first). */
+  actorHistory?: ActorEvent[]
 }
 
 // Zod schema for PipelineStateV2
@@ -211,6 +236,18 @@ export const PipelineStateV2Schema: z.ZodType<PipelineStateV2> = z.object({
       sessionId: z.string().optional(),
     }),
   ),
+  triggeredBy: z.string().optional(),
+  issueCreator: z.string().optional(),
+  actorHistory: z
+    .array(
+      z.object({
+        action: z.string(),
+        actor: z.string(),
+        timestamp: z.string(),
+        stage: z.string().optional(),
+      }),
+    )
+    .optional(),
 })
 
 /**

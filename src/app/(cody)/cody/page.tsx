@@ -2,12 +2,13 @@
  * @fileType page
  * @domain cody
  * @pattern dashboard-page
- * @ai-summary Main Cody dashboard page with Kanban board and AI chat
+ * @ai-summary Main Cody dashboard page. Auth gate: GitHub OAuth session (any repo collaborator).
+ *   Replaces the previous Payload admin-only gate.
  */
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { CodyDashboard } from '@/ui/cody/components/CodyDashboard'
-import { getMeUser } from '@/infra/utils/getMeUser'
-import { AccountRole } from '@/infra/auth/roles'
+import { verifyCodySessionToken, CODY_SESSION_COOKIE } from '@/infra/auth/cody_session'
 import { buildCodyMetadata } from './metadata'
 
 export const metadata = buildCodyMetadata({
@@ -17,11 +18,13 @@ export const metadata = buildCodyMetadata({
 })
 
 export default async function CodyPage() {
-  const { user } = await getMeUser()
+  const cookieStore = await cookies()
+  const token = cookieStore.get(CODY_SESSION_COOKIE)?.value
+  const identity = await verifyCodySessionToken(token)
 
-  // Require admin role - redirect to login with returnTo for post-login redirect
-  if (!user || user.role !== AccountRole.Admin) {
-    redirect('/login?returnTo=/cody')
+  // Not authenticated — redirect to GitHub OAuth
+  if (!identity) {
+    redirect('/api/oauth/github?returnTo=/cody')
   }
 
   return <CodyDashboard />

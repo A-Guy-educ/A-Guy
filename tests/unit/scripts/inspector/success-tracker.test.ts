@@ -231,20 +231,20 @@ describe('successTrackerPlugin', () => {
     expect(slackAction).toBeDefined()
   })
 
-  it('returns watchdog action when watchdogIssue is configured', async () => {
+  it('returns digest action when digestIssue is configured', async () => {
     const runs = Array(10)
       .fill(null)
       .map(() => makeRun({ daysAgo: 2 }))
     const ctx = makeCtx({
-      watchdogIssue: 100,
+      digestIssue: 100,
       github: {
         ...makeCtx().github,
         listWorkflowRuns: vi.fn().mockReturnValue(runs),
       } as GitHubClient,
     })
     const actions = await successTrackerPlugin.run(ctx)
-    const watchdogAction = actions.find((a) => a.type === 'watchdog-digest')
-    expect(watchdogAction).toBeDefined()
+    const digestAction = actions.find((a) => a.type === 'digest')
+    expect(digestAction).toBeDefined()
   })
 
   it('sets urgency to warning when success rate drops >15pp', async () => {
@@ -255,7 +255,7 @@ describe('successTrackerPlugin', () => {
       .fill(null)
       .map(() => makeRun({ conclusion: 'success', daysAgo: 20 }))
     const ctx = makeCtx({
-      watchdogIssue: 100,
+      digestIssue: 100,
       github: {
         ...makeCtx().github,
         listWorkflowRuns: vi.fn().mockReturnValue([...recent, ...older]),
@@ -274,7 +274,7 @@ describe('successTrackerPlugin', () => {
       .fill(null)
       .map(() => makeRun({ daysAgo: 1 }))
     const ctx = makeCtx({
-      watchdogIssue: 100,
+      digestIssue: 100,
       github: {
         ...makeCtx().github,
         listWorkflowRuns: vi.fn().mockReturnValue(runs),

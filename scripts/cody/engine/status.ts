@@ -14,6 +14,7 @@ import {
   isPipelineStateV2,
   type PipelineContext,
   type StageStateV2,
+  type ActorEvent,
 } from './types'
 
 // C3 FIX: Import stageOutputFile for correct path resolution in resetFromStage
@@ -104,6 +105,10 @@ export function deleteState(taskId: string): void {
 export function initState(ctx: PipelineContext, mode: string): PipelineStateV2 {
   const now = new Date().toISOString()
 
+  const actorHistory: ActorEvent[] = ctx.actor
+    ? [{ action: 'pipeline-triggered', actor: ctx.actor, timestamp: now }]
+    : []
+
   const state: PipelineStateV2 = {
     version: 2,
     taskId: ctx.taskId,
@@ -116,10 +121,39 @@ export function initState(ctx: PipelineContext, mode: string): PipelineStateV2 {
     stages: {},
     // Persist issue number for dashboard lookups (avoids Compare API)
     ...(ctx.input.issueNumber ? { issueNumber: ctx.input.issueNumber } : {}),
+    ...(ctx.actor ? { triggeredBy: ctx.actor } : {}),
+    ...(ctx.input.issueCreator ? { issueCreator: ctx.input.issueCreator } : {}),
+    ...(actorHistory.length > 0 ? { actorHistory } : {}),
   }
 
   writeState(ctx.taskId, state)
   return state
+}
+
+/** Max actor history entries kept in status.json (oldest dropped when exceeded) */
+const MAX_ACTOR_HISTORY = 50
+
+/**
+ * Append an actor event to the pipeline's actorHistory in status.json.
+ * Automatically trims to MAX_ACTOR_HISTORY entries.
+ */
+export function appendActorEvent(
+  taskId: string,
+  state: PipelineStateV2,
+  event: ActorEvent,
+): PipelineStateV2 {
+  const existing = state.actorHistory ?? []
+  const updated = [...existing, event]
+  // Keep most recent MAX_ACTOR_HISTORY entries
+  const trimmed = updated.length > MAX_ACTOR_HISTORY ? updated.slice(-MAX_ACTOR_HISTORY) : updated
+
+  const newState: PipelineStateV2 = {
+    ...state,
+    actorHistory: trimmed,
+    updatedAt: new Date().toISOString(),
+  }
+  writeState(taskId, newState)
+  return newState
 }
 
 /**
@@ -435,7 +469,7 @@ export function stateToV1(state: PipelineStateV2): CodyPipelineStatus {
     state: state.state,
     currentStage: state.cursor,
     stages: v1Stages,
-    triggeredBy: 'dispatch', // Default, not stored in v2
+    triggeredBy: state.triggeredBy ?? 'dispatch',
     issueNumber: state.issueNumber,
     runId: undefined,
     runUrl: undefined,
@@ -443,5 +477,8 @@ export function stateToV1(state: PipelineStateV2): CodyPipelineStatus {
     gatePoint: undefined,
     botCommentId: undefined,
     totalCost: state.totalCost,
+    triggeredByLogin: state.triggeredBy,
+    issueCreator: state.issueCreator,
+    actorHistory: state.actorHistory,
   }
 }

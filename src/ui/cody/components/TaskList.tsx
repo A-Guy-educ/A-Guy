@@ -218,11 +218,15 @@ export function TaskList({
                     {task.title}
                   </h3>
 
-                  {/* Assignee avatars */}
-                  {task.assignees && task.assignees.length > 0 && (
-                    <div className="hidden sm:flex items-center -space-x-1.5 shrink-0">
-                      {task.assignees.map((assignee) => (
-                        <SimpleTooltip key={assignee.login} content={assignee.login} side="bottom">
+                  {/* Assignee avatars + triggered-by actor */}
+                  <div className="hidden sm:flex items-center -space-x-1.5 shrink-0">
+                    {task.assignees &&
+                      task.assignees.map((assignee) => (
+                        <SimpleTooltip
+                          key={assignee.login}
+                          content={`Assignee: @${assignee.login}`}
+                          side="bottom"
+                        >
                           <span className="inline-block">
                             <Avatar className="h-5 w-5 ring-2 ring-[#0d1117]">
                               <AvatarImage src={assignee.avatar_url} alt={assignee.login} />
@@ -233,8 +237,45 @@ export function TaskList({
                           </span>
                         </SimpleTooltip>
                       ))}
-                    </div>
-                  )}
+                    {task.pipeline?.triggeredByLogin &&
+                      !task.assignees?.some((a) => a.login === task.pipeline?.triggeredByLogin) && (
+                        <SimpleTooltip
+                          content={`Triggered by @${task.pipeline.triggeredByLogin}`}
+                          side="bottom"
+                        >
+                          <span className="inline-block">
+                            <Avatar className="h-5 w-5 ring-2 ring-[#0d1117] opacity-60">
+                              <AvatarImage
+                                src={`https://github.com/${task.pipeline.triggeredByLogin}.png?size=40`}
+                                alt={task.pipeline.triggeredByLogin}
+                              />
+                              <AvatarFallback className="text-[8px] bg-zinc-700 text-zinc-400">
+                                {task.pipeline.triggeredByLogin[0]?.toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          </span>
+                        </SimpleTooltip>
+                      )}
+                    {task.pipeline?.issueCreator &&
+                      task.pipeline.issueCreator !== task.pipeline?.triggeredByLogin && (
+                        <SimpleTooltip
+                          content={`Issue owner @${task.pipeline.issueCreator}`}
+                          side="bottom"
+                        >
+                          <span className="inline-block">
+                            <Avatar className="h-5 w-5 ring-2 ring-[#0d1117] opacity-80">
+                              <AvatarImage
+                                src={`https://github.com/${task.pipeline.issueCreator}.png?size=40`}
+                                alt={task.pipeline.issueCreator}
+                              />
+                              <AvatarFallback className="text-[8px] bg-blue-900 text-blue-200">
+                                {task.pipeline.issueCreator[0]?.toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          </span>
+                        </SimpleTooltip>
+                      )}
+                  </div>
                 </div>
 
                 {/* Meta row */}

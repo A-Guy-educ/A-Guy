@@ -7,6 +7,7 @@ import { AGENTS, type AgentId } from '../agents'
 import type { CodyTask } from '../types'
 import type { ChatMessage, ChatSession } from '../chat-types'
 import { ConfirmDialog } from './ConfirmDialog'
+import { useRemoteStatus } from '../hooks/useRemoteStatus'
 
 const AGENT_LIST = Object.values(AGENTS).map(({ id, name, description, icon, capabilities }) => ({
   id,
@@ -72,6 +73,8 @@ function saveGlobalHistory(history: HistoryMap): void {
 
 interface CodyChatProps {
   selectedTask?: CodyTask | null
+  /** GitHub login of the current user — used for remote dev status */
+  actorLogin?: string | null
 }
 
 function getFileIcon(mimeType: string) {
@@ -94,7 +97,7 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-export function CodyChat({ selectedTask }: CodyChatProps) {
+export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
   // Global (non-task) chat history
   const [globalHistory, setGlobalHistory] = useState<HistoryMap>(emptyHistory)
 
@@ -118,6 +121,9 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
   const abortControllerRef = useRef<AbortController | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Remote dev status (only polls when actorLogin is provided)
+  const { data: remoteStatus } = useRemoteStatus(actorLogin)
 
   // Determine if we're in task mode or global mode
   const isTaskMode = !!selectedTask
@@ -610,6 +616,20 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
               </span>
             )}
           </div>
+
+          {/* Remote dev status indicator — only visible when configured */}
+          {remoteStatus?.configured && (
+            <div
+              className="flex items-center gap-1 text-xs text-muted-foreground"
+              title={remoteStatus.online ? 'Remote dev: online' : 'Remote dev: offline'}
+            >
+              <span
+                className={`w-2 h-2 rounded-full ${remoteStatus.online ? 'bg-green-500' : 'bg-red-400'}`}
+                aria-label={remoteStatus.online ? 'Remote dev online' : 'Remote dev offline'}
+              />
+              <span className="hidden sm:inline">{remoteStatus.online ? 'Remote' : 'Offline'}</span>
+            </div>
+          )}
 
           {/* Right: Agent selector dropdown */}
           <div className="relative" ref={dropdownRef}>

@@ -182,8 +182,8 @@ function createReaperAction(zombies: ZombieCandidate[]): ActionRequest {
         )
       }
 
-      // Watchdog issue summary
-      if (execCtx.watchdogIssue && reaped > 0) {
+      // Digest issue summary
+      if (execCtx.digestIssue && reaped > 0) {
         const lines = zombies
           .map(
             (z) =>
@@ -191,7 +191,7 @@ function createReaperAction(zombies: ZombieCandidate[]): ActionRequest {
           )
           .join('\n')
         execCtx.github.postComment(
-          execCtx.watchdogIssue,
+          execCtx.digestIssue,
           `## 🧟 Zombie Reaper Report\n\nReaped **${reaped}** orphaned task(s).\n\n| Task | Stale For | Issue |\n|------|-----------|-------|\n${lines}\n\n_Cycle ${execCtx.cycleNumber}_`,
         )
       }

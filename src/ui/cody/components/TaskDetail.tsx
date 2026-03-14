@@ -1123,7 +1123,36 @@ export function TaskDetail({
                 branchName={task.associatedPR.head.ref}
                 isMerging={externalIsMerging ?? false}
                 onMerge={() => onApproveReview(task)}
+                labels={task.labels}
               />
+            )}
+
+            {/* Approve UI button - when task has PR and UI not yet approved */}
+            {task.associatedPR && !task.labels?.includes('ui-approved') && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1.5 text-xs font-medium rounded-lg text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
+                onClick={() => taskActions.approveUI?.()}
+                disabled={taskActions.isPending}
+              >
+                <CheckCircle className="w-3 h-3" />
+                Approve UI
+              </Button>
+            )}
+
+            {/* Approve PR button - when task has PR */}
+            {task.associatedPR && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1.5 text-xs font-medium rounded-lg text-purple-400 border-purple-500/30 hover:bg-purple-500/10"
+                onClick={() => taskActions.approvePR?.()}
+                disabled={taskActions.isPending}
+              >
+                <GitPullRequest className="w-3 h-3" />
+                Approve PR
+              </Button>
             )}
 
             {/* Contextual primary action */}
@@ -1261,6 +1290,89 @@ export function TaskDetail({
               </div>
             </div>
           )}
+
+          {/* Triggered by */}
+          {task.pipeline?.triggeredByLogin && (
+            <div className="space-y-2">
+              <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-0.5">
+                Triggered by
+              </h4>
+              <div className="flex items-center gap-2 px-0.5">
+                <Avatar className="h-5 w-5 shrink-0">
+                  <AvatarImage
+                    src={`https://github.com/${task.pipeline.triggeredByLogin}.png?size=40`}
+                    alt={task.pipeline.triggeredByLogin}
+                  />
+                  <AvatarFallback className="text-[9px]">
+                    {task.pipeline.triggeredByLogin[0]?.toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-xs text-foreground">@{task.pipeline.triggeredByLogin}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Issue Owner */}
+          {task.pipeline?.issueCreator && (
+            <div className="space-y-2">
+              <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-0.5">
+                Issue Owner
+              </h4>
+              <div className="flex items-center gap-2 px-0.5">
+                <Avatar className="h-5 w-5 shrink-0">
+                  <AvatarImage
+                    src={`https://github.com/${task.pipeline.issueCreator}.png?size=40`}
+                    alt={task.pipeline.issueCreator}
+                  />
+                  <AvatarFallback className="text-[9px]">
+                    {task.pipeline.issueCreator[0]?.toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-xs text-foreground">@{task.pipeline.issueCreator}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Actor History */}
+          {task.pipeline?.actorHistory && task.pipeline.actorHistory.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-0.5">
+                Activity
+              </h4>
+              <div className="space-y-2">
+                {task.pipeline.actorHistory.slice(-8).map((event, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <Avatar className="h-4 w-4 shrink-0 mt-0.5">
+                      <AvatarImage
+                        src={`https://github.com/${event.actor}.png?size=32`}
+                        alt={event.actor}
+                      />
+                      <AvatarFallback className="text-[8px]">
+                        {event.actor[0]?.toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="text-[11px] text-foreground leading-tight">
+                        <span className="font-medium">@{event.actor}</span>{' '}
+                        <span className="text-muted-foreground">
+                          {event.action === 'pipeline-triggered'
+                            ? 'triggered'
+                            : event.action === 'gate-approved'
+                              ? `approved ${event.stage ?? ''} gate`
+                              : event.action === 'gate-rejected'
+                                ? `rejected ${event.stage ?? ''} gate`
+                                : event.action.replace(/-/g, ' ')}
+                        </span>
+                      </p>
+                      <p className="text-[10px] text-muted-foreground/70 mt-0.5">
+                        {formatRelativeTime(event.timestamp)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1357,7 +1469,36 @@ export function TaskDetail({
             branchName={task.associatedPR.head.ref}
             isMerging={externalIsMerging ?? false}
             onMerge={() => onApproveReview(task)}
+            labels={task.labels}
           />
+        )}
+
+        {/* Approve UI button - mobile */}
+        {task.associatedPR && !task.labels?.includes('ui-approved') && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9 gap-1.5 text-xs font-medium shrink-0 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
+            onClick={() => taskActions.approveUI?.()}
+            disabled={taskActions.isPending}
+          >
+            <CheckCircle className="w-3.5 h-3.5" />
+            Approve UI
+          </Button>
+        )}
+
+        {/* Approve PR button - mobile */}
+        {task.associatedPR && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9 gap-1.5 text-xs font-medium shrink-0 text-purple-400 border-purple-500/30 hover:bg-purple-500/10"
+            onClick={() => taskActions.approvePR?.()}
+            disabled={taskActions.isPending}
+          >
+            <GitPullRequest className="w-3.5 h-3.5" />
+            Approve PR
+          </Button>
         )}
 
         {/* Primary action */}

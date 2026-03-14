@@ -88,3 +88,30 @@ export function getViewModeCounts(tasks: CodyTask[]): {
     runningCount: tasks.length - backlogCount,
   }
 }
+
+// ============ Vercel Preview Bypass ============
+
+/**
+ * Create an iframe-friendly URL for Vercel preview deployments.
+ * Uses Vercel's Protection Bypass for Automation with SameSite=None
+ * to allow embedding in iframes.
+ *
+ * @param previewUrl - The Vercel preview deployment URL
+ * @returns URL with bypass query params appended, or original URL if no secret configured
+ */
+export function getPreviewBypassUrl(previewUrl: string | undefined | null): string | null {
+  if (!previewUrl) return null
+
+  // Read env var at runtime to support test mocking
+  const bypassSecret = process.env.NEXT_PUBLIC_VERCEL_BYPASS_SECRET
+
+  if (!bypassSecret) {
+    console.warn('[Cody] NEXT_PUBLIC_VERCEL_BYPASS_SECRET not set - iframe preview may be blocked')
+    return previewUrl
+  }
+
+  const url = new URL(previewUrl)
+  url.searchParams.set('x-vercel-protection-bypass', bypassSecret)
+  url.searchParams.set('x-vercel-set-bypass-cookie', 'samesitenone')
+  return url.toString()
+}

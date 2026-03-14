@@ -2665,3 +2665,28 @@
 .media-block-editor-select-btn:hover {
   background: var(--theme-elevation-200);
 }
+
+/* ========================
+   Viewport Validation & Warning
+   ======================== */
+
+.viewport-validation-error {
+  font-size: 0.6875rem;
+  color: var(--theme-error-500);
+  margin-top: 2px;
+}
+
+.viewport-warning-banner {
+  background: #fff8e1;
+  color: #f57c00;
+  border: 1px solid #ffe082;
+  border-radius: 4px;
+  padding: 0.5rem;
+  font-size: 0.8125rem;
+  margin-top: 0.5rem;
+}
+
+.viewport-fields-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}

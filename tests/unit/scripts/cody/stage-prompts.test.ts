@@ -81,6 +81,9 @@ describe('stage-prompts', () => {
         'spec.md',
         'clarified.md',
         'rerun-feedback.md',
+        'prev-run/plan.md',
+        'prev-run/build.md',
+        'prev-run/review.md',
       ])
       expect(STAGE_CONTEXT_FILES['plan-gap']).toEqual(['spec.md', 'plan.md', 'task.json'])
       expect(STAGE_CONTEXT_FILES.build).toEqual([
@@ -90,6 +93,10 @@ describe('stage-prompts', () => {
         'plan-gap.md',
         'context.md',
         'rerun-feedback.md',
+        'build-errors.md',
+        'review.md',
+        'prev-run/build.md',
+        'prev-run/review.md',
       ])
       expect(STAGE_CONTEXT_FILES.commit).toEqual(['task.json'])
       expect(STAGE_CONTEXT_FILES.verify).toEqual([])
@@ -113,6 +120,7 @@ describe('stage-prompts', () => {
         'context.md',
         'spec.md',
         'clarified.md',
+        'prev-run/build.md',
       ])
     })
 

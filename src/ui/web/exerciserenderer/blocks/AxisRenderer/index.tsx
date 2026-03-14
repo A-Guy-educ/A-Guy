@@ -1,9 +1,10 @@
 'use client'
 
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useStateת useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import type { AxisSpecV1 } from '@/infra/contracts'
 import { renderAxisSpec } from '../../graphics/axisElements'
+import { resolveViewport } from '@/infra/utils/graphics/viewport-utils'
 
 const JSXGraphBoard = dynamic(
   () => import('../../graphics/JSXGraphBoard').then((m) => ({ default: m.JSXGraphBoard })),
@@ -37,13 +38,10 @@ export function AxisRenderer({ blockId, spec, displaySize = 'full' }: AxisRender
     [spec],
   )
 
-  const vp = spec.viewport
-  const boundingBox: [number, number, number, number] = [
-    vp?.xMin ?? -10,
-    vp?.yMax ?? 10,
-    vp?.xMax ?? 10,
-    vp?.yMin ?? -10,
-  ]
+  const boundingBox = useMemo<[number, number, number, number]>(() => {
+    const resolved = resolveViewport(spec)
+    return [resolved.xMin, resolved.yMax, resolved.xMax, resolved.yMin]
+  }, [spec])
 
   // Container ref for responsive sizing
   const containerRef = useRef<HTMLDivElement>(null)
