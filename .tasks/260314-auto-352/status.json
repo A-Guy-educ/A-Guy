@@ -4,9 +4,9 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-14T21:04:49.515Z",
-  "updatedAt": "2026-03-14T21:42:03.732Z",
-  "state": "failed",
-  "cursor": "gap",
+  "updatedAt": "2026-03-14T22:08:42.975Z",
+  "state": "paused",
+  "cursor": "architect",
   "stages": {
     "taskify": {
       "state": "completed",
@@ -35,44 +35,30 @@
       "sessionId": "ses_311c70770ffeFnzFpTH1hnpkVY"
     },
     "architect": {
-      "state": "completed",
+      "state": "paused",
       "retries": 0,
-      "startedAt": "2026-03-14T21:25:30.366Z",
-      "completedAt": "2026-03-14T21:34:52.695Z",
+      "startedAt": "2026-03-14T21:59:20.452Z",
+      "completedAt": "2026-03-14T22:08:39.759Z",
       "outputFile": "architect.md",
       "tokenUsage": {
-        "input": 31,
-        "output": 30320,
-        "cacheRead": 3506755
+        "input": 24,
+        "output": 28918,
+        "cacheRead": 2102297
       },
-      "cost": 3.4437575000000002,
-      "sessionId": "ses_311c28601ffeoNyBxAQbGnuAvN"
+      "cost": 2.53574975,
+      "sessionId": "ses_311a3855affehzKSkfrpGczAPu"
     },
     "plan-gap": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-03-14T21:34:54.678Z",
-      "completedAt": "2026-03-14T21:38:10.746Z",
-      "outputFile": "plan-gap.md",
-      "tokenUsage": {
-        "input": 21,
-        "output": 8881,
-        "cacheRead": 3414682
-      },
-      "cost": 3.13045225,
-      "sessionId": "ses_311b9ed03ffeToKAYR2Nvii144"
+      "state": "pending",
+      "retries": 0
     },
     "test": {
-      "state": "completed",
-      "retries": 0,
-      "completedAt": "2026-03-14T21:42:02.435Z",
-      "outputFile": "test.md",
-      "sessionId": "ses_311b6ea40ffebzuDeYAb2XKEz6"
+      "state": "pending",
+      "retries": 0
     },
     "build": {
-      "state": "failed",
-      "retries": 0,
-      "error": "Agent failed"
+      "state": "pending",
+      "retries": 0
     }
   },
   "issueNumber": 824,
@@ -85,6 +71,6 @@
       "timestamp": "2026-03-14T21:04:49.515Z"
     }
   ],
-  "completedAt": "2026-03-14T21:42:03.732Z",
-  "totalCost": 6.57420975
+  "completedAt": "2026-03-14T22:08:42.975Z",
+  "totalCost": 2.53574975
 }

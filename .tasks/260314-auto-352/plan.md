@@ -2,7 +2,7 @@
 
 ## Rerun Context
 
-This is a rerun. The rerun feedback says "Rerun requested via /cody rerun" with no specific issues. The previous run's plan/build/review artifacts are missing (prev-run/ is empty), so this is a fresh rebuild. The plan incorporates clarification feedback (clarified.md) — specifically:
+This is a rerun (`/cody rerun` with no specific issues). No prev-run artifacts exist, so this is a fresh rebuild. The plan incorporates clarification feedback (clarified.md):
 1. The `shouldSkip` logic must also check git merge state (not just the marker file) to avoid stale marker re-entry.
 2. The merge in `runFixMode()` must move AFTER `ctx.taskDir` is resolved (currently at L787), since we need the task dir to write the conflict marker.
 3. User-facing docs need updating (README, CHEAT-SHEET).
@@ -16,17 +16,17 @@ This is a rerun. The rerun feedback says "Rerun requested via /cody rerun" with 
 - ✅ `scripts/cody/cody-utils.ts` — `CodyInput.mode` union at L22
 - ✅ `scripts/cody/parse-inputs.ts` — `VALID_MODES` at L33
 - ✅ `scripts/cody/pipeline/definitions.ts` — pipeline orders at L42-82, `createStageDefinitions()` at L91, `buildPipeline()` at L436
-- ✅ `scripts/cody/engine/pipeline-resolver.ts` — `resolvePipelineForMode()` at L18-45
+- ✅ `scripts/cody/engine/pipeline-resolver.ts` — `resolvePipelineForMode()` at L18-45, `createRebuildCallback` at L65
 - ✅ `scripts/cody/stage-prompts.ts` — `ALL_STAGES` at L29-44, `STAGE_CONTEXT_FILES` at L69-116, `stageInstructions` at L131-201
 - ✅ `scripts/cody/agent-runner.ts` — `STAGE_TIMEOUTS` at L65-80, `DEFAULT_TIMEOUT` at L62
 - ✅ `src/app/api/cody/tasks/[taskId]/actions/route.ts` — `actionSchema` at L30-57, switch at L82-339
 - ✅ `src/ui/cody/types.ts` — `GitHubAction` at L267-279
-- ✅ `src/ui/cody/api.ts` — `tasksApi` methods at L175-243
+- ✅ `src/ui/cody/api.ts` — `tasksApi` methods at L195-243
 - ✅ `src/ui/cody/hooks/index.ts` — `useTaskActions()` at L269-412
-- ✅ `src/ui/cody/components/TaskDetail.tsx` — `getPrimaryAction()` at L221-272, header at L1117-1188, mobile at L1462-1525
+- ✅ `src/ui/cody/components/TaskDetail.tsx` — header at L1117-1188, mobile at L1462-1525, MergeButton at L1119-1128
 - ✅ `src/ui/cody/components/MergeButton.tsx` — `hasConflicts` at L53, full component L1-140
 - ✅ `src/ui/cody/components/tooltip-content.tsx` — `MergeTooltipContent` at L156-216
-- ✅ `src/ui/cody/constants.ts` — `ALL_STAGES` at L27, `IMPL_STAGES` at L11-20
+- ✅ `src/ui/cody/constants.ts` — `IMPL_STAGES` at L11-20, `ALL_STAGES` at L27
 - ✅ `src/ui/cody/pipeline-utils.ts` — `stageLabels` at L14-27, `stageMaxDurations` at L32-44
 - ✅ `.github/workflows/cody.yml` — mode description at L14
 - ✅ `.opencode/agents/build.md` — YAML header pattern L1-10
@@ -68,7 +68,7 @@ This is a rerun. The rerun feedback says "Rerun requested via /cody rerun" with 
 
 ### New code justified
 - `scripts/cody/conflict-utils.ts` — new module encapsulating conflict detection/marker file logic. No existing utility handles this.
-- `.opencode/agents/merge-resolve.md` — build agent explicitly forbids git commands (L375-382), so a separate agent with git permissions is required.
+- `.opencode/agents/merge-resolve.md` — build agent explicitly forbids git commands, so a separate agent with git permissions is required.
 - `MERGE_ORDER` pipeline order — unique 4-stage sequence for dedicated merge mode.
 
 ---
@@ -81,7 +81,7 @@ This is a rerun. The rerun feedback says "Rerun requested via /cody rerun" with 
 
 **Behavior**:
 
-1. Create `scripts/cody/conflict-utils.ts` with four functions:
+1. Create `scripts/cody/conflict-utils.ts` with five functions:
    - `getConflictedFiles(cwd: string): string[]` — runs `execFileSync('git', ['diff', '--name-only', '--diff-filter=U'], { cwd, encoding: 'utf-8' })`, splits by newline, filters empties. Returns file list.
    - `hasActiveMergeConflicts(cwd: string): boolean` — runs `execFileSync('git', ['ls-files', '--unmerged'], { cwd, encoding: 'utf-8' })`. Returns true if output is non-empty (git is in merge conflict state).
    - `writeConflictMarker(taskDir: string, cwd: string): string` — builds markdown with: header, timestamp, current branch, target branch (from `getDefaultBranch()`), list of conflicted files from `getConflictedFiles()`. Writes to `path.join(taskDir, 'merge-conflicts.md')`. Returns the file path.
@@ -194,7 +194,7 @@ Key rules in the agent:
 1. In `scripts/cody/pipeline/definitions.ts`:
    - Add after L82 (after FIX_FULL_ORDER):
      ```typescript
-     // Merge-only pipeline: resolve conflicts, commit, verify, create PR
+     // Merge-only pipeline order: resolve conflicts, commit, verify, create PR
      export const MERGE_ORDER: PipelineStep[] = ['resolve-conflicts', 'commit', 'verify', 'pr']
      ```
    - Prepend `'resolve-conflicts'` to `IMPL_ORDER_STANDARD` (before 'architect' at L45)
@@ -342,7 +342,7 @@ Key rules in the agent:
        // Resolve and run pipeline
        const pipeline = resolvePipelineForMode('merge', ctx.profile, input.clarify ?? false, ctx)
        const rebuildCallback = createRebuildCallback('merge', input.clarify ?? false)
-       await runPipeline(ctx, pipeline, rebuildCallback)
+       await runPipeline(ctx, pipeline, undefined, rebuildCallback)
 
        logger.info('\n✅ Merge resolve complete!')
      }
@@ -370,13 +370,13 @@ Key rules in the agent:
 ## Step 5: Fix runFixMode Bug + checkout-task-branch.ts
 
 **Files to Touch**:
-- `scripts/cody/entry.ts` (MODIFIED — L750-755) — fix merge error swallowing in `runFixMode()`
+- `scripts/cody/entry.ts` (MODIFIED — L750-755, L788) — fix merge error swallowing in `runFixMode()`
 - `scripts/cody/checkout-task-branch.ts` (MODIFIED — L287-289) — remove `process.exit(1)` on conflict
 
 **Behavior**:
 
 1. Fix `runFixMode()` in `entry.ts`:
-   - The merge attempt is at L750-755, BUT `ctx.taskDir` isn't set until L787. Per clarified.md, we must move the merge AFTER taskDir is resolved.
+   - The merge attempt is at L750-755, BUT `ctx.taskDir` isn't set until L787-788. Per clarified.md, we must move the merge AFTER taskDir is resolved.
    - Remove the merge block at L750-756 (the `if (input.isPullRequest) { try { mergeDefaultBranch... } catch ... }`)
    - After L788 (`ctx.taskDir = originalTaskDir`), add:
      ```typescript
@@ -413,7 +413,7 @@ Key rules in the agent:
 
 **Tests** (FAIL before, PASS after):
 - `tests/unit/scripts/cody/checkout-task-branch.test.ts` (add or modify):
-  - When `mergeDefaultBranch()` returns false, `process.exit` is NOT called (or is called with 0, not 1)
+  - When `mergeDefaultBranch()` returns false, `process.exit` is NOT called with 1 (or is called with 0 via natural flow)
   - Log message contains "will be resolved by pipeline"
 
 **Acceptance Criteria**:
@@ -545,69 +545,55 @@ Key rules in the agent:
 
 **Behavior**:
 
-1. In `TaskDetail.tsx`:
-   - Add `GitMerge` to lucide-react imports (L31-56)
-   - Add `usePRCIStatus` import from `'../hooks/usePRCIStatus'`
-   - In the desktop header section (between MergeButton at L1119-1128 and Approve UI at L1131):
-     ```tsx
-     {/* Smart Resolve button (when PR has conflicts) */}
-     {task.associatedPR && (task.column === 'done' || task.column === 'review') && (() => {
-       // Need conflict detection — use usePRCIStatus inline data from MergeButton or pass down
-       // Since MergeButton already uses usePRCIStatus, we add the button next to it
-       return null // Handled via MergeButton's onSmartResolve prop below
-     })()}
-     ```
-   - Actually, the cleaner approach: add the `onSmartResolve` callback to `MergeButton`:
-     - Pass `onSmartResolve={() => taskActions.smartResolve?.()}` to the existing MergeButton components at L1119-1128 (desktop) and L1465-1473 (mobile)
-   - Also add a standalone Smart Resolve button in the header for when there's no MergeButton but there are conflicts. Add between the MergeButton and Approve UI blocks for non-review columns (done column):
-     ```tsx
-     {/* Smart Resolve button (done column with conflicts) */}
-     {task.column === 'done' && task.associatedPR && (
-       <SmartResolveButton 
-         prNumber={task.associatedPR.number}
-         onResolve={() => taskActions.smartResolve?.()}
-         isPending={taskActions.pendingAction === 'smart-resolve'}
-       />
-     )}
-     ```
-   - Create an inline `SmartResolveButton` component that uses `usePRCIStatus` internally:
-     - Takes `prNumber`, `onResolve`, `isPending` props
-     - Calls `usePRCIStatus(prNumber)` to get `hasConflicts`
-     - Renders button only when `hasConflicts === true`
-     - Yellow variant, `GitMerge` icon, "Smart Resolve" label
-
-2. In `tooltip-content.tsx` L201-211:
-   - Change the text at L206-210 from:
-     ```
-     "This PR has merge conflicts that must be resolved before merging."
-     "Update the branch or resolve conflicts on GitHub."
-     ```
-   - To:
-     ```
-     "This PR has merge conflicts that must be resolved before merging."
-     "Click Smart Resolve to automatically resolve conflicts, or resolve manually on GitHub."
-     ```
-
-3. In `MergeButton.tsx`:
-   - Add `onSmartResolve?: () => void` prop to `MergeButtonProps` (L19-26)
-   - When `hasConflicts` is true, render a small "Resolve" button/link next to the merge button (inside the span at L98, after the main Button at L99-126):
+1. In `MergeButton.tsx`:
+   - Add `onSmartResolve?: () => void` and `isSmartResolvePending?: boolean` props to `MergeButtonProps` (L19-26)
+   - When `hasConflicts` is true and `onSmartResolve` is provided, render a small "Resolve" button next to the merge button (inside the span at L98, after the main Button at L99-126):
      ```tsx
      {hasConflicts && onSmartResolve && (
        <Button
          variant="ghost"
          size="sm"
          onClick={(e) => { e.stopPropagation(); onSmartResolve() }}
+         disabled={isSmartResolvePending}
          onMouseDown={(e) => e.stopPropagation()}
          className="h-8 text-xs px-2 text-orange-400 hover:bg-orange-500/10 hover:text-orange-300"
        >
-         Resolve
+         {isSmartResolvePending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Resolve'}
        </Button>
      )}
      ```
 
+2. In `TaskDetail.tsx`:
+   - Add `GitMerge` to lucide-react imports (L31-56)
+   - Pass `onSmartResolve` and `isSmartResolvePending` to the existing MergeButton at L1120-1128 (desktop):
+     ```tsx
+     <MergeButton
+       prNumber={task.associatedPR.number}
+       prTitle={task.associatedPR.title}
+       branchName={task.associatedPR.head.ref}
+       isMerging={externalIsMerging ?? false}
+       onMerge={() => onApproveReview(task)}
+       labels={task.labels}
+       onSmartResolve={() => taskActions.smartResolve?.()}
+       isSmartResolvePending={taskActions.pendingAction === 'smart-resolve'}
+     />
+     ```
+   - Also pass the same props to the mobile MergeButton at L1466-1473
+   - Also show MergeButton in `done` column (currently only shows in `review` column). Change the condition at L1119 from `task.column === 'review'` to `(task.column === 'review' || task.column === 'done')` for both desktop (L1119) and mobile (L1465)
+
+3. In `tooltip-content.tsx` L201-211:
+   - Change the text at L208-210 from:
+     ```
+     "Update the branch or resolve conflicts on GitHub."
+     ```
+   - To:
+     ```
+     "Click Resolve to automatically fix conflicts, or resolve manually on GitHub."
+     ```
+
 **Tests** (FAIL before, PASS after):
 - `tests/unit/ui/cody/components/TaskDetail-smart-resolve.test.tsx` (NEW):
-  - Smart Resolve button renders in `done` column when `hasConflicts` is true (mock usePRCIStatus)
+  - Smart Resolve button renders when `hasConflicts` is true (mock usePRCIStatus)
   - Smart Resolve button does NOT render when `hasConflicts` is false
   - Clicking button calls `taskActions.smartResolve()`
 - `tests/unit/ui/cody/components/MergeButton-resolve.test.tsx` (NEW):
@@ -615,11 +601,12 @@ Key rules in the agent:
   - MergeButton does NOT render "Resolve" when no conflicts
 
 **Acceptance Criteria**:
-- [ ] Smart Resolve button appears in TaskDetail when PR has conflicts and task is in done/review column
+- [ ] Smart Resolve button appears in TaskDetail when PR has conflicts (review or done column)
 - [ ] Button does not appear when there are no conflicts
 - [ ] Button triggers `smartResolve` mutation on click
 - [ ] MergeButton shows "Resolve" action when conflicts detected and onSmartResolve provided
-- [ ] Conflict tooltip text updated to mention Smart Resolve
+- [ ] MergeButton shown in both `review` and `done` columns
+- [ ] Conflict tooltip text updated to mention Resolve
 - [ ] `pnpm -s tsc --noEmit` passes
 
 ---
