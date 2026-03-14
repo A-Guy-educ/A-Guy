@@ -69,6 +69,8 @@ export interface CodyPipelineStatus {
   gatePoint?: string
   /** GitHub login of the person who triggered this pipeline run */
   triggeredByLogin?: string
+  /** GitHub login of the person who created the issue (the "owner") */
+  issueCreator?: string
   /** Audit trail of actor actions (capped at 50 entries) */
   actorHistory?: ActorEvent[]
 }

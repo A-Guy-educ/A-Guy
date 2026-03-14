@@ -122,6 +122,7 @@ export function initState(ctx: PipelineContext, mode: string): PipelineStateV2 {
     // Persist issue number for dashboard lookups (avoids Compare API)
     ...(ctx.input.issueNumber ? { issueNumber: ctx.input.issueNumber } : {}),
     ...(ctx.actor ? { triggeredBy: ctx.actor } : {}),
+    ...(ctx.input.issueCreator ? { issueCreator: ctx.input.issueCreator } : {}),
     ...(actorHistory.length > 0 ? { actorHistory } : {}),
   }
 
@@ -477,6 +478,7 @@ export function stateToV1(state: PipelineStateV2): CodyPipelineStatus {
     botCommentId: undefined,
     totalCost: state.totalCost,
     triggeredByLogin: state.triggeredBy,
+    issueCreator: state.issueCreator,
     actorHistory: state.actorHistory,
   }
 }

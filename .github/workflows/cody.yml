@@ -407,6 +407,8 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           # Actor: comment author for comment triggers, workflow dispatcher for dispatch triggers
           GITHUB_ACTOR: ${{ github.event.comment.user.login || github.actor }}
+          # Issue creator (owner) - available for issue and comment triggers
+          ISSUE_CREATOR: ${{ github.event.issue.user.login || '' }}
         run: pnpm cody
 
       # Pipeline summary in Actions UI

@@ -181,6 +181,8 @@ export interface PipelineStateV2 {
   totalCost?: number
   /** GitHub login of the person who triggered this pipeline run */
   triggeredBy?: string
+  /** GitHub login of the person who created the issue (the "owner") */
+  issueCreator?: string
   /** Audit trail of actor actions. Capped at 50 entries (oldest dropped first). */
   actorHistory?: ActorEvent[]
 }
@@ -234,6 +236,18 @@ export const PipelineStateV2Schema: z.ZodType<PipelineStateV2> = z.object({
       sessionId: z.string().optional(),
     }),
   ),
+  triggeredBy: z.string().optional(),
+  issueCreator: z.string().optional(),
+  actorHistory: z
+    .array(
+      z.object({
+        action: z.string(),
+        actor: z.string(),
+        timestamp: z.string(),
+        stage: z.string().optional(),
+      }),
+    )
+    .optional(),
 })
 
 /**
