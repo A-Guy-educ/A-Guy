@@ -1,0 +1,50 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "high",
+  "confidence": 0.9,
+  "primary_domain": "devops",
+  "scope": [
+    "scripts/cody/git-utils.ts",
+    "scripts/cody/conflict-utils.ts (new)",
+    "scripts/cody/checkout-task-branch.ts",
+    "scripts/cody/pipeline/definitions.ts",
+    "scripts/cody/stage-prompts.ts",
+    "scripts/cody/engine/pipeline-resolver.ts",
+    "scripts/cody/entry.ts",
+    "scripts/cody/cody-utils.ts",
+    "scripts/cody/parse-inputs.ts",
+    ".opencode/agents/merge-resolve.md (new)",
+    "src/app/api/cody/tasks/[taskId]/actions/route.ts",
+    "src/ui/cody/types.ts",
+    "src/ui/cody/api.ts",
+    "src/ui/cody/hooks/index.ts",
+    "src/ui/cody/components/TaskDetail.tsx",
+    "src/ui/cody/components/tooltip-content.tsx",
+    "src/ui/cody/components/MergeButton.tsx",
+    ".github/workflows/cody.yml",
+    "src/ui/cody/constants.ts",
+    "src/ui/cody/pipeline-utils.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "GitHub API is accessible for conflict detection via mergeable_state",
+    "The existing mergeDefaultBranch() function can be safely modified with backward-compatible options",
+    "The merge-resolve agent will have proper git permissions in the CI environment",
+    "All existing tests will continue to pass after modifications"
+  ],
+  "review_questions": [
+    "Is the backward compatibility of mergeDefaultBranch() properly maintained for existing callers?",
+    "Does the auto-skip logic for resolve-conflicts stage correctly detect when no conflicts exist?",
+    "Is the fix to runFixMode() properly handling the merge conflict case without silently failing?",
+    "Should the new 'merge' mode be documented in user-facing documentation?"
+  ],
+  "complexity": 79,
+  "complexity_reasoning": "Scope: 24 points (20+ files across multiple modules). Risk: 18 points (git operations, CI/CD pipeline changes, production impact). Novelty: 15 points (new agent, new mode, new stage pattern). Cross-domain: 12 points (backend + frontend + devops + GitHub integration). Ambiguity: 2 points (detailed spec with file paths and line numbers). Dependency: 8 points (internal pipeline systems + GitHub API). Total: 79 - Very Complex+ tier requiring clarify stage.",
+  "input_quality": {
+    "level": "spec_and_plan",
+    "skip_stages": [],
+    "reasoning": "Input contains comprehensive ## Requirements with 8 detailed steps, ## Acceptance Criteria for each step, and detailed ## Plan sections with specific file paths and line numbers. Includes test specifications and integration points. Quality level is spec_and_plan due to full requirements + implementation steps with file changes."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
