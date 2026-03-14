@@ -1,0 +1,31 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.85,
+  "primary_domain": "frontend",
+  "scope": [
+    "Graph block in exercises",
+    "Admin editor for graph size",
+    "Student-facing graph display",
+    "Side-by-side layout handling"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "An existing graph component/block exists in the codebase that can be extended",
+    "The graph rendering library supports proportional scaling/aspect ratio preservation",
+    "There is a side-by-side layout mechanism already in place for text+graph combinations"
+  ],
+  "review_questions": [
+    "What are the exact width percentages for Small, Medium, and Large size options?",
+    "Is there an existing graph block component that this feature should extend?"
+  ],
+  "complexity": 34,
+  "complexity_reasoning": "Scope: 8 (2-4 files across admin + frontend). Risk: 6 (UI configuration, no critical systems). Novelty: 8 (extending existing graph pattern). Cross-domain: 6 (frontend + admin panels). Ambiguity: 2 (clear requirements with acceptance criteria). Dependencies: 4 (relies on existing graph component). Total: 34",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Input contains ## Requirements with core feature requirements and ## Acceptance Criteria with 6 checkable items. The specification is clear about the size selector, default state, proportional scaling, and layout interaction."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
