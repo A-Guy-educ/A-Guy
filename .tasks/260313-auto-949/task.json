@@ -1,0 +1,32 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.9,
+  "primary_domain": "frontend",
+  "scope": [
+    "Graph component schema (add layout field)",
+    "Admin panel (layout selector in graph editor)",
+    "Frontend rendering (4 layout variations)",
+    "Responsive behavior (maintain side-by-side on mobile)"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Existing graph component exists in codebase that can be extended",
+    "Graph component schema can accept a new layout field",
+    "Admin UI already has a pattern for selecting layout options that can be reused"
+  ],
+  "review_questions": [
+    "What is the current graph component structure/schema in the codebase?",
+    "Which Payload collection contains the graph components (exercises, lessons)?",
+    "How are similar layout/position options implemented in other admin components?"
+  ],
+  "complexity": 41,
+  "complexity_reasoning": "Scope: 12 (4-6 files across schema/admin/frontend), Risk: 10 (UI + content changes), Novelty: 5 (extending existing pattern), Cross-domain: 9 (backend + admin + frontend), Ambiguity: 2 (clear requirements), Dependencies: 3 (need to find existing component). Total: 41",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Input contains ## Core Requirements with 4 layout options and ## Acceptance Criteria with 5 checkable items. Clear user intent and scope."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
