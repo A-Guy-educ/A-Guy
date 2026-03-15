@@ -407,12 +407,24 @@ export function resetFromStage(
   // Reset stages to pending
   const newStages: Record<string, StageStateV2> = {}
 
+  // FIX #827: Stages BEFORE fromStage that are still 'paused' should be marked
+  // 'completed' — if later stages ran, the paused stage must have been approved.
+  // This prevents stale 'paused' states from causing reruns to re-trigger gates.
+  const stagesBefore = pipeline.slice(0, fromIndex)
+
   for (const [name, stage] of Object.entries(state.stages)) {
     if (stagesToReset.includes(name)) {
       // Reset this stage to pending
       newStages[name] = {
         state: 'pending',
         retries: 0,
+      }
+    } else if (stagesBefore.includes(name) && stage.state === 'paused') {
+      // Stale paused stage — later stages ran, so this must have been approved
+      newStages[name] = {
+        ...stage,
+        state: 'completed',
+        completedAt: stage.completedAt || now,
       }
     } else {
       // Keep existing stage

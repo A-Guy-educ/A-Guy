@@ -85,7 +85,13 @@ export async function runPipeline(
     state = recoverPipelineState(state, flatOrder, advisoryStages)
     writeState(ctx.taskId, state)
 
-    // Step 4: Handle paused pipeline with no paused stages (gate was approved)
+    // Step 4: FIX - If previous state was failed and we're now recovering, update label
+    // This handles reruns where the pipeline state was 'failed' but the GitHub label still shows cody:failed
+    if (state.state === 'failed' && ctx.input.issueNumber) {
+      setLifecycleLabel(ctx.input.issueNumber, 'cody:building')
+    }
+
+    // Step 5: Handle paused pipeline with no paused stages (gate was approved)
     // This handles the case where resumeFromGate() was called to mark the gate stage
     // as completed, but the pipeline-level state is still "paused"
     if (state.state === 'paused') {

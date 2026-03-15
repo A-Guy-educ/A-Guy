@@ -265,3 +265,97 @@ describe('findNearestEarlierStage', () => {
     expect(result).toBe('build')
   })
 })
+
+describe('Issue #827: stale paused state in resetFromStage', () => {
+  const LIGHTWEIGHT_PIPELINE = [
+    'taskify',
+    'clarify',
+    'architect',
+    'build',
+    'commit',
+    'verify',
+    'pr',
+  ]
+
+  it('marks stale paused stages as completed when resetting from a later stage', () => {
+    // Scenario: taskify was paused (gate), but architect/build ran after it.
+    // When resetting from 'build', taskify should be marked completed, not left paused.
+    const state = createBaseState({
+      state: 'failed',
+      stages: {
+        taskify: createStage('paused'), // Stale! Gate was approved but state not updated
+        architect: createStage('completed'),
+        build: createStage('failed'),
+      },
+    })
+
+    const result = resetFromStage(state, 'build', LIGHTWEIGHT_PIPELINE, '/tmp/nonexistent-827')
+
+    // taskify should be fixed from 'paused' → 'completed'
+    expect(result.stages['taskify'].state).toBe('completed')
+    // architect should remain completed (before fromStage)
+    expect(result.stages['architect'].state).toBe('completed')
+    // build should be reset to pending
+    expect(result.stages['build'].state).toBe('pending')
+  })
+
+  it('does not mark non-paused stages as completed', () => {
+    const state = createBaseState({
+      state: 'failed',
+      stages: {
+        taskify: createStage('completed'), // Already correct
+        architect: createStage('completed'),
+        build: createStage('failed'),
+      },
+    })
+
+    const result = resetFromStage(state, 'build', LIGHTWEIGHT_PIPELINE, '/tmp/nonexistent-827')
+
+    // taskify stays completed (not modified)
+    expect(result.stages['taskify'].state).toBe('completed')
+    expect(result.stages['build'].state).toBe('pending')
+  })
+
+  it('does not mark paused stages AFTER fromStage as completed', () => {
+    // Edge case: a stage after fromStage is paused — should be reset to pending
+    const state = createBaseState({
+      state: 'failed',
+      stages: {
+        taskify: createStage('completed'),
+        architect: createStage('paused'), // After fromStage 'taskify' — should reset
+      },
+    })
+
+    const result = resetFromStage(state, 'architect', LIGHTWEIGHT_PIPELINE, '/tmp/nonexistent-827')
+
+    expect(result.stages['taskify'].state).toBe('completed')
+    // architect is IN stagesToReset, so it gets reset to pending, not completed
+    expect(result.stages['architect'].state).toBe('pending')
+  })
+
+  it('full scenario: rerun after build failure with stale taskify paused', () => {
+    // This reproduces the exact issue #827 scenario
+    const state = createBaseState({
+      state: 'failed',
+      stages: {
+        taskify: createStage('paused'), // Stale from previous gate approval
+        architect: createStage('completed'),
+        test: createStage('completed'),
+        build: createStage('failed', { error: 'Quality gates failed' }),
+      },
+    })
+
+    // When pipeline state is 'failed', the fix prefers failedStage over pausedStage
+    // So fromStage would be 'build' (not 'taskify')
+    const result = resetFromStage(state, 'build', LIGHTWEIGHT_PIPELINE, '/tmp/nonexistent-827')
+
+    // taskify: paused → completed (stale fix)
+    expect(result.stages['taskify'].state).toBe('completed')
+    // architect, test: stay completed (before fromStage) — but test isn't in LIGHTWEIGHT_PIPELINE
+    expect(result.stages['architect'].state).toBe('completed')
+    // build: reset to pending
+    expect(result.stages['build'].state).toBe('pending')
+    // Overall state: running
+    expect(result.state).toBe('running')
+  })
+})

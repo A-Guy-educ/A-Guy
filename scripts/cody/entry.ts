@@ -678,7 +678,23 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
       input.fromStage = resolveFromStageAfterGateApproval(gateApprovedStage, tempOrder)
       logger.info(`  ℹ️ Gate approved at ${gateApprovedStage} — resuming from ${input.fromStage}`)
     } else {
-      input.fromStage = pausedStage || getLastFailedStage(input.taskId) || 'build'
+      // FIX #827: When pipeline state is 'failed', prefer failed stage over paused stage.
+      // A stale 'paused' state (e.g., taskify gate was approved but state wasn't updated)
+      // should not override the actual failed stage (e.g., build).
+      const { loadState: loadSt3 } = await import('./engine/status')
+      const prevState = loadSt3(input.taskId)
+      const failedStage = getLastFailedStage(input.taskId)
+
+      if (prevState?.state === 'failed' && failedStage) {
+        // Pipeline failed — resume from the failed stage, not from a stale paused stage
+        logger.info(
+          `  ℹ️ Pipeline state is 'failed' — using failed stage '${failedStage}' over paused stage '${pausedStage}'`,
+        )
+        input.fromStage = failedStage
+      } else {
+        // Pipeline is paused or unknown — use paused stage (gate approval scenario)
+        input.fromStage = pausedStage || failedStage || 'build'
+      }
     }
   }
 
@@ -734,6 +750,12 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
     // No need to manually delete files here - that was causing double-delete
     const newState = resetFromStage(state, fromStage, stageOrder, taskDir)
     writeState(input.taskId, newState)
+
+    // FIX: Update lifecycle label from failed → building so dashboard shows correct status during rerun
+    if (input.issueNumber && !input.local) {
+      const { setLifecycleLabel } = await import('./github-api')
+      setLifecycleLabel(input.issueNumber, 'cody:building')
+    }
   }
 
   // Run impl pipeline
