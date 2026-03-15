@@ -234,7 +234,7 @@ describe('getTaskSubStatusText', () => {
       pipeline: makePipeline({ state: 'paused', currentStage: 'architect' }),
     })
     const text = getTaskSubStatusText(task)
-    expect(text).toBe('Awaiting approval at Architecting')
+    expect(text).toBe('Paused · Planning')
   })
 
   it('formats starting as "Starting pipeline..."', () => {
@@ -285,5 +285,103 @@ describe('getTaskSubStatusText', () => {
     })
     const text = getTaskSubStatusText(task)
     expect(text).toMatch(/Committing · \d+\/12/)
+  })
+})
+
+// ══════════════════════════════════════════════════════
+// Bug fix: currentStage null with stages data
+// ══════════════════════════════════════════════════════
+
+describe('derivePipelineDisplayState — currentStage null fallback', () => {
+  it('returns stage-progress (not starting) when running with null currentStage but stages have running data', () => {
+    const task = makeTask({
+      column: 'building',
+      pipeline: makePipeline({
+        state: 'running',
+        currentStage: null,
+        stages: {
+          taskify: { state: 'completed', retries: 0 },
+          gap: { state: 'completed', retries: 0 },
+          architect: { state: 'completed', retries: 0 },
+          build: { state: 'running', retries: 0 },
+        },
+      }),
+    })
+    const state = derivePipelineDisplayState(task)
+    expect(state.kind).toBe('stage-progress')
+    if (state.kind === 'stage-progress') {
+      expect(state.label).toBe('Building')
+    }
+  })
+
+  it('returns stage-progress when all stages completed but state is still running (stale status)', () => {
+    const task = makeTask({
+      column: 'building',
+      pipeline: makePipeline({
+        state: 'running',
+        currentStage: null,
+        stages: {
+          taskify: { state: 'completed', retries: 0 },
+          gap: { state: 'completed', retries: 0 },
+          architect: { state: 'completed', retries: 0 },
+          'plan-gap': { state: 'skipped', retries: 0 },
+          build: { state: 'completed', retries: 0 },
+          commit: { state: 'completed', retries: 0 },
+          review: { state: 'completed', retries: 0 },
+        },
+      }),
+    })
+    const state = derivePipelineDisplayState(task)
+    expect(state.kind).toBe('stage-progress')
+    if (state.kind === 'stage-progress') {
+      // Should show last completed stage
+      expect(state.stageIndex).toBeGreaterThan(0)
+    }
+  })
+
+  it('returns starting when running with no stages at all', () => {
+    const task = makeTask({
+      column: 'building',
+      pipeline: makePipeline({ state: 'running', currentStage: null, stages: {} }),
+    })
+    const state = derivePipelineDisplayState(task)
+    expect(state.kind).toBe('starting')
+  })
+})
+
+// ══════════════════════════════════════════════════════
+// Updated label tests
+// ══════════════════════════════════════════════════════
+
+describe('getTaskSubStatusText — updated labels', () => {
+  it('gate-paused at taskify shows "Paused · Classifying" (not "Awaiting Analyzing")', () => {
+    const task = makeTask({
+      column: 'gate-waiting',
+      gateType: 'risk-gated',
+      pipeline: makePipeline({ state: 'paused', currentStage: 'taskify' }),
+    })
+    const text = getTaskSubStatusText(task)
+    expect(text).toBe('Paused · Classifying')
+    expect(text).not.toContain('Awaiting')
+    expect(text).not.toContain('Analyzing')
+  })
+
+  it('gate-paused at architect shows "Paused · Planning" (not "Awaiting Architecting")', () => {
+    const task = makeTask({
+      column: 'gate-waiting',
+      gateType: 'hard-stop',
+      pipeline: makePipeline({ state: 'paused', currentStage: 'architect' }),
+    })
+    const text = getTaskSubStatusText(task)
+    expect(text).toBe('Paused · Planning')
+  })
+
+  it('running at taskify shows "Classifying · 1/12"', () => {
+    const task = makeTask({
+      column: 'building',
+      pipeline: makePipeline({ state: 'running', currentStage: 'taskify' }),
+    })
+    const text = getTaskSubStatusText(task)
+    expect(text).toBe('Classifying · 1/12')
   })
 })

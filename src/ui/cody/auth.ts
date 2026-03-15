@@ -85,7 +85,10 @@ export async function requireCodyAuth(
 ): Promise<{ identity: CodyGitHubIdentity } | NextResponse> {
   const identity = await verifyCodySession(req)
   if (!identity) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json(
+      { message: 'Not authenticated. Please log in to access the dashboard.' },
+      { status: 401 },
+    )
   }
   return { identity }
 }

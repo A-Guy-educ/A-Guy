@@ -588,23 +588,27 @@ async function handleStageResult(
         const verifyFailuresPath = path.join(ctx.taskDir, 'verify-failures.md')
         const errorOutput = result.reason || 'Verify failed - check logs'
 
-        // Try to capture more detailed output from verify scripts
+        // Capture detailed output from individual gate output files.
+        // runVerifyStage writes <gate-name>-output.txt for each failed gate.
         let detailedOutput = errorOutput
         try {
-          const tscPath = path.join(ctx.taskDir, 'tsc-output.txt')
-          const lintPath = path.join(ctx.taskDir, 'lint-output.txt')
+          const gateFiles = [
+            { name: 'TypeScript Errors', file: 'typescript-output.txt' },
+            { name: 'Lint Errors', file: 'lint-output.txt' },
+            { name: 'Format Errors', file: 'format-output.txt' },
+            { name: 'Unit Test Errors', file: 'unit-tests-output.txt' },
+          ]
           const parts = [`# Verify Failures\n\n${errorOutput}`]
-          if (fs.existsSync(tscPath)) {
-            const tscOutput = fs.readFileSync(tscPath, 'utf-8').slice(0, 5000)
-            parts.push(`## TypeScript Errors\n\`\`\`\n${tscOutput}\n\`\`\``)
-          }
-          if (fs.existsSync(lintPath)) {
-            const lintOutput = fs.readFileSync(lintPath, 'utf-8').slice(0, 5000)
-            parts.push(`## Lint Errors\n\`\`\`\n${lintOutput}\n\`\`\``)
+          for (const gate of gateFiles) {
+            const gatePath = path.join(ctx.taskDir, gate.file)
+            if (fs.existsSync(gatePath)) {
+              const gateOutput = fs.readFileSync(gatePath, 'utf-8').slice(0, 5000)
+              parts.push(`## ${gate.name}\n\`\`\`\n${gateOutput}\n\`\`\``)
+            }
           }
           detailedOutput = parts.join('\n\n')
         } catch {
-          // Files don't exist, use basic error
+          // Gate output files may not exist, use basic error
         }
 
         try {
@@ -657,6 +661,20 @@ async function handleStageResult(
       state: 'timeout',
       error: result.reason,
     })
+
+    // FIX TIMEOUT RECOVERY: When the fix stage times out, don't immediately fail
+    // the pipeline. The fix agent may have committed partial work via its post-actions
+    // (commit-task-files with tracked+task). Let verify run to check if the partial
+    // fix was enough. If verify passes, pipeline succeeds. If verify fails, the normal
+    // verify→fix retry loop will handle it (or max attempts will fail the pipeline).
+    if (stageName === 'fix') {
+      logger.info('⚠️ Fix stage timed out — running verify to check if partial fixes suffice')
+      // Reset verify to pending so it runs next
+      state = updateStage(state, 'verify', { state: 'pending' })
+      writeState(ctx.taskId, state)
+      return state // Don't fail pipeline — let verify check
+    }
+
     if (!def.advisory) {
       // Set lifecycle label to failed
       if (ctx.input.issueNumber) {

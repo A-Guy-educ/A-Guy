@@ -15,6 +15,7 @@ import {
   CACHE_TTL,
   BRANCH_CACHE_TTL,
   TASK_ID_REGEX,
+  ALL_STAGES,
 } from './constants'
 import type {
   CodyPipelineStatus,
@@ -205,21 +206,53 @@ export async function findBranchByIssueNumber(
  * - Derives `currentStage` from stages data if not set (finds the running stage)
  * - Maps `cursor` field to `currentStage` as fallback
  */
-function normalizePipelineStatus(status: CodyPipelineStatus): CodyPipelineStatus {
+export function normalizePipelineStatus(status: CodyPipelineStatus): CodyPipelineStatus {
   let currentStage = status.currentStage
 
   // If currentStage is not set, derive it from stages data
   if (!currentStage && status.stages) {
-    // Find the stage that is currently running
-    const runningEntry = Object.entries(status.stages).find(([, data]) => data.state === 'running')
+    const stageEntries = Object.entries(status.stages)
+
+    // 1. Find a stage that is currently running
+    const runningEntry = stageEntries.find(([, data]) => data.state === 'running')
     if (runningEntry) {
       currentStage = runningEntry[0]
     }
-    // If no running stage but pipeline is paused, find the paused stage
-    if (!currentStage && status.state === 'paused') {
-      const pausedEntry = Object.entries(status.stages).find(([, data]) => data.state === 'paused')
+
+    // 2. Find a paused stage (pipeline gated)
+    if (!currentStage) {
+      const pausedEntry = stageEntries.find(([, data]) => data.state === 'paused')
       if (pausedEntry) {
         currentStage = pausedEntry[0]
+      }
+    }
+
+    // 3. Derive from stage completion: walk ALL_STAGES in order,
+    //    find the first stage with data that is NOT completed/skipped (= where we are now).
+    //    Stages without data entries are skipped (they may not be tracked).
+    if (!currentStage) {
+      for (const stage of ALL_STAGES) {
+        const data = status.stages[stage]
+        if (!data) continue // Stage not tracked — skip
+        if (data.state !== 'completed' && data.state !== 'skipped') {
+          // This stage hasn't finished — it's the current position
+          currentStage = stage
+          break
+        }
+      }
+    }
+
+    // 4. If ALL known stages are completed/skipped, use the last completed stage
+    if (!currentStage && stageEntries.length > 0) {
+      let lastCompleted: string | null = null
+      for (const stage of ALL_STAGES) {
+        const data = status.stages[stage]
+        if (data && (data.state === 'completed' || data.state === 'skipped')) {
+          lastCompleted = stage
+        }
+      }
+      if (lastCompleted) {
+        currentStage = lastCompleted
       }
     }
   }

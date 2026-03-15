@@ -12,6 +12,11 @@ vi.mock('pino', () => ({
 }))
 
 vi.mock('../../../../scripts/inspector/core/state', () => ({
+  createStateStore: vi.fn().mockReturnValue({
+    get: vi.fn().mockReturnValue(0),
+    set: vi.fn(),
+    save: vi.fn(),
+  }),
   JsonStateStore: {
     load: vi.fn().mockReturnValue({
       get: vi.fn().mockReturnValue(0),

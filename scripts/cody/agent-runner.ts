@@ -72,7 +72,7 @@ export const STAGE_TIMEOUTS: Record<string, number> = {
   'plan-gap': ms('15m'),
   test: ms('20m'),
   review: ms('15m'),
-  fix: ms('20m'),
+  fix: ms('30m'),
   verify: ms('10m'),
   docs: ms('10m'),
   pr: ms('5m'),

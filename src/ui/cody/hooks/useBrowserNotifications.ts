@@ -122,11 +122,6 @@ export function useBrowserNotifications({
         // Skip if task wasn't in the previous list
         if (!previousTask) continue
 
-        // Skip if task hasn't been updated recently (within last 30 seconds to avoid spam)
-        const updatedAt = new Date(task.updatedAt).getTime()
-        const now = Date.now()
-        if (now - updatedAt > 30000) continue
-
         // Check for column/state transitions
         const prevColumn = previousTask.column
         const currColumn = task.column

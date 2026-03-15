@@ -343,6 +343,11 @@ export type ClearVerifyFailuresAction = {
   type: 'clear-verify-failures'
 }
 
+// Run-mechanical-autofix action — runs lint:fix + format:fix deterministically (no LLM)
+export type RunMechanicalAutofixAction = {
+  type: 'run-mechanical-autofix'
+}
+
 // Parallel-post-action - runs multiple actions concurrently
 export type ParallelPostAction = {
   type: 'parallel'
@@ -365,6 +370,7 @@ export type PostAction =
   | RunQualityWithAutofixAction
   | AnalyzeReviewFindingsAction
   | ClearVerifyFailuresAction
+  | RunMechanicalAutofixAction
   | ParallelPostAction
 
 // ============================================================================

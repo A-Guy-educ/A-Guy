@@ -31,7 +31,7 @@ const STATUS_FILTERS = [
   { label: 'Building', value: 'building' },
   { label: 'In Review', value: 'review' },
   { label: 'Failed', value: 'failed' },
-  { label: 'Gate Waiting', value: 'gate-waiting' },
+  { label: 'Needs Approval', value: 'gate-waiting' },
   { label: 'Retrying', value: 'retrying' },
   { label: 'Done', value: 'done' },
 ] as const
