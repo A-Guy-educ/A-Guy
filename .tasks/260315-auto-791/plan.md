@@ -1,289 +1,117 @@
-# Plan: Access Code Gate (Coupon Logic)
+# Implementation Plan: Access Code Gate (Coupon Logic)
 
-## Clarification Adjustments
+**Task ID**: 260315-auto-791
+**Spec Requirements**: FR-001 through FR-007, NFR-001, NFR-002
 
-Based on clarified.md answers:
-1. **Multi-use codes** — same code can be used by multiple students
-2. **Lesson-only scope** — codes unlock specific lessons only (no course/global scope)
-3. **No retained access on deletion** — if code is deactivated/deleted, previously-unlocked students lose access (checked at runtime)
-4. **Time expiration** — codes support `expiresAt` date
+## Rerun Context
 
-These simplify the original spec: no `scopeType` enum needed (always lesson), and runtime validation must re-check code validity on each page load.
+This is a rerun (`/cody rerun`). The previous run completed through build but the prev-run artifacts are not available on disk. This plan is rebuilt fresh from spec.md, clarified.md, gap.md, and codebase research. Key simplification from clarified.md: **scope is lesson-only** (no course or global scoping). Students do NOT retain access if code is deleted/deactivated (runtime re-check against CodeRedemptions collection).
 
 ## Research Findings
 
-- `src/infra/auth/access-types.ts` ✅ — Defines `ACCESS_TYPES`, `LESSON_ACCESS_TYPES`, `resolveAccessType()`
-- `src/server/payload/collections/Courses.ts` ✅ — Has `accessType` and `pageAccessType` select fields
-- `src/server/payload/collections/Lessons.ts` ✅ — Has `accessType` select field (inherit/free/mandatory/gated)
-- `src/server/payload/collections/Users/index.ts` ✅ — Auth collection with roles
-- `src/ui/web/auth/AccessGateProvider.tsx` ✅ — Existing gate component, wraps content with blur
-- `src/ui/web/auth/AuthGateModal.tsx` ✅ — Existing modal pattern using Dialog
-- `src/client/hooks/useAccessGate.ts` ✅ — Client hook for access gate logic
-- `src/server/utils/access-gate-server.ts` ✅ — Server-side auth check
-- `src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/page.tsx` ✅ — Lesson page using `resolveAccessType()` + `AccessGateProvider`
-- `src/server/payload/access/adminOnly.ts` ✅ — Reusable access control
-- `src/server/payload/access/authenticated.ts` ✅ — Reusable access control
-- `src/server/payload/access/authenticatedOrOwner.ts` ✅ — Pattern for owner-scoped access
-- `src/server/payload/fields/createdBy.ts` ✅ — Reusable field
-- `src/payload.config.ts` ✅ — Collections array registration
-- `src/i18n/en.json` ✅ — Has `accessControl` namespace
-- `src/i18n/he.json` ✅ — Has `accessControl` namespace
-- `src/app/api/user-settings/route.ts` ✅ — API route pattern reference
-- `tests/int/lesson-types.int.spec.ts` ✅ — Integration test pattern
-- `src/server/payload/collections/AccessCodes.ts` 🆕 — Will create
-- `src/server/payload/collections/CodeRedemptions.ts` 🆕 — Will create
-- `src/app/api/access-codes/redeem/route.ts` 🆕 — Will create
-- `src/ui/web/auth/AccessCodeGateModal.tsx` 🆕 — Will create
-- `src/app/api/access-codes/export/route.ts` 🆕 — Will create
+- `src/infra/auth/access-types.ts` ✅ exists — has `ACCESS_TYPES = ['free', 'mandatory', 'gated']`, `LESSON_ACCESS_TYPES = ['inherit', ...ACCESS_TYPES]`, `resolveAccessType()`
+- `src/server/payload/collections/Lessons.ts` ✅ exists — `accessType` select field at lines 152-171
+- `src/server/payload/collections/Courses.ts` ✅ exists — `accessType` at lines 163-177, `pageAccessType` at lines 147-161
+- `src/payload.config.ts` ✅ exists — collections array at lines 143-170
+- `src/ui/web/auth/AccessGateProvider.tsx` ✅ exists — wraps content with modals for mandatory/gated
+- `src/client/hooks/useAccessGate.ts` ✅ exists — manages access gate state
+- `src/ui/web/auth/AuthGateModal.tsx` ✅ exists — non-dismissible Dialog pattern to follow
+- `src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/page.tsx` ✅ exists — uses `resolveAccessType()` and `AccessGateProvider`
+- `src/server/payload/access/adminOnly.ts` ✅ exists — standard admin access check
+- `src/server/payload/access/authenticated.ts` ✅ exists — boolean auth check
+- `src/server/payload/access/authenticatedOrOwner.ts` ✅ exists — admin sees all, user sees own
+- `src/server/payload/fields/createdBy.ts` ✅ exists — auto-sets `createdBy` on create
+- `src/server/payload/fields/tenant.ts` ✅ exists — auto-sets tenant on create
+- `src/i18n/en.json` ✅ exists — `accessControl` namespace at lines 314-323
+- `src/i18n/he.json` ✅ exists — `accessControl` namespace at lines 314-323
+- `src/app/api/user-settings/route.ts` ✅ exists — API route pattern (auth check, Zod, Payload queries)
+- `tests/int/lesson-types.int.spec.ts` ✅ exists — integration test pattern (ensureDefaultTenant helper)
+- `src/server/payload/collections/AccessCodes.ts` 🆕 will create
+- `src/server/payload/collections/CodeRedemptions.ts` 🆕 will create
+- `src/app/api/access-codes/redeem/route.ts` 🆕 will create
+- `src/app/api/access-codes/check/route.ts` 🆕 will create
+- `src/app/api/access-codes/export/route.ts` 🆕 will create
+- `src/ui/web/auth/AccessCodeGateModal.tsx` 🆕 will create
+
+### Patterns Observed
+- Collections use `adminOnly` access control from `src/server/payload/access/adminOnly.ts`
+- Tenant-scoped collections use `tenantField` from `src/server/payload/fields/tenant.ts`
+- `createdByField` auto-sets the creating user's ID
+- API routes use `payload.auth({ headers: req.headers })` for authentication
+- Integration tests use `getPayload({ config })` and `ensureDefaultTenant()` pattern
+- AccessGateProvider wraps content with blur effect when blocked
+- AuthGateModal uses `Dialog` with `allowDismiss={false}` for non-dismissible modals
+
+### Integration Points
+- Must register AccessCodes + CodeRedemptions in `payload.config.ts` collections array
+- Must run `pnpm generate:types` after adding new collections
+- Must run `pnpm generate:importmap` after adding new admin components
+- Lesson page uses `resolveAccessType()` — must handle `accessCode` return value
+- AccessGateProvider receives `accessType` — must handle `accessCode` case
+- Translation strings go in `accessControl` namespace in both `en.json` and `he.json`
 
 ## Reuse Inventory
 
-### Existing Utilities to Reuse
-- `adminOnly` from `src/server/payload/access/adminOnly.ts` — access control for AccessCodes and CodeRedemptions collections
-- `authenticated` from `src/server/payload/access/authenticated.ts` — access control for redemption endpoint auth check
-- `createdByField` from `src/server/payload/fields/createdBy.ts` — track who created access codes
-- `tenantField` from `src/server/payload/fields/tenant.ts` — multi-tenant support for access codes
-- `Dialog`, `DialogContent`, `DialogHeader`, `DialogTitle`, `DialogDescription` from `src/ui/web/components/dialog` — modal component
-- `useCurrentUser` from `src/client/hooks/useCurrentUser.ts` — get current user in client components
-- `useTranslations` from `src/ui/web/providers/I18n` — i18n translations
-- `resolveAccessType()` from `src/infra/auth/access-types.ts` — access type resolution
-- `isAuthenticatedServer()` from `src/server/utils/access-gate-server.ts` — server auth check
+### Existing utilities the plan will reuse (with import paths)
+- `adminOnly` from `src/server/payload/access/adminOnly.ts` — CRUD access on AccessCodes
+- `authenticated` from `src/server/payload/access/authenticated.ts` — auth check pattern
+- `authenticatedOrOwner` from `src/server/payload/access/authenticatedOrOwner.ts` — CodeRedemptions read (admin sees all, user sees own)
+- `createdByField` from `src/server/payload/fields/createdBy.ts` — AccessCodes `createdBy` field
+- `tenantField` from `src/server/payload/fields/tenant.ts` — AccessCodes tenant scoping
+- `Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription` from `src/ui/web/components/dialog` — AccessCodeGateModal UI
+- `useCurrentUser` from `src/client/hooks/useCurrentUser.ts` — user state in access code flow
+- `useTranslations` from `src/ui/web/providers/I18n` — i18n strings
+- `AccountRole` from `src/server/payload/collections/Users/roles.ts` — admin role checks
+- `isUsersCollectionUser` from `src/server/payload/access/isUsersCollectionUser.ts` — safe user type
+- `getDefaultTenantSlug` from `src/server/repos/tenant/get-default-tenant` — integration tests
 
-### New Utilities Justified
-- `AccessCodes` collection — new domain entity, nothing similar exists
-- `CodeRedemptions` collection — new audit trail, nothing similar exists
-- `AccessCodeGateModal` component — existing `AuthGateModal` handles auth login, not code entry; different UX flow
-- Redemption API route — unique business logic for code validation and redemption
+### Justification for NEW utilities
+- `AccessCodes` collection — no existing collection serves this purpose
+- `CodeRedemptions` collection — no existing audit trail collection for code usage
+- `AccessCodeGateModal` component — no existing code-entry modal; AuthGateModal is for login, not code input
+- API routes for redeem/check/export — no existing endpoints handle access code logic
 
 ---
 
 ## Steps
 
-### Step 1: Add `accessCode` to Access Types System (FR-001)
+### Step 1: Add `accessCode` to Access Types (FR-001)
 
 **Files to Touch**:
-- `src/infra/auth/access-types.ts` (MODIFIED — lines 8-14, 32-45)
+- `src/infra/auth/access-types.ts` (MODIFIED — lines 8-14, 32-44)
 
 **Behavior**:
-- Add `'accessCode'` to the `ACCESS_TYPES` constant array
-- This automatically propagates to `AccessType` union type
-- Add `'accessCode'` option to `LESSON_ACCESS_TYPES` (it inherits from ACCESS_TYPES spread, so automatic)
-- Update `resolveAccessType()` — `accessCode` is a valid return type, no special handling needed (it already validates via `ACCESS_TYPES.includes()`)
+- Add `'accessCode'` to `ACCESS_TYPES` array: `['free', 'mandatory', 'gated', 'accessCode']`
+- `AccessType` union type will automatically include `'accessCode'`
+- Add `'accessCode'` to `LESSON_ACCESS_TYPES`: `['inherit', ...ACCESS_TYPES]` (automatic via spread)
+- Update `resolveAccessType()` — `'accessCode'` is already a valid `ACCESS_TYPES` member so existing logic will handle it correctly (returns lesson-level if set, otherwise falls back to course-level)
 
 **Tests** (FAIL before, PASS after):
-- Test location: `tests/unit/access-types.unit.spec.ts` (NEW)
-- Test 1: `ACCESS_TYPES includes 'accessCode'` — verify the new type exists
-- Test 2: `resolveAccessType('accessCode', 'free') returns 'accessCode'` — verify lesson-level override works
-- Test 3: `resolveAccessType('inherit', 'accessCode') returns 'accessCode'` — verify course inheritance works
-- Test 4: Existing types still resolve correctly (regression check)
-- Run: `pnpm vitest run tests/unit/access-types.unit.spec.ts`
+- Test location: `tests/unit/access-types.unit.spec.ts`
+- Test 1: `ACCESS_TYPES includes 'accessCode'`
+- Test 2: `LESSON_ACCESS_TYPES includes 'accessCode'`
+- Test 3: `resolveAccessType('accessCode', 'free') returns 'accessCode'`
+- Test 4: `resolveAccessType('inherit', 'accessCode') returns 'accessCode'`
+- Test 5: `resolveAccessType('accessCode', 'gated') returns 'accessCode'` (lesson overrides course)
 
 **Acceptance Criteria**:
-- [ ] `AccessType` includes `'accessCode'`
-- [ ] `LessonAccessType` includes `'accessCode'`
-- [ ] `resolveAccessType()` handles `accessCode` correctly
-- [ ] Existing type resolution unchanged
+- [ ] `'accessCode'` is in `ACCESS_TYPES`
+- [ ] `resolveAccessType` correctly resolves `accessCode` from lesson or course level
+- [ ] Existing access types (`free`, `mandatory`, `gated`, `inherit`) behavior unchanged
+- [ ] TypeScript compiles: `pnpm tsc --noEmit` passes
+
+**Run**: `pnpm vitest run tests/unit/access-types.unit.spec.ts`
 
 ---
 
-### Step 2: Add `accessCode` Option to Lessons Collection (FR-001)
+### Step 2: Add i18n Translation Strings (NFR-001)
 
 **Files to Touch**:
-- `src/server/payload/collections/Courses.ts` (MODIFIED — line ~168 only, NOT pageAccessType)
-- `src/server/payload/collections/Lessons.ts` (MODIFIED — lines 157-165)
+- `src/i18n/en.json` (MODIFIED — add keys inside `accessControl` object at line ~323)
+- `src/i18n/he.json` (MODIFIED — add keys inside `accessControl` object at line ~323)
 
 **Behavior**:
-- Add `{ label: 'Access Code Required', value: 'accessCode' }` option to the `accessType` select field in Courses (line ~168) — this is the *default* access type for lessons in the course
-- Do **NOT** add `accessCode` to `pageAccessType` in Courses — per clarification #2, access codes are lesson-only; the course page itself should not be gated by access code
-- Add `{ label: 'Access Code Required', value: 'accessCode' }` option to the `accessType` select field in Lessons (line ~157)
-
-**Rationale**: The `pageAccessType` controls access to the course page listing chapters/lessons. Gating the course listing page with an access code is not useful — the student needs to see which lessons exist to know what code to enter. The access code gate should only appear when accessing the lesson content itself.
-
-**Tests** (FAIL before, PASS after):
-- Test location: `tests/int/access-code-gate.int.spec.ts` (NEW)
-- Test 1: Create a course with `accessType: 'accessCode'` → succeeds, stored value is `'accessCode'`
-- Test 2: Create a lesson with `accessType: 'accessCode'` → succeeds, stored value is `'accessCode'`
-- Run: `pnpm vitest run tests/int/access-code-gate.int.spec.ts`
-
-**Acceptance Criteria**:
-- [ ] Admin can select "Access Code Required" for course default accessType in admin UI
-- [ ] Admin can select "Access Code Required" for lesson accessType in admin UI
-- [ ] Values persist correctly in database
-- [ ] `pageAccessType` on Courses does NOT include `accessCode`
-
----
-
-### Step 3: Create `AccessCodes` Collection (FR-002)
-
-**Files to Touch**:
-- `src/server/payload/collections/AccessCodes.ts` (NEW)
-- `src/payload.config.ts` (MODIFIED — add import + register in collections array)
-
-**Behavior**:
-Create a new Payload collection with:
-- `slug: 'access-codes'`
-- Access: `adminOnly` for create/update/delete, `adminOnly` for read (admin-only management)
-- Fields:
-  - `code`: text, unique, required, index — the code string (e.g., "MACCABI-2024-FREE")
-  - `label`: text — admin-friendly name/description
-  - `lesson`: relationship to `lessons`, required — the lesson this code unlocks (lesson-only scope per clarification)
-  - `maxRedemptions`: number, optional — max uses (0 or null = unlimited)
-  - `currentRedemptions`: number, default 0, readOnly — auto-incremented
-  - `isActive`: checkbox, default true — admin can deactivate
-  - `expiresAt`: date, optional — expiration date (per clarification #4)
-  - `createdBy`: reuse `createdByField`
-  - `tenant`: reuse `tenantField`
-- Admin config:
-  - `useAsTitle: 'code'`
-  - `defaultColumns: ['code', 'label', 'lesson', 'currentRedemptions', 'maxRedemptions', 'isActive', 'expiresAt']`
-  - `group: 'Access Control'` (admin sidebar grouping)
-
-**Tests** (FAIL before, PASS after):
-- Test location: `tests/int/access-code-gate.int.spec.ts` (append to Step 2's file)
-- Test 1: Admin can create access code with all fields → succeeds
-- Test 2: Code field is unique → creating duplicate code fails
-- Test 3: `currentRedemptions` defaults to 0
-- Run: `pnpm vitest run tests/int/access-code-gate.int.spec.ts`
-
-**Acceptance Criteria**:
-- [ ] `access-codes` collection is visible in admin panel under "Access Control" group
-- [ ] Codes are unique
-- [ ] Only admins can CRUD codes
-- [ ] `createdBy` is auto-populated
-
----
-
-### Step 4: Create `CodeRedemptions` Collection (FR-004)
-
-**Files to Touch**:
-- `src/server/payload/collections/CodeRedemptions.ts` (NEW)
-- `src/payload.config.ts` (MODIFIED — add import + register in collections array)
-
-**Behavior**:
-Create a new Payload collection for audit trail:
-- `slug: 'code-redemptions'`
-- Access: `adminOnly` for read/delete, no create/update access (created programmatically only)
-- Fields:
-  - `accessCode`: relationship to `access-codes`, required, index
-  - `user`: relationship to `users`, required, index
-  - `lesson`: relationship to `lessons`, required, index — which lesson was unlocked
-  - `redeemedAt`: date, required — timestamp of redemption
-- Admin config:
-  - `useAsTitle: 'redeemedAt'`
-  - `defaultColumns: ['user', 'accessCode', 'lesson', 'redeemedAt']`
-  - `group: 'Access Control'`
-- Timestamps: true
-
-**Tests** (FAIL before, PASS after):
-- Test location: `tests/int/access-code-gate.int.spec.ts` (append)
-- Test 1: Admin can read code redemption records
-- Test 2: Redemption includes user, accessCode, lesson, and redeemedAt fields
-- Run: `pnpm vitest run tests/int/access-code-gate.int.spec.ts`
-
-**Acceptance Criteria**:
-- [ ] `code-redemptions` collection exists in admin panel under "Access Control"
-- [ ] Shows who redeemed what code for which lesson and when
-- [ ] Only admins can view redemption records
-
----
-
-### Step 5: Create Code Redemption API Endpoint (FR-005)
-
-**Files to Touch**:
-- `src/app/api/access-codes/redeem/route.ts` (NEW)
-
-**Behavior**:
-`POST /api/access-codes/redeem`
-
-Request body (validated with Zod):
-```json
-{ "code": "MACCABI-2024-FREE", "lessonId": "abc123" }
-```
-
-Validation logic:
-1. Auth check via `payload.auth({ headers })` → 401 if not authenticated
-2. Zod validate request body → 400 if invalid
-3. Find code in `access-codes` where `code equals` + `isActive: true` → 404 if not found
-4. Check `expiresAt` — if set and past, return 400 "Code has expired"
-5. Check `maxRedemptions` — if set and `currentRedemptions >= maxRedemptions`, return 400 "Code has reached maximum redemptions"
-6. Verify code's `lesson` matches the requested `lessonId` → 400 "Code is not valid for this lesson"
-7. Check if user already has a redemption for this code+lesson combo → if yes, return 200 with `{ success: true, alreadyRedeemed: true }`
-8. Create `code-redemptions` record with `accessCode`, `user`, `lesson`, `redeemedAt: new Date()`
-9. Increment `currentRedemptions` on the access code
-10. Return 200 `{ success: true }`
-
-All DB operations use `overrideAccess: true` (server-initiated, user already validated).
-
-Response:
-- 200: `{ success: true, alreadyRedeemed?: boolean }`
-- 400: `{ error: string }` (invalid input, expired, max reached, wrong lesson)
-- 401: `{ error: 'Unauthorized' }`
-- 404: `{ error: 'Code not found' }`
-
-**Tests** (FAIL before, PASS after):
-- Test location: `tests/int/access-code-redeem.int.spec.ts` (NEW)
-- Test 1: Authenticated user with valid code → 200 success, redemption created
-- Test 2: Unauthenticated request → 401
-- Test 3: Invalid code string → 404
-- Test 4: Inactive code → 404
-- Test 5: Expired code → 400
-- Test 6: Max redemptions reached → 400
-- Test 7: Code for wrong lesson → 400
-- Test 8: Duplicate redemption → 200 with `alreadyRedeemed: true` (idempotent)
-- Test 9: `currentRedemptions` incremented after successful redemption
-- Run: `pnpm vitest run tests/int/access-code-redeem.int.spec.ts`
-
-**Acceptance Criteria**:
-- [ ] Valid code redemption creates record and increments counter
-- [ ] All validation cases return correct error codes
-- [ ] Duplicate redemptions are idempotent
-- [ ] No access without authentication
-
----
-
-### Step 6: Create Check-Access API Endpoint
-
-**Files to Touch**:
-- `src/app/api/access-codes/check/route.ts` (NEW)
-
-**Behavior**:
-`GET /api/access-codes/check?lessonId=abc123`
-
-This endpoint checks whether the current user has an active redemption for a given lesson. Used by the frontend to decide whether to show the code gate modal or the content.
-
-Logic:
-1. Auth check → 401 if not authenticated
-2. Validate `lessonId` query param → 400 if missing
-3. Find redemption in `code-redemptions` where `user equals userId` AND `lesson equals lessonId`
-4. If redemption exists, verify the associated access code is still active and not expired:
-   - Populate the `accessCode` relationship
-   - Check `accessCode.isActive === true` and `expiresAt` not past
-5. Return `{ hasAccess: boolean }`
-
-**Tests** (FAIL before, PASS after):
-- Test location: `tests/int/access-code-redeem.int.spec.ts` (append)
-- Test 1: User with valid redemption + active code → `{ hasAccess: true }`
-- Test 2: User with no redemption → `{ hasAccess: false }`
-- Test 3: User with redemption but code deactivated → `{ hasAccess: false }` (clarification #3)
-- Test 4: User with redemption but code expired → `{ hasAccess: false }`
-- Test 5: Unauthenticated → 401
-- Run: `pnpm vitest run tests/int/access-code-redeem.int.spec.ts`
-
-**Acceptance Criteria**:
-- [ ] Returns `hasAccess: true` only when redemption exists AND code is still active + not expired
-- [ ] Returns `hasAccess: false` when code was deactivated (clarification: no retained access)
-- [ ] Unauthenticated requests return 401
-
----
-
-### Step 7: Add i18n Translation Strings (NFR-001)
-
-**Files to Touch**:
-- `src/i18n/en.json` (MODIFIED — add keys inside `accessControl` object)
-- `src/i18n/he.json` (MODIFIED — add keys inside `accessControl` object)
-
-**Behavior**:
-Add to `accessControl` namespace in both locales:
+Add the following keys to the `accessControl` namespace in both files:
 
 English (`en.json`):
 ```json
@@ -293,176 +121,411 @@ English (`en.json`):
 "accessCodeUnlock": "Unlock",
 "accessCodeError": "Incorrect code. Please check with your teacher.",
 "accessCodeSuccess": "Content unlocked!",
-"accessCodeExpired": "This code has expired.",
-"accessCodeMaxReached": "This code has reached its maximum uses.",
 "accessCodeLoading": "Verifying..."
 ```
 
 Hebrew (`he.json`):
 ```json
-"accessCodeTitle": "הגישה מוגבלת",
-"accessCodeDescription": "אנא הזן את קוד הגישה של בית הספר שלך כדי לפתוח תוכן זה.",
-"accessCodePlaceholder": "הזן קוד",
-"accessCodeUnlock": "פתח",
+"accessCodeTitle": "גישה מוגבלת",
+"accessCodeDescription": "הכנס את קוד הגישה של בית הספר שלך כדי לפתוח תוכן זה.",
+"accessCodePlaceholder": "הכנס קוד",
+"accessCodeUnlock": "פתח גישה",
 "accessCodeError": "קוד שגוי. אנא בדוק עם המורה שלך.",
 "accessCodeSuccess": "התוכן נפתח!",
-"accessCodeExpired": "קוד זה פג תוקף.",
-"accessCodeMaxReached": "קוד זה הגיע למקסימום השימושים.",
 "accessCodeLoading": "מאמת..."
 ```
 
 **Tests** (FAIL before, PASS after):
-- Test location: `tests/unit/i18n-access-code.unit.spec.ts` (NEW)
-- Test 1: All `accessCode*` keys exist in `en.json` `accessControl` namespace
-- Test 2: All `accessCode*` keys exist in `he.json` `accessControl` namespace
-- Test 3: Key counts match between en and he for `accessCode*` keys
-- Run: `pnpm vitest run tests/unit/i18n-access-code.unit.spec.ts`
+- Test location: `tests/unit/i18n-access-code.unit.spec.ts`
+- Test 1: `en.json accessControl has all accessCode keys`
+- Test 2: `he.json accessControl has all accessCode keys`
+- Test 3: `en.json and he.json have identical accessCode key sets`
 
 **Acceptance Criteria**:
-- [ ] All 9 new translation keys exist in both locales
-- [ ] English and Hebrew strings are meaningful (not placeholders)
+- [ ] All 7 accessCode keys present in `en.json` `accessControl` namespace
+- [ ] All 7 accessCode keys present in `he.json` `accessControl` namespace
+- [ ] Key sets match between en and he
+
+**Run**: `pnpm vitest run tests/unit/i18n-access-code.unit.spec.ts`
 
 ---
 
-### Step 8: Create `AccessCodeGateModal` Component (FR-006)
+### Step 3: Create AccessCodes Collection (FR-002)
 
 **Files to Touch**:
-- `src/ui/web/auth/AccessCodeGateModal.tsx` (NEW)
+- `src/server/payload/collections/AccessCodes.ts` (NEW)
+- `src/payload.config.ts` (MODIFIED — add import + register in collections array)
 
 **Behavior**:
-Client component (`'use client'`) that:
-1. Receives props: `isOpen: boolean`, `lessonId: string`, `onSuccess: () => void`
-2. Uses `useTranslations('accessControl')` for i18n
-3. Renders a `Dialog` (same pattern as `AuthGateModal`)
-4. Contains:
-   - Title: `t('accessCodeTitle')` — "Access Restricted"
-   - Description: `t('accessCodeDescription')`
-   - Text input for code entry, placeholder: `t('accessCodePlaceholder')`
-   - Submit button: `t('accessCodeUnlock')` — "Unlock"
-   - Error message area (shows `t('accessCodeError')` on invalid code)
-   - Loading state on submit
-5. On submit:
-   - POST `/api/access-codes/redeem` with `{ code, lessonId }`
-   - If 200 success: call `onSuccess()` callback
-   - If error: show appropriate error message
-6. Non-dismissible (like `AuthGateModal`, `allowDismiss={false}`)
+Create a Payload collection with slug `access-codes` and these fields:
+- `code`: text, required, unique, index — the code string (e.g., "MACCABI-2024-FREE")
+- `lesson`: relationship to `lessons`, required — the specific lesson this code unlocks (lesson-only scope per clarified.md)
+- `maxRedemptions`: number, optional, min 1 — max uses allowed (null = unlimited)
+- `currentRedemptions`: number, defaultValue 0, admin readOnly — auto-incremented on use
+- `isActive`: checkbox, defaultValue true — whether code is currently valid
+- `expiresAt`: date, optional — expiration date (per clarified.md #4)
+- `tenantField` — reuse existing tenant field
+- `createdByField` — reuse existing createdBy field
+
+Access control:
+- `create`: `adminOnly`
+- `read`: `adminOnly`
+- `update`: `adminOnly`
+- `delete`: `adminOnly`
+
+Admin config:
+- `useAsTitle: 'code'`
+- `defaultColumns: ['code', 'lesson', 'currentRedemptions', 'maxRedemptions', 'isActive', 'expiresAt']`
+
+Register in `payload.config.ts` collections array.
 
 **Tests** (FAIL before, PASS after):
-- Test location: `tests/int/access-code-gate.int.spec.ts` (append — integration test, not unit)
-- Test: Verify the component file exists and exports `AccessCodeGateModal`
-- Note: The project's unit test config uses `environment: 'node'` (no jsdom), so React component rendering tests are not feasible with the current setup. Verify the component through E2E or manual testing. Focus integration tests on the API layer.
-- Run: `pnpm vitest run tests/int/access-code-gate.int.spec.ts`
+- Test location: `tests/int/access-code-gate.int.spec.ts`
+- Test 1: `can create an access code with all required fields`
+- Test 2: `code field is unique` (duplicate code → error)
+- Test 3: `defaults: isActive=true, currentRedemptions=0`
+- Test 4: `expiresAt field is optional`
 
 **Acceptance Criteria**:
-- [ ] Modal shows code input field and unlock button
-- [ ] Error messages display correctly for invalid/expired/max-reached codes
-- [ ] Modal cannot be dismissed by clicking outside
-- [ ] Success triggers content reveal
+- [ ] `access-codes` collection registered and functional
+- [ ] Admin-only CRUD enforced
+- [ ] Unique constraint on `code` field
+- [ ] `tenantField` and `createdByField` work correctly
+- [ ] `pnpm generate:types` succeeds after this step
+
+**Run**: `pnpm vitest run tests/int/access-code-gate.int.spec.ts`
 
 ---
 
-### Step 9: Integrate Access Code Gate into `AccessGateProvider` and Lesson Page (FR-006)
+### Step 4: Create CodeRedemptions Collection (FR-004)
 
 **Files to Touch**:
-- `src/ui/web/auth/AccessGateProvider.tsx` (MODIFIED — add accessCode handling)
-- `src/client/hooks/useAccessGate.ts` (MODIFIED — add accessCode state)
-- `src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/page.tsx` (MODIFIED — pass lessonId to AccessGateProvider)
+- `src/server/payload/collections/CodeRedemptions.ts` (NEW)
+- `src/payload.config.ts` (MODIFIED — add import + register)
 
 **Behavior**:
+Create a Payload collection with slug `code-redemptions` and these fields:
+- `code`: relationship to `access-codes`, required, index — which code was used
+- `user`: relationship to `users`, required, index — who redeemed it
+- `lesson`: relationship to `lessons`, required, index — which lesson was unlocked
+- `redeemedAt`: date, required, defaultValue `new Date()` via beforeChange hook
 
-**AccessGateProvider changes**:
-- Accept new optional prop: `lessonId?: string` in `AccessGateProviderProps`
-- Pass `lessonId` to `useAccessGate()` hook call
-- When `accessType === 'accessCode'`:
-  - If user is NOT authenticated: show `AuthGateModal` (login first, then enter code)
-  - If user IS authenticated: check access via `GET /api/access-codes/check?lessonId=X` (done inside hook)
-    - While checking: show loading/blur (use `isCheckingAccess` state)
-    - If `hasAccess: true`: show content normally
-    - If `hasAccess: false`: show `AccessCodeGateModal` with `lessonId` prop
-  - On successful code redemption: hook's `onCodeRedeemed()` updates state, content revealed
-- Update `isBlocked` computation: `showMandatoryModal || showGatedModal || showAccessCodeModal`
-- Import `AccessCodeGateModal` from `./AccessCodeGateModal`
+Access control:
+- `create`: `adminOnly` (only server-side code creates redemptions)
+- `read`: `authenticatedOrOwner` (admin sees all, user sees own via `user` field match)
+- `update`: admin-only (or disallow entirely — records are immutable)
+- `delete`: `adminOnly`
 
-**useAccessGate hook changes**:
-- Add new optional param: `lessonId?: string` to `UseAccessGateParams` interface
-- Add new state: `showAccessCodeModal: boolean`
-- Add new state: `hasCodeAccess: boolean` (initially false, set to true after check or redemption)
-- Add new state: `isCheckingAccess: boolean` (loading state while fetching check endpoint)
-- When `accessType === 'accessCode'` and user is authenticated and `lessonId` is provided, fetch `GET /api/access-codes/check?lessonId=X` on mount
-- Expose `showAccessCodeModal`, `hasCodeAccess`, `isCheckingAccess`, and `onCodeRedeemed()` callback
-- `onCodeRedeemed()` sets `hasCodeAccess = true` and `showAccessCodeModal = false`
+Admin config:
+- `useAsTitle: 'redeemedAt'`
+- `defaultColumns: ['code', 'user', 'lesson', 'redeemedAt']`
 
-**Lesson page changes**:
-- Pass `lessonId={lesson.id}` to `AccessGateProvider`
-- Server-side: when `effectiveAccessType === 'accessCode'` and user is not authenticated, render minimal content (similar to mandatory mode)
+Register in `payload.config.ts` collections array.
+
+**NOTE**: Run `pnpm generate:types` after Steps 3+4 to regenerate payload-types.ts.
 
 **Tests** (FAIL before, PASS after):
-- Test location: `tests/int/access-code-gate.int.spec.ts` (append — integration-level tests)
-- Note: `useAccessGate` is a client-side React hook. The project's unit test config uses `environment: 'node'` (no jsdom), so direct React hook testing is not feasible. Verify the hook logic through E2E tests or by testing the underlying API endpoints (Steps 5-6) which the hook depends on.
-- Integration tests for Step 9 verify: the server-side `accessCode` handling in the lesson page returns correct HTML structure, and the check/redeem API endpoints (already tested in Steps 5-6) support the client-side flow.
-- Run: `pnpm vitest run tests/int/access-code-gate.int.spec.ts`
+- Test location: `tests/int/access-code-gate.int.spec.ts` (same file, new describe block)
+- Test 5: `can create a code redemption record`
+- Test 6: `redemption links code, user, and lesson`
 
 **Acceptance Criteria**:
-- [ ] Unauthenticated users see login prompt for access-code-gated content
-- [ ] Authenticated users without redemption see code entry modal with blur
-- [ ] Authenticated users with valid redemption see content normally
-- [ ] Content behind modal is blurred/hidden (pointer-events-none)
-- [ ] Existing access types (free, mandatory, gated) work unchanged
+- [ ] `code-redemptions` collection registered and functional
+- [ ] Admin can read all records; user reads only own (via `authenticatedOrOwner`)
+- [ ] Immutable records (update restricted to admin)
+- [ ] `pnpm generate:types` succeeds
+
+**Run**: `pnpm vitest run tests/int/access-code-gate.int.spec.ts`
 
 ---
 
-### Step 10: CSV Export Endpoint for Admin (FR-007)
+### Step 5: Add `accessCode` Option to Lessons and Courses Select Fields (FR-001)
+
+**Files to Touch**:
+- `src/server/payload/collections/Lessons.ts` (MODIFIED — lines 152-165, add option to `accessType` select)
+- `src/server/payload/collections/Courses.ts` (MODIFIED — lines 163-177 `accessType`, lines 147-161 `pageAccessType`)
+
+**Behavior**:
+Add `{ label: 'Access Code Required', value: 'accessCode' }` option to:
+- `Lessons.ts` → `accessType` select field (alongside inherit, free, mandatory, gated)
+- `Courses.ts` → `accessType` select field (alongside free, mandatory, gated)
+- `Courses.ts` → `pageAccessType` select field (alongside free, mandatory, gated)
+
+**Tests** (FAIL before, PASS after):
+- Test location: `tests/int/access-code-gate.int.spec.ts` (new describe block)
+- Test 7: `can create a lesson with accessType='accessCode'`
+- Test 8: `can create a course with accessType='accessCode'`
+- Test 9: `resolveAccessType returns 'accessCode' for lesson with accessType='accessCode'`
+
+**Acceptance Criteria**:
+- [ ] Lesson can be saved with `accessType: 'accessCode'`
+- [ ] Course can be saved with `accessType: 'accessCode'`
+- [ ] Existing access types still work
+- [ ] TypeScript compiles
+
+**Run**: `pnpm vitest run tests/int/access-code-gate.int.spec.ts`
+
+---
+
+### Step 6: Create Code Redemption API Endpoint (FR-005)
+
+**Files to Touch**:
+- `src/app/api/access-codes/redeem/route.ts` (NEW)
+
+**Behavior**:
+`POST /api/access-codes/redeem`
+
+Request body (validated with Zod):
+```typescript
+{ code: string, lessonId: string }
+```
+
+Response:
+```typescript
+{ success: boolean, message: string }
+```
+
+Validation logic:
+1. Authenticate user via `payload.auth({ headers: req.headers })`
+2. Parse/validate body with Zod schema
+3. Find code in `access-codes` collection where `code` matches AND `lesson` equals `lessonId`
+4. Verify `isActive === true`
+5. Verify not expired (`expiresAt` is null or in the future)
+6. Verify `maxRedemptions` not reached (`currentRedemptions < maxRedemptions` or `maxRedemptions` is null)
+7. Check user hasn't already redeemed (query `code-redemptions` for same `code` + `user` + `lesson`)
+8. If already redeemed → return `{ success: true, message: 'Already redeemed' }` (idempotent)
+9. Increment `currentRedemptions` on the access code
+10. Create `code-redemptions` record
+11. Return `{ success: true, message: 'Content unlocked' }`
+
+Error responses:
+- 401 if not authenticated
+- 400 if body invalid
+- 404 if code not found or not valid for this lesson
+- 409 if max redemptions reached
+- 500 for unexpected errors
+
+**Tests** (FAIL before, PASS after):
+- Test location: `tests/int/access-code-redeem.int.spec.ts`
+- Test 1: `returns 401 when not authenticated`
+- Test 2: `returns 400 for invalid body (missing code)`
+- Test 3: `returns 404 for nonexistent code`
+- Test 4: `successfully redeems a valid code`
+- Test 5: `increments currentRedemptions after redemption`
+- Test 6: `creates code-redemptions record`
+- Test 7: `returns success for already-redeemed code (idempotent)`
+- Test 8: `returns 404 for inactive code`
+- Test 9: `returns 404 for expired code`
+- Test 10: `returns 409 when maxRedemptions reached`
+- Test 11: `code for lesson A does not unlock lesson B`
+
+**Acceptance Criteria**:
+- [ ] Valid code + authenticated user → creates redemption, returns success
+- [ ] Duplicate redemption → idempotent success (no duplicate record)
+- [ ] Invalid/inactive/expired code → appropriate error
+- [ ] Max redemptions enforced
+- [ ] Lesson scope enforced (code must target the specific lesson)
+
+**Run**: `pnpm vitest run tests/int/access-code-redeem.int.spec.ts`
+
+---
+
+### Step 7: Create Access Code Check API Endpoint (FR-005 supplement)
+
+**Files to Touch**:
+- `src/app/api/access-codes/check/route.ts` (NEW)
+
+**Behavior**:
+`GET /api/access-codes/check?lessonId=<id>`
+
+This endpoint checks if the current authenticated user has an active redemption for a specific lesson. This is the **runtime re-check** that ensures access is revoked when a code is deleted/deactivated (clarified.md #3).
+
+Response:
+```typescript
+{ hasAccess: boolean }
+```
+
+Logic:
+1. Authenticate user
+2. Find any `code-redemptions` record for this `user` + `lesson`
+3. For each redemption, verify the linked `access-codes` record is still `isActive` and not expired
+4. If at least one valid redemption exists → `{ hasAccess: true }`
+5. Otherwise → `{ hasAccess: false }`
+
+**Tests** (FAIL before, PASS after):
+- Test location: `tests/int/access-code-redeem.int.spec.ts` (new describe block)
+- Test 12: `returns hasAccess=false when no redemption exists`
+- Test 13: `returns hasAccess=true after valid redemption`
+- Test 14: `returns hasAccess=false after code is deactivated`
+- Test 15: `returns 401 when not authenticated`
+
+**Acceptance Criteria**:
+- [ ] Returns true when user has active redemption with active code
+- [ ] Returns false when code has been deactivated (runtime re-check)
+- [ ] Returns false when code has expired
+- [ ] Returns 401 for unauthenticated requests
+
+**Run**: `pnpm vitest run tests/int/access-code-redeem.int.spec.ts`
+
+---
+
+### Step 8: Create Admin CSV Export Endpoint (FR-007)
 
 **Files to Touch**:
 - `src/app/api/access-codes/export/route.ts` (NEW)
 
 **Behavior**:
-`GET /api/access-codes/export?codeId=abc123`
+`GET /api/access-codes/export?codeId=<accessCodeId>`
 
-1. Auth check → must be admin (check `user.role === 'admin'`)
-2. Validate `codeId` query param
-3. Find all `code-redemptions` where `accessCode equals codeId`, populate `user` with depth 1
-4. Generate CSV string with columns: `Student Name, Email, Date Redeemed`
-5. Return `Response` with:
-   - `Content-Type: text/csv`
-   - `Content-Disposition: attachment; filename="access-code-redemptions-{code}.csv"`
+- Admin-only endpoint
+- Fetches all `code-redemptions` where `code` equals `codeId`
+- Populates `user` relationship (depth 1) to get name and email
+- Generates CSV with columns: `Student Name, Email, Date Redeemed`
+- Returns CSV file with `Content-Type: text/csv` and `Content-Disposition: attachment; filename=...`
 
 **Tests** (FAIL before, PASS after):
-- Test location: `tests/int/access-code-export.int.spec.ts` (NEW)
-- Test 1: Admin with codeId with redemptions → returns CSV with correct rows
-- Test 2: Admin with codeId with no redemptions → returns CSV with header only
-- Test 3: Non-admin user → 403
-- Test 4: Unauthenticated → 401
-- Run: `pnpm vitest run tests/int/access-code-export.int.spec.ts`
+- Test location: `tests/int/access-code-export.int.spec.ts`
+- Test 1: `returns 401 for unauthenticated request`
+- Test 2: `returns 403 for non-admin user`
+- Test 3: `returns CSV with correct headers`
+- Test 4: `CSV contains redemption data with student name and email`
+- Test 5: `returns empty CSV (headers only) when no redemptions`
 
 **Acceptance Criteria**:
-- [ ] CSV contains correct student name, email, and date
-- [ ] Only admins can access this endpoint
-- [ ] CSV downloads with correct content type and filename
+- [ ] Admin-only access enforced
+- [ ] CSV has correct format with Student Name, Email, Date Redeemed columns
+- [ ] Response has correct Content-Type and Content-Disposition headers
+- [ ] Handles empty data gracefully
+
+**Run**: `pnpm vitest run tests/int/access-code-export.int.spec.ts`
 
 ---
 
-### Step 11: Run Type Generation and Quality Gates
-
-**IMPORTANT**: Type generation (`pnpm generate:types`) MUST be run after Steps 3-4 (new collections are created) and BEFORE Steps 8-9 (which import the generated types). The build agent should run `pnpm generate:types` as part of Steps 3 or 4, then again here as a final check.
+### Step 9: Create AccessCodeGateModal Component (FR-006)
 
 **Files to Touch**:
-- `src/payload-types.ts` (REGENERATED)
-- Import map regeneration
+- `src/ui/web/auth/AccessCodeGateModal.tsx` (NEW)
 
 **Behavior**:
-1. Run `pnpm generate:types` to update TypeScript types for new collections
-2. Run `pnpm generate:importmap` if any new admin components
-3. Run `pnpm -s tsc --noEmit` to verify no type errors
-4. Run `pnpm -s lint` to verify no lint errors
-5. Run `pnpm -s format` to verify formatting
+Client component (`'use client'`) that renders a non-dismissible Dialog modal for code entry.
+
+Props:
+```typescript
+interface AccessCodeGateModalProps {
+  isOpen: boolean
+  lessonId: string
+  onSuccess: () => void
+}
+```
+
+Implementation:
+- Uses `Dialog` from `src/ui/web/components/dialog` with `allowDismiss={false}`
+- Uses `useTranslations('accessControl')` for all strings
+- Text input for code entry
+- "Unlock" button that calls `POST /api/access-codes/redeem`
+- Loading state while API call in progress
+- Error state shows `accessCodeError` translation
+- On success: calls `onSuccess()` callback
+- Follows `AuthGateModal` pattern (Dialog, DialogContent, DialogHeader, etc.)
 
 **Tests**:
-- All prior tests continue to pass
-- Run: `pnpm vitest run tests/int/access-code-gate.int.spec.ts tests/int/access-code-redeem.int.spec.ts tests/int/access-code-export.int.spec.ts tests/unit/access-types.unit.spec.ts tests/unit/i18n-access-code.unit.spec.ts`
+- No unit tests for React components (jsdom not configured in this project)
+- Component will be tested via integration in Step 10 and E2E tests
 
 **Acceptance Criteria**:
-- [ ] TypeScript compiles without errors
-- [ ] Linting passes
-- [ ] All tests pass
-- [ ] No regression in existing tests
+- [ ] Component renders Dialog with code input and unlock button
+- [ ] Uses i18n translations (not hardcoded strings)
+- [ ] Calls redeem API on submit
+- [ ] Shows error on failure, calls onSuccess on success
+- [ ] TypeScript compiles: `pnpm tsc --noEmit`
+
+---
+
+### Step 10: Integrate AccessCodeGate into AccessGateProvider and Lesson Page (FR-001, FR-006)
+
+**Files to Touch**:
+- `src/client/hooks/useAccessGate.ts` (MODIFIED — add accessCode state)
+- `src/ui/web/auth/AccessGateProvider.tsx` (MODIFIED — add AccessCodeGateModal rendering)
+- `src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/page.tsx` (MODIFIED — pass `lessonId` to AccessGateProvider)
+
+**Behavior**:
+
+**useAccessGate.ts changes**:
+- Add `isAccessCode` check: `accessType === 'accessCode'`
+- Add `showAccessCodeModal` state (boolean)
+- Add `accessCodeUnlocked` state (boolean, initially false)
+- On mount when `isAccessCode`: call `GET /api/access-codes/check?lessonId=...` to check existing redemption
+- If check returns `hasAccess: true` → set `accessCodeUnlocked = true`, don't show modal
+- If check returns `hasAccess: false` → set `showAccessCodeModal = true`
+- Add `onAccessCodeSuccess` callback that sets `accessCodeUnlocked = true` and `showAccessCodeModal = false`
+- Return `showAccessCodeModal` and `onAccessCodeSuccess` from hook
+- **New prop needed**: `lessonId?: string` (only needed for accessCode type)
+
+**AccessGateProvider.tsx changes**:
+- Accept new prop `lessonId?: string`
+- Destructure `showAccessCodeModal` and `onAccessCodeSuccess` from `useAccessGate`
+- Render `<AccessCodeGateModal>` when `showAccessCodeModal` is true
+- Add `accessCode` to `isBlocked` check: `isBlocked = showMandatoryModal || showGatedModal || showAccessCodeModal`
+
+**Lesson page.tsx changes**:
+- Pass `lessonId={lesson.id}` to all `<AccessGateProvider>` instances
+- For `accessCode` type: server-side should NOT block (unlike `mandatory`), because the client needs to render the code entry modal
+
+**Tests**:
+- No unit tests for hooks/components (jsdom not configured)
+- Acceptance via TypeScript compilation and manual verification
+- E2E test would be ideal but deferred to e2e-test-writer
+
+**Acceptance Criteria**:
+- [ ] When lesson has `accessType: 'accessCode'` and user has no redemption → shows AccessCodeGateModal, content is blurred
+- [ ] When user enters valid code → modal closes, content is revealed
+- [ ] When user already redeemed → modal doesn't show (runtime check)
+- [ ] When code is later deactivated → on next visit, modal shows again (no retained access)
+- [ ] Existing `mandatory` and `gated` flows unchanged
+- [ ] TypeScript compiles: `pnpm tsc --noEmit`
+
+---
+
+### Step 11: Quality Gates and Type Generation
+
+**Files to Touch**: None (commands only)
+
+**Behavior**:
+Run all quality checks to ensure nothing is broken:
+
+1. `pnpm generate:types` — regenerate payload types with new collections
+2. `pnpm generate:importmap` — regenerate admin import map
+3. `pnpm tsc --noEmit` — TypeScript check
+4. `pnpm lint` — lint check
+5. `pnpm vitest run tests/unit/access-types.unit.spec.ts tests/unit/i18n-access-code.unit.spec.ts tests/int/access-code-gate.int.spec.ts tests/int/access-code-redeem.int.spec.ts tests/int/access-code-export.int.spec.ts` — all tests pass
+
+**Acceptance Criteria**:
+- [ ] `pnpm generate:types` succeeds
+- [ ] `pnpm tsc --noEmit` passes with no errors
+- [ ] `pnpm lint` passes
+- [ ] All 5 test files pass
+- [ ] No regressions in existing tests
+
+**Run**: Commands listed above
+
+---
+
+## Ordering & Dependencies
+
+```
+Step 1 (access-types.ts) ─────────────────────────────┐
+Step 2 (i18n strings) ─────────────────────────────────┤
+                                                        ├── Step 5 (Lessons/Courses field options)
+Step 3 (AccessCodes collection) ───┐                    │
+                                    ├── generate:types ──┤
+Step 4 (CodeRedemptions collection)┘                    │
+                                                        ├── Step 6 (redeem API)
+                                                        ├── Step 7 (check API)
+                                                        ├── Step 8 (export API)
+                                                        ├── Step 9 (AccessCodeGateModal)
+                                                        └── Step 10 (integration)
+                                                              │
+                                                              └── Step 11 (quality gates)
+```
+
+**Critical ordering note**: `pnpm generate:types` MUST run after Steps 3-4 (new collections) and before Steps 6-10 (which import from `@/payload-types`).
