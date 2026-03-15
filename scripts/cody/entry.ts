@@ -734,6 +734,12 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
     // No need to manually delete files here - that was causing double-delete
     const newState = resetFromStage(state, fromStage, stageOrder, taskDir)
     writeState(input.taskId, newState)
+
+    // FIX: Update lifecycle label from failed → building so dashboard shows correct status during rerun
+    if (input.issueNumber && !input.local) {
+      const { setLifecycleLabel } = await import('./github-api')
+      setLifecycleLabel(input.issueNumber, 'cody:building')
+    }
   }
 
   // Run impl pipeline
