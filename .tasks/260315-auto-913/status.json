@@ -4,9 +4,9 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-15T12:38:54.363Z",
-  "updatedAt": "2026-03-15T17:26:39.071Z",
-  "state": "paused",
-  "cursor": null,
+  "updatedAt": "2026-03-15T17:33:21.070Z",
+  "state": "running",
+  "cursor": "architect",
   "stages": {
     "taskify": {
       "state": "paused",
@@ -22,18 +22,18 @@
       "sessionId": "ses_30e7e442dffeUA7XnIaDyVfEe3"
     },
     "architect": {
-      "state": "paused",
+      "state": "completed",
       "retries": 0,
-      "startedAt": "2026-03-15T17:21:54.773Z",
-      "completedAt": "2026-03-15T17:26:36.474Z",
+      "startedAt": "2026-03-15T17:30:22.780Z",
+      "completedAt": "2026-03-15T17:33:18.673Z",
       "outputFile": "architect.md",
       "tokenUsage": {
-        "input": 30,
-        "output": 11195,
-        "cacheRead": 2871886
+        "input": 14,
+        "output": 7311,
+        "cacheRead": 856904
       },
-      "cost": 2.57226175,
-      "sessionId": "ses_30d7b2a8affe44D52n1Zh9yY6I"
+      "cost": 1.1810595000000002,
+      "sessionId": "ses_30d736ab9ffedmXb9u329x9e4l"
     }
   },
   "triggeredBy": "aguyaharonyair",
@@ -44,6 +44,6 @@
       "timestamp": "2026-03-15T12:38:54.363Z"
     }
   ],
-  "completedAt": "2026-03-15T17:26:39.071Z",
-  "totalCost": 2.57226175
+  "totalCost": 2.57226175,
+  "branchName": "fix/260315-auto-827-pdf"
 }

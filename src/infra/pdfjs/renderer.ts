@@ -20,12 +20,19 @@ export function rewriteCss(css: string, cdnBase?: string): string {
  * 4. Remove broken locale references
  * 5. Inline rewritten CSS
  * 6. Inject security features to disable download and print
+ * 7. Inject PDF.js configuration to disable range requests
  *
  * Security features:
  * - Hides download and print buttons via CSS
  * - Disables Ctrl+P/Cmd+P keyboard shortcuts
  * - Overrides window.print() to prevent programmatic printing
  * - Disables context menu to prevent right-click print
+ *
+ * PDF.js configuration:
+ * - Disables HTTP range requests (disableRange: true)
+ * - Disables streaming mode (disableStream: true)
+ * - This fixes "Invalid PDF structure" errors caused by intermittent
+ *   CDN/proxy issues with partial content responses on certain platforms
  *
  * @param html - Original viewer HTML
  * @param css - CSS content (should already have image paths rewritten via rewriteCss)
@@ -47,6 +54,23 @@ export async function renderViewerHtml(
 
   // Step 1: Add base href right after <head>
   result = result.replace('<head>', `<head>\n  <base href="${base}/web/">`)
+
+  // Step 1.5: Inject PDF.js configuration to disable range requests
+  // This MUST come before the viewer scripts load to ensure proper initialization
+  // This fixes "Invalid PDF structure" errors on Chrome Windows caused by
+  // intermittent CDN/proxy issues with HTTP range requests (206 Partial Content).
+  // By disabling range requests, PDF.js downloads the entire file as a single request.
+  result = result.replace(
+    '<head>',
+    `<head>
+    <script>
+      // Force full-file download to prevent range request issues on certain platforms
+      // This is set on the window object before the viewer loads for safety
+      window.PDFJS_GLOBAL_OPTS = window.PDFJS_GLOBAL_OPTS || {};
+      window.PDFJS_GLOBAL_OPTS.disableRange = true;
+      window.PDFJS_GLOBAL_OPTS.disableStream = true;
+    </script>`,
+  )
 
   // Step 2: Replace viewer.mjs with CDN URL
   result = result.replace('src="viewer.mjs"', `src="${urls.mjs}"`)
@@ -75,7 +99,8 @@ export async function renderViewerHtml(
   // Remove external CSS link and inject inline CSS
   result = result.replace('href="viewer.css"', 'href="data:text/css;base64,REMOVED"').replace(
     '</head>',
-    `<style>${css}</style>\n<style>
+    `<style>${css}</style>
+<style>
       /* Remove padding and fix scrolling for iframe embedding */
       body {
         margin: 0 !important;

@@ -2,6 +2,7 @@ import { RESPONSE_HEADERS } from '@/infra/pdfjs/config'
 import { renderViewerHtml, rewriteCss, validateRewrittenHtml } from '@/infra/pdfjs/renderer'
 import { loadViewerCss, loadViewerTemplate } from '@/infra/pdfjs/template-loader'
 import { redactUrl, validateFileUrl } from '@/infra/pdfjs/validator'
+import { isVercelBlobUrl } from '@/infra/blob/vercel-blob-adapter'
 import { logger } from '@/infra/utils/logger'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -98,15 +99,21 @@ export async function GET(request: NextRequest) {
     // 1. Object.defineProperty crash (not configurable in modern browsers)
     // 2. Cross-origin PDF.js rejection (URL is same-origin via /api/media/file/ proxy)
 
+    // Determine PDF source type for observability
+    const pdfSource = isVercelBlobUrl(validatedFileUrl) ? 'blob' : 'proxy'
+
     reqLogger.info(
-      { fileUrl: redactUrl(validatedFileUrl), htmlSize: html.length },
+      { fileUrl: redactUrl(validatedFileUrl), htmlSize: html.length, pdfSource },
       'Successfully rendered PDF viewer',
     )
 
     // Return HTML with proper headers
     return new NextResponse(html, {
       status: 200,
-      headers: RESPONSE_HEADERS,
+      headers: {
+        ...RESPONSE_HEADERS,
+        'X-PDF-Source': pdfSource,
+      },
     })
   } catch (error) {
     reqLogger.error({ error }, 'Unexpected error proxying PDF viewer')
