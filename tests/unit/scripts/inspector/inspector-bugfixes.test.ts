@@ -206,7 +206,7 @@ describe('Fix #12: Failure analysis skips queue-managed tasks', () => {
           healthDetail: 'Failed',
         },
       ],
-      'cody:queueState': {
+      'queue:state': {
         activeTaskId: 'queue-task-1',
         activeIssueNumber: 500,
         activeStartedAt: new Date().toISOString(),
@@ -271,7 +271,7 @@ describe('Fix #12: Failure analysis skips queue-managed tasks', () => {
           healthDetail: 'Failed',
         },
       ],
-      // No cody:queueState
+      // No queue:state
     }
 
     const mockCtx = {
@@ -331,7 +331,7 @@ describe('Fix #12: Failure analysis skips queue-managed tasks', () => {
           healthDetail: 'Failed',
         },
       ],
-      'cody:queueState': {
+      'queue:state': {
         activeTaskId: 'different-task',
         activeIssueNumber: 999,
         activeStartedAt: new Date().toISOString(),

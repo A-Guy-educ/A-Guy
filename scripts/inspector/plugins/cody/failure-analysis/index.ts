@@ -227,7 +227,7 @@ export const failureAnalysisPlugin: InspectorPlugin = {
 
     // Skip tasks managed by queue-manager to avoid duplicate retries (Issue #12)
     // Queue-manager has its own retry logic with different MAX_RETRIES
-    const queueState = ctx.state.get<{ activeTaskId: string | null }>('cody:queueState')
+    const queueState = ctx.state.get<{ activeTaskId: string | null }>('queue:state')
     const activeQueueTaskId = queueState?.activeTaskId ?? null
     const unqueuedFailed = failedTasks.filter((t) => {
       if (activeQueueTaskId && t.taskId === activeQueueTaskId) {
