@@ -28,6 +28,7 @@ import { Prompts } from '@/server/payload/collections/Prompts'
 import { TeacherProfiles } from '@/server/payload/collections/TeacherProfiles'
 import { Tenants } from '@/server/payload/collections/Tenants'
 import { UploadSessions } from '@/server/payload/collections/UploadSessions'
+import { UserEntitlements } from '@/server/payload/collections/UserEntitlements'
 import { UserProgress } from '@/server/payload/collections/UserProgress'
 import { Users } from '@/server/payload/collections/Users'
 import { UserSettings } from '@/server/payload/collections/UserSettings'
@@ -166,6 +167,7 @@ export default buildConfig({
     UploadSessions,
     Posts,
     PricingPlans,
+    UserEntitlements,
     MCPAuditLogs,
   ],
   cors: [getServerSideURL()].filter(Boolean),

@@ -93,6 +93,7 @@ export interface Config {
     'upload-sessions': UploadSession;
     posts: Post;
     'pricing-plans': PricingPlan;
+    'user-entitlements': UserEntitlement;
     'mcp-audit-logs': McpAuditLog;
     redirects: Redirect;
     forms: Form;
@@ -132,6 +133,7 @@ export interface Config {
     'upload-sessions': UploadSessionsSelect<false> | UploadSessionsSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
     'pricing-plans': PricingPlansSelect<false> | PricingPlansSelect<true>;
+    'user-entitlements': UserEntitlementsSelect<false> | UserEntitlementsSelect<true>;
     'mcp-audit-logs': McpAuditLogsSelect<false> | McpAuditLogsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
@@ -513,11 +515,11 @@ export interface Course {
   /**
    * Controls access to the course page itself (study/practice view). "Gated" shows a sign-in prompt after a configurable delay.
    */
-  pageAccessType: 'free' | 'mandatory' | 'gated';
+  pageAccessType: 'free' | 'mandatory' | 'gated' | 'paid';
   /**
    * Default access type for lessons in this course. Lessons can override with their own setting.
    */
-  accessType: 'free' | 'mandatory' | 'gated';
+  accessType: 'free' | 'mandatory' | 'gated' | 'paid';
   categories: (string | Category)[];
   /**
    * AI system prompt for Ask tab chat in this course (uses default if not set)
@@ -1271,7 +1273,7 @@ export interface Lesson {
   /**
    * Access control for this lesson. "Inherit" uses the parent course setting. "Gated" is a client-side nudge, not hard enforcement.
    */
-  accessType: 'inherit' | 'free' | 'mandatory' | 'gated';
+  accessType: 'inherit' | 'free' | 'mandatory' | 'gated' | 'paid';
   /**
    * Show an intro/about page before the lesson starts
    */
@@ -1954,6 +1956,53 @@ export interface PricingPlan {
   createdAt: string;
 }
 /**
+ * Manage user access to paid courses and lessons
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-entitlements".
+ */
+export interface UserEntitlement {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * The student who has access
+   */
+  user: string | User;
+  /**
+   * Whether this entitlement is for a course or a specific lesson
+   */
+  contentType: 'course' | 'lesson';
+  /**
+   * The course to grant access to
+   */
+  course?: (string | null) | Course;
+  /**
+   * The specific lesson to grant access to
+   */
+  lesson?: (string | null) | Lesson;
+  /**
+   * How this entitlement was granted
+   */
+  grantMethod: 'admin' | 'payment' | 'code';
+  /**
+   * The admin who granted this entitlement
+   */
+  grantedBy?: (string | null) | User;
+  /**
+   * Optional expiration date (leave empty for permanent)
+   */
+  expiresAt?: string | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "mcp-audit-logs".
  */
@@ -2360,6 +2409,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'pricing-plans';
         value: string | PricingPlan;
+      } | null)
+    | ({
+        relationTo: 'user-entitlements';
+        value: string | UserEntitlement;
       } | null)
     | ({
         relationTo: 'mcp-audit-logs';
@@ -3114,6 +3167,23 @@ export interface PricingPlansSelect<T extends boolean = true> {
   price?: T;
   currency?: T;
   isActive?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-entitlements_select".
+ */
+export interface UserEntitlementsSelect<T extends boolean = true> {
+  tenant?: T;
+  user?: T;
+  contentType?: T;
+  course?: T;
+  lesson?: T;
+  grantMethod?: T;
+  grantedBy?: T;
+  expiresAt?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;

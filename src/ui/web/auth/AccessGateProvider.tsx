@@ -24,6 +24,10 @@ interface AccessGateProviderProps {
   gatedDelayMs?: number
   /** Warning duration before lock-out (ms). Read from admin config server-side. */
   gatedWarningMs?: number
+  /** Server-determined: user lacks entitlement for paid content */
+  requiresEntitlement?: boolean
+  /** Server-determined: whether user is logged in */
+  isAuthenticated?: boolean
   children: React.ReactNode
 }
 
@@ -32,6 +36,8 @@ export function AccessGateProvider({
   courseSlug,
   gatedDelayMs,
   gatedWarningMs,
+  requiresEntitlement,
+  isAuthenticated,
   children,
 }: AccessGateProviderProps) {
   const t = useTranslations('accessControl')
@@ -44,19 +50,22 @@ export function AccessGateProvider({
     dismissWarning,
   } = useAccessGate({ accessType, courseSlug, gatedDelayMs, gatedWarningMs })
 
-  const isBlocked = showMandatoryModal || showGatedModal
+  const showPaidModal = accessType === 'paid' && requiresEntitlement === true
+  const isBlocked = showMandatoryModal || showGatedModal || showPaidModal
 
   // Track which modal type is currently shown (fire once per modal appearance)
   const hasFiredRef = useRef<string | null>(null)
 
   useEffect(() => {
-    const triggerType = showMandatoryModal
-      ? 'mandatory'
-      : showGatedModal
-        ? 'gated'
-        : showWarningModal
-          ? 'warning'
-          : null
+    const triggerType = showPaidModal
+      ? 'paid'
+      : showMandatoryModal
+        ? 'mandatory'
+        : showGatedModal
+          ? 'gated'
+          : showWarningModal
+            ? 'warning'
+            : null
 
     if (triggerType && hasFiredRef.current !== triggerType) {
       hasFiredRef.current = triggerType
@@ -71,7 +80,7 @@ export function AccessGateProvider({
     if (!triggerType) {
       hasFiredRef.current = null
     }
-  }, [showMandatoryModal, showGatedModal, showWarningModal, courseSlug, pathname])
+  }, [showPaidModal, showMandatoryModal, showGatedModal, showWarningModal, courseSlug, pathname])
 
   return (
     <>
@@ -105,6 +114,25 @@ export function AccessGateProvider({
         description={t('gatedLockedDescription')}
         returnTo={pathname}
       />
+
+      {/* Paid content modal */}
+      {showPaidModal && (
+        <Dialog open={true}>
+          <DialogContent allowDismiss={false} className="sm:max-w-md">
+            <DialogHeader className="text-center sm:text-center">
+              <DialogTitle className="text-xl">{t('paidTitle')}</DialogTitle>
+              <DialogDescription className="mt-2">
+                {isAuthenticated ? t('paidNoEntitlement') : t('paidNotLoggedIn')}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-4 flex flex-col items-center gap-3">
+              {!isAuthenticated && (
+                <GoogleLoginButton returnTo={pathname} variant="default" className="w-full" />
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {isBlocked ? (
         <div aria-hidden="true" className="pointer-events-none select-none blur-sm">

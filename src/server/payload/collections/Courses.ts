@@ -152,6 +152,7 @@ export const Courses: CollectionConfig = {
         { label: 'Free Access', value: 'free' },
         { label: 'Require Registration', value: 'mandatory' },
         { label: 'Gated (5-Minute Delay)', value: 'gated' },
+        { label: 'Paid (Requires Entitlement)', value: 'paid' },
       ],
       admin: {
         position: 'sidebar',
@@ -168,6 +169,7 @@ export const Courses: CollectionConfig = {
         { label: 'Free Access', value: 'free' },
         { label: 'Require Registration', value: 'mandatory' },
         { label: 'Gated (5-Minute Delay)', value: 'gated' },
+        { label: 'Paid (Requires Entitlement)', value: 'paid' },
       ],
       admin: {
         position: 'sidebar',

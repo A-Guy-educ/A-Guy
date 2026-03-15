@@ -10,7 +10,11 @@ import { queryCourseBySlug } from '@/server/repos/queries/courses'
 import { queryExercisesByLesson } from '@/server/repos/queries/exercises'
 import { queryLessonBySlug } from '@/server/repos/queries/lessons'
 import { queryMediaByIds } from '@/server/repos/queries/media'
-import { isAuthenticatedServer } from '@/server/utils/access-gate-server'
+import { hasEntitlement } from '@/server/services/entitlement_check'
+import {
+  getAuthenticatedUserServer,
+  isAuthenticatedServer,
+} from '@/server/utils/access-gate-server'
 import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
 import { ChatInterface } from '@/ui/web/chat'
 import { extractAllMediaIds } from '@/ui/web/exerciserenderer/utils/extractMediaIds'
@@ -77,6 +81,41 @@ export default async function LessonPage({ params }: LessonPageProps) {
         <div className="min-h-screen" />
       </AccessGateProvider>
     )
+  }
+
+  // Server-side block: for paid mode, check entitlement
+  if (effectiveAccessType === 'paid') {
+    const { user, payload } = await getAuthenticatedUserServer()
+    const isAdmin = user?.role === 'admin'
+    let requiresEntitlement = true
+
+    if (user && !isAdmin) {
+      requiresEntitlement = !(await hasEntitlement({
+        payload,
+        userId: user.id,
+        courseId: course.id,
+        lessonId: lesson.id,
+      }))
+    }
+
+    if (isAdmin) {
+      requiresEntitlement = false
+    }
+
+    if (!user || requiresEntitlement) {
+      return (
+        <AccessGateProvider
+          accessType={effectiveAccessType}
+          courseSlug={courseSlug}
+          gatedDelayMs={gatedDelayMs}
+          gatedWarningMs={gatedWarningMs}
+          requiresEntitlement={true}
+          isAuthenticated={!!user}
+        >
+          <div className="min-h-screen" />
+        </AccessGateProvider>
+      )
+    }
   }
 
   const exercises = await queryExercisesByLesson({ lessonId: lesson.id })
