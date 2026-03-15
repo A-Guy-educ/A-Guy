@@ -27,7 +27,7 @@ function cleanCell(cell: string): string {
  */
 export function parseTabular(innerContent: string): QuestionTableBlock | null {
   // Strip column spec like {|c|c|c|} that follows \begin{tabular}
-  let stripped = innerContent.replace(/^\s*\{[|clrp{}.\d\\]*\}\s*/, '')
+  const stripped = innerContent.replace(/^\s*\{[|clrp{}.\d\\]*\}\s*/, '')
   // Remove \hline commands and split into rows by \\
   const cleaned = stripped.replace(/\\hline/g, '').trim()
 
