@@ -52,7 +52,10 @@ export function CourseLessonCard({
         )}
       >
         <div className="flex flex-col text-end">
-          <span className="text-[10px] font-bold text-muted-foreground mb-1 uppercase tracking-wide">
+          <span
+            className="text-[10px] font-bold mb-1 uppercase tracking-wide"
+            style={{ color: accentColor }}
+          >
             {tc('lesson')} {index}
           </span>
           <h3 className="text-lg font-bold text-card-foreground">{lesson.title}</h3>
