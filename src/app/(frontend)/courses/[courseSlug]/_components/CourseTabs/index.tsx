@@ -33,10 +33,12 @@ export function CourseTabs({ activeTab, onTabChange }: CourseTabsProps) {
               onClick={() => onTabChange(tab)}
               className={cn(
                 'flex-1 px-6 py-2 text-sm rounded-full transition-all font-semibold',
-                isActive ? 'shadow-md' : 'text-muted-foreground hover:text-foreground',
+                isActive ? 'shadow-md' : 'hover:opacity-80',
               )}
               style={
-                isActive ? { backgroundColor: TAB_COLORS[tab].stroke, color: 'white' } : undefined
+                isActive
+                  ? { backgroundColor: TAB_COLORS[tab].stroke, color: 'white' }
+                  : { color: TAB_COLORS[tab].text }
               }
             >
               {t(tab)}
