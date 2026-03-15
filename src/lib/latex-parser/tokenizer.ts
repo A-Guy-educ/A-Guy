@@ -7,8 +7,8 @@ const BEGIN_RE = /\\begin\{([^}]+)\}/g
 const DISPLAY_MATH_RE = /\$\$[\s\S]*?\$\$/g
 // Matches inline math $...$  (not $$)
 const INLINE_MATH_RE = /(?<!\$)\$(?!\$)(?:[^$\\]|\\.)*\$(?!\$)/g
-// Matches \commandName{arg} or bare \commandName
-const COMMAND_RE = /\\([a-zA-Z]+)(?:\{[^}]*\})?/g
+// Matches \commandName{arg}, \commandName*{arg}, or bare \commandName
+const COMMAND_RE = /\\([a-zA-Z]+)\*?(?:\{[^}]*\})?/g
 
 type Segment = {
   start: number
