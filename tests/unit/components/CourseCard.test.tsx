@@ -2,13 +2,16 @@
 import { CourseCard } from '@/app/(frontend)/courses/_components/CourseCard'
 import type { Course } from '@/payload-types'
 import { I18nProvider } from '@/ui/web/providers/I18n'
-import { fireEvent, render, screen } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import enMessages from '../../../src/i18n/en.json'
+import { toast } from 'sonner'
 
 // Mock sonner toast
 vi.mock('sonner', () => ({
-  toast: vi.fn(),
+  toast: {
+    info: vi.fn(() => 'mock-toast-id'),
+  },
 }))
 
 // Mock localStorage
@@ -77,6 +80,10 @@ const renderWithI18n = (course: Course) => {
 beforeEach(() => {
   vi.clearAllMocks()
   localStorageMock.clear()
+})
+
+afterEach(() => {
+  cleanup()
 })
 
 describe('CourseCard component', () => {
@@ -162,7 +169,6 @@ describe('CourseCard content status badges', () => {
   })
 
   it('does NOT navigate when clicking a "Soon" course', async () => {
-    const { toast } = await import('sonner')
     const soonCourse = { ...mockCourse, contentStatus: 'soon' as const }
     renderWithI18n(soonCourse)
 
@@ -173,8 +179,8 @@ describe('CourseCard content status badges', () => {
     expect(mockPush).not.toHaveBeenCalled()
 
     // Toast should have been shown
-    expect(toast).toHaveBeenCalled()
-    expect(toast).toHaveBeenCalledWith(expect.stringContaining('prepared'))
+    expect(toast.info).toHaveBeenCalled()
+    expect(toast.info).toHaveBeenCalledWith(expect.stringContaining('prepared'))
   })
 
   it('navigates normally when course.contentStatus is "justAdded"', () => {

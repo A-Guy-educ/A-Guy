@@ -6,9 +6,7 @@ import type {
   GraphLayout,
 } from '@/server/payload/collections/Exercises/types'
 import type { GeometrySpecV1 } from '@/infra/contracts/graphics/geometry.v1'
-import type { QuestionGeometryBlock } from '@/server/payload/collections/Exercises/types'
 import { CollapsibleSection } from '@/ui/admin/shared/CollapsibleSection'
-import React, { useCallback } from 'react'
 import { AnglesPanel } from '../components/geometry/AnglesPanel'
 import { CanvasConfigPanel } from '../components/geometry/CanvasConfigPanel'
 import { CirclesPanel } from '../components/geometry/CirclesPanel'

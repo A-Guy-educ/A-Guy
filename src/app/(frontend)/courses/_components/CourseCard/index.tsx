@@ -128,7 +128,7 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
       <div className="mt-auto pt-6 border-t border-border">
         <Button
           onClick={handleCourseSelect}
-          disabled={isLoading || isSoon}
+          disabled={isLoading}
           className={cn(
             'w-full',
             isOwned

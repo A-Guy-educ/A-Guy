@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-15T17:19:29.506Z",
-  "updatedAt": "2026-03-15T17:34:45.532Z",
+  "updatedAt": "2026-03-15T18:30:09.780Z",
   "state": "running",
   "cursor": "gap",
   "stages": {
@@ -52,6 +52,25 @@
       "state": "skipped",
       "retries": 0,
       "skipped": "Complexity 49 (complex) below threshold 50 for plan-gap"
+    },
+    "test": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-15T17:52:48.007Z",
+      "outputFile": "test.md",
+      "sessionId": "ses_30d6f6c52ffeavtrIMnie21LjF"
+    },
+    "build": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-15T17:52:48.007Z",
+      "outputFile": "build.md",
+      "sessionId": "ses_30d6f6b21ffez1SGHtuehvEetI"
+    },
+    "commit": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-15T18:30:09.780Z"
     }
   },
   "issueNumber": 839,
@@ -63,6 +82,5 @@
       "actor": "aguyaharonyair",
       "timestamp": "2026-03-15T17:19:29.506Z"
     }
-  ],
-  "branchName": "feat/260315-auto-839-content-status-badging-soon-just-a"
+  ]
 }

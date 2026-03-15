@@ -70,6 +70,7 @@ describe('Chapter adminTitle', () => {
         contentStatus: 'none',
         contentStatusVisible: true,
       },
+      draft: false,
     })
     course1Id = course1.id
     createdIds.push(course1.id)
@@ -88,7 +89,10 @@ describe('Chapter adminTitle', () => {
         tenant: tenantId,
         pageAccessType: 'free',
         accessType: 'free',
+        contentStatus: 'none',
+        contentStatusVisible: true,
       },
+      draft: false,
     })
     course2Id = course2.id
     createdIds.push(course2.id)
