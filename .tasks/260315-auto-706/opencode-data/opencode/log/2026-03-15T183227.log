@@ -1,0 +1,55 @@
+INFO  2026-03-15T18:32:27 +371ms service=default version=1.2.26 args=["export","ses_30d3cb158ffeIhXAR5UeHM2Q2m"] opencode
+INFO  2026-03-15T18:32:27 +1ms service=default directory=/home/runner/work/A-Guy/A-Guy creating instance
+INFO  2026-03-15T18:32:27 +0ms service=project directory=/home/runner/work/A-Guy/A-Guy fromDirectory
+INFO  2026-03-15T18:32:27 +19ms service=db path=/home/runner/work/A-Guy/A-Guy/.tasks/260315-auto-706/opencode-data/opencode/opencode.db opening database
+INFO  2026-03-15T18:32:27 +7ms service=db count=9 mode=bundled applying migrations
+INFO  2026-03-15T18:32:27 +22ms service=default directory=/home/runner/work/A-Guy/A-Guy bootstrapping
+INFO  2026-03-15T18:32:27 +18ms service=config path=/home/runner/.config/opencode/config.json loading
+INFO  2026-03-15T18:32:27 +2ms service=config path=/home/runner/.config/opencode/opencode.json loading
+INFO  2026-03-15T18:32:27 +0ms service=config path=/home/runner/.config/opencode/opencode.jsonc loading
+INFO  2026-03-15T18:32:27 +1ms service=config path=/home/runner/work/A-Guy/A-Guy/opencode.json loading
+INFO  2026-03-15T18:32:27 +41ms service=bun cmd=["/home/runner/.opencode/bin/opencode","install","--no-cache"] cwd=/home/runner/.config/opencode running
+INFO  2026-03-15T18:32:27 +4ms service=config path=/home/runner/work/A-Guy/A-Guy/.opencode/opencode.jsonc loading
+INFO  2026-03-15T18:32:27 +1ms service=config path=/home/runner/work/A-Guy/A-Guy/.opencode/opencode.json loading
+INFO  2026-03-15T18:32:27 +31ms service=config path=/home/runner/.opencode/opencode.jsonc loading
+INFO  2026-03-15T18:32:27 +0ms service=config path=/home/runner/.opencode/opencode.json loading
+INFO  2026-03-15T18:32:27 +8ms service=plugin name=CodexAuthPlugin loading internal plugin
+INFO  2026-03-15T18:32:27 +1ms service=plugin name=CopilotAuthPlugin loading internal plugin
+INFO  2026-03-15T18:32:27 +0ms service=plugin name=gitlabAuthPlugin loading internal plugin
+INFO  2026-03-15T18:32:27 +0ms service=plugin path=opencode-anthropic-auth@0.0.13 loading plugin
+INFO  2026-03-15T18:32:28 +385ms service=bun code=0 stdout=bun install v1.3.10 (30e609e0)
+
++ @opencode-ai/plugin@1.2.26
+
+2 packages installed [418.00ms]
+ stderr=Resolving dependencies
+Resolved, downloaded and extracted [6]
+Saved lockfile
+ done
+INFO  2026-03-15T18:32:28 +1ms service=bun cmd=["/home/runner/.opencode/bin/opencode","install","--no-cache"] cwd=/home/runner/work/A-Guy/A-Guy/.opencode running
+INFO  2026-03-15T18:32:28 +479ms service=bun code=0 stdout=bun install v1.3.10 (30e609e0)
+
++ @opencode-ai/plugin@1.2.26
+
+2 packages installed [469.00ms]
+ stderr=Resolving dependencies
+Resolved, downloaded and extracted [6]
+Saved lockfile
+ done
+INFO  2026-03-15T18:32:28 +1ms service=bun cmd=["/home/runner/.opencode/bin/opencode","install","--no-cache"] cwd=/home/runner/.opencode running
+INFO  2026-03-15T18:32:29 +506ms service=bun code=0 stdout=bun install v1.3.10 (30e609e0)
+
++ @opencode-ai/plugin@1.2.26
+
+2 packages installed [495.00ms]
+ stderr=Resolving dependencies
+Resolved, downloaded and extracted [6]
+Saved lockfile
+ done
+INFO  2026-03-15T18:32:29 +20ms service=bus type=* subscribing
+INFO  2026-03-15T18:32:29 +0ms service=bus type=session.updated subscribing
+INFO  2026-03-15T18:32:29 +0ms service=bus type=message.updated subscribing
+INFO  2026-03-15T18:32:29 +0ms service=bus type=message.part.updated subscribing
+INFO  2026-03-15T18:32:29 +0ms service=bus type=session.diff subscribing
+INFO  2026-03-15T18:32:29 +0ms service=format init
+INFO  2026-03-15T18:32:29 +0ms service=bus type=file.edited subscribing
