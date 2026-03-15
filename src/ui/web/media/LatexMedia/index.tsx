@@ -24,7 +24,9 @@ export const LatexMedia: React.FC<MediaProps> = (props) => {
   const title = React.useMemo(() => {
     if (resource && typeof resource === 'object') {
       // Strip .tex extension and Vercel Blob random suffix (e.g. "-j6raXSZXLk2MsIHrazuTx37oayvike")
-      return resource.filename?.replace(/\.tex$/i, '').replace(/-[a-zA-Z0-9]{20,}$/, '') ?? undefined
+      return (
+        resource.filename?.replace(/\.tex$/i, '').replace(/-[a-zA-Z0-9]{20,}$/, '') ?? undefined
+      )
     }
     return undefined
   }, [resource])

@@ -106,7 +106,10 @@ function convertTables(text: string): string {
         )
 
       const headerCells = parseRow(rows[0])
-      const mdLines = [`| ${headerCells.join(' | ')} |`, `| ${headerCells.map(() => '---').join(' | ')} |`]
+      const mdLines = [
+        `| ${headerCells.join(' | ')} |`,
+        `| ${headerCells.map(() => '---').join(' | ')} |`,
+      ]
 
       for (let i = 1; i < rows.length; i++) {
         const cells = parseRow(rows[i])
@@ -128,10 +131,7 @@ function stripMinipages(text: string): string {
 
 /** Replace TikZ picture blocks with a placeholder */
 function handleTikzPictures(text: string): string {
-  return text.replace(
-    /\\begin\{tikzpicture\}[\s\S]*?\\end\{tikzpicture\}/g,
-    '\n\n*[diagram]*\n\n',
-  )
+  return text.replace(/\\begin\{tikzpicture\}[\s\S]*?\\end\{tikzpicture\}/g, '\n\n*[diagram]*\n\n')
 }
 
 /** Strip language/polyglossia commands */

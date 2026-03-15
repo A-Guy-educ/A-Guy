@@ -84,10 +84,7 @@ export function makeAxisBlock(prompt: string, axis: AxisSpecV1): QuestionAxisBlo
   }
 }
 
-export function makeGeometryBlock(
-  prompt: string,
-  geometry: GeometrySpecV1,
-): QuestionGeometryBlock {
+export function makeGeometryBlock(prompt: string, geometry: GeometrySpecV1): QuestionGeometryBlock {
   return {
     id: generateId(),
     type: 'question_geometry',

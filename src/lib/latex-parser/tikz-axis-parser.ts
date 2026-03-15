@@ -46,9 +46,10 @@ function latexToFnString(latex: string): string {
 }
 
 /** Parse \addplot commands from tikzpicture content */
-function parseAddPlots(
-  content: string,
-): { graphs: AxisSpecV1['elements']['graphs']; points: AxisSpecV1['elements']['points'] } {
+function parseAddPlots(content: string): {
+  graphs: AxisSpecV1['elements']['graphs']
+  points: AxisSpecV1['elements']['points']
+} {
   const graphs: AxisSpecV1['elements']['graphs'] = []
   const points: AxisSpecV1['elements']['points'] = []
 

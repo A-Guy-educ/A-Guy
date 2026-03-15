@@ -5,7 +5,11 @@ import { tokenize } from '@/lib/latex-parser/tokenizer'
 import { parseExamClsMcq } from '@/lib/latex-parser/mcq-exam-cls'
 import { parseEnumitemMcq } from '@/lib/latex-parser/mcq-enumitem'
 import { parseInlineMcq } from '@/lib/latex-parser/mcq-inline'
-import { parseEnumerate, isSolutionHeader, isExerciseTitle } from '@/lib/latex-parser/enumerate-parser'
+import {
+  parseEnumerate,
+  isSolutionHeader,
+  isExerciseTitle,
+} from '@/lib/latex-parser/enumerate-parser'
 import { parseTabular } from '@/lib/latex-parser/tabular-parser'
 import { parseTikzAxis, hasTikzAxis } from '@/lib/latex-parser/tikz-axis-parser'
 import { parseTikzGeometry, hasTikzGeometry } from '@/lib/latex-parser/tikz-geometry-parser'
@@ -50,45 +54,73 @@ function tryMcqMatchers(text: string): ContentBlock | null {
 
 /** Preamble-only command names that should be silently skipped */
 const PREAMBLE_COMMANDS = new Set([
-  'documentclass', 'usepackage', 'pagestyle', 'setlength', 'geometry',
-  'fancyhf', 'renewcommand', 'newcommand', 'title', 'author', 'date', 'maketitle',
-  'linespread', 'newfontfamily', 'setmainlanguage', 'setotherlanguage',
-  'usetikzlibrary', 'pgfplotsset', 'onehalfspacing',
+  'documentclass',
+  'usepackage',
+  'pagestyle',
+  'setlength',
+  'geometry',
+  'fancyhf',
+  'renewcommand',
+  'newcommand',
+  'title',
+  'author',
+  'date',
+  'maketitle',
+  'linespread',
+  'newfontfamily',
+  'setmainlanguage',
+  'setotherlanguage',
+  'usetikzlibrary',
+  'pgfplotsset',
+  'onehalfspacing',
 ])
 
 /** Environments that just wrap content — recurse into children */
-const PASSTHROUGH_ENVS = new Set([
-  'document', 'minipage', 'center', 'flushleft', 'flushright',
-])
+const PASSTHROUGH_ENVS = new Set(['document', 'minipage', 'center', 'flushleft', 'flushright'])
 
 /** Layout/formatting commands to silently skip */
 const SKIP_COMMANDS = new Set([
   ...PREAMBLE_COMMANDS,
-  'noindent', 'vspace', 'hspace', 'hfill', 'vfill',
-  'newpage', 'clearpage', 'bigskip', 'medskip', 'smallskip',
-  'selectlanguage', 'begingroup', 'endgroup', 'LARGE', 'large',
-  'renewcommand', 'arraystretch',
+  'noindent',
+  'vspace',
+  'hspace',
+  'hfill',
+  'vfill',
+  'newpage',
+  'clearpage',
+  'bigskip',
+  'medskip',
+  'smallskip',
+  'selectlanguage',
+  'begingroup',
+  'endgroup',
+  'LARGE',
+  'large',
+  'renewcommand',
+  'arraystretch',
 ])
 
 /** Clean LaTeX text: strip formatting commands, normalize whitespace */
 function cleanText(text: string): string {
-  return text
-    .replace(/\\textbf\{([^}]*)\}/g, '**$1**')
-    .replace(/\\textit\{([^}]*)\}/g, '*$1*')
-    .replace(/\\emph\{([^}]*)\}/g, '*$1*')
-    .replace(/\\underline\{([^}]*)\}/g, '$1')
-    .replace(/\\text\{([^}]*)\}/g, '$1')
-    .replace(/\\\\/g, '\n')
-    .replace(/\\vspace\{[^}]*\}/g, '')
-    .replace(/\\hspace\*?\{[^}]*\}/g, ' ')
-    .replace(/\\noindent/g, '')
-    .replace(/\\selectlanguage\{[^}]*\}/g, '')
-    .replace(/\\begingroup/g, '')
-    .replace(/\\endgroup/g, '')
-    .replace(/\\arraystretch/g, '')
-    // Strip leading line-break spacing like [0.2cm], [5mm]
-    .replace(/^\s*\[\d+(\.\d+)?(cm|mm|pt|em|ex)\]\s*/g, '')
-    .trim()
+  return (
+    text
+      .replace(/\\textbf\{([^}]*)\}/g, '**$1**')
+      .replace(/\\textit\{([^}]*)\}/g, '*$1*')
+      .replace(/\\emph\{([^}]*)\}/g, '*$1*')
+      .replace(/\\underline\{([^}]*)\}/g, '$1')
+      .replace(/\\text\{([^}]*)\}/g, '$1')
+      .replace(/\\\\/g, '\n')
+      .replace(/\\vspace\{[^}]*\}/g, '')
+      .replace(/\\hspace\*?\{[^}]*\}/g, ' ')
+      .replace(/\\noindent/g, '')
+      .replace(/\\selectlanguage\{[^}]*\}/g, '')
+      .replace(/\\begingroup/g, '')
+      .replace(/\\endgroup/g, '')
+      .replace(/\\arraystretch/g, '')
+      // Strip leading line-break spacing like [0.2cm], [5mm]
+      .replace(/^\s*\[\d+(\.\d+)?(cm|mm|pt|em|ex)\]\s*/g, '')
+      .trim()
+  )
 }
 
 /**
@@ -245,15 +277,17 @@ function processTokens(
  */
 function attachSolutions(blocks: ContentBlock[], solutionBlocks: ContentBlock[]): void {
   // Find the last N free_response blocks matching solution count
-  const questionBlocks = blocks.filter(
-    (b) => b.type === 'question_free_response',
-  )
+  const questionBlocks = blocks.filter((b) => b.type === 'question_free_response')
   const startIdx = Math.max(0, questionBlocks.length - solutionBlocks.length)
 
   for (let i = 0; i < solutionBlocks.length; i++) {
     const target = questionBlocks[startIdx + i]
     const solBlock = solutionBlocks[i]
-    if (target && target.type === 'question_free_response' && solBlock.type === 'question_free_response') {
+    if (
+      target &&
+      target.type === 'question_free_response' &&
+      solBlock.type === 'question_free_response'
+    ) {
       target.fullSolution = {
         type: 'rich_text',
         format: 'md-math-v1',

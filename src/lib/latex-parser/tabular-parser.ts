@@ -36,9 +36,7 @@ export function parseTabular(innerContent: string): QuestionTableBlock | null {
 
   if (rawRows.length < 2) return null // Need at least header + 1 data row
 
-  const rows: string[][] = rawRows.map((row) =>
-    row.split('&').map((cell) => cleanCell(cell)),
-  )
+  const rows: string[][] = rawRows.map((row) => row.split('&').map((cell) => cleanCell(cell)))
 
   // First row is headers, rest is data
   const headers = rows[0]
