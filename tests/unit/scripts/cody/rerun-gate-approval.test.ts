@@ -16,7 +16,10 @@
 import { describe, it, expect } from 'vitest'
 import type { PipelineStateV2, StageStateV2 } from '../../../../scripts/cody/engine/types'
 import { resumeFromGate, resetFromStage } from '../../../../scripts/cody/engine/status'
-import { resolveFromStageAfterGateApproval } from '../../../../scripts/cody/rerun-utils'
+import {
+  resolveFromStageAfterGateApproval,
+  findNearestEarlierStage,
+} from '../../../../scripts/cody/rerun-utils'
 
 // ============================================================================
 // Test Fixtures
@@ -224,5 +227,41 @@ describe('Profile-aware pipeline resolution', () => {
 
     // Therefore: if ctx.profile resolves to 'lightweight', MUST use lightweight pipeline
     // Otherwise validation fails with "Stage gap not found"
+  })
+})
+
+describe('findNearestEarlierStage', () => {
+  // Lightweight pipeline for testing (no 'gap' or 'plan-gap')
+  const LIGHTWEIGHT_ORDER = ['taskify', 'clarify', 'architect', 'build', 'commit', 'verify', 'pr']
+
+  it('gap missing from lightweight pipeline → falls back to taskify', () => {
+    // In ALL_STAGES, taskify comes before gap and exists in lightweight
+    const result = findNearestEarlierStage('gap', LIGHTWEIGHT_ORDER)
+    expect(result).toBe('taskify')
+  })
+
+  it('plan-gap missing from lightweight → falls back to architect', () => {
+    // In ALL_STAGES, architect comes before plan-gap and exists in lightweight
+    const result = findNearestEarlierStage('plan-gap', LIGHTWEIGHT_ORDER)
+    expect(result).toBe('architect')
+  })
+
+  it('unknown stage → falls back to first pipeline stage', () => {
+    const result = findNearestEarlierStage('nonexistent', LIGHTWEIGHT_ORDER)
+    expect(result).toBe('taskify')
+  })
+
+  it('stage exists in pipeline → returns nearest earlier stage', () => {
+    // build exists, but architect is the nearest earlier in ALL_STAGES
+    const result = findNearestEarlierStage('build', LIGHTWEIGHT_ORDER)
+    expect(result).toBe('architect')
+  })
+
+  it('no earlier stage exists → returns first pipeline stage', () => {
+    // In ALL_STAGES, taskify is first, so nothing comes before it
+    // But for this test, we use a custom pipeline where taskify is not first
+    const customPipeline = ['build', 'commit', 'verify', 'pr']
+    const result = findNearestEarlierStage('taskify', customPipeline)
+    expect(result).toBe('build')
   })
 })

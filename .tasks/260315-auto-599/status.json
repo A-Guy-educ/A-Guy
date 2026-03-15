@@ -4,14 +4,36 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-15T12:39:10.070Z",
-  "updatedAt": "2026-03-15T12:39:11.375Z",
+  "updatedAt": "2026-03-15T12:42:26.895Z",
   "state": "running",
   "cursor": null,
   "stages": {
     "taskify": {
-      "state": "running",
+      "state": "completed",
       "retries": 0,
-      "startedAt": "2026-03-15T12:39:11.375Z"
+      "startedAt": "2026-03-15T12:39:11.375Z",
+      "completedAt": "2026-03-15T12:40:23.758Z",
+      "outputFile": "taskify.md",
+      "tokenUsage": {
+        "input": 3445,
+        "output": 1217,
+        "cacheRead": 146616
+      },
+      "sessionId": "ses_30e7e02a9ffed6C0P76dbDbBsm"
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-15T12:40:30.784Z",
+      "completedAt": "2026-03-15T12:42:26.848Z",
+      "outputFile": "architect.md",
+      "tokenUsage": {
+        "input": 12,
+        "output": 5935,
+        "cacheRead": 491413
+      },
+      "cost": 0.7658602500000001,
+      "sessionId": "ses_30e7cd29affeB5vA3RJ4gFiII6"
     }
   },
   "issueNumber": 828,
@@ -23,5 +45,6 @@
       "actor": "aguyaharonyair",
       "timestamp": "2026-03-15T12:39:10.070Z"
     }
-  ]
+  ],
+  "branchName": "fix/260315-auto-828-resilient-fromstage-resolution"
 }
