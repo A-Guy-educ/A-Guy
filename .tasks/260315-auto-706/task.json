@@ -1,0 +1,32 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.9,
+  "primary_domain": "frontend",
+  "scope": [
+    "Courses collection schema (add content status field)",
+    "Lessons collection schema (add content status field)",
+    "Course card components (add badge display)",
+    "Lesson list components (add badge display)",
+    "Access control for locked 'Soon' content"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Existing Courses and Lessons collections exist in Payload CMS",
+    "Using Tailwind CSS for styling (project standard)",
+    "Has existing course card and lesson list components to extend"
+  ],
+  "review_questions": [
+    "Should we implement the automated expiry ('New Until' date) for 'Just Added' tags as an optional feature?",
+    "Should 'Soon' content be hidden entirely from student view or just locked (showing teaser but preventing access)?"
+  ],
+  "complexity": 49,
+  "complexity_reasoning": "Scope: 15 (4-6 files across courses/lessons, backend+frontend). Risk: 10 (access control changes, medium impact). Novelty: 10 (new feature but follows existing patterns). Cross-Domain: 8 (backend schema + frontend UI). Ambiguity: 3 (clear requirements with some design decisions). Dependencies: 3 (uses existing collections). Total: 49",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Input contains ## Goal, ## Status Definitions & Logic, ## Admin Experience, ## Design Guidelines, and ## Success Criteria with clear requirements and acceptance criteria. Promoted spec.md."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
