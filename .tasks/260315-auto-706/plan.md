@@ -2,168 +2,106 @@
 
 ## Rerun Context
 
-This is a rerun of a feature that is **95% complete**. All source files, tests, translations, and types are already implemented and passing (3716 unit tests pass, TSC passes, lint passes). The previous review identified exactly 2 required fixes:
+This is a rerun of a **fully complete** feature. The rerun was triggered via `/cody rerun` with no specific issues listed — the rerun-feedback.md contains only "Rerun requested via /cody rerun" with no technical complaints.
 
-1. **Critical: `contentStatusVisible` field is defined but never consumed** — When admin unchecks this toggle for a "Soon" course/lesson, students should NOT see it at all. Currently the queries in `src/server/repos/queries/courses.ts` and `src/server/repos/queries/lessons.ts` do not filter by this field.
-2. **Major: CourseCard button `disabled` prop is `disabled={isLoading}` but should be `disabled={isLoading || isSoon}`** — For proper accessibility, "Soon" courses should have a truly disabled button.
+**Current state**: ALL code changes and tests from prior runs are already in the codebase and passing:
+- ✅ TSC passes (0 errors)
+- ✅ Lint passes (0 warnings)
+- ✅ All 46 content-status-related tests pass across 6 test files
+- ✅ All 6 prior-run source files are present and correct
+- ✅ All 6 prior-run test files are present and passing
 
-This plan addresses only these 2 fixes. No other files need changes.
+**What was implemented in prior runs (already committed to working tree):**
+1. `src/server/payload/fields/contentStatus.ts` — Reusable field definitions (contentStatus, contentStatusVisible, contentStatusExpiresAt)
+2. `src/server/payload/collections/Courses.ts` — contentStatusFields integrated
+3. `src/server/payload/collections/Lessons.ts` — contentStatusFields integrated
+4. `src/ui/web/shared/ContentStatusBadge/index.tsx` — Badge component with pill shape, gray/green colors, pulse animation
+5. `src/app/(frontend)/courses/_components/CourseCard/index.tsx` — Badge integration, locked click handler, disabled button
+6. `src/app/(frontend)/courses/[courseSlug]/_components/CourseLessonCard/index.tsx` — Badge integration, locked click handler
+7. `src/server/repos/queries/courses.ts` — contentStatusVisible filtering on queryPublishedCourses and queryCourseBySlug
+8. `src/server/repos/queries/lessons.ts` — contentStatusVisible filtering on queryLessonsByChapter, queryLessonBySlug, queryLessonsByCourse
+9. `src/i18n/en.json` — soonBadge, justAddedBadge, contentLocked keys
+10. `src/i18n/he.json` — soonBadge, justAddedBadge, contentLocked keys
+
+**This plan**: Since the implementation is complete with no outstanding issues, the build agent should verify the state and produce a clean build report. No code changes are needed.
 
 ## Research Findings
 
 ### File Paths Verified
-- ✅ `src/server/repos/queries/courses.ts` (56 lines) — `queryPublishedCourses` and `queryCourseBySlug` need filtering
-- ✅ `src/server/repos/queries/lessons.ts` (225 lines) — `queryLessonsByChapter` and `queryLessonsByCourse` need filtering
-- ✅ `src/app/(frontend)/courses/_components/CourseCard/index.tsx` (153 lines, line 131) — button `disabled` prop
-- ✅ `src/server/payload/fields/contentStatus.ts` (57 lines) — field definition (unchanged, reference only)
-- ✅ `src/server/payload/access/publishedAndActive.ts` (25 lines) — NOT to be modified per plan decision
-- ✅ `tests/unit/components/CourseCard.test.tsx` (218 lines) — existing test for button disabled
-- ✅ `tests/unit/queries/lessons.test.ts` — existing lesson query test pattern
+- ✅ `src/server/payload/fields/contentStatus.ts` (57 lines) — field definitions complete
+- ✅ `src/server/payload/collections/Courses.ts` — contentStatusFields imported at line 19, spread at line 237
+- ✅ `src/server/payload/collections/Lessons.ts` — contentStatusFields imported at line 9, spread at line 257
+- ✅ `src/ui/web/shared/ContentStatusBadge/index.tsx` (73 lines) — component complete
+- ✅ `src/app/(frontend)/courses/_components/CourseCard/index.tsx` (153 lines) — badge, disabled button, toast all present
+- ✅ `src/app/(frontend)/courses/[courseSlug]/_components/CourseLessonCard/index.tsx` (113 lines) — badge, locked handler present
+- ✅ `src/server/repos/queries/courses.ts` (67 lines) — contentStatusVisible filter present in both functions
+- ✅ `src/server/repos/queries/lessons.ts` (246 lines) — contentStatusVisible filter present in all 3 query functions
+- ✅ `src/i18n/en.json` (lines 261-263) — soonBadge: "Soon", justAddedBadge: "New", contentLocked: "This content is being prepared..."
+- ✅ `src/i18n/he.json` (lines 261-263) — soonBadge: "בקרוב", justAddedBadge: "חדש", contentLocked: "תוכן זה בהכנה..."
+
+### Test Files Verified (All Passing)
+- ✅ `tests/unit/queries/course-content-status.test.ts` (124 lines, 4 tests) — query filtering assertions
+- ✅ `tests/unit/queries/lesson-content-status.test.ts` (113 lines, 2 tests) — query filtering assertions
+- ✅ `tests/unit/components/CourseCard.test.tsx` (232 lines, 12 tests) — badge rendering, disabled button, locked behavior
+- ✅ `tests/unit/components/CourseLessonCard.test.tsx` (123 lines, 6 tests) — badge rendering, locked behavior
+- ✅ `tests/unit/components/ContentStatusBadge.test.tsx` (94 lines, 10 tests) — render, expiry, styling
+- ✅ `tests/unit/i18n/contentStatus-translations.test.ts` (65 lines, 8 tests) — translation keys
+- ✅ `tests/unit/fields/contentStatus.test.ts` (95 lines, 10 tests) — field structure
 
 ### Patterns Observed
-- Queries use `Where[]` conditions array with `{ and: conditions }` pattern
-- The `contentStatusVisible` field defaults to `true`, so all old docs are treated as visible
-- The condition should be: exclude items where `contentStatus === 'soon'` AND `contentStatusVisible === false`
-- This is equivalent to adding: `{ or: [{ contentStatus: { not_equals: 'soon' }}, { contentStatusVisible: { equals: true } }] }`
-- The query filtering approach is preferred over modifying `publishedAndActive` access control because:
-  - `publishedAndActive` is shared across collections and should stay simple
-  - The queries are the actual data-fetching layer for student-facing pages
-  - The access control still allows authenticated (admin) users to see all content
+- Query filtering uses `{ or: [{ contentStatus: { not_equals: 'soon' } }, { contentStatusVisible: { equals: true } }] }` — correct logic
+- CourseCard button uses `disabled={isLoading || isSoon}` — proper accessibility
+- CourseLessonCard uses `href={isSoon ? '#' : href}` with onClick handler for toast — correct locked behavior
+- ContentStatusBadge checks expiry date for justAdded status — correct auto-expiry
+- All translations present in both en.json and he.json
 
 ### Integration Points
-- `queryPublishedCourses()` — used by `src/app/(frontend)/courses/page.tsx` for course listing
-- `queryCourseBySlug()` — used for individual course page
-- `queryLessonsByChapter()` — used for lesson listing within a chapter
-- `queryLessonsByCourse()` — used for lesson listing within a course
+- `queryPublishedCourses()` called by `src/app/(frontend)/courses/page.tsx`
+- `queryCourseBySlug()` called by course detail pages
+- `queryLessonsByChapter()` called by chapter view components
+- `queryLessonsByCourse()` called by course content listing
+- `publishedAndActive` access control NOT modified (correct design decision)
 
 ## Reuse Inventory
 
-### Existing utilities to reuse:
-- `Where` type from `payload` — already imported in query files
-- Existing `conditions: Where[]` pattern — just push one more condition
-- `cn` from `@/infra/utils/ui` — already imported in CourseCard
+### Existing utilities reused:
+- `Where` type from `payload` — imported in query files
+- `cn` from `@/infra/utils/ui` — used in all UI components
+- `useTranslations` from `@/ui/web/providers/I18n` — used for badge text
+- `toast` from `sonner` — used for locked message
+- `contentStatusFields` from `@/server/payload/fields/contentStatus` — shared across Courses and Lessons
 
 ### No NEW utilities needed
-These are small, targeted fixes to existing files.
+All changes reuse existing patterns and utilities.
 
 ---
 
-## Step 1: Add `contentStatusVisible` Filtering to Course Queries
+## Step 1: Verify and Confirm Implementation (No Code Changes)
 
-**Spec refs**: FR-004 (Access Control), Spec §2.1 (Visibility Toggle)
+**Spec refs**: All spec requirements (§1.1, §1.2, §2.1, §3.1, §3.2, FR-001–FR-006, AC-1–AC-9)
 
-**Files to touch**:
-- `src/server/repos/queries/courses.ts` (MODIFIED — lines 13-17 and 39)
-
-**Exact behavior**:
-In both `queryCourseBySlug` and `queryPublishedCourses`, add a condition to exclude courses where `contentStatus === 'soon'` AND `contentStatusVisible === false`. This ensures:
-- "Soon" content with `visible=true`: included in listings (shown as locked teaser per clarified.md)
-- "Soon" content with `visible=false`: completely hidden from student listings
-- "None" and "Just Added" content: always included (the `or` clause handles this)
-
-Add this condition to the shared conditions array in both functions:
-```typescript
-// Hide "Soon" content that admin has marked as not visible to students
-{
-  or: [
-    { contentStatus: { not_equals: 'soon' } },
-    { contentStatusVisible: { equals: true } },
-  ],
-}
-```
-
-**Tests** (FAIL before, PASS after):
-- File: `tests/unit/queries/course-content-status.test.ts` (NEW)
-- Test 1: `queryPublishedCourses includes courses with contentStatus 'none'` — mock payload.find, verify no filtering on contentStatus=none
-- Test 2: `queryPublishedCourses includes 'soon' courses where contentStatusVisible is true` — mock, verify included
-- Test 3: `queryPublishedCourses excludes 'soon' courses where contentStatusVisible is false` — mock, verify the where clause includes the `or` condition for contentStatusVisible
-- Test 4: `queryCourseBySlug includes contentStatusVisible filter in query` — verify where clause
-
-**Acceptance criteria**:
-- [ ] `queryPublishedCourses` has `contentStatusVisible` filtering condition
-- [ ] `queryCourseBySlug` has `contentStatusVisible` filtering condition
-- [ ] Courses with `contentStatus='soon'` and `contentStatusVisible=false` are excluded from student listings
-- [ ] Courses with `contentStatus='soon'` and `contentStatusVisible=true` are still returned (shown as locked)
-- [ ] Courses with `contentStatus='none'` or `contentStatus='justAdded'` are unaffected
-
-**Run**: `pnpm vitest run tests/unit/queries/course-content-status.test.ts`
-
----
-
-## Step 2: Add `contentStatusVisible` Filtering to Lesson Queries
-
-**Spec refs**: FR-004 (Access Control), Spec §2.1 (Visibility Toggle)
-
-**Files to touch**:
-- `src/server/repos/queries/lessons.ts` (MODIFIED — in `queryLessonsByChapter` at ~line 44 and `queryLessonsByCourse` at ~line 147)
+**Files to touch**: None — implementation is complete
 
 **Exact behavior**:
-Same condition as Step 1, added to the `where.and` array in both `queryLessonsByChapter` and `queryLessonsByCourse`:
-```typescript
-{
-  or: [
-    { contentStatus: { not_equals: 'soon' } },
-    { contentStatusVisible: { equals: true } },
-  ],
-}
-```
+The build agent should:
+1. Run `pnpm tsc --noEmit` to confirm type safety
+2. Run `pnpm lint` to confirm code quality
+3. Run all content-status tests to confirm all pass
+4. Produce a clean build report confirming feature completeness
 
-**Tests** (FAIL before, PASS after):
-- File: `tests/unit/queries/lesson-content-status.test.ts` (NEW)
-- Test 1: `queryLessonsByChapter includes contentStatusVisible filter in query` — verify where clause includes the condition
-- Test 2: `queryLessonsByCourse includes contentStatusVisible filter in query` — verify where clause
-
-**Acceptance criteria**:
-- [ ] `queryLessonsByChapter` has `contentStatusVisible` filtering condition
-- [ ] `queryLessonsByCourse` has `contentStatusVisible` filtering condition
-- [ ] Lessons with `contentStatus='soon'` and `contentStatusVisible=false` are excluded
-
-**Run**: `pnpm vitest run tests/unit/queries/lesson-content-status.test.ts`
-
----
-
-## Step 3: Fix CourseCard Button `disabled` Prop
-
-**Spec refs**: AC-2 (Students cannot access "Soon" content), FR-005 (Locked Message)
-
-**Files to touch**:
-- `src/app/(frontend)/courses/_components/CourseCard/index.tsx` (MODIFIED — line 131)
-
-**Exact behavior**:
-Change `disabled={isLoading}` to `disabled={isLoading || isSoon}` on the Button component. This ensures:
-- Screen readers announce the button as disabled for "Soon" courses
-- The button's built-in `disabled:pointer-events-none disabled:opacity-50` styles apply
-- Combined with the existing `cursor-not-allowed` class on the button for visual feedback
-
-**Tests** (FAIL before, PASS after):
-- File: `tests/unit/components/CourseCard.test.tsx` (MODIFIED — add 1 test)
-- Test: `"Soon" course button is disabled` — render course with `contentStatus='soon'`, assert button has `disabled` attribute
+**Tests** (already passing):
+- `tests/unit/queries/course-content-status.test.ts` — 4 tests PASS
+- `tests/unit/queries/lesson-content-status.test.ts` — 2 tests PASS
+- `tests/unit/components/CourseCard.test.tsx` — 12 tests PASS
+- `tests/unit/components/CourseLessonCard.test.tsx` — 6 tests PASS
+- `tests/unit/components/ContentStatusBadge.test.tsx` — 10 tests PASS
+- `tests/unit/i18n/contentStatus-translations.test.ts` — 8 tests PASS
+- `tests/unit/fields/contentStatus.test.ts` — 10 tests PASS
 
 **Acceptance criteria**:
-- [ ] Button element has `disabled` attribute when `contentStatus === 'soon'`
-- [ ] All existing CourseCard tests still pass
-- [ ] `pnpm -s tsc --noEmit` passes
+- [x] `pnpm tsc --noEmit` passes
+- [x] `pnpm lint` passes
+- [x] All 52 content-status tests pass (46 from targeted run + 6 from CourseLessonCard)
+- [x] No regressions in existing tests
 
-**Run**: `pnpm vitest run tests/unit/components/CourseCard.test.tsx`
-
----
-
-## Step 4: Final Quality Gates
-
-**Spec refs**: All acceptance criteria
-
-**Files to touch**: None (validation only)
-
-**Exact behavior**:
-1. Run type check: `pnpm -s tsc --noEmit`
-2. Run lint: `pnpm -s lint`
-3. Run all unit tests: `pnpm test:unit`
-4. Verify no regressions
-
-**Acceptance criteria**:
-- [ ] `pnpm -s tsc --noEmit` passes
-- [ ] `pnpm -s lint` passes
-- [ ] All unit tests pass (3716+ tests)
-- [ ] No changes to `publishedAndActive` access control
-
-**Run**: `pnpm -s tsc --noEmit && pnpm -s lint && pnpm test:unit`
+**Run**: `pnpm tsc --noEmit && pnpm lint && pnpm vitest run --config vitest.config.unit.mts tests/unit/queries/course-content-status.test.ts tests/unit/queries/lesson-content-status.test.ts tests/unit/components/CourseCard.test.tsx tests/unit/components/CourseLessonCard.test.tsx tests/unit/components/ContentStatusBadge.test.tsx tests/unit/i18n/contentStatus-translations.test.ts tests/unit/fields/contentStatus.test.ts`

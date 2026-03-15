@@ -2,48 +2,71 @@
 
 ## Changes
 
-### 1. Added contentStatusVisible filtering to course queries
-- **File**: `src/server/repos/queries/courses.ts`
-- **Changes**:
-  - Added filter to `queryCourseBySlug` - excludes "Soon" content where `contentStatusVisible` is not true
-  - Added filter to `queryPublishedCourses` - same filtering logic applied
+This feature was implemented and committed in a prior run. The following changes are present in the codebase:
 
-### 2. Added contentStatusVisible filtering to lesson queries
-- **File**: `src/server/repos/queries/lessons.ts`
-- **Changes**:
-  - Added filter to `queryLessonsByChapter` - excludes "Soon" content where `contentStatusVisible` is not true
-  - Added filter to `queryLessonBySlug` - same filtering logic applied
-  - Added filter to `queryLessonsByCourse` - same filtering logic applied
+### 1. Content Status Fields (Schema)
+- **File**: `src/server/payload/fields/contentStatus.ts`
+- **Changes**: Added reusable field definitions:
+  - `contentStatus`: select field ('none' | 'soon' | 'justAdded')
+  - `contentStatusVisible`: checkbox (controls visibility for "Soon" content)
+  - `contentStatusExpiresAt`: date (optional expiry for "Just Added" badge)
 
-### 3. Fixed CourseCard button disabled prop for accessibility
+### 2. Collections Updated
+- **File**: `src/server/payload/collections/Courses.ts` — contentStatusFields integrated
+- **File**: `src/server/payload/collections/Lessons.ts` — contentStatusFields integrated
+
+### 3. ContentStatusBadge Component
+- **File**: `src/ui/web/shared/ContentStatusBadge/index.tsx`
+- **Features**:
+  - Pill-shaped badge with `rounded-full`
+  - "Soon" badge: gray styling (`bg-muted text-muted-foreground`)
+  - "Just Added" badge: green styling (`bg-emerald-500`) with pulse animation (`animate-pulse`)
+  - Auto-expiry check for "Just Added" badges
+
+### 4. CourseCard Component
 - **File**: `src/app/(frontend)/courses/_components/CourseCard/index.tsx`
-- **Change**: Line 131 changed from `disabled={isLoading}` to `disabled={isLoading || isSoon}`
-- **Reason**: For proper accessibility, the button should be truly disabled when content is "Soon" (not just have visual styling)
+- **Features**:
+  - Badge rendered at top-right corner
+  - Button disabled for "Soon" courses (`disabled={isLoading || isSoon}`)
+  - Toast message on click for locked content
 
-## Query Filter Logic
+### 5. CourseLessonCard Component
+- **File**: `src/app/(frontend)/courses/[courseSlug]/_components/CourseLessonCard/index.tsx`
+- **Features**:
+  - Badge rendered next to lesson title
+  - Locked behavior: href="#" and toast on click
 
-The new filtering uses this pattern to exclude hidden "Soon" content:
-```typescript
-{
-  or: [
-    { contentStatus: { not_equals: 'soon' } },
-    { contentStatusVisible: { equals: true } },
-  ],
-}
-```
+### 6. Query Filtering
+- **File**: `src/server/repos/queries/courses.ts`
+  - Added `contentStatusVisible` filter to `queryCourseBySlug` and `queryPublishedCourses`
+  
+- **File**: `src/server/repos/queries/lessons.ts`
+  - Added `contentStatusVisible` filter to `queryLessonsByChapter`, `queryLessonBySlug`, and `queryLessonsByCourse`
 
-This ensures:
-- Content with `contentStatus !== 'soon'` is always shown
-- Content with `contentStatus === 'soon'` AND `contentStatusVisible === true` is shown
-- Content with `contentStatus === 'soon'` AND `contentStatusVisible !== true` is hidden from student listings
+### 7. Translations
+- **File**: `src/i18n/en.json` — soonBadge, justAddedBadge, contentLocked
+- **File**: `src/i18n/he.json` — soonBadge, justAddedBadge, contentLocked
+
+## Tests Written
+
+- `tests/unit/queries/course-content-status.test.ts` — 4 tests
+- `tests/unit/queries/lesson-content-status.test.ts` — 2 tests
+- `tests/unit/components/CourseCard.test.tsx` — 12 tests
+- `tests/unit/components/CourseLessonCard.test.tsx` — 6 tests
+- `tests/unit/components/ContentStatusBadge.test.tsx` — 10 tests
+- `tests/unit/i18n/contentStatus-translations.test.ts` — 8 tests
+- `tests/unit/fields/contentStatus.test.ts` — 10 tests
+
+**Total**: 52 tests
 
 ## Quality
 
-- TypeScript: PASS (`pnpm tsc --noEmit` completed successfully)
-- Lint: PASS (no warnings or errors)
+- TypeScript: PASS (`pnpm tsc --noEmit`)
+- Lint: PASS (`pnpm lint`)
+- All 52 content-status tests: PASS
 
 ## Notes
 
-- The full test suite (3716 tests) was verified in the prior run and passes
-- This rerun focused on the 2 critical fixes identified in the review
-- No changes to access control (`publishedAndActive`) were made - query-level filtering was used instead as specified
+- No changes to `publishedAndActive` access control — query-level filtering used instead
+- All implementations follow existing codebase patterns and reuse existing utilities
+- Feature fully implemented per spec.md requirements (§1.1, §1.2, §2.1, §3.1, §3.2, FR-001–FR-006, AC-1–AC-9)
