@@ -134,11 +134,12 @@ See [AGENTS.md](./AGENTS.md) and [.ai-docs/BOOTSTRAP.md](.ai-docs/BOOTSTRAP.md) 
 
 All colors, spacing, typography, shadows, and other visual tokens are centrally defined in:
 
-- **CSS Variables (themes)**: [src/app/(frontend)/globals.css](./src/app/(frontend)/globals.css) - Light/dark theme colors, semantic colors, text highlights
+- **CSS Variables (themes)**: [src/app/(frontend)/globals.css](<./src/app/(frontend)/globals.css>) - Light/dark theme colors, semantic colors, text highlights
 - **Tailwind Tokens**: [tailwind.tokens.mjs](./tailwind.tokens.mjs) - Spacing, shadows, z-index, typography, animations
 - **Tailwind Config**: [tailwind.config.mjs](./tailwind.config.mjs) - Full theme configuration
 
 Key rules:
+
 - Use existing CSS variables (`--primary`, `--secondary`, `--accent`, `--success`, `--warning`, `--error`, `--text-highlight-1` through `--text-highlight-8`, etc.)
 - For canvas/non-CSS contexts, convert design system HSL values to hex - do NOT invent new colors
 - All new UI must use Tailwind classes that reference the design system tokens
