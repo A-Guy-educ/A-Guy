@@ -1,6 +1,6 @@
 # Clarified
 
-1. same code for multiple students
-2. lesson only
+1. same code for multiple students 
+2. alongside 
 3. no
-4. yes
+4. no expiration
