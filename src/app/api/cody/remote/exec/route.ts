@@ -31,7 +31,10 @@ export async function POST(req: NextRequest) {
     // Auth
     const auth = await requireDashboardAuth(req)
     if (!auth.authenticated) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json(
+        { message: 'Not authenticated. Please log in to access the dashboard.' },
+        { status: 401 },
+      )
     }
 
     const body = (await req.json()) as Partial<RemoteExecRequest>

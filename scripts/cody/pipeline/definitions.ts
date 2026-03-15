@@ -48,7 +48,9 @@ export const IMPL_ORDER_STANDARD: PipelineStep[] = [
   'commit',
   'review',
   'fix',
-  'commit',
+  // NOTE: No second 'commit' here — fix stage commits via its post-action
+  // (commit-task-files with tracked+task). A duplicate 'commit' entry would be
+  // skipped by resolveNextStep since state.stages['commit'] is already completed.
   'verify',
   'pr',
 ]
@@ -58,13 +60,12 @@ export const IMPL_ORDER_LIGHTWEIGHT: PipelineStep[] = [
   'commit',
   'review',
   'fix',
-  'commit',
   'verify',
   'pr',
 ]
 
 // Fix-only pipeline order for @cody fix mode
-export const FIX_ORDER: PipelineStep[] = ['review', 'fix', 'commit', 'verify', 'pr']
+export const FIX_ORDER: PipelineStep[] = ['review', 'fix', 'verify', 'pr']
 
 // Full pipeline order for fix mode — runs the full impl pipeline with taskify prepended
 // This gives the agent proper planning (architect, plan-gap) with previous run as context
@@ -76,7 +77,6 @@ export const FIX_FULL_ORDER: PipelineStep[] = [
   'commit',
   'review',
   'fix',
-  'commit',
   'verify',
   'pr',
 ]
@@ -269,6 +269,10 @@ No critical gaps identified. Plan was refined in-place.
         push: true,
         ensureBranch: true,
       },
+      // Run lint:fix + format:fix mechanically BEFORE quality gates.
+      // This is deterministic (no LLM needed) and prevents trivial format/lint
+      // failures from reaching verify stage or wasting LLM fix attempts.
+      { type: 'run-mechanical-autofix' },
       {
         type: 'run-quality-with-autofix',
         gates: [

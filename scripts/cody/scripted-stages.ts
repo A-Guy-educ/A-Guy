@@ -55,6 +55,7 @@ export function runVerifyStage(
   outputFile: string,
   cwd: string = process.cwd(),
   timeout?: number,
+  taskDir?: string,
 ): VerifyResult {
   logger.info('\n🔍 Running verification (scripted)...\n')
 
@@ -90,6 +91,23 @@ export function runVerifyStage(
   }
 
   const allPassed = gates.every((g) => g.passed)
+
+  // Write individual gate output files for failed gates.
+  // These files provide detailed error context to the fix stage agent
+  // (state-machine.ts reads tsc-output.txt / lint-output.txt when building verify-failures.md).
+  if (taskDir) {
+    for (const gate of gates) {
+      if (!gate.passed) {
+        const slug = gate.name.toLowerCase().replace(/\s+/g, '-')
+        const gateOutputPath = path.join(taskDir, `${slug}-output.txt`)
+        try {
+          fs.writeFileSync(gateOutputPath, gate.output.slice(0, 10000))
+        } catch {
+          // Non-critical — gate output is supplementary context
+        }
+      }
+    }
+  }
 
   const lines: string[] = ['# Verification Report\n']
   for (const gate of gates) {

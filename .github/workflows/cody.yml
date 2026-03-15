@@ -197,6 +197,32 @@ jobs:
           gh issue comment ${{ needs.parse.outputs.issue_number }} \
             --body "⚠️ Invalid \`@cody\` command. Use: \`@cody [spec|impl|rerun|full|status] [task-id] [options]\`"
 
+  # Job 1c: Notify on orchestrate failures (pipeline didn't start)
+  notify-orchestrate-error:
+    needs: [parse, orchestrate]
+    if: >-
+      always() &&
+      needs.orchestrate.result == 'failure' &&
+      needs.parse.result == 'success' &&
+      needs.parse.outputs.issue_number != '' &&
+      github.event_name == 'issue_comment'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Post failure comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment ${{ needs.parse.outputs.issue_number }} \
+            --repo ${{ github.repository }} \
+            --body "⚠️ **Pipeline failed to start**
+
+          The workflow crashed before the pipeline could run (infrastructure error, not a code issue).
+
+          To retry, comment \`/cody\` on this issue.
+
+          [View CI logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+
   # Smoke test: runs on push to dev/main to validate cody pipeline works
   smoke-test:
     runs-on: ubuntu-latest

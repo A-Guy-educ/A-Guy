@@ -578,7 +578,10 @@ export async function GET(req: NextRequest) {
     // Check authentication
     const auth = await requireDashboardAuth(req)
     if (!auth.authenticated) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json(
+        { message: 'Not authenticated. Please log in to access the dashboard.' },
+        { status: 401 },
+      )
     }
 
     // Test MCP connection — 5s timeout to avoid hanging

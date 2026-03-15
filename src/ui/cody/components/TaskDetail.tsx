@@ -138,7 +138,7 @@ const columnLabels: Record<ColumnId, string> = {
   building: 'Building',
   review: 'In Review',
   failed: 'Failed',
-  'gate-waiting': 'Gate Waiting',
+  'gate-waiting': 'Needs Approval',
   retrying: 'Retrying',
   done: 'Done',
 }

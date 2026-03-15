@@ -220,7 +220,7 @@ export function CodyStatusBanner({
           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-500" />
         </span>
         <span className="text-sm">
-          <span className="text-yellow-400 font-medium">Waiting for approval</span> on{' '}
+          <span className="text-yellow-400 font-medium">Approval needed</span> on{' '}
           <a
             href={getGitHubIssueUrl(state.task.issueNumber)}
             target="_blank"
