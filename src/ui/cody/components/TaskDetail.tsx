@@ -21,6 +21,7 @@ import { CommentList } from './CommentList'
 import { AssigneePicker, type AssigneeChangeEvent } from './AssigneePicker'
 import { MergeButton } from './MergeButton'
 import { SimpleTooltip } from './SimpleTooltip'
+import { WorkflowRunsPopover } from './WorkflowRunsPopover'
 import { Button } from '@/ui/web/components/button'
 import { Badge } from '@/ui/web/components/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/ui/web/components/avatar'
@@ -31,7 +32,6 @@ import {
   GitPullRequest,
   ExternalLink,
   Clock,
-  Play,
   CheckCircle,
   XCircle,
   AlertTriangle,
@@ -973,16 +973,7 @@ export function TaskDetail({
         </a>
       )}
       {task.workflowRun && (
-        <a
-          href={task.workflowRun.html_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/[0.08] text-zinc-300 hover:bg-white/[0.12] hover:text-white transition-all duration-150 shrink-0 border border-white/[0.1]"
-        >
-          <Play className="w-3 h-3" />
-          Workflow
-        </a>
+        <WorkflowRunsPopover taskTitle={task.title} fallbackRun={task.workflowRun} />
       )}
       {task.associatedPR && onOpenPreview && (
         <button
@@ -1132,7 +1123,36 @@ export function TaskDetail({
                 branchName={task.associatedPR.head.ref}
                 isMerging={externalIsMerging ?? false}
                 onMerge={() => onApproveReview(task)}
+                labels={task.labels}
               />
+            )}
+
+            {/* Approve UI button - when task has PR and UI not yet approved */}
+            {task.associatedPR && !task.labels?.includes('ui-approved') && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1.5 text-xs font-medium rounded-lg text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
+                onClick={() => taskActions.approveUI?.()}
+                disabled={taskActions.isPending}
+              >
+                <CheckCircle className="w-3 h-3" />
+                Approve UI
+              </Button>
+            )}
+
+            {/* Approve PR button - when task has PR */}
+            {task.associatedPR && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1.5 text-xs font-medium rounded-lg text-purple-400 border-purple-500/30 hover:bg-purple-500/10"
+                onClick={() => taskActions.approvePR?.()}
+                disabled={taskActions.isPending}
+              >
+                <GitPullRequest className="w-3 h-3" />
+                Approve PR
+              </Button>
             )}
 
             {/* Contextual primary action */}
@@ -1270,6 +1290,89 @@ export function TaskDetail({
               </div>
             </div>
           )}
+
+          {/* Triggered by */}
+          {task.pipeline?.triggeredByLogin && (
+            <div className="space-y-2">
+              <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-0.5">
+                Triggered by
+              </h4>
+              <div className="flex items-center gap-2 px-0.5">
+                <Avatar className="h-5 w-5 shrink-0">
+                  <AvatarImage
+                    src={`https://github.com/${task.pipeline.triggeredByLogin}.png?size=40`}
+                    alt={task.pipeline.triggeredByLogin}
+                  />
+                  <AvatarFallback className="text-[9px]">
+                    {task.pipeline.triggeredByLogin[0]?.toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-xs text-foreground">@{task.pipeline.triggeredByLogin}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Issue Owner */}
+          {task.pipeline?.issueCreator && (
+            <div className="space-y-2">
+              <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-0.5">
+                Issue Owner
+              </h4>
+              <div className="flex items-center gap-2 px-0.5">
+                <Avatar className="h-5 w-5 shrink-0">
+                  <AvatarImage
+                    src={`https://github.com/${task.pipeline.issueCreator}.png?size=40`}
+                    alt={task.pipeline.issueCreator}
+                  />
+                  <AvatarFallback className="text-[9px]">
+                    {task.pipeline.issueCreator[0]?.toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-xs text-foreground">@{task.pipeline.issueCreator}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Actor History */}
+          {task.pipeline?.actorHistory && task.pipeline.actorHistory.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-0.5">
+                Activity
+              </h4>
+              <div className="space-y-2">
+                {task.pipeline.actorHistory.slice(-8).map((event, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <Avatar className="h-4 w-4 shrink-0 mt-0.5">
+                      <AvatarImage
+                        src={`https://github.com/${event.actor}.png?size=32`}
+                        alt={event.actor}
+                      />
+                      <AvatarFallback className="text-[8px]">
+                        {event.actor[0]?.toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="text-[11px] text-foreground leading-tight">
+                        <span className="font-medium">@{event.actor}</span>{' '}
+                        <span className="text-muted-foreground">
+                          {event.action === 'pipeline-triggered'
+                            ? 'triggered'
+                            : event.action === 'gate-approved'
+                              ? `approved ${event.stage ?? ''} gate`
+                              : event.action === 'gate-rejected'
+                                ? `rejected ${event.stage ?? ''} gate`
+                                : event.action.replace(/-/g, ' ')}
+                        </span>
+                      </p>
+                      <p className="text-[10px] text-muted-foreground/70 mt-0.5">
+                        {formatRelativeTime(event.timestamp)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1366,7 +1469,36 @@ export function TaskDetail({
             branchName={task.associatedPR.head.ref}
             isMerging={externalIsMerging ?? false}
             onMerge={() => onApproveReview(task)}
+            labels={task.labels}
           />
+        )}
+
+        {/* Approve UI button - mobile */}
+        {task.associatedPR && !task.labels?.includes('ui-approved') && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9 gap-1.5 text-xs font-medium shrink-0 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
+            onClick={() => taskActions.approveUI?.()}
+            disabled={taskActions.isPending}
+          >
+            <CheckCircle className="w-3.5 h-3.5" />
+            Approve UI
+          </Button>
+        )}
+
+        {/* Approve PR button - mobile */}
+        {task.associatedPR && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9 gap-1.5 text-xs font-medium shrink-0 text-purple-400 border-purple-500/30 hover:bg-purple-500/10"
+            onClick={() => taskActions.approvePR?.()}
+            disabled={taskActions.isPending}
+          >
+            <GitPullRequest className="w-3.5 h-3.5" />
+            Approve PR
+          </Button>
         )}
 
         {/* Primary action */}
@@ -1414,29 +1546,29 @@ export function TaskDetail({
             PR #{task.associatedPR.number}
           </a>
         )}
-        {task.previewUrl && (
-          <SimpleTooltip
-            content={
-              <div className="space-y-1">
-                <p className="text-xs font-semibold">🔗 Preview Available</p>
-                <p className="text-xs text-muted-foreground">
-                  Click to open the deployed preview in a new tab
-                </p>
-              </div>
-            }
-            side="bottom"
+        {task.associatedPR && onOpenPreview && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onOpenPreview()
+            }}
+            className="h-9 inline-flex items-center gap-1.5 px-3 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors shrink-0 cursor-pointer"
           >
-            <a
-              href={task.previewUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="h-9 inline-flex items-center gap-1.5 px-3 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors shrink-0"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              Preview
-            </a>
-          </SimpleTooltip>
+            <Eye className="w-3.5 h-3.5" />
+            Preview
+          </button>
+        )}
+        {task.previewUrl && (
+          <a
+            href={task.previewUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="h-9 inline-flex items-center gap-1.5 px-3 rounded-full text-xs font-medium bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shrink-0"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            Deploy
+          </a>
         )}
 
         {/* Spacer */}

@@ -11,6 +11,8 @@ import {
   discoverTaskIdFromIssue,
   ensureTaskMarkerComment,
   validateTaskId,
+  getLinkedIssueFromPR,
+  getIssueBody,
 } from '../../../../scripts/cody/cody-utils'
 
 describe('discoverTaskIdFromIssue', () => {
@@ -59,6 +61,96 @@ describe('discoverTaskIdFromIssue', () => {
 
     const result = discoverTaskIdFromIssue(42)
     expect(result).toBe('260218-first-task')
+  })
+})
+
+describe('getLinkedIssueFromPR', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('should return linked issue number when PR has closing issue', () => {
+    vi.mocked(childProcess.execFileSync).mockReturnValue('780')
+
+    const result = getLinkedIssueFromPR(813)
+    expect(result).toBe(780)
+    expect(childProcess.execFileSync).toHaveBeenCalledWith(
+      'gh',
+      [
+        'pr',
+        'view',
+        '813',
+        '--json',
+        'closingIssuesReferences',
+        '--jq',
+        '.closingIssuesReferences[0].number',
+      ],
+      expect.objectContaining({ encoding: 'utf-8' }),
+    )
+  })
+
+  it('should return null when issueNumber is 0', () => {
+    const result = getLinkedIssueFromPR(0)
+    expect(result).toBeNull()
+    expect(childProcess.execFileSync).not.toHaveBeenCalled()
+  })
+
+  it('should return null when gh command fails', () => {
+    vi.mocked(childProcess.execFileSync).mockImplementation(() => {
+      throw new Error('gh: command not found')
+    })
+
+    const result = getLinkedIssueFromPR(813)
+    expect(result).toBeNull()
+  })
+
+  it('should return null when output is empty', () => {
+    vi.mocked(childProcess.execFileSync).mockReturnValue('')
+
+    const result = getLinkedIssueFromPR(813)
+    expect(result).toBeNull()
+  })
+})
+
+describe('getIssueBody', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('should return issue body when gh command succeeds', () => {
+    vi.mocked(childProcess.execFileSync).mockReturnValue(
+      'This is the issue body\nWith multiple lines',
+    )
+
+    const result = getIssueBody(780)
+    expect(result).toBe('This is the issue body\nWith multiple lines')
+    expect(childProcess.execFileSync).toHaveBeenCalledWith(
+      'gh',
+      ['issue', 'view', '780', '--json', 'body', '--jq', '.body'],
+      expect.objectContaining({ encoding: 'utf-8' }),
+    )
+  })
+
+  it('should return null when issueNumber is 0', () => {
+    const result = getIssueBody(0)
+    expect(result).toBeNull()
+    expect(childProcess.execFileSync).not.toHaveBeenCalled()
+  })
+
+  it('should return null when gh command fails', () => {
+    vi.mocked(childProcess.execFileSync).mockImplementation(() => {
+      throw new Error('gh: command not found')
+    })
+
+    const result = getIssueBody(780)
+    expect(result).toBeNull()
+  })
+
+  it('should return null when output is empty', () => {
+    vi.mocked(childProcess.execFileSync).mockReturnValue('')
+
+    const result = getIssueBody(780)
+    expect(result).toBeNull()
   })
 })
 

@@ -120,4 +120,94 @@ describe('AxisSpecV1Schema', () => {
     }
     expect(() => AxisSpecV1Schema.parse(invalidSpec)).toThrow()
   })
+
+  // Tests for FR-008: Viewport Schema Extension
+  describe('viewportMode field', () => {
+    it('defaults to auto when viewportMode is omitted (backward compatibility)', () => {
+      const specWithoutViewportMode = {
+        kind: 'cartesian',
+        units: 1,
+        grid: { enabled: true },
+        axes: {
+          showNumbers: true,
+          showLabels: true,
+          ticks: 1,
+          labels: { x: 'x', y: 'y' },
+          origin: { x: 0, y: 0 },
+        },
+        elements: {
+          points: [],
+          graphs: [],
+        },
+      }
+      const result = AxisSpecV1Schema.parse(specWithoutViewportMode)
+      expect(result.viewportMode).toBe('auto')
+    })
+
+    it('accepts viewportMode: auto', () => {
+      const specWithAutoMode = {
+        kind: 'cartesian',
+        units: 1,
+        grid: { enabled: true },
+        axes: {
+          showNumbers: true,
+          showLabels: true,
+          ticks: 1,
+          labels: { x: 'x', y: 'y' },
+          origin: { x: 0, y: 0 },
+        },
+        viewportMode: 'auto',
+        elements: {
+          points: [],
+          graphs: [],
+        },
+      }
+      const result = AxisSpecV1Schema.parse(specWithAutoMode)
+      expect(result.viewportMode).toBe('auto')
+    })
+
+    it('accepts viewportMode: manual', () => {
+      const specWithManualMode = {
+        kind: 'cartesian',
+        units: 1,
+        grid: { enabled: true },
+        axes: {
+          showNumbers: true,
+          showLabels: true,
+          ticks: 1,
+          labels: { x: 'x', y: 'y' },
+          origin: { x: 0, y: 0 },
+        },
+        viewportMode: 'manual',
+        viewport: { xMin: -5, xMax: 5, yMin: -10, yMax: 10 },
+        elements: {
+          points: [],
+          graphs: [],
+        },
+      }
+      const result = AxisSpecV1Schema.parse(specWithManualMode)
+      expect(result.viewportMode).toBe('manual')
+    })
+
+    it('rejects invalid viewportMode value', () => {
+      const specWithInvalidMode = {
+        kind: 'cartesian',
+        units: 1,
+        grid: { enabled: true },
+        axes: {
+          showNumbers: true,
+          showLabels: true,
+          ticks: 1,
+          labels: { x: 'x', y: 'y' },
+          origin: { x: 0, y: 0 },
+        },
+        viewportMode: 'zoom', // Invalid - not in enum
+        elements: {
+          points: [],
+          graphs: [],
+        },
+      }
+      expect(() => AxisSpecV1Schema.parse(specWithInvalidMode)).toThrow()
+    })
+  })
 })

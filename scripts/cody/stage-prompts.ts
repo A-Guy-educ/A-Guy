@@ -70,10 +70,30 @@ export const STAGE_CONTEXT_FILES: Record<Stage, string[]> = {
   taskify: ['task.md'],
   gap: ['task.md', 'task.json'],
   clarify: ['task.md', 'spec.md'],
-  architect: ['spec.md', 'clarified.md', 'rerun-feedback.md'],
+  architect: [
+    'spec.md',
+    'clarified.md',
+    'rerun-feedback.md',
+    // Previous run context (available in fix mode)
+    'prev-run/plan.md',
+    'prev-run/build.md',
+    'prev-run/review.md',
+  ],
   'plan-gap': ['spec.md', 'plan.md', 'task.json'],
   test: ['spec.md', 'clarified.md', 'plan.md', 'task.json'],
-  build: ['spec.md', 'clarified.md', 'plan.md', 'plan-gap.md', 'context.md', 'rerun-feedback.md'],
+  build: [
+    'spec.md',
+    'clarified.md',
+    'plan.md',
+    'plan-gap.md',
+    'context.md',
+    'rerun-feedback.md',
+    'build-errors.md',
+    'review.md',
+    // Previous run context (available in fix mode)
+    'prev-run/build.md',
+    'prev-run/review.md',
+  ],
   commit: ['task.json'],
   review: ['review.md', 'build.md', 'plan.md', 'context.md', 'spec.md', 'clarified.md'],
   fix: [
@@ -86,6 +106,8 @@ export const STAGE_CONTEXT_FILES: Record<Stage, string[]> = {
     'context.md',
     'spec.md',
     'clarified.md',
+    // Previous run context (available when fixing a previous fix)
+    'prev-run/build.md',
   ],
   verify: [], // scripted — no LLM prompt needed
   autofix: ['verify.md', 'build-errors.md'],
@@ -236,7 +258,7 @@ export function buildStagePrompt(input: CodyInput, stage: string, feedback?: str
 
   // Add task_type for stages that need it (architect, build)
   const taskTypeSection =
-    stage === 'architect' || stage === 'build' ? `\nTask Type: ${taskType}` : ''
+    stage === 'architect' || stage === 'build' || stage === 'fix' ? `\nTask Type: ${taskType}` : ''
 
   const outputFile = stageOutputFile(taskDir, stage)
 

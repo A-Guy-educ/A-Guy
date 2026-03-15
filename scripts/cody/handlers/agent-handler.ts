@@ -23,8 +23,12 @@ export class AgentHandler implements StageHandler {
     // Use stageOutputFile to get the correct output file (respects STAGE_OUTPUT_MAP)
     const outputFile = stageOutputFile(ctx.taskDir, def.name)
 
-    // Run agent
-    const result = await runAgentWithFileWatch(ctx.input, def.name, outputFile, def.timeout, {
+    // Run agent — use agentName override if set, otherwise stage name
+    const agentName = def.agentName ?? def.name
+    if (def.agentName && def.agentName !== def.name) {
+      logger.info(`  ⚙️ Stage "${def.name}" using agent: ${def.agentName}`)
+    }
+    const result = await runAgentWithFileWatch(ctx.input, agentName, outputFile, def.timeout, {
       backend: ctx.backend,
       validateOutput: def.validator,
       maxRetries: def.maxRetries,

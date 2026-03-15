@@ -19,6 +19,7 @@ import {
   parseCliArgs,
   validateAuth,
   ensureTaskDir,
+  getTaskDir,
   getLastFailedStage,
   getLastPausedStage,
 } from './cody-utils'
@@ -26,19 +27,29 @@ import { preflight } from './preflight'
 import { createRunner } from './runner-backend'
 import { logger, createStageLogger } from './logger'
 import { handleClarification } from './clarify-workflow'
-import { commitPipelineFiles } from './git-utils'
+import { commitPipelineFiles, mergeDefaultBranch } from './git-utils'
 import { readTask } from './pipeline-utils'
 
 import type { PipelineContext } from './engine/types'
 import { runPipeline } from './engine/state-machine'
 import { resolvePipelineForMode, createRebuildCallback } from './engine/pipeline-resolver'
 import { flattenPipelineOrder } from './pipeline/definitions'
-import { stateToV1 } from './engine/status'
+import { stateToV1, resetFromStage } from './engine/status'
 import { PipelinePausedError } from './engine/types'
-import { resolveRerunFromStage, resolveFromStageAfterGateApproval } from './rerun-utils'
+import {
+  resolveRerunFromStage,
+  resolveFromStageAfterGateApproval,
+  findNearestEarlierStage,
+} from './rerun-utils'
 import { startServer, stopServer, checkpointDb, findLastSessionId } from './opencode-server'
 import type { OpenCodeServer } from './opencode-server'
-import { ensureTaskMarkerComment, postComment } from './github-api'
+import {
+  ensureTaskMarkerComment,
+  postComment,
+  getLinkedIssueFromPR,
+  getIssueBody,
+  discoverTaskIdFromIssue,
+} from './github-api'
 import { formatStatusComment } from './cody-utils'
 
 // ============================================================================
@@ -278,6 +289,7 @@ Examples:
     taskDef: null,
     profile: 'standard',
     backend,
+    actor: input.actor,
   }
 
   // Start OpenCode server for persistent sessions across stages
@@ -636,22 +648,7 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
     }
   }
 
-  // Determine fromStage
-  // FIX #673: After gate approval, use the NEXT stage (not the approved one)
-  // to prevent resetFromStage from overwriting the gate approval
-  if (!input.fromStage) {
-    if (gateApprovedStage) {
-      // Gate was just approved — resolve pipeline order to find the next stage
-      const tempPipeline = resolvePipelineForMode('rerun', ctx.profile, false, ctx)
-      const tempOrder = flattenPipelineOrder(tempPipeline.order)
-      input.fromStage = resolveFromStageAfterGateApproval(gateApprovedStage, tempOrder)
-      logger.info(`  ℹ️ Gate approved at ${gateApprovedStage} — resuming from ${input.fromStage}`)
-    } else {
-      input.fromStage = pausedStage || getLastFailedStage(input.taskId) || 'build'
-    }
-  }
-
-  // G37: Read task definition for profile resolution
+  // G37: Read task definition for profile resolution (MUST be before fromStage resolution)
   let taskDef = null
   try {
     taskDef = readTask(taskDir)
@@ -668,6 +665,21 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
   if (ctx.input.turbo) {
     ctx.profile = 'turbo'
     logger.info('⚡ Turbo mode: forcing turbo profile')
+  }
+
+  // Determine fromStage
+  // FIX #673: After gate approval, use the NEXT stage (not the approved one)
+  // to prevent resetFromStage from overwriting the gate approval
+  if (!input.fromStage) {
+    if (gateApprovedStage) {
+      // Gate was just approved — resolve pipeline order to find the next stage
+      const tempPipeline = resolvePipelineForMode('rerun', ctx.profile, false, ctx)
+      const tempOrder = flattenPipelineOrder(tempPipeline.order)
+      input.fromStage = resolveFromStageAfterGateApproval(gateApprovedStage, tempOrder)
+      logger.info(`  ℹ️ Gate approved at ${gateApprovedStage} — resuming from ${input.fromStage}`)
+    } else {
+      input.fromStage = pausedStage || getLastFailedStage(input.taskId) || 'build'
+    }
   }
 
   // Default feedback
@@ -706,11 +718,13 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
   }
 
   // Fix 5: Validate fromStage exists in the resolved pipeline order
-  const fromStage = input.fromStage || 'build'
+  let fromStage = input.fromStage || 'build'
   if (!stageOrder.includes(fromStage)) {
-    throw new Error(
-      `Stage "${fromStage}" not found in rerun pipeline. Valid stages: ${stageOrder.join(', ')}`,
+    const fallback = findNearestEarlierStage(fromStage, stageOrder)
+    logger.warn(
+      `Stage "${fromStage}" not in pipeline (valid: ${stageOrder.join(', ')}). Falling back to "${fallback}".`,
     )
+    fromStage = fallback
   }
 
   const { loadState, resetFromStage, writeState } = await import('./engine/status')
@@ -729,40 +743,130 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
 }
 
 /**
- * Fix mode - applies targeted fixes without regenerating entire codebase
+ * Fix mode - runs the full pipeline on the original task with previous artifacts as context.
+ * This gives the agent proper planning (architect, plan-gap) instead of the short fix-only pipeline.
  */
 async function runFixMode(ctx: PipelineContext): Promise<void> {
-  const { input, taskDir } = ctx
-  logger.info('Running Cody FIX pipeline (targeted fix)...\n')
+  const { input } = ctx
+  logger.info('Running Cody FIX pipeline (full pipeline with original task context)...\n')
 
-  // Ensure feedback exists
-  if (!input.feedback) {
-    input.feedback = 'Fix requested via @cody fix command'
-  }
-
-  // Enrich feedback with PR review context when triggered from a PR
-  if (input.isPullRequest && input.issueNumber) {
-    const { getPRReviewFeedback } = await import('./github-api')
-    // issueNumber is the PR number when isPullRequest is true
-    const prNumber = input.issueNumber
-    const prFeedback = getPRReviewFeedback(prNumber)
-    if (prFeedback) {
-      logger.info(`Enriching fix feedback with PR #${prNumber} review context`)
-      input.feedback = `${input.feedback}\n\n${prFeedback}`
+  // ===========================================================================
+  // Step 0: Merge default branch to get latest fixes
+  // ===========================================================================
+  if (input.isPullRequest) {
+    try {
+      mergeDefaultBranch(process.cwd())
+    } catch (error) {
+      logger.error({ error }, 'Failed to merge default branch, continuing anyway')
     }
   }
 
-  // Write feedback to file
-  const feedbackPath = path.join(taskDir, 'rerun-feedback.md')
-  fs.writeFileSync(
-    feedbackPath,
-    `# Fix Feedback - ${new Date().toISOString()}\n\n${input.feedback}\n`,
-  )
+  // ===========================================================================
+  // Step 1: Resolve original task ID from PR → issue → original task
+  // ===========================================================================
+  let originalTaskId = input.taskId
+  let linkedIssueNumber: number | null = null
+
+  if (input.isPullRequest && input.issueNumber) {
+    const prNumber = input.issueNumber
+
+    // Get linked issue from PR
+    linkedIssueNumber = getLinkedIssueFromPR(prNumber)
+    if (linkedIssueNumber) {
+      logger.info(`Found linked issue #${linkedIssueNumber} from PR #${prNumber}`)
+
+      // Discover original task from the issue
+      const discoveredTaskId = discoverTaskIdFromIssue(linkedIssueNumber)
+      if (discoveredTaskId && discoveredTaskId !== input.taskId) {
+        logger.info(`Switching from fix task ${input.taskId} to original task ${discoveredTaskId}`)
+        originalTaskId = discoveredTaskId
+
+        // Update input and context
+        input.taskId = originalTaskId
+      }
+    } else {
+      logger.warn(`No linked issue found for PR #${prNumber}, using current task`)
+    }
+  }
+
+  // Get the original task's directory
+  const originalTaskDir = getTaskDir(originalTaskId)
+  ctx.taskDir = originalTaskDir
+
+  // ===========================================================================
+  // Step 2: Archive previous artifacts to prev-run/
+  // ===========================================================================
+  const prevRunDir = path.join(originalTaskDir, 'prev-run')
+  if (!fs.existsSync(prevRunDir)) {
+    fs.mkdirSync(prevRunDir, { recursive: true })
+  }
+
+  // Copy existing markdown files to prev-run/
+  const mdFiles = [
+    'spec.md',
+    'plan.md',
+    'gap.md',
+    'build.md',
+    'review.md',
+    'context.md',
+    'test.md',
+    'rerun-feedback.md',
+  ]
+  for (const mdFile of mdFiles) {
+    const srcPath = path.join(originalTaskDir, mdFile)
+    const destPath = path.join(prevRunDir, mdFile)
+    if (fs.existsSync(srcPath)) {
+      fs.copyFileSync(srcPath, destPath)
+      logger.info(`Archived ${mdFile} to prev-run/`)
+    }
+  }
+
+  // Copy task.json and status.json if they exist
+  const jsonFiles = ['task.json', 'status.json']
+  for (const jsonFile of jsonFiles) {
+    const srcPath = path.join(originalTaskDir, jsonFile)
+    const destPath = path.join(prevRunDir, jsonFile)
+    if (fs.existsSync(srcPath)) {
+      fs.copyFileSync(srcPath, destPath)
+      logger.info(`Archived ${jsonFile} to prev-run/`)
+    }
+  }
+
+  // ===========================================================================
+  // Step 3: Compose task.md from issue body + fix comment
+  // ===========================================================================
+  const issueBody = linkedIssueNumber ? getIssueBody(linkedIssueNumber) : null
+
+  // Get the fix comment from input.feedback
+  const fixComment = input.feedback || 'Fix requested via @cody fix command'
+
+  // Compose task.md content
+  let taskMdContent = `# Fix Request\n\n`
+  if (issueBody) {
+    taskMdContent += `## Original Request (Issue #${linkedIssueNumber})\n\n${issueBody}\n\n`
+  }
+  taskMdContent += `## Fix Feedback\n\n${fixComment}\n\n`
+  taskMdContent += `---\n\n`
+  taskMdContent += `*This is a FIX for an existing implementation. Previous artifacts are archived in prev-run/ for context.*\n`
+
+  // Write task.md
+  const taskMdPath = path.join(originalTaskDir, 'task.md')
+  fs.writeFileSync(taskMdPath, taskMdContent)
+  logger.info(`Composed fresh task.md from issue body and fix comment`)
+
+  // Also write rerun-feedback.md for architect/build to read
+  const feedbackPath = path.join(originalTaskDir, 'rerun-feedback.md')
+  fs.writeFileSync(feedbackPath, `# Fix Feedback - ${new Date().toISOString()}\n\n${fixComment}\n`)
+
+  // ===========================================================================
+  // Step 4: Ensure task directory exists and reset state from taskify
+  // ===========================================================================
+  ensureTaskDir(originalTaskId)
 
   // Read task definition for profile resolution
   let taskDef = null
   try {
-    taskDef = readTask(taskDir)
+    taskDef = readTask(originalTaskDir)
   } catch {
     logger.warn('Could not read task.json for profile resolution, using default')
   }
@@ -778,12 +882,11 @@ async function runFixMode(ctx: PipelineContext): Promise<void> {
     logger.info('⚡ Turbo mode: forcing turbo profile')
   }
 
-  // C2+M3 fix: resolve pipeline FIRST so we use the correct order for state init
-  // This handles turbo (FIX_ORDER_TURBO) and parallel groups correctly
+  // Resolve pipeline - now uses FIX_FULL_ORDER (full impl pipeline with taskify)
   const pipeline = resolvePipelineForMode('fix', ctx.profile, false, ctx)
-  const fixStages = flattenPipelineOrder(pipeline.order)
+  const stageOrder = flattenPipelineOrder(pipeline.order)
 
-  // Load existing state or create new one
+  // Load existing state or create fresh state
   const {
     loadState: loadSt2,
     writeState: writeSt2,
@@ -791,45 +894,26 @@ async function runFixMode(ctx: PipelineContext): Promise<void> {
     initState: initSt,
   } = await import('./engine/status')
 
-  let state = loadSt2(input.taskId)
+  let state = loadSt2(originalTaskId)
 
-  // If no existing state, create fresh state with resolved fix pipeline stages
+  // Create fresh state starting from taskify (reset all stages)
   if (!state) {
     state = initSt(ctx, 'fix')
-    // C2 fix: handle both string stages and parallel groups
-    for (const step of pipeline.order) {
-      if (typeof step === 'string') {
-        state = updStage(state, step, { state: 'pending', retries: 0 })
-      } else if ('parallel' in step) {
-        for (const s of step.parallel) {
-          state = updStage(state, s, { state: 'pending', retries: 0 })
-        }
-      }
-    }
-    writeSt2(input.taskId, state)
   }
 
-  // Set fix stage to pending and initialize fix attempt if not set
-  const existingFixAttempt = state.stages['fix']?.fixAttempt ?? 0
-  state = updStage(state, 'fix', {
-    state: 'pending',
-    fixAttempt: existingFixAttempt,
-    maxFixAttempts: 2,
-  })
+  // Reset all stages from taskify onward for a fresh run
+  state = resetFromStage(state, 'taskify', stageOrder, originalTaskDir)
 
-  // Also ensure verify is pending
-  state = updStage(state, 'verify', { state: 'pending' })
-  // Only init review if it's in this pipeline (turbo fix skips it)
-  if (fixStages.includes('review')) {
-    state = updStage(state, 'review', { state: 'pending' })
-  }
+  // Mark taskify as pending to start fresh
+  state = updStage(state, 'taskify', { state: 'pending', retries: 0 })
 
-  // Set initial cursor to first stage in the fix pipeline
-  const firstFixStage = fixStages[0] || 'fix'
-  state = { ...state, cursor: firstFixStage, state: 'running' }
-  writeSt2(input.taskId, state)
+  // Set initial cursor to taskify
+  state = { ...state, cursor: 'taskify', state: 'running' }
+  writeSt2(originalTaskId, state)
 
-  // Run pipeline - it will find the first pending stage (review) and continue
+  // ===========================================================================
+  // Step 5: Run the full pipeline
+  // ===========================================================================
   const finalState = await runPipeline(ctx, pipeline)
 
   // Handle paused state (gate approval required)

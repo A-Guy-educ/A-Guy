@@ -174,7 +174,9 @@ export function TaskList({
         const isExecuting = executingTaskId === task.id
         const hasPR = !!task.associatedPR
         const isHardStop = task.column === 'gate-waiting' && task.gateType === 'hard-stop'
-        const isActive = task.column === 'building' || task.column === 'retrying'
+        // gate-waiting tasks also show pipeline progress (they're paused mid-pipeline)
+        const isActive =
+          task.column === 'building' || task.column === 'retrying' || task.column === 'gate-waiting'
         const colors = statusColors[task.column]
         const gateLabel =
           task.column === 'gate-waiting' && task.gateType === 'hard-stop'
@@ -216,11 +218,15 @@ export function TaskList({
                     {task.title}
                   </h3>
 
-                  {/* Assignee avatars */}
-                  {task.assignees && task.assignees.length > 0 && (
-                    <div className="hidden sm:flex items-center -space-x-1.5 shrink-0">
-                      {task.assignees.map((assignee) => (
-                        <SimpleTooltip key={assignee.login} content={assignee.login} side="bottom">
+                  {/* Assignee avatars + triggered-by actor */}
+                  <div className="hidden sm:flex items-center -space-x-1.5 shrink-0">
+                    {task.assignees &&
+                      task.assignees.map((assignee) => (
+                        <SimpleTooltip
+                          key={assignee.login}
+                          content={`Assignee: @${assignee.login}`}
+                          side="bottom"
+                        >
                           <span className="inline-block">
                             <Avatar className="h-5 w-5 ring-2 ring-[#0d1117]">
                               <AvatarImage src={assignee.avatar_url} alt={assignee.login} />
@@ -231,8 +237,45 @@ export function TaskList({
                           </span>
                         </SimpleTooltip>
                       ))}
-                    </div>
-                  )}
+                    {task.pipeline?.triggeredByLogin &&
+                      !task.assignees?.some((a) => a.login === task.pipeline?.triggeredByLogin) && (
+                        <SimpleTooltip
+                          content={`Triggered by @${task.pipeline.triggeredByLogin}`}
+                          side="bottom"
+                        >
+                          <span className="inline-block">
+                            <Avatar className="h-5 w-5 ring-2 ring-[#0d1117] opacity-60">
+                              <AvatarImage
+                                src={`https://github.com/${task.pipeline.triggeredByLogin}.png?size=40`}
+                                alt={task.pipeline.triggeredByLogin}
+                              />
+                              <AvatarFallback className="text-[8px] bg-zinc-700 text-zinc-400">
+                                {task.pipeline.triggeredByLogin[0]?.toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          </span>
+                        </SimpleTooltip>
+                      )}
+                    {task.pipeline?.issueCreator &&
+                      task.pipeline.issueCreator !== task.pipeline?.triggeredByLogin && (
+                        <SimpleTooltip
+                          content={`Issue owner @${task.pipeline.issueCreator}`}
+                          side="bottom"
+                        >
+                          <span className="inline-block">
+                            <Avatar className="h-5 w-5 ring-2 ring-[#0d1117] opacity-80">
+                              <AvatarImage
+                                src={`https://github.com/${task.pipeline.issueCreator}.png?size=40`}
+                                alt={task.pipeline.issueCreator}
+                              />
+                              <AvatarFallback className="text-[8px] bg-blue-900 text-blue-200">
+                                {task.pipeline.issueCreator[0]?.toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          </span>
+                        </SimpleTooltip>
+                      )}
+                  </div>
                 </div>
 
                 {/* Meta row */}
@@ -267,9 +310,11 @@ export function TaskList({
                     </SimpleTooltip>
                   )}
 
+                  {/* Active pipeline progress — inline dots + stage label */}
                   {isActive && <MiniPipelineProgress task={task} variant="inline" />}
 
-                  {task.isTimeout && (
+                  {/* Non-pipeline sub-statuses (only shown when NOT active pipeline) */}
+                  {!isActive && task.isTimeout && (
                     <SimpleTooltip
                       content={<SubStatusTooltipContent type="timeout" />}
                       side="bottom"
@@ -280,7 +325,7 @@ export function TaskList({
                       </span>
                     </SimpleTooltip>
                   )}
-                  {task.isExhausted && (
+                  {!isActive && task.isExhausted && (
                     <SimpleTooltip
                       content={<SubStatusTooltipContent type="exhausted" />}
                       side="bottom"
@@ -291,7 +336,7 @@ export function TaskList({
                       </span>
                     </SimpleTooltip>
                   )}
-                  {task.isSupervisorError && (
+                  {!isActive && task.isSupervisorError && (
                     <SimpleTooltip content={<SubStatusTooltipContent type="error" />} side="bottom">
                       <span className="inline-flex items-center gap-0.5 font-semibold text-red-400 cursor-default">
                         <AlertCircle className="w-3 h-3" />
@@ -431,15 +476,14 @@ export function TaskList({
               </div>
             </div>
 
-            {/* Pipeline progress row */}
-            {isActive &&
-              task.pipeline &&
-              (task.pipeline.currentStage ||
-                Object.keys(task.pipeline.stages || {}).length > 0) && (
-                <div className="pb-3 px-4 pl-[52px] sm:block hidden">
-                  <MiniPipelineProgress task={task} variant="bar" />
-                </div>
-              )}
+            {/* Pipeline progress row — shown for building, retrying, and gate-waiting tasks.
+                Gate-waiting tasks show paused state (yellow dots) so the user can see
+                exactly where in the pipeline approval was requested. */}
+            {isActive && (
+              <div className="pb-3 px-4 pl-[52px] sm:block hidden">
+                <MiniPipelineProgress task={task} variant="bar" />
+              </div>
+            )}
           </div>
         )
       })}

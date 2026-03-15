@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { handleCodyApiError } from '@/ui/cody/github-error-handler'
 import { pipelineParamsSchema } from '@/ui/cody/schemas'
 import { apiValidationError } from '@/server/api/responses'
-import { requireAuth } from '@/ui/cody/auth'
+import { requireCodyAuth } from '@/ui/cody/auth'
 import {
   findTaskBranch,
   findBranchByIssueNumber,
@@ -21,8 +21,8 @@ import {
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   // Check auth
-  const authError = await requireAuth(req)
-  if (authError) return authError
+  const authResult = await requireCodyAuth(req)
+  if (authResult instanceof NextResponse) return authResult
 
   // Validate path params
   const { taskId: rawTaskId } = await params

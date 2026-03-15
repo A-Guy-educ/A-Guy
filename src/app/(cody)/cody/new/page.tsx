@@ -4,22 +4,26 @@
  * @pattern dashboard-page
  * @ai-summary Cody dashboard with create task dialog pre-opened via URL /cody/new
  */
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import type { Metadata } from 'next'
 import { CodyDashboard } from '@/ui/cody/components/CodyDashboard'
-import { getMeUser } from '@/infra/utils/getMeUser'
-import { AccountRole } from '@/infra/auth/roles'
+import { verifyCodySessionToken, CODY_SESSION_COOKIE } from '@/infra/auth/cody_session'
+import { buildCodyMetadata } from '../metadata'
 
-export const metadata: Metadata = {
+export const metadata = buildCodyMetadata({
   title: 'Create Task — Cody Operations Dashboard',
-  description: 'Create a new task for the Cody CI build agent',
-}
+  description: 'Create a new task for the Cody AI build agent',
+  path: '/cody/new',
+})
 
 export default async function CodyNewTaskPage() {
-  const { user } = await getMeUser()
+  const cookieStore = await cookies()
+  const token = cookieStore.get(CODY_SESSION_COOKIE)?.value
+  const identity = await verifyCodySessionToken(token)
 
-  if (!user || user.role !== AccountRole.Admin) {
-    redirect('/login?returnTo=/cody/new')
+  // Not authenticated — redirect to GitHub OAuth
+  if (!identity) {
+    redirect('/api/oauth/github?returnTo=/cody/new')
   }
 
   return <CodyDashboard initialModal="new" />

@@ -8,7 +8,7 @@
 import { execFileSync } from 'child_process'
 import * as fs from 'fs'
 
-import type { GitHubClient, IssueInfo, IssueComment } from '../core/types'
+import type { GitHubClient, IssueInfo, IssueComment, WorkflowRun } from '../core/types'
 
 /**
  * Create a GitHub client wrapper around scripts/cody/github-api.ts functions.
@@ -146,6 +146,58 @@ export function createGitHubClient(repo: string, token: string, patToken?: strin
         })
 
       return arrays.flat()
+    },
+
+    listWorkflowRuns(
+      workflow: string,
+      opts: { per_page?: number; status?: string; branch?: string } = {},
+    ): WorkflowRun[] {
+      const perPage = opts.per_page ?? 30
+      const statusFilter = opts.status ?? 'completed'
+      let query = `repos/${repo}/actions/workflows/${workflow}/runs?per_page=${perPage}&status=${statusFilter}`
+      if (opts.branch) query += `&branch=${encodeURIComponent(opts.branch)}`
+
+      const output = gh([
+        'api',
+        query,
+        '--jq',
+        '[.workflow_runs[] | {id: .id, status: .status, conclusion: .conclusion, createdAt: .created_at, updatedAt: .updated_at, headBranch: .head_branch, event: .event}]',
+      ])
+
+      if (!output) return []
+      try {
+        return JSON.parse(output) as WorkflowRun[]
+      } catch {
+        return []
+      }
+    },
+
+    createIssue(title: string, body: string, labels: string[]): number | null {
+      const args = ['issue', 'create', '--repo', repo, '--title', title, '--body-file', '-']
+      for (const label of labels) {
+        args.push('--label', label)
+      }
+      const output = gh(args, body)
+      if (!output) return null
+      // gh issue create returns the URL; extract number from last path segment
+      const match = output.match(/\/issues\/(\d+)/)
+      return match ? parseInt(match[1], 10) : null
+    },
+
+    searchIssues(query: string): IssueInfo[] {
+      const output = gh([
+        'api',
+        `search/issues?q=${encodeURIComponent(query + ` repo:${repo}`)}&per_page=30`,
+        '--jq',
+        '[.items[] | {number: .number, title: .title, labels: [.labels[].name], updatedAt: .updated_at}]',
+      ])
+
+      if (!output) return []
+      try {
+        return JSON.parse(output) as IssueInfo[]
+      } catch {
+        return []
+      }
     },
   }
 }

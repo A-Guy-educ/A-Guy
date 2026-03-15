@@ -5,19 +5,11 @@
  * @ai-summary Create a GitHub issue with 'publish' label to trigger dev→main PR workflow
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { Octokit } from '@octokit/rest'
 import { requireAuth } from '@/ui/cody/auth'
 import { GITHUB_OWNER, GITHUB_REPO, DEV_BRANCH, PROD_BRANCH } from '@/ui/cody/constants'
+import { getOctokit } from '@/ui/cody/github-client'
 
 const PUBLISH_LABEL = 'publish'
-
-function getOctokit(): Octokit {
-  const token = process.env.GITHUB_TOKEN
-  if (!token) {
-    throw new Error('GITHUB_TOKEN not configured')
-  }
-  return new Octokit({ auth: token })
-}
 
 export async function POST(req: NextRequest) {
   const authError = await requireAuth(req)

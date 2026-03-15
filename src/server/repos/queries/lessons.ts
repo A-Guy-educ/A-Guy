@@ -197,5 +197,29 @@ export const queryLessonsByCourse = cache(async ({ courseId }: { courseId: strin
     overrideAccess: false,
   })
 
-  return result.docs
+  // Sort lessons by chapter order (primary) then by lesson order (secondary)
+  // This ensures lessons are grouped by chapter and ordered correctly within each chapter
+  // chapters is already sorted by chapter.order (from queryChaptersByCourse)
+  const chapterOrderMap = new Map(chapters.map((ch, idx) => [ch.id, idx]))
+
+  const sortedDocs = [...result.docs].sort((a, b) => {
+    const chapterIdA = typeof a.chapter === 'string' ? a.chapter : a.chapter?.id
+    const chapterIdB = typeof b.chapter === 'string' ? b.chapter : b.chapter?.id
+
+    const chapterOrderA = chapterOrderMap.get(chapterIdA ?? '') ?? Infinity
+    const chapterOrderB = chapterOrderMap.get(chapterIdB ?? '') ?? Infinity
+
+    // Primary sort: by chapter order
+    if (chapterOrderA !== chapterOrderB) {
+      return chapterOrderA - chapterOrderB
+    }
+
+    // Secondary sort: by lesson order within the same chapter
+    // Treat undefined order as Infinity so lessons with defined order come first
+    const orderA = a.order !== undefined ? a.order : Infinity
+    const orderB = b.order !== undefined ? b.order : Infinity
+    return orderA - orderB
+  })
+
+  return sortedDocs
 })

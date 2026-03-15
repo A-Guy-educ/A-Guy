@@ -240,6 +240,27 @@ export interface QuestionAxisBlock {
 }
 
 // ---------------------------------
+// Multi-Axis Graph Item (single graph within multi-axis block)
+// ---------------------------------
+export interface MultiAxisGraphItem {
+  id: string
+  label: string
+  axis: AxisSpecV1
+  order: number
+}
+
+// ---------------------------------
+// Question Multi-Axis Block (multiple graphs in one block)
+// ---------------------------------
+export interface QuestionMultiAxisBlock {
+  id: string
+  type: 'question_multi_axis'
+  prompt?: InlineRichText
+  textPosition: 'above' | 'below'
+  graphs: MultiAxisGraphItem[]
+}
+
+// ---------------------------------
 // HTML Block (WYSIWYG rich content)
 // ---------------------------------
 export interface HtmlBlock {
@@ -271,6 +292,7 @@ export type ContentBlock =
   | SvgBlock
   | QuestionGeometryBlock
   | QuestionAxisBlock
+  | QuestionMultiAxisBlock
   | HtmlBlock
   | MediaBlock
 

@@ -15,7 +15,7 @@ import type { GitHubPR } from '@/ui/cody/types'
 
 // Mock the github-client module
 vi.mock('@/ui/cody/github-client', () => ({
-  findAssociatedPR: vi.fn(),
+  findAssociatedPRByIssueNumber: vi.fn(),
   findTaskBranch: vi.fn(),
   closePR: vi.fn(),
   deleteBranch: vi.fn(),
@@ -24,13 +24,13 @@ vi.mock('@/ui/cody/github-client', () => ({
 }))
 
 vi.mock('@/ui/cody/auth', () => ({
-  requireAuth: vi.fn(() => null), // Skip auth for tests
+  requireCodyAuth: vi.fn(() => null), // Skip auth for tests
 }))
 
 // Import after mocks
 import { NextRequest } from 'next/server'
 import {
-  findAssociatedPR,
+  findAssociatedPRByIssueNumber,
   findTaskBranch,
   closePR,
   deleteBranch,
@@ -55,7 +55,7 @@ describe('POST /api/cody/tasks/[taskId]/actions - Close Action', () => {
     }
     const mockBranch = 'feature/260301-test-issue'
 
-    vi.mocked(findAssociatedPR).mockResolvedValue(mockPR)
+    vi.mocked(findAssociatedPRByIssueNumber).mockResolvedValue(mockPR)
     vi.mocked(findTaskBranch).mockResolvedValue(mockBranch)
     vi.mocked(closePR).mockResolvedValue(undefined)
     vi.mocked(deleteBranch).mockResolvedValue(undefined)
@@ -74,7 +74,7 @@ describe('POST /api/cody/tasks/[taskId]/actions - Close Action', () => {
     const body = await response.json()
 
     // Verify all actions were called
-    expect(findAssociatedPR).toHaveBeenCalledWith('issue-659')
+    expect(findAssociatedPRByIssueNumber).toHaveBeenCalledWith(659)
     expect(closePR).toHaveBeenCalledWith(123)
     expect(findTaskBranch).toHaveBeenCalledWith('issue-659')
     expect(deleteBranch).toHaveBeenCalledWith(mockBranch)
@@ -89,7 +89,7 @@ describe('POST /api/cody/tasks/[taskId]/actions - Close Action', () => {
 
   it('should close issue when no PR or branch exists', async () => {
     // Setup mocks - no PR, no branch
-    vi.mocked(findAssociatedPR).mockResolvedValue(null)
+    vi.mocked(findAssociatedPRByIssueNumber).mockResolvedValue(null)
     vi.mocked(findTaskBranch).mockResolvedValue(null)
     vi.mocked(closePR).mockResolvedValue(undefined)
     vi.mocked(deleteBranch).mockResolvedValue(undefined)
@@ -108,7 +108,7 @@ describe('POST /api/cody/tasks/[taskId]/actions - Close Action', () => {
     const body = await response.json()
 
     // Verify only updateIssue was called (no PR to close, no branch to delete)
-    expect(findAssociatedPR).toHaveBeenCalledWith('issue-659')
+    expect(findAssociatedPRByIssueNumber).toHaveBeenCalledWith(659)
     expect(closePR).not.toHaveBeenCalled()
     expect(findTaskBranch).toHaveBeenCalledWith('issue-659')
     expect(deleteBranch).not.toHaveBeenCalled()
@@ -131,7 +131,7 @@ describe('POST /api/cody/tasks/[taskId]/actions - Close Action', () => {
       merged_at: null,
     }
 
-    vi.mocked(findAssociatedPR).mockResolvedValue(mockPR)
+    vi.mocked(findAssociatedPRByIssueNumber).mockResolvedValue(mockPR)
     vi.mocked(findTaskBranch).mockResolvedValue('dev')
     vi.mocked(closePR).mockResolvedValue(undefined)
     vi.mocked(deleteBranch).mockResolvedValue(undefined)
@@ -170,7 +170,7 @@ describe('POST /api/cody/tasks/[taskId]/actions - Close Action', () => {
       merged_at: null,
     }
 
-    vi.mocked(findAssociatedPR).mockResolvedValue(mockPR)
+    vi.mocked(findAssociatedPRByIssueNumber).mockResolvedValue(mockPR)
     vi.mocked(findTaskBranch).mockResolvedValue(null)
     vi.mocked(closePR).mockResolvedValue(undefined)
     vi.mocked(deleteBranch).mockResolvedValue(undefined)

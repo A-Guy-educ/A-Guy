@@ -19,6 +19,7 @@ export const queryKeys = {
   taskDetails: (issueNumber: number) => ['cody-task', issueNumber] as const,
   boards: ['cody-boards'] as const,
   collaborators: ['cody-collaborators'] as const,
+  workflowRuns: ['cody-workflow-runs'] as const,
 }
 
 // ============ useCodyTasks ============
@@ -164,6 +165,26 @@ export function useTaskDetails(issueNumber: number | null, actorLogin?: string) 
     isReopening: reopenMutation.isPending,
     isAborting: abortMutation.isPending,
   }
+}
+
+// ============ useWorkflowRuns ============
+
+/**
+ * Fetches all workflow runs and optionally filters them by task title.
+ * The /api/cody/workflows endpoint returns up to 20 runs (no per-task filter server-side),
+ * so we filter client-side by matching display_title against the provided taskTitle.
+ */
+export function useWorkflowRuns(taskTitle?: string) {
+  return useQuery({
+    queryKey: queryKeys.workflowRuns,
+    queryFn: () => codyApi.workflows.list(),
+    select: (runs) => {
+      if (!taskTitle) return runs
+      return runs.filter((run) => run.display_title === taskTitle)
+    },
+    staleTime: 30_000,
+    enabled: !!taskTitle,
+  })
 }
 
 // ============ useCreateTask ============
@@ -314,6 +335,18 @@ export function useTaskActions({
     onError: handleError('reject gate'),
   })
 
+  const approveUI = useMutation({
+    mutationFn: () => codyApi.tasks.approveUI(issueNumber, actorLogin),
+    onSuccess: handleSuccess('Preview UI approved'),
+    onError: handleError('approve UI'),
+  })
+
+  const approvePR = useMutation({
+    mutationFn: () => codyApi.tasks.approvePR(issueNumber, actorLogin),
+    onSuccess: handleSuccess('PR approved'),
+    onError: handleError('approve PR'),
+  })
+
   const assign = useMutation({
     mutationFn: (assignees: string[]) => codyApi.tasks.assign(issueNumber, assignees, actorLogin),
     onSuccess: handleSuccess('User(s) assigned'),
@@ -335,6 +368,8 @@ export function useTaskActions({
     abort.isPending ||
     approveGate.isPending ||
     rejectGate.isPending ||
+    approveUI.isPending ||
+    approvePR.isPending ||
     assign.isPending ||
     unassign.isPending
 
@@ -347,6 +382,8 @@ export function useTaskActions({
     abort: abort.mutate,
     approveGate: approveGate.mutate,
     rejectGate: rejectGate.mutate,
+    approveUI: approveUI.mutate,
+    approvePR: approvePR.mutate,
     assign: assign.mutate,
     unassign: unassign.mutate,
     isPending,
@@ -358,14 +395,18 @@ export function useTaskActions({
           ? 'approve'
           : rejectGate.isPending
             ? 'reject'
-            : close.isPending
-              ? 'close'
-              : closePR.isPending
-                ? 'close-pr'
-                : reset.isPending
-                  ? 'reset'
-                  : reopen.isPending
-                    ? 'reopen'
-                    : null,
+            : approveUI.isPending
+              ? 'approve-ui'
+              : approvePR.isPending
+                ? 'approve-pr'
+                : close.isPending
+                  ? 'close'
+                  : closePR.isPending
+                    ? 'close-pr'
+                    : reset.isPending
+                      ? 'reset'
+                      : reopen.isPending
+                        ? 'reopen'
+                        : null,
   }
 }

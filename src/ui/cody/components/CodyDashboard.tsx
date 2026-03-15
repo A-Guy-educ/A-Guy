@@ -51,7 +51,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { EnvironmentToolbar } from './EnvironmentToolbar'
 import { ErrorBoundary } from './ErrorBoundary'
-import { GitHubUserPickerDialog } from './GitHubUserPickerDialog'
 import { useGitHubIdentity } from '../hooks/useGitHubIdentity'
 import { Avatar, AvatarFallback, AvatarImage } from '@/ui/web/components/avatar'
 import { SimpleTooltip } from './SimpleTooltip'
@@ -137,16 +136,11 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
     [selectedIssueNumber, tasks],
   )
 
-  // GitHub identity (localStorage — forced on first visit)
-  const {
-    githubUser,
-    isLoaded: identityLoaded,
-    setGitHubUser,
-    clearGitHubUser,
-  } = useGitHubIdentity()
+  // GitHub identity — verified via OAuth session cookie
+  const { githubUser, clearGitHubUser } = useGitHubIdentity()
 
-  // Fetch collaborators for assignee picker + identity picker
-  const { data: collaborators = [], isLoading: collaboratorsLoading } = useQuery({
+  // Fetch collaborators for assignee picker
+  const { data: collaborators = [] } = useQuery({
     queryKey: ['cody-collaborators'],
     queryFn: () => codyApi.collaborators.list(),
     staleTime: 10 * 60 * 1000, // 10 minutes
@@ -594,9 +588,6 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
     </>
   )
 
-  // Show identity picker if no GitHub user is selected yet
-  const showIdentityPicker = identityLoaded && !githubUser
-
   // No token error — full-page (can't function without token)
   if (isNoToken) {
     return (
@@ -605,7 +596,8 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
           <div className="text-6xl mb-4">⚠️</div>
           <h2 className="text-xl font-semibold text-foreground mb-2">Unable to Load Tasks</h2>
           <p className="text-muted-foreground mb-4">
-            GITHUB_TOKEN is not configured. Please add it to your environment variables.
+            {error?.message ||
+              'GitHub token is not configured. Set CODY_BOT_TOKEN or GITHUB_TOKEN in environment variables.'}
           </p>
           <Button onClick={() => refetch()}>Retry</Button>
         </div>
@@ -625,13 +617,6 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
   return (
     <ErrorBoundary>
       <div className="flex h-screen bg-background overflow-hidden">
-        {/* GitHub identity picker — forced on first visit */}
-        <GitHubUserPickerDialog
-          open={showIdentityPicker}
-          collaborators={collaborators}
-          isLoading={collaboratorsLoading}
-          onSelect={setGitHubUser}
-        />
         {/* Preview Modal — full-screen overlay */}
         {showPreview && selectedTask && (
           <PreviewModal
@@ -666,7 +651,7 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
                   {/* GitHub identity badge */}
                   {githubUser && (
                     <SimpleTooltip
-                      content={`Logged in as @${githubUser.login} — click to switch`}
+                      content={`Logged in as @${githubUser.login} — click to log out`}
                       side="bottom"
                     >
                       <button
@@ -838,7 +823,7 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
 
         {/* Desktop: Chat Panel (right side, always visible) */}
         <div className="hidden md:block w-[400px] border-l border-border">
-          <CodyChat selectedTask={selectedTask} />
+          <CodyChat selectedTask={selectedTask} actorLogin={githubUser?.login} />
         </div>
 
         {/* Mobile Menu Sheet */}
@@ -977,7 +962,7 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
                 <SheetTitle>Chat with Cody</SheetTitle>
                 <SheetDescription>AI assistant chat</SheetDescription>
               </SheetHeader>
-              <CodyChat selectedTask={selectedTask} />
+              <CodyChat selectedTask={selectedTask} actorLogin={githubUser?.login} />
             </SheetContent>
           </Sheet>
         )}

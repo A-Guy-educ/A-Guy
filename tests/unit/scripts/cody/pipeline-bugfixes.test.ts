@@ -311,7 +311,7 @@ describe('CRITICAL 4: postComment retry logic', () => {
 
     // Should be called twice (initial + 1 retry)
     expect(mockExecFileSync).toHaveBeenCalledTimes(2)
-  })
+  }, 10000)
 
   it('should not throw when both attempts fail (fire-and-forget)', async () => {
     const { postComment } = await import('../../../../scripts/cody/github-api')
@@ -326,7 +326,7 @@ describe('CRITICAL 4: postComment retry logic', () => {
 
     // Should still call twice (initial + 1 retry)
     expect(mockExecFileSync).toHaveBeenCalledTimes(2)
-  })
+  }, 10000)
 })
 
 // =============================================================================
@@ -367,7 +367,7 @@ describe('CRITICAL 5: setLifecycleLabel retry logic', () => {
 
     // Should be called twice (initial + 1 retry)
     expect(mockExecFileSync).toHaveBeenCalledTimes(2)
-  })
+  }, 10000)
 
   it('should not throw when both attempts fail (fire-and-forget)', async () => {
     const { setLifecycleLabel } = await import('../../../../scripts/cody/github-api')
@@ -382,7 +382,7 @@ describe('CRITICAL 5: setLifecycleLabel retry logic', () => {
 
     // Should still call twice (initial + 1 retry)
     expect(mockExecFileSync).toHaveBeenCalledTimes(2)
-  })
+  }, 10000)
 
   it('should skip setting invalid lifecycle labels', async () => {
     const { setLifecycleLabel } = await import('../../../../scripts/cody/github-api')

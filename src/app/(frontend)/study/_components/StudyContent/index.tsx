@@ -1,21 +1,25 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Play, Sparkles } from 'lucide-react'
-import { getUserProfile } from '@/client/state/localStorage/userProfile'
+import {
+  TAB_COLORS,
+  type CourseTab,
+} from '@/app/(frontend)/courses/[courseSlug]/_components/CourseTabs'
 import { useExamCountdown } from '@/client/hooks/useExamCountdown'
+import { getUserProfile } from '@/client/state/localStorage/userProfile'
+import { SystemLink } from '@/infra/loading/components/SystemLink'
+import { logger } from '@/infra/utils/logger'
+import { cn } from '@/infra/utils/ui'
+import type { Chapter, Lesson } from '@/payload-types'
 import {
   DEFAULT_LESSON_TYPE,
   getEffectiveLessonType,
   type LessonType,
 } from '@/server/constants/lesson-types'
-import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
-import type { Chapter, Lesson } from '@/payload-types'
 import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
-import { SystemLink } from '@/infra/loading/components/SystemLink'
+import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { ProgressCircle } from '@/ui/web/shared/ProgressCircle'
-import { cn } from '@/infra/utils/ui'
-import { logger } from '@/infra/utils/logger'
+import { BarChart3, Clock, GraduationCap, Sparkles } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 interface ChapterWithLessons extends Chapter {
   lessons: Lesson[]
@@ -42,6 +46,10 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
   const [chapters, setChapters] = useState<ChapterWithLessons[]>([])
   const [courseInfo, setCourseInfo] = useState<CourseInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+
+  const tabForLessonType: CourseTab =
+    lessonType === 'practice' ? 'practice' : lessonType === 'exam' ? 'exams' : 'learn'
+  const tabColor = TAB_COLORS[tabForLessonType]
 
   useEffect(() => {
     async function loadData() {
@@ -103,20 +111,18 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
       gatedDelayMs={courseInfo?.gatedDelayMs}
       gatedWarningMs={courseInfo?.gatedWarningMs}
     >
-      {/* Grade + Exam Reminder */}
-      <GradeSection
-        courseId={courseInfo?.courseId ?? ''}
-        courseLabel={courseInfo?.courseLabel ?? ''}
-      />
+      {/* Centered title area - clean background */}
+      <div className="w-full py-6 px-6">
+        <div className="max-w-5xl mx-auto text-center">
+          <ExamReminderBubble courseId={courseInfo?.courseId ?? ''} />
+          <h1 className="text-3xl md:text-4xl font-black text-foreground mt-4 text-center">
+            {sectionTitle}
+          </h1>
+        </div>
+      </div>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-10 max-w-5xl">
-        <section className="mb-8 text-right px-2">
-          <h2 className="text-2xl md:text-3xl font-black text-foreground leading-tight">
-            {sectionTitle}
-          </h2>
-        </section>
-
+      <main className="container mx-auto px-6 py-6 max-w-5xl">
         {filteredLessons.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredLessons.map((lesson, idx) => (
@@ -126,6 +132,7 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
                 index={idx + 1}
                 courseSlug={courseInfo?.courseSlug ?? ''}
                 chapterSlug={lesson._chapterSlug}
+                tabColor={tabColor}
               />
             ))}
           </div>
@@ -135,14 +142,20 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
           </div>
         )}
 
-        {/* Footer */}
-        <div className="mt-16 pt-8 border-t border-border text-center">
-          <div className="flex flex-wrap justify-center gap-4">
-            <button className="text-sm font-bold text-muted-foreground bg-card shadow-card px-8 py-3 rounded-full hover:bg-muted transition-all text-nowrap">
-              {t('viewStats')}
+        {/* Footer actions with divider */}
+        <div className="mt-16 pt-8 border-t border-border">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <button className="flex items-center justify-center gap-2 text-sm font-bold text-foreground bg-card border border-border px-6 py-3 rounded-full hover:bg-muted/50 transition-all">
+              <BarChart3 className="w-4 h-4" />
+              {t('statsAndPerformance')}
             </button>
-            <button className="text-sm font-bold text-primary-foreground bg-primary px-8 py-3 rounded-full shadow-lg hover:opacity-90 transition-all text-nowrap">
-              {t('continueLastPoint')}
+            <button className="flex items-center justify-center gap-2 text-sm font-bold text-primary-foreground bg-primary px-6 py-3 rounded-full shadow-lg hover:opacity-90 transition-all">
+              <GraduationCap className="w-4 h-4" />
+              {t('upcomingExam')}
+            </button>
+            <button className="flex items-center justify-center gap-2 text-sm font-bold text-foreground bg-card border border-border px-6 py-3 rounded-full hover:bg-muted/50 transition-all">
+              <Sparkles className="w-4 h-4" />
+              {t('bagrutTransition')}
             </button>
           </div>
         </div>
@@ -152,34 +165,25 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
 }
 
 /* ------------------------------------------------------------------ */
-/* Grade section with exam reminder                                    */
+/* Exam reminder bubble                                                */
 /* ------------------------------------------------------------------ */
 
-function GradeSection({ courseId, courseLabel }: { courseId: string; courseLabel: string }) {
+function ExamReminderBubble({ courseId }: { courseId: string }) {
   const t = useTranslations('coursePage')
-  const { hasUpcomingExam, daysUntil } = useExamCountdown(courseId)
+  // Check both the actual courseId and 'default-course' (used by study-plan page)
+  const courseExam = useExamCountdown(courseId)
+  const fallbackExam = useExamCountdown('default-course')
+  const { hasUpcomingExam, daysUntil } = courseExam.hasUpcomingExam ? courseExam : fallbackExam
+
+  if (!hasUpcomingExam || daysUntil === null) return null
+
+  const message = t('examReminder').replace('{days}', String(daysUntil))
 
   return (
-    <div className="w-full bg-card/50 py-4 border-b border-border">
-      <div className="max-w-5xl mx-auto px-6 flex flex-col">
-        <div className="text-center">
-          <span className="text-sm md:text-base font-extrabold text-primary uppercase tracking-[0.3em]">
-            {t('grade')} {courseLabel}
-          </span>
-        </div>
-        {hasUpcomingExam && daysUntil !== null && (
-          <div className="flex items-center justify-end gap-3 mt-3 animate-in fade-in">
-            <div className="bg-card shadow-card border border-primary/10 rounded-2xl rounded-tr-none px-4 py-2">
-              <p className="text-xs md:text-sm font-bold text-primary">
-                {t('examReminder').replace('{days}', String(daysUntil))}
-              </p>
-            </div>
-            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-md shrink-0">
-              <Sparkles className="w-4 h-4 text-primary-foreground fill-current" />
-            </div>
-          </div>
-        )}
-      </div>
+    <div className="flex justify-center mt-4 animate-in fade-in">
+      <span className="bg-primary text-white text-sm font-bold px-6 py-2 rounded-full">
+        {message}
+      </span>
     </div>
   )
 }
@@ -193,11 +197,13 @@ function LessonGridCard({
   index,
   courseSlug,
   chapterSlug,
+  tabColor,
 }: {
   lesson: Lesson
   index: number
   courseSlug: string
   chapterSlug: string
+  tabColor?: { text: string; stroke: string }
 }) {
   const t = useTranslations('coursePage')
   const tc = useTranslations('courses')
@@ -214,32 +220,54 @@ function LessonGridCard({
         ? t('lessonsRemaining').replace('{count}', String(3))
         : t('notStarted')
 
-  return (
-    <SystemLink
-      href={href}
-      className={cn(
-        'bg-card rounded-3xl p-6 shadow-card',
-        'flex items-center justify-between',
-        'border border-transparent hover:border-primary/20',
-        'transition-all cursor-pointer active:scale-[0.98]',
-      )}
-    >
-      <div className="flex flex-col">
-        <span className="text-[10px] font-bold text-muted-foreground mb-1 uppercase tracking-wide">
-          {tc('lesson')} {index}
-        </span>
-        <h3 className="text-lg font-bold text-card-foreground">{lesson.title}</h3>
-        <p className="text-xs text-muted-foreground mt-1">{progressText}</p>
-      </div>
+  const accentColor = tabColor?.stroke ?? 'hsl(var(--primary))'
 
-      <div className="relative shrink-0 w-14 h-14">
-        <ProgressCircle percentage={progress} size={56} strokeWidth={3} />
-        {progress === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Play className="w-4 h-4 text-muted-foreground fill-current" />
-          </div>
+  return (
+    <div
+      className="rounded-2xl overflow-hidden border border-border/40 shadow-sm transition-all active:scale-[0.98]"
+      style={{ borderTopWidth: 3, borderTopColor: accentColor }}
+    >
+      <SystemLink
+        href={href}
+        className={cn(
+          'bg-card p-5',
+          'flex flex-row-reverse items-center justify-between',
+          'cursor-pointer',
         )}
-      </div>
-    </SystemLink>
+      >
+        <div className="flex flex-col text-end">
+          <span
+            className="text-[10px] font-bold mb-1 uppercase tracking-wide"
+            style={{ color: accentColor }}
+          >
+            {tc('lesson')} {index}
+          </span>
+          <h3 className="text-lg font-bold text-card-foreground">{lesson.title}</h3>
+          <p className="text-xs text-muted-foreground mt-1 flex items-center justify-end gap-1">
+            {progress === 0 && <Clock className="w-3 h-3" />}
+            {progressText}
+          </p>
+        </div>
+
+        <div className="relative shrink-0 w-14 h-14">
+          <ProgressCircle
+            percentage={progress}
+            size={56}
+            strokeWidth={3}
+            strokeColor={tabColor?.stroke}
+          >
+            <text
+              x="50%"
+              y="50%"
+              textAnchor="middle"
+              dy=".3em"
+              className="text-sm font-bold fill-foreground"
+            >
+              {Math.round(progress)}%
+            </text>
+          </ProgressCircle>
+        </div>
+      </SystemLink>
+    </div>
   )
 }

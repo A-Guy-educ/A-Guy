@@ -6,17 +6,19 @@ import type {
   GraphLayout,
 } from '@/server/payload/collections/Exercises/types'
 import type { GeometrySpecV1 } from '@/infra/contracts/graphics/geometry.v1'
-import { InlineRichTextEditor } from './InlineRichTextEditor'
-import { GeometryCanvasWithToolbar } from '../components/geometry/GeometryCanvasWithToolbar'
-import { CanvasConfigPanel } from '../components/geometry/CanvasConfigPanel'
-import { PointsPanel } from '../components/geometry/PointsPanel'
-import { LinesPanel } from '../components/geometry/LinesPanel'
-import { CirclesPanel } from '../components/geometry/CirclesPanel'
-import { AnglesPanel } from '../components/geometry/AnglesPanel'
-import { ShapesPanel } from '../components/geometry/ShapesPanel'
-import { VectorsPanel } from '../components/geometry/VectorsPanel'
-import { TextsPanel } from '../components/geometry/TextsPanel'
+import type { QuestionGeometryBlock } from '@/server/payload/collections/Exercises/types'
 import { CollapsibleSection } from '@/ui/admin/shared/CollapsibleSection'
+import React, { useCallback } from 'react'
+import { AnglesPanel } from '../components/geometry/AnglesPanel'
+import { CanvasConfigPanel } from '../components/geometry/CanvasConfigPanel'
+import { CirclesPanel } from '../components/geometry/CirclesPanel'
+import { GeometryCanvasWithToolbar } from '../components/geometry/GeometryCanvasWithToolbar'
+import { LinesPanel } from '../components/geometry/LinesPanel'
+import { PointsPanel } from '../components/geometry/PointsPanel'
+import { ShapesPanel } from '../components/geometry/ShapesPanel'
+import { TextsPanel } from '../components/geometry/TextsPanel'
+import { VectorsPanel } from '../components/geometry/VectorsPanel'
+import { InlineRichTextEditor } from './InlineRichTextEditor'
 
 interface GeometryEditorProps {
   block: QuestionGeometryBlock
@@ -64,7 +66,20 @@ export const GeometryEditor: React.FC<GeometryEditorProps> = ({ block, onChange 
     (x: number, y: number) => {
       const nextIndex = geo.elements.points.length + 1
       const name = String.fromCharCode(64 + nextIndex) // A, B, C, ...
-      updateElements({ points: [...geo.elements.points, { name, x, y }] })
+      updateElements({
+        points: [...geo.elements.points, { name, x, y, position: 'r' as const }],
+      })
+    },
+    [geo.elements.points, updateElements],
+  )
+
+  const handlePointLabelMoved = useCallback(
+    (name: string, position: string) => {
+      type PointPosition = GeometrySpecV1['elements']['points'][number]['position']
+      const newPoints = geo.elements.points.map((p) =>
+        p.name === name ? { ...p, position: position as PointPosition } : p,
+      )
+      updateElements({ points: newPoints })
     },
     [geo.elements.points, updateElements],
   )
@@ -74,6 +89,16 @@ export const GeometryEditor: React.FC<GeometryEditorProps> = ({ block, onChange 
       updateGeo({ canvas: { ...geo.canvas, grid: showGrid } })
     },
     [geo.canvas, updateGeo],
+  )
+
+  const handleTextMoved = useCallback(
+    (index: number, x: number, y: number) => {
+      const newTexts = (geo.elements.texts || []).map((t, i) =>
+        i === index ? { ...t, place: { ...t.place, x, y } } : t,
+      )
+      updateElements({ texts: newTexts })
+    },
+    [geo.elements.texts, updateElements],
   )
 
   return (
@@ -187,6 +212,8 @@ export const GeometryEditor: React.FC<GeometryEditorProps> = ({ block, onChange 
             onMultiPointMoved={handleMultiPointMoved}
             onPointAdded={handlePointAdded}
             onGridToggle={handleGridToggle}
+            onTextMoved={handleTextMoved}
+            onPointLabelMoved={handlePointLabelMoved}
           />
         </div>
       </div>

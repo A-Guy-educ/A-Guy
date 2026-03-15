@@ -67,7 +67,7 @@ describe('runInspector', () => {
     process.env = originalEnv
   })
 
-  it('should include watchdogIssue on context when configured', async () => {
+  it('should include digestIssue on context when configured', async () => {
     let capturedCtx: InspectorContext | undefined
 
     const spyPlugin: InspectorPlugin = {
@@ -85,16 +85,16 @@ describe('runInspector', () => {
       dryRun: false,
       stateFile: '/tmp/test-state.json',
       plugins: [spyPlugin],
-      watchdogIssue: 42,
+      digestIssue: 42,
     }
 
     await runInspector(config)
 
     expect(capturedCtx).toBeDefined()
-    expect(capturedCtx!.watchdogIssue).toBe(42)
+    expect(capturedCtx!.digestIssue).toBe(42)
   })
 
-  it('should have watchdogIssue undefined on context when not configured', async () => {
+  it('should have digestIssue undefined on context when not configured', async () => {
     let capturedCtx: InspectorContext | undefined
 
     const spyPlugin: InspectorPlugin = {
@@ -112,13 +112,13 @@ describe('runInspector', () => {
       dryRun: false,
       stateFile: '/tmp/test-state.json',
       plugins: [spyPlugin],
-      // No watchdogIssue
+      // No digestIssue
     }
 
     await runInspector(config)
 
     expect(capturedCtx).toBeDefined()
-    expect(capturedCtx!.watchdogIssue).toBeUndefined()
+    expect(capturedCtx!.digestIssue).toBeUndefined()
   })
 
   it('should return correct result summary', async () => {
@@ -127,7 +127,7 @@ describe('runInspector', () => {
       dryRun: false,
       stateFile: '/tmp/test-state.json',
       plugins: [],
-      watchdogIssue: 42,
+      digestIssue: 42,
     }
 
     const result = await runInspector(config)

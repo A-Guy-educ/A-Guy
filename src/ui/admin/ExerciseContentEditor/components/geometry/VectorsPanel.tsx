@@ -2,6 +2,7 @@
 
 import React from 'react'
 import type { GeometrySpecV1 } from '@/infra/contracts/graphics/geometry.v1'
+import { getDefaultTextColor } from '@/infra/contracts/graphics/textColors'
 import { Plus, Trash2 } from 'lucide-react'
 
 type GeoVector = NonNullable<GeometrySpecV1['elements']['vectors']>[number]
@@ -68,7 +69,7 @@ export const VectorsPanel: React.FC<VectorsPanelProps> = ({ vectors, points, onC
               <input
                 type="color"
                 className="panel-color-input"
-                value={vec.color || '#000000'}
+                value={vec.color || getDefaultTextColor()}
                 onChange={(e) => handleUpdate(index, { color: e.target.value })}
               />
             </div>

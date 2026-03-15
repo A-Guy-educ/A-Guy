@@ -377,6 +377,33 @@ You have access to GitHub MCP tools for repository browsing:
 }
 
 // ===========================================
+// REMOTE DEV EXTENSION
+// ===========================================
+
+/**
+ * System prompt extension injected when a remote dev environment is configured
+ * for the current user. Appended to the agent's base system prompt.
+ */
+export const REMOTE_SYSTEM_PROMPT_EXTENSION = `
+
+## Remote Dev Environment
+
+You have access to four additional tools for interacting with the user's remote Mac dev environment:
+
+**Remote Tools** (only available when remote dev is configured):
+- remoteExec: Execute shell commands on the remote Mac (30s timeout, 512KB output cap)
+- remoteRead: Read file contents from the remote Mac (1MB limit)
+- remoteWrite: Write files to the remote Mac
+- remoteLs: List directory contents on the remote Mac
+
+**Remote Tool Rules**:
+- Use these tools when the user asks about their local dev environment, running processes, or local files
+- Commands run with the user's local permissions — be careful with destructive operations
+- Always confirm before running commands that modify files or state
+- The remote environment is the user's own Mac development machine
+`
+
+// ===========================================
 // HELPERS
 // ===========================================
 

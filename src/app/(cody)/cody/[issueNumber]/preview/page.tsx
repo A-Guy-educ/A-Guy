@@ -4,15 +4,22 @@
  * @pattern dashboard-page
  * @ai-summary Cody dashboard with preview modal pre-opened via URL /cody/[n]/preview
  */
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { CodyDashboard } from '@/ui/cody/components/CodyDashboard'
-import { getMeUser } from '@/infra/utils/getMeUser'
-import { AccountRole } from '@/infra/auth/roles'
+import { verifyCodySessionToken, CODY_SESSION_COOKIE } from '@/infra/auth/cody_session'
+import { buildTaskMetadata } from '../../metadata'
 
-export const metadata: Metadata = {
-  title: 'Cody Operations Dashboard — Preview',
-  description: 'Developer operations dashboard for monitoring Cody CI build agent',
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ issueNumber: string }>
+}): Promise<Metadata> {
+  const { issueNumber } = await params
+  const parsed = parseInt(issueNumber, 10)
+  if (isNaN(parsed)) return { title: 'Cody Operations Dashboard' }
+  return buildTaskMetadata(parsed, { suffix: 'Preview', path: `/cody/${parsed}/preview` })
 }
 
 export default async function CodyPreviewPage({
@@ -20,12 +27,15 @@ export default async function CodyPreviewPage({
 }: {
   params: Promise<{ issueNumber: string }>
 }) {
-  const { user } = await getMeUser()
+  const cookieStore = await cookies()
+  const token = cookieStore.get(CODY_SESSION_COOKIE)?.value
+  const identity = await verifyCodySessionToken(token)
 
-  if (!user || user.role !== AccountRole.Admin) {
+  // Not authenticated — redirect to GitHub OAuth
+  if (!identity) {
     const { issueNumber } = await params
     const returnTo = `/cody/${issueNumber}/preview`
-    redirect(`/login?returnTo=${encodeURIComponent(returnTo)}`)
+    redirect(`/api/oauth/github?returnTo=${encodeURIComponent(returnTo)}`)
   }
 
   const { issueNumber } = await params

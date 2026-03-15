@@ -16,7 +16,10 @@
 import { describe, it, expect } from 'vitest'
 import type { PipelineStateV2, StageStateV2 } from '../../../../scripts/cody/engine/types'
 import { resumeFromGate, resetFromStage } from '../../../../scripts/cody/engine/status'
-import { resolveFromStageAfterGateApproval } from '../../../../scripts/cody/rerun-utils'
+import {
+  resolveFromStageAfterGateApproval,
+  findNearestEarlierStage,
+} from '../../../../scripts/cody/rerun-utils'
 
 // ============================================================================
 // Test Fixtures
@@ -168,5 +171,97 @@ describe('resolveFromStageAfterGateApproval', () => {
     const LIGHTWEIGHT = ['taskify', 'clarify', 'architect', 'build', 'commit', 'verify', 'pr']
     const result = resolveFromStageAfterGateApproval('taskify', LIGHTWEIGHT)
     expect(result).toBe('clarify')
+  })
+})
+
+describe('Profile-aware pipeline resolution', () => {
+  // This tests the fix for the bug where ctx.profile was resolved from task.json
+  // AFTER being used to calculate fromStage, causing "gap not found" error.
+  //
+  // Scenario: A task with complexity:moderate (resolves to lightweight profile)
+  // - If profile is resolved CORRECTLY first: next stage after taskify = 'clarify'
+  // - If profile is NOT resolved (uses default 'standard'): next stage = 'gap'
+  //
+  // The bug was: entry.ts used ctx.profile (default='standard') to pick 'gap',
+  // then resolved profile to 'lightweight' where 'gap' doesn't exist -> crash.
+
+  const STANDARD_ORDER = [
+    'taskify',
+    'gap',
+    'clarify',
+    'architect',
+    'plan-gap',
+    'build',
+    'commit',
+    'verify',
+    'pr',
+  ]
+
+  const LIGHTWEIGHT_ORDER = ['taskify', 'clarify', 'architect', 'build', 'commit', 'verify', 'pr']
+
+  it('standard profile: next stage after taskify is gap', () => {
+    const result = resolveFromStageAfterGateApproval('taskify', STANDARD_ORDER)
+    expect(result).toBe('gap')
+  })
+
+  it('lightweight profile: next stage after taskify is clarify', () => {
+    const result = resolveFromStageAfterGateApproval('taskify', LIGHTWEIGHT_ORDER)
+    expect(result).toBe('clarify')
+  })
+
+  it('demonstrates why profile must be resolved before fromStage calculation', () => {
+    // This is the exact bug scenario from issue #827
+    // Task has complexity:moderate (resolves to lightweight)
+    // But ctx.profile was default='standard' when calculating fromStage
+
+    // Wrong: using standard profile (the bug)
+    const wrongNextStage = resolveFromStageAfterGateApproval('taskify', STANDARD_ORDER)
+    expect(wrongNextStage).toBe('gap')
+
+    // Correct: using lightweight profile (the fix)
+    const correctNextStage = resolveFromStageAfterGateApproval('taskify', LIGHTWEIGHT_ORDER)
+    expect(correctNextStage).toBe('clarify')
+
+    // Verify: 'gap' does NOT exist in lightweight pipeline
+    expect(LIGHTWEIGHT_ORDER.includes('gap')).toBe(false)
+
+    // Therefore: if ctx.profile resolves to 'lightweight', MUST use lightweight pipeline
+    // Otherwise validation fails with "Stage gap not found"
+  })
+})
+
+describe('findNearestEarlierStage', () => {
+  // Lightweight pipeline for testing (no 'gap' or 'plan-gap')
+  const LIGHTWEIGHT_ORDER = ['taskify', 'clarify', 'architect', 'build', 'commit', 'verify', 'pr']
+
+  it('gap missing from lightweight pipeline → falls back to taskify', () => {
+    // In ALL_STAGES, taskify comes before gap and exists in lightweight
+    const result = findNearestEarlierStage('gap', LIGHTWEIGHT_ORDER)
+    expect(result).toBe('taskify')
+  })
+
+  it('plan-gap missing from lightweight → falls back to architect', () => {
+    // In ALL_STAGES, architect comes before plan-gap and exists in lightweight
+    const result = findNearestEarlierStage('plan-gap', LIGHTWEIGHT_ORDER)
+    expect(result).toBe('architect')
+  })
+
+  it('unknown stage → falls back to first pipeline stage', () => {
+    const result = findNearestEarlierStage('nonexistent', LIGHTWEIGHT_ORDER)
+    expect(result).toBe('taskify')
+  })
+
+  it('stage exists in pipeline → returns nearest earlier stage', () => {
+    // build exists, but architect is the nearest earlier in ALL_STAGES
+    const result = findNearestEarlierStage('build', LIGHTWEIGHT_ORDER)
+    expect(result).toBe('architect')
+  })
+
+  it('no earlier stage exists → returns first pipeline stage', () => {
+    // In ALL_STAGES, taskify is first, so nothing comes before it
+    // But for this test, we use a custom pipeline where taskify is not first
+    const customPipeline = ['build', 'commit', 'verify', 'pr']
+    const result = findNearestEarlierStage('taskify', customPipeline)
+    expect(result).toBe('build')
   })
 })
