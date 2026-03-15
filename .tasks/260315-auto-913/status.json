@@ -4,15 +4,15 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-15T09:24:04.301Z",
-  "updatedAt": "2026-03-15T09:25:23.181Z",
-  "state": "paused",
+  "updatedAt": "2026-03-15T09:41:33.622Z",
+  "state": "failed",
   "cursor": null,
   "stages": {
     "taskify": {
-      "state": "paused",
+      "state": "completed",
       "retries": 0,
       "startedAt": "2026-03-15T09:24:05.633Z",
-      "completedAt": "2026-03-15T09:25:18.281Z",
+      "completedAt": "2026-03-15T09:41:33.617Z",
       "outputFile": "taskify.md",
       "tokenUsage": {
         "input": 17348,
@@ -32,5 +32,5 @@
       "timestamp": "2026-03-15T09:24:04.301Z"
     }
   ],
-  "completedAt": "2026-03-15T09:25:23.181Z"
+  "completedAt": "2026-03-15T09:41:33.622Z"
 }
