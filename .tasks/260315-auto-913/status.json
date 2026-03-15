@@ -4,8 +4,8 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-15T12:38:54.363Z",
-  "updatedAt": "2026-03-15T17:33:21.070Z",
-  "state": "running",
+  "updatedAt": "2026-03-15T19:17:39.046Z",
+  "state": "failed",
   "cursor": "architect",
   "stages": {
     "taskify": {
@@ -34,6 +34,21 @@
       },
       "cost": 1.1810595000000002,
       "sessionId": "ses_30d736ab9ffedmXb9u329x9e4l"
+    },
+    "test": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-15T17:45:44.421Z",
+      "outputFile": "test.md",
+      "sessionId": "ses_30d70b2dfffep7hvXBBASSllFm"
+    },
+    "build": {
+      "state": "failed",
+      "retries": 0,
+      "completedAt": "2026-03-15T17:45:44.421Z",
+      "outputFile": "build.md",
+      "sessionId": "ses_30d70b1f8ffeXpVa4Zy4Wrq3WH",
+      "error": "Quality gates failed after 2 build agent fix attempts: TypeScript"
     }
   },
   "triggeredBy": "aguyaharonyair",
@@ -44,6 +59,6 @@
       "timestamp": "2026-03-15T12:38:54.363Z"
     }
   ],
-  "totalCost": 2.57226175,
-  "branchName": "fix/260315-auto-827-pdf"
+  "totalCost": 1.1810595000000002,
+  "completedAt": "2026-03-15T19:17:39.046Z"
 }
