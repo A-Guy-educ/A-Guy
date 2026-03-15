@@ -443,7 +443,7 @@ jobs:
         run: |
           TASK_ID="${{ needs.parse.outputs.task_id }}"
           STATUS_FILE=".tasks/${TASK_ID}/status.json"
-          echo "## 🤖 Cody Pipeline: `${TASK_ID}`" >> $GITHUB_STEP_SUMMARY
+          echo "## 🤖 Cody Pipeline: \`${TASK_ID}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ -f "$STATUS_FILE" ]; then
             STATE=$(jq -r '.state // "unknown"' "$STATUS_FILE")
@@ -457,6 +457,7 @@ jobs:
           fi
       - name: Upload artifacts
         if: always() && needs.parse.outputs.task_id != ''
+        continue-on-error: true # Don't fail the job if artifact zip has issues (e.g. dangling git objects)
         uses: actions/upload-artifact@v4
         with:
           name: cody-${{ needs.parse.outputs.task_id }}-${{ github.run_id }}
