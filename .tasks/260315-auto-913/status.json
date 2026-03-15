@@ -4,51 +4,34 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-15T12:38:54.363Z",
-  "updatedAt": "2026-03-15T19:17:39.046Z",
-  "state": "failed",
-  "cursor": "architect",
+  "updatedAt": "2026-03-15T19:40:35.772Z",
+  "state": "paused",
+  "cursor": "taskify",
   "stages": {
     "taskify": {
       "state": "paused",
       "retries": 0,
-      "startedAt": "2026-03-15T12:38:54.368Z",
-      "completedAt": "2026-03-15T12:39:58.684Z",
+      "startedAt": "2026-03-15T19:38:37.709Z",
+      "completedAt": "2026-03-15T19:40:32.283Z",
       "outputFile": "taskify.md",
       "tokenUsage": {
-        "input": 18239,
-        "output": 861,
-        "cacheRead": 226775
+        "input": 17116,
+        "output": 2134,
+        "cacheRead": 696254
       },
-      "sessionId": "ses_30e7e442dffeUA7XnIaDyVfEe3"
+      "sessionId": "ses_30cfe0002ffeUmHIIbnuzkwCSy"
     },
     "architect": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-03-15T17:30:22.780Z",
-      "completedAt": "2026-03-15T17:33:18.673Z",
-      "outputFile": "architect.md",
-      "tokenUsage": {
-        "input": 14,
-        "output": 7311,
-        "cacheRead": 856904
-      },
-      "cost": 1.1810595000000002,
-      "sessionId": "ses_30d736ab9ffedmXb9u329x9e4l"
+      "state": "pending",
+      "retries": 0
     },
     "test": {
-      "state": "completed",
-      "retries": 0,
-      "completedAt": "2026-03-15T17:45:44.421Z",
-      "outputFile": "test.md",
-      "sessionId": "ses_30d70b2dfffep7hvXBBASSllFm"
+      "state": "pending",
+      "retries": 0
     },
     "build": {
-      "state": "failed",
-      "retries": 0,
-      "completedAt": "2026-03-15T17:45:44.421Z",
-      "outputFile": "build.md",
-      "sessionId": "ses_30d70b1f8ffeXpVa4Zy4Wrq3WH",
-      "error": "Quality gates failed after 2 build agent fix attempts: TypeScript"
+      "state": "pending",
+      "retries": 0
     }
   },
   "triggeredBy": "aguyaharonyair",
@@ -60,5 +43,5 @@
     }
   ],
   "totalCost": 1.1810595000000002,
-  "completedAt": "2026-03-15T19:17:39.046Z"
+  "completedAt": "2026-03-15T19:40:35.772Z"
 }
