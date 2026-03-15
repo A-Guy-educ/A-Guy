@@ -47,7 +47,8 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
   const [courseInfo, setCourseInfo] = useState<CourseInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  const tabForLessonType: CourseTab = lessonType === 'practice' ? 'practice' : 'learn'
+  const tabForLessonType: CourseTab =
+    lessonType === 'practice' ? 'practice' : lessonType === 'exam' ? 'exams' : 'learn'
   const tabColor = TAB_COLORS[tabForLessonType]
 
   useEffect(() => {
