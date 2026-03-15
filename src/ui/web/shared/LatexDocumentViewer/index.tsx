@@ -10,7 +10,7 @@
 import { cn } from '@/infra/utils/ui'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { MathMarkdown } from '@/ui/web/shared/MathMarkdown'
-import { latexToMarkdown } from './latex-to-markdown'
+import { latexToMarkdown, detectDirection } from './latex-to-markdown'
 
 export interface LatexDocumentViewerProps {
   /** Raw LaTeX source text to render */
@@ -31,10 +31,11 @@ export function LatexDocumentViewer({
 }: LatexDocumentViewerProps) {
   const t = useTranslations('exercises')
   const markdown = latexToMarkdown(latex)
+  const dir = detectDirection(latex)
 
   return (
     <div
-      dir="ltr"
+      dir={dir}
       className={cn(
         'bg-background border-border mx-auto max-w-4xl rounded-lg border shadow-lg overflow-auto',
         className,
