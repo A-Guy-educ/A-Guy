@@ -4,8 +4,8 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-15T17:19:29.506Z",
-  "updatedAt": "2026-03-15T18:32:29.436Z",
-  "state": "running",
+  "updatedAt": "2026-03-15T18:59:32.798Z",
+  "state": "failed",
   "cursor": "gap",
   "stages": {
     "taskify": {
@@ -85,13 +85,20 @@
         "cacheRead": 2701313
       },
       "cost": 2.842619000000001,
-      "sessionId": "ses_30d3cb158ffeIhXAR5UeHM2Q2m",
-      "issuesFound": true,
-      "reviewSummary": {
-        "critical": 0,
-        "major": 131,
-        "minor": 26
-      }
+      "sessionId": "ses_30d3cb158ffeIhXAR5UeHM2Q2m"
+    },
+    "fix": {
+      "state": "timeout",
+      "retries": 0,
+      "skipped": "No issues to fix",
+      "fixAttempt": 1,
+      "maxFixAttempts": 2,
+      "startedAt": "2026-03-15T18:39:31.782Z"
+    },
+    "verify": {
+      "state": "pending",
+      "retries": 0,
+      "startedAt": "2026-03-15T18:32:31.385Z"
     }
   },
   "issueNumber": 839,
@@ -103,5 +110,7 @@
       "actor": "aguyaharonyair",
       "timestamp": "2026-03-15T17:19:29.506Z"
     }
-  ]
+  ],
+  "completedAt": "2026-03-15T18:59:32.798Z",
+  "totalCost": 4.612034500000001
 }

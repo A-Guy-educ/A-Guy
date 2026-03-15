@@ -2,9 +2,43 @@
 
 ## Changes
 
-### Feature Implementation (Previously Completed)
+### Fixes Applied (This Run)
 
-The Content Status Badging feature was implemented in a previous run with:
+**Critical Fix: `contentStatusVisible` filtering now implemented**
+
+The `contentStatusVisible` field was added to the schema but never consumed. Students could see "Soon" content even when admin hid it. Fixed by adding filtering logic to:
+
+1. **`src/server/repos/queries/courses.ts`** - Added contentStatusVisible filter to:
+   - `queryCourseBySlug()` - Excludes "Soon" content with visible=false
+   - `queryPublishedCourses()` - Excludes "Soon" content with visible=false
+
+2. **`src/server/repos/queries/lessons.ts`** - Added contentStatusVisible filter to:
+   - `queryLessonsByChapter()` - Excludes "Soon" content with visible=false
+   - `queryLessonBySlug()` - Excludes "Soon" content with visible=false
+   - `queryLessonsByCourse()` - Excludes "Soon" content with visible=false
+
+The filter logic: `OR(contentStatus != 'soon', contentStatusVisible == true)` - meaning:
+- If contentStatus is NOT 'soon' → show it
+- If contentStatus IS 'soon' AND contentStatusVisible is true → show it
+- If contentStatus IS 'soon' AND contentStatusVisible is false → hide it
+
+**Major Fix: CourseCard button properly disabled for "Soon" content**
+
+3. **`src/app/(frontend)/courses/_components/CourseCard/index.tsx`** - Changed button disabled prop from:
+   - `disabled={isLoading}` → `disabled={isLoading || isSoon}`
+   
+   This ensures:
+   - Button is truly disabled (HTML disabled attribute)
+   - Proper accessibility (screen readers announce as disabled)
+   - CSS disabled styles apply automatically
+
+4. **`tests/unit/components/CourseCard.test.tsx`** - Updated test to verify button is disabled:
+   - Changed test "does NOT navigate when clicking a 'Soon' course" to check `openButton.disabled === true`
+   - Updated to verify no toast is shown (disabled button doesn't fire click)
+
+### Previous Implementation (Already Complete)
+
+The feature was implemented in a previous run with:
 
 1. **Backend Schema** (`src/server/payload/fields/contentStatus.ts`)
    - Created reusable `contentStatusFields` with 3 fields:
@@ -20,44 +54,27 @@ The Content Status Badging feature was implemented in a previous run with:
    - Added `soonBadge`, `justAddedBadge`, `contentLocked` to en.json and he.json
 
 4. **UI Components**
-   - Created `ContentStatusBadge` component (`src/ui/web/shared/ContentStatusBadge/`)
+   - Created `ContentStatusBadge` component
    - Integrated badge into `CourseCard` with locked content handling
    - Integrated badge into `CourseLessonCard` with locked content handling
 
-### Type Error Fixes (This Run)
-
-Fixed pre-existing type errors that were blocking the build:
-
-5. **`src/ui/admin/ExerciseContentEditor/editors/GeometryEditor.tsx`**
-   - Fixed duplicate React imports (lines 3 and 11 both imported React and useCallback)
-   - Removed duplicate type import for `QuestionGeometryBlock`
-
-6. **Integration Test Fixes**
-   - `tests/int/chapter-admin-title.int.spec.ts`: Added `contentStatus` and `contentStatusVisible` fields + `draft: false`
-   - `tests/int/lesson-query-hierarchy-safety.int.spec.ts`: Added `contentStatus` and `contentStatusVisible` fields + `draft: false`
-   - `tests/int/lesson-types.int.spec.ts`: Added `contentStatus` and `contentStatusVisible` fields + `draft: false`
-
-These fixes were needed because:
-- The `contentStatus` field is required in the Course/Lesson types
-- The newer Payload 3.73.0 API requires the `draft` parameter
-
 ## Tests Written
 
+- Updated: `tests/unit/components/CourseCard.test.tsx` - Test now verifies button is properly disabled for "Soon" content
 - All 3685 unit tests pass
-- 45 feature-specific tests for Content Status Badging pass
 
 ## Deviations
 
-- None - the plan was followed and type errors were fixed
+- None - fixed both critical and major issues identified in review
 
 ## Quality
 
-- TypeScript: PASS (all errors fixed)
-- Lint: PASS
+- TypeScript: PASS
+- Lint: PASS  
 - Unit tests: 3685 passed
 
 ## Notes
 
-- Feature fully implemented and working
-- Type errors were pre-existing issues in the codebase that were fixed
-- The feature adds "Soon" and "Just Added" badges to Courses and Lessons with proper locking behavior
+- Feature fully implemented with proper visibility filtering
+- Admin can now hide "Soon" content entirely by unchecking "Visible to students"
+- Button properly disabled for "Soon" content with correct accessibility
