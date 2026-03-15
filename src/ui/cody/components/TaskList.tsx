@@ -115,7 +115,7 @@ const statusLabel: Record<ColumnId, string> = {
   building: 'Building',
   review: 'In Review',
   failed: 'Failed',
-  'gate-waiting': 'Gate',
+  'gate-waiting': 'Needs Approval',
   retrying: 'Retrying',
   done: 'Done',
 }

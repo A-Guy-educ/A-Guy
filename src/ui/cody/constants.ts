@@ -49,7 +49,7 @@ export const COLUMN_DEFS: Record<ColumnId, ColumnDef> = {
   building: { id: 'building', label: 'Building', color: 'blue', order: 1 },
   review: { id: 'review', label: 'Review', color: 'purple', order: 2 },
   failed: { id: 'failed', label: 'Failed', color: 'red', order: 3 },
-  'gate-waiting': { id: 'gate-waiting', label: 'Gate Waiting', color: 'yellow', order: 4 },
+  'gate-waiting': { id: 'gate-waiting', label: 'Needs Approval', color: 'yellow', order: 4 },
   retrying: { id: 'retrying', label: 'Retrying', color: 'orange', order: 5 },
   done: { id: 'done', label: 'Done', color: 'green', order: 6 },
 }

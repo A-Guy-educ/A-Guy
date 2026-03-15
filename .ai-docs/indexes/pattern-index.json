@@ -262,6 +262,7 @@
         "src/ui/web/exerciserenderer/blocks/AxisRenderer/index.tsx",
         "src/ui/web/exerciserenderer/blocks/GeometryRenderer/index.tsx",
         "src/ui/web/exerciserenderer/blocks/HtmlBlockRenderer/index.tsx",
+        "src/ui/web/exerciserenderer/blocks/MultiAxisRenderer/index.tsx",
         "src/ui/web/exerciserenderer/blocks/SvgRenderer/index.tsx",
         "src/ui/web/exerciserenderer/components/FeedbackDisplay/index.tsx",
         "src/ui/web/exerciserenderer/components/HelpSystem/HelpSystemButtons.tsx",
@@ -428,6 +429,8 @@
         "src/ui/web/exerciserenderer/ExerciseRenderer/index.tsx",
         "src/ui/web/exerciserenderer/answers/McqAnswerUI/index.tsx",
         "src/ui/web/exerciserenderer/answers/TrueFalseAnswerUI/index.tsx",
+        "src/ui/web/exerciserenderer/blocks/GraphWithPrompt/index.tsx",
+        "src/ui/web/exerciserenderer/blocks/MultiAxisRenderer/index.tsx",
         "src/ui/web/exerciserenderer/blocks/SvgRenderer/index.tsx",
         "src/ui/web/exerciserenderer/components/FeedbackDisplay/index.tsx",
         "src/ui/web/exerciserenderer/components/HelpSystem/HelpSystemButtons.tsx",
@@ -490,6 +493,8 @@
         "src/app/(frontend)/courses/[courseSlug]/_components/CourseTabs/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/_components/ExamReminderBubble/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/_components/ExamsTab/index.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/_components/LearnTab/index.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/_components/PracticeTab/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ExercisesPager/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonContent.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ViewToggle.tsx",
@@ -556,6 +561,7 @@
         "src/app/api/blob/upload-token/route.ts",
         "src/app/api/chat-assets/finalize/route.ts",
         "src/app/api/conversations/by-context/route.ts",
+        "src/app/api/exercises/[id]/blocks/[blockId]/route.ts",
         "src/app/api/exercises/convert/queue-v2/route.ts",
         "src/app/api/exercises/convert/queue/route.ts",
         "src/app/api/exercises/import/route.ts",
@@ -622,6 +628,7 @@
         "src/app/api/conversations/by-context/route.ts",
         "src/app/api/copilotkit/route.ts",
         "src/app/api/example/route.ts",
+        "src/app/api/exercises/[id]/blocks/[blockId]/route.ts",
         "src/app/api/exercises/convert/queue-v2/route.ts",
         "src/app/api/exercises/convert/queue/route.ts",
         "src/app/api/exercises/convert/runner/route.ts",
@@ -654,7 +661,7 @@
         "src/app/api/cody/prs/comments/route.ts",
         "src/app/api/cody/tasks/[taskId]/actions/route.ts",
         "src/app/api/cody/tasks/approve/route.ts",
-        "src/app/api/exercises/convert/queue-v2/route.ts",
+        "src/app/api/exercises/[id]/blocks/[blockId]/route.ts",
         "src/app/api/exercises/convert/queue/route.ts",
         "src/app/api/exercises/convert/single/create/route.ts",
         "src/app/api/study-plan/route.ts",
@@ -793,6 +800,20 @@
       "pattern": "queue",
       "description": "No description available",
       "files": ["src/app/api/exercises/convert/queue-v2/route.ts"]
+    },
+    "validation": {
+      "pattern": "validation",
+      "description": "No description available",
+      "files": [
+        "src/app/api/exercises/convert/queue-v2/schema.ts",
+        "src/server/payload/hooks/configSecrets/beforeChange-hook.ts",
+        "src/server/payload/hooks/configValues/beforeChange-hook.ts"
+      ]
+    },
+    "zod-schema": {
+      "pattern": "zod-schema",
+      "description": "No description available",
+      "files": ["src/app/api/exercises/convert/queue-v2/schema.ts"]
     },
     "oauth": {
       "pattern": "oauth",
@@ -1064,6 +1085,11 @@
       "description": "No description available",
       "files": ["src/infra/types/index.ts"]
     },
+    "viewport-calculation": {
+      "pattern": "viewport-calculation",
+      "description": "No description available",
+      "files": ["src/infra/utils/graphics/viewport-utils.ts"]
+    },
     "typed-config-accessor": {
       "pattern": "typed-config-accessor",
       "description": "No description available",
@@ -1269,14 +1295,6 @@
       "pattern": "write-only-ux",
       "description": "No description available",
       "files": ["src/server/payload/hooks/configSecrets/afterRead-hook.ts"]
-    },
-    "validation": {
-      "pattern": "validation",
-      "description": "No description available",
-      "files": [
-        "src/server/payload/hooks/configSecrets/beforeChange-hook.ts",
-        "src/server/payload/hooks/configValues/beforeChange-hook.ts"
-      ]
     },
     "secret-detection": {
       "pattern": "secret-detection",
@@ -1708,7 +1726,7 @@
       "domain": "cody",
       "patterns": ["dashboard-page"],
       "aiSummary": "Cody dashboard with task detail on Comments tab via URL /cody/[n]/comments",
-      "dependencies": ["next/navigation", "next"]
+      "dependencies": ["next/headers", "next/navigation", "next"]
     },
     "src/app/(cody)/cody/[issueNumber]/page.tsx": {
       "path": "src/app/(cody)/cody/[issueNumber]/page.tsx",
@@ -1716,7 +1734,7 @@
       "domain": "cody",
       "patterns": ["dashboard-page"],
       "aiSummary": "Cody dashboard with a specific task pre-selected via URL",
-      "dependencies": ["next/navigation", "next"]
+      "dependencies": ["next/headers", "next/navigation", "next"]
     },
     "src/app/(cody)/cody/[issueNumber]/preview/comments/page.tsx": {
       "path": "src/app/(cody)/cody/[issueNumber]/preview/comments/page.tsx",
@@ -1724,7 +1742,7 @@
       "domain": "cody",
       "patterns": ["dashboard-page"],
       "aiSummary": "Cody dashboard with preview modal on Comments tab via URL /cody/[n]/preview/comments",
-      "dependencies": ["next/navigation", "next"]
+      "dependencies": ["next/headers", "next/navigation", "next"]
     },
     "src/app/(cody)/cody/[issueNumber]/preview/docs/page.tsx": {
       "path": "src/app/(cody)/cody/[issueNumber]/preview/docs/page.tsx",
@@ -1732,7 +1750,7 @@
       "domain": "cody",
       "patterns": ["dashboard-page"],
       "aiSummary": "Cody dashboard with preview modal on Docs tab via URL /cody/[n]/preview/docs",
-      "dependencies": ["next/navigation", "next"]
+      "dependencies": ["next/headers", "next/navigation", "next"]
     },
     "src/app/(cody)/cody/[issueNumber]/preview/page.tsx": {
       "path": "src/app/(cody)/cody/[issueNumber]/preview/page.tsx",
@@ -1740,7 +1758,7 @@
       "domain": "cody",
       "patterns": ["dashboard-page"],
       "aiSummary": "Cody dashboard with preview modal pre-opened via URL /cody/[n]/preview",
-      "dependencies": ["next/navigation", "next"]
+      "dependencies": ["next/headers", "next/navigation", "next"]
     },
     "src/app/(cody)/cody/bug/page.tsx": {
       "path": "src/app/(cody)/cody/bug/page.tsx",
@@ -1748,7 +1766,7 @@
       "domain": "cody",
       "patterns": ["dashboard-page"],
       "aiSummary": "Cody dashboard with bug report dialog pre-opened via URL /cody/bug",
-      "dependencies": ["next/navigation"]
+      "dependencies": ["next/headers", "next/navigation"]
     },
     "src/app/(cody)/cody/chat/page.tsx": {
       "path": "src/app/(cody)/cody/chat/page.tsx",
@@ -1756,7 +1774,7 @@
       "domain": "cody",
       "patterns": ["dashboard-page"],
       "aiSummary": "Cody dashboard with chat panel pre-opened via URL /cody/chat",
-      "dependencies": ["next/navigation"]
+      "dependencies": ["next/headers", "next/navigation"]
     },
     "src/app/(cody)/cody/error.tsx": {
       "path": "src/app/(cody)/cody/error.tsx",
@@ -1780,7 +1798,7 @@
       "domain": "cody",
       "patterns": ["dashboard-page"],
       "aiSummary": "Cody dashboard with create task dialog pre-opened via URL /cody/new",
-      "dependencies": ["next/navigation"]
+      "dependencies": ["next/headers", "next/navigation"]
     },
     "src/app/(cody)/cody/page.tsx": {
       "path": "src/app/(cody)/cody/page.tsx",
@@ -1964,7 +1982,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react"]
+      "dependencies": ["lucide-react", "react"]
     },
     "src/app/(frontend)/courses/[courseSlug]/_components/CourseTabs/index.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/_components/CourseTabs/index.tsx",
@@ -1980,7 +1998,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["lucide-react"]
+      "dependencies": []
     },
     "src/app/(frontend)/courses/[courseSlug]/_components/ExamsTab/index.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/_components/ExamsTab/index.tsx",
@@ -1994,7 +2012,7 @@
       "path": "src/app/(frontend)/courses/[courseSlug]/_components/LearnTab/index.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["client-component"],
+      "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
       "dependencies": []
     },
@@ -2002,7 +2020,7 @@
       "path": "src/app/(frontend)/courses/[courseSlug]/_components/PracticeTab/index.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["client-component"],
+      "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
       "dependencies": []
     },
@@ -2284,7 +2302,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["next/navigation", "react"]
+      "dependencies": ["next/navigation", "react", "next/image"]
     },
     "src/app/(frontend)/login/LoginPageContent.tsx": {
       "path": "src/app/(frontend)/login/LoginPageContent.tsx",
@@ -2386,7 +2404,7 @@
       "domain": "general",
       "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "lucide-react"]
+      "dependencies": ["lucide-react", "react"]
     },
     "src/app/(frontend)/study-plan/_components/DayCard.tsx": {
       "path": "src/app/(frontend)/study-plan/_components/DayCard.tsx",
@@ -2708,6 +2726,14 @@
       "aiSummary": "",
       "dependencies": ["next/server", "zod", "@sentry/nextjs", "crypto"]
     },
+    "src/app/api/exercises/[id]/blocks/[blockId]/route.ts": {
+      "path": "src/app/api/exercises/[id]/blocks/[blockId]/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["api-endpoint", "authenticated-endpoint", "validated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["next/server", "payload", "zod", "@payload-config"]
+    },
     "src/app/api/exercises/convert/queue/route.ts": {
       "path": "src/app/api/exercises/convert/queue/route.ts",
       "type": "unknown",
@@ -2720,15 +2746,17 @@
       "path": "src/app/api/exercises/convert/queue-v2/route.ts",
       "type": "api-route",
       "domain": "conversion",
-      "patterns": [
-        "endpoint",
-        "queue",
-        "api-endpoint",
-        "authenticated-endpoint",
-        "validated-endpoint"
-      ],
+      "patterns": ["endpoint", "queue", "api-endpoint", "authenticated-endpoint"],
       "aiSummary": "",
-      "dependencies": ["payload", "@payload-config", "next/server", "zod"]
+      "dependencies": ["payload", "@payload-config", "next/server"]
+    },
+    "src/app/api/exercises/convert/queue-v2/schema.ts": {
+      "path": "src/app/api/exercises/convert/queue-v2/schema.ts",
+      "type": "utility",
+      "domain": "conversion",
+      "patterns": ["validation", "zod-schema"],
+      "aiSummary": "",
+      "dependencies": ["zod"]
     },
     "src/app/api/exercises/convert/runner/route.ts": {
       "path": "src/app/api/exercises/convert/runner/route.ts",
@@ -3352,6 +3380,14 @@
       "domain": "general",
       "patterns": ["type-exports"],
       "aiSummary": "Centralized type exports for easy discovery by AI agents",
+      "dependencies": []
+    },
+    "src/infra/utils/graphics/viewport-utils.ts": {
+      "path": "src/infra/utils/graphics/viewport-utils.ts",
+      "type": "utility",
+      "domain": "graphics",
+      "patterns": ["viewport-calculation"],
+      "aiSummary": "Viewport utility functions for auto-calculating, validating, and resolving graph display ranges",
       "dependencies": []
     },
     "src/infra/utils/useClickableCard.ts": {
@@ -4176,7 +4212,7 @@
       "domain": "general",
       "patterns": ["client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "jsxgraph"]
+      "dependencies": ["jsxgraph", "react"]
     },
     "src/ui/admin/ExerciseContentEditor/components/geometry/GeometryCanvasWithToolbar.tsx": {
       "path": "src/ui/admin/ExerciseContentEditor/components/geometry/GeometryCanvasWithToolbar.tsx",
@@ -4224,7 +4260,7 @@
       "domain": "general",
       "patterns": ["client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "lucide-react"]
+      "dependencies": ["lucide-react", "react"]
     },
     "src/ui/admin/ExerciseContentEditor/components/geometry/VectorsPanel.tsx": {
       "path": "src/ui/admin/ExerciseContentEditor/components/geometry/VectorsPanel.tsx",
@@ -5112,7 +5148,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["next/navigation", "react"]
+      "dependencies": ["lucide-react", "next/navigation", "react"]
     },
     "src/ui/web/Link/index.tsx": {
       "path": "src/ui/web/Link/index.tsx",
@@ -5471,6 +5507,14 @@
       "aiSummary": "",
       "dependencies": ["react", "next/dynamic"]
     },
+    "src/ui/web/exerciserenderer/blocks/GraphWithPrompt/index.tsx": {
+      "path": "src/ui/web/exerciserenderer/blocks/GraphWithPrompt/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["tailwind-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
     "src/ui/web/exerciserenderer/blocks/HtmlBlockRenderer/index.tsx": {
       "path": "src/ui/web/exerciserenderer/blocks/HtmlBlockRenderer/index.tsx",
       "type": "unknown",
@@ -5478,6 +5522,14 @@
       "patterns": ["client-component"],
       "aiSummary": "",
       "dependencies": ["dompurify", "react"]
+    },
+    "src/ui/web/exerciserenderer/blocks/MultiAxisRenderer/index.tsx": {
+      "path": "src/ui/web/exerciserenderer/blocks/MultiAxisRenderer/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["tailwind-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
     },
     "src/ui/web/exerciserenderer/blocks/SvgRenderer/index.tsx": {
       "path": "src/ui/web/exerciserenderer/blocks/SvgRenderer/index.tsx",
@@ -6009,8 +6061,8 @@
     }
   },
   "metadata": {
-    "generatedAt": "2026-03-14T18:12:55.484Z",
-    "totalFiles": 532,
-    "totalPatterns": 180
+    "generatedAt": "2026-03-15T19:25:16.217Z",
+    "totalFiles": 537,
+    "totalPatterns": 182
   }
 }

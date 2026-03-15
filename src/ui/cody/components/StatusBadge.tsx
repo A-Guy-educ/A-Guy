@@ -17,7 +17,7 @@ const statusConfig: Record<string, { bg: string; text: string; label: string }> 
   failed: { bg: 'bg-red-500/20', text: 'text-red-400', label: 'Failed' },
   timeout: { bg: 'bg-orange-500/20', text: 'text-orange-400', label: 'Timeout' },
   pending: { bg: 'bg-muted', text: 'text-muted-foreground', label: 'Pending' },
-  'gate-waiting': { bg: 'bg-yellow-500/20', text: 'text-yellow-400', label: 'Gate Waiting' },
+  'gate-waiting': { bg: 'bg-yellow-500/20', text: 'text-yellow-400', label: 'Needs Approval' },
 }
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {

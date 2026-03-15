@@ -558,6 +558,39 @@ export async function executePostAction(
       break
     }
 
+    case 'run-mechanical-autofix': {
+      // Run lint:fix + format:fix deterministically — no LLM needed for mechanical fixes.
+      // This prevents trivial format/lint failures from reaching verify stage.
+      if (ctx.input.dryRun) return
+
+      logger.info('  🔧 Running mechanical auto-fix (lint:fix + format:fix)...')
+
+      try {
+        execFileSync('pnpm', ['lint:fix'], {
+          stdio: 'pipe',
+          timeout: 2 * 60 * 1000, // 2 minutes
+          maxBuffer: 10 * 1024 * 1024,
+        })
+        logger.info('   ✓ lint:fix completed')
+      } catch {
+        logger.info('   ✗ lint:fix had errors (some may need manual fix)')
+      }
+
+      try {
+        execFileSync('pnpm', ['format:fix'], {
+          stdio: 'pipe',
+          timeout: 2 * 60 * 1000, // 2 minutes
+          maxBuffer: 10 * 1024 * 1024,
+        })
+        logger.info('   ✓ format:fix completed')
+      } catch {
+        logger.info('   ✗ format:fix had errors (some may need manual fix)')
+      }
+
+      logger.info('  ✅ Mechanical auto-fix complete')
+      break
+    }
+
     case 'clear-verify-failures': {
       const verifyFailuresPath = path.join(ctx.taskDir, 'verify-failures.md')
       if (fs.existsSync(verifyFailuresPath)) {
