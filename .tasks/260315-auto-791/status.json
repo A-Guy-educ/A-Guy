@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-15T18:32:09.674Z",
-  "updatedAt": "2026-03-15T20:36:54.213Z",
+  "updatedAt": "2026-03-15T20:54:20.386Z",
   "state": "running",
   "cursor": "plan-gap",
   "stages": {
@@ -63,12 +63,23 @@
       "sessionId": "ses_30cccdde4ffeEb27PNz2kGGt4z"
     },
     "test": {
-      "state": "pending",
-      "retries": 0
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-15T20:52:10.571Z",
+      "outputFile": "test.md",
+      "sessionId": "ses_30cc8a463ffemPfjNDcm5BF3c2"
     },
     "build": {
-      "state": "pending",
-      "retries": 0
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-15T20:52:10.571Z",
+      "outputFile": "build.md",
+      "sessionId": "ses_30cc8a1adffe37NVdKx37nKBxU"
+    },
+    "commit": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-15T20:54:20.386Z"
     }
   },
   "issueNumber": 838,
@@ -81,6 +92,5 @@
       "timestamp": "2026-03-15T18:32:09.674Z"
     }
   ],
-  "totalCost": 1.961956,
-  "branchName": "feat/260315-auto-838"
+  "totalCost": 1.961956
 }
