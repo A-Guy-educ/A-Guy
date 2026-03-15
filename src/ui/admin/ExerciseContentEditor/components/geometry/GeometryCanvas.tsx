@@ -1,8 +1,14 @@
 'use client'
 
-import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import type { GeometrySpecV1 } from '@/infra/contracts/graphics/geometry.v1'
+import {
+  getDefaultAngleColor,
+  getDefaultCanvasBackground,
+  getDefaultTextColor,
+  sizeScaleToPixels,
+} from '@/infra/contracts/graphics/textColors'
 import type { JXGBoard, JXGElement } from 'jsxgraph'
+import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { JSXGraphBoard } from '../shared/JSXGraphBoard'
 
 interface PointUpdate {
@@ -20,12 +26,34 @@ interface GeometryCanvasProps {
   onPointMoved?: (name: string, x: number, y: number) => void
   onMultiPointMoved?: (updates: PointUpdate[]) => void
   onCanvasClick?: (x: number, y: number) => void
+  onTextMoved?: (index: number, x: number, y: number) => void
+  onPointLabelMoved?: (name: string, position: string) => void
 }
 
 const DISPLAY_WIDTH = 420
 const DISPLAY_HEIGHT = 320
 
 const round1 = (n: number) => Math.round(n * 10) / 10
+
+function mapLabelPosition(pos?: string): string {
+  const map: Record<string, string> = {
+    tr: 'urt',
+    tl: 'ult',
+    br: 'lrt',
+    bl: 'llft',
+    t: 'top',
+    b: 'bot',
+    l: 'left',
+    r: 'right',
+  }
+  return map[pos || 'r'] || 'right'
+}
+
+function angleToLabelPosition(angleDeg: number): string {
+  const normalized = ((angleDeg % 360) + 360) % 360
+  const idx = Math.round(normalized / 45) % 8
+  return ['r', 'tr', 't', 'tl', 'l', 'bl', 'b', 'br'][idx]
+}
 
 export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
   id,
@@ -36,6 +64,8 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
   onPointMoved,
   onMultiPointMoved,
   onCanvasClick,
+  onTextMoved,
+  onPointLabelMoved,
 }) => {
   const boardRef = useRef<JXGBoard | null>(null)
   const isSyncingRef = useRef(false)
@@ -45,10 +75,14 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
   const onCanvasClickRef = useRef(onCanvasClick)
   const onPointMovedRef = useRef(onPointMoved)
   const onMultiPointMovedRef = useRef(onMultiPointMoved)
+  const onTextMovedRef = useRef(onTextMoved)
+  const onPointLabelMovedRef = useRef(onPointLabelMoved)
   modeRef.current = interactionMode
   onCanvasClickRef.current = onCanvasClick
   onPointMovedRef.current = onPointMoved
   onMultiPointMovedRef.current = onMultiPointMoved
+  onTextMovedRef.current = onTextMoved
+  onPointLabelMovedRef.current = onPointLabelMoved
 
   const syncToBoard = useCallback(() => {
     const board = boardRef.current
@@ -61,7 +95,16 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
       const existingIds = new Set(elementsRef.current.keys())
       const newIds = new Set<string>()
 
-      syncPoints(board, geometry, newIds, elementsRef, isSyncingRef, isDraggingRef, onPointMovedRef)
+      syncPoints(
+        board,
+        geometry,
+        newIds,
+        elementsRef,
+        isSyncingRef,
+        isDraggingRef,
+        onPointMovedRef,
+        onPointLabelMovedRef,
+      )
       syncSegments(board, geometry, newIds, elementsRef)
       syncLineLabels(board, geometry, newIds, elementsRef)
       syncCircles(board, geometry, newIds, elementsRef)
@@ -75,6 +118,7 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
         isDraggingRef,
         onMultiPointMovedRef,
       )
+      syncTexts(board, geometry, newIds, elementsRef, isSyncingRef, isDraggingRef, onTextMovedRef)
 
       for (const oldId of existingIds) {
         if (!newIds.has(oldId)) {
@@ -123,7 +167,7 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
   return (
     <div
       className={`geo-canvas-wrap geo-canvas-wrap--${interactionMode}`}
-      style={{ background: canvas.background || '#ffffff' }}
+      style={{ background: canvas.background || getDefaultCanvasBackground() }}
     >
       <JSXGraphBoard
         id={id}
@@ -137,6 +181,14 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
   )
 }
 
+type LabelEl = {
+  X: () => number
+  Y: () => number
+  setAttribute: (attrs: Record<string, unknown>) => void
+  on: (event: string, handler: () => void) => void
+}
+type PointElWithLabel = { X: () => number; Y: () => number; label?: LabelEl }
+
 function syncPoints(
   board: JXGBoard,
   geometry: GeometrySpecV1,
@@ -145,15 +197,30 @@ function syncPoints(
   isSyncingRef: React.MutableRefObject<boolean>,
   isDraggingRef: React.MutableRefObject<boolean>,
   onPointMovedRef: React.RefObject<((name: string, x: number, y: number) => void) | undefined>,
+  onPointLabelMovedRef: React.RefObject<((name: string, position: string) => void) | undefined>,
 ) {
   for (const point of geometry.elements.points) {
     const elemId = `point-${point.name}`
     newIds.add(elemId)
     const existing = elementsRef.current.get(elemId)
 
+    const pointColor = point.color ?? getDefaultTextColor()
+    const pointSize = point.size ?? 4
+    const labelPos = mapLabelPosition(point.position)
+
     if (existing && existing.moveTo) {
       existing.moveTo([point.x, point.y])
-      existing.setAttribute({ visible: point.visible !== false, name: point.name })
+      existing.setAttribute({
+        visible: point.visible !== false,
+        name: point.name,
+        fillColor: pointColor,
+        strokeColor: pointColor,
+        size: pointSize,
+      })
+      const existingLabel = (existing as unknown as PointElWithLabel).label
+      if (existingLabel) {
+        existingLabel.setAttribute({ position: labelPos })
+      }
     } else {
       if (existing) {
         board.removeObject(existing)
@@ -161,10 +228,12 @@ function syncPoints(
       }
       const el = board.create('point', [point.x, point.y], {
         name: point.name,
-        size: 4,
+        size: pointSize,
+        fillColor: pointColor,
+        strokeColor: pointColor,
         visible: point.visible !== false,
         withLabel: true,
-        label: { fontSize: point.fontSize || 14 },
+        label: { position: labelPos, fontSize: point.fontSize || 14 },
       })
       el.on('drag', () => {
         if (isSyncingRef.current) return
@@ -174,6 +243,26 @@ function syncPoints(
       el.on('up', () => {
         isDraggingRef.current = false
       })
+
+      const elWithLabel = el as unknown as PointElWithLabel
+      const labelEl = elWithLabel.label
+      if (labelEl) {
+        labelEl.setAttribute({ fixed: false })
+        labelEl.on('drag', () => {
+          if (isSyncingRef.current) return
+          isDraggingRef.current = true
+        })
+        labelEl.on('up', () => {
+          const dx = labelEl.X() - elWithLabel.X()
+          const dy = labelEl.Y() - elWithLabel.Y()
+          const angleDeg = Math.atan2(dy, dx) * (180 / Math.PI)
+          const snapped = angleToLabelPosition(angleDeg)
+          labelEl.setAttribute({ position: mapLabelPosition(snapped) })
+          onPointLabelMovedRef.current?.(point.name, snapped)
+          isDraggingRef.current = false
+        })
+      }
+
       elementsRef.current.set(elemId, el)
     }
   }
@@ -196,14 +285,14 @@ function syncSegments(
     const existing = elementsRef.current.get(elemId)
     if (existing) {
       existing.setAttribute({
-        strokeColor: line.color || '#000000',
+        strokeColor: line.color || getDefaultTextColor(),
         strokeWidth: line.thickness || 2,
         dash: line.style === 'dashed' ? 2 : 0,
       })
       continue
     }
     const el = board.create('segment', [fromEl, toEl], {
-      strokeColor: line.color || '#000000',
+      strokeColor: line.color || getDefaultTextColor(),
       strokeWidth: line.thickness || 2,
       dash: line.style === 'dashed' ? 2 : 0,
       fixed: true,
@@ -277,7 +366,7 @@ function syncCircles(
     const existing = elementsRef.current.get(elemId)
     if (existing) {
       existing.setAttribute({
-        strokeColor: circle.color || '#000000',
+        strokeColor: circle.color || getDefaultTextColor(),
         dash: circle.style === 'dashed' ? 2 : 0,
       })
       continue
@@ -286,7 +375,7 @@ function syncCircles(
       ? [centerEl, elementsRef.current.get(`point-${circle.through}`) || centerEl]
       : [centerEl, circle.radius || 50]
     const el = board.create('circle', parents, {
-      strokeColor: circle.color || '#000000',
+      strokeColor: circle.color || getDefaultTextColor(),
       dash: circle.style === 'dashed' ? 2 : 0,
       fixed: true,
     })
@@ -313,8 +402,8 @@ function syncAngles(
     const existing = elementsRef.current.get(elemId)
     if (existing) {
       existing.setAttribute({
-        strokeColor: angle.color || '#3366cc',
-        fillColor: angle.color || '#3366cc',
+        strokeColor: angle.color || getDefaultAngleColor(),
+        fillColor: angle.color || getDefaultAngleColor(),
         radius: angle.arcRadius || 30,
       })
       continue
@@ -324,8 +413,8 @@ function syncAngles(
     const el = board.create('angle', [ray1El, centerEl, ray2El], {
       radius: angle.arcRadius || 30,
       orthoType: isSquare ? 'square' : 'sector',
-      strokeColor: angle.color || '#3366cc',
-      fillColor: angle.color || '#3366cc',
+      strokeColor: angle.color || getDefaultAngleColor(),
+      fillColor: angle.color || getDefaultAngleColor(),
       fillOpacity: 0.15,
       strokeWidth: 2,
       fixed: true,
@@ -355,7 +444,7 @@ function syncPolygons(
     const ptEls = tri.points.map((name) => elementsRef.current.get(`point-${name}`)).filter(Boolean)
     if (ptEls.length < 3) continue
     const el = board.create('polygon', ptEls, {
-      borders: { strokeColor: tri.color || '#000000', strokeWidth: tri.thickness || 2 },
+      borders: { strokeColor: tri.color || getDefaultTextColor(), strokeWidth: tri.thickness || 2 },
       fillColor: tri.fill || 'transparent',
       fillOpacity: tri.fill ? 0.3 : 0,
       hasInnerPoints: true,
@@ -375,7 +464,10 @@ function syncPolygons(
       .filter(Boolean)
     if (ptEls.length < 4) continue
     const el = board.create('polygon', ptEls, {
-      borders: { strokeColor: rect.color || '#000000', strokeWidth: rect.thickness || 2 },
+      borders: {
+        strokeColor: rect.color || getDefaultTextColor(),
+        strokeWidth: rect.thickness || 2,
+      },
       fillColor: rect.fill || 'transparent',
       fillOpacity: rect.fill ? 0.3 : 0,
       hasInnerPoints: true,
@@ -407,4 +499,68 @@ function addPolygonDragHandlers(
   polygon.on('up', () => {
     isDraggingRef.current = false
   })
+}
+
+function syncTexts(
+  board: JXGBoard,
+  geometry: GeometrySpecV1,
+  newIds: Set<string>,
+  elementsRef: React.MutableRefObject<Map<string, JXGElement>>,
+  isSyncingRef: React.MutableRefObject<boolean>,
+  isDraggingRef: React.MutableRefObject<boolean>,
+  onTextMovedRef: React.RefObject<((index: number, x: number, y: number) => void) | undefined>,
+) {
+  const texts = geometry.elements.texts || []
+  for (let i = 0; i < texts.length; i++) {
+    const text = texts[i]
+    const elemId = `text-${i}`
+    newIds.add(elemId)
+
+    let x = text.place?.x ?? 0
+    let y = text.place?.y ?? 0
+
+    if (text.on?.from && text.on?.to) {
+      const fromEl = elementsRef.current.get(`point-${text.on.from}`)
+      const toEl = elementsRef.current.get(`point-${text.on.to}`)
+      if (fromEl && toEl) {
+        const f = fromEl as unknown as { X: () => number; Y: () => number }
+        const t = toEl as unknown as { X: () => number; Y: () => number }
+        x = (f.X() + t.X()) / 2
+        y = (f.Y() + t.Y()) / 2
+      }
+    }
+
+    // Always remove and recreate — JSXGraph text elements don't support moveTo or
+    // reliable in-place attribute updates. This matches the syncLineLabels pattern.
+    const existing = elementsRef.current.get(elemId)
+    if (existing) {
+      board.removeObject(existing)
+      elementsRef.current.delete(elemId)
+    }
+
+    const color = text.color ?? getDefaultTextColor()
+    const fontSize =
+      text.sizeScale !== undefined ? sizeScaleToPixels(text.sizeScale) : (text.fontSize ?? 14)
+
+    const el = board.create('text', [x, y, text.value], {
+      fontSize,
+      strokeColor: color,
+      color,
+      anchorX: 'middle',
+      anchorY: 'middle',
+      fixed: false,
+      highlight: true,
+    })
+
+    el.on('drag', () => {
+      if (isSyncingRef.current) return
+      isDraggingRef.current = true
+      const textEl = el as unknown as { X: () => number; Y: () => number }
+      onTextMovedRef.current?.(i, round1(textEl.X()), round1(textEl.Y()))
+    })
+    el.on('up', () => {
+      isDraggingRef.current = false
+    })
+    elementsRef.current.set(elemId, el)
+  }
 }
