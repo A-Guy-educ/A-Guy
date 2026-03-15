@@ -158,7 +158,7 @@ export function parseTikzGeometry(tikzContent: string): QuestionGeometryBlock | 
 
   // Calculate scale factor for radius normalization
   const rawXs = rawCoordinates.map((p) => p.x)
-  const rawRangeX = (Math.max(...rawXs) - Math.min(...rawXs)) || 1
+  const rawRangeX = Math.max(...rawXs) - Math.min(...rawXs) || 1
   const radiusScale = (CANVAS_WIDTH - 2 * CANVAS_PADDING) / rawRangeX
 
   const geometry: GeometrySpecV1 = {
