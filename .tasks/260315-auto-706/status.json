@@ -4,9 +4,9 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-15T17:19:29.506Z",
-  "updatedAt": "2026-03-15T18:59:32.798Z",
-  "state": "failed",
-  "cursor": "gap",
+  "updatedAt": "2026-03-15T19:44:16.043Z",
+  "state": "running",
+  "cursor": "architect",
   "stages": {
     "taskify": {
       "state": "completed",
@@ -37,16 +37,16 @@
     "architect": {
       "state": "completed",
       "retries": 0,
-      "startedAt": "2026-03-15T17:29:50.700Z",
-      "completedAt": "2026-03-15T17:34:42.608Z",
+      "startedAt": "2026-03-15T19:38:45.489Z",
+      "completedAt": "2026-03-15T19:44:14.392Z",
       "outputFile": "architect.md",
       "tokenUsage": {
-        "input": 21,
-        "output": 15743,
-        "cacheRead": 1528296
+        "input": 19,
+        "output": 6805,
+        "cacheRead": 4036222
       },
-      "cost": 1.7694154999999998,
-      "sessionId": "ses_30d73e52bffebS0wqtQxik3F9M"
+      "cost": 3.76638725,
+      "sessionId": "ses_30cfde1d9ffep601UdrbNOZjm7"
     },
     "plan-gap": {
       "state": "skipped",
@@ -54,51 +54,28 @@
       "skipped": "Complexity 49 (complex) below threshold 50 for plan-gap"
     },
     "test": {
-      "state": "completed",
-      "retries": 0,
-      "completedAt": "2026-03-15T17:52:48.007Z",
-      "outputFile": "test.md",
-      "sessionId": "ses_30d6f6c52ffeavtrIMnie21LjF"
+      "state": "pending",
+      "retries": 0
     },
     "build": {
-      "state": "completed",
-      "retries": 0,
-      "completedAt": "2026-03-15T17:52:48.007Z",
-      "outputFile": "build.md",
-      "sessionId": "ses_30d6f6b21ffez1SGHtuehvEetI"
+      "state": "pending",
+      "retries": 0
     },
     "commit": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-03-15T18:30:09.780Z",
-      "completedAt": "2026-03-15T18:30:10.716Z"
+      "state": "pending",
+      "retries": 0
     },
     "review": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-03-15T18:30:10.719Z",
-      "completedAt": "2026-03-15T18:32:29.435Z",
-      "outputFile": "review.md",
-      "tokenUsage": {
-        "input": 15,
-        "output": 5330,
-        "cacheRead": 2701313
-      },
-      "cost": 2.842619000000001,
-      "sessionId": "ses_30d3cb158ffeIhXAR5UeHM2Q2m"
+      "state": "pending",
+      "retries": 0
     },
     "fix": {
-      "state": "timeout",
-      "retries": 0,
-      "skipped": "No issues to fix",
-      "fixAttempt": 1,
-      "maxFixAttempts": 2,
-      "startedAt": "2026-03-15T18:39:31.782Z"
+      "state": "pending",
+      "retries": 0
     },
     "verify": {
       "state": "pending",
-      "retries": 0,
-      "startedAt": "2026-03-15T18:32:31.385Z"
+      "retries": 0
     }
   },
   "issueNumber": 839,
@@ -112,5 +89,6 @@
     }
   ],
   "completedAt": "2026-03-15T18:59:32.798Z",
-  "totalCost": 4.612034500000001
+  "totalCost": 4.612034500000001,
+  "branchName": "feat/260315-auto-839-content-status-badging-soon-just-a"
 }
