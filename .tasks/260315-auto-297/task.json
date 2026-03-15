@@ -1,0 +1,37 @@
+{
+  "task_type": "spec_only",
+  "risk_level": "medium",
+  "confidence": 0.9,
+  "primary_domain": "product",
+  "scope": [
+    "Student Statistics Dashboard UI",
+    "Time tracking with visibility API",
+    "Streak calculation logic",
+    "Course and timeframe filters",
+    "Progress by category visualization",
+    "Recent activity timeline",
+    "Topic mastery with drill-down recommendations"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "User progress data records exist in the system",
+    "Authentication is handled and user ID is available",
+    "Database schema can support time tracking fields",
+    "Existing Ask conversation history is available",
+    "Navigation and profile entry points can be modified"
+  ],
+  "review_questions": [
+    "Should we build on existing dashboard patterns in src/ui/web/ or create a new dashboard component?",
+    "How does this integrate with existing user progress data - are there existing collections/endpoints?",
+    "Should time tracking be implemented as a client-side heartbeat or server-side aggregation?"
+  ],
+  "complexity": 70,
+  "complexity_reasoning": "Scope: 18 (new dashboard with 6+ sections, multiple UI components). Risk: 13 (user data tracking, statistics, time spent). Novelty: 16 (new feature - no existing student stats dashboard). Cross-Domain: 10 (frontend UI + backend API + database + visibility API). Ambiguity: 4 (mostly clear, topic mastery formula pending). Dependencies: 9 (user progress data, auth, visibility API, Ask conversations). Total: 70",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Input contains detailed ## Requirements with feature specs, entry points, controls, dashboard sections, metrics, design constraints, and ## Acceptance Criteria with 7 checkable items. Also includes technical implementation details in Context section."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_only"
+}
