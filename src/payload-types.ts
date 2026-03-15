@@ -536,6 +536,18 @@ export interface Course {
     description?: string | null;
   };
   /**
+   * Content status badge displayed to students
+   */
+  contentStatus: 'none' | 'soon' | 'justAdded';
+  /**
+   * When unchecked, "Soon" content is completely hidden from student listings
+   */
+  contentStatusVisible?: boolean | null;
+  /**
+   * Badge auto-expires after this date (leave empty for permanent badge)
+   */
+  contentStatusExpiresAt?: string | null;
+  /**
    * User who created this document
    */
   createdBy?: (string | null) | User;
@@ -1300,6 +1312,18 @@ export interface Lesson {
    * URL-friendly identifier (auto-generated from title if empty)
    */
   slug?: string | null;
+  /**
+   * Content status badge displayed to students
+   */
+  contentStatus: 'none' | 'soon' | 'justAdded';
+  /**
+   * When unchecked, "Soon" content is completely hidden from student listings
+   */
+  contentStatusVisible?: boolean | null;
+  /**
+   * Badge auto-expires after this date (leave empty for permanent badge)
+   */
+  contentStatusExpiresAt?: string | null;
   /**
    * User who created this document
    */
@@ -2756,6 +2780,9 @@ export interface CoursesSelect<T extends boolean = true> {
         title?: T;
         description?: T;
       };
+  contentStatus?: T;
+  contentStatusVisible?: T;
+  contentStatusExpiresAt?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -2801,6 +2828,9 @@ export interface LessonsSelect<T extends boolean = true> {
   lessonContextText?: T;
   prompt?: T;
   slug?: T;
+  contentStatus?: T;
+  contentStatusVisible?: T;
+  contentStatusExpiresAt?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;

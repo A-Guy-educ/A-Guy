@@ -6,6 +6,7 @@ import { adminOnly } from '../access/adminOnly'
 import { publishedAndActive } from '../access/publishedAndActive'
 import { createdByField } from '../fields/createdBy'
 import { formatSlug } from '../fields/formatSlug'
+import { contentStatusFields } from '../fields/contentStatus'
 
 export const Lessons: CollectionConfig = {
   slug: 'lessons',
@@ -45,6 +46,7 @@ export const Lessons: CollectionConfig = {
       'order',
       'status',
       'isActive',
+      'contentStatus',
       'updatedAt',
     ],
   },
@@ -250,6 +252,9 @@ export const Lessons: CollectionConfig = {
         description: 'URL-friendly identifier (auto-generated from title if empty)',
       },
     },
+
+    // Content Status
+    ...contentStatusFields,
 
     // Created By
     createdByField,

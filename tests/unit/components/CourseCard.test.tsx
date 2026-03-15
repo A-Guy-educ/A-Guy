@@ -6,6 +6,11 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import enMessages from '../../../src/i18n/en.json'
 
+// Mock sonner toast
+vi.mock('sonner', () => ({
+  toast: vi.fn(),
+}))
+
 // Mock localStorage
 const localStorageMock = (() => {
   let store: Record<string, string> = {}
@@ -57,6 +62,8 @@ const mockCourse: Course = {
   accessType: 'free' as const,
   createdAt: '2024-01-01T00:00:00.000Z',
   updatedAt: '2024-01-01T00:00:00.000Z',
+  contentStatus: 'none' as const,
+  contentStatusVisible: true,
 }
 
 const renderWithI18n = (course: Course) => {
@@ -127,5 +134,79 @@ describe('CourseCard component', () => {
 
     const storedProfile = JSON.parse(localStorageMock.getItem('a-guy:user-profile') || '{}')
     expect(storedProfile.gradeLevel).toBe('8')
+  })
+})
+
+describe('CourseCard content status badges', () => {
+  it('renders "Soon" badge when course.contentStatus is "soon"', () => {
+    const soonCourse = { ...mockCourse, contentStatus: 'soon' as const }
+    renderWithI18n(soonCourse)
+
+    expect(screen.getByText('Soon')).toBeTruthy()
+  })
+
+  it('renders "New" badge when course.contentStatus is "justAdded"', () => {
+    const justAddedCourse = { ...mockCourse, contentStatus: 'justAdded' as const }
+    renderWithI18n(justAddedCourse)
+
+    expect(screen.getByText('New')).toBeTruthy()
+  })
+
+  it('does not render badge when contentStatus is "none" or undefined', () => {
+    // Use 'none' which is the default - this tests that the badge doesn't render
+    const noStatusCourse = { ...mockCourse, contentStatus: 'none' as const }
+    renderWithI18n(noStatusCourse)
+
+    expect(screen.queryByText('Soon')).toBeNull()
+    expect(screen.queryByText('New')).toBeNull()
+  })
+
+  it('does NOT navigate when clicking a "Soon" course', async () => {
+    const { toast } = await import('sonner')
+    const soonCourse = { ...mockCourse, contentStatus: 'soon' as const }
+    renderWithI18n(soonCourse)
+
+    const openButton = screen.getAllByRole('button', { name: enMessages.courses.openCourse })[0]
+    fireEvent.click(openButton)
+
+    // Navigation should NOT have been called
+    expect(mockPush).not.toHaveBeenCalled()
+
+    // Toast should have been shown
+    expect(toast).toHaveBeenCalled()
+    expect(toast).toHaveBeenCalledWith(expect.stringContaining('prepared'))
+  })
+
+  it('navigates normally when course.contentStatus is "justAdded"', () => {
+    const justAddedCourse = { ...mockCourse, contentStatus: 'justAdded' as const }
+    renderWithI18n(justAddedCourse)
+
+    const openButton = screen.getAllByRole('button', { name: enMessages.courses.openCourse })[0]
+    fireEvent.click(openButton)
+
+    // Navigation should have been called
+    expect(mockPush).toHaveBeenCalledWith('/', undefined)
+  })
+
+  it('does not render badge when justAdded has expired date', () => {
+    const expiredCourse = {
+      ...mockCourse,
+      contentStatus: 'justAdded' as const,
+      contentStatusExpiresAt: '2020-01-01',
+    }
+    renderWithI18n(expiredCourse)
+
+    expect(screen.queryByText('New')).toBeNull()
+  })
+
+  it('renders badge when justAdded has future expiry date', () => {
+    const futureCourse = {
+      ...mockCourse,
+      contentStatus: 'justAdded' as const,
+      contentStatusExpiresAt: '2030-01-01',
+    }
+    renderWithI18n(futureCourse)
+
+    expect(screen.getByText('New')).toBeTruthy()
   })
 })

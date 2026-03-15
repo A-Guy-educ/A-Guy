@@ -62,3 +62,38 @@ Add visual status badges to Courses and Lessons to highlight new additions ("Jus
 - Implement access control hook for "Soon" content locking
 - Extend existing CourseCard and LessonItem components
 - Use Tailwind CSS for all styling (project standard)
+- Run `pnpm generate:types` after schema changes
+- Add translation keys for badge labels in both he.json and en.json
+
+## Gap Analysis Updates
+
+### Added Requirements (from codebase exploration)
+
+1. **FR-001: Content Status Field - Schema**
+   - Field name: `contentStatus` (select: 'none' | 'soon' | 'justAdded')
+   - Field name: `contentStatusVisible` (checkbox, default: true) - controls visibility for "Soon" content
+   - Field name: `contentStatusExpiresAt` (date, optional) - for auto-expiry
+
+2. **FR-002: Type Generation**
+   - MUST run `pnpm generate:types` after modifying collections
+   - Import new types from `@/payload-types`
+
+3. **FR-003: Translation Keys**
+   - Add to he.json: `courses.contentStatus.soon`, `courses.contentStatus.justAdded`
+   - Add to en.json: `courses.contentStatus.soon`, `courses.contentStatus.justAdded`
+   - Add locked message: `courses.contentLocked`
+
+4. **FR-004: Access Control Integration**
+   - Extend existing `publishedAndActive` access control
+   - OR create new `publishedAndActiveWithStatus` that checks:
+     - For "Soon" with visible=false: return false (hidden from students)
+     - For "Soon" with visible=true: return but handle in UI (locked)
+     - For "justAdded" and "none": allow based on existing logic
+
+5. **FR-005: UI Component - Locked Message Display**
+   - Use existing Toast/Notification pattern or create Modal for "Soon" content click
+   - Message: "This content is being prepared and will be available soon"
+
+6. **FR-006: Pulse Animation**
+   - Use Tailwind animation classes or create custom CSS animation
+   - Example: `animate-pulse` or custom keyframe for subtle effect

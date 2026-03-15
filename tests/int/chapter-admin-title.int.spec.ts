@@ -67,6 +67,8 @@ describe('Chapter adminTitle', () => {
         tenant: tenantId,
         pageAccessType: 'free',
         accessType: 'free',
+        contentStatus: 'none',
+        contentStatusVisible: true,
       },
     })
     course1Id = course1.id

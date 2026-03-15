@@ -257,7 +257,10 @@
     "exercisesPagerIntro": "פתיחה",
     "exercisesPagerCompleted": "הושלם",
     "exercisesPagerBackToLesson": "חזור לשיעור",
-    "startLesson": "התחל שיעור"
+    "startLesson": "התחל שיעור",
+    "soonBadge": "בקרוב",
+    "justAddedBadge": "חדש",
+    "contentLocked": "תוכן זה בהכנה ויהיה זמין בקרוב."
   },
   "homepage": {
     "nav": {

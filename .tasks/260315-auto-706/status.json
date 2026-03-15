@@ -4,15 +4,15 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-15T17:19:29.506Z",
-  "updatedAt": "2026-03-15T17:21:12.853Z",
-  "state": "paused",
-  "cursor": null,
+  "updatedAt": "2026-03-15T17:34:45.532Z",
+  "state": "running",
+  "cursor": "gap",
   "stages": {
     "taskify": {
-      "state": "paused",
+      "state": "completed",
       "retries": 0,
       "startedAt": "2026-03-15T17:19:30.525Z",
-      "completedAt": "2026-03-15T17:21:08.341Z",
+      "completedAt": "2026-03-15T17:26:05.644Z",
       "outputFile": "taskify.md",
       "tokenUsage": {
         "input": 4328,
@@ -20,6 +20,38 @@
         "cacheRead": 225106
       },
       "sessionId": "ses_30d7d5c1affeVrvmwV11W8oe1d"
+    },
+    "gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-15T17:26:05.651Z",
+      "completedAt": "2026-03-15T17:29:50.698Z",
+      "outputFile": "gap.md",
+      "tokenUsage": {
+        "input": 24385,
+        "output": 5990,
+        "cacheRead": 868296
+      },
+      "sessionId": "ses_30d775596ffeSGogC5LsnTF0fc"
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-15T17:29:50.700Z",
+      "completedAt": "2026-03-15T17:34:42.608Z",
+      "outputFile": "architect.md",
+      "tokenUsage": {
+        "input": 21,
+        "output": 15743,
+        "cacheRead": 1528296
+      },
+      "cost": 1.7694154999999998,
+      "sessionId": "ses_30d73e52bffebS0wqtQxik3F9M"
+    },
+    "plan-gap": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 49 (complex) below threshold 50 for plan-gap"
     }
   },
   "issueNumber": 839,
@@ -32,5 +64,5 @@
       "timestamp": "2026-03-15T17:19:29.506Z"
     }
   ],
-  "completedAt": "2026-03-15T17:21:12.853Z"
+  "branchName": "feat/260315-auto-839-content-status-badging-soon-just-a"
 }

@@ -257,7 +257,10 @@
     "exercisesPagerIntro": "Intro",
     "exercisesPagerCompleted": "Completed",
     "exercisesPagerBackToLesson": "Back to Lesson",
-    "startLesson": "Start Lesson"
+    "startLesson": "Start Lesson",
+    "soonBadge": "Soon",
+    "justAddedBadge": "New",
+    "contentLocked": "This content is being prepared and will be available soon."
   },
   "homepage": {
     "nav": {
