@@ -1,62 +1,148 @@
 # Access Code Gate (Coupon Logic) - Specification
 
-## 1. Goal
+## Overview
 
 To provide specific institutions (e.g., schools) with free access to paid or restricted courses/lessons via a "Coupon Code" mechanism. This allows the system to grant access without traditional payment while enabling the administration to track exactly which students (by name and email) are utilizing each school's allocation.
 
-## 2. Pre-Conditions
+## Requirements
 
-- **User Identity**: The user must be a registered and logged-in student before interacting with the gate.
-- **Content Status**: By default, courses are open. The gate only appears if an admin has specifically flagged a course or lesson as "Restricted by Code."
+### FR-001: Add Access Code Gate Access Type
 
-## 3. User Experience (The Student Flow)
+**Priority**: MUST
+**Description**: Add a new `accessCode` option to the access type system that can be set on courses and lessons. When content has this access type, it triggers the code gate UI instead of the existing gated/mandatory flows.
 
-### 3.1 Encountering the Gate
+**Implementation Notes**:
+- Add `accessCode` to `AccessType` and `LessonAccessType` in `@/infra/auth/access-types.ts`
+- The frontend checks access type and shows code gate modal when `accessCode`
 
-When a student attempts to view a restricted course or lesson:
-- The main content area is blurred or hidden.
-- A small, clean popup appears in the center of the screen.
-- Message: "Access restricted. Please insert your school access code to unlock this content."
+### FR-002: Access Codes Collection
 
-### 3.2 Unlocking Content
+**Priority**: MUST
+**Description**: Create a new `access-codes` Payload collection for storing generated access codes.
 
-The student enters their provided code into a text field.
+**Fields**:
+- `code`: text (unique) - The code string (e.g., "MACCABI-2024-FREE")
+- `scopeType`: select - Scope of unlock: `lesson`, `course`, `global`
+- `scopeTarget`: relationship - Points to specific lesson or course (conditional on scopeType)
+- `maxRedemptions`: number (optional) - Maximum uses allowed
+- `currentRedemptions`: number - Auto-incremented on use
+- `isActive`: checkbox - Whether code is currently valid
+- `expiresAt`: date (optional) - Expiration date
+- `createdBy`: relationship to users - Admin who created the code
 
-Upon clicking "Unlock":
-- If valid: The popup disappears, the content is revealed, and the student gains permanent access to that specific item.
-- If invalid: A warning appears: "Incorrect code. Please check with your teacher."
+### FR-003: User Redeemed Codes Field
 
-### 3.3 Persistence
+**Priority**: MUST
+**Description**: Add field to Users collection to track which content items the user has unlocked via codes.
 
-Once a code is successfully redeemed, the student is never asked for a code for that specific content again. Their access is tied to their account profile.
+**Fields**:
+- `redeemedAccessCodes`: array of objects
+  - `codeId`: relationship to access-codes
+  - `contentId`: text (stores lesson/course ID that was unlocked)
+  - `contentType`: select (`lesson` | `course`)
+  - `redeemedAt`: date
 
-## 4. Admin Requirements (Management & Tracking)
+### FR-004: Code Redemptions Collection
 
-### 4.1 Access Code Creation
+**Priority**: MUST
+**Description**: Create `code-redemptions` collection for audit trail.
 
-Admins need a dedicated area to:
-- **Generate Codes**: Create unique strings (e.g., MACCABI-2024-FREE).
-- **Define Scope**: Set whether a code unlocks one specific lesson, an entire course, or all site content.
-- **Set Limits**: (Optional) Define a maximum number of redemptions allowed for a code.
+**Fields**:
+- `code`: relationship to access-codes
+- `user`: relationship to users
+- `contentId`: text
+- `contentType`: select
+- `redeemedAt`: date
 
-### 4.2 Content Control
+### FR-005: Code Redemption API
 
-In the Course/Lesson management area:
-- A toggle to enable/disable the "Access Code Gate."
-- A selection list to choose which specific codes are valid for that item.
+**Priority**: MUST
+**Description**: Create API endpoint for validating and redeeming access codes.
 
-### 4.3 Usage Tracking & Analytics
+**Endpoint**: `POST /api/access-codes/redeem`
+**Request Body**: `{ code: string, contentId: string, contentType: string }`
+**Response**: `{ success: boolean, message: string, unlockedContent?: {...} }`
 
-Admins must be able to view a report for every generated code showing:
-- **Usage Count**: Total number of redemptions.
-- **Student Details**: A list of every student who used the code, including:
-  - Full Name
-  - Email Address
-  - Date of Redemption
-- **Export**: Option to download this data as a CSV/Excel file for school reporting.
+**Validation Logic**:
+1. Check user is authenticated
+2. Find code in access-codes collection
+3. Verify code is active and not expired
+4. Check maxRedemptions not reached (if set)
+5. Check user hasn't already redeemed this code for this content
+6. Increment code's currentRedemptions
+7. Add to user's redeemedAccessCodes
+8. Create code-redemption record
+9. Return success
 
-## 5. Success Criteria
+### FR-006: Access Code Gate Modal Component
 
-1. A student from "School A" can log in, enter a code, and immediately see their lesson.
-2. The Admin can go to the dashboard and see that "Student Name (Email)" redeemed the "School A" code at 10:00 AM.
-3. Content that is not flagged remains open and accessible as usual.
+**Priority**: MUST
+**Description**: Create frontend component for code entry popup.
+
+**Implementation**:
+- New component: `src/ui/web/auth/AccessCodeGateModal.tsx`
+- Uses existing Dialog component from design system
+- Shows blur effect on content behind modal
+- Input field for code entry
+- Submit button "Unlock"
+- Error state: "Incorrect code. Please check with your teacher."
+- Success: Closes modal, reveals content, stores redemption
+
+### FR-007: Admin Usage Report Export
+
+**Priority**: SHOULD
+**Description**: Allow admins to export redemption data as CSV.
+
+**Implementation**:
+- Add export button to access code detail view
+- Generate CSV with columns: Student Name, Email, Date Redeemed
+- Use existing endpoint pattern for file download
+
+### NFR-001: Translation Strings
+
+**Priority**: MUST
+**Description**: Add Hebrew and English translations for code gate UI.
+
+**Strings Required**:
+- `accessCodeTitle`: "Access Restricted"
+- `accessCodeDescription`: "Please insert your school access code to unlock this content."
+- `accessCodePlaceholder`: "Enter code"
+- `accessCodeUnlock`: "Unlock"
+- `accessCodeError`: "Incorrect code. Please check with your teacher."
+- `accessCodeSuccess`: "Content unlocked!"
+
+### NFR-002: Access Control Security
+
+**Priority**: MUST
+**Description**: Ensure code redemption is secure and cannot be exploited.
+
+**Requirements**:
+- Code validation must happen server-side
+- Rate limiting on redemption endpoint to prevent brute force
+- Admin-only access to create/modify codes
+- Users can only read their own redemption history
+
+## Acceptance Criteria
+
+- [ ] A student from "School A" can log in, enter a code, and immediately see their lesson
+- [ ] The Admin can go to the dashboard and see that "Student Name (Email)" redeemed the "School A" code at 10:00 AM
+- [ ] Content that is not flagged remains open and accessible as usual
+- [ ] Invalid codes show error message and do not grant access
+- [ ] Students who redeemed a code are never asked for the code again for that content
+- [ ] Admins can create codes with lesson, course, or global scope
+- [ ] Admins can set optional max redemption limits
+- [ ] Admins can export redemption data as CSV
+
+## Guardrails
+
+- **Existing Access Types**: Must not break existing `free`, `mandatory`, `gated` access types
+- **User Data**: Must not expose user email/name to unauthorized parties
+- **Code Security**: Must prevent brute force attacks on code redemption
+- **Performance**: Must not add significant latency to content loading
+
+## Out of Scope
+
+- Integration with payment systems (this is a free access mechanism, not paid)
+- Multi-tenant code management (single tenant assumed)
+- Time-based access (codes are valid until manually deactivated or max redemptions reached)
+- Student self-service code generation
