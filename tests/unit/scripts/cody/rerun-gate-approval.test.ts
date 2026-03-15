@@ -170,3 +170,59 @@ describe('resolveFromStageAfterGateApproval', () => {
     expect(result).toBe('clarify')
   })
 })
+
+describe('Profile-aware pipeline resolution', () => {
+  // This tests the fix for the bug where ctx.profile was resolved from task.json
+  // AFTER being used to calculate fromStage, causing "gap not found" error.
+  //
+  // Scenario: A task with complexity:moderate (resolves to lightweight profile)
+  // - If profile is resolved CORRECTLY first: next stage after taskify = 'clarify'
+  // - If profile is NOT resolved (uses default 'standard'): next stage = 'gap'
+  //
+  // The bug was: entry.ts used ctx.profile (default='standard') to pick 'gap',
+  // then resolved profile to 'lightweight' where 'gap' doesn't exist -> crash.
+
+  const STANDARD_ORDER = [
+    'taskify',
+    'gap',
+    'clarify',
+    'architect',
+    'plan-gap',
+    'build',
+    'commit',
+    'verify',
+    'pr',
+  ]
+
+  const LIGHTWEIGHT_ORDER = ['taskify', 'clarify', 'architect', 'build', 'commit', 'verify', 'pr']
+
+  it('standard profile: next stage after taskify is gap', () => {
+    const result = resolveFromStageAfterGateApproval('taskify', STANDARD_ORDER)
+    expect(result).toBe('gap')
+  })
+
+  it('lightweight profile: next stage after taskify is clarify', () => {
+    const result = resolveFromStageAfterGateApproval('taskify', LIGHTWEIGHT_ORDER)
+    expect(result).toBe('clarify')
+  })
+
+  it('demonstrates why profile must be resolved before fromStage calculation', () => {
+    // This is the exact bug scenario from issue #827
+    // Task has complexity:moderate (resolves to lightweight)
+    // But ctx.profile was default='standard' when calculating fromStage
+
+    // Wrong: using standard profile (the bug)
+    const wrongNextStage = resolveFromStageAfterGateApproval('taskify', STANDARD_ORDER)
+    expect(wrongNextStage).toBe('gap')
+
+    // Correct: using lightweight profile (the fix)
+    const correctNextStage = resolveFromStageAfterGateApproval('taskify', LIGHTWEIGHT_ORDER)
+    expect(correctNextStage).toBe('clarify')
+
+    // Verify: 'gap' does NOT exist in lightweight pipeline
+    expect(LIGHTWEIGHT_ORDER.includes('gap')).toBe(false)
+
+    // Therefore: if ctx.profile resolves to 'lightweight', MUST use lightweight pipeline
+    // Otherwise validation fails with "Stage gap not found"
+  })
+})

@@ -644,22 +644,7 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
     }
   }
 
-  // Determine fromStage
-  // FIX #673: After gate approval, use the NEXT stage (not the approved one)
-  // to prevent resetFromStage from overwriting the gate approval
-  if (!input.fromStage) {
-    if (gateApprovedStage) {
-      // Gate was just approved — resolve pipeline order to find the next stage
-      const tempPipeline = resolvePipelineForMode('rerun', ctx.profile, false, ctx)
-      const tempOrder = flattenPipelineOrder(tempPipeline.order)
-      input.fromStage = resolveFromStageAfterGateApproval(gateApprovedStage, tempOrder)
-      logger.info(`  ℹ️ Gate approved at ${gateApprovedStage} — resuming from ${input.fromStage}`)
-    } else {
-      input.fromStage = pausedStage || getLastFailedStage(input.taskId) || 'build'
-    }
-  }
-
-  // G37: Read task definition for profile resolution
+  // G37: Read task definition for profile resolution (MUST be before fromStage resolution)
   let taskDef = null
   try {
     taskDef = readTask(taskDir)
@@ -676,6 +661,21 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
   if (ctx.input.turbo) {
     ctx.profile = 'turbo'
     logger.info('⚡ Turbo mode: forcing turbo profile')
+  }
+
+  // Determine fromStage
+  // FIX #673: After gate approval, use the NEXT stage (not the approved one)
+  // to prevent resetFromStage from overwriting the gate approval
+  if (!input.fromStage) {
+    if (gateApprovedStage) {
+      // Gate was just approved — resolve pipeline order to find the next stage
+      const tempPipeline = resolvePipelineForMode('rerun', ctx.profile, false, ctx)
+      const tempOrder = flattenPipelineOrder(tempPipeline.order)
+      input.fromStage = resolveFromStageAfterGateApproval(gateApprovedStage, tempOrder)
+      logger.info(`  ℹ️ Gate approved at ${gateApprovedStage} — resuming from ${input.fromStage}`)
+    } else {
+      input.fromStage = pausedStage || getLastFailedStage(input.taskId) || 'build'
+    }
   }
 
   // Default feedback
