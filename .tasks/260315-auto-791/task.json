@@ -1,0 +1,36 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "Access codes collection",
+    "Code redemptions collection",
+    "Course/lesson schema updates",
+    "Admin code management UI",
+    "Frontend gate component",
+    "Usage tracking and analytics"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Existing users collection has required fields (email, name)",
+    "Courses and lessons collections exist and can be modified",
+    "Admin authentication is already in place",
+    "CSV export capability can be added"
+  ],
+  "review_questions": [
+    "Should codes be single-use (one code per student) or multi-use (same code for multiple students)?",
+    "Should the code gate apply to courses only, lessons only, or both?",
+    "Should there be an expiration date for codes?",
+    "Should admins be able to deactivate codes after creation?"
+  ],
+  "complexity": 62,
+  "complexity_reasoning": "Scope: 16 (new collections + admin + frontend + analytics across 2+ modules). Risk: 12 (auth integration, DB changes, access control). Novelty: 16 (new feature pattern). Cross-domain: 10 (backend + frontend + admin). Ambiguity: 2 (very clear spec). Dependencies: 6 (users, courses, lessons). Total: 62",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Input contains detailed requirements with clear user flows, admin requirements, and success criteria. Has ## numbered sections but lacks implementation steps. Promoted spec.md."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
