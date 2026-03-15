@@ -9,7 +9,6 @@
 import { useCallback } from 'react'
 import { cn, formatRelativeTime } from '../utils'
 import { getGitHubIssueUrl } from '../constants'
-import { MergeButton } from './MergeButton'
 import { MiniPipelineProgress } from './MiniPipelineProgress'
 import { SimpleTooltip } from './SimpleTooltip'
 import { StatusTooltipContent, SubStatusTooltipContent } from './tooltip-content'
@@ -25,7 +24,6 @@ import {
 } from '@/ui/web/components/select'
 import {
   GitPullRequest,
-  ExternalLink,
   Play,
   Square,
   Bot,
@@ -38,6 +36,8 @@ import {
   Clock,
   AlertCircle,
   RefreshCw,
+  Eye,
+  Inbox,
 } from 'lucide-react'
 
 interface TaskListProps {
@@ -53,6 +53,8 @@ interface TaskListProps {
   onAssign?: (issueNumber: number, assignees: string[]) => void
   onUnassign?: (issueNumber: number, assignees: string[]) => void
   collaborators?: { login: string; avatar_url: string }[]
+  onOpenPreview?: (task: CodyTask) => void
+  onCreateTask?: () => void
 }
 
 // ── Status colors — single source of truth ──
@@ -122,14 +124,16 @@ export function TaskList({
   tasks,
   selectedTask,
   executingTaskId,
-  mergingTaskId,
+  mergingTaskId: _mergingTaskId,
   onTaskSelect,
   onExecuteTask,
   onStopTask,
-  onApproveReview,
+  onApproveReview: _onApproveReview,
   onTaskHover,
   onAssign,
   onUnassign: _onUnassign,
+  onOpenPreview,
+  onCreateTask,
   collaborators = [],
 }: TaskListProps) {
   const handleTaskClick = useCallback(
@@ -143,8 +147,21 @@ export function TaskList({
 
   if (tasks.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-muted-foreground">No tasks found</p>
+      <div className="flex flex-col items-center justify-center h-full gap-4 text-center px-6">
+        <div className="w-14 h-14 rounded-2xl bg-white/[0.03] ring-1 ring-white/[0.06] flex items-center justify-center">
+          <Inbox className="w-6 h-6 text-muted-foreground/40" />
+        </div>
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-foreground">No tasks found</p>
+          <p className="text-xs text-muted-foreground">
+            Tasks you create or that are assigned to Cody will appear here.
+          </p>
+        </div>
+        {onCreateTask && (
+          <Button size="sm" onClick={onCreateTask}>
+            + New Task
+          </Button>
+        )}
       </div>
     )
   }
@@ -155,10 +172,11 @@ export function TaskList({
         const isSelected = task.id === selectedTask?.id
         const canExecute = task.state === 'open' && onExecuteTask
         const isExecuting = executingTaskId === task.id
-        const isMerging = mergingTaskId === task.id
         const hasPR = !!task.associatedPR
         const isHardStop = task.column === 'gate-waiting' && task.gateType === 'hard-stop'
-        const isActive = task.column === 'building' || task.column === 'retrying'
+        // gate-waiting tasks also show pipeline progress (they're paused mid-pipeline)
+        const isActive =
+          task.column === 'building' || task.column === 'retrying' || task.column === 'gate-waiting'
         const colors = statusColors[task.column]
         const gateLabel =
           task.column === 'gate-waiting' && task.gateType === 'hard-stop'
@@ -178,7 +196,6 @@ export function TaskList({
               colors.bg,
               isSelected && cn('bg-white/[0.06] border-l-2', colors.border),
               isHardStop && 'ring-1 ring-red-500/30 ring-inset',
-              task.column === 'done' && !isSelected && 'opacity-50 hover:opacity-80',
             )}
           >
             {/* Main row */}
@@ -187,18 +204,29 @@ export function TaskList({
               <div className="shrink-0">{statusIcon[task.column]}</div>
 
               {/* Content — title + meta */}
-              <div className="flex-1 min-w-0">
+              <div
+                className={cn(
+                  'flex-1 min-w-0',
+                  task.column === 'done' &&
+                    !isSelected &&
+                    'opacity-50 group-hover:opacity-80 transition-opacity',
+                )}
+              >
                 {/* Title row */}
                 <div className="flex items-center gap-2.5">
                   <h3 className="text-[15px] font-medium text-zinc-100 truncate flex-1">
                     {task.title}
                   </h3>
 
-                  {/* Assignee avatars */}
-                  {task.assignees && task.assignees.length > 0 && (
-                    <div className="hidden sm:flex items-center -space-x-1.5 shrink-0">
-                      {task.assignees.map((assignee) => (
-                        <SimpleTooltip key={assignee.login} content={assignee.login} side="bottom">
+                  {/* Assignee avatars + triggered-by actor */}
+                  <div className="hidden sm:flex items-center -space-x-1.5 shrink-0">
+                    {task.assignees &&
+                      task.assignees.map((assignee) => (
+                        <SimpleTooltip
+                          key={assignee.login}
+                          content={`Assignee: @${assignee.login}`}
+                          side="bottom"
+                        >
                           <span className="inline-block">
                             <Avatar className="h-5 w-5 ring-2 ring-[#0d1117]">
                               <AvatarImage src={assignee.avatar_url} alt={assignee.login} />
@@ -209,8 +237,45 @@ export function TaskList({
                           </span>
                         </SimpleTooltip>
                       ))}
-                    </div>
-                  )}
+                    {task.pipeline?.triggeredByLogin &&
+                      !task.assignees?.some((a) => a.login === task.pipeline?.triggeredByLogin) && (
+                        <SimpleTooltip
+                          content={`Triggered by @${task.pipeline.triggeredByLogin}`}
+                          side="bottom"
+                        >
+                          <span className="inline-block">
+                            <Avatar className="h-5 w-5 ring-2 ring-[#0d1117] opacity-60">
+                              <AvatarImage
+                                src={`https://github.com/${task.pipeline.triggeredByLogin}.png?size=40`}
+                                alt={task.pipeline.triggeredByLogin}
+                              />
+                              <AvatarFallback className="text-[8px] bg-zinc-700 text-zinc-400">
+                                {task.pipeline.triggeredByLogin[0]?.toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          </span>
+                        </SimpleTooltip>
+                      )}
+                    {task.pipeline?.issueCreator &&
+                      task.pipeline.issueCreator !== task.pipeline?.triggeredByLogin && (
+                        <SimpleTooltip
+                          content={`Issue owner @${task.pipeline.issueCreator}`}
+                          side="bottom"
+                        >
+                          <span className="inline-block">
+                            <Avatar className="h-5 w-5 ring-2 ring-[#0d1117] opacity-80">
+                              <AvatarImage
+                                src={`https://github.com/${task.pipeline.issueCreator}.png?size=40`}
+                                alt={task.pipeline.issueCreator}
+                              />
+                              <AvatarFallback className="text-[8px] bg-blue-900 text-blue-200">
+                                {task.pipeline.issueCreator[0]?.toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          </span>
+                        </SimpleTooltip>
+                      )}
+                  </div>
                 </div>
 
                 {/* Meta row */}
@@ -245,33 +310,35 @@ export function TaskList({
                     </SimpleTooltip>
                   )}
 
+                  {/* Active pipeline progress — inline dots + stage label */}
                   {isActive && <MiniPipelineProgress task={task} variant="inline" />}
 
-                  {task.isTimeout && (
+                  {/* Non-pipeline sub-statuses (only shown when NOT active pipeline) */}
+                  {!isActive && task.isTimeout && (
                     <SimpleTooltip
                       content={<SubStatusTooltipContent type="timeout" />}
                       side="bottom"
                     >
-                      <span className="hidden sm:inline-flex items-center gap-0.5 font-semibold text-orange-400 cursor-default">
+                      <span className="inline-flex items-center gap-0.5 font-semibold text-orange-400 cursor-default">
                         <Clock className="w-3 h-3" />
                         Timeout
                       </span>
                     </SimpleTooltip>
                   )}
-                  {task.isExhausted && (
+                  {!isActive && task.isExhausted && (
                     <SimpleTooltip
                       content={<SubStatusTooltipContent type="exhausted" />}
                       side="bottom"
                     >
-                      <span className="hidden sm:inline-flex items-center gap-0.5 font-semibold text-red-400 cursor-default">
+                      <span className="inline-flex items-center gap-0.5 font-semibold text-red-400 cursor-default">
                         <RefreshCw className="w-3 h-3" />
                         Exhausted
                       </span>
                     </SimpleTooltip>
                   )}
-                  {task.isSupervisorError && (
+                  {!isActive && task.isSupervisorError && (
                     <SimpleTooltip content={<SubStatusTooltipContent type="error" />} side="bottom">
-                      <span className="hidden sm:inline-flex items-center gap-0.5 font-semibold text-red-400 cursor-default">
+                      <span className="inline-flex items-center gap-0.5 font-semibold text-red-400 cursor-default">
                         <AlertCircle className="w-3 h-3" />
                         Error
                       </span>
@@ -311,47 +378,26 @@ export function TaskList({
                       </a>
                     </SimpleTooltip>
                   )}
-
-                  {task.previewUrl && (
-                    <span className="hidden sm:contents">
-                      <SimpleTooltip content="Open deployed preview" side="bottom">
-                        <a
-                          href={task.previewUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors font-medium"
-                        >
-                          <ExternalLink className="w-3 h-3" />
-                          Preview
-                        </a>
-                      </SimpleTooltip>
-                    </span>
-                  )}
                 </div>
               </div>
 
-              {/* Actions — fade in on hover */}
-              <div
-                className={cn(
-                  'hidden sm:flex items-center gap-1 shrink-0 transition-opacity duration-100',
-                  'opacity-100',
-                )}
-              >
-                {task.column === 'review' && hasPR && onApproveReview && (
-                  <div
-                    onClick={(e) => e.stopPropagation()}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onPointerDown={(e) => e.stopPropagation()}
-                  >
-                    <MergeButton
-                      prNumber={task.associatedPR!.number}
-                      prTitle={task.associatedPR!.title}
-                      branchName={task.associatedPR!.head.ref}
-                      isMerging={isMerging}
-                      onMerge={() => onApproveReview(task)}
-                    />
-                  </div>
+              {/* Actions */}
+              <div className="hidden sm:flex items-center gap-1 shrink-0">
+                {hasPR && onOpenPreview && (
+                  <SimpleTooltip content="Open PR preview" side="bottom">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onOpenPreview(task)
+                      }}
+                      aria-label="Open PR preview"
+                      className="h-7 w-7 p-0 text-emerald-400 hover:bg-emerald-500/20"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                    </Button>
+                  </SimpleTooltip>
                 )}
 
                 {(task.column === 'building' &&
@@ -371,6 +417,7 @@ export function TaskList({
                         if (task.column === 'building') onStopTask?.(task)
                         else if (canExecute) onExecuteTask?.(task.id)
                       }}
+                      aria-label={task.column === 'building' ? 'Stop task' : 'Run task'}
                       className={cn(
                         'h-7 w-7 p-0 cursor-pointer disabled:opacity-50',
                         task.column === 'building'
@@ -429,15 +476,14 @@ export function TaskList({
               </div>
             </div>
 
-            {/* Pipeline progress row */}
-            {isActive &&
-              task.pipeline &&
-              (task.pipeline.currentStage ||
-                Object.keys(task.pipeline.stages || {}).length > 0) && (
-                <div className="hidden sm:block pb-3 px-4 pl-[52px]">
-                  <MiniPipelineProgress task={task} variant="bar" />
-                </div>
-              )}
+            {/* Pipeline progress row — shown for building, retrying, and gate-waiting tasks.
+                Gate-waiting tasks show paused state (yellow dots) so the user can see
+                exactly where in the pipeline approval was requested. */}
+            {isActive && (
+              <div className="pb-3 px-4 pl-[52px] sm:block hidden">
+                <MiniPipelineProgress task={task} variant="bar" />
+              </div>
+            )}
           </div>
         )
       })}

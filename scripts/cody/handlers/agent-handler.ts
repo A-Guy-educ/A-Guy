@@ -7,6 +7,7 @@
 
 import { logger } from '../logger'
 import * as fs from 'fs'
+import * as path from 'path'
 
 import type { PipelineContext, StageDefinition, StageResult } from '../engine/types'
 import { runAgentWithFileWatch } from '../agent-runner'
@@ -22,11 +23,19 @@ export class AgentHandler implements StageHandler {
     // Use stageOutputFile to get the correct output file (respects STAGE_OUTPUT_MAP)
     const outputFile = stageOutputFile(ctx.taskDir, def.name)
 
-    // Run agent
-    const result = await runAgentWithFileWatch(ctx.input, def.name, outputFile, def.timeout, {
+    // Run agent — use agentName override if set, otherwise stage name
+    const agentName = def.agentName ?? def.name
+    if (def.agentName && def.agentName !== def.name) {
+      logger.info(`  ⚙️ Stage "${def.name}" using agent: ${def.agentName}`)
+    }
+    const result = await runAgentWithFileWatch(ctx.input, agentName, outputFile, def.timeout, {
       backend: ctx.backend,
       validateOutput: def.validator,
       maxRetries: def.maxRetries,
+      serverUrl: ctx.serverUrl,
+      sessionId: ctx.lastSessionId,
+      // XDG_DATA_HOME must match the server's data dir for instance lookup
+      dataDir: ctx.serverUrl ? path.join(ctx.taskDir, 'opencode-data') : undefined,
     })
 
     // Map result to StageResult
@@ -48,6 +57,9 @@ export class AgentHandler implements StageHandler {
             outcome: 'completed',
             retries: result.retries,
             outputFile: `${def.name}.md`,
+            tokenUsage: result.tokenUsage,
+            cost: result.cost,
+            sessionId: result.sessionId,
           }
         }
       }
@@ -62,17 +74,23 @@ export class AgentHandler implements StageHandler {
     // Success - try to save chat history
     if (result.sessionId) {
       try {
-        await appendSession(ctx.taskDir, def.name, result.sessionId)
+        await appendSession(ctx.taskDir, def.name, result.sessionId, ctx.serverUrl)
       } catch (err) {
         // Non-fatal — don't fail the stage if chat export fails
         logger.warn({ err, stage: def.name }, 'Failed to save chat history')
       }
+
+      // Propagate sessionId for downstream stage forking
+      ctx.lastSessionId = result.sessionId
     }
 
     return {
       outcome: 'completed',
       retries: result.retries,
       outputFile: `${def.name}.md`,
+      tokenUsage: result.tokenUsage,
+      cost: result.cost,
+      sessionId: result.sessionId,
     }
   }
 }

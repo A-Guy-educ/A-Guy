@@ -72,7 +72,7 @@ vi.mock('../../../../scripts/cody/agent-runner', () => ({
   DEFAULT_TIMEOUT: 600000,
 }))
 
-import { execSync, execFileSync } from 'child_process'
+import { execFileSync } from 'child_process'
 import { executePostAction } from '../../../../scripts/cody/pipeline/post-actions'
 import { GitCommitHandler, GitPrHandler } from '../../../../scripts/cody/handlers/git-handler'
 import { runCommitStage, runPrStage } from '../../../../scripts/cody/scripted-stages'
@@ -167,7 +167,7 @@ describe('GitCommitHandler - No changes detection', () => {
     }
   })
 
-  it('should fail with descriptive message when "No changes" reported', async () => {
+  it('should succeed (completed) when "No changes" reported — fix/autofix may produce no changes', async () => {
     vi.mocked(runCommitStage).mockReturnValue({
       success: false,
       hash: '',
@@ -183,8 +183,7 @@ describe('GitCommitHandler - No changes detection', () => {
       maxRetries: 0,
     })
 
-    expect(result.outcome).toBe('failed')
-    expect(result.reason).toContain('No changes to commit after build stage')
+    expect(result.outcome).toBe('completed')
   })
 
   it('should fail with original message for other failures', async () => {

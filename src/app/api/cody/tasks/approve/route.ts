@@ -5,10 +5,10 @@
  * @ai-summary Approve a gate - merge PR, delete branch, close issue, remove labels via GitHub API
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { Octokit } from '@octokit/rest'
 import { z } from 'zod'
 import { requireAuth } from '@/ui/cody/auth'
 import { GITHUB_OWNER, GITHUB_REPO } from '@/ui/cody/constants'
+import { getOctokit } from '@/ui/cody/github-client'
 
 const GATE_LABELS = {
   HARD_STOP: 'hard-stop',
@@ -22,14 +22,6 @@ const ApproveRequestSchema = z.object({
   branchName: z.string().optional(),
   actorLogin: z.string().optional(),
 })
-
-function getOctokit(): Octokit {
-  const token = process.env.GITHUB_TOKEN
-  if (!token) {
-    throw new Error('GITHUB_TOKEN not configured')
-  }
-  return new Octokit({ auth: token })
-}
 
 export async function POST(req: NextRequest) {
   const authError = await requireAuth(req)

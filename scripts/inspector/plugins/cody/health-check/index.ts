@@ -171,9 +171,18 @@ function evaluateHealth(task: TaskSnapshot, ctx: InspectorContext): EvaluatedTas
 
 /**
  * Create a nudge action for gated tasks.
+ * @internal — exported for testing
  */
-function createNudgeAction(task: EvaluatedTask, ctx: InspectorContext): ActionRequest | null {
+export function createNudgeAction(
+  task: EvaluatedTask,
+  ctx: InspectorContext,
+): ActionRequest | null {
   if (task.health !== 'gated') {
+    return null
+  }
+
+  // Guard: skip if issue number is invalid (e.g., task discovered without a GitHub issue)
+  if (!task.issueNumber || task.issueNumber <= 0) {
     return null
   }
 
@@ -208,8 +217,18 @@ function createNudgeAction(task: EvaluatedTask, ctx: InspectorContext): ActionRe
 
 /**
  * Create a digest action summarizing all task health.
+ * @internal — exported for testing
  */
-function createDigestAction(tasks: EvaluatedTask[], ctx: InspectorContext): ActionRequest | null {
+export function createDigestAction(
+  tasks: EvaluatedTask[],
+  ctx: InspectorContext,
+): ActionRequest | null {
+  // Guard: skip digest when INSPECTOR_DIGEST_ISSUE is not configured
+  if (!ctx.digestIssue) {
+    ctx.log.warn('INSPECTOR_DIGEST_ISSUE not configured — skipping digest')
+    return null
+  }
+
   const healthCounts: Record<TaskHealth, number> = {
     healthy: 0,
     completed: 0,
@@ -261,7 +280,7 @@ function createDigestAction(tasks: EvaluatedTask[], ctx: InspectorContext): Acti
       }
 
       ctx.github.postComment(
-        Number(process.env.WATCHDOG_ISSUE) || 0,
+        ctx.digestIssue!,
         `## 🐕 Inspector Digest\n\n${table}\n\n_Cycle ${ctx.cycleNumber}_`,
       )
       return { success: true, message: 'Digest posted' }

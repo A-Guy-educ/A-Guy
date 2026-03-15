@@ -148,9 +148,9 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
   // Case 2: Document exists -> Keep existing behavior with ExerciseWorkspace
   const primaryContent = (
-    <div className="w-full h-full flex flex-col">
+    <div className="w-full h-full flex flex-col min-h-0">
       {validFiles.map((file, index) => (
-        <div key={file.id} className="w-full h-full flex-shrink-0">
+        <div key={file.id} className="w-full flex-1 min-h-0">
           {index > 0 && (
             <div className="h-0.5 my-8 flex-shrink-0 bg-gradient-to-r from-transparent via-border to-transparent" />
           )}

@@ -15,6 +15,8 @@ import type {
   BoardsResponse,
   CollaboratorsResponse,
   ActionResponse,
+  PRComment,
+  WorkflowRun,
 } from './types'
 
 const API_BASE = '/api/cody'
@@ -34,7 +36,9 @@ export class RateLimitError extends Error {
 }
 
 export class NoTokenError extends Error {
-  constructor(message = 'GITHUB_TOKEN is not configured') {
+  constructor(
+    message = 'GitHub token is not configured. Set CODY_BOT_TOKEN or GITHUB_TOKEN in environment variables.',
+  ) {
     super(message)
     this.name = 'NoTokenError'
   }
@@ -190,6 +194,24 @@ export const tasksApi = {
     return handleResponse(res)
   },
 
+  approveUI: async (issueNumber: number, actorLogin?: string): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'approve-ui', ...(actorLogin && { actorLogin }) }),
+    })
+    return handleResponse(res)
+  },
+
+  approvePR: async (issueNumber: number, actorLogin?: string): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'approve-pr', ...(actorLogin && { actorLogin }) }),
+    })
+    return handleResponse(res)
+  },
+
   comment: async (
     issueNumber: number,
     comment: string,
@@ -216,6 +238,23 @@ export const tasksApi = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'comment', comment, ...(actorLogin && { actorLogin }) }),
+    })
+    return handleResponse(res)
+  },
+
+  fixRequest: async (
+    issueNumber: number,
+    fixDescription: string,
+    actorLogin?: string,
+  ): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'fix',
+        comment: fixDescription,
+        ...(actorLogin && { actorLogin }),
+      }),
     })
     return handleResponse(res)
   },
@@ -297,6 +336,23 @@ export const prsApi = {
     const res = await fetch(`${API_BASE}/prs/status?prNumber=${prNumber}`)
     return handleResponse(res)
   },
+  comments: async (prNumber: number): Promise<PRComment[]> => {
+    const res = await fetch(`${API_BASE}/prs/comments?prNumber=${prNumber}`)
+    const data = await handleResponse<{ comments: PRComment[] }>(res)
+    return data.comments
+  },
+  postComment: async (
+    prNumber: number,
+    body: string,
+    actorLogin?: string,
+  ): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/prs/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prNumber, body, ...(actorLogin && { actorLogin }) }),
+    })
+    return handleResponse(res)
+  },
 }
 // ============ Task Documents API ============
 
@@ -329,6 +385,19 @@ export const collaboratorsApi = {
   },
 }
 
+// ============ Workflows API ============
+
+export const workflowsApi = {
+  list: async (params?: { status?: string }): Promise<WorkflowRun[]> => {
+    const searchParams = new URLSearchParams()
+    if (params?.status) searchParams.set('status', params.status)
+    const url = `${API_BASE}/workflows${searchParams.toString() ? `?${searchParams}` : ''}`
+    const res = await fetch(url)
+    const data = await handleResponse<{ runs: WorkflowRun[] }>(res)
+    return data.runs
+  },
+}
+
 // ============ Publish API ============
 
 export const publishApi = {
@@ -341,6 +410,65 @@ export const publishApi = {
     return handleResponse(res)
   },
 }
+// ============ Remote Dev API ============
+
+export interface RemoteExecPayload {
+  command?: string
+  path?: string
+  content?: string
+  cwd?: string
+}
+
+export interface RemoteExecResult {
+  stdout?: string
+  stderr?: string
+  exitCode?: number | null
+  content?: string
+  entries?: Array<{ name: string; type: string; size?: number }>
+  truncated?: boolean
+  success?: boolean
+  error?: string
+}
+
+export interface RemoteStatus {
+  configured: boolean
+  online: boolean
+  funnelUrl?: string
+}
+
+type RemoteAction = 'exec' | 'read' | 'write' | 'ls'
+
+export const remoteApi = {
+  /**
+   * Check if the remote dev agent is online for the given user.
+   */
+  status: async (actorLogin: string): Promise<RemoteStatus> => {
+    const res = await fetch(
+      `${API_BASE}/remote/status?actorLogin=${encodeURIComponent(actorLogin)}`,
+    )
+    if (res.status === 404) {
+      return { configured: false, online: false }
+    }
+    return handleResponse<RemoteStatus>(res)
+  },
+
+  /**
+   * Execute an action on the remote dev agent.
+   */
+  exec: async (
+    actorLogin: string,
+    action: RemoteAction,
+    payload: RemoteExecPayload,
+  ): Promise<RemoteExecResult> => {
+    const res = await fetch(`${API_BASE}/remote/exec`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ actorLogin, action, payload }),
+    })
+    return handleResponse<RemoteExecResult>(res)
+  },
+}
+
 // ============ Combined API ============
 
 export const codyApi = {
@@ -349,5 +477,7 @@ export const codyApi = {
   taskDocs: taskDocsApi,
   boards: boardsApi,
   collaborators: collaboratorsApi,
+  workflows: workflowsApi,
   publish: publishApi.publish,
+  remote: remoteApi,
 }

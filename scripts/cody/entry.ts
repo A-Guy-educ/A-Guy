@@ -5,6 +5,12 @@
  * @ai-summary New CLI entry point for Cody pipeline state machine
  */
 
+// Load .env before anything else so GH_PAT, API keys, etc. are available.
+// In CI, environment variables are injected by the workflow — this is a no-op
+// if .env doesn't exist (dotenv silently skips missing files).
+import { config as loadEnv } from 'dotenv'
+loadEnv({ path: '.env' })
+
 import * as fs from 'fs'
 import ms from 'ms'
 import * as path from 'path'
@@ -13,6 +19,7 @@ import {
   parseCliArgs,
   validateAuth,
   ensureTaskDir,
+  getTaskDir,
   getLastFailedStage,
   getLastPausedStage,
 } from './cody-utils'
@@ -20,18 +27,50 @@ import { preflight } from './preflight'
 import { createRunner } from './runner-backend'
 import { logger, createStageLogger } from './logger'
 import { handleClarification } from './clarify-workflow'
-import { commitPipelineFiles } from './git-utils'
+import { commitPipelineFiles, mergeDefaultBranch } from './git-utils'
 import { readTask } from './pipeline-utils'
 
 import type { PipelineContext } from './engine/types'
 import { runPipeline } from './engine/state-machine'
 import { resolvePipelineForMode, createRebuildCallback } from './engine/pipeline-resolver'
-import { flattenPipelineOrder, IMPL_ORDER_STANDARD, FIX_ORDER } from './pipeline/definitions'
-import { stateToV1 } from './engine/status'
+import { flattenPipelineOrder } from './pipeline/definitions'
+import { stateToV1, resetFromStage } from './engine/status'
 import { PipelinePausedError } from './engine/types'
 import { resolveRerunFromStage, resolveFromStageAfterGateApproval } from './rerun-utils'
-import { ensureTaskMarkerComment, postComment } from './github-api'
+import { startServer, stopServer, checkpointDb, findLastSessionId } from './opencode-server'
+import type { OpenCodeServer } from './opencode-server'
+import {
+  ensureTaskMarkerComment,
+  postComment,
+  getLinkedIssueFromPR,
+  getIssueBody,
+  discoverTaskIdFromIssue,
+} from './github-api'
 import { formatStatusComment } from './cody-utils'
+
+// ============================================================================
+// OpenCode Server Lifecycle
+// ============================================================================
+
+/** Module-level reference to the OpenCode server for cleanup in signal handlers */
+let openCodeServer: OpenCodeServer | null = null
+
+/**
+ * Gracefully shut down the OpenCode server, checkpoint the DB, and clear the reference.
+ * Safe to call multiple times (idempotent).
+ */
+async function shutdownOpenCodeServer(taskDir?: string): Promise<void> {
+  if (!openCodeServer) return
+  const server = openCodeServer
+  openCodeServer = null
+
+  await stopServer(server)
+
+  // Checkpoint WAL into main DB so it's self-contained for git commits
+  if (taskDir) {
+    checkpointDb(taskDir)
+  }
+}
 
 // ============================================================================
 // Shared Helpers
@@ -195,6 +234,15 @@ Examples:
     } catch (err) {
       logger.error({ err }, `  Failed to update status`)
     }
+    // Kill OpenCode server before exiting (sync-safe: just send SIGTERM).
+    // We cannot await stopServer() or checkpointDb() here — the signal context
+    // limits async work. The WAL checkpoint is skipped on forced shutdown;
+    // SQLite will recover the WAL automatically on the next open.
+    if (openCodeServer?.process && !openCodeServer.process.killed) {
+      openCodeServer.process.kill('SIGTERM')
+      openCodeServer = null
+    }
+
     process.exit(128 + (signal === 'SIGTERM' ? 15 : 2))
   }
 
@@ -237,6 +285,34 @@ Examples:
     taskDef: null,
     profile: 'standard',
     backend,
+    actor: input.actor,
+  }
+
+  // Start OpenCode server for persistent sessions across stages
+  // Graceful degradation: if startup fails, pipeline runs without server (cold-boot each stage)
+  if (input.mode !== 'status') {
+    const server = await startServer(taskDir)
+    if (server) {
+      openCodeServer = server
+      ctx.serverUrl = server.url
+      logger.info(`  OpenCode server available at ${server.url}`)
+
+      // On rerun: recover lastSessionId from previous pipeline state
+      if (input.mode === 'rerun') {
+        const { loadState } = await import('./engine/status')
+        const existingState = loadState(input.taskId)
+        if (existingState) {
+          const pipelineOrder = flattenPipelineOrder(
+            resolvePipelineForMode('full', ctx.profile, false, ctx).order,
+          )
+          const lastSid = findLastSessionId(existingState.stages, pipelineOrder)
+          if (lastSid) {
+            ctx.lastSessionId = lastSid
+            logger.info(`  Recovered session ${lastSid} from previous run`)
+          }
+        }
+      }
+    }
   }
 
   try {
@@ -264,7 +340,8 @@ Examples:
     }
   } catch (error) {
     if (error instanceof PipelinePausedError) {
-      // Pipeline paused - handled internally
+      // Pipeline paused — still need to shut down server and checkpoint DB
+      await shutdownOpenCodeServer(taskDir)
       return
     }
 
@@ -280,6 +357,9 @@ Examples:
 
     const errorMsg = error instanceof Error ? error.message : String(error)
     logger.error({ err: error }, `\n❌ Cody failed: ${errorMsg}`)
+
+    // Shutdown OpenCode server before committing (ensures DB is checkpointed)
+    await shutdownOpenCodeServer(taskDir)
 
     // Commit task files on failure — includes debug artifacts (*-events.jsonl, *-stderr.log)
     // for post-mortem diagnosis. On success these are excluded to keep PRs clean.
@@ -312,6 +392,14 @@ Examples:
     }
     process.exit(1)
   }
+
+  // Success path: shutdown OpenCode server and checkpoint DB
+  await shutdownOpenCodeServer(taskDir)
+
+  // Explicitly exit on success.  Without this the process may hang if
+  // the OpenCode server left orphan listeners, timers, or file handles
+  // that keep the Node event loop alive.
+  process.exit(0)
 }
 
 /**
@@ -437,6 +525,16 @@ async function runImplMode(ctx: PipelineContext): Promise<void> {
 async function runFullMode(ctx: PipelineContext): Promise<void> {
   logger.info('Running FULL Cody pipeline (spec + impl)...\n')
 
+  // FIX: If a previous run left state as failed/completed, delete it so the
+  // pipeline starts fresh.  Without this, runPipeline() sees the terminal state
+  // in status.json and returns immediately without executing any stages.
+  const { loadState: loadSt2, deleteState } = await import('./engine/status')
+  const prevState = loadSt2(ctx.taskId)
+  if (prevState && (prevState.state === 'failed' || prevState.state === 'completed')) {
+    logger.info(`  Previous run state: ${prevState.state} — resetting for fresh full-mode run`)
+    deleteState(ctx.taskId)
+  }
+
   // R4: Ensure task.md exists before running pipeline
   await ensureTaskMd(ctx)
 
@@ -557,22 +655,27 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
       input.fromStage = resolveFromStageAfterGateApproval(gateApprovedStage, tempOrder)
       logger.info(`  ℹ️ Gate approved at ${gateApprovedStage} — resuming from ${input.fromStage}`)
     } else {
-      input.fromStage = pausedStage || getLastFailedStage(input.taskId) || 'gsd-execute'
+      input.fromStage = pausedStage || getLastFailedStage(input.taskId) || 'build'
     }
   }
 
-  // P3 fix: Back up to architect when feedback provided so plan can be revised
-  const implStageOrder = flattenPipelineOrder(IMPL_ORDER_STANDARD)
-  const resolvedFrom = resolveRerunFromStage(
-    input.fromStage || 'gsd-execute',
-    input.feedback,
-    implStageOrder,
-  )
-  if (resolvedFrom !== input.fromStage) {
-    logger.info(
-      `  ℹ️ Feedback provided — backing up from ${input.fromStage} to ${resolvedFrom} for plan revision`,
-    )
-    input.fromStage = resolvedFrom
+  // G37: Read task definition for profile resolution
+  let taskDef = null
+  try {
+    taskDef = readTask(taskDir)
+  } catch {
+    logger.warn('Could not read task.json for profile resolution, using default')
+  }
+  ctx.taskDef = taskDef
+  if (taskDef) {
+    const { resolvePipelineProfile } = await import('./pipeline-utils')
+    ctx.profile = resolvePipelineProfile(taskDef)
+  }
+
+  // --turbo flag: hard override to turbo profile
+  if (ctx.input.turbo) {
+    ctx.profile = 'turbo'
+    logger.info('⚡ Turbo mode: forcing turbo profile')
   }
 
   // Default feedback
@@ -595,28 +698,23 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
   logger.info(`Feedback: ${input.feedback}`)
   logger.info(`From stage: ${input.fromStage}\n`)
 
-  // G37: Read task definition for profile resolution
-  // Fix 4: Wrap in try/catch to handle missing/invalid task.json gracefully
-  let taskDef = null
-  try {
-    taskDef = readTask(taskDir)
-  } catch {
-    logger.warn('Could not read task.json for profile resolution, using default')
-  }
-  ctx.taskDef = taskDef
-  if (taskDef) {
-    const { resolvePipelineProfile } = await import('./pipeline-utils')
-    ctx.profile = resolvePipelineProfile(taskDef)
-  }
-
-  // For rerun, we need to delete the files manually since the engine won't do it
-  // The status.ts resetFromStage handles this but we need to call it
-  // R3: Use dynamic stage order from pipeline definition instead of hardcoded array
+  // H2 fix: resolve pipeline BEFORE resolveRerunFromStage so we use profile-aware
+  // impl stage order. Previously hardcoded IMPL_ORDER_STANDARD which caused turbo
+  // rerun with feedback to back up to 'architect' (doesn't exist in turbo).
   const pipeline = resolvePipelineForMode('rerun', ctx.profile, false, ctx)
   const stageOrder = flattenPipelineOrder(pipeline.order)
 
+  // P3 fix: Back up to architect when feedback provided so plan can be revised
+  const resolvedFrom = resolveRerunFromStage(input.fromStage || 'build', input.feedback, stageOrder)
+  if (resolvedFrom !== input.fromStage) {
+    logger.info(
+      `  \u2139\ufe0f Feedback provided \u2014 backing up from ${input.fromStage} to ${resolvedFrom} for plan revision`,
+    )
+    input.fromStage = resolvedFrom
+  }
+
   // Fix 5: Validate fromStage exists in the resolved pipeline order
-  const fromStage = input.fromStage || 'gsd-execute'
+  const fromStage = input.fromStage || 'build'
   if (!stageOrder.includes(fromStage)) {
     throw new Error(
       `Stage "${fromStage}" not found in rerun pipeline. Valid stages: ${stageOrder.join(', ')}`,
@@ -639,28 +737,130 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
 }
 
 /**
- * Fix mode - applies targeted fixes without regenerating entire codebase
+ * Fix mode - runs the full pipeline on the original task with previous artifacts as context.
+ * This gives the agent proper planning (architect, plan-gap) instead of the short fix-only pipeline.
  */
 async function runFixMode(ctx: PipelineContext): Promise<void> {
-  const { input, taskDir } = ctx
-  logger.info('Running Cody FIX pipeline (targeted fix)...\n')
+  const { input } = ctx
+  logger.info('Running Cody FIX pipeline (full pipeline with original task context)...\n')
 
-  // Ensure feedback exists
-  if (!input.feedback) {
-    input.feedback = 'Fix requested via @cody fix command'
+  // ===========================================================================
+  // Step 0: Merge default branch to get latest fixes
+  // ===========================================================================
+  if (input.isPullRequest) {
+    try {
+      mergeDefaultBranch(process.cwd())
+    } catch (error) {
+      logger.error({ error }, 'Failed to merge default branch, continuing anyway')
+    }
   }
 
-  // Write feedback to file
-  const feedbackPath = path.join(taskDir, 'rerun-feedback.md')
-  fs.writeFileSync(
-    feedbackPath,
-    `# Fix Feedback - ${new Date().toISOString()}\n\n${input.feedback}\n`,
-  )
+  // ===========================================================================
+  // Step 1: Resolve original task ID from PR → issue → original task
+  // ===========================================================================
+  let originalTaskId = input.taskId
+  let linkedIssueNumber: number | null = null
+
+  if (input.isPullRequest && input.issueNumber) {
+    const prNumber = input.issueNumber
+
+    // Get linked issue from PR
+    linkedIssueNumber = getLinkedIssueFromPR(prNumber)
+    if (linkedIssueNumber) {
+      logger.info(`Found linked issue #${linkedIssueNumber} from PR #${prNumber}`)
+
+      // Discover original task from the issue
+      const discoveredTaskId = discoverTaskIdFromIssue(linkedIssueNumber)
+      if (discoveredTaskId && discoveredTaskId !== input.taskId) {
+        logger.info(`Switching from fix task ${input.taskId} to original task ${discoveredTaskId}`)
+        originalTaskId = discoveredTaskId
+
+        // Update input and context
+        input.taskId = originalTaskId
+      }
+    } else {
+      logger.warn(`No linked issue found for PR #${prNumber}, using current task`)
+    }
+  }
+
+  // Get the original task's directory
+  const originalTaskDir = getTaskDir(originalTaskId)
+  ctx.taskDir = originalTaskDir
+
+  // ===========================================================================
+  // Step 2: Archive previous artifacts to prev-run/
+  // ===========================================================================
+  const prevRunDir = path.join(originalTaskDir, 'prev-run')
+  if (!fs.existsSync(prevRunDir)) {
+    fs.mkdirSync(prevRunDir, { recursive: true })
+  }
+
+  // Copy existing markdown files to prev-run/
+  const mdFiles = [
+    'spec.md',
+    'plan.md',
+    'gap.md',
+    'build.md',
+    'review.md',
+    'context.md',
+    'test.md',
+    'rerun-feedback.md',
+  ]
+  for (const mdFile of mdFiles) {
+    const srcPath = path.join(originalTaskDir, mdFile)
+    const destPath = path.join(prevRunDir, mdFile)
+    if (fs.existsSync(srcPath)) {
+      fs.copyFileSync(srcPath, destPath)
+      logger.info(`Archived ${mdFile} to prev-run/`)
+    }
+  }
+
+  // Copy task.json and status.json if they exist
+  const jsonFiles = ['task.json', 'status.json']
+  for (const jsonFile of jsonFiles) {
+    const srcPath = path.join(originalTaskDir, jsonFile)
+    const destPath = path.join(prevRunDir, jsonFile)
+    if (fs.existsSync(srcPath)) {
+      fs.copyFileSync(srcPath, destPath)
+      logger.info(`Archived ${jsonFile} to prev-run/`)
+    }
+  }
+
+  // ===========================================================================
+  // Step 3: Compose task.md from issue body + fix comment
+  // ===========================================================================
+  const issueBody = linkedIssueNumber ? getIssueBody(linkedIssueNumber) : null
+
+  // Get the fix comment from input.feedback
+  const fixComment = input.feedback || 'Fix requested via @cody fix command'
+
+  // Compose task.md content
+  let taskMdContent = `# Fix Request\n\n`
+  if (issueBody) {
+    taskMdContent += `## Original Request (Issue #${linkedIssueNumber})\n\n${issueBody}\n\n`
+  }
+  taskMdContent += `## Fix Feedback\n\n${fixComment}\n\n`
+  taskMdContent += `---\n\n`
+  taskMdContent += `*This is a FIX for an existing implementation. Previous artifacts are archived in prev-run/ for context.*\n`
+
+  // Write task.md
+  const taskMdPath = path.join(originalTaskDir, 'task.md')
+  fs.writeFileSync(taskMdPath, taskMdContent)
+  logger.info(`Composed fresh task.md from issue body and fix comment`)
+
+  // Also write rerun-feedback.md for architect/build to read
+  const feedbackPath = path.join(originalTaskDir, 'rerun-feedback.md')
+  fs.writeFileSync(feedbackPath, `# Fix Feedback - ${new Date().toISOString()}\n\n${fixComment}\n`)
+
+  // ===========================================================================
+  // Step 4: Ensure task directory exists and reset state from taskify
+  // ===========================================================================
+  ensureTaskDir(originalTaskId)
 
   // Read task definition for profile resolution
   let taskDef = null
   try {
-    taskDef = readTask(taskDir)
+    taskDef = readTask(originalTaskDir)
   } catch {
     logger.warn('Could not read task.json for profile resolution, using default')
   }
@@ -670,7 +870,17 @@ async function runFixMode(ctx: PipelineContext): Promise<void> {
     ctx.profile = resolvePipelineProfile(taskDef)
   }
 
-  // Load existing state or create new one
+  // --turbo flag: hard override to turbo profile
+  if (ctx.input.turbo) {
+    ctx.profile = 'turbo'
+    logger.info('⚡ Turbo mode: forcing turbo profile')
+  }
+
+  // Resolve pipeline - now uses FIX_FULL_ORDER (full impl pipeline with taskify)
+  const pipeline = resolvePipelineForMode('fix', ctx.profile, false, ctx)
+  const stageOrder = flattenPipelineOrder(pipeline.order)
+
+  // Load existing state or create fresh state
   const {
     loadState: loadSt2,
     writeState: writeSt2,
@@ -678,40 +888,26 @@ async function runFixMode(ctx: PipelineContext): Promise<void> {
     initState: initSt,
   } = await import('./engine/status')
 
-  let state = loadSt2(input.taskId)
+  let state = loadSt2(originalTaskId)
 
-  // If no existing state, create fresh state with FIX_ORDER stages
+  // Create fresh state starting from taskify (reset all stages)
   if (!state) {
     state = initSt(ctx, 'fix')
-    for (const stageName of FIX_ORDER) {
-      if (typeof stageName === 'string') {
-        state = updStage(state, stageName, { state: 'pending', retries: 0 })
-      }
-    }
-    writeSt2(input.taskId, state)
   }
 
-  // Set fix stage to pending and initialize fix attempt if not set
-  const existingFixAttempt = state.stages['fix']?.fixAttempt ?? 0
-  state = updStage(state, 'fix', {
-    state: 'pending',
-    fixAttempt: existingFixAttempt,
-    maxFixAttempts: 2,
-  })
+  // Reset all stages from taskify onward for a fresh run
+  state = resetFromStage(state, 'taskify', stageOrder, originalTaskDir)
 
-  // Also ensure commit-fix and verify are pending
-  state = updStage(state, 'commit-fix', { state: 'pending' })
-  state = updStage(state, 'verify', { state: 'pending' })
-  state = updStage(state, 'review', { state: 'pending' })
+  // Mark taskify as pending to start fresh
+  state = updStage(state, 'taskify', { state: 'pending', retries: 0 })
 
-  // Set initial cursor
-  state = { ...state, cursor: 'review', state: 'running' }
-  writeSt2(input.taskId, state)
+  // Set initial cursor to taskify
+  state = { ...state, cursor: 'taskify', state: 'running' }
+  writeSt2(originalTaskId, state)
 
-  // Build pipeline for fix mode - resolvePipelineForMode maps 'fix' to FIX_ORDER
-  const pipeline = resolvePipelineForMode('fix', ctx.profile, false, ctx)
-
-  // Run pipeline - it will find the first pending stage (review) and continue
+  // ===========================================================================
+  // Step 5: Run the full pipeline
+  // ===========================================================================
   const finalState = await runPipeline(ctx, pipeline)
 
   // Handle paused state (gate approval required)

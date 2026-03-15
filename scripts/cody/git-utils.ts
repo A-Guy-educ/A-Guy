@@ -171,7 +171,7 @@ export function getDefaultBranch(cwd: string = process.cwd()): string {
  * This keeps the feature branch up-to-date with the latest changes from dev.
  * If a merge conflict occurs, aborts the merge and throws an error.
  */
-function mergeDefaultBranch(cwd: string): void {
+export function mergeDefaultBranch(cwd: string): void {
   const defaultBranch = getDefaultBranch(cwd)
   logger.info(`[branch] Merging latest ${defaultBranch} into current branch`)
   try {
@@ -679,8 +679,23 @@ export type StagingStrategy = 'task-only' | 'tracked+task' | 'all'
 
 /**
  * Files that are always excluded from task-only commits (internal state markers).
+ * NOTE: OpenCode runtime file patterns here must be kept in sync with
+ * the .gitignore entries under "OpenCode runtime files (per-task isolated data dirs)".
  */
-const TASK_FILES_ALWAYS_EXCLUDE = ['gate-*.md', 'rerun-feedback.consumed.md']
+const TASK_FILES_ALWAYS_EXCLUDE = [
+  'gate-*.md',
+  'rerun-feedback.consumed.md',
+  // OpenCode runtime files (only opencode.db is committed for session reuse)
+  'opencode-data/opencode/opencode.db-wal',
+  'opencode-data/opencode/opencode.db-shm',
+  'opencode-data/opencode/snapshot/',
+  'opencode-data/opencode/logs/',
+  'opencode-data/opencode/auth.json',
+  'opencode-data/opencode/bin/',
+  'opencode-data/opencode/tool-output/',
+  'opencode-data/opencode/storage/',
+  'opencode-data/opencode/worktree/',
+]
 
 /**
  * Debug artifacts — only committed when the pipeline fails (black box data).

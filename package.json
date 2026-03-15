@@ -27,7 +27,6 @@
     "ai:generate-all-indexes": "pnpm run ai:generate-readme-index && pnpm run ai:generate-route-index && pnpm run ai:generate-collection-slug-map",
     "ai:validate-indexes": "pnpm tsx scripts/validate-indexes.ts",
     "docs:links:fix": "pnpm tsx scripts/doc-link-fixer.ts",
-    "nightly-docs": "pnpm tsx scripts/nightly-docs/index.ts",
     "deps:security:report": "pnpm tsx scripts/deps-security-report.ts",
     "repo:hygiene:report": "pnpm tsx scripts/repo-hygiene-report.ts",
     "mcp:discover-tools": "pnpm tsx scripts/admin-chat-mcp_discover-tools.ts",
@@ -97,7 +96,10 @@
     "cody:test": "gh workflow run cody.yml -R A-Guy-educ/A-Guy -f task_id=TEST -f mode=status -f dry_run=true",
     "cody": "pnpm tsx scripts/cody/entry.ts",
     "cody:tag": "pnpm tsx scripts/cody/tag-version.ts",
-    "tunnel:ocode": "pnpm tsx scripts/tunnel-opencode.ts"
+    "tunnel:ocode": "pnpm tsx scripts/tunnel-opencode.ts",
+    "remote:agent": "tsx scripts/remote-agent/server.ts",
+    "remote:agent:dev": "tsx watch scripts/remote-agent/server.ts",
+    "remote:agent:funnel": "tsx scripts/remote-agent/start-with-funnel.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.30",

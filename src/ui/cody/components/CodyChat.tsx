@@ -6,6 +6,8 @@ import { Globe, Paperclip, X, Image as ImageIcon, FileText, FileCode } from 'luc
 import { AGENTS, type AgentId } from '../agents'
 import type { CodyTask } from '../types'
 import type { ChatMessage, ChatSession } from '../chat-types'
+import { ConfirmDialog } from './ConfirmDialog'
+import { useRemoteStatus } from '../hooks/useRemoteStatus'
 
 const AGENT_LIST = Object.values(AGENTS).map(({ id, name, description, icon, capabilities }) => ({
   id,
@@ -19,6 +21,7 @@ interface Message {
   role: 'user' | 'assistant'
   content: string
   isLoading?: boolean
+  timestamp?: string
 }
 
 interface ToolCall {
@@ -71,6 +74,8 @@ function saveGlobalHistory(history: HistoryMap): void {
 
 interface CodyChatProps {
   selectedTask?: CodyTask | null
+  /** GitHub login of the current user — used for remote dev status */
+  actorLogin?: string | null
 }
 
 function getFileIcon(mimeType: string) {
@@ -93,7 +98,7 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-export function CodyChat({ selectedTask }: CodyChatProps) {
+export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
   // Global (non-task) chat history
   const [globalHistory, setGlobalHistory] = useState<HistoryMap>(emptyHistory)
 
@@ -112,10 +117,14 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([])
   const [selectedAgent, setSelectedAgent] = useState<AgentId>('dashboard-manager')
   const [showAgentDropdown, setShowAgentDropdown] = useState(false)
+  const [showClearConfirm, setShowClearConfirm] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Remote dev status (only polls when actorLogin is provided)
+  const { data: remoteStatus } = useRemoteStatus(actorLogin)
 
   // Determine if we're in task mode or global mode
   const isTaskMode = !!selectedTask
@@ -160,6 +169,7 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
                 converted.push({
                   role: msg.role,
                   content: msg.text,
+                  timestamp: msg.timestamp,
                 })
               }
             }
@@ -172,7 +182,7 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
       // Clear task messages when no task
       setTaskMessages([])
     }
-  }, [selectedTask]) // eslint wants full object; re-runs are guarded by if(selectedTask)
+  }, [selectedTask?.id]) // eslint-disable-line react-hooks/exhaustive-deps -- intentional: only id needed, full object ref changes on every poll
 
   // Save task chat after each message exchange (debounced)
   const saveTaskChat = useCallback(async () => {
@@ -182,7 +192,7 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
       const messagesForApi: ChatMessage[] = taskMessages.map((m) => ({
         role: m.role,
         text: m.content,
-        timestamp: new Date().toISOString(),
+        timestamp: m.timestamp || new Date().toISOString(),
       }))
 
       await fetch('/api/cody/chat/save', {
@@ -260,11 +270,7 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
     setToolCalls([])
   }
 
-  const handleClearHistory = () => {
-    if (messages.length === 0) return
-    const confirmed = window.confirm('Clear conversation history?')
-    if (!confirmed) return
-
+  const executeClearHistory = () => {
     // Clear global chat from localStorage when clearing history in non-task mode
     if (!isTaskMode) {
       saveGlobalHistory(emptyHistory())
@@ -357,7 +363,10 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
       messageContent = attachmentDescriptions + (userMessage ? `\n\n${userMessage}` : '')
     }
 
-    setMessages((prev) => [...prev, { role: 'user', content: messageContent }])
+    setMessages((prev) => [
+      ...prev,
+      { role: 'user', content: messageContent, timestamp: new Date().toISOString() },
+    ])
     setLoading(true)
     setToolCalls([])
 
@@ -365,7 +374,10 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
     abortControllerRef.current = new AbortController()
 
     // Add placeholder for assistant response
-    setMessages((prev) => [...prev, { role: 'assistant', content: '', isLoading: true }])
+    setMessages((prev) => [
+      ...prev,
+      { role: 'assistant', content: '', isLoading: true, timestamp: new Date().toISOString() },
+    ])
 
     try {
       // Include task context in request when in task mode
@@ -613,6 +625,20 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
             )}
           </div>
 
+          {/* Remote dev status indicator — only visible when configured */}
+          {remoteStatus?.configured && (
+            <div
+              className="flex items-center gap-1 text-xs text-muted-foreground"
+              title={remoteStatus.online ? 'Remote dev: online' : 'Remote dev: offline'}
+            >
+              <span
+                className={`w-2 h-2 rounded-full ${remoteStatus.online ? 'bg-green-500' : 'bg-red-400'}`}
+                aria-label={remoteStatus.online ? 'Remote dev online' : 'Remote dev offline'}
+              />
+              <span className="hidden sm:inline">{remoteStatus.online ? 'Remote' : 'Offline'}</span>
+            </div>
+          )}
+
           {/* Right: Agent selector dropdown */}
           <div className="relative" ref={dropdownRef}>
             <button
@@ -837,13 +863,23 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
         {/* Clear history link */}
         {messages.length > 0 && !loading && (
           <button
-            onClick={handleClearHistory}
+            onClick={() => setShowClearConfirm(true)}
             className="mt-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             Clear history
           </button>
         )}
       </div>
+
+      <ConfirmDialog
+        open={showClearConfirm}
+        title="Clear history"
+        description="Clear conversation history? This cannot be undone."
+        confirmLabel="Clear"
+        variant="destructive"
+        onConfirm={executeClearHistory}
+        onClose={() => setShowClearConfirm(false)}
+      />
     </div>
   )
 }

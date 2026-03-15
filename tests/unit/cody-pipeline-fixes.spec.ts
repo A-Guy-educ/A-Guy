@@ -287,17 +287,16 @@ This is valid promoted content from a previous successful run.
   // ========================================================================
 
   describe('parallel stage error handling (Fix #3)', () => {
-    it('should NOT have parallel stages in the implementation pipeline', async () => {
-      // This test verifies the logic exists - actual parallel execution tested via integration
+    it('should have parallel test+build group in the implementation pipeline', async () => {
       const { IMPL_ORDER_STANDARD } = await import('../../scripts/cody/pipeline/definitions')
 
-      // Verify no parallel stages
+      // Verify parallel group exists for test+build
       const parallelStep = IMPL_ORDER_STANDARD.find(
         (step) => typeof step === 'object' && 'parallel' in step,
       )
 
-      // No parallel stages in implementation pipeline
-      expect(parallelStep).toBeUndefined()
+      expect(parallelStep).toBeDefined()
+      expect((parallelStep as { parallel: string[] }).parallel).toEqual(['test', 'build'])
     })
   })
 

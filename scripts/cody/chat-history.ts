@@ -10,6 +10,7 @@ import * as path from 'path'
 import { execFileSync } from 'child_process'
 
 import { logger } from './logger'
+import { resolveOpenCodeBinary } from './opencode-server'
 
 // ============================================================================
 // Types
@@ -117,6 +118,29 @@ function trimSession(
 }
 
 // ============================================================================
+// Helper: Extract JSON object from potentially noisy CLI output
+// ============================================================================
+
+/**
+ * Extract a JSON object from CLI output that may contain non-JSON lines
+ * (e.g., progress messages, "Exporting session:" prefix, warnings).
+ * Finds the first '{' and last '}' and parses the substring between them.
+ */
+export function extractJson(output: string): unknown {
+  const firstBrace = output.indexOf('{')
+  const lastBrace = output.lastIndexOf('}')
+
+  if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+    throw new SyntaxError(
+      `No JSON object found in output (length=${output.length}, first 200 chars: ${output.slice(0, 200)})`,
+    )
+  }
+
+  const jsonStr = output.slice(firstBrace, lastBrace + 1)
+  return JSON.parse(jsonStr)
+}
+
+// ============================================================================
 // Helper: Load existing chat history
 // ============================================================================
 
@@ -159,6 +183,7 @@ export async function appendSession(
   taskDir: string,
   stage: string,
   sessionId: string,
+  serverUrl?: string,
 ): Promise<void> {
   if (!sessionId) {
     logger.debug('No sessionId, skipping chat export')
@@ -168,15 +193,34 @@ export async function appendSession(
   logger.info(`  📝 Exporting chat session ${sessionId} for stage ${stage}...`)
 
   try {
-    // Export session as JSON
-    const output = execFileSync('pnpm', ['exec', 'opencode', 'export', sessionId], {
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-      cwd: process.cwd(),
-      maxBuffer: 50 * 1024 * 1024, // 50MB — session exports can be very large
-    }).replace(/^Exporting session:.*\n/, '') // Remove the "Exporting session:" line
+    // Export session as JSON from the OpenCode SQLite DB.
+    // `opencode export` reads directly from the DB — it does NOT support --attach.
+    // When serverUrl is set, the DB lives in the task-specific data dir, so we use
+    // the real binary + XDG_DATA_HOME. Without server mode, use pnpm exec (old binary).
+    let output: string
+    if (serverUrl) {
+      const args = ['export', sessionId]
+      const dataDir = path.join(taskDir, 'opencode-data')
+      output = execFileSync(resolveOpenCodeBinary(), args, {
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+        cwd: process.cwd(),
+        maxBuffer: 50 * 1024 * 1024,
+        env: { ...process.env, XDG_DATA_HOME: dataDir },
+      })
+    } else {
+      const args = ['exec', 'opencode', 'export', sessionId]
+      output = execFileSync('pnpm', args, {
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+        cwd: process.cwd(),
+        maxBuffer: 50 * 1024 * 1024,
+      })
+    }
 
-    const rawExport = JSON.parse(output)
+    // Extract JSON from potentially noisy CLI output (may contain
+    // "Exporting session:" prefix, progress messages, or other non-JSON lines)
+    const rawExport = extractJson(output) as Parameters<typeof trimSession>[0]
 
     // Trim to compact format
     const session = trimSession(rawExport, stage)

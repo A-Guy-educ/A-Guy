@@ -1,0 +1,31 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "medium",
+  "confidence": 0.85,
+  "primary_domain": "frontend",
+  "scope": [
+    "video rendering in exercise blocks",
+    "video rendering in lesson introductions"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The video file is correctly saved in the media collection",
+    "The video URL/path is being stored correctly in the block data",
+    "The issue is in the frontend rendering logic for video blocks",
+    "Exercise and Lesson components likely use a shared block rendering system"
+  ],
+  "review_questions": [
+    "Is the video field stored as a relationship to the media collection or as a direct URL?",
+    "Are there any conditional checks that might prevent video display (e.g., draft status)?",
+    "Is the video MIME type being validated or filtered incorrectly?"
+  ],
+  "complexity": 25,
+  "complexity_reasoning": "Scope: 8 (2-3 files in frontend for exercise/lesson rendering). Risk: 8 (non-critical business logic, content display). Novelty: 4 (fixing existing behavior). Cross-domain: 3 (frontend only). Ambiguity: 3 (clear bug, need to find root cause). Dependency: 2 (self-contained). Total: 28",
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Bug report with clear reproduction steps but no implementation details or file paths. The task describes what happens but not where to fix it."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

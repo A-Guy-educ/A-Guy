@@ -34,34 +34,36 @@ describe('stage-prompts', () => {
   // ===========================================================================
 
   describe('SPEC_STAGES', () => {
-    it('should contain taskify, spec, gap, clarify', () => {
-      expect([...SPEC_STAGES]).toEqual(['taskify', 'spec', 'gap', 'clarify'])
+    it('should contain taskify, gap, clarify (spec merged into gap)', () => {
+      expect([...SPEC_STAGES]).toEqual(['taskify', 'gap', 'clarify'])
     })
   })
 
   describe('SCRIPTED_STAGES', () => {
     it('should contain verify, commit, pr', () => {
-      expect([...SCRIPTED_STAGES]).toEqual(['verify', 'commit', 'commit-fix', 'pr'])
+      expect([...SCRIPTED_STAGES]).toEqual(['verify', 'commit', 'pr'])
     })
   })
 
   describe('ALL_STAGES', () => {
-    it('should contain all stages including gap, gsd stages, commit, autofix', () => {
+    it('should contain all stages including gap, plan-gap, commit, autofix', () => {
       const stages = [...ALL_STAGES]
       expect(stages).toContain('taskify')
-      expect(stages).toContain('spec')
+      expect(stages).not.toContain('spec') // spec merged into gap
       expect(stages).toContain('gap')
       expect(stages).toContain('clarify')
-      expect(stages).toContain('gsd-research')
-      expect(stages).toContain('gsd-plan')
-      expect(stages).toContain('gsd-execute')
+      expect(stages).toContain('architect')
+      expect(stages).toContain('plan-gap')
+      expect(stages).toContain('build')
       expect(stages).toContain('commit')
       expect(stages).toContain('verify')
       expect(stages).toContain('review')
       expect(stages).toContain('fix')
-      expect(stages).toContain('commit-fix')
       expect(stages).toContain('autofix')
+      expect(stages).toContain('docs')
       expect(stages).toContain('pr')
+      expect(stages).toContain('test')
+      expect(stages).not.toContain('reflect')
       expect(stages).toHaveLength(14)
     })
   })
@@ -73,22 +75,28 @@ describe('stage-prompts', () => {
   describe('STAGE_CONTEXT_FILES', () => {
     it('should map stages to their correct file lists', () => {
       expect(STAGE_CONTEXT_FILES.taskify).toEqual(['task.md'])
-      expect(STAGE_CONTEXT_FILES.spec).toEqual(['task.md', 'task.json'])
-      expect(STAGE_CONTEXT_FILES.gap).toEqual(['spec.md', 'task.json'])
+      expect(STAGE_CONTEXT_FILES.gap).toEqual(['task.md', 'task.json'])
       expect(STAGE_CONTEXT_FILES.clarify).toEqual(['task.md', 'spec.md'])
-      expect(STAGE_CONTEXT_FILES['gsd-research']).toEqual(['spec.md', 'clarified.md', 'task.json'])
-      expect(STAGE_CONTEXT_FILES['gsd-plan']).toEqual([
+      expect(STAGE_CONTEXT_FILES.architect).toEqual([
         'spec.md',
         'clarified.md',
-        'task.json',
         'rerun-feedback.md',
+        'prev-run/plan.md',
+        'prev-run/build.md',
+        'prev-run/review.md',
       ])
-      expect(STAGE_CONTEXT_FILES['gsd-execute']).toEqual([
+      expect(STAGE_CONTEXT_FILES['plan-gap']).toEqual(['spec.md', 'plan.md', 'task.json'])
+      expect(STAGE_CONTEXT_FILES.build).toEqual([
         'spec.md',
         'clarified.md',
         'plan.md',
-        'task.json',
+        'plan-gap.md',
+        'context.md',
         'rerun-feedback.md',
+        'build-errors.md',
+        'review.md',
+        'prev-run/build.md',
+        'prev-run/review.md',
       ])
       expect(STAGE_CONTEXT_FILES.commit).toEqual(['task.json'])
       expect(STAGE_CONTEXT_FILES.verify).toEqual([])
@@ -98,6 +106,7 @@ describe('stage-prompts', () => {
         'review.md',
         'build.md',
         'plan.md',
+        'context.md',
         'spec.md',
         'clarified.md',
       ])
@@ -108,10 +117,11 @@ describe('stage-prompts', () => {
         'fix-summary.md',
         'build.md',
         'plan.md',
+        'context.md',
         'spec.md',
         'clarified.md',
+        'prev-run/build.md',
       ])
-      expect(STAGE_CONTEXT_FILES['commit-fix']).toEqual(['fix-summary.md', 'verify-failures.md'])
     })
 
     it('should include build-errors.md in autofix context for build stage feedback', () => {
@@ -119,7 +129,7 @@ describe('stage-prompts', () => {
     })
 
     it('should include rerun-feedback.md in build context for supervisor feedback', () => {
-      expect(STAGE_CONTEXT_FILES['gsd-execute']).toContain('rerun-feedback.md')
+      expect(STAGE_CONTEXT_FILES.build).toContain('rerun-feedback.md')
     })
 
     it('should have an entry for every stage in ALL_STAGES', () => {
@@ -135,56 +145,62 @@ describe('stage-prompts', () => {
   // ===========================================================================
 
   describe('getSpecStages', () => {
-    it('should return taskify, spec, gap for default standard profile (clarify not included)', () => {
-      expect(getSpecStages()).toEqual(['taskify', 'spec', 'gap'])
+    it('should return taskify, gap for default standard profile (clarify not included)', () => {
+      expect(getSpecStages()).toEqual(['taskify', 'gap'])
     })
 
     it('should return only taskify for lightweight profile', () => {
       expect(getSpecStages('lightweight')).toEqual(['taskify'])
     })
 
-    it('should return taskify, spec, gap for standard profile (no clarify)', () => {
-      expect(getSpecStages('standard')).toEqual(['taskify', 'spec', 'gap'])
+    it('should return taskify, gap for standard profile (no clarify)', () => {
+      expect(getSpecStages('standard')).toEqual(['taskify', 'gap'])
     })
   })
 
   describe('getImplStages', () => {
     it('should return full implementation stage list (default standard profile)', () => {
+      // docs is deferred to inspector (deferred-stages plugin); reflect removed
       expect(getImplStages()).toEqual([
-        'gsd-research',
-        'gsd-plan',
-        'gsd-execute',
+        'architect',
+        'plan-gap',
+        'test',
+        'build',
         'commit',
         'review',
         'fix',
-        'commit-fix',
+        'commit',
         'verify',
         'pr',
       ])
     })
 
     it('should return reduced stage list for lightweight profile (no plan-gap)', () => {
+      // docs is deferred to inspector (deferred-stages plugin); reflect removed
       expect(getImplStages('lightweight')).toEqual([
-        'gsd-plan',
-        'gsd-execute',
+        'architect',
+        'test',
+        'build',
         'commit',
         'review',
         'fix',
-        'commit-fix',
+        'commit',
         'verify',
         'pr',
       ])
     })
 
     it('should return full stage list for standard profile', () => {
+      // docs is deferred to inspector (deferred-stages plugin); reflect removed
       expect(getImplStages('standard')).toEqual([
-        'gsd-research',
-        'gsd-plan',
-        'gsd-execute',
+        'architect',
+        'plan-gap',
+        'test',
+        'build',
         'commit',
         'review',
         'fix',
-        'commit-fix',
+        'commit',
         'verify',
         'pr',
       ])
@@ -207,19 +223,23 @@ describe('stage-prompts', () => {
       }
     })
 
-    it('should return empty strings for non-spec stages (except build, review, fix)', () => {
+    it('should return empty strings for non-spec stages (except build, review, fix, docs)', () => {
       const nonSpecStages = ALL_STAGES.filter(
         (s) => !SPEC_STAGES.includes(s as (typeof SPEC_STAGES)[number]),
       )
       for (const stage of nonSpecStages) {
         const instruction = stageInstructions[stage]('260219-test')
         // Build stage intentionally has implementation instructions
-        if (stage === 'gsd-execute') {
+        if (stage === 'build') {
           expect(instruction).toContain('IMPLEMENTATION STAGE')
         } else if (stage === 'review') {
-          expect(instruction).toContain('CODE REVIEW STAGE')
+          expect(instruction).toContain('CODE REVIEW')
         } else if (stage === 'fix') {
           expect(instruction).toContain('TARGETED FIX STAGE')
+        } else if (stage === 'docs') {
+          expect(instruction).toContain('DOCUMENTATION STAGE')
+        } else if (stage === 'test') {
+          expect(instruction).toContain('TDD RED PHASE')
         } else {
           expect(instruction).toBe('')
         }
@@ -251,7 +271,7 @@ describe('stage-prompts', () => {
     })
 
     it('should include "Read these files" section when stage has context files', () => {
-      const prompt = buildStagePrompt(mockInput, 'gsd-execute')
+      const prompt = buildStagePrompt(mockInput, 'build')
       expect(prompt).toContain('Read these files for context:')
     })
 

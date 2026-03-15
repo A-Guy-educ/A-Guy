@@ -12,6 +12,14 @@ import { createPluginRegistry } from './plugins/registry'
 import { healthCheckPlugin } from './plugins/cody/health-check/index'
 import { auditPlugin } from './plugins/cody/audit/index'
 import { failureAnalysisPlugin } from './plugins/cody/failure-analysis/index'
+import { deferredStagesPlugin } from './plugins/cody/deferred-stages/index'
+import { docsSyncPlugin } from './plugins/docs-sync/index'
+import { zombieReaperPlugin } from './plugins/cody/zombie-reaper/index'
+import { successTrackerPlugin } from './plugins/cody/success-tracker/index'
+import { failureMinerPlugin } from './plugins/cody/failure-miner/index'
+import { knowledgeGardenerPlugin } from './plugins/cody/knowledge-gardener/index'
+import { securityScannerPlugin } from './plugins/project/security-scanner/index'
+import { apiSurfaceAuditorPlugin } from './plugins/project/api-surface/index'
 import type { InspectorConfig } from './core/types'
 
 const logger = pino({ level: 'info' })
@@ -24,6 +32,11 @@ async function main(): Promise<void> {
   const repo = process.env.REPO
   const token = process.env.GH_TOKEN || ''
   const dryRun = process.env.DRY_RUN === 'true'
+
+  // Parse optional config
+  const digestIssue = process.env.INSPECTOR_DIGEST_ISSUE
+    ? Number(process.env.INSPECTOR_DIGEST_ISSUE)
+    : undefined
 
   // Validate required env vars
   if (!repo) {
@@ -38,6 +51,14 @@ async function main(): Promise<void> {
 
   logger.info({ repo, dryRun }, 'Starting Inspector')
 
+  // Warn about missing optional config
+  if (!digestIssue) {
+    logger.warn('INSPECTOR_DIGEST_ISSUE not set — digest reports will be skipped')
+  }
+  if (!process.env.MINIMAX_API_KEY) {
+    logger.warn('MINIMAX_API_KEY not set — failure analysis will use fallback mode')
+  }
+
   // Create plugin registry
   const registry = createPluginRegistry()
 
@@ -45,6 +66,14 @@ async function main(): Promise<void> {
   registry.register(healthCheckPlugin)
   registry.register(failureAnalysisPlugin)
   registry.register(auditPlugin)
+  registry.register(deferredStagesPlugin)
+  registry.register(docsSyncPlugin)
+  registry.register(zombieReaperPlugin)
+  registry.register(successTrackerPlugin)
+  registry.register(failureMinerPlugin)
+  registry.register(knowledgeGardenerPlugin)
+  registry.register(securityScannerPlugin)
+  registry.register(apiSurfaceAuditorPlugin)
 
   // Create config
   const config: InspectorConfig = {
@@ -52,6 +81,7 @@ async function main(): Promise<void> {
     dryRun,
     stateFile: `${process.cwd()}/.inspector/state.json`,
     plugins: registry.getAll(),
+    digestIssue,
   }
 
   // Run Inspector

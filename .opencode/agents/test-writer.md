@@ -226,7 +226,9 @@ Common edit failures:
    - Find a similar test in `tests/unit/` (e.g., for hooks, components, services)
    - Follow the same mock patterns and import structure
 
-3. **Test location**: For React components/hooks in `src/ui/`, place tests in `tests/unit/` following the directory structure
+3. **Reuse test helpers**: Check `src/infra/utils/test/` for existing test utilities (e.g., `mongodb-container`, `test-db-constraint`). Don't recreate test setup patterns that already exist.
+
+4. **Test location**: For React components/hooks in `src/ui/`, place tests in `tests/unit/` following the directory structure
 
 - Write tests that **assert the desired behavior** (will fail now, pass after implementation)
 - Do NOT write implementation code — the build agent handles that

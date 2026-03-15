@@ -10,6 +10,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { codyApi, RateLimitError, NoTokenError } from '../api'
 import type { CodyTask } from '../types'
+import type { ViewMode } from '../components/FilterBar'
 import { POLLING_INTERVALS } from '../constants'
 
 // Query keys
@@ -18,6 +19,7 @@ export const queryKeys = {
   taskDetails: (issueNumber: number) => ['cody-task', issueNumber] as const,
   boards: ['cody-boards'] as const,
   collaborators: ['cody-collaborators'] as const,
+  workflowRuns: ['cody-workflow-runs'] as const,
 }
 
 // ============ useCodyTasks ============
@@ -26,8 +28,13 @@ export interface UseCodyTasksOptions {
   days?: number
   includeDetails?: boolean
   /**
+   * Current view mode — 'running' or 'backlog'.
+   * When 'backlog', polling slows to 120s since backlog tasks change rarely.
+   */
+  viewMode?: ViewMode
+  /**
    * Auto-refresh interval based on task state.
-   * - 'auto': Uses smart polling based on running tasks
+   * - 'auto': Uses smart polling based on running tasks and view mode
    * - 'idle': 60s interval when no tasks are running
    * - 'board': 30s interval when tasks are on board
    * - 'active': 15s interval when viewing active task
@@ -37,12 +44,19 @@ export interface UseCodyTasksOptions {
 }
 
 /**
- * Determine polling interval based on current task data.
- * - Active tasks (building/retrying/gate-waiting): poll every 30s
- * - All idle: poll every 60s
+ * Determine polling interval based on current task data and view mode.
+ * - Backlog view: poll every 120s (tasks change rarely)
+ * - Running view with active tasks (building/retrying/gate-waiting): poll every 30s
+ * - Running view, all idle: poll every 60s
  */
-function getSmartInterval(tasks: CodyTask[] | undefined): number {
+export function getSmartInterval(
+  tasks: CodyTask[] | undefined,
+  viewMode: ViewMode = 'running',
+): number {
   if (!tasks || tasks.length === 0) return POLLING_INTERVALS.idle
+
+  // Backlog view — slow polling since these tasks change rarely
+  if (viewMode === 'backlog') return POLLING_INTERVALS.backlog
 
   const hasActive = tasks.some(
     (t) => t.column === 'building' || t.column === 'retrying' || t.column === 'gate-waiting',
@@ -52,7 +66,7 @@ function getSmartInterval(tasks: CodyTask[] | undefined): number {
 }
 
 export function useCodyTasks(options: UseCodyTasksOptions = {}) {
-  const { days, includeDetails = false, refetchInterval = 'auto' } = options
+  const { days, includeDetails = false, viewMode = 'running', refetchInterval = 'auto' } = options
 
   return useQuery({
     queryKey: queryKeys.tasks(days, includeDetails),
@@ -62,7 +76,7 @@ export function useCodyTasks(options: UseCodyTasksOptions = {}) {
 
       // Smart auto mode: inspect data to decide interval
       if (refetchInterval === 'auto') {
-        return getSmartInterval(query.state.data)
+        return getSmartInterval(query.state.data, viewMode)
       }
 
       return POLLING_INTERVALS[refetchInterval]
@@ -151,6 +165,26 @@ export function useTaskDetails(issueNumber: number | null, actorLogin?: string) 
     isReopening: reopenMutation.isPending,
     isAborting: abortMutation.isPending,
   }
+}
+
+// ============ useWorkflowRuns ============
+
+/**
+ * Fetches all workflow runs and optionally filters them by task title.
+ * The /api/cody/workflows endpoint returns up to 20 runs (no per-task filter server-side),
+ * so we filter client-side by matching display_title against the provided taskTitle.
+ */
+export function useWorkflowRuns(taskTitle?: string) {
+  return useQuery({
+    queryKey: queryKeys.workflowRuns,
+    queryFn: () => codyApi.workflows.list(),
+    select: (runs) => {
+      if (!taskTitle) return runs
+      return runs.filter((run) => run.display_title === taskTitle)
+    },
+    staleTime: 30_000,
+    enabled: !!taskTitle,
+  })
 }
 
 // ============ useCreateTask ============
@@ -301,6 +335,18 @@ export function useTaskActions({
     onError: handleError('reject gate'),
   })
 
+  const approveUI = useMutation({
+    mutationFn: () => codyApi.tasks.approveUI(issueNumber, actorLogin),
+    onSuccess: handleSuccess('Preview UI approved'),
+    onError: handleError('approve UI'),
+  })
+
+  const approvePR = useMutation({
+    mutationFn: () => codyApi.tasks.approvePR(issueNumber, actorLogin),
+    onSuccess: handleSuccess('PR approved'),
+    onError: handleError('approve PR'),
+  })
+
   const assign = useMutation({
     mutationFn: (assignees: string[]) => codyApi.tasks.assign(issueNumber, assignees, actorLogin),
     onSuccess: handleSuccess('User(s) assigned'),
@@ -322,6 +368,8 @@ export function useTaskActions({
     abort.isPending ||
     approveGate.isPending ||
     rejectGate.isPending ||
+    approveUI.isPending ||
+    approvePR.isPending ||
     assign.isPending ||
     unassign.isPending
 
@@ -334,6 +382,8 @@ export function useTaskActions({
     abort: abort.mutate,
     approveGate: approveGate.mutate,
     rejectGate: rejectGate.mutate,
+    approveUI: approveUI.mutate,
+    approvePR: approvePR.mutate,
     assign: assign.mutate,
     unassign: unassign.mutate,
     isPending,
@@ -345,14 +395,18 @@ export function useTaskActions({
           ? 'approve'
           : rejectGate.isPending
             ? 'reject'
-            : close.isPending
-              ? 'close'
-              : closePR.isPending
-                ? 'close-pr'
-                : reset.isPending
-                  ? 'reset'
-                  : reopen.isPending
-                    ? 'reopen'
-                    : null,
+            : approveUI.isPending
+              ? 'approve-ui'
+              : approvePR.isPending
+                ? 'approve-pr'
+                : close.isPending
+                  ? 'close'
+                  : closePR.isPending
+                    ? 'close-pr'
+                    : reset.isPending
+                      ? 'reset'
+                      : reopen.isPending
+                        ? 'reopen'
+                        : null,
   }
 }

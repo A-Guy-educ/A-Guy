@@ -14,6 +14,11 @@ vi.mock('../../../../scripts/cody/pipeline-utils', () => ({
   stageOutputFile: vi.fn((taskDir, stage) => `${taskDir}/${stage}.json`),
 }))
 
+// Mock chat-history
+vi.mock('../../../../scripts/cody/chat-history', () => ({
+  appendSession: vi.fn().mockResolvedValue(undefined),
+}))
+
 // Import after mocks
 import { AgentHandler } from '../../../../scripts/cody/handlers/agent-handler'
 import { runAgentWithFileWatch } from '../../../../scripts/cody/agent-runner'
@@ -161,6 +166,93 @@ describe('AgentHandler', () => {
           validateOutput: mockValidator,
         }),
       )
+    })
+
+    it('should pass serverUrl, sessionId, and dataDir to agent runner', async () => {
+      mockCtx.serverUrl = 'http://127.0.0.1:4097'
+      mockCtx.lastSessionId = 'sess-prev-123'
+
+      await handler.execute(mockCtx, mockDef)
+
+      expect(runAgentWithFileWatch).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({
+          serverUrl: 'http://127.0.0.1:4097',
+          sessionId: 'sess-prev-123',
+          dataDir: '/test/.tasks/test-task-123/opencode-data',
+        }),
+      )
+    })
+
+    it('should propagate sessionId to ctx.lastSessionId on success', async () => {
+      vi.mocked(runAgentWithFileWatch).mockResolvedValueOnce({
+        succeeded: true,
+        timedOut: false,
+        retries: 0,
+        sessionId: 'sess-new-456',
+      })
+
+      await handler.execute(mockCtx, mockDef)
+
+      expect(mockCtx.lastSessionId).toBe('sess-new-456')
+    })
+
+    it('should include sessionId in result on success', async () => {
+      vi.mocked(runAgentWithFileWatch).mockResolvedValueOnce({
+        succeeded: true,
+        timedOut: false,
+        retries: 0,
+        sessionId: 'sess-new-789',
+      })
+
+      const result = await handler.execute(mockCtx, mockDef)
+
+      expect(result).toEqual(
+        expect.objectContaining({
+          outcome: 'completed',
+          sessionId: 'sess-new-789',
+        }),
+      )
+    })
+
+    it('should pass undefined serverUrl, sessionId, and dataDir when ctx has none set', async () => {
+      // ctx has no serverUrl or lastSessionId (default state, no server mode)
+      expect(mockCtx.serverUrl).toBeUndefined()
+      expect(mockCtx.lastSessionId).toBeUndefined()
+
+      await handler.execute(mockCtx, mockDef)
+
+      expect(runAgentWithFileWatch).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({
+          serverUrl: undefined,
+          sessionId: undefined,
+          dataDir: undefined,
+        }),
+      )
+    })
+
+    it('should not update ctx.lastSessionId when agent succeeds with no sessionId', async () => {
+      // Pre-set a lastSessionId to verify it is not overwritten with undefined
+      mockCtx.lastSessionId = 'sess-existing'
+
+      vi.mocked(runAgentWithFileWatch).mockResolvedValueOnce({
+        succeeded: true,
+        timedOut: false,
+        retries: 0,
+        // no sessionId
+      })
+
+      await handler.execute(mockCtx, mockDef)
+
+      // Should remain unchanged — the undefined result.sessionId branch is not entered
+      expect(mockCtx.lastSessionId).toBe('sess-existing')
     })
   })
 })

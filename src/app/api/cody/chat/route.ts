@@ -23,6 +23,8 @@ import {
   getOctokit,
 } from '@/ui/cody/github-client'
 import { GITHUB_OWNER, GITHUB_REPO } from '@/ui/cody/constants'
+import { isRemoteEnabled } from '@/ui/cody/remote-config'
+import { REMOTE_SYSTEM_PROMPT_EXTENSION } from '@/ui/cody/agents'
 import type {
   CodyTask,
   CodyPipelineStatus,
@@ -511,6 +513,63 @@ function processAttachments(attachments?: Attachment[]) {
 }
 
 // ===========================================
+// REMOTE TOOLS BUILDER
+// ===========================================
+
+/**
+ * Builds the four remote dev tools for users with a configured remote environment.
+ * The tools proxy through /api/cody/remote/exec on the Vercel side.
+ * This is only called when isRemoteEnabled(actorLogin) is true.
+ */
+function buildRemoteTools(actorLogin: string): ToolSet {
+  const proxyAction = async (action: string, payload: Record<string, unknown>) => {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL || ''}/api/cody/remote/exec`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ actorLogin, action, payload }),
+    })
+    return res.json()
+  }
+
+  return {
+    remoteExec: tool({
+      description:
+        'Execute a shell command on the remote Mac dev environment. Use for running build commands, tests, checking processes, etc.',
+      inputSchema: z.object({
+        command: z.string().describe('Shell command to execute'),
+        cwd: z.string().optional().describe('Working directory (must be within allowed roots)'),
+      }),
+      execute: async ({ command, cwd }) => proxyAction('exec', { command, cwd }),
+    }),
+
+    remoteRead: tool({
+      description: 'Read a file from the remote Mac dev environment.',
+      inputSchema: z.object({
+        path: z.string().describe('Absolute path to the file to read'),
+      }),
+      execute: async ({ path }) => proxyAction('read', { path }),
+    }),
+
+    remoteWrite: tool({
+      description: 'Write content to a file on the remote Mac dev environment.',
+      inputSchema: z.object({
+        path: z.string().describe('Absolute path to the file to write'),
+        content: z.string().describe('Content to write to the file'),
+      }),
+      execute: async ({ path, content }) => proxyAction('write', { path, content }),
+    }),
+
+    remoteLs: tool({
+      description: 'List directory contents on the remote Mac dev environment.',
+      inputSchema: z.object({
+        path: z.string().describe('Absolute path to the directory to list'),
+      }),
+      execute: async ({ path }) => proxyAction('ls', { path }),
+    }),
+  } as ToolSet
+}
+
+// ===========================================
 // API HANDLERS
 // ===========================================
 
@@ -558,11 +617,14 @@ export async function POST(req: NextRequest) {
 
   try {
     // Validate environment
-    const githubToken = process.env.GITHUB_TOKEN
+    const githubToken = process.env.GH_PAT || process.env.GITHUB_TOKEN
     const geminiApiKey = process.env.GEMINI_API_KEY
 
     if (!githubToken) {
-      return NextResponse.json({ error: 'GITHUB_TOKEN is not configured' }, { status: 503 })
+      return NextResponse.json(
+        { error: 'GitHub token is not configured (set GH_PAT or GITHUB_TOKEN)' },
+        { status: 503 },
+      )
     }
 
     if (!geminiApiKey) {
@@ -570,7 +632,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { messages = [], taskId, taskData, agentId, attachments } = body
+    const { messages = [], taskId, taskData, agentId, attachments, actorLogin } = body
 
     if (!messages || messages.length === 0) {
       return NextResponse.json({ error: 'Messages are required' }, { status: 400 })
@@ -630,7 +692,15 @@ export async function POST(req: NextRequest) {
     }
 
     // Filter tools based on agent's toolScope
-    const allTools = filterToolsByScope(agent.toolScope, mcpTools, customTools) as ToolSet
+    let allTools = filterToolsByScope(agent.toolScope, mcpTools, customTools) as ToolSet
+
+    // Inject remote tools if this user has a remote dev environment configured
+    if (actorLogin && isRemoteEnabled(actorLogin)) {
+      const remoteTools = buildRemoteTools(actorLogin)
+      allTools = { ...allTools, ...remoteTools }
+      // Extend system prompt with remote tool instructions
+      systemPrompt = systemPrompt + REMOTE_SYSTEM_PROMPT_EXTENSION
+    }
 
     // Convert messages to AI SDK format, handling attachments
     const attachmentContents = processAttachments(attachments)

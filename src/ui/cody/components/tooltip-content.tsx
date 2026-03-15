@@ -158,17 +158,31 @@ export function MergeTooltipContent({
   ciStatus,
   isMerging,
   hasConflicts = false,
+  isApproved = false,
 }: {
   canMerge: boolean
   ciStatus: 'pending' | 'success' | 'failure' | 'running'
   isMerging: boolean
   hasConflicts?: boolean
+  isApproved?: boolean
 }) {
   if (isMerging) {
     return (
       <div className="space-y-1">
         <p className="text-xs font-semibold">🔄 Merging…</p>
         <p className="text-xs text-muted-foreground">Squash merge in progress. Please wait.</p>
+      </div>
+    )
+  }
+
+  // Check if approvals are missing
+  if (!isApproved) {
+    return (
+      <div className="space-y-1">
+        <p className="text-xs font-semibold">⏳ Approval Required</p>
+        <p className="text-xs text-muted-foreground">
+          Approve UI and PR before merging. Click on the task to approve.
+        </p>
       </div>
     )
   }

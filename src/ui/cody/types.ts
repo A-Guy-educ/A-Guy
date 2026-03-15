@@ -38,6 +38,18 @@ export interface CheckRunResult {
   html_url?: string
 }
 
+/** A single entry in the pipeline actor audit trail */
+export interface ActorEvent {
+  /** Action type: pipeline-triggered, gate-approved, gate-rejected, etc. */
+  action: string
+  /** GitHub login of the person who performed the action */
+  actor: string
+  /** ISO timestamp */
+  timestamp: string
+  /** Stage name, if action is stage-specific */
+  stage?: string
+}
+
 export interface CodyPipelineStatus {
   taskId: string
   mode: string
@@ -55,6 +67,12 @@ export interface CodyPipelineStatus {
   runUrl?: string
   controlMode?: 'auto' | 'risk-gated' | 'hard-stop'
   gatePoint?: string
+  /** GitHub login of the person who triggered this pipeline run */
+  triggeredByLogin?: string
+  /** GitHub login of the person who created the issue (the "owner") */
+  issueCreator?: string
+  /** Audit trail of actor actions (capped at 50 entries) */
+  actorHistory?: ActorEvent[]
 }
 
 // ============ Task Definition ============
@@ -189,6 +207,7 @@ export interface GitHubPR {
   head: { ref: string; sha: string }
   merged_at: string | null
   html_url: string
+  labels?: string[]
   ciStatus?: 'pending' | 'success' | 'failure' | 'running'
   mergeable?: boolean
 }
@@ -214,7 +233,7 @@ export interface CodyTask {
   // List view: only isTimeout available from workflow run conclusion
   // Detail view: all fields populated from parsed comments
   gateType?: 'hard-stop' | 'risk-gated' // which gate type (only when column === 'gate-waiting')
-  gateStage?: string // which stage gate paused at ('taskify' | 'gsd-plan')
+  gateStage?: string // which stage gate paused at ('taskify' | 'architect')
   clarifyWaiting?: boolean // waiting for user to answer questions
   isTimeout?: boolean // pipeline timed out (vs regular failure)
   isExhausted?: boolean // retries exhausted (terminal failure)

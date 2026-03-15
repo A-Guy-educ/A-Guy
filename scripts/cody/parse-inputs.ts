@@ -123,7 +123,7 @@ export function parseDispatchInputs(): ParseOutputs {
     trigger_type: 'dispatch',
     comment_body: '',
     valid: 'true',
-    runner: process.env.DISPATCH_RUNNER || 'self-hosted',
+    runner: process.env.DISPATCH_RUNNER || 'github-hosted',
     version: process.env.DISPATCH_VERSION || process.env.CODY_DEFAULT_VERSION || '',
     fresh: process.env.FRESH || '',
   }
@@ -269,6 +269,72 @@ export function parseCommentInputs(): ParseOutputs {
 }
 
 /**
+ * Parse PR review inputs (pull_request_review trigger)
+ * Automatically routes to fix mode with the review feedback as context.
+ */
+export function parsePRReviewInputs(): ParseOutputs {
+  const prNumber = process.env.PR_NUMBER || process.env.ISSUE_NUMBER || ''
+  const reviewState = process.env.PR_REVIEW_STATE || ''
+  const reviewBody = process.env.PR_REVIEW_BODY || ''
+
+  logger.info(`=== PR Review trigger: PR #${prNumber}, state=${reviewState} ===`)
+
+  // Only process "changes_requested" reviews
+  if (reviewState !== 'changes_requested') {
+    logger.info(`=== Ignoring PR review with state: ${reviewState} ===`)
+    return {
+      ...getDefaultOutputs(),
+      issue_number: prNumber,
+      is_pull_request: 'true',
+      valid: 'false',
+    }
+  }
+
+  // Discover existing task ID from PR comments
+  let taskId = ''
+  if (prNumber) {
+    const discoveredTaskId = discoverTaskIdFromIssue(prNumber)
+    if (discoveredTaskId) {
+      logger.info(`=== Discovered task-id from PR: ${discoveredTaskId} ===`)
+      taskId = discoveredTaskId
+    }
+  }
+
+  if (!taskId) {
+    logger.info('=== No task-id found on PR — cannot run fix mode ===')
+    return {
+      ...getDefaultOutputs(),
+      issue_number: prNumber,
+      is_pull_request: 'true',
+      valid: 'false',
+    }
+  }
+
+  const outputs: ParseOutputs = {
+    task_id: taskId,
+    mode: 'fix',
+    clarify: 'false',
+    dry_run: 'false',
+    from_stage: '',
+    feedback: reviewBody || 'Changes requested via PR review',
+    issue_number: prNumber,
+    is_pull_request: 'true',
+    trigger_type: 'pr_review',
+    comment_body: '',
+    valid: 'true',
+    runner: 'github-hosted',
+    version: process.env.CODY_DEFAULT_VERSION || '',
+    fresh: '',
+  }
+
+  logger.info(
+    `=== PR review → fix mode: task_id=${outputs.task_id}, feedback=${outputs.feedback.slice(0, 100)}... ===`,
+  )
+
+  return outputs
+}
+
+/**
  * Get default output values
  */
 export function getDefaultOutputs(): ParseOutputs {
@@ -284,7 +350,7 @@ export function getDefaultOutputs(): ParseOutputs {
     trigger_type: '',
     comment_body: '',
     valid: 'false',
-    runner: 'self-hosted',
+    runner: 'github-hosted',
     version: process.env.CODY_DEFAULT_VERSION || '',
     fresh: '',
   }
@@ -331,6 +397,8 @@ function main(): void {
 
   if (eventName === 'workflow_dispatch') {
     outputs = parseDispatchInputs()
+  } else if (eventName === 'pull_request_review') {
+    outputs = parsePRReviewInputs()
   } else {
     outputs = parseCommentInputs()
   }

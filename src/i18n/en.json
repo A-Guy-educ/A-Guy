@@ -193,6 +193,8 @@
     "helpHint": "Hint",
     "helpGuidingQuestion": "Guiding Question",
     "helpSolution": "Solution",
+    "videoUnavailable": "Video is not available",
+    "videoLoadError": "Failed to load video",
     "notebookTitle": "Practice Notebook",
     "chatTab": "Chat",
     "chatTitle": "Chat",

@@ -1,78 +1,24 @@
 # Build Agent Report: cody-dashboard-improvements
 
-## Changes
+## Changes (Session 2 — Items 2–18)
 
-### Implemented Steps (All 11)
-
-**Step 1: Comment autolinks — bare URLs rendered as plain text**
-- Modified `src/ui/cody/components/CommentList.tsx` - Added `remark-gfm` import and `remarkPlugins` prop to `ReactMarkdown` to enable GitHub Flavored Markdown autolinks
-
-**Step 2: Refresh button in task detail view**
-- Modified `src/ui/cody/components/TaskDetail.tsx` - Added `RefreshCw` icon button in header that calls `refetch()`, with loading spinner animation
-
-**Step 3: Fix issue naming — replace `auto-XX` with real issue number**
-- Modified `src/app/api/cody/tasks/route.ts` - After creating issue, updates title to replace `auto-XX` with actual issue number (e.g., `[260301-auto-642] My feature`)
-
-**Step 4: Show issue description in task detail**
-- Modified `src/ui/cody/components/TaskDetail.tsx` - Added collapsible description section below title using `ReactMarkdown` with `remarkGfm`
-
-**Step 5: Filter sub-header with status filter**
-- Modified `src/ui/cody/components/CodyDashboard.tsx` - Added `STATUS_FILTERS` constant and `statusFilter` state, added status dropdown filter with counts, combined with existing label filter (AND logic)
-
-**Step 6: Approve button hidden after approval**
-- Modified `src/ui/cody/components/TaskDetail.tsx` - Added `completedActions` state to track locally-completed actions, hides Approve/Reject buttons after clicking and shows "Awaiting pipeline..." badge
-
-**Step 7: Task detail as wide dialog**
-- Modified `src/ui/cody/components/CodyDashboard.tsx` - Replaced fixed right panel with Dialog component, opens centered dialog at 85vw width when task is selected
-
-**Step 8: Close PR button**
-- Modified `src/ui/cody/github-client.ts` - Added `closePR()` function
-- Modified `src/app/api/cody/tasks/[taskId]/actions/route.ts` - Added `'close-pr'` action
-- Modified `src/ui/cody/api.ts` - Added `closePR` method
-- Modified `src/ui/cody/hooks/index.ts` - Added `closePR` mutation
-- Modified `src/ui/cody/components/TaskDetail.tsx` - Added "Close PR" button in quick links row (visible when PR exists and is open)
-
-**Step 9: Merge approval dialog**
-- Created `src/ui/cody/components/MergeApprovalDialog.tsx` - New dialog component showing PR title, CI status, file changes summary
-- Modified `src/ui/cody/components/MergeButton.tsx` - Replaced inline two-click confirm with dialog trigger
-- Modified `src/ui/cody/components/TaskList.tsx` - Pass prTitle and branchName to MergeButton
-
-**Step 10: Reset Task button (full reset + re-run)**
-- Modified `src/ui/cody/github-client.ts` - Added `deleteBranch()` function
-- Modified `src/app/api/cody/tasks/[taskId]/actions/route.ts` - Added `'reset'` action that: closes PR, deletes branch, removes agent labels, posts `/cody` to re-trigger
-- Modified `src/ui/cody/api.ts` - Added `reset` method
-- Modified `src/ui/cody/hooks/index.ts` - Added `reset` mutation
-- Modified `src/ui/cody/components/TaskDetail.tsx` - Added "Reset" button in action panel (visible for done/failed tasks with PR)
-
-**Step 11: Bot token attribution**
-- Modified `src/ui/cody/github-client.ts` - `getOctokit()` now prefers `CODY_BOT_TOKEN` over `GITHUB_TOKEN`
-- Modified `scripts/cody/checkout-task-branch.ts` - Git identity now uses `GIT_USER_EMAIL` and `GIT_USER_NAME` env vars with fallback defaults
-- Modified `.github/workflows/cody.yml` - Git config uses env vars with defaults
-- Modified `.env.example` - Added `CODY_BOT_TOKEN`, `GIT_USER_NAME`, `GIT_USER_EMAIL` documentation
+- **`src/ui/cody/components/PreviewModal.tsx`** — Items 2, 3, 8, 10, 18: Fixed Escape double-close (guard when selectedDoc open); added `loadError` state with retry banners in Changes + Docs tabs; added `commentCount` state + count badge on Comments tab via `onCountChange` callback; added `pb-20` to scroll container; added ARIA `role="tablist"`, `role="tab"`, `aria-selected`, `role="tabpanel"` with matching `id`/`aria-labelledby`.
+- **`src/ui/cody/components/TaskList.tsx`** — Items 4, 5, 6, 7, 9, 17: Moved `opacity-50` from entire row to content div only (status icon/bar remain full opacity); added `onCreateTask` prop with icon + descriptive text + "New Task" button empty state; bar pipeline progress row changed to desktop-only (`hidden sm:block`); removed `hidden sm:` from Timeout, Exhausted, Error badges (Needs Answer stays hidden); removed dead `transition-opacity duration-100` comment/classes; added `aria-label` on play/stop and preview eye buttons.
+- **`src/ui/cody/components/PRCommentList.tsx`** — Item 8: Added `onCountChange?: (count: number) => void` prop; calls it after comments load.
+- **`src/ui/cody/components/CodyDashboard.tsx`** — Items 5, 11, 12, 14, 15, 17: Passes `onCreateTask={handleOpenCreate}` to TaskList; reads `date`/`status`/`label`/`view`/`q` from URL search params as initial state; `replaceState` effect syncs non-default values back to URL; added `searchQuery` + `debouncedSearch` state with 300ms debounce; filters `filteredTasks` by title/issueNumber; passes `searchQuery`/`onSearchChange` to FilterBar; wraps return in `<ErrorBoundary>`; removed rate-limit and generic full-page error returns, replaced with dismissible inline `errorBannerMessage` banner (NoTokenError stays full-page); added `aria-label` on hamburger, refresh, and notification bell buttons.
+- **`src/ui/cody/components/FilterBar.tsx`** — Item 12: Added `searchQuery`/`onSearchChange` props; renders search input with `Search` icon between ViewToggle and Date filter.
+- **`src/ui/cody/components/PipelineStatus.tsx`** — Item 16: Replaced native `title` attribute with `SimpleTooltip` wrapping each `StageRow` inner div.
+- **`src/ui/cody/components/TaskDetail.tsx`** — Items 13, 17, 18: Replaced `confirm()` in `OverflowMenu` with `ConfirmDialog` (stores pending action in state, renders after menu closes); added `aria-label` on close, back, and refresh buttons; added `role="tablist"`, `role="tab"`, `aria-selected`, `tabId`/`panelId` props to `TabButton`; added `role="tabpanel"` + `id`/`aria-labelledby` to tab content divs.
+- **`src/ui/cody/components/PreviewActions.tsx`** — Item 13: Replaced `confirm()` with `showCancelConfirm` state + `<ConfirmDialog>`.
+- **`src/ui/cody/components/CodyChat.tsx`** — Item 13: Replaced `window.confirm` with `showClearConfirm` state + `<ConfirmDialog>`; renamed handler to `executeClearHistory`.
+- **`src/ui/cody/components/ConfirmDialog.tsx`** *(new)* — Item 13: Reusable accessible confirm dialog using shadcn Dialog with `open`, `title`, `description`, `confirmLabel`, `variant`, `onConfirm`, `onClose` props.
+- **`src/ui/cody/components/ErrorBoundary.tsx`** *(new)* — Item 14: React class component error boundary with "Something went wrong" + "Reload" fallback.
 
 ## Tests Written
 
-No new test files created - modified existing files and verified with existing test suite.
+None — these are pure UI/UX changes with no business logic functions.
 
 ## Quality
 
 - TypeScript: PASS
-- Lint: PASS
-- Unit Tests: PASS (2690 tests passed)
-
-## Files Modified
-
-1. `src/ui/cody/components/CommentList.tsx` - remark-gfm for autolinks
-2. `src/ui/cody/components/TaskDetail.tsx` - refresh button, description, approve state, close PR, reset
-3. `src/ui/cody/components/CodyDashboard.tsx` - status filter, dialog for task detail
-4. `src/ui/cody/components/MergeButton.tsx` - dialog trigger instead of inline confirm
-5. `src/ui/cody/components/MergeApprovalDialog.tsx` - NEW - merge approval dialog
-6. `src/ui/cody/components/TaskList.tsx` - pass prTitle/branchName to MergeButton
-7. `src/app/api/cody/tasks/route.ts` - fix issue naming
-8. `src/app/api/cody/tasks/[taskId]/actions/route.ts` - close-pr, reset actions
-9. `src/ui/cody/github-client.ts` - closePR, deleteBranch, bot token preference
-10. `src/ui/cody/api.ts` - closePR, reset methods
-11. `src/ui/cody/hooks/index.ts` - closePR, reset mutations
-12. `scripts/cody/checkout-task-branch.ts` - env var git identity
-13. `.github/workflows/cody.yml` - env var git config
-14. `.env.example` - new env var documentation
+- Lint: PASS (no warnings or errors)

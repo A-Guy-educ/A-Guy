@@ -2,31 +2,31 @@
  * @fileType handler
  * @domain cody | handlers
  * @pattern scripted-handler
- * @ai-summary Scripted verify handler with autofix loop
+ * @ai-summary Scripted verify handler with auto-fix for lint/format
  */
 
 import type { PipelineContext, StageDefinition, StageResult } from '../engine/types'
 import { logger } from '../logger'
 import { runVerifyStage } from '../scripted-stages'
-import { runAgentWithFileWatch } from '../agent-runner'
 import { commitPipelineFiles } from '../git-utils'
 import type { StageHandler } from './handler'
 import { DEFAULT_TIMEOUT } from '../agent-runner'
 import { existsSync, unlinkSync } from 'fs'
+import { execFileSync } from 'child_process'
 
 const MAX_AUTOFIX_ATTEMPTS = 2
 
 /**
- * Scripted verify handler with internal autofix loop
+ * Scripted verify handler with scripted auto-fix loop.
  *
- * H2 FIX: Track aggregate timeout across autofix iterations to prevent
- * pipeline from hanging indefinitely when autofix loops take too long
+ * When verify fails on lint/format, runs `pnpm lint:fix` + `pnpm format:fix`
+ * directly instead of invoking an LLM agent. The build agent already handled
+ * all substantive failures (tsc, tests) in its own feedback loop.
  */
 export class ScriptedVerifyHandler implements StageHandler {
   async execute(ctx: PipelineContext, def: StageDefinition): Promise<StageResult> {
     const outputFile = `${ctx.taskDir}/${def.name}.md`
 
-    // H2 FIX: Track start time for aggregate timeout
     const startTime = Date.now()
     const totalTimeout = def.timeout ?? DEFAULT_TIMEOUT
 
@@ -41,84 +41,78 @@ export class ScriptedVerifyHandler implements StageHandler {
       }
     }
 
-    // Failed - try autofix loop
+    // Failed — try scripted auto-fix loop (lint:fix + format:fix)
     let fixed = false
 
     for (let attempt = 1; attempt <= MAX_AUTOFIX_ATTEMPTS; attempt++) {
-      // H2 FIX: Check aggregate timeout before each attempt
       const elapsed = Date.now() - startTime
       const remaining = totalTimeout - elapsed
 
       if (remaining <= 0) {
         logger.info(
-          `  ⏱️ Aggregate timeout exceeded (${totalTimeout / 1000 / 60} minutes) — stopping autofix loop`,
+          `  \u23f1\ufe0f Aggregate timeout exceeded (${totalTimeout / 1000 / 60} minutes) — stopping auto-fix loop`,
         )
         return {
           outcome: 'timed_out',
-          reason: `Aggregate timeout exceeded during autofix loop after ${attempt - 1} attempts`,
+          reason: `Aggregate timeout exceeded during auto-fix loop after ${attempt - 1} attempts`,
           retries: 0,
         }
       }
 
       logger.info(
-        `\n🔧 Auto-fix attempt ${attempt}/${MAX_AUTOFIX_ATTEMPTS} (${(remaining / 1000 / 60).toFixed(1)}m remaining)...`,
+        `\n\ud83d\udd27 Scripted auto-fix attempt ${attempt}/${MAX_AUTOFIX_ATTEMPTS} (${(remaining / 1000 / 60).toFixed(1)}m remaining)...`,
       )
 
-      // Remove previous autofix output if any
-      const autofixOutput = `${ctx.taskDir}/autofix.md`
-      if (existsSync(autofixOutput)) {
-        unlinkSync(autofixOutput)
+      // Run lint:fix and format:fix directly — no LLM needed for mechanical fixes
+      try {
+        logger.info('   Running pnpm lint:fix...')
+        execFileSync('pnpm', ['lint:fix'], {
+          stdio: 'pipe',
+          timeout: 2 * 60 * 1000,
+          maxBuffer: 10 * 1024 * 1024,
+        })
+        logger.info('   \u2713 lint:fix completed')
+      } catch {
+        logger.info('   \u2717 lint:fix had errors (some may need manual fix)')
       }
 
-      // Run autofix agent with remaining time
-      const autofixResult = await runAgentWithFileWatch(
-        ctx.input,
-        'autofix',
-        autofixOutput,
-        remaining, // H2 FIX: Pass remaining time instead of full timeout
-        { backend: ctx.backend },
-      )
-
-      if (!autofixResult.succeeded) {
-        logger.error(`  ❌ Autofix agent failed (attempt ${attempt})`)
-        // Check if it was a timeout
-        if (autofixResult.timedOut) {
-          logger.info(`  ⏱️ Autofix timed out, stopping loop`)
-          return {
-            outcome: 'timed_out',
-            reason: `Autofix agent timed out on attempt ${attempt}`,
-            retries: 0,
-          }
-        }
-        continue
+      try {
+        logger.info('   Running pnpm format:fix...')
+        execFileSync('pnpm', ['format:fix'], {
+          stdio: 'pipe',
+          timeout: 2 * 60 * 1000,
+          maxBuffer: 10 * 1024 * 1024,
+        })
+        logger.info('   \u2713 format:fix completed')
+      } catch {
+        logger.info('   \u2717 format:fix had errors (some may need manual fix)')
       }
 
-      // H2 FIX: Check timeout before re-running verify
-      const elapsedAfter = Date.now() - startTime
-      const remainingAfter = totalTimeout - elapsedAfter
-
-      if (remainingAfter <= 0) {
-        logger.info(`  ⏱️ Aggregate timeout exceeded — stopping before verify re-run`)
-        return {
-          outcome: 'timed_out',
-          reason: `Aggregate timeout exceeded during autofix loop`,
-          retries: 0,
-        }
-      }
-
-      // Re-run verify after autofix
+      // Re-run verify after fixes
       logger.info('  Re-running verification...')
       if (existsSync(outputFile)) {
         unlinkSync(outputFile)
       }
 
-      const reVerify = runVerifyStage(outputFile, undefined, remainingAfter) // H2 FIX: Pass remaining time
+      const elapsedAfter = Date.now() - startTime
+      const remainingAfter = totalTimeout - elapsedAfter
+
+      if (remainingAfter <= 0) {
+        logger.info(`  \u23f1\ufe0f Aggregate timeout exceeded — stopping before verify re-run`)
+        return {
+          outcome: 'timed_out',
+          reason: `Aggregate timeout exceeded during auto-fix loop`,
+          retries: 0,
+        }
+      }
+
+      const reVerify = runVerifyStage(outputFile, undefined, remainingAfter)
       if (reVerify.passed) {
-        logger.info(`  ✅ Verification passed after autofix attempt ${attempt}`)
+        logger.info(`  \u2705 Verification passed after auto-fix attempt ${attempt}`)
         fixed = true
         break
       } else {
-        logger.error(`  ❌ Verification still failing after autofix attempt ${attempt}`)
+        logger.error(`  \u274c Verification still failing after auto-fix attempt ${attempt}`)
       }
     }
 
@@ -130,21 +124,21 @@ export class ScriptedVerifyHandler implements StageHandler {
       }
     }
 
-    // Commit autofix changes (G(mod-20))
-    const autofixCommitResult = commitPipelineFiles({
+    // Commit auto-fix changes
+    const commitResult = commitPipelineFiles({
       taskDir: ctx.taskDir,
       taskId: ctx.taskId,
-      message: `fix: Autofix corrections for ${ctx.taskId}\n\nApply automated lint, type, and format fixes`,
+      message: `fix: Auto-fix lint/format for ${ctx.taskId}\n\nApply automated lint and format fixes`,
       stagingStrategy: 'tracked+task',
       push: true,
       dryRun: ctx.input.dryRun,
     })
 
-    if (!autofixCommitResult.success && !autofixCommitResult.message.includes('No changes')) {
-      logger.error(`  ❌ Failed to commit/push autofix changes: ${autofixCommitResult.message}`)
+    if (!commitResult.success && !commitResult.message.includes('No changes')) {
+      logger.error(`  \u274c Failed to commit/push auto-fix changes: ${commitResult.message}`)
       return {
         outcome: 'failed',
-        reason: 'Autofix changes could not be pushed',
+        reason: 'Auto-fix changes could not be pushed',
         retries: 0,
       }
     }

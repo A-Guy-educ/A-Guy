@@ -104,12 +104,13 @@ describe('lightweight pipeline integration', () => {
   })
 
   describe('getImplPipeline for lightweight', () => {
-    it('returns exactly 5 stages', async () => {
+    it('returns exactly 8 stages', async () => {
       const { getImplPipeline } = await import('../../../../scripts/cody/pipeline-utils')
 
       const pipeline = getImplPipeline('lightweight')
 
-      // Should be: architect, build, commit, review, fix, commit-fix, verify, pr (8 stages)
+      // Should be: architect, build, commit, review, fix, commit, verify, pr (8 elements)
+      // docs + reflect are deferred to inspector (deferred-stages plugin)
       expect(pipeline).toHaveLength(8)
     })
 
@@ -121,12 +122,13 @@ describe('lightweight pipeline integration', () => {
       const flatNames = flattenPipeline(pipeline)
 
       expect(flatNames).toEqual([
-        'gsd-plan',
-        'gsd-execute',
+        'architect',
+        'test',
+        'build',
         'commit',
         'review',
         'fix',
-        'commit-fix',
+        'commit',
         'verify',
         'pr',
       ])
@@ -139,7 +141,7 @@ describe('lightweight pipeline integration', () => {
       const pipeline = getImplPipeline('lightweight')
       const flatNames = flattenPipeline(pipeline)
 
-      expect(flatNames).not.toContain('gsd-research')
+      expect(flatNames).not.toContain('plan-gap')
     })
 
     it('does not include autofix as separate stage (it is sub-stage of verify)', async () => {
@@ -154,29 +156,34 @@ describe('lightweight pipeline integration', () => {
   })
 
   describe('LIGHTWEIGHT_IMPL_PIPELINE constant', () => {
-    it('flattens to 5 stage names', async () => {
+    it('flattens to 8 stage names', async () => {
       const { LIGHTWEIGHT_IMPL_PIPELINE, flattenPipeline } =
         await import('../../../../scripts/cody/pipeline-utils')
 
       const flatNames = flattenPipeline(LIGHTWEIGHT_IMPL_PIPELINE)
 
-      expect(flatNames).toHaveLength(8)
+      // docs + reflect deferred to inspector; removed from live pipeline
+      expect(flatNames).toHaveLength(9)
     })
 
-    it('contains architect, build, commit, review, fix, commit-fix, verify, pr', async () => {
+    it('contains architect, build, commit, review, fix, commit, verify, pr', async () => {
       const { LIGHTWEIGHT_IMPL_PIPELINE, flattenPipeline } =
         await import('../../../../scripts/cody/pipeline-utils')
 
       const flatNames = flattenPipeline(LIGHTWEIGHT_IMPL_PIPELINE)
 
-      expect(flatNames).toContain('gsd-plan')
-      expect(flatNames).toContain('gsd-execute')
+      expect(flatNames).toContain('architect')
+      expect(flatNames).toContain('test')
+      expect(flatNames).toContain('build')
       expect(flatNames).toContain('commit')
       expect(flatNames).toContain('review')
       expect(flatNames).toContain('fix')
-      expect(flatNames).toContain('commit-fix')
+      expect(flatNames).toContain('commit')
       expect(flatNames).toContain('verify')
       expect(flatNames).toContain('pr')
+      // docs is deferred to inspector (not in live pipeline); reflect removed
+      expect(flatNames).not.toContain('docs')
+      expect(flatNames).not.toContain('reflect')
     })
 
     it('does not contain plan-gap or autofix', async () => {
@@ -185,7 +192,7 @@ describe('lightweight pipeline integration', () => {
 
       const flatNames = flattenPipeline(LIGHTWEIGHT_IMPL_PIPELINE)
 
-      expect(flatNames).not.toContain('gsd-research')
+      expect(flatNames).not.toContain('plan-gap')
       expect(flatNames).not.toContain('autofix')
     })
   })
@@ -219,20 +226,20 @@ describe('standard pipeline integration', () => {
   })
 
   describe('getSpecStagesForProfile for standard', () => {
-    it('returns taskify, spec, gap when clarify is false', async () => {
+    it('returns taskify, gap when clarify is false', async () => {
       const { getSpecStagesForProfile } = await import('../../../../scripts/cody/pipeline-utils')
 
       const stages = getSpecStagesForProfile('standard', false)
 
-      expect(stages).toEqual(['taskify', 'spec', 'gap'])
+      expect(stages).toEqual(['taskify', 'gap'])
     })
 
-    it('returns taskify, spec, gap, clarify when clarify is true', async () => {
+    it('returns taskify, gap, clarify when clarify is true', async () => {
       const { getSpecStagesForProfile } = await import('../../../../scripts/cody/pipeline-utils')
 
       const stages = getSpecStagesForProfile('standard', true)
 
-      expect(stages).toEqual(['taskify', 'spec', 'gap', 'clarify'])
+      expect(stages).toEqual(['taskify', 'gap', 'clarify'])
     })
   })
 
@@ -244,7 +251,7 @@ describe('standard pipeline integration', () => {
       const pipeline = getImplPipeline('standard')
       const flatNames = flattenPipeline(pipeline)
 
-      expect(flatNames).toContain('gsd-research')
+      expect(flatNames).toContain('plan-gap')
     })
 
     it('does not include autofix as separate stage (it is sub-stage of verify)', async () => {
@@ -272,14 +279,15 @@ describe('standard pipeline integration', () => {
   })
 
   describe('IMPL_PIPELINE constant', () => {
-    it('flattens to 6 stage names', async () => {
+    it('flattens to 9 stage names', async () => {
       const { IMPL_PIPELINE, flattenPipeline } =
         await import('../../../../scripts/cody/pipeline-utils')
 
       const flatNames = flattenPipeline(IMPL_PIPELINE)
 
-      // Should be: architect, plan-gap, build, commit, review, fix, commit-fix, verify, pr (9 stages)
-      expect(flatNames).toHaveLength(9)
+      // Should be: architect, plan-gap, build, commit, review, fix, commit, verify, pr (9 stages)
+      // docs + reflect deferred to inspector (deferred-stages plugin)
+      expect(flatNames).toHaveLength(10)
     })
 
     it('contains all heavyweight stages', async () => {
@@ -288,7 +296,7 @@ describe('standard pipeline integration', () => {
 
       const flatNames = flattenPipeline(IMPL_PIPELINE)
 
-      expect(flatNames).toContain('gsd-research')
+      expect(flatNames).toContain('plan-gap')
       expect(flatNames).not.toContain('autofix')
     })
   })
@@ -313,20 +321,22 @@ describe('end-to-end pipeline selection', () => {
     const implPipeline = getImplPipeline(profile)
     const implStages = flattenPipeline(implPipeline)
 
-    // Should be: architect, build, commit, review, fix, commit-fix, verify, pr
+    // Should be: architect, build, commit, review, fix, commit, verify, pr
+    // docs + reflect are deferred to inspector (deferred-stages plugin)
     expect(implStages).toEqual([
-      'gsd-plan',
-      'gsd-execute',
+      'architect',
+      'test',
+      'build',
       'commit',
       'review',
       'fix',
-      'commit-fix',
+      'commit',
       'verify',
       'pr',
     ])
 
     // Only plan-gap is skipped in lightweight
-    expect(implStages).not.toContain('gsd-research')
+    expect(implStages).not.toContain('plan-gap')
   })
 
   it('implement_feature gets standard pipeline with all stages', async () => {
@@ -341,14 +351,14 @@ describe('end-to-end pipeline selection', () => {
 
     // Step 2: Get spec stages
     const specStages = getSpecStagesForProfile(profile, false)
-    expect(specStages).toEqual(['taskify', 'spec', 'gap'])
+    expect(specStages).toEqual(['taskify', 'gap'])
 
     // Step 3: Get impl pipeline
     const implPipeline = getImplPipeline(profile)
     const implStages = flattenPipeline(implPipeline)
 
     // Should contain heavyweight stages
-    expect(implStages).toContain('gsd-research')
+    expect(implStages).toContain('plan-gap')
     expect(implStages).not.toContain('autofix')
   })
 
@@ -362,8 +372,7 @@ describe('end-to-end pipeline selection', () => {
     expect(lightweightSpecStages).not.toContain('spec')
     expect(lightweightSpecStages).not.toContain('gap')
 
-    // Standard should have spec and gap
-    expect(standardSpecStages).toContain('spec')
+    // Standard should have gap (spec merged into gap)
     expect(standardSpecStages).toContain('gap')
   })
 
@@ -375,13 +384,13 @@ describe('end-to-end pipeline selection', () => {
     const standardImplStages = flattenPipeline(getImplPipeline('standard'))
 
     // Lightweight should NOT have plan-gap (planning overhead)
-    expect(lightweightImplStages).not.toContain('gsd-research')
+    expect(lightweightImplStages).not.toContain('plan-gap')
 
     // Autofix is a sub-stage of verify, not a separate pipeline stage
     expect(lightweightImplStages).not.toContain('autofix')
 
     // Standard should have all stages including plan-gap
-    expect(standardImplStages).toContain('gsd-research')
+    expect(standardImplStages).toContain('plan-gap')
     expect(standardImplStages).not.toContain('autofix')
   })
 })
@@ -419,12 +428,11 @@ describe('rebuildPipelineAfterTaskify', () => {
 
     // Should contain spec stages (completed from first phase)
     expect(flatOrder).toContain('taskify')
-    expect(flatOrder).toContain('spec')
     expect(flatOrder).toContain('gap')
 
     // Should also contain impl stages (to run after taskify)
-    expect(flatOrder).toContain('gsd-plan')
-    expect(flatOrder).toContain('gsd-execute')
+    expect(flatOrder).toContain('architect')
+    expect(flatOrder).toContain('build')
     expect(flatOrder).toContain('commit')
     expect(flatOrder).toContain('pr')
   })
@@ -459,7 +467,7 @@ describe('rebuildPipelineAfterTaskify', () => {
     const flatOrder = flattenPipelineOrder(result.order)
 
     // Standard profile should include heavyweight stages
-    expect(flatOrder).toContain('gsd-research')
+    expect(flatOrder).toContain('plan-gap')
   })
 
   it('should use lightweight profile when specified', async () => {
@@ -492,11 +500,11 @@ describe('rebuildPipelineAfterTaskify', () => {
     const flatOrder = flattenPipelineOrder(result.order)
 
     // Lightweight should NOT include plan-gap
-    expect(flatOrder).not.toContain('gsd-research')
+    expect(flatOrder).not.toContain('plan-gap')
 
     // But should still include both spec and impl stages
     expect(flatOrder).toContain('taskify')
-    expect(flatOrder).toContain('gsd-execute')
+    expect(flatOrder).toContain('build')
     expect(flatOrder).toContain('pr')
   })
 })
