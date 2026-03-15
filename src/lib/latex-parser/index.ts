@@ -201,7 +201,7 @@ function processTokens(
         const mcq = tryMcqMatchers(inner)
         if (mcq) blocks.push(mcq)
       } else {
-        // Unknown environment — try MCQ matchers, then fall back to rich_text
+        // Unknown environment — try MCQ matchers, then fall back to rich_text with warning
         const inner = extractInner(token)
         const mcq = tryMcqMatchers(inner)
         if (mcq) {
@@ -210,6 +210,11 @@ function processTokens(
           const cleaned = cleanText(inner || token.value)
           if (cleaned) {
             blocks.push(makeRichTextBlock(cleaned))
+            warnings.push({
+              line: token.line,
+              message: `Unrecognized environment: ${envName}`,
+              rawLatex: token.value,
+            })
           }
         }
       }
@@ -245,12 +250,21 @@ function processTokens(
           if (cleaned) blocks.push(makeRichTextBlock(cleaned))
         }
       } else if (cmdName === 'question') {
-        // Standalone \question (exam.cls) — look ahead for choices env
+        // Standalone \question (exam.cls) — collect text/math tokens then choices env
         const lookahead: string[] = [token.value]
         let j = i + 1
-        while (j < tokens.length && tokens[j].name === 'choices') {
-          lookahead.push(tokens[j].value)
-          j++
+        while (j < tokens.length) {
+          const next = tokens[j]
+          if (next.type === 'text' || next.type === 'math') {
+            lookahead.push(next.value)
+            j++
+          } else if (next.type === 'environment' && next.name === 'choices') {
+            lookahead.push(next.value)
+            j++
+            break
+          } else {
+            break
+          }
         }
         const combined = lookahead.join('\n')
         const mcq = parseExamClsMcq(combined)

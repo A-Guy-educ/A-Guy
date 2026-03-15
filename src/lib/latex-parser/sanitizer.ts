@@ -10,15 +10,18 @@ export interface SanitizeResult {
 }
 
 // Sorted longest-first so more specific commands (e.g. \write18) take priority over prefixes (e.g. \write)
-// Note: \newcommand, \renewcommand, and \include are standard LaTeX and NOT dangerous.
+// Note: \newcommand and \renewcommand are standard LaTeX and NOT dangerous.
+// \input and \include CAN read arbitrary files and ARE flagged.
 // Only commands that can execute shell code or read/write files are flagged.
 const DANGEROUS_COMMANDS = [
   '\\write18',
   '\\expandafter',
+  '\\include',
   '\\openout',
   '\\catcode',
   '\\csname',
   '\\openin',
+  '\\input',
   '\\write',
   '\\def',
 ]
