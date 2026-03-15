@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-15T12:38:54.363Z",
-  "updatedAt": "2026-03-15T20:44:24.170Z",
+  "updatedAt": "2026-03-15T20:52:41.284Z",
   "state": "running",
   "cursor": "gap",
   "stages": {
@@ -36,12 +36,18 @@
       "sessionId": "ses_30cc734b0ffelrz4R8bHKj7uce"
     },
     "test": {
-      "state": "pending",
-      "retries": 0
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-15T20:50:44.189Z",
+      "outputFile": "test.md",
+      "sessionId": "ses_30cc1c99bffeCtPuTO6dGK4ptf"
     },
     "build": {
-      "state": "pending",
-      "retries": 0
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-15T20:50:44.189Z",
+      "outputFile": "build.md",
+      "sessionId": "ses_30cc1c873ffeWQq2DH8MgQbRPy"
     },
     "gap": {
       "state": "completed",
@@ -60,6 +66,11 @@
       "state": "skipped",
       "retries": 0,
       "skipped": "Complexity 37 (complex) below threshold 50 for plan-gap"
+    },
+    "commit": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-15T20:52:41.284Z"
     }
   },
   "triggeredBy": "aguyaharonyair",
@@ -70,6 +81,5 @@
       "timestamp": "2026-03-15T12:38:54.363Z"
     }
   ],
-  "totalCost": 1.1810595000000002,
-  "branchName": "fix/260315-auto-827-pdf"
+  "totalCost": 1.1810595000000002
 }
