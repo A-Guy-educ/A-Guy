@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-15T12:39:10.070Z",
-  "updatedAt": "2026-03-15T12:42:26.895Z",
+  "updatedAt": "2026-03-15T12:54:12.276Z",
   "state": "running",
   "cursor": null,
   "stages": {
@@ -34,6 +34,25 @@
       },
       "cost": 0.7658602500000001,
       "sessionId": "ses_30e7cd29affeB5vA3RJ4gFiII6"
+    },
+    "test": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-15T12:52:21.004Z",
+      "outputFile": "test.md",
+      "sessionId": "ses_30e7b0930ffeaC5leXY1oEhiR6"
+    },
+    "build": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-15T12:52:21.004Z",
+      "outputFile": "build.md",
+      "sessionId": "ses_30e7b0774ffeaEClxaA93fua5B"
+    },
+    "commit": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-15T12:54:12.276Z"
     }
   },
   "issueNumber": 828,
@@ -45,6 +64,5 @@
       "actor": "aguyaharonyair",
       "timestamp": "2026-03-15T12:39:10.070Z"
     }
-  ],
-  "branchName": "fix/260315-auto-828-resilient-fromstage-resolution"
+  ]
 }
