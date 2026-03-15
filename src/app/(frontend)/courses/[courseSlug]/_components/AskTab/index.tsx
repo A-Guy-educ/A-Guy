@@ -17,11 +17,12 @@ interface ConversationSummary {
 
 interface AskTabProps {
   courseId: string
+  accentColor?: string
 }
 
 const PAGE_SIZE = 10
 
-export function AskTab({ courseId }: AskTabProps) {
+export function AskTab({ courseId, accentColor }: AskTabProps) {
   const t = useTranslations('coursePage')
   const router = useRouter()
   const [conversations, setConversations] = useState<ConversationSummary[]>([])
@@ -31,9 +32,8 @@ export function AskTab({ courseId }: AskTabProps) {
 
   const loadConversations = useCallback(async () => {
     try {
-      const contextKey = `courses:${courseId}`
       const res = await fetch(
-        `/api/conversations/by-context?contextKey=${encodeURIComponent(contextKey)}&limit=100`,
+        `/api/conversations/by-context?contextKeyPrefix=ask:${encodeURIComponent(courseId)}&limit=100`,
       )
       if (res.ok) {
         const data = await res.json()
@@ -101,6 +101,7 @@ export function AskTab({ courseId }: AskTabProps) {
           subtitle={`${conv.messageCount} messages`}
           onClick={() => router.push(`/ask?conversationId=${conv.id}`)}
           onDelete={() => handleDelete(conv.id)}
+          accentColor={accentColor}
         />
       ))}
 

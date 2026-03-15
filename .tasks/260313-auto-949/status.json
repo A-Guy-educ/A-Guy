@@ -1,0 +1,98 @@
+{
+  "version": 2,
+  "taskId": "260313-auto-949",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-13T18:11:04.627Z",
+  "updatedAt": "2026-03-13T18:55:08.702Z",
+  "state": "running",
+  "cursor": "gap",
+  "stages": {
+    "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-13T18:11:06.197Z",
+      "completedAt": "2026-03-13T18:16:52.018Z",
+      "outputFile": "taskify.md",
+      "tokenUsage": {
+        "input": 10849,
+        "output": 2863,
+        "cacheRead": 443643
+      },
+      "sessionId": "ses_3179ad9c8ffeBA8V5eHMQUANG1"
+    },
+    "gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-13T18:16:52.028Z",
+      "completedAt": "2026-03-13T18:21:39.952Z",
+      "outputFile": "gap.md",
+      "tokenUsage": {
+        "input": 50785,
+        "output": 6141,
+        "cacheRead": 1959463
+      },
+      "sessionId": "ses_317959046ffeugcqV9TpmPW3BI"
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-13T18:21:39.955Z",
+      "completedAt": "2026-03-13T18:26:09.600Z",
+      "outputFile": "architect.md",
+      "tokenUsage": {
+        "input": 17,
+        "output": 15006,
+        "cacheRead": 1534371
+      },
+      "cost": 1.8821392499999996,
+      "sessionId": "ses_317913140ffeuYJkPhAXVXXod4"
+    },
+    "plan-gap": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 43 (complex) below threshold 50 for plan-gap"
+    },
+    "test": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-13T18:51:04.632Z",
+      "outputFile": "test.md",
+      "sessionId": "ses_3178d0cc3ffes57u9JH9VCfs8F"
+    },
+    "build": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-13T18:51:04.632Z",
+      "outputFile": "build.md",
+      "sessionId": "ses_3178d0b45ffeJZObB2CLuXfYgx"
+    },
+    "commit": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-13T18:52:57.081Z",
+      "completedAt": "2026-03-13T18:52:58.102Z"
+    },
+    "review": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-13T18:52:58.104Z",
+      "completedAt": "2026-03-13T18:55:08.702Z",
+      "outputFile": "review.md",
+      "tokenUsage": {
+        "input": 14,
+        "output": 6457,
+        "cacheRead": 481741
+      },
+      "cost": 2.6782529999999998,
+      "sessionId": "ses_317748b55ffeEM598gzGzl6PzO",
+      "issuesFound": true,
+      "reviewSummary": {
+        "critical": 73,
+        "major": 73,
+        "minor": 73
+      }
+    }
+  },
+  "issueNumber": 779
+}

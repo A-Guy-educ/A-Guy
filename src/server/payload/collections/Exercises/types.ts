@@ -205,12 +205,18 @@ export type QuestionAnswer =
   | { kind: 'function'; acceptedExpressions: string[] }
 
 // ---------------------------------
+// Graph Layout Type (for geometry and axis blocks)
+// ---------------------------------
+export type GraphLayout = 'textAbove' | 'textBelow' | 'textLeft' | 'textRight'
+
+// ---------------------------------
 // Question Geometry Block
 // ---------------------------------
 export interface QuestionGeometryBlock {
   id: string
   type: 'question_geometry'
   prompt: InlineRichText
+  layout?: GraphLayout
   geometry: GeometrySpecV1
   answer?: QuestionAnswer
   hint?: InlineRichText
@@ -225,11 +231,33 @@ export interface QuestionAxisBlock {
   id: string
   type: 'question_axis'
   prompt: InlineRichText
+  layout?: GraphLayout
   axis: AxisSpecV1
   answer?: QuestionAnswer
   hint?: InlineRichText
   solution?: InlineRichText
   fullSolution?: InlineRichText
+}
+
+// ---------------------------------
+// Multi-Axis Graph Item (single graph within multi-axis block)
+// ---------------------------------
+export interface MultiAxisGraphItem {
+  id: string
+  label: string
+  axis: AxisSpecV1
+  order: number
+}
+
+// ---------------------------------
+// Question Multi-Axis Block (multiple graphs in one block)
+// ---------------------------------
+export interface QuestionMultiAxisBlock {
+  id: string
+  type: 'question_multi_axis'
+  prompt?: InlineRichText
+  textPosition: 'above' | 'below'
+  graphs: MultiAxisGraphItem[]
 }
 
 // ---------------------------------
@@ -264,6 +292,7 @@ export type ContentBlock =
   | SvgBlock
   | QuestionGeometryBlock
   | QuestionAxisBlock
+  | QuestionMultiAxisBlock
   | HtmlBlock
   | MediaBlock
 

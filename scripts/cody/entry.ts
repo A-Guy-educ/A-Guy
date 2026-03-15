@@ -36,7 +36,11 @@ import { resolvePipelineForMode, createRebuildCallback } from './engine/pipeline
 import { flattenPipelineOrder } from './pipeline/definitions'
 import { stateToV1, resetFromStage } from './engine/status'
 import { PipelinePausedError } from './engine/types'
-import { resolveRerunFromStage, resolveFromStageAfterGateApproval } from './rerun-utils'
+import {
+  resolveRerunFromStage,
+  resolveFromStageAfterGateApproval,
+  findNearestEarlierStage,
+} from './rerun-utils'
 import { startServer, stopServer, checkpointDb, findLastSessionId } from './opencode-server'
 import type { OpenCodeServer } from './opencode-server'
 import {
@@ -714,11 +718,13 @@ async function runRerunMode(ctx: PipelineContext): Promise<void> {
   }
 
   // Fix 5: Validate fromStage exists in the resolved pipeline order
-  const fromStage = input.fromStage || 'build'
+  let fromStage = input.fromStage || 'build'
   if (!stageOrder.includes(fromStage)) {
-    throw new Error(
-      `Stage "${fromStage}" not found in rerun pipeline. Valid stages: ${stageOrder.join(', ')}`,
+    const fallback = findNearestEarlierStage(fromStage, stageOrder)
+    logger.warn(
+      `Stage "${fromStage}" not in pipeline (valid: ${stageOrder.join(', ')}). Falling back to "${fallback}".`,
     )
+    fromStage = fallback
   }
 
   const { loadState, resetFromStage, writeState } = await import('./engine/status')

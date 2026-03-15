@@ -85,7 +85,7 @@ export function AccessGateProvider({
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4 flex justify-center">
-            <GoogleLoginButton returnTo={pathname} variant="default" className="w-full" />
+            <GoogleLoginButton returnTo={pathname} className="w-full" />
           </div>
         </DialogContent>
       </Dialog>

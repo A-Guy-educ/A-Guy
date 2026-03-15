@@ -4,6 +4,8 @@
  * @ai-summary Pure function to resolve rerun fromStage with feedback routing
  */
 
+import { ALL_STAGES } from './stage-prompts'
+
 /**
  * When feedback is provided and fromStage is AFTER architect in the impl pipeline,
  * back up to architect so the plan can be revised with the feedback.
@@ -66,4 +68,29 @@ export function resolveFromStageAfterGateApproval(
 
   // Edge case: approved stage is the last stage — return itself
   return approvedStage
+}
+
+/**
+ * Find the nearest earlier stage in the pipeline order.
+ * Uses ALL_STAGES as a reference to determine ordering.
+ * Falls back to first stage in pipeline if nothing earlier exists.
+ *
+ * @param missingStage - The stage that is not in the pipeline (e.g., 'gap' in lightweight)
+ * @param pipelineOrder - The pipeline's stage order (may not include all ALL_STAGES)
+ * @returns The nearest earlier stage that exists in pipelineOrder, or pipelineOrder[0] as fallback
+ */
+export function findNearestEarlierStage(missingStage: string, pipelineOrder: string[]): string {
+  const missingIdx = ALL_STAGES.indexOf(missingStage as (typeof ALL_STAGES)[number])
+  if (missingIdx === -1) return pipelineOrder[0] // unknown stage -> first stage
+
+  // Walk backwards through ALL_STAGES to find the nearest one that exists in pipeline
+  for (let i = missingIdx - 1; i >= 0; i--) {
+    const stage = ALL_STAGES[i]
+    if (pipelineOrder.includes(stage)) {
+      return stage
+    }
+  }
+
+  // Nothing earlier exists, use first pipeline stage
+  return pipelineOrder[0]
 }
