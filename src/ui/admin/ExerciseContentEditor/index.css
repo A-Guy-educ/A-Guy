@@ -2472,7 +2472,9 @@
   border-radius: 3px;
   border: 1px solid var(--theme-elevation-300);
   cursor: pointer;
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease;
 }
 
 .color-swatch:hover {
@@ -2480,7 +2482,9 @@
 }
 
 .color-swatch--selected {
-  box-shadow: 0 0 0 2px var(--theme-elevation-0), 0 0 0 3px var(--theme-info-500);
+  box-shadow:
+    0 0 0 2px var(--theme-elevation-0),
+    0 0 0 3px var(--theme-info-500);
 }
 
 .panel-field-select {
