@@ -1,9 +1,10 @@
 'use client'
 
 /**
- * Advanced JSON panel for debugging
+ * Advanced JSON panel with structure validation for exercise blocks
  */
 
+import { validateStructuralInvariance } from '@/utils/structure-validator'
 import React from 'react'
 import { CollapsibleSection } from './CollapsibleSection'
 
@@ -12,6 +13,8 @@ interface AdvancedJsonPanelProps {
   onChange?: (value: unknown) => void
   label?: string
   readonly?: boolean
+  /** Original value for structure comparison - if provided, structural changes are blocked */
+  originalValue?: unknown
 }
 
 export function AdvancedJsonPanel({
@@ -19,10 +22,12 @@ export function AdvancedJsonPanel({
   onChange,
   label = 'Advanced: JSON',
   readonly = false,
+  originalValue,
 }: AdvancedJsonPanelProps) {
   const jsonString = JSON.stringify(value, null, 2)
   const [editingJson, setEditingJson] = React.useState(jsonString)
   const [jsonError, setJsonError] = React.useState<string | null>(null)
+  const [structureError, setStructureError] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     setEditingJson(JSON.stringify(value, null, 2))
@@ -31,14 +36,32 @@ export function AdvancedJsonPanel({
   const handleJsonChange = (newJson: string) => {
     setEditingJson(newJson)
     setJsonError(null)
+    setStructureError(null)
 
     if (readonly || !onChange) return
 
     try {
       const parsed = JSON.parse(newJson)
+
+      // If originalValue is provided, validate structure invariance
+      if (originalValue !== undefined) {
+        const structureResult = validateStructuralInvariance(originalValue, parsed)
+        if (!structureResult.valid) {
+          const firstError = structureResult.errors[0]
+          const errorMessage = firstError
+            ? `Structure change not allowed: ${firstError.path || 'root'} — ${firstError.message}`
+            : 'Structure change not allowed'
+          setStructureError(errorMessage)
+          // Don't call onChange - block the structural change
+          return
+        }
+      }
+
+      // Only call onChange if JSON is valid AND structure is preserved
       onChange(parsed)
     } catch (e) {
       setJsonError(e instanceof Error ? e.message : 'Invalid JSON')
+      // Don't call onChange on parse error
     }
   }
 
@@ -63,9 +86,9 @@ export function AdvancedJsonPanel({
           }}
           spellCheck={false}
         />
-        {jsonError && (
+        {(jsonError || structureError) && (
           <div className="field-error" style={{ marginTop: '0.5rem' }}>
-            {jsonError}
+            {jsonError || structureError}
           </div>
         )}
       </div>
