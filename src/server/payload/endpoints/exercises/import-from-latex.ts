@@ -50,38 +50,44 @@ export async function importExerciseFromLatex(req: PayloadRequest): Promise<Resp
     return Response.json({ success: false, error: 'No parseable content found' }, { status: 422 })
   }
 
-  if (exerciseId) {
-    // Update existing exercise with parsed blocks
-    const updated = await req.payload.update({
+  try {
+    if (exerciseId) {
+      // Update existing exercise with parsed blocks
+      const updated = await req.payload.update({
+        collection: 'exercises',
+        id: exerciseId,
+        data: {
+          content: { blocks: result.blocks },
+        },
+        draft: true,
+      })
+      reqLogger.info({ exerciseId: updated.id }, 'Exercise updated from LaTeX')
+      return Response.json({
+        success: true,
+        data: { exerciseId: updated.id, warnings: result.warnings },
+      })
+    }
+
+    const exercise = await req.payload.create({
       collection: 'exercises',
-      id: exerciseId,
       data: {
+        lesson: lessonId,
         content: { blocks: result.blocks },
+        origin: 'import',
+        order: 0,
       },
       draft: true,
     })
-    reqLogger.info({ exerciseId: updated.id }, 'Exercise updated from LaTeX')
+
+    reqLogger.info({ exerciseId: exercise.id }, 'Exercise created from LaTeX')
+
     return Response.json({
       success: true,
-      data: { exerciseId: updated.id, warnings: result.warnings },
+      data: { exerciseId: exercise.id, warnings: result.warnings },
     })
+  } catch (err) {
+    reqLogger.error({ err }, 'Failed to save exercise from LaTeX import')
+    const message = err instanceof Error ? err.message : 'Failed to save exercise'
+    return Response.json({ success: false, error: message }, { status: 422 })
   }
-
-  const exercise = await req.payload.create({
-    collection: 'exercises',
-    data: {
-      lesson: lessonId,
-      content: { blocks: result.blocks },
-      origin: 'import',
-      order: 0,
-    },
-    draft: true,
-  })
-
-  reqLogger.info({ exerciseId: exercise.id }, 'Exercise created from LaTeX')
-
-  return Response.json({
-    success: true,
-    data: { exerciseId: exercise.id, warnings: result.warnings },
-  })
 }

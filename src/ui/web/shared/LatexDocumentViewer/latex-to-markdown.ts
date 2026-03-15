@@ -129,9 +129,17 @@ function stripMinipages(text: string): string {
   return result
 }
 
-/** Replace TikZ picture blocks with a placeholder */
+/** Replace TikZ picture blocks with a descriptive placeholder */
 function handleTikzPictures(text: string): string {
-  return text.replace(/\\begin\{tikzpicture\}[\s\S]*?\\end\{tikzpicture\}/g, '\n\n*[diagram]*\n\n')
+  return text.replace(
+    /\\begin\{tikzpicture\}([\s\S]*?)\\end\{tikzpicture\}/g,
+    (_match, body: string) => {
+      if (body.includes('\\begin{axis}')) return '\n\n> **[Graph/Axis diagram]**\n\n'
+      if (body.includes('\\coordinate')) return '\n\n> **[Geometry diagram]**\n\n'
+      if (body.includes('\\draw')) return '\n\n> **[Drawing/Sketch]**\n\n'
+      return '\n\n> **[Diagram]**\n\n'
+    },
+  )
 }
 
 /** Strip language/polyglossia commands */
@@ -200,6 +208,12 @@ export function latexToMarkdown(latex: string): string {
   result = convertFormatting(result)
   result = convertLists(result)
   result = convertExamPatterns(result)
+  // Strip leading whitespace from lines to prevent markdown code block rendering
+  // (4+ spaces at line start = code block in markdown)
+  result = result
+    .split('\n')
+    .map((line) => line.trimStart())
+    .join('\n')
   result = cleanMisc(result)
   return result
 }

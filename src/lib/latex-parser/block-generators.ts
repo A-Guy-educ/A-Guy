@@ -49,7 +49,7 @@ export function makeFreeResponseBlock(
     id: generateId(),
     type: 'question_free_response',
     prompt: makeInlineRichText(prompt),
-    answer: { acceptedAnswers: [] },
+    answer: { acceptedAnswers: ['__imported__'] },
     ...(solution && { solution: makeInlineRichText(solution) }),
     ...(fullSolution && { fullSolution: makeInlineRichText(fullSolution) }),
   }
