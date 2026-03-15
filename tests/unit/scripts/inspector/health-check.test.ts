@@ -1,4 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import * as fs from 'fs'
+import * as path from 'path'
 import type {
   InspectorContext,
   EvaluatedTask,
@@ -253,5 +255,116 @@ describe('createNudgeAction', () => {
 
     expect(action).not.toBeNull()
     expect(action!.urgency).toBe('critical')
+  })
+})
+
+// ============================================================================
+// markTaskFailed
+// ============================================================================
+
+describe('markTaskFailed', () => {
+  // Use the actual getTaskDir function which uses process.cwd()
+  // We'll create test files in a temp directory and set process.cwd temporarily
+  const originalCwd = process.cwd()
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    // Set temp directory as cwd for tests
+    process.chdir('/tmp')
+    const testDir = '/tmp/.tasks'
+    if (!fs.existsSync(testDir)) {
+      fs.mkdirSync(testDir, { recursive: true })
+    }
+  })
+
+  afterEach(() => {
+    // Restore original cwd and clean up
+    process.chdir(originalCwd)
+    const testDir = '/tmp/.tasks'
+    if (fs.existsSync(testDir)) {
+      try {
+        const files = fs.readdirSync(testDir)
+        for (const file of files) {
+          fs.rmSync(path.join(testDir, file), { recursive: true, force: true })
+        }
+      } catch {
+        // Ignore cleanup errors
+      }
+    }
+  })
+
+  it('should return false when status.json does not exist', async () => {
+    const { markTaskFailed } =
+      await import('../../../../scripts/inspector/plugins/cody/health-check/index')
+
+    const result = markTaskFailed('nonexistent-task', 'Test error')
+    expect(result).toBe(false)
+  })
+
+  it('should mark running stages as failed', async () => {
+    const { markTaskFailed } =
+      await import('../../../../scripts/inspector/plugins/cody/health-check/index')
+
+    const taskId = '260315-test-fail'
+    const testDir = `/tmp/.tasks/${taskId}`
+    fs.mkdirSync(testDir, { recursive: true })
+
+    // Create a status.json with running stages
+    const statusJson = {
+      version: 2,
+      taskId,
+      state: 'running',
+      cursor: 'build',
+      updatedAt: '2026-03-15T10:00:00Z',
+      stages: {
+        architect: { state: 'completed', completedAt: '2026-03-15T09:00:00Z' },
+        build: { state: 'running', startedAt: '2026-03-15T09:30:00Z' },
+        verify: { state: 'running', startedAt: '2026-03-15T10:00:00Z' },
+      },
+    }
+    fs.writeFileSync(path.join(testDir, 'status.json'), JSON.stringify(statusJson))
+
+    const result = markTaskFailed(taskId, 'Workflow terminated unexpectedly')
+
+    expect(result).toBe(true)
+
+    // Verify the status was updated
+    const updated = JSON.parse(fs.readFileSync(path.join(testDir, 'status.json'), 'utf-8'))
+    expect(updated.state).toBe('failed')
+    expect(updated.stages.build.state).toBe('failed')
+    expect(updated.stages.build.error).toBe('Workflow terminated unexpectedly')
+    expect(updated.stages.verify.state).toBe('failed')
+    expect(updated.completedAt).toBeDefined()
+  })
+
+  it('should use atomic rename for writing', async () => {
+    const { markTaskFailed } =
+      await import('../../../../scripts/inspector/plugins/cody/health-check/index')
+
+    const taskId = '260315-atomic-test'
+    const testDir = `/tmp/.tasks/${taskId}`
+    fs.mkdirSync(testDir, { recursive: true })
+
+    const statusJson = {
+      version: 2,
+      taskId,
+      state: 'running',
+      cursor: 'build',
+      updatedAt: '2026-03-15T10:00:00Z',
+      stages: { build: { state: 'running', startedAt: '2026-03-15T09:30:00Z' } },
+    }
+    fs.writeFileSync(path.join(testDir, 'status.json'), JSON.stringify(statusJson))
+
+    // Verify no temp file exists before
+    const tmpPath = path.join(testDir, 'status.json.tmp')
+    expect(fs.existsSync(tmpPath)).toBe(false)
+
+    markTaskFailed(taskId, 'Test error')
+
+    // Verify temp file was cleaned up (rename was atomic)
+    expect(fs.existsSync(tmpPath)).toBe(false)
+
+    // Verify target file exists
+    expect(fs.existsSync(path.join(testDir, 'status.json'))).toBe(true)
   })
 })

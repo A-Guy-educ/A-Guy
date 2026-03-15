@@ -12,6 +12,8 @@ export interface StageHotspot {
   failureCount: number
   /** Fraction of all failures at this stage (0-1) */
   fraction: number
+  /** Example task IDs for this stage */
+  exampleTaskIds: string[]
 }
 
 export interface ErrorPattern {
@@ -25,9 +27,9 @@ export interface ErrorPattern {
 
 export interface MinerAnalysis {
   totalFailures: number
-  /** Stages with ≥2 failures */
+  /** Stages with ≥3 failures */
   stageHotspots: StageHotspot[]
-  /** Error patterns with ≥2 occurrences */
+  /** Error patterns with ≥3 occurrences */
   errorPatterns: ErrorPattern[]
   analysisDate: string
 }
@@ -64,17 +66,25 @@ export function analyzeFailures(records: FailedTaskRecord[]): MinerAnalysis {
 
   // Stage hotspot detection
   const stageCount = new Map<string, number>()
+  const stageExamples = new Map<string, string[]>()
   for (const rec of records) {
     stageCount.set(rec.failedStage, (stageCount.get(rec.failedStage) ?? 0) + 1)
+    // Keep up to 5 examples
+    const examples = stageExamples.get(rec.failedStage) ?? []
+    if (examples.length < 5) {
+      examples.push(rec.taskId)
+    }
+    stageExamples.set(rec.failedStage, examples)
   }
 
   const stageHotspots: StageHotspot[] = []
   for (const [stage, count] of stageCount.entries()) {
-    if (count >= 2) {
+    if (count >= 3) {
       stageHotspots.push({
         stage,
         failureCount: count,
         fraction: total > 0 ? Math.round((count / total) * 100) / 100 : 0,
+        exampleTaskIds: stageExamples.get(stage) ?? [],
       })
     }
   }
@@ -97,7 +107,7 @@ export function analyzeFailures(records: FailedTaskRecord[]): MinerAnalysis {
 
   const errorPatterns: ErrorPattern[] = []
   for (const [label, data] of patternMatches.entries()) {
-    if (data.occurrences >= 2) {
+    if (data.occurrences >= 3) {
       const def = ERROR_PATTERNS.find((d) => d.label === label)!
       errorPatterns.push({
         label,

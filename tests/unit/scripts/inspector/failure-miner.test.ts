@@ -208,7 +208,7 @@ describe('analyzeFailures', () => {
     expect(result.errorPatterns).toHaveLength(0)
   })
 
-  it('detects stage hotspot when same stage fails >= 2 times', () => {
+  it('detects stage hotspot when same stage fails >= 3 times', () => {
     const records = [
       {
         taskId: 't1',
@@ -226,16 +226,23 @@ describe('analyzeFailures', () => {
       },
       {
         taskId: 't3',
-        failedStage: 'verify',
+        failedStage: 'build',
         error: '',
         failedAt: '2026-01-03T00:00:00Z',
+        statusVersion: 2 as const,
+      },
+      {
+        taskId: 't4',
+        failedStage: 'verify',
+        error: '',
+        failedAt: '2026-01-04T00:00:00Z',
         statusVersion: 2 as const,
       },
     ]
     const result = analyzeFailures(records)
     expect(result.stageHotspots).toHaveLength(1)
     expect(result.stageHotspots[0].stage).toBe('build')
-    expect(result.stageHotspots[0].failureCount).toBe(2)
+    expect(result.stageHotspots[0].failureCount).toBe(3)
   })
 
   it('does NOT flag a stage that failed only once', () => {
@@ -252,7 +259,7 @@ describe('analyzeFailures', () => {
     expect(result.stageHotspots).toHaveLength(0)
   })
 
-  it('detects typescript error pattern', () => {
+  it('detects typescript error pattern when it occurs >= 3 times', () => {
     const records = [
       {
         taskId: 't1',
@@ -268,11 +275,18 @@ describe('analyzeFailures', () => {
         failedAt: '2026-01-02T00:00:00Z',
         statusVersion: 2 as const,
       },
+      {
+        taskId: 't3',
+        failedStage: 'verify',
+        error: 'Type error in component.tsx',
+        failedAt: '2026-01-03T00:00:00Z',
+        statusVersion: 2 as const,
+      },
     ]
     const result = analyzeFailures(records)
     const tsPattern = result.errorPatterns.find((p) => p.label === 'type-error')
     expect(tsPattern).toBeDefined()
-    expect(tsPattern!.occurrences).toBe(2)
+    expect(tsPattern!.occurrences).toBe(3)
   })
 
   it('does NOT flag error pattern that appears only once', () => {
@@ -324,6 +338,13 @@ describe('analyzeFailures', () => {
         failedStage: 'build',
         error: '',
         failedAt: '2026-01-05T00:00:00Z',
+        statusVersion: 2 as const,
+      },
+      {
+        taskId: 't6',
+        failedStage: 'build',
+        error: '',
+        failedAt: '2026-01-06T00:00:00Z',
         statusVersion: 2 as const,
       },
     ]
@@ -408,7 +429,7 @@ describe('failureMinerPlugin', () => {
     expect(actions).toHaveLength(0)
   })
 
-  it('creates actions for detected hotspots', async () => {
+  it('creates actions for detected hotspots (>=3 failures)', async () => {
     const status = JSON.stringify({
       version: 2,
       taskId: 'task-1',
@@ -425,13 +446,26 @@ describe('failureMinerPlugin', () => {
       updatedAt: '2026-03-11T00:00:00Z',
       stages: { build: { state: 'failed', error: '' } },
     })
+    const status3 = JSON.stringify({
+      version: 2,
+      taskId: 'task-3',
+      state: 'failed',
+      cursor: 'build',
+      updatedAt: '2026-03-12T00:00:00Z',
+      stages: { build: { state: 'failed', error: '' } },
+    })
 
     vi.mocked(fs).existsSync = vi.fn().mockReturnValue(true)
     vi.mocked(fs).readdirSync = vi.fn().mockReturnValue([
       { name: 'task-1', isDirectory: () => true },
       { name: 'task-2', isDirectory: () => true },
+      { name: 'task-3', isDirectory: () => true },
     ] as unknown as fs.Dirent[])
-    vi.mocked(fs).readFileSync = vi.fn().mockReturnValueOnce(status).mockReturnValueOnce(status2)
+    vi.mocked(fs).readFileSync = vi
+      .fn()
+      .mockReturnValueOnce(status)
+      .mockReturnValueOnce(status2)
+      .mockReturnValueOnce(status3)
 
     const ctx = makeCtx()
     const actions = await failureMinerPlugin.run(ctx)
@@ -460,13 +494,26 @@ describe('failureMinerPlugin', () => {
       updatedAt: '2026-01-02T00:00:00Z',
       stages: { verify: { state: 'failed', error: '' } },
     })
+    const status3 = JSON.stringify({
+      version: 2,
+      taskId: 'task-c',
+      state: 'failed',
+      cursor: 'verify',
+      updatedAt: '2026-01-03T00:00:00Z',
+      stages: { verify: { state: 'failed', error: '' } },
+    })
 
     vi.mocked(fs).existsSync = vi.fn().mockReturnValue(true)
     vi.mocked(fs).readdirSync = vi.fn().mockReturnValue([
       { name: 'task-a', isDirectory: () => true },
       { name: 'task-b', isDirectory: () => true },
+      { name: 'task-c', isDirectory: () => true },
     ] as unknown as fs.Dirent[])
-    vi.mocked(fs).readFileSync = vi.fn().mockReturnValueOnce(status).mockReturnValueOnce(status2)
+    vi.mocked(fs).readFileSync = vi
+      .fn()
+      .mockReturnValueOnce(status)
+      .mockReturnValueOnce(status2)
+      .mockReturnValueOnce(status3)
 
     const ctx = makeCtx()
     const actions = await failureMinerPlugin.run(ctx)
@@ -492,13 +539,26 @@ describe('failureMinerPlugin', () => {
       updatedAt: '2026-03-11T00:00:00Z',
       stages: { build: { state: 'failed', error: '' } },
     })
+    const status3 = JSON.stringify({
+      version: 2,
+      taskId: 'task-z',
+      state: 'failed',
+      cursor: 'build',
+      updatedAt: '2026-03-12T00:00:00Z',
+      stages: { build: { state: 'failed', error: '' } },
+    })
 
     vi.mocked(fs).existsSync = vi.fn().mockReturnValue(true)
     vi.mocked(fs).readdirSync = vi.fn().mockReturnValue([
       { name: 'task-x', isDirectory: () => true },
       { name: 'task-y', isDirectory: () => true },
+      { name: 'task-z', isDirectory: () => true },
     ] as unknown as fs.Dirent[])
-    vi.mocked(fs).readFileSync = vi.fn().mockReturnValueOnce(status).mockReturnValueOnce(status2)
+    vi.mocked(fs).readFileSync = vi
+      .fn()
+      .mockReturnValueOnce(status)
+      .mockReturnValueOnce(status2)
+      .mockReturnValueOnce(status3)
 
     const existingIssue = {
       number: 77,

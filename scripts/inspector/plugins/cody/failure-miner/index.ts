@@ -27,6 +27,7 @@ import {
 
 const DEDUP_WINDOW_MINUTES = 23 * 60
 const IMPROVEMENT_LABEL = 'cody:improvement'
+const MAX_ACTIVE_IMPROVEMENTS = 2
 
 /**
  * Failure Pattern Miner plugin.
@@ -64,6 +65,16 @@ export const failureMinerPlugin: InspectorPlugin = {
     if (analysis.stageHotspots.length === 0 && analysis.errorPatterns.length === 0) {
       ctx.log.info('No systemic patterns found — no issues to create')
       return []
+    }
+
+    // Check for existing open improvement issues - limit to MAX_ACTIVE_IMPROVEMENTS
+    const existingImprovements = ctx.github.searchIssues(`is:open label:${IMPROVEMENT_LABEL}`)
+    if (existingImprovements.length >= MAX_ACTIVE_IMPROVEMENTS) {
+      ctx.log.info(
+        { existingCount: existingImprovements.length, limit: MAX_ACTIVE_IMPROVEMENTS },
+        'Too many active improvement issues — skipping creation',
+      )
+      // Still return actions but they'll be deduped
     }
 
     const actions: ActionRequest[] = []

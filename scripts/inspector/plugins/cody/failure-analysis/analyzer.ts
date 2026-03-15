@@ -77,7 +77,7 @@ export async function analyzeFailure(input: AnalysisInput): Promise<AnalysisResu
       rootCause: 'MINIMAX_API_KEY not set — using fallback analysis',
       refinedFeedback:
         input.previousFeedback || 'Review the error message and try a different approach.',
-      canRetry: true,
+      canRetry: false, // Don't blindly retry without LLM analysis
     }
   }
 
@@ -112,7 +112,7 @@ export async function analyzeFailure(input: AnalysisInput): Promise<AnalysisResu
         rootCause: 'Empty response from LLM',
         refinedFeedback:
           input.previousFeedback || 'Review the error message and try a different approach.',
-        canRetry: true,
+        canRetry: false, // Don't retry on empty response
       }
     }
 
@@ -123,7 +123,7 @@ export async function analyzeFailure(input: AnalysisInput): Promise<AnalysisResu
       rootCause: `API error: ${errorMessage}`,
       refinedFeedback:
         input.previousFeedback || 'The failure analyzer could not reach the API. Try again.',
-      canRetry: true,
+      canRetry: false, // Don't blindly retry on API error
     }
   }
 }
@@ -144,22 +144,43 @@ function buildContext(input: AnalysisInput): string {
 }
 
 function parseResponse(content: string, input: AnalysisInput): AnalysisResult {
+  // Generic fallback strings that indicate poor quality
+  const GENERIC_FEEDBACK_PATTERNS = [
+    'review the error',
+    'try a different approach',
+    'try again',
+    'read the error',
+    'fix the issue',
+    'analyze the problem',
+  ]
+
+  function isGenericFeedback(feedback: string): boolean {
+    const lower = feedback.toLowerCase()
+    // Check if it's too short
+    if (feedback.length < 50) return true
+    // Check if it matches generic patterns
+    return GENERIC_FEEDBACK_PATTERNS.some((pattern) => lower.includes(pattern))
+  }
+
   try {
     const jsonMatch = content.match(/```json\n?([\s\S]*?)\n?```/) || content.match(/{[\s\S]*}/)
     const jsonStr = jsonMatch ? jsonMatch[1] || jsonMatch[0] : content
     const parsed = JSON.parse(jsonStr)
 
+    const refinedFeedback = parsed.refinedFeedback || 'Review the error and try again.'
+
     return {
       rootCause: parsed.rootCause || 'Unknown root cause',
-      refinedFeedback: parsed.refinedFeedback || 'Review the error and try again.',
-      canRetry: true,
+      refinedFeedback,
+      // Only retry if we have meaningful feedback
+      canRetry: !isGenericFeedback(refinedFeedback),
     }
   } catch {
     return {
       rootCause: content.slice(0, 200),
       refinedFeedback:
         input.previousFeedback || 'Review the error message and try a different approach.',
-      canRetry: true,
+      canRetry: false, // Don't retry on parse failure
     }
   }
 }
