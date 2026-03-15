@@ -53,13 +53,13 @@ function parseDrawLines(
     const pointRefs = path.match(/\((\w+)\)/g)
     if (pointRefs && pointRefs.length >= 2) {
       const names = pointRefs.map((p) => p.replace(/[()]/g, ''))
-      // Only process if at least one point is a known coordinate
+      // Only process if all referenced points are known coordinates
       const allKnown = names.every((n) => knownPoints.has(n))
       if (allKnown) {
         for (let i = 0; i < names.length - 1; i++) {
           lines.push({ from: names[i], to: names[i + 1], style })
         }
-        // Check for cycle: if path ends with "-- cycle" or starts and ends at same point
+        // Check for cycle: if path ends with "-- cycle"
         if (/--\s*cycle/.test(path) && names.length > 2) {
           lines.push({ from: names[names.length - 1], to: names[0], style })
         }
@@ -99,6 +99,44 @@ function parseLabeledPoints(content: string): Map<string, string> {
   return labels
 }
 
+/** Canvas dimensions */
+const CANVAS_WIDTH = 500
+const CANVAS_HEIGHT = 400
+const CANVAS_PADDING = 40
+
+/**
+ * Normalize TikZ coordinates to canvas pixel space.
+ * Maps coordinate bounds to fill the canvas with padding.
+ */
+function normalizeCoordinates(points: ParsedPoint[]): ParsedPoint[] {
+  if (points.length === 0) return points
+
+  const xs = points.map((p) => p.x)
+  const ys = points.map((p) => p.y)
+  const minX = Math.min(...xs)
+  const maxX = Math.max(...xs)
+  const minY = Math.min(...ys)
+  const maxY = Math.max(...ys)
+
+  const rangeX = maxX - minX || 1
+  const rangeY = maxY - minY || 1
+
+  const usableW = CANVAS_WIDTH - 2 * CANVAS_PADDING
+  const usableH = CANVAS_HEIGHT - 2 * CANVAS_PADDING
+
+  // Use uniform scale to preserve aspect ratio
+  const scale = Math.min(usableW / rangeX, usableH / rangeY)
+  const offsetX = CANVAS_PADDING + (usableW - rangeX * scale) / 2
+  const offsetY = CANVAS_PADDING + (usableH - rangeY * scale) / 2
+
+  return points.map((p) => ({
+    name: p.name,
+    // Map to canvas coordinates — flip Y because canvas Y goes down, TikZ Y goes up
+    x: Math.round((p.x - minX) * scale + offsetX),
+    y: Math.round((maxY - p.y) * scale + offsetY),
+  }))
+}
+
 /**
  * Attempts to parse a tikzpicture (non-axis) into a QuestionGeometryBlock.
  * Returns null if no meaningful geometry found.
@@ -107,28 +145,31 @@ export function parseTikzGeometry(tikzContent: string): QuestionGeometryBlock | 
   // Skip if this is an axis plot
   if (tikzContent.includes('\\begin{axis}')) return null
 
-  const coordinates = parseCoordinates(tikzContent)
-  if (coordinates.length === 0) return null
+  const rawCoordinates = parseCoordinates(tikzContent)
+  if (rawCoordinates.length === 0) return null
 
-  const knownPoints = new Set(coordinates.map((p) => p.name))
+  const knownPoints = new Set(rawCoordinates.map((p) => p.name))
   const labels = parseLabeledPoints(tikzContent)
   const drawLines = parseDrawLines(tikzContent, knownPoints)
   const circles = parseCircles(tikzContent, knownPoints)
 
-  // Compute canvas bounds from point coordinates
-  const xs = coordinates.map((p) => p.x)
-  const ys = coordinates.map((p) => p.y)
-  const padding = 2
-  const minX = Math.min(...xs) - padding
-  const maxX = Math.max(...xs) + padding
-  const minY = Math.min(...ys) - padding
-  const maxY = Math.max(...ys) + padding
+  // Normalize coordinates to canvas pixel space
+  const coordinates = normalizeCoordinates(rawCoordinates)
+
+  // Build a map from coordinate name to normalized position for circle radius scaling
+  const coordMap = new Map(coordinates.map((p) => [p.name, p]))
+  const rawMap = new Map(rawCoordinates.map((p) => [p.name, p]))
+
+  // Calculate scale factor for radius normalization
+  const rawXs = rawCoordinates.map((p) => p.x)
+  const rawRangeX = (Math.max(...rawXs) - Math.min(...rawXs)) || 1
+  const radiusScale = (CANVAS_WIDTH - 2 * CANVAS_PADDING) / rawRangeX
 
   const geometry: GeometrySpecV1 = {
     kind: 'euclidean',
     canvas: {
-      width: Math.max(400, (maxX - minX) * 30),
-      height: Math.max(300, (maxY - minY) * 30),
+      width: CANVAS_WIDTH,
+      height: CANVAS_HEIGHT,
       grid: false,
     },
     elements: {
@@ -136,7 +177,7 @@ export function parseTikzGeometry(tikzContent: string): QuestionGeometryBlock | 
         name: labels.get(p.name) ?? p.name,
         x: p.x,
         y: p.y,
-        visible: labels.has(p.name),
+        visible: labels.has(p.name) || !labels.size,
       })),
       lines: drawLines.map((l) => ({
         from: labels.get(l.from) ?? l.from,
@@ -145,7 +186,7 @@ export function parseTikzGeometry(tikzContent: string): QuestionGeometryBlock | 
       })),
       circles: circles.map((c) => ({
         center: labels.get(c.center) ?? c.center,
-        radius: c.radius,
+        radius: Math.max(5, Math.round(c.radius * radiusScale)),
         style: 'solid' as const,
       })),
       angles: [],

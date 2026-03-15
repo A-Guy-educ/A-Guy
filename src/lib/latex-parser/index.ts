@@ -234,7 +234,7 @@ function processTokens(
         const title = titleMatch ? titleMatch[1] : token.value
         if (isSolutionHeader(token.value)) {
           inSolutionSection = true
-          blocks.push(makeRichTextBlock(`## ${title}`))
+          // Don't emit solution headers as blocks — solutions are attached to questions
         } else {
           inSolutionSection = false
           blocks.push(makeRichTextBlock(`## ${title}`))

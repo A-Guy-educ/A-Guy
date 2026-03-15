@@ -16,7 +16,18 @@ function stripPreamble(latex: string): string {
   result = result.replace(/\\end\{document\}/g, '')
   const inlineCommands =
     /\\(documentclass|usepackage|pagestyle|setlength|geometry|fancyhf|renewcommand|newcommand|title|author|date|maketitle|linespread|onehalfspacing|pgfplotsset|usetikzlibrary|newfontfamily|setmainlanguage|setotherlanguage)\b[^\n]*/g
-  return result.replace(inlineCommands, '')
+  result = result.replace(inlineCommands, '')
+  // Strip LaTeX comments (lines starting with % or inline % comments)
+  result = result
+    .split('\n')
+    .map((line) => {
+      // Remove full-line comments
+      if (/^\s*%/.test(line)) return ''
+      // Remove inline comments (but not escaped \%)
+      return line.replace(/(?<!\\)%.*$/, '')
+    })
+    .join('\n')
+  return result
 }
 
 /** Convert sectioning commands to markdown headings */
@@ -159,19 +170,32 @@ function stripCenterEnv(text: string): string {
 
 /** Clean up spacing and misc commands */
 function cleanMisc(text: string): string {
-  return text
-    .replace(/\\\\(?:\[[\d.]+(?:em|pt|mm|cm|ex)\])?/g, '\n')
-    .replace(/\\(?:hspace|vspace)\*?\{[^}]+\}/g, ' ')
-    .replace(
-      /\\(?:hfill|vfill|noindent|clearpage|newpage|bigskip|medskip|smallskip|LARGE|Large|large|normalsize)/g,
-      '',
-    )
-    .replace(/\\label\{[^}]+\}/g, '')
-    .replace(/\\ref\{[^}]+\}/g, '(ref)')
-    .replace(/\\%/g, '%')
-    .replace(/\\arraystretch/g, '')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
+  return (
+    text
+      // Line breaks: \\ optionally followed by spacing like [0.2cm]
+      .replace(/\\\\(?:\[[\d.]+(?:em|pt|mm|cm|ex)\])?/g, '\n\n')
+      .replace(/\\(?:hspace|vspace)\*?\{[^}]+\}/g, ' ')
+      .replace(
+        /\\(?:hfill|vfill|noindent|clearpage|newpage|bigskip|medskip|smallskip|LARGE|Large|large|normalsize)/g,
+        '',
+      )
+      .replace(/\\label\{[^}]+\}/g, '')
+      .replace(/\\ref\{[^}]+\}/g, '(ref)')
+      .replace(/\\%/g, '%')
+      .replace(/\\arraystretch/g, '')
+      // Strip \displaystyle (used in math mode for display sizing)
+      .replace(/\\displaystyle\s*/g, '')
+      // Strip \measuredangle (replace with angle symbol)
+      .replace(/\\measuredangle/g, '∠')
+      // Strip \mathbf inside math — KaTeX handles \mathbf natively
+      // Strip \implies → ⇒
+      .replace(/\\implies/g, '⇒')
+      // Strip orphaned \closedcycle and \tkz commands
+      .replace(/\\closedcycle/g, '')
+      .replace(/\\tkz\w+(?:\[[^\]]*\])?(?:\([^)]*\))?/g, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim()
+  )
 }
 
 /**
