@@ -382,26 +382,7 @@ export function completeStatus(taskId: string, state: CodyPipelineStatus['state'
   writeStatus(taskId, status)
 }
 
-// ============================================================================
-// GitHub API Helpers (re-exported from github-api.ts)
-// ============================================================================
-
-// Re-export all GitHub API functions from github-api.ts
-export {
-  postComment,
-  getIssueBody,
-  getIssue,
-  getIssueTitle,
-  editComment,
-  getLatestIssueComment,
-  getLatestApprovalComment,
-  TASK_ID_MARKER_REGEX,
-  extractTaskIdFromMarker,
-  discoverTaskIdFromIssue,
-  extractGateCommentBody,
-  ensureTaskMarkerComment,
-  getLinkedIssueFromPR,
-} from './github-api'
+// GitHub API re-exports removed — import directly from './github-api'
 
 // ============================================================================
 // CLI Argument Parsing

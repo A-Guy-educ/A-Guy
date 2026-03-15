@@ -64,10 +64,17 @@ export class AgentHandler implements StageHandler {
         }
       }
 
+      const details: string[] = [`Agent "${def.agentName ?? def.name}" failed`]
+      if (result.validationErrors?.length) {
+        details.push(`Validation errors: ${result.validationErrors.join('; ')}`)
+      }
+      details.push(`Artifacts: ${def.name}-stderr.log, ${def.name}-events.jsonl`)
       return {
         outcome: 'failed',
-        reason: `Agent failed`,
+        reason: details.join('. '),
         retries: result.retries,
+        tokenUsage: result.tokenUsage,
+        cost: result.cost,
       }
     }
 

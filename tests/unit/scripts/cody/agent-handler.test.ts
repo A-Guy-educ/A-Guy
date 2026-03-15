@@ -115,11 +115,10 @@ describe('AgentHandler', () => {
 
       const result = await handler.execute(mockCtx, mockDef)
 
-      expect(result).toEqual({
-        outcome: 'failed',
-        reason: 'Agent failed',
-        retries: 1,
-      })
+      expect(result.outcome).toBe('failed')
+      expect(result.retries).toBe(1)
+      expect(result.reason).toContain('Agent "taskify" failed')
+      expect(result.reason).toContain('Artifacts: taskify-stderr.log')
     })
 
     it('should return timed_out outcome when agent times out', async () => {

@@ -275,17 +275,26 @@ export async function executePostAction(
       // Check that the build agent actually modified source files, not just .tasks/
       let diff = ''
       let untracked = ''
+      let gitFailed = false
       try {
         diff = execFileSync('git', ['diff', '--name-only'], { encoding: 'utf-8' }).trim()
       } catch (error) {
-        logger.warn({ err: error }, 'git diff failed during src validation')
+        logger.error({ err: error }, 'git diff failed during src validation')
+        gitFailed = true
       }
       try {
         untracked = execFileSync('git', ['ls-files', '--others', '--exclude-standard'], {
           encoding: 'utf-8',
         }).trim()
       } catch (error) {
-        logger.warn({ err: error }, 'git ls-files failed during src validation')
+        logger.error({ err: error }, 'git ls-files failed during src validation')
+        gitFailed = true
+      }
+
+      if (gitFailed) {
+        throw new Error(
+          'validate-src-changes: git commands failed — cannot verify source changes. Check git state.',
+        )
       }
 
       const allChanged = [...diff.split('\n'), ...untracked.split('\n')]
@@ -639,7 +648,9 @@ export async function executePostAction(
     }
 
     default:
-      logger.warn(`Unknown post-action type: ${(action as PostAction).type}`)
+      throw new Error(
+        `Unknown post-action type: "${(action as PostAction).type}". This is a configuration bug.`,
+      )
   }
 }
 

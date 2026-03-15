@@ -16,6 +16,11 @@ import type {
 } from './types'
 import type { StageName } from '../stages/registry'
 import { logger, ciGroup, ciGroupEnd } from '../logger'
+import {
+  MAX_PIPELINE_LOOP_ITERATIONS,
+  RECOVERY_CHECK_INTERVAL,
+  MAX_GATE_OUTPUT_CHARS,
+} from '../config/constants'
 import { PipelinePausedError } from './types'
 import {
   loadState,
@@ -119,9 +124,22 @@ export async function runPipeline(
   while (true) {
     loopCount++
 
-    // FIX #9: Periodic recovery check every 10 iterations
+    // Circuit breaker: prevent infinite loops from stage state management bugs
+    if (loopCount > MAX_PIPELINE_LOOP_ITERATIONS) {
+      logger.error(
+        `Pipeline loop exceeded ${MAX_PIPELINE_LOOP_ITERATIONS} iterations — aborting to prevent infinite loop`,
+      )
+      state = completeState(state, 'failed')
+      writeState(ctx.taskId, state)
+      throw new Error(
+        `Pipeline loop guard triggered after ${MAX_PIPELINE_LOOP_ITERATIONS} iterations. ` +
+          'This is likely a bug in stage state management.',
+      )
+    }
+
+    // FIX #9: Periodic recovery check
     // This handles mid-run corruption of status.json
-    if (loopCount % 10 === 0) {
+    if (loopCount % RECOVERY_CHECK_INTERVAL === 0) {
       const currentState = loadState(ctx.taskId)
       if (currentState) {
         // Check for stale running stages
@@ -560,10 +578,17 @@ async function handleStageResult(
   result: StageResult,
   def: StageDefinition,
 ): Promise<PipelineStateV2> {
+  // Compute elapsed time from startedAt
+  const startedAt = state.stages[stageName]?.startedAt
+  const elapsed = startedAt
+    ? Math.round((Date.now() - new Date(startedAt).getTime()) / 1000)
+    : undefined
+
   if (result.outcome === 'completed') {
     state = updateStage(state, stageName, {
       state: 'completed',
       completedAt: new Date().toISOString(),
+      elapsed,
       retries: result.retries,
       outputFile: result.outputFile,
       tokenUsage: result.tokenUsage,
@@ -609,7 +634,7 @@ async function handleStageResult(
           for (const gate of gateFiles) {
             const gatePath = path.join(ctx.taskDir, gate.file)
             if (fs.existsSync(gatePath)) {
-              const gateOutput = fs.readFileSync(gatePath, 'utf-8').slice(0, 5000)
+              const gateOutput = fs.readFileSync(gatePath, 'utf-8').slice(0, MAX_GATE_OUTPUT_CHARS)
               parts.push(`## ${gate.name}\n\`\`\`\n${gateOutput}\n\`\`\``)
             }
           }
@@ -652,6 +677,7 @@ async function handleStageResult(
     // Normal failure handling
     state = updateStage(state, stageName, {
       state: 'failed',
+      elapsed,
       error: result.reason,
     })
 
@@ -666,6 +692,7 @@ async function handleStageResult(
   } else if (result.outcome === 'timed_out') {
     state = updateStage(state, stageName, {
       state: 'timeout',
+      elapsed,
       error: result.reason,
     })
 

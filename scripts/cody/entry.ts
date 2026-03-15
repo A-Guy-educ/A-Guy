@@ -53,6 +53,70 @@ import {
 import { formatStatusComment } from './cody-utils'
 
 // ============================================================================
+// Failure Comment Formatting
+// ============================================================================
+
+/**
+ * Build an enriched failure comment for GitHub issues.
+ * Includes failed stage, error, cost, and stage progression.
+ */
+function formatFailureComment(
+  input: { taskId: string; runUrl?: string },
+  state: import('./engine/types').PipelineStateV2 | null,
+  error: unknown,
+): string {
+  const errorMsg = error instanceof Error ? error.message : String(error)
+  const lines: string[] = [`❌ Pipeline failed for \`${input.taskId}\``]
+
+  if (state?.stages) {
+    // Find the failed stage
+    const failedEntry = Object.entries(state.stages).find(
+      ([, s]) => s.state === 'failed' || s.state === 'timeout',
+    )
+    if (failedEntry) {
+      const [stageName, stageState] = failedEntry
+      const elapsedStr =
+        stageState.elapsed != null
+          ? ` (after ${Math.floor(stageState.elapsed / 60)}m ${stageState.elapsed % 60}s)`
+          : ''
+      lines.push(`\n**Failed stage:** \`${stageName}\`${elapsedStr}`)
+    }
+
+    lines.push(`**Error:** ${errorMsg}`)
+
+    // Total cost across all stages
+    const totalCost = Object.values(state.stages).reduce((sum, s) => sum + (s.cost ?? 0), 0)
+    if (totalCost > 0) {
+      const completedCount = Object.values(state.stages).filter(
+        (s) => s.state === 'completed',
+      ).length
+      lines.push(`**Cost:** $${totalCost.toFixed(2)} across ${completedCount} stages`)
+    }
+
+    // Stage progression
+    const progression = Object.entries(state.stages)
+      .map(([name, s]) => {
+        if (s.state === 'completed') return `${name} ✅`
+        if (s.state === 'failed' || s.state === 'timeout') return `${name} ❌`
+        if (s.state === 'skipped') return `${name} ⏭`
+        return null
+      })
+      .filter(Boolean)
+    if (progression.length > 0) {
+      lines.push(`**Completed:** ${progression.join(' → ')}`)
+    }
+  } else {
+    lines.push(`\n**Error:** ${errorMsg}`)
+  }
+
+  if (input.runUrl) {
+    lines.push(`\nRun: ${input.runUrl}`)
+  }
+
+  return lines.join('\n')
+}
+
+// ============================================================================
 // OpenCode Server Lifecycle
 // ============================================================================
 
@@ -383,16 +447,21 @@ Examples:
       logger.warn({ err: commitErr }, 'Failed to commit task files on pipeline failure')
     }
 
-    // Skip GitHub API calls in local mode
+    // Skip GitHub API calls in local mode — each call wrapped in try/catch
+    // so process.exit(1) is ALWAYS reached even if GitHub API is down
     if (input.issueNumber && !input.local) {
-      // Set lifecycle label to failed for dashboard visibility
-      const { setLifecycleLabel } = await import('./github-api')
-      setLifecycleLabel(input.issueNumber, 'cody:failed')
-      postComment(
-        input.issueNumber,
-        `❌ Pipeline failed for \`${input.taskId}\`: ${error instanceof Error ? error.message : 'Unknown error'}` +
-          (input.runUrl ? `\nRun: ${input.runUrl}` : ''),
-      )
+      try {
+        const { setLifecycleLabel } = await import('./github-api')
+        setLifecycleLabel(input.issueNumber, 'cody:failed')
+      } catch (labelErr) {
+        logger.warn({ err: labelErr }, 'Failed to set failure lifecycle label')
+      }
+      try {
+        const failureComment = formatFailureComment(input, existingState, error)
+        postComment(input.issueNumber, failureComment)
+      } catch (commentErr) {
+        logger.warn({ err: commentErr }, 'Failed to post failure comment')
+      }
     }
     process.exit(1)
   }
