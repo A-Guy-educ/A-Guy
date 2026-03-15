@@ -156,10 +156,6 @@ export function parseTikzGeometry(tikzContent: string): QuestionGeometryBlock | 
   // Normalize coordinates to canvas pixel space
   const coordinates = normalizeCoordinates(rawCoordinates)
 
-  // Build a map from coordinate name to normalized position for circle radius scaling
-  const coordMap = new Map(coordinates.map((p) => [p.name, p]))
-  const rawMap = new Map(rawCoordinates.map((p) => [p.name, p]))
-
   // Calculate scale factor for radius normalization
   const rawXs = rawCoordinates.map((p) => p.x)
   const rawRangeX = (Math.max(...rawXs) - Math.min(...rawXs)) || 1
