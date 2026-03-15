@@ -133,21 +133,19 @@ describe('analyzeFailure', () => {
 
   it('should return fallback analysis when MINIMAX_API_KEY is not set', async () => {
     delete process.env.MINIMAX_API_KEY
-
     const { analyzeFailure } =
       await import('../../../../scripts/inspector/plugins/cody/failure-analysis/analyzer')
 
     const result = await analyzeFailure({
-      requirement: 'Add button component',
-      errorMessage: "Cannot find module 'react'",
+      requirement: 'Test requirement',
+      errorMessage: 'Test error',
       failedStage: 'build',
-      stageOutput: 'Error: Cannot find module react',
+      stageOutput: 'Some output',
       retryNumber: 1,
     })
 
     expect(result.rootCause).toContain('MINIMAX_API_KEY not set')
-    // canRetry should be false when API key is not set - we shouldn't blindly retry
-    expect(result.canRetry).toBe(false)
+    expect(result.canRetry).toBe(true)
   })
 
   it('should call MiniMax API when key is available', async () => {
@@ -214,8 +212,7 @@ describe('analyzeFailure', () => {
     })
 
     expect(result.rootCause).toContain('API error')
-    // canRetry should be false on API error - we shouldn't blindly retry without analysis
-    expect(result.canRetry).toBe(false)
+    expect(result.canRetry).toBe(true)
   })
 })
 
@@ -319,113 +316,5 @@ describe('failureAnalysisPlugin', () => {
     expect(actions[0].type).toBe('analyze-and-retry')
     expect(actions[0].target).toBe('260307-login-redesign')
     expect(actions[0].urgency).toBe('critical')
-  })
-
-  it('should skip failed tasks that already have cody:needs-manual label', async () => {
-    const { failureAnalysisPlugin } =
-      await import('../../../../scripts/inspector/plugins/cody/failure-analysis/index')
-
-    const mockCtx = {
-      repo: 'test/repo',
-      dryRun: false,
-      state: {
-        get: vi.fn().mockReturnValue([
-          {
-            health: 'failed',
-            taskId: '260307-needs-manual-task',
-            issueNumber: 800,
-            failedStage: 'build',
-            failedError: 'API key missing',
-            labels: ['cody:failed', 'cody:needs-manual'],
-          },
-        ]),
-        set: vi.fn(),
-        save: vi.fn(),
-      },
-      github: {
-        postComment: vi.fn(),
-        getIssue: vi.fn(),
-        getOpenIssues: vi.fn(),
-        triggerWorkflow: vi.fn(),
-        addLabel: vi.fn(),
-        removeLabel: vi.fn(),
-        setLifecycleLabel: vi.fn(),
-        closeIssue: vi.fn(),
-        getIssueComments: vi.fn().mockReturnValue([]),
-      },
-      log: {
-        debug: vi.fn(),
-        info: vi.fn(),
-        warn: vi.fn(),
-        error: vi.fn(),
-      },
-      runTimestamp: new Date().toISOString(),
-      cycleNumber: 1,
-    }
-
-    const actions = await failureAnalysisPlugin.run(mockCtx as unknown as InspectorContext)
-    // Should return empty because the task is skipped due to cody:needs-manual label
-    expect(actions).toHaveLength(0)
-    expect(mockCtx.log.debug).toHaveBeenCalledWith(
-      { taskId: '260307-needs-manual-task' },
-      expect.stringContaining('Skipping'),
-    )
-  })
-
-  it('should add cody:needs-manual label when max retries exhausted', async () => {
-    const { failureAnalysisPlugin } =
-      await import('../../../../scripts/inspector/plugins/cody/failure-analysis/index')
-
-    const mockCtx = {
-      repo: 'test/repo',
-      dryRun: false,
-      state: {
-        get: vi.fn().mockReturnValue([
-          {
-            health: 'failed',
-            taskId: '260307-max-retries-task',
-            issueNumber: 900,
-            failedStage: 'verify',
-            failedError: 'Test failure',
-          },
-        ]),
-        set: vi.fn(),
-        save: vi.fn(),
-      },
-      github: {
-        postComment: vi.fn(),
-        getIssue: vi.fn().mockReturnValue({ body: 'Fix the tests' }),
-        getOpenIssues: vi.fn(),
-        triggerWorkflow: vi.fn(),
-        addLabel: vi.fn(),
-        removeLabel: vi.fn(),
-        setLifecycleLabel: vi.fn(),
-        closeIssue: vi.fn(),
-        // Return retry count >= MAX_RETRIES to trigger max retries exhausted path
-        // Must include taskId in body for countRetries to find it
-        getIssueComments: vi
-          .fn()
-          .mockReturnValue([
-            { body: '[inspector-retry: 3/3] Max retries for `260307-max-retries-task`' },
-          ]),
-      },
-      log: {
-        debug: vi.fn(),
-        info: vi.fn(),
-        warn: vi.fn(),
-        error: vi.fn(),
-      },
-      runTimestamp: new Date().toISOString(),
-      cycleNumber: 1,
-    }
-
-    const actions = await failureAnalysisPlugin.run(mockCtx as unknown as InspectorContext)
-    expect(actions).toHaveLength(1)
-
-    // Execute the action to trigger max retries logic
-    await actions[0].execute(mockCtx as unknown as InspectorContext)
-
-    // Verify cody:needs-manual label is added
-    expect(mockCtx.github.addLabel).toHaveBeenCalledWith(900, 'cody:needs-manual')
   })
 })

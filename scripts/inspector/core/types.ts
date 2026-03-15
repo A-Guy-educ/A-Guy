@@ -138,7 +138,6 @@ export type TaskHealth =
   | 'gated'
   | 'orphaned'
   | 'unknown'
-  | 'untracked'
 
 export interface EvaluatedTask extends TaskSnapshot {
   health: TaskHealth

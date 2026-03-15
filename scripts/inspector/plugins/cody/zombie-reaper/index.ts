@@ -2,13 +2,14 @@
  * @fileType plugin
  * @domain inspector
  * @pattern zombie-reaper-plugin
- * @ai-summary Safety net for cleaning up tasks stuck in 'running' state with no active CI workflow
+ * @ai-summary Cleans up tasks stuck in 'running' state with no active CI workflow
  *
- * This plugin is a safety net for cases that health-check's orphaned detection misses.
- * It runs less frequently (every 6th cycle) with a 45-minute threshold.
- * The health-check plugin now handles orphaned tasks immediately at 20 min.
- * This catches edge cases: filesystem-only tasks without GitHub issues,
- * tasks that appeared between cycles, etc.
+ * Tasks accumulate as zombies when the CI workflow ends (crash, cancel, timeout)
+ * but status.json is never updated because the process died. The health-check
+ * plugin catches in-flight stalls but can't see across ephemeral CI runs.
+ *
+ * This plugin scans all .tasks/ directories, finds tasks stale >2h, cross-checks
+ * against active GitHub workflow runs, and marks confirmed zombies as failed.
  */
 
 import * as fs from 'fs'
@@ -17,10 +18,10 @@ import * as path from 'path'
 import type { InspectorPlugin, ActionRequest, InspectorContext } from '../../../core/types'
 
 /** Tasks stale longer than this threshold are candidates for zombie detection. */
-const STALE_THRESHOLD_MS = 45 * 60 * 1000 // 45 minutes (reduced from 2h - safety net for health-check)
+const STALE_THRESHOLD_MS = 2 * 60 * 60 * 1000 // 2 hours
 
-/** Dedup window: run once per 2 hours. */
-const DEDUP_WINDOW_MINUTES = 120 // 2 hours (reduced from 23h)
+/** Dedup window: run once per day. */
+const DEDUP_WINDOW_MINUTES = 23 * 60
 
 const CODY_WORKFLOW = 'cody.yml'
 

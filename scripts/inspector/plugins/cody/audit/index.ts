@@ -14,9 +14,6 @@ import { analyzeRun } from './analyzer'
 import { createImprovementIssueAction } from './actions/create-issue'
 import type { AuditInput } from './types'
 
-const MAX_OPEN_AUDIT_ISSUES = 5
-const AUDIT_LABEL = 'cody:audit'
-
 /**
  * Read task files for audit analysis.
  */
@@ -101,18 +98,6 @@ export const auditPlugin: InspectorPlugin = {
   async run(ctx) {
     ctx.log.debug('Running audit plugin')
 
-    // Check for existing open audit issues - cap at MAX_OPEN_AUDIT_ISSUES
-    const existingAuditIssues = ctx.github.searchIssues(`is:open label:${AUDIT_LABEL}`)
-    const tooManyOpen = existingAuditIssues.length >= MAX_OPEN_AUDIT_ISSUES
-
-    if (tooManyOpen) {
-      ctx.log.info(
-        { openCount: existingAuditIssues.length, limit: MAX_OPEN_AUDIT_ISSUES },
-        'Too many open audit issues — skipping new issue creation',
-      )
-      // Still audit tasks but skip creating new issues
-    }
-
     // Get already-audited tasks from state
     const auditedTasks = ctx.state.get<string[]>('cody:auditedTasks') || []
     ctx.log.debug({ auditedCount: auditedTasks.length }, 'Previously audited tasks')
@@ -150,14 +135,8 @@ export const auditPlugin: InspectorPlugin = {
         continue
       }
 
-      // Create issues for each improvement, but only if under the limit
+      // Create issues for each improvement
       for (const improvement of result.improvements) {
-        // Check if we've already hit the limit (include actions we're about to create)
-        const pendingActions = actions.filter((a) => a.type === 'create-audit-issue').length
-        if (tooManyOpen && pendingActions >= MAX_OPEN_AUDIT_ISSUES - existingAuditIssues.length) {
-          ctx.log.debug('Skipping audit issue creation - at limit')
-          break
-        }
         actions.push(createImprovementIssueAction(task.taskId, improvement, ctx))
       }
 

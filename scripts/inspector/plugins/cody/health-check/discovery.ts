@@ -33,29 +33,15 @@ export async function discoverTasks(ctx: InspectorContext): Promise<TaskSnapshot
     if (!taskId) {
       // Try to find from marker comment
       const markerTaskId = findTaskIdFromComments(ctx, issue.number)
-      if (markerTaskId) {
-        // Found from comments
-        const status = readTaskStatus(markerTaskId)
-        tasks.push({
-          taskId: markerTaskId,
-          issueNumber: issue.number,
-          issueTitle: issue.title,
-          labels: issue.labels,
-          status,
-          issueUpdatedAt: issue.updatedAt,
-          statusUpdatedAt: status?.updatedAt || null,
-        })
+      if (!markerTaskId) {
         continue
       }
-
-      // Task ID not found - this is an untracked issue
-      // Push with a special taskId that indicates we can't monitor it
       tasks.push({
-        taskId: `unknown-${issue.number}`,
+        taskId: markerTaskId,
         issueNumber: issue.number,
         issueTitle: issue.title,
         labels: issue.labels,
-        status: null, // No status.json because we don't know the task ID
+        status: null,
         issueUpdatedAt: issue.updatedAt,
         statusUpdatedAt: null,
       })
