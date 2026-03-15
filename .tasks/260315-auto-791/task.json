@@ -1,0 +1,36 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.9,
+  "primary_domain": "backend",
+  "scope": [
+    "New access-codes collection for storing generated codes",
+    "Course/Lesson schema updates for access code gate toggle",
+    "Student code entry UI (popup/gate component)",
+    "Admin dashboard for code generation and usage tracking",
+    "Usage analytics and CSV export",
+    "User-account access persistence"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Users collection already exists with authentication",
+    "Courses and Lessons collections exist with content",
+    "Admin panel infrastructure is available for new features",
+    "Students have unique email addresses for tracking"
+  ],
+  "review_questions": [
+    "Should access codes be single-use (one code per student) or multi-use (same code for multiple students from the same school)?",
+    "Should access codes work alongside existing subscription/access controls, or replace them when present?",
+    "If a code is deleted or modified by admin, should students who already redeemed it retain access?",
+    "Should there be a time expiration for codes, or are they valid indefinitely?"
+  ],
+  "complexity": 58,
+  "complexity_reasoning": "Scope: 18 (new collection, schema changes, admin UI, student UI, tracking), Risk: 8 (access control, not payments/auth), Novelty: 15 (new feature pattern), Cross-domain: 10 (backend + frontend + admin), Ambiguity: 2 (clear requirements), Dependencies: 5 (users, courses, lessons). Total: 58",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Input contains detailed requirements with structured sections (Goal, Pre-Conditions, User Experience, Admin Requirements, Success Criteria). Multiple acceptance criteria are present. Promoted spec.md for gap analysis."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
