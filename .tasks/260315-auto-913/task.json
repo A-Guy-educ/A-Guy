@@ -1,0 +1,33 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "medium",
+  "confidence": 0.85,
+  "primary_domain": "frontend",
+  "scope": [
+    "PDF viewer component",
+    "Lesson content rendering",
+    "File serving from storage"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The PDF file exists in storage but is being served incorrectly",
+    "PDF.js is being used as the viewer (v4.4.168 visible in console)",
+    "The issue may be related to how the PDF is streamed or fetched (e.g., missing headers, partial content)",
+    "This is likely a Vercel Blob storage serving issue rather than a corrupted file"
+  ],
+  "review_questions": [
+    "Is the PDF file itself corrupted or is it a serving issue?",
+    "Is this specific to certain lessons or all PDF lessons?",
+    "Does the issue occur with all browsers or just Chrome?",
+    "Should we add error handling to show a better user message when PDFs fail to load?"
+  ],
+  "complexity": 28,
+  "complexity_reasoning": "Scope: 10 (PDF viewer + file loading), Risk: 10 (medium - affects student content viewing), Novelty: 5 (existing pattern with bug), Cross-Domain: 4 (frontend + backend file serving), Ambiguity: 4 (clear bug, unclear root cause), Dependencies: 2 (external storage). Total: 35 → capped at 28 for simple bug fix",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Bug report with console error logs, reproduction URL, and clear expected vs actual behavior. Contains detailed error information from PDF.js showing 'Invalid PDF structure'."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}
