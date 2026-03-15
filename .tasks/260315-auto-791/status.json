@@ -4,8 +4,8 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-15T18:32:09.674Z",
-  "updatedAt": "2026-03-15T20:58:36.686Z",
-  "state": "running",
+  "updatedAt": "2026-03-15T21:15:44.649Z",
+  "state": "failed",
   "cursor": "plan-gap",
   "stages": {
     "taskify": {
@@ -94,13 +94,21 @@
         "cacheRead": 4053799
       },
       "cost": 3.8379244999999997,
-      "sessionId": "ses_30cb8b20affezCeXwg07uLmxfp",
-      "issuesFound": true,
-      "reviewSummary": {
-        "critical": 118,
-        "major": 119,
-        "minor": 82
-      }
+      "sessionId": "ses_30cb8b20affezCeXwg07uLmxfp"
+    },
+    "fix": {
+      "state": "failed",
+      "retries": 0,
+      "skipped": "No issues to fix",
+      "fixAttempt": 1,
+      "maxFixAttempts": 2,
+      "startedAt": "2026-03-15T21:05:59.423Z",
+      "error": "Agent failed"
+    },
+    "verify": {
+      "state": "pending",
+      "retries": 0,
+      "startedAt": "2026-03-15T20:58:42.769Z"
     }
   },
   "issueNumber": 838,
@@ -113,5 +121,6 @@
       "timestamp": "2026-03-15T18:32:09.674Z"
     }
   ],
-  "totalCost": 1.961956
+  "totalCost": 8.903493749999999,
+  "completedAt": "2026-03-15T21:15:44.649Z"
 }
