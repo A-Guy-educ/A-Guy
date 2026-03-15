@@ -16,6 +16,7 @@ import { useTranslations } from '@/ui/web/providers/I18n'
 import { usePathname } from 'next/navigation'
 
 import { AuthGateModal } from './AuthGateModal'
+import { AccessCodeGateModal } from './AccessCodeGateModal'
 
 interface AccessGateProviderProps {
   accessType: AccessType | string
@@ -24,6 +25,8 @@ interface AccessGateProviderProps {
   gatedDelayMs?: number
   /** Warning duration before lock-out (ms). Read from admin config server-side. */
   gatedWarningMs?: number
+  /** Lesson ID for access code gate */
+  lessonId?: string
   children: React.ReactNode
 }
 
@@ -32,6 +35,7 @@ export function AccessGateProvider({
   courseSlug,
   gatedDelayMs,
   gatedWarningMs,
+  lessonId,
   children,
 }: AccessGateProviderProps) {
   const t = useTranslations('accessControl')
@@ -40,11 +44,12 @@ export function AccessGateProvider({
     showMandatoryModal,
     showGatedModal,
     showWarningModal,
+    showAccessCodeModal,
     warningSecondsLeft,
     dismissWarning,
-  } = useAccessGate({ accessType, courseSlug, gatedDelayMs, gatedWarningMs })
+  } = useAccessGate({ accessType, courseSlug, gatedDelayMs, gatedWarningMs, lessonId })
 
-  const isBlocked = showMandatoryModal || showGatedModal
+  const isBlocked = showMandatoryModal || showGatedModal || showAccessCodeModal
 
   // Track which modal type is currently shown (fire once per modal appearance)
   const hasFiredRef = useRef<string | null>(null)
@@ -104,6 +109,16 @@ export function AccessGateProvider({
         title={t('gatedLockedTitle')}
         description={t('gatedLockedDescription')}
         returnTo={pathname}
+      />
+
+      {/* Access code gate modal for authenticated users */}
+      <AccessCodeGateModal
+        isOpen={showAccessCodeModal}
+        lessonId={lessonId || ''}
+        onSuccess={() => {
+          // The modal will automatically close because hasRedeemedCode will be set to true
+          // This triggers a re-render and the modal will be hidden
+        }}
       />
 
       {isBlocked ? (

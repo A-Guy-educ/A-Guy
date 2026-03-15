@@ -319,7 +319,15 @@
     "gatedLockedDescription": "התצוגה החינמית הסתיימה. התחבר עם Google כדי להמשיך ללמוד.",
     "signInPrompt": "התחבר כדי לפתוח גישה מלאה",
     "warningCountdown": "{{seconds}} שניות נותרו",
-    "browseCourses": "עיון בקורסים"
+    "browseCourses": "עיון בקורסים",
+    "accessCodeTitle": "הגישה מוגבלת",
+    "accessCodeDescription": "אנא הזן את קוד הגישה של בית הספר שלך כדי לפתוח תוכן זה.",
+    "accessCodePlaceholder": "הזן קוד גישה",
+    "accessCodeUnlock": "פתח",
+    "accessCodeError": "קוד שגוי. אנא בדוק עם המורה שלך.",
+    "accessCodeSuccess": "התוכן נפתח!",
+    "accessCodeExpired": "קוד זה פג תוקף.",
+    "accessCodeMaxReached": "קוד זה הגיע למקסימום השימושים."
   },
   "study": {
     "loading": "טוען...",

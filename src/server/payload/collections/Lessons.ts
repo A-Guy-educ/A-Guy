@@ -162,6 +162,10 @@ export const Lessons: CollectionConfig = {
           label: 'Gated (5-Minute Delay)',
           value: 'gated',
         },
+        {
+          label: 'Access Code Required',
+          value: 'accessCode',
+        },
       ],
       admin: {
         position: 'sidebar',

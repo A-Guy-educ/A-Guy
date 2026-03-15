@@ -4,9 +4,9 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-15T18:32:09.674Z",
-  "updatedAt": "2026-03-15T20:21:04.166Z",
-  "state": "paused",
-  "cursor": "architect",
+  "updatedAt": "2026-03-15T20:36:54.213Z",
+  "state": "running",
+  "cursor": "plan-gap",
   "stages": {
     "taskify": {
       "state": "completed",
@@ -35,10 +35,10 @@
       "sessionId": "ses_30d3547e2ffeWgEHToQAvFh582"
     },
     "architect": {
-      "state": "paused",
+      "state": "completed",
       "retries": 0,
       "startedAt": "2026-03-15T20:14:55.235Z",
-      "completedAt": "2026-03-15T20:21:01.623Z",
+      "completedAt": "2026-03-15T20:32:16.951Z",
       "outputFile": "architect.md",
       "tokenUsage": {
         "input": 17,
@@ -49,8 +49,18 @@
       "sessionId": "ses_30cdcc4b5ffeHqLZ3ObhtYT5XG"
     },
     "plan-gap": {
-      "state": "pending",
-      "retries": 0
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-15T20:32:17.752Z",
+      "completedAt": "2026-03-15T20:36:54.174Z",
+      "outputFile": "plan-gap.md",
+      "tokenUsage": {
+        "input": 38,
+        "output": 9917,
+        "cacheRead": 4068109
+      },
+      "cost": 3.10361325,
+      "sessionId": "ses_30cccdde4ffeEb27PNz2kGGt4z"
     },
     "test": {
       "state": "pending",
@@ -71,6 +81,6 @@
       "timestamp": "2026-03-15T18:32:09.674Z"
     }
   ],
-  "completedAt": "2026-03-15T20:21:04.166Z",
-  "totalCost": 1.961956
+  "totalCost": 1.961956,
+  "branchName": "feat/260315-auto-838"
 }

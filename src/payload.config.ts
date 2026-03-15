@@ -5,9 +5,11 @@ import sharp from 'sharp'
 import { fileURLToPath } from 'url'
 
 import { getServerSideURL } from '@/infra/utils/getURL'
+import { AccessCodes } from '@/server/payload/collections/AccessCodes'
 import { Categories } from '@/server/payload/collections/Categories'
 import { Chapters } from '@/server/payload/collections/Chapters'
 import { ChatAssets } from '@/server/payload/collections/ChatAssets'
+import { CodeRedemptions } from '@/server/payload/collections/CodeRedemptions'
 import { ConfigAuditLogs } from '@/server/payload/collections/ConfigAuditLogs'
 import { ConfigSecrets } from '@/server/payload/collections/ConfigSecrets'
 import { ConfigValues } from '@/server/payload/collections/ConfigValues'
@@ -141,6 +143,8 @@ export default buildConfig({
     },
   }),
   collections: [
+    AccessCodes,
+    CodeRedemptions,
     Pages,
     Categories,
     ConfigSecrets,

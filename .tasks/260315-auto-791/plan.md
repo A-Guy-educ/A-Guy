@@ -10,6 +10,10 @@ This is a rerun requested via `/cody rerun`. No previous plan/build/review artif
 3. No → If code is deleted, students who redeemed do NOT retain access
 4. Yes → Codes can have time-based expiration
 
+**Spec Deviations (per clarified answers):**
+- **FR-002 scope narrowed**: Spec says `scopeType` MUST support `lesson`, `course`, `global`. Per clarified answer #2, this plan implements `lesson` scope only. The `scopeType` field is extensible for future course/global support.
+- **FR-003 replaced by FR-004**: Spec says MUST add `redeemedAccessCodes` array to Users. This plan uses the `code-redemptions` collection (FR-004) + a check endpoint instead, avoiding unbounded arrays on User documents. Same persistence guarantee, better data architecture.
+
 ## Research Findings
 
 **File paths verified:**
@@ -35,6 +39,11 @@ This is a rerun requested via `/cody rerun`. No previous plan/build/review artif
 - 🆕 `src/ui/web/auth/AccessCodeGateModal.tsx` — Will create
 - 🆕 `src/app/api/access-codes/export/route.ts` — Will create
 - 🆕 `tests/int/access-codes.int.spec.ts` — Will create
+- 🆕 `tests/unit/access-types.test.ts` — Will create
+- 🆕 `tests/unit/i18n-access-code-keys.test.ts` — Will create
+- 🆕 `tests/unit/components/AccessCodeGateModal.test.tsx` — Will create
+- 🆕 `tests/unit/components/AccessGateProvider-accessCode.test.tsx` — Will create
+- 🆕 `src/app/api/access-codes/check/route.ts` — Will create
 
 **Patterns observed:**
 - Collections use `adminOnly` from `src/server/payload/access/adminOnly.ts` for CUD operations
@@ -90,7 +99,7 @@ This is a rerun requested via `/cody rerun`. No previous plan/build/review artif
 - Test 1: `ACCESS_TYPES includes 'accessCode'` — Verify the constant includes the new type
 - Test 2: `resolveAccessType('accessCode', 'free') returns 'accessCode'` — Verify resolution
 - Test 3: `resolveAccessType('inherit', 'accessCode') returns 'accessCode'` — Verify course-level inheritance
-- Run: `pnpm vitest run tests/unit/access-types.test.ts`
+- Run: `pnpm test:unit tests/unit/access-types.test.ts`
 
 **Acceptance Criteria:**
 - [ ] `AccessType` type includes `'accessCode'`
@@ -115,7 +124,7 @@ This is a rerun requested via `/cody rerun`. No previous plan/build/review artif
 - Test file: `tests/int/access-codes.int.spec.ts` (NEW)
 - Test 1: `Creating a lesson with accessType='accessCode' succeeds` — Create lesson via Local API
 - Test 2: `Creating a course with accessType='accessCode' succeeds` — Create course via Local API
-- Run: `pnpm test:int -- --grep "access-codes"`
+- Run: `pnpm test:int tests/int/access-codes.int.spec.ts`
 
 **Acceptance Criteria:**
 - [ ] Lessons can have `accessType: 'accessCode'`
@@ -156,7 +165,7 @@ Create new Payload collection with slug `access-codes`:
 - Test 1: `Admin can create an access code with all fields` — Create via Local API with admin user
 - Test 2: `Access code must have unique code string` — Attempt duplicate, expect error
 - Test 3: `Non-admin cannot create access codes` — Create with student user, expect denied
-- Run: `pnpm test:int -- --grep "access-codes"`
+- Run: `pnpm test:int tests/int/access-codes.int.spec.ts`
 
 **Acceptance Criteria:**
 - [ ] Collection registered in payload.config.ts
@@ -198,7 +207,9 @@ Anonymous → false
 - Test 1: `Code redemption can be created with valid fields` — Create via Local API
 - Test 2: `Student can only read own redemptions` — Create for user1, verify user2 cannot see
 - Test 3: `Admin can read all redemptions` — Admin sees all records
-- Run: `pnpm test:int -- --grep "access-codes"`
+- Run: `pnpm test:int tests/int/access-codes.int.spec.ts`
+
+**Note on FR-003 (User Redeemed Codes Field)**: The spec's FR-003 proposes adding a `redeemedAccessCodes` array field to the Users collection. This plan intentionally replaces that with the `code-redemptions` collection (FR-004) + the check endpoint (Step 9). Querying a separate collection avoids unbounded arrays on the User document and is the standard Payload pattern for audit/event data. The `code-redemptions` collection serves both the persistence (FR-003) and audit trail (FR-004) requirements.
 
 **Acceptance Criteria:**
 - [ ] Collection registered in payload.config.ts
@@ -243,7 +254,7 @@ Validation logic:
 - Test 4: `Redeem code at max redemptions returns 410` — Set maxRedemptions=1, redeem twice → 410 on second
 - Test 5: `Unauthenticated user gets 401` — POST without auth → 401
 - Test 6: `Already-redeemed code returns success with alreadyRedeemed flag` — Redeem same code twice → 200 with alreadyRedeemed: true
-- Run: `pnpm test:int -- --grep "access-codes"`
+- Run: `pnpm test:int tests/int/access-codes.int.spec.ts`
 
 **Acceptance Criteria:**
 - [ ] Authenticated users can redeem valid codes
@@ -291,7 +302,7 @@ Hebrew (`he.json`):
 - Test file: `tests/unit/i18n-access-code-keys.test.ts` (NEW)
 - Test 1: `en.json contains all accessCode translation keys` — Read JSON, verify keys exist
 - Test 2: `he.json contains all accessCode translation keys` — Read JSON, verify keys exist
-- Run: `pnpm vitest run tests/unit/i18n-access-code-keys.test.ts`
+- Run: `pnpm test:unit tests/unit/i18n-access-code-keys.test.ts`
 
 **Acceptance Criteria:**
 - [ ] All 8 new keys exist in both en.json and he.json
@@ -327,10 +338,10 @@ interface AccessCodeGateModalProps {
 ```
 
 **Tests (FAIL before, PASS after):**
-- Test file: `tests/unit/AccessCodeGateModal.test.tsx` (NEW)
+- Test file: `tests/unit/components/AccessCodeGateModal.test.tsx` (NEW)
 - Test 1: `Renders modal when isOpen is true` — Render component, verify dialog visible
 - Test 2: `Shows error message on invalid code` — Mock fetch to return error, verify error shown
-- Run: `pnpm vitest run tests/unit/AccessCodeGateModal.test.tsx`
+- Run: `pnpm test:unit tests/unit/components/AccessCodeGateModal.test.tsx`
 
 **Acceptance Criteria:**
 - [ ] Modal shows with input field and Unlock button
@@ -367,13 +378,16 @@ In `AccessGateProvider.tsx`:
 Need to pass `lessonId` to AccessGateProvider — add new optional prop `lessonId?: string`.
 
 **Files also touching:**
-- `src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/page.tsx` (MODIFIED — pass `lessonId` to AccessGateProvider)
+- `src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/page.tsx` (MODIFIED):
+  1. Pass `lessonId={lesson.id}` to all `<AccessGateProvider>` instances
+  2. Add server-side block for `accessCode` type similar to `mandatory` block (line 69):
+     When `effectiveAccessType === 'accessCode' && !(await isAuthenticatedServer())`, render only the gate provider with empty content. This prevents unauthenticated users from seeing server-rendered content via SSR.
 
 **Tests (FAIL before, PASS after):**
-- Test file: `tests/unit/AccessGateProvider-accessCode.test.tsx` (NEW)
+- Test file: `tests/unit/components/AccessGateProvider-accessCode.test.tsx` (NEW)
 - Test 1: `Shows login modal for unauthenticated user with accessCode type` — Render with no user, verify AuthGateModal shows
 - Test 2: `Shows code gate modal for authenticated user without redemption` — Render with user mock, verify AccessCodeGateModal shows
-- Run: `pnpm vitest run tests/unit/AccessGateProvider-accessCode.test.tsx`
+- Run: `pnpm test:unit tests/unit/components/AccessGateProvider-accessCode.test.tsx`
 
 **Acceptance Criteria:**
 - [ ] `accessCode` type shows login-first for anonymous users
@@ -402,7 +416,7 @@ This is used by the frontend to determine if the user needs to enter a code.
 - Test file: `tests/int/access-codes.int.spec.ts` (continued)
 - Test 1: `Check returns redeemed=false for unredeemed lesson` — Query for non-redeemed → false
 - Test 2: `Check returns redeemed=true after redemption` — Redeem then check → true
-- Run: `pnpm test:int -- --grep "access-codes"`
+- Run: `pnpm test:int tests/int/access-codes.int.spec.ts`
 
 **Acceptance Criteria:**
 - [ ] Returns `redeemed: true` for previously redeemed content
@@ -428,7 +442,7 @@ This is used by the frontend to determine if the user needs to enter a code.
 - Test file: `tests/int/access-codes.int.spec.ts` (continued)
 - Test 1: `Admin can export CSV for a code` — Create redemptions, export → valid CSV
 - Test 2: `Non-admin gets 403` — Student requests export → 403
-- Run: `pnpm test:int -- --grep "access-codes"`
+- Run: `pnpm test:int tests/int/access-codes.int.spec.ts`
 
 **Acceptance Criteria:**
 - [ ] Admin can download CSV with student name, email, date
@@ -447,7 +461,7 @@ This is used by the frontend to determine if the user needs to enter a code.
 2. Run `pnpm generate:importmap` to update admin import map
 3. Run `pnpm -s tsc --noEmit` to verify no type errors
 4. Run `pnpm -s lint` to verify no lint errors
-5. Run `pnpm test:int -- --grep "access-codes"` to verify all integration tests pass
+5. Run `pnpm test:int tests/int/access-codes.int.spec.ts` to verify all integration tests pass
 
 **Acceptance Criteria:**
 - [ ] Types generated successfully

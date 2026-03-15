@@ -319,7 +319,15 @@
     "gatedLockedDescription": "Your free preview has ended. Sign in with Google to keep learning.",
     "signInPrompt": "Sign in to unlock full access",
     "warningCountdown": "{{seconds}}s remaining",
-    "browseCourses": "Browse Courses"
+    "browseCourses": "Browse Courses",
+    "accessCodeTitle": "Access Restricted",
+    "accessCodeDescription": "Please insert your school access code to unlock this content.",
+    "accessCodePlaceholder": "Enter access code",
+    "accessCodeUnlock": "Unlock",
+    "accessCodeError": "Incorrect code. Please check with your teacher.",
+    "accessCodeSuccess": "Content unlocked!",
+    "accessCodeExpired": "This code has expired.",
+    "accessCodeMaxReached": "This code has reached its maximum uses."
   },
   "study": {
     "loading": "Loading...",
