@@ -1,0 +1,25 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 1,
+  "primary_domain": "backend",
+  "scope": [
+    "scripts/cody/entry.ts",
+    "scripts/cody/rerun-utils.ts",
+    "tests/unit/scripts/cody/rerun-gate-approval.test.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [],
+  "review_questions": [],
+  "complexity": 21,
+  "complexity_reasoning": "Scope: 8 (2 code files + 1 test file, small changes). Risk: 3 (only error path changes, happy path unaffected). Novelty: 5 (follows existing rerun pattern). Cross: 2 (single domain - backend scripts). Ambiguity: 1 (file paths and code provided). Deps: 2 (self-contained utility). Total: 21",
+  "input_quality": {
+    "level": "detailed_plan",
+    "skip_stages": [
+      "architect"
+    ],
+    "reasoning": "Task contains step-by-step implementation with file paths (entry.ts, rerun-utils.ts), code snippets for both the fix and new function, and test cases. Clear scope with 2 files to modify and 1 test file to add. Promoted spec.md not needed - spec_only pipeline skips build stages."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}
