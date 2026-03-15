@@ -31,6 +31,7 @@ import { RichTextRenderer } from '../blocks/RichTextRenderer'
 import { SvgRenderer } from '../blocks/SvgRenderer'
 import { GeometryRenderer } from '../blocks/GeometryRenderer'
 import { AxisRenderer } from '../blocks/AxisRenderer'
+import { MultiAxisRenderer } from '../blocks/MultiAxisRenderer'
 import { TrueFalseQuestion } from '../questions/TrueFalseQuestion'
 import { McqQuestion } from '../questions/McqQuestion'
 import { FreeResponseQuestion } from '../questions/FreeResponseQuestion'
@@ -332,6 +333,29 @@ export function ExerciseRenderer({
                 return (
                   <div key={b.id}>
                     <AxisRenderer blockId={b.id} spec={b.axis as AxisSpecV1} />
+                  </div>
+                )
+              }
+              if (b.type === ('question_multi_axis' as string)) {
+                const multiAxisBlock = b as unknown as {
+                  id: string
+                  graphs: Array<{ id: string; label: string; axis: AxisSpecV1; order: number }>
+                  prompt?: {
+                    type: 'rich_text'
+                    format: 'md-math-v1'
+                    value: string
+                    mediaIds?: string[]
+                  }
+                  textPosition?: 'above' | 'below'
+                }
+                return (
+                  <div key={multiAxisBlock.id}>
+                    <MultiAxisRenderer
+                      blockId={multiAxisBlock.id}
+                      graphs={multiAxisBlock.graphs}
+                      prompt={multiAxisBlock.prompt}
+                      textPosition={multiAxisBlock.textPosition ?? 'above'}
+                    />
                   </div>
                 )
               }
