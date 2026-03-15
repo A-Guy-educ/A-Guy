@@ -69,7 +69,7 @@ function LoginFormContent() {
             <div className="flex justify-center">
               <SystemLink
                 href="/signup"
-                className="bg-gray-100 text-red-700 font-bold rounded-full px-6 py-2 text-sm hover:bg-gray-200 transition-colors inline-block"
+                className="bg-muted text-primary font-bold rounded-full px-6 py-2 text-sm hover:bg-primary-soft transition-colors inline-block"
               >
                 {t('freeRegistration')}
               </SystemLink>
@@ -122,7 +122,7 @@ function LoginFormContent() {
             <div className="flex flex-col items-center gap-2 pt-2">
               <SystemLink
                 href="/signup"
-                className="bg-gray-100 text-red-700 font-bold rounded-full px-6 py-2 text-sm hover:bg-gray-200 transition-colors inline-block"
+                className="bg-muted text-primary font-bold rounded-full px-6 py-2 text-sm hover:bg-primary-soft transition-colors inline-block"
               >
                 {t('freeRegistration')}
               </SystemLink>

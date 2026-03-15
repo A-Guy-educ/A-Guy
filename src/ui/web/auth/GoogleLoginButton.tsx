@@ -24,8 +24,8 @@ export function GoogleLoginButton({ returnTo = '/', className }: GoogleLoginButt
     <button
       className={cn(
         'inline-flex items-center justify-center rounded text-sm font-medium',
-        'bg-white text-gray-700 border border-gray-300',
-        'transition-all duration-150 hover:scale-[1.03] hover:shadow-lg hover:bg-gray-50',
+        'bg-card text-card-foreground border border-border',
+        'transition-all duration-150 hover:scale-[1.03] hover:shadow-lg hover:bg-muted',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         isNavigating && 'opacity-60 pointer-events-none',
         className,

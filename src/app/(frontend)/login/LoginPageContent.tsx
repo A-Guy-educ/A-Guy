@@ -13,7 +13,7 @@ export function LoginPageContent() {
     <div className="min-h-[calc(100vh-200px)] flex flex-col items-center justify-center bg-gradient-to-b from-background to-muted/30 py-12">
       {/* Hero Section */}
       <div className="text-center mb-6 px-4">
-        <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
+        <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
           {t('headingRest')}
         </h1>
       </div>
