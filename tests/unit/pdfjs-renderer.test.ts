@@ -268,35 +268,38 @@ describe('PDF.js configuration injection', () => {
     .test { background: url(images/test.svg); }
   `
 
-  it('should inject disableRange configuration to prevent range request issues', async () => {
+  it('should inject webviewerloaded event listener to set disableRange via PDFViewerApplicationOptions', async () => {
     const result = await renderViewerHtml(mockHtml, mockCss, TEST_CDN_BASE, TEST_VIEWER_URLS)
-    expect(result).toContain('disableRange = true')
+    // Should use the correct PDF.js API - PDFViewerApplicationOptions.set()
+    expect(result).toContain('PDFViewerApplicationOptions.set')
+    expect(result).toContain('disableRange')
+    expect(result).toContain('disableStream')
+    // Should NOT use the broken window.PDFJS_GLOBAL_OPTS approach
+    expect(result).not.toContain('PDFJS_GLOBAL_OPTS')
   })
 
-  it('should inject disableStream configuration to prevent streaming issues', async () => {
+  it('should use document.addEventListener webviewerloaded pattern', async () => {
     const result = await renderViewerHtml(mockHtml, mockCss, TEST_CDN_BASE, TEST_VIEWER_URLS)
-    expect(result).toContain('disableStream = true')
+    expect(result).toContain('addEventListener')
+    expect(result).toContain('webviewerloaded')
   })
 
-  it('should inject PDF.js config with window object fallback for safety', async () => {
+  it('should inject error reporting via postMessage when PDF load fails', async () => {
     const result = await renderViewerHtml(mockHtml, mockCss, TEST_CDN_BASE, TEST_VIEWER_URLS)
-    // The config uses window object in case viewer isn't loaded yet
-    expect(result).toContain('window.PDFJS_GLOBAL_OPTS')
-    expect(result).toContain('disableRange = true')
-    expect(result).toContain('disableStream = true')
+    expect(result).toContain('postMessage')
+    expect(result).toContain('pdf-load-error')
+    expect(result).toContain('documenterror')
   })
 
   it('should inject config script before viewer.mjs to ensure proper initialization order', async () => {
     const result = await renderViewerHtml(mockHtml, mockCss, TEST_CDN_BASE, TEST_VIEWER_URLS)
     // The config script must be injected BEFORE viewer.mjs loads so that the config is set
-    // when PDF.js initializes. Currently, due to the way </head> replacements work,
-    // the config is injected after viewer.mjs which is incorrect.
-    // This test will fail until the implementation is fixed to inject config before viewer.mjs.
-    const configScriptIndex = result.indexOf('window.PDFJS_GLOBAL_OPTS')
+    // when PDF.js initializes
+    const configScriptIndex = result.indexOf('PDFViewerApplicationOptions.set')
     const viewerMjsIndex = result.indexOf(`src="${TEST_VIEWER_URLS.mjs}"`)
     expect(configScriptIndex).toBeGreaterThan(0)
     expect(viewerMjsIndex).toBeGreaterThan(0)
-    // This assertion captures the bug: config should come BEFORE viewer.mjs
+    // Config should come BEFORE viewer.mjs
     expect(configScriptIndex).toBeLessThan(viewerMjsIndex)
   })
 })

@@ -60,15 +60,35 @@ export async function renderViewerHtml(
   // This fixes "Invalid PDF structure" errors on Chrome Windows caused by
   // intermittent CDN/proxy issues with HTTP range requests (206 Partial Content).
   // By disabling range requests, PDF.js downloads the entire file as a single request.
+  //
+  // IMPORTANT: We use the webviewerloaded event + PDFViewerApplicationOptions.set() API
+  // because PDF.js does NOT read from window.PDFJS_GLOBAL_OPTS (that was a no-op).
+  // The webviewerloaded event fires after PDFViewerApplicationOptions is initialized
+  // but BEFORE the PDF document is opened, making it the correct hook for config.
   result = result.replace(
     '<head>',
     `<head>
     <script>
-      // Force full-file download to prevent range request issues on certain platforms
-      // This is set on the window object before the viewer loads for safety
-      window.PDFJS_GLOBAL_OPTS = window.PDFJS_GLOBAL_OPTS || {};
-      window.PDFJS_GLOBAL_OPTS.disableRange = true;
-      window.PDFJS_GLOBAL_OPTS.disableStream = true;
+      // Use webviewerloaded event to configure PDF.js before document load
+      // This is the correct API for the pre-built PDF.js viewer (v4.4.168+)
+      document.addEventListener("webviewerloaded", function() {
+        // Disable range requests to prevent intermittent partial content errors
+        // on certain platforms (notably Chrome on Windows)
+        PDFViewerApplicationOptions.set("disableRange", true);
+        PDFViewerApplicationOptions.set("disableStream", true);
+        PDFViewerApplicationOptions.set("disablePreferences", true);
+        
+        // Report load errors to parent frame for retry UI
+        // The eventBus.on("documenterror") fires when PDF.js fails to load the document
+        PDFViewerApplication.initializedPromise.then(function() {
+          PDFViewerApplication.eventBus.on("documenterror", function(errorInfo) {
+            console.error("PDF load error:", errorInfo);
+            if (window.parent !== window) {
+              window.parent.postMessage({ type: "pdf-load-error", error: errorInfo }, "*");
+            }
+          });
+        });
+      });
     </script>`,
   )
 

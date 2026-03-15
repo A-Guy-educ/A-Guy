@@ -4,15 +4,15 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-15T12:38:54.363Z",
-  "updatedAt": "2026-03-15T20:16:33.199Z",
-  "state": "paused",
-  "cursor": "taskify",
+  "updatedAt": "2026-03-15T20:44:24.170Z",
+  "state": "running",
+  "cursor": "gap",
   "stages": {
     "taskify": {
-      "state": "paused",
+      "state": "completed",
       "retries": 0,
       "startedAt": "2026-03-15T20:15:00.768Z",
-      "completedAt": "2026-03-15T20:16:29.168Z",
+      "completedAt": "2026-03-15T20:32:29.641Z",
       "outputFile": "taskify.md",
       "tokenUsage": {
         "input": 19567,
@@ -22,8 +22,18 @@
       "sessionId": "ses_30cdcae6bffeTevT6G3uoa3S7u"
     },
     "architect": {
-      "state": "pending",
-      "retries": 0
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-15T20:38:29.391Z",
+      "completedAt": "2026-03-15T20:44:22.487Z",
+      "outputFile": "architect.md",
+      "tokenUsage": {
+        "input": 42,
+        "output": 14631,
+        "cacheRead": 4810114
+      },
+      "cost": 3.661892,
+      "sessionId": "ses_30cc734b0ffelrz4R8bHKj7uce"
     },
     "test": {
       "state": "pending",
@@ -32,6 +42,24 @@
     "build": {
       "state": "pending",
       "retries": 0
+    },
+    "gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-15T20:32:30.403Z",
+      "completedAt": "2026-03-15T20:38:29.389Z",
+      "outputFile": "gap.md",
+      "tokenUsage": {
+        "input": 52173,
+        "output": 7912,
+        "cacheRead": 1967449
+      },
+      "sessionId": "ses_30cccab46ffe0u6SolO7lRWrjw"
+    },
+    "plan-gap": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 37 (complex) below threshold 50 for plan-gap"
     }
   },
   "triggeredBy": "aguyaharonyair",
@@ -43,5 +71,5 @@
     }
   ],
   "totalCost": 1.1810595000000002,
-  "completedAt": "2026-03-15T20:16:33.199Z"
+  "branchName": "fix/260315-auto-827-pdf"
 }

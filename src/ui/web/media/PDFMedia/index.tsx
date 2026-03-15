@@ -36,6 +36,18 @@ export const PDFMedia: React.FC<MediaProps> = (props) => {
     }
   }, [pdfUrl, resource])
 
+  // Listen for PDF load errors from the PDF.js viewer iframe
+  // The viewer posts a "pdf-load-error" message when it fails to load the document
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'pdf-load-error') {
+        setHasError(true)
+      }
+    }
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [])
+
   // Handle iframe error
   const handleIframeError = () => {
     setHasError(true)
