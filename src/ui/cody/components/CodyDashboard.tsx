@@ -54,7 +54,7 @@ import { useCodyTasks, queryKeys } from '../hooks'
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
 import { useBrowserNotifications } from '../hooks/useBrowserNotifications'
 import { useMediaQuery } from '@/server/payload/hooks/useMediaQuery'
-import { RateLimitError, NoTokenError, tasksApi, codyApi } from '../api'
+import { RateLimitError, NoTokenError, SessionExpiredError, tasksApi, codyApi } from '../api'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { EnvironmentToolbar } from './EnvironmentToolbar'
@@ -441,6 +441,7 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
   // Check for specific errors
   const isRateLimited = error instanceof RateLimitError
   const isNoToken = error instanceof NoTokenError
+  const isSessionExpired = error instanceof SessionExpiredError
 
   // Get retry info from error
   const retryAfter = isRateLimited ? (error as RateLimitError).retryAfter : null
@@ -672,6 +673,27 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
       </Select>
     </>
   )
+
+  // Session expired — show login prompt (no auto-redirect to avoid loops)
+  if (isSessionExpired) {
+    const returnTo = encodeURIComponent(
+      typeof window !== 'undefined' ? window.location.pathname : '/cody',
+    )
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center max-w-md p-6">
+          <div className="text-6xl mb-4">🔒</div>
+          <h2 className="text-xl font-semibold text-foreground mb-2">Session Expired</h2>
+          <p className="text-muted-foreground mb-4">
+            Your session has expired. Please log in again to continue.
+          </p>
+          <Button asChild>
+            <a href={`/api/oauth/github?returnTo=${returnTo}`}>Log In with GitHub</a>
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   // No token error — full-page (can't function without token)
   if (isNoToken) {

@@ -44,6 +44,13 @@ export class NoTokenError extends Error {
   }
 }
 
+export class SessionExpiredError extends Error {
+  constructor(message = 'Your session has expired. Please log in again.') {
+    super(message)
+    this.name = 'SessionExpiredError'
+  }
+}
+
 export class ApiError extends Error {
   status: number
   data: unknown
@@ -58,7 +65,7 @@ export class ApiError extends Error {
 
 // ============ Helpers ============
 
-async function handleResponse<T>(res: Response): Promise<T> {
+export async function handleResponse<T>(res: Response): Promise<T> {
   const data = await res.json()
 
   if (res.status === 429) {
@@ -70,7 +77,15 @@ async function handleResponse<T>(res: Response): Promise<T> {
   }
 
   if (res.status === 401) {
-    throw new NoTokenError(data.message)
+    // Distinguish server token config errors from user session auth errors.
+    // The tasks route returns { error: 'no_token' } when CODY_BOT_TOKEN/GITHUB_TOKEN is missing.
+    // The auth middleware returns { message: 'Not authenticated...' } for expired sessions.
+    if (data.error === 'no_token') {
+      throw new NoTokenError(data.message)
+    }
+    // Session expired — throw SessionExpiredError so the UI can show a login prompt.
+    // Do NOT redirect here — that causes infinite redirect loops.
+    throw new SessionExpiredError(data.message || 'Your session has expired. Please log in again.')
   }
 
   if (!res.ok) {
