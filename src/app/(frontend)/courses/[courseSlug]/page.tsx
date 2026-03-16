@@ -7,11 +7,8 @@ import { queryCourseBySlug } from '@/server/repos/queries/courses'
 import { queryChaptersByCourse } from '@/server/repos/queries/chapters'
 import { queryLessonsByCourse } from '@/server/repos/queries/lessons'
 import { SystemParams } from '@/infra/config/system-params'
-import {
-  getAuthenticatedUserServer,
-  isAuthenticatedServer,
-} from '@/server/utils/access-gate-server'
-import { hasEntitlement } from '@/server/services/entitlement_check'
+import { isAuthenticatedServer } from '@/server/utils/access-gate-server'
+import { checkPaidAccess } from '@/server/utils/check-paid-access'
 import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
 import { stripHtml } from '@/utils/strip-html'
 import { CoursePageContent } from './_components/CoursePageContent'
@@ -56,23 +53,9 @@ export default async function CoursePage({ params }: CoursePageProps) {
 
   // Server-side block: for paid mode, check entitlement
   if (courseAccessType === 'paid') {
-    const { user, payload } = await getAuthenticatedUserServer()
-    const isAdmin = user?.role === 'admin'
-    let requiresEntitlement = true
+    const { requiresEntitlement, isAuthenticated } = await checkPaidAccess(course.id)
 
-    if (user && !isAdmin) {
-      requiresEntitlement = !(await hasEntitlement({
-        payload,
-        userId: user.id,
-        courseId: course.id,
-      }))
-    }
-
-    if (isAdmin) {
-      requiresEntitlement = false
-    }
-
-    if (!user || requiresEntitlement) {
+    if (requiresEntitlement) {
       return (
         <AccessGateProvider
           accessType={courseAccessType}
@@ -80,7 +63,7 @@ export default async function CoursePage({ params }: CoursePageProps) {
           gatedDelayMs={gatedDelayMs}
           gatedWarningMs={gatedWarningMs}
           requiresEntitlement={true}
-          isAuthenticated={!!user}
+          isAuthenticated={isAuthenticated}
         >
           <div className="min-h-screen" />
         </AccessGateProvider>

@@ -8,8 +8,13 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
+import { z } from 'zod'
 
 import config from '@payload-config'
+
+const redeemSchema = z.object({
+  code: z.string().trim().min(1, 'code_required'),
+})
 
 export async function POST(request: NextRequest) {
   const payload = await getPayload({ config })
@@ -19,17 +24,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'authentication_required' }, { status: 401 })
   }
 
-  let body: { code?: string }
+  let body: unknown
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ success: false, error: 'invalid_body' }, { status: 400 })
   }
 
-  const code = body.code?.trim()
-  if (!code) {
+  const parsed = redeemSchema.safeParse(body)
+  if (!parsed.success) {
     return NextResponse.json({ success: false, error: 'code_required' }, { status: 400 })
   }
+
+  const code = parsed.data.code
 
   // Find the access code
   const accessCodes = await payload.find({

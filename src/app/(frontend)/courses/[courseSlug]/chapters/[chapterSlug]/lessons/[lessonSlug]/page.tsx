@@ -10,11 +10,8 @@ import { queryCourseBySlug } from '@/server/repos/queries/courses'
 import { queryExercisesByLesson } from '@/server/repos/queries/exercises'
 import { queryLessonBySlug } from '@/server/repos/queries/lessons'
 import { queryMediaByIds } from '@/server/repos/queries/media'
-import { hasEntitlement } from '@/server/services/entitlement_check'
-import {
-  getAuthenticatedUserServer,
-  isAuthenticatedServer,
-} from '@/server/utils/access-gate-server'
+import { isAuthenticatedServer } from '@/server/utils/access-gate-server'
+import { checkPaidAccess } from '@/server/utils/check-paid-access'
 import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
 import { ChatInterface } from '@/ui/web/chat'
 import { extractAllMediaIds } from '@/ui/web/exerciserenderer/utils/extractMediaIds'
@@ -85,24 +82,9 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
   // Server-side block: for paid mode, check entitlement
   if (effectiveAccessType === 'paid') {
-    const { user, payload } = await getAuthenticatedUserServer()
-    const isAdmin = user?.role === 'admin'
-    let requiresEntitlement = true
+    const { requiresEntitlement, isAuthenticated } = await checkPaidAccess(course.id)
 
-    if (user && !isAdmin) {
-      requiresEntitlement = !(await hasEntitlement({
-        payload,
-        userId: user.id,
-        courseId: course.id,
-        lessonId: lesson.id,
-      }))
-    }
-
-    if (isAdmin) {
-      requiresEntitlement = false
-    }
-
-    if (!user || requiresEntitlement) {
+    if (requiresEntitlement) {
       return (
         <AccessGateProvider
           accessType={effectiveAccessType}
@@ -110,7 +92,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
           gatedDelayMs={gatedDelayMs}
           gatedWarningMs={gatedWarningMs}
           requiresEntitlement={true}
-          isAuthenticated={!!user}
+          isAuthenticated={isAuthenticated}
         >
           <div className="min-h-screen" />
         </AccessGateProvider>
