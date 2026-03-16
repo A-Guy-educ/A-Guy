@@ -10,7 +10,7 @@ import { streamText, tool, stepCountIs, type ToolSet } from 'ai'
 import { z } from 'zod'
 import { logger } from '@/infra/utils/logger/logger'
 import { NextRequest, NextResponse } from 'next/server'
-import { requireDashboardAuth } from '@/ui/cody/auth'
+import { requireCodyAuth, verifyActorLogin } from '@/ui/cody/auth'
 import { getAgent, type ToolScope } from '@/ui/cody/agents'
 import {
   fetchIssue,
@@ -575,13 +575,10 @@ function buildRemoteTools(actorLogin: string): ToolSet {
 
 export async function GET(req: NextRequest) {
   try {
-    // Check authentication
-    const auth = await requireDashboardAuth(req)
-    if (!auth.authenticated) {
-      return NextResponse.json(
-        { message: 'Not authenticated. Please log in to access the dashboard.' },
-        { status: 401 },
-      )
+    // Check authentication using GitHub OAuth
+    const authResult = await requireCodyAuth(req)
+    if ('status' in authResult) {
+      return authResult // Return the 401 response
     }
 
     // Test MCP connection — 5s timeout to avoid hanging
@@ -637,6 +634,14 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { messages = [], taskId, taskData, agentId, attachments, actorLogin } = body
 
+    // Authenticate and verify actorLogin matches session
+    const authResult = await verifyActorLogin(req, actorLogin)
+    if ('status' in authResult) {
+      return authResult // Return the 401/403 response
+    }
+
+    const { identity } = authResult
+
     if (!messages || messages.length === 0) {
       return NextResponse.json({ error: 'Messages are required' }, { status: 400 })
     }
@@ -646,6 +651,7 @@ export async function POST(req: NextRequest) {
     logger.info(
       {
         requestId,
+        actorLogin: identity.login, // Use verified identity, not client-supplied
         messageCount: messages.length,
         taskId,
         agentId: agent.id,
@@ -698,8 +704,9 @@ export async function POST(req: NextRequest) {
     let allTools = filterToolsByScope(agent.toolScope, mcpTools, customTools) as ToolSet
 
     // Inject remote tools if this user has a remote dev environment configured
-    if (actorLogin && isRemoteEnabled(actorLogin)) {
-      const remoteTools = buildRemoteTools(actorLogin)
+    // Use verified identity.login instead of client-supplied actorLogin
+    if (identity.login && isRemoteEnabled(identity.login)) {
+      const remoteTools = buildRemoteTools(identity.login)
       allTools = { ...allTools, ...remoteTools }
       // Extend system prompt with remote tool instructions
       systemPrompt = systemPrompt + REMOTE_SYSTEM_PROMPT_EXTENSION

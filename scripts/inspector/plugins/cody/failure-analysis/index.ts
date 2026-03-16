@@ -19,6 +19,8 @@ import { classifyRetryability } from './classifier'
 import { analyzeFailure } from './analyzer'
 import { resolveFromStage } from './stage-router'
 
+// MAX_RETRIES = 3 for human-initiated tasks (broader retry budget).
+// Queue-manager uses MAX_RETRIES = 2 (fail fast for autonomous processing).
 const MAX_RETRIES = 3
 
 /**
@@ -223,11 +225,29 @@ export const failureAnalysisPlugin: InspectorPlugin = {
     const evaluatedTasks = ctx.state.get<EvaluatedTask[]>('cody:evaluatedTasks') || []
     const failedTasks = evaluatedTasks.filter((t) => t.health === 'failed')
 
-    ctx.log.debug({ failedCount: failedTasks.length }, 'Found failed tasks')
+    // Skip tasks managed by queue-manager to avoid duplicate retries (Issue #12)
+    // Queue-manager has its own retry logic with different MAX_RETRIES
+    const queueState = ctx.state.get<{ activeTaskId: string | null }>('queue:state')
+    const activeQueueTaskId = queueState?.activeTaskId ?? null
+    const unqueuedFailed = failedTasks.filter((t) => {
+      if (activeQueueTaskId && t.taskId === activeQueueTaskId) {
+        ctx.log.debug(
+          { taskId: t.taskId },
+          'Skipping queue-managed task (handled by queue-manager)',
+        )
+        return false
+      }
+      return true
+    })
+
+    ctx.log.debug(
+      { failedCount: failedTasks.length, unqueuedCount: unqueuedFailed.length },
+      'Found failed tasks',
+    )
 
     const actions: ActionRequest[] = []
 
-    for (const task of failedTasks) {
+    for (const task of unqueuedFailed) {
       const action = createFailureAnalysisAction(task, ctx)
       if (action) actions.push(action)
     }

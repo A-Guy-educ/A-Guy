@@ -5,19 +5,29 @@
  * @ai-summary Create a GitHub issue with 'publish' label to trigger dev→main PR workflow
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/ui/cody/auth'
+import { requireCodyAuth, verifyActorLogin } from '@/ui/cody/auth'
 import { GITHUB_OWNER, GITHUB_REPO, DEV_BRANCH, PROD_BRANCH } from '@/ui/cody/constants'
 import { getOctokit } from '@/ui/cody/github-client'
 
 const PUBLISH_LABEL = 'publish'
 
 export async function POST(req: NextRequest) {
-  const authError = await requireAuth(req)
-  if (authError) return authError
+  // Use GitHub OAuth auth for consistency with other routes
+  const authResult = await requireCodyAuth(req)
+  if (authResult instanceof NextResponse) return authResult
 
   try {
     const body = await req.json().catch(() => ({}))
     const actorLogin = body?.actorLogin as string | undefined
+
+    // Verify actorLogin matches the authenticated session (prevents impersonation)
+    const actorResult = await verifyActorLogin(req, actorLogin)
+    if (actorResult instanceof NextResponse) return actorResult
+    const { identity } = actorResult
+
+    // Use verified identity's login for attribution
+    const verifiedLogin = identity.login
+
     const octokit = getOctokit()
 
     // 1. Check if dev is ahead of main
@@ -66,9 +76,7 @@ export async function POST(req: NextRequest) {
         '',
         `Merging \`${DEV_BRANCH}\` into \`${PROD_BRANCH}\` — **${comparison.ahead_by} commits** ahead.`,
         '',
-        actorLogin
-          ? `This issue was created by @${actorLogin} via the Cody dashboard Publish button.`
-          : 'This issue was created via the Cody dashboard Publish button.',
+        `This issue was created by @${verifiedLogin} via the Cody dashboard Publish button.`,
         'A GitHub Action will automatically create a PR from `dev` → `main`.',
         'Once CI passes, use the Merge button in the dashboard to finalize.',
       ].join('\n'),

@@ -11,6 +11,7 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { verifyCodySession } from '@/infra/auth/cody_session'
 import type { CodyGitHubIdentity } from '@/infra/auth/cody_session'
+import { logger } from '@/infra/utils/logger/logger'
 
 /**
  * Require dashboard authentication using Payload
@@ -90,5 +91,57 @@ export async function requireCodyAuth(
       { status: 401 },
     )
   }
+  return { identity }
+}
+
+/**
+ * Verify that the supplied actorLogin matches the authenticated session.
+ * This prevents actorLogin spoofing where a user could impersonate another user in GitHub comments.
+ *
+ * @param req - The incoming request
+ * @param suppliedLogin - The actorLogin supplied in the request body
+ * @returns The verified identity if it matches, or a 403 NextResponse if mismatch
+ */
+export async function verifyActorLogin(
+  req: NextRequest,
+  suppliedLogin: string | undefined,
+): Promise<{ identity: CodyGitHubIdentity } | NextResponse> {
+  // First verify the user is authenticated
+  const authResult = await requireCodyAuth(req)
+  if ('status' in authResult) {
+    // Return the 401 response
+    return authResult
+  }
+
+  const { identity } = authResult
+
+  // If no actorLogin was supplied, use the authenticated user's login
+  if (!suppliedLogin) {
+    return { identity }
+  }
+
+  // Verify the supplied actorLogin matches the authenticated user
+  // Allow exact match OR prefixed match (e.g., "john" matches "johndoe" for convenience)
+  const normalizedSupplied = suppliedLogin.toLowerCase()
+  const normalizedIdentity = identity.login.toLowerCase()
+
+  if (
+    normalizedSupplied !== normalizedIdentity &&
+    !normalizedIdentity.startsWith(normalizedSupplied + '-')
+  ) {
+    logger.warn(
+      {
+        suppliedLogin,
+        authenticatedLogin: identity.login,
+        path: req.nextUrl.pathname,
+      },
+      'ActorLogin mismatch - possible impersonation attempt',
+    )
+    return NextResponse.json(
+      { message: 'Invalid actorLogin: does not match authenticated session' },
+      { status: 403 },
+    )
+  }
+
   return { identity }
 }

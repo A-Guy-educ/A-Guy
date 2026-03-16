@@ -20,6 +20,7 @@ import { failureMinerPlugin } from './plugins/cody/failure-miner/index'
 import { knowledgeGardenerPlugin } from './plugins/cody/knowledge-gardener/index'
 import { securityScannerPlugin } from './plugins/project/security-scanner/index'
 import { apiSurfaceAuditorPlugin } from './plugins/project/api-surface/index'
+import { queueManagerPlugin } from './plugins/cody/queue-manager/index'
 import type { InspectorConfig } from './core/types'
 
 const logger = pino({ level: 'info' })
@@ -56,7 +57,12 @@ async function main(): Promise<void> {
     logger.warn('INSPECTOR_DIGEST_ISSUE not set — digest reports will be skipped')
   }
   if (!process.env.MINIMAX_API_KEY) {
-    logger.warn('MINIMAX_API_KEY not set — failure analysis will use fallback mode')
+    logger.warn(
+      'MINIMAX_API_KEY not set — failure analysis will use generic feedback, gate reviews will auto-approve with zero confidence',
+    )
+  }
+  if (!process.env.GH_PAT) {
+    logger.warn('GH_PAT not set — workflow dispatches (retries, reruns) will silently fail')
   }
 
   // Create plugin registry
@@ -64,6 +70,7 @@ async function main(): Promise<void> {
 
   // Register plugins
   registry.register(healthCheckPlugin)
+  registry.register(queueManagerPlugin)
   registry.register(failureAnalysisPlugin)
   registry.register(auditPlugin)
   registry.register(deferredStagesPlugin)
@@ -74,6 +81,26 @@ async function main(): Promise<void> {
   registry.register(knowledgeGardenerPlugin)
   registry.register(securityScannerPlugin)
   registry.register(apiSurfaceAuditorPlugin)
+
+  // Validate critical plugin ordering:
+  // health-check MUST run before failure-analysis and queue-manager since they
+  // consume cody:evaluatedTasks which health-check populates.
+  const pluginNames = registry.getAll().map((p) => p.name)
+  const healthIdx = pluginNames.indexOf('health-check')
+  const failureIdx = pluginNames.indexOf('cody-failure-analysis')
+  const queueIdx = pluginNames.indexOf('cody-queue-manager')
+  if (healthIdx === -1 || failureIdx === -1 || queueIdx === -1) {
+    logger.error(
+      'Required plugins missing: health-check, cody-failure-analysis, cody-queue-manager',
+    )
+    process.exit(1)
+  }
+  if (healthIdx >= failureIdx || healthIdx >= queueIdx) {
+    logger.error(
+      'Plugin order violation: health-check must be registered before failure-analysis and queue-manager',
+    )
+    process.exit(1)
+  }
 
   // Create config
   const config: InspectorConfig = {

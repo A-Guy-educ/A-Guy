@@ -7,7 +7,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { requireCodyAuth } from '@/ui/cody/auth'
+import { requireCodyAuth, verifyActorLogin } from '@/ui/cody/auth'
 
 import {
   postComment,
@@ -26,6 +26,7 @@ import {
   clearCache,
   getOctokit,
 } from '@/ui/cody/github-client'
+import { GITHUB_OWNER, GITHUB_REPO } from '@/ui/cody/constants'
 
 const actionSchema = z.object({
   action: z.enum([
@@ -46,13 +47,17 @@ const actionSchema = z.object({
     'fix',
     'approve-ui',
     'approve-pr',
+    'update',
   ]),
   feedback: z.string().optional(),
   fromStage: z.string().optional(),
   mode: z.string().optional(),
   assignees: z.array(z.string()).optional(),
   label: z.string().optional(),
+  labels: z.array(z.string()).optional(),
   comment: z.string().optional(),
+  title: z.string().optional(),
+  body: z.string().optional(),
   actorLogin: z.string().optional(),
 })
 
@@ -70,6 +75,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
     const body = await req.json()
     const { action, feedback, fromStage, mode: _mode, actorLogin } = actionSchema.parse(body)
 
+    // Verify actorLogin matches the authenticated session (prevents impersonation)
+    const actorResult = await verifyActorLogin(req, actorLogin)
+    if (actorResult instanceof NextResponse) return actorResult
+    const { identity } = actorResult
+
+    // Use verified identity's login for attribution
+    const actor = identity.login
+
     // Get issue number from taskId
     const issueNumber = parseInt(taskId.replace('issue-', ''), 10)
     if (isNaN(issueNumber)) {
@@ -77,7 +90,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
     }
 
     const { assignees, label, comment } = actionSchema.parse(body)
-    const actor = actorLogin || undefined
 
     switch (action) {
       case 'approve': {
@@ -311,15 +323,13 @@ ${comment}`,
         }
         // Use shared getOctokit (supports both CODY_BOT_TOKEN and GITHUB_TOKEN)
         const octokit = getOctokit()
-        const OWNER = 'A-Guy-educ'
-        const REPO = 'A-Guy'
         try {
           await octokit.pulls.createReview({
-            owner: OWNER,
-            repo: REPO,
+            owner: GITHUB_OWNER,
+            repo: GITHUB_REPO,
             pull_number: associatedPR.number,
             event: 'APPROVE',
-            body: `✅ PR approved${actor ? ` by @${actor}` : ''} via Cody dashboard.`,
+            body: `✅ PR approved by @${actor} via Cody dashboard.`,
           })
         } catch (error: unknown) {
           // May fail if already approved - that's ok
@@ -333,6 +343,27 @@ ${comment}`,
         await postComment(issueNumber, withActor('✅ PR approved', actor))
         clearCache()
         return NextResponse.json({ success: true, message: 'PR approved' })
+      }
+
+      case 'update': {
+        const updates: { title?: string; body?: string; labels?: string[]; assignees?: string[] } =
+          {}
+        const parsed = actionSchema.parse(body)
+        const { title, body: issueBody, labels, assignees } = parsed
+
+        if (title) updates.title = title
+        if (issueBody !== undefined) updates.body = issueBody
+        if (labels) updates.labels = labels
+        if (assignees) updates.assignees = assignees
+
+        if (Object.keys(updates).length === 0) {
+          return NextResponse.json({ error: 'No fields to update' }, { status: 400 })
+        }
+
+        await updateIssue(issueNumber, updates)
+        if (actor) await postComment(issueNumber, `📝 Issue updated _(by @${actor})_`)
+        clearCache()
+        return NextResponse.json({ success: true, message: 'Issue updated' })
       }
 
       default:

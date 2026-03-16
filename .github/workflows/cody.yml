@@ -280,6 +280,9 @@ jobs:
       - name: Validate cody entry can be loaded
         run: pnpm tsx scripts/cody/entry.ts --help
 
+      - name: Run pipeline canary tests (dry-run, no LLM)
+        run: pnpm test:canary
+
       - name: Run actual pipeline (spec mode - runs taskify)
         env:
           GH_TOKEN: ${{ github.token }}

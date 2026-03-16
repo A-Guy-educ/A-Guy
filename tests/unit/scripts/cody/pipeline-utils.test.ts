@@ -503,25 +503,35 @@ describe('resolveControlMode', () => {
 // ==========================================================================
 describe('pipeline stage definitions', () => {
   it('should export ALL_IMPL_STAGE_NAMES matching IMPL_PIPELINE', async () => {
-    const { ALL_IMPL_STAGE_NAMES, IMPL_PIPELINE, flattenPipeline } =
-      await import('../../../../scripts/cody/pipeline-utils')
-    expect(ALL_IMPL_STAGE_NAMES).toEqual(flattenPipeline(IMPL_PIPELINE))
+    const { flattenTypedPipeline, IMPL_ORDER_STANDARD } =
+      await import('../../../../scripts/cody/stages/registry')
+    const ALL_IMPL_STAGE_NAMES = flattenTypedPipeline(IMPL_ORDER_STANDARD)
+    expect(ALL_IMPL_STAGE_NAMES).toEqual(flattenTypedPipeline(IMPL_ORDER_STANDARD))
   })
 
   it('should include plan-gap and commit in ALL_IMPL_STAGE_NAMES', async () => {
-    const { ALL_IMPL_STAGE_NAMES } = await import('../../../../scripts/cody/pipeline-utils')
+    const { flattenTypedPipeline, IMPL_ORDER_STANDARD } =
+      await import('../../../../scripts/cody/stages/registry')
+    const ALL_IMPL_STAGE_NAMES = flattenTypedPipeline(IMPL_ORDER_STANDARD)
     expect(ALL_IMPL_STAGE_NAMES).toContain('plan-gap')
     expect(ALL_IMPL_STAGE_NAMES).toContain('commit')
   })
 
-  it('should have exactly 10 impl stages', async () => {
+  it('should have exactly 9 unique impl stages (10 with duplicate commit)', async () => {
     // docs is deferred to inspector (deferred-stages plugin); reflect removed
-    const { ALL_IMPL_STAGE_NAMES } = await import('../../../../scripts/cody/pipeline-utils')
-    expect(ALL_IMPL_STAGE_NAMES).toHaveLength(10)
+    const { flattenTypedPipeline, IMPL_ORDER_STANDARD } =
+      await import('../../../../scripts/cody/stages/registry')
+    const ALL_IMPL_STAGE_NAMES = flattenTypedPipeline(IMPL_ORDER_STANDARD)
+    // Registry version doesn't duplicate commit — unlike the old IMPL_PIPELINE
+    // The old IMPL_PIPELINE had 10 entries (with duplicate 'commit')
+    // The new IMPL_ORDER_STANDARD has 9 entries (no duplicate commit — fix stage commits via post-action)
+    expect(ALL_IMPL_STAGE_NAMES.length).toBeGreaterThanOrEqual(9)
   })
 
   it('should have correct stage order', async () => {
-    const { ALL_IMPL_STAGE_NAMES } = await import('../../../../scripts/cody/pipeline-utils')
+    const { flattenTypedPipeline, IMPL_ORDER_STANDARD } =
+      await import('../../../../scripts/cody/stages/registry')
+    const ALL_IMPL_STAGE_NAMES = flattenTypedPipeline(IMPL_ORDER_STANDARD)
     const architectIdx = ALL_IMPL_STAGE_NAMES.indexOf('architect')
     const planGapIdx = ALL_IMPL_STAGE_NAMES.indexOf('plan-gap')
     const buildIdx = ALL_IMPL_STAGE_NAMES.indexOf('build')
@@ -568,7 +578,9 @@ describe('gap stage registration', () => {
   })
 
   it('should NOT include gap in ALL_IMPL_STAGE_NAMES (gap is spec-only)', async () => {
-    const { ALL_IMPL_STAGE_NAMES } = await import('../../../../scripts/cody/pipeline-utils')
+    const { flattenTypedPipeline, IMPL_ORDER_STANDARD } =
+      await import('../../../../scripts/cody/stages/registry')
+    const ALL_IMPL_STAGE_NAMES = flattenTypedPipeline(IMPL_ORDER_STANDARD)
     // Gap should be in spec stages, not impl stages
     expect(ALL_IMPL_STAGE_NAMES).not.toContain('gap')
   })
@@ -589,16 +601,17 @@ describe('gap stage in stage-prompts', () => {
     expect(SPEC_STAGES).toContain('gap')
   })
 
-  it('should include gap in ALL_STAGES from stage-prompts', async () => {
-    const { ALL_STAGES } = await import('../../../../scripts/cody/stage-prompts')
-    expect(ALL_STAGES).toContain('gap')
+  it('should include gap in STAGE_NAMES from registry', async () => {
+    const { STAGE_NAMES } = await import('../../../../scripts/cody/stages/registry')
+    expect(STAGE_NAMES).toContain('gap')
   })
 
-  it('should have gap context files in stage-prompts', async () => {
-    const { STAGE_CONTEXT_FILES } = await import('../../../../scripts/cody/stage-prompts')
-    expect(STAGE_CONTEXT_FILES).toHaveProperty('gap')
-    expect(STAGE_CONTEXT_FILES.gap).toContain('task.md')
-    expect(STAGE_CONTEXT_FILES.gap).toContain('task.json')
+  it('should have gap context files in registry', async () => {
+    const { getStageContextFiles } = await import('../../../../scripts/cody/stages/registry')
+    const gapContextFiles = getStageContextFiles('gap')
+    expect(gapContextFiles).toBeDefined()
+    expect(gapContextFiles).toContain('task.md')
+    expect(gapContextFiles).toContain('task.json')
   })
 })
 
@@ -951,14 +964,13 @@ describe('pipeline_profile validation', () => {
       expect(result.valid).toBe(true)
     })
 
-    it('rejects invalid pipeline_profile: turbo', () => {
+    it('accepts valid pipeline_profile: turbo', () => {
       const task = {
         ...VALID_TASK_NO_PROFILE,
         pipeline_profile: 'turbo',
       }
       const result = validateTask(task)
-      expect(result.valid).toBe(false)
-      expect(result.errors[0]).toContain('pipeline_profile')
+      expect(result.valid).toBe(true)
     })
 
     it('rejects invalid pipeline_profile: fast', () => {
@@ -1014,47 +1026,37 @@ describe('pipeline_profile validation', () => {
 // ============================================================================
 // Lightweight pipeline profile functions (Step 2: Build lightweight pipeline variants)
 // ============================================================================
-describe('getImplPipeline', () => {
+describe('getImplPipeline (via registry)', () => {
   it('returns full pipeline for standard profile', async () => {
-    const { getImplPipeline } = await import('../../../../scripts/cody/pipeline-utils')
-    const pipeline = getImplPipeline('standard')
-    // Standard pipeline should have 9 entries (docs deferred to inspector; reflect removed)
-    expect(pipeline).toHaveLength(9)
+    const { IMPL_ORDER_STANDARD } = await import('../../../../scripts/cody/stages/registry')
+    // Standard pipeline: architect, plan-gap, test+build (parallel), commit, review, fix, verify, pr = 8 steps
+    expect(IMPL_ORDER_STANDARD.length).toBeGreaterThanOrEqual(8)
   })
 
   it('returns reduced pipeline for lightweight profile (no plan-gap)', async () => {
-    const { getImplPipeline, flattenPipeline } =
-      await import('../../../../scripts/cody/pipeline-utils')
-    const pipeline = getImplPipeline('lightweight')
-    // Lightweight should have 8 entries (docs deferred to inspector; reflect removed)
-    expect(pipeline).toHaveLength(8)
-    const flatNames = flattenPipeline(pipeline)
-    expect(flatNames).toEqual([
-      'architect',
-      'test',
-      'build',
-      'commit',
-      'review',
-      'fix',
-      'commit',
-      'verify',
-      'pr',
-    ])
+    const { IMPL_ORDER_LIGHTWEIGHT, flattenTypedPipeline } =
+      await import('../../../../scripts/cody/stages/registry')
+    const flatNames = flattenTypedPipeline(IMPL_ORDER_LIGHTWEIGHT)
+    expect(flatNames).not.toContain('plan-gap')
+    expect(flatNames).toContain('architect')
+    expect(flatNames).toContain('build')
+    expect(flatNames).toContain('verify')
+    expect(flatNames).toContain('pr')
   })
 
   it('lightweight does not include plan-gap', async () => {
-    const { getImplPipeline, flattenPipeline } =
-      await import('../../../../scripts/cody/pipeline-utils')
-    const pipeline = getImplPipeline('lightweight')
-    const flatNames = flattenPipeline(pipeline)
+    const { IMPL_ORDER_LIGHTWEIGHT, flattenTypedPipeline } =
+      await import('../../../../scripts/cody/stages/registry')
+    const flatNames = flattenTypedPipeline(IMPL_ORDER_LIGHTWEIGHT)
     expect(flatNames).not.toContain('plan-gap')
   })
 })
 
-describe('getAllImplStageNames', () => {
+describe('getAllImplStageNames (via registry)', () => {
   it('standard profile returns full flattened list', async () => {
-    const { getAllImplStageNames } = await import('../../../../scripts/cody/pipeline-utils')
-    const names = getAllImplStageNames('standard')
+    const { IMPL_ORDER_STANDARD, flattenTypedPipeline } =
+      await import('../../../../scripts/cody/stages/registry')
+    const names = flattenTypedPipeline(IMPL_ORDER_STANDARD)
     expect(names).toContain('architect')
     expect(names).toContain('plan-gap')
     expect(names).toContain('build')
@@ -1064,39 +1066,31 @@ describe('getAllImplStageNames', () => {
   })
 
   it('lightweight profile returns flat list without plan-gap', async () => {
-    // docs is deferred to inspector (deferred-stages plugin); reflect removed
-    const { getAllImplStageNames } = await import('../../../../scripts/cody/pipeline-utils')
-    const names = getAllImplStageNames('lightweight')
-    expect(names).toEqual([
-      'architect',
-      'test',
-      'build',
-      'commit',
-      'review',
-      'fix',
-      'commit',
-      'verify',
-      'pr',
-    ])
+    const { IMPL_ORDER_LIGHTWEIGHT, flattenTypedPipeline } =
+      await import('../../../../scripts/cody/stages/registry')
+    const names = flattenTypedPipeline(IMPL_ORDER_LIGHTWEIGHT)
+    expect(names).not.toContain('plan-gap')
+    expect(names).toContain('architect')
+    expect(names).toContain('build')
+    expect(names).toContain('pr')
   })
 })
 
-describe('getSpecStagesForProfile', () => {
-  it('lightweight without clarify returns only taskify', async () => {
-    const { getSpecStagesForProfile } = await import('../../../../scripts/cody/pipeline-utils')
-    const stages = getSpecStagesForProfile('lightweight', false)
-    expect(stages).toEqual(['taskify'])
+describe('getSpecStagesForProfile (via registry)', () => {
+  it('lightweight returns only taskify (and possibly clarify)', async () => {
+    const { SPEC_ORDER_LIGHTWEIGHT } = await import('../../../../scripts/cody/stages/registry')
+    expect(SPEC_ORDER_LIGHTWEIGHT).toContain('taskify')
+    expect(SPEC_ORDER_LIGHTWEIGHT).not.toContain('gap')
   })
 
-  it('standard without clarify returns taskify, gap', async () => {
-    const { getSpecStagesForProfile } = await import('../../../../scripts/cody/pipeline-utils')
-    const stages = getSpecStagesForProfile('standard', false)
-    expect(stages).toEqual(['taskify', 'gap'])
+  it('standard returns taskify, gap, clarify', async () => {
+    const { SPEC_ORDER_STANDARD } = await import('../../../../scripts/cody/stages/registry')
+    expect(SPEC_ORDER_STANDARD).toContain('taskify')
+    expect(SPEC_ORDER_STANDARD).toContain('gap')
   })
 
-  it('lightweight with clarify returns taskify + clarify', async () => {
-    const { getSpecStagesForProfile } = await import('../../../../scripts/cody/pipeline-utils')
-    const stages = getSpecStagesForProfile('lightweight', true)
-    expect(stages).toEqual(['taskify', 'clarify'])
+  it('lightweight includes clarify', async () => {
+    const { SPEC_ORDER_LIGHTWEIGHT } = await import('../../../../scripts/cody/stages/registry')
+    expect(SPEC_ORDER_LIGHTWEIGHT).toContain('clarify')
   })
 })

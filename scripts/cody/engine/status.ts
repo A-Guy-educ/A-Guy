@@ -6,6 +6,8 @@
  */
 
 import { logger } from '../logger'
+import { MAX_ACTOR_HISTORY_ENTRIES } from '../config/constants'
+import type { StageName } from '../stages/registry'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -18,7 +20,7 @@ import {
 } from './types'
 
 // C3 FIX: Import stageOutputFile for correct path resolution in resetFromStage
-import { stageOutputFile } from '../pipeline-utils'
+import { stageOutputFile } from '../stages/registry'
 
 // ============================================================================
 // Status File Operations
@@ -131,7 +133,7 @@ export function initState(ctx: PipelineContext, mode: string): PipelineStateV2 {
 }
 
 /** Max actor history entries kept in status.json (oldest dropped when exceeded) */
-const MAX_ACTOR_HISTORY = 50
+const MAX_ACTOR_HISTORY = MAX_ACTOR_HISTORY_ENTRIES
 
 /**
  * Append an actor event to the pipeline's actorHistory in status.json.
@@ -436,7 +438,7 @@ export function resetFromStage(
     ...state,
     stages: newStages,
     state: 'running',
-    cursor: fromStage,
+    cursor: fromStage as StageName,
     updatedAt: now,
   }
 }

@@ -240,6 +240,21 @@ export interface CodyTask {
   isSupervisorError?: boolean // infrastructure/supervisor error
 }
 
+// ============ Sort Types ============
+
+export type SortField =
+  | 'updatedAt'
+  | 'createdAt'
+  | 'issueNumber'
+  | 'column'
+  | 'riskLevel'
+  | 'pipelineProgress'
+  | 'assignee'
+  | 'title'
+  | 'label'
+
+export type SortDirection = 'asc' | 'desc'
+
 // ============ API Response Types ============
 
 export interface TasksResponse {

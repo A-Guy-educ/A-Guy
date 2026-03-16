@@ -5,6 +5,8 @@
  * @ai-summary Classifies build/test/lint errors and formats them as actionable markdown for autofix agent
  */
 
+import { MAX_GATE_OUTPUT_CHARS } from '../config/constants'
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -28,7 +30,7 @@ export interface ClassifiedError {
 // Constants
 // ============================================================================
 
-const MAX_OUTPUT_LENGTH = 5000
+const MAX_OUTPUT_LENGTH = MAX_GATE_OUTPUT_CHARS
 const MAX_SUMMARY_LENGTH = 500
 
 const FIX_INSTRUCTIONS: Record<ErrorCategory, string> = {

@@ -4,7 +4,7 @@
  * @ai-summary Pure function to resolve rerun fromStage with feedback routing
  */
 
-import { ALL_STAGES } from './stage-prompts'
+import { STAGE_NAMES as ALL_STAGES } from './stages/registry'
 
 /**
  * When feedback is provided and fromStage is AFTER architect in the impl pipeline,

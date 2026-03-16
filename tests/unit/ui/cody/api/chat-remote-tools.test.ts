@@ -9,6 +9,12 @@ vi.mock('@/ui/cody/auth', () => ({
     authenticated: true,
     user: { id: '1', email: 'test@test.com' },
   })),
+  requireCodyAuth: vi.fn(async () => ({
+    identity: { login: 'alice', id: '1', email: 'test@test.com' },
+  })),
+  verifyActorLogin: vi.fn(async () => ({
+    identity: { login: 'alice', id: '1', email: 'test@test.com' },
+  })),
 }))
 
 vi.mock('@/ui/cody/remote-config', () => ({

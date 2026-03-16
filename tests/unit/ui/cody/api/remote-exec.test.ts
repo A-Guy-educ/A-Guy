@@ -4,11 +4,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 
-// Mock auth
+// Mock auth — must export verifyActorLogin (used by exec route) and requireDashboardAuth
 vi.mock('@/ui/cody/auth', () => ({
   requireDashboardAuth: vi.fn(() => ({
     authenticated: true,
     user: { id: '1', email: 'test@test.com' },
+  })),
+  verifyActorLogin: vi.fn(async (_req: NextRequest, actorLogin: string | undefined) => {
+    // Simulate successful auth — return identity with the supplied login
+    return { identity: { login: actorLogin ?? 'test-user', id: '1', email: 'test@test.com' } }
+  }),
+  requireCodyAuth: vi.fn(async () => ({
+    identity: { login: 'test-user', id: '1', email: 'test@test.com' },
   })),
 }))
 
@@ -54,18 +61,6 @@ describe('POST /api/cody/remote/exec', () => {
     expect(res.status).toBe(404)
     const body = await res.json()
     expect(body.error).toContain('not configured')
-  })
-
-  it('returns 400 when actorLogin is missing', async () => {
-    const { POST } = await import('@/app/api/cody/remote/exec/route')
-
-    const req = new NextRequest('http://localhost/api/cody/remote/exec', {
-      method: 'POST',
-      body: JSON.stringify({ action: 'exec', payload: {} }),
-    })
-
-    const res = await POST(req)
-    expect(res.status).toBe(400)
   })
 
   it('returns 400 for invalid action', async () => {

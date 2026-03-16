@@ -69,6 +69,43 @@ function setCache<T>(
   })
 }
 
+/**
+ * Invalidate specific cache keys by prefix
+ * More targeted than clearing the entire cache
+ */
+function invalidateCache(prefix: string): void {
+  for (const key of cache.keys()) {
+    if (key.startsWith(prefix)) {
+      cache.delete(key)
+    }
+  }
+}
+
+/**
+ * Targeted cache invalidation by category
+ * Instead of clearing everything, only clear relevant caches
+ */
+export function invalidateTaskCache(): void {
+  invalidateCache('issues-')
+  invalidateCache('workflow-')
+}
+
+export function invalidatePRCache(): void {
+  invalidateCache('prs-')
+  invalidateCache('pr-')
+}
+
+export function invalidateBoardCache(): void {
+  invalidateCache('boards-')
+  invalidateCache('labels-')
+  invalidateCache('milestones-')
+}
+
+export function invalidateBranchCache(): void {
+  invalidateCache('branches-')
+  invalidateCache('refs-')
+}
+
 // ============ Octokit Singleton ============
 
 let octokitInstance: Octokit | null = null
@@ -980,8 +1017,8 @@ export async function closePR(prNumber: number): Promise<void> {
     state: 'closed',
   })
 
-  // Invalidate PR cache
-  cache.clear()
+  // Invalidate PR cache only
+  invalidatePRCache()
 }
 
 /**
@@ -1012,8 +1049,9 @@ export async function deleteBranch(branchName: string): Promise<void> {
     throw error
   }
 
-  // Invalidate cache
-  cache.clear()
+  // Invalidate branch and task caches
+  invalidateBranchCache()
+  invalidateTaskCache()
 }
 
 /**
@@ -1253,8 +1291,8 @@ export async function createIssue(options: {
     assignees: options.assignees,
   })
 
-  // Invalidate issues cache
-  cache.clear()
+  // Invalidate task-related caches only (not PRs, boards, etc.)
+  invalidateTaskCache()
 
   return {
     id: data.id,
@@ -1334,8 +1372,8 @@ export async function updateIssue(
     assignees: options.assignees,
   })
 
-  // Invalidate cache
-  cache.clear()
+  // Invalidate task cache
+  invalidateTaskCache()
   cache.delete(`comments:${issueNumber}`)
 }
 
@@ -1352,8 +1390,8 @@ export async function addAssignees(issueNumber: number, assignees: string[]): Pr
     assignees,
   })
 
-  // Invalidate cache
-  cache.clear()
+  // Invalidate task cache
+  invalidateTaskCache()
 }
 
 /**
@@ -1369,8 +1407,8 @@ export async function removeAssignees(issueNumber: number, assignees: string[]):
     assignees,
   })
 
-  // Invalidate cache
-  cache.clear()
+  // Invalidate task cache
+  invalidateTaskCache()
 }
 
 /**
@@ -1386,8 +1424,8 @@ export async function addLabels(issueNumber: number, labels: string[]): Promise<
     labels,
   })
 
-  // Invalidate cache
-  cache.clear()
+  // Invalidate task cache
+  invalidateTaskCache()
 }
 
 /**
@@ -1403,8 +1441,8 @@ export async function removeLabel(issueNumber: number, label: string): Promise<v
     name: label,
   })
 
-  // Invalidate cache
-  cache.clear()
+  // Invalidate task cache
+  invalidateTaskCache()
 }
 
 /**
@@ -1439,6 +1477,31 @@ export async function fetchCollaborators(): Promise<GitHubCollaborator[]> {
  */
 export function clearCache(): void {
   cache.clear()
+}
+
+/**
+ * Clear specific cache categories
+ */
+export function clearCacheByCategory(
+  category: 'all' | 'tasks' | 'prs' | 'boards' | 'branches',
+): void {
+  switch (category) {
+    case 'all':
+      cache.clear()
+      break
+    case 'tasks':
+      invalidateTaskCache()
+      break
+    case 'prs':
+      invalidatePRCache()
+      break
+    case 'boards':
+      invalidateBoardCache()
+      break
+    case 'branches':
+      invalidateBranchCache()
+      break
+  }
 }
 
 /**

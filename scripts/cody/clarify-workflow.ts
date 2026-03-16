@@ -8,7 +8,8 @@
 import * as fs from 'fs'
 import * as path from 'path'
 
-import { getLatestIssueComment, getLatestApprovalComment, type CodyInput } from './cody-utils'
+import { getLatestIssueComment, getLatestApprovalComment } from './github-api'
+import type { CodyInput } from './cody-utils'
 import { checkForQuestions } from './content-validators'
 import { logger } from './logger'
 

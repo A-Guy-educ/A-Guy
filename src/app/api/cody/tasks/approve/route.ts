@@ -6,7 +6,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { requireAuth } from '@/ui/cody/auth'
+import { requireCodyAuth, verifyActorLogin } from '@/ui/cody/auth'
 import { GITHUB_OWNER, GITHUB_REPO } from '@/ui/cody/constants'
 import { getOctokit } from '@/ui/cody/github-client'
 
@@ -24,8 +24,9 @@ const ApproveRequestSchema = z.object({
 })
 
 export async function POST(req: NextRequest) {
-  const authError = await requireAuth(req)
-  if (authError) return authError
+  // Use GitHub OAuth auth for consistency with other routes
+  const authResult = await requireCodyAuth(req)
+  if (authResult instanceof NextResponse) return authResult
 
   try {
     const body = await req.json()
@@ -40,20 +41,26 @@ export async function POST(req: NextRequest) {
 
     const { issueNumber, prNumber, branchName, actorLogin } = parsed.data
 
+    // Verify actorLogin matches the authenticated session (prevents impersonation)
+    const actorResult = await verifyActorLogin(req, actorLogin)
+    if (actorResult instanceof NextResponse) return actorResult
+    const { identity } = actorResult
+
+    // Use verified identity's login for attribution
+    const verifiedLogin = identity.login
+
     const octokit = getOctokit()
     const results: string[] = []
 
     // 1. Approve and merge the PR (squash)
     try {
-      // Approve first
+      // Approve first - use verified identity for attribution
       await octokit.pulls.createReview({
         owner: GITHUB_OWNER,
         repo: GITHUB_REPO,
         pull_number: prNumber,
         event: 'APPROVE',
-        body: actorLogin
-          ? `✅ Gate approved by @${actorLogin} via Cody dashboard.`
-          : '✅ Gate approved via Cody dashboard.',
+        body: `✅ Gate approved by @${verifiedLogin} via Cody dashboard.`,
       })
     } catch {
       // May fail if already approved

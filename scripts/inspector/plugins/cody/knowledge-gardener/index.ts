@@ -101,10 +101,16 @@ export const knowledgeGardenerPlugin: InspectorPlugin = {
           // Commit the update
           try {
             // Set git identity for CI
-            execFileSync('git', ['config', 'user.name', 'Inspector Bot'], { stdio: 'pipe' })
-            execFileSync('git', ['config', 'user.email', 'inspector@noreply.github.com'], {
+            execFileSync('git', ['config', '--local', 'user.name', 'Inspector Bot'], {
               stdio: 'pipe',
             })
+            execFileSync(
+              'git',
+              ['config', '--local', 'user.email', 'inspector@noreply.github.com'],
+              {
+                stdio: 'pipe',
+              },
+            )
 
             execFileSync('git', ['add', KNOWLEDGE_INDEX_PATH], { stdio: 'pipe' })
             execFileSync(

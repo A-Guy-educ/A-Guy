@@ -14,19 +14,6 @@ vi.mock('../../../../scripts/cody/pipeline-utils', () => ({
     if (score < 50) return 'complex'
     return 'very_complex'
   }),
-  STAGE_COMPLEXITY_THRESHOLDS: {
-    taskify: 0,
-    spec: 35,
-    gap: 40,
-    clarify: 60,
-    architect: 10,
-    'plan-gap': 50,
-    build: 0,
-    commit: 0,
-    verify: 0,
-    autofix: 20,
-    pr: 0,
-  },
 }))
 
 vi.mock('../../../../scripts/cody/clarify-workflow', () => ({

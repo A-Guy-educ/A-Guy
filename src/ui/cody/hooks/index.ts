@@ -13,6 +13,10 @@ import type { CodyTask } from '../types'
 import type { ViewMode } from '../components/FilterBar'
 import { POLLING_INTERVALS } from '../constants'
 
+// Re-export new hooks
+export { useDashboardFilters } from './useDashboardFilters'
+export { useDashboardRouter } from './useDashboardRouter'
+
 // Query keys
 export const queryKeys = {
   tasks: (days?: number, includeDetails?: boolean) => ['cody-tasks', days, includeDetails] as const,
@@ -208,6 +212,26 @@ export function useCreateTask() {
   })
 }
 
+// ============ useUpdateTask ============
+
+export function useUpdateTask(issueNumber: number) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: {
+      title?: string
+      body?: string
+      labels?: string[]
+      assignees?: string[]
+      actorLogin?: string
+    }) => codyApi.tasks.update(issueNumber, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.taskDetails(issueNumber) })
+    },
+  })
+}
+
 // ============ usePostComment ============
 
 export function usePostComment(issueNumber: number, actorLogin?: string) {
@@ -359,6 +383,18 @@ export function useTaskActions({
     onError: handleError('unassign user'),
   })
 
+  const addToQueue = useMutation({
+    mutationFn: () => codyApi.tasks.addToQueue(issueNumber, actorLogin),
+    onSuccess: handleSuccess('Added to queue'),
+    onError: handleError('add to queue'),
+  })
+
+  const removeFromQueue = useMutation({
+    mutationFn: () => codyApi.tasks.removeFromQueue(issueNumber, actorLogin),
+    onSuccess: handleSuccess('Removed from queue'),
+    onError: handleError('remove from queue'),
+  })
+
   const isPending =
     execute.isPending ||
     close.isPending ||
@@ -371,7 +407,9 @@ export function useTaskActions({
     approveUI.isPending ||
     approvePR.isPending ||
     assign.isPending ||
-    unassign.isPending
+    unassign.isPending ||
+    addToQueue.isPending ||
+    removeFromQueue.isPending
 
   return {
     execute: execute.mutate,
@@ -386,6 +424,8 @@ export function useTaskActions({
     approvePR: approvePR.mutate,
     assign: assign.mutate,
     unassign: unassign.mutate,
+    addToQueue: addToQueue.mutate,
+    removeFromQueue: removeFromQueue.mutate,
     isPending,
     pendingAction: execute.isPending
       ? 'execute'
@@ -407,6 +447,10 @@ export function useTaskActions({
                       ? 'reset'
                       : reopen.isPending
                         ? 'reopen'
-                        : null,
+                        : addToQueue.isPending
+                          ? 'add-to-queue'
+                          : removeFromQueue.isPending
+                            ? 'remove-from-queue'
+                            : null,
   }
 }

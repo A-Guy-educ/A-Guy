@@ -6,7 +6,7 @@
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
-import { requireCodyAuth } from '@/ui/cody/auth'
+import { requireCodyAuth, verifyActorLogin } from '@/ui/cody/auth'
 
 import {
   fetchIssues,
@@ -18,6 +18,7 @@ import {
   findStatusOnBranch,
   createIssue,
   uploadIssueAttachment,
+  postComment,
 } from '@/ui/cody/github-client'
 import type {
   CodyTask,
@@ -399,12 +400,20 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { title, body: issueBody, labels, assignees, attachments, actorLogin } = body
 
+    // Verify actorLogin matches the authenticated session (prevents impersonation)
+    const actorResult = await verifyActorLogin(req, actorLogin)
+    if (actorResult instanceof NextResponse) return actorResult
+    const { identity } = actorResult
+
+    // Use verified identity's login for attribution
+    const verifiedLogin = identity.login
+
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
     }
 
-    // Create the issue in GitHub
-    const actorNote = actorLogin ? `\n\n---\n_Created by @${actorLogin} via Cody dashboard_` : ''
+    // Create the issue in GitHub - use verified login for attribution
+    const actorNote = `\n\n---\n_Created by @${verifiedLogin} via Cody dashboard_`
     const issue = await createIssue({
       title,
       body: (issueBody || '') + actorNote,
@@ -413,6 +422,15 @@ export async function POST(req: NextRequest) {
     })
 
     console.log('[Cody] Created issue:', issue.number, issue.title)
+
+    // Auto-trigger pipeline by commenting @cody on the issue
+    try {
+      await postComment(issue.number, '@cody')
+      console.log('[Cody] Triggered pipeline for issue:', issue.number)
+    } catch (triggerError: any) {
+      console.error('[Cody] Failed to trigger pipeline:', triggerError.message)
+      // Don't fail the whole request if trigger fails - task was still created
+    }
 
     // Upload attachments if provided
     const uploadedAttachments = []

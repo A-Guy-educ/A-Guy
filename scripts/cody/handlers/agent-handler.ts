@@ -11,7 +11,7 @@ import * as path from 'path'
 
 import type { PipelineContext, StageDefinition, StageResult } from '../engine/types'
 import { runAgentWithFileWatch } from '../agent-runner'
-import { stageOutputFile } from '../pipeline-utils'
+import { stageOutputFile } from '../stages/registry'
 import { appendSession } from '../chat-history'
 import type { StageHandler } from './handler'
 
@@ -64,10 +64,17 @@ export class AgentHandler implements StageHandler {
         }
       }
 
+      const details: string[] = [`Agent "${def.agentName ?? def.name}" failed`]
+      if (result.validationErrors?.length) {
+        details.push(`Validation errors: ${result.validationErrors.join('; ')}`)
+      }
+      details.push(`Artifacts: ${def.name}-stderr.log, ${def.name}-events.jsonl`)
       return {
         outcome: 'failed',
-        reason: `Agent failed`,
+        reason: details.join('. '),
         retries: result.retries,
+        tokenUsage: result.tokenUsage,
+        cost: result.cost,
       }
     }
 

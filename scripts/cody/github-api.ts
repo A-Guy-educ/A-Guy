@@ -747,7 +747,10 @@ export function setClassificationLabels(
  * Set profile label - adds new profile and removes the other
  * Fire-and-forget: errors are logged but never thrown
  */
-export function setProfileLabel(issueNumber: number, profile: 'lightweight' | 'standard'): void {
+export function setProfileLabel(
+  issueNumber: number,
+  profile: 'lightweight' | 'standard' | 'turbo',
+): void {
   if (!issueNumber || !profile) return
 
   const label = `profile:${profile}`
