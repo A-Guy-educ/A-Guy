@@ -460,12 +460,22 @@ export function runAgentWithFileWatch(
         logger.info(`  🗑️ Deleted stale output file before retry`)
       }
 
-      // Calculate remaining timeout (subtract elapsed time from previous attempts)
+      // FIX #10: Calculate remaining timeout (subtract elapsed time from ALL previous attempts).
+      // startTime is captured once before the first attempt, so elapsed accurately reflects
+      // total time spent across all retries including inter-retry delays.
       const elapsed = Date.now() - startTime
       const remainingTimeout = effectiveTimeout - elapsed
       if (remainingTimeout <= 0) {
+        logger.info(
+          `  ⏱️ No time remaining after ${retries} retries (${Math.round(elapsed / 1000)}s elapsed)`,
+        )
         resolve({ succeeded: false, timedOut: true, retries, validationErrors })
         return
+      }
+      if (remainingTimeout < 60_000 && retries > 0) {
+        logger.warn(
+          `  ⚠️ Only ${Math.round(remainingTimeout / 1000)}s remaining for attempt ${retries + 1}`,
+        )
       }
 
       // Build the prompt for the stage (rebuilt each attempt to include feedback)
@@ -578,14 +588,14 @@ export function runAgentWithFileWatch(
             }
           }
 
-          // Cap buffer size to prevent memory leaks on verbose agents
+          // FIX #5: Cap buffer size to prevent memory leaks on verbose agents.
+          // When the buffer exceeds MAX, discard the oldest data and keep the most
+          // recent MAX/2 bytes, breaking at a newline boundary for clean parsing.
           if (stdoutBuffer.length > MAX_STDOUT_BUFFER_SIZE) {
-            // Keep only the last portion, breaking at a newline boundary
-            const lastNewline = stdoutBuffer.lastIndexOf('\n', MAX_STDOUT_BUFFER_SIZE / 2)
+            const keepFrom = stdoutBuffer.length - MAX_STDOUT_BUFFER_SIZE / 2
+            const nextNewline = stdoutBuffer.indexOf('\n', keepFrom)
             stdoutBuffer =
-              lastNewline > 0
-                ? stdoutBuffer.slice(lastNewline + 1)
-                : stdoutBuffer.slice(-MAX_STDOUT_BUFFER_SIZE / 2)
+              nextNewline > 0 ? stdoutBuffer.slice(nextNewline + 1) : stdoutBuffer.slice(keepFrom)
           }
         })
       }

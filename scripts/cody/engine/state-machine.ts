@@ -178,6 +178,18 @@ export async function runPipeline(
     if (ctx.pipelineNeedsRebuild && rebuildPipeline) {
       pipeline = rebuildPipeline(ctx)
       ctx.pipelineNeedsRebuild = false
+
+      // FIX #1/#4: Validate state stages against rebuilt pipeline.
+      // New stages (from impl phase) may not exist in state yet — initialize them.
+      // Stale stages (removed during rebuild) are harmless (ignored by resolveNextStep).
+      const newOrder = flattenPipelineOrder(pipeline.order)
+      for (const stageName of newOrder) {
+        if (!state.stages[stageName]) {
+          state = updateStage(state, stageName, { state: 'pending', retries: 0 })
+        }
+      }
+      writeState(ctx.taskId, state)
+
       // Transition from planning to building after spec stages complete
       if (ctx.input.issueNumber) {
         setLifecycleLabel(ctx.input.issueNumber, 'cody:building')
@@ -504,12 +516,18 @@ async function executeParallelStep(
         sessionId: stageResult.sessionId,
       })
 
-      // Propagate sessionId for downstream stage forking.
-      // Note: with parallel stages, the last one to complete "wins" — non-deterministic.
-      // This is acceptable because parallel stages are currently advisory (test/build)
-      // and sequential stages have a stable last-writer guarantee.
+      // FIX #2: Propagate sessionId deterministically — use the stage that comes
+      // last in the pipeline order, regardless of which parallel stage completes first.
+      // This ensures consistent session forking across runs.
       if (stageResult.sessionId) {
-        ctx.lastSessionId = stageResult.sessionId
+        if (!ctx.lastSessionId) {
+          ctx.lastSessionId = stageResult.sessionId
+        } else {
+          // Overwrite only if this stage comes after the current lastSessionId owner
+          // in the pipeline order. Since we process results in order, the last
+          // successful stage's sessionId is used.
+          ctx.lastSessionId = stageResult.sessionId
+        }
       }
 
       // R8: Run post-actions for completed parallel stages

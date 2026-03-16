@@ -9,6 +9,8 @@ import { logger } from './logger'
 import { execFileSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
+// FIX #9: Import status functions to persist branch name early
+import { setBranchName, loadState } from './engine/status'
 
 // ============================================================================
 // Types
@@ -120,7 +122,12 @@ export function deriveBranchName(taskDir: string, taskId: string): string {
       .slice(0, maxTitleLength) // max chars for title portion
 
     return `${datePrefix}${issuePart}-${sanitized}`
-  } catch {
+  } catch (deriveErr) {
+    // FIX #7: Log when branch name derivation falls back to taskId
+    logger.warn(
+      { err: deriveErr },
+      `[branch] Branch name derivation failed, falling back to: ${taskId}`,
+    )
     return taskId
   }
 }
@@ -184,9 +191,15 @@ export function mergeDefaultBranch(cwd: string): void {
     logger.info('[branch] Aborting merge')
     try {
       execFileSync('git', ['merge', '--abort'], { cwd, stdio: 'inherit' })
-    } catch {
-      // merge --abort can fail if merge state was corrupted; fall back to hard reset
-      logger.warn('[branch] merge --abort failed, falling back to git reset --hard HEAD')
+    } catch (abortError) {
+      // FIX #6: Log the abort error before falling back to hard reset.
+      // merge --abort can fail if merge state was corrupted; hard reset discards ALL
+      // uncommitted changes (not just conflicts), which is a last resort.
+      const abortMsg = abortError instanceof Error ? abortError.message : String(abortError)
+      logger.warn(
+        `[branch] merge --abort failed (${abortMsg}), falling back to git reset --hard HEAD`,
+      )
+      logger.warn('[branch] \u26a0\ufe0f Hard reset will discard ALL uncommitted changes')
       execFileSync('git', ['reset', '--hard', 'HEAD'], { cwd, stdio: 'inherit' })
     }
     throw new Error(
@@ -300,6 +313,19 @@ export function ensureFeatureBranch(
           logger.warn('[branch] ⚠ Could not restore stash — may need manual recovery')
         }
       }
+    }
+    // FIX #9: Persist branch name to status.json immediately after checkout,
+    // not just in build stage preExecute. This ensures the dashboard can find the
+    // branch even for stages that run before build (e.g., gap, architect).
+    try {
+      const taskIdFromDir = taskDir ? path.basename(taskDir) : taskId
+      const existingState = loadState(taskIdFromDir)
+      if (existingState) {
+        setBranchName(taskIdFromDir, existingState, branchName)
+        logger.info(`[branch] Persisted branch name to status.json: ${branchName}`)
+      }
+    } catch {
+      // Non-critical - branch name will be captured in build stage preExecute as fallback
     }
     logger.info(`[branch] Checked out and pulled: ${branchName}`)
   } else {
@@ -799,28 +825,31 @@ export function commitPipelineFiles(
       case 'all':
         try {
           execFileSync('git', ['add', '-A'], { cwd, stdio: 'inherit' })
-        } catch {
-          // Ignore staging errors
+        } catch (stageErr) {
+          // FIX #7: Log staging errors instead of silently swallowing them
+          logger.warn({ err: stageErr }, '[commit] git add -A failed (non-fatal)')
         }
         break
       case 'tracked+task':
         try {
           execFileSync('git', ['add', '-u'], { cwd, stdio: 'inherit' })
-        } catch {
-          // Ignore
+        } catch (stageErr) {
+          // FIX #7: Log instead of silent swallow
+          logger.warn({ err: stageErr }, '[commit] git add -u failed (non-fatal)')
         }
         try {
           execFileSync('git', ['add', '--', taskDir], { cwd, stdio: 'inherit' })
-        } catch {
-          // Ignore
+        } catch (stageErr) {
+          logger.warn({ err: stageErr }, '[commit] git add task dir failed (non-fatal)')
         }
         break
       case 'task-only':
       default:
         try {
           execFileSync('git', ['add', '--', taskDir], { cwd, stdio: 'inherit' })
-        } catch {
-          // Ignore staging errors - silent fail is ok
+        } catch (stageErr) {
+          // FIX #7: Log instead of silent swallow
+          logger.warn({ err: stageErr }, '[commit] git add task-only failed (non-fatal)')
         }
         break
     }
