@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-16T13:35:46.395Z",
-  "updatedAt": "2026-03-16T13:45:50.236Z",
+  "updatedAt": "2026-03-16T13:48:44.162Z",
   "state": "running",
   "cursor": "gap",
   "stages": {
@@ -48,9 +48,23 @@
       "skipped": "Complexity 30 (moderate) below threshold 50 for plan-gap"
     },
     "build": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-16T13:45:50.220Z",
+      "completedAt": "2026-03-16T13:47:53.727Z",
+      "elapsed": 124,
+      "outputFile": "build.md",
+      "tokenUsage": {
+        "input": 19851,
+        "output": 2735,
+        "cacheRead": 551686
+      },
+      "sessionId": "ses_3091aa587ffe63y6OhOYsQUTJC"
+    },
+    "commit": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-16T13:45:50.220Z"
+      "startedAt": "2026-03-16T13:48:44.162Z"
     }
   },
   "issueNumber": 853,
@@ -62,6 +76,5 @@
       "actor": "aguyaharonyair",
       "timestamp": "2026-03-16T13:35:46.395Z"
     }
-  ],
-  "branchName": "chore/260316-auto-853-publish-dev-production-233-commits"
+  ]
 }
