@@ -118,9 +118,10 @@ describe('normalizeLatexDelimiters', () => {
       expect(normalizeLatexDelimiters('\\\\\\)')).toBe('$')
     })
 
-    it('normalizes over-escaped LaTeX commands (\\\\frac → \\frac)', () => {
+    it('normalizes over-escaped LaTeX commands (\\\\frac → \\frac) and wraps in $', () => {
       const input = '\\\\frac{a}{b}'
-      const expected = '\\frac{a}{b}'
+      // After normalization: \frac{a}{b}, then bare LaTeX wrapping adds $...$
+      const expected = '$\\frac{a}{b}$'
       expect(normalizeLatexDelimiters(input)).toBe(expected)
     })
 
@@ -225,6 +226,63 @@ describe('normalizeLatexDelimiters', () => {
       const result = normalizeLatexDelimiters(input)
       expect(result).toContain('$$')
       expect(result).toContain('חשבו את')
+    })
+  })
+
+  describe('undelimited LaTeX safety net', () => {
+    it('wraps bare \\frac in $...$', () => {
+      const input = 'the ratio is \\frac{CD}{AB}'
+      const result = normalizeLatexDelimiters(input)
+      expect(result).toContain('$\\frac{CD}{AB}$')
+    })
+
+    it('wraps bare \\triangle in $...$', () => {
+      const input = 'in \\triangle ABC'
+      const result = normalizeLatexDelimiters(input)
+      expect(result).toContain('$\\triangle$')
+    })
+
+    it('wraps bare \\angle in $...$', () => {
+      const input = 'where \\angle B = 90'
+      const result = normalizeLatexDelimiters(input)
+      expect(result).toContain('$\\angle$')
+    })
+
+    it('wraps bare \\sqrt in $...$', () => {
+      const input = 'equals \\sqrt{3}'
+      const result = normalizeLatexDelimiters(input)
+      expect(result).toContain('$\\sqrt{3}$')
+    })
+
+    it('does NOT double-wrap already delimited math', () => {
+      const input = 'already $\\frac{a}{b}$ here'
+      const result = normalizeLatexDelimiters(input)
+      expect(result).toBe(input)
+    })
+
+    it('does NOT double-wrap block math', () => {
+      const input = '$$\\frac{a}{b}$$'
+      const result = normalizeLatexDelimiters(input)
+      expect(result).toBe(input)
+    })
+
+    it('wraps complex expression with subscripts', () => {
+      const input = 'area \\frac{S_{\\triangle AEF}}{S_{\\triangle CDF}}'
+      const result = normalizeLatexDelimiters(input)
+      expect(result).toContain('$')
+      expect(result).not.toMatch(/^area \\frac/) // should be wrapped
+    })
+
+    it('wraps multiple bare commands in the same text', () => {
+      const input = 'given \\triangle ABC and \\angle B'
+      const result = normalizeLatexDelimiters(input)
+      expect(result).toContain('$\\triangle$')
+      expect(result).toContain('$\\angle$')
+    })
+
+    it('leaves plain text without LaTeX commands unchanged', () => {
+      const input = 'no math here, just text'
+      expect(normalizeLatexDelimiters(input)).toBe(input)
     })
   })
 })
