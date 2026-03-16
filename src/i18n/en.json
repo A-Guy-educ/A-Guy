@@ -319,7 +319,21 @@
     "gatedLockedDescription": "Your free preview has ended. Sign in with Google to keep learning.",
     "signInPrompt": "Sign in to unlock full access",
     "warningCountdown": "{{seconds}}s remaining",
-    "browseCourses": "Browse Courses"
+    "browseCourses": "Browse Courses",
+    "paidTitle": "Premium Content",
+    "paidNotLoggedIn": "Please sign in to access this content.",
+    "paidNoEntitlement": "This content requires a purchase. Enter an access code below or contact your administrator.",
+    "codePlaceholder": "Enter access code",
+    "codeSubmit": "Redeem Code",
+    "codeSubmitting": "Redeeming...",
+    "codeInvalid": "Invalid access code.",
+    "codeInactive": "This code is no longer active.",
+    "codeExpired": "This code has expired.",
+    "codeExhausted": "This code has reached its usage limit.",
+    "codeAlreadyUsed": "You already have access to this course.",
+    "codeError": "Something went wrong. Please try again.",
+    "codeSuccessTitle": "Welcome aboard!",
+    "codeSuccessMessage": "How exciting that you signed up! A free month on us."
   },
   "study": {
     "loading": "Loading...",

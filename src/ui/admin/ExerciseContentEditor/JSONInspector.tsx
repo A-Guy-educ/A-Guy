@@ -1,9 +1,27 @@
 'use client'
 
 import type { ContentBlock } from '@/server/payload/collections/Exercises/types'
+import { validateStructuralInvariance } from '@/utils/structure-validator'
 import { AlignLeft, Check, Copy, Edit, RotateCcw, X } from 'lucide-react'
 import { Highlight, themes } from 'prism-react-renderer'
 import React from 'react'
+
+// All valid block types (11 total)
+const VALID_BLOCK_TYPES = [
+  'rich_text',
+  'question_select',
+  'question_free_response',
+  'question_table',
+  'latex',
+  'question_matching',
+  'svg',
+  'question_geometry',
+  'question_axis',
+  'html',
+  'media',
+] as const
+
+type ValidBlockType = (typeof VALID_BLOCK_TYPES)[number]
 
 interface JSONInspectorProps {
   block: ContentBlock | null // Selected block
@@ -51,6 +69,7 @@ export const JSONInspector: React.FC<JSONInspectorProps> = ({ block, mode, onApp
 
   const validateJSON = (
     jsonStr: string,
+    originalBlock: ContentBlock | null,
   ): { valid: boolean; error?: string; data?: ContentBlock } => {
     // Try JSON.parse first
     let parsed: unknown
@@ -73,16 +92,24 @@ export const JSONInspector: React.FC<JSONInspectorProps> = ({ block, mode, onApp
       return { valid: false, error: 'Missing or invalid "type" field' }
     }
 
-    // Validate based on block type
-    const validTypes = [
-      'rich_text',
-      'question_select',
-      'question_free_response',
-      'question_table',
-      'latex',
-    ]
-    if (!validTypes.includes(obj.type as string)) {
+    // Validate based on block type - check against ALL valid types
+    if (!VALID_BLOCK_TYPES.includes(obj.type as ValidBlockType)) {
       return { valid: false, error: `Invalid block type: ${obj.type}` }
+    }
+
+    // Structure invariance validation - compare against original block
+    if (originalBlock) {
+      const structureResult = validateStructuralInvariance(originalBlock, parsed)
+      if (!structureResult.valid) {
+        const firstError = structureResult.errors[0]
+        const errorMessage = firstError
+          ? `Structure change not allowed: ${firstError.path || 'root'} — ${firstError.message}`
+          : 'Structure change not allowed'
+        return {
+          valid: false,
+          error: errorMessage,
+        }
+      }
     }
 
     // Return the parsed data as ContentBlock
@@ -92,7 +119,7 @@ export const JSONInspector: React.FC<JSONInspectorProps> = ({ block, mode, onApp
   const handleApply = () => {
     if (!onApply) return
 
-    const validation = validateJSON(editValue)
+    const validation = validateJSON(editValue, block)
     if (!validation.valid || !validation.data) {
       setEditError(validation.error || 'Unknown validation error')
       return
@@ -111,7 +138,7 @@ export const JSONInspector: React.FC<JSONInspectorProps> = ({ block, mode, onApp
   }
 
   const handleFormat = () => {
-    const validation = validateJSON(editValue)
+    const validation = validateJSON(editValue, block)
     if (validation.valid && validation.data) {
       setEditValue(JSON.stringify(validation.data, null, 2))
       setEditError(null)

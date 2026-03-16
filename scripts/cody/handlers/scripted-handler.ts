@@ -31,7 +31,7 @@ export class ScriptedVerifyHandler implements StageHandler {
     const totalTimeout = def.timeout ?? DEFAULT_TIMEOUT
 
     // Run initial verify
-    const verifyResult = runVerifyStage(outputFile, undefined, def.timeout)
+    const verifyResult = runVerifyStage(outputFile, undefined, def.timeout, ctx.taskDir)
 
     if (verifyResult.passed) {
       return {
@@ -106,7 +106,7 @@ export class ScriptedVerifyHandler implements StageHandler {
         }
       }
 
-      const reVerify = runVerifyStage(outputFile, undefined, remainingAfter)
+      const reVerify = runVerifyStage(outputFile, undefined, remainingAfter, ctx.taskDir)
       if (reVerify.passed) {
         logger.info(`  \u2705 Verification passed after auto-fix attempt ${attempt}`)
         fixed = true

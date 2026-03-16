@@ -270,6 +270,7 @@
         "Pipeline Modes",
         "Two-Phase Execution (Full Mode)",
         "Profiles",
+        "Stage Registry",
         "Stage Architecture",
         "Post-Action System",
         "Gate System",
@@ -288,7 +289,7 @@
       ],
       "relativeUrl": "scripts/cody/README.md",
       "category": "scripts",
-      "wordCount": 2155
+      "wordCount": 2226
     },
     {
       "path": "scripts/README.md",
@@ -579,7 +580,7 @@
     }
   ],
   "metadata": {
-    "generatedAt": "2026-03-13T21:00:01.189Z",
+    "generatedAt": "2026-03-15T22:20:39.822Z",
     "totalReadmes": 34,
     "categories": {
       ".claude": 1,

@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
-import { requireAuth } from '@/ui/cody/auth'
+import { requireCodyAuth } from '@/ui/cody/auth'
 import { findTaskBranch, findBranchByIssueNumber, getOctokit } from '@/ui/cody/github-client'
 import { GITHUB_OWNER, GITHUB_REPO, TASK_ID_REGEX } from '@/ui/cody/constants'
 import type { ChatHistory } from '@/ui/cody/chat-types'
@@ -24,7 +24,7 @@ const saveChatSchema = z.object({
 })
 
 export async function POST(req: NextRequest) {
-  const authError = await requireAuth(req)
+  const authError = await requireCodyAuth(req)
   if (authError) return authError
 
   try {

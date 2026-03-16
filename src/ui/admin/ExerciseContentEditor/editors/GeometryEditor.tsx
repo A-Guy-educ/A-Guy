@@ -1,9 +1,12 @@
 'use client'
 
-import type { GeometrySpecV1 } from '@/infra/contracts/graphics/geometry.v1'
-import type { QuestionGeometryBlock } from '@/server/payload/collections/Exercises/types'
-import { CollapsibleSection } from '@/ui/admin/shared/CollapsibleSection'
 import React, { useCallback } from 'react'
+import type {
+  QuestionGeometryBlock,
+  GraphLayout,
+} from '@/server/payload/collections/Exercises/types'
+import type { GeometrySpecV1 } from '@/infra/contracts/graphics/geometry.v1'
+import { CollapsibleSection } from '@/ui/admin/shared/CollapsibleSection'
 import { AnglesPanel } from '../components/geometry/AnglesPanel'
 import { CanvasConfigPanel } from '../components/geometry/CanvasConfigPanel'
 import { CirclesPanel } from '../components/geometry/CirclesPanel'
@@ -105,6 +108,20 @@ export const GeometryEditor: React.FC<GeometryEditorProps> = ({ block, onChange 
           onChange={(prompt) => onChange({ ...block, prompt })}
           placeholder="Enter your geometry question..."
         />
+      </div>
+
+      <div className="question-editor-section">
+        <label className="question-editor-label">Layout</label>
+        <select
+          className="w-full p-2 border border-input rounded-md bg-background text-foreground"
+          value={block.layout || 'textRight'}
+          onChange={(e) => onChange({ ...block, layout: e.target.value as GraphLayout })}
+        >
+          <option value="textAbove">Text Above, Graph Below</option>
+          <option value="textBelow">Text Below, Graph Above</option>
+          <option value="textLeft">Text Left, Graph Right</option>
+          <option value="textRight">Text Right, Graph Left</option>
+        </select>
       </div>
 
       <div className="question-editor-section">

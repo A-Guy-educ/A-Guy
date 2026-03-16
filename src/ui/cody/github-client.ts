@@ -15,6 +15,7 @@ import {
   CACHE_TTL,
   BRANCH_CACHE_TTL,
   TASK_ID_REGEX,
+  ALL_STAGES,
 } from './constants'
 import type {
   CodyPipelineStatus,
@@ -66,6 +67,43 @@ function setCache<T>(
     etag: options?.etag,
     lastModified: options?.lastModified,
   })
+}
+
+/**
+ * Invalidate specific cache keys by prefix
+ * More targeted than clearing the entire cache
+ */
+function invalidateCache(prefix: string): void {
+  for (const key of cache.keys()) {
+    if (key.startsWith(prefix)) {
+      cache.delete(key)
+    }
+  }
+}
+
+/**
+ * Targeted cache invalidation by category
+ * Instead of clearing everything, only clear relevant caches
+ */
+export function invalidateTaskCache(): void {
+  invalidateCache('issues-')
+  invalidateCache('workflow-')
+}
+
+export function invalidatePRCache(): void {
+  invalidateCache('prs-')
+  invalidateCache('pr-')
+}
+
+export function invalidateBoardCache(): void {
+  invalidateCache('boards-')
+  invalidateCache('labels-')
+  invalidateCache('milestones-')
+}
+
+export function invalidateBranchCache(): void {
+  invalidateCache('branches-')
+  invalidateCache('refs-')
 }
 
 // ============ Octokit Singleton ============
@@ -205,21 +243,53 @@ export async function findBranchByIssueNumber(
  * - Derives `currentStage` from stages data if not set (finds the running stage)
  * - Maps `cursor` field to `currentStage` as fallback
  */
-function normalizePipelineStatus(status: CodyPipelineStatus): CodyPipelineStatus {
+export function normalizePipelineStatus(status: CodyPipelineStatus): CodyPipelineStatus {
   let currentStage = status.currentStage
 
   // If currentStage is not set, derive it from stages data
   if (!currentStage && status.stages) {
-    // Find the stage that is currently running
-    const runningEntry = Object.entries(status.stages).find(([, data]) => data.state === 'running')
+    const stageEntries = Object.entries(status.stages)
+
+    // 1. Find a stage that is currently running
+    const runningEntry = stageEntries.find(([, data]) => data.state === 'running')
     if (runningEntry) {
       currentStage = runningEntry[0]
     }
-    // If no running stage but pipeline is paused, find the paused stage
-    if (!currentStage && status.state === 'paused') {
-      const pausedEntry = Object.entries(status.stages).find(([, data]) => data.state === 'paused')
+
+    // 2. Find a paused stage (pipeline gated)
+    if (!currentStage) {
+      const pausedEntry = stageEntries.find(([, data]) => data.state === 'paused')
       if (pausedEntry) {
         currentStage = pausedEntry[0]
+      }
+    }
+
+    // 3. Derive from stage completion: walk ALL_STAGES in order,
+    //    find the first stage with data that is NOT completed/skipped (= where we are now).
+    //    Stages without data entries are skipped (they may not be tracked).
+    if (!currentStage) {
+      for (const stage of ALL_STAGES) {
+        const data = status.stages[stage]
+        if (!data) continue // Stage not tracked — skip
+        if (data.state !== 'completed' && data.state !== 'skipped') {
+          // This stage hasn't finished — it's the current position
+          currentStage = stage
+          break
+        }
+      }
+    }
+
+    // 4. If ALL known stages are completed/skipped, use the last completed stage
+    if (!currentStage && stageEntries.length > 0) {
+      let lastCompleted: string | null = null
+      for (const stage of ALL_STAGES) {
+        const data = status.stages[stage]
+        if (data && (data.state === 'completed' || data.state === 'skipped')) {
+          lastCompleted = stage
+        }
+      }
+      if (lastCompleted) {
+        currentStage = lastCompleted
       }
     }
   }
@@ -555,6 +625,7 @@ export async function fetchWorkflowRuns(options?: {
     updated_at: run.updated_at,
     html_url: run.html_url,
     display_title: (run as any).display_title ?? '',
+    head_branch: (run as any).head_branch ?? undefined,
   }))
 
   setCache(cacheKey, CACHE_TTL.pipeline, runs)
@@ -947,8 +1018,8 @@ export async function closePR(prNumber: number): Promise<void> {
     state: 'closed',
   })
 
-  // Invalidate PR cache
-  cache.clear()
+  // Invalidate PR cache only
+  invalidatePRCache()
 }
 
 /**
@@ -979,8 +1050,9 @@ export async function deleteBranch(branchName: string): Promise<void> {
     throw error
   }
 
-  // Invalidate cache
-  cache.clear()
+  // Invalidate branch and task caches
+  invalidateBranchCache()
+  invalidateTaskCache()
 }
 
 /**
@@ -1220,8 +1292,8 @@ export async function createIssue(options: {
     assignees: options.assignees,
   })
 
-  // Invalidate issues cache
-  cache.clear()
+  // Invalidate task-related caches only (not PRs, boards, etc.)
+  invalidateTaskCache()
 
   return {
     id: data.id,
@@ -1301,8 +1373,8 @@ export async function updateIssue(
     assignees: options.assignees,
   })
 
-  // Invalidate cache
-  cache.clear()
+  // Invalidate task cache
+  invalidateTaskCache()
   cache.delete(`comments:${issueNumber}`)
 }
 
@@ -1319,8 +1391,8 @@ export async function addAssignees(issueNumber: number, assignees: string[]): Pr
     assignees,
   })
 
-  // Invalidate cache
-  cache.clear()
+  // Invalidate task cache
+  invalidateTaskCache()
 }
 
 /**
@@ -1336,8 +1408,8 @@ export async function removeAssignees(issueNumber: number, assignees: string[]):
     assignees,
   })
 
-  // Invalidate cache
-  cache.clear()
+  // Invalidate task cache
+  invalidateTaskCache()
 }
 
 /**
@@ -1353,8 +1425,8 @@ export async function addLabels(issueNumber: number, labels: string[]): Promise<
     labels,
   })
 
-  // Invalidate cache
-  cache.clear()
+  // Invalidate task cache
+  invalidateTaskCache()
 }
 
 /**
@@ -1370,8 +1442,8 @@ export async function removeLabel(issueNumber: number, label: string): Promise<v
     name: label,
   })
 
-  // Invalidate cache
-  cache.clear()
+  // Invalidate task cache
+  invalidateTaskCache()
 }
 
 /**
@@ -1406,6 +1478,31 @@ export async function fetchCollaborators(): Promise<GitHubCollaborator[]> {
  */
 export function clearCache(): void {
   cache.clear()
+}
+
+/**
+ * Clear specific cache categories
+ */
+export function clearCacheByCategory(
+  category: 'all' | 'tasks' | 'prs' | 'boards' | 'branches',
+): void {
+  switch (category) {
+    case 'all':
+      cache.clear()
+      break
+    case 'tasks':
+      invalidateTaskCache()
+      break
+    case 'prs':
+      invalidatePRCache()
+      break
+    case 'boards':
+      invalidateBoardCache()
+      break
+    case 'branches':
+      invalidateBranchCache()
+      break
+  }
 }
 
 /**

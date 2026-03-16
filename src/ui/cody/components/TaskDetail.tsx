@@ -19,7 +19,6 @@ import { ConfirmDialog } from './ConfirmDialog'
 import { CommentEditor } from './CommentEditor'
 import { CommentList } from './CommentList'
 import { AssigneePicker, type AssigneeChangeEvent } from './AssigneePicker'
-import { MergeButton } from './MergeButton'
 import { SimpleTooltip } from './SimpleTooltip'
 import { WorkflowRunsPopover } from './WorkflowRunsPopover'
 import { Button } from '@/ui/web/components/button'
@@ -53,15 +52,19 @@ import {
   Timer,
   ArrowLeft,
   Eye,
+  Pencil,
+  Copy,
+  ListPlus,
+  ListMinus,
 } from 'lucide-react'
 
 interface TaskDetailProps {
-  onApproveReview?: (task: CodyTask) => Promise<void>
-  isMerging?: boolean
   task: CodyTask | null
   onClose?: () => void
   onRefresh?: () => void
   onOpenPreview?: () => void
+  onEditTask?: (task: CodyTask) => void
+  onDuplicate?: (task: CodyTask) => void
 }
 
 interface FullTaskDetails extends CodyTask {
@@ -138,7 +141,7 @@ const columnLabels: Record<ColumnId, string> = {
   building: 'Building',
   review: 'In Review',
   failed: 'Failed',
-  'gate-waiting': 'Gate Waiting',
+  'gate-waiting': 'Needs Approval',
   retrying: 'Retrying',
   done: 'Done',
 }
@@ -277,6 +280,7 @@ function getOverflowActions(
   taskActions: ReturnType<typeof useTaskActions>,
   completedActions: Set<string>,
   setCompletedActions: React.Dispatch<React.SetStateAction<Set<string>>>,
+  onDuplicate?: (task: CodyTask) => void,
 ): Array<{
   icon: React.ElementType
   label: string
@@ -323,6 +327,31 @@ function getOverflowActions(
     })
   }
 
+  // Queue: Add to Queue (only if task has no queue-related labels)
+  const queueLabels = ['cody:queued', 'cody:queue-active', 'cody:queue-failed']
+  const hasQueueLabel = task.labels.some((l) => queueLabels.includes(l))
+
+  if (!hasQueueLabel && task.state === 'open') {
+    actions.push({
+      icon: ListPlus,
+      label: 'Add to Queue',
+      pendingLabel: 'Adding…',
+      onClick: () => taskActions.addToQueue(),
+      pendingKey: 'add-to-queue',
+    })
+  }
+
+  // Queue: Remove from Queue (only if task is queued but not active)
+  if (task.labels.includes('cody:queued')) {
+    actions.push({
+      icon: ListMinus,
+      label: 'Remove from Queue',
+      pendingLabel: 'Removing…',
+      onClick: () => taskActions.removeFromQueue(),
+      pendingKey: 'remove-from-queue',
+    })
+  }
+
   // Close PR
   if (task.associatedPR && task.associatedPR.state === 'open') {
     actions.push({
@@ -332,6 +361,17 @@ function getOverflowActions(
       onClick: () => taskActions.closePR(),
       pendingKey: 'close-pr',
       confirmMessage: `Close PR #${task.associatedPR.number}? This will NOT delete the branch.`,
+    })
+  }
+
+  // Duplicate Task
+  if (onDuplicate) {
+    actions.push({
+      icon: Copy,
+      label: 'Duplicate Task',
+      pendingLabel: 'Duplicating…',
+      onClick: () => onDuplicate(task),
+      pendingKey: 'duplicate',
     })
   }
 
@@ -564,9 +604,9 @@ export function TaskDetail({
   task,
   onClose,
   onRefresh,
-  onApproveReview,
-  isMerging: externalIsMerging,
   onOpenPreview,
+  onEditTask,
+  onDuplicate,
 }: TaskDetailProps) {
   const { githubUser } = useGitHubIdentity()
   const actorLogin = githubUser?.login
@@ -698,6 +738,7 @@ export function TaskDetail({
     taskActions,
     completedActions,
     setCompletedActions,
+    onDuplicate,
   )
 
   // --- Shared markdown components ---
@@ -1115,46 +1156,6 @@ export function TaskDetail({
             </span>
           </div>
           <div className="flex items-center gap-1 shrink-0">
-            {/* Merge button (in review) */}
-            {task.column === 'review' && task.associatedPR && onApproveReview && (
-              <MergeButton
-                prNumber={task.associatedPR.number}
-                prTitle={task.associatedPR.title}
-                branchName={task.associatedPR.head.ref}
-                isMerging={externalIsMerging ?? false}
-                onMerge={() => onApproveReview(task)}
-                labels={task.labels}
-              />
-            )}
-
-            {/* Approve UI button - when task has PR and UI not yet approved */}
-            {task.associatedPR && !task.labels?.includes('ui-approved') && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 gap-1.5 text-xs font-medium rounded-lg text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
-                onClick={() => taskActions.approveUI?.()}
-                disabled={taskActions.isPending}
-              >
-                <CheckCircle className="w-3 h-3" />
-                Approve UI
-              </Button>
-            )}
-
-            {/* Approve PR button - when task has PR */}
-            {task.associatedPR && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 gap-1.5 text-xs font-medium rounded-lg text-purple-400 border-purple-500/30 hover:bg-purple-500/10"
-                onClick={() => taskActions.approvePR?.()}
-                disabled={taskActions.isPending}
-              >
-                <GitPullRequest className="w-3 h-3" />
-                Approve PR
-              </Button>
-            )}
-
             {/* Contextual primary action */}
             {primaryAction && (
               <Button
@@ -1188,6 +1189,21 @@ export function TaskDetail({
             />
 
             <span className="w-px h-5 bg-white/[0.06] mx-0.5" />
+
+            {/* Edit button — only for backlog items */}
+            {onEditTask && task && task.column === 'open' && (
+              <SimpleTooltip content="Edit task" side="bottom">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onEditTask(task)}
+                  aria-label="Edit task"
+                  className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-muted-foreground"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </Button>
+              </SimpleTooltip>
+            )}
 
             <SimpleTooltip content="Refresh" side="bottom">
               <Button
@@ -1259,6 +1275,43 @@ export function TaskDetail({
               />
             </div>
           </div>
+
+          {/* Priority */}
+          {task.labels
+            .filter((l) => l.startsWith('priority:'))
+            .map((priorityLabel) => {
+              const priority = priorityLabel.replace('priority:', '')
+              const colors: Record<string, { bg: string; text: string; border: string }> = {
+                P0: { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30' },
+                P1: {
+                  bg: 'bg-orange-500/20',
+                  text: 'text-orange-400',
+                  border: 'border-orange-500/30',
+                },
+                P2: { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30' },
+                P3: { bg: 'bg-zinc-500/20', text: 'text-zinc-400', border: 'border-zinc-500/30' },
+              }
+              const c = colors[priority] || colors.P3
+              return (
+                <div key={priorityLabel} className="space-y-2">
+                  <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-0.5">
+                    Priority
+                  </h4>
+                  <div className="flex flex-wrap gap-1 px-0.5">
+                    <span
+                      className={cn(
+                        'inline-flex px-2.5 py-1 text-xs font-bold rounded-md border',
+                        c.bg,
+                        c.text,
+                        c.border,
+                      )}
+                    >
+                      {priority}
+                    </span>
+                  </div>
+                </div>
+              )
+            })}
 
           {/* Labels */}
           {task.labels.length > 0 && (
@@ -1461,46 +1514,6 @@ export function TaskDetail({
 
       {/* Bottom toolbar — single row, always visible */}
       <div className="shrink-0 border-t border-white/10 bg-card px-3 py-2 flex items-center gap-1.5 overflow-x-auto">
-        {/* Merge button */}
-        {task.column === 'review' && task.associatedPR && onApproveReview && (
-          <MergeButton
-            prNumber={task.associatedPR.number}
-            prTitle={task.associatedPR.title}
-            branchName={task.associatedPR.head.ref}
-            isMerging={externalIsMerging ?? false}
-            onMerge={() => onApproveReview(task)}
-            labels={task.labels}
-          />
-        )}
-
-        {/* Approve UI button - mobile */}
-        {task.associatedPR && !task.labels?.includes('ui-approved') && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-9 gap-1.5 text-xs font-medium shrink-0 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
-            onClick={() => taskActions.approveUI?.()}
-            disabled={taskActions.isPending}
-          >
-            <CheckCircle className="w-3.5 h-3.5" />
-            Approve UI
-          </Button>
-        )}
-
-        {/* Approve PR button - mobile */}
-        {task.associatedPR && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-9 gap-1.5 text-xs font-medium shrink-0 text-purple-400 border-purple-500/30 hover:bg-purple-500/10"
-            onClick={() => taskActions.approvePR?.()}
-            disabled={taskActions.isPending}
-          >
-            <GitPullRequest className="w-3.5 h-3.5" />
-            Approve PR
-          </Button>
-        )}
-
         {/* Primary action */}
         {primaryAction && (
           <Button

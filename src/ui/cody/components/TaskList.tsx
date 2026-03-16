@@ -38,6 +38,9 @@ import {
   RefreshCw,
   Eye,
   Inbox,
+  Pencil,
+  Copy,
+  ListPlus,
 } from 'lucide-react'
 
 interface TaskListProps {
@@ -45,6 +48,7 @@ interface TaskListProps {
   selectedTask?: CodyTask | null
   executingTaskId?: string | null
   mergingTaskId?: string | null
+  focusedIndex?: number
   onTaskSelect?: (task: CodyTask | null) => void
   onExecuteTask?: (taskId: string) => void
   onStopTask?: (task: CodyTask) => void
@@ -55,6 +59,9 @@ interface TaskListProps {
   collaborators?: { login: string; avatar_url: string }[]
   onOpenPreview?: (task: CodyTask) => void
   onCreateTask?: () => void
+  onEditTask?: (task: CodyTask) => void
+  onDuplicate?: (task: CodyTask) => void
+  onToggleQueue?: (task: CodyTask) => void
 }
 
 // ── Status colors — single source of truth ──
@@ -115,7 +122,7 @@ const statusLabel: Record<ColumnId, string> = {
   building: 'Building',
   review: 'In Review',
   failed: 'Failed',
-  'gate-waiting': 'Gate',
+  'gate-waiting': 'Needs Approval',
   retrying: 'Retrying',
   done: 'Done',
 }
@@ -132,8 +139,12 @@ export function TaskList({
   onTaskHover,
   onAssign,
   onUnassign: _onUnassign,
+  focusedIndex,
   onOpenPreview,
   onCreateTask,
+  onEditTask,
+  onDuplicate,
+  onToggleQueue,
   collaborators = [],
 }: TaskListProps) {
   const handleTaskClick = useCallback(
@@ -167,9 +178,10 @@ export function TaskList({
   }
 
   return (
-    <div className="divide-y divide-white/[0.06]">
-      {tasks.map((task) => {
+    <div className="divide-y divide-white/[0.06]" role="listbox" aria-label="Tasks">
+      {tasks.map((task, index) => {
         const isSelected = task.id === selectedTask?.id
+        const isFocused = index === focusedIndex
         const canExecute = task.state === 'open' && onExecuteTask
         const isExecuting = executingTaskId === task.id
         const hasPR = !!task.associatedPR
@@ -188,13 +200,23 @@ export function TaskList({
         return (
           <div
             key={task.id}
+            role="option"
+            aria-selected={isSelected}
+            tabIndex={0}
             onClick={() => handleTaskClick(task)}
             onMouseEnter={() => onTaskHover?.(task)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                handleTaskClick(task)
+              }
+            }}
             className={cn(
               'group relative cursor-pointer transition-colors duration-100 border-l-2 border-l-transparent',
               'hover:bg-white/[0.04]',
               colors.bg,
               isSelected && cn('bg-white/[0.06] border-l-2', colors.border),
+              isFocused && 'ring-1 ring-blue-500/40 bg-blue-500/5',
               isHardStop && 'ring-1 ring-red-500/30 ring-inset',
             )}
           >
@@ -309,6 +331,30 @@ export function TaskList({
                       </span>
                     </SimpleTooltip>
                   )}
+
+                  {/* Priority badge */}
+                  {task.labels
+                    .filter((l) => l.startsWith('priority:'))
+                    .map((priorityLabel) => {
+                      const priority = priorityLabel.replace('priority:', '')
+                      const colors: Record<string, string> = {
+                        P0: 'bg-red-500/20 text-red-400 border-red-500/30',
+                        P1: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+                        P2: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+                        P3: 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30',
+                      }
+                      return (
+                        <span
+                          key={priorityLabel}
+                          className={cn(
+                            'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold border',
+                            colors[priority] || 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30',
+                          )}
+                        >
+                          {priority}
+                        </span>
+                      )
+                    })}
 
                   {/* Active pipeline progress — inline dots + stage label */}
                   {isActive && <MiniPipelineProgress task={task} variant="inline" />}
@@ -473,6 +519,84 @@ export function TaskList({
                     </Select>
                   </div>
                 )}
+
+                {/* Edit button — only for backlog items */}
+                {onEditTask && task.column === 'open' && (
+                  <SimpleTooltip content="Edit task" side="bottom">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onEditTask(task)
+                      }}
+                      aria-label="Edit task"
+                      className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-foreground hover:bg-white/[0.06]"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </Button>
+                  </SimpleTooltip>
+                )}
+
+                {/* Duplicate button */}
+                {onDuplicate && (
+                  <SimpleTooltip content="Duplicate task" side="bottom">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onDuplicate(task)
+                      }}
+                      aria-label="Duplicate task"
+                      className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-foreground hover:bg-white/[0.06]"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </Button>
+                  </SimpleTooltip>
+                )}
+
+                {/* Queue toggle */}
+                {onToggleQueue &&
+                  (() => {
+                    const isQueued = task.labels.includes('cody:queued')
+                    const isQueueActive = task.labels.includes('cody:queue-active')
+                    const isQueueFailed = task.labels.includes('cody:queue-failed')
+                    // Hide if task is actively being processed or already failed in queue
+                    if (isQueueActive) return null
+                    return (
+                      <SimpleTooltip
+                        content={
+                          isQueued
+                            ? 'Remove from queue'
+                            : isQueueFailed
+                              ? 'Re-add to queue'
+                              : 'Add to queue'
+                        }
+                        side="bottom"
+                      >
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onToggleQueue(task)
+                          }}
+                          aria-label={isQueued ? 'Remove from queue' : 'Add to queue'}
+                          className={cn(
+                            'h-7 w-7 p-0 transition-colors',
+                            isQueued
+                              ? 'text-purple-400 bg-purple-500/15 hover:bg-purple-500/25'
+                              : isQueueFailed
+                                ? 'text-red-400/60 hover:text-purple-400 hover:bg-purple-500/15'
+                                : 'text-muted-foreground/50 hover:text-purple-400 hover:bg-purple-500/15',
+                          )}
+                        >
+                          <ListPlus className="w-3.5 h-3.5" />
+                        </Button>
+                      </SimpleTooltip>
+                    )
+                  })()}
               </div>
             </div>
 

@@ -5,6 +5,7 @@ import sharp from 'sharp'
 import { fileURLToPath } from 'url'
 
 import { getServerSideURL } from '@/infra/utils/getURL'
+import { AccessCodes } from '@/server/payload/collections/AccessCodes'
 import { Categories } from '@/server/payload/collections/Categories'
 import { Chapters } from '@/server/payload/collections/Chapters'
 import { ChatAssets } from '@/server/payload/collections/ChatAssets'
@@ -167,6 +168,7 @@ export default buildConfig({
     UploadSessions,
     Posts,
     PricingPlans,
+    AccessCodes,
     MCPAuditLogs,
   ],
   cors: [getServerSideURL()].filter(Boolean),

@@ -18,6 +18,7 @@ import {
   fetchWorkflowRuns,
 } from '@/ui/cody/github-client'
 import { parseAllComments } from '@/ui/cody/task-parser'
+import { matchWorkflowRunToTask } from '@/ui/cody/workflow-matching'
 import type {
   CodyTask,
   GitHubIssue,
@@ -145,7 +146,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ task
           findAssociatedPRByIssueNumber(issueNumberFromUrl),
         ])
 
-        const workflowRun = runs.find((r) => r.html_url.includes(issueNumberFromUrl.toString()))
+        const workflowRun = matchWorkflowRunToTask(runs, issue.title, issueNumberFromUrl, taskId)
 
         let pipeline = null
         if (branch) {
@@ -180,29 +181,44 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ task
     }
 
     // Fallback: Search through all issues if taskId is not numeric (e.g., task ID like "260221-feature")
-    // This is less efficient but handles task ID lookups
+    // Optimized: Fetch all issues AND their comments in parallel batches to reduce N+1
     const issues = await fetchIssues({ state: 'all', perPage: 100 })
+
+    // Fetch comments for all issues in parallel (max 10 concurrent to avoid rate limits)
+    const BATCH_SIZE = 10
+    const issueComments: Map<number, Awaited<ReturnType<typeof fetchComments>>> = new Map()
+
+    for (let i = 0; i < issues.length; i += BATCH_SIZE) {
+      const batch = issues.slice(i, i + BATCH_SIZE)
+      const results = await Promise.all(
+        batch.map((issue) => fetchComments(issue.number).catch(() => [])),
+      )
+      batch.forEach((issue, idx) => {
+        issueComments.set(issue.number, results[idx])
+      })
+    }
 
     // Find the issue that has this task ID in comments
     for (const issue of issues) {
-      const comments = await fetchComments(issue.number)
+      const comments = issueComments.get(issue.number) || []
       const parsed = parseAllComments(comments)
       const taskMarker = parsed.find((c) => c.type === 'task-marker')
 
       if (taskMarker?.taskId === taskId) {
-        // Get workflow runs
-        const runs = await fetchWorkflowRuns({ perPage: 50 })
-        const workflowRun = runs.find((r) => r.html_url.includes(taskId))
+        // Get workflow runs, branch, and PR in parallel
+        const [runs, branch, associatedPR] = await Promise.all([
+          fetchWorkflowRuns({ perPage: 50 }),
+          findTaskBranch(taskId),
+          findAssociatedPRByIssueNumber(issue.number),
+        ])
+
+        const workflowRun = matchWorkflowRunToTask(runs, issue.title, issue.number, taskId)
 
         // Get pipeline status
-        const branch = await findTaskBranch(taskId)
         let pipeline = null
         if (branch) {
           pipeline = await getStatusFromBranch(taskId, branch)
         }
-
-        // Get associated PR
-        const associatedPR = await findAssociatedPRByIssueNumber(issue.number)
 
         // Build task
         const task = buildCodyTask({

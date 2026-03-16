@@ -162,6 +162,7 @@ export const Lessons: CollectionConfig = {
           label: 'Gated (5-Minute Delay)',
           value: 'gated',
         },
+        { label: 'Paid (Requires Entitlement)', value: 'paid' },
       ],
       admin: {
         position: 'sidebar',

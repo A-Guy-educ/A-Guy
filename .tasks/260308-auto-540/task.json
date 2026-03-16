@@ -1,0 +1,35 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.85,
+  "primary_domain": "backend",
+  "scope": [
+    "PDF-to-exercise conversion v3",
+    "prompt selection UI",
+    "exercise generation phase",
+    "verification phase"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The system already has a 'saved prompts' collection/structure to store predefined prompts",
+    "The v3 PDF-to-exercise conversion endpoint already exists and can be extended",
+    "There is an existing admin interface where this prompt selection can be added",
+    "The exercise generation and verification phases are separate steps in the v3 flow"
+  ],
+  "review_questions": [
+    "Should the prompt selection UI be a modal, dropdown, or inline selection?",
+    "What is the exact mechanism to ensure the selected prompt is excluded from the verification phase?",
+    "Are there any existing prompt-related endpoints or hooks that should be reused?"
+  ],
+  "complexity": 49,
+  "complexity_reasoning": "Scope: 12 (4-6 files across admin UI and backend services). Risk: 10 (non-critical business logic, UI components). Novelty: 8 (extending existing v3 pattern). Cross-Domain: 8 (backend + frontend). Ambiguity: 5 (clear intent, some implementation details to figure out). Dependencies: 6 (depends on saved prompts system and v3 conversion). Total: 49",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Input contains ## Description with detailed feature requirements and ## Acceptance Criteria with 4 checkable items. Promoted spec.md to skip redundant spec stage."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

@@ -10,6 +10,7 @@ import {
 } from '@/ui/web/components/select'
 import { cookieName, getDirection, isForcedLocaleDomain, type Locale, locales } from '@/i18n/config'
 import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
+import { Globe } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
@@ -67,22 +68,23 @@ export function LanguageSwitcher({ portalContainer }: LanguageSwitcherProps = {}
   const isOnForcedDomain =
     typeof window !== 'undefined' && isForcedLocaleDomain(window.location.host)
 
-  const localeLabels: Record<Locale, string> = {
-    en: t('english'),
-    he: t('hebrew'),
+  const nativeLocaleLabels: Record<Locale, string> = {
+    en: 'English',
+    he: 'עברית',
   }
 
   return (
     <div className="flex items-center gap-2">
       <Select value={displayLocale} onValueChange={handleLocaleChange} disabled={isOnForcedDomain}>
-        <SelectTrigger className="w-[150px]">
+        <SelectTrigger className="w-[150px] min-h-[44px]">
+          <Globe className="h-4 w-4 shrink-0 opacity-70" />
           <SelectValue placeholder={t('label')} />
         </SelectTrigger>
         <SelectContent container={portalContainer}>
           <SelectGroup>
             {locales.map((loc) => (
               <SelectItem key={loc} value={loc}>
-                {localeLabels[loc]}
+                {nativeLocaleLabels[loc]}
               </SelectItem>
             ))}
           </SelectGroup>

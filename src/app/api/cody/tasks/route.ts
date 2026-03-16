@@ -6,7 +6,7 @@
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
-import { requireCodyAuth } from '@/ui/cody/auth'
+import { requireCodyAuth, verifyActorLogin } from '@/ui/cody/auth'
 
 import {
   fetchIssues,
@@ -18,6 +18,7 @@ import {
   findStatusOnBranch,
   createIssue,
   uploadIssueAttachment,
+  postComment,
 } from '@/ui/cody/github-client'
 import type {
   CodyTask,
@@ -27,6 +28,7 @@ import type {
   WorkflowRun,
   CodyPipelineStatus,
 } from '@/ui/cody/types'
+import { matchWorkflowRunToTask } from '@/ui/cody/workflow-matching'
 
 /**
  * Derive column from live pipeline status.
@@ -168,15 +170,8 @@ export async function GET(req: NextRequest) {
       fetchOpenPRs(),
     ])
 
-    // Build a map of most recent workflow run per issue title for fast lookup
-    const runsByTitle = new Map<string, (typeof workflowRuns)[number]>()
-    for (const run of workflowRuns) {
-      const title = run.display_title || ''
-      // Keep only the most recent run per title (runs are sorted by date desc)
-      if (title && !runsByTitle.has(title)) {
-        runsByTitle.set(title, run)
-      }
-    }
+    // Workflow runs are matched per-task below using matchWorkflowRunToTask()
+    // which prefers active (in_progress/queued) runs over stale completed ones.
 
     // Build PR lookup: match by title or by issue number in branch name
     const prsByIssueTitle = new Map<string, (typeof openPRs)[number]>()
@@ -217,13 +212,8 @@ export async function GET(req: NextRequest) {
         const taskIdMatch = issue.title.match(/\[[^\]]+\]/)
         const taskId = taskIdMatch ? taskIdMatch[0].replace(/[\[\]]/g, '') : ''
 
-        // Match workflow run by issue title (most reliable) or taskId
-        const workflowRun =
-          runsByTitle.get(issue.title) ??
-          workflowRuns.find(
-            (run) =>
-              taskId && (run.html_url.includes(taskId) || run.display_title?.includes(taskId)),
-          )
+        // Match workflow run — prefers active (in_progress) runs over stale completed ones
+        const workflowRun = matchWorkflowRunToTask(workflowRuns, issue.title, issue.number, taskId)
 
         // Match PR from pre-fetched bulk data (cheap, no extra API calls)
         const pr = prsByIssueTitle.get(issue.title) ?? prsByIssueNumber.get(issue.number) ?? null
@@ -399,12 +389,20 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { title, body: issueBody, labels, assignees, attachments, actorLogin } = body
 
+    // Verify actorLogin matches the authenticated session (prevents impersonation)
+    const actorResult = await verifyActorLogin(req, actorLogin)
+    if (actorResult instanceof NextResponse) return actorResult
+    const { identity } = actorResult
+
+    // Use verified identity's login for attribution
+    const verifiedLogin = identity.login
+
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
     }
 
-    // Create the issue in GitHub
-    const actorNote = actorLogin ? `\n\n---\n_Created by @${actorLogin} via Cody dashboard_` : ''
+    // Create the issue in GitHub - use verified login for attribution
+    const actorNote = `\n\n---\n_Created by @${verifiedLogin} via Cody dashboard_`
     const issue = await createIssue({
       title,
       body: (issueBody || '') + actorNote,
@@ -413,6 +411,15 @@ export async function POST(req: NextRequest) {
     })
 
     console.log('[Cody] Created issue:', issue.number, issue.title)
+
+    // Auto-trigger pipeline by commenting @cody on the issue
+    try {
+      await postComment(issue.number, '@cody')
+      console.log('[Cody] Triggered pipeline for issue:', issue.number)
+    } catch (triggerError: any) {
+      console.error('[Cody] Failed to trigger pipeline:', triggerError.message)
+      // Don't fail the whole request if trigger fails - task was still created
+    }
 
     // Upload attachments if provided
     const uploadedAttachments = []

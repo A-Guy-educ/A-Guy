@@ -13,15 +13,7 @@ import { MergeButton } from './MergeButton'
 import { FixRequestDialog } from './FixRequestDialog'
 import { AddCommentDialog } from './AddCommentDialog'
 import { ConfirmDialog } from './ConfirmDialog'
-import {
-  XCircle,
-  Wrench,
-  Loader2,
-  CheckCircle,
-  GitPullRequest,
-  SquareSplitHorizontal,
-  MessageSquare,
-} from 'lucide-react'
+import { XCircle, Wrench, Loader2, CheckCircle, GitPullRequest, MessageSquare } from 'lucide-react'
 import { tasksApi, prsApi } from '../api'
 import { useGitHubIdentity } from '../hooks/useGitHubIdentity'
 import { toast } from 'sonner'
@@ -110,27 +102,6 @@ export function PreviewActions({
     }
   }
 
-  const handleSplitView = () => {
-    if (!task.previewUrl) {
-      toast.error('No preview URL available')
-      return
-    }
-    // Open preview in a new window
-    const previewWindow = window.open(
-      task.previewUrl,
-      'preview-window',
-      'width=800,height=900,left=400,top=100',
-    )
-    if (previewWindow) {
-      toast.message('Preview opened', {
-        description: 'Resize your browser window to the left half for side-by-side view',
-        duration: 5000,
-      })
-    } else {
-      toast.error('Failed to open preview. Check popup blocker.')
-    }
-  }
-
   return (
     <>
       <div
@@ -167,19 +138,6 @@ export function PreviewActions({
           <GitPullRequest className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">Approve PR</span>
         </Button>
-
-        {/* Split View */}
-        {task.previewUrl && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSplitView}
-            className="gap-1.5 text-blue-400 border-blue-500/30 hover:bg-blue-500/10"
-          >
-            <SquareSplitHorizontal className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Split View</span>
-          </Button>
-        )}
 
         {/* Merge */}
         <div className="flex items-center gap-1.5">

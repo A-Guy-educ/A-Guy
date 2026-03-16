@@ -319,7 +319,21 @@
     "gatedLockedDescription": "התצוגה החינמית הסתיימה. התחבר עם Google כדי להמשיך ללמוד.",
     "signInPrompt": "התחבר כדי לפתוח גישה מלאה",
     "warningCountdown": "{{seconds}} שניות נותרו",
-    "browseCourses": "עיון בקורסים"
+    "browseCourses": "עיון בקורסים",
+    "paidTitle": "תוכן פרימיום",
+    "paidNotLoggedIn": "יש להתחבר כדי לגשת לתוכן זה.",
+    "paidNoEntitlement": "תוכן זה דורש רכישה. הזן קוד גישה למטה או פנה למנהל המערכת.",
+    "codePlaceholder": "הזן קוד גישה",
+    "codeSubmit": "מימוש קוד",
+    "codeSubmitting": "ממש...",
+    "codeInvalid": "קוד גישה לא תקין.",
+    "codeInactive": "קוד זה אינו פעיל יותר.",
+    "codeExpired": "פג תוקף הקוד.",
+    "codeExhausted": "קוד זה הגיע למגבלת השימוש שלו.",
+    "codeAlreadyUsed": "כבר יש לך גישה לקורס זה.",
+    "codeError": "משהו השתבש. נסה שוב.",
+    "codeSuccessTitle": "איזה כיף שנרשמת!",
+    "codeSuccessMessage": "חודש מתנה עלינו!"
   },
   "study": {
     "loading": "טוען...",

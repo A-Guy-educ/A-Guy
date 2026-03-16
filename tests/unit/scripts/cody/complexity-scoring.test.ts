@@ -21,10 +21,15 @@ import {
   resolvePipelineProfile,
   getComplexityTier,
   getStagesForComplexity,
-  STAGE_COMPLEXITY_THRESHOLDS,
   COMPLEXITY_MIN,
   COMPLEXITY_MAX,
 } from '../../../../scripts/cody/pipeline-utils'
+import { STAGE_REGISTRY, STAGE_NAMES } from '../../../../scripts/cody/stages/registry'
+
+// Backward-compat shim for tests: reconstruct STAGE_COMPLEXITY_THRESHOLDS from registry
+const STAGE_COMPLEXITY_THRESHOLDS: Record<string, number> = Object.fromEntries(
+  STAGE_NAMES.map((s) => [s, STAGE_REGISTRY[s].complexityThreshold]),
+)
 import type { TaskDefinition } from '../../../../scripts/cody/pipeline-utils'
 
 // Helper: create a temp task directory with a task.json
@@ -656,7 +661,7 @@ describe('definitions.ts skip chain integration', () => {
     const pipeline = buildPipeline('full', 'standard', true, ctx)
 
     // All optional stages should NOT be skipped by complexity
-    for (const stageName of ['gap', 'clarify', 'architect', 'plan-gap']) {
+    for (const stageName of ['gap', 'clarify', 'architect', 'plan-gap'] as const) {
       const stage = pipeline.stages.get(stageName)!
       if (stage.shouldSkip) {
         const result = stage.shouldSkip(ctx)
