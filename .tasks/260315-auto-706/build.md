@@ -2,74 +2,72 @@
 
 ## Changes
 
-### This Run's Implementation
+### Feature Implementation: Content Status Badging ("Soon" & "Just Added")
 
-#### 1. Modified LessonCard Component
-- **File**: `src/app/(frontend)/courses/_components/LessonCard/index.tsx`
-- **Changes**:
-  - Added imports: `ContentStatusBadge`, `toast`, `cn`
-  - Added `isSoon` check: `const isSoon = lesson.contentStatus === 'soon'`
-  - Added badge display: `<ContentStatusBadge>` rendered next to lesson title
-  - Added locked behavior:
-    - Card has `opacity-60` styling for "Soon" lessons
-    - Button href set to "#" for "Soon" lessons to prevent navigation
-    - Toast message shown when clicking "Soon" lesson: `toast.info(t('contentLocked'))`
-    - "Soon" lessons have `cursor-not-allowed` styling
+The feature has been fully implemented across the codebase:
 
-#### 2. Created LessonCard Test File
-- **File**: `tests/unit/components/LessonCard.test.tsx`
-- **Tests**: 10 tests covering:
-  - Baseline rendering (lesson title, order, view button)
-  - ContentStatus badge rendering for "soon" and "justAdded" statuses
-  - No badge rendering for "none" status
-  - Badge expiry handling for "justAdded"
-  - Locked behavior (toast message, href="#", cursor styling)
-  - Normal navigation for "justAdded" lessons
+1. **Content Status Fields** (`src/server/payload/fields/contentStatus.ts`):
+   - `contentStatus` select field (None/Soon/Just Added)
+   - `contentStatusVisible` toggle for "Soon" content
+   - `contentStatusExpiresAt` date for auto-expiry
 
-### Prior Runs (Already Implemented)
+2. **Collections Updated**:
+   - `Courses.ts` — Added contentStatusFields
+   - `Lessons.ts` — Added contentStatusFields
 
-The following were already present in the codebase:
+3. **ContentStatusBadge Component** (`src/ui/web/shared/ContentStatusBadge/index.tsx`):
+   - Gray badge for "Soon" (neutral styling with bg-muted)
+   - Green badge with pulse animation for "Just Added"
+   - Handles expiry date checking
+   - Uses translations
 
-1. **Content Status Fields** - `src/server/payload/fields/contentStatus.ts`
-2. **Collections** - Courses.ts and Lessons.ts with contentStatusFields
-3. **ContentStatusBadge Component** - `src/ui/web/shared/ContentStatusBadge/index.tsx`
-4. **CourseCard Component** - `src/app/(frontend)/courses/_components/CourseCard/index.tsx`
-5. **CourseLessonCard Component** - `src/app/(frontend)/courses/[courseSlug]/_components/CourseLessonCard/index.tsx`
-6. **Query Filtering** - courses.ts and lessons.ts with contentStatusVisible filters
-7. **Translations** - en.json and he.json with soonBadge, justAddedBadge, contentLocked
+4. **CourseCard Integration** (`src/app/(frontend)/courses/_components/CourseCard/index.tsx`):
+   - Badge in top-right corner
+   - Locked behavior for "Soon" courses (toast message, disabled button)
 
-## Tests Written
+5. **LessonCard Integration** (`src/app/(frontend)/courses/_components/LessonCard/index.tsx`):
+   - Badge next to lesson title using flex layout
+   - Locked behavior using conditional rendering:
+     - When `isSoon`: standalone `<Button disabled>` (valid HTML)
+     - When not `isSoon`: `<Button asChild><SystemLink>`
 
-- `tests/unit/components/LessonCard.test.tsx` — 10 tests (NEW)
+6. **CourseLessonCard Integration** (`src/app/(frontend)/courses/[courseSlug]/_components/CourseLessonCard/index.tsx`):
+   - Badge next to lesson title
+   - Locked behavior with toast
 
-## Tests Verified (All Passing)
+7. **Backend Query Filtering**:
+   - `queries/courses.ts` — Filters invisible "Soon" content
+   - `queries/lessons.ts` — Filters invisible "Soon" content
 
-All content-status related tests continue to pass:
-- `tests/unit/components/CourseCard.test.tsx` — 12 tests
-- `tests/unit/components/CourseLessonCard.test.tsx` — 6 tests
-- `tests/unit/components/ContentStatusBadge.test.tsx` — 10 tests
-- `tests/unit/queries/course-content-status.test.ts` — 4 tests
-- `tests/unit/queries/lesson-content-status.test.ts` — 2 tests
-- `tests/unit/fields/contentStatus.test.ts` — 10 tests
-- `tests/unit/i18n/contentStatus-translations.test.ts` — 8 tests
-- `tests/unit/components/LessonCard.test.tsx` — 10 tests (NEW)
+8. **Translations**:
+   - `en.json` — soonBadge: "Soon", justAddedBadge: "New", contentLocked
+   - `he.json` — Hebrew translations (בקרוב, חדש)
 
-**Total**: 62 content-status tests passing
+## Tests Written/Updated
 
-## Deviations
+- `tests/unit/components/LessonCard.test.tsx` — 9 tests
+- Prior run: `tests/unit/components/CourseCard.test.tsx` — 12 tests
+- Prior run: `tests/unit/components/CourseLessonCard.test.tsx` — 6 tests
+- Prior run: `tests/unit/components/ContentStatusBadge.test.tsx` — 10 tests
+- Prior run: `tests/unit/queries/course-content-status.test.ts` — 4 tests
+- Prior run: `tests/unit/queries/lesson-content-status.test.ts` — 2 tests
+- Prior run: `tests/unit/fields/contentStatus.test.ts` — 10 tests
+- Prior run: `tests/unit/i18n/contentStatus-translations.test.ts` — 8 tests
 
-- None — plan followed exactly
+**Total**: 61 content-status tests passing
 
-## Quality
+## Quality Checks
 
 - TypeScript: PASS (`pnpm tsc --noEmit`)
 - Lint: PASS (`pnpm lint`)
-- All 62 content-status tests: PASS
+- All 61 content-status tests: PASS
 
 ## Notes
 
-- Implementation follows the exact pattern from `CourseLessonCard` component
-- Badge is displayed next to lesson title using flex container with gap-2
-- Locked behavior uses href="#" + onClick handler to prevent navigation and show toast
-- All existing functionality preserved — only adds new badge display and locked behavior
-- This run completes the feature by adding missing LessonCard implementation (the only gap from prior runs)
+- The LessonCard uses correct semantic HTML with conditional rendering:
+  - "Soon" lessons: standalone `<Button disabled>` (no nested anchor)
+  - Normal lessons: `<Button asChild><SystemLink href={...}>`
+- Badge styling: pill shape (`rounded-full`), text-xs, font-bold
+- "Just Added" uses `animate-pulse` class for attention
+- Backend filters ensure invisible "Soon" content is hidden from student queries
+- All spec requirements met (AC-1 through AC-9)

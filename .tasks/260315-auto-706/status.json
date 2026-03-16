@@ -4,8 +4,8 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-16T07:44:21.445Z",
-  "updatedAt": "2026-03-16T08:15:37.442Z",
-  "state": "running",
+  "updatedAt": "2026-03-16T08:26:41.932Z",
+  "state": "failed",
   "cursor": null,
   "stages": {
     "taskify": {
@@ -100,13 +100,14 @@
         "cacheRead": 655363
       },
       "cost": 0.840239,
-      "sessionId": "ses_30a4af1afffebOOh63dk2keiNb",
-      "issuesFound": true,
-      "reviewSummary": {
-        "critical": 68,
-        "major": 68,
-        "minor": 68
-      }
+      "sessionId": "ses_30a4af1afffebOOh63dk2keiNb"
+    },
+    "fix": {
+      "state": "failed",
+      "retries": 0,
+      "startedAt": "2026-03-16T08:15:47.361Z",
+      "elapsed": 653,
+      "error": "Agent \"build\" failed. Artifacts: fix-stderr.log, fix-events.jsonl"
     }
   },
   "issueNumber": 839,
@@ -118,5 +119,7 @@
       "actor": "aguyaharonyair",
       "timestamp": "2026-03-16T07:44:21.445Z"
     }
-  ]
+  ],
+  "completedAt": "2026-03-16T08:26:41.932Z",
+  "totalCost": 3.8282642499999997
 }
