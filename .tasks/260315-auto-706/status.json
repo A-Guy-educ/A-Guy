@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-16T07:44:21.445Z",
-  "updatedAt": "2026-03-16T11:12:59.807Z",
+  "updatedAt": "2026-03-16T11:19:56.166Z",
   "state": "running",
   "cursor": "architect",
   "stages": {
@@ -112,7 +112,23 @@
     "fix": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-16T11:12:59.807Z"
+      "startedAt": "2026-03-16T11:19:56.166Z",
+      "completedAt": "2026-03-16T11:17:41.425Z",
+      "elapsed": 282,
+      "outputFile": "fix.md",
+      "tokenUsage": {
+        "input": 15075,
+        "output": 1963,
+        "cacheRead": 351474
+      },
+      "sessionId": "ses_309a69054ffeYEkUsaa8mqiqS5",
+      "fixAttempt": 1,
+      "maxFixAttempts": 2
+    },
+    "verify": {
+      "state": "pending",
+      "retries": 0,
+      "startedAt": "2026-03-16T11:17:52.019Z"
     }
   },
   "issueNumber": 839,

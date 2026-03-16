@@ -23,7 +23,7 @@ describe('contentStatus translations', () => {
     it('contains courses.contentLocked key', () => {
       expect(enMessages.courses).toBeDefined()
       expect((enMessages.courses as Record<string, unknown>).contentLocked).toBe(
-        'This content is being prepared and will be available soon.'
+        'This content is being prepared and will be available soon.',
       )
     })
   })
@@ -42,7 +42,7 @@ describe('contentStatus translations', () => {
     it('contains courses.contentLocked key', () => {
       expect(heMessages.courses).toBeDefined()
       expect((heMessages.courses as Record<string, unknown>).contentLocked).toBe(
-        'תוכן זה בהכנה ויהיה זמין בקרוב.'
+        'תוכן זה בהכנה ויהיה זמין בקרוב.',
       )
     })
   })
