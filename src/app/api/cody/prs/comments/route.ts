@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { handleCodyApiError } from '@/ui/cody/github-error-handler'
-import { requireAuth } from '@/ui/cody/auth'
+import { requireCodyAuth } from '@/ui/cody/auth'
 import { fetchPRComments, postComment, clearCache } from '@/ui/cody/github-client'
 
 const getSchema = z.object({
@@ -22,7 +22,7 @@ const postSchema = z.object({
 })
 
 export async function GET(req: NextRequest) {
-  const authError = await requireAuth(req)
+  const authError = await requireCodyAuth(req)
   if (authError) return authError
 
   try {
@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const authError = await requireAuth(req)
+  const authError = await requireCodyAuth(req)
   if (authError) return authError
 
   try {

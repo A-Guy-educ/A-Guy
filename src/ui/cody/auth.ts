@@ -78,12 +78,10 @@ export async function requireAuth(req: NextRequest): Promise<NextResponse | null
 
 /**
  * Require GitHub OAuth session for Cody API routes.
- * Returns the verified GitHubIdentity, or a 401 NextResponse if not authenticated.
+ * Returns null on success (authenticated), or a 401 NextResponse if not authenticated.
  * Use this instead of requireAuth for routes that should be accessible to any repo collaborator.
  */
-export async function requireCodyAuth(
-  req: NextRequest,
-): Promise<{ identity: CodyGitHubIdentity } | NextResponse> {
+export async function requireCodyAuth(req: NextRequest): Promise<null | NextResponse> {
   const identity = await verifyCodySession(req)
   if (!identity) {
     return NextResponse.json(
@@ -91,7 +89,7 @@ export async function requireCodyAuth(
       { status: 401 },
     )
   }
-  return { identity }
+  return null
 }
 
 /**
@@ -108,12 +106,15 @@ export async function verifyActorLogin(
 ): Promise<{ identity: CodyGitHubIdentity } | NextResponse> {
   // First verify the user is authenticated
   const authResult = await requireCodyAuth(req)
-  if ('status' in authResult) {
+  if (authResult !== null) {
     // Return the 401 response
     return authResult
   }
 
-  const { identity } = authResult
+  const identity = await verifyCodySession(req)
+  if (!identity) {
+    return NextResponse.json({ message: 'Authentication failed' }, { status: 401 })
+  }
 
   // If no actorLogin was supplied, use the authenticated user's login
   if (!suppliedLogin) {

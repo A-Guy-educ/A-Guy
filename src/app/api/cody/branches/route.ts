@@ -6,7 +6,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { requireAuth } from '@/ui/cody/auth'
+import { requireCodyAuth } from '@/ui/cody/auth'
 import { GITHUB_OWNER, GITHUB_REPO } from '@/ui/cody/constants'
 import { getOctokit } from '@/ui/cody/github-client'
 
@@ -20,7 +20,7 @@ const BULK_DELETE_SCHEMA = z.object({
 
 // GET /api/cody/branches - List branches from GitHub
 export async function GET(req: NextRequest) {
-  const authError = await requireAuth(req)
+  const authError = await requireCodyAuth(req)
   if (authError) return authError
 
   try {
@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
 
 // DELETE /api/cody/branches - Delete a single branch
 export async function DELETE(req: NextRequest) {
-  const authError = await requireAuth(req)
+  const authError = await requireCodyAuth(req)
   if (authError) return authError
 
   try {
@@ -116,7 +116,7 @@ export async function DELETE(req: NextRequest) {
 
 // POST /api/cody/branches - Bulk delete branches
 export async function POST(req: NextRequest) {
-  const authError = await requireAuth(req)
+  const authError = await requireCodyAuth(req)
   if (authError) return authError
 
   try {

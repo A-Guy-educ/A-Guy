@@ -577,7 +577,7 @@ export async function GET(req: NextRequest) {
   try {
     // Check authentication using GitHub OAuth
     const authResult = await requireCodyAuth(req)
-    if ('status' in authResult) {
+    if (authResult !== null) {
       return authResult // Return the 401 response
     }
 
