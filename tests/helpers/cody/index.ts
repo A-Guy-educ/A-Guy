@@ -13,3 +13,9 @@ export {
   MOCK_SPEC_MD,
 } from './fixtures'
 export { createMockRunnerBackend, createMockPipelineContext } from './pipeline-test-harness'
+export {
+  expectPipelineContains,
+  expectStageOrder,
+  expectMinimumStages,
+  expectNoGhostStages,
+} from './assertions'

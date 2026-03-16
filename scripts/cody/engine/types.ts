@@ -74,6 +74,18 @@ export interface StageDefinition {
    * Used when a stage should run a different agent (e.g., fix stage runs build agent).
    */
   agentName?: string
+  /**
+   * Declarative retry loop: when this stage fails, reset both this stage
+   * and `retryWith.stage` to pending, up to `retryWith.maxAttempts` times.
+   */
+  retryWith?: {
+    stage: StageName
+    maxAttempts: number
+    /** Called before retry to capture failure details (e.g., write verify-failures.md) */
+    onFailure?: (ctx: PipelineContext, taskDir: string) => Promise<void>
+    /** When the retryWith.stage times out: 'retry' resets this stage to pending; 'fail' fails the pipeline */
+    onTimeout?: 'retry' | 'fail'
+  }
 }
 
 // ============================================================================

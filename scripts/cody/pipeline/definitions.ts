@@ -36,6 +36,8 @@ import {
   createDocsValidator,
   createTestValidator,
 } from './validators'
+import { captureVerifyFailures } from './verify-failures'
+import { DEFAULT_MAX_FIX_ATTEMPTS } from '../config/constants'
 import {
   skipIfInputQuality,
   skipIfClarifyDisabled,
@@ -333,6 +335,12 @@ No critical gaps identified. Plan was refined in-place.
     type: 'scripted',
     timeout: getStageTimeout('verify'),
     maxRetries: 0,
+    retryWith: {
+      stage: 'fix',
+      maxAttempts: DEFAULT_MAX_FIX_ATTEMPTS,
+      onFailure: captureVerifyFailures,
+      onTimeout: 'retry',
+    },
     postActions: [
       // LOCAL-ONLY commit of task files after verify completes (G18)
       // NOT the autofix commit - that's inside ScriptedVerifyHandler

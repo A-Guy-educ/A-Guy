@@ -16,11 +16,7 @@ import type {
 } from './types'
 import type { StageName } from '../stages/registry'
 import { logger, ciGroup, ciGroupEnd } from '../logger'
-import {
-  MAX_PIPELINE_LOOP_ITERATIONS,
-  RECOVERY_CHECK_INTERVAL,
-  MAX_GATE_OUTPUT_CHARS,
-} from '../config/constants'
+import { MAX_PIPELINE_LOOP_ITERATIONS, RECOVERY_CHECK_INTERVAL } from '../config/constants'
 import { PipelinePausedError } from './types'
 import {
   loadState,
@@ -35,8 +31,6 @@ import { getHandler } from '../handlers/handler'
 import { setLifecycleLabel } from '../github-api'
 import { executePostAction } from '../pipeline/post-actions'
 import { flattenPipelineOrder } from '../pipeline/definitions'
-import * as fs from 'fs'
-import * as path from 'path'
 
 /**
  * Error subclass that carries the originating stage name for parallel error attribution
@@ -308,7 +302,7 @@ async function executeSingleStep(
     const handler = getHandler(def.name, def.type)
     const result = await handler.execute(ctx, def)
     ciGroupEnd()
-    return await handleStageResult(ctx, state, stageName, result, def)
+    return await handleStageResult(ctx, pipeline, state, stageName, result, def)
   } catch (error) {
     ciGroupEnd()
     if (error instanceof PipelinePausedError) {
@@ -573,6 +567,7 @@ async function executeParallelStep(
  */
 async function handleStageResult(
   ctx: PipelineContext,
+  pipeline: PipelineDefinition,
   state: PipelineStateV2,
   stageName: string,
   result: StageResult,
@@ -610,66 +605,34 @@ async function handleStageResult(
       }
     }
   } else if (result.outcome === 'failed') {
-    // VERIFY LOOP: Check if verify failed and we should retry with fix
-    if (stageName === 'verify' && !def.advisory) {
-      const maxAttempts = state.stages['fix']?.maxFixAttempts ?? 2
-      const currentAttempt = state.stages['fix']?.fixAttempt ?? 0
+    // Generic declarative retry via retryWith
+    if (def.retryWith && !def.advisory) {
+      const { stage: retryStage, maxAttempts, onFailure } = def.retryWith
+      const retryState = state.stages[retryStage]
+      const currentAttempt = retryState?.fixAttempt ?? 0
 
       if (currentAttempt < maxAttempts) {
-        // Capture verify failures for fix stage
-        const verifyFailuresPath = path.join(ctx.taskDir, 'verify-failures.md')
-        const errorOutput = result.reason || 'Verify failed - check logs'
-
-        // Capture detailed output from individual gate output files.
-        // runVerifyStage writes <gate-name>-output.txt for each failed gate.
-        let detailedOutput = errorOutput
-        try {
-          const gateFiles = [
-            { name: 'TypeScript Errors', file: 'typescript-output.txt' },
-            { name: 'Lint Errors', file: 'lint-output.txt' },
-            { name: 'Format Errors', file: 'format-output.txt' },
-            { name: 'Unit Test Errors', file: 'unit-tests-output.txt' },
-          ]
-          const parts = [`# Verify Failures\n\n${errorOutput}`]
-          for (const gate of gateFiles) {
-            const gatePath = path.join(ctx.taskDir, gate.file)
-            if (fs.existsSync(gatePath)) {
-              const gateOutput = fs.readFileSync(gatePath, 'utf-8').slice(0, MAX_GATE_OUTPUT_CHARS)
-              parts.push(`## ${gate.name}\n\`\`\`\n${gateOutput}\n\`\`\``)
-            }
-          }
-          detailedOutput = parts.join('\n\n')
-        } catch {
-          // Gate output files may not exist, use basic error
+        if (onFailure) {
+          await onFailure(ctx, ctx.taskDir)
         }
 
-        try {
-          fs.writeFileSync(verifyFailuresPath, detailedOutput)
-          if (!fs.existsSync(verifyFailuresPath)) {
-            logger.warn('verify-failures.md was not created after write — fix stage may skip')
-          }
-        } catch (writeErr) {
-          logger.warn(`Failed to write verify-failures.md: ${writeErr}`)
-        }
-
-        // Increment fix attempt and reset fix + verify to pending
-        const newFixAttempt = currentAttempt + 1
-        state = updateStage(state, 'fix', {
+        const newAttempt = currentAttempt + 1
+        state = updateStage(state, retryStage, {
           state: 'pending',
-          fixAttempt: newFixAttempt,
+          fixAttempt: newAttempt,
           maxFixAttempts: maxAttempts,
         })
-        state = updateStage(state, 'verify', { state: 'pending' })
+        state = updateStage(state, stageName, { state: 'pending' })
         writeState(ctx.taskId, state)
 
-        logger.info(`🔄 Verify failed, looping to fix (attempt ${newFixAttempt}/${maxAttempts})`)
-
-        // Return state WITHOUT calling completeState('failed')
-        // The main while(true) loop will continue and resolveNextStep
-        // will find 'fix' as next pending stage
+        logger.info(
+          `🔄 ${stageName} failed, looping to ${retryStage} (attempt ${newAttempt}/${maxAttempts})`,
+        )
         return state
       } else {
-        logger.error(`Max fix attempts (${maxAttempts}) reached, pipeline failing`)
+        logger.error(
+          `Max retry attempts (${maxAttempts}) reached for ${retryStage}, pipeline failing`,
+        )
         // Fall through to normal failure handling
       }
     }
@@ -696,17 +659,19 @@ async function handleStageResult(
       error: result.reason,
     })
 
-    // FIX TIMEOUT RECOVERY: When the fix stage times out, don't immediately fail
-    // the pipeline. The fix agent may have committed partial work via its post-actions
-    // (commit-task-files with tracked+task). Let verify run to check if the partial
-    // fix was enough. If verify passes, pipeline succeeds. If verify fails, the normal
-    // verify→fix retry loop will handle it (or max attempts will fail the pipeline).
-    if (stageName === 'fix') {
-      logger.info('⚠️ Fix stage timed out — running verify to check if partial fixes suffice')
-      // Reset verify to pending so it runs next
-      state = updateStage(state, 'verify', { state: 'pending' })
+    // Generic timeout recovery: if any stage declares retryWith pointing to this
+    // timed-out stage with onTimeout: 'retry', reset that stage to pending so it
+    // can re-evaluate (e.g., verify checks if partial fix work was enough).
+    const retryingDef = [...pipeline.stages.values()].find(
+      (s) => s.retryWith?.stage === stageName && s.retryWith.onTimeout === 'retry',
+    )
+    if (retryingDef) {
+      logger.info(
+        `⚠️ ${stageName} timed out — running ${retryingDef.name} to check if partial work suffices`,
+      )
+      state = updateStage(state, retryingDef.name, { state: 'pending' })
       writeState(ctx.taskId, state)
-      return state // Don't fail pipeline — let verify check
+      return state // Don't fail pipeline — let the retrying stage check
     }
 
     if (!def.advisory) {

@@ -38,6 +38,7 @@
     "ii": "cross-env NODE_OPTIONS=--no-deprecation pnpm --ignore-workspace install",
     "lint": "cross-env NODE_OPTIONS=--no-deprecation next lint",
     "lint:fix": "cross-env NODE_OPTIONS=--no-deprecation next lint --fix",
+    "lint:test-fragility": "tsx scripts/lint-test-fragility.ts",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,md,yml,yaml}\"",
     "fix": "pnpm lint:fix && pnpm format",

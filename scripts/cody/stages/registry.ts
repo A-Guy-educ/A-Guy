@@ -36,6 +36,26 @@ export const STAGE_NAMES = [
 
 export type StageName = (typeof STAGE_NAMES)[number]
 
+/**
+ * Named constant object for stage names — provides compile-time typo detection
+ * and single-point rename capability. Use STAGES.BUILD instead of 'build' in new code.
+ */
+export const STAGES = {
+  TASKIFY: 'taskify',
+  GAP: 'gap',
+  CLARIFY: 'clarify',
+  ARCHITECT: 'architect',
+  PLAN_GAP: 'plan-gap',
+  TEST: 'test',
+  BUILD: 'build',
+  COMMIT: 'commit',
+  REVIEW: 'review',
+  FIX: 'fix',
+  VERIFY: 'verify',
+  DOCS: 'docs',
+  PR: 'pr',
+} as const satisfies Record<string, StageName>
+
 // ============================================================================
 // Stage Metadata
 // ============================================================================
