@@ -113,6 +113,15 @@ export const Users: CollectionConfig = {
       },
     },
     {
+      name: 'entitlements',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/ui/admin/UserEntitlements#UserEntitlementsField',
+        },
+      },
+    },
+    {
       name: 'oauthLoginSecretEnc',
       type: 'text',
       // Encrypted secret for payload.login() - required for OAuth users

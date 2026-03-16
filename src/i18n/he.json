@@ -322,7 +322,16 @@
     "browseCourses": "עיון בקורסים",
     "paidTitle": "תוכן פרימיום",
     "paidNotLoggedIn": "יש להתחבר כדי לגשת לתוכן זה.",
-    "paidNoEntitlement": "תוכן זה דורש רכישה. פנה למנהל המערכת לקבלת גישה."
+    "paidNoEntitlement": "תוכן זה דורש רכישה. הזן קוד גישה למטה או פנה למנהל המערכת.",
+    "codePlaceholder": "הזן קוד גישה",
+    "codeSubmit": "מימוש קוד",
+    "codeSubmitting": "ממש...",
+    "codeInvalid": "קוד גישה לא תקין.",
+    "codeInactive": "קוד זה אינו פעיל יותר.",
+    "codeExpired": "פג תוקף הקוד.",
+    "codeExhausted": "קוד זה הגיע למגבלת השימוש שלו.",
+    "codeAlreadyUsed": "כבר יש לך גישה לקורס זה.",
+    "codeError": "משהו השתבש. נסה שוב."
   },
   "study": {
     "loading": "טוען...",

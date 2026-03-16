@@ -94,6 +94,7 @@ export interface Config {
     posts: Post;
     'pricing-plans': PricingPlan;
     'user-entitlements': UserEntitlement;
+    'access-codes': AccessCode;
     'mcp-audit-logs': McpAuditLog;
     redirects: Redirect;
     forms: Form;
@@ -134,6 +135,7 @@ export interface Config {
     posts: PostsSelect<false> | PostsSelect<true>;
     'pricing-plans': PricingPlansSelect<false> | PricingPlansSelect<true>;
     'user-entitlements': UserEntitlementsSelect<false> | UserEntitlementsSelect<true>;
+    'access-codes': AccessCodesSelect<false> | AccessCodesSelect<true>;
     'mcp-audit-logs': McpAuditLogsSelect<false> | McpAuditLogsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
@@ -2003,6 +2005,49 @@ export interface UserEntitlement {
   createdAt: string;
 }
 /**
+ * Manage access codes that grant course entitlements
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "access-codes".
+ */
+export interface AccessCode {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * The code students will enter (e.g., MACCABI-2024)
+   */
+  code: string;
+  /**
+   * The course this code grants access to
+   */
+  course: string | Course;
+  /**
+   * Maximum number of times this code can be used (0 = unlimited)
+   */
+  maxUses?: number | null;
+  /**
+   * How many times this code has been redeemed
+   */
+  currentUses?: number | null;
+  /**
+   * Whether this code can currently be redeemed
+   */
+  isActive?: boolean | null;
+  /**
+   * Optional expiration date (leave empty for no expiry)
+   */
+  expiresAt?: string | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "mcp-audit-logs".
  */
@@ -2413,6 +2458,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'user-entitlements';
         value: string | UserEntitlement;
+      } | null)
+    | ({
+        relationTo: 'access-codes';
+        value: string | AccessCode;
       } | null)
     | ({
         relationTo: 'mcp-audit-logs';
@@ -3183,6 +3232,22 @@ export interface UserEntitlementsSelect<T extends boolean = true> {
   lesson?: T;
   grantMethod?: T;
   grantedBy?: T;
+  expiresAt?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "access-codes_select".
+ */
+export interface AccessCodesSelect<T extends boolean = true> {
+  tenant?: T;
+  code?: T;
+  course?: T;
+  maxUses?: T;
+  currentUses?: T;
+  isActive?: T;
   expiresAt?: T;
   createdBy?: T;
   updatedAt?: T;
