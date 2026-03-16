@@ -793,8 +793,10 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
                     <SimpleTooltip
                       content={
                         notificationPermission === 'granted'
-                          ? 'Notifications enabled'
-                          : 'Enable notifications'
+                          ? `Notifications enabled (${notificationPermission})`
+                          : notificationPermission === 'denied'
+                            ? `Notifications blocked (${notificationPermission}) - check browser settings`
+                            : `Enable notifications (${notificationPermission})`
                       }
                       side="bottom"
                     >
@@ -810,7 +812,9 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
                         className={
                           notificationPermission === 'granted'
                             ? 'text-green-500'
-                            : 'text-muted-foreground'
+                            : notificationPermission === 'denied'
+                              ? 'text-red-500'
+                              : 'text-muted-foreground'
                         }
                       >
                         <Bell className="w-4 h-4" />

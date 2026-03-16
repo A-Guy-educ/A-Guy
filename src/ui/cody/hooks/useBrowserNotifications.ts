@@ -63,7 +63,8 @@ export function useBrowserNotifications({
   // Send a notification
   const sendNotification = useCallback(
     (title: string, body: string, options?: NotificationOptions) => {
-      if (!isSupported || permission !== 'granted') {
+      // Check permission directly from browser API, not React state (may be stale)
+      if (!isSupported || Notification.permission !== 'granted') {
         return null
       }
 
@@ -80,14 +81,42 @@ export function useBrowserNotifications({
         notification.close()
       }
 
+      // Play notification sound using Web Audio API (no external file needed)
+      try {
+        const AudioContextClass =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+        const audioContext = new AudioContextClass()
+        const oscillator = audioContext.createOscillator()
+        const gainNode = audioContext.createGain()
+
+        oscillator.connect(gainNode)
+        gainNode.connect(audioContext.destination)
+
+        oscillator.frequency.value = 800 // Hz
+        oscillator.type = 'sine'
+        gainNode.gain.value = 0.3 // Volume
+
+        oscillator.start()
+        oscillator.stop(audioContext.currentTime + 0.15) // 150ms beep
+      } catch {
+        // Audio not supported
+      }
+
       return notification
     },
-    [isSupported, permission],
+    [isSupported],
   )
 
-  // Request permission when user clicks the button
+  // Request or toggle permission when user clicks the button
   const requestPermission = useCallback(async () => {
     if (!isSupported) return
+
+    if (Notification.permission === 'granted') {
+      // Already granted - no way to revoke via API, but we can track "disabled" state
+      // User must go to browser settings to revoke
+      return
+    }
 
     if (Notification.permission === 'default') {
       const perm = await Notification.requestPermission()
