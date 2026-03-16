@@ -2,83 +2,105 @@
 
 ## Summary
 
-- Gaps Found: 6
+- Gaps Found: 2
 - Spec Revised: Yes
 
 ## Gaps Found
 
-### Gap 1: Missing Type Generation Requirement
+### Gap 1: LessonCard Missing ContentStatusBadge
 
 **Severity:** High
-**Location:** Technical Notes section
-**Issue:** The spec didn't mention the requirement to run `pnpm generate:types` after modifying Payload CMS collections. This is a critical step in the development workflow.
-**Fix Applied:** Added FR-002 to Technical Notes specifying that `pnpm generate:types` must be run after schema changes and types imported from `@/payload-types`.
+**Location:** `src/app/(frontend)/courses/_components/LessonCard/index.tsx`
+**Issue:** The LessonCard component does NOT display the ContentStatusBadge. According to the task requirements:
+- "Soon" badge should appear on Lesson cards
+- "Just Added" badge should appear on Lesson cards
+- Badge placement: "Next to the lesson title or the progress circle"
 
-### Gap 2: Missing Translation Keys
+**Current State:**
+- Courses (CourseCard): ✅ Has ContentStatusBadge + locked behavior
+- Lessons (LessonCard): ❌ Missing ContentStatusBadge + locked behavior
+
+**Fix Required:**
+1. Import ContentStatusBadge and toast
+2. Add badge rendering next to lesson title
+3. Add locked behavior to prevent navigation for "Soon" lessons
+
+### Gap 2: LessonCard Missing Locked Behavior for "Soon" Lessons
 
 **Severity:** High
-**Location:** i18n files (he.json, en.json)
-**Issue:** The spec didn't specify exact translation keys needed for the badge labels and locked message. The project uses both Hebrew and English translations.
-**Fix Applied:** Added FR-003 specifying translation keys:
-- `courses.contentStatus.soon`
-- `courses.contentStatus.justAdded`
-- `courses.contentLocked`
+**Location:** `src/app/(frontend)/courses/_components/LessonCard/index.tsx`
+**Issue:** When a lesson has "Soon" status:
+- Students should NOT be able to click into it
+- Clicking should show the toast message: "This content is being prepared and will be available soon"
+- The button should be disabled with appropriate styling
 
-### Gap 3: Missing Access Control Implementation Details
+**Current State:**
+- CourseCard: ✅ Implements locked behavior with toast message
+- LessonCard: ❌ No lock behavior - always navigates
 
-**Severity:** High
-**Location:** Access control integration
-**Issue:** The spec mentioned "access control hook for Soon content locking" but didn't specify how to integrate with the existing `publishedAndActive` pattern found in the codebase.
-**Fix Applied:** Added FR-004 specifying two approaches:
-1. Extend existing `publishedAndActive` access control
-2. Create new `publishedAndActiveWithStatus` that handles "Soon" visibility
-
-### Gap 4: Missing UI Locked Message Display
-
-**Severity:** Medium
-**Location:** Frontend components
-**Issue:** The spec mentions showing a message when students click "Soon" content but doesn't specify HOW (Toast? Modal? Inline message?).
-**Fix Applied:** Added FR-005 specifying to use existing Toast/Notification pattern or create a Modal for displaying the locked message.
-
-### Gap 5: Missing Pulse Animation Details
-
-**Severity:** Medium
-**Location:** Design Guidelines
-**Issue:** The spec mentions "subtle pulse animation" but doesn't specify implementation details. Should use Tailwind's animate-pulse or custom CSS.
-**Fix Applied:** Added FR-006 specifying to use Tailwind animation classes or custom CSS keyframe animation.
-
-### Gap 6: Field Naming and Structure
-
-**Severity:** Medium
-**Location:** Collection schema
-**Issue:** The spec mentioned "Status Selector" and "Visibility Toggle" but didn't define specific field names and types. Need consistent naming with existing collections.
-**Fix Applied:** Added FR-001 with specific field definitions:
-- `contentStatus`: select ('none' | 'soon' | 'justAdded')
-- `contentStatusVisible`: checkbox (default: true)
-- `contentStatusExpiresAt`: date (optional)
+**Fix Required:**
+1. Check lesson.contentStatus === 'soon'
+2. Show toast message on click
+3. Disable navigation for "Soon" lessons
 
 ## Changes Made to Spec
 
-- Added FR-001: Content Status Field - Schema (field names and types)
-- Added FR-002: Type Generation (pnpm generate:types requirement)
-- Added FR-003: Translation Keys (i18n keys for badge labels)
-- Added FR-004: Access Control Integration (extends existing publishedAndActive)
-- Added FR-005: UI Component - Locked Message Display (Toast/Modal pattern)
-- Added FR-006: Pulse Animation (Tailwind or custom CSS)
+- **Updated spec.md** with complete implementation status:
+  - Marked existing implementations as ✅
+  - Marked LessonCard gaps as ❌
+  - Added specific file locations and code patterns to follow
+  - Added implementation details for the developer
 
-## No Gaps Found
+## Implementation Pattern
 
-- None. After exploration, additional requirements were identified and spec has been updated.
+The developer should follow the exact pattern from CourseCard (`src/app/(frontend)/courses/_components/CourseCard/index.tsx`):
+
+### Code to Add to LessonCard:
+
+```typescript
+// Imports
+import { ContentStatusBadge } from '@/ui/web/shared/ContentStatusBadge'
+import { toast } from 'sonnet'
+
+// Inside component:
+const isSoon = lesson.contentStatus === 'soon'
+
+// Badge display (in CardHeader, after title):
+<ContentStatusBadge
+  contentStatus={lesson.contentStatus}
+  contentStatusExpiresAt={lesson.contentStatusExpiresAt ?? undefined}
+/>
+
+// Locked behavior (handleClick or similar):
+const handleClick = () => {
+  if (isSoon) {
+    toast.info(t('contentLocked'))
+    return
+  }
+  // existing navigation
+}
+
+// Button disabled state:
+disabled={isSoon}
+```
 
 ## Validation Notes
 
-Explored the following codebase areas to validate spec alignment:
+Explored the following codebase areas:
 
-1. **Collections**: Read Courses.ts and Lessons.ts - both have existing `status` and `isActive` fields
-2. **Access Control**: Found `publishedAndActive` in `/src/server/payload/access/publishedAndActive.ts`
-3. **Components**: Found CourseCard at `/src/app/(frontend)/courses/_components/CourseCard/index.tsx` and CourseLessonCard at `/src/app/(frontend)/courses/[courseSlug]/_components/CourseLessonCard/index.tsx`
-4. **Badge Component**: Found existing Badge at `/src/ui/web/components/badge.tsx` (shadcn/ui pattern)
-5. **Translations**: Found i18n files at `/src/i18n/he.json` and `/src/i18n/en.json`
-6. **Type Definitions**: Found `payload-types.ts` at root - types generated from Payload
+| Component | Status | Location |
+|-----------|--------|----------|
+| contentStatusFields | ✅ Implemented | `src/server/payload/fields/contentStatus.ts` |
+| Courses collection | ✅ Has fields | `src/server/payload/collections/Courses.ts` |
+| Lessons collection | ✅ Has fields | `src/server/payload/collections/Lessons.ts` |
+| ContentStatusBadge UI | ✅ Implemented | `src/ui/web/shared/ContentStatusBadge/index.tsx` |
+| CourseCard Badge | ✅ Implemented | `src/app/(frontend)/courses/_components/CourseCard/index.tsx` |
+| LessonCard Badge | ❌ Missing | `src/app/(frontend)/courses/_components/LessonCard/index.tsx` |
+| Course locked behavior | ✅ Implemented | CourseCard handleCourseSelect |
+| Lesson locked behavior | ❌ Missing | LessonCard |
+| Translations | ✅ Implemented | `src/i18n/en.json`, `src/i18n/he.json` |
+| Query filtering | ✅ Implemented | `src/server/repos/queries/courses.ts`, `lessons.ts` |
 
-The spec is now complete and aligned with existing codebase patterns.
+## Conclusion
+
+The feature is **mostly implemented** with only the LessonCard component missing. The backend fields, ContentStatusBadge component, CourseCard integration, translations, and query filtering all work correctly. The only required change is adding the badge display and locked behavior to the LessonCard component.

@@ -2,7 +2,7 @@
 
 ## Tests Written
 
-This is a **rerun** of a fully complete feature. All implementation and tests were created in prior runs and are already present in the codebase. The plan indicates no new implementation is needed - only verification.
+This is a **rerun** - the feature was already implemented in prior runs. This test phase created additional tests for the LessonCard component to ensure complete coverage.
 
 ### Prior Run Test Files (Already Existing)
 
@@ -16,6 +16,10 @@ All test files were created in previous pipeline runs and are passing:
 - `tests/unit/fields/contentStatus.test.ts` — Field definition tests
 - `tests/unit/i18n/contentStatus-translations.test.ts` — Translation key tests
 
+### New Test Files Created This Run
+
+- `tests/unit/components/LessonCard.test.tsx` — LessonCard component tests (10 tests)
+
 ## Test Files
 
 | File | Test Count | Type |
@@ -25,10 +29,11 @@ All test files were created in previous pipeline runs and are passing:
 | tests/unit/components/CourseCard.test.tsx | 12 | unit |
 | tests/unit/components/CourseLessonCard.test.tsx | 6 | unit |
 | tests/unit/components/ContentStatusBadge.test.tsx | 10 | unit |
+| tests/unit/components/LessonCard.test.tsx | 10 | unit |
 | tests/unit/fields/contentStatus.test.ts | 10 | unit |
 | tests/unit/i18n/contentStatus-translations.test.ts | 8 | unit |
 
-**Total: 7 test files, 52 tests**
+**Total: 8 test files, 62 tests**
 
 ## Test Cases
 
@@ -70,6 +75,21 @@ All test files were created in previous pipeline runs and are passing:
 | does not render badge when contentStatus is none/undefined | unit | No badge for default status |
 | prevents navigation on click when lesson is "Soon" | unit | Shows toast with locked message |
 | allows navigation for "Just Added" lesson | unit | No toast, normal navigation |
+
+### LessonCard Component Tests (Unit)
+
+| Test Name | Type | Expected Behavior |
+|-----------|------|-------------------|
+| renders lesson title and basic info | unit | Displays lesson title, order number ("Lesson 1"), and view button |
+| renders "Soon" badge when lesson.contentStatus is "soon" | unit | Shows "Soon" text badge when lesson has soon status |
+| renders "New" badge when lesson.contentStatus is "justAdded" | unit | Shows "New" text badge when lesson has justAdded status |
+| does not render badge when contentStatus is "none" | unit | No badge displayed for default "none" status |
+| does not render badge when justAdded has expired date | unit | Badge hidden when contentStatusExpiresAt is in the past |
+| renders badge when justAdded has future expiry date | unit | Badge shown when contentStatusExpiresAt is in the future |
+| shows toast when clicking "Soon" lesson | unit | toast.info called with "prepared" message on click |
+| href is "#" when lesson is "Soon" to prevent navigation | unit | SystemLink has href="#" for locked lessons |
+| renders SystemLink for normal (non-soon) lessons | unit | SystemLink renders for normal lessons |
+| renders SystemLink for "justAdded" lessons (navigates normally) | unit | Correct href to lesson page, no toast shown |
 
 ### ContentStatusBadge Component Tests (Unit)
 
@@ -116,16 +136,18 @@ All test files were created in previous pipeline runs and are passing:
 
 ## Test Execution Results
 
-All 46 tests pass:
+All 62 tests pass:
 
 ```
 ✓ tests/unit/components/CourseCard.test.tsx (12 tests)
+✓ tests/unit/components/CourseLessonCard.test.tsx (6 tests)
+✓ tests/unit/components/LessonCard.test.tsx (10 tests)
 ✓ tests/unit/components/ContentStatusBadge.test.tsx (10 tests)
 ✓ tests/unit/queries/course-content-status.test.ts (4 tests)
 ✓ tests/unit/queries/lesson-content-status.test.ts (2 tests)
 ✓ tests/unit/fields/contentStatus.test.ts (10 tests)
 ✓ tests/unit/i18n/contentStatus-translations.test.ts (8 tests)
 
-Test Files: 6 passed (6)
-Tests: 46 passed (46)
+Test Files: 8 passed (8)
+Tests: 62 passed (62)
 ```

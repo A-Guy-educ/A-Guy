@@ -1,64 +1,50 @@
 # Codebase Context: 260315-auto-706
 
 ## Files to Modify
-None — implementation is complete from prior runs. All source files are present and tested.
+- `src/app/(frontend)/courses/_components/LessonCard/index.tsx` (all 53 lines, MODIFIED) — Add ContentStatusBadge display and locked behavior for "Soon" lessons
 
-## Files to Read (verify completeness)
-- `src/server/payload/fields/contentStatus.ts` — Field definitions (contentStatus, contentStatusVisible, contentStatusExpiresAt)
-- `src/server/payload/collections/Courses.ts` — contentStatusFields integrated at line 237
-- `src/server/payload/collections/Lessons.ts` — contentStatusFields integrated at line 257
-- `src/ui/web/shared/ContentStatusBadge/index.tsx` — Badge component with pill shape, gray/green styling, pulse animation
-- `src/app/(frontend)/courses/_components/CourseCard/index.tsx` — Badge, disabled button (line 131), toast for locked content
-- `src/app/(frontend)/courses/[courseSlug]/_components/CourseLessonCard/index.tsx` — Badge, href="#" for locked, toast handler
-- `src/server/repos/queries/courses.ts` — contentStatusVisible filter in queryCourseBySlug and queryPublishedCourses
-- `src/server/repos/queries/lessons.ts` — contentStatusVisible filter in queryLessonsByChapter, queryLessonBySlug, queryLessonsByCourse
-- `src/i18n/en.json` (lines 261-263) — soonBadge, justAddedBadge, contentLocked
-- `src/i18n/he.json` (lines 261-263) — soonBadge, justAddedBadge, contentLocked
+## Files to Create
+- `tests/unit/components/LessonCard.test.tsx` (NEW) — Unit tests for LessonCard badge and locked behavior
 
-## Test Files (all passing)
-- `tests/unit/queries/course-content-status.test.ts` — 4 tests, verifies query contentStatusVisible filtering
-- `tests/unit/queries/lesson-content-status.test.ts` — 2 tests, verifies query contentStatusVisible filtering
-- `tests/unit/components/CourseCard.test.tsx` — 12 tests, verifies badges, disabled button, locked behavior
-- `tests/unit/components/CourseLessonCard.test.tsx` — 6 tests, verifies badges, locked behavior
-- `tests/unit/components/ContentStatusBadge.test.tsx` — 10 tests, verifies render, expiry, styling
-- `tests/unit/i18n/contentStatus-translations.test.ts` — 8 tests, verifies translation keys
-- `tests/unit/fields/contentStatus.test.ts` — 10 tests, verifies field structure
+## Files to Read (reference patterns)
+- `src/app/(frontend)/courses/[courseSlug]/_components/CourseLessonCard/index.tsx` — **Primary pattern**: Shows exact implementation of badge + locked behavior for lessons
+- `src/app/(frontend)/courses/_components/CourseCard/index.tsx` — **Secondary pattern**: Shows badge + locked behavior for courses
+- `tests/unit/components/CourseLessonCard.test.tsx` — Test pattern for lesson card with badge tests
+- `tests/unit/components/CourseCard.test.tsx` — Test pattern for card with badge + disabled button tests
 
 ## Key Signatures
-- `export const contentStatusFields: Field[]` from `src/server/payload/fields/contentStatus.ts`
-- `export const CONTENT_STATUS_OPTIONS = ['none', 'soon', 'justAdded'] as const` from same file
-- `export function ContentStatusBadge({ contentStatus, contentStatusExpiresAt, className })` from `src/ui/web/shared/ContentStatusBadge/index.tsx`
-- `export const queryPublishedCourses` from `src/server/repos/queries/courses.ts`
-- `export const queryCourseBySlug` from `src/server/repos/queries/courses.ts`
-- `export const queryLessonsByChapter` from `src/server/repos/queries/lessons.ts`
-- `export const queryLessonBySlug` from `src/server/repos/queries/lessons.ts`
-- `export const queryLessonsByCourse` from `src/server/repos/queries/lessons.ts`
+- `ContentStatusBadge({ contentStatus, contentStatusExpiresAt, className })` from `src/ui/web/shared/ContentStatusBadge/index.tsx`
+- `toast.info(message: string)` from `sonner`
+- `cn(...inputs: ClassValue[])` from `@/infra/utils/ui`
+- `useTranslations(namespace: string)` from `@/ui/web/providers/I18n`
+- `SystemLink({ href, children, ...props })` from `@/infra/loading/components/SystemLink`
 
 ## Reuse Inventory
-- `Where` type from `payload` — query condition typing
+- `ContentStatusBadge` from `@/ui/web/shared/ContentStatusBadge` — renders badge with correct styling/expiry
+- `toast` from `sonner` — shows locked message notification
 - `cn` from `@/infra/utils/ui` — conditional class merging
-- `useTranslations` from `@/ui/web/providers/I18n` — i18n translations
-- `toast` from `sonner` — toast notifications for locked content
-- `contentStatusFields` from `@/server/payload/fields/contentStatus` — shared fields across collections
-- `publishedAndActive` from `@/server/payload/access/publishedAndActive` — NOT modified (query-level filtering used instead)
+- `useTranslations('courses')` — already used in LessonCard; namespace contains `contentLocked`, `soonBadge`, `justAddedBadge`
+- `Card`, `CardHeader`, `CardTitle`, `CardFooter` from `@/ui/web/components/card` — already used in LessonCard
+- `Button` from `@/ui/web/components/button` — already used in LessonCard
+- `SystemLink` from `@/infra/loading/components/SystemLink` — already used in LessonCard
 
 ## Integration Points
-- `queryPublishedCourses()` called by `src/app/(frontend)/courses/page.tsx`
-- `queryCourseBySlug()` called by course detail pages
-- `queryLessonsByChapter()` called by chapter view components
-- `queryLessonsByCourse()` called by course content listing
-- `ContentStatusBadge` rendered in CourseCard and CourseLessonCard
+- `LessonCard` is imported by `src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/page.tsx` (line 16) — no changes needed to importing page
+- `Lesson` type from `@/payload-types` already has `contentStatus: 'none' | 'soon' | 'justAdded'` and `contentStatusExpiresAt?: string | null`
+- Translation keys already exist: `courses.contentLocked`, `courses.soonBadge`, `courses.justAddedBadge`
 
 ## Imports Verified
-- `@/server/payload/fields/contentStatus` → exports contentStatusFields, CONTENT_STATUS_OPTIONS, ContentStatus ✅
-- `@/ui/web/shared/ContentStatusBadge` → exports ContentStatusBadge ✅
-- `@/server/repos/queries/courses` → exports queryPublishedCourses, queryCourseBySlug ✅
-- `@/server/repos/queries/lessons` → exports queryLessonsByChapter, queryLessonBySlug, queryLessonsByCourse ✅
-- `@/payload-types` → Course and Lesson types include contentStatus, contentStatusVisible, contentStatusExpiresAt ✅
-- `sonner` → exports toast ✅
-- `@/infra/utils/ui` → exports cn ✅
+- `@/ui/web/shared/ContentStatusBadge` → exports `ContentStatusBadge` ✅
+- `@/infra/utils/ui` → exports `cn` ✅
+- `@/ui/web/providers/I18n` → exports `useTranslations`, `I18nProvider` ✅
+- `@/payload-types` → exports `Lesson` type with contentStatus fields ✅
+- `sonner` → exports `toast` ✅
+- `@/infra/loading/components/SystemLink` → exports `SystemLink` ✅
 
-## Quality Verification (confirmed)
-- TSC: passes (0 errors)
-- Lint: passes (0 warnings)  
-- All 52 content-status tests: pass
+## Test Configuration
+- Test runner: vitest (NOT jest)
+- Config: `vitest.config.unit.mts`
+- Command: `pnpm vitest run --config vitest.config.unit.mts tests/unit/components/LessonCard.test.tsx`
+- Environment: jsdom (`// @vitest-environment jsdom` at top of test file)
+- i18n setup: Wrap components in `<I18nProvider locale="en" messages={enMessages}>`
+- Mock pattern: Use `vi.mock('sonner', ...)` and `vi.mock('@/infra/loading/components/SystemLink', ...)`

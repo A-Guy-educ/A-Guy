@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-16T07:44:21.445Z",
-  "updatedAt": "2026-03-16T07:45:33.010Z",
+  "updatedAt": "2026-03-16T07:57:56.939Z",
   "state": "running",
   "cursor": null,
   "stages": {
@@ -21,6 +21,50 @@
         "cacheRead": 146651
       },
       "sessionId": "ses_30a658e2affeLsDQxx1UxdjKoV"
+    },
+    "gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-16T07:45:42.806Z",
+      "completedAt": "2026-03-16T07:50:25.816Z",
+      "elapsed": 283,
+      "outputFile": "gap.md",
+      "tokenUsage": {
+        "input": 36916,
+        "output": 7259,
+        "cacheRead": 1632157
+      },
+      "sessionId": "ses_30a645c52ffeL7STLz5j0L33oe"
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-16T07:50:25.818Z",
+      "completedAt": "2026-03-16T07:54:29.393Z",
+      "elapsed": 244,
+      "outputFile": "architect.md",
+      "tokenUsage": {
+        "input": 25,
+        "output": 9548,
+        "cacheRead": 2117883
+      },
+      "cost": 1.9717727500000002,
+      "sessionId": "ses_30a600834ffeb47BsJ2J5hMeqt"
+    },
+    "plan-gap": {
+      "state": "completed",
+      "retries": 1,
+      "startedAt": "2026-03-16T07:54:30.892Z",
+      "completedAt": "2026-03-16T07:57:56.902Z",
+      "elapsed": 206,
+      "outputFile": "plan-gap.md",
+      "tokenUsage": {
+        "input": 15,
+        "output": 3622,
+        "cacheRead": 1640005
+      },
+      "cost": 1.0162524999999998,
+      "sessionId": "ses_30a5ac158ffeQXFm5AMKTd3br2"
     }
   },
   "issueNumber": 839,
@@ -31,12 +75,7 @@
       "action": "pipeline-triggered",
       "actor": "aguyaharonyair",
       "timestamp": "2026-03-16T07:44:21.445Z"
-    },
-    {
-      "action": "gate-approved",
-      "actor": "aguyaharonyair",
-      "timestamp": "2026-03-16T07:45:33.009Z",
-      "stage": "taskify"
     }
-  ]
+  ],
+  "branchName": "feat/260315-auto-839-content-status-badging-soon-just-a"
 }

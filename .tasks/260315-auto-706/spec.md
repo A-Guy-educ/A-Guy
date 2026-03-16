@@ -56,44 +56,44 @@ Add visual status badges to Courses and Lessons to highlight new additions ("Jus
 8. "Just Added" badge has subtle pulse animation
 9. Optional: "New Until" date field auto-removes "Just Added" badge after expiry
 
-## Technical Notes
+## Technical Implementation (Existing)
 
-- Add fields to both Courses and Lessons collections
-- Implement access control hook for "Soon" content locking
-- Extend existing CourseCard and LessonItem components
-- Use Tailwind CSS for all styling (project standard)
-- Run `pnpm generate:types` after schema changes
-- Add translation keys for badge labels in both he.json and en.json
+### Already Implemented ✅
 
-## Gap Analysis Updates
+1. **Backend Fields** (`src/server/payload/fields/contentStatus.ts`):
+   - `contentStatus`: select field with None/Soon/Just Added options
+   - `contentStatusVisible`: checkbox to hide "Soon" content from students
+   - `contentStatusExpiresAt`: optional date for auto-expiry
+   - Already added to both Courses and Lessons collections
 
-### Added Requirements (from codebase exploration)
+2. **ContentStatusBadge Component** (`src/ui/web/shared/ContentStatusBadge/index.tsx`):
+   - Gray badge for "Soon" status
+   - Green badge with pulse animation for "Just Added"
+   - Handles expiry date checking
+   - Uses translations for badge labels
 
-1. **FR-001: Content Status Field - Schema**
-   - Field name: `contentStatus` (select: 'none' | 'soon' | 'justAdded')
-   - Field name: `contentStatusVisible` (checkbox, default: true) - controls visibility for "Soon" content
-   - Field name: `contentStatusExpiresAt` (date, optional) - for auto-expiry
+3. **CourseCard Integration** (`src/app/(frontend)/courses/_components/CourseCard/index.tsx`):
+   - Displays ContentStatusBadge in top-right corner
+   - Implements locked behavior for "Soon" courses
+   - Shows toast message when clicking "Soon" course
+   - Disables button for "Soon" courses
 
-2. **FR-002: Type Generation**
-   - MUST run `pnpm generate:types` after modifying collections
-   - Import new types from `@/payload-types`
+4. **Backend Query Filtering** (`src/server/repos/queries/`):
+   - Courses query filters out invisible "Soon" content
+   - Lessons query filters out invisible "Soon" content
 
-3. **FR-003: Translation Keys**
-   - Add to he.json: `courses.contentStatus.soon`, `courses.contentStatus.justAdded`
-   - Add to en.json: `courses.contentStatus.soon`, `courses.contentStatus.justAdded`
-   - Add locked message: `courses.contentLocked`
+5. **Translations** (`src/i18n/en.json`, `src/i18n/he.json`):
+   - `soonBadge`: "Soon" / "בקרוב"
+   - `justAddedBadge`: "New" / "חדש"
+   - `contentLocked`: Lock message
 
-4. **FR-004: Access Control Integration**
-   - Extend existing `publishedAndActive` access control
-   - OR create new `publishedAndActiveWithStatus` that checks:
-     - For "Soon" with visible=false: return false (hidden from students)
-     - For "Soon" with visible=true: return but handle in UI (locked)
-     - For "justAdded" and "none": allow based on existing logic
+### NOT Implemented ❌ (Gaps)
 
-5. **FR-005: UI Component - Locked Message Display**
-   - Use existing Toast/Notification pattern or create Modal for "Soon" content click
-   - Message: "This content is being prepared and will be available soon"
+1. **LessonCard does NOT display ContentStatusBadge**
+   - Location: `src/app/(frontend)/courses/_components/LessonCard/index.tsx`
+   - Needs to add ContentStatusBadge component next to title
+   - Needs to implement locked behavior for "Soon" lessons
 
-6. **FR-006: Pulse Animation**
-   - Use Tailwind animation classes or create custom CSS animation
-   - Example: `animate-pulse` or custom keyframe for subtle effect
+## Gap Analysis
+
+See `gap.md` for detailed gap analysis and required changes.
