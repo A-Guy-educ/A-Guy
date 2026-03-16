@@ -18,7 +18,6 @@ import { SlugField as SlugField_3817bf644402e67bfe6577f60ef982de } from '@payloa
 import { LessonConversionPanel as LessonConversionPanel_057daf3b86f654d90edf003b44c43703 } from '@/ui/admin/exercise-conversion/LessonConversionPanel'
 import { ExerciseContentEditor as ExerciseContentEditor_d0c5d070052b5cabcf602f1e9878afd8 } from '@/ui/admin/ExerciseContentEditor'
 import { ExercisePreview as ExercisePreview_79d54f4a9901df303ad8ae2cc7d44435 } from '@/ui/admin/ExercisePreview'
-import { UserEntitlementsField as UserEntitlementsField_c22ec06f3413dff018a880c65d1275fb } from '@/ui/admin/UserEntitlements'
 import { MediaPreview as MediaPreview_4b980c9a407724ef7c1755e3482d0258 } from '@/ui/admin/MediaPreview'
 import { HorizontalRuleFeatureClient as HorizontalRuleFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { BlocksFeatureClient as BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
@@ -57,7 +56,6 @@ export const importMap = {
   "@/ui/admin/exercise-conversion/LessonConversionPanel#LessonConversionPanel": LessonConversionPanel_057daf3b86f654d90edf003b44c43703,
   "@/ui/admin/ExerciseContentEditor#ExerciseContentEditor": ExerciseContentEditor_d0c5d070052b5cabcf602f1e9878afd8,
   "@/ui/admin/ExercisePreview#ExercisePreview": ExercisePreview_79d54f4a9901df303ad8ae2cc7d44435,
-  "@/ui/admin/UserEntitlements#UserEntitlementsField": UserEntitlementsField_c22ec06f3413dff018a880c65d1275fb,
   "@/ui/admin/MediaPreview#MediaPreview": MediaPreview_4b980c9a407724ef7c1755e3482d0258,
   "@payloadcms/richtext-lexical/client#HorizontalRuleFeatureClient": HorizontalRuleFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#BlocksFeatureClient": BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,

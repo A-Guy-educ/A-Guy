@@ -93,7 +93,6 @@ export interface Config {
     'upload-sessions': UploadSession;
     posts: Post;
     'pricing-plans': PricingPlan;
-    'user-entitlements': UserEntitlement;
     'access-codes': AccessCode;
     'mcp-audit-logs': McpAuditLog;
     redirects: Redirect;
@@ -134,7 +133,6 @@ export interface Config {
     'upload-sessions': UploadSessionsSelect<false> | UploadSessionsSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
     'pricing-plans': PricingPlansSelect<false> | PricingPlansSelect<true>;
-    'user-entitlements': UserEntitlementsSelect<false> | UserEntitlementsSelect<true>;
     'access-codes': AccessCodesSelect<false> | AccessCodesSelect<true>;
     'mcp-audit-logs': McpAuditLogsSelect<false> | McpAuditLogsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
@@ -453,6 +451,17 @@ export interface User {
   googleProfile?: {
     name?: string | null;
   };
+  /**
+   * Courses this user has access to
+   */
+  courseEntitlements?:
+    | {
+        course: string | Course;
+        grantMethod: 'admin' | 'payment' | 'code';
+        grantedAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   oauthLoginSecretEnc?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -1958,53 +1967,6 @@ export interface PricingPlan {
   createdAt: string;
 }
 /**
- * Manage user access to paid courses and lessons
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "user-entitlements".
- */
-export interface UserEntitlement {
-  id: string;
-  /**
-   * Tenant scope for this document
-   */
-  tenant: string | Tenant;
-  /**
-   * The student who has access
-   */
-  user: string | User;
-  /**
-   * Whether this entitlement is for a course or a specific lesson
-   */
-  contentType: 'course' | 'lesson';
-  /**
-   * The course to grant access to
-   */
-  course?: (string | null) | Course;
-  /**
-   * The specific lesson to grant access to
-   */
-  lesson?: (string | null) | Lesson;
-  /**
-   * How this entitlement was granted
-   */
-  grantMethod: 'admin' | 'payment' | 'code';
-  /**
-   * The admin who granted this entitlement
-   */
-  grantedBy?: (string | null) | User;
-  /**
-   * Optional expiration date (leave empty for permanent)
-   */
-  expiresAt?: string | null;
-  /**
-   * User who created this document
-   */
-  createdBy?: (string | null) | User;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
  * Manage access codes that grant course entitlements
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2454,10 +2416,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'pricing-plans';
         value: string | PricingPlan;
-      } | null)
-    | ({
-        relationTo: 'user-entitlements';
-        value: string | UserEntitlement;
       } | null)
     | ({
         relationTo: 'access-codes';
@@ -3033,6 +2991,14 @@ export interface UsersSelect<T extends boolean = true> {
     | {
         name?: T;
       };
+  courseEntitlements?:
+    | T
+    | {
+        course?: T;
+        grantMethod?: T;
+        grantedAt?: T;
+        id?: T;
+      };
   oauthLoginSecretEnc?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -3216,23 +3182,6 @@ export interface PricingPlansSelect<T extends boolean = true> {
   price?: T;
   currency?: T;
   isActive?: T;
-  createdBy?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "user-entitlements_select".
- */
-export interface UserEntitlementsSelect<T extends boolean = true> {
-  tenant?: T;
-  user?: T;
-  contentType?: T;
-  course?: T;
-  lesson?: T;
-  grantMethod?: T;
-  grantedBy?: T;
-  expiresAt?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;

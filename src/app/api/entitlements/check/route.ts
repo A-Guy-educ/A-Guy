@@ -1,7 +1,7 @@
 /**
  * Entitlement check API endpoint
  *
- * GET /api/entitlements/check?courseId=X or ?lessonId=X
+ * GET /api/entitlements/check?courseId=X
  * Returns { hasAccess: boolean }
  */
 
@@ -21,17 +21,15 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url)
   const courseId = searchParams.get('courseId') ?? undefined
-  const lessonId = searchParams.get('lessonId') ?? undefined
 
-  if (!courseId && !lessonId) {
-    return NextResponse.json({ error: 'courseId or lessonId required' }, { status: 400 })
+  if (!courseId) {
+    return NextResponse.json({ error: 'courseId required' }, { status: 400 })
   }
 
   const hasAccess = await hasEntitlement({
     payload,
     userId: user.id,
     courseId,
-    lessonId,
   })
 
   return NextResponse.json({ hasAccess })

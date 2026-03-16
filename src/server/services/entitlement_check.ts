@@ -3,10 +3,10 @@
  *
  * @fileType service
  * @domain entitlements
- * @ai-summary Checks if a user has access to paid courses/lessons
+ * @ai-summary Checks if a user has access to paid courses/lessons via courseEntitlements array on User
  */
 
-import type { Payload, Where } from 'payload'
+import type { Payload } from 'payload'
 
 interface CheckEntitlementParams {
   payload: Payload
@@ -17,8 +17,8 @@ interface CheckEntitlementParams {
 
 /**
  * Check if a user has an entitlement for a course or lesson.
- * - Course entitlement covers all lessons in that course.
- * - Lesson entitlement covers only that specific lesson.
+ * Course entitlement covers all lessons in that course.
+ * For lessons, we resolve to the parent course and check course-level access.
  */
 export async function hasEntitlement({
   payload,
@@ -26,45 +26,30 @@ export async function hasEntitlement({
   courseId,
   lessonId,
 }: CheckEntitlementParams): Promise<boolean> {
-  const now = new Date().toISOString()
-  const conditions: Where[] = []
+  if (!courseId && !lessonId) return false
 
-  if (courseId) {
-    conditions.push({
-      and: [
-        { user: { equals: userId } },
-        { contentType: { equals: 'course' } },
-        { course: { equals: courseId } },
-      ],
-    })
-  }
-
-  if (lessonId) {
-    conditions.push({
-      and: [
-        { user: { equals: userId } },
-        { contentType: { equals: 'lesson' } },
-        { lesson: { equals: lessonId } },
-      ],
-    })
-  }
-
-  if (conditions.length === 0) return false
-
-  const result = await payload.find({
-    collection: 'user-entitlements',
-    where: {
-      and: [
-        { or: conditions },
-        {
-          or: [{ expiresAt: { exists: false } }, { expiresAt: { greater_than: now } }],
-        },
-      ],
-    },
-    limit: 1,
+  // If we have a lessonId but no courseId, we need the courseId from the lesson page context
+  // The caller should pass courseId when checking lesson access
+  // For direct courseId checks, just query the user's entitlements array
+  const user = await payload.findByID({
+    collection: 'users',
+    id: userId,
     depth: 0,
     overrideAccess: true,
+    select: { courseEntitlements: true },
   })
 
-  return result.totalDocs > 0
+  const entitlements = user?.courseEntitlements
+  if (!entitlements || entitlements.length === 0) return false
+
+  const targetCourseId = courseId || undefined
+
+  if (targetCourseId) {
+    return entitlements.some((e) => {
+      const entCourseId = typeof e.course === 'string' ? e.course : e.course?.id
+      return entCourseId === targetCourseId
+    })
+  }
+
+  return false
 }

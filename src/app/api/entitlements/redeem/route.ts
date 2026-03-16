@@ -67,34 +67,40 @@ export async function POST(request: NextRequest) {
 
   const courseId = typeof accessCode.course === 'string' ? accessCode.course : accessCode.course.id
 
-  // Check if user already has an entitlement for this course
-  const existing = await payload.find({
-    collection: 'user-entitlements',
-    where: {
-      and: [
-        { user: { equals: user.id } },
-        { contentType: { equals: 'course' } },
-        { course: { equals: courseId } },
-      ],
-    },
-    limit: 1,
+  // Get current user with entitlements
+  const fullUser = await payload.findByID({
+    collection: 'users',
+    id: user.id,
     depth: 0,
     overrideAccess: true,
+    select: { courseEntitlements: true },
   })
 
-  if (existing.totalDocs > 0) {
+  const existing = fullUser.courseEntitlements || []
+
+  // Check if user already has this course
+  const alreadyHas = existing.some((e) => {
+    const entCourseId = typeof e.course === 'string' ? e.course : e.course?.id
+    return entCourseId === courseId
+  })
+
+  if (alreadyHas) {
     return NextResponse.json({ success: false, error: 'already_entitled' }, { status: 409 })
   }
 
-  // Create the entitlement (tenant auto-filled by beforeValidate hook)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tenant is auto-filled by hook
-  await (payload.create as any)({
-    collection: 'user-entitlements',
+  // Add entitlement to user's array
+  await payload.update({
+    collection: 'users',
+    id: user.id,
     data: {
-      user: user.id,
-      contentType: 'course',
-      course: courseId,
-      grantMethod: 'code',
+      courseEntitlements: [
+        ...existing,
+        {
+          course: courseId,
+          grantMethod: 'code' as const,
+          grantedAt: new Date().toISOString(),
+        },
+      ],
     },
     overrideAccess: true,
   })
@@ -104,7 +110,7 @@ export async function POST(request: NextRequest) {
     collection: 'access-codes',
     id: accessCode.id,
     data: {
-      currentUses: (accessCode.currentUses || 0) + 1,
+      currentUses: currentUses + 1,
     },
     overrideAccess: true,
   })
