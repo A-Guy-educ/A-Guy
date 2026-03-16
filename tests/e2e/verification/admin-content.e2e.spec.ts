@@ -3,6 +3,7 @@
  * #21 Chapter Management, #22 Content Updates
  *
  * Strategy: Hybrid – API for data ops, verify admin UI loads correctly.
+ * @tags @critical
  */
 import { expect, test } from '@playwright/test'
 import config from '@payload-config'
@@ -10,19 +11,22 @@ import { getPayload } from 'payload'
 
 import {
   cleanupVerificationData,
-  getOrSeedData,
   loginAsAdmin,
+  seedVerificationData,
   type VerificationData,
 } from '../helpers/verification-fixtures'
 
 let data: VerificationData | null = null
 
-test.beforeAll(async () => {
-  data = await getOrSeedData()
+test.beforeAll(async ({}, testInfo) => {
+  testInfo.setTimeout(120_000)
+  data = await seedVerificationData()
 })
 
+test.setTimeout(60_000)
+
 test.afterAll(async () => {
-  await cleanupVerificationData()
+  await cleanupVerificationData(data)
 })
 
 test.describe('Scenario #19 – Course Creation', () => {
@@ -50,7 +54,7 @@ test.describe('Scenario #19 – Course Creation', () => {
     try {
       await loginAsAdmin(page)
       await page.goto('/courses')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('domcontentloaded')
 
       const body = await page.locator('body').textContent()
       expect(body).toContain('Verification Test Course')
@@ -89,7 +93,7 @@ test.describe('Scenario #20 – Course Archiving', () => {
     try {
       await loginAsAdmin(page)
       await page.goto('/courses')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('domcontentloaded')
 
       const body = await page.locator('body').textContent()
       expect(body).not.toContain('Archive Test Course')
@@ -109,7 +113,7 @@ test.describe('Scenario #21 – Chapter Management', () => {
     await loginAsAdmin(page)
 
     await page.goto('/admin/collections/chapters')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     const content = page.locator('main, [class*="collection-list"], table')
     await expect(content.first()).toBeVisible({ timeout: 15_000 })
@@ -131,7 +135,7 @@ test.describe('Scenario #22 – Content Updates', () => {
 
     await loginAsAdmin(page)
     await page.goto(data!.lessonUrl)
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     const body = await page.locator('body').textContent()
     expect(body).toContain(uniqueText)

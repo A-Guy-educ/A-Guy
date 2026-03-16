@@ -1,14 +1,14 @@
 /**
  * Shared Playwright fixtures for pre-launch verification tests.
- * Provides pre-authenticated pages and seeded test data.
+ * Each spec file seeds its own data and cleans up only what it created.
  */
-import { test as base } from '@playwright/test'
+import type { Page } from '@playwright/test'
 
 import type { TestCourseData } from './courses'
 import type { TestExerciseData } from './admin'
 import { generateTestUserEmail, setupAuthenticatedUser, cleanupTestUsers } from './auth'
 import { seedTestCourseData, buildLessonUrl } from './courses'
-import { seedTestExercises, cleanupTestExercises } from './admin'
+import { seedTestExercises, cleanupTestExercisesById } from './admin'
 
 export interface VerificationData {
   course: TestCourseData
@@ -16,37 +16,35 @@ export interface VerificationData {
   lessonUrl: string
 }
 
-// Shared state across all verification tests (set once in beforeAll)
-let sharedData: VerificationData | null = null
-
-export async function getOrSeedData(): Promise<VerificationData | null> {
-  if (sharedData) return sharedData
-
+/**
+ * Seed fresh verification data for the calling spec file.
+ * Each file gets its own independent data — no shared singleton.
+ */
+export async function seedVerificationData(): Promise<VerificationData | null> {
   const course = await seedTestCourseData()
   if (!course) return null
 
   const exercises = await seedTestExercises(course)
   const lessonUrl = buildLessonUrl(course)
 
-  sharedData = { course, exercises, lessonUrl }
-  return sharedData
-}
-
-export async function cleanupVerificationData(): Promise<void> {
-  await cleanupTestExercises()
-  await cleanupTestUsers()
-  sharedData = null
+  return { course, exercises, lessonUrl }
 }
 
 /**
- * Extended test fixture with authenticated student page.
+ * Clean up only the specific data that was seeded.
  */
-export const studentTest = base.extend<{ studentPage: typeof base }>({})
+export async function cleanupVerificationData(data: VerificationData | null): Promise<void> {
+  if (data) {
+    const ids = data.exercises.map((e) => e.exerciseId)
+    await cleanupTestExercisesById(ids)
+  }
+  await cleanupTestUsers()
+}
 
 /**
  * Helper: set up an authenticated student on a page.
  */
-export async function loginAsStudent(page: import('@playwright/test').Page) {
+export async function loginAsStudent(page: Page) {
   return setupAuthenticatedUser(
     page,
     {
@@ -60,7 +58,7 @@ export async function loginAsStudent(page: import('@playwright/test').Page) {
 /**
  * Helper: set up an authenticated admin on a page.
  */
-export async function loginAsAdmin(page: import('@playwright/test').Page) {
+export async function loginAsAdmin(page: Page) {
   return setupAuthenticatedUser(
     page,
     {

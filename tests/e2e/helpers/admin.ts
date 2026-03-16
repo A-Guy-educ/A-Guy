@@ -62,20 +62,15 @@ export function buildExerciseUrl(courseData: TestCourseData, exerciseSlug: strin
 }
 
 /**
- * Clean up test exercises by slug prefix.
+ * Clean up specific test exercises by their IDs.
+ * Only deletes the exercises that were seeded by the calling test file.
  */
-export async function cleanupTestExercises(): Promise<void> {
+export async function cleanupTestExercisesById(ids: string[]): Promise<void> {
+  if (ids.length === 0) return
   const payload = await getPayload({ config })
-  const found = await payload.find({
-    collection: 'exercises',
-    where: { slug: { like: 'test-ex-' } },
-    limit: 200,
-    depth: 0,
-    overrideAccess: true,
-  })
-  for (const doc of found.docs) {
+  for (const id of ids) {
     try {
-      await payload.delete({ collection: 'exercises', id: doc.id, overrideAccess: true })
+      await payload.delete({ collection: 'exercises', id, overrideAccess: true })
     } catch {
       // ignore cleanup errors
     }

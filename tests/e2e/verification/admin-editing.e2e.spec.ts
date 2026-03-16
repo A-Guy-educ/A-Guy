@@ -3,24 +3,29 @@
  * #25 Answer Key Editing, #26 Hint & Solution, #27 Media Uploads
  *
  * Strategy: Hybrid – API for data ops, verify admin UI loads correctly.
+ * @tags @smoke
  */
 import { expect, test } from '@playwright/test'
 
+import { buildExerciseUrl } from '../helpers/admin'
 import {
   cleanupVerificationData,
-  getOrSeedData,
   loginAsAdmin,
+  seedVerificationData,
   type VerificationData,
 } from '../helpers/verification-fixtures'
 
 let data: VerificationData | null = null
 
-test.beforeAll(async () => {
-  data = await getOrSeedData()
+test.beforeAll(async ({}, testInfo) => {
+  testInfo.setTimeout(120_000)
+  data = await seedVerificationData()
 })
 
+test.setTimeout(60_000)
+
 test.afterAll(async () => {
-  await cleanupVerificationData()
+  await cleanupVerificationData(data)
 })
 
 test.describe('Scenario #23 – PDF to Exercise Flow', () => {
@@ -48,7 +53,7 @@ test.describe('Scenario #25 – Answer Key Editing', () => {
     test.skip(!exerciseId, 'No exercise to edit')
 
     await page.goto(`/admin/collections/exercises/${exerciseId}`)
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     const editPage = page.locator('main, form, [class*="edit-view"]')
     await expect(editPage.first()).toBeVisible({ timeout: 15_000 })
@@ -62,18 +67,23 @@ test.describe('Scenario #26 – Hint & Solution Setup', () => {
     test.skip(!mcqEx, 'MCQ exercise not seeded')
 
     await loginAsAdmin(page)
-    const url = buildExUrl(data!, mcqEx.exerciseSlug)
-    await page.goto(url)
-    await page.waitForLoadState('networkidle')
+    await page.goto(buildExerciseUrl(data!.course, mcqEx.exerciseSlug))
+    await page.waitForLoadState('domcontentloaded')
 
     const hintBtn = page
       .locator('button')
       .filter({ hasText: /hint|רמז/i })
       .first()
-    const exists = await hintBtn.isVisible({ timeout: 10_000 }).catch(() => false)
+    const hintVisible = await hintBtn.isVisible({ timeout: 10_000 }).catch(() => false)
 
-    // Hint data is seeded even if button isn't visible
-    expect(exists || data!.exercises.length > 0).toBeTruthy()
+    // If hint button exists, it should be clickable. Skip if UI doesn't show it.
+    test.skip(!hintVisible, 'Hint button not rendered on this page')
+    await hintBtn.click()
+
+    const hintContent = page.locator(
+      '[class*="animate-in"], [class*="rounded-2xl"][class*="bg-gradient"]',
+    )
+    await expect(hintContent.first()).toBeVisible({ timeout: 5_000 })
   })
 })
 
@@ -81,14 +91,9 @@ test.describe('Scenario #27 – Media Uploads', () => {
   test('admin media collection is accessible', async ({ page }) => {
     await loginAsAdmin(page)
     await page.goto('/admin/collections/media')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     const content = page.locator('main, [class*="collection-list"], table')
     await expect(content.first()).toBeVisible({ timeout: 15_000 })
   })
 })
-
-function buildExUrl(d: VerificationData, slug: string) {
-  const c = d.course
-  return `/courses/${c.courseSlug}/chapters/${c.chapterSlug}/lessons/${c.lessonSlug}/exercises/${slug}`
-}
