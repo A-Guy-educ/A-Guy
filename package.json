@@ -190,6 +190,7 @@
     "tailwindcss-animate": "^1.0.7",
     "tesseract.js": "^7.0.0",
     "unist-util-visit": "^5.0.0",
+    "yaml-language-server": "^1.21.0",
     "znv": "^0.5.0",
     "zod": "^4.3.5"
   },
