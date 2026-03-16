@@ -493,12 +493,12 @@ describe('Fix #11: Git config uses --local flag', () => {
 // ============================================================================
 
 describe('Fix #13: Workflow variables:write permission', () => {
-  it('should include variables: write in inspector workflow permissions', () => {
+  it('should not include invalid variables: write permission', () => {
     const content = fs.readFileSync(
       path.join(process.cwd(), '.github/workflows/inspector.yml'),
       'utf-8',
     )
-    expect(content).toContain('variables: write')
+    expect(content).not.toContain('variables: write')
   })
 })
 

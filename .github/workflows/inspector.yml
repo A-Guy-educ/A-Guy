@@ -21,7 +21,6 @@ jobs:
       contents: write
       pull-requests: write
       actions: write
-      variables: write
     steps:
       - uses: actions/checkout@v4
 
