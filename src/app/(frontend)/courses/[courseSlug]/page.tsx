@@ -32,7 +32,10 @@ export default async function CoursePage({ params }: CoursePageProps) {
     notFound()
   }
 
-  const courseAccessType = course.pageAccessType ?? 'free'
+  const pageAccess = course.pageAccessType ?? 'free'
+  const lessonAccess = course.accessType ?? 'free'
+  // If either the page or lesson access is paid, gate the course page
+  const courseAccessType = pageAccess === 'paid' || lessonAccess === 'paid' ? 'paid' : pageAccess
   const [gatedDelayMs, gatedWarningMs] = await Promise.all([
     SystemParams.getGatedDelayMs(),
     SystemParams.getGatedWarningMs(),

@@ -129,6 +129,7 @@ export const Users: CollectionConfig = {
           type: 'relationship',
           relationTo: 'courses',
           required: true,
+          admin: { readOnly: true },
         },
         {
           name: 'grantMethod',
@@ -140,6 +141,7 @@ export const Users: CollectionConfig = {
             { label: 'Payment', value: 'payment' },
             { label: 'Access Code', value: 'code' },
           ],
+          admin: { readOnly: true },
         },
         {
           name: 'grantedAt',

@@ -118,13 +118,22 @@ export function AccessGateProvider({
 
       {/* Paid content modal */}
       {showPaidModal && (
-        <PaidContentModal isAuthenticated={isAuthenticated} pathname={pathname} t={t} />
+        <PaidContentModal
+          isAuthenticated={isAuthenticated}
+          pathname={pathname}
+          courseSlug={courseSlug}
+          t={t}
+        />
       )}
 
       {isBlocked ? (
-        <div aria-hidden="true" className="pointer-events-none select-none blur-sm">
-          {children}
-        </div>
+        // For paid content, don't render children at all (server already blocks content)
+        // For other gates, show blurred placeholder
+        showPaidModal ? null : (
+          <div aria-hidden="true" className="pointer-events-none select-none blur-sm">
+            {children}
+          </div>
+        )
       ) : (
         children
       )}
@@ -136,10 +145,12 @@ export function AccessGateProvider({
 function PaidContentModal({
   isAuthenticated,
   pathname,
+  courseSlug,
   t,
 }: {
   isAuthenticated?: boolean
   pathname: string
+  courseSlug: string
   t: (key: string) => string
 }) {
   const router = useRouter()
@@ -147,7 +158,11 @@ function PaidContentModal({
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
-  const [isDismissed, setIsDismissed] = useState(false)
+
+  const handleDismiss = () => {
+    // Navigate back to the course page
+    router.push(`/courses/${courseSlug}`)
+  }
 
   const handleRedeem = async () => {
     const trimmed = code.trim()
@@ -169,7 +184,7 @@ function PaidContentModal({
         setShowSuccess(true)
         setTimeout(() => {
           router.refresh()
-        }, 3000)
+        }, 2000)
         return
       }
 
@@ -189,8 +204,6 @@ function PaidContentModal({
     }
   }
 
-  if (isDismissed) return null
-
   if (showSuccess) {
     return (
       <Dialog open={true}>
@@ -205,7 +218,7 @@ function PaidContentModal({
   }
 
   return (
-    <Dialog open={true} onOpenChange={(open) => !open && setIsDismissed(true)}>
+    <Dialog open={true} onOpenChange={(open) => !open && handleDismiss()}>
       <DialogContent allowDismiss={true} className="sm:max-w-md">
         <DialogHeader className="text-center sm:text-center">
           <DialogTitle className="text-xl">{t('paidTitle')}</DialogTitle>
