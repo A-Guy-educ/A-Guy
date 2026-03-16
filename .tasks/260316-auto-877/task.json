@@ -1,0 +1,26 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "medium",
+  "confidence": 0.85,
+  "primary_domain": "frontend",
+  "scope": [
+    "lesson completion flow",
+    "redirect logic",
+    "interactive lesson navigation"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The redirect logic exists in the frontend codebase",
+    "There is a current/new lesson flow that should be the target after completion"
+  ],
+  "review_questions": [],
+  "complexity": 37,
+  "complexity_reasoning": "Scope: 8 (find redirect in lesson completion flow), Risk: 10 (user navigation issue), Novelty: 6 (fixing existing redirect pattern), Cross-domain: 5 (frontend routing), Ambiguity: 4 (clear intent, need implementation discovery), Dependencies: 4 (self-contained). Total: 37",
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Bug report with clear steps to reproduce but no structured requirements or implementation plan. Task describes the bug behavior and expected vs actual result."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
