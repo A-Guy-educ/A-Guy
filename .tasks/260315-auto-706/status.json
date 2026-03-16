@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-16T07:44:21.445Z",
-  "updatedAt": "2026-03-16T07:57:56.939Z",
+  "updatedAt": "2026-03-16T08:11:14.007Z",
   "state": "running",
   "cursor": null,
   "stages": {
@@ -65,6 +65,25 @@
       },
       "cost": 1.0162524999999998,
       "sessionId": "ses_30a5ac158ffeQXFm5AMKTd3br2"
+    },
+    "test": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-16T08:08:59.869Z",
+      "outputFile": "test.md",
+      "sessionId": "ses_30a5923d9ffeG5NbemPHn0vi24"
+    },
+    "build": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-16T08:08:59.869Z",
+      "outputFile": "build.md",
+      "sessionId": "ses_30a5921e5ffeYpNEQScrBXxu4w"
+    },
+    "commit": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-16T08:11:14.007Z"
     }
   },
   "issueNumber": 839,
@@ -76,6 +95,5 @@
       "actor": "aguyaharonyair",
       "timestamp": "2026-03-16T07:44:21.445Z"
     }
-  ],
-  "branchName": "feat/260315-auto-839-content-status-badging-soon-just-a"
+  ]
 }
