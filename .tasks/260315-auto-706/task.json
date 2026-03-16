@@ -1,0 +1,32 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.9,
+  "primary_domain": "backend",
+  "scope": [
+    "Courses collection schema",
+    "Lessons collection schema",
+    "UI badge components",
+    "Access control for Soon status"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Admin has access to Payload CMS admin panel",
+    "Existing courses and lessons collections have proper schema structure",
+    "Tailwind CSS is available for styling badge components",
+    "The project uses Assistant font family"
+  ],
+  "review_questions": [
+    "Should the 'Soon' visibility toggle hide content entirely from students, or show it without the badge?",
+    "How should the automated expiry for 'Just Added' work - should it auto-remove the badge or just clear the status field?"
+  ],
+  "complexity": 44,
+  "complexity_reasoning": "Scope: 12 (2 collections + UI badges), Risk: 12 (access control + schema changes), Novelty: 5 (extends existing patterns), Cross-domain: 10 (backend + frontend), Ambiguity: 2 (clear requirements), Dependencies: 3 (internal only). Total: 44",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Input contains ## Goal, ## Status Definitions, ## Admin Experience, ## Design Guidelines, and ## Success Criteria sections. Requirements are clear with specific user stories and acceptance criteria."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

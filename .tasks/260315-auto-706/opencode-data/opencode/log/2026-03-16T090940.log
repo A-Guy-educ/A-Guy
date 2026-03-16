@@ -1,0 +1,16 @@
+INFO  2026-03-16T09:09:40 +391ms service=default version=1.2.27 args=["export","ses_30a18ff93ffe4O2PtYMoqU5HPK"] opencode
+INFO  2026-03-16T09:09:40 +1ms service=default directory=/home/runner/work/A-Guy/A-Guy creating instance
+INFO  2026-03-16T09:09:40 +0ms service=project directory=/home/runner/work/A-Guy/A-Guy fromDirectory
+INFO  2026-03-16T09:09:40 +20ms service=db path=/home/runner/work/A-Guy/A-Guy/.tasks/260315-auto-706/opencode-data/opencode/opencode.db opening database
+INFO  2026-03-16T09:09:40 +3ms service=db count=9 mode=bundled applying migrations
+INFO  2026-03-16T09:09:40 +24ms service=default directory=/home/runner/work/A-Guy/A-Guy bootstrapping
+INFO  2026-03-16T09:09:40 +26ms service=config path=/home/runner/.config/opencode/config.json loading
+INFO  2026-03-16T09:09:40 +1ms service=config path=/home/runner/.config/opencode/opencode.json loading
+INFO  2026-03-16T09:09:40 +0ms service=config path=/home/runner/.config/opencode/opencode.jsonc loading
+INFO  2026-03-16T09:09:40 +1ms service=config path=/home/runner/work/A-Guy/A-Guy/opencode.json loading
+INFO  2026-03-16T09:09:40 +34ms service=config path=/home/runner/work/A-Guy/A-Guy/.opencode/opencode.jsonc loading
+INFO  2026-03-16T09:09:40 +0ms service=config path=/home/runner/work/A-Guy/A-Guy/.opencode/opencode.json loading
+INFO  2026-03-16T09:09:40 +23ms service=config path=/home/runner/.opencode/opencode.jsonc loading
+INFO  2026-03-16T09:09:40 +0ms service=config path=/home/runner/.opencode/opencode.json loading
+INFO  2026-03-16T09:09:40 +8ms service=plugin name=CodexAuthPlugin loading internal plugin
+INFO  2026-03-16T09:09:40 +0ms service=plugin name=CopilotAuthPlugin loading internal plugin
