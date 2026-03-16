@@ -625,6 +625,7 @@ export async function fetchWorkflowRuns(options?: {
     updated_at: run.updated_at,
     html_url: run.html_url,
     display_title: (run as any).display_title ?? '',
+    head_branch: (run as any).head_branch ?? undefined,
   }))
 
   setCache(cacheKey, CACHE_TTL.pipeline, runs)

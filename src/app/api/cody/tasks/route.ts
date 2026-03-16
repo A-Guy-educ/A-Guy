@@ -28,6 +28,7 @@ import type {
   WorkflowRun,
   CodyPipelineStatus,
 } from '@/ui/cody/types'
+import { matchWorkflowRunToTask } from '@/ui/cody/workflow-matching'
 
 /**
  * Derive column from live pipeline status.
@@ -169,15 +170,8 @@ export async function GET(req: NextRequest) {
       fetchOpenPRs(),
     ])
 
-    // Build a map of most recent workflow run per issue title for fast lookup
-    const runsByTitle = new Map<string, (typeof workflowRuns)[number]>()
-    for (const run of workflowRuns) {
-      const title = run.display_title || ''
-      // Keep only the most recent run per title (runs are sorted by date desc)
-      if (title && !runsByTitle.has(title)) {
-        runsByTitle.set(title, run)
-      }
-    }
+    // Workflow runs are matched per-task below using matchWorkflowRunToTask()
+    // which prefers active (in_progress/queued) runs over stale completed ones.
 
     // Build PR lookup: match by title or by issue number in branch name
     const prsByIssueTitle = new Map<string, (typeof openPRs)[number]>()
@@ -218,13 +212,8 @@ export async function GET(req: NextRequest) {
         const taskIdMatch = issue.title.match(/\[[^\]]+\]/)
         const taskId = taskIdMatch ? taskIdMatch[0].replace(/[\[\]]/g, '') : ''
 
-        // Match workflow run by issue title (most reliable) or taskId
-        const workflowRun =
-          runsByTitle.get(issue.title) ??
-          workflowRuns.find(
-            (run) =>
-              taskId && (run.html_url.includes(taskId) || run.display_title?.includes(taskId)),
-          )
+        // Match workflow run — prefers active (in_progress) runs over stale completed ones
+        const workflowRun = matchWorkflowRunToTask(workflowRuns, issue.title, issue.number, taskId)
 
         // Match PR from pre-fetched bulk data (cheap, no extra API calls)
         const pr = prsByIssueTitle.get(issue.title) ?? prsByIssueNumber.get(issue.number) ?? null

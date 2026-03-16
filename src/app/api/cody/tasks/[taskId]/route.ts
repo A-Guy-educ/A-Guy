@@ -18,6 +18,7 @@ import {
   fetchWorkflowRuns,
 } from '@/ui/cody/github-client'
 import { parseAllComments } from '@/ui/cody/task-parser'
+import { matchWorkflowRunToTask } from '@/ui/cody/workflow-matching'
 import type {
   CodyTask,
   GitHubIssue,
@@ -145,7 +146,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ task
           findAssociatedPRByIssueNumber(issueNumberFromUrl),
         ])
 
-        const workflowRun = runs.find((r) => r.html_url.includes(issueNumberFromUrl.toString()))
+        const workflowRun = matchWorkflowRunToTask(runs, issue.title, issueNumberFromUrl, taskId)
 
         let pipeline = null
         if (branch) {
@@ -211,7 +212,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ task
           findAssociatedPRByIssueNumber(issue.number),
         ])
 
-        const workflowRun = runs.find((r) => r.html_url.includes(taskId))
+        const workflowRun = matchWorkflowRunToTask(runs, issue.title, issue.number, taskId)
 
         // Get pipeline status
         let pipeline = null

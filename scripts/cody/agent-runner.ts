@@ -101,6 +101,8 @@ export interface AgentRunnerOptions {
   sessionId?: string
   /** XDG_DATA_HOME directory for OpenCode server mode (must match server's data dir) */
   dataDir?: string
+  /** Override agent name (for stages that use a different agent, e.g., fix stage uses build agent) */
+  agentName?: string
 }
 
 export interface AgentRunResult {
@@ -341,10 +343,14 @@ export function runAgentWithFileWatch(
     serverUrl,
     sessionId,
     dataDir,
+    agentName,
   } = options
 
   // Resolve timeout — stage-specific timeouts are now passed from StageDefinition
   const effectiveTimeout = timeout ?? DEFAULT_TIMEOUT
+
+  // Use agentName override if provided, otherwise use stage
+  const effectiveAgent = agentName ?? stage
 
   return new Promise((resolve) => {
     // Build environment for the agent
@@ -389,7 +395,8 @@ export function runAgentWithFileWatch(
       logger.info(`  🤖 Running ${stage} with model: ${model}`)
 
       // Spawn using the configured backend (local or GitHub)
-      currentChild = backend.spawn(stage, prompt, agentEnv, cwd, {
+      // Use effectiveAgent for the --agent flag (may be overridden via agentName option)
+      currentChild = backend.spawn(effectiveAgent, prompt, agentEnv, cwd, {
         serverUrl,
         sessionId,
         dataDir,

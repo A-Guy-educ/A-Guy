@@ -184,6 +184,7 @@
         "src/ui/admin/exercise-conversion/LessonMediaActions/index.tsx",
         "src/ui/admin/exercise-conversion/V2StatusPanel/index.tsx",
         "src/ui/admin/exercise-conversion/V3PreviewPanel/index.tsx",
+        "src/ui/admin/exercise-conversion/hooks/useConversionPrompts.ts",
         "src/ui/admin/shared/AdvancedJsonPanel.tsx",
         "src/ui/admin/shared/CollapsibleSection.tsx",
         "src/ui/admin/shared/ErrorDisplay.tsx",
@@ -1745,6 +1746,11 @@
       "pattern": "utilities",
       "description": "No description available",
       "files": ["src/ui/cody/utils.ts"]
+    },
+    "workflow-matching": {
+      "pattern": "workflow-matching",
+      "description": "No description available",
+      "files": ["src/ui/cody/workflow-matching.ts"]
     },
     "variant-component": {
       "pattern": "variant-component",
@@ -4747,6 +4753,14 @@
       "aiSummary": "",
       "dependencies": ["react"]
     },
+    "src/ui/admin/exercise-conversion/hooks/useConversionPrompts.ts": {
+      "path": "src/ui/admin/exercise-conversion/hooks/useConversionPrompts.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
     "src/ui/admin/shared/AdvancedJsonPanel.tsx": {
       "path": "src/ui/admin/shared/AdvancedJsonPanel.tsx",
       "type": "unknown",
@@ -5257,6 +5271,14 @@
       "domain": "cody",
       "patterns": ["utilities"],
       "aiSummary": "Utility functions for Cody dashboard",
+      "dependencies": []
+    },
+    "src/ui/cody/workflow-matching.ts": {
+      "path": "src/ui/cody/workflow-matching.ts",
+      "type": "utility",
+      "domain": "cody",
+      "patterns": ["workflow-matching"],
+      "aiSummary": "Shared workflow run matching — prefers active (in_progress/queued) runs over stale completed ones",
       "dependencies": []
     },
     "src/ui/web/AdminBar/index.tsx": {
@@ -6218,8 +6240,8 @@
     }
   },
   "metadata": {
-    "generatedAt": "2026-03-16T06:20:54.085Z",
-    "totalFiles": 548,
-    "totalPatterns": 193
+    "generatedAt": "2026-03-16T08:32:06.899Z",
+    "totalFiles": 550,
+    "totalPatterns": 194
   }
 }
