@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-16T07:44:21.445Z",
-  "updatedAt": "2026-03-16T08:51:58.883Z",
+  "updatedAt": "2026-03-16T08:52:10.213Z",
   "state": "running",
   "cursor": "architect",
   "stages": {
@@ -107,17 +107,12 @@
         "cacheRead": 1164570
       },
       "cost": 1.6931412499999998,
-      "sessionId": "ses_30a29cf12ffeEHrlq6gczU1TXS",
-      "issuesFound": true,
-      "reviewSummary": {
-        "critical": 39,
-        "major": 39,
-        "minor": 39
-      }
+      "sessionId": "ses_30a29cf12ffeEHrlq6gczU1TXS"
     },
     "fix": {
-      "state": "pending",
-      "retries": 0
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-16T08:52:10.213Z"
     }
   },
   "issueNumber": 839,
