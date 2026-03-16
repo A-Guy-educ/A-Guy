@@ -4,8 +4,8 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-15T20:48:09.869Z",
-  "updatedAt": "2026-03-16T00:08:49.750Z",
-  "state": "running",
+  "updatedAt": "2026-03-16T00:08:51.565Z",
+  "state": "failed",
   "cursor": null,
   "stages": {
     "taskify": {
@@ -60,9 +60,11 @@
       "sessionId": "ses_30cbb1ce8ffeNaI2TkYUQVOqLR"
     },
     "commit": {
-      "state": "running",
+      "state": "failed",
       "retries": 0,
-      "startedAt": "2026-03-16T00:08:49.750Z"
+      "startedAt": "2026-03-16T00:08:49.750Z",
+      "elapsed": 2,
+      "error": "Committed (27e9624) but push failed after rebase"
     }
   },
   "issueNumber": 841,
@@ -74,5 +76,7 @@
       "actor": "aguyaharonyair",
       "timestamp": "2026-03-15T20:48:09.869Z"
     }
-  ]
+  ],
+  "completedAt": "2026-03-16T00:08:51.565Z",
+  "totalCost": 0.9118602499999999
 }
