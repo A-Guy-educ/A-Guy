@@ -25,7 +25,7 @@
   "input_quality": {
     "level": "good_spec",
     "skip_stages": [],
-    "reasoning": "Input contains ## Goal, ## Status Definitions, ## Admin Experience, ## Design Guidelines, and ## Success Criteria sections. Requirements are clear with specific user stories and acceptance criteria. Promoted spec.md with Requirements and Acceptance Criteria."
+    "reasoning": "Input contains ## Goal, ## Status Definitions, ## Admin Experience, ## Design Guidelines, and ## Success Criteria sections. Requirements are clear with specific user stories and acceptance criteria."
   },
   "pipeline_profile": "standard",
   "pipeline": "spec_execute_verify"
