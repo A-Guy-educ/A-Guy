@@ -9,7 +9,17 @@ import enMessages from '../../../src/i18n/en.json'
 
 // Mock SystemLink component
 vi.mock('@/infra/loading/components/SystemLink', () => ({
-  SystemLink: ({ href, children, onClick, className }: any) => (
+  SystemLink: ({
+    href,
+    children,
+    onClick,
+    className,
+  }: {
+    href: string
+    children: React.ReactNode
+    onClick?: React.MouseEventHandler
+    className?: string
+  }) => (
     <a href={href} onClick={onClick} className={className} data-testid="system-link">
       {children}
     </a>
@@ -117,20 +127,24 @@ describe('LessonCard component', () => {
       const soonLesson = { ...mockLesson, contentStatus: 'soon' as const }
       renderWithI18n(soonLesson)
 
-      const link = screen.getByTestId('system-link')
-      fireEvent.click(link)
+      // Click the button (not system-link, since locked lessons render standalone button)
+      const button = screen.getByRole('button')
+      fireEvent.click(button)
 
       expect(toast.info).toHaveBeenCalled()
       expect(toast.info).toHaveBeenCalledWith(expect.stringContaining('prepared'))
     })
 
-    it('href is "#" when lesson is "Soon" to prevent navigation', () => {
+    it('does not render SystemLink when lesson is "Soon"', () => {
       const soonLesson = { ...mockLesson, contentStatus: 'soon' as const }
       renderWithI18n(soonLesson)
 
-      const link = screen.getByTestId('system-link')
-      // href should be "#" to prevent navigation for "Soon" lessons
-      expect(link.getAttribute('href')).toBe('#')
+      // SystemLink should NOT be rendered for "Soon" lessons
+      // Instead, a standalone button is rendered (to avoid invalid <button><a> nesting)
+      expect(screen.queryByTestId('system-link')).toBeNull()
+
+      // A button should be rendered instead
+      expect(screen.getByRole('button')).toBeTruthy()
     })
 
     it('renders SystemLink for normal (non-soon) lessons', () => {

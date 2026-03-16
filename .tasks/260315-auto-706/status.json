@@ -4,9 +4,9 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-16T07:44:21.445Z",
-  "updatedAt": "2026-03-16T08:26:41.932Z",
-  "state": "failed",
-  "cursor": null,
+  "updatedAt": "2026-03-16T08:45:27.015Z",
+  "state": "running",
+  "cursor": "architect",
   "stages": {
     "taskify": {
       "state": "completed",
@@ -39,32 +39,32 @@
     "architect": {
       "state": "completed",
       "retries": 0,
-      "startedAt": "2026-03-16T07:50:25.818Z",
-      "completedAt": "2026-03-16T07:54:29.393Z",
-      "elapsed": 244,
+      "startedAt": "2026-03-16T08:40:00.742Z",
+      "completedAt": "2026-03-16T08:42:49.952Z",
+      "elapsed": 169,
       "outputFile": "architect.md",
       "tokenUsage": {
-        "input": 25,
-        "output": 9548,
-        "cacheRead": 2117883
+        "input": 12,
+        "output": 7093,
+        "cacheRead": 747432
       },
-      "cost": 1.9717727500000002,
-      "sessionId": "ses_30a600834ffeb47BsJ2J5hMeqt"
+      "cost": 1.1243135,
+      "sessionId": "ses_30a32a006ffe5hIby63365QD2I"
     },
     "plan-gap": {
       "state": "completed",
-      "retries": 1,
-      "startedAt": "2026-03-16T07:54:30.892Z",
-      "completedAt": "2026-03-16T07:57:56.902Z",
-      "elapsed": 206,
+      "retries": 0,
+      "startedAt": "2026-03-16T08:42:51.568Z",
+      "completedAt": "2026-03-16T08:45:26.999Z",
+      "elapsed": 155,
       "outputFile": "plan-gap.md",
       "tokenUsage": {
         "input": 15,
-        "output": 3622,
-        "cacheRead": 1640005
+        "output": 8375,
+        "cacheRead": 1336729
       },
-      "cost": 1.0162524999999998,
-      "sessionId": "ses_30a5ac158ffeQXFm5AMKTd3br2"
+      "cost": 1.5909332500000002,
+      "sessionId": "ses_30a300708ffefr8JYohf2A9s7N"
     },
     "test": {
       "state": "completed",
@@ -74,40 +74,21 @@
       "sessionId": "ses_30a5923d9ffeG5NbemPHn0vi24"
     },
     "build": {
-      "state": "completed",
+      "state": "running",
       "retries": 0,
-      "completedAt": "2026-03-16T08:08:59.869Z",
-      "outputFile": "build.md",
-      "sessionId": "ses_30a5921e5ffeYpNEQScrBXxu4w"
+      "startedAt": "2026-03-16T08:45:27.000Z"
     },
     "commit": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-03-16T08:13:25.529Z",
-      "completedAt": "2026-03-16T08:13:26.357Z",
-      "elapsed": 1
+      "state": "pending",
+      "retries": 0
     },
     "review": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-03-16T08:13:26.358Z",
-      "completedAt": "2026-03-16T08:15:37.439Z",
-      "elapsed": 131,
-      "outputFile": "review.md",
-      "tokenUsage": {
-        "input": 14,
-        "output": 5025,
-        "cacheRead": 655363
-      },
-      "cost": 0.840239,
-      "sessionId": "ses_30a4af1afffebOOh63dk2keiNb"
+      "state": "pending",
+      "retries": 0
     },
     "fix": {
-      "state": "failed",
-      "retries": 0,
-      "startedAt": "2026-03-16T08:15:47.361Z",
-      "elapsed": 653,
-      "error": "Agent \"build\" failed. Artifacts: fix-stderr.log, fix-events.jsonl"
+      "state": "pending",
+      "retries": 0
     }
   },
   "issueNumber": 839,
@@ -121,5 +102,6 @@
     }
   ],
   "completedAt": "2026-03-16T08:26:41.932Z",
-  "totalCost": 3.8282642499999997
+  "totalCost": 3.8282642499999997,
+  "branchName": "feat/260315-auto-839-content-status-badging-soon-just-a"
 }

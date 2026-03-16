@@ -2,72 +2,53 @@
 
 ## Changes
 
-### Feature Implementation: Content Status Badging ("Soon" & "Just Added")
+### Step 1: Fixed Invalid HTML Nesting in LessonCard Component
 
-The feature has been fully implemented across the codebase:
+**File**: `src/app/(frontend)/courses/_components/LessonCard/index.tsx`
 
-1. **Content Status Fields** (`src/server/payload/fields/contentStatus.ts`):
-   - `contentStatus` select field (None/Soon/Just Added)
-   - `contentStatusVisible` toggle for "Soon" content
-   - `contentStatusExpiresAt` date for auto-expiry
+**Problem**: When `isSoon=true`, the code used `<Button asChild={!isSoon}>` which renders a `<button>` element, but its child was always `<SystemLink>` (renders as `<a>`). This produced `<button><a href="#">...</a></button>` — invalid HTML (interactive element nested inside interactive element).
 
-2. **Collections Updated**:
-   - `Courses.ts` — Added contentStatusFields
-   - `Lessons.ts` — Added contentStatusFields
+**Fix**: Replaced single `<Button><SystemLink>` pattern with conditional rendering:
+- When `isSoon=true`: Render standalone `<Button onClick={handleLessonClick} className="cursor-not-allowed">` — no child link, button handles click directly (toast fires per AC-2)
+- When `isSoon=false`: Render `<Button asChild><SystemLink href={href}>` — normal pattern, SystemLink renders as `<a>`
 
-3. **ContentStatusBadge Component** (`src/ui/web/shared/ContentStatusBadge/index.tsx`):
-   - Gray badge for "Soon" (neutral styling with bg-muted)
-   - Green badge with pulse animation for "Just Added"
-   - Handles expiry date checking
-   - Uses translations
+**Why NOT `disabled`**: Using `disabled` would prevent `onClick` from firing (native browser behavior + Button's `disabled:pointer-events-none` CSS). The spec (AC-2) requires "clicking shows locked message" — which needs click events to work. Used `cursor-not-allowed` CSS + Card's `opacity-60` for visual "locked" cue instead.
 
-4. **CourseCard Integration** (`src/app/(frontend)/courses/_components/CourseCard/index.tsx`):
-   - Badge in top-right corner
-   - Locked behavior for "Soon" courses (toast message, disabled button)
+### Step 2: Fixed Test Quality Issues
 
-5. **LessonCard Integration** (`src/app/(frontend)/courses/_components/LessonCard/index.tsx`):
-   - Badge next to lesson title using flex layout
-   - Locked behavior using conditional rendering:
-     - When `isSoon`: standalone `<Button disabled>` (valid HTML)
-     - When not `isSoon`: `<Button asChild><SystemLink>`
+**File**: `tests/unit/components/LessonCard.test.tsx`
 
-6. **CourseLessonCard Integration** (`src/app/(frontend)/courses/[courseSlug]/_components/CourseLessonCard/index.tsx`):
-   - Badge next to lesson title
-   - Locked behavior with toast
+**Changes**:
+1. Fixed `any` type in SystemLink mock — replaced with proper interface
+2. Updated `shows toast when clicking "Soon" lesson` test — now clicks `<button>` element via `getByRole('button')` instead of `system-link` testid
+3. Replaced `href is "#" when lesson is "Soon"` test with `does not render SystemLink when lesson is "Soon"` — verifies SystemLink is not rendered for locked lessons (validates the HTML fix)
 
-7. **Backend Query Filtering**:
-   - `queries/courses.ts` — Filters invisible "Soon" content
-   - `queries/lessons.ts` — Filters invisible "Soon" content
+## Tests Written
 
-8. **Translations**:
-   - `en.json` — soonBadge: "Soon", justAddedBadge: "New", contentLocked
-   - `he.json` — Hebrew translations (בקרוב, חדש)
+- `tests/unit/components/LessonCard.test.tsx` — Updated existing tests (10 total)
+  - Added new test: `does not render SystemLink when lesson is "Soon"`
+  - Updated test: `shows toast when clicking "Soon" lesson` to click button instead of link
 
-## Tests Written/Updated
+## Tests Verified (All Passing)
 
-- `tests/unit/components/LessonCard.test.tsx` — 9 tests
-- Prior run: `tests/unit/components/CourseCard.test.tsx` — 12 tests
-- Prior run: `tests/unit/components/CourseLessonCard.test.tsx` — 6 tests
-- Prior run: `tests/unit/components/ContentStatusBadge.test.tsx` — 10 tests
-- Prior run: `tests/unit/queries/course-content-status.test.ts` — 4 tests
-- Prior run: `tests/unit/queries/lesson-content-status.test.ts` — 2 tests
-- Prior run: `tests/unit/fields/contentStatus.test.ts` — 10 tests
-- Prior run: `tests/unit/i18n/contentStatus-translations.test.ts` — 8 tests
+All content-status related tests pass:
+- `tests/unit/components/LessonCard.test.tsx` — 10 tests ✅
+- `tests/unit/components/CourseCard.test.tsx` — 12 tests ✅
+- `tests/unit/components/CourseLessonCard.test.tsx` — 6 tests ✅
+- `tests/unit/components/ContentStatusBadge.test.tsx` — 10 tests ✅
+- `tests/unit/queries/course-content-status.test.ts` — 4 tests ✅
+- `tests/unit/queries/lesson-content-status.test.ts` — 2 tests ✅
+- `tests/unit/fields/contentStatus.test.ts` — 10 tests ✅
+- `tests/unit/i18n/contentStatus-translations.test.ts` — 8 tests ✅
 
-**Total**: 61 content-status tests passing
+**Total**: 62 tests passing
 
-## Quality Checks
+## Deviations
+
+- None — plan followed exactly (with gap fix applied from plan-gap.md)
+
+## Quality
 
 - TypeScript: PASS (`pnpm tsc --noEmit`)
 - Lint: PASS (`pnpm lint`)
-- All 61 content-status tests: PASS
-
-## Notes
-
-- The LessonCard uses correct semantic HTML with conditional rendering:
-  - "Soon" lessons: standalone `<Button disabled>` (no nested anchor)
-  - Normal lessons: `<Button asChild><SystemLink href={...}>`
-- Badge styling: pill shape (`rounded-full`), text-xs, font-bold
-- "Just Added" uses `animate-pulse` class for attention
-- Backend filters ensure invisible "Soon" content is hidden from student queries
-- All spec requirements met (AC-1 through AC-9)
+- All 62 content-status tests: PASS

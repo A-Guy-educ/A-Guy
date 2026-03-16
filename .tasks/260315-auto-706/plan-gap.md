@@ -2,95 +2,65 @@
 
 ## Summary
 
-- Gaps Found: 1 (minor)
+- Gaps Found: 1
 - Plan Revised: Yes
 
-## Gaps Found
+## Gaps Identified
 
-### Gap 1: Plan Step 1 says `cn` is "already imported in LessonCard (via Card component)" — this is incorrect
+### Gap 1: `disabled` Button Prevents `onClick` From Firing — Toast Will Never Show
 
-**Severity:** Medium
-**Issue:** The plan states in the Reuse Inventory: "cn from @/infra/utils/ui — already imported in LessonCard (via Card component, but we'll add direct import)". This is misleading — `cn` is NOT currently imported in `LessonCard/index.tsx` at all. The Card component imports it internally, but it is not re-exported or available in the LessonCard file. The plan does correctly say "we'll add direct import" in parentheses, and Step 1 Exact Behavior item 1 correctly lists adding the `cn` import. So the implementation instructions are correct, but the reuse inventory description is slightly misleading.
-**Fix Applied:** No plan edit needed — the step instructions already correctly specify adding the import. This is a documentation clarity issue only.
+**Severity:** Critical
+**Issue:** The plan specified using `<Button onClick={handleLessonClick} disabled className="cursor-not-allowed">` for locked ("Soon") lessons. However, this is contradictory:
 
-## Feasibility Assessment
+1. A native HTML `<button disabled>` does NOT fire `onClick` events — this is standard browser behavior.
+2. The Button component (`src/ui/web/components/button.tsx` line 7) applies `disabled:pointer-events-none` CSS, which additionally blocks all pointer interactions.
+3. The spec (AC-2) explicitly requires: "Students cannot access 'Soon' content - clicking shows locked message" — the toast MUST fire on click.
+4. The existing `CourseCard.test.tsx` (line 187) confirms this: `expect(toast.info).not.toHaveBeenCalled()` — CourseCard's `disabled` button intentionally does NOT show toast.
 
-### File Paths Verified ✅
+If the plan were implemented as-written, clicking a "Soon" lesson would do nothing — no toast, no feedback. This violates AC-2.
 
-| File Path | Exists | Status |
-|-----------|--------|--------|
-| `src/app/(frontend)/courses/_components/LessonCard/index.tsx` | ✅ Yes (53 lines) | To be MODIFIED |
-| `src/ui/web/shared/ContentStatusBadge/index.tsx` | ✅ Yes (73 lines) | Import target |
-| `src/app/(frontend)/courses/[courseSlug]/_components/CourseLessonCard/index.tsx` | ✅ Yes (113 lines) | Pattern reference |
-| `src/app/(frontend)/courses/_components/CourseCard/index.tsx` | ✅ Yes (153 lines) | Pattern reference |
-| `src/infra/utils/ui.ts` | ✅ Yes | Exports `cn` |
-| `src/i18n/en.json` | ✅ Yes (has soonBadge, justAddedBadge, contentLocked keys) | Read-only reference |
-| `src/i18n/he.json` | ✅ Yes (has Hebrew translations) | Read-only reference |
-| `src/payload-types.ts` | ✅ Yes (Lesson type has contentStatus fields) | Type reference |
-| `tests/unit/components/LessonCard.test.tsx` | ❌ Does not exist yet | To be CREATED (correct) |
-| `vitest.config.unit.mts` | ✅ Yes | Test runner config |
+**Fix Applied:** Updated plan Steps 1 and 2:
+- **Step 1**: Changed from `<Button disabled onClick={handler}>` to `<Button onClick={handler} className="cursor-not-allowed">` (no `disabled` attribute). The button remains clickable so the toast fires. Visual "locked" cue comes from `cursor-not-allowed` + Card's `opacity-60`.
+- **Step 1 acceptance criteria**: Changed "disabled attribute present" to "Button is NOT disabled so onClick fires the toast"
+- **Step 1 pattern reference**: Changed from CourseCard (which uses `disabled`) to CourseLessonCard (which uses `onClick` + `cursor-not-allowed`)
+- **Step 2**: Removed the `button is disabled when lesson is "Soon"` test. Updated toast test to click `<button>` element via `getByRole('button')`.
 
-### Imports Validated ✅
+## Spec Coverage Check
 
-- `ContentStatusBadge` exported from `src/ui/web/shared/ContentStatusBadge/index.tsx` → ✅
-- `cn` exported from `src/infra/utils/ui.ts` → ✅
-- `toast` available from `sonner` package → ✅ (used in CourseCard and CourseLessonCard already)
-- `useTranslations` from `@/ui/web/providers/I18n` → ✅ (already imported in LessonCard)
-- `Lesson` type from `@/payload-types` → ✅ (already imported in LessonCard, has `contentStatus` field)
-
-### Step Ordering ✅
-
-Single step — no ordering dependencies.
-
-### Test Commands ✅
-
-- Command: `pnpm vitest run --config vitest.config.unit.mts tests/unit/components/LessonCard.test.tsx`
-- Uses vitest (correct, not jest)
-- Uses pnpm (correct, not npm)
-- Config file exists at `vitest.config.unit.mts`
-- Test file path follows existing convention (`tests/unit/components/`)
-
-### Time Budget ✅
-
-Step 1 touches 1 source file + creates 1 test file — reasonable for a 10-20 minute implementation.
+| Spec Requirement | Plan Step | Status |
+|-----------------|-----------|--------|
+| §1.1 "Soon" badge on Lesson card | Already implemented (prior runs) | ✅ Covered |
+| §1.1 "Soon" content locked + message | Step 1 (conditional render, toast on click) | ✅ Covered |
+| §1.2 "Just Added" badge on Lesson card | Already implemented (prior runs) | ✅ Covered |
+| §1.2 "Just Added" fully accessible | Step 1 (Button asChild + SystemLink for non-soon) | ✅ Covered |
+| §2.1 Admin fields | Already implemented (prior runs) | ✅ Covered |
+| §3.1 Badge styling | Already implemented (prior runs) | ✅ Covered |
+| §3.2 Pulse animation | Already implemented (prior runs) | ✅ Covered |
+| AC-2 Students cannot access "Soon" + message | Step 1 (toast fires on click, no navigation) | ✅ Covered |
+| AC-9 "New Until" date auto-removes badge | Already implemented (prior runs) | ✅ Covered |
 
 ## Reuse Corrections
 
-No reuse corrections needed. The plan correctly:
-- Reuses existing `ContentStatusBadge` from `@/ui/web/shared/ContentStatusBadge` (does NOT create a new badge)
-- Reuses existing `toast` from `sonner` (does NOT create a new notification system)
-- Reuses existing `cn` from `@/infra/utils/ui` (does NOT create a new class merger)
-- Reuses existing `useTranslations` with existing translation keys (does NOT add new i18n keys)
-- Does NOT create new access control functions (correctly uses query-level filtering already in place)
-- Does NOT create new hooks or utilities
+No new reuse corrections needed. The plan correctly reuses all existing components and utilities.
 
-## Spec Coverage ✅
+## Feasibility Fixes
 
-| Spec Requirement | Plan Coverage |
-|-----------------|---------------|
-| §1.1 "Soon" badge on Lesson card | ✅ Step 1 item 3 |
-| §1.2 "Just Added" badge on Lesson card | ✅ Step 1 item 3 |
-| §2.1 Admin fields (None/Soon/Just Added) | ✅ Already implemented |
-| §2.1 Visibility Toggle | ✅ Already implemented |
-| §2.1 "New Until" date auto-expiry | ✅ Already implemented |
-| §3.1 Pill-shaped badge, text-xs, rounded-full | ✅ ContentStatusBadge already has this |
-| §3.1 Badge next to lesson title | ✅ Step 1 item 6 |
-| §3.2 Pulse animation for "Just Added" | ✅ ContentStatusBadge already has animate-pulse |
-| AC-1 Admins can mark lesson as "Soon" | ✅ Already implemented |
-| AC-2 Students cannot access "Soon" content | ✅ Step 1 item 4 (locked behavior) |
-| AC-3 "Just Added" badge appears when enabled | ✅ Step 1 item 3 |
-| AC-4 Responsive design, no overlapping | ✅ Step 1 item 6 (flex gap-2 layout) |
-| AC-9 "New Until" auto-expiry | ✅ ContentStatusBadge handles this |
+### Fix 1: `disabled` + `onClick` Conflict (described above)
+
+**What was wrong:** Plan Step 1 specified `<Button disabled onClick={handler}>` expecting toast to fire — but disabled buttons don't fire click events.
+**What was fixed:** Removed `disabled` prop. Use `cursor-not-allowed` CSS for visual cue instead. Button remains clickable so toast fires per spec.
+
+### Fix 2: Test Structure Updated for Non-Disabled Button
+
+**What was wrong:** Plan Step 2 added a `button is disabled when lesson is "Soon"` test — but button is no longer disabled.
+**What was fixed:** Removed the disabled button test. Updated toast click test to use `getByRole('button')` instead of `getByTestId('system-link')`.
 
 ## Changes Made to Plan
 
-No changes were needed. The plan is well-structured with:
-- Correct single-step scope (1 source file + 1 test file)
-- All file paths verified as existing
-- All imports verified as valid
-- Correct test runner (vitest) and config file
-- Appropriate pattern reference (CourseLessonCard)
-- 7 well-defined TDD test cases
-- Clear acceptance criteria
-
-The plan accurately identifies the remaining gap (LessonCard missing badge + locked behavior) and provides a focused, feasible implementation step.
+- Updated Rerun Context: Removed reference to CourseCard `disabled` pattern as the target; clarified why `disabled` cannot be used with `onClick`
+- Updated Patterns Observed: Added CRITICAL note about `disabled` preventing `onClick`
+- Updated Step 1 exact behavior: `<Button onClick={handler} className="cursor-not-allowed">` instead of `<Button disabled onClick={handler}>`
+- Updated Step 1 pattern reference: CourseLessonCard (not CourseCard) is the correct pattern
+- Updated Step 1 HTML structure: Shows non-disabled `<button>` for locked state
+- Updated Step 1 acceptance criteria: "Button is NOT disabled" instead of "disabled present"
+- Updated Step 2: Removed disabled button test; updated toast test to click button element

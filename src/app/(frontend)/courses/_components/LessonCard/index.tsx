@@ -65,15 +65,18 @@ export function LessonCard({ lesson, courseSlug, chapterSlug }: LessonCardProps)
         )}
       </CardHeader>
       <CardFooter>
-        <Button asChild={!isSoon}>
-          <SystemLink
-            href={isSoon ? '#' : href}
-            onClick={isSoon ? handleLessonClick : undefined}
-            className={isSoon ? 'cursor-not-allowed' : undefined}
-          >
+        {isSoon ? (
+          // Locked "Soon" lesson: standalone button (no SystemLink) to avoid invalid <button><a> nesting
+          // Don't use disabled - we need onClick to fire so the toast shows (AC-2)
+          <Button onClick={handleLessonClick} className="cursor-not-allowed">
             {t('viewLesson')}
-          </SystemLink>
-        </Button>
+          </Button>
+        ) : (
+          // Normal lesson: Button with asChild renders SystemLink as the button element
+          <Button asChild>
+            <SystemLink href={href}>{t('viewLesson')}</SystemLink>
+          </Button>
+        )}
       </CardFooter>
     </Card>
   )
