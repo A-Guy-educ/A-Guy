@@ -133,6 +133,8 @@ function createDeferredTestsAction(taskId: string, _ctx: InspectorContext): Acti
           task_id: taskId,
           mode: 'rerun',
           from_stage: 'test',
+          feedback:
+            'Deferred test run: write tests for the implemented code on dev. Create a new test branch.',
         })
         execCtx.log.info({ taskId }, 'Triggered cody.yml for deferred test stage')
         return { success: true, message: `Triggered deferred tests for ${taskId}` }
