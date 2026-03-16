@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-16T12:10:03.945Z",
-  "updatedAt": "2026-03-16T12:38:00.707Z",
+  "updatedAt": "2026-03-16T12:40:51.275Z",
   "state": "running",
   "cursor": "gap",
   "stages": {
@@ -57,9 +57,23 @@
       "skipped": "Complexity 37 (complex) below threshold 50 for plan-gap"
     },
     "build": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-16T12:38:00.694Z",
+      "completedAt": "2026-03-16T12:40:36.534Z",
+      "elapsed": 156,
+      "outputFile": "build.md",
+      "tokenUsage": {
+        "input": 12271,
+        "output": 3159,
+        "cacheRead": 1043053
+      },
+      "sessionId": "ses_30958c0b3ffeI2CoExgbC9arUg"
+    },
+    "commit": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-16T12:38:00.694Z"
+      "startedAt": "2026-03-16T12:40:51.275Z"
     }
   },
   "issueNumber": 851,
@@ -71,6 +85,5 @@
       "actor": "aguyaharonyair",
       "timestamp": "2026-03-16T12:10:03.945Z"
     }
-  ],
-  "branchName": "fix/260316-auto-851-"
+  ]
 }
