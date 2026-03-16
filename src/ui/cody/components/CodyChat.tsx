@@ -21,6 +21,7 @@ interface Message {
   role: 'user' | 'assistant'
   content: string
   isLoading?: boolean
+  timestamp?: string
 }
 
 interface ToolCall {
@@ -168,6 +169,7 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
                 converted.push({
                   role: msg.role,
                   content: msg.text,
+                  timestamp: msg.timestamp,
                 })
               }
             }
@@ -180,7 +182,7 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
       // Clear task messages when no task
       setTaskMessages([])
     }
-  }, [selectedTask]) // eslint wants full object; re-runs are guarded by if(selectedTask)
+  }, [selectedTask?.id]) // eslint-disable-line react-hooks/exhaustive-deps -- intentional: only id needed, full object ref changes on every poll
 
   // Save task chat after each message exchange (debounced)
   const saveTaskChat = useCallback(async () => {
@@ -190,7 +192,7 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
       const messagesForApi: ChatMessage[] = taskMessages.map((m) => ({
         role: m.role,
         text: m.content,
-        timestamp: new Date().toISOString(),
+        timestamp: m.timestamp || new Date().toISOString(),
       }))
 
       await fetch('/api/cody/chat/save', {
@@ -361,7 +363,10 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
       messageContent = attachmentDescriptions + (userMessage ? `\n\n${userMessage}` : '')
     }
 
-    setMessages((prev) => [...prev, { role: 'user', content: messageContent }])
+    setMessages((prev) => [
+      ...prev,
+      { role: 'user', content: messageContent, timestamp: new Date().toISOString() },
+    ])
     setLoading(true)
     setToolCalls([])
 
@@ -369,7 +374,10 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
     abortControllerRef.current = new AbortController()
 
     // Add placeholder for assistant response
-    setMessages((prev) => [...prev, { role: 'assistant', content: '', isLoading: true }])
+    setMessages((prev) => [
+      ...prev,
+      { role: 'assistant', content: '', isLoading: true, timestamp: new Date().toISOString() },
+    ])
 
     try {
       // Include task context in request when in task mode

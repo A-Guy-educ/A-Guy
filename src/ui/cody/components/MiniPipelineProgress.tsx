@@ -71,14 +71,13 @@ function InlineVariant({
   task: CodyTask
   className?: string
 }) {
+  // Inline variant shows dots-only — the bar row below has the full text + elapsed.
+  // This avoids showing the same status text twice per task card.
   switch (displayState.kind) {
     case 'stage-progress':
       return (
         <span className={cn('inline-flex items-center gap-1', className)}>
           <StageDots currentIndex={displayState.stageIndex} state="running" size="inline" />
-          <span className="text-xs text-blue-400 font-medium truncate max-w-24">
-            {displayState.label}
-          </span>
         </span>
       )
 
@@ -87,7 +86,6 @@ function InlineVariant({
         <span className={cn('inline-flex items-center gap-1', className)}>
           <StageDots currentIndex={displayState.stageIndex} state="paused" size="inline" />
           <Pause className="w-3 h-3 text-yellow-400" />
-          <span className="text-xs text-yellow-400 font-medium">Approval</span>
         </span>
       )
 
@@ -95,19 +93,15 @@ function InlineVariant({
       return (
         <span className={cn('inline-flex items-center gap-1', className)}>
           <Loader2 className="w-3 h-3 text-blue-400 animate-spin" />
-          <span className="text-xs text-blue-400/80">Starting</span>
         </span>
       )
 
-    case 'no-data': {
-      const wf = displayState.workflowStatus
+    case 'no-data':
       return (
         <span className={cn('inline-flex items-center gap-1', className)}>
           <Loader2 className="w-3 h-3 text-blue-400 animate-spin" />
-          <span className="text-xs text-blue-400/80">{wf === 'queued' ? 'Queued' : 'Running'}</span>
         </span>
       )
-    }
   }
 }
 
@@ -159,7 +153,9 @@ function BarVariant({
         <div className={cn('flex items-center gap-2', className)}>
           <StageDots currentIndex={displayState.stageIndex} state="paused" size="bar" />
           <Pause className="w-3 h-3 text-yellow-400" />
-          <span className="text-[11px] text-yellow-400 font-medium">Awaiting approval</span>
+          <span className="text-[11px] text-yellow-400 font-medium">
+            Paused · {displayState.label}
+          </span>
           <ElapsedBadge since={pipeline?.startedAt} />
         </div>
       )

@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { handleCodyApiError } from '@/ui/cody/github-error-handler'
 import { pipelineParamsSchema } from '@/ui/cody/schemas'
 import { apiValidationError } from '@/server/api/responses'
-import { requireAuth } from '@/ui/cody/auth'
+import { requireCodyAuth } from '@/ui/cody/auth'
 import {
   findTaskBranch,
   findBranchByIssueNumber,
@@ -18,11 +18,12 @@ import {
   getStatusFromArtifact,
   fetchWorkflowRuns,
 } from '@/ui/cody/github-client'
+import { matchWorkflowRunToTask } from '@/ui/cody/workflow-matching'
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   // Check auth
-  const authError = await requireAuth(req)
-  if (authError) return authError
+  const authResult = await requireCodyAuth(req)
+  if (authResult instanceof NextResponse) return authResult
 
   // Validate path params
   const { taskId: rawTaskId } = await params
@@ -65,7 +66,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ task
 
     // Try artifact status (for completed tasks)
     const workflowRuns = await fetchWorkflowRuns({ perPage: 10 })
-    const run = workflowRuns.find((r) => r.html_url.includes(taskId))
+    const run = matchWorkflowRunToTask(workflowRuns, '', 0, taskId)
 
     if (run) {
       const status = await getStatusFromArtifact(taskId, run.id.toString())

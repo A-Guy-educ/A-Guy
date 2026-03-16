@@ -5,11 +5,11 @@
  * @ai-summary Fetch CI status and mergeability for a PR
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/ui/cody/auth'
+import { requireCodyAuth } from '@/ui/cody/auth'
 import { fetchPRCIStatus } from '@/ui/cody/github-client'
 
 export async function GET(req: NextRequest) {
-  const authError = await requireAuth(req)
+  const authError = await requireCodyAuth(req)
   if (authError) return authError
 
   try {

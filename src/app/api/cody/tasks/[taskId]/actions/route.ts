@@ -7,6 +7,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { requireCodyAuth, verifyActorLogin } from '@/ui/cody/auth'
 
 import {
   postComment,
@@ -23,7 +24,9 @@ import {
   findTaskBranch,
   deleteBranch,
   clearCache,
+  getOctokit,
 } from '@/ui/cody/github-client'
+import { GITHUB_OWNER, GITHUB_REPO } from '@/ui/cody/constants'
 
 const actionSchema = z.object({
   action: z.enum([
@@ -42,13 +45,19 @@ const actionSchema = z.object({
     'unassign',
     'comment',
     'fix',
+    'approve-ui',
+    'approve-pr',
+    'update',
   ]),
   feedback: z.string().optional(),
   fromStage: z.string().optional(),
   mode: z.string().optional(),
   assignees: z.array(z.string()).optional(),
   label: z.string().optional(),
+  labels: z.array(z.string()).optional(),
   comment: z.string().optional(),
+  title: z.string().optional(),
+  body: z.string().optional(),
   actorLogin: z.string().optional(),
 })
 
@@ -58,12 +67,21 @@ function withActor(message: string, actor?: string): string {
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
-  // Skip auth check for now - open access for testing
+  const authResult = await requireCodyAuth(req)
+  if (authResult instanceof NextResponse) return authResult
 
   try {
     const { taskId } = await params
     const body = await req.json()
     const { action, feedback, fromStage, mode: _mode, actorLogin } = actionSchema.parse(body)
+
+    // Verify actorLogin matches the authenticated session (prevents impersonation)
+    const actorResult = await verifyActorLogin(req, actorLogin)
+    if (actorResult instanceof NextResponse) return actorResult
+    const { identity } = actorResult
+
+    // Use verified identity's login for attribution
+    const actor = identity.login
 
     // Get issue number from taskId
     const issueNumber = parseInt(taskId.replace('issue-', ''), 10)
@@ -72,7 +90,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
     }
 
     const { assignees, label, comment } = actionSchema.parse(body)
-    const actor = actorLogin || undefined
 
     switch (action) {
       case 'approve': {
@@ -288,6 +305,65 @@ ${comment}`,
         await postComment(associatedPR.number, fixBody)
         clearCache()
         return NextResponse.json({ success: true, message: 'Fix requested on PR' })
+      }
+
+      case 'approve-ui': {
+        // Mark the preview UI as visually approved
+        await addLabels(issueNumber, ['ui-approved'])
+        await postComment(issueNumber, withActor('✅ Preview UI approved', actor))
+        clearCache()
+        return NextResponse.json({ success: true, message: 'Preview UI approved' })
+      }
+
+      case 'approve-pr': {
+        // Find associated PR and approve the review (without merging)
+        const associatedPR = await findAssociatedPRByIssueNumber(issueNumber)
+        if (!associatedPR) {
+          return NextResponse.json({ error: 'No associated PR found' }, { status: 404 })
+        }
+        // Use shared getOctokit (supports both CODY_BOT_TOKEN and GITHUB_TOKEN)
+        const octokit = getOctokit()
+        try {
+          await octokit.pulls.createReview({
+            owner: GITHUB_OWNER,
+            repo: GITHUB_REPO,
+            pull_number: associatedPR.number,
+            event: 'APPROVE',
+            body: `✅ PR approved by @${actor} via Cody dashboard.`,
+          })
+        } catch (error: unknown) {
+          // May fail if already approved - that's ok
+          const msg = error instanceof Error ? error.message : String(error)
+          if (!msg.includes('already approved')) {
+            console.warn('[Cody] PR approval note:', msg)
+          }
+        }
+        // Add pr-approved label for merge button to check
+        await addLabels(issueNumber, ['pr-approved'])
+        await postComment(issueNumber, withActor('✅ PR approved', actor))
+        clearCache()
+        return NextResponse.json({ success: true, message: 'PR approved' })
+      }
+
+      case 'update': {
+        const updates: { title?: string; body?: string; labels?: string[]; assignees?: string[] } =
+          {}
+        const parsed = actionSchema.parse(body)
+        const { title, body: issueBody, labels, assignees } = parsed
+
+        if (title) updates.title = title
+        if (issueBody !== undefined) updates.body = issueBody
+        if (labels) updates.labels = labels
+        if (assignees) updates.assignees = assignees
+
+        if (Object.keys(updates).length === 0) {
+          return NextResponse.json({ error: 'No fields to update' }, { status: 400 })
+        }
+
+        await updateIssue(issueNumber, updates)
+        if (actor) await postComment(issueNumber, `📝 Issue updated _(by @${actor})_`)
+        clearCache()
+        return NextResponse.json({ success: true, message: 'Issue updated' })
       }
 
       default:

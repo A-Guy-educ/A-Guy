@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useConversionPrompts } from '../hooks/useConversionPrompts'
 
 interface ConvertFormProps {
   lessonId: string
@@ -9,50 +10,20 @@ interface ConvertFormProps {
   onClose: () => void
 }
 
-interface PromptOption {
-  id: string
-  title: string
-  key: string
-  type: string
-  usage: string
-}
-
 export function ConvertForm({ lessonId, mediaId, filename, onClose }: ConvertFormProps) {
-  const [extractorPrompts, setExtractorPrompts] = useState<PromptOption[]>([])
-  const [verifierPrompts, setVerifierPrompts] = useState<PromptOption[]>([])
+  const {
+    extractorPrompts,
+    verifierPrompts,
+    isLoading,
+    error: promptsError,
+    retry,
+  } = useConversionPrompts(lessonId)
+
   const [selectedExtractor, setSelectedExtractor] = useState<string>('')
   const [selectedVerifier, setSelectedVerifier] = useState<string>('')
-  const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-
-  useEffect(() => {
-    async function loadPrompts() {
-      try {
-        const response = await fetch('/api/prompts/for-conversion', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ lessonId }),
-          credentials: 'include',
-        })
-
-        if (!response.ok) {
-          throw new Error('Failed to load prompts')
-        }
-
-        const data = await response.json()
-        setExtractorPrompts(data.extractors || [])
-        setVerifierPrompts(data.verifiers || [])
-      } catch {
-        setError('Failed to load prompts')
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadPrompts()
-  }, [lessonId])
 
   async function handleSubmit() {
     setIsSubmitting(true)
@@ -132,7 +103,7 @@ export function ConvertForm({ lessonId, mediaId, filename, onClose }: ConvertFor
         </span>
       </div>
 
-      {error && (
+      {(promptsError || error) && (
         <div
           style={{
             padding: 6,
@@ -143,7 +114,26 @@ export function ConvertForm({ lessonId, mediaId, filename, onClose }: ConvertFor
             borderRadius: 3,
           }}
         >
-          {error}
+          {promptsError || error}
+          {promptsError && (
+            <>
+              {' '}
+              <button
+                onClick={retry}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--theme-primary)',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  fontSize: 11,
+                  padding: 0,
+                }}
+              >
+                Retry
+              </button>
+            </>
+          )}
         </div>
       )}
       {success && (

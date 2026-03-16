@@ -6,6 +6,7 @@
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
+import { requireCodyAuth, verifyActorLogin } from '@/ui/cody/auth'
 
 import {
   fetchIssues,
@@ -17,6 +18,7 @@ import {
   findStatusOnBranch,
   createIssue,
   uploadIssueAttachment,
+  postComment,
 } from '@/ui/cody/github-client'
 import type {
   CodyTask,
@@ -26,6 +28,7 @@ import type {
   WorkflowRun,
   CodyPipelineStatus,
 } from '@/ui/cody/types'
+import { matchWorkflowRunToTask } from '@/ui/cody/workflow-matching'
 
 /**
  * Derive column from live pipeline status.
@@ -73,13 +76,15 @@ function getColumnForIssue(
 ): ColumnId {
   const labelNames = issue.labels.map((l) => l.name.toLowerCase())
 
-  // 1. Terminal lifecycle labels (highest priority)
+  // 0. Terminal lifecycle labels (highest priority)
   if (labelNames.includes('cody:failed')) return 'failed'
-  // cody:done = pipeline finished, PR created → task goes to review (not done)
-  // Task is only truly "done" when the PR is merged and the issue is closed
-  if (labelNames.includes('cody:done') || labelNames.includes('cody:review')) return 'review'
+  // cody:done = pipeline finished, PR created → task goes to review
+  // Task is only truly "done" when the PR is merged and the issue is closed.
+  if (labelNames.includes('cody:done') || labelNames.includes('cody:review')) {
+    return 'review'
+  }
 
-  // 2. Gate labels — pipeline paused waiting for approval.
+  // 1. Gate labels — pipeline paused waiting for approval.
   // Must be checked BEFORE cody:planning/cody:building and in_progress workflow,
   // because the pipeline keeps running (polling for approval) while gated,
   // and the cody:planning label is never removed when a gate fires.
@@ -121,7 +126,8 @@ function getColumnForIssue(
 }
 
 export async function GET(req: NextRequest) {
-  // Skip auth check for now - open access for testing
+  const authResult = await requireCodyAuth(req)
+  if (authResult instanceof NextResponse) return authResult
 
   const { searchParams } = new URL(req.url)
   const board = searchParams.get('board') || 'all'
@@ -149,15 +155,8 @@ export async function GET(req: NextRequest) {
       fetchOpenPRs(),
     ])
 
-    // Build a map of most recent workflow run per issue title for fast lookup
-    const runsByTitle = new Map<string, (typeof workflowRuns)[number]>()
-    for (const run of workflowRuns) {
-      const title = run.display_title || ''
-      // Keep only the most recent run per title (runs are sorted by date desc)
-      if (title && !runsByTitle.has(title)) {
-        runsByTitle.set(title, run)
-      }
-    }
+    // Workflow runs are matched per-task below using matchWorkflowRunToTask()
+    // which prefers active (in_progress/queued) runs over stale completed ones.
 
     // Build PR lookup: match by title or by issue number in branch name
     const prsByIssueTitle = new Map<string, (typeof openPRs)[number]>()
@@ -198,13 +197,8 @@ export async function GET(req: NextRequest) {
         const taskIdMatch = issue.title.match(/\[[^\]]+\]/)
         const taskId = taskIdMatch ? taskIdMatch[0].replace(/[\[\]]/g, '') : ''
 
-        // Match workflow run by issue title (most reliable) or taskId
-        const workflowRun =
-          runsByTitle.get(issue.title) ??
-          workflowRuns.find(
-            (run) =>
-              taskId && (run.html_url.includes(taskId) || run.display_title?.includes(taskId)),
-          )
+        // Match workflow run — prefers active (in_progress) runs over stale completed ones
+        const workflowRun = matchWorkflowRunToTask(workflowRuns, issue.title, issue.number, taskId)
 
         // Match PR from pre-fetched bulk data (cheap, no extra API calls)
         const pr = prsByIssueTitle.get(issue.title) ?? prsByIssueNumber.get(issue.number) ?? null
@@ -214,7 +208,6 @@ export async function GET(req: NextRequest) {
         // (has an active workflow run or cody:building/cody:planning labels).
         let pipelineStatus = undefined
         const labelNames = issue.labels.map((l) => l.name.toLowerCase())
-        // Fetch pipeline for tasks that are actively building, recently failed, or paused at a gate
         const isLikelyActive =
           workflowRun?.status === 'in_progress' ||
           workflowRun?.status === 'queued' ||
@@ -236,19 +229,19 @@ export async function GET(req: NextRequest) {
             // Pipeline generates random task IDs (e.g., 260306-auto-330) that don't
             // match the issue number, so we need to discover the actual directory.
             if (!status) {
-              status = await findStatusOnBranch(branch)
+              status = await findStatusOnBranch(branch, issue.number)
             }
             if (status) pipelineStatus = status
           }
         }
 
-        // Pipeline state is authoritative when available (no label-propagation delay).
-        // Fall back to label/workflow-based derivation when pipeline data is absent.
-        const column = pipelineStatus
+        // Column derivation: pipeline status is authoritative when fresh,
+        // falling back to label-based derivation.
+        const column: ColumnId = pipelineStatus
           ? deriveColumnFromPipeline(pipelineStatus)
           : getColumnForIssue(issue, workflowRun ?? undefined, pr ?? null)
 
-        // Derive gate type: prefer pipeline controlMode, fall back to labels
+        // Derive gate type: prefer pipeline controlMode, fall back to issue labels
         const gateType = deriveGateType(pipelineStatus, labelNames)
 
         return {
@@ -333,12 +326,21 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    // Check for missing token
-    if (error?.message?.includes('GITHUB_TOKEN not configured')) {
+    // Check for missing token - match both old and new error message formats from getOctokit()
+    // Old: "GITHUB_TOKEN not configured"
+    // New: "Neither CODY_BOT_TOKEN nor GITHUB_TOKEN is configured"
+    // Both contain "TOKEN" and "configured"
+    const isNoTokenError =
+      error?.message?.includes('TOKEN') &&
+      error?.message?.includes('configured') &&
+      (error?.message?.includes('GITHUB_TOKEN') || error?.message?.includes('CODY_BOT_TOKEN'))
+
+    if (isNoTokenError) {
       return NextResponse.json(
         {
           error: 'no_token',
-          message: 'GITHUB_TOKEN is not configured',
+          message:
+            'GitHub token is not configured. Set CODY_BOT_TOKEN or GITHUB_TOKEN in environment variables.',
         },
         { status: 401 },
       )
@@ -353,18 +355,27 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  // Skip auth check for now - open access for testing
+  const authResult = await requireCodyAuth(req)
+  if (authResult instanceof NextResponse) return authResult
 
   try {
     const body = await req.json()
     const { title, body: issueBody, labels, assignees, attachments, actorLogin } = body
 
+    // Verify actorLogin matches the authenticated session (prevents impersonation)
+    const actorResult = await verifyActorLogin(req, actorLogin)
+    if (actorResult instanceof NextResponse) return actorResult
+    const { identity } = actorResult
+
+    // Use verified identity's login for attribution
+    const verifiedLogin = identity.login
+
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
     }
 
-    // Create the issue in GitHub
-    const actorNote = actorLogin ? `\n\n---\n_Created by @${actorLogin} via Cody dashboard_` : ''
+    // Create the issue in GitHub - use verified login for attribution
+    const actorNote = `\n\n---\n_Created by @${verifiedLogin} via Cody dashboard_`
     const issue = await createIssue({
       title,
       body: (issueBody || '') + actorNote,
@@ -373,6 +384,15 @@ export async function POST(req: NextRequest) {
     })
 
     console.log('[Cody] Created issue:', issue.number, issue.title)
+
+    // Auto-trigger pipeline by commenting @cody on the issue
+    try {
+      await postComment(issue.number, '@cody')
+      console.log('[Cody] Triggered pipeline for issue:', issue.number)
+    } catch (triggerError: any) {
+      console.error('[Cody] Failed to trigger pipeline:', triggerError.message)
+      // Don't fail the whole request if trigger fails - task was still created
+    }
 
     // Upload attachments if provided
     const uploadedAttachments = []

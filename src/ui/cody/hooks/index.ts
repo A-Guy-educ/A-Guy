@@ -8,10 +8,14 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { codyApi, RateLimitError, NoTokenError } from '../api'
+import { codyApi, RateLimitError, NoTokenError, SessionExpiredError } from '../api'
 import type { CodyTask } from '../types'
 import type { ViewMode } from '../components/FilterBar'
 import { POLLING_INTERVALS } from '../constants'
+
+// Re-export new hooks
+export { useDashboardFilters } from './useDashboardFilters'
+export { useDashboardRouter } from './useDashboardRouter'
 
 // Query keys
 export const queryKeys = {
@@ -74,6 +78,10 @@ export function useCodyTasks(options: UseCodyTasksOptions = {}) {
     refetchInterval: (query): number | false => {
       if (refetchInterval === false) return false
 
+      // Stop polling when session expired or no token — user must re-authenticate
+      if (query.state.error instanceof SessionExpiredError) return false
+      if (query.state.error instanceof NoTokenError) return false
+
       // Smart auto mode: inspect data to decide interval
       if (refetchInterval === 'auto') {
         return getSmartInterval(query.state.data, viewMode)
@@ -87,6 +95,7 @@ export function useCodyTasks(options: UseCodyTasksOptions = {}) {
     retry: (failureCount, error) => {
       if (error instanceof RateLimitError) return false
       if (error instanceof NoTokenError) return false
+      if (error instanceof SessionExpiredError) return false
       return failureCount < 3
     },
   })
@@ -204,6 +213,26 @@ export function useCreateTask() {
     }) => codyApi.tasks.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
+    },
+  })
+}
+
+// ============ useUpdateTask ============
+
+export function useUpdateTask(issueNumber: number) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: {
+      title?: string
+      body?: string
+      labels?: string[]
+      assignees?: string[]
+      actorLogin?: string
+    }) => codyApi.tasks.update(issueNumber, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cody-tasks'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.taskDetails(issueNumber) })
     },
   })
 }
@@ -335,6 +364,18 @@ export function useTaskActions({
     onError: handleError('reject gate'),
   })
 
+  const approveUI = useMutation({
+    mutationFn: () => codyApi.tasks.approveUI(issueNumber, actorLogin),
+    onSuccess: handleSuccess('Preview UI approved'),
+    onError: handleError('approve UI'),
+  })
+
+  const approvePR = useMutation({
+    mutationFn: () => codyApi.tasks.approvePR(issueNumber, actorLogin),
+    onSuccess: handleSuccess('PR approved'),
+    onError: handleError('approve PR'),
+  })
+
   const assign = useMutation({
     mutationFn: (assignees: string[]) => codyApi.tasks.assign(issueNumber, assignees, actorLogin),
     onSuccess: handleSuccess('User(s) assigned'),
@@ -347,6 +388,18 @@ export function useTaskActions({
     onError: handleError('unassign user'),
   })
 
+  const addToQueue = useMutation({
+    mutationFn: () => codyApi.tasks.addToQueue(issueNumber, actorLogin),
+    onSuccess: handleSuccess('Added to queue'),
+    onError: handleError('add to queue'),
+  })
+
+  const removeFromQueue = useMutation({
+    mutationFn: () => codyApi.tasks.removeFromQueue(issueNumber, actorLogin),
+    onSuccess: handleSuccess('Removed from queue'),
+    onError: handleError('remove from queue'),
+  })
+
   const isPending =
     execute.isPending ||
     close.isPending ||
@@ -356,8 +409,12 @@ export function useTaskActions({
     abort.isPending ||
     approveGate.isPending ||
     rejectGate.isPending ||
+    approveUI.isPending ||
+    approvePR.isPending ||
     assign.isPending ||
-    unassign.isPending
+    unassign.isPending ||
+    addToQueue.isPending ||
+    removeFromQueue.isPending
 
   return {
     execute: execute.mutate,
@@ -368,8 +425,12 @@ export function useTaskActions({
     abort: abort.mutate,
     approveGate: approveGate.mutate,
     rejectGate: rejectGate.mutate,
+    approveUI: approveUI.mutate,
+    approvePR: approvePR.mutate,
     assign: assign.mutate,
     unassign: unassign.mutate,
+    addToQueue: addToQueue.mutate,
+    removeFromQueue: removeFromQueue.mutate,
     isPending,
     pendingAction: execute.isPending
       ? 'execute'
@@ -379,14 +440,22 @@ export function useTaskActions({
           ? 'approve'
           : rejectGate.isPending
             ? 'reject'
-            : close.isPending
-              ? 'close'
-              : closePR.isPending
-                ? 'close-pr'
-                : reset.isPending
-                  ? 'reset'
-                  : reopen.isPending
-                    ? 'reopen'
-                    : null,
+            : approveUI.isPending
+              ? 'approve-ui'
+              : approvePR.isPending
+                ? 'approve-pr'
+                : close.isPending
+                  ? 'close'
+                  : closePR.isPending
+                    ? 'close-pr'
+                    : reset.isPending
+                      ? 'reset'
+                      : reopen.isPending
+                        ? 'reopen'
+                        : addToQueue.isPending
+                          ? 'add-to-queue'
+                          : removeFromQueue.isPending
+                            ? 'remove-from-queue'
+                            : null,
   }
 }

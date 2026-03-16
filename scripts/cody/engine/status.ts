@@ -6,6 +6,8 @@
  */
 
 import { logger } from '../logger'
+import { MAX_ACTOR_HISTORY_ENTRIES } from '../config/constants'
+import type { StageName } from '../stages/registry'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -14,10 +16,11 @@ import {
   isPipelineStateV2,
   type PipelineContext,
   type StageStateV2,
+  type ActorEvent,
 } from './types'
 
 // C3 FIX: Import stageOutputFile for correct path resolution in resetFromStage
-import { stageOutputFile } from '../pipeline-utils'
+import { stageOutputFile } from '../stages/registry'
 
 // ============================================================================
 // Status File Operations
@@ -104,6 +107,10 @@ export function deleteState(taskId: string): void {
 export function initState(ctx: PipelineContext, mode: string): PipelineStateV2 {
   const now = new Date().toISOString()
 
+  const actorHistory: ActorEvent[] = ctx.actor
+    ? [{ action: 'pipeline-triggered', actor: ctx.actor, timestamp: now }]
+    : []
+
   const state: PipelineStateV2 = {
     version: 2,
     taskId: ctx.taskId,
@@ -116,10 +123,39 @@ export function initState(ctx: PipelineContext, mode: string): PipelineStateV2 {
     stages: {},
     // Persist issue number for dashboard lookups (avoids Compare API)
     ...(ctx.input.issueNumber ? { issueNumber: ctx.input.issueNumber } : {}),
+    ...(ctx.actor ? { triggeredBy: ctx.actor } : {}),
+    ...(ctx.input.issueCreator ? { issueCreator: ctx.input.issueCreator } : {}),
+    ...(actorHistory.length > 0 ? { actorHistory } : {}),
   }
 
   writeState(ctx.taskId, state)
   return state
+}
+
+/** Max actor history entries kept in status.json (oldest dropped when exceeded) */
+const MAX_ACTOR_HISTORY = MAX_ACTOR_HISTORY_ENTRIES
+
+/**
+ * Append an actor event to the pipeline's actorHistory in status.json.
+ * Automatically trims to MAX_ACTOR_HISTORY entries.
+ */
+export function appendActorEvent(
+  taskId: string,
+  state: PipelineStateV2,
+  event: ActorEvent,
+): PipelineStateV2 {
+  const existing = state.actorHistory ?? []
+  const updated = [...existing, event]
+  // Keep most recent MAX_ACTOR_HISTORY entries
+  const trimmed = updated.length > MAX_ACTOR_HISTORY ? updated.slice(-MAX_ACTOR_HISTORY) : updated
+
+  const newState: PipelineStateV2 = {
+    ...state,
+    actorHistory: trimmed,
+    updatedAt: new Date().toISOString(),
+  }
+  writeState(taskId, newState)
+  return newState
 }
 
 /**
@@ -373,12 +409,24 @@ export function resetFromStage(
   // Reset stages to pending
   const newStages: Record<string, StageStateV2> = {}
 
+  // FIX #827: Stages BEFORE fromStage that are still 'paused' should be marked
+  // 'completed' — if later stages ran, the paused stage must have been approved.
+  // This prevents stale 'paused' states from causing reruns to re-trigger gates.
+  const stagesBefore = pipeline.slice(0, fromIndex)
+
   for (const [name, stage] of Object.entries(state.stages)) {
     if (stagesToReset.includes(name)) {
       // Reset this stage to pending
       newStages[name] = {
         state: 'pending',
         retries: 0,
+      }
+    } else if (stagesBefore.includes(name) && stage.state === 'paused') {
+      // Stale paused stage — later stages ran, so this must have been approved
+      newStages[name] = {
+        ...stage,
+        state: 'completed',
+        completedAt: stage.completedAt || now,
       }
     } else {
       // Keep existing stage
@@ -390,7 +438,7 @@ export function resetFromStage(
     ...state,
     stages: newStages,
     state: 'running',
-    cursor: fromStage,
+    cursor: fromStage as StageName,
     updatedAt: now,
   }
 }
@@ -435,7 +483,7 @@ export function stateToV1(state: PipelineStateV2): CodyPipelineStatus {
     state: state.state,
     currentStage: state.cursor,
     stages: v1Stages,
-    triggeredBy: 'dispatch', // Default, not stored in v2
+    triggeredBy: state.triggeredBy ?? 'dispatch',
     issueNumber: state.issueNumber,
     runId: undefined,
     runUrl: undefined,
@@ -443,5 +491,8 @@ export function stateToV1(state: PipelineStateV2): CodyPipelineStatus {
     gatePoint: undefined,
     botCommentId: undefined,
     totalCost: state.totalCost,
+    triggeredByLogin: state.triggeredBy,
+    issueCreator: state.issueCreator,
+    actorHistory: state.actorHistory,
   }
 }

@@ -61,8 +61,8 @@ export interface InspectorContext {
   runTimestamp: string
   cycleNumber: number
   slack?: SlackClient
-  /** Issue number for posting digest reports. Parsed from WATCHDOG_ISSUE env var. */
-  watchdogIssue?: number
+  /** Issue number for posting digest reports. Parsed from INSPECTOR_DIGEST_ISSUE env var. */
+  digestIssue?: number
 }
 
 export interface StateStore {
@@ -154,7 +154,7 @@ export interface InspectorConfig {
   stateFile: string
   plugins: InspectorPlugin[]
   /** Issue number for posting digest reports */
-  watchdogIssue?: number
+  digestIssue?: number
 }
 
 export interface InspectorResult {

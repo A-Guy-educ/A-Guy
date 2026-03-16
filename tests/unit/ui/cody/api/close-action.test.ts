@@ -21,10 +21,16 @@ vi.mock('@/ui/cody/github-client', () => ({
   deleteBranch: vi.fn(),
   updateIssue: vi.fn(),
   clearCache: vi.fn(),
+  postComment: vi.fn(),
 }))
 
 vi.mock('@/ui/cody/auth', () => ({
-  requireAuth: vi.fn(() => null), // Skip auth for tests
+  requireCodyAuth: vi.fn(() => ({
+    identity: { login: 'testuser', id: 1 },
+  })),
+  verifyActorLogin: vi.fn(() => ({
+    identity: { login: 'testuser', id: 1 },
+  })),
 }))
 
 // Import after mocks

@@ -50,6 +50,12 @@ interface CreateTaskDialogProps {
   open: boolean
   onClose: () => void
   onCreated?: () => void
+  initialData?: {
+    title: string
+    body: string
+    labels?: string[]
+    assignees?: string[]
+  }
 }
 
 interface AttachmentFile {
@@ -59,7 +65,7 @@ interface AttachmentFile {
   type: string
 }
 
-export function CreateTaskDialog({ open, onClose, onCreated }: CreateTaskDialogProps) {
+export function CreateTaskDialog({ open, onClose, onCreated, initialData }: CreateTaskDialogProps) {
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [showPreview, setShowPreview] = useState(false)
@@ -95,6 +101,16 @@ export function CreateTaskDialog({ open, onClose, onCreated }: CreateTaskDialogP
       setAttachments([])
     }
   }, [open])
+
+  // Handle initialData for duplication
+  useEffect(() => {
+    if (open && initialData) {
+      setTitle(`Copy of ${initialData.title}`)
+      setBody(initialData.body)
+      setLabels(initialData.labels || [])
+      setAssignees(initialData.assignees || [])
+    }
+  }, [open, initialData])
 
   // File handling functions
   const processFile = useCallback((file: File): Promise<AttachmentFile> => {
@@ -226,7 +242,7 @@ export function CreateTaskDialog({ open, onClose, onCreated }: CreateTaskDialogP
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className="sm:max-w-[800px] max-h-[95vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create New Task</DialogTitle>
+          <DialogTitle>{initialData ? 'Duplicate Task' : 'Create New Task'}</DialogTitle>
           <DialogDescription>Create a new Cody task in GitHub.</DialogDescription>
         </DialogHeader>
 

@@ -2,16 +2,14 @@ import { FlatCompat } from '@eslint/eslintrc'
 import { dirname } from 'path'
 import { fileURLToPath } from 'url'
 
+import aguyPlugin from './eslint-plugin-aguy/index.mjs'
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 const compat = new FlatCompat({
   baseDirectory: __dirname,
 })
-
-// TODO: Enable custom eslint-plugin-aguy once converted to ESM
-// The plugin is currently CommonJS and needs to be converted to work with Next.js ESLint
-// See eslint-plugin-aguy/README.md for the rules it provides
 
 const eslintConfig = [
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
@@ -37,14 +35,32 @@ const eslintConfig = [
       // React hooks rules
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
-
-      // TODO: Custom A-Guy platform rules (pending plugin ESM conversion)
-      // 'aguy/require-collection-access': 'error',
-      // 'aguy/no-nested-metadata': 'error',
-      // 'aguy/tailwind-only-components': 'warn',
-      // 'aguy/require-auth-endpoints': 'error',
     },
   },
+
+  // Custom A-Guy platform rules
+  {
+    plugins: { aguy: aguyPlugin },
+    files: ['src/server/payload/collections/**/*.{ts,tsx}'],
+    rules: {
+      'aguy/require-collection-access': 'error',
+    },
+  },
+  {
+    plugins: { aguy: aguyPlugin },
+    files: ['scripts/cody/**/*.ts'],
+    rules: {
+      'aguy/no-exec-sync': 'error',
+    },
+  },
+  {
+    plugins: { aguy: aguyPlugin },
+    files: ['src/ui/**/*.{ts,tsx}', 'src/app/**/*.{ts,tsx}'],
+    rules: {
+      'aguy/tailwind-only-components': 'off',
+    },
+  },
+
   {
     ignores: [
       '.next/',

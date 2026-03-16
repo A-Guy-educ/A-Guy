@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { GeometrySpecV1 } from '@/infra/contracts'
+import { getDefaultTextColor, sizeScaleToPixels } from '@/infra/contracts/graphics/textColors'
 
 type PointSpec = GeometrySpecV1['elements']['points'][number]
 type LineSpec = GeometrySpecV1['elements']['lines'][number]
@@ -18,16 +19,20 @@ function mapPosition(pos?: string): string {
     r: 'right',
     m: 'top',
   }
-  return map[pos || 'tr'] || 'urt'
+  return map[pos || 'r'] || 'right'
 }
 
 function renderPoints(board: JXG.Board, points: PointSpec[]): Map<string, any> {
   const pointMap = new Map<string, any>()
   for (const p of points) {
+    const pointColor = p.color ?? getDefaultTextColor()
     const pt = board.create('point', [p.x, p.y], {
       name: p.name,
       fixed: true,
       visible: p.visible !== false,
+      fillColor: pointColor,
+      strokeColor: pointColor,
+      size: p.size ?? 4,
       label: { position: mapPosition(p.position), fontSize: p.fontSize ?? 14 },
     })
     pointMap.set(p.name, pt)
@@ -201,8 +206,12 @@ export function renderGeometrySpec(board: JXG.Board, spec: GeometrySpecV1): void
         }
       }
 
+      const color = text.color ?? getDefaultTextColor()
       board.create('text', [x, y, text.value], {
-        fontSize: text.fontSize ?? 14,
+        fontSize:
+          text.sizeScale !== undefined ? sizeScaleToPixels(text.sizeScale) : (text.fontSize ?? 14),
+        strokeColor: color,
+        color,
         anchorX: 'middle',
         anchorY: 'middle',
       })

@@ -13,11 +13,15 @@ import { healthCheckPlugin } from './plugins/cody/health-check/index'
 import { auditPlugin } from './plugins/cody/audit/index'
 import { failureAnalysisPlugin } from './plugins/cody/failure-analysis/index'
 import { deferredStagesPlugin } from './plugins/cody/deferred-stages/index'
+import { deferredTestsPlugin } from './plugins/cody/deferred-tests/index'
 import { docsSyncPlugin } from './plugins/docs-sync/index'
 import { zombieReaperPlugin } from './plugins/cody/zombie-reaper/index'
 import { successTrackerPlugin } from './plugins/cody/success-tracker/index'
 import { failureMinerPlugin } from './plugins/cody/failure-miner/index'
 import { knowledgeGardenerPlugin } from './plugins/cody/knowledge-gardener/index'
+import { securityScannerPlugin } from './plugins/project/security-scanner/index'
+import { apiSurfaceAuditorPlugin } from './plugins/project/api-surface/index'
+import { queueManagerPlugin } from './plugins/cody/queue-manager/index'
 import type { InspectorConfig } from './core/types'
 
 const logger = pino({ level: 'info' })
@@ -32,7 +36,9 @@ async function main(): Promise<void> {
   const dryRun = process.env.DRY_RUN === 'true'
 
   // Parse optional config
-  const watchdogIssue = process.env.WATCHDOG_ISSUE ? Number(process.env.WATCHDOG_ISSUE) : undefined
+  const digestIssue = process.env.INSPECTOR_DIGEST_ISSUE
+    ? Number(process.env.INSPECTOR_DIGEST_ISSUE)
+    : undefined
 
   // Validate required env vars
   if (!repo) {
@@ -48,11 +54,16 @@ async function main(): Promise<void> {
   logger.info({ repo, dryRun }, 'Starting Inspector')
 
   // Warn about missing optional config
-  if (!watchdogIssue) {
-    logger.warn('WATCHDOG_ISSUE not set — digest reports will be skipped')
+  if (!digestIssue) {
+    logger.warn('INSPECTOR_DIGEST_ISSUE not set — digest reports will be skipped')
   }
   if (!process.env.MINIMAX_API_KEY) {
-    logger.warn('MINIMAX_API_KEY not set — failure analysis will use fallback mode')
+    logger.warn(
+      'MINIMAX_API_KEY not set — failure analysis will use generic feedback, gate reviews will auto-approve with zero confidence',
+    )
+  }
+  if (!process.env.GH_PAT) {
+    logger.warn('GH_PAT not set — workflow dispatches (retries, reruns) will silently fail')
   }
 
   // Create plugin registry
@@ -60,14 +71,38 @@ async function main(): Promise<void> {
 
   // Register plugins
   registry.register(healthCheckPlugin)
+  registry.register(queueManagerPlugin)
   registry.register(failureAnalysisPlugin)
   registry.register(auditPlugin)
   registry.register(deferredStagesPlugin)
+  registry.register(deferredTestsPlugin)
   registry.register(docsSyncPlugin)
   registry.register(zombieReaperPlugin)
   registry.register(successTrackerPlugin)
   registry.register(failureMinerPlugin)
   registry.register(knowledgeGardenerPlugin)
+  registry.register(securityScannerPlugin)
+  registry.register(apiSurfaceAuditorPlugin)
+
+  // Validate critical plugin ordering:
+  // health-check MUST run before failure-analysis and queue-manager since they
+  // consume cody:evaluatedTasks which health-check populates.
+  const pluginNames = registry.getAll().map((p) => p.name)
+  const healthIdx = pluginNames.indexOf('health-check')
+  const failureIdx = pluginNames.indexOf('cody-failure-analysis')
+  const queueIdx = pluginNames.indexOf('cody-queue-manager')
+  if (healthIdx === -1 || failureIdx === -1 || queueIdx === -1) {
+    logger.error(
+      'Required plugins missing: health-check, cody-failure-analysis, cody-queue-manager',
+    )
+    process.exit(1)
+  }
+  if (healthIdx >= failureIdx || healthIdx >= queueIdx) {
+    logger.error(
+      'Plugin order violation: health-check must be registered before failure-analysis and queue-manager',
+    )
+    process.exit(1)
+  }
 
   // Create config
   const config: InspectorConfig = {
@@ -75,7 +110,7 @@ async function main(): Promise<void> {
     dryRun,
     stateFile: `${process.cwd()}/.inspector/state.json`,
     plugins: registry.getAll(),
-    watchdogIssue,
+    digestIssue,
   }
 
   // Run Inspector

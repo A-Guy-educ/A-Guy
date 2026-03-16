@@ -197,6 +197,32 @@ jobs:
           gh issue comment ${{ needs.parse.outputs.issue_number }} \
             --body "⚠️ Invalid \`@cody\` command. Use: \`@cody [spec|impl|rerun|full|status] [task-id] [options]\`"
 
+  # Job 1c: Notify on orchestrate failures (pipeline didn't start)
+  notify-orchestrate-error:
+    needs: [parse, orchestrate]
+    if: >-
+      always() &&
+      needs.orchestrate.result == 'failure' &&
+      needs.parse.result == 'success' &&
+      needs.parse.outputs.issue_number != '' &&
+      github.event_name == 'issue_comment'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Post failure comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment ${{ needs.parse.outputs.issue_number }} \
+            --repo ${{ github.repository }} \
+            --body "⚠️ **Pipeline failed to start**
+
+          The workflow crashed before the pipeline could run (infrastructure error, not a code issue).
+
+          To retry, comment \`/cody\` on this issue.
+
+          [View CI logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+
   # Smoke test: runs on push to dev/main to validate cody pipeline works
   smoke-test:
     runs-on: ubuntu-latest
@@ -254,10 +280,12 @@ jobs:
       - name: Validate cody entry can be loaded
         run: pnpm tsx scripts/cody/entry.ts --help
 
-      - name: Run actual pipeline (spec mode - runs taskify)
+      - name: Run pipeline canary tests (dry-run, no LLM)
+        run: pnpm test:canary
+
+      - name: Run pipeline dry-run (full mode - validates plumbing)
         env:
           GH_TOKEN: ${{ github.token }}
-          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
         run: |
           # Create simple test task
           mkdir -p .tasks/260225-smoke-test
@@ -265,21 +293,25 @@ jobs:
           echo "" >> .tasks/260225-smoke-test/task.md
           echo "Smoke test task" >> .tasks/260225-smoke-test/task.md
 
-          # Run spec mode (will run taskify stage)
-          pnpm cody --mode=spec --task-id=260225-smoke-test || true
+          # Run full mode with --dry-run --local (no LLM, no GitHub API)
+          # This exercises: CLI parsing, pipeline construction, state machine loop,
+          # stage ordering, skip conditions, status file writing
+          pnpm cody --mode=full --task-id=260225-smoke-test --dry-run --local
 
-          # Don't fail on stage errors, just verify files were created
-
-      - name: Verify taskify produced valid output
+      - name: Verify pipeline dry-run produced valid output
         run: |
-          # Verify task.json was created
-          if [ ! -f ".tasks/260225-smoke-test/task.json" ]; then
-            echo "ERROR: task.json was not created"
+          # Verify status.json was created (dry-run marks all stages as completed)
+          if [ ! -f ".tasks/260225-smoke-test/status.json" ]; then
+            echo "ERROR: status.json was not created"
             exit 1
           fi
 
-          # Verify it's valid JSON
-          cat .tasks/260225-smoke-test/task.json | pnpm tsx -e "JSON.parse(require('fs').readFileSync(0, 'utf-8')); console.log('Valid JSON')"
+          # Verify it's valid JSON with completed state
+          node -e "
+            const s = JSON.parse(require('fs').readFileSync('.tasks/260225-smoke-test/status.json', 'utf-8'));
+            if (s.state !== 'completed') { console.error('ERROR: state is ' + s.state); process.exit(1); }
+            console.log('Valid status.json — pipeline state: ' + s.state);
+          "
 
           echo "SUCCESS: Pipeline smoke test passed"
 
@@ -405,6 +437,10 @@ jobs:
           # GitHub context
           RUN_ID: ${{ github.run_id }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          # Actor: comment author for comment triggers, workflow dispatcher for dispatch triggers
+          GITHUB_ACTOR: ${{ github.event.comment.user.login || github.actor }}
+          # Issue creator (owner) - available for issue and comment triggers
+          ISSUE_CREATOR: ${{ github.event.issue.user.login || '' }}
         run: pnpm cody
 
       # Pipeline summary in Actions UI
@@ -413,7 +449,7 @@ jobs:
         run: |
           TASK_ID="${{ needs.parse.outputs.task_id }}"
           STATUS_FILE=".tasks/${TASK_ID}/status.json"
-          echo "## 🤖 Cody Pipeline: `${TASK_ID}`" >> $GITHUB_STEP_SUMMARY
+          echo "## 🤖 Cody Pipeline: \`${TASK_ID}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ -f "$STATUS_FILE" ]; then
             STATE=$(jq -r '.state // "unknown"' "$STATUS_FILE")
@@ -427,6 +463,7 @@ jobs:
           fi
       - name: Upload artifacts
         if: always() && needs.parse.outputs.task_id != ''
+        continue-on-error: true # Don't fail the job if artifact zip has issues (e.g. dangling git objects)
         uses: actions/upload-artifact@v4
         with:
           name: cody-${{ needs.parse.outputs.task_id }}-${{ github.run_id }}

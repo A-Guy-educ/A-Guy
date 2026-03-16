@@ -5,10 +5,21 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock all dependencies
 vi.mock('@/ui/cody/auth', () => ({
-  requireDashboardAuth: vi.fn(() => ({
-    authenticated: true,
-    user: { id: '1', email: 'test@test.com' },
+  requireCodyAuth: vi.fn(() => ({
+    identity: { login: 'alice', id: 1 },
   })),
+  verifyActorLogin: vi.fn(() => ({
+    identity: { login: 'alice', id: 1 },
+  })),
+}))
+
+vi.mock('@/ui/cody/agents', () => ({
+  getAgent: vi.fn(() => ({
+    id: 'dashboard-manager',
+    systemPrompt: 'test prompt',
+    tools: ['github'],
+  })),
+  REMOTE_SYSTEM_PROMPT_EXTENSION: 'Remote Dev Environment\nremoteExec',
 }))
 
 vi.mock('@/ui/cody/remote-config', () => ({

@@ -49,7 +49,7 @@ export const COLUMN_DEFS: Record<ColumnId, ColumnDef> = {
   building: { id: 'building', label: 'Building', color: 'blue', order: 1 },
   review: { id: 'review', label: 'Review', color: 'purple', order: 2 },
   failed: { id: 'failed', label: 'Failed', color: 'red', order: 3 },
-  'gate-waiting': { id: 'gate-waiting', label: 'Gate Waiting', color: 'yellow', order: 4 },
+  'gate-waiting': { id: 'gate-waiting', label: 'Needs Approval', color: 'yellow', order: 4 },
   retrying: { id: 'retrying', label: 'Retrying', color: 'orange', order: 5 },
   done: { id: 'done', label: 'Done', color: 'green', order: 6 },
 }
@@ -111,9 +111,9 @@ export const BRANCH_CACHE_TTL = 600000 // 10min - branches rarely change
 
 export const CACHE_TTL = {
   tasks: 120000, // 2min - reduced API calls while staying fresh
-  pipeline: 60000, // 30s - increased from 5s to reduce calls
-  boards: 900000, // 5min - labels/milestones rarely change
-  prs: 300000, // 2min - increased from 30s
+  pipeline: 60000, // 1min - fresh enough for status checks
+  boards: 900000, // 15min - labels/milestones rarely change
+  prs: 300000, // 5min - PRs don't change that often
 } as const
 
 // ============ Emoji List ============

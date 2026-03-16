@@ -2,96 +2,131 @@
 
 Automated development pipeline for A-Guy project using OpenCode CLI agents.
 
-## Pipeline Stages
+## Pipeline Flow
 
 ```
-Spec Phase:    taskify → [gate: hard-stop] → spec → [clarify: opt-in]
-Impl Phase:    architect → plan-gap → build(+TDD) → commit(scripted) →
-                 verify(scripted) → pr(scripted)
+┌─────────────────────── SPEC PHASE ───────────────────────┐
+│                                                           │
+│  taskify ──→ [gate?] ──→ gap ──→ [clarify: opt-in]       │
+│  (agent)     hard-stop   (agent)   (agent)                │
+│              if high-risk                                  │
+└───────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────── IMPL PHASE ───────────────────────┐
+│                                                           │
+│  architect ──→ [gate?] ──→ plan-gap ──→ build ──────┐     │
+│  (agent)       risk-gated   (agent)     (agent)     │     │
+│                if medium+                           │     │
+│                                                     ▼     │
+│                                          ┌──────────────┐ │
+│                                          │ Quality Gates │ │
+│                                          │  tsc + tests  │ │
+│                                          └──────┬───────┘ │
+│                                            pass? │        │
+│                                         ┌───no───┴──yes──┐│
+│                                         ▼                ▼│
+│                                    Re-invoke         commit│
+│                                    build agent      (script)│
+│                                    (up to 2x)          │  │
+│                                                        ▼  │
+│                                                    verify  │
+│                                                   (script) │
+│                                                   tsc+lint │
+│                                                   +format  │
+│                                                   +tests   │
+│                                                     │      │
+│                                              fail? ─┤      │
+│                                              lint:fix      │
+│                                              format:fix    │
+│                                              (scripted,    │
+│                                               up to 2x)   │
+│                                                     │      │
+│                                                     ▼      │
+│  review ──→ fix ──→ commit ──→ verify ──→ pr               │
+│  (agent)   (build   (script)   (script)   (script)         │
+│             agent)                                          │
+│                                                            │
+└────────────────────────────────────────────────────────────┘
 ```
 
-**Clarify is opt-in** — use `--clarify` flag to enable Q&A loop (default: skip).
+## Stages
 
-**Control modes** — Auto (low risk), Risk-Gated (medium risk), Hard Stop (high risk). See Control Modes section below.
+| Stage     | Type     | Model          | Input                     | Output       |
+| --------- | -------- | -------------- | ------------------------- | ------------ |
+| taskify   | agent    | MiniMax-M2.5   | task.md                   | task.json    |
+| gap       | agent    | MiniMax-M2.5   | task.md, task.json        | spec.md      |
+| clarify   | agent    | GPT-5.2        | task.md, spec.md          | clarified.md |
+| architect | agent    | Opus 4.6       | spec.md, clarified.md     | plan.md      |
+| plan-gap  | agent    | Opus 4.6       | spec.md, plan.md          | plan-gap.md  |
+| build     | agent    | MiniMax-M2.5   | spec.md, plan.md + errors | build.md     |
+| commit    | scripted | —              | task.json                 | commit.md    |
+| review    | agent    | Opus 4.6       | build.md, plan.md, spec   | review.md    |
+| fix       | agent    | MiniMax-M2.5   | review.md, verify.md      | fix-summary  |
+| verify    | scripted | —              | code                      | verify.md    |
+| pr        | scripted | —              | task files                | pr.md        |
 
-**TDD via @test-writer** — build agent invokes test-writer subagent per plan step.
+**Stage types:**
+- **agent** — Runs via LLM agent (opencode)
+- **scripted** — Runs directly via script (no LLM, fast)
 
-| Agent       | Description                        | Input                        | Output         | Type     |
-| ----------- | ---------------------------------- | ---------------------------- | -------------- | -------- |
-| taskify     | Classify task, produce task.json   | task.md                      | task.json      | agent    |
-| spec        | Requirements definition            | task.md                      | spec.md        | agent    |
-| clarify     | Collect operator Q&A (opt-in)      | task.md, spec.md             | questions.md   | agent    |
-| architect   | Implementation plan                | spec.md, clarified.md        | plan.md        | agent    |
-| plan-gap    | Analyze plan for gaps, auto-revise | spec.md, plan.md, task.json  | plan-gap.md    | agent    |
-| build       | Write implementation code + tests  | spec.md, plan.md             | build.md       | agent    |
-| commit      | Commit and push changes            | task.json                    | commit.md      | scripted |
-| verify      | Run quality gates (tsc, lint, fmt) | code                         | verify.md      | scripted |
-| autofix     | Fix lint/type/format errors        | verify.md                    | autofix.md     | agent    |
-| pr          | Create pull request via gh CLI     | task files                   | pr.md          | scripted |
+Override any model with `OPENCODE_MODEL` env var.
 
-### Stage Types
+## Build → Quality Gate Loop (Key Design)
 
-- **agent**: Runs via LLM agent (opencode github run)
-- **scripted**: Runs directly via script (no LLM needed, faster)
+After the build agent finishes, quality gates run automatically:
 
-### Model Routing
+```
+build agent exits
+    │
+    ▼
+validate src changes ──→ commit code (preserve work)
+    │
+    ▼
+run gates: tsc + unit tests
+    │
+    ├── ALL PASS ──→ continue to review
+    │
+    └── FAIL ──→ write build-errors.md
+                     │
+                     ▼
+                re-invoke BUILD agent (not a separate agent!)
+                     │  • has full context (spec, plan, code intent)
+                     │  • reads build-errors.md
+                     │  • fixes its own code
+                     │
+                     ▼
+                re-run ALL gates
+                     │
+                     ├── PASS ──→ continue
+                     └── FAIL ──→ retry once more (max 2 attempts)
+                                     │
+                                     └── still failing ──→ pipeline FAILS
+```
 
-Not all stages need an expensive model. Lightweight stages use a faster/cheaper model:
+**Why the build agent, not a separate autofix agent?**
+- Build agent wrote the code — it knows the intent
+- It has spec, plan, and full context
+- No cold-start penalty (same agent type)
+- One agent fixes everything (tsc, lint, format, AND tests)
 
-| Model            | Used For                           | Cost    |
-| ---------------- | ---------------------------------- | ------- |
-| MiniMax-M2.5     | gap, architect, build              | Default |
-| Claude Opus 4.6  | plan-gap                           | Quality |
+## Verify Stage (Post-Commit)
 
-Override with `OPENCODE_MODEL` env var to force a specific model for all stages.
+After commit, verify runs tsc + lint + format + tests. If lint/format fail:
 
-## Key Design Decisions
+```
+verify fails
+    │
+    ▼
+pnpm lint:fix + pnpm format:fix  (scripted, no LLM)
+    │
+    ▼
+re-run verify (max 2 attempts)
+```
 
-### Clarify Opt-In
+No LLM agent needed — lint and format fixes are mechanical.
 
-The clarify stage is **opt-in** via `--clarify` flag. By default:
-
-- Pipeline auto-creates `clarified.md` with "Use recommended answers."
-- No Q&A loop, fully automated
-
-Use `--clarify` when you want human review of ambiguities.
-
-### TDD via @test-writer Subagent
-
-The build agent invokes the `@test-writer` subagent for each plan step:
-
-1. test-writer writes failing tests (TDD red)
-2. build implements code to make tests pass (TDD green)
-3. Run `pnpm test:unit` to verify
-
-This removes the separate `test` LLM stage while maintaining test coverage.
-
-### Build / Commit Split
-
-The `build` agent writes code but does NOT commit or push. A separate scripted `commit` stage handles git operations. This means:
-
-- If commit fails (commitlint), only the 3-minute scripted commit stage reruns (not the 30-minute build)
-- Build agent focuses solely on code quality
-- Commit stage uses conventional commit format automatically derived from task.json and task.md
-
-### Plan Gap Analysis
-
-The `plan-gap` agent runs after `architect` and before `build`. It analyzes the plan against the spec and codebase to identify:
-
-- Missing spec requirements in the plan
-- Wrong file paths or incorrect patterns
-- Overlooked constraints or test gates
-
-**If gaps are found**, the agent:
-
-1. **Edits plan.md directly** to fix gaps (adds missing steps, corrects paths)
-2. Writes `plan-gap.md` documenting what was found and changed
-
-**No retry loop** — the gap agent fixes the plan in one pass and proceeds to build.
-
-### Control Modes (Autonomy Levels)
-
-The pipeline supports three autonomy levels based on task risk:
+## Control Modes (Gates)
 
 | Mode       | Trigger              | Gate Points                     | Use Case                          |
 | ---------- | -------------------- | ------------------------------- | --------------------------------- |
@@ -99,73 +134,18 @@ The pipeline supports three autonomy levels based on task risk:
 | Risk-Gated | `risk_level: medium` | After architect                 | New features, refactors           |
 | Hard Stop  | `risk_level: high`   | After taskify + after architect | DB changes, security, billing     |
 
-**How it works:**
-
-- **Auto mode** — Agent executes fully and opens PR. Used for low-risk, non-breaking changes.
-- **Risk-Gated mode** — Agent pauses after `architect` (shows plan). User must approve before `build` runs.
-- **Hard Stop mode** — Agent pauses immediately after `taskify` (before spec/architect). Mandatory human approval.
-
-**Risk classification** comes from `task.json.risk_level` (produced by taskify agent):
-
-- `low` → Auto
-- `medium` → Risk-Gated
-- `high` → Hard Stop
-
-**Overriding control mode:**
-
 - `/cody --auto` — Force auto mode (skip all gates)
 - `/cody --gate` — Force risk-gated mode
-- `/cody --hard-stop` — Force hard-stop mode
-
-**Approving gated tasks:**
-
 - `/cody approve` — Approve and resume pipeline
 - `/cody reject` — Cancel the task
-
-### Auto-Fix Loop
-
-When `verify` fails, the pipeline doesn't immediately abort. Instead:
-
-1. Run `autofix` agent with the verify error report
-2. Re-run `verify` (scripted)
-3. If still failing, retry once more (max 2 attempts)
-4. If all attempts exhausted, pipeline fails
-
-### Stage-Specific Context (No .context.md)
-
-Each agent receives only the files it needs via `STAGE_CONTEXT_FILES` in `stage-prompts.ts`.
-There is no monolithic `.context.md` file. This means:
-
-- Agents don't get confused by irrelevant prior outputs
-- Context window is used efficiently
-- The prompt lists exact file paths to read
-
-### Prompt Architecture
-
-Each agent has **two prompt layers**:
-
-1. **System prompt**: `.opencode/agents/<stage>.md` — behavioral instructions, output format, rules
-2. **User prompt**: `buildStagePrompt()` in `stage-prompts.ts` — runtime context only (task ID, file paths, spec-only guard)
-
-The user prompt is intentionally minimal. Behavioral instructions live exclusively in the `.md` file.
-
-### Content Validation
-
-Stage outputs are validated after completion:
-
-- **taskify**: JSON schema validation + normalization (aliases, types)
-- **plan-gap**: Gap analysis + auto-revision
-- **spec**: Warning if missing Requirements or Acceptance Criteria sections
-- **build**: Warning if missing Changes section
-- **verify**: Full error parsing + auto-fix loop
 
 ## Task Types & Pipelines
 
 | Task Type | Pipeline                                                             |
 | --------- | -------------------------------------------------------------------- |
-| feat      | spec → architect → plan-gap → build → commit → verify → pr         |
-| fix       | spec → architect → plan-gap → build → commit → verify → pr         |
-| refactor  | spec → architect → plan-gap → build → commit → verify → pr         |
+| feat      | taskify → gap → architect → plan-gap → build → commit → review → fix → commit → verify → pr |
+| fix       | taskify → gap → architect → plan-gap → build → commit → review → fix → commit → verify → pr |
+| refactor  | taskify → gap → architect → plan-gap → build → commit → review → fix → commit → verify → pr |
 | docs      | build → commit → verify → pr                                        |
 
 ## Task Structure
@@ -175,16 +155,17 @@ Stage outputs are validated after completion:
 └── <YYMMDD-task-name>/
     ├── task.md           # PRD/requirements (YOU write this)
     ├── task.json         # Task classification (taskify agent)
-    ├── spec.md           # Detailed spec (spec agent)
-    ├── questions.md      # Clarification questions (clarify agent, opt-in)
-    ├── clarified.md      # Q&A answers (operator provides) or "Use recommended answers."
+    ├── spec.md           # Detailed spec (gap agent)
+    ├── clarified.md      # Q&A answers or "Use recommended answers."
     ├── plan.md           # Implementation plan (architect agent)
     ├── plan-gap.md       # Gap analysis report (plan-gap agent)
-    ├── build.md          # Build report + test summary (build agent)
-    ├── commit.md         # Commit report (commit — scripted)
-    ├── verify.md         # Verification results (verify — scripted)
-    ├── autofix.md        # Auto-fix report (autofix agent, if verify fails)
-    ├── pr.md             # PR summary (pr — scripted)
+    ├── build.md          # Build report (build agent)
+    ├── build-errors.md   # Quality gate errors (for build retry, deleted on success)
+    ├── commit.md         # Commit report (scripted)
+    ├── review.md         # Code review (review agent)
+    ├── fix-summary.md    # Fix report (fix agent)
+    ├── verify.md         # Verification results (scripted)
+    ├── pr.md             # PR summary (scripted)
     └── status.json       # Pipeline status tracking
 ```
 
@@ -194,40 +175,23 @@ Stage outputs are validated after completion:
 
 ```
 /cody                              # Full pipeline, auto-generate task-id
-/cody --clarify                    # Full pipeline with clarify stage enabled
-/cody fix the tests                # Rerun if artifacts exist, else full (auto-discovers task-id)
-/cody update branch and fix lint   # Same as above, feedback = "update branch and fix lint"
+/cody --clarify                    # With clarify stage enabled
+/cody fix the tests                # Rerun with feedback
 /cody spec 260217-user-metrics     # Run spec phase only
 /cody impl 260217-user-metrics     # Run impl phase only
 /cody rerun 260217-user-metrics --feedback "fix this"
 /cody status 260217-user-metrics   # Check pipeline status
 ```
 
-**Simplified syntax**: When you use an unrecognized subcommand (like `/cody fix the tests`), the pipeline:
-
-1. Auto-discovers the task-id from the issue's marker comment
-2. If spec.md exists → reruns from build with your text as feedback
-3. If no spec.md → runs full pipeline
-
-### Via GitHub Workflow Dispatch
-
-- `task_id`: Required
-- `mode`: spec, impl, rerun, full, status (default: full)
-- `clarify`: true/false (default: false) — enable clarify stage
-- `dry_run`: true/false (default: false)
-
 ### Via Local CLI
 
 ```bash
 pnpm cody:run --task-id=260217-user-metrics --mode=full --local
-pnpm cody:run --task-id=260217-user-metrics --mode=full --clarify --local
 pnpm cody:run --task-id=260217-user-metrics --mode=impl --local
 pnpm cody:run --task-id=260217-user-metrics --mode=rerun --from=build --feedback="fix this" --local
 ```
 
 ## Commit Format
-
-Conventional commits required:
 
 ```
 <type>(<scope>): <Subject in sentence case>
@@ -235,24 +199,12 @@ Conventional commits required:
 <Body with at least 20 characters>
 ```
 
-### Valid Types
-
-- `feat` - New feature
-- `fix` - Bug fix
-- `docs` - Documentation
-- `style` - Formatting
-- `refactor` - Restructuring
-- `perf` - Performance
-- `test` - Testing
-- `build` - Build system
-- `ci` - CI/CD
-- `chore` - Maintenance
-- `security` - Security
+Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `security`
 
 ## Branch Naming
 
-- `feat/<task-name>` - Features
-- `fix/<task-name>` - Bug fixes
-- `chore/<task-name>` - Maintenance
-- `refactor/<task-name>` - Refactoring
-- `docs/<task-name>` - Documentation
+- `feat/<task-name>` — Features
+- `fix/<task-name>` — Bug fixes
+- `chore/<task-name>` — Maintenance
+- `refactor/<task-name>` — Refactoring
+- `docs/<task-name>` — Documentation

@@ -21,6 +21,7 @@ jobs:
       contents: write
       pull-requests: write
       actions: write
+      variables: write
     steps:
       - uses: actions/checkout@v4
 
@@ -43,6 +44,6 @@ jobs:
           GH_PAT: ${{ secrets.GH_PAT }}
           REPO: ${{ github.repository }}
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
-          WATCHDOG_ISSUE: ${{ vars.WATCHDOG_ISSUE }}
+          INSPECTOR_DIGEST_ISSUE: ${{ vars.INSPECTOR_DIGEST_ISSUE }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           DRY_RUN: ${{ inputs.dry_run || 'false' }}

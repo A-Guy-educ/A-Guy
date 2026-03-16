@@ -7,8 +7,6 @@
 import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { CodyDashboard } from '@/ui/cody/components/CodyDashboard'
-import { getMeUser } from '@/infra/utils/getMeUser'
-import { AccountRole } from '@/infra/auth/roles'
 import { buildTaskMetadata } from '../../../metadata'
 
 export async function generateMetadata({
@@ -30,14 +28,6 @@ export default async function CodyPreviewCommentsPage({
 }: {
   params: Promise<{ issueNumber: string }>
 }) {
-  const { user } = await getMeUser()
-
-  if (!user || user.role !== AccountRole.Admin) {
-    const { issueNumber } = await params
-    const returnTo = `/cody/${issueNumber}/preview/comments`
-    redirect(`/login?returnTo=${encodeURIComponent(returnTo)}`)
-  }
-
   const { issueNumber } = await params
   const parsed = parseInt(issueNumber, 10)
 

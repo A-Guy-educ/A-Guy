@@ -6,6 +6,7 @@
  */
 
 import { z } from 'zod'
+import type { StageName } from '../stages/registry'
 
 // ============================================================================
 // Stage Types
@@ -48,7 +49,7 @@ export type { ValidationResult }
 export type StagePreExecute = (ctx: PipelineContext) => Promise<void>
 
 export interface StageDefinition {
-  name: string
+  name: StageName
   type: StageType
   timeout: number
   maxRetries: number
@@ -68,16 +69,33 @@ export interface StageDefinition {
    * Returns the fallback content to write, or null to proceed with normal retry/fail.
    */
   fallbackOnMissingOutput?: (ctx: PipelineContext) => string | null
+  /**
+   * Override the agent name used by opencode. Defaults to stage name.
+   * Used when a stage should run a different agent (e.g., fix stage runs build agent).
+   */
+  agentName?: string
+  /**
+   * Declarative retry loop: when this stage fails, reset both this stage
+   * and `retryWith.stage` to pending, up to `retryWith.maxAttempts` times.
+   */
+  retryWith?: {
+    stage: StageName
+    maxAttempts: number
+    /** Called before retry to capture failure details (e.g., write verify-failures.md) */
+    onFailure?: (ctx: PipelineContext, taskDir: string) => Promise<void>
+    /** When the retryWith.stage times out: 'retry' resets this stage to pending; 'fail' fails the pipeline */
+    onTimeout?: 'retry' | 'fail'
+  }
 }
 
 // ============================================================================
 // Pipeline Definition
 // ============================================================================
 
-export type PipelineStep = string | { parallel: string[] }
+export type PipelineStep = StageName | { parallel: StageName[] }
 
 export interface PipelineDefinition {
-  stages: Map<string, StageDefinition>
+  stages: Map<StageName, StageDefinition>
   order: PipelineStep[]
 }
 
@@ -102,6 +120,8 @@ export interface PipelineContext {
   serverUrl?: string
   /** Most recent agent stage's sessionID — downstream stages fork from this */
   lastSessionId?: string
+  /** GitHub login of the person who triggered this run (from GITHUB_ACTOR env var) */
+  actor?: string
 }
 
 // Note: NO controlMode field — each gate resolves it dynamically via
@@ -142,6 +162,18 @@ export interface StageStateV2 {
   sessionId?: string
 }
 
+/** A single actor event in the pipeline audit trail */
+export interface ActorEvent {
+  /** Action type: pipeline-triggered, gate-approved, gate-rejected, stage-retried, etc. */
+  action: string
+  /** GitHub login of the person who performed the action */
+  actor: string
+  /** ISO timestamp */
+  timestamp: string
+  /** Stage name, if action is stage-specific */
+  stage?: string
+}
+
 export interface PipelineStateV2 {
   version: 2
   taskId: string
@@ -152,7 +184,7 @@ export interface PipelineStateV2 {
   completedAt?: string
   totalElapsed?: number
   state: 'running' | 'completed' | 'failed' | 'timeout' | 'paused'
-  cursor: string | null
+  cursor: StageName | null
   stages: Record<string, StageStateV2>
   /** GitHub issue number that triggered this pipeline run */
   issueNumber?: number
@@ -160,10 +192,17 @@ export interface PipelineStateV2 {
   branchName?: string
   /** Total accumulated cost across all stages in USD */
   totalCost?: number
+  /** GitHub login of the person who triggered this pipeline run */
+  triggeredBy?: string
+  /** GitHub login of the person who created the issue (the "owner") */
+  issueCreator?: string
+  /** Audit trail of actor actions. Capped at 50 entries (oldest dropped first). */
+  actorHistory?: ActorEvent[]
 }
 
 // Zod schema for PipelineStateV2
-export const PipelineStateV2Schema: z.ZodType<PipelineStateV2> = z.object({
+// Note: Uses z.string() for cursor (not StageName) for backward compat with existing status.json files
+export const PipelineStateV2Schema = z.object({
   version: z.literal(2),
   taskId: z.string(),
   mode: z.string(),
@@ -211,6 +250,18 @@ export const PipelineStateV2Schema: z.ZodType<PipelineStateV2> = z.object({
       sessionId: z.string().optional(),
     }),
   ),
+  triggeredBy: z.string().optional(),
+  issueCreator: z.string().optional(),
+  actorHistory: z
+    .array(
+      z.object({
+        action: z.string(),
+        actor: z.string(),
+        timestamp: z.string(),
+        stage: z.string().optional(),
+      }),
+    )
+    .optional(),
 })
 
 /**
@@ -306,6 +357,11 @@ export type ClearVerifyFailuresAction = {
   type: 'clear-verify-failures'
 }
 
+// Run-mechanical-autofix action — runs lint:fix + format:fix deterministically (no LLM)
+export type RunMechanicalAutofixAction = {
+  type: 'run-mechanical-autofix'
+}
+
 // Parallel-post-action - runs multiple actions concurrently
 export type ParallelPostAction = {
   type: 'parallel'
@@ -328,6 +384,7 @@ export type PostAction =
   | RunQualityWithAutofixAction
   | AnalyzeReviewFindingsAction
   | ClearVerifyFailuresAction
+  | RunMechanicalAutofixAction
   | ParallelPostAction
 
 // ============================================================================

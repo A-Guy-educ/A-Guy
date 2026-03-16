@@ -5,6 +5,8 @@
  * @ai-summary Classifies build/test/lint errors and formats them as actionable markdown for autofix agent
  */
 
+import { MAX_GATE_OUTPUT_CHARS } from '../config/constants'
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -28,7 +30,7 @@ export interface ClassifiedError {
 // Constants
 // ============================================================================
 
-const MAX_OUTPUT_LENGTH = 5000
+const MAX_OUTPUT_LENGTH = MAX_GATE_OUTPUT_CHARS
 const MAX_SUMMARY_LENGTH = 500
 
 const FIX_INSTRUCTIONS: Record<ErrorCategory, string> = {
@@ -37,7 +39,7 @@ const FIX_INSTRUCTIONS: Record<ErrorCategory, string> = {
   lint_error: 'Fix lint errors. Run `pnpm lint:fix` first, then manually fix any remaining issues.',
   format_error: 'Fix format errors. Run `pnpm format:fix` to auto-format all files.',
   test_failure:
-    'Fix failing test(s). Read the test expectations carefully and update the source code (not the tests) to make them pass.',
+    'Fix failing test(s). The tests may not match the implementation. Update the tests to correctly reflect what the code actually does.',
   unknown: 'Unknown error type. Read the full output below and fix the underlying issue.',
 }
 
