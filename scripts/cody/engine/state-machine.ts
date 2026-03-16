@@ -31,6 +31,8 @@ import { getHandler } from '../handlers/handler'
 import { setLifecycleLabel } from '../github-api'
 import { executePostAction } from '../pipeline/post-actions'
 import { flattenPipelineOrder } from '../pipeline/definitions'
+import { execFileSync } from 'node:child_process'
+import { commitPipelineFiles } from '../git-utils'
 
 /**
  * Error subclass that carries the originating stage name for parallel error attribution
@@ -68,6 +70,32 @@ export async function runPipeline(
       const initialLabel =
         ctx.input.mode === 'spec' || ctx.input.mode === 'full' ? 'cody:planning' : 'cody:building'
       setLifecycleLabel(ctx.input.issueNumber, initialLabel)
+    }
+
+    // Early push: overwrite stale status.json on branch so dashboard sees 'running' immediately.
+    // Only when the feature branch already exists (re-runs / gate resumes).
+    // First runs create the branch in taskify's post-action commit-task-files with ensureBranch.
+    if (!ctx.input.dryRun && !ctx.input.local) {
+      try {
+        const currentBranch = execFileSync('git', ['branch', '--show-current'], {
+          encoding: 'utf-8',
+        }).trim()
+        const isFeatureBranch = !['dev', 'main', 'master'].includes(currentBranch)
+        if (isFeatureBranch) {
+          commitPipelineFiles({
+            taskDir: ctx.taskDir,
+            taskId: ctx.taskId,
+            message: `ci(cody): reset status to running for ${ctx.taskId}`,
+            stagingStrategy: 'task-only',
+            push: true,
+            isCI: true,
+          })
+          logger.info('  ✓ Pushed fresh running status.json to branch')
+        }
+      } catch (earlyPushErr) {
+        // Non-fatal — dashboard will update once the first stage completes
+        logger.warn({ err: earlyPushErr }, 'Early status push failed (non-fatal)')
+      }
     }
   } else {
     // Recovery: handle stale state from previous interrupted runs
