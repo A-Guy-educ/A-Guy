@@ -19,6 +19,7 @@ vi.mock('@/ui/cody/github-client', () => ({
 
 vi.mock('@/ui/cody/auth', () => ({
   requireCodyAuth: vi.fn(() => null), // null = auth success
+  getUserOctokit: vi.fn().mockResolvedValue(null),
 }))
 
 vi.mock('@/ui/cody/constants', () => ({

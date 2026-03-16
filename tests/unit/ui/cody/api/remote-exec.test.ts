@@ -13,6 +13,7 @@ vi.mock('@/ui/cody/auth', () => ({
     authenticated: true,
     user: { id: '1', email: 'test@test.com' },
   })),
+  getUserOctokit: vi.fn(() => Promise.resolve(null)),
 }))
 
 // Mock remote-config
