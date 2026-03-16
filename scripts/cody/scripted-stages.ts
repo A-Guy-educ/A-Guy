@@ -67,7 +67,7 @@ export function runVerifyStage(
     { name: 'TypeScript', program: 'pnpm', args: ['-s', 'tsc', '--noEmit'] },
     { name: 'Lint', program: 'pnpm', args: ['-s', 'lint'] },
     { name: 'Format', program: 'pnpm', args: ['-s', 'format:check'] },
-    { name: 'Unit Tests', program: 'pnpm', args: ['-s', 'test:unit'] },
+    // Unit Tests gate removed — tests are deferred to inspector plugin (cody-deferred-tests)
   ]
 
   const gates: GateResult[] = []

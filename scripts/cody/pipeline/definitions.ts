@@ -196,6 +196,30 @@ No critical gaps identified. Plan was refined in-place.
     maxRetries: 1,
     minComplexity: getStageComplexityThreshold('test'),
     shouldSkip: (ctx) => skipIfInputQuality(ctx, 'test'),
+    preExecute: async (ctx) => {
+      // Ensure feature branch for deferred test runs (triggered by inspector plugin).
+      // Without this, the test stage would try to commit/push to dev (branch-protected).
+      if (!ctx.input.dryRun) {
+        try {
+          const td = readTask(ctx.taskDir)
+          if (td) {
+            ensureFeatureBranch(ctx.taskId, td.task_type, undefined, ctx.taskDir)
+          }
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : String(error)
+          throw new Error(`Test stage preExecute failed: ${msg}`)
+        }
+      }
+    },
+    postActions: [
+      // Commit test files after test stage completes (for deferred test runs)
+      {
+        type: 'commit-task-files',
+        stagingStrategy: 'tracked+task',
+        push: true,
+        ensureBranch: true,
+      },
+    ],
     validator: createTestValidator(),
   })
   // build stage - has preExecute for ensureFeatureBranch (G20)
@@ -254,7 +278,7 @@ No critical gaps identified. Plan was refined in-place.
         type: 'run-quality-with-autofix',
         gates: [
           { name: 'TypeScript', command: 'pnpm -s tsc --noEmit', source: 'tsc' as const },
-          { name: 'Unit Tests', command: 'pnpm -s test:unit', source: 'test' as const },
+          // Unit Tests gate removed — tests are deferred to inspector plugin (cody-deferred-tests)
         ],
         maxFeedbackLoops: 2,
       },

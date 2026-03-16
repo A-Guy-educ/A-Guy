@@ -60,9 +60,10 @@ export const stageInstructions: Record<string, (taskId: string) => string> = {
 
   'plan-gap': () => ``,
 
-  test: () => `TDD RED PHASE: Write failing tests from the plan.
-You run in PARALLEL with the build agent. Write tests to tests/ ONLY.
-Do NOT modify src/. Do NOT run tests (they will fail without implementation).`,
+  test: () => `DEFERRED TEST STAGE: Write comprehensive tests for the implemented code.
+Read the actual source files in src/ to understand what was built.
+Write tests to tests/ that validate the implementation against spec.md.
+Run tests with pnpm test:unit to verify they pass. Fix any failures before completing.`,
 
   build: () => `CRITICAL: IMPLEMENTATION STAGE - NOT DOCUMENTATION
 
@@ -83,10 +84,11 @@ DO NOT just write build.md - that will fail the pipeline! The pipeline validates
 
 You are reviewing already-generated code AND verifying spec satisfaction. DO NOT modify code files.
 
-Your #1 job is the GOAL-BACKWARD SPEC CHECK: for every requirement in spec.md, verify there is matching code AND a test.
+Your #1 job is the GOAL-BACKWARD SPEC CHECK: for every requirement in spec.md, verify there is matching code.
 Your #2 job is standard code review (security, correctness, quality).
+NOTE: Tests are written separately via the deferred-tests inspector plugin. Do NOT flag missing tests as issues.
 
-Produce review.md with a Spec Satisfaction matrix (requirement → code location → test → status) FIRST, then code quality findings.
+Produce review.md with a Spec Satisfaction matrix (requirement → code location → status) FIRST, then code quality findings.
 If ANY spec requirement has no corresponding code: mark as Critical issue.`,
 
   fix: () => `CRITICAL: TARGETED FIX STAGE

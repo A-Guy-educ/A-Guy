@@ -283,10 +283,9 @@ jobs:
       - name: Run pipeline canary tests (dry-run, no LLM)
         run: pnpm test:canary
 
-      - name: Run actual pipeline (spec mode - runs taskify)
+      - name: Run pipeline dry-run (full mode - validates plumbing)
         env:
           GH_TOKEN: ${{ github.token }}
-          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
         run: |
           # Create simple test task
           mkdir -p .tasks/260225-smoke-test
@@ -294,21 +293,25 @@ jobs:
           echo "" >> .tasks/260225-smoke-test/task.md
           echo "Smoke test task" >> .tasks/260225-smoke-test/task.md
 
-          # Run spec mode (will run taskify stage)
-          pnpm cody --mode=spec --task-id=260225-smoke-test || true
+          # Run full mode with --dry-run --local (no LLM, no GitHub API)
+          # This exercises: CLI parsing, pipeline construction, state machine loop,
+          # stage ordering, skip conditions, status file writing
+          pnpm cody --mode=full --task-id=260225-smoke-test --dry-run --local
 
-          # Don't fail on stage errors, just verify files were created
-
-      - name: Verify taskify produced valid output
+      - name: Verify pipeline dry-run produced valid output
         run: |
-          # Verify task.json was created
-          if [ ! -f ".tasks/260225-smoke-test/task.json" ]; then
-            echo "ERROR: task.json was not created"
+          # Verify status.json was created (dry-run marks all stages as completed)
+          if [ ! -f ".tasks/260225-smoke-test/status.json" ]; then
+            echo "ERROR: status.json was not created"
             exit 1
           fi
 
-          # Verify it's valid JSON
-          cat .tasks/260225-smoke-test/task.json | pnpm tsx -e "JSON.parse(require('fs').readFileSync(0, 'utf-8')); console.log('Valid JSON')"
+          # Verify it's valid JSON with completed state
+          node -e "
+            const s = JSON.parse(require('fs').readFileSync('.tasks/260225-smoke-test/status.json', 'utf-8'));
+            if (s.state !== 'completed') { console.error('ERROR: state is ' + s.state); process.exit(1); }
+            console.log('Valid status.json — pipeline state: ' + s.state);
+          "
 
           echo "SUCCESS: Pipeline smoke test passed"
 

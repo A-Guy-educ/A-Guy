@@ -119,7 +119,7 @@ export class GhVariableStateStore implements StateStore {
         {
           encoding: 'utf-8',
           stdio: ['pipe', 'pipe', 'pipe'],
-          env: { ...process.env },
+          env: { ...process.env, GH_TOKEN: process.env.GH_PAT || process.env.GH_TOKEN || '' },
         },
       ).trim()
 
@@ -156,7 +156,7 @@ export class GhVariableStateStore implements StateStore {
         {
           encoding: 'utf-8',
           stdio: ['pipe', 'pipe', 'pipe'],
-          env: { ...process.env },
+          env: { ...process.env, GH_TOKEN: process.env.GH_PAT || process.env.GH_TOKEN || '' },
         },
       )
       this.dirty = false

@@ -22,16 +22,14 @@ vi.mock('@/ui/cody/github-client', () => ({
   updateIssue: vi.fn(),
   clearCache: vi.fn(),
   postComment: vi.fn(),
-  findAssociatedPR: vi.fn(),
-  fetchIssue: vi.fn(),
 }))
 
 vi.mock('@/ui/cody/auth', () => ({
-  requireCodyAuth: vi.fn(async () => ({
-    identity: { login: 'test-user', id: '1', email: 'test@test.com' },
+  requireCodyAuth: vi.fn(() => ({
+    identity: { login: 'testuser', id: 1 },
   })),
-  verifyActorLogin: vi.fn(async () => ({
-    identity: { login: 'test-user', id: '1', email: 'test@test.com' },
+  verifyActorLogin: vi.fn(() => ({
+    identity: { login: 'testuser', id: 1 },
   })),
 }))
 
