@@ -517,15 +517,14 @@ describe('pipeline stage definitions', () => {
     expect(ALL_IMPL_STAGE_NAMES).toContain('commit')
   })
 
-  it('should have exactly 9 unique impl stages (10 with duplicate commit)', async () => {
-    // docs is deferred to inspector (deferred-stages plugin); reflect removed
+  it('should have exactly 8 unique impl stages', async () => {
+    // docs deferred to inspector; test deferred to inspector; reflect removed
     const { flattenTypedPipeline, IMPL_ORDER_STANDARD } =
       await import('../../../../scripts/cody/stages/registry')
     const ALL_IMPL_STAGE_NAMES = flattenTypedPipeline(IMPL_ORDER_STANDARD)
-    // Registry version doesn't duplicate commit — unlike the old IMPL_PIPELINE
-    // The old IMPL_PIPELINE had 10 entries (with duplicate 'commit')
-    // The new IMPL_ORDER_STANDARD has 9 entries (no duplicate commit — fix stage commits via post-action)
-    expect(ALL_IMPL_STAGE_NAMES.length).toBeGreaterThanOrEqual(9)
+    // Registry version: architect, plan-gap, build, commit, review, fix, verify, pr = 8
+    // No duplicate commit (fix stage commits via post-action); test deferred to inspector
+    expect(ALL_IMPL_STAGE_NAMES.length).toBeGreaterThanOrEqual(8)
   })
 
   it('should have correct stage order', async () => {

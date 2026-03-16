@@ -127,8 +127,9 @@ describe('lightweight pipeline integration', () => {
     it('returns 7 steps (no duplicate commit in registry)', async () => {
       const pipeline = getImplPipeline('lightweight')
 
-      // architect, test+build (parallel), commit, review, fix, verify, pr
+      // architect, build, commit, review, fix, verify, pr
       // No duplicate commit — fix stage commits via post-action
+      // test stage deferred to inspector plugin (cody-deferred-tests)
       expect(pipeline).toHaveLength(7)
     })
 
@@ -138,16 +139,8 @@ describe('lightweight pipeline integration', () => {
       const pipeline = getImplPipeline('lightweight')
       const flatNames = flattenPipeline(pipeline)
 
-      expect(flatNames).toEqual([
-        'architect',
-        'test',
-        'build',
-        'commit',
-        'review',
-        'fix',
-        'verify',
-        'pr',
-      ])
+      // test stage deferred to inspector plugin (cody-deferred-tests)
+      expect(flatNames).toEqual(['architect', 'build', 'commit', 'review', 'fix', 'verify', 'pr'])
     })
 
     it('does not include plan-gap', async () => {
@@ -170,30 +163,29 @@ describe('lightweight pipeline integration', () => {
   })
 
   describe('LIGHTWEIGHT_IMPL_PIPELINE constant', () => {
-    it('flattens to 8 stage names', async () => {
+    it('flattens to 7 stage names', async () => {
       // Using module-level shims from registry
 
       const flatNames = flattenPipeline(LIGHTWEIGHT_IMPL_PIPELINE)
 
-      // No duplicate commit in registry version
-      expect(flatNames).toHaveLength(8)
+      // No duplicate commit in registry version; test deferred to inspector
+      expect(flatNames).toHaveLength(7)
     })
 
-    it('contains architect, build, commit, review, fix, commit, verify, pr', async () => {
+    it('contains architect, build, commit, review, fix, verify, pr', async () => {
       // Using module-level shims from registry
 
       const flatNames = flattenPipeline(LIGHTWEIGHT_IMPL_PIPELINE)
 
       expect(flatNames).toContain('architect')
-      expect(flatNames).toContain('test')
       expect(flatNames).toContain('build')
       expect(flatNames).toContain('commit')
       expect(flatNames).toContain('review')
       expect(flatNames).toContain('fix')
-      expect(flatNames).toContain('commit')
       expect(flatNames).toContain('verify')
       expect(flatNames).toContain('pr')
-      // docs is deferred to inspector (not in live pipeline); reflect removed
+      // test deferred to inspector; docs deferred to inspector; reflect removed
+      expect(flatNames).not.toContain('test')
       expect(flatNames).not.toContain('docs')
       expect(flatNames).not.toContain('reflect')
     })
@@ -287,13 +279,13 @@ describe('standard pipeline integration', () => {
   })
 
   describe('IMPL_PIPELINE constant', () => {
-    it('flattens to 9 stage names', async () => {
+    it('flattens to 8 stage names', async () => {
       // Using module-level shims from registry
 
       const flatNames = flattenPipeline(IMPL_PIPELINE)
 
-      // 9 stages (no duplicate commit in registry)
-      expect(flatNames).toHaveLength(9)
+      // 8 stages (no duplicate commit in registry; test deferred to inspector)
+      expect(flatNames).toHaveLength(8)
     })
 
     it('contains all heavyweight stages', async () => {
@@ -325,17 +317,8 @@ describe('end-to-end pipeline selection', () => {
     const implPipeline = getImplPipeline(profile)
     const implStages = flattenPipeline(implPipeline)
 
-    // No duplicate commit in registry version
-    expect(implStages).toEqual([
-      'architect',
-      'test',
-      'build',
-      'commit',
-      'review',
-      'fix',
-      'verify',
-      'pr',
-    ])
+    // No duplicate commit in registry version; test deferred to inspector
+    expect(implStages).toEqual(['architect', 'build', 'commit', 'review', 'fix', 'verify', 'pr'])
 
     // Only plan-gap is skipped in lightweight
     expect(implStages).not.toContain('plan-gap')

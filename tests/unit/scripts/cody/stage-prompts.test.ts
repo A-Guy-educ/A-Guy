@@ -168,11 +168,10 @@ describe('stage-prompts', () => {
 
   describe('getImplStages', () => {
     it('should return full implementation stage list (default standard profile)', () => {
-      // docs is deferred to inspector; fix stage commits via post-action (no duplicate commit)
+      // docs deferred to inspector; test deferred to inspector; no duplicate commit
       expect(getImplStages()).toEqual([
         'architect',
         'plan-gap',
-        'test',
         'build',
         'commit',
         'review',
@@ -183,10 +182,9 @@ describe('stage-prompts', () => {
     })
 
     it('should return reduced stage list for lightweight profile (no plan-gap)', () => {
-      // docs is deferred to inspector; fix stage commits via post-action (no duplicate commit)
+      // docs deferred to inspector; test deferred to inspector; no duplicate commit
       expect(getImplStages('lightweight')).toEqual([
         'architect',
-        'test',
         'build',
         'commit',
         'review',
@@ -197,11 +195,10 @@ describe('stage-prompts', () => {
     })
 
     it('should return full stage list for standard profile', () => {
-      // docs is deferred to inspector; fix stage commits via post-action (no duplicate commit)
+      // docs deferred to inspector; test deferred to inspector; no duplicate commit
       expect(getImplStages('standard')).toEqual([
         'architect',
         'plan-gap',
-        'test',
         'build',
         'commit',
         'review',
@@ -228,7 +225,7 @@ describe('stage-prompts', () => {
       }
     })
 
-    it('should return empty strings for non-spec stages (except build, review, fix, docs)', () => {
+    it('should return empty strings for non-spec stages (except build, review, fix, docs, test)', () => {
       const nonSpecStages = ALL_STAGES.filter(
         (s) => !SPEC_STAGES.includes(s as (typeof SPEC_STAGES)[number]),
       )
@@ -244,7 +241,7 @@ describe('stage-prompts', () => {
         } else if (stage === 'docs') {
           expect(instruction).toContain('DOCUMENTATION STAGE')
         } else if (stage === 'test') {
-          expect(instruction).toContain('TDD RED PHASE')
+          expect(instruction).toContain('DEFERRED TEST STAGE')
         } else {
           expect(instruction).toBe('')
         }
