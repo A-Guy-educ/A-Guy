@@ -2,30 +2,31 @@
   "task_type": "implement_feature",
   "risk_level": "medium",
   "confidence": 0.9,
-  "primary_domain": "frontend",
+  "primary_domain": "backend",
   "scope": [
-    "Courses collection schema (add content status field)",
-    "Lessons collection schema (add content status field)",
-    "Course card components (add badge display)",
-    "Lesson list components (add badge display)",
-    "Access control for locked 'Soon' content"
+    "Courses collection",
+    "Lessons collection",
+    "Course card UI",
+    "Lesson list UI"
   ],
   "missing_inputs": [],
   "assumptions": [
-    "Existing Courses and Lessons collections exist in Payload CMS",
-    "Using Tailwind CSS for styling (project standard)",
-    "Has existing course card and lesson list components to extend"
+    "Courses and Lessons collections exist and follow standard patterns",
+    "Access control is handled via Payload's access control functions",
+    "UI uses Tailwind CSS for styling",
+    "Existing badge or tag patterns can be referenced in the codebase"
   ],
   "review_questions": [
-    "Should we implement the automated expiry ('New Until' date) for 'Just Added' tags as an optional feature?",
-    "Should 'Soon' content be hidden entirely from student view or just locked (showing teaser but preventing access)?"
+    "Should 'Soon' content be completely hidden from student views or just locked?",
+    "What is the default expiration period for 'Just Added' badges if admin sets a date?",
+    "Should the 'New Until' date be calculated from creation date or manual setting?"
   ],
-  "complexity": 49,
-  "complexity_reasoning": "Scope: 15 (4-6 files across courses/lessons, backend+frontend). Risk: 10 (access control changes, medium impact). Novelty: 10 (new feature but follows existing patterns). Cross-Domain: 8 (backend schema + frontend UI). Ambiguity: 3 (clear requirements with some design decisions). Dependencies: 3 (uses existing collections). Total: 49",
+  "complexity": 55,
+  "complexity_reasoning": "Scope: 18 (affects 2 collections + 2 UI components across backend/frontend), Risk: 12 (access control changes for student blocking), Novelty: 12 (new feature with some existing patterns), Cross-Domain: 8 (backend + frontend), Ambiguity: 3 (clear requirements with some implementation details to figure out), Dependencies: 4 (depends on existing collections). Total: 57",
   "input_quality": {
     "level": "good_spec",
     "skip_stages": [],
-    "reasoning": "Input contains ## Goal, ## Status Definitions & Logic, ## Admin Experience, ## Design Guidelines, and ## Success Criteria with clear requirements and acceptance criteria. Promoted spec.md."
+    "reasoning": "Input contains clear ## Goal, ## Status Definitions & Logic, ## Admin Experience, ## Design Guidelines, and ## Success Criteria sections. Requirements are specific but implementation approach is not specified - suitable for standard pipeline with gap analysis."
   },
   "pipeline_profile": "standard",
   "pipeline": "spec_execute_verify"
