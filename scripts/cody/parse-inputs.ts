@@ -136,6 +136,23 @@ export function parseDispatchInputs(): ParseOutputs {
 }
 
 /**
+ * Check if an issue has the "publish" label
+ */
+function hasPublishLabel(issueNumber: string): boolean {
+  if (!issueNumber) return false
+  try {
+    const result = execSync(
+      `gh issue view "${issueNumber}" --json labels --jq '.labels[].name' 2>/dev/null`,
+      { encoding: 'utf-8' },
+    )
+    const labels = result.trim().split('\n').filter(Boolean)
+    return labels.includes('publish')
+  } catch {
+    return false
+  }
+}
+
+/**
  * Parse comment inputs (issue_comment trigger)
  */
 export function parseCommentInputs(): ParseOutputs {
@@ -151,6 +168,17 @@ export function parseCommentInputs(): ParseOutputs {
       ...getDefaultOutputs(),
       issue_number: issueNumber,
       valid: 'false',
+    }
+  }
+
+  // Check for publish label - these are handled by the Publish workflow, not Cody
+  if (issueNumber && hasPublishLabel(issueNumber)) {
+    logger.info(`=== Issue #${issueNumber} has 'publish' label - skipping Cody pipeline ===`)
+    return {
+      ...getDefaultOutputs(),
+      issue_number: issueNumber,
+      valid: 'false',
+      feedback: 'Publish issues are handled by the Publish workflow. Do not process with Cody.',
     }
   }
 
