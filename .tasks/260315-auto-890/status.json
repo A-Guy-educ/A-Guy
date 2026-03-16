@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-15T13:10:42.715Z",
-  "updatedAt": "2026-03-16T09:17:02.131Z",
+  "updatedAt": "2026-03-16T09:46:31.319Z",
   "state": "running",
   "cursor": "gap",
   "stages": {
@@ -56,9 +56,23 @@
       "skipped": "Complexity 45 (complex) below threshold 50 for plan-gap"
     },
     "build": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-16T09:17:02.119Z",
+      "completedAt": "2026-03-16T09:46:09.399Z",
+      "elapsed": 1747,
+      "outputFile": "build.md",
+      "tokenUsage": {
+        "input": 122508,
+        "output": 34444,
+        "cacheRead": 19170145
+      },
+      "sessionId": "ses_30a10c03cffe0uFhuuuJDgs1An"
+    },
+    "commit": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-16T09:17:02.119Z"
+      "startedAt": "2026-03-16T09:46:31.319Z"
     }
   },
   "issueNumber": 835,
@@ -70,6 +84,5 @@
       "actor": "aguyaharonyair",
       "timestamp": "2026-03-15T13:10:42.715Z"
     }
-  ],
-  "branchName": "feat/260315-auto-835-p3-student-statistics-dashboard"
+  ]
 }
