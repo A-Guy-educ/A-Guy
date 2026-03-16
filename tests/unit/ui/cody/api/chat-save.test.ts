@@ -7,7 +7,6 @@
  * - Dedup: skip commit when content is unchanged
  * - Commit when content is different
  */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
 // Mock the github-client module
@@ -17,7 +16,7 @@ vi.mock('@/ui/cody/github-client', () => ({
 }))
 
 vi.mock('@/ui/cody/auth', () => ({
-  requireCodyAuth: vi.fn(() => ({ identity: { login: 'test-user', installationId: 1 } })),
+  requireCodyAuth: vi.fn(() => null), // Skip auth for tests
 }))
 
 vi.mock('@/ui/cody/constants', () => ({
