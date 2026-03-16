@@ -1,0 +1,27 @@
+{
+  "task_type": "ops",
+  "risk_level": "high",
+  "confidence": 0.95,
+  "primary_domain": "devops",
+  "scope": [
+    "merge dev to main",
+    "production deployment",
+    "233 commits"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "CI pipeline is configured to handle the dev-to-main merge",
+    "User will create PR via GitHub Action as described",
+    "The actual merge operation will be performed by the CI pipeline"
+  ],
+  "review_questions": [],
+  "complexity": 30,
+  "complexity_reasoning": "Scope: 3 (single merge operation), Risk: 16 (production deployment with 233 commits), Novelty: 3 (standard deployment pattern), Cross-Domain: 2 (devops only), Ambiguity: 2 (clear intent), Dependencies: 4 (CI pipeline, GitHub). Total: 30",
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Task describes a straightforward production deployment with clear intent - merge dev to main. No structured requirements or acceptance criteria present, but the task is unambiguous."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
