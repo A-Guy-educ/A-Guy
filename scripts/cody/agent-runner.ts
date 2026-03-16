@@ -53,6 +53,9 @@ export const STABILITY_CHECK_COUNT = 2
 /** Additional delay to wait after process exit before checking (filesystem flush) */
 export const POST_EXIT_DELAY = 500
 
+/** Timeout for session nudge attempt (seconds) — lightweight continuation before full retry */
+export const NUDGE_TIMEOUT = 90
+
 /** Maximum retry attempts for failed stages */
 export const MAX_RETRIES = 2
 
@@ -207,6 +210,84 @@ function findOutputFile(taskDir: string, expectedBase: string, outputExt: string
   const files = fs.readdirSync(taskDir)
   const prefixMatch = files.find((f) => f.startsWith(expectedBase + '-') && f.endsWith(outputExt))
   return prefixMatch ? path.join(taskDir, prefixMatch) : null
+}
+
+/**
+ * Nudge an agent session to write the missing output file.
+ * When an agent exits 0 but forgets the output file, this sends a short
+ * continuation message into the same session. Much cheaper than a full retry
+ * since the agent still has all context loaded.
+ *
+ * Returns the detected output file path on success, or null on failure.
+ */
+async function nudgeSession(
+  backend: RunnerBackend,
+  stage: string,
+  outputFile: string,
+  env: NodeJS.ProcessEnv,
+  cwd: string,
+  serverUrl: string,
+  sessionId: string,
+  dataDir?: string,
+): Promise<string | null> {
+  const nudgePrompt = `CRITICAL: You exited without writing the required output file. Write it NOW to: ${outputFile}`
+
+  logger.info(`  🔔 Nudging session ${sessionId.slice(0, 16)}... to write output file`)
+
+  return new Promise((resolve) => {
+    const nudgeChild = backend.spawn(stage, nudgePrompt, env, cwd, {
+      serverUrl,
+      sessionId,
+      dataDir,
+    })
+
+    // Close stdin
+    if (nudgeChild.stdin) nudgeChild.stdin.end()
+
+    // Log nudge output for debugging
+    if (nudgeChild.stdout) {
+      nudgeChild.stdout.on('data', () => {
+        // Silently consume — we only care about the file appearing
+      })
+    }
+    if (nudgeChild.stderr) {
+      nudgeChild.stderr.on('data', () => {
+        // Silently consume
+      })
+    }
+
+    // Timeout
+    const timer = setTimeout(() => {
+      logger.info(`  🔔 Nudge timed out after ${NUDGE_TIMEOUT}s`)
+      try {
+        nudgeChild.kill()
+      } catch {
+        /* ignore */
+      }
+      resolve(null)
+    }, NUDGE_TIMEOUT * 1000)
+
+    nudgeChild.on('exit', async (nudgeCode) => {
+      clearTimeout(timer)
+      logger.info(`  🔔 Nudge process exited with code: ${nudgeCode}`)
+
+      // Brief delay for filesystem flush
+      await sleep(POST_EXIT_DELAY)
+
+      // Check if the file appeared
+      const outputExt = path.extname(outputFile)
+      const expectedBase = path.basename(outputFile, outputExt)
+      const taskDirForPoll = path.dirname(outputFile)
+      const detected = findOutputFile(taskDirForPoll, expectedBase, outputExt)
+      if (detected) {
+        logger.info(`  🔔 ✅ Nudge succeeded — output file detected`)
+        resolve(detected)
+      } else {
+        logger.info(`  🔔 ❌ Nudge failed — output file still missing`)
+        resolve(null)
+      }
+    })
+  })
 }
 
 /**
@@ -643,7 +724,44 @@ export function runAgentWithFileWatch(
         const detectedFile = findOutputFile(taskDirForPoll, expectedBase, outputExt)
 
         if (!detectedFile) {
-          // File not found - retry or fail
+          // Nudge: If agent exited cleanly (code 0) and we have a live session,
+          // try a lightweight continuation before burning a full retry.
+          // The agent still has all context — it just forgot to write the file.
+          if (code === 0 && serverUrl && extractedSessionId) {
+            const nudgedFile = await nudgeSession(
+              backend,
+              effectiveAgent,
+              outputFile,
+              agentEnv,
+              cwd,
+              serverUrl,
+              extractedSessionId,
+              dataDir,
+            )
+            if (nudgedFile) {
+              // Nudge succeeded — continue to file stability check
+              // Re-assign detectedFile by jumping to the stability check below
+              const { stable, finalSize } = await waitForFileStable(nudgedFile, {
+                interval: STABILITY_CHECK_INTERVAL,
+                stableCount: STABILITY_CHECK_COUNT,
+                timeout: Math.min(ms('30s'), remainingTimeout),
+                onCheck: (size, checkNum) => {
+                  if (checkNum === 0) {
+                    logger.info(`  🔍 File size: ${size} bytes, waiting for stability...`)
+                  }
+                },
+              })
+              if (stable && finalSize > 0) {
+                logger.info(`  ✅ Output file stable (${finalSize} bytes) after nudge`)
+                finish({ succeeded: true, timedOut: false })
+                return
+              }
+              // Nudge produced file but it's not stable — fall through to retry
+              logger.info(`  ⚠️ Nudge produced file but it's not stable, falling through to retry`)
+            }
+          }
+
+          // File not found (or nudge failed) - retry or fail
           if (retries < maxRetries) {
             retries++
             const reason = code === 0 ? 'no output file' : `exit ${code}`
