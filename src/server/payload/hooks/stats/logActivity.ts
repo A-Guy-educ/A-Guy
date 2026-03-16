@@ -75,7 +75,7 @@ export async function logActivity({
           totalTimeSpentSeconds: 0,
           currentStreak: 0,
           longestStreak: 0,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload dynamic field not in generated types
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload dynamic field not in generated types
         } as any,
         overrideAccess: true,
       })

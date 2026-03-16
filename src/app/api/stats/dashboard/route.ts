@@ -48,8 +48,7 @@ export async function GET(req: Request) {
   // Parse query params
   const url = new URL(req.url)
   const courseId = url.searchParams.get('courseId') || undefined
-  const timeframe =
-    (url.searchParams.get('timeframe') as 'week' | 'month' | 'overall') || 'overall'
+  const timeframe = (url.searchParams.get('timeframe') as 'week' | 'month' | 'overall') || 'overall'
 
   const validation = dashboardQuerySchema.safeParse({ courseId, timeframe })
   if (!validation.success) {
@@ -117,7 +116,10 @@ export async function GET(req: Request) {
   const chapterIds = chaptersResult.docs.map((c) => c.id)
   for (const chapter of chaptersResult.docs) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload dynamic field
-    chapterMap.set(chapter.id, { title: ((chapter as Record<string, any>).title as string) || '', lessonIds: [] })
+    chapterMap.set(chapter.id, {
+      title: ((chapter as Record<string, any>).title as string) || '',
+      lessonIds: [],
+    })
   }
 
   if (chapterIds.length > 0) {
@@ -139,7 +141,9 @@ export async function GET(req: Request) {
     for (const lesson of lessonsResult.docs) {
       const chapterId =
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload relation can be string or object
-        typeof lesson.chapter === 'string' ? lesson.chapter : (lesson.chapter as Record<string, any>)?.id
+        typeof lesson.chapter === 'string'
+          ? lesson.chapter
+          : (lesson.chapter as Record<string, any>)?.id
       if (chapterId) {
         lessonToChapter.set(lesson.id, chapterId)
         const chapterEntry = chapterMap.get(chapterId)
@@ -199,8 +203,10 @@ export async function GET(req: Request) {
   const totalProgress =
     lessonRecords.length > 0
       ? Math.round(
-          lessonRecords.reduce((sum: number, r: ProgressRecord) => sum + (r.completionPercentage || 0), 0) /
-            lessonRecords.length,
+          lessonRecords.reduce(
+            (sum: number, r: ProgressRecord) => sum + (r.completionPercentage || 0),
+            0,
+          ) / lessonRecords.length,
         )
       : 0
 
@@ -223,7 +229,9 @@ export async function GET(req: Request) {
   const learnCount = lessonRecords.filter((r: ProgressRecord) => r.status === 'completed').length
 
   const practiceAttempted = exerciseRecords.length
-  const practiceCompleted = exerciseRecords.filter((r: ProgressRecord) => r.status === 'completed').length
+  const practiceCompleted = exerciseRecords.filter(
+    (r: ProgressRecord) => r.status === 'completed',
+  ).length
   const practiceSuccessRate =
     practiceAttempted > 0 ? Math.round((practiceCompleted / practiceAttempted) * 100) : 0
 
@@ -239,8 +247,10 @@ export async function GET(req: Request) {
   const examAvgScore =
     examRecordsWithScores.length > 0
       ? Math.round(
-          examRecordsWithScores.reduce((sum: number, r: ProgressRecord) => sum + (r.score || 0), 0) /
-            examRecordsWithScores.length,
+          examRecordsWithScores.reduce(
+            (sum: number, r: ProgressRecord) => sum + (r.score || 0),
+            0,
+          ) / examRecordsWithScores.length,
         )
       : 0
 

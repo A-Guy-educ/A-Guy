@@ -171,8 +171,7 @@ async function upsertProgressRecord(
     if (existingIndex >= 0) {
       // Update existing - don't downgrade completed status
       const existing = existingRecords[existingIndex]
-      const shouldUpdate =
-        existing.status !== 'completed' || record.status === 'completed'
+      const shouldUpdate = existing.status !== 'completed' || record.status === 'completed'
 
       if (shouldUpdate) {
         updatedRecords = [...existingRecords]

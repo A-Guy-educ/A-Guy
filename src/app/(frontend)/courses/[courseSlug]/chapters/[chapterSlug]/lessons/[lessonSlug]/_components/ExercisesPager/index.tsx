@@ -64,7 +64,10 @@ export function ExercisesPager({
   useEffect(() => {
     // When navigating away from an exercise (to next exercise or outro),
     // track the previous exercise as completed
-    if (prevExerciseIndex.current !== undefined && prevExerciseIndex.current !== pageState.exerciseIndex) {
+    if (
+      prevExerciseIndex.current !== undefined &&
+      prevExerciseIndex.current !== pageState.exerciseIndex
+    ) {
       const prevExercise = exercises[prevExerciseIndex.current]
       if (prevExercise && !trackedExercises.current.has(prevExercise.id)) {
         trackedExercises.current.add(prevExercise.id)
