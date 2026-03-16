@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-16T07:44:21.445Z",
-  "updatedAt": "2026-03-16T08:45:27.015Z",
+  "updatedAt": "2026-03-16T08:49:39.244Z",
   "state": "running",
   "cursor": "architect",
   "stages": {
@@ -74,13 +74,23 @@
       "sessionId": "ses_30a5923d9ffeG5NbemPHn0vi24"
     },
     "build": {
-      "state": "running",
+      "state": "completed",
       "retries": 0,
-      "startedAt": "2026-03-16T08:45:27.000Z"
+      "startedAt": "2026-03-16T08:45:27.000Z",
+      "completedAt": "2026-03-16T08:49:15.059Z",
+      "elapsed": 228,
+      "outputFile": "build.md",
+      "tokenUsage": {
+        "input": 17420,
+        "output": 3570,
+        "cacheRead": 1266276
+      },
+      "sessionId": "ses_30a2da8c7ffeaoBvP4iDRh3I9K"
     },
     "commit": {
-      "state": "pending",
-      "retries": 0
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-16T08:49:39.244Z"
     },
     "review": {
       "state": "pending",
@@ -102,6 +112,5 @@
     }
   ],
   "completedAt": "2026-03-16T08:26:41.932Z",
-  "totalCost": 3.8282642499999997,
-  "branchName": "feat/260315-auto-839-content-status-badging-soon-just-a"
+  "totalCost": 3.8282642499999997
 }
