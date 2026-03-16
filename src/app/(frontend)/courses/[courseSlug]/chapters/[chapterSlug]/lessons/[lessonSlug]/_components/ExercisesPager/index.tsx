@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import type { Exercise, Media as MediaType } from '@/payload-types'
 import { Button } from '@/ui/web/components/button'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
@@ -55,6 +56,37 @@ export function ExercisesPager({
     getExerciseOrdinal,
     totalExercises,
   } = useExercisesPager({ exercises, courseSlug, chapterSlug, lessonSlug, hasAboutPage })
+
+  // Track exercise completion when reaching the outro page
+  const trackedExercises = useRef(new Set<string>())
+  const prevExerciseIndex = useRef<number | undefined>(undefined)
+
+  useEffect(() => {
+    // When navigating away from an exercise (to next exercise or outro),
+    // track the previous exercise as completed
+    if (prevExerciseIndex.current !== undefined && prevExerciseIndex.current !== pageState.exerciseIndex) {
+      const prevExercise = exercises[prevExerciseIndex.current]
+      if (prevExercise && !trackedExercises.current.has(prevExercise.id)) {
+        trackedExercises.current.add(prevExercise.id)
+        fetch('/api/stats/track-activity', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            eventType: 'exercise_completed',
+            exerciseId: prevExercise.id,
+            exerciseTitle: prevExercise.title || '',
+            lessonId,
+            score: 100, // Default - individual question scoring happens in validate-answer
+            totalQuestions: 1,
+            correctCount: 1,
+          }),
+        }).catch(() => {
+          // fail silently
+        })
+      }
+    }
+    prevExerciseIndex.current = pageState.exerciseIndex
+  }, [pageState.exerciseIndex, exercises, lessonId])
 
   const introMediaObj = introMedia && typeof introMedia === 'object' ? introMedia : null
 

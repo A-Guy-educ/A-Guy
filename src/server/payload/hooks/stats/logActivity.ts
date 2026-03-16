@@ -4,6 +4,8 @@
  * Helper to log user activities to UserStats collection
  */
 
+import type { Payload } from 'payload'
+
 interface ActivityEntry {
   actionType:
     | 'lesson_completed'
@@ -18,25 +20,7 @@ interface ActivityEntry {
 }
 
 interface LogActivityParams {
-  payload: {
-    find: (options: {
-      collection: string
-      where: Record<string, unknown>
-      limit?: number
-      overrideAccess?: boolean
-    }) => Promise<{ docs: Array<{ id: string; activityLog?: ActivityEntry[] }> }>
-    update: (options: {
-      collection: string
-      id: string
-      data: Record<string, unknown>
-      overrideAccess?: boolean
-    }) => Promise<{ id: string | unknown }>
-    create: (options: {
-      collection: string
-      data: Record<string, unknown>
-      overrideAccess?: boolean
-    }) => Promise<{ id: string | unknown }>
-  }
+  payload: Payload
   userId: string
   actionType: ActivityEntry['actionType']
   label: string
@@ -70,13 +54,15 @@ export async function logActivity({
 
     if (userStatsResult.docs.length > 0) {
       const stats = userStatsResult.docs[0]
-      const currentLog = (stats.activityLog as ActivityEntry[]) || []
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload dynamic field not in generated types
+      const currentLog = ((stats as any).activityLog as ActivityEntry[]) || []
       const updatedLog = [activityEntry, ...currentLog].slice(0, 50) // Keep max 50
 
       await payload.update({
         collection: 'user-stats',
         id: stats.id,
-        data: { activityLog: updatedLog },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload dynamic field not in generated types
+        data: { activityLog: updatedLog } as any,
         overrideAccess: true,
       })
     } else {
@@ -89,7 +75,8 @@ export async function logActivity({
           totalTimeSpentSeconds: 0,
           currentStreak: 0,
           longestStreak: 0,
-        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload dynamic field not in generated types
+        } as any,
         overrideAccess: true,
       })
     }

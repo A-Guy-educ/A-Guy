@@ -10,6 +10,9 @@ import { useEffect, useState } from 'react'
 
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { SummaryCards } from './SummaryCards'
+import { CategoryProgress } from './CategoryProgress'
+import { TopicMastery } from './TopicMastery'
+import { ActivityTimeline } from './ActivityTimeline'
 import { DashboardFilters } from './DashboardFilters'
 
 interface Course {
@@ -97,7 +100,14 @@ export function StatsDashboard({
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
         </div>
       ) : data ? (
-        <SummaryCards summary={data.summary} categoryProgress={data.categoryProgress} />
+        <>
+          <SummaryCards summary={data.summary} categoryProgress={data.categoryProgress} />
+          <CategoryProgress data={data.categoryProgress} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <TopicMastery topics={data.topicMastery} />
+            <ActivityTimeline />
+          </div>
+        </>
       ) : (
         <div className="text-center py-12 text-muted-foreground">{t('errorLoading')}</div>
       )}
