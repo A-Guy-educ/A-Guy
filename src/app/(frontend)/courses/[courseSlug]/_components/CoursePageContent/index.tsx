@@ -79,10 +79,13 @@ export function CoursePageContent({
         {/* Footer actions with divider */}
         <div className="mt-16 pt-8 border-t border-border">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button className="flex items-center justify-center gap-2 text-sm font-bold text-foreground bg-card border border-border px-6 py-3 rounded-full hover:bg-muted/50 transition-all">
+            <SystemLink
+              href={`/stats?courseId=${course.id}`}
+              className="flex items-center justify-center gap-2 text-sm font-bold text-foreground bg-card border border-border px-6 py-3 rounded-full hover:bg-muted/50 transition-all"
+            >
               <BarChart3 className="w-4 h-4" />
               {t('statsAndPerformance')}
-            </button>
+            </SystemLink>
             <SystemLink
               href="/study-plan"
               className="flex items-center justify-center gap-2 text-sm font-bold text-primary-foreground bg-primary px-6 py-3 rounded-full shadow-lg hover:opacity-90 transition-all"
