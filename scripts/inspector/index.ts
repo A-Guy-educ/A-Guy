@@ -13,6 +13,7 @@ import { healthCheckPlugin } from './plugins/cody/health-check/index'
 import { auditPlugin } from './plugins/cody/audit/index'
 import { failureAnalysisPlugin } from './plugins/cody/failure-analysis/index'
 import { deferredStagesPlugin } from './plugins/cody/deferred-stages/index'
+import { deferredTestsPlugin } from './plugins/cody/deferred-tests/index'
 import { docsSyncPlugin } from './plugins/docs-sync/index'
 import { zombieReaperPlugin } from './plugins/cody/zombie-reaper/index'
 import { successTrackerPlugin } from './plugins/cody/success-tracker/index'
@@ -74,6 +75,7 @@ async function main(): Promise<void> {
   registry.register(failureAnalysisPlugin)
   registry.register(auditPlugin)
   registry.register(deferredStagesPlugin)
+  registry.register(deferredTestsPlugin)
   registry.register(docsSyncPlugin)
   registry.register(zombieReaperPlugin)
   registry.register(successTrackerPlugin)

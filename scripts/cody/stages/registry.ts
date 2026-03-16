@@ -279,7 +279,7 @@ export const SPEC_ORDER_LIGHTWEIGHT: StageName[] = ['taskify', 'clarify']
 export const IMPL_ORDER_STANDARD: TypedPipelineStep[] = [
   'architect',
   'plan-gap',
-  { parallel: ['test', 'build'] },
+  'build', // test stage deferred to inspector plugin (cody-deferred-tests)
   'commit',
   'review',
   'fix',
@@ -292,7 +292,7 @@ export const IMPL_ORDER_STANDARD: TypedPipelineStep[] = [
 
 export const IMPL_ORDER_LIGHTWEIGHT: TypedPipelineStep[] = [
   'architect',
-  { parallel: ['test', 'build'] },
+  'build', // test stage deferred to inspector plugin (cody-deferred-tests)
   'commit',
   'review',
   'fix',
