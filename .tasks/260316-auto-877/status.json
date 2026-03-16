@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-16T12:10:03.945Z",
-  "updatedAt": "2026-03-16T12:40:51.275Z",
+  "updatedAt": "2026-03-16T12:43:35.793Z",
   "state": "running",
   "cursor": "gap",
   "stages": {
@@ -71,9 +71,32 @@
       "sessionId": "ses_30958c0b3ffeI2CoExgbC9arUg"
     },
     "commit": {
-      "state": "running",
+      "state": "completed",
       "retries": 0,
-      "startedAt": "2026-03-16T12:40:51.275Z"
+      "startedAt": "2026-03-16T12:40:51.275Z",
+      "completedAt": "2026-03-16T12:40:52.143Z",
+      "elapsed": 1
+    },
+    "review": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-16T12:40:52.144Z",
+      "completedAt": "2026-03-16T12:43:35.792Z",
+      "elapsed": 164,
+      "outputFile": "review.md",
+      "tokenUsage": {
+        "input": 16,
+        "output": 4426,
+        "cacheRead": 1636541
+      },
+      "cost": 1.5585067500000003,
+      "sessionId": "ses_309562309ffePQ1zws10252Z3i",
+      "issuesFound": false,
+      "reviewSummary": {
+        "critical": 0,
+        "major": 0,
+        "minor": 0
+      }
     }
   },
   "issueNumber": 851,
