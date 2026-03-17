@@ -1,0 +1,28 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "low",
+  "confidence": 0.1,
+  "primary_domain": "backend",
+  "scope": [
+    "unknown"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Task is a placeholder/test with minimal information",
+    "No actual implementation details provided"
+  ],
+  "review_questions": [
+    "What specific feature should be implemented?",
+    "What are the acceptance criteria for this feature?",
+    "Which files or components should be modified?"
+  ],
+  "complexity": 10,
+  "complexity_reasoning": "Scope: 0 (no files specified), Risk: 0 (no changes described), Novelty: 0 (no feature described), Cross: 0, Ambiguity: 10 (completely vague - only 'test' as title/summary), Deps: 0. Total: 10",
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Task contains only title 'test' and category 'New Feature'. No requirements, no acceptance criteria, no implementation details. Cannot determine scope or specific changes needed."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

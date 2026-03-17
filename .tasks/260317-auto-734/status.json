@@ -1,0 +1,27 @@
+{
+  "version": 2,
+  "taskId": "260317-auto-734",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-17T21:11:33.684Z",
+  "updatedAt": "2026-03-17T21:11:35.217Z",
+  "state": "running",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-17T21:11:35.217Z"
+    }
+  },
+  "issueNumber": 877,
+  "triggeredBy": "korenguy123",
+  "issueCreator": "korenguy123",
+  "actorHistory": [
+    {
+      "action": "pipeline-triggered",
+      "actor": "korenguy123",
+      "timestamp": "2026-03-17T21:11:33.684Z"
+    }
+  ]
+}
