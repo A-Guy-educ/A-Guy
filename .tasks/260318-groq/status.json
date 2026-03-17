@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-17T23:12:46.639Z",
-  "updatedAt": "2026-03-17T23:13:58.109Z",
+  "updatedAt": "2026-03-17T23:15:44.500Z",
   "state": "running",
   "cursor": null,
   "stages": {
@@ -38,13 +38,23 @@
       "skipped": "Complexity 10 (simple) below threshold 50 for plan-gap"
     },
     "build": {
-      "state": "running",
+      "state": "completed",
       "retries": 0,
-      "startedAt": "2026-03-17T23:13:57.989Z"
+      "startedAt": "2026-03-17T23:13:57.989Z",
+      "completedAt": "2026-03-17T23:15:30.858Z",
+      "elapsed": 93,
+      "outputFile": "build.md",
+      "tokenUsage": {
+        "input": 7785,
+        "output": 1295,
+        "cacheRead": 434687
+      },
+      "sessionId": "ses_301ec1e65ffeCjWrwzONI2maHl"
     },
     "commit": {
-      "state": "pending",
-      "retries": 0
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-17T23:15:44.500Z"
     },
     "review": {
       "state": "pending",
@@ -62,6 +72,5 @@
       "state": "pending",
       "retries": 0
     }
-  },
-  "branchName": "docs/260318-groq-create-a-test-file-at-docstestspeed-te"
+  }
 }
