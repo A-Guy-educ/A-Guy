@@ -93,6 +93,7 @@ export interface Config {
     'upload-sessions': UploadSession;
     posts: Post;
     'pricing-plans': PricingPlan;
+    'access-codes': AccessCode;
     'mcp-audit-logs': McpAuditLog;
     redirects: Redirect;
     forms: Form;
@@ -132,6 +133,7 @@ export interface Config {
     'upload-sessions': UploadSessionsSelect<false> | UploadSessionsSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
     'pricing-plans': PricingPlansSelect<false> | PricingPlansSelect<true>;
+    'access-codes': AccessCodesSelect<false> | AccessCodesSelect<true>;
     'mcp-audit-logs': McpAuditLogsSelect<false> | McpAuditLogsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
@@ -449,6 +451,17 @@ export interface User {
   googleProfile?: {
     name?: string | null;
   };
+  /**
+   * Courses this user has access to
+   */
+  courseEntitlements?:
+    | {
+        course: string | Course;
+        grantMethod: 'admin' | 'payment' | 'code';
+        grantedAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   oauthLoginSecretEnc?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -513,11 +526,11 @@ export interface Course {
   /**
    * Controls access to the course page itself (study/practice view). "Gated" shows a sign-in prompt after a configurable delay.
    */
-  pageAccessType: 'free' | 'mandatory' | 'gated';
+  pageAccessType: 'free' | 'mandatory' | 'gated' | 'paid';
   /**
    * Default access type for lessons in this course. Lessons can override with their own setting.
    */
-  accessType: 'free' | 'mandatory' | 'gated';
+  accessType: 'free' | 'mandatory' | 'gated' | 'paid';
   categories: (string | Category)[];
   /**
    * AI system prompt for Ask tab chat in this course (uses default if not set)
@@ -535,6 +548,18 @@ export interface Course {
     title?: string | null;
     description?: string | null;
   };
+  /**
+   * Content status badge displayed to students
+   */
+  contentStatus: 'none' | 'soon' | 'justAdded';
+  /**
+   * When unchecked, "Soon" content is completely hidden from student listings
+   */
+  contentStatusVisible?: boolean | null;
+  /**
+   * Badge auto-expires after this date (leave empty for permanent badge)
+   */
+  contentStatusExpiresAt?: string | null;
   /**
    * User who created this document
    */
@@ -1271,7 +1296,7 @@ export interface Lesson {
   /**
    * Access control for this lesson. "Inherit" uses the parent course setting. "Gated" is a client-side nudge, not hard enforcement.
    */
-  accessType: 'inherit' | 'free' | 'mandatory' | 'gated';
+  accessType: 'inherit' | 'free' | 'mandatory' | 'gated' | 'paid';
   /**
    * Show an intro/about page before the lesson starts
    */
@@ -1300,6 +1325,18 @@ export interface Lesson {
    * URL-friendly identifier (auto-generated from title if empty)
    */
   slug?: string | null;
+  /**
+   * Content status badge displayed to students
+   */
+  contentStatus: 'none' | 'soon' | 'justAdded';
+  /**
+   * When unchecked, "Soon" content is completely hidden from student listings
+   */
+  contentStatusVisible?: boolean | null;
+  /**
+   * Badge auto-expires after this date (leave empty for permanent badge)
+   */
+  contentStatusExpiresAt?: string | null;
   /**
    * User who created this document
    */
@@ -1954,6 +1991,49 @@ export interface PricingPlan {
   createdAt: string;
 }
 /**
+ * Manage access codes that grant course entitlements
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "access-codes".
+ */
+export interface AccessCode {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * The code students will enter (e.g., MACCABI-2024)
+   */
+  code: string;
+  /**
+   * The course this code grants access to
+   */
+  course: string | Course;
+  /**
+   * Maximum number of times this code can be used (0 = unlimited)
+   */
+  maxUses?: number | null;
+  /**
+   * How many times this code has been redeemed
+   */
+  currentUses?: number | null;
+  /**
+   * Whether this code can currently be redeemed
+   */
+  isActive?: boolean | null;
+  /**
+   * Optional expiration date (leave empty for no expiry)
+   */
+  expiresAt?: string | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "mcp-audit-logs".
  */
@@ -2362,6 +2442,10 @@ export interface PayloadLockedDocument {
         value: string | PricingPlan;
       } | null)
     | ({
+        relationTo: 'access-codes';
+        value: string | AccessCode;
+      } | null)
+    | ({
         relationTo: 'mcp-audit-logs';
         value: string | McpAuditLog;
       } | null)
@@ -2756,6 +2840,9 @@ export interface CoursesSelect<T extends boolean = true> {
         title?: T;
         description?: T;
       };
+  contentStatus?: T;
+  contentStatusVisible?: T;
+  contentStatusExpiresAt?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -2801,6 +2888,9 @@ export interface LessonsSelect<T extends boolean = true> {
   lessonContextText?: T;
   prompt?: T;
   slug?: T;
+  contentStatus?: T;
+  contentStatusVisible?: T;
+  contentStatusExpiresAt?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -2930,6 +3020,14 @@ export interface UsersSelect<T extends boolean = true> {
     | T
     | {
         name?: T;
+      };
+  courseEntitlements?:
+    | T
+    | {
+        course?: T;
+        grantMethod?: T;
+        grantedAt?: T;
+        id?: T;
       };
   oauthLoginSecretEnc?: T;
   updatedAt?: T;
@@ -3114,6 +3212,22 @@ export interface PricingPlansSelect<T extends boolean = true> {
   price?: T;
   currency?: T;
   isActive?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "access-codes_select".
+ */
+export interface AccessCodesSelect<T extends boolean = true> {
+  tenant?: T;
+  code?: T;
+  course?: T;
+  maxUses?: T;
+  currentUses?: T;
+  isActive?: T;
+  expiresAt?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;

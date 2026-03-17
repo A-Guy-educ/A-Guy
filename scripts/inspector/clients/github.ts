@@ -2,7 +2,7 @@
  * @fileType utility
  * @domain inspector
  * @pattern github-client
- * @ai-summary Thin wrapper around github-api.ts, conforming to GitHubClient interface
+ * @ai-summary Thin wrapper around gh CLI, conforming to GitHubClient interface
  */
 
 import { execFileSync } from 'child_process'
@@ -11,7 +11,7 @@ import * as fs from 'fs'
 import type { GitHubClient, IssueInfo, IssueComment, WorkflowRun } from '../core/types'
 
 /**
- * Create a GitHub client wrapper around scripts/cody/github-api.ts functions.
+ * Create a GitHub client wrapper around the gh CLI.
  */
 export function createGitHubClient(repo: string, token: string, patToken?: string): GitHubClient {
   const gh = (args: string[], input?: string): string => {
@@ -59,12 +59,12 @@ export function createGitHubClient(repo: string, token: string, patToken?: strin
         query,
         '--paginate',
         '--jq',
-        '[.[] | select(.state == "open") | {number: .number, title: .title, labels: [.labels[].name], updatedAt: .updated_at}]',
+        // Exclude pull requests — GitHub /issues API returns both issues and PRs.
+        '[.[] | select(.state == "open") | select(.pull_request == null) | {number: .number, title: .title, labels: [.labels[].name], updatedAt: .updated_at}]',
       ])
 
       if (!output) return []
 
-      // Handle paginated output (multiple JSON arrays concatenated)
       const arrays = output
         .split('\n')
         .filter(Boolean)
@@ -82,29 +82,33 @@ export function createGitHubClient(repo: string, token: string, patToken?: strin
     triggerWorkflow(workflow: string, inputs: Record<string, string>): void {
       const args = ['workflow', 'run', workflow]
       for (const [key, value] of Object.entries(inputs)) {
-        args.push('-f', `${key}=${value}`)
+        if (value) args.push('-f', `${key}=${value}`)
       }
       args.push(`--repo=${repo}`)
 
-      // Workflow dispatch requires a PAT — github.token cannot trigger other workflows
       const dispatchToken = patToken || token
-      execFileSync('gh', args, {
-        encoding: 'utf-8',
-        stdio: ['pipe', 'pipe', 'inherit'],
-        env: { ...process.env, GH_TOKEN: dispatchToken },
-      })
+      try {
+        execFileSync('gh', args, {
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'pipe'],
+          env: { ...process.env, GH_TOKEN: dispatchToken },
+        })
+      } catch (error) {
+        const err = error as NodeJS.ErrnoException & { stderr?: string }
+        const msg = err.stderr || err.message || String(error)
+        throw new Error(`Workflow dispatch failed for ${workflow}: ${msg}`)
+      }
     },
 
     addLabel(issueNumber: number, label: string): void {
-      gh(['issue', 'add-label', String(issueNumber), '--repo', repo, label])
+      gh(['issue', 'edit', String(issueNumber), '--repo', repo, '--add-label', label])
     },
 
     removeLabel(issueNumber: number, label: string): void {
-      gh(['issue', 'remove-label', String(issueNumber), '--repo', repo, label])
+      gh(['issue', 'edit', String(issueNumber), '--repo', repo, '--remove-label', label])
     },
 
     setLifecycleLabel(issueNumber: number, label: string): void {
-      // Remove any existing lifecycle labels, then add new one
       const lifecycleLabels = [
         'cody:planning',
         'cody:building',
@@ -118,8 +122,9 @@ export function createGitHubClient(repo: string, token: string, patToken?: strin
       this.addLabel(issueNumber, label)
     },
 
-    closeIssue(issueNumber: number, _reason = 'not planned'): void {
-      gh(['issue', 'close', String(issueNumber), `--repo=${repo}`])
+    // FIX #16: Pass reason parameter
+    closeIssue(issueNumber: number, reason = 'not planned'): void {
+      gh(['issue', 'close', String(issueNumber), `--repo=${repo}`, '--reason', reason])
     },
 
     getIssueComments(issueNumber: number): IssueComment[] {
@@ -133,7 +138,6 @@ export function createGitHubClient(repo: string, token: string, patToken?: strin
 
       if (!output) return []
 
-      // Handle paginated output
       const arrays = output
         .split('\n')
         .filter(Boolean)
@@ -172,16 +176,23 @@ export function createGitHubClient(repo: string, token: string, patToken?: strin
       }
     },
 
+    // FIX #1: Create issue without --label, then add labels via edit.
+    // gh issue create --label fails silently when the label doesn't exist.
+    // gh issue edit --add-label creates the label if it doesn't exist.
     createIssue(title: string, body: string, labels: string[]): number | null {
       const args = ['issue', 'create', '--repo', repo, '--title', title, '--body-file', '-']
-      for (const label of labels) {
-        args.push('--label', label)
-      }
       const output = gh(args, body)
       if (!output) return null
-      // gh issue create returns the URL; extract number from last path segment
+
       const match = output.match(/\/issues\/(\d+)/)
-      return match ? parseInt(match[1], 10) : null
+      const issueNumber = match ? parseInt(match[1], 10) : null
+
+      // Add labels separately — this auto-creates labels that don't exist
+      if (issueNumber && labels.length > 0) {
+        this.addLabel(issueNumber, labels.join(','))
+      }
+
+      return issueNumber
     },
 
     searchIssues(query: string): IssueInfo[] {
@@ -204,7 +215,6 @@ export function createGitHubClient(repo: string, token: string, patToken?: strin
 
 /**
  * Read task files from the .tasks directory.
- * Uses the same logic as cody-utils.ts getTaskDir().
  */
 export function readTaskFile(taskId: string, filename: string): string {
   const taskDir = getTaskDir(taskId)

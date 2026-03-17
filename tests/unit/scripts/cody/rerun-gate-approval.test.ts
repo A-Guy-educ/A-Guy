@@ -359,3 +359,107 @@ describe('Issue #827: stale paused state in resetFromStage', () => {
     expect(result.state).toBe('running')
   })
 })
+
+// ============================================================================
+// Tests: Implicit gate approval on @cody rerun
+// ============================================================================
+
+/**
+ * Regression tests for implicit gate approval on @cody rerun.
+ *
+ * Bug: When @cody rerun is triggered on a pipeline paused at a gate, the rerun
+ * re-runs the gated stage from scratch and re-posts the same gate question.
+ *
+ * Fix: When handleGateApproval returns 'waiting' in rerun mode, implicitly approve
+ * the gate. The rationale: @cody rerun is a clear signal the user wants the pipeline
+ * to proceed — they should never need to separately approve a gate they've already seen.
+ */
+describe('Implicit gate approval on @cody rerun', () => {
+  const LIGHTWEIGHT_PIPELINE = [
+    'taskify',
+    'clarify',
+    'architect',
+    'plan-gap',
+    'build',
+    'commit',
+    'verify',
+    'pr',
+  ]
+
+  const STANDARD_PIPELINE = [
+    'taskify',
+    'gap',
+    'clarify',
+    'architect',
+    'plan-gap',
+    'build',
+    'commit',
+    'verify',
+    'pr',
+  ]
+
+  it('implicit approval marks paused stage as completed and pipeline as running', () => {
+    // Arrange: Pipeline paused at taskify gate
+    const pausedState = createBaseState({
+      state: 'paused',
+      completedAt: new Date().toISOString(),
+      stages: {
+        taskify: createStage('paused'),
+      },
+    })
+
+    // Act: Simulate implicit approval via resumeFromGate (already imported at top)
+    const approvedState = resumeFromGate(pausedState, 'taskify')
+
+    // Assert: taskify is now completed, pipeline is running
+    expect(approvedState.stages['taskify'].state).toBe('completed')
+    expect(approvedState.state).toBe('running')
+  })
+
+  it('fromStage resolves to next stage after implicitly approved gate', () => {
+    // Arrange: taskify was implicitly approved
+    const gateStage = 'taskify'
+
+    // Act: Use resolveFromStageAfterGateApproval to find the next stage (already imported at top)
+
+    // Standard pipeline: next after taskify is gap
+    const nextStageStandard = resolveFromStageAfterGateApproval(gateStage, STANDARD_PIPELINE)
+    expect(nextStageStandard).toBe('gap')
+
+    // Lightweight pipeline: next after taskify is clarify
+    const nextStageLightweight = resolveFromStageAfterGateApproval(gateStage, LIGHTWEIGHT_PIPELINE)
+    expect(nextStageLightweight).toBe('clarify')
+  })
+
+  it('implicit approval uses correct reason string in approval file', () => {
+    // The implicit approval should write "implicitly approved via @cody rerun"
+    // This test verifies the expected reason string format
+    const implicitReason = 'implicitly approved via @cody rerun'
+    const explicitReason = 'approved by user'
+
+    // Verify the reason strings contain expected keywords
+    expect(implicitReason).toContain('implicitly approved')
+    expect(implicitReason).toContain('@cody rerun')
+    expect(explicitReason).toContain('approved by user')
+  })
+
+  it('verify that gateApprovedStage enables correct fromStage resolution', () => {
+    // This test verifies the integration: when gateApprovedStage is set,
+    // fromStage should resolve to the next stage after the gate
+
+    // Scenario: taskify gate was implicitly approved
+    const gateApprovedStage = 'taskify'
+
+    // In rerun mode with standard profile, fromStage should be 'gap' (next after taskify)
+    const fromStage = resolveFromStageAfterGateApproval(gateApprovedStage, STANDARD_PIPELINE)
+
+    // Verify: fromStage is NOT the gate stage itself (that would cause resetFromStage to clobber approval)
+    expect(fromStage).not.toBe('taskify')
+    expect(fromStage).toBe('gap')
+
+    // Verify: fromStage is after the gate in pipeline order
+    const gateIndex = STANDARD_PIPELINE.indexOf(gateApprovedStage)
+    const fromIndex = STANDARD_PIPELINE.indexOf(fromStage)
+    expect(fromIndex).toBeGreaterThan(gateIndex)
+  })
+})

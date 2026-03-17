@@ -111,9 +111,9 @@ export const BRANCH_CACHE_TTL = 600000 // 10min - branches rarely change
 
 export const CACHE_TTL = {
   tasks: 120000, // 2min - reduced API calls while staying fresh
-  pipeline: 60000, // 30s - increased from 5s to reduce calls
-  boards: 900000, // 5min - labels/milestones rarely change
-  prs: 300000, // 2min - increased from 30s
+  pipeline: 60000, // 1min - fresh enough for status checks
+  boards: 900000, // 15min - labels/milestones rarely change
+  prs: 300000, // 5min - PRs don't change that often
 } as const
 
 // ============ Emoji List ============

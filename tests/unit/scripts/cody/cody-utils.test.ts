@@ -7,13 +7,13 @@ vi.mock('child_process', () => ({
   execFileSync: vi.fn(),
 }))
 
+import { validateTaskId } from '../../../../scripts/cody/cody-utils'
 import {
   discoverTaskIdFromIssue,
   ensureTaskMarkerComment,
-  validateTaskId,
   getLinkedIssueFromPR,
   getIssueBody,
-} from '../../../../scripts/cody/cody-utils'
+} from '../../../../scripts/cody/github-api'
 
 describe('discoverTaskIdFromIssue', () => {
   beforeEach(() => {
@@ -484,7 +484,7 @@ describe('getLastPausedStage', () => {
 // editComment Tests (R6: stdin-based implementation)
 // ============================================================================
 
-import { editComment } from '../../../../scripts/cody/cody-utils'
+import { editComment } from '../../../../scripts/cody/github-api'
 
 describe('editComment', () => {
   let execFileSyncSpy: ReturnType<typeof vi.spyOn>

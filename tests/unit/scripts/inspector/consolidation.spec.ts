@@ -49,33 +49,9 @@ describe('Monitoring consolidation', () => {
       ).toBe(true)
     })
 
-    it('should have failure-analysis plugin', () => {
+    it('should have pipeline-fixer plugin', () => {
       expect(
-        existsSync(join(projectRoot, 'scripts/inspector/plugins/cody/failure-analysis/index.ts')),
-      ).toBe(true)
-    })
-
-    it('should have classifier (from supervisor)', () => {
-      expect(
-        existsSync(
-          join(projectRoot, 'scripts/inspector/plugins/cody/failure-analysis/classifier.ts'),
-        ),
-      ).toBe(true)
-    })
-
-    it('should have analyzer (from supervisor)', () => {
-      expect(
-        existsSync(
-          join(projectRoot, 'scripts/inspector/plugins/cody/failure-analysis/analyzer.ts'),
-        ),
-      ).toBe(true)
-    })
-
-    it('should have stage-router (from supervisor)', () => {
-      expect(
-        existsSync(
-          join(projectRoot, 'scripts/inspector/plugins/cody/failure-analysis/stage-router.ts'),
-        ),
+        existsSync(join(projectRoot, 'scripts/inspector/plugins/cody/pipeline-fixer/index.ts')),
       ).toBe(true)
     })
 
@@ -89,10 +65,10 @@ describe('Monitoring consolidation', () => {
       )
     })
 
-    it('should register failure-analysis plugin in entry point', async () => {
+    it('should register pipeline-fixer plugin in entry point', async () => {
       const entryContent = readFileSync(join(projectRoot, 'scripts/inspector/index.ts'), 'utf-8')
-      expect(entryContent).toContain('failureAnalysisPlugin')
-      expect(entryContent).toContain('registry.register(failureAnalysisPlugin)')
+      expect(entryContent).toContain('pipelineFixerPlugin')
+      expect(entryContent).toContain('registry.register(pipelineFixerPlugin)')
     })
   })
 })

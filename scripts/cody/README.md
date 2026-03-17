@@ -93,6 +93,21 @@ Profile resolved in `resolve-profile` post-action based on:
 - Explicit `pipeline_profile` in task.json
 - Task type + risk level (fix_bug/refactor/ops + low risk → lightweight)
 
+## Stage Registry
+
+All stage metadata lives in a single source of truth: `stages/registry.ts`.
+
+```typescript
+// stages/registry.ts
+STAGE_NAMES // canonical list of valid stage names (as const tuple)
+StageName // type: 'taskify' | 'gap' | 'clarify' | ... | 'pr'
+STAGE_REGISTRY // Record<StageName, StageMetadata> — compile-time complete
+```
+
+Adding/removing a stage from `STAGE_NAMES` without updating `STAGE_REGISTRY` is a compile error.
+
+The registry exports typed pipeline order arrays (`SPEC_ORDER_STANDARD`, `IMPL_ORDER_STANDARD`, etc.) and helper functions (`getStageTimeout()`, `getStageComplexityThreshold()`, `isValidStageName()`).
+
 ## Stage Architecture
 
 ### Stage Types
@@ -109,7 +124,6 @@ Profile resolved in `resolve-profile` post-action based on:
 | Stage     | Type     | Input              | Output       | Post-Actions                                                        |
 | --------- | -------- | ------------------ | ------------ | ------------------------------------------------------------------- |
 | taskify   | agent    | issue body         | task.json    | validate-task-json, set-labels, check-gate, commit, resolve-profile |
-| spec      | agent    | task.json          | spec.md      | —                                                                   |
 | gap       | agent    | spec.md            | gap.md       | —                                                                   |
 | clarify   | agent    | spec.md            | clarified.md | —                                                                   |
 | architect | agent    | spec+gap+clarified | plan.md      | archive-rerun-feedback, check-gate                                  |
@@ -492,23 +506,26 @@ gh run view <run-id> --log
 
 ## Add New Stage
 
-1. Add to `SPEC_ORDER_*` or `IMPL_ORDER_*` in `pipeline/definitions.ts`
-2. Define stage in `createStageDefinitions()`:
+1. Add stage name to `STAGE_NAMES` in `stages/registry.ts`
+2. Add metadata entry in `STAGE_REGISTRY` (output file, timeout, complexity threshold, context files, type)
+3. Add to `SPEC_ORDER_*` or `IMPL_ORDER_*` pipeline order arrays in `stages/registry.ts`
+4. Define stage in `createStageDefinitions()` in `pipeline/definitions.ts`:
    ```typescript
    stages.set('newStage', {
      name: 'newStage',
      type: 'agent',
-     timeout: STAGE_TIMEOUTS.newStage ?? DEFAULT_TIMEOUT,
+     timeout: getStageTimeout('newStage'),
      maxRetries: 1,
-     minComplexity: STAGE_COMPLEXITY_THRESHOLDS.newStage,
+     minComplexity: getStageComplexityThreshold('newStage'),
      shouldSkip: (ctx) => skipIfBelowComplexity(ctx, 'newStage'),
      postActions: [...],
      validator: createNewStageValidator(ctx),
    })
    ```
-3. Add agent prompt in `.opencode/agents/newStage.md`
-4. Add handler in `handlers/` if custom (otherwise uses type-based default)
-5. Add complexity threshold in `pipeline-utils.ts` `STAGE_COMPLEXITY_THRESHOLDS`
+5. Add agent prompt in `.opencode/agents/newStage.md`
+6. Add handler in `handlers/` if custom (otherwise uses type-based default)
+
+> **Note**: Missing the stage in `STAGE_NAMES` or `STAGE_REGISTRY` causes a compile error — the `Record<StageName, StageMetadata>` type ensures completeness.
 
 ## Key Types
 
@@ -525,7 +542,7 @@ PipelineContext {
 }
 
 StageDefinition {
-  name: string
+  name: StageName  // type-safe — see stages/registry.ts
   type: 'agent' | 'scripted' | 'git' | 'gate'
   timeout: number
   maxRetries: number

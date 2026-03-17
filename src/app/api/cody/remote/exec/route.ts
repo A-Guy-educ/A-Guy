@@ -9,7 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { requireDashboardAuth } from '@/ui/cody/auth'
+import { verifyActorLogin } from '@/ui/cody/auth'
 import { getRemoteConfig } from '@/ui/cody/remote-config'
 import { logger } from '@/infra/utils/logger/logger'
 
@@ -27,22 +27,23 @@ interface RemoteExecRequest {
 }
 
 export async function POST(req: NextRequest) {
-  try {
-    // Auth
-    const auth = await requireDashboardAuth(req)
-    if (!auth.authenticated) {
-      return NextResponse.json(
-        { message: 'Not authenticated. Please log in to access the dashboard.' },
-        { status: 401 },
-      )
-    }
+  let verifiedLogin: string | undefined
 
+  try {
+    // Parse body first to get actorLogin for verification
     const body = (await req.json()) as Partial<RemoteExecRequest>
     const { actorLogin, action, payload: actionPayload = {} } = body
 
-    if (!actorLogin || typeof actorLogin !== 'string') {
-      return NextResponse.json({ error: 'actorLogin is required' }, { status: 400 })
+    // Authenticate and verify actorLogin matches session (prevents impersonation)
+    const authResult = await verifyActorLogin(req, actorLogin)
+    if ('status' in authResult) {
+      return authResult // Return the 401/403 response
     }
+
+    const { identity } = authResult
+
+    // Use verified identity for all further operations
+    verifiedLogin = identity.login
 
     if (!action || !['exec', 'read', 'write', 'ls'].includes(action)) {
       return NextResponse.json(
@@ -51,8 +52,8 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Look up user config
-    const remoteConfig = getRemoteConfig(actorLogin)
+    // Look up user config using verified identity
+    const remoteConfig = getRemoteConfig(verifiedLogin)
     if (!remoteConfig) {
       return NextResponse.json(
         { error: 'Remote dev environment not configured for this user' },
@@ -62,7 +63,7 @@ export async function POST(req: NextRequest) {
 
     const agentUrl = `${remoteConfig.funnelUrl.replace(/\/$/, '')}/${action}`
 
-    logger.info({ actorLogin, action, agentUrl }, 'Proxying to remote agent')
+    logger.info({ actorLogin: verifiedLogin, action, agentUrl }, 'Proxying to remote agent')
 
     // Proxy to the remote agent with timeout
     let agentResponse: Response
@@ -85,10 +86,10 @@ export async function POST(req: NextRequest) {
       }
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
-        logger.warn({ actorLogin, action }, 'Remote agent request timed out')
+        logger.warn({ actorLogin: verifiedLogin, action }, 'Remote agent request timed out')
         return NextResponse.json({ error: 'Remote agent timed out after 60s' }, { status: 504 })
       }
-      logger.error({ err, actorLogin, action }, 'Failed to connect to remote agent')
+      logger.error({ err, actorLogin: verifiedLogin, action }, 'Failed to connect to remote agent')
       return NextResponse.json({ error: 'Failed to connect to remote agent' }, { status: 502 })
     }
 
@@ -100,7 +101,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(data)
   } catch (error) {
-    logger.error({ err: error }, 'Remote exec route error')
+    logger.error({ err: error, actorLogin: verifiedLogin ?? 'unknown' }, 'Remote exec route error')
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 },

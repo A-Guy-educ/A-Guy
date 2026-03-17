@@ -57,6 +57,13 @@ export const queryLessonsByChapter = cache(async ({ chapterId }: { chapterId: st
             equals: true,
           },
         },
+        // Exclude "Soon" content that is not visible to students
+        {
+          or: [
+            { contentStatus: { not_equals: 'soon' } },
+            { contentStatusVisible: { equals: true } },
+          ],
+        },
       ],
     },
     sort: 'order',
@@ -90,6 +97,13 @@ export const queryLessonBySlug = cache(async ({ slug }: { slug: string }) => {
           isActive: {
             equals: true,
           },
+        },
+        // Exclude "Soon" content that is not visible to students
+        {
+          or: [
+            { contentStatus: { not_equals: 'soon' } },
+            { contentStatusVisible: { equals: true } },
+          ],
         },
       ],
     },
@@ -187,6 +201,13 @@ export const queryLessonsByCourse = cache(async ({ courseId }: { courseId: strin
           isActive: {
             equals: true,
           },
+        },
+        // Exclude "Soon" content that is not visible to students
+        {
+          or: [
+            { contentStatus: { not_equals: 'soon' } },
+            { contentStatusVisible: { equals: true } },
+          ],
         },
       ],
     },

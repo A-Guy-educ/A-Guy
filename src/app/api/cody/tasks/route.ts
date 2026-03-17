@@ -6,7 +6,7 @@
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
-import { requireCodyAuth } from '@/ui/cody/auth'
+import { requireCodyAuth, verifyActorLogin, getUserOctokit } from '@/ui/cody/auth'
 
 import {
   fetchIssues,
@@ -18,6 +18,7 @@ import {
   findStatusOnBranch,
   createIssue,
   uploadIssueAttachment,
+  postComment,
 } from '@/ui/cody/github-client'
 import type {
   CodyTask,
@@ -27,6 +28,7 @@ import type {
   WorkflowRun,
   CodyPipelineStatus,
 } from '@/ui/cody/types'
+import { matchWorkflowRunToTask } from '@/ui/cody/workflow-matching'
 
 /**
  * Derive column from live pipeline status.
@@ -74,34 +76,19 @@ function getColumnForIssue(
 ): ColumnId {
   const labelNames = issue.labels.map((l) => l.name.toLowerCase())
 
-  // 0. Check PR labels — when a fix/rerun is requested on a completed issue,
-  // the PR gets new labels (risk-gated, cody:failed, cody:building) that reflect
-  // the current state more accurately than the stale issue labels.
-  const prLabelNames = associatedPR?.labels?.map((l) => l.toLowerCase()) ?? []
-
-  // 1. Terminal lifecycle labels (highest priority)
-  if (labelNames.includes('cody:failed') && !prLabelNames.includes('risk-gated')) return 'failed'
-  // cody:done = pipeline finished, PR created → task goes to review (not done)
+  // 0. Terminal lifecycle labels (highest priority)
+  if (labelNames.includes('cody:failed')) return 'failed'
+  // cody:done = pipeline finished, PR created → task goes to review
   // Task is only truly "done" when the PR is merged and the issue is closed.
-  // BUT: if the PR has active labels (gate, building, failed), those take precedence —
-  // a fix/rerun was requested after the original pipeline completed.
   if (labelNames.includes('cody:done') || labelNames.includes('cody:review')) {
-    // Check if PR has labels indicating active work (fix/rerun in progress)
-    if (prLabelNames.includes('hard-stop') || prLabelNames.includes('risk-gated'))
-      return 'gate-waiting'
-    if (prLabelNames.includes('cody:building') || prLabelNames.includes('cody:planning'))
-      return 'building'
-    if (prLabelNames.includes('cody:failed')) return 'failed'
     return 'review'
   }
 
-  // 2. Gate labels — pipeline paused waiting for approval.
+  // 1. Gate labels — pipeline paused waiting for approval.
   // Must be checked BEFORE cody:planning/cody:building and in_progress workflow,
   // because the pipeline keeps running (polling for approval) while gated,
   // and the cody:planning label is never removed when a gate fires.
   if (labelNames.includes('hard-stop') || labelNames.includes('risk-gated')) return 'gate-waiting'
-  if (prLabelNames.includes('hard-stop') || prLabelNames.includes('risk-gated'))
-    return 'gate-waiting'
 
   // 3. Cody active-work labels (only reached when NOT gated)
   if (labelNames.includes('cody:planning') || labelNames.includes('cody:building'))
@@ -168,15 +155,8 @@ export async function GET(req: NextRequest) {
       fetchOpenPRs(),
     ])
 
-    // Build a map of most recent workflow run per issue title for fast lookup
-    const runsByTitle = new Map<string, (typeof workflowRuns)[number]>()
-    for (const run of workflowRuns) {
-      const title = run.display_title || ''
-      // Keep only the most recent run per title (runs are sorted by date desc)
-      if (title && !runsByTitle.has(title)) {
-        runsByTitle.set(title, run)
-      }
-    }
+    // Workflow runs are matched per-task below using matchWorkflowRunToTask()
+    // which prefers active (in_progress/queued) runs over stale completed ones.
 
     // Build PR lookup: match by title or by issue number in branch name
     const prsByIssueTitle = new Map<string, (typeof openPRs)[number]>()
@@ -217,13 +197,8 @@ export async function GET(req: NextRequest) {
         const taskIdMatch = issue.title.match(/\[[^\]]+\]/)
         const taskId = taskIdMatch ? taskIdMatch[0].replace(/[\[\]]/g, '') : ''
 
-        // Match workflow run by issue title (most reliable) or taskId
-        const workflowRun =
-          runsByTitle.get(issue.title) ??
-          workflowRuns.find(
-            (run) =>
-              taskId && (run.html_url.includes(taskId) || run.display_title?.includes(taskId)),
-          )
+        // Match workflow run — prefers active (in_progress) runs over stale completed ones
+        const workflowRun = matchWorkflowRunToTask(workflowRuns, issue.title, issue.number, taskId)
 
         // Match PR from pre-fetched bulk data (cheap, no extra API calls)
         const pr = prsByIssueTitle.get(issue.title) ?? prsByIssueNumber.get(issue.number) ?? null
@@ -231,20 +206,16 @@ export async function GET(req: NextRequest) {
         // Fetch pipeline status for tasks with active workflows or pipeline labels.
         // Only attempts branch discovery for tasks likely to have pipeline data
         // (has an active workflow run or cody:building/cody:planning labels).
-        // Also checks PR labels — when a fix/rerun is requested on a completed issue,
-        // the PR gets gate/active labels while the issue still has cody:done.
         let pipelineStatus = undefined
         const labelNames = issue.labels.map((l) => l.name.toLowerCase())
-        const prLabelNames = pr?.labels?.map((l) => l.toLowerCase()) ?? []
-        const allLabels = [...labelNames, ...prLabelNames]
         const isLikelyActive =
           workflowRun?.status === 'in_progress' ||
           workflowRun?.status === 'queued' ||
-          allLabels.includes('cody:building') ||
-          allLabels.includes('cody:planning') ||
-          allLabels.includes('cody:failed') ||
-          allLabels.includes('hard-stop') ||
-          allLabels.includes('risk-gated')
+          labelNames.includes('cody:building') ||
+          labelNames.includes('cody:planning') ||
+          labelNames.includes('cody:failed') ||
+          labelNames.includes('hard-stop') ||
+          labelNames.includes('risk-gated')
 
         if (isLikelyActive && issue.number) {
           const branch = await findBranchByIssueNumber(issue.number)
@@ -265,21 +236,13 @@ export async function GET(req: NextRequest) {
         }
 
         // Column derivation: pipeline status is authoritative when fresh,
-        // BUT PR labels (gate, building, failed) take precedence because they
-        // reflect the current state more accurately than stale status.json files.
-        // When PR has gate labels, trust them over potentially-stale pipeline state.
-        let column: ColumnId
-        if (pipelineStatus && prLabelNames.some((l) => ['hard-stop', 'risk-gated'].includes(l))) {
-          // PR has gate labels — derive from labels, ignore stale pipeline state
-          column = getColumnForIssue(issue, workflowRun ?? undefined, pr ?? null)
-        } else {
-          column = pipelineStatus
-            ? deriveColumnFromPipeline(pipelineStatus)
-            : getColumnForIssue(issue, workflowRun ?? undefined, pr ?? null)
-        }
+        // falling back to label-based derivation.
+        const column: ColumnId = pipelineStatus
+          ? deriveColumnFromPipeline(pipelineStatus)
+          : getColumnForIssue(issue, workflowRun ?? undefined, pr ?? null)
 
-        // Derive gate type: prefer pipeline controlMode, fall back to issue+PR labels
-        const gateType = deriveGateType(pipelineStatus, allLabels)
+        // Derive gate type: prefer pipeline controlMode, fall back to issue labels
+        const gateType = deriveGateType(pipelineStatus, labelNames)
 
         return {
           id: taskId ? `${taskId}-${issue.number}` : issue.number.toString(),
@@ -399,20 +362,45 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { title, body: issueBody, labels, assignees, attachments, actorLogin } = body
 
+    // Verify actorLogin matches the authenticated session (prevents impersonation)
+    const actorResult = await verifyActorLogin(req, actorLogin)
+    if (actorResult instanceof NextResponse) return actorResult
+    const { identity } = actorResult
+
+    // Use verified identity's login for attribution
+    const verifiedLogin = identity.login
+
+    // Get user's Octokit (null for legacy sessions → falls back to bot token)
+    const userOctokit = await getUserOctokit(req)
+
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
     }
 
-    // Create the issue in GitHub
-    const actorNote = actorLogin ? `\n\n---\n_Created by @${actorLogin} via Cody dashboard_` : ''
-    const issue = await createIssue({
-      title,
-      body: (issueBody || '') + actorNote,
-      labels: labels || [],
-      assignees: assignees || [],
-    })
+    // Create the issue in GitHub — when user token is available, issue appears under their identity
+    const actorNote = userOctokit
+      ? ''
+      : `\n\n---\n_Created by @${verifiedLogin} via Cody dashboard_`
+    const issue = await createIssue(
+      {
+        title,
+        body: (issueBody || '') + actorNote,
+        labels: labels || [],
+        assignees: assignees || [],
+      },
+      userOctokit ?? undefined,
+    )
 
     console.log('[Cody] Created issue:', issue.number, issue.title)
+
+    // Auto-trigger pipeline by commenting @cody on the issue
+    try {
+      await postComment(issue.number, '@cody', userOctokit ?? undefined)
+      console.log('[Cody] Triggered pipeline for issue:', issue.number)
+    } catch (triggerError: any) {
+      console.error('[Cody] Failed to trigger pipeline:', triggerError.message)
+      // Don't fail the whole request if trigger fails - task was still created
+    }
 
     // Upload attachments if provided
     const uploadedAttachments = []
@@ -420,10 +408,14 @@ export async function POST(req: NextRequest) {
       console.log('[Cody] Uploading', attachments.length, 'attachments...')
       for (const attachment of attachments) {
         try {
-          const result = await uploadIssueAttachment(issue.number, {
-            name: attachment.name,
-            content: attachment.content,
-          })
+          const result = await uploadIssueAttachment(
+            issue.number,
+            {
+              name: attachment.name,
+              content: attachment.content,
+            },
+            userOctokit ?? undefined,
+          )
           uploadedAttachments.push(result)
           console.log('[Cody] Uploaded attachment:', result.name, result.attachment_url)
         } catch (attachError: any) {
@@ -443,6 +435,18 @@ export async function POST(req: NextRequest) {
     })
   } catch (error: any) {
     console.error('[Cody] Error creating task:', error)
+
+    // User's GitHub token expired/revoked — prompt re-auth
+    if (error.status === 401) {
+      return NextResponse.json(
+        {
+          error: 'github_token_expired',
+          message: 'Your GitHub token has expired. Please log in again.',
+        },
+        { status: 401 },
+      )
+    }
+
     return NextResponse.json(
       { error: 'Failed to create task', details: error.message },
       { status: 500 },

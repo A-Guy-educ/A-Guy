@@ -1,0 +1,33 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.9,
+  "primary_domain": "backend",
+  "scope": [
+    "Courses collection",
+    "Lessons collection",
+    "Course card UI",
+    "Lesson list UI"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Courses and Lessons collections exist and follow standard patterns",
+    "Access control is handled via Payload's access control functions",
+    "UI uses Tailwind CSS for styling",
+    "Existing badge or tag patterns can be referenced in the codebase"
+  ],
+  "review_questions": [
+    "Should 'Soon' content be completely hidden from student views or just locked?",
+    "What is the default expiration period for 'Just Added' badges if admin sets a date?",
+    "Should the 'New Until' date be calculated from creation date or manual setting?"
+  ],
+  "complexity": 55,
+  "complexity_reasoning": "Scope: 18 (affects 2 collections + 2 UI components across backend/frontend), Risk: 12 (access control changes for student blocking), Novelty: 12 (new feature with some existing patterns), Cross-Domain: 8 (backend + frontend), Ambiguity: 3 (clear requirements with some implementation details to figure out), Dependencies: 4 (depends on existing collections). Total: 57",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Input contains clear ## Goal, ## Status Definitions & Logic, ## Admin Experience, ## Design Guidelines, and ## Success Criteria sections. Requirements are specific but implementation approach is not specified - suitable for standard pipeline with gap analysis."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
