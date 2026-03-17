@@ -4,14 +4,53 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-17T21:23:53.926Z",
-  "updatedAt": "2026-03-17T21:23:55.242Z",
+  "updatedAt": "2026-03-17T21:25:29.082Z",
   "state": "running",
   "cursor": null,
   "stages": {
     "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-17T21:23:55.242Z",
+      "completedAt": "2026-03-17T21:25:15.307Z",
+      "elapsed": 80,
+      "outputFile": "taskify.md",
+      "tokenUsage": {
+        "input": 3060,
+        "output": 1638,
+        "cacheRead": 145674
+      },
+      "sessionId": "ses_30250de87ffe1jg4vZ57nKsDpi"
+    },
+    "architect": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Pipeline is spec_only"
+    },
+    "build": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-17T21:23:55.242Z"
+      "startedAt": "2026-03-17T21:25:29.060Z"
+    },
+    "commit": {
+      "state": "pending",
+      "retries": 0
+    },
+    "review": {
+      "state": "pending",
+      "retries": 0
+    },
+    "fix": {
+      "state": "pending",
+      "retries": 0
+    },
+    "verify": {
+      "state": "pending",
+      "retries": 0
+    },
+    "pr": {
+      "state": "pending",
+      "retries": 0
     }
   },
   "issueNumber": 879,
@@ -22,5 +61,6 @@
       "actor": "cody-aios[bot]",
       "timestamp": "2026-03-17T21:23:53.926Z"
     }
-  ]
+  ],
+  "branchName": "docs/260317-systest-879-system-test-document-pipeline-h"
 }
