@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "taskId": "260318-groq",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-17T23:12:46.639Z",
+  "updatedAt": "2026-03-17T23:12:46.646Z",
+  "state": "running",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-17T23:12:46.646Z"
+    }
+  }
+}

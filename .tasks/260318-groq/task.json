@@ -1,0 +1,21 @@
+{
+  "task_type": "docs",
+  "risk_level": "low",
+  "confidence": 1,
+  "primary_domain": "product",
+  "scope": [
+    "docs/test/speed-test.md"
+  ],
+  "missing_inputs": [],
+  "assumptions": [],
+  "review_questions": [],
+  "complexity": 11,
+  "complexity_reasoning": "Scope: 3 (single file). Risk: 2 (docs only). Novelty: 3 (simple task). Cross-domain: 1 (single domain). Ambiguity: 1 (crystal clear). Deps: 1 (self-contained). Total: 11",
+  "input_quality": {
+    "level": "detailed_plan",
+    "skip_stages": [],
+    "reasoning": "Task contains ## Task, ## Implementation with steps, and ## Verify sections - clear plan with file path and content specified"
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_only"
+}
