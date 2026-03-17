@@ -78,7 +78,7 @@ export default async function CompletePage({ params }: CompletePageProps) {
     notFound()
   }
 
-  const backUrl = `/courses/${courseSlug}/chapters/${chapterSlug}/lessons/${lessonSlug}`
+  const backUrl = `/courses/${courseSlug}`
 
   return <CompleteContent backUrl={backUrl} />
 }

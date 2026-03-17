@@ -104,7 +104,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
   // Use lesson-scoped chat context to keep history stable across refreshes
   const chatLessonId = lesson.id
-  const backUrl = `/courses/${courseSlug}/chapters/${chapterSlug}`
+  const backUrl = `/courses/${courseSlug}`
 
   const validFiles =
     lesson.contentFiles
