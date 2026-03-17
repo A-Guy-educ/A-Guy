@@ -2,37 +2,39 @@
   "task_type": "implement_feature",
   "risk_level": "high",
   "confidence": 0.95,
-  "primary_domain": "devops",
+  "primary_domain": "infra",
   "scope": [
-    "next.config.js",
-    "src/app/(frontend)/error.tsx",
-    "src/infra/config/env-validation.ts",
-    "instrumentation.ts",
-    "Cody error utility",
-    "API routes (15+)",
-    "CI workflow",
-    "vitest config",
-    "instrumentation-client.ts"
+    "next.config.js - Security headers with split CSP",
+    "src/app/(frontend)/error.tsx - New error boundary",
+    "src/infra/config/env-validation.ts - New env validation",
+    "instrumentation.ts - Hook in env validation",
+    "E2E test helpers - Cherry-pick commit",
+    "Cody API error utility - Add Sentry",
+    "6 non-Cody API routes - Add captureAndRespond",
+    "4 high-traffic routes - Migrate to withApiHandler",
+    "4 remaining API routes - Add Zod validation",
+    ".github/workflows/ci.yml - Add coverage",
+    "vitest.config.unit.mts - Add coverage config",
+    "src/infra/instrumentation-client.ts - Add browserTracingIntegration"
   ],
   "missing_inputs": [],
   "assumptions": [
-    "Cherry-pick commit 9631fe7b will succeed without major conflicts",
-    "Existing handleCodyApiError utility exists in codebase",
-    "withApiHandler utility exists for Phase 2 migration"
+    "The withApiHandler utility exists and can be reused",
+    "The handleCodyApiError utility exists in the codebase",
+    "Cherry-pick of commit 9631fe7b will succeed or be manually resolvable",
+    "CSP directives for Payload admin panel are correct (unsafe-eval, unsafe-inline)"
   ],
   "review_questions": [
-    "Is cherry-pick from feat/pre-launch-e2e-verification the correct approach, or should we manually recreate specific test helpers?",
-    "What specific coverage thresholds should be set in vitest.config.unit.mts?",
-    "Should the env validation throw on missing optional vars (Sentry, OpenAI keys) or just warn?"
+    "Should E2E cherry-pick be done manually if conflicts arise?",
+    "Are the CSP directives correctly configured for both frontend and admin routes?",
+    "Should coverage thresholds be enforced now or remain permissive for visibility?"
   ],
-  "complexity": 65,
-  "complexity_reasoning": "Scope: 22 (25+ files across multiple modules). Risk: 16 (security headers, API validation, CI changes). Novelty: 8 (extending existing patterns). Cross-domain: 13 (security + frontend + backend + infra + testing). Ambiguity: 2 (very clear spec with file paths). Dependencies: 4 (mostly self-contained). Total: 65",
+  "complexity": 68,
+  "complexity_reasoning": "Scope: 20+ files across 3 phases (22 pts). Risk: Security headers + infrastructure changes (16 pts). Novelty: Following existing patterns with minor variations (8 pts). Cross-domain: Backend + Frontend + DevOps (10 pts). Ambiguity: Clear requirements with file paths (2 pts). Dependencies: Multi-phase implementation with some dependencies (6 pts). Total: 64 (rounded to 68 for conservative estimate)",
   "input_quality": {
     "level": "spec_and_plan",
-    "skip_stages": [
-      "architect"
-    ],
-    "reasoning": "Task contains detailed phases (Phase 1-3) with step-by-step implementation steps, specific file paths to modify/create, and verification commands. Has both requirements (Background, Audit Summary) and implementation plan (Phase items with file lists). Promoted spec.md and plan.md will be written."
+    "skip_stages": [],
+    "reasoning": "Input contains ## Background with audit summary table, clear ## Phase sections with specific file paths and implementation details, and ## Files Modified section listing all changes. Has both structured requirements and step-by-step implementation plan with exact file paths."
   },
   "pipeline_profile": "standard",
   "pipeline": "spec_execute_verify"
