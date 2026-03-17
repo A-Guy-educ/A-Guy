@@ -4,8 +4,8 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-17T21:38:25.040Z",
-  "updatedAt": "2026-03-17T21:39:49.998Z",
-  "state": "running",
+  "updatedAt": "2026-03-17T21:40:15.483Z",
+  "state": "failed",
   "cursor": null,
   "stages": {
     "taskify": {
@@ -61,13 +61,20 @@
       "skipped": "No issues to fix"
     },
     "verify": {
-      "state": "running",
+      "state": "completed",
       "retries": 0,
-      "startedAt": "2026-03-17T21:39:49.998Z"
+      "startedAt": "2026-03-17T21:39:49.998Z",
+      "completedAt": "2026-03-17T21:40:13.933Z",
+      "elapsed": 24,
+      "outputFile": "verify.md"
     },
     "pr": {
-      "state": "pending",
-      "retries": 0
+      "state": "failed",
+      "retries": 0,
+      "startedAt": "2026-03-17T21:40:15.352Z",
+      "elapsed": 0,
+      "error": "No source files changed vs base branch — refusing to create empty PR"
     }
-  }
+  },
+  "completedAt": "2026-03-17T21:40:15.483Z"
 }
