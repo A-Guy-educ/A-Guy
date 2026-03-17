@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-17T20:21:35.350Z",
-  "updatedAt": "2026-03-17T20:22:56.910Z",
+  "updatedAt": "2026-03-17T20:30:04.202Z",
   "state": "running",
   "cursor": null,
   "stages": {
@@ -38,13 +38,23 @@
       "skipped": "Complexity 16 (simple) below threshold 50 for plan-gap"
     },
     "build": {
-      "state": "running",
+      "state": "completed",
       "retries": 0,
-      "startedAt": "2026-03-17T20:22:56.890Z"
+      "startedAt": "2026-03-17T20:22:56.890Z",
+      "completedAt": "2026-03-17T20:29:48.824Z",
+      "elapsed": 412,
+      "outputFile": "build.md",
+      "tokenUsage": {
+        "input": 44399,
+        "output": 7787,
+        "cacheRead": 2531575
+      },
+      "sessionId": "ses_30288b931ffeSHaN3Ahzx08CeF"
     },
     "commit": {
-      "state": "pending",
-      "retries": 0
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-17T20:30:04.202Z"
     },
     "review": {
       "state": "pending",
@@ -71,6 +81,5 @@
       "actor": "cody-aios[bot]",
       "timestamp": "2026-03-17T20:21:35.350Z"
     }
-  ],
-  "branchName": "docs/260317-systest-875-system-test-document-pipeline-h"
+  ]
 }
