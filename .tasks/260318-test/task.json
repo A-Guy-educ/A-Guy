@@ -1,0 +1,21 @@
+{
+  "task_type": "ops",
+  "risk_level": "low",
+  "confidence": 1,
+  "primary_domain": "devops",
+  "scope": [
+    "docs/test/full-pipeline.md"
+  ],
+  "missing_inputs": [],
+  "assumptions": [],
+  "review_questions": [],
+  "complexity": 5,
+  "complexity_reasoning": "Scope: 2 (single file), Risk: 1 (test file creation), Novelty: 1 (simple pattern), Cross: 0 (single domain), Ambiguity: 0 (crystal clear), Deps: 0 (self-contained). Total: 5",
+  "input_quality": {
+    "level": "detailed_plan",
+    "skip_stages": [],
+    "reasoning": "Task contains ## Task, ## Implementation (steps 1-2), and ## Verify sections. Clear file path and content specified. Promoted spec.md."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}
