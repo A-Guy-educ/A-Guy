@@ -48,6 +48,7 @@ function createActivateAction(
     execute: async (execCtx: InspectorContext) => {
       // FIX #5: Trigger workflow FIRST — if this throws, state is not yet mutated
       execCtx.github.triggerWorkflow('cody.yml', {
+        issue_number: String(task.issueNumber),
         task_id: task.taskId,
         mode: 'full',
       })
@@ -137,6 +138,7 @@ function createCompleteAction(task: QueuedTask, _ctx: InspectorContext): ActionR
       if (nextTask) {
         // FIX #5: Trigger workflow FIRST — if this throws, we still completed the current task
         execCtx.github.triggerWorkflow('cody.yml', {
+          issue_number: String(nextTask.issueNumber),
           task_id: nextTask.taskId,
           mode: 'full',
         })
@@ -186,6 +188,7 @@ function advanceQueue(ctx: InspectorContext, state: QueueState): void {
   // and the next cycle will pick up the queued task again
   try {
     ctx.github.triggerWorkflow('cody.yml', {
+      issue_number: String(nextTask.issueNumber),
       task_id: nextTask.taskId,
       mode: 'full',
     })

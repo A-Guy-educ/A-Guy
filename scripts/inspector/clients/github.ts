@@ -59,14 +59,12 @@ export function createGitHubClient(repo: string, token: string, patToken?: strin
         query,
         '--paginate',
         '--jq',
-        // FIX #4: Exclude pull requests — GitHub /issues API returns both issues and PRs.
-        // PRs have a .pull_request field; issues do not.
+        // Exclude pull requests — GitHub /issues API returns both issues and PRs.
         '[.[] | select(.state == "open") | select(.pull_request == null) | {number: .number, title: .title, labels: [.labels[].name], updatedAt: .updated_at}]',
       ])
 
       if (!output) return []
 
-      // Handle paginated output (multiple JSON arrays concatenated)
       const arrays = output
         .split('\n')
         .filter(Boolean)
@@ -81,15 +79,13 @@ export function createGitHubClient(repo: string, token: string, patToken?: strin
       return arrays.flat()
     },
 
-    // FIX #2: Wrap triggerWorkflow in try/catch so it doesn't crash the action mid-execution.
     triggerWorkflow(workflow: string, inputs: Record<string, string>): void {
       const args = ['workflow', 'run', workflow]
       for (const [key, value] of Object.entries(inputs)) {
-        args.push('-f', `${key}=${value}`)
+        if (value) args.push('-f', `${key}=${value}`)
       }
       args.push(`--repo=${repo}`)
 
-      // Workflow dispatch requires a PAT — github.token cannot trigger other workflows
       const dispatchToken = patToken || token
       try {
         execFileSync('gh', args, {
@@ -104,7 +100,6 @@ export function createGitHubClient(repo: string, token: string, patToken?: strin
       }
     },
 
-    // FIX #1: Use `gh issue edit --add-label` instead of non-existent `gh issue add-label`
     addLabel(issueNumber: number, label: string): void {
       gh(['issue', 'edit', String(issueNumber), '--repo', repo, '--add-label', label])
     },
@@ -114,7 +109,6 @@ export function createGitHubClient(repo: string, token: string, patToken?: strin
     },
 
     setLifecycleLabel(issueNumber: number, label: string): void {
-      // Remove any existing lifecycle labels, then add new one
       const lifecycleLabels = [
         'cody:planning',
         'cody:building',
@@ -128,6 +122,7 @@ export function createGitHubClient(repo: string, token: string, patToken?: strin
       this.addLabel(issueNumber, label)
     },
 
+    // FIX #16: Pass reason parameter
     closeIssue(issueNumber: number, reason = 'not planned'): void {
       gh(['issue', 'close', String(issueNumber), `--repo=${repo}`, '--reason', reason])
     },
@@ -143,7 +138,6 @@ export function createGitHubClient(repo: string, token: string, patToken?: strin
 
       if (!output) return []
 
-      // Handle paginated output
       const arrays = output
         .split('\n')
         .filter(Boolean)
@@ -182,16 +176,23 @@ export function createGitHubClient(repo: string, token: string, patToken?: strin
       }
     },
 
+    // FIX #1: Create issue without --label, then add labels via edit.
+    // gh issue create --label fails silently when the label doesn't exist.
+    // gh issue edit --add-label creates the label if it doesn't exist.
     createIssue(title: string, body: string, labels: string[]): number | null {
       const args = ['issue', 'create', '--repo', repo, '--title', title, '--body-file', '-']
-      for (const label of labels) {
-        args.push('--label', label)
-      }
       const output = gh(args, body)
       if (!output) return null
-      // gh issue create returns the URL; extract number from last path segment
+
       const match = output.match(/\/issues\/(\d+)/)
-      return match ? parseInt(match[1], 10) : null
+      const issueNumber = match ? parseInt(match[1], 10) : null
+
+      // Add labels separately — this auto-creates labels that don't exist
+      if (issueNumber && labels.length > 0) {
+        this.addLabel(issueNumber, labels.join(','))
+      }
+
+      return issueNumber
     },
 
     searchIssues(query: string): IssueInfo[] {

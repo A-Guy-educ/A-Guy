@@ -147,6 +147,7 @@ describe('retry actions', () => {
       task_id: '260316-auto-648',
       mode: 'rerun',
       from_stage: 'build',
+      issue_number: '822',
       feedback: expect.any(String),
     })
     expect(ctx.github.postComment).toHaveBeenCalledWith(822, expect.stringContaining('retry 1/5'))

@@ -187,19 +187,25 @@ describe('createGitHubClient', () => {
   })
 
   describe('createIssue', () => {
-    it('should pass title and labels to gh CLI', () => {
+    it('should create issue then add labels separately', () => {
       mockExecFileSync.mockReturnValue('https://github.com/owner/repo/issues/99')
 
       const client = createGitHubClient('owner/repo', 'fake-token')
       const result = client.createIssue('Bug title', 'Bug body', ['bug', 'cody:improvement'])
 
       expect(result).toBe(99)
-      const args = mockExecFileSync.mock.calls[0][1] as string[]
-      expect(args).toContain('issue')
-      expect(args).toContain('create')
-      expect(args).toContain('Bug title')
-      expect(args).toContain('bug')
-      expect(args).toContain('cody:improvement')
+      // First call: create issue (no labels in args)
+      const createArgs = mockExecFileSync.mock.calls[0][1] as string[]
+      expect(createArgs).toContain('issue')
+      expect(createArgs).toContain('create')
+      expect(createArgs).toContain('Bug title')
+      expect(createArgs).not.toContain('--label')
+      // Second call: add labels via edit
+      const editArgs = mockExecFileSync.mock.calls[1][1] as string[]
+      expect(editArgs).toContain('issue')
+      expect(editArgs).toContain('edit')
+      expect(editArgs).toContain('--add-label')
+      expect(editArgs).toContain('bug,cody:improvement')
     })
 
     it('should return null when gh returns no URL', () => {

@@ -475,6 +475,7 @@ describe('action execution', () => {
     expect(ctx.github.removeLabel).toHaveBeenCalledWith(10, QUEUE_LABELS.QUEUED)
     expect(ctx.github.addLabel).toHaveBeenCalledWith(10, QUEUE_LABELS.ACTIVE)
     expect(ctx.github.triggerWorkflow).toHaveBeenCalledWith('cody.yml', {
+      issue_number: '10',
       task_id: 'issue-10',
       mode: 'full',
     })
@@ -513,6 +514,7 @@ describe('action execution', () => {
     expect(result.success).toBe(true)
     expect(ctx.github.removeLabel).toHaveBeenCalledWith(42, QUEUE_LABELS.ACTIVE)
     expect(ctx.github.triggerWorkflow).toHaveBeenCalledWith('cody.yml', {
+      issue_number: '50',
       task_id: 'issue-50',
       mode: 'full',
     })

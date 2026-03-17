@@ -46,7 +46,9 @@ const DEDUP_WINDOW_MINUTES = 15
 // Helpers
 // ============================================================================
 
+// FIX #8: When stage is 'unknown', default to empty string so pipeline decides
 function resolveFromStage(stage: string): string {
+  if (stage === 'unknown') return ''
   if (stage === 'commit') return 'commit'
   if (stage === 'pr') return 'pr'
   if (stage === 'verify' || stage === 'autofix') return 'build'
@@ -87,6 +89,21 @@ function saveFixerState(ctx: InspectorContext, state: FixerState): void {
   ctx.state.set(STATE_KEY, state)
 }
 
+// FIX #14: Prune fixer state entries older than 7 days (based on fixIssueCreatedAt or retries stale)
+function pruneFixerState(state: FixerState): FixerState {
+  const MAX_ENTRIES = 100
+  const entries = Object.entries(state)
+  if (entries.length <= MAX_ENTRIES) return state
+
+  // Keep only the most recent MAX_ENTRIES entries
+  const pruned: FixerState = {}
+  const sorted = entries.sort((a, b) => (b[1].retries || 0) - (a[1].retries || 0))
+  for (const [key, value] of sorted.slice(0, MAX_ENTRIES)) {
+    pruned[key] = value
+  }
+  return pruned
+}
+
 function buildFixIssueBody(
   task: EvaluatedTask,
   taskState: FixerTaskState,
@@ -116,7 +133,7 @@ ${verifyOutput || '_No verify output available_'}
 
 ## What Was Tried
 
-${Array.from({ length: taskState.retries }, (_, i) => `- Retry ${i + 1}: rerun from \`${resolveFromStage(failedStage)}\` — same failure`).join('\n')}
+${Array.from({ length: taskState.retries }, (_, i) => `- Retry ${i + 1}: rerun from \`${resolveFromStage(failedStage) || 'auto'}\` — same failure`).join('\n')}
 
 ## Original Issue (#${task.issueNumber})
 
@@ -155,7 +172,7 @@ function createRetryAction(
     target: task.taskId,
     urgency: 'critical',
     title: `Retry ${retryNum}/${MAX_RETRIES} for ${task.taskId}`,
-    detail: `Retrying from ${fromStage}${fixRef}`,
+    detail: `Retrying from ${fromStage || 'auto'}${fixRef}`,
     dedupKey: `pipeline-fixer:${task.taskId}`,
     dedupWindowMinutes: DEDUP_WINDOW_MINUTES,
     async execute(ctx: InspectorContext) {
@@ -165,16 +182,20 @@ function createRetryAction(
         task.failedError ||
         ''
 
-      ctx.github.triggerWorkflow('cody.yml', {
+      // FIX #3: Pass issue_number in dispatch payload
+      const inputs: Record<string, string> = {
         task_id: task.taskId,
         mode: 'rerun',
-        from_stage: fromStage,
+        issue_number: String(task.issueNumber),
         feedback: feedback.slice(0, 2000),
-      })
+      }
+      if (fromStage) inputs.from_stage = fromStage
+
+      ctx.github.triggerWorkflow('cody.yml', inputs)
 
       ctx.github.postComment(
         task.issueNumber,
-        `🔄 **[pipeline-fixer: retry ${retryNum}/${MAX_RETRIES}]** Retrying from \`${fromStage}\`${fixRef}`,
+        `🔄 **[pipeline-fixer: retry ${retryNum}/${MAX_RETRIES}]** Retrying from \`${fromStage || 'auto'}\`${fixRef}`,
       )
 
       // Update state
@@ -184,10 +205,10 @@ function createRetryAction(
         errorSignature: errorSignature(failedStage, task.failedError || ''),
       }
       fixerState[task.taskId] = newTaskState
-      saveFixerState(ctx, fixerState)
+      saveFixerState(ctx, pruneFixerState(fixerState))
 
       ctx.log.info({ taskId: task.taskId, retry: retryNum, fromStage }, 'Triggered retry')
-      return { success: true, message: `Retry ${retryNum} triggered from ${fromStage}` }
+      return { success: true, message: `Retry ${retryNum} triggered from ${fromStage || 'auto'}` }
     },
   }
 }
@@ -210,7 +231,6 @@ function createFixIssueAction(
     dedupKey: `pipeline-fixer:${task.taskId}`,
     dedupWindowMinutes: DEDUP_WINDOW_MINUTES,
     async execute(ctx: InspectorContext) {
-      // Get original issue body for context
       const issue = ctx.github.getIssue(task.issueNumber)
       const issueBody = issue.body || ''
 
@@ -220,29 +240,33 @@ function createFixIssueAction(
 
       const fixIssueNumber = ctx.github.createIssue(title, body, labels)
 
+      // FIX #2: Always advance retries even if createIssue fails,
+      // so we don't get stuck in an infinite loop trying to create the same issue
+      const newRetries = taskState.retries + 1
+      const newTaskState: FixerTaskState = {
+        ...taskState,
+        retries: newRetries,
+        fixIssueNumber: fixIssueNumber ?? taskState.fixIssueNumber,
+        fixIssueCreatedAt: fixIssueNumber ? new Date().toISOString() : taskState.fixIssueCreatedAt,
+      }
+      fixerState[task.taskId] = newTaskState
+      saveFixerState(ctx, pruneFixerState(fixerState))
+
       if (!fixIssueNumber) {
-        ctx.log.error({ taskId: task.taskId }, 'Failed to create fix issue')
-        return { success: false, message: 'Failed to create fix issue' }
+        ctx.log.error(
+          { taskId: task.taskId, retries: newRetries },
+          'Failed to create fix issue — retries advanced',
+        )
+        return { success: false, message: `Failed to create fix issue (retries now ${newRetries})` }
       }
 
       // Trigger Cody on the fix issue
       ctx.github.postComment(fixIssueNumber, '@cody')
 
-      // Notify on the original issue
       ctx.github.postComment(
         task.issueNumber,
         `🔧 **[pipeline-fixer]** Created fix issue #${fixIssueNumber} — Cody will analyze and fix the pipeline.`,
       )
-
-      // Update state
-      const newTaskState: FixerTaskState = {
-        ...taskState,
-        retries: taskState.retries,
-        fixIssueNumber,
-        fixIssueCreatedAt: new Date().toISOString(),
-      }
-      fixerState[task.taskId] = newTaskState
-      saveFixerState(ctx, fixerState)
 
       ctx.log.info({ taskId: task.taskId, fixIssueNumber }, 'Created fix issue and triggered Cody')
       return { success: true, message: `Created fix issue #${fixIssueNumber}` }
@@ -259,7 +283,7 @@ function createGiveUpAction(task: EvaluatedTask, fixerState: FixerState): Action
     title: `Giving up on ${task.taskId}`,
     detail: `Exhausted ${MAX_RETRIES} retry attempts`,
     dedupKey: `pipeline-fixer:${task.taskId}`,
-    dedupWindowMinutes: 60 * 24, // Don't re-trigger for 24h
+    dedupWindowMinutes: 60 * 24,
     async execute(ctx: InspectorContext) {
       const fixRef = fixerState[task.taskId]?.fixIssueNumber
         ? ` + fix issue #${fixerState[task.taskId].fixIssueNumber}`
@@ -270,7 +294,6 @@ function createGiveUpAction(task: EvaluatedTask, fixerState: FixerState): Action
         `⛔ **[pipeline-fixer]** Exhausted ${MAX_RETRIES} retry attempts${fixRef}. Manual intervention required.`,
       )
 
-      // Clean up state
       delete fixerState[task.taskId]
       saveFixerState(ctx, fixerState)
 
@@ -321,7 +344,6 @@ export const pipelineFixerPlugin: InspectorPlugin = {
       return []
     }
 
-    // Skip tasks actively managed by queue-manager
     const queueState = getQueueState(ctx)
     const activeQueueTaskId = queueState.activeTaskId
 
@@ -329,13 +351,11 @@ export const pipelineFixerPlugin: InspectorPlugin = {
     const actions: ActionRequest[] = []
 
     for (const task of failed) {
-      // Skip queue-managed active tasks (queue-manager handles fail→advance)
       if (activeQueueTaskId && task.taskId === activeQueueTaskId) {
         ctx.log.debug({ taskId: task.taskId }, 'Skipping queue-managed active task')
         continue
       }
 
-      // Skip tasks without a valid issue number
       if (!task.issueNumber || task.issueNumber <= 0) {
         continue
       }
@@ -343,13 +363,11 @@ export const pipelineFixerPlugin: InspectorPlugin = {
       const taskState = getTaskState(fixerState, task.taskId)
       const currentSig = errorSignature(task.failedStage || 'unknown', task.failedError || '')
 
-      // Non-retryable infrastructure failures
       if (isNonRetryable(task.failedError || '')) {
         actions.push(createNonRetryableAction(task))
         continue
       }
 
-      // Give up after max retries
       if (taskState.retries >= MAX_RETRIES) {
         actions.push(createGiveUpAction(task, fixerState))
         continue
@@ -362,18 +380,16 @@ export const pipelineFixerPlugin: InspectorPlugin = {
       }
 
       // Phase 2: Create fix issue at threshold (same error repeated)
-      if (taskState.retries === FIX_ISSUE_THRESHOLD && !taskState.fixIssueNumber) {
+      if (taskState.retries >= FIX_ISSUE_THRESHOLD && !taskState.fixIssueNumber) {
         if (currentSig === taskState.errorSignature) {
-          // Same error — escalate to fix issue
           actions.push(createFixIssueAction(task, taskState, fixerState))
         } else {
-          // Different error — retry with updated signature
           actions.push(createRetryAction(task, taskState, fixerState))
         }
         continue
       }
 
-      // Phase 3: Post-fix retries (3-4)
+      // Phase 3: Post-fix retries
       if (taskState.fixIssueNumber) {
         actions.push(createRetryAction(task, taskState, fixerState))
         continue
