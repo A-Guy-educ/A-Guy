@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-17T23:12:46.639Z",
-  "updatedAt": "2026-03-17T23:15:44.500Z",
+  "updatedAt": "2026-03-17T23:15:47.912Z",
   "state": "running",
   "cursor": null,
   "stages": {
@@ -52,21 +52,26 @@
       "sessionId": "ses_301ec1e65ffeCjWrwzONI2maHl"
     },
     "commit": {
-      "state": "running",
+      "state": "completed",
       "retries": 0,
-      "startedAt": "2026-03-17T23:15:44.500Z"
+      "startedAt": "2026-03-17T23:15:44.500Z",
+      "completedAt": "2026-03-17T23:15:47.888Z",
+      "elapsed": 3
     },
     "review": {
-      "state": "pending",
-      "retries": 0
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 10 (simple) below threshold 30 for review"
     },
     "fix": {
-      "state": "pending",
-      "retries": 0
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "No issues to fix"
     },
     "verify": {
-      "state": "pending",
-      "retries": 0
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-17T23:15:47.912Z"
     },
     "pr": {
       "state": "pending",
