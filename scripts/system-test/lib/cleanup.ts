@@ -6,7 +6,8 @@
  */
 
 import { execFileSync } from 'child_process'
-import type { GitHubClient } from '../../inspector/core/types'
+import type { GitHubClient, IssueInfo } from '../../inspector/core/types'
+import { ISSUE_TITLE_PREFIX } from './config'
 
 export interface CleanupOptions {
   issueNumber?: number
@@ -66,7 +67,8 @@ export async function cleanupScenario(
 
 /**
  * Clean up all system test artifacts.
- * Finds all open issues with the system-test label and cleans them up.
+ * Finds all open issues with the system-test label OR with [SYSTEM-TEST] title prefix
+ * and cleans them up.
  * This is an idempotent safety net for catching any leaked artifacts.
  */
 export async function cleanupAllSystemTests(
@@ -77,10 +79,22 @@ export async function cleanupAllSystemTests(
   let closedPRs = 0
   let deletedBranches = 0
 
-  // Find all open issues with system-test label
-  const issues = gh.getOpenIssues(['system-test'])
+  // Find all open issues with system-test label OR title prefix
+  const issuesByLabel = gh.getOpenIssues(['system-test'])
 
-  console.log(`Found ${issues.length} open issues with system-test label`)
+  // Also find issues by title prefix
+  const issuesByTitle = gh
+    .getOpenIssues()
+    .filter((issue) => issue.title.startsWith(ISSUE_TITLE_PREFIX))
+
+  // Merge, deduplicating by number
+  const allIssues = new Map<number, IssueInfo>()
+  for (const issue of [...issuesByLabel, ...issuesByTitle]) {
+    allIssues.set(issue.number, issue)
+  }
+
+  const issues = Array.from(allIssues.values())
+  console.log(`Found ${issues.length} system test issues`)
 
   for (const issue of issues) {
     // Find associated PRs by looking for branches with systest pattern
