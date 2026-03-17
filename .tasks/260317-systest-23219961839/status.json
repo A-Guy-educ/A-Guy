@@ -4,14 +4,82 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-17T22:55:02.342Z",
-  "updatedAt": "2026-03-17T22:55:03.554Z",
+  "updatedAt": "2026-03-17T23:04:22.715Z",
   "state": "running",
   "cursor": null,
   "stages": {
     "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-17T22:55:03.554Z",
+      "completedAt": "2026-03-17T22:56:21.824Z",
+      "elapsed": 78,
+      "outputFile": "taskify.md",
+      "tokenUsage": {
+        "input": 2666,
+        "output": 1682,
+        "cacheRead": 145761
+      },
+      "sessionId": "ses_301fd6bffffeWYLaoGJzSE6ja2"
+    },
+    "gap": {
+      "state": "completed",
+      "retries": 1,
+      "startedAt": "2026-03-17T22:56:31.579Z",
+      "completedAt": "2026-03-17T23:02:37.612Z",
+      "elapsed": 366,
+      "outputFile": "gap.md",
+      "tokenUsage": {
+        "input": 16533,
+        "output": 1860,
+        "cacheRead": 412588
+      },
+      "sessionId": "ses_301f8ed43ffeeOJWWDJ6kvqkDV"
+    },
+    "architect": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Pipeline is spec_only"
+    },
+    "plan-gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-17T23:02:37.615Z",
+      "completedAt": "2026-03-17T23:04:22.689Z",
+      "elapsed": 105,
+      "outputFile": "plan-gap.md",
+      "tokenUsage": {
+        "input": 13,
+        "output": 4426,
+        "cacheRead": 892472
+      },
+      "cost": 1.1737259999999998,
+      "sessionId": "ses_301f685cbffezZpnidDv4wP0b0"
+    },
+    "build": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-17T22:55:03.554Z"
+      "startedAt": "2026-03-17T23:04:22.692Z"
+    },
+    "commit": {
+      "state": "pending",
+      "retries": 0
+    },
+    "review": {
+      "state": "pending",
+      "retries": 0
+    },
+    "fix": {
+      "state": "pending",
+      "retries": 0
+    },
+    "verify": {
+      "state": "pending",
+      "retries": 0
+    },
+    "pr": {
+      "state": "pending",
+      "retries": 0
     }
   },
   "issueNumber": 882,
@@ -22,5 +90,6 @@
       "actor": "cody-aios[bot]",
       "timestamp": "2026-03-17T22:55:02.342Z"
     }
-  ]
+  ],
+  "branchName": "docs/260317-systest-882-system-test-document-pipeline-h"
 }
