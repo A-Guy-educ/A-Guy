@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-17T21:10:02.528Z",
-  "updatedAt": "2026-03-17T21:12:24.453Z",
+  "updatedAt": "2026-03-17T21:13:27.811Z",
   "state": "running",
   "cursor": null,
   "stages": {
@@ -47,13 +47,23 @@
       "skipped": "Complexity 20 (moderate) below threshold 50 for plan-gap"
     },
     "build": {
-      "state": "running",
+      "state": "completed",
       "retries": 0,
-      "startedAt": "2026-03-17T21:12:24.327Z"
+      "startedAt": "2026-03-17T21:12:24.327Z",
+      "completedAt": "2026-03-17T21:13:14.200Z",
+      "elapsed": 50,
+      "outputFile": "build.md",
+      "tokenUsage": {
+        "input": 5266,
+        "output": 932,
+        "cacheRead": 304005
+      },
+      "sessionId": "ses_3025b756fffen9o7Fm8UB0bVdK"
     },
     "commit": {
-      "state": "pending",
-      "retries": 0
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-17T21:13:27.811Z"
     },
     "review": {
       "state": "pending",
@@ -71,6 +81,5 @@
       "state": "pending",
       "retries": 0
     }
-  },
-  "branchName": "feat/260317-full-create-a-simple-test-file-docstestfull"
+  }
 }
