@@ -605,7 +605,7 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
   const canSend = input.trim() || attachments.length > 0
 
   return (
-    <div className="flex flex-col h-full border-l bg-background">
+    <div className="relative flex flex-col h-full border-l bg-background">
       {/* Voice Chat Overlay */}
       {isVoiceActive && (
         <VoiceChatOverlay
