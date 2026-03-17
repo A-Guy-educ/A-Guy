@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 
 const HEARTBEAT_INTERVAL_MS = 30000 // 30 seconds
-const STREAK_THRESHOLD_MS = 300000 // 5 minutes
+const STREAK_THRESHOLD_MS = 60000 // 1 minute
 
 interface UseActiveTimeTrackerOptions {
   isAuthenticated: boolean
