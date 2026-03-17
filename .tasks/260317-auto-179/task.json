@@ -1,0 +1,40 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.1,
+  "primary_domain": "backend",
+  "scope": [
+    "Unknown - task provides no details"
+  ],
+  "missing_inputs": [
+    {
+      "field": "description",
+      "question": "What is the actual feature or change being requested? The task only contains 'test' with no requirements or specifications."
+    },
+    {
+      "field": "requirements",
+      "question": "What are the functional requirements for this feature?"
+    },
+    {
+      "field": "acceptance_criteria",
+      "question": "What constitutes successful completion of this task?"
+    }
+  ],
+  "assumptions": [
+    "Task is labeled as 'New Feature' so I defaulted to implement_feature",
+    "Cannot assess scope, risk, or complexity without actual requirements"
+  ],
+  "review_questions": [
+    "Is this a placeholder/test task that should be ignored?",
+    "What is the actual feature being requested?"
+  ],
+  "complexity": 10,
+  "complexity_reasoning": "Scope: 0 (no information), Risk: 0 (no information), Novelty: 0 (no information), Cross-domain: 0 (no information), Ambiguity: 10 (maximum - task is just 'test'), Deps: 0 (no information). Total: 10 - Minimum score due to extreme ambiguity",
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Task contains only 'test' text - no requirements section, no acceptance criteria, no implementation details. Cannot skip any stages."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
