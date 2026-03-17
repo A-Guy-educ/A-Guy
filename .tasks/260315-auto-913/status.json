@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-15T12:38:54.363Z",
-  "updatedAt": "2026-03-17T08:12:35.906Z",
+  "updatedAt": "2026-03-17T08:16:12.517Z",
   "state": "running",
   "cursor": "architect",
   "stages": {
@@ -76,13 +76,32 @@
       "skipped": "Complexity 37 (complex) below threshold 50 for plan-gap"
     },
     "commit": {
-      "state": "running",
+      "state": "completed",
       "retries": 0,
-      "startedAt": "2026-03-17T08:12:35.906Z"
+      "startedAt": "2026-03-17T08:12:35.906Z",
+      "completedAt": "2026-03-17T08:12:36.669Z",
+      "elapsed": 1
     },
     "review": {
-      "state": "pending",
-      "retries": 0
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-17T08:12:36.670Z",
+      "completedAt": "2026-03-17T08:16:12.516Z",
+      "elapsed": 216,
+      "outputFile": "review.md",
+      "tokenUsage": {
+        "input": 25,
+        "output": 7847,
+        "cacheRead": 2013486
+      },
+      "cost": 1.81392425,
+      "sessionId": "ses_30525600effeqgqAX99EmImQzy",
+      "issuesFound": true,
+      "reviewSummary": {
+        "critical": 87,
+        "major": 87,
+        "minor": 87
+      }
     },
     "fix": {
       "state": "pending",
