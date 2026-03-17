@@ -15,7 +15,7 @@ import { ContentStatusBadge } from '@/ui/web/shared/ContentStatusBadge'
 import { toast } from 'sonner'
 
 interface CourseCardProps {
-  course: Pick<Course, 'id' | 'title' | 'description' | 'courseLabel' | 'slug'>
+  course: Pick<Course, 'id' | 'title' | 'description' | 'courseLabel' | 'slug' | 'contentStatus' | 'contentStatusExpiresAt' | 'contentStatusVisible'>
   isOwned?: boolean
 }
 

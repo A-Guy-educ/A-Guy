@@ -11,7 +11,7 @@ export function GradeRedirect() {
   useEffect(() => {
     const profile = getUserProfile()
     if (profile?.gradeLevel) {
-      window.location.replace(`/study?grade=${encodeURIComponent(profile.gradeLevel)}`)
+      window.location.replace(`/study/${encodeURIComponent(profile.gradeLevel)}`)
     } else {
       window.location.replace('/')
     }

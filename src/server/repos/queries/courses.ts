@@ -85,6 +85,9 @@ const _queryPublishedCourses = async (locale?: ContentLocale) => {
       isActive: true,
       pageAccessType: true,
       accessType: true,
+      contentStatus: true,
+      contentStatusExpiresAt: true,
+      contentStatusVisible: true,
     },
   })
 

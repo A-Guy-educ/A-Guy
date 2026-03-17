@@ -23,7 +23,7 @@ export default async function StudyPage({ searchParams }: StudyPageProps) {
     )
   }
 
-  // Grade is known — fetch data server-side (same process, no API round-trip)
+  // Legacy ?grade= URL — fetch data server-side (fallback for old links)
   const locale = isValidContentLocale(defaultLocale) ? defaultLocale : undefined
   const data = await fetchStudyData({ gradeLevel: grade, locale })
 
