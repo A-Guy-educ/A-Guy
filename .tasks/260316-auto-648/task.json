@@ -1,41 +1,37 @@
 {
   "task_type": "implement_feature",
-  "risk_level": "medium",
+  "risk_level": "high",
   "confidence": 0.9,
   "primary_domain": "infra",
   "scope": [
-    "next.config.js - Security headers with split CSP",
-    "src/app/(frontend)/error.tsx - Frontend error boundary",
-    "src/infra/config/env-validation.ts - Env variable validation",
-    "instrumentation.ts - Hook in validation",
-    "E2E tests - Cherry-pick from branch",
-    "handleCodyApiError utility - Add Sentry",
-    "API routes - Add Sentry capture",
-    "API routes - Migrate to withApiHandler",
-    "API routes - Add Zod validation",
-    ".github/workflows/ci.yml - Add coverage",
-    "vitest.config.unit.mts - Add coverage config",
-    "instrumentation-client.ts - Add browserTracing"
+    "Security headers (next.config.js)",
+    "Frontend error boundary (error.tsx)",
+    "Env variable validation (env-validation.ts, instrumentation.ts)",
+    "E2E tests (cherry-pick from feat/pre-launch-e2e-verification)",
+    "Sentry integration (handleCodyApiError, captureAndRespond, browserTracing)",
+    "Zod validation for API routes (8+ routes)",
+    "CI coverage enforcement (ci.yml, vitest.config.unit.mts)",
+    "Web vitals tracking (instrumentation-client.ts)"
   ],
   "missing_inputs": [],
   "assumptions": [
-    "Cherry-pick commit 9631fe7b will apply cleanly or have resolvable conflicts",
-    "Existing Sentry and error handling utilities exist and can be extended",
-    "withApiHandler utility exists and can be reused for 4 routes",
-    "Split CSP strategy is compatible with existing admin panel functionality"
+    "Cherry-pick commit 9631fe7b will have manageable conflicts",
+    "Existing Sentry configuration is present and can be extended",
+    "handleCodyApiError utility exists and can be found",
+    "withApiHandler utility exists for route migration",
+    "Project uses standard Payload CMS + Next.js stack"
   ],
   "review_questions": [
-    "Should E2E tests be committed to dev branch directly or to a feature branch?",
-    "Are the permissive CSP rules for /admin/* secure enough given Payload admin requirements?"
+    "Should the cherry-pick be verified for conflicts before Phase 1 implementation?",
+    "Are the CSP header configurations appropriate for production deployment?",
+    "Should coverage thresholds be enforced immediately or just monitored first?"
   ],
-  "complexity": 57,
-  "complexity_reasoning": "Scope: 18 points (10+ files across multiple modules). Risk: 12 points (security headers, env validation, infrastructure changes). Novelty: 8 points (extending existing patterns). Cross-domain: 12 points (frontend, backend, infra, devops). Ambiguity: 2 points (clear requirements). Dependencies: 5 points (phases depend on each other). Total: 57 - Very Complex",
+  "complexity": 65,
+  "complexity_reasoning": "Scope: 20+ files across 4+ modules (security, testing, monitoring, CI). Risk: HIGH - security headers, env validation at startup, Sentry integration. Novelty: Following existing patterns but extensive. Cross-domain: backend + frontend + infra + devops. Ambiguity: Very clear with file paths and implementation steps. Dependencies: Sentry, Vercel Blob, external APIs. Total: 65 (Very Complex+)",
   "input_quality": {
-    "level": "detailed_plan",
-    "skip_stages": [
-      "architect"
-    ],
-    "reasoning": "Input contains detailed phased plan with specific files to modify, implementation steps, file paths, and verification commands. The plan is structured with 3 phases and clear priorities. Promoted plan.md with implementation details."
+    "level": "spec_and_plan",
+    "skip_stages": [],
+    "reasoning": "Input contains detailed requirements with 8 distinct areas, implementation steps with specific file paths, phase-by-phase breakdown, verification commands, and decisions made section. Both spec and plan sections are present."
   },
   "pipeline_profile": "standard",
   "pipeline": "spec_execute_verify"
