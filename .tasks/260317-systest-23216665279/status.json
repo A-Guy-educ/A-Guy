@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-17T21:23:53.926Z",
-  "updatedAt": "2026-03-17T21:25:29.082Z",
+  "updatedAt": "2026-03-17T21:30:20.017Z",
   "state": "running",
   "cursor": null,
   "stages": {
@@ -28,13 +28,23 @@
       "skipped": "Pipeline is spec_only"
     },
     "build": {
-      "state": "running",
+      "state": "completed",
       "retries": 0,
-      "startedAt": "2026-03-17T21:25:29.060Z"
+      "startedAt": "2026-03-17T21:25:29.060Z",
+      "completedAt": "2026-03-17T21:29:27.348Z",
+      "elapsed": 238,
+      "outputFile": "build.md",
+      "tokenUsage": {
+        "input": 35245,
+        "output": 7326,
+        "cacheRead": 945194
+      },
+      "sessionId": "ses_3024f7a6dffezqfXw0IFdhmFNs"
     },
     "commit": {
-      "state": "pending",
-      "retries": 0
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-17T21:30:20.017Z"
     },
     "review": {
       "state": "pending",
@@ -61,6 +71,5 @@
       "actor": "cody-aios[bot]",
       "timestamp": "2026-03-17T21:23:53.926Z"
     }
-  ],
-  "branchName": "docs/260317-systest-879-system-test-document-pipeline-h"
+  ]
 }
