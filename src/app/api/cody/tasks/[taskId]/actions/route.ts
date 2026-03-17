@@ -73,15 +73,51 @@ function withActor(message: string, actor?: string): string {
   return actor ? `${message} _(by @${actor})_` : message
 }
 
-/** Post a comment, using user token if available (clean) or bot token with attribution */
-function postWithAttribution(
+/**
+ * Post a comment with fallback to bot token if user token fails.
+ * - First tries with user's Octokit (clean attribution)
+ * - If 401/403 (token expired/revoked), falls back to bot token with actor attribution
+ * - If no user token, uses bot token with attribution directly
+ */
+async function postWithFallback(
   issueNumber: number,
   message: string,
   actor: string | undefined,
   userOctokit: any,
-) {
-  const body = userOctokit ? message : withActor(message, actor)
-  return postComment(issueNumber, body, userOctokit ?? undefined)
+): Promise<void> {
+  // If no user token, use bot with attribution
+  if (!userOctokit) {
+    const body = withActor(message, actor)
+    await postComment(issueNumber, body)
+    return
+  }
+
+  // Try with user's token first
+  try {
+    await postComment(issueNumber, message, userOctokit)
+  } catch (error: any) {
+    // Check if it's an auth-related error (401 or 403 from GitHub)
+    const isAuthError = error?.status === 401 || error?.status === 403
+    const isGitHubAuthError =
+      isAuthError &&
+      (error?.message?.includes('Bad credentials') ||
+        error?.message?.includes('Resource not found') ||
+        error?.message?.includes('Not Found') ||
+        error?.response?.data?.message?.includes('Bad credentials') ||
+        error?.response?.data?.message?.includes('Not Found'))
+
+    if (isAuthError || isGitHubAuthError) {
+      // User token failed — fall back to bot token with attribution
+      console.warn(
+        `[Cody] User token failed (status: ${error?.status}), falling back to bot token for issue ${issueNumber}`,
+      )
+      const body = withActor(message, actor)
+      await postComment(issueNumber, body)
+    } else {
+      // Re-throw non-auth errors
+      throw error
+    }
+  }
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
@@ -114,12 +150,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
 
     switch (action) {
       case 'approve': {
-        await postWithAttribution(issueNumber, '/cody approve', actor, userOctokit)
+        await postWithFallback(issueNumber, '/cody approve', actor, userOctokit)
         return NextResponse.json({ success: true, message: 'Gate approved' })
       }
 
       case 'reject': {
-        await postWithAttribution(issueNumber, '/cody reject', actor, userOctokit)
+        await postWithFallback(issueNumber, '/cody reject', actor, userOctokit)
         return NextResponse.json({ success: true, message: 'Gate rejected' })
       }
 
@@ -137,7 +173,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
       }
 
       case 'execute': {
-        await postWithAttribution(issueNumber, '/cody', actor, userOctokit)
+        await postWithFallback(issueNumber, '/cody', actor, userOctokit)
         return NextResponse.json({ success: true, message: 'Cody execution triggered' })
       }
 
@@ -153,7 +189,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
         )
 
         // Post comment regardless of whether we found a running workflow
-        await postWithAttribution(
+        await postWithFallback(
           issueNumber,
           '## 🛑 Operation stopped - Run aborted by user.',
           actor,
@@ -254,7 +290,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
         }
 
         // Re-trigger pipeline
-        await postWithAttribution(issueNumber, '🔄 Task reset and re-triggered', actor, userOctokit)
+        await postWithFallback(issueNumber, '🔄 Task reset and re-triggered', actor, userOctokit)
         await postComment(issueNumber, '/cody', userOctokit ?? undefined)
 
         invalidateTaskCache()
@@ -338,7 +374,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
 
       case 'approve-ui': {
         await addLabels(issueNumber, ['ui-approved'], userOctokit ?? undefined)
-        await postWithAttribution(issueNumber, '✅ Preview UI approved', actor, userOctokit)
+        await postWithFallback(issueNumber, '✅ Preview UI approved', actor, userOctokit)
         invalidateTaskCache()
         return NextResponse.json({ success: true, message: 'Preview UI approved' })
       }
@@ -349,6 +385,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
           return NextResponse.json({ error: 'No associated PR found' }, { status: 404 })
         }
         // Use user's Octokit for PR review (review appears under user's identity)
+        // If user token fails, the PR review fails - but we still try to add labels and comment
         const octokit = userOctokit ?? getOctokit()
         try {
           await octokit.pulls.createReview({
@@ -364,8 +401,19 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
             console.warn('[Cody] PR approval note:', msg)
           }
         }
-        await addLabels(issueNumber, ['pr-approved'], userOctokit ?? undefined)
-        await postWithAttribution(issueNumber, '✅ PR approved', actor, userOctokit)
+        // For label, try user token first then fallback
+        try {
+          await addLabels(issueNumber, ['pr-approved'], userOctokit ?? undefined)
+        } catch {
+          // Fallback to bot token
+          try {
+            await addLabels(issueNumber, ['pr-approved'])
+          } catch {
+            // Ignore label errors
+          }
+        }
+        // For comment, use fallback so it always posts
+        await postWithFallback(issueNumber, '✅ PR approved', actor, userOctokit)
         invalidateTaskCache()
         invalidatePRCache()
         return NextResponse.json({ success: true, message: 'PR approved' })
