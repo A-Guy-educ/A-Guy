@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-15T12:38:54.363Z",
-  "updatedAt": "2026-03-17T08:16:12.517Z",
+  "updatedAt": "2026-03-17T08:16:16.181Z",
   "state": "running",
   "cursor": "architect",
   "stages": {
@@ -95,17 +95,12 @@
         "cacheRead": 2013486
       },
       "cost": 1.81392425,
-      "sessionId": "ses_30525600effeqgqAX99EmImQzy",
-      "issuesFound": true,
-      "reviewSummary": {
-        "critical": 87,
-        "major": 87,
-        "minor": 87
-      }
+      "sessionId": "ses_30525600effeqgqAX99EmImQzy"
     },
     "fix": {
-      "state": "pending",
-      "retries": 0
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-17T08:16:16.181Z"
     },
     "verify": {
       "state": "pending",
