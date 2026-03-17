@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-15T12:38:54.363Z",
-  "updatedAt": "2026-03-17T08:07:18.338Z",
+  "updatedAt": "2026-03-17T08:12:35.906Z",
   "state": "running",
   "cursor": "architect",
   "stages": {
@@ -44,9 +44,18 @@
       "sessionId": "ses_30cc1c99bffeCtPuTO6dGK4ptf"
     },
     "build": {
-      "state": "running",
+      "state": "completed",
       "retries": 0,
-      "startedAt": "2026-03-17T08:07:18.306Z"
+      "startedAt": "2026-03-17T08:07:18.306Z",
+      "completedAt": "2026-03-17T08:12:18.463Z",
+      "elapsed": 300,
+      "outputFile": "build.md",
+      "tokenUsage": {
+        "input": 23138,
+        "output": 3975,
+        "cacheRead": 595674
+      },
+      "sessionId": "ses_3052a35dcffeLE2SKzj7vXblXW"
     },
     "gap": {
       "state": "completed",
@@ -67,8 +76,9 @@
       "skipped": "Complexity 37 (complex) below threshold 50 for plan-gap"
     },
     "commit": {
-      "state": "pending",
-      "retries": 0
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-17T08:12:35.906Z"
     },
     "review": {
       "state": "pending",
@@ -92,6 +102,5 @@
     }
   ],
   "totalCost": 5.79664525,
-  "completedAt": "2026-03-15T21:06:51.119Z",
-  "branchName": "fix/260315-auto-827-pdf"
+  "completedAt": "2026-03-15T21:06:51.119Z"
 }

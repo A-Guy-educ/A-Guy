@@ -1,5 +1,5 @@
-# Rerun Feedback - 2026-03-15T20:32:29.645Z
+# Rerun Feedback - 2026-03-17T08:03:41.514Z
 
 ## Issues Found
 
-Rerun requested via /cody rerun
+Pipeline failed (no error details)
