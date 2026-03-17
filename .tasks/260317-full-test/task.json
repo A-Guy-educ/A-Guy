@@ -1,0 +1,21 @@
+{
+  "task_type": "docs",
+  "risk_level": "low",
+  "confidence": 1,
+  "primary_domain": "devops",
+  "scope": [
+    "docs/test/"
+  ],
+  "missing_inputs": [],
+  "assumptions": [],
+  "review_questions": [],
+  "complexity": 5,
+  "complexity_reasoning": "Scope:3 (single file), Risk:1 (no risk), Novelty:0 (simple task), Cross:0 (single domain), Ambiguity:0 (crystal clear), Deps:0 (no dependencies). Total: 4-5",
+  "input_quality": {
+    "level": "detailed_plan",
+    "skip_stages": [],
+    "reasoning": "Task contains step-by-step implementation with file paths (docs/test/full-pipeline.md) and verification criteria"
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_only"
+}
