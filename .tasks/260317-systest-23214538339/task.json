@@ -1,0 +1,28 @@
+{
+  "task_type": "docs",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "devops",
+  "scope": [
+    "docs/system-test/pipeline-health.md"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The inspector plugin framework exists in the codebase and can be documented",
+    "Health-check plugins exist that monitor pipeline components",
+    "Pipeline-fixer retry strategy exists in the codebase",
+    "Deferred test and docs stages are implemented in the pipeline"
+  ],
+  "review_questions": [
+    "Should this documentation be placed in docs/system-test/ or docs/cody/pipeline/?"
+  ],
+  "complexity": 16,
+  "complexity_reasoning": "Scope: 5 (single documentation file). Risk: 3 (low risk - documentation only). Novelty: 3 (documenting existing architecture, not creating new code). Cross-Domain: 0 (single domain - documentation). Ambiguity: 3 (clear requirements, some research needed to understand existing implementation). Dependencies: 2 (self-contained, references existing code). Total: 16",
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Task provides clear sections to document but lacks detailed plan with file paths and implementation details. Writer will need to explore codebase to understand the architecture before writing."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_only"
+}
