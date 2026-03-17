@@ -4,9 +4,9 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-15T12:38:54.363Z",
-  "updatedAt": "2026-03-15T21:06:51.119Z",
-  "state": "failed",
-  "cursor": "gap",
+  "updatedAt": "2026-03-17T08:07:18.338Z",
+  "state": "running",
+  "cursor": "architect",
   "stages": {
     "taskify": {
       "state": "completed",
@@ -24,16 +24,17 @@
     "architect": {
       "state": "completed",
       "retries": 0,
-      "startedAt": "2026-03-15T20:38:29.391Z",
-      "completedAt": "2026-03-15T20:44:22.487Z",
+      "startedAt": "2026-03-17T08:03:42.788Z",
+      "completedAt": "2026-03-17T08:07:16.639Z",
+      "elapsed": 214,
       "outputFile": "architect.md",
       "tokenUsage": {
-        "input": 42,
-        "output": 14631,
-        "cacheRead": 4810114
+        "input": 18,
+        "output": 4139,
+        "cacheRead": 3184874
       },
-      "cost": 3.661892,
-      "sessionId": "ses_30cc734b0ffelrz4R8bHKj7uce"
+      "cost": 2.989627,
+      "sessionId": "ses_3052d7aedffe9JBnkdAd88OH7A"
     },
     "test": {
       "state": "completed",
@@ -43,11 +44,9 @@
       "sessionId": "ses_30cc1c99bffeCtPuTO6dGK4ptf"
     },
     "build": {
-      "state": "completed",
+      "state": "running",
       "retries": 0,
-      "completedAt": "2026-03-15T20:50:44.189Z",
-      "outputFile": "build.md",
-      "sessionId": "ses_30cc1c873ffeWQq2DH8MgQbRPy"
+      "startedAt": "2026-03-17T08:07:18.306Z"
     },
     "gap": {
       "state": "completed",
@@ -68,38 +67,20 @@
       "skipped": "Complexity 37 (complex) below threshold 50 for plan-gap"
     },
     "commit": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-03-15T20:52:41.284Z",
-      "completedAt": "2026-03-15T20:52:42.134Z"
+      "state": "pending",
+      "retries": 0
     },
     "review": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-03-15T20:52:42.135Z",
-      "completedAt": "2026-03-15T20:54:26.570Z",
-      "outputFile": "review.md",
-      "tokenUsage": {
-        "input": 12,
-        "output": 3700,
-        "cacheRead": 1767324
-      },
-      "cost": 2.13475325,
-      "sessionId": "ses_30cba35c2ffenAkznH7sXudS3S"
+      "state": "pending",
+      "retries": 0
     },
     "fix": {
-      "state": "failed",
-      "retries": 0,
-      "skipped": "No issues to fix",
-      "fixAttempt": 1,
-      "maxFixAttempts": 2,
-      "startedAt": "2026-03-15T21:01:29.455Z",
-      "error": "Agent failed"
+      "state": "pending",
+      "retries": 0
     },
     "verify": {
       "state": "pending",
-      "retries": 0,
-      "startedAt": "2026-03-15T20:54:29.041Z"
+      "retries": 0
     }
   },
   "triggeredBy": "aguyaharonyair",
@@ -111,5 +92,6 @@
     }
   ],
   "totalCost": 5.79664525,
-  "completedAt": "2026-03-15T21:06:51.119Z"
+  "completedAt": "2026-03-15T21:06:51.119Z",
+  "branchName": "fix/260315-auto-827-pdf"
 }

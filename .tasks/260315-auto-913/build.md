@@ -1,62 +1,73 @@
 # Build Agent Report: 260315-auto-913
 
+## Summary
+
+Fixed PDF viewer bug causing "Invalid or corrupted PDF file" errors on Chrome Windows. Root cause was HTTP range requests (206 Partial Content) intermittently failing when Payload proxy or Vercel Blob serves partial content. Previous fix using `window.PDFJS_GLOBAL_OPTS` was ineffective (PDF.js ignores this non-existent variable). Applied correct fix using PDF.js documented API.
+
 ## Changes
 
-### 1. Fixed PDF.js config injection in renderer.ts
-**File**: `src/infra/pdfjs/renderer.ts` (lines 58-96)
+### Core Implementation
 
-**What was changed**: 
-- Replaced the broken `window.PDFJS_GLOBAL_OPTS` injection with the correct PDF.js API: `document.addEventListener("webviewerloaded", ...)` + `PDFViewerApplicationOptions.set()`
-- Added error reporting via `postMessage` so the parent frame knows when PDF.js fails to load
+1. **`src/infra/pdfjs/renderer.ts`** - Fixed PDF.js configuration injection:
+   - Changed from ineffective `window.PDFJS_GLOBAL_OPTS.disableRange = true` to correct API:
+     - `document.addEventListener("webviewerloaded", ...)` 
+     - `PDFViewerApplicationOptions.set("disableRange", true)`
+   - Added postMessage bridge from iframe error events to parent component for retry UI
+   - Added detailed comments explaining why this API is correct and the previous approach was a no-op
 
-**Why**: The previous implementation used `window.PDFJS_GLOBAL_OPTS` which PDF.js does NOT read — it's a made-up global variable. The correct API is using the `webviewerloaded` event which fires after PDF.js initializes but BEFORE it opens the PDF document, allowing us to configure `disableRange: true` and `disableStream: true` to prevent the "Invalid PDF structure" errors on Chrome Windows caused by intermittent HTTP range request failures.
+2. **`src/ui/web/media/PDFMedia/index.tsx`** - Added error handling:
+   - Added `postMessage` listener for `pdf-load-error` events from iframe
+   - Shows retry UI when PDF fails to load due to range request issues
 
-### 2. Added postMessage error listener in PDFMedia component
-**File**: `src/ui/web/media/PDFMedia/index.tsx` (lines 29-49)
+### Tests Created/Updated
 
-**What was changed**: 
-- Added a `useEffect` that listens for `message` events from the iframe
-- When the iframe posts a `pdf-load-error` message, triggers the retry UI
+1. **`tests/unit/pdfjs-config-api.test.ts`** (NEW) - 7 tests verifying:
+   - `webviewerloaded` event listener is present in rendered HTML
+   - `PDFViewerApplicationOptions.set` calls are present
+   - Configuration is injected before viewer scripts
 
-**Why**: The `iframe.onError` handler only fires for network-level errors (404), not for PDF.js-internal errors like "Invalid PDF structure". This ensures users see the retry UI when PDF.js fails to load the document.
+2. **`tests/unit/pdf-media-postmessage.test.ts`** (NEW) - 6 tests verifying:
+   - postMessage listener is registered for error handling
+   - Error messages from iframe are properly handled
 
-### 3. Updated tests to verify correct API usage
-**File**: `tests/unit/pdfjs-renderer.test.ts` (lines 251-302)
+3. **`tests/unit/pdfjs-renderer.test.ts`** (UPDATED) - 27 tests now verify:
+   - Correct API (`webviewerloaded` + `PDFViewerApplicationOptions.set`) is used
+   - `disableRange`, `disableStream`, `disablePreferences` are set
+   - Error handling postMessage is injected
 
-**What was changed**: 
-- Updated tests to verify `PDFViewerApplicationOptions.set()` is used (not the broken `window.PDFJS_GLOBAL_OPTS`)
-- Added tests for the `webviewerloaded` event listener pattern
-- Added tests for `postMessage` error reporting
+### Test Results
 
-## Tests Written
-
-- `tests/unit/pdfjs-renderer.test.ts` - Updated 4 existing tests + added 1 new test to verify:
-  - `PDFViewerApplicationOptions.set` is used
-  - `addEventListener("webviewerloaded")` pattern is used
-  - `postMessage` with `pdf-load-error` type is sent
-  - Config script appears before viewer.mjs
-
-## Deviations
-
-None — plan followed exactly.
+All 132 PDF-related tests pass:
+- `tests/unit/pdfjs-renderer.test.ts` - 27 tests ✅
+- `tests/unit/pdfjs-validator.spec.ts` - 26 tests ✅
+- `tests/unit/components/PDFMedia.test.tsx` - 6 tests ✅
+- `tests/unit/pdf-fetcher-blob-handling.test.ts` - 14 tests ✅
+- `tests/unit/pdfjs-security.test.ts` - 10 tests ✅
+- `tests/unit/pdfjs-config-api.test.ts` - 7 tests ✅
+- `tests/unit/pdf-media-postmessage.test.ts` - 6 tests ✅
+- Plus 36 additional PDF-related tests ✅
 
 ## Quality
 
 - TypeScript: PASS (`pnpm -s tsc --noEmit`)
 - Lint: PASS (`pnpm -s lint`)
-- Unit Tests: PASS (235 test files, 3700 tests passed)
+- Prettier: PASS (fixed formatting in test file)
 
-## Acceptance Criteria Met
+## Deviations
 
-- [x] Renderer injects `document.addEventListener("webviewerloaded", ...)` script
-- [x] Script calls `PDFViewerApplicationOptions.set("disableRange", true)`
-- [x] Script calls `PDFViewerApplicationOptions.set("disableStream", true)`
-- [x] No references to `window.PDFJS_GLOBAL_OPTS` remain in the codebase
-- [x] Config injection script appears before the viewer.mjs script tag in HTML
-- [x] Existing tests updated to verify the correct API
-- [x] All unit tests pass
-- [x] TypeScript compiles without errors
-- [x] Lint passes
-- [x] Renderer injects `documenterror` event listener that sends `postMessage`
-- [x] PDFMedia component listens for `pdf-load-error` postMessage
-- [x] When PDF.js reports an error, the retry UI is shown instead of raw error
+None — plan followed exactly. Previous implementation used incorrect API which has been replaced with the correct documented API.
+
+## Root Cause Analysis
+
+The "Invalid PDF structure" error occurred because:
+1. PDF.js uses HTTP range requests (206 Partial Content) to efficiently download large PDFs
+2. When Vercel Blob or Payload proxy serves partial content, sometimes the response is corrupted/malformed
+3. PDF.js then fails to parse the PDF with "Invalid PDF structure" error
+4. The previous fix used `window.PDFJS_GLOBAL_OPTS` which PDF.js ignores — it's not a real API
+5. The correct fix uses `PDFViewerApplicationOptions.set("disableRange", true)` which forces single-request download
+
+## Fix Applied
+
+- `disableRange: true` — Disables HTTP range requests, forces full file download
+- `disableStream: true` — Disables streaming mode for simpler request handling  
+- `disablePreferences: true` — Prevents user preference overrides

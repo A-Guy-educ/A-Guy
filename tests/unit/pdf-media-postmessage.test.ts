@@ -47,16 +47,16 @@ describe('PDFMedia postMessage error handling - Source Code Verification', () =>
     // The message handler should have empty deps since it only depends on setHasError (which is stable)
     // and doesn't need to re-subscribe when pdfUrl/resource changes
     expect(pdfMediaSource).toContain("window.addEventListener('message', handleMessage)")
-    
+
     // Check that there's a separate useEffect for message handling (not the analytics one)
     // The message handling useEffect should have an empty dependency array
     // Find the useEffect that contains 'handleMessage'
     const messageHandlerUseEffect = pdfMediaSource.match(
-      /useEffect\(\(\)\s*=>\s*\{[\s\S]*?handleMessage[\s\S]*?\},\s*(\[[^\]]*\])\)/
+      /useEffect\(\(\)\s*=>\s*\{[\s\S]*?handleMessage[\s\S]*?\},\s*(\[[^\]]*\])\)/,
     )
     expect(messageHandlerUseEffect).not.toBeNull()
-    
-    // The message handler should ideally have empty deps, but it's also acceptable 
+
+    // The message handler should ideally have empty deps, but it's also acceptable
     // to have deps if the component re-renders for other reasons
     // This test verifies the pattern exists
   })
