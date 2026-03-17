@@ -4,14 +4,63 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-17T21:16:06.556Z",
-  "updatedAt": "2026-03-17T21:16:06.561Z",
+  "updatedAt": "2026-03-17T21:18:25.331Z",
   "state": "running",
   "cursor": null,
   "stages": {
     "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-17T21:16:06.561Z",
+      "completedAt": "2026-03-17T21:17:01.651Z",
+      "elapsed": 55,
+      "outputFile": "taskify.md",
+      "tokenUsage": {
+        "input": 2769,
+        "output": 1243,
+        "cacheRead": 146448
+      },
+      "sessionId": "ses_3025803b7ffenDvpQaa2C7E5Pu"
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-17T21:17:05.087Z",
+      "completedAt": "2026-03-17T21:18:25.175Z",
+      "elapsed": 80,
+      "outputFile": "architect.md",
+      "tokenUsage": {
+        "input": 10,
+        "output": 2615,
+        "cacheRead": 356342
+      },
+      "sessionId": "ses_302571e6bffeQ9WytGn85PonRW"
+    },
+    "build": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-17T21:16:06.561Z"
+      "startedAt": "2026-03-17T21:18:25.186Z"
+    },
+    "commit": {
+      "state": "pending",
+      "retries": 0
+    },
+    "review": {
+      "state": "pending",
+      "retries": 0
+    },
+    "fix": {
+      "state": "pending",
+      "retries": 0
+    },
+    "verify": {
+      "state": "pending",
+      "retries": 0
+    },
+    "pr": {
+      "state": "pending",
+      "retries": 0
     }
-  }
+  },
+  "branchName": "feat/260317-full-create-a-simple-test-file-docstestfull"
 }
