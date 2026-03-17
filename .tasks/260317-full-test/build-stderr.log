@@ -1,2 +1,9 @@
-warn: CPU lacks AVX support, strange crashes may occur. Reinstall Bun or use *-baseline build:
-  https://github.com/oven-sh/bun/releases/download/bun-v1.3.10/bun-darwin-x64-baseline.zip
+ ERROR  Expected double-quoted property name in JSON at position 7448 while parsing '{  "name": "a-guy",  "version": "0.18.' in /Users/aguy/projects/A-Guy/package.json 
+  103 |     "cody:systest:cleanup": "pnpm tsx scripts/system-test/cleanup-all.ts --repo A-Guy-educ/A-Guy",
+  104 |     "cody:cli-test": "pnpm tsx scripts/cody-cli-test/run.ts",
+> 105 | <<<<<<< Updated upstream
+      | ^
+  106 |     "cody:cli-test:run": "pnpm tsx scripts/cody-cli-test/run.ts --scenario 01-status-mode",
+  107 | =======
+  108 |     "cody:cli-test:run": "pnpm tsx scripts/cody-cli-test/run.ts --scenario 04-full-pipeline",
+For help, run: pnpm help run

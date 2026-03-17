@@ -4,8 +4,8 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-17T21:26:56.503Z",
-  "updatedAt": "2026-03-17T21:28:22.912Z",
-  "state": "running",
+  "updatedAt": "2026-03-17T21:28:32.577Z",
+  "state": "failed",
   "cursor": null,
   "stages": {
     "taskify": {
@@ -31,9 +31,10 @@
       "outputFile": "architect.md"
     },
     "build": {
-      "state": "running",
+      "state": "failed",
       "retries": 0,
-      "startedAt": "2026-03-17T21:28:22.793Z"
+      "startedAt": "2026-03-17T21:28:22.793Z",
+      "error": "Quality gates failed after 2 build agent fix attempts: TypeScript"
     },
     "commit": {
       "state": "pending",
@@ -56,5 +57,5 @@
       "retries": 0
     }
   },
-  "branchName": "feat/260317-full-create-a-simple-test-file-docstestfull"
+  "completedAt": "2026-03-17T21:28:32.577Z"
 }
