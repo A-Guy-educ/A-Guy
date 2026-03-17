@@ -147,6 +147,31 @@ function createStageDefinitions(ctx: PipelineContext): Map<StageName, StageDefin
       { type: 'archive-rerun-feedback' },
       { type: 'check-gate', gate: 'architect', includeArtifact: 'plan.md' },
     ],
+    fallbackOnMissingOutput: (ctx) => {
+      // Fallback: use context.md as a rough plan when agent forgets to write plan.md
+      // This happens when agent does extensive research but runs out of output capacity
+      const planFile = path.join(ctx.taskDir, 'plan.md')
+      if (fs.existsSync(planFile)) return null // File exists, no fallback needed
+
+      const contextFile = path.join(ctx.taskDir, 'context.md')
+      if (fs.existsSync(contextFile)) {
+        const contextContent = fs.readFileSync(contextFile, 'utf-8')
+        return `# Plan: ${ctx.taskId}
+
+## Summary
+
+Architect agent completed research but did not write plan.md. Using context.md as fallback plan.
+
+${contextContent}
+
+## Note
+
+This plan was auto-generated from context.md because architect failed to produce plan.md.
+The implementation should proceed using the file list in context.md.
+`
+      }
+      return null
+    },
   })
 
   // plan-gap stage
