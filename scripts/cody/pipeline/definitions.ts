@@ -45,6 +45,7 @@ import {
   skipIfSpecOnly,
   skipIfBelowComplexity,
 } from './skip-conditions'
+import { logger } from '../logger'
 
 // Re-export pipeline order arrays from registry for backward compatibility
 export {
@@ -57,6 +58,58 @@ export {
   FIX_ORDER,
   FIX_FULL_ORDER,
 } from '../stages/registry'
+
+// ============================================================================
+// Prev-Run File Restoration
+// ============================================================================
+
+/**
+ * Restore prev-run files from git if they're missing.
+ * This handles the case where pipeline restarts after a previous run
+ * already created the output files (e.g., architect succeeded but pipeline
+ * restarted from taskify).
+ */
+async function restorePrevRunFiles(taskDir: string, _taskId: string): Promise<void> {
+  const prevRunDir = path.join(taskDir, 'prev-run')
+
+  // Files to restore from git
+  const filesToRestore = ['plan.md', 'build.md', 'review.md']
+
+  for (const file of filesToRestore) {
+    const prevRunPath = path.join(prevRunDir, file)
+    const mainPath = path.join(taskDir, file)
+
+    // If prev-run version exists, nothing to do
+    if (fs.existsSync(prevRunPath)) {
+      continue
+    }
+
+    // Try to get the file from git (current branch's latest commit)
+    try {
+      const gitShowOutput = execFileSync('git', ['show', `HEAD:${taskDir}/${file}`], {
+        encoding: 'utf-8',
+        timeout: 10000,
+      })
+
+      // Ensure prev-run directory exists
+      if (!fs.existsSync(prevRunDir)) {
+        fs.mkdirSync(prevRunDir, { recursive: true })
+      }
+
+      // Write to prev-run/
+      fs.writeFileSync(prevRunPath, gitShowOutput)
+      logger.info(`  🔄 Restored ${file} from git to prev-run/`)
+
+      // Also restore to main location if the main file doesn't exist
+      if (!fs.existsSync(mainPath)) {
+        fs.writeFileSync(mainPath, gitShowOutput)
+        logger.info(`  🔄 Restored ${file} from git to main location`)
+      }
+    } catch {
+      // File not in git, that's OK - it may not have been created yet
+    }
+  }
+}
 
 // ============================================================================
 // Stage Definitions
@@ -143,16 +196,31 @@ function createStageDefinitions(ctx: PipelineContext): Map<StageName, StageDefin
       if (complexitySkip.shouldSkip) return complexitySkip
       return skipIfSpecOnly(ctx)
     },
+    preExecute: async (ctx) => {
+      // Restore prev-run files from git if they're missing
+      // This handles the case where pipeline restarts after architect previously succeeded
+      await restorePrevRunFiles(ctx.taskDir, ctx.taskId)
+    },
     postActions: [
       { type: 'archive-rerun-feedback' },
       { type: 'check-gate', gate: 'architect', includeArtifact: 'plan.md' },
     ],
     fallbackOnMissingOutput: (ctx) => {
-      // Fallback: use context.md as a rough plan when agent forgets to write plan.md
-      // This happens when agent does extensive research but runs out of output capacity
+      // Fallback: try to use existing plan.md, context.md, or restore from git
       const planFile = path.join(ctx.taskDir, 'plan.md')
       if (fs.existsSync(planFile)) return null // File exists, no fallback needed
 
+      // First try: restore from git (handles case where pipeline restarted but git has the file)
+      const prevRunPlan = path.join(ctx.taskDir, 'prev-run', 'plan.md')
+      if (fs.existsSync(prevRunPlan)) {
+        // Copy to main location
+        fs.copyFileSync(prevRunPlan, planFile)
+        logger.info(`  ℹ️ Restored plan.md from prev-run/`)
+        return null // File now exists, let stage proceed
+      }
+
+      // Second try: use context.md as a rough plan
+      // This happens when agent does extensive research but runs out of output capacity
       const contextFile = path.join(ctx.taskDir, 'context.md')
       if (fs.existsSync(contextFile)) {
         const contextContent = fs.readFileSync(contextFile, 'utf-8')
