@@ -3,63 +3,11 @@
   "taskId": "260316-auto-648",
   "mode": "full",
   "pipeline": "spec_execute_verify",
-  "startedAt": "2026-03-16T17:17:56.064Z",
-  "updatedAt": "2026-03-17T14:22:53.030Z",
-  "state": "paused",
-  "cursor": "architect",
-  "stages": {
-    "taskify": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-03-16T17:17:57.448Z",
-      "completedAt": "2026-03-16T18:08:42.423Z",
-      "elapsed": 183,
-      "outputFile": "taskify.md",
-      "tokenUsage": {
-        "input": 5713,
-        "output": 3413,
-        "cacheRead": 191712
-      },
-      "sessionId": "ses_308586855ffeJZnXPphPx22xea"
-    },
-    "gap": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-03-16T18:08:43.843Z",
-      "completedAt": "2026-03-16T18:14:34.559Z",
-      "elapsed": 351,
-      "outputFile": "gap.md",
-      "tokenUsage": {
-        "input": 42525,
-        "output": 7658,
-        "cacheRead": 1658080
-      },
-      "sessionId": "ses_30829f29bffeuzF5OYJ2yXw5E5"
-    },
-    "architect": {
-      "state": "paused",
-      "retries": 0,
-      "startedAt": "2026-03-17T14:14:43.407Z",
-      "completedAt": "2026-03-17T14:22:50.573Z",
-      "elapsed": 487,
-      "outputFile": "architect.md",
-      "tokenUsage": {
-        "input": 32,
-        "output": 19383,
-        "cacheRead": 3042931
-      },
-      "cost": 2.7947254999999993,
-      "sessionId": "ses_303d9d32cffefiLF0RLU2vk3S0"
-    },
-    "plan-gap": {
-      "state": "pending",
-      "retries": 0
-    },
-    "build": {
-      "state": "pending",
-      "retries": 0
-    }
-  },
+  "startedAt": "2026-03-17T14:50:57.310Z",
+  "updatedAt": "2026-03-17T14:50:57.310Z",
+  "state": "running",
+  "cursor": null,
+  "stages": {},
   "issueNumber": 822,
   "triggeredBy": "aguyaharonyair",
   "issueCreator": "aguyaharonyair",
@@ -67,9 +15,7 @@
     {
       "action": "pipeline-triggered",
       "actor": "aguyaharonyair",
-      "timestamp": "2026-03-16T17:17:56.064Z"
+      "timestamp": "2026-03-17T14:50:57.310Z"
     }
-  ],
-  "completedAt": "2026-03-17T14:22:53.030Z",
-  "totalCost": 2.7947254999999993
+  ]
 }
