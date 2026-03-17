@@ -101,6 +101,8 @@
     "cody:systest": "gh workflow run cody-system-test.yml",
     "cody:systest:run": "pnpm tsx scripts/system-test/run-scenario.ts --scenario 02-full-high-complexity --repo A-Guy-educ/A-Guy",
     "cody:systest:cleanup": "pnpm tsx scripts/system-test/cleanup-all.ts --repo A-Guy-educ/A-Guy",
+    "cody:cli-test": "pnpm tsx scripts/cody-cli-test/run.ts",
+    "cody:cli-test:run": "pnpm tsx scripts/cody-cli-test/run.ts --scenario 01-status-mode",
     "tunnel:ocode": "pnpm tsx scripts/tunnel-opencode.ts",
     "remote:agent": "tsx scripts/remote-agent/server.ts",
     "remote:agent:dev": "tsx watch scripts/remote-agent/server.ts",
