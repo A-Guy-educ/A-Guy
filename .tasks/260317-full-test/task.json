@@ -1,20 +1,23 @@
 {
-  "task_type": "docs",
+  "task_type": "research",
   "risk_level": "low",
-  "confidence": 1,
+  "confidence": 0.05,
   "primary_domain": "product",
-  "scope": [
-    "docs/test/full-pipeline.md"
+  "scope": [],
+  "missing_inputs": [
+    {
+      "field": "description",
+      "question": "The task description only says 'Hello' with no actionable content. What do you want to accomplish? Please provide a description of the feature, bug fix, or other work to be done."
+    }
   ],
-  "missing_inputs": [],
   "assumptions": [],
   "review_questions": [],
-  "complexity": 3,
-  "complexity_reasoning": "Scope: 2 (single file creation), Risk: 0 (just docs), Novelty: 0 (simple task), Cross: 0 (single domain), Ambiguity: 0 (clear), Deps: 0 (no dependencies). Total: 2",
+  "complexity": 1,
+  "complexity_reasoning": "Scope: 0. Risk: 0. Novelty: 0. Cross-domain: 0. Ambiguity: 10. Dependencies: 0. Total: 10 (capped at 1 due to no actual work described)",
   "input_quality": {
-    "level": "detailed_plan",
+    "level": "raw_idea",
     "skip_stages": [],
-    "reasoning": "Task contains clear file path, content, and verification step. Has implementation steps with file paths."
+    "reasoning": "Task description contains only 'Hello' with no requirements, acceptance criteria, or implementation details. Cannot assess quality — input is essentially empty."
   },
   "pipeline_profile": "standard",
   "pipeline": "spec_only"
