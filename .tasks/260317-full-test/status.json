@@ -3,83 +3,15 @@
   "taskId": "260317-full-test",
   "mode": "full",
   "pipeline": "spec_execute_verify",
-  "startedAt": "2026-03-17T21:10:02.528Z",
-  "updatedAt": "2026-03-17T21:13:27.811Z",
+  "startedAt": "2026-03-17T21:16:06.556Z",
+  "updatedAt": "2026-03-17T21:16:06.561Z",
   "state": "running",
   "cursor": null,
   "stages": {
     "taskify": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-03-17T21:10:02.537Z",
-      "completedAt": "2026-03-17T21:11:26.164Z",
-      "elapsed": 84,
-      "outputFile": "taskify.md",
-      "tokenUsage": {
-        "input": 3218,
-        "output": 2437,
-        "cacheRead": 184189
-      },
-      "sessionId": "ses_3025d9e02ffeplVqPLUksJQWV1"
-    },
-    "gap": {
-      "state": "skipped",
-      "retries": 0,
-      "skipped": "Complexity 20 (moderate) below threshold 35 for gap"
-    },
-    "architect": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-03-17T21:11:33.271Z",
-      "completedAt": "2026-03-17T21:12:24.317Z",
-      "elapsed": 51,
-      "outputFile": "architect.md",
-      "tokenUsage": {
-        "input": 7,
-        "output": 2094,
-        "cacheRead": 221797
-      },
-      "sessionId": "ses_3025c3d4affenBRsOsPmtb8wyS"
-    },
-    "plan-gap": {
-      "state": "skipped",
-      "retries": 0,
-      "skipped": "Complexity 20 (moderate) below threshold 50 for plan-gap"
-    },
-    "build": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-03-17T21:12:24.327Z",
-      "completedAt": "2026-03-17T21:13:14.200Z",
-      "elapsed": 50,
-      "outputFile": "build.md",
-      "tokenUsage": {
-        "input": 5266,
-        "output": 932,
-        "cacheRead": 304005
-      },
-      "sessionId": "ses_3025b756fffen9o7Fm8UB0bVdK"
-    },
-    "commit": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-17T21:13:27.811Z"
-    },
-    "review": {
-      "state": "pending",
-      "retries": 0
-    },
-    "fix": {
-      "state": "pending",
-      "retries": 0
-    },
-    "verify": {
-      "state": "pending",
-      "retries": 0
-    },
-    "pr": {
-      "state": "pending",
-      "retries": 0
+      "startedAt": "2026-03-17T21:16:06.561Z"
     }
   }
 }

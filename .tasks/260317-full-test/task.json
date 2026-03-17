@@ -1,8 +1,8 @@
 {
-  "task_type": "implement_feature",
+  "task_type": "ops",
   "risk_level": "low",
   "confidence": 1,
-  "primary_domain": "product",
+  "primary_domain": "devops",
   "scope": [
     "docs/test/full-pipeline.md"
   ],
@@ -10,12 +10,12 @@
   "assumptions": [],
   "review_questions": [],
   "complexity": 5,
-  "complexity_reasoning": "Scope: 1 (single file), Risk: 1 (simple file creation), Novelty: 1 (trivial), Cross: 0, Ambiguity: 1 (crystal clear), Deps: 0 (no deps). Total: 4",
+  "complexity_reasoning": "Scope: 5 (single file creation), Risk: 0 (test file in docs), Novelty: 0 (follows exact instructions), Cross-domain: 0 (single domain), Ambiguity: 0 (crystal clear), Dependency: 0 (self-contained). Total: 5",
   "input_quality": {
-    "level": "good_spec",
+    "level": "detailed_plan",
     "skip_stages": [],
-    "reasoning": "Input has ## Task, ## Implementation steps (2), and ## Verify criteria (2 checkable items). Promoted spec.md."
+    "reasoning": "Input contains step-by-step implementation with file path (docs/test/full-pipeline.md) and verification steps. This qualifies as detailed_plan level."
   },
-  "pipeline_profile": "standard",
+  "pipeline_profile": "lightweight",
   "pipeline": "spec_execute_verify"
 }
