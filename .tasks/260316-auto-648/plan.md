@@ -1,380 +1,430 @@
-# Plan: 260316-auto-648 — QA Implementation (Critical + High Priority)
+# Plan: 260316-auto-648 — QA Implementation Plan (Critical + High Priority)
 
 ## Rerun Context
 
-This is rerun #2. The previous build agent made progress implementing many steps (headers, error boundary, env validation, sentry coverage, etc.) but the pipeline failed at the build stage. The previous build's code changes were reset. This plan is refined from the previous plan with lessons learned from the build events — the implementation approach was sound but the agent ran out of context/time. This plan is streamlined: fewer test steps, clearer priorities, and a recommended execution order that front-loads quick wins.
+The previous run completed the build but failed at the commit stage: "Committed (f1e6d58) but push failed after rebase." The commit was lost during the failed rebase. This is a fresh re-implementation of the same plan. All source files are in their original (unmodified) state.
 
-**Key learnings from previous run:**
-- Step 1 (security headers) was implemented successfully — same approach works
-- Step 2 (error boundary) was implemented successfully — same approach works  
-- Step 3 (env validation) was implemented successfully — same approach works
-- Steps 5-7 (Sentry coverage) were implemented but the agent hit context limits
-- Step 4 (cherry-pick) should be done FIRST to avoid conflicts with other changes
-- Tests should be minimal (file-existence checks, not mock-heavy) to save agent time
+**Key discovery**: The E2E tests (Item 4 in spec) have already been merged via PR #784. The `tests/e2e/verification/` folder with all 8 spec files already exists. This step is **SKIPPED**.
 
 ## Research Findings
 
-### File Paths Verified
-- `next.config.js` ✅ exists (103 lines, no `headers()` function — needs adding)
-- `src/app/global-error.tsx` ✅ exists (48 lines — reference pattern)
-- `src/app/(frontend)/error.tsx` 🆕 will create
-- `src/app/(frontend)/layout.tsx` ✅ exists (confirms route group)
-- `src/infra/config/env-validation.ts` 🆕 will create
-- `instrumentation.ts` ✅ exists (13 lines, needs env validation hook)
-- `src/infra/instrumentation-client.ts` ✅ exists (27 lines, missing browserTracingIntegration)
-- `src/ui/cody/github-error-handler.ts` ✅ exists (127 lines, no Sentry import)
-- `src/server/api/capture-and-respond.ts` ✅ exists (30 lines — proven pattern)
-- `src/server/api/with-api-handler.ts` ✅ exists (117 lines — reference)
-- `.github/workflows/ci.yml` ✅ exists (280 lines, test:unit on line 66)
-- `vitest.config.unit.mts` ✅ exists (54 lines — already has full coverage config)
-- Cherry-pick commit `9631fe7b` ✅ accessible (11 files, 1085 insertions)
+- `next.config.js` ✅ exists — no `headers()` function present (line 80-81, needs insertion before `reactStrictMode`)
+- `src/app/(frontend)/error.tsx` 🆕 will create — parent dir exists
+- `src/infra/config/env-validation.ts` 🆕 will create — parent dir `src/infra/config/` exists with 6 other files
+- `instrumentation.ts` ✅ exists — 13 lines, needs env validation call in nodejs block
+- `src/infra/instrumentation-client.ts` ✅ exists — 27 lines, missing `browserTracingIntegration`
+- `src/ui/cody/github-error-handler.ts` ✅ exists — 127 lines, uses `console.error` only, no Sentry import
+- `src/server/api/capture-and-respond.ts` ✅ exists — utility with `Sentry.captureException` pattern
+- `src/server/api/with-api-handler.ts` ✅ exists — wrapper pattern with Zod + Sentry + auth
+- `.github/workflows/ci.yml` ✅ exists — line 66 runs `pnpm test:unit` (no --coverage)
+- `vitest.config.unit.mts` ✅ exists — already has full coverage config (provider v8, thresholds)
+- `package.json` ✅ has `test:unit:coverage` script already defined
+- `tests/e2e/verification/` ✅ already exists — 8 spec files merged via PR #784
 
-### Patterns Observed
-- Error boundaries: `'use client'` + `useEffect` → `Sentry.captureException` + locale via `navigator.language`
-- `captureAndRespond`: logs + Sentry capture + returns 500 JSON response
-- Existing codebase uses dynamic import: `const { captureAndRespond } = await import('@/server/api/capture-and-respond')`
-- Cody routes use `requireCodyAuth()` + `handleCodyApiError` for error handling
-- `instrumentation.ts` uses `@/` alias for dynamic imports (not relative `./src/`)
+**Patterns observed:**
+- Error boundary pattern: `src/app/global-error.tsx` — 'use client', Sentry.captureException in useEffect, Hebrew/English locale detection, Tailwind styling
+- `captureAndRespond` pattern: import + call in catch blocks — `captureAndRespond(error, { route: '...' })`
+- `withApiHandler` pattern: `export const POST = withApiHandler<TBody, TQuery>({ auth, bodySchema }, async (ctx) => { ... })`
+- Cody routes use `handleCodyApiError(error, routeName)` — currently calls `console.error`, no Sentry
+
+**Integration points:**
+- `handleCodyApiError` is imported by 14+ Cody API routes — single change fixes all
+- `instrumentation.ts` register() runs at Node.js startup — env validation goes here
+- Vitest already has coverage config — CI just needs `--coverage` flag (or use `test:unit:coverage` script)
 
 ## Reuse Inventory
 
-### Existing Utilities to Reuse
-- `captureAndRespond` from `src/server/api/capture-and-respond.ts`
-- `Sentry` from `@sentry/nextjs` — already used across codebase
-- `z` from `zod` — already used in many routes
+| Existing Utility | Import Path | Used In |
+|---|---|---|
+| `captureAndRespond` | `@/server/api/capture-and-respond` | Steps 5-6 (6 non-Cody routes) |
+| `withApiHandler` | `@/server/api/with-api-handler` | Step 7 (4 high-traffic routes) |
+| `handleCodyApiError` | `@/ui/cody/github-error-handler` | Step 4 (add Sentry to it) |
+| `Sentry.*` | `@sentry/nextjs` | Steps 2, 4, 5, 6, 7, 8, 10 |
+| `logger` | `@/infra/utils/logger/logger` | Already in most routes |
+| `z` from `zod` | `zod` | Steps 3, 7, 8 |
+| Global error pattern | `src/app/global-error.tsx` | Step 2 reference |
+| `test:unit:coverage` script | `package.json` | Step 9 CI change |
 
-### NEW Utilities
-- `src/infra/config/env-validation.ts` — No existing env validation exists
-
----
-
-## Step 1: Cherry-pick E2E Tests [FR-004]
-
-**Files to Touch**:
-- `tests/e2e/helpers/admin.ts` (NEW — from cherry-pick)
-- `tests/e2e/helpers/exercise-builders.ts` (NEW — from cherry-pick)
-- `tests/e2e/helpers/verification-fixtures.ts` (NEW — from cherry-pick)
-- `tests/e2e/verification/*.e2e.spec.ts` (8 NEW spec files — from cherry-pick)
-
-**Exact Behavior**:
-Run `git cherry-pick --no-commit 9631fe7b` to bring in the pre-launch E2E verification suite without auto-committing. This keeps changes staged for the final commit. If conflicts arise, resolve by keeping dev branch patterns.
-
-The commit adds 11 files:
-- 3 helper files in `tests/e2e/helpers/`
-- 8 spec files in `tests/e2e/verification/`
-
-**Tests**: No additional tests needed — the cherry-pick itself contains 8 test spec files.
-
-**Acceptance Criteria**:
-- [ ] All 11 files from commit `9631fe7b` present in working tree
-- [ ] No merge conflicts remain
+**New utilities (justified):**
+- `src/infra/config/env-validation.ts` — No existing env validation exists anywhere in codebase. Required by spec FR-003.
 
 ---
 
-## Step 2: Security Headers in next.config.js [FR-001]
+## Steps
+
+### Step 1: Security Headers in next.config.js
+**Spec**: FR-001 (Phase 1 - Critical)
 
 **Files to Touch**:
-- `next.config.js` (MODIFIED — add `async headers()` property to `nextConfig` object before `reactStrictMode`)
+- `next.config.js` (MODIFIED — insert `async headers()` function into `nextConfig` object, between line 81 and `reactStrictMode`)
 
 **Exact Behavior**:
-Add an `async headers()` function inside the `nextConfig` object (before line 80 `reactStrictMode`) that returns two header groups:
-
-1. **All routes** (`/:path*`): Strict security headers
-   - `Content-Security-Policy`: `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' *.blob.vercel-storage.com img.youtube.com avatars.githubusercontent.com data:; font-src 'self'; connect-src 'self' *.sentry.io; frame-src 'self' www.youtube.com; object-src 'none'; base-uri 'self'; form-action 'self'`
+Add `async headers()` returning an array with two entries:
+1. `source: '/((?!admin).*)` — Strict CSP for all non-admin routes:
+   - `Content-Security-Policy`: `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.blob.vercel-storage.com https://img.youtube.com https://avatars.githubusercontent.com; connect-src 'self' https://*.blob.vercel-storage.com /monitoring https://*.sentry.io; font-src 'self'; frame-src https://www.youtube.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'`
    - `X-Frame-Options`: `DENY`
    - `Strict-Transport-Security`: `max-age=31536000; includeSubDomains`
    - `X-Content-Type-Options`: `nosniff`
    - `Referrer-Policy`: `strict-origin-when-cross-origin`
    - `Permissions-Policy`: `camera=(), microphone=(), geolocation=()`
    - `X-DNS-Prefetch-Control`: `on`
+2. `source: '/admin/:path*'` — Permissive CSP for Payload admin:
+   - `Content-Security-Policy`: `default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.blob.vercel-storage.com; connect-src 'self' https://*.blob.vercel-storage.com /monitoring https://*.sentry.io; font-src 'self'; frame-src 'self'; object-src 'none'`
+   - Same non-CSP security headers as above
 
-2. **Admin routes** (`/admin/:path*`): Override CSP only
-   - `Content-Security-Policy`: `default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' *.blob.vercel-storage.com avatars.githubusercontent.com data: blob:; font-src 'self' data:; connect-src 'self' *.sentry.io; frame-src 'self'; object-src 'none'; base-uri 'self'`
-   - All other 6 headers same as general routes
-
-**Tests**:
+**Tests** (FAIL before, PASS after):
 - Test location: `tests/unit/config/security-headers.spec.ts`
-- Test 1: Verify `nextConfig.headers` is a function by importing the config and calling `headers()`, assert it returns 2 header groups
-- Test 2: Verify admin route CSP contains `unsafe-eval`
+- Test 1: Import the headers function from next.config.js, verify it returns array with 2 entries
+- Test 2: Verify strict CSP does NOT contain 'unsafe-eval'
+- Test 3: Verify admin CSP contains 'unsafe-eval' and 'unsafe-inline'
+- Test 4: Verify all 7 security headers are present in both route entries
 
-**Acceptance Criteria**:
-- [ ] `headers()` function exists in next.config.js
-- [ ] General routes have strict CSP (no `unsafe-eval`)
-- [ ] Admin routes have permissive CSP with `unsafe-eval`
-- [ ] All 7 headers present on both route patterns
+**Acceptance**:
+- [ ] `headers()` function exists in nextConfig
+- [ ] Strict CSP applies to non-admin routes (no unsafe-eval)
+- [ ] Admin CSP has unsafe-eval + unsafe-inline
+- [ ] All 7 headers present: CSP, X-Frame-Options, HSTS, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, X-DNS-Prefetch-Control
 
 ---
 
-## Step 3: Frontend Error Boundary [FR-002]
+### Step 2: Frontend Error Boundary
+**Spec**: FR-002 (Phase 1 - Critical)
 
 **Files to Touch**:
 - `src/app/(frontend)/error.tsx` (NEW)
 
 **Exact Behavior**:
-Create a client component error boundary following `global-error.tsx` pattern but without `<html>/<body>` wrapper (route-group boundaries render inside the layout):
+Create a client component that mirrors `src/app/global-error.tsx`:
 - `'use client'` directive
-- Import `* as Sentry from '@sentry/nextjs'` and `useEffect` from `'react'`
-- `useEffect(() => { Sentry.captureException(error) }, [error])`
-- Detect Hebrew: `typeof navigator !== 'undefined' && navigator.language?.startsWith('he')`
-- Content object with: heading, description, tryAgain, reload — bilingual
-- Show error message in `<pre>` tag if available
-- Two buttons: "Try again" (`reset()`) and "Reload page" (`window.location.reload()`)
-- Tailwind classes: `flex flex-col items-center justify-center min-h-screen p-5 text-center`
+- Imports: `* as Sentry` from `@sentry/nextjs`, `useEffect` from `react`
+- Props: `{ error: Error & { digest?: string }, reset: () => void }`
+- `useEffect` calls `Sentry.captureException(error)` when error changes
+- Detect browser language: `navigator.language?.startsWith('he')` → Hebrew/English content
+- Show heading + "Try again" button calling `reset()`
+- Tailwind: `flex flex-col items-center justify-center min-h-screen p-5 text-center`
+- Button: `mt-4 rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90 transition-colors`
+- **Key difference from global-error.tsx**: No `<html>` / `<body>` wrapper (this is a nested error boundary within the layout)
 
-**Tests**:
-- Test location: `tests/unit/frontend/error-boundary.spec.tsx`
-- Test 1: Import and render FrontendError component, verify it calls `Sentry.captureException` (mock Sentry)
-- Test 2: Verify "Try again" button exists and calls `reset()`
+**Tests** (FAIL before, PASS after):
+- Test location: `tests/unit/config/frontend-error-boundary.spec.ts`
+- Test 1: Component renders heading text and try again button
+- Test 2: Sentry.captureException is called with the error
+- Test 3: Hebrew content shows when navigator.language starts with 'he'
 
-**Acceptance Criteria**:
+**Acceptance**:
 - [ ] File exists at `src/app/(frontend)/error.tsx`
-- [ ] Has `'use client'` directive
-- [ ] Calls `Sentry.captureException` in useEffect
-- [ ] Locale-aware (Hebrew/English)
-- [ ] Reset + reload buttons
+- [ ] Has 'use client' directive
+- [ ] Calls Sentry.captureException in useEffect
+- [ ] Locale-aware Hebrew/English text
+- [ ] "Try again" button calls reset()
 
 ---
 
-## Step 4: Env Variable Validation [FR-003]
+### Step 3: Env Variable Validation
+**Spec**: FR-003 (Phase 1 - Critical)
 
 **Files to Touch**:
 - `src/infra/config/env-validation.ts` (NEW)
-- `instrumentation.ts` (MODIFIED — add validateEnv call in nodejs block)
+- `instrumentation.ts` (MODIFIED — lines 4-6, add env validation call)
 
 **Exact Behavior**:
 
-`env-validation.ts`:
+**env-validation.ts**:
 - Import `z` from `zod`
-- Define required schema: `z.object({ DATABASE_URL: z.string().min(1), PAYLOAD_SECRET: z.string().min(1), BLOB_READ_WRITE_TOKEN: z.string().min(1) })`
-- Define optional server var names: `['SENTRY_DSN', 'OPENAI_API_KEY', 'GEMINI_API_KEY', 'GITHUB_TOKEN']`
-- Define public var names: `['NEXT_PUBLIC_SERVER_URL', 'NEXT_PUBLIC_SENTRY_DSN']`
-- Export `validateEnv()` that:
-  1. Parses `process.env` against required schema — on failure, throws with formatted error listing each missing var
-  2. Loops optional vars — `console.warn` for each missing/empty one
-  3. Loops public vars — `console.warn` for each missing/empty one
+- Define `serverEnvSchema` with required vars: `DATABASE_URL` (`z.string().min(1)`), `PAYLOAD_SECRET` (`z.string().min(1)`), `BLOB_READ_WRITE_TOKEN` (`z.string().min(1)`)
+- Define `optionalEnvVars` array: `['SENTRY_DSN', 'OPENAI_API_KEY', 'GEMINI_API_KEY', 'GITHUB_TOKEN']`
+- Define `publicEnvSchema` with: `NEXT_PUBLIC_SERVER_URL` (`z.string().optional()`), `NEXT_PUBLIC_SENTRY_DSN` (`z.string().optional()`)
+- Export `validateEnv()` function that:
+  1. Parses `process.env` with `serverEnvSchema.parse()` — throws on missing required vars (stops app)
+  2. Loops over `optionalEnvVars` — logs warning with `console.warn` for each missing one (does NOT throw)
+  3. Parses public vars with `publicEnvSchema.parse()` — optional, warns if missing
 
-`instrumentation.ts`:
-- Inside the `nodejs` runtime block, after `await import('./sentry.server.config')`, add:
-  ```ts
-  const { validateEnv } = await import('@/infra/config/env-validation')
-  validateEnv()
-  ```
+**instrumentation.ts**:
+- Inside the `if (process.env.NEXT_RUNTIME === 'nodejs')` block, after sentry import:
+  - Import and call `validateEnv()` from `@/infra/config/env-validation`
 
-**Tests**:
+**Tests** (FAIL before, PASS after):
 - Test location: `tests/unit/config/env-validation.spec.ts`
-- Test 1: `validateEnv()` with all required env vars set → no throw
-- Test 2: `validateEnv()` with `DATABASE_URL` missing → throws mentioning "DATABASE_URL"
-- Test 3: `validateEnv()` with optional var missing → warns, no throw
+- Test 1: `validateEnv()` throws when DATABASE_URL is missing
+- Test 2: `validateEnv()` throws when PAYLOAD_SECRET is missing
+- Test 3: `validateEnv()` throws when BLOB_READ_WRITE_TOKEN is missing
+- Test 4: `validateEnv()` succeeds when all required vars present (does NOT throw)
+- Test 5: `validateEnv()` logs warning for missing optional vars (does NOT throw)
 
-**Acceptance Criteria**:
-- [ ] `validateEnv()` throws on missing required vars
-- [ ] `validateEnv()` warns on missing optional vars
-- [ ] `instrumentation.ts` calls `validateEnv()` in nodejs runtime block
+**Acceptance**:
+- [ ] `env-validation.ts` created with Zod schema
+- [ ] Required vars throw on missing
+- [ ] Optional vars log warning but don't throw
+- [ ] `instrumentation.ts` calls `validateEnv()` in nodejs block
 
 ---
 
-## Step 5: Enhance handleCodyApiError with Sentry [FR-005a]
+### Step 4: Enhance handleCodyApiError with Sentry
+**Spec**: FR-005a (Phase 2 - Sentry Coverage)
 
 **Files to Touch**:
-- `src/ui/cody/github-error-handler.ts` (MODIFIED — add Sentry import + captureException call)
+- `src/ui/cody/github-error-handler.ts` (MODIFIED — add Sentry import at line 1, add captureException call before each `return` in `handleCodyApiError`)
 
 **Exact Behavior**:
-1. Add `import * as Sentry from '@sentry/nextjs'` at top of file (after existing imports)
-2. At the beginning of `handleCodyApiError` function (line 75, after `safeMessage` extraction), add:
-   ```ts
-   Sentry.captureException(error, {
-     tags: { route: `cody/${routeName}` },
-   })
-   ```
-   This single change covers all 20+ Cody routes that call `handleCodyApiError`.
+- Add `import * as Sentry from '@sentry/nextjs'` at top of file
+- At the start of `handleCodyApiError` function (after line 75, the safeMessage extraction), add:
+  ```
+  Sentry.captureException(error, {
+    tags: { route: `cody/${routeName}` },
+  })
+  ```
+- This single change covers all 20+ Cody routes that call `handleCodyApiError`
 
-**Tests**:
-- Test location: `tests/unit/cody/github-error-handler-sentry.spec.ts`  
-- Test 1: Call `handleCodyApiError(new Error('test'), 'test-route')` → verify `Sentry.captureException` called with the error
+**Tests** (FAIL before, PASS after):
+- Test location: `tests/unit/cody-api-error-sentry.spec.ts`
+- Test 1: `handleCodyApiError` calls `Sentry.captureException` for unknown errors
+- Test 2: `handleCodyApiError` calls `Sentry.captureException` for OctokitError with 500 status
+- Test 3: `handleCodyApiError` calls `Sentry.captureException` with correct route tag
 
-**Acceptance Criteria**:
-- [ ] `Sentry.captureException` called for all error types
-- [ ] Existing error response mapping unchanged
-- [ ] Existing `console.error` calls preserved
+**Acceptance**:
+- [ ] Sentry import added
+- [ ] Every error path calls `Sentry.captureException`
+- [ ] All 20+ Cody routes now report to Sentry (no individual route changes needed)
 
 ---
 
-## Step 6: Add Sentry to 6 Non-Cody Routes [FR-005b]
+### Step 5: Add captureAndRespond to 6 Non-Cody Routes
+**Spec**: FR-005b (Phase 2 - Sentry Coverage)
 
 **Files to Touch**:
-- `src/app/api/conversations/by-context/route.ts` (MODIFIED — 3 catch blocks around lines 58, 120, 150)
+- `src/app/api/conversations/by-context/route.ts` (MODIFIED — 3 catch blocks at lines 58, 120, 150)
 - `src/app/api/blob/upload-token/route.ts` (MODIFIED — catch block at line 143)
-- `src/app/api/jobs/run-immediate/route.ts` (MODIFIED — catch block around line 159)
-- `src/app/api/pdfjs-viewer/route.ts` (MODIFIED — catch block around line 111)
+- `src/app/api/jobs/run-immediate/route.ts` (MODIFIED — catch block at line 159)
+- `src/app/api/pdfjs-viewer/route.ts` (MODIFIED — catch block at line 111)
 - `src/app/api/copilotkit/route.ts` (MODIFIED — catch block at line 161)
-- `src/app/api/agent/message/persist/route.ts` (MODIFIED — non-Zod catch path at line 116)
+- `src/app/api/agent/message/persist/route.ts` (MODIFIED — catch block at line 116)
 
 **Exact Behavior**:
-For each route, add `import * as Sentry from '@sentry/nextjs'` at the top, then add `Sentry.captureException(error)` in each catch block alongside existing logging. Do NOT replace existing error response logic — just add the Sentry capture call.
+In each catch block, replace `console.error` / `logger.error` + NextResponse.json with:
+```typescript
+import { captureAndRespond } from '@/server/api/capture-and-respond'
+// ...
+} catch (error) {
+  return captureAndRespond(error, { route: '/api/...' })
+}
+```
 
-Specific per route:
-- **conversations/by-context**: Add `Sentry.captureException(error)` before each `return NextResponse.json` in the 3 catch blocks (GET/POST/DELETE)
-- **blob/upload-token**: The outer catch is bare `catch {` — change to `catch (error) {` and add `Sentry.captureException(error)` before the error response
-- **jobs/run-immediate**: Add `Sentry.captureException(error)` alongside existing `logger.error` in main catch
-- **pdfjs-viewer**: Add `Sentry.captureException(error)` alongside existing `reqLogger.error`
-- **copilotkit**: Add `Sentry.captureException(error)` alongside existing `logger.error`
-- **agent/message/persist**: Add `Sentry.captureException(error)` in the non-ZodError branch of catch block
+**Specific notes per route:**
+- `conversations/by-context`: 3 handlers (GET at line 58, POST at line 120, DELETE at line 150) — each gets captureAndRespond
+- `blob/upload-token`: Bare `catch {}` at line 143 — needs `(error)` parameter added
+- `jobs/run-immediate`: Keep the inner try/catch for job status update, but add Sentry to outer catch
+- `pdfjs-viewer`: Simple replacement
+- `copilotkit`: Simple replacement
+- `agent/message/persist`: Keep ZodError check (`if (error instanceof z.ZodError)` at line 112) — only add captureAndRespond to the else branch (non-validation errors)
 
-**Tests**:
-- No dedicated test file for this step — verification via `pnpm -s tsc --noEmit` and manual grep confirming Sentry import in all 6 files
+**Tests** (FAIL before, PASS after):
+- Test location: `tests/unit/api/sentry-coverage.spec.ts`
+- Test 1: Verify `captureAndRespond` import exists in each of the 6 route files (static analysis / grep)
+- (Integration-level validation happens via typecheck — if imports are wrong, tsc fails)
 
-**Acceptance Criteria**:
-- [ ] All 6 routes have `Sentry.captureException(error)` in catch blocks
-- [ ] All 6 routes import `@sentry/nextjs`
-- [ ] Existing error responses unchanged
-- [ ] TypeScript compiles
+**Acceptance**:
+- [ ] All 6 routes import and use `captureAndRespond`
+- [ ] No `console.error` in catch blocks (replaced with captureAndRespond)
+- [ ] Agent/message/persist still handles ZodError separately
+- [ ] blob/upload-token catch has error parameter
 
 ---
 
-## Step 7: Add Sentry to 4 High-Traffic Routes [FR-005c]
+### Step 6: Add Sentry to 4 High-Traffic Routes (catch blocks)
+**Spec**: FR-005c (Phase 2 - Sentry Coverage)
 
 **Files to Touch**:
-- `src/app/api/agent/chat/route.ts` (MODIFIED — add Sentry import + capture in catch at line 78)
-- `src/app/api/agent/chat/stream/route.ts` (MODIFIED — add Sentry import + capture in catch)
-- `src/app/api/exercises/import/route.ts` (MODIFIED — add Sentry import + capture in catch at line 48)
-- `src/app/api/exercises/validate-answer/route.ts` (MODIFIED — add Sentry import + capture in catch at line 29)
+- `src/app/api/agent/chat/route.ts` (MODIFIED — catch block at line 78)
+- `src/app/api/agent/chat/stream/route.ts` (MODIFIED — catch block at line 88)
+- `src/app/api/exercises/import/route.ts` (MODIFIED — catch block at line 48)
+- `src/app/api/exercises/validate-answer/route.ts` (MODIFIED — catch block at line 29)
 
 **Exact Behavior**:
-For each route, add `import * as Sentry from '@sentry/nextjs'` at top, then add `Sentry.captureException(error, { tags: { route: '<route-path>' } })` in the catch block.
+**NOTE**: The spec says "migrate to withApiHandler" but these routes have complex patterns (they delegate to Payload endpoints via custom PayloadRequest objects). Full migration to withApiHandler would require refactoring the endpoint layer, which is risky and out of scope for a QA fix. Instead, **add Sentry.captureException to the existing catch blocks** — this achieves the same Sentry coverage goal with minimal risk.
 
-**Note**: These routes delegate to deeper endpoint functions (agentChat, agentChatStream, validateAnswer, importExerciseFromLesson/importExerciseFromImage) that accept PayloadRequest-like objects. Full `withApiHandler` migration would require refactoring those downstream functions. The spec's primary goal is Sentry coverage — achieved by adding `Sentry.captureException` to catch blocks.
+For each route, add at the top:
+```typescript
+import * as Sentry from '@sentry/nextjs'
+```
 
-**Tests**:
-- No dedicated test file — verification via `pnpm -s tsc --noEmit`
+In each catch block, add before the return:
+```typescript
+Sentry.captureException(error, {
+  tags: { route: '/api/...' },
+  extra: { requestId },
+})
+```
 
-**Acceptance Criteria**:
-- [ ] All 4 routes have `Sentry.captureException(error)` in catch blocks
-- [ ] Existing request flow unchanged
-- [ ] TypeScript compiles
+This gives all 4 routes Sentry error reporting while preserving their existing behavior.
+
+**Tests** (FAIL before, PASS after):
+- Test location: `tests/unit/api/sentry-coverage.spec.ts` (same file as Step 5)
+- Test 1: Verify `Sentry` import exists in each of the 4 route files
+- (Typecheck validates correct usage)
+
+**Acceptance**:
+- [ ] All 4 routes import `@sentry/nextjs`
+- [ ] All 4 routes call `Sentry.captureException` in catch blocks
+- [ ] Existing behavior preserved (same response format, same status codes)
 
 ---
 
-## Step 8: Zod Validation for 4 Remaining Routes [FR-006]
+### Step 7: Zod Validation for 4 Remaining Routes
+**Spec**: FR-006, FR-008 (Phase 3 - Infrastructure)
 
 **Files to Touch**:
 - `src/app/api/agent/conversation/route.ts` (MODIFIED — add Zod schema + Sentry)
 - `src/app/api/agent/reset-chat/route.ts` (MODIFIED — add Zod schema + Sentry)
-- `src/app/api/cody/tasks/route.ts` (MODIFIED — add Zod schema to POST handler around line 357)
+- `src/app/api/cody/tasks/route.ts` (MODIFIED — add Zod schema to POST handler)
 - `src/app/api/cody/tasks/approve-review/route.ts` (MODIFIED — add Zod schema + Sentry)
 
 **Exact Behavior**:
 
-**agent/conversation** (POST):
-- Add `import { z } from 'zod'` and `import * as Sentry from '@sentry/nextjs'`
-- Add schema: `const bodySchema = z.object({ contextKey: z.string().min(1), exerciseId: z.string().optional() })`
-- Replace manual `if (!body.contextKey)` check with `const validated = bodySchema.parse(body)` and use `validated.contextKey`
-- Add ZodError handling in catch: if `error instanceof z.ZodError`, return 400 with formatted errors
-- Add `Sentry.captureException(error)` for non-Zod errors
+**agent/conversation**: Add `z.object({ contextKey: z.string().min(1), exerciseId: z.string().optional() })` schema. Parse body before the manual `if (!body.contextKey)` check (replace manual check with Zod). Add Sentry.captureException in catch block.
 
-**agent/reset-chat** (POST):
-- Same pattern as conversation but schema: `z.object({ contextKey: z.string().min(1) })`
+**agent/reset-chat**: Add `z.object({ contextKey: z.string().min(1) })` schema. Replace manual check. Add Sentry.captureException in catch block.
 
-**cody/tasks POST**:
-- Add `import { z } from 'zod'` and `import * as Sentry from '@sentry/nextjs'`
-- Add schema: `const createTaskSchema = z.object({ title: z.string().min(1), body: z.string().optional(), labels: z.array(z.string()).optional(), assignees: z.array(z.string()).optional(), actorLogin: z.string().optional(), attachments: z.array(z.any()).optional() })`
-- Replace `if (!title)` with `const validated = createTaskSchema.parse(body)` and use validated fields
-- Add `Sentry.captureException(error)` in catch block alongside existing `console.error`
+**cody/tasks POST**: Add basic Zod schema:
+```typescript
+const createTaskSchema = z.object({
+  title: z.string().min(1),
+  body: z.string().optional(),
+  labels: z.array(z.string()).optional(),
+  assignees: z.array(z.string()).optional(),
+  actorLogin: z.string().min(1),
+  attachments: z.array(z.object({
+    name: z.string(),
+    content: z.string(),
+  })).optional(),
+})
+```
+Parse body with this schema. Keep existing handleCodyApiError in outer catch (it already has Sentry from Step 4).
 
-**cody/tasks/approve-review** (POST):
-- Add `import { z } from 'zod'` and `import * as Sentry from '@sentry/nextjs'`
-- Add schema: `const approveReviewSchema = z.object({ prNumber: z.union([z.string(), z.number()]).transform(Number), actorLogin: z.string().optional() })`
-- Replace manual `if (!prNumber)` with `const validated = approveReviewSchema.parse(body)` and use `validated.prNumber`
-- Add `Sentry.captureException(error)` in catch block alongside existing `console.error`
+**cody/tasks/approve-review**: Add basic Zod schema:
+```typescript
+const approveReviewSchema = z.object({
+  prNumber: z.number().or(z.string().transform(Number)),
+  actorLogin: z.string().min(1),
+})
+```
+Parse body with this schema. Add Sentry to outer catch block.
 
-**Tests**:
+**Tests** (FAIL before, PASS after):
 - Test location: `tests/unit/api/route-zod-validation.spec.ts`
-- Test 1: Conversation schema rejects empty contextKey → ZodError
-- Test 2: Tasks POST schema rejects missing title → ZodError
-- Test 3: Approve-review schema transforms string prNumber "123" to number 123
+- Test 1: agent/conversation rejects body without contextKey (400 response)
+- Test 2: agent/reset-chat rejects body without contextKey (400 response)
+- Test 3: cody/tasks POST rejects body without title (400 response)
+- Test 4: cody/tasks/approve-review rejects body without prNumber (400 response)
 
-**Acceptance Criteria**:
-- [ ] All 4 routes have Zod schemas
-- [ ] Invalid input returns 400 with structured error
-- [ ] All 4 routes have Sentry capture
-- [ ] Existing auth checks preserved (requireCodyAuth, verifyActorLogin)
+**Acceptance**:
+- [ ] All 4 routes use Zod for input validation
+- [ ] Invalid input returns 400 with validation error
+- [ ] Valid input passes through unchanged
+- [ ] Sentry coverage in catch blocks
 
 ---
 
-## Step 9: CI Coverage Enforcement [FR-007]
+### Step 8: CI Coverage Enforcement
+**Spec**: FR-007 (Phase 3 - Infrastructure)
 
 **Files to Touch**:
-- `.github/workflows/ci.yml` (MODIFIED — line 66 + new step)
+- `.github/workflows/ci.yml` (MODIFIED — line 66, change test command + add artifact upload step)
 
 **Exact Behavior**:
-1. Change line 66 from `run: pnpm test:unit` to `run: pnpm test:unit -- --coverage`
-2. Add a new step immediately after:
-   ```yaml
-   - name: Upload coverage report
-     if: always()
-     uses: actions/upload-artifact@v4
-     with:
-       name: coverage-report
-       path: coverage/
-       retention-days: 7
-   ```
+1. Change line 66 from `run: pnpm test:unit` to `run: pnpm test:unit:coverage` (uses existing npm script that adds --coverage)
+2. Add new step after the unit tests step:
+```yaml
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
+```
 
-**NOTE**: `vitest.config.unit.mts` already has coverage configuration (provider: 'v8', thresholds, reporters). No changes needed there.
+**NOTE**: `vitest.config.unit.mts` already has full coverage config (v8 provider, thresholds, reporters). No changes needed there.
 
-**Tests**: No unit test needed — CI configuration change.
+**Tests** (FAIL before, PASS after):
+- No unit test — this is a CI config change
+- Verify via visual inspection of ci.yml
 
-**Acceptance Criteria**:
-- [ ] `pnpm test:unit -- --coverage` in ci.yml fast-gate job
+**Acceptance**:
+- [ ] CI runs `pnpm test:unit:coverage` instead of `pnpm test:unit`
 - [ ] Coverage report uploaded as artifact
-- [ ] `vitest.config.unit.mts` unchanged
+- [ ] No changes to vitest.config.unit.mts (already configured)
 
 ---
 
-## Step 10: Web Vitals Tracking [FR-008]
+### Step 9: Web Vitals Tracking
+**Spec**: FR-008, FR-010 (Phase 3 - Infrastructure)
 
 **Files to Touch**:
-- `src/infra/instrumentation-client.ts` (MODIFIED — add browserTracingIntegration to integrations array)
+- `src/infra/instrumentation-client.ts` (MODIFIED — line 21, add browserTracingIntegration)
 
 **Exact Behavior**:
-Add `Sentry.browserTracingIntegration()` to the `integrations` array, before the existing `replayIntegration`:
+Add `Sentry.browserTracingIntegration()` to the `integrations` array in `Sentry.init()`:
 
 ```typescript
 integrations: [
-  Sentry.browserTracingIntegration(),
   Sentry.replayIntegration({
     maskAllText: true,
     blockAllMedia: true,
   }),
+  Sentry.browserTracingIntegration(),
 ],
 ```
 
-This automatically captures LCP, FID/INP, CLS, TTFB, FCP at the existing `tracesSampleRate: 0.1`.
+This automatically captures LCP, FID/INP, CLS, TTFB, FCP at the existing `tracesSampleRate: 0.1` (10%).
 
-**Tests**: No unit test needed — this is a Sentry config addition. Verify via `pnpm -s tsc --noEmit`.
+**Tests** (FAIL before, PASS after):
+- Test location: `tests/unit/config/instrumentation-client.spec.ts`
+- Test 1: Verify `browserTracingIntegration` is called in Sentry.init integrations array
+- (This is a config-level change — mocking Sentry to verify the call)
 
-**Acceptance Criteria**:
-- [ ] `browserTracingIntegration()` present in integrations array
-- [ ] Existing `replayIntegration` preserved
-- [ ] `tracesSampleRate` unchanged at 0.1
+**Acceptance**:
+- [ ] `browserTracingIntegration()` added to integrations array
+- [ ] Existing replayIntegration preserved
+- [ ] tracesSampleRate unchanged at 0.1
 
 ---
 
-## Verification Plan
+### Step 10: Quality Gates
+**Spec**: Acceptance Criteria
 
-After all steps:
+**Files to Touch**: None (verification only)
+
+**Exact Behavior**:
+Run all quality gates:
 ```bash
-pnpm -s tsc --noEmit                              # TypeScript compilation
-pnpm lint                                          # ESLint
-pnpm vitest run --config vitest.config.unit.mts    # Unit tests
+pnpm -s tsc --noEmit
+pnpm vitest run --config vitest.config.unit.mts
+pnpm lint
 ```
 
-## Step Execution Order
+**Acceptance**:
+- [ ] TypeScript compiles with no errors
+- [ ] All unit tests pass
+- [ ] ESLint passes with no errors
 
-**Recommended order**: 1 → 10 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9
+---
 
-Rationale:
-- Step 1 (cherry-pick) first to avoid conflicts with later changes
-- Step 10 (web vitals) is a 1-line change — do it early
-- Steps 2-4 (Phase 1 critical) next
-- Steps 5-7 (Sentry) can be done in sequence
-- Step 8 (Zod) builds on Sentry patterns
-- Step 9 (CI) last since it's non-code
+## Step Dependencies
+
+```
+Step 1 (Security Headers) — independent
+Step 2 (Error Boundary)   — independent
+Step 3 (Env Validation)   — independent
+Step 4 (Cody Sentry)      — independent
+Step 5 (captureAndRespond)— independent
+Step 6 (4 Route Sentry)   — independent
+Step 7 (Zod Validation)   — depends on Step 4 (cody/tasks uses handleCodyApiError which gets Sentry)
+Step 8 (CI Coverage)       — independent
+Step 9 (Web Vitals)        — independent
+Step 10 (Quality Gates)    — depends on ALL previous steps
+```
+
+## Skipped Items
+
+- **Pre-launch E2E Tests (Spec Item 4)**: Already merged via PR #784. `tests/e2e/verification/` folder with all 8 spec files exists. No cherry-pick needed.
+- **Full withApiHandler migration for 4 routes (Spec Item 5c)**: These routes delegate to Payload endpoints via custom PayloadRequest objects. Full migration would require refactoring the endpoint layer, adding significant risk. Instead, Step 6 adds Sentry.captureException directly to catch blocks, achieving the same Sentry coverage goal.
