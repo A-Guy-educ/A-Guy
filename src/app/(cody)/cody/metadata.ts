@@ -9,6 +9,7 @@ import { fetchIssue } from '@/ui/cody/github-client'
 
 const SITE_NAME = 'Cody Operations Dashboard'
 const BASE_URL = process.env.CODY_PUBLIC_SERVER_URL || 'https://www.dev.aguy.co.il'
+const DEFAULT_IMAGE = `${BASE_URL}/website-template-OG.webp`
 
 /** Build base metadata with OG + Twitter tags for static cody pages */
 export function buildCodyMetadata(options: {
@@ -20,6 +21,7 @@ export function buildCodyMetadata(options: {
   const url = `${BASE_URL}${path}`
 
   return {
+    metadataBase: new URL(BASE_URL),
     title,
     description,
     openGraph: {
@@ -28,11 +30,20 @@ export function buildCodyMetadata(options: {
       url,
       siteName: SITE_NAME,
       type: 'website',
+      images: [
+        {
+          url: DEFAULT_IMAGE,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
     },
     twitter: {
-      card: 'summary',
+      card: 'summary_large_image',
       title,
       description,
+      images: [DEFAULT_IMAGE],
     },
     alternates: {
       canonical: url,
