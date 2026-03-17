@@ -25,6 +25,7 @@ vi.mock('@/ui/cody/github-client', () => ({
 vi.mock('@/ui/cody/auth', () => ({
   requireCodyAuth: vi.fn(() => Promise.resolve({ identity: { login: 'testuser' } })),
   verifyActorLogin: vi.fn(() => Promise.resolve({ identity: { login: 'testuser' } })),
+  getUserOctokit: vi.fn(() => Promise.resolve(null)),
 }))
 
 // Import after mocks
@@ -77,15 +78,18 @@ describe('POST /api/cody/tasks - Create Task', () => {
     const body = await response.json()
 
     // Verify issue was created
-    expect(createIssue).toHaveBeenCalledWith({
-      title: 'Test Task',
-      body: expect.stringContaining('Test description'),
-      labels: ['feature'],
-      assignees: [],
-    })
+    expect(createIssue).toHaveBeenCalledWith(
+      {
+        title: 'Test Task',
+        body: expect.stringContaining('Test description'),
+        labels: ['feature'],
+        assignees: [],
+      },
+      undefined,
+    )
 
     // Verify pipeline was triggered with @cody comment
-    expect(postComment).toHaveBeenCalledWith(123, '@cody')
+    expect(postComment).toHaveBeenCalledWith(123, '@cody', undefined)
 
     // Verify response
     expect(response.status).toBe(200)
@@ -116,7 +120,7 @@ describe('POST /api/cody/tasks - Create Task', () => {
     expect(createIssue).toHaveBeenCalled()
 
     // Verify trigger was attempted
-    expect(postComment).toHaveBeenCalledWith(456, '@cody')
+    expect(postComment).toHaveBeenCalledWith(456, '@cody', undefined)
 
     // Verify response still succeeds (trigger failure is non-fatal)
     expect(response.status).toBe(200)
@@ -147,10 +151,14 @@ describe('POST /api/cody/tasks - Create Task', () => {
     const body = await response.json()
 
     // Verify attachment was uploaded
-    expect(uploadIssueAttachment).toHaveBeenCalledWith(789, {
-      name: 'test.png',
-      content: 'base64data',
-    })
+    expect(uploadIssueAttachment).toHaveBeenCalledWith(
+      789,
+      {
+        name: 'test.png',
+        content: 'base64data',
+      },
+      undefined,
+    )
 
     // Verify response includes attachments
     expect(response.status).toBe(200)

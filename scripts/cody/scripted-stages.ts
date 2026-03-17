@@ -454,7 +454,13 @@ export async function runPrStage(
   }
 
   if (!pushSuccess) {
-    logger.info('  Push failed - may already be up to date or branch exists')
+    // R3-FIX #1: Abort PR creation if push failed — GitHub API will reject the PR
+    // with "branch not reachable" since the branch doesn't exist on the remote.
+    logger.error('  ❌ Push failed — cannot create PR for unpushed branch')
+    const report =
+      '# PR Stage\n\nFailed to create PR: git push failed. Branch not available on remote.\n'
+    fs.writeFileSync(outputFile, report)
+    return { created: false, url: '', report }
   }
   // Step 3: Build title and body
   const title = buildPrTitle(taskDir, defaultBranch, cwd, issueNumber)

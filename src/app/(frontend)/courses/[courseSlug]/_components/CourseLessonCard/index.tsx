@@ -5,7 +5,9 @@ import { cn } from '@/infra/utils/ui'
 import type { Lesson } from '@/payload-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { ProgressCircle } from '@/ui/web/shared/ProgressCircle'
+import { ContentStatusBadge } from '@/ui/web/shared/ContentStatusBadge'
 import { Clock } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface CourseLessonCardProps {
   lesson: Lesson
@@ -29,6 +31,9 @@ export function CourseLessonCard({
 
   const href = `/courses/${courseSlug}/chapters/${chapterSlug}/lessons/${lesson.slug}`
 
+  // Determine if lesson is "soon" (locked)
+  const isSoon = lesson.contentStatus === 'soon'
+
   const progressText =
     progress >= 100
       ? t('lessonCompleted')
@@ -38,17 +43,30 @@ export function CourseLessonCard({
 
   const accentColor = tabColor?.stroke ?? 'hsl(var(--primary))'
 
+  const handleLessonClick = (e: React.MouseEvent) => {
+    // If lesson is "Soon", show locked message and prevent navigation
+    if (isSoon) {
+      e.preventDefault()
+      toast.info(tc('contentLocked'))
+    }
+  }
+
   return (
     <div
-      className="rounded-2xl overflow-hidden border border-border/40 shadow-sm transition-all active:scale-[0.98]"
+      className={cn(
+        'rounded-2xl overflow-hidden border border-border/40 shadow-sm transition-all',
+        !isSoon && 'active:scale-[0.98]',
+        isSoon && 'opacity-60',
+      )}
       style={{ borderTopWidth: 3, borderTopColor: accentColor }}
     >
       <SystemLink
-        href={href}
+        href={isSoon ? '#' : href}
+        onClick={handleLessonClick}
         className={cn(
           'bg-card p-5',
           'flex flex-row-reverse items-center justify-between',
-          'cursor-pointer',
+          isSoon ? 'cursor-not-allowed' : 'cursor-pointer',
         )}
       >
         <div className="flex flex-col text-end">
@@ -58,7 +76,13 @@ export function CourseLessonCard({
           >
             {tc('lesson')} {index}
           </span>
-          <h3 className="text-lg font-bold text-card-foreground">{lesson.title}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-bold text-card-foreground">{lesson.title}</h3>
+            <ContentStatusBadge
+              contentStatus={lesson.contentStatus}
+              contentStatusExpiresAt={lesson.contentStatusExpiresAt ?? undefined}
+            />
+          </div>
           <p className="text-xs text-muted-foreground mt-1 flex items-center justify-end gap-1">
             {progress === 0 && <Clock className="w-3 h-3" />}
             {progressText}

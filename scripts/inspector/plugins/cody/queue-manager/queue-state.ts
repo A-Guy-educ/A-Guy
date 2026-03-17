@@ -2,7 +2,7 @@
  * @fileType utility
  * @domain inspector
  * @pattern queue-state
- * @ai-summary Queue state management helpers — read/write state, label operations, retry tracking
+ * @ai-summary Queue state management helpers — read/write state, label operations
  */
 
 import type { InspectorContext } from '../../../core/types'
@@ -82,37 +82,12 @@ export function failTask(ctx: InspectorContext, task: QueuedTask): void {
 }
 
 /**
- * Get the retry count for a task.
+ * Clean up queue state for a completed/failed task.
  */
-export function getRetryCount(state: QueueState, taskId: string): number {
-  return state.retries[taskId] ?? 0
-}
-
-/**
- * Return a new state with an incremented retry count for the given task.
- */
-export function incrementRetry(state: QueueState, taskId: string): QueueState {
+export function cleanTaskState(_state: QueueState, _taskId: string): QueueState {
   return {
-    ...state,
-    retries: {
-      ...state.retries,
-      [taskId]: (state.retries[taskId] ?? 0) + 1,
-    },
-  }
-}
-
-/**
- * Clean up retry and gate approval state for a completed/failed task.
- */
-export function cleanTaskState(state: QueueState, taskId: string): QueueState {
-  const { [taskId]: _retries, ...remainingRetries } = state.retries
-  const { [taskId]: _gates, ...remainingGates } = state.gateApprovals
-  return {
-    ...state,
     activeTaskId: null,
     activeIssueNumber: null,
     activeStartedAt: null,
-    retries: remainingRetries,
-    gateApprovals: remainingGates,
   }
 }

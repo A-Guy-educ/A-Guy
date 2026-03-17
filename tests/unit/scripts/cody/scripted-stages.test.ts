@@ -721,12 +721,14 @@ describe('runPrStage', () => {
       expect((pushCall![1] as string[]).includes('feat/new-thing')).toBe(true)
     })
 
-    it('should continue even if push fails', async () => {
+    it('should abort PR creation when push fails', async () => {
       setupPrMocks({ pushFails: true })
 
-      // Should not throw
+      // R3-FIX #1: Push failure now correctly aborts PR creation
+      // instead of trying to create a PR for an unpushed branch
       const result = await runPrStage('/fake/task-dir', '/tmp/pr.md', '/fake/cwd')
-      expect(result.created).toBe(true)
+      expect(result.created).toBe(false)
+      expect(result.report).toContain('push failed')
     })
 
     it.skip('should use the default branch as PR base', () => {

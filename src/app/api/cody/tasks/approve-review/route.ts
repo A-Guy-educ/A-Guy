@@ -3,10 +3,11 @@
  * @domain cody
  * @pattern approve-review
  * @ai-summary Approve a PR review and merge it via GitHub API (Octokit).
- *             All PRs (feature and publish) use standard squash merge.
+ *   All PRs (feature and publish) use standard squash merge.
+ *   Uses per-user GitHub token when available for proper attribution.
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { requireCodyAuth, verifyActorLogin } from '@/ui/cody/auth'
+import { requireCodyAuth, verifyActorLogin, getUserOctokit } from '@/ui/cody/auth'
 import { getOctokit } from '@/ui/cody/github-client'
 import { GITHUB_OWNER, GITHUB_REPO } from '@/ui/cody/constants'
 
@@ -14,7 +15,6 @@ const DEV_BRANCH = 'dev'
 const PROD_BRANCH = 'main'
 
 export async function POST(req: NextRequest) {
-  // Use GitHub OAuth auth for consistency with other routes
   const authResult = await requireCodyAuth(req)
   if (authResult instanceof NextResponse) return authResult
 
@@ -31,10 +31,11 @@ export async function POST(req: NextRequest) {
     if (actorResult instanceof NextResponse) return actorResult
     const { identity } = actorResult
 
-    // Use verified identity's login for attribution
     const verifiedLogin = identity.login
 
-    const octokit = getOctokit()
+    // Use user's Octokit for proper attribution (reviews, merges appear under user's identity)
+    const userOctokit = await getUserOctokit(req)
+    const octokit = userOctokit ?? getOctokit()
     const results: string[] = []
 
     // Fetch PR data once, reuse throughout
@@ -46,7 +47,7 @@ export async function POST(req: NextRequest) {
 
     const isPublishPR = prData.head.ref === DEV_BRANCH && prData.base.ref === PROD_BRANCH
 
-    // 1. Approve the PR review - use verified identity for attribution
+    // 1. Approve the PR review
     try {
       await octokit.pulls.createReview({
         owner: GITHUB_OWNER,
@@ -58,7 +59,6 @@ export async function POST(req: NextRequest) {
       results.push(`Approved PR #${prNumber}`)
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error)
-      // May fail if already approved or self-review
       results.push(`Review note: ${msg}`)
     }
 
@@ -109,6 +109,23 @@ export async function POST(req: NextRequest) {
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error)
     console.error('[Cody] Merge error:', msg)
+
+    // User's GitHub token expired/revoked
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'status' in error &&
+      (error as { status?: number }).status === 401
+    ) {
+      return NextResponse.json(
+        {
+          error: 'github_token_expired',
+          message: 'Your GitHub token has expired. Please log in again.',
+        },
+        { status: 401 },
+      )
+    }
+
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

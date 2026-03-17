@@ -11,6 +11,7 @@ vi.mock('@/ui/cody/auth', () => ({
   verifyActorLogin: vi.fn(() => ({
     identity: { login: 'alice', id: 1 },
   })),
+  getUserOctokit: vi.fn(() => Promise.resolve(null)),
 }))
 
 vi.mock('@/ui/cody/agents', () => ({

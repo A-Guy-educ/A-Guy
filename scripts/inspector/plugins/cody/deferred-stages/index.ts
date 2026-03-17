@@ -193,6 +193,8 @@ export const deferredStagesPlugin: InspectorPlugin = {
         const prStage = stages['pr']
         if (prStage?.state === 'completed') {
           processedTasks.push(taskId)
+          // FIX #14: Cap at 200 entries
+          while (processedTasks.length > 200) processedTasks.shift()
         }
         continue
       }

@@ -7,25 +7,26 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { requireCodyAuth } from '@/ui/cody/auth'
-import { execFileSync } from 'child_process'
-import * as fs from 'fs'
+import { execFile } from 'child_process'
+import { promisify } from 'util'
+import * as fs from 'fs/promises'
 import * as path from 'path'
+
+const execFileAsync = promisify(execFile)
 
 /**
  * Get inspector state - reads from GitHub Actions variable in CI, or local file otherwise
  */
-function getInspectorState(): Record<string, unknown> {
+async function getInspectorState(): Promise<Record<string, unknown>> {
   // In CI, try to read from GH variable
   if (process.env.GITHUB_ACTIONS) {
     try {
-      const output = execFileSync(
+      const { stdout } = await execFileAsync(
         'gh',
         ['variable', 'get', 'INSPECTOR_STATE', '--repo', process.env.GITHUB_REPOSITORY || ''],
-        {
-          encoding: 'utf-8',
-          stdio: ['pipe', 'pipe', 'ignore'],
-        },
-      ).trim()
+        { encoding: 'utf-8' },
+      )
+      const output = stdout.trim()
       if (output) {
         return JSON.parse(output)
       }
@@ -36,15 +37,12 @@ function getInspectorState(): Record<string, unknown> {
 
   // Local file fallback
   const statePath = path.join(process.cwd(), '.inspector/state.json')
-  if (fs.existsSync(statePath)) {
-    try {
-      return JSON.parse(fs.readFileSync(statePath, 'utf-8'))
-    } catch {
-      return {}
-    }
+  try {
+    const data = await fs.readFile(statePath, 'utf-8')
+    return JSON.parse(data)
+  } catch {
+    return {}
   }
-
-  return {}
 }
 
 /**
@@ -58,7 +56,7 @@ async function GET(req: NextRequest) {
   }
 
   try {
-    const state = getInspectorState()
+    const state = await getInspectorState()
 
     // Extract key metrics
     const cycleNumber = state['system:cycleNumber'] as number | undefined

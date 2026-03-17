@@ -42,7 +42,6 @@ import {
   Bug,
   Menu,
   RefreshCw,
-  Bell,
   Globe,
   AlertCircle,
   X as XIcon,
@@ -53,8 +52,10 @@ import {
 import { useCodyTasks, queryKeys } from '../hooks'
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
 import { useBrowserNotifications } from '../hooks/useBrowserNotifications'
+import { useNotificationStore } from '../notifications/useNotificationStore'
+import { NotificationCenter } from '../notifications/NotificationCenter'
 import { useMediaQuery } from '@/server/payload/hooks/useMediaQuery'
-import { RateLimitError, NoTokenError, tasksApi, codyApi } from '../api'
+import { RateLimitError, NoTokenError, SessionExpiredError, tasksApi, codyApi } from '../api'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { EnvironmentToolbar } from './EnvironmentToolbar'
@@ -99,6 +100,7 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
     return (['backlog', 'queue'].includes(v ?? '') ? v : 'running') as ViewMode
   })
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [showUserDropdown, setShowUserDropdown] = useState(false)
   const [showMobileDetail, setShowMobileDetail] = useState(false)
   const [showMobileChat, setShowMobileChat] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
@@ -302,12 +304,15 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
     [queryClient],
   )
 
-  // Browser notifications
+  // Notification system
+  const notificationStore = useNotificationStore()
+
   const {
     checkTaskChanges,
     permission: notificationPermission,
     isSupported: notificationsSupported,
-  } = useBrowserNotifications()
+    requestPermission,
+  } = useBrowserNotifications({ store: notificationStore })
 
   // Check for task changes when tasks update
   useEffect(() => {
@@ -441,6 +446,7 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
   // Check for specific errors
   const isRateLimited = error instanceof RateLimitError
   const isNoToken = error instanceof NoTokenError
+  const isSessionExpired = error instanceof SessionExpiredError
 
   // Get retry info from error
   const retryAfter = isRateLimited ? (error as RateLimitError).retryAfter : null
@@ -673,6 +679,27 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
     </>
   )
 
+  // Session expired — show login prompt (no auto-redirect to avoid loops)
+  if (isSessionExpired) {
+    const returnTo = encodeURIComponent(
+      typeof window !== 'undefined' ? window.location.pathname : '/cody',
+    )
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center max-w-md p-6">
+          <div className="text-6xl mb-4">🔒</div>
+          <h2 className="text-xl font-semibold text-foreground mb-2">Session Expired</h2>
+          <p className="text-muted-foreground mb-4">
+            Your session has expired. Please log in again to continue.
+          </p>
+          <Button asChild>
+            <a href={`/api/oauth/github?returnTo=${returnTo}`}>Log In with GitHub</a>
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   // No token error — full-page (can't function without token)
   if (isNoToken) {
     return (
@@ -733,15 +760,12 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
 
                 {/* Desktop controls */}
                 <div className="hidden md:flex items-center gap-3">
-                  {/* GitHub identity badge */}
+                  {/* GitHub identity badge with dropdown */}
                   {githubUser && (
-                    <SimpleTooltip
-                      content={`Logged in as @${githubUser.login} — click to log out`}
-                      side="bottom"
-                    >
+                    <div className="relative">
                       <button
                         type="button"
-                        onClick={clearGitHubUser}
+                        onClick={() => setShowUserDropdown((prev) => !prev)}
                         className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-accent transition-colors"
                       >
                         <Avatar className="h-5 w-5">
@@ -750,38 +774,30 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
                         </Avatar>
                         <span className="text-xs text-muted-foreground">@{githubUser.login}</span>
                       </button>
-                    </SimpleTooltip>
+                      {showUserDropdown && (
+                        <div className="absolute top-full right-0 mt-1 w-36 py-1 bg-popover border rounded-md shadow-lg z-50">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              clearGitHubUser()
+                              setShowUserDropdown(false)
+                            }}
+                            className="w-full px-3 py-1.5 text-left text-sm hover:bg-accent"
+                          >
+                            Sign out
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   )}
 
-                  {/* Notification status */}
-                  {notificationsSupported && (
-                    <SimpleTooltip
-                      content={
-                        notificationPermission === 'granted'
-                          ? 'Notifications enabled'
-                          : 'Enable notifications'
-                      }
-                      side="bottom"
-                    >
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => Notification.requestPermission()}
-                        aria-label={
-                          notificationPermission === 'granted'
-                            ? 'Notifications enabled'
-                            : 'Enable notifications'
-                        }
-                        className={
-                          notificationPermission === 'granted'
-                            ? 'text-green-500'
-                            : 'text-muted-foreground'
-                        }
-                      >
-                        <Bell className="w-4 h-4" />
-                      </Button>
-                    </SimpleTooltip>
-                  )}
+                  {/* Notification center */}
+                  <NotificationCenter
+                    store={notificationStore}
+                    browserPermission={notificationPermission}
+                    isSupported={notificationsSupported}
+                    onRequestPermission={requestPermission}
+                  />
 
                   {/* Theme toggle */}
                   <SimpleTooltip
@@ -1003,7 +1019,7 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
                   </Avatar>
                   <div className="flex flex-col items-start">
                     <span className="text-sm font-medium">@{githubUser.login}</span>
-                    <span className="text-xs text-muted-foreground">Tap to switch</span>
+                    <span className="text-xs text-muted-foreground">Tap to sign out</span>
                   </div>
                 </button>
               )}

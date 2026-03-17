@@ -136,14 +136,49 @@ export function getOctokit(): Octokit {
         return false
       },
       onSecondaryRateLimit: (retryAfter, _options, _octokit) => {
-        // Secondary rate limit - always retry
-        console.warn(`[Cody] Secondary rate limit, retrying after ${retryAfter}s`)
-        return true
+        // Secondary rate limit (abuse detection) — retry up to 2 times, then stop to avoid token ban
+        const retryCount = (_options.request?.retryCount as number) ?? 0
+        if (retryCount < 2) {
+          console.warn(
+            `[Cody] Secondary rate limit, retrying after ${retryAfter}s (attempt ${retryCount + 1}/2)`,
+          )
+          return true
+        }
+        console.error(
+          `[Cody] Secondary rate limit hit ${retryCount + 1} times, giving up to avoid token ban`,
+        )
+        return false
       },
     },
   })
 
   return octokitInstance as ThrottledOctokit
+}
+
+/**
+ * Create a per-request Octokit instance for a user's GitHub token.
+ * Used for write operations so they appear under the user's identity.
+ * Does NOT cache — each call creates a fresh instance.
+ */
+export function createUserOctokit(token: string): Octokit {
+  const MyOctokit = Octokit.plugin(throttling)
+  return new MyOctokit({
+    auth: token,
+    throttle: {
+      onRateLimit: (retryAfter, _options, _octokit) => {
+        if (_options.request?.headers?.['x-octokit-retry-count'] === 0) {
+          console.warn(`[Cody/User] Rate limited, retrying after ${retryAfter}s`)
+          return true
+        }
+        console.error(`[Cody/User] Rate limit hit twice, giving up`)
+        return false
+      },
+      onSecondaryRateLimit: (retryAfter, _options, _octokit) => {
+        console.warn(`[Cody/User] Secondary rate limit, retrying after ${retryAfter}s`)
+        return true
+      },
+    },
+  })
 }
 
 // ============ Branch Discovery ============
@@ -1008,8 +1043,8 @@ export async function fetchPRFileChanges(prNumber: number): Promise<FileChange[]
 /**
  * Close a PR (without merging)
  */
-export async function closePR(prNumber: number): Promise<void> {
-  const octokit = getOctokit()
+export async function closePR(prNumber: number, userOctokit?: Octokit): Promise<void> {
+  const octokit = userOctokit ?? getOctokit()
 
   await octokit.pulls.update({
     owner: GITHUB_OWNER,
@@ -1025,14 +1060,14 @@ export async function closePR(prNumber: number): Promise<void> {
 /**
  * Delete a branch
  */
-export async function deleteBranch(branchName: string): Promise<void> {
+export async function deleteBranch(branchName: string, userOctokit?: Octokit): Promise<void> {
   // Don't delete protected branches
   if (branchName === 'dev' || branchName === 'main' || branchName === 'master') {
     console.log(`[Cody] Skipping deletion of protected branch: ${branchName}`)
     return
   }
 
-  const octokit = getOctokit()
+  const octokit = userOctokit ?? getOctokit()
 
   try {
     await octokit.git.deleteRef({
@@ -1218,8 +1253,12 @@ export async function fetchMilestones(): Promise<
 /**
  * Post a comment on an issue
  */
-export async function postComment(issueNumber: number, body: string): Promise<void> {
-  const octokit = getOctokit()
+export async function postComment(
+  issueNumber: number,
+  body: string,
+  userOctokit?: Octokit,
+): Promise<void> {
+  const octokit = userOctokit ?? getOctokit()
 
   await octokit.issues.createComment({
     owner: GITHUB_OWNER,
@@ -1235,13 +1274,16 @@ export async function postComment(issueNumber: number, body: string): Promise<vo
 /**
  * Trigger workflow dispatch
  */
-export async function triggerWorkflow(options: {
-  taskId: string
-  mode?: string
-  fromStage?: string
-  feedback?: string
-}): Promise<void> {
-  const octokit = getOctokit()
+export async function triggerWorkflow(
+  options: {
+    taskId: string
+    mode?: string
+    fromStage?: string
+    feedback?: string
+  },
+  userOctokit?: Octokit,
+): Promise<void> {
+  const octokit = userOctokit ?? getOctokit()
 
   await octokit.actions.createWorkflowDispatch({
     owner: GITHUB_OWNER,
@@ -1260,8 +1302,8 @@ export async function triggerWorkflow(options: {
 /**
  * Cancel a workflow run
  */
-export async function cancelWorkflowRun(runId: number): Promise<void> {
-  const octokit = getOctokit()
+export async function cancelWorkflowRun(runId: number, userOctokit?: Octokit): Promise<void> {
+  const octokit = userOctokit ?? getOctokit()
 
   await octokit.actions.cancelWorkflowRun({
     owner: GITHUB_OWNER,
@@ -1275,13 +1317,16 @@ export async function cancelWorkflowRun(runId: number): Promise<void> {
 /**
  * Create a new GitHub issue
  */
-export async function createIssue(options: {
-  title: string
-  body?: string
-  labels?: string[]
-  assignees?: string[]
-}): Promise<GitHubIssue> {
-  const octokit = getOctokit()
+export async function createIssue(
+  options: {
+    title: string
+    body?: string
+    labels?: string[]
+    assignees?: string[]
+  },
+  userOctokit?: Octokit,
+): Promise<GitHubIssue> {
+  const octokit = userOctokit ?? getOctokit()
 
   const { data } = await octokit.issues.create({
     owner: GITHUB_OWNER,
@@ -1325,8 +1370,9 @@ export async function createIssue(options: {
 export async function uploadIssueAttachment(
   issueNumber: number,
   file: { name: string; content: string },
+  userOctokit?: Octokit,
 ): Promise<{ attachment_url: string; name: string }> {
-  const octokit = getOctokit() as any
+  const octokit = (userOctokit ?? getOctokit()) as any
 
   const buffer = Buffer.from(file.content, 'base64')
 
@@ -1359,8 +1405,9 @@ export async function updateIssue(
     labels?: string[]
     assignees?: string[]
   },
+  userOctokit?: Octokit,
 ): Promise<void> {
-  const octokit = getOctokit()
+  const octokit = userOctokit ?? getOctokit()
 
   await octokit.issues.update({
     owner: GITHUB_OWNER,
@@ -1381,8 +1428,12 @@ export async function updateIssue(
 /**
  * Add assignees to an issue
  */
-export async function addAssignees(issueNumber: number, assignees: string[]): Promise<void> {
-  const octokit = getOctokit()
+export async function addAssignees(
+  issueNumber: number,
+  assignees: string[],
+  userOctokit?: Octokit,
+): Promise<void> {
+  const octokit = userOctokit ?? getOctokit()
 
   await octokit.issues.addAssignees({
     owner: GITHUB_OWNER,
@@ -1398,8 +1449,12 @@ export async function addAssignees(issueNumber: number, assignees: string[]): Pr
 /**
  * Remove assignees from an issue
  */
-export async function removeAssignees(issueNumber: number, assignees: string[]): Promise<void> {
-  const octokit = getOctokit()
+export async function removeAssignees(
+  issueNumber: number,
+  assignees: string[],
+  userOctokit?: Octokit,
+): Promise<void> {
+  const octokit = userOctokit ?? getOctokit()
 
   await octokit.issues.removeAssignees({
     owner: GITHUB_OWNER,
@@ -1415,8 +1470,12 @@ export async function removeAssignees(issueNumber: number, assignees: string[]):
 /**
  * Add labels to an issue
  */
-export async function addLabels(issueNumber: number, labels: string[]): Promise<void> {
-  const octokit = getOctokit()
+export async function addLabels(
+  issueNumber: number,
+  labels: string[],
+  userOctokit?: Octokit,
+): Promise<void> {
+  const octokit = userOctokit ?? getOctokit()
 
   await octokit.issues.addLabels({
     owner: GITHUB_OWNER,
@@ -1432,8 +1491,12 @@ export async function addLabels(issueNumber: number, labels: string[]): Promise<
 /**
  * Remove a label from an issue
  */
-export async function removeLabel(issueNumber: number, label: string): Promise<void> {
-  const octokit = getOctokit()
+export async function removeLabel(
+  issueNumber: number,
+  label: string,
+  userOctokit?: Octokit,
+): Promise<void> {
+  const octokit = userOctokit ?? getOctokit()
 
   await octokit.issues.removeLabel({
     owner: GITHUB_OWNER,

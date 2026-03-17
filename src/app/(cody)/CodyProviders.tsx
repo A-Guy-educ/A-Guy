@@ -15,7 +15,7 @@ function makeQueryClient() {
     defaultOptions: {
       queries: {
         staleTime: 60 * 1000, // 1 minute
-        refetchOnWindowFocus: false,
+        refetchOnWindowFocus: false, // Disable to prevent refresh loops on tab-back when session expires
       },
     },
   })

@@ -22,7 +22,7 @@ export function shouldDedup(action: ActionRequest, ctx: InspectorContext): boole
   const dedupKey = `dedup:${action.plugin}:${action.dedupKey}`
 
   // Get all dedup entries for this plugin
-  const dedupEntries = ctx.state.get<Record<string, string>>('cody:dedupEntries') || {}
+  const dedupEntries = ctx.state.get<Record<string, string>>('inspector:dedupEntries') || {}
 
   const lastExecuted = dedupEntries[dedupKey]
   if (!lastExecuted) {
@@ -50,11 +50,11 @@ export function markExecuted(action: ActionRequest, ctx: InspectorContext): void
   if (!action.dedupKey) return
 
   const dedupKey = `dedup:${action.plugin}:${action.dedupKey}`
-  const dedupEntries = ctx.state.get<Record<string, string>>('cody:dedupEntries') || {}
+  const dedupEntries = ctx.state.get<Record<string, string>>('inspector:dedupEntries') || {}
 
   dedupEntries[dedupKey] = String(Date.now())
 
-  ctx.state.set('cody:dedupEntries', dedupEntries)
+  ctx.state.set('inspector:dedupEntries', dedupEntries)
 }
 
 /**
@@ -62,7 +62,7 @@ export function markExecuted(action: ActionRequest, ctx: InspectorContext): void
  * Should be called periodically (e.g., at the start of each inspector run).
  */
 export function cleanupExpiredDedup(ctx: InspectorContext, maxAgeMs = 24 * 60 * 60 * 1000): number {
-  const dedupEntries = ctx.state.get<Record<string, string>>('cody:dedupEntries') || {}
+  const dedupEntries = ctx.state.get<Record<string, string>>('inspector:dedupEntries') || {}
   const now = Date.now()
   let cleaned = 0
 
@@ -86,6 +86,6 @@ export function cleanupExpiredDedup(ctx: InspectorContext, maxAgeMs = 24 * 60 * 
     updated[key] = timestamp
   }
 
-  ctx.state.set('cody:dedupEntries', updated)
+  ctx.state.set('inspector:dedupEntries', updated)
   return cleaned
 }

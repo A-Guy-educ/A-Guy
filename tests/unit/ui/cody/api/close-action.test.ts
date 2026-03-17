@@ -20,7 +20,10 @@ vi.mock('@/ui/cody/github-client', () => ({
   closePR: vi.fn(),
   deleteBranch: vi.fn(),
   updateIssue: vi.fn(),
-  clearCache: vi.fn(),
+  invalidateTaskCache: vi.fn(),
+  invalidatePRCache: vi.fn(),
+  invalidateBranchCache: vi.fn(),
+  invalidateBoardCache: vi.fn(),
   postComment: vi.fn(),
 }))
 
@@ -31,6 +34,7 @@ vi.mock('@/ui/cody/auth', () => ({
   verifyActorLogin: vi.fn(() => ({
     identity: { login: 'testuser', id: 1 },
   })),
+  getUserOctokit: vi.fn(() => Promise.resolve(null)),
 }))
 
 // Import after mocks
@@ -81,10 +85,10 @@ describe('POST /api/cody/tasks/[taskId]/actions - Close Action', () => {
 
     // Verify all actions were called
     expect(findAssociatedPRByIssueNumber).toHaveBeenCalledWith(659)
-    expect(closePR).toHaveBeenCalledWith(123)
+    expect(closePR).toHaveBeenCalledWith(123, undefined)
     expect(findTaskBranch).toHaveBeenCalledWith('issue-659')
-    expect(deleteBranch).toHaveBeenCalledWith(mockBranch)
-    expect(updateIssue).toHaveBeenCalledWith(659, { state: 'closed' })
+    expect(deleteBranch).toHaveBeenCalledWith(mockBranch, undefined)
+    expect(updateIssue).toHaveBeenCalledWith(659, { state: 'closed' }, undefined)
 
     // Verify response
     expect(response.status).toBe(200)
@@ -118,7 +122,7 @@ describe('POST /api/cody/tasks/[taskId]/actions - Close Action', () => {
     expect(closePR).not.toHaveBeenCalled()
     expect(findTaskBranch).toHaveBeenCalledWith('issue-659')
     expect(deleteBranch).not.toHaveBeenCalled()
-    expect(updateIssue).toHaveBeenCalledWith(659, { state: 'closed' })
+    expect(updateIssue).toHaveBeenCalledWith(659, { state: 'closed' }, undefined)
 
     // Verify response still succeeds
     expect(response.status).toBe(200)
@@ -156,9 +160,9 @@ describe('POST /api/cody/tasks/[taskId]/actions - Close Action', () => {
     const _body = await response.json()
 
     // Verify PR was closed but branch was NOT deleted
-    expect(closePR).toHaveBeenCalledWith(123)
+    expect(closePR).toHaveBeenCalledWith(123, undefined)
     expect(deleteBranch).not.toHaveBeenCalled() // dev is protected
-    expect(updateIssue).toHaveBeenCalledWith(659, { state: 'closed' })
+    expect(updateIssue).toHaveBeenCalledWith(659, { state: 'closed' }, undefined)
 
     // Verify response succeeds
     expect(response.status).toBe(200)
@@ -195,9 +199,9 @@ describe('POST /api/cody/tasks/[taskId]/actions - Close Action', () => {
     const _body = await response.json()
 
     // Verify PR was closed but branch deletion was skipped
-    expect(closePR).toHaveBeenCalledWith(456)
+    expect(closePR).toHaveBeenCalledWith(456, undefined)
     expect(deleteBranch).not.toHaveBeenCalled() // No branch found
-    expect(updateIssue).toHaveBeenCalledWith(100, { state: 'closed' })
+    expect(updateIssue).toHaveBeenCalledWith(100, { state: 'closed' }, undefined)
 
     expect(response.status).toBe(200)
   })

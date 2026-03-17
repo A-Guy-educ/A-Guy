@@ -17,6 +17,12 @@ import * as path from 'path'
 
 import type { InspectorPlugin, ActionRequest, InspectorContext } from '../../../core/types'
 
+/**
+ * NOTE: status.json writes in CI are ephemeral — changes exist only during this run.
+ * Actual persistence is via the state store (cody:reapedTasks) and GitHub labels.
+ * The status.json update is cosmetic; it's the label change + state tracking that matters.
+ */
+
 /** Tasks stale longer than this threshold are candidates for zombie detection. */
 const STALE_THRESHOLD_MS = 2 * 60 * 60 * 1000 // 2 hours
 

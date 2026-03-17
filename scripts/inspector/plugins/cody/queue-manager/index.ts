@@ -2,10 +2,11 @@
  * @fileType plugin
  * @domain inspector
  * @pattern queue-manager-plugin
- * @ai-summary Autonomous sequential task queue processor with AI gate approval and failure recovery
+ * @ai-summary Sequential task queue processor — FIFO activation, completion, advancement only.
  *
- * Picks queued tasks one-by-one, runs them through the Cody pipeline, auto-approves gates
- * using AI review, monitors for failures, and retries up to 2 times — all without human intervention.
+ * Picks queued tasks one-by-one, runs them through the Cody pipeline, monitors health,
+ * and advances the queue on completion or failure. Failure recovery (retries, fix-issues)
+ * is delegated to the pipeline-fixer plugin.
  */
 
 import type {
@@ -14,11 +15,6 @@ import type {
   InspectorContext,
   EvaluatedTask,
 } from '../../../core/types'
-import { readTaskFile } from '../../../clients/github'
-import { classifyRetryability } from '../failure-analysis/classifier'
-import { analyzeFailure } from '../failure-analysis/analyzer'
-import { resolveFromStage } from '../failure-analysis/stage-router'
-import { reviewGate } from './gate-reviewer'
 import {
   getQueueState,
   saveQueueState,
@@ -27,12 +23,10 @@ import {
   activateTask,
   completeTask,
   failTask,
-  getRetryCount,
-  incrementRetry,
   cleanTaskState,
 } from './queue-state'
 import type { QueuedTask, QueueState } from './types'
-import { MAX_RETRIES, STARTUP_GRACE_PERIOD_MS } from './types'
+import { STARTUP_GRACE_PERIOD_MS } from './types'
 
 /**
  * Create an action to activate a queued task and trigger its workflow.
@@ -52,9 +46,16 @@ function createActivateAction(
     dedupKey: `queue-activate:${task.taskId}`,
     dedupWindowMinutes: 15,
     execute: async (execCtx: InspectorContext) => {
+      // FIX #5: Trigger workflow FIRST — if this throws, state is not yet mutated
+      execCtx.github.triggerWorkflow('cody.yml', {
+        issue_number: String(task.issueNumber),
+        task_id: task.taskId,
+        mode: 'full',
+      })
+
+      // Workflow dispatched successfully — now update labels and state
       activateTask(execCtx, task)
 
-      // Update queue state
       let state = getQueueState(execCtx)
       state = {
         ...state,
@@ -63,12 +64,6 @@ function createActivateAction(
         activeStartedAt: new Date().toISOString(),
       }
       saveQueueState(execCtx, state)
-
-      // Trigger the pipeline
-      execCtx.github.triggerWorkflow('cody.yml', {
-        task_id: task.taskId,
-        mode: 'full',
-      })
 
       execCtx.github.postComment(
         task.issueNumber,
@@ -81,206 +76,38 @@ function createActivateAction(
 }
 
 /**
- * Create an action to review a gated task.
+ * Create an action to mark a task failed and advance to the next queued task.
+ * Failure recovery (retries) is handled by the pipeline-fixer plugin.
  */
-function createGateReviewAction(
+function createFailAndAdvanceAction(
   task: QueuedTask,
   evaluated: EvaluatedTask,
   _ctx: InspectorContext,
 ): ActionRequest {
   return {
     plugin: 'cody-queue-manager',
-    type: 'gate-review',
+    type: 'fail-and-advance',
     target: task.taskId,
     urgency: 'warning',
-    title: `Queue: Review gate for ${task.taskId}`,
-    detail: `Task is gated at ${evaluated.failedStage || 'unknown stage'}`,
-    dedupKey: `queue-gate:${task.taskId}`,
+    title: `Queue: Fail and advance past ${task.taskId}`,
+    detail: `Task failed at ${evaluated.failedStage || 'unknown'} — advancing queue`,
+    dedupKey: `queue-fail:${task.taskId}`,
     dedupWindowMinutes: 15,
     execute: async (execCtx: InspectorContext) => {
-      const issueData = execCtx.github.getIssue(task.issueNumber)
-      const requirement = issueData.body || 'No requirement found'
-
-      // Try to read gate-relevant files
-      const taskJson = readTaskFile(task.taskId, 'task.json')
-      const planMd = readTaskFile(task.taskId, 'plan.md')
-      const specMd = readTaskFile(task.taskId, 'spec.md')
-      const gateOutput = taskJson || planMd || specMd || 'No gate output available'
-
-      // Determine gate name from the evaluated task's failed stage or pipeline info
-      const gateName = evaluated.failedStage || 'unknown'
-
-      const result = await reviewGate({
-        requirement,
-        gateOutput,
-        gateName,
-        taskId: task.taskId,
-      })
+      failTask(execCtx, task)
 
       let state = getQueueState(execCtx)
-
-      if (result.approved) {
-        // Post approval comment with /cody approve command
-        execCtx.github.postComment(
-          task.issueNumber,
-          `/cody approve\n\n**[queue-manager]** AI Review: ✅ Approved (confidence: ${(result.confidence * 100).toFixed(0)}%)\n\n${result.feedback}`,
-        )
-
-        // Track gate approval
-        const prevApprovals = state.gateApprovals[task.taskId] || []
-        state = {
-          ...state,
-          gateApprovals: {
-            ...state.gateApprovals,
-            [task.taskId]: [...prevApprovals, gateName],
-          },
-        }
-        saveQueueState(execCtx, state)
-
-        return { success: true, message: `Gate approved for ${task.taskId}` }
-      } else {
-        // Post rejection feedback and trigger rerun
-        execCtx.github.postComment(
-          task.issueNumber,
-          `**[queue-manager]** AI Review: ❌ Changes requested (confidence: ${(result.confidence * 100).toFixed(0)}%)\n\n${result.feedback}`,
-        )
-
-        // Trigger rerun with the feedback
-        const fromStage = resolveFromStage(gateName)
-        execCtx.github.triggerWorkflow('cody.yml', {
-          task_id: task.taskId,
-          mode: 'rerun',
-          from_stage: fromStage,
-          feedback: result.feedback,
-        })
-
-        return { success: true, message: `Gate rejected for ${task.taskId}, rerun triggered` }
-      }
-    },
-  }
-}
-
-/**
- * Create an action to handle a failed task — retry or fail permanently.
- */
-function createFailureAction(
-  task: QueuedTask,
-  evaluated: EvaluatedTask,
-  _ctx: InspectorContext,
-): ActionRequest {
-  return {
-    plugin: 'cody-queue-manager',
-    type: 'handle-failure',
-    target: task.taskId,
-    urgency: 'critical',
-    title: `Queue: Handle failure for ${task.taskId}`,
-    detail: `Task failed at ${evaluated.failedStage || 'unknown'}: ${evaluated.failedError || 'unknown error'}`,
-    dedupKey: `queue-retry:${task.taskId}`,
-    dedupWindowMinutes: 15,
-    execute: async (execCtx: InspectorContext) => {
-      let state = getQueueState(execCtx)
-      const retryCount = getRetryCount(state, task.taskId)
-
-      // Check if retries exhausted
-      if (retryCount >= MAX_RETRIES) {
-        failTask(execCtx, task)
-        state = cleanTaskState(state, task.taskId)
-        saveQueueState(execCtx, state)
-
-        execCtx.github.postComment(
-          task.issueNumber,
-          `⛔ **Queue Manager**: Max retries exhausted (${retryCount}/${MAX_RETRIES})\n\nManual intervention required. Review the failure history and either:\n- Fix the issue manually and close\n- Refine the issue description and re-add to queue`,
-        )
-
-        // Try to advance to next task
-        advanceQueue(execCtx, state)
-
-        return { success: true, message: `Max retries exhausted for ${task.taskId}` }
-      }
-
-      // Pre-classify retryability
-      const classification = classifyRetryability(
-        evaluated.failedStage || 'unknown',
-        evaluated.failedError || '',
-      )
-
-      if (!classification.canRetry) {
-        failTask(execCtx, task)
-        state = cleanTaskState(state, task.taskId)
-        saveQueueState(execCtx, state)
-
-        execCtx.github.postComment(
-          task.issueNumber,
-          `⛔ **Queue Manager**: Non-retryable failure\n\n**Category:** ${classification.category}\n**Reason:** ${classification.reason}\n\nManual intervention required.`,
-        )
-
-        advanceQueue(execCtx, state)
-
-        return { success: true, message: `Non-retryable failure for ${task.taskId}` }
-      }
-
-      // Increment retry count
-      state = incrementRetry(state, task.taskId)
-      const currentAttempt = getRetryCount(state, task.taskId)
+      state = cleanTaskState(state, task.taskId)
       saveQueueState(execCtx, state)
-
-      // For format-only failures, skip LLM analysis
-      if (classification.category === 'format-only') {
-        const fromStage = resolveFromStage(evaluated.failedStage || 'build')
-        execCtx.github.postComment(
-          task.issueNumber,
-          `🔄 **[queue-manager-retry: ${currentAttempt}/${MAX_RETRIES}]** Format-only failure. Auto-retrying from \`${fromStage}\`.`,
-        )
-        execCtx.github.triggerWorkflow('cody.yml', {
-          task_id: task.taskId,
-          mode: 'rerun',
-          from_stage: fromStage,
-          feedback: 'Format-only failure — run lint:fix and format:fix before verify.',
-        })
-        return { success: true, message: `Format-only retry triggered for ${task.taskId}` }
-      }
-
-      // Full LLM analysis
-      const requirement =
-        execCtx.github.getIssue(task.issueNumber).body || 'No issue body available'
-      const stageOutput = readTaskFile(task.taskId, `${evaluated.failedStage}.md`)
-      const verifyOutput = readTaskFile(task.taskId, 'verify.md')
-      const previousFeedback = readTaskFile(task.taskId, 'rerun-feedback.md')
-
-      const analysis = await analyzeFailure({
-        requirement,
-        errorMessage: evaluated.failedError || 'Unknown error',
-        failedStage: evaluated.failedStage || 'unknown',
-        stageOutput,
-        verifyOutput: verifyOutput || undefined,
-        previousFeedback: previousFeedback || undefined,
-        retryNumber: currentAttempt,
-      })
-
-      const fromStage = resolveFromStage(evaluated.failedStage || 'build')
 
       execCtx.github.postComment(
         task.issueNumber,
-        `🔄 **[queue-manager-retry: ${currentAttempt}/${MAX_RETRIES}]** Failure Analysis\n\n**Failed stage:** \`${evaluated.failedStage}\`\n**Root cause:** ${analysis.rootCause}\n\n${analysis.canRetry ? `Retrying from \`${fromStage}\`...` : 'No retry possible — manual intervention required.'}`,
+        `⏭️ **Queue Manager**: Task failed — advancing queue. The pipeline-fixer will handle retries.`,
       )
 
-      if (analysis.canRetry && analysis.refinedFeedback) {
-        execCtx.github.triggerWorkflow('cody.yml', {
-          task_id: task.taskId,
-          mode: 'rerun',
-          from_stage: fromStage,
-          feedback: analysis.refinedFeedback,
-        })
-        return { success: true, message: `Retry triggered from ${fromStage}` }
-      }
-
-      // Analysis says no retry possible
-      failTask(execCtx, task)
-      state = cleanTaskState(state, task.taskId)
-      saveQueueState(execCtx, state)
       advanceQueue(execCtx, state)
 
-      return { success: true, message: 'Analysis posted, no retry possible' }
+      return { success: true, message: `Failed ${task.taskId}, advanced queue` }
     },
   }
 }
@@ -305,11 +132,17 @@ function createCompleteAction(task: QueuedTask, _ctx: InspectorContext): ActionR
       state = cleanTaskState(state, task.taskId)
       saveQueueState(execCtx, state)
 
-      // Check for next task
       const queued = getQueuedTasks(execCtx)
       const nextTask = queued.length > 0 ? queued[0] : null
 
       if (nextTask) {
+        // FIX #5: Trigger workflow FIRST — if this throws, we still completed the current task
+        execCtx.github.triggerWorkflow('cody.yml', {
+          issue_number: String(nextTask.issueNumber),
+          task_id: nextTask.taskId,
+          mode: 'full',
+        })
+
         activateTask(execCtx, nextTask)
         const newState: typeof state = {
           ...state,
@@ -318,11 +151,6 @@ function createCompleteAction(task: QueuedTask, _ctx: InspectorContext): ActionR
           activeStartedAt: new Date().toISOString(),
         }
         saveQueueState(execCtx, newState)
-
-        execCtx.github.triggerWorkflow('cody.yml', {
-          task_id: nextTask.taskId,
-          mode: 'full',
-        })
 
         execCtx.github.postComment(
           task.issueNumber,
@@ -355,6 +183,23 @@ function advanceQueue(ctx: InspectorContext, state: QueueState): void {
   if (queued.length === 0) return
 
   const nextTask = queued[0]
+
+  // FIX #5: Trigger workflow FIRST — if this throws, queue state is clean (no active task)
+  // and the next cycle will pick up the queued task again
+  try {
+    ctx.github.triggerWorkflow('cody.yml', {
+      issue_number: String(nextTask.issueNumber),
+      task_id: nextTask.taskId,
+      mode: 'full',
+    })
+  } catch (error) {
+    ctx.log.error(
+      { taskId: nextTask.taskId, error: String(error) },
+      'Failed to trigger workflow for next queue task — will retry next cycle',
+    )
+    return
+  }
+
   activateTask(ctx, nextTask)
 
   const newState: QueueState = {
@@ -364,11 +209,6 @@ function advanceQueue(ctx: InspectorContext, state: QueueState): void {
     activeStartedAt: new Date().toISOString(),
   }
   saveQueueState(ctx, newState)
-
-  ctx.github.triggerWorkflow('cody.yml', {
-    task_id: nextTask.taskId,
-    mode: 'full',
-  })
 
   ctx.github.postComment(
     nextTask.issueNumber,
@@ -380,11 +220,12 @@ function advanceQueue(ctx: InspectorContext, state: QueueState): void {
  * Queue Manager Plugin.
  *
  * Runs every cycle (5 min). Depends on health-check plugin's evaluatedTasks in state.
+ * Only manages the queue: FIFO activation, completion, advancement.
+ * Failure recovery is delegated to the pipeline-fixer plugin.
  */
 export const queueManagerPlugin: InspectorPlugin = {
   name: 'cody-queue-manager',
-  description:
-    'Autonomous sequential task queue processor with AI gate approval and failure recovery',
+  description: 'Sequential task queue processor — activation, completion, and advancement',
   domain: 'cody',
 
   async run(ctx) {
@@ -393,11 +234,9 @@ export const queueManagerPlugin: InspectorPlugin = {
     const state = getQueueState(ctx)
     const evaluatedTasks = ctx.state.get<EvaluatedTask[]>('cody:evaluatedTasks') || []
 
-    // Check for active task
     const activeTask = getActiveTask(ctx)
 
     if (!activeTask) {
-      // No active task — pick next from queue
       const queued = getQueuedTasks(ctx)
 
       if (queued.length === 0) {
@@ -409,13 +248,11 @@ export const queueManagerPlugin: InspectorPlugin = {
       return [createActivateAction(queued[0], queued.length, ctx)]
     }
 
-    // Active task found — check its health
     ctx.log.debug({ taskId: activeTask.taskId }, 'Active task found, checking health')
 
     const evaluated = evaluatedTasks.find((t) => t.issueNumber === activeTask.issueNumber)
 
     if (!evaluated) {
-      // Task not found in evaluatedTasks — check if recently activated
       const startedAt = state.activeStartedAt ? new Date(state.activeStartedAt).getTime() : 0
       const elapsed = Date.now() - startedAt
 
@@ -427,7 +264,6 @@ export const queueManagerPlugin: InspectorPlugin = {
         return []
       }
 
-      // Grace period expired — treat as failed
       ctx.log.warn(
         { taskId: activeTask.taskId },
         'Active task not in evaluatedTasks after grace period — treating as failed',
@@ -445,26 +281,19 @@ export const queueManagerPlugin: InspectorPlugin = {
         failedStage: 'unknown',
         failedError: 'Task disappeared from health check after 10 minutes',
       }
-      return [createFailureAction(activeTask, syntheticEvaluated, ctx)]
+      return [createFailAndAdvanceAction(activeTask, syntheticEvaluated, ctx)]
     }
 
-    // Route based on health
     const actions: ActionRequest[] = []
 
     switch (evaluated.health) {
       case 'healthy':
-        // Task is running — wait
         ctx.log.debug({ taskId: activeTask.taskId }, 'Active task healthy, waiting')
         break
 
-      case 'gated':
-        ctx.log.info({ taskId: activeTask.taskId }, 'Active task gated, creating review action')
-        actions.push(createGateReviewAction(activeTask, evaluated, ctx))
-        break
-
       case 'failed':
-        ctx.log.info({ taskId: activeTask.taskId }, 'Active task failed, creating failure action')
-        actions.push(createFailureAction(activeTask, evaluated, ctx))
+        ctx.log.info({ taskId: activeTask.taskId }, 'Active task failed, failing and advancing')
+        actions.push(createFailAndAdvanceAction(activeTask, evaluated, ctx))
         break
 
       case 'completed':
@@ -485,12 +314,16 @@ export const queueManagerPlugin: InspectorPlugin = {
           failedError:
             evaluated.failedError || `Task is ${evaluated.health}: ${evaluated.healthDetail}`,
         }
-        actions.push(createFailureAction(activeTask, failedEval, ctx))
+        actions.push(createFailAndAdvanceAction(activeTask, failedEval, ctx))
         break
       }
 
+      case 'gated':
+        // No gate handling — wait for human or let it time out
+        ctx.log.debug({ taskId: activeTask.taskId }, 'Active task gated — waiting for approval')
+        break
+
       case 'unknown': {
-        // Check if recently activated
         const startedAt = state.activeStartedAt ? new Date(state.activeStartedAt).getTime() : 0
         const elapsed = Date.now() - startedAt
 
@@ -510,7 +343,7 @@ export const queueManagerPlugin: InspectorPlugin = {
             failedStage: 'unknown',
             failedError: 'Task health unknown after grace period',
           }
-          actions.push(createFailureAction(activeTask, failedEval, ctx))
+          actions.push(createFailAndAdvanceAction(activeTask, failedEval, ctx))
         }
         break
       }

@@ -4,6 +4,7 @@
  * @pattern auth
  * @ai-summary Dashboard authentication middleware.
  *   requireCodyAuth: GitHub OAuth session (any repo collaborator) — used for Cody API routes.
+ *   getUserOctokit: Extract user's GitHub token from session and create per-request Octokit.
  *   requireDashboardAuth / requireAuth: Legacy Payload-based auth — kept for backward compat.
  */
 import { NextRequest, NextResponse } from 'next/server'
@@ -11,7 +12,9 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { verifyCodySession } from '@/infra/auth/cody_session'
 import type { CodyGitHubIdentity } from '@/infra/auth/cody_session'
+import { createUserOctokit } from '@/ui/cody/github-client'
 import { logger } from '@/infra/utils/logger/logger'
+import type { Octokit } from '@octokit/rest'
 
 /**
  * Require dashboard authentication using Payload
@@ -78,12 +81,10 @@ export async function requireAuth(req: NextRequest): Promise<NextResponse | null
 
 /**
  * Require GitHub OAuth session for Cody API routes.
- * Returns the verified GitHubIdentity, or a 401 NextResponse if not authenticated.
+ * Returns null on success (authenticated), or a 401 NextResponse if not authenticated.
  * Use this instead of requireAuth for routes that should be accessible to any repo collaborator.
  */
-export async function requireCodyAuth(
-  req: NextRequest,
-): Promise<{ identity: CodyGitHubIdentity } | NextResponse> {
+export async function requireCodyAuth(req: NextRequest): Promise<null | NextResponse> {
   const identity = await verifyCodySession(req)
   if (!identity) {
     return NextResponse.json(
@@ -91,7 +92,18 @@ export async function requireCodyAuth(
       { status: 401 },
     )
   }
-  return { identity }
+  return null
+}
+
+/**
+ * Get a per-request Octokit instance using the authenticated user's GitHub token.
+ * Returns null if the session doesn't have a token (legacy sessions with read:user scope).
+ * Callers should fall back to getOctokit() (bot token) when this returns null.
+ */
+export async function getUserOctokit(req: NextRequest): Promise<Octokit | null> {
+  const identity = await verifyCodySession(req)
+  if (!identity?.ghToken) return null
+  return createUserOctokit(identity.ghToken)
 }
 
 /**
@@ -108,27 +120,26 @@ export async function verifyActorLogin(
 ): Promise<{ identity: CodyGitHubIdentity } | NextResponse> {
   // First verify the user is authenticated
   const authResult = await requireCodyAuth(req)
-  if ('status' in authResult) {
+  if (authResult !== null) {
     // Return the 401 response
     return authResult
   }
 
-  const { identity } = authResult
+  const identity = await verifyCodySession(req)
+  if (!identity) {
+    return NextResponse.json({ message: 'Authentication failed' }, { status: 401 })
+  }
 
   // If no actorLogin was supplied, use the authenticated user's login
   if (!suppliedLogin) {
     return { identity }
   }
 
-  // Verify the supplied actorLogin matches the authenticated user
-  // Allow exact match OR prefixed match (e.g., "john" matches "johndoe" for convenience)
+  // Verify the supplied actorLogin matches the authenticated user (exact match, case-insensitive)
   const normalizedSupplied = suppliedLogin.toLowerCase()
   const normalizedIdentity = identity.login.toLowerCase()
 
-  if (
-    normalizedSupplied !== normalizedIdentity &&
-    !normalizedIdentity.startsWith(normalizedSupplied + '-')
-  ) {
+  if (normalizedSupplied !== normalizedIdentity) {
     logger.warn(
       {
         suppliedLogin,
