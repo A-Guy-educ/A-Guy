@@ -4,7 +4,7 @@
   "mode": "fix",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-17T10:37:56.581Z",
-  "updatedAt": "2026-03-17T10:53:27.539Z",
+  "updatedAt": "2026-03-17T10:53:28.594Z",
   "state": "running",
   "cursor": null,
   "stages": {
@@ -57,9 +57,21 @@
       "sessionId": "ses_3049b3532ffedbbB5hLDId90Mb"
     },
     "commit": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-17T10:53:27.539Z",
+      "completedAt": "2026-03-17T10:53:28.592Z",
+      "elapsed": 1
+    },
+    "review": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 24 (moderate) below threshold 30 for review"
+    },
+    "fix": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-17T10:53:27.539Z"
+      "startedAt": "2026-03-17T10:53:28.594Z"
     }
   },
   "issueNumber": 852,
