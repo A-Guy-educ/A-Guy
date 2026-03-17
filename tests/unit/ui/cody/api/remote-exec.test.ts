@@ -9,6 +9,7 @@ vi.mock('@/ui/cody/auth', () => ({
   verifyActorLogin: vi.fn(() => ({
     identity: { login: 'alice', id: 1 },
   })),
+  requireCodyAuth: vi.fn(() => null),
   requireDashboardAuth: vi.fn(() => ({
     authenticated: true,
     user: { id: '1', email: 'test@test.com' },
