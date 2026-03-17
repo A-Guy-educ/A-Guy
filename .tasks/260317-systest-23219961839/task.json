@@ -1,0 +1,26 @@
+{
+  "task_type": "docs",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "product",
+  "scope": [
+    "docs/system-test/pipeline-health.md"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Inspector plugin framework exists in the codebase",
+    "Pipeline-fixer retry strategy code exists",
+    "Deferred test and docs stages exist in the pipeline",
+    "Mermaid syntax is supported for diagrams"
+  ],
+  "review_questions": [],
+  "complexity": 20,
+  "complexity_reasoning": "Scope: Single doc file (5). Risk: Documentation only, no code changes (3). Novelty: New doc following existing patterns (5). Cross: Single domain - docs (2). Ambiguity: Clear requirements with 6 specific sections (3). Deps: Self-contained, no external dependencies (2). Total: 20",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Task contains 6 specific sections to document with clear requirements. Has structured requirements section. Promoted spec.md with extracted requirements."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_only"
+}
