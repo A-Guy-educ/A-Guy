@@ -102,7 +102,11 @@
     "cody:systest:run": "pnpm tsx scripts/system-test/run-scenario.ts --scenario 02-full-high-complexity --repo A-Guy-educ/A-Guy",
     "cody:systest:cleanup": "pnpm tsx scripts/system-test/cleanup-all.ts --repo A-Guy-educ/A-Guy",
     "cody:cli-test": "pnpm tsx scripts/cody-cli-test/run.ts",
+<<<<<<< Updated upstream
     "cody:cli-test:run": "pnpm tsx scripts/cody-cli-test/run.ts --scenario 01-status-mode",
+=======
+    "cody:cli-test:run": "pnpm tsx scripts/cody-cli-test/run.ts --scenario 04-full-pipeline",
+>>>>>>> Stashed changes
     "tunnel:ocode": "pnpm tsx scripts/tunnel-opencode.ts",
     "remote:agent": "tsx scripts/remote-agent/server.ts",
     "remote:agent:dev": "tsx watch scripts/remote-agent/server.ts",
