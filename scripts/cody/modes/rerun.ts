@@ -38,7 +38,7 @@ export async function runRerunMode(ctx: PipelineContext): Promise<void> {
   // (spec.md, task.md, task.json) live on the feature branch. Checkout the
   // task's feature branch BEFORE checking for files, otherwise we'll falsely
   // fall back to full mode and fail with "task.md not found".
-  if (process.env.GITHUB_ACTIONS) {
+  if (process.env.GITHUB_ACTIONS && !input.dryRun) {
     const checkedOut = checkoutTaskBranch(input.taskId, taskDir)
     if (!checkedOut) {
       logger.info('No feature branch found for task — falling back to full pipeline')

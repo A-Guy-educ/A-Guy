@@ -254,9 +254,26 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ task
       return NextResponse.json({ error: 'GitHub token expired' }, { status: 502 })
     }
     if (error.status === 403) {
-      return NextResponse.json({ error: 'GitHub rate limit' }, { status: 429 })
+      const msg = error?.message || error?.response?.data?.message || 'Forbidden'
+      const isRateLimit =
+        msg.includes('rate limit') || error?.response?.headers?.['x-ratelimit-remaining'] === '0'
+
+      if (isRateLimit) {
+        return NextResponse.json(
+          { error: 'rate_limited', message: 'GitHub API rate limit exceeded' },
+          { status: 429 },
+        )
+      }
+
+      return NextResponse.json(
+        { error: 'github_forbidden', message: `GitHub API: ${msg}` },
+        { status: 403 },
+      )
     }
 
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'internal_error', message: error?.message || 'Internal error' },
+      { status: 500 },
+    )
   }
 }
