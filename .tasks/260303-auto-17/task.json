@@ -1,0 +1,32 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "medium",
+  "confidence": 0.8,
+  "primary_domain": "frontend",
+  "scope": [
+    "image upload",
+    "AI tutor",
+    "צט feature",
+    "file upload handling"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The issue is in the image upload flow to the AI tutor",
+    "The 'Failed' message is returned from an error handler",
+    "This affects the image-to-exercise feature or similar AI image analysis"
+  ],
+  "review_questions": [
+    "Is the image upload issue in the frontend or backend?",
+    "What causes the 'Failed' error message to appear?",
+    "Is this related to the image-to-exercise extraction flow?"
+  ],
+  "complexity": 39,
+  "complexity_reasoning": "Scope:8 (unknown extent, likely involves upload flow), Risk:10 (user-facing feature), Novelty:4 (bug fix, not new), Cross:8 (likely frontend + backend), Ambiguity:5 (clear symptom, unclear implementation), Deps:4 (depends on upload service). Total:39",
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Bug report describes symptom (image upload fails with 'Failed' error) but lacks technical details, file paths, or error stack traces. Need to investigate codebase to find the issue."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

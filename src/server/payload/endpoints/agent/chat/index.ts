@@ -3,6 +3,7 @@
  * Re-exports all chat-related modules for cleaner imports
  */
 export * from './background-tasks'
+export * from './chat-asset-processing'
 export * from './context-resolution'
 export * from './media-processing'
 export * from './memory-retrieval'
