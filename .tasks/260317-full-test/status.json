@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-17T22:05:32.090Z",
-  "updatedAt": "2026-03-17T22:08:49.294Z",
+  "updatedAt": "2026-03-17T22:09:30.532Z",
   "state": "running",
   "cursor": null,
   "stages": {
@@ -64,17 +64,26 @@
       "skipped": "Complexity 20 (moderate) below threshold 30 for review"
     },
     "fix": {
-      "state": "running",
+      "state": "completed",
       "retries": 0,
       "skipped": "No issues to fix",
       "fixAttempt": 1,
       "maxFixAttempts": 2,
-      "startedAt": "2026-03-17T22:08:49.294Z"
+      "startedAt": "2026-03-17T22:08:49.294Z",
+      "completedAt": "2026-03-17T22:09:27.665Z",
+      "elapsed": 38,
+      "outputFile": "fix.md",
+      "tokenUsage": {
+        "input": 8,
+        "output": 1257,
+        "cacheRead": 239092
+      },
+      "sessionId": "ses_30227ce9affeLHLnZAyA4bz1i8"
     },
     "verify": {
-      "state": "pending",
+      "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-17T22:07:27.101Z"
+      "startedAt": "2026-03-17T22:09:30.532Z"
     },
     "pr": {
       "state": "pending",

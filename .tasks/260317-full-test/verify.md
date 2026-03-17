@@ -4,17 +4,7 @@
 
 ## Lint: PASS ✅
 
-## Format: FAIL ❌
-
-```
-Checking formatting...
-[warn] cody-cli-test-result-01-status-mode.json
-[warn] cody-cli-test-result-02-help-mode.json
-[warn] cody-cli-test-result-03-error-handling.json
-[warn] cody-cli-test-result-04-full-pipeline.json
-[warn] Code style issues found in 4 files. Run Prettier with --write to fix.
-
-```
+## Format: PASS ✅
 
 
-## Result: FAIL
+## Result: PASS
