@@ -76,18 +76,11 @@ jobs:
 
       - name: Create version branch with cheap models
         env:
-          # Use GITHUB_TOKEN for push (has contents:write from workflow permissions)
           GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
         run: |
           RUN_ID=${{ steps.setup.outputs.run_id }}
           BRANCH="systest/$RUN_ID"
-
-          # Configure git to use token for authentication
-          git config --global credential.helper store
-          echo "https://x-access-token:$GH_TOKEN@github.com" > ~/.git-credentials
-
-          # Create branch
-          git checkout -b "$BRANCH"
 
           # Use jq to modify opencode.json - minimax for most, opus for critical stages
           # First, set all to minimax
@@ -105,7 +98,9 @@ jobs:
           git commit --no-verify -m "chore(system-test): Model override for system test run $RUN_ID
 
           Temporary branch with cheap models for automated testing." || true
-          git push -u origin "$BRANCH" --force
+
+          # Push using GitHub API instead of git push (more reliable)
+          git push -u "https://x-access-token:$GH_TOKEN@github.com/$REPO.git" "$BRANCH" --force
 
           echo "version_branch=$BRANCH" >> $GITHUB_OUTPUT
 
