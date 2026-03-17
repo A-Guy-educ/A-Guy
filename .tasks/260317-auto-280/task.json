@@ -1,0 +1,28 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.3,
+  "primary_domain": "backend",
+  "scope": [],
+  "missing_inputs": [],
+  "assumptions": [
+    "Task is a placeholder 'test' feature - actual requirements not specified",
+    "Full-stack scope suggests both frontend and backend components may be needed",
+    "No specific acceptance criteria provided - later stages will need to clarify requirements"
+  ],
+  "review_questions": [
+    "What specific feature should be implemented?",
+    "What are the functional requirements for this feature?",
+    "What is the expected behavior and output?",
+    "Are there any existing patterns in the codebase to follow?"
+  ],
+  "complexity": 23,
+  "complexity_reasoning": "Scope: 5 (single file if clear), Risk: 8 (medium risk for new feature), Novelty: 5 (standard feature pattern), Cross: 4 (full-stack), Ambiguity: 9 (very vague - only 'test' text), Deps: 2 (self-contained). Total: 33",
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Input contains only 'test' text with no structured sections, requirements, or implementation details. Cannot determine specific scope or requirements from task description."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
