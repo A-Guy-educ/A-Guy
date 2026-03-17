@@ -3,59 +3,17 @@
   "taskId": "260317-full-test",
   "mode": "full",
   "pipeline": "spec_execute_verify",
-  "startedAt": "2026-03-17T21:26:56.503Z",
-  "updatedAt": "2026-03-17T21:28:32.577Z",
+  "startedAt": "2026-03-17T21:30:18.160Z",
+  "updatedAt": "2026-03-17T21:31:54.842Z",
   "state": "failed",
   "cursor": null,
   "stages": {
     "taskify": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-03-17T21:26:56.515Z",
-      "completedAt": "2026-03-17T21:28:14.773Z",
-      "elapsed": 78,
-      "outputFile": "taskify.md",
-      "tokenUsage": {
-        "input": 3229,
-        "output": 1904,
-        "cacheRead": 184485
-      },
-      "sessionId": "ses_3024e25a8ffedmLizFlV2CEW7J"
-    },
-    "architect": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-03-17T21:28:20.712Z",
-      "completedAt": "2026-03-17T21:28:22.786Z",
-      "elapsed": 2,
-      "outputFile": "architect.md"
-    },
-    "build": {
       "state": "failed",
       "retries": 0,
-      "startedAt": "2026-03-17T21:28:22.793Z",
-      "error": "Quality gates failed after 2 build agent fix attempts: TypeScript"
-    },
-    "commit": {
-      "state": "pending",
-      "retries": 0
-    },
-    "review": {
-      "state": "pending",
-      "retries": 0
-    },
-    "fix": {
-      "state": "pending",
-      "retries": 0
-    },
-    "verify": {
-      "state": "pending",
-      "retries": 0
-    },
-    "pr": {
-      "state": "pending",
-      "retries": 0
+      "startedAt": "2026-03-17T21:30:18.166Z",
+      "error": "Invalid task.json: task.json validation failed:\n  • Invalid primary_domain: \"docs\". Must be one of: backend, frontend, infra, data, llm, devops, product"
     }
   },
-  "completedAt": "2026-03-17T21:28:32.577Z"
+  "completedAt": "2026-03-17T21:31:54.842Z"
 }
