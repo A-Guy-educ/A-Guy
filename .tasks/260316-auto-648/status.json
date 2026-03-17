@@ -4,9 +4,9 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-17T20:33:21.677Z",
-  "updatedAt": "2026-03-17T23:00:41.738Z",
-  "state": "failed",
-  "cursor": "plan-gap",
+  "updatedAt": "2026-03-17T23:13:25.360Z",
+  "state": "paused",
+  "cursor": "architect",
   "stages": {
     "taskify": {
       "state": "completed",
@@ -37,40 +37,27 @@
       "sessionId": "ses_30272da7cffewMw1kBiuNj2xFk"
     },
     "architect": {
-      "state": "completed",
+      "state": "paused",
       "retries": 0,
-      "startedAt": "2026-03-17T21:35:45.256Z",
-      "completedAt": "2026-03-17T22:10:29.890Z",
-      "elapsed": 287,
+      "startedAt": "2026-03-17T23:07:38.015Z",
+      "completedAt": "2026-03-17T23:13:20.826Z",
+      "elapsed": 343,
       "outputFile": "architect.md",
       "tokenUsage": {
-        "input": 24,
-        "output": 13048,
-        "cacheRead": 2673099
+        "input": 16,
+        "output": 15797,
+        "cacheRead": 2136617
       },
-      "cost": 2.5425757499999997,
-      "sessionId": "ses_3024609aaffen6CAklBPvEG1J0"
+      "cost": 2.502351,
+      "sessionId": "ses_301f1ee6dffeeoJe6BnZ4CZhue"
     },
     "plan-gap": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-03-17T22:10:31.678Z",
-      "completedAt": "2026-03-17T22:15:39.669Z",
-      "elapsed": 308,
-      "outputFile": "plan-gap.md",
-      "tokenUsage": {
-        "input": 45,
-        "output": 11759,
-        "cacheRead": 5494098
-      },
-      "cost": 3.927736500000001,
-      "sessionId": "ses_3022637c7ffeLWcYgvs1k4ygMO"
+      "state": "pending",
+      "retries": 0
     },
     "build": {
-      "state": "timeout",
-      "retries": 0,
-      "startedAt": "2026-03-17T22:15:39.671Z",
-      "elapsed": 2700
+      "state": "pending",
+      "retries": 0
     }
   },
   "issueNumber": 822,
@@ -83,6 +70,6 @@
       "timestamp": "2026-03-17T20:33:21.677Z"
     }
   ],
-  "totalCost": 6.470312250000001,
-  "completedAt": "2026-03-17T23:00:41.738Z"
+  "totalCost": 2.502351,
+  "completedAt": "2026-03-17T23:13:25.360Z"
 }

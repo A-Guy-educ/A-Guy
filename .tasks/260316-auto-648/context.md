@@ -5,21 +5,21 @@
 - `src/app/(frontend)/error.tsx` (NEW) — Create frontend error boundary
 - `src/infra/config/env-validation.ts` (NEW) — Create Zod env validation
 - `instrumentation.ts` (lines 4-6, inside nodejs runtime block) — Hook validateEnv() call
-- `src/ui/cody/github-error-handler.ts` (line 2 add Sentry import, line 75 add Sentry.captureException) — Add Sentry to handleCodyApiError
-- `src/app/api/conversations/by-context/route.ts` (catch blocks at lines 58-61, 120-123, 150-153) — Replace with captureAndRespond
-- `src/app/api/blob/upload-token/route.ts` (catch at line 153: bare catch{} → catch(error) + captureAndRespond) — Fix bare catch
-- `src/app/api/jobs/run-immediate/route.ts` (catch at line 159-182: add captureAndRespond before final return) — Add Sentry
-- `src/app/api/pdfjs-viewer/route.ts` (catch at line 111-114) — Replace with captureAndRespond
-- `src/app/api/copilotkit/route.ts` (catch at line 161-170) — Replace with captureAndRespond
-- `src/app/api/agent/message/persist/route.ts` (catch at line 111-118: add captureAndRespond for non-Zod branch) — Add Sentry to else branch
-- `src/app/api/agent/chat/route.ts` (catch at line 78-90) — Add Sentry.captureException
-- `src/app/api/agent/chat/stream/route.ts` (catch at line 88-105) — Add Sentry.captureException
-- `src/app/api/exercises/import/route.ts` (catch at line 48-58) — Add Sentry.captureException
-- `src/app/api/exercises/validate-answer/route.ts` (catch at line 29-38) — Add Sentry.captureException
-- `src/app/api/agent/conversation/route.ts` (lines 14-20 replace manual check with Zod, catch add Sentry) — Zod + Sentry
-- `src/app/api/agent/reset-chat/route.ts` (lines 14-19 replace manual check with Zod, catch add Sentry) — Zod + Sentry
+- `src/ui/cody/github-error-handler.ts` (add Sentry import after line 5, add Sentry.captureException at line 75) — Enhance handleCodyApiError
+- `src/app/api/conversations/by-context/route.ts` (catch blocks at lines 58, 120, 150) — Replace with captureAndRespond
+- `src/app/api/blob/upload-token/route.ts` (outer catch at line 153: bare catch{} → catch(error) + captureAndRespond) — Fix bare catch
+- `src/app/api/jobs/run-immediate/route.ts` (catch at line 159) — Add captureAndRespond
+- `src/app/api/pdfjs-viewer/route.ts` (catch at line 111) — Replace with captureAndRespond
+- `src/app/api/copilotkit/route.ts` (catch at line 161) — Replace with captureAndRespond
+- `src/app/api/agent/message/persist/route.ts` (catch at line 111: add captureAndRespond for non-Zod branch) — Add Sentry to else
+- `src/app/api/agent/chat/route.ts` (catch at line 78) — Add Sentry.captureException
+- `src/app/api/agent/chat/stream/route.ts` (catch at line 88) — Add Sentry.captureException
+- `src/app/api/exercises/import/route.ts` (catch at line 48) — Add Sentry.captureException
+- `src/app/api/exercises/validate-answer/route.ts` (catch at line 29) — Add Sentry.captureException
+- `src/app/api/agent/conversation/route.ts` (lines 17-20 replace manual check with Zod, catch add Sentry) — Zod + Sentry
+- `src/app/api/agent/reset-chat/route.ts` (lines 17-20 replace manual check with Zod, catch add Sentry) — Zod + Sentry
 - `src/app/api/cody/tasks/route.ts` (POST handler, add Zod body validation) — Zod
-- `src/app/api/cody/tasks/approve-review/route.ts` (lines 22-26 replace manual check with Zod, add Sentry to catch) — Zod + Sentry
+- `src/app/api/cody/tasks/approve-review/route.ts` (lines 25-27 replace manual check with Zod, add Sentry to catch) — Zod + Sentry
 - `.github/workflows/ci.yml` (line 66: add --coverage flag + new artifact upload step) — CI coverage
 - `src/infra/instrumentation-client.ts` (lines 21-26: add browserTracingIntegration) — Web Vitals
 
@@ -27,9 +27,9 @@
 - `src/app/global-error.tsx` — Error boundary pattern (Sentry, locale detection, Tailwind, root-level with html/body wrapper)
 - `src/app/(cody)/cody/error.tsx` — Nested error boundary pattern (NO html/body tags)
 - `src/server/api/capture-and-respond.ts` — captureAndRespond utility (import + use pattern)
-- `src/server/api/with-api-handler.ts` — withApiHandler pattern (reference only — NOT migrating to it)
 - `src/app/api/study-plan/route.ts` — captureAndRespond dynamic import usage example
 - `src/app/api/chapters/by-grade/route.ts` — captureAndRespond dynamic import usage example
+- `tests/unit/cody-api-routes.spec.ts` — Existing test file for handleCodyApiError
 
 ## Key Signatures
 - `captureAndRespond(error: unknown, context: { route: string; requestId?: string }): NextResponse` from `src/server/api/capture-and-respond.ts`
