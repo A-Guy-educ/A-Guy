@@ -1,35 +1,39 @@
 {
-  "task_type": "spec_only",
-  "risk_level": "medium",
+  "task_type": "implement_feature",
+  "risk_level": "high",
   "confidence": 0.95,
   "primary_domain": "infra",
   "scope": [
-    "Security Headers (next.config.js)",
-    "Frontend Error Boundary (error.tsx)",
-    "Env Variable Validation",
-    "E2E Tests (cherry-pick)",
-    "Sentry Integration (30+ API routes)",
-    "Zod Validation (8+ API routes)",
-    "CI Coverage Enforcement",
-    "Web Vitals Tracking"
+    "next.config.js - Add security headers with split CSP",
+    "src/app/(frontend)/error.tsx - Create frontend error boundary",
+    "src/infra/config/env-validation.ts - Create env validation",
+    "instrumentation.ts - Hook in env validation",
+    "src/infra/instrumentation-client.ts - Add browserTracingIntegration",
+    "vitest.config.unit.mts - Add coverage config",
+    ".github/workflows/ci.yml - Add coverage enforcement",
+    "Cody API error utility - Add Sentry.captureException",
+    "6 non-Cody API routes - Add captureAndRespond",
+    "4 high-traffic routes - Migrate to withApiHandler",
+    "4 remaining POST routes - Add Zod validation",
+    "E2E tests - Cherry-pick from feat/pre-launch-e2e-verification"
   ],
   "missing_inputs": [],
   "assumptions": [
-    "QA audit was completed as stated with 15 areas identified",
-    "Previous pipeline stages created spec.md and plan.md",
-    "Cherry-pick commit 9631fe7b exists on specified branch",
-    "Sentry and Zod infrastructure exists to extend"
+    "Cherry-pick commit 9631fe7b will succeed or conflicts can be resolved manually",
+    "handleCodyApiError utility exists and can be enhanced",
+    "withApiHandler utility exists for route migration",
+    "Current test coverage baseline can be measured for thresholds"
   ],
-  "review_questions": [],
-  "complexity": 62,
-  "complexity_reasoning": "Scope: 20 (20+ files across security, frontend, infra, API routes, CI/CD), Risk: 15 (security headers, CI changes, production monitoring), Novelty: 8 (extending existing patterns), Cross-domain: 13 (backend + frontend + infra + security), Ambiguity: 1 (very clear with detailed steps), Deps: 5 (depends on existing Sentry, API routes, CI). Total: 62",
+  "review_questions": [
+    "The admin CSP uses unsafe-eval and unsafe-inline which reduces security. Is this acceptable given Payload admin requirements?"
+  ],
+  "complexity": 60,
+  "complexity_reasoning": "Scope: 20+ files across 3 phases (18 pts). Risk: security headers + env validation + CI changes (14 pts). Novelty: follows existing patterns in codebase (8 pts). Cross-domain: frontend + backend + infra + devops (12 pts). Ambiguity: clear spec with file paths (2 pts). Dependencies: interconnected changes across phases (6 pts). Total: 60",
   "input_quality": {
-    "level": "spec_and_plan",
-    "skip_stages": [
-      "architect"
-    ],
-    "reasoning": "Task contains detailed ## Requirements (8 items with 8 acceptance criteria) and comprehensive implementation plan (118 lines with file paths and step-by-step instructions). Both spec.md and plan.md already exist, promoted from task.md."
+    "level": "detailed_plan",
+    "skip_stages": [],
+    "reasoning": "Input contains 3 phases with clear implementation steps, file paths for each change, verification commands, and decisions made section. Matches detailed_plan criteria."
   },
   "pipeline_profile": "standard",
-  "pipeline": "spec_only"
+  "pipeline": "spec_execute_verify"
 }
