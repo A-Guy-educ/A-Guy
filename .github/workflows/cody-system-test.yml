@@ -82,6 +82,10 @@ jobs:
           RUN_ID=${{ steps.setup.outputs.run_id }}
           BRANCH="systest/$RUN_ID"
 
+          # Configure git to use token for authentication
+          git config --global credential.helper store
+          echo "https://x-access-token:$GH_TOKEN@github.com" > ~/.git-credentials
+
           # Create branch
           git checkout -b "$BRANCH"
 
