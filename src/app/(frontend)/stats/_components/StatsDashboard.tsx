@@ -29,7 +29,7 @@ interface DashboardData {
     dailyStreak: number
   }
   categoryProgress: {
-    learn: { count: number }
+    learn: { count: number; total: number }
     practice: { attempted: number; completed: number; successRate: number }
     exams: { averageScore: number }
     ask: { questionsAsked: number; conversations: number }

@@ -96,6 +96,8 @@ export async function GET(req: Request) {
   const lessonToChapter: Map<string, string> = new Map()
   // lesson type mapping: lessonId → type
   const lessonTypeMap: Map<string, string> = new Map()
+  // exercise → lesson mapping for topic mastery
+  const exerciseToLesson: Map<string, string> = new Map()
 
   // Fetch chapters (optionally filtered by course)
   const chaptersWhere: Record<string, unknown> = {
@@ -115,8 +117,8 @@ export async function GET(req: Request) {
 
   const chapterIds = chaptersResult.docs.map((c) => c.id)
   for (const chapter of chaptersResult.docs) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload dynamic field
     chapterMap.set(chapter.id, {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload dynamic field
       title: ((chapter as Record<string, any>).title as string) || '',
       lessonIds: [],
     })
@@ -140,10 +142,10 @@ export async function GET(req: Request) {
 
     for (const lesson of lessonsResult.docs) {
       const chapterId =
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload relation can be string or object
         typeof lesson.chapter === 'string'
           ? lesson.chapter
-          : (lesson.chapter as Record<string, any>)?.id
+          : // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload relation can be string or object
+            (lesson.chapter as Record<string, any>)?.id
       if (chapterId) {
         lessonToChapter.set(lesson.id, chapterId)
         const chapterEntry = chapterMap.get(chapterId)
@@ -155,7 +157,7 @@ export async function GET(req: Request) {
       lessonTypeMap.set(lesson.id, (lesson as Record<string, any>).type || 'learning')
     }
 
-    // Fetch exercises for these lessons
+    // Fetch exercises for these lessons and build exercise→lesson mapping
     if (lessonIds.length > 0) {
       const exercisesResult = await payload.find({
         collection: 'exercises',
@@ -166,6 +168,18 @@ export async function GET(req: Request) {
         overrideAccess: true,
       })
       relevantExerciseIds = new Set(exercisesResult.docs.map((e) => e.id))
+
+      // Build exercise→lesson mapping for topic mastery
+      for (const exercise of exercisesResult.docs) {
+        const exLessonId =
+          typeof exercise.lesson === 'string'
+            ? exercise.lesson
+            : // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload relation can be string or object
+              (exercise.lesson as Record<string, any>)?.id
+        if (exLessonId) {
+          exerciseToLesson.set(exercise.id, exLessonId)
+        }
+      }
     }
   }
 
@@ -227,6 +241,7 @@ export async function GET(req: Request) {
 
   // Category Progress
   const learnCount = lessonRecords.filter((r: ProgressRecord) => r.status === 'completed').length
+  const totalLessons = relevantLessonIds ? relevantLessonIds.size : 0
 
   const practiceAttempted = exerciseRecords.length
   const practiceCompleted = exerciseRecords.filter(
@@ -254,7 +269,7 @@ export async function GET(req: Request) {
         )
       : 0
 
-  // Ask: count conversations for this user
+  // Ask: count conversations and actual user messages
   const conversationWhere: Record<string, unknown> = {
     user: { equals: userId },
   }
@@ -264,21 +279,28 @@ export async function GET(req: Request) {
   const conversationsResult = await payload.find({
     collection: 'conversations',
     where: conversationWhere as never,
-    limit: 0, // We only need the count
+    limit: 100, // Fetch conversations to count messages
     overrideAccess: true,
   })
 
   const askConversationsCount = conversationsResult.totalDocs
 
-  // Count total messages across conversations (approximate questions asked)
-  // Use totalDocs as a proxy since each conversation represents at least one question
-  const askQuestionsCount = askConversationsCount
+  // Count actual user messages across all conversations
+  interface ConvMessage {
+    role: string
+    hidden?: boolean
+  }
+  let askQuestionsCount = 0
+  for (const conv of conversationsResult.docs) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload dynamic field
+    const messages = ((conv as any).messages as ConvMessage[]) || []
+    askQuestionsCount += messages.filter((m: ConvMessage) => m.role === 'user' && !m.hidden).length
+  }
 
-  // Topic Mastery: group exercise records by chapter via lesson→chapter mapping
-  // For each chapter, compute: (completed exercises / total attempted exercises) * 100
+  // Topic Mastery: group both lesson and exercise records by chapter
   const chapterExerciseStats = new Map<string, { attempted: number; completed: number }>()
 
-  // Group lesson records by chapter for topic mastery
+  // Group lesson records by chapter
   for (const record of lessonRecords) {
     const chapterId = lessonToChapter.get(record.recordId)
     if (!chapterId) continue
@@ -291,10 +313,23 @@ export async function GET(req: Request) {
     chapterExerciseStats.set(chapterId, stats)
   }
 
-  // Also include exercise records contribution to their lesson's chapter
-  // This requires knowing which lesson an exercise belongs to — we'll look it up
-  // from the exercises we already fetched
-  // (For now, lesson-based mastery is the best proxy)
+  // Include exercise records - map exercise→lesson→chapter
+  const allExerciseRecords = filteredRecords.filter(
+    (r: ProgressRecord) => r.recordType === 'exercise',
+  )
+  for (const record of allExerciseRecords) {
+    const lessonId = exerciseToLesson.get(record.recordId)
+    if (!lessonId) continue
+    const chapterId = lessonToChapter.get(lessonId)
+    if (!chapterId) continue
+
+    const stats = chapterExerciseStats.get(chapterId) || { attempted: 0, completed: 0 }
+    stats.attempted++
+    if (record.status === 'completed') {
+      stats.completed++
+    }
+    chapterExerciseStats.set(chapterId, stats)
+  }
 
   const topicMastery: Array<{ chapterId: string; chapterTitle: string; successRate: number }> = []
 
@@ -322,6 +357,7 @@ export async function GET(req: Request) {
     categoryProgress: {
       learn: {
         count: learnCount,
+        total: totalLessons,
       },
       practice: {
         attempted: practiceAttempted,

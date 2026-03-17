@@ -13,7 +13,7 @@ import { GraduationCap, Pencil, FileText, MessageCircle } from 'lucide-react'
 import { Progress } from '@/ui/web/components/progress'
 
 interface CategoryProgressData {
-  learn: { count: number }
+  learn: { count: number; total: number }
   practice: { attempted: number; completed: number; successRate: number }
   exams: { averageScore: number }
   ask: { questionsAsked: number; conversations: number }
@@ -32,8 +32,8 @@ export function CategoryProgress({ data }: CategoryProgressProps) {
       icon: GraduationCap,
       color: TAB_COLORS.learn.text,
       title: t('categoryLearn'),
-      value: `${data.learn.count} ${t('lessonsCompleted')}`,
-      progress: Math.min(data.learn.count * 10, 100), // Approximate progress
+      value: `${data.learn.count}/${data.learn.total} ${t('lessonsCompleted')}`,
+      progress: data.learn.total > 0 ? Math.round((data.learn.count / data.learn.total) * 100) : 0,
     },
     {
       key: 'practice',
