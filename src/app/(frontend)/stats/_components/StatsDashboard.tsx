@@ -6,7 +6,7 @@
 
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { SummaryCards } from './SummaryCards'
@@ -58,30 +58,42 @@ export function StatsDashboard({
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true)
-      try {
-        const params = new URLSearchParams()
-        if (courseId !== 'all') {
-          params.set('courseId', courseId)
-        }
-        params.set('timeframe', timeframe)
+  const fetchData = useCallback(async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams()
+      if (courseId !== 'all') {
+        params.set('courseId', courseId)
+      }
+      params.set('timeframe', timeframe)
 
-        const response = await fetch(`/api/stats/dashboard?${params.toString()}`)
-        if (response.ok) {
-          const result = await response.json()
-          setData(result)
-        }
-      } catch (error) {
-        console.error('Failed to fetch dashboard data:', error)
-      } finally {
-        setLoading(false)
+      const response = await fetch(`/api/stats/dashboard?${params.toString()}`, {
+        credentials: 'include',
+        cache: 'no-store',
+      })
+      if (response.ok) {
+        const result = await response.json()
+        setData(result)
+      }
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [courseId, timeframe])
+
+  // Fetch on mount, filter change, and when user returns to this tab
+  useEffect(() => {
+    fetchData()
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchData()
       }
     }
-
-    fetchData()
-  }, [courseId, timeframe])
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+  }, [fetchData])
 
   return (
     <div className="space-y-6">

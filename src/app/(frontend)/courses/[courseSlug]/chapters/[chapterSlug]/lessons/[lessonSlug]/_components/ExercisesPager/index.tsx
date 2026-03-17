@@ -73,6 +73,7 @@ export function ExercisesPager({
         trackedExercises.current.add(prevExercise.id)
         fetch('/api/stats/track-activity', {
           method: 'POST',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             eventType: 'exercise_completed',

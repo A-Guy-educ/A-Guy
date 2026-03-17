@@ -60,7 +60,10 @@ export function ActivityTimeline() {
   useEffect(() => {
     const fetchActivities = async () => {
       try {
-        const response = await fetch('/api/stats/activity?limit=10')
+        const response = await fetch('/api/stats/activity?limit=10', {
+          credentials: 'include',
+          cache: 'no-store',
+        })
         if (response.ok) {
           const data = await response.json()
           setActivities(data.activities || [])

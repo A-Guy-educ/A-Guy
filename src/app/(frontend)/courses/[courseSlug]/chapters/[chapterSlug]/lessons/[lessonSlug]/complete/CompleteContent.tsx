@@ -23,6 +23,7 @@ export function CompleteContent({ backUrl, lessonId, lessonTitle }: CompleteCont
 
     fetch('/api/stats/track-activity', {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         eventType: 'lesson_completed',
