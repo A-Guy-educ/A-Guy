@@ -1,82 +1,109 @@
 # Codebase Context: 260314-auto-352
 
 ## Files to Modify
-- `scripts/cody/conflict-utils.ts` (NEW) — conflict detection & marker file utilities
-- `scripts/cody/git-utils.ts` (L174-196) — modify `mergeDefaultBranch()` to return boolean + support `leaveConflicts`
-- `.opencode/agents/merge-resolve.md` (NEW) — AI agent for git conflict resolution
-- `scripts/cody/pipeline/definitions.ts` (L42-82, L91) — add MERGE_ORDER, prepend resolve-conflicts to all impl orders, add stage definition
-- `scripts/cody/stage-prompts.ts` (L29-44, L69-116, L131-201) — add to ALL_STAGES, STAGE_CONTEXT_FILES, stageInstructions
-- `scripts/cody/agent-runner.ts` (L65-80) — add resolve-conflicts timeout
-- `scripts/cody/cody-utils.ts` (L22) — add 'merge' to CodyInput.mode union
-- `scripts/cody/parse-inputs.ts` (L33) — add 'merge' to VALID_MODES
-- `scripts/cody/engine/pipeline-resolver.ts` (L18-45, L65-70) — add merge case to resolvePipelineForMode + createRebuildCallback
-- `scripts/cody/entry.ts` (L30, L319, L750-755, L788) — add runMergeMode(), fix runFixMode merge ordering
-- `scripts/cody/checkout-task-branch.ts` (L287-289) — replace process.exit(1) with log
-- `src/app/api/cody/tasks/[taskId]/actions/route.ts` (L31-49, switch block) — add smart-resolve action
-- `src/ui/cody/types.ts` (L267-279) — add 'smart-resolve' to GitHubAction
-- `src/ui/cody/api.ts` (after L213) — add smartResolve() to tasksApi
-- `src/ui/cody/hooks/index.ts` (L269-412) — add smartResolve mutation
-- `src/ui/cody/constants.ts` (L11-20) — add resolve-conflicts to IMPL_STAGES
-- `src/ui/cody/pipeline-utils.ts` (L14-27, L32-44) — add stageLabels + stageMaxDurations entries
-- `src/ui/cody/components/TaskDetail.tsx` (L1119-1128, L1465-1473) — pass onSmartResolve to MergeButton, show in done column
-- `src/ui/cody/components/MergeButton.tsx` (L19-26, L83-139) — add onSmartResolve prop + Resolve button
-- `src/ui/cody/components/tooltip-content.tsx` (L201-211) — update conflict tooltip text
+
+### Stage Registry (canonical source of truth)
+- `scripts/cody/stages/registry.ts` (L21-35 STAGE_NAMES, L37 StageName, L43-57 STAGES, L80-201 STAGE_REGISTRY, L274 TypedPipelineStep, L279-323 pipeline orders) — add 'resolve-conflicts' to STAGE_NAMES, STAGE_REGISTRY, STAGES const; add MERGE_ORDER; prepend to IMPL/FIX orders
+
+### Conflict Utilities
+- `scripts/cody/conflict-utils.ts` (NEW) — getConflictedFiles, writeConflictMarker, hasConflictMarker, removeConflictMarker
+
+### Git Utils
+- `scripts/cody/git-utils.ts` (L267-295) — modify mergeDefaultBranch() signature and return type
+
+### Pipeline Definitions
+- `scripts/cody/pipeline/definitions.ts` (L68 createStageDefinitions) — add 'resolve-conflicts' stage definition with shouldSkip logic
+
+### Stage Prompts
+- `scripts/cody/stage-prompts.ts` (L43-115 stageInstructions) — add 'resolve-conflicts' entry
+
+### Agent
+- `.opencode/agents/merge-resolve.md` (NEW) — merge resolution agent with git permissions
+
+### Mode Handler
+- `scripts/cody/modes/merge.ts` (NEW) — runMergeMode function
+- `scripts/cody/modes/index.ts` (L7-12) — add export for runMergeMode
+- `scripts/cody/modes/fix.ts` (L16 imports, L30-35 merge bug, L67 taskDir) — fix merge ordering + use leaveConflicts
+
+### Entry Point
+- `scripts/cody/entry.ts` (L28-34 imports, L336-357 switch) — add merge case + import
+
+### Pipeline Resolver
+- `scripts/cody/engine/pipeline-resolver.ts` (L18-19 mode type, L24-44 switch, L66 rebuild type) — add merge case
+
+### Config
+- `scripts/cody/cody-utils.ts` (L19 CodyInput.mode) — add 'merge' to union
+- `scripts/cody/parse-inputs.ts` (L33 VALID_MODES) — add 'merge'
+
+### Checkout
+- `scripts/cody/checkout-task-branch.ts` (L287-290) — remove process.exit(1) on conflict
+
+### Dashboard API
+- `src/app/api/cody/tasks/[taskId]/actions/route.ts` (L35-55 actionSchema, L398 default case) — add 'smart-resolve'
+
+### Dashboard UI
+- `src/ui/cody/types.ts` (L282-293 GitHubAction) — add 'smart-resolve'
+- `src/ui/cody/api.ts` (after L249) — add smartResolve method
+- `src/ui/cody/hooks/index.ts` (L298-461 useTaskActions) — add smartResolve mutation
+- `src/ui/cody/components/TaskDetail.tsx` (L224-275 getPrimaryAction, header area) — Smart Resolve button
+- `src/ui/cody/components/MergeButton.tsx` (L19-26 props, L83+) — add onSmartResolve prop
+- `src/ui/cody/components/tooltip-content.tsx` (L201-213) — update conflict tooltip text
+- `src/ui/cody/constants.ts` (L11-27) — add 'resolve-conflicts' to IMPL_STAGES
+- `src/ui/cody/pipeline-utils.ts` (L14-27 stageLabels, L32-44 stageMaxDurations) — add resolve-conflicts
+
+### Workflow
 - `.github/workflows/cody.yml` (L14) — update mode description
 
 ## Files to Read (reference patterns)
-- `scripts/cody/git-utils.ts` — mergeDefaultBranch pattern, execFileSync usage
-- `scripts/cody/pipeline/definitions.ts` — stage definition Map pattern, shouldSkip signature
-- `scripts/cody/stage-prompts.ts` — ALL_STAGES tuple, STAGE_CONTEXT_FILES record, stageInstructions record
-- `.opencode/agents/build.md` — YAML frontmatter + agent instruction pattern
-- `src/app/api/cody/tasks/[taskId]/actions/route.ts` — actionSchema z.enum + switch case pattern
-- `src/ui/cody/api.ts` — tasksApi.approvePR pattern for new API method
-- `src/ui/cody/hooks/index.ts` — useMutation + handleSuccess/handleError pattern
-- `src/ui/cody/components/MergeButton.tsx` — usePRCIStatus + hasConflicts pattern
-- `tests/unit/scripts/cody/git-utils.test.ts` — execFileSync mock pattern
-- `tests/unit/scripts/cody/stage-prompts.test.ts` — stage constant assertion pattern
+- `.opencode/agents/build.md` (L1-10) — YAML header format for agents
+- `scripts/cody/modes/impl.ts` — mode handler pattern (imports, structure)
+- `scripts/cody/modes/fix.ts` — full mode handler with pipeline resolution
+- `scripts/cody/pipeline/definitions.ts` (L68-350) — stage definition pattern (shouldSkip, postActions)
+- `scripts/cody/engine/types.ts` (L50-76) — StageDefinition interface, agentName field
+- `tests/unit/scripts/cody/stage-registry.test.ts` — test pattern for registry assertions
+- `tests/unit/scripts/cody/entry-modes.test.ts` — test pattern for pipeline mode resolution
+- `tests/unit/scripts/cody/git-utils.test.ts` — test pattern for mocking child_process
+- `tests/helpers/cody/pipeline-test-harness.ts` — createMockPipelineContext factory
 
 ## Key Signatures
-- `export function mergeDefaultBranch(cwd: string): void` from `scripts/cody/git-utils.ts` → changing to `(cwd: string, options?: { leaveConflicts?: boolean }): boolean`
-- `export function resolvePipelineForMode(mode: ..., profile, clarify, ctx): PipelineDefinition` from `scripts/cody/engine/pipeline-resolver.ts`
-- `export function createRebuildCallback(_mode: ..., _clarify: boolean)` from `scripts/cody/engine/pipeline-resolver.ts`
-- `export function buildPipeline(mode, profile, clarify, ctx): PipelineDefinition` from `scripts/cody/pipeline/definitions.ts`
-- `function createStageDefinitions(ctx: PipelineContext): Map<string, StageDefinition>` from `scripts/cody/pipeline/definitions.ts`
-- `export const VALID_MODES = [...]` from `scripts/cody/parse-inputs.ts`
-- `export interface CodyInput { mode: ... }` from `scripts/cody/cody-utils.ts`
-- `export const ALL_STAGES = [...] as const` from `scripts/cody/stage-prompts.ts`
-- `export const STAGE_CONTEXT_FILES: Record<Stage, string[]>` from `scripts/cody/stage-prompts.ts`
-- `export const stageInstructions: Record<Stage, (taskId: string) => string>` from `scripts/cody/stage-prompts.ts`
-- `export const STAGE_TIMEOUTS: Record<string, number>` from `scripts/cody/agent-runner.ts`
-- `export type GitHubAction = ...` from `src/ui/cody/types.ts`
-- `export function useTaskActions({issueNumber, actorLogin, onSuccess, onError})` from `src/ui/cody/hooks/index.ts`
+- `mergeDefaultBranch(cwd: string): void` from `scripts/cody/git-utils.ts` — changing to `(cwd: string, options?: { leaveConflicts?: boolean }): boolean`
+- `ensureFeatureBranch(taskId, taskType, projectDir?, taskDir?): void` from `scripts/cody/git-utils.ts` — calls mergeDefaultBranch internally (L369, L391, L463)
+- `resolvePipelineForMode(mode, profile, clarify, ctx): PipelineDefinition` from pipeline-resolver.ts
+- `buildPipeline(mode, profile, clarify, ctx): PipelineDefinition` from definitions.ts
+- `createStageDefinitions(ctx): Map<StageName, StageDefinition>` from definitions.ts
+- `type CodyInput = { mode: 'spec' | 'impl' | 'rerun' | 'fix' | 'full' | 'status', ... }` from cody-utils.ts
+- `VALID_MODES = ['spec', 'impl', 'rerun', 'fix', 'full', 'status']` from parse-inputs.ts
+- `type StageName = (typeof STAGE_NAMES)[number]` from stages/registry.ts
+- `STAGE_REGISTRY: Record<StageName, StageMetadata>` from stages/registry.ts
+- `type GitHubAction = 'approve' | 'reject' | ...` from types.ts
+- `useTaskActions({ issueNumber, actorLogin, onSuccess, onError })` from hooks/index.ts
+- `getStageTimeout(stage: StageName): number` from stages/registry.ts
+- `flattenPipelineOrder(order: PipelineStep[]): string[]` from pipeline/definitions.ts
+- `triggerWorkflow(options, octokit?): Promise<void>` from github-client.ts
+- `postWithAttribution(issueNumber, message, actor, userOctokit)` from actions/route.ts
 
 ## Reuse Inventory
-- `mergeDefaultBranch` from `scripts/cody/git-utils.ts` — modify (not replace)
-- `ensureTaskDir` from `scripts/cody/cody-utils.ts` — used in runMergeMode
-- `getTaskDir` from `scripts/cody/cody-utils.ts` — used in runFixMode
-- `triggerWorkflow` from `src/ui/cody/github-client.ts` — trigger merge workflow
-- `postComment` from `src/ui/cody/github-client.ts` — audit trail
-- `clearCache` from `src/ui/cody/github-client.ts` — invalidate cache
-- `withActor` from `src/app/api/cody/tasks/[taskId]/actions/route.ts` (L60) — format with actor
-- `handleSuccess` / `handleError` — existing pattern in useTaskActions
-- `usePRCIStatus` from `src/ui/cody/hooks/usePRCIStatus.ts` — provides hasConflicts
+- `getDefaultBranch(cwd)` from `scripts/cody/git-utils.ts` — get branch name
+- `getStageTimeout('resolve-conflicts')` from registry — reuses registry timeout system
+- `createMockPipelineContext()` from `tests/helpers/cody/` — test fixtures
+- `triggerWorkflow()` from `src/ui/cody/github-client.ts` — trigger CI
+- `postWithAttribution()` from route.ts — post comment with actor
+- `handleSuccess()`/`handleError()` from `useTaskActions` — toast pattern
+- `invalidateTaskCache()`/`invalidatePRCache()` from github-client.ts — cache busting
+- `usePRCIStatus` hook from `src/ui/cody/hooks/usePRCIStatus.ts` — provides `hasConflicts`
 
 ## Integration Points
-- Must add 'resolve-conflicts' to `ALL_STAGES` in stage-prompts.ts (this is typed as `Stage`)
-- Must add 'resolve-conflicts' to `STAGE_CONTEXT_FILES` (keyed by `Stage` type)
-- Must add 'resolve-conflicts' to `stageInstructions` (keyed by `Stage` type)
-- Must add 'resolve-conflicts' to `IMPL_STAGES` in constants.ts (this is typed as `ImplStage`)
-- Must add `MERGE_ORDER` to exports from definitions.ts
-- Must import `MERGE_ORDER` in pipeline-resolver.ts
-- Must import `writeConflictMarker` in entry.ts
-- Must import `hasConflictMarker`, `hasActiveMergeConflicts`, `removeConflictMarker` in definitions.ts
+- `STAGE_NAMES` → `StageName` type → `STAGE_REGISTRY` → `createStageDefinitions()` → `buildPipeline()` — ALL must be updated for resolve-conflicts
+- New mode: `CodyInput.mode` union → `VALID_MODES` → `resolvePipelineForMode()` type + switch → `modes/merge.ts` → `entry.ts` switch
+- Dashboard: `actionSchema` z.enum → switch case → `GitHubAction` type → `tasksApi` → `useTaskActions()`
+- Frontend constants: `IMPL_STAGES` → `ALL_STAGES` → `calculatePipelineProgress()` — must include resolve-conflicts
 
 ## Imports Verified
-- `scripts/cody/git-utils.ts` → exports `mergeDefaultBranch`, `getDefaultBranch`, `ensureFeatureBranch` ✅
-- `scripts/cody/cody-utils.ts` → exports `ensureTaskDir`, `getTaskDir`, `CodyInput` ✅
-- `scripts/cody/agent-runner.ts` → exports `STAGE_TIMEOUTS`, `DEFAULT_TIMEOUT` ✅
-- `scripts/cody/pipeline/definitions.ts` → exports `buildPipeline`, `FIX_FULL_ORDER`, `IMPL_ORDER_STANDARD`, `IMPL_ORDER_LIGHTWEIGHT` ✅
-- `scripts/cody/engine/pipeline-resolver.ts` → exports `resolvePipelineForMode`, `createRebuildCallback` ✅
-- `src/ui/cody/github-client.ts` → exports `triggerWorkflow`, `postComment`, `clearCache` ✅
-- `src/ui/cody/hooks/usePRCIStatus.ts` → exports `usePRCIStatus` ✅
-- `child_process` → `execFileSync` (used in conflict-utils) ✅
+- `scripts/cody/git-utils` → exports `mergeDefaultBranch`, `ensureFeatureBranch`, `getDefaultBranch` ✅
+- `scripts/cody/stages/registry` → exports `STAGE_NAMES`, `StageName`, `STAGE_REGISTRY`, `IMPL_ORDER_STANDARD`, `IMPL_ORDER_LIGHTWEIGHT`, `FIX_FULL_ORDER`, `getStageTimeout` ✅
+- `scripts/cody/pipeline/definitions` → re-exports pipeline orders from registry, exports `buildPipeline`, `flattenPipelineOrder` ✅
+- `scripts/cody/engine/pipeline-resolver` → exports `resolvePipelineForMode` ✅
+- `scripts/cody/modes` → barrel exports all mode handlers ✅
+- `src/ui/cody/github-client` → exports `triggerWorkflow`, `postComment`, `invalidateTaskCache`, `invalidatePRCache` ✅
+- `src/ui/cody/hooks/usePRCIStatus` → exports `usePRCIStatus` with `hasConflicts` ✅
+- `tests/helpers/cody` → exports `createMockPipelineContext` ✅

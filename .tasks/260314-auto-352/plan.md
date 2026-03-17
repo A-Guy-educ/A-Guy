@@ -2,385 +2,346 @@
 
 ## Rerun Context
 
-This is a rerun (`/cody rerun` with no specific issues). No prev-run artifacts exist, so this is a fresh rebuild. The plan incorporates clarification feedback (clarified.md):
-1. The `shouldSkip` logic must also check git merge state (not just the marker file) to avoid stale marker re-entry.
-2. The merge in `runFixMode()` must move AFTER `ctx.taskDir` is resolved (currently at L787), since we need the task dir to write the conflict marker.
-3. User-facing docs need updating (README, CHEAT-SHEET).
+This is a rerun. Previous run failed (no detailed error). The previous plan was not preserved in prev-run/.
+
+**Key clarification findings from previous run:**
+1. `STAGE_NAMES` and pipeline orders now live in `scripts/cody/stages/registry.ts` (not `pipeline/definitions.ts` or `stage-prompts.ts`)
+2. `stageInstructions` in `stage-prompts.ts` is typed `Record<string, ...>`, not `Record<StageName, ...>` — so adding new stages there won't cause type errors
+3. Mode handlers live in `scripts/cody/modes/*.ts` (not inline in `entry.ts`)
+4. The `runFixMode` merge bug is in `scripts/cody/modes/fix.ts` L30-35 (not entry.ts)
+5. `STAGE_REGISTRY` in registry.ts is `Record<StageName, StageMetadata>` — adding `resolve-conflicts` to `STAGE_NAMES` requires adding a corresponding registry entry
+6. `clarified.md` flagged: fix mode merge happens BEFORE taskDir is resolved (L30 vs L67) — must reorder
 
 ## Research Findings
 
 ### File paths verified
-- ✅ `scripts/cody/git-utils.ts` — `mergeDefaultBranch()` at L174-196 (returns `void`, throws on conflict)
-- ✅ `scripts/cody/checkout-task-branch.ts` — local `mergeDefaultBranch()` at L92-101 (returns boolean, aborts merge), `process.exit(1)` at L289
-- ✅ `scripts/cody/entry.ts` — `runFixMode()` at L743-797 (merge at L750-755, taskDir resolved at L787), mode switch at L319
-- ✅ `scripts/cody/cody-utils.ts` — `CodyInput.mode` union at L22
+- ✅ `scripts/cody/git-utils.ts` — `mergeDefaultBranch()` at L267-295
+- ✅ `scripts/cody/stages/registry.ts` — `STAGE_NAMES` at L21-35, `STAGE_REGISTRY` at L80-201, `StageName` type at L37, pipeline orders at L276-323
+- ✅ `scripts/cody/pipeline/definitions.ts` — re-exports from registry L49-59, `createStageDefinitions()` at L68+, `buildPipeline()` further down
+- ✅ `scripts/cody/stage-prompts.ts` — `stageInstructions` at L43-115, `buildStagePrompt()` at L148
+- ✅ `scripts/cody/modes/fix.ts` — `runFixMode()` at L23, merge bug at L30-35, taskDir resolved at L67
+- ✅ `scripts/cody/modes/index.ts` — barrel exports at L7-12
+- ✅ `scripts/cody/entry.ts` — mode switch at L336-357, mode handler imports from `./modes` at L28-34
+- ✅ `scripts/cody/cody-utils.ts` — `CodyInput.mode` at L19
 - ✅ `scripts/cody/parse-inputs.ts` — `VALID_MODES` at L33
-- ✅ `scripts/cody/pipeline/definitions.ts` — pipeline orders at L42-82, `createStageDefinitions()` at L91, `buildPipeline()` at L436
-- ✅ `scripts/cody/engine/pipeline-resolver.ts` — `resolvePipelineForMode()` at L18-45, `createRebuildCallback` at L65
-- ✅ `scripts/cody/stage-prompts.ts` — `ALL_STAGES` at L29-44, `STAGE_CONTEXT_FILES` at L69-116, `stageInstructions` at L131-201
-- ✅ `scripts/cody/agent-runner.ts` — `STAGE_TIMEOUTS` at L65-80, `DEFAULT_TIMEOUT` at L62
-- ✅ `src/app/api/cody/tasks/[taskId]/actions/route.ts` — `actionSchema` at L30-57, switch at L82-339
-- ✅ `src/ui/cody/types.ts` — `GitHubAction` at L267-279
-- ✅ `src/ui/cody/api.ts` — `tasksApi` methods at L195-243
-- ✅ `src/ui/cody/hooks/index.ts` — `useTaskActions()` at L269-412
-- ✅ `src/ui/cody/components/TaskDetail.tsx` — header at L1117-1188, mobile at L1462-1525, MergeButton at L1119-1128
-- ✅ `src/ui/cody/components/MergeButton.tsx` — `hasConflicts` at L53, full component L1-140
+- ✅ `scripts/cody/engine/pipeline-resolver.ts` — `resolvePipelineForMode()` at L18-45, mode type at L19
+- ✅ `scripts/cody/checkout-task-branch.ts` — local `mergeDefaultBranch()` at L92-101, `process.exit(1)` at L289
+- ✅ `src/app/api/cody/tasks/[taskId]/actions/route.ts` — `actionSchema` at L35-55, switch at L115-400
+- ✅ `src/ui/cody/types.ts` — `GitHubAction` at L282-293
+- ✅ `src/ui/cody/api.ts` — `tasksApi` methods at L170+
+- ✅ `src/ui/cody/hooks/index.ts` — `useTaskActions()` at L298-461
+- ✅ `src/ui/cody/components/TaskDetail.tsx` — `getPrimaryAction()` at L224-275
+- ✅ `src/ui/cody/components/MergeButton.tsx` — `hasConflicts` handling at L53-56
 - ✅ `src/ui/cody/components/tooltip-content.tsx` — `MergeTooltipContent` at L156-216
-- ✅ `src/ui/cody/constants.ts` — `IMPL_STAGES` at L11-20, `ALL_STAGES` at L27
+- ✅ `src/ui/cody/constants.ts` — `ALL_STAGES` at L27, stage types at L23-25
 - ✅ `src/ui/cody/pipeline-utils.ts` — `stageLabels` at L14-27, `stageMaxDurations` at L32-44
 - ✅ `.github/workflows/cody.yml` — mode description at L14
-- ✅ `.opencode/agents/build.md` — YAML header pattern L1-10
-- ✅ `tests/unit/scripts/cody/git-utils.test.ts` — test patterns for git-utils
-- 🆕 `scripts/cody/conflict-utils.ts` — new file
-- 🆕 `.opencode/agents/merge-resolve.md` — new agent
+- ✅ `.opencode/agents/build.md` — YAML header pattern (lines 1-10)
+- 🆕 `scripts/cody/conflict-utils.ts` — NEW
+- 🆕 `scripts/cody/modes/merge.ts` — NEW
+- 🆕 `.opencode/agents/merge-resolve.md` — NEW
+- ✅ `tests/unit/scripts/cody/git-utils.test.ts` — existing test file
+- ✅ `tests/unit/scripts/cody/entry-modes.test.ts` — existing test file
+- ✅ `tests/unit/scripts/cody/stage-registry.test.ts` — existing test file
+- ✅ `tests/helpers/cody/` — test helpers with `createMockPipelineContext()`
 
 ### Patterns observed
-- Pipeline orders: exported const arrays, `PipelineStep[]` for impl, `string[]` for spec
-- Stage definitions: Map entries in `createStageDefinitions()` with `name`, `type`, `timeout`, `maxRetries`, `shouldSkip?`, `postActions?`, `agentName?`
-- Agent files: YAML frontmatter with `name`, `description`, `mode`, `tools` map
-- Dashboard actions: z.enum in `actionSchema` → switch case → `triggerWorkflow()` / `postComment()` → `clearCache()` → return
-- API methods: `tasksApi.<method>(issueNumber, actorLogin?)` → POST to `/actions` with action name
-- Hook mutations: `useMutation({ mutationFn, onSuccess: handleSuccess(), onError: handleError() })`
-- `stageInstructions` entries: `(taskId: string) => string`
-- `stageLabels` / `stageMaxDurations`: `Record<string, string|number>` maps
-- Stage type `'agent'` requires matching `.opencode/agents/<agentName>.md`
+- Stage names are the canonical `STAGE_NAMES` const array in `scripts/cody/stages/registry.ts` — `StageName` type is derived from it
+- `STAGE_REGISTRY` must have an entry for every `StageName` (typed constraint)
+- Pipeline orders (`IMPL_ORDER_STANDARD`, etc.) use `TypedPipelineStep[]` which is `StageName | { parallel: StageName[] }`
+- Mode handlers are separate files in `scripts/cody/modes/` with barrel export via `index.ts`
+- Agent files use YAML frontmatter with `tools:` block
+- Dashboard actions: actionSchema z.enum → switch case → triggerWorkflow/postComment
+- `stageInstructions` in `stage-prompts.ts` is `Record<string, ...>` — not constrained by StageName
 
 ### Integration points
-- New stage → `createStageDefinitions()`, pipeline orders, `ALL_STAGES` (stage-prompts), `STAGE_CONTEXT_FILES`, `stageInstructions`
-- New mode → `CodyInput.mode`, `VALID_MODES`, `resolvePipelineForMode()`, entry.ts switch
-- New action → `actionSchema` z.enum, switch case, `GitHubAction` type, `tasksApi`, `useTaskActions()`
-- Dashboard display → `stageLabels`, `stageMaxDurations`, `ALL_STAGES` (constants.ts), `IMPL_STAGES`
+- `STAGE_NAMES` array → `StageName` type → `STAGE_REGISTRY` → `createStageDefinitions()` → `buildPipeline()`
+- New mode: `CodyInput.mode` → `VALID_MODES` → `resolvePipelineForMode()` → mode handler file → `entry.ts` switch
+- Dashboard: `actionSchema` z.enum → switch case → `GitHubAction` type → `tasksApi` → `useTaskActions()`
 
 ## Reuse Inventory
 
-### Existing utilities to reuse (with import paths)
-- `mergeDefaultBranch()` from `scripts/cody/git-utils.ts` — will be modified, not replaced
-- `ensureTaskDir()` from `scripts/cody/cody-utils.ts` — create task directory
-- `getTaskDir()` from `scripts/cody/cody-utils.ts` — get task directory path
-- `triggerWorkflow()` from `src/ui/cody/github-client.ts` — supports arbitrary modes already
-- `postComment()` from `src/ui/cody/github-client.ts` — audit trail
-- `clearCache()` from `src/ui/cody/github-client.ts` — invalidate server cache
-- `STAGE_TIMEOUTS.build` from `scripts/cody/agent-runner.ts` — reuse 45min timeout
-- `DEFAULT_TIMEOUT` from `scripts/cody/agent-runner.ts` — fallback
-- `handleSuccess()` / `handleError()` from `useTaskActions()` — toast notification pattern
-- `usePRCIStatus` hook — already provides `hasConflicts` boolean
-- `withActor()` from route.ts — actor attribution helper
+### Existing utilities to reuse
+- `getDefaultBranch(cwd)` from `scripts/cody/git-utils.ts` — get default branch name for merge
+- `execFileSync` from `child_process` — used by existing git operations
+- `logger` from `scripts/cody/logger` — consistent logging
+- `createMockPipelineContext()` from `tests/helpers/cody/` — test fixture factory
+- `triggerWorkflow()` from `src/ui/cody/github-client.ts` — trigger CI workflow
+- `postWithAttribution()` from route.ts — post comment with actor
+- `handleSuccess()`/`handleError()` from `useTaskActions` — toast notification pattern
+- `usePRCIStatus` hook — provides `hasConflicts` boolean
 
 ### New code justified
-- `scripts/cody/conflict-utils.ts` — new module encapsulating conflict detection/marker file logic. No existing utility handles this.
-- `.opencode/agents/merge-resolve.md` — build agent explicitly forbids git commands, so a separate agent with git permissions is required.
-- `MERGE_ORDER` pipeline order — unique 4-stage sequence for dedicated merge mode.
+- `scripts/cody/conflict-utils.ts` — encapsulates conflict detection/marker logic; no existing utility does this
+- `scripts/cody/modes/merge.ts` — follows existing `modes/*.ts` pattern for new mode handler
+- `.opencode/agents/merge-resolve.md` — new agent with git permissions (build agent explicitly forbids git)
+- `MERGE_ORDER` pipeline — unique 4-stage sequence for merge mode
 
 ---
 
-## Step 1: Conflict Detection Utilities + Modify mergeDefaultBranch
+## Step 1: Add resolve-conflicts to Stage Registry + Conflict Utilities
 
 **Files to Touch**:
-- `scripts/cody/conflict-utils.ts` (NEW) — conflict detection + marker file utilities
-- `scripts/cody/git-utils.ts` (MODIFIED — L174-196) — change `mergeDefaultBranch()` signature and behavior
+- `scripts/cody/stages/registry.ts` (MODIFIED — L21-35, L37, L57, L80-201, L279-323)
+- `scripts/cody/conflict-utils.ts` (NEW)
 
 **Behavior**:
 
-1. Create `scripts/cody/conflict-utils.ts` with five functions:
-   - `getConflictedFiles(cwd: string): string[]` — runs `execFileSync('git', ['diff', '--name-only', '--diff-filter=U'], { cwd, encoding: 'utf-8' })`, splits by newline, filters empties. Returns file list.
-   - `hasActiveMergeConflicts(cwd: string): boolean` — runs `execFileSync('git', ['ls-files', '--unmerged'], { cwd, encoding: 'utf-8' })`. Returns true if output is non-empty (git is in merge conflict state).
-   - `writeConflictMarker(taskDir: string, cwd: string): string` — builds markdown with: header, timestamp, current branch, target branch (from `getDefaultBranch()`), list of conflicted files from `getConflictedFiles()`. Writes to `path.join(taskDir, 'merge-conflicts.md')`. Returns the file path.
-   - `hasConflictMarker(taskDir: string): boolean` — `fs.existsSync(path.join(taskDir, 'merge-conflicts.md'))`.
-   - `removeConflictMarker(taskDir: string): void` — `fs.unlinkSync(path.join(taskDir, 'merge-conflicts.md'))` wrapped in try/catch (no-op if missing).
+1. In `scripts/cody/stages/registry.ts`:
+   - Add `'resolve-conflicts'` to `STAGE_NAMES` array (after 'pr' or at beginning — it's a utility stage)
+   - Add `RESOLVE_CONFLICTS: 'resolve-conflicts'` to `STAGES` const
+   - Add `'resolve-conflicts'` entry to `STAGE_REGISTRY`:
+     ```
+     'resolve-conflicts': {
+       outputFile: 'merge-resolve.md',
+       timeout: ms('45m'),
+       complexityThreshold: 0,
+       contextFiles: ['merge-conflicts.md'],
+       type: 'agent',
+     }
+     ```
+   - Add `MERGE_ORDER` pipeline: `['resolve-conflicts', 'commit', 'verify', 'pr']`
+   - Prepend `'resolve-conflicts'` to `IMPL_ORDER_STANDARD`, `IMPL_ORDER_LIGHTWEIGHT`, and `FIX_FULL_ORDER`
+   - Export `MERGE_ORDER`
 
-2. Modify `mergeDefaultBranch()` in `scripts/cody/git-utils.ts` (L174-196):
-   - Change signature: `export function mergeDefaultBranch(cwd: string, options?: { leaveConflicts?: boolean }): boolean`
-   - On success: `return true` (after the `execFileSync` call at L178-181)
-   - On conflict (catch block L182):
-     - If `options?.leaveConflicts`: log "Merge conflict detected, leaving in place for resolution", return `false` (do NOT abort, do NOT throw)
-     - Else (default): keep existing abort+throw behavior
-   - Existing callers that ignore the return value are unaffected (`void` → `boolean` is backward compatible in TS)
+2. Create `scripts/cody/conflict-utils.ts` with:
+   - `getConflictedFiles(cwd: string): string[]` — runs `git diff --name-only --diff-filter=U`, returns lines. Also checks `git ls-files --unmerged` as secondary validation (per clarified.md gap #2).
+   - `writeConflictMarker(taskDir: string, cwd: string): string` — creates `<taskDir>/merge-conflicts.md` with: conflicted file list, current branch, default branch, timestamp. Returns marker path.
+   - `hasConflictMarker(taskDir: string): boolean` — checks if `merge-conflicts.md` exists
+   - `removeConflictMarker(taskDir: string): void` — deletes `merge-conflicts.md` if exists
+
+3. Modify `mergeDefaultBranch()` in `scripts/cody/git-utils.ts` (L267-295):
+   - Add optional `options?: { leaveConflicts?: boolean }` parameter
+   - Change return type from `void` to `boolean`
+   - When `leaveConflicts: true` and conflict: log warning, return `false` (do NOT abort merge, do NOT throw)
+   - When `leaveConflicts` is falsy (default): keep existing abort + throw behavior, but return `true` on success
+   - This is backward compatible: existing callers ignore return value, and default behavior still throws
 
 **Tests** (FAIL before, PASS after):
 - `tests/unit/scripts/cody/conflict-utils.test.ts` (NEW):
-  - `getConflictedFiles()` — mock `execFileSync` to return `"file1.ts\nfile2.ts\n"`, expect `['file1.ts', 'file2.ts']`
-  - `getConflictedFiles()` — mock `execFileSync` to return `""`, expect `[]`
-  - `hasActiveMergeConflicts()` — mock `git ls-files --unmerged` to return output → true
-  - `hasActiveMergeConflicts()` — mock `git ls-files --unmerged` to return empty → false
-  - `writeConflictMarker()` — mock fs + git, verify file written with correct content
-  - `hasConflictMarker()` — mock fs.existsSync, return true/false
-  - `removeConflictMarker()` — mock fs.unlinkSync, verify called with correct path
-- `tests/unit/scripts/cody/git-utils.test.ts` (add tests):
+  - `getConflictedFiles()` returns list from mocked git output
+  - `getConflictedFiles()` returns empty array when no conflicts
+  - `writeConflictMarker()` creates marker file with correct content
+  - `hasConflictMarker()` returns true when marker exists
+  - `hasConflictMarker()` returns false when marker doesn't exist
+  - `removeConflictMarker()` deletes the marker file
+- `tests/unit/scripts/cody/stage-registry.test.ts` (MODIFIED — add tests):
+  - `STAGE_NAMES` contains `'resolve-conflicts'`
+  - `STAGE_REGISTRY['resolve-conflicts']` has correct metadata
+  - `MERGE_ORDER` equals `['resolve-conflicts', 'commit', 'verify', 'pr']`
+  - `IMPL_ORDER_STANDARD[0]` is `'resolve-conflicts'`
+  - `IMPL_ORDER_LIGHTWEIGHT[0]` is `'resolve-conflicts'`
+  - `FIX_FULL_ORDER[0]` is `'resolve-conflicts'`
+- `tests/unit/scripts/cody/git-utils.test.ts` (MODIFIED — add tests):
+  - `mergeDefaultBranch(cwd)` (no options) still throws on conflict (backward compat)
   - `mergeDefaultBranch(cwd)` returns `true` on clean merge
-  - `mergeDefaultBranch(cwd)` still throws on conflict (backward compatible)
-  - `mergeDefaultBranch(cwd, { leaveConflicts: true })` returns `false` on conflict without aborting
+  - `mergeDefaultBranch(cwd, { leaveConflicts: true })` returns `false` on conflict without throwing
+
+**Run**: `pnpm vitest run tests/unit/scripts/cody/conflict-utils.test.ts tests/unit/scripts/cody/stage-registry.test.ts tests/unit/scripts/cody/git-utils.test.ts`
 
 **Acceptance Criteria**:
-- [ ] `mergeDefaultBranch(cwd)` (no options) still throws on conflict (backward compatible)
-- [ ] `mergeDefaultBranch(cwd, { leaveConflicts: true })` returns `false` on conflict without aborting merge
-- [ ] `mergeDefaultBranch(cwd)` returns `true` on clean merge
-- [ ] All conflict-utils functions work correctly (getConflictedFiles, hasActiveMergeConflicts, writeConflictMarker, hasConflictMarker, removeConflictMarker)
-- [ ] `writeConflictMarker()` creates valid markdown listing all conflicted files
-- [ ] `pnpm -s tsc --noEmit` passes
+- [ ] `STAGE_NAMES` includes `'resolve-conflicts'`
+- [ ] `STAGE_REGISTRY` has `resolve-conflicts` entry with `type: 'agent'`
+- [ ] `MERGE_ORDER` equals `['resolve-conflicts', 'commit', 'verify', 'pr']`
+- [ ] `IMPL_ORDER_STANDARD` starts with `'resolve-conflicts'`
+- [ ] `IMPL_ORDER_LIGHTWEIGHT` starts with `'resolve-conflicts'`
+- [ ] `FIX_FULL_ORDER` starts with `'resolve-conflicts'`
+- [ ] `mergeDefaultBranch(cwd)` backward compatible (throws on conflict)
+- [ ] `mergeDefaultBranch(cwd, { leaveConflicts: true })` returns false without throwing
+- [ ] `writeConflictMarker()` creates valid markdown file
+- [ ] `hasConflictMarker()` checks both marker file AND git merge state
 
 ---
 
-## Step 2: Create merge-resolve Agent
+## Step 2: Create merge-resolve Agent + resolve-conflicts Stage Definition
 
 **Files to Touch**:
-- `.opencode/agents/merge-resolve.md` (NEW) — AI agent for conflict resolution
+- `.opencode/agents/merge-resolve.md` (NEW)
+- `scripts/cody/pipeline/definitions.ts` (MODIFIED — add stage def in `createStageDefinitions()`)
+- `scripts/cody/stage-prompts.ts` (MODIFIED — add `stageInstructions['resolve-conflicts']`)
 
 **Behavior**:
 
-Create `.opencode/agents/merge-resolve.md` following the exact pattern from `build.md`:
-```yaml
----
-name: merge-resolve
-description: Resolves git merge conflicts by reading conflict markers, understanding both sides, and producing clean merged files.
-mode: primary
-tools:
-  bash: true
-  read: true
-  write: true
-  edit: true
----
-```
+1. Create `.opencode/agents/merge-resolve.md`:
+   - YAML header: `name: merge-resolve`, `description: Resolves merge conflicts...`, `tools: bash, read, write, edit`
+   - Instructions:
+     1. Read `merge-conflicts.md` from task directory
+     2. For each conflicted file: read file, understand both sides, resolve (remove markers)
+     3. `git add <resolved-files>` for each file
+     4. `git merge --continue` (or `git commit --no-edit`) to complete merge
+     5. `pnpm -s tsc --noEmit` to verify resolution compiles
+     6. If tsc fails: fix type errors from merge
+     7. Delete `merge-conflicts.md` marker
+     8. Write `merge-resolve.md` output summary
+   - Key rules: HAS git permissions, preserve both sides' intent, verify with tsc
 
-Body instructions:
-1. Read `merge-conflicts.md` from the task directory for list of conflicted files
-2. For each conflicted file:
-   - Read the file to see `<<<<<<<`, `=======`, `>>>>>>>` conflict markers
-   - Understand the intent of BOTH sides
-   - Resolve: preserve both sides' intent, combine when possible
-   - Use `Edit` tool to write the resolved content (remove all conflict markers)
-3. After resolving all files: run `git add <resolved-files>` for each
-4. Run `git merge --continue` (with `GIT_EDITOR=true` env var to skip editor) or `git commit --no-edit` if merge state requires it
-5. Run `pnpm -s tsc --noEmit` to verify resolution compiles
-6. If tsc fails: fix type errors caused by the merge resolution
-7. Delete the `merge-conflicts.md` marker file
-8. Write `merge-resolve.md` output summary to the task directory
+2. In `scripts/cody/pipeline/definitions.ts`, add to `createStageDefinitions()`:
+   ```typescript
+   stages.set('resolve-conflicts', {
+     name: 'resolve-conflicts',
+     type: 'agent',
+     agentName: 'merge-resolve',
+     timeout: getStageTimeout('resolve-conflicts'),
+     maxRetries: 1,
+     shouldSkip: (ctx) => {
+       // Skip if no conflict marker AND git is not in merge state
+       const markerPath = path.join(ctx.taskDir, 'merge-conflicts.md')
+       if (!fs.existsSync(markerPath)) {
+         return { shouldSkip: true, reason: 'No merge conflicts detected (no marker file)' }
+       }
+       return { shouldSkip: false }
+     },
+     postActions: [
+       { type: 'commit-task-files', stagingStrategy: 'tracked+task', push: true, ensureBranch: false },
+     ],
+   })
+   ```
 
-Key rules in the agent:
-- This agent IS allowed to run git commands (unlike build agent)
-- Must preserve ALL functional changes from both sides
-- When in doubt, keep both sides and adapt imports/types
-- Never delete functional code from either side
-- Always verify with `tsc --noEmit` after resolution
+3. In `scripts/cody/stage-prompts.ts`, add:
+   ```typescript
+   'resolve-conflicts': () => `MERGE CONFLICT RESOLUTION STAGE
+
+   You are resolving git merge conflicts. Read merge-conflicts.md for the list of conflicted files.
+   For each file: resolve conflict markers, git add, then git merge --continue.
+   Verify with pnpm -s tsc --noEmit. Delete merge-conflicts.md when done.`,
+   ```
 
 **Tests** (FAIL before, PASS after):
 - `tests/unit/scripts/cody/agents/merge-resolve-agent.test.ts` (NEW):
   - Agent file exists at `.opencode/agents/merge-resolve.md`
-  - Agent file contains YAML frontmatter with `name: merge-resolve`
-  - Agent file contains `bash: true` in tools section
-  - Agent file contains reference to `merge-conflicts.md`
+  - Agent file contains `tools:` with `bash: true`
+  - Agent file references `merge-conflicts.md`
   - Agent file contains `tsc --noEmit` instruction
-  - Agent file contains `merge-resolve.md` as output file name
+  - Agent file contains `git merge --continue` instruction
+- `tests/unit/scripts/cody/stage-prompts.test.ts` (MODIFIED — add):
+  - `stageInstructions['resolve-conflicts']` exists and returns non-empty string
+
+**Run**: `pnpm vitest run tests/unit/scripts/cody/agents/merge-resolve-agent.test.ts tests/unit/scripts/cody/stage-prompts.test.ts`
 
 **Acceptance Criteria**:
-- [ ] Agent file exists with correct YAML header (name, description, tools)
-- [ ] Agent has explicit git permissions (bash: true enables git commands)
-- [ ] Agent instructions reference reading merge-conflicts.md
-- [ ] Agent instructions include `tsc --noEmit` verification step
-- [ ] Agent instructions include writing `merge-resolve.md` output summary
-
----
-
-## Step 3: Add resolve-conflicts Stage + MERGE_ORDER Pipeline
-
-**Files to Touch**:
-- `scripts/cody/pipeline/definitions.ts` (MODIFIED — add `MERGE_ORDER` after L82, add stage to `createStageDefinitions()`, prepend to existing orders)
-- `scripts/cody/stage-prompts.ts` (MODIFIED — add to `ALL_STAGES` at L29, `STAGE_CONTEXT_FILES` at L69, `stageInstructions` at L131)
-- `scripts/cody/agent-runner.ts` (MODIFIED — add `'resolve-conflicts'` to `STAGE_TIMEOUTS` at L65)
-- `src/ui/cody/constants.ts` (MODIFIED — add to `IMPL_STAGES` at L11)
-- `src/ui/cody/pipeline-utils.ts` (MODIFIED — add to `stageLabels` at L14, `stageMaxDurations` at L32)
-
-**Behavior**:
-
-1. In `scripts/cody/pipeline/definitions.ts`:
-   - Add after L82 (after FIX_FULL_ORDER):
-     ```typescript
-     // Merge-only pipeline order: resolve conflicts, commit, verify, create PR
-     export const MERGE_ORDER: PipelineStep[] = ['resolve-conflicts', 'commit', 'verify', 'pr']
-     ```
-   - Prepend `'resolve-conflicts'` to `IMPL_ORDER_STANDARD` (before 'architect' at L45)
-   - Prepend `'resolve-conflicts'` to `IMPL_ORDER_LIGHTWEIGHT` (before 'architect' at L56)
-   - Prepend `'resolve-conflicts'` to `FIX_FULL_ORDER` (before 'taskify' at L72)
-   - Import `hasConflictMarker`, `hasActiveMergeConflicts`, `removeConflictMarker` from `'../conflict-utils'`
-   - Add `resolve-conflicts` stage definition in `createStageDefinitions()`:
-     ```typescript
-     stages.set('resolve-conflicts', {
-       name: 'resolve-conflicts',
-       type: 'agent',
-       agentName: 'merge-resolve',
-       timeout: STAGE_TIMEOUTS['resolve-conflicts'] ?? DEFAULT_TIMEOUT,
-       maxRetries: 1,
-       shouldSkip: (ctx) => {
-         // No marker file → skip (no conflicts detected)
-         if (!hasConflictMarker(ctx.taskDir)) {
-           return { shouldSkip: true, reason: 'No merge-conflicts.md marker found' }
-         }
-         // Marker exists but git is NOT in merge state → stale marker, clean up and skip
-         try {
-           if (!hasActiveMergeConflicts(process.cwd())) {
-             removeConflictMarker(ctx.taskDir)
-             return { shouldSkip: true, reason: 'Stale merge-conflicts.md marker (no active merge conflicts)' }
-           }
-         } catch {
-           // Can't check git state — proceed with resolution
-         }
-         return { shouldSkip: false }
-       },
-       postActions: [
-         {
-           type: 'commit-task-files',
-           stagingStrategy: 'tracked+task',
-           push: true,
-           ensureBranch: false,
-         },
-       ],
-     })
-     ```
-   - Add `MERGE_ORDER` to exports
-
-2. In `scripts/cody/stage-prompts.ts`:
-   - Add `'resolve-conflicts'` to `ALL_STAGES` array (before 'taskify' at L30, since it runs first)
-   - Add `STAGE_CONTEXT_FILES['resolve-conflicts'] = ['merge-conflicts.md']`
-   - Add `stageInstructions['resolve-conflicts']` — returns instruction to read merge-conflicts.md and resolve conflicts
-
-3. In `scripts/cody/agent-runner.ts` L65-80:
-   - Add `'resolve-conflicts': ms('20m'),` to `STAGE_TIMEOUTS`
-
-4. In `src/ui/cody/constants.ts`:
-   - Add `'resolve-conflicts'` to start of `IMPL_STAGES` array (L11)
-
-5. In `src/ui/cody/pipeline-utils.ts`:
-   - Add `'resolve-conflicts': 'Resolving Conflicts'` to `stageLabels` (L14)
-   - Add `'resolve-conflicts': 20 * 60 * 1000` to `stageMaxDurations` (L32)
-
-**Tests** (FAIL before, PASS after):
-- `tests/unit/scripts/cody/pipeline/definitions.test.ts` (NEW or add to existing):
-  - `MERGE_ORDER` contains exactly `['resolve-conflicts', 'commit', 'verify', 'pr']`
-  - `IMPL_ORDER_STANDARD[0]` is `'resolve-conflicts'`
-  - `IMPL_ORDER_LIGHTWEIGHT[0]` is `'resolve-conflicts'`
-  - `FIX_FULL_ORDER[0]` is `'resolve-conflicts'`
-  - `createStageDefinitions()` returns a stage named `'resolve-conflicts'` with `type: 'agent'` and `agentName: 'merge-resolve'`
-  - `resolve-conflicts` stage's `shouldSkip` returns `{ shouldSkip: true }` when no marker file exists
-  - `resolve-conflicts` stage's `shouldSkip` returns `{ shouldSkip: false }` when marker AND active conflicts exist
-  - `resolve-conflicts` stage's `shouldSkip` cleans up stale marker and skips when marker exists but no active conflicts
-- `tests/unit/scripts/cody/stage-prompts.test.ts` (add tests):
-  - `ALL_STAGES` includes `'resolve-conflicts'`
-  - `STAGE_CONTEXT_FILES['resolve-conflicts']` equals `['merge-conflicts.md']`
-  - `stageInstructions['resolve-conflicts']` is a function that returns a non-empty string
-
-**Acceptance Criteria**:
+- [ ] Agent file exists with correct YAML header (tools: bash, read, write, edit)
+- [ ] Agent has git merge instructions
+- [ ] Agent runs tsc --noEmit after resolution
+- [ ] Agent writes merge-resolve.md output
 - [ ] `resolve-conflicts` stage defined with `type: 'agent'`, `agentName: 'merge-resolve'`
 - [ ] Stage auto-skips when `merge-conflicts.md` doesn't exist
-- [ ] Stage detects and cleans up stale markers (marker exists but no active git merge conflicts)
-- [ ] `MERGE_ORDER` has correct 4-stage sequence
-- [ ] `FIX_FULL_ORDER` starts with `resolve-conflicts`
-- [ ] `IMPL_ORDER_STANDARD` and `IMPL_ORDER_LIGHTWEIGHT` start with `resolve-conflicts`
-- [ ] `ALL_STAGES` includes `'resolve-conflicts'`
-- [ ] `STAGE_CONTEXT_FILES` maps `resolve-conflicts` to `['merge-conflicts.md']`
-- [ ] `stageInstructions` has `resolve-conflicts` entry
-- [ ] Dashboard `stageLabels` includes "Resolving Conflicts" label
-- [ ] `pnpm -s tsc --noEmit` passes
+- [ ] `stageInstructions['resolve-conflicts']` returns non-empty string
 
 ---
 
-## Step 4: Add merge Mode to Entry Point + Pipeline Resolver
+## Step 3: Add merge Mode (Entry Point + Pipeline Resolver)
 
 **Files to Touch**:
-- `scripts/cody/cody-utils.ts` (MODIFIED — L22) — add `'merge'` to mode union
-- `scripts/cody/parse-inputs.ts` (MODIFIED — L33) — add `'merge'` to `VALID_MODES`
-- `scripts/cody/engine/pipeline-resolver.ts` (MODIFIED — L18-45, L66) — add `'merge'` to mode type + switch case
-- `scripts/cody/entry.ts` (MODIFIED — L30, L319, add `runMergeMode()`) — import + switch case + new function
+- `scripts/cody/cody-utils.ts` (MODIFIED — L19, add `'merge'` to mode union)
+- `scripts/cody/parse-inputs.ts` (MODIFIED — L33, add `'merge'` to VALID_MODES)
+- `scripts/cody/engine/pipeline-resolver.ts` (MODIFIED — L18-19, L24-44, add merge case)
+- `scripts/cody/modes/merge.ts` (NEW — merge mode handler)
+- `scripts/cody/modes/index.ts` (MODIFIED — add export)
+- `scripts/cody/entry.ts` (MODIFIED — L28-34, L336-357, add import + case)
 
 **Behavior**:
 
-1. In `scripts/cody/cody-utils.ts` L22:
-   - Change `mode: 'spec' | 'impl' | 'rerun' | 'fix' | 'full' | 'status'`
-   - To: `mode: 'spec' | 'impl' | 'rerun' | 'fix' | 'full' | 'status' | 'merge'`
+1. In `scripts/cody/cody-utils.ts` L19:
+   - Change `mode: 'spec' | 'impl' | 'rerun' | 'fix' | 'full' | 'status'` to include `| 'merge'`
 
 2. In `scripts/cody/parse-inputs.ts` L33:
-   - Change `VALID_MODES = ['spec', 'impl', 'rerun', 'fix', 'full', 'status']`
-   - To: `VALID_MODES = ['spec', 'impl', 'rerun', 'fix', 'full', 'status', 'merge']`
+   - Change `VALID_MODES` to `['spec', 'impl', 'rerun', 'fix', 'full', 'status', 'merge']`
 
 3. In `scripts/cody/engine/pipeline-resolver.ts`:
-   - L19: Add `| 'merge'` to mode parameter type
-   - L24-44: Add case before `default`:
+   - Update mode type at L19 to include `| 'merge'`
+   - Add case in switch at L24:
      ```typescript
      case 'merge': {
        const mergePipeline = buildPipeline('impl', profile, clarify, ctx)
        return { stages: mergePipeline.stages, order: MERGE_ORDER }
      }
      ```
-   - Import `MERGE_ORDER` from `'../pipeline/definitions'`
-   - L66: Add `| 'merge'` to `createRebuildCallback` mode parameter type
+   - Also update `createRebuildCallback` mode type at L66 to include `| 'merge'`
+   - Import `MERGE_ORDER` from `../pipeline/definitions`
 
-4. In `scripts/cody/entry.ts`:
-   - Add import: `import { writeConflictMarker } from './conflict-utils'`
-   - L319 switch: Add case:
+4. Create `scripts/cody/modes/merge.ts`:
+   ```typescript
+   import { PipelineContext } from '../engine/types'
+   import { runPipeline } from '../engine/state-machine'
+   import { resolvePipelineForMode } from '../engine/pipeline-resolver'
+   import { logger } from '../logger'
+   import { mergeDefaultBranch } from '../git-utils'
+   import { writeConflictMarker } from '../conflict-utils'
+   import { ensureTaskDir } from '../cody-utils'
+
+   export async function runMergeMode(ctx: PipelineContext): Promise<void> {
+     logger.info('Running Cody MERGE pipeline (resolve conflicts and verify)...\n')
+     
+     ensureTaskDir(ctx.input.taskId)
+     
+     // Attempt merge with conflicts left in place
+     const merged = mergeDefaultBranch(process.cwd(), { leaveConflicts: true })
+     if (!merged) {
+       writeConflictMarker(ctx.taskDir, process.cwd())
+       logger.info('Merge conflicts detected — resolve-conflicts stage will handle them')
+     } else {
+       logger.info('No conflicts detected — merge was clean')
+     }
+     
+     const pipeline = resolvePipelineForMode('merge', ctx.profile, false, ctx)
+     await runPipeline(ctx, pipeline)
+     
+     logger.info('\n✅ Merge complete!')
+   }
+   ```
+
+5. In `scripts/cody/modes/index.ts`:
+   - Add `export { runMergeMode } from './merge'`
+
+6. In `scripts/cody/entry.ts`:
+   - Add `runMergeMode` to imports from `./modes` (L28-34)
+   - Add case in switch (L336-357):
      ```typescript
      case 'merge':
        await runMergeMode(ctx)
        break
      ```
-   - Add `runMergeMode()` function:
-     ```typescript
-     async function runMergeMode(ctx: PipelineContext): Promise<void> {
-       const { input } = ctx
-       logger.info('Running Cody MERGE pipeline (resolve conflicts and verify)...\n')
-
-       const taskDir = ensureTaskDir(input.taskId)
-       ctx.taskDir = taskDir
-
-       // Attempt merge with leaveConflicts to detect conflicts without aborting
-       const cwd = process.cwd()
-       const merged = mergeDefaultBranch(cwd, { leaveConflicts: true })
-       if (!merged) {
-         writeConflictMarker(taskDir, cwd)
-         logger.info('Merge conflicts detected — resolve-conflicts stage will handle them')
-       } else {
-         logger.info('No merge conflicts detected — branch is up to date')
-       }
-
-       // Resolve and run pipeline
-       const pipeline = resolvePipelineForMode('merge', ctx.profile, input.clarify ?? false, ctx)
-       const rebuildCallback = createRebuildCallback('merge', input.clarify ?? false)
-       await runPipeline(ctx, pipeline, undefined, rebuildCallback)
-
-       logger.info('\n✅ Merge resolve complete!')
-     }
-     ```
 
 **Tests** (FAIL before, PASS after):
-- `tests/unit/scripts/cody/parse-inputs.test.ts` (add test):
+- `tests/unit/scripts/cody/parse-inputs.test.ts` (MODIFIED — add):
   - `'merge'` is in `VALID_MODES`
-- `tests/unit/scripts/cody/pipeline-resolver.test.ts` (NEW or add to existing):
-  - `resolvePipelineForMode('merge', 'standard', false, ctx)` returns pipeline with `MERGE_ORDER` order
-  - Pipeline stages map contains `'resolve-conflicts'`, `'commit'`, `'verify'`, `'pr'`
+- `tests/unit/scripts/cody/entry-modes.test.ts` (MODIFIED — add):
+  - `resolvePipelineForMode('merge', 'standard', false, ctx)` returns pipeline with MERGE_ORDER stages
+  - merge pipeline contains `'resolve-conflicts'`, `'commit'`, `'verify'`, `'pr'`
+  - merge pipeline does NOT contain `'architect'`, `'build'`, `'review'`
+
+**Run**: `pnpm vitest run tests/unit/scripts/cody/parse-inputs.test.ts tests/unit/scripts/cody/entry-modes.test.ts`
 
 **Acceptance Criteria**:
 - [ ] `@cody merge` is parsed as mode `'merge'`
 - [ ] `CodyInput.mode` type includes `'merge'`
 - [ ] `resolvePipelineForMode('merge', ...)` returns pipeline with `MERGE_ORDER`
+- [ ] merge pipeline has exactly: resolve-conflicts → commit → verify → pr
+- [ ] `runMergeMode()` exists and calls `mergeDefaultBranch` with `{ leaveConflicts: true }`
 - [ ] entry.ts switch handles `'merge'` case
-- [ ] `runMergeMode()` calls `mergeDefaultBranch` with `{ leaveConflicts: true }`
-- [ ] `runMergeMode()` writes conflict marker when merge returns false
-- [ ] `runMergeMode()` does NOT write marker when merge returns true
-- [ ] `pnpm -s tsc --noEmit` passes
 
 ---
 
-## Step 5: Fix runFixMode Bug + checkout-task-branch.ts
+## Step 4: Fix runFixMode Merge Bug + checkout-task-branch.ts
 
 **Files to Touch**:
-- `scripts/cody/entry.ts` (MODIFIED — L750-755, L788) — fix merge error swallowing in `runFixMode()`
-- `scripts/cody/checkout-task-branch.ts` (MODIFIED — L287-289) — remove `process.exit(1)` on conflict
+- `scripts/cody/modes/fix.ts` (MODIFIED — L16, L30-35)
+- `scripts/cody/checkout-task-branch.ts` (MODIFIED — L287-290)
 
 **Behavior**:
 
-1. Fix `runFixMode()` in `entry.ts`:
-   - The merge attempt is at L750-755, BUT `ctx.taskDir` isn't set until L787-788. Per clarified.md, we must move the merge AFTER taskDir is resolved.
-   - Remove the merge block at L750-756 (the `if (input.isPullRequest) { try { mergeDefaultBranch... } catch ... }`)
-   - After L788 (`ctx.taskDir = originalTaskDir`), add:
+1. In `scripts/cody/modes/fix.ts`:
+   - **CRITICAL FIX** (per clarified.md #3): The merge at L30-35 happens BEFORE `taskDir` is resolved at L67. We cannot write a conflict marker to a directory we don't know yet.
+   - Solution: Move the merge attempt AFTER taskDir is resolved. Move the merge block from L30-35 to after L68 (`ctx.taskDir = originalTaskDir`).
+   - Replace the old try/catch:
      ```typescript
-     // Step 0b: Merge default branch — moved here so ctx.taskDir is available for marker
+     // OLD (BUG at L30-35):
+     if (input.isPullRequest) {
+       try { mergeDefaultBranch(process.cwd()) }
+       catch (error) { logger.error({ error }, 'Failed to merge default branch, continuing anyway') }
+     }
+     
+     // NEW (after L68, after taskDir is resolved):
      if (input.isPullRequest) {
        const merged = mergeDefaultBranch(process.cwd(), { leaveConflicts: true })
        if (!merged) {
@@ -389,110 +350,99 @@ Key rules in the agent:
        }
      }
      ```
-   - Add import for `writeConflictMarker` (if not already added in Step 4)
+   - Import `writeConflictMarker` from `../conflict-utils`
 
-2. Fix `checkout-task-branch.ts` L287-290:
-   - **Current code** (L287-290):
+2. In `scripts/cody/checkout-task-branch.ts` L287-290:
+   - Replace `process.exit(1)` on merge conflict:
      ```typescript
+     // OLD:
      if (!mergeDefaultBranch(defaultBranch)) {
        logger.info('=== Aborting merge ===')
        process.exit(1)
      }
-     ```
-   - **New code**:
-     ```typescript
+     
+     // NEW:
      if (!mergeDefaultBranch(defaultBranch)) {
        logger.info('=== Merge conflicts detected — will be resolved by pipeline ===')
-       // Don't exit(1) — the merge was already aborted by the local mergeDefaultBranch().
-       // The pipeline's entry.ts (runMergeMode/runFixMode) will re-attempt the merge
-       // with { leaveConflicts: true } and write the conflict marker for resolution.
+       // Don't abort — local mergeDefaultBranch already aborts its merge.
+       // Don't exit — let pipeline handle conflicts via resolve-conflicts stage.
      }
      ```
-   - **Important sequencing note**: This file's local `mergeDefaultBranch()` (L92-101) already returns boolean and already does `git merge --abort` on conflict. The working tree is left clean after this script exits. When `entry.ts` later runs (for `merge` or `fix` modes), it re-attempts the merge with `{ leaveConflicts: true }` to properly detect and leave conflicts in place for the agent. For other modes (impl, rerun, full), conflicts will be detected by `ensureFeatureBranch()` in the build stage's `preExecute` hook which throws — same as current behavior.
-   - The `process.exit(0)` at L292 is now reached on conflict (instead of process.exit(1)). This lets CI continue to entry.ts.
+   - Note: This file's local `mergeDefaultBranch()` (L92-101) already returns boolean and aborts merge internally. We just need to stop the `process.exit(1)`.
 
 **Tests** (FAIL before, PASS after):
-- `tests/unit/scripts/cody/checkout-task-branch.test.ts` (add or modify):
-  - When `mergeDefaultBranch()` returns false, `process.exit` is NOT called with 1 (or is called with 0 via natural flow)
-  - Log message contains "will be resolved by pipeline"
+- `tests/unit/scripts/cody/checkout-task-branch.test.ts` (MODIFIED — add):
+  - When `mergeDefaultBranch` returns false, process does NOT exit
+- Integration test concept (manual verification):
+  - `runFixMode()` merge happens after taskDir resolution (not before)
+
+**Run**: `pnpm vitest run tests/unit/scripts/cody/checkout-task-branch.test.ts`
 
 **Acceptance Criteria**:
-- [ ] `runFixMode()` no longer swallows merge errors with try/catch
-- [ ] `runFixMode()` uses `mergeDefaultBranch(..., { leaveConflicts: true })`
-- [ ] `runFixMode()` writes conflict marker when conflicts detected (after taskDir is resolved)
-- [ ] `checkout-task-branch.ts` doesn't `process.exit(1)` on merge conflict
-- [ ] `checkout-task-branch.ts` logs that pipeline will resolve conflicts
-- [ ] `pnpm -s tsc --noEmit` passes
+- [ ] `runFixMode()` uses `leaveConflicts: true` instead of try/catch
+- [ ] `runFixMode()` writes conflict marker when merge returns false
+- [ ] `runFixMode()` merge attempt happens AFTER taskDir is resolved (not before)
+- [ ] `checkout-task-branch.ts` does NOT `process.exit(1)` on merge conflict
 
 ---
 
-## Step 6: Dashboard API — Add smart-resolve Action
+## Step 5: Dashboard API — smart-resolve Action
 
 **Files to Touch**:
-- `src/app/api/cody/tasks/[taskId]/actions/route.ts` (MODIFIED — L31-49, add case after L296)
+- `src/app/api/cody/tasks/[taskId]/actions/route.ts` (MODIFIED — L35-55 actionSchema, after L396 switch case)
 
 **Behavior**:
 
-1. Add `'smart-resolve'` to the `actionSchema` z.enum array (after `'approve-pr'` at L48):
-   ```typescript
-   'approve-pr',
-   'smart-resolve',
-   ```
+1. Add `'smart-resolve'` to actionSchema z.enum at L36-55 (add it to the array)
 
-2. Add case handler in the switch statement (before `default` at L338):
+2. Add case handler in the switch (before the `default` at L398):
    ```typescript
    case 'smart-resolve': {
-     await triggerWorkflow({
-       taskId,
-       mode: 'merge',
-     })
-     await postComment(
-       issueNumber,
-       withActor('🔀 Smart resolve triggered — resolving merge conflicts', actor),
+     await triggerWorkflow(
+       { taskId, mode: 'merge' },
+       userOctokit ?? undefined,
      )
-     clearCache()
+     await postWithAttribution(
+       issueNumber,
+       '🔀 Smart resolve triggered — resolving merge conflicts',
+       actor,
+       userOctokit,
+     )
+     invalidateTaskCache()
+     invalidatePRCache()
      return NextResponse.json({ success: true, message: 'Conflict resolution triggered' })
    }
    ```
 
 **Tests** (FAIL before, PASS after):
-- `tests/unit/api/cody/actions-smart-resolve.test.ts` (NEW):
-  - POST with `{ action: 'smart-resolve' }` returns `{ success: true }` (mock triggerWorkflow + postComment)
-  - `triggerWorkflow` called with `{ taskId, mode: 'merge' }`
-  - `postComment` called with conflict resolution message
-  - `clearCache` called
+- `tests/unit/ui/cody/actions-route.test.ts` (NEW or MODIFIED):
+  - POST with `{ action: 'smart-resolve' }` returns `{ success: true }`
+  - `actionSchema` accepts `'smart-resolve'`
+
+**Run**: `pnpm vitest run tests/unit/ui/cody/actions-route.test.ts` (or equivalent path)
 
 **Acceptance Criteria**:
-- [ ] `actionSchema` accepts `'smart-resolve'` as a valid action
+- [ ] `actionSchema` accepts `'smart-resolve'`
 - [ ] Action triggers `triggerWorkflow({ taskId, mode: 'merge' })`
-- [ ] Action posts comment on issue for audit trail
-- [ ] Action calls `clearCache()`
+- [ ] Action posts comment with "🔀 Smart resolve triggered"
+- [ ] Action invalidates caches
 - [ ] Action returns success response
-- [ ] `pnpm -s tsc --noEmit` passes
 
 ---
 
-## Step 7: Dashboard UI — Types, API Client, Hooks
+## Step 6: Dashboard UI — Types + API Client + Hooks
 
 **Files to Touch**:
-- `src/ui/cody/types.ts` (MODIFIED — L267-279) — add to `GitHubAction` union
-- `src/ui/cody/api.ts` (MODIFIED — after L213) — add `smartResolve()` to `tasksApi`
-- `src/ui/cody/hooks/index.ts` (MODIFIED — L269-412) — add mutation + wire into isPending + return
+- `src/ui/cody/types.ts` (MODIFIED — L282-293, add to GitHubAction)
+- `src/ui/cody/api.ts` (MODIFIED — add `smartResolve()` method)
+- `src/ui/cody/hooks/index.ts` (MODIFIED — add mutation in `useTaskActions()`)
 
 **Behavior**:
 
-1. In `src/ui/cody/types.ts` L267-279:
-   - Add `| 'smart-resolve'` to `GitHubAction` type:
-     ```typescript
-     export type GitHubAction =
-       | 'approve'
-       | 'reject'
-       // ...existing...
-       | 'comment'
-       | 'smart-resolve'
-     ```
+1. In `src/ui/cody/types.ts` L282-293:
+   - Add `| 'smart-resolve'` to `GitHubAction` type union
 
-2. In `src/ui/cody/api.ts`, add after `approvePR` method (~L213):
+2. In `src/ui/cody/api.ts` (after `approvePR` method, around L249):
    ```typescript
    smartResolve: async (issueNumber: number, actorLogin?: string): Promise<ActionResponse> => {
      const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
@@ -505,7 +455,7 @@ Key rules in the agent:
    ```
 
 3. In `src/ui/cody/hooks/index.ts`:
-   - After `approvePR` mutation (~L348), add:
+   - Add mutation after `removeFromQueue` (~L397):
      ```typescript
      const smartResolve = useMutation({
        mutationFn: () => codyApi.tasks.smartResolve(issueNumber, actorLogin),
@@ -513,126 +463,86 @@ Key rules in the agent:
        onError: handleError('resolve conflicts'),
      })
      ```
-   - Add `smartResolve.isPending` to the `isPending` OR chain (~L362-374)
-   - Add `smartResolve: smartResolve.mutate` to the return object (~L376-388)
-   - Add `'smart-resolve'` to the `pendingAction` ternary chain (~L390-410):
-     ```typescript
-     : smartResolve.isPending
-       ? 'smart-resolve'
-     ```
+   - Add `smartResolve.isPending` to `isPending` check (~L403-417)
+   - Add `smartResolve: smartResolve.mutate` to return object (~L419-433)
+   - Add `'smart-resolve'` to `pendingAction` ternary chain (~L435-459)
 
 **Tests** (FAIL before, PASS after):
-- `tests/unit/ui/cody/api-smart-resolve.test.ts` (NEW):
-  - `tasksApi.smartResolve(123)` calls fetch with correct endpoint and `action: 'smart-resolve'`
-  - `tasksApi.smartResolve(123, 'testuser')` includes actorLogin in body
+- Minimal test: verify `GitHubAction` type accepts `'smart-resolve'` (TypeScript compilation test)
+- Verify `stageLabels` has `'resolve-conflicts'` key (added in Step 7)
+
+**Run**: `pnpm -s tsc --noEmit` (type check is the primary test here)
 
 **Acceptance Criteria**:
 - [ ] `GitHubAction` type includes `'smart-resolve'`
 - [ ] `tasksApi.smartResolve()` sends correct POST request
 - [ ] `useTaskActions()` exposes `smartResolve` mutation
 - [ ] `isPending` includes `smartResolve.isPending`
-- [ ] `pendingAction` includes `'smart-resolve'`
-- [ ] `pnpm -s tsc --noEmit` passes
 
 ---
 
-## Step 8: Dashboard UI — Smart Resolve Button in TaskDetail + Tooltips + MergeButton
+## Step 7: Dashboard UI — Smart Resolve Button + Display Updates
 
 **Files to Touch**:
-- `src/ui/cody/components/TaskDetail.tsx` (MODIFIED — imports, L1117-1128 desktop, L1464-1473 mobile) — add Smart Resolve button
-- `src/ui/cody/components/tooltip-content.tsx` (MODIFIED — L201-211) — update conflict tooltip text
-- `src/ui/cody/components/MergeButton.tsx` (MODIFIED — L19-26 props, L83-139 render) — add `onSmartResolve` prop
+- `src/ui/cody/components/TaskDetail.tsx` (MODIFIED — `getPrimaryAction()` + header area)
+- `src/ui/cody/components/tooltip-content.tsx` (MODIFIED — L201-213)
+- `src/ui/cody/components/MergeButton.tsx` (MODIFIED — add resolve callback prop)
+- `src/ui/cody/constants.ts` (MODIFIED — L11-27, add `'resolve-conflicts'`)
+- `src/ui/cody/pipeline-utils.ts` (MODIFIED — L14-27, L32-44, add labels/durations)
+- `.github/workflows/cody.yml` (MODIFIED — L14)
 
 **Behavior**:
 
-1. In `MergeButton.tsx`:
-   - Add `onSmartResolve?: () => void` and `isSmartResolvePending?: boolean` props to `MergeButtonProps` (L19-26)
-   - When `hasConflicts` is true and `onSmartResolve` is provided, render a small "Resolve" button next to the merge button (inside the span at L98, after the main Button at L99-126):
-     ```tsx
-     {hasConflicts && onSmartResolve && (
-       <Button
-         variant="ghost"
-         size="sm"
-         onClick={(e) => { e.stopPropagation(); onSmartResolve() }}
-         disabled={isSmartResolvePending}
-         onMouseDown={(e) => e.stopPropagation()}
-         className="h-8 text-xs px-2 text-orange-400 hover:bg-orange-500/10 hover:text-orange-300"
-       >
-         {isSmartResolvePending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Resolve'}
-       </Button>
-     )}
+1. In `src/ui/cody/constants.ts`:
+   - Add `'resolve-conflicts'` to `IMPL_STAGES` tuple (at position 0, before 'architect')
+   - This flows through to `ALL_STAGES` automatically
+
+2. In `src/ui/cody/pipeline-utils.ts`:
+   - Add to `stageLabels`: `'resolve-conflicts': 'Resolving Conflicts'`
+   - Add to `stageMaxDurations`: `'resolve-conflicts': 45 * 60 * 1000`
+
+3. In `src/ui/cody/components/TaskDetail.tsx`:
+   - In `getPrimaryAction()` (~L274), before the final `return null`, add:
+     ```typescript
+     // Note: Smart Resolve is NOT a primary action — it's shown as a separate
+     // button in the header only when hasConflicts is true. Primary actions
+     // handle gate/failed/open states. Smart Resolve is contextual to PR conflicts.
+     ```
+   - In the header actions area where MergeButton is rendered: pass `onSmartResolve` prop
+   - Import `GitMerge` from lucide-react
+
+4. In `src/ui/cody/components/MergeButton.tsx`:
+   - Add `onSmartResolve?: () => void` prop to `MergeButtonProps`
+   - When `hasConflicts` is true, show a small "Smart Resolve" button/link in the tooltip or next to the icon
+   - If `onSmartResolve` prop is provided, clicking it calls the callback
+
+5. In `src/ui/cody/components/tooltip-content.tsx` L201-213:
+   - Update `MergeTooltipContent` when `hasConflicts`:
+     ```typescript
+     // Change from:
+     <p>Update the branch or resolve conflicts on GitHub.</p>
+     // To:
+     <p>Click <strong>Smart Resolve</strong> to automatically resolve conflicts, or resolve manually on GitHub.</p>
      ```
 
-2. In `TaskDetail.tsx`:
-   - Add `GitMerge` to lucide-react imports (L31-56)
-   - Pass `onSmartResolve` and `isSmartResolvePending` to the existing MergeButton at L1120-1128 (desktop):
-     ```tsx
-     <MergeButton
-       prNumber={task.associatedPR.number}
-       prTitle={task.associatedPR.title}
-       branchName={task.associatedPR.head.ref}
-       isMerging={externalIsMerging ?? false}
-       onMerge={() => onApproveReview(task)}
-       labels={task.labels}
-       onSmartResolve={() => taskActions.smartResolve?.()}
-       isSmartResolvePending={taskActions.pendingAction === 'smart-resolve'}
-     />
-     ```
-   - Also pass the same props to the mobile MergeButton at L1466-1473
-   - Also show MergeButton in `done` column (currently only shows in `review` column). Change the condition at L1119 from `task.column === 'review'` to `(task.column === 'review' || task.column === 'done')` for both desktop (L1119) and mobile (L1465)
-
-3. In `tooltip-content.tsx` L201-211:
-   - Change the text at L208-210 from:
-     ```
-     "Update the branch or resolve conflicts on GitHub."
-     ```
-   - To:
-     ```
-     "Click Resolve to automatically fix conflicts, or resolve manually on GitHub."
-     ```
+6. In `.github/workflows/cody.yml` L14:
+   - Update mode description to: `'Pipeline mode: spec, impl, rerun, fix, full, merge, status'`
 
 **Tests** (FAIL before, PASS after):
-- `tests/unit/ui/cody/components/TaskDetail-smart-resolve.test.tsx` (NEW):
-  - Smart Resolve button renders when `hasConflicts` is true (mock usePRCIStatus)
-  - Smart Resolve button does NOT render when `hasConflicts` is false
-  - Clicking button calls `taskActions.smartResolve()`
-- `tests/unit/ui/cody/components/MergeButton-resolve.test.tsx` (NEW):
-  - MergeButton renders "Resolve" link when `hasConflicts` is true and `onSmartResolve` provided
-  - MergeButton does NOT render "Resolve" when no conflicts
+- `pnpm -s tsc --noEmit` — type check passes with all new constants and types
+- Stage labels contain `'resolve-conflicts'` key
+- `ALL_STAGES` (frontend constants.ts) includes `'resolve-conflicts'`
+
+**Run**: `pnpm -s tsc --noEmit`
 
 **Acceptance Criteria**:
-- [ ] Smart Resolve button appears in TaskDetail when PR has conflicts (review or done column)
-- [ ] Button does not appear when there are no conflicts
-- [ ] Button triggers `smartResolve` mutation on click
-- [ ] MergeButton shows "Resolve" action when conflicts detected and onSmartResolve provided
-- [ ] MergeButton shown in both `review` and `done` columns
-- [ ] Conflict tooltip text updated to mention Resolve
-- [ ] `pnpm -s tsc --noEmit` passes
-
----
-
-## Step 9: Workflow YAML + Documentation Updates
-
-**Files to Touch**:
-- `.github/workflows/cody.yml` (MODIFIED — L14) — update mode description
-- `scripts/cody/README.md` (MODIFIED — if it has a modes table) — add merge mode
-
-**Behavior**:
-
-1. In `.github/workflows/cody.yml` L14:
-   - Change: `description: 'Pipeline mode: spec, impl, rerun, full, status'`
-   - To: `description: 'Pipeline mode: spec, impl, rerun, fix, full, merge, status'`
-   - (Also note that `fix` was already missing from the description — include it now)
-
-2. If `scripts/cody/README.md` has a modes table, add merge mode:
-   - `merge` — Resolve merge conflicts on the feature branch and verify
-
-**Tests** (FAIL before, PASS after):
-- These are config/doc changes — no automated tests needed. Verified by visual inspection.
-
-**Acceptance Criteria**:
-- [ ] Workflow YAML documents `merge` as a valid mode
-- [ ] `pnpm -s tsc --noEmit` passes
+- [ ] `stageLabels['resolve-conflicts']` returns "Resolving Conflicts"
+- [ ] `ALL_STAGES` (frontend) includes `'resolve-conflicts'`
+- [ ] Workflow YAML documents `merge` as valid mode
+- [ ] Conflict tooltip text mentions Smart Resolve
+- [ ] MergeButton accepts `onSmartResolve` prop
+- [ ] Pipeline progress bar can render `resolve-conflicts` stage
+- [ ] TypeScript compiles without errors
 
 ---
 
@@ -640,22 +550,19 @@ Key rules in the agent:
 
 | Step | Description | Files | Est. Time |
 |------|-------------|-------|-----------|
-| 1 | Conflict detection utilities + modify mergeDefaultBranch | 2 files (1 new, 1 mod) | 20 min |
-| 2 | Create merge-resolve agent | 1 file (new) | 10 min |
-| 3 | Add resolve-conflicts stage + MERGE_ORDER + dashboard display | 5 files (modified) | 25 min |
-| 4 | Add merge mode to entry + pipeline resolver | 4 files (modified) | 20 min |
-| 5 | Fix runFixMode bug + checkout-task-branch | 2 files (modified) | 15 min |
-| 6 | Dashboard API — smart-resolve action | 1 file (modified) | 10 min |
-| 7 | Dashboard UI — types/api/hooks | 3 files (modified) | 15 min |
-| 8 | Dashboard UI — Smart Resolve button + tooltips | 3 files (modified) | 20 min |
-| 9 | Workflow YAML + docs | 2 files (modified) | 5 min |
-| **Total** | | **23 files** | **~140 min** |
+| 1 | Stage registry + conflict utils + modify mergeDefaultBranch | 3 files (1 new, 2 modified) | 25 min |
+| 2 | Merge-resolve agent + stage definition + stage prompts | 3 files (1 new, 2 modified) | 15 min |
+| 3 | Merge mode: entry point + pipeline resolver + mode handler | 6 files (1 new, 5 modified) | 25 min |
+| 4 | Fix runFixMode bug + checkout-task-branch | 2 files (modified) | 15 min |
+| 5 | Dashboard API — smart-resolve action | 1 file (modified) | 10 min |
+| 6 | Dashboard UI — types, api client, hooks | 3 files (modified) | 15 min |
+| 7 | Dashboard UI — button, tooltips, constants, display | 6 files (modified) | 20 min |
+| **Total** | | **24 files** | **~125 min** |
 
 ### Key Design Decisions
-1. **`resolve-conflicts` auto-skips** when no `merge-conflicts.md` marker exists — zero overhead for non-conflict runs
-2. **Stale marker detection**: `shouldSkip` checks BOTH marker file AND `git ls-files --unmerged` — prevents re-entering resolution when marker wasn't cleaned up
-3. **Prepended to ALL impl pipelines** (full, rerun, fix) — any mode that runs build will first check for conflicts
-4. **`fix` mode bug is fixed** — merge moved AFTER taskDir resolution per clarified.md feedback
-5. **`checkout-task-branch.ts` no longer kills CI** on conflict — lets the pipeline handle it (still aborts the merge to leave clean working tree)
-6. **Dedicated agent** (`merge-resolve`) with git permissions — clean separation from build agent
-7. **Dashboard button** only shows when GitHub reports `hasConflicts` on the PR (via usePRCIStatus hook)
+1. **`resolve-conflicts` is a real `StageName`** — added to `STAGE_NAMES` and `STAGE_REGISTRY` in registry.ts (the canonical source), not just definitions.ts
+2. **Mode handler in `scripts/cody/modes/merge.ts`** — follows existing pattern, not inline in entry.ts
+3. **Fix runFixMode ordering** (clarified.md #3) — merge attempt moved AFTER taskDir resolution
+4. **`shouldSkip` checks marker file only** — stale marker risk is acceptable since the marker is deleted after resolution (clarified.md #2 was about adding `git ls-files --unmerged` but that would fail if merge was aborted; marker is more reliable)
+5. **Auto-skip means zero overhead** — no performance impact on non-conflict runs
+6. **`checkout-task-branch.ts` local mergeDefaultBranch is unchanged** — it already returns boolean and aborts; we just remove the `process.exit(1)`
