@@ -3,17 +3,32 @@
   "taskId": "260317-full-test",
   "mode": "full",
   "pipeline": "spec_execute_verify",
-  "startedAt": "2026-03-17T21:41:03.768Z",
-  "updatedAt": "2026-03-17T21:42:02.489Z",
+  "startedAt": "2026-03-17T22:44:41.772Z",
+  "updatedAt": "2026-03-17T22:45:53.483Z",
   "state": "failed",
   "cursor": null,
   "stages": {
     "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-17T22:44:41.778Z",
+      "completedAt": "2026-03-17T22:45:47.093Z",
+      "elapsed": 65,
+      "outputFile": "taskify.md",
+      "tokenUsage": {
+        "input": 2730,
+        "output": 1377,
+        "cacheRead": 148918
+      },
+      "sessionId": "ses_30206f631ffeAb5abEs41NRK2b"
+    },
+    "gap": {
       "state": "failed",
       "retries": 0,
-      "startedAt": "2026-03-17T21:41:03.780Z",
-      "error": "Invalid task.json: task.json validation failed:\n  • Invalid primary_domain: \"docs\". Must be one of: backend, frontend, infra, data, llm, devops, product"
+      "startedAt": "2026-03-17T22:45:49.339Z",
+      "elapsed": 4,
+      "error": "Agent \"gap\" failed. Artifacts: gap-stderr.log, gap-events.jsonl"
     }
   },
-  "completedAt": "2026-03-17T21:42:02.489Z"
+  "completedAt": "2026-03-17T22:45:53.483Z"
 }
