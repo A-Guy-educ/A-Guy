@@ -178,6 +178,92 @@ export function getDefaultBranch(cwd: string = process.cwd()): string {
  * This keeps the feature branch up-to-date with the latest changes from dev.
  * If a merge conflict occurs, aborts the merge and throws an error.
  */
+/**
+ * Find and checkout a remote branch matching the given task ID.
+ * Used by rerun mode to ensure task files are available before reading them.
+ * Unlike ensureFeatureBranch, this doesn't need taskType — it searches all
+ * remote branches for the task ID pattern.
+ *
+ * @returns true if a branch was found and checked out, false if not found
+ */
+export function checkoutTaskBranch(taskId: string, taskDir?: string): boolean {
+  const cwd = process.cwd()
+  const currentBranch = execFileSync('git', ['branch', '--show-current'], {
+    cwd,
+    encoding: 'utf-8',
+  }).trim()
+
+  // Already on a feature branch — don't switch
+  if (!BASE_BRANCHES.includes(currentBranch)) {
+    logger.info(`[branch] Already on feature branch: ${currentBranch}`)
+    return true
+  }
+
+  // Fetch latest
+  try {
+    execFileSync('git', ['fetch', 'origin'], { cwd, stdio: 'inherit', timeout: 120_000 })
+  } catch (fetchErr) {
+    logger.warn({ err: fetchErr }, '[branch] git fetch failed')
+    return false
+  }
+
+  // Search remote branches for one containing the task ID
+  let remoteBranches: string[]
+  try {
+    const output = execFileSync('git', ['branch', '-r', '--list', `origin/*${taskId}*`], {
+      cwd,
+      encoding: 'utf-8',
+      stdio: 'pipe',
+    }).trim()
+    remoteBranches = output
+      .split('\n')
+      .map((b) => b.trim().replace('origin/', ''))
+      .filter(Boolean)
+  } catch {
+    remoteBranches = []
+  }
+
+  if (remoteBranches.length === 0) {
+    logger.info(`[branch] No remote branch found matching task ID: ${taskId}`)
+    return false
+  }
+
+  // Use the first match (there should only be one branch per task)
+  const branchName = remoteBranches[0]
+  logger.info(`[branch] Found task branch: ${branchName} (for rerun of ${taskId})`)
+
+  try {
+    // Clean dirty state in CI before switching
+    if (process.env.GITHUB_ACTIONS) {
+      try {
+        execFileSync('git', ['checkout', '--', '.'], { cwd, stdio: 'pipe' })
+      } catch {
+        // Working tree may already be clean
+      }
+    }
+
+    execFileSync('git', ['checkout', branchName], { cwd, stdio: 'inherit' })
+    execFileSync('git', ['pull', 'origin', branchName], { cwd, stdio: 'inherit' })
+    mergeDefaultBranch(cwd)
+
+    // Persist branch name to status.json
+    try {
+      const existingState = loadState(taskDir ? path.basename(taskDir) : taskId)
+      if (existingState) {
+        setBranchName(taskDir ? path.basename(taskDir) : taskId, existingState, branchName)
+      }
+    } catch {
+      // Non-critical
+    }
+
+    logger.info(`[branch] Checked out task branch: ${branchName}`)
+    return true
+  } catch (checkoutErr) {
+    logger.error({ err: checkoutErr }, `[branch] Failed to checkout task branch: ${branchName}`)
+    return false
+  }
+}
+
 export function mergeDefaultBranch(cwd: string): void {
   const defaultBranch = getDefaultBranch(cwd)
   logger.info(`[branch] Merging latest ${defaultBranch} into current branch`)
