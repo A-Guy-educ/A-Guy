@@ -31,7 +31,8 @@ export async function GET(req: NextRequest) {
 
     const remoteConfig = getRemoteConfig(actorLogin)
     if (!remoteConfig) {
-      return NextResponse.json({ configured: false, online: false }, { status: 404 })
+      // Return 200 with configured: false instead of 404 to avoid console errors
+      return NextResponse.json({ configured: false, online: false })
     }
 
     const healthUrl = `${remoteConfig.funnelUrl.replace(/\/$/, '')}/health`

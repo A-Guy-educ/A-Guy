@@ -512,9 +512,7 @@ export const remoteApi = {
     const res = await fetch(
       `${API_BASE}/remote/status?actorLogin=${encodeURIComponent(actorLogin)}`,
     )
-    if (res.status === 404) {
-      return { configured: false, online: false }
-    }
+    // The API returns { configured: false } for non-configured users (200 OK)
     return handleResponse<RemoteStatus>(res)
   },
 
