@@ -1,0 +1,21 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "low",
+  "confidence": 1,
+  "primary_domain": "product",
+  "scope": [
+    "docs/test/full-pipeline.md"
+  ],
+  "missing_inputs": [],
+  "assumptions": [],
+  "review_questions": [],
+  "complexity": 5,
+  "complexity_reasoning": "Scope: 1 (single file), Risk: 1 (simple file creation), Novelty: 1 (trivial), Cross: 0, Ambiguity: 1 (crystal clear), Deps: 0 (no deps). Total: 4",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Input has ## Task, ## Implementation steps (2), and ## Verify criteria (2 checkable items). Promoted spec.md."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

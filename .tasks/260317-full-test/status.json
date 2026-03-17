@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "taskId": "260317-full-test",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-17T21:10:02.528Z",
+  "updatedAt": "2026-03-17T21:10:02.537Z",
+  "state": "running",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-17T21:10:02.537Z"
+    }
+  }
+}
