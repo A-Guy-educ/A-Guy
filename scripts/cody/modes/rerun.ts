@@ -21,6 +21,7 @@ import {
   findNearestEarlierStage,
 } from '../rerun-utils'
 import { getLastFailedStage, getLastPausedStage } from '../cody-utils'
+import { checkoutTaskBranch } from '../git-utils'
 import { runFullMode } from './full'
 
 export async function runRerunMode(ctx: PipelineContext): Promise<void> {
@@ -32,6 +33,20 @@ export async function runRerunMode(ctx: PipelineContext): Promise<void> {
   // because the gate paused before resolve-profile post-action ran)
   const pausedStage = !input.fromStage ? getLastPausedStage(input.taskId) : null
   let gateApprovedStage: string | null = null
+
+  // Early branch checkout: In CI, rerun mode starts on dev but task files
+  // (spec.md, task.md, task.json) live on the feature branch. Checkout the
+  // task's feature branch BEFORE checking for files, otherwise we'll falsely
+  // fall back to full mode and fail with "task.md not found".
+  if (process.env.GITHUB_ACTIONS) {
+    const checkedOut = checkoutTaskBranch(input.taskId, taskDir)
+    if (!checkedOut) {
+      logger.info('No feature branch found for task — falling back to full pipeline')
+      input.mode = 'full'
+      await runFullMode(ctx)
+      return
+    }
+  }
 
   // G33: Fallback to full only if spec.md missing AND no paused stage to resume
   const specPath = path.join(taskDir, 'spec.md')
@@ -139,6 +154,10 @@ export async function runRerunMode(ctx: PipelineContext): Promise<void> {
       const tempPipeline = resolvePipelineForMode('rerun', ctx.profile, false, ctx)
       const tempOrder = flattenPipelineOrder(tempPipeline.order)
       input.fromStage = resolveFromStageAfterGateApproval(gateApprovedStage, tempOrder)
+      // R3-FIX #2: Trigger pipeline rebuild after gate approval.
+      // The profile or task definition may have changed between the original run
+      // and this rerun — rebuilding ensures the correct stages are used.
+      ctx.pipelineNeedsRebuild = true
       logger.info(`  ℹ️ Gate approved at ${gateApprovedStage} — resuming from ${input.fromStage}`)
     } else {
       // FIX #827: When pipeline state is 'failed', prefer failed stage over paused stage.

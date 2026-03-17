@@ -2,17 +2,17 @@
  * @fileType api-endpoint
  * @domain cody
  * @pattern publish
- * @ai-summary Create a GitHub issue with 'publish' label to trigger dev→main PR workflow
+ * @ai-summary Create a GitHub issue with 'publish' label to trigger dev→main PR workflow.
+ *   Uses per-user GitHub token when available for proper attribution.
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { requireCodyAuth, verifyActorLogin } from '@/ui/cody/auth'
+import { requireCodyAuth, verifyActorLogin, getUserOctokit } from '@/ui/cody/auth'
 import { GITHUB_OWNER, GITHUB_REPO, DEV_BRANCH, PROD_BRANCH } from '@/ui/cody/constants'
 import { getOctokit } from '@/ui/cody/github-client'
 
 const PUBLISH_LABEL = 'publish'
 
 export async function POST(req: NextRequest) {
-  // Use GitHub OAuth auth for consistency with other routes
   const authResult = await requireCodyAuth(req)
   if (authResult instanceof NextResponse) return authResult
 
@@ -25,13 +25,15 @@ export async function POST(req: NextRequest) {
     if (actorResult instanceof NextResponse) return actorResult
     const { identity } = actorResult
 
-    // Use verified identity's login for attribution
     const verifiedLogin = identity.login
 
-    const octokit = getOctokit()
+    // Use user's Octokit for writes, bot for reads
+    const userOctokit = await getUserOctokit(req)
+    const readOctokit = getOctokit() // reads always use bot token (doesn't consume user rate limit)
+    const writeOctokit = userOctokit ?? readOctokit
 
-    // 1. Check if dev is ahead of main
-    const { data: comparison } = await octokit.repos.compareCommits({
+    // 1. Check if dev is ahead of main (read operation — use bot token)
+    const { data: comparison } = await readOctokit.repos.compareCommits({
       owner: GITHUB_OWNER,
       repo: GITHUB_REPO,
       base: PROD_BRANCH,
@@ -45,8 +47,8 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // 2. Check for existing open publish issue
-    const { data: existingIssues } = await octokit.issues.listForRepo({
+    // 2. Check for existing open publish issue (read operation — use bot token)
+    const { data: existingIssues } = await readOctokit.issues.listForRepo({
       owner: GITHUB_OWNER,
       repo: GITHUB_REPO,
       labels: PUBLISH_LABEL,
@@ -66,8 +68,8 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // 3. Create the publish issue
-    const { data: issue } = await octokit.issues.create({
+    // 3. Create the publish issue (write operation — use user token for attribution)
+    const { data: issue } = await writeOctokit.issues.create({
       owner: GITHUB_OWNER,
       repo: GITHUB_REPO,
       title: `Publish dev → production (${comparison.ahead_by} commits)`,
@@ -92,6 +94,23 @@ export async function POST(req: NextRequest) {
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error)
     console.error('[Cody] Publish error:', msg)
+
+    // User's GitHub token expired/revoked
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'status' in error &&
+      (error as { status?: number }).status === 401
+    ) {
+      return NextResponse.json(
+        {
+          error: 'github_token_expired',
+          message: 'Your GitHub token has expired. Please log in again.',
+        },
+        { status: 401 },
+      )
+    }
+
     return NextResponse.json({ error: msg || 'Publish failed' }, { status: 500 })
   }
 }

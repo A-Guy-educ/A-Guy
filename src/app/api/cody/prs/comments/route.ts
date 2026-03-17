@@ -8,8 +8,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { handleCodyApiError } from '@/ui/cody/github-error-handler'
-import { requireCodyAuth } from '@/ui/cody/auth'
-import { fetchPRComments, postComment, clearCache } from '@/ui/cody/github-client'
+import { requireCodyAuth, getUserOctokit, verifyActorLogin } from '@/ui/cody/auth'
+import { fetchPRComments, postComment, invalidateTaskCache } from '@/ui/cody/github-client'
 
 const getSchema = z.object({
   prNumber: z.coerce.number().int().positive(),
@@ -54,11 +54,21 @@ export async function POST(req: NextRequest) {
     }
 
     const { prNumber, body: commentBody, actorLogin } = parsed.data
-    const fullBody = actorLogin ? `${commentBody}\n\n_(posted by @${actorLogin})_` : commentBody
+
+    // Verify actorLogin matches authenticated session to prevent impersonation
+    if (actorLogin) {
+      const verified = await verifyActorLogin(req, actorLogin)
+      if (verified instanceof NextResponse) return verified
+    }
+
+    // Use user's Octokit so comments appear under their identity
+    const userOctokit = await getUserOctokit(req)
+    const fullBody =
+      actorLogin && !userOctokit ? `${commentBody}\n\n_(posted by @${actorLogin})_` : commentBody
 
     // GitHub API: PR comments use the same endpoint as issue comments
-    await postComment(prNumber, fullBody)
-    clearCache()
+    await postComment(prNumber, fullBody, userOctokit ?? undefined)
+    invalidateTaskCache()
 
     return NextResponse.json({ success: true, message: 'Comment posted' })
   } catch (error: unknown) {

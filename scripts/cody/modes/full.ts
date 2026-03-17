@@ -16,12 +16,19 @@ import { ensureTaskMd } from '../task-setup'
 export async function runFullMode(ctx: PipelineContext): Promise<void> {
   logger.info('Running FULL Cody pipeline (spec + impl)...\n')
 
-  // FIX: If a previous run left state as failed/completed, delete it so the
+  // FIX: If a previous run left state as failed/completed/paused, delete it so the
   // pipeline starts fresh.  Without this, runPipeline() sees the terminal state
   // in status.json and returns immediately without executing any stages.
+  // Paused state is included because a gate-paused status.json from a previous run
+  // causes the dashboard to show stale "Classifying" until the new run pushes an update.
   const { loadState: loadSt2, deleteState } = await import('../engine/status')
   const prevState = loadSt2(ctx.taskId)
-  if (prevState && (prevState.state === 'failed' || prevState.state === 'completed')) {
+  if (
+    prevState &&
+    (prevState.state === 'failed' ||
+      prevState.state === 'completed' ||
+      prevState.state === 'paused')
+  ) {
     logger.info(`  Previous run state: ${prevState.state} — resetting for fresh full-mode run`)
     deleteState(ctx.taskId)
   }

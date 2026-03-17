@@ -90,6 +90,15 @@ export async function executePostAction(
         if (taskDef.complexity !== undefined) {
           const tier = getComplexityTier(taskDef.complexity)
           logger.info(`  ℹ️ Complexity: ${taskDef.complexity} (${tier}) → profile: ${ctx.profile}`)
+
+          // R2-FIX #6: Warn when complexity seems mismatched with profile.
+          // A lightweight profile with high complexity may skip important stages.
+          if (ctx.profile === 'lightweight' && taskDef.complexity >= 35) {
+            logger.warn(
+              `  ⚠️ Profile/complexity mismatch: lightweight profile with complexity ${taskDef.complexity} (complex tier). ` +
+                `Some stages may be unexpectedly skipped. Consider overriding with --profile=standard.`,
+            )
+          }
         } else {
           logger.info(
             `  ℹ️ Resolved profile: ${ctx.profile} (no complexity score, using legacy heuristic)`,

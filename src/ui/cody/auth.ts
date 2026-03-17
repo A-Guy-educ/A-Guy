@@ -4,6 +4,7 @@
  * @pattern auth
  * @ai-summary Dashboard authentication middleware.
  *   requireCodyAuth: GitHub OAuth session (any repo collaborator) — used for Cody API routes.
+ *   getUserOctokit: Extract user's GitHub token from session and create per-request Octokit.
  *   requireDashboardAuth / requireAuth: Legacy Payload-based auth — kept for backward compat.
  */
 import { NextRequest, NextResponse } from 'next/server'
@@ -11,7 +12,9 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { verifyCodySession } from '@/infra/auth/cody_session'
 import type { CodyGitHubIdentity } from '@/infra/auth/cody_session'
+import { createUserOctokit } from '@/ui/cody/github-client'
 import { logger } from '@/infra/utils/logger/logger'
+import type { Octokit } from '@octokit/rest'
 
 /**
  * Require dashboard authentication using Payload
@@ -93,6 +96,17 @@ export async function requireCodyAuth(req: NextRequest): Promise<null | NextResp
 }
 
 /**
+ * Get a per-request Octokit instance using the authenticated user's GitHub token.
+ * Returns null if the session doesn't have a token (legacy sessions with read:user scope).
+ * Callers should fall back to getOctokit() (bot token) when this returns null.
+ */
+export async function getUserOctokit(req: NextRequest): Promise<Octokit | null> {
+  const identity = await verifyCodySession(req)
+  if (!identity?.ghToken) return null
+  return createUserOctokit(identity.ghToken)
+}
+
+/**
  * Verify that the supplied actorLogin matches the authenticated session.
  * This prevents actorLogin spoofing where a user could impersonate another user in GitHub comments.
  *
@@ -121,15 +135,11 @@ export async function verifyActorLogin(
     return { identity }
   }
 
-  // Verify the supplied actorLogin matches the authenticated user
-  // Allow exact match OR prefixed match (e.g., "john" matches "johndoe" for convenience)
+  // Verify the supplied actorLogin matches the authenticated user (exact match, case-insensitive)
   const normalizedSupplied = suppliedLogin.toLowerCase()
   const normalizedIdentity = identity.login.toLowerCase()
 
-  if (
-    normalizedSupplied !== normalizedIdentity &&
-    !normalizedIdentity.startsWith(normalizedSupplied + '-')
-  ) {
+  if (normalizedSupplied !== normalizedIdentity) {
     logger.warn(
       {
         suppliedLogin,

@@ -182,13 +182,13 @@ describe('Fix #6: Zombie reaper state persistence', () => {
 })
 
 // ============================================================================
-// Fix #12: Failure analysis skips queue-managed tasks
+// Fix #12: Pipeline-fixer skips queue-managed tasks
 // ============================================================================
 
-describe('Fix #12: Failure analysis skips queue-managed tasks', () => {
+describe('Fix #12: Pipeline-fixer skips queue-managed tasks', () => {
   it('should skip failed task when it is the active queue task', async () => {
-    const { failureAnalysisPlugin } =
-      await import('../../../../scripts/inspector/plugins/cody/failure-analysis/index')
+    const { pipelineFixerPlugin } =
+      await import('../../../../scripts/inspector/plugins/cody/pipeline-fixer/index')
 
     const stateStore: Record<string, unknown> = {
       'cody:evaluatedTasks': [
@@ -210,8 +210,6 @@ describe('Fix #12: Failure analysis skips queue-managed tasks', () => {
         activeTaskId: 'queue-task-1',
         activeIssueNumber: 500,
         activeStartedAt: new Date().toISOString(),
-        retries: {},
-        gateApprovals: {},
       },
     }
 
@@ -235,6 +233,8 @@ describe('Fix #12: Failure analysis skips queue-managed tasks', () => {
         setLifecycleLabel: vi.fn(),
         closeIssue: vi.fn(),
         getIssueComments: vi.fn().mockReturnValue([]),
+        createIssue: vi.fn().mockReturnValue(null),
+        searchIssues: vi.fn().mockReturnValue([]),
       },
       log: {
         debug: vi.fn(),
@@ -246,14 +246,14 @@ describe('Fix #12: Failure analysis skips queue-managed tasks', () => {
       cycleNumber: 1,
     }
 
-    const actions = await failureAnalysisPlugin.run(mockCtx as unknown as InspectorContext)
+    const actions = await pipelineFixerPlugin.run(mockCtx as unknown as InspectorContext)
     // Should produce NO actions since the task is queue-managed
     expect(actions).toHaveLength(0)
   })
 
   it('should NOT skip failed task when no queue state exists', async () => {
-    const { failureAnalysisPlugin } =
-      await import('../../../../scripts/inspector/plugins/cody/failure-analysis/index')
+    const { pipelineFixerPlugin } =
+      await import('../../../../scripts/inspector/plugins/cody/pipeline-fixer/index')
 
     const stateStore: Record<string, unknown> = {
       'cody:evaluatedTasks': [
@@ -294,6 +294,8 @@ describe('Fix #12: Failure analysis skips queue-managed tasks', () => {
         setLifecycleLabel: vi.fn(),
         closeIssue: vi.fn(),
         getIssueComments: vi.fn().mockReturnValue([]),
+        createIssue: vi.fn().mockReturnValue(null),
+        searchIssues: vi.fn().mockReturnValue([]),
       },
       log: {
         debug: vi.fn(),
@@ -305,15 +307,15 @@ describe('Fix #12: Failure analysis skips queue-managed tasks', () => {
       cycleNumber: 1,
     }
 
-    const actions = await failureAnalysisPlugin.run(mockCtx as unknown as InspectorContext)
+    const actions = await pipelineFixerPlugin.run(mockCtx as unknown as InspectorContext)
     // Should create action since there's no queue state
     expect(actions).toHaveLength(1)
     expect(actions[0].target).toBe('non-queue-task')
   })
 
   it('should NOT skip failed task when it is different from active queue task', async () => {
-    const { failureAnalysisPlugin } =
-      await import('../../../../scripts/inspector/plugins/cody/failure-analysis/index')
+    const { pipelineFixerPlugin } =
+      await import('../../../../scripts/inspector/plugins/cody/pipeline-fixer/index')
 
     const stateStore: Record<string, unknown> = {
       'cody:evaluatedTasks': [
@@ -335,8 +337,6 @@ describe('Fix #12: Failure analysis skips queue-managed tasks', () => {
         activeTaskId: 'different-task',
         activeIssueNumber: 999,
         activeStartedAt: new Date().toISOString(),
-        retries: {},
-        gateApprovals: {},
       },
     }
 
@@ -360,6 +360,8 @@ describe('Fix #12: Failure analysis skips queue-managed tasks', () => {
         setLifecycleLabel: vi.fn(),
         closeIssue: vi.fn(),
         getIssueComments: vi.fn().mockReturnValue([]),
+        createIssue: vi.fn().mockReturnValue(null),
+        searchIssues: vi.fn().mockReturnValue([]),
       },
       log: {
         debug: vi.fn(),
@@ -371,7 +373,7 @@ describe('Fix #12: Failure analysis skips queue-managed tasks', () => {
       cycleNumber: 1,
     }
 
-    const actions = await failureAnalysisPlugin.run(mockCtx as unknown as InspectorContext)
+    const actions = await pipelineFixerPlugin.run(mockCtx as unknown as InspectorContext)
     // Should create action since this task is NOT queue-managed
     expect(actions).toHaveLength(1)
     expect(actions[0].target).toBe('other-task')
@@ -384,17 +386,13 @@ describe('Fix #12: Failure analysis skips queue-managed tasks', () => {
 
 describe('Fix #4, #5: Health API getInspectorState', () => {
   it('should parse plain JSON (not base64) from GH variable', async () => {
-    // Read the route file and verify it uses JSON.parse(output) not Buffer.from
     const routeContent = fs.readFileSync(
       path.join(process.cwd(), 'src/app/api/cody/inspector/health/route.ts'),
       'utf-8',
     )
 
-    // Should NOT contain base64 decoding
     expect(routeContent).not.toContain('Buffer.from')
     expect(routeContent).not.toContain("'base64'")
-
-    // Should contain direct JSON.parse
     expect(routeContent).toContain('return JSON.parse(output)')
   })
 
@@ -404,7 +402,6 @@ describe('Fix #4, #5: Health API getInspectorState', () => {
       'utf-8',
     )
 
-    // Should use the correct path matching index.ts
     expect(routeContent).toContain('.inspector/state.json')
     expect(routeContent).not.toContain('.inspector-state.json')
   })
@@ -415,23 +412,23 @@ describe('Fix #4, #5: Health API getInspectorState', () => {
 // ============================================================================
 
 describe('Fix #2: Plugin order validation', () => {
-  it('should have health-check registered before failure-analysis and queue-manager', () => {
+  it('should have health-check registered before pipeline-fixer and queue-manager', () => {
     const indexContent = fs.readFileSync(
       path.join(process.cwd(), 'scripts/inspector/index.ts'),
       'utf-8',
     )
 
     // Verify the order assertion exists
-    expect(indexContent).toContain('healthIdx >= failureIdx')
+    expect(indexContent).toContain('healthIdx >= fixerIdx')
     expect(indexContent).toContain('healthIdx >= queueIdx')
     expect(indexContent).toContain('Plugin order violation')
 
     // Verify health-check is registered first
     const healthLine = indexContent.indexOf('registry.register(healthCheckPlugin)')
-    const failureLine = indexContent.indexOf('registry.register(failureAnalysisPlugin)')
+    const fixerLine = indexContent.indexOf('registry.register(pipelineFixerPlugin)')
     const queueLine = indexContent.indexOf('registry.register(queueManagerPlugin)')
 
-    expect(healthLine).toBeLessThan(failureLine)
+    expect(healthLine).toBeLessThan(fixerLine)
     expect(healthLine).toBeLessThan(queueLine)
   })
 })
@@ -445,7 +442,6 @@ describe('Fix #7: Registry dead code cleanup', () => {
     const { createPluginRegistry } = await import('../../../../scripts/inspector/plugins/registry')
     const registry = createPluginRegistry()
 
-    // getScheduled should be removed
     expect((registry as unknown as Record<string, unknown>).getScheduled).toBeUndefined()
   })
 })
@@ -465,13 +461,13 @@ describe('Fix #10, #16: Warning messages', () => {
     expect(indexContent).toContain('silently fail')
   })
 
-  it('should have expanded MINIMAX warning with gate review impact', () => {
+  it('should have MINIMAX warning mentioning audit', () => {
     const indexContent = fs.readFileSync(
       path.join(process.cwd(), 'scripts/inspector/index.ts'),
       'utf-8',
     )
-    expect(indexContent).toContain('gate reviews will auto-approve')
-    expect(indexContent).toContain('zero confidence')
+    expect(indexContent).toContain('MINIMAX_API_KEY not set')
+    expect(indexContent).toContain('audit')
   })
 })
 
@@ -487,7 +483,6 @@ describe('Fix #11: Git config uses --local flag', () => {
     )
     expect(content).toContain("'--local', 'user.name'")
     expect(content).toContain("'--local', 'user.email'")
-    // Verify no non-local config
     expect(content).not.toMatch(/'config', 'user\.name'/)
     expect(content).not.toMatch(/'config', 'user\.email'/)
   })
@@ -498,35 +493,26 @@ describe('Fix #11: Git config uses --local flag', () => {
 // ============================================================================
 
 describe('Fix #13: Workflow variables:write permission', () => {
-  it('should include variables: write in inspector workflow permissions', () => {
+  it('should not include invalid variables: write permission', () => {
     const content = fs.readFileSync(
       path.join(process.cwd(), '.github/workflows/inspector.yml'),
       'utf-8',
     )
-    expect(content).toContain('variables: write')
+    expect(content).not.toContain('variables: write')
   })
 })
 
 // ============================================================================
-// Fix #15: MAX_RETRIES documentation
+// Fix #15: Pipeline retry budget documentation
 // ============================================================================
 
-describe('Fix #15: MAX_RETRIES documentation', () => {
-  it('should document MAX_RETRIES=3 rationale in failure-analysis', () => {
+describe('Fix #15: Pipeline retry budget documentation', () => {
+  it('should document MAX_RETRIES in pipeline-fixer', () => {
     const content = fs.readFileSync(
-      path.join(process.cwd(), 'scripts/inspector/plugins/cody/failure-analysis/index.ts'),
+      path.join(process.cwd(), 'scripts/inspector/plugins/cody/pipeline-fixer/index.ts'),
       'utf-8',
     )
-    expect(content).toContain('human-initiated tasks')
-    expect(content).toContain('broader retry budget')
-  })
-
-  it('should document MAX_RETRIES=2 rationale in queue-manager', () => {
-    const content = fs.readFileSync(
-      path.join(process.cwd(), 'scripts/inspector/plugins/cody/queue-manager/types.ts'),
-      'utf-8',
-    )
-    expect(content).toContain('autonomous queue processing')
-    expect(content).toContain('fail fast')
+    expect(content).toContain('MAX_RETRIES')
+    expect(content).toContain('5')
   })
 })

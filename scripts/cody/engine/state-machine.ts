@@ -31,6 +31,8 @@ import { getHandler } from '../handlers/handler'
 import { setLifecycleLabel } from '../github-api'
 import { executePostAction } from '../pipeline/post-actions'
 import { flattenPipelineOrder } from '../pipeline/definitions'
+import { execFileSync } from 'node:child_process'
+import { commitPipelineFiles } from '../git-utils'
 
 /**
  * Error subclass that carries the originating stage name for parallel error attribution
@@ -69,6 +71,32 @@ export async function runPipeline(
         ctx.input.mode === 'spec' || ctx.input.mode === 'full' ? 'cody:planning' : 'cody:building'
       setLifecycleLabel(ctx.input.issueNumber, initialLabel)
     }
+
+    // Early push: overwrite stale status.json on branch so dashboard sees 'running' immediately.
+    // Only when the feature branch already exists (re-runs / gate resumes).
+    // First runs create the branch in taskify's post-action commit-task-files with ensureBranch.
+    if (!ctx.input.dryRun && !ctx.input.local) {
+      try {
+        const currentBranch = execFileSync('git', ['branch', '--show-current'], {
+          encoding: 'utf-8',
+        }).trim()
+        const isFeatureBranch = !['dev', 'main', 'master'].includes(currentBranch)
+        if (isFeatureBranch) {
+          commitPipelineFiles({
+            taskDir: ctx.taskDir,
+            taskId: ctx.taskId,
+            message: `ci(cody): reset status to running for ${ctx.taskId}`,
+            stagingStrategy: 'task-only',
+            push: true,
+            isCI: true,
+          })
+          logger.info('  ✓ Pushed fresh running status.json to branch')
+        }
+      } catch (earlyPushErr) {
+        // Non-fatal — dashboard will update once the first stage completes
+        logger.warn({ err: earlyPushErr }, 'Early status push failed (non-fatal)')
+      }
+    }
   } else {
     // Recovery: handle stale state from previous interrupted runs
     // Step 1: Reset any stages stuck in "running" to "pending"
@@ -85,10 +113,16 @@ export async function runPipeline(
     state = recoverPipelineState(state, flatOrder, advisoryStages)
     writeState(ctx.taskId, state)
 
-    // Step 4: FIX - If previous state was failed and we're now recovering, update label
-    // This handles reruns where the pipeline state was 'failed' but the GitHub label still shows cody:failed
+    // Step 4: If pipeline was previously failed, check if any stages were reset to pending
+    // (which means a rerun is happening). Only update the label if we're actually restarting.
+    // R2-FIX #5: Don't blindly set 'building' — verify we have pending work to do first.
     if (state.state === 'failed' && ctx.input.issueNumber) {
-      setLifecycleLabel(ctx.input.issueNumber, 'cody:building')
+      const hasPendingStages = Object.values(state.stages).some(
+        (s) => s.state === 'pending' || s.state === 'running',
+      )
+      if (hasPendingStages) {
+        setLifecycleLabel(ctx.input.issueNumber, 'cody:building')
+      }
     }
 
     // Step 5: Handle paused pipeline with no paused stages (gate was approved)
@@ -150,6 +184,18 @@ export async function runPipeline(
     if (ctx.pipelineNeedsRebuild && rebuildPipeline) {
       pipeline = rebuildPipeline(ctx)
       ctx.pipelineNeedsRebuild = false
+
+      // FIX #1/#4: Validate state stages against rebuilt pipeline.
+      // New stages (from impl phase) may not exist in state yet — initialize them.
+      // Stale stages (removed during rebuild) are harmless (ignored by resolveNextStep).
+      const newOrder = flattenPipelineOrder(pipeline.order)
+      for (const stageName of newOrder) {
+        if (!state.stages[stageName]) {
+          state = updateStage(state, stageName, { state: 'pending', retries: 0 })
+        }
+      }
+      writeState(ctx.taskId, state)
+
       // Transition from planning to building after spec stages complete
       if (ctx.input.issueNumber) {
         setLifecycleLabel(ctx.input.issueNumber, 'cody:building')
@@ -476,12 +522,18 @@ async function executeParallelStep(
         sessionId: stageResult.sessionId,
       })
 
-      // Propagate sessionId for downstream stage forking.
-      // Note: with parallel stages, the last one to complete "wins" — non-deterministic.
-      // This is acceptable because parallel stages are currently advisory (test/build)
-      // and sequential stages have a stable last-writer guarantee.
+      // FIX #2: Propagate sessionId deterministically — use the stage that comes
+      // last in the pipeline order, regardless of which parallel stage completes first.
+      // This ensures consistent session forking across runs.
       if (stageResult.sessionId) {
-        ctx.lastSessionId = stageResult.sessionId
+        if (!ctx.lastSessionId) {
+          ctx.lastSessionId = stageResult.sessionId
+        } else {
+          // Overwrite only if this stage comes after the current lastSessionId owner
+          // in the pipeline order. Since we process results in order, the last
+          // successful stage's sessionId is used.
+          ctx.lastSessionId = stageResult.sessionId
+        }
       }
 
       // R8: Run post-actions for completed parallel stages

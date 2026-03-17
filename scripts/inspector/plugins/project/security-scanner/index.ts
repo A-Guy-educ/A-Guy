@@ -74,9 +74,10 @@ export const securityScannerPlugin: InspectorPlugin = {
       })
     }
 
-    // Create GitHub issues for critical findings
+    // Create GitHub issues for critical findings — cap at 3 per cycle to avoid spam
     const criticalFindings = findings.filter((f) => f.severity === 'critical')
-    for (const finding of criticalFindings) {
+    const MAX_ISSUES_PER_CYCLE = 3
+    for (const finding of criticalFindings.slice(0, MAX_ISSUES_PER_CYCLE)) {
       const dedupKey = `security-scanner:issue:${finding.file}:${finding.rule}`
       const searchQuery = `[Security] ${finding.message} in:${finding.file} in:title is:open label:${SECURITY_LABEL}`
 

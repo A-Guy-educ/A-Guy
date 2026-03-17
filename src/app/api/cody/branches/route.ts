@@ -2,11 +2,12 @@
  * @fileType endpoint
  * @domain cody
  * @pattern branches-api
- * @ai-summary API route for listing and deleting branches from GitHub
+ * @ai-summary API route for listing and deleting branches from GitHub.
+ *   Uses per-user GitHub token for write operations (delete) when available.
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { requireCodyAuth } from '@/ui/cody/auth'
+import { requireCodyAuth, getUserOctokit } from '@/ui/cody/auth'
 import { GITHUB_OWNER, GITHUB_REPO } from '@/ui/cody/constants'
 import { getOctokit } from '@/ui/cody/github-client'
 
@@ -18,16 +19,13 @@ const BULK_DELETE_SCHEMA = z.object({
   branches: z.array(z.string()),
 })
 
-// GET /api/cody/branches - List branches from GitHub
+// GET /api/cody/branches - List branches from GitHub (read — always bot token)
 export async function GET(req: NextRequest) {
   const authError = await requireCodyAuth(req)
   if (authError) return authError
 
   try {
-    const octokit = await getOctokit()
-    if (!octokit) {
-      return NextResponse.json({ error: 'GitHub client not available' }, { status: 500 })
-    }
+    const octokit = getOctokit()
 
     // Get all branches from the repository
     const { data: branches } = await octokit.rest.repos.listBranches({
@@ -55,7 +53,6 @@ export async function GET(req: NextRequest) {
         let status: 'active' | 'merged' | 'closed' = 'active'
 
         if (prState === 'closed') {
-          // Check if PR was merged
           const pr = prs.find((p) => p.head.ref === branch.name)
           status = pr?.merged_at ? 'merged' : 'closed'
         }
@@ -75,16 +72,14 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// DELETE /api/cody/branches - Delete a single branch
+// DELETE /api/cody/branches - Delete a single branch (write — use user token)
 export async function DELETE(req: NextRequest) {
   const authError = await requireCodyAuth(req)
   if (authError) return authError
 
   try {
-    const octokit = await getOctokit()
-    if (!octokit) {
-      return NextResponse.json({ error: 'GitHub client not available' }, { status: 500 })
-    }
+    const userOctokit = await getUserOctokit(req)
+    const octokit = userOctokit ?? getOctokit()
 
     const body = await req.json()
     const { branch } = DELETE_BRANCH_SCHEMA.parse(body)
@@ -114,16 +109,14 @@ export async function DELETE(req: NextRequest) {
   }
 }
 
-// POST /api/cody/branches - Bulk delete branches
+// POST /api/cody/branches - Bulk delete branches (write — use user token)
 export async function POST(req: NextRequest) {
   const authError = await requireCodyAuth(req)
   if (authError) return authError
 
   try {
-    const octokit = await getOctokit()
-    if (!octokit) {
-      return NextResponse.json({ error: 'GitHub client not available' }, { status: 500 })
-    }
+    const userOctokit = await getUserOctokit(req)
+    const octokit = userOctokit ?? getOctokit()
 
     const body = await req.json()
     const { branches } = BULK_DELETE_SCHEMA.parse(body)

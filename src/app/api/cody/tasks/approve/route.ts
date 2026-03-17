@@ -2,11 +2,12 @@
  * @fileType api-endpoint
  * @domain cody
  * @pattern approve-gate
- * @ai-summary Approve a gate - merge PR, delete branch, close issue, remove labels via GitHub API
+ * @ai-summary Approve a gate - merge PR, delete branch, close issue, remove labels via GitHub API.
+ *   Uses per-user GitHub token when available for proper attribution.
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { requireCodyAuth, verifyActorLogin } from '@/ui/cody/auth'
+import { requireCodyAuth, verifyActorLogin, getUserOctokit } from '@/ui/cody/auth'
 import { GITHUB_OWNER, GITHUB_REPO } from '@/ui/cody/constants'
 import { getOctokit } from '@/ui/cody/github-client'
 
@@ -24,7 +25,6 @@ const ApproveRequestSchema = z.object({
 })
 
 export async function POST(req: NextRequest) {
-  // Use GitHub OAuth auth for consistency with other routes
   const authResult = await requireCodyAuth(req)
   if (authResult instanceof NextResponse) return authResult
 
@@ -46,15 +46,15 @@ export async function POST(req: NextRequest) {
     if (actorResult instanceof NextResponse) return actorResult
     const { identity } = actorResult
 
-    // Use verified identity's login for attribution
     const verifiedLogin = identity.login
 
-    const octokit = getOctokit()
+    // Use user's Octokit for proper attribution (reviews, merges appear under user's identity)
+    const userOctokit = await getUserOctokit(req)
+    const octokit = userOctokit ?? getOctokit()
     const results: string[] = []
 
     // 1. Approve and merge the PR (squash)
     try {
-      // Approve first - use verified identity for attribution
       await octokit.pulls.createReview({
         owner: GITHUB_OWNER,
         repo: GITHUB_REPO,
@@ -132,6 +132,23 @@ export async function POST(req: NextRequest) {
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error)
     console.error('[Cody] Approve error:', msg)
+
+    // User's GitHub token expired/revoked
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'status' in error &&
+      (error as { status?: number }).status === 401
+    ) {
+      return NextResponse.json(
+        {
+          error: 'github_token_expired',
+          message: 'Your GitHub token has expired. Please log in again.',
+        },
+        { status: 401 },
+      )
+    }
+
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

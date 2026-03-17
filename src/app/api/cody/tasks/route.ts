@@ -6,7 +6,7 @@
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
-import { requireCodyAuth, verifyActorLogin } from '@/ui/cody/auth'
+import { requireCodyAuth, verifyActorLogin, getUserOctokit } from '@/ui/cody/auth'
 
 import {
   fetchIssues,
@@ -370,24 +370,32 @@ export async function POST(req: NextRequest) {
     // Use verified identity's login for attribution
     const verifiedLogin = identity.login
 
+    // Get user's Octokit (null for legacy sessions → falls back to bot token)
+    const userOctokit = await getUserOctokit(req)
+
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
     }
 
-    // Create the issue in GitHub - use verified login for attribution
-    const actorNote = `\n\n---\n_Created by @${verifiedLogin} via Cody dashboard_`
-    const issue = await createIssue({
-      title,
-      body: (issueBody || '') + actorNote,
-      labels: labels || [],
-      assignees: assignees || [],
-    })
+    // Create the issue in GitHub — when user token is available, issue appears under their identity
+    const actorNote = userOctokit
+      ? ''
+      : `\n\n---\n_Created by @${verifiedLogin} via Cody dashboard_`
+    const issue = await createIssue(
+      {
+        title,
+        body: (issueBody || '') + actorNote,
+        labels: labels || [],
+        assignees: assignees || [],
+      },
+      userOctokit ?? undefined,
+    )
 
     console.log('[Cody] Created issue:', issue.number, issue.title)
 
     // Auto-trigger pipeline by commenting @cody on the issue
     try {
-      await postComment(issue.number, '@cody')
+      await postComment(issue.number, '@cody', userOctokit ?? undefined)
       console.log('[Cody] Triggered pipeline for issue:', issue.number)
     } catch (triggerError: any) {
       console.error('[Cody] Failed to trigger pipeline:', triggerError.message)
@@ -400,10 +408,14 @@ export async function POST(req: NextRequest) {
       console.log('[Cody] Uploading', attachments.length, 'attachments...')
       for (const attachment of attachments) {
         try {
-          const result = await uploadIssueAttachment(issue.number, {
-            name: attachment.name,
-            content: attachment.content,
-          })
+          const result = await uploadIssueAttachment(
+            issue.number,
+            {
+              name: attachment.name,
+              content: attachment.content,
+            },
+            userOctokit ?? undefined,
+          )
           uploadedAttachments.push(result)
           console.log('[Cody] Uploaded attachment:', result.name, result.attachment_url)
         } catch (attachError: any) {
@@ -423,6 +435,18 @@ export async function POST(req: NextRequest) {
     })
   } catch (error: any) {
     console.error('[Cody] Error creating task:', error)
+
+    // User's GitHub token expired/revoked — prompt re-auth
+    if (error.status === 401) {
+      return NextResponse.json(
+        {
+          error: 'github_token_expired',
+          message: 'Your GitHub token has expired. Please log in again.',
+        },
+        { status: 401 },
+      )
+    }
+
     return NextResponse.json(
       { error: 'Failed to create task', details: error.message },
       { status: 500 },

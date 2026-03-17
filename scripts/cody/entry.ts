@@ -33,6 +33,16 @@ import {
   runStatusMode,
 } from './modes'
 
+// FIX #3: Import status functions at module level instead of dynamic imports in signal handlers.
+// Dynamic `await import()` in signal handlers is unsafe — Node.js signal handlers have limited
+// async support and may be killed before the import resolves.
+import {
+  loadState as loadStateForSignal,
+  writeState as writeStateForSignal,
+  updateStage as updateStageForSignal,
+  completeState as completeStateForSignal,
+} from './engine/status'
+
 // Re-export for backward compatibility (canonical source: ./task-setup)
 export { ensureTaskMd } from './task-setup'
 import type { OpenCodeServer } from './opencode-server'
@@ -187,14 +197,14 @@ Examples:
     shuttingDown = true
     logger.error(`\n⚠ Received ${signal} — CI runner shutting down`)
     try {
-      const { loadState, writeState, updateStage, completeState } = await import('./engine/status')
-      const state = loadState(input.taskId)
+      // FIX #3: Use module-level imports instead of dynamic import in signal context
+      const state = loadStateForSignal(input.taskId)
       if (state) {
         // Mark all running stages as failed
         let updatedState = state
         for (const [name, stage] of Object.entries(state.stages)) {
           if (stage.state === 'running') {
-            updatedState = updateStage(updatedState, name, {
+            updatedState = updateStageForSignal(updatedState, name, {
               state: 'failed',
               error: `Process interrupted by ${signal}`,
             })
@@ -202,8 +212,8 @@ Examples:
           }
         }
         // Mark pipeline as failed
-        const failedState = completeState(updatedState, 'failed')
-        writeState(input.taskId, failedState)
+        const failedState = completeStateForSignal(updatedState, 'failed')
+        writeStateForSignal(input.taskId, failedState)
         logger.error(`  Updated status.json to "failed" for task ${input.taskId}`)
 
         // In CI mode: attempt to commit and push the updated status

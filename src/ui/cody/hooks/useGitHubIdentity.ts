@@ -5,7 +5,7 @@
  * @ai-summary Hook to read the authenticated GitHub identity from the Cody session cookie.
  *   Replaces the localStorage-based "Who are you?" picker with verified GitHub OAuth identity.
  *   The session is set server-side by /api/oauth/github/callback.
- *   clearGitHubUser() logs out (clears session cookie) and redirects to GitHub OAuth.
+ *   signOut() logs out (clears session cookie) and shows the login screen.
  */
 'use client'
 
@@ -38,7 +38,7 @@ async function fetchIdentity(): Promise<GitHubIdentity | null> {
  * - `githubUser` is `null` when not authenticated (session missing or expired).
  * - `isLoaded` is `false` while the initial fetch is in progress.
  * - `setGitHubUser` is a no-op (identity is set by OAuth, not manually).
- * - `clearGitHubUser()` clears the session and redirects to GitHub OAuth login.
+ * - `clearGitHubUser()` signs out: clears cookie and shows login screen (no auto-redirect).
  */
 export function useGitHubIdentity() {
   const queryClient = useQueryClient()
@@ -54,7 +54,7 @@ export function useGitHubIdentity() {
 
   // No-op: identity is set by OAuth flow, not manually
   const setGitHubUser = useCallback(() => {
-    // Identity is managed by OAuth session — use clearGitHubUser() to re-auth
+    // Identity is managed by OAuth session — use clearGitHubUser() to sign out
   }, [])
 
   const clearGitHubUser = useCallback(async () => {
@@ -62,12 +62,10 @@ export function useGitHubIdentity() {
     try {
       await fetch('/api/cody/auth/logout', { method: 'POST', credentials: 'include' })
     } catch {
-      // Ignore — we'll redirect anyway
+      // Ignore errors — cookie may already be cleared
     }
-    // Invalidate cached identity
+    // Invalidate cached identity — UI will show the login screen
     queryClient.setQueryData(QUERY_KEY, null)
-    // Redirect to GitHub OAuth
-    window.location.href = '/api/oauth/github?returnTo=/cody'
   }, [queryClient])
 
   return { githubUser, isLoaded, setGitHubUser, clearGitHubUser }

@@ -14,8 +14,6 @@ import {
   activateTask,
   completeTask,
   failTask,
-  getRetryCount,
-  incrementRetry,
   cleanTaskState,
 } from '../../../../scripts/inspector/plugins/cody/queue-manager/queue-state'
 import {
@@ -128,8 +126,6 @@ describe('queue-state helpers', () => {
       activeTaskId: 'issue-10',
       activeIssueNumber: 10,
       activeStartedAt: '2026-01-01T00:00:00Z',
-      retries: { 'issue-10': 1 },
-      gateApprovals: {},
     }
     ;(ctx.state.get as ReturnType<typeof vi.fn>).mockReturnValue(stored)
 
@@ -205,35 +201,18 @@ describe('queue-state helpers', () => {
     expect(ctx.github.addLabel).toHaveBeenCalledWith(42, QUEUE_LABELS.FAILED)
   })
 
-  it('getRetryCount returns 0 for unknown task', () => {
-    expect(getRetryCount(DEFAULT_QUEUE_STATE, 'issue-99')).toBe(0)
-  })
-
-  it('incrementRetry correctly tracks retry count', () => {
-    let state = { ...DEFAULT_QUEUE_STATE }
-
-    state = incrementRetry(state, 'issue-42')
-    expect(getRetryCount(state, 'issue-42')).toBe(1)
-
-    state = incrementRetry(state, 'issue-42')
-    expect(getRetryCount(state, 'issue-42')).toBe(2)
-  })
-
-  it('cleanTaskState removes task-specific data', () => {
+  it('cleanTaskState clears active fields', () => {
     const state: QueueState = {
       activeTaskId: 'issue-42',
       activeIssueNumber: 42,
       activeStartedAt: '2026-01-01T00:00:00Z',
-      retries: { 'issue-42': 2, 'issue-43': 1 },
-      gateApprovals: { 'issue-42': ['taskify'], 'issue-43': ['architect'] },
     }
 
     const cleaned = cleanTaskState(state, 'issue-42')
 
     expect(cleaned.activeTaskId).toBeNull()
     expect(cleaned.activeIssueNumber).toBeNull()
-    expect(cleaned.retries).toEqual({ 'issue-43': 1 })
-    expect(cleaned.gateApprovals).toEqual({ 'issue-43': ['architect'] })
+    expect(cleaned.activeStartedAt).toBeNull()
   })
 })
 
@@ -257,7 +236,6 @@ describe('cody-queue-manager plugin', () => {
   })
 
   it('activates first task when queue has tasks and no active task', async () => {
-    // First call for active (empty), second call for queued (has tasks)
     const getOpenIssuesFn = ctx.github.getOpenIssues as ReturnType<typeof vi.fn>
     getOpenIssuesFn
       .mockReturnValueOnce([]) // getActiveTask — no active
@@ -270,16 +248,13 @@ describe('cody-queue-manager plugin', () => {
 
     expect(actions).toHaveLength(1)
     expect(actions[0].type).toBe('activate-task')
-    expect(actions[0].target).toBe('issue-10') // First in FIFO order
+    expect(actions[0].target).toBe('issue-10')
   })
 
   it('returns no actions when active task is healthy', async () => {
-    // Active task exists
     ;(ctx.github.getOpenIssues as ReturnType<typeof vi.fn>).mockReturnValue([
       createIssueInfo({ number: 42, labels: ['cody:queue-active'] }),
     ])
-
-    // Health check says healthy
     ;(ctx.state.get as ReturnType<typeof vi.fn>).mockImplementation((key: string) => {
       if (key === 'cody:evaluatedTasks') {
         return [createEvaluatedTask({ health: 'healthy' })]
@@ -300,39 +275,7 @@ describe('cody-queue-manager plugin', () => {
     expect(actions).toEqual([])
   })
 
-  it('creates gate review action when active task is gated', async () => {
-    ;(ctx.github.getOpenIssues as ReturnType<typeof vi.fn>).mockReturnValue([
-      createIssueInfo({ number: 42, labels: ['cody:queue-active'] }),
-    ])
-    ;(ctx.state.get as ReturnType<typeof vi.fn>).mockImplementation((key: string) => {
-      if (key === 'cody:evaluatedTasks') {
-        return [
-          createEvaluatedTask({
-            health: 'gated',
-            healthDetail: 'Waiting for gate approval',
-            failedStage: 'taskify',
-          }),
-        ]
-      }
-      if (key === 'queue:state') {
-        return {
-          ...DEFAULT_QUEUE_STATE,
-          activeTaskId: 'issue-42',
-          activeIssueNumber: 42,
-          activeStartedAt: new Date().toISOString(),
-        }
-      }
-      return undefined
-    })
-
-    const actions = await queueManagerPlugin.run(ctx)
-
-    expect(actions).toHaveLength(1)
-    expect(actions[0].type).toBe('gate-review')
-    expect(actions[0].target).toBe('issue-42')
-  })
-
-  it('creates failure action when active task failed with retries remaining', async () => {
+  it('creates fail-and-advance action when active task failed', async () => {
     ;(ctx.github.getOpenIssues as ReturnType<typeof vi.fn>).mockReturnValue([
       createIssueInfo({ number: 42, labels: ['cody:queue-active'] }),
     ])
@@ -352,7 +295,6 @@ describe('cody-queue-manager plugin', () => {
           activeTaskId: 'issue-42',
           activeIssueNumber: 42,
           activeStartedAt: new Date().toISOString(),
-          retries: {},
         }
       }
       return undefined
@@ -361,12 +303,12 @@ describe('cody-queue-manager plugin', () => {
     const actions = await queueManagerPlugin.run(ctx)
 
     expect(actions).toHaveLength(1)
-    expect(actions[0].type).toBe('handle-failure')
-    expect(actions[0].urgency).toBe('critical')
+    expect(actions[0].type).toBe('fail-and-advance')
+    expect(actions[0].urgency).toBe('warning')
   })
 
   it('creates complete action and advances when active task completed', async () => {
-    ;(ctx.github.getOpenIssues as ReturnType<typeof vi.fn>).mockReturnValue([
+    ;(ctx.github.getOpenIssues as ReturnType<typeof vi.fn>).mockReturnValueOnce([
       createIssueInfo({ number: 42, labels: ['cody:queue-active'] }),
     ])
     ;(ctx.state.get as ReturnType<typeof vi.fn>).mockImplementation((key: string) => {
@@ -417,7 +359,7 @@ describe('cody-queue-manager plugin', () => {
     const actions = await queueManagerPlugin.run(ctx)
 
     expect(actions).toHaveLength(1)
-    expect(actions[0].type).toBe('handle-failure')
+    expect(actions[0].type).toBe('fail-and-advance')
   })
 
   it('waits during startup grace period for unknown health', async () => {
@@ -425,7 +367,7 @@ describe('cody-queue-manager plugin', () => {
       createIssueInfo({ number: 42, labels: ['cody:queue-active'] }),
     ])
 
-    const recentStart = new Date().toISOString() // Just started
+    const recentStart = new Date().toISOString()
 
     ;(ctx.state.get as ReturnType<typeof vi.fn>).mockImplementation((key: string) => {
       if (key === 'cody:evaluatedTasks') {
@@ -452,7 +394,7 @@ describe('cody-queue-manager plugin', () => {
       createIssueInfo({ number: 42, labels: ['cody:queue-active'] }),
     ])
 
-    const staleStart = new Date(Date.now() - 15 * 60 * 1000).toISOString() // 15 min ago
+    const staleStart = new Date(Date.now() - 15 * 60 * 1000).toISOString()
 
     ;(ctx.state.get as ReturnType<typeof vi.fn>).mockImplementation((key: string) => {
       if (key === 'cody:evaluatedTasks') {
@@ -472,26 +414,23 @@ describe('cody-queue-manager plugin', () => {
     const actions = await queueManagerPlugin.run(ctx)
 
     expect(actions).toHaveLength(1)
-    expect(actions[0].type).toBe('handle-failure')
+    expect(actions[0].type).toBe('fail-and-advance')
   })
 
-  it('waits during grace period when task not in evaluatedTasks', async () => {
+  it('waits for gated tasks (no gate handling)', async () => {
     ;(ctx.github.getOpenIssues as ReturnType<typeof vi.fn>).mockReturnValue([
       createIssueInfo({ number: 42, labels: ['cody:queue-active'] }),
     ])
-
-    const recentStart = new Date().toISOString()
-
     ;(ctx.state.get as ReturnType<typeof vi.fn>).mockImplementation((key: string) => {
       if (key === 'cody:evaluatedTasks') {
-        return [] // Not yet in evaluated tasks
+        return [createEvaluatedTask({ health: 'gated', healthDetail: 'Waiting for approval' })]
       }
       if (key === 'queue:state') {
         return {
           ...DEFAULT_QUEUE_STATE,
           activeTaskId: 'issue-42',
           activeIssueNumber: 42,
-          activeStartedAt: recentStart,
+          activeStartedAt: new Date().toISOString(),
         }
       }
       return undefined
@@ -499,6 +438,7 @@ describe('cody-queue-manager plugin', () => {
 
     const actions = await queueManagerPlugin.run(ctx)
 
+    // No gate-review action — just waits
     expect(actions).toEqual([])
   })
 
@@ -510,7 +450,7 @@ describe('cody-queue-manager plugin', () => {
 })
 
 // ============================================================================
-// Action Execution (execute callbacks)
+// Action Execution
 // ============================================================================
 
 describe('action execution', () => {
@@ -529,13 +469,13 @@ describe('action execution', () => {
     const actions = await queueManagerPlugin.run(ctx)
     expect(actions).toHaveLength(1)
 
-    // Execute the action
     const result = await actions[0].execute(ctx)
 
     expect(result.success).toBe(true)
     expect(ctx.github.removeLabel).toHaveBeenCalledWith(10, QUEUE_LABELS.QUEUED)
     expect(ctx.github.addLabel).toHaveBeenCalledWith(10, QUEUE_LABELS.ACTIVE)
     expect(ctx.github.triggerWorkflow).toHaveBeenCalledWith('cody.yml', {
+      issue_number: '10',
       task_id: 'issue-10',
       mode: 'full',
     })
@@ -543,7 +483,6 @@ describe('action execution', () => {
   })
 
   it('complete action removes active label and advances queue', async () => {
-    // Setup: active task completed
     ;(ctx.github.getOpenIssues as ReturnType<typeof vi.fn>).mockReturnValueOnce([
       createIssueInfo({ number: 42, labels: ['cody:queue-active'] }),
     ])
@@ -574,20 +513,26 @@ describe('action execution', () => {
 
     expect(result.success).toBe(true)
     expect(ctx.github.removeLabel).toHaveBeenCalledWith(42, QUEUE_LABELS.ACTIVE)
-    // Should trigger next task
     expect(ctx.github.triggerWorkflow).toHaveBeenCalledWith('cody.yml', {
+      issue_number: '50',
       task_id: 'issue-50',
       mode: 'full',
     })
   })
 
-  it('complete action handles empty queue gracefully', async () => {
+  it('fail-and-advance action marks task failed and advances', async () => {
     ;(ctx.github.getOpenIssues as ReturnType<typeof vi.fn>).mockReturnValueOnce([
       createIssueInfo({ number: 42, labels: ['cody:queue-active'] }),
     ])
     ;(ctx.state.get as ReturnType<typeof vi.fn>).mockImplementation((key: string) => {
       if (key === 'cody:evaluatedTasks') {
-        return [createEvaluatedTask({ health: 'completed' })]
+        return [
+          createEvaluatedTask({
+            health: 'failed',
+            failedStage: 'build',
+            failedError: 'Some error',
+          }),
+        ]
       }
       if (key === 'queue:state') {
         return {
@@ -601,14 +546,21 @@ describe('action execution', () => {
     })
 
     const actions = await queueManagerPlugin.run(ctx)
+    expect(actions).toHaveLength(1)
+    expect(actions[0].type).toBe('fail-and-advance')
 
-    // For execute: empty queue
-    ;(ctx.github.getOpenIssues as ReturnType<typeof vi.fn>).mockReturnValue([])
+    // Setup next task for advancement
+    ;(ctx.github.getOpenIssues as ReturnType<typeof vi.fn>).mockReturnValue([
+      createIssueInfo({ number: 50, labels: ['cody:queued'], updatedAt: '2026-03-15T08:00:00Z' }),
+    ])
 
     const result = await actions[0].execute(ctx)
-
     expect(result.success).toBe(true)
-    expect(result.message).toContain('Completed issue-42')
-    expect(ctx.github.triggerWorkflow).not.toHaveBeenCalled()
+    expect(ctx.github.removeLabel).toHaveBeenCalledWith(42, QUEUE_LABELS.ACTIVE)
+    expect(ctx.github.addLabel).toHaveBeenCalledWith(42, QUEUE_LABELS.FAILED)
+    expect(ctx.github.postComment).toHaveBeenCalledWith(
+      42,
+      expect.stringContaining('pipeline-fixer'),
+    )
   })
 })

@@ -99,6 +99,7 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
     return (['backlog', 'queue'].includes(v ?? '') ? v : 'running') as ViewMode
   })
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [showUserDropdown, setShowUserDropdown] = useState(false)
   const [showMobileDetail, setShowMobileDetail] = useState(false)
   const [showMobileChat, setShowMobileChat] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
@@ -307,6 +308,7 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
     checkTaskChanges,
     permission: notificationPermission,
     isSupported: notificationsSupported,
+    requestPermission,
   } = useBrowserNotifications()
 
   // Check for task changes when tasks update
@@ -755,15 +757,12 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
 
                 {/* Desktop controls */}
                 <div className="hidden md:flex items-center gap-3">
-                  {/* GitHub identity badge */}
+                  {/* GitHub identity badge with dropdown */}
                   {githubUser && (
-                    <SimpleTooltip
-                      content={`Logged in as @${githubUser.login} — click to log out`}
-                      side="bottom"
-                    >
+                    <div className="relative">
                       <button
                         type="button"
-                        onClick={clearGitHubUser}
+                        onClick={() => setShowUserDropdown((prev) => !prev)}
                         className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-accent transition-colors"
                       >
                         <Avatar className="h-5 w-5">
@@ -772,7 +771,21 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
                         </Avatar>
                         <span className="text-xs text-muted-foreground">@{githubUser.login}</span>
                       </button>
-                    </SimpleTooltip>
+                      {showUserDropdown && (
+                        <div className="absolute top-full right-0 mt-1 w-36 py-1 bg-popover border rounded-md shadow-lg z-50">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              clearGitHubUser()
+                              setShowUserDropdown(false)
+                            }}
+                            className="w-full px-3 py-1.5 text-left text-sm hover:bg-accent"
+                          >
+                            Sign out
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   )}
 
                   {/* Notification status */}
@@ -780,15 +793,17 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
                     <SimpleTooltip
                       content={
                         notificationPermission === 'granted'
-                          ? 'Notifications enabled'
-                          : 'Enable notifications'
+                          ? `Notifications enabled (${notificationPermission})`
+                          : notificationPermission === 'denied'
+                            ? `Notifications blocked (${notificationPermission}) - check browser settings`
+                            : `Enable notifications (${notificationPermission})`
                       }
                       side="bottom"
                     >
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => Notification.requestPermission()}
+                        onClick={requestPermission}
                         aria-label={
                           notificationPermission === 'granted'
                             ? 'Notifications enabled'
@@ -797,7 +812,9 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
                         className={
                           notificationPermission === 'granted'
                             ? 'text-green-500'
-                            : 'text-muted-foreground'
+                            : notificationPermission === 'denied'
+                              ? 'text-red-500'
+                              : 'text-muted-foreground'
                         }
                       >
                         <Bell className="w-4 h-4" />
@@ -1025,7 +1042,7 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
                   </Avatar>
                   <div className="flex flex-col items-start">
                     <span className="text-sm font-medium">@{githubUser.login}</span>
-                    <span className="text-xs text-muted-foreground">Tap to switch</span>
+                    <span className="text-xs text-muted-foreground">Tap to sign out</span>
                   </div>
                 </button>
               )}

@@ -359,6 +359,15 @@ No critical gaps identified. Plan was refined in-place.
     type: 'scripted',
     timeout: getStageTimeout('verify'),
     maxRetries: 0,
+    // R2-FIX: Clear stale verify-failures.md before running verify.
+    // Without this, a retry loop (verify→fix→verify) may process stale failures
+    // from the previous attempt, causing the fix agent to work on wrong errors.
+    preExecute: async (ctx) => {
+      const failuresPath = path.join(ctx.taskDir, 'verify-failures.md')
+      if (fs.existsSync(failuresPath)) {
+        fs.unlinkSync(failuresPath)
+      }
+    },
     retryWith: {
       stage: 'fix',
       maxAttempts: DEFAULT_MAX_FIX_ATTEMPTS,
