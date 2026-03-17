@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "taskId": "260317-systest-1773774208537",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-17T19:06:11.489Z",
+  "updatedAt": "2026-03-17T19:06:13.126Z",
+  "state": "running",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-17T19:06:13.126Z"
+    }
+  },
+  "issueNumber": 873,
+  "triggeredBy": "aguyaharonyair",
+  "actorHistory": [
+    {
+      "action": "pipeline-triggered",
+      "actor": "aguyaharonyair",
+      "timestamp": "2026-03-17T19:06:11.489Z"
+    }
+  ]
+}

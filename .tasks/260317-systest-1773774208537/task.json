@@ -1,0 +1,27 @@
+{
+  "task_type": "docs",
+  "risk_level": "low",
+  "confidence": 1,
+  "primary_domain": "devops",
+  "scope": [
+    "Create docs/system-test/pipeline-health.md documenting Cody pipeline health monitoring architecture"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Inspector framework files exist in scripts/inspector/",
+    "Health-check plugin monitors pipeline health in scripts/inspector/plugins/cody/health-check/",
+    "Pipeline-fixer plugin handles retries in scripts/inspector/plugins/cody/pipeline-fixer/",
+    "Deferred-stages plugin runs docs in scripts/inspector/plugins/cody/deferred-stages/",
+    "Deferred-tests plugin runs tests in scripts/inspector/plugins/cody/deferred-tests/"
+  ],
+  "review_questions": [],
+  "complexity": 21,
+  "complexity_reasoning": "Scope: 5 (single file to create, requires research into codebase). Risk: 0 (documentation only). Novelty: 10 (new comprehensive documentation). Cross-domain: 0 (single domain - docs). Ambiguity: 1 (very clear task). Dependencies: 5 (requires research into codebase). Total: 21",
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Task provides clear direction to document pipeline health monitoring architecture but does not include structured requirements or implementation steps. Requires research into inspector framework, health-check plugins, pipeline-fixer retry strategy, and deferred stage/test plugins to produce comprehensive documentation."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_only"
+}
