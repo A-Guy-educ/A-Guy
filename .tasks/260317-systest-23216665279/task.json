@@ -1,0 +1,38 @@
+{
+  "task_type": "docs",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "devops",
+  "scope": [
+    "Create docs/system-test/pipeline-health.md with 2000+ words",
+    "Document inspector plugin framework overview",
+    "Document each health-check plugin and its monitoring scope",
+    "Document pipeline-fixer retry strategy",
+    "Document deferred test and docs stages",
+    "Create troubleshooting guide for common failure modes",
+    "Include architecture diagrams in mermaid syntax",
+    "Reference actual file paths in codebase"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The codebase contains inspector plugin framework for pipeline health monitoring",
+    "Health-check plugins exist and monitor specific aspects of pipeline",
+    "Pipeline-fixer has a retry strategy implementation",
+    "Deferred test and docs stages are implemented in the pipeline",
+    "File paths referenced in documentation exist in the codebase"
+  ],
+  "review_questions": [
+    "Is the technical accuracy of the architecture descriptions correct?",
+    "Are the file paths referenced in the documentation accurate and existing?",
+    "Does the documentation adequately cover all 6 required sections?"
+  ],
+  "complexity": 28,
+  "complexity_reasoning": "Scope: 8 (single documentation file with detailed sections), Risk: 3 (docs only, no code changes), Novelty: 7 (documenting existing architecture with research), Cross-Domain: 2 (docs only), Ambiguity: 2 (clear requirements with 6 specific sections), Dependencies: 2 (self-contained, needs to read existing code for accuracy). Total: 24 (rounded to 28 for moderate complexity)",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Task contains clear requirements with 6 specific sections to document. Has structured sections (overview, health-check plugins, retry strategy, deferred stages, troubleshooting, diagrams) and specifies output location and word count target."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_only"
+}

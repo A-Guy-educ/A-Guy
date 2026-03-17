@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "taskId": "260317-systest-23216665279",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-17T21:23:53.926Z",
+  "updatedAt": "2026-03-17T21:23:55.242Z",
+  "state": "running",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-17T21:23:55.242Z"
+    }
+  },
+  "issueNumber": 879,
+  "triggeredBy": "cody-aios[bot]",
+  "actorHistory": [
+    {
+      "action": "pipeline-triggered",
+      "actor": "cody-aios[bot]",
+      "timestamp": "2026-03-17T21:23:53.926Z"
+    }
+  ]
+}
