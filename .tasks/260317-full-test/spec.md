@@ -1,19 +1,12 @@
-# Full Pipeline Test
+# Full Pipeline Test - Specification
 
 ## Overview
-
-Create a simple test markdown file to verify the full pipeline execution.
+Create a simple test file for full pipeline testing purposes.
 
 ## Requirements
+- Create a test file at `docs/test/full-pipeline.md`
+- The file should contain the text "Hello from CLI test"
 
-- Create a markdown file at `docs/test/full-pipeline.md`
-- File content: "Hello from CLI test"
-
-## Implementation Steps
-
-1. Create `docs/test/full-pipeline.md`
-2. Add content "Hello from CLI test"
-
-## Verification
-
+## Acceptance Criteria
 - File exists at `docs/test/full-pipeline.md`
+- File contains "Hello from CLI test"

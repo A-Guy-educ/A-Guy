@@ -1,0 +1,18 @@
+INFO  2026-03-17T22:51:39 +367ms service=default version=1.2.27 args=["export","ses_302016af9ffeZGfzL0aUdsQCTb"] opencode
+INFO  2026-03-17T22:51:39 +0ms service=default directory=/Users/aguy/projects/A-Guy creating instance
+INFO  2026-03-17T22:51:39 +0ms service=project directory=/Users/aguy/projects/A-Guy fromDirectory
+INFO  2026-03-17T22:51:40 +130ms service=db path=/Users/aguy/projects/A-Guy/.tasks/260317-full-test/opencode-data/opencode/opencode.db opening database
+INFO  2026-03-17T22:51:40 +9ms service=db count=9 mode=bundled applying migrations
+INFO  2026-03-17T22:51:40 +9ms service=default directory=/Users/aguy/projects/A-Guy bootstrapping
+INFO  2026-03-17T22:51:40 +14ms service=config path=/Users/aguy/.config/opencode/config.json loading
+INFO  2026-03-17T22:51:40 +0ms service=config path=/Users/aguy/.config/opencode/opencode.json loading
+INFO  2026-03-17T22:51:40 +0ms service=config path=/Users/aguy/.config/opencode/opencode.jsonc loading
+INFO  2026-03-17T22:51:40 +1ms service=config path=/Users/aguy/projects/A-Guy/opencode.json loading
+INFO  2026-03-17T22:51:40 +12ms service=config path=/Users/aguy/projects/A-Guy/.opencode/opencode.jsonc loading
+INFO  2026-03-17T22:51:40 +0ms service=config path=/Users/aguy/projects/A-Guy/.opencode/opencode.json loading
+INFO  2026-03-17T22:51:40 +11ms service=config path=/Users/aguy/.opencode/opencode.jsonc loading
+INFO  2026-03-17T22:51:40 +0ms service=config path=/Users/aguy/.opencode/opencode.json loading
+INFO  2026-03-17T22:51:40 +2ms service=plugin name=CodexAuthPlugin loading internal plugin
+INFO  2026-03-17T22:51:40 +0ms service=plugin name=CopilotAuthPlugin loading internal plugin
+INFO  2026-03-17T22:51:40 +0ms service=plugin name=gitlabAuthPlugin loading internal plugin
+INFO  2026-03-17T22:51:40 +0ms service=plugin path=opencode-anthropic-auth@0.0.13 loading plugin

@@ -3,32 +3,15 @@
   "taskId": "260317-full-test",
   "mode": "full",
   "pipeline": "spec_execute_verify",
-  "startedAt": "2026-03-17T22:46:56.783Z",
-  "updatedAt": "2026-03-17T22:48:08.620Z",
-  "state": "failed",
+  "startedAt": "2026-03-17T22:50:45.346Z",
+  "updatedAt": "2026-03-17T22:50:45.354Z",
+  "state": "running",
   "cursor": null,
   "stages": {
     "taskify": {
-      "state": "completed",
+      "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-17T22:46:56.790Z",
-      "completedAt": "2026-03-17T22:48:02.607Z",
-      "elapsed": 66,
-      "outputFile": "taskify.md",
-      "tokenUsage": {
-        "input": 2944,
-        "output": 1736,
-        "cacheRead": 149306
-      },
-      "sessionId": "ses_30204e6c5ffeoS3r7PJitZW3De"
-    },
-    "gap": {
-      "state": "failed",
-      "retries": 0,
-      "startedAt": "2026-03-17T22:48:04.519Z",
-      "elapsed": 4,
-      "error": "Agent \"gap\" failed. Artifacts: gap-stderr.log, gap-events.jsonl"
+      "startedAt": "2026-03-17T22:50:45.354Z"
     }
-  },
-  "completedAt": "2026-03-17T22:48:08.620Z"
+  }
 }

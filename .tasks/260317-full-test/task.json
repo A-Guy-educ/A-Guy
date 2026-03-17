@@ -1,0 +1,23 @@
+{
+  "task_type": "docs",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "devops",
+  "scope": [
+    "docs/test/full-pipeline.md"
+  ],
+  "missing_inputs": [],
+  "assumptions": [],
+  "review_questions": [],
+  "complexity": 15,
+  "complexity_reasoning": "Scope: 4 (single file), Risk: 3 (test file), Novelty: 3 (simple creation), Cross-domain: 2 (single domain), Ambiguity: 1 (clear path), Deps: 2 (self-contained). Total: 15",
+  "input_quality": {
+    "level": "detailed_plan",
+    "skip_stages": [
+      "architect"
+    ],
+    "reasoning": "Input contains ## Task section, ## Implementation with step-by-step steps, and ## Verify section. Has file path (docs/test/full-pipeline.md). Promoted spec.md and plan.md."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_only"
+}
