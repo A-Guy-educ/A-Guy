@@ -3,83 +3,83 @@
   "instructions": [".ai-docs/BOOTSTRAP.md", ".ai-docs/quick-reference/CHEAT-SHEET.md"],
   "agent": {
     "build": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "model": "opencode/mimo-v2-flash-free",
       "description": "Building features (TEST - cheap model)"
     },
     "plan": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "model": "opencode/mimo-v2-flash-free",
       "description": "Planning tasks (TEST - cheap model)"
     },
     "architect": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "model": "opencode/mimo-v2-flash-free",
       "description": "Architecture design (TEST - cheap model)"
     },
     "clarify": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "model": "opencode/mimo-v2-flash-free",
       "description": "Collects questions (TEST - cheap model)"
     },
     "taskify": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "model": "opencode/mimo-v2-flash-free",
       "description": "Creates task.json (TEST - cheap model)"
     },
     "gap": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "model": "opencode/mimo-v2-flash-free",
       "description": "Analyzes gaps (TEST - cheap model)"
     },
     "plan-gap": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "model": "opencode/mimo-v2-flash-free",
       "description": "Analyzes plan gaps (TEST - cheap model)"
     },
     "autofix": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "model": "opencode/mimo-v2-flash-free",
       "description": "Auto-fixes (TEST - cheap model)"
     },
     "verify": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "model": "opencode/mimo-v2-flash-free",
       "description": "Runs tests (TEST - cheap model)"
     },
     "test": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "model": "opencode/mimo-v2-flash-free",
       "description": "Writes tests (TEST - cheap model)"
     },
     "advisor": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "model": "opencode/mimo-v2-flash-free",
       "description": "Code review (TEST - cheap model)"
     },
     "pr": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "model": "opencode/mimo-v2-flash-free",
       "description": "Creates PR (TEST - cheap model)"
     },
     "cody-expert": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "model": "opencode/mimo-v2-flash-free",
       "description": "Pipeline expert (TEST - cheap model)"
     },
     "build-manager": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "model": "opencode/mimo-v2-flash-free",
       "description": "Orchestration (TEST - cheap model)"
     },
     "test-writer": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "model": "opencode/mimo-v2-flash-free",
       "description": "TDD writer (TEST - cheap model)"
     },
     "browser": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "model": "opencode/mimo-v2-flash-free",
       "description": "Browser agent (TEST - cheap model)"
     },
     "review": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "model": "opencode/mimo-v2-flash-free",
       "description": "Code review (TEST - cheap model)"
     },
     "fix": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "model": "opencode/mimo-v2-flash-free",
       "description": "Targeted fixes (TEST - cheap model)"
     },
     "reflect": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "model": "opencode/mimo-v2-flash-free",
       "description": "Reflection (TEST - cheap model)"
     },
     "e2e-test-writer": {
-      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "model": "opencode/mimo-v2-flash-free",
       "description": "E2E tests (TEST - cheap model)"
     }
   },
