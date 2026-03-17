@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-17T21:38:25.040Z",
-  "updatedAt": "2026-03-17T21:39:43.664Z",
+  "updatedAt": "2026-03-17T21:39:49.998Z",
   "state": "running",
   "cursor": null,
   "stages": {
@@ -44,21 +44,26 @@
       "error": "Build stage preExecute failed: Command failed: git checkout dev"
     },
     "commit": {
-      "state": "running",
+      "state": "completed",
       "retries": 0,
-      "startedAt": "2026-03-17T21:39:43.664Z"
+      "startedAt": "2026-03-17T21:39:43.664Z",
+      "completedAt": "2026-03-17T21:39:49.969Z",
+      "elapsed": 6
     },
     "review": {
-      "state": "pending",
-      "retries": 0
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 20 (moderate) below threshold 30 for review"
     },
     "fix": {
-      "state": "pending",
-      "retries": 0
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "No issues to fix"
     },
     "verify": {
-      "state": "pending",
-      "retries": 0
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-17T21:39:49.998Z"
     },
     "pr": {
       "state": "pending",
