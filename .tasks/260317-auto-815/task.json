@@ -1,0 +1,27 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "high",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "src/app/api/cody/auth/logout/route.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The logout route should require authentication to prevent unauthorized logout attempts",
+    "The project uses Payload's built-in authentication system which can be checked via req.user"
+  ],
+  "review_questions": [
+    "Should the logout route use Payload's built-in auth (payload.auth) or custom JWT validation?",
+    "Should failed authentication return a 401 Unauthorized or redirect to login?"
+  ],
+  "complexity": 37,
+  "complexity_reasoning": "Scope: 6 (single route file). Risk: 18 (security vulnerability - unauthenticated mutation). Novelty: 10 (requires analyzing existing auth patterns). Cross-domain: 0 (single backend domain). Ambiguity: 1 (clear issue). Dependencies: 2 (self-contained). Total: 37. Floor rule: fix_bug + high risk requires ≥35.",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Task contains clear file path, specific issue type (authentication), and error message. Promoted spec.md not needed as this is a straightforward security fix that doesn't require additional specification."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
