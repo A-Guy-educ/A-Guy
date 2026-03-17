@@ -3,6 +3,8 @@
 import { useSearchParams } from 'next/navigation'
 import { Suspense, useState } from 'react'
 
+import Image from 'next/image'
+
 import { GoogleLoginButton } from '@/ui/web/auth/GoogleLoginButton'
 import { Button } from '@/ui/web/components/button'
 import { Card, CardContent, CardHeader } from '@/ui/web/components/card'
@@ -12,6 +14,7 @@ import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { usePasswordLogin } from '@/ui/web/providers/PasswordLoginProvider'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { loginAction } from './login_authenticate-action'
+import telescopeSvg from '@/ui/web/TelescopeLogo/telescope.svg'
 
 function LoginFormContent() {
   const t = useTranslations('auth.login')
@@ -40,17 +43,25 @@ function LoginFormContent() {
   }
 
   return (
-    <Card className="rounded-2xl shadow-lg border-0 bg-card p-8">
-      <CardHeader className="pb-4">
+    <Card className="rounded-2xl shadow-lg border-0 bg-card px-8 py-6">
+      <CardHeader className="pb-3">
+        {/* Logo */}
+        <div className="flex flex-col items-center gap-1">
+          <Image src={telescopeSvg} alt="A-Guy" className="h-24 w-auto" width={224} height={204} />
+          <p className="text-primary font-semibold">{t('heroSubtitle')}</p>
+        </div>
         {/* Section label with decorative line */}
-        <div className="flex flex-col items-center">
-          <div className="w-8 h-px bg-border mb-3" />
+        <div className="flex flex-col items-center mt-3">
+          <div className="w-8 h-px bg-border mb-2" />
           <p className="text-sm text-muted-foreground">{t('quickLogin')}</p>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Google SSO Button */}
-        <GoogleLoginButton returnTo={returnTo} className="w-full h-14 rounded-xl" />
+        <GoogleLoginButton
+          returnTo={returnTo}
+          className="w-full h-14 rounded-xl text-base font-semibold"
+        />
 
         {/* Registration Link - appears below Google button when password is disabled */}
         {!passwordEnabled && (
@@ -58,13 +69,15 @@ function LoginFormContent() {
             <div className="flex justify-center">
               <SystemLink
                 href="/signup"
-                className="border border-primary text-primary rounded-full px-6 py-2 text-sm hover:bg-primary/5 transition-colors inline-block"
+                className="bg-muted text-primary font-bold rounded-full px-6 py-2 text-sm hover:bg-primary-soft transition-colors inline-block"
               >
                 {t('freeRegistration')}
               </SystemLink>
             </div>
             <p className="text-sm text-muted-foreground text-center pt-2">
-              {t('secureAccess')} {t('oneClickEntry')}
+              {t('secureAccess')}
+              <br />
+              {t('oneClickEntry')}
             </p>
           </>
         )}
@@ -109,12 +122,14 @@ function LoginFormContent() {
             <div className="flex flex-col items-center gap-2 pt-2">
               <SystemLink
                 href="/signup"
-                className="border border-primary text-primary rounded-full px-6 py-2 text-sm hover:bg-primary/5 transition-colors inline-block"
+                className="bg-muted text-primary font-bold rounded-full px-6 py-2 text-sm hover:bg-primary-soft transition-colors inline-block"
               >
                 {t('freeRegistration')}
               </SystemLink>
               <p className="text-sm text-muted-foreground text-center">
-                {t('secureAccess')} {t('oneClickEntry')}
+                {t('secureAccess')}
+                <br />
+                {t('oneClickEntry')}
               </p>
             </div>
           </>
@@ -134,9 +149,13 @@ export function LoginForm() {
 
 function LoginFormSkeleton() {
   return (
-    <Card className="rounded-2xl shadow-lg border-0 bg-card p-8">
-      <CardHeader className="pb-4">
-        <div className="flex flex-col items-center">
+    <Card className="rounded-2xl shadow-lg border-0 bg-card px-8 py-6">
+      <CardHeader className="pb-3">
+        <div className="flex flex-col items-center gap-1">
+          <div className="h-24 w-24 bg-muted animate-pulse rounded-full" />
+          <div className="h-4 w-40 bg-muted animate-pulse rounded" />
+        </div>
+        <div className="flex flex-col items-center mt-4">
           <div className="w-8 h-px bg-border mb-3" />
           <div className="h-4 w-24 mx-auto bg-muted animate-pulse rounded" />
         </div>

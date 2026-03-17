@@ -14,6 +14,7 @@ import type { CodyInput } from './cody-utils'
 import { buildStagePrompt } from './stage-prompts'
 import { createRunner, type RunnerBackend } from './runner-backend'
 import { logger } from './logger'
+import { STDERR_TAIL_LINES } from './config/constants'
 
 // ============================================================================
 // Model Resolution
@@ -52,6 +53,9 @@ export const STABILITY_CHECK_COUNT = 2
 /** Additional delay to wait after process exit before checking (filesystem flush) */
 export const POST_EXIT_DELAY = 500
 
+/** Timeout for session nudge attempt (seconds) — lightweight continuation before full retry */
+export const NUDGE_TIMEOUT = 90
+
 /** Maximum retry attempts for failed stages */
 export const MAX_RETRIES = 2
 
@@ -60,24 +64,6 @@ export const MAX_STDOUT_BUFFER_SIZE = 1_048_576
 
 /** Default timeout for stages (10 minutes) */
 export const DEFAULT_TIMEOUT = ms('10m')
-
-/** Stage-specific timeouts in milliseconds */
-export const STAGE_TIMEOUTS: Record<string, number> = {
-  taskify: ms('10m'),
-  spec: ms('15m'),
-  gap: ms('15m'),
-  clarify: ms('10m'),
-  architect: ms('30m'),
-  build: ms('45m'),
-  'plan-gap': ms('15m'),
-  test: ms('20m'),
-  review: ms('15m'),
-  fix: ms('20m'),
-  verify: ms('10m'),
-  docs: ms('10m'),
-  pr: ms('5m'),
-  autofix: ms('15m'),
-}
 
 /** LLM-specific timeout - max time to wait for LLM API response (3 minutes) */
 export const LLM_TIMEOUT = ms('3m')
@@ -118,6 +104,8 @@ export interface AgentRunnerOptions {
   sessionId?: string
   /** XDG_DATA_HOME directory for OpenCode server mode (must match server's data dir) */
   dataDir?: string
+  /** Override agent name (for stages that use a different agent, e.g., fix stage uses build agent) */
+  agentName?: string
 }
 
 export interface AgentRunResult {
@@ -222,6 +210,87 @@ function findOutputFile(taskDir: string, expectedBase: string, outputExt: string
   const files = fs.readdirSync(taskDir)
   const prefixMatch = files.find((f) => f.startsWith(expectedBase + '-') && f.endsWith(outputExt))
   return prefixMatch ? path.join(taskDir, prefixMatch) : null
+}
+
+/**
+ * Nudge an agent session to write the missing output file.
+ * When an agent exits 0 but forgets the output file, this sends a short
+ * continuation message into the same session. Much cheaper than a full retry
+ * since the agent still has all context loaded.
+ *
+ * Returns the detected output file path on success, or null on failure.
+ */
+async function nudgeSession(
+  backend: RunnerBackend,
+  stage: string,
+  outputFile: string,
+  env: NodeJS.ProcessEnv,
+  cwd: string,
+  serverUrl: string,
+  sessionId: string,
+  dataDir?: string,
+): Promise<string | null> {
+  const nudgePrompt = `CRITICAL: You exited without writing the required output file. Write it NOW to: ${outputFile}`
+
+  logger.info(`  🔔 Nudging session ${sessionId.slice(0, 16)}... to write output file`)
+
+  return new Promise((resolve) => {
+    const nudgeChild = backend.spawn(stage, nudgePrompt, env, cwd, {
+      serverUrl,
+      sessionId,
+      dataDir,
+    })
+
+    // Close stdin
+    if (nudgeChild.stdin) nudgeChild.stdin.end()
+
+    // Log nudge output for debugging
+    if (nudgeChild.stdout) {
+      nudgeChild.stdout.on('data', () => {
+        // Silently consume — we only care about the file appearing
+      })
+    }
+    if (nudgeChild.stderr) {
+      nudgeChild.stderr.on('data', () => {
+        // Silently consume
+      })
+    }
+
+    // Timeout
+    // R2-FIX #12: Use the smaller of NUDGE_TIMEOUT and remaining stage timeout.
+    // Without this, a stuck nudge could cause the stage to exceed its overall timeout.
+    const nudgeTimeoutMs = NUDGE_TIMEOUT * 1000
+    const timer = setTimeout(() => {
+      logger.info(`  🔔 Nudge timed out after ${NUDGE_TIMEOUT}s`)
+      try {
+        nudgeChild.kill()
+      } catch {
+        /* ignore */
+      }
+      resolve(null)
+    }, nudgeTimeoutMs)
+
+    nudgeChild.on('exit', async (nudgeCode) => {
+      clearTimeout(timer)
+      logger.info(`  🔔 Nudge process exited with code: ${nudgeCode}`)
+
+      // Brief delay for filesystem flush
+      await sleep(POST_EXIT_DELAY)
+
+      // Check if the file appeared
+      const outputExt = path.extname(outputFile)
+      const expectedBase = path.basename(outputFile, outputExt)
+      const taskDirForPoll = path.dirname(outputFile)
+      const detected = findOutputFile(taskDirForPoll, expectedBase, outputExt)
+      if (detected) {
+        logger.info(`  🔔 ✅ Nudge succeeded — output file detected`)
+        resolve(detected)
+      } else {
+        logger.info(`  🔔 ❌ Nudge failed — output file still missing`)
+        resolve(null)
+      }
+    })
+  })
 }
 
 /**
@@ -358,10 +427,14 @@ export function runAgentWithFileWatch(
     serverUrl,
     sessionId,
     dataDir,
+    agentName,
   } = options
 
-  // Resolve timeout
-  const effectiveTimeout = timeout ?? STAGE_TIMEOUTS[stage] ?? DEFAULT_TIMEOUT
+  // Resolve timeout — stage-specific timeouts are now passed from StageDefinition
+  const effectiveTimeout = timeout ?? DEFAULT_TIMEOUT
+
+  // Use agentName override if provided, otherwise use stage
+  const effectiveAgent = agentName ?? stage
 
   return new Promise((resolve) => {
     // Build environment for the agent
@@ -390,12 +463,22 @@ export function runAgentWithFileWatch(
         logger.info(`  🗑️ Deleted stale output file before retry`)
       }
 
-      // Calculate remaining timeout (subtract elapsed time from previous attempts)
+      // FIX #10: Calculate remaining timeout (subtract elapsed time from ALL previous attempts).
+      // startTime is captured once before the first attempt, so elapsed accurately reflects
+      // total time spent across all retries including inter-retry delays.
       const elapsed = Date.now() - startTime
       const remainingTimeout = effectiveTimeout - elapsed
       if (remainingTimeout <= 0) {
+        logger.info(
+          `  ⏱️ No time remaining after ${retries} retries (${Math.round(elapsed / 1000)}s elapsed)`,
+        )
         resolve({ succeeded: false, timedOut: true, retries, validationErrors })
         return
+      }
+      if (remainingTimeout < 60_000 && retries > 0) {
+        logger.warn(
+          `  ⚠️ Only ${Math.round(remainingTimeout / 1000)}s remaining for attempt ${retries + 1}`,
+        )
       }
 
       // Build the prompt for the stage (rebuilt each attempt to include feedback)
@@ -406,7 +489,8 @@ export function runAgentWithFileWatch(
       logger.info(`  🤖 Running ${stage} with model: ${model}`)
 
       // Spawn using the configured backend (local or GitHub)
-      currentChild = backend.spawn(stage, prompt, agentEnv, cwd, {
+      // Use effectiveAgent for the --agent flag (may be overridden via agentName option)
+      currentChild = backend.spawn(effectiveAgent, prompt, agentEnv, cwd, {
         serverUrl,
         sessionId,
         dataDir,
@@ -435,7 +519,7 @@ export function runAgentWithFileWatch(
       // Stderr capture for failure debugging
       let stderrLineCount = 0
       const stderrTailLines: string[] = [] // Rolling buffer of last N lines
-      const STDERR_TAIL_SIZE = 50
+      const STDERR_TAIL_SIZE = STDERR_TAIL_LINES
       let stderrLogFd: number | null = null
       try {
         const stderrLogPath = path.join(path.dirname(outputFile), `${stage}-stderr.log`)
@@ -507,14 +591,14 @@ export function runAgentWithFileWatch(
             }
           }
 
-          // Cap buffer size to prevent memory leaks on verbose agents
+          // FIX #5: Cap buffer size to prevent memory leaks on verbose agents.
+          // When the buffer exceeds MAX, discard the oldest data and keep the most
+          // recent MAX/2 bytes, breaking at a newline boundary for clean parsing.
           if (stdoutBuffer.length > MAX_STDOUT_BUFFER_SIZE) {
-            // Keep only the last portion, breaking at a newline boundary
-            const lastNewline = stdoutBuffer.lastIndexOf('\n', MAX_STDOUT_BUFFER_SIZE / 2)
+            const keepFrom = stdoutBuffer.length - MAX_STDOUT_BUFFER_SIZE / 2
+            const nextNewline = stdoutBuffer.indexOf('\n', keepFrom)
             stdoutBuffer =
-              lastNewline > 0
-                ? stdoutBuffer.slice(lastNewline + 1)
-                : stdoutBuffer.slice(-MAX_STDOUT_BUFFER_SIZE / 2)
+              nextNewline > 0 ? stdoutBuffer.slice(nextNewline + 1) : stdoutBuffer.slice(keepFrom)
           }
         })
       }
@@ -653,7 +737,55 @@ export function runAgentWithFileWatch(
         const detectedFile = findOutputFile(taskDirForPoll, expectedBase, outputExt)
 
         if (!detectedFile) {
-          // File not found - retry or fail
+          // Nudge: If agent exited cleanly (code 0) and we have a live session,
+          // try a lightweight continuation before burning a full retry.
+          // The agent still has all context — it just forgot to write the file.
+          if (code === 0 && serverUrl && extractedSessionId) {
+            // R2-FIX #12: Skip nudge if insufficient time remaining (need at least 30s)
+            const nudgeElapsed = Date.now() - startTime
+            const nudgeRemaining = effectiveTimeout - nudgeElapsed
+            if (nudgeRemaining < 30_000) {
+              logger.info(
+                `  🔔 Skipping nudge — only ${Math.round(nudgeRemaining / 1000)}s remaining`,
+              )
+            }
+            const nudgedFile =
+              nudgeRemaining >= 30_000
+                ? await nudgeSession(
+                    backend,
+                    effectiveAgent,
+                    outputFile,
+                    agentEnv,
+                    cwd,
+                    serverUrl,
+                    extractedSessionId,
+                    dataDir,
+                  )
+                : null
+            if (nudgedFile) {
+              // Nudge succeeded — continue to file stability check
+              // Re-assign detectedFile by jumping to the stability check below
+              const { stable, finalSize } = await waitForFileStable(nudgedFile, {
+                interval: STABILITY_CHECK_INTERVAL,
+                stableCount: STABILITY_CHECK_COUNT,
+                timeout: Math.min(ms('30s'), remainingTimeout),
+                onCheck: (size, checkNum) => {
+                  if (checkNum === 0) {
+                    logger.info(`  🔍 File size: ${size} bytes, waiting for stability...`)
+                  }
+                },
+              })
+              if (stable && finalSize > 0) {
+                logger.info(`  ✅ Output file stable (${finalSize} bytes) after nudge`)
+                finish({ succeeded: true, timedOut: false })
+                return
+              }
+              // Nudge produced file but it's not stable — fall through to retry
+              logger.info(`  ⚠️ Nudge produced file but it's not stable, falling through to retry`)
+            }
+          }
+
+          // File not found (or nudge failed) - retry or fail
           if (retries < maxRetries) {
             retries++
             const reason = code === 0 ? 'no output file' : `exit ${code}`

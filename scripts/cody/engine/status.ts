@@ -6,6 +6,8 @@
  */
 
 import { logger } from '../logger'
+import { MAX_ACTOR_HISTORY_ENTRIES } from '../config/constants'
+import type { StageName } from '../stages/registry'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -18,7 +20,7 @@ import {
 } from './types'
 
 // C3 FIX: Import stageOutputFile for correct path resolution in resetFromStage
-import { stageOutputFile } from '../pipeline-utils'
+import { stageOutputFile } from '../stages/registry'
 
 // ============================================================================
 // Status File Operations
@@ -131,7 +133,7 @@ export function initState(ctx: PipelineContext, mode: string): PipelineStateV2 {
 }
 
 /** Max actor history entries kept in status.json (oldest dropped when exceeded) */
-const MAX_ACTOR_HISTORY = 50
+const MAX_ACTOR_HISTORY = MAX_ACTOR_HISTORY_ENTRIES
 
 /**
  * Append an actor event to the pipeline's actorHistory in status.json.
@@ -407,12 +409,24 @@ export function resetFromStage(
   // Reset stages to pending
   const newStages: Record<string, StageStateV2> = {}
 
+  // FIX #827: Stages BEFORE fromStage that are still 'paused' should be marked
+  // 'completed' — if later stages ran, the paused stage must have been approved.
+  // This prevents stale 'paused' states from causing reruns to re-trigger gates.
+  const stagesBefore = pipeline.slice(0, fromIndex)
+
   for (const [name, stage] of Object.entries(state.stages)) {
     if (stagesToReset.includes(name)) {
       // Reset this stage to pending
       newStages[name] = {
         state: 'pending',
         retries: 0,
+      }
+    } else if (stagesBefore.includes(name) && stage.state === 'paused') {
+      // Stale paused stage — later stages ran, so this must have been approved
+      newStages[name] = {
+        ...stage,
+        state: 'completed',
+        completedAt: stage.completedAt || now,
       }
     } else {
       // Keep existing stage
@@ -424,7 +438,7 @@ export function resetFromStage(
     ...state,
     stages: newStages,
     state: 'running',
-    cursor: fromStage,
+    cursor: fromStage as StageName,
     updatedAt: now,
   }
 }

@@ -244,6 +244,14 @@ export async function appendSession(
     // Append the new session
     history.sessions.push(session)
 
+    // R2-FIX #8: Cap sessions to prevent unbounded growth during retry loops.
+    // Keep last 30 sessions — enough for full pipeline + several verify→fix loops.
+    const MAX_CHAT_SESSIONS = 30
+    if (history.sessions.length > MAX_CHAT_SESSIONS) {
+      history.sessions = history.sessions.slice(-MAX_CHAT_SESSIONS)
+      logger.info(`  ℹ️ Chat history trimmed to last ${MAX_CHAT_SESSIONS} sessions`)
+    }
+
     // Save
     saveChatHistory(taskDir, history)
 

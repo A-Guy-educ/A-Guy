@@ -7,12 +7,16 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import type { CodyTask } from '../types'
-import { filterTasksByView, getViewModeCounts } from '../utils'
+import type { CodyTask, SortField } from '../types'
+import { filterTasksByView, getViewModeCounts, sortTasks } from '../utils'
 import { TaskList } from './TaskList'
+import { QueueView } from './QueueView'
 
 import { CreateTaskDialog } from './CreateTaskDialog'
+import { EditTaskDialog } from './EditTaskDialog'
 import { BugReportDialog } from './BugReportDialog'
+import { KeyboardShortcutsDialog } from './KeyboardShortcutsDialog'
+import { BranchCleanupDialog } from './BranchCleanupDialog'
 import { CodyChat } from './CodyChat'
 import { CodyStatusBanner } from './CodyStatusBanner'
 import { FilterBar, ViewToggle, DATE_FILTERS, STATUS_FILTERS, type ViewMode } from './FilterBar'
@@ -42,16 +46,21 @@ import {
   Globe,
   AlertCircle,
   X as XIcon,
+  Sun,
+  Moon,
+  GitBranch,
 } from 'lucide-react'
 import { useCodyTasks, queryKeys } from '../hooks'
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
 import { useBrowserNotifications } from '../hooks/useBrowserNotifications'
 import { useMediaQuery } from '@/server/payload/hooks/useMediaQuery'
-import { RateLimitError, NoTokenError, tasksApi, codyApi } from '../api'
+import { RateLimitError, NoTokenError, SessionExpiredError, tasksApi, codyApi } from '../api'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { EnvironmentToolbar } from './EnvironmentToolbar'
 import { ErrorBoundary } from './ErrorBoundary'
 import { useGitHubIdentity } from '../hooks/useGitHubIdentity'
+import { useTheme } from '@/ui/web/providers/Theme'
 import { Avatar, AvatarFallback, AvatarImage } from '@/ui/web/components/avatar'
 import { SimpleTooltip } from './SimpleTooltip'
 import { SITE_URLS } from '../constants'
@@ -67,6 +76,11 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
   const [selectedIssueNumber, setSelectedIssueNumber] = useState<number | null>(null)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showBugDialog, setShowBugDialog] = useState(false)
+  const [editingTask, setEditingTask] = useState<CodyTask | null>(null)
+  const [focusedIndex, setFocusedIndex] = useState(0)
+  const [showShortcutsHelp, setShowShortcutsHelp] = useState(false)
+  const [duplicateSource, setDuplicateSource] = useState<CodyTask | null>(null)
+  const [showBranchCleanup, setShowBranchCleanup] = useState(false)
   const [dateFilter, setDateFilter] = useState<string>(() => {
     if (typeof window === 'undefined') return '30d'
     return new URLSearchParams(window.location.search).get('date') ?? '30d'
@@ -82,9 +96,10 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     if (typeof window === 'undefined') return 'running'
     const v = new URLSearchParams(window.location.search).get('view')
-    return (v === 'backlog' ? 'backlog' : 'running') as ViewMode
+    return (['backlog', 'queue'].includes(v ?? '') ? v : 'running') as ViewMode
   })
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [showUserDropdown, setShowUserDropdown] = useState(false)
   const [showMobileDetail, setShowMobileDetail] = useState(false)
   const [showMobileChat, setShowMobileChat] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
@@ -94,7 +109,16 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
     return new URLSearchParams(window.location.search).get('q') ?? ''
   })
   const [debouncedSearch, setDebouncedSearch] = useState(searchQuery)
+  const [sortField, setSortField] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'updatedAt'
+    return new URLSearchParams(window.location.search).get('sort') ?? 'updatedAt'
+  })
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(() => {
+    if (typeof window === 'undefined') return 'desc'
+    return (new URLSearchParams(window.location.search).get('dir') as 'asc' | 'desc') ?? 'desc'
+  })
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const filterBarRef = useRef<{ focusSearch: () => void } | null>(null)
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value)
@@ -123,7 +147,7 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
     error,
     refetch,
     dataUpdatedAt,
-  } = useCodyTasks({ days, viewMode })
+  } = useCodyTasks({ days, viewMode: viewMode === 'queue' ? 'running' : viewMode })
 
   const queryClient = useQueryClient()
 
@@ -138,6 +162,9 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
 
   // GitHub identity — verified via OAuth session cookie
   const { githubUser, clearGitHubUser } = useGitHubIdentity()
+
+  // Theme toggle
+  const { theme, setTheme } = useTheme()
 
   // Fetch collaborators for assignee picker
   const { data: collaborators = [] } = useQuery({
@@ -281,6 +308,7 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
     checkTaskChanges,
     permission: notificationPermission,
     isSupported: notificationsSupported,
+    requestPermission,
   } = useBrowserNotifications()
 
   // Check for task changes when tasks update
@@ -351,11 +379,11 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
   const totalCount = tasks.length
 
   // View mode counts — backlog = open column, running = everything else
-  const { runningCount, backlogCount } = getViewModeCounts(tasks)
+  const { runningCount, backlogCount, queueCount } = getViewModeCounts(tasks)
 
   // Filter tasks by view mode, then by status and label (combined with AND logic)
   const baseFilteredTasks = filterTasksByView(tasks, { viewMode, statusFilter, labelFilter })
-  const filteredTasks = useMemo(() => {
+  const searchedTasks = useMemo(() => {
     if (!debouncedSearch.trim()) return baseFilteredTasks
     const q = debouncedSearch.toLowerCase()
     return baseFilteredTasks.filter(
@@ -363,9 +391,59 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
     )
   }, [baseFilteredTasks, debouncedSearch])
 
+  // Sort tasks
+  const sortedTasks = useMemo(
+    () => sortTasks(searchedTasks, sortField as SortField, sortDirection),
+    [searchedTasks, sortField, sortDirection],
+  )
+
+  const filteredTasks = sortedTasks
+
+  // Keyboard shortcuts (after sortedTasks is defined)
+  useKeyboardShortcuts({
+    isModalOpen:
+      showCreateDialog ||
+      !!editingTask ||
+      showBugDialog ||
+      showBranchCleanup ||
+      showPreview ||
+      showShortcutsHelp ||
+      showMobileMenu ||
+      showMobileDetail ||
+      showMobileChat,
+    onNavigateDown: () => setFocusedIndex((i) => Math.min(i + 1, sortedTasks.length - 1)),
+    onNavigateUp: () => setFocusedIndex((i) => Math.max(i - 1, 0)),
+    onOpenSelected: () => {
+      if (sortedTasks[focusedIndex]) handleTaskSelect(sortedTasks[focusedIndex])
+    },
+    onCloseDetail: () => {
+      if (selectedTask) handleTaskSelect(null)
+      else if (showPreview) setShowPreview(false)
+      else if (showShortcutsHelp) setShowShortcutsHelp(false)
+    },
+    onRefresh: () => refetch(),
+    onNewTask: () => setShowCreateDialog(true),
+    onEdit: () => {
+      if (selectedTask && selectedTask.column === 'open') setEditingTask(selectedTask)
+    },
+    onOpenPreview: () => {
+      if (selectedTask?.associatedPR) setShowPreview(true)
+    },
+    onFocusSearch: () => {
+      filterBarRef.current?.focusSearch()
+    },
+    onShowHelp: () => setShowShortcutsHelp(true),
+  })
+
+  // Reset focused index when task list changes
+  useEffect(() => {
+    setFocusedIndex(0)
+  }, [sortedTasks.length, viewMode, statusFilter, labelFilter, debouncedSearch])
+
   // Check for specific errors
   const isRateLimited = error instanceof RateLimitError
   const isNoToken = error instanceof NoTokenError
+  const isSessionExpired = error instanceof SessionExpiredError
 
   // Get retry info from error
   const retryAfter = isRateLimited ? (error as RateLimitError).retryAfter : null
@@ -414,6 +492,7 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
 
   const handleCloseCreate = useCallback(() => {
     setShowCreateDialog(false)
+    setDuplicateSource(null)
     pushCodyBase()
   }, [])
 
@@ -436,6 +515,15 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
     setShowMobileChat(open)
     if (!open) pushCodyBase()
   }, [])
+
+  // Handle task duplication
+  const handleDuplicateTask = useCallback(
+    (task: CodyTask) => {
+      setDuplicateSource(task)
+      handleOpenCreate()
+    },
+    [handleOpenCreate],
+  )
 
   // Task selection — uses pushState for browser history support
   const handleTaskSelect = useCallback(
@@ -588,6 +676,27 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
     </>
   )
 
+  // Session expired — show login prompt (no auto-redirect to avoid loops)
+  if (isSessionExpired) {
+    const returnTo = encodeURIComponent(
+      typeof window !== 'undefined' ? window.location.pathname : '/cody',
+    )
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center max-w-md p-6">
+          <div className="text-6xl mb-4">🔒</div>
+          <h2 className="text-xl font-semibold text-foreground mb-2">Session Expired</h2>
+          <p className="text-muted-foreground mb-4">
+            Your session has expired. Please log in again to continue.
+          </p>
+          <Button asChild>
+            <a href={`/api/oauth/github?returnTo=${returnTo}`}>Log In with GitHub</a>
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   // No token error — full-page (can't function without token)
   if (isNoToken) {
     return (
@@ -634,9 +743,9 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
               task={selectedTask}
               onClose={() => handleTaskSelect(null)}
               onRefresh={refetch}
-              onApproveReview={handleMerge}
-              isMerging={!!(selectedTask && mergingTaskId === selectedTask.id)}
               onOpenPreview={() => selectedTask && handleOpenPreview(selectedTask)}
+              onEditTask={setEditingTask}
+              onDuplicate={handleDuplicateTask}
             />
           ) : (
             <>
@@ -648,15 +757,12 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
 
                 {/* Desktop controls */}
                 <div className="hidden md:flex items-center gap-3">
-                  {/* GitHub identity badge */}
+                  {/* GitHub identity badge with dropdown */}
                   {githubUser && (
-                    <SimpleTooltip
-                      content={`Logged in as @${githubUser.login} — click to log out`}
-                      side="bottom"
-                    >
+                    <div className="relative">
                       <button
                         type="button"
-                        onClick={clearGitHubUser}
+                        onClick={() => setShowUserDropdown((prev) => !prev)}
                         className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-accent transition-colors"
                       >
                         <Avatar className="h-5 w-5">
@@ -665,7 +771,21 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
                         </Avatar>
                         <span className="text-xs text-muted-foreground">@{githubUser.login}</span>
                       </button>
-                    </SimpleTooltip>
+                      {showUserDropdown && (
+                        <div className="absolute top-full right-0 mt-1 w-36 py-1 bg-popover border rounded-md shadow-lg z-50">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              clearGitHubUser()
+                              setShowUserDropdown(false)
+                            }}
+                            className="w-full px-3 py-1.5 text-left text-sm hover:bg-accent"
+                          >
+                            Sign out
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   )}
 
                   {/* Notification status */}
@@ -673,15 +793,17 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
                     <SimpleTooltip
                       content={
                         notificationPermission === 'granted'
-                          ? 'Notifications enabled'
-                          : 'Enable notifications'
+                          ? `Notifications enabled (${notificationPermission})`
+                          : notificationPermission === 'denied'
+                            ? `Notifications blocked (${notificationPermission}) - check browser settings`
+                            : `Enable notifications (${notificationPermission})`
                       }
                       side="bottom"
                     >
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => Notification.requestPermission()}
+                        onClick={requestPermission}
                         aria-label={
                           notificationPermission === 'granted'
                             ? 'Notifications enabled'
@@ -690,13 +812,49 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
                         className={
                           notificationPermission === 'granted'
                             ? 'text-green-500'
-                            : 'text-muted-foreground'
+                            : notificationPermission === 'denied'
+                              ? 'text-red-500'
+                              : 'text-muted-foreground'
                         }
                       >
                         <Bell className="w-4 h-4" />
                       </Button>
                     </SimpleTooltip>
                   )}
+
+                  {/* Theme toggle */}
+                  <SimpleTooltip
+                    content={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                    side="bottom"
+                  >
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                      aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                      className="text-muted-foreground"
+                    >
+                      {theme === 'dark' ? (
+                        <Sun className="w-4 h-4" />
+                      ) : (
+                        <Moon className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </SimpleTooltip>
+
+                  {/* Branch cleanup */}
+                  <SimpleTooltip content="Clean up branches" side="bottom">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowBranchCleanup(true)}
+                      aria-label="Clean up branches"
+                      className="gap-1"
+                    >
+                      <GitBranch className="w-4 h-4" />
+                      Cleanup
+                    </Button>
+                  </SimpleTooltip>
                   <SimpleTooltip content="Refresh tasks" side="bottom">
                     <Button
                       variant="outline"
@@ -735,6 +893,7 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
               {/* Filter Sub-header — desktop only, separate component */}
               <div className="hidden md:block">
                 <FilterBar
+                  ref={filterBarRef}
                   viewMode={viewMode}
                   onViewModeChange={setViewMode}
                   dateFilter={dateFilter}
@@ -750,8 +909,13 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
                   filteredCount={filteredTasks.length}
                   runningCount={runningCount}
                   backlogCount={backlogCount}
+                  queueCount={queueCount}
                   searchQuery={searchQuery}
                   onSearchChange={handleSearchChange}
+                  sortField={sortField as SortField}
+                  onSortFieldChange={setSortField}
+                  sortDirection={sortDirection}
+                  onSortDirectionChange={setSortDirection}
                 />
               </div>
 
@@ -794,12 +958,26 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
                   <div className="flex items-center justify-center h-full">
                     <div className="text-muted-foreground">Loading...</div>
                   </div>
+                ) : viewMode === 'queue' ? (
+                  <QueueView
+                    tasks={filteredTasks}
+                    onTaskSelect={handleTaskSelect}
+                    onRemoveFromQueue={(issueNumber) => {
+                      tasksApi.removeFromQueue(issueNumber, githubUser?.login).then(() => {
+                        toast.success('Removed from queue')
+                        refetch()
+                      })
+                    }}
+                    onRetry={(taskId) => handleExecuteTask(taskId)}
+                    selectedTask={selectedTask}
+                  />
                 ) : (
                   <TaskList
                     tasks={filteredTasks}
                     selectedTask={selectedTask}
                     executingTaskId={executingTaskId}
                     mergingTaskId={mergingTaskId}
+                    focusedIndex={focusedIndex}
                     onTaskSelect={handleTaskSelect}
                     onExecuteTask={handleExecuteTask}
                     onStopTask={handleStopTask}
@@ -814,6 +992,18 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
                     }
                     onOpenPreview={handleOpenPreview}
                     onCreateTask={handleOpenCreate}
+                    onEditTask={setEditingTask}
+                    onDuplicate={handleDuplicateTask}
+                    onToggleQueue={(task) => {
+                      const isQueued = task.labels.includes('cody:queued')
+                      const action = isQueued
+                        ? tasksApi.removeFromQueue(task.issueNumber, githubUser?.login)
+                        : tasksApi.addToQueue(task.issueNumber, githubUser?.login)
+                      action.then(() => {
+                        toast.success(isQueued ? 'Removed from queue' : 'Added to queue')
+                        refetch()
+                      })
+                    }}
                   />
                 )}
               </div>
@@ -852,7 +1042,7 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
                   </Avatar>
                   <div className="flex flex-col items-start">
                     <span className="text-sm font-medium">@{githubUser.login}</span>
-                    <span className="text-xs text-muted-foreground">Tap to switch</span>
+                    <span className="text-xs text-muted-foreground">Tap to sign out</span>
                   </div>
                 </button>
               )}
@@ -947,8 +1137,8 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
                 task={selectedTask}
                 onClose={() => handleTaskSelect(null)}
                 onRefresh={refetch}
-                onApproveReview={handleMerge}
-                isMerging={!!(selectedTask && mergingTaskId === selectedTask.id)}
+                onEditTask={setEditingTask}
+                onDuplicate={handleDuplicateTask}
               />
             </SheetContent>
           </Sheet>
@@ -968,10 +1158,44 @@ export function CodyDashboard({ initialIssueNumber, initialModal }: CodyDashboar
         )}
 
         {/* Create Dialog */}
-        <CreateTaskDialog open={showCreateDialog} onClose={handleCloseCreate} onCreated={refetch} />
+        <CreateTaskDialog
+          open={showCreateDialog}
+          onClose={handleCloseCreate}
+          onCreated={refetch}
+          initialData={
+            duplicateSource
+              ? {
+                  title: duplicateSource.title,
+                  body: duplicateSource.body,
+                  labels: duplicateSource.labels,
+                  assignees: duplicateSource.assignees?.map((a) => a.login),
+                }
+              : undefined
+          }
+        />
+
+        {/* Edit Task Dialog */}
+        <EditTaskDialog
+          open={!!editingTask}
+          onClose={() => setEditingTask(null)}
+          task={editingTask}
+          onSaved={() => {
+            refetch()
+            setEditingTask(null)
+          }}
+        />
 
         {/* Bug Report Dialog */}
         <BugReportDialog open={showBugDialog} onClose={handleCloseBug} onCreated={refetch} />
+
+        {/* Keyboard Shortcuts Dialog */}
+        <KeyboardShortcutsDialog
+          open={showShortcutsHelp}
+          onClose={() => setShowShortcutsHelp(false)}
+        />
+
+        {/* Branch Cleanup Dialog */}
+        <BranchCleanupDialog open={showBranchCleanup} onClose={() => setShowBranchCleanup(false)} />
       </div>
     </ErrorBoundary>
   )

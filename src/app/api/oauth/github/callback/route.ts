@@ -6,15 +6,15 @@
  * @pattern oauth
  * @ai-summary Handles GitHub OAuth callback for the Cody Operations Dashboard.
  *   Exchanges code for access token, fetches user profile, verifies the user is
- *   a repo collaborator (using the bot token), then issues a signed JWT session
- *   cookie (cody-gh-session). Does NOT create Payload CMS users.
+ *   a repo collaborator (using bot token — admin access required for this endpoint), then issues
+ *   a signed JWT session cookie with the encrypted access token embedded.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { validateOAuthState } from '@/infra/auth/oauth_state'
 import { getPublicBaseUrl } from '@/infra/auth/oauth_url'
 import { createCodySession } from '@/infra/auth/cody_session'
-import { fetchCollaborators } from '@/ui/cody/github-client'
+import { GITHUB_OWNER, GITHUB_REPO } from '@/ui/cody/constants'
 import { logger } from '@/infra/utils/logger/logger'
 
 interface GitHubUserInfo {
@@ -94,10 +94,12 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return res
   }
 
-  // STEP 3: Fetch GitHub user profile
+  const userAccessToken = tokenData.access_token
+
+  // STEP 3: Fetch GitHub user profile (using user's own token)
   const userinfoResponse = await fetch('https://api.github.com/user', {
     headers: {
-      Authorization: `Bearer ${tokenData.access_token}`,
+      Authorization: `Bearer ${userAccessToken}`,
       Accept: 'application/vnd.github+json',
       'X-GitHub-Api-Version': '2022-11-28',
     },
@@ -118,16 +120,40 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return res
   }
 
-  // STEP 4: Verify user is a repo collaborator (using bot token)
+  // STEP 4: Verify user is a repo collaborator
+  // Uses bot token for this check — the /collaborators/{username} endpoint requires admin
+  // access, which regular collaborators don't have even with repo scope.
+  const botToken = process.env.CODY_BOT_TOKEN || process.env.GITHUB_TOKEN
+  if (!botToken) {
+    logger.error(
+      { correlationId, event: 'github_oauth_no_bot_token' },
+      'No CODY_BOT_TOKEN or GITHUB_TOKEN for collaborator check',
+    )
+    res.headers.set('Location', new URL('/cody?error=not_configured', req.url).toString())
+    return res
+  }
+
   try {
-    const collaborators = await fetchCollaborators()
-    const isCollaborator = collaborators.some(
-      (c) => c.login.toLowerCase() === userinfo.login.toLowerCase(),
+    const collabResponse = await fetch(
+      `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/collaborators/${userinfo.login}`,
+      {
+        headers: {
+          Authorization: `Bearer ${botToken}`,
+          Accept: 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+        },
+      },
     )
 
-    if (!isCollaborator) {
+    // 204 = is collaborator, 404 = not collaborator, 403 = no access
+    if (collabResponse.status !== 204) {
       logger.warn(
-        { correlationId, event: 'github_oauth_not_collaborator', login: userinfo.login },
+        {
+          correlationId,
+          event: 'github_oauth_not_collaborator',
+          login: userinfo.login,
+          status: collabResponse.status,
+        },
         'GitHub user is not a repo collaborator',
       )
       res.headers.set('Location', new URL('/cody?error=not_collaborator', req.url).toString())
@@ -145,16 +171,20 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return res
   }
 
-  // STEP 5: Issue session cookie
-  await createCodySession(res, {
-    login: userinfo.login,
-    avatar_url: userinfo.avatar_url,
-    githubId: userinfo.id,
-  })
+  // STEP 5: Issue session cookie with encrypted access token
+  await createCodySession(
+    res,
+    {
+      login: userinfo.login,
+      avatar_url: userinfo.avatar_url,
+      githubId: userinfo.id,
+    },
+    userAccessToken,
+  )
 
   logger.info(
     { correlationId, event: 'github_oauth_success', login: userinfo.login },
-    'GitHub OAuth login successful',
+    'GitHub OAuth login successful (per-user token stored)',
   )
 
   res.headers.set('Location', returnTo || '/cody')

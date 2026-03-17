@@ -158,7 +158,7 @@ export const ChatMessageSentSchema = z.object({
  */
 export const LoginModalShownSchema = z.object({
   trigger_type: z
-    .enum(['mandatory', 'gated', 'warning'])
+    .enum(['mandatory', 'gated', 'warning', 'paid'])
     .describe('Which access gate triggered the modal'),
   course_slug: z.string().describe('Course where modal appeared'),
   current_page: z.string().optional().describe('Page URL when modal shown'),

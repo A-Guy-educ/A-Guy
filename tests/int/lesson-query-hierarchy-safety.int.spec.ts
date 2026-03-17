@@ -98,8 +98,11 @@ describe('Lesson/Chapter query hierarchy safety (bug reproduction)', () => {
         tenant: tenantId,
         pageAccessType: 'free',
         accessType: 'free',
+        contentStatus: 'none',
+        contentStatusVisible: true,
       },
       overrideAccess: true,
+      draft: false,
     })
     publishedCourseId = publishedCourse.id
 
@@ -151,8 +154,11 @@ describe('Lesson/Chapter query hierarchy safety (bug reproduction)', () => {
         tenant: tenantId,
         pageAccessType: 'free',
         accessType: 'free',
+        contentStatus: 'none',
+        contentStatusVisible: true,
       },
       overrideAccess: true,
+      draft: false,
     })
     draftChapterCourseId = draftChapterCourse.id
 
@@ -204,8 +210,11 @@ describe('Lesson/Chapter query hierarchy safety (bug reproduction)', () => {
         tenant: tenantId,
         pageAccessType: 'free',
         accessType: 'free',
+        contentStatus: 'none',
+        contentStatusVisible: true,
       },
       overrideAccess: true,
+      draft: false,
     })
     draftCourseId = draftCourse.id
 

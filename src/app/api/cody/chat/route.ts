@@ -7,10 +7,12 @@
 import { createMCPClient } from '@ai-sdk/mcp'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { streamText, tool, stepCountIs, type ToolSet } from 'ai'
+import { spawn, type ChildProcess } from 'child_process'
+import * as net from 'net'
 import { z } from 'zod'
 import { logger } from '@/infra/utils/logger/logger'
 import { NextRequest, NextResponse } from 'next/server'
-import { requireDashboardAuth } from '@/ui/cody/auth'
+import { requireCodyAuth, verifyActorLogin } from '@/ui/cody/auth'
 import { getAgent, type ToolScope } from '@/ui/cody/agents'
 import {
   fetchIssue,
@@ -36,9 +38,14 @@ import type {
 // Use Node.js runtime
 export const runtime = 'nodejs'
 
-// Cache the MCP client — retry on failure instead of caching rejections
+// Cache the MCP clients — retry on failure instead of caching rejections
 let mcpClient: Awaited<ReturnType<typeof createMCPClient>> | null = null
 let mcpClientPending: ReturnType<typeof createMCPClient> | null = null
+
+// Figma MCP client
+let figmaMcpProcessRef: ChildProcess | null = null
+let figmaMcpClient: Awaited<ReturnType<typeof createMCPClient>> | null = null
+let figmaMcpPending: ReturnType<typeof createMCPClient> | null = null
 
 async function getMCPClient() {
   // Return cached client if already initialized
@@ -63,6 +70,84 @@ async function getMCPClient() {
   } catch (error) {
     // Clear pending so next request retries instead of replaying the same error
     mcpClientPending = null
+    throw error
+  }
+}
+
+function cleanupFigmaMCPProcess() {
+  if (figmaMcpProcessRef) {
+    try {
+      figmaMcpProcessRef.kill()
+    } catch {
+      // Process may already be dead
+    }
+    figmaMcpProcessRef = null
+  }
+}
+
+// Cleanup Figma MCP child process on server shutdown
+process.on('beforeExit', cleanupFigmaMCPProcess)
+process.on('SIGTERM', cleanupFigmaMCPProcess)
+process.on('SIGINT', cleanupFigmaMCPProcess)
+
+async function getFigmaMCPClient() {
+  // Skip if no Figma API key configured
+  if (!process.env.FIGMA_API_KEY) return null
+
+  // Return cached client if already initialized
+  if (figmaMcpClient) return figmaMcpClient
+
+  // Deduplicate concurrent initialization attempts
+  if (figmaMcpPending) return figmaMcpPending
+
+  // Spawn figma-developer-mcp as background HTTP server
+  // Use a random available port
+  const port = 3_000 + Math.floor(Math.random() * 1000)
+
+  // SECURITY: Pass API key via env vars, not CLI args (CLI args visible via `ps aux`)
+  const figmaMcpProcess = spawn('npx', ['-y', 'figma-developer-mcp', '--port', port.toString()], {
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env: { ...process.env, FIGMA_API_KEY: process.env.FIGMA_API_KEY },
+    detached: false,
+  })
+
+  // Track process for cleanup on shutdown
+  figmaMcpProcessRef = figmaMcpProcess
+
+  // Wait for server to be ready (check if port is listening)
+  await new Promise<void>((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      cleanupFigmaMCPProcess()
+      reject(new Error('Figma MCP server startup timeout'))
+    }, 10_000)
+
+    const checkPort = setInterval(() => {
+      const client = new net.Socket()
+      client.connect(port, '127.0.0.1', () => {
+        clearInterval(checkPort)
+        clearTimeout(timeout)
+        client.destroy()
+        resolve()
+      })
+      client.on('error', () => {
+        client.destroy()
+      })
+    }, 200)
+  })
+
+  figmaMcpPending = createMCPClient({
+    transport: {
+      type: 'http',
+      url: `http://127.0.0.1:${port}/mcp`,
+    },
+  })
+
+  try {
+    figmaMcpClient = await figmaMcpPending
+    return figmaMcpClient
+  } catch (error) {
+    figmaMcpPending = null
+    cleanupFigmaMCPProcess()
     throw error
   }
 }
@@ -575,10 +660,10 @@ function buildRemoteTools(actorLogin: string): ToolSet {
 
 export async function GET(req: NextRequest) {
   try {
-    // Check authentication
-    const auth = await requireDashboardAuth(req)
-    if (!auth.authenticated) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Check authentication using GitHub OAuth
+    const authResult = await requireCodyAuth(req)
+    if (authResult !== null) {
+      return authResult // Return the 401 response
     }
 
     // Test MCP connection — 5s timeout to avoid hanging
@@ -634,6 +719,14 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { messages = [], taskId, taskData, agentId, attachments, actorLogin } = body
 
+    // Authenticate and verify actorLogin matches session
+    const authResult = await verifyActorLogin(req, actorLogin)
+    if ('status' in authResult) {
+      return authResult // Return the 401/403 response
+    }
+
+    const { identity } = authResult
+
     if (!messages || messages.length === 0) {
       return NextResponse.json({ error: 'Messages are required' }, { status: 400 })
     }
@@ -643,6 +736,7 @@ export async function POST(req: NextRequest) {
     logger.info(
       {
         requestId,
+        actorLogin: identity.login, // Use verified identity, not client-supplied
         messageCount: messages.length,
         taskId,
         agentId: agent.id,
@@ -691,12 +785,44 @@ export async function POST(req: NextRequest) {
       logger.warn({ err: mcpError, requestId }, 'GitHub MCP unavailable - using custom tools only')
     }
 
+    // Get Figma MCP tools — 5s timeout, skip on failure
+    let figmaMcpTools = {} as Record<string, unknown>
+    try {
+      const figmaMcp = await getFigmaMCPClient()
+      if (figmaMcp) {
+        const figmaToolsPromise = (async () => {
+          return await figmaMcp.tools()
+        })()
+
+        const timeoutMs = 5_000
+        const figmaToolsOrEmpty = await Promise.race([
+          figmaToolsPromise,
+          new Promise<Record<string, never>>((resolve) => setTimeout(() => resolve({}), timeoutMs)),
+        ])
+
+        if (Object.keys(figmaToolsOrEmpty).length > 0) {
+          figmaMcpTools = figmaToolsOrEmpty
+          logger.info(
+            { requestId, figmaToolCount: Object.keys(figmaMcpTools).length },
+            'Figma MCP tools loaded',
+          )
+        }
+      }
+    } catch (figmaError) {
+      logger.warn({ err: figmaError, requestId }, 'Figma MCP unavailable - continuing without it')
+    }
+
     // Filter tools based on agent's toolScope
-    let allTools = filterToolsByScope(agent.toolScope, mcpTools, customTools) as ToolSet
+    let allTools = filterToolsByScope(
+      agent.toolScope,
+      { ...mcpTools, ...figmaMcpTools },
+      customTools,
+    ) as ToolSet
 
     // Inject remote tools if this user has a remote dev environment configured
-    if (actorLogin && isRemoteEnabled(actorLogin)) {
-      const remoteTools = buildRemoteTools(actorLogin)
+    // Use verified identity.login instead of client-supplied actorLogin
+    if (identity.login && isRemoteEnabled(identity.login)) {
+      const remoteTools = buildRemoteTools(identity.login)
       allTools = { ...allTools, ...remoteTools }
       // Extend system prompt with remote tool instructions
       systemPrompt = systemPrompt + REMOTE_SYSTEM_PROMPT_EXTENSION

@@ -6,10 +6,12 @@
  * @pattern oauth
  * @ai-summary Standalone GitHub identity session for the Cody Operations Dashboard.
  *   Uses a signed JWT cookie (cody-gh-session) independent of Payload CMS auth.
- *   Session payload: { login, avatar_url, githubId, iat, exp }
+ *   Session payload: { login, avatar_url, githubId, encryptedGhToken?, iat, exp }
+ *   When present, the GitHub access token is encrypted with AES-256-GCM at rest.
  */
 
 import { SignJWT, jwtVerify } from 'jose'
+import { createCipheriv, createDecipheriv, randomBytes, createHash } from 'crypto'
 import type { NextRequest, NextResponse } from 'next/server'
 
 export const CODY_SESSION_COOKIE = 'cody-gh-session'
@@ -21,9 +23,16 @@ export interface CodyGitHubIdentity {
   login: string
   avatar_url: string
   githubId: number
+  /** Decrypted GitHub access token — only present for sessions created with repo scope */
+  ghToken?: string
 }
 
-interface CodySessionPayload extends CodyGitHubIdentity {
+interface CodySessionPayload {
+  login: string
+  avatar_url: string
+  githubId: number
+  /** Encrypted GitHub access token (base64: iv:ciphertext:authTag) */
+  ght?: string
   iat: number
   exp: number
 }
@@ -36,20 +45,77 @@ function getSecret(): Uint8Array {
 }
 
 /**
+ * Derive a 256-bit AES key from PAYLOAD_SECRET.
+ * Uses SHA-256 hash so any length secret produces a valid 32-byte key.
+ */
+function getEncryptionKey(): Buffer {
+  const secret = process.env.PAYLOAD_SECRET
+  if (!secret) throw new Error('PAYLOAD_SECRET is required for token encryption')
+  return createHash('sha256').update(`cody-token-encryption:${secret}`).digest()
+}
+
+/**
+ * Encrypt a plaintext string with AES-256-GCM.
+ * Returns base64-encoded string in format: iv:ciphertext:authTag
+ */
+export function encryptToken(plaintext: string): string {
+  const key = getEncryptionKey()
+  const iv = randomBytes(12) // 96-bit IV for GCM
+  const cipher = createCipheriv('aes-256-gcm', key, iv)
+
+  let encrypted = cipher.update(plaintext, 'utf8', 'base64')
+  encrypted += cipher.final('base64')
+  const authTag = cipher.getAuthTag()
+
+  return `${iv.toString('base64')}:${encrypted}:${authTag.toString('base64')}`
+}
+
+/**
+ * Decrypt a token encrypted with encryptToken().
+ * Expects format: iv:ciphertext:authTag (all base64)
+ */
+export function decryptToken(encrypted: string): string {
+  const key = getEncryptionKey()
+  const parts = encrypted.split(':')
+  if (parts.length !== 3) throw new Error('Invalid encrypted token format')
+
+  const iv = Buffer.from(parts[0], 'base64')
+  const ciphertext = parts[1]
+  const authTag = Buffer.from(parts[2], 'base64')
+
+  const decipher = createDecipheriv('aes-256-gcm', key, iv)
+  decipher.setAuthTag(authTag)
+
+  let decrypted = decipher.update(ciphertext, 'base64', 'utf8')
+  decrypted += decipher.final('utf8')
+
+  return decrypted
+}
+
+/**
  * Create a signed JWT and set it as an httpOnly cookie on the response.
+ * Optionally includes an encrypted GitHub access token for per-user API calls.
  */
 export async function createCodySession(
   res: NextResponse,
   identity: CodyGitHubIdentity,
+  ghAccessToken?: string,
 ): Promise<void> {
   const secret = getSecret()
   const now = Math.floor(Date.now() / 1000)
 
-  const token = await new SignJWT({
+  const jwtPayload: Record<string, unknown> = {
     login: identity.login,
     avatar_url: identity.avatar_url,
     githubId: identity.githubId,
-  })
+  }
+
+  // Encrypt and embed GitHub access token if provided
+  if (ghAccessToken) {
+    jwtPayload.ght = encryptToken(ghAccessToken)
+  }
+
+  const token = await new SignJWT(jwtPayload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt(now)
     .setExpirationTime(now + SESSION_TTL_SECONDS)
@@ -82,6 +148,7 @@ export async function createCodySession(
 /**
  * Verify a raw session token string.
  * Used by both verifyCodySession (API routes) and verifyCodySessionToken (Server Components).
+ * Decrypts the GitHub access token if present.
  */
 async function verifyToken(token: string): Promise<CodyGitHubIdentity | null> {
   try {
@@ -91,11 +158,22 @@ async function verifyToken(token: string): Promise<CodyGitHubIdentity | null> {
 
     if (!p.login || !p.avatar_url || !p.githubId) return null
 
-    return {
+    const identity: CodyGitHubIdentity = {
       login: p.login,
       avatar_url: p.avatar_url,
       githubId: p.githubId,
     }
+
+    // Decrypt GitHub access token if present (new sessions with repo scope)
+    if (p.ght) {
+      try {
+        identity.ghToken = decryptToken(p.ght)
+      } catch {
+        // Token decryption failed — treat as legacy session (no user token)
+      }
+    }
+
+    return identity
   } catch {
     return null
   }

@@ -1,0 +1,74 @@
+{
+  "version": 2,
+  "taskId": "260310-auto-320",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-10T14:51:48.470Z",
+  "updatedAt": "2026-03-11T14:59:49.929Z",
+  "state": "running",
+  "cursor": "spec",
+  "stages": {
+    "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-10T14:51:50.377Z",
+      "completedAt": "2026-03-11T14:17:11.856Z",
+      "outputFile": "taskify.md"
+    },
+    "spec": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-11T14:17:11.932Z",
+      "completedAt": "2026-03-11T14:22:01.124Z",
+      "outputFile": "spec.md"
+    },
+    "gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-11T14:22:01.146Z",
+      "completedAt": "2026-03-11T14:27:02.871Z",
+      "outputFile": "gap.md"
+    },
+    "gsd-research": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-11T14:27:02.892Z",
+      "completedAt": "2026-03-11T14:28:58.937Z",
+      "outputFile": "gsd-research.md"
+    },
+    "gsd-plan": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-11T14:28:58.959Z",
+      "completedAt": "2026-03-11T14:33:33.655Z",
+      "outputFile": "gsd-plan.md"
+    },
+    "gsd-execute": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-11T14:33:37.101Z",
+      "completedAt": "2026-03-11T14:48:56.101Z",
+      "outputFile": "gsd-execute.md"
+    },
+    "commit": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-11T14:56:54.797Z",
+      "completedAt": "2026-03-11T14:56:56.856Z"
+    },
+    "review": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-11T14:56:56.878Z",
+      "completedAt": "2026-03-11T14:59:49.928Z",
+      "outputFile": "review.md",
+      "issuesFound": true,
+      "reviewSummary": {
+        "critical": 2,
+        "major": 3,
+        "minor": 26
+      }
+    }
+  },
+  "issueNumber": 782
+}

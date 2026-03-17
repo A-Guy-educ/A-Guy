@@ -8,7 +8,7 @@
 import pino from 'pino'
 
 import type { ActionRequest, InspectorConfig, InspectorContext, InspectorResult } from './types'
-import { JsonStateStore } from './state'
+import { createStateStore } from './state'
 import { shouldDedup, markExecuted, cleanupExpiredDedup } from './dedup'
 import { createGitHubClient } from '../clients/github'
 import { createSlackClient } from '../clients/slack'
@@ -19,8 +19,8 @@ import { createSlackClient } from '../clients/slack'
 export async function runInspector(config: InspectorConfig): Promise<InspectorResult> {
   const { repo, dryRun, stateFile, plugins } = config
 
-  // Initialize components
-  const state = JsonStateStore.load(stateFile)
+  // Initialize state — uses GH variable in CI, local file otherwise
+  const state = createStateStore(repo, stateFile)
 
   // Get or increment cycle number
   const cycleNumber = (state.get<number>('system:cycleNumber') || 0) + 1

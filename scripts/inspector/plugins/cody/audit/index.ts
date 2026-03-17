@@ -9,7 +9,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 
 import type { InspectorPlugin, ActionRequest, InspectorContext } from '../../../core/types'
-import type { TaskSnapshot } from '../../../core/types'
+import type { TaskSnapshot, EvaluatedTask } from '../../../core/types'
 import { analyzeRun } from './analyzer'
 import { createImprovementIssueAction } from './actions/create-issue'
 import type { AuditInput } from './types'
@@ -102,8 +102,15 @@ export const auditPlugin: InspectorPlugin = {
     const auditedTasks = ctx.state.get<string[]>('cody:auditedTasks') || []
     ctx.log.debug({ auditedCount: auditedTasks.length }, 'Previously audited tasks')
 
-    // Discover completed tasks
-    const tasks = await discoverCompletedTasks(ctx)
+    // Discover completed tasks from .tasks/ directory (when status.json is on default branch)
+    let tasks = await discoverCompletedTasks(ctx)
+
+    // FIX #13: Also check evaluatedTasks from health-check — picks up cody:done tasks
+    // where status.json is on the feature branch, not the default branch
+    if (tasks.length === 0) {
+      const evaluated = ctx.state.get<EvaluatedTask[]>('cody:evaluatedTasks') || []
+      tasks = evaluated.filter((t) => t.health === 'completed' || t.labels?.includes('cody:done'))
+    }
     ctx.log.debug({ taskCount: tasks.length }, 'Discovered completed tasks')
 
     const actions: ActionRequest[] = []
@@ -140,8 +147,9 @@ export const auditPlugin: InspectorPlugin = {
         actions.push(createImprovementIssueAction(task.taskId, improvement, ctx))
       }
 
-      // Mark task as audited
+      // Mark task as audited — cap at 200 entries to prevent unbounded growth
       auditedTasks.push(task.taskId)
+      while (auditedTasks.length > 200) auditedTasks.shift()
       ctx.log.info(
         { taskId: task.taskId, improvementCount: result.improvements.length },
         'Audited task',

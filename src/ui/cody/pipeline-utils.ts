@@ -12,10 +12,10 @@ import type { CodyPipelineStatus, CodyTask, StageStatus } from './types'
  * Human-readable labels for each pipeline stage
  */
 export const stageLabels: Record<string, string> = {
-  taskify: 'Analyzing',
-  gap: 'Gap Analysis',
+  taskify: 'Classifying',
+  gap: 'Checking Gaps',
   clarify: 'Clarifying',
-  architect: 'Architecting',
+  architect: 'Planning',
   'plan-gap': 'Reviewing Plan',
   build: 'Building',
   commit: 'Committing',
@@ -244,8 +244,34 @@ export function derivePipelineDisplayState(task: CodyTask): PipelineDisplayState
     return { kind: 'stage-progress', stageIndex, label, stepNumber, totalStages }
   }
 
-  // Case 3: Pipeline running but currentStage not yet set (just started)
+  // Case 3: Pipeline running but currentStage not yet set
   if (pipeline?.state === 'running') {
+    // Defensive: derive position from stages data when currentStage is null
+    if (pipeline.stages && Object.keys(pipeline.stages).length > 0) {
+      // Walk stages in order: find the first with data that isn't completed/skipped.
+      // Stages without data entries are skipped (they may not be tracked).
+      let derivedStage: string | null = null
+      let lastCompleted: string | null = null
+      for (const stage of ALL_STAGES) {
+        const data = pipeline.stages[stage]
+        if (!data) continue // Stage not tracked — skip
+        if (data.state === 'completed' || data.state === 'skipped') {
+          lastCompleted = stage
+          continue
+        }
+        // This stage has data but isn't done — it's the current position
+        derivedStage = stage
+        break
+      }
+      const resolvedStage = derivedStage || lastCompleted
+      if (resolvedStage) {
+        const stageIndex = ALL_STAGES.indexOf(resolvedStage as (typeof ALL_STAGES)[number])
+        const label = stageLabels[resolvedStage] || resolvedStage
+        const totalStages = ALL_STAGES.length
+        const stepNumber = stageIndex >= 0 ? stageIndex + 1 : 1
+        return { kind: 'stage-progress', stageIndex, label, stepNumber, totalStages }
+      }
+    }
     return { kind: 'starting' }
   }
 
@@ -271,7 +297,7 @@ export function getTaskSubStatusText(task: CodyTask): string {
     case 'stage-progress':
       return `${state.label} · ${state.stepNumber}/${total}`
     case 'gate-paused':
-      return `Awaiting approval${state.label ? ` at ${state.label}` : ''}`
+      return `Paused · ${state.label || 'Approval'}`
     case 'starting':
       return 'Starting pipeline...'
     case 'no-data': {

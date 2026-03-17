@@ -51,34 +51,20 @@ export function useBrowserNotifications({
     }
   }, [])
 
-  // Request permission on mount (only if supported)
+  // Request permission on mount (only if supported) - but don't auto-request
+  // Let user click the bell button to request permission
   useEffect(() => {
     if (!isSupported) return
 
-    const requestPermission = async () => {
-      if (Notification.permission === 'default') {
-        const perm = await Notification.requestPermission()
-        setPermission(perm)
-
-        if (perm === 'denied') {
-          onPermissionDenied?.()
-        }
-      } else {
-        setPermission(Notification.permission)
-
-        if (Notification.permission === 'denied') {
-          onPermissionDenied?.()
-        }
-      }
-    }
-
-    requestPermission()
-  }, [isSupported, onPermissionDenied])
+    // Just check current permission status, don't auto-request
+    setPermission(Notification.permission)
+  }, [isSupported])
 
   // Send a notification
   const sendNotification = useCallback(
     (title: string, body: string, options?: NotificationOptions) => {
-      if (!isSupported || permission !== 'granted') {
+      // Check permission directly from browser API, not React state (may be stale)
+      if (!isSupported || Notification.permission !== 'granted') {
         return null
       }
 
@@ -95,10 +81,58 @@ export function useBrowserNotifications({
         notification.close()
       }
 
+      // Play notification sound using Web Audio API (no external file needed)
+      try {
+        const AudioContextClass =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+        const audioContext = new AudioContextClass()
+        const oscillator = audioContext.createOscillator()
+        const gainNode = audioContext.createGain()
+
+        oscillator.connect(gainNode)
+        gainNode.connect(audioContext.destination)
+
+        oscillator.frequency.value = 800 // Hz
+        oscillator.type = 'sine'
+        gainNode.gain.value = 0.3 // Volume
+
+        oscillator.start()
+        oscillator.stop(audioContext.currentTime + 0.15) // 150ms beep
+      } catch {
+        // Audio not supported
+      }
+
       return notification
     },
-    [isSupported, permission],
+    [isSupported],
   )
+
+  // Request or toggle permission when user clicks the button
+  const requestPermission = useCallback(async () => {
+    if (!isSupported) return
+
+    if (Notification.permission === 'granted') {
+      // Already granted - no way to revoke via API, but we can track "disabled" state
+      // User must go to browser settings to revoke
+      return
+    }
+
+    if (Notification.permission === 'default') {
+      const perm = await Notification.requestPermission()
+      setPermission(perm)
+
+      if (perm === 'denied') {
+        onPermissionDenied?.()
+      }
+    } else {
+      setPermission(Notification.permission)
+
+      if (Notification.permission === 'denied') {
+        onPermissionDenied?.()
+      }
+    }
+  }, [isSupported, onPermissionDenied])
 
   // Check for task state changes and send notifications
   const checkTaskChanges = useCallback(
@@ -121,11 +155,6 @@ export function useBrowserNotifications({
 
         // Skip if task wasn't in the previous list
         if (!previousTask) continue
-
-        // Skip if task hasn't been updated recently (within last 30 seconds to avoid spam)
-        const updatedAt = new Date(task.updatedAt).getTime()
-        const now = Date.now()
-        if (now - updatedAt > 30000) continue
 
         // Check for column/state transitions
         const prevColumn = previousTask.column
@@ -175,6 +204,7 @@ export function useBrowserNotifications({
   return {
     permission,
     sendNotification,
+    requestPermission,
     checkTaskChanges,
     isSupported,
   }

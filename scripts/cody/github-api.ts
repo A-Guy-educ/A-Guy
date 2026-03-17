@@ -711,18 +711,56 @@ export function setClassificationLabels(
     }
   }
 
-  try {
-    const args = ['issue', 'edit', String(issueNumber), '--add-label', labels.join(',')]
-    if (labelsToRemove.length > 0) {
-      args.push('--remove-label', labelsToRemove.join(','))
+  // FIX #8: Add retry logic for the critical add operation.
+  // Step 1: Add new labels (critical — retry once on failure)
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      execFileSync('gh', ['issue', 'edit', String(issueNumber), '--add-label', labels.join(',')], {
+        stdio: ['pipe', 'pipe', 'pipe'],
+        timeout: GH_API_TIMEOUT,
+      })
+      logger.info(`  Set classification labels [${labels.join(', ')}] on issue #${issueNumber}`)
+      break // Success
+    } catch (error) {
+      if (attempt === 0) {
+        logger.warn(
+          { err: error },
+          `Classification label add attempt 1 failed for issue ${issueNumber}, retrying...`,
+        )
+        syncSleep(2000)
+      } else {
+        logger.error(
+          { err: error },
+          `Failed to set classification labels on issue ${issueNumber} after 2 attempts`,
+        )
+      }
     }
-    execFileSync('gh', args, {
-      stdio: ['inherit', 'inherit', 'inherit'],
-      timeout: GH_API_TIMEOUT,
-    })
-    logger.info(`  Set classification labels [${labels.join(', ')}] on issue #${issueNumber}`)
-  } catch (error) {
-    logger.error({ err: error }, `Failed to set classification labels on issue ${issueNumber}:`)
+  }
+
+  // Step 2: Remove stale labels in a separate call (best-effort with retry).
+  // This is separate because `gh issue edit --remove-label` fails if ANY label in the
+  // list doesn't exist on the repo. By separating add/remove, a remove failure
+  // doesn't prevent the add from succeeding.
+  if (labelsToRemove.length > 0) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        execFileSync(
+          'gh',
+          ['issue', 'edit', String(issueNumber), '--remove-label', labelsToRemove.join(',')],
+          {
+            stdio: ['pipe', 'pipe', 'pipe'],
+            timeout: GH_API_TIMEOUT,
+          },
+        )
+        break // Success
+      } catch {
+        if (attempt === 0) {
+          syncSleep(1000)
+        }
+        // Silently ignore on final attempt — labels may not exist on the repo or issue.
+        // This is expected for newly added domain/category labels.
+      }
+    }
   }
 }
 
@@ -730,7 +768,10 @@ export function setClassificationLabels(
  * Set profile label - adds new profile and removes the other
  * Fire-and-forget: errors are logged but never thrown
  */
-export function setProfileLabel(issueNumber: number, profile: 'lightweight' | 'standard'): void {
+export function setProfileLabel(
+  issueNumber: number,
+  profile: 'lightweight' | 'standard' | 'turbo',
+): void {
   if (!issueNumber || !profile) return
 
   const label = `profile:${profile}`

@@ -5,8 +5,8 @@
  * @domain auth
  * @pattern oauth
  * @ai-summary Initiates GitHub OAuth flow for the Cody Operations Dashboard.
- *   Redirects to GitHub consent screen requesting read:user scope.
- *   Only used by dashboard users — the bot token handles all GitHub API calls.
+ *   Redirects to GitHub consent screen requesting repo scope for per-user
+ *   GitHub API operations (issues, PRs, actions, contents).
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -30,7 +30,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const authUrl = new URL(GITHUB_AUTH_URL)
   authUrl.searchParams.set('client_id', clientId)
   authUrl.searchParams.set('redirect_uri', callbackUrl)
-  authUrl.searchParams.set('scope', 'read:user')
+  // repo scope grants: issues, PRs, actions, contents — needed for per-user dashboard operations
+  authUrl.searchParams.set('scope', 'repo')
 
   const res = NextResponse.redirect(authUrl)
   const state = await storeOAuthState(res, returnTo)

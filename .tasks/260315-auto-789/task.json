@@ -1,0 +1,22 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "devops",
+  "scope": [
+    "scripts/cody/entry.ts",
+    "tests/unit/scripts/cody/rerun-gate-approval.test.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [],
+  "review_questions": [],
+  "complexity": 18,
+  "complexity_reasoning": "Scope: 4 (single file, ~25 lines change). Risk: 3 (stated low in issue). Novelty: 4 (follows existing approval pattern). Cross-Domain: 2 (pipeline only). Ambiguity: 2 (exact file, lines, and fix approach provided). Dependencies: 2 (self-contained). Total: 17-18",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Input contains clear problem description, root cause with exact file/line numbers, exact fix location and approach, test plan, and files-to-touch table. Has ## Requirements via fix steps and ## Acceptance Criteria via test plan."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

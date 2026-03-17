@@ -2,13 +2,22 @@
  * @fileType utility
  * @domain inspector
  * @pattern state-store
- * @ai-summary JSON-backed key-value store persisted to disk
+ * @ai-summary State stores: JSON file (local/test) and GitHub Actions variable (CI persistence)
+ *
+ * The original JsonStateStore writes to disk, which is ephemeral in CI — the cycle counter
+ * and dedup entries reset to zero on every run. GhVariableStateStore persists state across
+ * CI runs by reading/writing a single GitHub Actions repository variable (INSPECTOR_STATE).
  */
 
 import * as fs from 'fs'
 import * as path from 'path'
+import { execFileSync } from 'child_process'
 
 import type { StateStore } from './types'
+
+// ============================================================================
+// JSON File State Store (local dev / testing)
+// ============================================================================
 
 /**
  * JSON-backed state store that persists to disk.
@@ -24,9 +33,6 @@ export class JsonStateStore implements StateStore {
     this.load()
   }
 
-  /**
-   * Load state from disk. Handles missing/corrupt files gracefully.
-   */
   private load(): void {
     try {
       if (fs.existsSync(this.filePath)) {
@@ -37,7 +43,6 @@ export class JsonStateStore implements StateStore {
         }
       }
     } catch {
-      // If file is corrupt or can't be read, start with empty state
       this.data = {}
     }
   }
@@ -51,10 +56,6 @@ export class JsonStateStore implements StateStore {
     this.dirty = true
   }
 
-  /**
-   * Persist state to disk atomically.
-   * Writes to a temp file first, then renames to target.
-   */
   save(): void {
     if (!this.dirty) return
 
@@ -67,13 +68,10 @@ export class JsonStateStore implements StateStore {
     const json = JSON.stringify(this.data, null, 2)
 
     try {
-      // Write to temp file
       fs.writeFileSync(tempPath, json, 'utf-8')
-      // Atomic rename
       fs.renameSync(tempPath, this.filePath)
       this.dirty = false
     } catch (error) {
-      // Clean up temp file on failure
       if (fs.existsSync(tempPath)) {
         fs.unlinkSync(tempPath)
       }
@@ -81,12 +79,118 @@ export class JsonStateStore implements StateStore {
     }
   }
 
-  /**
-   * Create a new store, loading existing state if available.
-   */
   static load(filePath: string): JsonStateStore {
     return new JsonStateStore(filePath)
   }
+}
+
+// ============================================================================
+// GitHub Actions Variable State Store (CI persistence)
+// ============================================================================
+
+const GH_VARIABLE_NAME = 'INSPECTOR_STATE'
+
+/**
+ * State store backed by a GitHub Actions repository variable.
+ *
+ * Reads/writes a single variable `INSPECTOR_STATE` containing the full
+ * state as a JSON string. This survives across ephemeral CI runners.
+ *
+ * Requires:
+ * - `gh` CLI available on PATH
+ * - `GH_TOKEN` env var with `actions:write` + `variables:write` permissions
+ * - `REPO` env var (e.g. "owner/repo")
+ */
+export class GhVariableStateStore implements StateStore {
+  private data: Record<string, unknown> = {}
+  private dirty = false
+  private repo: string
+
+  constructor(repo: string) {
+    this.repo = repo
+    this.loadFromGh()
+  }
+
+  private loadFromGh(): void {
+    try {
+      const output = execFileSync(
+        'gh',
+        ['variable', 'get', GH_VARIABLE_NAME, '--repo', this.repo],
+        {
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'pipe'],
+          env: { ...process.env, GH_TOKEN: process.env.GH_PAT || process.env.GH_TOKEN || '' },
+        },
+      ).trim()
+
+      if (output) {
+        const parsed = JSON.parse(output)
+        if (parsed && typeof parsed === 'object') {
+          this.data = parsed as Record<string, unknown>
+        }
+      }
+    } catch {
+      // Variable doesn't exist yet or parse failed — start fresh
+      this.data = {}
+    }
+  }
+
+  get<T>(key: string): T | undefined {
+    return this.data[key] as T | undefined
+  }
+
+  set<T>(key: string, value: T): void {
+    this.data[key] = value
+    this.dirty = true
+  }
+
+  save(): void {
+    if (!this.dirty) return
+
+    const json = JSON.stringify(this.data)
+
+    try {
+      execFileSync(
+        'gh',
+        ['variable', 'set', GH_VARIABLE_NAME, '--repo', this.repo, '--body', json],
+        {
+          encoding: 'utf-8',
+          stdio: ['pipe', 'pipe', 'pipe'],
+          env: { ...process.env, GH_TOKEN: process.env.GH_PAT || process.env.GH_TOKEN || '' },
+        },
+      )
+      this.dirty = false
+    } catch (error) {
+      // Log but don't crash — the inspector should still complete even if state persistence fails
+      const msg = error instanceof Error ? error.message : String(error)
+
+      console.error(`[GhVariableStateStore] Failed to save state: ${msg}`)
+    }
+  }
+
+  /**
+   * Create a GH variable-backed store for CI use.
+   */
+  static load(repo: string): GhVariableStateStore {
+    return new GhVariableStateStore(repo)
+  }
+}
+
+// ============================================================================
+// Factory
+// ============================================================================
+
+/**
+ * Create the appropriate state store based on environment.
+ *
+ * - In GitHub Actions (`GITHUB_ACTIONS=true`): uses GhVariableStateStore
+ * - Locally: uses JsonStateStore at the given file path
+ */
+export function createStateStore(repo: string, localFilePath: string): StateStore {
+  if (process.env.GITHUB_ACTIONS === 'true') {
+    return GhVariableStateStore.load(repo)
+  }
+  return JsonStateStore.load(localFilePath)
 }
 
 /**

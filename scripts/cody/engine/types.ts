@@ -6,6 +6,7 @@
  */
 
 import { z } from 'zod'
+import type { StageName } from '../stages/registry'
 
 // ============================================================================
 // Stage Types
@@ -48,7 +49,7 @@ export type { ValidationResult }
 export type StagePreExecute = (ctx: PipelineContext) => Promise<void>
 
 export interface StageDefinition {
-  name: string
+  name: StageName
   type: StageType
   timeout: number
   maxRetries: number
@@ -73,16 +74,28 @@ export interface StageDefinition {
    * Used when a stage should run a different agent (e.g., fix stage runs build agent).
    */
   agentName?: string
+  /**
+   * Declarative retry loop: when this stage fails, reset both this stage
+   * and `retryWith.stage` to pending, up to `retryWith.maxAttempts` times.
+   */
+  retryWith?: {
+    stage: StageName
+    maxAttempts: number
+    /** Called before retry to capture failure details (e.g., write verify-failures.md) */
+    onFailure?: (ctx: PipelineContext, taskDir: string) => Promise<void>
+    /** When the retryWith.stage times out: 'retry' resets this stage to pending; 'fail' fails the pipeline */
+    onTimeout?: 'retry' | 'fail'
+  }
 }
 
 // ============================================================================
 // Pipeline Definition
 // ============================================================================
 
-export type PipelineStep = string | { parallel: string[] }
+export type PipelineStep = StageName | { parallel: StageName[] }
 
 export interface PipelineDefinition {
-  stages: Map<string, StageDefinition>
+  stages: Map<StageName, StageDefinition>
   order: PipelineStep[]
 }
 
@@ -171,7 +184,7 @@ export interface PipelineStateV2 {
   completedAt?: string
   totalElapsed?: number
   state: 'running' | 'completed' | 'failed' | 'timeout' | 'paused'
-  cursor: string | null
+  cursor: StageName | null
   stages: Record<string, StageStateV2>
   /** GitHub issue number that triggered this pipeline run */
   issueNumber?: number
@@ -188,7 +201,8 @@ export interface PipelineStateV2 {
 }
 
 // Zod schema for PipelineStateV2
-export const PipelineStateV2Schema: z.ZodType<PipelineStateV2> = z.object({
+// Note: Uses z.string() for cursor (not StageName) for backward compat with existing status.json files
+export const PipelineStateV2Schema = z.object({
   version: z.literal(2),
   taskId: z.string(),
   mode: z.string(),
@@ -343,6 +357,11 @@ export type ClearVerifyFailuresAction = {
   type: 'clear-verify-failures'
 }
 
+// Run-mechanical-autofix action — runs lint:fix + format:fix deterministically (no LLM)
+export type RunMechanicalAutofixAction = {
+  type: 'run-mechanical-autofix'
+}
+
 // Parallel-post-action - runs multiple actions concurrently
 export type ParallelPostAction = {
   type: 'parallel'
@@ -365,6 +384,7 @@ export type PostAction =
   | RunQualityWithAutofixAction
   | AnalyzeReviewFindingsAction
   | ClearVerifyFailuresAction
+  | RunMechanicalAutofixAction
   | ParallelPostAction
 
 // ============================================================================

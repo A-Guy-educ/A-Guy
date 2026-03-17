@@ -15,6 +15,7 @@ import {
   CACHE_TTL,
   BRANCH_CACHE_TTL,
   TASK_ID_REGEX,
+  ALL_STAGES,
 } from './constants'
 import type {
   CodyPipelineStatus,
@@ -68,6 +69,43 @@ function setCache<T>(
   })
 }
 
+/**
+ * Invalidate specific cache keys by prefix
+ * More targeted than clearing the entire cache
+ */
+function invalidateCache(prefix: string): void {
+  for (const key of cache.keys()) {
+    if (key.startsWith(prefix)) {
+      cache.delete(key)
+    }
+  }
+}
+
+/**
+ * Targeted cache invalidation by category
+ * Instead of clearing everything, only clear relevant caches
+ */
+export function invalidateTaskCache(): void {
+  invalidateCache('issues-')
+  invalidateCache('workflow-')
+}
+
+export function invalidatePRCache(): void {
+  invalidateCache('prs-')
+  invalidateCache('pr-')
+}
+
+export function invalidateBoardCache(): void {
+  invalidateCache('boards-')
+  invalidateCache('labels-')
+  invalidateCache('milestones-')
+}
+
+export function invalidateBranchCache(): void {
+  invalidateCache('branches-')
+  invalidateCache('refs-')
+}
+
 // ============ Octokit Singleton ============
 
 let octokitInstance: Octokit | null = null
@@ -98,14 +136,49 @@ export function getOctokit(): Octokit {
         return false
       },
       onSecondaryRateLimit: (retryAfter, _options, _octokit) => {
-        // Secondary rate limit - always retry
-        console.warn(`[Cody] Secondary rate limit, retrying after ${retryAfter}s`)
-        return true
+        // Secondary rate limit (abuse detection) — retry up to 2 times, then stop to avoid token ban
+        const retryCount = (_options.request?.retryCount as number) ?? 0
+        if (retryCount < 2) {
+          console.warn(
+            `[Cody] Secondary rate limit, retrying after ${retryAfter}s (attempt ${retryCount + 1}/2)`,
+          )
+          return true
+        }
+        console.error(
+          `[Cody] Secondary rate limit hit ${retryCount + 1} times, giving up to avoid token ban`,
+        )
+        return false
       },
     },
   })
 
   return octokitInstance as ThrottledOctokit
+}
+
+/**
+ * Create a per-request Octokit instance for a user's GitHub token.
+ * Used for write operations so they appear under the user's identity.
+ * Does NOT cache — each call creates a fresh instance.
+ */
+export function createUserOctokit(token: string): Octokit {
+  const MyOctokit = Octokit.plugin(throttling)
+  return new MyOctokit({
+    auth: token,
+    throttle: {
+      onRateLimit: (retryAfter, _options, _octokit) => {
+        if (_options.request?.headers?.['x-octokit-retry-count'] === 0) {
+          console.warn(`[Cody/User] Rate limited, retrying after ${retryAfter}s`)
+          return true
+        }
+        console.error(`[Cody/User] Rate limit hit twice, giving up`)
+        return false
+      },
+      onSecondaryRateLimit: (retryAfter, _options, _octokit) => {
+        console.warn(`[Cody/User] Secondary rate limit, retrying after ${retryAfter}s`)
+        return true
+      },
+    },
+  })
 }
 
 // ============ Branch Discovery ============
@@ -205,21 +278,53 @@ export async function findBranchByIssueNumber(
  * - Derives `currentStage` from stages data if not set (finds the running stage)
  * - Maps `cursor` field to `currentStage` as fallback
  */
-function normalizePipelineStatus(status: CodyPipelineStatus): CodyPipelineStatus {
+export function normalizePipelineStatus(status: CodyPipelineStatus): CodyPipelineStatus {
   let currentStage = status.currentStage
 
   // If currentStage is not set, derive it from stages data
   if (!currentStage && status.stages) {
-    // Find the stage that is currently running
-    const runningEntry = Object.entries(status.stages).find(([, data]) => data.state === 'running')
+    const stageEntries = Object.entries(status.stages)
+
+    // 1. Find a stage that is currently running
+    const runningEntry = stageEntries.find(([, data]) => data.state === 'running')
     if (runningEntry) {
       currentStage = runningEntry[0]
     }
-    // If no running stage but pipeline is paused, find the paused stage
-    if (!currentStage && status.state === 'paused') {
-      const pausedEntry = Object.entries(status.stages).find(([, data]) => data.state === 'paused')
+
+    // 2. Find a paused stage (pipeline gated)
+    if (!currentStage) {
+      const pausedEntry = stageEntries.find(([, data]) => data.state === 'paused')
       if (pausedEntry) {
         currentStage = pausedEntry[0]
+      }
+    }
+
+    // 3. Derive from stage completion: walk ALL_STAGES in order,
+    //    find the first stage with data that is NOT completed/skipped (= where we are now).
+    //    Stages without data entries are skipped (they may not be tracked).
+    if (!currentStage) {
+      for (const stage of ALL_STAGES) {
+        const data = status.stages[stage]
+        if (!data) continue // Stage not tracked — skip
+        if (data.state !== 'completed' && data.state !== 'skipped') {
+          // This stage hasn't finished — it's the current position
+          currentStage = stage
+          break
+        }
+      }
+    }
+
+    // 4. If ALL known stages are completed/skipped, use the last completed stage
+    if (!currentStage && stageEntries.length > 0) {
+      let lastCompleted: string | null = null
+      for (const stage of ALL_STAGES) {
+        const data = status.stages[stage]
+        if (data && (data.state === 'completed' || data.state === 'skipped')) {
+          lastCompleted = stage
+        }
+      }
+      if (lastCompleted) {
+        currentStage = lastCompleted
       }
     }
   }
@@ -555,6 +660,7 @@ export async function fetchWorkflowRuns(options?: {
     updated_at: run.updated_at,
     html_url: run.html_url,
     display_title: (run as any).display_title ?? '',
+    head_branch: (run as any).head_branch ?? undefined,
   }))
 
   setCache(cacheKey, CACHE_TTL.pipeline, runs)
@@ -937,8 +1043,8 @@ export async function fetchPRFileChanges(prNumber: number): Promise<FileChange[]
 /**
  * Close a PR (without merging)
  */
-export async function closePR(prNumber: number): Promise<void> {
-  const octokit = getOctokit()
+export async function closePR(prNumber: number, userOctokit?: Octokit): Promise<void> {
+  const octokit = userOctokit ?? getOctokit()
 
   await octokit.pulls.update({
     owner: GITHUB_OWNER,
@@ -947,21 +1053,21 @@ export async function closePR(prNumber: number): Promise<void> {
     state: 'closed',
   })
 
-  // Invalidate PR cache
-  cache.clear()
+  // Invalidate PR cache only
+  invalidatePRCache()
 }
 
 /**
  * Delete a branch
  */
-export async function deleteBranch(branchName: string): Promise<void> {
+export async function deleteBranch(branchName: string, userOctokit?: Octokit): Promise<void> {
   // Don't delete protected branches
   if (branchName === 'dev' || branchName === 'main' || branchName === 'master') {
     console.log(`[Cody] Skipping deletion of protected branch: ${branchName}`)
     return
   }
 
-  const octokit = getOctokit()
+  const octokit = userOctokit ?? getOctokit()
 
   try {
     await octokit.git.deleteRef({
@@ -979,8 +1085,9 @@ export async function deleteBranch(branchName: string): Promise<void> {
     throw error
   }
 
-  // Invalidate cache
-  cache.clear()
+  // Invalidate branch and task caches
+  invalidateBranchCache()
+  invalidateTaskCache()
 }
 
 /**
@@ -1146,8 +1253,12 @@ export async function fetchMilestones(): Promise<
 /**
  * Post a comment on an issue
  */
-export async function postComment(issueNumber: number, body: string): Promise<void> {
-  const octokit = getOctokit()
+export async function postComment(
+  issueNumber: number,
+  body: string,
+  userOctokit?: Octokit,
+): Promise<void> {
+  const octokit = userOctokit ?? getOctokit()
 
   await octokit.issues.createComment({
     owner: GITHUB_OWNER,
@@ -1163,13 +1274,16 @@ export async function postComment(issueNumber: number, body: string): Promise<vo
 /**
  * Trigger workflow dispatch
  */
-export async function triggerWorkflow(options: {
-  taskId: string
-  mode?: string
-  fromStage?: string
-  feedback?: string
-}): Promise<void> {
-  const octokit = getOctokit()
+export async function triggerWorkflow(
+  options: {
+    taskId: string
+    mode?: string
+    fromStage?: string
+    feedback?: string
+  },
+  userOctokit?: Octokit,
+): Promise<void> {
+  const octokit = userOctokit ?? getOctokit()
 
   await octokit.actions.createWorkflowDispatch({
     owner: GITHUB_OWNER,
@@ -1188,8 +1302,8 @@ export async function triggerWorkflow(options: {
 /**
  * Cancel a workflow run
  */
-export async function cancelWorkflowRun(runId: number): Promise<void> {
-  const octokit = getOctokit()
+export async function cancelWorkflowRun(runId: number, userOctokit?: Octokit): Promise<void> {
+  const octokit = userOctokit ?? getOctokit()
 
   await octokit.actions.cancelWorkflowRun({
     owner: GITHUB_OWNER,
@@ -1203,13 +1317,16 @@ export async function cancelWorkflowRun(runId: number): Promise<void> {
 /**
  * Create a new GitHub issue
  */
-export async function createIssue(options: {
-  title: string
-  body?: string
-  labels?: string[]
-  assignees?: string[]
-}): Promise<GitHubIssue> {
-  const octokit = getOctokit()
+export async function createIssue(
+  options: {
+    title: string
+    body?: string
+    labels?: string[]
+    assignees?: string[]
+  },
+  userOctokit?: Octokit,
+): Promise<GitHubIssue> {
+  const octokit = userOctokit ?? getOctokit()
 
   const { data } = await octokit.issues.create({
     owner: GITHUB_OWNER,
@@ -1220,8 +1337,8 @@ export async function createIssue(options: {
     assignees: options.assignees,
   })
 
-  // Invalidate issues cache
-  cache.clear()
+  // Invalidate task-related caches only (not PRs, boards, etc.)
+  invalidateTaskCache()
 
   return {
     id: data.id,
@@ -1253,8 +1370,9 @@ export async function createIssue(options: {
 export async function uploadIssueAttachment(
   issueNumber: number,
   file: { name: string; content: string },
+  userOctokit?: Octokit,
 ): Promise<{ attachment_url: string; name: string }> {
-  const octokit = getOctokit() as any
+  const octokit = (userOctokit ?? getOctokit()) as any
 
   const buffer = Buffer.from(file.content, 'base64')
 
@@ -1287,8 +1405,9 @@ export async function updateIssue(
     labels?: string[]
     assignees?: string[]
   },
+  userOctokit?: Octokit,
 ): Promise<void> {
-  const octokit = getOctokit()
+  const octokit = userOctokit ?? getOctokit()
 
   await octokit.issues.update({
     owner: GITHUB_OWNER,
@@ -1301,16 +1420,20 @@ export async function updateIssue(
     assignees: options.assignees,
   })
 
-  // Invalidate cache
-  cache.clear()
+  // Invalidate task cache
+  invalidateTaskCache()
   cache.delete(`comments:${issueNumber}`)
 }
 
 /**
  * Add assignees to an issue
  */
-export async function addAssignees(issueNumber: number, assignees: string[]): Promise<void> {
-  const octokit = getOctokit()
+export async function addAssignees(
+  issueNumber: number,
+  assignees: string[],
+  userOctokit?: Octokit,
+): Promise<void> {
+  const octokit = userOctokit ?? getOctokit()
 
   await octokit.issues.addAssignees({
     owner: GITHUB_OWNER,
@@ -1319,15 +1442,19 @@ export async function addAssignees(issueNumber: number, assignees: string[]): Pr
     assignees,
   })
 
-  // Invalidate cache
-  cache.clear()
+  // Invalidate task cache
+  invalidateTaskCache()
 }
 
 /**
  * Remove assignees from an issue
  */
-export async function removeAssignees(issueNumber: number, assignees: string[]): Promise<void> {
-  const octokit = getOctokit()
+export async function removeAssignees(
+  issueNumber: number,
+  assignees: string[],
+  userOctokit?: Octokit,
+): Promise<void> {
+  const octokit = userOctokit ?? getOctokit()
 
   await octokit.issues.removeAssignees({
     owner: GITHUB_OWNER,
@@ -1336,15 +1463,19 @@ export async function removeAssignees(issueNumber: number, assignees: string[]):
     assignees,
   })
 
-  // Invalidate cache
-  cache.clear()
+  // Invalidate task cache
+  invalidateTaskCache()
 }
 
 /**
  * Add labels to an issue
  */
-export async function addLabels(issueNumber: number, labels: string[]): Promise<void> {
-  const octokit = getOctokit()
+export async function addLabels(
+  issueNumber: number,
+  labels: string[],
+  userOctokit?: Octokit,
+): Promise<void> {
+  const octokit = userOctokit ?? getOctokit()
 
   await octokit.issues.addLabels({
     owner: GITHUB_OWNER,
@@ -1353,15 +1484,19 @@ export async function addLabels(issueNumber: number, labels: string[]): Promise<
     labels,
   })
 
-  // Invalidate cache
-  cache.clear()
+  // Invalidate task cache
+  invalidateTaskCache()
 }
 
 /**
  * Remove a label from an issue
  */
-export async function removeLabel(issueNumber: number, label: string): Promise<void> {
-  const octokit = getOctokit()
+export async function removeLabel(
+  issueNumber: number,
+  label: string,
+  userOctokit?: Octokit,
+): Promise<void> {
+  const octokit = userOctokit ?? getOctokit()
 
   await octokit.issues.removeLabel({
     owner: GITHUB_OWNER,
@@ -1370,8 +1505,8 @@ export async function removeLabel(issueNumber: number, label: string): Promise<v
     name: label,
   })
 
-  // Invalidate cache
-  cache.clear()
+  // Invalidate task cache
+  invalidateTaskCache()
 }
 
 /**
@@ -1406,6 +1541,31 @@ export async function fetchCollaborators(): Promise<GitHubCollaborator[]> {
  */
 export function clearCache(): void {
   cache.clear()
+}
+
+/**
+ * Clear specific cache categories
+ */
+export function clearCacheByCategory(
+  category: 'all' | 'tasks' | 'prs' | 'boards' | 'branches',
+): void {
+  switch (category) {
+    case 'all':
+      cache.clear()
+      break
+    case 'tasks':
+      invalidateTaskCache()
+      break
+    case 'prs':
+      invalidatePRCache()
+      break
+    case 'boards':
+      invalidateBoardCache()
+      break
+    case 'branches':
+      invalidateBranchCache()
+      break
+  }
 }
 
 /**
