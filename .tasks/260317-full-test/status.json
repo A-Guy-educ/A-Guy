@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-17T22:05:32.090Z",
-  "updatedAt": "2026-03-17T22:06:15.537Z",
+  "updatedAt": "2026-03-17T22:07:23.092Z",
   "state": "running",
   "cursor": null,
   "stages": {
@@ -38,13 +38,23 @@
       "skipped": "Complexity 20 (moderate) below threshold 50 for plan-gap"
     },
     "build": {
-      "state": "running",
+      "state": "completed",
       "retries": 0,
-      "startedAt": "2026-03-17T22:06:15.417Z"
+      "startedAt": "2026-03-17T22:06:15.417Z",
+      "completedAt": "2026-03-17T22:07:07.450Z",
+      "elapsed": 52,
+      "outputFile": "build.md",
+      "tokenUsage": {
+        "input": 6,
+        "output": 1594,
+        "cacheRead": 116868
+      },
+      "sessionId": "ses_3022a2811ffeI0MV1GjTtPTwxe"
     },
     "commit": {
-      "state": "pending",
-      "retries": 0
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-17T22:07:23.092Z"
     },
     "review": {
       "state": "pending",
@@ -62,6 +72,5 @@
       "state": "pending",
       "retries": 0
     }
-  },
-  "branchName": "feat/260317-full-hello"
+  }
 }
