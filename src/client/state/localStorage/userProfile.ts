@@ -33,6 +33,10 @@ export const setUserProfile = (profile: LocalUserProfile): void => {
   if (typeof window === 'undefined') return
   try {
     localStorage.setItem(STORAGE_KEYS.USER_PROFILE, JSON.stringify(profile))
+    // Mirror grade to cookie so middleware can rewrite /study → /study/[grade]
+    if (profile.gradeLevel) {
+      document.cookie = `a-guy-grade=${encodeURIComponent(profile.gradeLevel)};path=/;max-age=${60 * 60 * 24 * 365};samesite=lax`
+    }
   } catch (error) {
     console.error('Failed to save user profile to localStorage:', error)
   }

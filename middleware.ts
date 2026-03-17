@@ -68,6 +68,17 @@ export function middleware(request: NextRequest) {
   const mediaRedirect = handleMediaRedirect(request)
   if (mediaRedirect) return mediaRedirect
 
+  // Rewrite /study → /study/[grade] using cookie so the pre-rendered ISR page is served
+  // while keeping the clean /study URL in the browser
+  if (pathname === '/study') {
+    const grade = request.cookies.get('a-guy-grade')?.value
+    if (grade) {
+      const url = request.nextUrl.clone()
+      url.pathname = `/study/${grade}`
+      return NextResponse.rewrite(url)
+    }
+  }
+
   // Exclude paths from locale handling (double safety, even though matcher already excludes many)
   const shouldExclude =
     pathname.startsWith('/admin') ||
