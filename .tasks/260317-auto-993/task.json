@@ -1,0 +1,41 @@
+{
+  "task_type": "research",
+  "risk_level": "medium",
+  "confidence": 0.7,
+  "primary_domain": "devops",
+  "scope": [
+    "Investigate build stage failure in task 260316-auto-648",
+    "Analyze pipeline code in scripts/cody/",
+    "Identify root cause of repeated build failures",
+    "Propose fix for pipeline code"
+  ],
+  "missing_inputs": [
+    {
+      "field": "build_artifacts",
+      "question": "The task description says no build.md or verify output is available. What are the actual error logs from the build stage (build-stderr.log, build-events.jsonl) that caused the failure?"
+    },
+    {
+      "field": "failing_task_context",
+      "question": "What specific code changes was task 260316-auto-648 attempting to implement? The original issue #822 references a QA implementation plan - what was the actual code being built?"
+    }
+  ],
+  "assumptions": [
+    "The pipeline code exists in scripts/cody/ and handles the build stage",
+    "The build stage is failing due to some issue in how the pipeline processes tasks",
+    "This is a reproducible issue since it failed 3 times with the same error"
+  ],
+  "review_questions": [
+    "Is this a task-specific code issue or a general pipeline infrastructure bug?",
+    "Should the fix target the build agent code, the pipeline orchestration, or the task specification itself?",
+    "What is the actual error message from the build stage that we need to debug?"
+  ],
+  "complexity": 41,
+  "complexity_reasoning": "Scope: 10 (investigate pipeline code, identify root cause), Risk: 10 (modifying pipeline infrastructure), Novelty: 5 (investigating existing bugs, not new features), Cross-Domain: 3 (devops only), Ambiguity: 8 (vague failure - no actual error logs available), Dependencies: 5 (depends on understanding build stage code). Total: 41",
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Task describes a vague debugging scenario - build stage failing 3 times with no actual error logs available. The task lacks critical debugging information needed to diagnose the issue. This is a research task that requires more investigation to understand the actual failure."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_only"
+}

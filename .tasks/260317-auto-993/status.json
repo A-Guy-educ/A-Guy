@@ -1,0 +1,37 @@
+{
+  "version": 2,
+  "taskId": "260317-auto-993",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-17T14:05:51.498Z",
+  "updatedAt": "2026-03-17T14:08:36.228Z",
+  "state": "paused",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "paused",
+      "retries": 0,
+      "startedAt": "2026-03-17T14:05:53.205Z",
+      "completedAt": "2026-03-17T14:08:26.929Z",
+      "elapsed": 154,
+      "outputFile": "taskify.md",
+      "tokenUsage": {
+        "input": 12387,
+        "output": 3046,
+        "cacheRead": 360746
+      },
+      "sessionId": "ses_303e1e927ffe0cqW6z4Vf0EOIc"
+    }
+  },
+  "issueNumber": 858,
+  "triggeredBy": "aguyaharonyair",
+  "issueCreator": "github-actions[bot]",
+  "actorHistory": [
+    {
+      "action": "pipeline-triggered",
+      "actor": "aguyaharonyair",
+      "timestamp": "2026-03-17T14:05:51.498Z"
+    }
+  ],
+  "completedAt": "2026-03-17T14:08:36.228Z"
+}
