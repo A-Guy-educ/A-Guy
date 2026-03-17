@@ -443,7 +443,15 @@ describe('Pathname Builder', () => {
   })
 })
 
-describe('Media Upload with File', () => {
+// Check token validity outside describe - skip entire describe if no valid token
+// Real Vercel tokens are 60+ chars
+const blobToken = process.env.BLOB_READ_WRITE_TOKEN
+const shouldRunMedia = blobToken && blobToken.length > 60 && blobToken.startsWith('vercel_blob_rw_')
+
+// Use conditional describe pattern
+const mediaUploadDescribe = shouldRunMedia ? describe : describe.skip
+
+mediaUploadDescribe('Media Upload with File', () => {
   /**
    * Create a minimal valid JPEG buffer for testing
    */

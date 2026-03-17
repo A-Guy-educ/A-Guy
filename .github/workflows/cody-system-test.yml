@@ -1,0 +1,201 @@
+# Cody System Test - End-to-end test of the full Cody pipeline
+name: cody-system-test
+
+on:
+  workflow_dispatch:
+    inputs:
+      scenarios:
+        description: 'Scenario names (comma-separated) or "all"'
+        type: string
+        default: 'all'
+      cleanup:
+        description: 'Cleanup test artifacts'
+        type: boolean
+        default: true
+
+# Only one system test at a time
+concurrency:
+  group: cody-system-test
+  cancel-in-progress: true
+
+permissions:
+  issues: write
+  pull-requests: write
+  contents: write
+  actions: write
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      run_id: ${{ steps.setup.outputs.run_id }}
+      version_branch: ${{ steps.setup.outputs.version_branch }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate run ID
+        id: setup
+        run: |
+          RUN_ID=$(date +%s)
+          echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
+          echo "Branch will be: systest/$RUN_ID"
+
+      - name: Create version branch with cheap models
+        run: |
+          RUN_ID=${{ steps.setup.outputs.run_id }}
+          BRANCH="systest/$RUN_ID"
+
+          # Create branch
+          git checkout -b "$BRANCH"
+
+          # Use jq to modify opencode.json - minimax for most, opus for critical stages
+          # First, set all to minimax
+          jq '.agent |= with_entries(.value.model = "minimax-coding-plan/MiniMax-M2.5")' opencode.json > tmp.json
+          mv tmp.json opencode.json
+
+          # Then override critical stages to use opus
+          jq '.agent.architect.model = "anthropic/claude-opus-4-6" | 
+              .agent.review.model = "anthropic/claude-opus-4-6" | 
+              .agent["plan-gap"].model = "anthropic/claude-opus-4-6"' opencode.json > tmp.json
+          mv tmp.json opencode.json
+
+          # Commit
+          git add opencode.json
+          git commit -m "chore: system test model override" || true
+          git push -u origin "$BRANCH" --force
+
+          echo "version_branch=$BRANCH" >> $GITHUB_OUTPUT
+
+  scenario-02:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    needs: setup
+    continue-on-error: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Configure git
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      - name: Run scenario
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          REPO: ${{ github.repository }}
+        run: |
+          pnpm tsx scripts/system-test/run-scenario.ts \
+            --scenario 02-full-high-complexity \
+            --repo "$REPO" \
+            --run-id "${{ needs.setup.outputs.run_id }}" \
+            --version-branch "${{ needs.setup.outputs.version_branch }}"
+
+      - name: Upload result artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: scenario-result-02
+          path: system-test-result-*.json
+          retention-days: 7
+
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [setup, scenario-02]
+    if: always()
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: scenario-result-*
+          path: results
+
+      - name: Generate report
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          GITHUB_STEP_SUMMARY: ${{ env.GITHUB_STEP_SUMMARY }}
+        run: |
+          # Check if results exist
+          if [ ! -d results ] || [ -z "$(ls -A results)" ]; then
+            echo "No results found" >> $GITHUB_STEP_SUMMARY
+            echo "## 🧪 Cody System Test" >> $GITHUB_STEP_SUMMARY
+            echo "No scenario results found" >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+
+          # Run report script
+          pnpm tsx scripts/system-test/report-results.ts --results-dir results || true
+
+          # Check for failures
+          FAILED=$(grep -l "false" results/*.json 2>/dev/null | wc -l || echo "0")
+          if [ "$FAILED" -gt "0" ]; then
+            echo ""
+            echo "⚠️ $FAILED scenario(s) failed"
+            # Send Slack notification if webhook is configured
+            if [ -n "$SLACK_WEBHOOK_URL" ]; then
+              echo "Sending Slack notification..."
+              # Slack notification would go here
+            fi
+            exit 1
+          fi
+
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [setup, scenario-02]
+    if: always() && (needs.scenario-02.outputs.cleanup != 'false')
+    steps:
+      - name: Cleanup
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          REPO: ${{ github.repository }}
+        run: |
+          # Run cleanup
+          pnpm tsx scripts/system-test/cleanup-all.ts \
+            --repo "$REPO" \
+            --run-id "${{ needs.setup.outputs.run_id }}" || true
+
+          # Delete version branch
+          BRANCH="${{ needs.setup.outputs.version_branch }}"
+          if [ -n "$BRANCH" ]; then
+            echo "Deleting branch $BRANCH"
+            git push -u origin --delete "$BRANCH" || true
+          fi

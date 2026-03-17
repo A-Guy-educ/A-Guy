@@ -694,20 +694,20 @@ describe('entry.ts impl-mode complexity override', () => {
     expect(taskDef.complexity_reasoning).toBe('Override via --complexity=42')
   })
 
-  it('override does NOT apply when taskDef already has complexity', () => {
+  it('override DOES apply even when taskDef already has complexity (new behavior)', () => {
     const taskDef = createTaskDef('implement_feature', 'medium', 75)
     expect(taskDef.complexity).toBe(75)
 
-    // Simulate the entry.ts logic (line 370)
+    // Simulate the NEW entry.ts logic (override always applies)
     const complexityOverride = 10
-    if (complexityOverride !== undefined && taskDef.complexity === undefined) {
+    if (complexityOverride !== undefined) {
       taskDef.complexity = complexityOverride
       taskDef.complexity_reasoning = `Override via --complexity=${complexityOverride}`
     }
 
-    // Original preserved
-    expect(taskDef.complexity).toBe(75)
-    expect(taskDef.complexity_reasoning).toBe('Test complexity: 75')
+    // Override replaces original
+    expect(taskDef.complexity).toBe(10)
+    expect(taskDef.complexity_reasoning).toBe('Override via --complexity=10')
   })
 
   it('M3 fix: override does NOT apply when taskDef.complexity is a falsy number (edge case)', () => {

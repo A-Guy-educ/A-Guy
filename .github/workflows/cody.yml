@@ -53,6 +53,11 @@ on:
         required: false
         type: string
         default: ''
+      complexity:
+        description: 'Override complexity score (1-100) for testing'
+        required: false
+        type: string
+        default: ''
 
   push:
     branches:
@@ -110,6 +115,7 @@ jobs:
       comment_body: ${{ steps.parse.outputs.comment_body }}
       runner: ${{ steps.parse.outputs.runner }}
       version: ${{ steps.parse.outputs.version }}
+      complexity: ${{ steps.parse.outputs.complexity }}
       fresh: ${{ steps.parse.outputs.fresh }}
     steps:
       - name: Checkout repository
@@ -169,6 +175,7 @@ jobs:
           DISPATCH_CLARIFY: ${{ github.event.inputs.clarify }}
           DISPATCH_RUNNER: ${{ github.event.inputs.runner }}
           DISPATCH_VERSION: ${{ github.event.inputs.version }}
+          DISPATCH_COMPLEXITY: ${{ github.event.inputs.complexity }}
           # Comment inputs (for orchestrator to parse)
           COMMENT_BODY: ${{ github.event.comment.body }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
@@ -438,6 +445,7 @@ jobs:
           TRIGGER_TYPE: ${{ needs.parse.outputs.trigger_type }}
           COMMENT_BODY: ${{ needs.parse.outputs.comment_body }}
           VERSION: ${{ needs.parse.outputs.version }}
+          COMPLEXITY: ${{ needs.parse.outputs.complexity }}
           IS_PULL_REQUEST: ${{ needs.parse.outputs.is_pull_request }}
 
           # GitHub context
