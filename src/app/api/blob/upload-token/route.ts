@@ -108,7 +108,6 @@ export async function POST(request: Request): Promise<Response> {
         })
 
         return {
-          pathname: finalPathname,
           allowedContentTypes: [clientPayload.contentType],
           maximumSizeInBytes: CHAT_ASSET_MAX_BYTES,
           validUntil: expiresAt.getTime(),
