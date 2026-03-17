@@ -1,9 +1,3 @@
-/**
- * @fileType scenario
- * @domain cody | cody-cli-test
- * @ai-summary Status mode CLI test - verifies status command works
- */
-
 import { mkdirSync, writeFileSync, rmSync, existsSync } from 'fs'
 import { join } from 'path'
 import { runCodyCli, assertCliSuccess, createTestLogger } from '../lib'
@@ -13,72 +7,57 @@ const SCENARIO_TASK_ID = '250101-cli-test-status'
 
 export const statusModeScenario: CliScenario = {
   name: '01-status-mode',
-  description: 'Test that --mode=status works with a valid task',
+  description: 'Test --mode=status with valid task',
   timeoutMs: 2 * 60 * 1000,
-
   async run(ctx: CliScenarioContext): Promise<CliScenarioResult> {
     const startTime = Date.now()
     const assertions: CliScenarioResult['assertions'] = []
-    const log = createTestLogger('status-mode-scenario')
+    const log = createTestLogger('status-mode')
     const taskDir = join(ctx.workingDir, '.tasks', SCENARIO_TASK_ID)
-
     try {
-      log.info('Creating task directory with status.json...')
+      log.info('Creating task dir...')
       mkdirSync(taskDir, { recursive: true })
-      const statusJson = {
-        taskId: SCENARIO_TASK_ID,
-        state: 'completed',
-        mode: 'full',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        stages: {
-          taskify: { state: 'completed', startedAt: new Date().toISOString(), elapsed: 1000 },
-        },
-        cost: 0.15,
-      }
-      writeFileSync(join(taskDir, 'status.json'), JSON.stringify(statusJson, null, 2))
-      assertions.push({ name: 'Created task directory with status.json', passed: true })
-
-      log.info('Running CLI with --mode=status...')
+      writeFileSync(
+        join(taskDir, 'status.json'),
+        JSON.stringify(
+          {
+            taskId: SCENARIO_TASK_ID,
+            state: 'completed',
+            stages: { taskify: { state: 'completed' } },
+          },
+          null,
+          2,
+        ),
+      )
+      assertions.push({ name: 'Created task dir', passed: true })
       const result = runCodyCli(['--task-id', SCENARIO_TASK_ID, '--mode', 'status', '--local'], {
         cwd: ctx.workingDir,
       })
-
       try {
-        assertCliSuccess(result, 'Status mode should succeed')
-        assertions.push({ name: 'CLI exited successfully', passed: true })
-      } catch (error) {
-        assertions.push({ name: 'CLI exited successfully', passed: false, detail: String(error) })
+        assertCliSuccess(result, 'Status')
+        assertions.push({ name: 'CLI ok', passed: true })
+      } catch (e) {
+        assertions.push({ name: 'CLI ok', passed: false, detail: String(e) })
       }
-
-      const output = result.stdout + result.stderr
-      if (output.includes(SCENARIO_TASK_ID))
-        assertions.push({ name: 'Output contains task ID', passed: true })
-      else
-        assertions.push({
-          name: 'Output contains task ID',
-          passed: false,
-          detail: 'Task ID not found',
-        })
-
+      const out = result.stdout + result.stderr
+      assertions.push({ name: 'Output has task ID', passed: out.includes(SCENARIO_TASK_ID) })
       return {
         name: this.name,
         passed: assertions.every((a) => a.passed),
         duration: Date.now() - startTime,
         assertions,
       }
-    } catch (error) {
+    } catch (e) {
       return {
         name: this.name,
         passed: false,
         duration: Date.now() - startTime,
         assertions,
-        error: error instanceof Error ? error.message : String(error),
+        error: String(e),
       }
     } finally {
       if (existsSync(taskDir)) rmSync(taskDir, { recursive: true, force: true })
     }
   },
 }
-
 export default statusModeScenario

@@ -1,0 +1,36 @@
+INFO  2026-03-17T22:07:07 +367ms service=default version=1.2.27 args=["export","ses_3022a2811ffeI0MV1GjTtPTwxe"] opencode
+INFO  2026-03-17T22:07:07 +0ms service=default directory=/Users/aguy/projects/A-Guy creating instance
+INFO  2026-03-17T22:07:07 +1ms service=project directory=/Users/aguy/projects/A-Guy fromDirectory
+INFO  2026-03-17T22:07:07 +121ms service=db path=/Users/aguy/projects/A-Guy/.tasks/260317-full-test/opencode-data/opencode/opencode.db opening database
+INFO  2026-03-17T22:07:07 +9ms service=db count=9 mode=bundled applying migrations
+INFO  2026-03-17T22:07:07 +7ms service=default directory=/Users/aguy/projects/A-Guy bootstrapping
+INFO  2026-03-17T22:07:07 +6ms service=config path=/Users/aguy/.config/opencode/config.json loading
+INFO  2026-03-17T22:07:07 +2ms service=config path=/Users/aguy/.config/opencode/opencode.json loading
+INFO  2026-03-17T22:07:07 +0ms service=config path=/Users/aguy/.config/opencode/opencode.jsonc loading
+INFO  2026-03-17T22:07:07 +4ms service=config path=/Users/aguy/projects/A-Guy/.opencode/opencode.jsonc loading
+INFO  2026-03-17T22:07:07 +0ms service=config path=/Users/aguy/projects/A-Guy/.opencode/opencode.json loading
+INFO  2026-03-17T22:07:07 +9ms service=config path=/Users/aguy/.opencode/opencode.jsonc loading
+INFO  2026-03-17T22:07:07 +0ms service=config path=/Users/aguy/.opencode/opencode.json loading
+INFO  2026-03-17T22:07:07 +3ms service=plugin name=CodexAuthPlugin loading internal plugin
+INFO  2026-03-17T22:07:07 +0ms service=plugin name=CopilotAuthPlugin loading internal plugin
+INFO  2026-03-17T22:07:07 +0ms service=plugin name=gitlabAuthPlugin loading internal plugin
+INFO  2026-03-17T22:07:07 +0ms service=plugin path=opencode-anthropic-auth@0.0.13 loading plugin
+INFO  2026-03-17T22:07:07 +11ms service=bus type=* subscribing
+INFO  2026-03-17T22:07:07 +0ms service=bus type=session.updated subscribing
+INFO  2026-03-17T22:07:07 +0ms service=bus type=message.updated subscribing
+INFO  2026-03-17T22:07:07 +0ms service=bus type=message.part.updated subscribing
+INFO  2026-03-17T22:07:07 +0ms service=bus type=session.diff subscribing
+INFO  2026-03-17T22:07:07 +0ms service=format init
+INFO  2026-03-17T22:07:07 +0ms service=bus type=file.edited subscribing
+INFO  2026-03-17T22:07:07 +0ms service=lsp serverIds=deno, typescript, vue, eslint, oxlint, biome, gopls, ruby-lsp, pyright, elixir-ls, zls, csharp, fsharp, sourcekit-lsp, rust, clangd, svelte, astro, jdtls, kotlin-ls, yaml-ls, lua-ls, php intelephense, prisma, dart, ocaml-lsp, bash, terraform, texlab, dockerfile, gleam, clojure-lsp, nixd, tinymist, haskell-language-server, julials enabled LSP servers
+INFO  2026-03-17T22:07:07 +1ms service=file.watcher init
+INFO  2026-03-17T22:07:07 +1ms service=scheduler id=snapshot.cleanup run
+INFO  2026-03-17T22:07:07 +1ms service=scheduler id=tool.truncation.cleanup run
+INFO  2026-03-17T22:07:07 +1ms service=bus type=command.executed subscribing
+INFO  2026-03-17T22:07:07 +0ms service=file.watcher platform=darwin backend=fs-events watcher backend
+INFO  2026-03-17T22:07:07 +132ms service=default directory=/Users/aguy/projects/A-Guy disposing instance
+INFO  2026-03-17T22:07:07 +0ms service=state key=/Users/aguy/projects/A-Guy waiting for state disposal to complete
+INFO  2026-03-17T22:07:07 +2ms service=vcs branch=feat/260317-full-hello initialized
+INFO  2026-03-17T22:07:07 +0ms service=bus type=file.watcher.updated subscribing
+INFO  2026-03-17T22:07:07 +0ms service=bus type=file.watcher.updated unsubscribing
+INFO  2026-03-17T22:07:07 +52ms service=state key=/Users/aguy/projects/A-Guy state disposal completed

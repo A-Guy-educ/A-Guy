@@ -85,6 +85,7 @@ async function main(): Promise<void> {
   registry.register(apiSurfaceAuditorPlugin)
   registry.register(systemTestPlugin)
   registry.register(cliTestPlugin)
+  registry.register(cliTestPlugin)
 
   // Validate critical plugin ordering:
   // health-check MUST run before pipeline-fixer and queue-manager since they

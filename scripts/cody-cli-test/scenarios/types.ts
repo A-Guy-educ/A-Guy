@@ -1,7 +1,6 @@
 /**
  * @fileType types
  * @domain cody | cody-cli-test
- * @ai-summary Type definitions for Cody CLI system test
  */
 
 export interface CliScenarioContext {
@@ -27,13 +26,11 @@ export interface CliScenario {
   timeoutMs: number
   run: (ctx: CliScenarioContext) => Promise<CliScenarioResult>
 }
-
 export interface CliAssertion {
   name: string
   passed: boolean
   detail?: string
 }
-
 export interface CliScenarioResult {
   name: string
   passed: boolean
