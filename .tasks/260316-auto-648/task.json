@@ -4,37 +4,38 @@
   "confidence": 0.95,
   "primary_domain": "infra",
   "scope": [
-    "next.config.js - Security headers with split CSP",
-    "src/app/(frontend)/error.tsx - New error boundary",
-    "src/infra/config/env-validation.ts - New env validation",
-    "instrumentation.ts - Hook in env validation",
-    "E2E test helpers - Cherry-pick commit",
-    "Cody API error utility - Add Sentry",
-    "6 non-Cody API routes - Add captureAndRespond",
-    "4 high-traffic routes - Migrate to withApiHandler",
-    "4 remaining API routes - Add Zod validation",
-    ".github/workflows/ci.yml - Add coverage",
-    "vitest.config.unit.mts - Add coverage config",
-    "src/infra/instrumentation-client.ts - Add browserTracingIntegration"
+    "next.config.js - security headers with split CSP",
+    "src/app/(frontend)/error.tsx - create error boundary",
+    "src/infra/config/env-validation.ts - create env validation",
+    "instrumentation.ts - hook in validation",
+    "Cody API error utility - add Sentry capture",
+    "6 non-Cody routes - add captureAndRespond",
+    "4 high-traffic routes - migrate to withApiHandler",
+    "4 remaining POST routes - add Zod validation",
+    ".github/workflows/ci.yml - add coverage",
+    "vitest.config.unit.mts - add coverage config",
+    "instrumentation-client.ts - add browserTracingIntegration"
   ],
   "missing_inputs": [],
   "assumptions": [
-    "The withApiHandler utility exists and can be reused",
-    "The handleCodyApiError utility exists in the codebase",
-    "Cherry-pick of commit 9631fe7b will succeed or be manually resolvable",
-    "CSP directives for Payload admin panel are correct (unsafe-eval, unsafe-inline)"
+    "Cherry-pick commit 9631fe7b will succeed or conflicts can be resolved",
+    "handleCodyApiError utility exists and can be found in codebase",
+    "withApiHandler utility exists and can be used for migration",
+    "Sentry is already configured in the project"
   ],
   "review_questions": [
-    "Should E2E cherry-pick be done manually if conflicts arise?",
-    "Are the CSP directives correctly configured for both frontend and admin routes?",
-    "Should coverage thresholds be enforced now or remain permissive for visibility?"
+    "Should the E2E cherry-pick be done first to have test helpers available for verification?",
+    "Are there any existing env validation patterns in the codebase to follow?",
+    "Should coverage thresholds be enforced or just visible initially?"
   ],
-  "complexity": 68,
-  "complexity_reasoning": "Scope: 20+ files across 3 phases (22 pts). Risk: Security headers + infrastructure changes (16 pts). Novelty: Following existing patterns with minor variations (8 pts). Cross-domain: Backend + Frontend + DevOps (10 pts). Ambiguity: Clear requirements with file paths (2 pts). Dependencies: Multi-phase implementation with some dependencies (6 pts). Total: 64 (rounded to 68 for conservative estimate)",
+  "complexity": 64,
+  "complexity_reasoning": "Scope: 20+ files across 3 phases (20pts). Risk: High - security headers, infrastructure, CI changes (15pts). Novelty: Mix of new and existing patterns (10pts). Cross-Domain: Backend + Frontend + Infra + DevOps (12pts). Ambiguity: Very detailed spec (2pts). Dependencies: Sentry, external configs (5pts). Total: 64",
   "input_quality": {
-    "level": "spec_and_plan",
-    "skip_stages": [],
-    "reasoning": "Input contains ## Background with audit summary table, clear ## Phase sections with specific file paths and implementation details, and ## Files Modified section listing all changes. Has both structured requirements and step-by-step implementation plan with exact file paths."
+    "level": "detailed_plan",
+    "skip_stages": [
+      "architect"
+    ],
+    "reasoning": "Input contains step-by-step implementation phases with file paths and specific changes. Missing formal ## Requirements and ## Acceptance Criteria sections, so promoted to detailed_plan (not spec_and_plan). Skipping architect stage as plan is already detailed."
   },
   "pipeline_profile": "standard",
   "pipeline": "spec_execute_verify"

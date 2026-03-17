@@ -2,137 +2,94 @@
 
 ## Overview
 
-This specification covers Critical and High Priority items from the QA audit. The goal is to improve security headers, error handling, environment validation, test coverage, and monitoring across the application.
+This plan implements Critical and High Priority items from a QA security and quality audit. The implementation covers 8 main areas across 3 phases, focusing on security headers, error handling, environment validation, Sentry coverage, Zod validation, CI coverage enforcement, and Web Vitals tracking.
 
-## Requirements
+## Critical Items (Phase 1)
 
-### Phase 1: Critical Items
-
-#### 1. Security Headers (next.config.js)
+### 1. Security Headers — next.config.js
 
 Add `async headers()` function with split CSP strategy:
-
 - **All routes (`/*`)**: Strict CSP (self, Vercel Blob, YouTube, Sentry tunnel, unsafe-inline for styles)
 - **Admin routes (`/admin/*`)**: Permissive CSP (unsafe-eval, unsafe-inline — required by Payload admin panel)
 
-Headers to add for all routes:
-- `Content-Security-Policy`
-- `X-Frame-Options: DENY`
-- `Strict-Transport-Security: max-age=31536000; includeSubDomains`
-- `X-Content-Type-Options: nosniff`
-- `Referrer-Policy: strict-origin-when-cross-origin`
-- `Permissions-Policy: camera=(), microphone=(), geolocation=()`
-- `X-DNS-Prefetch-Control: on`
+Headers for all routes:
+- Content-Security-Policy
+- X-Frame-Options: DENY
+- Strict-Transport-Security: max-age=31536000; includeSubDomains
+- X-Content-Type-Options: nosniff
+- Referrer-Policy: strict-origin-when-cross-origin
+- Permissions-Policy: camera=(), microphone=(), geolocation=()
+- X-DNS-Prefetch-Control: on
 
-#### 2. Frontend Error Boundary
+### 2. Frontend Error Boundary
 
-Create new file `src/app/(frontend)/error.tsx`:
+Create `src/app/(frontend)/error.tsx`:
+- 'use client' directive
+- useEffect → Sentry.captureException(error)
+- Locale-aware text (Hebrew/English)
+- "Try again" button calling reset()
+- Tailwind styling
 
-- `'use client'` directive
-- `useEffect` → `Sentry.captureException(error)`
-- Locale-aware text (Hebrew/English via `navigator.language`)
-- "Try again" button calling `reset()`
-- Tailwind styling consistent with design system
+### 3. Environment Variable Validation
 
-Reference: `src/app/global-error.tsx`, `src/app/(cody)/cody/error.tsx`
+Create `src/infra/config/env-validation.ts` with Zod schema:
+- **Required**: DATABASE_URL, PAYLOAD_SECRET, BLOB_READ_WRITE_TOKEN
+- **Optional (warn)**: SENTRY_DSN, OPENAI_API_KEY, GEMINI_API_KEY, GITHUB_TOKEN
+- **Public**: NEXT_PUBLIC_SERVER_URL, NEXT_PUBLIC_SENTRY_DSN
 
-#### 3. Environment Variable Validation
+Called from instrumentation.ts at startup.
 
-Create Zod schema for all required env vars in `src/infra/config/env-validation.ts`:
+### 4. Pre-launch E2E Tests
 
-Required env vars to validate:
-- **Server-only**: `DATABASE_URL`, `PAYLOAD_SECRET`, `BLOB_READ_WRITE_TOKEN`
-- **Optional but logged if missing**: `SENTRY_DSN`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `GITHUB_TOKEN`
-- **Public**: `NEXT_PUBLIC_SERVER_URL`, `NEXT_PUBLIC_SENTRY_DSN`
+Cherry-pick commit 9631fe7b from feat/pre-launch-e2e-verification branch.
 
-Strategy: `z.string().min(1)` for required vars. Log a warning (not throw) for optional vars.
+## Sentry Coverage (Phase 2)
 
-Modify `instrumentation.ts` to call validateEnv() in register() for nodejs runtime.
+### 5a. Cody API Error Utility
+Enhance handleCodyApiError utility with Sentry.captureException
 
-#### 4. Pre-launch E2E Tests
+### 5b. Non-Cody Routes
+Add captureAndRespond to 6 routes:
+- api/conversations/by-context
+- api/blob/upload-token
+- api/jobs/run-immediate
+- api/pdfjs-viewer
+- api/copilotkit
+- api/agent/message/persist
 
-Cherry-pick commit `9631fe7b` from `feat/pre-launch-e2e-verification` branch.
+### 5c. High-Traffic Routes
+Migrate 4 routes to withApiHandler:
+- api/agent/chat
+- api/agent/chat/stream
+- api/exercises/import
+- api/exercises/validate-answer
 
-Contains:
-- `tests/e2e/helpers/admin.ts` — exercise seeding helpers
-- `tests/e2e/helpers/exercise-builders.ts` — content builders
-- `tests/e2e/helpers/verification-fixtures.ts` — shared fixtures + loginAsStudent/loginAsAdmin
-- 8 spec files in `tests/e2e/verification/`: auth-onboarding, catalog-navigation, lesson-content, exercises, student-support, admin-content, admin-editing, admin-settings
+## Infrastructure (Phase 3)
 
-### Phase 2: Sentry Coverage
+### 6. Zod Validation
+Add Zod schemas to:
+- api/agent/conversation
+- api/agent/reset-chat
+- api/cody/tasks (POST)
+- api/cody/tasks/approve-review
 
-#### 5a. Enhance Cody API Error Utility
+### 7. CI Coverage Enforcement
+- Add --coverage flags to test:unit
+- Upload coverage report as artifact
+- Add coverage config to vitest.config.unit.mts
 
-Find the Cody API error utility (handleCodyApiError) and add `Sentry.captureException` call. This fixes all 20 Cody dashboard routes at once.
-
-#### 5b. Add captureAndRespond to Non-Cody Routes
-
-Add `import { captureAndRespond }` + replace `catch` blocks in:
-- `api/conversations/by-context`
-- `api/blob/upload-token`
-- `api/jobs/run-immediate`
-- `api/pdfjs-viewer`
-- `api/copilotkit`
-- `api/agent/message/persist`
-
-#### 5c. Migrate High-Traffic Routes to withApiHandler
-
-Full Zod schema + Sentry + structured logging via `withApiHandler`:
-- `api/agent/chat`
-- `api/agent/chat/stream`
-- `api/exercises/import`
-- `api/exercises/validate-answer`
-
-### Phase 3: Infrastructure
-
-#### 6. Zod Validation for Remaining Routes
-
-Add Zod schemas to remaining POST routes:
-1. `api/agent/conversation` — accepts `contextKey`, `exerciseId` body fields
-2. `api/agent/reset-chat` — accepts `contextKey` body field
-3. `api/cody/tasks` POST — accepts task creation params
-4. `api/cody/tasks/approve-review` — accepts PR number + task ID
-
-#### 7. CI Coverage Enforcement
-
-Changes to `.github/workflows/ci.yml`:
-1. Add `--coverage --reporter=json --reporter=html` to `pnpm test:unit` step
-2. Upload coverage report as artifact (retention-days: 7)
-
-Changes to `vitest.config.unit.mts`:
-1. Add `coverage` section with `provider: 'v8'`, thresholds at current baseline
-2. Set `reporter: ['text', 'json', 'html']`
-
-#### 8. Web Vitals Tracking
-
-Add `Sentry.browserTracingIntegration()` to `src/infra/instrumentation-client.ts` integrations array.
-
-This automatically captures:
-- LCP (Largest Contentful Paint)
-- FID / INP (Interaction to Next Paint)
-- CLS (Cumulative Layout Shift)
-- TTFB (Time to First Byte)
-- FCP (First Contentful Paint)
-
-Sampled at existing `tracesSampleRate: 0.1` (10%).
+### 8. Web Vitals Tracking
+Add Sentry.browserTracingIntegration() to instrumentation-client.ts
 
 ## Acceptance Criteria
 
-1. **Security Headers**: All routes return CSP, X-Frame-Options, HSTS, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, X-DNS-Prefetch-Control headers
-2. **Error Boundary**: Frontend error.tsx captures exceptions to Sentry, shows locale-aware error message with retry button
-3. **Env Validation**: Application validates required env vars at startup, logs warnings for optional vars
-4. **E2E Tests**: Cherry-picked tests run successfully
-5. **Sentry Coverage**: All Cody routes report errors to Sentry via enhanced utility
-6. **Non-Cody Routes**: 6 routes use captureAndRespond pattern
-7. **High-Traffic Routes**: 4 routes migrated to withApiHandler with Zod validation
-8. **Remaining Zod**: 4 routes have Zod schemas for input validation
-9. **CI Coverage**: Coverage reports generated and uploaded as artifacts
-10. **Web Vitals**: browserTracingIntegration captures LCP, FID/INP, CLS, TTFB, FCP
-
-## Verification Commands
-
-```bash
-pnpm -s tsc --noEmit
-pnpm vitest run --config vitest.config.unit.mts
-pnpm lint
-```
+1. Security headers are applied correctly (strict for frontend, permissive for admin)
+2. Frontend error boundary captures errors to Sentry
+3. Required env vars are validated at startup
+4. E2E test helpers are available
+5. All Cody routes report errors to Sentry
+6. 6 non-Cody routes report errors to Sentry
+7. 4 high-traffic routes use withApiHandler
+8. 4 remaining routes have Zod validation
+9. CI runs with coverage reporting
+10. Web Vitals are tracked in Sentry
