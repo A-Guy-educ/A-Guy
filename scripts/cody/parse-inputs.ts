@@ -5,7 +5,7 @@
  */
 
 import { logger } from './logger'
-import { execSync } from 'child_process'
+import { execFileSync } from 'child_process'
 import { writeFileSync } from 'fs'
 
 // Types for outputs
@@ -67,9 +67,10 @@ export function extractCommandAfterCody(comment: string): string {
  */
 export function discoverTaskIdFromIssue(issueNumber: string): string | null {
   try {
-    const result = execSync(
-      `gh issue view "${issueNumber}" --json comments --jq '.comments[].body' 2>/dev/null`,
-      { encoding: 'utf-8' },
+    const result = execFileSync(
+      'gh',
+      ['issue', 'view', issueNumber, '--json', 'comments', '--jq', '.comments[].body'],
+      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] },
     )
 
     // Find "Task created: `YYYYMMDD-description`" pattern
@@ -93,7 +94,7 @@ export function parseDispatchInputs(): ParseOutputs {
   if (!taskId) {
     return {
       ...getDefaultOutputs(),
-      issue_number: '',
+      issue_number: process.env.DISPATCH_ISSUE_NUMBER || '',
       is_pull_request: process.env.IS_PULL_REQUEST == 'true' ? 'true' : '',
       valid: 'false',
     }
@@ -105,7 +106,7 @@ export function parseDispatchInputs(): ParseOutputs {
     logger.info('Expected format: YYMMDD-description (e.g., 260225-auto-90)')
     return {
       ...getDefaultOutputs(),
-      issue_number: '',
+      issue_number: process.env.DISPATCH_ISSUE_NUMBER || '',
       is_pull_request: process.env.IS_PULL_REQUEST == 'true' ? 'true' : '',
       valid: 'false',
     }
@@ -118,12 +119,12 @@ export function parseDispatchInputs(): ParseOutputs {
     dry_run: process.env.DISPATCH_DRY_RUN || 'false',
     from_stage: process.env.DISPATCH_FROM_STAGE || '',
     feedback: process.env.DISPATCH_FEEDBACK || '',
-    issue_number: '',
+    issue_number: process.env.DISPATCH_ISSUE_NUMBER || '',
     is_pull_request: process.env.IS_PULL_REQUEST == 'true' ? 'true' : '',
     trigger_type: 'dispatch',
     comment_body: '',
     valid: 'true',
-    runner: process.env.DISPATCH_RUNNER || 'self-hosted',
+    runner: process.env.DISPATCH_RUNNER || 'github-hosted',
     version: process.env.DISPATCH_VERSION || process.env.CODY_DEFAULT_VERSION || '',
     fresh: process.env.FRESH || '',
   }
@@ -133,6 +134,24 @@ export function parseDispatchInputs(): ParseOutputs {
   )
 
   return outputs
+}
+
+/**
+ * Check if an issue has the "publish" label
+ */
+function hasPublishLabel(issueNumber: string): boolean {
+  if (!issueNumber) return false
+  try {
+    const result = execFileSync(
+      'gh',
+      ['issue', 'view', issueNumber, '--json', 'labels', '--jq', '.labels[].name'],
+      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] },
+    )
+    const labels = result.trim().split('\n').filter(Boolean)
+    return labels.includes('publish')
+  } catch {
+    return false
+  }
 }
 
 /**
@@ -151,6 +170,17 @@ export function parseCommentInputs(): ParseOutputs {
       ...getDefaultOutputs(),
       issue_number: issueNumber,
       valid: 'false',
+    }
+  }
+
+  // Check for publish label - these are handled by the Publish workflow, not Cody
+  if (issueNumber && hasPublishLabel(issueNumber)) {
+    logger.info(`=== Issue #${issueNumber} has 'publish' label - skipping Cody pipeline ===`)
+    return {
+      ...getDefaultOutputs(),
+      issue_number: issueNumber,
+      valid: 'false',
+      feedback: 'Publish issues are handled by the Publish workflow. Do not process with Cody.',
     }
   }
 
@@ -269,6 +299,72 @@ export function parseCommentInputs(): ParseOutputs {
 }
 
 /**
+ * Parse PR review inputs (pull_request_review trigger)
+ * Automatically routes to fix mode with the review feedback as context.
+ */
+export function parsePRReviewInputs(): ParseOutputs {
+  const prNumber = process.env.PR_NUMBER || process.env.ISSUE_NUMBER || ''
+  const reviewState = process.env.PR_REVIEW_STATE || ''
+  const reviewBody = process.env.PR_REVIEW_BODY || ''
+
+  logger.info(`=== PR Review trigger: PR #${prNumber}, state=${reviewState} ===`)
+
+  // Only process "changes_requested" reviews
+  if (reviewState !== 'changes_requested') {
+    logger.info(`=== Ignoring PR review with state: ${reviewState} ===`)
+    return {
+      ...getDefaultOutputs(),
+      issue_number: prNumber,
+      is_pull_request: 'true',
+      valid: 'false',
+    }
+  }
+
+  // Discover existing task ID from PR comments
+  let taskId = ''
+  if (prNumber) {
+    const discoveredTaskId = discoverTaskIdFromIssue(prNumber)
+    if (discoveredTaskId) {
+      logger.info(`=== Discovered task-id from PR: ${discoveredTaskId} ===`)
+      taskId = discoveredTaskId
+    }
+  }
+
+  if (!taskId) {
+    logger.info('=== No task-id found on PR — cannot run fix mode ===')
+    return {
+      ...getDefaultOutputs(),
+      issue_number: prNumber,
+      is_pull_request: 'true',
+      valid: 'false',
+    }
+  }
+
+  const outputs: ParseOutputs = {
+    task_id: taskId,
+    mode: 'fix',
+    clarify: 'false',
+    dry_run: 'false',
+    from_stage: '',
+    feedback: reviewBody || 'Changes requested via PR review',
+    issue_number: prNumber,
+    is_pull_request: 'true',
+    trigger_type: 'pr_review',
+    comment_body: '',
+    valid: 'true',
+    runner: 'github-hosted',
+    version: process.env.CODY_DEFAULT_VERSION || '',
+    fresh: '',
+  }
+
+  logger.info(
+    `=== PR review → fix mode: task_id=${outputs.task_id}, feedback=${outputs.feedback.slice(0, 100)}... ===`,
+  )
+
+  return outputs
+}
+
+/**
  * Get default output values
  */
 export function getDefaultOutputs(): ParseOutputs {
@@ -279,12 +375,12 @@ export function getDefaultOutputs(): ParseOutputs {
     dry_run: 'false',
     from_stage: '',
     feedback: '',
-    issue_number: '',
+    issue_number: process.env.DISPATCH_ISSUE_NUMBER || '',
     is_pull_request: process.env.IS_PULL_REQUEST == 'true' ? 'true' : '',
     trigger_type: '',
     comment_body: '',
     valid: 'false',
-    runner: 'self-hosted',
+    runner: 'github-hosted',
     version: process.env.CODY_DEFAULT_VERSION || '',
     fresh: '',
   }
@@ -331,6 +427,8 @@ function main(): void {
 
   if (eventName === 'workflow_dispatch') {
     outputs = parseDispatchInputs()
+  } else if (eventName === 'pull_request_review') {
+    outputs = parsePRReviewInputs()
   } else {
     outputs = parseCommentInputs()
   }

@@ -9,7 +9,8 @@ import * as fs from 'fs'
 import * as path from 'path'
 
 import type { PipelineContext, SkipResult } from '../engine/types'
-import { STAGE_COMPLEXITY_THRESHOLDS, getComplexityTier } from '../pipeline-utils'
+import { getStageComplexityThreshold, isValidStageName } from '../stages/registry'
+import { getComplexityTier } from '../pipeline-utils'
 
 /**
  * Check if stage should be skipped due to input_quality skip_stages
@@ -21,11 +22,7 @@ export function skipIfInputQuality(ctx: PipelineContext, stageName: string): Ski
   }
 
   const skipStages = taskDef.input_quality.skip_stages
-  if (
-    !skipStages.includes(
-      stageName as 'spec' | 'gap' | 'clarify' | 'architect' | 'plan-gap' | 'build',
-    )
-  ) {
+  if (!skipStages.includes(stageName as 'gap' | 'clarify' | 'architect' | 'plan-gap' | 'build')) {
     return { shouldSkip: false }
   }
 
@@ -135,9 +132,12 @@ export function skipIfBelowComplexity(ctx: PipelineContext, stageName: string): 
     return { shouldSkip: false }
   }
 
-  const threshold = STAGE_COMPLEXITY_THRESHOLDS[stageName]
+  if (!isValidStageName(stageName)) {
+    return { shouldSkip: false }
+  }
+  const threshold = getStageComplexityThreshold(stageName)
   // No threshold defined for this stage → don't skip
-  if (threshold === undefined || threshold === 0) {
+  if (threshold === 0) {
     return { shouldSkip: false }
   }
 

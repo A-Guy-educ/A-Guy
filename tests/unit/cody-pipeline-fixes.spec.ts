@@ -287,16 +287,17 @@ This is valid promoted content from a previous successful run.
   // ========================================================================
 
   describe('parallel stage error handling (Fix #3)', () => {
-    it('should NOT have parallel stages in the implementation pipeline', async () => {
-      // This test verifies the logic exists - actual parallel execution tested via integration
+    it('should have build as a direct string entry in the implementation pipeline (test deferred to inspector)', async () => {
       const { IMPL_ORDER_STANDARD } = await import('../../scripts/cody/pipeline/definitions')
 
-      // Verify no parallel stages
+      // test stage deferred to inspector plugin (cody-deferred-tests)
+      // build is now a direct string entry, not part of a parallel group
+      expect(IMPL_ORDER_STANDARD).toContain('build')
+
+      // No parallel groups in standard impl pipeline
       const parallelStep = IMPL_ORDER_STANDARD.find(
         (step) => typeof step === 'object' && 'parallel' in step,
       )
-
-      // No parallel stages in implementation pipeline
       expect(parallelStep).toBeUndefined()
     })
   })

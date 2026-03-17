@@ -1,0 +1,76 @@
+{
+  "version": 2,
+  "taskId": "260313-auto-657",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-13T15:02:29.939Z",
+  "updatedAt": "2026-03-13T15:11:52.029Z",
+  "state": "running",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-13T15:02:31.535Z",
+      "completedAt": "2026-03-13T15:03:56.214Z",
+      "outputFile": "taskify.md",
+      "tokenUsage": {
+        "input": 5197,
+        "output": 2223,
+        "cacheRead": 264995
+      },
+      "sessionId": "ses_3184783c5ffe5if41pRTpyJaNH"
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-13T15:04:08.568Z",
+      "completedAt": "2026-03-13T15:06:25.127Z",
+      "outputFile": "architect.md",
+      "tokenUsage": {
+        "input": 13,
+        "output": 5245,
+        "cacheRead": 618802
+      },
+      "cost": 0.8636535,
+      "sessionId": "ses_318460a90ffeMGIkwypztHDesc"
+    },
+    "build": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-13T15:06:25.147Z",
+      "completedAt": "2026-03-13T15:10:36.367Z",
+      "outputFile": "build.md",
+      "tokenUsage": {
+        "input": 32954,
+        "output": 2716,
+        "cacheRead": 1000365
+      },
+      "sessionId": "ses_31843f4b1ffeMvxhaH37weG1tZ"
+    },
+    "commit": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-13T15:11:06.822Z",
+      "completedAt": "2026-03-13T15:11:08.800Z"
+    },
+    "review": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 17 (simple) below threshold 30 for review"
+    },
+    "fix": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "No issues to fix"
+    },
+    "verify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-13T15:11:08.862Z",
+      "completedAt": "2026-03-13T15:11:52.029Z",
+      "outputFile": "verify.md"
+    }
+  },
+  "issueNumber": 738
+}

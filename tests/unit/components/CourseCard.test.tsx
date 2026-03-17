@@ -2,9 +2,17 @@
 import { CourseCard } from '@/app/(frontend)/courses/_components/CourseCard'
 import type { Course } from '@/payload-types'
 import { I18nProvider } from '@/ui/web/providers/I18n'
-import { fireEvent, render, screen } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import enMessages from '../../../src/i18n/en.json'
+import { toast } from 'sonner'
+
+// Mock sonner toast
+vi.mock('sonner', () => ({
+  toast: {
+    info: vi.fn(() => 'mock-toast-id'),
+  },
+}))
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -57,6 +65,8 @@ const mockCourse: Course = {
   accessType: 'free' as const,
   createdAt: '2024-01-01T00:00:00.000Z',
   updatedAt: '2024-01-01T00:00:00.000Z',
+  contentStatus: 'none' as const,
+  contentStatusVisible: true,
 }
 
 const renderWithI18n = (course: Course) => {
@@ -70,6 +80,10 @@ const renderWithI18n = (course: Course) => {
 beforeEach(() => {
   vi.clearAllMocks()
   localStorageMock.clear()
+})
+
+afterEach(() => {
+  cleanup()
 })
 
 describe('CourseCard component', () => {
@@ -127,5 +141,92 @@ describe('CourseCard component', () => {
 
     const storedProfile = JSON.parse(localStorageMock.getItem('a-guy:user-profile') || '{}')
     expect(storedProfile.gradeLevel).toBe('8')
+  })
+})
+
+describe('CourseCard content status badges', () => {
+  it('renders "Soon" badge when course.contentStatus is "soon"', () => {
+    const soonCourse = { ...mockCourse, contentStatus: 'soon' as const }
+    renderWithI18n(soonCourse)
+
+    expect(screen.getByText('Soon')).toBeTruthy()
+  })
+
+  it('renders "New" badge when course.contentStatus is "justAdded"', () => {
+    const justAddedCourse = { ...mockCourse, contentStatus: 'justAdded' as const }
+    renderWithI18n(justAddedCourse)
+
+    expect(screen.getByText('New')).toBeTruthy()
+  })
+
+  it('does not render badge when contentStatus is "none" or undefined', () => {
+    // Use 'none' which is the default - this tests that the badge doesn't render
+    const noStatusCourse = { ...mockCourse, contentStatus: 'none' as const }
+    renderWithI18n(noStatusCourse)
+
+    expect(screen.queryByText('Soon')).toBeNull()
+    expect(screen.queryByText('New')).toBeNull()
+  })
+
+  it('does NOT navigate when clicking a "Soon" course (button is disabled)', async () => {
+    const soonCourse = { ...mockCourse, contentStatus: 'soon' as const }
+    renderWithI18n(soonCourse)
+
+    const openButton = screen.getAllByRole('button', { name: enMessages.courses.openCourse })[0]
+
+    // Button should be disabled for "Soon" courses (accessibility)
+    expect((openButton as HTMLButtonElement).disabled).toBe(true)
+
+    // Clicking a disabled button doesn't trigger any events
+    fireEvent.click(openButton)
+
+    // Navigation should NOT have been called
+    expect(mockPush).not.toHaveBeenCalled()
+
+    // Toast should NOT have been shown (click event doesn't fire on disabled buttons)
+    expect(toast.info).not.toHaveBeenCalled()
+  })
+
+  it('navigates normally when course.contentStatus is "justAdded"', () => {
+    const justAddedCourse = { ...mockCourse, contentStatus: 'justAdded' as const }
+    renderWithI18n(justAddedCourse)
+
+    const openButton = screen.getAllByRole('button', { name: enMessages.courses.openCourse })[0]
+    fireEvent.click(openButton)
+
+    // Navigation should have been called
+    expect(mockPush).toHaveBeenCalledWith('/', undefined)
+  })
+
+  it('does not render badge when justAdded has expired date', () => {
+    const expiredCourse = {
+      ...mockCourse,
+      contentStatus: 'justAdded' as const,
+      contentStatusExpiresAt: '2020-01-01',
+    }
+    renderWithI18n(expiredCourse)
+
+    expect(screen.queryByText('New')).toBeNull()
+  })
+
+  it('renders button as disabled when course.contentStatus is "soon"', () => {
+    const soonCourse = { ...mockCourse, contentStatus: 'soon' as const }
+    renderWithI18n(soonCourse)
+
+    const openButton = screen.getAllByRole('button', {
+      name: enMessages.courses.openCourse,
+    })[0] as HTMLButtonElement
+    expect(openButton.disabled).toBe(true)
+  })
+
+  it('renders badge when justAdded has future expiry date', () => {
+    const futureCourse = {
+      ...mockCourse,
+      contentStatus: 'justAdded' as const,
+      contentStatusExpiresAt: '2030-01-01',
+    }
+    renderWithI18n(futureCourse)
+
+    expect(screen.getByText('New')).toBeTruthy()
   })
 })

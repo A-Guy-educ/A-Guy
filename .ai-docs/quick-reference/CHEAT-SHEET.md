@@ -6,6 +6,42 @@
 
 ---
 
+## ⭐ Code Quality & Reuse Principles (ALWAYS FOLLOW)
+
+**These principles apply to ALL code-writing agents. They are non-negotiable.**
+
+### Search Before Creating (DRY)
+
+Before creating ANY new file, function, or component — **search for existing code first**:
+
+| What you need      | Search here FIRST             | Examples                                                                       |
+| ------------------ | ----------------------------- | ------------------------------------------------------------------------------ |
+| Access control     | `src/server/payload/access/`  | `adminOnly`, `authenticated`, `authenticatedOrPublished`, `publishedAndActive` |
+| Hooks              | `src/server/payload/hooks/`   | `populatePublishedAt`, `validateLocaleUniqueness`                              |
+| Validation schemas | `src/infra/utils/validation/` | `common-schemas.ts`, `zodToPayloadError`                                       |
+| Utilities          | `src/infra/utils/`            | `logger`, `formatDateTime`, `deepMerge`, `getMediaUrl`, `http`                 |
+| UI components      | `src/ui/`                     | shadcn components, existing web/admin components                               |
+| Test helpers       | `src/infra/utils/test/`       | `mongodb-container`, `test-db-constraint`                                      |
+
+**Rules:**
+
+- If existing code does 80%+ of what you need → **extend it**, don't create a parallel version
+- If you create a new utility, place it where similar utilities live — not in the feature directory
+- NEVER duplicate access control functions — import from `src/server/payload/access/`
+- NEVER create a new logger — import from `src/infra/utils/logger`
+- Copy-pasted blocks > 5 lines → extract into a shared function
+
+### Code Quality Standards
+
+- **No `any` types** — use proper TypeScript types. Import from `@/payload-types` for generated types.
+- **Small functions** — max ~50 lines. Extract helpers with clear names.
+- **Named constants** — `const MAX_RETRIES = 3` not magic `3`.
+- **Early returns** — guard clause pattern. Max 3 levels of nesting.
+- **Descriptive names** — `fetchUserProgress()` not `getData()`. Verb-noun for functions.
+- **Error handling** — every async op needs try/catch. No silent failures.
+- **Immutability** — `{ ...obj, key: value }` not `obj.key = value`.
+- **`@/` imports** — never relative imports across directories.
+
 ## 🏗️ Collection Patterns
 
 ### Published Content Collection
@@ -664,7 +700,9 @@ pnpm test:e2e                  # E2E tests
 ### Full Pipeline Flow
 
 ```
-@cody on issue → taskify → spec → gap → gsd-plan → gsd-execute → commit → review → fix → verify → pr
+@cody on issue → taskify → gap → architect → plan-gap → build → commit → review → fix → commit → verify → pr
+                                                                                                          ↓
+                                                           (deferred, via inspector, complexity ≥ 30) → docs
 ```
 
 ### Key Debug Files
@@ -673,6 +711,8 @@ pnpm test:e2e                  # E2E tests
 | ----------------- | ------------------------------------------ |
 | Pipeline status   | `.tasks/<id>/status.json`                  |
 | Task definition   | `.tasks/<id>/task.json`                    |
+| Task memory       | `.tasks/<id>/memory.json`                  |
+| Knowledge base    | `.ai-docs/knowledge/index.json`            |
 | Stage definitions | `scripts/cody/pipeline/definitions.ts`     |
 | Post-actions      | `scripts/cody/pipeline/post-actions.ts`    |
 | Skip logic        | `scripts/cody/pipeline/skip-conditions.ts` |
@@ -687,7 +727,7 @@ pnpm test:e2e                  # E2E tests
 - **Duplicate labels on rerun** → `setClassificationLabels` removes old category labels first
 - **Gate approval overwritten** → `resolveFromStageAfterGateApproval` starts AFTER the gate stage
 - **Impl stages skipped** → `rebuildPipelineAfterTaskify` must return BOTH spec + impl stages
-- **Stage aliases**: `build` → `gsd-execute`, `architect` → `gsd-plan`
+- **Stage names**: `architect` (planning), `plan-gap` (gap analysis), `build` (implementation)
 
 ---
 

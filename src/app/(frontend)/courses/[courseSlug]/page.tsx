@@ -7,11 +7,11 @@ import { queryCourseBySlug } from '@/server/repos/queries/courses'
 import { queryChaptersByCourseDirectly } from '@/server/repos/queries/chapters'
 import { queryLessonsByCourseDirectly } from '@/server/repos/queries/lessons'
 import { SystemParams } from '@/infra/config/system-params'
+import { isAuthenticatedServer } from '@/server/utils/access-gate-server'
+import { checkPaidAccess } from '@/server/utils/check-paid-access'
 import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
 import { stripHtml } from '@/utils/strip-html'
 import { CoursePageContent } from './_components/CoursePageContent'
-
-export const revalidate = 300 // ISR: revalidate every 5 minutes
 
 interface CoursePageProps {
   params: Promise<{
@@ -33,7 +33,43 @@ export default async function CoursePage({ params }: CoursePageProps) {
     notFound()
   }
 
-  const courseAccessType = course.pageAccessType ?? 'free'
+  const pageAccess = course.pageAccessType ?? 'free'
+  const lessonAccess = course.accessType ?? 'free'
+  // If either the page or lesson access is paid, gate the course page
+  const courseAccessType = pageAccess === 'paid' || lessonAccess === 'paid' ? 'paid' : pageAccess
+
+  if (courseAccessType === 'mandatory' && !(await isAuthenticatedServer())) {
+    return (
+      <AccessGateProvider
+        accessType={courseAccessType}
+        courseSlug={courseSlug}
+        gatedDelayMs={gatedDelayMs}
+        gatedWarningMs={gatedWarningMs}
+      >
+        <div className="min-h-screen" />
+      </AccessGateProvider>
+    )
+  }
+
+  // Server-side block: for paid mode, check entitlement
+  if (courseAccessType === 'paid') {
+    const { requiresEntitlement, isAuthenticated } = await checkPaidAccess(course.id)
+
+    if (requiresEntitlement) {
+      return (
+        <AccessGateProvider
+          accessType={courseAccessType}
+          courseSlug={courseSlug}
+          gatedDelayMs={gatedDelayMs}
+          gatedWarningMs={gatedWarningMs}
+          requiresEntitlement={true}
+          isAuthenticated={isAuthenticated}
+        >
+          <div className="min-h-screen" />
+        </AccessGateProvider>
+      )
+    }
+  }
 
   // Use Direct variants — course is already verified above, skip redundant re-validation
   const [chapters, lessons] = await Promise.all([

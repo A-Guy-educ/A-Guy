@@ -9,7 +9,6 @@
 import { useCallback } from 'react'
 import { cn, formatRelativeTime } from '../utils'
 import { getGitHubIssueUrl } from '../constants'
-import { MergeButton } from './MergeButton'
 import { MiniPipelineProgress } from './MiniPipelineProgress'
 import { SimpleTooltip } from './SimpleTooltip'
 import { StatusTooltipContent, SubStatusTooltipContent } from './tooltip-content'
@@ -25,7 +24,6 @@ import {
 } from '@/ui/web/components/select'
 import {
   GitPullRequest,
-  ExternalLink,
   Play,
   Square,
   Bot,
@@ -38,6 +36,11 @@ import {
   Clock,
   AlertCircle,
   RefreshCw,
+  Eye,
+  Inbox,
+  Pencil,
+  Copy,
+  ListPlus,
 } from 'lucide-react'
 
 interface TaskListProps {
@@ -45,6 +48,7 @@ interface TaskListProps {
   selectedTask?: CodyTask | null
   executingTaskId?: string | null
   mergingTaskId?: string | null
+  focusedIndex?: number
   onTaskSelect?: (task: CodyTask | null) => void
   onExecuteTask?: (taskId: string) => void
   onStopTask?: (task: CodyTask) => void
@@ -53,6 +57,11 @@ interface TaskListProps {
   onAssign?: (issueNumber: number, assignees: string[]) => void
   onUnassign?: (issueNumber: number, assignees: string[]) => void
   collaborators?: { login: string; avatar_url: string }[]
+  onOpenPreview?: (task: CodyTask) => void
+  onCreateTask?: () => void
+  onEditTask?: (task: CodyTask) => void
+  onDuplicate?: (task: CodyTask) => void
+  onToggleQueue?: (task: CodyTask) => void
 }
 
 // ── Status colors — single source of truth ──
@@ -113,7 +122,7 @@ const statusLabel: Record<ColumnId, string> = {
   building: 'Building',
   review: 'In Review',
   failed: 'Failed',
-  'gate-waiting': 'Gate',
+  'gate-waiting': 'Needs Approval',
   retrying: 'Retrying',
   done: 'Done',
 }
@@ -122,14 +131,20 @@ export function TaskList({
   tasks,
   selectedTask,
   executingTaskId,
-  mergingTaskId,
+  mergingTaskId: _mergingTaskId,
   onTaskSelect,
   onExecuteTask,
   onStopTask,
-  onApproveReview,
+  onApproveReview: _onApproveReview,
   onTaskHover,
   onAssign,
   onUnassign: _onUnassign,
+  focusedIndex,
+  onOpenPreview,
+  onCreateTask,
+  onEditTask,
+  onDuplicate,
+  onToggleQueue,
   collaborators = [],
 }: TaskListProps) {
   const handleTaskClick = useCallback(
@@ -143,22 +158,37 @@ export function TaskList({
 
   if (tasks.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-muted-foreground">No tasks found</p>
+      <div className="flex flex-col items-center justify-center h-full gap-4 text-center px-6">
+        <div className="w-14 h-14 rounded-2xl bg-white/[0.03] ring-1 ring-white/[0.06] flex items-center justify-center">
+          <Inbox className="w-6 h-6 text-muted-foreground/40" />
+        </div>
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-foreground">No tasks found</p>
+          <p className="text-xs text-muted-foreground">
+            Tasks you create or that are assigned to Cody will appear here.
+          </p>
+        </div>
+        {onCreateTask && (
+          <Button size="sm" onClick={onCreateTask}>
+            + New Task
+          </Button>
+        )}
       </div>
     )
   }
 
   return (
-    <div className="divide-y divide-white/[0.06]">
-      {tasks.map((task) => {
+    <div className="divide-y divide-white/[0.06]" role="listbox" aria-label="Tasks">
+      {tasks.map((task, index) => {
         const isSelected = task.id === selectedTask?.id
+        const isFocused = index === focusedIndex
         const canExecute = task.state === 'open' && onExecuteTask
         const isExecuting = executingTaskId === task.id
-        const isMerging = mergingTaskId === task.id
         const hasPR = !!task.associatedPR
         const isHardStop = task.column === 'gate-waiting' && task.gateType === 'hard-stop'
-        const isActive = task.column === 'building' || task.column === 'retrying'
+        // gate-waiting tasks also show pipeline progress (they're paused mid-pipeline)
+        const isActive =
+          task.column === 'building' || task.column === 'retrying' || task.column === 'gate-waiting'
         const colors = statusColors[task.column]
         const gateLabel =
           task.column === 'gate-waiting' && task.gateType === 'hard-stop'
@@ -170,15 +200,24 @@ export function TaskList({
         return (
           <div
             key={task.id}
+            role="option"
+            aria-selected={isSelected}
+            tabIndex={0}
             onClick={() => handleTaskClick(task)}
             onMouseEnter={() => onTaskHover?.(task)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                handleTaskClick(task)
+              }
+            }}
             className={cn(
               'group relative cursor-pointer transition-colors duration-100 border-l-2 border-l-transparent',
               'hover:bg-white/[0.04]',
               colors.bg,
               isSelected && cn('bg-white/[0.06] border-l-2', colors.border),
+              isFocused && 'ring-1 ring-blue-500/40 bg-blue-500/5',
               isHardStop && 'ring-1 ring-red-500/30 ring-inset',
-              task.column === 'done' && !isSelected && 'opacity-50 hover:opacity-80',
             )}
           >
             {/* Main row */}
@@ -187,18 +226,29 @@ export function TaskList({
               <div className="shrink-0">{statusIcon[task.column]}</div>
 
               {/* Content — title + meta */}
-              <div className="flex-1 min-w-0">
+              <div
+                className={cn(
+                  'flex-1 min-w-0',
+                  task.column === 'done' &&
+                    !isSelected &&
+                    'opacity-50 group-hover:opacity-80 transition-opacity',
+                )}
+              >
                 {/* Title row */}
                 <div className="flex items-center gap-2.5">
                   <h3 className="text-[15px] font-medium text-zinc-100 truncate flex-1">
                     {task.title}
                   </h3>
 
-                  {/* Assignee avatars */}
-                  {task.assignees && task.assignees.length > 0 && (
-                    <div className="hidden sm:flex items-center -space-x-1.5 shrink-0">
-                      {task.assignees.map((assignee) => (
-                        <SimpleTooltip key={assignee.login} content={assignee.login} side="bottom">
+                  {/* Assignee avatars + triggered-by actor */}
+                  <div className="hidden sm:flex items-center -space-x-1.5 shrink-0">
+                    {task.assignees &&
+                      task.assignees.map((assignee) => (
+                        <SimpleTooltip
+                          key={assignee.login}
+                          content={`Assignee: @${assignee.login}`}
+                          side="bottom"
+                        >
                           <span className="inline-block">
                             <Avatar className="h-5 w-5 ring-2 ring-[#0d1117]">
                               <AvatarImage src={assignee.avatar_url} alt={assignee.login} />
@@ -209,8 +259,45 @@ export function TaskList({
                           </span>
                         </SimpleTooltip>
                       ))}
-                    </div>
-                  )}
+                    {task.pipeline?.triggeredByLogin &&
+                      !task.assignees?.some((a) => a.login === task.pipeline?.triggeredByLogin) && (
+                        <SimpleTooltip
+                          content={`Triggered by @${task.pipeline.triggeredByLogin}`}
+                          side="bottom"
+                        >
+                          <span className="inline-block">
+                            <Avatar className="h-5 w-5 ring-2 ring-[#0d1117] opacity-60">
+                              <AvatarImage
+                                src={`https://github.com/${task.pipeline.triggeredByLogin}.png?size=40`}
+                                alt={task.pipeline.triggeredByLogin}
+                              />
+                              <AvatarFallback className="text-[8px] bg-zinc-700 text-zinc-400">
+                                {task.pipeline.triggeredByLogin[0]?.toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          </span>
+                        </SimpleTooltip>
+                      )}
+                    {task.pipeline?.issueCreator &&
+                      task.pipeline.issueCreator !== task.pipeline?.triggeredByLogin && (
+                        <SimpleTooltip
+                          content={`Issue owner @${task.pipeline.issueCreator}`}
+                          side="bottom"
+                        >
+                          <span className="inline-block">
+                            <Avatar className="h-5 w-5 ring-2 ring-[#0d1117] opacity-80">
+                              <AvatarImage
+                                src={`https://github.com/${task.pipeline.issueCreator}.png?size=40`}
+                                alt={task.pipeline.issueCreator}
+                              />
+                              <AvatarFallback className="text-[8px] bg-blue-900 text-blue-200">
+                                {task.pipeline.issueCreator[0]?.toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          </span>
+                        </SimpleTooltip>
+                      )}
+                  </div>
                 </div>
 
                 {/* Meta row */}
@@ -245,33 +332,59 @@ export function TaskList({
                     </SimpleTooltip>
                   )}
 
+                  {/* Priority badge */}
+                  {task.labels
+                    .filter((l) => l.startsWith('priority:'))
+                    .map((priorityLabel) => {
+                      const priority = priorityLabel.replace('priority:', '')
+                      const colors: Record<string, string> = {
+                        P0: 'bg-red-500/20 text-red-400 border-red-500/30',
+                        P1: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+                        P2: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+                        P3: 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30',
+                      }
+                      return (
+                        <span
+                          key={priorityLabel}
+                          className={cn(
+                            'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold border',
+                            colors[priority] || 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30',
+                          )}
+                        >
+                          {priority}
+                        </span>
+                      )
+                    })}
+
+                  {/* Active pipeline progress — inline dots + stage label */}
                   {isActive && <MiniPipelineProgress task={task} variant="inline" />}
 
-                  {task.isTimeout && (
+                  {/* Non-pipeline sub-statuses (only shown when NOT active pipeline) */}
+                  {!isActive && task.isTimeout && (
                     <SimpleTooltip
                       content={<SubStatusTooltipContent type="timeout" />}
                       side="bottom"
                     >
-                      <span className="hidden sm:inline-flex items-center gap-0.5 font-semibold text-orange-400 cursor-default">
+                      <span className="inline-flex items-center gap-0.5 font-semibold text-orange-400 cursor-default">
                         <Clock className="w-3 h-3" />
                         Timeout
                       </span>
                     </SimpleTooltip>
                   )}
-                  {task.isExhausted && (
+                  {!isActive && task.isExhausted && (
                     <SimpleTooltip
                       content={<SubStatusTooltipContent type="exhausted" />}
                       side="bottom"
                     >
-                      <span className="hidden sm:inline-flex items-center gap-0.5 font-semibold text-red-400 cursor-default">
+                      <span className="inline-flex items-center gap-0.5 font-semibold text-red-400 cursor-default">
                         <RefreshCw className="w-3 h-3" />
                         Exhausted
                       </span>
                     </SimpleTooltip>
                   )}
-                  {task.isSupervisorError && (
+                  {!isActive && task.isSupervisorError && (
                     <SimpleTooltip content={<SubStatusTooltipContent type="error" />} side="bottom">
-                      <span className="hidden sm:inline-flex items-center gap-0.5 font-semibold text-red-400 cursor-default">
+                      <span className="inline-flex items-center gap-0.5 font-semibold text-red-400 cursor-default">
                         <AlertCircle className="w-3 h-3" />
                         Error
                       </span>
@@ -311,47 +424,26 @@ export function TaskList({
                       </a>
                     </SimpleTooltip>
                   )}
-
-                  {task.previewUrl && (
-                    <span className="hidden sm:contents">
-                      <SimpleTooltip content="Open deployed preview" side="bottom">
-                        <a
-                          href={task.previewUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors font-medium"
-                        >
-                          <ExternalLink className="w-3 h-3" />
-                          Preview
-                        </a>
-                      </SimpleTooltip>
-                    </span>
-                  )}
                 </div>
               </div>
 
-              {/* Actions — fade in on hover */}
-              <div
-                className={cn(
-                  'hidden sm:flex items-center gap-1 shrink-0 transition-opacity duration-100',
-                  'opacity-100',
-                )}
-              >
-                {task.column === 'review' && hasPR && onApproveReview && (
-                  <div
-                    onClick={(e) => e.stopPropagation()}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onPointerDown={(e) => e.stopPropagation()}
-                  >
-                    <MergeButton
-                      prNumber={task.associatedPR!.number}
-                      prTitle={task.associatedPR!.title}
-                      branchName={task.associatedPR!.head.ref}
-                      isMerging={isMerging}
-                      onMerge={() => onApproveReview(task)}
-                    />
-                  </div>
+              {/* Actions */}
+              <div className="hidden sm:flex items-center gap-1 shrink-0">
+                {hasPR && onOpenPreview && (
+                  <SimpleTooltip content="Open PR preview" side="bottom">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onOpenPreview(task)
+                      }}
+                      aria-label="Open PR preview"
+                      className="h-7 w-7 p-0 text-emerald-400 hover:bg-emerald-500/20"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                    </Button>
+                  </SimpleTooltip>
                 )}
 
                 {(task.column === 'building' &&
@@ -371,6 +463,7 @@ export function TaskList({
                         if (task.column === 'building') onStopTask?.(task)
                         else if (canExecute) onExecuteTask?.(task.id)
                       }}
+                      aria-label={task.column === 'building' ? 'Stop task' : 'Run task'}
                       className={cn(
                         'h-7 w-7 p-0 cursor-pointer disabled:opacity-50',
                         task.column === 'building'
@@ -426,18 +519,95 @@ export function TaskList({
                     </Select>
                   </div>
                 )}
+
+                {/* Edit button — only for backlog items */}
+                {onEditTask && task.column === 'open' && (
+                  <SimpleTooltip content="Edit task" side="bottom">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onEditTask(task)
+                      }}
+                      aria-label="Edit task"
+                      className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-foreground hover:bg-white/[0.06]"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </Button>
+                  </SimpleTooltip>
+                )}
+
+                {/* Duplicate button */}
+                {onDuplicate && (
+                  <SimpleTooltip content="Duplicate task" side="bottom">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onDuplicate(task)
+                      }}
+                      aria-label="Duplicate task"
+                      className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-foreground hover:bg-white/[0.06]"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </Button>
+                  </SimpleTooltip>
+                )}
+
+                {/* Queue toggle */}
+                {onToggleQueue &&
+                  (() => {
+                    const isQueued = task.labels.includes('cody:queued')
+                    const isQueueActive = task.labels.includes('cody:queue-active')
+                    const isQueueFailed = task.labels.includes('cody:queue-failed')
+                    // Hide if task is actively being processed or already failed in queue
+                    if (isQueueActive) return null
+                    return (
+                      <SimpleTooltip
+                        content={
+                          isQueued
+                            ? 'Remove from queue'
+                            : isQueueFailed
+                              ? 'Re-add to queue'
+                              : 'Add to queue'
+                        }
+                        side="bottom"
+                      >
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onToggleQueue(task)
+                          }}
+                          aria-label={isQueued ? 'Remove from queue' : 'Add to queue'}
+                          className={cn(
+                            'h-7 w-7 p-0 transition-colors',
+                            isQueued
+                              ? 'text-purple-400 bg-purple-500/15 hover:bg-purple-500/25'
+                              : isQueueFailed
+                                ? 'text-red-400/60 hover:text-purple-400 hover:bg-purple-500/15'
+                                : 'text-muted-foreground/50 hover:text-purple-400 hover:bg-purple-500/15',
+                          )}
+                        >
+                          <ListPlus className="w-3.5 h-3.5" />
+                        </Button>
+                      </SimpleTooltip>
+                    )
+                  })()}
               </div>
             </div>
 
-            {/* Pipeline progress row */}
-            {isActive &&
-              task.pipeline &&
-              (task.pipeline.currentStage ||
-                Object.keys(task.pipeline.stages || {}).length > 0) && (
-                <div className="hidden sm:block pb-3 px-4 pl-[52px]">
-                  <MiniPipelineProgress task={task} variant="bar" />
-                </div>
-              )}
+            {/* Pipeline progress row — shown for building, retrying, and gate-waiting tasks.
+                Gate-waiting tasks show paused state (yellow dots) so the user can see
+                exactly where in the pipeline approval was requested. */}
+            {isActive && (
+              <div className="pb-3 px-4 pl-[52px] sm:block hidden">
+                <MiniPipelineProgress task={task} variant="bar" />
+              </div>
+            )}
           </div>
         )
       })}

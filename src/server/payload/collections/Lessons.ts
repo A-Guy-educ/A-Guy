@@ -6,9 +6,11 @@ import { adminOnly } from '../access/adminOnly'
 import { publishedAndActive } from '../access/publishedAndActive'
 import { createdByField } from '../fields/createdBy'
 import { formatSlug } from '../fields/formatSlug'
+import { contentStatusFields } from '../fields/contentStatus'
 
 export const Lessons: CollectionConfig = {
   slug: 'lessons',
+  defaultSort: 'order',
   access: {
     create: adminOnly,
     delete: adminOnly,
@@ -44,6 +46,7 @@ export const Lessons: CollectionConfig = {
       'order',
       'status',
       'isActive',
+      'contentStatus',
       'updatedAt',
     ],
   },
@@ -110,6 +113,7 @@ export const Lessons: CollectionConfig = {
       required: true,
       defaultValue: 0,
       min: 0,
+      index: true,
       admin: {
         description: 'Sort order within the course',
       },
@@ -160,6 +164,7 @@ export const Lessons: CollectionConfig = {
           label: 'Gated (5-Minute Delay)',
           value: 'gated',
         },
+        { label: 'Paid (Requires Entitlement)', value: 'paid' },
       ],
       admin: {
         position: 'sidebar',
@@ -248,6 +253,9 @@ export const Lessons: CollectionConfig = {
         description: 'URL-friendly identifier (auto-generated from title if empty)',
       },
     },
+
+    // Content Status
+    ...contentStatusFields,
 
     // Created By
     createdByField,

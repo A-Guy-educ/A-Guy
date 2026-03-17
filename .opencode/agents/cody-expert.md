@@ -28,10 +28,10 @@ Cody is a 3-layer system:
 ## Pipeline Stages (Full Standard Mode)
 
 ```
-taskify → spec → gap → [clarify] → gsd-research → gsd-plan → gsd-execute → commit → review → fix → commit-fix → verify → pr
+taskify → spec → gap → [clarify] → research → architect → plan-gap → build → commit → review → fix → commit → verify → pr
 ```
 
-Lightweight mode skips: spec, gap, gsd-research.
+Lightweight mode skips: spec, gap, research.
 Complexity thresholds further skip stages for simple tasks.
 
 ## Key Files — Where to Look
@@ -97,8 +97,8 @@ Control modes: `auto` (skip gates), `supervised` (gate on medium+), `gated` (alw
 ## Rerun Flow
 
 1. `resolveRerunFromStage()` in `rerun-utils.ts` handles:
-   - Stage alias resolution: `build` → `gsd-execute`, `architect` → `gsd-plan`
-   - Feedback routing: if feedback provided and fromStage is after gsd-plan, backs up to gsd-plan
+   - Stage alias resolution: `build` stays as `build`, `architect` stays as `architect`
+   - Feedback routing: if feedback provided and fromStage is after architect, backs up to architect
 2. All stages before fromStage stay completed
 3. fromStage and later reset to pending
 

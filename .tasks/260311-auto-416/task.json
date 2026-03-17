@@ -1,0 +1,33 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "medium",
+  "confidence": 0.85,
+  "primary_domain": "backend",
+  "scope": [
+    "Find lesson query logic in frontend components",
+    "Check lessons collection for order field",
+    "Verify sort parameter is applied to lesson queries"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Lessons collection has an 'order' or 'sortOrder' field defined in admin",
+    "The query fetching lessons for website frontend is missing sort by order field",
+    "This is likely in a course/lesson display component or API endpoint"
+  ],
+  "review_questions": [
+    "Where are lessons queried for the website frontend (which component/endpoint)?",
+    "Does the lessons collection have an 'order' field defined in Payload?",
+    "Is there existing sorting logic that's not being applied correctly?"
+  ],
+  "complexity": 33,
+  "complexity_reasoning": "Scope: 8 (2-3 files to check - query logic + collection). Risk: 8 (display bug, no data loss). Novelty: 5 (following existing patterns, just missing sort). Cross-Domain: 6 (backend query + frontend display). Ambiguity: 4 (clear bug, need to locate query). Dependencies: 2 (self-contained). Total: 33",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "spec"
+    ],
+    "reasoning": "Input contains clear bug report with Steps to Reproduce (6 steps), Expected Result, and Actual Result. Has environment details and preconditions. Promoted spec.md with extracted requirements."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

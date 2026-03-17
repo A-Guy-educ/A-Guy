@@ -16,22 +16,6 @@ vi.mock('../../../../scripts/cody/pipeline-utils', () => ({
   resolveControlMode: vi.fn(() => 'auto'),
   stageOutputFile: vi.fn((taskDir: string, stage: string) => `${taskDir}/${stage}.md`),
   getComplexityTier: vi.fn(() => 'moderate'),
-  STAGE_COMPLEXITY_THRESHOLDS: {
-    taskify: 0,
-    spec: 35,
-    gap: 40,
-    clarify: 60,
-    architect: 10,
-    'plan-gap': 50,
-    build: 0,
-    commit: 0,
-    review: 30,
-    fix: 0,
-    'commit-fix': 0,
-    verify: 0,
-    autofix: 20,
-    pr: 0,
-  },
 }))
 
 vi.mock('../../../../scripts/cody/clarify-workflow', () => ({

@@ -5,6 +5,7 @@
  * @ai-summary Root layout for Cody dashboard — reuses frontend fonts, theme, and CSS without Header/Footer/i18n
  */
 import React from 'react'
+import type { Metadata } from 'next'
 import { cn } from '@/infra/utils/ui'
 import { GeistMono } from 'geist/font/mono'
 import { GeistSans } from 'geist/font/sans'
@@ -21,6 +22,14 @@ const assistant = Assistant({
   display: 'swap',
   variable: '--font-assistant',
 })
+
+export const metadata: Metadata = {
+  metadataBase: new URL(process.env.CODY_PUBLIC_SERVER_URL || 'https://www.dev.aguy.co.il'),
+  title: {
+    default: 'Cody Operations Dashboard',
+    template: '%s | Cody Operations',
+  },
+}
 
 export default function CodyLayout({ children }: { children: React.ReactNode }) {
   return (

@@ -5,87 +5,144 @@
  * @ai-summary New CLI entry point for Cody pipeline state machine
  */
 
-import * as fs from 'fs'
-import ms from 'ms'
-import * as path from 'path'
+// Load .env before anything else so GH_PAT, API keys, etc. are available.
+// In CI, environment variables are injected by the workflow — this is a no-op
+// if .env doesn't exist (dotenv silently skips missing files).
+import { config as loadEnv } from 'dotenv'
+loadEnv({ path: '.env' })
 
-import {
-  parseCliArgs,
-  validateAuth,
-  ensureTaskDir,
-  getLastFailedStage,
-  getLastPausedStage,
-} from './cody-utils'
+import ms from 'ms'
+
+import { parseCliArgs, validateAuth, ensureTaskDir } from './cody-utils'
 import { preflight } from './preflight'
 import { createRunner } from './runner-backend'
-import { logger, createStageLogger } from './logger'
-import { handleClarification } from './clarify-workflow'
+import { logger } from './logger'
 import { commitPipelineFiles } from './git-utils'
-import { readTask } from './pipeline-utils'
 
 import type { PipelineContext } from './engine/types'
-import { runPipeline } from './engine/state-machine'
-import { resolvePipelineForMode, createRebuildCallback } from './engine/pipeline-resolver'
-import { flattenPipelineOrder, IMPL_ORDER_STANDARD, FIX_ORDER } from './pipeline/definitions'
-import { stateToV1 } from './engine/status'
+import { resolvePipelineForMode } from './engine/pipeline-resolver'
+import { flattenPipelineOrder } from './pipeline/definitions'
 import { PipelinePausedError } from './engine/types'
-import { resolveRerunFromStage, resolveFromStageAfterGateApproval } from './rerun-utils'
+import { startServer, stopServer, checkpointDb, findLastSessionId } from './opencode-server'
+import {
+  runSpecMode,
+  runImplMode,
+  runFullMode,
+  runRerunMode,
+  runFixMode,
+  runStatusMode,
+} from './modes'
+
+// FIX #3: Import status functions at module level instead of dynamic imports in signal handlers.
+// Dynamic `await import()` in signal handlers is unsafe — Node.js signal handlers have limited
+// async support and may be killed before the import resolves.
+import {
+  loadState as loadStateForSignal,
+  writeState as writeStateForSignal,
+  updateStage as updateStageForSignal,
+  completeState as completeStateForSignal,
+} from './engine/status'
+
+// Re-export for backward compatibility (canonical source: ./task-setup)
+export { ensureTaskMd } from './task-setup'
+import type { OpenCodeServer } from './opencode-server'
 import { ensureTaskMarkerComment, postComment } from './github-api'
-import { formatStatusComment } from './cody-utils'
 
 // ============================================================================
-// Shared Helpers
+// Failure Comment Formatting
 // ============================================================================
 
 /**
- * R4: Extract task.md preparation logic into a shared helper.
- * Ensures task.md exists before pipeline runs (needed for taskify agent).
+ * Build an enriched failure comment for GitHub issues.
+ * Includes failed stage, error, cost, and stage progression.
  */
-async function ensureTaskMd(ctx: PipelineContext): Promise<void> {
-  const { input, taskDir } = ctx
-  const taskMdPath = path.join(taskDir, 'task.md')
+function formatFailureComment(
+  input: { taskId: string; runUrl?: string },
+  state: import('./engine/types').PipelineStateV2 | null,
+  error: unknown,
+): string {
+  const errorMsg = error instanceof Error ? error.message : String(error)
+  const lines: string[] = [`❌ Pipeline failed for \`${input.taskId}\``]
 
-  // --file flag has priority
-  if (input.file) {
-    const resolvedFile = path.resolve(input.file)
-    if (!fs.existsSync(resolvedFile)) {
-      throw new Error(`File not found: ${resolvedFile}`)
+  if (state?.stages) {
+    // Find the failed stage
+    const failedEntry = Object.entries(state.stages).find(
+      ([, s]) => s.state === 'failed' || s.state === 'timeout',
+    )
+    if (failedEntry) {
+      const [stageName, stageState] = failedEntry
+      const elapsedStr =
+        stageState.elapsed != null
+          ? ` (after ${Math.floor(stageState.elapsed / 60)}m ${stageState.elapsed % 60}s)`
+          : ''
+      lines.push(`\n**Failed stage:** \`${stageName}\`${elapsedStr}`)
     }
-    const content = fs.readFileSync(resolvedFile, 'utf-8').trim()
-    if (!content) {
-      throw new Error(`File is empty: ${resolvedFile}`)
+
+    lines.push(`**Error:** ${errorMsg}`)
+
+    // Total cost across all stages
+    const totalCost = Object.values(state.stages).reduce((sum, s) => sum + (s.cost ?? 0), 0)
+    if (totalCost > 0) {
+      const completedCount = Object.values(state.stages).filter(
+        (s) => s.state === 'completed',
+      ).length
+      lines.push(`**Cost:** $${totalCost.toFixed(2)} across ${completedCount} stages`)
     }
-    fs.writeFileSync(taskMdPath, `# Task\n\n${content}\n`)
-    logger.info(`Created task.md from ${resolvedFile}`)
-    return
+
+    // Stage progression
+    const progression = Object.entries(state.stages)
+      .map(([name, s]) => {
+        if (s.state === 'completed') return `${name} ✅`
+        if (s.state === 'failed' || s.state === 'timeout') return `${name} ❌`
+        if (s.state === 'skipped') return `${name} ⏭`
+        return null
+      })
+      .filter(Boolean)
+    if (progression.length > 0) {
+      lines.push(`**Completed:** ${progression.join(' → ')}`)
+    }
+  } else {
+    lines.push(`\n**Error:** ${errorMsg}`)
   }
 
-  // Create task.md from issue body if it doesn't exist
-  if (!fs.existsSync(taskMdPath)) {
-    if (input.issueNumber) {
-      const { getIssue } = await import('./github-api')
-      logger.info('task.md not found, fetching issue body to create it...')
-      const { body: issueBody, title: issueTitle } = getIssue(input.issueNumber)
-      if (issueBody) {
-        const titleSection = issueTitle ? `## Issue Title\n\n${issueTitle}\n` : ''
-        fs.writeFileSync(taskMdPath, `# Task\n\n${titleSection}${issueBody}\n`)
-        logger.info(`Created task.md from issue #${input.issueNumber}`)
-      } else {
-        throw new Error(
-          `task.md not found in .tasks/${input.taskId}/ and issue #${input.issueNumber} has no body. Create it first.`,
-        )
-      }
-    } else {
-      throw new Error(`task.md not found in .tasks/${input.taskId}/. Create it first.`)
-    }
+  if (input.runUrl) {
+    lines.push(`\nRun: ${input.runUrl}`)
+  }
+
+  return lines.join('\n')
+}
+
+// ============================================================================
+// OpenCode Server Lifecycle
+// ============================================================================
+
+/** Module-level reference to the OpenCode server for cleanup in signal handlers */
+let openCodeServer: OpenCodeServer | null = null
+
+/**
+ * Gracefully shut down the OpenCode server, checkpoint the DB, and clear the reference.
+ * Safe to call multiple times (idempotent).
+ */
+async function shutdownOpenCodeServer(taskDir?: string): Promise<void> {
+  if (!openCodeServer) return
+  const server = openCodeServer
+  openCodeServer = null
+
+  await stopServer(server)
+
+  // Checkpoint WAL into main DB so it's self-contained for git commits
+  if (taskDir) {
+    checkpointDb(taskDir)
   }
 }
+
+// ============================================================================
 
 /**
  * Main entry point
  */
-async function main(): Promise<void> {
-  const args = process.argv.slice(2)
+export async function main(cliArgs?: string[]): Promise<void> {
+  const args = cliArgs ?? process.argv.slice(2)
 
   // Handle --help early
   if (args.includes('--help') || args.includes('-h')) {
@@ -127,7 +184,6 @@ Examples:
   const input = parseCliArgs(args)
 
   // Create a child logger with task context
-  const _stageLogger = createStageLogger('main', input.taskId)
 
   // R9: Shutdown guard to prevent double-execution on SIGTERM/SIGINT
   let shuttingDown = false
@@ -141,14 +197,14 @@ Examples:
     shuttingDown = true
     logger.error(`\n⚠ Received ${signal} — CI runner shutting down`)
     try {
-      const { loadState, writeState, updateStage, completeState } = await import('./engine/status')
-      const state = loadState(input.taskId)
+      // FIX #3: Use module-level imports instead of dynamic import in signal context
+      const state = loadStateForSignal(input.taskId)
       if (state) {
         // Mark all running stages as failed
         let updatedState = state
         for (const [name, stage] of Object.entries(state.stages)) {
           if (stage.state === 'running') {
-            updatedState = updateStage(updatedState, name, {
+            updatedState = updateStageForSignal(updatedState, name, {
               state: 'failed',
               error: `Process interrupted by ${signal}`,
             })
@@ -156,8 +212,8 @@ Examples:
           }
         }
         // Mark pipeline as failed
-        const failedState = completeState(updatedState, 'failed')
-        writeState(input.taskId, failedState)
+        const failedState = completeStateForSignal(updatedState, 'failed')
+        writeStateForSignal(input.taskId, failedState)
         logger.error(`  Updated status.json to "failed" for task ${input.taskId}`)
 
         // In CI mode: attempt to commit and push the updated status
@@ -195,6 +251,15 @@ Examples:
     } catch (err) {
       logger.error({ err }, `  Failed to update status`)
     }
+    // Kill OpenCode server before exiting (sync-safe: just send SIGTERM).
+    // We cannot await stopServer() or checkpointDb() here — the signal context
+    // limits async work. The WAL checkpoint is skipped on forced shutdown;
+    // SQLite will recover the WAL automatically on the next open.
+    if (openCodeServer?.process && !openCodeServer.process.killed) {
+      openCodeServer.process.kill('SIGTERM')
+      openCodeServer = null
+    }
+
     process.exit(128 + (signal === 'SIGTERM' ? 15 : 2))
   }
 
@@ -237,6 +302,34 @@ Examples:
     taskDef: null,
     profile: 'standard',
     backend,
+    actor: input.actor,
+  }
+
+  // Start OpenCode server for persistent sessions across stages
+  // Graceful degradation: if startup fails, pipeline runs without server (cold-boot each stage)
+  if (input.mode !== 'status') {
+    const server = await startServer(taskDir)
+    if (server) {
+      openCodeServer = server
+      ctx.serverUrl = server.url
+      logger.info(`  OpenCode server available at ${server.url}`)
+
+      // On rerun: recover lastSessionId from previous pipeline state
+      if (input.mode === 'rerun') {
+        const { loadState } = await import('./engine/status')
+        const existingState = loadState(input.taskId)
+        if (existingState) {
+          const pipelineOrder = flattenPipelineOrder(
+            resolvePipelineForMode('full', ctx.profile, false, ctx).order,
+          )
+          const lastSid = findLastSessionId(existingState.stages, pipelineOrder)
+          if (lastSid) {
+            ctx.lastSessionId = lastSid
+            logger.info(`  Recovered session ${lastSid} from previous run`)
+          }
+        }
+      }
+    }
   }
 
   try {
@@ -264,7 +357,8 @@ Examples:
     }
   } catch (error) {
     if (error instanceof PipelinePausedError) {
-      // Pipeline paused - handled internally
+      // Pipeline paused — still need to shut down server and checkpoint DB
+      await shutdownOpenCodeServer(taskDir)
       return
     }
 
@@ -280,6 +374,9 @@ Examples:
 
     const errorMsg = error instanceof Error ? error.message : String(error)
     logger.error({ err: error }, `\n❌ Cody failed: ${errorMsg}`)
+
+    // Shutdown OpenCode server before committing (ensures DB is checkpointed)
+    await shutdownOpenCodeServer(taskDir)
 
     // Commit task files on failure — includes debug artifacts (*-events.jsonl, *-stderr.log)
     // for post-mortem diagnosis. On success these are excluded to keep PRs clean.
@@ -299,456 +396,41 @@ Examples:
       logger.warn({ err: commitErr }, 'Failed to commit task files on pipeline failure')
     }
 
-    // Skip GitHub API calls in local mode
+    // Skip GitHub API calls in local mode — each call wrapped in try/catch
+    // so process.exit(1) is ALWAYS reached even if GitHub API is down
     if (input.issueNumber && !input.local) {
-      // Set lifecycle label to failed for dashboard visibility
-      const { setLifecycleLabel } = await import('./github-api')
-      setLifecycleLabel(input.issueNumber, 'cody:failed')
-      postComment(
-        input.issueNumber,
-        `❌ Pipeline failed for \`${input.taskId}\`: ${error instanceof Error ? error.message : 'Unknown error'}` +
-          (input.runUrl ? `\nRun: ${input.runUrl}` : ''),
-      )
+      try {
+        const { setLifecycleLabel } = await import('./github-api')
+        setLifecycleLabel(input.issueNumber, 'cody:failed')
+      } catch (labelErr) {
+        logger.warn({ err: labelErr }, 'Failed to set failure lifecycle label')
+      }
+      try {
+        const failureComment = formatFailureComment(input, existingState, error)
+        postComment(input.issueNumber, failureComment)
+      } catch (commentErr) {
+        logger.warn({ err: commentErr }, 'Failed to post failure comment')
+      }
     }
     process.exit(1)
   }
+
+  // Success path: shutdown OpenCode server and checkpoint DB
+  await shutdownOpenCodeServer(taskDir)
+
+  // Explicitly exit on success.  Without this the process may hang if
+  // the OpenCode server left orphan listeners, timers, or file handles
+  // that keep the Node event loop alive.
+  process.exit(0)
 }
 
-/**
- * Spec mode setup
- */
-async function runSpecMode(ctx: PipelineContext): Promise<void> {
-  const { input, taskDir } = ctx
-
-  // R4: Ensure task.md exists before running pipeline
-  await ensureTaskMd(ctx)
-
-  // Run spec pipeline
-  const pipeline = resolvePipelineForMode('spec', 'standard', input.clarify ?? false, ctx)
-  await runPipeline(ctx, pipeline)
-
-  // G17: Post-spec clarification logic
-  if (input.clarify) {
-    const clarifyResult = handleClarification(input, taskDir)
-    if (clarifyResult === 'waiting') {
-      logger.info('\n⚠️ Clarify stage has questions that need answering')
-      const questionsPath = path.join(taskDir, 'questions.md')
-      if (input.issueNumber) {
-        let preview = '(questions file not found)'
-        try {
-          if (fs.existsSync(questionsPath)) {
-            const questionsContent = fs.readFileSync(questionsPath, 'utf-8')
-            preview = questionsContent.slice(0, 1500)
-          }
-        } catch (readErr) {
-          logger.warn({ err: readErr }, 'Failed to read questions.md for preview')
-        }
-        postComment(
-          input.issueNumber,
-          `🔄 Cody stopped at clarify stage - questions need answering:\n\n${preview}\n\nPlease answer these questions and call \`/cody\` again to proceed with implementation.`,
-        )
-      }
-      // Commit task files and pause
-      commitPipelineFiles({
-        taskDir,
-        taskId: input.taskId,
-        message: `ci(cody): Save task files for ${input.taskId}\n\nAuto-committed by Cody pipeline`,
-        ensureBranch: true,
-        cleanDirtyState: true,
-        stagingStrategy: 'task-only',
-        push: true,
-        isCI: !input.local,
-        dryRun: input.dryRun,
-      })
-      throw new PipelinePausedError(`clarify stage: awaiting answers for ${input.taskId}`)
-    }
-  }
-
-  // Commit spec task files
-  commitPipelineFiles({
-    taskDir,
-    taskId: input.taskId,
-    message: `ci(cody): Save task files for ${input.taskId}\n\nAuto-committed by Cody pipeline`,
-    ensureBranch: true,
-    cleanDirtyState: true,
-    stagingStrategy: 'task-only',
-    push: true,
-    isCI: !input.local,
-    dryRun: input.dryRun,
+// Run main — skip auto-invocation when imported as a module (e.g., canary tests)
+const isDirectExecution =
+  process.argv[1]?.endsWith('entry.ts') || process.argv[1]?.endsWith('entry')
+if (isDirectExecution) {
+  main().catch((err) => {
+    const fatalErr = err instanceof Error ? err.message : String(err)
+    logger.error({ err }, `Fatal error: ${fatalErr}`)
+    process.exit(1)
   })
-
-  logger.info('\n✅ Cody SPEC pipeline complete')
 }
-
-/**
- * Impl mode setup
- */
-async function runImplMode(ctx: PipelineContext): Promise<void> {
-  const { taskDir } = ctx
-
-  // Validate clarified.md exists
-  const clarifiedPath = path.join(taskDir, 'clarified.md')
-  if (!fs.existsSync(clarifiedPath)) {
-    throw new Error(`clarified.md not found. Run spec pipeline first or create it.`)
-  }
-
-  // Get task definition
-  let taskDef
-  try {
-    taskDef = readTask(taskDir)
-    ctx.taskDef = taskDef
-  } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error)
-    logger.error(`\n❌ Failed to read task definition: ${msg}`)
-    throw new Error(`Invalid task.json: ${msg}`)
-  }
-  if (!taskDef) {
-    throw new Error(`task.json not found. Run spec pipeline first.`)
-  }
-
-  // Apply --complexity override if provided
-  if (ctx.input.complexityOverride !== undefined && taskDef.complexity === undefined) {
-    taskDef.complexity = ctx.input.complexityOverride
-    taskDef.complexity_reasoning = `Override via --complexity=${ctx.input.complexityOverride}`
-  }
-
-  // Check spec_only pipeline
-  if (taskDef.pipeline === 'spec_only') {
-    logger.info('Task pipeline is spec_only — skipping implementation stages.')
-    return
-  }
-
-  // Resolve profile
-  const { resolvePipelineProfile } = await import('./pipeline-utils')
-  ctx.profile = resolvePipelineProfile(taskDef)
-  logger.info(`ℹ️ Pipeline profile: ${ctx.profile}`)
-
-  // Run impl pipeline (pass rebuild callback for two-phase construction)
-  const pipeline = resolvePipelineForMode('impl', ctx.profile, false, ctx)
-  const rebuild = createRebuildCallback('full', ctx.input.clarify ?? false)
-  await runPipeline(ctx, pipeline, undefined, rebuild)
-
-  logger.info('\n✅ Cody IMPLEMENTATION pipeline complete')
-}
-
-/**
- * Full mode setup
- */
-async function runFullMode(ctx: PipelineContext): Promise<void> {
-  logger.info('Running FULL Cody pipeline (spec + impl)...\n')
-
-  // R4: Ensure task.md exists before running pipeline
-  await ensureTaskMd(ctx)
-
-  // FIX #5: Resolve profile from task.json instead of hardcoding 'standard'
-  // This ensures the correct profile (lightweight vs standard) is used
-  let profile: 'standard' | 'lightweight' = 'standard'
-  try {
-    const taskDef = readTask(ctx.taskDir)
-    if (taskDef) {
-      ctx.taskDef = taskDef
-      const { resolvePipelineProfile } = await import('./pipeline-utils')
-      profile = resolvePipelineProfile(taskDef)
-      logger.info(`ℹ️ Resolved profile from task.json: ${profile}`)
-    }
-  } catch {
-    // If task.json doesn't exist yet, taskify will create it and resolve profile
-    logger.info('ℹ️ task.json not found yet, will resolve profile after taskify')
-  }
-  ctx.profile = profile
-
-  // Run full pipeline - pass rebuild callback for two-phase construction
-  // This ensures profile changes after taskify are reflected in later stages
-  const pipeline = resolvePipelineForMode('full', profile, ctx.input.clarify ?? false, ctx)
-  const rebuild = createRebuildCallback('full', ctx.input.clarify ?? false)
-  const finalState = await runPipeline(ctx, pipeline, undefined, rebuild)
-
-  // Handle paused state (gate approval required)
-  if (finalState.state === 'paused') {
-    throw new PipelinePausedError(`Pipeline paused — awaiting gate approval for ${ctx.taskId}`)
-  }
-
-  logger.info('\n✅ Full Cody pipeline complete!')
-}
-
-/**
- * Rerun mode setup
- */
-async function runRerunMode(ctx: PipelineContext): Promise<void> {
-  const { input, taskDir } = ctx
-  logger.info('Running Cody RERUN pipeline...\n')
-
-  // G33: Check for paused stage FIRST - if we're resuming from a gate approval,
-  // we should continue even if spec.md doesn't exist (it may not have been created yet
-  // because the gate paused before resolve-profile post-action ran)
-  const pausedStage = !input.fromStage ? getLastPausedStage(input.taskId) : null
-  let gateApprovedStage: string | null = null
-
-  // G33: Fallback to full only if spec.md missing AND no paused stage to resume
-  const specPath = path.join(taskDir, 'spec.md')
-  if (!fs.existsSync(specPath) && !pausedStage) {
-    logger.info('No spec.md found — falling back to full pipeline')
-    input.mode = 'full'
-    await runFullMode(ctx)
-    return
-  }
-
-  // FIX #5: Check for paused stage first (gate approval scenario)
-  // This handles the case where @cody approve was used to resume a paused pipeline
-  if (pausedStage) {
-    logger.info(`Detected paused stage: ${pausedStage}`)
-
-    // Try to approve the gate directly
-    try {
-      const taskDef = readTask(taskDir)
-      if (taskDef) {
-        const { handleGateApproval } = await import('./clarify-workflow')
-        const gateResult = handleGateApproval(input, taskDir, pausedStage, taskDef)
-
-        if (gateResult === 'approved') {
-          logger.info(`Gate ${pausedStage} approved — resuming pipeline`)
-          gateApprovedStage = pausedStage
-
-          // Note: handleGateApproval already wrote gate-{stage}-approved.md and clarified.md
-          // No need to overwrite here - that would lose the context about how approval was detected
-
-          // Commit and push the approval files so subsequent runs can find them
-          // This includes both gate-{stage}-approved.md and clarified.md
-          const { commitPipelineFiles } = await import('./git-utils')
-          await commitPipelineFiles({
-            taskDir,
-            taskId: input.taskId,
-            message: `ci(cody): gate ${pausedStage} approved for ${input.taskId}`,
-            ensureBranch: true,
-            stagingStrategy: 'task-only',
-            push: true,
-            isCI: !input.local,
-            dryRun: input.dryRun,
-          })
-
-          // Mark the paused stage as completed in status (immutable update)
-          const { loadState, writeState, resumeFromGate } = await import('./engine/status')
-          const state = loadState(input.taskId)
-          if (state) {
-            const resumedState = resumeFromGate(state, pausedStage)
-            writeState(input.taskId, resumedState)
-          }
-
-          // After approving a spec-phase gate, continue with the rerun pipeline
-          // The rerun pipeline already includes both spec and impl stages
-          // No mode switch needed - just continue running
-        } else if (gateResult === 'waiting') {
-          logger.info(`Gate ${pausedStage} still waiting for approval`)
-        }
-      }
-    } catch (err) {
-      logger.warn({ err }, 'Could not handle gate approval')
-    }
-  }
-
-  // Determine fromStage
-  // FIX #673: After gate approval, use the NEXT stage (not the approved one)
-  // to prevent resetFromStage from overwriting the gate approval
-  if (!input.fromStage) {
-    if (gateApprovedStage) {
-      // Gate was just approved — resolve pipeline order to find the next stage
-      const tempPipeline = resolvePipelineForMode('rerun', ctx.profile, false, ctx)
-      const tempOrder = flattenPipelineOrder(tempPipeline.order)
-      input.fromStage = resolveFromStageAfterGateApproval(gateApprovedStage, tempOrder)
-      logger.info(`  ℹ️ Gate approved at ${gateApprovedStage} — resuming from ${input.fromStage}`)
-    } else {
-      input.fromStage = pausedStage || getLastFailedStage(input.taskId) || 'build'
-    }
-  }
-
-  // P3 fix: Back up to architect when feedback provided so plan can be revised
-  const implStageOrder = flattenPipelineOrder(IMPL_ORDER_STANDARD)
-  const resolvedFrom = resolveRerunFromStage(
-    input.fromStage || 'build',
-    input.feedback,
-    implStageOrder,
-  )
-  if (resolvedFrom !== input.fromStage) {
-    logger.info(
-      `  ℹ️ Feedback provided — backing up from ${input.fromStage} to ${resolvedFrom} for plan revision`,
-    )
-    input.fromStage = resolvedFrom
-  }
-
-  // Default feedback
-  if (!input.feedback) {
-    input.feedback = 'Rerun requested via /cody rerun'
-  }
-
-  // G37: Write feedback file
-  const feedbackFile = path.join(taskDir, 'rerun-feedback.md')
-  try {
-    fs.writeFileSync(
-      feedbackFile,
-      `# Rerun Feedback - ${new Date().toISOString()}\n\n## Issues Found\n\n${input.feedback}\n`,
-    )
-  } catch (writeErr) {
-    logger.error({ err: writeErr }, `Failed to write rerun feedback file: ${feedbackFile}`)
-    throw writeErr
-  }
-
-  logger.info(`Feedback: ${input.feedback}`)
-  logger.info(`From stage: ${input.fromStage}\n`)
-
-  // G37: Read task definition for profile resolution
-  // Fix 4: Wrap in try/catch to handle missing/invalid task.json gracefully
-  let taskDef = null
-  try {
-    taskDef = readTask(taskDir)
-  } catch {
-    logger.warn('Could not read task.json for profile resolution, using default')
-  }
-  ctx.taskDef = taskDef
-  if (taskDef) {
-    const { resolvePipelineProfile } = await import('./pipeline-utils')
-    ctx.profile = resolvePipelineProfile(taskDef)
-  }
-
-  // For rerun, we need to delete the files manually since the engine won't do it
-  // The status.ts resetFromStage handles this but we need to call it
-  // R3: Use dynamic stage order from pipeline definition instead of hardcoded array
-  const pipeline = resolvePipelineForMode('rerun', ctx.profile, false, ctx)
-  const stageOrder = flattenPipelineOrder(pipeline.order)
-
-  // Fix 5: Validate fromStage exists in the resolved pipeline order
-  const fromStage = input.fromStage || 'build'
-  if (!stageOrder.includes(fromStage)) {
-    throw new Error(
-      `Stage "${fromStage}" not found in rerun pipeline. Valid stages: ${stageOrder.join(', ')}`,
-    )
-  }
-
-  const { loadState, resetFromStage, writeState } = await import('./engine/status')
-  const state = loadState(input.taskId)
-  if (state) {
-    // H4 FIX: resetFromStage now handles both state reset AND output file deletion
-    // No need to manually delete files here - that was causing double-delete
-    const newState = resetFromStage(state, fromStage, stageOrder, taskDir)
-    writeState(input.taskId, newState)
-  }
-
-  // Run impl pipeline
-  await runPipeline(ctx, pipeline)
-
-  logger.info('\n✅ Rerun complete!')
-}
-
-/**
- * Fix mode - applies targeted fixes without regenerating entire codebase
- */
-async function runFixMode(ctx: PipelineContext): Promise<void> {
-  const { input, taskDir } = ctx
-  logger.info('Running Cody FIX pipeline (targeted fix)...\n')
-
-  // Ensure feedback exists
-  if (!input.feedback) {
-    input.feedback = 'Fix requested via @cody fix command'
-  }
-
-  // Write feedback to file
-  const feedbackPath = path.join(taskDir, 'rerun-feedback.md')
-  fs.writeFileSync(
-    feedbackPath,
-    `# Fix Feedback - ${new Date().toISOString()}\n\n${input.feedback}\n`,
-  )
-
-  // Read task definition for profile resolution
-  let taskDef = null
-  try {
-    taskDef = readTask(taskDir)
-  } catch {
-    logger.warn('Could not read task.json for profile resolution, using default')
-  }
-  ctx.taskDef = taskDef
-  if (taskDef) {
-    const { resolvePipelineProfile } = await import('./pipeline-utils')
-    ctx.profile = resolvePipelineProfile(taskDef)
-  }
-
-  // Load existing state or create new one
-  const {
-    loadState: loadSt2,
-    writeState: writeSt2,
-    updateStage: updStage,
-    initState: initSt,
-  } = await import('./engine/status')
-
-  let state = loadSt2(input.taskId)
-
-  // If no existing state, create fresh state with FIX_ORDER stages
-  if (!state) {
-    state = initSt(ctx, 'fix')
-    for (const stageName of FIX_ORDER) {
-      if (typeof stageName === 'string') {
-        state = updStage(state, stageName, { state: 'pending', retries: 0 })
-      }
-    }
-    writeSt2(input.taskId, state)
-  }
-
-  // Set fix stage to pending and initialize fix attempt if not set
-  const existingFixAttempt = state.stages['fix']?.fixAttempt ?? 0
-  state = updStage(state, 'fix', {
-    state: 'pending',
-    fixAttempt: existingFixAttempt,
-    maxFixAttempts: 2,
-  })
-
-  // Also ensure commit-fix and verify are pending
-  state = updStage(state, 'commit-fix', { state: 'pending' })
-  state = updStage(state, 'verify', { state: 'pending' })
-  state = updStage(state, 'review', { state: 'pending' })
-
-  // Set initial cursor
-  state = { ...state, cursor: 'review', state: 'running' }
-  writeSt2(input.taskId, state)
-
-  // Build pipeline for fix mode - resolvePipelineForMode maps 'fix' to FIX_ORDER
-  const pipeline = resolvePipelineForMode('fix', ctx.profile, false, ctx)
-
-  // Run pipeline - it will find the first pending stage (review) and continue
-  const finalState = await runPipeline(ctx, pipeline)
-
-  // Handle paused state (gate approval required)
-  if (finalState.state === 'paused') {
-    throw new PipelinePausedError(`Pipeline paused — awaiting gate approval for ${ctx.taskId}`)
-  }
-
-  logger.info('\n✅ Fix complete!')
-}
-
-/**
- * Status mode
- */
-async function runStatusMode(ctx: PipelineContext): Promise<void> {
-  const { input } = ctx
-  const { loadState } = await import('./engine/status')
-
-  const state = loadState(input.taskId)
-
-  if (!state) {
-    logger.info(`No status found for task: ${input.taskId}`)
-    logger.info(`The Cody may not have run yet, or status.json was deleted.`)
-    return
-  }
-
-  logger.info(`Status for ${input.taskId}:`)
-  logger.info(state)
-
-  if (input.issueNumber) {
-    const v1Status = stateToV1(state)
-    postComment(input.issueNumber, formatStatusComment(input, v1Status))
-  }
-}
-
-// Run main
-main().catch((err) => {
-  const fatalErr = err instanceof Error ? err.message : String(err)
-  logger.error({ err }, `Fatal error: ${fatalErr}`)
-  process.exit(1)
-})

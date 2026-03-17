@@ -3,28 +3,20 @@
  * @domain cody
  * @pattern approve-review
  * @ai-summary Approve a PR review and merge it via GitHub API (Octokit).
- *             All PRs (feature and publish) use standard squash merge.
+ *   All PRs (feature and publish) use standard squash merge.
+ *   Uses per-user GitHub token when available for proper attribution.
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { Octokit } from '@octokit/rest'
-import { requireAuth } from '@/ui/cody/auth'
+import { requireCodyAuth, verifyActorLogin, getUserOctokit } from '@/ui/cody/auth'
+import { getOctokit } from '@/ui/cody/github-client'
+import { GITHUB_OWNER, GITHUB_REPO } from '@/ui/cody/constants'
 
-const OWNER = 'A-Guy-educ'
-const REPO = 'A-Guy'
 const DEV_BRANCH = 'dev'
 const PROD_BRANCH = 'main'
 
-function getOctokit(): Octokit {
-  const token = process.env.GITHUB_TOKEN
-  if (!token) {
-    throw new Error('GITHUB_TOKEN not configured')
-  }
-  return new Octokit({ auth: token })
-}
-
 export async function POST(req: NextRequest) {
-  const authError = await requireAuth(req)
-  if (authError) return authError
+  const authResult = await requireCodyAuth(req)
+  if (authResult instanceof NextResponse) return authResult
 
   try {
     const body = await req.json()
@@ -34,13 +26,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing prNumber' }, { status: 400 })
     }
 
-    const octokit = getOctokit()
+    // Verify actorLogin matches the authenticated session (prevents impersonation)
+    const actorResult = await verifyActorLogin(req, actorLogin)
+    if (actorResult instanceof NextResponse) return actorResult
+    const { identity } = actorResult
+
+    const verifiedLogin = identity.login
+
+    // Use user's Octokit for proper attribution (reviews, merges appear under user's identity)
+    const userOctokit = await getUserOctokit(req)
+    const octokit = userOctokit ?? getOctokit()
     const results: string[] = []
 
     // Fetch PR data once, reuse throughout
     const { data: prData } = await octokit.pulls.get({
-      owner: OWNER,
-      repo: REPO,
+      owner: GITHUB_OWNER,
+      repo: GITHUB_REPO,
       pull_number: Number(prNumber),
     })
 
@@ -48,18 +49,16 @@ export async function POST(req: NextRequest) {
 
     // 1. Approve the PR review
     try {
-      const actor = actorLogin ? ` by @${actorLogin}` : ''
       await octokit.pulls.createReview({
-        owner: OWNER,
-        repo: REPO,
+        owner: GITHUB_OWNER,
+        repo: GITHUB_REPO,
         pull_number: Number(prNumber),
         event: 'APPROVE',
-        body: `✅ Approved${actor} via Cody dashboard.`,
+        body: `✅ Approved by @${verifiedLogin} via Cody dashboard.`,
       })
       results.push(`Approved PR #${prNumber}`)
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error)
-      // May fail if already approved or self-review
       results.push(`Review note: ${msg}`)
     }
 
@@ -67,8 +66,8 @@ export async function POST(req: NextRequest) {
     try {
       const mergeMethod = isPublishPR ? 'merge' : 'squash'
       await octokit.pulls.merge({
-        owner: OWNER,
-        repo: REPO,
+        owner: GITHUB_OWNER,
+        repo: GITHUB_REPO,
         pull_number: Number(prNumber),
         merge_method: mergeMethod,
       })
@@ -94,8 +93,8 @@ export async function POST(req: NextRequest) {
         const branchRef = prData.head.ref
         if (branchRef !== DEV_BRANCH && branchRef !== PROD_BRANCH) {
           await octokit.git.deleteRef({
-            owner: OWNER,
-            repo: REPO,
+            owner: GITHUB_OWNER,
+            repo: GITHUB_REPO,
             ref: `heads/${branchRef}`,
           })
           results.push(`Deleted branch ${branchRef}`)
@@ -110,6 +109,23 @@ export async function POST(req: NextRequest) {
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error)
     console.error('[Cody] Merge error:', msg)
+
+    // User's GitHub token expired/revoked
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'status' in error &&
+      (error as { status?: number }).status === 401
+    ) {
+      return NextResponse.json(
+        {
+          error: 'github_token_expired',
+          message: 'Your GitHub token has expired. Please log in again.',
+        },
+        { status: 401 },
+      )
+    }
+
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

@@ -184,10 +184,13 @@
         "src/ui/admin/exercise-conversion/LessonMediaActions/index.tsx",
         "src/ui/admin/exercise-conversion/V2StatusPanel/index.tsx",
         "src/ui/admin/exercise-conversion/V3PreviewPanel/index.tsx",
+        "src/ui/admin/exercise-conversion/hooks/useConversionPrompts.ts",
         "src/ui/admin/shared/AdvancedJsonPanel.tsx",
         "src/ui/admin/shared/CollapsibleSection.tsx",
         "src/ui/admin/shared/ErrorDisplay.tsx",
+        "src/ui/cody/components/AddCommentDialog.tsx",
         "src/ui/cody/components/AssigneePicker.tsx",
+        "src/ui/cody/components/BranchCleanupDialog.tsx",
         "src/ui/cody/components/BugReportDialog.tsx",
         "src/ui/cody/components/CIStatusBadge.tsx",
         "src/ui/cody/components/CodyChat.tsx",
@@ -196,27 +199,49 @@
         "src/ui/cody/components/CommentBox.tsx",
         "src/ui/cody/components/CommentEditor.tsx",
         "src/ui/cody/components/CommentList.tsx",
+        "src/ui/cody/components/ConfirmDialog.tsx",
         "src/ui/cody/components/CreateTaskDialog.tsx",
+        "src/ui/cody/components/DashboardHeader.tsx",
+        "src/ui/cody/components/EditTaskDialog.tsx",
         "src/ui/cody/components/EnvironmentToolbar.tsx",
+        "src/ui/cody/components/ErrorBoundary.tsx",
         "src/ui/cody/components/FilterBar.tsx",
-        "src/ui/cody/components/GitHubUserPickerDialog.tsx",
+        "src/ui/cody/components/FixRequestDialog.tsx",
+        "src/ui/cody/components/KeyboardShortcutsDialog.tsx",
         "src/ui/cody/components/LabelPicker.tsx",
         "src/ui/cody/components/MarkdownViewer.tsx",
         "src/ui/cody/components/MergeApprovalDialog.tsx",
         "src/ui/cody/components/MergeButton.tsx",
         "src/ui/cody/components/MiniPipelineProgress.tsx",
+        "src/ui/cody/components/PRCommentList.tsx",
         "src/ui/cody/components/PipelineStatus.tsx",
+        "src/ui/cody/components/PreviewActions.tsx",
+        "src/ui/cody/components/PreviewModal.tsx",
+        "src/ui/cody/components/QueueView.tsx",
         "src/ui/cody/components/SimpleTooltip.tsx",
         "src/ui/cody/components/StageErrorDetail.tsx",
         "src/ui/cody/components/TaskDetail.tsx",
         "src/ui/cody/components/TaskDetailDialog.tsx",
+        "src/ui/cody/components/TaskDetailHeader.tsx",
         "src/ui/cody/components/TaskList.tsx",
-        "src/ui/cody/components/TaskPreviewTab.tsx",
+        "src/ui/cody/components/VoiceButton.tsx",
+        "src/ui/cody/components/VoiceChatOverlay.tsx",
+        "src/ui/cody/components/WorkflowRunsPopover.tsx",
         "src/ui/cody/hooks/index.ts",
         "src/ui/cody/hooks/useBrowserNotifications.ts",
+        "src/ui/cody/hooks/useCodyTTS.ts",
+        "src/ui/cody/hooks/useDashboardFilters.ts",
+        "src/ui/cody/hooks/useDashboardRouter.ts",
         "src/ui/cody/hooks/useGitHubIdentity.ts",
+        "src/ui/cody/hooks/useKeyboardShortcuts.ts",
         "src/ui/cody/hooks/usePRCIStatus.ts",
         "src/ui/cody/hooks/usePublish.ts",
+        "src/ui/cody/hooks/useRemoteStatus.ts",
+        "src/ui/cody/hooks/useSpeechRecognition.ts",
+        "src/ui/cody/hooks/useVoiceChat.ts",
+        "src/ui/cody/notifications/NotificationCenter.tsx",
+        "src/ui/cody/notifications/NotificationPreferences.tsx",
+        "src/ui/cody/notifications/useNotificationStore.ts",
         "src/ui/web/AdminBar/index.tsx",
         "src/ui/web/Card/index.tsx",
         "src/ui/web/CommandPalette.tsx",
@@ -255,6 +280,7 @@
         "src/ui/web/exerciserenderer/blocks/AxisRenderer/index.tsx",
         "src/ui/web/exerciserenderer/blocks/GeometryRenderer/index.tsx",
         "src/ui/web/exerciserenderer/blocks/HtmlBlockRenderer/index.tsx",
+        "src/ui/web/exerciserenderer/blocks/MultiAxisRenderer/index.tsx",
         "src/ui/web/exerciserenderer/blocks/SvgRenderer/index.tsx",
         "src/ui/web/exerciserenderer/components/FeedbackDisplay/index.tsx",
         "src/ui/web/exerciserenderer/components/HelpSystem/HelpSystemButtons.tsx",
@@ -262,6 +288,7 @@
         "src/ui/web/exerciserenderer/components/HelpSystem/index.tsx",
         "src/ui/web/exerciserenderer/components/MediaAttachments/index.tsx",
         "src/ui/web/exerciserenderer/components/QuestionCard/index.tsx",
+        "src/ui/web/exerciserenderer/components/VideoPlayer/index.tsx",
         "src/ui/web/exerciserenderer/context/MediaMapContext.tsx",
         "src/ui/web/exerciserenderer/graphics/JSXGraphBoard.tsx",
         "src/ui/web/exerciserenderer/hooks/useHelpSystem.ts",
@@ -300,6 +327,7 @@
         "src/ui/web/providers/Theme/ThemeSelector/index.tsx",
         "src/ui/web/providers/Theme/index.tsx",
         "src/ui/web/search/Component.tsx",
+        "src/ui/web/shared/ContentStatusBadge/index.tsx",
         "src/ui/web/shared/MathInput/FormulaComposer.tsx",
         "src/ui/web/shared/MathInput/MathField.tsx",
         "src/ui/web/shared/MathInput/MathFieldToolbar.tsx",
@@ -311,12 +339,27 @@
     "dashboard-page": {
       "pattern": "dashboard-page",
       "description": "No description available",
-      "files": ["src/app/(cody)/cody/[issueNumber]/page.tsx", "src/app/(cody)/cody/page.tsx"]
+      "files": [
+        "src/app/(cody)/cody/[issueNumber]/comments/page.tsx",
+        "src/app/(cody)/cody/[issueNumber]/page.tsx",
+        "src/app/(cody)/cody/[issueNumber]/preview/comments/page.tsx",
+        "src/app/(cody)/cody/[issueNumber]/preview/docs/page.tsx",
+        "src/app/(cody)/cody/[issueNumber]/preview/page.tsx",
+        "src/app/(cody)/cody/bug/page.tsx",
+        "src/app/(cody)/cody/chat/page.tsx",
+        "src/app/(cody)/cody/new/page.tsx",
+        "src/app/(cody)/cody/page.tsx"
+      ]
     },
     "next-error-boundary": {
       "pattern": "next-error-boundary",
       "description": "No description available",
       "files": ["src/app/(cody)/cody/error.tsx"]
+    },
+    "metadata-helper": {
+      "pattern": "metadata-helper",
+      "description": "No description available",
+      "files": ["src/app/(cody)/cody/metadata.ts"]
     },
     "route-group": {
       "pattern": "route-group",
@@ -339,6 +382,7 @@
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/MathPalette/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/NotebookWorkspace/index.tsx",
         "src/app/(frontend)/courses/_components/CourseCard/index.tsx",
+        "src/app/(frontend)/courses/_components/LessonCard/index.tsx",
         "src/app/(frontend)/courses/_components/LessonHeader/index.tsx",
         "src/app/(frontend)/courses/_components/PlanCard/index.tsx",
         "src/app/(frontend)/layout.tsx",
@@ -349,22 +393,33 @@
         "src/server/payload/blocks/Banner/Component.tsx",
         "src/server/payload/blocks/Content/Component.tsx",
         "src/server/payload/blocks/MediaBlock/Component.tsx",
+        "src/ui/cody/components/BranchCleanupDialog.tsx",
         "src/ui/cody/components/BugReportDialog.tsx",
         "src/ui/cody/components/CIStatusBadge.tsx",
         "src/ui/cody/components/CodyStatusBanner.tsx",
         "src/ui/cody/components/CommentEditor.tsx",
         "src/ui/cody/components/CommentList.tsx",
+        "src/ui/cody/components/ConfirmDialog.tsx",
         "src/ui/cody/components/CreateTaskDialog.tsx",
+        "src/ui/cody/components/EditTaskDialog.tsx",
+        "src/ui/cody/components/FilterBar.tsx",
         "src/ui/cody/components/MergeApprovalDialog.tsx",
         "src/ui/cody/components/MergeButton.tsx",
         "src/ui/cody/components/MiniPipelineProgress.tsx",
         "src/ui/cody/components/PipelineStatus.tsx",
+        "src/ui/cody/components/PreviewActions.tsx",
+        "src/ui/cody/components/PreviewModal.tsx",
+        "src/ui/cody/components/QueueView.tsx",
         "src/ui/cody/components/RiskBadge.tsx",
         "src/ui/cody/components/StatusBadge.tsx",
         "src/ui/cody/components/TaskDetail.tsx",
         "src/ui/cody/components/TaskList.tsx",
         "src/ui/cody/components/TaskTypeBadge.tsx",
-        "src/ui/cody/utils.ts",
+        "src/ui/cody/components/VoiceButton.tsx",
+        "src/ui/cody/components/VoiceChatOverlay.tsx",
+        "src/ui/cody/components/WorkflowRunsPopover.tsx",
+        "src/ui/cody/notifications/NotificationCenter.tsx",
+        "src/ui/cody/notifications/NotificationPreferences.tsx",
         "src/ui/web/AdminBar/index.tsx",
         "src/ui/web/Card/index.tsx",
         "src/ui/web/CollectionArchive/index.tsx",
@@ -400,11 +455,14 @@
         "src/ui/web/exerciserenderer/ExerciseRenderer/index.tsx",
         "src/ui/web/exerciserenderer/answers/McqAnswerUI/index.tsx",
         "src/ui/web/exerciserenderer/answers/TrueFalseAnswerUI/index.tsx",
+        "src/ui/web/exerciserenderer/blocks/GraphWithPrompt/index.tsx",
+        "src/ui/web/exerciserenderer/blocks/MultiAxisRenderer/index.tsx",
         "src/ui/web/exerciserenderer/blocks/SvgRenderer/index.tsx",
         "src/ui/web/exerciserenderer/components/FeedbackDisplay/index.tsx",
         "src/ui/web/exerciserenderer/components/HelpSystem/HelpSystemButtons.tsx",
         "src/ui/web/exerciserenderer/components/MediaAttachments/index.tsx",
         "src/ui/web/exerciserenderer/components/QuestionCard/index.tsx",
+        "src/ui/web/exerciserenderer/components/VideoPlayer/index.tsx",
         "src/ui/web/exerciserenderer/graphics/JSXGraphBoard.tsx",
         "src/ui/web/exerciserenderer/questions/MatchingQuestion/MatchingItem.tsx",
         "src/ui/web/exerciserenderer/questions/McqQuestion/index.tsx",
@@ -420,6 +478,7 @@
         "src/ui/web/media/PDFMedia/index.tsx",
         "src/ui/web/media/SVGMedia/index.tsx",
         "src/ui/web/media/VideoMedia/index.tsx",
+        "src/ui/web/shared/ContentStatusBadge/index.tsx",
         "src/ui/web/shared/EmptyState/EmptyState.tsx",
         "src/ui/web/shared/EmptyState/ErrorState.tsx",
         "src/ui/web/shared/Icon/Icon.tsx",
@@ -461,6 +520,8 @@
         "src/app/(frontend)/courses/[courseSlug]/_components/CourseTabs/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/_components/ExamReminderBubble/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/_components/ExamsTab/index.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/_components/LearnTab/index.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/_components/PracticeTab/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ExercisesPager/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonContent.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ViewToggle.tsx",
@@ -504,12 +565,14 @@
         "src/ui/web/chat/ChatErrorSurface/index.tsx",
         "src/ui/web/chat/ChatInterface/index.tsx",
         "src/ui/web/exerciserenderer/ExerciseRenderer/index.tsx",
+        "src/ui/web/exerciserenderer/components/VideoPlayer/index.tsx",
         "src/ui/web/header/MobileMenu/MobileMenuAuthSection.tsx",
         "src/ui/web/header/MobileMenu/index.tsx",
         "src/ui/web/header/Nav/index.tsx",
         "src/ui/web/homepage/GreetingFlow/index.tsx",
         "src/ui/web/homepage/NavigationBar/index.tsx",
-        "src/ui/web/providers/I18n/index.tsx"
+        "src/ui/web/providers/I18n/index.tsx",
+        "src/ui/web/shared/ContentStatusBadge/index.tsx"
       ]
     },
     "authenticated-endpoint": {
@@ -526,6 +589,9 @@
         "src/app/api/blob/upload-token/route.ts",
         "src/app/api/chat-assets/finalize/route.ts",
         "src/app/api/conversations/by-context/route.ts",
+        "src/app/api/entitlements/check/route.ts",
+        "src/app/api/entitlements/redeem/route.ts",
+        "src/app/api/exercises/[id]/blocks/[blockId]/route.ts",
         "src/app/api/exercises/convert/queue-v2/route.ts",
         "src/app/api/exercises/convert/queue/route.ts",
         "src/app/api/exercises/import/route.ts",
@@ -566,17 +632,24 @@
         "src/app/api/agent/message/persist/route.ts",
         "src/app/api/agent/reset-chat/route.ts",
         "src/app/api/chapters/by-grade/route.ts",
+        "src/app/api/cody/auth/logout/route.ts",
+        "src/app/api/cody/auth/me/route.ts",
         "src/app/api/cody/auth/route.ts",
         "src/app/api/cody/boards/route.ts",
+        "src/app/api/cody/branches/route.ts",
         "src/app/api/cody/chat/load/route.ts",
         "src/app/api/cody/chat/route.ts",
         "src/app/api/cody/chat/save/route.ts",
         "src/app/api/cody/collaborators/route.ts",
+        "src/app/api/cody/inspector/health/route.ts",
         "src/app/api/cody/pipeline/[taskId]/route.ts",
+        "src/app/api/cody/prs/comments/route.ts",
         "src/app/api/cody/prs/files/route.ts",
         "src/app/api/cody/prs/route.ts",
         "src/app/api/cody/prs/status/route.ts",
         "src/app/api/cody/publish/route.ts",
+        "src/app/api/cody/remote/exec/route.ts",
+        "src/app/api/cody/remote/status/route.ts",
         "src/app/api/cody/tasks/[taskId]/actions/route.ts",
         "src/app/api/cody/tasks/[taskId]/docs/route.ts",
         "src/app/api/cody/tasks/[taskId]/route.ts",
@@ -586,18 +659,24 @@
         "src/app/api/cody/workflows/route.ts",
         "src/app/api/conversations/by-context/route.ts",
         "src/app/api/copilotkit/route.ts",
+        "src/app/api/entitlements/check/route.ts",
+        "src/app/api/entitlements/redeem/route.ts",
         "src/app/api/example/route.ts",
+        "src/app/api/exercises/[id]/blocks/[blockId]/route.ts",
         "src/app/api/exercises/convert/queue-v2/route.ts",
         "src/app/api/exercises/convert/queue/route.ts",
         "src/app/api/exercises/convert/runner/route.ts",
         "src/app/api/exercises/import/route.ts",
         "src/app/api/jobs/run-immediate/route.ts",
+        "src/app/api/oauth/github/callback/route.ts",
+        "src/app/api/oauth/github/route.ts",
         "src/app/api/oauth/google/callback/oauth_callback_helpers.ts",
         "src/app/api/oauth/google/callback/route.ts",
         "src/app/api/oauth/google/route.ts",
         "src/app/api/pdfjs-viewer/route.ts",
         "src/app/api/prompts/for-conversion/route.ts",
         "src/app/api/study-plan/route.ts",
+        "src/infra/auth/cody_session.ts",
         "src/infra/auth/oauth_cookies.ts",
         "src/infra/auth/oauth_state.ts",
         "src/server/api/responses.ts",
@@ -611,11 +690,15 @@
       "files": [
         "src/app/api/agent/message/persist/route.ts",
         "src/app/api/blob/upload-token/route.ts",
+        "src/app/api/cody/branches/route.ts",
         "src/app/api/cody/chat/route.ts",
         "src/app/api/cody/chat/save/route.ts",
+        "src/app/api/cody/prs/comments/route.ts",
+        "src/app/api/cody/prs/status/route.ts",
         "src/app/api/cody/tasks/[taskId]/actions/route.ts",
         "src/app/api/cody/tasks/approve/route.ts",
-        "src/app/api/exercises/convert/queue-v2/route.ts",
+        "src/app/api/entitlements/redeem/route.ts",
+        "src/app/api/exercises/[id]/blocks/[blockId]/route.ts",
         "src/app/api/exercises/convert/queue/route.ts",
         "src/app/api/exercises/convert/single/create/route.ts",
         "src/app/api/study-plan/route.ts",
@@ -630,12 +713,21 @@
     "auth-api": {
       "pattern": "auth-api",
       "description": "No description available",
-      "files": ["src/app/api/cody/auth/route.ts"]
+      "files": [
+        "src/app/api/cody/auth/logout/route.ts",
+        "src/app/api/cody/auth/me/route.ts",
+        "src/app/api/cody/auth/route.ts"
+      ]
     },
     "boards-api": {
       "pattern": "boards-api",
       "description": "No description available",
       "files": ["src/app/api/cody/boards/route.ts"]
+    },
+    "branches-api": {
+      "pattern": "branches-api",
+      "description": "No description available",
+      "files": ["src/app/api/cody/branches/route.ts"]
     },
     "chat-load-api": {
       "pattern": "chat-load-api",
@@ -657,10 +749,20 @@
       "description": "No description available",
       "files": ["src/app/api/cody/collaborators/route.ts"]
     },
+    "inspector-health-api": {
+      "pattern": "inspector-health-api",
+      "description": "No description available",
+      "files": ["src/app/api/cody/inspector/health/route.ts"]
+    },
     "pipeline-api": {
       "pattern": "pipeline-api",
       "description": "No description available",
       "files": ["src/app/api/cody/pipeline/[taskId]/route.ts"]
+    },
+    "prs-comments-api": {
+      "pattern": "prs-comments-api",
+      "description": "No description available",
+      "files": ["src/app/api/cody/prs/comments/route.ts"]
     },
     "pr-files-api": {
       "pattern": "pr-files-api",
@@ -681,6 +783,16 @@
       "pattern": "publish",
       "description": "No description available",
       "files": ["src/app/api/cody/publish/route.ts"]
+    },
+    "proxy-endpoint": {
+      "pattern": "proxy-endpoint",
+      "description": "No description available",
+      "files": ["src/app/api/cody/remote/exec/route.ts"]
+    },
+    "health-check": {
+      "pattern": "health-check",
+      "description": "No description available",
+      "files": ["src/app/api/cody/remote/status/route.ts"]
     },
     "task-actions-api": {
       "pattern": "task-actions-api",
@@ -736,13 +848,30 @@
       "description": "No description available",
       "files": ["src/app/api/exercises/convert/queue-v2/route.ts"]
     },
+    "validation": {
+      "pattern": "validation",
+      "description": "No description available",
+      "files": [
+        "src/app/api/exercises/convert/queue-v2/schema.ts",
+        "src/server/payload/hooks/configSecrets/beforeChange-hook.ts",
+        "src/server/payload/hooks/configValues/beforeChange-hook.ts"
+      ]
+    },
+    "zod-schema": {
+      "pattern": "zod-schema",
+      "description": "No description available",
+      "files": ["src/app/api/exercises/convert/queue-v2/schema.ts"]
+    },
     "oauth": {
       "pattern": "oauth",
       "description": "No description available",
       "files": [
+        "src/app/api/oauth/github/callback/route.ts",
+        "src/app/api/oauth/github/route.ts",
         "src/app/api/oauth/google/callback/oauth_callback_helpers.ts",
         "src/app/api/oauth/google/callback/route.ts",
         "src/app/api/oauth/google/route.ts",
+        "src/infra/auth/cody_session.ts",
         "src/infra/auth/oauth_constants.ts",
         "src/infra/auth/oauth_cookies.ts",
         "src/infra/auth/oauth_logger.ts",
@@ -1003,6 +1132,21 @@
       "description": "No description available",
       "files": ["src/infra/types/index.ts"]
     },
+    "viewport-calculation": {
+      "pattern": "viewport-calculation",
+      "description": "No description available",
+      "files": ["src/infra/utils/graphics/viewport-utils.ts"]
+    },
+    "browser-api-types": {
+      "pattern": "browser-api-types",
+      "description": "No description available",
+      "files": ["src/infra/utils/speech-recognition.d.ts"]
+    },
+    "text-processing": {
+      "pattern": "text-processing",
+      "description": "No description available",
+      "files": ["src/infra/utils/speechHelpers.ts"]
+    },
     "typed-config-accessor": {
       "pattern": "typed-config-accessor",
       "description": "No description available",
@@ -1017,6 +1161,7 @@
       "pattern": "access-control",
       "description": "Explicit access control defined for CRUD operations",
       "files": [
+        "src/server/payload/collections/AccessCodes.ts",
         "src/server/payload/collections/Categories.ts",
         "src/server/payload/collections/Chapters.ts",
         "src/server/payload/collections/ChatAssets/index.ts",
@@ -1209,14 +1354,6 @@
       "description": "No description available",
       "files": ["src/server/payload/hooks/configSecrets/afterRead-hook.ts"]
     },
-    "validation": {
-      "pattern": "validation",
-      "description": "No description available",
-      "files": [
-        "src/server/payload/hooks/configSecrets/beforeChange-hook.ts",
-        "src/server/payload/hooks/configValues/beforeChange-hook.ts"
-      ]
-    },
     "secret-detection": {
       "pattern": "secret-detection",
       "description": "No description available",
@@ -1389,10 +1526,20 @@
       "description": "No description available",
       "files": ["src/ui/cody/chat-types.ts"]
     },
+    "add-comment-dialog": {
+      "pattern": "add-comment-dialog",
+      "description": "No description available",
+      "files": ["src/ui/cody/components/AddCommentDialog.tsx"]
+    },
     "assignee-picker": {
       "pattern": "assignee-picker",
       "description": "No description available",
       "files": ["src/ui/cody/components/AssigneePicker.tsx"]
+    },
+    "branch-cleanup-dialog": {
+      "pattern": "branch-cleanup-dialog",
+      "description": "No description available",
+      "files": ["src/ui/cody/components/BranchCleanupDialog.tsx"]
     },
     "bug-report-dialog": {
       "pattern": "bug-report-dialog",
@@ -1429,25 +1576,50 @@
       "description": "No description available",
       "files": ["src/ui/cody/components/CommentList.tsx"]
     },
+    "confirm-dialog": {
+      "pattern": "confirm-dialog",
+      "description": "No description available",
+      "files": ["src/ui/cody/components/ConfirmDialog.tsx"]
+    },
     "create-task-dialog": {
       "pattern": "create-task-dialog",
       "description": "No description available",
       "files": ["src/ui/cody/components/CreateTaskDialog.tsx"]
+    },
+    "dashboard-header": {
+      "pattern": "dashboard-header",
+      "description": "No description available",
+      "files": ["src/ui/cody/components/DashboardHeader.tsx"]
+    },
+    "edit-task-dialog": {
+      "pattern": "edit-task-dialog",
+      "description": "No description available",
+      "files": ["src/ui/cody/components/EditTaskDialog.tsx"]
     },
     "environment-toolbar": {
       "pattern": "environment-toolbar",
       "description": "No description available",
       "files": ["src/ui/cody/components/EnvironmentToolbar.tsx"]
     },
+    "error-boundary": {
+      "pattern": "error-boundary",
+      "description": "No description available",
+      "files": ["src/ui/cody/components/ErrorBoundary.tsx"]
+    },
     "filter-bar": {
       "pattern": "filter-bar",
       "description": "No description available",
       "files": ["src/ui/cody/components/FilterBar.tsx"]
     },
-    "github-identity-picker": {
-      "pattern": "github-identity-picker",
+    "fix-request-dialog": {
+      "pattern": "fix-request-dialog",
       "description": "No description available",
-      "files": ["src/ui/cody/components/GitHubUserPickerDialog.tsx"]
+      "files": ["src/ui/cody/components/FixRequestDialog.tsx"]
+    },
+    "keyboard-shortcuts-dialog": {
+      "pattern": "keyboard-shortcuts-dialog",
+      "description": "No description available",
+      "files": ["src/ui/cody/components/KeyboardShortcutsDialog.tsx"]
     },
     "label-picker": {
       "pattern": "label-picker",
@@ -1474,10 +1646,30 @@
       "description": "No description available",
       "files": ["src/ui/cody/components/MiniPipelineProgress.tsx", "src/ui/cody/pipeline-utils.ts"]
     },
+    "pr-comment-list": {
+      "pattern": "pr-comment-list",
+      "description": "No description available",
+      "files": ["src/ui/cody/components/PRCommentList.tsx"]
+    },
     "pipeline-status": {
       "pattern": "pipeline-status",
       "description": "No description available",
       "files": ["src/ui/cody/components/PipelineStatus.tsx"]
+    },
+    "preview-actions": {
+      "pattern": "preview-actions",
+      "description": "No description available",
+      "files": ["src/ui/cody/components/PreviewActions.tsx"]
+    },
+    "preview-modal": {
+      "pattern": "preview-modal",
+      "description": "No description available",
+      "files": ["src/ui/cody/components/PreviewModal.tsx"]
+    },
+    "queue-view": {
+      "pattern": "queue-view",
+      "description": "No description available",
+      "files": ["src/ui/cody/components/QueueView.tsx"]
     },
     "badge": {
       "pattern": "badge",
@@ -1508,15 +1700,28 @@
       "description": "No description available",
       "files": ["src/ui/cody/components/TaskDetailDialog.tsx"]
     },
+    "task-detail-header": {
+      "pattern": "task-detail-header",
+      "description": "No description available",
+      "files": ["src/ui/cody/components/TaskDetailHeader.tsx"]
+    },
     "task-list": {
       "pattern": "task-list",
       "description": "No description available",
       "files": ["src/ui/cody/components/TaskList.tsx"]
     },
-    "task-preview-tab": {
-      "pattern": "task-preview-tab",
+    "voice-ui": {
+      "pattern": "voice-ui",
       "description": "No description available",
-      "files": ["src/ui/cody/components/TaskPreviewTab.tsx"]
+      "files": [
+        "src/ui/cody/components/VoiceButton.tsx",
+        "src/ui/cody/components/VoiceChatOverlay.tsx"
+      ]
+    },
+    "popover": {
+      "pattern": "popover",
+      "description": "No description available",
+      "files": ["src/ui/cody/components/WorkflowRunsPopover.tsx"]
     },
     "tooltip-content": {
       "pattern": "tooltip-content",
@@ -1531,17 +1736,37 @@
     "custom-hooks": {
       "pattern": "custom-hooks",
       "description": "No description available",
-      "files": ["src/ui/cody/hooks/index.ts"]
+      "files": ["src/ui/cody/hooks/index.ts", "src/ui/cody/hooks/useRemoteStatus.ts"]
     },
     "browser-notifications": {
       "pattern": "browser-notifications",
       "description": "No description available",
       "files": ["src/ui/cody/hooks/useBrowserNotifications.ts"]
     },
+    "browser-speech-api": {
+      "pattern": "browser-speech-api",
+      "description": "No description available",
+      "files": ["src/ui/cody/hooks/useCodyTTS.ts", "src/ui/cody/hooks/useSpeechRecognition.ts"]
+    },
+    "state-management": {
+      "pattern": "state-management",
+      "description": "No description available",
+      "files": ["src/ui/cody/hooks/useDashboardFilters.ts"]
+    },
+    "url-management": {
+      "pattern": "url-management",
+      "description": "No description available",
+      "files": ["src/ui/cody/hooks/useDashboardRouter.ts"]
+    },
     "github-identity": {
       "pattern": "github-identity",
       "description": "No description available",
       "files": ["src/ui/cody/hooks/useGitHubIdentity.ts"]
+    },
+    "keyboard-shortcuts": {
+      "pattern": "keyboard-shortcuts",
+      "description": "No description available",
+      "files": ["src/ui/cody/hooks/useKeyboardShortcuts.ts"]
     },
     "usePRCIStatus": {
       "pattern": "usePRCIStatus",
@@ -1553,6 +1778,27 @@
       "description": "No description available",
       "files": ["src/ui/cody/hooks/usePublish.ts"]
     },
+    "state-machine": {
+      "pattern": "state-machine",
+      "description": "No description available",
+      "files": ["src/ui/cody/hooks/useVoiceChat.ts"]
+    },
+    "notification-system": {
+      "pattern": "notification-system",
+      "description": "No description available",
+      "files": [
+        "src/ui/cody/notifications/NotificationCenter.tsx",
+        "src/ui/cody/notifications/NotificationPreferences.tsx",
+        "src/ui/cody/notifications/sounds.ts",
+        "src/ui/cody/notifications/types.ts",
+        "src/ui/cody/notifications/useNotificationStore.ts"
+      ]
+    },
+    "config": {
+      "pattern": "config",
+      "description": "No description available",
+      "files": ["src/ui/cody/remote-config.ts"]
+    },
     "task-parser": {
       "pattern": "task-parser",
       "description": "No description available",
@@ -1562,6 +1808,11 @@
       "pattern": "utilities",
       "description": "No description available",
       "files": ["src/ui/cody/utils.ts"]
+    },
+    "workflow-matching": {
+      "pattern": "workflow-matching",
+      "description": "No description available",
+      "files": ["src/ui/cody/workflow-matching.ts"]
     },
     "variant-component": {
       "pattern": "variant-component",
@@ -1603,16 +1854,64 @@
       "type": "component",
       "domain": "cody",
       "patterns": ["client-provider", "client-component"],
-      "aiSummary": "Client-side providers wrapper for Cody dashboard (QueryClientProvider)",
+      "aiSummary": "Client-side providers wrapper for Cody dashboard (QueryClientProvider + ThemeProvider)",
       "dependencies": ["@tanstack/react-query", "react"]
+    },
+    "src/app/(cody)/cody/[issueNumber]/comments/page.tsx": {
+      "path": "src/app/(cody)/cody/[issueNumber]/comments/page.tsx",
+      "type": "page",
+      "domain": "cody",
+      "patterns": ["dashboard-page"],
+      "aiSummary": "Cody dashboard with task detail on Comments tab via URL /cody/[n]/comments.",
+      "dependencies": ["next/navigation", "next"]
     },
     "src/app/(cody)/cody/[issueNumber]/page.tsx": {
       "path": "src/app/(cody)/cody/[issueNumber]/page.tsx",
       "type": "page",
       "domain": "cody",
       "patterns": ["dashboard-page"],
-      "aiSummary": "Cody dashboard with a specific task pre-selected via URL",
+      "aiSummary": "Cody dashboard with a specific task pre-selected via URL.",
       "dependencies": ["next/navigation", "next"]
+    },
+    "src/app/(cody)/cody/[issueNumber]/preview/comments/page.tsx": {
+      "path": "src/app/(cody)/cody/[issueNumber]/preview/comments/page.tsx",
+      "type": "page",
+      "domain": "cody",
+      "patterns": ["dashboard-page"],
+      "aiSummary": "Cody dashboard with preview modal on Comments tab via URL /cody/[n]/preview/comments.",
+      "dependencies": ["next/navigation", "next"]
+    },
+    "src/app/(cody)/cody/[issueNumber]/preview/docs/page.tsx": {
+      "path": "src/app/(cody)/cody/[issueNumber]/preview/docs/page.tsx",
+      "type": "page",
+      "domain": "cody",
+      "patterns": ["dashboard-page"],
+      "aiSummary": "Cody dashboard with preview modal on Docs tab via URL /cody/[n]/preview/docs.",
+      "dependencies": ["next/navigation", "next"]
+    },
+    "src/app/(cody)/cody/[issueNumber]/preview/page.tsx": {
+      "path": "src/app/(cody)/cody/[issueNumber]/preview/page.tsx",
+      "type": "page",
+      "domain": "cody",
+      "patterns": ["dashboard-page"],
+      "aiSummary": "Cody dashboard with preview modal pre-opened via URL /cody/[n]/preview.",
+      "dependencies": ["next/navigation", "next"]
+    },
+    "src/app/(cody)/cody/bug/page.tsx": {
+      "path": "src/app/(cody)/cody/bug/page.tsx",
+      "type": "page",
+      "domain": "cody",
+      "patterns": ["dashboard-page"],
+      "aiSummary": "Cody dashboard with bug report dialog pre-opened via URL /cody/bug.",
+      "dependencies": []
+    },
+    "src/app/(cody)/cody/chat/page.tsx": {
+      "path": "src/app/(cody)/cody/chat/page.tsx",
+      "type": "page",
+      "domain": "cody",
+      "patterns": ["dashboard-page"],
+      "aiSummary": "Cody dashboard with chat panel pre-opened via URL /cody/chat.",
+      "dependencies": []
     },
     "src/app/(cody)/cody/error.tsx": {
       "path": "src/app/(cody)/cody/error.tsx",
@@ -1622,13 +1921,29 @@
       "aiSummary": "Error boundary for the Cody dashboard — catches runtime errors and lets the user retry",
       "dependencies": ["react", "lucide-react"]
     },
+    "src/app/(cody)/cody/metadata.ts": {
+      "path": "src/app/(cody)/cody/metadata.ts",
+      "type": "utility",
+      "domain": "cody",
+      "patterns": ["metadata-helper"],
+      "aiSummary": "Shared metadata builders for Cody dashboard routes with OG/Twitter tags",
+      "dependencies": ["next"]
+    },
+    "src/app/(cody)/cody/new/page.tsx": {
+      "path": "src/app/(cody)/cody/new/page.tsx",
+      "type": "page",
+      "domain": "cody",
+      "patterns": ["dashboard-page"],
+      "aiSummary": "Cody dashboard with create task dialog pre-opened via URL /cody/new.",
+      "dependencies": []
+    },
     "src/app/(cody)/cody/page.tsx": {
       "path": "src/app/(cody)/cody/page.tsx",
       "type": "page",
       "domain": "cody",
       "patterns": ["dashboard-page"],
-      "aiSummary": "Main Cody dashboard page with Kanban board and AI chat",
-      "dependencies": ["next/navigation", "next"]
+      "aiSummary": "Main Cody dashboard page. Auth handled client-side via SessionExpiredError.",
+      "dependencies": []
     },
     "src/app/(cody)/layout.tsx": {
       "path": "src/app/(cody)/layout.tsx",
@@ -1636,7 +1951,7 @@
       "domain": "cody",
       "patterns": ["route-group", "tailwind-component"],
       "aiSummary": "Root layout for Cody dashboard — reuses frontend fonts, theme, and CSS without Header/Footer/i18n",
-      "dependencies": ["react", "geist/font/mono", "geist/font/sans", "next/font/google"]
+      "dependencies": ["react", "next", "geist/font/mono", "geist/font/sans", "next/font/google"]
     },
     "src/app/(frontend)/LayoutClient.tsx": {
       "path": "src/app/(frontend)/LayoutClient.tsx",
@@ -1796,7 +2111,7 @@
       "domain": "general",
       "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["lucide-react"]
+      "dependencies": ["lucide-react", "sonner"]
     },
     "src/app/(frontend)/courses/[courseSlug]/_components/CoursePageContent/index.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/_components/CoursePageContent/index.tsx",
@@ -1804,7 +2119,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react"]
+      "dependencies": ["lucide-react", "react"]
     },
     "src/app/(frontend)/courses/[courseSlug]/_components/CourseTabs/index.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/_components/CourseTabs/index.tsx",
@@ -1820,7 +2135,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["lucide-react"]
+      "dependencies": []
     },
     "src/app/(frontend)/courses/[courseSlug]/_components/ExamsTab/index.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/_components/ExamsTab/index.tsx",
@@ -1834,7 +2149,7 @@
       "path": "src/app/(frontend)/courses/[courseSlug]/_components/LearnTab/index.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["client-component"],
+      "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
       "dependencies": []
     },
@@ -1842,7 +2157,7 @@
       "path": "src/app/(frontend)/courses/[courseSlug]/_components/PracticeTab/index.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["client-component"],
+      "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
       "dependencies": []
     },
@@ -2012,7 +2327,7 @@
       "domain": "general",
       "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["lucide-react", "react"]
+      "dependencies": ["lucide-react", "react", "sonner"]
     },
     "src/app/(frontend)/courses/_components/CourseCatalogHeader/index.tsx": {
       "path": "src/app/(frontend)/courses/_components/CourseCatalogHeader/index.tsx",
@@ -2066,9 +2381,9 @@
       "path": "src/app/(frontend)/courses/_components/LessonCard/index.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["i18n-component", "client-component"],
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": []
+      "dependencies": ["sonner"]
     },
     "src/app/(frontend)/courses/_components/LessonHeader/index.tsx": {
       "path": "src/app/(frontend)/courses/_components/LessonHeader/index.tsx",
@@ -2124,7 +2439,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["next/navigation", "react"]
+      "dependencies": ["next/navigation", "react", "next/image"]
     },
     "src/app/(frontend)/login/LoginPageContent.tsx": {
       "path": "src/app/(frontend)/login/LoginPageContent.tsx",
@@ -2226,7 +2541,7 @@
       "domain": "general",
       "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "lucide-react"]
+      "dependencies": ["lucide-react", "react"]
     },
     "src/app/(frontend)/study-plan/_components/DayCard.tsx": {
       "path": "src/app/(frontend)/study-plan/_components/DayCard.tsx",
@@ -2340,6 +2655,22 @@
       "aiSummary": "",
       "dependencies": ["payload", "zod", "@payload-config"]
     },
+    "src/app/api/cody/auth/logout/route.ts": {
+      "path": "src/app/api/cody/auth/logout/route.ts",
+      "type": "api-route",
+      "domain": "cody",
+      "patterns": ["auth-api", "api-endpoint"],
+      "aiSummary": "Clears the Cody GitHub session cookie (logout).",
+      "dependencies": ["next/server"]
+    },
+    "src/app/api/cody/auth/me/route.ts": {
+      "path": "src/app/api/cody/auth/me/route.ts",
+      "type": "api-route",
+      "domain": "cody",
+      "patterns": ["auth-api", "api-endpoint"],
+      "aiSummary": "Returns the current GitHub identity from the Cody session cookie.",
+      "dependencies": ["next/server"]
+    },
     "src/app/api/cody/auth/route.ts": {
       "path": "src/app/api/cody/auth/route.ts",
       "type": "api-endpoint",
@@ -2356,6 +2687,14 @@
       "aiSummary": "API route to fetch boards (labels + milestones)",
       "dependencies": ["next/server"]
     },
+    "src/app/api/cody/branches/route.ts": {
+      "path": "src/app/api/cody/branches/route.ts",
+      "type": "endpoint",
+      "domain": "cody",
+      "patterns": ["branches-api", "api-endpoint", "validated-endpoint"],
+      "aiSummary": "API route for listing and deleting branches from GitHub.",
+      "dependencies": ["next/server", "zod"]
+    },
     "src/app/api/cody/chat/load/route.ts": {
       "path": "src/app/api/cody/chat/load/route.ts",
       "type": "api-endpoint",
@@ -2370,14 +2709,22 @@
       "domain": "cody",
       "patterns": ["ai-chat-streaming", "api-endpoint", "validated-endpoint"],
       "aiSummary": "Streaming AI chat endpoint with GitHub MCP tools for repo browsing",
-      "dependencies": ["@ai-sdk/mcp", "@ai-sdk/google", "ai", "zod", "next/server"]
+      "dependencies": [
+        "@ai-sdk/mcp",
+        "@ai-sdk/google",
+        "ai",
+        "child_process",
+        "net",
+        "zod",
+        "next/server"
+      ]
     },
     "src/app/api/cody/chat/save/route.ts": {
       "path": "src/app/api/cody/chat/save/route.ts",
       "type": "api-endpoint",
       "domain": "cody",
       "patterns": ["chat-save-api", "api-endpoint", "validated-endpoint"],
-      "aiSummary": "API route to save chat history for a task to GitHub",
+      "aiSummary": "API route to save chat history for a task to GitHub.",
       "dependencies": ["next/server", "zod"]
     },
     "src/app/api/cody/collaborators/route.ts": {
@@ -2388,6 +2735,14 @@
       "aiSummary": "API route to fetch repository collaborators for assignee picker",
       "dependencies": ["next/server"]
     },
+    "src/app/api/cody/inspector/health/route.ts": {
+      "path": "src/app/api/cody/inspector/health/route.ts",
+      "type": "api-endpoint",
+      "domain": "cody",
+      "patterns": ["inspector-health-api", "api-endpoint"],
+      "aiSummary": "API route to fetch inspector health status and metrics",
+      "dependencies": ["next/server", "child_process", "util", "fs/promises", "path"]
+    },
     "src/app/api/cody/pipeline/[taskId]/route.ts": {
       "path": "src/app/api/cody/pipeline/[taskId]/route.ts",
       "type": "api-endpoint",
@@ -2395,6 +2750,14 @@
       "patterns": ["pipeline-api", "api-endpoint"],
       "aiSummary": "API route to fetch pipeline status for a task",
       "dependencies": ["next/server"]
+    },
+    "src/app/api/cody/prs/comments/route.ts": {
+      "path": "src/app/api/cody/prs/comments/route.ts",
+      "type": "api-endpoint",
+      "domain": "cody",
+      "patterns": ["prs-comments-api", "api-endpoint", "validated-endpoint"],
+      "aiSummary": "API route to fetch and post PR comments",
+      "dependencies": ["next/server", "zod"]
     },
     "src/app/api/cody/prs/files/route.ts": {
       "path": "src/app/api/cody/prs/files/route.ts",
@@ -2416,17 +2779,33 @@
       "path": "src/app/api/cody/prs/status/route.ts",
       "type": "api-endpoint",
       "domain": "cody",
-      "patterns": ["pr-ci-status", "api-endpoint"],
+      "patterns": ["pr-ci-status", "api-endpoint", "validated-endpoint"],
       "aiSummary": "Fetch CI status and mergeability for a PR",
-      "dependencies": ["next/server"]
+      "dependencies": ["next/server", "zod"]
     },
     "src/app/api/cody/publish/route.ts": {
       "path": "src/app/api/cody/publish/route.ts",
       "type": "api-endpoint",
       "domain": "cody",
       "patterns": ["publish", "api-endpoint"],
-      "aiSummary": "Create a GitHub issue with 'publish' label to trigger dev→main PR workflow",
-      "dependencies": ["next/server", "@octokit/rest"]
+      "aiSummary": "Create a GitHub issue with 'publish' label to trigger dev→main PR workflow.",
+      "dependencies": ["next/server"]
+    },
+    "src/app/api/cody/remote/exec/route.ts": {
+      "path": "src/app/api/cody/remote/exec/route.ts",
+      "type": "api-endpoint",
+      "domain": "cody",
+      "patterns": ["proxy-endpoint", "api-endpoint"],
+      "aiSummary": "Proxy endpoint that forwards exec/read/write/ls actions to the remote dev agent",
+      "dependencies": ["next/server"]
+    },
+    "src/app/api/cody/remote/status/route.ts": {
+      "path": "src/app/api/cody/remote/status/route.ts",
+      "type": "api-endpoint",
+      "domain": "cody",
+      "patterns": ["health-check", "api-endpoint"],
+      "aiSummary": "Health check for the remote dev agent — returns online/offline status",
+      "dependencies": ["next/server"]
     },
     "src/app/api/cody/tasks/[taskId]/actions/route.ts": {
       "path": "src/app/api/cody/tasks/[taskId]/actions/route.ts",
@@ -2457,8 +2836,8 @@
       "type": "api-endpoint",
       "domain": "cody",
       "patterns": ["approve-gate", "api-endpoint", "validated-endpoint"],
-      "aiSummary": "Approve a gate - merge PR, delete branch, close issue, remove labels via GitHub API",
-      "dependencies": ["next/server", "@octokit/rest", "zod"]
+      "aiSummary": "Approve a gate - merge PR, delete branch, close issue, remove labels via GitHub API.",
+      "dependencies": ["next/server", "zod"]
     },
     "src/app/api/cody/tasks/approve-review/route.ts": {
       "path": "src/app/api/cody/tasks/approve-review/route.ts",
@@ -2466,7 +2845,7 @@
       "domain": "cody",
       "patterns": ["approve-review", "api-endpoint"],
       "aiSummary": "Approve a PR review and merge it via GitHub API (Octokit).",
-      "dependencies": ["next/server", "@octokit/rest"]
+      "dependencies": ["next/server"]
     },
     "src/app/api/cody/tasks/route.ts": {
       "path": "src/app/api/cody/tasks/route.ts",
@@ -2500,6 +2879,22 @@
       "aiSummary": "Simple AI chat endpoint for Cody dashboard",
       "dependencies": ["@google/generative-ai", "next/server"]
     },
+    "src/app/api/entitlements/check/route.ts": {
+      "path": "src/app/api/entitlements/check/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["api-endpoint", "authenticated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["next/server", "payload", "@payload-config"]
+    },
+    "src/app/api/entitlements/redeem/route.ts": {
+      "path": "src/app/api/entitlements/redeem/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["api-endpoint", "authenticated-endpoint", "validated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["next/server", "payload", "zod", "@payload-config"]
+    },
     "src/app/api/example/route.ts": {
       "path": "src/app/api/example/route.ts",
       "type": "unknown",
@@ -2507,6 +2902,14 @@
       "patterns": ["api-endpoint"],
       "aiSummary": "",
       "dependencies": ["next/server", "zod", "@sentry/nextjs", "crypto"]
+    },
+    "src/app/api/exercises/[id]/blocks/[blockId]/route.ts": {
+      "path": "src/app/api/exercises/[id]/blocks/[blockId]/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["api-endpoint", "authenticated-endpoint", "validated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["next/server", "payload", "zod", "@payload-config"]
     },
     "src/app/api/exercises/convert/queue/route.ts": {
       "path": "src/app/api/exercises/convert/queue/route.ts",
@@ -2520,15 +2923,17 @@
       "path": "src/app/api/exercises/convert/queue-v2/route.ts",
       "type": "api-route",
       "domain": "conversion",
-      "patterns": [
-        "endpoint",
-        "queue",
-        "api-endpoint",
-        "authenticated-endpoint",
-        "validated-endpoint"
-      ],
+      "patterns": ["endpoint", "queue", "api-endpoint", "authenticated-endpoint"],
       "aiSummary": "",
-      "dependencies": ["payload", "@payload-config", "next/server", "zod"]
+      "dependencies": ["payload", "@payload-config", "next/server"]
+    },
+    "src/app/api/exercises/convert/queue-v2/schema.ts": {
+      "path": "src/app/api/exercises/convert/queue-v2/schema.ts",
+      "type": "utility",
+      "domain": "conversion",
+      "patterns": ["validation", "zod-schema"],
+      "aiSummary": "",
+      "dependencies": ["zod"]
     },
     "src/app/api/exercises/convert/runner/route.ts": {
       "path": "src/app/api/exercises/convert/runner/route.ts",
@@ -2577,6 +2982,22 @@
       "patterns": ["api-endpoint", "authenticated-endpoint"],
       "aiSummary": "",
       "dependencies": ["@payload-config", "mongodb", "next/server", "payload"]
+    },
+    "src/app/api/oauth/github/callback/route.ts": {
+      "path": "src/app/api/oauth/github/callback/route.ts",
+      "type": "api-route",
+      "domain": "auth",
+      "patterns": ["oauth", "api-endpoint"],
+      "aiSummary": "Handles GitHub OAuth callback for the Cody Operations Dashboard.",
+      "dependencies": ["next/server"]
+    },
+    "src/app/api/oauth/github/route.ts": {
+      "path": "src/app/api/oauth/github/route.ts",
+      "type": "api-route",
+      "domain": "auth",
+      "patterns": ["oauth", "api-endpoint"],
+      "aiSummary": "Initiates GitHub OAuth flow for the Cody Operations Dashboard.",
+      "dependencies": ["next/server"]
     },
     "src/app/api/oauth/google/callback/oauth_callback_helpers.ts": {
       "path": "src/app/api/oauth/google/callback/oauth_callback_helpers.ts",
@@ -2761,6 +3182,14 @@
       "patterns": ["authenticated-endpoint"],
       "aiSummary": "",
       "dependencies": []
+    },
+    "src/infra/auth/cody_session.ts": {
+      "path": "src/infra/auth/cody_session.ts",
+      "type": "utility",
+      "domain": "auth",
+      "patterns": ["oauth", "api-endpoint"],
+      "aiSummary": "Standalone GitHub identity session for the Cody Operations Dashboard.",
+      "dependencies": ["jose", "crypto", "next/server"]
     },
     "src/infra/auth/oauth_constants.ts": {
       "path": "src/infra/auth/oauth_constants.ts",
@@ -3130,6 +3559,30 @@
       "aiSummary": "Centralized type exports for easy discovery by AI agents",
       "dependencies": []
     },
+    "src/infra/utils/graphics/viewport-utils.ts": {
+      "path": "src/infra/utils/graphics/viewport-utils.ts",
+      "type": "utility",
+      "domain": "graphics",
+      "patterns": ["viewport-calculation"],
+      "aiSummary": "Viewport utility functions for auto-calculating, validating, and resolving graph display ranges",
+      "dependencies": []
+    },
+    "src/infra/utils/speech-recognition.d.ts": {
+      "path": "src/infra/utils/speech-recognition.d.ts",
+      "type": "type-declaration",
+      "domain": "shared",
+      "patterns": ["browser-api-types"],
+      "aiSummary": "Type declarations for the Web Speech Recognition API",
+      "dependencies": []
+    },
+    "src/infra/utils/speechHelpers.ts": {
+      "path": "src/infra/utils/speechHelpers.ts",
+      "type": "utility",
+      "domain": "shared",
+      "patterns": ["text-processing"],
+      "aiSummary": "Shared helpers for speech synthesis: markdown stripping and language detection",
+      "dependencies": []
+    },
     "src/infra/utils/useClickableCard.ts": {
       "path": "src/infra/utils/useClickableCard.ts",
       "type": "unknown",
@@ -3231,6 +3684,14 @@
       "patterns": ["tailwind-component"],
       "aiSummary": "",
       "dependencies": ["next/image", "react"]
+    },
+    "src/server/payload/collections/AccessCodes.ts": {
+      "path": "src/server/payload/collections/AccessCodes.ts",
+      "type": "collection-config",
+      "domain": "entitlements",
+      "patterns": ["access-control"],
+      "aiSummary": "Stores coupon/access codes that grant entitlements to courses",
+      "dependencies": ["payload"]
     },
     "src/server/payload/collections/Categories.ts": {
       "path": "src/server/payload/collections/Categories.ts",
@@ -3952,7 +4413,7 @@
       "domain": "general",
       "patterns": ["client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "jsxgraph"]
+      "dependencies": ["jsxgraph", "react"]
     },
     "src/ui/admin/ExerciseContentEditor/components/geometry/GeometryCanvasWithToolbar.tsx": {
       "path": "src/ui/admin/ExerciseContentEditor/components/geometry/GeometryCanvasWithToolbar.tsx",
@@ -4000,7 +4461,7 @@
       "domain": "general",
       "patterns": ["client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "lucide-react"]
+      "dependencies": ["lucide-react", "react"]
     },
     "src/ui/admin/ExerciseContentEditor/components/geometry/VectorsPanel.tsx": {
       "path": "src/ui/admin/ExerciseContentEditor/components/geometry/VectorsPanel.tsx",
@@ -4402,6 +4863,14 @@
       "aiSummary": "",
       "dependencies": ["react"]
     },
+    "src/ui/admin/exercise-conversion/hooks/useConversionPrompts.ts": {
+      "path": "src/ui/admin/exercise-conversion/hooks/useConversionPrompts.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
     "src/ui/admin/shared/AdvancedJsonPanel.tsx": {
       "path": "src/ui/admin/shared/AdvancedJsonPanel.tsx",
       "type": "unknown",
@@ -4447,8 +4916,8 @@
       "type": "utility",
       "domain": "cody",
       "patterns": ["auth", "api-endpoint", "authenticated-endpoint"],
-      "aiSummary": "Dashboard authentication middleware using Payload",
-      "dependencies": ["next/server", "payload", "@payload-config"]
+      "aiSummary": "Dashboard authentication middleware.",
+      "dependencies": ["next/server", "payload", "@payload-config", "@octokit/rest"]
     },
     "src/ui/cody/chat-types.ts": {
       "path": "src/ui/cody/chat-types.ts",
@@ -4458,6 +4927,14 @@
       "aiSummary": "Shared types for chat persistence across dashboard and pipeline",
       "dependencies": []
     },
+    "src/ui/cody/components/AddCommentDialog.tsx": {
+      "path": "src/ui/cody/components/AddCommentDialog.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["add-comment-dialog", "client-component"],
+      "aiSummary": "Dialog with markdown editor to add a simple comment on a PR (without @cody action)",
+      "dependencies": ["react", "lucide-react", "react-markdown", "remark-gfm"]
+    },
     "src/ui/cody/components/AssigneePicker.tsx": {
       "path": "src/ui/cody/components/AssigneePicker.tsx",
       "type": "component",
@@ -4465,6 +4942,14 @@
       "patterns": ["assignee-picker", "client-component"],
       "aiSummary": "Inline assignee management with cached collaborators, loading states, and remove buttons",
       "dependencies": ["react", "lucide-react"]
+    },
+    "src/ui/cody/components/BranchCleanupDialog.tsx": {
+      "path": "src/ui/cody/components/BranchCleanupDialog.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["branch-cleanup-dialog", "tailwind-component", "client-component"],
+      "aiSummary": "Dialog to view and delete branches associated with closed/done tasks",
+      "dependencies": ["react", "lucide-react", "@tanstack/react-query", "sonner"]
     },
     "src/ui/cody/components/BugReportDialog.tsx": {
       "path": "src/ui/cody/components/BugReportDialog.tsx",
@@ -4496,7 +4981,7 @@
       "domain": "cody",
       "patterns": ["cody-dashboard", "client-component"],
       "aiSummary": "Main dashboard component with responsive layout — Sheet for mobile controls and task detail",
-      "dependencies": ["react", "lucide-react", "@tanstack/react-query", "sonner"]
+      "dependencies": ["react", "@tanstack/react-query", "sonner"]
     },
     "src/ui/cody/components/CodyStatusBanner.tsx": {
       "path": "src/ui/cody/components/CodyStatusBanner.tsx",
@@ -4530,6 +5015,14 @@
       "aiSummary": "Component to display comments with markdown rendering",
       "dependencies": ["react", "react-markdown", "remark-gfm"]
     },
+    "src/ui/cody/components/ConfirmDialog.tsx": {
+      "path": "src/ui/cody/components/ConfirmDialog.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["confirm-dialog", "tailwind-component", "client-component"],
+      "aiSummary": "Reusable confirmation dialog replacing native confirm() calls with accessible modal",
+      "dependencies": []
+    },
     "src/ui/cody/components/CreateTaskDialog.tsx": {
       "path": "src/ui/cody/components/CreateTaskDialog.tsx",
       "type": "component",
@@ -4537,6 +5030,22 @@
       "patterns": ["create-task-dialog", "tailwind-component", "client-component"],
       "aiSummary": "Dialog to create new tasks with useCreateTask hook",
       "dependencies": ["react", "next/image", "react-markdown"]
+    },
+    "src/ui/cody/components/DashboardHeader.tsx": {
+      "path": "src/ui/cody/components/DashboardHeader.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["dashboard-header", "client-component"],
+      "aiSummary": "Dashboard header with user info, theme toggle, and action buttons",
+      "dependencies": ["react", "lucide-react"]
+    },
+    "src/ui/cody/components/EditTaskDialog.tsx": {
+      "path": "src/ui/cody/components/EditTaskDialog.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["edit-task-dialog", "tailwind-component", "client-component"],
+      "aiSummary": "Dialog to edit existing tasks with title, description, labels, and assignees",
+      "dependencies": ["react", "react-markdown"]
     },
     "src/ui/cody/components/EnvironmentToolbar.tsx": {
       "path": "src/ui/cody/components/EnvironmentToolbar.tsx",
@@ -4546,21 +5055,37 @@
       "aiSummary": "Toolbar with Dev/Prod site links and Publish button with confirmation dialog",
       "dependencies": ["react", "lucide-react"]
     },
+    "src/ui/cody/components/ErrorBoundary.tsx": {
+      "path": "src/ui/cody/components/ErrorBoundary.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["error-boundary", "client-component"],
+      "aiSummary": "React error boundary that catches render errors and shows a \"Something went wrong\" fallback",
+      "dependencies": ["react", "lucide-react"]
+    },
     "src/ui/cody/components/FilterBar.tsx": {
       "path": "src/ui/cody/components/FilterBar.tsx",
       "type": "component",
       "domain": "cody",
-      "patterns": ["filter-bar", "client-component"],
-      "aiSummary": "Dedicated filter sub-header bar for Cody dashboard with date, status, and label filters",
-      "dependencies": []
+      "patterns": ["filter-bar", "tailwind-component", "client-component"],
+      "aiSummary": "Dedicated filter sub-header bar for Cody dashboard with view toggle, date, status, and label filters",
+      "dependencies": ["react", "lucide-react"]
     },
-    "src/ui/cody/components/GitHubUserPickerDialog.tsx": {
-      "path": "src/ui/cody/components/GitHubUserPickerDialog.tsx",
+    "src/ui/cody/components/FixRequestDialog.tsx": {
+      "path": "src/ui/cody/components/FixRequestDialog.tsx",
       "type": "component",
       "domain": "cody",
-      "patterns": ["github-identity-picker", "client-component"],
-      "aiSummary": "Forced modal dialog for selecting your GitHub identity on first visit",
-      "dependencies": ["react", "lucide-react"]
+      "patterns": ["fix-request-dialog", "client-component"],
+      "aiSummary": "Dialog with markdown editor to request fixes on a PR via @cody fix",
+      "dependencies": ["react", "lucide-react", "react-markdown", "remark-gfm"]
+    },
+    "src/ui/cody/components/KeyboardShortcutsDialog.tsx": {
+      "path": "src/ui/cody/components/KeyboardShortcutsDialog.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["keyboard-shortcuts-dialog", "client-component"],
+      "aiSummary": "Dialog showing keyboard shortcuts available in Cody dashboard",
+      "dependencies": []
     },
     "src/ui/cody/components/LabelPicker.tsx": {
       "path": "src/ui/cody/components/LabelPicker.tsx",
@@ -4599,7 +5124,15 @@
       "type": "component",
       "domain": "cody",
       "patterns": ["pipeline-progress", "tailwind-component", "client-component"],
-      "aiSummary": "Compact pipeline progress indicator with two variants: \"inline\" (dot-separated text for metadata line) and \"bar\" (full progress bar for dedicated row)",
+      "aiSummary": "Compact pipeline progress indicator with two variants: \"inline\" (dot-separated text for metadata line) and \"bar\" (full progress bar for dedicated row). Both variants always render 12 dots — one per stage — for visual consistency across all tasks.",
+      "dependencies": ["react", "lucide-react"]
+    },
+    "src/ui/cody/components/PRCommentList.tsx": {
+      "path": "src/ui/cody/components/PRCommentList.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["pr-comment-list", "client-component"],
+      "aiSummary": "Renders PR comments with markdown and author avatars",
       "dependencies": ["react", "lucide-react"]
     },
     "src/ui/cody/components/PipelineStatus.tsx": {
@@ -4607,8 +5140,32 @@
       "type": "component",
       "domain": "cody",
       "patterns": ["pipeline-status", "tailwind-component", "client-component"],
-      "aiSummary": "Pipeline status visualization",
+      "aiSummary": "Vertical stepper pipeline status for narrow sidebar",
       "dependencies": ["react", "lucide-react"]
+    },
+    "src/ui/cody/components/PreviewActions.tsx": {
+      "path": "src/ui/cody/components/PreviewActions.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["preview-actions", "tailwind-component", "client-component"],
+      "aiSummary": "Sticky action bar for Preview: Approve UI, Approve PR, Merge, Fix, Cancel PR",
+      "dependencies": ["react", "lucide-react", "sonner"]
+    },
+    "src/ui/cody/components/PreviewModal.tsx": {
+      "path": "src/ui/cody/components/PreviewModal.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["preview-modal", "tailwind-component", "client-component"],
+      "aiSummary": "Full-screen modal overlay showing PR preview: iframe, changes, docs, comments, actions",
+      "dependencies": ["react"]
+    },
+    "src/ui/cody/components/QueueView.tsx": {
+      "path": "src/ui/cody/components/QueueView.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["queue-view", "tailwind-component", "client-component"],
+      "aiSummary": "Queue-specific task list showing queued, active, and failed queue tasks",
+      "dependencies": ["lucide-react"]
     },
     "src/ui/cody/components/RiskBadge.tsx": {
       "path": "src/ui/cody/components/RiskBadge.tsx",
@@ -4658,6 +5215,14 @@
       "aiSummary": "Wide dialog wrapper for TaskDetail on desktop, ~85vw centered",
       "dependencies": []
     },
+    "src/ui/cody/components/TaskDetailHeader.tsx": {
+      "path": "src/ui/cody/components/TaskDetailHeader.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["task-detail-header", "client-component"],
+      "aiSummary": "Task detail header with title, status badges, and quick actions",
+      "dependencies": ["react"]
+    },
     "src/ui/cody/components/TaskList.tsx": {
       "path": "src/ui/cody/components/TaskList.tsx",
       "type": "component",
@@ -4666,14 +5231,6 @@
       "aiSummary": "Three-zone task list: color bar | title + inline metadata + assignees | actions. Pipeline progress gets its own row only when active.",
       "dependencies": ["react"]
     },
-    "src/ui/cody/components/TaskPreviewTab.tsx": {
-      "path": "src/ui/cody/components/TaskPreviewTab.tsx",
-      "type": "component",
-      "domain": "cody",
-      "patterns": ["task-preview-tab", "client-component"],
-      "aiSummary": "Changes tab links to GitHub diffs; Docs tab opens markdown in a modal dialog",
-      "dependencies": ["react", "lucide-react"]
-    },
     "src/ui/cody/components/TaskTypeBadge.tsx": {
       "path": "src/ui/cody/components/TaskTypeBadge.tsx",
       "type": "component",
@@ -4681,6 +5238,30 @@
       "patterns": ["badge", "tailwind-component"],
       "aiSummary": "Task type badge",
       "dependencies": []
+    },
+    "src/ui/cody/components/VoiceButton.tsx": {
+      "path": "src/ui/cody/components/VoiceButton.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["voice-ui", "tailwind-component", "client-component"],
+      "aiSummary": "Mic button for CodyChat input bar — tap for conversation, long-press for push-to-talk",
+      "dependencies": ["react", "lucide-react"]
+    },
+    "src/ui/cody/components/VoiceChatOverlay.tsx": {
+      "path": "src/ui/cody/components/VoiceChatOverlay.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["voice-ui", "tailwind-component", "client-component"],
+      "aiSummary": "Voice conversation overlay scoped to the chat panel (not full-screen)",
+      "dependencies": ["react", "lucide-react"]
+    },
+    "src/ui/cody/components/WorkflowRunsPopover.tsx": {
+      "path": "src/ui/cody/components/WorkflowRunsPopover.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["popover", "tailwind-component", "client-component"],
+      "aiSummary": "Popover pill listing all workflow runs for a task with status icon, relative time, branch, and external link",
+      "dependencies": ["react", "lucide-react"]
     },
     "src/ui/cody/components/tooltip-content.tsx": {
       "path": "src/ui/cody/components/tooltip-content.tsx",
@@ -4722,12 +5303,44 @@
       "aiSummary": "Browser notification hook for task state changes.",
       "dependencies": ["react"]
     },
+    "src/ui/cody/hooks/useCodyTTS.ts": {
+      "path": "src/ui/cody/hooks/useCodyTTS.ts",
+      "type": "hook",
+      "domain": "cody",
+      "patterns": ["browser-speech-api", "client-component"],
+      "aiSummary": "Cody-specific TTS hook with onEnd callback for conversation loop",
+      "dependencies": ["react"]
+    },
+    "src/ui/cody/hooks/useDashboardFilters.ts": {
+      "path": "src/ui/cody/hooks/useDashboardFilters.ts",
+      "type": "hook",
+      "domain": "cody",
+      "patterns": ["state-management", "client-component"],
+      "aiSummary": "Custom hook encapsulating dashboard filter state and URL synchronization",
+      "dependencies": ["react"]
+    },
+    "src/ui/cody/hooks/useDashboardRouter.ts": {
+      "path": "src/ui/cody/hooks/useDashboardRouter.ts",
+      "type": "hook",
+      "domain": "cody",
+      "patterns": ["url-management", "client-component"],
+      "aiSummary": "Custom hook for dashboard URL state management with pushState/popstate",
+      "dependencies": ["react"]
+    },
     "src/ui/cody/hooks/useGitHubIdentity.ts": {
       "path": "src/ui/cody/hooks/useGitHubIdentity.ts",
       "type": "hook",
       "domain": "cody",
       "patterns": ["github-identity", "client-component"],
-      "aiSummary": "Hook to read/write the selected GitHub identity from localStorage",
+      "aiSummary": "Hook to read the authenticated GitHub identity from the Cody session cookie.",
+      "dependencies": ["react", "@tanstack/react-query"]
+    },
+    "src/ui/cody/hooks/useKeyboardShortcuts.ts": {
+      "path": "src/ui/cody/hooks/useKeyboardShortcuts.ts",
+      "type": "hook",
+      "domain": "cody",
+      "patterns": ["keyboard-shortcuts", "client-component"],
+      "aiSummary": "Hook for keyboard navigation shortcuts in Cody dashboard",
       "dependencies": ["react"]
     },
     "src/ui/cody/hooks/usePRCIStatus.ts": {
@@ -4746,12 +5359,84 @@
       "aiSummary": "Hook for publishing dev to production (creates issue with publish label)",
       "dependencies": ["@tanstack/react-query", "sonner"]
     },
+    "src/ui/cody/hooks/useRemoteStatus.ts": {
+      "path": "src/ui/cody/hooks/useRemoteStatus.ts",
+      "type": "hooks",
+      "domain": "cody",
+      "patterns": ["custom-hooks", "client-component"],
+      "aiSummary": "React Query hook for polling remote dev agent status",
+      "dependencies": ["@tanstack/react-query"]
+    },
+    "src/ui/cody/hooks/useSpeechRecognition.ts": {
+      "path": "src/ui/cody/hooks/useSpeechRecognition.ts",
+      "type": "hook",
+      "domain": "cody",
+      "patterns": ["browser-speech-api", "client-component"],
+      "aiSummary": "React hook wrapping Web Speech Recognition API for speech-to-text",
+      "dependencies": ["react"]
+    },
+    "src/ui/cody/hooks/useVoiceChat.ts": {
+      "path": "src/ui/cody/hooks/useVoiceChat.ts",
+      "type": "hook",
+      "domain": "cody",
+      "patterns": ["state-machine", "client-component"],
+      "aiSummary": "Orchestrates full voice conversation: LISTEN → PROCESS → SPEAK → LISTEN",
+      "dependencies": ["react"]
+    },
+    "src/ui/cody/notifications/NotificationCenter.tsx": {
+      "path": "src/ui/cody/notifications/NotificationCenter.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["notification-system", "tailwind-component", "client-component"],
+      "aiSummary": "Dropdown notification center with unread badge, history, and preferences",
+      "dependencies": ["react", "lucide-react"]
+    },
+    "src/ui/cody/notifications/NotificationPreferences.tsx": {
+      "path": "src/ui/cody/notifications/NotificationPreferences.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["notification-system", "tailwind-component", "client-component"],
+      "aiSummary": "Settings panel for notification preferences (per-type toggles, sound, browser)",
+      "dependencies": ["lucide-react"]
+    },
+    "src/ui/cody/notifications/sounds.ts": {
+      "path": "src/ui/cody/notifications/sounds.ts",
+      "type": "utility",
+      "domain": "cody",
+      "patterns": ["notification-system"],
+      "aiSummary": "Web Audio API notification sounds — distinct per priority level",
+      "dependencies": []
+    },
+    "src/ui/cody/notifications/types.ts": {
+      "path": "src/ui/cody/notifications/types.ts",
+      "type": "types",
+      "domain": "cody",
+      "patterns": ["notification-system"],
+      "aiSummary": "Notification type definitions for the Cody dashboard notification center",
+      "dependencies": []
+    },
+    "src/ui/cody/notifications/useNotificationStore.ts": {
+      "path": "src/ui/cody/notifications/useNotificationStore.ts",
+      "type": "hook",
+      "domain": "cody",
+      "patterns": ["notification-system", "client-component"],
+      "aiSummary": "localStorage-backed notification history (max 50) with read/unread tracking",
+      "dependencies": ["react"]
+    },
     "src/ui/cody/pipeline-utils.ts": {
       "path": "src/ui/cody/pipeline-utils.ts",
       "type": "utility",
       "domain": "cody",
       "patterns": ["pipeline-progress"],
       "aiSummary": "Shared pipeline progress utilities — stage labels, progress calculation, elapsed formatting, tooltips",
+      "dependencies": []
+    },
+    "src/ui/cody/remote-config.ts": {
+      "path": "src/ui/cody/remote-config.ts",
+      "type": "utility",
+      "domain": "cody",
+      "patterns": ["config"],
+      "aiSummary": "Parses REMOTE_DEV_USERS env var to enable per-user remote dev agent access",
       "dependencies": []
     },
     "src/ui/cody/task-parser.ts": {
@@ -4774,8 +5459,16 @@
       "path": "src/ui/cody/utils.ts",
       "type": "utility",
       "domain": "cody",
-      "patterns": ["utilities", "tailwind-component"],
+      "patterns": ["utilities"],
       "aiSummary": "Utility functions for Cody dashboard",
+      "dependencies": []
+    },
+    "src/ui/cody/workflow-matching.ts": {
+      "path": "src/ui/cody/workflow-matching.ts",
+      "type": "utility",
+      "domain": "cody",
+      "patterns": ["workflow-matching"],
+      "aiSummary": "Shared workflow run matching — prefers active (in_progress/queued) runs over stale completed ones",
       "dependencies": []
     },
     "src/ui/web/AdminBar/index.tsx": {
@@ -4824,7 +5517,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["next/navigation", "react"]
+      "dependencies": ["lucide-react", "next/navigation", "react"]
     },
     "src/ui/web/Link/index.tsx": {
       "path": "src/ui/web/Link/index.tsx",
@@ -5183,6 +5876,14 @@
       "aiSummary": "",
       "dependencies": ["react", "next/dynamic"]
     },
+    "src/ui/web/exerciserenderer/blocks/GraphWithPrompt/index.tsx": {
+      "path": "src/ui/web/exerciserenderer/blocks/GraphWithPrompt/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["tailwind-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
     "src/ui/web/exerciserenderer/blocks/HtmlBlockRenderer/index.tsx": {
       "path": "src/ui/web/exerciserenderer/blocks/HtmlBlockRenderer/index.tsx",
       "type": "unknown",
@@ -5190,6 +5891,14 @@
       "patterns": ["client-component"],
       "aiSummary": "",
       "dependencies": ["dompurify", "react"]
+    },
+    "src/ui/web/exerciserenderer/blocks/MultiAxisRenderer/index.tsx": {
+      "path": "src/ui/web/exerciserenderer/blocks/MultiAxisRenderer/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["tailwind-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
     },
     "src/ui/web/exerciserenderer/blocks/SvgRenderer/index.tsx": {
       "path": "src/ui/web/exerciserenderer/blocks/SvgRenderer/index.tsx",
@@ -5246,6 +5955,14 @@
       "patterns": ["tailwind-component", "client-component"],
       "aiSummary": "",
       "dependencies": ["react", "lucide-react"]
+    },
+    "src/ui/web/exerciserenderer/components/VideoPlayer/index.tsx": {
+      "path": "src/ui/web/exerciserenderer/components/VideoPlayer/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
     },
     "src/ui/web/exerciserenderer/context/MediaMapContext.tsx": {
       "path": "src/ui/web/exerciserenderer/context/MediaMapContext.tsx",
@@ -5567,6 +6284,14 @@
       "aiSummary": "",
       "dependencies": ["react", "next/navigation"]
     },
+    "src/ui/web/shared/ContentStatusBadge/index.tsx": {
+      "path": "src/ui/web/shared/ContentStatusBadge/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": []
+    },
     "src/ui/web/shared/EmptyState/EmptyState.tsx": {
       "path": "src/ui/web/shared/EmptyState/EmptyState.tsx",
       "type": "unknown",
@@ -5713,8 +6438,8 @@
     }
   },
   "metadata": {
-    "generatedAt": "2026-03-12T14:03:15.946Z",
-    "totalFiles": 507,
-    "totalPatterns": 169
+    "generatedAt": "2026-03-17T09:46:39.504Z",
+    "totalFiles": 566,
+    "totalPatterns": 200
   }
 }

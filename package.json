@@ -1,6 +1,6 @@
 {
   "name": "a-guy",
-  "version": "0.15.0",
+  "version": "0.18.0",
   "description": "Website template for Payload",
   "license": "MIT",
   "type": "module",
@@ -27,7 +27,6 @@
     "ai:generate-all-indexes": "pnpm run ai:generate-readme-index && pnpm run ai:generate-route-index && pnpm run ai:generate-collection-slug-map",
     "ai:validate-indexes": "pnpm tsx scripts/validate-indexes.ts",
     "docs:links:fix": "pnpm tsx scripts/doc-link-fixer.ts",
-    "nightly-docs": "pnpm tsx scripts/nightly-docs/index.ts",
     "deps:security:report": "pnpm tsx scripts/deps-security-report.ts",
     "repo:hygiene:report": "pnpm tsx scripts/repo-hygiene-report.ts",
     "mcp:discover-tools": "pnpm tsx scripts/admin-chat-mcp_discover-tools.ts",
@@ -39,6 +38,7 @@
     "ii": "cross-env NODE_OPTIONS=--no-deprecation pnpm --ignore-workspace install",
     "lint": "cross-env NODE_OPTIONS=--no-deprecation next lint",
     "lint:fix": "cross-env NODE_OPTIONS=--no-deprecation next lint --fix",
+    "lint:test-fragility": "tsx scripts/lint-test-fragility.ts",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,md,yml,yaml}\"",
     "fix": "pnpm lint:fix && pnpm format",
@@ -59,6 +59,7 @@
     "test:e2e:headed": "pnpm exec playwright test --headed",
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
     "test:int:cody": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.cody-int.mts",
+    "test:canary": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.canary.mts",
     "test:int:atlas": "cross-env USE_ATLAS=true NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
     "test:vector": "cross-env USE_ATLAS=true NODE_OPTIONS=--no-deprecation vitest run tests/int/vector-*.int.spec.ts --config ./vitest.config.mts",
     "test:watch": "vitest watch --config ./vitest.config.mts",
@@ -97,7 +98,10 @@
     "cody:test": "gh workflow run cody.yml -R A-Guy-educ/A-Guy -f task_id=TEST -f mode=status -f dry_run=true",
     "cody": "pnpm tsx scripts/cody/entry.ts",
     "cody:tag": "pnpm tsx scripts/cody/tag-version.ts",
-    "tunnel:ocode": "pnpm tsx scripts/tunnel-opencode.ts"
+    "tunnel:ocode": "pnpm tsx scripts/tunnel-opencode.ts",
+    "remote:agent": "tsx scripts/remote-agent/server.ts",
+    "remote:agent:dev": "tsx watch scripts/remote-agent/server.ts",
+    "remote:agent:funnel": "tsx scripts/remote-agent/start-with-funnel.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.30",

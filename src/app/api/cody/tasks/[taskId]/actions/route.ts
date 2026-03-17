@@ -3,10 +3,12 @@
  * @domain cody
  * @pattern task-actions-api
  * @ai-summary API route for task actions (approve, reject, rerun, abort, execute)
+ *   Uses per-user GitHub token when available for proper attribution.
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { requireCodyAuth, verifyActorLogin, getUserOctokit } from '@/ui/cody/auth'
 
 import {
   postComment,
@@ -19,11 +21,16 @@ import {
   addLabels,
   removeLabel,
   closePR,
-  findAssociatedPR,
+  findAssociatedPRByIssueNumber,
   findTaskBranch,
   deleteBranch,
-  clearCache,
+  invalidateTaskCache,
+  invalidatePRCache,
+  invalidateBoardCache,
+  invalidateBranchCache,
+  getOctokit,
 } from '@/ui/cody/github-client'
+import { GITHUB_OWNER, GITHUB_REPO } from '@/ui/cody/constants'
 
 const actionSchema = z.object({
   action: z.enum([
@@ -41,28 +48,61 @@ const actionSchema = z.object({
     'assign',
     'unassign',
     'comment',
+    'fix',
+    'approve-ui',
+    'approve-pr',
+    'update',
   ]),
   feedback: z.string().optional(),
   fromStage: z.string().optional(),
   mode: z.string().optional(),
   assignees: z.array(z.string()).optional(),
   label: z.string().optional(),
+  labels: z.array(z.string()).optional(),
   comment: z.string().optional(),
+  title: z.string().optional(),
+  body: z.string().optional(),
   actorLogin: z.string().optional(),
 })
 
-/** Format a string with actor attribution */
+/**
+ * Format a string with actor attribution (only used when falling back to bot token).
+ * When user's own token is available, comments appear under their identity naturally.
+ */
 function withActor(message: string, actor?: string): string {
   return actor ? `${message} _(by @${actor})_` : message
 }
 
+/** Post a comment, using user token if available (clean) or bot token with attribution */
+function postWithAttribution(
+  issueNumber: number,
+  message: string,
+  actor: string | undefined,
+  userOctokit: any,
+) {
+  const body = userOctokit ? message : withActor(message, actor)
+  return postComment(issueNumber, body, userOctokit ?? undefined)
+}
+
 export async function POST(req: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
-  // Skip auth check for now - open access for testing
+  const authResult = await requireCodyAuth(req)
+  if (authResult instanceof NextResponse) return authResult
 
   try {
     const { taskId } = await params
     const body = await req.json()
     const { action, feedback, fromStage, mode: _mode, actorLogin } = actionSchema.parse(body)
+
+    // Verify actorLogin matches the authenticated session (prevents impersonation)
+    const actorResult = await verifyActorLogin(req, actorLogin)
+    if (actorResult instanceof NextResponse) return actorResult
+    const { identity } = actorResult
+
+    // Use verified identity's login for attribution
+    const actor = identity.login
+
+    // Get user's Octokit (null for legacy sessions → falls back to bot token)
+    const userOctokit = await getUserOctokit(req)
 
     // Get issue number from taskId
     const issueNumber = parseInt(taskId.replace('issue-', ''), 10)
@@ -71,32 +111,33 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
     }
 
     const { assignees, label, comment } = actionSchema.parse(body)
-    const actor = actorLogin || undefined
 
     switch (action) {
       case 'approve': {
-        await postComment(issueNumber, withActor('/cody approve', actor))
+        await postWithAttribution(issueNumber, '/cody approve', actor, userOctokit)
         return NextResponse.json({ success: true, message: 'Gate approved' })
       }
 
       case 'reject': {
-        await postComment(issueNumber, withActor('/cody reject', actor))
+        await postWithAttribution(issueNumber, '/cody reject', actor, userOctokit)
         return NextResponse.json({ success: true, message: 'Gate rejected' })
       }
 
       case 'rerun': {
-        await triggerWorkflow({
-          taskId,
-          mode: 'rerun',
-          fromStage,
-          feedback,
-        })
+        await triggerWorkflow(
+          {
+            taskId,
+            mode: 'rerun',
+            fromStage,
+            feedback,
+          },
+          userOctokit ?? undefined,
+        )
         return NextResponse.json({ success: true, message: 'Workflow triggered' })
       }
 
       case 'execute': {
-        // Post /cody command to assign issue to Cody
-        await postComment(issueNumber, withActor('/cody', actor))
+        await postWithAttribution(issueNumber, '/cody', actor, userOctokit)
         return NextResponse.json({ success: true, message: 'Cody execution triggered' })
       }
 
@@ -112,17 +153,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
         )
 
         // Post comment regardless of whether we found a running workflow
-        // This ensures the issue is marked as stopped even if workflow already finished
-        await postComment(
+        await postWithAttribution(
           issueNumber,
-          withActor('## 🛑 Operation stopped - Run aborted by user.', actor),
+          '## 🛑 Operation stopped - Run aborted by user.',
+          actor,
+          userOctokit,
         )
 
         if (run) {
-          await cancelWorkflowRun(run.id)
+          await cancelWorkflowRun(run.id, userOctokit ?? undefined)
           return NextResponse.json({ success: true, message: 'Workflow cancelled' })
         }
-        // Return success anyway - the comment was posted
         return NextResponse.json({
           success: true,
           message: 'Marked as stopped (no running workflow)',
@@ -131,9 +172,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
 
       case 'close': {
         // Close PR if exists
-        const pr = await findAssociatedPR(taskId)
+        const pr = await findAssociatedPRByIssueNumber(issueNumber)
         if (pr) {
-          await closePR(pr.number)
+          await closePR(pr.number, userOctokit ?? undefined)
         }
 
         // Delete branch if exists
@@ -144,15 +185,19 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
           branchName !== 'main' &&
           branchName !== 'master'
         ) {
-          await deleteBranch(branchName)
+          await deleteBranch(branchName, userOctokit ?? undefined)
         }
 
         // Finally close the issue
-        await updateIssue(issueNumber, { state: 'closed' })
-        if (actor) await postComment(issueNumber, `🔒 Issue closed _(by @${actor})_`)
+        await updateIssue(issueNumber, { state: 'closed' }, userOctokit ?? undefined)
+        if (actor) {
+          const closeMsg = userOctokit ? '🔒 Issue closed' : `🔒 Issue closed _(by @${actor})_`
+          await postComment(issueNumber, closeMsg, userOctokit ?? undefined)
+        }
 
-        // Clear server-side cache so the next poll reflects the closed state immediately
-        clearCache()
+        invalidateTaskCache()
+        invalidatePRCache()
+        invalidateBranchCache()
 
         return NextResponse.json({
           success: true,
@@ -161,24 +206,23 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
       }
 
       case 'close-pr': {
-        // Find the associated PR for this task
-        const pr = await findAssociatedPR(taskId)
+        const pr = await findAssociatedPRByIssueNumber(issueNumber)
         if (!pr) {
           return NextResponse.json({ error: 'No associated PR found' }, { status: 404 })
         }
-        await closePR(pr.number)
-        clearCache()
+        await closePR(pr.number, userOctokit ?? undefined)
+        invalidateTaskCache()
+        invalidatePRCache()
         return NextResponse.json({ success: true, message: `PR #${pr.number} closed` })
       }
 
       case 'reset': {
-        // Full reset: delete branch, close PR, remove agent labels, re-trigger pipeline
         const branchName = await findTaskBranch(taskId)
 
         // Close PR if exists
-        const pr = await findAssociatedPR(taskId)
+        const pr = await findAssociatedPRByIssueNumber(issueNumber)
         if (pr) {
-          await closePR(pr.number)
+          await closePR(pr.number, userOctokit ?? undefined)
         }
 
         // Delete branch if exists
@@ -188,7 +232,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
           branchName !== 'main' &&
           branchName !== 'master'
         ) {
-          await deleteBranch(branchName)
+          await deleteBranch(branchName, userOctokit ?? undefined)
         }
 
         // Remove lifecycle labels
@@ -203,17 +247,20 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
         ]
         for (const lbl of labelsToRemove) {
           try {
-            await removeLabel(issueNumber, lbl)
+            await removeLabel(issueNumber, lbl, userOctokit ?? undefined)
           } catch {
             // Ignore if label doesn't exist
           }
         }
 
         // Re-trigger pipeline
-        await postComment(issueNumber, withActor('🔄 Task reset and re-triggered', actor))
-        await postComment(issueNumber, '/cody')
+        await postWithAttribution(issueNumber, '🔄 Task reset and re-triggered', actor, userOctokit)
+        await postComment(issueNumber, '/cody', userOctokit ?? undefined)
 
-        clearCache()
+        invalidateTaskCache()
+        invalidatePRCache()
+        invalidateBranchCache()
+        invalidateBoardCache()
 
         return NextResponse.json({
           success: true,
@@ -222,9 +269,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
       }
 
       case 'reopen': {
-        await updateIssue(issueNumber, { state: 'open' })
-        if (actor) await postComment(issueNumber, `🔓 Issue reopened _(by @${actor})_`)
-        clearCache()
+        await updateIssue(issueNumber, { state: 'open' }, userOctokit ?? undefined)
+        if (actor) {
+          const reopenMsg = userOctokit ? '🔓 Issue reopened' : `🔓 Issue reopened _(by @${actor})_`
+          await postComment(issueNumber, reopenMsg, userOctokit ?? undefined)
+        }
+        invalidateTaskCache()
         return NextResponse.json({ success: true, message: 'Issue reopened' })
       }
 
@@ -232,7 +282,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
         if (!label) {
           return NextResponse.json({ error: 'Label is required' }, { status: 400 })
         }
-        await addLabels(issueNumber, [label])
+        await addLabels(issueNumber, [label], userOctokit ?? undefined)
         return NextResponse.json({ success: true, message: `Label "${label}" added` })
       }
 
@@ -240,7 +290,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
         if (!label) {
           return NextResponse.json({ error: 'Label is required' }, { status: 400 })
         }
-        await removeLabel(issueNumber, label)
+        await removeLabel(issueNumber, label, userOctokit ?? undefined)
         return NextResponse.json({ success: true, message: `Label "${label}" removed` })
       }
 
@@ -248,8 +298,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
         if (!assignees || assignees.length === 0) {
           return NextResponse.json({ error: 'Assignees are required' }, { status: 400 })
         }
-        await addAssignees(issueNumber, assignees)
-        clearCache()
+        await addAssignees(issueNumber, assignees, userOctokit ?? undefined)
+        invalidateTaskCache()
         return NextResponse.json({ success: true, message: `Assigned to ${assignees.join(', ')}` })
       }
 
@@ -257,8 +307,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
         if (!assignees || assignees.length === 0) {
           return NextResponse.json({ error: 'Assignees are required' }, { status: 400 })
         }
-        await removeAssignees(issueNumber, assignees)
-        clearCache()
+        await removeAssignees(issueNumber, assignees, userOctokit ?? undefined)
+        invalidateTaskCache()
         return NextResponse.json({ success: true, message: `Unassigned ${assignees.join(', ')}` })
       }
 
@@ -266,8 +316,83 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
         if (!comment) {
           return NextResponse.json({ error: 'Comment is required' }, { status: 400 })
         }
-        await postComment(issueNumber, comment)
+        await postComment(issueNumber, comment, userOctokit ?? undefined)
         return NextResponse.json({ success: true, message: 'Comment posted' })
+      }
+
+      case 'fix': {
+        if (!comment) {
+          return NextResponse.json({ error: 'Fix description is required' }, { status: 400 })
+        }
+        const associatedPR = await findAssociatedPRByIssueNumber(issueNumber)
+        if (!associatedPR) {
+          return NextResponse.json({ error: 'No associated PR found' }, { status: 404 })
+        }
+        const fixMessage = `@cody fix\n\n${comment}`
+        const fixBody = userOctokit ? fixMessage : withActor(fixMessage, actor)
+        await postComment(associatedPR.number, fixBody, userOctokit ?? undefined)
+        invalidateTaskCache()
+        invalidatePRCache()
+        return NextResponse.json({ success: true, message: 'Fix requested on PR' })
+      }
+
+      case 'approve-ui': {
+        await addLabels(issueNumber, ['ui-approved'], userOctokit ?? undefined)
+        await postWithAttribution(issueNumber, '✅ Preview UI approved', actor, userOctokit)
+        invalidateTaskCache()
+        return NextResponse.json({ success: true, message: 'Preview UI approved' })
+      }
+
+      case 'approve-pr': {
+        const associatedPR = await findAssociatedPRByIssueNumber(issueNumber)
+        if (!associatedPR) {
+          return NextResponse.json({ error: 'No associated PR found' }, { status: 404 })
+        }
+        // Use user's Octokit for PR review (review appears under user's identity)
+        const octokit = userOctokit ?? getOctokit()
+        try {
+          await octokit.pulls.createReview({
+            owner: GITHUB_OWNER,
+            repo: GITHUB_REPO,
+            pull_number: associatedPR.number,
+            event: 'APPROVE',
+            body: `✅ PR approved by @${actor} via Cody dashboard.`,
+          })
+        } catch (error: unknown) {
+          const msg = error instanceof Error ? error.message : String(error)
+          if (!msg.includes('already approved')) {
+            console.warn('[Cody] PR approval note:', msg)
+          }
+        }
+        await addLabels(issueNumber, ['pr-approved'], userOctokit ?? undefined)
+        await postWithAttribution(issueNumber, '✅ PR approved', actor, userOctokit)
+        invalidateTaskCache()
+        invalidatePRCache()
+        return NextResponse.json({ success: true, message: 'PR approved' })
+      }
+
+      case 'update': {
+        const updates: { title?: string; body?: string; labels?: string[]; assignees?: string[] } =
+          {}
+        const parsed = actionSchema.parse(body)
+        const { title, body: issueBody, labels, assignees } = parsed
+
+        if (title) updates.title = title
+        if (issueBody !== undefined) updates.body = issueBody
+        if (labels) updates.labels = labels
+        if (assignees) updates.assignees = assignees
+
+        if (Object.keys(updates).length === 0) {
+          return NextResponse.json({ error: 'No fields to update' }, { status: 400 })
+        }
+
+        await updateIssue(issueNumber, updates, userOctokit ?? undefined)
+        if (actor) {
+          const updateMsg = userOctokit ? '📝 Issue updated' : `📝 Issue updated _(by @${actor})_`
+          await postComment(issueNumber, updateMsg, userOctokit ?? undefined)
+        }
+        invalidateTaskCache()
+        return NextResponse.json({ success: true, message: 'Issue updated' })
       }
 
       default:
@@ -280,8 +405,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tas
       return NextResponse.json({ error: 'Invalid request', details: error.errors }, { status: 400 })
     }
 
+    // User's GitHub token expired/revoked — prompt re-auth
     if (error.status === 401) {
-      return NextResponse.json({ error: 'GitHub token expired' }, { status: 502 })
+      return NextResponse.json(
+        {
+          error: 'github_token_expired',
+          message: 'Your GitHub token has expired. Please log in again.',
+        },
+        { status: 401 },
+      )
     }
     if (error.status === 403) {
       return NextResponse.json({ error: 'GitHub rate limit' }, { status: 429 })

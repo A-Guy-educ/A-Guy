@@ -3,179 +3,225 @@
  * @domain cody
  * @pattern browser-notifications
  * @ai-summary Browser notification hook for task state changes.
- *   Uses useState+useEffect for isSupported/permission to avoid hydration mismatch.
+ *   Detects column transitions, PR changes, stage changes, assignments.
+ *   Delegates to notification store for in-app history and sound system for audio.
  */
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import type { CodyTask } from '../types'
-
-interface NotificationOptions {
-  icon?: string
-  badge?: string
-  tag?: string
-  requireInteraction?: boolean
-}
+import type { NotificationType } from '../notifications/types'
+import { NOTIFICATION_META } from '../notifications/types'
+import type { UseNotificationStoreReturn } from '../notifications/useNotificationStore'
+import { playNotificationSound } from '../notifications/sounds'
 
 interface UseBrowserNotificationsOptions {
-  // Callback when permission is denied
   onPermissionDenied?: () => void
-  // Callback when notification is clicked
-  onNotificationClick?: (task: CodyTask) => void
+  /** Notification store from useNotificationStore — wired by the dashboard */
+  store?: UseNotificationStoreReturn
 }
 
-/**
- * Hook to manage browser notifications for task state changes.
- * Tracks task state transitions and sends notifications for important events.
- *
- * IMPORTANT: isSupported and permission use useState (not synchronous checks)
- * so that server and client both render `false`/`'default'` on first pass,
- * avoiding hydration mismatch.
- */
 export function useBrowserNotifications({
   onPermissionDenied,
-  onNotificationClick: _onNotificationClick,
+  store,
 }: UseBrowserNotificationsOptions = {}) {
-  // Start false/default on both server and client to avoid hydration mismatch
   const [isSupported, setIsSupported] = useState(false)
   const [permission, setPermission] = useState<NotificationPermission>('default')
   const previousTasksRef = useRef<CodyTask[]>([])
-  const tasksRef = useRef<CodyTask[]>([])
 
-  // Detect support after mount (client-only)
   useEffect(() => {
     const supported = typeof window !== 'undefined' && 'Notification' in window
     setIsSupported(supported)
-    if (supported) {
-      setPermission(Notification.permission)
-    }
+    if (supported) setPermission(Notification.permission)
   }, [])
 
-  // Request permission on mount (only if supported)
   useEffect(() => {
     if (!isSupported) return
+    setPermission(Notification.permission)
+  }, [isSupported])
 
-    const requestPermission = async () => {
-      if (Notification.permission === 'default') {
-        const perm = await Notification.requestPermission()
-        setPermission(perm)
+  /** Emit a notification to both browser + in-app store */
+  const notify = useCallback(
+    (
+      type: NotificationType,
+      title: string,
+      body: string,
+      opts?: { taskIssueNumber?: number; taskTitle?: string; meta?: Record<string, string> },
+    ) => {
+      // Check if type is enabled
+      if (store && !store.isTypeEnabled(type)) return
 
-        if (perm === 'denied') {
-          onPermissionDenied?.()
+      const meta = NOTIFICATION_META[type]
+
+      // In-app notification
+      store?.addNotification(type, title, body, opts)
+
+      // Sound
+      if (store?.prefs.soundEnabled !== false) {
+        playNotificationSound(meta.priority)
+      }
+
+      // Browser (OS-level) notification
+      if (
+        isSupported &&
+        Notification.permission === 'granted' &&
+        store?.prefs.browserEnabled !== false
+      ) {
+        const notification = new Notification(`${meta.icon} ${title}`, {
+          body,
+          icon: '/favicon.ico',
+          tag: opts?.taskIssueNumber ? `task-${opts.taskIssueNumber}` : undefined,
+        })
+        notification.onclick = () => {
+          window.focus()
+          notification.close()
         }
-      } else {
-        setPermission(Notification.permission)
-
-        if (Notification.permission === 'denied') {
-          onPermissionDenied?.()
-        }
       }
-    }
-
-    requestPermission()
-  }, [isSupported, onPermissionDenied])
-
-  // Send a notification
-  const sendNotification = useCallback(
-    (title: string, body: string, options?: NotificationOptions) => {
-      if (!isSupported || permission !== 'granted') {
-        return null
-      }
-
-      const notification = new Notification(title, {
-        body,
-        icon: options?.icon || '/favicon.ico',
-        badge: options?.badge,
-        tag: options?.tag,
-        requireInteraction: options?.requireInteraction,
-      })
-
-      notification.onclick = () => {
-        window.focus()
-        notification.close()
-      }
-
-      return notification
     },
-    [isSupported, permission],
+    [isSupported, store],
   )
 
-  // Check for task state changes and send notifications
+  const requestPermission = useCallback(async () => {
+    if (!isSupported) return
+    if (Notification.permission === 'granted') return
+    if (Notification.permission === 'default') {
+      const perm = await Notification.requestPermission()
+      setPermission(perm)
+      if (perm === 'denied') onPermissionDenied?.()
+    } else {
+      setPermission(Notification.permission)
+      if (Notification.permission === 'denied') onPermissionDenied?.()
+    }
+  }, [isSupported, onPermissionDenied])
+
+  /** Check for task state changes and emit notifications */
   const checkTaskChanges = useCallback(
     (tasks: CodyTask[]) => {
-      tasksRef.current = tasks
-      const previousTasks = previousTasksRef.current
-
-      // On first run, just store the tasks
-      if (previousTasks.length === 0) {
+      const previous = previousTasksRef.current
+      if (previous.length === 0) {
         previousTasksRef.current = tasks
         return
       }
 
-      // Create a map of previous tasks by issueNumber
-      const previousTaskMap = new Map(previousTasks.map((t) => [t.issueNumber, t]))
+      const prevMap = new Map(previous.map((t) => [t.issueNumber, t]))
 
-      // Check each current task for state changes
       for (const task of tasks) {
-        const previousTask = previousTaskMap.get(task.issueNumber)
+        const prev = prevMap.get(task.issueNumber)
+        if (!prev) continue
 
-        // Skip if task wasn't in the previous list
-        if (!previousTask) continue
+        const from = prev.column
+        const to = task.column
+        const info = { taskIssueNumber: task.issueNumber, taskTitle: task.title }
 
-        // Skip if task hasn't been updated recently (within last 30 seconds to avoid spam)
-        const updatedAt = new Date(task.updatedAt).getTime()
-        const now = Date.now()
-        if (now - updatedAt > 30000) continue
-
-        // Check for column/state transitions
-        const prevColumn = previousTask.column
-        const currColumn = task.column
-
-        // Gate waiting notification
-        if (prevColumn !== 'gate-waiting' && currColumn === 'gate-waiting') {
-          sendNotification('🚦 Task Needs Approval', `${task.title}`, {
-            tag: `task-${task.issueNumber}`,
-          })
+        // Gate waiting
+        if (from !== 'gate-waiting' && to === 'gate-waiting') {
+          notify('gate-waiting', 'Task Needs Approval', task.title, info)
         }
 
-        // Failed notification
-        if (prevColumn !== 'failed' && currColumn === 'failed') {
+        // Failed
+        if (from !== 'failed' && to === 'failed') {
           const reason = task.isTimeout
             ? ' (timeout)'
             : task.isExhausted
               ? ' (retries exhausted)'
               : ''
-          sendNotification('❌ Task Failed', `${task.title}${reason}`, {
-            tag: `task-${task.issueNumber}`,
-          })
+          notify('task-failed', 'Task Failed', `${task.title}${reason}`, info)
+
+          // If we have specific error info, also send build-error
+          if (task.isSupervisorError) {
+            notify('build-error', 'Build Error', `Infrastructure error on ${task.title}`, {
+              ...info,
+              meta: { errorType: 'supervisor' },
+            })
+          }
         }
 
-        // Done notification
-        if (prevColumn !== 'done' && currColumn === 'done') {
-          sendNotification('✅ Task Completed', `${task.title}`, {
-            tag: `task-${task.issueNumber}`,
-          })
+        // Done
+        if (from !== 'done' && to === 'done') {
+          notify('task-completed', 'Task Completed', task.title, info)
         }
 
-        // Running notification (started running from not running)
+        // Started (open/failed/retrying → building/review)
         if (
-          (prevColumn === 'open' || prevColumn === 'failed' || prevColumn === 'retrying') &&
-          (currColumn === 'building' || currColumn === 'review')
+          (from === 'open' || from === 'failed' || from === 'retrying') &&
+          (to === 'building' || to === 'review')
         ) {
-          sendNotification('🔄 Task Started', `${task.title}`, { tag: `task-${task.issueNumber}` })
+          notify('task-started', 'Task Started', task.title, info)
+        }
+
+        // Retry started
+        if (from === 'failed' && to === 'retrying') {
+          notify('retry-started', 'Retry Started', task.title, info)
+        }
+
+        // PR ready for review (moved to review column + has PR)
+        if (from !== 'review' && to === 'review' && task.associatedPR) {
+          notify('pr-ready', 'PR Ready for Review', `#${task.associatedPR.number}: ${task.title}`, {
+            ...info,
+            meta: { prNumber: String(task.associatedPR.number) },
+          })
+        }
+
+        // PR merged (PR state changed to merged)
+        if (prev.associatedPR?.state !== 'merged' && task.associatedPR?.state === 'merged') {
+          notify('pr-merged', 'PR Merged', `#${task.associatedPR.number}: ${task.title}`, {
+            ...info,
+            meta: { prNumber: String(task.associatedPR.number) },
+          })
+        }
+
+        // Stage change (pipeline stage changed)
+        if (
+          prev.pipeline?.currentStage &&
+          task.pipeline?.currentStage &&
+          prev.pipeline.currentStage !== task.pipeline.currentStage
+        ) {
+          notify(
+            'stage-change',
+            'Stage Changed',
+            `${task.title}: ${prev.pipeline.currentStage} → ${task.pipeline.currentStage}`,
+            {
+              ...info,
+              meta: { from: prev.pipeline.currentStage, to: task.pipeline.currentStage },
+            },
+          )
+        }
+
+        // Task assigned to user (assignees changed)
+        const prevAssignees = new Set(prev.assignees?.map((a) => a.login) ?? [])
+        const currAssignees = task.assignees?.map((a) => a.login) ?? []
+        for (const login of currAssignees) {
+          if (!prevAssignees.has(login)) {
+            notify('task-assigned', 'Task Assigned', `${task.title} assigned to ${login}`, {
+              ...info,
+              meta: { assignee: login },
+            })
+          }
         }
       }
 
-      // Update previous tasks
       previousTasksRef.current = tasks
     },
-    [sendNotification],
+    [notify],
+  )
+
+  /** Send a chat response notification (called from CodyChat when tab unfocused) */
+  const notifyChatResponse = useCallback(
+    (taskTitle: string, preview: string, taskIssueNumber?: number) => {
+      if (document.hasFocus()) return // Don't notify if tab is focused
+      notify('chat-response', 'Chat Response', preview.slice(0, 100), {
+        taskTitle,
+        taskIssueNumber,
+      })
+    },
+    [notify],
   )
 
   return {
     permission,
-    sendNotification,
+    requestPermission,
     checkTaskChanges,
+    notifyChatResponse,
     isSupported,
   }
 }

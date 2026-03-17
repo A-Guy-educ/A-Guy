@@ -13,6 +13,7 @@ import { ExerciseWorkspace } from '@/app/(frontend)/courses/[courseSlug]/chapter
 import { ChatInterface } from '@/ui/web/chat'
 import { getMediaUrl } from '@/infra/utils/getMediaUrl'
 import { SafeHtml } from '@/ui/web/SafeHtml'
+import { VideoPlayer } from '@/ui/web/exerciserenderer/components/VideoPlayer'
 
 interface ExercisesPagerProps {
   exercises: Exercise[]
@@ -175,7 +176,7 @@ export function ExercisesPager({
       <Progress value={progressPercent} className="h-1.5 rounded-none" />
 
       <main className="flex-1 overflow-y-auto">
-        <div className="container mx-auto px-4 sm:px-6 py-8 md:py-12 max-w-3xl">
+        <div className="container mx-auto px-4 sm:px-6 py-8 md:py-12 max-w-7xl">
           {pageState.type === 'intro' && (
             <div className="space-y-8">
               <header className="text-center">
@@ -196,7 +197,7 @@ export function ExercisesPager({
                 <h2 className="text-2xl font-medium mb-4 text-foreground">
                   {t('exercisesPagerWelcome')}
                 </h2>
-                <p className="text-muted-foreground mb-10 text-base leading-relaxed max-w-md mx-auto">
+                <p className="text-muted-foreground mb-10 text-base leading-relaxed max-w-2xl mx-auto">
                   {t('exercisesPagerIntroDescriptionPart1')} {totalExercises}{' '}
                   {t('exercisesPagerIntroDescriptionPart2')}
                 </p>
@@ -242,18 +243,28 @@ export function ExercisesPager({
                   <SafeHtml
                     html={introDescription}
                     enableProse
-                    className="prose-lg max-w-md mx-auto mb-8 text-muted-foreground leading-relaxed text-start [&_ul]:list-inside [&_ol]:list-inside"
+                    className="prose-lg max-w-2xl mx-auto mb-8 text-muted-foreground leading-relaxed text-start [&_ul]:list-inside [&_ol]:list-inside"
                   />
                 )}
 
                 {introMediaObj?.url && (
                   <div className="mx-auto max-h-80 overflow-hidden rounded-2xl mb-8">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={getMediaUrl(introMediaObj.url)}
-                      alt={introMediaObj.alt || ''}
-                      className="mx-auto max-h-80 w-auto object-contain"
-                    />
+                    {/* Check if media is a video (type field or mimeType starts with 'video/') */}
+                    {introMediaObj.type === 'video' ||
+                    introMediaObj.mimeType?.startsWith('video/') ? (
+                      <VideoPlayer
+                        src={introMediaObj.url}
+                        mimeType={introMediaObj.mimeType}
+                        className="mx-auto max-h-80 w-full"
+                      />
+                    ) : (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={getMediaUrl(introMediaObj.url)}
+                        alt={introMediaObj.alt || ''}
+                        className="mx-auto max-h-80 w-auto object-contain"
+                      />
+                    )}
                   </div>
                 )}
 
@@ -289,7 +300,7 @@ export function ExercisesPager({
                 <h2 className="text-2xl font-medium mb-4 text-foreground">
                   {t('exercisesPagerCompletedTitle')}
                 </h2>
-                <p className="text-muted-foreground mb-10 text-base leading-relaxed max-w-md mx-auto">
+                <p className="text-muted-foreground mb-10 text-base leading-relaxed max-w-2xl mx-auto">
                   {t('exercisesPagerCompletedDescription')}
                 </p>
 

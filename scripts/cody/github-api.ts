@@ -6,6 +6,7 @@
  */
 
 import { logger } from './logger'
+import { getComplexityTier } from './pipeline-utils'
 import { execFileSync } from 'child_process'
 
 // ============================================================================
@@ -267,6 +268,137 @@ export function discoverTaskIdFromIssue(issueNumber: number): string | null {
     // Use canonical task-ID marker regex
     const match = output.match(TASK_ID_MARKER_REGEX)
     return match ? match[1] : null
+  } catch {
+    return null
+  }
+}
+
+// ============================================================================
+// PR Review Functions
+// ============================================================================
+
+/**
+ * Fetch PR review feedback: the latest "changes requested" review body +
+ * all inline review comments. Returns formatted markdown suitable for
+ * writing to rerun-feedback.md.
+ *
+ * Uses `gh api` to fetch PR reviews and review comments.
+ * Returns null if no change-request reviews or comments found.
+ */
+export function getPRReviewFeedback(prNumber: number): string | null {
+  if (!prNumber) return null
+
+  const repo = process.env.GITHUB_REPOSITORY
+  if (!repo) {
+    logger.warn('getPRReviewFeedback: GITHUB_REPOSITORY not set')
+    return null
+  }
+
+  const sections: string[] = []
+
+  // 1. Get the latest "changes_requested" review body
+  try {
+    const reviewsOutput = execFileSync(
+      'gh',
+      [
+        'api',
+        `repos/${repo}/pulls/${prNumber}/reviews`,
+        '--jq',
+        '[.[] | select(.state == "CHANGES_REQUESTED")] | last | {body: .body, user: .user.login, submitted_at: .submitted_at}',
+      ],
+      { encoding: 'utf-8', timeout: GH_API_TIMEOUT },
+    )
+    const review = JSON.parse(reviewsOutput.trim())
+    if (review?.body) {
+      sections.push(`## Change Request from @${review.user}\n\n${review.body}`)
+    }
+  } catch (error) {
+    logger.warn({ err: error }, `Failed to fetch PR reviews for #${prNumber}`)
+  }
+
+  // 2. Get inline review comments (code-level feedback)
+  try {
+    const commentsOutput = execFileSync(
+      'gh',
+      [
+        'api',
+        `repos/${repo}/pulls/${prNumber}/comments`,
+        '--jq',
+        '[.[] | {path: .path, line: .line, body: .body, user: .user.login}]',
+      ],
+      { encoding: 'utf-8', timeout: GH_API_TIMEOUT },
+    )
+    const comments = JSON.parse(commentsOutput.trim()) as Array<{
+      path: string
+      line: number | null
+      body: string
+      user: string
+    }>
+
+    if (comments.length > 0) {
+      const commentLines = comments.map((c) => {
+        const location = c.line ? `${c.path}:${c.line}` : c.path
+        return `- **${location}** (@${c.user}): ${c.body}`
+      })
+      const header = '## Inline Comments'
+      sections.push(header + '\n\n' + commentLines.join('\n'))
+    }
+  } catch (error) {
+    logger.warn({ err: error }, `Failed to fetch PR review comments for #${prNumber}`)
+  }
+
+  if (sections.length === 0) return null
+
+  return sections.join('\n\n')
+}
+
+/**
+ * Discover the PR number associated with the current branch.
+ * Uses `gh pr view` which finds the PR for the current HEAD branch.
+ * Returns null if no PR exists.
+ */
+export function getCurrentPRNumber(): number | null {
+  try {
+    const output = execFileSync('gh', ['pr', 'view', '--json', 'number', '--jq', '.number'], {
+      encoding: 'utf-8',
+      timeout: GH_API_TIMEOUT,
+    })
+    const num = parseInt(output.trim(), 10)
+    return isNaN(num) ? null : num
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Discover the task ID from a PR by checking bot comments on the PR.
+ * PRs are issues in GitHub's API, so we can reuse discoverTaskIdFromIssue.
+ */
+export function discoverTaskIdFromPR(prNumber: number): string | null {
+  return discoverTaskIdFromIssue(prNumber)
+}
+
+/**
+ * Get the issue number linked to a PR via "Closes #XXX" in the PR description.
+ * Used in fix mode to find the original issue from a PR.
+ */
+export function getLinkedIssueFromPR(prNumber: number): number | null {
+  if (!prNumber) return null
+  try {
+    const output = execFileSync(
+      'gh',
+      [
+        'pr',
+        'view',
+        String(prNumber),
+        '--json',
+        'closingIssuesReferences',
+        '--jq',
+        '.closingIssuesReferences[0].number',
+      ],
+      { encoding: 'utf-8', timeout: GH_API_TIMEOUT },
+    ).trim()
+    return output ? parseInt(output, 10) : null
   } catch {
     return null
   }
@@ -534,14 +666,16 @@ export function setClassificationLabels(
     }
   }
 
-  // Map complexity to complexity:* label
+  // Map complexity to complexity:* label (uses getComplexityTier for single source of truth)
   if (taskDef.complexity !== undefined) {
+    const tier = getComplexityTier(taskDef.complexity)
     let label: string
-    if (taskDef.complexity <= 30) {
+    if (tier === 'trivial' || tier === 'simple') {
       label = 'complexity:simple'
-    } else if (taskDef.complexity <= 60) {
+    } else if (tier === 'moderate') {
       label = 'complexity:moderate'
     } else {
+      // complex or very_complex
       label = 'complexity:complex'
     }
     labels.push(label)
@@ -577,18 +711,56 @@ export function setClassificationLabels(
     }
   }
 
-  try {
-    const args = ['issue', 'edit', String(issueNumber), '--add-label', labels.join(',')]
-    if (labelsToRemove.length > 0) {
-      args.push('--remove-label', labelsToRemove.join(','))
+  // FIX #8: Add retry logic for the critical add operation.
+  // Step 1: Add new labels (critical — retry once on failure)
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      execFileSync('gh', ['issue', 'edit', String(issueNumber), '--add-label', labels.join(',')], {
+        stdio: ['pipe', 'pipe', 'pipe'],
+        timeout: GH_API_TIMEOUT,
+      })
+      logger.info(`  Set classification labels [${labels.join(', ')}] on issue #${issueNumber}`)
+      break // Success
+    } catch (error) {
+      if (attempt === 0) {
+        logger.warn(
+          { err: error },
+          `Classification label add attempt 1 failed for issue ${issueNumber}, retrying...`,
+        )
+        syncSleep(2000)
+      } else {
+        logger.error(
+          { err: error },
+          `Failed to set classification labels on issue ${issueNumber} after 2 attempts`,
+        )
+      }
     }
-    execFileSync('gh', args, {
-      stdio: ['inherit', 'inherit', 'inherit'],
-      timeout: GH_API_TIMEOUT,
-    })
-    logger.info(`  Set classification labels [${labels.join(', ')}] on issue #${issueNumber}`)
-  } catch (error) {
-    logger.error({ err: error }, `Failed to set classification labels on issue ${issueNumber}:`)
+  }
+
+  // Step 2: Remove stale labels in a separate call (best-effort with retry).
+  // This is separate because `gh issue edit --remove-label` fails if ANY label in the
+  // list doesn't exist on the repo. By separating add/remove, a remove failure
+  // doesn't prevent the add from succeeding.
+  if (labelsToRemove.length > 0) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        execFileSync(
+          'gh',
+          ['issue', 'edit', String(issueNumber), '--remove-label', labelsToRemove.join(',')],
+          {
+            stdio: ['pipe', 'pipe', 'pipe'],
+            timeout: GH_API_TIMEOUT,
+          },
+        )
+        break // Success
+      } catch {
+        if (attempt === 0) {
+          syncSleep(1000)
+        }
+        // Silently ignore on final attempt — labels may not exist on the repo or issue.
+        // This is expected for newly added domain/category labels.
+      }
+    }
   }
 }
 
@@ -596,7 +768,10 @@ export function setClassificationLabels(
  * Set profile label - adds new profile and removes the other
  * Fire-and-forget: errors are logged but never thrown
  */
-export function setProfileLabel(issueNumber: number, profile: 'lightweight' | 'standard'): void {
+export function setProfileLabel(
+  issueNumber: number,
+  profile: 'lightweight' | 'standard' | 'turbo',
+): void {
   if (!issueNumber || !profile) return
 
   const label = `profile:${profile}`

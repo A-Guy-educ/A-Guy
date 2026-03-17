@@ -10,6 +10,7 @@ import * as path from 'path'
 import { execFileSync } from 'child_process'
 
 import { logger } from './logger'
+import { resolveOpenCodeBinary } from './opencode-server'
 
 // ============================================================================
 // Types
@@ -182,6 +183,7 @@ export async function appendSession(
   taskDir: string,
   stage: string,
   sessionId: string,
+  serverUrl?: string,
 ): Promise<void> {
   if (!sessionId) {
     logger.debug('No sessionId, skipping chat export')
@@ -191,13 +193,30 @@ export async function appendSession(
   logger.info(`  📝 Exporting chat session ${sessionId} for stage ${stage}...`)
 
   try {
-    // Export session as JSON
-    const output = execFileSync('pnpm', ['exec', 'opencode', 'export', sessionId], {
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-      cwd: process.cwd(),
-      maxBuffer: 50 * 1024 * 1024, // 50MB — session exports can be very large
-    })
+    // Export session as JSON from the OpenCode SQLite DB.
+    // `opencode export` reads directly from the DB — it does NOT support --attach.
+    // When serverUrl is set, the DB lives in the task-specific data dir, so we use
+    // the real binary + XDG_DATA_HOME. Without server mode, use pnpm exec (old binary).
+    let output: string
+    if (serverUrl) {
+      const args = ['export', sessionId]
+      const dataDir = path.join(taskDir, 'opencode-data')
+      output = execFileSync(resolveOpenCodeBinary(), args, {
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+        cwd: process.cwd(),
+        maxBuffer: 50 * 1024 * 1024,
+        env: { ...process.env, XDG_DATA_HOME: dataDir },
+      })
+    } else {
+      const args = ['exec', 'opencode', 'export', sessionId]
+      output = execFileSync('pnpm', args, {
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+        cwd: process.cwd(),
+        maxBuffer: 50 * 1024 * 1024,
+      })
+    }
 
     // Extract JSON from potentially noisy CLI output (may contain
     // "Exporting session:" prefix, progress messages, or other non-JSON lines)
@@ -224,6 +243,14 @@ export async function appendSession(
 
     // Append the new session
     history.sessions.push(session)
+
+    // R2-FIX #8: Cap sessions to prevent unbounded growth during retry loops.
+    // Keep last 30 sessions — enough for full pipeline + several verify→fix loops.
+    const MAX_CHAT_SESSIONS = 30
+    if (history.sessions.length > MAX_CHAT_SESSIONS) {
+      history.sessions = history.sessions.slice(-MAX_CHAT_SESSIONS)
+      logger.info(`  ℹ️ Chat history trimmed to last ${MAX_CHAT_SESSIONS} sessions`)
+    }
 
     // Save
     saveChatHistory(taskDir, history)

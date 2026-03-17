@@ -142,7 +142,7 @@ export function SplitPaneLayout({
           storageKey={storageKey}
           className="flex-1"
         >
-          <div className="h-full overflow-hidden">{primaryContent}</div>
+          <div className="h-full overflow-hidden min-h-0">{primaryContent}</div>
           <div className="bg-background flex flex-col overflow-hidden h-full">{chatContent}</div>
         </ResizablePane>
       </div>

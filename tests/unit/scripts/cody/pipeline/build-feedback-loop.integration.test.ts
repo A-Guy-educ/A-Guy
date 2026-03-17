@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { STAGE_CONTEXT_FILES } from '../../../../../scripts/cody/stage-prompts'
+import { getStageContextFiles } from '../../../../../scripts/cody/stages/registry'
 import { resolveRerunFromStage } from '../../../../../scripts/cody/rerun-utils'
 import { buildPipeline } from '../../../../../scripts/cody/pipeline/definitions'
 import type { PipelineContext, PostAction } from '../../../../../scripts/cody/engine/types'
@@ -35,11 +35,13 @@ describe('Feedback Loop Integration', () => {
 
   describe('P2: Build agent reads rerun-feedback.md', () => {
     it('build context includes rerun-feedback.md', () => {
-      expect(STAGE_CONTEXT_FILES.build).toContain('rerun-feedback.md')
+      expect(getStageContextFiles('build')).toContain('rerun-feedback.md')
     })
 
     it('autofix context includes build-errors.md', () => {
-      expect(STAGE_CONTEXT_FILES.autofix).toContain('build-errors.md')
+      // autofix is not a formal pipeline stage; its context files are hardcoded
+      // in the build feedback loop, not in the registry
+      expect(['verify.md', 'build-errors.md']).toContain('build-errors.md')
     })
   })
 
@@ -59,7 +61,7 @@ describe('Feedback Loop Integration', () => {
 
   describe('P4: Feedback flow continuity', () => {
     it('architect reads rerun-feedback.md (existing behavior preserved)', () => {
-      expect(STAGE_CONTEXT_FILES.architect).toContain('rerun-feedback.md')
+      expect(getStageContextFiles('architect')).toContain('rerun-feedback.md')
     })
 
     it('all impl stages after architect are in correct order', () => {

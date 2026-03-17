@@ -27,20 +27,20 @@ vi.mock('../../../../scripts/cody/logger', () => ({
 
 import { setClassificationLabels } from '../../../../scripts/cody/github-api'
 
-// Helper to get the last execFileSync call args
-const getLastGhCall = () => {
+// Helper to get all gh calls
+const getGhCalls = () => {
   const calls = vi.mocked(childProcess.execFileSync).mock.calls
-  const ghCalls = calls.filter((c) => c[0] === 'gh')
-  return ghCalls[ghCalls.length - 1]
+  return calls.filter((c) => c[0] === 'gh').map((c) => c[1] as string[])
 }
 
-const getGhArgs = () => {
-  const call = getLastGhCall()
-  return call?.[1] as string[]
-}
+// Helper to find the add-label call
+const getAddCall = () => getGhCalls().find((args) => args.includes('--add-label'))
+
+// Helper to find the remove-label call
+const getRemoveCall = () => getGhCalls().find((args) => args.includes('--remove-label'))
 
 // ============================================================================
-// setClassificationLabels — stale label removal
+// setClassificationLabels — split add/remove calls
 // ============================================================================
 
 describe('setClassificationLabels', () => {
@@ -48,19 +48,30 @@ describe('setClassificationLabels', () => {
     vi.clearAllMocks()
   })
 
+  it('should make separate gh calls for add and remove (split for resilience)', () => {
+    setClassificationLabels(100, { risk_level: 'medium' })
+
+    const ghCalls = getGhCalls()
+    // Should be 2 calls: one for add, one for remove
+    expect(ghCalls.length).toBe(2)
+
+    const addCall = getAddCall()
+    const removeCall = getRemoveCall()
+    expect(addCall).toBeDefined()
+    expect(removeCall).toBeDefined()
+  })
+
   it('should add risk label and remove other risk labels', () => {
     setClassificationLabels(100, { risk_level: 'medium' })
 
-    const args = getGhArgs()
-    expect(args).toContain('--add-label')
-    expect(args).toContain('--remove-label')
-
-    const addIdx = args.indexOf('--add-label')
-    const removeIdx = args.indexOf('--remove-label')
-    const addedLabels = args[addIdx + 1]
-    const removedLabels = args[removeIdx + 1]
-
+    const addCall = getAddCall()!
+    const addIdx = addCall.indexOf('--add-label')
+    const addedLabels = addCall[addIdx + 1]
     expect(addedLabels).toContain('risk:medium')
+
+    const removeCall = getRemoveCall()!
+    const removeIdx = removeCall.indexOf('--remove-label')
+    const removedLabels = removeCall[removeIdx + 1]
     expect(removedLabels).toContain('risk:high')
     expect(removedLabels).toContain('risk:low')
     expect(removedLabels).not.toContain('risk:medium')
@@ -69,9 +80,9 @@ describe('setClassificationLabels', () => {
   it('should remove old risk labels when risk changes from low to high', () => {
     setClassificationLabels(200, { risk_level: 'high' })
 
-    const args = getGhArgs()
-    const removeIdx = args.indexOf('--remove-label')
-    const removedLabels = args[removeIdx + 1]
+    const removeCall = getRemoveCall()!
+    const removeIdx = removeCall.indexOf('--remove-label')
+    const removedLabels = removeCall[removeIdx + 1]
 
     expect(removedLabels).toContain('risk:low')
     expect(removedLabels).toContain('risk:medium')
@@ -81,13 +92,14 @@ describe('setClassificationLabels', () => {
   it('should remove old type labels when setting a new type', () => {
     setClassificationLabels(300, { task_type: 'fix_bug' })
 
-    const args = getGhArgs()
-    const addIdx = args.indexOf('--add-label')
-    const removeIdx = args.indexOf('--remove-label')
-    const addedLabels = args[addIdx + 1]
-    const removedLabels = args[removeIdx + 1]
-
+    const addCall = getAddCall()!
+    const addIdx = addCall.indexOf('--add-label')
+    const addedLabels = addCall[addIdx + 1]
     expect(addedLabels).toContain('type:bug')
+
+    const removeCall = getRemoveCall()!
+    const removeIdx = removeCall.indexOf('--remove-label')
+    const removedLabels = removeCall[removeIdx + 1]
     expect(removedLabels).toContain('type:feature')
     expect(removedLabels).toContain('type:refactor')
     expect(removedLabels).not.toContain('type:bug')
@@ -96,9 +108,9 @@ describe('setClassificationLabels', () => {
   it('should remove old complexity labels when setting new complexity', () => {
     setClassificationLabels(400, { complexity: 75 }) // complex
 
-    const args = getGhArgs()
-    const removeIdx = args.indexOf('--remove-label')
-    const removedLabels = args[removeIdx + 1]
+    const removeCall = getRemoveCall()!
+    const removeIdx = removeCall.indexOf('--remove-label')
+    const removedLabels = removeCall[removeIdx + 1]
 
     expect(removedLabels).toContain('complexity:simple')
     expect(removedLabels).toContain('complexity:moderate')
@@ -108,9 +120,9 @@ describe('setClassificationLabels', () => {
   it('should remove old domain labels when setting new domain', () => {
     setClassificationLabels(500, { primary_domain: 'frontend' })
 
-    const args = getGhArgs()
-    const removeIdx = args.indexOf('--remove-label')
-    const removedLabels = args[removeIdx + 1]
+    const removeCall = getRemoveCall()!
+    const removeIdx = removeCall.indexOf('--remove-label')
+    const removedLabels = removeCall[removeIdx + 1]
 
     expect(removedLabels).toContain('domain:backend')
     expect(removedLabels).toContain('domain:infra')
@@ -125,22 +137,24 @@ describe('setClassificationLabels', () => {
       primary_domain: 'backend',
     })
 
-    const args = getGhArgs()
-    const addIdx = args.indexOf('--add-label')
-    const removeIdx = args.indexOf('--remove-label')
-    const addedLabels = args[addIdx + 1].split(',')
-    const removedLabels = args[removeIdx + 1].split(',')
+    const addCall = getAddCall()!
+    const addIdx = addCall.indexOf('--add-label')
+    const addedLabels = addCall[addIdx + 1].split(',')
 
     // Added labels
     expect(addedLabels).toContain('type:feature')
     expect(addedLabels).toContain('risk:low')
-    expect(addedLabels).toContain('complexity:simple')
+    expect(addedLabels).toContain('complexity:moderate')
     expect(addedLabels).toContain('domain:backend')
+
+    const removeCall = getRemoveCall()!
+    const removeIdx = removeCall.indexOf('--remove-label')
+    const removedLabels = removeCall[removeIdx + 1].split(',')
 
     // Removed labels should NOT include the ones we're adding
     expect(removedLabels).not.toContain('type:feature')
     expect(removedLabels).not.toContain('risk:low')
-    expect(removedLabels).not.toContain('complexity:simple')
+    expect(removedLabels).not.toContain('complexity:moderate')
     expect(removedLabels).not.toContain('domain:backend')
 
     // But should include competing labels
@@ -150,13 +164,11 @@ describe('setClassificationLabels', () => {
     expect(removedLabels).toContain('domain:frontend')
   })
 
-  it('should not include --remove-label when no labels to remove', () => {
+  it('should not include remove call when no labels to remove', () => {
     // No valid labels to add means no labels to remove either
     setClassificationLabels(700, {})
 
-    // Should not have called gh at all (no labels)
-    const calls = vi.mocked(childProcess.execFileSync).mock.calls
-    const ghCalls = calls.filter((c) => c[0] === 'gh')
+    const ghCalls = getGhCalls()
     expect(ghCalls).toHaveLength(0)
   })
 
@@ -165,5 +177,39 @@ describe('setClassificationLabels', () => {
 
     const calls = vi.mocked(childProcess.execFileSync).mock.calls
     expect(calls).toHaveLength(0)
+  })
+
+  // NEW: Tests for the split add/remove resilience fix
+  it('should succeed adding labels even when remove fails (missing repo labels)', () => {
+    let callCount = 0
+    vi.mocked(childProcess.execFileSync).mockImplementation((..._args: unknown[]) => {
+      callCount++
+      const args = _args[1] as string[]
+      // Fail only the remove call
+      if (args.includes('--remove-label')) {
+        throw new Error("'domain:data' not found")
+      }
+      return Buffer.from('')
+    })
+
+    // Should not throw — remove failure is silently ignored
+    expect(() =>
+      setClassificationLabels(123, { task_type: 'fix_bug', primary_domain: 'frontend' }),
+    ).not.toThrow()
+
+    // 1 add call + 2 remove attempts (retry on failure) = 3 total
+    expect(callCount).toBe(3)
+  })
+
+  it('should use pipe stdio instead of inherit to avoid leaking stderr', () => {
+    setClassificationLabels(123, { risk_level: 'high' })
+
+    const calls = vi.mocked(childProcess.execFileSync).mock.calls
+    for (const call of calls) {
+      if (call[0] === 'gh') {
+        const opts = call[2] as { stdio: string[] }
+        expect(opts.stdio).toEqual(['pipe', 'pipe', 'pipe'])
+      }
+    }
   })
 })

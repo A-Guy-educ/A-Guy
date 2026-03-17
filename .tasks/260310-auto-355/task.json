@@ -1,0 +1,31 @@
+{
+  "task_type": "refactor",
+  "risk_level": "medium",
+  "confidence": 0.9,
+  "primary_domain": "frontend",
+  "scope": [
+    "UI redesign",
+    "course page",
+    "visual styling",
+    "responsive layout"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The Figma design reference URL is accessible and contains the visual design",
+    "Existing course page components can be identified and modified",
+    "All functionality should be preserved - only visual layer changes"
+  ],
+  "review_questions": [
+    "Is it confirmed that no backend or API changes are needed?",
+    "Are there existing UI tests that should be run to verify no functionality is broken?"
+  ],
+  "complexity": 26,
+  "complexity_reasoning": "Scope: 8 (multiple UI files/components), Risk: 6 (UI changes but no backend), Novelty: 6 (following design reference), Cross: 2 (frontend only), Ambiguity: 2 (clear requirements), Deps: 2 (self-contained). Total: 26",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Task contains clear requirements, scope definition, and acceptance criteria. Has well-defined constraints about what MUST NOT change. Not a detailed plan with file paths, but structured enough to understand implementation requirements."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

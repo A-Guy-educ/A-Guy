@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "description": "Cross-task knowledge base for Cody pipeline self-learning. Updated by the Knowledge Gardener nightly inspector plugin.",
+  "entries": [
+    {
+      "taskId": "260313-auto-657",
+      "date": "2026-03-13T17:12:00.000Z",
+      "domain": "frontend",
+      "taskType": "fix_bug",
+      "complexity": 17,
+      "patterns": ["css-styling", "frontend-bugfix", "tailwind-utility"],
+      "summary": "Fixed lesson introduction container being too narrow by updating Tailwind max-width classes in ExercisesPager component"
+    }
+  ],
+  "patternFrequency": {
+    "css-styling": 1,
+    "frontend-bugfix": 1,
+    "tailwind-utility": 1
+  },
+  "skillsCreated": [],
+  "lastUpdated": "2026-03-13T17:12:00.000Z"
+}

@@ -6,6 +6,11 @@ import { Globe, Paperclip, X, Image as ImageIcon, FileText, FileCode } from 'luc
 import { AGENTS, type AgentId } from '../agents'
 import type { CodyTask } from '../types'
 import type { ChatMessage, ChatSession } from '../chat-types'
+import { ConfirmDialog } from './ConfirmDialog'
+import { useRemoteStatus } from '../hooks/useRemoteStatus'
+import { useVoiceChat } from '../hooks/useVoiceChat'
+import { VoiceButton } from './VoiceButton'
+import { VoiceChatOverlay } from './VoiceChatOverlay'
 
 const AGENT_LIST = Object.values(AGENTS).map(({ id, name, description, icon, capabilities }) => ({
   id,
@@ -19,6 +24,7 @@ interface Message {
   role: 'user' | 'assistant'
   content: string
   isLoading?: boolean
+  timestamp?: string
 }
 
 interface ToolCall {
@@ -71,6 +77,8 @@ function saveGlobalHistory(history: HistoryMap): void {
 
 interface CodyChatProps {
   selectedTask?: CodyTask | null
+  /** GitHub login of the current user — used for remote dev status */
+  actorLogin?: string | null
 }
 
 function getFileIcon(mimeType: string) {
@@ -93,7 +101,7 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-export function CodyChat({ selectedTask }: CodyChatProps) {
+export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
   // Global (non-task) chat history
   const [globalHistory, setGlobalHistory] = useState<HistoryMap>(emptyHistory)
 
@@ -112,10 +120,16 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([])
   const [selectedAgent, setSelectedAgent] = useState<AgentId>('dashboard-manager')
   const [showAgentDropdown, setShowAgentDropdown] = useState(false)
+  const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [voiceMuted, setVoiceMuted] = useState(false)
+  const [voiceOverlayOpen, setVoiceOverlayOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Remote dev status (only polls when actorLogin is provided)
+  const { data: remoteStatus } = useRemoteStatus(actorLogin)
 
   // Determine if we're in task mode or global mode
   const isTaskMode = !!selectedTask
@@ -160,6 +174,7 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
                 converted.push({
                   role: msg.role,
                   content: msg.text,
+                  timestamp: msg.timestamp,
                 })
               }
             }
@@ -172,7 +187,7 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
       // Clear task messages when no task
       setTaskMessages([])
     }
-  }, [selectedTask]) // eslint wants full object; re-runs are guarded by if(selectedTask)
+  }, [selectedTask?.id]) // eslint-disable-line react-hooks/exhaustive-deps -- intentional: only id needed, full object ref changes on every poll
 
   // Save task chat after each message exchange (debounced)
   const saveTaskChat = useCallback(async () => {
@@ -182,7 +197,7 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
       const messagesForApi: ChatMessage[] = taskMessages.map((m) => ({
         role: m.role,
         text: m.content,
-        timestamp: new Date().toISOString(),
+        timestamp: m.timestamp || new Date().toISOString(),
       }))
 
       await fetch('/api/cody/chat/save', {
@@ -255,16 +270,17 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
       setLoading(false)
     }
 
+    if (voiceOverlayOpen) {
+      voiceChat.stopConversation()
+      setVoiceOverlayOpen(false)
+      setVoiceMuted(false)
+    }
     setSelectedAgent(agentId)
     setShowAgentDropdown(false)
     setToolCalls([])
   }
 
-  const handleClearHistory = () => {
-    if (messages.length === 0) return
-    const confirmed = window.confirm('Clear conversation history?')
-    if (!confirmed) return
-
+  const executeClearHistory = () => {
     // Clear global chat from localStorage when clearing history in non-task mode
     if (!isTaskMode) {
       saveGlobalHistory(emptyHistory())
@@ -334,239 +350,235 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
     setAttachments((prev) => prev.filter((a) => a.id !== id))
   }
 
-  const sendMessage = async () => {
-    if (!input.trim() && attachments.length === 0) return
+  const sendText = useCallback(
+    async (
+      messageContent: string,
+      currentAttachments: Attachment[] = [],
+    ): Promise<string | null> => {
+      if (!messageContent.trim() && currentAttachments.length === 0) return null
 
-    const userMessage = input.trim()
-    setInput('')
-    setAttachments([]) // Clear attachments after sending
-
-    // Build message content - include attachments as data URIs
-    let messageContent = userMessage
-    if (attachments.length > 0) {
-      const attachmentDescriptions = attachments
-        .map((a) => {
-          const sizeStr = formatFileSize(a.size)
-          if (a.mimeType.startsWith('image/')) {
-            return `[Image: ${a.name} (${sizeStr})]\n${a.data}`
-          }
-          return `[File: ${a.name} (${a.mimeType}, ${sizeStr})]\n${a.data}`
-        })
-        .join('\n\n')
-
-      messageContent = attachmentDescriptions + (userMessage ? `\n\n${userMessage}` : '')
-    }
-
-    setMessages((prev) => [...prev, { role: 'user', content: messageContent }])
-    setLoading(true)
-    setToolCalls([])
-
-    // Create abort controller for this request
-    abortControllerRef.current = new AbortController()
-
-    // Add placeholder for assistant response
-    setMessages((prev) => [...prev, { role: 'assistant', content: '', isLoading: true }])
-
-    try {
-      // Include task context in request when in task mode
-      const requestBody: {
-        agentId: AgentId
-        messages: Array<{ role: 'user' | 'assistant'; content: string }>
-        taskId?: string
-        taskData?: {
-          issueNumber: number
-          title: string
-          body: string
-          state: string
-          labels: string[]
-          column: string
-          pipeline?: {
-            state: string
-            currentStage: string | null
-            stages: Record<string, { state: string }>
-          }
-          taskDefinition?: {
-            task_type: string
-            risk_level: string
-            primary_domain: string
-            scope: string[]
-          }
-          associatedPR?: {
-            number: number
-            state: string
-            html_url: string
-          }
-        }
-        attachments?: Array<{
-          name: string
-          mimeType: string
-          data: string
-        }>
-      } = {
-        agentId: selectedAgent,
-        messages: [
-          ...messages.map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-          { role: 'user', content: messageContent },
-        ],
+      let fullContent = messageContent
+      if (currentAttachments.length > 0) {
+        const attachmentDescriptions = currentAttachments
+          .map((a) => {
+            const sizeStr = formatFileSize(a.size)
+            if (a.mimeType.startsWith('image/')) return `[Image: ${a.name} (${sizeStr})]\n${a.data}`
+            return `[File: ${a.name} (${a.mimeType}, ${sizeStr})]\n${a.data}`
+          })
+          .join('\n\n')
+        fullContent = attachmentDescriptions + (messageContent ? `\n\n${messageContent}` : '')
       }
 
-      // Include attachments in request
-      if (attachments.length > 0) {
-        requestBody.attachments = attachments.map((a) => ({
-          name: a.name,
-          mimeType: a.mimeType,
-          data: a.data,
-        }))
-      }
+      setMessages((prev) => [
+        ...prev,
+        { role: 'user', content: fullContent, timestamp: new Date().toISOString() },
+      ])
+      setLoading(true)
+      setToolCalls([])
+      abortControllerRef.current = new AbortController()
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', content: '', isLoading: true, timestamp: new Date().toISOString() },
+      ])
 
-      if (selectedTask) {
-        requestBody.taskId = selectedTask.id
-        // Send task context for the AI to understand the task
-        requestBody.taskData = {
-          issueNumber: selectedTask.issueNumber,
-          title: selectedTask.title,
-          body: selectedTask.body,
-          state: selectedTask.state,
-          labels: selectedTask.labels,
-          column: selectedTask.column,
-          pipeline: selectedTask.pipeline
-            ? {
-                state: selectedTask.pipeline.state,
-                currentStage: selectedTask.pipeline.currentStage,
-                stages: selectedTask.pipeline.stages,
-              }
-            : undefined,
-          taskDefinition: selectedTask.taskDefinition,
-          associatedPR: selectedTask.associatedPR
-            ? {
-                number: selectedTask.associatedPR.number,
-                state: selectedTask.associatedPR.state,
-                html_url: selectedTask.associatedPR.html_url,
-              }
-            : undefined,
-        }
-      }
-
-      const response = await fetch('/api/cody/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-        signal: abortControllerRef.current.signal,
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || `HTTP ${response.status}`)
-      }
-
-      if (!response.body) {
-        throw new Error('No response body')
-      }
-
-      // Handle streaming response - AI SDK v6 UI message stream (SSE format)
-      const reader = response.body.getReader()
-      const decoder = new TextDecoder()
-      let buffer = ''
       let accumulatedContent = ''
 
-      // Parse SSE stream (AI SDK v6 UI message stream protocol)
-      const parseSSEChunk = (text: string) => {
-        const lines = text.split('\n')
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue
-          const data = line.slice(6)
-
-          if (data === '[DONE]') continue
-
-          try {
-            const parsed = JSON.parse(data)
-
-            switch (parsed.type) {
-              case 'text-delta': {
-                accumulatedContent += parsed.delta
-                setMessages((prev) => {
-                  const newMessages = [...prev]
-                  const lastMsg = newMessages[newMessages.length - 1]
-                  if (lastMsg?.role === 'assistant') {
-                    lastMsg.content = accumulatedContent
-                  }
-                  return newMessages
-                })
-                break
-              }
-              case 'tool-input-start': {
-                setToolCalls((prev) => [...prev, { name: parsed.toolName, arguments: {} }])
-                break
-              }
-              case 'tool-output-available': {
-                // Tool result received - the model will continue with text after this
-                break
-              }
-              case 'error': {
-                console.error('Stream error:', parsed.errorText)
-                break
-              }
-              // Ignore other event types
+      try {
+        const requestBody: {
+          agentId: AgentId
+          messages: Array<{ role: 'user' | 'assistant'; content: string }>
+          taskId?: string
+          taskData?: {
+            issueNumber: number
+            title: string
+            body: string
+            state: string
+            labels: string[]
+            column: string
+            pipeline?: {
+              state: string
+              currentStage: string | null
+              stages: Record<string, { state: string }>
             }
-          } catch {
-            // Skip malformed JSON
+            taskDefinition?: {
+              task_type: string
+              risk_level: string
+              primary_domain: string
+              scope: string[]
+            }
+            associatedPR?: { number: number; state: string; html_url: string }
+          }
+          attachments?: Array<{ name: string; mimeType: string; data: string }>
+        } = {
+          agentId: selectedAgent,
+          messages: [
+            ...messages.map((m) => ({ role: m.role, content: m.content })),
+            { role: 'user', content: fullContent },
+          ],
+        }
+
+        if (currentAttachments.length > 0) {
+          requestBody.attachments = currentAttachments.map((a) => ({
+            name: a.name,
+            mimeType: a.mimeType,
+            data: a.data,
+          }))
+        }
+
+        if (selectedTask) {
+          requestBody.taskId = selectedTask.id
+          requestBody.taskData = {
+            issueNumber: selectedTask.issueNumber,
+            title: selectedTask.title,
+            body: selectedTask.body,
+            state: selectedTask.state,
+            labels: selectedTask.labels,
+            column: selectedTask.column,
+            pipeline: selectedTask.pipeline
+              ? {
+                  state: selectedTask.pipeline.state,
+                  currentStage: selectedTask.pipeline.currentStage,
+                  stages: selectedTask.pipeline.stages,
+                }
+              : undefined,
+            taskDefinition: selectedTask.taskDefinition,
+            associatedPR: selectedTask.associatedPR
+              ? {
+                  number: selectedTask.associatedPR.number,
+                  state: selectedTask.associatedPR.state,
+                  html_url: selectedTask.associatedPR.html_url,
+                }
+              : undefined,
           }
         }
-      }
 
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
+        const response = await fetch('/api/cody/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+          signal: abortControllerRef.current.signal,
+        })
 
-        buffer += decoder.decode(value, { stream: true })
-
-        // Process complete lines from buffer
-        const lastNewline = buffer.lastIndexOf('\n')
-        if (lastNewline !== -1) {
-          const completeLines = buffer.slice(0, lastNewline + 1)
-          buffer = buffer.slice(lastNewline + 1)
-          parseSSEChunk(completeLines)
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || `HTTP ${response.status}`)
         }
-      }
+        if (!response.body) throw new Error('No response body')
 
-      // Process remaining buffer
-      if (buffer.trim()) {
-        parseSSEChunk(buffer)
-      }
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        // Request was cancelled - don't update messages
-        setMessages((prev) => prev.slice(0, -1))
-        return
-      }
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
 
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-
-      setMessages((prev) => {
-        const newMessages = [...prev]
-        const lastMsg = newMessages[newMessages.length - 1]
-        if (lastMsg?.role === 'assistant') {
-          lastMsg.content = `Error: ${errorMessage}`
-          lastMsg.isLoading = false
+        const parseSSEChunk = (text: string) => {
+          const lines = text.split('\n')
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue
+            const data = line.slice(6)
+            if (data === '[DONE]') continue
+            try {
+              const parsed = JSON.parse(data)
+              switch (parsed.type) {
+                case 'text-delta': {
+                  accumulatedContent += parsed.delta
+                  setMessages((prev) => {
+                    const newMessages = [...prev]
+                    const lastMsg = newMessages[newMessages.length - 1]
+                    if (lastMsg?.role === 'assistant') lastMsg.content = accumulatedContent
+                    return newMessages
+                  })
+                  break
+                }
+                case 'tool-input-start':
+                  setToolCalls((prev) => [...prev, { name: parsed.toolName, arguments: {} }])
+                  break
+                case 'tool-output-available':
+                  break
+                case 'error':
+                  console.error('Stream error:', parsed.errorText)
+                  break
+              }
+            } catch {
+              /* skip malformed JSON */
+            }
+          }
         }
-        return newMessages
-      })
-    } finally {
-      setLoading(false)
-      setMessages((prev) => {
-        const newMessages = [...prev]
-        const lastMsg = newMessages[newMessages.length - 1]
-        if (lastMsg?.role === 'assistant') {
-          lastMsg.isLoading = false
+
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          buffer += decoder.decode(value, { stream: true })
+          const lastNewline = buffer.lastIndexOf('\n')
+          if (lastNewline !== -1) {
+            parseSSEChunk(buffer.slice(0, lastNewline + 1))
+            buffer = buffer.slice(lastNewline + 1)
+          }
         }
-        return newMessages
-      })
-      abortControllerRef.current = null
-    }
+        if (buffer.trim()) parseSSEChunk(buffer)
+
+        return accumulatedContent
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          setMessages((prev) => prev.slice(0, -1))
+          return null
+        }
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        setMessages((prev) => {
+          const newMessages = [...prev]
+          const lastMsg = newMessages[newMessages.length - 1]
+          if (lastMsg?.role === 'assistant') {
+            lastMsg.content = `Error: ${errorMessage}`
+            lastMsg.isLoading = false
+          }
+          return newMessages
+        })
+        return null
+      } finally {
+        setLoading(false)
+        setMessages((prev) => {
+          const newMessages = [...prev]
+          const lastMsg = newMessages[newMessages.length - 1]
+          if (lastMsg?.role === 'assistant') lastMsg.isLoading = false
+          return newMessages
+        })
+        abortControllerRef.current = null
+      }
+    },
+    [selectedAgent, selectedTask, setMessages, messages],
+  )
+
+  const sendMessage = async () => {
+    if (!input.trim() && attachments.length === 0) return
+    const userMessage = input.trim()
+    setInput('')
+    const currentAttachments = [...attachments]
+    setAttachments([])
+    await sendText(userMessage, currentAttachments)
   }
+
+  // ─── Voice chat integration ───
+
+  const handleVoiceSend = useCallback(
+    async (transcript: string) => {
+      const response = await sendText(transcript)
+      if (response) voiceChatRef.current?.onResponseComplete(response)
+    },
+    [sendText],
+  )
+
+  const voiceChat = useVoiceChat({ onSendMessage: handleVoiceSend })
+  const voiceChatRef = useRef(voiceChat)
+  useEffect(() => {
+    voiceChatRef.current = voiceChat
+  }, [voiceChat])
+
+  const handleVoiceToggleMute = useCallback(() => {
+    setVoiceMuted((prev) => {
+      const next = !prev
+      if (next) voiceChat.pauseConversation()
+      else voiceChat.resumeConversation()
+      return next
+    })
+  }, [voiceChat])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -596,7 +608,25 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
   const canSend = input.trim() || attachments.length > 0
 
   return (
-    <div className="flex flex-col h-full border-l bg-background">
+    <div className="relative flex flex-col h-full border-l bg-background">
+      {/* Voice Chat Overlay */}
+      {voiceOverlayOpen && (
+        <VoiceChatOverlay
+          state={voiceChat.state}
+          currentTranscript={voiceChat.currentTranscript}
+          turnCount={voiceChat.turnCount}
+          error={voiceChat.error}
+          messages={messages}
+          agentName={currentAgent.name}
+          onStop={() => {
+            voiceChat.stopConversation()
+            setVoiceOverlayOpen(false)
+            setVoiceMuted(false)
+          }}
+          onToggleMute={handleVoiceToggleMute}
+          isMuted={voiceMuted}
+        />
+      )}
       {/* Header with agent and context */}
       <div className="pl-4 pr-12 md:pr-4 py-3 border-b bg-gradient-to-r from-muted/80 to-muted/40">
         <div className="flex items-center justify-between">
@@ -612,6 +642,20 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
               </span>
             )}
           </div>
+
+          {/* Remote dev status indicator — only visible when configured */}
+          {remoteStatus?.configured && (
+            <div
+              className="flex items-center gap-1 text-xs text-muted-foreground"
+              title={remoteStatus.online ? 'Remote dev: online' : 'Remote dev: offline'}
+            >
+              <span
+                className={`w-2 h-2 rounded-full ${remoteStatus.online ? 'bg-green-500' : 'bg-red-400'}`}
+                aria-label={remoteStatus.online ? 'Remote dev online' : 'Remote dev offline'}
+              />
+              <span className="hidden sm:inline">{remoteStatus.online ? 'Remote' : 'Offline'}</span>
+            </div>
+          )}
 
           {/* Right: Agent selector dropdown */}
           <div className="relative" ref={dropdownRef}>
@@ -802,6 +846,29 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
             <Paperclip className="w-5 h-5" />
           </button>
 
+          {/* Voice button */}
+          <VoiceButton
+            isActive={voiceOverlayOpen}
+            isSupported={voiceChat.isSupported}
+            onTap={() => {
+              if (voiceOverlayOpen) {
+                voiceChat.stopConversation()
+                setVoiceOverlayOpen(false)
+                setVoiceMuted(false)
+              } else {
+                voiceChat.startConversation()
+                setVoiceOverlayOpen(true)
+              }
+            }}
+            onLongPressStart={() => {
+              voiceChat.startConversation()
+              setVoiceOverlayOpen(true)
+            }}
+            onLongPressEnd={() => {
+              /* let conversation handle it */
+            }}
+            disabled={loading}
+          />
           <textarea
             value={input}
             onChange={(e) => {
@@ -837,13 +904,23 @@ export function CodyChat({ selectedTask }: CodyChatProps) {
         {/* Clear history link */}
         {messages.length > 0 && !loading && (
           <button
-            onClick={handleClearHistory}
+            onClick={() => setShowClearConfirm(true)}
             className="mt-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             Clear history
           </button>
         )}
       </div>
+
+      <ConfirmDialog
+        open={showClearConfirm}
+        title="Clear history"
+        description="Clear conversation history? This cannot be undone."
+        confirmLabel="Clear"
+        variant="destructive"
+        onConfirm={executeClearHistory}
+        onClose={() => setShowClearConfirm(false)}
+      />
     </div>
   )
 }

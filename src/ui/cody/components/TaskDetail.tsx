@@ -15,12 +15,12 @@ import type { CodyTask, GitHubComment, ColumnId, CodyPipelineStatus } from '../t
 import { ALL_STAGES } from '../constants'
 import { calculatePipelineProgress, stageLabels, formatElapsed } from '../pipeline-utils'
 import { PipelineStatus } from './PipelineStatus'
+import { ConfirmDialog } from './ConfirmDialog'
 import { CommentEditor } from './CommentEditor'
 import { CommentList } from './CommentList'
-import { TaskPreviewTab } from './TaskPreviewTab'
 import { AssigneePicker, type AssigneeChangeEvent } from './AssigneePicker'
-import { MergeButton } from './MergeButton'
 import { SimpleTooltip } from './SimpleTooltip'
+import { WorkflowRunsPopover } from './WorkflowRunsPopover'
 import { Button } from '@/ui/web/components/button'
 import { Badge } from '@/ui/web/components/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/ui/web/components/avatar'
@@ -31,7 +31,6 @@ import {
   GitPullRequest,
   ExternalLink,
   Clock,
-  Play,
   CheckCircle,
   XCircle,
   AlertTriangle,
@@ -49,19 +48,23 @@ import {
   Info,
   FileText,
   MessageSquare,
-  GitBranch,
-  BookOpen,
   MoreHorizontal,
   Timer,
   ArrowLeft,
+  Eye,
+  Pencil,
+  Copy,
+  ListPlus,
+  ListMinus,
 } from 'lucide-react'
 
 interface TaskDetailProps {
-  onApproveReview?: (task: CodyTask) => Promise<void>
-  isMerging?: boolean
   task: CodyTask | null
   onClose?: () => void
   onRefresh?: () => void
+  onOpenPreview?: () => void
+  onEditTask?: (task: CodyTask) => void
+  onDuplicate?: (task: CodyTask) => void
 }
 
 interface FullTaskDetails extends CodyTask {
@@ -138,7 +141,7 @@ const columnLabels: Record<ColumnId, string> = {
   building: 'Building',
   review: 'In Review',
   failed: 'Failed',
-  'gate-waiting': 'Gate Waiting',
+  'gate-waiting': 'Needs Approval',
   retrying: 'Retrying',
   done: 'Done',
 }
@@ -152,15 +155,23 @@ function TabButton({
   label,
   icon: Icon,
   count,
+  tabId,
+  panelId,
 }: {
   active: boolean
   onClick: () => void
   label: string
   icon: React.ElementType
   count?: number
+  tabId?: string
+  panelId?: string
 }) {
   return (
     <button
+      role="tab"
+      id={tabId}
+      aria-selected={active}
+      aria-controls={panelId}
       onClick={onClick}
       className={cn(
         'relative flex items-center gap-1.5 px-3.5 py-2.5 text-[13px] font-medium transition-all duration-200',
@@ -269,6 +280,7 @@ function getOverflowActions(
   taskActions: ReturnType<typeof useTaskActions>,
   completedActions: Set<string>,
   setCompletedActions: React.Dispatch<React.SetStateAction<Set<string>>>,
+  onDuplicate?: (task: CodyTask) => void,
 ): Array<{
   icon: React.ElementType
   label: string
@@ -315,6 +327,31 @@ function getOverflowActions(
     })
   }
 
+  // Queue: Add to Queue (only if task has no queue-related labels)
+  const queueLabels = ['cody:queued', 'cody:queue-active', 'cody:queue-failed']
+  const hasQueueLabel = task.labels.some((l) => queueLabels.includes(l))
+
+  if (!hasQueueLabel && task.state === 'open') {
+    actions.push({
+      icon: ListPlus,
+      label: 'Add to Queue',
+      pendingLabel: 'Adding…',
+      onClick: () => taskActions.addToQueue(),
+      pendingKey: 'add-to-queue',
+    })
+  }
+
+  // Queue: Remove from Queue (only if task is queued but not active)
+  if (task.labels.includes('cody:queued')) {
+    actions.push({
+      icon: ListMinus,
+      label: 'Remove from Queue',
+      pendingLabel: 'Removing…',
+      onClick: () => taskActions.removeFromQueue(),
+      pendingKey: 'remove-from-queue',
+    })
+  }
+
   // Close PR
   if (task.associatedPR && task.associatedPR.state === 'open') {
     actions.push({
@@ -324,6 +361,17 @@ function getOverflowActions(
       onClick: () => taskActions.closePR(),
       pendingKey: 'close-pr',
       confirmMessage: `Close PR #${task.associatedPR.number}? This will NOT delete the branch.`,
+    })
+  }
+
+  // Duplicate Task
+  if (onDuplicate) {
+    actions.push({
+      icon: Copy,
+      label: 'Duplicate Task',
+      pendingLabel: 'Duplicating…',
+      onClick: () => onDuplicate(task),
+      pendingKey: 'duplicate',
     })
   }
 
@@ -370,6 +418,9 @@ function OverflowMenu({
   const [open, setOpen] = useState(false)
   const btnRef = useRef<HTMLButtonElement>(null)
   const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null)
+  const [confirmAction, setConfirmAction] = useState<
+    ReturnType<typeof getOverflowActions>[0] | null
+  >(null)
 
   const handleToggle = useCallback(() => {
     if (!open && btnRef.current) {
@@ -420,7 +471,9 @@ function OverflowMenu({
               const isActionPending = pendingAction === action.pendingKey
               const handleClick = () => {
                 if (action.confirmMessage) {
-                  if (!confirm(action.confirmMessage)) return
+                  setConfirmAction(action)
+                  setOpen(false)
+                  return
                 }
                 action.onClick()
                 setOpen(false)
@@ -449,6 +502,17 @@ function OverflowMenu({
             })}
           </div>
         </>
+      )}
+      {confirmAction && (
+        <ConfirmDialog
+          open={true}
+          title={confirmAction.label}
+          description={confirmAction.confirmMessage!}
+          confirmLabel={confirmAction.label}
+          variant={confirmAction.destructive ? 'destructive' : 'default'}
+          onConfirm={() => confirmAction.onClick()}
+          onClose={() => setConfirmAction(null)}
+        />
       )}
     </>
   )
@@ -540,8 +604,9 @@ export function TaskDetail({
   task,
   onClose,
   onRefresh,
-  onApproveReview,
-  isMerging: externalIsMerging,
+  onOpenPreview,
+  onEditTask,
+  onDuplicate,
 }: TaskDetailProps) {
   const { githubUser } = useGitHubIdentity()
   const actorLogin = githubUser?.login
@@ -557,9 +622,10 @@ export function TaskDetail({
     refetch,
     isFetching: isDetailsFetching,
   } = useTaskDetails(task?.issueNumber ?? null, actorLogin)
-  const [activeTab, setActiveTab] = useState<'description' | 'comments' | 'changes' | 'docs'>(
-    'description',
-  )
+  const [activeTab, setActiveTab] = useState<'description' | 'comments'>(() => {
+    if (typeof window === 'undefined') return 'description'
+    return window.location.pathname.endsWith('/comments') ? 'comments' : 'description'
+  })
   const [retryContext, setRetryContext] = useState('')
   const [showRetryContext, setShowRetryContext] = useState(false)
   const [showMobileExtra, setShowMobileExtra] = useState(false)
@@ -581,10 +647,26 @@ export function TaskDetail({
     }
   }, [])
 
+  // Sync tab from URL on browser back/forward
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname
+      // Only handle if we're on a task detail URL
+      if (!/\/cody\/\d+/.test(path)) return
+      // Don't handle preview URLs — parent manages those
+      if (path.includes('/preview')) return
+
+      setActiveTab(path.endsWith('/comments') ? 'comments' : 'description')
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
   useEffect(() => {
     setCompletedActions(new Set())
     setShowMobileExtra(false)
-    setActiveTab('description')
+    setActiveTab(window.location.pathname.endsWith('/comments') ? 'comments' : 'description')
   }, [task?.issueNumber])
 
   const retryWithContext = useRetryWithContext({
@@ -638,7 +720,6 @@ export function TaskDetail({
 
   const hasDescription = task.body && task.body.trim().length > 0
   const commentsCount = fullDetails?.comments?.length || 0
-  const hasPR = !!task.associatedPR
   const showPipelineTimeline =
     task.pipeline &&
     (task.pipeline.state === 'running' || task.pipeline.state === 'paused') &&
@@ -657,6 +738,7 @@ export function TaskDetail({
     taskActions,
     completedActions,
     setCompletedActions,
+    onDuplicate,
   )
 
   // --- Shared markdown components ---
@@ -815,8 +897,6 @@ export function TaskDetail({
       ? [{ key: 'description' as const, label: 'Description', icon: FileText }]
       : []),
     { key: 'comments' as const, label: 'Comments', icon: MessageSquare, count: commentsCount },
-    ...(hasPR ? [{ key: 'changes' as const, label: 'Changes', icon: GitBranch }] : []),
-    ...(hasPR ? [{ key: 'docs' as const, label: 'Docs', icon: BookOpen }] : []),
   ]
 
   // Compute effective tab: if current tab was removed (e.g. no PR → no Changes/Docs), fallback
@@ -825,15 +905,27 @@ export function TaskDetail({
 
   // --- Tab Bar ---
   const tabBar = (
-    <div className="flex border-b border-white/[0.08] shrink-0 overflow-x-auto bg-black/10">
+    <div
+      role="tablist"
+      className="flex border-b border-white/[0.08] shrink-0 overflow-x-auto bg-black/10"
+    >
       {tabs.map(({ key, label, icon, count }) => (
         <TabButton
           key={key}
           active={effectiveTab === key}
-          onClick={() => setActiveTab(key)}
+          onClick={() => {
+            setActiveTab(key)
+            if (task) {
+              const base = `/cody/${task.issueNumber}`
+              const path = key === 'description' ? base : `${base}/${key}`
+              window.history.pushState(null, '', path)
+            }
+          }}
           label={label}
           icon={icon}
           count={count}
+          tabId={`task-tab-${key}`}
+          panelId={`task-panel-${key}`}
         />
       ))}
     </div>
@@ -843,7 +935,12 @@ export function TaskDetail({
   const tabContent = (
     <>
       {effectiveTab === 'description' && hasDescription && (
-        <div className="p-5 md:p-6 overflow-y-auto overflow-x-hidden h-full bg-white/[0.03]">
+        <div
+          role="tabpanel"
+          id="task-panel-description"
+          aria-labelledby="task-tab-description"
+          className="p-5 md:p-6 overflow-y-auto overflow-x-hidden h-full bg-white/[0.03]"
+        >
           <div className="max-w-3xl min-w-0">
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
               {task.body!}
@@ -852,7 +949,12 @@ export function TaskDetail({
         </div>
       )}
       {effectiveTab === 'comments' && (
-        <div className="flex flex-col h-full">
+        <div
+          role="tabpanel"
+          id="task-panel-comments"
+          aria-labelledby="task-tab-comments"
+          className="flex flex-col h-full"
+        >
           <div className="flex-1 overflow-y-auto p-4 bg-white/[0.03]">
             <CommentList comments={fullDetails?.comments || []} loading={isDetailsFetching} />
           </div>
@@ -860,11 +962,6 @@ export function TaskDetail({
             <CommentEditor issueNumber={task.issueNumber} onCommentPosted={() => refetch()} />
           </div>
           {retryWithContextBlock}
-        </div>
-      )}
-      {(effectiveTab === 'changes' || effectiveTab === 'docs') && (
-        <div className="p-4 overflow-y-auto h-full bg-white/[0.03]">
-          <TaskPreviewTab task={task} activeTab={effectiveTab as 'changes' | 'docs'} />
         </div>
       )}
     </>
@@ -917,40 +1014,19 @@ export function TaskDetail({
         </a>
       )}
       {task.workflowRun && (
-        <a
-          href={task.workflowRun.html_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/[0.08] text-zinc-300 hover:bg-white/[0.12] hover:text-white transition-all duration-150 shrink-0 border border-white/[0.1]"
-        >
-          <Play className="w-3 h-3" />
-          Workflow
-        </a>
+        <WorkflowRunsPopover taskTitle={task.title} fallbackRun={task.workflowRun} />
       )}
-      {task.previewUrl && (
-        <SimpleTooltip
-          content={
-            <div className="space-y-1">
-              <p className="text-xs font-semibold">🔗 Preview Available</p>
-              <p className="text-xs text-muted-foreground">
-                Click to open the deployed preview in a new tab
-              </p>
-            </div>
-          }
-          side="bottom"
+      {task.associatedPR && onOpenPreview && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onOpenPreview()
+          }}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 hover:text-emerald-200 transition-all duration-150 shrink-0 border border-emerald-500/20 cursor-pointer"
         >
-          <a
-            href={task.previewUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 hover:text-emerald-200 transition-all duration-150 shrink-0 border border-emerald-500/20"
-          >
-            <ExternalLink className="w-3 h-3" />
-            Preview
-          </a>
-        </SimpleTooltip>
+          <Eye className="w-3 h-3" />
+          Preview
+        </button>
       )}
     </>
   )
@@ -1016,6 +1092,7 @@ export function TaskDetail({
             variant="ghost"
             size="sm"
             onClick={onClose}
+            aria-label="Back to task list"
             className="h-9 w-9 p-0 -ml-1 shrink-0 text-muted-foreground/60"
           >
             <ArrowLeft className="w-4.5 h-4.5" />
@@ -1033,6 +1110,7 @@ export function TaskDetail({
             size="sm"
             onClick={handleRefresh}
             disabled={isRefreshing}
+            aria-label="Refresh task"
             className="h-9 w-9 p-0 shrink-0 text-muted-foreground/50"
           >
             <RefreshCw
@@ -1078,17 +1156,6 @@ export function TaskDetail({
             </span>
           </div>
           <div className="flex items-center gap-1 shrink-0">
-            {/* Merge button (in review) */}
-            {task.column === 'review' && task.associatedPR && onApproveReview && (
-              <MergeButton
-                prNumber={task.associatedPR.number}
-                prTitle={task.associatedPR.title}
-                branchName={task.associatedPR.head.ref}
-                isMerging={externalIsMerging ?? false}
-                onMerge={() => onApproveReview(task)}
-              />
-            )}
-
             {/* Contextual primary action */}
             {primaryAction && (
               <Button
@@ -1123,12 +1190,28 @@ export function TaskDetail({
 
             <span className="w-px h-5 bg-white/[0.06] mx-0.5" />
 
+            {/* Edit button — only for backlog items */}
+            {onEditTask && task && task.column === 'open' && (
+              <SimpleTooltip content="Edit task" side="bottom">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onEditTask(task)}
+                  aria-label="Edit task"
+                  className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-muted-foreground"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </Button>
+              </SimpleTooltip>
+            )}
+
             <SimpleTooltip content="Refresh" side="bottom">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleRefresh}
                 disabled={isRefreshing}
+                aria-label="Refresh task"
                 className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-muted-foreground"
               >
                 <RefreshCw
@@ -1143,6 +1226,7 @@ export function TaskDetail({
               variant="ghost"
               size="sm"
               onClick={onClose}
+              aria-label="Close task detail"
               className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-muted-foreground"
             >
               <XCircle className="w-3.5 h-3.5" />
@@ -1192,6 +1276,43 @@ export function TaskDetail({
             </div>
           </div>
 
+          {/* Priority */}
+          {task.labels
+            .filter((l) => l.startsWith('priority:'))
+            .map((priorityLabel) => {
+              const priority = priorityLabel.replace('priority:', '')
+              const colors: Record<string, { bg: string; text: string; border: string }> = {
+                P0: { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30' },
+                P1: {
+                  bg: 'bg-orange-500/20',
+                  text: 'text-orange-400',
+                  border: 'border-orange-500/30',
+                },
+                P2: { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30' },
+                P3: { bg: 'bg-zinc-500/20', text: 'text-zinc-400', border: 'border-zinc-500/30' },
+              }
+              const c = colors[priority] || colors.P3
+              return (
+                <div key={priorityLabel} className="space-y-2">
+                  <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-0.5">
+                    Priority
+                  </h4>
+                  <div className="flex flex-wrap gap-1 px-0.5">
+                    <span
+                      className={cn(
+                        'inline-flex px-2.5 py-1 text-xs font-bold rounded-md border',
+                        c.bg,
+                        c.text,
+                        c.border,
+                      )}
+                    >
+                      {priority}
+                    </span>
+                  </div>
+                </div>
+              )
+            })}
+
           {/* Labels */}
           {task.labels.length > 0 && (
             <div className="space-y-2">
@@ -1219,6 +1340,89 @@ export function TaskDetail({
               </h4>
               <div className="rounded-lg p-3 bg-white/[0.03] border border-white/[0.06]">
                 <PipelineStatus status={task.pipeline} />
+              </div>
+            </div>
+          )}
+
+          {/* Triggered by */}
+          {task.pipeline?.triggeredByLogin && (
+            <div className="space-y-2">
+              <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-0.5">
+                Triggered by
+              </h4>
+              <div className="flex items-center gap-2 px-0.5">
+                <Avatar className="h-5 w-5 shrink-0">
+                  <AvatarImage
+                    src={`https://github.com/${task.pipeline.triggeredByLogin}.png?size=40`}
+                    alt={task.pipeline.triggeredByLogin}
+                  />
+                  <AvatarFallback className="text-[9px]">
+                    {task.pipeline.triggeredByLogin[0]?.toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-xs text-foreground">@{task.pipeline.triggeredByLogin}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Issue Owner */}
+          {task.pipeline?.issueCreator && (
+            <div className="space-y-2">
+              <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-0.5">
+                Issue Owner
+              </h4>
+              <div className="flex items-center gap-2 px-0.5">
+                <Avatar className="h-5 w-5 shrink-0">
+                  <AvatarImage
+                    src={`https://github.com/${task.pipeline.issueCreator}.png?size=40`}
+                    alt={task.pipeline.issueCreator}
+                  />
+                  <AvatarFallback className="text-[9px]">
+                    {task.pipeline.issueCreator[0]?.toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-xs text-foreground">@{task.pipeline.issueCreator}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Actor History */}
+          {task.pipeline?.actorHistory && task.pipeline.actorHistory.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-0.5">
+                Activity
+              </h4>
+              <div className="space-y-2">
+                {task.pipeline.actorHistory.slice(-8).map((event, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <Avatar className="h-4 w-4 shrink-0 mt-0.5">
+                      <AvatarImage
+                        src={`https://github.com/${event.actor}.png?size=32`}
+                        alt={event.actor}
+                      />
+                      <AvatarFallback className="text-[8px]">
+                        {event.actor[0]?.toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="text-[11px] text-foreground leading-tight">
+                        <span className="font-medium">@{event.actor}</span>{' '}
+                        <span className="text-muted-foreground">
+                          {event.action === 'pipeline-triggered'
+                            ? 'triggered'
+                            : event.action === 'gate-approved'
+                              ? `approved ${event.stage ?? ''} gate`
+                              : event.action === 'gate-rejected'
+                                ? `rejected ${event.stage ?? ''} gate`
+                                : event.action.replace(/-/g, ' ')}
+                        </span>
+                      </p>
+                      <p className="text-[10px] text-muted-foreground/70 mt-0.5">
+                        {formatRelativeTime(event.timestamp)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -1310,17 +1514,6 @@ export function TaskDetail({
 
       {/* Bottom toolbar — single row, always visible */}
       <div className="shrink-0 border-t border-white/10 bg-card px-3 py-2 flex items-center gap-1.5 overflow-x-auto">
-        {/* Merge button */}
-        {task.column === 'review' && task.associatedPR && onApproveReview && (
-          <MergeButton
-            prNumber={task.associatedPR.number}
-            prTitle={task.associatedPR.title}
-            branchName={task.associatedPR.head.ref}
-            isMerging={externalIsMerging ?? false}
-            onMerge={() => onApproveReview(task)}
-          />
-        )}
-
         {/* Primary action */}
         {primaryAction && (
           <Button
@@ -1366,29 +1559,29 @@ export function TaskDetail({
             PR #{task.associatedPR.number}
           </a>
         )}
-        {task.previewUrl && (
-          <SimpleTooltip
-            content={
-              <div className="space-y-1">
-                <p className="text-xs font-semibold">🔗 Preview Available</p>
-                <p className="text-xs text-muted-foreground">
-                  Click to open the deployed preview in a new tab
-                </p>
-              </div>
-            }
-            side="bottom"
+        {task.associatedPR && onOpenPreview && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onOpenPreview()
+            }}
+            className="h-9 inline-flex items-center gap-1.5 px-3 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors shrink-0 cursor-pointer"
           >
-            <a
-              href={task.previewUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="h-9 inline-flex items-center gap-1.5 px-3 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors shrink-0"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              Preview
-            </a>
-          </SimpleTooltip>
+            <Eye className="w-3.5 h-3.5" />
+            Preview
+          </button>
+        )}
+        {task.previewUrl && (
+          <a
+            href={task.previewUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="h-9 inline-flex items-center gap-1.5 px-3 rounded-full text-xs font-medium bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shrink-0"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            Deploy
+          </a>
         )}
 
         {/* Spacer */}

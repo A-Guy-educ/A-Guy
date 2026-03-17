@@ -9,88 +9,23 @@ import * as fs from 'fs'
 import * as path from 'path'
 
 import type { CodyInput } from './cody-utils'
-import { stageOutputFile, getSpecStagesForProfile, getAllImplStageNames } from './pipeline-utils'
+import {
+  getStageContextFiles,
+  stageOutputFile,
+  isValidStageName,
+  SPEC_ORDER_STANDARD,
+  SPEC_ORDER_LIGHTWEIGHT,
+  flattenTypedPipeline,
+  IMPL_ORDER_STANDARD,
+  IMPL_ORDER_LIGHTWEIGHT,
+} from './stages/registry'
 
-// ============================================================================
-// Constants
-// ============================================================================
-
-/**
- * Spec-only stages that don't produce code (skip hooks, as they auto-commit but shouldn't be enforced)
- */
-export const SPEC_STAGES = ['taskify', 'spec', 'gap', 'clarify'] as const
-
-export type SpecStage = (typeof SPEC_STAGES)[number]
-
-/**
- * All valid stage names in the pipeline.
- * Note: 'test' was removed — tests are now written by build agent via @test-writer subagent (TDD)
- */
-export const ALL_STAGES = [
-  'taskify',
-  'spec',
-  'gap',
-  'clarify',
-  'architect',
-  'plan-gap',
-  'build',
-  'commit',
-  'review',
-  'fix',
-  'commit-fix',
-  'verify',
-  'autofix',
-  'pr',
-] as const
-
-export type Stage = (typeof ALL_STAGES)[number]
-
-/**
- * Scripted stages that run directly without an LLM agent.
- * Their prompts in stageInstructions are unused but kept for documentation.
- */
-export const SCRIPTED_STAGES = ['verify', 'commit', 'commit-fix', 'pr'] as const
+// Re-export for backward compatibility
+export { SPEC_STAGES, SCRIPTED_STAGES } from './stages/registry'
 
 // ============================================================================
 // Stage Context — which files each stage needs to read
 // ============================================================================
-
-/**
- * Maps each stage to the task files it needs. Agents read these individual
- * files instead of a monolithic .context.md.
- *
- * Design principle: each agent gets ONLY what it needs.
- * Behavioral instructions live in .opencode/agents/<stage>.md (system prompt).
- * This file provides only runtime context (task ID, file paths).
- *
- * Note: Some files may not exist (e.g., rerun-feedback.md on first runs).
- * The agent should gracefully handle missing optional files.
- */
-export const STAGE_CONTEXT_FILES: Record<Stage, string[]> = {
-  taskify: ['task.md'],
-  spec: ['task.md', 'task.json'],
-  gap: ['spec.md', 'task.json'],
-  clarify: ['task.md', 'spec.md'],
-  architect: ['spec.md', 'clarified.md', 'rerun-feedback.md'],
-  'plan-gap': ['spec.md', 'plan.md', 'task.json'],
-  build: ['spec.md', 'clarified.md', 'plan.md', 'plan-gap.md', 'rerun-feedback.md'],
-  commit: ['task.json'],
-  review: ['review.md', 'build.md', 'plan.md', 'spec.md', 'clarified.md'],
-  fix: [
-    'verify-failures.md',
-    'review.md',
-    'rerun-feedback.md',
-    'fix-summary.md',
-    'build.md',
-    'plan.md',
-    'spec.md',
-    'clarified.md',
-  ],
-  'commit-fix': ['fix-summary.md', 'verify-failures.md'],
-  verify: [], // scripted — no LLM prompt needed
-  autofix: ['verify.md', 'build-errors.md'],
-  pr: [], // scripted — no LLM prompt needed
-}
 
 // ============================================================================
 // Stage Instructions — runtime context ONLY (not behavioral)
@@ -105,13 +40,8 @@ export const STAGE_CONTEXT_FILES: Record<Stage, string[]> = {
 const specOnlyInstructionTemplate = (taskDir: string) =>
   `CRITICAL: This is a SPEC-ONLY pipeline. DO NOT create branches, commits, or pull requests. DO NOT modify any code files. Only read from and write to the ${taskDir}/ directory.`
 
-export const stageInstructions: Record<Stage, (taskId: string) => string> = {
+export const stageInstructions: Record<string, (taskId: string) => string> = {
   taskify: (taskId) => {
-    const taskDir = path.join(process.cwd(), '.tasks', taskId)
-    return specOnlyInstructionTemplate(taskDir)
-  },
-
-  spec: (taskId) => {
     const taskDir = path.join(process.cwd(), '.tasks', taskId)
     return specOnlyInstructionTemplate(taskDir)
   },
@@ -130,6 +60,11 @@ export const stageInstructions: Record<Stage, (taskId: string) => string> = {
 
   'plan-gap': () => ``,
 
+  test: () => `DEFERRED TEST STAGE: Write comprehensive tests for the implemented code.
+Read the actual source files in src/ to understand what was built.
+Write tests to tests/ that validate the implementation against spec.md.
+Run tests with pnpm test:unit to verify they pass. Fix any failures before completing.`,
+
   build: () => `CRITICAL: IMPLEMENTATION STAGE - NOT DOCUMENTATION
 
 You must ACTUALLY IMPLEMENT the code changes, not just document them.
@@ -145,17 +80,16 @@ DO NOT just write build.md - that will fail the pipeline! The pipeline validates
 
   commit: () => ``,
 
-  review: () => `CRITICAL: CODE REVIEW STAGE
+  review: () => `CRITICAL: CODE REVIEW + SPEC SATISFACTION STAGE
 
-You are reviewing already-generated code. DO NOT modify code files.
-Your job is to analyze and produce a review.md with findings.
+You are reviewing already-generated code AND verifying spec satisfaction. DO NOT modify code files.
 
-Read the generated source files and identify issues by severity:
-- Critical: Security vulnerabilities, data loss risks, runtime crashes
-- Major: TypeScript type errors, missing functionality, logic errors
-- Minor: Code style, missing error handling, performance concerns
+Your #1 job is the GOAL-BACKWARD SPEC CHECK: for every requirement in spec.md, verify there is matching code.
+Your #2 job is standard code review (security, correctness, quality).
+NOTE: Tests are written separately via the deferred-tests inspector plugin. Do NOT flag missing tests as issues.
 
-Write review.md with your findings including file:line references.`,
+Produce review.md with a Spec Satisfaction matrix (requirement → code location → status) FIRST, then code quality findings.
+If ANY spec requirement has no corresponding code: mark as Critical issue.`,
 
   fix: () => `CRITICAL: TARGETED FIX STAGE
 
@@ -164,13 +98,19 @@ DO NOT regenerate entire codebase.
 DO NOT refactor or rewrite working code.
 Only fix the specific issues identified in verify-failures.md, review.md, or rerun-feedback.md.
 
-Write fix-summary.md summarizing what you changed.`,
+For fix_bug tasks: follow the SCIENTIFIC DEBUG PROTOCOL in your agent instructions.
+Hypothesis first, reproduction test second, minimal fix third.
 
-  'commit-fix': () => ``,
+Write fix-summary.md summarizing what you changed.`,
 
   // Scripted stages — these prompts are never sent to an LLM
   verify: () => ``,
   autofix: () => ``,
+  docs: () => `DOCUMENTATION STAGE
+
+You are updating project documentation based on task changes.
+DO NOT modify source code files — only documentation files (.md, .json indexes).
+Write docs.md as your output summarizing documentation changes.`,
   pr: () => ``,
 }
 
@@ -213,14 +153,22 @@ export function buildStagePrompt(input: CodyInput, stage: string, feedback?: str
   // Get task_type for stages that need it (architect, build)
   const taskType = getTaskType(taskId)
 
-  const instructionFn = stageInstructions[stage as Stage]
+  const instructionFn = stageInstructions[stage]
   const instruction = instructionFn ? instructionFn(taskId) : ''
 
   // Build file list for this stage
-  const contextFiles = STAGE_CONTEXT_FILES[stage as Stage] || []
+  const contextFiles = isValidStageName(stage) ? getStageContextFiles(stage) : []
   const fileList = contextFiles.map((f) => `- ${taskDir}/${f}`).join('\n')
 
-  const filesSection = contextFiles.length > 0 ? `\nRead these files for context:\n${fileList}` : ''
+  // For architect stage, also include the cross-task knowledge base
+  const knowledgePath = path.join(process.cwd(), '.ai-docs', 'knowledge', 'index.json')
+  const knowledgeSection =
+    stage === 'architect' && fs.existsSync(knowledgePath) ? `\n- ${knowledgePath}` : ''
+
+  const filesSection =
+    contextFiles.length > 0 || knowledgeSection
+      ? `\nRead these files for context:\n${fileList}${knowledgeSection}`
+      : ''
 
   // Add task_type for stages that need it (architect, build)
   const taskTypeSection =
@@ -246,11 +194,13 @@ export function buildStagePrompt(input: CodyInput, stage: string, feedback?: str
 }
 
 /**
- * Get spec pipeline stages (taskify, spec, clarify)
+ * Get spec pipeline stages (taskify, gap — without clarify by default)
  * @param profile - Optional pipeline profile ('lightweight' | 'standard'), defaults to 'standard'
  */
 export function getSpecStages(profile?: 'lightweight' | 'standard'): string[] {
-  return getSpecStagesForProfile(profile ?? 'standard', false)
+  const order = profile === 'lightweight' ? SPEC_ORDER_LIGHTWEIGHT : SPEC_ORDER_STANDARD
+  // Default: exclude clarify (backward compat with old getSpecStagesForProfile(profile, false))
+  return order.filter((s) => s !== 'clarify')
 }
 
 /**
@@ -258,5 +208,7 @@ export function getSpecStages(profile?: 'lightweight' | 'standard'): string[] {
  * @param profile - Optional pipeline profile ('lightweight' | 'standard'), defaults to 'standard'
  */
 export function getImplStages(profile?: 'lightweight' | 'standard'): string[] {
-  return getAllImplStageNames(profile ?? 'standard')
+  return flattenTypedPipeline(
+    profile === 'lightweight' ? IMPL_ORDER_LIGHTWEIGHT : IMPL_ORDER_STANDARD,
+  )
 }

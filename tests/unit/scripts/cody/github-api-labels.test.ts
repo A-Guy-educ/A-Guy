@@ -145,18 +145,8 @@ describe('setClassificationLabels', () => {
     expect(labels).toContain('domain:data')
   })
 
-  it('should map complexity 25 to complexity:simple', () => {
+  it('should map complexity 25 to complexity:moderate (tier boundary: 20-34)', () => {
     setClassificationLabels(123, { complexity: 25 })
-
-    const callArgs = vi.mocked(childProcess.execFileSync).mock.calls[0]?.[1] as string[]
-    const addIndex = callArgs.indexOf('--add-label')
-    const labels = callArgs[addIndex + 1]
-
-    expect(labels).toContain('complexity:simple')
-  })
-
-  it('should map complexity 50 to complexity:moderate', () => {
-    setClassificationLabels(123, { complexity: 50 })
 
     const callArgs = vi.mocked(childProcess.execFileSync).mock.calls[0]?.[1] as string[]
     const addIndex = callArgs.indexOf('--add-label')
@@ -165,8 +155,59 @@ describe('setClassificationLabels', () => {
     expect(labels).toContain('complexity:moderate')
   })
 
+  it('should map complexity 50 to complexity:complex (tier boundary: >= 35)', () => {
+    setClassificationLabels(123, { complexity: 50 })
+
+    const callArgs = vi.mocked(childProcess.execFileSync).mock.calls[0]?.[1] as string[]
+    const addIndex = callArgs.indexOf('--add-label')
+    const labels = callArgs[addIndex + 1]
+
+    expect(labels).toContain('complexity:complex')
+  })
+
   it('should map complexity 80 to complexity:complex', () => {
     setClassificationLabels(123, { complexity: 80 })
+
+    const callArgs = vi.mocked(childProcess.execFileSync).mock.calls[0]?.[1] as string[]
+    const addIndex = callArgs.indexOf('--add-label')
+    const labels = callArgs[addIndex + 1]
+
+    expect(labels).toContain('complexity:complex')
+  })
+
+  // Boundary tests aligned with getComplexityTier() from pipeline-utils.ts
+  it('should map complexity 19 to complexity:simple (boundary: < 20)', () => {
+    setClassificationLabels(123, { complexity: 19 })
+
+    const callArgs = vi.mocked(childProcess.execFileSync).mock.calls[0]?.[1] as string[]
+    const addIndex = callArgs.indexOf('--add-label')
+    const labels = callArgs[addIndex + 1]
+
+    expect(labels).toContain('complexity:simple')
+  })
+
+  it('should map complexity 20 to complexity:moderate (boundary: >= 20)', () => {
+    setClassificationLabels(123, { complexity: 20 })
+
+    const callArgs = vi.mocked(childProcess.execFileSync).mock.calls[0]?.[1] as string[]
+    const addIndex = callArgs.indexOf('--add-label')
+    const labels = callArgs[addIndex + 1]
+
+    expect(labels).toContain('complexity:moderate')
+  })
+
+  it('should map complexity 34 to complexity:moderate (boundary: < 35)', () => {
+    setClassificationLabels(123, { complexity: 34 })
+
+    const callArgs = vi.mocked(childProcess.execFileSync).mock.calls[0]?.[1] as string[]
+    const addIndex = callArgs.indexOf('--add-label')
+    const labels = callArgs[addIndex + 1]
+
+    expect(labels).toContain('complexity:moderate')
+  })
+
+  it('should map complexity 35 to complexity:complex (boundary: >= 35)', () => {
+    setClassificationLabels(123, { complexity: 35 })
 
     const callArgs = vi.mocked(childProcess.execFileSync).mock.calls[0]?.[1] as string[]
     const addIndex = callArgs.indexOf('--add-label')
@@ -189,7 +230,7 @@ describe('setClassificationLabels', () => {
 
     expect(labels).toContain('type:bug')
     expect(labels).toContain('risk:high')
-    expect(labels).toContain('complexity:simple')
+    expect(labels).toContain('complexity:moderate')
     expect(labels).toContain('domain:backend')
   })
 

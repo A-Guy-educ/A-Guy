@@ -60,6 +60,13 @@ export async function fetchStudyData({
           { chapter: { in: chapterIds } },
           { status: { equals: 'published' } },
           { isActive: { equals: true } },
+          // Exclude "Soon" content that is not visible to students
+          {
+            or: [
+              { contentStatus: { not_equals: 'soon' } },
+              { contentStatusVisible: { equals: true } },
+            ],
+          },
         ],
       },
       sort: 'order',

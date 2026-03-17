@@ -61,14 +61,24 @@ export interface InspectorContext {
   runTimestamp: string
   cycleNumber: number
   slack?: SlackClient
-  /** Issue number for posting digest reports. Parsed from WATCHDOG_ISSUE env var. */
-  watchdogIssue?: number
+  /** Issue number for posting digest reports. Parsed from INSPECTOR_DIGEST_ISSUE env var. */
+  digestIssue?: number
 }
 
 export interface StateStore {
   get<T>(key: string): T | undefined
   set<T>(key: string, value: T): void
   save(): void
+}
+
+export interface WorkflowRun {
+  id: number
+  status: string
+  conclusion: string | null
+  createdAt: string
+  updatedAt: string
+  headBranch: string
+  event: string
 }
 
 export interface GitHubClient {
@@ -81,6 +91,15 @@ export interface GitHubClient {
   setLifecycleLabel(issueNumber: number, label: string): void
   closeIssue(issueNumber: number, reason?: string): void
   getIssueComments(issueNumber: number): IssueComment[]
+  /** List completed workflow runs for the given workflow file */
+  listWorkflowRuns(
+    workflow: string,
+    opts?: { per_page?: number; status?: string; branch?: string },
+  ): WorkflowRun[]
+  /** Create a new GitHub issue and return its number, or null on failure */
+  createIssue(title: string, body: string, labels: string[]): number | null
+  /** Search issues by query string — returns matching issue stubs */
+  searchIssues(query: string): IssueInfo[]
 }
 
 export interface IssueInfo {
@@ -135,7 +154,7 @@ export interface InspectorConfig {
   stateFile: string
   plugins: InspectorPlugin[]
   /** Issue number for posting digest reports */
-  watchdogIssue?: number
+  digestIssue?: number
 }
 
 export interface InspectorResult {

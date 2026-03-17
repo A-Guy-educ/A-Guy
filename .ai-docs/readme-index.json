@@ -270,12 +270,13 @@
         "Pipeline Modes",
         "Two-Phase Execution (Full Mode)",
         "Profiles",
+        "Stage Registry",
         "Stage Architecture",
         "Post-Action System",
         "Gate System",
         "Rerun & Recovery",
         "Complexity-Based Stage Routing",
-        "Quality Gates (gsd-execute post-action)",
+        "Quality Gates (build post-action)",
         "File Map",
         "Task Files",
         "State Machine",
@@ -288,7 +289,7 @@
       ],
       "relativeUrl": "scripts/cody/README.md",
       "category": "scripts",
-      "wordCount": 2129
+      "wordCount": 2226
     },
     {
       "path": "scripts/README.md",
@@ -306,6 +307,36 @@
       "relativeUrl": "scripts/README.md",
       "category": "scripts",
       "wordCount": 575
+    },
+    {
+      "path": "scripts/remote-agent/README.md",
+      "title": "Remote Dev Agent",
+      "sections": [
+        "Architecture",
+        "Setup",
+        "npm Scripts",
+        "Endpoints",
+        "Security",
+        "Environment Variables (Remote Mac)"
+      ],
+      "relativeUrl": "scripts/remote-agent/README.md",
+      "category": "scripts",
+      "wordCount": 350
+    },
+    {
+      "path": "docs/self-growing-pipeline/README.md",
+      "title": "Self-Growing Pipeline",
+      "sections": [
+        "Architecture",
+        "Current Implementation",
+        "Files",
+        "Future: Self-Creating Subagents",
+        "Future: Dynamic MCP Integration",
+        "Metrics & Monitoring"
+      ],
+      "relativeUrl": "self-growing-pipeline/README.md",
+      "category": "self-growing-pipeline",
+      "wordCount": 838
     },
     {
       "path": "src/app/README.md",
@@ -549,8 +580,8 @@
     }
   ],
   "metadata": {
-    "generatedAt": "2026-03-12T14:16:41.746Z",
-    "totalReadmes": 32,
+    "generatedAt": "2026-03-15T22:20:39.822Z",
+    "totalReadmes": 34,
     "categories": {
       ".claude": 1,
       "root": 1,
@@ -565,8 +596,9 @@
       "exercise-import": 1,
       "exercises": 1,
       "features": 1,
+      "self-growing-pipeline": 1,
       "eslint-plugin-aguy": 1,
-      "scripts": 3,
+      "scripts": 4,
       "src/app": 1,
       "src/client": 1,
       "src/infra": 3,

@@ -153,6 +153,20 @@ export function useNotebookChat({
     })
   }, [messages, scrollToBottom])
 
+  // Scroll to bottom after history finishes loading
+  // This is necessary because the messages effect above fires when messages state changes,
+  // but at that point isLoadingHistory is still true so messages aren't in the DOM yet.
+  // When isLoadingHistory becomes false and messages render, we need to scroll again.
+  useEffect(() => {
+    if (!isLoadingHistory && messages.length > 1) {
+      // Only scroll if we have loaded messages (more than just welcome message)
+      requestAnimationFrame(() => {
+        scrollToBottom()
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoadingHistory])
+
   // Load existing conversation history on mount
   useEffect(() => {
     async function loadConversationHistory() {

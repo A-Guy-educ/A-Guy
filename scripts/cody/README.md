@@ -15,7 +15,7 @@ Cody is a 3-layer system:
 ├──────────────────────────────────────────────────────────────────┤
 │  2. ENGINE LAYER — State machine (scripts/cody/)                 │
 │     Entry: entry.ts → state-machine.ts loop                      │
-│     Stages: taskify → spec → gap → gsd-plan → gsd-execute → pr  │
+│     Stages: taskify → gap → architect → build → pr              │
 │     Output: code changes, PRs, status.json                       │
 ├──────────────────────────────────────────────────────────────────┤
 │  3. DASHBOARD LAYER — Next.js UI (src/ui/cody/, src/app/api/cody)│
@@ -41,7 +41,7 @@ cody.yml orchestrate job:
 state-machine.ts loop:
   for each stage in pipeline order:
     1. shouldSkip? → skip if conditions met
-    2. preExecute? → e.g., ensureFeatureBranch for gsd-execute
+    2. preExecute? → e.g., ensureFeatureBranch for build
     3. handler.execute() → runs agent (LLM) or script
     4. postActions → validate, commit, check gates
     5. writeState() → persist to .tasks/<id>/status.json
@@ -62,17 +62,21 @@ Output:
 
 ## Pipeline Modes
 
-| Mode    | Stages                                                                      |
-| ------- | --------------------------------------------------------------------------- |
-| `spec`  | taskify → spec → gap → clarify                                              |
-| `impl`  | gsd-research → gsd-plan → gsd-execute → commit → review → fix → verify → pr |
-| `full`  | spec + impl (two-phase, with pipeline rebuild after taskify)                |
-| `rerun` | Resume from last failure/pause point                                        |
-| `fix`   | review → fix → commit-fix → verify → pr (targeted fix mode)                 |
+| Mode    | Stages                                                             |
+| ------- | ------------------------------------------------------------------ |
+| `spec`  | taskify → gap → clarify                                            |
+| `impl`  | architect → plan-gap → build → commit → review → fix → verify → pr |
+| `full`  | spec + impl (two-phase, with pipeline rebuild after taskify)       |
+| `rerun` | Resume from last failure/pause point                               |
+| `fix`   | review → fix → commit → verify → pr (targeted fix mode)            |
+
+> **Note**: `docs` stage is deferred to the inspector (`cody-deferred-stages` plugin) for tasks with complexity ≥ 30.
+> After a task's PR is merged, the inspector triggers it via `cody.yml rerun --from=docs`.
+> The `reflect` stage has been removed — its functionality is subsumed by the Knowledge Gardener nightly inspector plugin.
 
 ## Two-Phase Execution (Full Mode)
 
-1. **Phase 1**: Spec stages run (taskify → spec → gap)
+1. **Phase 1**: Spec stages run (taskify → gap)
 2. **After taskify**: `resolve-profile` post-action sets `ctx.pipelineNeedsRebuild = true`
 3. **Rebuild**: `rebuildPipelineAfterTaskify()` returns full pipeline with BOTH completed + pending stages
 4. **Phase 2**: Engine skips completed spec stages, continues with impl stages
@@ -81,13 +85,28 @@ Output:
 
 ## Profiles
 
-- `standard`: Full pipeline (includes spec, gap, gsd-research)
-- `lightweight`: Skips spec, gap, gsd-research (for simple bug fixes, refactors)
+- `standard`: Full pipeline (includes gap, plan-gap)
+- `lightweight`: Skips gap, plan-gap (for simple bug fixes, refactors)
 
 Profile resolved in `resolve-profile` post-action based on:
 
 - Explicit `pipeline_profile` in task.json
 - Task type + risk level (fix_bug/refactor/ops + low risk → lightweight)
+
+## Stage Registry
+
+All stage metadata lives in a single source of truth: `stages/registry.ts`.
+
+```typescript
+// stages/registry.ts
+STAGE_NAMES // canonical list of valid stage names (as const tuple)
+StageName // type: 'taskify' | 'gap' | 'clarify' | ... | 'pr'
+STAGE_REGISTRY // Record<StageName, StageMetadata> — compile-time complete
+```
+
+Adding/removing a stage from `STAGE_NAMES` without updating `STAGE_REGISTRY` is a compile error.
+
+The registry exports typed pipeline order arrays (`SPEC_ORDER_STANDARD`, `IMPL_ORDER_STANDARD`, etc.) and helper functions (`getStageTimeout()`, `getStageComplexityThreshold()`, `isValidStageName()`).
 
 ## Stage Architecture
 
@@ -102,21 +121,20 @@ Profile resolved in `resolve-profile` post-action based on:
 
 ### Stage Inputs/Outputs
 
-| Stage        | Type     | Input             | Output       | Post-Actions                                                        |
-| ------------ | -------- | ----------------- | ------------ | ------------------------------------------------------------------- |
-| taskify      | agent    | issue body        | task.json    | validate-task-json, set-labels, check-gate, commit, resolve-profile |
-| spec         | agent    | task.json         | spec.md      | —                                                                   |
-| gap          | agent    | spec.md           | gap.md       | —                                                                   |
-| clarify      | agent    | spec.md           | clarified.md | —                                                                   |
-| gsd-research | agent    | spec+gap          | research.md  | —                                                                   |
-| gsd-plan     | agent    | research+spec+gap | plan.md      | archive-rerun-feedback, check-gate                                  |
-| gsd-execute  | agent    | plan.md           | code changes | validate-src, validate-build, commit, quality-autofix               |
-| commit       | git      | staged files      | commit hash  | —                                                                   |
-| review       | agent    | code diff         | review.md    | analyze-review-findings, commit                                     |
-| fix          | agent    | review.md         | code fixes   | commit, clear-verify-failures                                       |
-| commit-fix   | git      | fix changes       | commit hash  | —                                                                   |
-| verify       | scripted | code              | test results | commit (local only)                                                 |
-| pr           | git      | all               | PR URL       | —                                                                   |
+| Stage     | Type     | Input              | Output       | Post-Actions                                                        |
+| --------- | -------- | ------------------ | ------------ | ------------------------------------------------------------------- |
+| taskify   | agent    | issue body         | task.json    | validate-task-json, set-labels, check-gate, commit, resolve-profile |
+| gap       | agent    | spec.md            | gap.md       | —                                                                   |
+| clarify   | agent    | spec.md            | clarified.md | —                                                                   |
+| architect | agent    | spec+gap+clarified | plan.md      | archive-rerun-feedback, check-gate                                  |
+| plan-gap  | agent    | plan.md+spec+gap   | plan-gap.md  | validate-plan-exists                                                |
+| build     | agent    | plan.md            | code changes | validate-src, validate-build, commit, quality-autofix               |
+| commit    | git      | staged files       | commit hash  | —                                                                   |
+| review    | agent    | code diff          | review.md    | analyze-review-findings, commit                                     |
+| fix       | agent    | review.md          | code fixes   | commit, clear-verify-failures                                       |
+| commit    | git      | fix changes        | commit hash  | —                                                                   |
+| verify    | scripted | code               | test results | commit (local only)                                                 |
+| pr        | git      | all                | PR URL       | —                                                                   |
 
 ### Stage Execution Flow (per stage)
 
@@ -142,19 +160,19 @@ shouldSkip(ctx)?
 
 Post-actions run after a stage completes. Defined per-stage in `definitions.ts`.
 
-| Action                      | Purpose                                                      |
-| --------------------------- | ------------------------------------------------------------ |
-| `validate-task-json`        | Parse task.json, delete if invalid so retry recreates it     |
-| `set-classification-labels` | Set risk:_, type:_, complexity:_, domain:_ labels on issue   |
-| `resolve-profile`           | Determine standard/lightweight profile, trigger rebuild      |
-| `check-gate`                | Post gate comment, pause if awaiting approval                |
-| `commit-task-files`         | Commit + push task files or tracked files to remote          |
-| `archive-rerun-feedback`    | Move rerun-feedback.md to archive after gsd-plan consumes it |
-| `validate-src-changes`      | Ensure build agent actually modified source files            |
-| `validate-build-content`    | Validate build output quality                                |
-| `run-quality-with-autofix`  | Run tsc + tests, retry with autofix agent if they fail       |
-| `analyze-review-findings`   | Parse review.md to determine if fix stage is needed          |
-| `clear-verify-failures`     | Remove verify-failures.md for clean retry                    |
+| Action                      | Purpose                                                       |
+| --------------------------- | ------------------------------------------------------------- |
+| `validate-task-json`        | Parse task.json, delete if invalid so retry recreates it      |
+| `set-classification-labels` | Set risk:_, type:_, complexity:_, domain:_ labels on issue    |
+| `resolve-profile`           | Determine standard/lightweight profile, trigger rebuild       |
+| `check-gate`                | Post gate comment, pause if awaiting approval                 |
+| `commit-task-files`         | Commit + push task files or tracked files to remote           |
+| `archive-rerun-feedback`    | Move rerun-feedback.md to archive after architect consumes it |
+| `validate-src-changes`      | Ensure build agent actually modified source files             |
+| `validate-build-content`    | Validate build output quality                                 |
+| `run-quality-with-autofix`  | Run tsc + tests, retry with autofix agent if they fail        |
+| `analyze-review-findings`   | Parse review.md to determine if fix stage is needed           |
+| `clear-verify-failures`     | Remove verify-failures.md for clean retry                     |
 
 ## Gate System
 
@@ -169,11 +187,11 @@ Gates pause the pipeline for human approval:
 
 ### Control Modes
 
-| Mode         | Behavior                               |
-| ------------ | -------------------------------------- |
-| `auto`       | Skip gates, run to completion          |
-| `supervised` | Gate only on medium/high risk          |
-| `gated`      | Always gate after taskify and gsd-plan |
+| Mode         | Behavior                                |
+| ------------ | --------------------------------------- |
+| `auto`       | Skip gates, run to completion           |
+| `supervised` | Gate only on medium/high risk           |
+| `gated`      | Always gate after taskify and architect |
 
 Control mode resolved dynamically per gate via `resolveControlMode(taskDef, inputControlMode)`.
 
@@ -182,11 +200,11 @@ Control mode resolved dynamically per gate via `resolveControlMode(taskDef, inpu
 ### Rerun from failure
 
 ```
-@cody rerun <task-id> --from gsd-execute
+@cody rerun <task-id> --from build
 ```
 
-1. `resolveRerunFromStage()` resolves stage aliases (`build` → `gsd-execute`)
-2. If feedback is provided and fromStage is after gsd-plan, backs up to gsd-plan
+1. `resolveRerunFromStage()` resolves the fromStage name
+2. If feedback is provided and fromStage is after architect, backs up to architect
 3. All stages before fromStage stay completed, fromStage resets to pending
 4. Pipeline resumes from that point
 
@@ -200,29 +218,25 @@ Control mode resolved dynamically per gate via `resolveControlMode(taskDef, inpu
 2. The approved stage itself is NOT reset (would overwrite the approval)
 3. Pipeline continues from the next stage
 
-### Stage aliases (backward compatibility)
+### Stage names
 
-| Old Name    | New Name      |
-| ----------- | ------------- |
-| `architect` | `gsd-plan`    |
-| `plan-gap`  | `gsd-plan`    |
-| `build`     | `gsd-execute` |
+The current pipeline uses `architect`, `plan-gap`, and `build` directly. No stage aliases are needed.
 
 ## Complexity-Based Stage Routing
 
 The taskify agent assigns a complexity score (1-100). Stages have minimum complexity thresholds:
 
-| Complexity | Tier         | Stages that run                      |
-| ---------- | ------------ | ------------------------------------ |
-| 1-9        | trivial      | gsd-plan → gsd-execute → commit → pr |
-| 10-19      | simple       | gsd-plan → gsd-execute → commit → pr |
-| 20-34      | moderate     | + spec, gap, review                  |
-| 35-49      | complex      | + gsd-research, clarify              |
-| 50+        | very complex | All stages + quality model profile   |
+| Complexity | Tier         | Stages that run                    |
+| ---------- | ------------ | ---------------------------------- |
+| 1-9        | trivial      | architect → build → commit → pr    |
+| 10-19      | simple       | architect → build → commit → pr    |
+| 20-34      | moderate     | + gap, plan-gap, review            |
+| 35-49      | complex      | + clarify                          |
+| 50+        | very complex | All stages + quality model profile |
 
-## Quality Gates (gsd-execute post-action)
+## Quality Gates (build post-action)
 
-After gsd-execute commits code, `run-quality-with-autofix` runs:
+After build commits code, `run-quality-with-autofix` runs:
 
 1. TypeScript check (`pnpm -s tsc --noEmit`)
 2. Unit tests (`pnpm -s test:unit`)
@@ -268,7 +282,6 @@ If either fails:
 | `agent-runner.ts`   | runAgentWithFileWatch(), spawns opencode, monitors output    |
 | `runner-backend.ts` | Pluggable backends: GitHubRunner (CI) vs LocalRunner (ocode) |
 | `stage-prompts.ts`  | SPEC_STAGES prompt definitions for each agent stage          |
-| `gsd-bridge.ts`     | Maps complexity score to GSD workflow config                 |
 
 ### Git & GitHub
 
@@ -312,14 +325,15 @@ Generated in `.tasks/<task-id>/`:
 | `spec.md`            | After spec         | Generated specification             |
 | `gap.md`             | After gap          | Gap analysis                        |
 | `clarified.md`       | After clarify      | Clarified requirements              |
-| `plan.md`            | After gsd-plan     | Implementation plan                 |
-| `gsd-execute.md`     | After gsd-execute  | Build output log                    |
+| `plan.md`            | After architect    | Implementation plan                 |
+| `plan-gap.md`        | After plan-gap     | Plan gap analysis                   |
+| `build.md`           | After build        | Build output log                    |
 | `review.md`          | After review       | Code review findings                |
 | `commit.md`          | After commit       | Commit details                      |
 | `status.json`        | Throughout         | Pipeline state (V2 format)          |
 | `chat.json`          | After agent stages | Trimmed chat history                |
 | `gate-taskify.md`    | At taskify gate    | Gate pause marker                   |
-| `gate-architect.md`  | At gsd-plan gate   | Gate pause marker                   |
+| `gate-architect.md`  | At architect gate  | Gate pause marker                   |
 | `rerun-feedback.md`  | On rerun           | Operator feedback for plan revision |
 | `verify-failures.md` | On verify failure  | Formatted test/lint failures        |
 
@@ -478,10 +492,10 @@ cat .tasks/<task-id>/status.json | jq '.stages | to_entries[] | select(.value.st
 cat .tasks/<task-id>/task.json | jq '{task_type, risk_level, complexity, pipeline_profile}'
 
 # Resume from specific stage
-@cody rerun <task-id> --from gsd-execute
+@cody rerun <task-id> --from build
 
 # Resume with feedback
-@cody rerun <task-id> --from gsd-plan --feedback "Use the existing Button component"
+@cody rerun <task-id> --from architect --feedback "Use the existing Button component"
 
 # Check git log for task
 git log --oneline .tasks/<task-id>/
@@ -492,23 +506,26 @@ gh run view <run-id> --log
 
 ## Add New Stage
 
-1. Add to `SPEC_ORDER_*` or `IMPL_ORDER_*` in `pipeline/definitions.ts`
-2. Define stage in `createStageDefinitions()`:
+1. Add stage name to `STAGE_NAMES` in `stages/registry.ts`
+2. Add metadata entry in `STAGE_REGISTRY` (output file, timeout, complexity threshold, context files, type)
+3. Add to `SPEC_ORDER_*` or `IMPL_ORDER_*` pipeline order arrays in `stages/registry.ts`
+4. Define stage in `createStageDefinitions()` in `pipeline/definitions.ts`:
    ```typescript
    stages.set('newStage', {
      name: 'newStage',
      type: 'agent',
-     timeout: STAGE_TIMEOUTS.newStage ?? DEFAULT_TIMEOUT,
+     timeout: getStageTimeout('newStage'),
      maxRetries: 1,
-     minComplexity: STAGE_COMPLEXITY_THRESHOLDS.newStage,
+     minComplexity: getStageComplexityThreshold('newStage'),
      shouldSkip: (ctx) => skipIfBelowComplexity(ctx, 'newStage'),
      postActions: [...],
      validator: createNewStageValidator(ctx),
    })
    ```
-3. Add agent prompt in `.opencode/agents/newStage.md`
-4. Add handler in `handlers/` if custom (otherwise uses type-based default)
-5. Add complexity threshold in `pipeline-utils.ts` `STAGE_COMPLEXITY_THRESHOLDS`
+5. Add agent prompt in `.opencode/agents/newStage.md`
+6. Add handler in `handlers/` if custom (otherwise uses type-based default)
+
+> **Note**: Missing the stage in `STAGE_NAMES` or `STAGE_REGISTRY` causes a compile error — the `Record<StageName, StageMetadata>` type ensures completeness.
 
 ## Key Types
 
@@ -525,7 +542,7 @@ PipelineContext {
 }
 
 StageDefinition {
-  name: string
+  name: StageName  // type-safe — see stages/registry.ts
   type: 'agent' | 'scripted' | 'git' | 'gate'
   timeout: number
   maxRetries: number

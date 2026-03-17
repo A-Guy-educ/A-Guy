@@ -1,0 +1,30 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "medium",
+  "confidence": 0.8,
+  "primary_domain": "frontend",
+  "scope": [
+    "PDF/document viewer component",
+    "Desktop Chrome rendering"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "There is a component that renders PDFs/documents in lessons",
+    "The issue might be related to CSS media queries or device-specific logic",
+    "The component might use iframe, object tag, or PDF.js library"
+  ],
+  "review_questions": [
+    "What component renders the PDF/document in lessons?",
+    "Is there any device-specific or browser-specific logic in the component?",
+    "What PDF viewing library or method is being used?"
+  ],
+  "complexity": 21,
+  "complexity_reasoning": "Scope: 6 (2-3 files in same module for PDF viewer). Risk: 8 (UI display bug, non-critical). Novelty: 3 (bug fix following existing pattern). Cross-domain: 2 (single frontend). Ambiguity: 2 (clear reproduction steps). Dependencies: 2 (self-contained component). Total: 21",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Input contains clear bug report with 7 structured sections (Title, Environment, Preconditions, Steps to Reproduce, Expected Result, Actual Result, Reproducibility). The issue is well-documented with specific browser/device information."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

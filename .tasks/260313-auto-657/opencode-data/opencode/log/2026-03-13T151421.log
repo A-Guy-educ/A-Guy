@@ -1,0 +1,26 @@
+INFO  2026-03-13T15:14:21 +638ms service=default version=1.2.25 args=["export","ses_3183ef6f8ffeO0G0x2vi0SFJaS"] opencode
+INFO  2026-03-13T15:14:21 +1ms service=default directory=/Users/bot/actions-work/A-Guy/A-Guy creating instance
+INFO  2026-03-13T15:14:21 +0ms service=project directory=/Users/bot/actions-work/A-Guy/A-Guy fromDirectory
+INFO  2026-03-13T15:14:21 +69ms service=db path=/Users/bot/actions-work/A-Guy/A-Guy/.tasks/260313-auto-657/opencode-data/opencode/opencode.db opening database
+INFO  2026-03-13T15:14:21 +6ms service=db count=8 mode=bundled applying migrations
+INFO  2026-03-13T15:14:21 +9ms service=default directory=/Users/bot/actions-work/A-Guy/A-Guy bootstrapping
+INFO  2026-03-13T15:14:21 +7ms service=config path=/Users/bot/.config/opencode/config.json loading
+INFO  2026-03-13T15:14:21 +1ms service=config path=/Users/bot/.config/opencode/opencode.json loading
+INFO  2026-03-13T15:14:21 +7ms service=config path=/Users/bot/.config/opencode/opencode.jsonc loading
+INFO  2026-03-13T15:14:21 +1ms service=config path=/Users/bot/actions-work/A-Guy/A-Guy/opencode.json loading
+INFO  2026-03-13T15:14:21 +36ms service=config path=/Users/bot/actions-work/A-Guy/A-Guy/.opencode/opencode.jsonc loading
+INFO  2026-03-13T15:14:21 +0ms service=config path=/Users/bot/actions-work/A-Guy/A-Guy/.opencode/opencode.json loading
+INFO  2026-03-13T15:14:21 +8ms service=config path=/Users/bot/.opencode/opencode.jsonc loading
+INFO  2026-03-13T15:14:21 +1ms service=config path=/Users/bot/.opencode/opencode.json loading
+INFO  2026-03-13T15:14:21 +8ms service=plugin name=CodexAuthPlugin loading internal plugin
+INFO  2026-03-13T15:14:21 +1ms service=plugin name=CopilotAuthPlugin loading internal plugin
+INFO  2026-03-13T15:14:21 +0ms service=plugin name=gitlabAuthPlugin loading internal plugin
+INFO  2026-03-13T15:14:21 +0ms service=plugin path=opencode-anthropic-auth@0.0.13 loading plugin
+INFO  2026-03-13T15:14:22 +27ms service=bus type=* subscribing
+INFO  2026-03-13T15:14:22 +0ms service=bus type=session.updated subscribing
+INFO  2026-03-13T15:14:22 +0ms service=bus type=message.updated subscribing
+INFO  2026-03-13T15:14:22 +0ms service=bus type=message.part.updated subscribing
+INFO  2026-03-13T15:14:22 +0ms service=bus type=session.diff subscribing
+INFO  2026-03-13T15:14:22 +1ms service=format init
+INFO  2026-03-13T15:14:22 +0ms service=bus type=file.edited subscribing
+INFO  2026-03-13T15:14:22 +0ms service=lsp serverIds=deno, typescript, vue, eslint, oxlint, biome, gopls, ruby-lsp, pyright, elixir-ls, zls, csharp, fsharp, sourcekit-lsp, rust, clangd, svelte, astro, jdtls, kotlin-ls, yaml-ls, lua-ls, php intelephense, prisma, dart, ocaml-lsp, bash, terraform, texlab, dockerfile, gleam, clojure-lsp, nixd, tinymist, haskell-language-server, julials enabled LSP servers

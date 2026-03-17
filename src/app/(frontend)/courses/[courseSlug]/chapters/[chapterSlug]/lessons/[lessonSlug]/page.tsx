@@ -10,6 +10,8 @@ import { queryCourseBySlug } from '@/server/repos/queries/courses'
 import { queryExercisesByLesson } from '@/server/repos/queries/exercises'
 import { queryLessonBySlugDirectly } from '@/server/repos/queries/lessons'
 import { queryMediaByIds } from '@/server/repos/queries/media'
+import { isAuthenticatedServer } from '@/server/utils/access-gate-server'
+import { checkPaidAccess } from '@/server/utils/check-paid-access'
 import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
 import { ChatInterface } from '@/ui/web/chat'
 import { extractAllMediaIds } from '@/ui/web/exerciserenderer/utils/extractMediaIds'
@@ -19,8 +21,6 @@ import { notFound } from 'next/navigation'
 import { ExercisesPager } from './_components/ExercisesPager'
 import { LessonAnalytics } from './_components/LessonAnalytics'
 import { ExerciseWorkspace } from './exercises/[exerciseSlug]/_components/ExerciseWorkspace'
-
-export const revalidate = 300 // ISR: revalidate every 5 minutes
 
 interface LessonPageProps {
   params: Promise<{
@@ -69,6 +69,40 @@ export default async function LessonPage({ params }: LessonPageProps) {
     SystemParams.getGatedWarningMs(),
     queryExercisesByLesson({ lessonId: lesson.id }),
   ])
+
+  // Server-side block: for mandatory mode, don't render content for unauthenticated users
+  if (effectiveAccessType === 'mandatory' && !(await isAuthenticatedServer())) {
+    return (
+      <AccessGateProvider
+        accessType={effectiveAccessType}
+        courseSlug={courseSlug}
+        gatedDelayMs={gatedDelayMs}
+        gatedWarningMs={gatedWarningMs}
+      >
+        <div className="min-h-screen" />
+      </AccessGateProvider>
+    )
+  }
+
+  // Server-side block: for paid mode, check entitlement
+  if (effectiveAccessType === 'paid') {
+    const { requiresEntitlement, isAuthenticated } = await checkPaidAccess(course.id)
+
+    if (requiresEntitlement) {
+      return (
+        <AccessGateProvider
+          accessType={effectiveAccessType}
+          courseSlug={courseSlug}
+          gatedDelayMs={gatedDelayMs}
+          gatedWarningMs={gatedWarningMs}
+          requiresEntitlement={true}
+          isAuthenticated={isAuthenticated}
+        >
+          <div className="min-h-screen" />
+        </AccessGateProvider>
+      )
+    }
+  }
 
   // Use lesson-scoped chat context to keep history stable across refreshes
   const chatLessonId = lesson.id
@@ -137,9 +171,9 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
   // Case 2: Document exists -> Keep existing behavior with ExerciseWorkspace
   const primaryContent = (
-    <div className="w-full h-full flex flex-col">
+    <div className="w-full h-full flex flex-col min-h-0">
       {validFiles.map((file, index) => (
-        <div key={file.id} className="w-full h-full flex-shrink-0">
+        <div key={file.id} className="w-full flex-1 min-h-0">
           {index > 0 && (
             <div className="h-0.5 my-8 flex-shrink-0 bg-gradient-to-r from-transparent via-border to-transparent" />
           )}

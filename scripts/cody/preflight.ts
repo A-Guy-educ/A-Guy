@@ -46,6 +46,16 @@ export function preflight(): void {
       },
       errorMessage: 'Run from project root with package.json',
     },
+    {
+      name: 'GitHub token (GH_PAT or GH_TOKEN)',
+      test: () => {
+        const token = process.env.GH_PAT?.trim() || process.env.GH_TOKEN?.trim()
+        if (!token) {
+          throw new Error('No GitHub token found')
+        }
+      },
+      errorMessage: 'Set GH_PAT or GH_TOKEN in .env (needed for PR creation and GitHub API)',
+    },
   ]
 
   logger.info('🔍 Pre-flight checks...')

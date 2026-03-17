@@ -39,7 +39,6 @@ vi.mock('../../../../scripts/cody/pipeline-utils', () => ({
   resolveControlMode: vi.fn(() => 'risk-gated'),
   stageOutputFile: vi.fn((taskDir: string, stage: string) => `${taskDir}/${stage}.md`),
   getComplexityTier: vi.fn(() => 'moderate'),
-  STAGE_COMPLEXITY_THRESHOLDS: {},
 }))
 
 vi.mock('../../../../scripts/cody/clarify-workflow', () => ({
@@ -68,11 +67,10 @@ vi.mock('../../../../scripts/cody/engine/status', () => ({
 
 vi.mock('../../../../scripts/cody/agent-runner', () => ({
   runAgentWithFileWatch: vi.fn(),
-  STAGE_TIMEOUTS: {},
   DEFAULT_TIMEOUT: 600000,
 }))
 
-import { execSync, execFileSync } from 'child_process'
+import { execFileSync } from 'child_process'
 import { executePostAction } from '../../../../scripts/cody/pipeline/post-actions'
 import { GitCommitHandler, GitPrHandler } from '../../../../scripts/cody/handlers/git-handler'
 import { runCommitStage, runPrStage } from '../../../../scripts/cody/scripted-stages'
@@ -137,7 +135,7 @@ describe('validate-src-changes post-action', () => {
     expect(execFileSync).not.toHaveBeenCalled()
   })
 
-  it('should handle git command failures gracefully', async () => {
+  it('should throw clear error when git commands fail', async () => {
     vi.mocked(execFileSync)
       .mockImplementationOnce(() => {
         throw new Error('git failed')
@@ -146,7 +144,9 @@ describe('validate-src-changes post-action', () => {
 
     const action: PostAction = { type: 'validate-src-changes' }
 
-    await expect(executePostAction(ctx, action, null)).resolves.not.toThrow()
+    await expect(executePostAction(ctx, action, null)).rejects.toThrow(
+      'validate-src-changes: git commands failed',
+    )
   })
 })
 
@@ -167,7 +167,7 @@ describe('GitCommitHandler - No changes detection', () => {
     }
   })
 
-  it('should fail with descriptive message when "No changes" reported', async () => {
+  it('should succeed (completed) when "No changes" reported — fix/autofix may produce no changes', async () => {
     vi.mocked(runCommitStage).mockReturnValue({
       success: false,
       hash: '',
@@ -183,8 +183,7 @@ describe('GitCommitHandler - No changes detection', () => {
       maxRetries: 0,
     })
 
-    expect(result.outcome).toBe('failed')
-    expect(result.reason).toContain('No changes to commit after build stage')
+    expect(result.outcome).toBe('completed')
   })
 
   it('should fail with original message for other failures', async () => {

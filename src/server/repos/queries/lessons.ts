@@ -47,6 +47,13 @@ const _queryLessonsByChapter = async (chapterId: string) => {
         { chapter: { equals: chapterId } },
         { status: { equals: 'published' } },
         { isActive: { equals: true } },
+        // Exclude "Soon" content that is not visible to students
+        {
+          or: [
+            { contentStatus: { not_equals: 'soon' } },
+            { contentStatusVisible: { equals: true } },
+          ],
+        },
       ],
     },
     sort: 'order',
@@ -82,6 +89,13 @@ const _queryLessonsByChapterDirectly = async (chapterId: string) => {
         { chapter: { equals: chapterId } },
         { status: { equals: 'published' } },
         { isActive: { equals: true } },
+        // Exclude "Soon" content that is not visible to students
+        {
+          or: [
+            { contentStatus: { not_equals: 'soon' } },
+            { contentStatusVisible: { equals: true } },
+          ],
+        },
       ],
     },
     sort: 'order',
@@ -113,6 +127,13 @@ export const queryLessonBySlug = cache(async ({ slug }: { slug: string }) => {
         { slug: { equals: slug } },
         { status: { equals: 'published' } },
         { isActive: { equals: true } },
+        // Exclude "Soon" content that is not visible to students
+        {
+          or: [
+            { contentStatus: { not_equals: 'soon' } },
+            { contentStatusVisible: { equals: true } },
+          ],
+        },
       ],
     },
     limit: 1,
@@ -222,6 +243,13 @@ const _queryLessonsByCourse = async (courseId: string) => {
         { chapter: { in: chapterIds } },
         { status: { equals: 'published' } },
         { isActive: { equals: true } },
+        // Exclude "Soon" content that is not visible to students
+        {
+          or: [
+            { contentStatus: { not_equals: 'soon' } },
+            { contentStatusVisible: { equals: true } },
+          ],
+        },
       ],
     },
     sort: 'order',
@@ -231,7 +259,28 @@ const _queryLessonsByCourse = async (courseId: string) => {
     overrideAccess: false,
   })
 
-  return result.docs
+  // Sort lessons by chapter order (primary) then by lesson order (secondary)
+  const chapterOrderMap = new Map(chapters.map((ch, idx) => [ch.id, idx]))
+
+  const sortedDocs = [...result.docs].sort((a, b) => {
+    const chapterIdA = typeof a.chapter === 'string' ? a.chapter : a.chapter?.id
+    const chapterIdB = typeof b.chapter === 'string' ? b.chapter : b.chapter?.id
+
+    const chapterOrderA = chapterOrderMap.get(chapterIdA ?? '') ?? Infinity
+    const chapterOrderB = chapterOrderMap.get(chapterIdB ?? '') ?? Infinity
+
+    // Primary sort: by chapter order
+    if (chapterOrderA !== chapterOrderB) {
+      return chapterOrderA - chapterOrderB
+    }
+
+    // Secondary sort: by lesson order within the same chapter
+    const orderA = a.order !== undefined ? a.order : Infinity
+    const orderB = b.order !== undefined ? b.order : Infinity
+    return orderA - orderB
+  })
+
+  return sortedDocs
 }
 
 export const queryLessonsByCourse = async ({ courseId }: { courseId: string }) => {
@@ -266,6 +315,13 @@ const _queryLessonsByCourseDirectly = async (courseId: string) => {
         { chapter: { in: chapterIds } },
         { status: { equals: 'published' } },
         { isActive: { equals: true } },
+        // Exclude "Soon" content that is not visible to students
+        {
+          or: [
+            { contentStatus: { not_equals: 'soon' } },
+            { contentStatusVisible: { equals: true } },
+          ],
+        },
       ],
     },
     sort: 'order',
@@ -275,7 +331,26 @@ const _queryLessonsByCourseDirectly = async (courseId: string) => {
     overrideAccess: false,
   })
 
-  return result.docs
+  // Sort lessons by chapter order (primary) then by lesson order (secondary)
+  const chapterOrderMap = new Map(chapters.map((ch, idx) => [ch.id, idx]))
+
+  const sortedDocs = [...result.docs].sort((a, b) => {
+    const chapterIdA = typeof a.chapter === 'string' ? a.chapter : a.chapter?.id
+    const chapterIdB = typeof b.chapter === 'string' ? b.chapter : b.chapter?.id
+
+    const chapterOrderA = chapterOrderMap.get(chapterIdA ?? '') ?? Infinity
+    const chapterOrderB = chapterOrderMap.get(chapterIdB ?? '') ?? Infinity
+
+    if (chapterOrderA !== chapterOrderB) {
+      return chapterOrderA - chapterOrderB
+    }
+
+    const orderA = a.order !== undefined ? a.order : Infinity
+    const orderB = b.order !== undefined ? b.order : Infinity
+    return orderA - orderB
+  })
+
+  return sortedDocs
 }
 
 export const queryLessonsByCourseDirectly = async ({ courseId }: { courseId: string }) => {

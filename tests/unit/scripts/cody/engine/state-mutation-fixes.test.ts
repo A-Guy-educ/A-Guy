@@ -174,52 +174,6 @@ describe('updateStage immutability', () => {
 })
 
 // ============================================================================
-// Fix #4: Signal handler git ops timeout - static analysis test
-// ============================================================================
-
-describe('signal handler git ops', () => {
-  it('should use execFileSync with timeout in signal handler (static analysis)', async () => {
-    const fs = await import('fs')
-    const path = await import('path')
-    const entryPath = path.resolve(__dirname, '../../../../../scripts/cody/entry.ts')
-    const content = fs.readFileSync(entryPath, 'utf-8')
-
-    // Find the signal handler section
-    const signalHandlerStart = content.indexOf('cleanupOnSignal')
-    const signalHandlerEnd = content.indexOf("process.on('SIGTERM'", signalHandlerStart)
-    const signalHandler = content.slice(signalHandlerStart, signalHandlerEnd)
-
-    // Should NOT use execSync (vulnerable to hanging)
-    expect(signalHandler).not.toContain('execSync(')
-
-    // Should use execFileSync (safe from shell injection)
-    expect(signalHandler).toContain('execFileSync')
-
-    // All execFileSync calls should have timeout option
-    // Count execFileSync occurrences and timeout occurrences in signal handler
-    const execFileCalls = (signalHandler.match(/execFileSync\(/g) || []).length
-    const timeoutOccurrences = (signalHandler.match(/timeout:\s*SIGNAL_TIMEOUT/g) || []).length
-    expect(execFileCalls).toBeGreaterThan(0)
-    expect(timeoutOccurrences).toBe(execFileCalls)
-  })
-
-  it('should not use shell-injectable execSync with string arguments', async () => {
-    const fs = await import('fs')
-    const path = await import('path')
-    const entryPath = path.resolve(__dirname, '../../../../../scripts/cody/entry.ts')
-    const content = fs.readFileSync(entryPath, 'utf-8')
-
-    // Find the signal handler section
-    const signalHandlerStart = content.indexOf('cleanupOnSignal')
-    const signalHandlerEnd = content.indexOf("process.on('SIGTERM'", signalHandlerStart)
-    const signalHandler = content.slice(signalHandlerStart, signalHandlerEnd)
-
-    // Should NOT use execSync with template literals (shell injection risk)
-    expect(signalHandler).not.toMatch(/execSync\(`[^`]*\$\{/)
-  })
-})
-
-// ============================================================================
 // Fix for Pipeline Rebuild Bug: Full mode should include all stages
 // ============================================================================
 
@@ -242,9 +196,8 @@ describe('full pipeline mode', () => {
     // Full mode should include ALL stages, not just spec
     const stageNames = Array.from(pipeline.stages.keys())
 
-    // Should have spec stages
+    // Should have spec stages (spec merged into gap)
     expect(stageNames).toContain('taskify')
-    expect(stageNames).toContain('spec')
     expect(stageNames).toContain('gap')
 
     // Should ALSO have impl stages (THIS IS THE FIX)

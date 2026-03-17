@@ -20,13 +20,9 @@ const STALENESS_THRESHOLD_MS = 20 * 60 * 1000 // 20 minutes
 /**
  * Check if a workflow run exists and is in a terminal state (completed/cancelled)
  * while status.json still says running — meaning the workflow crashed but status wasn't updated.
- *
- * Ported from: scripts/watchdog/checks/stuck-pipelines.ts → checkOrphanedWorkflow()
  */
 function checkOrphanedWorkflow(taskId: string, ctx: InspectorContext): boolean {
   try {
-    // Use gh CLI via the github client's underlying mechanism
-    // We need to check workflow runs for the task's branch
     const output = execFileSync(
       'gh',
       [
@@ -50,13 +46,70 @@ function checkOrphanedWorkflow(taskId: string, ctx: InspectorContext): boolean {
     if (!output) return false
 
     const run = JSON.parse(output)
-    // If run is completed or cancelled but status.json says running, it's orphaned
     return (
       (run.status === 'completed' || run.status === 'cancelled') && run.conclusion !== 'success'
     )
   } catch {
     return false
   }
+}
+
+/**
+ * FIX #6: Extract failure details from pipeline failure comments on an issue.
+ * Searches for multiple comment formats — both old and new pipeline versions.
+ */
+function parseFailureFromComments(
+  ctx: InspectorContext,
+  issueNumber: number,
+): { failedStage: string; failedError: string } {
+  try {
+    const comments = ctx.github.getIssueComments(issueNumber)
+    // Search newest-to-oldest
+    for (let i = comments.length - 1; i >= 0; i--) {
+      const body = comments[i].body
+
+      // Pattern 1: New format "❌ Pipeline failed"
+      if (body.includes('\u274c Pipeline failed') || body.includes('Pipeline failed')) {
+        const stageMatch = body.match(/\*\*Failed stage:\*\*\s*`([^`]+)`/)
+        const errorMatch = body.match(/\*\*Error:\*\*\s*(.+)/)
+        if (stageMatch || errorMatch) {
+          return {
+            failedStage: stageMatch?.[1] || 'unknown',
+            failedError: errorMatch?.[1]?.trim() || 'Unknown error (parsed from comment)',
+          }
+        }
+      }
+
+      // Pattern 2: Older format "Pipeline failed at stage:"
+      if (body.includes('Pipeline failed at stage:')) {
+        const stageMatch = body.match(/Pipeline failed at stage:\s*(\w+)/)
+        const errorMatch = body.match(/Error:\s*(.+)/)
+        return {
+          failedStage: stageMatch?.[1] || 'unknown',
+          failedError: errorMatch?.[1]?.trim() || 'Pipeline failed (no error details)',
+        }
+      }
+
+      // Pattern 3: Look for any "failed" + stage name in cody bot comments
+      if (
+        body.includes('failed') &&
+        (body.includes('build') || body.includes('verify') || body.includes('commit'))
+      ) {
+        const stageMatch = body.match(
+          /(?:stage|at)\s*[:`]*\s*(taskify|gap|architect|plan-gap|build|verify|autofix|commit|review|fix|pr)\b/i,
+        )
+        if (stageMatch) {
+          return {
+            failedStage: stageMatch[1].toLowerCase(),
+            failedError: body.slice(0, 200).trim(),
+          }
+        }
+      }
+    }
+  } catch {
+    // Ignore errors — fallback below
+  }
+  return { failedStage: 'unknown', failedError: 'Unknown error (no failure comment found)' }
 }
 
 /**
@@ -69,8 +122,27 @@ function evaluateHealth(task: TaskSnapshot, ctx: InspectorContext): EvaluatedTas
     stages?: Record<string, { state?: string; error?: string; startedAt?: string }>
   }
 
-  // No status = unknown
+  // No status.json
   if (!status) {
+    // FIX #5: Treat cody:done as completed
+    if (task.labels.includes('cody:done')) {
+      return {
+        ...task,
+        health: 'completed',
+        healthDetail: 'Task completed (cody:done label)',
+      }
+    }
+    // Detect failures from label
+    if (task.labels.includes('cody:failed')) {
+      const { failedStage, failedError } = parseFailureFromComments(ctx, task.issueNumber)
+      return {
+        ...task,
+        health: 'failed',
+        healthDetail: 'Pipeline failed (status.json on feature branch)',
+        failedStage,
+        failedError,
+      }
+    }
     return {
       ...task,
       health: 'unknown',
@@ -89,7 +161,6 @@ function evaluateHealth(task: TaskSnapshot, ctx: InspectorContext): EvaluatedTas
 
   // Failed or timeout
   if (status.state === 'failed' || status.state === 'timeout') {
-    // Find the failed stage
     let failedStage = 'unknown'
     let failedError = ''
     for (const [stageName, stage] of Object.entries(status.stages || {})) {
@@ -110,7 +181,6 @@ function evaluateHealth(task: TaskSnapshot, ctx: InspectorContext): EvaluatedTas
 
   // Paused (gated)
   if (status.state === 'paused') {
-    // Find paused stage and calculate wait time
     let pausedStage = 'unknown'
     let gatedMinutes = 0
     for (const [stageName, stage] of Object.entries(status.stages || {})) {
@@ -128,14 +198,13 @@ function evaluateHealth(task: TaskSnapshot, ctx: InspectorContext): EvaluatedTas
     }
   }
 
-  // Running - check for staleness and orphaned workflows
+  // Running — check for staleness and orphaned workflows
   if (status.state === 'running') {
     const updatedAt = status.updatedAt ? new Date(status.updatedAt).getTime() : 0
     const stalledMs = Date.now() - updatedAt
     const stalledMinutes = Math.round(stalledMs / 60000)
 
     if (stalledMs > STALENESS_THRESHOLD_MS) {
-      // Check for orphaned workflow (workflow crashed but status not updated)
       const isOrphaned = checkOrphanedWorkflow(task.taskId, ctx)
 
       if (isOrphaned) {
@@ -177,24 +246,13 @@ export function createNudgeAction(
   task: EvaluatedTask,
   ctx: InspectorContext,
 ): ActionRequest | null {
-  if (task.health !== 'gated') {
-    return null
-  }
-
-  // Guard: skip if issue number is invalid (e.g., task discovered without a GitHub issue)
-  if (!task.issueNumber || task.issueNumber <= 0) {
-    return null
-  }
+  if (task.health !== 'gated') return null
+  if (!task.issueNumber || task.issueNumber <= 0) return null
 
   const gatedMinutes = task.gatedMinutes || 0
-
-  // Only nudge after 30 minutes
-  if (gatedMinutes < 30) {
-    return null
-  }
+  if (gatedMinutes < 30) return null
 
   const urgency = gatedMinutes > 120 ? 'critical' : 'warning'
-  const dedupKey = `nudge:${task.taskId}`
 
   return {
     plugin: 'cody-health-check',
@@ -202,8 +260,8 @@ export function createNudgeAction(
     target: task.taskId,
     urgency,
     title: `Gate approval needed: ${task.taskId}`,
-    detail: `Pipeline paused for ${gatedMinutes} minutes. Reply \`/cody approve\` to continue.`,
-    dedupKey,
+    detail: `Pipeline paused for ${gatedMinutes} minutes.`,
+    dedupKey: `nudge:${task.taskId}`,
     dedupWindowMinutes: 60,
     execute: async () => {
       ctx.github.postComment(
@@ -216,16 +274,23 @@ export function createNudgeAction(
 }
 
 /**
- * Create a digest action summarizing all task health.
+ * FIX #4: Create a useful digest action — only actionable tasks, with fixer state.
  * @internal — exported for testing
  */
 export function createDigestAction(
   tasks: EvaluatedTask[],
   ctx: InspectorContext,
 ): ActionRequest | null {
-  // Guard: skip digest when WATCHDOG_ISSUE is not configured
-  if (!ctx.watchdogIssue) {
-    ctx.log.warn('WATCHDOG_ISSUE not configured — skipping digest')
+  if (!ctx.digestIssue) {
+    ctx.log.warn('INSPECTOR_DIGEST_ISSUE not configured — skipping digest')
+    return null
+  }
+
+  // Only include actionable tasks (not completed, not unknown/done)
+  const actionable = tasks.filter((t) => t.health !== 'completed' && t.health !== 'unknown')
+
+  // If nothing actionable, skip digest entirely
+  if (actionable.length === 0) {
     return null
   }
 
@@ -238,51 +303,61 @@ export function createDigestAction(
     orphaned: 0,
     unknown: 0,
   }
-
   for (const task of tasks) {
     healthCounts[task.health]++
   }
-
-  // If everything is healthy or completed, no need for digest
-  if (healthCounts.healthy + healthCounts.completed === tasks.length || tasks.length === 0) {
-    return null
-  }
-
-  const dedupKey = 'digest'
 
   return {
     plugin: 'cody-health-check',
     type: 'digest',
     urgency: 'info',
     title: 'Cody Pipeline Health Digest',
-    detail: `Total: ${tasks.length} | Healthy: ${healthCounts.healthy} | Completed: ${healthCounts.completed} | Failed: ${healthCounts.failed} | Stalled: ${healthCounts.stalled} | Gated: ${healthCounts.gated} | Orphaned: ${healthCounts.orphaned}`,
-    dedupKey,
-    dedupWindowMinutes: 30,
+    detail: `Failed: ${healthCounts.failed} | Running: ${healthCounts.healthy} | Gated: ${healthCounts.gated} | Completed: ${healthCounts.completed}`,
+    dedupKey: 'digest',
+    // FIX #7: Increase dedup to 6 hours — digest is rarely changing
+    dedupWindowMinutes: 360,
     execute: async () => {
-      // Build markdown table
-      let table = '| Task | Status | Detail |\n|------|--------|--------|\n'
-      for (const task of tasks) {
-        const statusEmoji =
-          task.health === 'healthy'
-            ? '✅'
-            : task.health === 'completed'
-              ? '🎉'
+      // Read fixer state for context
+      const fixerState =
+        ctx.state.get<Record<string, { retries: number; fixIssueNumber: number | null }>>(
+          'cody:fixerState',
+        ) || {}
+
+      // Summary line
+      let md = `## 🐕 Inspector Digest — Cycle ${ctx.cycleNumber}\n\n`
+      md += `**Summary**: ${healthCounts.failed} failed, ${healthCounts.healthy} running, ${healthCounts.gated} gated, ${healthCounts.completed} completed, ${healthCounts.unknown} unknown\n\n`
+
+      // Only show actionable tasks
+      if (actionable.length > 0) {
+        md += `### Actionable Tasks\n\n`
+        md += `| Issue | Task | Status | Detail | Fixer |\n|-------|------|--------|--------|-------|\n`
+
+        for (const task of actionable) {
+          const emoji =
+            task.health === 'healthy'
+              ? '🟢'
               : task.health === 'failed'
-                ? '❌'
+                ? '🔴'
                 : task.health === 'stalled'
-                  ? '⏸️'
+                  ? '🟡'
                   : task.health === 'gated'
-                    ? '🚧'
+                    ? '🟠'
                     : task.health === 'orphaned'
                       ? '👻'
                       : '❓'
-        table += `| ${task.taskId} | ${statusEmoji} ${task.health} | ${task.healthDetail} |\n`
+
+          const fixer = fixerState[task.taskId]
+          const fixerInfo = fixer
+            ? `retry ${fixer.retries}/5${fixer.fixIssueNumber ? ` • fix #${fixer.fixIssueNumber}` : ''}`
+            : '—'
+
+          md += `| #${task.issueNumber} | ${task.taskId} | ${emoji} ${task.health} | ${task.healthDetail.slice(0, 60)} | ${fixerInfo} |\n`
+        }
       }
 
-      ctx.github.postComment(
-        ctx.watchdogIssue!,
-        `## 🐕 Inspector Digest\n\n${table}\n\n_Cycle ${ctx.cycleNumber}_`,
-      )
+      md += `\n_${new Date().toISOString()}_`
+
+      ctx.github.postComment(ctx.digestIssue!, md)
       return { success: true, message: 'Digest posted' }
     },
   }
@@ -293,13 +368,12 @@ export function createDigestAction(
  *
  * Responsibilities:
  * - Discover active Cody tasks
- * - Evaluate health (healthy, stalled, failed, gated, orphaned)
+ * - Evaluate health (healthy, stalled, failed, gated, orphaned, completed)
  * - Create nudge actions for gated tasks
  * - Create digest action for visibility
- * - Share evaluated tasks via state for failure-analysis plugin
+ * - Share evaluated tasks via state for pipeline-fixer plugin
  *
- * NOTE: Failed task retries are delegated to the failure-analysis plugin.
- * This plugin only detects failures and shares them via ctx.state.
+ * NOTE: Failed task retries are delegated to the pipeline-fixer plugin.
  */
 export const healthCheckPlugin: InspectorPlugin = {
   name: 'cody-health-check',
@@ -309,17 +383,14 @@ export const healthCheckPlugin: InspectorPlugin = {
   async run(ctx) {
     ctx.log.debug('Running health-check plugin')
 
-    // Discover tasks
     const tasks = await discoverTasks(ctx)
     ctx.log.debug({ taskCount: tasks.length }, 'Discovered tasks')
 
-    // Evaluate health
     const evaluated = tasks.map((task) => evaluateHealth(task, ctx))
 
-    // Share evaluated tasks with failure-analysis plugin via state
+    // Share evaluated tasks with pipeline-fixer plugin via state
     ctx.state.set('cody:evaluatedTasks', evaluated)
 
-    // Generate actions (nudge + digest only — retries handled by failure-analysis)
     const actions: ActionRequest[] = []
 
     for (const task of evaluated) {
@@ -327,7 +398,6 @@ export const healthCheckPlugin: InspectorPlugin = {
       if (nudge) actions.push(nudge)
     }
 
-    // Add digest
     const digest = createDigestAction(evaluated, ctx)
     if (digest) actions.push(digest)
 

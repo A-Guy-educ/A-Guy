@@ -37,7 +37,7 @@ You MUST output **valid JSON only** to the output file. No markdown wrappers, no
   "complexity_reasoning": "Scope: X. Risk: X. Novelty: X. Cross-domain: X. Ambiguity: X. Dependencies: X. Total: N",
   "input_quality": {
     "level": "raw_idea | good_spec | detailed_plan | spec_and_plan",
-    "skip_stages": ["spec"] | ["spec", "architect"] | [],
+    "skip_stages": ["architect"] | [],
     "reasoning": "Brief explanation of why this quality level was assigned"
   },
   "pipeline_profile": "lightweight | standard"
@@ -126,9 +126,9 @@ Analyze the task description to determine its quality level. When the input is a
 | Level           | Description                                  | Stages Skipped      | When to Use                              |
 | --------------- | -------------------------------------------- | ------------------- | ---------------------------------------- |
 | `raw_idea`      | Vague task, no structured sections           | None                | Default for most tasks                   |
-| `good_spec`     | Has ## Requirements + ## Acceptance Criteria | `spec`              | Task already has structured requirements |
-| `detailed_plan` | Has step-by-step plan with file paths        | `spec`, `architect` | Task includes implementation steps       |
-| `spec_and_plan` | Has both spec AND plan sections              | `spec`, `architect` | Task is fully detailed                   |
+| `good_spec`     | Has ## Requirements + ## Acceptance Criteria | (none)              | Task already has structured requirements |
+| `detailed_plan` | Has step-by-step plan with file paths        | `architect`         | Task includes implementation steps       |
+| `spec_and_plan` | Has both spec AND plan sections              | `architect`         | Task is fully detailed                   |
 
 ### Detection Criteria
 
@@ -170,7 +170,7 @@ For **trivial fixes** (complexity 1-9) with **good_spec** or higher quality, you
 **When**: complexity <= 9 AND (input_quality is `good_spec` OR `detailed_plan` OR `spec_and_plan`)
 
 **What to do**:
-1. Add only `"spec"` to the `skip_stages` array in task.json (NOT "build" - build cannot be skipped)
+1. Keep `skip_stages` as empty array `[]` in task.json (build cannot be skipped)
 2. Write `.tasks/<task-id>/build.md` with:
    - ## Changes section describing what was implemented
    - List of files modified with specific changes
@@ -179,7 +179,7 @@ This allows the pipeline to skip the build agent (which is slow) and go straight
 
 **Example skip_stages for trivial fix**:
 ```json
-"skip_stages": ["spec"]
+"skip_stages": []
 ```
 
 **Example build.md for trivial fix**:
@@ -206,7 +206,7 @@ Example:
 {
   "input_quality": {
     "level": "good_spec",
-    "skip_stages": ["spec"],
+    "skip_stages": [],
     "reasoning": "Input contains ## Requirements with 5 FR entries and ## Acceptance Criteria with 8 checkable items. Promoted spec.md."
   }
 }
@@ -214,7 +214,7 @@ Example:
 
 ## Pipeline Profile (Lightweight vs Standard)
 
-Determine whether the task should use the lightweight or standard pipeline. The lightweight profile skips: `spec`, `gap`, `plan-gap` — saving 5-6 LLM calls for simple fixes.
+Determine whether the task should use the lightweight or standard pipeline. The lightweight profile skips: `gap`, `plan-gap` — saving LLM calls for simple fixes.
 
 ### Decision Criteria
 
@@ -248,7 +248,7 @@ Example lightweight task.json:
   "pipeline_profile": "lightweight",
   "input_quality": {
     "level": "good_spec",
-    "skip_stages": ["spec"],
+    "skip_stages": [],
     "reasoning": "Task describes a simple bug fix with clear scope"
   }
 }
@@ -260,11 +260,15 @@ Example lightweight task.json:
 
 | Score | Tier | Stages That Run |
 |-------|------|-----------------|
-| 1-9 | Trivial | taskify → build → commit → verify → pr |
-| 10-19 | Simple | + architect |
-| 20-34 | Moderate | + architect, build |
-| 35-49 | Complex | + spec, gap |
-| 50-100 | Very Complex | + plan-gap, clarify |
+| 1-9 | Trivial | taskify → build → commit → verify → pr (always-run stages only) |
+| 10-14 | Simple | + architect |
+| 15-19 | Simple+ | (no additional stages) |
+| 20-29 | Moderate | (no additional stages at this threshold) |
+| 30-34 | Moderate+ | + review |
+| 35-39 | Complex | + gap (writes spec.md + gap.md) |
+| 40-49 | Complex+ | + plan-gap |
+| 50-59 | Very Complex | (no additional stages at this threshold) |
+| 60-100 | Very Complex+ | + clarify |
 
 ### Scoring Dimensions (6 weighted factors)
 
