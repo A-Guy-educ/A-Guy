@@ -3,78 +3,17 @@
   "taskId": "260317-full-test",
   "mode": "full",
   "pipeline": "spec_execute_verify",
-  "startedAt": "2026-03-17T21:38:25.040Z",
-  "updatedAt": "2026-03-17T21:40:15.483Z",
+  "startedAt": "2026-03-17T21:41:03.768Z",
+  "updatedAt": "2026-03-17T21:42:02.489Z",
   "state": "failed",
   "cursor": null,
   "stages": {
     "taskify": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-03-17T21:38:25.050Z",
-      "completedAt": "2026-03-17T21:39:40.815Z",
-      "elapsed": 76,
-      "outputFile": "taskify.md",
-      "tokenUsage": {
-        "input": 2898,
-        "output": 1328,
-        "cacheRead": 186198
-      },
-      "sessionId": "ses_30243a3d6ffeC3jbbJBeMIz1nO"
-    },
-    "gap": {
-      "state": "skipped",
-      "retries": 0,
-      "skipped": "Complexity 20 (moderate) below threshold 35 for gap"
-    },
-    "architect": {
-      "state": "skipped",
-      "retries": 0,
-      "skipped": "Pipeline is spec_only"
-    },
-    "plan-gap": {
-      "state": "skipped",
-      "retries": 0,
-      "skipped": "Complexity 20 (moderate) below threshold 50 for plan-gap"
-    },
-    "build": {
       "state": "failed",
       "retries": 0,
-      "startedAt": "2026-03-17T21:39:42.356Z",
-      "error": "Build stage preExecute failed: Command failed: git checkout dev"
-    },
-    "commit": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-03-17T21:39:43.664Z",
-      "completedAt": "2026-03-17T21:39:49.969Z",
-      "elapsed": 6
-    },
-    "review": {
-      "state": "skipped",
-      "retries": 0,
-      "skipped": "Complexity 20 (moderate) below threshold 30 for review"
-    },
-    "fix": {
-      "state": "skipped",
-      "retries": 0,
-      "skipped": "No issues to fix"
-    },
-    "verify": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-03-17T21:39:49.998Z",
-      "completedAt": "2026-03-17T21:40:13.933Z",
-      "elapsed": 24,
-      "outputFile": "verify.md"
-    },
-    "pr": {
-      "state": "failed",
-      "retries": 0,
-      "startedAt": "2026-03-17T21:40:15.352Z",
-      "elapsed": 0,
-      "error": "No source files changed vs base branch — refusing to create empty PR"
+      "startedAt": "2026-03-17T21:41:03.780Z",
+      "error": "Invalid task.json: task.json validation failed:\n  • Invalid primary_domain: \"docs\". Must be one of: backend, frontend, infra, data, llm, devops, product"
     }
   },
-  "completedAt": "2026-03-17T21:40:15.483Z"
+  "completedAt": "2026-03-17T21:42:02.489Z"
 }
