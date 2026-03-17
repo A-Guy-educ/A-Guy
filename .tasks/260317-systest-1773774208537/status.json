@@ -4,14 +4,63 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-17T19:06:11.489Z",
-  "updatedAt": "2026-03-17T19:06:13.126Z",
+  "updatedAt": "2026-03-17T19:08:54.523Z",
   "state": "running",
   "cursor": null,
   "stages": {
     "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-17T19:06:13.126Z",
+      "completedAt": "2026-03-17T19:08:40.993Z",
+      "elapsed": 148,
+      "outputFile": "taskify.md",
+      "tokenUsage": {
+        "input": 29422,
+        "output": 2788,
+        "cacheRead": 510908
+      },
+      "sessionId": "ses_302cef3e9ffeBWcW4tyA8jRFeA"
+    },
+    "gap": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 21 (moderate) below threshold 35 for gap"
+    },
+    "architect": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Pipeline is spec_only"
+    },
+    "plan-gap": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 21 (moderate) below threshold 50 for plan-gap"
+    },
+    "build": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-17T19:06:13.126Z"
+      "startedAt": "2026-03-17T19:08:54.436Z"
+    },
+    "commit": {
+      "state": "pending",
+      "retries": 0
+    },
+    "review": {
+      "state": "pending",
+      "retries": 0
+    },
+    "fix": {
+      "state": "pending",
+      "retries": 0
+    },
+    "verify": {
+      "state": "pending",
+      "retries": 0
+    },
+    "pr": {
+      "state": "pending",
+      "retries": 0
     }
   },
   "issueNumber": 873,
@@ -22,5 +71,6 @@
       "actor": "aguyaharonyair",
       "timestamp": "2026-03-17T19:06:11.489Z"
     }
-  ]
+  ],
+  "branchName": "docs/260317-systest-873-system-test-document-pipeline-h"
 }
