@@ -1,4 +1,3 @@
 # Clarified
 
-1. feature branch
-2. yes
+_(by @aguyaharonyair)_
