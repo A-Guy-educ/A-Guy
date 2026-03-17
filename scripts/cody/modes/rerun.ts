@@ -145,6 +145,10 @@ export async function runRerunMode(ctx: PipelineContext): Promise<void> {
     logger.info('⚡ Turbo mode: forcing turbo profile')
   }
 
+  // Track if fromStage was explicitly provided (via CLI) vs derived from failed/paused stage
+  // If explicitly provided, don't inject default feedback (prevents backup to architect on auto-retries)
+  const fromStageExplicitlyProvided = !!input.fromStage
+
   // Determine fromStage
   // FIX #673: After gate approval, use the NEXT stage (not the approved one)
   // to prevent resetFromStage from overwriting the gate approval
@@ -180,8 +184,9 @@ export async function runRerunMode(ctx: PipelineContext): Promise<void> {
     }
   }
 
-  // Default feedback
-  if (!input.feedback) {
+  // Default feedback - but only if fromStage wasn't explicitly provided
+  // This prevents unnecessary backup to architect on auto-retries (pipeline-fixer)
+  if (!input.feedback && !fromStageExplicitlyProvided) {
     input.feedback = 'Rerun requested via /cody rerun'
   }
 

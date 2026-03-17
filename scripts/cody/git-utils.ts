@@ -507,11 +507,25 @@ function getHookSafeEnv(): NodeJS.ProcessEnv {
  * Handles the case where the remote branch has been updated by a previous
  * pipeline run (e.g., gate approval pushed new commits before rerun started).
  *
+ * FIX: Use origin/<branch> instead of HEAD for pull, and add force-with-lease fallback.
+ *
  * @returns true if push succeeded, false if it failed even after rebase
  */
 export function pushWithRebase(cwd: string, env?: NodeJS.ProcessEnv): boolean {
   const pushEnv = env || getHookSafeEnv()
   const pushOpts = { cwd, stdio: 'inherit' as const, env: pushEnv, timeout: 120_000 }
+
+  // Get current branch name for proper remote tracking reference
+  let branchName = ''
+  try {
+    branchName = execFileSync('git', ['branch', '--show-current'], {
+      cwd,
+      encoding: 'utf-8',
+    }).trim()
+  } catch {
+    logger.warn('[push] Could not determine branch name, falling back to HEAD')
+    branchName = ''
+  }
 
   try {
     execFileSync('git', ['push', '-u', 'origin', 'HEAD'], pushOpts)
@@ -520,7 +534,8 @@ export function pushWithRebase(cwd: string, env?: NodeJS.ProcessEnv): boolean {
     // Push rejected — remote has new commits. Pull with rebase and retry.
     logger.info('[push] Push rejected, pulling with rebase...')
     try {
-      execFileSync('git', ['pull', '--rebase', 'origin', 'HEAD'], {
+      // FIX: Use origin/<branch> instead of HEAD for proper remote tracking
+      execFileSync('git', ['pull', '--rebase', 'origin', branchName], {
         cwd,
         stdio: 'inherit',
         timeout: 120_000,
@@ -529,10 +544,18 @@ export function pushWithRebase(cwd: string, env?: NodeJS.ProcessEnv): boolean {
       execFileSync('git', ['push', '-u', 'origin', 'HEAD'], pushOpts)
       logger.info('[push] Push succeeded after rebase')
       return true
-    } catch (rebaseError: unknown) {
-      const msg = rebaseError instanceof Error ? rebaseError.message : String(rebaseError)
-      logger.error(`[push] Push failed after rebase: ${msg}`)
-      return false
+    } catch {
+      // Try force-with-lease as last resort (safe for feature branches - rejects if remote moved)
+      logger.info('[push] Rebase push failed, trying force-with-lease...')
+      try {
+        execFileSync('git', ['push', '-u', 'origin', 'HEAD', '--force-with-lease'], pushOpts)
+        logger.info('[push] Push succeeded with force-with-lease')
+        return true
+      } catch (forceError: unknown) {
+        const msg = forceError instanceof Error ? forceError.message : String(forceError)
+        logger.error(`[push] Push failed after all retries: ${msg}`)
+        return false
+      }
     }
   }
 }
