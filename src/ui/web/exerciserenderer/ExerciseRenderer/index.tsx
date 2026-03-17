@@ -181,8 +181,9 @@ export function ExerciseRenderer({
   useEffect(() => {
     if (!onResultsChange) return
     const totalQuestions = questionBlocks.length
+    const checkedCount = Object.keys(checkResults).length
     const correctCount = Object.values(checkResults).filter((r) => r.isCorrect).length
-    onResultsChange({ totalQuestions, correctCount })
+    onResultsChange({ totalQuestions, checkedCount, correctCount })
   }, [checkResults, onResultsChange, questionBlocks.length])
 
   // SVG hotspot state (interactive SVGs are separate from QuestionBlock flow)

@@ -178,11 +178,8 @@ async function upsertProgressRecord(
         updatedRecords[existingIndex] = {
           ...existing,
           ...record,
-          // Keep the higher score
-          score:
-            record.score !== undefined
-              ? Math.max(record.score, existing.score || 0)
-              : existing.score,
+          // Use the new score (allows correction on re-attempts)
+          score: record.score !== undefined ? record.score : existing.score,
           lastAccessedAt: now,
         }
       } else {

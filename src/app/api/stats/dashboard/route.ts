@@ -216,16 +216,13 @@ export async function GET(req: Request) {
     (r: ProgressRecord) => r.recordType === 'exercise',
   )
 
-  // Total Progress: average completion percentage across lesson records
+  // Total Progress: completed lessons / total lessons (not just average of attempted)
+  const completedLessonCount = lessonRecords.filter(
+    (r: ProgressRecord) => r.status === 'completed',
+  ).length
+  const allLessonCount = relevantLessonIds ? relevantLessonIds.size : 0
   const totalProgress =
-    lessonRecords.length > 0
-      ? Math.round(
-          lessonRecords.reduce(
-            (sum: number, r: ProgressRecord) => sum + (r.completionPercentage || 0),
-            0,
-          ) / lessonRecords.length,
-        )
-      : 0
+    allLessonCount > 0 ? Math.round((completedLessonCount / allLessonCount) * 100) : 0
 
   // Time Spent (from UserStats)
   const timeSpent = userStats.totalTimeSpentSeconds || 0

@@ -58,12 +58,14 @@ export function ExercisesPager({
   } = useExercisesPager({ exercises, courseSlug, chapterSlug, lessonSlug, hasAboutPage })
 
   // Store per-exercise question results from ExerciseRenderer
-  const exerciseResults = useRef<Record<string, { totalQuestions: number; correctCount: number }>>({})
+  const exerciseResults = useRef<
+    Record<string, { totalQuestions: number; checkedCount: number; correctCount: number }>
+  >({})
   const trackedExercises = useRef(new Set<string>())
   const prevExerciseIndex = useRef<number | undefined>(undefined)
   const trackedLessonCompletion = useRef(false)
 
-  // Track exercise completion when navigating away from an exercise
+  // Track exercise when navigating away — only if student checked at least one answer
   useEffect(() => {
     if (
       prevExerciseIndex.current !== undefined &&
@@ -71,48 +73,57 @@ export function ExercisesPager({
     ) {
       const prevExercise = exercises[prevExerciseIndex.current]
       if (prevExercise && !trackedExercises.current.has(prevExercise.id)) {
-        trackedExercises.current.add(prevExercise.id)
         const results = exerciseResults.current[prevExercise.id]
-        const totalQuestions = results?.totalQuestions || 1
-        const correctCount = results?.correctCount || 0
-        const score = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0
-        fetch('/api/stats/track-activity', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            eventType: 'exercise_completed',
-            exerciseId: prevExercise.id,
-            exerciseTitle: prevExercise.title || '',
-            lessonId,
-            score,
-            totalQuestions,
-            correctCount,
-          }),
-        }).catch(() => {
-          // fail silently
-        })
+        const checkedCount = results?.checkedCount || 0
+
+        // Only track if student actually attempted at least one question
+        if (checkedCount > 0) {
+          trackedExercises.current.add(prevExercise.id)
+          const totalQuestions = results?.totalQuestions || 1
+          const correctCount = results?.correctCount || 0
+          const score = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0
+          fetch('/api/stats/track-activity', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              eventType: 'exercise_completed',
+              exerciseId: prevExercise.id,
+              exerciseTitle: prevExercise.title || '',
+              lessonId,
+              score,
+              totalQuestions,
+              correctCount,
+            }),
+          }).catch(() => {
+            // fail silently
+          })
+        }
       }
     }
     prevExerciseIndex.current = pageState.exerciseIndex
   }, [pageState.exerciseIndex, exercises, lessonId])
 
-  // Track lesson completion when reaching the outro page
+  // Track lesson completion when reaching outro — only if student attempted exercises
   useEffect(() => {
     if (pageState.type === 'outro' && !trackedLessonCompletion.current) {
-      trackedLessonCompletion.current = true
-      fetch('/api/stats/track-activity', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          eventType: 'lesson_completed',
-          lessonId,
-          lessonTitle,
-        }),
-      }).catch(() => {
-        // fail silently
-      })
+      // Only mark lesson complete if at least one exercise was actually attempted
+      const hasAttemptedExercises = trackedExercises.current.size > 0
+      if (hasAttemptedExercises) {
+        trackedLessonCompletion.current = true
+        fetch('/api/stats/track-activity', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            eventType: 'lesson_completed',
+            lessonId,
+            lessonTitle,
+          }),
+        }).catch(() => {
+          // fail silently
+        })
+      }
     }
   }, [pageState.type, lessonId, lessonTitle])
 
@@ -123,7 +134,7 @@ export function ExercisesPager({
     typeof pageState.exerciseIndex === 'number' ? exercises[pageState.exerciseIndex] : null
 
   const handleExerciseResultsChange = useCallback(
-    (results: { totalQuestions: number; correctCount: number }) => {
+    (results: { totalQuestions: number; checkedCount: number; correctCount: number }) => {
       if (currentExercise) {
         exerciseResults.current[currentExercise.id] = results
       }
