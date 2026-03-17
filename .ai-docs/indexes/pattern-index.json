@@ -224,9 +224,12 @@
         "src/ui/cody/components/TaskDetailDialog.tsx",
         "src/ui/cody/components/TaskDetailHeader.tsx",
         "src/ui/cody/components/TaskList.tsx",
+        "src/ui/cody/components/VoiceButton.tsx",
+        "src/ui/cody/components/VoiceChatOverlay.tsx",
         "src/ui/cody/components/WorkflowRunsPopover.tsx",
         "src/ui/cody/hooks/index.ts",
         "src/ui/cody/hooks/useBrowserNotifications.ts",
+        "src/ui/cody/hooks/useCodyTTS.ts",
         "src/ui/cody/hooks/useDashboardFilters.ts",
         "src/ui/cody/hooks/useDashboardRouter.ts",
         "src/ui/cody/hooks/useGitHubIdentity.ts",
@@ -234,6 +237,8 @@
         "src/ui/cody/hooks/usePRCIStatus.ts",
         "src/ui/cody/hooks/usePublish.ts",
         "src/ui/cody/hooks/useRemoteStatus.ts",
+        "src/ui/cody/hooks/useSpeechRecognition.ts",
+        "src/ui/cody/hooks/useVoiceChat.ts",
         "src/ui/web/AdminBar/index.tsx",
         "src/ui/web/Card/index.tsx",
         "src/ui/web/CommandPalette.tsx",
@@ -407,6 +412,8 @@
         "src/ui/cody/components/TaskDetail.tsx",
         "src/ui/cody/components/TaskList.tsx",
         "src/ui/cody/components/TaskTypeBadge.tsx",
+        "src/ui/cody/components/VoiceButton.tsx",
+        "src/ui/cody/components/VoiceChatOverlay.tsx",
         "src/ui/cody/components/WorkflowRunsPopover.tsx",
         "src/ui/web/AdminBar/index.tsx",
         "src/ui/web/Card/index.tsx",
@@ -682,6 +689,7 @@
         "src/app/api/cody/chat/route.ts",
         "src/app/api/cody/chat/save/route.ts",
         "src/app/api/cody/prs/comments/route.ts",
+        "src/app/api/cody/prs/status/route.ts",
         "src/app/api/cody/tasks/[taskId]/actions/route.ts",
         "src/app/api/cody/tasks/approve/route.ts",
         "src/app/api/entitlements/redeem/route.ts",
@@ -1123,6 +1131,16 @@
       "pattern": "viewport-calculation",
       "description": "No description available",
       "files": ["src/infra/utils/graphics/viewport-utils.ts"]
+    },
+    "browser-api-types": {
+      "pattern": "browser-api-types",
+      "description": "No description available",
+      "files": ["src/infra/utils/speech-recognition.d.ts"]
+    },
+    "text-processing": {
+      "pattern": "text-processing",
+      "description": "No description available",
+      "files": ["src/infra/utils/speechHelpers.ts"]
     },
     "typed-config-accessor": {
       "pattern": "typed-config-accessor",
@@ -1687,6 +1705,14 @@
       "description": "No description available",
       "files": ["src/ui/cody/components/TaskList.tsx"]
     },
+    "voice-ui": {
+      "pattern": "voice-ui",
+      "description": "No description available",
+      "files": [
+        "src/ui/cody/components/VoiceButton.tsx",
+        "src/ui/cody/components/VoiceChatOverlay.tsx"
+      ]
+    },
     "popover": {
       "pattern": "popover",
       "description": "No description available",
@@ -1711,6 +1737,11 @@
       "pattern": "browser-notifications",
       "description": "No description available",
       "files": ["src/ui/cody/hooks/useBrowserNotifications.ts"]
+    },
+    "browser-speech-api": {
+      "pattern": "browser-speech-api",
+      "description": "No description available",
+      "files": ["src/ui/cody/hooks/useCodyTTS.ts", "src/ui/cody/hooks/useSpeechRecognition.ts"]
     },
     "state-management": {
       "pattern": "state-management",
@@ -1741,6 +1772,11 @@
       "pattern": "usePublish",
       "description": "No description available",
       "files": ["src/ui/cody/hooks/usePublish.ts"]
+    },
+    "state-machine": {
+      "pattern": "state-machine",
+      "description": "No description available",
+      "files": ["src/ui/cody/hooks/useVoiceChat.ts"]
     },
     "config": {
       "pattern": "config",
@@ -2640,7 +2676,7 @@
       "type": "endpoint",
       "domain": "cody",
       "patterns": ["branches-api", "api-endpoint", "validated-endpoint"],
-      "aiSummary": "API route for listing and deleting branches from GitHub",
+      "aiSummary": "API route for listing and deleting branches from GitHub.",
       "dependencies": ["next/server", "zod"]
     },
     "src/app/api/cody/chat/load/route.ts": {
@@ -2657,14 +2693,22 @@
       "domain": "cody",
       "patterns": ["ai-chat-streaming", "api-endpoint", "validated-endpoint"],
       "aiSummary": "Streaming AI chat endpoint with GitHub MCP tools for repo browsing",
-      "dependencies": ["@ai-sdk/mcp", "@ai-sdk/google", "ai", "zod", "next/server"]
+      "dependencies": [
+        "@ai-sdk/mcp",
+        "@ai-sdk/google",
+        "ai",
+        "child_process",
+        "net",
+        "zod",
+        "next/server"
+      ]
     },
     "src/app/api/cody/chat/save/route.ts": {
       "path": "src/app/api/cody/chat/save/route.ts",
       "type": "api-endpoint",
       "domain": "cody",
       "patterns": ["chat-save-api", "api-endpoint", "validated-endpoint"],
-      "aiSummary": "API route to save chat history for a task to GitHub",
+      "aiSummary": "API route to save chat history for a task to GitHub.",
       "dependencies": ["next/server", "zod"]
     },
     "src/app/api/cody/collaborators/route.ts": {
@@ -2681,7 +2725,7 @@
       "domain": "cody",
       "patterns": ["inspector-health-api", "api-endpoint"],
       "aiSummary": "API route to fetch inspector health status and metrics",
-      "dependencies": ["next/server", "child_process", "fs", "path"]
+      "dependencies": ["next/server", "child_process", "util", "fs/promises", "path"]
     },
     "src/app/api/cody/pipeline/[taskId]/route.ts": {
       "path": "src/app/api/cody/pipeline/[taskId]/route.ts",
@@ -2719,16 +2763,16 @@
       "path": "src/app/api/cody/prs/status/route.ts",
       "type": "api-endpoint",
       "domain": "cody",
-      "patterns": ["pr-ci-status", "api-endpoint"],
+      "patterns": ["pr-ci-status", "api-endpoint", "validated-endpoint"],
       "aiSummary": "Fetch CI status and mergeability for a PR",
-      "dependencies": ["next/server"]
+      "dependencies": ["next/server", "zod"]
     },
     "src/app/api/cody/publish/route.ts": {
       "path": "src/app/api/cody/publish/route.ts",
       "type": "api-endpoint",
       "domain": "cody",
       "patterns": ["publish", "api-endpoint"],
-      "aiSummary": "Create a GitHub issue with 'publish' label to trigger dev→main PR workflow",
+      "aiSummary": "Create a GitHub issue with 'publish' label to trigger dev→main PR workflow.",
       "dependencies": ["next/server"]
     },
     "src/app/api/cody/remote/exec/route.ts": {
@@ -2776,7 +2820,7 @@
       "type": "api-endpoint",
       "domain": "cody",
       "patterns": ["approve-gate", "api-endpoint", "validated-endpoint"],
-      "aiSummary": "Approve a gate - merge PR, delete branch, close issue, remove labels via GitHub API",
+      "aiSummary": "Approve a gate - merge PR, delete branch, close issue, remove labels via GitHub API.",
       "dependencies": ["next/server", "zod"]
     },
     "src/app/api/cody/tasks/approve-review/route.ts": {
@@ -3129,7 +3173,7 @@
       "domain": "auth",
       "patterns": ["oauth", "api-endpoint"],
       "aiSummary": "Standalone GitHub identity session for the Cody Operations Dashboard.",
-      "dependencies": ["jose", "next/server"]
+      "dependencies": ["jose", "crypto", "next/server"]
     },
     "src/infra/auth/oauth_constants.ts": {
       "path": "src/infra/auth/oauth_constants.ts",
@@ -3505,6 +3549,22 @@
       "domain": "graphics",
       "patterns": ["viewport-calculation"],
       "aiSummary": "Viewport utility functions for auto-calculating, validating, and resolving graph display ranges",
+      "dependencies": []
+    },
+    "src/infra/utils/speech-recognition.d.ts": {
+      "path": "src/infra/utils/speech-recognition.d.ts",
+      "type": "type-declaration",
+      "domain": "shared",
+      "patterns": ["browser-api-types"],
+      "aiSummary": "Type declarations for the Web Speech Recognition API",
+      "dependencies": []
+    },
+    "src/infra/utils/speechHelpers.ts": {
+      "path": "src/infra/utils/speechHelpers.ts",
+      "type": "utility",
+      "domain": "shared",
+      "patterns": ["text-processing"],
+      "aiSummary": "Shared helpers for speech synthesis: markdown stripping and language detection",
       "dependencies": []
     },
     "src/infra/utils/useClickableCard.ts": {
@@ -4841,7 +4901,7 @@
       "domain": "cody",
       "patterns": ["auth", "api-endpoint", "authenticated-endpoint"],
       "aiSummary": "Dashboard authentication middleware.",
-      "dependencies": ["next/server", "payload", "@payload-config"]
+      "dependencies": ["next/server", "payload", "@payload-config", "@octokit/rest"]
     },
     "src/ui/cody/chat-types.ts": {
       "path": "src/ui/cody/chat-types.ts",
@@ -5163,6 +5223,22 @@
       "aiSummary": "Task type badge",
       "dependencies": []
     },
+    "src/ui/cody/components/VoiceButton.tsx": {
+      "path": "src/ui/cody/components/VoiceButton.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["voice-ui", "tailwind-component", "client-component"],
+      "aiSummary": "Mic button for CodyChat input bar — tap for conversation, long-press for push-to-talk",
+      "dependencies": ["react", "lucide-react"]
+    },
+    "src/ui/cody/components/VoiceChatOverlay.tsx": {
+      "path": "src/ui/cody/components/VoiceChatOverlay.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["voice-ui", "tailwind-component", "client-component"],
+      "aiSummary": "Full-screen voice conversation overlay with state indicators and controls",
+      "dependencies": ["react", "lucide-react"]
+    },
     "src/ui/cody/components/WorkflowRunsPopover.tsx": {
       "path": "src/ui/cody/components/WorkflowRunsPopover.tsx",
       "type": "component",
@@ -5209,6 +5285,14 @@
       "domain": "cody",
       "patterns": ["browser-notifications", "client-component"],
       "aiSummary": "Browser notification hook for task state changes.",
+      "dependencies": ["react"]
+    },
+    "src/ui/cody/hooks/useCodyTTS.ts": {
+      "path": "src/ui/cody/hooks/useCodyTTS.ts",
+      "type": "hook",
+      "domain": "cody",
+      "patterns": ["browser-speech-api", "client-component"],
+      "aiSummary": "Cody-specific TTS hook with onEnd callback for conversation loop",
       "dependencies": ["react"]
     },
     "src/ui/cody/hooks/useDashboardFilters.ts": {
@@ -5266,6 +5350,22 @@
       "patterns": ["custom-hooks", "client-component"],
       "aiSummary": "React Query hook for polling remote dev agent status",
       "dependencies": ["@tanstack/react-query"]
+    },
+    "src/ui/cody/hooks/useSpeechRecognition.ts": {
+      "path": "src/ui/cody/hooks/useSpeechRecognition.ts",
+      "type": "hook",
+      "domain": "cody",
+      "patterns": ["browser-speech-api", "client-component"],
+      "aiSummary": "React hook wrapping Web Speech Recognition API for speech-to-text",
+      "dependencies": ["react"]
+    },
+    "src/ui/cody/hooks/useVoiceChat.ts": {
+      "path": "src/ui/cody/hooks/useVoiceChat.ts",
+      "type": "hook",
+      "domain": "cody",
+      "patterns": ["state-machine", "client-component"],
+      "aiSummary": "Orchestrates full voice conversation: LISTEN → PROCESS → SPEAK → LISTEN",
+      "dependencies": ["react"]
     },
     "src/ui/cody/pipeline-utils.ts": {
       "path": "src/ui/cody/pipeline-utils.ts",
@@ -6282,8 +6382,8 @@
     }
   },
   "metadata": {
-    "generatedAt": "2026-03-16T18:15:30.290Z",
-    "totalFiles": 554,
-    "totalPatterns": 194
+    "generatedAt": "2026-03-16T21:19:58.965Z",
+    "totalFiles": 561,
+    "totalPatterns": 199
   }
 }
