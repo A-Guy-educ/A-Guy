@@ -11,7 +11,7 @@ import { LABELS } from '../shared/locales'
 
 export const logout: ActionHandler = async (ctx) => {
   const { page, locale } = ctx
-  const _labels = LABELS[locale]
+  const labels = LABELS[locale]
 
   // Click user dropdown to find logout option
   const userButton = page

@@ -18,7 +18,7 @@ export const submitAnswer: ActionHandler = async (ctx, input) => {
     throw new Error('submitAnswer action requires questionIndex and value inputs')
   }
 
-  const _labels = LABELS[locale]
+  const labels = LABELS[locale]
 
   // Find the question container at the given index
   const questionContainers = page.locator('[class*="question"], [class*="exercise"]')

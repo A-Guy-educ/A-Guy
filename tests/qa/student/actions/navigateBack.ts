@@ -10,7 +10,7 @@ import { LABELS } from '../shared/locales'
 
 export const navigateBack: ActionHandler = async (ctx) => {
   const { page, locale } = ctx
-  const _labels = LABELS[locale]
+  const labels = LABELS[locale]
 
   // Try back button first
   const backButton = page.getByRole('button', { name: labels.back })

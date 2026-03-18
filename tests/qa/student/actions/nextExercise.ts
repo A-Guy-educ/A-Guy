@@ -10,7 +10,7 @@ import { LABELS } from '../shared/locales'
 
 export const nextExercise: ActionHandler = async (ctx) => {
   const { page, locale } = ctx
-  const _labels = LABELS[locale]
+  const labels = LABELS[locale]
 
   const nextButton = page.getByRole('button', { name: labels.next })
   await nextButton.click()

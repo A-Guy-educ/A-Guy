@@ -16,7 +16,7 @@ export const requestSolution: ActionHandler = async (ctx, input) => {
     throw new Error('requestSolution action requires questionIndex input')
   }
 
-  const _labels = LABELS[locale]
+  const labels = LABELS[locale]
 
   // Find all Solution buttons and click the one at questionIndex
   const buttons = page.getByRole('button', { name: labels.solution })

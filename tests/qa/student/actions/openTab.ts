@@ -28,7 +28,7 @@ export const openTab: ActionHandler = async (ctx, input) => {
     throw new Error('openTab action requires tab input')
   }
 
-  const _labels = LABELS[locale]
+  const labels = LABELS[locale]
   const labelKey = TAB_MAP[tab]
   const tabLabel = labels[labelKey as keyof typeof labels]
 

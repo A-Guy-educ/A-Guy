@@ -10,7 +10,7 @@ import { LABELS } from '../shared/locales'
 
 export const completeLesson: ActionHandler = async (ctx) => {
   const { page, locale } = ctx
-  const _labels = LABELS[locale]
+  const labels = LABELS[locale]
 
   const completeButton = page.getByRole('button', { name: labels.complete })
   await completeButton.click()

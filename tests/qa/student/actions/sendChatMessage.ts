@@ -16,7 +16,7 @@ export const sendChatMessage: ActionHandler = async (ctx, input) => {
     throw new Error('sendChatMessage action requires text input')
   }
 
-  const _labels = LABELS[locale]
+  const labels = LABELS[locale]
 
   // Find the chat input by placeholder text
   const chatInput = page.getByPlaceholder(labels.typeMessage)

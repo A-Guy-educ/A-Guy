@@ -19,7 +19,7 @@ export const expectFeedback: ActionHandler = async (ctx, input) => {
     throw new Error('expectFeedback action requires questionIndex and correct inputs')
   }
 
-  const _labels = LABELS[locale]
+  const labels = LABELS[locale]
   const expectedText = correct ? labels.correct : labels.incorrect
 
   // Find the feedback element at questionIndex
