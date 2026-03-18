@@ -209,6 +209,7 @@
     "@tailwindcss/postcss": "^4.1.18",
     "@tailwindcss/typography": "^0.5.13",
     "@testcontainers/mongodb": "^11.11.0",
+    "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "16.3.1",
     "@types/escape-html": "^1.0.2",
     "@types/hast": "^3.0.4",

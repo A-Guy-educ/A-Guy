@@ -343,6 +343,7 @@ export const ExerciseBlockDefaults: Record<string, () => ContentBlock> = {
       viewport: { xMin: -10, xMax: 10, yMin: -10, yMax: 10 },
       elements: { points: [], graphs: [] },
     },
+    displaySize: 'full',
     hint: DEFAULT_HINT_SOLUTION(),
     solution: DEFAULT_HINT_SOLUTION(),
     fullSolution: DEFAULT_HINT_SOLUTION(),

@@ -1,0 +1,48 @@
+{
+  "version": 2,
+  "taskId": "260314-auto-530",
+  "mode": "fix",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-14T09:54:23.838Z",
+  "updatedAt": "2026-03-14T10:17:33.614Z",
+  "state": "failed",
+  "cursor": "review",
+  "stages": {
+    "review": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-14T09:54:23.845Z",
+      "completedAt": "2026-03-14T09:57:29.127Z",
+      "outputFile": "review.md",
+      "tokenUsage": {
+        "input": 20,
+        "output": 7287,
+        "cacheRead": 1114477
+      },
+      "cost": 1.2752635,
+      "sessionId": "ses_3143b3e8cffeNYxGGdgnD3NiHk"
+    },
+    "fix": {
+      "state": "timeout",
+      "retries": 0,
+      "fixAttempt": 0,
+      "maxFixAttempts": 2,
+      "startedAt": "2026-03-14T09:57:32.250Z"
+    },
+    "commit": {
+      "state": "pending",
+      "retries": 0
+    },
+    "verify": {
+      "state": "pending",
+      "retries": 0
+    },
+    "pr": {
+      "state": "pending",
+      "retries": 0
+    }
+  },
+  "issueNumber": 813,
+  "completedAt": "2026-03-14T10:17:33.614Z",
+  "totalCost": 1.2752635
+}
