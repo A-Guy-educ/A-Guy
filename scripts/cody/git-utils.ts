@@ -502,6 +502,106 @@ function getHookSafeEnv(): NodeJS.ProcessEnv {
   return _hookSafeEnvCache
 }
 
+// ============================================================================
+// Pending Commit Patch — Persist build output across failed pushes
+// ============================================================================
+
+const PENDING_PATCH_FILE = 'pending-commit.patch'
+const PENDING_MESSAGE_FILE = 'pending-commit-message.txt'
+
+/**
+ * Save the last commit as a patch file in the task directory.
+ * Called when commit succeeds but push fails, so the build output
+ * can be recovered on the next rerun without re-running the build stage.
+ */
+export function savePendingPatch(taskDir: string, cwd: string): boolean {
+  try {
+    // Generate patch from HEAD commit
+    const patch = execFileSync('git', ['format-patch', '-1', 'HEAD', '--stdout'], {
+      cwd,
+      encoding: 'utf-8',
+      timeout: 30_000,
+    })
+
+    if (!patch.trim()) {
+      logger.warn('[patch] No patch content generated')
+      return false
+    }
+
+    // Save patch to task directory
+    const patchPath = path.join(taskDir, PENDING_PATCH_FILE)
+    fs.writeFileSync(patchPath, patch)
+
+    // Save commit message separately (format-patch includes it but we need it standalone)
+    const message = execFileSync('git', ['log', '-1', '--format=%B'], {
+      cwd,
+      encoding: 'utf-8',
+    }).trim()
+    const messagePath = path.join(taskDir, PENDING_MESSAGE_FILE)
+    fs.writeFileSync(messagePath, message)
+
+    // Reset HEAD back so the patch can be cleanly re-applied on next run
+    // (the commit exists locally but was never pushed)
+    execFileSync('git', ['reset', 'HEAD~1'], {
+      cwd,
+      stdio: 'pipe',
+    })
+
+    logger.info(`[patch] Saved pending patch to ${PENDING_PATCH_FILE} (build output preserved)`)
+    return true
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    logger.error(`[patch] Failed to save pending patch: ${msg}`)
+    return false
+  }
+}
+
+/**
+ * Check if a pending patch exists and apply it.
+ * Called at the start of commitAndPush to restore build output
+ * from a previous failed push attempt.
+ *
+ * @returns true if patch was applied, false if no patch or apply failed
+ */
+export function restorePendingPatch(taskDir: string, cwd: string): boolean {
+  const patchPath = path.join(taskDir, PENDING_PATCH_FILE)
+  if (!fs.existsSync(patchPath)) {
+    return false
+  }
+
+  try {
+    logger.info('[patch] Found pending patch — restoring build output from previous run...')
+
+    // Apply the patch (--3way handles conflicts gracefully)
+    execFileSync('git', ['apply', '--3way', patchPath], {
+      cwd,
+      stdio: 'pipe',
+      timeout: 30_000,
+    })
+
+    // Clean up the patch file (it will be re-saved if push fails again)
+    fs.unlinkSync(patchPath)
+    const messagePath = path.join(taskDir, PENDING_MESSAGE_FILE)
+    if (fs.existsSync(messagePath)) {
+      fs.unlinkSync(messagePath)
+    }
+
+    logger.info('[patch] Successfully restored build output from pending patch')
+    return true
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    logger.warn(`[patch] Failed to apply pending patch (may need rebuild): ${msg}`)
+
+    // Clean up the failed patch so we don't keep retrying it
+    try {
+      fs.unlinkSync(patchPath)
+    } catch {
+      // ignore
+    }
+    return false
+  }
+}
+
 /**
  * Push to origin with automatic pull-rebase-retry on rejection.
  * Handles the case where the remote branch has been updated by a previous
@@ -709,11 +809,28 @@ export function commitAndPush(
     }).trim()
 
     if (!status) {
-      return {
-        hash: '',
-        branch,
-        success: false,
-        message: 'No changes to commit',
+      // Try restoring from a pending patch (build output from a previous failed push)
+      const restored = restorePendingPatch(taskDir, workDir)
+      if (!restored) {
+        return {
+          hash: '',
+          branch,
+          success: false,
+          message: 'No changes to commit',
+        }
+      }
+      // Re-check status after patch restore
+      const newStatus = execFileSync('git', ['status', '--porcelain'], {
+        cwd: workDir,
+        encoding: 'utf-8',
+      }).trim()
+      if (!newStatus) {
+        return {
+          hash: '',
+          branch,
+          success: false,
+          message: 'No changes to commit (patch restore produced no changes)',
+        }
       }
     }
 
@@ -786,6 +903,9 @@ export function commitAndPush(
     // Push with automatic rebase-retry on rejection (fixes rejected pushes on reruns)
     const pushed = pushWithRebase(workDir, hookSafeEnv)
     if (!pushed) {
+      // Save the commit as a patch so it can be restored on next rerun
+      // This preserves build output across failed pushes
+      savePendingPatch(taskDir, workDir)
       return {
         hash,
         branch,
