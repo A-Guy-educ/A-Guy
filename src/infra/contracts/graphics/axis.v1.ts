@@ -29,6 +29,12 @@ const AxesSchema = z.object({
     x: z.number(),
     y: z.number(),
   }),
+  tickPosition: z
+    .object({
+      x: z.enum(['default', 'inverted']).default('default'),
+      y: z.enum(['default', 'inverted']).default('default'),
+    })
+    .optional(),
 })
 
 /** Viewport mode: auto (calculate from content) or manual (user-defined) */

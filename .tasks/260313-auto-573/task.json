@@ -1,0 +1,33 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.9,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/infra/contracts/graphics/axis.v1.ts - Add tickPosition config to AxesSchema",
+    "src/ui/admin/ExerciseContentEditor/components/axis/AxisConfigPanel.tsx - Add toggle controls",
+    "src/ui/admin/ExerciseContentEditor/components/axis/AxisCanvas.tsx - Pass tick position to JSXGraphBoard",
+    "src/ui/web/exerciserenderer/graphics/JSXGraphBoard.tsx - Support tick position rendering",
+    "src/ui/web/exerciserenderer/blocks/AxisRenderer/index.tsx - Pass tick config to JSXGraphBoard"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "JSXGraph supports tick position configuration via axis attributes (position property)",
+    "Existing graphs should default to current behavior (standard placement)",
+    "AxisSpecV1 schema can be extended with optional tickPosition fields",
+    "The axis title positioning can be achieved via JSXGraph label positioning options"
+  ],
+  "review_questions": [
+    "Does JSXGraph API support tick position inversion (above/below for X, left/right for Y)?",
+    "Should axis title positioning be standardized programmatically or via JSXGraph's built-in label positioning?"
+  ],
+  "complexity": 40,
+  "complexity_reasoning": "Scope: 12 (4-6 files across admin + student view modules). Risk: 8 (UI configuration, no critical data). Novelty: 8 (extending existing axis editor). Cross-domain: 6 (admin + student view rendering). Ambiguity: 2 (clear requirements). Dependency: 4 (depends on existing graph infrastructure). Total: 40 - Complex tier",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Input contains ## Requirements with clear core requirements and ## Acceptance Criteria with 6 checkable items. The task describes a feature implementation with specific UI behavior and data persistence requirements."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

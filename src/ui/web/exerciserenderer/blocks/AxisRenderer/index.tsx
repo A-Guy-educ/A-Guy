@@ -46,6 +46,7 @@ export function AxisRenderer({ blockId, spec }: AxisRendererProps) {
           showLabels: spec.axes.showLabels,
           ticks: spec.axes.ticks,
           labels: spec.axes.labels,
+          tickPosition: spec.axes.tickPosition ?? { x: 'default', y: 'default' },
         }}
         onBoardReady={handleBoardReady}
         className="border-border"

@@ -212,6 +212,13 @@ export const AxisCanvas: React.FC<AxisCanvasProps> = ({ id, axis, onPointMoved }
       boundingBox={bbox}
       showAxis
       showGrid={axis.grid.enabled}
+      axisConfig={{
+        showNumbers: axis.axes.showNumbers,
+        showLabels: axis.axes.showLabels,
+        ticks: axis.axes.ticks,
+        labels: axis.axes.labels,
+        tickPosition: axis.axes.tickPosition ?? { x: 'default', y: 'default' },
+      }}
       onBoardReady={handleBoardReady}
     />
   )
