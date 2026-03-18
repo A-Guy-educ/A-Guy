@@ -11,7 +11,12 @@ import {
   isExerciseTitle,
 } from '@/lib/latex-parser/enumerate-parser'
 import { parseTabular } from '@/lib/latex-parser/tabular-parser'
-import { parseTikzAxis, hasTikzAxis } from '@/lib/latex-parser/tikz-axis-parser'
+import {
+  parseTikzAxis,
+  hasTikzAxis,
+  parseTikzDrawPlot,
+  hasTikzDrawPlot,
+} from '@/lib/latex-parser/tikz-axis-parser'
 import { parseTikzGeometry, hasTikzGeometry } from '@/lib/latex-parser/tikz-geometry-parser'
 import { makeRichTextBlock, makeLatexBlock } from '@/lib/latex-parser/block-generators'
 import type { ContentBlock } from '@/server/payload/collections/Exercises/types'
@@ -187,6 +192,12 @@ function processTokens(
           const axisBlock = parseTikzAxis(raw)
           if (axisBlock) {
             blocks.push(axisBlock)
+          }
+        } else if (hasTikzDrawPlot(raw)) {
+          // Raw \draw ... plot (\x, {expr}) — function graphs without \begin{axis}
+          const drawPlotBlock = parseTikzDrawPlot(raw)
+          if (drawPlotBlock) {
+            blocks.push(drawPlotBlock)
           }
         } else if (hasTikzGeometry(raw)) {
           const geoBlock = parseTikzGeometry(raw)

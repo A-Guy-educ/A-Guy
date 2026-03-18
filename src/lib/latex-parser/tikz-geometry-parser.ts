@@ -99,6 +99,24 @@ function parseLabeledPoints(content: string): Map<string, string> {
   return labels
 }
 
+/** Parse \tkzMarkRightAngle(A,B,C) for right angle markers */
+function parseRightAngles(
+  content: string,
+  knownPoints: Set<string>,
+): Array<{ center: string; ray1: string; ray2: string }> {
+  const angles: Array<{ center: string; ray1: string; ray2: string }> = []
+  // Match \tkzMarkRightAngle[options](A,B,C) — B is the vertex
+  const regex = /\\tkzMarkRightAngle\s*(?:\[[^\]]*\])?\s*\((\w+)\s*,\s*(\w+)\s*,\s*(\w+)\)/g
+  let match: RegExpExecArray | null
+  while ((match = regex.exec(content)) !== null) {
+    const [, ray1, center, ray2] = match
+    if (knownPoints.has(ray1) && knownPoints.has(center) && knownPoints.has(ray2)) {
+      angles.push({ center, ray1, ray2 })
+    }
+  }
+  return angles
+}
+
 /** Canvas dimensions */
 const CANVAS_WIDTH = 500
 const CANVAS_HEIGHT = 400
@@ -152,6 +170,7 @@ export function parseTikzGeometry(tikzContent: string): QuestionGeometryBlock | 
   const labels = parseLabeledPoints(tikzContent)
   const drawLines = parseDrawLines(tikzContent, knownPoints)
   const circles = parseCircles(tikzContent, knownPoints)
+  const rightAngles = parseRightAngles(tikzContent, knownPoints)
 
   // Normalize coordinates to canvas pixel space
   const coordinates = normalizeCoordinates(rawCoordinates)
@@ -185,7 +204,12 @@ export function parseTikzGeometry(tikzContent: string): QuestionGeometryBlock | 
         radius: Math.max(5, Math.round(c.radius * radiusScale)),
         style: 'solid' as const,
       })),
-      angles: [],
+      angles: rightAngles.map((a) => ({
+        center: labels.get(a.center) ?? a.center,
+        ray1: labels.get(a.ray1) ?? a.ray1,
+        ray2: labels.get(a.ray2) ?? a.ray2,
+        style: 'square' as const,
+      })),
     },
   }
 
