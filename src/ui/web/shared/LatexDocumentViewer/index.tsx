@@ -2,15 +2,55 @@
  * @fileType component
  * @domain ui
  * @pattern viewer
- * @ai-summary Renders raw LaTeX source as a typeset academic document, similar to PDFMedia for PDFs
+ * @ai-summary Renders raw LaTeX source as a typeset academic document with live TikZ diagrams.
+ *             Parses tikzpicture environments and renders them as interactive JSXGraph diagrams.
  */
 
 'use client'
 
+import React, { useMemo } from 'react'
+import dynamic from 'next/dynamic'
 import { cn } from '@/infra/utils/ui'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { MathMarkdown } from '@/ui/web/shared/MathMarkdown'
-import { latexToMarkdown, detectDirection } from './latex-to-markdown'
+import {
+  latexToMarkdownWithDiagrams,
+  detectDirection,
+  type ParsedDiagram,
+} from './latex-to-markdown'
+import type { AxisSpecV1 } from '@/infra/contracts/graphics/axis.v1'
+import type { GeometrySpecV1 } from '@/infra/contracts/graphics/geometry.v1'
+
+/** Lazy-loaded AxisRenderer for graph diagrams */
+const LazyAxisRenderer = dynamic(
+  () =>
+    import('@/ui/web/exerciserenderer/blocks/AxisRenderer').then((m) => ({
+      default: m.AxisRenderer,
+    })),
+  {
+    ssr: false,
+    loading: () => <div className="my-4 h-64 w-full animate-pulse rounded-lg bg-muted" />,
+  },
+)
+
+/** Lazy-loaded GeometryRenderer for geometry diagrams */
+const LazyGeometryRenderer = dynamic(
+  () =>
+    import('@/ui/web/exerciserenderer/blocks/GeometryRenderer').then((m) => ({
+      default: m.GeometryRenderer,
+    })),
+  {
+    ssr: false,
+    loading: () => <div className="my-4 h-64 w-full animate-pulse rounded-lg bg-muted" />,
+  },
+)
+
+function DiagramRenderer({ diagram }: { diagram: ParsedDiagram }) {
+  if (diagram.type === 'axis') {
+    return <LazyAxisRenderer blockId={diagram.id} spec={diagram.spec as AxisSpecV1} />
+  }
+  return <LazyGeometryRenderer blockId={diagram.id} spec={diagram.spec as GeometrySpecV1} />
+}
 
 export interface LatexDocumentViewerProps {
   /** Raw LaTeX source text to render */
@@ -30,26 +70,44 @@ export function LatexDocumentViewer({
   showPrintButton = true,
 }: LatexDocumentViewerProps) {
   const t = useTranslations('exercises')
-  const markdown = latexToMarkdown(latex)
   const dir = detectDirection(latex)
+
+  const { segments, diagrams } = useMemo(() => latexToMarkdownWithDiagrams(latex), [latex])
 
   return (
     <div
       dir={dir}
       className={cn(
-        'bg-background border-border mx-auto max-w-4xl rounded-lg border shadow-lg overflow-auto',
+        'bg-background border-border mx-auto max-w-4xl overflow-auto rounded-lg border shadow-lg',
         className,
       )}
     >
       <div className="px-12 py-10 font-serif sm:px-16 sm:py-12">
         {title && <h1 className="text-foreground mb-8 text-center text-2xl font-bold">{title}</h1>}
-        <MathMarkdown
-          content={markdown}
-          className="rich-text-content latex-document text-foreground text-base leading-relaxed"
-        />
+
+        {diagrams.length === 0 ? (
+          <MathMarkdown
+            content={segments[0]}
+            className="rich-text-content latex-document text-foreground text-base leading-relaxed"
+          />
+        ) : (
+          <>
+            {segments.map((segment, i) => (
+              <React.Fragment key={i}>
+                {segment && (
+                  <MathMarkdown
+                    content={segment}
+                    className="rich-text-content latex-document text-foreground text-base leading-relaxed"
+                  />
+                )}
+                {i < diagrams.length && <DiagramRenderer diagram={diagrams[i]} />}
+              </React.Fragment>
+            ))}
+          </>
+        )}
       </div>
       {showPrintButton && (
-        <div className="print:hidden fixed bottom-4 right-4">
+        <div className="fixed bottom-4 right-4 print:hidden">
           <button
             onClick={() => window.print()}
             className={cn(

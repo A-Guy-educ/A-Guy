@@ -3,8 +3,27 @@
  * @domain latex
  * @pattern converter
  * @ai-summary Converts raw LaTeX source to markdown+math for rendering via MathMarkdown.
- *             Handles Bagrut exam format: Hebrew enumerate, tabular, minipage, TikZ placeholders.
+ *             Handles Bagrut exam format: Hebrew enumerate, tabular, minipage, TikZ diagrams.
+ *             Extracts TikZ diagrams and returns parsed specs for live rendering.
  */
+
+import type { AxisSpecV1 } from '@/infra/contracts/graphics/axis.v1'
+import type { GeometrySpecV1 } from '@/infra/contracts/graphics/geometry.v1'
+import {
+  parseTikzAxis,
+  parseTikzDrawPlot,
+  hasTikzAxis,
+  hasTikzDrawPlot,
+} from '@/lib/latex-parser/tikz-axis-parser'
+import { parseTikzGeometry, hasTikzGeometry } from '@/lib/latex-parser/tikz-geometry-parser'
+
+/** A parsed TikZ diagram ready for rendering */
+export type ParsedDiagram =
+  | { type: 'axis'; id: string; spec: AxisSpecV1 }
+  | { type: 'geometry'; id: string; spec: GeometrySpecV1 }
+
+/** Marker prefix used to identify diagram insertion points in the markdown */
+const DIAGRAM_MARKER = '%%%TIKZ_DIAGRAM_'
 
 /** Strip LaTeX preamble: everything before \begin{document} + the command itself, and \end{document} */
 function stripPreamble(latex: string): string {
@@ -140,17 +159,53 @@ function stripMinipages(text: string): string {
   return result
 }
 
-/** Replace TikZ picture blocks with a descriptive placeholder */
-function handleTikzPictures(text: string): string {
-  return text.replace(
+/**
+ * Extract TikZ picture blocks and parse them into renderable diagram specs.
+ * Replaces each tikzpicture in the text with a unique marker for later injection.
+ */
+function extractTikzDiagrams(text: string): { text: string; diagrams: ParsedDiagram[] } {
+  const diagrams: ParsedDiagram[] = []
+  let diagramIdx = 0
+
+  const processed = text.replace(
     /\\begin\{tikzpicture\}([\s\S]*?)\\end\{tikzpicture\}/g,
-    (_match, body: string) => {
-      if (body.includes('\\begin{axis}')) return '\n\n> **[Graph/Axis diagram]**\n\n'
-      if (body.includes('\\coordinate')) return '\n\n> **[Geometry diagram]**\n\n'
-      if (body.includes('\\draw')) return '\n\n> **[Drawing/Sketch]**\n\n'
+    (fullMatch) => {
+      // Try axis parser first
+      if (hasTikzAxis(fullMatch)) {
+        const block = parseTikzAxis(fullMatch)
+        if (block) {
+          const id = `tikz-diagram-${diagramIdx++}`
+          diagrams.push({ type: 'axis', id, spec: block.axis })
+          return `\n\n${DIAGRAM_MARKER}${diagrams.length - 1}%%%\n\n`
+        }
+      }
+
+      // Try \draw ... plot parser
+      if (hasTikzDrawPlot(fullMatch)) {
+        const block = parseTikzDrawPlot(fullMatch)
+        if (block) {
+          const id = `tikz-diagram-${diagramIdx++}`
+          diagrams.push({ type: 'axis', id, spec: block.axis })
+          return `\n\n${DIAGRAM_MARKER}${diagrams.length - 1}%%%\n\n`
+        }
+      }
+
+      // Try geometry parser
+      if (hasTikzGeometry(fullMatch)) {
+        const block = parseTikzGeometry(fullMatch)
+        if (block) {
+          const id = `tikz-diagram-${diagramIdx++}`
+          diagrams.push({ type: 'geometry', id, spec: block.geometry })
+          return `\n\n${DIAGRAM_MARKER}${diagrams.length - 1}%%%\n\n`
+        }
+      }
+
+      // Fallback: show text placeholder for unparseable tikzpictures
       return '\n\n> **[Diagram]**\n\n'
     },
   )
+
+  return { text: processed, diagrams }
 }
 
 /** Strip language/polyglossia commands */
@@ -212,18 +267,27 @@ export function detectDirection(latex: string): 'ltr' | 'rtl' {
   return 'ltr'
 }
 
+/** Result of converting LaTeX to markdown with extracted diagrams */
+export interface LatexToMarkdownResult {
+  /** Markdown segments split around diagram markers */
+  segments: string[]
+  /** Parsed diagram specs corresponding to the gaps between segments */
+  diagrams: ParsedDiagram[]
+}
+
 /**
- * Converts raw LaTeX source to markdown with math delimiters preserved.
- * The output is suitable for rendering via MathMarkdown (remark-math + rehype-katex).
+ * Converts raw LaTeX source to markdown segments with parsed TikZ diagram specs.
  *
- * Supports:
- * - Standard LaTeX: sections, formatting, lists, math
- * - exam.cls: questions, choices
- * - Bagrut exams: Hebrew enumerate, tabular tables, minipage, TikZ placeholders
+ * Returns an interleaved structure:
+ * - segments[0], diagrams[0], segments[1], diagrams[1], ..., segments[N]
+ *
+ * Each segment is a markdown string renderable via MathMarkdown.
+ * Each diagram is a parsed spec renderable via AxisRenderer or GeometryRenderer.
  */
-export function latexToMarkdown(latex: string): string {
+export function latexToMarkdownWithDiagrams(latex: string): LatexToMarkdownResult {
   let result = stripPreamble(latex)
-  result = handleTikzPictures(result)
+  const { text: withMarkers, diagrams } = extractTikzDiagrams(result)
+  result = withMarkers
   result = convertTables(result)
   result = stripMinipages(result)
   result = stripCenterEnv(result)
@@ -239,5 +303,52 @@ export function latexToMarkdown(latex: string): string {
     .map((line) => line.trimStart())
     .join('\n')
   result = cleanMisc(result)
-  return result
+
+  // Split on diagram markers to create interleaved segments
+  if (diagrams.length === 0) {
+    return { segments: [result], diagrams: [] }
+  }
+
+  const segments: string[] = []
+  let remaining = result
+  for (let i = 0; i < diagrams.length; i++) {
+    const marker = `${DIAGRAM_MARKER}${i}%%%`
+    const markerIdx = remaining.indexOf(marker)
+    if (markerIdx !== -1) {
+      segments.push(remaining.slice(0, markerIdx).trim())
+      remaining = remaining.slice(markerIdx + marker.length)
+    } else {
+      // Marker not found (shouldn't happen) — push empty segment
+      segments.push('')
+    }
+  }
+  segments.push(remaining.trim())
+
+  return { segments, diagrams }
+}
+
+/**
+ * Converts raw LaTeX source to markdown with math delimiters preserved.
+ * The output is suitable for rendering via MathMarkdown (remark-math + rehype-katex).
+ *
+ * @deprecated Use latexToMarkdownWithDiagrams() for proper diagram rendering.
+ *             This function still shows text placeholders for TikZ diagrams.
+ */
+export function latexToMarkdown(latex: string): string {
+  const { segments, diagrams } = latexToMarkdownWithDiagrams(latex)
+  if (diagrams.length === 0) return segments[0]
+
+  // Fallback: join with text placeholders for backward compatibility
+  const parts: string[] = []
+  for (let i = 0; i < diagrams.length; i++) {
+    parts.push(segments[i])
+    const d = diagrams[i]
+    if (d.type === 'axis') {
+      parts.push('\n\n> **[Graph/Axis diagram]**\n\n')
+    } else {
+      parts.push('\n\n> **[Geometry diagram]**\n\n')
+    }
+  }
+  parts.push(segments[segments.length - 1])
+  return parts.join('')
 }
