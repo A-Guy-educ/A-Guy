@@ -332,6 +332,7 @@ export function formatJsonEvent(line: string): {
   sessionId?: string
   stepTokens?: { input: number; output: number; cacheRead: number }
   stepCost?: number
+  completed?: boolean
 } {
   try {
     const event = JSON.parse(line)
@@ -354,11 +355,13 @@ export function formatJsonEvent(line: string): {
         const outputTokens = event.part?.tokens?.output || 0
         const costStr = typeof cost === 'number' && cost > 0 ? ` · $${cost.toFixed(4)}` : ''
         const cacheStr = cached > 0 ? ` · ${cached} cached` : ''
+        const isCompletion = reason === 'stop'
         return {
           display: `  ✅ Step done (${tokens} tok${cacheStr}${costStr}) [${reason}]`,
           sessionId,
           stepTokens: { input: inputTokens, output: outputTokens, cacheRead: cached },
           stepCost: typeof cost === 'number' ? cost : 0,
+          completed: isCompletion,
         }
       }
 
@@ -534,6 +537,7 @@ export function runAgentWithFileWatch(
       let timeoutTimer: NodeJS.Timeout | null = null
       let stdoutBuffer = ''
       let extractedSessionId: string | undefined
+      let hasCompleted = false // Track if we've detected completion via step_finish event
       const accumulatedTokens = { input: 0, output: 0, cacheRead: 0 }
       let accumulatedCost = 0
       // Write raw JSON events to artifact file for full debugging
@@ -617,6 +621,18 @@ export function runAgentWithFileWatch(
             // Display formatted output
             if (result.display) {
               process.stderr.write(prefixLogLine(stage, result.display) + '\n')
+            }
+
+            // R2-FIX #13: Detect completion via step_finish event.
+            // This fixes the hang in fork mode where process never exits.
+            // When we detect completion, call finish() to trigger file detection,
+            // nudge logic, and retry - all the fallback logic that normally runs
+            // in the exit handler.
+            if (result.completed && !hasCompleted && !resolved) {
+              hasCompleted = true
+              logger.info(`  🎯 Agent signaled completion via event, triggering finish...`)
+              // Call finish with succeeded=true - it handles all the fallback logic
+              finish({ succeeded: true, timedOut: false })
             }
           }
 

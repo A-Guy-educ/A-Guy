@@ -684,12 +684,27 @@ export function pushWithRebase(cwd: string, env?: NodeJS.ProcessEnv): boolean {
       logger.warn('[push] App token push failed due to permissions — falling back to GITHUB_TOKEN')
 
       // Fallback: Use GITHUB_TOKEN for push (it can push source files but not workflows)
+      // IMPORTANT: Unset the git url substitution that forces App token, so GITHUB_TOKEN is used
       const fallbackEnv = {
         ...getHookSafeEnv(),
         GH_TOKEN: undefined,
         GITHUB_TOKEN: process.env.GITHUB_TOKEN,
       }
       const fallbackOpts = { cwd, stdio: 'inherit' as const, env: fallbackEnv, timeout: 120_000 }
+
+      // Remove the App token git config so fallback uses GITHUB_TOKEN
+      try {
+        execFileSync(
+          'git',
+          ['config', '--global', '--unset', 'url.https://x-access-token:@github.com/.insteadOf'],
+          {
+            cwd,
+            stdio: 'inherit',
+          },
+        )
+      } catch {
+        // Ignore if not set
+      }
 
       // Try push with GITHUB_TOKEN
       try {

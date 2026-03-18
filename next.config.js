@@ -81,14 +81,14 @@ const nextConfig = {
   redirects,
   async headers() {
     return [
-      // General routes - strict CSP
+      // General routes - CSP optimized for Next.js
       {
         source: '/:path*',
         headers: [
           {
             key: 'Content-Security-Policy',
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' *.blob.vercel-storage.com img.youtube.com avatars.githubusercontent.com data:; font-src 'self'; connect-src 'self'; frame-src 'self' www.youtube.com; object-src 'none'; base-uri 'self'; form-action 'self'",
+              "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live; style-src 'self' 'unsafe-inline'; img-src 'self' *.blob.vercel-storage.com img.youtube.com avatars.githubusercontent.com data: blob:; font-src 'self' data: https://r2cdn.perplexity.ai; connect-src 'self' https://*.vercel.app https://vercel.live wss://*.vercel.app; frame-src 'self' www.youtube.com; object-src 'none'; base-uri 'self'; form-action 'self'",
           },
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },

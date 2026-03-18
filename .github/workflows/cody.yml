@@ -451,6 +451,7 @@ jobs:
         env:
           # GitHub token for gh CLI (GH_PAT takes precedence for PR creation)
           GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
           GH_PAT: ${{ secrets.GH_PAT }}
 
           # Blob storage token for verify stage (unit tests need it)
