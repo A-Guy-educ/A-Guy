@@ -1,0 +1,72 @@
+{
+  "id": "help-system-hint",
+  "name": "Student uses hint system when stuck on an exercise",
+  "journey": "student-solves-exercises",
+  "type": "feature",
+  "area": "exercises",
+  "tags": ["help", "hint"],
+  "locale": "he",
+  "preconditions": [
+    {
+      "action": "seed",
+      "entity": "course",
+      "data": {
+        "title": "Test Physics",
+        "courseLabel": "פ",
+        "status": "published",
+        "isActive": true,
+        "accessType": "free"
+      },
+      "ref": "$course"
+    },
+    {
+      "action": "seed",
+      "entity": "chapter",
+      "data": {
+        "title": "Forces",
+        "course": "$course",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$chapter"
+    },
+    {
+      "action": "seed",
+      "entity": "lesson",
+      "data": {
+        "title": "Newton's Laws",
+        "chapter": "$chapter",
+        "type": "learning",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$lesson"
+    },
+    {
+      "action": "seed",
+      "entity": "user",
+      "data": { "role": "student" },
+      "ref": "$student"
+    }
+  ],
+  "steps": [
+    {
+      "action": "login",
+      "input": { "userRef": "$student" }
+    },
+    {
+      "action": "openLesson",
+      "input": {
+        "courseRef": "$course",
+        "chapterRef": "$chapter",
+        "lessonRef": "$lesson"
+      }
+    },
+    {
+      "action": "expectUrl",
+      "input": { "pattern": "/lessons/" },
+      "description": "Verify lesson page loads"
+    }
+  ],
+  "teardown": "auto"
+}

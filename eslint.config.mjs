@@ -70,6 +70,7 @@ const eslintConfig = [
       'build/',
       'coverage/',
       'src/app/(payload)/custom.scss',
+      'tests/',
     ],
   },
 
