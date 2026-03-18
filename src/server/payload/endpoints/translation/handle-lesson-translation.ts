@@ -31,11 +31,13 @@ export async function handleLessonTranslation(
   const { payload } = req
   const { lessonId, targetLocale, targetChapterId, includeExercises } = input
 
+  try {
   reqLogger.info({ lessonId, targetLocale }, 'Starting lesson translation')
 
   const source = await payload.findByID({
     collection: 'lessons',
     id: lessonId,
+    overrideAccess: true,
   })
 
   if (!source) {
@@ -88,6 +90,7 @@ export async function handleLessonTranslation(
       where: { lesson: { equals: lessonId } },
       sort: 'order',
       limit: 500,
+      overrideAccess: true,
     })
 
     reqLogger.info({ exerciseCount: exercises.docs.length }, 'Translating child exercises')
@@ -136,4 +139,14 @@ export async function handleLessonTranslation(
       exercises: translatedExercises,
     },
   })
+  } catch (error) {
+    reqLogger.error({ err: error, lessonId }, 'Lesson translation threw unexpected error')
+    return Response.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unexpected error during lesson translation',
+      },
+      { status: 500 },
+    )
+  }
 }

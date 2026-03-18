@@ -24,70 +24,85 @@ export async function handleExerciseTranslation(
   const { payload } = req
   const { exerciseId, targetLocale, targetLessonId } = input
 
-  reqLogger.info({ exerciseId, targetLocale }, 'Starting exercise translation')
+  try {
+    reqLogger.info({ exerciseId, targetLocale }, 'Starting exercise translation')
 
-  const source = await payload.findByID({
-    collection: 'exercises',
-    id: exerciseId,
-  })
+    const source = await payload.findByID({
+      collection: 'exercises',
+      id: exerciseId,
+      overrideAccess: true,
+    })
 
-  if (!source) {
-    return Response.json({ success: false, error: 'Exercise not found' }, { status: 404 })
-  }
+    if (!source) {
+      return Response.json({ success: false, error: 'Exercise not found' }, { status: 404 })
+    }
 
-  const sourceLocale = (source.locale as ContentLocale) || 'he'
+    const sourceLocale = (source.locale as ContentLocale) || 'he'
 
-  if (sourceLocale === targetLocale) {
-    return Response.json(
-      { success: false, error: 'Source and target locale are the same' },
-      { status: 400 },
+    if (sourceLocale === targetLocale) {
+      return Response.json(
+        { success: false, error: 'Source and target locale are the same' },
+        { status: 400 },
+      )
+    }
+
+    const content = source.content as { blocks: unknown[] } | undefined
+    const blocks = content?.blocks ?? []
+
+    const translationResult = await translateContentBlocks(
+      {
+        blocks: blocks as Parameters<typeof translateContentBlocks>[0]['blocks'],
+        sourceLocale,
+        targetLocale,
+      },
+      payload,
     )
-  }
 
-  const content = source.content as { blocks: unknown[] } | undefined
-  const blocks = content?.blocks ?? []
+    if (!translationResult.success || !translationResult.data) {
+      reqLogger.error({ error: translationResult.error }, 'Block translation failed')
+      return Response.json(
+        { success: false, error: translationResult.error ?? 'Translation failed' },
+        { status: 500 },
+      )
+    }
 
-  const translationResult = await translateContentBlocks(
-    {
-      blocks: blocks as Parameters<typeof translateContentBlocks>[0]['blocks'],
-      sourceLocale,
-      targetLocale,
-    },
-    payload,
-  )
+    const titlePrefix = targetLocale === 'en' ? '[EN]' : '[HE]'
+    const translatedTitle = source.title
+      ? `${titlePrefix} ${source.title}`
+      : `${titlePrefix} Exercise`
 
-  if (!translationResult.success || !translationResult.data) {
-    reqLogger.error({ error: translationResult.error }, 'Block translation failed')
+    const newExercise = await payload.create({
+      collection: 'exercises',
+      draft: false,
+      data: {
+        tenant: typeof source.tenant === 'string' ? source.tenant : source.tenant.id,
+        title: translatedTitle,
+        order: source.order,
+        lesson: targetLessonId,
+        content: translationResult.data as unknown as Record<string, unknown>,
+        locale: targetLocale,
+        translatedFrom: exerciseId,
+        origin: 'manual',
+      },
+    })
+
+    reqLogger.info({ newExerciseId: newExercise.id }, 'Exercise translated successfully')
+
+    return Response.json({
+      success: true,
+      data: { id: newExercise.id, title: translatedTitle },
+    })
+  } catch (error) {
+    reqLogger.error(
+      { err: error, exerciseId },
+      'Exercise translation threw unexpected error',
+    )
     return Response.json(
-      { success: false, error: translationResult.error ?? 'Translation failed' },
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unexpected error during exercise translation',
+      },
       { status: 500 },
     )
   }
-
-  const titlePrefix = targetLocale === 'en' ? '[EN]' : '[HE]'
-  const translatedTitle = source.title
-    ? `${titlePrefix} ${source.title}`
-    : `${titlePrefix} Exercise`
-
-  const newExercise = await payload.create({
-    collection: 'exercises',
-    draft: false,
-    data: {
-      tenant: typeof source.tenant === 'string' ? source.tenant : source.tenant.id,
-      title: translatedTitle,
-      order: source.order,
-      lesson: targetLessonId,
-      content: translationResult.data as unknown as Record<string, unknown>,
-      locale: targetLocale,
-      translatedFrom: exerciseId,
-      origin: 'manual',
-    },
-  })
-
-  reqLogger.info({ newExerciseId: newExercise.id }, 'Exercise translated successfully')
-
-  return Response.json({
-    success: true,
-    data: { id: newExercise.id, title: translatedTitle },
-  })
 }

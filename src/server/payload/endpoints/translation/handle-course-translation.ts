@@ -24,11 +24,13 @@ export async function handleCourseTranslation(
   const { payload } = req
   const { courseId, targetLocale } = input
 
+  try {
   reqLogger.info({ courseId, targetLocale }, 'Starting course translation')
 
   const source = await payload.findByID({
     collection: 'courses',
     id: courseId,
+    overrideAccess: true,
   })
 
   if (!source) {
@@ -80,6 +82,7 @@ export async function handleCourseTranslation(
     where: { course: { equals: courseId } },
     sort: 'order',
     limit: 500,
+    overrideAccess: true,
   })
 
   const translatedChapters: Array<{
@@ -112,6 +115,7 @@ export async function handleCourseTranslation(
       where: { chapter: { equals: chapter.id } },
       sort: 'order',
       limit: 500,
+      overrideAccess: true,
     })
 
     const lessonResults: unknown[] = []
@@ -154,4 +158,14 @@ export async function handleCourseTranslation(
       chapters: translatedChapters,
     },
   })
+  } catch (error) {
+    reqLogger.error({ err: error, courseId }, 'Course translation threw unexpected error')
+    return Response.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unexpected error during course translation',
+      },
+      { status: 500 },
+    )
+  }
 }
