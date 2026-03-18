@@ -1,0 +1,31 @@
+import { z } from 'zod'
+import { CONTENT_LOCALES } from '@/server/payload/fields/contentLocale'
+
+export const TranslateExerciseSchema = z.object({
+  scope: z.literal('exercise'),
+  exerciseId: z.string().min(1),
+  targetLocale: z.enum(CONTENT_LOCALES),
+  targetLessonId: z.string().min(1),
+})
+
+export const TranslateLessonSchema = z.object({
+  scope: z.literal('lesson'),
+  lessonId: z.string().min(1),
+  targetLocale: z.enum(CONTENT_LOCALES),
+  targetChapterId: z.string().min(1),
+  includeExercises: z.boolean().default(true),
+})
+
+export const TranslateCourseSchema = z.object({
+  scope: z.literal('course'),
+  courseId: z.string().min(1),
+  targetLocale: z.enum(CONTENT_LOCALES),
+})
+
+export const TranslateRequestSchema = z.discriminatedUnion('scope', [
+  TranslateExerciseSchema,
+  TranslateLessonSchema,
+  TranslateCourseSchema,
+])
+
+export type TranslateRequest = z.infer<typeof TranslateRequestSchema>

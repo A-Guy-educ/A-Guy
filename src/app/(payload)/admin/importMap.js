@@ -15,9 +15,12 @@ import { MetaTitleComponent as MetaTitleComponent_a8a977ebc872c5d5ea7ee689724c08
 import { MetaDescriptionComponent as MetaDescriptionComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
 import { PreviewComponent as PreviewComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
 import { SlugField as SlugField_3817bf644402e67bfe6577f60ef982de } from '@payloadcms/ui'
+import { TranslateCourseButton as TranslateCourseButton_5e03fe73ee4379dfd96d492849856d43 } from '@/ui/admin/TranslationButton'
 import { LessonConversionPanel as LessonConversionPanel_057daf3b86f654d90edf003b44c43703 } from '@/ui/admin/exercise-conversion/LessonConversionPanel'
+import { TranslateLessonButton as TranslateLessonButton_5e03fe73ee4379dfd96d492849856d43 } from '@/ui/admin/TranslationButton'
 import { ExerciseContentEditor as ExerciseContentEditor_d0c5d070052b5cabcf602f1e9878afd8 } from '@/ui/admin/ExerciseContentEditor'
 import { ExercisePreview as ExercisePreview_79d54f4a9901df303ad8ae2cc7d44435 } from '@/ui/admin/ExercisePreview'
+import { TranslateExerciseButton as TranslateExerciseButton_5e03fe73ee4379dfd96d492849856d43 } from '@/ui/admin/TranslationButton'
 import { MediaPreview as MediaPreview_4b980c9a407724ef7c1755e3482d0258 } from '@/ui/admin/MediaPreview'
 import { HorizontalRuleFeatureClient as HorizontalRuleFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { BlocksFeatureClient as BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
@@ -53,9 +56,12 @@ export const importMap = {
   "@payloadcms/plugin-seo/client#MetaDescriptionComponent": MetaDescriptionComponent_a8a977ebc872c5d5ea7ee689724c0860,
   "@payloadcms/plugin-seo/client#PreviewComponent": PreviewComponent_a8a977ebc872c5d5ea7ee689724c0860,
   "@payloadcms/ui#SlugField": SlugField_3817bf644402e67bfe6577f60ef982de,
+  "@/ui/admin/TranslationButton#TranslateCourseButton": TranslateCourseButton_5e03fe73ee4379dfd96d492849856d43,
   "@/ui/admin/exercise-conversion/LessonConversionPanel#LessonConversionPanel": LessonConversionPanel_057daf3b86f654d90edf003b44c43703,
+  "@/ui/admin/TranslationButton#TranslateLessonButton": TranslateLessonButton_5e03fe73ee4379dfd96d492849856d43,
   "@/ui/admin/ExerciseContentEditor#ExerciseContentEditor": ExerciseContentEditor_d0c5d070052b5cabcf602f1e9878afd8,
   "@/ui/admin/ExercisePreview#ExercisePreview": ExercisePreview_79d54f4a9901df303ad8ae2cc7d44435,
+  "@/ui/admin/TranslationButton#TranslateExerciseButton": TranslateExerciseButton_5e03fe73ee4379dfd96d492849856d43,
   "@/ui/admin/MediaPreview#MediaPreview": MediaPreview_4b980c9a407724ef7c1755e3482d0258,
   "@payloadcms/richtext-lexical/client#HorizontalRuleFeatureClient": HorizontalRuleFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#BlocksFeatureClient": BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,

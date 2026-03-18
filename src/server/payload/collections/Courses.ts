@@ -17,6 +17,7 @@ import { publishedAndActive } from '../access/publishedAndActive'
 import { createdByField } from '../fields/createdBy'
 import { formatSlug } from '../fields/formatSlug'
 import { contentStatusFields } from '../fields/contentStatus'
+import { translatedFromField } from '../fields/translatedFrom'
 import { cascadeAdminTitle } from '../hooks/courses/cascadeAdminTitle'
 import { enforceFieldLocaleUniqueness } from '../hooks/validateLocaleUniqueness'
 import { validateTreeIsolationOnPublish } from '../hooks/courses/validateTreeIsolation'
@@ -65,6 +66,8 @@ export const Courses: CollectionConfig = {
     tenantField,
     // Content locale
     contentLocaleField,
+    // Translation link
+    translatedFromField('courses'),
     {
       name: 'courseLabel',
       type: 'text',
@@ -233,6 +236,18 @@ export const Courses: CollectionConfig = {
           type: 'textarea',
         },
       ],
+    },
+
+    // Translation button (sidebar)
+    {
+      name: 'translateAction',
+      type: 'ui',
+      admin: {
+        position: 'sidebar',
+        components: {
+          Field: '@/ui/admin/TranslationButton#TranslateCourseButton',
+        },
+      },
     },
 
     // Content Status

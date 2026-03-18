@@ -117,6 +117,7 @@ describe('Lesson/Chapter query hierarchy safety (bug reproduction)', () => {
         status: 'published',
         isActive: true,
         tenant: tenantId,
+        locale: 'he',
       },
       overrideAccess: true,
     })
@@ -173,6 +174,7 @@ describe('Lesson/Chapter query hierarchy safety (bug reproduction)', () => {
         status: 'draft', // <-- DRAFT
         isActive: true,
         tenant: tenantId,
+        locale: 'he',
       },
       overrideAccess: true,
     })
@@ -230,6 +232,7 @@ describe('Lesson/Chapter query hierarchy safety (bug reproduction)', () => {
         status: 'published',
         isActive: true,
         tenant: tenantId,
+        locale: 'he',
       },
       overrideAccess: true,
     })

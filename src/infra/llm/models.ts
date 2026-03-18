@@ -58,6 +58,7 @@ export type AIModelKey =
   | 'PDF_TO_EXERCISE'
   | 'ANSWER_VALIDATION'
   | 'SUPPORT_GENERATION'
+  | 'CONTENT_TRANSLATION'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Model Registry - Single Source of Truth
@@ -99,6 +100,11 @@ export const MODEL_REGISTRY: Record<AIModelKey, Omit<AIModel, 'name'>> = {
     maxOutputTokens: 4096,
     capabilities: ['chat', 'generation'],
   },
+  CONTENT_TRANSLATION: {
+    temperature: 0.3,
+    maxOutputTokens: 8192,
+    capabilities: ['chat', 'translation'],
+  },
 } as const
 
 /**
@@ -115,6 +121,7 @@ export const PROVIDER_MODEL_NAMES: Record<LLMProviderType, Record<AIModelKey, st
     PDF_TO_EXERCISE: 'gemini-3.1-pro',
     ANSWER_VALIDATION: 'gemini-3.1-pro',
     SUPPORT_GENERATION: 'gemini-3.1-pro',
+    CONTENT_TRANSLATION: 'gemini-3.1-pro',
   },
   [LLMProviderType.OPENAI_COMPATIBLE]: {
     IMAGE_TO_EXERCISE: 'MiniMax-M2.1',
@@ -122,6 +129,7 @@ export const PROVIDER_MODEL_NAMES: Record<LLMProviderType, Record<AIModelKey, st
     PDF_TO_EXERCISE: 'MiniMax-M2.1',
     ANSWER_VALIDATION: 'MiniMax-M2.1',
     SUPPORT_GENERATION: 'MiniMax-M2.1',
+    CONTENT_TRANSLATION: 'MiniMax-M2.1',
   },
 } as const
 
@@ -186,6 +194,10 @@ export const AI_MODELS: Record<AIModelKey, AIModel> = {
   SUPPORT_GENERATION: {
     ...MODEL_REGISTRY.SUPPORT_GENERATION,
     name: PROVIDER_MODEL_NAMES[LLMProviderType.GEMINI].SUPPORT_GENERATION,
+  },
+  CONTENT_TRANSLATION: {
+    ...MODEL_REGISTRY.CONTENT_TRANSLATION,
+    name: PROVIDER_MODEL_NAMES[LLMProviderType.GEMINI].CONTENT_TRANSLATION,
   },
 } as const
 

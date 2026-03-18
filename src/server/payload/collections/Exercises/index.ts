@@ -2,9 +2,11 @@ import type { Access, CollectionConfig } from 'payload'
 
 import type { User } from '@/payload-types'
 import { tenantField } from '@/server/payload/fields/tenant'
+import { contentLocaleField } from '@/server/payload/fields/contentLocale'
 import { anyone } from '../../access/anyone'
 import { authenticated } from '../../access/authenticated'
 import { createdByField } from '../../fields/createdBy'
+import { translatedFromField } from '../../fields/translatedFrom'
 import { AccountRole } from '../Users/roles'
 import { DEFAULT_CONTENT } from './defaults'
 import { ContentSchema } from './schemas'
@@ -61,6 +63,10 @@ export const Exercises: CollectionConfig = {
   fields: [
     // Tenant
     tenantField,
+    // Content locale
+    contentLocaleField,
+    // Translation link
+    translatedFromField('exercises'),
     // Section 1: Exercise Meta (Basics)
     {
       type: 'collapsible',
@@ -268,6 +274,17 @@ export const Exercises: CollectionConfig = {
         position: 'sidebar',
         components: {
           Field: '@/ui/admin/ExercisePreview#ExercisePreview',
+        },
+      },
+    },
+    // Translation button (sidebar)
+    {
+      name: 'translateAction',
+      type: 'ui',
+      admin: {
+        position: 'sidebar',
+        components: {
+          Field: '@/ui/admin/TranslationButton#TranslateExerciseButton',
         },
       },
     },
