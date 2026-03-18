@@ -20,5 +20,5 @@ export function isValidStage(stage: string): stage is (typeof VALID_STAGES)[numb
 }
 
 export function validateTaskId(taskId: string): boolean {
-  return /^\d{6}[a-z0-9-]+$/.test(taskId)
+  return /^\d{6}[a-zA-Z0-9-]+$/.test(taskId)
 }
