@@ -8,7 +8,10 @@ import type { PayloadRequest } from 'payload'
 import type { Logger } from 'pino'
 
 import type { ContentLocale } from '@/server/payload/fields/contentLocale'
-import { translateContentBlocks, translateText } from '@/infra/llm/services/content-translation-service'
+import {
+  translateContentBlocks,
+  translateText,
+} from '@/infra/llm/services/content-translation-service'
 
 interface ExerciseTranslationInput {
   exerciseId: string
@@ -92,14 +95,12 @@ export async function handleExerciseTranslation(
       data: { id: newExercise.id, title: translatedTitle },
     })
   } catch (error) {
-    reqLogger.error(
-      { err: error, exerciseId },
-      'Exercise translation threw unexpected error',
-    )
+    reqLogger.error({ err: error, exerciseId }, 'Exercise translation threw unexpected error')
     return Response.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Unexpected error during exercise translation',
+        error:
+          error instanceof Error ? error.message : 'Unexpected error during exercise translation',
       },
       { status: 500 },
     )
