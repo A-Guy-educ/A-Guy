@@ -1776,6 +1776,10 @@ export interface UserProgress {
          */
         score?: number | null;
         /**
+         * Cumulative time spent on this item in seconds
+         */
+        timeSpentSeconds?: number | null;
+        /**
          * Last time this record was accessed
          */
         lastAccessedAt?: string | null;
@@ -3133,6 +3137,7 @@ export interface UserProgressSelect<T extends boolean = true> {
         completionPercentage?: T;
         status?: T;
         score?: T;
+        timeSpentSeconds?: T;
         lastAccessedAt?: T;
         id?: T;
       };

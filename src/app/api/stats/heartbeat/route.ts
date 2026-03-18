@@ -2,7 +2,7 @@
  * Stats Heartbeat API
  *
  * POST /api/stats/heartbeat
- * Increments user's total time spent
+ * Increments user's total time spent and per-lesson time if lessonId is provided
  */
 
 import { getPayload } from 'payload'
@@ -12,6 +12,7 @@ import config from '@payload-config'
 
 const heartbeatSchema = z.object({
   seconds: z.number().min(30).max(60),
+  lessonId: z.string().min(1).optional(),
 })
 
 export async function POST(req: Request) {
@@ -42,7 +43,7 @@ export async function POST(req: Request) {
     )
   }
 
-  const { seconds } = validation.data
+  const { seconds, lessonId } = validation.data
 
   // Find or create UserStats for user
   const existingStats = await payload.find({
@@ -84,6 +85,11 @@ export async function POST(req: Request) {
     statsId = created.id as string
   }
 
+  // Track per-lesson time if lessonId is provided
+  if (lessonId) {
+    await incrementLessonTime(payload, userId, lessonId, seconds)
+  }
+
   // Fetch updated stats to return current total
   const updatedStats = (await payload.findByID({
     collection: 'user-stats',
@@ -97,4 +103,89 @@ export async function POST(req: Request) {
     success: true,
     totalTimeSpentSeconds: updatedStats.totalTimeSpentSeconds,
   })
+}
+
+/**
+ * Increment timeSpentSeconds for a lesson in user-progress.
+ * Creates or updates a lesson progress record with time tracking.
+ */
+async function incrementLessonTime(
+  payload: Awaited<ReturnType<typeof getPayload>>,
+  userId: string,
+  lessonId: string,
+  seconds: number,
+) {
+  const userProgressResult = await payload.find({
+    collection: 'user-progress',
+    where: { user: { equals: userId } },
+    limit: 1,
+    overrideAccess: true,
+  })
+
+  const now = new Date().toISOString()
+
+  if (userProgressResult.docs.length > 0) {
+    const doc = userProgressResult.docs[0]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload dynamic field
+    const existingRecords: any[] = (doc as any).progressRecords || []
+
+    const existingIndex = existingRecords.findIndex(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload dynamic record shape
+      (r: any) => r.recordType === 'lesson' && r.recordId === lessonId,
+    )
+
+    let updatedRecords
+    if (existingIndex >= 0) {
+      // Update existing — just increment time
+      updatedRecords = [...existingRecords]
+      updatedRecords[existingIndex] = {
+        ...existingRecords[existingIndex],
+        timeSpentSeconds: (existingRecords[existingIndex].timeSpentSeconds || 0) + seconds,
+        lastAccessedAt: now,
+      }
+    } else {
+      // Create new lesson record with time only (status stays in_progress)
+      updatedRecords = [
+        ...existingRecords,
+        {
+          recordType: 'lesson',
+          recordId: lessonId,
+          status: 'in_progress',
+          completionPercentage: 0,
+          timeSpentSeconds: seconds,
+          lastAccessedAt: now,
+        },
+      ]
+    }
+
+    await payload.update({
+      collection: 'user-progress',
+      id: doc.id,
+      data: {
+        progressRecords: updatedRecords,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload dynamic field
+      } as any,
+      overrideAccess: true,
+    })
+  } else {
+    // Create new UserProgress document with time
+    await payload.create({
+      collection: 'user-progress',
+      data: {
+        user: userId,
+        progressRecords: [
+          {
+            recordType: 'lesson',
+            recordId: lessonId,
+            status: 'in_progress',
+            completionPercentage: 0,
+            timeSpentSeconds: seconds,
+            lastAccessedAt: now,
+          },
+        ],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload dynamic field
+      } as any,
+      overrideAccess: true,
+    })
+  }
 }

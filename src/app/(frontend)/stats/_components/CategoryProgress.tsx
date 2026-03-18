@@ -15,7 +15,7 @@ import { Progress } from '@/ui/web/components/progress'
 interface CategoryProgressData {
   learn: { count: number; total: number }
   practice: { attempted: number; completed: number; successRate: number }
-  exams: { averageScore: number }
+  exams: { averageScore: number; practiced?: number }
   ask: { questionsAsked: number; conversations: number }
 }
 
@@ -48,7 +48,7 @@ export function CategoryProgress({ data }: CategoryProgressProps) {
       icon: FileText,
       color: TAB_COLORS.exams.text,
       title: t('categoryExams'),
-      value: `${t('averageScore')}: ${data.exams.averageScore}%`,
+      value: `${data.exams.practiced || 0} ${t('examsPracticed')}`,
       progress: data.exams.averageScore,
     },
     {

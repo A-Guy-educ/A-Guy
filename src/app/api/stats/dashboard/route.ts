@@ -17,6 +17,7 @@ interface ProgressRecord {
   status: string
   completionPercentage?: number
   score?: number | null
+  timeSpentSeconds?: number
   lastAccessedAt?: string
 }
 
@@ -87,16 +88,14 @@ export async function GET(req: Request) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload dynamic field not in generated types
   const progressRecords: ProgressRecord[] = (userProgress as any)?.progressRecords || []
 
-  // Build a set of relevant lesson/exercise IDs and chapter→lesson mapping if course filter is set
+  // Build a set of relevant lesson/exercise IDs
   let relevantLessonIds: Set<string> | null = null
   let relevantExerciseIds: Set<string> | null = null
-  // chapter data: chapterId → { title, lessonIds }
-  const chapterMap: Map<string, { title: string; lessonIds: string[] }> = new Map()
-  // lesson → chapter mapping
-  const lessonToChapter: Map<string, string> = new Map()
   // lesson type mapping: lessonId → type
   const lessonTypeMap: Map<string, string> = new Map()
-  // exercise → lesson mapping for topic mastery
+  // lesson title mapping: lessonId → title
+  const lessonTitleMap: Map<string, string> = new Map()
+  // exercise → lesson mapping
   const exerciseToLesson: Map<string, string> = new Map()
 
   // Fetch chapters (optionally filtered by course)
@@ -116,13 +115,6 @@ export async function GET(req: Request) {
   })
 
   const chapterIds = chaptersResult.docs.map((c) => c.id)
-  for (const chapter of chaptersResult.docs) {
-    chapterMap.set(chapter.id, {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload dynamic field
-      title: ((chapter as Record<string, any>).title as string) || '',
-      lessonIds: [],
-    })
-  }
 
   if (chapterIds.length > 0) {
     // Fetch lessons for these chapters
@@ -141,20 +133,10 @@ export async function GET(req: Request) {
     relevantLessonIds = new Set(lessonIds)
 
     for (const lesson of lessonsResult.docs) {
-      const chapterId =
-        typeof lesson.chapter === 'string'
-          ? lesson.chapter
-          : // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload relation can be string or object
-            (lesson.chapter as Record<string, any>)?.id
-      if (chapterId) {
-        lessonToChapter.set(lesson.id, chapterId)
-        const chapterEntry = chapterMap.get(chapterId)
-        if (chapterEntry) {
-          chapterEntry.lessonIds.push(lesson.id)
-        }
-      }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload dynamic field
       lessonTypeMap.set(lesson.id, (lesson as Record<string, any>).type || 'learning')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload dynamic field
+      lessonTitleMap.set(lesson.id, ((lesson as Record<string, any>).title as string) || '')
     }
 
     // Fetch exercises for these lessons and build exercise→lesson mapping
@@ -169,7 +151,6 @@ export async function GET(req: Request) {
       })
       relevantExerciseIds = new Set(exercisesResult.docs.map((e) => e.id))
 
-      // Build exercise→lesson mapping for topic mastery
       for (const exercise of exercisesResult.docs) {
         const exLessonId =
           typeof exercise.lesson === 'string'
@@ -216,25 +197,8 @@ export async function GET(req: Request) {
     (r: ProgressRecord) => r.recordType === 'exercise',
   )
 
-  // Total Progress: completed lessons / total lessons (not just average of attempted)
-  const completedLessonCount = lessonRecords.filter(
-    (r: ProgressRecord) => r.status === 'completed',
-  ).length
-  const allLessonCount = relevantLessonIds ? relevantLessonIds.size : 0
-  const totalProgress =
-    allLessonCount > 0 ? Math.round((completedLessonCount / allLessonCount) * 100) : 0
-
   // Time Spent (from UserStats)
   const timeSpent = userStats.totalTimeSpentSeconds || 0
-
-  // Average Score: mean of scores from exercise records
-  const averageScore =
-    exerciseRecords.length > 0
-      ? Math.round(
-          exerciseRecords.reduce((sum: number, r: ProgressRecord) => sum + (r.score || 0), 0) /
-            exerciseRecords.length,
-        )
-      : 0
 
   // Daily Streak
   const dailyStreak = userStats.currentStreak || 0
@@ -269,6 +233,13 @@ export async function GET(req: Request) {
         )
       : 0
 
+  // Count exams practiced (unique exam-type lessons that have exercise records)
+  const practicedExamLessonIds = new Set<string>()
+  for (const r of examExerciseRecords) {
+    const parentLessonId = exerciseToLesson.get(r.recordId)
+    if (parentLessonId) practicedExamLessonIds.add(parentLessonId)
+  }
+
   // Ask: count conversations and actual user messages
   const conversationWhere: Record<string, unknown> = {
     user: { equals: userId },
@@ -279,7 +250,7 @@ export async function GET(req: Request) {
   const conversationsResult = await payload.find({
     collection: 'conversations',
     where: conversationWhere as never,
-    limit: 100, // Fetch conversations to count messages
+    limit: 500,
     overrideAccess: true,
   })
 
@@ -291,64 +262,93 @@ export async function GET(req: Request) {
     hidden?: boolean
   }
   let askQuestionsCount = 0
+
+  // Build per-lesson chat question counts from conversations
+  // contextKey format: "lessons:<lessonId>" or "exercises:<exerciseId>"
+  const lessonChatCounts: Map<string, number> = new Map()
+
   for (const conv of conversationsResult.docs) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload dynamic field
     const messages = ((conv as any).messages as ConvMessage[]) || []
-    askQuestionsCount += messages.filter((m: ConvMessage) => m.role === 'user' && !m.hidden).length
-  }
+    const userMsgCount = messages.filter((m: ConvMessage) => m.role === 'user' && !m.hidden).length
+    askQuestionsCount += userMsgCount
 
-  // Topic Mastery: group both lesson and exercise records by chapter
-  const chapterExerciseStats = new Map<string, { attempted: number; completed: number }>()
+    // Map conversation to lesson for per-lesson chat counts
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload dynamic field
+    const contextKey = (conv as any).contextKey as string | undefined
+    if (contextKey && userMsgCount > 0) {
+      let lessonId: string | undefined
 
-  // Group lesson records by chapter
-  for (const record of lessonRecords) {
-    const chapterId = lessonToChapter.get(record.recordId)
-    if (!chapterId) continue
+      if (contextKey.startsWith('lessons:')) {
+        lessonId = contextKey.replace('lessons:', '')
+      } else if (contextKey.startsWith('exercises:')) {
+        const exerciseId = contextKey.replace('exercises:', '')
+        lessonId = exerciseToLesson.get(exerciseId)
+      }
 
-    const stats = chapterExerciseStats.get(chapterId) || { attempted: 0, completed: 0 }
-    stats.attempted++
-    if (record.status === 'completed') {
-      stats.completed++
+      if (lessonId) {
+        lessonChatCounts.set(lessonId, (lessonChatCounts.get(lessonId) || 0) + userMsgCount)
+      }
     }
-    chapterExerciseStats.set(chapterId, stats)
   }
 
-  // Include exercise records - map exercise→lesson→chapter
-  for (const record of allExerciseRecords) {
-    const lessonId = exerciseToLesson.get(record.recordId)
-    if (!lessonId) continue
-    const chapterId = lessonToChapter.get(lessonId)
-    if (!chapterId) continue
+  // Build practiced lessons list (only lessons with progress records)
+  // Collect per-lesson time from lesson records
+  const lessonTimeMap: Map<string, number> = new Map()
+  const practicedLessonIds = new Set<string>()
 
-    const stats = chapterExerciseStats.get(chapterId) || { attempted: 0, completed: 0 }
-    stats.attempted++
-    if (record.status === 'completed') {
-      stats.completed++
+  // Add lessons that have direct lesson records (with time)
+  for (const r of lessonRecords) {
+    practicedLessonIds.add(r.recordId)
+    if (r.timeSpentSeconds) {
+      lessonTimeMap.set(r.recordId, (lessonTimeMap.get(r.recordId) || 0) + r.timeSpentSeconds)
     }
-    chapterExerciseStats.set(chapterId, stats)
+  }
+  // Add lessons that have exercise records
+  for (const r of allExerciseRecords) {
+    const parentLessonId = exerciseToLesson.get(r.recordId)
+    if (parentLessonId) practicedLessonIds.add(parentLessonId)
   }
 
-  const topicMastery: Array<{ chapterId: string; chapterTitle: string; successRate: number }> = []
+  // Split into practiced lessons (learning type) and practiced exams
+  const practicedLessons: Array<{
+    lessonId: string
+    title: string
+    timeSpentSeconds: number
+    chatQuestions: number
+  }> = []
 
-  for (const [chapterId, stats] of chapterExerciseStats) {
-    const chapterInfo = chapterMap.get(chapterId)
-    if (!chapterInfo || stats.attempted === 0) continue
+  const practicedExams: Array<{
+    lessonId: string
+    title: string
+    timeSpentSeconds: number
+    chatQuestions: number
+  }> = []
 
-    topicMastery.push({
-      chapterId,
-      chapterTitle: chapterInfo.title,
-      successRate: Math.round((stats.completed / stats.attempted) * 100),
-    })
+  for (const lessonId of practicedLessonIds) {
+    const title = lessonTitleMap.get(lessonId)
+    if (!title) continue // lesson not found in current scope
+
+    const type = lessonTypeMap.get(lessonId) || 'learning'
+    const chatQuestions = lessonChatCounts.get(lessonId) || 0
+    const timeSpentSeconds = lessonTimeMap.get(lessonId) || 0
+
+    const item = { lessonId, title, timeSpentSeconds, chatQuestions }
+
+    if (type === 'exam') {
+      practicedExams.push(item)
+    } else {
+      practicedLessons.push(item)
+    }
   }
 
-  // Sort by success rate ascending (weakest topics first)
-  topicMastery.sort((a, b) => a.successRate - b.successRate)
+  // Sort by title
+  practicedLessons.sort((a, b) => a.title.localeCompare(b.title))
+  practicedExams.sort((a, b) => a.title.localeCompare(b.title))
 
   return Response.json({
     summary: {
-      totalProgress,
       timeSpent,
-      averageScore,
       dailyStreak,
     },
     categoryProgress: {
@@ -363,12 +363,14 @@ export async function GET(req: Request) {
       },
       exams: {
         averageScore: examAvgScore,
+        practiced: practicedExamLessonIds.size,
       },
       ask: {
         questionsAsked: askQuestionsCount,
         conversations: askConversationsCount,
       },
     },
-    topicMastery,
+    practicedLessons,
+    practicedExams,
   })
 }

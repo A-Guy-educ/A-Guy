@@ -11,7 +11,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { SummaryCards } from './SummaryCards'
 import { CategoryProgress } from './CategoryProgress'
-import { TopicMastery } from './TopicMastery'
+import { PracticedItems } from './PracticedItems'
 import { ActivityTimeline } from './ActivityTimeline'
 import { DashboardFilters } from './DashboardFilters'
 
@@ -21,24 +21,26 @@ interface Course {
   slug: string
 }
 
+interface PracticedItem {
+  lessonId: string
+  title: string
+  timeSpentSeconds: number
+  chatQuestions: number
+}
+
 interface DashboardData {
   summary: {
-    totalProgress: number
     timeSpent: number
-    averageScore: number
     dailyStreak: number
   }
   categoryProgress: {
     learn: { count: number; total: number }
     practice: { attempted: number; completed: number; successRate: number }
-    exams: { averageScore: number }
+    exams: { averageScore: number; practiced?: number }
     ask: { questionsAsked: number; conversations: number }
   }
-  topicMastery: Array<{
-    chapterId: string
-    chapterTitle: string
-    successRate: number
-  }>
+  practicedLessons: PracticedItem[]
+  practicedExams: PracticedItem[]
 }
 
 interface StatsDashboardProps {
@@ -116,9 +118,10 @@ export function StatsDashboard({
           <SummaryCards summary={data.summary} categoryProgress={data.categoryProgress} />
           <CategoryProgress data={data.categoryProgress} />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <TopicMastery topics={data.topicMastery} />
-            <ActivityTimeline />
+            <PracticedItems items={data.practicedLessons} type="lessons" />
+            <PracticedItems items={data.practicedExams} type="exams" />
           </div>
+          <ActivityTimeline />
         </>
       ) : (
         <div className="text-center py-12 text-muted-foreground">{t('errorLoading')}</div>

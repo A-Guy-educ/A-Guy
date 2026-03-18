@@ -393,9 +393,7 @@
   },
   "stats": {
     "title": "הסטטיסטיקה שלי",
-    "totalProgress": "התקדמות כוללת",
     "timeSpent": "זמן למידה",
-    "averageScore": "ציון ממוצע",
     "dailyStreak": "רצף יומי",
     "allCourses": "כל הקורסים",
     "thisWeek": "השבוע",
@@ -411,9 +409,9 @@
     "lessonsCompleted": "שיעורים הושלמו",
     "exercisesAttempted": "תרגילים ניסו",
     "exercisesSuccessful": "הצלחה",
+    "examsPracticed": "מבחנים שתורגלו",
     "questionsAsked": "שאלות נשאלו",
     "conversationsStarted": "שיחות",
-    "topicMastery": "שליטה בנושאים",
     "recentActivity": "פעילות אחרונה",
     "noActivity": "אין פעילות עדיין. התחל ללמוד כדי לראות את ההתקדמות שלך!",
     "continue": "המשך",
@@ -422,7 +420,13 @@
     "viewFullStats": "צפה בסטטיסטיקה המלאה",
     "myProgressAndStats": "ההתקדמות והסטטיסטיקה שלי",
     "errorLoading": "טעינת הסטטיסטיקה נכשלה",
-    "noTopics": "אין נתוני נושאים זמינים עדיין"
+    "practicedLessons": "שיעורים שתורגלו",
+    "practicedExams": "מבחנים שתורגלו",
+    "noLessonsPracticed": "אין שיעורים שתורגלו עדיין",
+    "noExamsPracticed": "אין מבחנים שתורגלו עדיין",
+    "lessonName": "שיעור",
+    "examName": "מבחן",
+    "chatQuestions": "שאלות בצ'אט"
   },
   "exerciseConversion": {
     "convertButton": "המר → תרגילים",

@@ -393,9 +393,7 @@
   },
   "stats": {
     "title": "My Statistics",
-    "totalProgress": "Total Progress",
     "timeSpent": "Time Spent",
-    "averageScore": "Average Score",
     "dailyStreak": "Daily Streak",
     "allCourses": "All Courses",
     "thisWeek": "This Week",
@@ -411,9 +409,9 @@
     "lessonsCompleted": "lessons completed",
     "exercisesAttempted": "exercises attempted",
     "exercisesSuccessful": "successful",
+    "examsPracticed": "exams practiced",
     "questionsAsked": "questions asked",
     "conversationsStarted": "conversations",
-    "topicMastery": "Topic Mastery",
     "recentActivity": "Recent Activity",
     "noActivity": "No activity yet. Start learning to see your progress!",
     "continue": "Continue",
@@ -422,7 +420,13 @@
     "viewFullStats": "View Full Statistics",
     "myProgressAndStats": "My Progress & Stats",
     "errorLoading": "Failed to load statistics",
-    "noTopics": "No topic data available yet"
+    "practicedLessons": "Lessons Practiced",
+    "practicedExams": "Exams Practiced",
+    "noLessonsPracticed": "No lessons practiced yet",
+    "noExamsPracticed": "No exams practiced yet",
+    "lessonName": "Lesson",
+    "examName": "Exam",
+    "chatQuestions": "Chat Questions"
   },
   "exerciseConversion": {
     "convertButton": "Convert → Exercises",

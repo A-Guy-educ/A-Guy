@@ -3,6 +3,7 @@
  *
  * Tracks user active time with heartbeat mechanism.
  * Pauses when user switches to a different browser tab.
+ * Sends current lessonId for per-lesson time tracking.
  */
 
 'use client'
@@ -15,30 +16,36 @@ const STREAK_THRESHOLD_MS = 60000 // 1 minute
 interface UseActiveTimeTrackerOptions {
   isAuthenticated: boolean
   enabled?: boolean
+  getLessonId?: () => string | null
 }
 
 export function useActiveTimeTracker({
   isAuthenticated,
   enabled = true,
+  getLessonId,
 }: UseActiveTimeTrackerOptions) {
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const cumulativeTimeRef = useRef<number>(0)
   const streakSentRef = useRef<boolean>(false)
   const isVisibleRef = useRef<boolean>(true)
 
-  const sendHeartbeat = useCallback(async (seconds: number) => {
-    try {
-      await fetch('/api/stats/heartbeat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ seconds }),
-      })
-    } catch (error) {
-      console.error('Failed to send heartbeat:', error)
-    }
-  }, [])
+  const sendHeartbeat = useCallback(
+    async (seconds: number) => {
+      try {
+        const lessonId = getLessonId?.() ?? null
+        await fetch('/api/stats/heartbeat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ seconds, ...(lessonId ? { lessonId } : {}) }),
+        })
+      } catch (error) {
+        console.error('Failed to send heartbeat:', error)
+      }
+    },
+    [getLessonId],
+  )
 
   const sendStreakUpdate = useCallback(async () => {
     if (streakSentRef.current) return // Already sent today
@@ -83,7 +90,7 @@ export function useActiveTimeTracker({
       // Track cumulative time for streak
       cumulativeTimeRef.current += HEARTBEAT_INTERVAL_MS
 
-      // Check if we've reached the 5-minute threshold for streak
+      // Check if we've reached the 1-minute threshold for streak
       if (cumulativeTimeRef.current >= STREAK_THRESHOLD_MS) {
         sendStreakUpdate()
         cumulativeTimeRef.current = 0 // Reset after sending streak
