@@ -502,12 +502,113 @@ function getHookSafeEnv(): NodeJS.ProcessEnv {
   return _hookSafeEnvCache
 }
 
+// ============================================================================
+// Pending Commit Patch — Persist build output across failed pushes
+// ============================================================================
+
+const PENDING_PATCH_FILE = 'pending-commit.patch'
+const PENDING_MESSAGE_FILE = 'pending-commit-message.txt'
+
+/**
+ * Save the last commit as a patch file in the task directory.
+ * Called when commit succeeds but push fails, so the build output
+ * can be recovered on the next rerun without re-running the build stage.
+ */
+export function savePendingPatch(taskDir: string, cwd: string): boolean {
+  try {
+    // Generate patch from HEAD commit
+    const patch = execFileSync('git', ['format-patch', '-1', 'HEAD', '--stdout'], {
+      cwd,
+      encoding: 'utf-8',
+      timeout: 30_000,
+    })
+
+    if (!patch.trim()) {
+      logger.warn('[patch] No patch content generated')
+      return false
+    }
+
+    // Save patch to task directory
+    const patchPath = path.join(taskDir, PENDING_PATCH_FILE)
+    fs.writeFileSync(patchPath, patch)
+
+    // Save commit message separately (format-patch includes it but we need it standalone)
+    const message = execFileSync('git', ['log', '-1', '--format=%B'], {
+      cwd,
+      encoding: 'utf-8',
+    }).trim()
+    const messagePath = path.join(taskDir, PENDING_MESSAGE_FILE)
+    fs.writeFileSync(messagePath, message)
+
+    // Reset HEAD back so the patch can be cleanly re-applied on next run
+    // (the commit exists locally but was never pushed)
+    execFileSync('git', ['reset', 'HEAD~1'], {
+      cwd,
+      stdio: 'pipe',
+    })
+
+    logger.info(`[patch] Saved pending patch to ${PENDING_PATCH_FILE} (build output preserved)`)
+    return true
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    logger.error(`[patch] Failed to save pending patch: ${msg}`)
+    return false
+  }
+}
+
+/**
+ * Check if a pending patch exists and apply it.
+ * Called at the start of commitAndPush to restore build output
+ * from a previous failed push attempt.
+ *
+ * @returns true if patch was applied, false if no patch or apply failed
+ */
+export function restorePendingPatch(taskDir: string, cwd: string): boolean {
+  const patchPath = path.join(taskDir, PENDING_PATCH_FILE)
+  if (!fs.existsSync(patchPath)) {
+    return false
+  }
+
+  try {
+    logger.info('[patch] Found pending patch — restoring build output from previous run...')
+
+    // Apply the patch (--3way handles conflicts gracefully)
+    execFileSync('git', ['apply', '--3way', patchPath], {
+      cwd,
+      stdio: 'pipe',
+      timeout: 30_000,
+    })
+
+    // Clean up the patch file (it will be re-saved if push fails again)
+    fs.unlinkSync(patchPath)
+    const messagePath = path.join(taskDir, PENDING_MESSAGE_FILE)
+    if (fs.existsSync(messagePath)) {
+      fs.unlinkSync(messagePath)
+    }
+
+    logger.info('[patch] Successfully restored build output from pending patch')
+    return true
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    logger.warn(`[patch] Failed to apply pending patch (may need rebuild): ${msg}`)
+
+    // Clean up the failed patch so we don't keep retrying it
+    try {
+      fs.unlinkSync(patchPath)
+    } catch {
+      // ignore
+    }
+    return false
+  }
+}
+
 /**
  * Push to origin with automatic pull-rebase-retry on rejection.
  * Handles the case where the remote branch has been updated by a previous
  * pipeline run (e.g., gate approval pushed new commits before rerun started).
  *
  * FIX: Use origin/<branch> instead of HEAD for pull, and add force-with-lease fallback.
+ * FIX: Fallback to GITHUB_TOKEN if App token fails with "Write access to repository not granted".
  *
  * @returns true if push succeeded, false if it failed even after rebase
  */
@@ -527,36 +628,83 @@ export function pushWithRebase(cwd: string, env?: NodeJS.ProcessEnv): boolean {
     branchName = ''
   }
 
-  try {
-    execFileSync('git', ['push', '-u', 'origin', 'HEAD'], pushOpts)
-    return true
-  } catch {
-    // Push rejected — remote has new commits. Pull with rebase and retry.
-    logger.info('[push] Push rejected, pulling with rebase...')
+  // Try push with provided env (typically App token)
+  const tryPush = (pushEnvVar: NodeJS.ProcessEnv): boolean => {
+    const opts = { cwd, stdio: 'inherit' as const, env: pushEnvVar, timeout: 120_000 }
     try {
-      // FIX: Use origin/<branch> instead of HEAD for proper remote tracking
-      execFileSync('git', ['pull', '--rebase', 'origin', branchName], {
-        cwd,
-        stdio: 'inherit',
-        timeout: 120_000,
-        env: pushEnv,
-      })
-      execFileSync('git', ['push', '-u', 'origin', 'HEAD'], pushOpts)
-      logger.info('[push] Push succeeded after rebase')
+      execFileSync('git', ['push', '-u', 'origin', 'HEAD'], opts)
       return true
     } catch {
-      // Try force-with-lease as last resort (safe for feature branches - rejects if remote moved)
-      logger.info('[push] Rebase push failed, trying force-with-lease...')
+      return false
+    }
+  }
+
+  // First attempt with provided env (App token)
+  if (tryPush(pushEnv)) {
+    return true
+  }
+
+  // Push rejected — remote has new commits. Pull with rebase and retry.
+  logger.info('[push] Push rejected, pulling with rebase...')
+  try {
+    // FIX: Use origin/<branch> instead of HEAD for proper remote tracking
+    execFileSync('git', ['pull', '--rebase', 'origin', branchName], {
+      cwd,
+      stdio: 'inherit',
+      timeout: 120_000,
+      env: pushEnv,
+    })
+
+    // Retry push after rebase with App token
+    if (tryPush(pushEnv)) {
+      logger.info('[push] Push succeeded after rebase')
+      return true
+    }
+  } catch {
+    // Rebase failed — try force-with-lease
+  }
+
+  // Try force-with-lease as last resort with App token
+  logger.info('[push] Rebase push failed, trying force-with-lease...')
+  try {
+    execFileSync('git', ['push', '-u', 'origin', 'HEAD', '--force-with-lease'], pushOpts)
+    logger.info('[push] Push succeeded with force-with-lease')
+    return true
+  } catch (forceError: unknown) {
+    const msg = forceError instanceof Error ? forceError.message : String(forceError)
+
+    // Check if this is a permission error (App token lacks workflows permission)
+    // Error: "refusing to allow a GitHub App to create or update workflow .github/workflows/ci.yml
+    // without workflows permission"
+    if (
+      msg.includes('Write access to repository not granted') ||
+      msg.includes('workflow') ||
+      msg.includes('permission')
+    ) {
+      logger.warn('[push] App token push failed due to permissions — falling back to GITHUB_TOKEN')
+
+      // Fallback: Use GITHUB_TOKEN for push (it can push source files but not workflows)
+      const fallbackEnv = {
+        ...getHookSafeEnv(),
+        GH_TOKEN: undefined,
+        GITHUB_TOKEN: process.env.GITHUB_TOKEN,
+      }
+      const fallbackOpts = { cwd, stdio: 'inherit' as const, env: fallbackEnv, timeout: 120_000 }
+
+      // Try push with GITHUB_TOKEN
       try {
-        execFileSync('git', ['push', '-u', 'origin', 'HEAD', '--force-with-lease'], pushOpts)
-        logger.info('[push] Push succeeded with force-with-lease')
+        execFileSync('git', ['push', '-u', 'origin', 'HEAD'], fallbackOpts)
+        logger.info('[push] Push succeeded with GITHUB_TOKEN fallback')
         return true
-      } catch (forceError: unknown) {
-        const msg = forceError instanceof Error ? forceError.message : String(forceError)
-        logger.error(`[push] Push failed after all retries: ${msg}`)
-        return false
+      } catch (fallbackError: unknown) {
+        const fallbackMsg =
+          fallbackError instanceof Error ? fallbackError.message : String(fallbackError)
+        logger.error(`[push] GITHUB_TOKEN fallback also failed: ${fallbackMsg}`)
       }
     }
+
+    logger.error(`[push] Push failed after all retries: ${msg}`)
+    return false
   }
 }
 
@@ -709,11 +857,28 @@ export function commitAndPush(
     }).trim()
 
     if (!status) {
-      return {
-        hash: '',
-        branch,
-        success: false,
-        message: 'No changes to commit',
+      // Try restoring from a pending patch (build output from a previous failed push)
+      const restored = restorePendingPatch(taskDir, workDir)
+      if (!restored) {
+        return {
+          hash: '',
+          branch,
+          success: false,
+          message: 'No changes to commit',
+        }
+      }
+      // Re-check status after patch restore
+      const newStatus = execFileSync('git', ['status', '--porcelain'], {
+        cwd: workDir,
+        encoding: 'utf-8',
+      }).trim()
+      if (!newStatus) {
+        return {
+          hash: '',
+          branch,
+          success: false,
+          message: 'No changes to commit (patch restore produced no changes)',
+        }
       }
     }
 
@@ -786,6 +951,9 @@ export function commitAndPush(
     // Push with automatic rebase-retry on rejection (fixes rejected pushes on reruns)
     const pushed = pushWithRebase(workDir, hookSafeEnv)
     if (!pushed) {
+      // Save the commit as a patch so it can be restored on next rerun
+      // This preserves build output across failed pushes
+      savePendingPatch(taskDir, workDir)
       return {
         hash,
         branch,

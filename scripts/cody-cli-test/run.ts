@@ -11,12 +11,18 @@ import { statusModeScenario } from './scenarios/01-status-mode'
 import { helpModeScenario } from './scenarios/02-help-mode'
 import { errorHandlingScenario } from './scenarios/03-error-handling'
 import { fullPipelineScenario } from './scenarios/04-full-pipeline'
+import { specOnlyScenario } from './scenarios/05-spec-only-mode'
+import { complexitySkipScenario } from './scenarios/06-complexity-skip'
+import { badSpecScenario } from './scenarios/07-bad-spec-failure'
 
 const SCENARIOS: Record<string, CliScenario> = {
   '01-status-mode': statusModeScenario,
   '02-help-mode': helpModeScenario,
   '03-error-handling': errorHandlingScenario,
   '04-full-pipeline': fullPipelineScenario,
+  '05-spec-only-mode': specOnlyScenario,
+  '06-complexity-skip': complexitySkipScenario,
+  '07-bad-spec-failure': badSpecScenario,
 }
 
 async function main() {

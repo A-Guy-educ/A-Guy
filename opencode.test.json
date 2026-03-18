@@ -3,83 +3,83 @@
   "instructions": [".ai-docs/BOOTSTRAP.md", ".ai-docs/quick-reference/CHEAT-SHEET.md"],
   "agent": {
     "build": {
-      "model": "opencode/mimo-v2-flash-free",
+      "model": "groq/llama-3.3-70b-versatile",
       "description": "Building features (TEST - cheap model)"
     },
     "plan": {
-      "model": "opencode/mimo-v2-flash-free",
+      "model": "groq/llama-3.3-70b-versatile",
       "description": "Planning tasks (TEST - cheap model)"
     },
     "architect": {
-      "model": "opencode/mimo-v2-flash-free",
+      "model": "groq/llama-3.3-70b-versatile",
       "description": "Architecture design (TEST - cheap model)"
     },
     "clarify": {
-      "model": "opencode/mimo-v2-flash-free",
+      "model": "groq/llama-3.3-70b-versatile",
       "description": "Collects questions (TEST - cheap model)"
     },
     "taskify": {
-      "model": "opencode/mimo-v2-flash-free",
+      "model": "groq/llama-3.3-70b-versatile",
       "description": "Creates task.json (TEST - cheap model)"
     },
     "gap": {
-      "model": "opencode/mimo-v2-flash-free",
+      "model": "groq/llama-3.3-70b-versatile",
       "description": "Analyzes gaps (TEST - cheap model)"
     },
     "plan-gap": {
-      "model": "opencode/mimo-v2-flash-free",
+      "model": "groq/llama-3.3-70b-versatile",
       "description": "Analyzes plan gaps (TEST - cheap model)"
     },
     "autofix": {
-      "model": "opencode/mimo-v2-flash-free",
+      "model": "groq/llama-3.3-70b-versatile",
       "description": "Auto-fixes (TEST - cheap model)"
     },
     "verify": {
-      "model": "opencode/mimo-v2-flash-free",
+      "model": "groq/llama-3.3-70b-versatile",
       "description": "Runs tests (TEST - cheap model)"
     },
     "test": {
-      "model": "opencode/mimo-v2-flash-free",
+      "model": "groq/llama-3.3-70b-versatile",
       "description": "Writes tests (TEST - cheap model)"
     },
     "advisor": {
-      "model": "opencode/mimo-v2-flash-free",
+      "model": "groq/llama-3.3-70b-versatile",
       "description": "Code review (TEST - cheap model)"
     },
     "pr": {
-      "model": "opencode/mimo-v2-flash-free",
+      "model": "groq/llama-3.3-70b-versatile",
       "description": "Creates PR (TEST - cheap model)"
     },
     "cody-expert": {
-      "model": "opencode/mimo-v2-flash-free",
+      "model": "groq/llama-3.3-70b-versatile",
       "description": "Pipeline expert (TEST - cheap model)"
     },
     "build-manager": {
-      "model": "opencode/mimo-v2-flash-free",
+      "model": "groq/llama-3.3-70b-versatile",
       "description": "Orchestration (TEST - cheap model)"
     },
     "test-writer": {
-      "model": "opencode/mimo-v2-flash-free",
+      "model": "groq/llama-3.3-70b-versatile",
       "description": "TDD writer (TEST - cheap model)"
     },
     "browser": {
-      "model": "opencode/mimo-v2-flash-free",
+      "model": "groq/llama-3.3-70b-versatile",
       "description": "Browser agent (TEST - cheap model)"
     },
     "review": {
-      "model": "opencode/mimo-v2-flash-free",
+      "model": "groq/llama-3.3-70b-versatile",
       "description": "Code review (TEST - cheap model)"
     },
     "fix": {
-      "model": "opencode/mimo-v2-flash-free",
+      "model": "groq/llama-3.3-70b-versatile",
       "description": "Targeted fixes (TEST - cheap model)"
     },
     "reflect": {
-      "model": "opencode/mimo-v2-flash-free",
+      "model": "groq/llama-3.3-70b-versatile",
       "description": "Reflection (TEST - cheap model)"
     },
     "e2e-test-writer": {
-      "model": "opencode/mimo-v2-flash-free",
+      "model": "groq/llama-3.3-70b-versatile",
       "description": "E2E tests (TEST - cheap model)"
     }
   },
