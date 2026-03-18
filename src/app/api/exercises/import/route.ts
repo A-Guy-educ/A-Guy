@@ -47,6 +47,8 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     logger.error({ err: error }, '[API Route] Error in /api/exercises/import')
+    const Sentry = await import('@sentry/nextjs')
+    Sentry.captureException(error, { tags: { route: '/api/exercises/import' } })
 
     return NextResponse.json(
       {

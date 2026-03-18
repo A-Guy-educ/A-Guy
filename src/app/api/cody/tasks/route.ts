@@ -6,6 +6,7 @@
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { requireCodyAuth, verifyActorLogin, getUserOctokit } from '@/ui/cody/auth'
 
 import {
@@ -382,9 +383,30 @@ export async function POST(req: NextRequest) {
   const authResult = await requireCodyAuth(req)
   if (authResult instanceof NextResponse) return authResult
 
+  // Zod validation schema for POST body
+  const createTaskSchema = z.object({
+    title: z.string().min(1),
+    body: z.string().optional(),
+    labels: z.array(z.string()).optional(),
+    assignees: z.array(z.string()).optional(),
+    attachments: z
+      .array(
+        z.object({
+          name: z.string(),
+          content: z.string(),
+        }),
+      )
+      .optional(),
+    actorLogin: z.string().optional(),
+  })
+
   try {
     const body = await req.json()
-    const { title, body: issueBody, labels, assignees, attachments, actorLogin } = body
+
+    // Validate with Zod
+    const validated = createTaskSchema.parse(body)
+
+    const { title, body: issueBody, labels, assignees, attachments, actorLogin } = validated
 
     // Verify actorLogin matches the authenticated session (prevents impersonation)
     const actorResult = await verifyActorLogin(req, actorLogin)
@@ -396,10 +418,6 @@ export async function POST(req: NextRequest) {
 
     // Get user's Octokit (null for legacy sessions → falls back to bot token)
     const userOctokit = await getUserOctokit(req)
-
-    if (!title) {
-      return NextResponse.json({ error: 'Title is required' }, { status: 400 })
-    }
 
     // Create the issue in GitHub — when user token is available, issue appears under their identity
     const actorNote = userOctokit
@@ -459,6 +477,14 @@ export async function POST(req: NextRequest) {
     })
   } catch (error: any) {
     console.error('[Cody] Error creating task:', error)
+
+    // Handle ZodError specifically - return 400 for validation errors
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Validation error', details: error.issues },
+        { status: 400 },
+      )
+    }
 
     // User's GitHub token expired/revoked — prompt re-auth
     if (error.status === 401) {

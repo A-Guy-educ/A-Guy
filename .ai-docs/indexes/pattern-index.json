@@ -69,6 +69,7 @@
         "src/app/(frontend)/courses/_components/LessonsSectionTitle/index.tsx",
         "src/app/(frontend)/courses/_components/MembershipPlans/index.tsx",
         "src/app/(frontend)/courses/_components/PlanCard/index.tsx",
+        "src/app/(frontend)/error.tsx",
         "src/app/(frontend)/login/LoginForm.tsx",
         "src/app/(frontend)/login/LoginPageContent.tsx",
         "src/app/(frontend)/not-found.tsx",
@@ -697,7 +698,9 @@
       "pattern": "validated-endpoint",
       "description": "API endpoint with Zod validation",
       "files": [
+        "src/app/api/agent/conversation/route.ts",
         "src/app/api/agent/message/persist/route.ts",
+        "src/app/api/agent/reset-chat/route.ts",
         "src/app/api/blob/upload-token/route.ts",
         "src/app/api/cody/branches/route.ts",
         "src/app/api/cody/chat/route.ts",
@@ -705,7 +708,9 @@
         "src/app/api/cody/prs/comments/route.ts",
         "src/app/api/cody/prs/status/route.ts",
         "src/app/api/cody/tasks/[taskId]/actions/route.ts",
+        "src/app/api/cody/tasks/approve-review/route.ts",
         "src/app/api/cody/tasks/approve/route.ts",
+        "src/app/api/cody/tasks/route.ts",
         "src/app/api/entitlements/redeem/route.ts",
         "src/app/api/exercises/[id]/blocks/[blockId]/route.ts",
         "src/app/api/exercises/convert/queue/route.ts",
@@ -2452,6 +2457,14 @@
       "aiSummary": "",
       "dependencies": ["lucide-react"]
     },
+    "src/app/(frontend)/error.tsx": {
+      "path": "src/app/(frontend)/error.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["@sentry/nextjs", "react"]
+    },
     "src/app/(frontend)/layout.tsx": {
       "path": "src/app/(frontend)/layout.tsx",
       "type": "unknown",
@@ -2646,9 +2659,9 @@
       "path": "src/app/api/agent/conversation/route.ts",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["api-endpoint", "authenticated-endpoint"],
+      "patterns": ["api-endpoint", "authenticated-endpoint", "validated-endpoint"],
       "aiSummary": "",
-      "dependencies": ["next/server", "payload", "@payload-config"]
+      "dependencies": ["next/server", "payload", "@payload-config", "zod"]
     },
     "src/app/api/agent/message/persist/route.ts": {
       "path": "src/app/api/agent/message/persist/route.ts",
@@ -2662,9 +2675,9 @@
       "path": "src/app/api/agent/reset-chat/route.ts",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["api-endpoint", "authenticated-endpoint"],
+      "patterns": ["api-endpoint", "authenticated-endpoint", "validated-endpoint"],
       "aiSummary": "",
-      "dependencies": ["@payload-config", "next/server", "payload"]
+      "dependencies": ["@payload-config", "next/server", "payload", "zod"]
     },
     "src/app/api/blob/upload-token/route.ts": {
       "path": "src/app/api/blob/upload-token/route.ts",
@@ -2886,17 +2899,17 @@
       "path": "src/app/api/cody/tasks/approve-review/route.ts",
       "type": "api-endpoint",
       "domain": "cody",
-      "patterns": ["approve-review", "api-endpoint"],
+      "patterns": ["approve-review", "api-endpoint", "validated-endpoint"],
       "aiSummary": "Approve a PR review and merge it via GitHub API (Octokit).",
-      "dependencies": ["next/server"]
+      "dependencies": ["next/server", "zod"]
     },
     "src/app/api/cody/tasks/route.ts": {
       "path": "src/app/api/cody/tasks/route.ts",
       "type": "api-endpoint",
       "domain": "cody",
-      "patterns": ["tasks-api", "api-endpoint"],
+      "patterns": ["tasks-api", "api-endpoint", "validated-endpoint"],
       "aiSummary": "API route to fetch and create tasks (GitHub issues)",
-      "dependencies": ["next/server"]
+      "dependencies": ["next/server", "zod"]
     },
     "src/app/api/cody/workflows/route.ts": {
       "path": "src/app/api/cody/workflows/route.ts",

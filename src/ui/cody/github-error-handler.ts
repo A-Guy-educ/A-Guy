@@ -1,5 +1,6 @@
 import { ZodError, type ZodError as ZodErrorType } from 'zod'
 
+import * as Sentry from '@sentry/nextjs'
 import { ApiErrors, apiError, apiValidationError } from '@/server/api/responses'
 import type { ApiErrorResponse } from '@/server/api/responses'
 import type { NextResponse } from 'next/server'
@@ -73,6 +74,9 @@ export function handleCodyApiError(
 ): NextResponse<ApiErrorResponse> {
   // Extract a safe message for logging (never log stack traces)
   const safeMessage = error instanceof Error ? error.message : 'Unknown error'
+
+  // Capture exception to Sentry
+  Sentry.captureException(error, { tags: { route: routeName } })
 
   // Handle Zod validation errors
   if (isZodError(error)) {

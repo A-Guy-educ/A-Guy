@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
       headers: RESPONSE_HEADERS,
     })
   } catch (error) {
-    reqLogger.error({ error }, 'Unexpected error proxying PDF viewer')
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    const { captureAndRespond } = await import('@/server/api/capture-and-respond')
+    return captureAndRespond(error, { route: '/api/pdfjs-viewer' })
   }
 }

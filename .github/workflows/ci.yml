@@ -63,7 +63,15 @@ jobs:
         run: pnpm format:check
 
       - name: Run unit tests
-        run: pnpm test:unit
+        run: pnpm test:unit -- --coverage
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
 
       - name: Run cody integration tests
         run: pnpm test:int:cody

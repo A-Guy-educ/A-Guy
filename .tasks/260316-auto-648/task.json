@@ -1,0 +1,42 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "high",
+  "confidence": 0.8,
+  "primary_domain": "infra",
+  "scope": [
+    "next.config.js - security headers with split CSP",
+    "src/app/(frontend)/error.tsx - create error boundary",
+    "src/infra/config/env-validation.ts - create env validation",
+    "instrumentation.ts - hook in validation",
+    "Cody API error utility - add Sentry capture",
+    "6 non-Cody routes - add captureAndRespond",
+    "4 high-traffic routes - migrate to withApiHandler",
+    "4 remaining POST routes - add Zod validation",
+    ".github/workflows/ci.yml - add coverage",
+    "vitest.config.unit.mts - add coverage config",
+    "instrumentation-client.ts - add browserTracingIntegration"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Cherry-pick commit 9631fe7b will succeed or conflicts can be resolved",
+    "handleCodyApiError utility exists and can be found in codebase",
+    "withApiHandler utility exists and can be used for migration",
+    "Sentry is already configured in the project"
+  ],
+  "review_questions": [
+    "Should the E2E cherry-pick be done first to have test helpers available for verification?",
+    "Are there any existing env validation patterns in the codebase to follow?",
+    "Should coverage thresholds be enforced or just visible initially?"
+  ],
+  "complexity": 64,
+  "complexity_reasoning": "Scope: 20+ files across 3 phases (20pts). Risk: High - security headers, infrastructure, CI changes (15pts). Novelty: Mix of new and existing patterns (10pts). Cross-Domain: Backend + Frontend + Infra + DevOps (12pts). Ambiguity: Very detailed spec (2pts). Dependencies: Sentry, external configs (5pts). Total: 64",
+  "input_quality": {
+    "level": "detailed_plan",
+    "skip_stages": [
+      "architect"
+    ],
+    "reasoning": "Input contains step-by-step implementation phases with file paths and specific changes. Has spec.md with Requirements and Acceptance Criteria, and plan.md with implementation steps. Skipping architect stage as plan is already detailed."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

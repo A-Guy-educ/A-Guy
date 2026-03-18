@@ -7,6 +7,7 @@
  *   Uses per-user GitHub token when available for proper attribution.
  */
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { requireCodyAuth, verifyActorLogin, getUserOctokit } from '@/ui/cody/auth'
 import { getOctokit } from '@/ui/cody/github-client'
 import { GITHUB_OWNER, GITHUB_REPO } from '@/ui/cody/constants'
@@ -18,13 +19,16 @@ export async function POST(req: NextRequest) {
   const authResult = await requireCodyAuth(req)
   if (authResult instanceof NextResponse) return authResult
 
+  // Zod validation schema
+  const bodySchema = z.object({
+    prNumber: z.number().int().positive(),
+    actorLogin: z.string().optional(),
+  })
+
   try {
     const body = await req.json()
-    const { prNumber, actorLogin } = body
-
-    if (!prNumber) {
-      return NextResponse.json({ error: 'Missing prNumber' }, { status: 400 })
-    }
+    const validated = bodySchema.parse(body)
+    const { prNumber, actorLogin } = validated
 
     // Verify actorLogin matches the authenticated session (prevents impersonation)
     const actorResult = await verifyActorLogin(req, actorLogin)
@@ -107,8 +111,20 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, results })
   } catch (error: unknown) {
+    // Handle ZodError specifically
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Validation error', details: error.issues },
+        { status: 400 },
+      )
+    }
+
     const msg = error instanceof Error ? error.message : String(error)
     console.error('[Cody] Merge error:', msg)
+
+    // Capture to Sentry
+    const Sentry = await import('@sentry/nextjs')
+    Sentry.captureException(error, { tags: { route: '/api/cody/tasks/approve-review' } })
 
     // User's GitHub token expired/revoked
     if (

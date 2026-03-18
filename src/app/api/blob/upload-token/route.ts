@@ -150,7 +150,8 @@ export async function POST(request: Request): Promise<Response> {
     })
 
     return Response.json(result)
-  } catch {
-    return Response.json({ error: 'Internal server error' }, { status: 500 })
+  } catch (error) {
+    const { captureAndRespond } = await import('@/server/api/capture-and-respond')
+    return captureAndRespond(error, { route: '/api/blob/upload-token' })
   }
 }
