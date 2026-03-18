@@ -68,7 +68,9 @@ export async function handleCourseTranslation(
             typeof c === 'string' ? c : (c as { id: string }).id,
           )
         : [],
-      slug: source.slug ? `${formatSlug(source.slug)}-${targetLocale}` : undefined,
+      slug: source.slug
+        ? `${formatSlug(source.slug)}-${targetLocale}-${Date.now().toString().slice(-6)}`
+        : undefined,
       contentStatus: 'none',
       contentStatusVisible: false,
       translatedFrom: courseId,
@@ -106,7 +108,9 @@ export async function handleCourseTranslation(
         isActive: true,
         locale: targetLocale,
         translatedFrom: chapter.id,
-        slug: chapter.slug ? `${chapter.slug}-${targetLocale}` : undefined,
+        slug: chapter.slug
+          ? `${chapter.slug}-${targetLocale}-${Date.now().toString().slice(-6)}`
+          : undefined,
       },
     })
 
