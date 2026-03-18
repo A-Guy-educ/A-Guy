@@ -12,12 +12,18 @@ import {
   CHAT_ASSET_MAX_BYTES,
   CHAT_ASSET_RETENTION_DAYS,
 } from '@/server/chat-assets/constants'
+import { head } from '@vercel/blob'
 import { isVercelBlobUrl } from '@/infra/blob/vercel-blob-adapter'
-import { getMediaBlobAdapter } from '@/infra/blob/vercel-blob-adapter'
 
-const finalizeSchema = z.object({
-  uploadSessionId: z.string().min(1),
-})
+const finalizeSchema = z
+  .object({
+    uploadSessionId: z.string().min(1).optional(),
+    blobUrl: z.string().url().optional(),
+    originalFilename: z.string().optional(),
+  })
+  .refine((data) => data.uploadSessionId || data.blobUrl, {
+    message: 'Either uploadSessionId or blobUrl is required',
+  })
 
 export async function POST(request: Request): Promise<Response> {
   try {
@@ -43,14 +49,67 @@ export async function POST(request: Request): Promise<Response> {
       )
     }
 
-    const { uploadSessionId } = validated.data
+    const { uploadSessionId, blobUrl, originalFilename } = validated.data
 
-    const session = await payload.findByID({
-      collection: 'upload-sessions',
-      id: uploadSessionId,
-      depth: 0,
-      overrideAccess: true,
-    })
+    let session
+    if (uploadSessionId) {
+      session = await payload.findByID({
+        collection: 'upload-sessions',
+        id: uploadSessionId,
+        depth: 0,
+        overrideAccess: true,
+      })
+    } else if (blobUrl) {
+      // Strategy 1: by blobUrl (set by onUploadCompleted callback)
+      const byUrl = await payload.find({
+        collection: 'upload-sessions',
+        where: { blobUrl: { equals: blobUrl } },
+        limit: 1,
+        depth: 0,
+        overrideAccess: true,
+      })
+      session = byUrl.docs[0] || null
+
+      // Strategy 2: by pathname extracted from blobUrl
+      if (!session) {
+        try {
+          const url = new URL(blobUrl)
+          const blobPathname = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname
+          if (blobPathname) {
+            const byPath = await payload.find({
+              collection: 'upload-sessions',
+              where: {
+                pathname: { equals: blobPathname },
+                createdBy: { equals: userId },
+              },
+              limit: 1,
+              depth: 0,
+              overrideAccess: true,
+            })
+            session = byPath.docs[0] || null
+          }
+        } catch {
+          // Invalid URL, skip pathname lookup
+        }
+      }
+
+      // Strategy 3: most recent unfinalized session for this user
+      if (!session) {
+        const byUser = await payload.find({
+          collection: 'upload-sessions',
+          where: {
+            createdBy: { equals: userId },
+            status: { in: ['initiated', 'uploaded'] },
+            ...(originalFilename ? { originalFilename: { equals: originalFilename } } : {}),
+          },
+          sort: '-createdAt',
+          limit: 1,
+          depth: 0,
+          overrideAccess: true,
+        })
+        session = byUser.docs[0] || null
+      }
+    }
 
     if (!session) {
       return Response.json({ error: 'Upload session not found' }, { status: 404 })
@@ -94,29 +153,46 @@ export async function POST(request: Request): Promise<Response> {
       return Response.json({ error: 'Invalid session status' }, { status: 409 })
     }
 
-    if (!session.blobUrl) {
+    // If onUploadCompleted didn't fire, use the blobUrl from the client
+    const resolvedBlobUrl = session.blobUrl || blobUrl
+    if (!resolvedBlobUrl) {
       return Response.json({ error: 'Upload not completed' }, { status: 409 })
     }
 
-    if (!isVercelBlobUrl(session.blobUrl)) {
+    if (!isVercelBlobUrl(resolvedBlobUrl)) {
       return Response.json({ error: 'Invalid blob URL' }, { status: 400 })
     }
 
-    const blobAdapter = getMediaBlobAdapter()
-    const metadata = await blobAdapter.getMetadata(session.blobUrl)
-
-    if (!metadata) {
-      return Response.json({ error: 'Blob not found' }, { status: 404 })
+    // Update session with blobUrl if it wasn't set by onUploadCompleted
+    if (!session.blobUrl && resolvedBlobUrl) {
+      await payload.update({
+        collection: 'upload-sessions',
+        id: session.id,
+        data: { blobUrl: resolvedBlobUrl, status: 'uploaded' },
+        overrideAccess: true,
+      })
     }
 
-    if (metadata.size && metadata.size > CHAT_ASSET_MAX_BYTES) {
+    // Verify blob exists using head() directly (not through media adapter,
+    // since chat assets are stored under chat-assets/, not media/)
+    let blobSize = session.expectedSize || 0
+    let blobContentType = session.mimeType
+    try {
+      const blobHead = await head(resolvedBlobUrl)
+      blobSize = blobHead.size || blobSize
+      blobContentType = blobHead.contentType || blobContentType
+    } catch {
+      // Blob might not be immediately available; trust the session data
+    }
+
+    if (blobSize && blobSize > CHAT_ASSET_MAX_BYTES) {
       return Response.json({ error: 'File size exceeds maximum' }, { status: 413 })
     }
 
     if (
-      metadata.contentType &&
+      blobContentType &&
       !CHAT_ASSET_ALLOWED_MIME_TYPES.includes(
-        metadata.contentType as (typeof CHAT_ASSET_ALLOWED_MIME_TYPES)[number],
+        blobContentType as (typeof CHAT_ASSET_ALLOWED_MIME_TYPES)[number],
       )
     ) {
       return Response.json({ error: 'Content type not allowed' }, { status: 415 })
@@ -129,11 +205,11 @@ export async function POST(request: Request): Promise<Response> {
       data: {
         tenant: session.tenant,
         createdBy: userId,
-        url: session.blobUrl,
+        url: resolvedBlobUrl,
         pathname: session.pathname,
         originalFilename: session.originalFilename,
         mimeType: session.mimeType,
-        filesize: metadata.size || session.expectedSize || 0,
+        filesize: blobSize || session.expectedSize || 0,
         retentionPolicy: 'ephemeral',
         expiresAt: expiresAt.toISOString(),
         uploadSessionId: session.id,

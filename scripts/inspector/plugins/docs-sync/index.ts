@@ -21,7 +21,7 @@ const DEDUP_KEY = 'docs-sync:nightly-run'
 const DEDUP_WINDOW_MINUTES = 1380
 
 function runNightlyDocs(dryRun: boolean): { success: boolean; output: string } {
-  const args = ['nightly-docs']
+  const args = ['tsx', 'scripts/nightly-docs/index.ts']
   if (dryRun) args.push('--dry-run')
 
   try {

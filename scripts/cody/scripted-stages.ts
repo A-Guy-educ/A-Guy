@@ -55,6 +55,7 @@ export function runVerifyStage(
   outputFile: string,
   cwd: string = process.cwd(),
   timeout?: number,
+  taskDir?: string,
 ): VerifyResult {
   logger.info('\n🔍 Running verification (scripted)...\n')
 
@@ -66,7 +67,7 @@ export function runVerifyStage(
     { name: 'TypeScript', program: 'pnpm', args: ['-s', 'tsc', '--noEmit'] },
     { name: 'Lint', program: 'pnpm', args: ['-s', 'lint'] },
     { name: 'Format', program: 'pnpm', args: ['-s', 'format:check'] },
-    { name: 'Unit Tests', program: 'pnpm', args: ['-s', 'test:unit'] },
+    // Unit Tests gate removed — tests are deferred to inspector plugin (cody-deferred-tests)
   ]
 
   const gates: GateResult[] = []
@@ -90,6 +91,23 @@ export function runVerifyStage(
   }
 
   const allPassed = gates.every((g) => g.passed)
+
+  // Write individual gate output files for failed gates.
+  // These files provide detailed error context to the fix stage agent
+  // (state-machine.ts reads tsc-output.txt / lint-output.txt when building verify-failures.md).
+  if (taskDir) {
+    for (const gate of gates) {
+      if (!gate.passed) {
+        const slug = gate.name.toLowerCase().replace(/\s+/g, '-')
+        const gateOutputPath = path.join(taskDir, `${slug}-output.txt`)
+        try {
+          fs.writeFileSync(gateOutputPath, gate.output.slice(0, 10000))
+        } catch {
+          // Non-critical — gate output is supplementary context
+        }
+      }
+    }
+  }
 
   const lines: string[] = ['# Verification Report\n']
   for (const gate of gates) {
@@ -436,7 +454,13 @@ export async function runPrStage(
   }
 
   if (!pushSuccess) {
-    logger.info('  Push failed - may already be up to date or branch exists')
+    // R3-FIX #1: Abort PR creation if push failed — GitHub API will reject the PR
+    // with "branch not reachable" since the branch doesn't exist on the remote.
+    logger.error('  ❌ Push failed — cannot create PR for unpushed branch')
+    const report =
+      '# PR Stage\n\nFailed to create PR: git push failed. Branch not available on remote.\n'
+    fs.writeFileSync(outputFile, report)
+    return { created: false, url: '', report }
   }
   // Step 3: Build title and body
   const title = buildPrTitle(taskDir, defaultBranch, cwd, issueNumber)

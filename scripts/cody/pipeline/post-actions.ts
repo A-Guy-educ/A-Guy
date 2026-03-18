@@ -26,7 +26,8 @@ import {
 } from '../github-api'
 import { updateStage, completeState, writeState, appendActorEvent } from '../engine/status'
 import { classifyError, formatErrorsAsMarkdown } from './error-classifier'
-import { runAgentWithFileWatch, STAGE_TIMEOUTS, DEFAULT_TIMEOUT } from '../agent-runner'
+import { runAgentWithFileWatch } from '../agent-runner'
+import { getStageTimeout } from '../stages/registry'
 
 /**
  * Execute a post-action
@@ -71,10 +72,17 @@ export async function executePostAction(
       const taskDef = readTask(ctx.taskDir)
       if (taskDef) {
         // Apply --complexity override if provided (for testing/debugging)
-        if (ctx.input.complexityOverride !== undefined && taskDef.complexity === undefined) {
+        if (ctx.input.complexityOverride !== undefined) {
+          const oldComplexity = taskDef.complexity
           taskDef.complexity = ctx.input.complexityOverride
           taskDef.complexity_reasoning = `Override via --complexity=${ctx.input.complexityOverride}`
-          logger.info(`  ℹ️ Applied complexity override: ${ctx.input.complexityOverride}`)
+          if (oldComplexity !== undefined) {
+            logger.info(
+              `  ℹ️ Complexity override: ${oldComplexity} → ${ctx.input.complexityOverride}`,
+            )
+          } else {
+            logger.info(`  ℹ️ Complexity override applied: ${ctx.input.complexityOverride}`)
+          }
         }
         // Update ctx.taskDef so subsequent post-actions can access it
         ctx.taskDef = taskDef
@@ -89,6 +97,15 @@ export async function executePostAction(
         if (taskDef.complexity !== undefined) {
           const tier = getComplexityTier(taskDef.complexity)
           logger.info(`  ℹ️ Complexity: ${taskDef.complexity} (${tier}) → profile: ${ctx.profile}`)
+
+          // R2-FIX #6: Warn when complexity seems mismatched with profile.
+          // A lightweight profile with high complexity may skip important stages.
+          if (ctx.profile === 'lightweight' && taskDef.complexity >= 35) {
+            logger.warn(
+              `  ⚠️ Profile/complexity mismatch: lightweight profile with complexity ${taskDef.complexity} (complex tier). ` +
+                `Some stages may be unexpectedly skipped. Consider overriding with --profile=standard.`,
+            )
+          }
         } else {
           logger.info(
             `  ℹ️ Resolved profile: ${ctx.profile} (no complexity score, using legacy heuristic)`,
@@ -274,17 +291,26 @@ export async function executePostAction(
       // Check that the build agent actually modified source files, not just .tasks/
       let diff = ''
       let untracked = ''
+      let gitFailed = false
       try {
         diff = execFileSync('git', ['diff', '--name-only'], { encoding: 'utf-8' }).trim()
       } catch (error) {
-        logger.warn({ err: error }, 'git diff failed during src validation')
+        logger.error({ err: error }, 'git diff failed during src validation')
+        gitFailed = true
       }
       try {
         untracked = execFileSync('git', ['ls-files', '--others', '--exclude-standard'], {
           encoding: 'utf-8',
         }).trim()
       } catch (error) {
-        logger.warn({ err: error }, 'git ls-files failed during src validation')
+        logger.error({ err: error }, 'git ls-files failed during src validation')
+        gitFailed = true
+      }
+
+      if (gitFailed) {
+        throw new Error(
+          'validate-src-changes: git commands failed — cannot verify source changes. Check git state.',
+        )
       }
 
       const allChanged = [...diff.split('\n'), ...untracked.split('\n')]
@@ -425,7 +451,7 @@ export async function executePostAction(
 
         // Re-invoke the build agent — it has spec, plan, and wrote the code
         const buildOutput = path.join(ctx.taskDir, 'build.md')
-        const buildTimeout = STAGE_TIMEOUTS.build ?? DEFAULT_TIMEOUT
+        const buildTimeout = getStageTimeout('build')
         let buildResult: { succeeded: boolean } | undefined
         try {
           buildResult = await runAgentWithFileWatch(ctx.input, 'build', buildOutput, buildTimeout, {
@@ -558,6 +584,39 @@ export async function executePostAction(
       break
     }
 
+    case 'run-mechanical-autofix': {
+      // Run lint:fix + format:fix deterministically — no LLM needed for mechanical fixes.
+      // This prevents trivial format/lint failures from reaching verify stage.
+      if (ctx.input.dryRun) return
+
+      logger.info('  🔧 Running mechanical auto-fix (lint:fix + format:fix)...')
+
+      try {
+        execFileSync('pnpm', ['lint:fix'], {
+          stdio: 'pipe',
+          timeout: 2 * 60 * 1000, // 2 minutes
+          maxBuffer: 10 * 1024 * 1024,
+        })
+        logger.info('   ✓ lint:fix completed')
+      } catch {
+        logger.info('   ✗ lint:fix had errors (some may need manual fix)')
+      }
+
+      try {
+        execFileSync('pnpm', ['format:fix'], {
+          stdio: 'pipe',
+          timeout: 2 * 60 * 1000, // 2 minutes
+          maxBuffer: 10 * 1024 * 1024,
+        })
+        logger.info('   ✓ format:fix completed')
+      } catch {
+        logger.info('   ✗ format:fix had errors (some may need manual fix)')
+      }
+
+      logger.info('  ✅ Mechanical auto-fix complete')
+      break
+    }
+
     case 'clear-verify-failures': {
       const verifyFailuresPath = path.join(ctx.taskDir, 'verify-failures.md')
       if (fs.existsSync(verifyFailuresPath)) {
@@ -605,7 +664,9 @@ export async function executePostAction(
     }
 
     default:
-      logger.warn(`Unknown post-action type: ${(action as PostAction).type}`)
+      throw new Error(
+        `Unknown post-action type: "${(action as PostAction).type}". This is a configuration bug.`,
+      )
   }
 }
 

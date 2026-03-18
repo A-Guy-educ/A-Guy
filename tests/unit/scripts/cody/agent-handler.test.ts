@@ -9,9 +9,9 @@ vi.mock('../../../../scripts/cody/agent-runner', () => ({
   }),
 }))
 
-// Mock pipeline-utils
-vi.mock('../../../../scripts/cody/pipeline-utils', () => ({
-  stageOutputFile: vi.fn((taskDir, stage) => `${taskDir}/${stage}.json`),
+// Mock stages/registry stageOutputFile (agent-handler now imports from registry)
+vi.mock('../../../../scripts/cody/stages/registry', () => ({
+  stageOutputFile: vi.fn((taskDir: string, stage: string) => `${taskDir}/${stage}.md`),
 }))
 
 // Mock chat-history
@@ -65,7 +65,7 @@ describe('AgentHandler', () => {
       expect(runAgentWithFileWatch).toHaveBeenCalledWith(
         mockCtx.input,
         'taskify',
-        '/test/.tasks/test-task-123/taskify.json',
+        '/test/.tasks/test-task-123/taskify.md',
         300000,
         expect.objectContaining({
           backend: mockCtx.backend,
@@ -115,11 +115,10 @@ describe('AgentHandler', () => {
 
       const result = await handler.execute(mockCtx, mockDef)
 
-      expect(result).toEqual({
-        outcome: 'failed',
-        reason: 'Agent failed',
-        retries: 1,
-      })
+      expect(result.outcome).toBe('failed')
+      expect(result.retries).toBe(1)
+      expect(result.reason).toContain('Agent "taskify" failed')
+      expect(result.reason).toContain('Artifacts: taskify-stderr.log')
     })
 
     it('should return timed_out outcome when agent times out', async () => {
@@ -145,7 +144,7 @@ describe('AgentHandler', () => {
       expect(runAgentWithFileWatch).toHaveBeenCalledWith(
         expect.anything(),
         'build',
-        '/test/.tasks/test-task-123/build.json',
+        '/test/.tasks/test-task-123/build.md',
         expect.anything(),
         expect.anything(),
       )

@@ -49,7 +49,7 @@ export const COLUMN_DEFS: Record<ColumnId, ColumnDef> = {
   building: { id: 'building', label: 'Building', color: 'blue', order: 1 },
   review: { id: 'review', label: 'Review', color: 'purple', order: 2 },
   failed: { id: 'failed', label: 'Failed', color: 'red', order: 3 },
-  'gate-waiting': { id: 'gate-waiting', label: 'Gate Waiting', color: 'yellow', order: 4 },
+  'gate-waiting': { id: 'gate-waiting', label: 'Needs Approval', color: 'yellow', order: 4 },
   retrying: { id: 'retrying', label: 'Retrying', color: 'orange', order: 5 },
   done: { id: 'done', label: 'Done', color: 'green', order: 6 },
 }
@@ -111,9 +111,9 @@ export const BRANCH_CACHE_TTL = 600000 // 10min - branches rarely change
 
 export const CACHE_TTL = {
   tasks: 120000, // 2min - reduced API calls while staying fresh
-  pipeline: 60000, // 30s - increased from 5s to reduce calls
-  boards: 900000, // 5min - labels/milestones rarely change
-  prs: 300000, // 2min - increased from 30s
+  pipeline: 60000, // 1min - fresh enough for status checks
+  boards: 900000, // 15min - labels/milestones rarely change
+  prs: 300000, // 5min - PRs don't change that often
 } as const
 
 // ============ Emoji List ============
@@ -256,3 +256,62 @@ export const SITE_URLS = {
 
 export const DEV_BRANCH = 'dev'
 export const PROD_BRANCH = 'main'
+
+// ============ Priority Labels ============
+
+export const PRIORITY_LEVELS = ['P0', 'P1', 'P2', 'P3'] as const
+export type PriorityLevel = (typeof PRIORITY_LEVELS)[number]
+
+export const PRIORITY_META: Record<
+  PriorityLevel,
+  { label: string; description: string; badge: string; colorClass: string }
+> = {
+  P0: {
+    label: 'Critical',
+    description: 'System down, data loss, security breach',
+    badge: '🔴',
+    colorClass: 'bg-red-500/20 text-red-400 border-red-500/30',
+  },
+  P1: {
+    label: 'High',
+    description: 'Major feature broken, no workaround',
+    badge: '🟠',
+    colorClass: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+  },
+  P2: {
+    label: 'Medium',
+    description: 'Feature impaired but workaround exists',
+    badge: '🟡',
+    colorClass: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  },
+  P3: {
+    label: 'Low',
+    description: 'Minor issue, cosmetic, nice-to-have',
+    badge: '🟢',
+    colorClass: 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30',
+  },
+}
+
+/** Convert a priority label string like "priority:P1" to a PriorityLevel, or undefined */
+export function parsePriorityLabel(label: string): PriorityLevel | undefined {
+  if (!label.startsWith('priority:')) return undefined
+  const level = label.replace('priority:', '') as PriorityLevel
+  return PRIORITY_LEVELS.includes(level) ? level : undefined
+}
+
+/** Get the priority level for a task from its labels, or undefined if no priority set */
+export function getTaskPriority(labels: string[]): PriorityLevel | undefined {
+  for (const label of labels) {
+    const p = parsePriorityLabel(label)
+    if (p) return p
+  }
+  return undefined
+}
+
+/** Numeric rank for sorting (lower = higher priority). Unset = 99 */
+export const PRIORITY_RANK: Record<string, number> = {
+  P0: 0,
+  P1: 1,
+  P2: 2,
+  P3: 3,
+}

@@ -5,10 +5,22 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock all dependencies
 vi.mock('@/ui/cody/auth', () => ({
-  requireDashboardAuth: vi.fn(() => ({
-    authenticated: true,
-    user: { id: '1', email: 'test@test.com' },
+  requireCodyAuth: vi.fn(() => ({
+    identity: { login: 'alice', id: 1 },
   })),
+  verifyActorLogin: vi.fn(() => ({
+    identity: { login: 'alice', id: 1 },
+  })),
+  getUserOctokit: vi.fn(() => Promise.resolve(null)),
+}))
+
+vi.mock('@/ui/cody/agents', () => ({
+  getAgent: vi.fn(() => ({
+    id: 'dashboard-manager',
+    systemPrompt: 'test prompt',
+    tools: ['github'],
+  })),
+  REMOTE_SYSTEM_PROMPT_EXTENSION: 'Remote Dev Environment\nremoteExec',
 }))
 
 vi.mock('@/ui/cody/remote-config', () => ({
@@ -33,6 +45,21 @@ vi.mock('@ai-sdk/mcp', () => ({
       tools: vi.fn(() => Promise.resolve({})),
     }),
   ),
+}))
+
+// Mock child_process spawn for Figma MCP
+vi.mock('child_process', () => ({
+  spawn: vi.fn(() => ({
+    kill: vi.fn(),
+  })),
+}))
+
+vi.mock('net', () => ({
+  Socket: vi.fn(() => ({
+    connect: vi.fn(),
+    on: vi.fn(),
+    destroy: vi.fn(),
+  })),
 }))
 
 vi.mock('@ai-sdk/google', () => ({
@@ -61,6 +88,8 @@ describe('chat route — remote tools injection', () => {
     process.env.GEMINI_API_KEY = 'test-key'
     process.env.GH_PAT = 'test-token'
     process.env.NEXT_PUBLIC_SERVER_URL = 'http://localhost:3000'
+    // Prevent Figma MCP from spawning in tests
+    delete process.env.FIGMA_API_KEY
   })
 
   it('does NOT inject remote tools when user has no remote config', async () => {

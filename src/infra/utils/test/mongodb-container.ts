@@ -41,16 +41,16 @@ export async function startMongoContainer(): Promise<string> {
     return 'mongodb://localhost:27017/test?directConnection=true'
   }
 
-  // Check if DATABASE_URL is set to Atlas - tests using testcontainers shouldn't have Atlas configured
+  // If DATABASE_URL is set to Atlas, clear it so testcontainers can take over.
+  // This happens locally when .env has the production Atlas URL.
+  // Tests that need Atlas (vector-search) use USE_ATLAS=true explicitly.
   const currentDbUrl = process.env.DATABASE_URL
   if (currentDbUrl && isProductionDatabase(currentDbUrl)) {
-    throw new Error(
-      `❌ Cannot start testcontainers: DATABASE_URL is set to MongoDB Atlas!\n` +
-        `DATABASE_URL: ${currentDbUrl.replace(/:[^:@]+@/, ':****@')}\n\n` +
-        `Tests using testcontainers (startMongoContainer()) must NOT have Atlas configured.\n` +
-        `Vector search tests use Atlas directly without testcontainers.\n\n` +
-        `Solution: Unset DATABASE_URL or set it to a testcontainers URL before calling startMongoContainer()`,
+    console.log(
+      `[testcontainers] DATABASE_URL is set to Atlas — clearing it for testcontainers.\n` +
+        `If you need Atlas tests, use: pnpm test:int:atlas`,
     )
+    process.env.DATABASE_URL = ''
   }
 
   if (!mongoContainer) {

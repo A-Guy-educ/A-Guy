@@ -11,6 +11,8 @@ import type { Course } from '@/payload-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { Button } from '@/ui/web/components/button'
 import { SafeHtml } from '@/ui/web/SafeHtml'
+import { ContentStatusBadge } from '@/ui/web/shared/ContentStatusBadge'
+import { toast } from 'sonner'
 
 interface CourseCardProps {
   course: Course
@@ -26,8 +28,17 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
   // Show loading state if this button was clicked and route is loading
   const isLoading = wasClicked && isRouteLoading
 
+  // Determine if content is "soon" (locked)
+  const isSoon = course.contentStatus === 'soon'
+
   const handleCourseSelect = (e: React.MouseEvent) => {
     e.preventDefault()
+
+    // If course is "Soon", show locked message and do NOT navigate
+    if (isSoon) {
+      toast.info(t('contentLocked'))
+      return
+    }
 
     // Mark that this button was clicked
     setWasClicked(true)
@@ -57,6 +68,7 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
         borderClass,
         'shadow-[0_1px_2px_0_rgba(60,64,67,.3),0_1px_3px_1px_rgba(60,64,67,.15)]',
         'transition-all hover:-translate-y-0.5',
+        isSoon && 'opacity-75',
       )}
     >
       {isOwned && (
@@ -67,6 +79,13 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
           הקורס שלך
         </span>
       )}
+
+      {/* Content Status Badge - top right */}
+      <ContentStatusBadge
+        contentStatus={course.contentStatus}
+        contentStatusExpiresAt={course.contentStatusExpiresAt ?? undefined}
+        className="absolute -top-3 right-6"
+      />
 
       <div className="mb-6 flex justify-between items-start gap-4">
         <div className="flex-1">
@@ -109,12 +128,14 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
       <div className="mt-auto pt-6 border-t border-border">
         <Button
           onClick={handleCourseSelect}
-          disabled={isLoading}
+          disabled={isLoading || isSoon}
           className={cn(
             'w-full',
             isOwned
               ? 'bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/20'
-              : 'bg-muted text-primary hover:bg-[hsl(var(--primary-soft))]',
+              : isSoon
+                ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                : 'bg-muted text-primary hover:bg-[hsl(var(--primary-soft))]',
           )}
         >
           {isLoading ? (

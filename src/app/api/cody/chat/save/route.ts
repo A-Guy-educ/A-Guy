@@ -2,12 +2,13 @@
  * @fileType api-endpoint
  * @domain cody
  * @pattern chat-save-api
- * @ai-summary API route to save chat history for a task to GitHub
+ * @ai-summary API route to save chat history for a task to GitHub.
+ *   Uses per-user GitHub token for file writes when available.
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
-import { requireAuth } from '@/ui/cody/auth'
+import { requireCodyAuth, getUserOctokit } from '@/ui/cody/auth'
 import { findTaskBranch, findBranchByIssueNumber, getOctokit } from '@/ui/cody/github-client'
 import { GITHUB_OWNER, GITHUB_REPO, TASK_ID_REGEX } from '@/ui/cody/constants'
 import type { ChatHistory } from '@/ui/cody/chat-types'
@@ -24,7 +25,7 @@ const saveChatSchema = z.object({
 })
 
 export async function POST(req: NextRequest) {
-  const authError = await requireAuth(req)
+  const authError = await requireCodyAuth(req)
   if (authError) return authError
 
   try {
@@ -50,15 +51,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Task has no branch yet' }, { status: 400 })
     }
 
-    const octokit = getOctokit()
+    // Use bot token for reads, user token for writes
+    const readOctokit = getOctokit()
+    const userOctokit = await getUserOctokit(req)
+    const writeOctokit = userOctokit ?? readOctokit
+
     const filePath = `.tasks/${taskId}/chat.json`
 
-    // Single fetch: get existing file content + SHA in one call
+    // Single fetch: get existing file content + SHA in one call (read — bot token)
     let sha: string | undefined
     let chatData: ChatHistory = { version: 1, taskId, sessions: [] }
+    let existingContentBase64: string | undefined
 
     try {
-      const { data } = await octokit.repos.getContent({
+      const { data } = await readOctokit.repos.getContent({
         owner: GITHUB_OWNER,
         repo: GITHUB_REPO,
         path: filePath,
@@ -67,6 +73,7 @@ export async function POST(req: NextRequest) {
 
       if ('content' in data) {
         sha = data.sha
+        existingContentBase64 = data.content // Save for dedup check
         if (data.content) {
           const existingContent = Buffer.from(data.content, 'base64').toString('utf-8')
           chatData = JSON.parse(existingContent)
@@ -104,10 +111,15 @@ export async function POST(req: NextRequest) {
       }))
     }
 
-    // Write the file
+    // Write the file (write — user token for attribution)
     const content = Buffer.from(JSON.stringify(chatData, null, 2)).toString('base64')
 
-    await octokit.repos.createOrUpdateFileContents({
+    // Skip commit if content is identical to existing (dedup)
+    if (existingContentBase64 && content === existingContentBase64) {
+      return NextResponse.json({ success: true, unchanged: true })
+    }
+
+    await writeOctokit.repos.createOrUpdateFileContents({
       owner: GITHUB_OWNER,
       repo: GITHUB_REPO,
       path: filePath,

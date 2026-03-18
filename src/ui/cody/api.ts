@@ -44,6 +44,13 @@ export class NoTokenError extends Error {
   }
 }
 
+export class SessionExpiredError extends Error {
+  constructor(message = 'Your session has expired. Please log in again.') {
+    super(message)
+    this.name = 'SessionExpiredError'
+  }
+}
+
 export class ApiError extends Error {
   status: number
   data: unknown
@@ -56,9 +63,19 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Redirect to GitHub OAuth login when session expires.
+ * Call this in mutation onError handlers to handle expired credentials.
+ * @param returnTo - Optional path to return to after login (defaults to /cody)
+ */
+export function redirectToLogin(returnTo = '/cody'): void {
+  const encoded = encodeURIComponent(returnTo)
+  window.location.href = `/api/oauth/github?returnTo=${encoded}`
+}
+
 // ============ Helpers ============
 
-async function handleResponse<T>(res: Response): Promise<T> {
+export async function handleResponse<T>(res: Response): Promise<T> {
   const data = await res.json()
 
   if (res.status === 429) {
@@ -70,7 +87,15 @@ async function handleResponse<T>(res: Response): Promise<T> {
   }
 
   if (res.status === 401) {
-    throw new NoTokenError(data.message)
+    // Distinguish server token config errors from user session auth errors.
+    // The tasks route returns { error: 'no_token' } when CODY_BOT_TOKEN/GITHUB_TOKEN is missing.
+    // The auth middleware returns { message: 'Not authenticated...' } for expired sessions.
+    if (data.error === 'no_token') {
+      throw new NoTokenError(data.message)
+    }
+    // Session expired — throw SessionExpiredError so the UI can show a login prompt.
+    // Do NOT redirect here — that causes infinite redirect loops.
+    throw new SessionExpiredError(data.message || 'Your session has expired. Please log in again.')
   }
 
   if (!res.ok) {
@@ -118,6 +143,31 @@ export const tasksApi = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
+    })
+    return handleResponse(res)
+  },
+
+  update: async (
+    issueNumber: number,
+    data: {
+      title?: string
+      body?: string
+      labels?: string[]
+      assignees?: string[]
+      actorLogin?: string
+    },
+  ): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'update',
+        title: data.title,
+        body: data.body,
+        labels: data.labels,
+        assignees: data.assignees,
+        ...(data.actorLogin && { actorLogin: data.actorLogin }),
+      }),
     })
     return handleResponse(res)
   },
@@ -316,6 +366,32 @@ export const tasksApi = {
     })
     return handleResponse(res)
   },
+
+  addToQueue: async (issueNumber: number, actorLogin?: string): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'add-label',
+        label: 'cody:queued',
+        ...(actorLogin && { actorLogin }),
+      }),
+    })
+    return handleResponse(res)
+  },
+
+  removeFromQueue: async (issueNumber: number, actorLogin?: string): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'remove-label',
+        label: 'cody:queued',
+        ...(actorLogin && { actorLogin }),
+      }),
+    })
+    return handleResponse(res)
+  },
 }
 
 // ============ PRs API ============
@@ -446,9 +522,7 @@ export const remoteApi = {
     const res = await fetch(
       `${API_BASE}/remote/status?actorLogin=${encodeURIComponent(actorLogin)}`,
     )
-    if (res.status === 404) {
-      return { configured: false, online: false }
-    }
+    // The API returns { configured: false } for non-configured users (200 OK)
     return handleResponse<RemoteStatus>(res)
   },
 

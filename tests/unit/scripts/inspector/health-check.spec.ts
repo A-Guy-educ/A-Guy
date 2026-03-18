@@ -17,7 +17,7 @@ describe('healthCheckPlugin', () => {
     expect(typeof healthCheckPlugin.run).toBe('function')
   })
 
-  it('should share evaluated tasks via state for failure-analysis', async () => {
+  it('should share evaluated tasks via state for pipeline-fixer', async () => {
     const { healthCheckPlugin } =
       await import('../../../../scripts/inspector/plugins/cody/health-check/index')
 
@@ -58,7 +58,7 @@ describe('healthCheckPlugin', () => {
     expect(mockState.set).toHaveBeenCalledWith('cody:evaluatedTasks', expect.any(Array))
   })
 
-  it('should NOT produce retry actions (delegated to failure-analysis)', async () => {
+  it('should NOT produce retry actions (delegated to pipeline-fixer)', async () => {
     const { healthCheckPlugin } =
       await import('../../../../scripts/inspector/plugins/cody/health-check/index')
 

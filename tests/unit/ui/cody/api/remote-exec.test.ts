@@ -6,10 +6,15 @@ import { NextRequest } from 'next/server'
 
 // Mock auth
 vi.mock('@/ui/cody/auth', () => ({
+  verifyActorLogin: vi.fn(() => ({
+    identity: { login: 'alice', id: 1 },
+  })),
+  requireCodyAuth: vi.fn(() => null),
   requireDashboardAuth: vi.fn(() => ({
     authenticated: true,
     user: { id: '1', email: 'test@test.com' },
   })),
+  getUserOctokit: vi.fn(() => Promise.resolve(null)),
 }))
 
 // Mock remote-config
@@ -56,7 +61,7 @@ describe('POST /api/cody/remote/exec', () => {
     expect(body.error).toContain('not configured')
   })
 
-  it('returns 400 when actorLogin is missing', async () => {
+  it('returns 404 when actorLogin is missing (falls back to identity, not configured)', async () => {
     const { POST } = await import('@/app/api/cody/remote/exec/route')
 
     const req = new NextRequest('http://localhost/api/cody/remote/exec', {
@@ -64,8 +69,10 @@ describe('POST /api/cody/remote/exec', () => {
       body: JSON.stringify({ action: 'exec', payload: {} }),
     })
 
+    // verifyActorLogin with undefined actorLogin uses the authenticated identity's login
+    // Since getRemoteConfig('alice') returns undefined, the route returns 404
     const res = await POST(req)
-    expect(res.status).toBe(400)
+    expect(res.status).toBe(404)
   })
 
   it('returns 400 for invalid action', async () => {
@@ -134,12 +141,12 @@ describe('GET /api/cody/remote/status', () => {
     vi.mocked(getRemoteConfig).mockReturnValue(undefined)
   })
 
-  it('returns 404 when user is not configured', async () => {
+  it('returns 200 with configured: false when user is not configured', async () => {
     const { GET } = await import('@/app/api/cody/remote/status/route')
 
     const req = new NextRequest('http://localhost/api/cody/remote/status?actorLogin=unknown')
     const res = await GET(req)
-    expect(res.status).toBe(404)
+    expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.configured).toBe(false)
   })

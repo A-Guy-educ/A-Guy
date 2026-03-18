@@ -32,6 +32,8 @@ import { RichTextRenderer } from '../blocks/RichTextRenderer'
 import { SvgRenderer } from '../blocks/SvgRenderer'
 import { GeometryRenderer } from '../blocks/GeometryRenderer'
 import { AxisRenderer } from '../blocks/AxisRenderer'
+import { GraphWithPrompt } from '../blocks/GraphWithPrompt'
+import { MultiAxisRenderer } from '../blocks/MultiAxisRenderer'
 import { TrueFalseQuestion } from '../questions/TrueFalseQuestion'
 import { McqQuestion } from '../questions/McqQuestion'
 import { FreeResponseQuestion } from '../questions/FreeResponseQuestion'
@@ -321,12 +323,29 @@ export function ExerciseRenderer({
             let questionIndex = 0
             return content.blocks.map((block) => {
               // Geometry/Axis — media-only display blocks (type not in ContentBlock union)
-              const b = block as ContentBlock & { geometry?: unknown; axis?: unknown }
+              const b = block as ContentBlock & {
+                geometry?: unknown
+                axis?: unknown
+                layout?: string
+                prompt?: unknown
+              }
               if (b.type === ('question_geometry' as string)) {
                 return (
-                  <div key={b.id}>
+                  <GraphWithPrompt
+                    key={b.id}
+                    blockId={b.id}
+                    layout={
+                      (b.layout as 'textAbove' | 'textBelow' | 'textLeft' | 'textRight') ||
+                      'textRight'
+                    }
+                    prompt={
+                      b.prompt as
+                        | import('@/server/payload/collections/Exercises/types').InlineRichText
+                        | undefined
+                    }
+                  >
                     <GeometryRenderer blockId={b.id} spec={b.geometry as GeometrySpecV1} />
-                  </div>
+                  </GraphWithPrompt>
                 )
               }
               if (b.type === ('question_axis' as string)) {
@@ -335,11 +354,46 @@ export function ExerciseRenderer({
                   displaySize?: DisplaySize
                 }
                 return (
-                  <div key={b.id}>
+                  <GraphWithPrompt
+                    key={b.id}
+                    blockId={b.id}
+                    layout={
+                      (b.layout as 'textAbove' | 'textBelow' | 'textLeft' | 'textRight') ||
+                      'textRight'
+                    }
+                    prompt={
+                      b.prompt as
+                        | import('@/server/payload/collections/Exercises/types').InlineRichText
+                        | undefined
+                    }
+                  >
                     <AxisRenderer
                       blockId={b.id}
                       spec={axisBlock.axis as AxisSpecV1}
                       displaySize={axisBlock.displaySize}
+                    />
+                  </GraphWithPrompt>
+                )
+              }
+              if (b.type === ('question_multi_axis' as string)) {
+                const multiAxisBlock = b as unknown as {
+                  id: string
+                  graphs: Array<{ id: string; label: string; axis: AxisSpecV1; order: number }>
+                  prompt?: {
+                    type: 'rich_text'
+                    format: 'md-math-v1'
+                    value: string
+                    mediaIds?: string[]
+                  }
+                  textPosition?: 'above' | 'below'
+                }
+                return (
+                  <div key={multiAxisBlock.id}>
+                    <MultiAxisRenderer
+                      blockId={multiAxisBlock.id}
+                      graphs={multiAxisBlock.graphs}
+                      prompt={multiAxisBlock.prompt}
+                      textPosition={multiAxisBlock.textPosition ?? 'above'}
                     />
                   </div>
                 )

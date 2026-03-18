@@ -2460,6 +2460,33 @@
   width: 100%;
 }
 
+.color-swatches-row {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.color-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  border: 1px solid var(--theme-elevation-300);
+  cursor: pointer;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease;
+}
+
+.color-swatch:hover {
+  transform: scale(1.1);
+}
+
+.color-swatch--selected {
+  box-shadow:
+    0 0 0 2px var(--theme-elevation-0),
+    0 0 0 3px var(--theme-info-500);
+}
+
 .panel-field-select {
   padding: 0.375rem 0.5rem;
   border: 1px solid var(--theme-elevation-200);

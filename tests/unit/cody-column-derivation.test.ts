@@ -22,7 +22,8 @@ interface MockWorkflowRun {
 }
 
 /**
- * Derive column from PR labels - mirrors the logic in route.ts getColumnForIssue
+ * Derive column from issue labels only - mirrors the updated logic in route.ts getColumnForIssue
+ * PR labels are no longer used for column derivation (issue labels are the single source of truth)
  */
 function deriveColumnFromLabels(
   issueLabels: string[],
@@ -31,36 +32,28 @@ function deriveColumnFromLabels(
 ): ColumnId {
   const labelNames = issueLabels.map((l) => l.toLowerCase())
 
-  // 0. Check PR labels
-  const prLabels = pr?.labels?.map((l) => l.toLowerCase()) ?? []
-
-  // 1. Terminal lifecycle labels
-  if (labelNames.includes('cody:failed') && !prLabels.includes('risk-gated')) return 'failed'
+  // 0. Terminal lifecycle labels (highest priority)
+  if (labelNames.includes('cody:failed')) return 'failed'
   if (labelNames.includes('cody:done') || labelNames.includes('cody:review')) {
-    // Check if PR has labels indicating active work
-    if (prLabels.includes('hard-stop') || prLabels.includes('risk-gated')) return 'gate-waiting'
-    if (prLabels.includes('cody:building') || prLabels.includes('cody:planning')) return 'building'
-    if (prLabels.includes('cody:failed')) return 'failed'
     return 'review'
   }
 
-  // 2. Gate labels
+  // 1. Gate labels
   if (labelNames.includes('hard-stop') || labelNames.includes('risk-gated')) return 'gate-waiting'
-  if (prLabels.includes('hard-stop') || prLabels.includes('risk-gated')) return 'gate-waiting'
 
-  // 3. Active work labels
+  // 2. Active work labels
   if (labelNames.includes('cody:planning') || labelNames.includes('cody:building'))
     return 'building'
 
-  // 4. Workflow run
+  // 3. Workflow run
   if (workflowRun?.status === 'in_progress') return 'building'
 
-  // 5. Other labels
+  // 4. Other labels
   if (labelNames.includes('failed')) return 'failed'
   if (labelNames.includes('gate-waiting')) return 'gate-waiting'
   if (labelNames.includes('retrying')) return 'retrying'
 
-  // 6. Workflow completed
+  // 5. Workflow completed
   if (workflowRun?.status === 'completed') {
     if (
       workflowRun.conclusion === 'failure' ||
@@ -70,10 +63,10 @@ function deriveColumnFromLabels(
       return 'failed'
   }
 
-  // 7. PR
+  // 6. PR
   if (pr && !pr.merged_at) return 'review'
 
-  // 8. Other labels
+  // 7. Other labels
   if (labelNames.includes('released')) return 'done'
   if (labelNames.includes('in-progress') || labelNames.includes('building')) return 'building'
   if (labelNames.includes('review') || labelNames.includes('pr')) return 'review'
@@ -82,77 +75,84 @@ function deriveColumnFromLabels(
 }
 
 describe('Column Derivation from Labels', () => {
-  describe('cody:done issue with PR labels', () => {
-    it('returns gate-waiting when PR has risk-gated label', () => {
-      const column = deriveColumnFromLabels(['cody:done', 'type:feature'], undefined, {
-        labels: ['risk-gated', 'type:bug'],
-      })
-      expect(column).toBe('gate-waiting')
-    })
-
-    it('returns gate-waiting when PR has hard-stop label', () => {
-      const column = deriveColumnFromLabels(['cody:done'], undefined, {
-        labels: ['hard-stop'],
-      })
-      expect(column).toBe('gate-waiting')
-    })
-
-    it('returns building when PR has cody:building label', () => {
-      const column = deriveColumnFromLabels(['cody:done'], undefined, {
-        labels: ['cody:building'],
-      })
-      expect(column).toBe('building')
-    })
-
-    it('returns failed when PR has cody:failed label but no risk-gated', () => {
-      const column = deriveColumnFromLabels(['cody:done'], undefined, {
-        labels: ['cody:failed'],
-      })
-      expect(column).toBe('failed')
-    })
-
-    it('returns review when PR has no active labels', () => {
-      const column = deriveColumnFromLabels(['cody:done', 'type:feature'], undefined, {
-        labels: ['type:bug'],
-      })
+  describe('cody:done/cody:review issues', () => {
+    it('returns review when issue has cody:done label', () => {
+      const column = deriveColumnFromLabels(['cody:done', 'type:feature'], undefined, null)
       expect(column).toBe('review')
     })
 
-    it('returns review when no PR exists', () => {
-      const column = deriveColumnFromLabels(['cody:done'], undefined, null)
+    it('returns review when issue has cody:review label', () => {
+      const column = deriveColumnFromLabels(['cody:review'], undefined, null)
+      expect(column).toBe('review')
+    })
+
+    it('returns review regardless of PR labels (PR labels ignored)', () => {
+      // PR labels no longer override issue labels
+      const column = deriveColumnFromLabels(['cody:done'], undefined, {
+        labels: ['risk-gated', 'cody:building'],
+      })
       expect(column).toBe('review')
     })
   })
 
-  describe('cody:failed issue with PR labels', () => {
-    it('returns gate-waiting (not failed) when issue has cody:failed but PR has risk-gated', () => {
-      const column = deriveColumnFromLabels(['cody:failed'], undefined, {
-        labels: ['risk-gated'],
-      })
-      // risk-gated should take precedence over cody:failed
-      expect(column).toBe('gate-waiting')
-    })
-
-    it('returns failed when issue has cody:failed and no PR', () => {
+  describe('cody:failed issues', () => {
+    it('returns failed when issue has cody:failed label', () => {
       const column = deriveColumnFromLabels(['cody:failed'], undefined, null)
       expect(column).toBe('failed')
     })
+
+    it('returns failed regardless of PR labels (PR labels ignored)', () => {
+      // PR labels no longer override issue labels
+      const column = deriveColumnFromLabels(['cody:failed'], undefined, {
+        labels: ['risk-gated'],
+      })
+      expect(column).toBe('failed')
+    })
   })
 
-  describe('issues without cody:done', () => {
+  describe('gate labels on issues', () => {
     it('returns gate-waiting when issue has risk-gated label', () => {
       const column = deriveColumnFromLabels(['risk-gated'], undefined, null)
       expect(column).toBe('gate-waiting')
     })
 
+    it('returns gate-waiting when issue has hard-stop label', () => {
+      const column = deriveColumnFromLabels(['hard-stop'], undefined, null)
+      expect(column).toBe('gate-waiting')
+    })
+
+    it('returns gate-waiting regardless of PR labels (PR labels ignored)', () => {
+      // Even if PR has labels, issue labels take precedence
+      const column = deriveColumnFromLabels(['risk-gated'], undefined, {
+        labels: ['cody:done'],
+      })
+      expect(column).toBe('gate-waiting')
+    })
+  })
+
+  describe('active work labels', () => {
     it('returns building when issue has cody:building label', () => {
       const column = deriveColumnFromLabels(['cody:building'], undefined, null)
       expect(column).toBe('building')
     })
 
+    it('returns building when issue has cody:planning label', () => {
+      const column = deriveColumnFromLabels(['cody:planning'], undefined, null)
+      expect(column).toBe('building')
+    })
+  })
+
+  describe('PR presence', () => {
     it('returns review when PR exists and issue has no special labels', () => {
       const column = deriveColumnFromLabels(['type:feature'], undefined, {
         labels: [],
+        merged_at: null,
+      })
+      expect(column).toBe('review')
+    })
+
+    it('returns review when PR exists and is not merged', () => {
+      const column = deriveColumnFromLabels(['type:feature'], undefined, {
         merged_at: null,
       })
       expect(column).toBe('review')
@@ -172,6 +172,46 @@ describe('Column Derivation from Labels', () => {
         null,
       )
       expect(column).toBe('failed')
+    })
+
+    it('returns failed when workflow completed with timed_out', () => {
+      const column = deriveColumnFromLabels(
+        ['type:feature'],
+        { status: 'completed', conclusion: 'timed_out' },
+        null,
+      )
+      expect(column).toBe('failed')
+    })
+
+    it('returns failed when workflow completed with cancelled', () => {
+      const column = deriveColumnFromLabels(
+        ['type:feature'],
+        { status: 'completed', conclusion: 'cancelled' },
+        null,
+      )
+      expect(column).toBe('failed')
+    })
+  })
+
+  describe('other labels', () => {
+    it('returns done when issue has released label', () => {
+      const column = deriveColumnFromLabels(['released'], undefined, null)
+      expect(column).toBe('done')
+    })
+
+    it('returns building when issue has in-progress label', () => {
+      const column = deriveColumnFromLabels(['in-progress'], undefined, null)
+      expect(column).toBe('building')
+    })
+
+    it('returns review when issue has pr label', () => {
+      const column = deriveColumnFromLabels(['pr'], undefined, null)
+      expect(column).toBe('review')
+    })
+
+    it('returns open when issue has no relevant labels', () => {
+      const column = deriveColumnFromLabels(['type:feature'], undefined, null)
+      expect(column).toBe('open')
     })
   })
 })

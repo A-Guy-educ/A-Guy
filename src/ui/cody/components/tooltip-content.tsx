@@ -31,8 +31,8 @@ const statusExplanations: Record<
     action: 'Check the error details and retry or fix manually.',
   },
   'gate-waiting': {
-    title: 'Gate Waiting',
-    description: 'Pipeline paused at a quality gate awaiting approval.',
+    title: 'Needs Approval',
+    description: 'Pipeline paused — your approval is needed before Cody continues.',
     action: 'Review the changes and approve to continue.',
   },
   retrying: {

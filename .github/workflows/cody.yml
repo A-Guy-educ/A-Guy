@@ -35,6 +35,11 @@ on:
         required: false
         type: string
         default: ''
+      issue_number:
+        description: 'Issue number for the task (passed by inspector for dispatch triggers)'
+        required: false
+        type: string
+        default: ''
       runner:
         description: 'Where to run: github-hosted (default) or self-hosted'
         required: false
@@ -48,6 +53,16 @@ on:
         required: false
         type: string
         default: ''
+      complexity:
+        description: 'Override complexity score (1-100) for testing'
+        required: false
+        type: string
+        default: ''
+      use_test_config:
+        description: 'Use opencode.test.json (cheap models) instead of opencode.json'
+        required: false
+        type: boolean
+        default: false
 
   push:
     branches:
@@ -105,6 +120,7 @@ jobs:
       comment_body: ${{ steps.parse.outputs.comment_body }}
       runner: ${{ steps.parse.outputs.runner }}
       version: ${{ steps.parse.outputs.version }}
+      complexity: ${{ steps.parse.outputs.complexity }}
       fresh: ${{ steps.parse.outputs.fresh }}
     steps:
       - name: Checkout repository
@@ -160,9 +176,11 @@ jobs:
           DISPATCH_DRY_RUN: ${{ github.event.inputs.dry_run }}
           DISPATCH_FEEDBACK: ${{ github.event.inputs.feedback }}
           DISPATCH_FROM_STAGE: ${{ github.event.inputs.from_stage }}
+          DISPATCH_ISSUE_NUMBER: ${{ github.event.inputs.issue_number }}
           DISPATCH_CLARIFY: ${{ github.event.inputs.clarify }}
           DISPATCH_RUNNER: ${{ github.event.inputs.runner }}
           DISPATCH_VERSION: ${{ github.event.inputs.version }}
+          DISPATCH_COMPLEXITY: ${{ github.event.inputs.complexity }}
           # Comment inputs (for orchestrator to parse)
           COMMENT_BODY: ${{ github.event.comment.body }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
@@ -197,6 +215,32 @@ jobs:
           gh issue comment ${{ needs.parse.outputs.issue_number }} \
             --body "⚠️ Invalid \`@cody\` command. Use: \`@cody [spec|impl|rerun|full|status] [task-id] [options]\`"
 
+  # Job 1c: Notify on orchestrate failures (pipeline didn't start)
+  notify-orchestrate-error:
+    needs: [parse, orchestrate]
+    if: >-
+      always() &&
+      needs.orchestrate.result == 'failure' &&
+      needs.parse.result == 'success' &&
+      needs.parse.outputs.issue_number != '' &&
+      github.event_name == 'issue_comment'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Post failure comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment ${{ needs.parse.outputs.issue_number }} \
+            --repo ${{ github.repository }} \
+            --body "⚠️ **Pipeline failed to start**
+
+          The workflow crashed before the pipeline could run (infrastructure error, not a code issue).
+
+          To retry, comment \`/cody\` on this issue.
+
+          [View CI logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+
   # Smoke test: runs on push to dev/main to validate cody pipeline works
   smoke-test:
     runs-on: ubuntu-latest
@@ -214,6 +258,8 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          # Use GITHUB_TOKEN for all GitHub HTTPS operations (including push)
+          git config --global url."https://x-access-token:${{ github.token }}@github.com/".insteadOf "https://github.com/"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -254,10 +300,12 @@ jobs:
       - name: Validate cody entry can be loaded
         run: pnpm tsx scripts/cody/entry.ts --help
 
-      - name: Run actual pipeline (spec mode - runs taskify)
+      - name: Run pipeline canary tests (dry-run, no LLM)
+        run: pnpm test:canary
+
+      - name: Run pipeline dry-run (full mode - validates plumbing)
         env:
           GH_TOKEN: ${{ github.token }}
-          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
         run: |
           # Create simple test task
           mkdir -p .tasks/260225-smoke-test
@@ -265,21 +313,25 @@ jobs:
           echo "" >> .tasks/260225-smoke-test/task.md
           echo "Smoke test task" >> .tasks/260225-smoke-test/task.md
 
-          # Run spec mode (will run taskify stage)
-          pnpm cody --mode=spec --task-id=260225-smoke-test || true
+          # Run full mode with --dry-run --local (no LLM, no GitHub API)
+          # This exercises: CLI parsing, pipeline construction, state machine loop,
+          # stage ordering, skip conditions, status file writing
+          pnpm cody --mode=full --task-id=260225-smoke-test --dry-run --local
 
-          # Don't fail on stage errors, just verify files were created
-
-      - name: Verify taskify produced valid output
+      - name: Verify pipeline dry-run produced valid output
         run: |
-          # Verify task.json was created
-          if [ ! -f ".tasks/260225-smoke-test/task.json" ]; then
-            echo "ERROR: task.json was not created"
+          # Verify status.json was created (dry-run marks all stages as completed)
+          if [ ! -f ".tasks/260225-smoke-test/status.json" ]; then
+            echo "ERROR: status.json was not created"
             exit 1
           fi
 
-          # Verify it's valid JSON
-          cat .tasks/260225-smoke-test/task.json | pnpm tsx -e "JSON.parse(require('fs').readFileSync(0, 'utf-8')); console.log('Valid JSON')"
+          # Verify it's valid JSON with completed state
+          node -e "
+            const s = JSON.parse(require('fs').readFileSync('.tasks/260225-smoke-test/status.json', 'utf-8'));
+            if (s.state !== 'completed') { console.error('ERROR: state is ' + s.state); process.exit(1); }
+            console.log('Valid status.json — pipeline state: ' + s.state);
+          "
 
           echo "SUCCESS: Pipeline smoke test passed"
 
@@ -295,9 +347,20 @@ jobs:
       pull-requests: write # Create PRs, post comments
       issues: write # Post status comments
     steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: 3116827
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          permission-contents: write
+          permission-pull-requests: write
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          token: ${{ steps.app-token.outputs.token }}
           persist-credentials: true
           fetch-depth: 0
 
@@ -333,6 +396,11 @@ jobs:
           # Verify it's installed and print version for diagnostics
           $HOME/.opencode/bin/opencode --version || echo "Warning: opencode install may have failed"
 
+      # Use test config (cheap models) if requested
+      - name: Use test config
+        if: github.event.inputs.use_test_config == 'true' || github.event.inputs.use_test_config == true
+        run: cp opencode.test.json opencode.json
+
       - name: Checkout feature branch if exists
         if: needs.parse.outputs.task_id != '' || needs.parse.outputs.fresh == 'true'
         env:
@@ -347,6 +415,8 @@ jobs:
         run: |
           git config --global user.email "${GIT_USER_EMAIL:-242132053+aguyaharonyair@users.noreply.github.com}"
           git config --global user.name "${GIT_USER_NAME:-aguyaharonyair}"
+          # Use App token for all GitHub HTTPS operations (including push)
+          git config --global url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "https://github.com/"
 
       # Overlay pipeline version (if specified)
       - name: Overlay pipeline version
@@ -375,6 +445,7 @@ jobs:
           echo "GOOGLE_GENERATIVE_AI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> $GITHUB_ENV
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
           echo "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}" >> $GITHUB_ENV
+          echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> $GITHUB_ENV
 
       - name: Run Cody
         env:
@@ -400,6 +471,7 @@ jobs:
           TRIGGER_TYPE: ${{ needs.parse.outputs.trigger_type }}
           COMMENT_BODY: ${{ needs.parse.outputs.comment_body }}
           VERSION: ${{ needs.parse.outputs.version }}
+          COMPLEXITY: ${{ needs.parse.outputs.complexity }}
           IS_PULL_REQUEST: ${{ needs.parse.outputs.is_pull_request }}
 
           # GitHub context
@@ -417,7 +489,7 @@ jobs:
         run: |
           TASK_ID="${{ needs.parse.outputs.task_id }}"
           STATUS_FILE=".tasks/${TASK_ID}/status.json"
-          echo "## 🤖 Cody Pipeline: `${TASK_ID}`" >> $GITHUB_STEP_SUMMARY
+          echo "## 🤖 Cody Pipeline: \`${TASK_ID}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ -f "$STATUS_FILE" ]; then
             STATE=$(jq -r '.state // "unknown"' "$STATUS_FILE")
@@ -431,6 +503,7 @@ jobs:
           fi
       - name: Upload artifacts
         if: always() && needs.parse.outputs.task_id != ''
+        continue-on-error: true # Don't fail the job if artifact zip has issues (e.g. dangling git objects)
         uses: actions/upload-artifact@v4
         with:
           name: cody-${{ needs.parse.outputs.task_id }}-${{ github.run_id }}

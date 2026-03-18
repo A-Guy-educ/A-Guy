@@ -1,0 +1,32 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.9,
+  "primary_domain": "frontend",
+  "scope": [
+    "Exercise component multi-graph support",
+    "Graph block configuration (up to 4 graphs)",
+    "Responsive layout (desktop: side-by-side, mobile: 2-per-row grid)",
+    "Graph ordering and labeling",
+    "Global explanatory text positioning"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Existing exercise collection and graph components exist in the codebase",
+    "The graph coordinate system component can be reused for each graph instance",
+    "Admin editor will need to be extended to support multi-graph configuration"
+  ],
+  "review_questions": [
+    "Should this be implemented as a new block type or extend the existing graph block?",
+    "How should the data be stored - as an array of graph configurations in the exercise content?"
+  ],
+  "complexity": 45,
+  "complexity_reasoning": "Scope: 12 (4-6 files across frontend/backend modules), Risk: 8 (UI + data model changes, non-critical), Novelty: 10 (extending existing pattern), Cross-domain: 8 (frontend components + backend collection), Ambiguity: 2 (clear requirements), Dependencies: 5 (reuse existing graph component). Total: 45 → Complex+",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Task contains ## Core Requirements with detailed FR items and ## Acceptance Criteria with 8 checkable items. Requirements are specific about limits (4 graphs), layout behavior (desktop/mobile), and ordering. Promoted spec.md for pipeline."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

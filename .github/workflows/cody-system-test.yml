@@ -1,0 +1,112 @@
+# Cody System Test - End-to-end test of the full Cody pipeline
+# Runs as a single-job state machine. Each step is idempotent.
+# On rerun, resumes from where it left off via persisted state.
+name: cody-system-test
+
+on:
+  workflow_dispatch:
+    inputs:
+      scenarios:
+        description: 'Scenario names (comma-separated) or "all"'
+        type: string
+        default: 'all'
+      cleanup_only:
+        description: 'Only run cleanup (skip test)'
+        type: boolean
+        default: false
+
+# Only one system test at a time
+concurrency:
+  group: cody-system-test
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: 3116827
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Configure git
+        env:
+          APP_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git config --global url."https://x-access-token:${APP_TOKEN}@github.com/".insteadOf "https://github.com/"
+
+      - name: Run system test
+        if: inputs.cleanup_only != true
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_PAT: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SCENARIOS: ${{ inputs.scenarios }}
+        run: |
+          pnpm tsx scripts/system-test/run-scenario.ts \
+            --scenario 02-full-high-complexity \
+            --repo "$REPO"
+
+      - name: Generate report
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          if ls system-test-results/*.json 1>/dev/null 2>&1; then
+            pnpm tsx scripts/system-test/report-results.ts --results-dir system-test-results || true
+          else
+            echo "## 🧪 Cody System Test" >> $GITHUB_STEP_SUMMARY
+            echo "No scenario results found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Cleanup
+        if: always()
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_PAT: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          pnpm tsx scripts/system-test/cleanup-all.ts --repo "$REPO" || true
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: system-test-results-${{ github.run_id }}
+          path: |
+            system-test-results/
+          retention-days: 14

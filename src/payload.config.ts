@@ -5,6 +5,7 @@ import sharp from 'sharp'
 import { fileURLToPath } from 'url'
 
 import { getServerSideURL } from '@/infra/utils/getURL'
+import { AccessCodes } from '@/server/payload/collections/AccessCodes'
 import { Categories } from '@/server/payload/collections/Categories'
 import { Chapters } from '@/server/payload/collections/Chapters'
 import { ChatAssets } from '@/server/payload/collections/ChatAssets'
@@ -33,6 +34,7 @@ import { Users } from '@/server/payload/collections/Users'
 import { UserSettings } from '@/server/payload/collections/UserSettings'
 import { importExerciseFromImage } from '@/server/payload/endpoints/exercises/import-from-image'
 import { importExerciseFromLesson } from '@/server/payload/endpoints/exercises/import-from-lesson'
+import { generateSupportEndpoint } from '@/server/payload/endpoints/exercises/generate-support'
 import { defaultLexical } from '@/server/payload/fields/defaultLexical'
 import { pdfToExercisesTask } from '@/server/payload/jobs/pdf-to-exercises-task'
 import { pdfToExercisesV2Task } from '@/server/payload/jobs/pdf-to-exercises-v2-task'
@@ -166,6 +168,7 @@ export default buildConfig({
     UploadSessions,
     Posts,
     PricingPlans,
+    AccessCodes,
     MCPAuditLogs,
   ],
   cors: [getServerSideURL()].filter(Boolean),
@@ -192,6 +195,11 @@ export default buildConfig({
         }
         return importExerciseFromImage(req)
       },
+    },
+    {
+      path: '/exercises/generate-support',
+      method: 'post',
+      handler: (req: PayloadRequest) => generateSupportEndpoint(req),
     },
   ],
   jobs: {

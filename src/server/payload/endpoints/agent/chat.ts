@@ -53,6 +53,7 @@ import {
   fetchLessonContextForContext,
   getOrCreateConversation,
   parseRequestBody,
+  processChatAssetAttachments,
   processMediaAttachments,
   resolveContext,
   retrieveMemories,
@@ -721,6 +722,24 @@ async function handleContextScopedChat(
     )
   }
 
+  // Process chat-asset attachments (direct-to-Blob uploads)
+  const chatAssetResult = await processChatAssetAttachments(
+    req.payload,
+    validated.chatAssetIds || [],
+    ownerId,
+    logger as Logger,
+  )
+
+  if (!chatAssetResult.success) {
+    return jsonWithCookie(
+      { error: chatAssetResult.error },
+      { status: 400, cookieHeader: guestCookieHeader },
+    )
+  }
+
+  // Merge media results from both legacy media and chat assets
+  const allMediaParts = [...mediaResult.mediaPartsWithPath, ...chatAssetResult.mediaPartsWithPath]
+
   // Compose prompt using Context Policy V1
   const basePrompt = composePrompt(composedInstructions.instructions, {
     systemMessage: composedInstructions.instructions,
@@ -748,8 +767,7 @@ async function handleContextScopedChat(
       message: validated.message,
       acknowledgment: validated.acknowledgment,
       composedPrompt: composedPrompt,
-      mediaPartsWithPath:
-        mediaResult.mediaPartsWithPath.length > 0 ? mediaResult.mediaPartsWithPath : undefined,
+      mediaPartsWithPath: allMediaParts.length > 0 ? allMediaParts : undefined,
       req: {
         headers: {
           authorization:

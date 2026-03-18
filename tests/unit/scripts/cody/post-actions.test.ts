@@ -14,19 +14,6 @@ vi.mock('../../../../scripts/cody/pipeline-utils', () => ({
     if (score < 50) return 'complex'
     return 'very_complex'
   }),
-  STAGE_COMPLEXITY_THRESHOLDS: {
-    taskify: 0,
-    spec: 35,
-    gap: 40,
-    clarify: 60,
-    architect: 10,
-    'plan-gap': 50,
-    build: 0,
-    commit: 0,
-    verify: 0,
-    autofix: 20,
-    pr: 0,
-  },
 }))
 
 vi.mock('../../../../scripts/cody/clarify-workflow', () => ({
@@ -171,9 +158,9 @@ describe('Post-Actions', () => {
       const action: PostAction = { type: 'resolve-profile' }
       await executePostAction(ctx, action, null)
 
-      // Original complexity preserved — override only applies when complexity is undefined
-      expect(ctx.taskDef!.complexity).toBe(75)
-      expect(ctx.taskDef!.complexity_reasoning).toBe('LLM scored')
+      // Override applies even when taskDef already has complexity (new behavior)
+      expect(ctx.taskDef!.complexity).toBe(10)
+      expect(ctx.taskDef!.complexity_reasoning).toContain('Override via --complexity=10')
     })
 
     it('should log tier info when task has complexity', async () => {

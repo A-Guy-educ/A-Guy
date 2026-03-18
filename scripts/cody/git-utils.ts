@@ -9,6 +9,8 @@ import { logger } from './logger'
 import { execFileSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
+// FIX #9: Import status functions to persist branch name early
+import { setBranchName, loadState } from './engine/status'
 
 // ============================================================================
 // Types
@@ -120,7 +122,12 @@ export function deriveBranchName(taskDir: string, taskId: string): string {
       .slice(0, maxTitleLength) // max chars for title portion
 
     return `${datePrefix}${issuePart}-${sanitized}`
-  } catch {
+  } catch (deriveErr) {
+    // FIX #7: Log when branch name derivation falls back to taskId
+    logger.warn(
+      { err: deriveErr },
+      `[branch] Branch name derivation failed, falling back to: ${taskId}`,
+    )
     return taskId
   }
 }
@@ -171,6 +178,92 @@ export function getDefaultBranch(cwd: string = process.cwd()): string {
  * This keeps the feature branch up-to-date with the latest changes from dev.
  * If a merge conflict occurs, aborts the merge and throws an error.
  */
+/**
+ * Find and checkout a remote branch matching the given task ID.
+ * Used by rerun mode to ensure task files are available before reading them.
+ * Unlike ensureFeatureBranch, this doesn't need taskType — it searches all
+ * remote branches for the task ID pattern.
+ *
+ * @returns true if a branch was found and checked out, false if not found
+ */
+export function checkoutTaskBranch(taskId: string, taskDir?: string): boolean {
+  const cwd = process.cwd()
+  const currentBranch = execFileSync('git', ['branch', '--show-current'], {
+    cwd,
+    encoding: 'utf-8',
+  }).trim()
+
+  // Already on a feature branch — don't switch
+  if (!BASE_BRANCHES.includes(currentBranch)) {
+    logger.info(`[branch] Already on feature branch: ${currentBranch}`)
+    return true
+  }
+
+  // Fetch latest
+  try {
+    execFileSync('git', ['fetch', 'origin'], { cwd, stdio: 'inherit', timeout: 120_000 })
+  } catch (fetchErr) {
+    logger.warn({ err: fetchErr }, '[branch] git fetch failed')
+    return false
+  }
+
+  // Search remote branches for one containing the task ID
+  let remoteBranches: string[]
+  try {
+    const output = execFileSync('git', ['branch', '-r', '--list', `origin/*${taskId}*`], {
+      cwd,
+      encoding: 'utf-8',
+      stdio: 'pipe',
+    }).trim()
+    remoteBranches = output
+      .split('\n')
+      .map((b) => b.trim().replace('origin/', ''))
+      .filter(Boolean)
+  } catch {
+    remoteBranches = []
+  }
+
+  if (remoteBranches.length === 0) {
+    logger.info(`[branch] No remote branch found matching task ID: ${taskId}`)
+    return false
+  }
+
+  // Use the first match (there should only be one branch per task)
+  const branchName = remoteBranches[0]
+  logger.info(`[branch] Found task branch: ${branchName} (for rerun of ${taskId})`)
+
+  try {
+    // Clean dirty state in CI before switching
+    if (process.env.GITHUB_ACTIONS) {
+      try {
+        execFileSync('git', ['checkout', '--', '.'], { cwd, stdio: 'pipe' })
+      } catch {
+        // Working tree may already be clean
+      }
+    }
+
+    execFileSync('git', ['checkout', branchName], { cwd, stdio: 'inherit' })
+    execFileSync('git', ['pull', 'origin', branchName], { cwd, stdio: 'inherit' })
+    mergeDefaultBranch(cwd)
+
+    // Persist branch name to status.json
+    try {
+      const existingState = loadState(taskDir ? path.basename(taskDir) : taskId)
+      if (existingState) {
+        setBranchName(taskDir ? path.basename(taskDir) : taskId, existingState, branchName)
+      }
+    } catch {
+      // Non-critical
+    }
+
+    logger.info(`[branch] Checked out task branch: ${branchName}`)
+    return true
+  } catch (checkoutErr) {
+    logger.error({ err: checkoutErr }, `[branch] Failed to checkout task branch: ${branchName}`)
+    return false
+  }
+}
+
 export function mergeDefaultBranch(cwd: string): void {
   const defaultBranch = getDefaultBranch(cwd)
   logger.info(`[branch] Merging latest ${defaultBranch} into current branch`)
@@ -184,9 +277,15 @@ export function mergeDefaultBranch(cwd: string): void {
     logger.info('[branch] Aborting merge')
     try {
       execFileSync('git', ['merge', '--abort'], { cwd, stdio: 'inherit' })
-    } catch {
-      // merge --abort can fail if merge state was corrupted; fall back to hard reset
-      logger.warn('[branch] merge --abort failed, falling back to git reset --hard HEAD')
+    } catch (abortError) {
+      // FIX #6: Log the abort error before falling back to hard reset.
+      // merge --abort can fail if merge state was corrupted; hard reset discards ALL
+      // uncommitted changes (not just conflicts), which is a last resort.
+      const abortMsg = abortError instanceof Error ? abortError.message : String(abortError)
+      logger.warn(
+        `[branch] merge --abort failed (${abortMsg}), falling back to git reset --hard HEAD`,
+      )
+      logger.warn('[branch] \u26a0\ufe0f Hard reset will discard ALL uncommitted changes')
       execFileSync('git', ['reset', '--hard', 'HEAD'], { cwd, stdio: 'inherit' })
     }
     throw new Error(
@@ -301,6 +400,19 @@ export function ensureFeatureBranch(
         }
       }
     }
+    // FIX #9: Persist branch name to status.json immediately after checkout,
+    // not just in build stage preExecute. This ensures the dashboard can find the
+    // branch even for stages that run before build (e.g., gap, architect).
+    try {
+      const taskIdFromDir = taskDir ? path.basename(taskDir) : taskId
+      const existingState = loadState(taskIdFromDir)
+      if (existingState) {
+        setBranchName(taskIdFromDir, existingState, branchName)
+        logger.info(`[branch] Persisted branch name to status.json: ${branchName}`)
+      }
+    } catch {
+      // Non-critical - branch name will be captured in build stage preExecute as fallback
+    }
     logger.info(`[branch] Checked out and pulled: ${branchName}`)
   } else {
     // Branch doesn't exist on remote — check if it exists locally (from previous failed run)
@@ -380,9 +492,114 @@ export function ensureFeatureBranch(
   }
 }
 
-// Helper to get environment with hooks disabled for CI
+// R2-FIX #7: Cache hook-safe env to avoid recreating on every git call (hot path).
+// process.env changes are rare during pipeline execution, so caching is safe.
+let _hookSafeEnvCache: NodeJS.ProcessEnv | null = null
 function getHookSafeEnv(): NodeJS.ProcessEnv {
-  return { ...process.env, HUSKY: '0', SKIP_HOOKS: '1' }
+  if (!_hookSafeEnvCache) {
+    _hookSafeEnvCache = { ...process.env, HUSKY: '0', SKIP_HOOKS: '1' }
+  }
+  return _hookSafeEnvCache
+}
+
+// ============================================================================
+// Pending Commit Patch — Persist build output across failed pushes
+// ============================================================================
+
+const PENDING_PATCH_FILE = 'pending-commit.patch'
+const PENDING_MESSAGE_FILE = 'pending-commit-message.txt'
+
+/**
+ * Save the last commit as a patch file in the task directory.
+ * Called when commit succeeds but push fails, so the build output
+ * can be recovered on the next rerun without re-running the build stage.
+ */
+export function savePendingPatch(taskDir: string, cwd: string): boolean {
+  try {
+    // Generate patch from HEAD commit
+    const patch = execFileSync('git', ['format-patch', '-1', 'HEAD', '--stdout'], {
+      cwd,
+      encoding: 'utf-8',
+      timeout: 30_000,
+    })
+
+    if (!patch.trim()) {
+      logger.warn('[patch] No patch content generated')
+      return false
+    }
+
+    // Save patch to task directory
+    const patchPath = path.join(taskDir, PENDING_PATCH_FILE)
+    fs.writeFileSync(patchPath, patch)
+
+    // Save commit message separately (format-patch includes it but we need it standalone)
+    const message = execFileSync('git', ['log', '-1', '--format=%B'], {
+      cwd,
+      encoding: 'utf-8',
+    }).trim()
+    const messagePath = path.join(taskDir, PENDING_MESSAGE_FILE)
+    fs.writeFileSync(messagePath, message)
+
+    // Reset HEAD back so the patch can be cleanly re-applied on next run
+    // (the commit exists locally but was never pushed)
+    execFileSync('git', ['reset', 'HEAD~1'], {
+      cwd,
+      stdio: 'pipe',
+    })
+
+    logger.info(`[patch] Saved pending patch to ${PENDING_PATCH_FILE} (build output preserved)`)
+    return true
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    logger.error(`[patch] Failed to save pending patch: ${msg}`)
+    return false
+  }
+}
+
+/**
+ * Check if a pending patch exists and apply it.
+ * Called at the start of commitAndPush to restore build output
+ * from a previous failed push attempt.
+ *
+ * @returns true if patch was applied, false if no patch or apply failed
+ */
+export function restorePendingPatch(taskDir: string, cwd: string): boolean {
+  const patchPath = path.join(taskDir, PENDING_PATCH_FILE)
+  if (!fs.existsSync(patchPath)) {
+    return false
+  }
+
+  try {
+    logger.info('[patch] Found pending patch — restoring build output from previous run...')
+
+    // Apply the patch (--3way handles conflicts gracefully)
+    execFileSync('git', ['apply', '--3way', patchPath], {
+      cwd,
+      stdio: 'pipe',
+      timeout: 30_000,
+    })
+
+    // Clean up the patch file (it will be re-saved if push fails again)
+    fs.unlinkSync(patchPath)
+    const messagePath = path.join(taskDir, PENDING_MESSAGE_FILE)
+    if (fs.existsSync(messagePath)) {
+      fs.unlinkSync(messagePath)
+    }
+
+    logger.info('[patch] Successfully restored build output from pending patch')
+    return true
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    logger.warn(`[patch] Failed to apply pending patch (may need rebuild): ${msg}`)
+
+    // Clean up the failed patch so we don't keep retrying it
+    try {
+      fs.unlinkSync(patchPath)
+    } catch {
+      // ignore
+    }
+    return false
+  }
 }
 
 /**
@@ -390,33 +607,104 @@ function getHookSafeEnv(): NodeJS.ProcessEnv {
  * Handles the case where the remote branch has been updated by a previous
  * pipeline run (e.g., gate approval pushed new commits before rerun started).
  *
+ * FIX: Use origin/<branch> instead of HEAD for pull, and add force-with-lease fallback.
+ * FIX: Fallback to GITHUB_TOKEN if App token fails with "Write access to repository not granted".
+ *
  * @returns true if push succeeded, false if it failed even after rebase
  */
 export function pushWithRebase(cwd: string, env?: NodeJS.ProcessEnv): boolean {
   const pushEnv = env || getHookSafeEnv()
   const pushOpts = { cwd, stdio: 'inherit' as const, env: pushEnv, timeout: 120_000 }
 
+  // Get current branch name for proper remote tracking reference
+  let branchName = ''
   try {
-    execFileSync('git', ['push', '-u', 'origin', 'HEAD'], pushOpts)
-    return true
+    branchName = execFileSync('git', ['branch', '--show-current'], {
+      cwd,
+      encoding: 'utf-8',
+    }).trim()
   } catch {
-    // Push rejected — remote has new commits. Pull with rebase and retry.
-    logger.info('[push] Push rejected, pulling with rebase...')
+    logger.warn('[push] Could not determine branch name, falling back to HEAD')
+    branchName = ''
+  }
+
+  // Try push with provided env (typically App token)
+  const tryPush = (pushEnvVar: NodeJS.ProcessEnv): boolean => {
+    const opts = { cwd, stdio: 'inherit' as const, env: pushEnvVar, timeout: 120_000 }
     try {
-      execFileSync('git', ['pull', '--rebase', 'origin', 'HEAD'], {
-        cwd,
-        stdio: 'inherit',
-        timeout: 120_000,
-        env: pushEnv,
-      })
-      execFileSync('git', ['push', '-u', 'origin', 'HEAD'], pushOpts)
-      logger.info('[push] Push succeeded after rebase')
+      execFileSync('git', ['push', '-u', 'origin', 'HEAD'], opts)
       return true
-    } catch (rebaseError: unknown) {
-      const msg = rebaseError instanceof Error ? rebaseError.message : String(rebaseError)
-      logger.error(`[push] Push failed after rebase: ${msg}`)
+    } catch {
       return false
     }
+  }
+
+  // First attempt with provided env (App token)
+  if (tryPush(pushEnv)) {
+    return true
+  }
+
+  // Push rejected — remote has new commits. Pull with rebase and retry.
+  logger.info('[push] Push rejected, pulling with rebase...')
+  try {
+    // FIX: Use origin/<branch> instead of HEAD for proper remote tracking
+    execFileSync('git', ['pull', '--rebase', 'origin', branchName], {
+      cwd,
+      stdio: 'inherit',
+      timeout: 120_000,
+      env: pushEnv,
+    })
+
+    // Retry push after rebase with App token
+    if (tryPush(pushEnv)) {
+      logger.info('[push] Push succeeded after rebase')
+      return true
+    }
+  } catch {
+    // Rebase failed — try force-with-lease
+  }
+
+  // Try force-with-lease as last resort with App token
+  logger.info('[push] Rebase push failed, trying force-with-lease...')
+  try {
+    execFileSync('git', ['push', '-u', 'origin', 'HEAD', '--force-with-lease'], pushOpts)
+    logger.info('[push] Push succeeded with force-with-lease')
+    return true
+  } catch (forceError: unknown) {
+    const msg = forceError instanceof Error ? forceError.message : String(forceError)
+
+    // Check if this is a permission error (App token lacks workflows permission)
+    // Error: "refusing to allow a GitHub App to create or update workflow .github/workflows/ci.yml
+    // without workflows permission"
+    if (
+      msg.includes('Write access to repository not granted') ||
+      msg.includes('workflow') ||
+      msg.includes('permission')
+    ) {
+      logger.warn('[push] App token push failed due to permissions — falling back to GITHUB_TOKEN')
+
+      // Fallback: Use GITHUB_TOKEN for push (it can push source files but not workflows)
+      const fallbackEnv = {
+        ...getHookSafeEnv(),
+        GH_TOKEN: undefined,
+        GITHUB_TOKEN: process.env.GITHUB_TOKEN,
+      }
+      const fallbackOpts = { cwd, stdio: 'inherit' as const, env: fallbackEnv, timeout: 120_000 }
+
+      // Try push with GITHUB_TOKEN
+      try {
+        execFileSync('git', ['push', '-u', 'origin', 'HEAD'], fallbackOpts)
+        logger.info('[push] Push succeeded with GITHUB_TOKEN fallback')
+        return true
+      } catch (fallbackError: unknown) {
+        const fallbackMsg =
+          fallbackError instanceof Error ? fallbackError.message : String(fallbackError)
+        logger.error(`[push] GITHUB_TOKEN fallback also failed: ${fallbackMsg}`)
+      }
+    }
+
+    logger.error(`[push] Push failed after all retries: ${msg}`)
+    return false
   }
 }
 
@@ -569,11 +857,28 @@ export function commitAndPush(
     }).trim()
 
     if (!status) {
-      return {
-        hash: '',
-        branch,
-        success: false,
-        message: 'No changes to commit',
+      // Try restoring from a pending patch (build output from a previous failed push)
+      const restored = restorePendingPatch(taskDir, workDir)
+      if (!restored) {
+        return {
+          hash: '',
+          branch,
+          success: false,
+          message: 'No changes to commit',
+        }
+      }
+      // Re-check status after patch restore
+      const newStatus = execFileSync('git', ['status', '--porcelain'], {
+        cwd: workDir,
+        encoding: 'utf-8',
+      }).trim()
+      if (!newStatus) {
+        return {
+          hash: '',
+          branch,
+          success: false,
+          message: 'No changes to commit (patch restore produced no changes)',
+        }
       }
     }
 
@@ -646,6 +951,9 @@ export function commitAndPush(
     // Push with automatic rebase-retry on rejection (fixes rejected pushes on reruns)
     const pushed = pushWithRebase(workDir, hookSafeEnv)
     if (!pushed) {
+      // Save the commit as a patch so it can be restored on next rerun
+      // This preserves build output across failed pushes
+      savePendingPatch(taskDir, workDir)
       return {
         hash,
         branch,
@@ -799,28 +1107,31 @@ export function commitPipelineFiles(
       case 'all':
         try {
           execFileSync('git', ['add', '-A'], { cwd, stdio: 'inherit' })
-        } catch {
-          // Ignore staging errors
+        } catch (stageErr) {
+          // FIX #7: Log staging errors instead of silently swallowing them
+          logger.warn({ err: stageErr }, '[commit] git add -A failed (non-fatal)')
         }
         break
       case 'tracked+task':
         try {
           execFileSync('git', ['add', '-u'], { cwd, stdio: 'inherit' })
-        } catch {
-          // Ignore
+        } catch (stageErr) {
+          // FIX #7: Log instead of silent swallow
+          logger.warn({ err: stageErr }, '[commit] git add -u failed (non-fatal)')
         }
         try {
           execFileSync('git', ['add', '--', taskDir], { cwd, stdio: 'inherit' })
-        } catch {
-          // Ignore
+        } catch (stageErr) {
+          logger.warn({ err: stageErr }, '[commit] git add task dir failed (non-fatal)')
         }
         break
       case 'task-only':
       default:
         try {
           execFileSync('git', ['add', '--', taskDir], { cwd, stdio: 'inherit' })
-        } catch {
-          // Ignore staging errors - silent fail is ok
+        } catch (stageErr) {
+          // FIX #7: Log instead of silent swallow
+          logger.warn({ err: stageErr }, '[commit] git add task-only failed (non-fatal)')
         }
         break
     }

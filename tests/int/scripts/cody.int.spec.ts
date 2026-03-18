@@ -453,26 +453,27 @@ describe('orchestrator integration', () => {
 
   describe('pipeline stage integration', () => {
     it('defines correct stages for spec and impl pipelines', async () => {
-      const { SPEC_ONLY_STAGES, ALL_IMPL_STAGE_NAMES } =
-        await import('../../../scripts/cody/pipeline-utils')
+      const { SPEC_ONLY_STAGES } = await import('../../../scripts/cody/pipeline-utils')
+      const { flattenTypedPipeline, IMPL_ORDER_STANDARD } =
+        await import('../../../scripts/cody/stages/registry')
+      const ALL_IMPL_STAGE_NAMES = flattenTypedPipeline(IMPL_ORDER_STANDARD)
 
       // Spec-only stages are the stages between taskify and impl (gap, clarify)
       // Note: 'spec' was renamed to 'taskify' and is NOT in SPEC_ONLY_STAGES
       expect(SPEC_ONLY_STAGES).toContain('gap')
       expect(SPEC_ONLY_STAGES).toContain('clarify')
 
-      // Impl pipeline should have architect, plan-gap, test+build (parallel), review/fix cycle, and commit/verify/pr
+      // Impl pipeline should have architect, plan-gap, build, review/fix cycle, and commit/verify/pr
       expect(ALL_IMPL_STAGE_NAMES).toContain('architect')
       expect(ALL_IMPL_STAGE_NAMES).toContain('plan-gap')
-      expect(ALL_IMPL_STAGE_NAMES).toContain('test')
       expect(ALL_IMPL_STAGE_NAMES).toContain('build')
       expect(ALL_IMPL_STAGE_NAMES).toContain('commit')
       expect(ALL_IMPL_STAGE_NAMES).toContain('verify')
       expect(ALL_IMPL_STAGE_NAMES).toContain('pr')
       expect(ALL_IMPL_STAGE_NAMES).toContain('review')
       expect(ALL_IMPL_STAGE_NAMES).toContain('fix')
-      // 10 stages: architect, plan-gap, test, build, commit, review, fix, commit, verify, pr
-      expect(ALL_IMPL_STAGE_NAMES).toHaveLength(10)
+      // 8 stages: architect, plan-gap, build, commit, review, fix, verify, pr
+      expect(ALL_IMPL_STAGE_NAMES).toHaveLength(8)
     })
 
     it('excludes auditor on rerun', async () => {
@@ -750,7 +751,9 @@ describe('gap stage integration', () => {
   })
 
   it('does not include gap in impl stages', async () => {
-    const { ALL_IMPL_STAGE_NAMES } = await import('../../../scripts/cody/pipeline-utils')
+    const { flattenTypedPipeline: flatten, IMPL_ORDER_STANDARD: implOrder } =
+      await import('../../../scripts/cody/stages/registry')
+    const ALL_IMPL_STAGE_NAMES = flatten(implOrder)
     // Gap should be a spec stage, not impl
     expect(ALL_IMPL_STAGE_NAMES).not.toContain('gap')
   })

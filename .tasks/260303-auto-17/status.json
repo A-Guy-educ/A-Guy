@@ -1,0 +1,82 @@
+{
+  "version": 2,
+  "taskId": "260303-auto-17",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-03T12:21:29.942Z",
+  "updatedAt": "2026-03-09T12:35:12.011Z",
+  "state": "running",
+  "cursor": "review",
+  "stages": {
+    "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-03T19:58:55.998Z",
+      "completedAt": "2026-03-03T20:00:06.496Z",
+      "outputFile": "taskify.md"
+    },
+    "spec": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-03T20:00:15.016Z",
+      "completedAt": "2026-03-03T20:02:19.951Z",
+      "outputFile": "spec.md"
+    },
+    "gap": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 39 (complex) below threshold 40 for gap"
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-03T20:02:19.952Z",
+      "completedAt": "2026-03-03T20:08:21.334Z",
+      "outputFile": "architect.md"
+    },
+    "plan-gap": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 39 (complex) below threshold 50 for plan-gap"
+    },
+    "build": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-03T20:08:25.157Z",
+      "completedAt": "2026-03-03T20:22:54.449Z",
+      "outputFile": "build.md"
+    },
+    "commit": {
+      "state": "pending",
+      "retries": 0
+    },
+    "fix": {
+      "state": "pending",
+      "retries": 0,
+      "fixAttempt": 0,
+      "maxFixAttempts": 2
+    },
+    "commit-fix": {
+      "state": "pending",
+      "retries": 0
+    },
+    "verify": {
+      "state": "pending",
+      "retries": 0
+    },
+    "review": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-09T12:32:58.589Z",
+      "completedAt": "2026-03-09T12:35:12.010Z",
+      "outputFile": "review.md",
+      "issuesFound": false,
+      "reviewSummary": {
+        "critical": 0,
+        "major": 0,
+        "minor": 0
+      }
+    }
+  },
+  "issueNumber": 673
+}
