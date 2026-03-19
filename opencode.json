@@ -95,6 +95,10 @@
         "--no-usage-statistics"
       ]
     },
+    "figma": {
+      "type": "local",
+      "command": ["npx", "-y", "figma-developer-mcp", "--figma-api-key=${FIGMA_API_KEY}", "--stdio"]
+    },
     "playwright": {
       "type": "local",
       "command": [

@@ -90,11 +90,13 @@ export interface Config {
     'exercise-assets': ExerciseAsset;
     users: User;
     'user-progress': UserProgress;
+    'user-stats': UserStat;
     media: Media;
     'chat-assets': ChatAsset;
     'upload-sessions': UploadSession;
     posts: Post;
     'pricing-plans': PricingPlan;
+    'access-codes': AccessCode;
     'mcp-audit-logs': McpAuditLog;
     redirects: Redirect;
     forms: Form;
@@ -131,11 +133,13 @@ export interface Config {
     'exercise-assets': ExerciseAssetsSelect<false> | ExerciseAssetsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'user-progress': UserProgressSelect<false> | UserProgressSelect<true>;
+    'user-stats': UserStatsSelect<false> | UserStatsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     'chat-assets': ChatAssetsSelect<false> | ChatAssetsSelect<true>;
     'upload-sessions': UploadSessionsSelect<false> | UploadSessionsSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
     'pricing-plans': PricingPlansSelect<false> | PricingPlansSelect<true>;
+    'access-codes': AccessCodesSelect<false> | AccessCodesSelect<true>;
     'mcp-audit-logs': McpAuditLogsSelect<false> | McpAuditLogsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
@@ -902,6 +906,316 @@ export interface ArchiveBlock {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+<<<<<<< HEAD
+=======
+ * via the `definition` "categories".
+ */
+export interface Category {
+  id: string;
+  title: string;
+  /**
+   * Content language
+   */
+  locale: 'en' | 'he';
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  parent?: (string | null) | Category;
+  breadcrumbs?:
+    | {
+        doc?: (string | null) | Category;
+        url?: string | null;
+        label?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users".
+ */
+export interface User {
+  id: string;
+  name?: string | null;
+  role: 'admin' | 'student';
+  googleSub?: string | null;
+  verifiedEmail?: string | null;
+  registrationMethod?: ('google' | 'email') | null;
+  registeredAt?: string | null;
+  googleProfile?: {
+    name?: string | null;
+  };
+  /**
+   * Courses this user has access to
+   */
+  courseEntitlements?:
+    | {
+        course: string | Course;
+        grantMethod: 'admin' | 'payment' | 'code';
+        grantedAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  oauthLoginSecretEnc?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "courses".
+ */
+export interface Course {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * Content language
+   */
+  locale: 'en' | 'he';
+  /**
+   * Course identifier (e.g., "ח" or "8")
+   */
+  courseLabel: string;
+  /**
+   * Display title (e.g., "Course 8 Math")
+   */
+  title: string;
+  /**
+   * Detailed description of the course
+   */
+  description?: string | null;
+  /**
+   * Upload course-related media files (images, videos, documents, etc.)
+   */
+  mediaFiles?: (string | Media)[] | null;
+  /**
+   * Sort order for UI display
+   */
+  order: number;
+  /**
+   * Publication status of the course
+   */
+  status: 'draft' | 'published' | 'archived';
+  /**
+   * Whether this course is currently active
+   */
+  isActive: boolean;
+  /**
+   * Controls access to the course page itself (study/practice view). "Gated" shows a sign-in prompt after a configurable delay.
+   */
+  pageAccessType: 'free' | 'mandatory' | 'gated' | 'paid';
+  /**
+   * Default access type for lessons in this course. Lessons can override with their own setting.
+   */
+  accessType: 'free' | 'mandatory' | 'gated' | 'paid';
+  categories: (string | Category)[];
+  /**
+   * AI system prompt for Ask tab chat in this course (uses default if not set)
+   */
+  prompt?: (string | null) | Prompt;
+  /**
+   * AI context text for this course. Injected into Ask tab chat prompts at runtime.
+   */
+  courseContextText?: string | null;
+  /**
+   * URL-friendly identifier (auto-generated from title if empty)
+   */
+  slug?: string | null;
+  meta?: {
+    title?: string | null;
+    description?: string | null;
+  };
+  /**
+   * Content status badge displayed to students
+   */
+  contentStatus: 'none' | 'soon' | 'justAdded';
+  /**
+   * When unchecked, "Soon" content is completely hidden from student listings
+   */
+  contentStatusVisible?: boolean | null;
+  /**
+   * Badge auto-expires after this date (leave empty for permanent badge)
+   */
+  contentStatusExpiresAt?: string | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tenants".
+ */
+export interface Tenant {
+  id: string;
+  /**
+   * Tenant display name
+   */
+  name: string;
+  /**
+   * Tenant slug (used to resolve default tenant from env)
+   */
+  slug: string;
+  /**
+   * Tenant status flag
+   */
+  status?: ('active' | 'archived') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * Auto-detected from file type (admin can override)
+   */
+  type: 'image' | 'video' | 'audio' | 'pdf' | 'svg' | 'document' | 'external' | 'other';
+  /**
+   * URL for external embed or link
+   */
+  externalUrl?: string | null;
+  /**
+   * Auto-detected from URL. Do not change manually.
+   */
+  embedProvider?: ('youtube' | 'vimeo' | 'generic') | null;
+  /**
+   * Provider-specific video/content ID
+   */
+  embedVideoId?: string | null;
+  /**
+   * Embed-ready URL for iframe (auto-generated)
+   */
+  embedUrl?: string | null;
+  /**
+   * Title fetched from provider (auto-populated)
+   */
+  embedTitle?: string | null;
+  /**
+   * Thumbnail URL fetched from provider (auto-populated)
+   */
+  embedThumbnailUrl?: string | null;
+  /**
+   * Alternative text for images and SVGs (required for accessibility)
+   */
+  alt?: string | null;
+  caption?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  retentionPolicy: 'persistent' | 'ephemeral';
+  /**
+   * Auto-set for ephemeral media (30 days from creation)
+   */
+  expiresAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "prompts".
+ */
+export interface Prompt {
+  id: string;
+  /**
+   * Human-readable prompt name
+   */
+  title: string;
+  /**
+   * Machine-readable key (e.g., "default-tutor-v1")
+   */
+  promptKey?: string | null;
+  /**
+   * Content language
+   */
+  locale: 'en' | 'he';
+  /**
+   * System prompts are always included. Context prompts are lesson-specific. Persona prompts define teacher identity.
+   */
+  type: 'system' | 'context' | 'persona';
+  /**
+   * System prompt template for AI tutor
+   */
+  template: string;
+  /**
+   * Only "published" prompts are used at runtime
+   */
+  status: 'draft' | 'published' | 'archived';
+  /**
+   * Use as fallback when lesson has no prompt
+   */
+  isDefaultForAgentChat?: boolean | null;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * Purpose of this prompt: chat conversation, PDF extraction, PDF verification, or context extraction for AI tutor
+   */
+  usage?: ('chat' | 'extractor' | 'verifier' | 'context_extractor') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+>>>>>>> origin/dev
  * via the `definition` "FormBlock".
  */
 export interface FormBlock {
@@ -1389,6 +1703,155 @@ export interface GuestSession {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+<<<<<<< HEAD
+=======
+ * via the `definition` "chapters".
+ */
+export interface Chapter {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * The course this chapter belongs to
+   */
+  course: string | Course;
+  /**
+   * Chapter identifier (e.g., "1", "A", "א")
+   */
+  chapterLabel?: string | null;
+  /**
+   * Chapter title
+   */
+  title: string;
+  /**
+   * Auto-computed display title for admin (chapter title — course title)
+   */
+  adminTitle?: string | null;
+  /**
+   * Detailed description of the chapter
+   */
+  description?: string | null;
+  /**
+   * Upload chapter-related media files (images, videos, documents, etc.)
+   */
+  mediaFiles?: (string | Media)[] | null;
+  /**
+   * Sort order within the course
+   */
+  order: number;
+  /**
+   * Publication status of the chapter
+   */
+  status: 'draft' | 'published' | 'archived';
+  /**
+   * Whether this chapter is currently active
+   */
+  isActive: boolean;
+  /**
+   * URL-friendly identifier (auto-generated from title if empty)
+   */
+  slug?: string | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lessons".
+ */
+export interface Lesson {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * The chapter this lesson belongs to
+   */
+  chapter: string | Chapter;
+  /**
+   * The type of lesson: Learning content, Practice exercises, or Exam
+   */
+  type: 'learning' | 'practice' | 'exam';
+  /**
+   * Lesson title
+   */
+  title: string;
+  /**
+   * Detailed description of the lesson
+   */
+  description?: string | null;
+  /**
+   * Sort order within the course
+   */
+  order: number;
+  /**
+   * Publication status of the lesson
+   */
+  status: 'draft' | 'published' | 'archived';
+  /**
+   * Whether this lesson is currently active
+   */
+  isActive: boolean;
+  /**
+   * Access control for this lesson. "Inherit" uses the parent course setting. "Gated" is a client-side nudge, not hard enforcement.
+   */
+  accessType: 'inherit' | 'free' | 'mandatory' | 'gated' | 'paid';
+  /**
+   * Show an intro/about page before the lesson starts
+   */
+  introEnabled?: boolean | null;
+  /**
+   * HTML content for the intro page. Supports raw HTML (bold, lists, etc).
+   */
+  introDescription?: string | null;
+  /**
+   * Image, SVG, or video displayed on the intro page
+   */
+  introMedia?: (string | null) | Media;
+  /**
+   * Upload lesson content files (PDFs, videos, images, etc.)
+   */
+  contentFiles?: (string | Media)[] | null;
+  /**
+   * AI context text for this lesson. Injected into chat prompts at runtime. NOT indexed or searchable.
+   */
+  lessonContextText?: string | null;
+  /**
+   * AI system prompt for this lesson (uses default if not set)
+   */
+  prompt?: (string | null) | Prompt;
+  /**
+   * URL-friendly identifier (auto-generated from title if empty)
+   */
+  slug?: string | null;
+  /**
+   * Content status badge displayed to students
+   */
+  contentStatus: 'none' | 'soon' | 'justAdded';
+  /**
+   * When unchecked, "Soon" content is completely hidden from student listings
+   */
+  contentStatusVisible?: boolean | null;
+  /**
+   * Badge auto-expires after this date (leave empty for permanent badge)
+   */
+  contentStatusExpiresAt?: string | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+>>>>>>> origin/dev
  * via the `definition` "exercises".
  */
 export interface Exercise {
@@ -1817,6 +2280,10 @@ export interface UserProgress {
          */
         score?: number | null;
         /**
+         * Cumulative time spent on this item in seconds
+         */
+        timeSpentSeconds?: number | null;
+        /**
          * Last time this record was accessed
          */
         lastAccessedAt?: string | null;
@@ -1869,6 +2336,70 @@ export interface UserProgress {
               id?: string | null;
             }[]
           | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-stats".
+ */
+export interface UserStat {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * The user this stats belongs to
+   */
+  user: string | User;
+  /**
+   * Cumulative active time in seconds
+   */
+  totalTimeSpentSeconds?: number | null;
+  /**
+   * Current consecutive days of activity
+   */
+  currentStreak?: number | null;
+  /**
+   * Historical maximum streak
+   */
+  longestStreak?: number | null;
+  /**
+   * Last day counted for streak (YYYY-MM-DD format)
+   */
+  lastActiveDate?: string | null;
+  /**
+   * Timestamp of last heartbeat received
+   */
+  lastHeartbeatAt?: string | null;
+  /**
+   * Recent user activity timeline (max 50 entries)
+   */
+  activityLog?:
+    | {
+        actionType:
+          | 'lesson_completed'
+          | 'exercise_attempted'
+          | 'exercise_completed'
+          | 'question_asked'
+          | 'conversation_started';
+        /**
+         * Human-readable description (e.g., "Completed Lesson 3")
+         */
+        label: string;
+        /**
+         * ID of the entity (lesson/exercise/conversation ID)
+         */
+        targetId?: string | null;
+        /**
+         * Collection slug (lessons/exercises/conversations)
+         */
+        targetCollection?: string | null;
+        timestamp: string;
         id?: string | null;
       }[]
     | null;
@@ -2026,6 +2557,49 @@ export interface PricingPlan {
    * Whether this pricing plan is currently active
    */
   isActive?: boolean | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Manage access codes that grant course entitlements
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "access-codes".
+ */
+export interface AccessCode {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * The code students will enter (e.g., MACCABI-2024)
+   */
+  code: string;
+  /**
+   * The course this code grants access to
+   */
+  course: string | Course;
+  /**
+   * Maximum number of times this code can be used (0 = unlimited)
+   */
+  maxUses?: number | null;
+  /**
+   * How many times this code has been redeemed
+   */
+  currentUses?: number | null;
+  /**
+   * Whether this code can currently be redeemed
+   */
+  isActive?: boolean | null;
+  /**
+   * Optional expiration date (leave empty for no expiry)
+   */
+  expiresAt?: string | null;
   /**
    * User who created this document
    */
@@ -2430,6 +3004,10 @@ export interface PayloadLockedDocument {
         value: string | UserProgress;
       } | null)
     | ({
+        relationTo: 'user-stats';
+        value: string | UserStat;
+      } | null)
+    | ({
         relationTo: 'media';
         value: string | Media;
       } | null)
@@ -2448,6 +3026,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'pricing-plans';
         value: string | PricingPlan;
+      } | null)
+    | ({
+        relationTo: 'access-codes';
+        value: string | AccessCode;
       } | null)
     | ({
         relationTo: 'mcp-audit-logs';
@@ -2873,6 +3455,9 @@ export interface CoursesSelect<T extends boolean = true> {
         title?: T;
         description?: T;
       };
+  contentStatus?: T;
+  contentStatusVisible?: T;
+  contentStatusExpiresAt?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -2918,6 +3503,9 @@ export interface LessonsSelect<T extends boolean = true> {
   lessonContextText?: T;
   prompt?: T;
   slug?: T;
+  contentStatus?: T;
+  contentStatusVisible?: T;
+  contentStatusExpiresAt?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -3048,6 +3636,14 @@ export interface UsersSelect<T extends boolean = true> {
     | {
         name?: T;
       };
+  courseEntitlements?:
+    | T
+    | {
+        course?: T;
+        grantMethod?: T;
+        grantedAt?: T;
+        id?: T;
+      };
   oauthLoginSecretEnc?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -3082,6 +3678,7 @@ export interface UserProgressSelect<T extends boolean = true> {
         completionPercentage?: T;
         status?: T;
         score?: T;
+        timeSpentSeconds?: T;
         lastAccessedAt?: T;
         id?: T;
       };
@@ -3113,6 +3710,31 @@ export interface UserProgressSelect<T extends boolean = true> {
               userStartTime?: T;
               id?: T;
             };
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-stats_select".
+ */
+export interface UserStatsSelect<T extends boolean = true> {
+  tenant?: T;
+  user?: T;
+  totalTimeSpentSeconds?: T;
+  currentStreak?: T;
+  longestStreak?: T;
+  lastActiveDate?: T;
+  lastHeartbeatAt?: T;
+  activityLog?:
+    | T
+    | {
+        actionType?: T;
+        label?: T;
+        targetId?: T;
+        targetCollection?: T;
+        timestamp?: T;
         id?: T;
       };
   updatedAt?: T;
@@ -3231,6 +3853,22 @@ export interface PricingPlansSelect<T extends boolean = true> {
   price?: T;
   currency?: T;
   isActive?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "access-codes_select".
+ */
+export interface AccessCodesSelect<T extends boolean = true> {
+  tenant?: T;
+  code?: T;
+  course?: T;
+  maxUses?: T;
+  currentUses?: T;
+  isActive?: T;
+  expiresAt?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;

@@ -45,6 +45,7 @@ import {
   POST_EXIT_DELAY,
   LLM_TIMEOUT,
   DEFAULT_TIMEOUT,
+  NUDGE_TIMEOUT,
 } from '../../../../scripts/cody/agent-runner'
 import type { CodyInput } from '../../../../scripts/cody/cody-utils'
 
@@ -81,6 +82,12 @@ describe('LLM_TIMEOUT', () => {
 describe('DEFAULT_TIMEOUT', () => {
   it('should be 10 minutes (600000ms)', () => {
     expect(DEFAULT_TIMEOUT).toBe(600000)
+  })
+})
+
+describe('NUDGE_TIMEOUT', () => {
+  it('should be 90 seconds', () => {
+    expect(NUDGE_TIMEOUT).toBe(90)
   })
 })
 

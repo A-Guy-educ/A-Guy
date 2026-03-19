@@ -420,6 +420,11 @@ export const QuestionGeometryBlockSchema = z
   .strict()
 
 // ---------------------------------
+// Zod: Display Size Enum (for graph width control)
+// ---------------------------------
+const DisplaySizeSchema = z.enum(['small', 'medium', 'large', 'full']).default('full').optional()
+
+// ---------------------------------
 // Zod: Question Axis Block Schema
 // ---------------------------------
 export const QuestionAxisBlockSchema = z
@@ -429,6 +434,7 @@ export const QuestionAxisBlockSchema = z
     prompt: InlineRichTextSchema,
     layout: GraphLayoutSchema,
     axis: AxisSpecV1Schema,
+    displaySize: DisplaySizeSchema,
     answer: QuestionAnswerSchema.optional(),
     hint: InlineRichTextSchema.optional(),
     solution: InlineRichTextSchema.optional(),

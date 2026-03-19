@@ -112,11 +112,11 @@ describe('createDigestAction', () => {
     )
   })
 
-  it('should return null when all tasks are healthy', () => {
+  it('should return null when all tasks are completed or unknown', () => {
     ctx = createMockContext({ digestIssue: 42 })
     const tasks = [
-      createEvaluatedTask({ health: 'healthy' }),
       createEvaluatedTask({ health: 'completed' }),
+      createEvaluatedTask({ health: 'unknown' }),
     ]
 
     const action = createDigestAction(tasks, ctx)
@@ -155,8 +155,8 @@ describe('createDigestAction', () => {
     const body = (ctx.github.postComment as ReturnType<typeof vi.fn>).mock.calls[0][1] as string
     expect(body).toContain('260312-task-a')
     expect(body).toContain('260312-task-b')
-    expect(body).toContain('❌ failed')
-    expect(body).toContain('🚧 gated')
+    expect(body).toContain('🔴 failed')
+    expect(body).toContain('🟠 gated')
   })
 })
 

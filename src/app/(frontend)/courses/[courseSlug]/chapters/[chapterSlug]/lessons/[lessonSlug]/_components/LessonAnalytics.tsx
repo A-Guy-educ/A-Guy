@@ -1,6 +1,7 @@
 'use client'
 
 import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
+import { useSetCurrentLesson } from '@/client/providers/ActiveTimeProvider'
 import { useEffect, useRef } from 'react'
 
 interface LessonAnalyticsProps {
@@ -12,6 +13,9 @@ interface LessonAnalyticsProps {
 export function LessonAnalytics({ lessonId, courseId, lessonTitle }: LessonAnalyticsProps) {
   const startTimeRef = useRef<number>(Date.now())
   const hasEmittedEndedRef = useRef<boolean>(false)
+
+  // Register current lesson for per-lesson time tracking
+  useSetCurrentLesson(lessonId)
 
   useEffect(() => {
     // Track lesson started

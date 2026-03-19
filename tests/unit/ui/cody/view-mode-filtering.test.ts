@@ -89,6 +89,7 @@ describe('filterTasksByView', () => {
         viewMode: 'running',
         statusFilter: 'all',
         labelFilter: 'all',
+        priorityFilter: 'all',
       })
       expect(result).not.toContainEqual(expect.objectContaining({ id: 'open-1' }))
       expect(result).toHaveLength(4)
@@ -99,6 +100,7 @@ describe('filterTasksByView', () => {
         viewMode: 'backlog',
         statusFilter: 'all',
         labelFilter: 'all',
+        priorityFilter: 'all',
       })
       expect(result).toHaveLength(1)
       expect(result[0].id).toBe('open-1')
@@ -110,6 +112,7 @@ describe('filterTasksByView', () => {
         viewMode: 'running',
         statusFilter: 'all',
         labelFilter: 'all',
+        priorityFilter: 'all',
       })
       expect(result).toHaveLength(0)
     })
@@ -120,6 +123,7 @@ describe('filterTasksByView', () => {
         viewMode: 'backlog',
         statusFilter: 'all',
         labelFilter: 'all',
+        priorityFilter: 'all',
       })
       expect(result).toHaveLength(0)
     })
@@ -133,6 +137,7 @@ describe('filterTasksByView', () => {
         viewMode: 'running',
         statusFilter: 'building',
         labelFilter: 'all',
+        priorityFilter: 'all',
       })
       expect(result).toHaveLength(1)
       expect(result[0].id).toBe('building-1')
@@ -143,6 +148,7 @@ describe('filterTasksByView', () => {
         viewMode: 'running',
         statusFilter: 'done',
         labelFilter: 'all',
+        priorityFilter: 'all',
       })
       expect(result).toHaveLength(1)
       expect(result[0].id).toBe('done-1')
@@ -153,6 +159,7 @@ describe('filterTasksByView', () => {
         viewMode: 'backlog',
         statusFilter: 'open',
         labelFilter: 'all',
+        priorityFilter: 'all',
       })
       expect(result).toHaveLength(1)
       expect(result[0].id).toBe('open-1')
@@ -163,6 +170,7 @@ describe('filterTasksByView', () => {
         viewMode: 'backlog',
         statusFilter: 'building',
         labelFilter: 'all',
+        priorityFilter: 'all',
       })
       expect(result).toHaveLength(0)
     })
@@ -176,6 +184,7 @@ describe('filterTasksByView', () => {
         viewMode: 'running',
         statusFilter: 'all',
         labelFilter: 'feature',
+        priorityFilter: 'all',
       })
       // buildingTask (feature), reviewTask (bug, feature), doneTask (feature)
       expect(result).toHaveLength(3)
@@ -187,6 +196,7 @@ describe('filterTasksByView', () => {
         viewMode: 'running',
         statusFilter: 'all',
         labelFilter: 'bug',
+        priorityFilter: 'all',
       })
       // reviewTask (bug, feature), failedTask (bug)
       expect(result).toHaveLength(2)
@@ -198,6 +208,7 @@ describe('filterTasksByView', () => {
         viewMode: 'backlog',
         statusFilter: 'all',
         labelFilter: 'bug',
+        priorityFilter: 'all',
       })
       expect(result).toHaveLength(1)
       expect(result[0].id).toBe('open-1')
@@ -208,6 +219,7 @@ describe('filterTasksByView', () => {
         viewMode: 'backlog',
         statusFilter: 'all',
         labelFilter: 'feature',
+        priorityFilter: 'all',
       })
       expect(result).toHaveLength(0)
     })
@@ -221,6 +233,7 @@ describe('filterTasksByView', () => {
         viewMode: 'running',
         statusFilter: 'review',
         labelFilter: 'bug',
+        priorityFilter: 'all',
       })
       expect(result).toHaveLength(1)
       expect(result[0].id).toBe('review-1')
@@ -231,6 +244,7 @@ describe('filterTasksByView', () => {
         viewMode: 'running',
         statusFilter: 'review',
         labelFilter: 'nonexistent',
+        priorityFilter: 'all',
       })
       expect(result).toHaveLength(0)
     })
@@ -244,6 +258,7 @@ describe('filterTasksByView', () => {
         viewMode: 'running',
         statusFilter: 'all',
         labelFilter: 'all',
+        priorityFilter: 'all',
       })
       expect(result).toHaveLength(0)
     })
@@ -253,6 +268,7 @@ describe('filterTasksByView', () => {
         viewMode: 'backlog',
         statusFilter: 'all',
         labelFilter: 'all',
+        priorityFilter: 'all',
       })
       expect(result).toHaveLength(0)
     })

@@ -1,0 +1,29 @@
+{
+  "blocks": [
+    {
+      "id": "q1",
+      "type": "question_open",
+      "variant": "matching",
+      "question": {
+        "text": "Match the capitals to their countries"
+      },
+      "leftItems": [
+        { "id": "l1", "value": "France" },
+        { "id": "l2", "value": "Japan" },
+        { "id": "l3", "value": "Brazil" }
+      ],
+      "rightItems": [
+        { "id": "r1", "value": "Tokyo" },
+        { "id": "r2", "value": "Paris" },
+        { "id": "r3", "value": "Brasilia" }
+      ],
+      "answer": {
+        "correctConnections": [
+          { "leftId": "l1", "rightId": "r2" },
+          { "leftId": "l2", "rightId": "r1" },
+          { "leftId": "l3", "rightId": "r3" }
+        ]
+      }
+    }
+  ]
+}

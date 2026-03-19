@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react'
 
+import { SystemLink } from '@/infra/loading/components/SystemLink'
 import type { User } from '@/payload-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
+import { BarChart3 } from 'lucide-react'
 import {
   Accordion,
   AccordionContent,
@@ -52,32 +54,43 @@ export function AccountHub({ user, initialSection }: AccountHubProps) {
   }
 
   return (
-    <Accordion
-      type="single"
-      collapsible
-      value={value}
-      onValueChange={handleValueChange}
-      className="w-full"
-    >
-      <AccordionItem value="details">
-        <AccordionTrigger className="ps-4">{t('sectionDetails')}</AccordionTrigger>
-        <AccordionContent className="px-4">{<DetailsSection user={user} />}</AccordionContent>
-      </AccordionItem>
+    <div className="space-y-4">
+      {/* My Progress & Stats - outside accordion */}
+      <SystemLink
+        href="/stats"
+        className="flex items-center gap-2 text-sm font-bold text-primary px-4 py-2 hover:bg-muted/50 rounded-lg transition-all w-full"
+      >
+        <BarChart3 className="w-4 h-4" />
+        {t('myProgressAndStats')}
+      </SystemLink>
 
-      <AccordionItem value="courses">
-        <AccordionTrigger className="ps-4">{t('sectionCourses')}</AccordionTrigger>
-        <AccordionContent className="px-4">{<SelectedCourseCard />}</AccordionContent>
-      </AccordionItem>
+      <Accordion
+        type="single"
+        collapsible
+        value={value}
+        onValueChange={handleValueChange}
+        className="w-full"
+      >
+        <AccordionItem value="details">
+          <AccordionTrigger className="ps-4">{t('sectionDetails')}</AccordionTrigger>
+          <AccordionContent className="px-4">{<DetailsSection user={user} />}</AccordionContent>
+        </AccordionItem>
 
-      <AccordionItem value="preferences">
-        <AccordionTrigger className="ps-4">{t('sectionPreferences')}</AccordionTrigger>
-        <AccordionContent className="px-4">{<PreferencesSection />}</AccordionContent>
-      </AccordionItem>
+        <AccordionItem value="courses">
+          <AccordionTrigger className="ps-4">{t('sectionCourses')}</AccordionTrigger>
+          <AccordionContent className="px-4">{<SelectedCourseCard />}</AccordionContent>
+        </AccordionItem>
 
-      <AccordionItem value="teachers-profile">
-        <AccordionTrigger className="ps-4">{t('sectionTeachersProfile')}</AccordionTrigger>
-        <AccordionContent className="px-4">{<TeachersProfileSection />}</AccordionContent>
-      </AccordionItem>
-    </Accordion>
+        <AccordionItem value="preferences">
+          <AccordionTrigger className="ps-4">{t('sectionPreferences')}</AccordionTrigger>
+          <AccordionContent className="px-4">{<PreferencesSection />}</AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="teachers-profile">
+          <AccordionTrigger className="ps-4">{t('sectionTeachersProfile')}</AccordionTrigger>
+          <AccordionContent className="px-4">{<TeachersProfileSection />}</AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    </div>
   )
 }

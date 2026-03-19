@@ -2,12 +2,29 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
-import { Globe, Paperclip, X, Image as ImageIcon, FileText, FileCode } from 'lucide-react'
+import {
+  Globe,
+  Paperclip,
+  X,
+  Image as ImageIcon,
+  FileText,
+  FileCode,
+  MessageSquare,
+  History,
+} from 'lucide-react'
 import { AGENTS, type AgentId } from '../agents'
 import type { CodyTask } from '../types'
 import type { ChatMessage, ChatSession } from '../chat-types'
 import { ConfirmDialog } from './ConfirmDialog'
 import { useRemoteStatus } from '../hooks/useRemoteStatus'
+import { useVoiceChat } from '../hooks/useVoiceChat'
+import { VoiceButton } from './VoiceButton'
+import { VoiceChatOverlay } from './VoiceChatOverlay'
+import { useChatSessions } from '../hooks/useChatSessions'
+import { SessionSidebar } from './SessionSidebar'
+import { TaskSessionHistory } from './TaskSessionHistory'
+import { ToolCallList } from './ToolCallCard'
+import { MessageActions } from './MessageActions'
 
 const AGENT_LIST = Object.values(AGENTS).map(({ id, name, description, icon, capabilities }) => ({
   id,
@@ -22,11 +39,46 @@ interface Message {
   content: string
   isLoading?: boolean
   timestamp?: string
+  toolCalls?: Array<{
+    name: string
+    arguments: Record<string, unknown>
+    result?: unknown
+    status: 'running' | 'success' | 'error'
+    durationMs?: number
+  }>
+}
+
+/**
+ * Convert ChatMessage (from session storage) to Message (UI)
+ */
+function chatToMessage(chat: ChatMessage): Message {
+  return {
+    role: chat.role,
+    content: chat.text,
+    timestamp: chat.timestamp,
+    toolCalls: chat.toolCalls,
+  }
+}
+
+/**
+ * Convert Message (UI) to ChatMessage (for session storage)
+ */
+function messageToChat(msg: Message): ChatMessage {
+  return {
+    role: msg.role,
+    text: msg.content,
+    timestamp: msg.timestamp || new Date().toISOString(),
+    toolCalls: msg.toolCalls,
+  }
 }
 
 interface ToolCall {
   name: string
   arguments: Record<string, unknown>
+  result?: unknown
+  status: 'running' | 'success' | 'error'
+  startedAt?: number
+  durationMs?: number
 }
 
 interface Attachment {
@@ -36,40 +88,6 @@ interface Attachment {
   size: number
   data: string // base64
   mimeType: string
-}
-
-/** Per-agent conversation history keyed by AgentId */
-type HistoryMap = Record<AgentId, Message[]>
-
-const emptyHistory = (): HistoryMap => ({
-  'dashboard-manager': [],
-  'prd-refiner': [],
-  'system-architect': [],
-})
-
-const GLOBAL_CHAT_STORAGE_KEY = 'cody-global-chat'
-
-function loadGlobalHistory(): HistoryMap {
-  if (typeof window === 'undefined') return emptyHistory()
-  try {
-    const stored = localStorage.getItem(GLOBAL_CHAT_STORAGE_KEY)
-    if (stored) {
-      const parsed = JSON.parse(stored)
-      return { ...emptyHistory(), ...parsed }
-    }
-  } catch {
-    // Ignore parse errors
-  }
-  return emptyHistory()
-}
-
-function saveGlobalHistory(history: HistoryMap): void {
-  if (typeof window === 'undefined') return
-  try {
-    localStorage.setItem(GLOBAL_CHAT_STORAGE_KEY, JSON.stringify(history))
-  } catch {
-    // Ignore storage errors
-  }
 }
 
 interface CodyChatProps {
@@ -99,14 +117,6 @@ function formatFileSize(bytes: number): string {
 }
 
 export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
-  // Global (non-task) chat history
-  const [globalHistory, setGlobalHistory] = useState<HistoryMap>(emptyHistory)
-
-  // Load from localStorage after hydration (client-only)
-  useEffect(() => {
-    setGlobalHistory(loadGlobalHistory())
-  }, [])
-
   // Task-scoped messages (loaded from / saved to API)
   const [taskMessages, setTaskMessages] = useState<Message[]>([])
   const [isLoadingTaskChat, setIsLoadingTaskChat] = useState(false)
@@ -118,6 +128,8 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
   const [selectedAgent, setSelectedAgent] = useState<AgentId>('dashboard-manager')
   const [showAgentDropdown, setShowAgentDropdown] = useState(false)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [voiceMuted, setVoiceMuted] = useState(false)
+  const [voiceOverlayOpen, setVoiceOverlayOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -126,26 +138,39 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
   // Remote dev status (only polls when actorLogin is provided)
   const { data: remoteStatus } = useRemoteStatus(actorLogin)
 
+  // Session sidebar state (for session management feature)
+  const [showSessionSidebar, setShowSessionSidebar] = useState(false)
+
+  // Task session history (loaded from API)
+  const [taskSessions, setTaskSessions] = useState<ChatSession[]>([])
+  const [showTaskHistory, setShowTaskHistory] = useState(false)
+
+  // Use session hook for global (non-task) chat
+  const sessionHook = useChatSessions(selectedAgent)
+
   // Determine if we're in task mode or global mode
   const isTaskMode = !!selectedTask
 
-  // Current messages — from task or global history
-  const messages = isTaskMode ? taskMessages : globalHistory[selectedAgent]
+  // Current messages — from task or global history (via session hook)
+  // Convert ChatMessage[] from session storage to Message[] for UI
+  const messages: Message[] = isTaskMode ? taskMessages : sessionHook.messages.map(chatToMessage)
 
+  // Set messages function - uses session hook in global mode
   const setMessages = useCallback(
     (updater: Message[] | ((prev: Message[]) => Message[])) => {
       if (isTaskMode) {
         // Task mode: update task messages directly
         setTaskMessages((prev) => (typeof updater === 'function' ? updater(prev) : updater))
       } else {
-        // Global mode: update agent-specific history
-        setGlobalHistory((prev) => ({
-          ...prev,
-          [selectedAgent]: typeof updater === 'function' ? updater(prev[selectedAgent]) : updater,
-        }))
+        // Global mode: convert Message[] to ChatMessage[] before storing
+        sessionHook.setMessages((prevChat: ChatMessage[]) => {
+          const newMessages =
+            typeof updater === 'function' ? updater(prevChat.map(chatToMessage)) : updater
+          return newMessages.map(messageToChat)
+        })
       }
     },
-    [isTaskMode, selectedAgent],
+    [isTaskMode, sessionHook],
   )
 
   // Load task chat when task changes
@@ -161,6 +186,9 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
         })
         .then((data) => {
           if (data?.sessions) {
+            // Store all sessions for TaskSessionHistory
+            setTaskSessions(data.sessions)
+
             // Convert dashboard sessions to messages
             const dashboardSessions = data.sessions.filter((s) => s.stage === 'dashboard')
             const converted: Message[] = []
@@ -181,6 +209,7 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
     } else {
       // Clear task messages when no task
       setTaskMessages([])
+      setTaskSessions([])
     }
   }, [selectedTask?.id]) // eslint-disable-line react-hooks/exhaustive-deps -- intentional: only id needed, full object ref changes on every poll
 
@@ -216,14 +245,6 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
       return () => clearTimeout(timer)
     }
   }, [taskMessages, isTaskMode, loading, saveTaskChat])
-
-  // Save global chat to localStorage when it changes (debounced)
-  useEffect(() => {
-    if (!isTaskMode && globalHistory && !loading) {
-      const timer = setTimeout(() => saveGlobalHistory(globalHistory), 2000)
-      return () => clearTimeout(timer)
-    }
-  }, [globalHistory, isTaskMode, loading])
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -265,15 +286,20 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
       setLoading(false)
     }
 
+    if (voiceOverlayOpen) {
+      voiceChat.stopConversation()
+      setVoiceOverlayOpen(false)
+      setVoiceMuted(false)
+    }
     setSelectedAgent(agentId)
     setShowAgentDropdown(false)
     setToolCalls([])
   }
 
   const executeClearHistory = () => {
-    // Clear global chat from localStorage when clearing history in non-task mode
+    // Clear active session when clearing history in non-task mode
     if (!isTaskMode) {
-      saveGlobalHistory(emptyHistory())
+      sessionHook.clearActiveSession()
     }
 
     setMessages([])
@@ -340,245 +366,243 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
     setAttachments((prev) => prev.filter((a) => a.id !== id))
   }
 
-  const sendMessage = async () => {
-    if (!input.trim() && attachments.length === 0) return
+  const sendText = useCallback(
+    async (
+      messageContent: string,
+      currentAttachments: Attachment[] = [],
+    ): Promise<string | null> => {
+      if (!messageContent.trim() && currentAttachments.length === 0) return null
 
-    const userMessage = input.trim()
-    setInput('')
-    setAttachments([]) // Clear attachments after sending
-
-    // Build message content - include attachments as data URIs
-    let messageContent = userMessage
-    if (attachments.length > 0) {
-      const attachmentDescriptions = attachments
-        .map((a) => {
-          const sizeStr = formatFileSize(a.size)
-          if (a.mimeType.startsWith('image/')) {
-            return `[Image: ${a.name} (${sizeStr})]\n${a.data}`
-          }
-          return `[File: ${a.name} (${a.mimeType}, ${sizeStr})]\n${a.data}`
-        })
-        .join('\n\n')
-
-      messageContent = attachmentDescriptions + (userMessage ? `\n\n${userMessage}` : '')
-    }
-
-    setMessages((prev) => [
-      ...prev,
-      { role: 'user', content: messageContent, timestamp: new Date().toISOString() },
-    ])
-    setLoading(true)
-    setToolCalls([])
-
-    // Create abort controller for this request
-    abortControllerRef.current = new AbortController()
-
-    // Add placeholder for assistant response
-    setMessages((prev) => [
-      ...prev,
-      { role: 'assistant', content: '', isLoading: true, timestamp: new Date().toISOString() },
-    ])
-
-    try {
-      // Include task context in request when in task mode
-      const requestBody: {
-        agentId: AgentId
-        messages: Array<{ role: 'user' | 'assistant'; content: string }>
-        taskId?: string
-        taskData?: {
-          issueNumber: number
-          title: string
-          body: string
-          state: string
-          labels: string[]
-          column: string
-          pipeline?: {
-            state: string
-            currentStage: string | null
-            stages: Record<string, { state: string }>
-          }
-          taskDefinition?: {
-            task_type: string
-            risk_level: string
-            primary_domain: string
-            scope: string[]
-          }
-          associatedPR?: {
-            number: number
-            state: string
-            html_url: string
-          }
-        }
-        attachments?: Array<{
-          name: string
-          mimeType: string
-          data: string
-        }>
-      } = {
-        agentId: selectedAgent,
-        messages: [
-          ...messages.map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-          { role: 'user', content: messageContent },
-        ],
+      let fullContent = messageContent
+      if (currentAttachments.length > 0) {
+        const attachmentDescriptions = currentAttachments
+          .map((a) => {
+            const sizeStr = formatFileSize(a.size)
+            if (a.mimeType.startsWith('image/')) return `[Image: ${a.name} (${sizeStr})]\n${a.data}`
+            return `[File: ${a.name} (${a.mimeType}, ${sizeStr})]\n${a.data}`
+          })
+          .join('\n\n')
+        fullContent = attachmentDescriptions + (messageContent ? `\n\n${messageContent}` : '')
       }
 
-      // Include attachments in request
-      if (attachments.length > 0) {
-        requestBody.attachments = attachments.map((a) => ({
-          name: a.name,
-          mimeType: a.mimeType,
-          data: a.data,
-        }))
-      }
+      setMessages((prev) => [
+        ...prev,
+        { role: 'user', content: fullContent, timestamp: new Date().toISOString() },
+      ])
+      setLoading(true)
+      setToolCalls([])
+      abortControllerRef.current = new AbortController()
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', content: '', isLoading: true, timestamp: new Date().toISOString() },
+      ])
 
-      if (selectedTask) {
-        requestBody.taskId = selectedTask.id
-        // Send task context for the AI to understand the task
-        requestBody.taskData = {
-          issueNumber: selectedTask.issueNumber,
-          title: selectedTask.title,
-          body: selectedTask.body,
-          state: selectedTask.state,
-          labels: selectedTask.labels,
-          column: selectedTask.column,
-          pipeline: selectedTask.pipeline
-            ? {
-                state: selectedTask.pipeline.state,
-                currentStage: selectedTask.pipeline.currentStage,
-                stages: selectedTask.pipeline.stages,
-              }
-            : undefined,
-          taskDefinition: selectedTask.taskDefinition,
-          associatedPR: selectedTask.associatedPR
-            ? {
-                number: selectedTask.associatedPR.number,
-                state: selectedTask.associatedPR.state,
-                html_url: selectedTask.associatedPR.html_url,
-              }
-            : undefined,
-        }
-      }
-
-      const response = await fetch('/api/cody/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-        signal: abortControllerRef.current.signal,
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || `HTTP ${response.status}`)
-      }
-
-      if (!response.body) {
-        throw new Error('No response body')
-      }
-
-      // Handle streaming response - AI SDK v6 UI message stream (SSE format)
-      const reader = response.body.getReader()
-      const decoder = new TextDecoder()
-      let buffer = ''
       let accumulatedContent = ''
 
-      // Parse SSE stream (AI SDK v6 UI message stream protocol)
-      const parseSSEChunk = (text: string) => {
-        const lines = text.split('\n')
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue
-          const data = line.slice(6)
-
-          if (data === '[DONE]') continue
-
-          try {
-            const parsed = JSON.parse(data)
-
-            switch (parsed.type) {
-              case 'text-delta': {
-                accumulatedContent += parsed.delta
-                setMessages((prev) => {
-                  const newMessages = [...prev]
-                  const lastMsg = newMessages[newMessages.length - 1]
-                  if (lastMsg?.role === 'assistant') {
-                    lastMsg.content = accumulatedContent
-                  }
-                  return newMessages
-                })
-                break
-              }
-              case 'tool-input-start': {
-                setToolCalls((prev) => [...prev, { name: parsed.toolName, arguments: {} }])
-                break
-              }
-              case 'tool-output-available': {
-                // Tool result received - the model will continue with text after this
-                break
-              }
-              case 'error': {
-                console.error('Stream error:', parsed.errorText)
-                break
-              }
-              // Ignore other event types
+      try {
+        const requestBody: {
+          agentId: AgentId
+          messages: Array<{ role: 'user' | 'assistant'; content: string }>
+          taskId?: string
+          taskData?: {
+            issueNumber: number
+            title: string
+            body: string
+            state: string
+            labels: string[]
+            column: string
+            pipeline?: {
+              state: string
+              currentStage: string | null
+              stages: Record<string, { state: string }>
             }
-          } catch {
-            // Skip malformed JSON
+            taskDefinition?: {
+              task_type: string
+              risk_level: string
+              primary_domain: string
+              scope: string[]
+            }
+            associatedPR?: { number: number; state: string; html_url: string }
+          }
+          attachments?: Array<{ name: string; mimeType: string; data: string }>
+        } = {
+          agentId: selectedAgent,
+          messages: [
+            ...messages.map((m) => ({ role: m.role, content: m.content })),
+            { role: 'user', content: fullContent },
+          ],
+        }
+
+        if (currentAttachments.length > 0) {
+          requestBody.attachments = currentAttachments.map((a) => ({
+            name: a.name,
+            mimeType: a.mimeType,
+            data: a.data,
+          }))
+        }
+
+        if (selectedTask) {
+          requestBody.taskId = selectedTask.id
+          requestBody.taskData = {
+            issueNumber: selectedTask.issueNumber,
+            title: selectedTask.title,
+            body: selectedTask.body,
+            state: selectedTask.state,
+            labels: selectedTask.labels,
+            column: selectedTask.column,
+            pipeline: selectedTask.pipeline
+              ? {
+                  state: selectedTask.pipeline.state,
+                  currentStage: selectedTask.pipeline.currentStage,
+                  stages: selectedTask.pipeline.stages,
+                }
+              : undefined,
+            taskDefinition: selectedTask.taskDefinition,
+            associatedPR: selectedTask.associatedPR
+              ? {
+                  number: selectedTask.associatedPR.number,
+                  state: selectedTask.associatedPR.state,
+                  html_url: selectedTask.associatedPR.html_url,
+                }
+              : undefined,
           }
         }
-      }
 
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
+        const response = await fetch('/api/cody/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+          signal: abortControllerRef.current.signal,
+        })
 
-        buffer += decoder.decode(value, { stream: true })
-
-        // Process complete lines from buffer
-        const lastNewline = buffer.lastIndexOf('\n')
-        if (lastNewline !== -1) {
-          const completeLines = buffer.slice(0, lastNewline + 1)
-          buffer = buffer.slice(lastNewline + 1)
-          parseSSEChunk(completeLines)
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || `HTTP ${response.status}`)
         }
-      }
+        if (!response.body) throw new Error('No response body')
 
-      // Process remaining buffer
-      if (buffer.trim()) {
-        parseSSEChunk(buffer)
-      }
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        // Request was cancelled - don't update messages
-        setMessages((prev) => prev.slice(0, -1))
-        return
-      }
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
 
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-
-      setMessages((prev) => {
-        const newMessages = [...prev]
-        const lastMsg = newMessages[newMessages.length - 1]
-        if (lastMsg?.role === 'assistant') {
-          lastMsg.content = `Error: ${errorMessage}`
-          lastMsg.isLoading = false
+        const parseSSEChunk = (text: string) => {
+          const lines = text.split('\n')
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue
+            const data = line.slice(6)
+            if (data === '[DONE]') continue
+            try {
+              const parsed = JSON.parse(data)
+              switch (parsed.type) {
+                case 'text-delta': {
+                  accumulatedContent += parsed.delta
+                  setMessages((prev) => {
+                    const newMessages = [...prev]
+                    const lastMsg = newMessages[newMessages.length - 1]
+                    if (lastMsg?.role === 'assistant') lastMsg.content = accumulatedContent
+                    return newMessages
+                  })
+                  break
+                }
+                case 'tool-input-start':
+                  setToolCalls((prev) => [
+                    ...prev,
+                    {
+                      name: parsed.toolName,
+                      arguments: {},
+                      status: 'running' as const,
+                      startedAt: Date.now(),
+                    },
+                  ])
+                  break
+                case 'tool-output-available':
+                  break
+                case 'error':
+                  console.error('Stream error:', parsed.errorText)
+                  break
+              }
+            } catch {
+              /* skip malformed JSON */
+            }
+          }
         }
-        return newMessages
-      })
-    } finally {
-      setLoading(false)
-      setMessages((prev) => {
-        const newMessages = [...prev]
-        const lastMsg = newMessages[newMessages.length - 1]
-        if (lastMsg?.role === 'assistant') {
-          lastMsg.isLoading = false
+
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          buffer += decoder.decode(value, { stream: true })
+          const lastNewline = buffer.lastIndexOf('\n')
+          if (lastNewline !== -1) {
+            parseSSEChunk(buffer.slice(0, lastNewline + 1))
+            buffer = buffer.slice(lastNewline + 1)
+          }
         }
-        return newMessages
-      })
-      abortControllerRef.current = null
-    }
+        if (buffer.trim()) parseSSEChunk(buffer)
+
+        return accumulatedContent
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          setMessages((prev) => prev.slice(0, -1))
+          return null
+        }
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        setMessages((prev) => {
+          const newMessages = [...prev]
+          const lastMsg = newMessages[newMessages.length - 1]
+          if (lastMsg?.role === 'assistant') {
+            lastMsg.content = `Error: ${errorMessage}`
+            lastMsg.isLoading = false
+          }
+          return newMessages
+        })
+        return null
+      } finally {
+        setLoading(false)
+        setMessages((prev) => {
+          const newMessages = [...prev]
+          const lastMsg = newMessages[newMessages.length - 1]
+          if (lastMsg?.role === 'assistant') lastMsg.isLoading = false
+          return newMessages
+        })
+        abortControllerRef.current = null
+      }
+    },
+    [selectedAgent, selectedTask, setMessages, messages],
+  )
+
+  const sendMessage = async () => {
+    if (!input.trim() && attachments.length === 0) return
+    const userMessage = input.trim()
+    setInput('')
+    const currentAttachments = [...attachments]
+    setAttachments([])
+    await sendText(userMessage, currentAttachments)
   }
+
+  // ─── Voice chat integration ───
+
+  const handleVoiceSend = useCallback(
+    async (transcript: string) => {
+      const response = await sendText(transcript)
+      if (response) voiceChatRef.current?.onResponseComplete(response)
+    },
+    [sendText],
+  )
+
+  const voiceChat = useVoiceChat({ onSendMessage: handleVoiceSend })
+  const voiceChatRef = useRef(voiceChat)
+  useEffect(() => {
+    voiceChatRef.current = voiceChat
+  }, [voiceChat])
+
+  const handleVoiceToggleMute = useCallback(() => {
+    setVoiceMuted((prev) => {
+      const next = !prev
+      if (next) voiceChat.pauseConversation()
+      else voiceChat.resumeConversation()
+      return next
+    })
+  }, [voiceChat])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -608,7 +632,42 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
   const canSend = input.trim() || attachments.length > 0
 
   return (
-    <div className="flex flex-col h-full border-l bg-background">
+    <div className="relative flex flex-col h-full border-l bg-background">
+      {/* Session Sidebar */}
+      {showSessionSidebar && !isTaskMode && (
+        <SessionSidebar
+          sessions={sessionHook.sessions}
+          activeSessionId={sessionHook.activeSession?.id || null}
+          agentId={selectedAgent}
+          onSwitchSession={sessionHook.switchSession}
+          onCreateSession={sessionHook.createSession}
+          onDeleteSession={sessionHook.deleteSession}
+          onRenameSession={sessionHook.renameSession}
+          onPinSession={sessionHook.pinSession}
+          className="absolute left-0 top-0 bottom-0 w-72 z-50"
+        />
+      )}
+      {/* Voice Chat Overlay */}
+      {voiceOverlayOpen && (
+        <VoiceChatOverlay
+          state={voiceChat.state}
+          currentTranscript={voiceChat.currentTranscript}
+          turnCount={voiceChat.turnCount}
+          error={voiceChat.error}
+          messages={messages}
+          agentName={currentAgent.name}
+          onStop={() => {
+            voiceChat.stopConversation()
+            setVoiceOverlayOpen(false)
+            setVoiceMuted(false)
+          }}
+          onInterrupt={() => {
+            voiceChat.interruptConversation()
+          }}
+          onToggleMute={handleVoiceToggleMute}
+          isMuted={voiceMuted}
+        />
+      )}
       {/* Header with agent and context */}
       <div className="pl-4 pr-12 md:pr-4 py-3 border-b bg-gradient-to-r from-muted/80 to-muted/40">
         <div className="flex items-center justify-between">
@@ -680,6 +739,41 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
               </div>
             )}
           </div>
+
+          {/* Right: Action buttons (session sidebar, task history) */}
+          <div className="flex items-center gap-1">
+            {/* Session sidebar toggle (global mode only) */}
+            {!isTaskMode && (
+              <button
+                onClick={() => setShowSessionSidebar(!showSessionSidebar)}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md border transition-all ${
+                  showSessionSidebar
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-background border-transparent hover:border-border'
+                }`}
+                title="Conversations"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Chats</span>
+              </button>
+            )}
+
+            {/* Task history toggle (task mode only) */}
+            {isTaskMode && taskSessions.length > 0 && (
+              <button
+                onClick={() => setShowTaskHistory(!showTaskHistory)}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md border transition-all ${
+                  showTaskHistory
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-background border-transparent hover:border-border'
+                }`}
+                title="Session History"
+              >
+                <History className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">History</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Context bar: task or global */}
@@ -741,13 +835,54 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
           </div>
         )}
 
+        {/* Task session history (task mode) */}
+        {isTaskMode && showTaskHistory && taskSessions.length > 0 && (
+          <div className="mb-4">
+            <TaskSessionHistory sessions={taskSessions} />
+          </div>
+        )}
+
         {messages.map((msg, i) => (
-          <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+          <div
+            key={i}
+            className={`group flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} relative`}
+          >
             <div
               className={`max-w-[85%] rounded-lg px-3 py-2 text-base ${
                 msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
               }`}
             >
+              {/* Message Actions */}
+              <MessageActions
+                role={msg.role}
+                content={msg.content}
+                isLast={i === messages.length - 1}
+                isLoading={!!msg.isLoading}
+                hasToolCalls={!!msg.toolCalls && msg.toolCalls.length > 0}
+                onCopy={() => msg.content}
+                onRetry={
+                  msg.role === 'assistant' && i === messages.length - 1
+                    ? () => {
+                        /* TODO: Implement retry */
+                      }
+                    : undefined
+                }
+                onEdit={
+                  msg.role === 'user'
+                    ? (content) => {
+                        setMessages((prev) => {
+                          const newMessages = [...prev]
+                          newMessages[i] = { ...newMessages[i], content }
+                          return newMessages
+                        })
+                      }
+                    : undefined
+                }
+                onDelete={() => {
+                  setMessages((prev) => prev.filter((_, idx) => idx !== i))
+                }}
+              />
+
               {msg.role === 'assistant' ? (
                 <div className="prose prose-base dark:prose-invert max-w-none">
                   <ReactMarkdown>
@@ -764,19 +899,19 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
           </div>
         ))}
 
-        {/* Tool calls display */}
+        {/* Tool calls display - using ToolCallList component */}
         {toolCalls.length > 0 && (
           <div className="flex justify-start">
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg px-3 py-2 text-xs">
-              <p className="font-medium mb-1">Using tools:</p>
-              <ul className="space-y-1">
-                {toolCalls.map((tc, i) => (
-                  <li key={i} className="text-blue-600 dark:text-blue-400">
-                    • {tc.name}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <ToolCallList
+              toolCalls={toolCalls.map((tc) => ({
+                name: tc.name,
+                arguments: tc.arguments,
+                result: tc.result,
+                status: tc.status,
+                startedAt: tc.startedAt,
+                durationMs: tc.durationMs,
+              }))}
+            />
           </div>
         )}
 
@@ -828,6 +963,40 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
             <Paperclip className="w-5 h-5" />
           </button>
 
+          {/* Voice button */}
+          <VoiceButton
+            isActive={voiceOverlayOpen}
+            isSupported={voiceChat.isSupported}
+            onTap={() => {
+              // Handle tap based on current voice state:
+              // - If AI is speaking: interrupt and start listening (voice interrupt)
+              // - If listening/processing: stop conversation
+              // - If idle: start conversation
+              if (voiceChat.state === 'speaking') {
+                // Voice interrupt: cancel AI speech and start listening
+                voiceChat.interruptConversation()
+                setVoiceOverlayOpen(true)
+                setVoiceMuted(false)
+              } else if (voiceOverlayOpen) {
+                // Already in voice mode - stop it
+                voiceChat.stopConversation()
+                setVoiceOverlayOpen(false)
+                setVoiceMuted(false)
+              } else {
+                // Not in voice mode - start it
+                voiceChat.startConversation()
+                setVoiceOverlayOpen(true)
+              }
+            }}
+            onLongPressStart={() => {
+              voiceChat.startConversation()
+              setVoiceOverlayOpen(true)
+            }}
+            onLongPressEnd={() => {
+              /* let conversation handle it */
+            }}
+            disabled={loading}
+          />
           <textarea
             value={input}
             onChange={(e) => {

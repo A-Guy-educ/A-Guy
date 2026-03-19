@@ -11,6 +11,7 @@ import { queryExercisesByLesson } from '@/server/repos/queries/exercises'
 import { queryLessonBySlug } from '@/server/repos/queries/lessons'
 import { queryMediaByIds } from '@/server/repos/queries/media'
 import { isAuthenticatedServer } from '@/server/utils/access-gate-server'
+import { checkPaidAccess } from '@/server/utils/check-paid-access'
 import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
 import { ChatInterface } from '@/ui/web/chat'
 import { extractAllMediaIds } from '@/ui/web/exerciserenderer/utils/extractMediaIds'
@@ -79,11 +80,31 @@ export default async function LessonPage({ params }: LessonPageProps) {
     )
   }
 
+  // Server-side block: for paid mode, check entitlement
+  if (effectiveAccessType === 'paid') {
+    const { requiresEntitlement, isAuthenticated } = await checkPaidAccess(course.id)
+
+    if (requiresEntitlement) {
+      return (
+        <AccessGateProvider
+          accessType={effectiveAccessType}
+          courseSlug={courseSlug}
+          gatedDelayMs={gatedDelayMs}
+          gatedWarningMs={gatedWarningMs}
+          requiresEntitlement={true}
+          isAuthenticated={isAuthenticated}
+        >
+          <div className="min-h-screen" />
+        </AccessGateProvider>
+      )
+    }
+  }
+
   const exercises = await queryExercisesByLesson({ lessonId: lesson.id })
 
   // Use lesson-scoped chat context to keep history stable across refreshes
   const chatLessonId = lesson.id
-  const backUrl = `/courses/${courseSlug}/chapters/${chapterSlug}`
+  const backUrl = '/study'
 
   const validFiles =
     lesson.contentFiles

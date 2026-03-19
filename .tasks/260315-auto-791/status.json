@@ -4,9 +4,9 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-15T18:32:09.674Z",
-  "updatedAt": "2026-03-15T21:15:44.649Z",
-  "state": "failed",
-  "cursor": "plan-gap",
+  "updatedAt": "2026-03-19T12:01:25.520Z",
+  "state": "running",
+  "cursor": "commit",
   "stages": {
     "taskify": {
       "state": "completed",
@@ -77,38 +77,21 @@
       "sessionId": "ses_30cc8a1adffe37NVdKx37nKBxU"
     },
     "commit": {
-      "state": "completed",
+      "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-15T20:54:20.386Z",
-      "completedAt": "2026-03-15T20:54:21.386Z"
+      "startedAt": "2026-03-19T12:01:25.520Z"
     },
     "review": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-03-15T20:54:21.388Z",
-      "completedAt": "2026-03-15T20:58:36.684Z",
-      "outputFile": "review.md",
-      "tokenUsage": {
-        "input": 20,
-        "output": 11493,
-        "cacheRead": 4053799
-      },
-      "cost": 3.8379244999999997,
-      "sessionId": "ses_30cb8b20affezCeXwg07uLmxfp"
+      "state": "pending",
+      "retries": 0
     },
     "fix": {
-      "state": "failed",
-      "retries": 0,
-      "skipped": "No issues to fix",
-      "fixAttempt": 1,
-      "maxFixAttempts": 2,
-      "startedAt": "2026-03-15T21:05:59.423Z",
-      "error": "Agent failed"
+      "state": "pending",
+      "retries": 0
     },
     "verify": {
       "state": "pending",
-      "retries": 0,
-      "startedAt": "2026-03-15T20:58:42.769Z"
+      "retries": 0
     }
   },
   "issueNumber": 838,

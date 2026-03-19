@@ -1,0 +1,75 @@
+{
+  "version": 2,
+  "taskId": "260316-auto-648",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-17T20:33:21.677Z",
+  "updatedAt": "2026-03-17T23:13:25.360Z",
+  "state": "paused",
+  "cursor": "architect",
+  "stages": {
+    "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-17T20:33:23.431Z",
+      "completedAt": "2026-03-17T20:46:47.233Z",
+      "elapsed": 169,
+      "outputFile": "taskify.md",
+      "tokenUsage": {
+        "input": 10787,
+        "output": 2490,
+        "cacheRead": 279076
+      },
+      "sessionId": "ses_3027f212affe0RQkjbyL0v9saY"
+    },
+    "gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-17T20:46:48.608Z",
+      "completedAt": "2026-03-17T20:50:12.937Z",
+      "elapsed": 204,
+      "outputFile": "gap.md",
+      "tokenUsage": {
+        "input": 56536,
+        "output": 4414,
+        "cacheRead": 862753
+      },
+      "sessionId": "ses_30272da7cffewMw1kBiuNj2xFk"
+    },
+    "architect": {
+      "state": "paused",
+      "retries": 0,
+      "startedAt": "2026-03-17T23:07:38.015Z",
+      "completedAt": "2026-03-17T23:13:20.826Z",
+      "elapsed": 343,
+      "outputFile": "architect.md",
+      "tokenUsage": {
+        "input": 16,
+        "output": 15797,
+        "cacheRead": 2136617
+      },
+      "cost": 2.502351,
+      "sessionId": "ses_301f1ee6dffeeoJe6BnZ4CZhue"
+    },
+    "plan-gap": {
+      "state": "pending",
+      "retries": 0
+    },
+    "build": {
+      "state": "pending",
+      "retries": 0
+    }
+  },
+  "issueNumber": 822,
+  "triggeredBy": "aguyaharonyair",
+  "issueCreator": "aguyaharonyair",
+  "actorHistory": [
+    {
+      "action": "pipeline-triggered",
+      "actor": "aguyaharonyair",
+      "timestamp": "2026-03-17T20:33:21.677Z"
+    }
+  ],
+  "totalCost": 2.502351,
+  "completedAt": "2026-03-17T23:13:25.360Z"
+}

@@ -2,14 +2,26 @@
  * @fileType page
  * @domain cody
  * @pattern dashboard-page
- * @ai-summary Cody dashboard with preview modal on Comments tab via URL /cody/[n]/preview/comments
+ * @ai-summary Cody dashboard with preview modal on Comments tab via URL /cody/[n]/preview/comments.
+ *   Force static with generateStaticParams for OG tags.
  */
-import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { CodyDashboard } from '@/ui/cody/components/CodyDashboard'
-import { verifyCodySessionToken, CODY_SESSION_COOKIE } from '@/infra/auth/cody_session'
 import { buildTaskMetadata } from '../../../metadata'
+
+// Force static generation so OG tags are available without authentication
+export const dynamic = 'force-static'
+export const revalidate = false
+export const fetchCache = 'force-cache'
+
+// Pre-render common issue numbers at build time for OG tags
+export async function generateStaticParams() {
+  const issueNumbers = Array.from({ length: 50 }, (_, i) => ({
+    issueNumber: String(i + 800),
+  }))
+  return issueNumbers
+}
 
 export async function generateMetadata({
   params,
@@ -30,17 +42,6 @@ export default async function CodyPreviewCommentsPage({
 }: {
   params: Promise<{ issueNumber: string }>
 }) {
-  const cookieStore = await cookies()
-  const token = cookieStore.get(CODY_SESSION_COOKIE)?.value
-  const identity = await verifyCodySessionToken(token)
-
-  // Not authenticated — redirect to GitHub OAuth
-  if (!identity) {
-    const { issueNumber } = await params
-    const returnTo = `/cody/${issueNumber}/preview/comments`
-    redirect(`/api/oauth/github?returnTo=${encodeURIComponent(returnTo)}`)
-  }
-
   const { issueNumber } = await params
   const parsed = parseInt(issueNumber, 10)
 

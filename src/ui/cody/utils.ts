@@ -5,12 +5,8 @@
  * @ai-summary Utility functions for Cody dashboard
  */
 
-/**
- * Simple className merger (minimal version for cody dashboard)
- */
-export function cn(...classes: (string | undefined | null | false)[]): string {
-  return classes.filter(Boolean).join(' ')
-}
+// Re-export cn from infra/utils/ui (uses tailwind-merge for proper class merging)
+export { cn } from '@/infra/utils/ui'
 
 /**
  * Format duration in ms to human readable
@@ -45,13 +41,15 @@ export function formatRelativeTime(date: string | Date): string {
 
 // ============ View Mode Filtering ============
 
-import type { CodyTask } from './types'
+import type { CodyTask, SortField, SortDirection } from './types'
 import type { ViewMode } from './components/FilterBar'
+import { COLUMN_DEFS, getTaskPriority, PRIORITY_RANK } from './constants'
 
 export interface ViewModeFilterOptions {
   viewMode: ViewMode
   statusFilter: string
   labelFilter: string
+  priorityFilter: string
 }
 
 /**
@@ -60,16 +58,26 @@ export interface ViewModeFilterOptions {
  * - 'backlog' view: only tasks in 'open' column
  * Status and label filters apply within the selected view.
  */
+
+// Queue labels
+export const QUEUE_LABELS = ['cody:queued', 'cody:queue-active', 'cody:queue-failed'] as const
+
 export function filterTasksByView(tasks: CodyTask[], options: ViewModeFilterOptions): CodyTask[] {
-  const { viewMode, statusFilter, labelFilter } = options
+  const { viewMode, statusFilter, labelFilter, priorityFilter } = options
   return tasks.filter((task) => {
     // View mode filter — primary split
+    if (viewMode === 'queue') {
+      return task.labels.some((l) => QUEUE_LABELS.includes(l as (typeof QUEUE_LABELS)[number]))
+    }
     if (viewMode === 'backlog' && task.column !== 'open') return false
     if (viewMode === 'running' && task.column === 'open') return false
     // Status filter
     if (statusFilter !== 'all' && task.column !== statusFilter) return false
     // Label filter
     if (labelFilter !== 'all' && !task.labels.includes(labelFilter)) return false
+    // Priority filter
+    if (priorityFilter !== 'all' && !task.labels.includes(`priority:${priorityFilter}`))
+      return false
     return true
   })
 }
@@ -81,12 +89,98 @@ export function filterTasksByView(tasks: CodyTask[], options: ViewModeFilterOpti
 export function getViewModeCounts(tasks: CodyTask[]): {
   runningCount: number
   backlogCount: number
+  queueCount: number
 } {
   const backlogCount = tasks.filter((t) => t.column === 'open').length
+  const queueCount = tasks.filter((t) =>
+    t.labels.some((l) => QUEUE_LABELS.includes(l as (typeof QUEUE_LABELS)[number])),
+  ).length
   return {
     backlogCount,
     runningCount: tasks.length - backlogCount,
+    queueCount,
   }
+}
+
+// ============ Sorting ============
+
+const RISK_ORDER: Record<string, number> = {
+  high: 0,
+  medium: 1,
+  low: 2,
+  undefined: 3,
+}
+
+/**
+ * Sort tasks by a specific field and direction.
+ * Returns a new sorted array (immutable).
+ */
+export function sortTasks(
+  tasks: CodyTask[],
+  field: SortField,
+  direction: SortDirection,
+): CodyTask[] {
+  const sorted = [...tasks].sort((a, b) => {
+    let cmp = 0
+
+    switch (field) {
+      case 'updatedAt':
+        cmp = new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        break
+      case 'createdAt':
+        cmp = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        break
+      case 'issueNumber':
+        cmp = b.issueNumber - a.issueNumber
+        break
+      case 'column':
+        cmp = (COLUMN_DEFS[a.column]?.order ?? 0) - (COLUMN_DEFS[b.column]?.order ?? 0)
+        break
+      case 'riskLevel': {
+        const aRisk = a.taskDefinition?.risk_level ?? 'undefined'
+        const bRisk = b.taskDefinition?.risk_level ?? 'undefined'
+        cmp = (RISK_ORDER[aRisk] ?? 3) - (RISK_ORDER[bRisk] ?? 3)
+        break
+      }
+      case 'pipelineProgress': {
+        const aStages = a.pipeline?.stages ?? {}
+        const bStages = b.pipeline?.stages ?? {}
+        const aCompleted = Object.values(aStages).filter((s) => s.state === 'completed').length
+        const bCompleted = Object.values(bStages).filter((s) => s.state === 'completed').length
+        cmp = bCompleted - aCompleted
+        break
+      }
+      case 'assignee': {
+        const aAssignee = a.assignees?.[0]?.login ?? ''
+        const bAssignee = b.assignees?.[0]?.login ?? ''
+        cmp = aAssignee.localeCompare(bAssignee)
+        break
+      }
+      case 'title':
+        cmp = a.title.localeCompare(b.title)
+        break
+      case 'label': {
+        const aLabel = a.labels?.[0] ?? ''
+        const bLabel = b.labels?.[0] ?? ''
+        cmp = aLabel.localeCompare(bLabel)
+        break
+      }
+      case 'priority': {
+        const aPri = getTaskPriority(a.labels)
+        const bPri = getTaskPriority(b.labels)
+        const aRank = aPri ? (PRIORITY_RANK[aPri] ?? 99) : 99
+        const bRank = bPri ? (PRIORITY_RANK[bPri] ?? 99) : 99
+        cmp = aRank - bRank
+        break
+      }
+      default:
+        cmp = 0
+    }
+
+    return direction === 'asc' ? -cmp : cmp
+  })
+
+  return sorted
 }
 
 // ============ Vercel Preview Bypass ============

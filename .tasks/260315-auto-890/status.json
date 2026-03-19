@@ -1,0 +1,111 @@
+{
+  "version": 2,
+  "taskId": "260315-auto-890",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-15T13:10:42.715Z",
+  "updatedAt": "2026-03-16T09:49:29.088Z",
+  "state": "running",
+  "cursor": "gap",
+  "stages": {
+    "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-15T13:10:43.654Z",
+      "completedAt": "2026-03-16T09:05:57.227Z",
+      "outputFile": "taskify.md",
+      "tokenUsage": {
+        "input": 4286,
+        "output": 2901,
+        "cacheRead": 186807
+      },
+      "sessionId": "ses_30e61237cffexgcrPUOjJXxzIv"
+    },
+    "gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-16T09:05:58.395Z",
+      "completedAt": "2026-03-16T09:10:29.065Z",
+      "elapsed": 271,
+      "outputFile": "gap.md",
+      "tokenUsage": {
+        "input": 36993,
+        "output": 7446,
+        "cacheRead": 1263325
+      },
+      "sessionId": "ses_30a1ad94bffexZdGvBJBaWeIjE"
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-16T09:10:29.068Z",
+      "completedAt": "2026-03-16T09:16:59.844Z",
+      "elapsed": 391,
+      "outputFile": "architect.md",
+      "tokenUsage": {
+        "input": 22,
+        "output": 20245,
+        "cacheRead": 1964054
+      },
+      "cost": 2.2494870000000002,
+      "sessionId": "ses_30a16bb39ffeEY78W6sC890qra"
+    },
+    "plan-gap": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 45 (complex) below threshold 50 for plan-gap"
+    },
+    "build": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-16T09:17:02.119Z",
+      "completedAt": "2026-03-16T09:46:09.399Z",
+      "elapsed": 1747,
+      "outputFile": "build.md",
+      "tokenUsage": {
+        "input": 122508,
+        "output": 34444,
+        "cacheRead": 19170145
+      },
+      "sessionId": "ses_30a10c03cffe0uFhuuuJDgs1An"
+    },
+    "commit": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-16T09:46:31.319Z",
+      "completedAt": "2026-03-16T09:46:32.314Z",
+      "elapsed": 1
+    },
+    "review": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-16T09:46:32.316Z",
+      "completedAt": "2026-03-16T09:49:29.083Z",
+      "elapsed": 177,
+      "outputFile": "review.md",
+      "tokenUsage": {
+        "input": 16,
+        "output": 7115,
+        "cacheRead": 1404027
+      },
+      "cost": 1.60708725,
+      "sessionId": "ses_309f5bdbbffeQx68KdUsXn1JzU",
+      "issuesFound": true,
+      "reviewSummary": {
+        "critical": 0,
+        "major": 197,
+        "minor": 88
+      }
+    }
+  },
+  "issueNumber": 835,
+  "triggeredBy": "aguyaharonyair",
+  "issueCreator": "aguyaharonyair",
+  "actorHistory": [
+    {
+      "action": "pipeline-triggered",
+      "actor": "aguyaharonyair",
+      "timestamp": "2026-03-15T13:10:42.715Z"
+    }
+  ]
+}

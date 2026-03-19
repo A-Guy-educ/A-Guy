@@ -31,10 +31,12 @@ import { TeacherProfiles } from '@/server/payload/collections/TeacherProfiles'
 import { Tenants } from '@/server/payload/collections/Tenants'
 import { UploadSessions } from '@/server/payload/collections/UploadSessions'
 import { UserProgress } from '@/server/payload/collections/UserProgress'
+import { UserStats } from '@/server/payload/collections/UserStats'
 import { Users } from '@/server/payload/collections/Users'
 import { UserSettings } from '@/server/payload/collections/UserSettings'
 import { importExerciseFromImage } from '@/server/payload/endpoints/exercises/import-from-image'
 import { importExerciseFromLesson } from '@/server/payload/endpoints/exercises/import-from-lesson'
+import { generateSupportEndpoint } from '@/server/payload/endpoints/exercises/generate-support'
 import { defaultLexical } from '@/server/payload/fields/defaultLexical'
 import { pdfToExercisesTask } from '@/server/payload/jobs/pdf-to-exercises-task'
 import { pdfToExercisesV2Task } from '@/server/payload/jobs/pdf-to-exercises-v2-task'
@@ -165,11 +167,13 @@ export default buildConfig({
     ExerciseAssets,
     Users,
     UserProgress,
+    UserStats,
     Media,
     ChatAssets,
     UploadSessions,
     Posts,
     PricingPlans,
+    AccessCodes,
     MCPAuditLogs,
   ],
   cors: [getServerSideURL()].filter(Boolean),
@@ -196,6 +200,11 @@ export default buildConfig({
         }
         return importExerciseFromImage(req)
       },
+    },
+    {
+      path: '/exercises/generate-support',
+      method: 'post',
+      handler: (req: PayloadRequest) => generateSupportEndpoint(req),
     },
   ],
   jobs: {

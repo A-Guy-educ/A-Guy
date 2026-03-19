@@ -253,6 +253,23 @@
       "wordCount": 592
     },
     {
+      "path": "scripts/brain-server/README.md",
+      "title": "Brain Server Setup Guide",
+      "sections": [
+        "What You'll Get",
+        "Prerequisites (Accounts to Create)",
+        "Setup Steps",
+        "Management Commands",
+        "GitHub Webhook (Optional)",
+        "Troubleshooting",
+        "Architecture",
+        "Cost"
+      ],
+      "relativeUrl": "scripts/brain-server/README.md",
+      "category": "scripts",
+      "wordCount": 678
+    },
+    {
       "path": "scripts/browser-agent/README.md",
       "title": "A-Guy Browser Agent",
       "sections": ["Architecture", "Setup", "Usage", "Files", "Capabilities", "Troubleshooting"],
@@ -270,6 +287,7 @@
         "Pipeline Modes",
         "Two-Phase Execution (Full Mode)",
         "Profiles",
+        "Stage Registry",
         "Stage Architecture",
         "Post-Action System",
         "Gate System",
@@ -288,7 +306,7 @@
       ],
       "relativeUrl": "scripts/cody/README.md",
       "category": "scripts",
-      "wordCount": 2155
+      "wordCount": 2226
     },
     {
       "path": "scripts/README.md",
@@ -321,6 +339,24 @@
       "relativeUrl": "scripts/remote-agent/README.md",
       "category": "scripts",
       "wordCount": 350
+    },
+    {
+      "path": "scripts/system-test/mock-llm/README.md",
+      "title": "LLM Mock Tool",
+      "sections": [
+        "Overview",
+        "Quick Start",
+        "CLI Options",
+        "API Key",
+        "Architecture",
+        "File Structure",
+        "Endpoints",
+        "Resilience Features",
+        "Future Extensions"
+      ],
+      "relativeUrl": "scripts/system-test/mock-llm/README.md",
+      "category": "scripts",
+      "wordCount": 357
     },
     {
       "path": "docs/self-growing-pipeline/README.md",
@@ -554,6 +590,23 @@
       "wordCount": 87
     },
     {
+      "path": "docs/system-test/README.md",
+      "title": "Cody Pipeline System Test - Overview",
+      "sections": [
+        "What This Test Does",
+        "Test Configuration",
+        "How to Trigger",
+        "How to Monitor",
+        "Common Issues & Fixes",
+        "Test Artifacts",
+        "Cleanup",
+        "Files Involved"
+      ],
+      "relativeUrl": "system-test/README.md",
+      "category": "system-test",
+      "wordCount": 306
+    },
+    {
       "path": "tests/README.md",
       "title": "Testing Strategy",
       "sections": [
@@ -579,8 +632,8 @@
     }
   ],
   "metadata": {
-    "generatedAt": "2026-03-13T21:00:01.189Z",
-    "totalReadmes": 34,
+    "generatedAt": "2026-03-19T07:15:53.253Z",
+    "totalReadmes": 37,
     "categories": {
       ".claude": 1,
       "root": 1,
@@ -596,8 +649,9 @@
       "exercises": 1,
       "features": 1,
       "self-growing-pipeline": 1,
+      "system-test": 1,
       "eslint-plugin-aguy": 1,
-      "scripts": 4,
+      "scripts": 6,
       "src/app": 1,
       "src/client": 1,
       "src/infra": 3,

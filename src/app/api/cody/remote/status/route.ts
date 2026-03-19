@@ -9,7 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { requireDashboardAuth } from '@/ui/cody/auth'
+import { requireCodyAuth } from '@/ui/cody/auth'
 import { getRemoteConfig } from '@/ui/cody/remote-config'
 import { logger } from '@/infra/utils/logger/logger'
 
@@ -19,13 +19,8 @@ const STATUS_TIMEOUT_MS = 3_000
 
 export async function GET(req: NextRequest) {
   try {
-    const auth = await requireDashboardAuth(req)
-    if (!auth.authenticated) {
-      return NextResponse.json(
-        { message: 'Not authenticated. Please log in to access the dashboard.' },
-        { status: 401 },
-      )
-    }
+    const authError = await requireCodyAuth(req)
+    if (authError) return authError
 
     const { searchParams } = new URL(req.url)
     const actorLogin = searchParams.get('actorLogin')
@@ -36,7 +31,8 @@ export async function GET(req: NextRequest) {
 
     const remoteConfig = getRemoteConfig(actorLogin)
     if (!remoteConfig) {
-      return NextResponse.json({ configured: false, online: false }, { status: 404 })
+      // Return 200 with configured: false instead of 404 to avoid console errors
+      return NextResponse.json({ configured: false, online: false })
     }
 
     const healthUrl = `${remoteConfig.funnelUrl.replace(/\/$/, '')}/health`

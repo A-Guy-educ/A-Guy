@@ -5,27 +5,36 @@
  * @ai-summary Fetch CI status and mergeability for a PR
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/ui/cody/auth'
+import { z } from 'zod'
+import { requireCodyAuth } from '@/ui/cody/auth'
 import { fetchPRCIStatus } from '@/ui/cody/github-client'
+import { logger } from '@/infra/utils/logger/logger'
+
+const querySchema = z.object({
+  prNumber: z.coerce.number().int().positive(),
+})
 
 export async function GET(req: NextRequest) {
-  const authError = await requireAuth(req)
+  const authError = await requireCodyAuth(req)
   if (authError) return authError
 
   try {
     const { searchParams } = new URL(req.url)
-    const prNumber = searchParams.get('prNumber')
+    const parsed = querySchema.safeParse({ prNumber: searchParams.get('prNumber') })
 
-    if (!prNumber) {
-      return NextResponse.json({ error: 'prNumber required' }, { status: 400 })
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid prNumber: must be a positive integer' },
+        { status: 400 },
+      )
     }
 
-    const status = await fetchPRCIStatus(Number(prNumber))
+    const status = await fetchPRCIStatus(parsed.data.prNumber)
 
     return NextResponse.json(status)
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error)
-    console.error('[Cody] Error fetching PR CI status:', msg)
+    logger.error({ err: error }, `Error fetching PR CI status: ${msg}`)
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })
   }
 }

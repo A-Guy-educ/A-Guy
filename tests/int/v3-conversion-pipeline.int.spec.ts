@@ -192,7 +192,7 @@ describe.skipIf(!hasDatabaseUrl)('V3 Conversion Pipeline', () => {
     })
   }, 120000)
 
-  // Cleanup after all tests
+  // Cleanup after all tests - increased timeout for parallel test runs
   afterAll(async () => {
     if (!payload || !hasDatabaseUrl) return
 
@@ -256,7 +256,7 @@ describe.skipIf(!hasDatabaseUrl)('V3 Conversion Pipeline', () => {
     } catch {
       /* ignore */
     }
-  })
+  }, 180000)
 
   describe('extractSingle orchestrator', () => {
     it('should extract exercise from attached media successfully', async () => {

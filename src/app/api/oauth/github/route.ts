@@ -4,9 +4,9 @@
  * @fileType api-route
  * @domain auth
  * @pattern oauth
- * @ai-summary Initiates GitHub OAuth flow for the Cody Operations Dashboard.
- *   Redirects to GitHub consent screen requesting read:user scope.
- *   Only used by dashboard users — the bot token handles all GitHub API calls.
+ * @ai-summary Initiates GitHub App OAuth flow for the Cody Operations Dashboard.
+ *   Redirects to GitHub consent screen for per-user GitHub API operations
+ *   (issues, PRs, actions, contents). Permissions are defined at App level.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -22,15 +22,15 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const baseUrl = getPublicBaseUrl(req)
   const callbackUrl = `${baseUrl}/api/oauth/github/callback`
 
-  const clientId = process.env.GITHUB_OAUTH_CLIENT_ID
+  const clientId = process.env.GITHUB_APP_CLIENT_ID
   if (!clientId) {
-    return NextResponse.json({ error: 'GitHub OAuth not configured' }, { status: 503 })
+    return NextResponse.json({ error: 'GitHub App not configured' }, { status: 503 })
   }
 
   const authUrl = new URL(GITHUB_AUTH_URL)
   authUrl.searchParams.set('client_id', clientId)
   authUrl.searchParams.set('redirect_uri', callbackUrl)
-  authUrl.searchParams.set('scope', 'read:user')
+  // No scope parameter — GitHub App permissions are defined at App registration level
 
   const res = NextResponse.redirect(authUrl)
   const state = await storeOAuthState(res, returnTo)

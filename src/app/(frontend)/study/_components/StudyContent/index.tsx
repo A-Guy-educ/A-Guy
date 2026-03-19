@@ -31,6 +31,7 @@ interface CourseInfo {
   courseTitle: string
   courseLabel: string
   coursePageAccessType: string
+  courseAccessType: string
   gatedDelayMs?: number
   gatedWarningMs?: number
 }
@@ -46,6 +47,8 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
   const [chapters, setChapters] = useState<ChapterWithLessons[]>([])
   const [courseInfo, setCourseInfo] = useState<CourseInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [requiresEntitlement, setRequiresEntitlement] = useState<boolean | undefined>(undefined)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | undefined>(undefined)
 
   const tabForLessonType: CourseTab =
     lessonType === 'practice' ? 'practice' : lessonType === 'exam' ? 'exams' : 'learn'
@@ -66,15 +69,35 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
         if (res.ok) {
           const data = await res.json()
           setChapters(data.chapters || [])
-          setCourseInfo({
+          const info = {
             courseSlug: data.courseSlug || '',
             courseId: data.courseId || '',
             courseTitle: data.courseTitle || '',
             courseLabel: data.courseLabel || '',
             coursePageAccessType: data.coursePageAccessType || 'free',
+            courseAccessType: data.courseAccessType || 'free',
             gatedDelayMs: data.gatedDelayMs,
             gatedWarningMs: data.gatedWarningMs,
-          })
+          }
+          setCourseInfo(info)
+
+          // Check entitlement if course is paid
+          const isPaid = info.coursePageAccessType === 'paid' || info.courseAccessType === 'paid'
+          if (isPaid && info.courseId) {
+            try {
+              const entRes = await fetch(`/api/entitlements/check?courseId=${info.courseId}`)
+              if (entRes.ok) {
+                const entData = await entRes.json()
+                setRequiresEntitlement(!entData.hasAccess)
+                setIsAuthenticated(true)
+              } else if (entRes.status === 401) {
+                setRequiresEntitlement(true)
+                setIsAuthenticated(false)
+              }
+            } catch {
+              // If check fails, don't block — fail open
+            }
+          }
         }
       } catch (error) {
         const err = error instanceof Error ? error : new Error('Unknown error')
@@ -106,10 +129,16 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
 
   return (
     <AccessGateProvider
-      accessType={courseInfo?.coursePageAccessType ?? 'free'}
+      accessType={
+        courseInfo?.coursePageAccessType === 'paid' || courseInfo?.courseAccessType === 'paid'
+          ? 'paid'
+          : (courseInfo?.coursePageAccessType ?? 'free')
+      }
       courseSlug={courseInfo?.courseSlug ?? ''}
       gatedDelayMs={courseInfo?.gatedDelayMs}
       gatedWarningMs={courseInfo?.gatedWarningMs}
+      requiresEntitlement={requiresEntitlement}
+      isAuthenticated={isAuthenticated}
     >
       {/* Centered title area - clean background */}
       <div className="w-full py-6 px-6">

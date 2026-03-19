@@ -83,6 +83,7 @@
       "sectionCourses": "Courses",
       "sectionPreferences": "Preferences",
       "sectionTeachersProfile": "Teachers Profile",
+      "myProgressAndStats": "My Progress & Stats",
       "expand": "Expand",
       "collapse": "Collapse",
       "preferencesPlaceholder": "Preferences settings will be available soon.",
@@ -257,7 +258,10 @@
     "exercisesPagerIntro": "Intro",
     "exercisesPagerCompleted": "Completed",
     "exercisesPagerBackToLesson": "Back to Lesson",
-    "startLesson": "Start Lesson"
+    "startLesson": "Start Lesson",
+    "soonBadge": "Soon",
+    "justAddedBadge": "New",
+    "contentLocked": "This content is being prepared and will be available soon."
   },
   "homepage": {
     "nav": {
@@ -320,6 +324,7 @@
     "signInPrompt": "Sign in to unlock full access",
     "warningCountdown": "{{seconds}}s remaining",
     "browseCourses": "Browse Courses",
+<<<<<<< HEAD
     "accessCodeTitle": "Access Restricted",
     "accessCodeDescription": "Please insert your school access code to unlock this content.",
     "accessCodePlaceholder": "Enter access code",
@@ -328,6 +333,22 @@
     "accessCodeSuccess": "Content unlocked!",
     "accessCodeExpired": "This code has expired.",
     "accessCodeMaxReached": "This code has reached its maximum uses."
+=======
+    "paidTitle": "Premium Content",
+    "paidNotLoggedIn": "Please sign in to access this content.",
+    "paidNoEntitlement": "This content requires a purchase. Enter an access code below or contact your administrator.",
+    "codePlaceholder": "Enter access code",
+    "codeSubmit": "Redeem Code",
+    "codeSubmitting": "Redeeming...",
+    "codeInvalid": "Invalid access code.",
+    "codeInactive": "This code is no longer active.",
+    "codeExpired": "This code has expired.",
+    "codeExhausted": "This code has reached its usage limit.",
+    "codeAlreadyUsed": "You already have access to this course.",
+    "codeError": "Something went wrong. Please try again.",
+    "codeSuccessTitle": "Welcome aboard!",
+    "codeSuccessMessage": "How exciting that you signed up! A free month on us."
+>>>>>>> origin/dev
   },
   "study": {
     "loading": "Loading...",
@@ -380,6 +401,43 @@
     "loading": "Loading...",
     "deleteConversation": "Delete conversation",
     "deleteConfirm": "Are you sure you want to delete this conversation?"
+  },
+  "stats": {
+    "title": "My Statistics",
+    "timeSpent": "Time Spent",
+    "dailyStreak": "Daily Streak",
+    "allCourses": "All Courses",
+    "thisWeek": "This Week",
+    "thisMonth": "This Month",
+    "overall": "Overall",
+    "days": "days",
+    "hours": "h",
+    "minutes": "m",
+    "categoryLearn": "Study",
+    "categoryPractice": "Practice",
+    "categoryExams": "Tests",
+    "categoryAsk": "Ask",
+    "lessonsCompleted": "lessons completed",
+    "exercisesAttempted": "exercises attempted",
+    "exercisesSuccessful": "successful",
+    "examsPracticed": "exams practiced",
+    "questionsAsked": "questions asked",
+    "conversationsStarted": "conversations",
+    "recentActivity": "Recent Activity",
+    "noActivity": "No activity yet. Start learning to see your progress!",
+    "continue": "Continue",
+    "practiceWeakest": "Practice",
+    "reviewSummary": "Review Summary",
+    "viewFullStats": "View Full Statistics",
+    "myProgressAndStats": "My Progress & Stats",
+    "errorLoading": "Failed to load statistics",
+    "practicedLessons": "Lessons Practiced",
+    "practicedExams": "Exams Practiced",
+    "noLessonsPracticed": "No lessons practiced yet",
+    "noExamsPracticed": "No exams practiced yet",
+    "lessonName": "Lesson",
+    "examName": "Exam",
+    "chatQuestions": "Chat Questions"
   },
   "exerciseConversion": {
     "convertButton": "Convert → Exercises",

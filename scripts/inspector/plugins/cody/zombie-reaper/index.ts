@@ -17,6 +17,12 @@ import * as path from 'path'
 
 import type { InspectorPlugin, ActionRequest, InspectorContext } from '../../../core/types'
 
+/**
+ * NOTE: status.json writes in CI are ephemeral — changes exist only during this run.
+ * Actual persistence is via the state store (cody:reapedTasks) and GitHub labels.
+ * The status.json update is cosmetic; it's the label change + state tracking that matters.
+ */
+
 /** Tasks stale longer than this threshold are candidates for zombie detection. */
 const STALE_THRESHOLD_MS = 2 * 60 * 60 * 1000 // 2 hours
 
@@ -24,6 +30,17 @@ const STALE_THRESHOLD_MS = 2 * 60 * 60 * 1000 // 2 hours
 const DEDUP_WINDOW_MINUTES = 23 * 60
 
 const CODY_WORKFLOW = 'cody.yml'
+
+/** State key for tracking reaped task IDs across CI runs. */
+const REAPED_TASKS_STATE_KEY = 'cody:reapedTasks'
+
+/** TTL for reaped task entries: 7 days. */
+const REAPED_TASKS_TTL_MS = 7 * 24 * 60 * 60 * 1000
+
+interface ReapedEntry {
+  taskId: string
+  reapedAt: number
+}
 
 interface RawStatus {
   state?: string
@@ -65,6 +82,31 @@ interface ZombieCandidate {
 /**
  * Scan .tasks/ for candidate zombies: state=running, stale >2h, valid issueNumber.
  */
+
+/**
+ * Get the set of task IDs already reaped (from state store, survives CI runs).
+ */
+function getReapedTaskIds(ctx: InspectorContext): Set<string> {
+  const entries = ctx.state.get<ReapedEntry[]>(REAPED_TASKS_STATE_KEY) || []
+  const now = Date.now()
+  // Filter out expired entries
+  const valid = entries.filter((e) => now - e.reapedAt < REAPED_TASKS_TTL_MS)
+  return new Set(valid.map((e) => e.taskId))
+}
+
+/**
+ * Persist newly reaped task IDs to the state store.
+ * Merges with existing entries and prunes expired ones.
+ */
+function persistReapedTaskIds(ctx: InspectorContext, newTaskIds: string[]): void {
+  const existing = ctx.state.get<ReapedEntry[]>(REAPED_TASKS_STATE_KEY) || []
+  const now = Date.now()
+  // Prune expired entries
+  const valid = existing.filter((e) => now - e.reapedAt < REAPED_TASKS_TTL_MS)
+  // Add new entries
+  const newEntries = newTaskIds.map((taskId) => ({ taskId, reapedAt: now }))
+  ctx.state.set(REAPED_TASKS_STATE_KEY, [...valid, ...newEntries])
+}
 function findCandidates(tasksDir: string, now: number): ZombieCandidate[] {
   if (!fs.existsSync(tasksDir)) return []
 
@@ -196,6 +238,11 @@ function createReaperAction(zombies: ZombieCandidate[]): ActionRequest {
         )
       }
 
+      // 3. Persist reaped task IDs to state store (survives ephemeral CI runners)
+      const reapedIds = zombies.filter((_, i) => i < reaped).map((z) => z.taskId)
+      if (reapedIds.length > 0) {
+        persistReapedTaskIds(execCtx, reapedIds)
+      }
       execCtx.log.info({ reaped, errors }, 'Zombie reaper complete')
       return { success: true, message: `Reaped ${reaped} zombie(s), ${errors} error(s)` }
     },
@@ -223,20 +270,24 @@ export const zombieReaperPlugin: InspectorPlugin = {
     // Find all stale running candidates
     const candidates = findCandidates(tasksDir, now)
 
-    if (candidates.length === 0) {
+    // Filter out tasks already reaped (persisted in state store across CI runs)
+    const alreadyReaped = getReapedTaskIds(ctx)
+    const freshCandidates = candidates.filter((c) => !alreadyReaped.has(c.taskId))
+
+    if (freshCandidates.length === 0) {
       ctx.log.debug('No zombie candidates found')
       return []
     }
 
     ctx.log.info(
-      { candidateCount: candidates.length },
+      { candidateCount: freshCandidates.length },
       'Found zombie candidates, checking workflows',
     )
 
     // Cross-check: filter out tasks that have an active workflow run
     const zombies: ZombieCandidate[] = []
 
-    for (const candidate of candidates) {
+    for (const candidate of freshCandidates) {
       // Check for active workflow run on the task's feature branch
       const branch = `feat/${candidate.taskId}`
       const runs = ctx.github.listWorkflowRuns(CODY_WORKFLOW, {

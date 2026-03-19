@@ -156,6 +156,39 @@ export const AxisConfigPanel: React.FC<AxisConfigPanelProps> = ({ spec, onChange
       </div>
 
       <div className="canvas-config-row" style={{ marginTop: 8 }}>
+        <label className="panel-checkbox-label">
+          <input
+            type="checkbox"
+            checked={spec.axes.tickPosition?.x === 'inverted'}
+            onChange={(e) =>
+              updateAxes({
+                tickPosition: {
+                  ...(spec.axes.tickPosition ?? { x: 'default', y: 'default' }),
+                  x: e.target.checked ? 'inverted' : 'default',
+                },
+              })
+            }
+          />
+          Invert X Numbers
+        </label>
+        <label className="panel-checkbox-label">
+          <input
+            type="checkbox"
+            checked={spec.axes.tickPosition?.y === 'inverted'}
+            onChange={(e) =>
+              updateAxes({
+                tickPosition: {
+                  ...(spec.axes.tickPosition ?? { x: 'default', y: 'default' }),
+                  y: e.target.checked ? 'inverted' : 'default',
+                },
+              })
+            }
+          />
+          Invert Y Numbers
+        </label>
+      </div>
+
+      <div className="canvas-config-row" style={{ marginTop: 8 }}>
         <div className="panel-field">
           <span className="panel-field-label">X Label</span>
           <input

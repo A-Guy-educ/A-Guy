@@ -7,6 +7,7 @@
  * @pattern pipeline, extraction
  */
 import { composePrompt, getRecentWindow, type Message } from '@/infra/llm/context-policy'
+import type { MediaPartWithPath } from '@/infra/llm/multimodal'
 import { logger } from '@/infra/utils/logger'
 import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
@@ -22,6 +23,7 @@ import {
   extractContextCandidate,
   fetchLessonContextForContext,
   getOrCreateConversation,
+  processChatAssetAttachments,
   processMediaAttachments,
   resolveContext,
   retrieveMemories,
@@ -63,6 +65,7 @@ export interface ChatPipelineResult {
     summary?: string
     messages?: Message[]
   }
+  mediaPartsWithPath: MediaPartWithPath[]
 }
 
 /**
@@ -262,6 +265,23 @@ export async function runChatPipeline(
     }
   }
 
+  // Process chat-asset attachments (direct-to-Blob uploads)
+  const chatAssetResult = await processChatAssetAttachments(
+    req.payload,
+    validated.chatAssetIds || [],
+    ownerId,
+    reqLogger as Logger,
+  )
+
+  if (!chatAssetResult.success) {
+    return {
+      response: Response.json({ error: chatAssetResult.error }, { status: 400 }),
+    }
+  }
+
+  // Merge media results from both legacy media and chat assets
+  const allMediaParts = [...mediaResult.mediaPartsWithPath, ...chatAssetResult.mediaPartsWithPath]
+
   // Compose prompt using Context Policy V1
   const basePrompt = composePrompt(composedInstructions.instructions, {
     systemMessage: composedInstructions.instructions,
@@ -292,6 +312,7 @@ export async function runChatPipeline(
         summary: conversation.summary,
         messages: conversation.messages,
       },
+      mediaPartsWithPath: allMediaParts,
     },
   }
 }

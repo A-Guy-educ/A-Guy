@@ -1,0 +1,20 @@
+{
+  "id": "navigate-course-catalog",
+  "name": "Student browses the course catalog",
+  "journey": "student-navigates-content",
+  "type": "core",
+  "area": "navigation",
+  "tags": ["navigation", "courses"],
+  "locale": "he",
+  "steps": [
+    {
+      "action": "openCourses",
+      "description": "Navigate to course catalog"
+    },
+    {
+      "action": "expectUrl",
+      "input": { "pattern": "/courses" }
+    }
+  ],
+  "teardown": "auto"
+}

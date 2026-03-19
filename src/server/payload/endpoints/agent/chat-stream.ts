@@ -171,6 +171,9 @@ export async function agentChatStream(
       )
     }
 
+    // Note: chatAssetIds ARE supported in streaming mode since they use public URLs
+    // (processed in pipeline via processChatAssetAttachments)
+
     // 5) Extract context candidate
     const contextCandidate = extractPipelineContextCandidate(validated)
     if (!contextCandidate) {
@@ -195,7 +198,8 @@ export async function agentChatStream(
     }
 
     const { result: pipelineData } = pipelineResult
-    const { conversationId, context, allMessages, composedPrompt } = pipelineData
+    const { conversationId, context, allMessages, composedPrompt, mediaPartsWithPath } =
+      pipelineData
 
     reqLogger.info({ conversationId, contextKey: context.contextKey }, 'Starting streaming chat')
 
@@ -207,6 +211,8 @@ export async function agentChatStream(
           message: validated.message,
           acknowledgment: validated.acknowledgment || '',
           composedPrompt: composedPrompt,
+          mediaPartsWithPath:
+            mediaPartsWithPath && mediaPartsWithPath.length > 0 ? mediaPartsWithPath : undefined,
           req: {
             headers: {
               authorization:

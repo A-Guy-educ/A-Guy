@@ -98,7 +98,7 @@ export default async function ExercisePage({ params }: ExercisePageProps) {
     redirect(redirectUrl)
   }
 
-  const backUrl = `/courses/${courseSlug}/chapters/${chapterSlug}/lessons/${lessonSlug}`
+  const backUrl = '/study'
 
   const mediaMap = await queryMediaByIds(extractAllMediaIds(exercises))
 

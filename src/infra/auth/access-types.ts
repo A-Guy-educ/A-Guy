@@ -5,7 +5,11 @@
  * Re-exported from @/server/constants/access-types for backward compat
  */
 
+<<<<<<< HEAD
 export const ACCESS_TYPES = ['free', 'mandatory', 'gated', 'accessCode'] as const
+=======
+export const ACCESS_TYPES = ['free', 'mandatory', 'gated', 'paid'] as const
+>>>>>>> origin/dev
 
 export type AccessType = (typeof ACCESS_TYPES)[number]
 

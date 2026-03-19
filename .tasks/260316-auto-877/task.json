@@ -1,0 +1,30 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 0.85,
+  "primary_domain": "frontend",
+  "scope": [
+    "lesson completion flow",
+    "interactive lesson redirect"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The redirect logic is in a lesson completion handler component",
+    "There are two display page variants - current/new (updated) and old",
+    "The fix involves changing the redirect destination from old to new page",
+    "The bug is in frontend code since it involves user navigation"
+  ],
+  "review_questions": [
+    "Does the codebase have a known pattern for lesson completion redirects?",
+    "Are there any backend API endpoints involved in lesson completion?"
+  ],
+  "complexity": 24,
+  "complexity_reasoning": "Scope: 8 (2-3 files for lesson completion handler), Risk: 6 (non-critical UI bug), Novelty: 3 (fixing existing pattern), Cross: 2 (frontend only), Ambiguity: 4 (clear intent but need to find code), Deps: 1 (self-contained). Total: 24",
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Task is a bug report with clear reproduction steps but no file paths or implementation details. Need architect stage to discover exact location of redirect logic."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}

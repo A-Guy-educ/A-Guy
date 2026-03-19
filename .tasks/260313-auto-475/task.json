@@ -1,0 +1,32 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.95,
+  "primary_domain": "frontend",
+  "scope": [
+    "Exercise collection schema (add graph size field)",
+    "Graph rendering component (accept size prop)",
+    "Admin editor UI (size selector)",
+    "Student-facing exercise display"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Graph block already exists in exercises - this adds size configuration",
+    "Existing graph rendering already handles aspect ratio preservation",
+    "Side-by-side layout logic already exists for text+graph combination"
+  ],
+  "review_questions": [
+    "What predefined size options should be available (e.g., Small/Medium/Large percentages)?",
+    "Should the size field be on the graph block itself or on the layout container?",
+    "How should the default size interact with the full-width vs side-by-side layout modes?"
+  ],
+  "complexity": 45,
+  "complexity_reasoning": "Scope: 12 (4-6 files across collections and UI), Risk: 12 (schema + UI changes), Novelty: 8 (extending existing graph pattern), Cross-Domain: 8 (backend + frontend), Ambiguity: 3 (clear requirements), Dependencies: 2 (self-contained feature). Total: 45",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Input contains ## Requirements with detailed specifications and ## Acceptance Criteria with 6 checkable items. No implementation steps provided, so architect stage will be needed."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

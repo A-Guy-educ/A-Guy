@@ -13,7 +13,7 @@ vi.mock('child_process', () => ({
 const mockRunAgent = vi.fn()
 vi.mock('../../../../../scripts/cody/agent-runner', () => ({
   runAgentWithFileWatch: (...args: unknown[]) => mockRunAgent(...args),
-  STAGE_TIMEOUTS: { autofix: 300000, build: 2700000 },
+
   DEFAULT_TIMEOUT: 600000,
 }))
 
@@ -46,6 +46,12 @@ vi.mock('../../../../../scripts/cody/github-api', () => ({
 }))
 vi.mock('../../../../../scripts/cody/git-utils', () => ({
   commitPipelineFiles: vi.fn(),
+}))
+vi.mock('../../../../../scripts/cody/stages/registry', () => ({
+  getStageTimeout: vi.fn(() => 2700000), // 45m default
+  STAGE_REGISTRY: {},
+  STAGE_NAMES: [],
+  stageOutputFile: vi.fn(),
 }))
 vi.mock('../../../../../scripts/cody/engine/status', () => ({
   loadState: vi.fn(() => null),

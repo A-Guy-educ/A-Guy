@@ -39,7 +39,6 @@ vi.mock('../../../../scripts/cody/pipeline-utils', () => ({
   resolveControlMode: vi.fn(() => 'risk-gated'),
   stageOutputFile: vi.fn((taskDir: string, stage: string) => `${taskDir}/${stage}.md`),
   getComplexityTier: vi.fn(() => 'moderate'),
-  STAGE_COMPLEXITY_THRESHOLDS: {},
 }))
 
 vi.mock('../../../../scripts/cody/clarify-workflow', () => ({
@@ -68,7 +67,6 @@ vi.mock('../../../../scripts/cody/engine/status', () => ({
 
 vi.mock('../../../../scripts/cody/agent-runner', () => ({
   runAgentWithFileWatch: vi.fn(),
-  STAGE_TIMEOUTS: {},
   DEFAULT_TIMEOUT: 600000,
 }))
 
@@ -137,7 +135,7 @@ describe('validate-src-changes post-action', () => {
     expect(execFileSync).not.toHaveBeenCalled()
   })
 
-  it('should handle git command failures gracefully', async () => {
+  it('should throw clear error when git commands fail', async () => {
     vi.mocked(execFileSync)
       .mockImplementationOnce(() => {
         throw new Error('git failed')
@@ -146,7 +144,9 @@ describe('validate-src-changes post-action', () => {
 
     const action: PostAction = { type: 'validate-src-changes' }
 
-    await expect(executePostAction(ctx, action, null)).resolves.not.toThrow()
+    await expect(executePostAction(ctx, action, null)).rejects.toThrow(
+      'validate-src-changes: git commands failed',
+    )
   })
 })
 

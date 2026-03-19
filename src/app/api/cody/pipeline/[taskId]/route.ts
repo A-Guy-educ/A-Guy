@@ -18,6 +18,7 @@ import {
   getStatusFromArtifact,
   fetchWorkflowRuns,
 } from '@/ui/cody/github-client'
+import { matchWorkflowRunToTask } from '@/ui/cody/workflow-matching'
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ taskId: string }> }) {
   // Check auth
@@ -65,7 +66,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ task
 
     // Try artifact status (for completed tasks)
     const workflowRuns = await fetchWorkflowRuns({ perPage: 10 })
-    const run = workflowRuns.find((r) => r.html_url.includes(taskId))
+    const run = matchWorkflowRunToTask(workflowRuns, '', 0, taskId)
 
     if (run) {
       const status = await getStatusFromArtifact(taskId, run.id.toString())

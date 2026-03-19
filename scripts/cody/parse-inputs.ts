@@ -5,7 +5,7 @@
  */
 
 import { logger } from './logger'
-import { execSync } from 'child_process'
+import { execFileSync } from 'child_process'
 import { writeFileSync } from 'fs'
 
 // Types for outputs
@@ -24,6 +24,7 @@ interface ParseOutputs {
   runner: string
   version: string
   fresh: string
+  complexity: string
 }
 
 // Task ID format: YYMMDD-description (e.g., 260225-auto-90)
@@ -67,9 +68,10 @@ export function extractCommandAfterCody(comment: string): string {
  */
 export function discoverTaskIdFromIssue(issueNumber: string): string | null {
   try {
-    const result = execSync(
-      `gh issue view "${issueNumber}" --json comments --jq '.comments[].body' 2>/dev/null`,
-      { encoding: 'utf-8' },
+    const result = execFileSync(
+      'gh',
+      ['issue', 'view', issueNumber, '--json', 'comments', '--jq', '.comments[].body'],
+      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] },
     )
 
     // Find "Task created: `YYYYMMDD-description`" pattern
@@ -93,7 +95,7 @@ export function parseDispatchInputs(): ParseOutputs {
   if (!taskId) {
     return {
       ...getDefaultOutputs(),
-      issue_number: '',
+      issue_number: process.env.DISPATCH_ISSUE_NUMBER || '',
       is_pull_request: process.env.IS_PULL_REQUEST == 'true' ? 'true' : '',
       valid: 'false',
     }
@@ -105,7 +107,7 @@ export function parseDispatchInputs(): ParseOutputs {
     logger.info('Expected format: YYMMDD-description (e.g., 260225-auto-90)')
     return {
       ...getDefaultOutputs(),
-      issue_number: '',
+      issue_number: process.env.DISPATCH_ISSUE_NUMBER || '',
       is_pull_request: process.env.IS_PULL_REQUEST == 'true' ? 'true' : '',
       valid: 'false',
     }
@@ -118,7 +120,7 @@ export function parseDispatchInputs(): ParseOutputs {
     dry_run: process.env.DISPATCH_DRY_RUN || 'false',
     from_stage: process.env.DISPATCH_FROM_STAGE || '',
     feedback: process.env.DISPATCH_FEEDBACK || '',
-    issue_number: '',
+    issue_number: process.env.DISPATCH_ISSUE_NUMBER || '',
     is_pull_request: process.env.IS_PULL_REQUEST == 'true' ? 'true' : '',
     trigger_type: 'dispatch',
     comment_body: '',
@@ -126,6 +128,7 @@ export function parseDispatchInputs(): ParseOutputs {
     runner: process.env.DISPATCH_RUNNER || 'github-hosted',
     version: process.env.DISPATCH_VERSION || process.env.CODY_DEFAULT_VERSION || '',
     fresh: process.env.FRESH || '',
+    complexity: process.env.DISPATCH_COMPLEXITY || '',
   }
 
   logger.info(
@@ -133,6 +136,24 @@ export function parseDispatchInputs(): ParseOutputs {
   )
 
   return outputs
+}
+
+/**
+ * Check if an issue has the "publish" label
+ */
+function hasPublishLabel(issueNumber: string): boolean {
+  if (!issueNumber) return false
+  try {
+    const result = execFileSync(
+      'gh',
+      ['issue', 'view', issueNumber, '--json', 'labels', '--jq', '.labels[].name'],
+      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] },
+    )
+    const labels = result.trim().split('\n').filter(Boolean)
+    return labels.includes('publish')
+  } catch {
+    return false
+  }
 }
 
 /**
@@ -151,6 +172,17 @@ export function parseCommentInputs(): ParseOutputs {
       ...getDefaultOutputs(),
       issue_number: issueNumber,
       valid: 'false',
+    }
+  }
+
+  // Check for publish label - these are handled by the Publish workflow, not Cody
+  if (issueNumber && hasPublishLabel(issueNumber)) {
+    logger.info(`=== Issue #${issueNumber} has 'publish' label - skipping Cody pipeline ===`)
+    return {
+      ...getDefaultOutputs(),
+      issue_number: issueNumber,
+      valid: 'false',
+      feedback: 'Publish issues are handled by the Publish workflow. Do not process with Cody.',
     }
   }
 
@@ -325,6 +357,7 @@ export function parsePRReviewInputs(): ParseOutputs {
     runner: 'github-hosted',
     version: process.env.CODY_DEFAULT_VERSION || '',
     fresh: '',
+    complexity: '',
   }
 
   logger.info(
@@ -345,14 +378,15 @@ export function getDefaultOutputs(): ParseOutputs {
     dry_run: 'false',
     from_stage: '',
     feedback: '',
-    issue_number: '',
+    issue_number: process.env.DISPATCH_ISSUE_NUMBER || '',
     is_pull_request: process.env.IS_PULL_REQUEST == 'true' ? 'true' : '',
     trigger_type: '',
     comment_body: '',
     valid: 'false',
     runner: 'github-hosted',
     version: process.env.CODY_DEFAULT_VERSION || '',
-    fresh: '',
+    fresh: process.env.FRESH || '',
+    complexity: process.env.DISPATCH_COMPLEXITY || '',
   }
 }
 
@@ -382,6 +416,7 @@ function writeOutputs(outputs: ParseOutputs): void {
     `runner=${outputs.runner}`,
     `version=${outputs.version}`,
     `fresh=${outputs.fresh}`,
+    `complexity=${outputs.complexity}`,
   ]
 
   writeFileSync(githubOutput, lines.join('\n') + '\n')

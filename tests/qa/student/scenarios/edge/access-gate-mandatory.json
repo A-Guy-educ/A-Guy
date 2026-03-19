@@ -1,0 +1,61 @@
+{
+  "id": "access-gate-mandatory",
+  "name": "Guest encounters mandatory access gate and must sign in",
+  "journey": "student-accesses-gated-content",
+  "type": "edge",
+  "area": "access-control",
+  "tags": ["access-gate", "auth-required"],
+  "locale": "he",
+  "preconditions": [
+    {
+      "action": "seed",
+      "entity": "course",
+      "data": {
+        "title": "Premium Course",
+        "courseLabel": "פרימיום",
+        "status": "published",
+        "isActive": true,
+        "accessType": "mandatory"
+      },
+      "ref": "$course"
+    },
+    {
+      "action": "seed",
+      "entity": "chapter",
+      "data": {
+        "title": "Premium Chapter",
+        "course": "$course",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$chapter"
+    },
+    {
+      "action": "seed",
+      "entity": "lesson",
+      "data": {
+        "title": "Premium Lesson",
+        "chapter": "$chapter",
+        "type": "learning",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$lesson"
+    }
+  ],
+  "steps": [
+    {
+      "action": "startAsGuest"
+    },
+    {
+      "action": "openCourse",
+      "input": { "courseRef": "$course" }
+    },
+    {
+      "action": "expectVisible",
+      "input": { "text": "התחבר" },
+      "description": "Should show sign in prompt"
+    }
+  ],
+  "teardown": "auto"
+}

@@ -6,6 +6,7 @@ import { adminOnly } from '../access/adminOnly'
 import { publishedAndActive } from '../access/publishedAndActive'
 import { createdByField } from '../fields/createdBy'
 import { formatSlug } from '../fields/formatSlug'
+import { contentStatusFields } from '../fields/contentStatus'
 
 export const Lessons: CollectionConfig = {
   slug: 'lessons',
@@ -45,6 +46,7 @@ export const Lessons: CollectionConfig = {
       'order',
       'status',
       'isActive',
+      'contentStatus',
       'updatedAt',
     ],
   },
@@ -162,10 +164,14 @@ export const Lessons: CollectionConfig = {
           label: 'Gated (5-Minute Delay)',
           value: 'gated',
         },
+<<<<<<< HEAD
         {
           label: 'Access Code Required',
           value: 'accessCode',
         },
+=======
+        { label: 'Paid (Requires Entitlement)', value: 'paid' },
+>>>>>>> origin/dev
       ],
       admin: {
         position: 'sidebar',
@@ -254,6 +260,9 @@ export const Lessons: CollectionConfig = {
         description: 'URL-friendly identifier (auto-generated from title if empty)',
       },
     },
+
+    // Content Status
+    ...contentStatusFields,
 
     // Created By
     createdByField,

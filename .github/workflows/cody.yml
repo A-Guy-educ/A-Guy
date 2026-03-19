@@ -35,6 +35,11 @@ on:
         required: false
         type: string
         default: ''
+      issue_number:
+        description: 'Issue number for the task (passed by inspector for dispatch triggers)'
+        required: false
+        type: string
+        default: ''
       runner:
         description: 'Where to run: github-hosted (default) or self-hosted'
         required: false
@@ -48,6 +53,21 @@ on:
         required: false
         type: string
         default: ''
+      complexity:
+        description: 'Override complexity score (1-100) for testing'
+        required: false
+        type: string
+        default: ''
+      use_test_config:
+        description: 'Use opencode.test.json (cheap models) instead of opencode.json'
+        required: false
+        type: boolean
+        default: false
+      use_mock:
+        description: 'Use mock LLM server with recorded responses'
+        required: false
+        type: boolean
+        default: false
 
   push:
     branches:
@@ -105,6 +125,7 @@ jobs:
       comment_body: ${{ steps.parse.outputs.comment_body }}
       runner: ${{ steps.parse.outputs.runner }}
       version: ${{ steps.parse.outputs.version }}
+      complexity: ${{ steps.parse.outputs.complexity }}
       fresh: ${{ steps.parse.outputs.fresh }}
     steps:
       - name: Checkout repository
@@ -160,9 +181,11 @@ jobs:
           DISPATCH_DRY_RUN: ${{ github.event.inputs.dry_run }}
           DISPATCH_FEEDBACK: ${{ github.event.inputs.feedback }}
           DISPATCH_FROM_STAGE: ${{ github.event.inputs.from_stage }}
+          DISPATCH_ISSUE_NUMBER: ${{ github.event.inputs.issue_number }}
           DISPATCH_CLARIFY: ${{ github.event.inputs.clarify }}
           DISPATCH_RUNNER: ${{ github.event.inputs.runner }}
           DISPATCH_VERSION: ${{ github.event.inputs.version }}
+          DISPATCH_COMPLEXITY: ${{ github.event.inputs.complexity }}
           # Comment inputs (for orchestrator to parse)
           COMMENT_BODY: ${{ github.event.comment.body }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
@@ -240,6 +263,8 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          # Use GITHUB_TOKEN for all GitHub HTTPS operations (including push)
+          git config --global url."https://x-access-token:${{ github.token }}@github.com/".insteadOf "https://github.com/"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -280,10 +305,12 @@ jobs:
       - name: Validate cody entry can be loaded
         run: pnpm tsx scripts/cody/entry.ts --help
 
-      - name: Run actual pipeline (spec mode - runs taskify)
+      - name: Run pipeline canary tests (dry-run, no LLM)
+        run: pnpm test:canary
+
+      - name: Run pipeline dry-run (full mode - validates plumbing)
         env:
           GH_TOKEN: ${{ github.token }}
-          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
         run: |
           # Create simple test task
           mkdir -p .tasks/260225-smoke-test
@@ -291,21 +318,25 @@ jobs:
           echo "" >> .tasks/260225-smoke-test/task.md
           echo "Smoke test task" >> .tasks/260225-smoke-test/task.md
 
-          # Run spec mode (will run taskify stage)
-          pnpm cody --mode=spec --task-id=260225-smoke-test || true
+          # Run full mode with --dry-run --local (no LLM, no GitHub API)
+          # This exercises: CLI parsing, pipeline construction, state machine loop,
+          # stage ordering, skip conditions, status file writing
+          pnpm cody --mode=full --task-id=260225-smoke-test --dry-run --local
 
-          # Don't fail on stage errors, just verify files were created
-
-      - name: Verify taskify produced valid output
+      - name: Verify pipeline dry-run produced valid output
         run: |
-          # Verify task.json was created
-          if [ ! -f ".tasks/260225-smoke-test/task.json" ]; then
-            echo "ERROR: task.json was not created"
+          # Verify status.json was created (dry-run marks all stages as completed)
+          if [ ! -f ".tasks/260225-smoke-test/status.json" ]; then
+            echo "ERROR: status.json was not created"
             exit 1
           fi
 
-          # Verify it's valid JSON
-          cat .tasks/260225-smoke-test/task.json | pnpm tsx -e "JSON.parse(require('fs').readFileSync(0, 'utf-8')); console.log('Valid JSON')"
+          # Verify it's valid JSON with completed state
+          node -e "
+            const s = JSON.parse(require('fs').readFileSync('.tasks/260225-smoke-test/status.json', 'utf-8'));
+            if (s.state !== 'completed') { console.error('ERROR: state is ' + s.state); process.exit(1); }
+            console.log('Valid status.json — pipeline state: ' + s.state);
+          "
 
           echo "SUCCESS: Pipeline smoke test passed"
 
@@ -321,9 +352,21 @@ jobs:
       pull-requests: write # Create PRs, post comments
       issues: write # Post status comments
     steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: 3126173
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          repositories: A-Guy
+          owner: A-Guy-educ
+          permission-contents: write
+          permission-pull-requests: write
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          token: ${{ steps.app-token.outputs.token }}
           persist-credentials: true
           fetch-depth: 0
 
@@ -359,6 +402,38 @@ jobs:
           # Verify it's installed and print version for diagnostics
           $HOME/.opencode/bin/opencode --version || echo "Warning: opencode install may have failed"
 
+      # Use mock LLM server if requested
+      - name: Start mock LLM server
+        if: github.event.inputs.use_mock == 'true' || github.event.inputs.use_mock == true
+        run: |
+          # Check if recordings exist
+          if [ -d "scripts/system-test/recordings/scenario-02" ]; then
+            echo "Found recordings, starting mock in replay mode..."
+            pnpm tsx scripts/system-test/mock-llm/cli.ts \
+              --mode replay \
+              --port 8080 \
+              --recordings-dir scripts/system-test/recordings/scenario-02 &
+            
+            # Wait for server to start
+            sleep 5
+            
+            # Verify server is running
+            curl -s http://localhost:8080/health || echo "Warning: mock server not ready"
+          else
+            echo "No recordings found, cannot use mock mode"
+            exit 1
+          fi
+
+      # Use mock config
+      - name: Use mock config
+        if: github.event.inputs.use_mock == 'true' || github.event.inputs.use_mock == true
+        run: cp opencode.mock.json opencode.json
+
+      # Use test config (cheap models) if requested
+      - name: Use test config
+        if: github.event.inputs.use_test_config == 'true' || github.event.inputs.use_test_config == true
+        run: cp opencode.test.json opencode.json
+
       - name: Checkout feature branch if exists
         if: needs.parse.outputs.task_id != '' || needs.parse.outputs.fresh == 'true'
         env:
@@ -373,6 +448,8 @@ jobs:
         run: |
           git config --global user.email "${GIT_USER_EMAIL:-242132053+aguyaharonyair@users.noreply.github.com}"
           git config --global user.name "${GIT_USER_NAME:-aguyaharonyair}"
+          # Use App token for all GitHub HTTPS operations (including push)
+          git config --global url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "https://github.com/"
 
       # Overlay pipeline version (if specified)
       - name: Overlay pipeline version
@@ -401,11 +478,13 @@ jobs:
           echo "GOOGLE_GENERATIVE_AI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> $GITHUB_ENV
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
           echo "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}" >> $GITHUB_ENV
+          echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> $GITHUB_ENV
 
       - name: Run Cody
         env:
           # GitHub token for gh CLI (GH_PAT takes precedence for PR creation)
           GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
           GH_PAT: ${{ secrets.GH_PAT }}
 
           # Blob storage token for verify stage (unit tests need it)
@@ -426,6 +505,7 @@ jobs:
           TRIGGER_TYPE: ${{ needs.parse.outputs.trigger_type }}
           COMMENT_BODY: ${{ needs.parse.outputs.comment_body }}
           VERSION: ${{ needs.parse.outputs.version }}
+          COMPLEXITY: ${{ needs.parse.outputs.complexity }}
           IS_PULL_REQUEST: ${{ needs.parse.outputs.is_pull_request }}
 
           # GitHub context

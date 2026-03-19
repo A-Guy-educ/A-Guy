@@ -14,7 +14,17 @@ import type {
   StageDefinition,
   PipelineStep,
 } from '../engine/types'
-import { STAGE_TIMEOUTS, DEFAULT_TIMEOUT } from '../agent-runner'
+import {
+  type StageName,
+  getStageTimeout,
+  getStageComplexityThreshold,
+  SPEC_ORDER_STANDARD,
+  SPEC_ORDER_LIGHTWEIGHT,
+  IMPL_ORDER_STANDARD,
+  IMPL_ORDER_LIGHTWEIGHT,
+  SPEC_ORDER_TURBO,
+  IMPL_ORDER_TURBO,
+} from '../stages/registry'
 import { ensureFeatureBranch } from '../git-utils'
 import { readTask } from '../pipeline-utils'
 import { setBranchName, loadState } from '../engine/status'
@@ -26,6 +36,8 @@ import {
   createDocsValidator,
   createTestValidator,
 } from './validators'
+import { captureVerifyFailures } from './verify-failures'
+import { DEFAULT_MAX_FIX_ATTEMPTS } from '../config/constants'
 import {
   skipIfInputQuality,
   skipIfClarifyDisabled,
@@ -33,53 +45,71 @@ import {
   skipIfSpecOnly,
   skipIfBelowComplexity,
 } from './skip-conditions'
-import { STAGE_COMPLEXITY_THRESHOLDS } from '../pipeline-utils'
+import { logger } from '../logger'
+
+// Re-export pipeline order arrays from registry for backward compatibility
+export {
+  SPEC_ORDER_STANDARD,
+  SPEC_ORDER_LIGHTWEIGHT,
+  IMPL_ORDER_STANDARD,
+  IMPL_ORDER_LIGHTWEIGHT,
+  SPEC_ORDER_TURBO,
+  IMPL_ORDER_TURBO,
+  FIX_ORDER,
+  FIX_FULL_ORDER,
+} from '../stages/registry'
 
 // ============================================================================
-// Pipeline Orders
+// Prev-Run File Restoration
 // ============================================================================
 
-export const SPEC_ORDER_STANDARD: string[] = ['taskify', 'gap', 'clarify']
-export const SPEC_ORDER_LIGHTWEIGHT: string[] = ['taskify', 'clarify']
-export const IMPL_ORDER_STANDARD: PipelineStep[] = [
-  'architect',
-  'plan-gap',
-  { parallel: ['test', 'build'] },
-  'commit',
-  'review',
-  'fix',
-  // NOTE: No second 'commit' here — fix stage commits via its post-action
-  // (commit-task-files with tracked+task). A duplicate 'commit' entry would be
-  // skipped by resolveNextStep since state.stages['commit'] is already completed.
-  'verify',
-  'pr',
-]
-export const IMPL_ORDER_LIGHTWEIGHT: PipelineStep[] = [
-  'architect',
-  { parallel: ['test', 'build'] },
-  'commit',
-  'review',
-  'fix',
-  'verify',
-  'pr',
-]
+/**
+ * Restore prev-run files from git if they're missing.
+ * This handles the case where pipeline restarts after a previous run
+ * already created the output files (e.g., architect succeeded but pipeline
+ * restarted from taskify).
+ */
+async function restorePrevRunFiles(taskDir: string, _taskId: string): Promise<void> {
+  const prevRunDir = path.join(taskDir, 'prev-run')
 
-// Fix-only pipeline order for @cody fix mode
-export const FIX_ORDER: PipelineStep[] = ['review', 'fix', 'verify', 'pr']
+  // Files to restore from git
+  const filesToRestore = ['plan.md', 'build.md', 'review.md']
 
-// Full pipeline order for fix mode — runs the full impl pipeline with taskify prepended
-// This gives the agent proper planning (architect, plan-gap) with previous run as context
-export const FIX_FULL_ORDER: PipelineStep[] = [
-  'taskify',
-  'architect',
-  'plan-gap',
-  { parallel: ['test', 'build'] },
-  'commit',
-  'review',
-  'fix',
-  'verify',
-  'pr',
-]
+  for (const file of filesToRestore) {
+    const prevRunPath = path.join(prevRunDir, file)
+    const mainPath = path.join(taskDir, file)
+
+    // If prev-run version exists, nothing to do
+    if (fs.existsSync(prevRunPath)) {
+      continue
+    }
+
+    // Try to get the file from git (current branch's latest commit)
+    try {
+      const gitShowOutput = execFileSync('git', ['show', `HEAD:${taskDir}/${file}`], {
+        encoding: 'utf-8',
+        timeout: 10000,
+      })
+
+      // Ensure prev-run directory exists
+      if (!fs.existsSync(prevRunDir)) {
+        fs.mkdirSync(prevRunDir, { recursive: true })
+      }
+
+      // Write to prev-run/
+      fs.writeFileSync(prevRunPath, gitShowOutput)
+      logger.info(`  🔄 Restored ${file} from git to prev-run/`)
+
+      // Also restore to main location if the main file doesn't exist
+      if (!fs.existsSync(mainPath)) {
+        fs.writeFileSync(mainPath, gitShowOutput)
+        logger.info(`  🔄 Restored ${file} from git to main location`)
+      }
+    } catch {
+      // File not in git, that's OK - it may not have been created yet
+    }
+  }
+}
 
 // ============================================================================
 // Stage Definitions
@@ -88,14 +118,14 @@ export const FIX_FULL_ORDER: PipelineStep[] = [
 /**
  * Create all stage definitions
  */
-function createStageDefinitions(ctx: PipelineContext): Map<string, StageDefinition> {
-  const stages = new Map<string, StageDefinition>()
+function createStageDefinitions(ctx: PipelineContext): Map<StageName, StageDefinition> {
+  const stages = new Map<StageName, StageDefinition>()
 
   // taskify stage
   stages.set('taskify', {
     name: 'taskify',
     type: 'agent',
-    timeout: STAGE_TIMEOUTS.taskify ?? DEFAULT_TIMEOUT,
+    timeout: getStageTimeout('taskify'),
     maxRetries: 2, // BUG-F fix: increased from 1 to 2 for better resilience
     postActions: [
       { type: 'validate-task-json' },
@@ -117,9 +147,9 @@ function createStageDefinitions(ctx: PipelineContext): Map<string, StageDefiniti
   stages.set('gap', {
     name: 'gap',
     type: 'agent',
-    timeout: STAGE_TIMEOUTS.gap ?? DEFAULT_TIMEOUT,
+    timeout: getStageTimeout('gap'),
     maxRetries: 1,
-    minComplexity: STAGE_COMPLEXITY_THRESHOLDS.gap,
+    minComplexity: getStageComplexityThreshold('gap'),
     shouldSkip: (ctx) => {
       const complexitySkip = skipIfBelowComplexity(ctx, 'gap')
       if (complexitySkip.shouldSkip) return complexitySkip
@@ -132,9 +162,9 @@ function createStageDefinitions(ctx: PipelineContext): Map<string, StageDefiniti
   stages.set('clarify', {
     name: 'clarify',
     type: 'agent',
-    timeout: STAGE_TIMEOUTS.clarify ?? DEFAULT_TIMEOUT,
+    timeout: getStageTimeout('clarify'),
     maxRetries: 1,
-    minComplexity: STAGE_COMPLEXITY_THRESHOLDS.clarify,
+    minComplexity: getStageComplexityThreshold('clarify'),
     shouldSkip: (ctx) => {
       // First check complexity threshold
       const complexitySkip = skipIfBelowComplexity(ctx, 'clarify')
@@ -158,28 +188,71 @@ function createStageDefinitions(ctx: PipelineContext): Map<string, StageDefiniti
   stages.set('architect', {
     name: 'architect',
     type: 'agent',
-    timeout: STAGE_TIMEOUTS.architect ?? DEFAULT_TIMEOUT,
+    timeout: getStageTimeout('architect'),
     maxRetries: 1,
-    minComplexity: STAGE_COMPLEXITY_THRESHOLDS.architect,
+    minComplexity: getStageComplexityThreshold('architect'),
     shouldSkip: (ctx) => {
       const complexitySkip = skipIfBelowComplexity(ctx, 'architect')
       if (complexitySkip.shouldSkip) return complexitySkip
       return skipIfSpecOnly(ctx)
     },
+    preExecute: async (ctx) => {
+      // Restore prev-run files from git if they're missing
+      // This handles the case where pipeline restarts after architect previously succeeded
+      await restorePrevRunFiles(ctx.taskDir, ctx.taskId)
+    },
     postActions: [
       { type: 'archive-rerun-feedback' },
       { type: 'check-gate', gate: 'architect', includeArtifact: 'plan.md' },
     ],
+    fallbackOnMissingOutput: (ctx) => {
+      // Fallback: try to use existing plan.md, context.md, or restore from git
+      const planFile = path.join(ctx.taskDir, 'plan.md')
+      if (fs.existsSync(planFile)) return null // File exists, no fallback needed
+
+      // First try: restore from git (handles case where pipeline restarted but git has the file)
+      const prevRunPlan = path.join(ctx.taskDir, 'prev-run', 'plan.md')
+      if (fs.existsSync(prevRunPlan)) {
+        // Copy to main location
+        fs.copyFileSync(prevRunPlan, planFile)
+        logger.info(`  ℹ️ Restored plan.md from prev-run/`)
+        return null // File now exists, let stage proceed
+      }
+
+      // Second try: use context.md as a rough plan
+      // This happens when agent does extensive research but runs out of output capacity
+      const contextFile = path.join(ctx.taskDir, 'context.md')
+      if (fs.existsSync(contextFile)) {
+        const contextContent = fs.readFileSync(contextFile, 'utf-8')
+        return `# Plan: ${ctx.taskId}
+
+## Summary
+
+Architect agent completed research but did not write plan.md. Using context.md as fallback plan.
+
+${contextContent}
+
+## Note
+
+This plan was auto-generated from context.md because architect failed to produce plan.md.
+The implementation should proceed using the file list in context.md.
+`
+      }
+      return null
+    },
   })
 
   // plan-gap stage
   stages.set('plan-gap', {
     name: 'plan-gap',
     type: 'agent',
-    timeout: STAGE_TIMEOUTS['plan-gap'] ?? DEFAULT_TIMEOUT,
+    timeout: getStageTimeout('plan-gap'),
     maxRetries: 1,
-    minComplexity: STAGE_COMPLEXITY_THRESHOLDS['plan-gap'],
+    minComplexity: getStageComplexityThreshold('plan-gap'),
     shouldSkip: (ctx) => {
+      // Skip plan-gap when pipeline is spec_only (no plan.md exists to gap-check)
+      const specOnlySkip = skipIfSpecOnly(ctx)
+      if (specOnlySkip.shouldSkip) return specOnlySkip
       const complexitySkip = skipIfBelowComplexity(ctx, 'plan-gap')
       if (complexitySkip.shouldSkip) return complexitySkip
       return skipIfInputQuality(ctx, 'plan-gap')
@@ -215,19 +288,43 @@ No critical gaps identified. Plan was refined in-place.
   stages.set('test', {
     name: 'test',
     type: 'agent',
-    timeout: STAGE_TIMEOUTS.test ?? DEFAULT_TIMEOUT,
+    timeout: getStageTimeout('test'),
     maxRetries: 1,
-    minComplexity: STAGE_COMPLEXITY_THRESHOLDS.test,
+    minComplexity: getStageComplexityThreshold('test'),
     shouldSkip: (ctx) => skipIfInputQuality(ctx, 'test'),
+    preExecute: async (ctx) => {
+      // Ensure feature branch for deferred test runs (triggered by inspector plugin).
+      // Without this, the test stage would try to commit/push to dev (branch-protected).
+      if (!ctx.input.dryRun) {
+        try {
+          const td = readTask(ctx.taskDir)
+          if (td) {
+            ensureFeatureBranch(ctx.taskId, td.task_type, undefined, ctx.taskDir)
+          }
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : String(error)
+          throw new Error(`Test stage preExecute failed: ${msg}`)
+        }
+      }
+    },
+    postActions: [
+      // Commit test files after test stage completes (for deferred test runs)
+      {
+        type: 'commit-task-files',
+        stagingStrategy: 'tracked+task',
+        push: true,
+        ensureBranch: true,
+      },
+    ],
     validator: createTestValidator(),
   })
   // build stage - has preExecute for ensureFeatureBranch (G20)
   stages.set('build', {
     name: 'build',
     type: 'agent',
-    timeout: STAGE_TIMEOUTS.build ?? DEFAULT_TIMEOUT,
+    timeout: getStageTimeout('build'),
     maxRetries: 1,
-    minComplexity: STAGE_COMPLEXITY_THRESHOLDS.build,
+    minComplexity: getStageComplexityThreshold('build'),
     shouldSkip: (ctx) => skipIfInputQuality(ctx, 'build'),
     preExecute: async (ctx) => {
       if (!ctx.input.dryRun) {
@@ -277,21 +374,71 @@ No critical gaps identified. Plan was refined in-place.
         type: 'run-quality-with-autofix',
         gates: [
           { name: 'TypeScript', command: 'pnpm -s tsc --noEmit', source: 'tsc' as const },
-          { name: 'Unit Tests', command: 'pnpm -s test:unit', source: 'test' as const },
+          // Unit Tests gate removed — tests are deferred to inspector plugin (cody-deferred-tests)
         ],
         maxFeedbackLoops: 2,
       },
     ],
     validator: createBuildValidator(),
+    fallbackOnMissingOutput: (ctx) => {
+      // Fallback: generate build.md from git changes when agent forgets to write it
+      // This happens when agent exits 0 but doesn't produce the required output file
+      const buildFile = path.join(ctx.taskDir, 'build.md')
+      if (fs.existsSync(buildFile)) return null // File exists, no fallback needed
+
+      // Get git changes to generate the summary
+      let diff = ''
+      let untracked = ''
+      try {
+        diff = execFileSync('git', ['diff', '--name-only'], { encoding: 'utf-8' }).trim()
+      } catch {
+        // git diff failed, return null to let the stage fail normally
+        return null
+      }
+      try {
+        untracked = execFileSync('git', ['ls-files', '--others', '--exclude-standard'], {
+          encoding: 'utf-8',
+        }).trim()
+      } catch {
+        return null
+      }
+
+      const allChanged = [...diff.split('\n'), ...untracked.split('\n')]
+        .filter(Boolean)
+        .filter((f) => !f.startsWith('.tasks/'))
+
+      if (allChanged.length === 0) {
+        // No source changes, can't generate meaningful summary
+        return null
+      }
+
+      // Generate build.md from changes
+      const filesList = allChanged.map((f) => `- ${f}`).join('\n')
+      return `# Build Agent Report: ${ctx.taskId}
+
+## Changes
+
+${filesList}
+
+## Summary
+
+Build agent completed but did not write build.md. This report was auto-generated from git changes.
+
+## Quality
+
+- TypeScript: Unknown (build.md not produced)
+- Lint: Unknown (build.md not produced)
+`
+    },
   })
 
   // review stage - architect agent reviews generated code
   stages.set('review', {
     name: 'review',
     type: 'agent',
-    timeout: STAGE_TIMEOUTS.review ?? DEFAULT_TIMEOUT,
+    timeout: getStageTimeout('review'),
     maxRetries: 0,
-    minComplexity: STAGE_COMPLEXITY_THRESHOLDS.review,
+    minComplexity: getStageComplexityThreshold('review'),
     shouldSkip: (ctx) => {
       const complexitySkip = skipIfBelowComplexity(ctx, 'review')
       if (complexitySkip.shouldSkip) return complexitySkip
@@ -309,7 +456,7 @@ No critical gaps identified. Plan was refined in-place.
     name: 'fix',
     type: 'agent',
     agentName: 'build', // Build agent fixes its own code based on review.md
-    timeout: STAGE_TIMEOUTS.fix ?? DEFAULT_TIMEOUT,
+    timeout: getStageTimeout('fix'),
     maxRetries: 2,
     shouldSkip: (ctx) => {
       // In fix mode, never skip — user explicitly requested fixes
@@ -348,7 +495,7 @@ No critical gaps identified. Plan was refined in-place.
   stages.set('commit', {
     name: 'commit',
     type: 'git',
-    timeout: STAGE_TIMEOUTS.commit ?? DEFAULT_TIMEOUT,
+    timeout: getStageTimeout('commit'),
     maxRetries: 0,
   })
 
@@ -356,8 +503,23 @@ No critical gaps identified. Plan was refined in-place.
   stages.set('verify', {
     name: 'verify',
     type: 'scripted',
-    timeout: STAGE_TIMEOUTS.verify ?? DEFAULT_TIMEOUT,
+    timeout: getStageTimeout('verify'),
     maxRetries: 0,
+    // R2-FIX: Clear stale verify-failures.md before running verify.
+    // Without this, a retry loop (verify→fix→verify) may process stale failures
+    // from the previous attempt, causing the fix agent to work on wrong errors.
+    preExecute: async (ctx) => {
+      const failuresPath = path.join(ctx.taskDir, 'verify-failures.md')
+      if (fs.existsSync(failuresPath)) {
+        fs.unlinkSync(failuresPath)
+      }
+    },
+    retryWith: {
+      stage: 'fix',
+      maxAttempts: DEFAULT_MAX_FIX_ATTEMPTS,
+      onFailure: captureVerifyFailures,
+      onTimeout: 'retry',
+    },
     postActions: [
       // LOCAL-ONLY commit of task files after verify completes (G18)
       // NOT the autofix commit - that's inside ScriptedVerifyHandler
@@ -377,9 +539,9 @@ No critical gaps identified. Plan was refined in-place.
   stages.set('docs', {
     name: 'docs',
     type: 'agent',
-    timeout: STAGE_TIMEOUTS.docs ?? DEFAULT_TIMEOUT,
+    timeout: getStageTimeout('docs'),
     maxRetries: 1,
-    minComplexity: STAGE_COMPLEXITY_THRESHOLDS.docs,
+    minComplexity: getStageComplexityThreshold('docs'),
     shouldSkip: (ctx) => {
       const complexitySkip = skipIfBelowComplexity(ctx, 'docs')
       if (complexitySkip.shouldSkip) return complexitySkip
@@ -400,7 +562,7 @@ No critical gaps identified. Plan was refined in-place.
   stages.set('pr', {
     name: 'pr',
     type: 'git',
-    timeout: STAGE_TIMEOUTS.pr ?? DEFAULT_TIMEOUT,
+    timeout: getStageTimeout('pr'),
     maxRetries: 0,
   })
 
@@ -423,6 +585,14 @@ export function rebuildPipelineAfterTaskify(
   // Build spec stages based on profile
   const specOrder = ctx.profile === 'standard' ? SPEC_ORDER_STANDARD : SPEC_ORDER_LIGHTWEIGHT
   const filteredSpecOrder = ctx.input.clarify ? specOrder : specOrder.filter((s) => s !== 'clarify')
+
+  // For spec_only pipelines, don't include impl stages — there's no plan.md to build from
+  if (ctx.taskDef?.pipeline === 'spec_only') {
+    return {
+      stages: createStageDefinitions(ctx),
+      order: [...filteredSpecOrder],
+    }
+  }
 
   // Build impl stages based on profile
   const implOrder = ctx.profile === 'standard' ? IMPL_ORDER_STANDARD : IMPL_ORDER_LIGHTWEIGHT
@@ -450,20 +620,40 @@ export function buildPipeline(
 
   if (mode === 'spec') {
     // Spec stages only
-    const specOrder = profile === 'standard' ? SPEC_ORDER_STANDARD : SPEC_ORDER_LIGHTWEIGHT
+    const specOrder =
+      profile === 'standard'
+        ? SPEC_ORDER_STANDARD
+        : profile === 'turbo'
+          ? SPEC_ORDER_TURBO
+          : SPEC_ORDER_LIGHTWEIGHT
     // If clarify is disabled, remove it from the spec order
     const filteredSpecOrder = clarify ? specOrder : specOrder.filter((s) => s !== 'clarify')
     order = [...filteredSpecOrder]
   } else if (mode === 'impl') {
     // Implementation stages only
-    const implOrder = profile === 'standard' ? IMPL_ORDER_STANDARD : IMPL_ORDER_LIGHTWEIGHT
+    const implOrder =
+      profile === 'standard'
+        ? IMPL_ORDER_STANDARD
+        : profile === 'turbo'
+          ? IMPL_ORDER_TURBO
+          : IMPL_ORDER_LIGHTWEIGHT
     order = [...implOrder]
   } else if (mode === 'full' || mode === 'rerun') {
     // Full/rerun mode: include both spec and impl stages
     // This ensures the pipeline survives restarts — all stages are present
     // and the state machine efficiently skips completed ones
-    const specOrder = profile === 'standard' ? SPEC_ORDER_STANDARD : SPEC_ORDER_LIGHTWEIGHT
-    const implOrder = profile === 'standard' ? IMPL_ORDER_STANDARD : IMPL_ORDER_LIGHTWEIGHT
+    const specOrder =
+      profile === 'standard'
+        ? SPEC_ORDER_STANDARD
+        : profile === 'turbo'
+          ? SPEC_ORDER_TURBO
+          : SPEC_ORDER_LIGHTWEIGHT
+    const implOrder =
+      profile === 'standard'
+        ? IMPL_ORDER_STANDARD
+        : profile === 'turbo'
+          ? IMPL_ORDER_TURBO
+          : IMPL_ORDER_LIGHTWEIGHT
     const filteredSpecOrder = clarify ? specOrder : specOrder.filter((s) => s !== 'clarify')
     order = [...filteredSpecOrder, ...implOrder]
   }
@@ -474,8 +664,8 @@ export function buildPipeline(
 /**
  * Flatten pipeline order (including parallel stages) into a flat array of stage names
  */
-export function flattenPipelineOrder(order: PipelineStep[]): string[] {
-  const result: string[] = []
+export function flattenPipelineOrder(order: PipelineStep[]): StageName[] {
+  const result: StageName[] = []
   for (const step of order) {
     if (typeof step === 'string') {
       result.push(step)

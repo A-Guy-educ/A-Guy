@@ -185,7 +185,7 @@ describe('setClassificationLabels', () => {
     vi.mocked(childProcess.execFileSync).mockImplementation((..._args: unknown[]) => {
       callCount++
       const args = _args[1] as string[]
-      // Fail only the remove call (second call)
+      // Fail only the remove call
       if (args.includes('--remove-label')) {
         throw new Error("'domain:data' not found")
       }
@@ -197,8 +197,8 @@ describe('setClassificationLabels', () => {
       setClassificationLabels(123, { task_type: 'fix_bug', primary_domain: 'frontend' }),
     ).not.toThrow()
 
-    // Both calls were attempted
-    expect(callCount).toBe(2)
+    // 1 add call + 2 remove attempts (retry on failure) = 3 total
+    expect(callCount).toBe(3)
   })
 
   it('should use pipe stdio instead of inherit to avoid leaking stderr', () => {

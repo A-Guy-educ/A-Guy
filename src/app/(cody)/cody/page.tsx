@@ -2,14 +2,16 @@
  * @fileType page
  * @domain cody
  * @pattern dashboard-page
- * @ai-summary Main Cody dashboard page. Auth gate: GitHub OAuth session (any repo collaborator).
- *   Replaces the previous Payload admin-only gate.
+ * @ai-summary Main Cody dashboard page. Auth handled client-side via SessionExpiredError.
+ *   Force static for OG tags - social media crawlers need metadata without auth.
  */
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
 import { CodyDashboard } from '@/ui/cody/components/CodyDashboard'
-import { verifyCodySessionToken, CODY_SESSION_COOKIE } from '@/infra/auth/cody_session'
 import { buildCodyMetadata } from './metadata'
+
+// Force static generation so OG tags are available without authentication
+export const dynamic = 'force-static'
+export const revalidate = false
+export const fetchCache = 'force-cache'
 
 export const metadata = buildCodyMetadata({
   title: 'Cody Operations Dashboard',
@@ -18,14 +20,5 @@ export const metadata = buildCodyMetadata({
 })
 
 export default async function CodyPage() {
-  const cookieStore = await cookies()
-  const token = cookieStore.get(CODY_SESSION_COOKIE)?.value
-  const identity = await verifyCodySessionToken(token)
-
-  // Not authenticated — redirect to GitHub OAuth
-  if (!identity) {
-    redirect('/api/oauth/github?returnTo=/cody')
-  }
-
   return <CodyDashboard />
 }
