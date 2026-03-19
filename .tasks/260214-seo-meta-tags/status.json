@@ -3,25 +3,17 @@
   "taskId": "260214-seo-meta-tags",
   "mode": "full",
   "pipeline": "spec_execute_verify",
-  "startedAt": "2026-03-19T14:33:26.672Z",
-  "updatedAt": "2026-03-19T14:43:26.810Z",
-  "state": "failed",
+  "startedAt": "2026-03-19T14:57:10.997Z",
+  "updatedAt": "2026-03-19T14:57:10.997Z",
+  "state": "running",
   "cursor": null,
-  "stages": {
-    "taskify": {
-      "state": "timeout",
-      "retries": 0,
-      "startedAt": "2026-03-19T14:33:26.679Z",
-      "elapsed": 600
-    }
-  },
+  "stages": {},
   "triggeredBy": "aguyaharonyair",
   "actorHistory": [
     {
       "action": "pipeline-triggered",
       "actor": "aguyaharonyair",
-      "timestamp": "2026-03-19T14:33:26.672Z"
+      "timestamp": "2026-03-19T14:57:10.997Z"
     }
-  ],
-  "completedAt": "2026-03-19T14:43:26.810Z"
+  ]
 }
