@@ -1,0 +1,29 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "low",
+  "confidence": 0.9,
+  "primary_domain": "infra",
+  "scope": [
+    "Create src/infra/utils/pipeline-health.ts with PipelineHealthReport class",
+    "Define HealthStatus, Report, RetryStrategy interfaces",
+    "Implement getStageTimeout helper function",
+    "Add Zod validation schemas for public methods",
+    "Create tests/unit/infra/utils/pipeline-health.test.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Zod is available in the project (confirmed from AGENTS.md)",
+    "Test directory structure tests/unit/infra/utils/ may need to be created",
+    "Project follows vitest testing patterns from CHEAT-SHEET.md"
+  ],
+  "review_questions": [],
+  "complexity": 25,
+  "complexity_reasoning": "Scope: 7 (2 new files, single module), Risk: 5 (new utility, no existing changes), Novelty: 6 (new class following existing patterns), Cross-domain: 2 (single domain), Ambiguity: 2 (clear requirements), Dependency: 3 (self-contained, uses Zod). Total: 25",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Task contains clear requirements (6 numbered items) and acceptance criteria. Has specific file paths, method names, interface names, and test requirements. Promoted spec.md with extracted requirements."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
