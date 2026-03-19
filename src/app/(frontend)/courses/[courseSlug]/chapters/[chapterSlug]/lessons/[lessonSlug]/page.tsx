@@ -18,6 +18,7 @@ import { extractAllMediaIds } from '@/ui/web/exerciserenderer/utils/extractMedia
 import { stripHtml } from '@/utils/strip-html'
 import { Media as MediaComponent } from '@/ui/web/media'
 import { notFound } from 'next/navigation'
+import { RenderBlocks } from '@/server/payload/blocks/RenderBlocks'
 import { ExercisesPager } from './_components/ExercisesPager'
 import { LessonAnalytics } from './_components/LessonAnalytics'
 import { ExerciseWorkspace } from './exercises/[exerciseSlug]/_components/ExerciseWorkspace'
@@ -141,7 +142,11 @@ export default async function LessonPage({ params }: LessonPageProps) {
             chapterSlug={chapterSlug}
             lessonSlug={lessonSlug}
             lessonId={lesson.id}
-            introContent={lesson.introEnabled ? (lesson.introContent ?? []) : []}
+            introContentRendered={
+              lesson.introEnabled && lesson.introContent && lesson.introContent.length > 0 ? (
+                <RenderBlocks blocks={lesson.introContent} />
+              ) : undefined
+            }
             introMedia={lesson.introEnabled ? lesson.introMedia : null}
             mediaMap={mediaMap}
           />
