@@ -267,7 +267,7 @@ describe.skipIf(!hasDatabaseUrl)('UserProgress Collection', () => {
       expect(foundUser2Progress).toBeUndefined()
     })
 
-    it('should allow admin to read all progress records', async () => {
+    it('should allow admin to read all progress records (via authenticatedOrOwner)', async () => {
       // Create admin user (hook forces role=student on create, so update after)
       const admin = await payload.create({
         collection: 'users',
@@ -315,6 +315,133 @@ describe.skipIf(!hasDatabaseUrl)('UserProgress Collection', () => {
         await payload.delete({
           collection: 'users',
           id: admin.id,
+          overrideAccess: true,
+        })
+      }
+    })
+  })
+
+  describe('Progress record upsert logic', () => {
+    let upsertProgressId: string
+
+    it('should create a new progress doc with a lesson record', async () => {
+      const progress = await payload.create({
+        collection: 'user-progress',
+        data: {
+          user: testUser1Id,
+          tenant: testTenantId,
+          gradeLevel: 'upsert-test',
+          progressRecords: [
+            {
+              recordType: 'lesson',
+              recordId: 'lesson-upsert-1',
+              completionPercentage: 50,
+              status: 'in_progress',
+            },
+          ],
+        } as any,
+        overrideAccess: true,
+      })
+
+      upsertProgressId = progress.id
+      expect(progress.id).toBeDefined()
+      expect((progress as any).progressRecords).toHaveLength(1)
+    })
+
+    it('should upsert: update existing record and add new record in same array', async () => {
+      // Simulate what the POST /api/progress endpoint does: find doc, upsert record
+      const existing = await payload.findByID({
+        collection: 'user-progress',
+        id: upsertProgressId,
+        overrideAccess: true,
+      })
+
+      const records = ((existing as any).progressRecords ?? []) as any[]
+
+      // Update existing lesson record
+      const idx = records.findIndex(
+        (r: any) => r.recordType === 'lesson' && r.recordId === 'lesson-upsert-1',
+      )
+      expect(idx).toBeGreaterThanOrEqual(0)
+
+      const updatedRecords = records.map((r: any, i: number) =>
+        i === idx ? { ...r, completionPercentage: 100, status: 'completed' } : r,
+      )
+
+      // Add a new exercise record
+      updatedRecords.push({
+        recordType: 'exercise',
+        recordId: 'exercise-upsert-1',
+        completionPercentage: 100,
+        status: 'completed',
+        score: 90,
+      })
+
+      const updated = await payload.update({
+        collection: 'user-progress',
+        id: upsertProgressId,
+        data: { progressRecords: updatedRecords } as any,
+        overrideAccess: true,
+      })
+
+      const finalRecords = (updated as any).progressRecords
+      expect(finalRecords).toHaveLength(2)
+
+      // Verify lesson was updated
+      const lessonRecord = finalRecords.find(
+        (r: any) => r.recordType === 'lesson' && r.recordId === 'lesson-upsert-1',
+      )
+      expect(lessonRecord.completionPercentage).toBe(100)
+      expect(lessonRecord.status).toBe('completed')
+
+      // Verify exercise was added
+      const exerciseRecord = finalRecords.find(
+        (r: any) => r.recordType === 'exercise' && r.recordId === 'exercise-upsert-1',
+      )
+      expect(exerciseRecord).toBeDefined()
+      expect(exerciseRecord.score).toBe(90)
+    })
+
+    it('should not duplicate records when upserting same recordId', async () => {
+      const existing = await payload.findByID({
+        collection: 'user-progress',
+        id: upsertProgressId,
+        overrideAccess: true,
+      })
+
+      const records = ((existing as any).progressRecords ?? []) as any[]
+      const idx = records.findIndex(
+        (r: any) => r.recordType === 'lesson' && r.recordId === 'lesson-upsert-1',
+      )
+
+      // Update the same lesson record again (should not create duplicate)
+      const updatedRecords = records.map((r: any, i: number) =>
+        i === idx ? { ...r, completionPercentage: 100, status: 'completed' } : r,
+      )
+
+      const updated = await payload.update({
+        collection: 'user-progress',
+        id: upsertProgressId,
+        data: { progressRecords: updatedRecords } as any,
+        overrideAccess: true,
+      })
+
+      const finalRecords = (updated as any).progressRecords
+      // Should still be 2, not 3
+      expect(finalRecords).toHaveLength(2)
+
+      const lessonRecords = finalRecords.filter(
+        (r: any) => r.recordType === 'lesson' && r.recordId === 'lesson-upsert-1',
+      )
+      expect(lessonRecords).toHaveLength(1)
+    })
+
+    // Cleanup
+    afterAll(async () => {
+      if (upsertProgressId && payload) {
+        await payload.delete({
+          collection: 'user-progress',
+          id: upsertProgressId,
           overrideAccess: true,
         })
       }
