@@ -1,0 +1,25 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/app/(frontend)/courses/_components/LessonCard/index.tsx"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The 'Lesson' label text is rendered via translation t('lesson') on line 53",
+    "Current font size is text-sm (0.875rem / 14px)",
+    "15% increase would change to text-base (1rem / 16px) or apply custom sizing"
+  ],
+  "review_questions": [],
+  "complexity": 8,
+  "complexity_reasoning": "Scope: 4 (single component file, small change), Risk: 2 (visual only, no functional impact), Novelty: 2 (simple CSS change), Cross-domain: 0 (frontend only), Ambiguity: 1 (crystal clear), Dependencies: 0 (self-contained). Total: 9 → Simple tier",
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Task describes a clear UI bug with steps to reproduce and expected result. No formal ## Requirements or ## Acceptance Criteria sections, but clear enough for implementation."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}
