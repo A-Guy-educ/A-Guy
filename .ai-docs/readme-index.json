@@ -3,12 +3,7 @@
     {
       "path": ".claude/rules/README.md",
       "title": "Rules",
-      "sections": [
-        "Structure",
-        "Installation",
-        "Rules vs Skills",
-        "Adding a New Language"
-      ],
+      "sections": ["Structure", "Installation", "Rules vs Skills", "Adding a New Language"],
       "relativeUrl": ".claude/rules/README.md",
       "category": ".claude",
       "wordCount": 184
@@ -16,9 +11,7 @@
     {
       "path": "docs/a-guy/README.md",
       "title": "A-Guy Documentation",
-      "sections": [
-        "Files"
-      ],
+      "sections": ["Files"],
       "relativeUrl": "a-guy/README.md",
       "category": "a-guy",
       "wordCount": 35
@@ -279,14 +272,7 @@
     {
       "path": "scripts/browser-agent/README.md",
       "title": "A-Guy Browser Agent",
-      "sections": [
-        "Architecture",
-        "Setup",
-        "Usage",
-        "Files",
-        "Capabilities",
-        "Troubleshooting"
-      ],
+      "sections": ["Architecture", "Setup", "Usage", "Files", "Capabilities", "Troubleshooting"],
       "relativeUrl": "scripts/browser-agent/README.md",
       "category": "scripts",
       "wordCount": 365
@@ -390,13 +376,7 @@
     {
       "path": "src/app/README.md",
       "title": "Application Routes",
-      "sections": [
-        "Structure",
-        "Patterns",
-        "Key Files",
-        "Common Tasks",
-        "Related"
-      ],
+      "sections": ["Structure", "Patterns", "Key Files", "Common Tasks", "Related"],
       "relativeUrl": "src/app/README.md",
       "category": "src/app",
       "wordCount": 172
@@ -404,13 +384,7 @@
     {
       "path": "src/client/README.md",
       "title": "Client-Side Utilities",
-      "sections": [
-        "Structure",
-        "Patterns",
-        "Key Files",
-        "Common Tasks",
-        "Related"
-      ],
+      "sections": ["Structure", "Patterns", "Key Files", "Common Tasks", "Related"],
       "relativeUrl": "src/client/README.md",
       "category": "src/client",
       "wordCount": 169
@@ -567,11 +541,7 @@
     {
       "path": "src/ui/admin/exercise/README.md",
       "title": "Exercise Components",
-      "sections": [
-        "Directory Structure",
-        "Migration Status",
-        "Guidelines"
-      ],
+      "sections": ["Directory Structure", "Migration Status", "Guidelines"],
       "relativeUrl": "src/ui/admin/exercise/README.md",
       "category": "src/ui",
       "wordCount": 112
@@ -614,10 +584,7 @@
     {
       "path": "src/ui/web/shared/README.md",
       "title": "Shared Components",
-      "sections": [
-        "Directory Structure",
-        "Guidelines"
-      ],
+      "sections": ["Directory Structure", "Guidelines"],
       "relativeUrl": "src/ui/web/shared/README.md",
       "category": "src/ui",
       "wordCount": 87

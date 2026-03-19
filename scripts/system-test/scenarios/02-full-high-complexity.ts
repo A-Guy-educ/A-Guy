@@ -15,7 +15,7 @@
 import { execFileSync } from 'child_process'
 import * as fs from 'fs'
 
-import { assertLabelsPresent, assertPRCreated, assertCommentExists, pollWorkflowRun } from '../lib'
+import { assertPRCreated, assertCommentExists } from '../lib'
 import { CODY_WORKFLOW, SYSTEM_TEST_LABEL, ISSUE_TITLE_PREFIX } from '../lib/config'
 import type { ScenarioContext, Scenario } from './types'
 import type { ScenarioResult } from '../lib/report'
@@ -51,7 +51,7 @@ export const scenario02: Scenario = {
 
     let issueNumber: number | undefined = undefined
     let taskId: string | undefined
-    let workflowDispatchTime: string | undefined
+    let _workflowDispatchTime: string | undefined
 
     // Step 0: Create test version branch with opencode config
     // Use mock config if MOCK_MODE is set, otherwise use test (cheap) config
@@ -128,7 +128,7 @@ export const scenario02: Scenario = {
       const mm = String(now.getMonth() + 1).padStart(2, '0')
       const dd = String(now.getDate()).padStart(2, '0')
       taskId = `${yy}${mm}${dd}-systest-${ctx.runId}`
-      workflowDispatchTime = now.toISOString()
+      _workflowDispatchTime = now.toISOString()
 
       ctx.log.info(
         `Dispatching pipeline: task=${taskId}, complexity=65, version=${TEST_VERSION_BRANCH}`,
@@ -178,7 +178,18 @@ export const scenario02: Scenario = {
 
       while (Date.now() - pollStart < maxWaitMs) {
         const labelsOutput = execFileSync(
-          'gh', ['issue', 'view', String(issueNumber), '--repo', ctx.repo, '--json', 'labels', '--jq', '[.labels[].name]'],
+          'gh',
+          [
+            'issue',
+            'view',
+            String(issueNumber),
+            '--repo',
+            ctx.repo,
+            '--json',
+            'labels',
+            '--jq',
+            '[.labels[].name]',
+          ],
           { encoding: 'utf-8', stdio: 'pipe' },
         ).trim()
         const labels: string[] = labelsOutput ? JSON.parse(labelsOutput) : []
@@ -193,7 +204,15 @@ export const scenario02: Scenario = {
           try {
             execFileSync(
               'gh',
-              ['issue', 'comment', String(issueNumber), '--repo', ctx.repo, '--body', '@cody approve'],
+              [
+                'issue',
+                'comment',
+                String(issueNumber),
+                '--repo',
+                ctx.repo,
+                '--body',
+                '@cody approve',
+              ],
               { env: { ...process.env }, stdio: 'pipe' },
             )
             gateApproved = true
