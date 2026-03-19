@@ -20,6 +20,7 @@ export interface TranslationInput {
   sourceLocale: ContentLocale
   targetLocale: ContentLocale
   glossary?: GlossaryEntry[]
+  customSystemPrompt?: string
 }
 
 export interface GlossaryEntry {
@@ -42,7 +43,7 @@ export async function translateContentBlocks(
   input: TranslationInput,
   payload: Payload,
 ): Promise<TranslationResponse> {
-  const { blocks, sourceLocale, targetLocale, glossary } = input
+  const { blocks, sourceLocale, targetLocale, glossary, customSystemPrompt } = input
 
   if (blocks.length === 0) {
     return { success: true, data: { blocks: [] } }
@@ -53,11 +54,12 @@ export async function translateContentBlocks(
     const adapter = await createGenkitUnifiedAdapter(payload)
     const modelConfig = resolveModelConfig('CONTENT_TRANSLATION')
 
+    const systemPrompt = customSystemPrompt || CONTENT_TRANSLATION_PROMPT
     const userPrompt = buildTranslationPrompt(blocks, sourceLocale, targetLocale, glossary)
 
     const result = await adapter.generateChatCompletion(
       {
-        system: CONTENT_TRANSLATION_PROMPT,
+        system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }],
         model: modelConfig,
         acknowledgment: `Translating ${blocks.length} blocks from ${sourceLocale} to ${targetLocale}`,
@@ -80,7 +82,7 @@ export async function translateContentBlocks(
         },
         '[Content Translation] Block count mismatch, retrying',
       )
-      return retryTranslation(adapter, modelConfig, userPrompt, result.text, blocks.length, payload)
+      return retryTranslation(adapter, modelConfig, userPrompt, result.text, blocks.length, payload, systemPrompt)
     }
 
     return { success: true, data: parsed }
@@ -144,10 +146,11 @@ async function retryTranslation(
   previousResponse: string,
   expectedCount: number,
   payload: Payload,
+  systemPrompt: string = CONTENT_TRANSLATION_PROMPT,
 ): Promise<TranslationResponse> {
   const retryResult = await adapter.generateChatCompletion(
     {
-      system: CONTENT_TRANSLATION_PROMPT,
+      system: systemPrompt,
       messages: [
         { role: 'user', content: originalPrompt },
         { role: 'assistant', content: previousResponse },

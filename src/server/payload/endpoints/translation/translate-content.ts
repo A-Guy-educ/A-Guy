@@ -50,6 +50,7 @@ export async function translateContentEndpoint(
         exerciseId: input.exerciseId,
         targetLocale: input.targetLocale,
         targetLessonId: input.targetLessonId,
+        promptId: input.promptId,
       },
       reqLogger,
     )
@@ -63,6 +64,7 @@ export async function translateContentEndpoint(
         targetLocale: input.targetLocale,
         targetChapterId: input.targetChapterId,
         includeExercises: input.includeExercises,
+        promptId: input.promptId,
       },
       reqLogger,
     )
@@ -74,6 +76,7 @@ export async function translateContentEndpoint(
       {
         courseId: input.courseId,
         targetLocale: input.targetLocale,
+        promptId: input.promptId,
       },
       reqLogger,
     )

@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { useDocumentInfo, useFormFields } from '@payloadcms/ui'
 import { useTranslation } from './useTranslation'
 import { TranslationStatusBanner } from './TranslationStatusBanner'
+import { TranslationModal } from './TranslationModal'
 
 export const TranslateCourseButton: React.FC = () => {
   const { id } = useDocumentInfo()
@@ -11,7 +12,7 @@ export const TranslateCourseButton: React.FC = () => {
   const currentLocale = (localeField?.value as string) || 'he'
   const targetLocale = currentLocale === 'he' ? 'en' : 'he'
 
-  const [showConfirm, setShowConfirm] = useState(false)
+  const [showModal, setShowModal] = useState(false)
   const { status, error, result, translate, reset } = useTranslation()
 
   if (!id) {
@@ -22,13 +23,14 @@ export const TranslateCourseButton: React.FC = () => {
     )
   }
 
-  const handleTranslate = () => {
+  const handleTranslate = (promptId?: string) => {
     translate({
       scope: 'course',
       courseId: id,
       targetLocale,
+      promptId,
     })
-    setShowConfirm(false)
+    setShowModal(false)
   }
 
   const newCourseId = result?.id ?? (result as unknown as { courseId?: string })?.courseId
@@ -40,39 +42,24 @@ export const TranslateCourseButton: React.FC = () => {
         Clone entire course tree to <strong>{targetLocale === 'en' ? 'English' : 'Hebrew'}</strong>
       </p>
 
-      {!showConfirm && status === 'idle' && (
+      {status === 'idle' && (
         <button
           type="button"
-          onClick={() => setShowConfirm(true)}
+          onClick={() => setShowModal(true)}
           className="inline-flex items-center px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90"
         >
           Translate Whole Course
         </button>
       )}
 
-      {showConfirm && status === 'idle' && (
-        <div className="space-y-2">
-          <p className="text-xs text-amber-600 font-medium">
-            This will translate all chapters, lessons, and exercises. It may take several minutes.
-          </p>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={handleTranslate}
-              className="px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90"
-            >
-              Confirm Translation
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowConfirm(false)}
-              className="px-3 py-1.5 bg-muted text-muted-foreground rounded-md text-sm"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+      <TranslationModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onConfirm={handleTranslate}
+        targetLocale={targetLocale}
+        scope="Course"
+        isTranslating={status === 'loading'}
+      />
 
       <TranslationStatusBanner
         status={status}
@@ -81,7 +68,7 @@ export const TranslateCourseButton: React.FC = () => {
         collection="courses"
         onReset={() => {
           reset()
-          setShowConfirm(false)
+          setShowModal(false)
         }}
       />
     </div>

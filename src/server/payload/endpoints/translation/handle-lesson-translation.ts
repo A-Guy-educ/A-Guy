@@ -16,6 +16,7 @@ interface LessonTranslationInput {
   targetLocale: ContentLocale
   targetChapterId: string
   includeExercises: boolean
+  promptId?: string
 }
 
 interface TranslatedExercise {
@@ -30,7 +31,7 @@ export async function handleLessonTranslation(
   reqLogger: Logger,
 ) {
   const { payload } = req
-  const { lessonId, targetLocale, targetChapterId, includeExercises } = input
+  const { lessonId, targetLocale, targetChapterId, includeExercises, promptId } = input
 
   try {
     reqLogger.info({ lessonId, targetLocale }, 'Starting lesson translation')
@@ -108,6 +109,7 @@ export async function handleLessonTranslation(
             exerciseId: exercise.id,
             targetLocale,
             targetLessonId: newLesson.id,
+            promptId,
           },
           reqLogger,
         )

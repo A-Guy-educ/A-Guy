@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { useDocumentInfo, useFormFields } from '@payloadcms/ui'
 import { useTranslation } from './useTranslation'
 import { TranslationStatusBanner } from './TranslationStatusBanner'
+import { TranslationModal } from './TranslationModal'
 
 export const TranslateLessonButton: React.FC = () => {
   const { id } = useDocumentInfo()
@@ -14,6 +15,7 @@ export const TranslateLessonButton: React.FC = () => {
   const [targetChapterId, setTargetChapterId] = useState('')
   const [includeExercises, setIncludeExercises] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [showModal, setShowModal] = useState(false)
   const { status, error, result, translate, reset } = useTranslation()
 
   if (!id) {
@@ -24,7 +26,7 @@ export const TranslateLessonButton: React.FC = () => {
     )
   }
 
-  const handleTranslate = () => {
+  const handleTranslate = (promptId?: string) => {
     if (!targetChapterId.trim()) return
     translate({
       scope: 'lesson',
@@ -32,7 +34,9 @@ export const TranslateLessonButton: React.FC = () => {
       targetLocale,
       targetChapterId: targetChapterId.trim(),
       includeExercises,
+      promptId,
     })
+    setShowModal(false)
   }
 
   const newLessonId = result?.id ?? (result as unknown as { lessonId?: string })?.lessonId
@@ -79,7 +83,7 @@ export const TranslateLessonButton: React.FC = () => {
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={handleTranslate}
+              onClick={() => setShowModal(true)}
               disabled={!targetChapterId.trim()}
               className="px-3 py-1.5 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90 disabled:opacity-50"
             >
@@ -95,6 +99,15 @@ export const TranslateLessonButton: React.FC = () => {
           </div>
         </div>
       )}
+
+      <TranslationModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onConfirm={handleTranslate}
+        targetLocale={targetLocale}
+        scope="Lesson"
+        isTranslating={status === 'loading'}
+      />
 
       <TranslationStatusBanner
         status={status}

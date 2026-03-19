@@ -17,6 +17,7 @@ interface ExerciseTranslationInput {
   exerciseId: string
   targetLocale: ContentLocale
   targetLessonId: string
+  promptId?: string
 }
 
 export async function handleExerciseTranslation(
@@ -25,7 +26,7 @@ export async function handleExerciseTranslation(
   reqLogger: Logger,
 ) {
   const { payload } = req
-  const { exerciseId, targetLocale, targetLessonId } = input
+  const { exerciseId, targetLocale, targetLessonId, promptId } = input
 
   try {
     reqLogger.info({ exerciseId, targetLocale }, 'Starting exercise translation')
@@ -49,6 +50,16 @@ export async function handleExerciseTranslation(
       )
     }
 
+    let customSystemPrompt: string | undefined
+    if (promptId) {
+      const prompt = await payload.findByID({
+        collection: 'prompts',
+        id: promptId,
+        overrideAccess: true,
+      })
+      customSystemPrompt = prompt?.template || undefined
+    }
+
     const content = source.content as { blocks: unknown[] } | undefined
     const blocks = content?.blocks ?? []
 
@@ -57,6 +68,7 @@ export async function handleExerciseTranslation(
         blocks: blocks as Parameters<typeof translateContentBlocks>[0]['blocks'],
         sourceLocale,
         targetLocale,
+        customSystemPrompt,
       },
       payload,
     )

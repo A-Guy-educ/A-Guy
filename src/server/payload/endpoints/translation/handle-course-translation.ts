@@ -15,6 +15,7 @@ import { handleLessonTranslation } from './handle-lesson-translation'
 interface CourseTranslationInput {
   courseId: string
   targetLocale: ContentLocale
+  promptId?: string
 }
 
 export async function handleCourseTranslation(
@@ -23,7 +24,7 @@ export async function handleCourseTranslation(
   reqLogger: Logger,
 ) {
   const { payload } = req
-  const { courseId, targetLocale } = input
+  const { courseId, targetLocale, promptId } = input
 
   try {
     reqLogger.info({ courseId, targetLocale }, 'Starting course translation')
@@ -137,6 +138,7 @@ export async function handleCourseTranslation(
             targetLocale,
             targetChapterId: newChapter.id,
             includeExercises: true,
+            promptId,
           },
           reqLogger,
         )
