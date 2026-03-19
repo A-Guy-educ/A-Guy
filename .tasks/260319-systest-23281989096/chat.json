@@ -1876,6 +1876,785 @@
           "timestamp": "2026-03-19T06:22:37.271Z"
         }
       ]
+    },
+    {
+      "stage": "review",
+      "sessionId": "ses_2fb3cfbe6ffeXnEh9ojfkSM76Y",
+      "startedAt": "2026-03-19T06:23:02.681Z",
+      "messages": [
+        {
+          "role": "user",
+          "stage": "review",
+          "text": "\"CRITICAL: This is a SPEC-ONLY pipeline. DO NOT create branches, commits, or pull requests. DO NOT modify any code files. Only read from and write to the /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/ directory.\n\nTask ID: 260319-systest-23281989096\n\n\nRead these files for context:\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/task.md\n\nWrite your output to /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/task.json\"",
+          "tools": [],
+          "timestamp": "2026-03-19T06:06:50.130Z",
+          "model": "{\"providerID\":\"minimax-coding-plan\",\"modelID\":\"MiniMax-M2.5\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-19T06:06:50.247Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now I'll write the task.json file based on the task analysis:",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:07:28.452Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:07:58.116Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:08:26.010Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:08:38.088Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:08:41.930Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Task completed. I've created:\n\n1. **task.json** - Task definition with:\n   - `task_type`: `implement_feature`\n   - `risk_level`: `low`\n   - `confidence`: 0.9\n   - `primary_domain`: `infra`\n   - `complexity`: 25 (moderate)\n   - `input_quality`: `good_spec` - task has clear requirements with 6 numbered items and acceptance criteria\n\n2. **spec.md** - Promoted spec file with extracted requirements from the task\n\nThe task is a clear implementation of a new utility module with no ambiguity, following existing patterns in the codebase. No missing inputs identified - all required information is present in the task description.",
+          "tools": [],
+          "timestamp": "2026-03-19T06:08:45.950Z"
+        },
+        {
+          "role": "user",
+          "stage": "review",
+          "text": "\"CRITICAL: This is a SPEC-ONLY pipeline. DO NOT create branches, commits, or pull requests. DO NOT modify any code files. Only read from and write to the /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/ directory.\n\nTask ID: 260319-systest-23281989096\n\n\nRead these files for context:\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/task.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/task.json\n\nWrite your output to /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/gap.md\"",
+          "tools": [],
+          "timestamp": "2026-03-19T06:09:04.797Z",
+          "model": "{\"providerID\":\"minimax-coding-plan\",\"modelID\":\"MiniMax-M2.5\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-19T06:09:04.806Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let me explore the codebase to find gaps in the spec:",
+          "tools": [
+            "glob",
+            "glob"
+          ],
+          "timestamp": "2026-03-19T06:09:11.844Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-19T06:09:15.922Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-19T06:09:20.118Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-19T06:09:27.015Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-19T06:09:37.122Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let me check the test patterns used in the project:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-19T06:09:41.857Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Let me check if there's any existing pipeline health related code:",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-19T06:09:49.398Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let me verify the test directory structure:",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-19T06:09:57.656Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-19T06:10:01.367Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now I have enough information. Let me write the gap.md file:",
+          "tools": [
+            "write"
+          ],
+          "timestamp": "2026-03-19T06:10:11.164Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-19T06:10:48.097Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-19T06:10:59.216Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:11:22.057Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:11:26.657Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Gap analysis complete. Here's a summary:\n\n**Gaps Found:** 4\n- **Gap 1 (HIGH):** Interface properties not defined - HealthStatus, Report, RetryStrategy had no concrete properties specified\n- **Gap 2 (HIGH):** Valid stage names not specified - The codebase already has a stage registry but the spec didn't reference it\n- **Gap 3 (MEDIUM):** RetryStrategy properties not specified - maxRetries, backoffMs, strategyType not defined\n- **Gap 4 (MEDIUM):** HealthStatus properties not specified - stage, status, timestamp, message not defined\n\n**Spec Revised:** Yes\n- Added NFR-001, NFR-002, NFR-003 specifying interface properties\n- Added FR-005 for getStageTimeout to support all Cody pipeline stages\n- Added Guardrails section with coupling constraints\n- Added Out of Scope section\n\nAll files are in place at `/home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/`:\n- `task.json` - valid\n- `spec.md` - updated with requirements\n- `gap.md` - documenting findings",
+          "tools": [],
+          "timestamp": "2026-03-19T06:11:40.522Z"
+        },
+        {
+          "role": "user",
+          "stage": "review",
+          "text": "\"Task ID: 260319-systest-23281989096\n\n\nTask Type: implement_feature\n\n\nRead these files for context:\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/spec.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/clarified.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/rerun-feedback.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/prev-run/plan.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/prev-run/build.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/prev-run/review.md\n- /home/runner/work/A-Guy/A-Guy/.ai-docs/knowledge/index.json\n\nWrite your output to /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/plan.md\"",
+          "tools": [],
+          "timestamp": "2026-03-19T06:11:54.971Z",
+          "model": "{\"providerID\":\"minimax-coding-plan\",\"modelID\":\"MiniMax-M2.5\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-19T06:11:54.977Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:12:10.508Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:12:20.012Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let me check the knowledge index and then research the codebase:",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-19T06:12:24.946Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-19T06:12:29.116Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-19T06:12:34.181Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now I'll write the plan.md file:",
+          "tools": [
+            "invalid"
+          ],
+          "timestamp": "2026-03-19T06:12:51.266Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:13:44.568Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-19T06:14:24.167Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:14:27.670Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:14:33.318Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now I need to create the context.md file:",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:14:36.926Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:14:49.485Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:14:53.428Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Plan complete. Created:\n\n1. **plan.md** (118 lines) - 4-step implementation plan:\n   - Step 1: Define TypeScript interfaces and Zod validation schemas\n   - Step 2: Implement getStageTimeout helper\n   - Step 3: Implement PipelineHealthReport class\n   - Step 4: Write companion unit tests\n\n2. **context.md** - Codebase context with:\n   - Files to modify\n   - Reference patterns\n   - Key signatures\n   - Reuse inventory\n   - Validated imports\n\nBoth files are in `/home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/`.",
+          "tools": [],
+          "timestamp": "2026-03-19T06:15:04.132Z"
+        },
+        {
+          "role": "user",
+          "stage": "review",
+          "text": "\"Task ID: 260319-systest-23281989096\n\n\nRead these files for context:\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/spec.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/plan.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/task.json\n\nWrite your output to /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/plan-gap.md\"",
+          "tools": [],
+          "timestamp": "2026-03-19T06:15:12.861Z",
+          "model": "{\"providerID\":\"minimax-coding-plan\",\"modelID\":\"MiniMax-M2.5\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read",
+            "read",
+            "read"
+          ],
+          "timestamp": "2026-03-19T06:15:12.877Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-19T06:15:21.329Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:15:31.508Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Now let me verify the key signatures and imports in the codebase:",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-19T06:15:35.516Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-19T06:15:50.083Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-19T06:15:53.728Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-19T06:15:58.045Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Let me check if vitest is available in the project:",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-19T06:16:21.500Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-19T06:16:25.677Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:16:37.541Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-19T06:17:27.215Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:17:31.312Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Gap analysis complete. Summary:\n\n**Gaps Found: 0**\n\nThe plan is complete and covers all spec requirements:\n- All 6 functional requirements (FR-001 through FR-006) are addressed\n- All 3 non-functional requirements (NFR-001 through NFR-003) are covered\n- Guardrails are respected (no import from registry.ts)\n- File paths verified to exist\n- Import patterns verified to work\n- Test commands are valid\n\n**Files created:**\n- `plan.md` (118 lines) - 4-step implementation plan\n- `plan-gap.md` (70 lines) - gap analysis results\n- `context.md` - codebase context\n\nAll files in `/home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/`.",
+          "tools": [],
+          "timestamp": "2026-03-19T06:17:35.109Z"
+        },
+        {
+          "role": "user",
+          "stage": "review",
+          "text": "\"CRITICAL: IMPLEMENTATION STAGE - NOT DOCUMENTATION ONLY\n\nYou must ACTUALLY IMPLEMENT the code changes, not just document them.\n\nYour job is to:\n1. Use Edit/Write tools to modify source files in src/\n2. Create new files as needed\n3. Run tests to verify\n4. **MUST write build.md** summarizing what was implemented before exiting\n\nThe build.md file should be a SUMMARY of what you implemented, not the implementation plan.\nWrite it to: .tasks/<taskId>/build.md\n\nDO NOT skip writing build.md - the pipeline REQUIRES this file!\n\nTask ID: 260319-systest-23281989096\n\n\nTask Type: implement_feature\n\n\nRead these files for context:\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/spec.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/clarified.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/plan.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/plan-gap.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/context.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/rerun-feedback.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/build-errors.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/review.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/prev-run/build.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/prev-run/review.md\n\nWrite your output to /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/build.md\"",
+          "tools": [],
+          "timestamp": "2026-03-19T06:17:44.722Z",
+          "model": "{\"providerID\":\"minimax-coding-plan\",\"modelID\":\"MiniMax-M2.5\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-19T06:17:44.732Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "todowrite"
+          ],
+          "timestamp": "2026-03-19T06:17:58.845Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:18:08.253Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "todowrite"
+          ],
+          "timestamp": "2026-03-19T06:18:41.889Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:18:46.554Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "todowrite"
+          ],
+          "timestamp": "2026-03-19T06:19:19.763Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:19:24.501Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-19T06:19:32.450Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-19T06:19:44.606Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:19:58.772Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:20:04.644Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-19T06:20:43.779Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-19T06:20:47.982Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "edit"
+          ],
+          "timestamp": "2026-03-19T06:20:56.775Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:21:03.947Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:21:18.210Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:21:24.196Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "todowrite"
+          ],
+          "timestamp": "2026-03-19T06:21:45.877Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:22:04.766Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:22:27.375Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "todowrite"
+          ],
+          "timestamp": "2026-03-19T06:22:31.712Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Implementation complete. Here's the summary:\n\n**Files Created:**\n1. `src/infra/utils/pipeline-health.ts` - Pipeline health monitoring utility module\n2. `tests/unit/infra/utils/pipeline-health.test.ts` - Unit tests (26 tests)\n\n**Implementation Details:**\n- `PipelineHealthReport` class with 3 methods:\n  - `checkStageHealth(stage)` - Returns HealthStatus for a stage\n  - `generateReport()` - Returns full Report with all stages\n  - `getRetryRecommendation(failedStage)` - Returns RetryStrategy\n- Interfaces: `HealthStatus`, `Report`, `RetryStrategy`\n- Zod validation schemas for all public method inputs\n- `getStageTimeout()` helper returning default timeouts per stage (taskify=10m, gap=15m, etc.)\n- All exports have JSDoc comments\n\n**Quality Gates:**\n- TypeScript: ✅ PASS\n- Lint: ✅ PASS  \n- Unit Tests: ✅ 26/26 PASS",
+          "tools": [],
+          "timestamp": "2026-03-19T06:22:37.271Z"
+        },
+        {
+          "role": "user",
+          "stage": "review",
+          "text": "\"CRITICAL: CODE REVIEW + SPEC SATISFACTION STAGE\n\nYou are reviewing already-generated code AND verifying spec satisfaction. DO NOT modify code files.\n\nYour #1 job is the GOAL-BACKWARD SPEC CHECK: for every requirement in spec.md, verify there is matching code.\nYour #2 job is standard code review (security, correctness, quality).\nNOTE: Tests are written separately via the deferred-tests inspector plugin. Do NOT flag missing tests as issues.\n\nProduce review.md with a Spec Satisfaction matrix (requirement → code location → status) FIRST, then code quality findings.\nIf ANY spec requirement has no corresponding code: mark as Critical issue.\n\nTask ID: 260319-systest-23281989096\n\n\nRead these files for context:\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/review.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/build.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/plan.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/context.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/spec.md\n- /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/clarified.md\n\nWrite your output to /home/runner/work/A-Guy/A-Guy/.tasks/260319-systest-23281989096/review.md\"",
+          "tools": [],
+          "timestamp": "2026-03-19T06:23:02.958Z",
+          "model": "{\"providerID\":\"minimax-coding-plan\",\"modelID\":\"MiniMax-M2.5\"}"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-19T06:23:02.975Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "read"
+          ],
+          "timestamp": "2026-03-19T06:23:14.237Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "glob"
+          ],
+          "timestamp": "2026-03-19T06:23:22.093Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-19T06:23:28.042Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "grep"
+          ],
+          "timestamp": "2026-03-19T06:23:33.126Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:23:37.131Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "",
+          "tools": [
+            "bash"
+          ],
+          "timestamp": "2026-03-19T06:24:09.705Z"
+        },
+        {
+          "role": "assistant",
+          "stage": "review",
+          "text": "Review complete. Summary:\n\n**Spec Satisfaction: 100% (10/10 requirements met)**\n\n| Requirement | Status |\n|-------------|--------|\n| FR-001: PipelineHealthReport class | ✅ |\n| FR-002: TypeScript interfaces | ✅ |\n| FR-003: getStageTimeout helper | ✅ |\n| FR-004: JSDoc comments | ✅ |\n| FR-005: Zod validation | ✅ |\n| FR-006: Unit test file | ✅ |\n| NFR-001: HealthStatus | ✅ |\n| NFR-002: Report | ✅ |\n| NFR-003: RetryStrategy | ✅ |\n| Guardrail: No registry import | ✅ |\n\n**Code Quality: No issues found**\n- TypeScript: ✅\n- Lint: ✅\n- Tests: 26/26 passing\n\n**Files created:**\n- `src/infra/utils/pipeline-health.ts` (288 lines)\n- `tests/unit/infra/utils/pipeline-health.test.ts` (257 lines)\n\n**Recommendation: Proceed** - All requirements met, no issues found.",
+          "tools": [],
+          "timestamp": "2026-03-19T06:24:14.058Z"
+        }
+      ]
     }
   ]
 }
