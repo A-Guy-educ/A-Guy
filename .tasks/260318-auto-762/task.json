@@ -1,0 +1,29 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 0.9,
+  "primary_domain": "frontend",
+  "scope": [
+    "exercise component UI"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The redundant '1' label is in an exercise rendering component",
+    "The numbering system at the top is separate from the internal label",
+    "The fix involves removing or hiding the internal label while preserving the top numbering"
+  ],
+  "review_questions": [
+    "What component renders the internal '1' label in the exercise?",
+    "Is the internal label controlled by a prop or derived from exercise data?",
+    "Should the internal numbering be conditionally hidden when external numbering exists?"
+  ],
+  "complexity": 12,
+  "complexity_reasoning": "Scope: 4 (single component), Risk: 2 (UI bug, no data impact), Novelty: 3 (following existing pattern), Cross-Domain: 0 (frontend only), Ambiguity: 3 (clear bug, need to find source), Deps: 0 (self-contained). Total: 12",
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Bug report with steps to reproduce but no formal ## Requirements or ## Acceptance Criteria sections. Clear about expected vs actual behavior."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}
