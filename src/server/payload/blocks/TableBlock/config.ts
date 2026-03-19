@@ -13,7 +13,9 @@ export const TableBlock: Block = {
       type: 'textarea',
       required: true,
       admin: {
-        description: 'JSON array of header strings, e.g. ["Name", "Value", "Unit"]',
+        components: {
+          Field: '@/ui/admin/IntroTableField#IntroTableHeadersField',
+        },
       },
     },
     {
@@ -21,7 +23,9 @@ export const TableBlock: Block = {
       type: 'textarea',
       required: true,
       admin: {
-        description: 'JSON array of row arrays, e.g. [["Mass", "5", "kg"], ["Length", "10", "m"]]',
+        components: {
+          Field: '@/ui/admin/IntroTableField#IntroTableRowsField',
+        },
       },
     },
     {
