@@ -4,84 +4,83 @@
   "agent": {
     "build": {
       "model": "minimax-coding-plan/MiniMax-M2.5",
-      "description": "Building features, refactoring, implementing changes"
+      "description": "Building features (TEST - cheap model)"
     },
     "plan": {
-      "model": "anthropic/claude-opus-4-6",
-      "description": "Planning tasks, architecture design, complex problem solving"
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Planning tasks (TEST - cheap model)"
     },
     "architect": {
-      "model": "anthropic/claude-opus-4-6",
-      "description": "Planning tasks, architecture design, complex problem solving"
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Architecture design (TEST - cheap model)"
     },
     "clarify": {
-      "model": "openai/gpt-5.2",
-      "description": "Collects operator questions and answers"
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Collects questions (TEST - cheap model)"
     },
     "taskify": {
       "model": "minimax-coding-plan/MiniMax-M2.5",
-      "description": "Converts free-text tasks into structured task.json for pipeline routing"
+      "description": "Creates task.json (TEST - cheap model)"
     },
     "gap": {
       "model": "minimax-coding-plan/MiniMax-M2.5",
-      "description": "Analyzes spec.md for gaps, missing info, and inconsistencies"
+      "description": "Analyzes gaps (TEST - cheap model)"
     },
     "plan-gap": {
-      "model": "anthropic/claude-opus-4-6",
-      "description": "Analyzes plan for gaps vs spec and codebase, auto-revises plan"
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Analyzes plan gaps (TEST - cheap model)"
     },
     "autofix": {
       "model": "minimax-coding-plan/MiniMax-M2.5",
-      "description": "Automatically fixes lint, type, and format errors from verify stage"
+      "description": "Auto-fixes (TEST - cheap model)"
     },
     "verify": {
       "model": "minimax-coding-plan/MiniMax-M2.5",
-      "description": "Runs tests, validates implementation passes all gates"
+      "description": "Runs tests (TEST - cheap model)"
     },
     "test": {
       "model": "minimax-coding-plan/MiniMax-M2.5",
-      "description": "Writes E2E and integration tests using Playwright"
+      "description": "Writes tests (TEST - cheap model)"
     },
     "advisor": {
-      "model": "openai/gpt-5.2",
-      "description": "Code review, suggestions, best practices"
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Code review (TEST - cheap model)"
     },
     "pr": {
       "model": "minimax-coding-plan/MiniMax-M2.5",
-      "description": "Creates branch, commits changes, opens pull request"
+      "description": "Creates PR (TEST - cheap model)"
     },
     "cody-expert": {
       "model": "minimax-coding-plan/MiniMax-M2.5",
-      "description": "Cody pipeline expert - understands pipeline execution, debugging, adding new stages"
+      "description": "Pipeline expert (TEST - cheap model)"
     },
     "build-manager": {
-      "model": "anthropic/claude-opus-4-6",
-      "description": "Orchestrates build and test-writer agents in parallel, handles retries and verification"
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Orchestration (TEST - cheap model)"
     },
     "test-writer": {
       "model": "minimax-coding-plan/MiniMax-M2.5",
-      "description": "TDD test writer - writes failing tests before implementation"
+      "description": "TDD writer (TEST - cheap model)"
     },
     "browser": {
       "model": "minimax-coding-plan/MiniMax-M2.5",
-      "description": "Browser agent - navigates A-Guy platform, inspects pages, answers UI questions. Uses Chrome DevTools MCP locally, Playwright MCP in CI.",
-      "instructions": ["scripts/browser-agent/AGENT.md"]
+      "description": "Browser agent (TEST - cheap model)"
     },
     "review": {
-      "model": "anthropic/claude-opus-4-6",
-      "description": "Architect-level code review of generated code for quality, security, and correctness"
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Code review (TEST - cheap model)"
     },
     "fix": {
       "model": "minimax-coding-plan/MiniMax-M2.5",
-      "description": "Targeted fixes for issues found by review or verify stages"
+      "description": "Targeted fixes (TEST - cheap model)"
     },
     "reflect": {
       "model": "minimax-coding-plan/MiniMax-M2.5",
-      "description": "Post-task reflection - extracts patterns, updates knowledge base, creates skills when patterns repeat"
+      "description": "Reflection (TEST - cheap model)"
     },
     "e2e-test-writer": {
       "model": "minimax-coding-plan/MiniMax-M2.5",
-      "description": "Writes Playwright E2E tests for UI changes. Tests committed but NOT run in pipeline — CI runs them on PR."
+      "description": "E2E tests (TEST - cheap model)"
     }
   },
   "mcp": {

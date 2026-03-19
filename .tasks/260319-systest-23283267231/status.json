@@ -1,0 +1,36 @@
+{
+  "version": 2,
+  "taskId": "260319-systest-23283267231",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-19T06:49:20.784Z",
+  "updatedAt": "2026-03-19T06:51:36.265Z",
+  "state": "paused",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "paused",
+      "retries": 0,
+      "startedAt": "2026-03-19T06:49:21.817Z",
+      "completedAt": "2026-03-19T06:51:30.857Z",
+      "elapsed": 129,
+      "outputFile": "taskify.md",
+      "tokenUsage": {
+        "input": 2577,
+        "output": 2182,
+        "cacheRead": 145801
+      },
+      "sessionId": "ses_2fb24d9e2ffeylnlsvO6DiIKUZ"
+    }
+  },
+  "issueNumber": 934,
+  "triggeredBy": "cody-ai-os[bot]",
+  "actorHistory": [
+    {
+      "action": "pipeline-triggered",
+      "actor": "cody-ai-os[bot]",
+      "timestamp": "2026-03-19T06:49:20.784Z"
+    }
+  ],
+  "completedAt": "2026-03-19T06:51:36.265Z"
+}
