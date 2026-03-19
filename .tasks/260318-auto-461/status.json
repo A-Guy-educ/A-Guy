@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-19T08:28:03.366Z",
-  "updatedAt": "2026-03-19T08:33:12.723Z",
+  "updatedAt": "2026-03-19T08:44:50.708Z",
   "state": "running",
   "cursor": null,
   "stages": {
@@ -48,13 +48,23 @@
       "skipped": "Complexity 22 (moderate) below threshold 50 for plan-gap"
     },
     "build": {
-      "state": "running",
+      "state": "completed",
       "retries": 0,
-      "startedAt": "2026-03-19T08:33:12.707Z"
+      "startedAt": "2026-03-19T08:33:12.707Z",
+      "completedAt": "2026-03-19T08:44:35.256Z",
+      "elapsed": 683,
+      "outputFile": "build.md",
+      "tokenUsage": {
+        "input": 35150,
+        "output": 7544,
+        "cacheRead": 3136207
+      },
+      "sessionId": "ses_2fac5cbceffeeqD6sF1N23TEgX"
     },
     "commit": {
-      "state": "pending",
-      "retries": 0
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-19T08:44:50.708Z"
     },
     "review": {
       "state": "pending",
@@ -82,6 +92,5 @@
       "actor": "yaeliavni",
       "timestamp": "2026-03-19T08:28:03.366Z"
     }
-  ],
-  "branchName": "fix/260318-auto-889-lesson-introduction-page-is-not-ed"
+  ]
 }
