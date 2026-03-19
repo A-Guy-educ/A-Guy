@@ -244,12 +244,12 @@ export function TranslationModal({
                   padding: '8px 16px',
                   fontSize: 13,
                   fontWeight: 500,
-                  border: 'none',
+                  border: '1px solid var(--theme-elevation-200)',
                   borderRadius: 4,
                   backgroundColor: isTranslating
                     ? 'var(--theme-elevation-400)'
-                    : 'var(--theme-primary)',
-                  color: 'var(--theme-elevation-0)',
+                    : 'var(--theme-elevation-100)',
+                  color: 'var(--theme-elevation-1000)',
                   cursor: isTranslating ? 'not-allowed' : 'pointer',
                   opacity: isTranslating ? 0.6 : 1,
                 }}
