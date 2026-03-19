@@ -49,7 +49,7 @@ export function LessonCard({ lesson, courseSlug, chapterSlug }: LessonCardProps)
     <Card className={cn('hover:shadow-md transition-shadow', isSoon && 'opacity-60')}>
       <CardHeader>
         <div className="flex items-center gap-3 mb-2">
-          <span className="text-sm font-semibold text-muted-foreground">
+          <span className="text-base font-semibold text-muted-foreground">
             {t('lesson')} {lesson.order}
           </span>
         </div>
