@@ -4,15 +4,15 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-19T06:49:20.784Z",
-  "updatedAt": "2026-03-19T06:51:36.265Z",
-  "state": "paused",
-  "cursor": null,
+  "updatedAt": "2026-03-19T06:57:04.120Z",
+  "state": "running",
+  "cursor": "gap",
   "stages": {
     "taskify": {
-      "state": "paused",
+      "state": "completed",
       "retries": 0,
       "startedAt": "2026-03-19T06:49:21.817Z",
-      "completedAt": "2026-03-19T06:51:30.857Z",
+      "completedAt": "2026-03-19T06:53:54.255Z",
       "elapsed": 129,
       "outputFile": "taskify.md",
       "tokenUsage": {
@@ -21,6 +21,35 @@
         "cacheRead": 145801
       },
       "sessionId": "ses_2fb24d9e2ffeylnlsvO6DiIKUZ"
+    },
+    "gap": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 22 (moderate) below threshold 35 for gap"
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-19T06:53:55.513Z",
+      "completedAt": "2026-03-19T06:57:01.044Z",
+      "elapsed": 186,
+      "outputFile": "architect.md",
+      "tokenUsage": {
+        "input": 24825,
+        "output": 3935,
+        "cacheRead": 744680
+      },
+      "sessionId": "ses_2fb20ab61ffeIqSOBoZZJFgs2N"
+    },
+    "plan-gap": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 22 (moderate) below threshold 50 for plan-gap"
+    },
+    "build": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-19T06:57:04.080Z"
     }
   },
   "issueNumber": 934,
@@ -32,5 +61,5 @@
       "timestamp": "2026-03-19T06:49:20.784Z"
     }
   ],
-  "completedAt": "2026-03-19T06:51:36.265Z"
+  "branchName": "feat/260319-systest-934-system-test-add-pipeline-health"
 }
