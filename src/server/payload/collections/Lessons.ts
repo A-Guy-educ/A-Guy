@@ -3,6 +3,8 @@ import type { CollectionConfig } from 'payload'
 import { DEFAULT_LESSON_ACCESS_TYPE } from '@/server/constants/access-types'
 import { tenantField } from '@/server/payload/fields/tenant'
 import { Content } from '../blocks/Content/config'
+import { ContentPageRefBlock } from '../blocks/ContentPageRefBlock/config'
+import { ExerciseRefBlock } from '../blocks/ExerciseRefBlock/config'
 import { GeometryBlock } from '../blocks/GeometryBlock/config'
 import { GraphBlock } from '../blocks/GraphBlock/config'
 import { HtmlBlock } from '../blocks/HtmlBlock/config'
@@ -206,6 +208,17 @@ export const Lessons: CollectionConfig = {
       admin: {
         description: 'Image, SVG, or video displayed on the intro page',
         condition: (data) => Boolean(data?.introEnabled),
+      },
+    },
+    // --- Lesson Blocks (ordered playlist) ---
+    {
+      name: 'blocks',
+      type: 'blocks',
+      blocks: [ExerciseRefBlock, ContentPageRefBlock],
+      admin: {
+        description:
+          'Ordered playlist of exercises and content pages. Defines the lesson flow. Drag to reorder.',
+        initCollapsed: true,
       },
     },
     // --- Lesson Content ---

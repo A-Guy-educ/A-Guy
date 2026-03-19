@@ -12,7 +12,8 @@ export const queryExercisesByLesson = cache(async ({ lessonId }: { lessonId: str
         equals: lessonId,
       },
     },
-    sort: 'order',
+    // Order is now defined by lesson blocks array; fall back to creation time
+    sort: 'createdAt',
     limit: 1000,
     pagination: false,
     depth: 1,

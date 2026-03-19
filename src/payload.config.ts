@@ -15,6 +15,7 @@ import { ConfigValues } from '@/server/payload/collections/ConfigValues'
 import { Conversations } from '@/server/payload/collections/Conversations'
 import { Courses } from '@/server/payload/collections/Courses'
 import { ExerciseAssets } from '@/server/payload/collections/ExerciseAssets'
+import { ContentPages } from '@/server/payload/collections/ContentPages'
 import { Exercises } from '@/server/payload/collections/Exercises'
 import { ExtractionLogs } from '@/server/payload/collections/ExtractionLogs'
 import { GuestSessions } from '@/server/payload/collections/GuestSessions'
@@ -155,6 +156,7 @@ export default buildConfig({
     Courses,
     Chapters,
     Lessons,
+    ContentPages,
     Exercises,
     ExtractionLogs,
     Prompts,

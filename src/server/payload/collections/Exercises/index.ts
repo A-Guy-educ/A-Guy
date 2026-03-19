@@ -76,10 +76,11 @@ export const Exercises: CollectionConfig = {
         {
           name: 'order',
           type: 'number',
-          required: true,
+          required: false,
           defaultValue: 0,
           admin: {
-            description: 'Order of exercise within the lesson (lower numbers appear first)',
+            description:
+              'DEPRECATED — Order is now defined by lesson blocks array. Kept for backward compatibility.',
           },
         },
         {

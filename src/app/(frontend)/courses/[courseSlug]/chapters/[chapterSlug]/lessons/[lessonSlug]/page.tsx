@@ -8,6 +8,7 @@ import { getSystemLocale } from '@/i18n/server-locale'
 import { isValidContentLocale } from '@/server/payload/fields/contentLocale'
 import { queryCourseBySlug } from '@/server/repos/queries/courses'
 import { queryExercisesByLesson } from '@/server/repos/queries/exercises'
+import { queryLessonBlocks } from '@/server/repos/queries/lesson-blocks'
 import { queryLessonBySlug } from '@/server/repos/queries/lessons'
 import { queryMediaByIds } from '@/server/repos/queries/media'
 import { isAuthenticatedServer } from '@/server/utils/access-gate-server'
@@ -20,6 +21,7 @@ import { Media as MediaComponent } from '@/ui/web/media'
 import { notFound } from 'next/navigation'
 import { RenderBlocks } from '@/server/payload/blocks/RenderBlocks'
 import { ExercisesPager } from './_components/ExercisesPager'
+import { LessonPager } from './_components/LessonPager'
 import { LessonAnalytics } from './_components/LessonAnalytics'
 import { ExerciseWorkspace } from './exercises/[exerciseSlug]/_components/ExerciseWorkspace'
 
@@ -101,6 +103,55 @@ export default async function LessonPage({ params }: LessonPageProps) {
     }
   }
 
+  // Try blocks-based path first (new architecture)
+  const resolvedBlocks = await queryLessonBlocks({ lessonId: lesson.id })
+  const hasBlocks = resolvedBlocks.length > 0
+
+  if (hasBlocks) {
+    // Extract exercises from blocks for media fetching
+    const blockExercises = resolvedBlocks
+      .filter((b) => b.type === 'exercise')
+      .map((b) => b.data as import('@/payload-types').Exercise)
+    const mediaMap =
+      blockExercises.length > 0 ? await queryMediaByIds(extractAllMediaIds(blockExercises)) : {}
+
+    // Pre-render content page bodies server-side
+    const contentPageBodies: Record<string, React.ReactNode> = {}
+    for (const block of resolvedBlocks) {
+      if (
+        block.type === 'contentPage' &&
+        block.data.body &&
+        Array.isArray(block.data.body) &&
+        block.data.body.length > 0
+      ) {
+        contentPageBodies[block.data.id] = <RenderBlocks blocks={block.data.body} />
+      }
+    }
+
+    return (
+      <AccessGateProvider
+        accessType={effectiveAccessType}
+        courseSlug={courseSlug}
+        gatedDelayMs={gatedDelayMs}
+        gatedWarningMs={gatedWarningMs}
+      >
+        <LessonAnalytics lessonId={lesson.id} courseId={course.id} lessonTitle={lesson.title} />
+        <LessonPager
+          blocks={resolvedBlocks}
+          lessonTitle={lesson.title}
+          backUrl="/study"
+          courseSlug={courseSlug}
+          chapterSlug={chapterSlug}
+          lessonSlug={lessonSlug}
+          lessonId={lesson.id}
+          mediaMap={mediaMap}
+          contentPageBodies={contentPageBodies}
+        />
+      </AccessGateProvider>
+    )
+  }
+
+  // Legacy path: exercises-only (lessons without blocks field)
   const exercises = await queryExercisesByLesson({ lessonId: lesson.id })
 
   // Use lesson-scoped chat context to keep history stable across refreshes

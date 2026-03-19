@@ -80,6 +80,7 @@ export interface Config {
     courses: Course;
     chapters: Chapter;
     lessons: Lesson;
+    'content-pages': ContentPage;
     exercises: Exercise;
     'extraction-logs': ExtractionLog;
     prompts: Prompt;
@@ -120,6 +121,7 @@ export interface Config {
     courses: CoursesSelect<false> | CoursesSelect<true>;
     chapters: ChaptersSelect<false> | ChaptersSelect<true>;
     lessons: LessonsSelect<false> | LessonsSelect<true>;
+    'content-pages': ContentPagesSelect<false> | ContentPagesSelect<true>;
     exercises: ExercisesSelect<false> | ExercisesSelect<true>;
     'extraction-logs': ExtractionLogsSelect<false> | ExtractionLogsSelect<true>;
     prompts: PromptsSelect<false> | PromptsSelect<true>;
@@ -1310,6 +1312,10 @@ export interface Lesson {
    */
   introMedia?: (string | null) | Media;
   /**
+   * Ordered playlist of exercises and content pages. Defines the lesson flow. Drag to reorder.
+   */
+  blocks?: (ExerciseRefBlock | ContentPageRefBlock)[] | null;
+  /**
    * Upload lesson content files (PDFs, videos, images, etc.)
    */
   contentFiles?: (string | Media)[] | null;
@@ -1359,13 +1365,7 @@ export interface MediaBlock {
  * via the `definition` "TableBlock".
  */
 export interface TableBlock {
-  /**
-   * JSON array of header strings, e.g. ["Name", "Value", "Unit"]
-   */
   headers: string;
-  /**
-   * JSON array of row arrays, e.g. [["Mass", "5", "kg"], ["Length", "10", "m"]]
-   */
   rows: string;
   showBorders?: boolean | null;
   showHeader?: boolean | null;
@@ -1378,9 +1378,6 @@ export interface TableBlock {
  * via the `definition` "GeometryBlock".
  */
 export interface GeometryBlock {
-  /**
-   * GeometrySpecV1 JSON. Must have kind:"euclidean", canvas:{width,height}, and elements:{points,lines,circles,angles}.
-   */
   spec: string;
   id?: string | null;
   blockName?: string | null;
@@ -1391,14 +1388,24 @@ export interface GeometryBlock {
  * via the `definition` "GraphBlock".
  */
 export interface GraphBlock {
-  /**
-   * AxisSpecV1 JSON. Must have kind:"cartesian", units, grid, axes, and elements:{points,graphs}.
-   */
   spec: string;
   displaySize?: ('small' | 'medium' | 'large' | 'full') | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'graphBlock';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ExerciseRefBlock".
+ */
+export interface ExerciseRefBlock {
+  /**
+   * Reference to an exercise
+   */
+  exercise: string | Exercise;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'exerciseRef';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1415,9 +1422,9 @@ export interface Exercise {
    */
   title?: string | null;
   /**
-   * Order of exercise within the lesson (lower numbers appear first)
+   * DEPRECATED — Order is now defined by lesson blocks array. Kept for backward compatibility.
    */
-  order: number;
+  order?: number | null;
   /**
    * The lesson this exercise belongs to
    */
@@ -1507,6 +1514,56 @@ export interface Exercise {
     | number
     | boolean
     | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ContentPageRefBlock".
+ */
+export interface ContentPageRefBlock {
+  /**
+   * Reference to a content page
+   */
+  contentPage: string | ContentPage;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'contentPageRef';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "content-pages".
+ */
+export interface ContentPage {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * Content page title
+   */
+  title: string;
+  /**
+   * URL-friendly identifier (auto-generated from title if empty)
+   */
+  slug?: string | null;
+  /**
+   * Page content. Supports rich text, HTML/SVG, media, tables, geometry, and graphs.
+   */
+  body: (ContentBlock | HtmlBlock | MediaBlock | TableBlock | GeometryBlock | GraphBlock)[];
+  /**
+   * Publication status
+   */
+  status: 'draft' | 'published' | 'archived';
+  /**
+   * Whether this content page is currently active
+   */
+  isActive: boolean;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
 }
@@ -2446,6 +2503,10 @@ export interface PayloadLockedDocument {
         value: string | Lesson;
       } | null)
     | ({
+        relationTo: 'content-pages';
+        value: string | ContentPage;
+      } | null)
+    | ({
         relationTo: 'exercises';
         value: string | Exercise;
       } | null)
@@ -2949,6 +3010,12 @@ export interface LessonsSelect<T extends boolean = true> {
         graphBlock?: T | GraphBlockSelect<T>;
       };
   introMedia?: T;
+  blocks?:
+    | T
+    | {
+        exerciseRef?: T | ExerciseRefBlockSelect<T>;
+        contentPageRef?: T | ContentPageRefBlockSelect<T>;
+      };
   contentFiles?: T;
   lessonContextText?: T;
   prompt?: T;
@@ -2999,6 +3066,48 @@ export interface GraphBlockSelect<T extends boolean = true> {
   displaySize?: T;
   id?: T;
   blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ExerciseRefBlock_select".
+ */
+export interface ExerciseRefBlockSelect<T extends boolean = true> {
+  exercise?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ContentPageRefBlock_select".
+ */
+export interface ContentPageRefBlockSelect<T extends boolean = true> {
+  contentPage?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "content-pages_select".
+ */
+export interface ContentPagesSelect<T extends boolean = true> {
+  tenant?: T;
+  title?: T;
+  slug?: T;
+  body?:
+    | T
+    | {
+        content?: T | ContentBlockSelect<T>;
+        html?: T | HtmlBlockSelect<T>;
+        mediaBlock?: T | MediaBlockSelect<T>;
+        tableBlock?: T | TableBlockSelect<T>;
+        geometryBlock?: T | GeometryBlockSelect<T>;
+        graphBlock?: T | GraphBlockSelect<T>;
+      };
+  status?: T;
+  isActive?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
