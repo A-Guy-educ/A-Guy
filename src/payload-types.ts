@@ -1400,7 +1400,7 @@ export interface GraphBlock {
  */
 export interface ExerciseRefBlock {
   /**
-   * Reference to an exercise
+   * Reference to an exercise belonging to this lesson
    */
   exercise: string | Exercise;
   id?: string | null;
@@ -1523,7 +1523,7 @@ export interface Exercise {
  */
 export interface ContentPageRefBlock {
   /**
-   * Reference to a content page
+   * Reference to a content page belonging to this lesson
    */
   contentPage: string | ContentPage;
   id?: string | null;
@@ -1540,6 +1540,10 @@ export interface ContentPage {
    * Tenant scope for this document
    */
   tenant: string | Tenant;
+  /**
+   * The lesson this content page belongs to
+   */
+  lesson: string | Lesson;
   /**
    * Content page title
    */
@@ -3091,6 +3095,7 @@ export interface ContentPageRefBlockSelect<T extends boolean = true> {
  */
 export interface ContentPagesSelect<T extends boolean = true> {
   tenant?: T;
+  lesson?: T;
   title?: T;
   slug?: T;
   body?:

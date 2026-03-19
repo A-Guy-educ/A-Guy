@@ -44,6 +44,16 @@ export const ContentPages: CollectionConfig = {
   fields: [
     tenantField,
     {
+      name: 'lesson',
+      type: 'relationship',
+      relationTo: 'lessons',
+      required: true,
+      index: true,
+      admin: {
+        description: 'The lesson this content page belongs to',
+      },
+    },
+    {
       name: 'title',
       type: 'text',
       required: true,
