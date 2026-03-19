@@ -18,6 +18,7 @@ interface VoiceChatOverlayProps {
   messages: Array<{ role: 'user' | 'assistant'; content: string }>
   agentName: string
   onStop: () => void
+  onInterrupt?: () => void // New: interrupt AI and start listening
   onToggleMute: () => void
   isMuted: boolean
 }
@@ -36,12 +37,20 @@ export function VoiceChatOverlay({
   messages,
   agentName,
   onStop,
+  onInterrupt,
   onToggleMute,
   isMuted,
 }: VoiceChatOverlayProps) {
   const overlayRef = useRef<HTMLDivElement>(null)
   const [elapsed, setElapsed] = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // Handle tap to interrupt when AI is speaking
+  const handleStateIndicatorClick = useCallback(() => {
+    if (state === 'speaking' && onInterrupt) {
+      onInterrupt()
+    }
+  }, [state, onInterrupt])
 
   useEffect(() => {
     setElapsed(0)
@@ -88,6 +97,13 @@ export function VoiceChatOverlay({
 
   const recent = messages.slice(-4)
 
+  // Handle tap to interrupt when AI is speaking - using onInterrupt prop
+  const handleOverlayClick = useCallback(() => {
+    if (state === 'speaking' && onInterrupt) {
+      onInterrupt()
+    }
+  }, [state, onInterrupt])
+
   return (
     <div
       ref={overlayRef}
@@ -95,7 +111,11 @@ export function VoiceChatOverlay({
       aria-modal="true"
       aria-label="Voice chat conversation"
       tabIndex={-1}
-      className="absolute inset-0 z-40 flex flex-col bg-background/95 backdrop-blur-sm overflow-hidden"
+      className={cn(
+        'absolute inset-0 z-40 flex flex-col bg-background/95 backdrop-blur-sm overflow-hidden',
+        state === 'speaking' && 'cursor-pointer', // Show it's clickable when AI is speaking
+      )}
+      onClick={handleOverlayClick}
     >
       {/* Header */}
       <div className="px-4 py-3 border-b text-center shrink-0">
@@ -123,14 +143,20 @@ export function VoiceChatOverlay({
         ))}
       </div>
 
-      {/* State indicator */}
-      <div className="flex flex-col items-center gap-2 py-4 shrink-0">
+      {/* State indicator - clickable when AI is speaking to interrupt */}
+      <div
+        className={cn(
+          'flex flex-col items-center gap-2 py-4 shrink-0',
+          state === 'speaking' && 'cursor-pointer',
+        )}
+        onClick={handleStateIndicatorClick}
+      >
         <div
           className={cn(
             'relative flex items-center justify-center w-16 h-16 rounded-full transition-all duration-300',
             state === 'listening' && 'bg-primary/10',
             state === 'processing' && 'bg-amber-500/10',
-            state === 'speaking' && 'bg-green-500/10',
+            state === 'speaking' && 'bg-green-500/10 hover:bg-green-500/20',
           )}
         >
           {state === 'listening' && !isMuted && (
@@ -170,6 +196,10 @@ export function VoiceChatOverlay({
           )}
           {state === 'speaking' && (
             <p className="text-sm font-medium text-green-500">Speaking...</p>
+          )}
+          {/* Hint to interrupt when AI is speaking */}
+          {state === 'speaking' && (
+            <p className="text-xs text-muted-foreground animate-pulse">Tap anywhere to interrupt</p>
           )}
         </div>
 

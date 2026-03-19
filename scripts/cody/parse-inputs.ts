@@ -24,6 +24,7 @@ interface ParseOutputs {
   runner: string
   version: string
   fresh: string
+  complexity: string
 }
 
 // Task ID format: YYMMDD-description (e.g., 260225-auto-90)
@@ -127,6 +128,7 @@ export function parseDispatchInputs(): ParseOutputs {
     runner: process.env.DISPATCH_RUNNER || 'github-hosted',
     version: process.env.DISPATCH_VERSION || process.env.CODY_DEFAULT_VERSION || '',
     fresh: process.env.FRESH || '',
+    complexity: process.env.DISPATCH_COMPLEXITY || '',
   }
 
   logger.info(
@@ -355,6 +357,7 @@ export function parsePRReviewInputs(): ParseOutputs {
     runner: 'github-hosted',
     version: process.env.CODY_DEFAULT_VERSION || '',
     fresh: '',
+    complexity: '',
   }
 
   logger.info(
@@ -382,7 +385,8 @@ export function getDefaultOutputs(): ParseOutputs {
     valid: 'false',
     runner: 'github-hosted',
     version: process.env.CODY_DEFAULT_VERSION || '',
-    fresh: '',
+    fresh: process.env.FRESH || '',
+    complexity: process.env.DISPATCH_COMPLEXITY || '',
   }
 }
 
@@ -412,6 +416,7 @@ function writeOutputs(outputs: ParseOutputs): void {
     `runner=${outputs.runner}`,
     `version=${outputs.version}`,
     `fresh=${outputs.fresh}`,
+    `complexity=${outputs.complexity}`,
   ]
 
   writeFileSync(githubOutput, lines.join('\n') + '\n')

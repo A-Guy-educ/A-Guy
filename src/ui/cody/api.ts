@@ -63,6 +63,16 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Redirect to GitHub OAuth login when session expires.
+ * Call this in mutation onError handlers to handle expired credentials.
+ * @param returnTo - Optional path to return to after login (defaults to /cody)
+ */
+export function redirectToLogin(returnTo = '/cody'): void {
+  const encoded = encodeURIComponent(returnTo)
+  window.location.href = `/api/oauth/github?returnTo=${encoded}`
+}
+
 // ============ Helpers ============
 
 export async function handleResponse<T>(res: Response): Promise<T> {
@@ -512,9 +522,7 @@ export const remoteApi = {
     const res = await fetch(
       `${API_BASE}/remote/status?actorLogin=${encodeURIComponent(actorLogin)}`,
     )
-    if (res.status === 404) {
-      return { configured: false, online: false }
-    }
+    // The API returns { configured: false } for non-configured users (200 OK)
     return handleResponse<RemoteStatus>(res)
   },
 

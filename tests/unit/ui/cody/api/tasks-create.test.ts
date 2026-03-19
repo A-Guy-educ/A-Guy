@@ -180,9 +180,10 @@ describe('POST /api/cody/tasks - Create Task', () => {
     const response = await POST(request)
     const body = await response.json()
 
-    // Verify error response
+    // Verify error response - Zod validation returns structured error
     expect(response.status).toBe(400)
-    expect(body.error).toBe('Title is required')
+    expect(body.error).toBe('Validation error')
+    expect(body.details).toBeDefined()
 
     // Verify no issue was created
     expect(createIssue).not.toHaveBeenCalled()

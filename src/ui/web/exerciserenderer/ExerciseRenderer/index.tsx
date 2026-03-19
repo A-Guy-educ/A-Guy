@@ -26,6 +26,7 @@ import type {
   CheckResult,
 } from '../types'
 import type { GeometrySpecV1, AxisSpecV1 } from '@/infra/contracts'
+import type { DisplaySize } from '../blocks/AxisRenderer'
 import { HtmlBlockRenderer } from '../blocks/HtmlBlockRenderer'
 import { RichTextRenderer } from '../blocks/RichTextRenderer'
 import { SvgRenderer } from '../blocks/SvgRenderer'
@@ -358,6 +359,10 @@ export function ExerciseRenderer({
                 )
               }
               if (b.type === ('question_axis' as string)) {
+                const axisBlock = b as ContentBlock & {
+                  axis?: AxisSpecV1
+                  displaySize?: DisplaySize
+                }
                 return (
                   <GraphWithPrompt
                     key={b.id}
@@ -372,7 +377,11 @@ export function ExerciseRenderer({
                         | undefined
                     }
                   >
-                    <AxisRenderer blockId={b.id} spec={b.axis as AxisSpecV1} />
+                    <AxisRenderer
+                      blockId={b.id}
+                      spec={axisBlock.axis as AxisSpecV1}
+                      displaySize={axisBlock.displaySize}
+                    />
                   </GraphWithPrompt>
                 )
               }

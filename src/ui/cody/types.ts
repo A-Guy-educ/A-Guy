@@ -252,6 +252,7 @@ export type SortField =
   | 'assignee'
   | 'title'
   | 'label'
+  | 'priority'
 
 export type SortDirection = 'asc' | 'desc'
 

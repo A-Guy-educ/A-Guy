@@ -9,6 +9,10 @@
  *   Retry 3 (same error): Create a GitHub issue describing the failure, trigger @cody on it
  *   Retry 4-5: Rerun original task (now with potentially fixed pipeline code)
  *   Give up after 5 attempts
+ *
+ * Cross-task dedup: Before creating a fix issue, checks if an open fix issue
+ * already exists for the same stage failure. If so, adds a comment instead
+ * of creating a duplicate issue.
  */
 
 import type {
@@ -41,6 +45,7 @@ const STATE_KEY = 'cody:fixerState'
 const MAX_RETRIES = 5
 const FIX_ISSUE_THRESHOLD = 2
 const DEDUP_WINDOW_MINUTES = 15
+const FIX_ISSUE_LABEL = 'cody:pipeline-fix'
 
 // ============================================================================
 // Helpers
@@ -102,6 +107,71 @@ function pruneFixerState(state: FixerState): FixerState {
     pruned[key] = value
   }
   return pruned
+}
+
+/**
+ * Find an existing open fix issue for the same stage failure.
+ * Checks fixer state for other tasks that already created fix issues for the same stage.
+ */
+function findExistingFixIssue(
+  stage: string,
+  currentTaskId: string,
+  fixerState: FixerState,
+): number | null {
+  for (const [taskId, taskState] of Object.entries(fixerState)) {
+    if (taskId === currentTaskId) continue
+    if (taskState.fixIssueNumber && taskState.errorSignature.startsWith(stage + ':')) {
+      return taskState.fixIssueNumber
+    }
+  }
+  return null
+}
+
+/**
+ * Link a task to an existing fix issue: post comments and update state.
+ */
+function linkToExistingFixIssue(
+  ctx: InspectorContext,
+  task: EvaluatedTask,
+  taskState: FixerTaskState,
+  fixerState: FixerState,
+  existingIssueNumber: number,
+  failedStage: string,
+): { success: boolean; message: string } {
+  const errorSnippet = (task.failedError || '').slice(0, 500)
+  const linkComment = [
+    '\u{1f517} **Additional affected task:**',
+    'Task ID: ' + task.taskId,
+    'Issue: #' + task.issueNumber,
+    'Stage: ' + failedStage,
+    '',
+    'Error:',
+    errorSnippet,
+  ].join('\n')
+
+  ctx.github.postComment(existingIssueNumber, linkComment)
+
+  const newRetries = taskState.retries + 1
+  const newTaskState: FixerTaskState = {
+    ...taskState,
+    retries: newRetries,
+    fixIssueNumber: existingIssueNumber,
+    fixIssueCreatedAt: taskState.fixIssueCreatedAt,
+  }
+  fixerState[task.taskId] = newTaskState
+  saveFixerState(ctx, pruneFixerState(fixerState))
+
+  const issueComment =
+    '\u{1f527} **[pipeline-fixer]** Linked to existing fix issue #' +
+    existingIssueNumber +
+    ' (same stage failure).'
+  ctx.github.postComment(task.issueNumber, issueComment)
+
+  ctx.log.info(
+    { taskId: task.taskId, linkedTo: existingIssueNumber },
+    'Linked to existing fix issue instead of creating duplicate',
+  )
+  return { success: true, message: 'Linked to existing fix issue #' + existingIssueNumber }
 }
 
 function buildFixIssueBody(
@@ -234,9 +304,42 @@ function createFixIssueAction(
       const issue = ctx.github.getIssue(task.issueNumber)
       const issueBody = issue.body || ''
 
+      // Cross-task dedup: check if another task already created a fix issue for the same stage
+      const existingFixFromState = findExistingFixIssue(failedStage, task.taskId, fixerState)
+      if (existingFixFromState) {
+        return linkToExistingFixIssue(
+          ctx,
+          task,
+          taskState,
+          fixerState,
+          existingFixFromState,
+          failedStage,
+        )
+      }
+
+      // Also search GitHub for open fix issues with a similar title
+      const fixSearchQuery = [
+        '"[pipeline-fix]"',
+        '"fails at ' + failedStage + '"',
+        'label:' + FIX_ISSUE_LABEL,
+        'is:open',
+      ].join(' ')
+      const searchResults = ctx.github.searchIssues(fixSearchQuery)
+      if (searchResults.length > 0) {
+        return linkToExistingFixIssue(
+          ctx,
+          task,
+          taskState,
+          fixerState,
+          searchResults[0].number,
+          failedStage,
+        )
+      }
+
+      // Create a new fix issue
       const title = `[pipeline-fix] Cody fails at ${failedStage}: ${errorSummary}`
       const body = buildFixIssueBody(task, taskState, issueBody)
-      const labels = ['cody:pipeline-fix']
+      const labels = [FIX_ISSUE_LABEL]
 
       const fixIssueNumber = ctx.github.createIssue(title, body, labels)
 
@@ -406,3 +509,6 @@ export const pipelineFixerPlugin: InspectorPlugin = {
     return actions
   },
 }
+
+// Export for testing
+export { findExistingFixIssue }

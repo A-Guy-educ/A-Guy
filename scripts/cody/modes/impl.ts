@@ -36,10 +36,16 @@ export async function runImplMode(ctx: PipelineContext): Promise<void> {
     throw new Error(`task.json not found. Run spec pipeline first.`)
   }
 
-  // Apply --complexity override if provided
-  if (ctx.input.complexityOverride !== undefined && taskDef.complexity === undefined) {
+  // Apply --complexity override if provided (for testing/debugging)
+  if (ctx.input.complexityOverride !== undefined) {
+    const oldComplexity = taskDef.complexity
     taskDef.complexity = ctx.input.complexityOverride
     taskDef.complexity_reasoning = `Override via --complexity=${ctx.input.complexityOverride}`
+    if (oldComplexity !== undefined) {
+      logger.info(`  ℹ️ Complexity override: ${oldComplexity} → ${ctx.input.complexityOverride}`)
+    } else {
+      logger.info(`  ℹ️ Complexity override applied: ${ctx.input.complexityOverride}`)
+    }
   }
 
   // Check spec_only pipeline

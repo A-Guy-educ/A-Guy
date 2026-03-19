@@ -1,0 +1,115 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [".ai-docs/BOOTSTRAP.md", ".ai-docs/quick-reference/CHEAT-SHEET.md"],
+  "agent": {
+    "build": {
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Building features (TEST - cheap model)"
+    },
+    "plan": {
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Planning tasks (TEST - cheap model)"
+    },
+    "architect": {
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Architecture design (TEST - cheap model)"
+    },
+    "clarify": {
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Collects questions (TEST - cheap model)"
+    },
+    "taskify": {
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Creates task.json (TEST - cheap model)"
+    },
+    "gap": {
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Analyzes gaps (TEST - cheap model)"
+    },
+    "plan-gap": {
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Analyzes plan gaps (TEST - cheap model)"
+    },
+    "autofix": {
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Auto-fixes (TEST - cheap model)"
+    },
+    "verify": {
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Runs tests (TEST - cheap model)"
+    },
+    "test": {
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Writes tests (TEST - cheap model)"
+    },
+    "advisor": {
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Code review (TEST - cheap model)"
+    },
+    "pr": {
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Creates PR (TEST - cheap model)"
+    },
+    "cody-expert": {
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Pipeline expert (TEST - cheap model)"
+    },
+    "build-manager": {
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Orchestration (TEST - cheap model)"
+    },
+    "test-writer": {
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "TDD writer (TEST - cheap model)"
+    },
+    "browser": {
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Browser agent (TEST - cheap model)"
+    },
+    "review": {
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Code review (TEST - cheap model)"
+    },
+    "fix": {
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Targeted fixes (TEST - cheap model)"
+    },
+    "reflect": {
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "Reflection (TEST - cheap model)"
+    },
+    "e2e-test-writer": {
+      "model": "minimax-coding-plan/MiniMax-M2.5",
+      "description": "E2E tests (TEST - cheap model)"
+    }
+  },
+  "mcp": {
+    "chrome-devtools": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "chrome-devtools-mcp@latest",
+        "--isolated=true",
+        "--no-usage-statistics"
+      ]
+    },
+    "figma": {
+      "type": "local",
+      "command": ["npx", "-y", "figma-developer-mcp", "--figma-api-key=${FIGMA_API_KEY}", "--stdio"]
+    },
+    "playwright": {
+      "type": "local",
+      "command": [
+        "npx",
+        "@playwright/mcp@latest",
+        "--headless",
+        "--caps=vision,devtools,pdf",
+        "--storage-state=scripts/browser-agent/.auth/storage-state.json",
+        "--test-id-attribute=data-testid",
+        "--console-level=info",
+        "--viewport-size=1280x720"
+      ]
+    }
+  }
+}

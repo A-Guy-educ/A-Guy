@@ -35,6 +35,7 @@ import { Users } from '@/server/payload/collections/Users'
 import { UserSettings } from '@/server/payload/collections/UserSettings'
 import { importExerciseFromImage } from '@/server/payload/endpoints/exercises/import-from-image'
 import { importExerciseFromLesson } from '@/server/payload/endpoints/exercises/import-from-lesson'
+import { generateSupportEndpoint } from '@/server/payload/endpoints/exercises/generate-support'
 import { defaultLexical } from '@/server/payload/fields/defaultLexical'
 import { pdfToExercisesTask } from '@/server/payload/jobs/pdf-to-exercises-task'
 import { pdfToExercisesV2Task } from '@/server/payload/jobs/pdf-to-exercises-v2-task'
@@ -196,6 +197,11 @@ export default buildConfig({
         }
         return importExerciseFromImage(req)
       },
+    },
+    {
+      path: '/exercises/generate-support',
+      method: 'post',
+      handler: (req: PayloadRequest) => generateSupportEndpoint(req),
     },
   ],
   jobs: {

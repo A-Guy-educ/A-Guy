@@ -20,6 +20,7 @@ import { CheckCircle2, XCircle, Trash2, Loader2, GitBranch } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { cn } from '../utils'
+import { SessionExpiredError, redirectToLogin } from '../api'
 
 interface BranchCleanupDialogProps {
   open: boolean
@@ -65,7 +66,11 @@ export function BranchCleanupDialog({ open, onClose }: BranchCleanupDialogProps)
       queryClient.invalidateQueries({ queryKey: ['cody-branches'] })
     },
     onError: (error) => {
-      toast.error(`Failed to delete branches: ${error}`)
+      if (error instanceof SessionExpiredError) {
+        redirectToLogin()
+      } else {
+        toast.error(`Failed to delete branches: ${error}`)
+      }
     },
   })
 

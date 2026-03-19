@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from '@/ui/web/components/select'
 import { cn } from '../utils'
+import { PRIORITY_LEVELS, PRIORITY_META } from '../constants'
 import { Search, ArrowUp, ArrowDown } from 'lucide-react'
 import type { SortField, SortDirection } from '../types'
 
@@ -30,6 +31,7 @@ const SORT_OPTIONS = [
   { label: 'Assignee', value: 'assignee' },
   { label: 'Title', value: 'title' },
   { label: 'Label', value: 'label' },
+  { label: 'Priority', value: 'priority' },
 ] as const
 
 const DATE_FILTERS = [
@@ -61,6 +63,8 @@ export interface FilterBarProps {
   onLabelFilterChange: (value: string) => void
   availableLabels: string[]
   labelCounts: Record<string, number>
+  priorityFilter: string
+  onPriorityFilterChange: (value: string) => void
   statusCounts: Record<string, number>
   totalCount: number
   filteredCount: number
@@ -151,6 +155,8 @@ export const FilterBar = forwardRef<FilterBarHandle, FilterBarProps>(function Fi
     onLabelFilterChange,
     availableLabels,
     labelCounts,
+    priorityFilter,
+    onPriorityFilterChange,
     statusCounts,
     totalCount,
     filteredCount,
@@ -244,6 +250,20 @@ export const FilterBar = forwardRef<FilterBarHandle, FilterBarProps>(function Fi
         </SelectContent>
       </Select>
 
+      {/* Priority filter */}
+      <Select value={priorityFilter} onValueChange={onPriorityFilterChange}>
+        <SelectTrigger className="w-full md:w-32">
+          <SelectValue placeholder="Priority" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All priorities</SelectItem>
+          {PRIORITY_LEVELS.map((level) => (
+            <SelectItem key={level} value={level}>
+              {PRIORITY_META[level].badge} {level} — {PRIORITY_META[level].label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       {/* Sort control */}
       {onSortFieldChange && onSortDirectionChange && (
         <>

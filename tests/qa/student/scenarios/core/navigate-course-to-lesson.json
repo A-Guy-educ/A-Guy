@@ -1,0 +1,62 @@
+{
+  "id": "navigate-course-to-lesson",
+  "name": "Student navigates from course to chapter to lesson",
+  "journey": "student-navigates-content",
+  "type": "core",
+  "area": "navigation",
+  "tags": ["navigation", "hierarchy"],
+  "locale": "he",
+  "preconditions": [
+    {
+      "action": "seed",
+      "entity": "course",
+      "data": {
+        "title": "Test Math Course",
+        "courseLabel": "מ",
+        "status": "published",
+        "isActive": true,
+        "accessType": "free"
+      },
+      "ref": "$course"
+    },
+    {
+      "action": "seed",
+      "entity": "chapter",
+      "data": {
+        "title": "Test Fractions",
+        "course": "$course",
+        "chapterLabel": "1",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$chapter"
+    },
+    {
+      "action": "seed",
+      "entity": "lesson",
+      "data": {
+        "title": "Adding Fractions",
+        "chapter": "$chapter",
+        "type": "learning",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$lesson"
+    }
+  ],
+  "steps": [
+    {
+      "action": "openLesson",
+      "input": {
+        "courseRef": "$course",
+        "chapterRef": "$chapter",
+        "lessonRef": "$lesson"
+      }
+    },
+    {
+      "action": "expectUrl",
+      "input": { "pattern": "/lessons/" }
+    }
+  ],
+  "teardown": "auto"
+}

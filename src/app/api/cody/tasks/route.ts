@@ -6,6 +6,7 @@
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { requireCodyAuth, verifyActorLogin, getUserOctokit } from '@/ui/cody/auth'
 
 import {
@@ -13,7 +14,7 @@ import {
   fetchWorkflowRuns,
   fetchOpenPRs,
   fetchDeploymentPreviews,
-  findBranchByIssueNumber,
+  findBranchesByIssueNumbers,
   getStatusFromBranch,
   findStatusOnBranch,
   createIssue,
@@ -190,6 +191,31 @@ export async function GET(req: NextRequest) {
       // for older deployments that fall outside the bulk fetch window.
     }
 
+    // First pass: identify all issue numbers that need branch lookup
+    // (those with active workflows or pipeline labels)
+    const activeIssueNumbers: number[] = []
+    for (const issue of issues) {
+      const taskIdMatch = issue.title.match(/\[[^\]]+\]/)
+      const taskId = taskIdMatch ? taskIdMatch[0].replace(/[\[\]]/g, '') : ''
+      const workflowRun = matchWorkflowRunToTask(workflowRuns, issue.title, issue.number, taskId)
+      const labelNames = issue.labels.map((l) => l.name.toLowerCase())
+      const isLikelyActive =
+        workflowRun?.status === 'in_progress' ||
+        workflowRun?.status === 'queued' ||
+        labelNames.includes('cody:building') ||
+        labelNames.includes('cody:planning') ||
+        labelNames.includes('cody:failed') ||
+        labelNames.includes('hard-stop') ||
+        labelNames.includes('risk-gated')
+
+      if (isLikelyActive && issue.number) {
+        activeIssueNumbers.push(issue.number)
+      }
+    }
+
+    // Batch fetch branches for all active issues (5 GitHub API calls max, not 5*N)
+    const branchByIssueNumber = await findBranchesByIssueNumbers(activeIssueNumbers)
+
     // Parse issues into tasks with additional metadata
     const tasks: CodyTask[] = await Promise.all(
       issues.map(async (issue) => {
@@ -204,8 +230,7 @@ export async function GET(req: NextRequest) {
         const pr = prsByIssueTitle.get(issue.title) ?? prsByIssueNumber.get(issue.number) ?? null
 
         // Fetch pipeline status for tasks with active workflows or pipeline labels.
-        // Only attempts branch discovery for tasks likely to have pipeline data
-        // (has an active workflow run or cody:building/cody:planning labels).
+        // Uses pre-fetched branch map (batch call above) instead of per-task API calls.
         let pipelineStatus = undefined
         const labelNames = issue.labels.map((l) => l.name.toLowerCase())
         const isLikelyActive =
@@ -218,7 +243,7 @@ export async function GET(req: NextRequest) {
           labelNames.includes('risk-gated')
 
         if (isLikelyActive && issue.number) {
-          const branch = await findBranchByIssueNumber(issue.number)
+          const branch = branchByIssueNumber.get(issue.number)
           if (branch) {
             // First try with known taskId from title brackets (fast, exact path)
             let status: Awaited<ReturnType<typeof getStatusFromBranch>> = null
@@ -358,9 +383,30 @@ export async function POST(req: NextRequest) {
   const authResult = await requireCodyAuth(req)
   if (authResult instanceof NextResponse) return authResult
 
+  // Zod validation schema for POST body
+  const createTaskSchema = z.object({
+    title: z.string().min(1),
+    body: z.string().optional(),
+    labels: z.array(z.string()).optional(),
+    assignees: z.array(z.string()).optional(),
+    attachments: z
+      .array(
+        z.object({
+          name: z.string(),
+          content: z.string(),
+        }),
+      )
+      .optional(),
+    actorLogin: z.string().optional(),
+  })
+
   try {
     const body = await req.json()
-    const { title, body: issueBody, labels, assignees, attachments, actorLogin } = body
+
+    // Validate with Zod
+    const validated = createTaskSchema.parse(body)
+
+    const { title, body: issueBody, labels, assignees, attachments, actorLogin } = validated
 
     // Verify actorLogin matches the authenticated session (prevents impersonation)
     const actorResult = await verifyActorLogin(req, actorLogin)
@@ -372,10 +418,6 @@ export async function POST(req: NextRequest) {
 
     // Get user's Octokit (null for legacy sessions → falls back to bot token)
     const userOctokit = await getUserOctokit(req)
-
-    if (!title) {
-      return NextResponse.json({ error: 'Title is required' }, { status: 400 })
-    }
 
     // Create the issue in GitHub — when user token is available, issue appears under their identity
     const actorNote = userOctokit
@@ -435,6 +477,14 @@ export async function POST(req: NextRequest) {
     })
   } catch (error: any) {
     console.error('[Cody] Error creating task:', error)
+
+    // Handle ZodError specifically - return 400 for validation errors
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Validation error', details: error.issues },
+        { status: 400 },
+      )
+    }
 
     // User's GitHub token expired/revoked — prompt re-auth
     if (error.status === 401) {

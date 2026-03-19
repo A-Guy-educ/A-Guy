@@ -2,7 +2,16 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
-import { Globe, Paperclip, X, Image as ImageIcon, FileText, FileCode } from 'lucide-react'
+import {
+  Globe,
+  Paperclip,
+  X,
+  Image as ImageIcon,
+  FileText,
+  FileCode,
+  MessageSquare,
+  History,
+} from 'lucide-react'
 import { AGENTS, type AgentId } from '../agents'
 import type { CodyTask } from '../types'
 import type { ChatMessage, ChatSession } from '../chat-types'
@@ -11,6 +20,11 @@ import { useRemoteStatus } from '../hooks/useRemoteStatus'
 import { useVoiceChat } from '../hooks/useVoiceChat'
 import { VoiceButton } from './VoiceButton'
 import { VoiceChatOverlay } from './VoiceChatOverlay'
+import { useChatSessions } from '../hooks/useChatSessions'
+import { SessionSidebar } from './SessionSidebar'
+import { TaskSessionHistory } from './TaskSessionHistory'
+import { ToolCallList } from './ToolCallCard'
+import { MessageActions } from './MessageActions'
 
 const AGENT_LIST = Object.values(AGENTS).map(({ id, name, description, icon, capabilities }) => ({
   id,
@@ -25,11 +39,46 @@ interface Message {
   content: string
   isLoading?: boolean
   timestamp?: string
+  toolCalls?: Array<{
+    name: string
+    arguments: Record<string, unknown>
+    result?: unknown
+    status: 'running' | 'success' | 'error'
+    durationMs?: number
+  }>
+}
+
+/**
+ * Convert ChatMessage (from session storage) to Message (UI)
+ */
+function chatToMessage(chat: ChatMessage): Message {
+  return {
+    role: chat.role,
+    content: chat.text,
+    timestamp: chat.timestamp,
+    toolCalls: chat.toolCalls,
+  }
+}
+
+/**
+ * Convert Message (UI) to ChatMessage (for session storage)
+ */
+function messageToChat(msg: Message): ChatMessage {
+  return {
+    role: msg.role,
+    text: msg.content,
+    timestamp: msg.timestamp || new Date().toISOString(),
+    toolCalls: msg.toolCalls,
+  }
 }
 
 interface ToolCall {
   name: string
   arguments: Record<string, unknown>
+  result?: unknown
+  status: 'running' | 'success' | 'error'
+  startedAt?: number
+  durationMs?: number
 }
 
 interface Attachment {
@@ -39,40 +88,6 @@ interface Attachment {
   size: number
   data: string // base64
   mimeType: string
-}
-
-/** Per-agent conversation history keyed by AgentId */
-type HistoryMap = Record<AgentId, Message[]>
-
-const emptyHistory = (): HistoryMap => ({
-  'dashboard-manager': [],
-  'prd-refiner': [],
-  'system-architect': [],
-})
-
-const GLOBAL_CHAT_STORAGE_KEY = 'cody-global-chat'
-
-function loadGlobalHistory(): HistoryMap {
-  if (typeof window === 'undefined') return emptyHistory()
-  try {
-    const stored = localStorage.getItem(GLOBAL_CHAT_STORAGE_KEY)
-    if (stored) {
-      const parsed = JSON.parse(stored)
-      return { ...emptyHistory(), ...parsed }
-    }
-  } catch {
-    // Ignore parse errors
-  }
-  return emptyHistory()
-}
-
-function saveGlobalHistory(history: HistoryMap): void {
-  if (typeof window === 'undefined') return
-  try {
-    localStorage.setItem(GLOBAL_CHAT_STORAGE_KEY, JSON.stringify(history))
-  } catch {
-    // Ignore storage errors
-  }
 }
 
 interface CodyChatProps {
@@ -102,14 +117,6 @@ function formatFileSize(bytes: number): string {
 }
 
 export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
-  // Global (non-task) chat history
-  const [globalHistory, setGlobalHistory] = useState<HistoryMap>(emptyHistory)
-
-  // Load from localStorage after hydration (client-only)
-  useEffect(() => {
-    setGlobalHistory(loadGlobalHistory())
-  }, [])
-
   // Task-scoped messages (loaded from / saved to API)
   const [taskMessages, setTaskMessages] = useState<Message[]>([])
   const [isLoadingTaskChat, setIsLoadingTaskChat] = useState(false)
@@ -131,26 +138,39 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
   // Remote dev status (only polls when actorLogin is provided)
   const { data: remoteStatus } = useRemoteStatus(actorLogin)
 
+  // Session sidebar state (for session management feature)
+  const [showSessionSidebar, setShowSessionSidebar] = useState(false)
+
+  // Task session history (loaded from API)
+  const [taskSessions, setTaskSessions] = useState<ChatSession[]>([])
+  const [showTaskHistory, setShowTaskHistory] = useState(false)
+
+  // Use session hook for global (non-task) chat
+  const sessionHook = useChatSessions(selectedAgent)
+
   // Determine if we're in task mode or global mode
   const isTaskMode = !!selectedTask
 
-  // Current messages — from task or global history
-  const messages = isTaskMode ? taskMessages : globalHistory[selectedAgent]
+  // Current messages — from task or global history (via session hook)
+  // Convert ChatMessage[] from session storage to Message[] for UI
+  const messages: Message[] = isTaskMode ? taskMessages : sessionHook.messages.map(chatToMessage)
 
+  // Set messages function - uses session hook in global mode
   const setMessages = useCallback(
     (updater: Message[] | ((prev: Message[]) => Message[])) => {
       if (isTaskMode) {
         // Task mode: update task messages directly
         setTaskMessages((prev) => (typeof updater === 'function' ? updater(prev) : updater))
       } else {
-        // Global mode: update agent-specific history
-        setGlobalHistory((prev) => ({
-          ...prev,
-          [selectedAgent]: typeof updater === 'function' ? updater(prev[selectedAgent]) : updater,
-        }))
+        // Global mode: convert Message[] to ChatMessage[] before storing
+        sessionHook.setMessages((prevChat: ChatMessage[]) => {
+          const newMessages =
+            typeof updater === 'function' ? updater(prevChat.map(chatToMessage)) : updater
+          return newMessages.map(messageToChat)
+        })
       }
     },
-    [isTaskMode, selectedAgent],
+    [isTaskMode, sessionHook],
   )
 
   // Load task chat when task changes
@@ -166,6 +186,9 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
         })
         .then((data) => {
           if (data?.sessions) {
+            // Store all sessions for TaskSessionHistory
+            setTaskSessions(data.sessions)
+
             // Convert dashboard sessions to messages
             const dashboardSessions = data.sessions.filter((s) => s.stage === 'dashboard')
             const converted: Message[] = []
@@ -186,6 +209,7 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
     } else {
       // Clear task messages when no task
       setTaskMessages([])
+      setTaskSessions([])
     }
   }, [selectedTask?.id]) // eslint-disable-line react-hooks/exhaustive-deps -- intentional: only id needed, full object ref changes on every poll
 
@@ -221,14 +245,6 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
       return () => clearTimeout(timer)
     }
   }, [taskMessages, isTaskMode, loading, saveTaskChat])
-
-  // Save global chat to localStorage when it changes (debounced)
-  useEffect(() => {
-    if (!isTaskMode && globalHistory && !loading) {
-      const timer = setTimeout(() => saveGlobalHistory(globalHistory), 2000)
-      return () => clearTimeout(timer)
-    }
-  }, [globalHistory, isTaskMode, loading])
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -281,9 +297,9 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
   }
 
   const executeClearHistory = () => {
-    // Clear global chat from localStorage when clearing history in non-task mode
+    // Clear active session when clearing history in non-task mode
     if (!isTaskMode) {
-      saveGlobalHistory(emptyHistory())
+      sessionHook.clearActiveSession()
     }
 
     setMessages([])
@@ -489,7 +505,15 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
                   break
                 }
                 case 'tool-input-start':
-                  setToolCalls((prev) => [...prev, { name: parsed.toolName, arguments: {} }])
+                  setToolCalls((prev) => [
+                    ...prev,
+                    {
+                      name: parsed.toolName,
+                      arguments: {},
+                      status: 'running' as const,
+                      startedAt: Date.now(),
+                    },
+                  ])
                   break
                 case 'tool-output-available':
                   break
@@ -609,6 +633,20 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
 
   return (
     <div className="relative flex flex-col h-full border-l bg-background">
+      {/* Session Sidebar */}
+      {showSessionSidebar && !isTaskMode && (
+        <SessionSidebar
+          sessions={sessionHook.sessions}
+          activeSessionId={sessionHook.activeSession?.id || null}
+          agentId={selectedAgent}
+          onSwitchSession={sessionHook.switchSession}
+          onCreateSession={sessionHook.createSession}
+          onDeleteSession={sessionHook.deleteSession}
+          onRenameSession={sessionHook.renameSession}
+          onPinSession={sessionHook.pinSession}
+          className="absolute left-0 top-0 bottom-0 w-72 z-50"
+        />
+      )}
       {/* Voice Chat Overlay */}
       {voiceOverlayOpen && (
         <VoiceChatOverlay
@@ -622,6 +660,9 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
             voiceChat.stopConversation()
             setVoiceOverlayOpen(false)
             setVoiceMuted(false)
+          }}
+          onInterrupt={() => {
+            voiceChat.interruptConversation()
           }}
           onToggleMute={handleVoiceToggleMute}
           isMuted={voiceMuted}
@@ -698,6 +739,41 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
               </div>
             )}
           </div>
+
+          {/* Right: Action buttons (session sidebar, task history) */}
+          <div className="flex items-center gap-1">
+            {/* Session sidebar toggle (global mode only) */}
+            {!isTaskMode && (
+              <button
+                onClick={() => setShowSessionSidebar(!showSessionSidebar)}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md border transition-all ${
+                  showSessionSidebar
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-background border-transparent hover:border-border'
+                }`}
+                title="Conversations"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Chats</span>
+              </button>
+            )}
+
+            {/* Task history toggle (task mode only) */}
+            {isTaskMode && taskSessions.length > 0 && (
+              <button
+                onClick={() => setShowTaskHistory(!showTaskHistory)}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md border transition-all ${
+                  showTaskHistory
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-background border-transparent hover:border-border'
+                }`}
+                title="Session History"
+              >
+                <History className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">History</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Context bar: task or global */}
@@ -759,13 +835,54 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
           </div>
         )}
 
+        {/* Task session history (task mode) */}
+        {isTaskMode && showTaskHistory && taskSessions.length > 0 && (
+          <div className="mb-4">
+            <TaskSessionHistory sessions={taskSessions} />
+          </div>
+        )}
+
         {messages.map((msg, i) => (
-          <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+          <div
+            key={i}
+            className={`group flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} relative`}
+          >
             <div
               className={`max-w-[85%] rounded-lg px-3 py-2 text-base ${
                 msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
               }`}
             >
+              {/* Message Actions */}
+              <MessageActions
+                role={msg.role}
+                content={msg.content}
+                isLast={i === messages.length - 1}
+                isLoading={!!msg.isLoading}
+                hasToolCalls={!!msg.toolCalls && msg.toolCalls.length > 0}
+                onCopy={() => msg.content}
+                onRetry={
+                  msg.role === 'assistant' && i === messages.length - 1
+                    ? () => {
+                        /* TODO: Implement retry */
+                      }
+                    : undefined
+                }
+                onEdit={
+                  msg.role === 'user'
+                    ? (content) => {
+                        setMessages((prev) => {
+                          const newMessages = [...prev]
+                          newMessages[i] = { ...newMessages[i], content }
+                          return newMessages
+                        })
+                      }
+                    : undefined
+                }
+                onDelete={() => {
+                  setMessages((prev) => prev.filter((_, idx) => idx !== i))
+                }}
+              />
+
               {msg.role === 'assistant' ? (
                 <div className="prose prose-base dark:prose-invert max-w-none">
                   <ReactMarkdown>
@@ -782,19 +899,19 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
           </div>
         ))}
 
-        {/* Tool calls display */}
+        {/* Tool calls display - using ToolCallList component */}
         {toolCalls.length > 0 && (
           <div className="flex justify-start">
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg px-3 py-2 text-xs">
-              <p className="font-medium mb-1">Using tools:</p>
-              <ul className="space-y-1">
-                {toolCalls.map((tc, i) => (
-                  <li key={i} className="text-blue-600 dark:text-blue-400">
-                    • {tc.name}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <ToolCallList
+              toolCalls={toolCalls.map((tc) => ({
+                name: tc.name,
+                arguments: tc.arguments,
+                result: tc.result,
+                status: tc.status,
+                startedAt: tc.startedAt,
+                durationMs: tc.durationMs,
+              }))}
+            />
           </div>
         )}
 
@@ -851,11 +968,22 @@ export function CodyChat({ selectedTask, actorLogin }: CodyChatProps) {
             isActive={voiceOverlayOpen}
             isSupported={voiceChat.isSupported}
             onTap={() => {
-              if (voiceOverlayOpen) {
+              // Handle tap based on current voice state:
+              // - If AI is speaking: interrupt and start listening (voice interrupt)
+              // - If listening/processing: stop conversation
+              // - If idle: start conversation
+              if (voiceChat.state === 'speaking') {
+                // Voice interrupt: cancel AI speech and start listening
+                voiceChat.interruptConversation()
+                setVoiceOverlayOpen(true)
+                setVoiceMuted(false)
+              } else if (voiceOverlayOpen) {
+                // Already in voice mode - stop it
                 voiceChat.stopConversation()
                 setVoiceOverlayOpen(false)
                 setVoiceMuted(false)
               } else {
+                // Not in voice mode - start it
                 voiceChat.startConversation()
                 setVoiceOverlayOpen(true)
               }

@@ -11,6 +11,13 @@ interface JSXGraphBoardProps {
   showAxis?: boolean
   showGrid?: boolean
   showNavigation?: boolean
+  axisConfig?: {
+    showNumbers?: boolean
+    showLabels?: boolean
+    ticks?: number
+    labels?: { x: string; y: string }
+    tickPosition?: { x: 'default' | 'inverted'; y: 'default' | 'inverted' }
+  }
   onBoardReady?: (board: JXGBoard) => void
 }
 
@@ -22,6 +29,7 @@ export const JSXGraphBoard: React.FC<JSXGraphBoardProps> = ({
   showAxis = false,
   showGrid = false,
   showNavigation = false,
+  axisConfig,
   onBoardReady,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -50,21 +58,67 @@ export const JSXGraphBoard: React.FC<JSXGraphBoardProps> = ({
       boardRef.current = null
     }
 
+    // Build axis options - use defaultAxes when axisConfig is provided
+    const axisOpts =
+      showAxis && axisConfig
+        ? {
+            axis: true,
+            defaultAxes: {
+              x: {
+                ticks: {
+                  visible: axisConfig.showNumbers ?? true,
+                  ticksDistance: axisConfig.ticks ?? 1,
+                  label: {
+                    // Invert tick position: -10 (above) for default, 10 (below) for inverted
+                    offset: [0, axisConfig.tickPosition?.x === 'inverted' ? 10 : -10] as [
+                      number,
+                      number,
+                    ],
+                  },
+                },
+                name: axisConfig.labels?.x ?? 'x',
+                withLabel: axisConfig.showLabels ?? true,
+                // Standardized title position: far right, slightly below
+                label: { position: 'rt', offset: [0, 12] as [number, number] },
+              },
+              y: {
+                ticks: {
+                  visible: axisConfig.showNumbers ?? true,
+                  ticksDistance: axisConfig.ticks ?? 1,
+                  label: {
+                    // Invert tick position: -10 (left) for default, 10 (right) for inverted
+                    offset: [axisConfig.tickPosition?.y === 'inverted' ? 10 : -10, 0] as [
+                      number,
+                      number,
+                    ],
+                  },
+                },
+                name: axisConfig.labels?.y ?? 'y',
+                withLabel: axisConfig.showLabels ?? true,
+                // Standardized title position: near top, slightly to right
+                label: { position: 'rt', offset: [15, 0] as [number, number] },
+              },
+            },
+          }
+        : showAxis
+          ? { axis: true }
+          : { axis: false }
+
     const options: JXGBoardOptions = {
       boundingbox: boundingBox,
-      axis: showAxis,
       grid: showGrid,
       showNavigation,
       showCopyright: false,
       keepAspectRatio: false,
       pan: { enabled: true },
       zoom: { enabled: true },
+      ...axisOpts,
     }
 
     const board = jxgRef.current.JSXGraph.initBoard(containerRef.current, options)
     boardRef.current = board
     onBoardReadyRef.current?.(board)
-  }, [loaded, boundingBox, showAxis, showGrid, showNavigation])
+  }, [loaded, boundingBox, showAxis, showGrid, showNavigation, axisConfig])
 
   useEffect(() => {
     initBoard()

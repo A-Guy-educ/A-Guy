@@ -47,6 +47,29 @@ export const AxisEditor: React.FC<AxisEditorProps> = ({ block, onChange }) => {
   return (
     <div className="axis-editor">
       <div className="question-editor-section">
+        <div className="canvas-config-row">
+          <div className="panel-field">
+            <span className="panel-field-label">Display Size</span>
+            <select
+              className="panel-field-select"
+              value={block.displaySize || 'full'}
+              onChange={(e) =>
+                onChange({
+                  ...block,
+                  displaySize: e.target.value as 'small' | 'medium' | 'large' | 'full',
+                })
+              }
+            >
+              <option value="small">Small (33%)</option>
+              <option value="medium">Medium (50%)</option>
+              <option value="large">Large (75%)</option>
+              <option value="full">Full Width (100%)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div className="question-editor-section">
         <label className="question-editor-label">Prompt</label>
         <InlineRichTextEditor
           value={block.prompt}

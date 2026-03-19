@@ -6,6 +6,7 @@
  */
 
 import type { ChildProcess } from 'child_process'
+import { execFileSync } from 'child_process'
 import * as fs from 'fs'
 import ms from 'ms'
 import * as path from 'path'
@@ -15,6 +16,7 @@ import { buildStagePrompt } from './stage-prompts'
 import { createRunner, type RunnerBackend } from './runner-backend'
 import { logger } from './logger'
 import { STDERR_TAIL_LINES } from './config/constants'
+import { resolveOpenCodeBinary } from './opencode-server'
 
 // ============================================================================
 // Model Resolution
@@ -213,6 +215,33 @@ function findOutputFile(taskDir: string, expectedBase: string, outputExt: string
 }
 
 /**
+ * Recover the latest session ID from OpenCode's database when JSON events
+ * didn't include sessionID (e.g., some model providers omit it).
+ * Uses `opencode session list` to query the local SQLite DB.
+ */
+function recoverSessionId(dataDir?: string): string | undefined {
+  if (!dataDir) return undefined
+
+  try {
+    const binary = resolveOpenCodeBinary()
+    const output = execFileSync(binary, ['session', 'list', '--format', 'json', '-n', '1'], {
+      encoding: 'utf-8',
+      timeout: 10_000,
+      env: { ...process.env, XDG_DATA_HOME: dataDir },
+    })
+
+    const sessions = JSON.parse(output)
+    if (Array.isArray(sessions) && sessions.length > 0 && sessions[0].id) {
+      logger.info(`  🔍 Recovered session ID from DB: ${sessions[0].id.slice(0, 16)}...`)
+      return sessions[0].id
+    }
+  } catch (err) {
+    logger.debug({ err }, 'Failed to recover session ID from OpenCode DB')
+  }
+  return undefined
+}
+
+/**
  * Nudge an agent session to write the missing output file.
  * When an agent exits 0 but forgets the output file, this sends a short
  * continuation message into the same session. Much cheaper than a full retry
@@ -303,6 +332,7 @@ export function formatJsonEvent(line: string): {
   sessionId?: string
   stepTokens?: { input: number; output: number; cacheRead: number }
   stepCost?: number
+  completed?: boolean
 } {
   try {
     const event = JSON.parse(line)
@@ -325,11 +355,13 @@ export function formatJsonEvent(line: string): {
         const outputTokens = event.part?.tokens?.output || 0
         const costStr = typeof cost === 'number' && cost > 0 ? ` · $${cost.toFixed(4)}` : ''
         const cacheStr = cached > 0 ? ` · ${cached} cached` : ''
+        const isCompletion = reason === 'stop'
         return {
           display: `  ✅ Step done (${tokens} tok${cacheStr}${costStr}) [${reason}]`,
           sessionId,
           stepTokens: { input: inputTokens, output: outputTokens, cacheRead: cached },
           stepCost: typeof cost === 'number' ? cost : 0,
+          completed: isCompletion,
         }
       }
 
@@ -505,6 +537,7 @@ export function runAgentWithFileWatch(
       let timeoutTimer: NodeJS.Timeout | null = null
       let stdoutBuffer = ''
       let extractedSessionId: string | undefined
+      let hasCompleted = false // Track if we've detected completion via step_finish event
       const accumulatedTokens = { input: 0, output: 0, cacheRead: 0 }
       let accumulatedCost = 0
       // Write raw JSON events to artifact file for full debugging
@@ -588,6 +621,18 @@ export function runAgentWithFileWatch(
             // Display formatted output
             if (result.display) {
               process.stderr.write(prefixLogLine(stage, result.display) + '\n')
+            }
+
+            // R2-FIX #13: Detect completion via step_finish event.
+            // This fixes the hang in fork mode where process never exits.
+            // When we detect completion, call finish() to trigger file detection,
+            // nudge logic, and retry - all the fallback logic that normally runs
+            // in the exit handler.
+            if (result.completed && !hasCompleted && !resolved) {
+              hasCompleted = true
+              logger.info(`  🎯 Agent signaled completion via event, triggering finish...`)
+              // Call finish with succeeded=true - it handles all the fallback logic
+              finish({ succeeded: true, timedOut: false })
             }
           }
 
@@ -740,6 +785,11 @@ export function runAgentWithFileWatch(
           // Nudge: If agent exited cleanly (code 0) and we have a live session,
           // try a lightweight continuation before burning a full retry.
           // The agent still has all context — it just forgot to write the file.
+          // If extractedSessionId is missing (some models don't emit sessionID in events),
+          // try to recover it from the OpenCode DB before giving up on nudge.
+          if (code === 0 && serverUrl && !extractedSessionId) {
+            extractedSessionId = recoverSessionId(dataDir)
+          }
           if (code === 0 && serverUrl && extractedSessionId) {
             // R2-FIX #12: Skip nudge if insufficient time remaining (need at least 30s)
             const nudgeElapsed = Date.now() - startTime

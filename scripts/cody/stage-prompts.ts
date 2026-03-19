@@ -65,7 +65,7 @@ Read the actual source files in src/ to understand what was built.
 Write tests to tests/ that validate the implementation against spec.md.
 Run tests with pnpm test:unit to verify they pass. Fix any failures before completing.`,
 
-  build: () => `CRITICAL: IMPLEMENTATION STAGE - NOT DOCUMENTATION
+  build: () => `CRITICAL: IMPLEMENTATION STAGE - NOT DOCUMENTATION ONLY
 
 You must ACTUALLY IMPLEMENT the code changes, not just document them.
 
@@ -73,10 +73,12 @@ Your job is to:
 1. Use Edit/Write tools to modify source files in src/
 2. Create new files as needed
 3. Run tests to verify
+4. **MUST write build.md** summarizing what was implemented before exiting
 
 The build.md file should be a SUMMARY of what you implemented, not the implementation plan.
+Write it to: .tasks/<taskId>/build.md
 
-DO NOT just write build.md - that will fail the pipeline! The pipeline validates that you modified actual source files.`,
+DO NOT skip writing build.md - the pipeline REQUIRES this file!`,
 
   commit: () => ``,
 

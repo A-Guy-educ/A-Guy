@@ -47,15 +47,15 @@ describe('GitHub OAuth Callback', () => {
   beforeEach(() => {
     vi.resetModules()
     vi.clearAllMocks()
-    process.env.GITHUB_OAUTH_CLIENT_ID = 'test-client-id'
-    process.env.GITHUB_OAUTH_CLIENT_SECRET = 'test-client-secret'
+    process.env.GITHUB_APP_CLIENT_ID = 'test-client-id'
+    process.env.GITHUB_APP_CLIENT_SECRET = 'test-client-secret'
     process.env.CODY_BOT_TOKEN = BOT_TOKEN
     process.env.PAYLOAD_SECRET = 'test-payload-secret-for-unit-tests'
   })
 
   afterEach(() => {
-    process.env.GITHUB_OAUTH_CLIENT_ID = undefined as unknown as string
-    process.env.GITHUB_OAUTH_CLIENT_SECRET = undefined as unknown as string
+    process.env.GITHUB_APP_CLIENT_ID = undefined as unknown as string
+    process.env.GITHUB_APP_CLIENT_SECRET = undefined as unknown as string
     process.env.CODY_BOT_TOKEN = undefined as unknown as string
     process.env.PAYLOAD_SECRET = undefined as unknown as string
   })

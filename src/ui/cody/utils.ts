@@ -43,12 +43,13 @@ export function formatRelativeTime(date: string | Date): string {
 
 import type { CodyTask, SortField, SortDirection } from './types'
 import type { ViewMode } from './components/FilterBar'
-import { COLUMN_DEFS } from './constants'
+import { COLUMN_DEFS, getTaskPriority, PRIORITY_RANK } from './constants'
 
 export interface ViewModeFilterOptions {
   viewMode: ViewMode
   statusFilter: string
   labelFilter: string
+  priorityFilter: string
 }
 
 /**
@@ -62,7 +63,7 @@ export interface ViewModeFilterOptions {
 export const QUEUE_LABELS = ['cody:queued', 'cody:queue-active', 'cody:queue-failed'] as const
 
 export function filterTasksByView(tasks: CodyTask[], options: ViewModeFilterOptions): CodyTask[] {
-  const { viewMode, statusFilter, labelFilter } = options
+  const { viewMode, statusFilter, labelFilter, priorityFilter } = options
   return tasks.filter((task) => {
     // View mode filter — primary split
     if (viewMode === 'queue') {
@@ -74,6 +75,9 @@ export function filterTasksByView(tasks: CodyTask[], options: ViewModeFilterOpti
     if (statusFilter !== 'all' && task.column !== statusFilter) return false
     // Label filter
     if (labelFilter !== 'all' && !task.labels.includes(labelFilter)) return false
+    // Priority filter
+    if (priorityFilter !== 'all' && !task.labels.includes(`priority:${priorityFilter}`))
+      return false
     return true
   })
 }
@@ -159,6 +163,14 @@ export function sortTasks(
         const aLabel = a.labels?.[0] ?? ''
         const bLabel = b.labels?.[0] ?? ''
         cmp = aLabel.localeCompare(bLabel)
+        break
+      }
+      case 'priority': {
+        const aPri = getTaskPriority(a.labels)
+        const bPri = getTaskPriority(b.labels)
+        const aRank = aPri ? (PRIORITY_RANK[aPri] ?? 99) : 99
+        const bRank = bPri ? (PRIORITY_RANK[bPri] ?? 99) : 99
+        cmp = aRank - bRank
         break
       }
       default:

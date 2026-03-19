@@ -33,6 +33,7 @@ export const AUTH_PATTERNS: RegExp[] = [
   /req\.user/,
   /requireAuth\s*\(/,
   /requireDashboardAuth\s*\(/,
+  /requireCodyAuth\s*\(/,
   /requireAdminOrTestSecret\s*\(/,
   /withApiHandler\s*\(/,
   /withCronMiddleware\s*\(/,
@@ -51,6 +52,7 @@ export const PUBLIC_ROUTE_ALLOWLIST: string[] = [
   'cody/boards/route.ts', // intentional public endpoint
   'chapters/by-grade/route.ts', // public content
   'pdfjs-viewer/route.ts', // viewer proxy
+  'cody/auth/logout/route.ts', // logout clears session — no auth needed
 ]
 
 // ============================================================================

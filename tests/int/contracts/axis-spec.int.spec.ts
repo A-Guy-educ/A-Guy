@@ -121,6 +121,180 @@ describe('AxisSpecV1Schema', () => {
     expect(() => AxisSpecV1Schema.parse(invalidSpec)).toThrow()
   })
 
+  describe('tickPosition field', () => {
+    it('validates axis spec with tickPosition field - inverted X', () => {
+      const validSpec = {
+        kind: 'cartesian',
+        units: 1,
+        grid: { enabled: true },
+        axes: {
+          showNumbers: true,
+          showLabels: true,
+          ticks: 1,
+          labels: { x: 'x', y: 'y' },
+          origin: { x: 0, y: 0 },
+          tickPosition: { x: 'inverted', y: 'default' },
+        },
+        elements: {
+          points: [],
+          graphs: [],
+        },
+      }
+      expect(() => AxisSpecV1Schema.parse(validSpec)).not.toThrow()
+    })
+
+    it('validates axis spec with tickPosition field - inverted Y', () => {
+      const validSpec = {
+        kind: 'cartesian',
+        units: 1,
+        grid: { enabled: true },
+        axes: {
+          showNumbers: true,
+          showLabels: true,
+          ticks: 1,
+          labels: { x: 'x', y: 'y' },
+          origin: { x: 0, y: 0 },
+          tickPosition: { x: 'default', y: 'inverted' },
+        },
+        elements: {
+          points: [],
+          graphs: [],
+        },
+      }
+      expect(() => AxisSpecV1Schema.parse(validSpec)).not.toThrow()
+    })
+
+    it('validates axis spec with tickPosition field - both inverted', () => {
+      const validSpec = {
+        kind: 'cartesian',
+        units: 1,
+        grid: { enabled: true },
+        axes: {
+          showNumbers: true,
+          showLabels: true,
+          ticks: 1,
+          labels: { x: 'x', y: 'y' },
+          origin: { x: 0, y: 0 },
+          tickPosition: { x: 'inverted', y: 'inverted' },
+        },
+        elements: {
+          points: [],
+          graphs: [],
+        },
+      }
+      expect(() => AxisSpecV1Schema.parse(validSpec)).not.toThrow()
+    })
+
+    it('validates axis spec without tickPosition (backward compatibility)', () => {
+      const validSpec = {
+        kind: 'cartesian',
+        units: 1,
+        grid: { enabled: true },
+        axes: {
+          showNumbers: true,
+          showLabels: true,
+          ticks: 1,
+          labels: { x: 'x', y: 'y' },
+          origin: { x: 0, y: 0 },
+        },
+        elements: {
+          points: [],
+          graphs: [],
+        },
+      }
+      // Should not throw - tickPosition is optional
+      expect(() => AxisSpecV1Schema.parse(validSpec)).not.toThrow()
+    })
+
+    it('rejects invalid tickPosition X value', () => {
+      const invalidSpec = {
+        kind: 'cartesian',
+        units: 1,
+        grid: { enabled: true },
+        axes: {
+          showNumbers: true,
+          showLabels: true,
+          ticks: 1,
+          labels: { x: 'x', y: 'y' },
+          origin: { x: 0, y: 0 },
+          tickPosition: { x: 'invalid', y: 'default' },
+        },
+        elements: {
+          points: [],
+          graphs: [],
+        },
+      }
+      expect(() => AxisSpecV1Schema.parse(invalidSpec)).toThrow()
+    })
+
+    it('rejects invalid tickPosition Y value', () => {
+      const invalidSpec = {
+        kind: 'cartesian',
+        units: 1,
+        grid: { enabled: true },
+        axes: {
+          showNumbers: true,
+          showLabels: true,
+          ticks: 1,
+          labels: { x: 'x', y: 'y' },
+          origin: { x: 0, y: 0 },
+          tickPosition: { x: 'default', y: 'upside_down' },
+        },
+        elements: {
+          points: [],
+          graphs: [],
+        },
+      }
+      expect(() => AxisSpecV1Schema.parse(invalidSpec)).toThrow()
+    })
+
+    it('defaults missing x in tickPosition to default', () => {
+      const spec = {
+        kind: 'cartesian',
+        units: 1,
+        grid: { enabled: true },
+        axes: {
+          showNumbers: true,
+          showLabels: true,
+          ticks: 1,
+          labels: { x: 'x', y: 'y' },
+          origin: { x: 0, y: 0 },
+          tickPosition: { y: 'inverted' },
+        },
+        elements: {
+          points: [],
+          graphs: [],
+        },
+      }
+      const result = AxisSpecV1Schema.parse(spec)
+      expect(result.axes.tickPosition?.x).toBe('default')
+      expect(result.axes.tickPosition?.y).toBe('inverted')
+    })
+
+    it('defaults missing y in tickPosition to default', () => {
+      const spec = {
+        kind: 'cartesian',
+        units: 1,
+        grid: { enabled: true },
+        axes: {
+          showNumbers: true,
+          showLabels: true,
+          ticks: 1,
+          labels: { x: 'x', y: 'y' },
+          origin: { x: 0, y: 0 },
+          tickPosition: { x: 'inverted' },
+        },
+        elements: {
+          points: [],
+          graphs: [],
+        },
+      }
+      const result = AxisSpecV1Schema.parse(spec)
+      expect(result.axes.tickPosition?.x).toBe('inverted')
+      expect(result.axes.tickPosition?.y).toBe('default')
+    })
+  })
+
   // Tests for FR-008: Viewport Schema Extension
   describe('viewportMode field', () => {
     it('defaults to auto when viewportMode is omitted (backward compatibility)', () => {

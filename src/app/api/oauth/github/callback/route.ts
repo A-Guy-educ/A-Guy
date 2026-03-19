@@ -4,7 +4,7 @@
  * @fileType api-route
  * @domain auth
  * @pattern oauth
- * @ai-summary Handles GitHub OAuth callback for the Cody Operations Dashboard.
+ * @ai-summary Handles GitHub App OAuth callback for the Cody Operations Dashboard.
  *   Exchanges code for access token, fetches user profile, verifies the user is
  *   a repo collaborator (using bot token — admin access required for this endpoint), then issues
  *   a signed JWT session cookie with the encrypted access token embedded.
@@ -46,12 +46,12 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return res
   }
 
-  const clientId = process.env.GITHUB_OAUTH_CLIENT_ID
-  const clientSecret = process.env.GITHUB_OAUTH_CLIENT_SECRET
+  const clientId = process.env.GITHUB_APP_CLIENT_ID
+  const clientSecret = process.env.GITHUB_APP_CLIENT_SECRET
   if (!clientId || !clientSecret) {
     logger.error(
       { correlationId, event: 'github_oauth_not_configured' },
-      'GitHub OAuth env vars missing',
+      'GitHub App env vars missing',
     )
     res.headers.set('Location', new URL('/cody?error=not_configured', req.url).toString())
     return res

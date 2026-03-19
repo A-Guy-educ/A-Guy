@@ -158,9 +158,9 @@ describe('Post-Actions', () => {
       const action: PostAction = { type: 'resolve-profile' }
       await executePostAction(ctx, action, null)
 
-      // Original complexity preserved — override only applies when complexity is undefined
-      expect(ctx.taskDef!.complexity).toBe(75)
-      expect(ctx.taskDef!.complexity_reasoning).toBe('LLM scored')
+      // Override applies even when taskDef already has complexity (new behavior)
+      expect(ctx.taskDef!.complexity).toBe(10)
+      expect(ctx.taskDef!.complexity_reasoning).toContain('Override via --complexity=10')
     })
 
     it('should log tier info when task has complexity', async () => {

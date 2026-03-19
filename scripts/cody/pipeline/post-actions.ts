@@ -72,10 +72,17 @@ export async function executePostAction(
       const taskDef = readTask(ctx.taskDir)
       if (taskDef) {
         // Apply --complexity override if provided (for testing/debugging)
-        if (ctx.input.complexityOverride !== undefined && taskDef.complexity === undefined) {
+        if (ctx.input.complexityOverride !== undefined) {
+          const oldComplexity = taskDef.complexity
           taskDef.complexity = ctx.input.complexityOverride
           taskDef.complexity_reasoning = `Override via --complexity=${ctx.input.complexityOverride}`
-          logger.info(`  ℹ️ Applied complexity override: ${ctx.input.complexityOverride}`)
+          if (oldComplexity !== undefined) {
+            logger.info(
+              `  ℹ️ Complexity override: ${oldComplexity} → ${ctx.input.complexityOverride}`,
+            )
+          } else {
+            logger.info(`  ℹ️ Complexity override applied: ${ctx.input.complexityOverride}`)
+          }
         }
         // Update ctx.taskDef so subsequent post-actions can access it
         ctx.taskDef = taskDef

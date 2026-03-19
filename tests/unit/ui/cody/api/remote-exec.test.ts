@@ -141,12 +141,12 @@ describe('GET /api/cody/remote/status', () => {
     vi.mocked(getRemoteConfig).mockReturnValue(undefined)
   })
 
-  it('returns 404 when user is not configured', async () => {
+  it('returns 200 with configured: false when user is not configured', async () => {
     const { GET } = await import('@/app/api/cody/remote/status/route')
 
     const req = new NextRequest('http://localhost/api/cody/remote/status?actorLogin=unknown')
     const res = await GET(req)
-    expect(res.status).toBe(404)
+    expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.configured).toBe(false)
   })

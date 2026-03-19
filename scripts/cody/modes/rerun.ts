@@ -38,7 +38,7 @@ export async function runRerunMode(ctx: PipelineContext): Promise<void> {
   // (spec.md, task.md, task.json) live on the feature branch. Checkout the
   // task's feature branch BEFORE checking for files, otherwise we'll falsely
   // fall back to full mode and fail with "task.md not found".
-  if (process.env.GITHUB_ACTIONS) {
+  if (process.env.GITHUB_ACTIONS && !input.dryRun) {
     const checkedOut = checkoutTaskBranch(input.taskId, taskDir)
     if (!checkedOut) {
       logger.info('No feature branch found for task — falling back to full pipeline')
@@ -145,6 +145,10 @@ export async function runRerunMode(ctx: PipelineContext): Promise<void> {
     logger.info('⚡ Turbo mode: forcing turbo profile')
   }
 
+  // Track if fromStage was explicitly provided (via CLI) vs derived from failed/paused stage
+  // If explicitly provided, don't inject default feedback (prevents backup to architect on auto-retries)
+  const fromStageExplicitlyProvided = !!input.fromStage
+
   // Determine fromStage
   // FIX #673: After gate approval, use the NEXT stage (not the approved one)
   // to prevent resetFromStage from overwriting the gate approval
@@ -180,8 +184,9 @@ export async function runRerunMode(ctx: PipelineContext): Promise<void> {
     }
   }
 
-  // Default feedback
-  if (!input.feedback) {
+  // Default feedback - but only if fromStage wasn't explicitly provided
+  // This prevents unnecessary backup to architect on auto-retries (pipeline-fixer)
+  if (!input.feedback && !fromStageExplicitlyProvided) {
     input.feedback = 'Rerun requested via /cody rerun'
   }
 
@@ -207,16 +212,20 @@ export async function runRerunMode(ctx: PipelineContext): Promise<void> {
   const stageOrder = flattenPipelineOrder(pipeline.order)
 
   // P3 fix: Back up to architect when feedback provided so plan can be revised
-  const resolvedFrom = resolveRerunFromStage(input.fromStage || 'build', input.feedback, stageOrder)
-  if (resolvedFrom !== input.fromStage) {
-    logger.info(
-      `  \u2139\ufe0f Feedback provided \u2014 backing up from ${input.fromStage} to ${resolvedFrom} for plan revision`,
-    )
-    input.fromStage = resolvedFrom
+  // BUT: Don't back up if fromStage was explicitly provided (via CLI --from or pipeline-fixer)
+  // This prevents pipeline-fixer retries from unnecessarily re-running architect
+  let resolvedFrom = input.fromStage || 'build'
+  if (!fromStageExplicitlyProvided && input.feedback) {
+    resolvedFrom = resolveRerunFromStage(resolvedFrom, input.feedback, stageOrder)
+    if (resolvedFrom !== input.fromStage) {
+      logger.info(
+        `  ℹ️ Feedback provided — backing up from ${input.fromStage} to ${resolvedFrom} for plan revision`,
+      )
+    }
   }
 
   // Fix 5: Validate fromStage exists in the resolved pipeline order
-  let fromStage = input.fromStage || 'build'
+  let fromStage = resolvedFrom
   if (!stageOrder.includes(fromStage as StageName)) {
     const fallback = findNearestEarlierStage(fromStage, stageOrder)
     logger.warn(

@@ -182,24 +182,10 @@ export function useDirectChatAssetUpload(): UseDirectChatAssetUploadReturn {
         ),
       )
 
-      // Try to get uploadSessionId from tokenPayload, otherwise use the localId as fallback
-      let uploadSessionIdVal = localId
-      try {
-        const rawTokenPayload = (blobResult as { tokenPayload?: string }).tokenPayload
-        if (rawTokenPayload) {
-          const parsed = JSON.parse(rawTokenPayload) as { uploadSessionId?: unknown }
-          if (parsed && typeof parsed.uploadSessionId === 'string') {
-            uploadSessionIdVal = parsed.uploadSessionId
-          }
-        }
-      } catch {
-        // Ignore parse errors - use localId fallback
-      }
-
       const finalizeResponse = await fetch('/api/chat-assets/finalize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uploadSessionId: uploadSessionIdVal || '' }),
+        body: JSON.stringify({ blobUrl: blobResult.url, originalFilename: file.name }),
       })
 
       if (!finalizeResponse.ok) {

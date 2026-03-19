@@ -22,6 +22,7 @@ export interface UseVoiceChatReturn {
   stopConversation: () => void
   pauseConversation: () => void
   resumeConversation: () => void
+  interruptConversation: () => void // NEW: Allow interrupting AI to start listening
   currentTranscript: string
   turnCount: number
   error: string | null
@@ -143,6 +144,18 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
     stt.start()
   }, [isSupported, setS, stt])
 
+  // NEW: Allow interrupting AI while it's speaking to start listening
+  const interruptConversation = useCallback(() => {
+    // Cancel TTS if speaking
+    tts.cancel()
+    // Reset retry state
+    retryRef.current = 0
+    pausedRef.current = false
+    // Go back to listening
+    setS('listening')
+    stt.start()
+  }, [tts, setS, stt])
+
   const onResponseComplete = useCallback(
     (text: string) => {
       if (stateRef.current !== 'processing') return
@@ -168,6 +181,7 @@ export function useVoiceChat(options: UseVoiceChatOptions): UseVoiceChatReturn {
     stopConversation,
     pauseConversation,
     resumeConversation,
+    interruptConversation,
     currentTranscript: stt.transcript,
     turnCount,
     error,

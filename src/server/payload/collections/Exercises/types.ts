@@ -233,6 +233,7 @@ export interface QuestionAxisBlock {
   prompt: InlineRichText
   layout?: GraphLayout
   axis: AxisSpecV1
+  displaySize?: 'small' | 'medium' | 'large' | 'full'
   answer?: QuestionAnswer
   hint?: InlineRichText
   solution?: InlineRichText

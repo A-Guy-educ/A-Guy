@@ -1,0 +1,123 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [".ai-docs/BOOTSTRAP.md", ".ai-docs/quick-reference/CHEAT-SHEET.md"],
+  "provider": {
+    "groq": {
+      "options": {
+        "baseURL": "http://localhost:8080/v1",
+        "apiKey": "mock-key"
+      }
+    }
+  },
+  "agent": {
+    "build": {
+      "model": "groq/llama-3.3-70b-versatile",
+      "description": "Building features (MOCK - uses recorded responses)"
+    },
+    "plan": {
+      "model": "groq/llama-3.3-70b-versatile",
+      "description": "Planning tasks (MOCK - uses recorded responses)"
+    },
+    "architect": {
+      "model": "groq/llama-3.3-70b-versatile",
+      "description": "Architecture design (MOCK - uses recorded responses)"
+    },
+    "clarify": {
+      "model": "groq/llama-3.3-70b-versatile",
+      "description": "Collects questions (MOCK - uses recorded responses)"
+    },
+    "taskify": {
+      "model": "groq/llama-3.3-70b-versatile",
+      "description": "Creates task.json (MOCK - uses recorded responses)"
+    },
+    "gap": {
+      "model": "groq/llama-3.3-70b-versatile",
+      "description": "Analyzes gaps (MOCK - uses recorded responses)"
+    },
+    "plan-gap": {
+      "model": "groq/llama-3.3-70b-versatile",
+      "description": "Analyzes plan gaps (MOCK - uses recorded responses)"
+    },
+    "autofix": {
+      "model": "groq/llama-3.3-70b-versatile",
+      "description": "Auto-fixes (MOCK - uses recorded responses)"
+    },
+    "verify": {
+      "model": "groq/llama-3.3-70b-versatile",
+      "description": "Runs tests (MOCK - uses recorded responses)"
+    },
+    "test": {
+      "model": "groq/llama-3.3-70b-versatile",
+      "description": "Writes tests (MOCK - uses recorded responses)"
+    },
+    "advisor": {
+      "model": "groq/llama-3.3-70b-versatile",
+      "description": "Code review (MOCK - uses recorded responses)"
+    },
+    "pr": {
+      "model": "groq/llama-3.3-70b-versatile",
+      "description": "Creates PR (MOCK - uses recorded responses)"
+    },
+    "cody-expert": {
+      "model": "groq/llama-3.3-70b-versatile",
+      "description": "Pipeline expert (MOCK - uses recorded responses)"
+    },
+    "build-manager": {
+      "model": "groq/llama-3.3-70b-versatile",
+      "description": "Orchestration (MOCK - uses recorded responses)"
+    },
+    "test-writer": {
+      "model": "groq/llama-3.3-70b-versatile",
+      "description": "TDD writer (MOCK - uses recorded responses)"
+    },
+    "browser": {
+      "model": "groq/llama-3.3-70b-versatile",
+      "description": "Browser agent (MOCK - uses recorded responses)"
+    },
+    "review": {
+      "model": "groq/llama-3.3-70b-versatile",
+      "description": "Code review (MOCK - uses recorded responses)"
+    },
+    "fix": {
+      "model": "groq/llama-3.3-70b-versatile",
+      "description": "Targeted fixes (MOCK - uses recorded responses)"
+    },
+    "reflect": {
+      "model": "groq/llama-3.3-70b-versatile",
+      "description": "Reflection (MOCK - uses recorded responses)"
+    },
+    "e2e-test-writer": {
+      "model": "groq/llama-3.3-70b-versatile",
+      "description": "E2E tests (MOCK - uses recorded responses)"
+    }
+  },
+  "mcp": {
+    "chrome-devtools": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "chrome-devtools-mcp@latest",
+        "--isolated=true",
+        "--no-usage-statistics"
+      ]
+    },
+    "figma": {
+      "type": "local",
+      "command": ["npx", "-y", "figma-developer-mcp", "--figma-api-key=${FIGMA_API_KEY}", "--stdio"]
+    },
+    "playwright": {
+      "type": "local",
+      "command": [
+        "npx",
+        "@playwright/mcp@latest",
+        "--headless",
+        "--caps=vision,devtools,pdf",
+        "--storage-state=scripts/browser-agent/.auth/storage-state.json",
+        "--test-id-attribute=data-testid",
+        "--console-level=info",
+        "--viewport-size=1280x720"
+      ]
+    }
+  }
+}

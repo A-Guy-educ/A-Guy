@@ -47,6 +47,21 @@ vi.mock('@ai-sdk/mcp', () => ({
   ),
 }))
 
+// Mock child_process spawn for Figma MCP
+vi.mock('child_process', () => ({
+  spawn: vi.fn(() => ({
+    kill: vi.fn(),
+  })),
+}))
+
+vi.mock('net', () => ({
+  Socket: vi.fn(() => ({
+    connect: vi.fn(),
+    on: vi.fn(),
+    destroy: vi.fn(),
+  })),
+}))
+
 vi.mock('@ai-sdk/google', () => ({
   createGoogleGenerativeAI: vi.fn(() => (model: string) => ({ model })),
 }))
@@ -73,6 +88,8 @@ describe('chat route — remote tools injection', () => {
     process.env.GEMINI_API_KEY = 'test-key'
     process.env.GH_PAT = 'test-token'
     process.env.NEXT_PUBLIC_SERVER_URL = 'http://localhost:3000'
+    // Prevent Figma MCP from spawning in tests
+    delete process.env.FIGMA_API_KEY
   })
 
   it('does NOT inject remote tools when user has no remote config', async () => {

@@ -4,16 +4,15 @@
  * @pattern ai-chat-streaming
  * @ai-summary Streaming AI chat endpoint with GitHub MCP tools for repo browsing
  */
-import { createMCPClient } from '@ai-sdk/mcp'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { streamText, tool, stepCountIs, type ToolSet } from 'ai'
-import { spawn, type ChildProcess } from 'child_process'
-import * as net from 'net'
 import { z } from 'zod'
 import { logger } from '@/infra/utils/logger/logger'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireCodyAuth, verifyActorLogin } from '@/ui/cody/auth'
-import { getAgent, type ToolScope } from '@/ui/cody/agents'
+import { getAgent, type ToolScope, type AgentId } from '@/ui/cody/agents'
+import { getMCPManager } from './mcp-manager'
+import { browseUrlTool } from './tools/browse-url'
 import {
   fetchIssue,
   fetchIssues,
@@ -37,120 +36,6 @@ import type {
 
 // Use Node.js runtime
 export const runtime = 'nodejs'
-
-// Cache the MCP clients — retry on failure instead of caching rejections
-let mcpClient: Awaited<ReturnType<typeof createMCPClient>> | null = null
-let mcpClientPending: ReturnType<typeof createMCPClient> | null = null
-
-// Figma MCP client
-let figmaMcpProcessRef: ChildProcess | null = null
-let figmaMcpClient: Awaited<ReturnType<typeof createMCPClient>> | null = null
-let figmaMcpPending: ReturnType<typeof createMCPClient> | null = null
-
-async function getMCPClient() {
-  // Return cached client if already initialized
-  if (mcpClient) return mcpClient
-
-  // Deduplicate concurrent initialization attempts
-  if (mcpClientPending) return mcpClientPending
-
-  mcpClientPending = createMCPClient({
-    transport: {
-      type: 'http',
-      url: 'https://api.githubcopilot.com/mcp/',
-      headers: {
-        Authorization: `Bearer ${process.env.GH_PAT || process.env.GITHUB_TOKEN}`,
-      },
-    },
-  })
-
-  try {
-    mcpClient = await mcpClientPending
-    return mcpClient
-  } catch (error) {
-    // Clear pending so next request retries instead of replaying the same error
-    mcpClientPending = null
-    throw error
-  }
-}
-
-function cleanupFigmaMCPProcess() {
-  if (figmaMcpProcessRef) {
-    try {
-      figmaMcpProcessRef.kill()
-    } catch {
-      // Process may already be dead
-    }
-    figmaMcpProcessRef = null
-  }
-}
-
-// Cleanup Figma MCP child process on server shutdown
-process.on('beforeExit', cleanupFigmaMCPProcess)
-process.on('SIGTERM', cleanupFigmaMCPProcess)
-process.on('SIGINT', cleanupFigmaMCPProcess)
-
-async function getFigmaMCPClient() {
-  // Skip if no Figma API key configured
-  if (!process.env.FIGMA_API_KEY) return null
-
-  // Return cached client if already initialized
-  if (figmaMcpClient) return figmaMcpClient
-
-  // Deduplicate concurrent initialization attempts
-  if (figmaMcpPending) return figmaMcpPending
-
-  // Spawn figma-developer-mcp as background HTTP server
-  // Use a random available port
-  const port = 3_000 + Math.floor(Math.random() * 1000)
-
-  // SECURITY: Pass API key via env vars, not CLI args (CLI args visible via `ps aux`)
-  const figmaMcpProcess = spawn('npx', ['-y', 'figma-developer-mcp', '--port', port.toString()], {
-    stdio: ['ignore', 'pipe', 'pipe'],
-    env: { ...process.env, FIGMA_API_KEY: process.env.FIGMA_API_KEY },
-    detached: false,
-  })
-
-  // Track process for cleanup on shutdown
-  figmaMcpProcessRef = figmaMcpProcess
-
-  // Wait for server to be ready (check if port is listening)
-  await new Promise<void>((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      cleanupFigmaMCPProcess()
-      reject(new Error('Figma MCP server startup timeout'))
-    }, 10_000)
-
-    const checkPort = setInterval(() => {
-      const client = new net.Socket()
-      client.connect(port, '127.0.0.1', () => {
-        clearInterval(checkPort)
-        clearTimeout(timeout)
-        client.destroy()
-        resolve()
-      })
-      client.on('error', () => {
-        client.destroy()
-      })
-    }, 200)
-  })
-
-  figmaMcpPending = createMCPClient({
-    transport: {
-      type: 'http',
-      url: `http://127.0.0.1:${port}/mcp`,
-    },
-  })
-
-  try {
-    figmaMcpClient = await figmaMcpPending
-    return figmaMcpClient
-  } catch (error) {
-    figmaMcpPending = null
-    cleanupFigmaMCPProcess()
-    throw error
-  }
-}
 
 // Attachment from request
 interface Attachment {
@@ -368,6 +253,9 @@ const customTools = {
       }
     },
   }),
+
+  // Web browsing tool - fetch and read any public web page
+  browseUrl: browseUrlTool,
 }
 
 // ===========================================
@@ -666,27 +554,15 @@ export async function GET(req: NextRequest) {
       return authResult // Return the 401 response
     }
 
-    // Test MCP connection — 5s timeout to avoid hanging
-    let mcpToolCount = 0
-    try {
-      const mcpCheck = (async () => {
-        const mcp = await getMCPClient()
-        const tools = await mcp.tools()
-        return Object.keys(tools).length
-      })()
-      mcpToolCount = await Promise.race([
-        mcpCheck,
-        new Promise<number>((resolve) => setTimeout(() => resolve(0), 5_000)),
-      ])
-    } catch (mcpError) {
-      logger.warn({ err: mcpError }, 'GitHub MCP unavailable for health check')
-    }
+    // Get MCP health status from manager
+    const mcpManager = getMCPManager()
+    const mcps = await mcpManager.getHealthStatus()
+    const totalMcpTools = mcps.reduce((sum, m) => sum + m.toolCount, 0)
 
     return NextResponse.json({
       status: 'Chat endpoint ready',
-      toolsets: mcpToolCount > 0 ? ['github-mcp', 'custom-cody'] : ['custom-cody'],
-      toolCount: mcpToolCount + Object.keys(customTools).length,
-      mcpEnabled: mcpToolCount > 0,
+      mcps,
+      toolCount: totalMcpTools + Object.keys(customTools).length,
     })
   } catch (error) {
     logger.error({ err: error }, 'Chat GET error')
@@ -758,66 +634,23 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Get GitHub MCP tools — 5s timeout to allow initial handshake, skip on failure
-    let mcpTools = {} as Record<string, unknown>
-    try {
-      const mcpToolsPromise = (async () => {
-        const mcp = await getMCPClient()
-        return await mcp.tools()
-      })()
+    // Get MCP tools for this agent via the manager (handles timeout and graceful degradation)
+    const mcpManager = getMCPManager()
+    const mcpTools = await mcpManager.getTools(agent.id as AgentId)
 
-      const timeoutMs = 5_000
-      const mcpToolsOrEmpty = await Promise.race([
-        mcpToolsPromise,
-        new Promise<Record<string, never>>((resolve) => setTimeout(() => resolve({}), timeoutMs)),
-      ])
+    logger.info(
+      { requestId, agentId: agent.id, mcpToolCount: Object.keys(mcpTools).length },
+      'MCP tools loaded for agent',
+    )
 
-      if (Object.keys(mcpToolsOrEmpty).length > 0) {
-        mcpTools = mcpToolsOrEmpty
-        logger.info(
-          { requestId, mcpToolCount: Object.keys(mcpTools).length },
-          'GitHub MCP tools loaded',
-        )
-      } else {
-        logger.warn({ requestId }, 'GitHub MCP timed out after 5s - using custom tools only')
-      }
-    } catch (mcpError) {
-      logger.warn({ err: mcpError, requestId }, 'GitHub MCP unavailable - using custom tools only')
-    }
-
-    // Get Figma MCP tools — 5s timeout, skip on failure
-    let figmaMcpTools = {} as Record<string, unknown>
-    try {
-      const figmaMcp = await getFigmaMCPClient()
-      if (figmaMcp) {
-        const figmaToolsPromise = (async () => {
-          return await figmaMcp.tools()
-        })()
-
-        const timeoutMs = 5_000
-        const figmaToolsOrEmpty = await Promise.race([
-          figmaToolsPromise,
-          new Promise<Record<string, never>>((resolve) => setTimeout(() => resolve({}), timeoutMs)),
-        ])
-
-        if (Object.keys(figmaToolsOrEmpty).length > 0) {
-          figmaMcpTools = figmaToolsOrEmpty
-          logger.info(
-            { requestId, figmaToolCount: Object.keys(figmaMcpTools).length },
-            'Figma MCP tools loaded',
-          )
-        }
-      }
-    } catch (figmaError) {
-      logger.warn({ err: figmaError, requestId }, 'Figma MCP unavailable - continuing without it')
+    // Get MCP system prompt extensions (e.g., Figma tool documentation)
+    const mcpPromptExt = await mcpManager.getSystemPromptExtensions(agent.id as AgentId)
+    if (mcpPromptExt) {
+      systemPrompt = systemPrompt + mcpPromptExt
     }
 
     // Filter tools based on agent's toolScope
-    let allTools = filterToolsByScope(
-      agent.toolScope,
-      { ...mcpTools, ...figmaMcpTools },
-      customTools,
-    ) as ToolSet
+    let allTools = filterToolsByScope(agent.toolScope, mcpTools, customTools) as ToolSet
 
     // Inject remote tools if this user has a remote dev environment configured
     // Use verified identity.login instead of client-supplied actorLogin
@@ -827,6 +660,17 @@ export async function POST(req: NextRequest) {
       // Extend system prompt with remote tool instructions
       systemPrompt = systemPrompt + REMOTE_SYSTEM_PROMPT_EXTENSION
     }
+
+    // Inject dynamic tool list into system prompt
+    // This ensures the LLM knows exactly which tools it has available at runtime
+    const toolNames = Object.keys(allTools)
+    const toolInventory =
+      `\n\n## Your Available Tools (${toolNames.length})\n\n` +
+      toolNames.map((name) => `- ${name}`).join('\n') +
+      `\n\nIMPORTANT: If a user asks you to do something and you don't have a tool for it, ` +
+      `explicitly say which tool or capability would be needed. Never say "I cannot" without ` +
+      `explaining what's missing. If the user shares a URL, use the browseUrl tool to read it.`
+    systemPrompt = systemPrompt + toolInventory
 
     // Convert messages to AI SDK format, handling attachments
     const attachmentContents = processAttachments(attachments)

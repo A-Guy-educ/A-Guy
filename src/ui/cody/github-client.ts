@@ -271,6 +271,69 @@ export async function findBranchByIssueNumber(
   return null
 }
 
+/**
+ * Fetch branches for multiple issue numbers in a single batch.
+ * Makes 5 listMatchingRefs calls (one per prefix) instead of 5*N calls.
+ * Returns a map of issueNumber -> branchName.
+ *
+ * Also caches the full branch list per prefix to avoid redundant calls on subsequent polls.
+ */
+export async function findBranchesByIssueNumbers(
+  issueNumbers: (string | number)[],
+): Promise<Map<number, string>> {
+  if (issueNumbers.length === 0) return new Map()
+
+  const result = new Map<number, string>()
+  const issueStrs = issueNumbers.map((n) => String(n))
+  const octokit = getOctokit()
+
+  // Fetch all branches for each prefix in parallel
+  // Map updates + caching happen in-place, results not needed
+  void (await Promise.allSettled(
+    BRANCH_PREFIXES.map(async (prefix) => {
+      // Check cache first for this prefix's branch list
+      const prefixCacheKey = `branches:prefix:${prefix}`
+      let branches: string[] | null = getCached<string[]>(prefixCacheKey)
+
+      if (!branches) {
+        // Not cached, fetch from GitHub
+        try {
+          const { data } = await octokit.git.listMatchingRefs({
+            owner: GITHUB_OWNER,
+            repo: GITHUB_REPO,
+            ref: `heads/${prefix}/`,
+          })
+          branches = data.map((ref: any) => ref.ref.replace('refs/heads/', ''))
+          // Cache the full branch list for this prefix (10 min)
+          setCache(prefixCacheKey, BRANCH_CACHE_TTL, branches)
+        } catch {
+          branches = []
+        }
+      }
+
+      // Now search for each issue number in this prefix's branches
+      for (const issueStr of issueStrs) {
+        const pattern = new RegExp(`-${issueStr}-`)
+        const match = branches!.find((branchName) => pattern.test(branchName))
+        if (match) {
+          const issueNum = parseInt(issueStr, 10)
+          // Only set if not already found (first match wins)
+          if (!result.has(issueNum)) {
+            result.set(issueNum, match)
+            // Also cache individual branch lookup for future single-issue lookups
+            const individualCacheKey = `branch:issue:${issueStr}`
+            setCache(individualCacheKey, BRANCH_CACHE_TTL, match)
+          }
+        }
+      }
+
+      return branches
+    }),
+  ))
+
+  return result
+}
+
 // ============ Status JSON Access ============
 
 /**
