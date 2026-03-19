@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import { AxisRenderer } from '@/ui/web/exerciserenderer/blocks/AxisRenderer'
 import type { DisplaySize } from '@/ui/web/exerciserenderer/blocks/AxisRenderer'
 
@@ -13,13 +13,22 @@ type Props = GraphBlockType & {
 }
 
 export const GraphBlock: React.FC<Props> = ({ id, spec, displaySize }) => {
-  if (!spec || typeof spec !== 'object') return null
+  const parsed = useMemo<AxisSpecV1 | null>(() => {
+    if (!spec) return null
+    try {
+      return (typeof spec === 'string' ? JSON.parse(spec) : spec) as AxisSpecV1
+    } catch {
+      return null
+    }
+  }, [spec])
+
+  if (!parsed) return null
 
   return (
     <div className="flex justify-center">
       <AxisRenderer
         blockId={id ?? 'graph'}
-        spec={spec as AxisSpecV1}
+        spec={parsed}
         displaySize={(displaySize as DisplaySize) ?? 'full'}
       />
     </div>

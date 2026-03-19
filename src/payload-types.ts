@@ -1360,29 +1360,13 @@ export interface MediaBlock {
  */
 export interface TableBlock {
   /**
-   * Array of header strings, e.g. ["Name", "Value", "Unit"]
+   * JSON array of header strings, e.g. ["Name", "Value", "Unit"]
    */
-  headers:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
+  headers: string;
   /**
-   * Array of row arrays, e.g. [["Mass", "5", "kg"], ["Length", "10", "m"]]
+   * JSON array of row arrays, e.g. [["Mass", "5", "kg"], ["Length", "10", "m"]]
    */
-  rows:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
+  rows: string;
   showBorders?: boolean | null;
   showHeader?: boolean | null;
   id?: string | null;
@@ -1397,15 +1381,7 @@ export interface GeometryBlock {
   /**
    * GeometrySpecV1 JSON. Must have kind:"euclidean", canvas:{width,height}, and elements:{points,lines,circles,angles}.
    */
-  spec:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
+  spec: string;
   id?: string | null;
   blockName?: string | null;
   blockType: 'geometryBlock';
@@ -1418,15 +1394,7 @@ export interface GraphBlock {
   /**
    * AxisSpecV1 JSON. Must have kind:"cartesian", units, grid, axes, and elements:{points,graphs}.
    */
-  spec:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
+  spec: string;
   displaySize?: ('small' | 'medium' | 'large' | 'full') | null;
   id?: string | null;
   blockName?: string | null;

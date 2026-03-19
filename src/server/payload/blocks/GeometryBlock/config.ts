@@ -10,9 +10,10 @@ export const GeometryBlock: Block = {
   fields: [
     {
       name: 'spec',
-      type: 'json',
+      type: 'code',
       required: true,
       admin: {
+        language: 'json',
         description:
           'GeometrySpecV1 JSON. Must have kind:"euclidean", canvas:{width,height}, and elements:{points,lines,circles,angles}.',
       },

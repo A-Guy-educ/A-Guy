@@ -8,9 +8,18 @@ type Props = TableBlockType & {
   disableInnerContainer?: boolean
 }
 
+function safeJsonParse<T>(value: unknown, fallback: T): T {
+  if (typeof value !== 'string') return fallback
+  try {
+    return JSON.parse(value) as T
+  } catch {
+    return fallback
+  }
+}
+
 export const TableBlock: React.FC<Props> = ({ headers, rows, showBorders, showHeader }) => {
-  const parsedHeaders = (Array.isArray(headers) ? headers : []) as string[]
-  const parsedRows = (Array.isArray(rows) ? rows : []) as string[][]
+  const parsedHeaders = safeJsonParse<string[]>(headers, [])
+  const parsedRows = safeJsonParse<string[][]>(rows, [])
 
   if (parsedHeaders.length === 0 && parsedRows.length === 0) return null
 

@@ -10,9 +10,10 @@ export const GraphBlock: Block = {
   fields: [
     {
       name: 'spec',
-      type: 'json',
+      type: 'code',
       required: true,
       admin: {
+        language: 'json',
         description:
           'AxisSpecV1 JSON. Must have kind:"cartesian", units, grid, axes, and elements:{points,graphs}.',
       },

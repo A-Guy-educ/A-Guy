@@ -10,18 +10,20 @@ export const TableBlock: Block = {
   fields: [
     {
       name: 'headers',
-      type: 'json',
+      type: 'code',
       required: true,
       admin: {
-        description: 'Array of header strings, e.g. ["Name", "Value", "Unit"]',
+        language: 'json',
+        description: 'JSON array of header strings, e.g. ["Name", "Value", "Unit"]',
       },
     },
     {
       name: 'rows',
-      type: 'json',
+      type: 'code',
       required: true,
       admin: {
-        description: 'Array of row arrays, e.g. [["Mass", "5", "kg"], ["Length", "10", "m"]]',
+        language: 'json',
+        description: 'JSON array of row arrays, e.g. [["Mass", "5", "kg"], ["Length", "10", "m"]]',
       },
     },
     {
