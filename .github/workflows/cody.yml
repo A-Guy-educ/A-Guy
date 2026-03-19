@@ -402,8 +402,21 @@ jobs:
           # Verify it's installed and print version for diagnostics
           $HOME/.opencode/bin/opencode --version || echo "Warning: opencode install may have failed"
 
+      # Fetch recordings from dev branch (ensure we have them regardless of feature branch)
+      - name: Fetch recordings from dev
+        if: github.event.inputs.use_mock == 'true' || github.event.inputs.use_mock == true
+        run: |
+          # Fetch recordings from origin/dev if they don't exist locally
+          if [ ! -d "scripts/system-test/recordings/scenario-02" ] || [ $(ls -A scripts/system-test/recordings/scenario-02/*.json 2>/dev/null | wc -l) -lt 2 ]; then
+            echo "Fetching recordings from dev branch..."
+            git fetch origin dev --depth=1 --no-recurse-submodules 2>/dev/null || true
+            git checkout origin/dev -- scripts/system-test/recordings/ 2>/dev/null || echo "No recordings in dev branch"
+          else
+            echo "Recordings already exist locally"
+          fi
+
       # Start mock LLM server in record or replay mode
-      - name: Start mock LLM server (replay mode)
+      - name: Start mock LLM server
         if: github.event.inputs.use_mock == 'true' || github.event.inputs.use_mock == true
         run: |
           # Check if recordings exist for replay, otherwise run in record mode to capture calls
