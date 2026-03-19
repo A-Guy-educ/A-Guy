@@ -180,9 +180,10 @@ export const Lessons: CollectionConfig = {
       type: 'blocks',
       blocks: [ExerciseRefBlock, ContentPageRefBlock],
       admin: {
-        description:
-          'Ordered playlist of exercises and content pages. Defines the lesson flow. Drag to reorder.',
-        initCollapsed: true,
+        description: 'Ordered playlist of exercises and content pages. Defines the lesson flow.',
+        components: {
+          Field: '@/ui/admin/LessonBlocksField#LessonBlocksField',
+        },
       },
     },
     // --- Lesson Content ---
