@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-19T18:39:57.749Z",
-  "updatedAt": "2026-03-19T18:43:44.444Z",
+  "updatedAt": "2026-03-19T18:52:13.736Z",
   "state": "running",
   "cursor": null,
   "stages": {
@@ -38,13 +38,23 @@
       "sessionId": "ses_2f898cea3ffebTExylnxUFgagD"
     },
     "build": {
-      "state": "running",
+      "state": "completed",
       "retries": 0,
-      "startedAt": "2026-03-19T18:43:44.399Z"
+      "startedAt": "2026-03-19T18:43:44.399Z",
+      "completedAt": "2026-03-19T18:51:58.070Z",
+      "elapsed": 494,
+      "outputFile": "build.md",
+      "tokenUsage": {
+        "input": 35585,
+        "output": 4890,
+        "cacheRead": 1741211
+      },
+      "sessionId": "ses_2f896d4f0ffeaJpQw0mZL8CQrd"
     },
     "commit": {
-      "state": "pending",
-      "retries": 0
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-19T18:52:13.736Z"
     },
     "review": {
       "state": "pending",
@@ -71,6 +81,5 @@
       "actor": "aguyaharonyair",
       "timestamp": "2026-03-19T18:39:57.749Z"
     }
-  ],
-  "branchName": "fix/260318-auto-908-redundant-1-label-displayed-inside"
+  ]
 }
