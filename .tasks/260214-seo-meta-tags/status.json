@@ -4,10 +4,17 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-19T14:57:10.997Z",
-  "updatedAt": "2026-03-19T14:57:10.997Z",
-  "state": "running",
+  "updatedAt": "2026-03-19T15:07:12.144Z",
+  "state": "failed",
   "cursor": null,
-  "stages": {},
+  "stages": {
+    "taskify": {
+      "state": "timeout",
+      "retries": 0,
+      "startedAt": "2026-03-19T14:57:12.037Z",
+      "elapsed": 600
+    }
+  },
   "triggeredBy": "aguyaharonyair",
   "actorHistory": [
     {
@@ -15,5 +22,6 @@
       "actor": "aguyaharonyair",
       "timestamp": "2026-03-19T14:57:10.997Z"
     }
-  ]
+  ],
+  "completedAt": "2026-03-19T15:07:12.144Z"
 }
