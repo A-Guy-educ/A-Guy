@@ -1300,18 +1300,6 @@ export interface Lesson {
    */
   accessType: 'inherit' | 'free' | 'mandatory' | 'gated' | 'paid';
   /**
-   * Show an intro/about page before the lesson starts
-   */
-  introEnabled?: boolean | null;
-  /**
-   * Block-based content for the intro page. Supports rich text, HTML/SVG, and media.
-   */
-  introContent?: (ContentBlock | HtmlBlock | MediaBlock | TableBlock | GeometryBlock | GraphBlock)[] | null;
-  /**
-   * Image, SVG, or video displayed on the intro page
-   */
-  introMedia?: (string | null) | Media;
-  /**
    * Ordered playlist of exercises and content pages. Defines the lesson flow. Drag to reorder.
    */
   blocks?: (ExerciseRefBlock | ContentPageRefBlock)[] | null;
@@ -1349,50 +1337,6 @@ export interface Lesson {
   createdBy?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "MediaBlock".
- */
-export interface MediaBlock {
-  media: string | Media;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'mediaBlock';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "TableBlock".
- */
-export interface TableBlock {
-  headers: string;
-  rows: string;
-  showBorders?: boolean | null;
-  showHeader?: boolean | null;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'tableBlock';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "GeometryBlock".
- */
-export interface GeometryBlock {
-  spec: string;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'geometryBlock';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "GraphBlock".
- */
-export interface GraphBlock {
-  spec: string;
-  displaySize?: ('small' | 'medium' | 'large' | 'full') | null;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'graphBlock';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1570,6 +1514,50 @@ export interface ContentPage {
   createdBy?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "MediaBlock".
+ */
+export interface MediaBlock {
+  media: string | Media;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'mediaBlock';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TableBlock".
+ */
+export interface TableBlock {
+  headers: string;
+  rows: string;
+  showBorders?: boolean | null;
+  showHeader?: boolean | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'tableBlock';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "GeometryBlock".
+ */
+export interface GeometryBlock {
+  spec: string;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'geometryBlock';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "GraphBlock".
+ */
+export interface GraphBlock {
+  spec: string;
+  displaySize?: ('small' | 'medium' | 'large' | 'full') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'graphBlock';
 }
 /**
  * Chat attachments uploaded directly to Vercel Blob
@@ -3002,18 +2990,6 @@ export interface LessonsSelect<T extends boolean = true> {
   status?: T;
   isActive?: T;
   accessType?: T;
-  introEnabled?: T;
-  introContent?:
-    | T
-    | {
-        content?: T | ContentBlockSelect<T>;
-        html?: T | HtmlBlockSelect<T>;
-        mediaBlock?: T | MediaBlockSelect<T>;
-        tableBlock?: T | TableBlockSelect<T>;
-        geometryBlock?: T | GeometryBlockSelect<T>;
-        graphBlock?: T | GraphBlockSelect<T>;
-      };
-  introMedia?: T;
   blocks?:
     | T
     | {
@@ -3030,46 +3006,6 @@ export interface LessonsSelect<T extends boolean = true> {
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "MediaBlock_select".
- */
-export interface MediaBlockSelect<T extends boolean = true> {
-  media?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "TableBlock_select".
- */
-export interface TableBlockSelect<T extends boolean = true> {
-  headers?: T;
-  rows?: T;
-  showBorders?: T;
-  showHeader?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "GeometryBlock_select".
- */
-export interface GeometryBlockSelect<T extends boolean = true> {
-  spec?: T;
-  id?: T;
-  blockName?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "GraphBlock_select".
- */
-export interface GraphBlockSelect<T extends boolean = true> {
-  spec?: T;
-  displaySize?: T;
-  id?: T;
-  blockName?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3113,6 +3049,46 @@ export interface ContentPagesSelect<T extends boolean = true> {
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "MediaBlock_select".
+ */
+export interface MediaBlockSelect<T extends boolean = true> {
+  media?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TableBlock_select".
+ */
+export interface TableBlockSelect<T extends boolean = true> {
+  headers?: T;
+  rows?: T;
+  showBorders?: T;
+  showHeader?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "GeometryBlock_select".
+ */
+export interface GeometryBlockSelect<T extends boolean = true> {
+  spec?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "GraphBlock_select".
+ */
+export interface GraphBlockSelect<T extends boolean = true> {
+  spec?: T;
+  displaySize?: T;
+  id?: T;
+  blockName?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

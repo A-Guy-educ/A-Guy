@@ -193,12 +193,6 @@ export default async function LessonPage({ params }: LessonPageProps) {
             chapterSlug={chapterSlug}
             lessonSlug={lessonSlug}
             lessonId={lesson.id}
-            introContentRendered={
-              lesson.introEnabled && lesson.introContent && lesson.introContent.length > 0 ? (
-                <RenderBlocks blocks={lesson.introContent} />
-              ) : undefined
-            }
-            introMedia={lesson.introEnabled ? lesson.introMedia : null}
             mediaMap={mediaMap}
           />
         ) : (

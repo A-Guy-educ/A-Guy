@@ -2,14 +2,8 @@ import type { CollectionConfig } from 'payload'
 
 import { DEFAULT_LESSON_ACCESS_TYPE } from '@/server/constants/access-types'
 import { tenantField } from '@/server/payload/fields/tenant'
-import { Content } from '../blocks/Content/config'
 import { ContentPageRefBlock } from '../blocks/ContentPageRefBlock/config'
 import { ExerciseRefBlock } from '../blocks/ExerciseRefBlock/config'
-import { GeometryBlock } from '../blocks/GeometryBlock/config'
-import { GraphBlock } from '../blocks/GraphBlock/config'
-import { HtmlBlock } from '../blocks/HtmlBlock/config'
-import { MediaBlock } from '../blocks/MediaBlock/config'
-import { TableBlock } from '../blocks/TableBlock/config'
 import { adminOnly } from '../access/adminOnly'
 import { publishedAndActive } from '../access/publishedAndActive'
 import { createdByField } from '../fields/createdBy'
@@ -178,36 +172,6 @@ export const Lessons: CollectionConfig = {
         position: 'sidebar',
         description:
           'Access control for this lesson. "Inherit" uses the parent course setting. "Gated" is a client-side nudge, not hard enforcement.',
-      },
-    },
-    // --- Intro Page (pre-lesson context screen) ---
-    {
-      name: 'introEnabled',
-      type: 'checkbox',
-      defaultValue: false,
-      admin: {
-        description: 'Show an intro/about page before the lesson starts',
-        position: 'sidebar',
-      },
-    },
-    {
-      name: 'introContent',
-      type: 'blocks',
-      blocks: [Content, HtmlBlock, MediaBlock, TableBlock, GeometryBlock, GraphBlock],
-      admin: {
-        description:
-          'Block-based content for the intro page. Supports rich text, HTML/SVG, and media.',
-        condition: (data) => Boolean(data?.introEnabled),
-        initCollapsed: true,
-      },
-    },
-    {
-      name: 'introMedia',
-      type: 'upload',
-      relationTo: 'media',
-      admin: {
-        description: 'Image, SVG, or video displayed on the intro page',
-        condition: (data) => Boolean(data?.introEnabled),
       },
     },
     // --- Lesson Blocks (ordered playlist) ---
