@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A-Guy Platform Wiki</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown.min.css">
+  <style>
+    body { max-width: 980px; margin: 0 auto; padding: 20px; }
+    .markdown-body { box-sizing: border-box; min-width: 200px; max-width: 980px; margin: 0 auto; padding: 45px; }
+    #back-link { display: none; margin-bottom: 16px; }
+    #back-link.visible { display: block; }
+    @media (max-width: 767px) { .markdown-body { padding: 15px; } }
+  </style>
+</head>
+<body>
+  <article class="markdown-body">
+    <div id="back-link"><a href="./">← Back to index</a></div>
+    <div id="content">Loading...</div>
+  </article>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    async function loadPage() {
+      const hash = window.location.hash.slice(1);
+      const file = hash || 'README.md';
+      const path = file.endsWith('.md') ? file : file + '/README.md';
+
+      document.getElementById('back-link').className = hash ? 'visible' : '';
+
+      try {
+        const res = await fetch(path);
+        if (!res.ok) throw new Error('Not found');
+        const md = await res.text();
+        // Fix relative links: convert .md links to hash links
+        const fixed = md.replace(/\]\(\.?\/?([^)]+\.md)\)/g, '](#$1')
+                        .replace(/\]\(\.?\/?([a-z][-a-z0-9]*)\/?(?:README\.md)?\)/g, '](#$1');
+        document.getElementById('content').innerHTML = marked.parse(fixed);
+        document.title = 'A-Guy Wiki - ' + (hash || 'Home');
+        window.scrollTo(0, 0);
+      } catch (e) {
+        document.getElementById('content').innerHTML = '<h1>Page not found</h1><p>Could not load: ' + path + '</p><p><a href="./">Go back to index</a></p>';
+      }
+    }
+
+    window.addEventListener('hashchange', loadPage);
+    loadPage();
+  </script>
+</body>
+</html>

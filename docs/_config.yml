@@ -1,6 +1,0 @@
-title: A-Guy Platform Wiki
-description: Documentation for the A-Guy education platform
-theme: jekyll-theme-primer
-exclude:
-  - ai/indexes/
-  - ai/schemas/
