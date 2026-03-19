@@ -124,7 +124,6 @@ export function ExerciseRenderer({
   showCheckAnswer = true,
   className = '',
   mediaMap = EMPTY_MEDIA_MAP,
-  exerciseNumber = 1,
   lessonId = '',
   exerciseId = '',
   onResultsChange,
@@ -351,20 +350,6 @@ export function ExerciseRenderer({
   return (
     <MediaMapProvider value={mediaMap}>
       <div className={cn('w-full max-w-3xl mx-auto', className)}>
-        {/* Exercise Number Bubble - shown once at the top */}
-        {/* NOTE: We intentionally avoid flex-row-reverse here because it inverts the bubble
-             position depending on DOM order. Instead we pin the bubble via auto margins. */}
-        <div className="w-full flex items-center justify-between mb-6">
-          <div
-            className={cn(
-              'w-7 h-7 rounded-full flex items-center justify-center bg-slate-50 border border-slate-200 shadow-sm',
-              isHebrew ? 'ml-auto' : 'mr-auto',
-            )}
-          >
-            <span className="font-bold text-sm">{String(exerciseNumber)}</span>
-          </div>
-        </div>
-
         <div className="flex flex-col gap-6">
           {(() => {
             let questionIndex = 0
