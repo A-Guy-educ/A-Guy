@@ -240,5 +240,17 @@ export const Courses: CollectionConfig = {
 
     // Created By
     createdByField,
+
+    // Cascade Delete
+    {
+      name: 'cascadeDelete',
+      type: 'ui',
+      admin: {
+        position: 'sidebar',
+        components: {
+          Field: '@/ui/admin/CascadeDeleteButton#CourseCascadeDelete',
+        },
+      },
+    },
   ],
 }
