@@ -1,7 +1,7 @@
 - **Getting Started**
   - [Home](/)
-  - [Dev Environment](dev-container.md)
-  - [Smoke Checks](SMOKE_CHECKS.md)
+  - [Dev Environment](dev-container)
+  - [Smoke Checks](SMOKE_CHECKS)
 
 - **Architecture**
   - [Access Control](access-control/)
@@ -15,7 +15,6 @@
   - [Block Rendering](block-rendering/)
   - [Contracts](contracts/)
   - [Chat Context](features/chat-context/)
-  - [Homepage Redesign](features/homepage-redesign/)
 
 - **AI & Pipeline**
   - [AI Services](ai-services/)
@@ -26,8 +25,8 @@
   - [QA System](qa/)
 
 - **Operations**
-  - [Automation](automation.md)
-  - [Releases](releases.md)
+  - [Automation](automation)
+  - [Releases](releases)
   - [System Tests](system-test/)
   - [Nightly Docs Agent](nightly-docs-agent/)
 
