@@ -234,7 +234,12 @@ const eslintConfig = [
   {
     name: 'thin-app-routes-services-only',
     files: ['src/app/**/route.ts', 'src/app/**/actions/**'],
-    ignores: ['src/app/api/blob/**', 'src/app/api/study-plan/**', 'src/app/api/chapters/**'],
+    ignores: [
+      'src/app/api/blob/**',
+      'src/app/api/study-plan/**',
+      'src/app/api/chapters/**',
+      'src/app/api/progress/**',
+    ],
     rules: {
       'no-restricted-imports': [
         'error',

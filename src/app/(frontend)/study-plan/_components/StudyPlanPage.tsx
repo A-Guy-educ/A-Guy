@@ -68,11 +68,12 @@ export function StudyPlanPage() {
   const [newTopic, setNewTopic] = useState('')
   const [hasGenerated, setHasGenerated] = useState(false)
 
-  // Load sidebar fields from saved plan (but don't show schedule until user clicks generate)
+  // Load sidebar fields from saved plan and show schedule if plan was loaded from DB
   useEffect(() => {
     if (plan) {
       setExamDate(plan.examDate)
       setTopics(plan.topics)
+      setHasGenerated(true)
     }
   }, [plan])
 

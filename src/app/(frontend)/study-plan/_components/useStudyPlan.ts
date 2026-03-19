@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 
+import { getUserProfile } from '@/client/state/localStorage/userProfile'
 import type { StudyPlanSnapshot, TopicInput } from '@/server/services/study-plan'
 
 interface UseStudyPlanReturn {
@@ -21,8 +22,9 @@ export function useStudyPlan(): UseStudyPlanReturn {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Hardcoded for demo - in production this would come from user context
-  const gradeLevel = 'default'
+  // Get grade level from user profile (falls back to 'default' for backwards compat)
+  const profile = getUserProfile()
+  const gradeLevel = profile?.gradeLevel || 'default'
 
   // Fetch existing plan on mount
   useEffect(() => {
@@ -30,7 +32,8 @@ export function useStudyPlan(): UseStudyPlanReturn {
       try {
         setIsLoading(true)
         const response = await fetch(
-          `/api/study-plan?gradeLevel=${gradeLevel}&courseId=default-course`,
+          `/api/study-plan?gradeLevel=${encodeURIComponent(gradeLevel)}&courseId=default-course`,
+          { credentials: 'include' },
         )
 
         if (!response.ok) {
@@ -61,9 +64,8 @@ export function useStudyPlan(): UseStudyPlanReturn {
 
         const response = await fetch('/api/study-plan', {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             action: 'generate',
             courseId,
@@ -112,6 +114,7 @@ export function useStudyPlan(): UseStudyPlanReturn {
         const response = await fetch('/api/study-plan', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             action: 'toggleStatus',
             dayId,
@@ -151,6 +154,7 @@ export function useStudyPlan(): UseStudyPlanReturn {
         const response = await fetch('/api/study-plan', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
             action: 'editDay',
             dayId,
