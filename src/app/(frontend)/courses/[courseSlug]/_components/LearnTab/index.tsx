@@ -4,15 +4,23 @@ import type { Chapter, Lesson } from '@/payload-types'
 import { getEffectiveLessonType } from '@/server/constants/lesson-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { CourseLessonCard } from '../CourseLessonCard'
+import type { LessonProgress } from '../CoursePageContent'
 
 interface LearnTabProps {
   lessons: Lesson[]
   chapters: Chapter[]
   courseSlug: string
   tabColor?: { text: string; stroke: string }
+  lessonProgressMap?: Record<string, LessonProgress>
 }
 
-export function LearnTab({ lessons, chapters, courseSlug, tabColor }: LearnTabProps) {
+export function LearnTab({
+  lessons,
+  chapters,
+  courseSlug,
+  tabColor,
+  lessonProgressMap = {},
+}: LearnTabProps) {
   const t = useTranslations('coursePage')
   const learningLessons = lessons.filter((l) => getEffectiveLessonType(l.type) === 'learning')
 
@@ -20,10 +28,15 @@ export function LearnTab({ lessons, chapters, courseSlug, tabColor }: LearnTabPr
     return null
   }
 
-  // Placeholder — will reflect real UserProgress when wired
-  const completedCount = 0
-  const inProgressCount = 0
-  const notStartedCount = learningLessons.length
+  // Calculate counts from real progress data
+  const completedCount = learningLessons.filter(
+    (l) => (lessonProgressMap[l.id]?.percent ?? 0) >= 100,
+  ).length
+  const inProgressCount = learningLessons.filter((l) => {
+    const p = lessonProgressMap[l.id]?.percent ?? 0
+    return p > 0 && p < 100
+  }).length
+  const notStartedCount = learningLessons.length - completedCount - inProgressCount
 
   return (
     <>
@@ -56,6 +69,7 @@ export function LearnTab({ lessons, chapters, courseSlug, tabColor }: LearnTabPr
               courseSlug={courseSlug}
               chapterSlug={chapterSlug}
               tabColor={tabColor}
+              progress={lessonProgressMap[lesson.id]?.percent ?? 0}
             />
           )
         })}

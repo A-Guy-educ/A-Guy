@@ -30,6 +30,7 @@ import { TeacherProfiles } from '@/server/payload/collections/TeacherProfiles'
 import { Tenants } from '@/server/payload/collections/Tenants'
 import { UploadSessions } from '@/server/payload/collections/UploadSessions'
 import { UserProgress } from '@/server/payload/collections/UserProgress'
+import { UserStats } from '@/server/payload/collections/UserStats'
 import { Users } from '@/server/payload/collections/Users'
 import { UserSettings } from '@/server/payload/collections/UserSettings'
 import { importExerciseFromImage } from '@/server/payload/endpoints/exercises/import-from-image'
@@ -163,6 +164,7 @@ export default buildConfig({
     ExerciseAssets,
     Users,
     UserProgress,
+    UserStats,
     Media,
     ChatAssets,
     UploadSessions,

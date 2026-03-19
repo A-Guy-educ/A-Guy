@@ -6,7 +6,7 @@
 
 'use client'
 
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { cn } from '@/infra/utils/ui'
 import { useTranslations, useLocale } from '@/ui/web/providers/I18n'
 import { Card } from '@/ui/web/components/card'
@@ -127,6 +127,7 @@ export function ExerciseRenderer({
   exerciseNumber = 1,
   lessonId = '',
   exerciseId = '',
+  onResultsChange,
 }: ExerciseRendererProps) {
   const t = useTranslations('courses')
   const locale = useLocale()
@@ -176,6 +177,15 @@ export function ExerciseRenderer({
   const [hasChecked, setHasChecked] = useState<Record<string, boolean>>({})
   const [isChecking, setIsChecking] = useState<Record<string, boolean>>({})
   const chatTriggeredRef = useRef<Set<string>>(new Set())
+
+  // Report aggregate correctness to parent when check results change
+  useEffect(() => {
+    if (!onResultsChange) return
+    const totalQuestions = questionBlocks.length
+    const checkedCount = Object.keys(checkResults).length
+    const correctCount = Object.values(checkResults).filter((r) => r.isCorrect).length
+    onResultsChange({ totalQuestions, checkedCount, correctCount })
+  }, [checkResults, onResultsChange, questionBlocks.length])
 
   // SVG hotspot state (interactive SVGs are separate from QuestionBlock flow)
   const [svgAnswers, setSvgAnswers] = useState<Record<string, UserAnswer>>({})

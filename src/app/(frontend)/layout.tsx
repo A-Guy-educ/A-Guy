@@ -25,6 +25,7 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import './globals.css'
 import { LayoutClient } from './LayoutClient'
+import { ActiveTimeProvider } from '@/client/providers/ActiveTimeProvider'
 
 const assistant = Assistant({
   subsets: ['latin', 'hebrew'],
@@ -70,19 +71,21 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <I18nProvider locale={locale} messages={messages}>
           <Providers>
-            <PasswordLoginProvider enabled={passwordLoginEnabled}>
-              <RouteLoadingIndicator />
-              <LayoutClient />
-              <AdminBar
-                adminBarProps={{
-                  preview: isEnabled,
-                }}
-              />
-              <Header />
-              {children}
-              <Footer />
-              <Toaster />
-            </PasswordLoginProvider>
+            <ActiveTimeProvider>
+              <PasswordLoginProvider enabled={passwordLoginEnabled}>
+                <RouteLoadingIndicator />
+                <LayoutClient />
+                <AdminBar
+                  adminBarProps={{
+                    preview: isEnabled,
+                  }}
+                />
+                <Header />
+                {children}
+                <Footer />
+                <Toaster />
+              </PasswordLoginProvider>
+            </ActiveTimeProvider>
           </Providers>
         </I18nProvider>
       </body>

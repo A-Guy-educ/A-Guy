@@ -14,6 +14,8 @@ vi.mock('next/navigation', () => ({
     replace: vi.fn(),
     push: vi.fn(),
   }),
+  usePathname: () => '/account',
+  useSearchParams: () => new URLSearchParams(),
 }))
 
 // Mock child components to avoid complex setups
