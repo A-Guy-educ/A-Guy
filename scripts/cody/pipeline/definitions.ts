@@ -250,6 +250,9 @@ The implementation should proceed using the file list in context.md.
     maxRetries: 1,
     minComplexity: getStageComplexityThreshold('plan-gap'),
     shouldSkip: (ctx) => {
+      // Skip plan-gap when pipeline is spec_only (no plan.md exists to gap-check)
+      const specOnlySkip = skipIfSpecOnly(ctx)
+      if (specOnlySkip.shouldSkip) return specOnlySkip
       const complexitySkip = skipIfBelowComplexity(ctx, 'plan-gap')
       if (complexitySkip.shouldSkip) return complexitySkip
       return skipIfInputQuality(ctx, 'plan-gap')
@@ -582,6 +585,14 @@ export function rebuildPipelineAfterTaskify(
   // Build spec stages based on profile
   const specOrder = ctx.profile === 'standard' ? SPEC_ORDER_STANDARD : SPEC_ORDER_LIGHTWEIGHT
   const filteredSpecOrder = ctx.input.clarify ? specOrder : specOrder.filter((s) => s !== 'clarify')
+
+  // For spec_only pipelines, don't include impl stages — there's no plan.md to build from
+  if (ctx.taskDef?.pipeline === 'spec_only') {
+    return {
+      stages: createStageDefinitions(ctx),
+      order: [...filteredSpecOrder],
+    }
+  }
 
   // Build impl stages based on profile
   const implOrder = ctx.profile === 'standard' ? IMPL_ORDER_STANDARD : IMPL_ORDER_LIGHTWEIGHT

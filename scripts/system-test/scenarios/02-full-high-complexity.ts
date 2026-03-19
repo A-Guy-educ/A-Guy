@@ -20,16 +20,16 @@ import { CODY_WORKFLOW, SYSTEM_TEST_LABEL, ISSUE_TITLE_PREFIX } from '../lib/con
 import type { ScenarioContext, Scenario } from './types'
 import type { ScenarioResult } from '../lib/report'
 
-const ISSUE_BODY = `Create a new documentation file \`docs/system-test/pipeline-health.md\` that documents the Cody pipeline health monitoring architecture. Include:
+const ISSUE_BODY = `Create a new utility module at \`src/infra/utils/pipeline-health.ts\` that exports a \`PipelineHealthReport\` class for monitoring Cody pipeline health. The module should:
 
-1. An overview section describing the inspector plugin framework
-2. A section on each health-check plugin and what it monitors
-3. A section on the pipeline-fixer retry strategy
-4. A section on deferred test and docs stages
-5. A troubleshooting guide for common failure modes
-6. Architecture diagrams in mermaid syntax
+1. Export a \`PipelineHealthReport\` class with methods: \`checkStageHealth(stage: string): HealthStatus\`, \`generateReport(): Report\`, and \`getRetryRecommendation(failedStage: string): RetryStrategy\`
+2. Define TypeScript interfaces: \`HealthStatus\`, \`Report\`, \`RetryStrategy\`
+3. Implement a \`getStageTimeout(stage: string): number\` helper that returns default timeouts per stage
+4. Add JSDoc comments on all exported members
+5. Include input validation using Zod schemas for all public method parameters
+6. Write a companion integration test at \`tests/unit/infra/utils/pipeline-health.test.ts\` covering all public methods
 
-This documentation should be comprehensive (2000+ words) and reference actual file paths in the codebase.
+This is a medium-complexity feature that requires creating new TypeScript source files, defining types, implementing business logic, and writing tests.
 
 **This is a SYSTEM TEST. The PR should NOT be merged.**`
 
@@ -113,7 +113,7 @@ export const scenario02: Scenario = {
     try {
       // Step 1: Create issue
       ctx.log.info('Creating issue...')
-      const title = `${ISSUE_TITLE_PREFIX} Document pipeline health monitoring architecture`
+      const title = `${ISSUE_TITLE_PREFIX} Add pipeline health monitoring utility module`
       issueNumber = ctx.gh.createIssue(title, ISSUE_BODY, [SYSTEM_TEST_LABEL]) ?? undefined
 
       if (!issueNumber) {
