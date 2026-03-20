@@ -4,10 +4,16 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-20T11:01:57.223Z",
-  "updatedAt": "2026-03-20T11:01:57.223Z",
+  "updatedAt": "2026-03-20T11:01:59.862Z",
   "state": "running",
   "cursor": null,
-  "stages": {},
+  "stages": {
+    "taskify": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-20T11:01:59.862Z"
+    }
+  },
   "issueNumber": 888,
   "triggeredBy": "aguyaharonyair",
   "actorHistory": [

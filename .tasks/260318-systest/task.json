@@ -1,0 +1,23 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 0.1,
+  "primary_domain": "backend",
+  "scope": [],
+  "missing_inputs": [],
+  "assumptions": [
+    "This is a placeholder test bug report with minimal information",
+    "The 'test' content in all fields indicates this is not a real bug",
+    "No actual bug description, expected result, or actual result is provided"
+  ],
+  "review_questions": [],
+  "complexity": 5,
+  "complexity_reasoning": "Scope: 0 (no files or features mentioned). Risk: 0 (placeholder test). Novelty: 0 (test content). Cross-Domain: 0 (no domain). Ambiguity: 10 (extremely vague - 'test' repeated in all fields). Dependency Depth: 0 (none). Total: 10 → Simple tier, but lowered to 5 to reflect placeholder nature.",
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Task contains minimal placeholder content ('test' in all fields). No real bug description, steps to reproduce, expected/actual results, or environment details. Cannot determine scope or implementation details."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}
