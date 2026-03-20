@@ -5,7 +5,7 @@
  * @domain qa
  * @pattern action-registry
  */
-import type { ActionHandler, ActionRegistry } from './types'
+import type { ActionRegistry } from './types'
 
 // Session actions
 import { login } from './login'
@@ -44,6 +44,9 @@ import { expectNotVisible } from './expectNotVisible'
 import { expectUrl } from './expectUrl'
 import { expectFeedback } from './expectFeedback'
 
+// PDF actions
+import { expectPdfVisible, expectPdfDownloadButtonVisible, expectPdfNotVisible } from './expectPdf'
+
 export const actionRegistry: ActionRegistry = {
   // Session
   login,
@@ -81,4 +84,9 @@ export const actionRegistry: ActionRegistry = {
   expectNotVisible,
   expectUrl,
   expectFeedback,
+
+  // PDF
+  expectPdfVisible,
+  expectPdfDownloadButtonVisible,
+  expectPdfNotVisible,
 }

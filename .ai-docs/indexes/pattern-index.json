@@ -80,6 +80,12 @@
         "src/app/(frontend)/search/page.client.tsx",
         "src/app/(frontend)/signup/SignupForm.tsx",
         "src/app/(frontend)/signup/SignupPageContent.tsx",
+        "src/app/(frontend)/stats/_components/ActivityTimeline.tsx",
+        "src/app/(frontend)/stats/_components/CategoryProgress.tsx",
+        "src/app/(frontend)/stats/_components/DashboardFilters.tsx",
+        "src/app/(frontend)/stats/_components/PracticedItems.tsx",
+        "src/app/(frontend)/stats/_components/StatsDashboard.tsx",
+        "src/app/(frontend)/stats/_components/SummaryCards.tsx",
         "src/app/(frontend)/study-plan/_components/DayCard.tsx",
         "src/app/(frontend)/study-plan/_components/StudyPlanPage.tsx",
         "src/app/(frontend)/study-plan/_components/useStudyPlan.ts",
@@ -88,8 +94,11 @@
         "src/app/(payload)/admin/pdf-conversion/page.tsx",
         "src/app/global-error.tsx",
         "src/client/hooks/useAccessGate.ts",
+        "src/client/hooks/useActiveTimeTracker.ts",
         "src/client/hooks/useCurrentUser.ts",
         "src/client/hooks/useExamCountdown.ts",
+        "src/client/hooks/useProgressMap.ts",
+        "src/client/providers/ActiveTimeProvider.tsx",
         "src/infra/analytics/adapters/ga4/adapter.ts",
         "src/infra/analytics/adapters/ga4/scripts.tsx",
         "src/infra/analytics/adapters/mixpanel/adapter.ts",
@@ -562,6 +571,12 @@
         "src/app/(frontend)/onboarding/persona/PersonaSelectionStep.tsx",
         "src/app/(frontend)/signup/SignupForm.tsx",
         "src/app/(frontend)/signup/SignupPageContent.tsx",
+        "src/app/(frontend)/stats/_components/ActivityTimeline.tsx",
+        "src/app/(frontend)/stats/_components/CategoryProgress.tsx",
+        "src/app/(frontend)/stats/_components/DashboardFilters.tsx",
+        "src/app/(frontend)/stats/_components/PracticedItems.tsx",
+        "src/app/(frontend)/stats/_components/StatsDashboard.tsx",
+        "src/app/(frontend)/stats/_components/SummaryCards.tsx",
         "src/app/(frontend)/study-plan/_components/DayCard.tsx",
         "src/app/(frontend)/study-plan/_components/EmptyPlanState.tsx",
         "src/app/(frontend)/study-plan/_components/StudyPlanPage.tsx",
@@ -588,6 +603,7 @@
       "pattern": "authenticated-endpoint",
       "description": "API endpoint requiring authentication",
       "files": [
+        "src/app/(frontend)/courses/[courseSlug]/page.tsx",
         "src/app/(frontend)/next/preview/route.ts",
         "src/app/(frontend)/next/seed/route.ts",
         "src/app/api/agent/chat/route.ts",
@@ -607,7 +623,13 @@
         "src/app/api/exercises/import/route.ts",
         "src/app/api/exercises/validate-answer/route.ts",
         "src/app/api/jobs/run-immediate/route.ts",
+        "src/app/api/progress/route.ts",
         "src/app/api/prompts/for-conversion/route.ts",
+        "src/app/api/stats/activity/route.ts",
+        "src/app/api/stats/dashboard/route.ts",
+        "src/app/api/stats/heartbeat/route.ts",
+        "src/app/api/stats/streak/route.ts",
+        "src/app/api/stats/track-activity/route.ts",
         "src/app/api/study-plan/route.ts",
         "src/app/api/teacher-profiles/route.ts",
         "src/app/api/user-settings/route.ts",
@@ -684,6 +706,7 @@
         "src/app/api/oauth/google/callback/route.ts",
         "src/app/api/oauth/google/route.ts",
         "src/app/api/pdfjs-viewer/route.ts",
+        "src/app/api/progress/route.ts",
         "src/app/api/prompts/for-conversion/route.ts",
         "src/app/api/study-plan/route.ts",
         "src/infra/auth/cody_session.ts",
@@ -715,6 +738,8 @@
         "src/app/api/exercises/[id]/blocks/[blockId]/route.ts",
         "src/app/api/exercises/convert/queue/route.ts",
         "src/app/api/exercises/convert/single/create/route.ts",
+        "src/app/api/progress/route.ts",
+        "src/app/api/stats/activity/route.ts",
         "src/app/api/study-plan/route.ts",
         "src/server/payload/endpoints/agent/chat.ts",
         "src/server/payload/endpoints/agent/chat/request-validation.ts",
@@ -1211,6 +1236,7 @@
         "src/server/payload/collections/UploadSessions/index.ts",
         "src/server/payload/collections/UserProgress.ts",
         "src/server/payload/collections/UserSettings/index.ts",
+        "src/server/payload/collections/UserStats.ts",
         "src/server/payload/collections/Users/index.ts"
       ]
     },
@@ -1259,6 +1285,7 @@
         "src/server/payload/collections/Conversations.ts",
         "src/server/payload/collections/MemoryItems.ts",
         "src/server/payload/collections/UserProgress.ts",
+        "src/server/payload/collections/UserStats.ts",
         "src/server/payload/collections/Users/index.ts"
       ]
     },
@@ -1306,7 +1333,10 @@
     "progress-tracking": {
       "pattern": "progress-tracking",
       "description": "No description available",
-      "files": ["src/server/payload/collections/UserProgress.ts"]
+      "files": [
+        "src/server/payload/collections/UserProgress.ts",
+        "src/server/payload/collections/UserStats.ts"
+      ]
     },
     "user-settings": {
       "pattern": "user-settings",
@@ -2031,7 +2061,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react"]
+      "dependencies": ["react", "lucide-react"]
     },
     "src/app/(frontend)/account/_components/DetailsSection.tsx": {
       "path": "src/app/(frontend)/account/_components/DetailsSection.tsx",
@@ -2191,7 +2221,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": []
+      "dependencies": ["react"]
     },
     "src/app/(frontend)/courses/[courseSlug]/_components/PracticeTab/index.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/_components/PracticeTab/index.tsx",
@@ -2199,7 +2229,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": []
+      "dependencies": ["react"]
     },
     "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ConvertButton.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ConvertButton.tsx",
@@ -2215,7 +2245,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["lucide-react"]
+      "dependencies": ["react", "lucide-react"]
     },
     "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonAnalytics.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonAnalytics.tsx",
@@ -2247,7 +2277,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["lucide-react"]
+      "dependencies": ["react", "lucide-react"]
     },
     "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseHeader/index.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseHeader/index.tsx",
@@ -2312,6 +2342,14 @@
       "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
       "dependencies": ["react", "next/link", "lucide-react"]
+    },
+    "src/app/(frontend)/courses/[courseSlug]/page.tsx": {
+      "path": "src/app/(frontend)/courses/[courseSlug]/page.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["authenticated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["next/navigation", "next/headers", "payload", "@payload-config"]
     },
     "src/app/(frontend)/courses/_components/BackToChapter/index.tsx": {
       "path": "src/app/(frontend)/courses/_components/BackToChapter/index.tsx",
@@ -2582,6 +2620,54 @@
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
       "dependencies": ["react"]
+    },
+    "src/app/(frontend)/stats/_components/ActivityTimeline.tsx": {
+      "path": "src/app/(frontend)/stats/_components/ActivityTimeline.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "lucide-react"]
+    },
+    "src/app/(frontend)/stats/_components/CategoryProgress.tsx": {
+      "path": "src/app/(frontend)/stats/_components/CategoryProgress.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["lucide-react"]
+    },
+    "src/app/(frontend)/stats/_components/DashboardFilters.tsx": {
+      "path": "src/app/(frontend)/stats/_components/DashboardFilters.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": []
+    },
+    "src/app/(frontend)/stats/_components/PracticedItems.tsx": {
+      "path": "src/app/(frontend)/stats/_components/PracticedItems.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["lucide-react"]
+    },
+    "src/app/(frontend)/stats/_components/StatsDashboard.tsx": {
+      "path": "src/app/(frontend)/stats/_components/StatsDashboard.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/app/(frontend)/stats/_components/SummaryCards.tsx": {
+      "path": "src/app/(frontend)/stats/_components/SummaryCards.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["lucide-react"]
     },
     "src/app/(frontend)/study/_components/StudyContent/index.tsx": {
       "path": "src/app/(frontend)/study/_components/StudyContent/index.tsx",
@@ -3095,6 +3181,14 @@
       "aiSummary": "",
       "dependencies": ["next/server"]
     },
+    "src/app/api/progress/route.ts": {
+      "path": "src/app/api/progress/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["api-endpoint", "authenticated-endpoint", "validated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["@payload-config", "next/server", "payload", "zod"]
+    },
     "src/app/api/prompts/for-conversion/route.ts": {
       "path": "src/app/api/prompts/for-conversion/route.ts",
       "type": "unknown",
@@ -3102,6 +3196,46 @@
       "patterns": ["api-endpoint", "authenticated-endpoint"],
       "aiSummary": "",
       "dependencies": ["@payload-config", "next/server", "payload"]
+    },
+    "src/app/api/stats/activity/route.ts": {
+      "path": "src/app/api/stats/activity/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["authenticated-endpoint", "validated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["payload", "zod", "@payload-config"]
+    },
+    "src/app/api/stats/dashboard/route.ts": {
+      "path": "src/app/api/stats/dashboard/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["authenticated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["payload", "zod", "@payload-config"]
+    },
+    "src/app/api/stats/heartbeat/route.ts": {
+      "path": "src/app/api/stats/heartbeat/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["authenticated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["payload", "zod", "@payload-config"]
+    },
+    "src/app/api/stats/streak/route.ts": {
+      "path": "src/app/api/stats/streak/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["authenticated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["payload", "@payload-config"]
+    },
+    "src/app/api/stats/track-activity/route.ts": {
+      "path": "src/app/api/stats/track-activity/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["authenticated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["payload", "zod", "@payload-config"]
     },
     "src/app/api/study-plan/route.ts": {
       "path": "src/app/api/study-plan/route.ts",
@@ -3143,6 +3277,14 @@
       "aiSummary": "",
       "dependencies": ["react"]
     },
+    "src/client/hooks/useActiveTimeTracker.ts": {
+      "path": "src/client/hooks/useActiveTimeTracker.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
     "src/client/hooks/useCurrentUser.ts": {
       "path": "src/client/hooks/useCurrentUser.ts",
       "type": "unknown",
@@ -3153,6 +3295,22 @@
     },
     "src/client/hooks/useExamCountdown.ts": {
       "path": "src/client/hooks/useExamCountdown.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/client/hooks/useProgressMap.ts": {
+      "path": "src/client/hooks/useProgressMap.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/client/providers/ActiveTimeProvider.tsx": {
+      "path": "src/client/providers/ActiveTimeProvider.tsx",
       "type": "unknown",
       "domain": "general",
       "patterns": ["client-component"],
@@ -3971,6 +4129,14 @@
       "domain": "user",
       "patterns": ["user-settings", "access-control"],
       "aiSummary": "Collection for storing per-user settings including teacher profile selection",
+      "dependencies": ["payload"]
+    },
+    "src/server/payload/collections/UserStats.ts": {
+      "path": "src/server/payload/collections/UserStats.ts",
+      "type": "collection-config",
+      "domain": "progress-tracking",
+      "patterns": ["user-owned", "progress-tracking", "access-control"],
+      "aiSummary": "User statistics tracking for time spent, daily streak, and activity history",
       "dependencies": ["payload"]
     },
     "src/server/payload/collections/Users/hooks/auditRoleChange-hook.ts": {
@@ -5938,7 +6104,7 @@
       "domain": "general",
       "patterns": ["client-component"],
       "aiSummary": "",
-      "dependencies": []
+      "dependencies": ["react"]
     },
     "src/ui/web/exerciserenderer/ExerciseRenderer/index.tsx": {
       "path": "src/ui/web/exerciserenderer/ExerciseRenderer/index.tsx",
@@ -6542,8 +6708,8 @@
     }
   },
   "metadata": {
-    "generatedAt": "2026-03-18T07:17:27.586Z",
-    "totalFiles": 574,
+    "generatedAt": "2026-03-20T13:43:34.839Z",
+    "totalFiles": 592,
     "totalPatterns": 205
   }
 }
