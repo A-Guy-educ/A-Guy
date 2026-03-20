@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-20T17:54:28.710Z",
-  "updatedAt": "2026-03-20T17:55:45.388Z",
+  "updatedAt": "2026-03-20T17:57:44.739Z",
   "state": "running",
   "cursor": null,
   "stages": {
@@ -28,13 +28,23 @@
       "skipped": "Complexity 5 (trivial) below threshold 10 for architect"
     },
     "build": {
-      "state": "running",
+      "state": "completed",
       "retries": 0,
-      "startedAt": "2026-03-20T17:55:45.368Z"
+      "startedAt": "2026-03-20T17:55:45.368Z",
+      "completedAt": "2026-03-20T17:57:30.061Z",
+      "elapsed": 105,
+      "outputFile": "build.md",
+      "tokenUsage": {
+        "input": 2835,
+        "output": 613,
+        "cacheRead": 196580
+      },
+      "sessionId": "ses_2f39c6717ffesAvqJefzeMgkMR"
     },
     "commit": {
-      "state": "pending",
-      "retries": 0
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-20T17:57:44.739Z"
     },
     "review": {
       "state": "pending",
@@ -61,6 +71,5 @@
       "actor": "cody-ai-os[bot]",
       "timestamp": "2026-03-20T17:54:28.710Z"
     }
-  ],
-  "branchName": "refactor/260320-systest-977-system-test-add-comment-to-logg"
+  ]
 }
