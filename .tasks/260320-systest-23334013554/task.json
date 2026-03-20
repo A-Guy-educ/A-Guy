@@ -1,0 +1,27 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "src/infra/utils/pipeline-health.ts",
+    "tests/unit/infra/utils/pipeline-health.test.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Zod is already available in the project for input validation",
+    "Tests follow Vitest patterns consistent with existing tests in the project"
+  ],
+  "review_questions": [],
+  "complexity": 28,
+  "complexity_reasoning": "Scope: 10 (2 new files, class with 3 methods, interfaces, helper, Zod schemas, tests). Risk: 5 (new utility module, no existing code changes, low impact). Novelty: 6 (following existing utility patterns but new functionality). Cross: 3 (backend only). Ambiguity: 2 (clear requirements with specific method names and file paths). Deps: 2 (self-contained, Zod is standard dependency). Total: 28",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [
+      "architect"
+    ],
+    "reasoning": "Task contains detailed requirements with 6 specific bullet points including exact method names (checkStageHealth, generateReport, getRetryRecommendation), interface names (HealthStatus, Report, RetryStrategy), file paths, and acceptance criteria for JSDoc and Zod validation. Promoted spec.md to enable gap analysis."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

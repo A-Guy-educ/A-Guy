@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "taskId": "260320-systest-23334013554",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-20T07:59:51.706Z",
+  "updatedAt": "2026-03-20T07:59:52.672Z",
+  "state": "running",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-20T07:59:52.672Z"
+    }
+  },
+  "issueNumber": 955,
+  "triggeredBy": "cody-ai-os[bot]",
+  "actorHistory": [
+    {
+      "action": "pipeline-triggered",
+      "actor": "cody-ai-os[bot]",
+      "timestamp": "2026-03-20T07:59:51.706Z"
+    }
+  ]
+}

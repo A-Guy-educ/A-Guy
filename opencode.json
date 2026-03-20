@@ -7,11 +7,11 @@
       "description": "Building features, refactoring, implementing changes"
     },
     "plan": {
-      "model": "anthropic/claude-opus-4-6",
+      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
       "description": "Planning tasks, architecture design, complex problem solving"
     },
     "architect": {
-      "model": "anthropic/claude-opus-4-6",
+      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
       "description": "Planning tasks, architecture design, complex problem solving"
     },
     "clarify": {
@@ -27,7 +27,7 @@
       "description": "Analyzes spec.md for gaps, missing info, and inconsistencies"
     },
     "plan-gap": {
-      "model": "anthropic/claude-opus-4-6",
+      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
       "description": "Analyzes plan for gaps vs spec and codebase, auto-revises plan"
     },
     "autofix": {
