@@ -126,7 +126,7 @@ jobs:
           MOCK_MODE: ${{ inputs.mock_mode }}
         run: |
           pnpm tsx scripts/system-test/run-scenario.ts \
-            --scenario 02-full-high-complexity \
+            --scenario ${{ inputs.scenarios }} \
             --repo "$REPO"
 
       - name: Upload recordings
