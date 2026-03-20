@@ -442,8 +442,8 @@ jobs:
               --mode record \
               --port 8080 \
               --recordings-dir scripts/system-test/recordings/scenario-02 \
-              --upstream https://api.groq.com/openai \
-              --api-key "${{ secrets.GROQ_API_KEY }}" &
+              --upstream https://api.minimax.io/v1 \
+              --api-key "${{ secrets.MINIMAX_API_KEY }}" &
             
             # Wait for server to start
             sleep 5
