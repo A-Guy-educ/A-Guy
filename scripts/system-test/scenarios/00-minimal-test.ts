@@ -148,7 +148,7 @@ export const scenario00: Scenario = {
           '-f',
           `version=${TEST_VERSION_BRANCH}`,
           '-f',
-          `use_mock=${isReplayMode}`,
+          `use_mock=true`,
           '--repo',
           ctx.repo,
         ],
