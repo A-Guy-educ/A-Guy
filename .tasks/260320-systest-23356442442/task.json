@@ -1,0 +1,32 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.85,
+  "primary_domain": "infra",
+  "scope": [
+    "src/infra/utils/pipeline-health.ts",
+    "tests/unit/infra/utils/pipeline-health.test.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Zod is available as a dependency for input validation",
+    "Stage names follow a known convention (architect, build, commit, verify, pr, etc.)",
+    "HealthStatus will include fields like status, message, and timestamp",
+    "Report will aggregate health statuses of all pipeline stages",
+    "RetryStrategy will include fields like maxRetries, backoffMultiplier, and retryDelay"
+  ],
+  "review_questions": [
+    "Should the PipelineHealthReport class be a singleton or instantiated per use?",
+    "Should stage timeouts be configurable or hard-coded defaults?",
+    "Should HealthStatus include a severity level (warning, error, critical)?"
+  ],
+  "complexity": 25,
+  "complexity_reasoning": "Scope: 2 files (source + test) = 8. Risk: Non-critical infra utility = 8. Novelty: New pattern but follows existing utility conventions = 8. Cross: Single domain (infra) = 2. Ambiguity: Clear requirements, some impl details to discover = 4. Deps: Self-contained with Zod = 3. Total: 33",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Task contains clear requirements with 6 numbered items and acceptance criteria for the PipelineHealthReport class. Contains specific file paths, method names, and interface definitions."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
