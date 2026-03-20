@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-20T07:59:51.706Z",
-  "updatedAt": "2026-03-20T08:16:55.721Z",
+  "updatedAt": "2026-03-20T08:18:21.146Z",
   "state": "running",
   "cursor": null,
   "stages": {
@@ -79,13 +79,32 @@
       "sessionId": "ses_2f5b5a8e6ffe3hupnVqc9vEc7R"
     },
     "commit": {
-      "state": "running",
+      "state": "completed",
       "retries": 0,
-      "startedAt": "2026-03-20T08:16:55.721Z"
+      "startedAt": "2026-03-20T08:16:55.721Z",
+      "completedAt": "2026-03-20T08:16:56.746Z",
+      "elapsed": 1
     },
     "review": {
-      "state": "pending",
-      "retries": 0
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-20T08:16:56.747Z",
+      "completedAt": "2026-03-20T08:18:21.145Z",
+      "elapsed": 84,
+      "outputFile": "review.md",
+      "tokenUsage": {
+        "input": 10,
+        "output": 3542,
+        "cacheRead": 1192967
+      },
+      "cost": 1.64768975,
+      "sessionId": "ses_2f5ae5434ffeOZ2ksn61GdDXNM",
+      "issuesFound": true,
+      "reviewSummary": {
+        "critical": 169,
+        "major": 169,
+        "minor": 169
+      }
     },
     "fix": {
       "state": "pending",
