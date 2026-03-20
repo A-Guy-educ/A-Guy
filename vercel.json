@@ -1,4 +1,10 @@
 {
+  "buildCommand": "echo 'Build skipped - using pre-built from GitHub Actions'",
+  "outputDirectory": ".next",
+  "framework": null,
+  "github": {
+    "silent": true
+  },
   "crons": [
     {
       "path": "/api/cron/upload-session-cleanup",
