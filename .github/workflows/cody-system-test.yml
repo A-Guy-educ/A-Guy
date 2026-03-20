@@ -85,8 +85,8 @@ jobs:
               --mode record \
               --port 8080 \
               --recordings-dir scripts/system-test/recordings/scenario-02 \
-              --upstream https://api.groq.com/openai \
-              --api-key "${{ secrets.GROQ_API_KEY }}" &
+              --upstream https://api.minimax.io/v1 \
+              --api-key "${{ secrets.MINIMAX_API_KEY }}" &
 
             # Wait for server to start
             sleep 5
@@ -100,7 +100,11 @@ jobs:
               --port 8080 \
               --recordings-dir scripts/system-test/recordings/scenario-02 &
 
+            # Wait for server to start
             sleep 5
+
+            # Check if server is running
+            curl -s http://localhost:8080/health || echo "Mock server not ready yet"
           fi
 
           echo "Mock server started in background"
@@ -108,8 +112,8 @@ jobs:
       - name: Configure OpenCode for Mock
         if: inputs.mock_mode != 'none'
         run: |
-          cp opencode.mock.json opencode.json
-          echo "Using mock LLM configuration"
+          cp opencode.test.json opencode.json
+          echo "Using minimax test configuration"
 
       - name: Run system test
         if: inputs.cleanup_only != true
