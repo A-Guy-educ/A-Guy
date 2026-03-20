@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-20T18:14:47.332Z",
-  "updatedAt": "2026-03-20T18:25:36.031Z",
+  "updatedAt": "2026-03-20T18:30:57.471Z",
   "state": "running",
   "cursor": "gap",
   "stages": {
@@ -47,9 +47,23 @@
       "skipped": "Complexity 25 (moderate) below threshold 50 for plan-gap"
     },
     "build": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-20T18:25:36.016Z",
+      "completedAt": "2026-03-20T18:30:42.057Z",
+      "elapsed": 306,
+      "outputFile": "build.md",
+      "tokenUsage": {
+        "input": 28128,
+        "output": 5830,
+        "cacheRead": 1408209
+      },
+      "sessionId": "ses_2f381149cffebkKbbaNDEJ1eBP"
+    },
+    "commit": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-20T18:25:36.016Z"
+      "startedAt": "2026-03-20T18:30:57.471Z"
     }
   },
   "issueNumber": 979,
@@ -60,6 +74,5 @@
       "actor": "cody-ai-os[bot]",
       "timestamp": "2026-03-20T18:14:47.332Z"
     }
-  ],
-  "branchName": "feat/260320-systest-979-system-test-add-pipeline-health"
+  ]
 }
