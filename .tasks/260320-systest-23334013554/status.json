@@ -4,14 +4,90 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-20T07:59:51.706Z",
-  "updatedAt": "2026-03-20T07:59:52.672Z",
+  "updatedAt": "2026-03-20T08:08:55.889Z",
   "state": "running",
   "cursor": null,
   "stages": {
     "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-20T07:59:52.672Z",
+      "completedAt": "2026-03-20T08:01:26.735Z",
+      "elapsed": 94,
+      "outputFile": "taskify.md",
+      "tokenUsage": {
+        "input": 2097,
+        "output": 1932,
+        "cacheRead": 145792
+      },
+      "sessionId": "ses_2f5bdec8affevL5jLxA2EC4Dfv"
+    },
+    "gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-20T08:01:34.349Z",
+      "completedAt": "2026-03-20T08:04:31.949Z",
+      "elapsed": 178,
+      "outputFile": "gap.md",
+      "tokenUsage": {
+        "input": 26761,
+        "output": 4831,
+        "cacheRead": 614396
+      },
+      "sessionId": "ses_2f5bc6515ffeeYMmiwY3z5A5Yn"
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-20T08:04:31.951Z",
+      "completedAt": "2026-03-20T08:07:15.833Z",
+      "elapsed": 164,
+      "outputFile": "architect.md",
+      "tokenUsage": {
+        "input": 10411,
+        "output": 6523,
+        "cacheRead": 689335
+      },
+      "sessionId": "ses_2f5b9aef1ffeCDY8pLFiMryogZ"
+    },
+    "plan-gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-20T08:07:15.836Z",
+      "completedAt": "2026-03-20T08:08:55.862Z",
+      "elapsed": 100,
+      "outputFile": "plan-gap.md",
+      "tokenUsage": {
+        "input": 8287,
+        "output": 3385,
+        "cacheRead": 489112
+      },
+      "sessionId": "ses_2f5b72f69ffeopp0byOZFDTRPm"
+    },
+    "build": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-20T07:59:52.672Z"
+      "startedAt": "2026-03-20T08:08:55.863Z"
+    },
+    "commit": {
+      "state": "pending",
+      "retries": 0
+    },
+    "review": {
+      "state": "pending",
+      "retries": 0
+    },
+    "fix": {
+      "state": "pending",
+      "retries": 0
+    },
+    "verify": {
+      "state": "pending",
+      "retries": 0
+    },
+    "pr": {
+      "state": "pending",
+      "retries": 0
     }
   },
   "issueNumber": 955,
@@ -22,5 +98,6 @@
       "actor": "cody-ai-os[bot]",
       "timestamp": "2026-03-20T07:59:51.706Z"
     }
-  ]
+  ],
+  "branchName": "feat/260320-systest-955-system-test-add-pipeline-health"
 }
