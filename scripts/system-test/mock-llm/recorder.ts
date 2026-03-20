@@ -39,11 +39,28 @@ export interface Recorder {
 
 export function createRecorder(options: RecorderOptions): Recorder {
   const { recordingsDir, upstreamUrl, apiKey, timeout = 120000 } = options
-  let callCount = 0
 
   // Ensure recordings directory exists
   if (!fs.existsSync(recordingsDir)) {
     fs.mkdirSync(recordingsDir, { recursive: true })
+  }
+
+  // Scan existing recordings to find highest index (for incremental recording)
+  let callCount = 0
+  try {
+    const files = fs.readdirSync(recordingsDir).filter((f) => f.endsWith('.json'))
+    if (files.length > 0) {
+      const indices = files
+        .map((f) => parseInt(f.replace('.json', ''), 10))
+        .filter((n) => !isNaN(n))
+      const maxIndex = Math.max(...indices, -1)
+      callCount = maxIndex + 1
+      console.log(
+        `[mock-llm] Incremental mode: Found ${files.length} existing recordings, starting at index ${callCount}`,
+      )
+    }
+  } catch (err) {
+    console.warn(`[mock-llm] Could not scan recordings dir: ${err}`)
   }
 
   return {

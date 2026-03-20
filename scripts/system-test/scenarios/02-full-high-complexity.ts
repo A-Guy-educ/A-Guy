@@ -15,7 +15,7 @@
 import { execFileSync } from 'child_process'
 import * as fs from 'fs'
 
-import { assertLabelsPresent, assertPRCreated, assertCommentExists, pollWorkflowRun } from '../lib'
+import { assertPRCreated, assertCommentExists } from '../lib'
 import { CODY_WORKFLOW, SYSTEM_TEST_LABEL, ISSUE_TITLE_PREFIX } from '../lib/config'
 import type { ScenarioContext, Scenario } from './types'
 import type { ScenarioResult } from '../lib/report'
@@ -51,13 +51,16 @@ export const scenario02: Scenario = {
 
     let issueNumber: number | undefined = undefined
     let taskId: string | undefined
-    let workflowDispatchTime: string | undefined
+    let _workflowDispatchTime: string | undefined
 
     // Step 0: Create test version branch with opencode config
-    // Use mock config if MOCK_MODE is set, otherwise use test (cheap) config
-    const useMock = process.env.MOCK_MODE === 'record' || process.env.MOCK_MODE === 'replay'
-    const configFile = useMock ? 'opencode.mock.json' : 'opencode.test.json'
-    const configLabel = useMock ? 'mock' : 'cheap'
+    // In replay mode: use mock config (cody uses recordings)
+    // In record mode: use real config (cody uses real API, we capture calls separately)
+    // Otherwise: use test (cheap) config
+    const isReplayMode = process.env.MOCK_MODE === 'replay'
+    const isRecordMode = process.env.MOCK_MODE === 'record'
+    const configFile = isReplayMode ? 'opencode.mock.json' : 'opencode.test.json'
+    const configLabel = isReplayMode ? 'mock' : 'cheap'
 
     ctx.log.info(`Creating test version branch: ${TEST_VERSION_BRANCH} with ${configLabel} config`)
     try {
@@ -128,7 +131,7 @@ export const scenario02: Scenario = {
       const mm = String(now.getMonth() + 1).padStart(2, '0')
       const dd = String(now.getDate()).padStart(2, '0')
       taskId = `${yy}${mm}${dd}-systest-${ctx.runId}`
-      workflowDispatchTime = now.toISOString()
+      _workflowDispatchTime = now.toISOString()
 
       ctx.log.info(
         `Dispatching pipeline: task=${taskId}, complexity=65, version=${TEST_VERSION_BRANCH}`,
@@ -155,7 +158,7 @@ export const scenario02: Scenario = {
           '-f',
           `version=${TEST_VERSION_BRANCH}`,
           '-f',
-          `use_mock=${useMock}`,
+          `use_mock=${isReplayMode}`,
           '--repo',
           ctx.repo,
         ],

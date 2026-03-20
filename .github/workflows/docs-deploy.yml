@@ -1,0 +1,178 @@
+name: Deploy Wiki to GitHub Pages
+
+on:
+  push:
+    branches: [dev]
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Collect docs from repo
+        run: |
+          mkdir -p _wiki
+
+          # 1. Copy docs/ folder as the base
+          cp -r docs/* _wiki/
+          rm -f _wiki/.nojekyll
+
+          # 2. Copy root-level docs into _wiki/project/
+          mkdir -p _wiki/project
+          for f in AGENTS.md DESIGN_SYSTEM.md STYLING-GUIDE.md RELEASE.md CHANGELOG.md SETUP.md README.md; do
+            [ -f "$f" ] && cp "$f" "_wiki/project/$f"
+          done
+
+          # 3. Copy src/ READMEs preserving structure
+          mkdir -p _wiki/src
+          find src -name "README.md" -not -path "*/node_modules/*" | while read f; do
+            dir="_wiki/$(dirname "$f")"
+            mkdir -p "$dir"
+            cp "$f" "$dir/README.md"
+          done
+
+          # 4. Copy scripts/ READMEs
+          mkdir -p _wiki/scripts
+          find scripts -name "README.md" -not -path "*/node_modules/*" | while read f; do
+            dir="_wiki/$(dirname "$f")"
+            mkdir -p "$dir"
+            cp "$f" "$dir/README.md"
+          done
+
+          # 5. Copy tests/ README
+          [ -f tests/README.md ] && mkdir -p _wiki/tests && cp tests/README.md _wiki/tests/
+
+          # 6. Copy Docsify index.html
+          cp docs/index.html _wiki/index.html
+
+          # 7. Auto-generate README.md for folders that don't have one
+          find _wiki -type d | while read dir; do
+            if [ ! -f "$dir/README.md" ]; then
+              # Get folder name for title
+              folder_name=$(basename "$dir")
+              [ "$folder_name" = "_wiki" ] && continue
+
+              # Make title from folder name (kebab-case to Title Case)
+              title=$(echo "$folder_name" | sed 's/-/ /g' | sed 's/\b\(.\)/\u\1/g')
+
+              # List all .md files in this folder
+              echo "# $title" > "$dir/README.md"
+              echo "" >> "$dir/README.md"
+              for md in "$dir"/*.md; do
+                [ "$(basename "$md")" = "README.md" ] && continue
+                [ ! -f "$md" ] && continue
+                # Get first heading from file, or use filename
+                heading=$(head -5 "$md" | grep "^#" | head -1 | sed 's/^#* *//')
+                filename=$(basename "$md" .md)
+                if [ -n "$heading" ]; then
+                  echo "- [$heading]($filename)" >> "$dir/README.md"
+                else
+                  echo "- [$filename]($filename)" >> "$dir/README.md"
+                fi
+              done
+
+              # List subdirectories
+              for subdir in "$dir"/*/; do
+                [ ! -d "$subdir" ] && continue
+                subname=$(basename "$subdir")
+                subtitle=$(echo "$subname" | sed 's/-/ /g' | sed 's/\b\(.\)/\u\1/g')
+                echo "- [$subtitle]($subname/)" >> "$dir/README.md"
+              done
+            fi
+          done
+
+          # 8. Auto-generate _sidebar.md
+          cat > _wiki/_sidebar.md << 'SIDEBAR'
+          - **Home**
+            - [Welcome](/)
+
+          - **Project**
+            - [Overview](project/README)
+            - [Agents / Payload Rules](project/AGENTS)
+            - [Design System](project/DESIGN_SYSTEM)
+            - [Styling Guide](project/STYLING-GUIDE)
+            - [Setup](project/SETUP)
+            - [Releases](project/RELEASE)
+            - [Changelog](project/CHANGELOG)
+
+          - **Architecture**
+            - [Access Control](access-control/)
+            - [Admin Components](admin-components/)
+            - [Architecture Decisions](architecture/)
+            - [Contracts](contracts/)
+
+          - **Features**
+            - [Course Hierarchy](course-hierarchy/)
+            - [Exercises](exercises/)
+            - [Exercise Import](exercise-import/)
+            - [Block Rendering](block-rendering/)
+            - [Chat Context](features/chat-context/)
+
+          - **AI & Pipeline**
+            - [AI Services](ai-services/)
+            - [AI Docs](ai/)
+            - [A-Guy Platform](a-guy/)
+            - [Self-Growing Pipeline](self-growing-pipeline/)
+            - [Brain Server](brain-server/)
+            - [QA System](qa/)
+
+          - **Source Code**
+            - [App](src/app/)
+            - [Server](src/server/)
+            - [Collections](src/server/payload/collections/)
+            - [Endpoints](src/server/payload/endpoints/)
+            - [Blocks](src/server/payload/blocks/)
+            - [Repos](src/server/repos/)
+            - [Client](src/client/)
+            - [Infra](src/infra/)
+            - [Analytics](src/infra/analytics/)
+            - [LLM](src/infra/llm/)
+            - [Admin UI](src/ui/admin/)
+            - [Web UI](src/ui/web/)
+
+          - **Scripts**
+            - [Scripts Overview](scripts/)
+            - [Cody Pipeline](scripts/cody/)
+            - [Brain Server](scripts/brain-server/)
+            - [Browser Agent](scripts/browser-agent/)
+            - [Remote Agent](scripts/remote-agent/)
+
+          - **Testing**
+            - [Tests](tests/)
+            - [System Tests](system-test/)
+            - [Smoke Checks](SMOKE_CHECKS)
+
+          - **Operations**
+            - [Automation](automation)
+            - [Releases](releases)
+            - [Nightly Docs Agent](nightly-docs-agent/)
+
+          - **Specs & Plans**
+            - [Specifications](specs/)
+            - [Plans](plans/)
+            - [Audits](audits/)
+            - [Fixes](fixes/)
+          SIDEBAR
+          # Remove leading whitespace from heredoc
+          sed -i 's/^          //' _wiki/_sidebar.md
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_wiki
+          publish_branch: gh-pages
+          force_orphan: true
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'

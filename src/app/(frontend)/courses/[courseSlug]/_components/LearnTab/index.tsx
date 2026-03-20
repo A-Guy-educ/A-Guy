@@ -1,29 +1,51 @@
 'use client'
 
+import { useMemo } from 'react'
 import type { Chapter, Lesson } from '@/payload-types'
 import { getEffectiveLessonType } from '@/server/constants/lesson-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
+import { useProgressMap } from '@/client/hooks/useProgressMap'
 import { CourseLessonCard } from '../CourseLessonCard'
+import type { LessonProgress } from '../CoursePageContent'
 
 interface LearnTabProps {
   lessons: Lesson[]
   chapters: Chapter[]
   courseSlug: string
   tabColor?: { text: string; stroke: string }
+  lessonProgressMap?: Record<string, LessonProgress>
 }
 
-export function LearnTab({ lessons, chapters, courseSlug, tabColor }: LearnTabProps) {
+export function LearnTab({
+  lessons,
+  chapters,
+  courseSlug,
+  tabColor,
+  lessonProgressMap = {},
+}: LearnTabProps) {
   const t = useTranslations('coursePage')
   const learningLessons = lessons.filter((l) => getEffectiveLessonType(l.type) === 'learning')
+
+  const lessonIds = useMemo(() => learningLessons.map((l) => l.id), [learningLessons])
+  const { progressMap, statusMap } = useProgressMap({ recordType: 'lesson', recordIds: lessonIds })
 
   if (learningLessons.length === 0) {
     return null
   }
 
-  // Placeholder — will reflect real UserProgress when wired
-  const completedCount = 0
-  const inProgressCount = 0
-  const notStartedCount = learningLessons.length
+  // Use parent lessonProgressMap if available, fall back to DB-fetched progressMap
+  const hasParentProgress = Object.keys(lessonProgressMap).length > 0
+
+  const completedCount = hasParentProgress
+    ? learningLessons.filter((l) => (lessonProgressMap[l.id]?.percent ?? 0) >= 100).length
+    : Object.values(statusMap).filter((s) => s === 'completed').length
+  const inProgressCount = hasParentProgress
+    ? learningLessons.filter((l) => {
+        const p = lessonProgressMap[l.id]?.percent ?? 0
+        return p > 0 && p < 100
+      }).length
+    : Object.values(statusMap).filter((s) => s === 'in_progress').length
+  const notStartedCount = learningLessons.length - completedCount - inProgressCount
 
   return (
     <>
@@ -56,6 +78,7 @@ export function LearnTab({ lessons, chapters, courseSlug, tabColor }: LearnTabPr
               courseSlug={courseSlug}
               chapterSlug={chapterSlug}
               tabColor={tabColor}
+              progress={lessonProgressMap[lesson.id]?.percent ?? progressMap[lesson.id] ?? 0}
             />
           )
         })}

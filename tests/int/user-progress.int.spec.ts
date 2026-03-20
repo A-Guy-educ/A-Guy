@@ -267,7 +267,7 @@ describe.skipIf(!hasDatabaseUrl)('UserProgress Collection', () => {
       expect(foundUser2Progress).toBeUndefined()
     })
 
-    it('should allow admin to read all progress records', async () => {
+    it('should allow admin to read all progress records (via authenticatedOrOwner)', async () => {
       // Create admin user (hook forces role=student on create, so update after)
       const admin = await payload.create({
         collection: 'users',

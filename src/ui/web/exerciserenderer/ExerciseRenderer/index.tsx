@@ -6,7 +6,7 @@
 
 'use client'
 
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { cn } from '@/infra/utils/ui'
 import { useTranslations, useLocale } from '@/ui/web/providers/I18n'
 import { Card } from '@/ui/web/components/card'
@@ -127,6 +127,7 @@ export function ExerciseRenderer({
   exerciseNumber = 1,
   lessonId = '',
   exerciseId = '',
+  onResultsChange,
 }: ExerciseRendererProps) {
   const t = useTranslations('courses')
   const locale = useLocale()
@@ -164,7 +165,27 @@ export function ExerciseRenderer({
       locale: locale ?? undefined,
     })
 
+  // localStorage key for persisting answers per exercise
+  const storageKey = exerciseId ? `a-guy:answers:${exerciseId}` : ''
+
   const [answers, setAnswers] = useState<Record<string, UserAnswer>>(() => {
+    // Try to restore saved answers from localStorage
+    if (storageKey && typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem(storageKey)
+        if (saved) {
+          const parsed = JSON.parse(saved) as Record<string, UserAnswer>
+          // Merge saved answers with initial answers (in case new questions were added)
+          const initial: Record<string, UserAnswer> = {}
+          questionBlocks.forEach((q) => {
+            initial[q.id] = parsed[q.id] ?? getInitialAnswer(q)
+          })
+          return initial
+        }
+      } catch {
+        // Corrupted data — fall through to default
+      }
+    }
     const initial: Record<string, UserAnswer> = {}
     questionBlocks.forEach((q) => {
       initial[q.id] = getInitialAnswer(q)
@@ -172,10 +193,32 @@ export function ExerciseRenderer({
     return initial
   })
 
+  // Persist answers to localStorage on every change
+  const persistAnswers = useCallback(
+    (updated: Record<string, UserAnswer>) => {
+      if (!storageKey || typeof window === 'undefined') return
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(updated))
+      } catch {
+        // Storage full or unavailable — silent
+      }
+    },
+    [storageKey],
+  )
+
   const [checkResults, setCheckResults] = useState<Record<string, CheckResult>>({})
   const [hasChecked, setHasChecked] = useState<Record<string, boolean>>({})
   const [isChecking, setIsChecking] = useState<Record<string, boolean>>({})
   const chatTriggeredRef = useRef<Set<string>>(new Set())
+
+  // Report aggregate correctness to parent when check results change
+  useEffect(() => {
+    if (!onResultsChange) return
+    const totalQuestions = questionBlocks.length
+    const checkedCount = Object.keys(checkResults).length
+    const correctCount = Object.values(checkResults).filter((r) => r.isCorrect).length
+    onResultsChange({ totalQuestions, checkedCount, correctCount })
+  }, [checkResults, onResultsChange, questionBlocks.length])
 
   // SVG hotspot state (interactive SVGs are separate from QuestionBlock flow)
   const [svgAnswers, setSvgAnswers] = useState<Record<string, UserAnswer>>({})
@@ -200,7 +243,11 @@ export function ExerciseRenderer({
   }
 
   const handleAnswerChange = async (questionId: string, answer: UserAnswer) => {
-    setAnswers((prev) => ({ ...prev, [questionId]: answer }))
+    setAnswers((prev) => {
+      const updated = { ...prev, [questionId]: answer }
+      persistAnswers(updated)
+      return updated
+    })
 
     // For true/false questions, check immediately on selection
     const question = questionBlocks.find((q) => q.id === questionId)

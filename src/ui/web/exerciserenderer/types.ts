@@ -205,4 +205,10 @@ export interface ExerciseRendererProps {
   lessonId?: string
   /** Exercise ID for analytics and help system */
   exerciseId?: string
+  /** Callback when check results change, reporting aggregate correctness */
+  onResultsChange?: (results: {
+    totalQuestions: number
+    checkedCount: number
+    correctCount: number
+  }) => void
 }

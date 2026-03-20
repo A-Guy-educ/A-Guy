@@ -1,18 +1,21 @@
 # Brain Server Setup Guide
 
-One-time setup for the Context+ brain server — a remote codebase intelligence service that powers the Cody pipeline's architect and review stages.
+One-time setup for the brain server — a remote service that powers the Cody pipeline's architect and review stages.
 
 ## What You'll Get
 
 A private server running:
 
-- **Context+** — AST parsing, semantic search, memory graph, blast radius analysis
+- **Context+** — AST parsing, semantic search, memory graph, blast radius analysis (default)
+- **Or: Claude MCP Server** — Claude Code tools via MCP (alternative option)
 - **Ollama** — Local embedding model for semantic search
 - **Webhook server** — Keeps repo in sync on every `git push`
 
 All accessible only via Tailscale (private encrypted network) — no public ports exposed.
 
 **Cost**: ~$5-7/mo | **Time**: ~30 minutes
+
+> **Tip**: You can run both Context+ and Claude MCP simultaneously — see [docs/brain-server/05-claude-mcp-option.md](../../docs/brain-server/05-claude-mcp-option.md)
 
 ---
 
@@ -205,6 +208,16 @@ Your Mac ──(Tailscale)──→ VPS (100.x.x.x)
 
 GitHub push → Webhook → git pull → Context+ re-indexes
 ```
+
+---
+
+## Alternative: Claude MCP Server
+
+Instead of Context+, you can run `claude mcp serve` + `supergateway` to expose Claude Code's built-in tools as an MCP server.
+
+**See**: [docs/brain-server/05-claude-mcp-option.md](../../docs/brain-server/05-claude-mcp-option.md)
+
+This gives you shell access (git, bash) via MCP instead of semantic search. You can also run **both** stacks simultaneously.
 
 ## Cost
 

@@ -88,6 +88,7 @@ export interface Config {
     'exercise-assets': ExerciseAsset;
     users: User;
     'user-progress': UserProgress;
+    'user-stats': UserStat;
     media: Media;
     'chat-assets': ChatAsset;
     'upload-sessions': UploadSession;
@@ -128,6 +129,7 @@ export interface Config {
     'exercise-assets': ExerciseAssetsSelect<false> | ExerciseAssetsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'user-progress': UserProgressSelect<false> | UserProgressSelect<true>;
+    'user-stats': UserStatsSelect<false> | UserStatsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     'chat-assets': ChatAssetsSelect<false> | ChatAssetsSelect<true>;
     'upload-sessions': UploadSessionsSelect<false> | UploadSessionsSelect<true>;
@@ -1774,6 +1776,10 @@ export interface UserProgress {
          */
         score?: number | null;
         /**
+         * Cumulative time spent on this item in seconds
+         */
+        timeSpentSeconds?: number | null;
+        /**
          * Last time this record was accessed
          */
         lastAccessedAt?: string | null;
@@ -1826,6 +1832,70 @@ export interface UserProgress {
               id?: string | null;
             }[]
           | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-stats".
+ */
+export interface UserStat {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * The user this stats belongs to
+   */
+  user: string | User;
+  /**
+   * Cumulative active time in seconds
+   */
+  totalTimeSpentSeconds?: number | null;
+  /**
+   * Current consecutive days of activity
+   */
+  currentStreak?: number | null;
+  /**
+   * Historical maximum streak
+   */
+  longestStreak?: number | null;
+  /**
+   * Last day counted for streak (YYYY-MM-DD format)
+   */
+  lastActiveDate?: string | null;
+  /**
+   * Timestamp of last heartbeat received
+   */
+  lastHeartbeatAt?: string | null;
+  /**
+   * Recent user activity timeline (max 50 entries)
+   */
+  activityLog?:
+    | {
+        actionType:
+          | 'lesson_completed'
+          | 'exercise_attempted'
+          | 'exercise_completed'
+          | 'question_asked'
+          | 'conversation_started';
+        /**
+         * Human-readable description (e.g., "Completed Lesson 3")
+         */
+        label: string;
+        /**
+         * ID of the entity (lesson/exercise/conversation ID)
+         */
+        targetId?: string | null;
+        /**
+         * Collection slug (lessons/exercises/conversations)
+         */
+        targetCollection?: string | null;
+        timestamp: string;
         id?: string | null;
       }[]
     | null;
@@ -2420,6 +2490,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'user-progress';
         value: string | UserProgress;
+      } | null)
+    | ({
+        relationTo: 'user-stats';
+        value: string | UserStat;
       } | null)
     | ({
         relationTo: 'media';
@@ -3063,6 +3137,7 @@ export interface UserProgressSelect<T extends boolean = true> {
         completionPercentage?: T;
         status?: T;
         score?: T;
+        timeSpentSeconds?: T;
         lastAccessedAt?: T;
         id?: T;
       };
@@ -3094,6 +3169,31 @@ export interface UserProgressSelect<T extends boolean = true> {
               userStartTime?: T;
               id?: T;
             };
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-stats_select".
+ */
+export interface UserStatsSelect<T extends boolean = true> {
+  tenant?: T;
+  user?: T;
+  totalTimeSpentSeconds?: T;
+  currentStreak?: T;
+  longestStreak?: T;
+  lastActiveDate?: T;
+  lastHeartbeatAt?: T;
+  activityLog?:
+    | T
+    | {
+        actionType?: T;
+        label?: T;
+        targetId?: T;
+        targetCollection?: T;
+        timestamp?: T;
         id?: T;
       };
   updatedAt?: T;

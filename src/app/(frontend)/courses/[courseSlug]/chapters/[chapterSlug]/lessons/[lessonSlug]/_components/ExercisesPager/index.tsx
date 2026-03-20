@@ -1,5 +1,6 @@
 'use client'
 
+import { useCallback, useEffect, useRef } from 'react'
 import type { Exercise, Media as MediaType } from '@/payload-types'
 import { Button } from '@/ui/web/components/button'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
@@ -54,13 +55,92 @@ export function ExercisesPager({
     handleStartExercises,
     getExerciseOrdinal,
     totalExercises,
-  } = useExercisesPager({ exercises, courseSlug, chapterSlug, lessonSlug, hasAboutPage })
+  } = useExercisesPager({ exercises, courseSlug, chapterSlug, lessonSlug, lessonId, hasAboutPage })
+
+  // Store per-exercise question results from ExerciseRenderer
+  const exerciseResults = useRef<
+    Record<string, { totalQuestions: number; checkedCount: number; correctCount: number }>
+  >({})
+  const trackedExercises = useRef(new Set<string>())
+  const prevExerciseIndex = useRef<number | undefined>(undefined)
+  const trackedLessonCompletion = useRef(false)
+
+  // Track exercise when navigating away — only if student checked at least one answer
+  useEffect(() => {
+    if (
+      prevExerciseIndex.current !== undefined &&
+      prevExerciseIndex.current !== pageState.exerciseIndex
+    ) {
+      const prevExercise = exercises[prevExerciseIndex.current]
+      if (prevExercise && !trackedExercises.current.has(prevExercise.id)) {
+        const results = exerciseResults.current[prevExercise.id]
+        const checkedCount = results?.checkedCount || 0
+
+        // Only track if student actually attempted at least one question
+        if (checkedCount > 0) {
+          trackedExercises.current.add(prevExercise.id)
+          const totalQuestions = results?.totalQuestions || 1
+          const correctCount = results?.correctCount || 0
+          const score = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0
+          fetch('/api/stats/track-activity', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              eventType: 'exercise_completed',
+              exerciseId: prevExercise.id,
+              exerciseTitle: prevExercise.title || '',
+              lessonId,
+              score,
+              totalQuestions,
+              correctCount,
+            }),
+          }).catch(() => {
+            // fail silently
+          })
+        }
+      }
+    }
+    prevExerciseIndex.current = pageState.exerciseIndex
+  }, [pageState.exerciseIndex, exercises, lessonId])
+
+  // Track lesson completion when reaching outro — only if student attempted exercises
+  useEffect(() => {
+    if (pageState.type === 'outro' && !trackedLessonCompletion.current) {
+      // Only mark lesson complete if at least one exercise was actually attempted
+      const hasAttemptedExercises = trackedExercises.current.size > 0
+      if (hasAttemptedExercises) {
+        trackedLessonCompletion.current = true
+        fetch('/api/stats/track-activity', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            eventType: 'lesson_completed',
+            lessonId,
+            lessonTitle,
+          }),
+        }).catch(() => {
+          // fail silently
+        })
+      }
+    }
+  }, [pageState.type, lessonId, lessonTitle])
 
   const introMediaObj = introMedia && typeof introMedia === 'object' ? introMedia : null
 
   const exerciseOrdinal = getExerciseOrdinal()
   const currentExercise =
     typeof pageState.exerciseIndex === 'number' ? exercises[pageState.exerciseIndex] : null
+
+  const handleExerciseResultsChange = useCallback(
+    (results: { totalQuestions: number; checkedCount: number; correctCount: number }) => {
+      if (currentExercise) {
+        exerciseResults.current[currentExercise.id] = results
+      }
+    },
+    [currentExercise],
+  )
 
   if (pageState.type === 'exercise' && currentExercise) {
     return (
@@ -95,12 +175,14 @@ export function ExercisesPager({
 
                 <div className="bg-card rounded-2xl p-5 md:p-6 border border-border/60 shadow-sm">
                   <ExerciseRenderer
+                    key={currentExercise.id}
                     content={currentExercise.content as unknown as ExerciseContentData}
                     mode="student"
                     showCheckAnswer={true}
                     mediaMap={mediaMap}
                     lessonId={lessonId}
                     exerciseId={currentExercise.id}
+                    onResultsChange={handleExerciseResultsChange}
                   />
                 </div>
               </div>

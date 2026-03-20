@@ -1,29 +1,50 @@
 'use client'
 
+import { useMemo } from 'react'
 import type { Chapter, Lesson } from '@/payload-types'
 import { getEffectiveLessonType } from '@/server/constants/lesson-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
+import { useProgressMap } from '@/client/hooks/useProgressMap'
 import { CourseLessonCard } from '../CourseLessonCard'
+import type { LessonProgress } from '../CoursePageContent'
 
 interface PracticeTabProps {
   lessons: Lesson[]
   chapters: Chapter[]
   courseSlug: string
   tabColor?: { text: string; stroke: string }
+  lessonProgressMap?: Record<string, LessonProgress>
 }
 
-export function PracticeTab({ lessons, chapters, courseSlug, tabColor }: PracticeTabProps) {
+export function PracticeTab({
+  lessons,
+  chapters,
+  courseSlug,
+  tabColor,
+  lessonProgressMap = {},
+}: PracticeTabProps) {
   const t = useTranslations('coursePage')
   const practiceLessons = lessons.filter((l) => getEffectiveLessonType(l.type) === 'practice')
+
+  const lessonIds = useMemo(() => practiceLessons.map((l) => l.id), [practiceLessons])
+  const { progressMap, statusMap } = useProgressMap({ recordType: 'lesson', recordIds: lessonIds })
 
   if (practiceLessons.length === 0) {
     return null
   }
 
-  // Placeholder — will reflect real UserProgress when wired
-  const completedCount = 0
-  const inProgressCount = 0
-  const notStartedCount = practiceLessons.length
+  const hasParentProgress = Object.keys(lessonProgressMap).length > 0
+
+  const completedCount = hasParentProgress
+    ? practiceLessons.filter((l) => (lessonProgressMap[l.id]?.percent ?? 0) >= 100).length
+    : Object.values(statusMap).filter((s) => s === 'completed').length
+  const inProgressCount = hasParentProgress
+    ? practiceLessons.filter((l) => {
+        const p = lessonProgressMap[l.id]?.percent ?? 0
+        return p > 0 && p < 100
+      }).length
+    : Object.values(statusMap).filter((s) => s === 'in_progress').length
+  const notStartedCount = practiceLessons.length - completedCount - inProgressCount
 
   return (
     <>
@@ -56,6 +77,7 @@ export function PracticeTab({ lessons, chapters, courseSlug, tabColor }: Practic
               courseSlug={courseSlug}
               chapterSlug={chapterSlug}
               tabColor={tabColor}
+              progress={lessonProgressMap[lesson.id]?.percent ?? progressMap[lesson.id] ?? 0}
             />
           )
         })}
