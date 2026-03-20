@@ -1,0 +1,21 @@
+{
+  "task_type": "refactor",
+  "risk_level": "low",
+  "confidence": 1,
+  "primary_domain": "devops",
+  "scope": [
+    "src/infra/utils/logger/index.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [],
+  "review_questions": [],
+  "complexity": 3,
+  "complexity_reasoning": "Scope: 2 (single file, <5 lines changed). Risk: 0 (comment only). Novelty: 0 (existing pattern). Cross-domain: 0 (single file). Ambiguity: 0 (exact comment provided). Dependency: 0 (self-contained). Total: 3",
+  "input_quality": {
+    "level": "detailed_plan",
+    "skip_stages": [],
+    "reasoning": "Task provides exact comment text and file path. Promoted spec.md with task description."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}

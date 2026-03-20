@@ -4,8 +4,8 @@
   "provider": {
     "minimax": {
       "options": {
-        "baseURL": "https://api.minimax.io/v1",
-        "apiKey": "${MINIMAX_API_KEY}"
+        "baseURL": "http://localhost:8080/v1",
+        "apiKey": "mock-key"
       }
     }
   },
@@ -105,7 +105,7 @@
     },
     "figma": {
       "type": "local",
-      "command": ["npx", "y", "figma-developer-mcp", "--figma-api-key=${FIGMA_API_KEY}", "--stdio"]
+      "command": ["npx", "-y", "figma-developer-mcp", "--figma-api-key=${FIGMA_API_KEY}", "--stdio"]
     },
     "playwright": {
       "type": "local",
