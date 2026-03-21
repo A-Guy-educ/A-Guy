@@ -380,7 +380,7 @@ No critical gaps identified. Plan was refined in-place.
         type: 'run-quality-with-autofix',
         gates: [
           { name: 'TypeScript', command: 'pnpm -s tsc --noEmit', source: 'tsc' as const },
-          // Unit Tests gate removed — tests are deferred to inspector plugin (cody-deferred-tests)
+          // No unit test gate — test stage handles test validation
         ],
         maxFeedbackLoops: 2,
       },

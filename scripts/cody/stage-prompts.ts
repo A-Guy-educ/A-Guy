@@ -60,10 +60,9 @@ export const stageInstructions: Record<string, (taskId: string) => string> = {
 
   'plan-gap': () => ``,
 
-  test: () => `DEFERRED TEST STAGE: Write comprehensive tests for the implemented code.
-Read the actual source files in src/ to understand what was built.
-Write tests to tests/ that validate the implementation against spec.md.
-Run tests with pnpm test:unit to verify they pass. Fix any failures before completing.`,
+  test: () => `TDD RED PHASE: Write failing tests from the plan.
+You run in PARALLEL with the build agent. Write tests to tests/ ONLY.
+Do NOT modify src/. Do NOT run tests (they will fail without implementation).`,
 
   build: () => `CRITICAL: IMPLEMENTATION STAGE - NOT DOCUMENTATION ONLY
 
