@@ -1,0 +1,31 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.85,
+  "primary_domain": "infra",
+  "scope": [
+    "src/infra/utils/pipeline-health.ts",
+    "tests/unit/infra/utils/pipeline-health.test.ts",
+    "PipelineHealthReport class with checkStageHealth, generateReport, getRetryRecommendation methods",
+    "HealthStatus, Report, RetryStrategy TypeScript interfaces",
+    "getStageTimeout helper function",
+    "Zod validation schemas for input validation"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "src/infra/utils/ directory exists and follows existing utility patterns",
+    "Zod is already installed as a project dependency",
+    "Test infrastructure exists at tests/unit/infra/utils/",
+    "Similar utility modules exist in codebase for reference patterns"
+  ],
+  "review_questions": [],
+  "complexity": 28,
+  "complexity_reasoning": "Scope: 12 (new utility module + test file, 2 main files). Risk: 6 (new TypeScript business logic, non-critical). Novelty: 5 (follows existing utility patterns). Cross-domain: 0 (single domain - backend utility). Ambiguity: 3 (clear requirements with specific methods, some implementation details to discover). Dependencies: 2 (self-contained, no external services). Total: 28",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Task contains 6 detailed requirements with specific class name (PipelineHealthReport), method signatures, file paths, and quality requirements (JSDoc, Zod validation, tests). Lacks formal '## Requirements' and '## Acceptance Criteria' headers but content is sufficiently detailed. Promoted spec.md."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
