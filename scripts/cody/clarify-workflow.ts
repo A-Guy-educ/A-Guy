@@ -157,14 +157,12 @@ export function handleClarification(input: CodyInput, taskDir: string): ClarifyR
 export type GateResult = 'approved' | 'rejected' | 'waiting'
 
 /**
- * Approval keywords that indicate user wants to proceed
+ * Structured gate commands — only `approve` and `reject` are accepted.
+ * Previously accepted ambiguous keywords (yes, go, y, continue, no, n, stop, cancel)
+ * which could cause accidental approvals/rejections from natural language comments.
  */
-const APPROVAL_KEYWORDS = ['approve', 'approved', 'yes', 'go', 'proceed', 'y', 'continue']
-
-/**
- * Rejection keywords that indicate user wants to cancel
- */
-const REJECTION_KEYWORDS = ['reject', 'rejected', 'no', 'cancel', 'stop', 'n']
+const APPROVAL_KEYWORDS = ['approve'] as const
+const REJECTION_KEYWORDS = ['reject'] as const
 
 /**
  * Get the gate file paths for a specific gate point
@@ -188,10 +186,11 @@ export interface ApprovalDetection {
 }
 
 /**
- * Check if a comment contains approval or rejection keywords
+ * Check if a comment contains structured gate commands (`approve` or `reject`).
+ * Only exact commands are accepted — no ambiguous keywords.
  * Also extracts any answer content provided after the keyword (preserves newlines!)
  */
-function detectApprovalFromComment(commentBody: string | null): ApprovalDetection {
+export function detectApprovalFromComment(commentBody: string | null): ApprovalDetection {
   if (!commentBody) return { status: null }
 
   // Decode if JSON-encoded

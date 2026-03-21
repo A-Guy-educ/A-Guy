@@ -260,7 +260,7 @@ If either fails:
 | `engine/pipeline-resolver.ts`  | resolvePipelineForMode(), createRebuildCallback()             |
 | `engine/status.ts`             | loadState, writeState, initState, updateStage                 |
 | `pipeline/definitions.ts`      | Stage order, createStageDefinitions(), buildPipeline()        |
-| `pipeline/post-actions.ts`     | executePostAction() — all post-action implementations         |
+| `pipeline/post-actions/`       | Post-action modules (split by responsibility)                 |
 | `pipeline/skip-conditions.ts`  | shouldSkip logic (input quality, complexity, clarify)         |
 | `pipeline/validators.ts`       | Output validators for spec, gap, build                        |
 | `pipeline/error-classifier.ts` | Classify tsc/lint/test errors for autofix                     |
@@ -279,9 +279,10 @@ If either fails:
 
 | File                | Purpose                                                      |
 | ------------------- | ------------------------------------------------------------ |
-| `agent-runner.ts`   | runAgentWithFileWatch(), spawns opencode, monitors output    |
-| `runner-backend.ts` | Pluggable backends: GitHubRunner (CI) vs LocalRunner (ocode) |
-| `stage-prompts.ts`  | SPEC_STAGES prompt definitions for each agent stage          |
+| `agent-runner.ts`   | runAgentWithFileWatch() orchestrator, re-exports agent/ modules |
+| `agent/`            | Split modules: file-watcher, session, log-parser, constants     |
+| `runner-backend.ts` | Pluggable backends: GitHubRunner (CI) vs LocalRunner (ocode)    |
+| `stage-prompts.ts`  | SPEC_STAGES prompt definitions for each agent stage             |
 
 ### Git & GitHub
 
@@ -446,6 +447,83 @@ One pipeline run per issue at a time. Does NOT cancel in-progress runs.
 | `/api/cody/auth`                  | GET    | Auth check                        |
 | `/api/cody/publish`               | POST   | Publish/merge PR                  |
 | `/api/cody/chat/*`                | \*     | Chat save/load/stream             |
+
+## Architecture Analysis & Design Rationale
+
+This section documents the engineering decisions behind the pipeline engine's complexity. Each pattern exists for a specific, validated reason — this is earned complexity, not accidental complexity.
+
+### Why the Complexity is Earned
+
+The Cody pipeline engine is a ~5,000+ line state machine that orchestrates 13 stages. On first read, several patterns appear over-engineered. Under scrutiny, each one addresses a real constraint.
+
+#### File-Watching for Agent Output
+
+The engine watches the filesystem for output files, checks size stability, and nudges agents that exit without output. This exists because **there is no reliable signal for agent completion**. The agent process can exit 0 without having written its output file (model timeouts, context exhaustion, silent failures). File-watching with stability checks is the pragmatic solution when you can't trust process exit codes.
+
+#### State Machine Loop (not a `for` loop)
+
+A simple `for` over stages doesn't work because:
+- **`retryWith` creates backward jumps** — verify fails → reset fix → re-run fix → re-run verify
+- **Gate pauses exit the process** — the pipeline must serialize state, exit, and resume in a new CI run
+- **Pipeline rebuild happens mid-execution** — after taskify, the profile is determined and impl stages are added
+- **Parallel stage groups** need coordinated execution with error aggregation
+
+The 1000-iteration circuit breaker and periodic recovery checks are safety nets for a system that runs in CI where processes can be killed at any time.
+
+#### Complexity-Based Skip Conditions
+
+Per-stage complexity thresholds (0-60) determine which stages run. This cannot be replaced with 3 hardcoded pipelines because:
+- The skip logic also considers `input_quality.skip_stages` (content promoted from previous runs)
+- `skipIfClarifyDisabled` and `skipIfSpecOnly` add orthogonal skip dimensions
+- Thresholds can be overridden per-task via `complexityOverride`
+- The state machine still needs all stages present for resume/rerun support
+
+Three fixed pipelines would lose this flexibility and break rerun-from-any-stage.
+
+#### Session Forking
+
+Each agent stage forks from the previous stage's session, carrying context forward. This **reduces token costs significantly** — later stages inherit context from earlier ones instead of loading full file contents from scratch. For a 13-stage pipeline, this compounds into meaningful savings.
+
+#### Post-Actions as Lifecycle Events
+
+Post-actions (`check-gate`, `resolve-profile`, `commit-task-files`, `run-quality-with-autofix`) are not cleanup tasks — they are pipeline-altering events. `resolve-profile` triggers pipeline rebuild. `check-gate` throws `PipelinePausedError`. `run-quality-with-autofix` runs multi-iteration fix loops.
+
+They are separate from handlers because the same post-action (e.g., `commit-task-files`) runs after multiple stages with different commit strategies. Merging them into handlers would duplicate logic.
+
+#### Fallback Content Generation
+
+When an agent fails to write its output file, some stages generate substitute content. The fallbacks vary in validity:
+- **Architect fallback** (restore `plan.md` from prev-run or use `context.md`): valid — recovers from interrupted reruns
+- **Plan-gap fallback** (note that agent edited plan.md directly): valid — the work was done, just documented differently
+- **Build fallback** (`git diff` as build summary): **degraded** — downstream stages (review, verify) operate on less information
+
+See [Recommended Improvements](#recommended-improvements) for the plan to audit and tighten these.
+
+#### Atomic State Writes
+
+Write to temp file → fsync → atomic rename. This prevents status.json corruption if the CI runner is killed mid-write. Combined with recovery checks that reset stale "running" stages to "pending," this makes the pipeline crash-safe.
+
+### Key Design Patterns
+
+| Pattern | Purpose | Justification |
+|---------|---------|---------------|
+| Immutable state updates | All `updateStage`, `completeState` return new objects | Safe recovery, no hidden side effects |
+| Declarative `retryWith` | Stages declare retry behavior, engine executes | Explicit, testable retry policy |
+| Two-phase construction | Spec stages run first, then pipeline rebuilds with impl stages | Dynamic profile selection based on task analysis |
+| Advisory stages | Spec stages don't fail the pipeline | Spec failures shouldn't block implementation |
+| Parallel execution with `Promise.allSettled` | Collects all results before error handling | No early exit on first failure, all post-actions run |
+
+### Recommended Improvements
+
+Three improvements identified, ordered by impact:
+
+| # | Change | Risk | Effort | Value | Rating |
+|---|--------|------|--------|-------|--------|
+| 1 | **Structured gate commands** — restrict to `@cody approve` / `@cody reject` only, remove keyword matching (`yes`, `go`, `proceed`, `y`, `continue`) | Low | Low | Medium | ★★★★★ |
+| 2 | **Audit fallback content** — remove build stage fallback (degraded substitute), keep architect and plan-gap fallbacks (valid recovery) | Low | Low | Medium | ★★★★☆ |
+| 3 | **Split large files** — break `post-actions.ts`, `agent-runner.ts` into focused modules, rename "post-actions" to "lifecycle hooks" | Low | Low | Medium | ★★★☆☆ |
+
+These are organizational and safety improvements. The core architecture should not be changed.
 
 ## Known Gotchas & Bugs Fixed
 
