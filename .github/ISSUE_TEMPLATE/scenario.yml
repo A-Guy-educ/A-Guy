@@ -1,0 +1,68 @@
+name: '📝 Scenario'
+description: 'Create a scenario for scenario-first development'
+labels: ['type:scenario']
+body:
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: 'Scenario category'
+      options:
+        - 'core - Core user flow'
+        - 'feature - Feature functionality'
+        - 'edge - Edge case handling'
+    validations:
+      required: true
+
+  - type: input
+    id: area
+    attributes:
+      label: Feature Area
+      description: 'Which part of the system does this affect?'
+      placeholder: 'e.g., exercises, chat, navigation'
+
+  - type: textarea
+    id: scenario
+    attributes:
+      label: Scenario
+      description: 'Describe the scenario in plain language'
+      placeholder: |
+        Given [precondition]
+        When [action]
+        Then [expected result]
+    validations:
+      required: true
+
+  - type: textarea
+    id: prototype
+    attributes:
+      label: Prototype Reference
+      description: 'HTML prototype file name (if available)'
+      placeholder: 'e.g., exercise-page.html'
+
+  - type: textarea
+    id: fixture
+    attributes:
+      label: Test Fixture
+      description: 'Required test data (if any)'
+      placeholder: 'e.g., student-with-course'
+
+  - type: textarea
+    id: behaviors
+    attributes:
+      label: Site Behaviors
+      description: 'Any site behaviors that should be documented'
+      placeholder: 'e.g., loading states, error handling'
+
+  - type: textarea
+    id: ds-components
+    attributes:
+      label: Design System Components
+      description: 'Design system components to use (if known)'
+      placeholder: 'e.g., Button, Card, Dialog'
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: 'Screenshots, mockups, links to related issues'

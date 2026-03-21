@@ -1,0 +1,63 @@
+{
+  "behaviors": [
+    {
+      "id": "network-error-toast",
+      "feature": "errors",
+      "type": "error",
+      "errorType": "network",
+      "display": "toast",
+      "recoverable": true,
+      "retryable": true,
+      "userInputPreserved": true,
+      "message": "שגיאת רשת. נסה שוב.",
+      "description": "Show toast for network errors with retry option"
+    },
+    {
+      "id": "auth-error-modal",
+      "feature": "errors",
+      "type": "error",
+      "errorType": "auth",
+      "display": "modal",
+      "recoverable": true,
+      "retryable": false,
+      "userInputPreserved": false,
+      "message": "ההפעלה הסתיימה. התחבר שוב.",
+      "description": "Show modal for auth errors, require re-login"
+    },
+    {
+      "id": "validation-error-inline",
+      "feature": "errors",
+      "type": "error",
+      "errorType": "validation",
+      "display": "inline",
+      "recoverable": true,
+      "retryable": false,
+      "userInputPreserved": true,
+      "description": "Show inline validation errors under form fields"
+    },
+    {
+      "id": "server-error-banner",
+      "feature": "errors",
+      "type": "error",
+      "errorType": "server",
+      "display": "banner",
+      "recoverable": false,
+      "retryable": true,
+      "userInputPreserved": false,
+      "message": "שגיאת שרת. נסה שוב מאוחר יותר.",
+      "description": "Show banner for server errors at top of page"
+    },
+    {
+      "id": "unknown-error-toast",
+      "feature": "errors",
+      "type": "error",
+      "errorType": "unknown",
+      "display": "toast",
+      "recoverable": false,
+      "retryable": false,
+      "userInputPreserved": true,
+      "message": "משהו השתבש. נסה שוב.",
+      "description": "Generic error handling"
+    }
+  ]
+}

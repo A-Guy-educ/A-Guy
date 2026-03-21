@@ -1,0 +1,26 @@
+{
+  "behaviors": [
+    {
+      "id": "page-loading-skeleton",
+      "feature": "navigation",
+      "type": "loading",
+      "loadingType": "skeleton",
+      "description": "Use skeleton loading for page transitions"
+    },
+    {
+      "id": "button-loading-spinner",
+      "feature": "buttons",
+      "type": "loading",
+      "loadingType": "spinner",
+      "duration": 500,
+      "description": "Inline spinner in buttons during async operations"
+    },
+    {
+      "id": "form-submit-progress",
+      "feature": "forms",
+      "type": "loading",
+      "loadingType": "progress",
+      "description": "Progress bar for form submissions"
+    }
+  ]
+}

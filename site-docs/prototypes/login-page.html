@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login Page Prototype</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      .login-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        padding: 40px;
+        width: 100%;
+        max-width: 400px;
+      }
+      .logo {
+        text-align: center;
+        margin-bottom: 32px;
+      }
+      .logo h1 {
+        color: #667eea;
+        font-size: 24px;
+        font-weight: 700;
+      }
+      .form-group {
+        margin-bottom: 20px;
+      }
+      .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #374151;
+        font-weight: 500;
+      }
+      .form-group input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border-color 0.2s;
+      }
+      .form-group input:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+      .submit-btn {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+      }
+      .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+      }
+      .forgot-link {
+        display: block;
+        text-align: center;
+        margin-top: 16px;
+        color: #667eea;
+        text-decoration: none;
+        font-size: 14px;
+      }
+      .guest-link {
+        display: block;
+        text-align: center;
+        margin-top: 12px;
+        color: #6b7280;
+        text-decoration: none;
+        font-size: 14px;
+      }
+      .loading-spinner {
+        display: none;
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-right: 8px;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .error-message {
+        display: none;
+        background: #fef2f2;
+        color: #dc2626;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="login-card" class="login-card">
+      <div id="logo" class="logo">
+        <h1>A-Guy</h1>
+      </div>
+
+      <div id="error-message" class="error-message">שם משתמש או סיסמה שגויים</div>
+
+      <form id="login-form">
+        <div id="email-group" class="form-group">
+          <label for="email-input">אימייל</label>
+          <input type="email" id="email-input" name="email" placeholder="your@email.com" required />
+        </div>
+
+        <div id="password-group" class="form-group">
+          <label for="password-input">סיסמה</label>
+          <input
+            type="password"
+            id="password-input"
+            name="password"
+            placeholder="••••••••"
+            required
+          />
+        </div>
+
+        <button type="submit" id="submit-btn" class="submit-btn">
+          <span id="btn-text">התחבר</span>
+          <span id="loading-spinner" class="loading-spinner"></span>
+        </button>
+      </form>
+
+      <a href="/forgot-password" id="forgot-link" class="forgot-link"> שכחת סיסמה? </a>
+
+      <a href="/guest" id="guest-link" class="guest-link"> המשך כאורח </a>
+    </div>
+
+    <script>
+      const form = document.getElementById('login-form')
+      const submitBtn = document.getElementById('submit-btn')
+      const btnText = document.getElementById('btn-text')
+      const spinner = document.getElementById('loading-spinner')
+      const errorMessage = document.getElementById('error-message')
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault()
+
+        // Show loading state
+        btnText.textContent = 'טוען...'
+        spinner.style.display = 'inline-block'
+        submitBtn.disabled = true
+        errorMessage.style.display = 'none'
+
+        // Simulate API call
+        const email = document.getElementById('email-input').value
+        const password = document.getElementById('password-input').value
+
+        setTimeout(() => {
+          // Reset button
+          btnText.textContent = 'התחבר'
+          spinner.style.display = 'none'
+          submitBtn.disabled = false
+
+          // Show error for demo
+          if (password !== 'correct') {
+            errorMessage.style.display = 'block'
+            return
+          }
+
+          // Success - redirect
+          window.location.href = '/dashboard'
+        }, 1500)
+      })
+    </script>
+  </body>
+</html>
