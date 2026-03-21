@@ -1,0 +1,26 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.92,
+  "primary_domain": "backend",
+  "scope": [
+    "src/infra/utils/pipeline-health.ts",
+    "tests/unit/infra/utils/pipeline-health.test.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Pipeline health monitoring patterns exist in the codebase for reference",
+    "Zod is already available as a dependency for validation schemas",
+    "Test infrastructure (Vitest) is already set up in the project"
+  ],
+  "review_questions": [],
+  "complexity": 28,
+  "complexity_reasoning": "Scope: 8 (2 files - utility module + test). Risk: 8 (new business logic, medium risk). Novelty: 6 (extends existing patterns). Cross-domain: 2 (backend only). Ambiguity: 3 (clear requirements with specific methods). Dependencies: 1 (self-contained utility). Total: 28",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Input contains 6 specific requirements with method names, interface names, file paths, and test coverage requirements. Promoted spec.md for structured requirements."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
