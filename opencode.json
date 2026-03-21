@@ -90,6 +90,46 @@
     "e2e-test-writer": {
       "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
       "description": "Writes Playwright E2E tests for UI changes. Tests committed but NOT run in pipeline — CI runs them on PR."
+    },
+    "delegation-test": {
+      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "description": "DELEGATION TEST: Tests whether build agent can spawn domain sub-agents for parallel execution",
+      "instructions": [".opencode/agents/build-delegation-test.md"]
+    },
+    "ui-expert": {
+      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "description": "UI expert - frontend components in src/ui/web/",
+      "instructions": [".opencode/agents/domain/ui-expert.md"]
+    },
+    "web-expert": {
+      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "description": "Web expert - pages and routes in src/app/(frontend)/",
+      "instructions": [".opencode/agents/domain/web-expert.md"]
+    },
+    "admin-expert": {
+      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "description": "Admin expert - Payload admin components in src/ui/admin/",
+      "instructions": [".opencode/agents/domain/admin-expert.md"]
+    },
+    "build-delegation": {
+      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "description": "Build agent with agent team delegation - spawns domain specialists",
+      "instructions": [".opencode/agents/build-delegation.md"]
+    },
+    "payload-expert": {
+      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "description": "Payload CMS expert - collections, hooks, access control, endpoints",
+      "instructions": [".opencode/agents/domain/payload-expert.md"]
+    },
+    "llm-expert": {
+      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "description": "LLM/AI expert - AI services, embeddings, vector search",
+      "instructions": [".opencode/agents/domain/llm-expert.md"]
+    },
+    "security-auditor": {
+      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "description": "Security auditor - auth, authorization, secrets, API endpoints",
+      "instructions": [".opencode/agents/domain/security-auditor.md"]
     }
   },
   "mcp": {
