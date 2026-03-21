@@ -556,7 +556,14 @@ export function runAgentWithFileWatch(
             }
 
             logger.info(`  ⚠️ Stage failed (${reason}), retrying (${retries}/${maxRetries})...`)
-            setTimeout(() => attemptWithRetry(feedbackMsg), ms('2s'))
+            setTimeout(() => {
+              try {
+                attemptWithRetry(feedbackMsg)
+              } catch (err) {
+                logger.error(`  ❌ attemptWithRetry threw: ${err}`)
+                finish({ succeeded: false, timedOut: false })
+              }
+            }, ms('2s'))
             return
           } else {
             // Exhausted retries
@@ -597,7 +604,14 @@ export function runAgentWithFileWatch(
               retries++
               const feedbackMsg = `CRITICAL FAILURE: Output file was not fully written. The file size changed during stability check. Please ensure you write the complete file before exiting.`
               logger.info(`  ⚠️ Retrying with feedback (${retries}/${maxRetries})...`)
-              setTimeout(() => attemptWithRetry(feedbackMsg), ms('2s'))
+              setTimeout(() => {
+                try {
+                  attemptWithRetry(feedbackMsg)
+                } catch (err) {
+                  logger.error(`  ❌ attemptWithRetry threw: ${err}`)
+                  finish({ succeeded: false, timedOut: false })
+                }
+              }, ms('2s'))
               return
             } else {
               logger.info(`  ❌ File stability check failed, retries exhausted`)
@@ -639,7 +653,14 @@ export function runAgentWithFileWatch(
                 retries++
                 const feedbackMsg = `VALIDATION ERROR from previous attempt:\n${errorMsg}\n\nFix this issue in your output. Ensure your output follows the exact required format.`
                 logger.info(`  🔄 Retrying with validation feedback (${retries}/${maxRetries})...`)
-                setTimeout(() => attemptWithRetry(feedbackMsg), ms('2s'))
+                setTimeout(() => {
+                  try {
+                    attemptWithRetry(feedbackMsg)
+                  } catch (err) {
+                    logger.error(`  ❌ attemptWithRetry threw: ${err}`)
+                    finish({ succeeded: false, timedOut: false })
+                  }
+                }, ms('2s'))
                 return
               } else {
                 logger.info(`  ❌ Validation failed and retries exhausted`)
@@ -673,7 +694,12 @@ export function runAgentWithFileWatch(
     }
 
     // Start first attempt (no feedback)
-    attemptWithRetry(undefined)
+    try {
+      attemptWithRetry(undefined)
+    } catch (err) {
+      logger.error(`  ❌ attemptWithRetry initial call threw: ${err}`)
+      resolve({ succeeded: false, timedOut: false, retries: 0, validationErrors: [] })
+    }
   })
 }
 

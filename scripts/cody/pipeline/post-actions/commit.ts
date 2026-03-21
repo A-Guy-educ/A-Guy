@@ -21,7 +21,7 @@ export async function executeCommitTaskFiles(
     return
   }
 
-  commitPipelineFiles({
+  const result = commitPipelineFiles({
     taskDir: ctx.taskDir,
     taskId: ctx.taskId,
     message: action.commitMessage || `ci(cody): commit task files for ${ctx.taskId}`,
@@ -32,4 +32,7 @@ export async function executeCommitTaskFiles(
     isCI: !ctx.input.local,
     dryRun: ctx.input.dryRun,
   })
+  if (!result.success) {
+    throw new Error(`commit-task-files failed: ${result.message}`)
+  }
 }

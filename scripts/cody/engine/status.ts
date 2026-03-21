@@ -73,7 +73,11 @@ export function writeState(taskId: string, state: PipelineStateV2): void {
   // Ensure directory exists
   const dir = path.dirname(statusFile)
   if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true })
+    try {
+      fs.mkdirSync(dir, { recursive: true })
+    } catch (err) {
+      throw new Error(`Failed to create status directory ${dir}: ${err}`)
+    }
   }
 
   // Atomic write with fsync: write to temp file, flush to disk, then rename

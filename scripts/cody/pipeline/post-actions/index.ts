@@ -111,11 +111,28 @@ export async function executePostAction(
       const parallelActions = (action as { actions: PostAction[] }).actions
       logger.info(`   Running ${parallelActions.length} actions in parallel...`)
 
-      const results = await Promise.allSettled(
-        parallelActions.map(async (a) => {
-          await executePostAction(ctx, a, _state)
-        }),
-      )
+      // Timeout wrapper to prevent hanging on slow post-actions
+      const PARALLEL_POST_ACTION_TIMEOUT_MS = 60_000 // 60 seconds
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(
+          () =>
+            reject(
+              new Error(
+                `Parallel post-actions exceeded ${PARALLEL_POST_ACTION_TIMEOUT_MS / 1000}s timeout`,
+              ),
+            ),
+          PARALLEL_POST_ACTION_TIMEOUT_MS,
+        )
+      })
+
+      const results = await Promise.race([
+        Promise.allSettled(
+          parallelActions.map(async (a) => {
+            await executePostAction(ctx, a, _state)
+          }),
+        ),
+        timeoutPromise,
+      ])
 
       // Check for PipelinePausedError first — re-throw it directly to preserve the type
       const pauseResult = results.find(
