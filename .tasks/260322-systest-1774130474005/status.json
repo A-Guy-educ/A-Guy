@@ -3,73 +3,19 @@
   "taskId": "260322-systest-1774130474005",
   "mode": "full",
   "pipeline": "spec_execute_verify",
-  "startedAt": "2026-03-21T22:03:31.565Z",
-  "updatedAt": "2026-03-21T22:11:56.406Z",
-  "state": "failed",
-  "cursor": "gap",
-  "stages": {
-    "taskify": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-03-21T22:03:32.770Z",
-      "completedAt": "2026-03-21T22:06:36.749Z",
-      "elapsed": 55,
-      "outputFile": "taskify.md",
-      "tokenUsage": {
-        "input": 1745,
-        "output": 1048,
-        "cacheRead": 108781
-      },
-      "sessionId": "ses_2ed932a43ffeEX9v0GS8gT1FTe"
-    },
-    "gap": {
-      "state": "skipped",
-      "retries": 0,
-      "skipped": "Complexity 28 (moderate) below threshold 35 for gap"
-    },
-    "architect": {
-      "state": "completed",
-      "retries": 0,
-      "startedAt": "2026-03-21T22:06:37.940Z",
-      "completedAt": "2026-03-21T22:09:02.726Z",
-      "elapsed": 145,
-      "outputFile": "architect.md",
-      "tokenUsage": {
-        "input": 29582,
-        "output": 5742,
-        "cacheRead": 839647
-      },
-      "sessionId": "ses_2ed905719ffe71DOYZimRzjhQ7"
-    },
-    "plan-gap": {
-      "state": "skipped",
-      "retries": 0,
-      "skipped": "Complexity 28 (moderate) below threshold 50 for plan-gap"
-    },
-    "test": {
-      "state": "completed",
-      "retries": 0,
-      "completedAt": "2026-03-21T22:11:53.748Z",
-      "outputFile": "test.md",
-      "sessionId": "ses_2ed8e1926ffeKKF0qUOa3ZXTh6"
-    },
-    "build": {
-      "state": "failed",
-      "retries": 0,
-      "completedAt": "2026-03-21T22:11:54.833Z",
-      "outputFile": "build.md",
-      "sessionId": "ses_2ed8e17f9ffe1hFwqO4xYm9F4G",
-      "error": "commit-task-files failed: Command failed: git commit --no-gpg-sign -m ci(cody): commit task files for 260322-systest-1774130474005"
-    }
-  },
+  "startedAt": "2026-03-21T22:16:09.878Z",
+  "updatedAt": "2026-03-21T22:16:09.878Z",
+  "state": "running",
+  "cursor": null,
+  "stages": {},
   "issueNumber": 989,
   "triggeredBy": "aguyaharonyair",
+  "issueCreator": "aguyaharonyair",
   "actorHistory": [
     {
       "action": "pipeline-triggered",
       "actor": "aguyaharonyair",
-      "timestamp": "2026-03-21T22:03:31.565Z"
+      "timestamp": "2026-03-21T22:16:09.878Z"
     }
-  ],
-  "completedAt": "2026-03-21T22:11:56.406Z"
+  ]
 }
