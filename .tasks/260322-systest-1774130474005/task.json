@@ -1,25 +1,27 @@
 {
   "task_type": "implement_feature",
   "risk_level": "medium",
-  "confidence": 0.92,
+  "confidence": 0.95,
   "primary_domain": "backend",
   "scope": [
-    "src/infra/utils/pipeline-health.ts",
-    "tests/unit/infra/utils/pipeline-health.test.ts"
+    "src/infra/utils/pipeline-health.ts - PipelineHealthReport class with HealthStatus, Report, RetryStrategy interfaces",
+    "src/infra/utils/pipeline-health.ts - getStageTimeout helper",
+    "src/infra/utils/pipeline-health.ts - Zod validation schemas",
+    "tests/unit/infra/utils/pipeline-health.test.ts - Integration tests for all public methods"
   ],
   "missing_inputs": [],
   "assumptions": [
-    "Pipeline health monitoring patterns exist in the codebase for reference",
-    "Zod is already available as a dependency for validation schemas",
-    "Test infrastructure (Vitest) is already set up in the project"
+    "Project uses Zod for validation (standard in this codebase)",
+    "Test patterns follow existing unit test conventions in tests/unit/",
+    "Pipeline stages follow the standard Cody pipeline stages: taskify, gap, architect, plan-gap, build, commit, review, verify, pr"
   ],
   "review_questions": [],
-  "complexity": 28,
-  "complexity_reasoning": "Scope: 8 (2 files - utility module + test). Risk: 8 (new business logic, medium risk). Novelty: 6 (extends existing patterns). Cross-domain: 2 (backend only). Ambiguity: 3 (clear requirements with specific methods). Dependencies: 1 (self-contained utility). Total: 28",
+  "complexity": 32,
+  "complexity_reasoning": "Scope: 6 (2 files - new utility module + test). Risk: 10 (non-critical business logic). Novelty: 8 (new utility but follows existing patterns). Cross-Domain: 3 (backend only). Ambiguity: 2 (clear requirements). Dependencies: 3 (Zod validation). Total: 32",
   "input_quality": {
     "level": "good_spec",
     "skip_stages": [],
-    "reasoning": "Input contains 6 specific requirements with method names, interface names, file paths, and test coverage requirements. Promoted spec.md for structured requirements."
+    "reasoning": "Task contains clear requirements with 6 specific items (class, interfaces, helper, JSDoc, Zod validation, tests). Promoted spec.md with structured requirements section."
   },
   "pipeline_profile": "standard",
   "pipeline": "spec_execute_verify"
