@@ -1,0 +1,230 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aguy.com/schemas/react-component.json",
+  "title": "React Component Contract",
+  "description": "Schema for validating React component patterns in the A-Guy platform",
+  "type": "object",
+  "required": ["componentName", "props", "styling"],
+  "properties": {
+    "componentName": {
+      "type": "string",
+      "pattern": "^[A-Z][a-zA-Z0-9]*$",
+      "description": "Component name in PascalCase",
+      "examples": ["Button", "Card", "UserProfile", "ExerciseCard"]
+    },
+    "props": {
+      "type": "object",
+      "description": "Component props interface definition",
+      "properties": {
+        "required": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Required prop names"
+        },
+        "optional": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Optional prop names"
+        },
+        "className": {
+          "type": "boolean",
+          "description": "Whether className prop is accepted for style overrides",
+          "default": true
+        }
+      }
+    },
+    "styling": {
+      "type": "object",
+      "required": ["method"],
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": ["tailwind-only"],
+          "description": "MUST use Tailwind CSS only (no SCSS, CSS modules, or inline styles)"
+        },
+        "variants": {
+          "type": "object",
+          "description": "CVA variants for the component",
+          "patternProperties": {
+            "^[a-zA-Z]+$": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "examples": [
+            {
+              "variant": ["primary", "secondary", "outline"],
+              "size": ["sm", "md", "lg"]
+            }
+          ]
+        },
+        "designTokens": {
+          "type": "boolean",
+          "description": "Whether component uses design tokens from tailwind.config.mjs",
+          "default": true
+        }
+      }
+    },
+    "i18n": {
+      "type": "object",
+      "description": "Internationalization configuration",
+      "properties": {
+        "required": {
+          "type": "boolean",
+          "description": "Whether component requires translations"
+        },
+        "namespace": {
+          "type": "string",
+          "description": "Translation namespace (usually component name)",
+          "pattern": "^[A-Z][a-zA-Z0-9]*$"
+        },
+        "keys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Translation keys used by component"
+        }
+      }
+    },
+    "accessibility": {
+      "type": "object",
+      "description": "Accessibility requirements",
+      "properties": {
+        "ariaLabels": {
+          "type": "boolean",
+          "description": "Whether component includes proper ARIA labels"
+        },
+        "keyboardNav": {
+          "type": "boolean",
+          "description": "Whether component supports keyboard navigation"
+        },
+        "focusManagement": {
+          "type": "boolean",
+          "description": "Whether component manages focus properly"
+        }
+      }
+    },
+    "serverComponent": {
+      "type": "boolean",
+      "description": "Whether component is a Server Component (default) or Client Component",
+      "default": true
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "External dependencies (e.g., 'next-intl', '@radix-ui/react-dialog')"
+    }
+  },
+  "examples": [
+    {
+      "componentName": "Button",
+      "props": {
+        "required": ["children"],
+        "optional": ["variant", "size", "disabled", "onClick"],
+        "className": true
+      },
+      "styling": {
+        "method": "tailwind-only",
+        "variants": {
+          "variant": ["primary", "secondary", "outline", "ghost"],
+          "size": ["sm", "md", "lg"]
+        },
+        "designTokens": true
+      },
+      "i18n": {
+        "required": false
+      },
+      "accessibility": {
+        "ariaLabels": true,
+        "keyboardNav": true,
+        "focusManagement": true
+      },
+      "serverComponent": true,
+      "dependencies": ["class-variance-authority"]
+    },
+    {
+      "componentName": "UserProfile",
+      "props": {
+        "required": ["userId"],
+        "optional": ["showEmail", "showAvatar"],
+        "className": true
+      },
+      "styling": {
+        "method": "tailwind-only",
+        "designTokens": true
+      },
+      "i18n": {
+        "required": true,
+        "namespace": "UserProfile",
+        "keys": ["title", "emailLabel", "roleLabel"]
+      },
+      "accessibility": {
+        "ariaLabels": true
+      },
+      "serverComponent": true,
+      "dependencies": ["next-intl"]
+    }
+  ],
+  "definitions": {
+    "patterns": {
+      "basicComponent": {
+        "description": "Simple presentational component with Tailwind styling",
+        "requirements": [
+          "Use Tailwind utilities only",
+          "Accept className prop for overrides",
+          "Use cn() utility for conditional classes",
+          "Export named component (not default)"
+        ]
+      },
+      "variantComponent": {
+        "description": "Component with multiple visual variants using CVA",
+        "requirements": [
+          "Use class-variance-authority (CVA)",
+          "Define variants in styling.variants",
+          "Use design tokens from tailwind.config.mjs",
+          "Provide sensible defaults for all variants"
+        ]
+      },
+      "i18nComponent": {
+        "description": "Component with internationalization support",
+        "requirements": [
+          "Use useTranslations hook from next-intl",
+          "Define namespace matching component name",
+          "Add translation keys to messages/en.json and messages/he.json",
+          "Handle RTL layout for Hebrew"
+        ]
+      },
+      "clientComponent": {
+        "description": "Client-side component with interactivity",
+        "requirements": [
+          "Add 'use client' directive at top of file",
+          "Use React hooks (useState, useEffect, etc.)",
+          "Handle events (onClick, onChange, etc.)",
+          "Manage client-side state"
+        ]
+      }
+    }
+  },
+  "notes": [
+    "CRITICAL: MUST use Tailwind CSS only - NO SCSS, CSS modules, or inline styles (except dynamic values)",
+    "BEST PRACTICE: Always accept className prop to allow style overrides from parent components",
+    "BEST PRACTICE: Use cn() utility from @/utilities/cn for combining conditional classes",
+    "BEST PRACTICE: Use design tokens from tailwind.config.mjs for consistency",
+    "PATTERN: For variants, use class-variance-authority (CVA) for type-safe variant handling",
+    "PATTERN: Server Components are default - only use 'use client' when necessary (state, effects, events)",
+    "i18n: Use useTranslations hook from next-intl for all user-facing text",
+    "i18n: Translation namespace should match component name (e.g., 'UserProfile' component uses 'UserProfile' namespace)",
+    "ACCESSIBILITY: Include proper ARIA labels for interactive elements",
+    "ACCESSIBILITY: Ensure keyboard navigation works for all interactive components",
+    "TESTING: Create component tests in __tests__ directory adjacent to component"
+  ]
+}
