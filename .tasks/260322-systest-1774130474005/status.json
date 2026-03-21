@@ -3,26 +3,11 @@
   "taskId": "260322-systest-1774130474005",
   "mode": "full",
   "pipeline": "spec_execute_verify",
-  "startedAt": "2026-03-21T22:16:09.878Z",
-  "updatedAt": "2026-03-21T22:17:55.651Z",
-  "state": "paused",
+  "startedAt": "2026-03-21T23:09:04.466Z",
+  "updatedAt": "2026-03-21T23:09:04.466Z",
+  "state": "running",
   "cursor": null,
-  "stages": {
-    "taskify": {
-      "state": "paused",
-      "retries": 0,
-      "startedAt": "2026-03-21T22:16:12.254Z",
-      "completedAt": "2026-03-21T22:17:48.141Z",
-      "elapsed": 96,
-      "outputFile": "taskify.md",
-      "tokenUsage": {
-        "input": 4527,
-        "output": 2949,
-        "cacheRead": 298844
-      },
-      "sessionId": "ses_2ed87909fffeHamlUaVF0b6xbY"
-    }
-  },
+  "stages": {},
   "issueNumber": 989,
   "triggeredBy": "aguyaharonyair",
   "issueCreator": "aguyaharonyair",
@@ -30,8 +15,7 @@
     {
       "action": "pipeline-triggered",
       "actor": "aguyaharonyair",
-      "timestamp": "2026-03-21T22:16:09.878Z"
+      "timestamp": "2026-03-21T23:09:04.466Z"
     }
-  ],
-  "completedAt": "2026-03-21T22:17:55.651Z"
+  ]
 }
