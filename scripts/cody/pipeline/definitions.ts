@@ -223,7 +223,9 @@ function createStageDefinitions(ctx: PipelineContext): Map<StageName, StageDefin
       // This happens when agent does extensive research but runs out of output capacity
       const contextFile = path.join(ctx.taskDir, 'context.md')
       if (fs.existsSync(contextFile)) {
-        logger.warn(`  ⚠️ Architect fallback: using context.md as plan substitute for ${ctx.taskId}`)
+        logger.warn(
+          `  ⚠️ Architect fallback: using context.md as plan substitute for ${ctx.taskId}`,
+        )
         const contextContent = fs.readFileSync(contextFile, 'utf-8')
         return `# Plan: ${ctx.taskId}
 
@@ -264,7 +266,9 @@ The implementation should proceed using the file list in context.md.
       // If agent edited plan.md but forgot to write plan-gap.md, create a fallback
       const planFile = path.join(ctx.taskDir, 'plan.md')
       if (fs.existsSync(planFile)) {
-        logger.warn(`  ⚠️ Plan-gap fallback: agent edited plan.md directly without writing plan-gap.md for ${ctx.taskId}`)
+        logger.warn(
+          `  ⚠️ Plan-gap fallback: agent edited plan.md directly without writing plan-gap.md for ${ctx.taskId}`,
+        )
         return `# Plan Gap Analysis: ${ctx.taskId}
 
 ## Summary

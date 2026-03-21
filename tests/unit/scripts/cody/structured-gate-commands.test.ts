@@ -11,11 +11,7 @@ import { detectApprovalFromComment } from '../../../../scripts/cody/clarify-work
 
 describe('structured gate commands', () => {
   describe('accepted approval commands', () => {
-    it.each([
-      '@cody approve',
-      '/cody approve',
-      'approve',
-    ])('"%s" → approved', (comment) => {
+    it.each(['@cody approve', '/cody approve', 'approve'])('"%s" → approved', (comment) => {
       const result = detectApprovalFromComment(comment)
       expect(result.status).toBe('approved')
     })
@@ -35,11 +31,7 @@ describe('structured gate commands', () => {
   })
 
   describe('accepted rejection commands', () => {
-    it.each([
-      '@cody reject',
-      '/cody reject',
-      'reject',
-    ])('"%s" → rejected', (comment) => {
+    it.each(['@cody reject', '/cody reject', 'reject'])('"%s" → rejected', (comment) => {
       const result = detectApprovalFromComment(comment)
       expect(result.status).toBe('rejected')
     })

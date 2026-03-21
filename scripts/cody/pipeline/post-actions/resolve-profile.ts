@@ -24,9 +24,7 @@ export async function executeResolveProfile(ctx: PipelineContext): Promise<void>
       taskDef.complexity = ctx.input.complexityOverride
       taskDef.complexity_reasoning = `Override via --complexity=${ctx.input.complexityOverride}`
       if (oldComplexity !== undefined) {
-        logger.info(
-          `  ℹ️ Complexity override: ${oldComplexity} → ${ctx.input.complexityOverride}`,
-        )
+        logger.info(`  ℹ️ Complexity override: ${oldComplexity} → ${ctx.input.complexityOverride}`)
       } else {
         logger.info(`  ℹ️ Complexity override applied: ${ctx.input.complexityOverride}`)
       }

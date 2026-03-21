@@ -44,8 +44,7 @@ export async function executeCheckGate(
   const gateResult = handleGateApproval(ctx.input, ctx.taskDir, action.gate, taskDef)
 
   // Determine gate label based on risk level
-  const gateLabel =
-    taskDef.risk_level === 'high' ? GATE_LABELS.HARD_STOP : GATE_LABELS.RISK_GATED
+  const gateLabel = taskDef.risk_level === 'high' ? GATE_LABELS.HARD_STOP : GATE_LABELS.RISK_GATED
 
   if (gateResult === 'waiting') {
     // Add gate label for dashboard visibility

@@ -277,8 +277,8 @@ If either fails:
 
 ### Agent Execution
 
-| File                | Purpose                                                      |
-| ------------------- | ------------------------------------------------------------ |
+| File                | Purpose                                                         |
+| ------------------- | --------------------------------------------------------------- |
 | `agent-runner.ts`   | runAgentWithFileWatch() orchestrator, re-exports agent/ modules |
 | `agent/`            | Split modules: file-watcher, session, log-parser, constants     |
 | `runner-backend.ts` | Pluggable backends: GitHubRunner (CI) vs LocalRunner (ocode)    |
@@ -463,6 +463,7 @@ The engine watches the filesystem for output files, checks size stability, and n
 #### State Machine Loop (not a `for` loop)
 
 A simple `for` over stages doesn't work because:
+
 - **`retryWith` creates backward jumps** — verify fails → reset fix → re-run fix → re-run verify
 - **Gate pauses exit the process** — the pipeline must serialize state, exit, and resume in a new CI run
 - **Pipeline rebuild happens mid-execution** — after taskify, the profile is determined and impl stages are added
@@ -473,6 +474,7 @@ The 1000-iteration circuit breaker and periodic recovery checks are safety nets 
 #### Complexity-Based Skip Conditions
 
 Per-stage complexity thresholds (0-60) determine which stages run. This cannot be replaced with 3 hardcoded pipelines because:
+
 - The skip logic also considers `input_quality.skip_stages` (content promoted from previous runs)
 - `skipIfClarifyDisabled` and `skipIfSpecOnly` add orthogonal skip dimensions
 - Thresholds can be overridden per-task via `complexityOverride`
@@ -493,6 +495,7 @@ They are separate from handlers because the same post-action (e.g., `commit-task
 #### Fallback Content Generation
 
 When an agent fails to write its output file, some stages generate substitute content. The fallbacks vary in validity:
+
 - **Architect fallback** (restore `plan.md` from prev-run or use `context.md`): valid — recovers from interrupted reruns
 - **Plan-gap fallback** (note that agent edited plan.md directly): valid — the work was done, just documented differently
 - **Build fallback** (`git diff` as build summary): **degraded** — downstream stages (review, verify) operate on less information
@@ -505,23 +508,23 @@ Write to temp file → fsync → atomic rename. This prevents status.json corrup
 
 ### Key Design Patterns
 
-| Pattern | Purpose | Justification |
-|---------|---------|---------------|
-| Immutable state updates | All `updateStage`, `completeState` return new objects | Safe recovery, no hidden side effects |
-| Declarative `retryWith` | Stages declare retry behavior, engine executes | Explicit, testable retry policy |
-| Two-phase construction | Spec stages run first, then pipeline rebuilds with impl stages | Dynamic profile selection based on task analysis |
-| Advisory stages | Spec stages don't fail the pipeline | Spec failures shouldn't block implementation |
-| Parallel execution with `Promise.allSettled` | Collects all results before error handling | No early exit on first failure, all post-actions run |
+| Pattern                                      | Purpose                                                        | Justification                                        |
+| -------------------------------------------- | -------------------------------------------------------------- | ---------------------------------------------------- |
+| Immutable state updates                      | All `updateStage`, `completeState` return new objects          | Safe recovery, no hidden side effects                |
+| Declarative `retryWith`                      | Stages declare retry behavior, engine executes                 | Explicit, testable retry policy                      |
+| Two-phase construction                       | Spec stages run first, then pipeline rebuilds with impl stages | Dynamic profile selection based on task analysis     |
+| Advisory stages                              | Spec stages don't fail the pipeline                            | Spec failures shouldn't block implementation         |
+| Parallel execution with `Promise.allSettled` | Collects all results before error handling                     | No early exit on first failure, all post-actions run |
 
 ### Recommended Improvements
 
 Three improvements identified, ordered by impact:
 
-| # | Change | Risk | Effort | Value | Rating |
-|---|--------|------|--------|-------|--------|
-| 1 | **Structured gate commands** — restrict to `@cody approve` / `@cody reject` only, remove keyword matching (`yes`, `go`, `proceed`, `y`, `continue`) | Low | Low | Medium | ★★★★★ |
-| 2 | **Audit fallback content** — remove build stage fallback (degraded substitute), keep architect and plan-gap fallbacks (valid recovery) | Low | Low | Medium | ★★★★☆ |
-| 3 | **Split large files** — break `post-actions.ts`, `agent-runner.ts` into focused modules, rename "post-actions" to "lifecycle hooks" | Low | Low | Medium | ★★★☆☆ |
+| #   | Change                                                                                                                                              | Risk | Effort | Value  | Rating |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ---- | ------ | ------ | ------ |
+| 1   | **Structured gate commands** — restrict to `@cody approve` / `@cody reject` only, remove keyword matching (`yes`, `go`, `proceed`, `y`, `continue`) | Low  | Low    | Medium | ★★★★★  |
+| 2   | **Audit fallback content** — remove build stage fallback (degraded substitute), keep architect and plan-gap fallbacks (valid recovery)              | Low  | Low    | Medium | ★★★★☆  |
+| 3   | **Split large files** — break `post-actions.ts`, `agent-runner.ts` into focused modules, rename "post-actions" to "lifecycle hooks"                 | Low  | Low    | Medium | ★★★☆☆  |
 
 These are organizational and safety improvements. The core architecture should not be changed.
 

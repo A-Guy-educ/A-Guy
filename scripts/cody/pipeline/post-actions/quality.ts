@@ -48,9 +48,7 @@ export async function executeRunUnitTests(ctx: PipelineContext): Promise<void> {
     // G25: Include output text (3000 chars) for supervisor retry
     const err = error as { stdout?: string; stderr?: string; message?: string }
     const output = (err.stdout || '') + (err.stderr || '') + (err.message || '')
-    throw new Error(
-      `Unit tests failed after build. Fix and re-run.\n\n${output.slice(0, 3000)}`,
-    )
+    throw new Error(`Unit tests failed after build. Fix and re-run.\n\n${output.slice(0, 3000)}`)
   }
 }
 

@@ -10,9 +10,9 @@ Welcome to the A-Guy platform wiki! This site contains all documentation for the
 - [Access Control](access-control/) — Authentication and authorization
 
 ### Development
-- [Getting Started](dev-container) — Development environment setup
-- [Automation](automation) — CI/CD and automation guides
-- [Releases](releases) — Release process and versioning
+- [Getting Started](dev-container.md) — Development environment setup
+- [Automation](automation.md) — CI/CD and automation guides
+- [Releases](releases.md) — Release process and versioning
 
 ### Features
 - [Course Hierarchy](course-hierarchy/) — Course structure and management
