@@ -1184,11 +1184,17 @@ export function commitPipelineFiles(
       logger.info(`[commit] ${message}`)
     } catch (commitError: unknown) {
       const commitMsg = commitError instanceof Error ? commitError.message : String(commitError)
+      // Also check stdout for git output (execFileSync error.message doesn't include git stdout)
+      const commitStdout =
+        commitError instanceof Error && 'stdout' in commitError
+          ? String((commitError as Record<string, unknown>).stdout || '')
+          : ''
+      const fullOutput = commitMsg + commitStdout
       // Handle various git "nothing to commit" messages
       if (
-        commitMsg.includes('nothing to commit') ||
-        commitMsg.includes('no changes added') ||
-        commitMsg.includes('nothing added to commit')
+        fullOutput.includes('nothing to commit') ||
+        fullOutput.includes('no changes added') ||
+        fullOutput.includes('nothing added to commit')
       ) {
         return { success: true, message: 'No changes to commit', committed: false }
       }

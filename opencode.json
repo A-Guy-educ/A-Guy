@@ -4,132 +4,91 @@
   "provider": {
     "minimax": {
       "options": {
-        "baseURL": "https://api.minimax.io/v1",
-        "apiKey": "${MINIMAX_API_KEY}"
+        "baseURL": "http://localhost:8080/v1",
+        "apiKey": "mock-key"
       }
     }
   },
   "agent": {
     "build": {
       "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
-      "description": "Building features, refactoring, implementing changes"
+      "description": "Building features (MOCK - uses recorded responses)"
     },
     "plan": {
       "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
-      "description": "Planning tasks, architecture design, complex problem solving"
+      "description": "Planning tasks (MOCK - uses recorded responses)"
     },
     "architect": {
       "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
-      "description": "Planning tasks, architecture design, complex problem solving"
+      "description": "Architecture design (MOCK - uses recorded responses)"
     },
     "clarify": {
-      "model": "openai/gpt-5.2",
-      "description": "Collects operator questions and answers"
+      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "description": "Collects questions (MOCK - uses recorded responses)"
     },
     "taskify": {
       "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
-      "description": "Converts free-text tasks into structured task.json for pipeline routing"
+      "description": "Creates task.json (MOCK - uses recorded responses)"
     },
     "gap": {
       "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
-      "description": "Analyzes spec.md for gaps, missing info, and inconsistencies"
+      "description": "Analyzes gaps (MOCK - uses recorded responses)"
     },
     "plan-gap": {
       "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
-      "description": "Analyzes plan for gaps vs spec and codebase, auto-revises plan"
+      "description": "Analyzes plan gaps (MOCK - uses recorded responses)"
     },
     "autofix": {
       "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
-      "description": "Automatically fixes lint, type, and format errors from verify stage"
+      "description": "Auto-fixes (MOCK - uses recorded responses)"
     },
     "verify": {
       "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
-      "description": "Runs tests, validates implementation passes all gates"
+      "description": "Runs tests (MOCK - uses recorded responses)"
     },
     "test": {
       "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
-      "description": "Writes E2E and integration tests using Playwright"
+      "description": "Writes tests (MOCK - uses recorded responses)"
     },
     "advisor": {
-      "model": "openai/gpt-5.2",
-      "description": "Code review, suggestions, best practices"
+      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "description": "Code review (MOCK - uses recorded responses)"
     },
     "pr": {
       "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
-      "description": "Creates branch, commits changes, opens pull request"
+      "description": "Creates PR (MOCK - uses recorded responses)"
     },
     "cody-expert": {
       "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
-      "description": "Cody pipeline expert - understands pipeline execution, debugging, adding new stages"
+      "description": "Pipeline expert (MOCK - uses recorded responses)"
     },
     "build-manager": {
-      "model": "anthropic/claude-opus-4-6",
-      "description": "Orchestrates build and test-writer agents in parallel, handles retries and verification"
+      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "description": "Orchestration (MOCK - uses recorded responses)"
     },
     "test-writer": {
       "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
-      "description": "TDD test writer - writes failing tests before implementation"
+      "description": "TDD writer (MOCK - uses recorded responses)"
     },
     "browser": {
       "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
-      "description": "Browser agent - navigates A-Guy platform, inspects pages, answers UI questions. Uses Chrome DevTools MCP locally, Playwright MCP in CI.",
-      "instructions": ["scripts/browser-agent/AGENT.md"]
+      "description": "Browser agent (MOCK - uses recorded responses)"
     },
     "review": {
-      "model": "anthropic/claude-opus-4-6",
-      "description": "Architect-level code review of generated code for quality, security, and correctness"
+      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "description": "Code review (MOCK - uses recorded responses)"
     },
     "fix": {
       "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
-      "description": "Targeted fixes for issues found by review or verify stages"
+      "description": "Targeted fixes (MOCK - uses recorded responses)"
     },
     "reflect": {
       "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
-      "description": "Post-task reflection - extracts patterns, updates knowledge base, creates skills when patterns repeat"
+      "description": "Reflection (MOCK - uses recorded responses)"
     },
     "e2e-test-writer": {
       "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
-      "description": "Writes Playwright E2E tests for UI changes. Tests committed but NOT run in pipeline — CI runs them on PR."
-    },
-    "delegation-test": {
-      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
-      "description": "DELEGATION TEST: Tests whether build agent can spawn domain sub-agents for parallel execution",
-      "instructions": [".opencode/agents/build-delegation-test.md"]
-    },
-    "ui-expert": {
-      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
-      "description": "UI expert - frontend components in src/ui/web/",
-      "instructions": [".opencode/agents/domain/ui-expert.md"]
-    },
-    "web-expert": {
-      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
-      "description": "Web expert - pages and routes in src/app/(frontend)/",
-      "instructions": [".opencode/agents/domain/web-expert.md"]
-    },
-    "admin-expert": {
-      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
-      "description": "Admin expert - Payload admin components in src/ui/admin/",
-      "instructions": [".opencode/agents/domain/admin-expert.md"]
-    },
-    "build-delegation": {
-      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
-      "description": "Build agent with agent team delegation - spawns domain specialists",
-      "instructions": [".opencode/agents/build-delegation.md"]
-    },
-    "payload-expert": {
-      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
-      "description": "Payload CMS expert - collections, hooks, access control, endpoints",
-      "instructions": [".opencode/agents/domain/payload-expert.md"]
-    },
-    "llm-expert": {
-      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
-      "description": "LLM/AI expert - AI services, embeddings, vector search",
-      "instructions": [".opencode/agents/domain/llm-expert.md"]
-    },
-    "security-auditor": {
-      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
-      "description": "Security auditor - auth, authorization, secrets, API endpoints",
-      "instructions": [".opencode/agents/domain/security-auditor.md"]
+      "description": "E2E tests (MOCK - uses recorded responses)"
     }
   },
   "mcp": {
@@ -145,7 +104,7 @@
     },
     "figma": {
       "type": "local",
-      "command": ["npx", "y", "figma-developer-mcp", "--figma-api-key=${FIGMA_API_KEY}", "--stdio"]
+      "command": ["npx", "-y", "figma-developer-mcp", "--figma-api-key=${FIGMA_API_KEY}", "--stdio"]
     },
     "playwright": {
       "type": "local",
@@ -159,10 +118,6 @@
         "--console-level=info",
         "--viewport-size=1280x720"
       ]
-    },
-    "contextplus": {
-      "type": "remote",
-      "url": "${BRAIN_SERVER_URL:-http://100.66.248.120:4097/sse}"
     }
   }
 }
