@@ -161,7 +161,7 @@ export const STAGE_REGISTRY: Record<StageName, StageMetadata> = {
   },
   fix: {
     outputFile: 'fix.md',
-    timeout: ms('30m'),
+    timeout: ms('45m'), // Increased from 30m — fixes often need more time than original build
     complexityThreshold: 0,
     contextFiles: [
       'verify-failures.md',

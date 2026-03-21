@@ -103,6 +103,9 @@ Only fix the specific issues identified in verify-failures.md, review.md, or rer
 For fix_bug tasks: follow the SCIENTIFIC DEBUG PROTOCOL in your agent instructions.
 Hypothesis first, reproduction test second, minimal fix third.
 
+IMPORTANT: If review.md lists many issues (dozens+), focus on the CRITICAL issues first, then MAJOR issues.
+Do NOT try to fix every single issue — prioritize the most impactful ones.
+The goal is to make the code substantially better, not perfectly bug-free.
 Write fix-summary.md summarizing what you changed.`,
 
   // Scripted stages — these prompts are never sent to an LLM

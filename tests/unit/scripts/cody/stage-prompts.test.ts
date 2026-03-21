@@ -247,6 +247,13 @@ describe('stage-prompts', () => {
         }
       }
     })
+
+    it('fix stage instructs to prioritize critical/major issues when many issues exist', () => {
+      const instruction = stageInstructions['fix']('260219-test')
+      expect(instruction).toContain('focus on the CRITICAL issues first')
+      expect(instruction).toContain('prioritize the most impactful ones')
+      expect(instruction).toContain('make the code substantially better')
+    })
   })
 
   // ===========================================================================
