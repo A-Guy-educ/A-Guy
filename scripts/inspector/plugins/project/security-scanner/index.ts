@@ -95,7 +95,7 @@ export const securityScannerPlugin: InspectorPlugin = {
   name: 'security-scanner',
   description: 'Scan for security vulnerabilities in API routes, collections, and source code',
   domain: 'project',
-  schedule: { every: 6 },
+  schedule: { every: 1 }, // Daily
 
   async run(ctx): Promise<ActionRequest[]> {
     ctx.log.debug('Running security-scanner plugin')

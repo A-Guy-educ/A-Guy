@@ -17,7 +17,7 @@ export const systemTestPlugin: InspectorPlugin = {
   name: 'cody-system-test',
   description: 'Daily system test of the full Cody pipeline',
   domain: 'cody',
-  schedule: { every: 288 }, // Every 288th cycle ≈ 24 hours (5 min × 288 = 1440 min)
+  schedule: { every: 1 }, // Daily
 
   async run(ctx: InspectorContext): Promise<ActionRequest[]> {
     const today = new Date().toISOString().slice(0, 10) // YYYY-MM-DD

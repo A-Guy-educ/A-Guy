@@ -93,7 +93,7 @@ export const auditPlugin: InspectorPlugin = {
   name: 'cody-audit',
   description: 'Analyze completed pipeline runs and create improvement issues',
   domain: 'cody',
-  schedule: { every: 3 }, // Every 3rd cycle (15 min)
+  schedule: { every: 1 }, // Daily
 
   async run(ctx) {
     ctx.log.debug('Running audit plugin')

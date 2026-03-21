@@ -28,7 +28,7 @@ export const successTrackerPlugin: InspectorPlugin = {
   name: 'success-tracker',
   description: 'Track Cody pipeline success rate and post daily metrics digest',
   domain: 'cody',
-  schedule: { every: 6 },
+  schedule: { every: 1 }, // Daily
 
   async run(ctx): Promise<ActionRequest[]> {
     ctx.log.debug('Running success-tracker plugin')

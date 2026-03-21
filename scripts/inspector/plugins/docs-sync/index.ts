@@ -50,7 +50,7 @@ export const docsSyncPlugin: InspectorPlugin = {
   name: 'docs-sync',
   description: 'Run nightly-docs agent to keep documentation in sync with structural changes',
   domain: 'docs',
-  schedule: { every: 6 }, // Every 6th cycle = every ~30 min; dedup handles daily rate-limiting
+  schedule: { every: 1 }, // Daily
 
   async run(ctx) {
     ctx.log.debug('Running docs-sync plugin')

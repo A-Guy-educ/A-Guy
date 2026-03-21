@@ -259,7 +259,7 @@ export const zombieReaperPlugin: InspectorPlugin = {
   name: 'zombie-reaper',
   description: 'Clean up tasks stuck in running state with no active CI workflow',
   domain: 'cody',
-  schedule: { every: 6 },
+  schedule: { every: 1 }, // Daily
 
   async run(ctx): Promise<ActionRequest[]> {
     ctx.log.debug('Running zombie-reaper plugin')

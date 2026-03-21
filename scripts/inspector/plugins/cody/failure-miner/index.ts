@@ -37,7 +37,7 @@ export const failureMinerPlugin: InspectorPlugin = {
   name: 'failure-miner',
   description: 'Detect systemic pipeline failure patterns and create improvement issues',
   domain: 'cody',
-  schedule: { every: 6 },
+  schedule: { every: 1 }, // Daily
 
   async run(ctx): Promise<ActionRequest[]> {
     ctx.log.debug('Running failure-miner plugin')

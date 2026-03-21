@@ -9,61 +9,24 @@
  * This inspector plugin picks up completed tasks and triggers the test stage via
  * `cody.yml` workflow dispatch with `mode=rerun from_stage=test`.
  *
+ * Uses evaluated tasks from health-check state (discovered via GitHub API),
+ * not the filesystem, to find tasks on feature branches.
+ *
  * Unlike the deferred-stages (docs) plugin, there is no complexity threshold — every
  * task gets tests. A staleness guard skips tasks older than 7 days.
  */
 
-import * as fs from 'fs'
-import * as path from 'path'
-
-import type { InspectorPlugin, ActionRequest, InspectorContext } from '../../../core/types'
+import type {
+  InspectorPlugin,
+  ActionRequest,
+  InspectorContext,
+  EvaluatedTask,
+} from '../../../core/types'
 
 const STATE_KEY = 'cody:deferredTestsProcessed'
 
 /** Maximum age (in days) for a task to be eligible for deferred tests */
 const MAX_TASK_AGE_DAYS = 7
-
-interface StageEntry {
-  state?: string
-}
-
-interface TaskStatus {
-  state?: string
-  version?: number
-  stages?: Record<string, StageEntry>
-  startedAt?: string
-}
-
-interface TaskJson {
-  complexity?: number
-  created_at?: string
-}
-
-/**
- * Get the task creation date. Checks task.json first, then status.json startedAt.
- * Returns null if no date can be determined.
- */
-function getTaskCreationDate(taskDir: string, status: TaskStatus): Date | null {
-  // Try task.json created_at
-  const taskJsonPath = path.join(taskDir, 'task.json')
-  try {
-    if (fs.existsSync(taskJsonPath)) {
-      const data = JSON.parse(fs.readFileSync(taskJsonPath, 'utf-8')) as TaskJson
-      if (data.created_at) {
-        return new Date(data.created_at)
-      }
-    }
-  } catch {
-    // Ignore errors
-  }
-
-  // Fall back to status.json startedAt
-  if (status.startedAt) {
-    return new Date(status.startedAt)
-  }
-
-  return null
-}
 
 /**
  * Check if a task is eligible for deferred tests.
@@ -71,11 +34,11 @@ function getTaskCreationDate(taskDir: string, status: TaskStatus): Date | null {
  * A task is eligible if:
  *   1. The `pr` stage is completed (pipeline finished)
  *   2. The `test` stage is not completed
- *   3. test.md output file does not already exist
- *   4. Task is not older than MAX_TASK_AGE_DAYS (staleness guard)
+ *   3. Task is not older than MAX_TASK_AGE_DAYS (staleness guard)
  */
-function isEligibleForDeferredTests(taskDir: string, status: TaskStatus): boolean {
-  const stages = status.stages || {}
+function isEligibleForDeferredTests(task: EvaluatedTask): boolean {
+  const status = task.status as { stages?: Record<string, { state?: string }> } | null
+  const stages = status?.stages || {}
 
   // Must have completed pr stage
   const prStage = stages['pr']
@@ -89,16 +52,10 @@ function isEligibleForDeferredTests(taskDir: string, status: TaskStatus): boolea
     return false
   }
 
-  // Check if test.md output file already exists (tests ran outside status tracking)
-  const testMdPath = path.join(taskDir, 'test.md')
-  if (fs.existsSync(testMdPath)) {
-    return false
-  }
-
-  // Staleness guard: skip tasks older than MAX_TASK_AGE_DAYS
-  const createdDate = getTaskCreationDate(taskDir, status)
-  if (createdDate) {
-    const ageMs = Date.now() - createdDate.getTime()
+  // Staleness guard: skip tasks with cody:done label that are old
+  // (issueUpdatedAt is used as proxy for task age)
+  if (task.issueUpdatedAt) {
+    const ageMs = Date.now() - new Date(task.issueUpdatedAt).getTime()
     const ageDays = ageMs / (1000 * 60 * 60 * 24)
     if (ageDays > MAX_TASK_AGE_DAYS) {
       return false
@@ -150,6 +107,9 @@ function createDeferredTestsAction(taskId: string, _ctx: InspectorContext): Acti
 /**
  * Deferred Tests plugin — writes tests for tasks that completed the pipeline without test coverage.
  *
+ * Uses evaluated tasks from health-check state (discovered via GitHub API)
+ * instead of filesystem scanning, so it can find tasks on feature branches.
+ *
  * Runs every 6th cycle (~30 min) to batch up multiple completed tasks.
  * No complexity threshold — every task gets tests.
  * Staleness guard: skips tasks older than 7 days.
@@ -158,7 +118,7 @@ export const deferredTestsPlugin: InspectorPlugin = {
   name: 'cody-deferred-tests',
   description: 'Trigger test writing for tasks that completed PR but have no test coverage',
   domain: 'cody',
-  schedule: { every: 6 }, // Every 6th cycle = every ~30 min
+  schedule: { every: 1 }, // Daily
 
   async run(ctx) {
     ctx.log.debug('Running deferred-tests plugin')
@@ -166,54 +126,37 @@ export const deferredTestsPlugin: InspectorPlugin = {
     const processedTasks = ctx.state.get<string[]>(STATE_KEY) || []
     ctx.log.debug({ processedCount: processedTasks.length }, 'Previously processed tasks')
 
-    const tasksDir = path.join(process.cwd(), '.tasks')
-    if (!fs.existsSync(tasksDir)) {
-      return []
-    }
+    // Use evaluated tasks from health-check state (discovered via GitHub API)
+    const evaluatedTasks = ctx.state.get<EvaluatedTask[]>('cody:evaluatedTasks') || []
+    ctx.log.debug({ taskCount: evaluatedTasks.length }, 'Evaluated tasks from health-check')
 
-    const entries = fs.readdirSync(tasksDir, { withFileTypes: true })
     const actions: ActionRequest[] = []
 
-    for (const entry of entries) {
-      if (!entry.isDirectory()) continue
-
-      const taskId = entry.name
-
+    for (const task of evaluatedTasks) {
       // Skip already processed
-      if (processedTasks.includes(taskId)) {
-        ctx.log.debug({ taskId }, 'Skipping already-processed task')
+      if (processedTasks.includes(task.taskId)) {
+        ctx.log.debug({ taskId: task.taskId }, 'Skipping already-processed task')
         continue
       }
 
-      const taskDir = path.join(tasksDir, taskId)
-      const statusPath = path.join(taskDir, 'status.json')
-
-      if (!fs.existsSync(statusPath)) continue
-
-      let status: TaskStatus
-      try {
-        status = JSON.parse(fs.readFileSync(statusPath, 'utf-8')) as TaskStatus
-      } catch {
+      // Only consider completed tasks
+      if (task.health !== 'completed') {
         continue
       }
 
-      if (!isEligibleForDeferredTests(taskDir, status)) {
-        // If PR is completed, mark as processed so we don't keep checking
-        const stages = status.stages || {}
-        const prStage = stages['pr']
-        if (prStage?.state === 'completed') {
-          processedTasks.push(taskId)
-          // FIX #14: Cap at 200 entries
-          while (processedTasks.length > 200) processedTasks.shift()
-        }
+      if (!isEligibleForDeferredTests(task)) {
+        // Mark as processed so we don't keep checking
+        processedTasks.push(task.taskId)
+        // FIX #14: Cap at 200 entries
+        while (processedTasks.length > 200) processedTasks.shift()
         continue
       }
 
-      ctx.log.info({ taskId }, 'Task eligible for deferred tests')
-      actions.push(createDeferredTestsAction(taskId, ctx))
+      ctx.log.info({ taskId: task.taskId }, 'Task eligible for deferred tests')
+      actions.push(createDeferredTestsAction(task.taskId, ctx))
 
       // Mark as processed so we only trigger once per task
-      processedTasks.push(taskId)
+      processedTasks.push(task.taskId)
     }
 
     ctx.state.set(STATE_KEY, processedTasks)

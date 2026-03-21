@@ -375,10 +375,48 @@ export function createDigestAction(
  *
  * NOTE: Failed task retries are delegated to the pipeline-fixer plugin.
  */
+
+/**
+ * Prune completed tasks from fixerState to prevent unbounded growth.
+ * Called after evaluating task health.
+ */
+function pruneFixerStateForCompletedTasks(ctx: InspectorContext, evaluated: EvaluatedTask[]): void {
+  const completedTaskIds = new Set(
+    evaluated.filter((t) => t.health === 'completed').map((t) => t.taskId),
+  )
+
+  if (completedTaskIds.size === 0) return
+
+  const fixerState =
+    ctx.state.get<Record<string, { retries: number; fixIssueNumber: number | null }>>(
+      'cody:fixerState',
+    ) || {}
+
+  let pruned = 0
+  for (const taskId of completedTaskIds) {
+    if (taskId in fixerState) {
+      delete fixerState[taskId]
+      pruned++
+    }
+  }
+
+  if (pruned > 0) {
+    ctx.state.set('cody:fixerState', fixerState)
+    ctx.log.debug(
+      { pruned, remaining: Object.keys(fixerState).length },
+      'Pruned completed tasks from fixerState',
+    )
+  }
+}
+
+/**
+ * NOTE: Failed task retries are delegated to the pipeline-fixer plugin.
+ */
 export const healthCheckPlugin: InspectorPlugin = {
   name: 'cody-health-check',
   description: 'Monitor Cody pipeline health and take corrective action',
   domain: 'cody',
+  schedule: { every: 1 }, // Daily
 
   async run(ctx) {
     ctx.log.debug('Running health-check plugin')
@@ -387,6 +425,9 @@ export const healthCheckPlugin: InspectorPlugin = {
     ctx.log.debug({ taskCount: tasks.length }, 'Discovered tasks')
 
     const evaluated = tasks.map((task) => evaluateHealth(task, ctx))
+
+    // Prune completed tasks from fixerState to prevent unbounded growth
+    pruneFixerStateForCompletedTasks(ctx, evaluated)
 
     // Share evaluated tasks with pipeline-fixer plugin via state
     ctx.state.set('cody:evaluatedTasks', evaluated)
