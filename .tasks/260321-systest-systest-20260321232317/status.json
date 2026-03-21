@@ -1,0 +1,36 @@
+{
+  "version": 2,
+  "taskId": "260321-systest-systest-20260321232317",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-21T21:25:21.919Z",
+  "updatedAt": "2026-03-21T21:26:49.206Z",
+  "state": "paused",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "paused",
+      "retries": 0,
+      "startedAt": "2026-03-21T21:25:22.935Z",
+      "completedAt": "2026-03-21T21:26:43.471Z",
+      "elapsed": 81,
+      "outputFile": "taskify.md",
+      "tokenUsage": {
+        "input": 3044,
+        "output": 2232,
+        "cacheRead": 221950
+      },
+      "sessionId": "ses_2edb61a4dffeO8JpQ9VajChiUK"
+    }
+  },
+  "issueNumber": 987,
+  "triggeredBy": "aguyaharonyair",
+  "actorHistory": [
+    {
+      "action": "pipeline-triggered",
+      "actor": "aguyaharonyair",
+      "timestamp": "2026-03-21T21:25:21.919Z"
+    }
+  ],
+  "completedAt": "2026-03-21T21:26:49.206Z"
+}

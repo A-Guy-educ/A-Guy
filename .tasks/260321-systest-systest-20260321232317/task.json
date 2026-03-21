@@ -1,0 +1,30 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.85,
+  "primary_domain": "backend",
+  "scope": [
+    "src/infra/utils/pipeline-health.ts",
+    "tests/unit/infra/utils/pipeline-health.test.ts"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "HealthStatus interface will include fields: status (pass|fail|warn), message, timestamp",
+    "Report interface will include fields: overallHealth, stageStatuses, generatedAt",
+    "RetryStrategy interface will include fields: shouldRetry, maxRetries, backoffMultiplier",
+    "getStageTimeout will return timeout in milliseconds for each pipeline stage"
+  ],
+  "review_questions": [
+    "What default timeout values should be used for each pipeline stage (architect, gap, build, etc.)?",
+    "What specific retry strategies should be supported (immediate, exponential backoff, linear)?"
+  ],
+  "complexity": 34,
+  "complexity_reasoning": "Scope: 12 (2 files, class with 3 methods + helper). Risk: 5 (new utility, non-critical). Novelty: 8 (new pattern with clear structure). Cross-domain: 2 (backend only). Ambiguity: 4 (clear requirements, some implementation details unspecified). Dependencies: 3 (Zod validation). Total: 34",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Input contains clear requirements for PipelineHealthReport class with 3 methods, helper function, TypeScript interfaces, JSDoc comments, Zod validation, and integration tests. Has structured requirements but some implementation details (timeout values, retry strategies) need architect stage."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}
