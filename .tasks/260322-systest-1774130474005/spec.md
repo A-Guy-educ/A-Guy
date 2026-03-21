@@ -1,4 +1,4 @@
-# Pipeline Health Monitoring Utility
+# Pipeline Health Monitoring Utility Module
 
 ## Overview
 
@@ -6,37 +6,58 @@ Create a new utility module at `src/infra/utils/pipeline-health.ts` that exports
 
 ## Requirements
 
-### FR-1: PipelineHealthReport Class
-- Export a `PipelineHealthReport` class with the following methods:
-  - `checkStageHealth(stage: string): HealthStatus` - Check health status of a pipeline stage
-  - `generateReport(): Report` - Generate a full pipeline health report
-  - `getRetryRecommendation(failedStage: string): RetryStrategy` - Get retry strategy for a failed stage
+### 1. PipelineHealthReport Class
 
-### FR-2: TypeScript Interfaces
+Export a `PipelineHealthReport` class with the following methods:
+
+- `checkStageHealth(stage: string): HealthStatus` - Check health status of a pipeline stage
+- `generateReport(): Report` - Generate a comprehensive health report
+- `getRetryRecommendation(failedStage: string): RetryStrategy` - Get retry strategy for a failed stage
+
+### 2. TypeScript Interfaces
+
 Define the following interfaces:
-- `HealthStatus` - Represents health status of a stage (status, message, timestamp)
-- `Report` - Represents a full pipeline health report
+
+- `HealthStatus` - Represents the health status of a stage
+- `Report` - Represents a comprehensive pipeline health report
 - `RetryStrategy` - Represents retry recommendations for failed stages
 
-### FR-3: getStageTimeout Helper
-- Implement a `getStageTimeout(stage: string): number` helper function
-- Returns default timeouts per pipeline stage
+### 3. Helper Function
 
-### FR-4: JSDoc Documentation
+- `getStageTimeout(stage: string): number` - Returns default timeouts per stage name
+
+### 4. Documentation
+
 - Add JSDoc comments on all exported members
 
-### FR-5: Input Validation
-- Use Zod schemas for validating all public method parameters
+### 5. Validation
 
-### FR-6: Integration Tests
-- Write companion integration test at `tests/unit/infra/utils/pipeline-health.test.ts`
-- Cover all public methods
+- Include input validation using Zod schemas for all public method parameters
+
+### 6. Tests
+
+- Write a companion integration test at `tests/unit/infra/utils/pipeline-health.test.ts` covering all public methods
 
 ## Acceptance Criteria
 
-1. PipelineHealthReport class is exported and instantiable
-2. All methods have proper TypeScript types
-3. Zod validation is applied to all public method inputs
-4. JSDoc comments present on all exported members
-5. Integration tests exist and cover all public methods
-6. Tests pass when run
+1. ✅ `PipelineHealthReport` class is exported from `src/infra/utils/pipeline-health.ts`
+2. ✅ All required methods are implemented with proper signatures
+3. ✅ All TypeScript interfaces are defined and exported
+4. ✅ `getStageTimeout` helper function is implemented and exported
+5. ✅ All exported members have JSDoc comments
+6. ✅ Zod schemas validate inputs for all public methods
+7. ✅ Integration tests exist at `tests/unit/infra/utils/pipeline-health.test.ts`
+8. ✅ All public methods are covered by tests
+
+## File Structure
+
+```
+src/infra/utils/pipeline-health.ts    # Main utility module
+tests/unit/infra/utils/pipeline-health.test.ts  # Integration tests
+```
+
+## Technical Notes
+
+- This is a utility module following existing patterns in `src/infra/utils/`
+- Uses Zod for runtime validation
+- Standard TypeScript with no external dependencies beyond project dependencies
