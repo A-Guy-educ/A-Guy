@@ -185,7 +185,7 @@ function runScript(envVars: Record<string, string>): Record<string, string> {
   }
 
   try {
-    execSync(`npx tsx ${path.join(process.cwd(), 'scripts/cody/parse-safety.ts')}`, {
+    execSync(`bun run ${path.join(process.cwd(), 'scripts/cody/parse-safety.ts')}`, {
       env,
       encoding: 'utf-8',
     })
