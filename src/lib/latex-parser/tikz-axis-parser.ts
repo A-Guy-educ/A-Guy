@@ -264,6 +264,7 @@ function parseAxisOptions(content: string): {
   viewport: { xMin?: number; xMax?: number; yMin?: number; yMax?: number }
   labels: { x: string; y: string }
   showGrid: boolean
+  showNumbers: boolean
   ticks: number[]
 } {
   const axisOptsMatch = /\\begin\{axis\}\s*\[([^\]]*)\]/s.exec(content)
@@ -278,6 +279,7 @@ function parseAxisOptions(content: string): {
   const xlabel = opts['xlabel']?.replace(/[{}$]/g, '') ?? 'x'
   const ylabel = opts['ylabel']?.replace(/[{}$]/g, '') ?? 'y'
   const showGrid = opts['grid'] === 'major' || opts['grid'] === 'both'
+  const showNumbers = opts['ticks'] !== 'none'
 
   // Parse xtick values
   const ticks: number[] = []
@@ -289,7 +291,7 @@ function parseAxisOptions(content: string): {
     })
   }
 
-  return { viewport, labels: { x: xlabel, y: ylabel }, showGrid, ticks }
+  return { viewport, labels: { x: xlabel, y: ylabel }, showGrid, showNumbers, ticks }
 }
 
 /**
@@ -318,7 +320,13 @@ function attachFillAreas(
 export function parseTikzAxis(tikzContent: string): QuestionAxisBlock | null {
   if (!tikzContent.includes('\\begin{axis}')) return null
 
-  const { viewport, labels, showGrid, ticks: tickValues } = parseAxisOptions(tikzContent)
+  const {
+    viewport,
+    labels,
+    showGrid,
+    showNumbers,
+    ticks: tickValues,
+  } = parseAxisOptions(tikzContent)
   const { graphs, points, fillRanges } = parseAddPlots(tikzContent)
   const asymptotes = parseAsymptotes(tikzContent)
   const nodePoints = parseAxisNodes(tikzContent)
@@ -332,10 +340,10 @@ export function parseTikzAxis(tikzContent: string): QuestionAxisBlock | null {
     attachFillAreas(graphs, fillRanges)
   }
 
-  const xMin = viewport.xMin ?? -10
-  const xMax = viewport.xMax ?? 10
-  const yMin = viewport.yMin ?? -10
-  const yMax = viewport.yMax ?? 10
+  const xMin = viewport.xMin ?? -5
+  const xMax = viewport.xMax ?? 5
+  const yMin = viewport.yMin ?? -5
+  const yMax = viewport.yMax ?? 5
 
   // Derive tick interval from parsed xtick values, or infer from viewport range
   let tickInterval = 1
@@ -354,8 +362,8 @@ export function parseTikzAxis(tikzContent: string): QuestionAxisBlock | null {
     units: 1,
     grid: { enabled: showGrid },
     axes: {
-      showNumbers: true,
-      showLabels: true,
+      showNumbers,
+      showLabels: showNumbers,
       ticks: tickInterval,
       labels,
       origin: { x: 0, y: 0 },
