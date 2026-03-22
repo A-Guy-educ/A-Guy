@@ -1,4 +1,9 @@
-import type { ParseResult, ParseWarning } from '@/lib/latex-parser/types'
+import type {
+  ParseResult,
+  ParseWarning,
+  MultiExerciseResult,
+  ExerciseGroup,
+} from '@/lib/latex-parser/types'
 import type { LatexToken } from '@/lib/latex-parser/types'
 import { sanitizeLatex } from '@/lib/latex-parser/sanitizer'
 import { tokenize } from '@/lib/latex-parser/tokenizer'
@@ -408,4 +413,65 @@ function mergeAdjacentRichText(blocks: ContentBlock[]): ContentBlock[] {
   }
 
   return result
+}
+
+/**
+ * Exercise title pattern: `## תרגיל N` or `## תרגיל N - Title`
+ * These are emitted by processTokens when isExerciseTitle() matches.
+ */
+const EXERCISE_HEADING_RE = /^## תרגיל\s+(\d+)/
+
+/**
+ * Parses LaTeX into multiple exercises split on `\textbf{תרגיל N}` boundaries.
+ *
+ * If the LaTeX contains no exercise titles, returns a single exercise
+ * with all blocks (backward-compatible with single-exercise import).
+ */
+export function parseLatexToExercises(latex: string): MultiExerciseResult {
+  const parsed = parseLatexToBlocks(latex)
+  if (parsed.errors.length > 0) {
+    return { exercises: [], warnings: parsed.warnings, errors: parsed.errors }
+  }
+
+  const exercises: ExerciseGroup[] = []
+  let current: ExerciseGroup | null = null
+
+  for (const block of parsed.blocks) {
+    if (block.type === 'rich_text') {
+      const match = EXERCISE_HEADING_RE.exec(block.value)
+      if (match) {
+        current = {
+          title: block.value.replace(/^## /, ''),
+          number: parseInt(match[1], 10),
+          blocks: [],
+        }
+        exercises.push(current)
+        continue
+      }
+    }
+    if (current) {
+      current.blocks.push(block)
+    } else {
+      // Blocks before any exercise title — create an unnamed group
+      if (exercises.length === 0 || exercises[0].number !== 0) {
+        current = { title: '', number: 0, blocks: [] }
+        exercises.unshift(current)
+      }
+      exercises[0].blocks.push(block)
+    }
+  }
+
+  // If no exercise boundaries found, wrap all blocks in a single exercise
+  if (exercises.length === 0) {
+    return {
+      exercises: [{ title: '', number: 1, blocks: parsed.blocks }],
+      warnings: parsed.warnings,
+      errors: [],
+    }
+  }
+
+  // Filter out empty exercises (title-only with no content)
+  const nonEmpty = exercises.filter((e) => e.blocks.length > 0)
+
+  return { exercises: nonEmpty, warnings: parsed.warnings, errors: [] }
 }

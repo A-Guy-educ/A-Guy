@@ -16,11 +16,25 @@ import type { QuestionAxisBlock } from '@/server/payload/collections/Exercises/t
 import { makeAxisBlock } from '@/lib/latex-parser/block-generators'
 import { generateId } from '@/server/payload/collections/Exercises/types'
 
-/** Parse key=value options from [key=val, key2=val2] */
+/** Parse key=value options from [key=val, key2=val2], respecting brace groups */
 function parseOptions(optionStr: string): Record<string, string> {
   const opts: Record<string, string> = {}
-  // Simple key=value parser (doesn't handle nested braces perfectly)
-  const pairs = optionStr.split(',')
+  // Split on commas that are NOT inside braces
+  const pairs: string[] = []
+  let current = ''
+  let braceDepth = 0
+  for (const ch of optionStr) {
+    if (ch === '{') braceDepth++
+    else if (ch === '}') braceDepth--
+    if (ch === ',' && braceDepth === 0) {
+      pairs.push(current)
+      current = ''
+    } else {
+      current += ch
+    }
+  }
+  if (current.trim()) pairs.push(current)
+
   for (const pair of pairs) {
     const eqIdx = pair.indexOf('=')
     if (eqIdx !== -1) {
@@ -303,7 +317,7 @@ function attachFillAreas(
 export function parseTikzAxis(tikzContent: string): QuestionAxisBlock | null {
   if (!tikzContent.includes('\\begin{axis}')) return null
 
-  const { viewport, labels, showGrid } = parseAxisOptions(tikzContent)
+  const { viewport, labels, showGrid, ticks: tickValues } = parseAxisOptions(tikzContent)
   const { graphs, points, fillRanges } = parseAddPlots(tikzContent)
   const asymptotes = parseAsymptotes(tikzContent)
   const nodePoints = parseAxisNodes(tikzContent)
@@ -322,6 +336,18 @@ export function parseTikzAxis(tikzContent: string): QuestionAxisBlock | null {
   const yMin = viewport.yMin ?? -10
   const yMax = viewport.yMax ?? 10
 
+  // Derive tick interval from parsed xtick values, or infer from viewport range
+  let tickInterval = 1
+  if (tickValues.length >= 2) {
+    tickInterval = Math.abs(tickValues[1] - tickValues[0])
+  } else {
+    // Auto-derive a reasonable interval when no xtick specified
+    const range = Math.max(xMax - xMin, yMax - yMin)
+    if (range > 50) tickInterval = 10
+    else if (range > 20) tickInterval = 5
+    else if (range > 10) tickInterval = 2
+  }
+
   const axis: AxisSpecV1 = {
     kind: 'cartesian',
     units: 1,
@@ -329,7 +355,7 @@ export function parseTikzAxis(tikzContent: string): QuestionAxisBlock | null {
     axes: {
       showNumbers: true,
       showLabels: true,
-      ticks: 1,
+      ticks: tickInterval,
       labels,
       origin: { x: 0, y: 0 },
     },

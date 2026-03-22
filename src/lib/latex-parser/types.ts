@@ -18,6 +18,18 @@ export interface ParseResult {
   errors: ParseError[]
 }
 
+export interface ExerciseGroup {
+  title: string
+  number: number
+  blocks: ContentBlock[]
+}
+
+export interface MultiExerciseResult {
+  exercises: ExerciseGroup[]
+  warnings: ParseWarning[]
+  errors: ParseError[]
+}
+
 export interface LatexToken {
   type: 'environment' | 'command' | 'text' | 'math'
   value: string

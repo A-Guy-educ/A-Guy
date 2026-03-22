@@ -117,42 +117,52 @@ function parseRightAngles(
   return angles
 }
 
-/** Canvas dimensions */
+/** Canvas display dimensions (pixels) */
 const CANVAS_WIDTH = 500
 const CANVAS_HEIGHT = 400
-const CANVAS_PADDING = 40
+
+/** Padding factor for bounding box (fraction of range to add on each side) */
+const BBOX_PADDING = 0.1
 
 /**
- * Normalize TikZ coordinates to canvas pixel space.
- * Maps coordinate bounds to fill the canvas with padding.
+ * Compute a JSXGraph bounding box [xMin, yMax, xMax, yMin] that fits all
+ * points and circles with padding. Preserves original TikZ coordinates.
  */
-function normalizeCoordinates(points: ParsedPoint[]): ParsedPoint[] {
-  if (points.length === 0) return points
+function computeBoundingBox(
+  points: ParsedPoint[],
+  circles: Array<{ center: string; radius: number }>,
+  pointMap: Map<string, ParsedPoint>,
+): [number, number, number, number] {
+  let minX = Infinity
+  let maxX = -Infinity
+  let minY = Infinity
+  let maxY = -Infinity
 
-  const xs = points.map((p) => p.x)
-  const ys = points.map((p) => p.y)
-  const minX = Math.min(...xs)
-  const maxX = Math.max(...xs)
-  const minY = Math.min(...ys)
-  const maxY = Math.max(...ys)
+  for (const p of points) {
+    minX = Math.min(minX, p.x)
+    maxX = Math.max(maxX, p.x)
+    minY = Math.min(minY, p.y)
+    maxY = Math.max(maxY, p.y)
+  }
+
+  // Expand for circles
+  for (const c of circles) {
+    const center = pointMap.get(c.center)
+    if (center) {
+      minX = Math.min(minX, center.x - c.radius)
+      maxX = Math.max(maxX, center.x + c.radius)
+      minY = Math.min(minY, center.y - c.radius)
+      maxY = Math.max(maxY, center.y + c.radius)
+    }
+  }
 
   const rangeX = maxX - minX || 1
   const rangeY = maxY - minY || 1
+  const padX = rangeX * BBOX_PADDING
+  const padY = rangeY * BBOX_PADDING
 
-  const usableW = CANVAS_WIDTH - 2 * CANVAS_PADDING
-  const usableH = CANVAS_HEIGHT - 2 * CANVAS_PADDING
-
-  // Use uniform scale to preserve aspect ratio
-  const scale = Math.min(usableW / rangeX, usableH / rangeY)
-  const offsetX = CANVAS_PADDING + (usableW - rangeX * scale) / 2
-  const offsetY = CANVAS_PADDING + (usableH - rangeY * scale) / 2
-
-  return points.map((p) => ({
-    name: p.name,
-    // Map to canvas coordinates — flip Y because canvas Y goes down, TikZ Y goes up
-    x: Math.round((p.x - minX) * scale + offsetX),
-    y: Math.round((maxY - p.y) * scale + offsetY),
-  }))
+  // JSXGraph bounding box: [xMin, yMax, xMax, yMin]
+  return [minX - padX, maxY + padY, maxX + padX, minY - padY]
 }
 
 /**
@@ -163,29 +173,26 @@ export function parseTikzGeometry(tikzContent: string): QuestionGeometryBlock | 
   // Skip if this is an axis plot
   if (tikzContent.includes('\\begin{axis}')) return null
 
-  const rawCoordinates = parseCoordinates(tikzContent)
-  if (rawCoordinates.length === 0) return null
+  const coordinates = parseCoordinates(tikzContent)
+  if (coordinates.length === 0) return null
 
-  const knownPoints = new Set(rawCoordinates.map((p) => p.name))
+  const knownPoints = new Set(coordinates.map((p) => p.name))
+  const pointMap = new Map(coordinates.map((p) => [p.name, p]))
   const labels = parseLabeledPoints(tikzContent)
   const drawLines = parseDrawLines(tikzContent, knownPoints)
   const circles = parseCircles(tikzContent, knownPoints)
   const rightAngles = parseRightAngles(tikzContent, knownPoints)
 
-  // Normalize coordinates to canvas pixel space
-  const coordinates = normalizeCoordinates(rawCoordinates)
-
-  // Calculate scale factor for radius normalization
-  const rawXs = rawCoordinates.map((p) => p.x)
-  const rawRangeX = Math.max(...rawXs) - Math.min(...rawXs) || 1
-  const radiusScale = (CANVAS_WIDTH - 2 * CANVAS_PADDING) / rawRangeX
+  // Compute bounding box from raw TikZ coordinates — no normalization needed
+  const boundingBox = computeBoundingBox(coordinates, circles, pointMap)
 
   const geometry: GeometrySpecV1 = {
     kind: 'euclidean',
     canvas: {
       width: CANVAS_WIDTH,
       height: CANVAS_HEIGHT,
-      grid: false,
+      axis: true,
+      boundingBox,
     },
     elements: {
       points: coordinates.map((p) => ({
@@ -201,7 +208,7 @@ export function parseTikzGeometry(tikzContent: string): QuestionGeometryBlock | 
       })),
       circles: circles.map((c) => ({
         center: labels.get(c.center) ?? c.center,
-        radius: Math.max(5, Math.round(c.radius * radiusScale)),
+        radius: c.radius,
         style: 'solid' as const,
       })),
       angles: rightAngles.map((a) => ({

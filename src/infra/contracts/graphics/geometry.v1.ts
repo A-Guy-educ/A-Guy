@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { ColorStringSchema, PositionEnumSchema } from '../primitives'
-import { EvaluationModeSchema, InteractionToolSchema } from './interaction.base'
+import { InteractionToolSchema, EvaluationModeSchema } from './interaction.base'
 
 /**
  * GeometrySpecV1 - Declarative JSON specification for Euclidean geometry
@@ -13,6 +13,9 @@ const CanvasSchema = z.object({
   height: z.number().positive(),
   background: ColorStringSchema.optional(),
   grid: z.boolean().optional(),
+  axis: z.boolean().optional(),
+  /** JSXGraph bounding box [xMin, yMax, xMax, yMin] — overrides width/height-based box when set */
+  boundingBox: z.tuple([z.number(), z.number(), z.number(), z.number()]).optional(),
 })
 
 /** Point element */
@@ -23,8 +26,6 @@ const GeometryPointSchema = z.object({
   position: PositionEnumSchema.optional(),
   fontSize: z.number().positive().optional(),
   visible: z.boolean().optional(),
-  color: ColorStringSchema.optional(),
-  size: z.number().int().min(1).max(5).optional(),
 })
 
 /** Line label */
@@ -122,8 +123,6 @@ const TextSchema = z.object({
     .optional(),
   position: PositionEnumSchema.optional(),
   fontSize: z.number().positive().optional(),
-  color: ColorStringSchema.optional(),
-  sizeScale: z.number().int().min(0).max(10).optional(),
 })
 
 /** Equal segment marker (array of segments that are equal to each other) */

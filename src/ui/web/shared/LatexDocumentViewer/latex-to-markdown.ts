@@ -58,14 +58,22 @@ function convertSections(text: string): string {
     .replace(/\\paragraph\{([^}]+)\}/g, '\n**$1** ')
 }
 
-/** Convert text formatting commands */
+/** Regex fragment matching brace content with one level of nesting */
+const BRACE_CONTENT = '([^{}]*(?:\\{[^}]*\\}[^{}]*)*)'
+
+/** Convert text formatting commands (supports one level of nested braces) */
 function convertFormatting(text: string): string {
+  const bf = new RegExp(`\\\\textbf\\{${BRACE_CONTENT}\\}`, 'g')
+  const it = new RegExp(`\\\\textit\\{${BRACE_CONTENT}\\}`, 'g')
+  const ul = new RegExp(`\\\\underline\\{${BRACE_CONTENT}\\}`, 'g')
+  const em = new RegExp(`\\\\emph\\{${BRACE_CONTENT}\\}`, 'g')
+  const tx = new RegExp(`\\\\text\\{${BRACE_CONTENT}\\}`, 'g')
   return text
-    .replace(/\\textbf\{([^}]+)\}/g, '**$1**')
-    .replace(/\\textit\{([^}]+)\}/g, '*$1*')
-    .replace(/\\underline\{([^}]+)\}/g, '$1')
-    .replace(/\\emph\{([^}]+)\}/g, '*$1*')
-    .replace(/\\text\{([^}]+)\}/g, '$1')
+    .replace(bf, '**$1**')
+    .replace(it, '*$1*')
+    .replace(ul, '$1')
+    .replace(em, '*$1*')
+    .replace(tx, '$1')
 }
 
 /** Convert enumerate with label support to markdown numbered lists */
@@ -223,34 +231,51 @@ function stripCenterEnv(text: string): string {
   return text.replace(/\\begin\{center\}/g, '').replace(/\\end\{center\}/g, '')
 }
 
+/**
+ * Apply a replacement only to text segments outside $ and $$ math delimiters.
+ * Math segments are passed through unchanged.
+ */
+function replaceOutsideMath(text: string, pattern: RegExp, replacement: string): string {
+  // Split on math delimiters, preserving them
+  const parts = text.split(/(\$\$[\s\S]*?\$\$|\$[^$]+?\$)/g)
+  return parts
+    .map((part, i) => {
+      // Odd indices are math segments (captured groups)
+      if (i % 2 === 1) return part
+      return part.replace(pattern, replacement)
+    })
+    .join('')
+}
+
 /** Clean up spacing and misc commands */
 function cleanMisc(text: string): string {
-  return (
-    text
-      // Line breaks: \\ optionally followed by spacing like [0.2cm]
-      .replace(/\\\\(?:\[[\d.]+(?:em|pt|mm|cm|ex)\])?/g, '\n\n')
-      .replace(/\\(?:hspace|vspace)\*?\{[^}]+\}/g, ' ')
-      .replace(
-        /\\(?:hfill|vfill|noindent|clearpage|newpage|bigskip|medskip|smallskip|LARGE|Large|large|normalsize)/g,
-        '',
-      )
-      .replace(/\\label\{[^}]+\}/g, '')
-      .replace(/\\ref\{[^}]+\}/g, '(ref)')
-      .replace(/\\%/g, '%')
-      .replace(/\\arraystretch/g, '')
-      // Strip \displaystyle (used in math mode for display sizing)
-      .replace(/\\displaystyle\s*/g, '')
-      // Strip \measuredangle (replace with angle symbol)
-      .replace(/\\measuredangle/g, '∠')
-      // Strip \mathbf inside math — KaTeX handles \mathbf natively
-      // Strip \implies → ⇒
-      .replace(/\\implies/g, '⇒')
-      // Strip orphaned \closedcycle and \tkz commands
-      .replace(/\\closedcycle/g, '')
-      .replace(/\\tkz\w+(?:\[[^\]]*\])?(?:\([^)]*\))?/g, '')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim()
-  )
+  let result = text
+    // Line breaks: \\ optionally followed by spacing like [0.2cm]
+    .replace(/\\\\(?:\[[\d.]+(?:em|pt|mm|cm|ex)\])?/g, '\n\n')
+    .replace(/\\(?:hspace|vspace)\*?\{[^}]+\}/g, ' ')
+    .replace(
+      /\\(?:hfill|vfill|noindent|clearpage|newpage|bigskip|medskip|smallskip|LARGE|Large|large|normalsize)/g,
+      '',
+    )
+    .replace(/\\label\{[^}]+\}/g, '')
+    .replace(/\\ref\{[^}]+\}/g, '(ref)')
+    .replace(/\\arraystretch/g, '')
+    // Strip \displaystyle (used in math mode for display sizing)
+    .replace(/\\displaystyle\s*/g, '')
+    // Strip \measuredangle (replace with angle symbol)
+    .replace(/\\measuredangle/g, '∠')
+    // Strip \implies → ⇒
+    .replace(/\\implies/g, '⇒')
+    // Strip orphaned \closedcycle and \tkz commands
+    .replace(/\\closedcycle/g, '')
+    .replace(/\\tkz\w+(?:\[[^\]]*\])?(?:\([^)]*\))?/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+
+  // Replace \% → % only outside math (KaTeX handles \% natively inside math)
+  result = replaceOutsideMath(result, /\\%/g, '%')
+
+  return result
 }
 
 /**

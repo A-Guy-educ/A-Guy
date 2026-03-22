@@ -1,18 +1,20 @@
 /**
  * POST /api/exercises/import-latex
- * Import exercise from LaTeX source using the latex-parser library
+ * Import exercises from LaTeX source using the latex-parser library.
+ *
+ * Splits on \textbf{תרגיל N} boundaries and creates one exercise per question.
+ * If no exercise titles are found, creates a single exercise with all blocks.
  *
  * Access: Authenticated users only
  */
 import type { PayloadRequest } from 'payload'
 import { z } from 'zod'
-import { parseLatexToBlocks } from '@/lib/latex-parser'
+import { parseLatexToExercises } from '@/lib/latex-parser'
 import { logger } from '@/infra/utils/logger'
 
 const ImportLatexSchema = z.object({
   latex: z.string().min(1).max(500_000),
   lessonId: z.string().min(1),
-  exerciseId: z.string().min(1).optional(),
 })
 
 export async function importExerciseFromLatex(req: PayloadRequest): Promise<Response> {
@@ -20,74 +22,72 @@ export async function importExerciseFromLatex(req: PayloadRequest): Promise<Resp
     return Response.json({ success: false, error: 'Authentication required' }, { status: 401 })
   }
 
-  // Body is pre-parsed by the Next.js route wrapper and attached as req.json
   const body = (req as PayloadRequest & { json?: unknown }).json
   const parsed = ImportLatexSchema.safeParse(body)
   if (!parsed.success) {
     return Response.json({ success: false, error: parsed.error.message }, { status: 400 })
   }
 
-  const { latex, lessonId, exerciseId } = parsed.data
+  const { latex, lessonId } = parsed.data
   const reqLogger = logger.child({ requestId: crypto.randomUUID() })
 
   try {
-    await req.payload.findByID({
-      collection: 'lessons',
-      id: lessonId,
-    })
+    await req.payload.findByID({ collection: 'lessons', id: lessonId })
   } catch {
     return Response.json({ success: false, error: 'Lesson not found' }, { status: 404 })
   }
 
-  const result = parseLatexToBlocks(latex)
+  const result = parseLatexToExercises(latex)
 
   if (result.errors.length > 0) {
     reqLogger.warn({ errors: result.errors }, 'LaTeX import had errors')
     return Response.json({ success: false, errors: result.errors }, { status: 422 })
   }
 
-  if (result.blocks.length === 0) {
+  if (result.exercises.length === 0) {
     return Response.json({ success: false, error: 'No parseable content found' }, { status: 422 })
   }
 
   try {
-    if (exerciseId) {
-      // Update existing exercise with parsed blocks
-      const updated = await req.payload.update({
+    // Find existing exercise count to set order correctly
+    const existing = await req.payload.find({
+      collection: 'exercises',
+      where: { lesson: { equals: lessonId } },
+      limit: 0,
+    })
+    const startOrder = existing.totalDocs
+
+    const createdIds: string[] = []
+
+    for (let i = 0; i < result.exercises.length; i++) {
+      const group = result.exercises[i]
+      const exercise = await req.payload.create({
         collection: 'exercises',
-        id: exerciseId,
         data: {
-          content: { blocks: result.blocks },
+          lesson: lessonId,
+          title: group.title || undefined,
+          content: { blocks: group.blocks },
+          origin: 'import',
+          order: startOrder + i,
         },
         draft: true,
       })
-      reqLogger.info({ exerciseId: updated.id }, 'Exercise updated from LaTeX')
-      return Response.json({
-        success: true,
-        data: { exerciseId: updated.id, warnings: result.warnings },
-      })
+      createdIds.push(exercise.id)
     }
 
-    const exercise = await req.payload.create({
-      collection: 'exercises',
-      data: {
-        lesson: lessonId,
-        content: { blocks: result.blocks },
-        origin: 'import',
-        order: 0,
-      },
-      draft: true,
-    })
-
-    reqLogger.info({ exerciseId: exercise.id }, 'Exercise created from LaTeX')
+    reqLogger.info({ lessonId, count: createdIds.length }, 'Exercises created from LaTeX import')
 
     return Response.json({
       success: true,
-      data: { exerciseId: exercise.id, warnings: result.warnings },
+      data: {
+        exerciseIds: createdIds,
+        exerciseCount: createdIds.length,
+        warnings: result.warnings,
+      },
     })
   } catch (err) {
-    reqLogger.error({ err }, 'Failed to save exercise from LaTeX import')
-    const message = err instanceof Error ? err.message : 'Failed to save exercise'
+    reqLogger.error({ err }, 'Failed to save exercises from LaTeX import')
+    const message = err instanceof Error ? err.message : 'Failed to save exercises'
     return Response.json({ success: false, error: message }, { status: 422 })
   }
 }
