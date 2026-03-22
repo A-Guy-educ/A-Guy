@@ -11,6 +11,23 @@
       "files": [
         "src/app/(cody)/CodyProviders.tsx",
         "src/app/(cody)/cody/error.tsx",
+        "src/app/(cody)/cody/scenario/components/DesignSystemPanel.tsx",
+        "src/app/(cody)/cody/scenario/components/PRDCard.tsx",
+        "src/app/(cody)/cody/scenario/components/PrototypePanel.tsx",
+        "src/app/(cody)/cody/scenario/components/ScenarioBuilder.tsx",
+        "src/app/(cody)/cody/scenario/components/ScenarioEditor.tsx",
+        "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/StepIndicator.tsx",
+        "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/WizardDialog.tsx",
+        "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/WizardNavigation.tsx",
+        "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/shared/PRDCardContent.tsx",
+        "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/shared/SelectedItemsBadge.tsx",
+        "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/shared/StepsList.tsx",
+        "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/steps/NameStep.tsx",
+        "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/steps/PrototypeStep.tsx",
+        "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/steps/SaveStep.tsx",
+        "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/steps/StepsStep.tsx",
+        "src/app/(cody)/cody/scenario/components/ScenarioWizard/_hooks/useScenarioWizard.ts",
+        "src/app/(cody)/cody/scenario/components/ScenarioWizard/index.tsx",
         "src/app/(frontend)/LayoutClient.tsx",
         "src/app/(frontend)/[slug]/page.client.tsx",
         "src/app/(frontend)/_components/HomePage/index.tsx",
@@ -41,6 +58,8 @@
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ExercisesPager/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonAnalytics.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonContent.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/index.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/useLessonPager.ts",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ViewToggle.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/complete/CompleteContent.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseHeader/index.tsx",
@@ -80,6 +99,12 @@
         "src/app/(frontend)/search/page.client.tsx",
         "src/app/(frontend)/signup/SignupForm.tsx",
         "src/app/(frontend)/signup/SignupPageContent.tsx",
+        "src/app/(frontend)/stats/_components/ActivityTimeline.tsx",
+        "src/app/(frontend)/stats/_components/CategoryProgress.tsx",
+        "src/app/(frontend)/stats/_components/DashboardFilters.tsx",
+        "src/app/(frontend)/stats/_components/PracticedItems.tsx",
+        "src/app/(frontend)/stats/_components/StatsDashboard.tsx",
+        "src/app/(frontend)/stats/_components/SummaryCards.tsx",
         "src/app/(frontend)/study-plan/_components/DayCard.tsx",
         "src/app/(frontend)/study-plan/_components/StudyPlanPage.tsx",
         "src/app/(frontend)/study-plan/_components/useStudyPlan.ts",
@@ -88,8 +113,11 @@
         "src/app/(payload)/admin/pdf-conversion/page.tsx",
         "src/app/global-error.tsx",
         "src/client/hooks/useAccessGate.ts",
+        "src/client/hooks/useActiveTimeTracker.ts",
         "src/client/hooks/useCurrentUser.ts",
         "src/client/hooks/useExamCountdown.ts",
+        "src/client/hooks/useProgressMap.ts",
+        "src/client/providers/ActiveTimeProvider.tsx",
         "src/infra/analytics/adapters/ga4/adapter.ts",
         "src/infra/analytics/adapters/ga4/scripts.tsx",
         "src/infra/analytics/adapters/mixpanel/adapter.ts",
@@ -111,6 +139,8 @@
         "src/server/payload/blocks/Code/CopyButton.tsx",
         "src/server/payload/blocks/Form/Component.tsx",
         "src/server/payload/blocks/Form/Error/index.tsx",
+        "src/server/payload/blocks/GeometryBlock/Component.tsx",
+        "src/server/payload/blocks/GraphBlock/Component.tsx",
         "src/ui/admin/AdminChat/DashboardWidget/index.tsx",
         "src/ui/admin/AdminChat/SidebarLink/index.tsx",
         "src/ui/admin/AnswerSpecJsonField/index.tsx",
@@ -157,6 +187,10 @@
         "src/ui/admin/ExercisePreview/index.tsx",
         "src/ui/admin/Footer/index.tsx",
         "src/ui/admin/Header/index.tsx",
+        "src/ui/admin/IntroGeometryField/index.tsx",
+        "src/ui/admin/IntroGraphField/index.tsx",
+        "src/ui/admin/IntroTableField/index.tsx",
+        "src/ui/admin/LessonBlocksField/index.tsx",
         "src/ui/admin/MediaPreview/AudioPreview.tsx",
         "src/ui/admin/MediaPreview/DocumentPreview.tsx",
         "src/ui/admin/MediaPreview/ExternalPreview.tsx",
@@ -207,6 +241,7 @@
         "src/ui/cody/components/EnvironmentToolbar.tsx",
         "src/ui/cody/components/ErrorBoundary.tsx",
         "src/ui/cody/components/FilterBar.tsx",
+        "src/ui/cody/components/FilterDropdown.tsx",
         "src/ui/cody/components/FixRequestDialog.tsx",
         "src/ui/cody/components/KeyboardShortcutsDialog.tsx",
         "src/ui/cody/components/LabelPicker.tsx",
@@ -277,6 +312,7 @@
         "src/ui/web/components/select.tsx",
         "src/ui/web/components/sheet.tsx",
         "src/ui/web/components/split-pane-layout.tsx",
+        "src/ui/web/components/tabs.tsx",
         "src/ui/web/components/toaster.tsx",
         "src/ui/web/components/tooltip.tsx",
         "src/ui/web/courses/PDFViewer/PDFEmbed.tsx",
@@ -365,6 +401,133 @@
       "description": "No description available",
       "files": ["src/app/(cody)/cody/metadata.ts"]
     },
+    "design-system-panel": {
+      "pattern": "design-system-panel",
+      "description": "No description available",
+      "files": ["src/app/(cody)/cody/scenario/components/DesignSystemPanel.tsx"]
+    },
+    "prd-card": {
+      "pattern": "prd-card",
+      "description": "No description available",
+      "files": ["src/app/(cody)/cody/scenario/components/PRDCard.tsx"]
+    },
+    "prototype-panel": {
+      "pattern": "prototype-panel",
+      "description": "No description available",
+      "files": ["src/app/(cody)/cody/scenario/components/PrototypePanel.tsx"]
+    },
+    "scenario-builder": {
+      "pattern": "scenario-builder",
+      "description": "No description available",
+      "files": ["src/app/(cody)/cody/scenario/components/ScenarioBuilder.tsx"]
+    },
+    "scenario-editor": {
+      "pattern": "scenario-editor",
+      "description": "No description available",
+      "files": ["src/app/(cody)/cody/scenario/components/ScenarioEditor.tsx"]
+    },
+    "step-indicator": {
+      "pattern": "step-indicator",
+      "description": "No description available",
+      "files": [
+        "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/StepIndicator.tsx"
+      ]
+    },
+    "wizard-dialog": {
+      "pattern": "wizard-dialog",
+      "description": "No description available",
+      "files": [
+        "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/WizardDialog.tsx"
+      ]
+    },
+    "wizard-navigation": {
+      "pattern": "wizard-navigation",
+      "description": "No description available",
+      "files": [
+        "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/WizardNavigation.tsx"
+      ]
+    },
+    "prd-card-content": {
+      "pattern": "prd-card-content",
+      "description": "No description available",
+      "files": [
+        "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/shared/PRDCardContent.tsx"
+      ]
+    },
+    "selected-items-badge": {
+      "pattern": "selected-items-badge",
+      "description": "No description available",
+      "files": [
+        "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/shared/SelectedItemsBadge.tsx"
+      ]
+    },
+    "steps-list": {
+      "pattern": "steps-list",
+      "description": "No description available",
+      "files": [
+        "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/shared/StepsList.tsx"
+      ]
+    },
+    "name-step": {
+      "pattern": "name-step",
+      "description": "No description available",
+      "files": [
+        "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/steps/NameStep.tsx"
+      ]
+    },
+    "prototype-step": {
+      "pattern": "prototype-step",
+      "description": "No description available",
+      "files": [
+        "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/steps/PrototypeStep.tsx"
+      ]
+    },
+    "save-step": {
+      "pattern": "save-step",
+      "description": "No description available",
+      "files": [
+        "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/steps/SaveStep.tsx"
+      ]
+    },
+    "steps-step": {
+      "pattern": "steps-step",
+      "description": "No description available",
+      "files": [
+        "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/steps/StepsStep.tsx"
+      ]
+    },
+    "scenario-wizard-constants": {
+      "pattern": "scenario-wizard-constants",
+      "description": "No description available",
+      "files": ["src/app/(cody)/cody/scenario/components/ScenarioWizard/_constants/wizard.ts"]
+    },
+    "use-scenario-wizard": {
+      "pattern": "use-scenario-wizard",
+      "description": "No description available",
+      "files": [
+        "src/app/(cody)/cody/scenario/components/ScenarioWizard/_hooks/useScenarioWizard.ts"
+      ]
+    },
+    "scenario-wizard-types": {
+      "pattern": "scenario-wizard-types",
+      "description": "No description available",
+      "files": ["src/app/(cody)/cody/scenario/components/ScenarioWizard/_types/wizard.ts"]
+    },
+    "scenario-wizard-orchestrator": {
+      "pattern": "scenario-wizard-orchestrator",
+      "description": "No description available",
+      "files": ["src/app/(cody)/cody/scenario/components/ScenarioWizard/index.tsx"]
+    },
+    "scenario-list-page": {
+      "pattern": "scenario-list-page",
+      "description": "No description available",
+      "files": ["src/app/(cody)/cody/scenario/list/page.tsx"]
+    },
+    "scenario-wizard-page": {
+      "pattern": "scenario-wizard-page",
+      "description": "No description available",
+      "files": ["src/app/(cody)/cody/scenario/page.tsx"]
+    },
     "route-group": {
       "pattern": "route-group",
       "description": "No description available",
@@ -397,6 +560,7 @@
         "src/server/payload/blocks/Banner/Component.tsx",
         "src/server/payload/blocks/Content/Component.tsx",
         "src/server/payload/blocks/MediaBlock/Component.tsx",
+        "src/server/payload/blocks/TableBlock/Component.tsx",
         "src/ui/cody/components/BranchCleanupDialog.tsx",
         "src/ui/cody/components/BugReportDialog.tsx",
         "src/ui/cody/components/CIStatusBadge.tsx",
@@ -407,6 +571,7 @@
         "src/ui/cody/components/CreateTaskDialog.tsx",
         "src/ui/cody/components/EditTaskDialog.tsx",
         "src/ui/cody/components/FilterBar.tsx",
+        "src/ui/cody/components/FilterDropdown.tsx",
         "src/ui/cody/components/MergeApprovalDialog.tsx",
         "src/ui/cody/components/MergeButton.tsx",
         "src/ui/cody/components/MessageActions.tsx",
@@ -459,6 +624,7 @@
         "src/ui/web/components/select.tsx",
         "src/ui/web/components/sheet.tsx",
         "src/ui/web/components/split-pane-layout.tsx",
+        "src/ui/web/components/tabs.tsx",
         "src/ui/web/components/textarea.tsx",
         "src/ui/web/components/tooltip.tsx",
         "src/ui/web/exerciserenderer/ExerciseRenderer/index.tsx",
@@ -533,6 +699,7 @@
         "src/app/(frontend)/courses/[courseSlug]/_components/PracticeTab/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ExercisesPager/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonContent.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ViewToggle.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/complete/CompleteContent.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseHeader/index.tsx",
@@ -562,6 +729,12 @@
         "src/app/(frontend)/onboarding/persona/PersonaSelectionStep.tsx",
         "src/app/(frontend)/signup/SignupForm.tsx",
         "src/app/(frontend)/signup/SignupPageContent.tsx",
+        "src/app/(frontend)/stats/_components/ActivityTimeline.tsx",
+        "src/app/(frontend)/stats/_components/CategoryProgress.tsx",
+        "src/app/(frontend)/stats/_components/DashboardFilters.tsx",
+        "src/app/(frontend)/stats/_components/PracticedItems.tsx",
+        "src/app/(frontend)/stats/_components/StatsDashboard.tsx",
+        "src/app/(frontend)/stats/_components/SummaryCards.tsx",
         "src/app/(frontend)/study-plan/_components/DayCard.tsx",
         "src/app/(frontend)/study-plan/_components/EmptyPlanState.tsx",
         "src/app/(frontend)/study-plan/_components/StudyPlanPage.tsx",
@@ -588,6 +761,7 @@
       "pattern": "authenticated-endpoint",
       "description": "API endpoint requiring authentication",
       "files": [
+        "src/app/(frontend)/courses/[courseSlug]/page.tsx",
         "src/app/(frontend)/next/preview/route.ts",
         "src/app/(frontend)/next/seed/route.ts",
         "src/app/api/agent/chat/route.ts",
@@ -607,7 +781,13 @@
         "src/app/api/exercises/import/route.ts",
         "src/app/api/exercises/validate-answer/route.ts",
         "src/app/api/jobs/run-immediate/route.ts",
+        "src/app/api/progress/route.ts",
         "src/app/api/prompts/for-conversion/route.ts",
+        "src/app/api/stats/activity/route.ts",
+        "src/app/api/stats/dashboard/route.ts",
+        "src/app/api/stats/heartbeat/route.ts",
+        "src/app/api/stats/streak/route.ts",
+        "src/app/api/stats/track-activity/route.ts",
         "src/app/api/study-plan/route.ts",
         "src/app/api/teacher-profiles/route.ts",
         "src/app/api/user-settings/route.ts",
@@ -660,6 +840,11 @@
         "src/app/api/cody/publish/route.ts",
         "src/app/api/cody/remote/exec/route.ts",
         "src/app/api/cody/remote/status/route.ts",
+        "src/app/api/cody/scenario/export/route.ts",
+        "src/app/api/cody/scenario/github/route.ts",
+        "src/app/api/cody/scenario/prototypes/[name]/route.ts",
+        "src/app/api/cody/scenario/prototypes/route.ts",
+        "src/app/api/cody/scenario/scenarios/route.ts",
         "src/app/api/cody/tasks/[taskId]/actions/route.ts",
         "src/app/api/cody/tasks/[taskId]/docs/route.ts",
         "src/app/api/cody/tasks/[taskId]/route.ts",
@@ -684,6 +869,7 @@
         "src/app/api/oauth/google/callback/route.ts",
         "src/app/api/oauth/google/route.ts",
         "src/app/api/pdfjs-viewer/route.ts",
+        "src/app/api/progress/route.ts",
         "src/app/api/prompts/for-conversion/route.ts",
         "src/app/api/study-plan/route.ts",
         "src/infra/auth/cody_session.ts",
@@ -713,8 +899,9 @@
         "src/app/api/cody/tasks/route.ts",
         "src/app/api/entitlements/redeem/route.ts",
         "src/app/api/exercises/[id]/blocks/[blockId]/route.ts",
-        "src/app/api/exercises/convert/queue/route.ts",
         "src/app/api/exercises/convert/single/create/route.ts",
+        "src/app/api/progress/route.ts",
+        "src/app/api/stats/activity/route.ts",
         "src/app/api/study-plan/route.ts",
         "src/server/payload/endpoints/agent/chat.ts",
         "src/server/payload/endpoints/agent/chat/request-validation.ts",
@@ -818,6 +1005,44 @@
       "description": "No description available",
       "files": ["src/app/api/cody/remote/status/route.ts"]
     },
+    "action-registry-api": {
+      "pattern": "action-registry-api",
+      "description": "No description available",
+      "files": ["src/app/api/cody/scenario/actions/route.ts"]
+    },
+    "scenario-components-api": {
+      "pattern": "scenario-components-api",
+      "description": "No description available",
+      "files": ["src/app/api/cody/scenario/components/route.ts"]
+    },
+    "scenario-export-api": {
+      "pattern": "scenario-export-api",
+      "description": "No description available",
+      "files": ["src/app/api/cody/scenario/export/route.ts"]
+    },
+    "scenario-github-api": {
+      "pattern": "scenario-github-api",
+      "description": "No description available",
+      "files": [
+        "src/app/api/cody/scenario/github/route.ts",
+        "src/server/services/cody/scenario-github.ts"
+      ]
+    },
+    "scenario-prototype-detail-api": {
+      "pattern": "scenario-prototype-detail-api",
+      "description": "No description available",
+      "files": ["src/app/api/cody/scenario/prototypes/[name]/route.ts"]
+    },
+    "scenario-prototypes-api": {
+      "pattern": "scenario-prototypes-api",
+      "description": "No description available",
+      "files": ["src/app/api/cody/scenario/prototypes/route.ts"]
+    },
+    "scenario-save-api": {
+      "pattern": "scenario-save-api",
+      "description": "No description available",
+      "files": ["src/app/api/cody/scenario/scenarios/route.ts"]
+    },
     "task-actions-api": {
       "pattern": "task-actions-api",
       "description": "No description available",
@@ -858,6 +1083,24 @@
       "description": "No description available",
       "files": ["src/app/api/copilotkit/route.ts"]
     },
+    "validation": {
+      "pattern": "validation",
+      "description": "No description available",
+      "files": [
+        "src/app/api/exercises/convert/queue-v2/schema.ts",
+        "src/app/api/exercises/convert/queue/schema.ts",
+        "src/server/payload/hooks/configSecrets/beforeChange-hook.ts",
+        "src/server/payload/hooks/configValues/beforeChange-hook.ts"
+      ]
+    },
+    "zod-schema": {
+      "pattern": "zod-schema",
+      "description": "No description available",
+      "files": [
+        "src/app/api/exercises/convert/queue-v2/schema.ts",
+        "src/app/api/exercises/convert/queue/schema.ts"
+      ]
+    },
     "endpoint": {
       "pattern": "endpoint",
       "description": "No description available",
@@ -871,20 +1114,6 @@
       "pattern": "queue",
       "description": "No description available",
       "files": ["src/app/api/exercises/convert/queue-v2/route.ts"]
-    },
-    "validation": {
-      "pattern": "validation",
-      "description": "No description available",
-      "files": [
-        "src/app/api/exercises/convert/queue-v2/schema.ts",
-        "src/server/payload/hooks/configSecrets/beforeChange-hook.ts",
-        "src/server/payload/hooks/configValues/beforeChange-hook.ts"
-      ]
-    },
-    "zod-schema": {
-      "pattern": "zod-schema",
-      "description": "No description available",
-      "files": ["src/app/api/exercises/convert/queue-v2/schema.ts"]
     },
     "oauth": {
       "pattern": "oauth",
@@ -1122,6 +1351,7 @@
         "src/server/payload/collections/Chapters.ts",
         "src/server/payload/collections/ConfigSecrets.ts",
         "src/server/payload/collections/ConfigValues.ts",
+        "src/server/payload/collections/ContentPages.ts",
         "src/server/payload/collections/Conversations.ts",
         "src/server/payload/collections/Courses.ts",
         "src/server/payload/collections/Lessons.ts",
@@ -1150,6 +1380,61 @@
       "pattern": "youtube-detection",
       "description": "No description available",
       "files": ["src/infra/media/youtube.ts"]
+    },
+    "design-system-loader": {
+      "pattern": "design-system-loader",
+      "description": "No description available",
+      "files": ["src/infra/qa/design-system/loader.ts"]
+    },
+    "fixture-loader": {
+      "pattern": "fixture-loader",
+      "description": "No description available",
+      "files": ["src/infra/qa/fixtures/loader.ts"]
+    },
+    "fixture-schema": {
+      "pattern": "fixture-schema",
+      "description": "No description available",
+      "files": ["src/infra/qa/fixtures/schema.ts"]
+    },
+    "qa-scripts-index": {
+      "pattern": "qa-scripts-index",
+      "description": "No description available",
+      "files": ["src/infra/qa/index.ts"]
+    },
+    "prd-generator": {
+      "pattern": "prd-generator",
+      "description": "No description available",
+      "files": ["src/infra/qa/prd-generator.ts"]
+    },
+    "prototype-loader": {
+      "pattern": "prototype-loader",
+      "description": "No description available",
+      "files": ["src/infra/qa/prototype/loader.ts"]
+    },
+    "selector-extractor": {
+      "pattern": "selector-extractor",
+      "description": "No description available",
+      "files": ["src/infra/qa/prototype/selector-extractor.ts"]
+    },
+    "scenario-converter": {
+      "pattern": "scenario-converter",
+      "description": "No description available",
+      "files": ["src/infra/qa/scenario-converter.ts"]
+    },
+    "scenario-schemas": {
+      "pattern": "scenario-schemas",
+      "description": "No description available",
+      "files": ["src/infra/qa/schema.ts"]
+    },
+    "site-behavior-loader": {
+      "pattern": "site-behavior-loader",
+      "description": "No description available",
+      "files": ["src/infra/qa/site-behavior/loader.ts"]
+    },
+    "site-behavior-schema": {
+      "pattern": "site-behavior-schema",
+      "description": "No description available",
+      "files": ["src/infra/qa/site-behavior/schema.ts"]
     },
     "type-exports": {
       "pattern": "type-exports",
@@ -1192,6 +1477,7 @@
         "src/server/payload/collections/ConfigAuditLogs.ts",
         "src/server/payload/collections/ConfigSecrets.ts",
         "src/server/payload/collections/ConfigValues.ts",
+        "src/server/payload/collections/ContentPages.ts",
         "src/server/payload/collections/Conversations.ts",
         "src/server/payload/collections/Courses.ts",
         "src/server/payload/collections/ExerciseAssets.ts",
@@ -1211,6 +1497,7 @@
         "src/server/payload/collections/UploadSessions/index.ts",
         "src/server/payload/collections/UserProgress.ts",
         "src/server/payload/collections/UserSettings/index.ts",
+        "src/server/payload/collections/UserStats.ts",
         "src/server/payload/collections/Users/index.ts"
       ]
     },
@@ -1259,6 +1546,7 @@
         "src/server/payload/collections/Conversations.ts",
         "src/server/payload/collections/MemoryItems.ts",
         "src/server/payload/collections/UserProgress.ts",
+        "src/server/payload/collections/UserStats.ts",
         "src/server/payload/collections/Users/index.ts"
       ]
     },
@@ -1306,7 +1594,10 @@
     "progress-tracking": {
       "pattern": "progress-tracking",
       "description": "No description available",
-      "files": ["src/server/payload/collections/UserProgress.ts"]
+      "files": [
+        "src/server/payload/collections/UserProgress.ts",
+        "src/server/payload/collections/UserStats.ts"
+      ]
     },
     "user-settings": {
       "pattern": "user-settings",
@@ -1631,6 +1922,11 @@
       "description": "No description available",
       "files": ["src/ui/cody/components/FilterBar.tsx"]
     },
+    "filter-dropdown": {
+      "pattern": "filter-dropdown",
+      "description": "No description available",
+      "files": ["src/ui/cody/components/FilterDropdown.tsx"]
+    },
     "fix-request-dialog": {
       "pattern": "fix-request-dialog",
       "description": "No description available",
@@ -1872,6 +2168,11 @@
         "src/ui/web/shared/Typography/Text.tsx"
       ]
     },
+    "tabs": {
+      "pattern": "tabs",
+      "description": "No description available",
+      "files": ["src/ui/web/components/tabs.tsx"]
+    },
     "shared-markdown": {
       "pattern": "shared-markdown",
       "description": "No description available",
@@ -1985,6 +2286,174 @@
       "aiSummary": "Main Cody dashboard page. Auth handled client-side via SessionExpiredError.",
       "dependencies": []
     },
+    "src/app/(cody)/cody/scenario/components/DesignSystemPanel.tsx": {
+      "path": "src/app/(cody)/cody/scenario/components/DesignSystemPanel.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["design-system-panel", "client-component"],
+      "aiSummary": "Panel for browsing and selecting design system components",
+      "dependencies": ["react", "lucide-react"]
+    },
+    "src/app/(cody)/cody/scenario/components/PRDCard.tsx": {
+      "path": "src/app/(cody)/cody/scenario/components/PRDCard.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["prd-card", "client-component"],
+      "aiSummary": "Preview card showing generated PRD in real-time",
+      "dependencies": ["lucide-react", "react"]
+    },
+    "src/app/(cody)/cody/scenario/components/PrototypePanel.tsx": {
+      "path": "src/app/(cody)/cody/scenario/components/PrototypePanel.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["prototype-panel", "client-component"],
+      "aiSummary": "Panel for loading and selecting prototype elements",
+      "dependencies": ["react", "lucide-react"]
+    },
+    "src/app/(cody)/cody/scenario/components/ScenarioBuilder.tsx": {
+      "path": "src/app/(cody)/cody/scenario/components/ScenarioBuilder.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["scenario-builder", "client-component"],
+      "aiSummary": "Component for building scenario steps from selected elements and components",
+      "dependencies": ["react", "lucide-react", "sonner"]
+    },
+    "src/app/(cody)/cody/scenario/components/ScenarioEditor.tsx": {
+      "path": "src/app/(cody)/cody/scenario/components/ScenarioEditor.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["scenario-editor", "client-component"],
+      "aiSummary": "Main scenario editor component with prototype, design system, and scenario builder panels",
+      "dependencies": ["react", "sonner"]
+    },
+    "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/StepIndicator.tsx": {
+      "path": "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/StepIndicator.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["step-indicator", "client-component"],
+      "aiSummary": "Shows wizard progress with clickable step indicators",
+      "dependencies": ["lucide-react"]
+    },
+    "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/WizardDialog.tsx": {
+      "path": "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/WizardDialog.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["wizard-dialog", "client-component"],
+      "aiSummary": "PRD preview dialog with GitHub issue creation",
+      "dependencies": []
+    },
+    "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/WizardNavigation.tsx": {
+      "path": "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/WizardNavigation.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["wizard-navigation", "client-component"],
+      "aiSummary": "Bottom navigation for wizard - back/next buttons with step counter",
+      "dependencies": ["lucide-react"]
+    },
+    "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/shared/PRDCardContent.tsx": {
+      "path": "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/shared/PRDCardContent.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["prd-card-content", "client-component"],
+      "aiSummary": "PRD card content for preview dialog",
+      "dependencies": []
+    },
+    "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/shared/SelectedItemsBadge.tsx": {
+      "path": "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/shared/SelectedItemsBadge.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["selected-items-badge", "client-component"],
+      "aiSummary": "Shows selected prototype elements and design system components as badges",
+      "dependencies": []
+    },
+    "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/shared/StepsList.tsx": {
+      "path": "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/shared/StepsList.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["steps-list", "client-component"],
+      "aiSummary": "Renders a list of scenario steps with remove functionality",
+      "dependencies": []
+    },
+    "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/steps/NameStep.tsx": {
+      "path": "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/steps/NameStep.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["name-step", "client-component"],
+      "aiSummary": "Step 1: Name your scenario and select type",
+      "dependencies": []
+    },
+    "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/steps/PrototypeStep.tsx": {
+      "path": "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/steps/PrototypeStep.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["prototype-step", "client-component"],
+      "aiSummary": "Step 2: Select prototype and design system components",
+      "dependencies": []
+    },
+    "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/steps/SaveStep.tsx": {
+      "path": "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/steps/SaveStep.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["save-step", "client-component"],
+      "aiSummary": "Step 4: Preview, save and export scenario",
+      "dependencies": ["lucide-react"]
+    },
+    "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/steps/StepsStep.tsx": {
+      "path": "src/app/(cody)/cody/scenario/components/ScenarioWizard/_components/steps/StepsStep.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["steps-step", "client-component"],
+      "aiSummary": "Step 3: Add and manage test steps",
+      "dependencies": ["react"]
+    },
+    "src/app/(cody)/cody/scenario/components/ScenarioWizard/_constants/wizard.ts": {
+      "path": "src/app/(cody)/cody/scenario/components/ScenarioWizard/_constants/wizard.ts",
+      "type": "constants",
+      "domain": "cody",
+      "patterns": ["scenario-wizard-constants"],
+      "aiSummary": "",
+      "dependencies": []
+    },
+    "src/app/(cody)/cody/scenario/components/ScenarioWizard/_hooks/useScenarioWizard.ts": {
+      "path": "src/app/(cody)/cody/scenario/components/ScenarioWizard/_hooks/useScenarioWizard.ts",
+      "type": "hook",
+      "domain": "cody",
+      "patterns": ["use-scenario-wizard", "client-component"],
+      "aiSummary": "Main state hook for ScenarioWizard - manages all scenario state and actions",
+      "dependencies": ["react", "sonner"]
+    },
+    "src/app/(cody)/cody/scenario/components/ScenarioWizard/_types/wizard.ts": {
+      "path": "src/app/(cody)/cody/scenario/components/ScenarioWizard/_types/wizard.ts",
+      "type": "types",
+      "domain": "cody",
+      "patterns": ["scenario-wizard-types"],
+      "aiSummary": "",
+      "dependencies": []
+    },
+    "src/app/(cody)/cody/scenario/components/ScenarioWizard/index.tsx": {
+      "path": "src/app/(cody)/cody/scenario/components/ScenarioWizard/index.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["scenario-wizard-orchestrator", "client-component"],
+      "aiSummary": "Main orchestrator for ScenarioWizard - renders steps and manages navigation",
+      "dependencies": ["react", "sonner"]
+    },
+    "src/app/(cody)/cody/scenario/list/page.tsx": {
+      "path": "src/app/(cody)/cody/scenario/list/page.tsx",
+      "type": "page",
+      "domain": "cody",
+      "patterns": ["scenario-list-page"],
+      "aiSummary": "List page for viewing all scenarios",
+      "dependencies": ["next/link"]
+    },
+    "src/app/(cody)/cody/scenario/page.tsx": {
+      "path": "src/app/(cody)/cody/scenario/page.tsx",
+      "type": "page",
+      "domain": "cody",
+      "patterns": ["scenario-wizard-page"],
+      "aiSummary": "Scenario creation wizard page - 4-step flow to create scenarios",
+      "dependencies": []
+    },
     "src/app/(cody)/layout.tsx": {
       "path": "src/app/(cody)/layout.tsx",
       "type": "layout",
@@ -2031,7 +2500,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react"]
+      "dependencies": ["react", "lucide-react"]
     },
     "src/app/(frontend)/account/_components/DetailsSection.tsx": {
       "path": "src/app/(frontend)/account/_components/DetailsSection.tsx",
@@ -2191,7 +2660,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": []
+      "dependencies": ["react"]
     },
     "src/app/(frontend)/courses/[courseSlug]/_components/PracticeTab/index.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/_components/PracticeTab/index.tsx",
@@ -2199,7 +2668,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": []
+      "dependencies": ["react"]
     },
     "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ConvertButton.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ConvertButton.tsx",
@@ -2215,7 +2684,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["lucide-react"]
+      "dependencies": ["react", "lucide-react"]
     },
     "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonAnalytics.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonAnalytics.tsx",
@@ -2233,6 +2702,22 @@
       "aiSummary": "",
       "dependencies": ["react"]
     },
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/index.tsx": {
+      "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/useLessonPager.ts": {
+      "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/useLessonPager.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
     "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ViewToggle.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ViewToggle.tsx",
       "type": "unknown",
@@ -2247,7 +2732,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["lucide-react"]
+      "dependencies": ["react", "lucide-react"]
     },
     "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseHeader/index.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseHeader/index.tsx",
@@ -2312,6 +2797,14 @@
       "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
       "dependencies": ["react", "next/link", "lucide-react"]
+    },
+    "src/app/(frontend)/courses/[courseSlug]/page.tsx": {
+      "path": "src/app/(frontend)/courses/[courseSlug]/page.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["authenticated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["next/navigation", "next/headers", "payload", "@payload-config"]
     },
     "src/app/(frontend)/courses/_components/BackToChapter/index.tsx": {
       "path": "src/app/(frontend)/courses/_components/BackToChapter/index.tsx",
@@ -2582,6 +3075,54 @@
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
       "dependencies": ["react"]
+    },
+    "src/app/(frontend)/stats/_components/ActivityTimeline.tsx": {
+      "path": "src/app/(frontend)/stats/_components/ActivityTimeline.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "lucide-react"]
+    },
+    "src/app/(frontend)/stats/_components/CategoryProgress.tsx": {
+      "path": "src/app/(frontend)/stats/_components/CategoryProgress.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["lucide-react"]
+    },
+    "src/app/(frontend)/stats/_components/DashboardFilters.tsx": {
+      "path": "src/app/(frontend)/stats/_components/DashboardFilters.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": []
+    },
+    "src/app/(frontend)/stats/_components/PracticedItems.tsx": {
+      "path": "src/app/(frontend)/stats/_components/PracticedItems.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["lucide-react"]
+    },
+    "src/app/(frontend)/stats/_components/StatsDashboard.tsx": {
+      "path": "src/app/(frontend)/stats/_components/StatsDashboard.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/app/(frontend)/stats/_components/SummaryCards.tsx": {
+      "path": "src/app/(frontend)/stats/_components/SummaryCards.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["lucide-react"]
     },
     "src/app/(frontend)/study/_components/StudyContent/index.tsx": {
       "path": "src/app/(frontend)/study/_components/StudyContent/index.tsx",
@@ -2863,6 +3404,62 @@
       "aiSummary": "Health check for the remote dev agent — returns online/offline status",
       "dependencies": ["next/server"]
     },
+    "src/app/api/cody/scenario/actions/route.ts": {
+      "path": "src/app/api/cody/scenario/actions/route.ts",
+      "type": "api-route",
+      "domain": "cody",
+      "patterns": ["action-registry-api"],
+      "aiSummary": "API endpoint to list available QA actions",
+      "dependencies": ["next/server"]
+    },
+    "src/app/api/cody/scenario/components/route.ts": {
+      "path": "src/app/api/cody/scenario/components/route.ts",
+      "type": "api-route",
+      "domain": "cody",
+      "patterns": ["scenario-components-api"],
+      "aiSummary": "API endpoint to list design system components",
+      "dependencies": ["next/server"]
+    },
+    "src/app/api/cody/scenario/export/route.ts": {
+      "path": "src/app/api/cody/scenario/export/route.ts",
+      "type": "api-route",
+      "domain": "cody",
+      "patterns": ["scenario-export-api", "api-endpoint"],
+      "aiSummary": "API endpoint to export scenarios in QA runner format or as Playwright tests",
+      "dependencies": ["next/server"]
+    },
+    "src/app/api/cody/scenario/github/route.ts": {
+      "path": "src/app/api/cody/scenario/github/route.ts",
+      "type": "api-route",
+      "domain": "cody",
+      "patterns": ["scenario-github-api", "api-endpoint"],
+      "aiSummary": "API endpoint to create GitHub issues from scenarios",
+      "dependencies": ["next/server"]
+    },
+    "src/app/api/cody/scenario/prototypes/[name]/route.ts": {
+      "path": "src/app/api/cody/scenario/prototypes/[name]/route.ts",
+      "type": "api-route",
+      "domain": "cody",
+      "patterns": ["scenario-prototype-detail-api", "api-endpoint"],
+      "aiSummary": "API endpoint to get a specific prototype by name",
+      "dependencies": ["next/server"]
+    },
+    "src/app/api/cody/scenario/prototypes/route.ts": {
+      "path": "src/app/api/cody/scenario/prototypes/route.ts",
+      "type": "api-route",
+      "domain": "cody",
+      "patterns": ["scenario-prototypes-api", "api-endpoint"],
+      "aiSummary": "API endpoint to list and upload prototypes",
+      "dependencies": ["next/server", "fs", "path"]
+    },
+    "src/app/api/cody/scenario/scenarios/route.ts": {
+      "path": "src/app/api/cody/scenario/scenarios/route.ts",
+      "type": "api-route",
+      "domain": "cody",
+      "patterns": ["scenario-save-api", "api-endpoint"],
+      "aiSummary": "API endpoint to save scenarios to filesystem",
+      "dependencies": ["next/server", "fs", "path"]
+    },
     "src/app/api/cody/tasks/[taskId]/actions/route.ts": {
       "path": "src/app/api/cody/tasks/[taskId]/actions/route.ts",
       "type": "api-endpoint",
@@ -2971,9 +3568,17 @@
       "path": "src/app/api/exercises/convert/queue/route.ts",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["api-endpoint", "authenticated-endpoint", "validated-endpoint"],
+      "patterns": ["api-endpoint", "authenticated-endpoint"],
       "aiSummary": "",
-      "dependencies": ["payload", "@payload-config", "next/server", "zod"]
+      "dependencies": ["payload", "@payload-config", "next/server"]
+    },
+    "src/app/api/exercises/convert/queue/schema.ts": {
+      "path": "src/app/api/exercises/convert/queue/schema.ts",
+      "type": "utility",
+      "domain": "conversion",
+      "patterns": ["validation", "zod-schema"],
+      "aiSummary": "",
+      "dependencies": ["zod"]
     },
     "src/app/api/exercises/convert/queue-v2/route.ts": {
       "path": "src/app/api/exercises/convert/queue-v2/route.ts",
@@ -3095,6 +3700,14 @@
       "aiSummary": "",
       "dependencies": ["next/server"]
     },
+    "src/app/api/progress/route.ts": {
+      "path": "src/app/api/progress/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["api-endpoint", "authenticated-endpoint", "validated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["@payload-config", "next/server", "payload", "zod"]
+    },
     "src/app/api/prompts/for-conversion/route.ts": {
       "path": "src/app/api/prompts/for-conversion/route.ts",
       "type": "unknown",
@@ -3102,6 +3715,46 @@
       "patterns": ["api-endpoint", "authenticated-endpoint"],
       "aiSummary": "",
       "dependencies": ["@payload-config", "next/server", "payload"]
+    },
+    "src/app/api/stats/activity/route.ts": {
+      "path": "src/app/api/stats/activity/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["authenticated-endpoint", "validated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["payload", "zod", "@payload-config"]
+    },
+    "src/app/api/stats/dashboard/route.ts": {
+      "path": "src/app/api/stats/dashboard/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["authenticated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["payload", "zod", "@payload-config"]
+    },
+    "src/app/api/stats/heartbeat/route.ts": {
+      "path": "src/app/api/stats/heartbeat/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["authenticated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["payload", "zod", "@payload-config"]
+    },
+    "src/app/api/stats/streak/route.ts": {
+      "path": "src/app/api/stats/streak/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["authenticated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["payload", "@payload-config"]
+    },
+    "src/app/api/stats/track-activity/route.ts": {
+      "path": "src/app/api/stats/track-activity/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["authenticated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["payload", "zod", "@payload-config"]
     },
     "src/app/api/study-plan/route.ts": {
       "path": "src/app/api/study-plan/route.ts",
@@ -3143,6 +3796,14 @@
       "aiSummary": "",
       "dependencies": ["react"]
     },
+    "src/client/hooks/useActiveTimeTracker.ts": {
+      "path": "src/client/hooks/useActiveTimeTracker.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
     "src/client/hooks/useCurrentUser.ts": {
       "path": "src/client/hooks/useCurrentUser.ts",
       "type": "unknown",
@@ -3153,6 +3814,22 @@
     },
     "src/client/hooks/useExamCountdown.ts": {
       "path": "src/client/hooks/useExamCountdown.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/client/hooks/useProgressMap.ts": {
+      "path": "src/client/hooks/useProgressMap.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/client/providers/ActiveTimeProvider.tsx": {
+      "path": "src/client/providers/ActiveTimeProvider.tsx",
       "type": "unknown",
       "domain": "general",
       "patterns": ["client-component"],
@@ -3615,6 +4292,94 @@
       "aiSummary": "Client-side YouTube URL detection and embed URL generation (no API calls)",
       "dependencies": []
     },
+    "src/infra/qa/design-system/loader.ts": {
+      "path": "src/infra/qa/design-system/loader.ts",
+      "type": "loader",
+      "domain": "qa",
+      "patterns": ["design-system-loader"],
+      "aiSummary": "Loads and parses design system components from src/ui/web/components",
+      "dependencies": ["fs", "path"]
+    },
+    "src/infra/qa/fixtures/loader.ts": {
+      "path": "src/infra/qa/fixtures/loader.ts",
+      "type": "loader",
+      "domain": "qa",
+      "patterns": ["fixture-loader"],
+      "aiSummary": "Loads test fixtures from JSON files",
+      "dependencies": ["fs", "path"]
+    },
+    "src/infra/qa/fixtures/schema.ts": {
+      "path": "src/infra/qa/fixtures/schema.ts",
+      "type": "schema",
+      "domain": "qa",
+      "patterns": ["fixture-schema"],
+      "aiSummary": "Zod schemas for test fixtures",
+      "dependencies": ["zod"]
+    },
+    "src/infra/qa/index.ts": {
+      "path": "src/infra/qa/index.ts",
+      "type": "index",
+      "domain": "qa",
+      "patterns": ["qa-scripts-index"],
+      "aiSummary": "Main entry point for scenario-first development system scripts",
+      "dependencies": []
+    },
+    "src/infra/qa/prd-generator.ts": {
+      "path": "src/infra/qa/prd-generator.ts",
+      "type": "prd-generator",
+      "domain": "qa",
+      "patterns": ["prd-generator"],
+      "aiSummary": "Generates Product Requirements Documents from scenarios with DS translations",
+      "dependencies": ["path", "fs"]
+    },
+    "src/infra/qa/prototype/loader.ts": {
+      "path": "src/infra/qa/prototype/loader.ts",
+      "type": "loader",
+      "domain": "qa",
+      "patterns": ["prototype-loader"],
+      "aiSummary": "Loads HTML prototype files and extracts element information without external dependencies",
+      "dependencies": ["fs", "path"]
+    },
+    "src/infra/qa/prototype/selector-extractor.ts": {
+      "path": "src/infra/qa/prototype/selector-extractor.ts",
+      "type": "utility",
+      "domain": "qa",
+      "patterns": ["selector-extractor"],
+      "aiSummary": "Extracts and matches CSS selectors from prototype elements",
+      "dependencies": []
+    },
+    "src/infra/qa/scenario-converter.ts": {
+      "path": "src/infra/qa/scenario-converter.ts",
+      "type": "converter",
+      "domain": "qa",
+      "patterns": ["scenario-converter"],
+      "aiSummary": "Converts scenarios between editor format and QA runner format",
+      "dependencies": ["@playwright/test"]
+    },
+    "src/infra/qa/schema.ts": {
+      "path": "src/infra/qa/schema.ts",
+      "type": "schema",
+      "domain": "qa",
+      "patterns": ["scenario-schemas"],
+      "aiSummary": "Core Zod schemas for scenario-first development system",
+      "dependencies": ["zod"]
+    },
+    "src/infra/qa/site-behavior/loader.ts": {
+      "path": "src/infra/qa/site-behavior/loader.ts",
+      "type": "loader",
+      "domain": "qa",
+      "patterns": ["site-behavior-loader"],
+      "aiSummary": "Loads site behavior specifications from JSON files",
+      "dependencies": ["fs", "path"]
+    },
+    "src/infra/qa/site-behavior/schema.ts": {
+      "path": "src/infra/qa/site-behavior/schema.ts",
+      "type": "schema",
+      "domain": "qa",
+      "patterns": ["site-behavior-schema"],
+      "aiSummary": "Zod schemas for site behavior specifications",
+      "dependencies": ["zod"]
+    },
     "src/infra/types/index.ts": {
       "path": "src/infra/types/index.ts",
       "type": "utility",
@@ -3741,6 +4506,22 @@
       "aiSummary": "",
       "dependencies": ["react", "react-hook-form"]
     },
+    "src/server/payload/blocks/GeometryBlock/Component.tsx": {
+      "path": "src/server/payload/blocks/GeometryBlock/Component.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/server/payload/blocks/GraphBlock/Component.tsx": {
+      "path": "src/server/payload/blocks/GraphBlock/Component.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
     "src/server/payload/blocks/MediaBlock/Component.tsx": {
       "path": "src/server/payload/blocks/MediaBlock/Component.tsx",
       "type": "unknown",
@@ -3748,6 +4529,14 @@
       "patterns": ["tailwind-component"],
       "aiSummary": "",
       "dependencies": ["next/image", "react"]
+    },
+    "src/server/payload/blocks/TableBlock/Component.tsx": {
+      "path": "src/server/payload/blocks/TableBlock/Component.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["tailwind-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
     },
     "src/server/payload/collections/AccessCodes.ts": {
       "path": "src/server/payload/collections/AccessCodes.ts",
@@ -3803,6 +4592,14 @@
       "domain": "config",
       "patterns": ["domain-scoped-config", "json-storage", "access-control", "payload-hooks"],
       "aiSummary": "Domain-based configuration values stored as JSON, tenant-scoped",
+      "dependencies": ["payload"]
+    },
+    "src/server/payload/collections/ContentPages.ts": {
+      "path": "src/server/payload/collections/ContentPages.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["access-control", "payload-hooks"],
+      "aiSummary": "",
       "dependencies": ["payload"]
     },
     "src/server/payload/collections/Conversations.ts": {
@@ -3971,6 +4768,14 @@
       "domain": "user",
       "patterns": ["user-settings", "access-control"],
       "aiSummary": "Collection for storing per-user settings including teacher profile selection",
+      "dependencies": ["payload"]
+    },
+    "src/server/payload/collections/UserStats.ts": {
+      "path": "src/server/payload/collections/UserStats.ts",
+      "type": "collection-config",
+      "domain": "progress-tracking",
+      "patterns": ["user-owned", "progress-tracking", "access-control"],
+      "aiSummary": "User statistics tracking for time spent, daily streak, and activity history",
       "dependencies": ["payload"]
     },
     "src/server/payload/collections/Users/hooks/auditRoleChange-hook.ts": {
@@ -4222,6 +5027,14 @@
       "patterns": ["plugin-configuration", "read-only-access", "tenant-scoped"],
       "aiSummary": "",
       "dependencies": ["@payloadcms/plugin-mcp", "payload"]
+    },
+    "src/server/services/cody/scenario-github.ts": {
+      "path": "src/server/services/cody/scenario-github.ts",
+      "type": "api-client",
+      "domain": "cody",
+      "patterns": ["scenario-github-api"],
+      "aiSummary": "GitHub API integration for scenario-based issues",
+      "dependencies": ["@octokit/rest", "@octokit/plugin-throttling"]
     },
     "src/server/services/conversation-service.ts": {
       "path": "src/server/services/conversation-service.ts",
@@ -4703,6 +5516,38 @@
       "aiSummary": "",
       "dependencies": ["@payloadcms/ui"]
     },
+    "src/ui/admin/IntroGeometryField/index.tsx": {
+      "path": "src/ui/admin/IntroGeometryField/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "@payloadcms/ui"]
+    },
+    "src/ui/admin/IntroGraphField/index.tsx": {
+      "path": "src/ui/admin/IntroGraphField/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "@payloadcms/ui"]
+    },
+    "src/ui/admin/IntroTableField/index.tsx": {
+      "path": "src/ui/admin/IntroTableField/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "@payloadcms/ui", "lucide-react"]
+    },
+    "src/ui/admin/LessonBlocksField/index.tsx": {
+      "path": "src/ui/admin/LessonBlocksField/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "@payloadcms/ui"]
+    },
     "src/ui/admin/MediaPreview/AudioPreview.tsx": {
       "path": "src/ui/admin/MediaPreview/AudioPreview.tsx",
       "type": "unknown",
@@ -5132,8 +5977,16 @@
       "type": "component",
       "domain": "cody",
       "patterns": ["filter-bar", "tailwind-component", "client-component"],
-      "aiSummary": "Dedicated filter sub-header bar for Cody dashboard with view toggle, date, status, and label filters",
+      "aiSummary": "Dedicated filter sub-header bar for Cody dashboard with view toggle and consolidated filter dropdown",
       "dependencies": ["react", "lucide-react"]
+    },
+    "src/ui/cody/components/FilterDropdown.tsx": {
+      "path": "src/ui/cody/components/FilterDropdown.tsx",
+      "type": "component",
+      "domain": "cody",
+      "patterns": ["filter-dropdown", "tailwind-component", "client-component"],
+      "aiSummary": "Consolidated dropdown for all task filters — status, label, priority, date, and sort",
+      "dependencies": ["lucide-react"]
     },
     "src/ui/cody/components/FixRequestDialog.tsx": {
       "path": "src/ui/cody/components/FixRequestDialog.tsx",
@@ -5908,6 +6761,14 @@
       "aiSummary": "",
       "dependencies": ["react"]
     },
+    "src/ui/web/components/tabs.tsx": {
+      "path": "src/ui/web/components/tabs.tsx",
+      "type": "component",
+      "domain": "web",
+      "patterns": ["tabs", "tailwind-component", "client-component"],
+      "aiSummary": "Generic tabs component with trigger and content panels",
+      "dependencies": ["react"]
+    },
     "src/ui/web/components/textarea.tsx": {
       "path": "src/ui/web/components/textarea.tsx",
       "type": "unknown",
@@ -5938,7 +6799,7 @@
       "domain": "general",
       "patterns": ["client-component"],
       "aiSummary": "",
-      "dependencies": []
+      "dependencies": ["react"]
     },
     "src/ui/web/exerciserenderer/ExerciseRenderer/index.tsx": {
       "path": "src/ui/web/exerciserenderer/ExerciseRenderer/index.tsx",
@@ -6542,8 +7403,8 @@
     }
   },
   "metadata": {
-    "generatedAt": "2026-03-18T07:17:27.586Z",
-    "totalFiles": 574,
-    "totalPatterns": 205
+    "generatedAt": "2026-03-22T10:44:29.547Z",
+    "totalFiles": 645,
+    "totalPatterns": 246
   }
 }

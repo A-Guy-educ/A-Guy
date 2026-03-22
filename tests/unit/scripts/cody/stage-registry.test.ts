@@ -156,6 +156,13 @@ describe('getStageTimeout', () => {
     expect(buildTimeout).toBeGreaterThanOrEqual(getStageTimeout('taskify'))
     expect(buildTimeout).toBeGreaterThanOrEqual(getStageTimeout('review'))
   })
+
+  it('fix stage has adequate timeout (>= build) for complex fixes', () => {
+    // Fix stage often needs more time than original build due to understanding overhead
+    const fixTimeout = getStageTimeout('fix')
+    const buildTimeout = getStageTimeout('build')
+    expect(fixTimeout).toBeGreaterThanOrEqual(buildTimeout)
+  })
 })
 
 // ============================================================================

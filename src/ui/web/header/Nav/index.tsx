@@ -35,12 +35,12 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({ data, user, isAuthLoading 
   const secondaryLinks = navItems.slice(Math.ceil(navItems.length / 2))
 
   return (
-    <nav className="flex gap-6 items-center">
+    <nav className="flex gap-content-gap-lg items-center">
       {/* User Greeting */}
       {user?.name && (
-        <div className="hidden xl:flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/30">
-          <span className="text-sm text-muted-foreground">{tCommon('welcome')}</span>
-          <span className="text-sm font-semibold">{user.name}</span>
+        <div className="hidden xl:flex items-center gap-content-gap-xs px-3 py-2 rounded-lg bg-muted/30">
+          <span className="text-body-sm text-muted-foreground">{tCommon('welcome')}</span>
+          <span className="text-body-sm font-semibold">{user.name}</span>
         </div>
       )}
 
@@ -90,7 +90,7 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({ data, user, isAuthLoading 
         ) : user ? (
           <UserDropdown user={user} />
         ) : (
-          <div data-testid="header-auth-buttons" className="flex items-center gap-2">
+          <div data-testid="header-auth-buttons" className="flex items-center gap-content-gap-xs">
             <Button size="sm" asChild>
               <SystemLink href="/login">{tCommon('login')}</SystemLink>
             </Button>

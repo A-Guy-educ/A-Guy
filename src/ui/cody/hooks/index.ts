@@ -322,6 +322,12 @@ export function useTaskActions({
     onError: handleError('start task'),
   })
 
+  const rerun = useMutation({
+    mutationFn: () => codyApi.tasks.rerun(issueNumber, actorLogin),
+    onSuccess: handleSuccess('Task rerun'),
+    onError: handleError('rerun task'),
+  })
+
   const close = useMutation({
     mutationFn: () => codyApi.tasks.close(issueNumber, actorLogin),
     onSuccess: handleSuccess('Issue closed'),
@@ -418,6 +424,7 @@ export function useTaskActions({
 
   return {
     execute: execute.mutate,
+    rerun: rerun.mutate,
     close: close.mutate,
     closePR: closePR.mutate,
     reset: reset.mutate,

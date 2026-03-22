@@ -11,7 +11,7 @@
 export const MAX_PIPELINE_LOOP_ITERATIONS = 200
 
 /** Default max verify→fix loop iterations */
-export const DEFAULT_MAX_FIX_ATTEMPTS = 2
+export const DEFAULT_MAX_FIX_ATTEMPTS = 1
 
 /** Max build→quality-gate feedback loops */
 export const MAX_BUILD_FEEDBACK_LOOPS = 2

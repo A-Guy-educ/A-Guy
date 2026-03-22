@@ -29,7 +29,7 @@ export const apiSurfaceAuditorPlugin: InspectorPlugin = {
   name: 'api-surface-auditor',
   description: 'Catalog and audit all API routes for auth, validation, and error handling',
   domain: 'project',
-  schedule: { every: 6 },
+  schedule: { every: 1 }, // Daily
 
   async run(ctx): Promise<ActionRequest[]> {
     ctx.log.debug('Running api-surface-auditor plugin')

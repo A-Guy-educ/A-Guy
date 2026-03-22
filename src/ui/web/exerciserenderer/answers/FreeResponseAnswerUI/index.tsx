@@ -51,7 +51,7 @@ export function FreeResponseAnswerUI({
 
   return (
     <div className="space-y-2">
-      <div className="text-sm text-muted-foreground">
+      <div className="text-body-sm text-muted-foreground">
         {spec.responseKind === 'numeric' && 'Enter a numeric value'}
         {spec.responseKind === 'algebraic' && 'Enter an algebraic expression'}
         {spec.responseKind === 'text' && 'Enter your text answer'}

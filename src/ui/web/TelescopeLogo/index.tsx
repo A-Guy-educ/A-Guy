@@ -9,7 +9,7 @@ interface TelescopeLogoProps {
 
 export function TelescopeLogo({ className }: TelescopeLogoProps) {
   return (
-    <div className={clsx('flex items-center gap-2', className)}>
+    <div className={clsx('flex items-center gap-content-gap-xs', className)}>
       <Image
         src={telescopeSvg}
         alt="Telescope Logo"
@@ -18,7 +18,7 @@ export function TelescopeLogo({ className }: TelescopeLogoProps) {
         height={204}
         priority
       />
-      <span className="text-primary font-bold text-xl">Aguy</span>
+      <span className="text-primary font-bold text-heading-xl">Aguy</span>
     </div>
   )
 }

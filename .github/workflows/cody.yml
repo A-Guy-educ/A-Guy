@@ -437,13 +437,13 @@ jobs:
             # Create recordings directory
             mkdir -p scripts/system-test/recordings/scenario-02
             
-            # Start in record mode to capture LLM calls
+            # Start mock server in record mode
             pnpm tsx scripts/system-test/mock-llm/cli.ts \
               --mode record \
               --port 8080 \
               --recordings-dir scripts/system-test/recordings/scenario-02 \
-              --upstream https://api.groq.com/openai \
-              --api-key "${{ secrets.GROQ_API_KEY }}" &
+              --upstream https://api.minimax.io/v1 \
+              --api-key "${{ secrets.MINIMAX_API_KEY }}" &
             
             # Wait for server to start
             sleep 5
@@ -509,6 +509,13 @@ jobs:
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
           echo "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}" >> $GITHUB_ENV
           echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> $GITHUB_ENV
+
+          # For mock mode, redirect API calls to local mock server
+          # Only set this if mock mode is enabled
+          if [ "${{ github.event.inputs.use_mock }}" = "true" ]; then
+            echo "OPENAI_BASE_URL=http://localhost:8080/v1" >> $GITHUB_ENV
+            echo "MINIMAX_BASE_URL=http://localhost:8080/v1" >> $GITHUB_ENV
+          fi
 
       - name: Run Cody
         env:

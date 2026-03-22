@@ -63,11 +63,11 @@ export function McqQuestion({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="text-base font-medium text-foreground leading-relaxed">
+    <div className="flex flex-col gap-content-gap">
+      <div className="text-body-md font-medium text-foreground leading-relaxed">
         <RichTextRenderer block={promptBlock} />
       </div>
-      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+      <div className="flex items-center gap-1.5 text-body-sm text-muted-foreground">
         <AlertCircle className="w-4 h-4" />
         {question.answer.multiSelect ? t('selectMultiple') : t('selectOne')}
       </div>
@@ -86,11 +86,11 @@ export function McqQuestion({
             <label
               key={option.id}
               className={cn(
-                'flex items-start gap-3 p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer',
+                'flex items-start gap-3 p-card-padding-sm rounded-lg border-2 transition-all duration-normal cursor-pointer',
                 'border-border bg-card',
                 !disabled && 'hover:border-muted-foreground hover:bg-muted',
                 'focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2',
-                isSelected && 'border-primary bg-primary/10 shadow-sm',
+                isSelected && 'border-primary bg-primary/10 shadow-elevation-1',
                 disabled && 'opacity-60 cursor-not-allowed',
               )}
               onClick={() => !question.answer.multiSelect && handleOptionClick(option.id)}
@@ -113,7 +113,7 @@ export function McqQuestion({
                   {isSelected && <div className="w-2 h-2 rounded-full bg-primary-foreground" />}
                 </div>
               )}
-              <div className="flex-1 text-foreground">
+              <div className="flex-1 text-lg text-foreground">
                 <RichTextRenderer block={optionBlock} />
               </div>
             </label>

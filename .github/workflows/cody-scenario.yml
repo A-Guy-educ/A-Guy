@@ -1,0 +1,231 @@
+# Scenario Workflow - Processes scenario-based issues through Cody pipeline
+# Triggers: workflow_dispatch (manual), issue_comment (@cody scenario)
+
+name: cody-scenario
+
+on:
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'GitHub issue number for the scenario'
+        required: true
+        type: string
+
+  issue_comment:
+    types: [created]
+    # Only trigger when comment contains @cody scenario
+
+# Concurrency
+concurrency:
+  group: cody-scenario-${{ github.event.inputs.issue_number || github.event.issue.number }}
+  cancel-in-progress: false
+
+# Permissions
+permissions:
+  issues: write
+  pull-requests: write
+  contents: write
+
+jobs:
+  # Job 1: Validate scenario issue
+  validate:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.comment.body, '@cody scenario')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate issue is a scenario
+        run: |
+          ISSUE_NUMBER=${{ github.event.inputs.issue_number || github.event.issue.number }}
+          if [ -z "$ISSUE_NUMBER" ]; then
+            echo "Error: Issue number is required"
+            exit 1
+          fi
+
+          # Check if issue has type:scenario label
+          LABELS=$(gh issue view $ISSUE_NUMBER --json labels -q '.labels[].name')
+          if ! echo "$LABELS" | grep -q "type:scenario"; then
+            echo "Error: Issue is not a scenario issue"
+            exit 1
+          fi
+
+          echo "Issue $ISSUE_NUMBER validated as scenario"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Job 2: Create task from scenario
+  create-task:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create task directory
+        run: |
+          mkdir -p .tasks/scenario-${{ github.event.inputs.issue_number || github.event.issue.number }}
+
+      - name: Write task.json
+        run: |
+          cat > .tasks/scenario-${{ github.event.inputs.issue_number || github.event.issue.number }}/task.json << 'EOF'
+          {
+            "id": "scenario-${{ github.event.inputs.issue_number || github.event.issue.number }}",
+            "type": "scenario",
+            "issueNumber": ${{ github.event.inputs.issue_number || github.event.issue.number }},
+            "status": "planned",
+            "createdAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+
+      - name: Write spec.md
+        run: |
+          ISSUE_NUMBER=${{ github.event.inputs.issue_number || github.event.issue.number }}
+          gh issue view $ISSUE_NUMBER --json title,body,labels --jq '{
+            title: .title,
+            body: .body,
+            labels: [.labels[] | .name]
+          }' > .tasks/scenario-$ISSUE_NUMBER/spec.md
+
+      - name: Commit task files
+        run: |
+          git config --local user.email "cody@github-actions.com"
+          git config --local user.name "Cody Bot"
+          git add .tasks/
+          git commit -m "Task: scenario from issue #${{ github.event.inputs.issue_number || github.event.issue.number }}"
+
+      - name: Create branch
+        run: |
+          BRANCH_NAME="scenario/${{ github.event.inputs.issue_number || github.event.issue.number }}"
+          git checkout -b $BRANCH_NAME
+          git push -u origin $BRANCH_NAME
+
+      - name: Update issue status
+        run: |
+          gh issue edit ${{ github.event.inputs.issue_number || github.event.issue.number }} \
+            --add-label "status:planned"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Job 3: Run architect stage
+  architect:
+    needs: create-task
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run architect stage
+        run: |
+          # Load scenario spec and generate detailed implementation plan
+          echo "Running architect stage for scenario..."
+
+          # The architect reviews the scenario and creates the implementation plan
+          cat >> .tasks/scenario-${{ github.event.inputs.issue_number || github.event.issue.number }}/plan.md << 'EOF'
+          # Implementation Plan
+
+          ## Scenario Analysis
+
+          [To be filled by architect agent]
+
+          ## Design System Components
+
+          [List of DS components to use]
+
+          ## Prototype Mapping
+
+          [Prototype element → DS component mapping]
+
+          ## Implementation Steps
+
+          1. [Step 1]
+          2. [Step 2]
+          ...
+
+          ## Verification
+
+          [How to verify the implementation]
+          EOF
+
+      - name: Commit plan
+        run: |
+          git config --local user.email "cody@github-actions.com"
+          git config --local user.name "Cody Bot"
+          git add .
+          git commit -m "Plan: implementation plan for scenario"
+          git push
+
+  # Job 4: Run implement stage
+  implement:
+    needs: architect
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: TypeScript check
+        run: pnpm tsc --noEmit
+
+      - name: Run implement stage
+        run: |
+          echo "Running implement stage..."
+          # Implementation would happen here
+
+      - name: Commit implementation
+        if: failure() == false
+        run: |
+          git config --local user.email "cody@github-actions.com"
+          git config --local user.name "Cody Bot"
+          git add .
+          git commit -m "Implement: scenario implementation"
+          git push
+
+  # Job 5: Update issue and create PR
+  finalize:
+    needs: implement
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update issue status
+        run: |
+          ISSUE_NUMBER=${{ github.event.inputs.issue_number || github.event.issue.number }}
+          gh issue edit $ISSUE_NUMBER \
+            --remove-label "status:planned" \
+            --add-label "status:implemented"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create PR
+        run: |
+          ISSUE_NUMBER=${{ github.event.inputs.issue_number || github.event.issue.number }}
+          BRANCH_NAME="scenario/$ISSUE_NUMBER"
+
+          PR_TITLE="Scenario #$ISSUE_NUMBER: $(gh issue view $ISSUE_NUMBER --json title --jq '.title')"
+
+          # Use heredoc for PR body to avoid YAML multiline issues
+          gh pr create \
+            --title "$PR_TITLE" \
+            --body "## Summary"$'\n\n'"Implementing scenario from issue #$ISSUE_NUMBER"$'\n\n'"## Changes"$'\n\n'"- [List of changes]"$'\n\n'"## Testing"$'\n\n'"- [Testing performed]" \
+            --head $BRANCH_NAME \
+            --base main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add PR comment
+        run: |
+          ISSUE_NUMBER=${{ github.event.inputs.issue_number || github.event.issue.number }}
+          gh pr comment "$ISSUE_NUMBER" --body "Scenario implementation ready for review. @cody fix ci fails to address any CI issues."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

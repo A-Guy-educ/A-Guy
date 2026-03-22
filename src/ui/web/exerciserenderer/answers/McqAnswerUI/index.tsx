@@ -50,7 +50,7 @@ export function McqAnswerUI({
 
   return (
     <div>
-      <div className="mb-2 text-sm opacity-80">
+      <div className="mb-2 text-body-sm opacity-80">
         {spec.multiSelect ? 'Select all that apply' : 'Select one answer'}
       </div>
 
@@ -64,7 +64,7 @@ export function McqAnswerUI({
             <label
               key={option.id}
               className={cn(
-                'flex items-start gap-3 p-4 border rounded-lg cursor-pointer transition-all duration-normal',
+                'flex items-start gap-3 p-card-padding-sm border rounded-lg cursor-pointer transition-all duration-normal',
                 'bg-background hover:bg-muted hover:border-muted-foreground',
                 isSelected && 'border-2 border-primary bg-primary/5',
                 showAsCorrect && 'border-2 border-success bg-success/5',
@@ -85,7 +85,7 @@ export function McqAnswerUI({
                   <BlockRenderer key={block.id} block={block} />
                 ))}
                 {showAsCorrect && (
-                  <div className="mt-2 text-xs text-success font-medium">✓ Correct Answer</div>
+                  <div className="mt-2 text-body-xs text-success font-medium">✓ Correct Answer</div>
                 )}
               </div>
             </label>

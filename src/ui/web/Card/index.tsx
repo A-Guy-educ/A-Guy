@@ -38,9 +38,9 @@ export const Card: React.FC<{
       <div className="relative w-full ">
         <div className="">No image</div>
       </div>
-      <div className="p-4">
+      <div className="p-card-padding-sm">
         {showCategories && hasCategories && (
-          <div className="uppercase text-sm mb-4">
+          <div className="uppercase text-body-sm mb-4">
             {showCategories && hasCategories && (
               <div>
                 {categories?.map((category, index) => {

@@ -1,0 +1,54 @@
+{
+  "blocks": [
+    {
+      "id": "q1",
+      "type": "question_select",
+      "variant": "mcq",
+      "question": {
+        "text": "What is 1 + 1?"
+      },
+      "options": [
+        { "id": "a", "value": "1" },
+        { "id": "b", "value": "2" },
+        { "id": "c", "value": "3" }
+      ],
+      "answer": {
+        "correctOptionIds": ["b"],
+        "multiSelect": false
+      }
+    },
+    {
+      "id": "q2",
+      "type": "question_select",
+      "variant": "mcq",
+      "question": {
+        "text": "What is 2 + 2?"
+      },
+      "options": [
+        { "id": "a", "value": "3" },
+        { "id": "b", "value": "4" },
+        { "id": "c", "value": "5" }
+      ],
+      "answer": {
+        "correctOptionIds": ["b"],
+        "multiSelect": false
+      }
+    },
+    {
+      "id": "q3",
+      "type": "question_select",
+      "variant": "true_false",
+      "question": {
+        "text": "Is 3 + 3 = 6?"
+      },
+      "options": [
+        { "id": "true", "value": "True" },
+        { "id": "false", "value": "False" }
+      ],
+      "answer": {
+        "correctOptionIds": ["true"],
+        "multiSelect": false
+      }
+    }
+  ]
+}

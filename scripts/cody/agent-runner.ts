@@ -2,11 +2,11 @@
  * @fileType utility
  * @domain ci | cody | agent-execution
  * @pattern agent-runner
- * @ai-summary Agent execution with file watching, timeouts, and retry logic for Cody pipeline stages
+ * @ai-summary Agent execution orchestrator — spawns agents, monitors output, handles retries.
+ *   File watching, session management, and log parsing are in agent/ submodules.
  */
 
 import type { ChildProcess } from 'child_process'
-import { execFileSync } from 'child_process'
 import * as fs from 'fs'
 import ms from 'ms'
 import * as path from 'path'
@@ -16,7 +16,35 @@ import { buildStagePrompt } from './stage-prompts'
 import { createRunner, type RunnerBackend } from './runner-backend'
 import { logger } from './logger'
 import { STDERR_TAIL_LINES } from './config/constants'
-import { resolveOpenCodeBinary } from './opencode-server'
+
+// Re-export split modules for backward compatibility
+export {
+  STABILITY_CHECK_INTERVAL,
+  STABILITY_CHECK_COUNT,
+  POST_EXIT_DELAY,
+  NUDGE_TIMEOUT,
+  MAX_RETRIES,
+  MAX_STDOUT_BUFFER_SIZE,
+  DEFAULT_TIMEOUT,
+  LLM_TIMEOUT,
+  STALL_TIMEOUT,
+} from './agent/constants'
+export { waitForFileStable } from './agent/file-watcher'
+export { formatJsonEvent } from './agent/log-parser'
+
+// Import from split modules for internal use
+import {
+  MAX_RETRIES,
+  MAX_STDOUT_BUFFER_SIZE,
+  DEFAULT_TIMEOUT,
+  STABILITY_CHECK_INTERVAL,
+  STABILITY_CHECK_COUNT,
+  POST_EXIT_DELAY,
+  STALL_TIMEOUT,
+} from './agent/constants'
+import { waitForFileStable, findOutputFile, sleep } from './agent/file-watcher'
+import { recoverSessionId, nudgeSession } from './agent/session'
+import { formatJsonEvent, prefixLogLine } from './agent/log-parser'
 
 // ============================================================================
 // Model Resolution
@@ -41,34 +69,6 @@ function getStageModel(stage: string): string {
   }
   return opencodeConfigCache?.agent?.[stage]?.model ?? 'unknown'
 }
-
-// ============================================================================
-// Configuration
-// ============================================================================
-
-/** Delay between stability checks after process exit (milliseconds) */
-export const STABILITY_CHECK_INTERVAL = 500
-
-/** Number of consecutive stable size checks before settling */
-export const STABILITY_CHECK_COUNT = 2
-
-/** Additional delay to wait after process exit before checking (filesystem flush) */
-export const POST_EXIT_DELAY = 500
-
-/** Timeout for session nudge attempt (seconds) — lightweight continuation before full retry */
-export const NUDGE_TIMEOUT = 90
-
-/** Maximum retry attempts for failed stages */
-export const MAX_RETRIES = 2
-
-/** Maximum size of stdout buffer to prevent memory leaks (1 MB) */
-export const MAX_STDOUT_BUFFER_SIZE = 1_048_576
-
-/** Default timeout for stages (10 minutes) */
-export const DEFAULT_TIMEOUT = ms('10m')
-
-/** LLM-specific timeout - max time to wait for LLM API response (3 minutes) */
-export const LLM_TIMEOUT = ms('3m')
 
 // ============================================================================
 // Types
@@ -125,305 +125,8 @@ export interface AgentRunResult {
 }
 
 // ============================================================================
-// Functions
+// Main Runner
 // ============================================================================
-
-/**
- * Wait for a file to become stable (size doesn't change for N consecutive checks).
- * This handles filesystem flush delays after the agent process exits.
- *
- * @param filePath - Path to the file to check
- * @param options - Stability check configuration
- * @returns Promise that resolves when file is stable, or rejects on timeout/error
- */
-export async function waitForFileStable(
-  filePath: string,
-  options: {
-    interval?: number
-    stableCount?: number
-    timeout?: number
-    onCheck?: (size: number, checkNumber: number) => void
-  } = {},
-): Promise<{ stable: boolean; finalSize: number }> {
-  const {
-    interval = STABILITY_CHECK_INTERVAL,
-    stableCount = STABILITY_CHECK_COUNT,
-    timeout = ms('30s'),
-    onCheck,
-  } = options
-
-  const startTime = Date.now()
-  let lastSize = 0
-  let stableCheckCount = 0
-
-  while (true) {
-    // Check timeout
-    if (Date.now() - startTime > timeout) {
-      return { stable: false, finalSize: lastSize }
-    }
-
-    // Check if file exists
-    if (!fs.existsSync(filePath)) {
-      stableCheckCount = 0
-      lastSize = 0
-      await sleep(interval)
-      continue
-    }
-
-    // Get current file size
-    const stat = fs.statSync(filePath)
-    const currentSize = stat.size
-
-    if (onCheck) {
-      onCheck(currentSize, stableCheckCount)
-    }
-
-    // Check if size is stable (skip first check - we need 2 consecutive stable checks)
-    if (currentSize > 0 && currentSize === lastSize) {
-      stableCheckCount++
-      if (stableCheckCount >= stableCount) {
-        return { stable: true, finalSize: currentSize }
-      }
-    } else {
-      stableCheckCount = 0
-    }
-
-    lastSize = currentSize
-    await sleep(interval)
-  }
-}
-
-/**
- * Simple sleep utility
- */
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
-/**
- * Find output file in directory (supports timestamped variants like spec-123456.md)
- */
-function findOutputFile(taskDir: string, expectedBase: string, outputExt: string): string | null {
-  if (fs.existsSync(path.join(taskDir, expectedBase + outputExt))) {
-    return path.join(taskDir, expectedBase + outputExt)
-  }
-
-  // Check for timestamped variants
-  const files = fs.readdirSync(taskDir)
-  const prefixMatch = files.find((f) => f.startsWith(expectedBase + '-') && f.endsWith(outputExt))
-  return prefixMatch ? path.join(taskDir, prefixMatch) : null
-}
-
-/**
- * Recover the latest session ID from OpenCode's database when JSON events
- * didn't include sessionID (e.g., some model providers omit it).
- * Uses `opencode session list` to query the local SQLite DB.
- */
-function recoverSessionId(dataDir?: string): string | undefined {
-  if (!dataDir) return undefined
-
-  try {
-    const binary = resolveOpenCodeBinary()
-    const output = execFileSync(binary, ['session', 'list', '--format', 'json', '-n', '1'], {
-      encoding: 'utf-8',
-      timeout: 10_000,
-      env: { ...process.env, XDG_DATA_HOME: dataDir },
-    })
-
-    const sessions = JSON.parse(output)
-    if (Array.isArray(sessions) && sessions.length > 0 && sessions[0].id) {
-      logger.info(`  🔍 Recovered session ID from DB: ${sessions[0].id.slice(0, 16)}...`)
-      return sessions[0].id
-    }
-  } catch (err) {
-    logger.debug({ err }, 'Failed to recover session ID from OpenCode DB')
-  }
-  return undefined
-}
-
-/**
- * Nudge an agent session to write the missing output file.
- * When an agent exits 0 but forgets the output file, this sends a short
- * continuation message into the same session. Much cheaper than a full retry
- * since the agent still has all context loaded.
- *
- * Returns the detected output file path on success, or null on failure.
- */
-async function nudgeSession(
-  backend: RunnerBackend,
-  stage: string,
-  outputFile: string,
-  env: NodeJS.ProcessEnv,
-  cwd: string,
-  serverUrl: string,
-  sessionId: string,
-  dataDir?: string,
-): Promise<string | null> {
-  const nudgePrompt = `CRITICAL: You exited without writing the required output file. Write it NOW to: ${outputFile}`
-
-  logger.info(`  🔔 Nudging session ${sessionId.slice(0, 16)}... to write output file`)
-
-  return new Promise((resolve) => {
-    const nudgeChild = backend.spawn(stage, nudgePrompt, env, cwd, {
-      serverUrl,
-      sessionId,
-      dataDir,
-    })
-
-    // Close stdin
-    if (nudgeChild.stdin) nudgeChild.stdin.end()
-
-    // Log nudge output for debugging
-    if (nudgeChild.stdout) {
-      nudgeChild.stdout.on('data', () => {
-        // Silently consume — we only care about the file appearing
-      })
-    }
-    if (nudgeChild.stderr) {
-      nudgeChild.stderr.on('data', () => {
-        // Silently consume
-      })
-    }
-
-    // Timeout
-    // R2-FIX #12: Use the smaller of NUDGE_TIMEOUT and remaining stage timeout.
-    // Without this, a stuck nudge could cause the stage to exceed its overall timeout.
-    const nudgeTimeoutMs = NUDGE_TIMEOUT * 1000
-    const timer = setTimeout(() => {
-      logger.info(`  🔔 Nudge timed out after ${NUDGE_TIMEOUT}s`)
-      try {
-        nudgeChild.kill()
-      } catch {
-        /* ignore */
-      }
-      resolve(null)
-    }, nudgeTimeoutMs)
-
-    nudgeChild.on('exit', async (nudgeCode) => {
-      clearTimeout(timer)
-      logger.info(`  🔔 Nudge process exited with code: ${nudgeCode}`)
-
-      // Brief delay for filesystem flush
-      await sleep(POST_EXIT_DELAY)
-
-      // Check if the file appeared
-      const outputExt = path.extname(outputFile)
-      const expectedBase = path.basename(outputFile, outputExt)
-      const taskDirForPoll = path.dirname(outputFile)
-      const detected = findOutputFile(taskDirForPoll, expectedBase, outputExt)
-      if (detected) {
-        logger.info(`  🔔 ✅ Nudge succeeded — output file detected`)
-        resolve(detected)
-      } else {
-        logger.info(`  🔔 ❌ Nudge failed — output file still missing`)
-        resolve(null)
-      }
-    })
-  })
-}
-
-/**
- * Format a JSON event line from opencode into a human-readable log line.
- * Returns the formatted string, or null to skip (for noisy/unimportant events).
- * Also extracts sessionID from events when found.
- */
-export function formatJsonEvent(line: string): {
-  display: string | null
-  sessionId?: string
-  stepTokens?: { input: number; output: number; cacheRead: number }
-  stepCost?: number
-  completed?: boolean
-} {
-  try {
-    const event = JSON.parse(line)
-    const type: string = event.type
-    const sessionId: string | undefined = event.sessionID
-
-    switch (type) {
-      case 'session_start':
-        return { display: `🎯 Session started: ${sessionId?.slice(0, 16) || 'unknown'}`, sessionId }
-
-      case 'step_start':
-        return { display: null, sessionId } // Quiet — step_finish is more useful
-
-      case 'step_finish': {
-        const tokens = event.part?.tokens?.total || 0
-        const cost = event.part?.cost ?? 0
-        const reason = event.part?.reason || ''
-        const cached = event.part?.tokens?.cache?.read || 0
-        const inputTokens = event.part?.tokens?.input || 0
-        const outputTokens = event.part?.tokens?.output || 0
-        const costStr = typeof cost === 'number' && cost > 0 ? ` · $${cost.toFixed(4)}` : ''
-        const cacheStr = cached > 0 ? ` · ${cached} cached` : ''
-        const isCompletion = reason === 'stop'
-        return {
-          display: `  ✅ Step done (${tokens} tok${cacheStr}${costStr}) [${reason}]`,
-          sessionId,
-          stepTokens: { input: inputTokens, output: outputTokens, cacheRead: cached },
-          stepCost: typeof cost === 'number' ? cost : 0,
-          completed: isCompletion,
-        }
-      }
-
-      case 'tool_use': {
-        const tool = event.part?.tool || 'unknown'
-        const status = event.part?.state?.status || ''
-        const title = event.part?.state?.title || event.part?.state?.input?.description || ''
-        const exit = event.part?.state?.metadata?.exit
-        const exitStr = exit !== undefined && exit !== 0 ? ` exit=${exit}` : ''
-        const titleStr = title ? `: ${title}` : ''
-        if (status === 'completed') {
-          return { display: `  🔧 ${tool}${titleStr}${exitStr}`, sessionId }
-        }
-        return { display: null, sessionId } // Skip pending/running states
-      }
-
-      case 'text': {
-        // Agent reasoning — complete thought blocks (not char-by-char deltas)
-        // Typically 6-17 per stage, ~100-200 chars each — not noisy
-        const text = (event.part?.text || '').trim()
-        if (!text) return { display: null, sessionId }
-        const truncated = text.length > 300 ? text.slice(0, 297) + '...' : text
-        return { display: `  💭 ${truncated}`, sessionId }
-      }
-
-      case 'text_delta':
-      case 'content':
-        return { display: null, sessionId } // Skip streaming text deltas (too noisy)
-
-      case 'error': {
-        const msg = event.part?.message || event.message || JSON.stringify(event.part)
-        return { display: `  🔴 Error: ${msg}`, sessionId }
-      }
-
-      default:
-        return { display: null, sessionId } // Skip unknown event types
-    }
-  } catch {
-    // Not valid JSON — might be a plain log line from pino/logger
-    // Show it as-is if it looks meaningful
-    const trimmed = line.trim()
-    if (!trimmed) return { display: null }
-    return { display: trimmed }
-  }
-}
-
-/**
- * Format a timestamp as HH:MM:SS for log prefixing.
- */
-function formatTimestamp(): string {
-  const now = new Date()
-  return [now.getHours(), now.getMinutes(), now.getSeconds()]
-    .map((n) => String(n).padStart(2, '0'))
-    .join(':')
-}
-
-/**
- * Prefix a display line with [stage HH:MM:SS] for log context.
- */
-function prefixLogLine(stage: string, display: string): string {
-  return `[${stage} ${formatTimestamp()}] ${display.trimStart()}`
-}
 
 /**
  * Run an OpenCode agent with file watching, timeouts, and optional retry logic.
@@ -535,6 +238,7 @@ export function runAgentWithFileWatch(
 
       let resolved = false
       let timeoutTimer: NodeJS.Timeout | null = null
+      let stallTimer: NodeJS.Timeout | null = null
       let stdoutBuffer = ''
       let extractedSessionId: string | undefined
       let hasCompleted = false // Track if we've detected completion via step_finish event
@@ -587,6 +291,9 @@ export function runAgentWithFileWatch(
         currentChild.stdout.on('data', (data: Buffer) => {
           const chunk = data.toString()
           stdoutBuffer += chunk
+
+          // Reset stall timer on any stdout activity
+          resetStallTimer()
 
           // Process line by line (JSON events are one per line)
           const lines = stdoutBuffer.split('\n')
@@ -685,6 +392,7 @@ export function runAgentWithFileWatch(
         resolved = true
 
         if (timeoutTimer) clearTimeout(timeoutTimer)
+        if (stallTimer) clearTimeout(stallTimer)
 
         // Flush remaining stdout buffer
         if (stdoutBuffer.trim()) {
@@ -753,6 +461,22 @@ export function runAgentWithFileWatch(
         logger.info(`  ⏱️ Timeout reached (${remainingTimeout / 1000 / 60} minutes)`)
         finish({ succeeded: false, timedOut: true })
       }, remainingTimeout)
+
+      // Stall detection: if no stdout events for STALL_TIMEOUT, the LLM is likely
+      // hung (API stall, infinite generation). Kill early and retry instead of
+      // wasting the full stage timeout sitting idle.
+      const resetStallTimer = () => {
+        if (stallTimer) clearTimeout(stallTimer)
+        const stallLimit = Math.min(STALL_TIMEOUT, remainingTimeout)
+        stallTimer = setTimeout(() => {
+          if (resolved) return
+          logger.warn(
+            `  ⚠️ Agent stalled — no output for ${STALL_TIMEOUT / 1000 / 60} minutes, killing`,
+          )
+          finish({ succeeded: false, timedOut: true })
+        }, stallLimit)
+      }
+      resetStallTimer()
 
       // Process exit handler - wait for file stability after exit
       currentChild.on('exit', async (code) => {
@@ -855,7 +579,14 @@ export function runAgentWithFileWatch(
             }
 
             logger.info(`  ⚠️ Stage failed (${reason}), retrying (${retries}/${maxRetries})...`)
-            setTimeout(() => attemptWithRetry(feedbackMsg), ms('2s'))
+            setTimeout(() => {
+              try {
+                attemptWithRetry(feedbackMsg)
+              } catch (err) {
+                logger.error(`  ❌ attemptWithRetry threw: ${err}`)
+                finish({ succeeded: false, timedOut: false })
+              }
+            }, ms('2s'))
             return
           } else {
             // Exhausted retries
@@ -896,7 +627,14 @@ export function runAgentWithFileWatch(
               retries++
               const feedbackMsg = `CRITICAL FAILURE: Output file was not fully written. The file size changed during stability check. Please ensure you write the complete file before exiting.`
               logger.info(`  ⚠️ Retrying with feedback (${retries}/${maxRetries})...`)
-              setTimeout(() => attemptWithRetry(feedbackMsg), ms('2s'))
+              setTimeout(() => {
+                try {
+                  attemptWithRetry(feedbackMsg)
+                } catch (err) {
+                  logger.error(`  ❌ attemptWithRetry threw: ${err}`)
+                  finish({ succeeded: false, timedOut: false })
+                }
+              }, ms('2s'))
               return
             } else {
               logger.info(`  ❌ File stability check failed, retries exhausted`)
@@ -938,7 +676,14 @@ export function runAgentWithFileWatch(
                 retries++
                 const feedbackMsg = `VALIDATION ERROR from previous attempt:\n${errorMsg}\n\nFix this issue in your output. Ensure your output follows the exact required format.`
                 logger.info(`  🔄 Retrying with validation feedback (${retries}/${maxRetries})...`)
-                setTimeout(() => attemptWithRetry(feedbackMsg), ms('2s'))
+                setTimeout(() => {
+                  try {
+                    attemptWithRetry(feedbackMsg)
+                  } catch (err) {
+                    logger.error(`  ❌ attemptWithRetry threw: ${err}`)
+                    finish({ succeeded: false, timedOut: false })
+                  }
+                }, ms('2s'))
                 return
               } else {
                 logger.info(`  ❌ Validation failed and retries exhausted`)
@@ -972,7 +717,12 @@ export function runAgentWithFileWatch(
     }
 
     // Start first attempt (no feedback)
-    attemptWithRetry(undefined)
+    try {
+      attemptWithRetry(undefined)
+    } catch (err) {
+      logger.error(`  ❌ attemptWithRetry initial call threw: ${err}`)
+      resolve({ succeeded: false, timedOut: false, retries: 0, validationErrors: [] })
+    }
   })
 }
 

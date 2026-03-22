@@ -73,7 +73,11 @@ export function writeState(taskId: string, state: PipelineStateV2): void {
   // Ensure directory exists
   const dir = path.dirname(statusFile)
   if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true })
+    try {
+      fs.mkdirSync(dir, { recursive: true })
+    } catch (err) {
+      throw new Error(`Failed to create status directory ${dir}: ${err}`)
+    }
   }
 
   // Atomic write with fsync: write to temp file, flush to disk, then rename
@@ -457,7 +461,12 @@ export function stateToV1(state: PipelineStateV2): CodyPipelineStatus {
 
   for (const [name, stage] of Object.entries(state.stages)) {
     v1Stages[name] = {
-      state: stage.state === 'paused' ? 'gate-waiting' : stage.state,
+      state:
+        stage.state === 'paused'
+          ? 'gate-waiting'
+          : stage.state === 'observing'
+            ? 'running'
+            : stage.state,
       startedAt: stage.startedAt,
       completedAt: stage.completedAt,
       elapsed: stage.elapsed,

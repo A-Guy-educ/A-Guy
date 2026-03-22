@@ -55,7 +55,7 @@ export function HealthBadge({ showVersion = false }: HealthBadgeProps) {
 
   if (state === 'loading') {
     return (
-      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted text-muted-foreground text-sm">
+      <div className="inline-flex items-center gap-content-gap-xs px-3 py-1 rounded-full bg-muted text-muted-foreground text-body-sm">
         <span className="animate-pulse">●</span>
         <span>Checking API...</span>
       </div>
@@ -64,7 +64,7 @@ export function HealthBadge({ showVersion = false }: HealthBadgeProps) {
 
   if (state === 'error') {
     return (
-      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100 text-sm">
+      <div className="inline-flex items-center gap-content-gap-xs px-3 py-1 rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100 text-body-sm">
         <span>●</span>
         <span>API ERROR</span>
       </div>
@@ -73,20 +73,20 @@ export function HealthBadge({ showVersion = false }: HealthBadgeProps) {
 
   if (state === 'unhealthy') {
     return (
-      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100 text-sm">
+      <div className="inline-flex items-center gap-content-gap-xs px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100 text-body-sm">
         <span>●</span>
         <span>API DOWN</span>
-        {error && <span className="text-xs opacity-75">({error})</span>}
+        {error && <span className="text-body-xs opacity-75">({error})</span>}
       </div>
     )
   }
 
   return (
-    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 text-sm">
+    <div className="inline-flex items-center gap-content-gap-xs px-3 py-1 rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 text-body-sm">
       <span>●</span>
       <span>API OK</span>
       {showVersion && data && (
-        <span className="text-xs opacity-75 ms-2">
+        <span className="text-body-xs opacity-75 ms-2">
           {data.projectVersion} ({data.gitSha.slice(0, 7)})
         </span>
       )}

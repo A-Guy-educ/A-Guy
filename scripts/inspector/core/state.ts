@@ -127,12 +127,23 @@ export class GhVariableStateStore implements StateStore {
         const parsed = JSON.parse(output)
         if (parsed && typeof parsed === 'object') {
           this.data = parsed as Record<string, unknown>
+          console.log(
+            `[GhVariableStateStore] Loaded state with ${Object.keys(this.data).length} keys`,
+          )
+          return
         }
       }
-    } catch {
-      // Variable doesn't exist yet or parse failed — start fresh
-      this.data = {}
+      console.log('[GhVariableStateStore] Variable empty or invalid — starting fresh')
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error)
+      // Check if it's a "not found" error (which is expected for first run)
+      if (msg.includes('HTTP 404') || msg.includes('variable not found')) {
+        console.log('[GhVariableStateStore] Variable not found — starting fresh (first run)')
+      } else {
+        console.warn(`[GhVariableStateStore] Failed to load state: ${msg} — starting fresh`)
+      }
     }
+    this.data = {}
   }
 
   get<T>(key: string): T | undefined {

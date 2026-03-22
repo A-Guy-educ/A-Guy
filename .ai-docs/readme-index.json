@@ -115,6 +115,25 @@
       "wordCount": 899
     },
     {
+      "path": "docs/brain-server/README.md",
+      "title": "Brain Server",
+      "sections": [
+        "Architecture",
+        "Services",
+        "Tools Available",
+        "Quick Start",
+        "Server Management",
+        "Network",
+        "Token Management",
+        "Troubleshooting",
+        "Documentation",
+        "Cost"
+      ],
+      "relativeUrl": "brain-server/README.md",
+      "category": "brain-server",
+      "wordCount": 345
+    },
+    {
       "path": "docs/contracts/README.md",
       "title": "Exercise Contracts",
       "sections": [
@@ -233,6 +252,14 @@
       "wordCount": 773
     },
     {
+      "path": "docs/README.md",
+      "title": "A-Guy Platform Documentation",
+      "sections": ["Quick Links"],
+      "relativeUrl": "README.md",
+      "category": "README.md",
+      "wordCount": 156
+    },
+    {
       "path": "README.md",
       "title": "A-Guy: AI-Powered Educational Platform",
       "sections": [
@@ -263,11 +290,12 @@
         "GitHub Webhook (Optional)",
         "Troubleshooting",
         "Architecture",
+        "Alternative: Claude MCP Server",
         "Cost"
       ],
       "relativeUrl": "scripts/brain-server/README.md",
       "category": "scripts",
-      "wordCount": 678
+      "wordCount": 752
     },
     {
       "path": "scripts/browser-agent/README.md",
@@ -299,6 +327,7 @@
         "State Machine",
         "CI Layer (.github/workflows/cody.yml)",
         "Dashboard Layer",
+        "Architecture Analysis & Design Rationale",
         "Known Gotchas & Bugs Fixed",
         "Debug",
         "Add New Stage",
@@ -306,7 +335,7 @@
       ],
       "relativeUrl": "scripts/cody/README.md",
       "category": "scripts",
-      "wordCount": 2226
+      "wordCount": 3028
     },
     {
       "path": "scripts/README.md",
@@ -372,6 +401,14 @@
       "relativeUrl": "self-growing-pipeline/README.md",
       "category": "self-growing-pipeline",
       "wordCount": 838
+    },
+    {
+      "path": "site-docs/README.md",
+      "title": "Site Documentation",
+      "sections": ["Structure", "Usage"],
+      "relativeUrl": "site-docs/README.md",
+      "category": "site-docs",
+      "wordCount": 67
     },
     {
       "path": "src/app/README.md",
@@ -632,17 +669,19 @@
     }
   ],
   "metadata": {
-    "generatedAt": "2026-03-19T07:15:53.253Z",
-    "totalReadmes": 37,
+    "generatedAt": "2026-03-21T14:52:46.518Z",
+    "totalReadmes": 40,
     "categories": {
       ".claude": 1,
       "root": 1,
+      "README.md": 1,
       "a-guy": 1,
       "access-control": 1,
       "admin-components": 1,
       "ai": 1,
       "ai-services": 1,
       "block-rendering": 1,
+      "brain-server": 1,
       "contracts": 1,
       "course-hierarchy": 1,
       "exercise-import": 1,
@@ -652,6 +691,7 @@
       "system-test": 1,
       "eslint-plugin-aguy": 1,
       "scripts": 6,
+      "site-docs": 1,
       "src/app": 1,
       "src/client": 1,
       "src/infra": 3,

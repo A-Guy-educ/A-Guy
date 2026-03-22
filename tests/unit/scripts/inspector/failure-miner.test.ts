@@ -439,8 +439,8 @@ describe('failureMinerPlugin', () => {
     expect(actions.some((a) => a.type === 'create-improvement-issue')).toBe(true)
   })
 
-  it('has correct schedule (every 6)', () => {
-    expect(failureMinerPlugin.schedule?.every).toBe(6)
+  it('has correct schedule (daily)', () => {
+    expect(failureMinerPlugin.schedule?.every).toBe(1)
   })
 
   it('uses 23h dedup window', async () => {

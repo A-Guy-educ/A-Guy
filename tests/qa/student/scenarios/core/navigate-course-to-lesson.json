@@ -46,15 +46,16 @@
   ],
   "steps": [
     {
-      "action": "openLesson",
+      "action": "navigate",
       "input": {
+        "type": "lesson",
         "courseRef": "$course",
         "chapterRef": "$chapter",
         "lessonRef": "$lesson"
       }
     },
     {
-      "action": "expectUrl",
+      "action": "beAt",
       "input": { "pattern": "/lessons/" }
     }
   ],

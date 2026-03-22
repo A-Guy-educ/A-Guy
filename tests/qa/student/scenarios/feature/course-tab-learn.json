@@ -1,0 +1,61 @@
+{
+  "id": "course-tab-learn",
+  "name": "Student views Learn tab on course page",
+  "journey": "student-navigates-content",
+  "type": "feature",
+  "area": "navigation",
+  "tags": ["navigation", "tabs", "learn"],
+  "locale": "he",
+  "preconditions": [
+    {
+      "action": "seed",
+      "entity": "course",
+      "data": {
+        "title": "Tab Test Course",
+        "courseLabel": "ט",
+        "status": "published",
+        "isActive": true,
+        "accessType": "free"
+      },
+      "ref": "$course"
+    },
+    {
+      "action": "seed",
+      "entity": "chapter",
+      "data": {
+        "title": "Tab Chapter",
+        "course": "$course",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$chapter"
+    },
+    {
+      "action": "seed",
+      "entity": "lesson",
+      "data": {
+        "title": "Tab Lesson",
+        "chapter": "$chapter",
+        "type": "learning",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$lesson"
+    }
+  ],
+  "steps": [
+    {
+      "action": "navigate",
+      "input": { "type": "course", "courseRef": "$course" }
+    },
+    {
+      "action": "clickTab",
+      "input": { "tab": "learn" }
+    },
+    {
+      "action": "see",
+      "input": { "text": "ללמוד" }
+    }
+  ],
+  "teardown": "auto"
+}

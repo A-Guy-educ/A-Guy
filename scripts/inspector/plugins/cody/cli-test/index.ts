@@ -13,7 +13,7 @@ export const cliTestPlugin: InspectorPlugin = {
   name: 'cody-cli-test',
   description: 'Daily system test of the Cody CLI directly',
   domain: 'cody',
-  schedule: { every: 288 },
+  schedule: { every: 1 }, // Daily
 
   async run(ctx: InspectorContext): Promise<ActionRequest[]> {
     const today = new Date().toISOString().slice(0, 10)

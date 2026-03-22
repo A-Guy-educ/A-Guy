@@ -8,6 +8,9 @@
  * This inspector plugin picks up completed tasks and triggers the docs stage via
  * `cody.yml` workflow dispatch with `mode=rerun from_stage=docs`.
  *
+ * Uses evaluated tasks from health-check state (discovered via GitHub API),
+ * not the filesystem, to find tasks on feature branches.
+ *
  * Complexity gate: only tasks with complexity ≥ 30 are eligible (matching the review threshold).
  * Low-complexity tasks (< 30) skip docs entirely.
  *
@@ -15,44 +18,14 @@
  * subsumes reflect functionality.
  */
 
-import * as fs from 'fs'
-import * as path from 'path'
-
-import type { InspectorPlugin, ActionRequest, InspectorContext } from '../../../core/types'
+import type {
+  InspectorPlugin,
+  ActionRequest,
+  InspectorContext,
+  EvaluatedTask,
+} from '../../../core/types'
 
 const STATE_KEY = 'cody:deferredStagesProcessed'
-
-interface StageEntry {
-  state?: string
-}
-
-interface TaskStatus {
-  state?: string
-  version?: number
-  stages?: Record<string, StageEntry>
-}
-
-interface TaskJson {
-  complexity?: number
-}
-
-/**
- * Read complexity from task.json. Returns 0 if not found or invalid.
- */
-function getTaskComplexity(taskDir: string): number {
-  const taskJsonPath = path.join(taskDir, 'task.json')
-  try {
-    if (fs.existsSync(taskJsonPath)) {
-      const data = JSON.parse(fs.readFileSync(taskJsonPath, 'utf-8')) as TaskJson
-      if (typeof data.complexity === 'number') {
-        return data.complexity
-      }
-    }
-  } catch {
-    // Ignore errors, return 0 (below threshold)
-  }
-  return 0
-}
 
 /** Minimum complexity for docs to run via nightly inspector */
 export const DOCS_COMPLEXITY_THRESHOLD = 30
@@ -64,20 +37,16 @@ export const DOCS_COMPLEXITY_THRESHOLD = 30
  * A task is eligible if:
  *   1. The `pr` stage is completed (pipeline finished)
  *   2. The `docs` stage is not completed
- *   3. docs.md output file does not already exist
- *   4. Task complexity is ≥ DOCS_COMPLEXITY_THRESHOLD (30)
+ *   3. Task complexity is ≥ DOCS_COMPLEXITY_THRESHOLD (30)
  */
-function isEligibleForDeferredDocs(
-  taskDir: string,
-  status: TaskStatus,
-  complexity: number,
-): boolean {
+function isEligibleForDeferredDocs(task: EvaluatedTask, complexity: number): boolean {
   // Must meet complexity threshold
   if (complexity < DOCS_COMPLEXITY_THRESHOLD) {
     return false
   }
 
-  const stages = status.stages || {}
+  const status = task.status as { stages?: Record<string, { state?: string }> } | null
+  const stages = status?.stages || {}
 
   // Must have completed pr stage
   const prStage = stages['pr']
@@ -91,13 +60,30 @@ function isEligibleForDeferredDocs(
     return false
   }
 
-  // Check if docs.md output file already exists (docs ran outside status tracking)
-  const docsMdPath = path.join(taskDir, 'docs.md')
-  if (fs.existsSync(docsMdPath)) {
-    return false
-  }
-
   return true
+}
+
+/**
+ * Extract complexity from task labels.
+ * Labels format: "complexity:moderate", "complexity:complex", "complexity:simple"
+ */
+function getComplexityFromLabels(task: EvaluatedTask): number {
+  const label = task.labels.find((l) => l.startsWith('complexity:'))
+  if (!label) return 0
+
+  const level = label.split(':')[1]
+  switch (level) {
+    case 'simple':
+      return 10
+    case 'moderate':
+      return 30
+    case 'complex':
+      return 60
+    case 'very-complex':
+      return 90
+    default:
+      return 0
+  }
 }
 
 /**
@@ -140,13 +126,16 @@ function createDeferredDocsAction(taskId: string, _ctx: InspectorContext): Actio
 /**
  * Deferred Stages plugin - runs docs for tasks (complexity ≥ 30) that completed the pipeline.
  *
+ * Uses evaluated tasks from health-check state (discovered via GitHub API)
+ * instead of filesystem scanning, so it can find tasks on feature branches.
+ *
  * Runs every 6th cycle (~30 min) to batch up multiple completed tasks.
  */
 export const deferredStagesPlugin: InspectorPlugin = {
   name: 'cody-deferred-stages',
   description: 'Trigger docs for tasks (complexity ≥ 30) that completed PR but missed that stage',
   domain: 'cody',
-  schedule: { every: 6 }, // Every 6th cycle = every ~30 min
+  schedule: { every: 1 }, // Daily
 
   async run(ctx) {
     ctx.log.debug('Running deferred-stages plugin')
@@ -154,56 +143,39 @@ export const deferredStagesPlugin: InspectorPlugin = {
     const processedTasks = ctx.state.get<string[]>(STATE_KEY) || []
     ctx.log.debug({ processedCount: processedTasks.length }, 'Previously processed tasks')
 
-    const tasksDir = path.join(process.cwd(), '.tasks')
-    if (!fs.existsSync(tasksDir)) {
-      return []
-    }
+    // Use evaluated tasks from health-check state (discovered via GitHub API)
+    const evaluatedTasks = ctx.state.get<EvaluatedTask[]>('cody:evaluatedTasks') || []
+    ctx.log.debug({ taskCount: evaluatedTasks.length }, 'Evaluated tasks from health-check')
 
-    const entries = fs.readdirSync(tasksDir, { withFileTypes: true })
     const actions: ActionRequest[] = []
 
-    for (const entry of entries) {
-      if (!entry.isDirectory()) continue
-
-      const taskId = entry.name
-
+    for (const task of evaluatedTasks) {
       // Skip already processed
-      if (processedTasks.includes(taskId)) {
-        ctx.log.debug({ taskId }, 'Skipping already-processed task')
+      if (processedTasks.includes(task.taskId)) {
+        ctx.log.debug({ taskId: task.taskId }, 'Skipping already-processed task')
         continue
       }
 
-      const taskDir = path.join(tasksDir, taskId)
-      const statusPath = path.join(taskDir, 'status.json')
-
-      if (!fs.existsSync(statusPath)) continue
-
-      let status: TaskStatus
-      try {
-        status = JSON.parse(fs.readFileSync(statusPath, 'utf-8')) as TaskStatus
-      } catch {
+      // Only consider completed tasks
+      if (task.health !== 'completed') {
         continue
       }
 
-      const complexity = getTaskComplexity(taskDir)
+      const complexity = getComplexityFromLabels(task)
 
-      if (!isEligibleForDeferredDocs(taskDir, status, complexity)) {
-        // If PR is completed, mark as processed so we don't keep checking
-        const stages = status.stages || {}
-        const prStage = stages['pr']
-        if (prStage?.state === 'completed') {
-          processedTasks.push(taskId)
-          // FIX #14: Cap at 200 entries
-          while (processedTasks.length > 200) processedTasks.shift()
-        }
+      if (!isEligibleForDeferredDocs(task, complexity)) {
+        // Mark as processed so we don't keep checking
+        processedTasks.push(task.taskId)
+        // FIX #14: Cap at 200 entries
+        while (processedTasks.length > 200) processedTasks.shift()
         continue
       }
 
-      ctx.log.info({ taskId, complexity }, 'Task eligible for deferred docs stage')
-      actions.push(createDeferredDocsAction(taskId, ctx))
+      ctx.log.info({ taskId: task.taskId, complexity }, 'Task eligible for deferred docs stage')
+      actions.push(createDeferredDocsAction(task.taskId, ctx))
 
       // Mark as processed so we only trigger once per task
-      processedTasks.push(taskId)
+      processedTasks.push(task.taskId)
     }
 
     ctx.state.set(STATE_KEY, processedTasks)

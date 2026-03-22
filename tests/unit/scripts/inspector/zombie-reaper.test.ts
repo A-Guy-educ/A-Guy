@@ -248,7 +248,7 @@ describe('zombie-reaper plugin', () => {
 
     it('has correct dedup key and 23h window', () => {
       // Instantiate a minimal action to check dedup config
-      expect(zombieReaperPlugin.schedule?.every).toBe(6)
+      expect(zombieReaperPlugin.schedule?.every).toBe(1)
     })
   })
 })

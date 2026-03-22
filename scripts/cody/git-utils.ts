@@ -1172,19 +1172,31 @@ export function commitPipelineFiles(
 
     // 4. Commit using execFileSync to prevent shell injection (BUG-5 fix)
     // Skip husky/commitlint hooks in CI - they run their own quality gates
+    // Use stdio: 'pipe' to capture git output in error object for "nothing to commit" detection
     const hookSafeEnv = getHookSafeEnv()
     let committed = false
     try {
       execFileSync('git', ['commit', '--no-gpg-sign', '-m', message], {
         cwd,
-        stdio: 'inherit',
+        stdio: 'pipe',
         env: hookSafeEnv,
       })
       committed = true
       logger.info(`[commit] ${message}`)
     } catch (commitError: unknown) {
       const commitMsg = commitError instanceof Error ? commitError.message : String(commitError)
-      if (commitMsg.includes('nothing to commit') || commitMsg.includes('no changes added')) {
+      // Also check stdout for git output (execFileSync error.message doesn't include git stdout)
+      const commitStdout =
+        commitError instanceof Error && 'stdout' in commitError
+          ? String((commitError as Record<string, unknown>).stdout || '')
+          : ''
+      const fullOutput = commitMsg + commitStdout
+      // Handle various git "nothing to commit" messages
+      if (
+        fullOutput.includes('nothing to commit') ||
+        fullOutput.includes('no changes added') ||
+        fullOutput.includes('nothing added to commit')
+      ) {
         return { success: true, message: 'No changes to commit', committed: false }
       }
       throw commitError

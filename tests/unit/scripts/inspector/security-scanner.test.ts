@@ -59,8 +59,8 @@ describe('securityScannerPlugin', () => {
     expect(securityScannerPlugin.domain).toBe('project')
   })
 
-  it('has schedule with every: 6', () => {
-    expect(securityScannerPlugin.schedule?.every).toBe(6)
+  it('has schedule with every: 1 (daily)', () => {
+    expect(securityScannerPlugin.schedule?.every).toBe(1)
   })
 
   it('run is an async function', () => {

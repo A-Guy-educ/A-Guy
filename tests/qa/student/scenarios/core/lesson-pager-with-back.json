@@ -1,0 +1,69 @@
+{
+  "id": "lesson-pager-with-back",
+  "name": "Student navigates forward and backward through lesson exercises",
+  "journey": "student-studies-lesson",
+  "type": "core",
+  "area": "lessons",
+  "tags": ["lesson", "pager", "navigation"],
+  "locale": "he",
+  "preconditions": [
+    {
+      "action": "seed",
+      "entity": "course",
+      "data": {
+        "title": "Pager Course",
+        "courseLabel": "פ",
+        "status": "published",
+        "isActive": true,
+        "accessType": "free"
+      },
+      "ref": "$course"
+    },
+    {
+      "action": "seed",
+      "entity": "chapter",
+      "data": {
+        "title": "Pager Chapter",
+        "course": "$course",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$chapter"
+    },
+    {
+      "action": "seed",
+      "entity": "lesson",
+      "data": {
+        "title": "Pager Lesson",
+        "chapter": "$chapter",
+        "type": "learning",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$lesson"
+    }
+  ],
+  "steps": [
+    {
+      "action": "navigate",
+      "input": {
+        "type": "lesson",
+        "courseRef": "$course",
+        "chapterRef": "$chapter",
+        "lessonRef": "$lesson"
+      }
+    },
+    {
+      "action": "startLesson"
+    },
+    {
+      "action": "navigateExercise",
+      "input": { "direction": "next" }
+    },
+    {
+      "action": "navigateExercise",
+      "input": { "direction": "prev" }
+    }
+  ],
+  "teardown": "auto"
+}

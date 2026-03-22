@@ -16,7 +16,7 @@ import { STAGE_NAMES } from './stages/registry'
 // ============================================================================
 
 export interface CodyInput {
-  mode: 'spec' | 'impl' | 'rerun' | 'fix' | 'full' | 'status'
+  mode: 'spec' | 'impl' | 'rerun' | 'fix' | 'full' | 'status' | 'design-system'
   taskId: string
   dryRun: boolean
   fromStage?: string

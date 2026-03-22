@@ -260,31 +260,12 @@ describe('clarify-workflow', () => {
       expect(result).toBe('approved')
     })
 
-    // Approval keywords: approve, approved, yes, go, proceed, y, continue
-    it.each([
-      ['approve', 'approved'],
-      ['approved', 'approved'],
-      ['yes', 'approved'],
-      ['go', 'approved'],
-      ['proceed', 'approved'],
-      ['y', 'approved'],
-      ['continue', 'approved'],
-    ])('approval keyword "%s" → returns approved', (keyword, _expected) => {
-      const input = createMockInput({
-        commentBody: `/cody ${keyword}`,
-        triggerType: 'comment',
-      })
-
-      const result = handleGateApproval(input, tempDir, 'architect', taskDef)
-      expect(result).toBe('approved')
-    })
-
-    // BUG-F fix: @cody prefix should also work for approval
-    it.each([['@cody approve'], ['@cody yes'], ['@cody proceed']])(
-      '@cody prefix with approval keyword "%s" → returns approved',
-      (commentBody) => {
+    // Only structured commands accepted: approve, reject
+    it.each([['approve', 'approved']])(
+      'structured command "%s" → returns approved',
+      (keyword, _expected) => {
         const input = createMockInput({
-          commentBody,
+          commentBody: `/cody ${keyword}`,
           triggerType: 'comment',
         })
 
@@ -293,30 +274,23 @@ describe('clarify-workflow', () => {
       },
     )
 
-    // Rejection keywords: reject, rejected, no, cancel, stop, n
-    it.each([
-      ['reject', 'rejected'],
-      ['rejected', 'rejected'],
-      ['no', 'rejected'],
-      ['cancel', 'rejected'],
-      ['stop', 'rejected'],
-      ['n', 'rejected'],
-    ])('rejection keyword "%s" → returns rejected', (keyword, _expected) => {
+    // @cody prefix should work for approval
+    it.each([['@cody approve']])('@cody prefix with "%s" → returns approved', (commentBody) => {
       const input = createMockInput({
-        commentBody: `/cody ${keyword}`,
+        commentBody,
         triggerType: 'comment',
       })
 
       const result = handleGateApproval(input, tempDir, 'architect', taskDef)
-      expect(result).toBe('rejected')
+      expect(result).toBe('approved')
     })
 
-    // BUG-F fix: @cody prefix should also work for rejection
-    it.each([['@cody reject'], ['@cody no'], ['@cody cancel']])(
-      '@cody prefix with rejection keyword "%s" → returns rejected',
-      (commentBody) => {
+    // Only structured rejection command accepted: reject
+    it.each([['reject', 'rejected']])(
+      'structured command "%s" → returns rejected',
+      (keyword, _expected) => {
         const input = createMockInput({
-          commentBody,
+          commentBody: `/cody ${keyword}`,
           triggerType: 'comment',
         })
 
@@ -324,6 +298,41 @@ describe('clarify-workflow', () => {
         expect(result).toBe('rejected')
       },
     )
+
+    // @cody prefix should work for rejection
+    it.each([['@cody reject']])('@cody prefix with "%s" → returns rejected', (commentBody) => {
+      const input = createMockInput({
+        commentBody,
+        triggerType: 'comment',
+      })
+
+      const result = handleGateApproval(input, tempDir, 'architect', taskDef)
+      expect(result).toBe('rejected')
+    })
+
+    // Ambiguous keywords no longer accepted
+    it.each([
+      'yes',
+      'go',
+      'proceed',
+      'y',
+      'continue',
+      'approved',
+      'no',
+      'cancel',
+      'stop',
+      'n',
+      'rejected',
+    ])('ambiguous keyword "%s" → returns waiting (not accepted)', (keyword) => {
+      fs.writeFileSync(path.join(tempDir, 'task.md'), '# Task\n\nSome task.')
+      const input = createMockInput({
+        commentBody: `/cody ${keyword}`,
+        triggerType: 'comment',
+      })
+
+      const result = handleGateApproval(input, tempDir, 'architect', taskDef)
+      expect(result).toBe('waiting')
+    })
 
     it('high risk_level triggers hard-stop mode comment', () => {
       const highRiskTaskDef = { ...taskDef, risk_level: 'high' }

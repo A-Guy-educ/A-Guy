@@ -17,6 +17,13 @@ import type { CodyTask, ColumnId } from '../types'
 import { Button } from '@/ui/web/components/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/ui/web/components/avatar'
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/ui/web/components/dropdown-menu'
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -42,6 +49,7 @@ import {
   Pencil,
   Copy,
   ListPlus,
+  MoreHorizontal,
 } from 'lucide-react'
 
 interface TaskListProps {
@@ -62,6 +70,7 @@ interface TaskListProps {
   onCreateTask?: () => void
   onEditTask?: (task: CodyTask) => void
   onDuplicate?: (task: CodyTask) => void
+  onRerun?: (task: CodyTask) => void
   onToggleQueue?: (task: CodyTask) => void
 }
 
@@ -145,6 +154,7 @@ export function TaskList({
   onCreateTask,
   onEditTask,
   onDuplicate,
+  onRerun,
   onToggleQueue,
   collaborators = [],
 }: TaskListProps) {
@@ -479,121 +489,124 @@ export function TaskList({
                   </SimpleTooltip>
                 ) : null}
 
-                {onAssign && collaborators.length > 0 && (
-                  <div
-                    onClick={(e) => e.stopPropagation()}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onPointerDown={(e) => e.stopPropagation()}
-                    className="relative"
-                  >
-                    <Select
-                      onValueChange={(value) => {
-                        onAssign(task.issueNumber, [value])
-                      }}
-                    >
-                      <SelectTrigger className="h-7 w-auto px-2 text-xs gap-1 border-white/[0.06] bg-transparent hover:bg-white/[0.06]">
-                        <SelectValue placeholder="Assign" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {collaborators
-                          .filter((c) => !task.assignees?.some((a) => a.login === c.login))
-                          .map((collaborator) => (
-                            <SelectItem
-                              key={collaborator.login}
-                              value={collaborator.login}
-                              className="flex items-center gap-2"
-                            >
-                              <Avatar className="h-5 w-5">
-                                <AvatarImage src={collaborator.avatar_url} />
-                                <AvatarFallback className="text-[8px]">
-                                  {collaborator.login[0]?.toUpperCase()}
-                                </AvatarFallback>
-                              </Avatar>
-                              {collaborator.login}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                {/* Edit button — only for backlog items */}
-                {onEditTask && task.column === 'open' && (
-                  <SimpleTooltip content="Edit task" side="bottom">
+                {/* Overflow menu for remaining actions */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onEditTask(task)
-                      }}
-                      aria-label="Edit task"
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label="More actions"
                       className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-foreground hover:bg-white/[0.06]"
                     >
-                      <Pencil className="w-3.5 h-3.5" />
+                      <MoreHorizontal className="w-3.5 h-3.5" />
                     </Button>
-                  </SimpleTooltip>
-                )}
-
-                {/* Duplicate button */}
-                {onDuplicate && (
-                  <SimpleTooltip content="Duplicate task" side="bottom">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onDuplicate(task)
-                      }}
-                      aria-label="Duplicate task"
-                      className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-foreground hover:bg-white/[0.06]"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                    </Button>
-                  </SimpleTooltip>
-                )}
-
-                {/* Queue toggle */}
-                {onToggleQueue &&
-                  (() => {
-                    const isQueued = task.labels.includes('cody:queued')
-                    const isQueueActive = task.labels.includes('cody:queue-active')
-                    const isQueueFailed = task.labels.includes('cody:queue-failed')
-                    // Hide if task is actively being processed or already failed in queue
-                    if (isQueueActive) return null
-                    return (
-                      <SimpleTooltip
-                        content={
-                          isQueued
-                            ? 'Remove from queue'
-                            : isQueueFailed
-                              ? 'Re-add to queue'
-                              : 'Add to queue'
-                        }
-                        side="bottom"
-                      >
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onToggleQueue(task)
-                          }}
-                          aria-label={isQueued ? 'Remove from queue' : 'Add to queue'}
-                          className={cn(
-                            'h-7 w-7 p-0 transition-colors',
-                            isQueued
-                              ? 'text-purple-400 bg-purple-500/15 hover:bg-purple-500/25'
-                              : isQueueFailed
-                                ? 'text-red-400/60 hover:text-purple-400 hover:bg-purple-500/15'
-                                : 'text-muted-foreground/50 hover:text-purple-400 hover:bg-purple-500/15',
-                          )}
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    {/* Assign */}
+                    {onAssign && collaborators.length > 0 && (
+                      <>
+                        <DropdownMenuItem
+                          onSelect={(e) => e.preventDefault()}
+                          className="flex flex-col items-start gap-1 py-2"
                         >
-                          <ListPlus className="w-3.5 h-3.5" />
-                        </Button>
-                      </SimpleTooltip>
-                    )
-                  })()}
+                          <span className="text-xs text-muted-foreground">Assign to</span>
+                          <Select
+                            onValueChange={(value) => {
+                              onAssign(task.issueNumber, [value])
+                            }}
+                          >
+                            <SelectTrigger className="w-full h-7 text-xs">
+                              <SelectValue placeholder="Select..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {collaborators
+                                .filter((c) => !task.assignees?.some((a) => a.login === c.login))
+                                .map((collaborator) => (
+                                  <SelectItem
+                                    key={collaborator.login}
+                                    value={collaborator.login}
+                                    className="flex items-center gap-2"
+                                  >
+                                    <Avatar className="h-5 w-5">
+                                      <AvatarImage src={collaborator.avatar_url} />
+                                      <AvatarFallback className="text-[8px]">
+                                        {collaborator.login[0]?.toUpperCase()}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    {collaborator.login}
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
+
+                    {/* Edit — only for backlog items */}
+                    {onEditTask && task.column === 'open' && (
+                      <DropdownMenuItem
+                        onClick={() => {
+                          onEditTask(task)
+                        }}
+                      >
+                        <Pencil className="w-4 h-4 mr-2" />
+                        Edit task
+                      </DropdownMenuItem>
+                    )}
+
+                    {/* Duplicate */}
+                    {onDuplicate && (
+                      <DropdownMenuItem
+                        onClick={() => {
+                          onDuplicate(task)
+                        }}
+                      >
+                        <Copy className="w-4 h-4 mr-2" />
+                        Duplicate task
+                      </DropdownMenuItem>
+                    )}
+
+                    {/* Rerun */}
+                    {onRerun && (
+                      <DropdownMenuItem
+                        onClick={() => {
+                          onRerun(task)
+                        }}
+                      >
+                        <RotateCcw className="w-4 h-4 mr-2" />
+                        Rerun
+                      </DropdownMenuItem>
+                    )}
+
+                    {/* Queue toggle */}
+                    {onToggleQueue &&
+                      (() => {
+                        const isQueued = task.labels.includes('cody:queued')
+                        const isQueueActive = task.labels.includes('cody:queue-active')
+                        const isQueueFailed = task.labels.includes('cody:queue-failed')
+                        if (isQueueActive) return null
+                        return (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => {
+                                onToggleQueue(task)
+                              }}
+                            >
+                              <ListPlus className="w-4 h-4 mr-2" />
+                              {isQueued
+                                ? 'Remove from queue'
+                                : isQueueFailed
+                                  ? 'Re-add to queue'
+                                  : 'Add to queue'}
+                            </DropdownMenuItem>
+                          </>
+                        )
+                      })()}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 

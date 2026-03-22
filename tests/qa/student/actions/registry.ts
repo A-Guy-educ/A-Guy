@@ -4,81 +4,153 @@
  * @fileType registry
  * @domain qa
  * @pattern action-registry
+ * @normalized
  */
-import type { ActionHandler, ActionRegistry } from './types'
+import type { ActionRegistry } from './types'
 
-// Session actions
+// Session actions (keep as-is)
 import { login } from './login'
 import { logout } from './logout'
 import { startAsGuest } from './startAsGuest'
 
-// Navigation actions
+// Navigation actions - NEW unified navigate + existing back/tab
+import { navigate } from './navigate'
+import { navigateBack } from './navigateBack'
+import { clickTab } from './clickTab'
+
+// Navigation actions - DEPRECATED (aliases for migrate)
 import { openHome } from './openHome'
 import { openCourses } from './openCourses'
 import { openCourse } from './openCourse'
 import { openLesson } from './openLesson'
 import { openTab } from './openTab'
-import { navigateBack } from './navigateBack'
 import { goto } from './goto'
+import { openAskPage } from './openAskPage'
 
-// Lesson actions
+// Lesson actions - NEW
 import { startLesson } from './startLesson'
-import { nextExercise } from './nextExercise'
-import { previousExercise } from './previousExercise'
+import { navigateExercise } from './navigateExercise'
 import { completeLesson } from './completeLesson'
 
-// Exercise actions
-import { submitAnswer } from './submitAnswer'
+// Lesson actions - DEPRECATED
+import { nextExercise } from './nextExercise'
+import { previousExercise } from './previousExercise'
+
+// Exercise actions - NEW
+import { answer } from './answer'
 import { checkAnswer } from './checkAnswer'
+import { requestHelp } from './requestHelp'
+
+// Exercise actions - DEPRECATED
+import { submitAnswer } from './submitAnswer'
 import { requestHint } from './requestHint'
 import { requestSolution } from './requestSolution'
 
-// Chat actions
+// Chat actions - NEW
+import { sendMessage } from './sendMessage'
+import { waitForMessage } from './waitForMessage'
+
+// Chat actions - DEPRECATED
 import { sendChatMessage } from './sendChatMessage'
-import { openAskPage } from './openAskPage'
 import { expectChatResponse } from './expectChatResponse'
 
-// Assertion actions
+// Assertion actions - NEW
+import { see } from './see'
+import { dontSee } from './dontSee'
+import { beAt } from './beAt'
+import { seeFeedback } from './seeFeedback'
+
+// Assertion actions - DEPRECATED
 import { expectVisible } from './expectVisible'
 import { expectNotVisible } from './expectNotVisible'
 import { expectUrl } from './expectUrl'
 import { expectFeedback } from './expectFeedback'
 
+// PDF actions - NEW
+import { seePdf } from './seePdf'
+
+// PDF actions - DEPRECATED
+import { expectPdfVisible, expectPdfDownloadButtonVisible, expectPdfNotVisible } from './expectPdf'
+
+// Utility actions
+import { resizeViewport } from './resizeViewport'
+
 export const actionRegistry: ActionRegistry = {
-  // Session
+  // ============================================================
+  // NORMALIZED ACTIONS (preferred)
+  // ============================================================
+
+  // Session (3) - unchanged
   login,
   logout,
   startAsGuest,
 
-  // Navigation
+  // Navigation (3) - normalized
+  navigate,
+  navigateBack,
+  clickTab,
+
+  // Lesson (3) - normalized
+  startLesson,
+  navigateExercise,
+  completeLesson,
+
+  // Exercise (3) - normalized
+  answer,
+  checkAnswer,
+  requestHelp,
+
+  // Chat (2) - normalized
+  sendMessage,
+  waitForMessage,
+
+  // Assertions (4) - normalized
+  see,
+  dontSee,
+  beAt,
+  seeFeedback,
+
+  // PDF (1) - normalized
+  seePdf,
+
+  // Utility (1) - responsive testing
+  resizeViewport,
+
+  // ============================================================
+  // DEPRECATED ALIASES (for backward compatibility during migration)
+  // Remove after all scenarios updated
+  // ============================================================
+
+  // Navigation aliases
   openHome,
   openCourses,
   openCourse,
   openLesson,
+  openAskPage,
   openTab,
-  navigateBack,
   goto,
 
-  // Lesson
-  startLesson,
+  // Lesson aliases
   nextExercise,
   previousExercise,
-  completeLesson,
 
-  // Exercise
+  // Exercise aliases
   submitAnswer,
-  checkAnswer,
   requestHint,
   requestSolution,
 
-  // Chat
+  // Chat aliases
   sendChatMessage,
-  openAskPage,
   expectChatResponse,
 
-  // Assertions
+  // Assertion aliases
   expectVisible,
   expectNotVisible,
   expectUrl,
   expectFeedback,
+
+  // PDF aliases
+  expectPdfVisible,
+  expectPdfDownloadButtonVisible,
+  expectPdfNotVisible,
 }

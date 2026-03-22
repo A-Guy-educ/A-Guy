@@ -8,11 +8,12 @@
   "locale": "he",
   "steps": [
     {
-      "action": "openHome",
+      "action": "navigate",
+      "input": { "type": "home" },
       "description": "Start at home page"
     },
     {
-      "action": "expectVisible",
+      "action": "see",
       "input": { "text": "שלום" },
       "description": "Verify greeting is visible"
     }

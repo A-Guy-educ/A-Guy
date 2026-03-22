@@ -8,15 +8,19 @@
   "locale": "he",
   "steps": [
     {
-      "action": "openHome"
+      "action": "navigate",
+      "input": { "type": "home" }
     },
     {
-      "action": "goto",
-      "input": { "url": "/courses/non-existent-course/chapters/chapter-1/lessons/lesson-1" },
+      "action": "navigate",
+      "input": {
+        "type": "url",
+        "url": "/courses/non-existent-course/chapters/chapter-1/lessons/lesson-1"
+      },
       "description": "Navigate to a non-existent page"
     },
     {
-      "action": "expectUrl",
+      "action": "beAt",
       "input": { "pattern": "/courses/" },
       "description": "Should navigate to courses area"
     }

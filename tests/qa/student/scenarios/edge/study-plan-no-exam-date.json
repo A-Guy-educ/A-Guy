@@ -1,0 +1,31 @@
+{
+  "id": "study-plan-no-exam-date",
+  "name": "Student creates study plan without exam date",
+  "journey": "student-plans-study",
+  "type": "edge",
+  "area": "study-plan",
+  "tags": ["study-plan", "validation", "edge"],
+  "locale": "he",
+  "preconditions": [
+    {
+      "action": "seed",
+      "entity": "user",
+      "data": { "role": "student" },
+      "ref": "$student"
+    }
+  ],
+  "steps": [
+    {
+      "action": "login",
+      "input": { "userRef": "$student" }
+    },
+    {
+      "action": "navigate",
+      "input": {
+        "type": "url",
+        "url": "/study-plan/new"
+      }
+    }
+  ],
+  "teardown": "auto"
+}

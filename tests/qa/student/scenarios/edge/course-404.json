@@ -1,0 +1,23 @@
+{
+  "id": "course-404",
+  "name": "Student navigates to non-existent course and sees 404",
+  "journey": "student-navigates-content",
+  "type": "edge",
+  "area": "navigation",
+  "tags": ["404", "error", "course"],
+  "locale": "he",
+  "steps": [
+    {
+      "action": "navigate",
+      "input": {
+        "type": "url",
+        "url": "/courses/non-existent-course-xyz"
+      }
+    },
+    {
+      "action": "beAt",
+      "input": { "pattern": "/(404|not-found)" }
+    }
+  ],
+  "teardown": "auto"
+}

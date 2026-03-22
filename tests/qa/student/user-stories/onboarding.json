@@ -1,0 +1,48 @@
+{
+  "userStories": [
+    {
+      "id": "US-ONBOARD-001",
+      "story": "As a new student, I want to see a greeting flow so that I feel welcome and understand the app",
+      "criteria": [
+        "Given I am a new user",
+        "When I first open the app",
+        "Then I see a welcome greeting and introduction"
+      ],
+      "scenarios": ["onboarding-greeting-flow"],
+      "priority": "should-have"
+    },
+    {
+      "id": "US-ONBOARD-002",
+      "story": "As a new student, I want to select my mood so that the app can personalize my experience",
+      "criteria": [
+        "Given I am on the onboarding flow",
+        "When I select my current mood",
+        "Then the app adapts content recommendations"
+      ],
+      "scenarios": ["onboarding-mood-selection"],
+      "priority": "should-have"
+    },
+    {
+      "id": "US-ONBOARD-003",
+      "story": "As a new student, I want to select courses during onboarding so that I can start learning right away",
+      "criteria": [
+        "Given I am on the course selection step",
+        "When I select courses and confirm",
+        "Then the courses are added to my dashboard"
+      ],
+      "scenarios": ["onboarding-course-selection"],
+      "priority": "should-have"
+    },
+    {
+      "id": "US-ONBOARD-004",
+      "story": "As a student, I want to skip course selection during onboarding so that I can explore at my own pace",
+      "criteria": [
+        "Given I am on the course selection step",
+        "When I click skip",
+        "Then I am taken to the dashboard without course selection"
+      ],
+      "scenarios": ["onboarding-skip-course"],
+      "priority": "may-have"
+    }
+  ]
+}

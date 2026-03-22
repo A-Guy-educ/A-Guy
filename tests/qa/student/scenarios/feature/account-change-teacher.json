@@ -1,0 +1,35 @@
+{
+  "id": "account-change-teacher",
+  "name": "Student changes teacher persona",
+  "journey": "student-manages-account",
+  "type": "feature",
+  "area": "account",
+  "tags": ["account", "teacher", "persona"],
+  "locale": "he",
+  "preconditions": [
+    {
+      "action": "seed",
+      "entity": "user",
+      "data": { "role": "student" },
+      "ref": "$student"
+    }
+  ],
+  "steps": [
+    {
+      "action": "login",
+      "input": { "userRef": "$student" }
+    },
+    {
+      "action": "navigate",
+      "input": {
+        "type": "url",
+        "url": "/account"
+      }
+    },
+    {
+      "action": "beAt",
+      "input": { "pattern": "/account" }
+    }
+  ],
+  "teardown": "auto"
+}

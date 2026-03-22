@@ -181,6 +181,15 @@ export const tasksApi = {
     return handleResponse(res)
   },
 
+  rerun: async (issueNumber: number, actorLogin?: string): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'rerun', ...(actorLogin && { actorLogin }) }),
+    })
+    return handleResponse(res)
+  },
+
   close: async (issueNumber: number, actorLogin?: string): Promise<ActionResponse> => {
     const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
       method: 'POST',

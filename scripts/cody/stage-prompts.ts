@@ -60,10 +60,9 @@ export const stageInstructions: Record<string, (taskId: string) => string> = {
 
   'plan-gap': () => ``,
 
-  test: () => `DEFERRED TEST STAGE: Write comprehensive tests for the implemented code.
-Read the actual source files in src/ to understand what was built.
-Write tests to tests/ that validate the implementation against spec.md.
-Run tests with pnpm test:unit to verify they pass. Fix any failures before completing.`,
+  test: () => `TDD RED PHASE: Write failing tests from the plan.
+You run in PARALLEL with the build agent. Write tests to tests/ ONLY.
+Do NOT modify src/. Do NOT run tests (they will fail without implementation).`,
 
   build: () => `CRITICAL: IMPLEMENTATION STAGE - NOT DOCUMENTATION ONLY
 
@@ -75,8 +74,24 @@ Your job is to:
 3. Run tests to verify
 4. **MUST write build.md** summarizing what was implemented before exiting
 
-The build.md file should be a SUMMARY of what you implemented, not the implementation plan.
-Write it to: .tasks/<taskId>/build.md
+The build.md file format:
+- Must include a ## Changes or ## Files section (required by pipeline validation)
+- Should be a SUMMARY of what was implemented
+- Write it to: .tasks/<taskId>/build.md
+
+Example format:
+\`\`\`markdown
+# Build Summary
+
+## Changes
+- Created src/infra/utils/pipeline-health.ts
+- Added PipelineHealthReport class
+- Added integration tests
+
+## Files
+- src/infra/utils/pipeline-health.ts
+- tests/unit/infra/utils/pipeline-health.test.ts
+\`\`\`
 
 DO NOT skip writing build.md - the pipeline REQUIRES this file!`,
 
@@ -103,6 +118,9 @@ Only fix the specific issues identified in verify-failures.md, review.md, or rer
 For fix_bug tasks: follow the SCIENTIFIC DEBUG PROTOCOL in your agent instructions.
 Hypothesis first, reproduction test second, minimal fix third.
 
+IMPORTANT: If review.md lists many issues (dozens+), focus on the CRITICAL issues first, then MAJOR issues.
+Do NOT try to fix every single issue — prioritize the most impactful ones.
+The goal is to make the code substantially better, not perfectly bug-free.
 Write fix-summary.md summarizing what you changed.`,
 
   // Scripted stages — these prompts are never sent to an LLM

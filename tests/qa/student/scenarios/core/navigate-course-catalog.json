@@ -8,11 +8,12 @@
   "locale": "he",
   "steps": [
     {
-      "action": "openCourses",
+      "action": "navigate",
+      "input": { "type": "courses" },
       "description": "Navigate to course catalog"
     },
     {
-      "action": "expectUrl",
+      "action": "beAt",
       "input": { "pattern": "/courses" }
     }
   ],

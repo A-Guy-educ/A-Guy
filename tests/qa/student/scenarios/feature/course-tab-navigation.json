@@ -8,26 +8,26 @@
   "locale": "he",
   "steps": [
     {
-      "action": "goto",
-      "input": { "url": "/courses/test" },
+      "action": "navigate",
+      "input": { "type": "url", "url": "/courses/test" },
       "description": "Navigate to existing course"
     },
     {
-      "action": "expectVisible",
+      "action": "see",
       "input": { "text": "בדיקת המרה" }
     },
     {
-      "action": "openTab",
+      "action": "clickTab",
       "input": { "tab": "practice" },
       "description": "Switch to Practice tab"
     },
     {
-      "action": "openTab",
+      "action": "clickTab",
       "input": { "tab": "ask" },
       "description": "Switch to Ask tab"
     },
     {
-      "action": "openTab",
+      "action": "clickTab",
       "input": { "tab": "learn" },
       "description": "Switch back to Learn tab"
     }

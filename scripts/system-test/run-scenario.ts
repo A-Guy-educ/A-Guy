@@ -9,8 +9,10 @@ import pino from 'pino'
 import { createSystemTestClient } from './lib/gh-client'
 import type { ScenarioContext, Scenario } from './scenarios/types'
 import { scenario02 } from './scenarios/02-full-high-complexity'
+import { scenario00 } from './scenarios/00-minimal-test'
 
 const SCENARIOS: Record<string, Scenario> = {
+  '00-minimal-test': scenario00,
   '02-full-high-complexity': scenario02,
 }
 

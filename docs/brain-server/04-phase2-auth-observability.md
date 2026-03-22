@@ -142,7 +142,7 @@ interface BrainRequestLog {
   // Tool usage
   toolCalls: {
     tool: string;          // 'semantic_code_search', etc.
-    mcpServer: string;     // 'contextplus', 'github', etc.
+    mcpServer: string;     // 'neuron', 'github', etc.
     durationMs: number;
     success: boolean;
     error?: string;

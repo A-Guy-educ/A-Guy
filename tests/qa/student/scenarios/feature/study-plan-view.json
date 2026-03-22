@@ -1,0 +1,35 @@
+{
+  "id": "study-plan-view",
+  "name": "Student views their existing study plan",
+  "journey": "student-plans-study",
+  "type": "feature",
+  "area": "study-plan",
+  "tags": ["study-plan", "view"],
+  "locale": "he",
+  "preconditions": [
+    {
+      "action": "seed",
+      "entity": "user",
+      "data": { "role": "student" },
+      "ref": "$student"
+    }
+  ],
+  "steps": [
+    {
+      "action": "login",
+      "input": { "userRef": "$student" }
+    },
+    {
+      "action": "navigate",
+      "input": {
+        "type": "url",
+        "url": "/study-plan"
+      }
+    },
+    {
+      "action": "beAt",
+      "input": { "pattern": "/study-plan" }
+    }
+  ],
+  "teardown": "auto"
+}

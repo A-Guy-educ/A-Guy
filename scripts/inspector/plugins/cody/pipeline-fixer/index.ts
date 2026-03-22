@@ -435,6 +435,7 @@ export const pipelineFixerPlugin: InspectorPlugin = {
   name: 'cody-pipeline-fixer',
   description: 'Retry failed tasks, escalate persistent failures by creating fix-issues for Cody',
   domain: 'cody',
+  schedule: { every: 1 }, // Daily
 
   async run(ctx) {
     ctx.log.debug('Running pipeline-fixer plugin')

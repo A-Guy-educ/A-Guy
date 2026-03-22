@@ -8,7 +8,8 @@ import config from '@payload-config'
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import type { Lesson } from '@/payload-types'
-import { z } from 'zod'
+
+import { queueRequestSchema } from './schema'
 
 type ErrorCode =
   | 'UNAUTHORIZED'
@@ -30,14 +31,6 @@ function errorResponse(
 ): NextResponse {
   return NextResponse.json({ error: { code, message }, ...extra }, { status })
 }
-
-// Zod schema for request validation
-export const queueRequestSchema = z.object({
-  lessonId: z.string().min(1),
-  mediaId: z.string().min(1),
-  extractorPromptId: z.string().min(1),
-  verifierPromptId: z.string().min(1),
-})
 
 export async function POST(request: NextRequest) {
   try {

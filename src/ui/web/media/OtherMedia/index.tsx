@@ -24,12 +24,12 @@ export const OtherMedia: React.FC<MediaProps> = (props) => {
         <a
           href={fileUrl}
           download
-          className="inline-flex items-center gap-2 px-4 py-3 border border-border rounded text-inherit no-underline"
+          className="inline-flex items-center gap-content-gap-xs px-4 py-3 border border-border rounded text-inherit no-underline"
         >
           <span>📄</span>
           <span>{filename || 'File'}</span>
           {filesize && (
-            <span className="text-sm text-muted-foreground">
+            <span className="text-body-sm text-muted-foreground">
               ({Math.round(filesize / 1024)} KB)
             </span>
           )}

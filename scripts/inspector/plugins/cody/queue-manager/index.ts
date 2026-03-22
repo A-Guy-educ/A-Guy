@@ -227,6 +227,7 @@ export const queueManagerPlugin: InspectorPlugin = {
   name: 'cody-queue-manager',
   description: 'Sequential task queue processor — activation, completion, and advancement',
   domain: 'cody',
+  schedule: { every: 1 }, // Daily
 
   async run(ctx) {
     ctx.log.debug('Running queue-manager plugin')

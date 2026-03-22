@@ -1,0 +1,47 @@
+{
+  "id": "study-plan-create",
+  "name": "Student creates a 7-day study plan",
+  "journey": "student-plans-study",
+  "type": "feature",
+  "area": "study-plan",
+  "tags": ["study-plan", "create"],
+  "locale": "he",
+  "preconditions": [
+    {
+      "action": "seed",
+      "entity": "user",
+      "data": { "role": "student" },
+      "ref": "$student"
+    },
+    {
+      "action": "seed",
+      "entity": "course",
+      "data": {
+        "title": "Study Plan Course",
+        "courseLabel": "ש",
+        "status": "published",
+        "isActive": true,
+        "accessType": "free"
+      },
+      "ref": "$course"
+    }
+  ],
+  "steps": [
+    {
+      "action": "login",
+      "input": { "userRef": "$student" }
+    },
+    {
+      "action": "navigate",
+      "input": {
+        "type": "url",
+        "url": "/study-plan"
+      }
+    },
+    {
+      "action": "beAt",
+      "input": { "pattern": "/study-plan" }
+    }
+  ],
+  "teardown": "auto"
+}

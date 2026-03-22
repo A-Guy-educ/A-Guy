@@ -1,0 +1,81 @@
+{
+  "userStories": [
+    {
+      "id": "US-EXERCISE-001",
+      "story": "As a student, I want to answer MCQ questions correctly so that I can test my understanding",
+      "criteria": [
+        "Given I am on a lesson page with an MCQ exercise",
+        "When I select the correct answer and click Check",
+        "Then I see correct feedback"
+      ],
+      "scenarios": ["solve-mcq-correct"],
+      "priority": "must-have"
+    },
+    {
+      "id": "US-EXERCISE-002",
+      "story": "As a student, I want to answer MCQ questions incorrectly so that I can see feedback on wrong answers",
+      "criteria": [
+        "Given I am on a lesson page with an MCQ exercise",
+        "When I select the wrong answer and click Check",
+        "Then I see incorrect feedback"
+      ],
+      "scenarios": ["solve-mcq-incorrect"],
+      "priority": "must-have"
+    },
+    {
+      "id": "US-EXERCISE-003",
+      "story": "As a student, I want to answer True/False questions so that I can quickly assess my knowledge",
+      "criteria": [
+        "Given I am on a lesson page with a T/F exercise",
+        "When I click True or False",
+        "Then the answer is automatically checked and I see feedback"
+      ],
+      "scenarios": ["solve-true-false-correct"],
+      "priority": "must-have"
+    },
+    {
+      "id": "US-EXERCISE-004",
+      "story": "As a student, I want to type free response answers so that I can explain my reasoning",
+      "criteria": [
+        "Given I am on a lesson page with a free response exercise",
+        "When I type my answer and click Check",
+        "Then my answer is submitted for validation"
+      ],
+      "scenarios": ["solve-free-response"],
+      "priority": "must-have"
+    },
+    {
+      "id": "US-EXERCISE-005",
+      "story": "As a student, I want to connect matching pairs so that I can complete matching exercises",
+      "criteria": [
+        "Given I am on a lesson page with a matching exercise",
+        "When I click on left items and then corresponding right items",
+        "Then the pairs are connected"
+      ],
+      "scenarios": ["solve-matching-correct"],
+      "priority": "should-have"
+    },
+    {
+      "id": "US-EXERCISE-006",
+      "story": "As a student, I want to request a hint when stuck so that I can get help without seeing the solution",
+      "criteria": [
+        "Given I am on an exercise and cannot answer",
+        "When I click the Hint button",
+        "Then a hint is displayed to guide me"
+      ],
+      "scenarios": ["help-system-hint"],
+      "priority": "should-have"
+    },
+    {
+      "id": "US-EXERCISE-007",
+      "story": "As a student, I want to unlock the solution after using hints so that I can learn from the complete answer",
+      "criteria": [
+        "Given I have used a hint and seen the guiding question",
+        "When I click the Solution button",
+        "Then the full solution is displayed"
+      ],
+      "scenarios": ["help-system-solution-unlock", "help-system-guiding-question"],
+      "priority": "should-have"
+    }
+  ]
+}

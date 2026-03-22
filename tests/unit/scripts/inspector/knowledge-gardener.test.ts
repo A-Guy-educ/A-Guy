@@ -368,8 +368,8 @@ describe('knowledgeGardenerPlugin', () => {
     expect(actions[0].type).toBe('commit-knowledge-base')
   })
 
-  it('has correct schedule (every 6)', () => {
-    expect(knowledgeGardenerPlugin.schedule?.every).toBe(6)
+  it('has correct schedule (daily)', () => {
+    expect(knowledgeGardenerPlugin.schedule?.every).toBe(1)
   })
 
   it('uses 23h dedup window', async () => {

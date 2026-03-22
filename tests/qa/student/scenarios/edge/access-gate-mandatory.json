@@ -48,11 +48,11 @@
       "action": "startAsGuest"
     },
     {
-      "action": "openCourse",
-      "input": { "courseRef": "$course" }
+      "action": "navigate",
+      "input": { "type": "course", "courseRef": "$course" }
     },
     {
-      "action": "expectVisible",
+      "action": "see",
       "input": { "text": "התחבר" },
       "description": "Should show sign in prompt"
     }

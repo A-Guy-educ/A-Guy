@@ -17,7 +17,7 @@ export function TTSButton({ isPlaying, onToggle, labelPlay, labelStop }: TTSButt
       onClick={onToggle}
       className={cn(
         'mt-2 ms-auto flex items-center justify-center',
-        'w-7 h-7 rounded-full shadow-sm transition-colors',
+        'w-7 h-7 rounded-full shadow-elevation-1 transition-colors',
         isPlaying
           ? 'bg-primary/15 text-primary hover:bg-primary/25'
           : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80',

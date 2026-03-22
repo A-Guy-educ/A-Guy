@@ -24,6 +24,8 @@ import { apiSurfaceAuditorPlugin } from './plugins/project/api-surface/index'
 import { queueManagerPlugin } from './plugins/cody/queue-manager/index'
 import { systemTestPlugin } from './plugins/cody/system-test/index'
 import { cliTestPlugin } from './plugins/cody/cli-test/index'
+import { e2eTestPlugin } from './plugins/cody/e2e-test/index'
+import { systemArchitectPlugin } from './plugins/cody/system-architect/index'
 import type { InspectorConfig } from './core/types'
 
 const logger = pino({ level: 'info' })
@@ -85,6 +87,8 @@ async function main(): Promise<void> {
   registry.register(apiSurfaceAuditorPlugin)
   registry.register(systemTestPlugin)
   registry.register(cliTestPlugin)
+  registry.register(e2eTestPlugin)
+  registry.register(systemArchitectPlugin)
 
   // Validate critical plugin ordering:
   // health-check MUST run before pipeline-fixer and queue-manager since they

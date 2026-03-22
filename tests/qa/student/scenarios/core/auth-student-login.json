@@ -24,11 +24,12 @@
       "input": { "userRef": "$student" }
     },
     {
-      "action": "openHome",
+      "action": "navigate",
+      "input": { "type": "home" },
       "description": "Verify redirect to home page after login"
     },
     {
-      "action": "expectUrl",
+      "action": "beAt",
       "input": { "pattern": "/(start|/?)$" }
     }
   ],

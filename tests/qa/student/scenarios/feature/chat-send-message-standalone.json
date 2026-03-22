@@ -1,0 +1,36 @@
+{
+  "id": "chat-send-message-standalone",
+  "name": "Student sends message on standalone /ask page",
+  "journey": "student-chats-with-ai",
+  "type": "feature",
+  "area": "chat",
+  "tags": ["chat", "ask", "standalone"],
+  "locale": "he",
+  "preconditions": [
+    {
+      "action": "seed",
+      "entity": "user",
+      "data": { "role": "student" },
+      "ref": "$student"
+    }
+  ],
+  "steps": [
+    {
+      "action": "login",
+      "input": { "userRef": "$student" }
+    },
+    {
+      "action": "navigate",
+      "input": { "type": "ask" }
+    },
+    {
+      "action": "beAt",
+      "input": { "pattern": "/ask" }
+    },
+    {
+      "action": "sendMessage",
+      "input": { "text": "שלום" }
+    }
+  ],
+  "teardown": "auto"
+}

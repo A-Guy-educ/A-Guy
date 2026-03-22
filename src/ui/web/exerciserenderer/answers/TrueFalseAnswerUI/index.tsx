@@ -72,10 +72,10 @@ export function TrueFalseAnswerUI({
     <div className="space-y-6">
       {spec.items.map((item) => (
         <div key={item.id} className="space-y-3">
-          <div className="font-medium text-sm">
+          <div className="font-medium text-body-sm">
             <span>{item.label}.</span>
           </div>
-          <div className="text-base">
+          <div className="text-body-md">
             <RichTextRenderer block={item.prompt} />
           </div>
           <div className="flex gap-3">

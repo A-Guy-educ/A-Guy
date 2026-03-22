@@ -42,11 +42,11 @@ export function FormulaComposer({ onInsert, onClose, className }: FormulaCompose
         placeholder="Type or use buttons..."
       />
 
-      <div className="flex justify-end gap-2 mt-2">
+      <div className="flex justify-end gap-content-gap-xs mt-2">
         <button
           type="button"
           onClick={onClose}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:bg-muted transition-colors"
+          className="flex items-center gap-1 px-3 py-1.5 rounded-md text-body-sm text-muted-foreground hover:bg-muted transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
@@ -55,7 +55,7 @@ export function FormulaComposer({ onInsert, onClose, className }: FormulaCompose
           onClick={handleInsert}
           disabled={!formulaValue.trim()}
           className={cn(
-            'flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+            'flex items-center gap-1 px-3 py-1.5 rounded-md text-body-sm font-medium transition-colors',
             'bg-primary text-primary-foreground hover:bg-primary/90',
             'disabled:opacity-50 disabled:cursor-not-allowed',
           )}

@@ -268,8 +268,8 @@ describe('successTrackerPlugin', () => {
     expect(actions.some((a) => a.urgency === 'warning')).toBe(true)
   })
 
-  it('has correct schedule (every 6)', () => {
-    expect(successTrackerPlugin.schedule?.every).toBe(6)
+  it('has correct schedule (daily)', () => {
+    expect(successTrackerPlugin.schedule?.every).toBe(1)
   })
 
   it('uses dedup keys to prevent multiple daily executions', async () => {

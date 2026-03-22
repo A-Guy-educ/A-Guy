@@ -1,0 +1,23 @@
+{
+  "id": "auth-guest-upgrade",
+  "name": "Guest user upgrades to authenticated account",
+  "journey": "student-auth",
+  "type": "feature",
+  "area": "auth",
+  "tags": ["auth", "guest", "upgrade"],
+  "locale": "he",
+  "steps": [
+    {
+      "action": "startAsGuest"
+    },
+    {
+      "action": "navigate",
+      "input": { "type": "courses" }
+    },
+    {
+      "action": "see",
+      "input": { "text": "קורסים" }
+    }
+  ],
+  "teardown": "auto"
+}

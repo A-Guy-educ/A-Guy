@@ -161,7 +161,7 @@ export const STAGE_REGISTRY: Record<StageName, StageMetadata> = {
   },
   fix: {
     outputFile: 'fix.md',
-    timeout: ms('30m'),
+    timeout: ms('45m'), // Increased from 30m — fixes often need more time than original build
     complexityThreshold: 0,
     contextFiles: [
       'verify-failures.md',
@@ -279,7 +279,7 @@ export const SPEC_ORDER_LIGHTWEIGHT: StageName[] = ['taskify', 'clarify']
 export const IMPL_ORDER_STANDARD: TypedPipelineStep[] = [
   'architect',
   'plan-gap',
-  'build', // test stage deferred to inspector plugin (cody-deferred-tests)
+  { parallel: ['test', 'build'] },
   'commit',
   'review',
   'fix',
@@ -292,7 +292,7 @@ export const IMPL_ORDER_STANDARD: TypedPipelineStep[] = [
 
 export const IMPL_ORDER_LIGHTWEIGHT: TypedPipelineStep[] = [
   'architect',
-  'build', // test stage deferred to inspector plugin (cody-deferred-tests)
+  { parallel: ['test', 'build'] },
   'commit',
   'review',
   'fix',

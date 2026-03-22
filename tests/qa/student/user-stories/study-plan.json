@@ -1,0 +1,37 @@
+{
+  "userStories": [
+    {
+      "id": "US-STUDY-001",
+      "story": "As a student, I want to create a study plan so that I can organize my learning goals",
+      "criteria": [
+        "Given I am logged in and on the study plan page",
+        "When I set my exam date and select courses",
+        "Then a personalized study schedule is generated"
+      ],
+      "scenarios": ["study-plan-create"],
+      "priority": "should-have"
+    },
+    {
+      "id": "US-STUDY-002",
+      "story": "As a student, I want to view my existing study plan so that I can track my progress",
+      "criteria": [
+        "Given I have an existing study plan",
+        "When I navigate to the study plan page",
+        "Then I see my schedule and progress"
+      ],
+      "scenarios": ["study-plan-view"],
+      "priority": "should-have"
+    },
+    {
+      "id": "US-STUDY-003",
+      "story": "As a student, I want to create a study plan without an exam date so that I can plan self-paced learning",
+      "criteria": [
+        "Given I am on the study plan creation page",
+        "When I do not set an exam date",
+        "Then the system creates a flexible self-paced schedule"
+      ],
+      "scenarios": ["study-plan-no-exam-date"],
+      "priority": "may-have"
+    }
+  ]
+}

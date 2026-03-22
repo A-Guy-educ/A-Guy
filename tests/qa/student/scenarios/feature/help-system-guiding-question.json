@@ -1,0 +1,72 @@
+{
+  "id": "help-system-guiding-question",
+  "name": "Student sees guiding question after requesting hint",
+  "journey": "student-solves-exercises",
+  "type": "feature",
+  "area": "exercises",
+  "tags": ["help", "hint", "guiding-question"],
+  "locale": "he",
+  "preconditions": [
+    {
+      "action": "seed",
+      "entity": "course",
+      "data": {
+        "title": "Guiding Course",
+        "courseLabel": "ג",
+        "status": "published",
+        "isActive": true,
+        "accessType": "free"
+      },
+      "ref": "$course"
+    },
+    {
+      "action": "seed",
+      "entity": "chapter",
+      "data": {
+        "title": "Guiding Chapter",
+        "course": "$course",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$chapter"
+    },
+    {
+      "action": "seed",
+      "entity": "lesson",
+      "data": {
+        "title": "Guiding Lesson",
+        "chapter": "$chapter",
+        "type": "learning",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$lesson"
+    },
+    {
+      "action": "seed",
+      "entity": "user",
+      "data": { "role": "student" },
+      "ref": "$student"
+    }
+  ],
+  "steps": [
+    {
+      "action": "login",
+      "input": { "userRef": "$student" }
+    },
+    {
+      "action": "navigate",
+      "input": {
+        "type": "lesson",
+        "courseRef": "$course",
+        "chapterRef": "$chapter",
+        "lessonRef": "$lesson"
+      }
+    },
+    {
+      "action": "requestHelp",
+      "input": { "level": "hint" }
+    }
+  ],
+  "teardown": "auto"
+}

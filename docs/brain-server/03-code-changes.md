@@ -281,10 +281,9 @@ Add Context+ MCP server so build agent can query brain during execution.
 ```json
 {
   "mcp": {
-    "contextplus": {
-      "type": "remote",
-      "url": "http://<tailscale-ip>:4097/sse",
-      "enabled": true
+    "neuron": {
+      "type": "sse",
+      "url": "http://100.66.248.120:4097/sse"
     }
   }
 }

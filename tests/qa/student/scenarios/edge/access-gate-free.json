@@ -1,0 +1,60 @@
+{
+  "id": "access-gate-free",
+  "name": "Guest can access free content without login",
+  "journey": "student-accesses-gated-content",
+  "type": "edge",
+  "area": "access-control",
+  "tags": ["access-gate", "free", "guest"],
+  "locale": "he",
+  "preconditions": [
+    {
+      "action": "seed",
+      "entity": "course",
+      "data": {
+        "title": "Free Course",
+        "courseLabel": "ח",
+        "status": "published",
+        "isActive": true,
+        "accessType": "free"
+      },
+      "ref": "$course"
+    },
+    {
+      "action": "seed",
+      "entity": "chapter",
+      "data": {
+        "title": "Free Chapter",
+        "course": "$course",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$chapter"
+    },
+    {
+      "action": "seed",
+      "entity": "lesson",
+      "data": {
+        "title": "Free Lesson",
+        "chapter": "$chapter",
+        "type": "learning",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$lesson"
+    }
+  ],
+  "steps": [
+    {
+      "action": "startAsGuest"
+    },
+    {
+      "action": "navigate",
+      "input": { "type": "course", "courseRef": "$course" }
+    },
+    {
+      "action": "see",
+      "input": { "text": "Free Course" }
+    }
+  ],
+  "teardown": "auto"
+}

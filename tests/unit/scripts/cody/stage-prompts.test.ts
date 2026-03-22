@@ -168,10 +168,11 @@ describe('stage-prompts', () => {
 
   describe('getImplStages', () => {
     it('should return full implementation stage list (default standard profile)', () => {
-      // docs deferred to inspector; test deferred to inspector; no duplicate commit
+      // test + build run in parallel; no duplicate commit
       expect(getImplStages()).toEqual([
         'architect',
         'plan-gap',
+        'test',
         'build',
         'commit',
         'review',
@@ -182,9 +183,10 @@ describe('stage-prompts', () => {
     })
 
     it('should return reduced stage list for lightweight profile (no plan-gap)', () => {
-      // docs deferred to inspector; test deferred to inspector; no duplicate commit
+      // test + build run in parallel; no duplicate commit
       expect(getImplStages('lightweight')).toEqual([
         'architect',
+        'test',
         'build',
         'commit',
         'review',
@@ -195,10 +197,11 @@ describe('stage-prompts', () => {
     })
 
     it('should return full stage list for standard profile', () => {
-      // docs deferred to inspector; test deferred to inspector; no duplicate commit
+      // test + build run in parallel; no duplicate commit
       expect(getImplStages('standard')).toEqual([
         'architect',
         'plan-gap',
+        'test',
         'build',
         'commit',
         'review',
@@ -241,11 +244,18 @@ describe('stage-prompts', () => {
         } else if (stage === 'docs') {
           expect(instruction).toContain('DOCUMENTATION STAGE')
         } else if (stage === 'test') {
-          expect(instruction).toContain('DEFERRED TEST STAGE')
+          expect(instruction).toContain('TDD RED PHASE')
         } else {
           expect(instruction).toBe('')
         }
       }
+    })
+
+    it('fix stage instructs to prioritize critical/major issues when many issues exist', () => {
+      const instruction = stageInstructions['fix']('260219-test')
+      expect(instruction).toContain('focus on the CRITICAL issues first')
+      expect(instruction).toContain('prioritize the most impactful ones')
+      expect(instruction).toContain('make the code substantially better')
     })
   })
 

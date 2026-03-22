@@ -27,10 +27,11 @@ import { startServer, stopServer, checkpointDb, findLastSessionId } from './open
 import {
   runSpecMode,
   runImplMode,
-  runFullMode,
+  runBrainFullMode,
   runRerunMode,
   runFixMode,
   runStatusMode,
+  runDesignSystemMode,
 } from './modes'
 
 // FIX #3: Import status functions at module level instead of dynamic imports in signal handlers.
@@ -341,7 +342,8 @@ Examples:
         await runImplMode(ctx)
         break
       case 'full':
-        await runFullMode(ctx)
+        // Brain-aware: uses remote brain for architect + review when BRAIN_SERVER_URL is set
+        await runBrainFullMode(ctx)
         break
       case 'rerun':
         await runRerunMode(ctx)
@@ -351,6 +353,9 @@ Examples:
         break
       case 'status':
         await runStatusMode(ctx)
+        break
+      case 'design-system':
+        await runDesignSystemMode(ctx)
         break
       default:
         throw new Error(`Unknown mode: ${input.mode}`)

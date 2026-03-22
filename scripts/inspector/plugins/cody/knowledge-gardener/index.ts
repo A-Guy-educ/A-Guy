@@ -32,7 +32,7 @@ export const knowledgeGardenerPlugin: InspectorPlugin = {
   name: 'knowledge-gardener',
   description: 'Maintain AI knowledge base from completed task memory files',
   domain: 'cody',
-  schedule: { every: 6 },
+  schedule: { every: 1 }, // Daily
 
   async run(ctx): Promise<ActionRequest[]> {
     ctx.log.debug('Running knowledge-gardener plugin')

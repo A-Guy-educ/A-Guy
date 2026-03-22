@@ -54,7 +54,7 @@ function migrateFromV1(v1Data: Record<AgentId, ChatMessage[]> | null): GlobalCha
     if (messages && messages.length > 0) {
       const sessionId = generateSessionId()
       const firstUserMessage = messages.find((m) => m.role === 'user')
-      const title = firstUserMessage ? firstUserMessage.text.slice(0, 60) : 'Imported conversation'
+      const title = firstUserMessage?.text?.slice(0, 60) || 'Imported conversation'
 
       store.sessions.push({
         id: sessionId,
@@ -390,7 +390,7 @@ export function useChatSessions(agentId: AgentId): UseChatSessionsResult {
                     s.title === 'New conversation' && newMessages.length > 0
                       ? newMessages
                           .find((m: ChatMessage) => m.role === 'user')
-                          ?.text.slice(0, 60) || s.title
+                          ?.text?.slice(0, 60) || s.title
                       : s.title,
                 }
               : s,

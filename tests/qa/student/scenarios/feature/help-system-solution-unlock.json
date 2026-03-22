@@ -55,15 +55,16 @@
       "input": { "userRef": "$student" }
     },
     {
-      "action": "openLesson",
+      "action": "navigate",
       "input": {
+        "type": "lesson",
         "courseRef": "$course",
         "chapterRef": "$chapter",
         "lessonRef": "$lesson"
       }
     },
     {
-      "action": "expectUrl",
+      "action": "beAt",
       "input": { "pattern": "/lessons/" },
       "description": "Verify lesson page loads"
     }

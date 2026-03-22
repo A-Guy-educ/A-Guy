@@ -327,14 +327,14 @@ export function ExerciseRenderer({
   if (!content?.blocks || !Array.isArray(content.blocks)) {
     return (
       <div className={cn('w-full max-w-3xl mx-auto', className)}>
-        <Card className="p-6 border-destructive bg-destructive/5">
+        <Card className="p-card-padding border-destructive bg-destructive/5">
           <div className="flex items-start gap-3">
             <XCircle className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
             <div>
-              <h3 className="text-lg font-semibold text-destructive mb-1">
+              <h3 className="text-body-lg font-semibold text-destructive mb-1">
                 Invalid Content Format
               </h3>
-              <p className="text-sm text-muted-foreground">Expected: {`{ blocks: [] }`}</p>
+              <p className="text-body-sm text-muted-foreground">Expected: {`{ blocks: [] }`}</p>
             </div>
           </div>
         </Card>
@@ -357,15 +357,15 @@ export function ExerciseRenderer({
         <div className="w-full flex items-center justify-between mb-6">
           <div
             className={cn(
-              'w-7 h-7 rounded-full flex items-center justify-center bg-slate-50 border border-slate-200 shadow-sm',
+              'w-7 h-7 rounded-full flex items-center justify-center bg-slate-50 border border-slate-200 shadow-elevation-1',
               isHebrew ? 'ml-auto' : 'mr-auto',
             )}
           >
-            <span className="font-bold text-sm">{String(exerciseNumber)}</span>
+            <span className="font-bold text-body-sm">{String(exerciseNumber)}</span>
           </div>
         </div>
 
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-content-gap-lg">
           {(() => {
             let questionIndex = 0
             return content.blocks.map((block) => {
@@ -518,7 +518,7 @@ export function ExerciseRenderer({
                 if (!media) {
                   return (
                     <div key={mediaBlock.id} className="my-4">
-                      <p className="text-sm text-muted-foreground">{t('videoUnavailable')}</p>
+                      <p className="text-body-sm text-muted-foreground">{t('videoUnavailable')}</p>
                     </div>
                   )
                 }

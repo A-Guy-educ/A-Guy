@@ -312,6 +312,17 @@ function getOverflowActions(
     })
   }
 
+  // Rerun (if has previous run and not currently building)
+  if (task.pipeline && task.pipeline.state !== 'running') {
+    actions.push({
+      icon: RotateCcw,
+      label: 'Rerun',
+      pendingLabel: 'Rerunning…',
+      onClick: () => taskActions.rerun(),
+      pendingKey: 'rerun',
+    })
+  }
+
   // Reject Gate
   if (task.column === 'gate-waiting' && !completedActions.has('reject')) {
     actions.push({

@@ -52,7 +52,7 @@ export function ExerciseTable({
       <table
         className={cn(
           'w-full border-collapse table-fixed',
-          table.showBorders && 'shadow-sm rounded-md overflow-hidden',
+          table.showBorders && 'shadow-elevation-1 rounded-md overflow-hidden',
         )}
       >
         {table.showHeader && (
@@ -127,8 +127,8 @@ function FillableInput({ cellKey, value, onChange, result, disabled, align }: Fi
       onChange={(e) => onChange(cellKey, e.target.value)}
       readOnly={disabled}
       className={cn(
-        'w-full min-w-[120px] px-2 py-1.5 rounded-md border-2 text-sm',
-        'bg-background transition-colors duration-200',
+        'w-full min-w-[120px] px-2 py-1.5 rounded-md border-2 text-body-sm',
+        'bg-background transition-colors duration-normal',
         align === 'left' && 'text-left',
         align === 'center' && 'text-center',
         align === 'right' && 'text-right',

@@ -1,0 +1,20 @@
+{
+  "id": "onboarding-skip-course",
+  "name": "Student skips course selection during onboarding",
+  "journey": "student-onboarding",
+  "type": "edge",
+  "area": "onboarding",
+  "tags": ["onboarding", "skip", "edge"],
+  "locale": "he",
+  "steps": [
+    {
+      "action": "navigate",
+      "input": { "type": "home" }
+    },
+    {
+      "action": "see",
+      "input": { "text": "שלום" }
+    }
+  ],
+  "teardown": "auto"
+}

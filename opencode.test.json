@@ -1,6 +1,14 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "instructions": [".ai-docs/BOOTSTRAP.md", ".ai-docs/quick-reference/CHEAT-SHEET.md"],
+  "provider": {
+    "minimax": {
+      "options": {
+        "baseURL": "http://localhost:8080/v1",
+        "apiKey": "mock-key"
+      }
+    }
+  },
   "agent": {
     "build": {
       "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",

@@ -1,0 +1,61 @@
+{
+  "id": "course-tab-practice",
+  "name": "Student views Practice tab on course page",
+  "journey": "student-navigates-content",
+  "type": "feature",
+  "area": "navigation",
+  "tags": ["navigation", "tabs", "practice"],
+  "locale": "he",
+  "preconditions": [
+    {
+      "action": "seed",
+      "entity": "course",
+      "data": {
+        "title": "Practice Tab Course",
+        "courseLabel": "מ",
+        "status": "published",
+        "isActive": true,
+        "accessType": "free"
+      },
+      "ref": "$course"
+    },
+    {
+      "action": "seed",
+      "entity": "chapter",
+      "data": {
+        "title": "Practice Chapter",
+        "course": "$course",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$chapter"
+    },
+    {
+      "action": "seed",
+      "entity": "lesson",
+      "data": {
+        "title": "Practice Lesson",
+        "chapter": "$chapter",
+        "type": "practice",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$lesson"
+    }
+  ],
+  "steps": [
+    {
+      "action": "navigate",
+      "input": { "type": "course", "courseRef": "$course" }
+    },
+    {
+      "action": "clickTab",
+      "input": { "tab": "practice" }
+    },
+    {
+      "action": "see",
+      "input": { "text": "לתרגל" }
+    }
+  ],
+  "teardown": "auto"
+}
