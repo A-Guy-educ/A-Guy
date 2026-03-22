@@ -8,11 +8,7 @@
       "domain": "frontend",
       "taskType": "fix_bug",
       "complexity": 17,
-      "patterns": [
-        "css-styling",
-        "frontend-bugfix",
-        "tailwind-utility"
-      ],
+      "patterns": ["css-styling", "frontend-bugfix", "tailwind-utility"],
       "summary": "Fixed lesson introduction container being too narrow by updating Tailwind max-width classes in ExercisesPager component"
     },
     {
@@ -21,11 +17,7 @@
       "domain": "frontend",
       "taskType": "fix_bug",
       "complexity": 17,
-      "patterns": [
-        "type-error",
-        "css-styling",
-        "hook"
-      ],
+      "patterns": ["type-error", "css-styling", "hook"],
       "summary": "typescript, css, hook"
     }
   ],

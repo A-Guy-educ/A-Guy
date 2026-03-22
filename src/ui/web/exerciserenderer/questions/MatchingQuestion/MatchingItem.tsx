@@ -69,7 +69,9 @@ export function MatchingItem({
       aria-selected={isSelected}
       disabled={disabled}
     >
-      <span className="font-bold text-body-lg text-muted-foreground min-w-[28px] shrink-0">{badge}</span>
+      <span className="font-bold text-body-lg text-muted-foreground min-w-[28px] shrink-0">
+        {badge}
+      </span>
       <span className="flex-1">
         <RichTextRenderer block={optionBlock} />
       </span>

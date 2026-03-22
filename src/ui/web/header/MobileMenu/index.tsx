@@ -150,7 +150,9 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
 
           {/* Version number - mobile only */}
           <div className="px-6 py-section-xs border-t border-border">
-            <p className="text-body-xs text-muted-foreground/70 font-normal text-center">v{version}</p>
+            <p className="text-body-xs text-muted-foreground/70 font-normal text-center">
+              v{version}
+            </p>
           </div>
         </nav>
       </div>

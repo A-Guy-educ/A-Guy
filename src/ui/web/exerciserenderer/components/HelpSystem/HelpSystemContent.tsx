@@ -58,7 +58,10 @@ export function HelpSystemContent({
         <span className="text-body-xs font-medium text-gray-600">{label}</span>
       </div>
       <div className="prose prose-sm prose-slate dark:prose-invert max-w-none">
-        <MathMarkdown content={processed} className="text-body-sm leading-relaxed text-foreground" />
+        <MathMarkdown
+          content={processed}
+          className="text-body-sm leading-relaxed text-foreground"
+        />
       </div>
     </div>
   )

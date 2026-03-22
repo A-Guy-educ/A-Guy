@@ -29,7 +29,9 @@ export function NavigationBar() {
                 href={item.href}
                 className={cn(
                   'flex-1 py-1.5 text-body-xs md:text-body-sm rounded-lg transition-all text-center',
-                  isActive ? 'bg-card shadow-elevation-1 font-bold' : 'font-medium hover:opacity-80',
+                  isActive
+                    ? 'bg-card shadow-elevation-1 font-bold'
+                    : 'font-medium hover:opacity-80',
                 )}
               >
                 <span style={isActive ? { color: item.color } : undefined}>{t(item.key)}</span>

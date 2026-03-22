@@ -600,8 +600,8 @@ describe('McqQuestion component', () => {
         />,
       )
 
-      // The prompt should NOT have text-lg (it uses text-base)
-      const promptContainer = container.querySelector('.text-base.font-medium')
+      // The prompt should NOT have text-lg (it uses text-body-md per design system)
+      const promptContainer = container.querySelector('.text-body-md.font-medium')
       expect(promptContainer).toBeTruthy()
     })
   })

@@ -58,6 +58,8 @@
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ExercisesPager/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonAnalytics.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonContent.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/index.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/useLessonPager.ts",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ViewToggle.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/complete/CompleteContent.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseHeader/index.tsx",
@@ -137,6 +139,8 @@
         "src/server/payload/blocks/Code/CopyButton.tsx",
         "src/server/payload/blocks/Form/Component.tsx",
         "src/server/payload/blocks/Form/Error/index.tsx",
+        "src/server/payload/blocks/GeometryBlock/Component.tsx",
+        "src/server/payload/blocks/GraphBlock/Component.tsx",
         "src/ui/admin/AdminChat/DashboardWidget/index.tsx",
         "src/ui/admin/AdminChat/SidebarLink/index.tsx",
         "src/ui/admin/AnswerSpecJsonField/index.tsx",
@@ -183,6 +187,10 @@
         "src/ui/admin/ExercisePreview/index.tsx",
         "src/ui/admin/Footer/index.tsx",
         "src/ui/admin/Header/index.tsx",
+        "src/ui/admin/IntroGeometryField/index.tsx",
+        "src/ui/admin/IntroGraphField/index.tsx",
+        "src/ui/admin/IntroTableField/index.tsx",
+        "src/ui/admin/LessonBlocksField/index.tsx",
         "src/ui/admin/MediaPreview/AudioPreview.tsx",
         "src/ui/admin/MediaPreview/DocumentPreview.tsx",
         "src/ui/admin/MediaPreview/ExternalPreview.tsx",
@@ -552,6 +560,7 @@
         "src/server/payload/blocks/Banner/Component.tsx",
         "src/server/payload/blocks/Content/Component.tsx",
         "src/server/payload/blocks/MediaBlock/Component.tsx",
+        "src/server/payload/blocks/TableBlock/Component.tsx",
         "src/ui/cody/components/BranchCleanupDialog.tsx",
         "src/ui/cody/components/BugReportDialog.tsx",
         "src/ui/cody/components/CIStatusBadge.tsx",
@@ -690,6 +699,7 @@
         "src/app/(frontend)/courses/[courseSlug]/_components/PracticeTab/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ExercisesPager/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonContent.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ViewToggle.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/complete/CompleteContent.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseHeader/index.tsx",
@@ -1341,6 +1351,7 @@
         "src/server/payload/collections/Chapters.ts",
         "src/server/payload/collections/ConfigSecrets.ts",
         "src/server/payload/collections/ConfigValues.ts",
+        "src/server/payload/collections/ContentPages.ts",
         "src/server/payload/collections/Conversations.ts",
         "src/server/payload/collections/Courses.ts",
         "src/server/payload/collections/Lessons.ts",
@@ -1466,6 +1477,7 @@
         "src/server/payload/collections/ConfigAuditLogs.ts",
         "src/server/payload/collections/ConfigSecrets.ts",
         "src/server/payload/collections/ConfigValues.ts",
+        "src/server/payload/collections/ContentPages.ts",
         "src/server/payload/collections/Conversations.ts",
         "src/server/payload/collections/Courses.ts",
         "src/server/payload/collections/ExerciseAssets.ts",
@@ -2687,6 +2699,22 @@
       "type": "unknown",
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/index.tsx": {
+      "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/useLessonPager.ts": {
+      "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/useLessonPager.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
       "aiSummary": "",
       "dependencies": ["react"]
     },
@@ -4478,6 +4506,22 @@
       "aiSummary": "",
       "dependencies": ["react", "react-hook-form"]
     },
+    "src/server/payload/blocks/GeometryBlock/Component.tsx": {
+      "path": "src/server/payload/blocks/GeometryBlock/Component.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/server/payload/blocks/GraphBlock/Component.tsx": {
+      "path": "src/server/payload/blocks/GraphBlock/Component.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
     "src/server/payload/blocks/MediaBlock/Component.tsx": {
       "path": "src/server/payload/blocks/MediaBlock/Component.tsx",
       "type": "unknown",
@@ -4485,6 +4529,14 @@
       "patterns": ["tailwind-component"],
       "aiSummary": "",
       "dependencies": ["next/image", "react"]
+    },
+    "src/server/payload/blocks/TableBlock/Component.tsx": {
+      "path": "src/server/payload/blocks/TableBlock/Component.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["tailwind-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
     },
     "src/server/payload/collections/AccessCodes.ts": {
       "path": "src/server/payload/collections/AccessCodes.ts",
@@ -4540,6 +4592,14 @@
       "domain": "config",
       "patterns": ["domain-scoped-config", "json-storage", "access-control", "payload-hooks"],
       "aiSummary": "Domain-based configuration values stored as JSON, tenant-scoped",
+      "dependencies": ["payload"]
+    },
+    "src/server/payload/collections/ContentPages.ts": {
+      "path": "src/server/payload/collections/ContentPages.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["access-control", "payload-hooks"],
+      "aiSummary": "",
       "dependencies": ["payload"]
     },
     "src/server/payload/collections/Conversations.ts": {
@@ -5455,6 +5515,38 @@
       "patterns": ["client-component"],
       "aiSummary": "",
       "dependencies": ["@payloadcms/ui"]
+    },
+    "src/ui/admin/IntroGeometryField/index.tsx": {
+      "path": "src/ui/admin/IntroGeometryField/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "@payloadcms/ui"]
+    },
+    "src/ui/admin/IntroGraphField/index.tsx": {
+      "path": "src/ui/admin/IntroGraphField/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "@payloadcms/ui"]
+    },
+    "src/ui/admin/IntroTableField/index.tsx": {
+      "path": "src/ui/admin/IntroTableField/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "@payloadcms/ui", "lucide-react"]
+    },
+    "src/ui/admin/LessonBlocksField/index.tsx": {
+      "path": "src/ui/admin/LessonBlocksField/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "@payloadcms/ui"]
     },
     "src/ui/admin/MediaPreview/AudioPreview.tsx": {
       "path": "src/ui/admin/MediaPreview/AudioPreview.tsx",
@@ -7311,8 +7403,8 @@
     }
   },
   "metadata": {
-    "generatedAt": "2026-03-21T20:27:58.622Z",
-    "totalFiles": 635,
+    "generatedAt": "2026-03-22T10:44:29.547Z",
+    "totalFiles": 645,
     "totalPatterns": 246
   }
 }

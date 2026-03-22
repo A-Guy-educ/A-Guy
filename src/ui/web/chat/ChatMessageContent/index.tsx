@@ -21,7 +21,9 @@ interface ChatMessageContentProps {
 const chatMarkdownComponents: Components = {
   p: ({ children }) => <p className="mb-4 leading-relaxed first:mt-0 last:mb-0">{children}</p>,
   h1: ({ children }) => (
-    <h1 className="text-heading-xl font-semibold leading-tight mt-5 mb-2.5 first:mt-0">{children}</h1>
+    <h1 className="text-heading-xl font-semibold leading-tight mt-5 mb-2.5 first:mt-0">
+      {children}
+    </h1>
   ),
   h2: ({ children }) => (
     <h2 className="text-body-lg font-semibold leading-tight mt-5 mb-2.5 first:mt-0">{children}</h2>
