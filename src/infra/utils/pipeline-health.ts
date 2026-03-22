@@ -77,11 +77,13 @@ const VALID_STAGES = [
   'pr',
 ] as const
 
-const stageNameSchema = z.string().refine(
-  (val): val is (typeof VALID_STAGES)[number] =>
-    (VALID_STAGES as readonly string[]).includes(val),
-  { message: `Invalid stage name. Valid stages: ${VALID_STAGES.join(', ')}` }
-)
+const stageNameSchema = z
+  .string()
+  .refine(
+    (val): val is (typeof VALID_STAGES)[number] =>
+      (VALID_STAGES as readonly string[]).includes(val),
+    { message: `Invalid stage name. Valid stages: ${VALID_STAGES.join(', ')}` },
+  )
 
 const checkStageHealthSchema = z.object({
   stage: stageNameSchema,

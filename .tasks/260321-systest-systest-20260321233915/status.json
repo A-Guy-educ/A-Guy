@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-21T21:41:44.755Z",
-  "updatedAt": "2026-03-22T00:54:06.700Z",
+  "updatedAt": "2026-03-22T00:56:20.803Z",
   "state": "running",
   "cursor": "build",
   "stages": {
@@ -61,9 +61,29 @@
       "sessionId": "ses_2ecf9d0deffe2dAaGYTspkhkvS"
     },
     "commit": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-22T00:54:06.700Z",
+      "completedAt": "2026-03-22T00:54:07.470Z",
+      "elapsed": 1
+    },
+    "review": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 28 (moderate) below threshold 30 for review"
+    },
+    "fix": {
       "state": "running",
       "retries": 0,
-      "startedAt": "2026-03-22T00:54:06.700Z"
+      "skipped": "No issues to fix",
+      "fixAttempt": 1,
+      "maxFixAttempts": 2,
+      "startedAt": "2026-03-22T00:56:20.803Z"
+    },
+    "verify": {
+      "state": "pending",
+      "retries": 0,
+      "startedAt": "2026-03-22T00:54:07.474Z"
     }
   },
   "issueNumber": 988,
