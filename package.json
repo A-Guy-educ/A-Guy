@@ -1,6 +1,6 @@
 {
   "name": "a-guy",
-  "version": "0.19.0",
+  "version": "0.20.0",
   "description": "Website template for Payload",
   "license": "MIT",
   "type": "module",
@@ -118,8 +118,6 @@
     "brain:restart": "ssh root@${BRAIN_VPS_IP:-184.174.39.227} \"cd /opt/brain-server && docker compose restart\"",
     "brain:proxy": "node --import tsx scripts/brain-server/local-mcp-proxy.ts",
     "brain:proxy:start": "BRAIN_API_TOKEN=${BRAIN_API_TOKEN} BRAIN_SERVER_URL=http://184.174.39.227:4098 node --import tsx scripts/brain-server/local-mcp-proxy.ts &",
-    "design:tokens:codemod": "pnpm tsx scripts/design-tokens/codemod.ts",
-    "design:tokens:codemod:dry": "pnpm tsx scripts/design-tokens/codemod.ts --dry-run --verbose",
     "design:tokens:audit": "pnpm tsx scripts/design-tokens/audit.ts",
     "design:tokens:audit:fixable": "pnpm tsx scripts/design-tokens/audit.ts --fixable",
     "design:tokens:audit:verbose": "pnpm tsx scripts/design-tokens/audit.ts --verbose"
