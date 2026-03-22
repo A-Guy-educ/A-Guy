@@ -1172,12 +1172,13 @@ export function commitPipelineFiles(
 
     // 4. Commit using execFileSync to prevent shell injection (BUG-5 fix)
     // Skip husky/commitlint hooks in CI - they run their own quality gates
+    // Use stdio: 'pipe' to capture git output in error object for "nothing to commit" detection
     const hookSafeEnv = getHookSafeEnv()
     let committed = false
     try {
       execFileSync('git', ['commit', '--no-gpg-sign', '-m', message], {
         cwd,
-        stdio: 'inherit',
+        stdio: 'pipe',
         env: hookSafeEnv,
       })
       committed = true
