@@ -1499,16 +1499,17 @@ describe('commitPipelineFiles', () => {
     })
 
     // Should have called git commit via execFileSync (BUG-5 fix: no shell injection)
+    // commit uses stdio: 'pipe' to capture output for "nothing to commit" detection
     expect(childProcess.execFileSync).toHaveBeenCalledWith(
       'git',
       ['commit', '--no-gpg-sign', '-m', 'test commit'],
-      expect.objectContaining({ stdio: 'inherit' }),
+      expect.objectContaining({ stdio: 'pipe', cwd: expect.any(String) }),
     )
-    // Should have called git push via execFileSync (production code uses execFileSync)
+    // Should have called git push via pushWithRebase (uses execFileSync with env)
     expect(childProcess.execFileSync).toHaveBeenCalledWith(
       'git',
-      ['push', '-u', 'origin', 'HEAD'],
-      expect.objectContaining({ stdio: 'inherit' }),
+      expect.arrayContaining(['push', '-u', 'origin', 'HEAD']),
+      expect.objectContaining({ cwd: expect.any(String) }),
     )
   })
 })
@@ -1610,9 +1611,9 @@ describe('commitPipelineFiles artifact exclusion', () => {
       })
 
       const resets = getResetCalls()
-      // All reset patterns should include the taskDir prefix
+      // All reset patterns should include the taskDir prefix (path.join may use OS separator)
       for (const reset of resets) {
-        expect(reset).toContain('.tasks/260218-test')
+        expect(reset).toMatch(/\.tasks[/\\]260218-test/)
       }
     })
 
