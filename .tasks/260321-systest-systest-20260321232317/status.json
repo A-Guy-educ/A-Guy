@@ -4,9 +4,9 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-21T21:25:21.919Z",
-  "updatedAt": "2026-03-21T21:36:57.994Z",
-  "state": "failed",
-  "cursor": "gap",
+  "updatedAt": "2026-03-22T00:51:07.925Z",
+  "state": "running",
+  "cursor": "build",
   "stages": {
     "taskify": {
       "state": "completed",
@@ -54,12 +54,8 @@
       "sessionId": "ses_2edb08a29ffe1E2PD8qAWUhSi0"
     },
     "build": {
-      "state": "failed",
-      "retries": 0,
-      "completedAt": "2026-03-21T21:36:56.510Z",
-      "outputFile": "build.md",
-      "sessionId": "ses_2edb08bfeffeMKUq2pKUUy8lVa",
-      "error": "build.md must contain ## Changes or ## Files section"
+      "state": "pending",
+      "retries": 0
     }
   },
   "issueNumber": 987,
@@ -71,5 +67,6 @@
       "timestamp": "2026-03-21T21:25:21.919Z"
     }
   ],
-  "completedAt": "2026-03-21T21:36:57.994Z"
+  "completedAt": "2026-03-21T21:36:57.994Z",
+  "branchName": "feat/260321-systest-987-system-test-add-pipeline-health"
 }
