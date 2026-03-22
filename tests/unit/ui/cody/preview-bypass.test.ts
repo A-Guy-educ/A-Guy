@@ -84,4 +84,13 @@ describe('getPreviewBypassUrl', () => {
     expect(result).toMatch(/^http:\/\//)
     delete process.env.NEXT_PUBLIC_VERCEL_BYPASS_SECRET
   })
+
+  it('returns original URL when URL is truly invalid (causes URL constructor to throw)', () => {
+    process.env.NEXT_PUBLIC_VERCEL_BYPASS_SECRET = 'secret'
+    // 'not-a-url' is not a valid URL and causes URL constructor to throw
+    const result = getPreviewBypassUrl('not-a-url')
+    // Should return the original URL since URL parsing threw (graceful degradation)
+    expect(result).toBe('not-a-url')
+    delete process.env.NEXT_PUBLIC_VERCEL_BYPASS_SECRET
+  })
 })

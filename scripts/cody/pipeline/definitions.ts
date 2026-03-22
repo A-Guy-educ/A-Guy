@@ -126,7 +126,7 @@ function createStageDefinitions(ctx: PipelineContext): Map<StageName, StageDefin
     name: 'taskify',
     type: 'agent',
     timeout: getStageTimeout('taskify'),
-    maxRetries: 2, // BUG-F fix: increased from 1 to 2 for better resilience
+    maxRetries: 1,
     postActions: [
       { type: 'validate-task-json' },
       { type: 'set-classification-labels' },
@@ -417,7 +417,7 @@ No critical gaps identified. Plan was refined in-place.
     type: 'agent',
     agentName: 'build', // Build agent fixes its own code based on review.md
     timeout: getStageTimeout('fix'),
-    maxRetries: 2,
+    maxRetries: 1,
     shouldSkip: (ctx) => {
       // In fix mode, never skip — user explicitly requested fixes
       if (ctx.input.mode === 'fix') {

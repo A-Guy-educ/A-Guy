@@ -22,7 +22,7 @@ export function ChatErrorSurface({ type, message, onDismiss, className }: ChatEr
   return (
     <div
       className={cn(
-        'flex items-start gap-3 p-4 rounded-lg border bg-destructive/10 border-destructive/30 text-destructive',
+        'flex items-start gap-3 p-card-padding-sm rounded-lg border bg-destructive/10 border-destructive/30 text-destructive',
         className,
       )}
       role="alert"
@@ -33,11 +33,11 @@ export function ChatErrorSurface({ type, message, onDismiss, className }: ChatEr
 
       {/* Error Content */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium leading-relaxed">{message}</p>
+        <p className="text-body-sm font-medium leading-relaxed">{message}</p>
 
         {/* Auth Error CTA */}
         {(type === 'auth' || type === 'limit') && (
-          <div className="flex items-center gap-2 mt-2 text-sm">
+          <div className="flex items-center gap-content-gap-xs mt-2 text-body-sm">
             <SystemLink
               href={loginUrl}
               className="font-semibold underline hover:no-underline transition-all"

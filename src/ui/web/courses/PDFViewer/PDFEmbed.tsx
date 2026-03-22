@@ -80,8 +80,8 @@ export function PDFEmbed({ pdfUrl, title }: PDFEmbedProps) {
 
   if (showFallback) {
     return (
-      <div className="border rounded-lg overflow-hidden bg-gray-50 p-6">
-        <div className="flex flex-col items-center justify-center py-4 text-center">
+      <div className="border rounded-lg overflow-hidden bg-gray-50 p-card-padding">
+        <div className="flex flex-col items-center justify-center py-section-xs text-center">
           <p className="text-muted-foreground mb-3">
             PDF cannot be displayed inline due to browser restrictions.
           </p>

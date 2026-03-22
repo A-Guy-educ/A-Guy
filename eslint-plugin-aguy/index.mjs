@@ -24,6 +24,7 @@ import tailwindOnlyComponents from './rules/tailwind-only-components.mjs'
 import requireAuthEndpoints from './rules/require-auth-endpoints.mjs'
 import fileLocation from './rules/file-location.mjs'
 import noExecSync from './rules/no-exec-sync.mjs'
+import preferDesignTokens from './rules/prefer-design-tokens.mjs'
 
 const plugin = {
   meta: {
@@ -37,6 +38,7 @@ const plugin = {
     'require-auth-endpoints': requireAuthEndpoints,
     'file-location': fileLocation,
     'no-exec-sync': noExecSync,
+    'prefer-design-tokens': preferDesignTokens,
   },
 }
 export default plugin

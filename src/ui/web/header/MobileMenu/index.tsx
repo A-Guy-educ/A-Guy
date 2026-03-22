@@ -57,7 +57,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   return (
     <>
       <div
-        className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] transition-opacity duration-slow ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={onClose}
@@ -65,12 +65,12 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
 
       <div
         ref={portalContainerRef}
-        className={`fixed top-0 right-0 h-full w-[280px] sm:w-[320px] bg-background border-l border-border z-[70] transform transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 h-full w-[280px] sm:w-[320px] bg-background border-l border-border z-[70] transform transition-transform duration-slow ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="flex items-center justify-between p-6 border-b border-border">
-          <h2 className="text-lg font-semibold">{tMenu('title')}</h2>
+        <div className="flex items-center justify-between p-card-padding border-b border-border">
+          <h2 className="text-body-lg font-semibold">{tMenu('title')}</h2>
           <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-muted transition-colors"
@@ -82,24 +82,24 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
 
         <nav className="flex flex-col h-[calc(100%-73px)] overflow-y-auto">
           {user?.name && (
-            <div className="px-6 py-4 border-b border-border bg-muted/30">
-              <p className="text-sm text-muted-foreground">{tCommon('welcome')}</p>
-              <p className="text-base font-semibold mt-1">{user.name}</p>
+            <div className="px-6 py-section-xs border-b border-border bg-muted/30">
+              <p className="text-body-sm text-muted-foreground">{tCommon('welcome')}</p>
+              <p className="text-body-md font-semibold mt-1">{user.name}</p>
             </div>
           )}
 
           {primaryLinks.length > 0 && (
-            <div className="px-6 py-4 border-b border-border">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            <div className="px-6 py-section-xs border-b border-border">
+              <h3 className="text-body-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
                 {tMenu('navigation')}
               </h3>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-content-gap-xs">
                 {primaryLinks.map(({ link }, i) => (
                   <div key={i} onClick={onClose}>
                     <CMSLink
                       {...link}
                       appearance="link"
-                      className="block py-2 px-3 rounded-lg hover:bg-muted transition-colors text-base"
+                      className="block py-2 px-3 rounded-lg hover:bg-muted transition-colors text-body-md"
                     />
                   </div>
                 ))}
@@ -108,17 +108,17 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
           )}
 
           {secondaryLinks.length > 0 && (
-            <div className="px-6 py-4 border-b border-border">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            <div className="px-6 py-section-xs border-b border-border">
+              <h3 className="text-body-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
                 {tMenu('resources')}
               </h3>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-content-gap-xs">
                 {secondaryLinks.map(({ link }, i) => (
                   <div key={i} onClick={onClose}>
                     <CMSLink
                       {...link}
                       appearance="link"
-                      className="block py-2 px-3 rounded-lg hover:bg-muted transition-colors text-base"
+                      className="block py-2 px-3 rounded-lg hover:bg-muted transition-colors text-body-md"
                     />
                   </div>
                 ))}
@@ -126,31 +126,33 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
             </div>
           )}
 
-          <div className="px-6 py-4 border-b border-border">
+          <div className="px-6 py-section-xs border-b border-border">
             <SystemLink
               href="/search"
               onClick={onClose}
               className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-muted transition-colors"
             >
               <SearchIcon className="w-5 h-5 text-primary" />
-              <span className="text-base">{tMenu('search')}</span>
+              <span className="text-body-md">{tMenu('search')}</span>
             </SystemLink>
           </div>
 
-          <div className="px-6 py-4">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          <div className="px-6 py-section-xs">
+            <h3 className="text-body-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
               {tMenu('language')}
             </h3>
             <LanguageSwitcher portalContainer={portalContainerRef.current} />
           </div>
 
-          <div className="px-6 py-4 border-t border-border mt-auto">
+          <div className="px-6 py-section-xs border-t border-border mt-auto">
             <MobileMenuAuthSection user={user} isAuthLoading={isAuthLoading} onClose={onClose} />
           </div>
 
           {/* Version number - mobile only */}
-          <div className="px-6 py-4 border-t border-border">
-            <p className="text-xs text-muted-foreground/70 font-normal text-center">v{version}</p>
+          <div className="px-6 py-section-xs border-t border-border">
+            <p className="text-body-xs text-muted-foreground/70 font-normal text-center">
+              v{version}
+            </p>
           </div>
         </nav>
       </div>

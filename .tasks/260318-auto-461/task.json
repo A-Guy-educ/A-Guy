@@ -1,0 +1,27 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "medium",
+  "confidence": 0.95,
+  "primary_domain": "backend",
+  "scope": [
+    "src/server/payload/collections/Lessons.ts - introDescription field"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Block types already exist in the codebase (CallToAction, Content, Archive, FormBlock, HtmlBlock)",
+    "The fix involves changing introDescription from textarea to blocks field type",
+    "The existing QuillField component can be removed after migration to blocks"
+  ],
+  "review_questions": [
+    "Should the introDescription field support all existing block types from Pages, or a subset optimized for lesson introductions?"
+  ],
+  "complexity": 22,
+  "complexity_reasoning": "Scope: 8 (single field change in lessons collection). Risk: 8 (content field change, requires data migration consideration). Novelty: 4 (extending existing blocks pattern). Cross-domain: 2 (single domain - backend/collection). Ambiguity: 2 (clear fix - change textarea to blocks). Dependency: 3 (depends on existing block types). Total: 22 (Moderate)",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Input contains clear bug description with steps to reproduce, expected result (block-based editing), and actual result (plain text). Has specific requirements (text, images, videos, graphs, other blocks). No implementation details provided but fix direction is clear from codebase patterns."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

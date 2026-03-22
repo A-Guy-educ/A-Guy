@@ -47,7 +47,7 @@ export function ProgressCircle({
         strokeDasharray={circumference}
         strokeDashoffset={offset}
         strokeLinecap="round"
-        className="transition-all duration-500 ease-out"
+        className="transition-all duration-slower ease-out"
         style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%' }}
       />
       {children ??
@@ -57,7 +57,7 @@ export function ProgressCircle({
             y="50%"
             textAnchor="middle"
             dy=".3em"
-            className="text-sm font-semibold fill-foreground"
+            className="text-body-sm font-semibold fill-foreground"
           >
             {Math.round(percentage)}%
           </text>

@@ -39,12 +39,12 @@ export function UserDropdown({ user }: { user: User }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
         <div className="px-2 py-1.5">
-          <p className="text-sm font-medium">{user.name}</p>
-          <p className="text-xs text-muted-foreground">{user.email}</p>
+          <p className="text-body-sm font-medium">{user.name}</p>
+          <p className="text-body-xs text-muted-foreground">{user.email}</p>
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <SystemLink href="/account" className="flex items-center gap-2">
+          <SystemLink href="/account" className="flex items-center gap-content-gap-xs">
             <UserIcon className="w-4 h-4" />
             {t('myAccount')}
           </SystemLink>

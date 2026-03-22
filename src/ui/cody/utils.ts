@@ -204,8 +204,13 @@ export function getPreviewBypassUrl(previewUrl: string | undefined | null): stri
     return previewUrl
   }
 
-  const url = new URL(previewUrl)
-  url.searchParams.set('x-vercel-protection-bypass', bypassSecret)
-  url.searchParams.set('x-vercel-set-bypass-cookie', 'samesitenone')
-  return url.toString()
+  try {
+    const url = new URL(previewUrl)
+    url.searchParams.set('x-vercel-protection-bypass', bypassSecret)
+    url.searchParams.set('x-vercel-set-bypass-cookie', 'samesitenone')
+    return url.toString()
+  } catch (error) {
+    console.warn('[Cody] Invalid preview URL, cannot add bypass params:', previewUrl, error)
+    return previewUrl
+  }
 }

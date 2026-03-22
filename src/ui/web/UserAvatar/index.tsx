@@ -15,7 +15,7 @@ function getInitials(name: string): string {
 }
 
 export function UserAvatar({ name, size = 'sm' }: UserAvatarProps) {
-  const sizeClass = size === 'sm' ? 'h-8 w-8 text-xs' : 'h-10 w-10 text-sm'
+  const sizeClass = size === 'sm' ? 'h-8 w-8 text-body-xs' : 'h-10 w-10 text-body-sm'
 
   return (
     <Avatar className={sizeClass}>

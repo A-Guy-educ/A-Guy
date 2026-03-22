@@ -31,6 +31,7 @@ import {
   runRerunMode,
   runFixMode,
   runStatusMode,
+  runDesignSystemMode,
 } from './modes'
 
 // FIX #3: Import status functions at module level instead of dynamic imports in signal handlers.
@@ -352,6 +353,9 @@ Examples:
         break
       case 'status':
         await runStatusMode(ctx)
+        break
+      case 'design-system':
+        await runDesignSystemMode(ctx)
         break
       default:
         throw new Error(`Unknown mode: ${input.mode}`)

@@ -7,7 +7,15 @@
 
 import { STAGE_NAMES } from './stages/registry'
 
-export const VALID_MODES = ['spec', 'impl', 'rerun', 'fix', 'full', 'status'] as const
+export const VALID_MODES = [
+  'spec',
+  'impl',
+  'rerun',
+  'fix',
+  'full',
+  'status',
+  'design-system',
+] as const
 
 export const VALID_STAGES = [...STAGE_NAMES, 'autofix' as const]
 

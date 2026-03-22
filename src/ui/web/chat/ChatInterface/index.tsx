@@ -371,10 +371,10 @@ export function ChatInterface({
       {/* Header with optional reset button and teacher profile badge */}
       {showResetButton && (
         <div className="flex items-center justify-between p-3 border-b border-border">
-          <div className="flex items-center gap-2">
-            <h3 className="font-medium text-sm text-foreground">{tCourses('chatTitle')}</h3>
+          <div className="flex items-center gap-content-gap-xs">
+            <h3 className="font-medium text-body-sm text-foreground">{tCourses('chatTitle')}</h3>
             {teacherProfileLabel && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-body-xs font-medium bg-primary/10 text-primary">
                 {teacherProfileLabel}
               </span>
             )}
@@ -383,7 +383,7 @@ export function ChatInterface({
             <button
               onClick={handleReset}
               disabled={isLoading}
-              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+              className="flex items-center gap-1 text-body-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
               title={tCourses('chatReset')}
             >
               <RefreshCw className="w-3 h-3" />
@@ -402,7 +402,7 @@ export function ChatInterface({
         )}
       >
         {isLoadingHistory && (
-          <div className="flex items-center justify-center p-4 text-muted-foreground text-sm">
+          <div className="flex items-center justify-center p-card-padding-sm text-muted-foreground text-body-sm">
             <Loader2 className="w-4 h-4 animate-spin me-2" />
             {tCourses('chatLoadingHistory')}
           </div>
@@ -417,10 +417,10 @@ export function ChatInterface({
               <div
                 key={msg.id}
                 className={cn(
-                  'max-w-[85%] px-[18px] py-3.5 text-base leading-relaxed shadow-sm',
+                  'max-w-[85%] px-[18px] py-3.5 text-body-md leading-relaxed shadow-elevation-1',
                   msg.role === ChatMessageRole.User
-                    ? 'ms-auto bg-primary text-primary-foreground rounded-[20px] rounded-bl-[4px]'
-                    : 'me-auto bg-card text-foreground border border-border rounded-[20px] rounded-br-[4px]',
+                    ? 'ms-auto bg-primary text-primary-foreground rounded-chat-lg rounded-bl-[4px]'
+                    : 'me-auto bg-card text-foreground border border-border rounded-chat-lg rounded-br-[4px]',
                   isCurrentlyPlaying && 'ring-2 ring-primary/30',
                 )}
               >
@@ -430,7 +430,7 @@ export function ChatInterface({
                       <div
                         key={mediaItem.mediaId}
                         className={cn(
-                          'inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs',
+                          'inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-body-xs',
                           msg.role === ChatMessageRole.User
                             ? 'bg-primary-foreground/20'
                             : 'bg-muted',
@@ -450,7 +450,7 @@ export function ChatInterface({
                       <div
                         key={asset.chatAssetId}
                         className={cn(
-                          'inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs',
+                          'inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-body-xs',
                           msg.role === ChatMessageRole.User
                             ? 'bg-primary-foreground/20'
                             : 'bg-muted',
@@ -477,7 +477,7 @@ export function ChatInterface({
             )
           })}
         {isLoading && (
-          <div className="me-auto bg-card text-foreground border border-border px-[18px] py-3.5 rounded-[20px] rounded-br-[4px] max-w-[85%] flex items-center gap-2 shadow-sm">
+          <div className="me-auto bg-card text-foreground border border-border px-[18px] py-3.5 rounded-chat-lg rounded-br-[4px] max-w-[85%] flex items-center gap-content-gap-xs shadow-elevation-1">
             <Loader2 className="w-4 h-4 animate-spin" />
             <span>{tCourses('chatThinking')}</span>
           </div>
@@ -487,9 +487,9 @@ export function ChatInterface({
 
       {/* Quick Actions */}
       {showQuickActions && (
-        <div className="flex gap-2 p-3 border-t border-border">
+        <div className="flex gap-content-gap-xs p-3 border-t border-border">
           <button
-            className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-muted hover:bg-muted/80 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 flex items-center justify-center gap-content-gap-xs py-2 px-3 rounded-lg bg-muted hover:bg-muted/80 text-body-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={() => handleQuickAction('hint')}
             disabled={isLoading}
           >
@@ -497,7 +497,7 @@ export function ChatInterface({
             <span>{tCourses('chatHint')}</span>
           </button>
           <button
-            className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-muted hover:bg-muted/80 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 flex items-center justify-center gap-content-gap-xs py-2 px-3 rounded-lg bg-muted hover:bg-muted/80 text-body-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={() => handleQuickAction('solution')}
             disabled={isLoading}
           >
@@ -505,7 +505,7 @@ export function ChatInterface({
             <span>{tCourses('chatSolution')}</span>
           </button>
           <button
-            className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-muted hover:bg-muted/80 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 flex items-center justify-center gap-content-gap-xs py-2 px-3 rounded-lg bg-muted hover:bg-muted/80 text-body-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={() => handleQuickAction('full')}
             disabled={isLoading}
           >
@@ -533,7 +533,7 @@ export function ChatInterface({
       >
         {/* Formula Composer Popup */}
         {showMathTools && formulaComposerOpen && (
-          <div className="mb-2.5 max-w-[850px] mx-auto">
+          <div className="mb-2.5 max-w-chat mx-auto">
             <FormulaComposer
               onInsert={handleFormulaInsert}
               onClose={() => setFormulaComposerOpen(false)}
@@ -543,10 +543,10 @@ export function ChatInterface({
 
         {/* Mobile Toggle */}
         {isMobile && viewMode && onModeToggle && (
-          <div className="flex mb-2.5 px-1.5 justify-end max-w-[850px] mx-auto">
+          <div className="flex mb-2.5 px-1.5 justify-end max-w-chat mx-auto">
             <button
               type="button"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors bg-muted hover:bg-muted/80"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-body-sm font-medium transition-colors bg-muted hover:bg-muted/80"
               onClick={onModeToggle}
               aria-label={viewMode === 'PDF' ? tCourses('switchToChat') : tCourses('switchToPdf')}
             >
@@ -567,12 +567,12 @@ export function ChatInterface({
 
         {/* Direct Upload Previews */}
         {directUploads.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-2.5 max-w-[850px] mx-auto">
+          <div className="flex flex-wrap gap-content-gap-xs mb-2.5 max-w-chat mx-auto">
             {directUploads.map((file) => (
               <div
                 key={file.localId}
                 className={cn(
-                  'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm border',
+                  'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-body-sm border',
                   file.status === 'complete' &&
                     'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950',
                   file.status === 'failed' &&
@@ -600,7 +600,7 @@ export function ChatInterface({
                 )}
                 <span className="max-w-[120px] truncate text-foreground">{file.file.name}</span>
                 {file.status === 'uploading' && (
-                  <span className="text-xs text-muted-foreground">{file.progress}%</span>
+                  <span className="text-body-xs text-muted-foreground">{file.progress}%</span>
                 )}
                 {file.status === 'complete' && (
                   <CheckCircle className="w-3.5 h-3.5 text-green-500" />
@@ -608,7 +608,7 @@ export function ChatInterface({
                 {file.status === 'failed' && (
                   <>
                     <span
-                      className="text-xs text-red-500 max-w-[100px] truncate"
+                      className="text-body-xs text-red-500 max-w-[100px] truncate"
                       title={file.error}
                     >
                       {file.error || 'Failed'}
@@ -638,12 +638,12 @@ export function ChatInterface({
 
         {/* Input Wrapper */}
         <form onSubmit={handleFormSubmit}>
-          <div className="max-w-[850px] mx-auto bg-muted rounded-[30px] flex items-center px-4 py-1.5 border border-input gap-3 relative">
+          <div className="max-w-chat mx-auto bg-muted rounded-chat-2xl flex items-center px-4 py-1.5 border border-input gap-3 relative">
             {/* Input — always mounted */}
             <input
               ref={inputRef}
               type="text"
-              className="flex-1 bg-transparent border-none outline-none py-2.5 text-[17px] text-foreground placeholder:text-muted-foreground"
+              className="flex-1 bg-transparent border-none outline-none py-2.5 text-chat-input text-foreground placeholder:text-muted-foreground"
               placeholder={t('chatInputPlaceholder')}
               value={inputValue}
               onChange={handleInputChange}
@@ -666,7 +666,7 @@ export function ChatInterface({
               >
                 <MathMarkdown
                   content={inputValue}
-                  className="text-[17px] leading-relaxed truncate"
+                  className="text-chat-input leading-relaxed truncate"
                 />
               </div>
             )}

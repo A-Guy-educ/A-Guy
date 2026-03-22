@@ -43,6 +43,7 @@ import { executePostAction } from '../pipeline/post-actions'
 import { flattenPipelineOrder } from '../pipeline/definitions'
 import { execFileSync } from 'node:child_process'
 import { commitPipelineFiles } from '../git-utils'
+import { PipelineObserver } from '../pipeline/observer/observer'
 
 /**
  * Error subclass that carries the originating stage name for parallel error attribution
@@ -371,10 +372,87 @@ async function executeSingleStep(
       state = updateStage(state, stageName, { state: 'paused' })
       return completeState(state, 'paused')
     }
+
     // Handle failure - mark stage as failed
     const errorMessage = error instanceof Error ? error.message : String(error)
     logger.error({ err: error }, `  ❌ ${stageName} failed:`)
     logStageFail(stageName, ctx.taskId, errorMessage)
+
+    // Check if Observer is available (requires serverUrl and sessionId)
+    const canObserve = ctx.serverUrl && ctx.lastSessionId && !ctx.input.dryRun
+
+    if (canObserve && !def.advisory) {
+      // Delegate to Observer for complex failure handling
+      // Pipeline is PAUSED while Observer waits for agent decision
+      try {
+        const observer = new PipelineObserver(
+          ctx.taskId,
+          ctx.taskDir,
+          ctx.serverUrl!,
+          ctx.lastSessionId!,
+          ctx.taskDir, // dataDir is taskDir/opencode-data derived in Observer
+        )
+
+        const failure = {
+          stageName,
+          error: error instanceof Error ? error : new Error(String(error)),
+          attempt: (state.stages[stageName]?.retries ?? 0) + 1,
+          maxAttempts: def.maxRetries,
+          taskDir: ctx.taskDir,
+        }
+
+        const observerResult = await observer.handle(failure)
+
+        logger.info(
+          `[StateMachine] Observer decision: ${observerResult.action} - ${observerResult.reason}`,
+        )
+
+        // Apply Observer's decision
+        switch (observerResult.action) {
+          case 'retry':
+            // Reset stage to pending for retry
+            state = updateStage(state, stageName, {
+              state: 'pending',
+              retries: observerResult.observerAttempt,
+              error: `Observer retry: ${observerResult.reason}`,
+            })
+            return state
+
+          case 'escalate':
+            // Pause pipeline and notify (GitHub issue comment)
+            state = updateStage(state, stageName, {
+              state: 'failed',
+              error: `Observer escalate: ${observerResult.reason}`,
+            })
+            return completeState(state, 'paused')
+
+          case 'halt':
+          default:
+            // Mark pipeline as failed
+            state = updateStage(state, stageName, {
+              state: 'failed',
+              error: `Observer halt: ${observerResult.reason}`,
+            })
+            if (ctx.input.issueNumber) {
+              setLifecycleLabel(ctx.input.issueNumber, 'cody:failed')
+            }
+            return completeState(state, 'failed')
+        }
+      } catch (observerError) {
+        // Observer failed - fall back to default failure handling
+        logger.error({ err: observerError }, `[StateMachine] Observer error, falling back`)
+        state = updateStage(state, stageName, {
+          state: 'failed',
+          error: errorMessage,
+        })
+        if (ctx.input.issueNumber) {
+          setLifecycleLabel(ctx.input.issueNumber, 'cody:failed')
+        }
+        return completeState(state, 'failed')
+      }
+    }
+
+    // Default failure handling (no Observer available or advisory stage)
     state = updateStage(state, stageName, {
       state: 'failed',
       error: errorMessage,
@@ -402,11 +480,16 @@ async function executeParallelStep(
 ): Promise<PipelineStateV2> {
   logger.info(`  Running parallel: [${stageNames.join(', ')}]...`)
 
-  // Filter out already completed stages (for resume)
+  // Filter out already completed/terminal stages (for resume)
   const stagesToRun = stageNames.filter((stageName) => {
     const stageState = state.stages[stageName]
-    if (stageState?.state === 'completed' || stageState?.state === 'skipped') {
-      logger.info(`  ${stageName} already completed/skipped, skipping`)
+    if (
+      stageState?.state === 'completed' ||
+      stageState?.state === 'skipped' ||
+      stageState?.state === 'timeout' ||
+      stageState?.state === 'failed'
+    ) {
+      logger.info(`  ${stageName} already ${stageState.state}, skipping`)
       return false
     }
     return true
@@ -589,6 +672,16 @@ async function executeParallelStep(
         state: 'skipped',
         skipped: stageResult.reason,
       })
+    } else if (stageResult.outcome === 'timed_out') {
+      // Handle timeout in parallel stages — previously missing, causing infinite retry loops
+      const isAdvisory = pipeline.stages.get(stageName)?.advisory === true
+      state = updateStage(state, stageName, {
+        state: 'timeout',
+        error: stageResult.reason || 'timed out',
+      })
+      if (!isAdvisory) {
+        criticalFailures.push({ name: stageName, reason: stageResult.reason || 'timed out' })
+      }
     } else if (stageResult.outcome === 'failed') {
       // R7: Use dynamic advisory lookup from pipeline definition
       const isAdvisory = pipeline.stages.get(stageName)?.advisory === true

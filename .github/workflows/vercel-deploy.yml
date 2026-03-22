@@ -53,8 +53,15 @@ jobs:
       - name: Install Vercel CLI
         run: pnpm add -g vercel
 
+      - name: Pull Vercel project settings
+        run: vercel pull --yes --environment=production
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_ACCESS_TOKEN }}
+
       - name: Build and Deploy with Vercel
-        run: vercel build --prod && vercel deploy --prebuilt --prod
+        run: vercel build --prod && vercel deploy --prod
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}

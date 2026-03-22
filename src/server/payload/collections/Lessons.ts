@@ -177,34 +177,15 @@ export const Lessons: CollectionConfig = {
           'Access control for this lesson. "Inherit" uses the parent course setting. "Gated" is a client-side nudge, not hard enforcement.',
       },
     },
-    // --- Intro Page (pre-lesson context screen) ---
+    // --- Lesson Blocks (ordered playlist) ---
     {
-      name: 'introEnabled',
-      type: 'checkbox',
-      defaultValue: false,
-      admin: {
-        description: 'Show an intro/about page before the lesson starts',
-        position: 'sidebar',
-      },
-    },
-    {
-      name: 'introDescription',
+      name: 'blocks',
       type: 'textarea',
       admin: {
-        description: 'HTML content for the intro page. Supports raw HTML (bold, lists, etc).',
-        condition: (data) => Boolean(data?.introEnabled),
+        description: 'Ordered playlist of exercises and content pages. Defines the lesson flow.',
         components: {
-          Field: '@/ui/admin/QuillField#QuillField',
+          Field: '@/ui/admin/LessonBlocksField#LessonBlocksField',
         },
-      },
-    },
-    {
-      name: 'introMedia',
-      type: 'upload',
-      relationTo: 'media',
-      admin: {
-        description: 'Image, SVG, or video displayed on the intro page',
-        condition: (data) => Boolean(data?.introEnabled),
       },
     },
     // --- Lesson Content ---

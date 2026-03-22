@@ -27,6 +27,7 @@ export {
   MAX_STDOUT_BUFFER_SIZE,
   DEFAULT_TIMEOUT,
   LLM_TIMEOUT,
+  STALL_TIMEOUT,
 } from './agent/constants'
 export { waitForFileStable } from './agent/file-watcher'
 export { formatJsonEvent } from './agent/log-parser'
@@ -39,6 +40,7 @@ import {
   STABILITY_CHECK_INTERVAL,
   STABILITY_CHECK_COUNT,
   POST_EXIT_DELAY,
+  STALL_TIMEOUT,
 } from './agent/constants'
 import { waitForFileStable, findOutputFile, sleep } from './agent/file-watcher'
 import { recoverSessionId, nudgeSession } from './agent/session'
@@ -236,6 +238,7 @@ export function runAgentWithFileWatch(
 
       let resolved = false
       let timeoutTimer: NodeJS.Timeout | null = null
+      let stallTimer: NodeJS.Timeout | null = null
       let stdoutBuffer = ''
       let extractedSessionId: string | undefined
       let hasCompleted = false // Track if we've detected completion via step_finish event
@@ -288,6 +291,9 @@ export function runAgentWithFileWatch(
         currentChild.stdout.on('data', (data: Buffer) => {
           const chunk = data.toString()
           stdoutBuffer += chunk
+
+          // Reset stall timer on any stdout activity
+          resetStallTimer()
 
           // Process line by line (JSON events are one per line)
           const lines = stdoutBuffer.split('\n')
@@ -386,6 +392,7 @@ export function runAgentWithFileWatch(
         resolved = true
 
         if (timeoutTimer) clearTimeout(timeoutTimer)
+        if (stallTimer) clearTimeout(stallTimer)
 
         // Flush remaining stdout buffer
         if (stdoutBuffer.trim()) {
@@ -454,6 +461,22 @@ export function runAgentWithFileWatch(
         logger.info(`  ⏱️ Timeout reached (${remainingTimeout / 1000 / 60} minutes)`)
         finish({ succeeded: false, timedOut: true })
       }, remainingTimeout)
+
+      // Stall detection: if no stdout events for STALL_TIMEOUT, the LLM is likely
+      // hung (API stall, infinite generation). Kill early and retry instead of
+      // wasting the full stage timeout sitting idle.
+      const resetStallTimer = () => {
+        if (stallTimer) clearTimeout(stallTimer)
+        const stallLimit = Math.min(STALL_TIMEOUT, remainingTimeout)
+        stallTimer = setTimeout(() => {
+          if (resolved) return
+          logger.warn(
+            `  ⚠️ Agent stalled — no output for ${STALL_TIMEOUT / 1000 / 60} minutes, killing`,
+          )
+          finish({ succeeded: false, timedOut: true })
+        }, stallLimit)
+      }
+      resetStallTimer()
 
       // Process exit handler - wait for file stability after exit
       currentChild.on('exit', async (code) => {

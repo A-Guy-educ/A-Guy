@@ -35,8 +35,8 @@ export function MobileMenuAuthSection({
 
   if (user) {
     return (
-      <div className="flex flex-col gap-2">
-        <Button variant="ghost" asChild className="justify-start gap-2">
+      <div className="flex flex-col gap-content-gap-xs">
+        <Button variant="ghost" asChild className="justify-start gap-content-gap-xs">
           <SystemLink href="/account" onClick={onClose}>
             <UserIcon className="w-4 h-4" />
             {tCommon('myAccount')}
@@ -44,7 +44,7 @@ export function MobileMenuAuthSection({
         </Button>
         <Button
           variant="ghost"
-          className="justify-start gap-2 text-destructive hover:text-destructive"
+          className="justify-start gap-content-gap-xs text-destructive hover:text-destructive"
           onClick={async () => {
             setIsLoggingOut(true)
             try {
@@ -68,7 +68,7 @@ export function MobileMenuAuthSection({
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-content-gap-xs">
       <Button asChild className="justify-start">
         <SystemLink href="/login" onClick={onClose}>
           {tCommon('login')}

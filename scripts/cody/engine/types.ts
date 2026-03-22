@@ -132,7 +132,15 @@ export interface PipelineContext {
 // ============================================================================
 
 export interface StageStateV2 {
-  state: 'pending' | 'running' | 'completed' | 'failed' | 'timeout' | 'skipped' | 'paused'
+  state:
+    | 'pending'
+    | 'running'
+    | 'completed'
+    | 'failed'
+    | 'timeout'
+    | 'skipped'
+    | 'paused'
+    | 'observing'
   startedAt?: string
   completedAt?: string
   elapsed?: number
@@ -219,7 +227,16 @@ export const PipelineStateV2Schema = z.object({
   stages: z.record(
     z.string(),
     z.object({
-      state: z.enum(['pending', 'running', 'completed', 'failed', 'timeout', 'skipped', 'paused']),
+      state: z.enum([
+        'pending',
+        'running',
+        'completed',
+        'failed',
+        'timeout',
+        'skipped',
+        'paused',
+        'observing',
+      ]),
       startedAt: z.string().optional(),
       completedAt: z.string().optional(),
       elapsed: z.number().optional(),

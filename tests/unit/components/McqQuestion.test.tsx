@@ -523,4 +523,86 @@ describe('McqQuestion component', () => {
       expect(onChange).toHaveBeenCalledWith({ type: 'mcq', selectedIds: ['opt3'] })
     })
   })
+
+  describe('Font size for answer options', () => {
+    const questionWithMathOptions: QuestionSelectMcqBlock = {
+      id: 'test-font-size',
+      type: 'question_select',
+      variant: 'mcq',
+      selectionMode: 'single',
+      prompt: {
+        type: 'rich_text',
+        format: 'md-math-v1',
+        value: 'Solve for x:',
+        mediaIds: [],
+      },
+      answer: {
+        multiSelect: false,
+        options: [
+          {
+            id: 'opt1',
+            content: {
+              type: 'rich_text',
+              format: 'md-math-v1',
+              value: '$\\frac{x}{2} = 4$',
+              mediaIds: [],
+            },
+          },
+          {
+            id: 'opt2',
+            content: {
+              type: 'rich_text',
+              format: 'md-math-v1',
+              value: '$x + 2 = 8$',
+              mediaIds: [],
+            },
+          },
+        ],
+        correctOptionIds: ['opt2'],
+      },
+    }
+
+    it('renders option text with text-lg class for better readability', () => {
+      const answer: UserAnswer = { type: 'mcq', selectedIds: [] }
+      const { container } = render(
+        <McqQuestion
+          question={questionWithMathOptions}
+          answer={answer}
+          onChange={onChange}
+          disabled={false}
+          checkResult={null}
+          t={mockT}
+        />,
+      )
+
+      // Find all the text wrappers (flex-1 divs inside each option label)
+      const textWrappers = container.querySelectorAll('label > div.flex-1')
+
+      // There should be 2 options
+      expect(textWrappers.length).toBe(2)
+
+      // Each option text wrapper should have text-lg class for larger font
+      textWrappers.forEach((wrapper) => {
+        expect(wrapper.classList.contains('text-lg')).toBe(true)
+      })
+    })
+
+    it('does not apply text-lg to the prompt text', () => {
+      const answer: UserAnswer = { type: 'mcq', selectedIds: [] }
+      const { container } = render(
+        <McqQuestion
+          question={questionWithMathOptions}
+          answer={answer}
+          onChange={onChange}
+          disabled={false}
+          checkResult={null}
+          t={mockT}
+        />,
+      )
+
+      // The prompt should NOT have text-lg (it uses text-body-md per design system)
+      const promptContainer = container.querySelector('.text-body-md.font-medium')
+      expect(promptContainer).toBeTruthy()
+    })
+  })
 })

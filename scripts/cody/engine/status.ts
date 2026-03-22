@@ -461,7 +461,12 @@ export function stateToV1(state: PipelineStateV2): CodyPipelineStatus {
 
   for (const [name, stage] of Object.entries(state.stages)) {
     v1Stages[name] = {
-      state: stage.state === 'paused' ? 'gate-waiting' : stage.state,
+      state:
+        stage.state === 'paused'
+          ? 'gate-waiting'
+          : stage.state === 'observing'
+            ? 'running'
+            : stage.state,
       startedAt: stage.startedAt,
       completedAt: stage.completedAt,
       elapsed: stage.elapsed,

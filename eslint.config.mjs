@@ -58,6 +58,7 @@ const eslintConfig = [
     files: ['src/ui/**/*.{ts,tsx}', 'src/app/**/*.{ts,tsx}'],
     rules: {
       'aguy/tailwind-only-components': 'off',
+      'aguy/prefer-design-tokens': 'warn',
     },
   },
 

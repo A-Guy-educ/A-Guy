@@ -30,3 +30,7 @@ export const DEFAULT_TIMEOUT = ms('10m')
 
 /** LLM-specific timeout - max time to wait for LLM API response (3 minutes) */
 export const LLM_TIMEOUT = ms('3m')
+
+/** Stall detection: if no stdout events for this many ms, kill and retry the agent.
+ *  Prevents wasting the full stage timeout when the LLM API hangs silently. */
+export const STALL_TIMEOUT = ms('5m')
