@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-22T00:32:07.553Z",
-  "updatedAt": "2026-03-22T00:38:02.861Z",
+  "updatedAt": "2026-03-22T00:43:07.582Z",
   "state": "running",
   "cursor": "gap",
   "stages": {
@@ -45,6 +45,25 @@
       "state": "skipped",
       "retries": 0,
       "skipped": "Complexity 31 (moderate) below threshold 50 for plan-gap"
+    },
+    "test": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-22T00:42:39.119Z",
+      "outputFile": "test.md",
+      "sessionId": "ses_2ed05b585ffesSOgW00hprG3Bh"
+    },
+    "build": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-22T00:42:40.223Z",
+      "outputFile": "build.md",
+      "sessionId": "ses_2ed05b64fffeT09N4mp3YV9wvy"
+    },
+    "commit": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-22T00:43:07.582Z"
     }
   },
   "issueNumber": 991,
@@ -55,6 +74,5 @@
       "actor": "aguyaharonyair",
       "timestamp": "2026-03-22T00:32:07.553Z"
     }
-  ],
-  "branchName": "feat/260322-systest-991-system-test-add-pipeline-health"
+  ]
 }
