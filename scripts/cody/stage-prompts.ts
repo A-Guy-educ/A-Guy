@@ -74,8 +74,24 @@ Your job is to:
 3. Run tests to verify
 4. **MUST write build.md** summarizing what was implemented before exiting
 
-The build.md file should be a SUMMARY of what you implemented, not the implementation plan.
-Write it to: .tasks/<taskId>/build.md
+The build.md file format:
+- Must include a ## Changes or ## Files section (required by pipeline validation)
+- Should be a SUMMARY of what was implemented
+- Write it to: .tasks/<taskId>/build.md
+
+Example format:
+\`\`\`markdown
+# Build Summary
+
+## Changes
+- Created src/infra/utils/pipeline-health.ts
+- Added PipelineHealthReport class
+- Added integration tests
+
+## Files
+- src/infra/utils/pipeline-health.ts
+- tests/unit/infra/utils/pipeline-health.test.ts
+\`\`\`
 
 DO NOT skip writing build.md - the pipeline REQUIRES this file!`,
 
