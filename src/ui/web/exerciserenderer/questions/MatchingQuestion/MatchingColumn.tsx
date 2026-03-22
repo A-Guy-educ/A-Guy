@@ -30,8 +30,8 @@ export function MatchingColumn({
   onRef,
 }: MatchingColumnProps) {
   return (
-    <div className="flex-1 flex flex-col gap-2 relative z-[2] min-w-[180px] max-w-[350px]">
-      <div className="font-bold text-center py-2 bg-muted rounded-t-md border-2 border-b-0 border-border text-sm">
+    <div className="flex-1 flex flex-col gap-content-gap-xs relative z-[2] min-w-[180px] max-w-[350px]">
+      <div className="font-bold text-center py-2 bg-muted rounded-t-md border-2 border-b-0 border-border text-body-sm">
         {header}
       </div>
       {items.map((item, i) => (

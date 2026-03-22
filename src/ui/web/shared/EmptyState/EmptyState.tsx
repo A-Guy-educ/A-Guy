@@ -62,7 +62,7 @@ export function EmptyState({
   return (
     <Stack gap="content-gap" align="center" className={cn('py-section-md text-center', className)}>
       {IconComponent && (
-        <div className="rounded-full bg-muted p-4">
+        <div className="rounded-full bg-muted p-card-padding-sm">
           <IconComponent className="h-8 w-8 text-muted-foreground" />
         </div>
       )}

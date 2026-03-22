@@ -34,16 +34,16 @@ export function HelpSystemButtons({
   solutionLabel,
 }: HelpSystemButtonsProps) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-content-gap-xs">
       {/* Hint Button - always visible, AI fallback when no backend content */}
       <button
         type="button"
         onClick={onHintClick}
         className={cn(
-          'flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs transition-all duration-300 border shadow-sm',
+          'flex items-center gap-1.5 px-4 py-2 rounded-xl text-body-xs transition-all duration-slow border shadow-elevation-1',
           activeHelp === 'hint'
             ? 'bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-200/60 text-amber-700 shadow-amber-100'
-            : 'bg-white border-gray-200/60 text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md',
+            : 'bg-white border-gray-200/60 text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:shadow-elevation-3',
         )}
       >
         <Lightbulb className="w-4 h-4" />
@@ -55,10 +55,10 @@ export function HelpSystemButtons({
         type="button"
         onClick={onGuidingClick}
         className={cn(
-          'flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs transition-all duration-300 border shadow-sm',
+          'flex items-center gap-1.5 px-4 py-2 rounded-xl text-body-xs transition-all duration-slow border shadow-elevation-1',
           activeHelp === 'guiding'
             ? 'bg-gradient-to-br from-purple-50 to-purple-100/50 border-purple-200/60 text-purple-700 shadow-purple-100'
-            : 'bg-white border-gray-200/60 text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md',
+            : 'bg-white border-gray-200/60 text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:shadow-elevation-3',
         )}
       >
         <HelpCircle className="w-4 h-4" />
@@ -71,10 +71,10 @@ export function HelpSystemButtons({
           type="button"
           onClick={onSolutionClick}
           className={cn(
-            'flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs transition-all duration-300 border shadow-sm',
+            'flex items-center gap-1.5 px-4 py-2 rounded-xl text-body-xs transition-all duration-slow border shadow-elevation-1',
             activeHelp === 'solution'
               ? 'bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200/60 text-blue-700 shadow-blue-100'
-              : 'bg-white border-gray-200/60 text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:shadow-md',
+              : 'bg-white border-gray-200/60 text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:shadow-elevation-3',
           )}
         >
           <CheckCircle2 className="w-4 h-4" />

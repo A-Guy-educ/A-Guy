@@ -51,7 +51,7 @@ export function VideoPlayer({ src, mimeType, className, media }: VideoPlayerProp
     return (
       <div
         className={cn(
-          'flex items-center justify-center p-4 text-muted-foreground text-sm',
+          'flex items-center justify-center p-card-padding-sm text-muted-foreground text-body-sm',
           className,
         )}
       >
@@ -75,7 +75,7 @@ export function VideoPlayer({ src, mimeType, className, media }: VideoPlayerProp
     return (
       <div
         className={cn(
-          'flex items-center justify-center p-4 text-muted-foreground text-sm',
+          'flex items-center justify-center p-card-padding-sm text-muted-foreground text-body-sm',
           className,
         )}
       >
@@ -93,7 +93,7 @@ export function VideoPlayer({ src, mimeType, className, media }: VideoPlayerProp
     >
       <source src={absoluteSrc} type={typeAttribute ?? undefined} />
       {/* Fallback text for browsers that don't support video */}
-      <p className="text-sm text-muted-foreground">{t('videoUnavailable')}</p>
+      <p className="text-body-sm text-muted-foreground">{t('videoUnavailable')}</p>
     </video>
   )
 }

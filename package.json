@@ -29,6 +29,8 @@
     "docs:links:fix": "pnpm tsx scripts/doc-link-fixer.ts",
     "deps:security:report": "pnpm tsx scripts/deps-security-report.ts",
     "repo:hygiene:report": "pnpm tsx scripts/repo-hygiene-report.ts",
+    "design:tokens:codemod": "pnpm tsx scripts/design-tokens/codemod.ts",
+    "design:tokens:codemod:dry": "pnpm tsx scripts/design-tokens/codemod.ts --dry-run --verbose",
     "mcp:discover-tools": "pnpm tsx scripts/admin-chat-mcp_discover-tools.ts",
     "browser-agent:auth": "tsx scripts/browser-agent/save-auth.ts",
     "validate:readme-links": "pnpm tsx scripts/validate-readme-links.ts",
@@ -115,7 +117,12 @@
     "brain:logs": "ssh root@${BRAIN_VPS_IP:-184.174.39.227} \"cd /opt/brain-server && docker compose logs --tail 50\"",
     "brain:restart": "ssh root@${BRAIN_VPS_IP:-184.174.39.227} \"cd /opt/brain-server && docker compose restart\"",
     "brain:proxy": "node --import tsx scripts/brain-server/local-mcp-proxy.ts",
-    "brain:proxy:start": "BRAIN_API_TOKEN=${BRAIN_API_TOKEN} BRAIN_SERVER_URL=http://184.174.39.227:4098 node --import tsx scripts/brain-server/local-mcp-proxy.ts &"
+    "brain:proxy:start": "BRAIN_API_TOKEN=${BRAIN_API_TOKEN} BRAIN_SERVER_URL=http://184.174.39.227:4098 node --import tsx scripts/brain-server/local-mcp-proxy.ts &",
+    "design:tokens:codemod": "pnpm tsx scripts/design-tokens/codemod.ts",
+    "design:tokens:codemod:dry": "pnpm tsx scripts/design-tokens/codemod.ts --dry-run --verbose",
+    "design:tokens:audit": "pnpm tsx scripts/design-tokens/audit.ts",
+    "design:tokens:audit:fixable": "pnpm tsx scripts/design-tokens/audit.ts --fixable",
+    "design:tokens:audit:verbose": "pnpm tsx scripts/design-tokens/audit.ts --verbose"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.30",

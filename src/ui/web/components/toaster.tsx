@@ -12,7 +12,7 @@ export function Toaster() {
         classNames: {
           toast: 'font-sans',
           title: 'font-medium',
-          description: 'text-sm opacity-90',
+          description: 'text-body-sm opacity-90',
         },
       }}
     />

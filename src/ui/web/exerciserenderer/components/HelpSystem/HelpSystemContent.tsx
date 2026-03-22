@@ -51,14 +51,14 @@ export function HelpSystemContent({
 
   return (
     <div
-      className={`p-4 rounded-2xl bg-gradient-to-br ${gradientClass} border shadow-sm animate-in slide-in-from-top-2 duration-300`}
+      className={`p-card-padding-sm rounded-2xl bg-gradient-to-br ${gradientClass} border shadow-elevation-1 animate-in slide-in-from-top-2 duration-slow`}
     >
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-center gap-content-gap-xs mb-2">
         <Icon className={`w-4 h-4 ${iconClass}`} />
-        <span className="text-xs font-medium text-gray-600">{label}</span>
+        <span className="text-body-xs font-medium text-gray-600">{label}</span>
       </div>
       <div className="prose prose-sm prose-slate dark:prose-invert max-w-none">
-        <MathMarkdown content={processed} className="text-sm leading-relaxed text-foreground" />
+        <MathMarkdown content={processed} className="text-body-sm leading-relaxed text-foreground" />
       </div>
     </div>
   )

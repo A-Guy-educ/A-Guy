@@ -28,8 +28,8 @@ export function NavigationBar() {
                 key={item.key}
                 href={item.href}
                 className={cn(
-                  'flex-1 py-1.5 text-xs md:text-sm rounded-lg transition-all text-center',
-                  isActive ? 'bg-card shadow-sm font-bold' : 'font-medium hover:opacity-80',
+                  'flex-1 py-1.5 text-body-xs md:text-body-sm rounded-lg transition-all text-center',
+                  isActive ? 'bg-card shadow-elevation-1 font-bold' : 'font-medium hover:opacity-80',
                 )}
               >
                 <span style={isActive ? { color: item.color } : undefined}>{t(item.key)}</span>

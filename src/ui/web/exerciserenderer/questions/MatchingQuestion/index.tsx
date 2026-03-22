@@ -139,12 +139,12 @@ export function MatchingQuestion({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="text-base font-medium text-foreground leading-relaxed">
+    <div className="flex flex-col gap-content-gap">
+      <div className="text-body-md font-medium text-foreground leading-relaxed">
         <RichTextRenderer block={promptBlock} />
       </div>
 
-      <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-sm text-blue-600 dark:text-blue-400">
+      <div className="flex items-center gap-content-gap-xs px-4 py-3 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-body-sm text-blue-600 dark:text-blue-400">
         <Info className="w-4 h-4 shrink-0" />
         {t('matchingInstruction')}
       </div>
@@ -180,7 +180,7 @@ export function MatchingQuestion({
       {connections.length > 0 && !disabled && (
         <button
           onClick={handleClearAll}
-          className="self-start text-sm text-muted-foreground hover:text-foreground transition-colors underline"
+          className="self-start text-body-sm text-muted-foreground hover:text-foreground transition-colors underline"
         >
           {t('matchingClear')}
         </button>

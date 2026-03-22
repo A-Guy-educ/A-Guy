@@ -70,7 +70,7 @@ export function GraphWithPrompt({
 
   // For side-by-side layouts, add minimum width and gap
   const isSideBySide = layout === 'textLeft' || layout === 'textRight'
-  const gapClass = isSideBySide ? 'gap-4' : 'gap-4'
+  const gapClass = isSideBySide ? 'gap-content-gap' : 'gap-content-gap'
 
   // Minimum width threshold for side-by-side (per clarified.md)
   const minWidthClass = isSideBySide ? 'min-w-[280px]' : ''

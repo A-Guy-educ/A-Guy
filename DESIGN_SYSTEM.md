@@ -182,6 +182,51 @@ Design tokens are defined in [`tailwind.tokens.mjs`](./tailwind.tokens.mjs) and 
 <div className="opacity-subtle">   {/* 0.4 */}
 ```
 
+### Chat Bubble Radius Tokens
+
+Chat bubbles use specific border radius values for a consistent look:
+
+```tsx
+// Chat bubbles - use these instead of raw values like rounded-[20px]
+<div className="rounded-chat-xs">   {/* 8px - compact */}
+<div className="rounded-chat-sm">   {/* 12px */}
+<div className="rounded-chat-md">   {/* 16px */}
+<div className="rounded-chat-lg">   {/* 20px - standard */}
+<div className="rounded-chat-xl">   {/* 24px */}
+<div className="rounded-chat-2xl">  {/* 30px - large */}
+```
+
+### Icon Size Tokens
+
+Standardized icon sizes for consistent visual rhythm:
+
+```tsx
+<div className="w-icon-xs h-icon-xs">   {/* 12px */}
+<div className="w-icon-sm h-icon-sm">   {/* 16px */}
+<div className="w-icon-md h-icon-md">   {/* 20px - default */}
+<div className="w-icon-lg h-icon-lg">   {/* 24px */}
+<div className="w-icon-xl h-icon-xl">   {/* 32px */}
+<div className="w-icon-2xl h-icon-2xl"> {/* 40px */}
+```
+
+### Input Height Tokens
+
+Standardized input heights for form consistency:
+
+```tsx
+<input className="h-input-h-sm">   {/* 32px - compact */}
+<input className="h-input-h-md">   {/* 40px - default */}
+<input className="h-input-h-lg">   {/* 48px - large */}
+```
+
+### Chat Input Text
+
+Specific text size for chat input fields:
+
+```tsx
+<input className="text-chat-input">  {/* 17px - chat input text */}
+```
+
 ## Color System
 
 ### Color Tokens
@@ -1051,6 +1096,107 @@ html {
 }
 ```
 
+## Token Adoption Tools
+
+To improve adoption of design tokens, we provide ESLint warnings and a codemod.
+
+### ESLint Rule: prefer-design-tokens
+
+The `aguy/prefer-design-tokens` rule warns when raw Tailwind values are used instead of design tokens:
+
+```bash
+# Run lint to see suggestions
+pnpm lint
+```
+
+Example warning:
+
+```
+src/ui/web/components/MyComponent.tsx
+  Line 45: Consider using design token "text-xl" instead of "text-xl". Use "text-heading-xl or text-heading-lg"
+```
+
+This rule is **warn-only** - it suggests but does not enforce. This encourages adoption without blocking development.
+
+### Codemod: Automatic Replacement
+
+The codemod automatically replaces common raw Tailwind patterns with design tokens:
+
+```bash
+# Dry run - see what would change
+pnpm design:tokens:codemod:dry
+
+# Apply changes
+pnpm design:tokens:codemod
+
+# Audit - check for remaining issues
+pnpm design:tokens:audit
+
+# Audit with full details
+pnpm design:tokens:audit --verbose
+
+# Audit only fixable issues
+pnpm design:tokens:audit --fixable
+```
+
+**Patterns automatically replaced:**
+
+| Raw Tailwind     | Design Token       |
+| ---------------- | ------------------ |
+| `text-xl`        | `text-heading-xl`  |
+| `text-lg`        | `text-body-lg`     |
+| `text-base`      | `text-body-md`     |
+| `p-6`            | `p-card-padding`   |
+| `py-8`           | `py-section-md`    |
+| `gap-4`          | `gap-content-gap`  |
+| `shadow-lg`      | `shadow-card`      |
+| `duration-150`   | `duration-fast`    |
+| `rounded-[20px]` | `rounded-chat-lg`  |
+| `rounded-[30px]` | `rounded-chat-2xl` |
+
+### Token Cheat Sheet
+
+Quick reference for common replacements:
+
+| Instead of...      | Use...               |
+| ------------------ | -------------------- |
+| `text-2xl`         | `text-display-xl`    |
+| `text-xl`          | `text-heading-xl`    |
+| `text-lg`          | `text-body-lg`       |
+| `text-base`        | `text-body-md`       |
+| `text-sm`          | `text-body-sm`       |
+| `text-xs`          | `text-body-xs`       |
+| `p-4`              | `p-card-padding-sm`  |
+| `p-6`              | `p-card-padding`     |
+| `p-8`              | `p-card-padding-lg`  |
+| `py-4`             | `py-section-xs`      |
+| `py-6`             | `py-section-sm`      |
+| `py-8`             | `py-section-md`      |
+| `py-16`            | `py-section-lg`      |
+| `gap-4`            | `gap-content-gap`    |
+| `gap-6`            | `gap-content-gap-lg` |
+| `shadow-lg`        | `shadow-card`        |
+| `shadow-xl`        | `shadow-card-hover`  |
+| `duration-150`     | `duration-fast`      |
+| `duration-200`     | `duration-normal`    |
+| `rounded-[20px]`   | `rounded-chat-lg`    |
+| `rounded-[30px]`   | `rounded-chat-2xl`   |
+| `tracking-[0.2em]` | `tracking-lg`        |
+| `max-w-[850px]`    | `max-w-chat`         |
+
+### Additional Tokens
+
+These tokens are available but not auto-replaced by codemod:
+
+| Token             | Example           | Purpose                  |
+| ----------------- | ----------------- | ------------------------ |
+| `text-label`      | `text-label`      | 12px semibold for labels |
+| `text-chat-input` | `text-chat-input` | 17px for chat inputs     |
+| `tracking-xs`     | `tracking-xs`     | Tight letter spacing     |
+| `tracking-sm`     | `tracking-sm`     | Small caps               |
+| `max-w-prose`     | `max-w-prose`     | 65ch for prose           |
+| `max-w-content`   | `max-w-content`   | 1280px for content       |
+
 ## Resources
 
 - **TailwindCSS Docs**: [https://tailwindcss.com/docs](https://tailwindcss.com/docs)
@@ -1070,3 +1216,59 @@ If you need to:
 - **Report design inconsistencies**: Create an issue with screenshots
 
 For questions about design decisions or component usage, refer to [PROJECT-TOOLING.md](./PROJECT-TOOLING.md) or consult with the team.
+
+## Storybook
+
+Storybook is set up for visual documentation and testing of components.
+
+### Setup
+
+```bash
+# Install Storybook (first time only)
+bash scripts/setup-storybook.sh
+
+# Start Storybook dev server
+pnpm storybook
+```
+
+### Creating Stories
+
+Create a `.stories.tsx` file alongside your component:
+
+```tsx
+// src/ui/web/components/button.stories.tsx
+import type { Meta, StoryObj } from '@storybook/react'
+import { Button } from './button'
+
+const meta = {
+  title: 'UI/Button',
+  component: Button,
+  tags: ['autodocs'],
+  parameters: {
+    layout: 'centered',
+  },
+} satisfies Meta<typeof Button>
+
+export default meta
+type Story = StoryObj<typeof meta>
+
+export const Default: Story = {
+  args: {
+    children: 'Button',
+    variant: 'default',
+  },
+}
+```
+
+### Benefits
+
+- **Visual testing**: See components in isolation
+- **Variant showcase**: All states in one place
+- **Documentation**: Auto-generated from stories
+- **Interaction testing**: Test user interactions
+- **Accessibility**: Built-in accessibility checking
+
+### Configuration
+
+- `.storybook/main.ts` - Framework and addon configuration
+- `.storybook/preview.ts` - Global parameters and decorators

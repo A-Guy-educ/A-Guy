@@ -58,12 +58,12 @@ export function QuestionCard({
           className={cn(
             'w-full flex items-center mb-4',
             dir === 'rtl'
-              ? 'justify-end text-right flex-row-reverse gap-2'
-              : 'justify-start text-left gap-2',
+              ? 'justify-end text-right flex-row-reverse gap-content-gap-xs'
+              : 'justify-start text-left gap-content-gap-xs',
           )}
         >
-          <div className="w-5 h-5 rounded-full flex items-center justify-center bg-slate-50 border border-slate-200 shadow-sm">
-            <span className="font-bold text-xs">{questionLabel}</span>
+          <div className="w-5 h-5 rounded-full flex items-center justify-center bg-slate-50 border border-slate-200 shadow-elevation-1">
+            <span className="font-bold text-body-xs">{questionLabel}</span>
           </div>
         </div>
       )}
