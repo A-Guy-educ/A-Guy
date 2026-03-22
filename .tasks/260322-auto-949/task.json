@@ -1,0 +1,26 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 0.3,
+  "primary_domain": "frontend",
+  "scope": [],
+  "missing_inputs": [],
+  "assumptions": [
+    "This appears to be a placeholder test bug report (title is 'בדיקה' meaning 'check/test')",
+    "The description field contains only 'תאור' (Hebrew for 'description') with no actual bug details",
+    "No steps to reproduce, expected result, or actual result were provided"
+  ],
+  "review_questions": [
+    "Is this a real bug report or a test/placeholder? The content appears to be minimal/incomplete",
+    "What is the actual bug that needs to be fixed? The current description is empty"
+  ],
+  "complexity": 5,
+  "complexity_reasoning": "Scope: 1 (no code changes described). Risk: 1 (placeholder content). Novelty: 0 (no details). Cross-domain: 0 (no specifics). Ambiguity: 3 (extremely vague). Dependencies: 0 (none). Total: 5",
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Bug report with minimal content - just 'תאור' (description) with no actual details, no steps to reproduce, no expected/actual results. Appears to be a placeholder test."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}
