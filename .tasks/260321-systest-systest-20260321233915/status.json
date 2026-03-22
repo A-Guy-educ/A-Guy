@@ -4,7 +4,7 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-21T21:41:44.755Z",
-  "updatedAt": "2026-03-22T00:51:02.676Z",
+  "updatedAt": "2026-03-22T00:54:06.700Z",
   "state": "running",
   "cursor": "build",
   "stages": {
@@ -54,8 +54,16 @@
       "sessionId": "ses_2eda160b7ffeF4DJCN0gVEx65X"
     },
     "build": {
-      "state": "pending",
-      "retries": 0
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-22T00:52:56.265Z",
+      "outputFile": "build.md",
+      "sessionId": "ses_2ecf9d0deffe2dAaGYTspkhkvS"
+    },
+    "commit": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-22T00:54:06.700Z"
     }
   },
   "issueNumber": 988,
@@ -67,6 +75,5 @@
       "timestamp": "2026-03-21T21:41:44.755Z"
     }
   ],
-  "completedAt": "2026-03-21T21:53:44.900Z",
-  "branchName": "feat/260321-systest-988-system-test-add-pipeline-health"
+  "completedAt": "2026-03-21T21:53:44.900Z"
 }
