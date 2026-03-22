@@ -45,8 +45,19 @@ describe('getStageTimeout', () => {
 
   it('returns correct timeout for all 13 stages', () => {
     const stages = [
-      'taskify', 'gap', 'clarify', 'architect', 'plan-gap',
-      'test', 'build', 'commit', 'review', 'fix', 'verify', 'docs', 'pr',
+      'taskify',
+      'gap',
+      'clarify',
+      'architect',
+      'plan-gap',
+      'test',
+      'build',
+      'commit',
+      'review',
+      'fix',
+      'verify',
+      'docs',
+      'pr',
     ]
     for (const stage of stages) {
       const timeout = getStageTimeout(stage)
@@ -158,7 +169,15 @@ describe('PipelineHealthReport.generateReport', () => {
   it('stageStatuses includes all required stages per spec', () => {
     const report = reporter.generateReport()
     const requiredStages = [
-      'taskify', 'architect', 'gap', 'plan-gap', 'build', 'commit', 'review', 'verify', 'pr',
+      'taskify',
+      'architect',
+      'gap',
+      'plan-gap',
+      'build',
+      'commit',
+      'review',
+      'verify',
+      'pr',
     ]
     for (const stage of requiredStages) {
       expect(report.stageStatuses).toHaveProperty(stage)
@@ -221,7 +240,16 @@ describe('PipelineHealthReport.getRetryRecommendation', () => {
   })
 
   it('returns backoffMultiplier of 2.0 for agent stages', () => {
-    const agentStages = ['taskify', 'gap', 'clarify', 'architect', 'plan-gap', 'test', 'build', 'fix']
+    const agentStages = [
+      'taskify',
+      'gap',
+      'clarify',
+      'architect',
+      'plan-gap',
+      'test',
+      'build',
+      'fix',
+    ]
     for (const stage of agentStages) {
       const strategy = reporter.getRetryRecommendation(stage)
       expect(strategy.backoffMultiplier).toBe(2.0)
@@ -245,8 +273,19 @@ describe('Zod schema validation', () => {
   describe('stageNameSchema', () => {
     it('accepts all valid stage names', () => {
       const validStages = [
-        'taskify', 'gap', 'clarify', 'architect', 'plan-gap',
-        'test', 'build', 'commit', 'review', 'fix', 'verify', 'docs', 'pr',
+        'taskify',
+        'gap',
+        'clarify',
+        'architect',
+        'plan-gap',
+        'test',
+        'build',
+        'commit',
+        'review',
+        'fix',
+        'verify',
+        'docs',
+        'pr',
       ]
       for (const stage of validStages) {
         const result = stageNameSchema.safeParse(stage)

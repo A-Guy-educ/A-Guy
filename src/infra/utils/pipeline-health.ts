@@ -34,13 +34,15 @@ const VALID_STAGE_NAMES = [
 /**
  * Zod schema for validating stage names.
  */
-export const stageNameSchema = z.string().refine(
-  (val): val is (typeof VALID_STAGE_NAMES)[number] =>
-    (VALID_STAGE_NAMES as readonly string[]).includes(val),
-  {
-    message: `Invalid stage name. Valid stages: ${VALID_STAGE_NAMES.join(', ')}`,
-  },
-)
+export const stageNameSchema = z
+  .string()
+  .refine(
+    (val): val is (typeof VALID_STAGE_NAMES)[number] =>
+      (VALID_STAGE_NAMES as readonly string[]).includes(val),
+    {
+      message: `Invalid stage name. Valid stages: ${VALID_STAGE_NAMES.join(', ')}`,
+    },
+  )
 
 /**
  * Schema for failed stage names (same validation as stage names).
@@ -252,7 +254,16 @@ export class PipelineHealthReport {
     const shouldRetry = maxRetries > 0 && !noRetryStages.includes(failedStage)
 
     // Backoff multiplier: 2x for agent stages, 1.5x for others
-    const backoffMultiplier = ['taskify', 'gap', 'clarify', 'architect', 'plan-gap', 'test', 'build', 'fix'].includes(failedStage)
+    const backoffMultiplier = [
+      'taskify',
+      'gap',
+      'clarify',
+      'architect',
+      'plan-gap',
+      'test',
+      'build',
+      'fix',
+    ].includes(failedStage)
       ? 2.0
       : 1.5
 
