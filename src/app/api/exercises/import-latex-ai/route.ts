@@ -70,18 +70,28 @@ export async function POST(request: NextRequest) {
       payload,
     )
 
-    const responseText = result.text
-      .replace(/^```json\s*/i, '')
-      .replace(/^```\s*/, '')
-      .replace(/```\s*$/, '')
-      .trim()
+    // Extract JSON from AI response — handle markdown code fences and leading text
+    let responseText = result.text.trim()
+    // Extract content between ```json...``` or ```...``` fences
+    const fenceMatch = /```(?:json)?\s*\n?([\s\S]*?)```/.exec(responseText)
+    if (fenceMatch) {
+      responseText = fenceMatch[1].trim()
+    }
+    // Find first { or [ if there's leading text
+    const jsonStart = responseText.search(/[{[]/)
+    if (jsonStart > 0) {
+      responseText = responseText.slice(jsonStart)
+    }
 
     let exercises: Array<{ title: string; blocks: unknown[] }>
     try {
       const parsed = JSON.parse(responseText)
       exercises = Array.isArray(parsed.exercises) ? parsed.exercises : [parsed]
     } catch {
-      reqLogger.error('AI returned invalid JSON for LaTeX import')
+      reqLogger.error(
+        { responsePreview: responseText.slice(0, 500) },
+        'AI returned invalid JSON for LaTeX import',
+      )
       return NextResponse.json(
         { success: false, error: 'AI returned invalid JSON. Try the script import instead.' },
         { status: 422 },

@@ -53,6 +53,7 @@ function parseOptions(optionStr: string): Record<string, string> {
 function latexToFnString(latex: string): string {
   return latex
     .replace(/\\cdot/g, '*')
+    .replace(/\\\*/g, '*')
     .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
     .replace(/\\sqrt\{([^}]+)\}/g, 'sqrt($1)')
     .replace(/\\left\(/g, '(')

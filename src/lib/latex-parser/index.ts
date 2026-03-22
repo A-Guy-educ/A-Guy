@@ -187,9 +187,15 @@ function processTokens(
         }
       } else if (envName === 'tabular' || envName === 'tabular*') {
         const inner = extractInner(token)
-        const table = parseTabular(inner)
-        if (table) {
-          blocks.push(table)
+        // If the tabular contains tikzpictures (e.g. Q6 option graphs), extract those
+        if (/\\begin\{tikzpicture\}/.test(inner)) {
+          const tikzBlocks = extractTikzFromTabular(inner, blocks, warnings, token.line)
+          blocks.push(...tikzBlocks)
+        } else {
+          const table = parseTabular(inner)
+          if (table) {
+            blocks.push(table)
+          }
         }
       } else if (envName === 'tikzpicture') {
         const raw = token.value ?? ''
@@ -326,6 +332,37 @@ function attachSolutions(blocks: ContentBlock[], solutionBlocks: ContentBlock[])
       }
     }
   }
+}
+
+/**
+ * Extracts tikzpicture blocks embedded inside a tabular (e.g. option graph grids).
+ * Finds each \begin{tikzpicture}...\end{tikzpicture} and parses it as a diagram.
+ */
+function extractTikzFromTabular(
+  inner: string,
+  _blocks: ContentBlock[],
+  warnings: ParseWarning[],
+  line: number,
+): ContentBlock[] {
+  const result: ContentBlock[] = []
+  const tikzRe = /\\begin\{tikzpicture\}([\s\S]*?)\\end\{tikzpicture\}/g
+  let match: RegExpExecArray | null
+  while ((match = tikzRe.exec(inner)) !== null) {
+    const raw = match[0]
+    if (hasTikzAxis(raw)) {
+      const axisBlock = parseTikzAxis(raw)
+      if (axisBlock) result.push(axisBlock)
+    } else if (hasTikzDrawPlot(raw)) {
+      const drawPlotBlock = parseTikzDrawPlot(raw)
+      if (drawPlotBlock) result.push(drawPlotBlock)
+    } else if (hasTikzGeometry(raw)) {
+      const geoBlock = parseTikzGeometry(raw)
+      if (geoBlock) result.push(geoBlock)
+    } else {
+      warnings.push({ line, message: 'Unrecognized tikzpicture in tabular', rawLatex: raw })
+    }
+  }
+  return result
 }
 
 /** Extract inner content from an environment token (strip begin/end tags) */
