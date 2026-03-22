@@ -4,9 +4,9 @@
   "mode": "full",
   "pipeline": "spec_execute_verify",
   "startedAt": "2026-03-21T23:09:04.466Z",
-  "updatedAt": "2026-03-22T00:00:28.857Z",
-  "state": "failed",
-  "cursor": "gap",
+  "updatedAt": "2026-03-22T00:51:03.295Z",
+  "state": "running",
+  "cursor": "build",
   "stages": {
     "taskify": {
       "state": "completed",
@@ -54,12 +54,8 @@
       "sessionId": "ses_2ed2b1032ffehhw45rzdTdno6J"
     },
     "build": {
-      "state": "failed",
-      "retries": 0,
-      "completedAt": "2026-03-22T00:00:27.402Z",
-      "outputFile": "build.md",
-      "sessionId": "ses_2ed2b0d5fffe3gS7FbvjTVFbOM",
-      "error": "commit-task-files failed: Command failed: git commit --no-gpg-sign -m ci(cody): commit task files for 260322-systest-1774130474005"
+      "state": "pending",
+      "retries": 0
     }
   },
   "issueNumber": 989,
@@ -72,5 +68,6 @@
       "timestamp": "2026-03-21T23:09:04.466Z"
     }
   ],
-  "completedAt": "2026-03-22T00:00:28.857Z"
+  "completedAt": "2026-03-22T00:00:28.857Z",
+  "branchName": "feat/260322-systest-989-system-test-add-pipeline-health"
 }
