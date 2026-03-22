@@ -115,7 +115,7 @@ describe('executeUpdateKnowledgeBase', () => {
     mockFs.existsSync = vi.fn().mockReturnValue(false)
     mockFs.mkdirSync = vi.fn()
     mockFs.writeFileSync = vi.fn()
-    mockFs.readFileSync = vi.fn()
+    ;(mockFs.readFileSync as ReturnType<typeof vi.fn>).mockReturnValue('')
   })
 
   it('skips update in dry-run mode', async () => {
