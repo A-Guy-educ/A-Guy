@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "taskId": "260322-auto-781",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-22T18:48:43.541Z",
+  "updatedAt": "2026-03-22T18:49:40.529Z",
+  "state": "running",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "running",
+      "retries": 1,
+      "startedAt": "2026-03-22T18:49:40.529Z",
+      "error": "Observer retry: Fixed primary_domain validation error - changed from 'unknown' to 'backend' (a valid enum value)"
+    }
+  },
+  "issueNumber": 1002,
+  "triggeredBy": "aguyaharonyair",
+  "issueCreator": "aguyaharonyair",
+  "actorHistory": [
+    {
+      "action": "pipeline-triggered",
+      "actor": "aguyaharonyair",
+      "timestamp": "2026-03-22T18:48:43.541Z"
+    }
+  ]
+}

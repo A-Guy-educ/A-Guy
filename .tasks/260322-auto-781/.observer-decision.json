@@ -1,0 +1,8 @@
+{
+  "action": "retry",
+  "reason": "Fixed primary_domain validation error - changed from 'unknown' to 'backend' (a valid enum value)",
+  "fix": {
+    "description": "Changed primary_domain from invalid value 'unknown' to valid enum value 'backend'",
+    "filesModified": [".tasks/260322-auto-781/task.json"]
+  }
+}

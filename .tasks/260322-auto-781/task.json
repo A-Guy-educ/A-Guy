@@ -1,0 +1,31 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "low",
+  "confidence": 0.1,
+  "primary_domain": "backend",
+  "scope": [],
+  "missing_inputs": [
+    {
+      "field": "requirements",
+      "question": "What are the actual requirements for this new feature? The task currently contains no specifications."
+    },
+    {
+      "field": "summary",
+      "question": "What is the actual feature being requested? The task content is just 'test' with no meaningful description."
+    }
+  ],
+  "assumptions": [],
+  "review_questions": [
+    "Is this task meant to be a placeholder that should be filled in with actual content?",
+    "Should this task be closed/cancelled given it contains no actionable information?"
+  ],
+  "complexity": 5,
+  "complexity_reasoning": "Scope: 0 (no files, no changes described). Risk: 0 (no content to evaluate). Novelty: 0 (no feature described). Cross-domain: 0. Ambiguity: 5 (task content is just 'test', completely unclear). Dependencies: 0. Total: 5",
+  "input_quality": {
+    "level": "raw_idea",
+    "skip_stages": [],
+    "reasoning": "Task contains only 'test' text with no meaningful requirements, acceptance criteria, or implementation details. The issue metadata (New Feature, Full-stack, P2) contradicts the actual content which is essentially empty."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

@@ -1,0 +1,11 @@
+{
+  "stageName": "taskify",
+  "error": {
+    "message": "Invalid task.json: task.json validation failed:\n  • Invalid primary_domain: \"unknown\". Must be one of: backend, frontend, infra, data, llm, devops, product",
+    "stack": "Error: Invalid task.json: task.json validation failed:\n  • Invalid primary_domain: \"unknown\". Must be one of: backend, frontend, infra, data, llm, devops, product\n    at executeValidateTaskJson (/home/runner/work/A-Guy/A-Guy/scripts/cody/pipeline/post-actions/validate-task-json.ts:26:11)\n    at executePostAction (/home/runner/work/A-Guy/A-Guy/scripts/cody/pipeline/post-actions/index.ts:46:14)\n    at handleStageResult (/home/runner/work/A-Guy/A-Guy/scripts/cody/engine/state-machine.ts:765:15)\n    at executeSingleStep (/home/runner/work/A-Guy/A-Guy/scripts/cody/engine/state-machine.ts:367:18)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async runPipeline (/home/runner/work/A-Guy/A-Guy/scripts/cody/engine/state-machine.ts:238:15)\n    at async runFullMode (/home/runner/work/A-Guy/A-Guy/scripts/cody/modes/full.ts:60:22)\n    at async main (/home/runner/work/A-Guy/A-Guy/scripts/cody/entry.ts:346:9)"
+  },
+  "attempt": 1,
+  "maxAttempts": 1,
+  "taskDir": "/home/runner/work/A-Guy/A-Guy/.tasks/260322-auto-781",
+  "observerAttempt": 1
+}
