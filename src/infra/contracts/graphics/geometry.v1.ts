@@ -26,6 +26,8 @@ const GeometryPointSchema = z.object({
   position: PositionEnumSchema.optional(),
   fontSize: z.number().positive().optional(),
   visible: z.boolean().optional(),
+  color: ColorStringSchema.optional(),
+  size: z.number().int().min(1).max(5).optional(),
 })
 
 /** Line label */
@@ -123,6 +125,8 @@ const TextSchema = z.object({
     .optional(),
   position: PositionEnumSchema.optional(),
   fontSize: z.number().positive().optional(),
+  color: ColorStringSchema.optional(),
+  sizeScale: z.number().int().min(0).max(10).optional(),
 })
 
 /** Equal segment marker (array of segments that are equal to each other) */
