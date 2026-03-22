@@ -44,6 +44,7 @@ export const MIME_ALLOWLISTS: Record<MediaType, string[]> = {
     'text/csv',
     'text/x-tex',
     'application/x-tex',
+    'application/x-latex',
   ],
   [MediaType.External]: [], // No file upload
   [MediaType.Other]: [], // Catch-all
