@@ -32,7 +32,8 @@ export function ProgressCircle({
         cx={size / 2}
         cy={size / 2}
         r={radius}
-        stroke="hsl(var(--border))"
+        stroke={resolvedColor}
+        strokeOpacity={0.2}
         strokeWidth={strokeWidth}
         fill="none"
       />

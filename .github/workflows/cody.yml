@@ -35,19 +35,39 @@ on:
         required: false
         type: string
         default: ''
+      issue_number:
+        description: 'Issue number for the task (passed by inspector for dispatch triggers)'
+        required: false
+        type: string
+        default: ''
       runner:
-        description: 'Where to run: self-hosted (default) or github-hosted'
+        description: 'Where to run: github-hosted (default) or self-hosted'
         required: false
         type: choice
         options:
           - github-hosted
           - self-hosted
-        default: 'self-hosted'
+        default: 'github-hosted'
       version:
         description: 'Pipeline version (branch, tag, or commit). Overrides CODY_DEFAULT_VERSION'
         required: false
         type: string
         default: ''
+      complexity:
+        description: 'Override complexity score (1-100) for testing'
+        required: false
+        type: string
+        default: ''
+      use_test_config:
+        description: 'Use opencode.test.json (cheap models) instead of opencode.json'
+        required: false
+        type: boolean
+        default: false
+      use_mock:
+        description: 'Use mock LLM server with recorded responses'
+        required: false
+        type: boolean
+        default: false
 
   push:
     branches:
@@ -105,6 +125,7 @@ jobs:
       comment_body: ${{ steps.parse.outputs.comment_body }}
       runner: ${{ steps.parse.outputs.runner }}
       version: ${{ steps.parse.outputs.version }}
+      complexity: ${{ steps.parse.outputs.complexity }}
       fresh: ${{ steps.parse.outputs.fresh }}
     steps:
       - name: Checkout repository
@@ -160,9 +181,11 @@ jobs:
           DISPATCH_DRY_RUN: ${{ github.event.inputs.dry_run }}
           DISPATCH_FEEDBACK: ${{ github.event.inputs.feedback }}
           DISPATCH_FROM_STAGE: ${{ github.event.inputs.from_stage }}
+          DISPATCH_ISSUE_NUMBER: ${{ github.event.inputs.issue_number }}
           DISPATCH_CLARIFY: ${{ github.event.inputs.clarify }}
           DISPATCH_RUNNER: ${{ github.event.inputs.runner }}
           DISPATCH_VERSION: ${{ github.event.inputs.version }}
+          DISPATCH_COMPLEXITY: ${{ github.event.inputs.complexity }}
           # Comment inputs (for orchestrator to parse)
           COMMENT_BODY: ${{ github.event.comment.body }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
@@ -197,6 +220,32 @@ jobs:
           gh issue comment ${{ needs.parse.outputs.issue_number }} \
             --body "⚠️ Invalid \`@cody\` command. Use: \`@cody [spec|impl|rerun|full|status] [task-id] [options]\`"
 
+  # Job 1c: Notify on orchestrate failures (pipeline didn't start)
+  notify-orchestrate-error:
+    needs: [parse, orchestrate]
+    if: >-
+      always() &&
+      needs.orchestrate.result == 'failure' &&
+      needs.parse.result == 'success' &&
+      needs.parse.outputs.issue_number != '' &&
+      github.event_name == 'issue_comment'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Post failure comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment ${{ needs.parse.outputs.issue_number }} \
+            --repo ${{ github.repository }} \
+            --body "⚠️ **Pipeline failed to start**
+
+          The workflow crashed before the pipeline could run (infrastructure error, not a code issue).
+
+          To retry, comment \`/cody\` on this issue.
+
+          [View CI logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+
   # Smoke test: runs on push to dev/main to validate cody pipeline works
   smoke-test:
     runs-on: ubuntu-latest
@@ -207,6 +256,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git identity
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          # Use GITHUB_TOKEN for all GitHub HTTPS operations (including push)
+          git config --global url."https://x-access-token:${{ github.token }}@github.com/".insteadOf "https://github.com/"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -221,6 +279,12 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Install OpenCode CLI
+        run: |
+          curl -fsSL https://opencode.ai/install | bash
+          echo "$HOME/.opencode/bin" >> $GITHUB_PATH
+          $HOME/.opencode/bin/opencode --version || echo "Warning: opencode install failed"
 
       - name: Run parse-inputs validation
         env:
@@ -241,10 +305,12 @@ jobs:
       - name: Validate cody entry can be loaded
         run: pnpm tsx scripts/cody/entry.ts --help
 
-      - name: Run actual pipeline (spec mode - runs taskify)
+      - name: Run pipeline canary tests (dry-run, no LLM)
+        run: pnpm test:canary
+
+      - name: Run pipeline dry-run (full mode - validates plumbing)
         env:
           GH_TOKEN: ${{ github.token }}
-          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
         run: |
           # Create simple test task
           mkdir -p .tasks/260225-smoke-test
@@ -252,21 +318,25 @@ jobs:
           echo "" >> .tasks/260225-smoke-test/task.md
           echo "Smoke test task" >> .tasks/260225-smoke-test/task.md
 
-          # Run spec mode (will run taskify stage)
-          pnpm cody --mode=spec --task-id=260225-smoke-test || true
+          # Run full mode with --dry-run --local (no LLM, no GitHub API)
+          # This exercises: CLI parsing, pipeline construction, state machine loop,
+          # stage ordering, skip conditions, status file writing
+          pnpm cody --mode=full --task-id=260225-smoke-test --dry-run --local
 
-          # Don't fail on stage errors, just verify files were created
-
-      - name: Verify taskify produced valid output
+      - name: Verify pipeline dry-run produced valid output
         run: |
-          # Verify task.json was created
-          if [ ! -f ".tasks/260225-smoke-test/task.json" ]; then
-            echo "ERROR: task.json was not created"
+          # Verify status.json was created (dry-run marks all stages as completed)
+          if [ ! -f ".tasks/260225-smoke-test/status.json" ]; then
+            echo "ERROR: status.json was not created"
             exit 1
           fi
 
-          # Verify it's valid JSON
-          cat .tasks/260225-smoke-test/task.json | pnpm tsx -e "JSON.parse(require('fs').readFileSync(0, 'utf-8')); console.log('Valid JSON')"
+          # Verify it's valid JSON with completed state
+          node -e "
+            const s = JSON.parse(require('fs').readFileSync('.tasks/260225-smoke-test/status.json', 'utf-8'));
+            if (s.state !== 'completed') { console.error('ERROR: state is ' + s.state); process.exit(1); }
+            console.log('Valid status.json — pipeline state: ' + s.state);
+          "
 
           echo "SUCCESS: Pipeline smoke test passed"
 
@@ -274,7 +344,7 @@ jobs:
   orchestrate:
     needs: parse
     if: needs.parse.outputs.valid == 'true'
-    runs-on: ${{ needs.parse.outputs.runner == 'self-hosted' && 'self-hosted' || (needs.parse.outputs.runner == 'github-hosted' && 'ubuntu-latest' || 'self-hosted') }}
+    runs-on: ${{ needs.parse.outputs.runner == 'self-hosted' && 'self-hosted' || 'ubuntu-latest' }}
     timeout-minutes: 120
     permissions:
       id-token: write # OpenCode GitHub App OIDC
@@ -282,9 +352,21 @@ jobs:
       pull-requests: write # Create PRs, post comments
       issues: write # Post status comments
     steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: 3126173
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          repositories: A-Guy
+          owner: A-Guy-educ
+          permission-contents: write
+          permission-pull-requests: write
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          token: ${{ steps.app-token.outputs.token }}
           persist-credentials: true
           fetch-depth: 0
 
@@ -297,16 +379,90 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: 'pnpm'
 
-      - name: Configure pnpm to use local store
+      - name: Configure pnpm to use local store (self-hosted only)
+        if: needs.parse.outputs.runner == 'self-hosted'
         run: |
-          # Use the local pnpm store on the runner (avoid GitHub cache download)
+          # Use the local pnpm store on the self-hosted runner (avoid GitHub cache download)
           echo "PNPM_HOME=/Users/bot/Library/pnpm" >> $GITHUB_ENV
           echo "STORE_DIR=/Users/bot/Library/pnpm/store/v10" >> $GITHUB_ENV
           echo "/Users/bot/Library/pnpm" >> $GITHUB_PATH
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      # Install the real OpenCode CLI binary (v1.2.x) from opencode.ai.
+      # The npm package (opencode-ai) does NOT properly support --attach/serve.
+      # This gives us ~/.opencode/bin/opencode which does.
+      - name: Install OpenCode CLI
+        run: |
+          curl -fsSL https://opencode.ai/install | bash
+          echo "$HOME/.opencode/bin" >> $GITHUB_PATH
+          # Verify it's installed and print version for diagnostics
+          $HOME/.opencode/bin/opencode --version || echo "Warning: opencode install may have failed"
+
+      # Fetch recordings from dev branch (ensure we have them regardless of feature branch)
+      - name: Fetch recordings from dev
+        if: github.event.inputs.use_mock == 'true' || github.event.inputs.use_mock == true
+        run: |
+          # Fetch recordings from origin/dev if they don't exist locally
+          if [ ! -d "scripts/system-test/recordings/scenario-02" ] || [ $(ls -A scripts/system-test/recordings/scenario-02/*.json 2>/dev/null | wc -l) -lt 2 ]; then
+            echo "Fetching recordings from dev branch..."
+            git fetch origin dev --depth=1 --no-recurse-submodules 2>/dev/null || true
+            git checkout origin/dev -- scripts/system-test/recordings/ 2>/dev/null || echo "No recordings in dev branch"
+          else
+            echo "Recordings already exist locally"
+          fi
+
+      # Start mock LLM server in record or replay mode
+      - name: Start mock LLM server
+        if: github.event.inputs.use_mock == 'true' || github.event.inputs.use_mock == true
+        run: |
+          # Check if recordings exist for replay, otherwise run in record mode to capture calls
+          if [ -d "scripts/system-test/recordings/scenario-02" ] && [ "$(ls -A scripts/system-test/recordings/scenario-02/*.json 2>/dev/null | wc -l)" -gt 1 ]; then
+            echo "Found recordings, starting mock in REPLAY mode..."
+            pnpm tsx scripts/system-test/mock-llm/cli.ts \
+              --mode replay \
+              --port 8080 \
+              --recordings-dir scripts/system-test/recordings/scenario-02 &
+            
+            # Wait for server to start
+            sleep 5
+            
+            # Verify server is running
+            curl -s http://localhost:8080/health || echo "Warning: mock server not ready"
+          else
+            echo "No recordings found, starting mock in RECORD mode..."
+            # Create recordings directory
+            mkdir -p scripts/system-test/recordings/scenario-02
+            
+            # Start mock server in record mode
+            pnpm tsx scripts/system-test/mock-llm/cli.ts \
+              --mode record \
+              --port 8080 \
+              --recordings-dir scripts/system-test/recordings/scenario-02 \
+              --upstream https://api.minimax.io/v1 \
+              --api-key "${{ secrets.MINIMAX_API_KEY }}" &
+            
+            # Wait for server to start
+            sleep 5
+            
+            # Verify server is running
+            curl -s http://localhost:8080/health || echo "Warning: mock server not ready"
+            
+            echo "Running in record mode - will save LLM calls"
+          fi
+
+      # Use mock config (for both record and replay)
+      - name: Use mock config
+        if: github.event.inputs.use_mock == 'true' || github.event.inputs.use_mock == true
+        run: cp opencode.mock.json opencode.json
+
+      # Use test config (cheap models) if requested
+      - name: Use test config
+        if: github.event.inputs.use_test_config == 'true' || github.event.inputs.use_test_config == true
+        run: cp opencode.test.json opencode.json
 
       - name: Checkout feature branch if exists
         if: needs.parse.outputs.task_id != '' || needs.parse.outputs.fresh == 'true'
@@ -322,6 +478,8 @@ jobs:
         run: |
           git config --global user.email "${GIT_USER_EMAIL:-242132053+aguyaharonyair@users.noreply.github.com}"
           git config --global user.name "${GIT_USER_NAME:-aguyaharonyair}"
+          # Use App token for all GitHub HTTPS operations (including push)
+          git config --global url."https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/".insteadOf "https://github.com/"
 
       # Overlay pipeline version (if specified)
       - name: Overlay pipeline version
@@ -350,11 +508,20 @@ jobs:
           echo "GOOGLE_GENERATIVE_AI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> $GITHUB_ENV
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
           echo "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}" >> $GITHUB_ENV
+          echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> $GITHUB_ENV
+
+          # For mock mode, redirect API calls to local mock server
+          # Only set this if mock mode is enabled
+          if [ "${{ github.event.inputs.use_mock }}" = "true" ]; then
+            echo "OPENAI_BASE_URL=http://localhost:8080/v1" >> $GITHUB_ENV
+            echo "MINIMAX_BASE_URL=http://localhost:8080/v1" >> $GITHUB_ENV
+          fi
 
       - name: Run Cody
         env:
           # GitHub token for gh CLI (GH_PAT takes precedence for PR creation)
           GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
           GH_PAT: ${{ secrets.GH_PAT }}
 
           # Blob storage token for verify stage (unit tests need it)
@@ -375,11 +542,16 @@ jobs:
           TRIGGER_TYPE: ${{ needs.parse.outputs.trigger_type }}
           COMMENT_BODY: ${{ needs.parse.outputs.comment_body }}
           VERSION: ${{ needs.parse.outputs.version }}
+          COMPLEXITY: ${{ needs.parse.outputs.complexity }}
           IS_PULL_REQUEST: ${{ needs.parse.outputs.is_pull_request }}
 
           # GitHub context
           RUN_ID: ${{ github.run_id }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          # Actor: comment author for comment triggers, workflow dispatcher for dispatch triggers
+          GITHUB_ACTOR: ${{ github.event.comment.user.login || github.actor }}
+          # Issue creator (owner) - available for issue and comment triggers
+          ISSUE_CREATOR: ${{ github.event.issue.user.login || '' }}
         run: pnpm cody
 
       # Pipeline summary in Actions UI
@@ -388,7 +560,7 @@ jobs:
         run: |
           TASK_ID="${{ needs.parse.outputs.task_id }}"
           STATUS_FILE=".tasks/${TASK_ID}/status.json"
-          echo "## 🤖 Cody Pipeline: `${TASK_ID}`" >> $GITHUB_STEP_SUMMARY
+          echo "## 🤖 Cody Pipeline: \`${TASK_ID}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ -f "$STATUS_FILE" ]; then
             STATE=$(jq -r '.state // "unknown"' "$STATUS_FILE")
@@ -402,11 +574,22 @@ jobs:
           fi
       - name: Upload artifacts
         if: always() && needs.parse.outputs.task_id != ''
+        continue-on-error: true # Don't fail the job if artifact zip has issues (e.g. dangling git objects)
         uses: actions/upload-artifact@v4
         with:
           name: cody-${{ needs.parse.outputs.task_id }}-${{ github.run_id }}
           path: .tasks/${{ needs.parse.outputs.task_id }}/
           retention-days: 7
+
+      # Upload LLM recordings if in record mode
+      - name: Upload LLM recordings
+        if: always() && (github.event.inputs.use_mock == 'true' || github.event.inputs.use_mock == true)
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: llm-recordings
+          path: scripts/system-test/recordings/
+          retention-days: 30
 
       # Clean workspace for self-hosted runners (no-op on GitHub-hosted since VM is discarded)
       - name: Cleanup workspace (self-hosted)

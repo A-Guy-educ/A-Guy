@@ -17,9 +17,10 @@ import {
 // Mock child_process.execSync
 vi.mock('child_process', () => ({
   execSync: vi.fn(),
+  execFileSync: vi.fn(),
 }))
 
-import { execSync } from 'child_process'
+import { execFileSync } from 'child_process'
 
 describe('parse-inputs', () => {
   describe('isValidTaskId', () => {
@@ -293,7 +294,7 @@ describe('parse-inputs', () => {
       vi.stubEnv('ISSUE_NUMBER', '123')
 
       // Mock gh to return a valid task-id
-      vi.mocked(execSync).mockReturnValue('Task created: `260225-test`')
+      vi.mocked(execFileSync).mockReturnValue('Task created: `260225-test`')
 
       const result = parseCommentInputs()
 
@@ -306,7 +307,7 @@ describe('parse-inputs', () => {
       vi.stubEnv('ISSUE_NUMBER', '123')
 
       // Mock gh to return a valid task-id
-      vi.mocked(execSync).mockReturnValue('Task created: `260225-test`')
+      vi.mocked(execFileSync).mockReturnValue('Task created: `260225-test`')
 
       const result = parseCommentInputs()
 

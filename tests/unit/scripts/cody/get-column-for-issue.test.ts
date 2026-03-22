@@ -49,29 +49,33 @@ function getColumnForIssue(
 ): ColumnId {
   const labelNames = issue.labels.map((l) => l.name.toLowerCase())
 
-  // 1. Cody lifecycle labels (highest priority — set by the pipeline state machine)
-  if (labelNames.includes('cody:planning') || labelNames.includes('cody:building'))
-    return 'building'
+  // 1. Terminal lifecycle labels (highest priority)
   if (labelNames.includes('cody:failed')) return 'failed'
   // cody:done = pipeline finished, PR created → task goes to review (not done)
   // Task is only truly "done" when the PR is merged and the issue is closed
   if (labelNames.includes('cody:done') || labelNames.includes('cody:review')) return 'review'
 
-  // 2. Active workflow run takes priority over gate labels
-  // This ensures the dashboard shows "Building" even if risk-gated/hard-stop labels
-  // are still present (they are removed mid-run after approval)
+  // 2. Gate labels — pipeline paused waiting for approval.
+  // Must be checked BEFORE cody:planning/cody:building and in_progress workflow,
+  // because the pipeline keeps running (polling for approval) while gated,
+  // and the cody:planning label is never removed when a gate fires.
+  if (labelNames.includes('hard-stop') || labelNames.includes('risk-gated')) return 'gate-waiting'
+
+  // 3. Cody active-work labels (only reached when NOT gated)
+  if (labelNames.includes('cody:planning') || labelNames.includes('cody:building'))
+    return 'building'
+
+  // 4. Active workflow run (only reached when NOT gated and no cody:* label)
   if (workflowRun?.status === 'in_progress') return 'building'
 
-  // 3. Explicit state labels (only checked when no active workflow run)
+  // 5. Explicit state labels (only checked when no active workflow run)
   if (labelNames.includes('failed')) return 'failed'
   if (labelNames.includes('gate-waiting')) return 'gate-waiting'
   if (labelNames.includes('retrying')) return 'retrying'
 
-  // 3b. Pipeline gate labels (set by pipeline when hitting gates)
-  if (labelNames.includes('hard-stop') || labelNames.includes('risk-gated')) return 'gate-waiting'
-
-  // 4. Workflow run completed status
+  // 6. Workflow run completed status
   if (workflowRun?.status === 'completed') {
+    // Also handle timed_out and cancelled as failures
     if (
       workflowRun.conclusion === 'failure' ||
       workflowRun.conclusion === 'timed_out' ||
@@ -80,15 +84,15 @@ function getColumnForIssue(
       return 'failed'
   }
 
-  // 5. Associated PR
+  // 7. Associated PR (always fetched via bulk)
   if (associatedPR && !associatedPR.merged_at) return 'review'
 
-  // 6. Other labels
+  // 8. Other labels
   if (labelNames.includes('released')) return 'done'
   if (labelNames.includes('in-progress') || labelNames.includes('building')) return 'building'
   if (labelNames.includes('review') || labelNames.includes('pr')) return 'review'
 
-  // 7. Default to open
+  // 9. Default to open
   return 'open'
 }
 
@@ -120,7 +124,7 @@ describe('getColumnForIssue', () => {
       expect(getColumnForIssue(issue)).toBe('review')
     })
 
-    it('cody:building should override risk-gated label', () => {
+    it('risk-gated should override cody:building label (gate takes priority)', () => {
       const issue = {
         ...baseIssue,
         labels: [
@@ -128,12 +132,76 @@ describe('getColumnForIssue', () => {
           { name: 'risk-gated', color: 'yellow' },
         ],
       }
-      expect(getColumnForIssue(issue)).toBe('building')
+      expect(getColumnForIssue(issue)).toBe('gate-waiting')
+    })
+
+    it('risk-gated should override cody:planning label (gate takes priority)', () => {
+      const issue = {
+        ...baseIssue,
+        labels: [
+          { name: 'cody:planning', color: 'blue' },
+          { name: 'risk-gated', color: 'yellow' },
+        ],
+      }
+      expect(getColumnForIssue(issue)).toBe('gate-waiting')
+    })
+
+    it('hard-stop should override cody:planning label (gate takes priority)', () => {
+      const issue = {
+        ...baseIssue,
+        labels: [
+          { name: 'cody:planning', color: 'blue' },
+          { name: 'hard-stop', color: 'red' },
+        ],
+      }
+      expect(getColumnForIssue(issue)).toBe('gate-waiting')
+    })
+
+    it('cody:planning + risk-gated + in_progress workflow should still be gate-waiting', () => {
+      const issue = {
+        ...baseIssue,
+        labels: [
+          { name: 'cody:planning', color: 'blue' },
+          { name: 'risk-gated', color: 'yellow' },
+        ],
+      }
+      const workflowRun: WorkflowRun = {
+        id: 123,
+        status: 'in_progress',
+        conclusion: null,
+        created_at: '2026-01-01',
+        updated_at: '2026-01-01',
+        html_url: 'https://github.com/owner/repo/actions/runs/123',
+        display_title: 'Task title',
+      }
+      expect(getColumnForIssue(issue, workflowRun)).toBe('gate-waiting')
+    })
+
+    it('cody:done should still override risk-gated (pipeline completed)', () => {
+      const issue = {
+        ...baseIssue,
+        labels: [
+          { name: 'cody:done', color: 'green' },
+          { name: 'risk-gated', color: 'yellow' },
+        ],
+      }
+      expect(getColumnForIssue(issue)).toBe('review')
+    })
+
+    it('cody:failed should still override risk-gated', () => {
+      const issue = {
+        ...baseIssue,
+        labels: [
+          { name: 'cody:failed', color: 'red' },
+          { name: 'risk-gated', color: 'yellow' },
+        ],
+      }
+      expect(getColumnForIssue(issue)).toBe('failed')
     })
   })
 
-  describe('workflow run in_progress takes priority over gate labels', () => {
-    it('should return building when workflow is in_progress, even with risk-gated label', () => {
+  describe('gate labels take priority over workflow runs', () => {
+    it('risk-gated should override in_progress workflow (gate takes priority)', () => {
       const issue = {
         ...baseIssue,
         labels: [{ name: 'risk-gated', color: 'yellow' }],
@@ -147,10 +215,10 @@ describe('getColumnForIssue', () => {
         html_url: 'https://github.com/owner/repo/actions/runs/123',
         display_title: 'Task title',
       }
-      expect(getColumnForIssue(issue, workflowRun)).toBe('building')
+      expect(getColumnForIssue(issue, workflowRun)).toBe('gate-waiting')
     })
 
-    it('should return building when workflow is in_progress, even with hard-stop label', () => {
+    it('hard-stop should override in_progress workflow (gate takes priority)', () => {
       const issue = {
         ...baseIssue,
         labels: [{ name: 'hard-stop', color: 'red' }],
@@ -164,7 +232,7 @@ describe('getColumnForIssue', () => {
         html_url: 'https://github.com/owner/repo/actions/runs/123',
         display_title: 'Task title',
       }
-      expect(getColumnForIssue(issue, workflowRun)).toBe('building')
+      expect(getColumnForIssue(issue, workflowRun)).toBe('gate-waiting')
     })
 
     it('should return gate-waiting for risk-gated when no active workflow run', () => {

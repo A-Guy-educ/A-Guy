@@ -6,12 +6,12 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 
-import { requireAuth } from '@/ui/cody/auth'
+import { requireCodyAuth } from '@/ui/cody/auth'
 import { findTaskBranch, findBranchByIssueNumber, getOctokit } from '@/ui/cody/github-client'
 import { GITHUB_OWNER, GITHUB_REPO, TASK_ID_REGEX } from '@/ui/cody/constants'
 
 export async function GET(req: NextRequest) {
-  const authError = await requireAuth(req)
+  const authError = await requireCodyAuth(req)
   if (authError) return authError
 
   try {

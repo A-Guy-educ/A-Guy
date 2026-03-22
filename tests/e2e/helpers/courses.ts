@@ -183,6 +183,8 @@ export async function seedTestCourseData(): Promise<TestCourseData | null> {
         tenant: tenantId,
         pageAccessType: 'free',
         accessType: 'free',
+        contentStatus: 'none',
+        contentStatusVisible: true,
       },
     })
 
@@ -218,6 +220,8 @@ export async function seedTestCourseData(): Promise<TestCourseData | null> {
         order: 0,
         tenant: tenantId,
         accessType: 'inherit',
+        contentStatus: 'none',
+        contentStatusVisible: true,
       },
     })
 

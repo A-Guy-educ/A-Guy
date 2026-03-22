@@ -1,0 +1,71 @@
+{
+  "id": "solve-matching-correct",
+  "name": "Student solves matching exercise correctly",
+  "journey": "student-solves-exercises",
+  "type": "feature",
+  "area": "exercises",
+  "tags": ["matching", "correct"],
+  "locale": "he",
+  "preconditions": [
+    {
+      "action": "seed",
+      "entity": "course",
+      "data": {
+        "title": "Matching Course",
+        "courseLabel": "מ",
+        "status": "published",
+        "isActive": true,
+        "accessType": "free"
+      },
+      "ref": "$course"
+    },
+    {
+      "action": "seed",
+      "entity": "chapter",
+      "data": {
+        "title": "Matching Chapter",
+        "course": "$course",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$chapter"
+    },
+    {
+      "action": "seed",
+      "entity": "lesson",
+      "data": {
+        "title": "Matching Lesson",
+        "chapter": "$chapter",
+        "type": "learning",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$lesson"
+    },
+    {
+      "action": "seed",
+      "entity": "user",
+      "data": { "role": "student" },
+      "ref": "$student"
+    }
+  ],
+  "steps": [
+    {
+      "action": "login",
+      "input": { "userRef": "$student" }
+    },
+    {
+      "action": "navigate",
+      "input": {
+        "type": "lesson",
+        "courseRef": "$course",
+        "chapterRef": "$chapter",
+        "lessonRef": "$lesson"
+      }
+    },
+    {
+      "action": "startLesson"
+    }
+  ],
+  "teardown": "auto"
+}

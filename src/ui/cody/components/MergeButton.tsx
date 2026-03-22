@@ -22,6 +22,7 @@ interface MergeButtonProps {
   branchName?: string
   isMerging: boolean
   onMerge: () => Promise<void>
+  labels?: string[]
 }
 
 const ciIcons = {
@@ -41,6 +42,7 @@ export function MergeButton({
   branchName,
   isMerging: externalIsMerging,
   onMerge,
+  labels = [],
 }: MergeButtonProps) {
   const [showDialog, setShowDialog] = useState(false)
   const { data, isLoading, isError } = usePRCIStatus(prNumber)
@@ -53,9 +55,14 @@ export function MergeButton({
   // Show warning triangle for conflicts instead of the CI status X icon
   const CIIcon = hasConflicts ? AlertTriangle : config.icon
 
+  // Check approval status
+  const isUIApproved = labels.includes('ui-approved')
+  const isPRApproved = labels.includes('pr-approved')
+  const isApproved = isUIApproved && isPRApproved
+
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!canMerge || isMerging || isLoading) return
+    if (!canMerge || isMerging || isLoading || !isApproved) return
     setShowDialog(true)
   }
 
@@ -82,6 +89,7 @@ export function MergeButton({
             ciStatus={ciStatus}
             isMerging={isMerging}
             hasConflicts={hasConflicts}
+            isApproved={isApproved}
           />
         }
         side="bottom"
@@ -91,12 +99,12 @@ export function MergeButton({
           <Button
             variant="ghost"
             size="sm"
-            disabled={isMerging || !canMerge || isLoading}
+            disabled={isMerging || !canMerge || isLoading || !isApproved}
             onClick={handleClick}
             onMouseDown={handleMouseDown}
             className={cn(
               'h-8 text-sm px-2.5 gap-1.5 disabled:opacity-50',
-              canMerge
+              isApproved && canMerge
                 ? 'text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/30 hover:border-emerald-500/50 hover:shadow-lg cursor-pointer'
                 : 'text-muted-foreground bg-muted/30 cursor-not-allowed',
             )}

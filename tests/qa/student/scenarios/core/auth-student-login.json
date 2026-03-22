@@ -1,0 +1,37 @@
+{
+  "id": "auth-student-login",
+  "name": "Student logs in via email and password",
+  "journey": "student-auth",
+  "type": "core",
+  "area": "auth",
+  "tags": ["login", "auth"],
+  "locale": "he",
+  "preconditions": [
+    {
+      "action": "seed",
+      "entity": "user",
+      "data": {
+        "email": "student-login@example.com",
+        "password": "testPassword123!",
+        "role": "student"
+      },
+      "ref": "$student"
+    }
+  ],
+  "steps": [
+    {
+      "action": "login",
+      "input": { "userRef": "$student" }
+    },
+    {
+      "action": "navigate",
+      "input": { "type": "home" },
+      "description": "Verify redirect to home page after login"
+    },
+    {
+      "action": "beAt",
+      "input": { "pattern": "/(start|/?)$" }
+    }
+  ],
+  "teardown": "auto"
+}

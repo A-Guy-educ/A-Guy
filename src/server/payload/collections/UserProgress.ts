@@ -100,6 +100,15 @@ export const UserProgress: CollectionConfig = {
           },
         },
         {
+          name: 'timeSpentSeconds',
+          type: 'number',
+          min: 0,
+          defaultValue: 0,
+          admin: {
+            description: 'Cumulative time spent on this item in seconds',
+          },
+        },
+        {
           name: 'lastAccessedAt',
           type: 'date',
           admin: {

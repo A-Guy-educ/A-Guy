@@ -2,17 +2,36 @@
  * @fileType page
  * @domain cody
  * @pattern dashboard-page
- * @ai-summary Cody dashboard with preview modal on Docs tab via URL /cody/[n]/preview/docs
+ * @ai-summary Cody dashboard with preview modal on Docs tab via URL /cody/[n]/preview/docs.
+ *   Force static with generateStaticParams for OG tags.
  */
 import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { CodyDashboard } from '@/ui/cody/components/CodyDashboard'
-import { getMeUser } from '@/infra/utils/getMeUser'
-import { AccountRole } from '@/infra/auth/roles'
+import { buildTaskMetadata } from '../../../metadata'
 
-export const metadata: Metadata = {
-  title: 'Cody Operations Dashboard — Docs',
-  description: 'Developer operations dashboard for monitoring Cody CI build agent',
+// Force static generation so OG tags are available without authentication
+export const dynamic = 'force-static'
+export const revalidate = false
+export const fetchCache = 'force-cache'
+
+// Pre-render common issue numbers at build time for OG tags
+export async function generateStaticParams() {
+  const issueNumbers = Array.from({ length: 50 }, (_, i) => ({
+    issueNumber: String(i + 800),
+  }))
+  return issueNumbers
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ issueNumber: string }>
+}): Promise<Metadata> {
+  const { issueNumber } = await params
+  const parsed = parseInt(issueNumber, 10)
+  if (isNaN(parsed)) return { title: 'Cody Operations Dashboard' }
+  return buildTaskMetadata(parsed, { suffix: 'Docs', path: `/cody/${parsed}/preview/docs` })
 }
 
 export default async function CodyPreviewDocsPage({
@@ -20,14 +39,6 @@ export default async function CodyPreviewDocsPage({
 }: {
   params: Promise<{ issueNumber: string }>
 }) {
-  const { user } = await getMeUser()
-
-  if (!user || user.role !== AccountRole.Admin) {
-    const { issueNumber } = await params
-    const returnTo = `/cody/${issueNumber}/preview/docs`
-    redirect(`/login?returnTo=${encodeURIComponent(returnTo)}`)
-  }
-
   const { issueNumber } = await params
   const parsed = parseInt(issueNumber, 10)
 

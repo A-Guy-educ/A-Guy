@@ -62,27 +62,18 @@ function createMockPipeline(
     error?: string
   }>,
 ): PipelineDefinition {
-  const stagesMap = new Map<
-    string,
-    {
-      name: string
-      type: StageType
-      timeout: number
-      maxRetries: number
-      advisory?: boolean
-    }
-  >()
+  const stagesMap = new Map() as PipelineDefinition['stages']
 
-  const order: (string | { parallel: string[] })[] = []
+  const order: PipelineDefinition['order'] = []
 
   for (const stage of stages) {
-    stagesMap.set(stage.name, {
-      name: stage.name,
+    stagesMap.set(stage.name as import('../../../../../scripts/cody/stages/registry').StageName, {
+      name: stage.name as import('../../../../../scripts/cody/stages/registry').StageName,
       type: 'agent',
       timeout: 60000,
       maxRetries: 2,
     })
-    order.push(stage.name)
+    order.push(stage.name as import('../../../../../scripts/cody/stages/registry').StageName)
   }
 
   return { stages: stagesMap, order }

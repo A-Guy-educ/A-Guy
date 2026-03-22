@@ -1,0 +1,37 @@
+{
+  "userStories": [
+    {
+      "id": "US-NAV-001",
+      "story": "As a student, I want to browse the course catalog so that I can discover new content",
+      "criteria": [
+        "Given I am on the home page",
+        "When I navigate to /courses",
+        "Then I see a list of available courses"
+      ],
+      "scenarios": ["navigate-course-catalog"],
+      "priority": "must-have"
+    },
+    {
+      "id": "US-NAV-002",
+      "story": "As a student, I want to navigate from a course to a specific lesson so that I can study specific content",
+      "criteria": [
+        "Given I am on a course page",
+        "When I click on a chapter and then a lesson",
+        "Then I am taken to the lesson page"
+      ],
+      "scenarios": ["navigate-course-to-lesson", "navigate-lesson-direct"],
+      "priority": "must-have"
+    },
+    {
+      "id": "US-NAV-003",
+      "story": "As a student, I want to switch between tabs on a course page so that I can access different learning modes",
+      "criteria": [
+        "Given I am on a course page",
+        "When I click on Learn, Practice, or Ask tabs",
+        "Then the corresponding tab content is displayed"
+      ],
+      "scenarios": ["course-tab-navigation", "course-tab-learn", "course-tab-practice"],
+      "priority": "should-have"
+    }
+  ]
+}

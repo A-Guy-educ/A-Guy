@@ -1,0 +1,60 @@
+{
+  "id": "access-gate-gated",
+  "name": "Guest encounters gated content with login prompt",
+  "journey": "student-accesses-gated-content",
+  "type": "edge",
+  "area": "access-control",
+  "tags": ["access-gate", "gated", "auth"],
+  "locale": "he",
+  "preconditions": [
+    {
+      "action": "seed",
+      "entity": "course",
+      "data": {
+        "title": "Gated Course",
+        "courseLabel": "ג",
+        "status": "published",
+        "isActive": true,
+        "accessType": "gated"
+      },
+      "ref": "$course"
+    },
+    {
+      "action": "seed",
+      "entity": "chapter",
+      "data": {
+        "title": "Gated Chapter",
+        "course": "$course",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$chapter"
+    },
+    {
+      "action": "seed",
+      "entity": "lesson",
+      "data": {
+        "title": "Gated Lesson",
+        "chapter": "$chapter",
+        "type": "learning",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$lesson"
+    }
+  ],
+  "steps": [
+    {
+      "action": "startAsGuest"
+    },
+    {
+      "action": "navigate",
+      "input": { "type": "course", "courseRef": "$course" }
+    },
+    {
+      "action": "see",
+      "input": { "text": "התחבר" }
+    }
+  ],
+  "teardown": "auto"
+}

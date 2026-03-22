@@ -41,7 +41,7 @@ export const PDFMedia: React.FC<MediaProps> = (props) => {
   const viewerUrl = `/api/pdfjs-viewer?file=${encodeURIComponent(pdfUrl)}&v=4.4.168`
 
   return (
-    <div className={cn('w-full h-full', className)}>
+    <div className={cn('w-full h-full min-h-0', className)}>
       <iframe src={viewerUrl} className="w-full h-full border-0" title="PDF Viewer" />
     </div>
   )

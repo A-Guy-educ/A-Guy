@@ -1,0 +1,44 @@
+{
+  "id": "account-view-profile",
+  "name": "Student views their account profile",
+  "journey": "student-manages-account",
+  "type": "feature",
+  "area": "account",
+  "tags": ["account", "profile", "view"],
+  "locale": "he",
+  "preconditions": [
+    {
+      "action": "seed",
+      "entity": "user",
+      "data": {
+        "email": "account-test@example.com",
+        "password": "testPassword123!",
+        "role": "student",
+        "name": "בדיקה בדיק"
+      },
+      "ref": "$student"
+    }
+  ],
+  "steps": [
+    {
+      "action": "login",
+      "input": { "userRef": "$student" }
+    },
+    {
+      "action": "navigate",
+      "input": {
+        "type": "url",
+        "url": "/account"
+      }
+    },
+    {
+      "action": "beAt",
+      "input": { "pattern": "/account" }
+    },
+    {
+      "action": "see",
+      "input": { "text": "בדיקה" }
+    }
+  ],
+  "teardown": "auto"
+}

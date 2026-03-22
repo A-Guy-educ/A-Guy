@@ -14,6 +14,28 @@ declare module 'jsxgraph' {
     pan?: { enabled?: boolean }
     zoom?: { enabled?: boolean }
     renderer?: string
+    defaultAxes?: {
+      x?: {
+        ticks?: {
+          visible?: boolean
+          ticksDistance?: number
+          label?: { offset?: [number, number] }
+        }
+        name?: string
+        withLabel?: boolean
+        label?: { position?: string; offset?: [number, number]; fontSize?: number }
+      }
+      y?: {
+        ticks?: {
+          visible?: boolean
+          ticksDistance?: number
+          label?: { offset?: [number, number] }
+        }
+        name?: string
+        withLabel?: boolean
+        label?: { position?: string; offset?: [number, number]; fontSize?: number }
+      }
+    }
   }
 
   export interface JXGElementAttributes {

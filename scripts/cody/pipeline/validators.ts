@@ -14,6 +14,7 @@ import {
   validatePlanGapReport,
   validateBuildReport,
   validateSpecContent,
+  validateTestReport,
 } from '../content-validators'
 
 /**
@@ -124,23 +125,16 @@ export function createDocsValidator(): (outputFile: string) => ValidationResult 
 }
 
 /**
- * Create a validator for the reflect stage.
- * Validates reflect.md was written with minimum content.
+ * Create a validator for the test stage.
+ * Validates test.md contains test case sections.
  */
-export function createReflectValidator(): (outputFile: string) => ValidationResult {
+export function createTestValidator(): (outputFile: string) => ValidationResult {
   return (outputFile: string) => {
-    if (!fs.existsSync(outputFile)) {
-      return {
-        valid: false,
-        error: 'reflect.md must exist in the task directory',
-      }
-    }
     const content = fs.readFileSync(outputFile, 'utf-8')
-    const minLength = 50
-    if (content.length < minLength) {
+    if (!validateTestReport(content)) {
       return {
         valid: false,
-        error: `reflect.md must have at least ${minLength} characters of content`,
+        error: 'test.md must contain ## Tests Written, ## Test Cases, or ## Test Files section',
       }
     }
     return { valid: true }

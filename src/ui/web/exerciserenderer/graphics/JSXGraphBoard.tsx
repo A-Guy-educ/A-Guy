@@ -15,6 +15,7 @@ interface JSXGraphBoardProps {
     showLabels?: boolean
     ticks?: number
     labels?: { x: string; y: string }
+    tickPosition?: { x: 'default' | 'inverted'; y: 'default' | 'inverted' }
   }
   onBoardReady: (board: JXG.Board) => void
   className?: string
@@ -55,17 +56,29 @@ export function JSXGraphBoard({
                 ticks: {
                   visible: axisConfig?.showNumbers ?? true,
                   ticksDistance: axisConfig?.ticks ?? 1,
+                  label: {
+                    // Invert tick position: -10 (above) for default, 10 (below) for inverted
+                    offset: [0, axisConfig?.tickPosition?.x === 'inverted' ? 10 : -10],
+                  },
                 },
                 name: axisConfig?.labels?.x ?? 'x',
                 withLabel: axisConfig?.showLabels ?? true,
+                // Standardized title position: far right, slightly below
+                label: { position: 'rt', offset: [0, 12] },
               },
               y: {
                 ticks: {
                   visible: axisConfig?.showNumbers ?? true,
                   ticksDistance: axisConfig?.ticks ?? 1,
+                  label: {
+                    // Invert tick position: -10 (left) for default, 10 (right) for inverted
+                    offset: [axisConfig?.tickPosition?.y === 'inverted' ? 10 : -10, 0],
+                  },
                 },
                 name: axisConfig?.labels?.y ?? 'y',
                 withLabel: axisConfig?.showLabels ?? true,
+                // Standardized title position: near top, slightly to right
+                label: { position: 'rt', offset: [15, 0] },
               },
             },
           }

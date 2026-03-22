@@ -2,6 +2,7 @@
 
 import React from 'react'
 import type { GeometrySpecV1 } from '@/infra/contracts/graphics/geometry.v1'
+import { getDefaultTextColor } from '@/infra/contracts/graphics/textColors'
 import { Plus, Trash2 } from 'lucide-react'
 
 type GeoLine = GeometrySpecV1['elements']['lines'][number]
@@ -80,7 +81,7 @@ export const LinesPanel: React.FC<LinesPanelProps> = ({ lines, points, onChange 
               <input
                 type="color"
                 className="panel-color-input"
-                value={line.color || '#000000'}
+                value={line.color || getDefaultTextColor()}
                 onChange={(e) => handleUpdate(index, { color: e.target.value })}
               />
             </div>

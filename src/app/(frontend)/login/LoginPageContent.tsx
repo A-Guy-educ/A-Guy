@@ -12,16 +12,14 @@ export function LoginPageContent() {
   return (
     <div className="min-h-[calc(100vh-200px)] flex flex-col items-center justify-center bg-gradient-to-b from-background to-muted/30 py-12">
       {/* Hero Section */}
-      <div className="text-center mb-8 px-4">
-        <h1 className="text-4xl md:text-5xl font-extrabold mb-2">
-          <span className="text-foreground">{t('headingBold')}</span>{' '}
-          <span className="text-foreground/70 font-normal">{t('headingRest')}</span>
+      <div className="text-center mb-6 px-4">
+        <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+          {t('headingRest')}
         </h1>
-        <p className="text-base text-muted-foreground">{t('heroSubtitle')}</p>
       </div>
 
       {/* Login Card */}
-      <div className="w-full max-w-sm px-4">
+      <div className="w-full max-w-lg px-4">
         <LoginForm />
       </div>
 

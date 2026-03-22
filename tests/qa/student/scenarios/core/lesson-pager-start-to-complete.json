@@ -1,0 +1,63 @@
+{
+  "id": "lesson-pager-start-to-complete",
+  "name": "Student starts a lesson and can navigate through it",
+  "journey": "student-studies-lesson",
+  "type": "core",
+  "area": "lessons",
+  "tags": ["lesson", "pager"],
+  "locale": "he",
+  "preconditions": [
+    {
+      "action": "seed",
+      "entity": "course",
+      "data": {
+        "title": "Test Biology",
+        "courseLabel": "ב",
+        "status": "published",
+        "isActive": true,
+        "accessType": "free"
+      },
+      "ref": "$course"
+    },
+    {
+      "action": "seed",
+      "entity": "chapter",
+      "data": {
+        "title": "Cells",
+        "course": "$course",
+        "chapterLabel": "1",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$chapter"
+    },
+    {
+      "action": "seed",
+      "entity": "lesson",
+      "data": {
+        "title": "Cell Structure",
+        "chapter": "$chapter",
+        "type": "learning",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$lesson"
+    }
+  ],
+  "steps": [
+    {
+      "action": "navigate",
+      "input": {
+        "type": "lesson",
+        "courseRef": "$course",
+        "chapterRef": "$chapter",
+        "lessonRef": "$lesson"
+      }
+    },
+    {
+      "action": "beAt",
+      "input": { "pattern": "/lessons/" }
+    }
+  ],
+  "teardown": "auto"
+}

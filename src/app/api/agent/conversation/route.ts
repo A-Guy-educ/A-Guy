@@ -3,6 +3,11 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { getConversation } from '@/server/payload/endpoints/agent/get-conversation'
 import { logger } from '@/infra/utils/logger/logger'
+import { z } from 'zod'
+
+const bodySchema = z.object({
+  contextKey: z.string().min(1),
+})
 
 export async function POST(request: NextRequest) {
   const requestId = crypto.randomUUID()
@@ -14,10 +19,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
 
     // Validate required fields
-    if (!body.contextKey) {
-      logger.warn({ requestId }, 'Missing contextKey in get conversation request')
-      return NextResponse.json({ error: 'Missing contextKey', requestId }, { status: 400 })
-    }
+    const validated = bodySchema.parse(body)
+    const contextKey = validated.contextKey
 
     const payload = await getPayload({ config })
     const { user } = await payload.auth({ headers: request.headers })
@@ -30,10 +33,20 @@ export async function POST(request: NextRequest) {
       json: async () => body, // Return the already-parsed body
     } as Parameters<typeof getConversation>[0]
 
-    logger.info({ requestId, contextKey: body.contextKey }, 'Processing get conversation request')
+    logger.info({ requestId, contextKey }, 'Processing get conversation request')
     return await getConversation(payloadRequest)
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Validation error', details: error.issues, requestId },
+        { status: 400 },
+      )
+    }
+
     logger.error({ err: error, requestId }, 'Get conversation route error')
+    const Sentry = await import('@sentry/nextjs')
+    Sentry.captureException(error, { tags: { route: '/api/agent/conversation' } })
+
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : 'Internal server error',

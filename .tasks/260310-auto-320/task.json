@@ -1,0 +1,33 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.85,
+  "primary_domain": "frontend",
+  "scope": [
+    "Admin panel block JSON editing component",
+    "Role-based access control for Advanced Content Editor role",
+    "JSON structure validation to prevent schema changes",
+    "Block isolation for editing (only current block affected)"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "The Advanced Content Editor role needs to be added to the role system (currently only Admin and Student exist)",
+    "Block data is stored as JSON in Exercises, Pages, and/or Posts collections",
+    "There's an existing block edit view or component where the JSON edit can be attached",
+    "The existing AdvancedJsonPanel component can be reused as reference pattern"
+  ],
+  "review_questions": [
+    "Does the Advanced Content Editor role need to be created, or does it already exist?",
+    "Which collection(s) have the blocks that need this feature - Exercises, Pages, Posts, or all of them?",
+    "Is there an existing block edit component/view where the Raw JSON Edit option can be integrated?"
+  ],
+  "complexity": 45,
+  "complexity_reasoning": "Scope: 12 (multi-file admin component + access control). Risk: 12 (access control + data validation). Novelty: 8 (building on existing AdvancedJsonPanel). Cross-domain: 8 (frontend + backend access control). Ambiguity: 2 (clear requirements). Dependencies: 3 (uses existing patterns). Total: 45 - Complex tier",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Input contains ## Core Requirements with 4 detailed requirements and ## Acceptance Criteria with 7 checkable items. Clear user intent and scope. Promoted spec.md will capture requirements and acceptance criteria for downstream stages."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

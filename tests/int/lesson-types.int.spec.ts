@@ -59,7 +59,10 @@ describe('Lesson types', () => {
         tenant: tenantId,
         pageAccessType: 'free',
         accessType: 'free',
+        contentStatus: 'none',
+        contentStatusVisible: true,
       },
+      draft: false,
     })
     courseId = course.id
     const chapter = await payload.create({
@@ -115,7 +118,10 @@ describe('Lesson types', () => {
         isActive: true,
         tenant: tenantId,
         accessType: 'inherit',
+        contentStatus: 'none',
+        contentStatusVisible: true,
       },
+      draft: false,
     })
     lessonIds.push(lesson.id)
     expect(lesson.type).toBe('practice')
@@ -132,7 +138,10 @@ describe('Lesson types', () => {
         isActive: true,
         tenant: tenantId,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- intentionally omitting 'type' to test default
+        contentStatus: 'none',
+        contentStatusVisible: true,
       } as any,
+      draft: false,
     })
     lessonIds.push(lesson.id)
     expect(lesson.type).toBe('learning')
@@ -150,7 +159,10 @@ describe('Lesson types', () => {
         isActive: true,
         tenant: tenantId,
         accessType: 'inherit',
+        contentStatus: 'none',
+        contentStatusVisible: true,
       },
+      draft: false,
     })
     lessonIds.push(lesson.id)
     const updated = await payload.update({
@@ -174,7 +186,10 @@ describe('Lesson types', () => {
           isActive: true,
           tenant: tenantId,
           accessType: 'inherit',
+          contentStatus: 'none',
+          contentStatusVisible: true,
         },
+        draft: false,
       }),
     ).rejects.toThrow()
   })

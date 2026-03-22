@@ -117,13 +117,13 @@ describe('ChatMessageContent', () => {
       expect(blockMath?.querySelector('.katex-display')).not.toBeNull()
     })
 
-    it('renders \\(...\\) as block math (all math on own line)', () => {
+    it('renders \\(...\\) as inline math (preserves sentence flow)', () => {
       const { container } = render(<ChatMessageContent content={'The value is \\(x^2\\) here'} />)
 
-      // All math is now rendered as block math for better readability
-      const blockMath = container.querySelector('.isolate.block[dir="ltr"]')
-      expect(blockMath).not.toBeNull()
-      expect(blockMath?.querySelector('.katex-display')).not.toBeNull()
+      // Inline math should render with inline-block isolation, not block
+      const inlineMath = container.querySelector('.isolate.inline-block[dir="ltr"]')
+      expect(inlineMath).not.toBeNull()
+      expect(inlineMath?.querySelector('.katex')).not.toBeNull()
     })
 
     it('renders Gaussian formula with \\[...\\] delimiters', () => {
@@ -159,14 +159,14 @@ describe('ChatMessageContent', () => {
       expect(blockMath?.querySelector('.katex-display')).not.toBeNull()
     })
 
-    it('converts \\(...\\) to $$...$$ for block math (all math on own line)', () => {
-      // Test that LaTeX-style inline delimiters are converted to block math
+    it('converts \\(...\\) to $...$ for inline math (preserves sentence flow)', () => {
+      // Test that LaTeX-style inline delimiters are converted to inline math
       const { container } = render(<ChatMessageContent content={'The value is \\(x^2\\) here'} />)
 
-      // Should render as block math with katex-display
-      const blockMath = container.querySelector('.isolate.block[dir="ltr"]')
-      expect(blockMath).not.toBeNull()
-      expect(blockMath?.querySelector('.katex-display')).not.toBeNull()
+      // Should render as inline math with katex (not katex-display)
+      const inlineMath = container.querySelector('.isolate.inline-block[dir="ltr"]')
+      expect(inlineMath).not.toBeNull()
+      expect(inlineMath?.querySelector('.katex')).not.toBeNull()
     })
   })
 })

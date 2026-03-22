@@ -1910,3 +1910,122 @@ describe('commitPipelineFiles push-rebase integration', () => {
     expect(result.pushed).toBe(false)
   })
 })
+
+// ============================================================================
+// savePendingPatch / restorePendingPatch
+// ============================================================================
+
+import { savePendingPatch, restorePendingPatch } from '../../../../scripts/cody/git-utils'
+
+describe('savePendingPatch', () => {
+  let tempTaskDir: string
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    tempTaskDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cody-patch-'))
+  })
+
+  afterEach(() => {
+    fs.rmSync(tempTaskDir, { recursive: true, force: true })
+  })
+
+  it('should generate and save a patch from HEAD commit', () => {
+    const mockExecFileSync = vi.mocked(childProcess.execFileSync)
+    // Real fs for writing, mocked git
+    mockExecFileSync.mockImplementation((_cmd, args) => {
+      if (args && args[0] === 'format-patch') return 'From abc123...\n---\ndiff content'
+      if (args && args[0] === 'log') return 'feat(task): commit message'
+      if (args && args[0] === 'reset') return ''
+      return ''
+    })
+
+    const result = savePendingPatch(tempTaskDir, '/repo')
+    expect(result).toBe(true)
+    // Verify files written to real filesystem
+    expect(fs.existsSync(path.join(tempTaskDir, 'pending-commit.patch'))).toBe(true)
+    expect(fs.existsSync(path.join(tempTaskDir, 'pending-commit-message.txt'))).toBe(true)
+    expect(fs.readFileSync(path.join(tempTaskDir, 'pending-commit.patch'), 'utf-8')).toContain(
+      'diff content',
+    )
+    expect(fs.readFileSync(path.join(tempTaskDir, 'pending-commit-message.txt'), 'utf-8')).toBe(
+      'feat(task): commit message',
+    )
+    // Should reset HEAD after saving
+    expect(mockExecFileSync).toHaveBeenCalledWith('git', ['reset', 'HEAD~1'], expect.any(Object))
+  })
+
+  it('should return false when format-patch produces empty output', () => {
+    const mockExecFileSync = vi.mocked(childProcess.execFileSync)
+    mockExecFileSync.mockImplementation((_cmd, args) => {
+      if (args && args[0] === 'format-patch') return '   '
+      return ''
+    })
+
+    const result = savePendingPatch(tempTaskDir, '/repo')
+    expect(result).toBe(false)
+  })
+
+  it('should return false when git command fails', () => {
+    const mockExecFileSync = vi.mocked(childProcess.execFileSync)
+    mockExecFileSync.mockImplementation(() => {
+      throw new Error('git failed')
+    })
+
+    const result = savePendingPatch(tempTaskDir, '/repo')
+    expect(result).toBe(false)
+  })
+})
+
+describe('restorePendingPatch', () => {
+  let tempTaskDir: string
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    tempTaskDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cody-patch-restore-'))
+  })
+
+  afterEach(() => {
+    fs.rmSync(tempTaskDir, { recursive: true, force: true })
+  })
+
+  it('should return false when no pending patch exists', () => {
+    const result = restorePendingPatch(tempTaskDir, '/repo')
+    expect(result).toBe(false)
+  })
+
+  it('should apply the patch and clean up files when patch exists', () => {
+    // Create patch files on real filesystem
+    fs.writeFileSync(path.join(tempTaskDir, 'pending-commit.patch'), 'diff content')
+    fs.writeFileSync(path.join(tempTaskDir, 'pending-commit-message.txt'), 'commit msg')
+
+    const mockExecFileSync = vi.mocked(childProcess.execFileSync)
+    mockExecFileSync.mockReturnValue('')
+
+    const result = restorePendingPatch(tempTaskDir, '/repo')
+    expect(result).toBe(true)
+    // Should apply patch
+    expect(mockExecFileSync).toHaveBeenCalledWith(
+      'git',
+      ['apply', '--3way', path.join(tempTaskDir, 'pending-commit.patch')],
+      expect.any(Object),
+    )
+    // Should clean up both files
+    expect(fs.existsSync(path.join(tempTaskDir, 'pending-commit.patch'))).toBe(false)
+    expect(fs.existsSync(path.join(tempTaskDir, 'pending-commit-message.txt'))).toBe(false)
+  })
+
+  it('should return false and clean up when patch apply fails', () => {
+    // Create only the patch file
+    fs.writeFileSync(path.join(tempTaskDir, 'pending-commit.patch'), 'bad patch')
+
+    const mockExecFileSync = vi.mocked(childProcess.execFileSync)
+    mockExecFileSync.mockImplementation(() => {
+      throw new Error('patch apply failed - conflicts')
+    })
+
+    const result = restorePendingPatch(tempTaskDir, '/repo')
+    expect(result).toBe(false)
+    // Should still clean up the bad patch
+    expect(fs.existsSync(path.join(tempTaskDir, 'pending-commit.patch'))).toBe(false)
+  })
+})

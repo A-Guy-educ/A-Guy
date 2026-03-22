@@ -1,6 +1,13 @@
 import { defineConfig, devices } from '@playwright/test'
 
 /**
+ * Custom test options for scenario-driven QA
+ */
+export interface ScenarioTestOptions {
+  scenarioCategory?: 'core' | 'feature' | 'edge' | Array<'core' | 'feature' | 'edge'>
+}
+
+/**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
@@ -48,9 +55,31 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   projects: [
+    // Default Chromium project
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'], channel: 'chromium' },
+    },
+    // Scenario-driven QA - Core scenarios (runs on PRs)
+    {
+      name: 'qa-core',
+      testDir: './tests/qa/student/runner',
+      testMatch: 'run-scenarios.spec.ts',
+      use: { scenarioCategory: 'core' } as Record<string, unknown>,
+    },
+    // Scenario-driven QA - Full scenarios (runs on merge to main)
+    {
+      name: 'qa-full',
+      testDir: './tests/qa/student/runner',
+      testMatch: 'run-scenarios.spec.ts',
+      use: { scenarioCategory: ['core', 'feature'] } as Record<string, unknown>,
+    },
+    // Scenario-driven QA - Nightly scenarios (runs on schedule)
+    {
+      name: 'qa-nightly',
+      testDir: './tests/qa/student/runner',
+      testMatch: 'run-scenarios.spec.ts',
+      use: { scenarioCategory: ['core', 'feature', 'edge'] } as Record<string, unknown>,
     },
   ],
   webServer: {

@@ -10,6 +10,22 @@ import { buildLessonContextPrompt } from './lesson-context'
 export const SYSTEM_PROMPT_SEPARATOR = '\n\n---\n\n'
 
 /**
+ * Mandatory math formatting instructions injected into every chat prompt.
+ * Ensures the LLM always uses LaTeX delimiters so the frontend can render math properly.
+ */
+const MATH_FORMATTING_INSTRUCTIONS = `## Math Formatting (CRITICAL)
+
+Always use LaTeX delimiters for mathematical expressions:
+- Inline math (within sentences): \\(...\\)
+- Block/display math (standalone equations): \\[...\\]
+
+IMPORTANT: Never use dollar signs ($) for math delimiters. Always use \\(...\\) for inline math and \\[...\\] for block math.
+
+Never write math as plain text. Use proper LaTeX notation for fractions (\\frac{}{}), multiplication (\\cdot), square roots (\\sqrt{}), trigonometric functions (\\sin, \\cos, \\tan), Greek letters (\\alpha, \\pi), etc.
+
+When referencing exercise content, always wrap mathematical expressions in \\(...\\) or \\[...\\] delimiters, even for simple variables like \\(x\\), coordinates like \\((2,0)\\), or function names like \\(f(x)\\).`
+
+/**
  * Composes final system instructions for AI chat.
  *
  * Order (deterministic):
@@ -44,6 +60,9 @@ export function composeSystemInstructions(
   // Step 3: Append lesson prompt
   const withLessonPrompt = withTeacherProfile + lessonPromptTemplate
 
-  // Step 4: Inject lesson context (reuse existing function)
-  return buildLessonContextPrompt(withLessonPrompt, lessonContextText)
+  // Step 4: Append mandatory math formatting instructions
+  const withMathFormatting = withLessonPrompt + '\n\n' + MATH_FORMATTING_INSTRUCTIONS
+
+  // Step 5: Inject lesson context (reuse existing function)
+  return buildLessonContextPrompt(withMathFormatting, lessonContextText)
 }

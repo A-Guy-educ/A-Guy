@@ -6,10 +6,10 @@ import { useTranslations } from '@/ui/web/providers/I18n'
 import { cn } from '@/infra/utils/ui'
 
 const NAV_ITEMS = [
-  { key: 'study', href: '/study' },
-  { key: 'practice', href: '/practice' },
-  { key: 'ask', href: '/ask' },
-  { key: 'test', href: '/test' },
+  { key: 'study', href: '/study', color: 'hsl(217 91% 60%)' },
+  { key: 'practice', href: '/practice', color: 'hsl(0 72% 51%)' },
+  { key: 'ask', href: '/ask', color: 'hsl(142 71% 45%)' },
+  { key: 'test', href: '/test', color: 'hsl(330 81% 60%)' },
 ] as const
 
 export function NavigationBar() {
@@ -29,12 +29,10 @@ export function NavigationBar() {
                 href={item.href}
                 className={cn(
                   'flex-1 py-1.5 text-xs md:text-sm rounded-lg transition-all text-center',
-                  isActive
-                    ? 'bg-card text-primary shadow-sm font-bold'
-                    : 'text-muted-foreground font-medium hover:text-foreground',
+                  isActive ? 'bg-card shadow-sm font-bold' : 'font-medium hover:opacity-80',
                 )}
               >
-                {t(item.key)}
+                <span style={isActive ? { color: item.color } : undefined}>{t(item.key)}</span>
               </SystemLink>
             )
           })}

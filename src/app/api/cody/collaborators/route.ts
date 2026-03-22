@@ -5,11 +5,14 @@
  * @ai-summary API route to fetch repository collaborators for assignee picker
  */
 import { NextRequest, NextResponse } from 'next/server'
+import { requireCodyAuth } from '@/ui/cody/auth'
 
 import { fetchCollaborators } from '@/ui/cody/github-client'
 
-export async function GET(_req: NextRequest) {
-  // Skip auth check for now - open access for testing
+export async function GET(req: NextRequest) {
+  const authResult = await requireCodyAuth(req)
+  if (authResult instanceof NextResponse) return authResult
+
   try {
     const collaborators = await fetchCollaborators()
     return NextResponse.json({ collaborators })

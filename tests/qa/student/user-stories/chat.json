@@ -1,0 +1,37 @@
+{
+  "userStories": [
+    {
+      "id": "US-CHAT-001",
+      "story": "As a student, I want to send a message to the AI tutor so that I can get help with my studies",
+      "criteria": [
+        "Given I am on the chat page",
+        "When I type a question and click send",
+        "Then I receive a response from the AI tutor"
+      ],
+      "scenarios": ["chat-send-message-standalone"],
+      "priority": "must-have"
+    },
+    {
+      "id": "US-CHAT-002",
+      "story": "As a student, I want to ask questions about the current lesson so that I can get contextual help",
+      "criteria": [
+        "Given I am on a lesson page with the chat panel open",
+        "When I ask a question about the lesson content",
+        "Then I receive a relevant response"
+      ],
+      "scenarios": ["chat-send-message-in-lesson"],
+      "priority": "should-have"
+    },
+    {
+      "id": "US-CHAT-003",
+      "story": "As a student, I want to see feedback when sending an empty message so that I understand the system expects input",
+      "criteria": [
+        "Given I am on the chat page",
+        "When I click send without typing a message",
+        "Then I see an error message or the send button is disabled"
+      ],
+      "scenarios": ["chat-empty-message"],
+      "priority": "may-have"
+    }
+  ]
+}

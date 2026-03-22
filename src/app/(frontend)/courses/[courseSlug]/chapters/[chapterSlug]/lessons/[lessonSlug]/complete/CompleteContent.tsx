@@ -1,17 +1,43 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { Button } from '@/ui/web/components/button'
 import { Progress } from '@/ui/web/components/progress'
 import { Sparkles } from 'lucide-react'
+import { getUserProfile } from '@/client/state/localStorage/userProfile'
 
 interface CompleteContentProps {
   backUrl: string
+  lessonId: string
 }
 
-export function CompleteContent({ backUrl }: CompleteContentProps) {
+export function CompleteContent({ backUrl, lessonId }: CompleteContentProps) {
   const t = useTranslations('courses')
+  const savedRef = useRef(false)
+
+  // Save lesson completion on mount (idempotent fallback for direct navigation)
+  useEffect(() => {
+    if (savedRef.current) return
+    savedRef.current = true
+    const profile = getUserProfile()
+    if (!profile?.gradeLevel) return
+    fetch('/api/progress', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        recordType: 'lesson',
+        recordId: lessonId,
+        completionPercentage: 100,
+        status: 'completed',
+        gradeLevel: profile.gradeLevel,
+      }),
+    }).catch(() => {
+      /* silent – user may be anonymous */
+    })
+  }, [lessonId])
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

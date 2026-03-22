@@ -1,7 +1,7 @@
 'use client'
 
 import { BookOpen, CheckCircle, Loader2 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { cn } from '@/infra/utils/ui'
 import { useRouterWithLoading } from '@/infra/loading/hooks/useRouterWithLoading'
 import { useLoadingState } from '@/infra/loading/hooks/useLoadingState'
@@ -11,6 +11,9 @@ import type { Course } from '@/payload-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { Button } from '@/ui/web/components/button'
 import { SafeHtml } from '@/ui/web/SafeHtml'
+import { ContentStatusBadge } from '@/ui/web/shared/ContentStatusBadge'
+import { ProgressCircle } from '@/ui/web/shared/ProgressCircle'
+import { toast } from 'sonner'
 
 interface CourseCardProps {
   course: Course
@@ -22,12 +25,39 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
   const router = useRouterWithLoading()
   const [wasClicked, setWasClicked] = useState(false)
   const isRouteLoading = useLoadingState({ key: LOADING_KEYS.ROUTE_TRANSITION })
+  const [courseProgress, setCourseProgress] = useState(0)
+
+  // Fetch course-level progress for owned courses
+  useEffect(() => {
+    if (!isOwned) return
+    const profile = getUserProfile()
+    if (!profile?.gradeLevel) return
+    fetch(`/api/progress?gradeLevel=${encodeURIComponent(profile.gradeLevel)}&scope=course`, {
+      credentials: 'include',
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (json?.data?.percentage) setCourseProgress(json.data.percentage)
+      })
+      .catch(() => {
+        /* silent */
+      })
+  }, [isOwned])
 
   // Show loading state if this button was clicked and route is loading
   const isLoading = wasClicked && isRouteLoading
 
+  // Determine if content is "soon" (locked)
+  const isSoon = course.contentStatus === 'soon'
+
   const handleCourseSelect = (e: React.MouseEvent) => {
     e.preventDefault()
+
+    // If course is "Soon", show locked message and do NOT navigate
+    if (isSoon) {
+      toast.info(t('contentLocked'))
+      return
+    }
 
     // Mark that this button was clicked
     setWasClicked(true)
@@ -57,6 +87,7 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
         borderClass,
         'shadow-[0_1px_2px_0_rgba(60,64,67,.3),0_1px_3px_1px_rgba(60,64,67,.15)]',
         'transition-all hover:-translate-y-0.5',
+        isSoon && 'opacity-75',
       )}
     >
       {isOwned && (
@@ -67,6 +98,13 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
           הקורס שלך
         </span>
       )}
+
+      {/* Content Status Badge - top right */}
+      <ContentStatusBadge
+        contentStatus={course.contentStatus}
+        contentStatusExpiresAt={course.contentStatusExpiresAt ?? undefined}
+        className="absolute -top-3 right-6"
+      />
 
       <div className="mb-6 flex justify-between items-start gap-4">
         <div className="flex-1">
@@ -92,16 +130,40 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
             />
           )}
         </div>
-        <div
-          className={cn(
-            'w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0',
-            isOwned ? 'bg-[hsl(var(--success))]/10' : 'bg-muted',
-          )}
-        >
-          {isOwned ? (
-            <CheckCircle className="w-6 h-6 text-[hsl(var(--success))]" />
+        <div className="flex-shrink-0">
+          {isOwned && courseProgress > 0 ? (
+            <div className="w-12 h-12 relative">
+              <ProgressCircle percentage={courseProgress} size={48} strokeWidth={3}>
+                {courseProgress >= 100 ? (
+                  <foreignObject x="25%" y="25%" width="50%" height="50%">
+                    <CheckCircle className="w-full h-full text-[hsl(var(--success))]" />
+                  </foreignObject>
+                ) : (
+                  <text
+                    x="50%"
+                    y="50%"
+                    textAnchor="middle"
+                    dy=".3em"
+                    className="text-[10px] font-bold fill-foreground"
+                  >
+                    {Math.round(courseProgress)}%
+                  </text>
+                )}
+              </ProgressCircle>
+            </div>
           ) : (
-            <BookOpen className="w-6 h-6 text-primary" />
+            <div
+              className={cn(
+                'w-12 h-12 rounded-2xl flex items-center justify-center',
+                isOwned ? 'bg-[hsl(var(--success))]/10' : 'bg-muted',
+              )}
+            >
+              {isOwned ? (
+                <CheckCircle className="w-6 h-6 text-[hsl(var(--success))]" />
+              ) : (
+                <BookOpen className="w-6 h-6 text-primary" />
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -109,12 +171,14 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
       <div className="mt-auto pt-6 border-t border-border">
         <Button
           onClick={handleCourseSelect}
-          disabled={isLoading}
+          disabled={isLoading || isSoon}
           className={cn(
             'w-full',
             isOwned
               ? 'bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/20'
-              : 'bg-muted text-primary hover:bg-[hsl(var(--primary-soft))]',
+              : isSoon
+                ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                : 'bg-muted text-primary hover:bg-[hsl(var(--primary-soft))]',
           )}
         >
           {isLoading ? (

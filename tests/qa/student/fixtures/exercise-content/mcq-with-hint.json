@@ -1,0 +1,23 @@
+{
+  "blocks": [
+    {
+      "id": "q1",
+      "type": "question_select",
+      "variant": "mcq",
+      "question": {
+        "text": "What is 2 + 2?"
+      },
+      "options": [
+        { "id": "a", "value": "3" },
+        { "id": "b", "value": "4" },
+        { "id": "c", "value": "5" }
+      ],
+      "answer": {
+        "correctOptionIds": ["b"],
+        "multiSelect": false
+      },
+      "hint": "Try counting on your fingers",
+      "guidingQuestion": "Is the answer greater than 3?"
+    }
+  ]
+}

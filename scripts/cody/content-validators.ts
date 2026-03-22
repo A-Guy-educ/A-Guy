@@ -259,3 +259,18 @@ export function validateGapReport(gapContent: string): boolean {
 
   return hasGapsFound || hasChangesMade || hasNoGaps
 }
+
+// ============================================================================
+// Test Report Validation
+// ============================================================================
+
+/**
+ * Validate that test.md contains required sections indicating tests were written.
+ */
+export function validateTestReport(content: string): boolean {
+  const hasTestsWritten = /##\s*Tests?\s*Written/i.test(content)
+  const hasTestCases = /##\s*Test\s*Cases/i.test(content)
+  const hasTestFiles = /##\s*Test\s*Files/i.test(content)
+
+  return hasTestsWritten || hasTestCases || hasTestFiles
+}

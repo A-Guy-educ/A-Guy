@@ -700,7 +700,9 @@ pnpm test:e2e                  # E2E tests
 ### Full Pipeline Flow
 
 ```
-@cody on issue → taskify → gap → architect → plan-gap → build → commit → review → fix → commit → verify → docs → reflect → pr
+@cody on issue → taskify → gap → architect → plan-gap → build → commit → review → fix → commit → verify → pr
+                                                                                                          ↓
+                                                           (deferred, via inspector, complexity ≥ 30) → docs
 ```
 
 ### Key Debug Files
@@ -725,7 +727,7 @@ pnpm test:e2e                  # E2E tests
 - **Duplicate labels on rerun** → `setClassificationLabels` removes old category labels first
 - **Gate approval overwritten** → `resolveFromStageAfterGateApproval` starts AFTER the gate stage
 - **Impl stages skipped** → `rebuildPipelineAfterTaskify` must return BOTH spec + impl stages
-- **Stage aliases**: `build` → `gsd-execute`, `architect` → `gsd-plan`
+- **Stage names**: `architect` (planning), `plan-gap` (gap analysis), `build` (implementation)
 
 ---
 

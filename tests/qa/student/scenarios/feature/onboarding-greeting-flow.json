@@ -1,0 +1,22 @@
+{
+  "id": "onboarding-greeting-flow",
+  "name": "First-time visitor goes through greeting flow and course selection",
+  "journey": "student-onboarding",
+  "type": "feature",
+  "area": "onboarding",
+  "tags": ["onboarding", "greeting", "flow"],
+  "locale": "he",
+  "steps": [
+    {
+      "action": "navigate",
+      "input": { "type": "home" },
+      "description": "Start at home page"
+    },
+    {
+      "action": "see",
+      "input": { "text": "שלום" },
+      "description": "Verify greeting is visible"
+    }
+  ],
+  "teardown": "auto"
+}

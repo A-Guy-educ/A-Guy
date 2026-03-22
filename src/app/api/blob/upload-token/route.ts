@@ -67,6 +67,15 @@ export async function POST(request: Request): Promise<Response> {
 
         const expiresAt = new Date(Date.now() + CHAT_ASSET_TOKEN_VALID_MINUTES * 60 * 1000)
 
+        // Generate a temporary ID for pathname construction
+        const tempId = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+        const initialPathname = buildChatAssetPathname({
+          tenantId,
+          userId,
+          uploadSessionId: tempId,
+          filename: clientPayload.originalFilename,
+        })
+
         const session = await payload.create({
           collection: 'upload-sessions',
           data: {
@@ -76,13 +85,14 @@ export async function POST(request: Request): Promise<Response> {
             originalFilename: clientPayload.originalFilename,
             mimeType: clientPayload.contentType,
             expectedSize: clientPayload.size,
-            pathname: '',
+            pathname: initialPathname,
             status: 'initiated',
             expiresAt: expiresAt.toISOString(),
           },
           overrideAccess: true,
         })
 
+        // Update pathname with the actual session ID
         const finalPathname = buildChatAssetPathname({
           tenantId,
           userId,
@@ -140,7 +150,8 @@ export async function POST(request: Request): Promise<Response> {
     })
 
     return Response.json(result)
-  } catch {
-    return Response.json({ error: 'Internal server error' }, { status: 500 })
+  } catch (error) {
+    const { captureAndRespond } = await import('@/server/api/capture-and-respond')
+    return captureAndRespond(error, { route: '/api/blob/upload-token' })
   }
 }

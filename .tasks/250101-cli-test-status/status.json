@@ -1,0 +1,15 @@
+{
+  "taskId": "250101-cli-test-status",
+  "state": "completed",
+  "mode": "full",
+  "createdAt": "2026-03-17T23:47:33.312Z",
+  "updatedAt": "2026-03-17T23:47:33.314Z",
+  "stages": {
+    "taskify": {
+      "state": "completed",
+      "startedAt": "2026-03-17T23:47:33.314Z",
+      "elapsed": 1000
+    }
+  },
+  "cost": 0.15
+}

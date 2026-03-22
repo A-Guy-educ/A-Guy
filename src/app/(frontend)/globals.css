@@ -92,6 +92,12 @@
     --text-highlight-6: 271 91% 65%; /* Purple */
     --text-highlight-7: 330 81% 60%; /* Pink */
     --text-highlight-8: 220 8% 45%; /* Gray */
+
+    /* Course tab accent colors */
+    --tab-learn: 217 91% 60%; /* Blue */
+    --tab-practice: 0 72% 51%; /* Red */
+    --tab-exams: 330 81% 60%; /* Pink */
+    --tab-ask: 142 71% 45%; /* Green */
   }
 
   [data-theme='dark'] {
@@ -179,6 +185,12 @@
     --text-highlight-6: 271 91% 65%; /* Purple */
     --text-highlight-7: 330 81% 60%; /* Pink */
     --text-highlight-8: 220 8% 45%; /* Gray */
+
+    /* Course tab accent colors */
+    --tab-learn: 217 91% 60%; /* Blue */
+    --tab-practice: 0 72% 51%; /* Red */
+    --tab-exams: 330 81% 60%; /* Pink */
+    --tab-ask: 142 71% 45%; /* Green */
   }
 }
 

@@ -16,6 +16,7 @@ import { adminOnly } from '../access/adminOnly'
 import { publishedAndActive } from '../access/publishedAndActive'
 import { createdByField } from '../fields/createdBy'
 import { formatSlug } from '../fields/formatSlug'
+import { contentStatusFields } from '../fields/contentStatus'
 import { cascadeAdminTitle } from '../hooks/courses/cascadeAdminTitle'
 import { enforceFieldLocaleUniqueness } from '../hooks/validateLocaleUniqueness'
 import { validateTreeIsolationOnPublish } from '../hooks/courses/validateTreeIsolation'
@@ -55,6 +56,7 @@ export const Courses: CollectionConfig = {
       'order',
       'status',
       'isActive',
+      'contentStatus',
       'updatedAt',
     ],
   },
@@ -152,6 +154,7 @@ export const Courses: CollectionConfig = {
         { label: 'Free Access', value: 'free' },
         { label: 'Require Registration', value: 'mandatory' },
         { label: 'Gated (5-Minute Delay)', value: 'gated' },
+        { label: 'Paid (Requires Entitlement)', value: 'paid' },
       ],
       admin: {
         position: 'sidebar',
@@ -168,6 +171,7 @@ export const Courses: CollectionConfig = {
         { label: 'Free Access', value: 'free' },
         { label: 'Require Registration', value: 'mandatory' },
         { label: 'Gated (5-Minute Delay)', value: 'gated' },
+        { label: 'Paid (Requires Entitlement)', value: 'paid' },
       ],
       admin: {
         position: 'sidebar',
@@ -230,6 +234,9 @@ export const Courses: CollectionConfig = {
         },
       ],
     },
+
+    // Content Status
+    ...contentStatusFields,
 
     // Created By
     createdByField,

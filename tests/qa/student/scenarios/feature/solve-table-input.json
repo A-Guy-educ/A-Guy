@@ -1,0 +1,71 @@
+{
+  "id": "solve-table-input",
+  "name": "Student enters data in table exercise",
+  "journey": "student-solves-exercises",
+  "type": "feature",
+  "area": "exercises",
+  "tags": ["table", "input"],
+  "locale": "he",
+  "preconditions": [
+    {
+      "action": "seed",
+      "entity": "course",
+      "data": {
+        "title": "Table Course",
+        "courseLabel": "ט",
+        "status": "published",
+        "isActive": true,
+        "accessType": "free"
+      },
+      "ref": "$course"
+    },
+    {
+      "action": "seed",
+      "entity": "chapter",
+      "data": {
+        "title": "Table Chapter",
+        "course": "$course",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$chapter"
+    },
+    {
+      "action": "seed",
+      "entity": "lesson",
+      "data": {
+        "title": "Table Lesson",
+        "chapter": "$chapter",
+        "type": "learning",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$lesson"
+    },
+    {
+      "action": "seed",
+      "entity": "user",
+      "data": { "role": "student" },
+      "ref": "$student"
+    }
+  ],
+  "steps": [
+    {
+      "action": "login",
+      "input": { "userRef": "$student" }
+    },
+    {
+      "action": "navigate",
+      "input": {
+        "type": "lesson",
+        "courseRef": "$course",
+        "chapterRef": "$chapter",
+        "lessonRef": "$lesson"
+      }
+    },
+    {
+      "action": "startLesson"
+    }
+  ],
+  "teardown": "auto"
+}

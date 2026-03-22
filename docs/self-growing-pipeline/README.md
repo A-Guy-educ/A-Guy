@@ -8,8 +8,7 @@ The Cody pipeline includes a learning system that improves itself over time thro
 Task Completed
       ↓
   docs stage (writes docs.md + memory.json)
-      ↓
-  reflect stage (pattern detection + knowledge update)
+  [nightly inspector: Knowledge Gardener]
       ↓
   ┌─────────────┬──────────────┐
   │             │              │
@@ -21,6 +20,8 @@ Update       .agents/       .ai-docs/
 knowledge    skills/        knowledge/
 index        <new>/         index.json
 ```
+
+> **Note**: The `reflect` stage has been removed from the pipeline. Pattern detection, knowledge update, and skill creation are now handled by the **Knowledge Gardener** nightly inspector plugin.
 
 ## Current Implementation
 
@@ -38,7 +39,7 @@ Cross-task knowledge base that grows over time:
 - **Skills created**: Auto-generated skills and when
 
 ### Auto-Created Skills
-When a pattern appears 3+ times, the reflect agent automatically creates a skill:
+When a pattern appears 3+ times, the Knowledge Gardener automatically creates a skill:
 - Located in `.agents/skills/<pattern-name>/SKILL.md`
 - Contains recipe, examples from past tasks, aggregated gotchas
 - Available to future architect/build agents via skill discovery
@@ -55,8 +56,6 @@ The architect and build stages read the knowledge index to:
 |------|---------|
 | `.ai-docs/knowledge/index.json` | Cross-task knowledge base |
 | `.tasks/<id>/memory.json` | Per-task structured memory |
-| `.tasks/<id>/reflect.md` | Reflect stage output |
-| `.opencode/agents/reflect.md` | Reflect agent instructions |
 | `.opencode/agents/docs.md` | Docs agent (writes memory.json) |
 
 ---
@@ -71,7 +70,7 @@ When the pipeline encounters a task requiring domain expertise that no current a
 ### Proposed Architecture
 
 ```
-reflect stage detects:
+Knowledge Gardener detects:
   "3 tasks needed MongoDB aggregation expertise, no mongo-expert agent exists"
       ↓
   Creates .opencode/agents/mongo-expert.md with:

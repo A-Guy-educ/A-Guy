@@ -2,6 +2,7 @@
 
 import React from 'react'
 import type { GeometrySpecV1 } from '@/infra/contracts/graphics/geometry.v1'
+import { getDefaultShapeFill } from '@/infra/contracts/graphics/textColors'
 import { Plus, Trash2 } from 'lucide-react'
 
 type GeoTriangle = NonNullable<GeometrySpecV1['elements']['triangles']>[number]
@@ -95,7 +96,7 @@ export const ShapesPanel: React.FC<ShapesPanelProps> = ({
                 <input
                   type="color"
                   className="panel-color-input"
-                  value={tri.fill || '#cccccc'}
+                  value={tri.fill || getDefaultShapeFill()}
                   onChange={(e) => updateTri(tIdx, { fill: e.target.value })}
                 />
                 {tri.fill && (
@@ -156,7 +157,7 @@ export const ShapesPanel: React.FC<ShapesPanelProps> = ({
                 <input
                   type="color"
                   className="panel-color-input"
-                  value={rect.fill || '#cccccc'}
+                  value={rect.fill || getDefaultShapeFill()}
                   onChange={(e) => updateRect(rIdx, { fill: e.target.value })}
                 />
                 {rect.fill && (

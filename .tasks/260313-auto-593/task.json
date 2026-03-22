@@ -1,0 +1,29 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 0.9,
+  "primary_domain": "frontend",
+  "scope": [
+    "Lesson chat component",
+    "Chat scroll behavior on mount"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Chat component exists in lesson view that needs auto-scroll behavior",
+    "Fix involves adding scroll-to-bottom logic on component mount or message update"
+  ],
+  "review_questions": [
+    "Where is the lesson chat component located in the codebase?",
+    "What is the current scrolling implementation being used?",
+    "Should the scroll-to-bottom behavior apply to all chat instances or only lesson-specific chats?"
+  ],
+  "complexity": 17,
+  "complexity_reasoning": "Scope: 5 (single component fix). Risk: 5 (UI bug, no data/security impact). Novelty: 3 (common scroll-to-bottom pattern). Cross-domain: 0 (frontend only). Ambiguity: 2 (clear reproduction steps). Dependencies: 2 (self-contained component). Total: 17",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Input contains clear environment details, 6-step reproduction instructions, expected vs actual results, and reproducibility status. This is a well-formed bug report."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}

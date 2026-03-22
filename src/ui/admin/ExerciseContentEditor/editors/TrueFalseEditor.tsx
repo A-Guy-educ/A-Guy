@@ -81,7 +81,9 @@ export const TrueFalseEditor: React.FC<TrueFalseEditorProps> = ({ block, onChang
           hint={block.hint}
           solution={block.solution}
           fullSolution={block.fullSolution}
+          blockId={block.id}
           onChange={(field, value) => onChange({ ...block, [field]: value })}
+          onBatchChange={(fields) => onChange({ ...block, ...fields })}
         />
       </div>
     </div>

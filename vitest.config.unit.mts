@@ -10,6 +10,8 @@ export default defineConfig({
   plugins: [tsconfigPaths(), react()],
   test: {
     environment: 'node',
+    globals: true,
+    setupFiles: ['./vitest.setup.ts'],
     include: [
       'tests/unit/**/*.spec.ts',
       'tests/unit/**/*.test.ts',

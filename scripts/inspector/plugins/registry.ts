@@ -40,22 +40,6 @@ export class PluginRegistry {
   }
 
   /**
-   * Get plugins that should run on the current cycle.
-   * @param cycleNumber - The current cycle number (1-indexed)
-   */
-  getScheduled(cycleNumber: number): InspectorPlugin[] {
-    return this.plugins.filter((plugin) => {
-      // No schedule = run every cycle
-      if (!plugin.schedule || !plugin.schedule.every) {
-        return true
-      }
-
-      // Run if cycle number is a multiple of the schedule interval
-      return cycleNumber % plugin.schedule.every === 0
-    })
-  }
-
-  /**
    * Clear all registered plugins (useful for testing).
    */
   clear(): void {

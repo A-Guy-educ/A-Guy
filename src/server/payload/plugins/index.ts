@@ -37,7 +37,12 @@ let vercelBlobPlugin: Plugin | null = null
 if (process.env.PAYLOAD_GENERATE_TYPES !== 'true') {
   const blobToken = process.env.BLOB_READ_WRITE_TOKEN
 
-  if (!blobToken && process.env.NODE_ENV !== 'test') {
+  // In test mode, skip the plugin if no valid token is provided
+  // Valid tokens start with 'vercel_blob_rw_'
+  const isValidToken = blobToken && blobToken.startsWith('vercel_blob_rw_')
+  const isTestMode = process.env.NODE_ENV === 'test'
+
+  if (!blobToken && !isTestMode) {
     throw new Error(
       'BLOB_READ_WRITE_TOKEN environment variable is required. ' +
         'Vercel Blob storage is mandatory for this application. ' +
@@ -45,7 +50,9 @@ if (process.env.PAYLOAD_GENERATE_TYPES !== 'true') {
     )
   }
 
-  if (blobToken) {
+  // Only initialize the plugin if we have a valid token
+  // In test mode with mock token, skip the plugin entirely
+  if (isValidToken || (!isTestMode && blobToken)) {
     vercelBlobPlugin = vercelBlobStorage({
       addRandomSuffix: true,
       clientUploads: false,

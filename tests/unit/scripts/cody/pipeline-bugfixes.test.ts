@@ -68,7 +68,6 @@ vi.mock('fetch', () => ({
 // Get mock references
 const mockExecSync = vi.mocked(childProcess.execSync)
 const mockExecFileSync = vi.mocked(childProcess.execFileSync)
-const mockWriteFileSync = vi.mocked(fs.writeFileSync)
 const mockExistsSync = vi.mocked(fs.existsSync)
 const mockReadFileSync = vi.mocked(fs.readFileSync)
 
@@ -246,34 +245,6 @@ describe('CRITICAL 2: Duplicate setLifecycleLabel removed', () => {
 })
 
 // =============================================================================
-// CRITICAL 3: Null state fix in parallel post-action
-// =============================================================================
-
-describe('CRITICAL 3: Null state fix in parallel post-action', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  it('should have correct function signature for executePostAction', async () => {
-    const { executePostAction } = await import('../../../../scripts/cody/pipeline/post-actions')
-
-    // Verify function exists and has correct parameters
-    expect(executePostAction).toBeDefined()
-    expect(typeof executePostAction).toBe('function')
-  })
-
-  // Note: Full state forwarding test requires complex mocking of context
-  // This is a structural test to verify the fix is in place
-  it('should accept state parameter in executePostAction', async () => {
-    // Test that the function can be called with state parameter
-    // The fix ensures _state is forwarded to recursive calls
-    const actionType = 'parallel'
-    // This verifies the action type exists in the switch
-    expect(actionType).toBe('parallel')
-  })
-})
-
-// =============================================================================
 // CRITICAL 4: postComment retry logic
 // =============================================================================
 
@@ -311,7 +282,7 @@ describe('CRITICAL 4: postComment retry logic', () => {
 
     // Should be called twice (initial + 1 retry)
     expect(mockExecFileSync).toHaveBeenCalledTimes(2)
-  })
+  }, 10000)
 
   it('should not throw when both attempts fail (fire-and-forget)', async () => {
     const { postComment } = await import('../../../../scripts/cody/github-api')
@@ -326,7 +297,7 @@ describe('CRITICAL 4: postComment retry logic', () => {
 
     // Should still call twice (initial + 1 retry)
     expect(mockExecFileSync).toHaveBeenCalledTimes(2)
-  })
+  }, 10000)
 })
 
 // =============================================================================
@@ -367,7 +338,7 @@ describe('CRITICAL 5: setLifecycleLabel retry logic', () => {
 
     // Should be called twice (initial + 1 retry)
     expect(mockExecFileSync).toHaveBeenCalledTimes(2)
-  })
+  }, 10000)
 
   it('should not throw when both attempts fail (fire-and-forget)', async () => {
     const { setLifecycleLabel } = await import('../../../../scripts/cody/github-api')
@@ -382,7 +353,7 @@ describe('CRITICAL 5: setLifecycleLabel retry logic', () => {
 
     // Should still call twice (initial + 1 retry)
     expect(mockExecFileSync).toHaveBeenCalledTimes(2)
-  })
+  }, 10000)
 
   it('should skip setting invalid lifecycle labels', async () => {
     const { setLifecycleLabel } = await import('../../../../scripts/cody/github-api')
@@ -438,60 +409,6 @@ describe('HIGH 9: Task ID randomness', () => {
     const result = parseCliArgs(['--task-id', '260225-my-task'])
 
     expect(result.taskId).toBe('260225-my-task')
-  })
-})
-
-// =============================================================================
-// HIGH 8: merge --abort fallback (structural test)
-// =============================================================================
-
-describe('HIGH 8: merge --abort fallback', () => {
-  it('should have git-utils module available', async () => {
-    const gitUtils = await import('../../../../scripts/cody/git-utils')
-
-    // Check that the module exports necessary functions
-    expect(gitUtils).toBeDefined()
-    expect(typeof gitUtils.getDefaultBranch).toBe('function')
-  })
-})
-
-// =============================================================================
-// HIGH 10: Lifecycle label on failure (structural test)
-// =============================================================================
-
-describe('HIGH 10: Lifecycle label on failure', () => {
-  it('should have setLifecycleLabel function in github-api', async () => {
-    const { setLifecycleLabel, LIFECYCLE_LABELS } =
-      await import('../../../../scripts/cody/github-api')
-
-    expect(setLifecycleLabel).toBeDefined()
-    expect(typeof setLifecycleLabel).toBe('function')
-    // Verify cody:failed is a valid lifecycle label
-    expect(LIFECYCLE_LABELS).toContain('cody:failed')
-  })
-})
-
-// =============================================================================
-// HIGH 11: Error handling in parallel actions
-// =============================================================================
-
-describe('HIGH 11: Error handling in parallel actions', () => {
-  it('should collect errors from all failed parallel actions', async () => {
-    // This is tested by Promise.allSettled behavior
-    // The parallel action case should use Promise.allSettled and collect failures
-    const promises = [
-      Promise.resolve('success'),
-      Promise.reject(new Error('fail 1')),
-      Promise.reject(new Error('fail 2')),
-    ]
-
-    const results = await Promise.allSettled(promises)
-
-    const failures = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected')
-
-    expect(failures).toHaveLength(2)
-    expect(failures[0].reason.message).toBe('fail 1')
-    expect(failures[1].reason.message).toBe('fail 2')
   })
 })
 

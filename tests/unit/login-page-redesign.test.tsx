@@ -50,30 +50,16 @@ describe('Login Page Redesign - i18n translations', () => {
 })
 
 describe('LoginPageContent', () => {
-  it('renders hero heading with split bold/regular text in Hebrew', () => {
+  it('renders hero heading as gradient text in Hebrew', () => {
     renderWithI18n('he', <LoginPageContent />)
 
-    expect(screen.getByText('שלום,')).toBeTruthy()
     expect(screen.getByText('מוכנים להצליח?')).toBeTruthy()
   })
 
-  it('renders hero heading in English', () => {
+  it('renders hero heading as gradient text in English', () => {
     renderWithI18n('en', <LoginPageContent />)
 
-    expect(screen.getByText('Hello,')).toBeTruthy()
     expect(screen.getByText('Ready to Succeed?')).toBeTruthy()
-  })
-
-  it('renders subtitle "A-Guy המורה הפרטי שלכם" in Hebrew', () => {
-    renderWithI18n('he', <LoginPageContent />)
-
-    expect(screen.getByText('A-Guy המורה הפרטי שלכם')).toBeTruthy()
-  })
-
-  it('renders subtitle in English', () => {
-    renderWithI18n('en', <LoginPageContent />)
-
-    expect(screen.getByText('A-Guy Your Personal Tutor')).toBeTruthy()
   })
 
   it('renders help link "זקוקים לעזרה?"', () => {

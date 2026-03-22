@@ -1,0 +1,15 @@
+{
+  "blocks": [
+    {
+      "id": "q1",
+      "type": "question_open",
+      "variant": "free_response",
+      "question": {
+        "text": "Explain the concept of photosynthesis in one sentence."
+      },
+      "answer": {
+        "sampleAnswer": "Photosynthesis is the process by which plants convert light energy into chemical energy, producing glucose and oxygen from carbon dioxide and water."
+      }
+    }
+  ]
+}

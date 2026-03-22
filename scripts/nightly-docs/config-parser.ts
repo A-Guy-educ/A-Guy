@@ -126,11 +126,15 @@ function parseSimpleYaml(yaml: string): any {
     if (content.startsWith('- ')) {
       // Array item
       const value = content.slice(2).trim()
-      if (!Array.isArray(parent)) {
+      let arrayParent = parent
+      if (!Array.isArray(arrayParent)) {
         const key = stack[stack.length - 1].key
-        if (key) {
+        if (key && stack.length >= 2) {
           stack[stack.length - 2].obj[key] = []
-          stack[stack.length - 1].obj = stack[stack.length - 2].obj[key]
+          arrayParent = stack[stack.length - 2].obj[key]
+          stack[stack.length - 1].obj = arrayParent
+        } else {
+          continue // Can't convert to array, skip this line
         }
       }
       if (value.includes(':')) {
@@ -141,10 +145,10 @@ function parseSimpleYaml(yaml: string): any {
         if (v) {
           obj[k] = parseValue(v)
         }
-        parent.push(obj)
+        arrayParent.push(obj)
         stack.push({ indent, obj, key: k })
       } else {
-        parent.push(parseValue(value))
+        arrayParent.push(parseValue(value))
       }
     } else if (content.includes(':')) {
       // Key-value pair

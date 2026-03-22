@@ -18,6 +18,7 @@ import { getGuestChatConfig } from '@/server/config/guest-chat-config'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
 import { DEFAULT_CONTENT_LOCALE } from '@/server/payload/fields/contentLocale'
 import type { ContentLocale } from '@/server/payload/fields/contentLocale'
+import { logActivity } from '@/server/payload/hooks/stats/logActivity'
 import type { Payload, PayloadRequest } from 'payload'
 
 export class GuestConversationLimitError extends Error {
@@ -142,6 +143,17 @@ export class ConversationService {
     })
 
     logger.info({ userId, contextKey, conversationId: newConv.id }, 'Created new conversation')
+
+    // Log activity for stats dashboard
+    logActivity({
+      payload: this.payload,
+      userId,
+      actionType: 'conversation_started',
+      label: `Conversation in ${contextRef.relationTo}`,
+      targetId: newConv.id as string,
+      targetCollection: 'conversations',
+    }).catch((err) => logger.error({ err }, 'Failed to log conversation activity'))
+
     return newConv as unknown as ConversationWithHistory
   }
 

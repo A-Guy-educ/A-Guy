@@ -5,7 +5,7 @@ import { queryChaptersByGrade } from '@/server/repos/queries/chapters'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 import type { Lesson } from '@/payload-types'
-import { DEFAULT_PAGE_ACCESS_TYPE } from '@/server/constants/access-types'
+import { DEFAULT_ACCESS_TYPE, DEFAULT_PAGE_ACCESS_TYPE } from '@/server/constants/access-types'
 import { SystemParams } from '@/infra/config/system-params'
 import { isValidContentLocale } from '@/server/payload/fields/contentLocale'
 
@@ -33,6 +33,10 @@ export async function GET(request: NextRequest) {
       courseObj && 'pageAccessType' in courseObj
         ? (courseObj.pageAccessType ?? DEFAULT_PAGE_ACCESS_TYPE)
         : DEFAULT_PAGE_ACCESS_TYPE
+    const courseAccessType =
+      courseObj && 'accessType' in courseObj
+        ? (courseObj.accessType ?? DEFAULT_ACCESS_TYPE)
+        : DEFAULT_ACCESS_TYPE
 
     // Fetch all lessons for all chapters (batch query for efficiency)
     const chapterIds = chapters.map((chapter) => chapter.id)
@@ -99,6 +103,7 @@ export async function GET(request: NextRequest) {
       courseTitle,
       courseLabel,
       coursePageAccessType,
+      courseAccessType,
       gatedDelayMs,
       gatedWarningMs,
     })

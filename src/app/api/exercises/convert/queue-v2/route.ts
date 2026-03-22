@@ -14,8 +14,8 @@ import config from '@payload-config'
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import type { Lesson } from '@/payload-types'
-import { z } from 'zod'
 import { requireAdminOrTestSecret } from '@/server/api/auth'
+import { queueV2RequestSchema } from './schema'
 
 type ErrorCode =
   | 'UNAUTHORIZED'
@@ -33,11 +33,8 @@ function errorResponse(
   return NextResponse.json({ error: { code, message }, ...extra }, { status })
 }
 
-// Zod schema for request validation
-export const queueV2RequestSchema = z.object({
-  lessonId: z.string().min(1),
-  mediaId: z.string().min(1),
-})
+// Export the schema from here for backward compatibility
+export { queueV2RequestSchema } from './schema'
 
 export async function POST(request: NextRequest) {
   try {

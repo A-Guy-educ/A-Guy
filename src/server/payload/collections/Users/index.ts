@@ -113,6 +113,45 @@ export const Users: CollectionConfig = {
       },
     },
     {
+      name: 'courseEntitlements',
+      type: 'array',
+      label: 'Course Entitlements',
+      admin: {
+        description: 'Courses this user has access to',
+      },
+      access: {
+        update: ({ req: { user } }) =>
+          isUsersCollectionUser(user) && user.role === AccountRole.Admin,
+      },
+      fields: [
+        {
+          name: 'course',
+          type: 'relationship',
+          relationTo: 'courses',
+          required: true,
+          admin: { readOnly: true },
+        },
+        {
+          name: 'grantMethod',
+          type: 'select',
+          required: true,
+          defaultValue: 'admin',
+          options: [
+            { label: 'Admin Grant', value: 'admin' },
+            { label: 'Payment', value: 'payment' },
+            { label: 'Access Code', value: 'code' },
+          ],
+          admin: { readOnly: true },
+        },
+        {
+          name: 'grantedAt',
+          type: 'date',
+          defaultValue: () => new Date().toISOString(),
+          admin: { readOnly: true },
+        },
+      ],
+    },
+    {
       name: 'oauthLoginSecretEnc',
       type: 'text',
       // Encrypted secret for payload.login() - required for OAuth users

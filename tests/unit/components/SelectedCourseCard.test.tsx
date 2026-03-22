@@ -125,6 +125,8 @@ describe('SelectedCourseCard AbortController', () => {
               accessType: 'free',
               createdAt: '2024-01-01T00:00:00.000Z',
               updatedAt: '2024-01-01T00:00:00.000Z',
+              contentStatus: 'none' as const,
+              contentStatusVisible: true,
             }
 
             resolve(
@@ -215,6 +217,8 @@ describe('SelectedCourseCard AbortController', () => {
               accessType: 'free',
               createdAt: '2024-01-01T00:00:00.000Z',
               updatedAt: '2024-01-01T00:00:00.000Z',
+              contentStatus: 'none' as const,
+              contentStatusVisible: true,
             }
 
             resolve(

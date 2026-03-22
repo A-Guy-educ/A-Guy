@@ -1,0 +1,65 @@
+{
+  "id": "lesson-progress-indicator",
+  "name": "Student sees lesson progress indicator update",
+  "journey": "student-studies-lesson",
+  "type": "feature",
+  "area": "lessons",
+  "tags": ["lesson", "progress"],
+  "locale": "he",
+  "preconditions": [
+    {
+      "action": "seed",
+      "entity": "course",
+      "data": {
+        "title": "Progress Course",
+        "courseLabel": "ה",
+        "status": "published",
+        "isActive": true,
+        "accessType": "free"
+      },
+      "ref": "$course"
+    },
+    {
+      "action": "seed",
+      "entity": "chapter",
+      "data": {
+        "title": "Progress Chapter",
+        "course": "$course",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$chapter"
+    },
+    {
+      "action": "seed",
+      "entity": "lesson",
+      "data": {
+        "title": "Progress Lesson",
+        "chapter": "$chapter",
+        "type": "learning",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$lesson"
+    }
+  ],
+  "steps": [
+    {
+      "action": "navigate",
+      "input": {
+        "type": "lesson",
+        "courseRef": "$course",
+        "chapterRef": "$chapter",
+        "lessonRef": "$lesson"
+      }
+    },
+    {
+      "action": "startLesson"
+    },
+    {
+      "action": "navigateExercise",
+      "input": { "direction": "next" }
+    }
+  ],
+  "teardown": "auto"
+}

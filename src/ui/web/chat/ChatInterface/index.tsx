@@ -15,6 +15,7 @@ import {
   MessageSquare,
   Plus,
   RefreshCw,
+  RotateCcw,
   Send,
   X,
 } from 'lucide-react'
@@ -138,6 +139,7 @@ export function ChatInterface({
     directUploads,
     addDirectUploads,
     removeDirectUpload,
+    retryDirectUpload,
     isDirectUploading,
     completedChatAssetIds,
     openFilePicker,
@@ -603,7 +605,24 @@ export function ChatInterface({
                 {file.status === 'complete' && (
                   <CheckCircle className="w-3.5 h-3.5 text-green-500" />
                 )}
-                {file.status === 'failed' && <span className="text-xs text-red-500">Failed</span>}
+                {file.status === 'failed' && (
+                  <>
+                    <span
+                      className="text-xs text-red-500 max-w-[100px] truncate"
+                      title={file.error}
+                    >
+                      {file.error || 'Failed'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => retryDirectUpload(file.localId)}
+                      className="p-0.5 hover:bg-primary/20 rounded-full transition-colors"
+                      aria-label="Retry upload"
+                    >
+                      <RotateCcw className="w-3 h-3 text-muted-foreground hover:text-primary" />
+                    </button>
+                  </>
+                )}
                 <button
                   type="button"
                   onClick={() => removeDirectUpload(file.localId)}

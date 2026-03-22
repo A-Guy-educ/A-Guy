@@ -27,6 +27,9 @@ export async function POST(request: NextRequest) {
 
     return await validateAnswer(payloadRequest)
   } catch (error) {
+    const Sentry = await import('@sentry/nextjs')
+    Sentry.captureException(error, { tags: { route: '/api/exercises/validate-answer' } })
+
     return Response.json(
       {
         success: false,

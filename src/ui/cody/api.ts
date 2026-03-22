@@ -16,6 +16,7 @@ import type {
   CollaboratorsResponse,
   ActionResponse,
   PRComment,
+  WorkflowRun,
 } from './types'
 
 const API_BASE = '/api/cody'
@@ -35,9 +36,18 @@ export class RateLimitError extends Error {
 }
 
 export class NoTokenError extends Error {
-  constructor(message = 'GITHUB_TOKEN is not configured') {
+  constructor(
+    message = 'GitHub token is not configured. Set CODY_BOT_TOKEN or GITHUB_TOKEN in environment variables.',
+  ) {
     super(message)
     this.name = 'NoTokenError'
+  }
+}
+
+export class SessionExpiredError extends Error {
+  constructor(message = 'Your session has expired. Please log in again.') {
+    super(message)
+    this.name = 'SessionExpiredError'
   }
 }
 
@@ -53,9 +63,19 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Redirect to GitHub OAuth login when session expires.
+ * Call this in mutation onError handlers to handle expired credentials.
+ * @param returnTo - Optional path to return to after login (defaults to /cody)
+ */
+export function redirectToLogin(returnTo = '/cody'): void {
+  const encoded = encodeURIComponent(returnTo)
+  window.location.href = `/api/oauth/github?returnTo=${encoded}`
+}
+
 // ============ Helpers ============
 
-async function handleResponse<T>(res: Response): Promise<T> {
+export async function handleResponse<T>(res: Response): Promise<T> {
   const data = await res.json()
 
   if (res.status === 429) {
@@ -67,7 +87,15 @@ async function handleResponse<T>(res: Response): Promise<T> {
   }
 
   if (res.status === 401) {
-    throw new NoTokenError(data.message)
+    // Distinguish server token config errors from user session auth errors.
+    // The tasks route returns { error: 'no_token' } when CODY_BOT_TOKEN/GITHUB_TOKEN is missing.
+    // The auth middleware returns { message: 'Not authenticated...' } for expired sessions.
+    if (data.error === 'no_token') {
+      throw new NoTokenError(data.message)
+    }
+    // Session expired — throw SessionExpiredError so the UI can show a login prompt.
+    // Do NOT redirect here — that causes infinite redirect loops.
+    throw new SessionExpiredError(data.message || 'Your session has expired. Please log in again.')
   }
 
   if (!res.ok) {
@@ -115,6 +143,31 @@ export const tasksApi = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
+    })
+    return handleResponse(res)
+  },
+
+  update: async (
+    issueNumber: number,
+    data: {
+      title?: string
+      body?: string
+      labels?: string[]
+      assignees?: string[]
+      actorLogin?: string
+    },
+  ): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'update',
+        title: data.title,
+        body: data.body,
+        labels: data.labels,
+        assignees: data.assignees,
+        ...(data.actorLogin && { actorLogin: data.actorLogin }),
+      }),
     })
     return handleResponse(res)
   },
@@ -187,6 +240,24 @@ export const tasksApi = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'reject', ...(actorLogin && { actorLogin }) }),
+    })
+    return handleResponse(res)
+  },
+
+  approveUI: async (issueNumber: number, actorLogin?: string): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'approve-ui', ...(actorLogin && { actorLogin }) }),
+    })
+    return handleResponse(res)
+  },
+
+  approvePR: async (issueNumber: number, actorLogin?: string): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'approve-pr', ...(actorLogin && { actorLogin }) }),
     })
     return handleResponse(res)
   },
@@ -295,6 +366,32 @@ export const tasksApi = {
     })
     return handleResponse(res)
   },
+
+  addToQueue: async (issueNumber: number, actorLogin?: string): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'add-label',
+        label: 'cody:queued',
+        ...(actorLogin && { actorLogin }),
+      }),
+    })
+    return handleResponse(res)
+  },
+
+  removeFromQueue: async (issueNumber: number, actorLogin?: string): Promise<ActionResponse> => {
+    const res = await fetch(`${API_BASE}/tasks/issue-${issueNumber}/actions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'remove-label',
+        label: 'cody:queued',
+        ...(actorLogin && { actorLogin }),
+      }),
+    })
+    return handleResponse(res)
+  },
 }
 
 // ============ PRs API ============
@@ -364,6 +461,19 @@ export const collaboratorsApi = {
   },
 }
 
+// ============ Workflows API ============
+
+export const workflowsApi = {
+  list: async (params?: { status?: string }): Promise<WorkflowRun[]> => {
+    const searchParams = new URLSearchParams()
+    if (params?.status) searchParams.set('status', params.status)
+    const url = `${API_BASE}/workflows${searchParams.toString() ? `?${searchParams}` : ''}`
+    const res = await fetch(url)
+    const data = await handleResponse<{ runs: WorkflowRun[] }>(res)
+    return data.runs
+  },
+}
+
 // ============ Publish API ============
 
 export const publishApi = {
@@ -376,6 +486,63 @@ export const publishApi = {
     return handleResponse(res)
   },
 }
+// ============ Remote Dev API ============
+
+export interface RemoteExecPayload {
+  command?: string
+  path?: string
+  content?: string
+  cwd?: string
+}
+
+export interface RemoteExecResult {
+  stdout?: string
+  stderr?: string
+  exitCode?: number | null
+  content?: string
+  entries?: Array<{ name: string; type: string; size?: number }>
+  truncated?: boolean
+  success?: boolean
+  error?: string
+}
+
+export interface RemoteStatus {
+  configured: boolean
+  online: boolean
+  funnelUrl?: string
+}
+
+type RemoteAction = 'exec' | 'read' | 'write' | 'ls'
+
+export const remoteApi = {
+  /**
+   * Check if the remote dev agent is online for the given user.
+   */
+  status: async (actorLogin: string): Promise<RemoteStatus> => {
+    const res = await fetch(
+      `${API_BASE}/remote/status?actorLogin=${encodeURIComponent(actorLogin)}`,
+    )
+    // The API returns { configured: false } for non-configured users (200 OK)
+    return handleResponse<RemoteStatus>(res)
+  },
+
+  /**
+   * Execute an action on the remote dev agent.
+   */
+  exec: async (
+    actorLogin: string,
+    action: RemoteAction,
+    payload: RemoteExecPayload,
+  ): Promise<RemoteExecResult> => {
+    const res = await fetch(`${API_BASE}/remote/exec`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ actorLogin, action, payload }),
+    })
+    return handleResponse<RemoteExecResult>(res)
+  },
+}
+
 // ============ Combined API ============
 
 export const codyApi = {
@@ -384,5 +551,7 @@ export const codyApi = {
   taskDocs: taskDocsApi,
   boards: boardsApi,
   collaborators: collaboratorsApi,
+  workflows: workflowsApi,
   publish: publishApi.publish,
+  remote: remoteApi,
 }

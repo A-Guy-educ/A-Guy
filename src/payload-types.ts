@@ -88,11 +88,13 @@ export interface Config {
     'exercise-assets': ExerciseAsset;
     users: User;
     'user-progress': UserProgress;
+    'user-stats': UserStat;
     media: Media;
     'chat-assets': ChatAsset;
     'upload-sessions': UploadSession;
     posts: Post;
     'pricing-plans': PricingPlan;
+    'access-codes': AccessCode;
     'mcp-audit-logs': McpAuditLog;
     redirects: Redirect;
     forms: Form;
@@ -127,11 +129,13 @@ export interface Config {
     'exercise-assets': ExerciseAssetsSelect<false> | ExerciseAssetsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'user-progress': UserProgressSelect<false> | UserProgressSelect<true>;
+    'user-stats': UserStatsSelect<false> | UserStatsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     'chat-assets': ChatAssetsSelect<false> | ChatAssetsSelect<true>;
     'upload-sessions': UploadSessionsSelect<false> | UploadSessionsSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
     'pricing-plans': PricingPlansSelect<false> | PricingPlansSelect<true>;
+    'access-codes': AccessCodesSelect<false> | AccessCodesSelect<true>;
     'mcp-audit-logs': McpAuditLogsSelect<false> | McpAuditLogsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
@@ -449,6 +453,17 @@ export interface User {
   googleProfile?: {
     name?: string | null;
   };
+  /**
+   * Courses this user has access to
+   */
+  courseEntitlements?:
+    | {
+        course: string | Course;
+        grantMethod: 'admin' | 'payment' | 'code';
+        grantedAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   oauthLoginSecretEnc?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -513,11 +528,11 @@ export interface Course {
   /**
    * Controls access to the course page itself (study/practice view). "Gated" shows a sign-in prompt after a configurable delay.
    */
-  pageAccessType: 'free' | 'mandatory' | 'gated';
+  pageAccessType: 'free' | 'mandatory' | 'gated' | 'paid';
   /**
    * Default access type for lessons in this course. Lessons can override with their own setting.
    */
-  accessType: 'free' | 'mandatory' | 'gated';
+  accessType: 'free' | 'mandatory' | 'gated' | 'paid';
   categories: (string | Category)[];
   /**
    * AI system prompt for Ask tab chat in this course (uses default if not set)
@@ -535,6 +550,18 @@ export interface Course {
     title?: string | null;
     description?: string | null;
   };
+  /**
+   * Content status badge displayed to students
+   */
+  contentStatus: 'none' | 'soon' | 'justAdded';
+  /**
+   * When unchecked, "Soon" content is completely hidden from student listings
+   */
+  contentStatusVisible?: boolean | null;
+  /**
+   * Badge auto-expires after this date (leave empty for permanent badge)
+   */
+  contentStatusExpiresAt?: string | null;
   /**
    * User who created this document
    */
@@ -1271,7 +1298,7 @@ export interface Lesson {
   /**
    * Access control for this lesson. "Inherit" uses the parent course setting. "Gated" is a client-side nudge, not hard enforcement.
    */
-  accessType: 'inherit' | 'free' | 'mandatory' | 'gated';
+  accessType: 'inherit' | 'free' | 'mandatory' | 'gated' | 'paid';
   /**
    * Show an intro/about page before the lesson starts
    */
@@ -1300,6 +1327,18 @@ export interface Lesson {
    * URL-friendly identifier (auto-generated from title if empty)
    */
   slug?: string | null;
+  /**
+   * Content status badge displayed to students
+   */
+  contentStatus: 'none' | 'soon' | 'justAdded';
+  /**
+   * When unchecked, "Soon" content is completely hidden from student listings
+   */
+  contentStatusVisible?: boolean | null;
+  /**
+   * Badge auto-expires after this date (leave empty for permanent badge)
+   */
+  contentStatusExpiresAt?: string | null;
   /**
    * User who created this document
    */
@@ -1737,6 +1776,10 @@ export interface UserProgress {
          */
         score?: number | null;
         /**
+         * Cumulative time spent on this item in seconds
+         */
+        timeSpentSeconds?: number | null;
+        /**
          * Last time this record was accessed
          */
         lastAccessedAt?: string | null;
@@ -1789,6 +1832,70 @@ export interface UserProgress {
               id?: string | null;
             }[]
           | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-stats".
+ */
+export interface UserStat {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * The user this stats belongs to
+   */
+  user: string | User;
+  /**
+   * Cumulative active time in seconds
+   */
+  totalTimeSpentSeconds?: number | null;
+  /**
+   * Current consecutive days of activity
+   */
+  currentStreak?: number | null;
+  /**
+   * Historical maximum streak
+   */
+  longestStreak?: number | null;
+  /**
+   * Last day counted for streak (YYYY-MM-DD format)
+   */
+  lastActiveDate?: string | null;
+  /**
+   * Timestamp of last heartbeat received
+   */
+  lastHeartbeatAt?: string | null;
+  /**
+   * Recent user activity timeline (max 50 entries)
+   */
+  activityLog?:
+    | {
+        actionType:
+          | 'lesson_completed'
+          | 'exercise_attempted'
+          | 'exercise_completed'
+          | 'question_asked'
+          | 'conversation_started';
+        /**
+         * Human-readable description (e.g., "Completed Lesson 3")
+         */
+        label: string;
+        /**
+         * ID of the entity (lesson/exercise/conversation ID)
+         */
+        targetId?: string | null;
+        /**
+         * Collection slug (lessons/exercises/conversations)
+         */
+        targetCollection?: string | null;
+        timestamp: string;
         id?: string | null;
       }[]
     | null;
@@ -1946,6 +2053,49 @@ export interface PricingPlan {
    * Whether this pricing plan is currently active
    */
   isActive?: boolean | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Manage access codes that grant course entitlements
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "access-codes".
+ */
+export interface AccessCode {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * The code students will enter (e.g., MACCABI-2024)
+   */
+  code: string;
+  /**
+   * The course this code grants access to
+   */
+  course: string | Course;
+  /**
+   * Maximum number of times this code can be used (0 = unlimited)
+   */
+  maxUses?: number | null;
+  /**
+   * How many times this code has been redeemed
+   */
+  currentUses?: number | null;
+  /**
+   * Whether this code can currently be redeemed
+   */
+  isActive?: boolean | null;
+  /**
+   * Optional expiration date (leave empty for no expiry)
+   */
+  expiresAt?: string | null;
   /**
    * User who created this document
    */
@@ -2342,6 +2492,10 @@ export interface PayloadLockedDocument {
         value: string | UserProgress;
       } | null)
     | ({
+        relationTo: 'user-stats';
+        value: string | UserStat;
+      } | null)
+    | ({
         relationTo: 'media';
         value: string | Media;
       } | null)
@@ -2360,6 +2514,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'pricing-plans';
         value: string | PricingPlan;
+      } | null)
+    | ({
+        relationTo: 'access-codes';
+        value: string | AccessCode;
       } | null)
     | ({
         relationTo: 'mcp-audit-logs';
@@ -2756,6 +2914,9 @@ export interface CoursesSelect<T extends boolean = true> {
         title?: T;
         description?: T;
       };
+  contentStatus?: T;
+  contentStatusVisible?: T;
+  contentStatusExpiresAt?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -2801,6 +2962,9 @@ export interface LessonsSelect<T extends boolean = true> {
   lessonContextText?: T;
   prompt?: T;
   slug?: T;
+  contentStatus?: T;
+  contentStatusVisible?: T;
+  contentStatusExpiresAt?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -2931,6 +3095,14 @@ export interface UsersSelect<T extends boolean = true> {
     | {
         name?: T;
       };
+  courseEntitlements?:
+    | T
+    | {
+        course?: T;
+        grantMethod?: T;
+        grantedAt?: T;
+        id?: T;
+      };
   oauthLoginSecretEnc?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -2965,6 +3137,7 @@ export interface UserProgressSelect<T extends boolean = true> {
         completionPercentage?: T;
         status?: T;
         score?: T;
+        timeSpentSeconds?: T;
         lastAccessedAt?: T;
         id?: T;
       };
@@ -2996,6 +3169,31 @@ export interface UserProgressSelect<T extends boolean = true> {
               userStartTime?: T;
               id?: T;
             };
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-stats_select".
+ */
+export interface UserStatsSelect<T extends boolean = true> {
+  tenant?: T;
+  user?: T;
+  totalTimeSpentSeconds?: T;
+  currentStreak?: T;
+  longestStreak?: T;
+  lastActiveDate?: T;
+  lastHeartbeatAt?: T;
+  activityLog?:
+    | T
+    | {
+        actionType?: T;
+        label?: T;
+        targetId?: T;
+        targetCollection?: T;
+        timestamp?: T;
         id?: T;
       };
   updatedAt?: T;
@@ -3114,6 +3312,22 @@ export interface PricingPlansSelect<T extends boolean = true> {
   price?: T;
   currency?: T;
   isActive?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "access-codes_select".
+ */
+export interface AccessCodesSelect<T extends boolean = true> {
+  tenant?: T;
+  code?: T;
+  course?: T;
+  maxUses?: T;
+  currentUses?: T;
+  isActive?: T;
+  expiresAt?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;

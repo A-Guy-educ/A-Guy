@@ -4,6 +4,7 @@ import { useTranslations } from '@/ui/web/providers/I18n'
 import { Calendar, Plus, Trash2, Zap } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { addExamDate, getExamDates, setExamDates } from '@/client/state/localStorage/examDates'
 import type { MasteryLevel, TopicInput } from '@/server/services/study-plan'
 import { Button } from '@/ui/web/components/button'
 import { DayCard } from './DayCard'
@@ -67,11 +68,12 @@ export function StudyPlanPage() {
   const [newTopic, setNewTopic] = useState('')
   const [hasGenerated, setHasGenerated] = useState(false)
 
-  // Load sidebar fields from saved plan (but don't show schedule until user clicks generate)
+  // Load sidebar fields from saved plan and show schedule if plan was loaded from DB
   useEffect(() => {
     if (plan) {
       setExamDate(plan.examDate)
       setTopics(plan.topics)
+      setHasGenerated(true)
     }
   }, [plan])
 
@@ -109,6 +111,16 @@ export function StudyPlanPage() {
   const handleGeneratePlan = useCallback(async () => {
     if (!examDate || topics.length === 0) return
     await generatePlan(examDate, topics, 'default-course')
+    // Persist exam date to localStorage so the /study countdown can read it
+    const existing = getExamDates('default-course')
+    if (!existing.some((e) => e.date === examDate)) {
+      addExamDate('default-course', { id: `exam-${Date.now()}`, date: examDate })
+    } else {
+      // Update: keep only the latest exam date
+      setExamDates('default-course', [
+        { id: existing[0]?.id ?? `exam-${Date.now()}`, date: examDate },
+      ])
+    }
     setHasGenerated(true)
   }, [examDate, topics, generatePlan])
 

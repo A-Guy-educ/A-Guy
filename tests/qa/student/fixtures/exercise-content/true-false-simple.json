@@ -1,0 +1,15 @@
+{
+  "blocks": [
+    {
+      "id": "q1",
+      "type": "question_select",
+      "variant": "true_false",
+      "question": {
+        "text": "The sun is a planet."
+      },
+      "answer": {
+        "correctOptionId": false
+      }
+    }
+  ]
+}

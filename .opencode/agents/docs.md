@@ -89,7 +89,7 @@ Common updates:
 
 **REQUIRED OUTPUT**: Write `memory.json` in the task directory (alongside docs.md).
 
-This is a structured version of the memory file that the reflect stage will use for cross-task pattern detection.
+This is a structured version of the memory file that the Knowledge Gardener nightly inspector will use for cross-task pattern detection.
 
 ```json
 {

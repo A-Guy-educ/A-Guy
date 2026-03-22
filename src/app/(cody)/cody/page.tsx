@@ -2,27 +2,23 @@
  * @fileType page
  * @domain cody
  * @pattern dashboard-page
- * @ai-summary Main Cody dashboard page with Kanban board and AI chat
+ * @ai-summary Main Cody dashboard page. Auth handled client-side via SessionExpiredError.
+ *   Force static for OG tags - social media crawlers need metadata without auth.
  */
-import { redirect } from 'next/navigation'
-import type { Metadata } from 'next'
 import { CodyDashboard } from '@/ui/cody/components/CodyDashboard'
-import { getMeUser } from '@/infra/utils/getMeUser'
+import { buildCodyMetadata } from './metadata'
 
-import { AccountRole } from '@/infra/auth/roles'
+// Force static generation so OG tags are available without authentication
+export const dynamic = 'force-static'
+export const revalidate = false
+export const fetchCache = 'force-cache'
 
-export const metadata: Metadata = {
+export const metadata = buildCodyMetadata({
   title: 'Cody Operations Dashboard',
-  description: 'Developer operations dashboard for monitoring Cody CI build agent',
-}
+  description: 'Monitor and manage AI coding agent tasks, pipelines, and deployments',
+  path: '/cody',
+})
 
 export default async function CodyPage() {
-  const { user } = await getMeUser()
-
-  // Require admin role - redirect to login with returnTo for post-login redirect
-  if (!user || user.role !== AccountRole.Admin) {
-    redirect('/login?returnTo=/cody')
-  }
-
   return <CodyDashboard />
 }

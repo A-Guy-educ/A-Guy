@@ -1,0 +1,70 @@
+name: Publish Complete
+
+# Triggered when a PR targeting main is closed (merged)
+# Closes the associated publish issue since GitHub's "Closes #N"
+# only works for PRs merged into the default branch (dev), not main.
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  issues: write
+
+jobs:
+  close-publish-issue:
+    if: >-
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.labels.*.name, 'publish')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract publish issue number from PR body
+        id: extract
+        run: |
+          # Look for "Closes #NNN" in the PR body
+          ISSUE_NUMBER=$(echo "$PR_BODY" | grep -oP 'Closes #\K\d+' | head -1)
+          echo "issue_number=$ISSUE_NUMBER" >> "$GITHUB_OUTPUT"
+          if [ -n "$ISSUE_NUMBER" ]; then
+            echo "Found publish issue: #$ISSUE_NUMBER"
+          else
+            echo "No publish issue reference found in PR body"
+          fi
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+
+      - name: Close publish issue
+        if: steps.extract.outputs.issue_number != ''
+        run: |
+          gh issue comment "$ISSUE_NUMBER" \
+            --repo "${{ github.repository }}" \
+            --body "✅ Published to production! PR #${{ github.event.pull_request.number }} merged to \`main\`."
+          gh issue close "$ISSUE_NUMBER" \
+            --repo "${{ github.repository }}" \
+            --reason completed
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+          ISSUE_NUMBER: ${{ steps.extract.outputs.issue_number }}
+
+      - name: Fallback — close any open publish issues
+        if: steps.extract.outputs.issue_number == ''
+        run: |
+          # Find open issues with 'publish' label and close them
+          ISSUES=$(gh issue list \
+            --repo "${{ github.repository }}" \
+            --label publish \
+            --state open \
+            --json number \
+            --jq '.[].number')
+
+          for ISSUE in $ISSUES; do
+            echo "Closing publish issue #$ISSUE"
+            gh issue comment "$ISSUE" \
+              --repo "${{ github.repository }}" \
+              --body "✅ Published to production! PR #${{ github.event.pull_request.number }} merged to \`main\`."
+            gh issue close "$ISSUE" \
+              --repo "${{ github.repository }}" \
+              --reason completed
+          done
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}

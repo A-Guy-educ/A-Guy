@@ -1,0 +1,32 @@
+{
+  "id": "chat-empty-message",
+  "name": "Student tries to send empty chat message",
+  "journey": "student-chats-with-ai",
+  "type": "edge",
+  "area": "chat",
+  "tags": ["chat", "validation", "edge"],
+  "locale": "he",
+  "preconditions": [
+    {
+      "action": "seed",
+      "entity": "user",
+      "data": { "role": "student" },
+      "ref": "$student"
+    }
+  ],
+  "steps": [
+    {
+      "action": "login",
+      "input": { "userRef": "$student" }
+    },
+    {
+      "action": "navigate",
+      "input": { "type": "ask" }
+    },
+    {
+      "action": "beAt",
+      "input": { "pattern": "/ask" }
+    }
+  ],
+  "teardown": "auto"
+}

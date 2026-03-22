@@ -1,0 +1,29 @@
+{
+  "id": "exercise-404",
+  "name": "Student navigates to non-existent exercise and sees 404",
+  "journey": "student-navigates-content",
+  "type": "edge",
+  "area": "navigation",
+  "tags": ["404", "error"],
+  "locale": "he",
+  "steps": [
+    {
+      "action": "navigate",
+      "input": { "type": "home" }
+    },
+    {
+      "action": "navigate",
+      "input": {
+        "type": "url",
+        "url": "/courses/non-existent-course/chapters/chapter-1/lessons/lesson-1"
+      },
+      "description": "Navigate to a non-existent page"
+    },
+    {
+      "action": "beAt",
+      "input": { "pattern": "/courses/" },
+      "description": "Should navigate to courses area"
+    }
+  ],
+  "teardown": "auto"
+}

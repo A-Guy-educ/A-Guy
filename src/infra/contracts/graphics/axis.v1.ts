@@ -29,7 +29,16 @@ const AxesSchema = z.object({
     x: z.number(),
     y: z.number(),
   }),
+  tickPosition: z
+    .object({
+      x: z.enum(['default', 'inverted']).default('default'),
+      y: z.enum(['default', 'inverted']).default('default'),
+    })
+    .optional(),
 })
+
+/** Viewport mode: auto (calculate from content) or manual (user-defined) */
+const ViewportModeSchema = z.enum(['auto', 'manual']).default('auto').optional()
 
 /** Viewport bounds (optional) */
 const ViewportSchema = z
@@ -162,6 +171,7 @@ export const AxisSpecV1Schema = z
     units: z.number().positive(),
     grid: GridSchema,
     axes: AxesSchema,
+    viewportMode: ViewportModeSchema,
     viewport: ViewportSchema,
     elements: ElementsSchema,
     interactionSpec: InteractionSpecSchema,
@@ -170,3 +180,6 @@ export const AxisSpecV1Schema = z
 
 /** Inferred TypeScript type */
 export type AxisSpecV1 = z.infer<typeof AxisSpecV1Schema>
+
+/** Viewport mode type */
+export type ViewportMode = 'auto' | 'manual'

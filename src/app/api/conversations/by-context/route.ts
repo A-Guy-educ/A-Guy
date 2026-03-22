@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { logger } from '@/infra/utils/logger/logger'
 import { DEFAULT_CONTENT_LOCALE, isValidContentLocale } from '@/server/payload/fields/contentLocale'
 import type { ContentLocale } from '@/server/payload/fields/contentLocale'
 
@@ -56,8 +55,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ conversations, total: result.totalDocs })
   } catch (error) {
-    logger.error({ err: error }, 'Failed to fetch conversations by context')
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    const { captureAndRespond } = await import('@/server/api/capture-and-respond')
+    return captureAndRespond(error, { route: '/api/conversations/by-context GET' })
   }
 }
 
@@ -118,8 +117,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ id: conversation.id, contextKey })
   } catch (error) {
-    logger.error({ err: error }, 'Failed to create conversation')
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    const { captureAndRespond } = await import('@/server/api/capture-and-respond')
+    return captureAndRespond(error, { route: '/api/conversations/by-context POST' })
   }
 }
 
@@ -148,8 +147,8 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    logger.error({ err: error }, 'Failed to delete conversation')
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    const { captureAndRespond } = await import('@/server/api/capture-and-respond')
+    return captureAndRespond(error, { route: '/api/conversations/by-context DELETE' })
   }
 }
 

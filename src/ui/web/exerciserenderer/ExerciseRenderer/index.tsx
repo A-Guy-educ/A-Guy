@@ -6,7 +6,7 @@
 
 'use client'
 
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { cn } from '@/infra/utils/ui'
 import { useTranslations, useLocale } from '@/ui/web/providers/I18n'
 import { Card } from '@/ui/web/components/card'
@@ -21,15 +21,19 @@ import type {
   QuestionTableBlock,
   QuestionMatchingBlock,
   SvgBlock,
+  MediaBlock,
   UserAnswer,
   CheckResult,
 } from '../types'
 import type { GeometrySpecV1, AxisSpecV1 } from '@/infra/contracts'
+import type { DisplaySize } from '../blocks/AxisRenderer'
 import { HtmlBlockRenderer } from '../blocks/HtmlBlockRenderer'
 import { RichTextRenderer } from '../blocks/RichTextRenderer'
 import { SvgRenderer } from '../blocks/SvgRenderer'
 import { GeometryRenderer } from '../blocks/GeometryRenderer'
 import { AxisRenderer } from '../blocks/AxisRenderer'
+import { GraphWithPrompt } from '../blocks/GraphWithPrompt'
+import { MultiAxisRenderer } from '../blocks/MultiAxisRenderer'
 import { TrueFalseQuestion } from '../questions/TrueFalseQuestion'
 import { McqQuestion } from '../questions/McqQuestion'
 import { FreeResponseQuestion } from '../questions/FreeResponseQuestion'
@@ -46,6 +50,8 @@ import {
   type AnswerErrorMessages,
 } from '../utils/answerChecking'
 import { MediaMapProvider } from '../context/MediaMapContext'
+import { VideoPlayer } from '../components/VideoPlayer'
+import { getMediaUrl } from '@/infra/utils/getMediaUrl'
 
 /**
  * Hebrew letters for question numbering
@@ -121,6 +127,7 @@ export function ExerciseRenderer({
   exerciseNumber = 1,
   lessonId = '',
   exerciseId = '',
+  onResultsChange,
 }: ExerciseRendererProps) {
   const t = useTranslations('courses')
   const locale = useLocale()
@@ -158,7 +165,27 @@ export function ExerciseRenderer({
       locale: locale ?? undefined,
     })
 
+  // localStorage key for persisting answers per exercise
+  const storageKey = exerciseId ? `a-guy:answers:${exerciseId}` : ''
+
   const [answers, setAnswers] = useState<Record<string, UserAnswer>>(() => {
+    // Try to restore saved answers from localStorage
+    if (storageKey && typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem(storageKey)
+        if (saved) {
+          const parsed = JSON.parse(saved) as Record<string, UserAnswer>
+          // Merge saved answers with initial answers (in case new questions were added)
+          const initial: Record<string, UserAnswer> = {}
+          questionBlocks.forEach((q) => {
+            initial[q.id] = parsed[q.id] ?? getInitialAnswer(q)
+          })
+          return initial
+        }
+      } catch {
+        // Corrupted data — fall through to default
+      }
+    }
     const initial: Record<string, UserAnswer> = {}
     questionBlocks.forEach((q) => {
       initial[q.id] = getInitialAnswer(q)
@@ -166,10 +193,32 @@ export function ExerciseRenderer({
     return initial
   })
 
+  // Persist answers to localStorage on every change
+  const persistAnswers = useCallback(
+    (updated: Record<string, UserAnswer>) => {
+      if (!storageKey || typeof window === 'undefined') return
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(updated))
+      } catch {
+        // Storage full or unavailable — silent
+      }
+    },
+    [storageKey],
+  )
+
   const [checkResults, setCheckResults] = useState<Record<string, CheckResult>>({})
   const [hasChecked, setHasChecked] = useState<Record<string, boolean>>({})
   const [isChecking, setIsChecking] = useState<Record<string, boolean>>({})
   const chatTriggeredRef = useRef<Set<string>>(new Set())
+
+  // Report aggregate correctness to parent when check results change
+  useEffect(() => {
+    if (!onResultsChange) return
+    const totalQuestions = questionBlocks.length
+    const checkedCount = Object.keys(checkResults).length
+    const correctCount = Object.values(checkResults).filter((r) => r.isCorrect).length
+    onResultsChange({ totalQuestions, checkedCount, correctCount })
+  }, [checkResults, onResultsChange, questionBlocks.length])
 
   // SVG hotspot state (interactive SVGs are separate from QuestionBlock flow)
   const [svgAnswers, setSvgAnswers] = useState<Record<string, UserAnswer>>({})
@@ -194,7 +243,11 @@ export function ExerciseRenderer({
   }
 
   const handleAnswerChange = async (questionId: string, answer: UserAnswer) => {
-    setAnswers((prev) => ({ ...prev, [questionId]: answer }))
+    setAnswers((prev) => {
+      const updated = { ...prev, [questionId]: answer }
+      persistAnswers(updated)
+      return updated
+    })
 
     // For true/false questions, check immediately on selection
     const question = questionBlocks.find((q) => q.id === questionId)
@@ -317,18 +370,78 @@ export function ExerciseRenderer({
             let questionIndex = 0
             return content.blocks.map((block) => {
               // Geometry/Axis — media-only display blocks (type not in ContentBlock union)
-              const b = block as ContentBlock & { geometry?: unknown; axis?: unknown }
+              const b = block as ContentBlock & {
+                geometry?: unknown
+                axis?: unknown
+                layout?: string
+                prompt?: unknown
+              }
               if (b.type === ('question_geometry' as string)) {
                 return (
-                  <div key={b.id}>
+                  <GraphWithPrompt
+                    key={b.id}
+                    blockId={b.id}
+                    layout={
+                      (b.layout as 'textAbove' | 'textBelow' | 'textLeft' | 'textRight') ||
+                      'textRight'
+                    }
+                    prompt={
+                      b.prompt as
+                        | import('@/server/payload/collections/Exercises/types').InlineRichText
+                        | undefined
+                    }
+                  >
                     <GeometryRenderer blockId={b.id} spec={b.geometry as GeometrySpecV1} />
-                  </div>
+                  </GraphWithPrompt>
                 )
               }
               if (b.type === ('question_axis' as string)) {
+                const axisBlock = b as ContentBlock & {
+                  axis?: AxisSpecV1
+                  displaySize?: DisplaySize
+                }
                 return (
-                  <div key={b.id}>
-                    <AxisRenderer blockId={b.id} spec={b.axis as AxisSpecV1} />
+                  <GraphWithPrompt
+                    key={b.id}
+                    blockId={b.id}
+                    layout={
+                      (b.layout as 'textAbove' | 'textBelow' | 'textLeft' | 'textRight') ||
+                      'textRight'
+                    }
+                    prompt={
+                      b.prompt as
+                        | import('@/server/payload/collections/Exercises/types').InlineRichText
+                        | undefined
+                    }
+                  >
+                    <AxisRenderer
+                      blockId={b.id}
+                      spec={axisBlock.axis as AxisSpecV1}
+                      displaySize={axisBlock.displaySize}
+                    />
+                  </GraphWithPrompt>
+                )
+              }
+              if (b.type === ('question_multi_axis' as string)) {
+                const multiAxisBlock = b as unknown as {
+                  id: string
+                  graphs: Array<{ id: string; label: string; axis: AxisSpecV1; order: number }>
+                  prompt?: {
+                    type: 'rich_text'
+                    format: 'md-math-v1'
+                    value: string
+                    mediaIds?: string[]
+                  }
+                  textPosition?: 'above' | 'below'
+                }
+                return (
+                  <div key={multiAxisBlock.id}>
+                    <MultiAxisRenderer
+                      blockId={multiAxisBlock.id}
+                      graphs={multiAxisBlock.graphs}
+                      prompt={multiAxisBlock.prompt}
+                      textPosition={multiAxisBlock.textPosition ?? 'above'}
+                    />
                   </div>
                 )
               }
@@ -393,6 +506,47 @@ export function ExerciseRenderer({
                     className="prose prose-slate dark:prose-invert max-w-none text-foreground leading-relaxed"
                   >
                     <HtmlBlockRenderer block={block} />
+                  </div>
+                )
+              }
+
+              // Media block - render image or video from mediaMap
+              if (block.type === 'media') {
+                const mediaBlock = block as MediaBlock
+                const media = mediaMap[mediaBlock.mediaId]
+
+                if (!media) {
+                  return (
+                    <div key={mediaBlock.id} className="my-4">
+                      <p className="text-sm text-muted-foreground">{t('videoUnavailable')}</p>
+                    </div>
+                  )
+                }
+
+                // Check if media is a video (type field or mimeType starts with 'video/')
+                const isVideo = media.type === 'video' || media.mimeType?.startsWith('video/')
+
+                if (isVideo) {
+                  return (
+                    <div key={mediaBlock.id} className="my-4">
+                      <VideoPlayer src={media.url} mimeType={media.mimeType} />
+                    </div>
+                  )
+                }
+
+                // Otherwise render as image (using getMediaUrl for proper URL resolution)
+                const imageSrc = getMediaUrl(media.url)
+                return (
+                  <div
+                    key={mediaBlock.id}
+                    className="my-4 rounded-xl overflow-hidden border border-border/60 bg-muted/30"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={imageSrc}
+                      alt={media.alt || media.filename || ''}
+                      className="w-full h-auto max-h-96 object-contain"
+                    />
                   </div>
                 )
               }

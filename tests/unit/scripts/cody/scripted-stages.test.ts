@@ -39,7 +39,7 @@ vi.spyOn(console, 'error').mockImplementation(() => {})
 // Helpers
 // =============================================================================
 
-const mockExecSync = vi.mocked(childProcess.execSync)
+const _mockExecSync = vi.mocked(childProcess.execSync)
 const mockExecFileSync = vi.mocked(childProcess.execFileSync)
 const mockWriteFileSync = vi.mocked(fs.writeFileSync)
 const mockExistsSync = vi.mocked(fs.existsSync)
@@ -47,7 +47,7 @@ const mockReadFileSync = vi.mocked(fs.readFileSync)
 const mockGetDefaultBranch = vi.mocked(getDefaultBranch)
 
 /**
- * Configure execFileSync to succeed for all 4 verify gates.
+ * Configure execFileSync to succeed for all 3 verify gates.
  */
 function mockAllGatesPass() {
   mockExecFileSync.mockReturnValue('OK')
@@ -62,7 +62,7 @@ function mockGateFails(
   errorOutput: { stdout?: string; stderr?: string; message?: string },
 ) {
   mockExecFileSync.mockImplementation(
-    (program: string, args?: readonly string[], _options?: any) => {
+    (program: string, args?: readonly string[], _options?: unknown) => {
       const argsArr = args || []
       const fullCommand = `${program} ${argsArr.join(' ')}`
       if (fullCommand.includes(failingCommand)) {
@@ -80,11 +80,11 @@ function mockGateFails(
 }
 
 /**
- * Configure execFileSync to fail for all verify gates.
+ * Configure execFileSync to fail for all 3 verify gates.
  */
 function mockAllGatesFail() {
   mockExecFileSync.mockImplementation(
-    (program: string, args?: readonly string[], _options?: any) => {
+    (program: string, args?: readonly string[], _options?: unknown) => {
       const argsArr = args || []
       const fullCommand = `${program} ${argsArr.join(' ')}`
       if (
@@ -140,7 +140,7 @@ describe('runVerifyStage', () => {
       expect(result.report).toContain('## TypeScript: PASS ✅')
       expect(result.report).toContain('## Lint: PASS ✅')
       expect(result.report).toContain('## Format: PASS ✅')
-      expect(result.report).toContain('## Unit Tests: PASS ✅')
+      // Unit Tests gate removed — tests deferred to inspector plugin
     })
 
     it('should NOT include error code blocks when all pass', () => {
@@ -158,7 +158,7 @@ describe('runVerifyStage', () => {
       expect(mockWriteFileSync).toHaveBeenCalledWith('/tmp/verify.md', result.report)
     })
 
-    it('should run all 4 gates with correct commands and cwd', () => {
+    it('should run all 3 gates with correct commands and cwd', () => {
       mockAllGatesPass()
 
       runVerifyStage('/tmp/verify.md', '/my/project')
@@ -178,11 +178,7 @@ describe('runVerifyStage', () => {
         ['-s', 'format:check'],
         expect.objectContaining({ cwd: '/my/project' }),
       )
-      expect(mockExecFileSync).toHaveBeenCalledWith(
-        'pnpm',
-        ['-s', 'test:unit'],
-        expect.objectContaining({ cwd: '/my/project' }),
-      )
+      // Unit Tests gate removed — tests deferred to inspector plugin
     })
   })
 
@@ -211,12 +207,7 @@ describe('runVerifyStage', () => {
       expect(result.passed).toBe(false)
     })
 
-    it('should return { passed: false } when Unit Tests fails', () => {
-      mockGateFails('test:unit', { stdout: '3 tests failed' })
-
-      const result = runVerifyStage('/tmp/verify.md', '/fake/cwd')
-      expect(result.passed).toBe(false)
-    })
+    // Unit Tests gate removed — tests deferred to inspector plugin (cody-deferred-tests)
 
     it('should include FAIL icon for the failing gate', () => {
       mockGateFails('lint', { stderr: 'ESLint: 3 errors found' })
@@ -239,7 +230,7 @@ describe('runVerifyStage', () => {
       const result = runVerifyStage('/tmp/verify.md', '/fake/cwd')
       expect(result.report).toContain('## TypeScript: PASS ✅')
       expect(result.report).toContain('## Format: PASS ✅')
-      expect(result.report).toContain('## Unit Tests: PASS ✅')
+      // Unit Tests gate removed — tests deferred to inspector plugin
     })
 
     it('should include FAIL in the result line', () => {
@@ -268,7 +259,7 @@ describe('runVerifyStage', () => {
       expect(result.report).toContain('## TypeScript: FAIL ❌')
       expect(result.report).toContain('## Lint: FAIL ❌')
       expect(result.report).toContain('## Format: FAIL ❌')
-      expect(result.report).toContain('## Unit Tests: FAIL ❌')
+      // Unit Tests gate removed — tests deferred to inspector plugin
     })
 
     it('should include error output for all failed gates', () => {
@@ -278,7 +269,7 @@ describe('runVerifyStage', () => {
       expect(result.report).toContain('Error output for: pnpm -s tsc --noEmit')
       expect(result.report).toContain('Error output for: pnpm -s lint')
       expect(result.report).toContain('Error output for: pnpm -s format:check')
-      expect(result.report).toContain('Error output for: pnpm -s test:unit')
+      // Unit Tests gate removed — tests deferred to inspector plugin
     })
 
     it('should include FAIL in the result line', () => {
@@ -307,9 +298,8 @@ describe('runVerifyStage', () => {
     it('should truncate error output to 5000 chars', () => {
       const longError = 'E'.repeat(10000)
       mockExecFileSync.mockImplementation(
-        (program: string, args?: readonly string[], _options?: any) => {
+        (program: string, args?: readonly string[], _options?: unknown) => {
           const argsArr = args || []
-          const fullCommand = argsArr.join(' ')
           // Check for 'tsc' as a separate argument (not just substring)
           if (argsArr.includes('tsc')) {
             const error = new Error('failed') as Error & { stdout?: string; stderr?: string }
@@ -333,7 +323,7 @@ describe('runVerifyStage', () => {
 
     it('should use error.message as fallback when stdout and stderr are empty', () => {
       mockExecFileSync.mockImplementation(
-        (program: string, args?: readonly string[], _options?: any) => {
+        (program: string, args?: readonly string[], _options?: unknown) => {
           const argsArr = args || []
           if (argsArr.join(' ').includes('tsc')) {
             const error = new Error('Command tsc not found')
@@ -349,7 +339,7 @@ describe('runVerifyStage', () => {
 
     it('should use "Unknown error" when error has no stdout, stderr, or message', () => {
       mockExecFileSync.mockImplementation(
-        (program: string, args?: readonly string[], _options?: any) => {
+        (program: string, args?: readonly string[], _options?: unknown) => {
           const argsArr = args || []
           if (argsArr.join(' ').includes('tsc')) {
             throw {} // plain object, no message
@@ -428,7 +418,7 @@ describe('runVerifyStage', () => {
       expect(result.report).toContain('## Lint: SKIPPED ❌')
       expect(result.report).toContain('aggregate timeout exceeded')
       expect(result.report).toContain('## Format: SKIPPED ❌')
-      expect(result.report).toContain('## Unit Tests: SKIPPED ❌')
+      // Unit Tests gate removed — tests deferred to inspector plugin
 
       // Final result should be FAIL since not all gates passed
       expect(result.report).toContain('## Result: FAIL')
@@ -459,11 +449,10 @@ describe('runVerifyStage', () => {
       // Check that gates after the first are marked as SKIPPED
       const lintMatch = result.report.match(/## Lint: (PASS|FAIL|SKIPPED)/)
       const formatMatch = result.report.match(/## Format: (PASS|FAIL|SKIPPED)/)
-      const unitTestsMatch = result.report.match(/## Unit Tests: (PASS|FAIL|SKIPPED)/)
 
       expect(lintMatch?.[1]).toBe('SKIPPED')
       expect(formatMatch?.[1]).toBe('SKIPPED')
-      expect(unitTestsMatch?.[1]).toBe('SKIPPED')
+      // Unit Tests gate removed — tests deferred to inspector plugin
     })
 
     it('should include aggregate timeout message in skipped gate output', () => {
@@ -510,9 +499,9 @@ describe('runVerifyStage', () => {
       expect(result.report).toContain('## TypeScript: PASS ✅')
       expect(result.report).toContain('## Lint: PASS ✅')
 
-      // Remaining gates should be skipped
+      // Remaining gate should be skipped
       expect(result.report).toContain('## Format: SKIPPED')
-      expect(result.report).toContain('## Unit Tests: SKIPPED')
+      // Unit Tests gate removed — tests deferred to inspector plugin
     })
   })
 })
@@ -732,12 +721,14 @@ describe('runPrStage', () => {
       expect((pushCall![1] as string[]).includes('feat/new-thing')).toBe(true)
     })
 
-    it('should continue even if push fails', async () => {
+    it('should abort PR creation when push fails', async () => {
       setupPrMocks({ pushFails: true })
 
-      // Should not throw
+      // R3-FIX #1: Push failure now correctly aborts PR creation
+      // instead of trying to create a PR for an unpushed branch
       const result = await runPrStage('/fake/task-dir', '/tmp/pr.md', '/fake/cwd')
-      expect(result.created).toBe(true)
+      expect(result.created).toBe(false)
+      expect(result.report).toContain('push failed')
     })
 
     it.skip('should use the default branch as PR base', () => {

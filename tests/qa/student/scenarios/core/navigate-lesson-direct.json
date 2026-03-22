@@ -1,0 +1,67 @@
+{
+  "id": "navigate-lesson-direct",
+  "name": "Student navigates directly to a lesson URL",
+  "journey": "student-navigates-content",
+  "type": "core",
+  "area": "navigation",
+  "tags": ["navigation", "direct-url"],
+  "locale": "he",
+  "preconditions": [
+    {
+      "action": "seed",
+      "entity": "course",
+      "data": {
+        "title": "Direct Nav Course",
+        "courseLabel": "ד",
+        "status": "published",
+        "isActive": true,
+        "accessType": "free"
+      },
+      "ref": "$course"
+    },
+    {
+      "action": "seed",
+      "entity": "chapter",
+      "data": {
+        "title": "Direct Chapter",
+        "course": "$course",
+        "chapterLabel": "1",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$chapter"
+    },
+    {
+      "action": "seed",
+      "entity": "lesson",
+      "data": {
+        "title": "Direct Lesson",
+        "chapter": "$chapter",
+        "type": "learning",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$lesson"
+    }
+  ],
+  "steps": [
+    {
+      "action": "navigate",
+      "input": {
+        "type": "lesson",
+        "courseRef": "$course",
+        "chapterRef": "$chapter",
+        "lessonRef": "$lesson"
+      }
+    },
+    {
+      "action": "beAt",
+      "input": { "pattern": "/lessons/" }
+    },
+    {
+      "action": "see",
+      "input": { "text": "Direct Lesson" }
+    }
+  ],
+  "teardown": "auto"
+}

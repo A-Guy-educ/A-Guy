@@ -1,0 +1,29 @@
+model_list:
+  - model_name: claude-opus
+    litellm_params:
+      model: claude-3-opus-20240229
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: claude-sonnet
+    litellm_params:
+      model: claude-3-5-sonnet-20240620
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: gpt-4o
+    litellm_params:
+      model: gpt-4o
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: gpt-4o-mini
+    litellm_params:
+      model: gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+router_settings:
+  retries: 3
+  fallbacks:
+    - claude-opus: gpt-4o
+    - claude-sonnet: gpt-4o-mini
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY

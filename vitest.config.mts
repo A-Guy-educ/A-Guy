@@ -15,8 +15,8 @@ export default defineConfig({
     environment: 'node',
     setupFiles: ['./vitest.setup.ts'],
     include: ['tests/int/**/*.int.spec.ts', 'tests/int/**/*.int.spec.tsx'],
-    hookTimeout: 120000, // 120 seconds for hooks (parallel tests may contend for Payload init)
-    testTimeout: 15000, // 15 seconds for individual tests
+    hookTimeout: 180000, // 180 seconds for hooks (cleanup operations may be slow)
+    testTimeout: 30000, // 30 seconds for individual tests (Vercel Blob and network-dependent tests may be slow)
     // Suppress console output during tests for cleaner output
     onConsoleLog(_log, type) {
       if (type === 'stdout') {

@@ -1,19 +1,22 @@
 'use client'
 
 import React, { useCallback } from 'react'
-import type { QuestionGeometryBlock } from '@/server/payload/collections/Exercises/types'
+import type {
+  QuestionGeometryBlock,
+  GraphLayout,
+} from '@/server/payload/collections/Exercises/types'
 import type { GeometrySpecV1 } from '@/infra/contracts/graphics/geometry.v1'
-import { InlineRichTextEditor } from './InlineRichTextEditor'
-import { GeometryCanvasWithToolbar } from '../components/geometry/GeometryCanvasWithToolbar'
-import { CanvasConfigPanel } from '../components/geometry/CanvasConfigPanel'
-import { PointsPanel } from '../components/geometry/PointsPanel'
-import { LinesPanel } from '../components/geometry/LinesPanel'
-import { CirclesPanel } from '../components/geometry/CirclesPanel'
-import { AnglesPanel } from '../components/geometry/AnglesPanel'
-import { ShapesPanel } from '../components/geometry/ShapesPanel'
-import { VectorsPanel } from '../components/geometry/VectorsPanel'
-import { TextsPanel } from '../components/geometry/TextsPanel'
 import { CollapsibleSection } from '@/ui/admin/shared/CollapsibleSection'
+import { AnglesPanel } from '../components/geometry/AnglesPanel'
+import { CanvasConfigPanel } from '../components/geometry/CanvasConfigPanel'
+import { CirclesPanel } from '../components/geometry/CirclesPanel'
+import { GeometryCanvasWithToolbar } from '../components/geometry/GeometryCanvasWithToolbar'
+import { LinesPanel } from '../components/geometry/LinesPanel'
+import { PointsPanel } from '../components/geometry/PointsPanel'
+import { ShapesPanel } from '../components/geometry/ShapesPanel'
+import { TextsPanel } from '../components/geometry/TextsPanel'
+import { VectorsPanel } from '../components/geometry/VectorsPanel'
+import { InlineRichTextEditor } from './InlineRichTextEditor'
 
 interface GeometryEditorProps {
   block: QuestionGeometryBlock
@@ -61,7 +64,20 @@ export const GeometryEditor: React.FC<GeometryEditorProps> = ({ block, onChange 
     (x: number, y: number) => {
       const nextIndex = geo.elements.points.length + 1
       const name = String.fromCharCode(64 + nextIndex) // A, B, C, ...
-      updateElements({ points: [...geo.elements.points, { name, x, y }] })
+      updateElements({
+        points: [...geo.elements.points, { name, x, y, position: 'r' as const }],
+      })
+    },
+    [geo.elements.points, updateElements],
+  )
+
+  const handlePointLabelMoved = useCallback(
+    (name: string, position: string) => {
+      type PointPosition = GeometrySpecV1['elements']['points'][number]['position']
+      const newPoints = geo.elements.points.map((p) =>
+        p.name === name ? { ...p, position: position as PointPosition } : p,
+      )
+      updateElements({ points: newPoints })
     },
     [geo.elements.points, updateElements],
   )
@@ -73,6 +89,16 @@ export const GeometryEditor: React.FC<GeometryEditorProps> = ({ block, onChange 
     [geo.canvas, updateGeo],
   )
 
+  const handleTextMoved = useCallback(
+    (index: number, x: number, y: number) => {
+      const newTexts = (geo.elements.texts || []).map((t, i) =>
+        i === index ? { ...t, place: { ...t.place, x, y } } : t,
+      )
+      updateElements({ texts: newTexts })
+    },
+    [geo.elements.texts, updateElements],
+  )
+
   return (
     <div className="geometry-editor">
       <div className="question-editor-section">
@@ -82,6 +108,20 @@ export const GeometryEditor: React.FC<GeometryEditorProps> = ({ block, onChange 
           onChange={(prompt) => onChange({ ...block, prompt })}
           placeholder="Enter your geometry question..."
         />
+      </div>
+
+      <div className="question-editor-section">
+        <label className="question-editor-label">Layout</label>
+        <select
+          className="w-full p-2 border border-input rounded-md bg-background text-foreground"
+          value={block.layout || 'textRight'}
+          onChange={(e) => onChange({ ...block, layout: e.target.value as GraphLayout })}
+        >
+          <option value="textAbove">Text Above, Graph Below</option>
+          <option value="textBelow">Text Below, Graph Above</option>
+          <option value="textLeft">Text Left, Graph Right</option>
+          <option value="textRight">Text Right, Graph Left</option>
+        </select>
       </div>
 
       <div className="question-editor-section">
@@ -170,6 +210,8 @@ export const GeometryEditor: React.FC<GeometryEditorProps> = ({ block, onChange 
             onMultiPointMoved={handleMultiPointMoved}
             onPointAdded={handlePointAdded}
             onGridToggle={handleGridToggle}
+            onTextMoved={handleTextMoved}
+            onPointLabelMoved={handlePointLabelMoved}
           />
         </div>
       </div>

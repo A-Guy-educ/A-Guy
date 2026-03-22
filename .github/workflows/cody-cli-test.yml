@@ -1,0 +1,36 @@
+name: cody-cli-test
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: cody-cli-test
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: pnpm install --frozen-lockfile
+      - run: |
+          git config --global user.email "bot@github.com"
+          git config --global user.name "bot"
+      - run: pnpm tsx scripts/cody-cli-test/run.ts --scenario 04-full-pipeline
+      - uses: actions/upload-artifact@v4
+        with:
+          name: results-${{ github.run_id }}
+          path: cody-cli-test-result-*.json

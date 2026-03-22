@@ -159,6 +159,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error({ err: error }, '[run-immediately] Error')
 
+    // Add Sentry capture
+    const { captureAndRespond } = await import('@/server/api/capture-and-respond')
+
     // Try to update job status to failed if we can identify the job
     try {
       if (payload) {
@@ -179,5 +182,7 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 },
     )
+
+    return captureAndRespond(error, { route: '/api/jobs/run-immediate' })
   }
 }

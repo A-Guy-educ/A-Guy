@@ -5,6 +5,7 @@ import sharp from 'sharp'
 import { fileURLToPath } from 'url'
 
 import { getServerSideURL } from '@/infra/utils/getURL'
+import { AccessCodes } from '@/server/payload/collections/AccessCodes'
 import { Categories } from '@/server/payload/collections/Categories'
 import { Chapters } from '@/server/payload/collections/Chapters'
 import { ChatAssets } from '@/server/payload/collections/ChatAssets'
@@ -29,11 +30,13 @@ import { TeacherProfiles } from '@/server/payload/collections/TeacherProfiles'
 import { Tenants } from '@/server/payload/collections/Tenants'
 import { UploadSessions } from '@/server/payload/collections/UploadSessions'
 import { UserProgress } from '@/server/payload/collections/UserProgress'
+import { UserStats } from '@/server/payload/collections/UserStats'
 import { Users } from '@/server/payload/collections/Users'
 import { UserSettings } from '@/server/payload/collections/UserSettings'
 import { importExerciseFromImage } from '@/server/payload/endpoints/exercises/import-from-image'
 import { importExerciseFromLatex } from '@/server/payload/endpoints/exercises/import-from-latex'
 import { importExerciseFromLesson } from '@/server/payload/endpoints/exercises/import-from-lesson'
+import { generateSupportEndpoint } from '@/server/payload/endpoints/exercises/generate-support'
 import { defaultLexical } from '@/server/payload/fields/defaultLexical'
 import { pdfToExercisesTask } from '@/server/payload/jobs/pdf-to-exercises-task'
 import { pdfToExercisesV2Task } from '@/server/payload/jobs/pdf-to-exercises-v2-task'
@@ -162,11 +165,13 @@ export default buildConfig({
     ExerciseAssets,
     Users,
     UserProgress,
+    UserStats,
     Media,
     ChatAssets,
     UploadSessions,
     Posts,
     PricingPlans,
+    AccessCodes,
     MCPAuditLogs,
   ],
   cors: [getServerSideURL()].filter(Boolean),
@@ -198,6 +203,11 @@ export default buildConfig({
       path: '/exercises/import-latex',
       method: 'post',
       handler: (req: PayloadRequest) => importExerciseFromLatex(req),
+    },
+    {
+      path: '/exercises/generate-support',
+      method: 'post',
+      handler: (req: PayloadRequest) => generateSupportEndpoint(req),
     },
   ],
   jobs: {

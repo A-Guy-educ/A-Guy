@@ -1,0 +1,59 @@
+{
+  "version": 2,
+  "taskId": "260313-auto-593",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-13T18:07:29.549Z",
+  "updatedAt": "2026-03-13T18:29:15.475Z",
+  "state": "running",
+  "cursor": null,
+  "stages": {
+    "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-13T18:07:30.544Z",
+      "completedAt": "2026-03-13T18:08:51.955Z",
+      "outputFile": "taskify.md",
+      "tokenUsage": {
+        "input": 2983,
+        "output": 1955,
+        "cacheRead": 145947
+      },
+      "sessionId": "ses_3179e232fffelCJZzDv089Ro0e"
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-13T18:08:58.049Z",
+      "completedAt": "2026-03-13T18:10:33.733Z",
+      "outputFile": "architect.md",
+      "tokenUsage": {
+        "input": 11,
+        "output": 4441,
+        "cacheRead": 544839
+      },
+      "cost": 0.885612,
+      "sessionId": "ses_3179cd516ffeFzXVpnYKvfGih5"
+    },
+    "test": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-13T18:27:29.208Z",
+      "outputFile": "test.md",
+      "sessionId": "ses_3179b5a73ffeqr9FX5lFVJjdsN"
+    },
+    "build": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-13T18:27:29.208Z",
+      "outputFile": "build.md",
+      "sessionId": "ses_3179b5b86ffeqdDlngtBTsFFC3"
+    },
+    "commit": {
+      "state": "running",
+      "retries": 0,
+      "startedAt": "2026-03-13T18:29:15.475Z"
+    }
+  },
+  "issueNumber": 766
+}

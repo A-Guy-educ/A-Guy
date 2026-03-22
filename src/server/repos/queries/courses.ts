@@ -14,6 +14,10 @@ export const queryCourseBySlug = cache(
       { slug: { equals: slug } },
       { status: { equals: 'published' } },
       { isActive: { equals: true } },
+      // Exclude "Soon" content that is not visible to students
+      {
+        or: [{ contentStatus: { not_equals: 'soon' } }, { contentStatusVisible: { equals: true } }],
+      },
     ]
 
     if (locale) {
@@ -36,7 +40,14 @@ export const queryCourseBySlug = cache(
 export const queryPublishedCourses = cache(async (locale?: ContentLocale) => {
   const payload = await getPayload({ config: configPromise })
 
-  const conditions: Where[] = [{ status: { equals: 'published' } }, { isActive: { equals: true } }]
+  const conditions: Where[] = [
+    { status: { equals: 'published' } },
+    { isActive: { equals: true } },
+    // Exclude "Soon" content that is not visible to students
+    {
+      or: [{ contentStatus: { not_equals: 'soon' } }, { contentStatusVisible: { equals: true } }],
+    },
+  ]
 
   if (locale) {
     conditions.push(localeWhereClause(locale))

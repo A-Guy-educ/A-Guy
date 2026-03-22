@@ -1,0 +1,21 @@
+INFO  2026-03-13T18:48:24 +373ms service=default version=1.2.26 args=["export","ses_3177b972fffe612Oxw6tvBsePA"] opencode
+INFO  2026-03-13T18:48:24 +1ms service=default directory=/home/runner/work/A-Guy/A-Guy creating instance
+INFO  2026-03-13T18:48:24 +0ms service=project directory=/home/runner/work/A-Guy/A-Guy fromDirectory
+INFO  2026-03-13T18:48:24 +19ms service=db path=/home/runner/work/A-Guy/A-Guy/.tasks/260313-auto-965/opencode-data/opencode/opencode.db opening database
+INFO  2026-03-13T18:48:24 +9ms service=db count=9 mode=bundled applying migrations
+INFO  2026-03-13T18:48:24 +21ms service=default directory=/home/runner/work/A-Guy/A-Guy bootstrapping
+INFO  2026-03-13T18:48:24 +10ms service=config path=/home/runner/.config/opencode/config.json loading
+INFO  2026-03-13T18:48:24 +2ms service=config path=/home/runner/.config/opencode/opencode.json loading
+INFO  2026-03-13T18:48:24 +0ms service=config path=/home/runner/.config/opencode/opencode.jsonc loading
+INFO  2026-03-13T18:48:24 +2ms service=config path=/home/runner/work/A-Guy/A-Guy/opencode.json loading
+INFO  2026-03-13T18:48:24 +45ms service=config path=/home/runner/work/A-Guy/A-Guy/.opencode/opencode.jsonc loading
+INFO  2026-03-13T18:48:24 +0ms service=config path=/home/runner/work/A-Guy/A-Guy/.opencode/opencode.json loading
+INFO  2026-03-13T18:48:24 +50ms service=config path=/home/runner/.opencode/opencode.jsonc loading
+INFO  2026-03-13T18:48:24 +0ms service=config path=/home/runner/.opencode/opencode.json loading
+INFO  2026-03-13T18:48:24 +6ms service=plugin name=CodexAuthPlugin loading internal plugin
+INFO  2026-03-13T18:48:24 +0ms service=plugin name=CopilotAuthPlugin loading internal plugin
+INFO  2026-03-13T18:48:24 +0ms service=plugin name=gitlabAuthPlugin loading internal plugin
+INFO  2026-03-13T18:48:24 +1ms service=plugin path=opencode-anthropic-auth@0.0.13 loading plugin
+INFO  2026-03-13T18:48:24 +23ms service=bus type=* subscribing
+INFO  2026-03-13T18:48:24 +0ms service=bus type=session.updated subscribing
+INFO  2026-03-13T18:48:24 +1ms service=bus type=message.updated subscribing

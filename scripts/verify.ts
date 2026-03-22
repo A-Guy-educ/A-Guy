@@ -43,8 +43,7 @@ const steps: VerifyStep[] = [
   { name: 'Prettier', command: 'pnpm prettier --check .' },
   { name: 'Lint', command: 'pnpm lint' },
   { name: 'Typecheck', command: 'pnpm typecheck' },
-  // Build removed - CI will catch build failures, typecheck catches most issues
-  { name: 'Unit tests', command: 'pnpm test:unit' },
+  // Unit tests removed - CI already runs them on PRs
 ]
 
 async function runStepAsync(

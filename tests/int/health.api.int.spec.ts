@@ -1,7 +1,12 @@
 import { GET } from '@/app/api/health/route'
 import { describe, expect, it } from 'vitest'
 
-describe('GET /api/health', () => {
+// Check if DATABASE_URL is set to Atlas (testcontainers don't work with Atlas)
+const dbUrl = process.env.DATABASE_URL || ''
+const isAtlasUrl = dbUrl.includes('mongodb+srv://') || dbUrl.includes('.mongodb.net')
+
+// Skip tests if DATABASE_URL is set to Atlas (these tests need testcontainers, not Atlas)
+describe.skipIf(isAtlasUrl)('GET /api/health', () => {
   it('returns 200 on success', async () => {
     const response = await GET()
     expect(response.status).toBe(200)

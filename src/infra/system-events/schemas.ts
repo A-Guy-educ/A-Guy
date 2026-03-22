@@ -171,7 +171,7 @@ export type ChatMessageSubmittedPayload = z.infer<typeof ChatMessageSubmittedSch
 
 export const LoginModalShownSchema = z
   .object({
-    trigger_type: z.enum(['mandatory', 'gated', 'warning']),
+    trigger_type: z.enum(['mandatory', 'gated', 'warning', 'paid']),
     course_slug: z.string().min(1, 'course_slug is required'),
     current_page: z.string().optional(),
   })

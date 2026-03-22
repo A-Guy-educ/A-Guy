@@ -14,8 +14,20 @@ import type {
   StageResult,
   PipelineStep,
 } from './types'
+import type { StageName } from '../stages/registry'
 import { logger, ciGroup, ciGroupEnd } from '../logger'
+import { MAX_PIPELINE_LOOP_ITERATIONS, RECOVERY_CHECK_INTERVAL } from '../config/constants'
 import { PipelinePausedError } from './types'
+import {
+  logStageStart,
+  logStageComplete,
+  logStageSkip,
+  logStageFail,
+  logStageRetry,
+  logPipelineStart,
+  logPipelineComplete,
+  logRecovery,
+} from '../pipeline-events'
 import {
   loadState,
   writeState,
@@ -29,8 +41,8 @@ import { getHandler } from '../handlers/handler'
 import { setLifecycleLabel } from '../github-api'
 import { executePostAction } from '../pipeline/post-actions'
 import { flattenPipelineOrder } from '../pipeline/definitions'
-import * as fs from 'fs'
-import * as path from 'path'
+import { execFileSync } from 'node:child_process'
+import { commitPipelineFiles } from '../git-utils'
 
 /**
  * Error subclass that carries the originating stage name for parallel error attribution
@@ -60,6 +72,7 @@ export async function runPipeline(
   rebuildPipeline?: (ctx: PipelineContext) => PipelineDefinition,
 ): Promise<PipelineStateV2> {
   // Load or init state
+  logPipelineStart(ctx.taskId, ctx.input.mode, ctx.profile)
   let state = loadState(ctx.taskId)
   if (!state) {
     state = initState(ctx, ctx.input.mode)
@@ -68,6 +81,32 @@ export async function runPipeline(
       const initialLabel =
         ctx.input.mode === 'spec' || ctx.input.mode === 'full' ? 'cody:planning' : 'cody:building'
       setLifecycleLabel(ctx.input.issueNumber, initialLabel)
+    }
+
+    // Early push: overwrite stale status.json on branch so dashboard sees 'running' immediately.
+    // Only when the feature branch already exists (re-runs / gate resumes).
+    // First runs create the branch in taskify's post-action commit-task-files with ensureBranch.
+    if (!ctx.input.dryRun && !ctx.input.local) {
+      try {
+        const currentBranch = execFileSync('git', ['branch', '--show-current'], {
+          encoding: 'utf-8',
+        }).trim()
+        const isFeatureBranch = !['dev', 'main', 'master'].includes(currentBranch)
+        if (isFeatureBranch) {
+          commitPipelineFiles({
+            taskDir: ctx.taskDir,
+            taskId: ctx.taskId,
+            message: `ci(cody): reset status to running for ${ctx.taskId}`,
+            stagingStrategy: 'task-only',
+            push: true,
+            isCI: true,
+          })
+          logger.info('  ✓ Pushed fresh running status.json to branch')
+        }
+      } catch (earlyPushErr) {
+        // Non-fatal — dashboard will update once the first stage completes
+        logger.warn({ err: earlyPushErr }, 'Early status push failed (non-fatal)')
+      }
     }
   } else {
     // Recovery: handle stale state from previous interrupted runs
@@ -85,7 +124,19 @@ export async function runPipeline(
     state = recoverPipelineState(state, flatOrder, advisoryStages)
     writeState(ctx.taskId, state)
 
-    // Step 4: Handle paused pipeline with no paused stages (gate was approved)
+    // Step 4: If pipeline was previously failed, check if any stages were reset to pending
+    // (which means a rerun is happening). Only update the label if we're actually restarting.
+    // R2-FIX #5: Don't blindly set 'building' — verify we have pending work to do first.
+    if (state.state === 'failed' && ctx.input.issueNumber) {
+      const hasPendingStages = Object.values(state.stages).some(
+        (s) => s.state === 'pending' || s.state === 'running',
+      )
+      if (hasPendingStages) {
+        setLifecycleLabel(ctx.input.issueNumber, 'cody:building')
+      }
+    }
+
+    // Step 5: Handle paused pipeline with no paused stages (gate was approved)
     // This handles the case where resumeFromGate() was called to mark the gate stage
     // as completed, but the pipeline-level state is still "paused"
     if (state.state === 'paused') {
@@ -112,15 +163,29 @@ export async function runPipeline(
   while (true) {
     loopCount++
 
-    // FIX #9: Periodic recovery check every 10 iterations
+    // Circuit breaker: prevent infinite loops from stage state management bugs
+    if (loopCount > MAX_PIPELINE_LOOP_ITERATIONS) {
+      logger.error(
+        `Pipeline loop exceeded ${MAX_PIPELINE_LOOP_ITERATIONS} iterations — aborting to prevent infinite loop`,
+      )
+      state = completeState(state, 'failed')
+      writeState(ctx.taskId, state)
+      throw new Error(
+        `Pipeline loop guard triggered after ${MAX_PIPELINE_LOOP_ITERATIONS} iterations. ` +
+          'This is likely a bug in stage state management.',
+      )
+    }
+
+    // FIX #9: Periodic recovery check
     // This handles mid-run corruption of status.json
-    if (loopCount % 10 === 0) {
+    if (loopCount % RECOVERY_CHECK_INTERVAL === 0) {
       const currentState = loadState(ctx.taskId)
       if (currentState) {
         // Check for stale running stages
         const recoveredState = recoverStaleStages(currentState)
         if (recoveredState !== currentState) {
           logger.info('⚠️ Periodic recovery: reset stale running stages')
+          logRecovery('stale-stage-recovery', ctx.taskId, 'Reset stale running stages')
           state = recoveredState
           writeState(ctx.taskId, state)
         }
@@ -131,6 +196,18 @@ export async function runPipeline(
     if (ctx.pipelineNeedsRebuild && rebuildPipeline) {
       pipeline = rebuildPipeline(ctx)
       ctx.pipelineNeedsRebuild = false
+
+      // FIX #1/#4: Validate state stages against rebuilt pipeline.
+      // New stages (from impl phase) may not exist in state yet — initialize them.
+      // Stale stages (removed during rebuild) are harmless (ignored by resolveNextStep).
+      const newOrder = flattenPipelineOrder(pipeline.order)
+      for (const stageName of newOrder) {
+        if (!state.stages[stageName]) {
+          state = updateStage(state, stageName, { state: 'pending', retries: 0 })
+        }
+      }
+      writeState(ctx.taskId, state)
+
       // Transition from planning to building after spec stages complete
       if (ctx.input.issueNumber) {
         setLifecycleLabel(ctx.input.issueNumber, 'cody:building')
@@ -146,13 +223,14 @@ export async function runPipeline(
       if (ctx.input.issueNumber) {
         setLifecycleLabel(ctx.input.issueNumber, 'cody:done')
       }
+      logPipelineComplete(ctx.taskId, state.totalElapsed)
       break
     }
 
     const prevState: PipelineStateV2 | null = state
 
     // Handle parallel vs sequential
-    const step = nextStep as string | { parallel: string[] }
+    const step = nextStep as StageName | { parallel: StageName[] }
     if (step && typeof step === 'object' && 'parallel' in step) {
       state = await executeParallelStep(ctx, pipeline, state, step.parallel)
     } else if (step && typeof step === 'string') {
@@ -227,7 +305,7 @@ async function executeSingleStep(
   ctx: PipelineContext,
   pipeline: PipelineDefinition,
   state: PipelineStateV2,
-  stageName: string,
+  stageName: StageName,
 ): Promise<PipelineStateV2> {
   const def = pipeline.stages.get(stageName)
   if (!def) {
@@ -241,6 +319,7 @@ async function executeSingleStep(
     const skipResult = def.shouldSkip(ctx)
     if (skipResult.shouldSkip) {
       logger.info(`  ${stageName} skipped — ${skipResult.reason}`)
+      logStageSkip(stageName, ctx.taskId, skipResult.reason)
       return updateStage(state, stageName, {
         state: 'skipped',
         skipped: skipResult.reason,
@@ -258,6 +337,7 @@ async function executeSingleStep(
   // Mark as running
   state = updateStage(state, stageName, { state: 'running', startedAt: new Date().toISOString() })
   writeState(ctx.taskId, state)
+  logStageStart(stageName, ctx.taskId)
 
   // Dry-run: mark completed without running
   if (ctx.input.dryRun) {
@@ -283,7 +363,7 @@ async function executeSingleStep(
     const handler = getHandler(def.name, def.type)
     const result = await handler.execute(ctx, def)
     ciGroupEnd()
-    return await handleStageResult(ctx, state, stageName, result, def)
+    return await handleStageResult(ctx, pipeline, state, stageName, result, def)
   } catch (error) {
     ciGroupEnd()
     if (error instanceof PipelinePausedError) {
@@ -292,10 +372,12 @@ async function executeSingleStep(
       return completeState(state, 'paused')
     }
     // Handle failure - mark stage as failed
+    const errorMessage = error instanceof Error ? error.message : String(error)
     logger.error({ err: error }, `  ❌ ${stageName} failed:`)
+    logStageFail(stageName, ctx.taskId, errorMessage)
     state = updateStage(state, stageName, {
       state: 'failed',
-      error: error instanceof Error ? error.message : String(error),
+      error: errorMessage,
     })
     // For non-advisory stages, mark pipeline as failed to stop the loop
     if (!def.advisory) {
@@ -316,7 +398,7 @@ async function executeParallelStep(
   ctx: PipelineContext,
   pipeline: PipelineDefinition,
   state: PipelineStateV2,
-  stageNames: string[],
+  stageNames: StageName[],
 ): Promise<PipelineStateV2> {
   logger.info(`  Running parallel: [${stageNames.join(', ')}]...`)
 
@@ -332,6 +414,14 @@ async function executeParallelStep(
 
   // If all stages already completed, return current state
   if (stagesToRun.length === 0) {
+    return state
+  }
+
+  // Dry-run: mark all parallel stages as completed without running
+  if (ctx.input.dryRun) {
+    for (const stageName of stagesToRun) {
+      state = updateStage(state, stageName, { state: 'completed', retries: 0 })
+    }
     return state
   }
 
@@ -416,7 +506,7 @@ async function executeParallelStep(
           : (((reason as Record<string, unknown>)?.stageName as string) ?? 'unknown')
       const message = reason instanceof Error ? reason.message : String(reason)
       // R7: Use dynamic advisory lookup from pipeline definition
-      const isAdvisory = pipeline.stages.get(name)?.advisory === true
+      const isAdvisory = pipeline.stages.get(name as StageName)?.advisory === true
       if (isAdvisory) {
         // R2: Mark advisory rejected stage as failed in state
         state = updateStage(state, name, { state: 'failed', error: message })
@@ -446,11 +536,26 @@ async function executeParallelStep(
         completedAt: new Date().toISOString(),
         retries: stageResult.retries,
         outputFile: stageResult.outputFile,
+        sessionId: stageResult.sessionId,
       })
+
+      // FIX #2: Propagate sessionId deterministically — use the stage that comes
+      // last in the pipeline order, regardless of which parallel stage completes first.
+      // This ensures consistent session forking across runs.
+      if (stageResult.sessionId) {
+        if (!ctx.lastSessionId) {
+          ctx.lastSessionId = stageResult.sessionId
+        } else {
+          // Overwrite only if this stage comes after the current lastSessionId owner
+          // in the pipeline order. Since we process results in order, the last
+          // successful stage's sessionId is used.
+          ctx.lastSessionId = stageResult.sessionId
+        }
+      }
 
       // R8: Run post-actions for completed parallel stages
       const def = pipeline.stages.get(stageName)
-      if (def?.postActions) {
+      if (def?.postActions && !ctx.input.dryRun) {
         try {
           for (const action of def.postActions) {
             await executePostAction(ctx, action, state)
@@ -531,20 +636,35 @@ async function executeParallelStep(
  */
 async function handleStageResult(
   ctx: PipelineContext,
+  pipeline: PipelineDefinition,
   state: PipelineStateV2,
-  stageName: string,
+  stageName: StageName,
   result: StageResult,
   def: StageDefinition,
 ): Promise<PipelineStateV2> {
+  // Compute elapsed time from startedAt
+  const startedAt = state.stages[stageName]?.startedAt
+  const elapsed = startedAt
+    ? Math.round((Date.now() - new Date(startedAt).getTime()) / 1000)
+    : undefined
+
   if (result.outcome === 'completed') {
     state = updateStage(state, stageName, {
       state: 'completed',
       completedAt: new Date().toISOString(),
+      elapsed,
       retries: result.retries,
       outputFile: result.outputFile,
       tokenUsage: result.tokenUsage,
       cost: result.cost,
+      sessionId: result.sessionId,
     })
+    logStageComplete(stageName, ctx.taskId, 'completed', elapsed ? elapsed * 1000 : undefined)
+
+    // Propagate sessionId for downstream stage forking
+    if (result.sessionId) {
+      ctx.lastSessionId = result.sessionId
+    }
 
     // Run post-actions if defined
     if (def.postActions) {
@@ -555,62 +675,35 @@ async function handleStageResult(
       }
     }
   } else if (result.outcome === 'failed') {
-    // VERIFY LOOP: Check if verify failed and we should retry with fix
-    if (stageName === 'verify' && !def.advisory) {
-      const maxAttempts = state.stages['fix']?.maxFixAttempts ?? 2
-      const currentAttempt = state.stages['fix']?.fixAttempt ?? 0
+    // Generic declarative retry via retryWith
+    if (def.retryWith && !def.advisory) {
+      const { stage: retryStage, maxAttempts, onFailure } = def.retryWith
+      const retryState = state.stages[retryStage]
+      const currentAttempt = retryState?.fixAttempt ?? 0
 
       if (currentAttempt < maxAttempts) {
-        // Capture verify failures for fix stage
-        const verifyFailuresPath = path.join(ctx.taskDir, 'verify-failures.md')
-        const errorOutput = result.reason || 'Verify failed - check logs'
-
-        // Try to capture more detailed output from verify scripts
-        let detailedOutput = errorOutput
-        try {
-          const tscPath = path.join(ctx.taskDir, 'tsc-output.txt')
-          const lintPath = path.join(ctx.taskDir, 'lint-output.txt')
-          const parts = [`# Verify Failures\n\n${errorOutput}`]
-          if (fs.existsSync(tscPath)) {
-            const tscOutput = fs.readFileSync(tscPath, 'utf-8').slice(0, 5000)
-            parts.push(`## TypeScript Errors\n\`\`\`\n${tscOutput}\n\`\`\``)
-          }
-          if (fs.existsSync(lintPath)) {
-            const lintOutput = fs.readFileSync(lintPath, 'utf-8').slice(0, 5000)
-            parts.push(`## Lint Errors\n\`\`\`\n${lintOutput}\n\`\`\``)
-          }
-          detailedOutput = parts.join('\n\n')
-        } catch {
-          // Files don't exist, use basic error
+        if (onFailure) {
+          await onFailure(ctx, ctx.taskDir)
         }
 
-        try {
-          fs.writeFileSync(verifyFailuresPath, detailedOutput)
-          if (!fs.existsSync(verifyFailuresPath)) {
-            logger.warn('verify-failures.md was not created after write — fix stage may skip')
-          }
-        } catch (writeErr) {
-          logger.warn(`Failed to write verify-failures.md: ${writeErr}`)
-        }
-
-        // Increment fix attempt and reset fix + verify to pending
-        const newFixAttempt = currentAttempt + 1
-        state = updateStage(state, 'fix', {
+        const newAttempt = currentAttempt + 1
+        state = updateStage(state, retryStage, {
           state: 'pending',
-          fixAttempt: newFixAttempt,
+          fixAttempt: newAttempt,
           maxFixAttempts: maxAttempts,
         })
-        state = updateStage(state, 'verify', { state: 'pending' })
+        state = updateStage(state, stageName, { state: 'pending' })
         writeState(ctx.taskId, state)
 
-        logger.info(`🔄 Verify failed, looping to fix (attempt ${newFixAttempt}/${maxAttempts})`)
-
-        // Return state WITHOUT calling completeState('failed')
-        // The main while(true) loop will continue and resolveNextStep
-        // will find 'fix' as next pending stage
+        logStageRetry(stageName, ctx.taskId, newAttempt, maxAttempts)
+        logger.info(
+          `🔄 ${stageName} failed, looping to ${retryStage} (attempt ${newAttempt}/${maxAttempts})`,
+        )
         return state
       } else {
-        logger.error(`Max fix attempts (${maxAttempts}) reached, pipeline failing`)
+        logger.error(
+          `Max retry attempts (${maxAttempts}) reached for ${retryStage}, pipeline failing`,
+        )
         // Fall through to normal failure handling
       }
     }
@@ -618,6 +711,7 @@ async function handleStageResult(
     // Normal failure handling
     state = updateStage(state, stageName, {
       state: 'failed',
+      elapsed,
       error: result.reason,
     })
 
@@ -632,8 +726,25 @@ async function handleStageResult(
   } else if (result.outcome === 'timed_out') {
     state = updateStage(state, stageName, {
       state: 'timeout',
+      elapsed,
       error: result.reason,
     })
+
+    // Generic timeout recovery: if any stage declares retryWith pointing to this
+    // timed-out stage with onTimeout: 'retry', reset that stage to pending so it
+    // can re-evaluate (e.g., verify checks if partial fix work was enough).
+    const retryingDef = [...pipeline.stages.values()].find(
+      (s) => s.retryWith?.stage === stageName && s.retryWith.onTimeout === 'retry',
+    )
+    if (retryingDef) {
+      logger.info(
+        `⚠️ ${stageName} timed out — running ${retryingDef.name} to check if partial work suffices`,
+      )
+      state = updateStage(state, retryingDef.name, { state: 'pending' })
+      writeState(ctx.taskId, state)
+      return state // Don't fail pipeline — let the retrying stage check
+    }
+
     if (!def.advisory) {
       // Set lifecycle label to failed
       if (ctx.input.issueNumber) {

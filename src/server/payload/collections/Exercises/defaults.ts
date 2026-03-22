@@ -299,6 +299,7 @@ export const ExerciseBlockDefaults: Record<string, () => ContentBlock> = {
     id: generateId(),
     type: 'question_geometry',
     prompt: DEFAULT_HINT_SOLUTION(),
+    layout: 'textRight' as const,
     geometry: {
       kind: 'euclidean',
       canvas: { width: 600, height: 400, background: '#ffffff', grid: true },
@@ -327,6 +328,7 @@ export const ExerciseBlockDefaults: Record<string, () => ContentBlock> = {
     id: generateId(),
     type: 'question_axis',
     prompt: DEFAULT_HINT_SOLUTION(),
+    layout: 'textRight' as const,
     axis: {
       kind: 'cartesian',
       units: 1,
@@ -341,6 +343,7 @@ export const ExerciseBlockDefaults: Record<string, () => ContentBlock> = {
       viewport: { xMin: -10, xMax: 10, yMin: -10, yMax: 10 },
       elements: { points: [], graphs: [] },
     },
+    displaySize: 'full',
     hint: DEFAULT_HINT_SOLUTION(),
     solution: DEFAULT_HINT_SOLUTION(),
     fullSolution: DEFAULT_HINT_SOLUTION(),

@@ -86,7 +86,9 @@ export const MatchingEditor: React.FC<MatchingEditorProps> = ({ block, onChange 
           hint={block.hint}
           solution={block.solution}
           fullSolution={block.fullSolution}
+          blockId={block.id}
           onChange={(field, value) => onChange({ ...block, [field]: value })}
+          onBatchChange={(fields) => onChange({ ...block, ...fields })}
         />
       </div>
     </div>

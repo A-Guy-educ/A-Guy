@@ -8,58 +8,91 @@
 import * as fs from 'fs'
 import type { InspectorContext, TaskSnapshot } from '../../../core/types'
 
-// Minimal type for status.json - we don't need to import from cody
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type PipelineStateV2 = any
+
+// FIX #12: Filter by cody lifecycle labels to avoid fetching ALL open issues
+const CODY_LIFECYCLE_LABELS = [
+  'cody:planning',
+  'cody:building',
+  'cody:review',
+  'cody:done',
+  'cody:failed',
+]
 
 /**
  * Discover all active Cody tasks from GitHub issues.
  */
 export async function discoverTasks(ctx: InspectorContext): Promise<TaskSnapshot[]> {
   const tasks: TaskSnapshot[] = []
+  const seenIssues = new Set<number>()
 
-  // Get open issues - no label filter, we'll check manually
-  const issues = ctx.github.getOpenIssues()
+  // Query for each lifecycle label separately — more API calls but each is targeted
+  for (const label of CODY_LIFECYCLE_LABELS) {
+    const issues = ctx.github.getOpenIssues([label])
 
-  for (const issue of issues) {
-    // Filter to issues with any cody lifecycle label
-    const hasCodyLabel = issue.labels.some((label: string) => label.startsWith('cody:'))
-    if (!hasCodyLabel) {
-      continue
-    }
+    for (const issue of issues) {
+      // Skip duplicates (an issue can have multiple cody: labels)
+      if (seenIssues.has(issue.number)) continue
+      seenIssues.add(issue.number)
 
-    // Extract task ID from title
-    const taskId = extractTaskId(issue.title)
-    if (!taskId) {
-      // Try to find from marker comment
-      const markerTaskId = findTaskIdFromComments(ctx, issue.number)
-      if (!markerTaskId) {
+      // Extract task ID from title
+      const taskId = extractTaskId(issue.title)
+      if (!taskId) {
+        // Try to find from marker comment
+        const markerTaskId = findTaskIdFromComments(ctx, issue.number)
+        if (!markerTaskId) {
+          continue
+        }
+        tasks.push({
+          taskId: markerTaskId,
+          issueNumber: issue.number,
+          issueTitle: issue.title,
+          labels: issue.labels,
+          status: null,
+          issueUpdatedAt: issue.updatedAt,
+          statusUpdatedAt: null,
+        })
         continue
       }
+
+      // Read status.json
+      const status = readTaskStatus(taskId)
+
       tasks.push({
-        taskId: markerTaskId,
+        taskId,
         issueNumber: issue.number,
         issueTitle: issue.title,
         labels: issue.labels,
-        status: null,
+        status,
         issueUpdatedAt: issue.updatedAt,
-        statusUpdatedAt: null,
+        statusUpdatedAt: status?.updatedAt || null,
       })
-      continue
     }
+  }
 
-    // Read status.json
-    const status = readTaskStatus(taskId)
+  // Also check queue labels
+  const queueLabels = ['cody:queued', 'cody:queue-active']
+  for (const label of queueLabels) {
+    const issues = ctx.github.getOpenIssues([label])
+    for (const issue of issues) {
+      if (seenIssues.has(issue.number)) continue
+      seenIssues.add(issue.number)
 
-    tasks.push({
-      taskId,
-      issueNumber: issue.number,
-      issueTitle: issue.title,
-      labels: issue.labels,
-      status,
-      issueUpdatedAt: issue.updatedAt,
-      statusUpdatedAt: status?.updatedAt || null,
-    })
+      const taskId = extractTaskId(issue.title) || findTaskIdFromComments(ctx, issue.number)
+      if (!taskId) continue
+
+      const status = readTaskStatus(taskId)
+      tasks.push({
+        taskId,
+        issueNumber: issue.number,
+        issueTitle: issue.title,
+        labels: issue.labels,
+        status,
+        issueUpdatedAt: issue.updatedAt,
+        statusUpdatedAt: status?.updatedAt || null,
+      })
+    }
   }
 
   return tasks
@@ -80,7 +113,6 @@ function findTaskIdFromComments(ctx: InspectorContext, issueNumber: number): str
   try {
     const comments = ctx.github.getIssueComments(issueNumber)
     for (const comment of comments) {
-      // Look for "Task created: `XXXXXX-slug`" pattern
       const match = comment.body.match(/Task created: `(\d{6}-[\w-]+)`/)
       if (match) {
         return match[1]
@@ -106,7 +138,6 @@ function readTaskStatus(taskId: string): PipelineStateV2 | null {
     const content = fs.readFileSync(statusPath, 'utf-8')
     const parsed = JSON.parse(content)
 
-    // Basic validation - must have required fields
     if (!parsed || typeof parsed !== 'object' || !parsed.state || !parsed.stages) {
       return null
     }

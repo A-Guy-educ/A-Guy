@@ -1,0 +1,32 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.85,
+  "primary_domain": "frontend",
+  "scope": [
+    "Add layout field to QuestionAxisBlock and QuestionGeometryBlock schemas",
+    "Create admin UI for layout selector in AxisEditor and GeometryEditor",
+    "Update frontend renderers to apply selected layout",
+    "Ensure layout persists after save/reload"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Graph blocks are QuestionAxisBlock and QuestionGeometryBlock in Exercises collection",
+    "Layout will be a select field with 4 options: textAbove, textBelow, textLeft, textRight",
+    "Default layout should be 'textRight' (Text to the right, Graph to the left)",
+    "Layout needs to be enforced on mobile/landscape (no responsive stacking)",
+    "Need to modify: schemas.ts, types.ts, defaults.ts, admin editors, and frontend renderers"
+  ],
+  "review_questions": [
+    "Should the strict side-by-side on mobile be enforced even if it causes horizontal scrolling, or should there be a minimum width threshold?"
+  ],
+  "complexity": 43,
+  "complexity_reasoning": "Scope: 12 (modify 4+ files across schemas, types, admin UI, and frontend), Risk: 10 (non-critical schema change), Novelty: 8 (extending existing block pattern), Cross-Domain: 8 (backend + frontend + admin), Ambiguity: 2 (clear requirements), Dependencies: 5 (depends on existing block structure). Total: 45 → Complex+",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Input contains ## Requirements with 4 layout options and ## Acceptance Criteria with 5 checkable items. The technical context clarifies the layout selector is an implementation detail. Promoted spec.md from requirements."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

@@ -8,7 +8,8 @@
 import * as fs from 'fs'
 import * as path from 'path'
 
-import { getLatestIssueComment, getLatestApprovalComment, type CodyInput } from './cody-utils'
+import { getLatestIssueComment, getLatestApprovalComment } from './github-api'
+import type { CodyInput } from './cody-utils'
 import { checkForQuestions } from './content-validators'
 import { logger } from './logger'
 
@@ -156,14 +157,12 @@ export function handleClarification(input: CodyInput, taskDir: string): ClarifyR
 export type GateResult = 'approved' | 'rejected' | 'waiting'
 
 /**
- * Approval keywords that indicate user wants to proceed
+ * Structured gate commands — only `approve` and `reject` are accepted.
+ * Previously accepted ambiguous keywords (yes, go, y, continue, no, n, stop, cancel)
+ * which could cause accidental approvals/rejections from natural language comments.
  */
-const APPROVAL_KEYWORDS = ['approve', 'approved', 'yes', 'go', 'proceed', 'y', 'continue']
-
-/**
- * Rejection keywords that indicate user wants to cancel
- */
-const REJECTION_KEYWORDS = ['reject', 'rejected', 'no', 'cancel', 'stop', 'n']
+const APPROVAL_KEYWORDS = ['approve'] as const
+const REJECTION_KEYWORDS = ['reject'] as const
 
 /**
  * Get the gate file paths for a specific gate point
@@ -187,10 +186,11 @@ export interface ApprovalDetection {
 }
 
 /**
- * Check if a comment contains approval or rejection keywords
+ * Check if a comment contains structured gate commands (`approve` or `reject`).
+ * Only exact commands are accepted — no ambiguous keywords.
  * Also extracts any answer content provided after the keyword (preserves newlines!)
  */
-function detectApprovalFromComment(commentBody: string | null): ApprovalDetection {
+export function detectApprovalFromComment(commentBody: string | null): ApprovalDetection {
   if (!commentBody) return { status: null }
 
   // Decode if JSON-encoded
@@ -381,7 +381,12 @@ export function handleGateApproval(
     if (latestApproval.status) {
       // User replied with approve/reject - write the approved file
       if (latestApproval.status === 'approved') {
-        safeWriteFile(approvedPath, `# Gate Approved\n\nApproved at ${gatePoint} gate.\n`)
+        const approvedBy = input.actor || 'unknown'
+        const approvedAt = new Date().toISOString()
+        safeWriteFile(
+          approvedPath,
+          `# Gate Approved\n\nApproved at ${gatePoint} gate.\nApproved by: @${approvedBy}\nApproved at: ${approvedAt}\n`,
+        )
         // If there's also answer content in the comment, create clarified.md
         if (latestApproval.answerContent) {
           const clarifiedPath = path.join(taskDir, 'clarified.md')
@@ -390,7 +395,11 @@ export function handleGateApproval(
         return 'approved'
       } else {
         // Write rejection marker
-        safeWriteFile(requestPath, `# Gate Rejected\n\nRejected at ${gatePoint} gate.\n`)
+        const rejectedBy = input.actor || 'unknown'
+        safeWriteFile(
+          requestPath,
+          `# Gate Rejected\n\nRejected at ${gatePoint} gate.\nRejected by: @${rejectedBy}\n`,
+        )
         return 'rejected'
       }
     }
@@ -398,7 +407,12 @@ export function handleGateApproval(
 
   // If we have approval in current trigger
   if (approval.status === 'approved') {
-    safeWriteFile(approvedPath, `# Gate Approved\n\nApproved at ${gatePoint} gate.\n`)
+    const approvedBy = input.actor || 'unknown'
+    const approvedAt = new Date().toISOString()
+    safeWriteFile(
+      approvedPath,
+      `# Gate Approved\n\nApproved at ${gatePoint} gate.\nApproved by: @${approvedBy}\nApproved at: ${approvedAt}\n`,
+    )
     // If there's also answer content in the comment, create clarified.md
     if (approval.answerContent) {
       const clarifiedPath = path.join(taskDir, 'clarified.md')
@@ -406,7 +420,11 @@ export function handleGateApproval(
     }
     return 'approved'
   } else if (approval.status === 'rejected') {
-    safeWriteFile(requestPath, `# Gate Rejected\n\nRejected at ${gatePoint} gate.\n`)
+    const rejectedBy = input.actor || 'unknown'
+    safeWriteFile(
+      requestPath,
+      `# Gate Rejected\n\nRejected at ${gatePoint} gate.\nRejected by: @${rejectedBy}\n`,
+    )
     return 'rejected'
   }
 

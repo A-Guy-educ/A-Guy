@@ -159,13 +159,7 @@ When answering:
       requestId,
     })
   } catch (error) {
-    logger.error({ err: error, requestId }, 'Chat route error')
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : 'Internal server error',
-        requestId,
-      },
-      { status: 500 },
-    )
+    const { captureAndRespond } = await import('@/server/api/capture-and-respond')
+    return captureAndRespond(error, { route: '/api/copilotkit', requestId })
   }
 }

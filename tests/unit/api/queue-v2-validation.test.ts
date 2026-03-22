@@ -8,21 +8,12 @@
  * @pattern validation, zod-schema
  */
 
-import { beforeAll, describe, expect, it } from 'vitest'
-import { z } from 'zod'
+import { describe, expect, it } from 'vitest'
 
-// Import the schema from the route file - will fail until schema is added
-// This import path follows the project structure
-let queueV2RequestSchema: z.ZodSchema
+// Import the schema from the schema file (not the route, to avoid payload config dependency)
+import { queueV2RequestSchema } from '@/app/api/exercises/convert/queue-v2/schema'
 
 describe('Queue V2 Schema Validation', () => {
-  beforeAll(async () => {
-    // Dynamic import to get the schema from the route file
-    // This will fail initially (TDD red phase) until the schema is implemented
-    const routeModule = await import('@/app/api/exercises/convert/queue-v2/route')
-    queueV2RequestSchema = routeModule.queueV2RequestSchema
-  })
-
   describe('queueV2RequestSchema', () => {
     it('rejects empty body', () => {
       const result = queueV2RequestSchema.safeParse({})

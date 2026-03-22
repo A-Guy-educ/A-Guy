@@ -2,6 +2,7 @@
 
 import React from 'react'
 import type { GeometrySpecV1 } from '@/infra/contracts/graphics/geometry.v1'
+import { getDefaultCanvasBackground } from '@/infra/contracts/graphics/textColors'
 
 interface CanvasConfigPanelProps {
   canvas: GeometrySpecV1['canvas']
@@ -39,7 +40,7 @@ export const CanvasConfigPanel: React.FC<CanvasConfigPanelProps> = ({ canvas, on
           <input
             type="color"
             className="panel-color-input"
-            value={canvas.background || '#ffffff'}
+            value={canvas.background || getDefaultCanvasBackground()}
             onChange={(e) => onChange({ ...canvas, background: e.target.value })}
           />
         </div>

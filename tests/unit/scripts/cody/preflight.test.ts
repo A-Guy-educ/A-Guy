@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 // Mock child_process.execFileSync and fs before importing the module
 vi.mock('child_process', () => ({
@@ -34,15 +34,19 @@ import * as fs from 'fs'
 import { preflight } from '../../../../scripts/cody/preflight'
 
 describe('preflight', () => {
+  const originalEnv = { ...process.env }
+
   beforeEach(() => {
     vi.clearAllMocks()
     mockLogger.info.mockClear()
     mockLogger.warn.mockClear()
     mockLogger.error.mockClear()
 
-    // Default: all checks pass
+    // Default: all checks pass (including GitHub token)
+    process.env.GH_PAT = 'test-token'
+
     vi.mocked(execFileSync).mockImplementation(
-      (program: string, args?: readonly string[], _options?: any) => {
+      (program: string, args?: readonly string[], _options?: unknown) => {
         const argsArr = args || []
         if (program === 'node' && argsArr.includes('--version')) {
           return 'v20.11.0'
@@ -51,6 +55,11 @@ describe('preflight', () => {
       },
     )
     vi.mocked(fs.existsSync).mockReturnValue(true)
+  })
+
+  afterEach(() => {
+    // Restore original env to avoid leaking between tests
+    process.env = { ...originalEnv }
   })
 
   it('should pass all checks without throwing', () => {
@@ -62,7 +71,7 @@ describe('preflight', () => {
 
   it('should throw Error (not process.exit) when ocode CLI is missing', () => {
     vi.mocked(execFileSync).mockImplementation(
-      (program: string, args?: readonly string[], _options?: any) => {
+      (program: string, args?: readonly string[], _options?: unknown) => {
         const argsArr = args || []
         if (program === 'pnpm' && argsArr.includes('ocode') && argsArr.includes('--version')) {
           throw new Error('command not found: ocode')
@@ -80,7 +89,7 @@ describe('preflight', () => {
 
   it('should throw Error when git repo is missing', () => {
     vi.mocked(execFileSync).mockImplementation(
-      (program: string, args?: readonly string[], _options?: any) => {
+      (program: string, args?: readonly string[], _options?: unknown) => {
         const argsArr = args || []
         if (program === 'git' && argsArr.includes('rev-parse') && argsArr.includes('--git-dir')) {
           throw new Error('fatal: not a git repository')
@@ -97,7 +106,7 @@ describe('preflight', () => {
 
   it('should throw Error when Node.js is too old (v16)', () => {
     vi.mocked(execFileSync).mockImplementation(
-      (program: string, args?: readonly string[], _options?: any) => {
+      (program: string, args?: readonly string[], _options?: unknown) => {
         const argsArr = args || []
         if (program === 'node' && argsArr.includes('--version')) {
           return 'v16.20.0'
@@ -115,10 +124,26 @@ describe('preflight', () => {
     expect(() => preflight()).toThrow('Pre-flight checks failed')
   })
 
+  it('should throw Error when GitHub token is missing', () => {
+    delete process.env.GH_PAT
+    delete process.env.GH_TOKEN
+
+    expect(() => preflight()).toThrow('Pre-flight checks failed')
+    expect(() => preflight()).toThrow(/GH_PAT or GH_TOKEN/)
+  })
+
+  it('should accept GH_TOKEN as alternative to GH_PAT', () => {
+    delete process.env.GH_PAT
+    process.env.GH_TOKEN = 'gh-token-value'
+
+    preflight()
+    expect(mockLogger.info).toHaveBeenCalledWith(expect.stringContaining('Pre-flight complete'))
+  })
+
   it('should collect all error messages in thrown Error when multiple checks fail', () => {
     // Fail ocode CLI, git repo, and pnpm
     vi.mocked(execFileSync).mockImplementation(
-      (program: string, args?: readonly string[], _options?: any) => {
+      (program: string, args?: readonly string[], _options?: unknown) => {
         const argsArr = args || []
         if (program === 'pnpm' && argsArr.includes('ocode') && argsArr.includes('--version')) {
           throw new Error('command not found: ocode')
@@ -164,13 +189,13 @@ describe('preflight', () => {
     const passLogs = mockLogger.info.mock.calls.filter(
       (args: unknown[]) => typeof args[0] === 'string' && args[0].includes('✅'),
     )
-    // 5 checks pass + the final "Pre-flight complete" line
-    expect(passLogs.length).toBeGreaterThanOrEqual(5)
+    // 6 checks pass + the final "Pre-flight complete" line
+    expect(passLogs.length).toBeGreaterThanOrEqual(6)
   })
 
   it('should throw Error when pnpm is missing', () => {
     vi.mocked(execFileSync).mockImplementation(
-      (program: string, args?: readonly string[], _options?: any) => {
+      (program: string, args?: readonly string[], _options?: unknown) => {
         const argsArr = args || []
         if (program === 'which' && argsArr.includes('pnpm')) {
           throw new Error('pnpm not found')
@@ -187,7 +212,7 @@ describe('preflight', () => {
 
   it('should accept Node.js v18 as valid', () => {
     vi.mocked(execFileSync).mockImplementation(
-      (program: string, args?: readonly string[], _options?: any) => {
+      (program: string, args?: readonly string[], _options?: unknown) => {
         const argsArr = args || []
         if (program === 'node' && argsArr.includes('--version')) {
           return 'v18.0.0'

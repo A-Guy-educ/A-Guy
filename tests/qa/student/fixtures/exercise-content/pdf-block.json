@@ -1,0 +1,11 @@
+{
+  "blocks": [
+    {
+      "id": "p1",
+      "type": "pdf",
+      "url": "https://www.w3.org/WAI/WCAG21/Techniques/pdf/img/table-word.pdf",
+      "title": "Sample PDF Document",
+      "description": "A sample PDF for testing embedded PDF viewing"
+    }
+  ]
+}

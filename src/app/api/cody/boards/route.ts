@@ -10,10 +10,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { handleCodyApiError } from '@/ui/cody/github-error-handler'
+import { requireCodyAuth } from '@/ui/cody/auth'
 import { fetchLabels, fetchMilestones } from '@/ui/cody/github-client'
 import type { Board } from '@/ui/cody/types'
 
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
+  const authError = await requireCodyAuth(req)
+  if (authError) return authError
+
   try {
     // Fetch labels and milestones in parallel
     const [labels, milestones] = await Promise.all([fetchLabels(), fetchMilestones()])

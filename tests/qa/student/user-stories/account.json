@@ -1,0 +1,26 @@
+{
+  "userStories": [
+    {
+      "id": "US-ACCOUNT-001",
+      "story": "As a student, I want to view my profile so that I can see my account information",
+      "criteria": [
+        "Given I am logged in",
+        "When I navigate to my account settings",
+        "Then I see my profile information"
+      ],
+      "scenarios": ["account-view-profile"],
+      "priority": "must-have"
+    },
+    {
+      "id": "US-ACCOUNT-002",
+      "story": "As a student, I want to change my assigned teacher so that I can work with a different teacher",
+      "criteria": [
+        "Given I am on my account settings page",
+        "When I select a different teacher from the dropdown",
+        "Then my teacher assignment is updated"
+      ],
+      "scenarios": ["account-change-teacher"],
+      "priority": "may-have"
+    }
+  ]
+}

@@ -45,6 +45,7 @@ jobs:
           PR_URL=$(gh pr create \
             --base main \
             --head dev \
+            --label publish \
             --title "Publish dev → production (${{ steps.check.outputs.ahead }} commits)" \
             --body "$(cat <<'EOF'
           ## Publish to Production

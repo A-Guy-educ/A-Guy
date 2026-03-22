@@ -19,8 +19,8 @@ import { ConfirmDialog } from './ConfirmDialog'
 import { CommentEditor } from './CommentEditor'
 import { CommentList } from './CommentList'
 import { AssigneePicker, type AssigneeChangeEvent } from './AssigneePicker'
-import { MergeButton } from './MergeButton'
 import { SimpleTooltip } from './SimpleTooltip'
+import { WorkflowRunsPopover } from './WorkflowRunsPopover'
 import { Button } from '@/ui/web/components/button'
 import { Badge } from '@/ui/web/components/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/ui/web/components/avatar'
@@ -31,7 +31,6 @@ import {
   GitPullRequest,
   ExternalLink,
   Clock,
-  Play,
   CheckCircle,
   XCircle,
   AlertTriangle,
@@ -53,15 +52,19 @@ import {
   Timer,
   ArrowLeft,
   Eye,
+  Pencil,
+  Copy,
+  ListPlus,
+  ListMinus,
 } from 'lucide-react'
 
 interface TaskDetailProps {
-  onApproveReview?: (task: CodyTask) => Promise<void>
-  isMerging?: boolean
   task: CodyTask | null
   onClose?: () => void
   onRefresh?: () => void
   onOpenPreview?: () => void
+  onEditTask?: (task: CodyTask) => void
+  onDuplicate?: (task: CodyTask) => void
 }
 
 interface FullTaskDetails extends CodyTask {
@@ -138,7 +141,7 @@ const columnLabels: Record<ColumnId, string> = {
   building: 'Building',
   review: 'In Review',
   failed: 'Failed',
-  'gate-waiting': 'Gate Waiting',
+  'gate-waiting': 'Needs Approval',
   retrying: 'Retrying',
   done: 'Done',
 }
@@ -277,6 +280,7 @@ function getOverflowActions(
   taskActions: ReturnType<typeof useTaskActions>,
   completedActions: Set<string>,
   setCompletedActions: React.Dispatch<React.SetStateAction<Set<string>>>,
+  onDuplicate?: (task: CodyTask) => void,
 ): Array<{
   icon: React.ElementType
   label: string
@@ -323,6 +327,31 @@ function getOverflowActions(
     })
   }
 
+  // Queue: Add to Queue (only if task has no queue-related labels)
+  const queueLabels = ['cody:queued', 'cody:queue-active', 'cody:queue-failed']
+  const hasQueueLabel = task.labels.some((l) => queueLabels.includes(l))
+
+  if (!hasQueueLabel && task.state === 'open') {
+    actions.push({
+      icon: ListPlus,
+      label: 'Add to Queue',
+      pendingLabel: 'Adding…',
+      onClick: () => taskActions.addToQueue(),
+      pendingKey: 'add-to-queue',
+    })
+  }
+
+  // Queue: Remove from Queue (only if task is queued but not active)
+  if (task.labels.includes('cody:queued')) {
+    actions.push({
+      icon: ListMinus,
+      label: 'Remove from Queue',
+      pendingLabel: 'Removing…',
+      onClick: () => taskActions.removeFromQueue(),
+      pendingKey: 'remove-from-queue',
+    })
+  }
+
   // Close PR
   if (task.associatedPR && task.associatedPR.state === 'open') {
     actions.push({
@@ -332,6 +361,17 @@ function getOverflowActions(
       onClick: () => taskActions.closePR(),
       pendingKey: 'close-pr',
       confirmMessage: `Close PR #${task.associatedPR.number}? This will NOT delete the branch.`,
+    })
+  }
+
+  // Duplicate Task
+  if (onDuplicate) {
+    actions.push({
+      icon: Copy,
+      label: 'Duplicate Task',
+      pendingLabel: 'Duplicating…',
+      onClick: () => onDuplicate(task),
+      pendingKey: 'duplicate',
     })
   }
 
@@ -564,9 +604,9 @@ export function TaskDetail({
   task,
   onClose,
   onRefresh,
-  onApproveReview,
-  isMerging: externalIsMerging,
   onOpenPreview,
+  onEditTask,
+  onDuplicate,
 }: TaskDetailProps) {
   const { githubUser } = useGitHubIdentity()
   const actorLogin = githubUser?.login
@@ -698,6 +738,7 @@ export function TaskDetail({
     taskActions,
     completedActions,
     setCompletedActions,
+    onDuplicate,
   )
 
   // --- Shared markdown components ---
@@ -973,16 +1014,7 @@ export function TaskDetail({
         </a>
       )}
       {task.workflowRun && (
-        <a
-          href={task.workflowRun.html_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/[0.08] text-zinc-300 hover:bg-white/[0.12] hover:text-white transition-all duration-150 shrink-0 border border-white/[0.1]"
-        >
-          <Play className="w-3 h-3" />
-          Workflow
-        </a>
+        <WorkflowRunsPopover taskTitle={task.title} fallbackRun={task.workflowRun} />
       )}
       {task.associatedPR && onOpenPreview && (
         <button
@@ -1124,17 +1156,6 @@ export function TaskDetail({
             </span>
           </div>
           <div className="flex items-center gap-1 shrink-0">
-            {/* Merge button (in review) */}
-            {task.column === 'review' && task.associatedPR && onApproveReview && (
-              <MergeButton
-                prNumber={task.associatedPR.number}
-                prTitle={task.associatedPR.title}
-                branchName={task.associatedPR.head.ref}
-                isMerging={externalIsMerging ?? false}
-                onMerge={() => onApproveReview(task)}
-              />
-            )}
-
             {/* Contextual primary action */}
             {primaryAction && (
               <Button
@@ -1168,6 +1189,21 @@ export function TaskDetail({
             />
 
             <span className="w-px h-5 bg-white/[0.06] mx-0.5" />
+
+            {/* Edit button — only for backlog items */}
+            {onEditTask && task && task.column === 'open' && (
+              <SimpleTooltip content="Edit task" side="bottom">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onEditTask(task)}
+                  aria-label="Edit task"
+                  className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-muted-foreground"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </Button>
+              </SimpleTooltip>
+            )}
 
             <SimpleTooltip content="Refresh" side="bottom">
               <Button
@@ -1240,6 +1276,43 @@ export function TaskDetail({
             </div>
           </div>
 
+          {/* Priority */}
+          {task.labels
+            .filter((l) => l.startsWith('priority:'))
+            .map((priorityLabel) => {
+              const priority = priorityLabel.replace('priority:', '')
+              const colors: Record<string, { bg: string; text: string; border: string }> = {
+                P0: { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30' },
+                P1: {
+                  bg: 'bg-orange-500/20',
+                  text: 'text-orange-400',
+                  border: 'border-orange-500/30',
+                },
+                P2: { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30' },
+                P3: { bg: 'bg-zinc-500/20', text: 'text-zinc-400', border: 'border-zinc-500/30' },
+              }
+              const c = colors[priority] || colors.P3
+              return (
+                <div key={priorityLabel} className="space-y-2">
+                  <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-0.5">
+                    Priority
+                  </h4>
+                  <div className="flex flex-wrap gap-1 px-0.5">
+                    <span
+                      className={cn(
+                        'inline-flex px-2.5 py-1 text-xs font-bold rounded-md border',
+                        c.bg,
+                        c.text,
+                        c.border,
+                      )}
+                    >
+                      {priority}
+                    </span>
+                  </div>
+                </div>
+              )
+            })}
+
           {/* Labels */}
           {task.labels.length > 0 && (
             <div className="space-y-2">
@@ -1267,6 +1340,89 @@ export function TaskDetail({
               </h4>
               <div className="rounded-lg p-3 bg-white/[0.03] border border-white/[0.06]">
                 <PipelineStatus status={task.pipeline} />
+              </div>
+            </div>
+          )}
+
+          {/* Triggered by */}
+          {task.pipeline?.triggeredByLogin && (
+            <div className="space-y-2">
+              <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-0.5">
+                Triggered by
+              </h4>
+              <div className="flex items-center gap-2 px-0.5">
+                <Avatar className="h-5 w-5 shrink-0">
+                  <AvatarImage
+                    src={`https://github.com/${task.pipeline.triggeredByLogin}.png?size=40`}
+                    alt={task.pipeline.triggeredByLogin}
+                  />
+                  <AvatarFallback className="text-[9px]">
+                    {task.pipeline.triggeredByLogin[0]?.toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-xs text-foreground">@{task.pipeline.triggeredByLogin}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Issue Owner */}
+          {task.pipeline?.issueCreator && (
+            <div className="space-y-2">
+              <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-0.5">
+                Issue Owner
+              </h4>
+              <div className="flex items-center gap-2 px-0.5">
+                <Avatar className="h-5 w-5 shrink-0">
+                  <AvatarImage
+                    src={`https://github.com/${task.pipeline.issueCreator}.png?size=40`}
+                    alt={task.pipeline.issueCreator}
+                  />
+                  <AvatarFallback className="text-[9px]">
+                    {task.pipeline.issueCreator[0]?.toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-xs text-foreground">@{task.pipeline.issueCreator}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Actor History */}
+          {task.pipeline?.actorHistory && task.pipeline.actorHistory.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-0.5">
+                Activity
+              </h4>
+              <div className="space-y-2">
+                {task.pipeline.actorHistory.slice(-8).map((event, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <Avatar className="h-4 w-4 shrink-0 mt-0.5">
+                      <AvatarImage
+                        src={`https://github.com/${event.actor}.png?size=32`}
+                        alt={event.actor}
+                      />
+                      <AvatarFallback className="text-[8px]">
+                        {event.actor[0]?.toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="text-[11px] text-foreground leading-tight">
+                        <span className="font-medium">@{event.actor}</span>{' '}
+                        <span className="text-muted-foreground">
+                          {event.action === 'pipeline-triggered'
+                            ? 'triggered'
+                            : event.action === 'gate-approved'
+                              ? `approved ${event.stage ?? ''} gate`
+                              : event.action === 'gate-rejected'
+                                ? `rejected ${event.stage ?? ''} gate`
+                                : event.action.replace(/-/g, ' ')}
+                        </span>
+                      </p>
+                      <p className="text-[10px] text-muted-foreground/70 mt-0.5">
+                        {formatRelativeTime(event.timestamp)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -1358,17 +1514,6 @@ export function TaskDetail({
 
       {/* Bottom toolbar — single row, always visible */}
       <div className="shrink-0 border-t border-white/10 bg-card px-3 py-2 flex items-center gap-1.5 overflow-x-auto">
-        {/* Merge button */}
-        {task.column === 'review' && task.associatedPR && onApproveReview && (
-          <MergeButton
-            prNumber={task.associatedPR.number}
-            prTitle={task.associatedPR.title}
-            branchName={task.associatedPR.head.ref}
-            isMerging={externalIsMerging ?? false}
-            onMerge={() => onApproveReview(task)}
-          />
-        )}
-
         {/* Primary action */}
         {primaryAction && (
           <Button
@@ -1414,29 +1559,29 @@ export function TaskDetail({
             PR #{task.associatedPR.number}
           </a>
         )}
-        {task.previewUrl && (
-          <SimpleTooltip
-            content={
-              <div className="space-y-1">
-                <p className="text-xs font-semibold">🔗 Preview Available</p>
-                <p className="text-xs text-muted-foreground">
-                  Click to open the deployed preview in a new tab
-                </p>
-              </div>
-            }
-            side="bottom"
+        {task.associatedPR && onOpenPreview && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onOpenPreview()
+            }}
+            className="h-9 inline-flex items-center gap-1.5 px-3 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors shrink-0 cursor-pointer"
           >
-            <a
-              href={task.previewUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="h-9 inline-flex items-center gap-1.5 px-3 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors shrink-0"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              Preview
-            </a>
-          </SimpleTooltip>
+            <Eye className="w-3.5 h-3.5" />
+            Preview
+          </button>
+        )}
+        {task.previewUrl && (
+          <a
+            href={task.previewUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="h-9 inline-flex items-center gap-1.5 px-3 rounded-full text-xs font-medium bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shrink-0"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            Deploy
+          </a>
         )}
 
         {/* Spacer */}

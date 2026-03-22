@@ -1,0 +1,39 @@
+{
+  "id": "auth-student-logout",
+  "name": "Student logs out of the application",
+  "journey": "student-auth",
+  "type": "core",
+  "area": "auth",
+  "tags": ["auth", "logout"],
+  "locale": "he",
+  "preconditions": [
+    {
+      "action": "seed",
+      "entity": "user",
+      "data": {
+        "email": "logout-test@example.com",
+        "password": "testPassword123!",
+        "role": "student"
+      },
+      "ref": "$student"
+    }
+  ],
+  "steps": [
+    {
+      "action": "login",
+      "input": { "userRef": "$student" }
+    },
+    {
+      "action": "navigate",
+      "input": { "type": "home" }
+    },
+    {
+      "action": "logout"
+    },
+    {
+      "action": "see",
+      "input": { "text": "התחבר" }
+    }
+  ],
+  "teardown": "auto"
+}

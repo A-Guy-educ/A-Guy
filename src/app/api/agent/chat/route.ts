@@ -77,6 +77,9 @@ export async function POST(request: NextRequest) {
     return await agentChat(payloadRequest)
   } catch (error) {
     logger.error({ err: error, requestId }, 'Agent chat route error')
+    const Sentry = await import('@sentry/nextjs')
+    Sentry.captureException(error, { tags: { route: '/api/agent/chat' } })
+
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : 'Internal server error',

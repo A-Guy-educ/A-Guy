@@ -396,6 +396,13 @@ const QuestionAnswerSchema = z.discriminatedUnion('kind', [
 ])
 
 // ---------------------------------
+// Zod: Graph Layout Enum
+// ---------------------------------
+const GraphLayoutSchema = z
+  .enum(['textAbove', 'textBelow', 'textLeft', 'textRight'])
+  .default('textRight')
+
+// ---------------------------------
 // Zod: Question Geometry Block Schema
 // ---------------------------------
 export const QuestionGeometryBlockSchema = z
@@ -403,6 +410,7 @@ export const QuestionGeometryBlockSchema = z
     id: z.string().min(1),
     type: z.literal('question_geometry'),
     prompt: InlineRichTextSchema,
+    layout: GraphLayoutSchema,
     geometry: GeometrySpecV1Schema,
     answer: QuestionAnswerSchema.optional(),
     hint: InlineRichTextSchema.optional(),
@@ -412,6 +420,11 @@ export const QuestionGeometryBlockSchema = z
   .strict()
 
 // ---------------------------------
+// Zod: Display Size Enum (for graph width control)
+// ---------------------------------
+const DisplaySizeSchema = z.enum(['small', 'medium', 'large', 'full']).default('full').optional()
+
+// ---------------------------------
 // Zod: Question Axis Block Schema
 // ---------------------------------
 export const QuestionAxisBlockSchema = z
@@ -419,13 +432,52 @@ export const QuestionAxisBlockSchema = z
     id: z.string().min(1),
     type: z.literal('question_axis'),
     prompt: InlineRichTextSchema,
+    layout: GraphLayoutSchema,
     axis: AxisSpecV1Schema,
+    displaySize: DisplaySizeSchema,
     answer: QuestionAnswerSchema.optional(),
     hint: InlineRichTextSchema.optional(),
     solution: InlineRichTextSchema.optional(),
     fullSolution: InlineRichTextSchema.optional(),
   })
   .strict()
+
+// ---------------------------------
+// Zod: Multi-Axis Graph Item Schema (single graph within multi-axis block)
+// ---------------------------------
+const MultiAxisGraphItemSchema = z
+  .object({
+    id: z.string().min(1),
+    label: z.string().min(1),
+    axis: AxisSpecV1Schema,
+    order: z.number().int().min(0),
+  })
+  .strict()
+
+// ---------------------------------
+// Zod: Question Multi-Axis Block Schema (multiple graphs in one block)
+// ---------------------------------
+export const QuestionMultiAxisBlockSchema = z
+  .object({
+    id: z.string().min(1),
+    type: z.literal('question_multi_axis'),
+    prompt: InlineRichTextSchema.optional(),
+    textPosition: z.enum(['above', 'below']).default('above'),
+    graphs: z.array(MultiAxisGraphItemSchema).min(1).max(4),
+  })
+  .strict()
+  .superRefine((data, ctx) => {
+    // Validate unique graph IDs
+    const graphIds = data.graphs.map((g) => g.id)
+    const uniqueIds = new Set(graphIds)
+    if (uniqueIds.size !== graphIds.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Graph IDs must be unique within the multi-axis block',
+        path: ['graphs'],
+      })
+    }
+  })
 
 // ---------------------------------
 // Zod: HTML Block (WYSIWYG content stored as sanitized HTML string)
@@ -532,6 +584,7 @@ export const ContentBlockSchema = z.discriminatedUnion('type', [
   SvgBlockSchema,
   QuestionGeometryBlockSchema,
   QuestionAxisBlockSchema,
+  QuestionMultiAxisBlockSchema,
   HtmlBlockSchema,
   MediaBlockSchema,
 ])

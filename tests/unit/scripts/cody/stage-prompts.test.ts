@@ -5,11 +5,18 @@ import {
   stageInstructions,
   SPEC_STAGES,
   SCRIPTED_STAGES,
-  ALL_STAGES,
-  STAGE_CONTEXT_FILES,
   getSpecStages,
   getImplStages,
 } from '../../../../scripts/cody/stage-prompts'
+import { STAGE_NAMES, getStageContextFiles } from '../../../../scripts/cody/stages/registry'
+
+// Backward-compat aliases for tests
+const ALL_STAGES = [...STAGE_NAMES, 'autofix' as const] as const
+const STAGE_CONTEXT_FILES: Record<string, string[]> = Object.fromEntries(
+  STAGE_NAMES.map((s) => [s, getStageContextFiles(s)]),
+)
+// autofix is not a formal stage but tests may reference it
+STAGE_CONTEXT_FILES['autofix'] = ['verify.md', 'build-errors.md']
 import type { CodyInput } from '../../../../scripts/cody/cody-utils'
 
 const mockInput: CodyInput = {
@@ -62,6 +69,8 @@ describe('stage-prompts', () => {
       expect(stages).toContain('autofix')
       expect(stages).toContain('docs')
       expect(stages).toContain('pr')
+      expect(stages).toContain('test')
+      expect(stages).not.toContain('reflect')
       expect(stages).toHaveLength(14)
     })
   })
@@ -71,7 +80,8 @@ describe('stage-prompts', () => {
   // ===========================================================================
 
   describe('STAGE_CONTEXT_FILES', () => {
-    it('should map stages to their correct file lists', () => {
+    it('should map stages to their correct file lists (from registry)', () => {
+      // These now come from the stage registry — test key files are present
       expect(STAGE_CONTEXT_FILES.taskify).toEqual(['task.md'])
       expect(STAGE_CONTEXT_FILES.gap).toEqual(['task.md', 'task.json'])
       expect(STAGE_CONTEXT_FILES.clarify).toEqual(['task.md', 'spec.md'])
@@ -79,6 +89,9 @@ describe('stage-prompts', () => {
         'spec.md',
         'clarified.md',
         'rerun-feedback.md',
+        'prev-run/plan.md',
+        'prev-run/build.md',
+        'prev-run/review.md',
       ])
       expect(STAGE_CONTEXT_FILES['plan-gap']).toEqual(['spec.md', 'plan.md', 'task.json'])
       expect(STAGE_CONTEXT_FILES.build).toEqual([
@@ -88,6 +101,10 @@ describe('stage-prompts', () => {
         'plan-gap.md',
         'context.md',
         'rerun-feedback.md',
+        'build-errors.md',
+        'review.md',
+        'prev-run/build.md',
+        'prev-run/review.md',
       ])
       expect(STAGE_CONTEXT_FILES.commit).toEqual(['task.json'])
       expect(STAGE_CONTEXT_FILES.verify).toEqual([])
@@ -111,6 +128,7 @@ describe('stage-prompts', () => {
         'context.md',
         'spec.md',
         'clarified.md',
+        'prev-run/build.md',
       ])
     })
 
@@ -150,48 +168,45 @@ describe('stage-prompts', () => {
 
   describe('getImplStages', () => {
     it('should return full implementation stage list (default standard profile)', () => {
+      // test + build run in parallel; no duplicate commit
       expect(getImplStages()).toEqual([
         'architect',
         'plan-gap',
+        'test',
         'build',
         'commit',
         'review',
         'fix',
-        'commit',
         'verify',
-        'docs',
-        'reflect',
         'pr',
       ])
     })
 
     it('should return reduced stage list for lightweight profile (no plan-gap)', () => {
+      // test + build run in parallel; no duplicate commit
       expect(getImplStages('lightweight')).toEqual([
         'architect',
+        'test',
         'build',
         'commit',
         'review',
         'fix',
-        'commit',
         'verify',
-        'docs',
-        'reflect',
         'pr',
       ])
     })
 
     it('should return full stage list for standard profile', () => {
+      // test + build run in parallel; no duplicate commit
       expect(getImplStages('standard')).toEqual([
         'architect',
         'plan-gap',
+        'test',
         'build',
         'commit',
         'review',
         'fix',
-        'commit',
         'verify',
-        'docs',
-        'reflect',
         'pr',
       ])
     })
@@ -213,7 +228,7 @@ describe('stage-prompts', () => {
       }
     })
 
-    it('should return empty strings for non-spec stages (except build, review, fix, docs, reflect)', () => {
+    it('should return empty strings for non-spec stages (except build, review, fix, docs, test)', () => {
       const nonSpecStages = ALL_STAGES.filter(
         (s) => !SPEC_STAGES.includes(s as (typeof SPEC_STAGES)[number]),
       )
@@ -228,12 +243,19 @@ describe('stage-prompts', () => {
           expect(instruction).toContain('TARGETED FIX STAGE')
         } else if (stage === 'docs') {
           expect(instruction).toContain('DOCUMENTATION STAGE')
-        } else if (stage === 'reflect') {
-          expect(instruction).toContain('REFLECT STAGE')
+        } else if (stage === 'test') {
+          expect(instruction).toContain('TDD RED PHASE')
         } else {
           expect(instruction).toBe('')
         }
       }
+    })
+
+    it('fix stage instructs to prioritize critical/major issues when many issues exist', () => {
+      const instruction = stageInstructions['fix']('260219-test')
+      expect(instruction).toContain('focus on the CRITICAL issues first')
+      expect(instruction).toContain('prioritize the most impactful ones')
+      expect(instruction).toContain('make the code substantially better')
     })
   })
 
@@ -250,7 +272,8 @@ describe('stage-prompts', () => {
     })
 
     it('should include file list from STAGE_CONTEXT_FILES', () => {
-      for (const stage of ALL_STAGES) {
+      // Test only formal pipeline stages (autofix is not in registry)
+      for (const stage of STAGE_NAMES) {
         const prompt = buildStagePrompt(mockInput, stage)
         const files = STAGE_CONTEXT_FILES[stage]
         for (const file of files) {

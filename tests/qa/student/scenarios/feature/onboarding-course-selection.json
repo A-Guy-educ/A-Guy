@@ -1,0 +1,34 @@
+{
+  "id": "onboarding-course-selection",
+  "name": "Student selects a course from onboarding",
+  "journey": "student-onboarding",
+  "type": "feature",
+  "area": "onboarding",
+  "tags": ["onboarding", "course-selection"],
+  "locale": "he",
+  "preconditions": [
+    {
+      "action": "seed",
+      "entity": "course",
+      "data": {
+        "title": "Onboarding Course",
+        "courseLabel": "ע",
+        "status": "published",
+        "isActive": true,
+        "accessType": "free"
+      },
+      "ref": "$course"
+    }
+  ],
+  "steps": [
+    {
+      "action": "navigate",
+      "input": { "type": "home" }
+    },
+    {
+      "action": "see",
+      "input": { "text": "שלום" }
+    }
+  ],
+  "teardown": "auto"
+}

@@ -9,11 +9,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { handleCodyApiError } from '@/ui/cody/github-error-handler'
 import { prFilesQuerySchema } from '@/ui/cody/schemas'
 import { parseQueryParams } from '@/server/api/responses'
-import { requireAuth } from '@/ui/cody/auth'
+import { requireCodyAuth } from '@/ui/cody/auth'
 import { fetchPRFileChanges } from '@/ui/cody/github-client'
 
 export async function GET(req: NextRequest) {
-  const authError = await requireAuth(req)
+  const authError = await requireCodyAuth(req)
   if (authError) return authError
 
   // Validate query params

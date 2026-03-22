@@ -2,7 +2,8 @@
  * @fileType utility
  * @domain ci | cody | agent-execution
  * @pattern agent-runner
- * @ai-summary Agent execution with file watching, timeouts, and retry logic for Cody pipeline stages
+ * @ai-summary Agent execution orchestrator — spawns agents, monitors output, handles retries.
+ *   File watching, session management, and log parsing are in agent/ submodules.
  */
 
 import type { ChildProcess } from 'child_process'
@@ -14,52 +15,58 @@ import type { CodyInput } from './cody-utils'
 import { buildStagePrompt } from './stage-prompts'
 import { createRunner, type RunnerBackend } from './runner-backend'
 import { logger } from './logger'
+import { STDERR_TAIL_LINES } from './config/constants'
+
+// Re-export split modules for backward compatibility
+export {
+  STABILITY_CHECK_INTERVAL,
+  STABILITY_CHECK_COUNT,
+  POST_EXIT_DELAY,
+  NUDGE_TIMEOUT,
+  MAX_RETRIES,
+  MAX_STDOUT_BUFFER_SIZE,
+  DEFAULT_TIMEOUT,
+  LLM_TIMEOUT,
+} from './agent/constants'
+export { waitForFileStable } from './agent/file-watcher'
+export { formatJsonEvent } from './agent/log-parser'
+
+// Import from split modules for internal use
+import {
+  MAX_RETRIES,
+  MAX_STDOUT_BUFFER_SIZE,
+  DEFAULT_TIMEOUT,
+  STABILITY_CHECK_INTERVAL,
+  STABILITY_CHECK_COUNT,
+  POST_EXIT_DELAY,
+} from './agent/constants'
+import { waitForFileStable, findOutputFile, sleep } from './agent/file-watcher'
+import { recoverSessionId, nudgeSession } from './agent/session'
+import { formatJsonEvent, prefixLogLine } from './agent/log-parser'
 
 // ============================================================================
-// Configuration
+// Model Resolution
 // ============================================================================
 
-/** Delay between stability checks after process exit (milliseconds) */
-export const STABILITY_CHECK_INTERVAL = 500
+/** Cache for opencode.json model config */
+let opencodeConfigCache: { agent?: Record<string, { model?: string }> } | null = null
 
-/** Number of consecutive stable size checks before settling */
-export const STABILITY_CHECK_COUNT = 2
-
-/** Additional delay to wait after process exit before checking (filesystem flush) */
-export const POST_EXIT_DELAY = 500
-
-/** Maximum retry attempts for failed stages */
-export const MAX_RETRIES = 2
-
-/** Maximum size of stdout buffer to prevent memory leaks (1 MB) */
-export const MAX_STDOUT_BUFFER_SIZE = 1_048_576
-
-/** Default timeout for stages (10 minutes) */
-export const DEFAULT_TIMEOUT = ms('10m')
-
-/** Stage-specific timeouts in milliseconds */
-export const STAGE_TIMEOUTS: Record<string, number> = {
-  taskify: ms('10m'),
-  spec: ms('15m'),
-  gap: ms('15m'),
-  clarify: ms('10m'),
-  architect: ms('30m'),
-  build: ms('45m'),
-  'plan-gap': ms('15m'),
-  review: ms('15m'),
-  fix: ms('20m'),
-  verify: ms('10m'),
-  docs: ms('10m'),
-  reflect: ms('10m'),
-  pr: ms('5m'),
-  autofix: ms('15m'),
+/**
+ * Get the model name for a stage from opencode.json
+ */
+function getStageModel(stage: string): string {
+  if (!opencodeConfigCache) {
+    try {
+      const configPath = path.resolve(process.cwd(), 'opencode.json')
+      if (fs.existsSync(configPath)) {
+        opencodeConfigCache = JSON.parse(fs.readFileSync(configPath, 'utf-8'))
+      }
+    } catch {
+      opencodeConfigCache = {}
+    }
+  }
+  return opencodeConfigCache?.agent?.[stage]?.model ?? 'unknown'
 }
-
-/** LLM-specific timeout - max time to wait for LLM API response (3 minutes) */
-export const LLM_TIMEOUT = ms('3m')
-
-/** Progress heartbeat interval - log progress every 30 seconds */
-export const HEARTBEAT_INTERVAL = ms('30s')
 
 // ============================================================================
 // Types
@@ -91,6 +98,14 @@ export interface AgentRunnerOptions {
   /** Content validation function to run after output file is detected.
    *  On validation failure, the output file is deleted and the agent is retried with the error in the prompt. */
   validateOutput?: (outputFile: string) => ValidationResult
+  /** URL of running OpenCode server (for --attach mode) */
+  serverUrl?: string
+  /** Session ID to fork from (for session continuation) */
+  sessionId?: string
+  /** XDG_DATA_HOME directory for OpenCode server mode (must match server's data dir) */
+  dataDir?: string
+  /** Override agent name (for stages that use a different agent, e.g., fix stage uses build agent) */
+  agentName?: string
 }
 
 export interface AgentRunResult {
@@ -108,168 +123,8 @@ export interface AgentRunResult {
 }
 
 // ============================================================================
-// Functions
+// Main Runner
 // ============================================================================
-
-/**
- * Wait for a file to become stable (size doesn't change for N consecutive checks).
- * This handles filesystem flush delays after the agent process exits.
- *
- * @param filePath - Path to the file to check
- * @param options - Stability check configuration
- * @returns Promise that resolves when file is stable, or rejects on timeout/error
- */
-export async function waitForFileStable(
-  filePath: string,
-  options: {
-    interval?: number
-    stableCount?: number
-    timeout?: number
-    onCheck?: (size: number, checkNumber: number) => void
-  } = {},
-): Promise<{ stable: boolean; finalSize: number }> {
-  const {
-    interval = STABILITY_CHECK_INTERVAL,
-    stableCount = STABILITY_CHECK_COUNT,
-    timeout = ms('30s'),
-    onCheck,
-  } = options
-
-  const startTime = Date.now()
-  let lastSize = 0
-  let stableCheckCount = 0
-
-  while (true) {
-    // Check timeout
-    if (Date.now() - startTime > timeout) {
-      return { stable: false, finalSize: lastSize }
-    }
-
-    // Check if file exists
-    if (!fs.existsSync(filePath)) {
-      stableCheckCount = 0
-      lastSize = 0
-      await sleep(interval)
-      continue
-    }
-
-    // Get current file size
-    const stat = fs.statSync(filePath)
-    const currentSize = stat.size
-
-    if (onCheck) {
-      onCheck(currentSize, stableCheckCount)
-    }
-
-    // Check if size is stable (skip first check - we need 2 consecutive stable checks)
-    if (currentSize > 0 && currentSize === lastSize) {
-      stableCheckCount++
-      if (stableCheckCount >= stableCount) {
-        return { stable: true, finalSize: currentSize }
-      }
-    } else {
-      stableCheckCount = 0
-    }
-
-    lastSize = currentSize
-    await sleep(interval)
-  }
-}
-
-/**
- * Simple sleep utility
- */
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
-/**
- * Find output file in directory (supports timestamped variants like spec-123456.md)
- */
-function findOutputFile(taskDir: string, expectedBase: string, outputExt: string): string | null {
-  if (fs.existsSync(path.join(taskDir, expectedBase + outputExt))) {
-    return path.join(taskDir, expectedBase + outputExt)
-  }
-
-  // Check for timestamped variants
-  const files = fs.readdirSync(taskDir)
-  const prefixMatch = files.find((f) => f.startsWith(expectedBase + '-') && f.endsWith(outputExt))
-  return prefixMatch ? path.join(taskDir, prefixMatch) : null
-}
-
-/**
- * Format a JSON event line from opencode into a human-readable log line.
- * Returns the formatted string, or null to skip (for noisy/unimportant events).
- * Also extracts sessionID from events when found.
- */
-export function formatJsonEvent(line: string): {
-  display: string | null
-  sessionId?: string
-  stepTokens?: { input: number; output: number; cacheRead: number }
-  stepCost?: number
-} {
-  try {
-    const event = JSON.parse(line)
-    const type: string = event.type
-    const sessionId: string | undefined = event.sessionID
-
-    switch (type) {
-      case 'session_start':
-        return { display: `🎯 Session started: ${sessionId?.slice(0, 16) || 'unknown'}`, sessionId }
-
-      case 'step_start':
-        return { display: null, sessionId } // Quiet — step_finish is more useful
-
-      case 'step_finish': {
-        const tokens = event.part?.tokens?.total || 0
-        const cost = event.part?.cost ?? 0
-        const reason = event.part?.reason || ''
-        const cached = event.part?.tokens?.cache?.read || 0
-        const inputTokens = event.part?.tokens?.input || 0
-        const outputTokens = event.part?.tokens?.output || 0
-        const costStr = typeof cost === 'number' && cost > 0 ? ` · $${cost.toFixed(4)}` : ''
-        const cacheStr = cached > 0 ? ` · ${cached} cached` : ''
-        return {
-          display: `  ✅ Step done (${tokens} tok${cacheStr}${costStr}) [${reason}]`,
-          sessionId,
-          stepTokens: { input: inputTokens, output: outputTokens, cacheRead: cached },
-          stepCost: typeof cost === 'number' ? cost : 0,
-        }
-      }
-
-      case 'tool_use': {
-        const tool = event.part?.tool || 'unknown'
-        const status = event.part?.state?.status || ''
-        const title = event.part?.state?.title || event.part?.state?.input?.description || ''
-        const exit = event.part?.state?.metadata?.exit
-        const exitStr = exit !== undefined && exit !== 0 ? ` exit=${exit}` : ''
-        const titleStr = title ? `: ${title}` : ''
-        if (status === 'completed') {
-          return { display: `  🔧 ${tool}${titleStr}${exitStr}`, sessionId }
-        }
-        return { display: null, sessionId } // Skip pending/running states
-      }
-
-      case 'text_delta':
-      case 'content':
-        return { display: null, sessionId } // Skip streaming text deltas (too noisy)
-
-      case 'error': {
-        const msg = event.part?.message || event.message || JSON.stringify(event.part)
-        return { display: `  🔴 Error: ${msg}`, sessionId }
-      }
-
-      default:
-        return { display: null, sessionId } // Skip unknown event types
-    }
-  } catch {
-    // Not valid JSON — might be a plain log line from pino/logger
-    // Show it as-is if it looks meaningful
-    const trimmed = line.trim()
-    if (!trimmed) return { display: null }
-    return { display: trimmed }
-  }
-}
 
 /**
  * Run an OpenCode agent with file watching, timeouts, and optional retry logic.
@@ -302,10 +157,17 @@ export function runAgentWithFileWatch(
     cwd = process.cwd(),
     backend = createRunner(),
     validateOutput,
+    serverUrl,
+    sessionId,
+    dataDir,
+    agentName,
   } = options
 
-  // Resolve timeout
-  const effectiveTimeout = timeout ?? STAGE_TIMEOUTS[stage] ?? DEFAULT_TIMEOUT
+  // Resolve timeout — stage-specific timeouts are now passed from StageDefinition
+  const effectiveTimeout = timeout ?? DEFAULT_TIMEOUT
+
+  // Use agentName override if provided, otherwise use stage
+  const effectiveAgent = agentName ?? stage
 
   return new Promise((resolve) => {
     // Build environment for the agent
@@ -334,19 +196,38 @@ export function runAgentWithFileWatch(
         logger.info(`  🗑️ Deleted stale output file before retry`)
       }
 
-      // Calculate remaining timeout (subtract elapsed time from previous attempts)
+      // FIX #10: Calculate remaining timeout (subtract elapsed time from ALL previous attempts).
+      // startTime is captured once before the first attempt, so elapsed accurately reflects
+      // total time spent across all retries including inter-retry delays.
       const elapsed = Date.now() - startTime
       const remainingTimeout = effectiveTimeout - elapsed
       if (remainingTimeout <= 0) {
+        logger.info(
+          `  ⏱️ No time remaining after ${retries} retries (${Math.round(elapsed / 1000)}s elapsed)`,
+        )
         resolve({ succeeded: false, timedOut: true, retries, validationErrors })
         return
+      }
+      if (remainingTimeout < 60_000 && retries > 0) {
+        logger.warn(
+          `  ⚠️ Only ${Math.round(remainingTimeout / 1000)}s remaining for attempt ${retries + 1}`,
+        )
       }
 
       // Build the prompt for the stage (rebuilt each attempt to include feedback)
       const prompt = buildStagePrompt(input, stage, feedback)
 
+      // Log the model being used for this stage
+      const model = getStageModel(stage)
+      logger.info(`  🤖 Running ${stage} with model: ${model}`)
+
       // Spawn using the configured backend (local or GitHub)
-      currentChild = backend.spawn(stage, prompt, agentEnv, cwd)
+      // Use effectiveAgent for the --agent flag (may be overridden via agentName option)
+      currentChild = backend.spawn(effectiveAgent, prompt, agentEnv, cwd, {
+        serverUrl,
+        sessionId,
+        dataDir,
+      })
 
       // Explicitly close stdin to prevent opencode from waiting for input
       if (currentChild.stdin) {
@@ -356,8 +237,8 @@ export function runAgentWithFileWatch(
       let resolved = false
       let timeoutTimer: NodeJS.Timeout | null = null
       let stdoutBuffer = ''
-      let heartbeatTimer: NodeJS.Timeout | null = null
       let extractedSessionId: string | undefined
+      let hasCompleted = false // Track if we've detected completion via step_finish event
       const accumulatedTokens = { input: 0, output: 0, cacheRead: 0 }
       let accumulatedCost = 0
       // Write raw JSON events to artifact file for full debugging
@@ -372,7 +253,7 @@ export function runAgentWithFileWatch(
       // Stderr capture for failure debugging
       let stderrLineCount = 0
       const stderrTailLines: string[] = [] // Rolling buffer of last N lines
-      const STDERR_TAIL_SIZE = 50
+      const STDERR_TAIL_SIZE = STDERR_TAIL_LINES
       let stderrLogFd: number | null = null
       try {
         const stderrLogPath = path.join(path.dirname(outputFile), `${stage}-stderr.log`)
@@ -440,18 +321,30 @@ export function runAgentWithFileWatch(
 
             // Display formatted output
             if (result.display) {
-              process.stderr.write(result.display + '\n')
+              process.stderr.write(prefixLogLine(stage, result.display) + '\n')
+            }
+
+            // R2-FIX #13: Detect completion via step_finish event.
+            // This fixes the hang in fork mode where process never exits.
+            // When we detect completion, call finish() to trigger file detection,
+            // nudge logic, and retry - all the fallback logic that normally runs
+            // in the exit handler.
+            if (result.completed && !hasCompleted && !resolved) {
+              hasCompleted = true
+              logger.info(`  🎯 Agent signaled completion via event, triggering finish...`)
+              // Call finish with succeeded=true - it handles all the fallback logic
+              finish({ succeeded: true, timedOut: false })
             }
           }
 
-          // Cap buffer size to prevent memory leaks on verbose agents
+          // FIX #5: Cap buffer size to prevent memory leaks on verbose agents.
+          // When the buffer exceeds MAX, discard the oldest data and keep the most
+          // recent MAX/2 bytes, breaking at a newline boundary for clean parsing.
           if (stdoutBuffer.length > MAX_STDOUT_BUFFER_SIZE) {
-            // Keep only the last portion, breaking at a newline boundary
-            const lastNewline = stdoutBuffer.lastIndexOf('\n', MAX_STDOUT_BUFFER_SIZE / 2)
+            const keepFrom = stdoutBuffer.length - MAX_STDOUT_BUFFER_SIZE / 2
+            const nextNewline = stdoutBuffer.indexOf('\n', keepFrom)
             stdoutBuffer =
-              lastNewline > 0
-                ? stdoutBuffer.slice(lastNewline + 1)
-                : stdoutBuffer.slice(-MAX_STDOUT_BUFFER_SIZE / 2)
+              nextNewline > 0 ? stdoutBuffer.slice(nextNewline + 1) : stdoutBuffer.slice(keepFrom)
           }
         })
       }
@@ -492,8 +385,6 @@ export function runAgentWithFileWatch(
         if (resolved) return
         resolved = true
 
-        // Clear heartbeat timer
-        if (heartbeatTimer) clearInterval(heartbeatTimer)
         if (timeoutTimer) clearTimeout(timeoutTimer)
 
         // Flush remaining stdout buffer
@@ -506,7 +397,7 @@ export function runAgentWithFileWatch(
             extractedSessionId = lastResult.sessionId
           }
           if (lastResult.display) {
-            process.stderr.write(lastResult.display + '\n')
+            process.stderr.write(prefixLogLine(stage, lastResult.display) + '\n')
           }
         }
 
@@ -558,16 +449,6 @@ export function runAgentWithFileWatch(
       const expectedBase = path.basename(outputFile, outputExt)
       const taskDirForPoll = path.dirname(outputFile)
 
-      // Progress heartbeat - log progress every 30s to detect hangs
-      const heartbeatStartTime = Date.now()
-      heartbeatTimer = setInterval(() => {
-        const elapsed = Date.now() - heartbeatStartTime
-        const stageLabel = stage || 'unknown'
-        logger.info(
-          `  💓 Still working on stage '${stageLabel}' (${elapsed / 1000 / 60} min elapsed)...`,
-        )
-      }, HEARTBEAT_INTERVAL)
-
       // Timeout (uses remaining time to prevent accumulation across retries)
       timeoutTimer = setTimeout(() => {
         logger.info(`  ⏱️ Timeout reached (${remainingTimeout / 1000 / 60} minutes)`)
@@ -602,7 +483,60 @@ export function runAgentWithFileWatch(
         const detectedFile = findOutputFile(taskDirForPoll, expectedBase, outputExt)
 
         if (!detectedFile) {
-          // File not found - retry or fail
+          // Nudge: If agent exited cleanly (code 0) and we have a live session,
+          // try a lightweight continuation before burning a full retry.
+          // The agent still has all context — it just forgot to write the file.
+          // If extractedSessionId is missing (some models don't emit sessionID in events),
+          // try to recover it from the OpenCode DB before giving up on nudge.
+          if (code === 0 && serverUrl && !extractedSessionId) {
+            extractedSessionId = recoverSessionId(dataDir)
+          }
+          if (code === 0 && serverUrl && extractedSessionId) {
+            // R2-FIX #12: Skip nudge if insufficient time remaining (need at least 30s)
+            const nudgeElapsed = Date.now() - startTime
+            const nudgeRemaining = effectiveTimeout - nudgeElapsed
+            if (nudgeRemaining < 30_000) {
+              logger.info(
+                `  🔔 Skipping nudge — only ${Math.round(nudgeRemaining / 1000)}s remaining`,
+              )
+            }
+            const nudgedFile =
+              nudgeRemaining >= 30_000
+                ? await nudgeSession(
+                    backend,
+                    effectiveAgent,
+                    outputFile,
+                    agentEnv,
+                    cwd,
+                    serverUrl,
+                    extractedSessionId,
+                    dataDir,
+                  )
+                : null
+            if (nudgedFile) {
+              // Nudge succeeded — continue to file stability check
+              // Re-assign detectedFile by jumping to the stability check below
+              const { stable, finalSize } = await waitForFileStable(nudgedFile, {
+                interval: STABILITY_CHECK_INTERVAL,
+                stableCount: STABILITY_CHECK_COUNT,
+                timeout: Math.min(ms('30s'), remainingTimeout),
+                onCheck: (size, checkNum) => {
+                  if (checkNum === 0) {
+                    logger.info(`  🔍 File size: ${size} bytes, waiting for stability...`)
+                  }
+                },
+              })
+              if (stable && finalSize > 0) {
+                logger.info(`  ✅ Output file stable (${finalSize} bytes) after nudge`)
+                finish({ succeeded: true, timedOut: false })
+                return
+              }
+              // Nudge produced file but it's not stable — fall through to retry
+              logger.info(`  ⚠️ Nudge produced file but it's not stable, falling through to retry`)
+            }
+          }
+
+          // File not found (or nudge failed) - retry or fail
           if (retries < maxRetries) {
             retries++
             const reason = code === 0 ? 'no output file' : `exit ${code}`
@@ -622,7 +556,14 @@ export function runAgentWithFileWatch(
             }
 
             logger.info(`  ⚠️ Stage failed (${reason}), retrying (${retries}/${maxRetries})...`)
-            setTimeout(() => attemptWithRetry(feedbackMsg), ms('2s'))
+            setTimeout(() => {
+              try {
+                attemptWithRetry(feedbackMsg)
+              } catch (err) {
+                logger.error(`  ❌ attemptWithRetry threw: ${err}`)
+                finish({ succeeded: false, timedOut: false })
+              }
+            }, ms('2s'))
             return
           } else {
             // Exhausted retries
@@ -663,7 +604,14 @@ export function runAgentWithFileWatch(
               retries++
               const feedbackMsg = `CRITICAL FAILURE: Output file was not fully written. The file size changed during stability check. Please ensure you write the complete file before exiting.`
               logger.info(`  ⚠️ Retrying with feedback (${retries}/${maxRetries})...`)
-              setTimeout(() => attemptWithRetry(feedbackMsg), ms('2s'))
+              setTimeout(() => {
+                try {
+                  attemptWithRetry(feedbackMsg)
+                } catch (err) {
+                  logger.error(`  ❌ attemptWithRetry threw: ${err}`)
+                  finish({ succeeded: false, timedOut: false })
+                }
+              }, ms('2s'))
               return
             } else {
               logger.info(`  ❌ File stability check failed, retries exhausted`)
@@ -705,7 +653,14 @@ export function runAgentWithFileWatch(
                 retries++
                 const feedbackMsg = `VALIDATION ERROR from previous attempt:\n${errorMsg}\n\nFix this issue in your output. Ensure your output follows the exact required format.`
                 logger.info(`  🔄 Retrying with validation feedback (${retries}/${maxRetries})...`)
-                setTimeout(() => attemptWithRetry(feedbackMsg), ms('2s'))
+                setTimeout(() => {
+                  try {
+                    attemptWithRetry(feedbackMsg)
+                  } catch (err) {
+                    logger.error(`  ❌ attemptWithRetry threw: ${err}`)
+                    finish({ succeeded: false, timedOut: false })
+                  }
+                }, ms('2s'))
                 return
               } else {
                 logger.info(`  ❌ Validation failed and retries exhausted`)
@@ -739,7 +694,12 @@ export function runAgentWithFileWatch(
     }
 
     // Start first attempt (no feedback)
-    attemptWithRetry(undefined)
+    try {
+      attemptWithRetry(undefined)
+    } catch (err) {
+      logger.error(`  ❌ attemptWithRetry initial call threw: ${err}`)
+      resolve({ succeeded: false, timedOut: false, retries: 0, validationErrors: [] })
+    }
   })
 }
 

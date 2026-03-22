@@ -72,20 +72,20 @@ describe('createDigestAction', () => {
     ctx = createMockContext()
   })
 
-  it('should return null when ctx.watchdogIssue is undefined', () => {
-    // No watchdogIssue on context
+  it('should return null when ctx.digestIssue is undefined', () => {
+    // No digestIssue on context
     const tasks = [createEvaluatedTask({ health: 'failed', healthDetail: 'Pipeline failed' })]
 
     const action = createDigestAction(tasks, ctx)
 
     expect(action).toBeNull()
     expect(ctx.log.warn).toHaveBeenCalledWith(
-      expect.stringContaining('WATCHDOG_ISSUE not configured'),
+      expect.stringContaining('INSPECTOR_DIGEST_ISSUE not configured'),
     )
   })
 
-  it('should return null when ctx.watchdogIssue is 0', () => {
-    ctx = createMockContext({ watchdogIssue: 0 })
+  it('should return null when ctx.digestIssue is 0', () => {
+    ctx = createMockContext({ digestIssue: 0 })
     const tasks = [createEvaluatedTask({ health: 'failed', healthDetail: 'Pipeline failed' })]
 
     const action = createDigestAction(tasks, ctx)
@@ -93,8 +93,8 @@ describe('createDigestAction', () => {
     expect(action).toBeNull()
   })
 
-  it('should return action that posts to correct issue number when ctx.watchdogIssue is set', async () => {
-    ctx = createMockContext({ watchdogIssue: 99 })
+  it('should return action that posts to correct issue number when ctx.digestIssue is set', async () => {
+    ctx = createMockContext({ digestIssue: 99 })
     const tasks = [createEvaluatedTask({ health: 'failed', healthDetail: 'Pipeline failed' })]
 
     const action = createDigestAction(tasks, ctx)
@@ -112,11 +112,11 @@ describe('createDigestAction', () => {
     )
   })
 
-  it('should return null when all tasks are healthy', () => {
-    ctx = createMockContext({ watchdogIssue: 42 })
+  it('should return null when all tasks are completed or unknown', () => {
+    ctx = createMockContext({ digestIssue: 42 })
     const tasks = [
-      createEvaluatedTask({ health: 'healthy' }),
       createEvaluatedTask({ health: 'completed' }),
+      createEvaluatedTask({ health: 'unknown' }),
     ]
 
     const action = createDigestAction(tasks, ctx)
@@ -125,7 +125,7 @@ describe('createDigestAction', () => {
   })
 
   it('should return null when there are no tasks', () => {
-    ctx = createMockContext({ watchdogIssue: 42 })
+    ctx = createMockContext({ digestIssue: 42 })
 
     const action = createDigestAction([], ctx)
 
@@ -133,7 +133,7 @@ describe('createDigestAction', () => {
   })
 
   it('should include task details in digest table', async () => {
-    ctx = createMockContext({ watchdogIssue: 42 })
+    ctx = createMockContext({ digestIssue: 42 })
     const tasks = [
       createEvaluatedTask({
         taskId: '260312-task-a',
@@ -155,8 +155,8 @@ describe('createDigestAction', () => {
     const body = (ctx.github.postComment as ReturnType<typeof vi.fn>).mock.calls[0][1] as string
     expect(body).toContain('260312-task-a')
     expect(body).toContain('260312-task-b')
-    expect(body).toContain('❌ failed')
-    expect(body).toContain('🚧 gated')
+    expect(body).toContain('🔴 failed')
+    expect(body).toContain('🟠 gated')
   })
 })
 

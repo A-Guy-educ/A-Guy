@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid request', details: error.issues }, { status: 400 })
     }
 
-    reqLogger.error({ err: error, requestId }, 'Message persist endpoint error')
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    const { captureAndRespond } = await import('@/server/api/capture-and-respond')
+    return captureAndRespond(error, { route: '/api/agent/message/persist', requestId })
   }
 }

@@ -21,10 +21,15 @@ import {
   resolvePipelineProfile,
   getComplexityTier,
   getStagesForComplexity,
-  STAGE_COMPLEXITY_THRESHOLDS,
   COMPLEXITY_MIN,
   COMPLEXITY_MAX,
 } from '../../../../scripts/cody/pipeline-utils'
+import { STAGE_REGISTRY, STAGE_NAMES } from '../../../../scripts/cody/stages/registry'
+
+// Backward-compat shim for tests: reconstruct STAGE_COMPLEXITY_THRESHOLDS from registry
+const STAGE_COMPLEXITY_THRESHOLDS: Record<string, number> = Object.fromEntries(
+  STAGE_NAMES.map((s) => [s, STAGE_REGISTRY[s].complexityThreshold]),
+)
 import type { TaskDefinition } from '../../../../scripts/cody/pipeline-utils'
 
 // Helper: create a temp task directory with a task.json
@@ -656,7 +661,7 @@ describe('definitions.ts skip chain integration', () => {
     const pipeline = buildPipeline('full', 'standard', true, ctx)
 
     // All optional stages should NOT be skipped by complexity
-    for (const stageName of ['gap', 'clarify', 'architect', 'plan-gap']) {
+    for (const stageName of ['gap', 'clarify', 'architect', 'plan-gap'] as const) {
       const stage = pipeline.stages.get(stageName)!
       if (stage.shouldSkip) {
         const result = stage.shouldSkip(ctx)
@@ -689,20 +694,20 @@ describe('entry.ts impl-mode complexity override', () => {
     expect(taskDef.complexity_reasoning).toBe('Override via --complexity=42')
   })
 
-  it('override does NOT apply when taskDef already has complexity', () => {
+  it('override DOES apply even when taskDef already has complexity (new behavior)', () => {
     const taskDef = createTaskDef('implement_feature', 'medium', 75)
     expect(taskDef.complexity).toBe(75)
 
-    // Simulate the entry.ts logic (line 370)
+    // Simulate the NEW entry.ts logic (override always applies)
     const complexityOverride = 10
-    if (complexityOverride !== undefined && taskDef.complexity === undefined) {
+    if (complexityOverride !== undefined) {
       taskDef.complexity = complexityOverride
       taskDef.complexity_reasoning = `Override via --complexity=${complexityOverride}`
     }
 
-    // Original preserved
-    expect(taskDef.complexity).toBe(75)
-    expect(taskDef.complexity_reasoning).toBe('Test complexity: 75')
+    // Override replaces original
+    expect(taskDef.complexity).toBe(10)
+    expect(taskDef.complexity_reasoning).toBe('Override via --complexity=10')
   })
 
   it('M3 fix: override does NOT apply when taskDef.complexity is a falsy number (edge case)', () => {

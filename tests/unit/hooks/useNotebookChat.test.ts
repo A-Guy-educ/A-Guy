@@ -236,6 +236,67 @@ describe('useNotebookChat', () => {
     expect(result.current.injectExerciseContext).toBe(initialInjectExerciseContext)
   })
 
+  it('should scroll to bottom after loading conversation history', async () => {
+    // Mock getConversation to return a conversation with multiple messages (history exists)
+    const conversationHistory = [
+      { id: 'msg-1', role: ChatRole.User, content: 'First message' },
+      { id: 'msg-2', role: ChatRole.Assistant, content: 'First response' },
+      { id: 'msg-3', role: ChatRole.User, content: 'Second message' },
+      { id: 'msg-4', role: ChatRole.Assistant, content: 'Second response' },
+      { id: 'msg-5', role: ChatRole.User, content: 'Third message - latest' },
+    ]
+
+    ;(apiService.getConversation as ReturnType<typeof vi.fn>).mockResolvedValue({
+      success: true,
+      exists: true,
+      conversationId: 'conv-123',
+      messages: conversationHistory,
+    })
+
+    // Track scroll calls by spying on the container's scrollTop setter
+    const scrollCalls: number[] = []
+    const mockContainer = {
+      scrollHeight: 500,
+      get scrollTop() {
+        return 0
+      },
+      set scrollTop(value: number) {
+        scrollCalls.push(value)
+      },
+    }
+
+    // Override the messagesContainerRef before rendering
+    // We need to spy on scrollTop assignments to verify scrollToBottom is called
+    const { result } = renderHook(() => useNotebookChat(defaultProps))
+
+    // Manually set the mock container on the ref
+    Object.defineProperty(result.current.messagesContainerRef, 'current', {
+      get: () => mockContainer as unknown as HTMLDivElement,
+      set: () => {},
+      configurable: true,
+    })
+
+    // Initially, loading history is true
+    expect(result.current.isLoadingHistory).toBe(true)
+
+    // Wait for history to load
+    await waitFor(() => expect(result.current.isLoadingHistory).toBe(false))
+
+    // Verify messages were loaded (5 history messages)
+    expect(result.current.messages.length).toBe(5)
+
+    // BUG: The current implementation scrolls when messages change, but at that point
+    // isLoadingHistory is still true, so messages aren't in the DOM yet.
+    // When isLoadingHistory becomes false and messages render, there's no scroll.
+    //
+    // The fix should add a useEffect that watches isLoadingHistory and scrolls when it becomes false.
+    // This test verifies that behavior exists by checking scrollTop was set to scrollHeight
+    // after history finished loading.
+    //
+    // Currently this test will FAIL because there's no effect watching isLoadingHistory
+    expect(scrollCalls).toContain(500) // scrollHeight
+  })
+
   describe('error logging', () => {
     let consoleErrorSpy: ReturnType<typeof vi.spyOn>
 

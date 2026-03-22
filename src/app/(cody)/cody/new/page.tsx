@@ -2,25 +2,23 @@
  * @fileType page
  * @domain cody
  * @pattern dashboard-page
- * @ai-summary Cody dashboard with create task dialog pre-opened via URL /cody/new
+ * @ai-summary Cody dashboard with create task dialog pre-opened via URL /cody/new.
+ *   Force static for OG tags - social media crawlers need metadata without auth.
  */
-import { redirect } from 'next/navigation'
-import type { Metadata } from 'next'
 import { CodyDashboard } from '@/ui/cody/components/CodyDashboard'
-import { getMeUser } from '@/infra/utils/getMeUser'
-import { AccountRole } from '@/infra/auth/roles'
+import { buildCodyMetadata } from '../metadata'
 
-export const metadata: Metadata = {
+// Force static generation so OG tags are available without authentication
+export const dynamic = 'force-static'
+export const revalidate = false
+export const fetchCache = 'force-cache'
+
+export const metadata = buildCodyMetadata({
   title: 'Create Task — Cody Operations Dashboard',
-  description: 'Create a new task for the Cody CI build agent',
-}
+  description: 'Create a new task for the Cody AI build agent',
+  path: '/cody/new',
+})
 
 export default async function CodyNewTaskPage() {
-  const { user } = await getMeUser()
-
-  if (!user || user.role !== AccountRole.Admin) {
-    redirect('/login?returnTo=/cody/new')
-  }
-
   return <CodyDashboard initialModal="new" />
 }

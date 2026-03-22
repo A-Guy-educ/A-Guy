@@ -1,0 +1,48 @@
+{
+  "id": "lesson-404",
+  "name": "Student navigates to non-existent lesson and sees 404",
+  "journey": "student-navigates-content",
+  "type": "edge",
+  "area": "navigation",
+  "tags": ["404", "error", "lesson"],
+  "locale": "he",
+  "preconditions": [
+    {
+      "action": "seed",
+      "entity": "course",
+      "data": {
+        "title": "404 Course",
+        "courseLabel": "א",
+        "status": "published",
+        "isActive": true,
+        "accessType": "free"
+      },
+      "ref": "$course"
+    },
+    {
+      "action": "seed",
+      "entity": "chapter",
+      "data": {
+        "title": "404 Chapter",
+        "course": "$course",
+        "status": "published",
+        "isActive": true
+      },
+      "ref": "$chapter"
+    }
+  ],
+  "steps": [
+    {
+      "action": "navigate",
+      "input": {
+        "type": "url",
+        "url": "/courses/non-existent-lesson-slug/chapters/chapter/lessons/lesson"
+      }
+    },
+    {
+      "action": "beAt",
+      "input": { "pattern": "/(404|not-found)" }
+    }
+  ],
+  "teardown": "auto"
+}

@@ -287,17 +287,15 @@ This is valid promoted content from a previous successful run.
   // ========================================================================
 
   describe('parallel stage error handling (Fix #3)', () => {
-    it('should have parallel docs+reflect group in the implementation pipeline', async () => {
-      // Speed optimization: docs and reflect run in parallel
+    it('should have test and build in parallel group in the implementation pipeline', async () => {
       const { IMPL_ORDER_STANDARD } = await import('../../scripts/cody/pipeline/definitions')
 
-      // Verify parallel group exists for docs+reflect
+      // test and build run in parallel
       const parallelStep = IMPL_ORDER_STANDARD.find(
         (step) => typeof step === 'object' && 'parallel' in step,
       )
-
       expect(parallelStep).toBeDefined()
-      expect(parallelStep).toEqual({ parallel: ['docs', 'reflect'] })
+      expect(parallelStep).toEqual({ parallel: ['test', 'build'] })
     })
   })
 

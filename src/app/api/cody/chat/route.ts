@@ -4,14 +4,15 @@
  * @pattern ai-chat-streaming
  * @ai-summary Streaming AI chat endpoint with GitHub MCP tools for repo browsing
  */
-import { createMCPClient } from '@ai-sdk/mcp'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { streamText, tool, stepCountIs, type ToolSet } from 'ai'
 import { z } from 'zod'
 import { logger } from '@/infra/utils/logger/logger'
 import { NextRequest, NextResponse } from 'next/server'
-import { requireDashboardAuth } from '@/ui/cody/auth'
-import { getAgent, type ToolScope } from '@/ui/cody/agents'
+import { requireCodyAuth, verifyActorLogin } from '@/ui/cody/auth'
+import { getAgent, type ToolScope, type AgentId } from '@/ui/cody/agents'
+import { getMCPManager } from './mcp-manager'
+import { browseUrlTool } from './tools/browse-url'
 import {
   fetchIssue,
   fetchIssues,
@@ -23,6 +24,8 @@ import {
   getOctokit,
 } from '@/ui/cody/github-client'
 import { GITHUB_OWNER, GITHUB_REPO } from '@/ui/cody/constants'
+import { isRemoteEnabled } from '@/ui/cody/remote-config'
+import { REMOTE_SYSTEM_PROMPT_EXTENSION } from '@/ui/cody/agents'
 import type {
   CodyTask,
   CodyPipelineStatus,
@@ -33,37 +36,6 @@ import type {
 
 // Use Node.js runtime
 export const runtime = 'nodejs'
-
-// Cache the MCP client — retry on failure instead of caching rejections
-let mcpClient: Awaited<ReturnType<typeof createMCPClient>> | null = null
-let mcpClientPending: ReturnType<typeof createMCPClient> | null = null
-
-async function getMCPClient() {
-  // Return cached client if already initialized
-  if (mcpClient) return mcpClient
-
-  // Deduplicate concurrent initialization attempts
-  if (mcpClientPending) return mcpClientPending
-
-  mcpClientPending = createMCPClient({
-    transport: {
-      type: 'http',
-      url: 'https://api.githubcopilot.com/mcp/',
-      headers: {
-        Authorization: `Bearer ${process.env.GH_PAT || process.env.GITHUB_TOKEN}`,
-      },
-    },
-  })
-
-  try {
-    mcpClient = await mcpClientPending
-    return mcpClient
-  } catch (error) {
-    // Clear pending so next request retries instead of replaying the same error
-    mcpClientPending = null
-    throw error
-  }
-}
 
 // Attachment from request
 interface Attachment {
@@ -281,6 +253,9 @@ const customTools = {
       }
     },
   }),
+
+  // Web browsing tool - fetch and read any public web page
+  browseUrl: browseUrlTool,
 }
 
 // ===========================================
@@ -511,38 +486,83 @@ function processAttachments(attachments?: Attachment[]) {
 }
 
 // ===========================================
+// REMOTE TOOLS BUILDER
+// ===========================================
+
+/**
+ * Builds the four remote dev tools for users with a configured remote environment.
+ * The tools proxy through /api/cody/remote/exec on the Vercel side.
+ * This is only called when isRemoteEnabled(actorLogin) is true.
+ */
+function buildRemoteTools(actorLogin: string): ToolSet {
+  const proxyAction = async (action: string, payload: Record<string, unknown>) => {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL || ''}/api/cody/remote/exec`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ actorLogin, action, payload }),
+    })
+    return res.json()
+  }
+
+  return {
+    remoteExec: tool({
+      description:
+        'Execute a shell command on the remote Mac dev environment. Use for running build commands, tests, checking processes, etc.',
+      inputSchema: z.object({
+        command: z.string().describe('Shell command to execute'),
+        cwd: z.string().optional().describe('Working directory (must be within allowed roots)'),
+      }),
+      execute: async ({ command, cwd }) => proxyAction('exec', { command, cwd }),
+    }),
+
+    remoteRead: tool({
+      description: 'Read a file from the remote Mac dev environment.',
+      inputSchema: z.object({
+        path: z.string().describe('Absolute path to the file to read'),
+      }),
+      execute: async ({ path }) => proxyAction('read', { path }),
+    }),
+
+    remoteWrite: tool({
+      description: 'Write content to a file on the remote Mac dev environment.',
+      inputSchema: z.object({
+        path: z.string().describe('Absolute path to the file to write'),
+        content: z.string().describe('Content to write to the file'),
+      }),
+      execute: async ({ path, content }) => proxyAction('write', { path, content }),
+    }),
+
+    remoteLs: tool({
+      description: 'List directory contents on the remote Mac dev environment.',
+      inputSchema: z.object({
+        path: z.string().describe('Absolute path to the directory to list'),
+      }),
+      execute: async ({ path }) => proxyAction('ls', { path }),
+    }),
+  } as ToolSet
+}
+
+// ===========================================
 // API HANDLERS
 // ===========================================
 
 export async function GET(req: NextRequest) {
   try {
-    // Check authentication
-    const auth = await requireDashboardAuth(req)
-    if (!auth.authenticated) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Check authentication using GitHub OAuth
+    const authResult = await requireCodyAuth(req)
+    if (authResult !== null) {
+      return authResult // Return the 401 response
     }
 
-    // Test MCP connection — 5s timeout to avoid hanging
-    let mcpToolCount = 0
-    try {
-      const mcpCheck = (async () => {
-        const mcp = await getMCPClient()
-        const tools = await mcp.tools()
-        return Object.keys(tools).length
-      })()
-      mcpToolCount = await Promise.race([
-        mcpCheck,
-        new Promise<number>((resolve) => setTimeout(() => resolve(0), 5_000)),
-      ])
-    } catch (mcpError) {
-      logger.warn({ err: mcpError }, 'GitHub MCP unavailable for health check')
-    }
+    // Get MCP health status from manager
+    const mcpManager = getMCPManager()
+    const mcps = await mcpManager.getHealthStatus()
+    const totalMcpTools = mcps.reduce((sum, m) => sum + m.toolCount, 0)
 
     return NextResponse.json({
       status: 'Chat endpoint ready',
-      toolsets: mcpToolCount > 0 ? ['github-mcp', 'custom-cody'] : ['custom-cody'],
-      toolCount: mcpToolCount + Object.keys(customTools).length,
-      mcpEnabled: mcpToolCount > 0,
+      mcps,
+      toolCount: totalMcpTools + Object.keys(customTools).length,
     })
   } catch (error) {
     logger.error({ err: error }, 'Chat GET error')
@@ -573,7 +593,15 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { messages = [], taskId, taskData, agentId, attachments } = body
+    const { messages = [], taskId, taskData, agentId, attachments, actorLogin } = body
+
+    // Authenticate and verify actorLogin matches session
+    const authResult = await verifyActorLogin(req, actorLogin)
+    if ('status' in authResult) {
+      return authResult // Return the 401/403 response
+    }
+
+    const { identity } = authResult
 
     if (!messages || messages.length === 0) {
       return NextResponse.json({ error: 'Messages are required' }, { status: 400 })
@@ -584,6 +612,7 @@ export async function POST(req: NextRequest) {
     logger.info(
       {
         requestId,
+        actorLogin: identity.login, // Use verified identity, not client-supplied
         messageCount: messages.length,
         taskId,
         agentId: agent.id,
@@ -605,35 +634,43 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Get GitHub MCP tools — 5s timeout to allow initial handshake, skip on failure
-    let mcpTools = {} as Record<string, unknown>
-    try {
-      const mcpToolsPromise = (async () => {
-        const mcp = await getMCPClient()
-        return await mcp.tools()
-      })()
+    // Get MCP tools for this agent via the manager (handles timeout and graceful degradation)
+    const mcpManager = getMCPManager()
+    const mcpTools = await mcpManager.getTools(agent.id as AgentId)
 
-      const timeoutMs = 5_000
-      const mcpToolsOrEmpty = await Promise.race([
-        mcpToolsPromise,
-        new Promise<Record<string, never>>((resolve) => setTimeout(() => resolve({}), timeoutMs)),
-      ])
+    logger.info(
+      { requestId, agentId: agent.id, mcpToolCount: Object.keys(mcpTools).length },
+      'MCP tools loaded for agent',
+    )
 
-      if (Object.keys(mcpToolsOrEmpty).length > 0) {
-        mcpTools = mcpToolsOrEmpty
-        logger.info(
-          { requestId, mcpToolCount: Object.keys(mcpTools).length },
-          'GitHub MCP tools loaded',
-        )
-      } else {
-        logger.warn({ requestId }, 'GitHub MCP timed out after 5s - using custom tools only')
-      }
-    } catch (mcpError) {
-      logger.warn({ err: mcpError, requestId }, 'GitHub MCP unavailable - using custom tools only')
+    // Get MCP system prompt extensions (e.g., Figma tool documentation)
+    const mcpPromptExt = await mcpManager.getSystemPromptExtensions(agent.id as AgentId)
+    if (mcpPromptExt) {
+      systemPrompt = systemPrompt + mcpPromptExt
     }
 
     // Filter tools based on agent's toolScope
-    const allTools = filterToolsByScope(agent.toolScope, mcpTools, customTools) as ToolSet
+    let allTools = filterToolsByScope(agent.toolScope, mcpTools, customTools) as ToolSet
+
+    // Inject remote tools if this user has a remote dev environment configured
+    // Use verified identity.login instead of client-supplied actorLogin
+    if (identity.login && isRemoteEnabled(identity.login)) {
+      const remoteTools = buildRemoteTools(identity.login)
+      allTools = { ...allTools, ...remoteTools }
+      // Extend system prompt with remote tool instructions
+      systemPrompt = systemPrompt + REMOTE_SYSTEM_PROMPT_EXTENSION
+    }
+
+    // Inject dynamic tool list into system prompt
+    // This ensures the LLM knows exactly which tools it has available at runtime
+    const toolNames = Object.keys(allTools)
+    const toolInventory =
+      `\n\n## Your Available Tools (${toolNames.length})\n\n` +
+      toolNames.map((name) => `- ${name}`).join('\n') +
+      `\n\nIMPORTANT: If a user asks you to do something and you don't have a tool for it, ` +
+      `explicitly say which tool or capability would be needed. Never say "I cannot" without ` +
+      `explaining what's missing. If the user shares a URL, use the browseUrl tool to read it.`
+    systemPrompt = systemPrompt + toolInventory
 
     // Convert messages to AI SDK format, handling attachments
     const attachmentContents = processAttachments(attachments)

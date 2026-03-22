@@ -1,0 +1,36 @@
+{
+  "id": "course-tab-navigation",
+  "name": "Student switches between course tabs (Learn, Practice, Ask)",
+  "journey": "student-navigates-content",
+  "type": "feature",
+  "area": "navigation",
+  "tags": ["navigation", "tabs"],
+  "locale": "he",
+  "steps": [
+    {
+      "action": "navigate",
+      "input": { "type": "url", "url": "/courses/test" },
+      "description": "Navigate to existing course"
+    },
+    {
+      "action": "see",
+      "input": { "text": "בדיקת המרה" }
+    },
+    {
+      "action": "clickTab",
+      "input": { "tab": "practice" },
+      "description": "Switch to Practice tab"
+    },
+    {
+      "action": "clickTab",
+      "input": { "tab": "ask" },
+      "description": "Switch to Ask tab"
+    },
+    {
+      "action": "clickTab",
+      "input": { "tab": "learn" },
+      "description": "Switch back to Learn tab"
+    }
+  ],
+  "teardown": "auto"
+}

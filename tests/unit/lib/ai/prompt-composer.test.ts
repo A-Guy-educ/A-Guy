@@ -36,7 +36,8 @@ describe('composeSystemInstructions', () => {
   it('works with empty system prompts array', () => {
     const result = composeSystemInstructions([], 'Lesson prompt', undefined)
 
-    expect(result).toBe('Lesson prompt')
+    expect(result).toContain('Lesson prompt')
+    expect(result).toContain('## Math Formatting')
     expect(result).not.toContain(SYSTEM_PROMPT_SEPARATOR)
   })
 
@@ -57,7 +58,8 @@ describe('composeSystemInstructions', () => {
   it('adds separator between system prompts and lesson prompt', () => {
     const result = composeSystemInstructions(['System'], 'Lesson')
 
-    expect(result).toBe(`System${SYSTEM_PROMPT_SEPARATOR}Lesson`)
+    expect(result).toContain(`System${SYSTEM_PROMPT_SEPARATOR}Lesson`)
+    expect(result).toContain('## Math Formatting')
   })
 
   it('includes lesson context with proper delimiters', () => {
@@ -71,7 +73,8 @@ describe('composeSystemInstructions', () => {
   it('handles single system prompt correctly', () => {
     const result = composeSystemInstructions(['Only system prompt'], 'Lesson prompt')
 
-    expect(result).toBe(`Only system prompt${SYSTEM_PROMPT_SEPARATOR}Lesson prompt`)
+    expect(result).toContain(`Only system prompt${SYSTEM_PROMPT_SEPARATOR}Lesson prompt`)
+    expect(result).toContain('## Math Formatting')
   })
 
   it('handles multiple system prompts with lesson context', () => {
