@@ -1,51 +1,65 @@
 # Codebase Context: 260322-systest-1774130474005
 
 ## Files to Modify
-- `src/infra/utils/pipeline-health.ts` (NEW) — PipelineHealthReport class with HealthStatus, Report, RetryStrategy interfaces, getStageTimeout helper, Zod validation
-- `tests/unit/infra/utils/pipeline-health.test.ts` (NEW) — Unit tests covering all public methods
+
+- `src/infra/utils/pipeline-health.ts` (NEW) — Main utility module with PipelineHealthReport class, interfaces, and helper function
+- `tests/unit/infra/utils/pipeline-health.test.ts` (NEW) — Integration tests for all public methods
 
 ## Files to Read (reference patterns)
-- `src/infra/utils/path-utils.ts` — JSDoc comment style, simple utility function patterns
-- `src/infra/utils/validation/validate.ts` — validate(), safeValidate() helpers for Zod
-- `src/infra/utils/validation/common-schemas.ts` — Zod schema patterns (emailSchema, objectIdSchema, etc.)
-- `tests/unit/infra/utils/speechHelpers.test.ts` — Test file structure with describe/it/expect
+
+- `src/infra/utils/validation/common-schemas.ts` — Zod schema patterns (import `z` from 'zod')
+- `src/infra/utils/validation/validate.ts` — Validation helper functions (validate, safeValidate, formatZodErrors)
+- `tests/unit/infra/utils/speechHelpers.test.ts` — Test file pattern with Vitest describe/it/expect
 
 ## Key Signatures
 
-### Zod Validation Pattern
 ```typescript
-// From src/infra/utils/validation/validate.ts
-export function validate<T extends z.ZodTypeAny>(schema: T, data: unknown): z.infer<T>
-export function safeValidate<T extends z.ZodTypeAny>(schema: T, data: unknown): { success: true; data: z.infer<T> } | { success: false; error: z.ZodError }
+// New exports from src/infra/utils/pipeline-health.ts
+export class PipelineHealthReport {
+  checkStageHealth(stage: string): HealthStatus
+  generateReport(): Report
+  getRetryRecommendation(failedStage: string): RetryStrategy
+}
 
-// From src/infra/utils/validation/common-schemas.ts
-export const emailSchema = z.string().email('Invalid email address')
-export const objectIdSchema = z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid ID format')
-```
+export function getStageTimeout(stage: string): number
 
-### Test Pattern
-```typescript
-// From tests/unit/infra/utils/speechHelpers.test.ts
-import { describe, it, expect } from 'vitest'
-describe('functionName', () => {
-  it('should do something', () => {
-    expect(someFunction()).toBe(expected)
-  })
-})
+// Interfaces
+export interface HealthStatus {
+  stage: string
+  isHealthy: boolean
+  lastCheck: Date
+  message?: string
+}
+
+export interface Report {
+  timestamp: Date
+  stages: HealthStatus[]
+  overallHealth: 'healthy' | 'degraded' | 'unhealthy'
+}
+
+export interface RetryStrategy {
+  stage: string
+  recommendedRetries: number
+  backoffMultiplier: number
+  shouldRetry: boolean
+}
 ```
 
 ## Reuse Inventory
-- `z` from 'zod' — Zod validation schema creation
-- `validate`, `safeValidate` from `@/infra/utils/validation` — validation helpers
-- Vitest `describe`, `it`, `expect` — testing framework
-- Existing `src/infra/utils/` patterns for JSDoc and exports
+
+- `z` from `zod` — Use for runtime validation schemas in pipeline-health.ts
+- `validate`/`safeValidate` from `src/infra/utils/validation/validate.ts` — Can reuse for input validation
+- Vitest (`describe`, `it`, `expect`) — Already used in existing test files
 
 ## Integration Points
-- None — standalone utility module, no collection or API integration
-- Import path: `@/infra/utils/pipeline-health`
+
+- No Payload collection registration needed (pure utility module)
+- No Next.js route registration needed
+- No admin component registration needed
 
 ## Imports Verified
-- `zod` → exports `z` for schema creation ✅
-- `@/infra/utils/validation` → exports `validate`, `safeValidate` ✅
-- `vitest` → exports `describe`, `it`, `expect` ✅
-- `src/infra/utils/` → exists with similar utilities ✅
+
+- `zod` — Available as project dependency ✅
+- `vitest` — Available as dev dependency for testing ✅
+- `src/infra/utils/` directory exists ✅
+- `tests/unit/infra/utils/` directory exists ✅
