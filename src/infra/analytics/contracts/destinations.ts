@@ -56,6 +56,21 @@ export const eventDestinations: Record<ProductEvent, AnalyticsDestination[]> = {
   [PRODUCT_EVENTS.CHAT_AUTO_TRIGGERED]: ['mixpanel'],
   [PRODUCT_EVENTS.EXERCISE_VIEWED]: ['mixpanel'],
   [PRODUCT_EVENTS.EXERCISE_COMPLETED]: ['mixpanel'],
+
+  // Coupon & Access Events (Mixpanel only)
+  [PRODUCT_EVENTS.COUPON_CODE_ENTERED]: ['mixpanel'],
+  [PRODUCT_EVENTS.ACCESS_GATE_SHOWN]: ['mixpanel'],
+  [PRODUCT_EVENTS.ACCESS_GRANTED]: ['mixpanel'],
+
+  // Exercise Quality Events (Mixpanel only)
+  [PRODUCT_EVENTS.ANSWER_CORRECT]: ['mixpanel'],
+  [PRODUCT_EVENTS.ANSWER_INCORRECT]: ['mixpanel'],
+  [PRODUCT_EVENTS.EXERCISE_SKIPPED]: ['mixpanel'],
+
+  // Engagement Signal Events (Mixpanel only)
+  [PRODUCT_EVENTS.LESSON_ABANDONED]: ['mixpanel'],
+  [PRODUCT_EVENTS.CHAPTER_COMPLETED]: ['mixpanel'],
+  [PRODUCT_EVENTS.TIME_ON_PAGE]: ['mixpanel'],
 }
 
 /**
