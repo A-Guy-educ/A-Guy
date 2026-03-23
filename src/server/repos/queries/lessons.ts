@@ -111,6 +111,9 @@ export const queryLessonBySlug = cache(async ({ slug }: { slug: string }) => {
     pagination: false,
     depth: 1,
     overrideAccess: false,
+    // Exclude formulaSheet from population — its blocks field can cause
+    // population errors. Formula sheets are fetched separately via resolveFormulaSheet.
+    select: { formulaSheet: false },
   })
 
   const lesson = result.docs?.[0]
