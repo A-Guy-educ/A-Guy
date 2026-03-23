@@ -65,12 +65,31 @@ export async function POST(request: NextRequest) {
       ...modelEntry,
     }
 
-    // Process each exercise chunk individually
+    // Process each exercise chunk: AI for text, script parser for diagrams
+    const { parseLatexToExercises } = await import('@/lib/latex-parser')
+
     const rawExercises: Array<{ title: string; blocks: unknown[] }> = []
     const aiErrors: string[] = []
 
     for (let ci = 0; ci < chunks.length; ci++) {
       const chunk = chunks[ci]
+
+      // Step 1: Run script parser to extract diagram blocks (axis, geometry)
+      const scriptResult = parseLatexToExercises(chunk.latex)
+      const diagramBlocks: unknown[] = []
+      for (const ex of scriptResult.exercises) {
+        for (const block of ex.blocks) {
+          if (
+            block.type === 'question_axis' ||
+            block.type === 'question_geometry' ||
+            block.type === 'question_multi_axis'
+          ) {
+            diagramBlocks.push(block)
+          }
+        }
+      }
+
+      // Step 2: AI for text/questions
       try {
         const { system, userMessage } = buildAiParserPrompt(chunk.latex)
 
@@ -88,21 +107,47 @@ export async function POST(request: NextRequest) {
         if (parsed) {
           const exercises = Array.isArray(parsed.exercises) ? parsed.exercises : [parsed]
           for (const ex of exercises) {
+            // Step 3: Merge — replace [diagram] placeholders with actual diagram blocks
+            const mergedBlocks = mergeDiagramBlocks(ex.blocks || [], diagramBlocks)
             rawExercises.push({
               title: ex.title || chunk.title || `Exercise ${ci + 1}`,
-              blocks: ex.blocks || [],
+              blocks: mergedBlocks,
             })
           }
         } else {
-          reqLogger.warn(
-            { chunkIndex: ci, responsePreview: result.text.slice(0, 300) },
-            'AI returned unparseable response for chunk',
-          )
-          aiErrors.push(`Exercise ${ci + 1} (${chunk.title || 'untitled'}): invalid AI response`)
+          // AI failed — fall back to script-only result if it has content
+          if (scriptResult.exercises.length > 0 && scriptResult.exercises[0].blocks.length > 0) {
+            for (const ex of scriptResult.exercises) {
+              rawExercises.push({
+                title: ex.title || chunk.title || `Exercise ${ci + 1}`,
+                blocks: ex.blocks,
+              })
+            }
+            reqLogger.info({ chunkIndex: ci }, 'AI failed, fell back to script parser')
+          } else {
+            reqLogger.warn(
+              { chunkIndex: ci, responsePreview: result.text.slice(0, 300) },
+              'AI returned unparseable response for chunk',
+            )
+            aiErrors.push(`Exercise ${ci + 1} (${chunk.title || 'untitled'}): invalid AI response`)
+          }
         }
       } catch (err) {
-        reqLogger.error({ chunkIndex: ci, err }, 'AI call failed for chunk')
-        aiErrors.push(`Exercise ${ci + 1}: ${err instanceof Error ? err.message : 'unknown error'}`)
+        // AI call failed — fall back to script parser
+        if (scriptResult.exercises.length > 0 && scriptResult.exercises[0].blocks.length > 0) {
+          for (const ex of scriptResult.exercises) {
+            rawExercises.push({
+              title: ex.title || chunk.title || `Exercise ${ci + 1}`,
+              blocks: ex.blocks,
+            })
+          }
+          reqLogger.info({ chunkIndex: ci }, 'AI call failed, fell back to script parser')
+        } else {
+          reqLogger.error({ chunkIndex: ci, err }, 'AI call failed for chunk')
+          aiErrors.push(
+            `Exercise ${ci + 1}: ${err instanceof Error ? err.message : 'unknown error'}`,
+          )
+        }
       }
     }
 
@@ -359,6 +404,43 @@ function pick(obj: Record<string, unknown>, keys: string[]): Record<string, unkn
     }
   }
   return result
+}
+
+/**
+ * Replace AI [diagram] placeholder blocks with actual parsed diagram blocks.
+ * Diagram blocks are inserted in order — first [diagram] gets first diagram block, etc.
+ */
+function mergeDiagramBlocks(aiBlocks: unknown[], diagramBlocks: unknown[]): unknown[] {
+  if (diagramBlocks.length === 0) return aiBlocks
+
+  const result: unknown[] = []
+  let diagramIdx = 0
+
+  for (const block of aiBlocks) {
+    if (isDiagramPlaceholder(block) && diagramIdx < diagramBlocks.length) {
+      result.push(diagramBlocks[diagramIdx])
+      diagramIdx++
+    } else {
+      result.push(block)
+    }
+  }
+
+  // Append any remaining diagram blocks that didn't match a placeholder
+  while (diagramIdx < diagramBlocks.length) {
+    result.push(diagramBlocks[diagramIdx])
+    diagramIdx++
+  }
+
+  return result
+}
+
+/** Check if a block is an AI-generated [diagram] placeholder */
+function isDiagramPlaceholder(block: unknown): boolean {
+  if (typeof block !== 'object' || block === null) return false
+  const b = block as Record<string, unknown>
+  if (b.type !== 'rich_text') return false
+  const val = String(b.value || '').toLowerCase()
+  return val.includes('[diagram]') || val.includes('[graph]') || val.includes('[tikz')
 }
 
 /**
