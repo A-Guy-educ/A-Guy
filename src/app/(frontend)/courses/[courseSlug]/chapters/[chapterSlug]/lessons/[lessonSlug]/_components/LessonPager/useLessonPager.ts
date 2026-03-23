@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import type { ResolvedLessonBlock } from '@/server/repos/queries/lesson-blocks'
 import type { Exercise, ContentPage } from '@/payload-types'
 
-type PageType = 'intro' | 'block' | 'outro'
+type PageType = 'intro' | 'block' | 'pdf' | 'outro'
 
 interface PageState {
   type: PageType
@@ -17,6 +17,7 @@ interface UseLessonPagerProps {
   courseSlug: string
   chapterSlug: string
   lessonSlug: string
+  hasPdfFiles?: boolean
 }
 
 function getExerciseSlug(exercise: Exercise): string {
@@ -32,9 +33,11 @@ export function useLessonPager({
   courseSlug,
   chapterSlug,
   lessonSlug,
+  hasPdfFiles = false,
 }: UseLessonPagerProps) {
-  // Pages: intro(0) → blocks(1..n) → outro(n+1)
-  const totalPages = blocks.length + 2
+  // Pages: intro(0) → blocks(1..n) → [pdf(n+1)] → outro
+  const pdfOffset = hasPdfFiles ? 1 : 0
+  const totalPages = blocks.length + 2 + pdfOffset
 
   const [pageState, setPageState] = useState<PageState>({
     type: 'intro',
@@ -43,6 +46,7 @@ export function useLessonPager({
 
   const basePath = `/courses/${courseSlug}/chapters/${chapterSlug}/lessons/${lessonSlug}`
   const introUrl = basePath
+  const viewUrl = `${basePath}/view`
   const completeUrl = `${basePath}/complete`
 
   const getBlockUrl = useCallback(
@@ -64,7 +68,9 @@ export function useLessonPager({
     const pathname = window.location.pathname
 
     if (pathname === completeUrl) {
-      setPageState({ type: 'outro', pageNumber: blocks.length + 1 })
+      setPageState({ type: 'outro', pageNumber: totalPages - 1 })
+    } else if (hasPdfFiles && pathname === viewUrl) {
+      setPageState({ type: 'pdf', pageNumber: blocks.length + 1 })
     } else if (pathname.startsWith(`${basePath}/exercises/`)) {
       const slug = pathname.split('/exercises/')[1]
       const index = blocks.findIndex(
@@ -82,7 +88,7 @@ export function useLessonPager({
         setPageState({ type: 'block', pageNumber: index + 1, blockIndex: index })
       }
     }
-  }, [basePath, completeUrl, blocks])
+  }, [basePath, completeUrl, viewUrl, blocks, hasPdfFiles, totalPages])
 
   const syncUrl = useCallback(
     (state: PageState) => {
@@ -93,6 +99,8 @@ export function useLessonPager({
         newUrl = introUrl
       } else if (state.type === 'block' && state.blockIndex !== undefined) {
         newUrl = getBlockUrl(state.blockIndex)
+      } else if (state.type === 'pdf') {
+        newUrl = viewUrl
       } else if (state.type === 'outro') {
         newUrl = completeUrl
       } else {
@@ -104,17 +112,21 @@ export function useLessonPager({
         window.history.replaceState(null, '', newUrl)
       }
     },
-    [introUrl, completeUrl, getBlockUrl],
+    [introUrl, viewUrl, completeUrl, getBlockUrl],
   )
 
   const pageToState = useCallback(
     (page: number): PageState => {
       if (page === 0) return { type: 'intro', pageNumber: 0 }
       if (page === totalPages - 1) return { type: 'outro', pageNumber: page }
+      // PDF page sits after all blocks
+      if (hasPdfFiles && page === blocks.length + 1) {
+        return { type: 'pdf', pageNumber: page }
+      }
       const blockIndex = page - 1
       return { type: 'block', pageNumber: page, blockIndex }
     },
-    [totalPages],
+    [totalPages, hasPdfFiles, blocks.length],
   )
 
   const [isPending, startTransition] = useTransition()
@@ -154,12 +166,16 @@ export function useLessonPager({
   }, [pageToState, startTransition])
 
   const handleStart = useCallback(() => {
+    if (blocks.length === 0 && hasPdfFiles) {
+      setPageState({ type: 'pdf', pageNumber: 1 })
+      return
+    }
     if (blocks.length === 0) {
       setPageState({ type: 'outro', pageNumber: totalPages - 1 })
       return
     }
     setPageState({ type: 'block', pageNumber: 1, blockIndex: 0 })
-  }, [blocks.length, totalPages])
+  }, [blocks.length, totalPages, hasPdfFiles])
 
   useEffect(() => {
     syncUrl(pageState)
@@ -168,9 +184,15 @@ export function useLessonPager({
   const progressPercent = (() => {
     if (pageState.type === 'intro') return 0
     if (pageState.type === 'outro') return 100
+    if (pageState.type === 'pdf') {
+      // PDF is the last content page before outro
+      const contentSteps = blocks.length + pdfOffset
+      return (contentSteps / contentSteps) * 100 * 0.95 // near-complete
+    }
     if (pageState.type === 'block' && pageState.blockIndex !== undefined) {
-      if (blocks.length === 0) return 0
-      return ((pageState.blockIndex + 1) / blocks.length) * 100
+      const contentSteps = blocks.length + pdfOffset
+      if (contentSteps === 0) return 0
+      return ((pageState.blockIndex + 1) / contentSteps) * 100
     }
     return 0
   })()

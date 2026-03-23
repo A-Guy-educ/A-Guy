@@ -103,6 +103,12 @@ export default async function LessonPage({ params }: LessonPageProps) {
     }
   }
 
+  // Resolve content files (PDFs, etc.) — needed by both blocks and legacy paths
+  const validFiles =
+    lesson.contentFiles
+      ?.map((file) => (typeof file === 'string' ? null : file))
+      .filter((file): file is Media => file !== null && Boolean(file.url)) || []
+
   // Try blocks-based path first (new architecture)
   const resolvedBlocks = await queryLessonBlocks({ lessonId: lesson.id })
   const hasBlocks = resolvedBlocks.length > 0
@@ -146,6 +152,8 @@ export default async function LessonPage({ params }: LessonPageProps) {
           lessonId={lesson.id}
           mediaMap={mediaMap}
           contentPageBodies={contentPageBodies}
+          validFiles={validFiles}
+          chatLessonId={lesson.id}
         />
       </AccessGateProvider>
     )
@@ -157,11 +165,6 @@ export default async function LessonPage({ params }: LessonPageProps) {
   // Use lesson-scoped chat context to keep history stable across refreshes
   const chatLessonId = lesson.id
   const backUrl = '/study'
-
-  const validFiles =
-    lesson.contentFiles
-      ?.map((file) => (typeof file === 'string' ? null : file))
-      .filter((file): file is Media => file !== null && Boolean(file.url)) || []
 
   const hasContent = validFiles.length > 0
   const hasExercises = exercises.length > 0
