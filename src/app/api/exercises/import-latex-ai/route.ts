@@ -267,6 +267,13 @@ function repairBlocks(blocks: unknown[]): unknown[] {
           ans.correctOptionIds = []
         }
 
+        // MCQ needs at least 2 options — downgrade to free_response if not enough
+        if (!Array.isArray(ans.options) || ans.options.length < 2) {
+          b.type = 'question_free_response'
+          b.answer = { acceptedAnswers: ['-'] }
+          return pick(b, ['id', 'type', 'prompt', 'answer', 'hint', 'solution', 'fullSolution'])
+        }
+
         b.answer = pick(ans, ['multiSelect', 'options', 'correctOptionIds'])
       }
 
@@ -522,9 +529,10 @@ Each block must have an "id" (random string like "b-abc1234") and a "type".
 - If a question has multiple choice options, use question_select with variant "mcq"
 - If a question requires a free-form answer, use question_free_response
 - Tables (\\begin{tabular}) become question_table blocks
-- Skip TikZ diagrams (geometry/graphs) — just mention them in a rich_text note
+- For TikZ diagrams: create a rich_text block with "[diagram]" — do NOT try to reproduce the diagram content
 - Skip preamble, \\documentclass, \\usepackage, etc.
-- Skip solution sections
+- Skip solution sections (\\section*{פתרון ...})
+- Be CONCISE — minimal block content, no verbose explanations in values
 - Return ONLY valid JSON — no markdown fences, no comments, no explanatory text`
 
   const userMessage = `Convert this LaTeX into exercise blocks JSON:\n\n${latex}`
