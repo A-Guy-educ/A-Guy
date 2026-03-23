@@ -224,10 +224,10 @@ function repairBlocks(blocks: unknown[]): unknown[] {
       repairInlineRichText(b, 'solution')
       repairInlineRichText(b, 'fullSolution')
 
-      // Ensure answer has acceptedAnswers
+      // Ensure answer has acceptedAnswers with at least 1 item
       if (b.answer && typeof b.answer === 'object') {
         const ans = b.answer as Record<string, unknown>
-        if (!Array.isArray(ans.acceptedAnswers)) {
+        if (!Array.isArray(ans.acceptedAnswers) || ans.acceptedAnswers.length === 0) {
           ans.acceptedAnswers = ['']
         }
         b.answer = pick(ans, ['acceptedAnswers'])
