@@ -257,10 +257,6 @@
     "exercisesPagerNext": "הבא",
     "exercisesPagerIntro": "פתיחה",
     "exercisesPagerCompleted": "הושלם",
-    "pdfLessonPagerIntroDescriptionPart1": "השיעור מכיל",
-    "pdfLessonPagerIntroDescriptionPart2": "מסמכים. בואו נתחיל!",
-    "pdfLessonPagerDocuments": "מסמכים",
-    "pdfLessonPagerCompletedDescription": "סקרת את כל המסמכים בשיעור זה.",
     "exercisesPagerBackToLesson": "חזור לשיעור",
     "startLesson": "התחל שיעור",
     "soonBadge": "בקרוב",
@@ -536,6 +532,9 @@
       "privacy": "מדיניות פרטיות",
       "contact": "צור קשר"
     }
+  },
+  "exercises": {
+    "printDocument": "הדפסה"
   },
   "studyPlan": {
     "pageTitle": "תוכנית 7 ימי המיקוד",

@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { cn } from '@/infra/utils/ui'
 import { GeistMono } from 'geist/font/mono'
 import { GeistSans } from 'geist/font/sans'
-import { Assistant } from 'next/font/google'
+import { Assistant, STIX_Two_Text } from 'next/font/google'
 import React from 'react'
 
 import { reloadConfigValues } from '@/infra/config/runtime'
@@ -34,6 +34,12 @@ const assistant = Assistant({
   variable: '--font-assistant',
 })
 
+const stixTwoText = STIX_Two_Text({
+  subsets: ['latin'],
+  variable: '--font-stix-two-text',
+  display: 'swap',
+})
+
 async function getMessages(locale: string) {
   try {
     return (await import(`../../../src/i18n/${locale}.json`, { with: { type: 'json' } })).default
@@ -58,7 +64,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html
-      className={cn(GeistSans.variable, GeistMono.variable, assistant.variable)}
+      className={cn(
+        GeistSans.variable,
+        GeistMono.variable,
+        assistant.variable,
+        stixTwoText.variable,
+      )}
       dir={dir}
       lang={locale}
       suppressHydrationWarning

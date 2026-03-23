@@ -257,10 +257,6 @@
     "exercisesPagerNext": "Next",
     "exercisesPagerIntro": "Intro",
     "exercisesPagerCompleted": "Completed",
-    "pdfLessonPagerIntroDescriptionPart1": "This lesson contains",
-    "pdfLessonPagerIntroDescriptionPart2": "documents. Let's begin!",
-    "pdfLessonPagerDocuments": "documents",
-    "pdfLessonPagerCompletedDescription": "You've reviewed all documents for this lesson.",
     "exercisesPagerBackToLesson": "Back to Lesson",
     "startLesson": "Start Lesson",
     "soonBadge": "Soon",
@@ -536,6 +532,9 @@
       "privacy": "Privacy Policy",
       "contact": "Contact Us"
     }
+  },
+  "exercises": {
+    "printDocument": "Print"
   },
   "studyPlan": {
     "pageTitle": "7-Day Focus Plan",
