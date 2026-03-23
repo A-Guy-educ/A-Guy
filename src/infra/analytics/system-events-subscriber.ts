@@ -377,6 +377,146 @@ export function initAnalyticsSubscriber(): () => void {
         locale: payload.locale,
       })
     }),
+
+    // Coupon & Access Events
+    safeSubscribe(SYSTEM_EVENTS.COUPON_CODE_ENTERED, (envelope) => {
+      const payload = envelope.payload as {
+        coupon_code?: string
+        lesson_id?: string
+        course_id?: string
+      }
+      analytics.track(PRODUCT_EVENTS.COUPON_CODE_ENTERED, {
+        coupon_code: payload.coupon_code,
+        lesson_id: payload.lesson_id,
+        course_id: payload.course_id,
+      })
+    }),
+
+    safeSubscribe(SYSTEM_EVENTS.ACCESS_GATE_SHOWN, (envelope) => {
+      const payload = envelope.payload as {
+        gate_type?: 'free' | 'login' | 'paid' | 'coupon'
+        lesson_id?: string
+        course_id?: string
+      }
+      analytics.track(PRODUCT_EVENTS.ACCESS_GATE_SHOWN, {
+        gate_type: payload.gate_type,
+        lesson_id: payload.lesson_id,
+        course_id: payload.course_id,
+      })
+    }),
+
+    safeSubscribe(SYSTEM_EVENTS.ACCESS_GRANTED, (envelope) => {
+      const payload = envelope.payload as {
+        access_type?: 'free' | 'coupon' | 'paid'
+        coupon_code?: string
+        lesson_id?: string
+        course_id?: string
+      }
+      analytics.track(PRODUCT_EVENTS.ACCESS_GRANTED, {
+        access_type: payload.access_type,
+        coupon_code: payload.coupon_code,
+        lesson_id: payload.lesson_id,
+        course_id: payload.course_id,
+      })
+    }),
+
+    // Exercise Quality Events
+    safeSubscribe(SYSTEM_EVENTS.ANSWER_CORRECT, (envelope) => {
+      const payload = envelope.payload as {
+        exercise_id?: string
+        lesson_id?: string
+        time_seconds?: number
+        attempt_number?: number
+        difficulty_level?: 'easy' | 'medium' | 'hard'
+      }
+      analytics.track(PRODUCT_EVENTS.ANSWER_CORRECT, {
+        exercise_id: payload.exercise_id,
+        lesson_id: payload.lesson_id,
+        time_seconds: payload.time_seconds,
+        attempt_number: payload.attempt_number,
+        difficulty_level: payload.difficulty_level,
+      })
+    }),
+
+    safeSubscribe(SYSTEM_EVENTS.ANSWER_INCORRECT, (envelope) => {
+      const payload = envelope.payload as {
+        exercise_id?: string
+        lesson_id?: string
+        attempt_number?: number
+        max_attempts?: number
+        time_seconds?: number
+      }
+      analytics.track(PRODUCT_EVENTS.ANSWER_INCORRECT, {
+        exercise_id: payload.exercise_id,
+        lesson_id: payload.lesson_id,
+        attempt_number: payload.attempt_number,
+        max_attempts: payload.max_attempts,
+        time_seconds: payload.time_seconds,
+      })
+    }),
+
+    safeSubscribe(SYSTEM_EVENTS.EXERCISE_SKIPPED, (envelope) => {
+      const payload = envelope.payload as {
+        exercise_id?: string
+        lesson_id?: string
+        reason?: string
+      }
+      analytics.track(PRODUCT_EVENTS.EXERCISE_SKIPPED, {
+        exercise_id: payload.exercise_id,
+        lesson_id: payload.lesson_id,
+        reason: payload.reason,
+      })
+    }),
+
+    // Engagement Signal Events
+    safeSubscribe(SYSTEM_EVENTS.LESSON_ABANDONED, (envelope) => {
+      const payload = envelope.payload as {
+        lesson_id?: string
+        course_id?: string
+        time_spent_seconds?: number
+        progress_percent?: number
+        exercises_attempted?: number
+        exercises_completed?: number
+      }
+      analytics.track(PRODUCT_EVENTS.LESSON_ABANDONED, {
+        lesson_id: payload.lesson_id,
+        course_id: payload.course_id,
+        time_spent_seconds: payload.time_spent_seconds,
+        progress_percent: payload.progress_percent,
+        exercises_attempted: payload.exercises_attempted,
+        exercises_completed: payload.exercises_completed,
+      })
+    }),
+
+    safeSubscribe(SYSTEM_EVENTS.CHAPTER_COMPLETED, (envelope) => {
+      const payload = envelope.payload as {
+        course_id?: string
+        chapter_id?: string
+        total_lessons?: number
+        completion_time_seconds?: number
+      }
+      analytics.track(PRODUCT_EVENTS.CHAPTER_COMPLETED, {
+        course_id: payload.course_id,
+        chapter_id: payload.chapter_id,
+        total_lessons: payload.total_lessons,
+        completion_time_seconds: payload.completion_time_seconds,
+      })
+    }),
+
+    safeSubscribe(SYSTEM_EVENTS.TIME_ON_PAGE, (envelope) => {
+      const payload = envelope.payload as {
+        page_url?: string
+        time_seconds?: number
+        scroll_depth_percent?: number
+        user_interacted?: boolean
+      }
+      analytics.track(PRODUCT_EVENTS.TIME_ON_PAGE, {
+        page_url: payload.page_url,
+        time_seconds: payload.time_seconds,
+        scroll_depth_percent: payload.scroll_depth_percent,
+        user_interacted: payload.user_interacted,
+      })
+    }),
   ]
 
   console.log(

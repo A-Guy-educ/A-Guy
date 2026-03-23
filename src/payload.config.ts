@@ -39,6 +39,7 @@ import { importExerciseFromImage } from '@/server/payload/endpoints/exercises/im
 import { importExerciseFromLesson } from '@/server/payload/endpoints/exercises/import-from-lesson'
 import { generateSupportEndpoint } from '@/server/payload/endpoints/exercises/generate-support'
 import { translateContentEndpoint } from '@/server/payload/endpoints/translation/translate-content'
+import { cascadeDeleteEndpoint } from '@/server/payload/endpoints/cascade-delete'
 import { defaultLexical } from '@/server/payload/fields/defaultLexical'
 import { pdfToExercisesTask } from '@/server/payload/jobs/pdf-to-exercises-task'
 import { pdfToExercisesV2Task } from '@/server/payload/jobs/pdf-to-exercises-v2-task'
@@ -212,6 +213,11 @@ export default buildConfig({
       path: '/translation/translate',
       method: 'post',
       handler: (req: PayloadRequest) => translateContentEndpoint(req),
+    },
+    {
+      path: '/cascade-delete',
+      method: 'delete',
+      handler: (req: PayloadRequest) => cascadeDeleteEndpoint(req),
     },
   ],
   jobs: {

@@ -48,6 +48,11 @@ export const Courses: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
+    components: {
+      edit: {
+        beforeDocumentControls: ['@/ui/admin/CascadeDeleteButton#CourseCascadeDelete'],
+      },
+    },
     defaultColumns: [
       'courseLabel',
       'title',

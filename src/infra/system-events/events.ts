@@ -61,6 +61,30 @@ export const SYSTEM_EVENTS = {
   STUDY_PLAN_GENERATED: 'system.study_plan_generated',
   /** User completed a study plan day */
   STUDY_PLAN_DAY_COMPLETED: 'system.study_plan_day_completed',
+
+  // Coupon & Access Events
+  /** User entered a coupon code to access lesson */
+  COUPON_CODE_ENTERED: 'system.coupon_code_entered',
+  /** User encounters paywall/login gate */
+  ACCESS_GATE_SHOWN: 'system.access_gate_shown',
+  /** User gains access to content */
+  ACCESS_GRANTED: 'system.access_granted',
+
+  // Exercise Quality Events
+  /** User gets answer right on first attempt */
+  ANSWER_CORRECT: 'system.answer_correct',
+  /** User gets answer wrong */
+  ANSWER_INCORRECT: 'system.answer_incorrect',
+  /** User skips exercise without answering */
+  EXERCISE_SKIPPED: 'system.exercise_skipped',
+
+  // Engagement Signal Events
+  /** User leaves lesson incomplete */
+  LESSON_ABANDONED: 'system.lesson_abandoned',
+  /** User finishes all lessons in chapter */
+  CHAPTER_COMPLETED: 'system.chapter_completed',
+  /** Abandonment signal at time thresholds */
+  TIME_ON_PAGE: 'system.time_on_page',
 } as const
 
 /**

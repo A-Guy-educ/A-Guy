@@ -33,6 +33,14 @@ export const Chapters: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'adminTitle',
+    components: {
+      edit: {
+        beforeDocumentControls: [
+          '@/ui/admin/TranslationButton#TranslateChapterAction',
+          '@/ui/admin/CascadeDeleteButton#ChapterCascadeDelete',
+        ],
+      },
+    },
     defaultColumns: [
       'course',
       'chapterLabel',
@@ -43,11 +51,6 @@ export const Chapters: CollectionConfig = {
       'isActive',
       'updatedAt',
     ],
-    components: {
-      edit: {
-        beforeDocumentControls: ['@/ui/admin/TranslationButton#TranslateChapterAction'],
-      },
-    },
   },
   fields: [
     // Tenant

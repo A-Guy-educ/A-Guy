@@ -1,0 +1,98 @@
+{
+  "version": 2,
+  "taskId": "260318-auto-581",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-22T09:46:57.898Z",
+  "updatedAt": "2026-03-22T12:39:39.756Z",
+  "state": "running",
+  "cursor": "build",
+  "stages": {
+    "taskify": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-22T09:46:59.295Z",
+      "completedAt": "2026-03-22T09:48:18.460Z",
+      "elapsed": 79,
+      "outputFile": "taskify.md",
+      "tokenUsage": {
+        "input": 5502,
+        "output": 2106,
+        "cacheRead": 152578
+      },
+      "sessionId": "ses_2eb0f273dfferdaA3EIOlYqRvj"
+    },
+    "gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-22T09:48:30.137Z",
+      "completedAt": "2026-03-22T09:50:49.379Z",
+      "elapsed": 139,
+      "outputFile": "gap.md",
+      "tokenUsage": {
+        "input": 31723,
+        "output": 6916,
+        "cacheRead": 632582
+      },
+      "sessionId": "ses_2eb0dc6ccffeJq9UuG5vZbWVbn"
+    },
+    "architect": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-22T09:50:49.381Z",
+      "completedAt": "2026-03-22T09:53:40.152Z",
+      "elapsed": 171,
+      "outputFile": "architect.md",
+      "tokenUsage": {
+        "input": 23052,
+        "output": 10775,
+        "cacheRead": 949345
+      },
+      "sessionId": "ses_2eb0ba7ccffe8jSEJMmsIkGZZO"
+    },
+    "plan-gap": {
+      "state": "skipped",
+      "retries": 0,
+      "skipped": "Complexity 42 (complex) below threshold 50 for plan-gap"
+    },
+    "test": {
+      "state": "pending",
+      "retries": 0
+    },
+    "build": {
+      "state": "pending",
+      "retries": 0
+    },
+    "commit": {
+      "state": "pending",
+      "retries": 0
+    },
+    "review": {
+      "state": "pending",
+      "retries": 0
+    },
+    "fix": {
+      "state": "pending",
+      "retries": 0
+    },
+    "verify": {
+      "state": "pending",
+      "retries": 0
+    },
+    "pr": {
+      "state": "pending",
+      "retries": 0
+    }
+  },
+  "issueNumber": 891,
+  "triggeredBy": "yaeliavni",
+  "issueCreator": "korenguy123",
+  "actorHistory": [
+    {
+      "action": "pipeline-triggered",
+      "actor": "yaeliavni",
+      "timestamp": "2026-03-22T09:46:57.898Z"
+    }
+  ],
+  "branchName": "feat/260318-auto-891-mixpanel-analytics-specification-c"
+}
