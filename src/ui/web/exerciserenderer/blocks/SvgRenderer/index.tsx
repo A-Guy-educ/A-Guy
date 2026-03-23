@@ -122,7 +122,7 @@ export function SvgRenderer({
         dangerouslySetInnerHTML={{ __html: sanitizedSvg }}
       />
       {captionBlock && (
-        <div className="mt-2 text-sm text-muted-foreground text-center">
+        <div className="mt-2 text-body-sm text-muted-foreground text-center">
           <RichTextRenderer block={captionBlock} />
         </div>
       )}

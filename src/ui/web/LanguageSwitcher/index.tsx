@@ -74,7 +74,7 @@ export function LanguageSwitcher({ portalContainer }: LanguageSwitcherProps = {}
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-content-gap-xs">
       <Select value={displayLocale} onValueChange={handleLocaleChange} disabled={isOnForcedDomain}>
         <SelectTrigger className="w-[150px] min-h-[44px]">
           <Globe className="h-4 w-4 shrink-0 opacity-70" />

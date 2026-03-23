@@ -21,22 +21,24 @@ interface ChatMessageContentProps {
 const chatMarkdownComponents: Components = {
   p: ({ children }) => <p className="mb-4 leading-relaxed first:mt-0 last:mb-0">{children}</p>,
   h1: ({ children }) => (
-    <h1 className="text-xl font-semibold leading-tight mt-5 mb-2.5 first:mt-0">{children}</h1>
+    <h1 className="text-heading-xl font-semibold leading-tight mt-5 mb-2.5 first:mt-0">
+      {children}
+    </h1>
   ),
   h2: ({ children }) => (
-    <h2 className="text-lg font-semibold leading-tight mt-5 mb-2.5 first:mt-0">{children}</h2>
+    <h2 className="text-body-lg font-semibold leading-tight mt-5 mb-2.5 first:mt-0">{children}</h2>
   ),
   h3: ({ children }) => (
-    <h3 className="text-base font-semibold leading-tight mt-5 mb-2.5 first:mt-0">{children}</h3>
+    <h3 className="text-body-md font-semibold leading-tight mt-5 mb-2.5 first:mt-0">{children}</h3>
   ),
   h4: ({ children }) => (
-    <h4 className="text-base font-semibold leading-tight mt-5 mb-2.5 first:mt-0">{children}</h4>
+    <h4 className="text-body-md font-semibold leading-tight mt-5 mb-2.5 first:mt-0">{children}</h4>
   ),
   h5: ({ children }) => (
-    <h5 className="text-base font-semibold leading-tight mt-5 mb-2.5 first:mt-0">{children}</h5>
+    <h5 className="text-body-md font-semibold leading-tight mt-5 mb-2.5 first:mt-0">{children}</h5>
   ),
   h6: ({ children }) => (
-    <h6 className="text-base font-semibold leading-tight mt-5 mb-2.5 first:mt-0">{children}</h6>
+    <h6 className="text-body-md font-semibold leading-tight mt-5 mb-2.5 first:mt-0">{children}</h6>
   ),
   ul: ({ children }) => <ul className="mb-4 ps-5 list-disc">{children}</ul>,
   ol: ({ children }) => <ol className="mb-4 ps-5 list-decimal">{children}</ol>,
@@ -49,10 +51,10 @@ const chatMarkdownComponents: Components = {
     </a>
   ),
   code: ({ children }) => (
-    <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">{children}</code>
+    <code className="bg-muted px-1.5 py-0.5 rounded text-body-sm font-mono">{children}</code>
   ),
   pre: ({ children }) => (
-    <pre className="bg-muted p-4 rounded-lg overflow-x-auto mb-4 border border-border">
+    <pre className="bg-muted p-card-padding-sm rounded-lg overflow-x-auto mb-4 border border-border">
       {children}
     </pre>
   ),
@@ -63,8 +65,8 @@ const chatMarkdownComponents: Components = {
   ),
   hr: () => <hr className="border-0 border-t border-border my-5" />,
   table: ({ children }) => (
-    <div className="chat-table my-4 overflow-x-auto rounded-lg border border-border shadow-sm">
-      <table className="w-full border-collapse text-sm">{children}</table>
+    <div className="chat-table my-4 overflow-x-auto rounded-lg border border-border shadow-elevation-1">
+      <table className="w-full border-collapse text-body-sm">{children}</table>
     </div>
   ),
   thead: ({ children }) => <thead className="bg-muted">{children}</thead>,

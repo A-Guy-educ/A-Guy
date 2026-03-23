@@ -47,13 +47,13 @@ export function MatchingItem({
       ref={(el) => onRef(item.id, el)}
       onClick={() => onClick(item.id)}
       className={cn(
-        'flex items-center gap-2 px-3 py-2 rounded-md border-2 text-start',
-        'transition-all duration-200 min-h-[44px]',
+        'flex items-center gap-content-gap-xs px-3 py-2 rounded-md border-2 text-start',
+        'transition-all duration-normal min-h-[44px]',
         'border-border bg-card',
         !disabled &&
           !isSelected &&
           !isConnected &&
-          'hover:border-blue-400 hover:shadow-md hover:-translate-y-0.5 cursor-pointer',
+          'hover:border-blue-400 hover:shadow-elevation-3 hover:-translate-y-0.5 cursor-pointer',
         canSelect && !isConnected && 'cursor-pointer',
         isSelected &&
           'border-blue-500 bg-blue-50 dark:bg-blue-500/15 border-[3px] shadow-[0_0_10px_rgba(59,130,246,0.3)]',
@@ -69,7 +69,9 @@ export function MatchingItem({
       aria-selected={isSelected}
       disabled={disabled}
     >
-      <span className="font-bold text-lg text-muted-foreground min-w-[28px] shrink-0">{badge}</span>
+      <span className="font-bold text-body-lg text-muted-foreground min-w-[28px] shrink-0">
+        {badge}
+      </span>
       <span className="flex-1">
         <RichTextRenderer block={optionBlock} />
       </span>

@@ -56,7 +56,7 @@ export function MathFieldToolbar({ mathfield, className }: MathFieldToolbarProps
             'shrink-0 min-w-[44px] h-10 px-2.5 rounded-md',
             'border border-border bg-background text-foreground',
             'hover:bg-accent hover:text-accent-foreground',
-            'transition-colors text-base',
+            'transition-colors text-body-md',
           )}
           onClick={() => handleInsert(btn.latex)}
           aria-label={btn.ariaLabel}

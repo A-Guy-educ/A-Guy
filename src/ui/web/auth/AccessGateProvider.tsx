@@ -89,7 +89,7 @@ export function AccessGateProvider({
       <Dialog open={showWarningModal} onOpenChange={(open) => !open && dismissWarning()}>
         <DialogContent allowDismiss={true} className="sm:max-w-md">
           <DialogHeader className="text-center sm:text-center">
-            <DialogTitle className="text-xl">{t('gatedWarningTitle')}</DialogTitle>
+            <DialogTitle className="text-heading-xl">{t('gatedWarningTitle')}</DialogTitle>
             <DialogDescription className="mt-2">
               {t('warningCountdown').replace('{{seconds}}', String(warningSecondsLeft))}
             </DialogDescription>
@@ -202,7 +202,7 @@ function PaidContentModal({
       <Dialog open={true}>
         <DialogContent allowDismiss={false} className="sm:max-w-md">
           <DialogHeader className="text-center sm:text-center">
-            <DialogTitle className="text-xl">{t('codeSuccessTitle')}</DialogTitle>
+            <DialogTitle className="text-heading-xl">{t('codeSuccessTitle')}</DialogTitle>
             <DialogDescription className="mt-2">{t('codeSuccessMessage')}</DialogDescription>
           </DialogHeader>
         </DialogContent>
@@ -214,12 +214,12 @@ function PaidContentModal({
     <Dialog open={true} onOpenChange={(open) => !open && handleDismiss()}>
       <DialogContent allowDismiss={true} className="sm:max-w-md">
         <DialogHeader className="text-center sm:text-center">
-          <DialogTitle className="text-xl">{t('paidTitle')}</DialogTitle>
+          <DialogTitle className="text-heading-xl">{t('paidTitle')}</DialogTitle>
           <DialogDescription className="mt-2">
             {isAuthenticated ? t('paidNoEntitlement') : t('paidNotLoggedIn')}
           </DialogDescription>
         </DialogHeader>
-        <div className="mt-4 flex flex-col items-center gap-4">
+        <div className="mt-4 flex flex-col items-center gap-content-gap">
           {!isAuthenticated && <GoogleLoginButton returnTo={pathname} className="w-full" />}
           {isAuthenticated && (
             <div className="w-full space-y-3">
@@ -235,12 +235,12 @@ function PaidContentModal({
                     if (e.key === 'Enter') handleRedeem()
                   }}
                   placeholder={t('codePlaceholder')}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-body-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   dir="ltr"
                   disabled={isSubmitting}
                 />
               </div>
-              {error && <p className="text-sm text-error">{error}</p>}
+              {error && <p className="text-body-sm text-error">{error}</p>}
               <Button
                 onClick={handleRedeem}
                 disabled={!code.trim() || isSubmitting}

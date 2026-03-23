@@ -55,6 +55,19 @@ const config = {
       transitionDuration: designTokens.transitionDuration,
       borderWidth: designTokens.borderWidth,
       opacity: designTokens.opacity,
+      borderRadius: {
+        ...designTokens.borderRadius,
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
+        xl: 'calc(var(--radius) + 4px)',
+        '2xl': 'calc(var(--radius) + 8px)',
+      },
+      iconSize: designTokens.iconSize,
+      inputHeight: designTokens.inputHeight,
+      chatText: designTokens.chatText,
+      letterSpacing: designTokens.letterSpacing,
+      maxWidth: designTokens.maxWidth,
 
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -67,13 +80,6 @@ const config = {
         'cody-shimmer': 'cody-shimmer 2s ease-in-out infinite',
         'cody-breathe': 'cody-breathe 3s ease-in-out infinite',
         'cody-breathe-overlay': 'cody-breathe-overlay 3s ease-in-out infinite',
-      },
-      borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
-        xl: 'calc(var(--radius) + 4px)',
-        '2xl': 'calc(var(--radius) + 8px)',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',

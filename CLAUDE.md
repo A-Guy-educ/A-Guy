@@ -6,18 +6,7 @@ This file serves as the entry point for Claude Code (AI assistant) when working 
 
 ## Documentation
 
-**Read [AGENTS.md](./AGENTS.md) - it contains everything you need:**
-
-- Core principles and best practices
-- Project structure and architecture
-- Payload CMS patterns (collections, fields, hooks, access control)
-- Security patterns (CRITICAL - access control, transactions, hooks)
-- Component development
-- Custom endpoints
-- Type safety guidelines
-- Exercise system architecture
-- Authentication patterns
-- Examples and code snippets
+For detailed project patterns (Payload CMS, security, architecture), refer to [AGENTS.md](./AGENTS.md) **on-demand when needed** — do NOT read it upfront. Only read the specific sections relevant to your current task.
 
 ---
 
@@ -124,7 +113,7 @@ This codebase includes tools to help AI agents work efficiently:
 - **DocSearch** - Keyword-based documentation search
 - **Pattern Index** - Find code examples by pattern
 
-See [AGENTS.md](./AGENTS.md) and [.ai-docs/BOOTSTRAP.md](.ai-docs/BOOTSTRAP.md) for details.
+See [.ai-docs/BOOTSTRAP.md](.ai-docs/BOOTSTRAP.md) for details.
 
 ---
 

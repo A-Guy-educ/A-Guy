@@ -94,6 +94,9 @@ export const fontSize = {
   'code-lg': ['1rem', { lineHeight: '1.6', fontFamily: 'var(--font-geist-mono)' }],
   'code-md': ['0.875rem', { lineHeight: '1.6', fontFamily: 'var(--font-geist-mono)' }],
   'code-sm': ['0.75rem', { lineHeight: '1.6', fontFamily: 'var(--font-geist-mono)' }],
+
+  // Label text (for form labels, badges, small caps)
+  label: ['0.75rem', { lineHeight: '1rem', fontWeight: '500' }], // 12px semibold
 }
 
 /**
@@ -105,6 +108,17 @@ export const transitionDuration = {
   normal: '200ms',
   slow: '300ms',
   slower: '500ms',
+}
+
+/**
+ * Letter Spacing Scale
+ * Consistent tracking tokens
+ */
+export const letterSpacing = {
+  'tracking-xs': '0.05em', // Very tight
+  'tracking-sm': '0.1em', // Small caps
+  'tracking-md': '0.15em', // Footer copyright style
+  'tracking-lg': '0.2em', // All caps
 }
 
 /**
@@ -129,6 +143,61 @@ export const opacity = {
   subtle: '0.4',
 }
 
+/**
+ * Border Radius Scale
+ * Semantic radius tokens for consistent rounding
+ */
+export const borderRadius = {
+  // Chat bubble radii (commonly used in ChatInterface)
+  'chat-xs': '8px', // 8px - small chat bubbles
+  'chat-sm': '12px', // 12px - compact chat
+  'chat-md': '16px', // 16px - medium chat
+  'chat-lg': '20px', // 20px - standard chat bubble
+  'chat-xl': '24px', // 24px - large chat bubble
+  'chat-2xl': '30px', // 30px - extra large chat bubble
+}
+
+/**
+ * Icon Size Scale
+ * Semantic icon size tokens for consistent iconography
+ */
+export const iconSize = {
+  'icon-xs': '0.75rem', // 12px - extra small icons
+  'icon-sm': '1rem', // 16px - small icons
+  'icon-md': '1.25rem', // 20px - medium icons (default)
+  'icon-lg': '1.5rem', // 24px - large icons
+  'icon-xl': '2rem', // 32px - extra large icons
+  'icon-2xl': '2.5rem', // 40px - 2xl icons
+}
+
+/**
+ * Input Height Scale
+ * Semantic input height tokens for consistent form elements
+ */
+export const inputHeight = {
+  'input-h-sm': '2rem', // 32px - compact inputs
+  'input-h-md': '2.5rem', // 40px - default inputs
+  'input-h-lg': '3rem', // 48px - large inputs
+}
+
+/**
+ * Chat Input Text Size
+ * Specific text size for chat input (17px observed in ChatInterface)
+ */
+export const chatText = {
+  'chat-input': ['17px', { lineHeight: '1.5' }],
+}
+
+/**
+ * Max Width Scale
+ * Semantic max-width tokens for containers
+ */
+export const maxWidth = {
+  'max-w-chat': '850px', // Chat input container
+  'max-w-prose': '65ch', // Prose content
+  'max-w-content': '1280px', // General content
+}
+
 export default {
   spacing,
   boxShadow,
@@ -137,4 +206,10 @@ export default {
   transitionDuration,
   borderWidth,
   opacity,
+  borderRadius,
+  iconSize,
+  inputHeight,
+  chatText,
+  letterSpacing,
+  maxWidth,
 }

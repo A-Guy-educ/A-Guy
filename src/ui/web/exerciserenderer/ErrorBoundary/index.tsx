@@ -32,13 +32,13 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   render() {
     if (this.state.hasError) {
       return (
-        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded my-2">
-          <div className="text-2xl mb-2">⚠️</div>
+        <div className="p-card-padding-sm bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded my-2">
+          <div className="text-display-xl mb-2">⚠️</div>
           <div className="font-semibold text-red-700 dark:text-red-300 mb-1">
             {this.props.fallbackTitle || 'Error rendering content'}
           </div>
           {this.state.error && (
-            <div className="text-sm text-red-600 dark:text-red-400 font-mono">
+            <div className="text-body-sm text-red-600 dark:text-red-400 font-mono">
               {this.state.error.message}
             </div>
           )}

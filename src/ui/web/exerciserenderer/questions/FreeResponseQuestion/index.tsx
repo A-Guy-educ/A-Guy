@@ -97,7 +97,7 @@ export function FreeResponseQuestion({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="text-base font-medium text-foreground leading-relaxed">
+      <div className="text-body-md font-medium text-foreground leading-relaxed">
         <RichTextRenderer block={promptBlock} />
       </div>
 
@@ -112,7 +112,7 @@ export function FreeResponseQuestion({
           onBlur={handleBlur}
           disabled={disabled}
           placeholder={t('enterAnswer')}
-          className="text-base min-h-0 resize-none overflow-hidden pe-10"
+          className="text-body-md min-h-0 resize-none overflow-hidden pe-10"
           rows={1}
         />
 
@@ -120,7 +120,7 @@ export function FreeResponseQuestion({
         {showViewOverlay && (
           <div
             onClick={switchToEditMode}
-            className="absolute inset-0 px-3 py-2 pe-10 rounded-md border border-input bg-background text-base leading-relaxed cursor-text overflow-hidden"
+            className="absolute inset-0 px-3 py-2 pe-10 rounded-md border border-input bg-background text-body-md leading-relaxed cursor-text overflow-hidden"
           >
             <MathMarkdown content={value} />
           </div>
