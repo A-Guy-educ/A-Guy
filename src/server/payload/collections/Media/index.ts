@@ -54,31 +54,15 @@ export const Media: CollectionConfig = {
       // Uploaded files: return the main URL (false to disable if url is undefined)
       return docData.url || false
     },
-    // Skip Payload's buffer-based checkFileRestrictions.
-    // With clientUploads=true, Payload re-fetches the entire file from Vercel Blob into
-    // server memory before running restrictions — causing OOM/timeouts for large video files.
-    // Our validateMediaUploadHook already handles MIME type and size validation server-side.
+    // Skip Payload's client-side and server-side file type restrictions entirely.
+    // Our validateMediaUploadHook handles MIME type and size validation server-side.
+    //
+    // mimeTypes is intentionally empty: Payload's client-side validateMimeType()
+    // does `mimeType.startsWith(...)` which fails for files like .tex that browsers
+    // report with an empty MIME type. With an empty array, Payload skips client-side
+    // validation. The file picker shows all files (no accept filter).
     allowRestrictedFileTypes: true,
-    mimeTypes: [
-      'image/*',
-      // Explicit video MIME types + extensions for browser file-picker compatibility.
-      // macOS Safari requires 'video/quicktime' or '.mov' explicitly — 'video/*' alone
-      // does not show .mov files in the file picker on all browsers.
-      'video/*',
-      'video/mp4',
-      'video/quicktime',
-      '.mp4',
-      '.mov',
-      'audio/*',
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.ms-excel',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'application/vnd.ms-powerpoint',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-      'text/*',
-    ],
+    mimeTypes: [],
     // NOTE: imageSizes disabled - causes issues with Vercel Blob plugin
     // The plugin generates sizes as a group field which conflicts with our setup
     // imageSizes: [
