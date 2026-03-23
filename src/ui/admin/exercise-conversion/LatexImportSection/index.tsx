@@ -35,14 +35,7 @@ export function LatexImportSection({ lessonId }: LatexImportSectionProps) {
       >
         {expanded ? '\u25BC' : '\u25B6'} Import from LaTeX
       </button>
-      {expanded && (
-        <LatexQuickImport
-          lessonId={lessonId}
-          onImportSuccess={() => {
-            window.location.reload()
-          }}
-        />
-      )}
+      {expanded && <LatexQuickImport lessonId={lessonId} onImportSuccess={() => {}} />}
     </div>
   )
 }

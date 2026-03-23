@@ -59,7 +59,6 @@ export function TexImportButton({ lessonId, mediaId, filename }: TexImportButton
         return
       }
       setStatus({ type: 'success', message: `${data.data.exerciseCount} exercise(s) created` })
-      setTimeout(() => window.location.reload(), 1500)
     } catch {
       setStatus({ type: 'error', message: 'Network error' })
     } finally {
@@ -87,11 +86,12 @@ export function TexImportButton({ lessonId, mediaId, filename }: TexImportButton
         setStatus({ type: 'error', message: data.error || 'AI import failed' })
         return
       }
+      const warnings = data.data.warnings
+      const warnText = warnings?.length ? ` (${warnings.length} failed)` : ''
       setStatus({
         type: 'success',
-        message: `${data.data.exerciseCount} exercise(s) created via AI`,
+        message: `${data.data.exerciseCount} exercise(s) created via AI${warnText}`,
       })
-      setTimeout(() => window.location.reload(), 1500)
     } catch {
       setStatus({ type: 'error', message: 'Network error' })
     } finally {

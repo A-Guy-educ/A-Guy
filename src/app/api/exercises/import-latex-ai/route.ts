@@ -228,11 +228,11 @@ function repairBlocks(blocks: unknown[]): unknown[] {
       if (b.answer && typeof b.answer === 'object') {
         const ans = b.answer as Record<string, unknown>
         if (!Array.isArray(ans.acceptedAnswers) || ans.acceptedAnswers.length === 0) {
-          ans.acceptedAnswers = ['']
+          ans.acceptedAnswers = ['-']
         }
         b.answer = pick(ans, ['acceptedAnswers'])
       } else {
-        b.answer = { acceptedAnswers: [''] }
+        b.answer = { acceptedAnswers: ['-'] }
       }
 
       return pick(b, ['id', 'type', 'prompt', 'answer', 'hint', 'solution', 'fullSolution'])
