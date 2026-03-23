@@ -24,12 +24,12 @@ export const DocumentMedia: React.FC<MediaProps> = (props) => {
         <a
           href={docUrl}
           download
-          className="inline-flex items-center gap-2 px-4 py-3 border border-border rounded text-inherit no-underline"
+          className="inline-flex items-center gap-content-gap-xs px-4 py-3 border border-border rounded text-inherit no-underline"
         >
           <span>📄</span>
           <span>{filename || 'Document'}</span>
           {filesize && (
-            <span className="text-sm text-muted-foreground">
+            <span className="text-body-sm text-muted-foreground">
               ({Math.round(filesize / 1024)} KB)
             </span>
           )}

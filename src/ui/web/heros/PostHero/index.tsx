@@ -28,7 +28,9 @@ export const PostHero: React.FC<{ post: Post }> = ({ post }) => {
       <div className="container relative z-10 pb-8">
         <div className="max-w-[48rem] mx-auto">
           {post.title && (
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 pt-8">{post.title}</h1>
+            <h1 className="text-display-md md:text-display-lg font-bold text-white mb-6 pt-8">
+              {post.title}
+            </h1>
           )}
         </div>
       </div>

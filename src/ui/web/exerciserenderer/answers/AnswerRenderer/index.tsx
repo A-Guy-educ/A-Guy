@@ -68,8 +68,8 @@ export function AnswerRenderer({
 
     default:
       return (
-        <div className="flex items-center gap-2 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded text-yellow-700 dark:text-yellow-300">
-          <span className="text-xl">⚠️</span>
+        <div className="flex items-center gap-content-gap-xs p-card-padding-sm bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded text-yellow-700 dark:text-yellow-300">
+          <span className="text-heading-xl">⚠️</span>
           <span>Unknown answer type</span>
         </div>
       )

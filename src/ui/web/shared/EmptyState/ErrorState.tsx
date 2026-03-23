@@ -52,7 +52,7 @@ export function ErrorState({
 }: ErrorStateProps) {
   return (
     <Stack gap="content-gap" align="center" className={cn('py-section-md text-center', className)}>
-      <div className="rounded-full bg-destructive/10 p-4">
+      <div className="rounded-full bg-destructive/10 p-card-padding-sm">
         <AlertCircle className="h-8 w-8 text-destructive" />
       </div>
 

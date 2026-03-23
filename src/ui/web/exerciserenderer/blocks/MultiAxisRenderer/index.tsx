@@ -88,11 +88,11 @@ export function MultiAxisRenderer({
     <div className="my-4">
       {promptAbove}
 
-      <div className={cn('grid gap-4', gridClasses)}>
+      <div className={cn('grid gap-content-gap', gridClasses)}>
         {sortedGraphs.map((graph) => (
           <div key={graph.id} className="flex flex-col">
             {/* Graph label - centered above the graph */}
-            <p className="text-center text-sm font-medium text-muted-foreground mb-2">
+            <p className="text-center text-body-sm font-medium text-muted-foreground mb-2">
               {graph.label}
             </p>
             {/* Individual axis renderer */}

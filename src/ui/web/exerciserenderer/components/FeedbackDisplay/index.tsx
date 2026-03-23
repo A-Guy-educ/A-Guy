@@ -20,11 +20,11 @@ export function FeedbackDisplay({ checkResult, correctText, incorrectText }: Fee
   return (
     <div
       className={cn(
-        'mt-card-padding p-4 rounded-lg border-2',
+        'mt-card-padding p-card-padding-sm rounded-lg border-2',
         checkResult.isCorrect ? 'border-success bg-success/10' : 'border-error bg-error/10',
       )}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-content-gap-xs">
         {checkResult.isCorrect ? (
           <CheckCircle2 className="w-6 h-6 shrink-0 text-success" />
         ) : (
@@ -32,7 +32,7 @@ export function FeedbackDisplay({ checkResult, correctText, incorrectText }: Fee
         )}
         <span
           className={cn(
-            'font-semibold text-lg',
+            'font-semibold text-body-lg',
             checkResult.isCorrect ? 'text-success' : 'text-error',
           )}
         >
@@ -42,7 +42,7 @@ export function FeedbackDisplay({ checkResult, correctText, incorrectText }: Fee
       {checkResult.message && (
         <p
           className={cn(
-            'mt-2 text-sm',
+            'mt-2 text-body-sm',
             checkResult.isCorrect ? 'text-success/80' : 'text-error/80',
           )}
         >

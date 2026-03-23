@@ -65,8 +65,8 @@ export function TrueFalseQuestion({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="text-base font-medium text-foreground leading-relaxed">
+    <div className="flex flex-col gap-content-gap">
+      <div className="text-body-md font-medium text-foreground leading-relaxed">
         <RichTextRenderer block={promptBlock} />
       </div>
       <div className="flex gap-3">
@@ -86,28 +86,28 @@ export function TrueFalseQuestion({
               onClick={() => onChange({ type: 'true_false', value: option.value })}
               disabled={disabled}
               className={cn(
-                'flex-1 relative overflow-hidden px-6 py-4 rounded-lg border-2 font-medium text-base transition-all duration-200',
+                'flex-1 relative overflow-hidden px-6 py-section-xs rounded-lg border-2 font-medium text-body-md transition-all duration-normal',
                 'border-border bg-card',
                 'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
                 !disabled && 'hover:border-muted-foreground hover:bg-muted cursor-pointer',
                 isSelected &&
                   !showFeedback &&
-                  'border-primary bg-primary/10 text-primary shadow-sm',
+                  'border-primary bg-primary/10 text-primary shadow-elevation-1',
                 showFeedback &&
                   isSelected &&
                   checkResult.isCorrect &&
-                  'border-success bg-success/10 text-success shadow-sm',
+                  'border-success bg-success/10 text-success shadow-elevation-1',
                 showFeedback &&
                   isSelected &&
                   !checkResult.isCorrect &&
-                  'border-destructive bg-destructive/10 text-destructive shadow-sm',
+                  'border-destructive bg-destructive/10 text-destructive shadow-elevation-1',
                 disabled && 'opacity-60 cursor-not-allowed',
               )}
             >
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center justify-center gap-content-gap-xs">
                 <RichTextRenderer block={labelBlock} />
                 {showFeedback && isSelected && (
-                  <span className="text-xl font-bold">
+                  <span className="text-heading-xl font-bold">
                     {checkResult.isCorrect ? (
                       <CheckCircle2 className="w-5 h-5" />
                     ) : (

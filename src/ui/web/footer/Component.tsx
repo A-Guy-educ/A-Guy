@@ -30,7 +30,7 @@ async function getVersion(): Promise<string> {
  * Matches admin page styling: 12px, subtle color
  */
 function VersionDisplay({ version }: { version: string }) {
-  return <span className="text-xs text-muted-foreground/70 font-normal">v{version}</span>
+  return <span className="text-body-xs text-muted-foreground/70 font-normal">v{version}</span>
 }
 
 export async function Footer() {
@@ -41,20 +41,20 @@ export async function Footer() {
 
   return (
     <footer className="mt-auto border-t border-border bg-footer text-card-foreground relative z-0">
-      <div className="container py-3 flex flex-row items-center gap-2">
+      <div className="container py-3 flex flex-row items-center gap-content-gap-xs">
         <SystemLink className="flex items-center" href="/">
           <TelescopeLogo className="h-5 w-auto" />
         </SystemLink>
 
-        <span className="flex-1 text-center text-xs font-bold text-muted-foreground/40 uppercase tracking-[0.2em]">
+        <span className="flex-1 text-center text-body-xs font-bold text-muted-foreground/40 uppercase tracking-[0.2em]">
           Aguy Learning Platform
         </span>
 
-        <div className="flex items-center gap-2 text-xs">
+        <div className="flex items-center gap-content-gap-xs text-body-xs">
           {navItems.map(({ link }, i) => {
             return (
               <CMSLink
-                className="text-card-foreground hover:text-primary transition-colors text-xs whitespace-nowrap"
+                className="text-card-foreground hover:text-primary transition-colors text-body-xs whitespace-nowrap"
                 key={i}
                 {...link}
               />

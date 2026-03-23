@@ -44,7 +44,7 @@ export function ContentStatusBadge({
     return (
       <span
         className={cn(
-          'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold',
+          'inline-flex items-center rounded-full px-2.5 py-0.5 text-body-xs font-bold',
           'bg-muted text-muted-foreground',
           className,
         )}
@@ -59,7 +59,7 @@ export function ContentStatusBadge({
     return (
       <span
         className={cn(
-          'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold',
+          'inline-flex items-center rounded-full px-2.5 py-0.5 text-body-xs font-bold',
           'bg-emerald-500 text-white animate-pulse',
           className,
         )}

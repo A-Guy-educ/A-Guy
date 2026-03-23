@@ -10,8 +10,8 @@ describe('Inline style removal refactor', () => {
       expect(source).not.toMatch(/style=\{\{[\s]*fontSize/)
     })
 
-    it('should still have text-xs Tailwind class', () => {
-      expect(source).toMatch(/text-xs/)
+    it('should still have text-body-xs Tailwind class (design token)', () => {
+      expect(source).toMatch(/text-body-xs/)
     })
   })
 

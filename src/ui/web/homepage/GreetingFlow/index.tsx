@@ -5,6 +5,10 @@ import { TypingAnimation } from '@/ui/web/shared/TypingAnimation'
 import { Button } from '@/ui/web/components/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/web/components/card'
 import { Badge } from '@/ui/web/components/badge'
+import { Stack } from '@/ui/web/shared/Layout/Stack'
+import { Grid } from '@/ui/web/shared/Layout/Grid'
+import { Section } from '@/ui/web/shared/Layout/Section'
+import { Text } from '@/ui/web/shared/Typography/Text'
 import { setUserProfile } from '@/client/state/localStorage/userProfile'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import type { Course } from '@/payload-types'
@@ -68,90 +72,92 @@ export function GreetingFlow({ onComplete }: { onComplete: () => void }) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
+    <Section size="lg" className="min-h-screen flex items-center justify-center">
       {step === 'greeting' && (
-        <div className="max-w-2xl text-center">
+        <Stack gap="content-gap-lg" align="center" className="text-center">
           <TypingAnimation
             text={t('welcome')}
             speed={100}
             onComplete={() => setTimeout(() => setStep('mood'), 2000)}
-            className="text-2xl md:text-4xl mb-8"
+            className="text-display-sm md:text-display-md"
           />
-        </div>
+        </Stack>
       )}
 
       {step === 'mood' && (
-        <div className="max-w-md w-full space-y-6">
-          <h2 className="text-xl text-center">{t('moodQuestion')}</h2>
-          <div className="grid grid-cols-1 gap-4">
+        <Stack gap="content-gap-lg" align="center" className="w-full max-w-md">
+          <h2 className="text-heading-xl text-center">{t('moodQuestion')}</h2>
+          <Grid cols="1" gap="content-gap">
             {MOODS.map((mood) => (
               <Button
                 key={mood}
                 variant="outline"
                 size="lg"
                 onClick={() => handleMoodSelect(mood)}
-                className="h-20"
+                className="h-input-h-lg"
               >
                 {t(`moods.${mood}`)}
               </Button>
             ))}
-          </div>
-        </div>
+          </Grid>
+        </Stack>
       )}
 
       {step === 'moodResponse' && (
-        <div className="max-w-2xl text-center">
+        <Stack gap="content-gap-lg" align="center" className="text-center">
           <TypingAnimation
             text={t(`moodResponses.${selectedMood}`)}
             speed={100}
             onComplete={() => setTimeout(() => setStep('courses'), 1500)}
-            className="text-2xl md:text-4xl mb-8"
+            className="text-display-sm md:text-display-md"
           />
-        </div>
+        </Stack>
       )}
 
       {step === 'courses' && (
-        <div className="container mx-auto px-4 py-8 max-w-6xl w-full">
-          <h2 className="text-xl text-center mb-8">{t('gradeQuestion')}</h2>
-          {isLoadingCourses ? (
-            <div className="text-center text-muted-foreground">{t('loading')}</div>
-          ) : courses.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {courses.map((course) => (
-                <Card
-                  key={course.id}
-                  onClick={() => handleCourseSelect(course)}
-                  className="cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full flex flex-col"
-                >
-                  <CardHeader>
-                    {course.courseLabel && (
-                      <Badge variant="secondary" className="w-fit mb-2 text-xs font-semibold">
-                        {course.courseLabel}
-                      </Badge>
+        <Section size="md" className="w-full max-w-content">
+          <Stack gap="content-gap-lg" align="center">
+            <h2 className="text-heading-xl text-center">{t('gradeQuestion')}</h2>
+            {isLoadingCourses ? (
+              <Text variant="muted">{t('loading')}</Text>
+            ) : courses.length > 0 ? (
+              <Grid cols={{ default: '1', md: '2', lg: '3' }} gap="content-gap-lg">
+                {courses.map((course) => (
+                  <Card
+                    key={course.id}
+                    onClick={() => handleCourseSelect(course)}
+                    className="cursor-pointer transition-all duration-slow hover:shadow-card-hover hover:-translate-y-1 h-full flex flex-col"
+                  >
+                    <CardHeader>
+                      {course.courseLabel && (
+                        <Badge variant="secondary" className="w-fit mb-2">
+                          {course.courseLabel}
+                        </Badge>
+                      )}
+                      <CardTitle className="text-body-lg font-bold">{course.title}</CardTitle>
+                    </CardHeader>
+                    {course.description && (
+                      <CardContent className="flex-1">
+                        <CardDescription className="line-clamp-2">
+                          {course.description}
+                        </CardDescription>
+                      </CardContent>
                     )}
-                    <CardTitle className="text-lg font-bold">{course.title}</CardTitle>
-                  </CardHeader>
-                  {course.description && (
-                    <CardContent className="flex-1">
-                      <CardDescription className="line-clamp-2">
-                        {course.description}
-                      </CardDescription>
-                    </CardContent>
-                  )}
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center text-muted-foreground">{t('noCoursesAvailable')}</div>
-          )}
-        </div>
+                  </Card>
+                ))}
+              </Grid>
+            ) : (
+              <Text variant="muted">{t('noCoursesAvailable')}</Text>
+            )}
+          </Stack>
+        </Section>
       )}
 
       {step === 'complete' && (
-        <div className="text-center">
-          <TypingAnimation text={t('letsStart')} speed={100} className="text-2xl" />
-        </div>
+        <Stack gap="content-gap" align="center">
+          <TypingAnimation text={t('letsStart')} speed={100} className="text-display-sm" />
+        </Stack>
       )}
-    </div>
+    </Section>
   )
 }

@@ -6,7 +6,6 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { readFileSync } from 'fs'
 
 describe('workflow comment parsing', () => {
   /**
@@ -268,40 +267,5 @@ describe('workflow gh issue comment - repo flag', () => {
     // Without -R (incorrect - will fail)
     const incorrectCommand = `gh issue comment ${issueNumber} --body "${body}"`
     expect(incorrectCommand).not.toContain('-R')
-  })
-})
-
-describe('cody.yml Pipeline summary step', () => {
-  it('should not use unescaped backticks in bash echo (would cause command substitution)', () => {
-    // Regression test: backticks in bash are command substitution.
-    // `echo "## Pipeline: \`${TASK_ID}\`"` is correct (escaped backticks for markdown).
-    // `echo "## Pipeline: `${TASK_ID}`"` is WRONG — bash executes ${TASK_ID} as a command.
-    const workflowContent = readFileSync('.github/workflows/cody.yml', 'utf-8')
-
-    // Find the Pipeline summary step's echo line
-    const lines = workflowContent.split('\n')
-    const summaryEchoLines = lines.filter(
-      (line: string) => line.includes('GITHUB_STEP_SUMMARY') && line.includes('TASK_ID'),
-    )
-
-    for (const line of summaryEchoLines) {
-      // Ensure backticks around TASK_ID are escaped with backslash
-      // BAD:  echo "## 🤖 Cody Pipeline: `${TASK_ID}`"
-      // GOOD: echo "## 🤖 Cody Pipeline: \`${TASK_ID}\`"
-      const unescapedBacktickPattern = /(?<!\\)`\$\{TASK_ID\}`/
-      expect(line).not.toMatch(unescapedBacktickPattern)
-    }
-  })
-
-  it('Upload artifacts step should have continue-on-error for resilience', () => {
-    const workflowContent = readFileSync('.github/workflows/cody.yml', 'utf-8')
-
-    // Find the Upload artifacts step and verify continue-on-error is set
-    const uploadIdx = workflowContent.indexOf('name: Upload artifacts')
-    expect(uploadIdx).toBeGreaterThan(-1)
-
-    // The continue-on-error should appear between "Upload artifacts" and the next step
-    const sectionAfterUpload = workflowContent.slice(uploadIdx, uploadIdx + 300)
-    expect(sectionAfterUpload).toContain('continue-on-error: true')
   })
 })

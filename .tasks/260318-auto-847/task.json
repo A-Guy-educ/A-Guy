@@ -1,0 +1,25 @@
+{
+  "task_type": "fix_bug",
+  "risk_level": "low",
+  "confidence": 0.95,
+  "primary_domain": "frontend",
+  "scope": [
+    "src/ui/web/"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Multiple-choice question component exists in src/ui/web/",
+    "The component renders answer options with mathematical expressions",
+    "Font size is controlled via Tailwind CSS classes"
+  ],
+  "review_questions": [],
+  "complexity": 17,
+  "complexity_reasoning": "Scope: 4 (single component for multiple-choice answers), Risk: 3 (styling-only fix), Novelty: 3 (following existing patterns), Cross-Domain: 0 (frontend only), Ambiguity: 2 (clear intent - increase font size), Deps: 2 (self-contained). Total: 17",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Task contains clear bug report with preconditions, steps to reproduce, expected result, actual result, priority, and reproducibility. This is a well-structured bug report suitable for implementation."
+  },
+  "pipeline_profile": "lightweight",
+  "pipeline": "spec_execute_verify"
+}

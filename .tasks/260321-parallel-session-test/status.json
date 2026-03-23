@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "taskId": "260321-parallel-session-test",
+  "mode": "full",
+  "pipeline": "spec_execute_verify",
+  "startedAt": "2026-03-22T14:54:59.112Z",
+  "updatedAt": "2026-03-22T14:54:59.115Z",
+  "state": "completed",
+  "cursor": null,
+  "stages": {
+    "plan-gap": {
+      "state": "completed",
+      "retries": 0,
+      "startedAt": "2026-03-22T14:54:59.113Z",
+      "completedAt": "2026-03-22T14:54:59.114Z",
+      "elapsed": 0
+    },
+    "test": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-22T14:54:59.115Z"
+    },
+    "build": {
+      "state": "completed",
+      "retries": 0,
+      "completedAt": "2026-03-22T14:54:59.115Z"
+    }
+  },
+  "completedAt": "2026-03-22T14:54:59.115Z"
+}

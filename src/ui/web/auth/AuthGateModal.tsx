@@ -26,14 +26,14 @@ export function AuthGateModal({ isOpen, title, description, returnTo }: AuthGate
     <Dialog open={isOpen}>
       <DialogContent allowDismiss={false} className="sm:max-w-md">
         <DialogHeader className="text-center sm:text-center">
-          <DialogTitle className="text-xl">{title}</DialogTitle>
+          <DialogTitle className="text-heading-xl">{title}</DialogTitle>
           <DialogDescription className="mt-2">{description}</DialogDescription>
         </DialogHeader>
         <div className="mt-4 flex flex-col items-center gap-3">
           <GoogleLoginButton returnTo={returnTo} className="w-full" />
           <Link
             href="/courses"
-            className="text-sm text-muted-foreground underline hover:text-foreground"
+            className="text-body-sm text-muted-foreground underline hover:text-foreground"
           >
             {t('browseCourses')}
           </Link>

@@ -82,8 +82,9 @@ const nextConfig = {
   async headers() {
     return [
       // General routes - CSP optimized for Next.js
+      // Excludes /api/pdfjs-viewer which needs to be embeddable in same-origin iframes
       {
-        source: '/:path*',
+        source: '/((?!api/pdfjs-viewer).*)',
         headers: [
           {
             key: 'Content-Security-Policy',

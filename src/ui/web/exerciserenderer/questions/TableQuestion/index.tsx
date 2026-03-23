@@ -66,8 +66,8 @@ export function TableQuestion({
   }, [cellValues, question.table.answers, onCheckResult])
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="text-base font-medium text-foreground leading-relaxed">
+    <div className="flex flex-col gap-content-gap">
+      <div className="text-body-md font-medium text-foreground leading-relaxed">
         <RichTextRenderer block={promptBlock} />
       </div>
 
