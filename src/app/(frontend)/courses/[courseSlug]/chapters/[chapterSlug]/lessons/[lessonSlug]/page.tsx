@@ -224,14 +224,14 @@ export default async function LessonPage({ params }: LessonPageProps) {
             <ExerciseWorkspace
               exerciseTitle={lesson.title}
               backUrl={backUrl}
-              formulaSheetTitle={formulaSheetTitle}
-              formulaSheetContent={formulaSheetContent}
               primaryContent={<EmptyLessonPlaceholder />}
               chatContent={
                 <ChatInterface
                   lessonId={chatLessonId}
                   translationNamespace="courses"
                   showMathTools={true}
+                  formulaSheetTitle={formulaSheetTitle}
+                  formulaSheetContent={formulaSheetContent}
                 />
               }
             />
@@ -268,14 +268,14 @@ export default async function LessonPage({ params }: LessonPageProps) {
       <ExerciseWorkspace
         exerciseTitle={lesson.title}
         backUrl={backUrl}
-        formulaSheetTitle={formulaSheetTitle}
-        formulaSheetContent={formulaSheetContent}
         primaryContent={primaryContent}
         chatContent={
           <ChatInterface
             lessonId={chatLessonId}
             translationNamespace="courses"
             showMathTools={true}
+            formulaSheetTitle={formulaSheetTitle}
+            formulaSheetContent={formulaSheetContent}
           />
         }
       />

@@ -1,19 +1,16 @@
 'use client'
 
-import type React from 'react'
-
 import { isRTL } from '@/i18n/config'
-import { SystemLink } from '@/infra/loading/components/SystemLink'
-import { useRouterWithLoading } from '@/infra/loading/hooks/useRouterWithLoading'
 import { cn } from '@/infra/utils/ui'
 import type { User } from '@/payload-types'
 import { TelescopeLogo } from '@/ui/web/TelescopeLogo'
 import { UserDropdown } from '@/ui/web/UserDropdown'
 import { Button } from '@/ui/web/components/button'
-import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { usePasswordLogin } from '@/ui/web/providers/PasswordLoginProvider'
-import { FormulaSheetButton } from '@/ui/web/shared/FormulaSheetViewer/FormulaSheetButton'
+import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { ArrowLeft, ArrowRight, Menu } from 'lucide-react'
+import { SystemLink } from '@/infra/loading/components/SystemLink'
+import { useRouterWithLoading } from '@/infra/loading/hooks/useRouterWithLoading'
 
 interface ExerciseHeaderProps {
   exerciseTitle: string
@@ -22,10 +19,6 @@ interface ExerciseHeaderProps {
   user?: User | null
   isAuthLoading?: boolean
   currentUrl?: string
-  /** Title of the formula sheet */
-  formulaSheetTitle?: string | null
-  /** Pre-rendered formula sheet content */
-  formulaSheetContent?: React.ReactNode | null
 }
 
 export function ExerciseHeader({
@@ -35,8 +28,6 @@ export function ExerciseHeader({
   user,
   isAuthLoading,
   currentUrl,
-  formulaSheetTitle,
-  formulaSheetContent,
 }: ExerciseHeaderProps) {
   const t = useTranslations('courses')
   const tCommon = useTranslations('common.header')
@@ -86,12 +77,6 @@ export function ExerciseHeader({
           [rtl ? 'left' : 'right']: '20px',
         }}
       >
-        {/* Formula Sheet Button */}
-        <FormulaSheetButton
-          title={formulaSheetTitle ?? null}
-          content={formulaSheetContent ?? null}
-        />
-
         {/* Logo - Hidden on mobile, shown on desktop */}
         <TelescopeLogo className="h-8 w-auto hidden lg:flex" />
 

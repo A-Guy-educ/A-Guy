@@ -1,20 +1,16 @@
 'use client'
 
 import { useCurrentUser } from '@/client/hooks/useCurrentUser'
-import { SplitPaneLayout } from '@/ui/web/components/split-pane-layout'
 import { usePathname } from 'next/navigation'
 import React from 'react'
 import { ExerciseHeader } from '../ExerciseHeader'
+import { SplitPaneLayout } from '@/ui/web/components/split-pane-layout'
 
 interface ExerciseWorkspaceProps {
   exerciseTitle: string
   backUrl?: string
   primaryContent: React.ReactNode
   chatContent: React.ReactNode
-  /** Title of the formula sheet */
-  formulaSheetTitle?: string | null
-  /** Pre-rendered formula sheet content */
-  formulaSheetContent?: React.ReactNode | null
 }
 
 export function ExerciseWorkspace({
@@ -22,8 +18,6 @@ export function ExerciseWorkspace({
   backUrl,
   primaryContent,
   chatContent,
-  formulaSheetTitle,
-  formulaSheetContent,
 }: ExerciseWorkspaceProps) {
   const { user, isLoading: isAuthLoading } = useCurrentUser()
   const pathname = usePathname()
@@ -41,8 +35,6 @@ export function ExerciseWorkspace({
         user={user}
         isAuthLoading={isAuthLoading}
         currentUrl={pathname}
-        formulaSheetTitle={formulaSheetTitle}
-        formulaSheetContent={formulaSheetContent}
       />
       <SplitPaneLayout
         primaryContent={primaryContent}

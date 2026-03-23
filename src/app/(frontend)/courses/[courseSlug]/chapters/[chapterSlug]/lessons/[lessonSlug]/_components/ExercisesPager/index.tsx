@@ -1,6 +1,5 @@
 'use client'
 
-import type React from 'react'
 import { useCallback, useEffect, useRef } from 'react'
 import type { Exercise, Media as MediaType } from '@/payload-types'
 import { Button } from '@/ui/web/components/button'
@@ -13,6 +12,8 @@ import { Progress } from '@/ui/web/components/progress'
 import { useExercisesPager } from './useExercisesPager'
 import { ExerciseWorkspace } from '@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseWorkspace'
 import { ChatInterface } from '@/ui/web/chat'
+import type React from 'react'
+
 interface ExercisesPagerProps {
   exercises: Exercise[]
   lessonTitle: string
@@ -22,9 +23,9 @@ interface ExercisesPagerProps {
   lessonSlug: string
   lessonId: string
   mediaMap?: Record<string, MediaType>
-  /** Title of the formula sheet */
+  /** Title of the formula sheet (passed to ChatInterface) */
   formulaSheetTitle?: string | null
-  /** Pre-rendered formula sheet content */
+  /** Pre-rendered formula sheet content (passed to ChatInterface) */
   formulaSheetContent?: React.ReactNode | null
 }
 
@@ -142,8 +143,6 @@ export function ExercisesPager({
       <ExerciseWorkspace
         exerciseTitle={currentExercise.title ?? ''}
         backUrl={backUrl}
-        formulaSheetTitle={formulaSheetTitle}
-        formulaSheetContent={formulaSheetContent}
         primaryContent={
           <div className="h-full flex flex-col">
             <div className="flex-1 overflow-y-auto min-h-0">
@@ -244,6 +243,8 @@ export function ExercisesPager({
             }
             translationNamespace="courses"
             showMathTools={true}
+            formulaSheetTitle={formulaSheetTitle}
+            formulaSheetContent={formulaSheetContent}
           />
         }
       />

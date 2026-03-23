@@ -29,6 +29,7 @@ import { useTTS } from '../hooks/useTTS'
 import { FormulaComposer } from '@/ui/web/shared/MathInput/FormulaComposer'
 import { MathMarkdown } from '@/ui/web/shared/MathMarkdown'
 import { FunctionSquare } from 'lucide-react'
+import { FormulaSheetButton } from '@/ui/web/shared/FormulaSheetViewer/FormulaSheetButton'
 
 export type ViewMode = 'PDF' | 'Chat'
 
@@ -79,6 +80,10 @@ interface ChatInterfaceProps {
   showResetButton?: boolean
   showMathTools?: boolean
 
+  // Formula Sheet (pre-rendered server-side)
+  formulaSheetTitle?: string | null
+  formulaSheetContent?: React.ReactNode | null
+
   // Override computed contextKey (e.g. for Ask page per-session conversations)
   contextKeyOverride?: string
 
@@ -110,6 +115,8 @@ export function ChatInterface({
   showQuickActions = false,
   showResetButton = false,
   showMathTools = false,
+  formulaSheetTitle,
+  formulaSheetContent,
   contextKeyOverride,
   onConversationCreated,
   displayMode = 'full',
@@ -488,6 +495,11 @@ export function ChatInterface({
       {/* Quick Actions */}
       {showQuickActions && (
         <div className="flex gap-content-gap-xs p-3 border-t border-border">
+          {/* Formula Sheet Button */}
+          <FormulaSheetButton
+            title={formulaSheetTitle ?? null}
+            content={formulaSheetContent ?? null}
+          />
           <button
             className="flex-1 flex items-center justify-center gap-content-gap-xs py-2 px-3 rounded-lg bg-muted hover:bg-muted/80 text-body-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={() => handleQuickAction('hint')}

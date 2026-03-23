@@ -1,15 +1,10 @@
 'use client'
 
-import { ExerciseWorkspace } from '@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseWorkspace'
-import { SystemLink } from '@/infra/loading/components/SystemLink'
 import type { Exercise, Media as MediaType } from '@/payload-types'
 import type { ResolvedLessonBlock } from '@/server/repos/queries/lesson-blocks'
-import { ChatInterface } from '@/ui/web/chat'
 import { Button } from '@/ui/web/components/button'
-import { Progress } from '@/ui/web/components/progress'
+import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { ExerciseRenderer } from '@/ui/web/exerciserenderer'
-import type { ExerciseContentData } from '@/ui/web/exerciserenderer/types'
-import { useTranslations } from '@/ui/web/providers/I18n'
 import {
   BookOpen,
   ChevronLeft,
@@ -19,8 +14,13 @@ import {
   Loader2,
   Sparkles,
 } from 'lucide-react'
-import type React from 'react'
+import { useTranslations } from '@/ui/web/providers/I18n'
+import type { ExerciseContentData } from '@/ui/web/exerciserenderer/types'
+import { Progress } from '@/ui/web/components/progress'
 import { useLessonPager } from './useLessonPager'
+import { ExerciseWorkspace } from '@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseWorkspace'
+import { ChatInterface } from '@/ui/web/chat'
+import type React from 'react'
 
 interface LessonPagerProps {
   blocks: ResolvedLessonBlock[]
@@ -33,9 +33,9 @@ interface LessonPagerProps {
   mediaMap?: Record<string, MediaType>
   /** Pre-rendered content page bodies (keyed by content page ID) */
   contentPageBodies?: Record<string, React.ReactNode>
-  /** Title of the formula sheet */
+  /** Title of the formula sheet (passed to ChatInterface) */
   formulaSheetTitle?: string | null
-  /** Pre-rendered formula sheet content */
+  /** Pre-rendered formula sheet content (passed to ChatInterface) */
   formulaSheetContent?: React.ReactNode | null
 }
 
@@ -82,8 +82,6 @@ export function LessonPager({
       <ExerciseWorkspace
         exerciseTitle={exercise.title ?? ''}
         backUrl={backUrl}
-        formulaSheetTitle={formulaSheetTitle}
-        formulaSheetContent={formulaSheetContent}
         primaryContent={
           <div className="h-full flex flex-col">
             <div className="flex-1 overflow-y-auto min-h-0">
@@ -173,6 +171,8 @@ export function LessonPager({
             }
             translationNamespace="courses"
             showMathTools={true}
+            formulaSheetTitle={formulaSheetTitle}
+            formulaSheetContent={formulaSheetContent}
           />
         }
       />
