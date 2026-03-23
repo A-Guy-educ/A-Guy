@@ -88,11 +88,7 @@ export async function renderViewerHtml(
       #mainContainer {
         padding: 0 !important;
       }
-      /* Hide the entire top toolbar */
-      #toolbarContainer {
-        display: none !important;
-      }
-      /* Disable download and print controls (fallback) */
+      /* Disable download and print controls */
       #download,
       #downloadButton,
       #openFile,
