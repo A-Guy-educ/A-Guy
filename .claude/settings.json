@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "additionalDirectories": ["\\tmp"],
+    "allow": [
+      "Bash(diff /tmp/lesson-pager-dev.tsx \"src/app/\\(frontend\\)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/index.tsx\")"
+    ]
+  }
+}
