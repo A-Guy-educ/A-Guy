@@ -490,11 +490,16 @@ export function ChatInterface({
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Formula Sheet Button - always visible when sheet data exists */}
+      {formulaSheet && (
+        <div className="flex gap-content-gap-xs px-5 pt-3">
+          <FormulaSheetButton sheet={formulaSheet} />
+        </div>
+      )}
+
       {/* Quick Actions */}
       {showQuickActions && (
         <div className="flex gap-content-gap-xs p-3 border-t border-border">
-          {/* Formula Sheet Button */}
-          <FormulaSheetButton sheet={formulaSheet ?? null} />
           <button
             className="flex-1 flex items-center justify-center gap-content-gap-xs py-2 px-3 rounded-lg bg-muted hover:bg-muted/80 text-body-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={() => handleQuickAction('hint')}
