@@ -12,7 +12,13 @@ const redirects = async () => {
     source: '/:path((?!ie-incompatible.html$).*)', // all pages except the incompatibility page
   }
 
-  const redirects = [internetExplorerRedirect]
+  const codyRedirect = {
+    source: '/cody/:path*',
+    destination: 'https://cody-aguy.vercel.app/cody/:path*',
+    permanent: false,
+  }
+
+  const redirects = [internetExplorerRedirect, codyRedirect]
 
   return redirects
 }

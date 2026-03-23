@@ -8,6 +8,9 @@ loadEnv({ path: '.env.test', override: true })
 
 export default defineConfig({
   plugins: [tsconfigPaths(), react()],
+  ssr: {
+    noExternal: ['zod'],
+  },
   test: {
     environment: 'node',
     globals: true,
