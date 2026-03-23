@@ -38,6 +38,11 @@ export const Lessons: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
+    components: {
+      edit: {
+        beforeDocumentControls: ['@/ui/admin/CascadeDeleteButton#LessonCascadeDelete'],
+      },
+    },
     defaultColumns: [
       'chapter',
       'title',

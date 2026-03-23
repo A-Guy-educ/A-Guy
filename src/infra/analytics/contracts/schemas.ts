@@ -310,6 +310,115 @@ export const ExerciseCompletedSchema = z.object({
 })
 
 /**
+ * coupon_code_entered - Track coupon code usage
+ * Destination: Mixpanel
+ * Priority: P0
+ */
+export const CouponCodeEnteredPropertiesSchema = z.object({
+  coupon_code: z.string().describe('Coupon code entered'),
+  lesson_id: z.string().describe('Lesson identifier'),
+  course_id: z.string().describe('Course identifier'),
+})
+
+/**
+ * access_gate_shown - Track paywall/login gate display
+ * Destination: Mixpanel
+ * Priority: P0
+ */
+export const AccessGateShownPropertiesSchema = z.object({
+  gate_type: z.enum(['free', 'login', 'paid', 'coupon']).describe('Type of access gate'),
+  lesson_id: z.string().describe('Lesson identifier'),
+  course_id: z.string().describe('Course identifier'),
+})
+
+/**
+ * access_granted - Track content access grants
+ * Destination: Mixpanel
+ * Priority: P0
+ */
+export const AccessGrantedPropertiesSchema = z.object({
+  access_type: z.enum(['free', 'coupon', 'paid']).describe('How access was granted'),
+  coupon_code: z.string().optional().describe('Coupon code if applicable'),
+  lesson_id: z.string().describe('Lesson identifier'),
+  course_id: z.string().describe('Course identifier'),
+})
+
+/**
+ * answer_correct - Track correct answers
+ * Destination: Mixpanel
+ * Priority: P0
+ */
+export const AnswerCorrectPropertiesSchema = z.object({
+  exercise_id: z.string().describe('Exercise identifier'),
+  lesson_id: z.string().describe('Lesson identifier'),
+  time_seconds: z.number().describe('Time taken to answer'),
+  attempt_number: z.number().int().positive().describe('Attempt number'),
+  difficulty_level: z.enum(['easy', 'medium', 'hard']).describe('Exercise difficulty'),
+})
+
+/**
+ * answer_incorrect - Track incorrect answers
+ * Destination: Mixpanel
+ * Priority: P0
+ */
+export const AnswerIncorrectPropertiesSchema = z.object({
+  exercise_id: z.string().describe('Exercise identifier'),
+  lesson_id: z.string().describe('Lesson identifier'),
+  attempt_number: z.number().int().positive().describe('Attempt number'),
+  max_attempts: z.number().int().positive().describe('Maximum allowed attempts'),
+  time_seconds: z.number().describe('Time taken to answer'),
+})
+
+/**
+ * exercise_skipped - Track skipped exercises
+ * Destination: Mixpanel
+ * Priority: P0
+ */
+export const ExerciseSkippedPropertiesSchema = z.object({
+  exercise_id: z.string().describe('Exercise identifier'),
+  lesson_id: z.string().describe('Lesson identifier'),
+  reason: z.string().describe('Reason for skipping'),
+})
+
+/**
+ * lesson_abandoned - Track lesson abandonment
+ * Destination: Mixpanel
+ * Priority: P0
+ */
+export const LessonAbandonedPropertiesSchema = z.object({
+  lesson_id: z.string().describe('Lesson identifier'),
+  course_id: z.string().describe('Course identifier'),
+  time_spent_seconds: z.number().describe('Time spent on lesson'),
+  progress_percent: z.number().describe('Completion percentage'),
+  exercises_attempted: z.number().int().nonnegative().describe('Exercises attempted'),
+  exercises_completed: z.number().int().nonnegative().describe('Exercises completed'),
+})
+
+/**
+ * chapter_completed - Track chapter completion
+ * Destination: Mixpanel
+ * Priority: P0
+ */
+export const ChapterCompletedPropertiesSchema = z.object({
+  course_id: z.string().describe('Course identifier'),
+  chapter_id: z.string().describe('Chapter identifier'),
+  total_lessons: z.number().int().positive().describe('Total lessons in chapter'),
+  completion_time_seconds: z.number().describe('Time to complete chapter'),
+})
+
+/**
+ * time_on_page - Track time threshold signals
+ * Destination: Mixpanel
+ * Priority: P0
+ */
+export const TimeOnPagePropertiesSchema = z.object({
+  page_url: z.string().describe('Page URL'),
+  time_seconds: z.number().describe('Time threshold reached (30/60/120/300/600)'),
+  scroll_depth_percent: z.number().optional().describe('Max scroll depth percentage'),
+  user_interacted: z.boolean().describe('Whether user scrolled'),
+})
+
+/**
  * Master schema mapping
  */
 export const eventSchemas = {
@@ -338,6 +447,21 @@ export const eventSchemas = {
   [PRODUCT_EVENTS.CHAT_AUTO_TRIGGERED]: ChatAutoTriggeredSchema,
   [PRODUCT_EVENTS.EXERCISE_VIEWED]: ExerciseViewedSchema,
   [PRODUCT_EVENTS.EXERCISE_COMPLETED]: ExerciseCompletedSchema,
+
+  // Coupon & Access Events
+  [PRODUCT_EVENTS.COUPON_CODE_ENTERED]: CouponCodeEnteredPropertiesSchema,
+  [PRODUCT_EVENTS.ACCESS_GATE_SHOWN]: AccessGateShownPropertiesSchema,
+  [PRODUCT_EVENTS.ACCESS_GRANTED]: AccessGrantedPropertiesSchema,
+
+  // Exercise Quality Events
+  [PRODUCT_EVENTS.ANSWER_CORRECT]: AnswerCorrectPropertiesSchema,
+  [PRODUCT_EVENTS.ANSWER_INCORRECT]: AnswerIncorrectPropertiesSchema,
+  [PRODUCT_EVENTS.EXERCISE_SKIPPED]: ExerciseSkippedPropertiesSchema,
+
+  // Engagement Signal Events
+  [PRODUCT_EVENTS.LESSON_ABANDONED]: LessonAbandonedPropertiesSchema,
+  [PRODUCT_EVENTS.CHAPTER_COMPLETED]: ChapterCompletedPropertiesSchema,
+  [PRODUCT_EVENTS.TIME_ON_PAGE]: TimeOnPagePropertiesSchema,
 } as const
 
 /**
@@ -369,6 +493,21 @@ export type ChatAutoTriggeredProperties = z.infer<typeof ChatAutoTriggeredSchema
 export type ExerciseViewedProperties = z.infer<typeof ExerciseViewedSchema>
 export type ExerciseCompletedProperties = z.infer<typeof ExerciseCompletedSchema>
 
+// Coupon & Access
+export type CouponCodeEnteredProperties = z.infer<typeof CouponCodeEnteredPropertiesSchema>
+export type AccessGateShownProperties = z.infer<typeof AccessGateShownPropertiesSchema>
+export type AccessGrantedProperties = z.infer<typeof AccessGrantedPropertiesSchema>
+
+// Exercise Quality
+export type AnswerCorrectProperties = z.infer<typeof AnswerCorrectPropertiesSchema>
+export type AnswerIncorrectProperties = z.infer<typeof AnswerIncorrectPropertiesSchema>
+export type ExerciseSkippedProperties = z.infer<typeof ExerciseSkippedPropertiesSchema>
+
+// Engagement Signals
+export type LessonAbandonedProperties = z.infer<typeof LessonAbandonedPropertiesSchema>
+export type ChapterCompletedProperties = z.infer<typeof ChapterCompletedPropertiesSchema>
+export type TimeOnPageProperties = z.infer<typeof TimeOnPagePropertiesSchema>
+
 /**
  * Union type of all event properties
  */
@@ -396,3 +535,12 @@ export type EventProperties =
   | ChatAutoTriggeredProperties
   | ExerciseViewedProperties
   | ExerciseCompletedProperties
+  | CouponCodeEnteredProperties
+  | AccessGateShownProperties
+  | AccessGrantedProperties
+  | AnswerCorrectProperties
+  | AnswerIncorrectProperties
+  | ExerciseSkippedProperties
+  | LessonAbandonedProperties
+  | ChapterCompletedProperties
+  | TimeOnPageProperties

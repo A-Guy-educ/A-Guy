@@ -1,0 +1,34 @@
+{
+  "task_type": "implement_feature",
+  "risk_level": "medium",
+  "confidence": 0.95,
+  "primary_domain": "frontend",
+  "scope": [
+    "mixpanel-analytics",
+    "event-tracking",
+    "coupon-tracking",
+    "exercise-tracking",
+    "engagement-signals"
+  ],
+  "missing_inputs": [],
+  "assumptions": [
+    "Mixpanel SDK is already integrated into the project",
+    "Existing 20 events can be examined for implementation patterns",
+    "Analytics tracking utilities/helpers exist in the codebase",
+    "Event tracking follows lowercase_with_underscores naming convention"
+  ],
+  "review_questions": [
+    "Should the 9 critical events be added in a single PR, or would you prefer to split into multiple PRs by event category (coupon, exercise, engagement)?",
+    "Is there an existing analytics service/utility file where these events should be added?",
+    "Should the new events follow the same implementation pattern as the existing 20 events?"
+  ],
+  "complexity": 42,
+  "complexity_reasoning": "Scope: 12 (multiple files across frontend tracking + potentially backend). Risk: 8 (analytics tracking, non-critical). Novelty: 7 (extending existing pattern). Cross-Domain: 6 (frontend + analytics patterns). Ambiguity: 2 (very detailed spec). Dependencies: 7 (Mixpanel already integrated, adding to existing pattern). Total: 42",
+  "input_quality": {
+    "level": "good_spec",
+    "skip_stages": [],
+    "reasoning": "Input contains comprehensive event specifications with data properties, filterable fields, pre-built tables/reports, and acceptance criteria. Has 9 critical events defined with all required properties. Does not include step-by-step implementation steps with file paths, but provides complete specification for implementation. Promoted spec.md with requirements extracted."
+  },
+  "pipeline_profile": "standard",
+  "pipeline": "spec_execute_verify"
+}

@@ -50,6 +50,21 @@ export const PRODUCT_EVENTS = {
   CHAT_AUTO_TRIGGERED: 'chat_auto_triggered',
   EXERCISE_VIEWED: 'exercise_viewed',
   EXERCISE_COMPLETED: 'exercise_completed',
+
+  // Coupon & Access Events (Mixpanel only)
+  COUPON_CODE_ENTERED: 'coupon_code_entered',
+  ACCESS_GATE_SHOWN: 'access_gate_shown',
+  ACCESS_GRANTED: 'access_granted',
+
+  // Exercise Quality Events (Mixpanel only)
+  ANSWER_CORRECT: 'answer_correct',
+  ANSWER_INCORRECT: 'answer_incorrect',
+  EXERCISE_SKIPPED: 'exercise_skipped',
+
+  // Engagement Signal Events (Mixpanel only)
+  LESSON_ABANDONED: 'lesson_abandoned',
+  CHAPTER_COMPLETED: 'chapter_completed',
+  TIME_ON_PAGE: 'time_on_page',
 } as const
 
 /**
