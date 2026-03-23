@@ -9,6 +9,7 @@ import { ConvertV2Button } from '../ConvertV2Button'
 import { ConvertV3Button } from '../ConvertV3Button'
 import { DraftExercisesList } from '../DraftExercisesList'
 import { LatexImportSection } from '../LatexImportSection'
+import { TexFileUpload } from '../TexFileUpload'
 import { TexImportButton } from '../TexImportButton'
 import { V2StatusPanel } from '../V2StatusPanel'
 
@@ -172,6 +173,9 @@ export const LessonConversionPanel = () => {
         <p style={{ fontSize: 12, color: 'var(--theme-elevation-500)' }}>
           No PDFs or images attached.
         </p>
+        <div style={{ marginTop: 4 }}>
+          <TexFileUpload lessonId={String(lessonId)} />
+        </div>
         <LatexImportSection lessonId={String(lessonId)} />
       </div>
     )
@@ -354,7 +358,17 @@ export const LessonConversionPanel = () => {
         </div>
       ))}
 
-      {/* LaTeX paste import */}
+      {/* Upload .tex + LaTeX paste import */}
+      <div
+        style={{
+          marginTop: 4,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+        }}
+      >
+        <TexFileUpload lessonId={String(lessonId)} />
+      </div>
       <LatexImportSection lessonId={String(lessonId)} />
     </div>
   )
