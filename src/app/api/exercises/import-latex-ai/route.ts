@@ -47,6 +47,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Lesson not found' }, { status: 404 })
     }
 
+    // Split the LaTeX into individual exercises before sending to AI.
+    // Sending the whole file at once causes truncated JSON responses.
+    const chunks = splitLatexIntoExercises(latex)
+    reqLogger.info({ chunkCount: chunks.length }, 'Split LaTeX into exercise chunks for AI')
+
     // Use Genkit unified adapter for AI parsing
     const { createGenkitUnifiedAdapter } =
       await import('@/infra/llm/genkit/adapters/unified-adapter')
@@ -60,72 +65,55 @@ export async function POST(request: NextRequest) {
       ...modelEntry,
     }
 
-    const { system, userMessage } = buildAiParserPrompt(latex)
+    // Process each exercise chunk individually
+    const rawExercises: Array<{ title: string; blocks: unknown[] }> = []
+    const aiErrors: string[] = []
 
-    const result = await adapter.generateChatCompletion(
-      {
-        system,
-        messages: [{ role: 'user', content: userMessage }],
-        model: modelConfig,
-        acknowledgment: 'Parsing LaTeX into exercise blocks.',
-      },
-      payload,
-    )
+    for (let ci = 0; ci < chunks.length; ci++) {
+      const chunk = chunks[ci]
+      try {
+        const { system, userMessage } = buildAiParserPrompt(chunk.latex)
 
-    // Extract JSON from AI response — handle markdown code fences and leading text
-    let responseText = result.text.trim()
-    const fenceMatch = /```(?:json)?\s*\n?([\s\S]*?)```/.exec(responseText)
-    if (fenceMatch) {
-      responseText = fenceMatch[1].trim()
-    }
-    const jsonStart = responseText.search(/[{[]/)
-    if (jsonStart > 0) {
-      responseText = responseText.slice(jsonStart)
-    }
-
-    let rawExercises: Array<{ title: string; blocks: unknown[] }>
-    try {
-      const aiOutput = JSON.parse(responseText)
-      rawExercises = Array.isArray(aiOutput.exercises) ? aiOutput.exercises : [aiOutput]
-    } catch (parseErr) {
-      // Try to repair truncated JSON by closing open brackets/braces
-      const repaired = repairTruncatedJson(responseText)
-      if (repaired) {
-        try {
-          const aiOutput = JSON.parse(repaired)
-          rawExercises = Array.isArray(aiOutput.exercises) ? aiOutput.exercises : [aiOutput]
-          reqLogger.warn('AI JSON was truncated, repaired successfully')
-        } catch {
-          reqLogger.error(
-            {
-              responsePreview: responseText.slice(0, 500),
-              responseTail: responseText.slice(-200),
-              parseError: parseErr instanceof Error ? parseErr.message : String(parseErr),
-            },
-            'AI returned invalid JSON for LaTeX import',
-          )
-          return NextResponse.json(
-            {
-              success: false,
-              error: 'AI returned invalid JSON. Try the script import instead.',
-            },
-            { status: 422 },
-          )
-        }
-      } else {
-        reqLogger.error(
+        const result = await adapter.generateChatCompletion(
           {
-            responsePreview: responseText.slice(0, 500),
-            responseTail: responseText.slice(-200),
-            parseError: parseErr instanceof Error ? parseErr.message : String(parseErr),
+            system,
+            messages: [{ role: 'user', content: userMessage }],
+            model: modelConfig,
+            acknowledgment: `Parsing exercise ${ci + 1}/${chunks.length} into blocks.`,
           },
-          'AI returned invalid JSON for LaTeX import',
+          payload,
         )
-        return NextResponse.json(
-          { success: false, error: 'AI returned invalid JSON. Try the script import instead.' },
-          { status: 422 },
-        )
+
+        const parsed = extractJsonFromResponse(result.text)
+        if (parsed) {
+          const exercises = Array.isArray(parsed.exercises) ? parsed.exercises : [parsed]
+          for (const ex of exercises) {
+            rawExercises.push({
+              title: ex.title || chunk.title || `Exercise ${ci + 1}`,
+              blocks: ex.blocks || [],
+            })
+          }
+        } else {
+          reqLogger.warn(
+            { chunkIndex: ci, responsePreview: result.text.slice(0, 300) },
+            'AI returned unparseable response for chunk',
+          )
+          aiErrors.push(`Exercise ${ci + 1} (${chunk.title || 'untitled'}): invalid AI response`)
+        }
+      } catch (err) {
+        reqLogger.error({ chunkIndex: ci, err }, 'AI call failed for chunk')
+        aiErrors.push(`Exercise ${ci + 1}: ${err instanceof Error ? err.message : 'unknown error'}`)
       }
+    }
+
+    if (rawExercises.length === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `AI failed to parse all exercises. ${aiErrors[0] ?? ''}`,
+        },
+        { status: 422 },
+      )
     }
 
     // Find existing exercise count for ordering
@@ -364,6 +352,83 @@ function pick(obj: Record<string, unknown>, keys: string[]): Record<string, unkn
     }
   }
   return result
+}
+
+/**
+ * Split a full LaTeX document into individual exercise chunks.
+ * Uses the same \textbf{תרגיל N} boundary the script parser uses.
+ */
+function splitLatexIntoExercises(latex: string): Array<{ title: string; latex: string }> {
+  // Strip preamble (everything before \begin{document})
+  const docStart = latex.indexOf('\\begin{document}')
+  const body = docStart >= 0 ? latex.slice(docStart) : latex
+
+  // Split on exercise titles: \textbf{תרגיל N ...}
+  const exercisePattern = /\\textbf\{תרגיל\s+(\d+)[^}]*\}/g
+  const matches = [...body.matchAll(exercisePattern)]
+
+  if (matches.length === 0) {
+    // No exercise boundaries found — send the whole thing as one chunk
+    return [{ title: '', latex: body }]
+  }
+
+  const chunks: Array<{ title: string; latex: string }> = []
+
+  for (let i = 0; i < matches.length; i++) {
+    const match = matches[i]
+    const start = match.index!
+    const end = i + 1 < matches.length ? matches[i + 1].index! : body.length
+    const chunkLatex = body.slice(start, end).trim()
+
+    // Skip solution sections
+    if (/^\\section\*?\{פתרון/.test(chunkLatex)) continue
+
+    chunks.push({
+      title: match[0].replace(/\\textbf\{|\}/g, '').trim(),
+      latex: chunkLatex,
+    })
+  }
+
+  // Filter out solution exercises (title contains "פתרון")
+  return chunks.filter((c) => !c.title.includes('פתרון'))
+}
+
+/**
+ * Extract JSON from AI response text. Handles:
+ * - Markdown code fences
+ * - Leading text before JSON
+ * - Truncated JSON (attempts repair)
+ */
+function extractJsonFromResponse(text: string): Record<string, unknown> | null {
+  let responseText = text.trim()
+
+  // Extract from code fences
+  const fenceMatch = /```(?:json)?\s*\n?([\s\S]*?)```/.exec(responseText)
+  if (fenceMatch) {
+    responseText = fenceMatch[1].trim()
+  }
+
+  // Find first { or [
+  const jsonStart = responseText.search(/[{[]/)
+  if (jsonStart > 0) {
+    responseText = responseText.slice(jsonStart)
+  }
+  if (jsonStart < 0) return null
+
+  try {
+    return JSON.parse(responseText) as Record<string, unknown>
+  } catch {
+    // Try repair
+    const repaired = repairTruncatedJson(responseText)
+    if (repaired) {
+      try {
+        return JSON.parse(repaired) as Record<string, unknown>
+      } catch {
+        return null
+      }
+    }
+    return null
+  }
 }
 
 /**
