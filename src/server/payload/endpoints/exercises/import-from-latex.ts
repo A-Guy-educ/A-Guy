@@ -59,6 +59,24 @@ export async function importExerciseFromLatex(req: PayloadRequest): Promise<Resp
 
     const createdIds: string[] = []
 
+    // Debug: log axis blocks to verify viewport/range are correct
+    for (const ex of result.exercises) {
+      for (const block of ex.blocks) {
+        if (block.type === 'question_axis') {
+          const axis = (block as unknown as Record<string, unknown>).axis as Record<string, unknown>
+          reqLogger.info(
+            {
+              title: ex.title,
+              viewport: (axis as Record<string, unknown>).viewport,
+              graphs: ((axis as Record<string, unknown>).elements as Record<string, unknown[]>)
+                .graphs,
+            },
+            '[LaTeX import] Axis block debug',
+          )
+        }
+      }
+    }
+
     for (let i = 0; i < result.exercises.length; i++) {
       const group = result.exercises[i]
       const exercise = await req.payload.create({
