@@ -1,10 +1,12 @@
 import type { CollectionConfig } from 'payload'
 
 import { tenantField } from '@/server/payload/fields/tenant'
+import { contentLocaleField } from '@/server/payload/fields/contentLocale'
 import { adminOnly } from '../access/adminOnly'
 import { publishedAndActive } from '../access/publishedAndActive'
 import { createdByField } from '../fields/createdBy'
 import { formatSlug } from '../fields/formatSlug'
+import { translatedFromField } from '../fields/translatedFrom'
 import { computeAdminTitle } from '../hooks/chapters/computeAdminTitle'
 
 export const Chapters: CollectionConfig = {
@@ -33,14 +35,30 @@ export const Chapters: CollectionConfig = {
     useAsTitle: 'adminTitle',
     components: {
       edit: {
-        beforeDocumentControls: ['@/ui/admin/CascadeDeleteButton#ChapterCascadeDelete'],
+        beforeDocumentControls: [
+          '@/ui/admin/TranslationButton#TranslateChapterAction',
+          '@/ui/admin/CascadeDeleteButton#ChapterCascadeDelete',
+        ],
       },
     },
-    defaultColumns: ['course', 'chapterLabel', 'title', 'order', 'status', 'isActive', 'updatedAt'],
+    defaultColumns: [
+      'course',
+      'chapterLabel',
+      'title',
+      'locale',
+      'order',
+      'status',
+      'isActive',
+      'updatedAt',
+    ],
   },
   fields: [
     // Tenant
     tenantField,
+    // Content locale
+    contentLocaleField,
+    // Translation link
+    translatedFromField('chapters'),
     {
       name: 'course',
       type: 'relationship',

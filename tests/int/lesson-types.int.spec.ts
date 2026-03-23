@@ -75,6 +75,7 @@ describe('Lesson types', () => {
         status: 'published',
         isActive: true,
         tenant: tenantId,
+        locale: 'he',
       },
     })
     chapterId = chapter.id
@@ -117,6 +118,7 @@ describe('Lesson types', () => {
         status: 'published',
         isActive: true,
         tenant: tenantId,
+        locale: 'he',
         accessType: 'inherit',
         contentStatus: 'none',
         contentStatusVisible: true,
@@ -158,6 +160,7 @@ describe('Lesson types', () => {
         status: 'published',
         isActive: true,
         tenant: tenantId,
+        locale: 'he',
         accessType: 'inherit',
         contentStatus: 'none',
         contentStatusVisible: true,
@@ -185,6 +188,7 @@ describe('Lesson types', () => {
           status: 'published',
           isActive: true,
           tenant: tenantId,
+          locale: 'he',
           accessType: 'inherit',
           contentStatus: 'none',
           contentStatusVisible: true,

@@ -43,6 +43,7 @@ const mockLesson: Lesson = {
   isActive: true,
   order: 1,
   accessType: 'inherit' as const,
+  locale: 'he' as const,
   tenant: 'test-tenant',
   createdAt: '2024-01-01T00:00:00.000Z',
   updatedAt: '2024-01-01T00:00:00.000Z',

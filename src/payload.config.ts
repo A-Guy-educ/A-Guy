@@ -30,6 +30,7 @@ import { PricingPlans } from '@/server/payload/collections/PricingPlans'
 import { Prompts } from '@/server/payload/collections/Prompts'
 import { TeacherProfiles } from '@/server/payload/collections/TeacherProfiles'
 import { Tenants } from '@/server/payload/collections/Tenants'
+import { TranslationGlossary } from '@/server/payload/collections/TranslationGlossary'
 import { UploadSessions } from '@/server/payload/collections/UploadSessions'
 import { UserProgress } from '@/server/payload/collections/UserProgress'
 import { Users } from '@/server/payload/collections/Users'
@@ -38,6 +39,7 @@ import { UserStats } from '@/server/payload/collections/UserStats'
 import { generateSupportEndpoint } from '@/server/payload/endpoints/exercises/generate-support'
 import { importExerciseFromImage } from '@/server/payload/endpoints/exercises/import-from-image'
 import { importExerciseFromLesson } from '@/server/payload/endpoints/exercises/import-from-lesson'
+import { translateContentEndpoint } from '@/server/payload/endpoints/translation/translate-content'
 import { cascadeDeleteEndpoint } from '@/server/payload/endpoints/cascade-delete'
 import { defaultLexical } from '@/server/payload/fields/defaultLexical'
 import { pdfToExercisesTask } from '@/server/payload/jobs/pdf-to-exercises-task'
@@ -177,6 +179,7 @@ export default buildConfig({
     PricingPlans,
     AccessCodes,
     MCPAuditLogs,
+    TranslationGlossary,
   ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],
@@ -207,6 +210,11 @@ export default buildConfig({
       path: '/exercises/generate-support',
       method: 'post',
       handler: (req: PayloadRequest) => generateSupportEndpoint(req),
+    },
+    {
+      path: '/translation/translate',
+      method: 'post',
+      handler: (req: PayloadRequest) => translateContentEndpoint(req),
     },
     {
       path: '/cascade-delete',
