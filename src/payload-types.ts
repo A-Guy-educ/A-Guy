@@ -97,6 +97,7 @@ export interface Config {
     'pricing-plans': PricingPlan;
     'access-codes': AccessCode;
     'mcp-audit-logs': McpAuditLog;
+    'translation-glossary': TranslationGlossary;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -139,6 +140,7 @@ export interface Config {
     'pricing-plans': PricingPlansSelect<false> | PricingPlansSelect<true>;
     'access-codes': AccessCodesSelect<false> | AccessCodesSelect<true>;
     'mcp-audit-logs': McpAuditLogsSelect<false> | McpAuditLogsSelect<true>;
+    'translation-glossary': TranslationGlossarySelect<false> | TranslationGlossarySelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -499,6 +501,10 @@ export interface Course {
    * Content language
    */
   locale: 'en' | 'he';
+  /**
+   * Source document this was translated from
+   */
+  translatedFrom?: (string | null) | Course;
   /**
    * Course identifier (e.g., "ח" or "8")
    */
@@ -1213,6 +1219,14 @@ export interface Chapter {
    */
   tenant: string | Tenant;
   /**
+   * Content language
+   */
+  locale: 'en' | 'he';
+  /**
+   * Source document this was translated from
+   */
+  translatedFrom?: (string | null) | Chapter;
+  /**
    * The course this chapter belongs to
    */
   course: string | Course;
@@ -1269,6 +1283,14 @@ export interface Lesson {
    * Tenant scope for this document
    */
   tenant: string | Tenant;
+  /**
+   * Content language
+   */
+  locale: 'en' | 'he';
+  /**
+   * Source document this was translated from
+   */
+  translatedFrom?: (string | null) | Lesson;
   /**
    * The chapter this lesson belongs to
    */
@@ -1350,6 +1372,14 @@ export interface Exercise {
    * Tenant scope for this document
    */
   tenant: string | Tenant;
+  /**
+   * Content language
+   */
+  locale: 'en' | 'he';
+  /**
+   * Source document this was translated from
+   */
+  translatedFrom?: (string | null) | Exercise;
   /**
    * Exercise title (for admin reference)
    */
@@ -2235,6 +2265,39 @@ export interface McpAuditLog {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "translation-glossary".
+ */
+export interface TranslationGlossary {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * Term in Hebrew (e.g., "יתר")
+   */
+  hebrewTerm: string;
+  /**
+   * Term in English (e.g., "hypotenuse")
+   */
+  englishTerm: string;
+  /**
+   * Subject area for this term
+   */
+  subject?: ('math' | 'science' | 'general') | null;
+  /**
+   * Usage notes or context for translators
+   */
+  notes?: string | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -2605,6 +2668,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'mcp-audit-logs';
         value: string | McpAuditLog;
+      } | null)
+    | ({
+        relationTo: 'translation-glossary';
+        value: string | TranslationGlossary;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -2978,6 +3045,7 @@ export interface TenantsSelect<T extends boolean = true> {
 export interface CoursesSelect<T extends boolean = true> {
   tenant?: T;
   locale?: T;
+  translatedFrom?: T;
   courseLabel?: T;
   title?: T;
   description?: T;
@@ -3010,6 +3078,8 @@ export interface CoursesSelect<T extends boolean = true> {
  */
 export interface ChaptersSelect<T extends boolean = true> {
   tenant?: T;
+  locale?: T;
+  translatedFrom?: T;
   course?: T;
   chapterLabel?: T;
   title?: T;
@@ -3030,6 +3100,8 @@ export interface ChaptersSelect<T extends boolean = true> {
  */
 export interface LessonsSelect<T extends boolean = true> {
   tenant?: T;
+  locale?: T;
+  translatedFrom?: T;
   chapter?: T;
   type?: T;
   title?: T;
@@ -3121,6 +3193,8 @@ export interface GraphBlockSelect<T extends boolean = true> {
  */
 export interface ExercisesSelect<T extends boolean = true> {
   tenant?: T;
+  locale?: T;
+  translatedFrom?: T;
   title?: T;
   order?: T;
   lesson?: T;
@@ -3492,6 +3566,20 @@ export interface McpAuditLogsSelect<T extends boolean = true> {
   timestamp?: T;
   requestId?: T;
   durationMs?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "translation-glossary_select".
+ */
+export interface TranslationGlossarySelect<T extends boolean = true> {
+  tenant?: T;
+  hebrewTerm?: T;
+  englishTerm?: T;
+  subject?: T;
+  notes?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

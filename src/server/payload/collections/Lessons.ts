@@ -2,11 +2,13 @@ import type { CollectionConfig } from 'payload'
 
 import { DEFAULT_LESSON_ACCESS_TYPE } from '@/server/constants/access-types'
 import { tenantField } from '@/server/payload/fields/tenant'
+import { contentLocaleField } from '@/server/payload/fields/contentLocale'
 import { adminOnly } from '../access/adminOnly'
 import { publishedAndActive } from '../access/publishedAndActive'
 import { createdByField } from '../fields/createdBy'
 import { formatSlug } from '../fields/formatSlug'
 import { contentStatusFields } from '../fields/contentStatus'
+import { translatedFromField } from '../fields/translatedFrom'
 
 export const Lessons: CollectionConfig = {
   slug: 'lessons',
@@ -38,9 +40,18 @@ export const Lessons: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
+    components: {
+      edit: {
+        beforeDocumentControls: [
+          '@/ui/admin/TranslationButton#TranslateLessonAction',
+          '@/ui/admin/CascadeDeleteButton#LessonCascadeDelete',
+        ],
+      },
+    },
     defaultColumns: [
       'chapter',
       'title',
+      'locale',
       'type',
       'slug',
       'order',
@@ -53,6 +64,10 @@ export const Lessons: CollectionConfig = {
   fields: [
     // Tenant
     tenantField,
+    // Content locale
+    contentLocaleField,
+    // Translation link
+    translatedFromField('lessons'),
     {
       name: 'chapter',
       type: 'relationship',

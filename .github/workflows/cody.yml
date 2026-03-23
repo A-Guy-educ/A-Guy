@@ -74,7 +74,7 @@ on:
       - dev
       - main
     paths:
-      - 'scripts/cody/**'
+      - 'src/engine/**'
       - 'package.json'
       - 'pnpm-lock.yaml'
 
@@ -131,7 +131,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          sparse-checkout: scripts/cody
+          sparse-checkout: src/engine
           sparse-checkout-cone-mode: true
 
       - name: Setup pnpm
@@ -156,7 +156,7 @@ jobs:
           COMMENT_BODY: ${{ github.event.comment.body }}
           AUTHOR: ${{ github.event.comment.user.login }}
           ASSOCIATION: ${{ github.event.comment.author_association }}
-        run: pnpm tsx scripts/cody/parse-safety.ts
+        run: pnpm tsx src/engine/parse-safety.ts
 
       # Add reaction to acknowledge command (shows instantly on the comment)
       - name: Acknowledge command with reaction
@@ -198,7 +198,7 @@ jobs:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           # Default version (can be overridden by explicit --version in command)
           CODY_DEFAULT_VERSION: ${{ env.CODY_DEFAULT_VERSION }}
-        run: pnpm tsx scripts/cody/parse-inputs.ts
+        run: pnpm tsx src/engine/parse-inputs.ts
 
   # Job 1b: Notify on parse errors (invalid commands)
   notify-parse-error:
@@ -300,10 +300,10 @@ jobs:
           GITHUB_EVENT_NAME: 'push'
           SAFETY_VALID: 'true'
           SAFETY_REASON: ''
-        run: pnpm tsx scripts/cody/parse-inputs.ts
+        run: pnpm tsx src/engine/parse-inputs.ts
 
       - name: Validate cody entry can be loaded
-        run: pnpm tsx scripts/cody/entry.ts --help
+        run: pnpm tsx src/engine/entry.ts --help
 
       - name: Run pipeline canary tests (dry-run, no LLM)
         run: pnpm test:canary
@@ -471,7 +471,7 @@ jobs:
           TASK_ID: ${{ needs.parse.outputs.task_id }}
           ISSUE_NUMBER: ${{ needs.parse.outputs.issue_number }}
           FRESH: ${{ needs.parse.outputs.fresh }}
-        run: pnpm tsx scripts/cody/checkout-task-branch.ts
+        run: pnpm tsx src/engine/checkout-task-branch.ts
 
       # Configure git identity for commits in CI
       - name: Configure git identity
@@ -493,8 +493,8 @@ jobs:
 
           # Checkout only pipeline files from that ref (not the whole repo)
           # This preserves the feature branch and task files
-          git checkout "origin/$VERSION_REF" -- scripts/cody/ .opencode/agents/ opencode.json 2>/dev/null || \
-            git checkout "$VERSION_REF" -- scripts/cody/ .opencode/agents/ opencode.json 2>/dev/null || \
+          git checkout "origin/$VERSION_REF" -- src/engine/ .opencode/agents/ opencode.json 2>/dev/null || \
+            git checkout "$VERSION_REF" -- src/engine/ .opencode/agents/ opencode.json 2>/dev/null || \
             echo "Warning: Could not overlay from $VERSION_REF, using current code"
 
           echo "Pipeline version: $VERSION_REF"

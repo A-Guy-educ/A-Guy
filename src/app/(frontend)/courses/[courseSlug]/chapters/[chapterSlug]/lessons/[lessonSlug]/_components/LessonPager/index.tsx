@@ -20,6 +20,7 @@ import { Progress } from '@/ui/web/components/progress'
 import { useLessonPager } from './useLessonPager'
 import { ExerciseWorkspace } from '@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseWorkspace'
 import { ChatInterface } from '@/ui/web/chat'
+import { Media as MediaComponent } from '@/ui/web/media'
 import type React from 'react'
 
 interface LessonPagerProps {
@@ -33,6 +34,10 @@ interface LessonPagerProps {
   mediaMap?: Record<string, MediaType>
   /** Pre-rendered content page bodies (keyed by content page ID) */
   contentPageBodies?: Record<string, React.ReactNode>
+  /** PDF/media files attached to the lesson (contentFiles) */
+  validFiles?: MediaType[]
+  /** Lesson ID for chat context (defaults to lessonId) */
+  chatLessonId?: string
 }
 
 export function LessonPager({
@@ -45,6 +50,8 @@ export function LessonPager({
   lessonId,
   mediaMap,
   contentPageBodies,
+  validFiles,
+  chatLessonId,
 }: LessonPagerProps) {
   const t = useTranslations('courses')
   const {
@@ -58,7 +65,13 @@ export function LessonPager({
     handleStart,
     getCurrentBlockOrdinal,
     totalBlocks,
-  } = useLessonPager({ blocks, courseSlug, chapterSlug, lessonSlug })
+  } = useLessonPager({
+    blocks,
+    courseSlug,
+    chapterSlug,
+    lessonSlug,
+    hasPdfFiles: (validFiles?.length ?? 0) > 0,
+  })
 
   const currentBlock =
     pageState.type === 'block' && pageState.blockIndex !== undefined
@@ -224,6 +237,72 @@ export function LessonPager({
           </div>
         </main>
       </div>
+    )
+  }
+
+  // Render PDF viewer page
+  if (pageState.type === 'pdf' && validFiles && validFiles.length > 0) {
+    return (
+      <ExerciseWorkspace
+        exerciseTitle={lessonTitle}
+        backUrl={backUrl}
+        primaryContent={
+          <div className="h-full flex flex-col min-h-0">
+            <div className="flex-1 overflow-y-auto min-h-0">
+              <div className="w-full h-full flex flex-col min-h-0">
+                {validFiles.map((file, index) => (
+                  <div key={file.id} className="w-full flex-1 min-h-0">
+                    {index > 0 && (
+                      <div className="h-0.5 my-8 flex-shrink-0 bg-gradient-to-r from-transparent via-border to-transparent" />
+                    )}
+                    <div className="border rounded-lg overflow-hidden bg-card shadow-lg h-full">
+                      <MediaComponent
+                        resource={file}
+                        className="w-full h-full"
+                        htmlElement={null}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="shrink-0 border-t border-border bg-card px-4 py-3">
+              <div className="flex justify-between items-center">
+                <Button
+                  variant="ghost"
+                  onClick={handlePrev}
+                  disabled={!canGoPrev || isNavigating}
+                  className="text-muted-foreground text-sm hover:text-foreground gap-1.5 cursor-pointer"
+                >
+                  <ChevronRight className="w-4 h-4 rtl:rotate-0 ltr:rotate-180" />{' '}
+                  {t('exercisesPagerPrev')}
+                </Button>
+                <Button
+                  onClick={handleNext}
+                  disabled={!canGoNext || isNavigating}
+                  className="px-6 py-2 rounded-xl text-sm cursor-pointer"
+                >
+                  {isNavigating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 me-2 animate-spin" />
+                      {t('exercisesPagerNext')}
+                    </>
+                  ) : (
+                    t('exercisesPagerNext')
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        }
+        chatContent={
+          <ChatInterface
+            lessonId={chatLessonId ?? lessonId}
+            translationNamespace="courses"
+            showMathTools={true}
+          />
+        }
+      />
     )
   }
 

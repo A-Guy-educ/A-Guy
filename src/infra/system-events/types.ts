@@ -17,8 +17,16 @@ import type {
   StudentAnswerSubmittedPayload,
 } from './exercise-schemas'
 import type {
+  AccessGateShownPayload,
+  AccessGrantedPayload,
+  AnswerCorrectPayload,
+  AnswerIncorrectPayload,
+  ChapterCompletedPayload,
   ChatMessageSubmittedPayload,
+  CouponCodeEnteredPayload,
   CourseEnteredPayload,
+  ExerciseSkippedPayload,
+  LessonAbandonedPayload,
   LessonEndedPayload,
   LessonStartedPayload,
   LoginModalShownPayload,
@@ -28,6 +36,7 @@ import type {
   RegistrationPromptShownPayload,
   SessionStartedPayload,
   SiteInitPayload,
+  TimeOnPagePayload,
   UserResolvedPayload,
 } from './schemas'
 import type {
@@ -90,6 +99,21 @@ export type SystemEventPayloads = {
   'system.study_plan_viewed': StudyPlanViewed
   'system.study_plan_generated': StudyPlanGenerated
   'system.study_plan_day_completed': StudyPlanDayCompleted
+
+  // Coupon & Access
+  'system.coupon_code_entered': CouponCodeEnteredPayload
+  'system.access_gate_shown': AccessGateShownPayload
+  'system.access_granted': AccessGrantedPayload
+
+  // Exercise Quality
+  'system.answer_correct': AnswerCorrectPayload
+  'system.answer_incorrect': AnswerIncorrectPayload
+  'system.exercise_skipped': ExerciseSkippedPayload
+
+  // Engagement Signals
+  'system.lesson_abandoned': LessonAbandonedPayload
+  'system.chapter_completed': ChapterCompletedPayload
+  'system.time_on_page': TimeOnPagePayload
 }
 
 /**

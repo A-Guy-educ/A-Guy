@@ -202,6 +202,7 @@ export async function seedTestCourseData(): Promise<TestCourseData | null> {
         isActive: true,
         order: 0,
         tenant: tenantId,
+        locale: 'he',
       },
     })
 
@@ -219,6 +220,7 @@ export async function seedTestCourseData(): Promise<TestCourseData | null> {
         isActive: true,
         order: 0,
         tenant: tenantId,
+        locale: 'he',
         accessType: 'inherit',
         contentStatus: 'none',
         contentStatusVisible: true,

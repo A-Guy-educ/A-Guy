@@ -15,14 +15,19 @@ import { MetaTitleComponent as MetaTitleComponent_a8a977ebc872c5d5ea7ee689724c08
 import { MetaDescriptionComponent as MetaDescriptionComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
 import { PreviewComponent as PreviewComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
 import { SlugField as SlugField_3817bf644402e67bfe6577f60ef982de } from '@payloadcms/ui'
+import { TranslateCourseAction as TranslateCourseAction_5e03fe73ee4379dfd96d492849856d43 } from '@/ui/admin/TranslationButton'
+import { TranslateChapterAction as TranslateChapterAction_5e03fe73ee4379dfd96d492849856d43 } from '@/ui/admin/TranslationButton'
+import { ChapterCascadeDelete as ChapterCascadeDelete_8b707dd02fbf8886630a64bffcae6998 } from '@/ui/admin/CascadeDeleteButton'
 import { LessonBlocksField as LessonBlocksField_c3ff48da65f411ef372b497cb7c724ee } from '@/ui/admin/LessonBlocksField'
 import { LessonConversionPanel as LessonConversionPanel_057daf3b86f654d90edf003b44c43703 } from '@/ui/admin/exercise-conversion/LessonConversionPanel'
+import { TranslateLessonAction as TranslateLessonAction_5e03fe73ee4379dfd96d492849856d43 } from '@/ui/admin/TranslationButton'
 import { IntroTableHeadersField as IntroTableHeadersField_7c6162afec623d7dc5ec436565e36ecb } from '@/ui/admin/IntroTableField'
 import { IntroTableRowsField as IntroTableRowsField_7c6162afec623d7dc5ec436565e36ecb } from '@/ui/admin/IntroTableField'
 import { IntroGeometrySpecField as IntroGeometrySpecField_c2c1761cbe819b0609cad9be299e1fc7 } from '@/ui/admin/IntroGeometryField'
 import { IntroGraphSpecField as IntroGraphSpecField_8d1eea97d57da5692323d9664ac06d67 } from '@/ui/admin/IntroGraphField'
 import { ExerciseContentEditor as ExerciseContentEditor_d0c5d070052b5cabcf602f1e9878afd8 } from '@/ui/admin/ExerciseContentEditor'
 import { ExercisePreview as ExercisePreview_79d54f4a9901df303ad8ae2cc7d44435 } from '@/ui/admin/ExercisePreview'
+import { TranslateExerciseAction as TranslateExerciseAction_5e03fe73ee4379dfd96d492849856d43 } from '@/ui/admin/TranslationButton'
 import { MediaPreview as MediaPreview_4b980c9a407724ef7c1755e3482d0258 } from '@/ui/admin/MediaPreview'
 import { HorizontalRuleFeatureClient as HorizontalRuleFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { BlocksFeatureClient as BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
@@ -58,14 +63,19 @@ export const importMap = {
   "@payloadcms/plugin-seo/client#MetaDescriptionComponent": MetaDescriptionComponent_a8a977ebc872c5d5ea7ee689724c0860,
   "@payloadcms/plugin-seo/client#PreviewComponent": PreviewComponent_a8a977ebc872c5d5ea7ee689724c0860,
   "@payloadcms/ui#SlugField": SlugField_3817bf644402e67bfe6577f60ef982de,
+  "@/ui/admin/TranslationButton#TranslateCourseAction": TranslateCourseAction_5e03fe73ee4379dfd96d492849856d43,
+  "@/ui/admin/TranslationButton#TranslateChapterAction": TranslateChapterAction_5e03fe73ee4379dfd96d492849856d43,
+  "@/ui/admin/CascadeDeleteButton#ChapterCascadeDelete": ChapterCascadeDelete_8b707dd02fbf8886630a64bffcae6998,
   "@/ui/admin/LessonBlocksField#LessonBlocksField": LessonBlocksField_c3ff48da65f411ef372b497cb7c724ee,
   "@/ui/admin/exercise-conversion/LessonConversionPanel#LessonConversionPanel": LessonConversionPanel_057daf3b86f654d90edf003b44c43703,
+  "@/ui/admin/TranslationButton#TranslateLessonAction": TranslateLessonAction_5e03fe73ee4379dfd96d492849856d43,
   "@/ui/admin/IntroTableField#IntroTableHeadersField": IntroTableHeadersField_7c6162afec623d7dc5ec436565e36ecb,
   "@/ui/admin/IntroTableField#IntroTableRowsField": IntroTableRowsField_7c6162afec623d7dc5ec436565e36ecb,
   "@/ui/admin/IntroGeometryField#IntroGeometrySpecField": IntroGeometrySpecField_c2c1761cbe819b0609cad9be299e1fc7,
   "@/ui/admin/IntroGraphField#IntroGraphSpecField": IntroGraphSpecField_8d1eea97d57da5692323d9664ac06d67,
   "@/ui/admin/ExerciseContentEditor#ExerciseContentEditor": ExerciseContentEditor_d0c5d070052b5cabcf602f1e9878afd8,
   "@/ui/admin/ExercisePreview#ExercisePreview": ExercisePreview_79d54f4a9901df303ad8ae2cc7d44435,
+  "@/ui/admin/TranslationButton#TranslateExerciseAction": TranslateExerciseAction_5e03fe73ee4379dfd96d492849856d43,
   "@/ui/admin/MediaPreview#MediaPreview": MediaPreview_4b980c9a407724ef7c1755e3482d0258,
   "@payloadcms/richtext-lexical/client#HorizontalRuleFeatureClient": HorizontalRuleFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#BlocksFeatureClient": BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,

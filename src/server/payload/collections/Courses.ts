@@ -17,6 +17,7 @@ import { publishedAndActive } from '../access/publishedAndActive'
 import { createdByField } from '../fields/createdBy'
 import { formatSlug } from '../fields/formatSlug'
 import { contentStatusFields } from '../fields/contentStatus'
+import { translatedFromField } from '../fields/translatedFrom'
 import { cascadeAdminTitle } from '../hooks/courses/cascadeAdminTitle'
 import { enforceFieldLocaleUniqueness } from '../hooks/validateLocaleUniqueness'
 import { validateTreeIsolationOnPublish } from '../hooks/courses/validateTreeIsolation'
@@ -47,6 +48,14 @@ export const Courses: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
+    components: {
+      edit: {
+        beforeDocumentControls: [
+          '@/ui/admin/TranslationButton#TranslateCourseAction',
+          '@/ui/admin/CascadeDeleteButton#CourseCascadeDelete',
+        ],
+      },
+    },
     defaultColumns: [
       'courseLabel',
       'title',
@@ -65,6 +74,8 @@ export const Courses: CollectionConfig = {
     tenantField,
     // Content locale
     contentLocaleField,
+    // Translation link
+    translatedFromField('courses'),
     {
       name: 'courseLabel',
       type: 'text',
