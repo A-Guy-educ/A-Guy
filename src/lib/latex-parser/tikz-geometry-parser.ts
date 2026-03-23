@@ -183,16 +183,12 @@ export function parseTikzGeometry(tikzContent: string): QuestionGeometryBlock | 
   const circles = parseCircles(tikzContent, knownPoints)
   const rightAngles = parseRightAngles(tikzContent, knownPoints)
 
-  // Compute bounding box from raw TikZ coordinates — no normalization needed
-  const boundingBox = computeBoundingBox(coordinates, circles, pointMap)
-
   const geometry: GeometrySpecV1 = {
     kind: 'euclidean',
     canvas: {
       width: CANVAS_WIDTH,
       height: CANVAS_HEIGHT,
-      axis: true,
-      boundingBox,
+      grid: true,
     },
     elements: {
       points: coordinates.map((p) => ({
