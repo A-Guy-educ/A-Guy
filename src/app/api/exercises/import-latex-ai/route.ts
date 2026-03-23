@@ -87,15 +87,45 @@ export async function POST(request: NextRequest) {
     try {
       const aiOutput = JSON.parse(responseText)
       rawExercises = Array.isArray(aiOutput.exercises) ? aiOutput.exercises : [aiOutput]
-    } catch {
-      reqLogger.error(
-        { responsePreview: responseText.slice(0, 500) },
-        'AI returned invalid JSON for LaTeX import',
-      )
-      return NextResponse.json(
-        { success: false, error: 'AI returned invalid JSON. Try the script import instead.' },
-        { status: 422 },
-      )
+    } catch (parseErr) {
+      // Try to repair truncated JSON by closing open brackets/braces
+      const repaired = repairTruncatedJson(responseText)
+      if (repaired) {
+        try {
+          const aiOutput = JSON.parse(repaired)
+          rawExercises = Array.isArray(aiOutput.exercises) ? aiOutput.exercises : [aiOutput]
+          reqLogger.warn('AI JSON was truncated, repaired successfully')
+        } catch {
+          reqLogger.error(
+            {
+              responsePreview: responseText.slice(0, 500),
+              responseTail: responseText.slice(-200),
+              parseError: parseErr instanceof Error ? parseErr.message : String(parseErr),
+            },
+            'AI returned invalid JSON for LaTeX import',
+          )
+          return NextResponse.json(
+            {
+              success: false,
+              error: 'AI returned invalid JSON. Try the script import instead.',
+            },
+            { status: 422 },
+          )
+        }
+      } else {
+        reqLogger.error(
+          {
+            responsePreview: responseText.slice(0, 500),
+            responseTail: responseText.slice(-200),
+            parseError: parseErr instanceof Error ? parseErr.message : String(parseErr),
+          },
+          'AI returned invalid JSON for LaTeX import',
+        )
+        return NextResponse.json(
+          { success: false, error: 'AI returned invalid JSON. Try the script import instead.' },
+          { status: 422 },
+        )
+      }
     }
 
     // Find existing exercise count for ordering
@@ -334,6 +364,56 @@ function pick(obj: Record<string, unknown>, keys: string[]): Record<string, unkn
     }
   }
   return result
+}
+
+/**
+ * Try to repair truncated JSON by closing open brackets/braces.
+ * Returns repaired string or null if unrepairable.
+ */
+function repairTruncatedJson(text: string): string | null {
+  // Count open/close brackets
+  let braces = 0
+  let brackets = 0
+  let inString = false
+  let escaped = false
+
+  for (const ch of text) {
+    if (escaped) {
+      escaped = false
+      continue
+    }
+    if (ch === '\\') {
+      escaped = true
+      continue
+    }
+    if (ch === '"') {
+      inString = !inString
+      continue
+    }
+    if (inString) continue
+    if (ch === '{') braces++
+    else if (ch === '}') braces--
+    else if (ch === '[') brackets++
+    else if (ch === ']') brackets--
+  }
+
+  if (braces === 0 && brackets === 0) return null // Not a truncation issue
+
+  // Close the string if we're inside one
+  let repaired = text
+  if (inString) repaired += '"'
+
+  // Close open brackets/braces
+  while (brackets > 0) {
+    repaired += ']'
+    brackets--
+  }
+  while (braces > 0) {
+    repaired += '}'
+    braces--
+  }
+
+  return repaired
 }
 
 function buildAiParserPrompt(latex: string): { system: string; userMessage: string } {

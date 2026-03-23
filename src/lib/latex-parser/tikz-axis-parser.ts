@@ -360,6 +360,7 @@ export function parseTikzAxis(tikzContent: string): QuestionAxisBlock | null {
   const axis: AxisSpecV1 = {
     kind: 'cartesian',
     units: 1,
+    viewportMode: 'manual',
     grid: { enabled: showGrid },
     axes: {
       showNumbers,
@@ -423,6 +424,7 @@ export function parseTikzDrawPlot(tikzContent: string): QuestionAxisBlock | null
   const axis: AxisSpecV1 = {
     kind: 'cartesian',
     units: 1,
+    viewportMode: 'manual',
     grid: { enabled: false },
     axes: {
       showNumbers: true,
