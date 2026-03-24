@@ -46,21 +46,22 @@ export function LessonCard({ lesson, courseSlug, chapterSlug }: LessonCardProps)
   }
 
   return (
-    <Card className={cn('hover:shadow-elevation-3 transition-shadow', isSoon && 'opacity-60')}>
+    <Card
+      className={cn('relative hover:shadow-elevation-3 transition-shadow', isSoon && 'opacity-60')}
+    >
+      <ContentStatusBadge
+        contentStatus={lesson.contentStatus}
+        contentStatusExpiresAt={lesson.contentStatusExpiresAt ?? undefined}
+        contentStatusLabel={lesson.contentStatusLabel ?? undefined}
+        className="absolute -top-3 right-4 z-10"
+      />
       <CardHeader>
         <div className="flex items-center gap-3 mb-2">
           <span className="text-body-md font-semibold text-muted-foreground">
             {t('lesson')} {lesson.order}
           </span>
         </div>
-        <div className="flex items-center gap-content-gap-xs">
-          <CardTitle className="text-heading-xl">{lesson.title}</CardTitle>
-          <ContentStatusBadge
-            contentStatus={lesson.contentStatus}
-            contentStatusExpiresAt={lesson.contentStatusExpiresAt ?? undefined}
-            contentStatusLabel={lesson.contentStatusLabel ?? undefined}
-          />
-        </div>
+        <CardTitle className="text-heading-xl">{lesson.title}</CardTitle>
         {lesson.description && (
           <SafeHtml
             html={lesson.description}

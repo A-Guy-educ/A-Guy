@@ -50,12 +50,18 @@ export function CourseLessonCard({
   return (
     <div
       className={cn(
-        'rounded-2xl overflow-hidden border border-border/40 shadow-elevation-1 transition-all',
+        'relative rounded-2xl overflow-hidden border border-border/40 shadow-elevation-1 transition-all',
         !isSoon && 'active:scale-[0.98]',
         isSoon && 'opacity-60',
       )}
       style={{ borderTopWidth: 3, borderTopColor: accentColor }}
     >
+      <ContentStatusBadge
+        contentStatus={lesson.contentStatus}
+        contentStatusExpiresAt={lesson.contentStatusExpiresAt ?? undefined}
+        contentStatusLabel={lesson.contentStatusLabel ?? undefined}
+        className="absolute -top-3 right-4 z-10"
+      />
       <SystemLink
         href={isSoon ? '#' : href}
         onClick={handleLessonClick}
@@ -72,14 +78,7 @@ export function CourseLessonCard({
           >
             {tc('lesson')} {index}
           </span>
-          <div className="flex items-center gap-content-gap-xs">
-            <h3 className="text-body-lg font-bold text-card-foreground">{lesson.title}</h3>
-            <ContentStatusBadge
-              contentStatus={lesson.contentStatus}
-              contentStatusExpiresAt={lesson.contentStatusExpiresAt ?? undefined}
-              contentStatusLabel={lesson.contentStatusLabel ?? undefined}
-            />
-          </div>
+          <h3 className="text-body-lg font-bold text-card-foreground">{lesson.title}</h3>
           <p className="text-body-xs text-muted-foreground mt-1 flex items-center justify-end gap-1">
             {progress === 0 && <Clock className="w-3 h-3" />}
             {progressText}
