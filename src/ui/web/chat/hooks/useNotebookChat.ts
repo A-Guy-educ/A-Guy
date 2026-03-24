@@ -25,7 +25,7 @@ export interface UploadedMedia {
 }
 
 export interface ChatError {
-  type: 'auth' | 'limit' | 'general'
+  type: 'auth' | 'limit' | 'quota' | 'general'
   message: string
 }
 
@@ -472,7 +472,7 @@ export function useNotebookChat({
               })
             } else if (errMsg?.startsWith('quota_exceeded:')) {
               setChatError({
-                type: 'limit' as const,
+                type: 'quota' as const,
                 message: 'Chat limit reached. Try again later.',
               })
             } else {
@@ -547,7 +547,7 @@ export function useNotebookChat({
           })
         } else if (result.quotaExceeded) {
           setChatError({
-            type: 'limit' as const,
+            type: 'quota' as const,
             message: result.error || 'Chat limit reached. Try again later.',
           })
         } else {
