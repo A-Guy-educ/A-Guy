@@ -260,6 +260,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
         lessonSlug={lessonSlug}
         lessonId={lesson.id}
         chatLessonId={chatLessonId}
+        formulaSheet={formulaSheet}
       />
     </AccessGateProvider>
   )
