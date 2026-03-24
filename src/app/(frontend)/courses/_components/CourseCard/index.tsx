@@ -1,18 +1,18 @@
 'use client'
 
-import { BookOpen, CheckCircle, Loader2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { cn } from '@/infra/utils/ui'
-import { useRouterWithLoading } from '@/infra/loading/hooks/useRouterWithLoading'
+import { getUserProfile, setUserProfile } from '@/client/state/localStorage/userProfile'
 import { useLoadingState } from '@/infra/loading/hooks/useLoadingState'
+import { useRouterWithLoading } from '@/infra/loading/hooks/useRouterWithLoading'
 import { LOADING_KEYS } from '@/infra/loading/keys'
-import { setUserProfile, getUserProfile } from '@/client/state/localStorage/userProfile'
+import { cn } from '@/infra/utils/ui'
 import type { Course } from '@/payload-types'
-import { useTranslations } from '@/ui/web/providers/I18n'
 import { Button } from '@/ui/web/components/button'
+import { useTranslations } from '@/ui/web/providers/I18n'
 import { SafeHtml } from '@/ui/web/SafeHtml'
 import { ContentStatusBadge } from '@/ui/web/shared/ContentStatusBadge'
 import { ProgressCircle } from '@/ui/web/shared/ProgressCircle'
+import { BookOpen, CheckCircle, Loader2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 interface CourseCardProps {
@@ -92,7 +92,7 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
     >
       {isOwned && (
         <span
-          className="absolute -top-3 left-6 bg-[hsl(var(--success))] text-white px-4 py-1 rounded-full shadow-elevation-3 uppercase tracking-wider"
+          className="absolute -top-3 start-6 bg-[hsl(var(--success))] text-white px-4 py-1 rounded-full shadow-elevation-3 uppercase tracking-wider"
           style={{ fontSize: '9px', fontWeight: 900 }}
         >
           הקורס שלך
@@ -104,7 +104,7 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
         contentStatus={course.contentStatus}
         contentStatusExpiresAt={course.contentStatusExpiresAt ?? undefined}
         contentStatusLabel={course.contentStatusLabel ?? undefined}
-        className="absolute -top-3 right-6"
+        className="absolute -top-3 end-6"
       />
 
       <div className="mb-6 flex justify-between items-start gap-content-gap">
@@ -118,7 +118,7 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
             </span>
           )}
           <h4
-            className="text-card-foreground text-right"
+            className="text-card-foreground text-start"
             style={{ fontSize: '20px', fontWeight: 900 }}
           >
             {course.title}
@@ -126,7 +126,7 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
           {course.description && (
             <SafeHtml
               html={course.description}
-              className="text-muted-foreground mt-1 line-clamp-2 text-right [&_p]:m-0"
+              className="text-muted-foreground mt-1 line-clamp-2 text-start [&_p]:m-0"
               style={{ fontSize: '12px' }}
             />
           )}
@@ -184,7 +184,7 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
         >
           {isLoading ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              <Loader2 className="w-4 h-4 animate-spin me-2" />
               {t('openCourse')}
             </>
           ) : (

@@ -4,8 +4,8 @@ import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { cn } from '@/infra/utils/ui'
 import type { Lesson } from '@/payload-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
-import { ProgressCircle } from '@/ui/web/shared/ProgressCircle'
 import { ContentStatusBadge } from '@/ui/web/shared/ContentStatusBadge'
+import { ProgressCircle } from '@/ui/web/shared/ProgressCircle'
 import { Clock } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -67,11 +67,11 @@ export function CourseLessonCard({
         onClick={handleLessonClick}
         className={cn(
           'bg-card p-5',
-          'flex flex-row-reverse items-center justify-between',
+          'flex items-center justify-between',
           isSoon ? 'cursor-not-allowed' : 'cursor-pointer',
         )}
       >
-        <div className="flex flex-col text-end">
+        <div className="flex flex-col text-start">
           <span
             className="text-[10px] font-bold mb-1 uppercase tracking-wide"
             style={{ color: accentColor }}
@@ -79,7 +79,7 @@ export function CourseLessonCard({
             {tc('lesson')} {index}
           </span>
           <h3 className="text-body-lg font-bold text-card-foreground">{lesson.title}</h3>
-          <p className="text-body-xs text-muted-foreground mt-1 flex items-center justify-end gap-1">
+          <p className="text-body-xs text-muted-foreground mt-1 flex items-center justify-start gap-1">
             {progress === 0 && <Clock className="w-3 h-3" />}
             {progressText}
           </p>
