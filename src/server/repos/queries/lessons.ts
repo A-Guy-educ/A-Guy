@@ -71,6 +71,7 @@ export const queryLessonsByChapter = cache(async ({ chapterId }: { chapterId: st
     pagination: false,
     depth: 1,
     overrideAccess: false,
+    select: { formulaSheet: false },
   })
 
   return result.docs
@@ -219,6 +220,7 @@ export const queryLessonsByCourse = cache(async ({ courseId }: { courseId: strin
     pagination: false,
     depth: 1,
     overrideAccess: false,
+    select: { formulaSheet: false },
   })
 
   // Sort lessons by chapter order (primary) then by lesson order (secondary)
