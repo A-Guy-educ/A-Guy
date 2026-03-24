@@ -351,19 +351,21 @@ export function ExerciseRenderer({
   return (
     <MediaMapProvider value={mediaMap}>
       <div className={cn('w-full max-w-3xl mx-auto', className)}>
-        {/* Exercise Number Bubble - shown once at the top */}
+        {/* Exercise Number Bubble - only shown when there are multiple questions */}
         {/* NOTE: We intentionally avoid flex-row-reverse here because it inverts the bubble
              position depending on DOM order. Instead we pin the bubble via auto margins. */}
-        <div className="w-full flex items-center justify-between mb-6">
-          <div
-            className={cn(
-              'w-7 h-7 rounded-full flex items-center justify-center bg-slate-50 border border-slate-200 shadow-elevation-1',
-              isHebrew ? 'ml-auto' : 'mr-auto',
-            )}
-          >
-            <span className="font-bold text-body-sm">{String(exerciseNumber)}</span>
+        {questionBlocks.length > 1 && (
+          <div className="w-full flex items-center justify-between mb-6">
+            <div
+              className={cn(
+                'w-7 h-7 rounded-full flex items-center justify-center bg-slate-50 border border-slate-200 shadow-elevation-1',
+                isHebrew ? 'ml-auto' : 'mr-auto',
+              )}
+            >
+              <span className="font-bold text-body-sm">{String(exerciseNumber)}</span>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="flex flex-col gap-content-gap-lg">
           {(() => {
