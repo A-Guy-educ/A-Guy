@@ -50,7 +50,7 @@ export function CourseLessonCard({
   return (
     <div
       className={cn(
-        'relative rounded-2xl overflow-hidden border border-border/40 shadow-elevation-1 transition-all',
+        'relative rounded-2xl overflow-visible border border-border/40 shadow-elevation-1 transition-all',
         !isSoon && 'active:scale-[0.98]',
         isSoon && 'opacity-60',
       )}
