@@ -430,7 +430,12 @@ export function useNotebookChat({
         courseId?: string
         categoryId?: string
       },
-      options?: { hidden?: boolean; contextKeyOverride?: string; hidePromptOnly?: boolean },
+      options?: {
+        hidden?: boolean
+        contextKeyOverride?: string
+        hidePromptOnly?: boolean
+        silent?: boolean
+      },
     ) => {
       try {
         const stream = apiService.chatStream(message, acknowledgment, context, options)
@@ -466,14 +471,19 @@ export function useNotebookChat({
             // Check if this is an auth error (contains "auth" or "authentication")
             if (errMsg?.toLowerCase().includes('auth')) {
               hasAuthError = true
-              setChatError({ type: 'auth' as const, message: authRequiredMessage })
+              if (!options?.silent) {
+                setChatError({ type: 'auth' as const, message: authRequiredMessage })
+              }
             } else if (errMsg?.toLowerCase().includes('guest message limit')) {
-              setChatError({
-                type: 'limit' as const,
-                message:
-                  guestLimitMessage || 'Guest message limit reached. Sign up for unlimited access.',
-              })
-            } else {
+              if (!options?.silent) {
+                setChatError({
+                  type: 'limit' as const,
+                  message:
+                    guestLimitMessage ||
+                    'Guest message limit reached. Sign up for unlimited access.',
+                })
+              }
+            } else if (!options?.silent) {
               toast.error(errMsg || errorMessage)
             }
             // Remove the empty/partial message on error
@@ -496,8 +506,10 @@ export function useNotebookChat({
           })
         }
       } catch (error) {
-        console.error('Stream message failed:', error)
-        toast.error(errorMessage)
+        if (!options?.silent) {
+          console.error('Stream message failed:', error)
+          toast.error(errorMessage)
+        }
       } finally {
         setIsLoading(false)
         inputRef.current?.focus()
@@ -696,7 +708,7 @@ export function useNotebookChat({
         const prompt = `The student is now viewing the following exercise. Use this context to help them if they ask questions.\n\n${formatted}`
 
         const context = { exerciseId, lessonId, chapterId, courseId, categoryId }
-        await streamMessage(prompt, acknowledgment, context, { hidden: true })
+        await streamMessage(prompt, acknowledgment, context, { hidden: true, silent: true })
       } finally {
         isInjectingRef.current = false
       }
