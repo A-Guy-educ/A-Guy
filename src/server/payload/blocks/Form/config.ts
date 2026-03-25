@@ -1,5 +1,6 @@
 import type { Block } from 'payload'
 
+import { blockSpacingField } from '../../fields/blockSpacing'
 import {
   FixedToolbarFeature,
   HeadingFeature,
@@ -40,6 +41,7 @@ export const FormBlock: Block = {
       }),
       label: 'Intro Content',
     },
+    blockSpacingField,
   ],
   graphQL: {
     singularName: 'FormBlock',

@@ -8,6 +8,7 @@ import {
 } from '@payloadcms/richtext-lexical'
 
 import { link } from '@/server/payload/fields/link'
+import { blockSpacingField } from '@/server/payload/fields/blockSpacing'
 
 const columnFields: Field[] = [
   {
@@ -75,5 +76,6 @@ export const Content: Block = {
       },
       fields: columnFields,
     },
+    blockSpacingField,
   ],
 }

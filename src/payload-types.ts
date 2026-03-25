@@ -283,6 +283,10 @@ export interface Page {
   generateSlug?: boolean | null;
   slug: string;
   /**
+   * Default vertical spacing between layout blocks
+   */
+  defaultBlockSpacing?: ('none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
+  /**
    * User who created this document
    */
   createdBy?: (string | null) | User;
@@ -329,6 +333,10 @@ export interface CallToActionBlock {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Override the page default spacing after this block
+   */
+  spacingAfter?: ('inherit' | 'none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'cta';
@@ -374,6 +382,10 @@ export interface ContentBlock {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Override the page default spacing after this block
+   */
+  spacingAfter?: ('inherit' | 'none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'content';
@@ -408,6 +420,10 @@ export interface ArchiveBlock {
         value: string | Course;
       }[]
     | null;
+  /**
+   * Override the page default spacing after this block
+   */
+  spacingAfter?: ('inherit' | 'none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'archive';
@@ -798,6 +814,10 @@ export interface HtmlBlock {
    * Enter HTML content. Links must be relative (/path or #anchor). Allowed attributes: class, id, data-* on all tags; href (required), title, class, id, data-* on <a> tags; colspan, rowspan, scope on table cells; plus safe SVG attributes (e.g., viewBox, fill, stroke, d). No style=, target=, or on*= attributes allowed. The <style> tag is allowed.
    */
   html: string;
+  /**
+   * Override the page default spacing after this block
+   */
+  spacingAfter?: ('inherit' | 'none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'html';
@@ -808,6 +828,10 @@ export interface HtmlBlock {
  */
 export interface MediaBlock {
   media: string | Media;
+  /**
+   * Override the page default spacing after this block
+   */
+  spacingAfter?: ('inherit' | 'none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'mediaBlock';
@@ -821,6 +845,10 @@ export interface TableBlock {
   rows: string;
   showBorders?: boolean | null;
   showHeader?: boolean | null;
+  /**
+   * Override the page default spacing after this block
+   */
+  spacingAfter?: ('inherit' | 'none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'tableBlock';
@@ -847,6 +875,10 @@ export interface FormBlock {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * Override the page default spacing after this block
+   */
+  spacingAfter?: ('inherit' | 'none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'formBlock';
@@ -1748,6 +1780,10 @@ export interface ContentPage {
  */
 export interface GeometryBlock {
   spec: string;
+  /**
+   * Override the page default spacing after this block
+   */
+  spacingAfter?: ('inherit' | 'none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'geometryBlock';
@@ -1759,6 +1795,10 @@ export interface GeometryBlock {
 export interface GraphBlock {
   spec: string;
   displaySize?: ('small' | 'medium' | 'large' | 'full') | null;
+  /**
+   * Override the page default spacing after this block
+   */
+  spacingAfter?: ('inherit' | 'none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'graphBlock';
@@ -2871,6 +2911,7 @@ export interface PagesSelect<T extends boolean = true> {
   publishedAt?: T;
   generateSlug?: T;
   slug?: T;
+  defaultBlockSpacing?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -2897,6 +2938,7 @@ export interface CallToActionBlockSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  spacingAfter?: T;
   id?: T;
   blockName?: T;
 }
@@ -2923,6 +2965,7 @@ export interface ContentBlockSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  spacingAfter?: T;
   id?: T;
   blockName?: T;
 }
@@ -2937,6 +2980,7 @@ export interface ArchiveBlockSelect<T extends boolean = true> {
   categories?: T;
   limit?: T;
   selectedDocs?: T;
+  spacingAfter?: T;
   id?: T;
   blockName?: T;
 }
@@ -2948,6 +2992,7 @@ export interface FormBlockSelect<T extends boolean = true> {
   form?: T;
   enableIntro?: T;
   introContent?: T;
+  spacingAfter?: T;
   id?: T;
   blockName?: T;
 }
@@ -2957,6 +3002,7 @@ export interface FormBlockSelect<T extends boolean = true> {
  */
 export interface HtmlBlockSelect<T extends boolean = true> {
   html?: T;
+  spacingAfter?: T;
   id?: T;
   blockName?: T;
 }
@@ -3235,6 +3281,7 @@ export interface ContentPagesSelect<T extends boolean = true> {
  */
 export interface MediaBlockSelect<T extends boolean = true> {
   media?: T;
+  spacingAfter?: T;
   id?: T;
   blockName?: T;
 }
@@ -3247,6 +3294,7 @@ export interface TableBlockSelect<T extends boolean = true> {
   rows?: T;
   showBorders?: T;
   showHeader?: T;
+  spacingAfter?: T;
   id?: T;
   blockName?: T;
 }
@@ -3256,6 +3304,7 @@ export interface TableBlockSelect<T extends boolean = true> {
  */
 export interface GeometryBlockSelect<T extends boolean = true> {
   spec?: T;
+  spacingAfter?: T;
   id?: T;
   blockName?: T;
 }
@@ -3266,6 +3315,7 @@ export interface GeometryBlockSelect<T extends boolean = true> {
 export interface GraphBlockSelect<T extends boolean = true> {
   spec?: T;
   displaySize?: T;
+  spacingAfter?: T;
   id?: T;
   blockName?: T;
 }

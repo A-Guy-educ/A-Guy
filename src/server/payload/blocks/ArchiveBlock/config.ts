@@ -1,5 +1,6 @@
 import type { Block } from 'payload'
 
+import { blockSpacingField } from '../../fields/blockSpacing'
 import {
   FixedToolbarFeature,
   HeadingFeature,
@@ -86,6 +87,7 @@ export const Archive: Block = {
       label: 'Selection',
       relationTo: ['courses'],
     },
+    blockSpacingField,
   ],
   labels: {
     plural: 'Archives',
