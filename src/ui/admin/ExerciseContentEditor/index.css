@@ -2723,7 +2723,7 @@
   border: 1px solid var(--theme-elevation-200);
   border-radius: 6px;
   background: var(--theme-elevation-0);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .content-slot-editor--legacy {
