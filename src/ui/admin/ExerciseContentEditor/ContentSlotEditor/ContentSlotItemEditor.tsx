@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import React from 'react'
 import { InlineRichTextEditor } from '../editors/InlineRichTextEditor'
+import { MediaBlockEditor } from '../editors/MediaBlockEditor'
 
 // Display-only editors for axis and geometry
 import { AxisDisplayEditor } from './AxisDisplayEditor'
@@ -167,16 +168,12 @@ export const ContentSlotItemEditor: React.FC<ContentSlotItemEditorProps> = ({
 
       case 'media':
         return (
-          <div className="slot-item-media-editor">
-            <input
-              type="text"
-              className="slot-item-media-input"
-              value={data.mediaId || ''}
-              onChange={(e) => onUpdate({ data: { ...data, mediaId: e.target.value } })}
-              placeholder="Enter media ID..."
-            />
-            <p className="slot-item-media-hint">Select a media item from the media collection</p>
-          </div>
+          <MediaBlockEditor
+            block={{ id: item.id, type: 'media', mediaId: data.mediaId || '' }}
+            onChange={(updated) => {
+              onUpdate({ data: { ...data, mediaId: updated.mediaId } })
+            }}
+          />
         )
 
       case 'axis_display':
