@@ -3,6 +3,7 @@
  * Extracts block context into a structured user prompt
  */
 import type { ContentBlock } from '@/server/payload/collections/Exercises/types'
+import { getRichContentText } from '@/server/payload/collections/Exercises/types'
 
 export interface SupportPromptInput {
   block: ContentBlock
@@ -41,7 +42,7 @@ export function buildSupportUserPrompt(input: SupportPromptInput): string {
 
 function extractPromptText(block: ContentBlock): string {
   if ('prompt' in block && block.prompt) {
-    return block.prompt.value || '(empty prompt)'
+    return getRichContentText(block.prompt) || '(empty prompt)'
   }
   return '(no prompt)'
 }
@@ -55,7 +56,7 @@ function extractAnswerText(block: ContentBlock): string {
       const correctLabels = block.answer.correctOptionIds
         .map((id) => {
           const opt = block.answer.options.find((o) => o.id === id)
-          return opt ? opt.content.value : id
+          return opt ? getRichContentText(opt.content) : id
         })
         .join(', ')
       return `Correct option(s): ${correctLabels}`
@@ -81,8 +82,8 @@ function extractAnswerText(block: ContentBlock): string {
       .map((p) => {
         const left = block.leftColumn.find((o) => o.id === p.optionId)
         const right = block.rightColumn.find((o) => o.id === p.matchId)
-        const leftText = left?.content.value ?? p.optionId
-        const rightText = right?.content.value ?? p.matchId
+        const leftText = left ? getRichContentText(left.content) : p.optionId
+        const rightText = right ? getRichContentText(right.content) : p.matchId
         return `${leftText} -> ${rightText}`
       })
       .join('; ')
@@ -98,7 +99,9 @@ function hasOptions(block: ContentBlock): boolean {
 
 function extractOptionsText(block: ContentBlock): string {
   if (block.type === 'question_select' && block.variant === 'mcq') {
-    return block.answer.options.map((opt) => `[${opt.id}] ${opt.content.value}`).join(' | ')
+    return block.answer.options
+      .map((opt) => `[${opt.id}] ${getRichContentText(opt.content)}`)
+      .join(' | ')
   }
   return ''
 }

@@ -2,7 +2,7 @@
 
 import React from 'react'
 import type { QuestionTableBlock } from '@/server/payload/collections/Exercises/types'
-import { InlineRichTextEditor } from './InlineRichTextEditor'
+import { ContentSlotEditor } from '../ContentSlotEditor'
 import { HintSolutionPanel } from './HintSolutionPanel'
 import { Plus, Trash2 } from 'lucide-react'
 
@@ -157,7 +157,7 @@ export const TableEditor: React.FC<TableEditorProps> = ({ block, onChange }) => 
     <div className="table-editor">
       <div className="question-editor-section">
         <label className="question-editor-label">Prompt</label>
-        <InlineRichTextEditor
+        <ContentSlotEditor
           value={block.prompt}
           onChange={(newPrompt) => onChange({ ...block, prompt: newPrompt })}
           placeholder="Enter your table question..."

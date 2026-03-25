@@ -22,6 +22,99 @@ const InlineRichTextSchema = z
   .strict()
 
 // ---------------------------------
+// Zod: ContentSlot Item Data (leaf nodes)
+// ---------------------------------
+
+// Axis Display Data Schema (display-only axis)
+const AxisDisplayDataSchema = z
+  .object({
+    type: z.literal('axis_display'),
+    axis: AxisSpecV1Schema,
+    displaySize: z.enum(['small', 'medium', 'large', 'full']).optional(),
+  })
+  .strict()
+
+// Geometry Display Data Schema (display-only geometry)
+const GeometryDisplayDataSchema = z
+  .object({
+    type: z.literal('geometry_display'),
+    geometry: GeometrySpecV1Schema,
+  })
+  .strict()
+
+// ContentSlot Item Data Union
+export const ContentSlotItemDataSchema = z.discriminatedUnion('type', [
+  // Rich text item
+  z
+    .object({
+      type: z.literal('rich_text'),
+      format: z.literal('md-math-v1'),
+      value: z.string(),
+      mediaIds: z.array(z.string().min(1)).default([]),
+    })
+    .strict(),
+  // LaTeX item
+  z
+    .object({
+      type: z.literal('latex'),
+      latex: z.string().min(1),
+      renderMode: z.enum(['block', 'inline']).optional(),
+    })
+    .strict(),
+  // SVG item
+  z
+    .object({
+      type: z.literal('svg'),
+      value: z.string().min(1),
+      altText: z.string().optional(),
+    })
+    .strict(),
+  // Media item
+  z
+    .object({
+      type: z.literal('media'),
+      mediaId: z.string().min(1),
+    })
+    .strict(),
+  // Axis display item
+  AxisDisplayDataSchema,
+  // Geometry display item
+  GeometryDisplayDataSchema,
+  // HTML item
+  z
+    .object({
+      type: z.literal('html'),
+      html: z.string().min(1),
+    })
+    .strict(),
+])
+
+// ---------------------------------
+// Zod: ContentSlot Item (wrapper with id)
+// ---------------------------------
+export const ContentSlotItemSchema = z
+  .object({
+    id: z.string().min(1),
+    data: ContentSlotItemDataSchema,
+  })
+  .strict()
+
+// ---------------------------------
+// Zod: ContentSlot (v2 container)
+// ---------------------------------
+export const ContentSlotSchema = z
+  .object({
+    version: z.literal(2),
+    items: z.array(ContentSlotItemSchema),
+  })
+  .strict()
+
+// ---------------------------------
+// Zod: RichContent Union (v1 or v2) — available for future use when consumers are ready
+// ---------------------------------
+export const RichContentSchema = z.union([InlineRichTextSchema, ContentSlotSchema])
+
+// ---------------------------------
 // Zod: Stream Rich Text Block (has id)
 // ---------------------------------
 export const RichTextBlockSchema = z
@@ -47,8 +140,7 @@ export const TrueFalseAnswerSchema = z
 const McqOptionSchema = z
   .object({
     id: z.string().min(1),
-    // single rich_text per option
-    content: InlineRichTextSchema,
+    content: RichContentSchema,
   })
   .strict()
 
@@ -95,24 +187,24 @@ const QuestionSelectTrueFalseSchema = z
     type: z.literal('question_select'),
     variant: z.literal('true_false'),
     selectionMode: z.literal('single'),
-    prompt: InlineRichTextSchema,
+    prompt: RichContentSchema,
     options: z.tuple([
       z.object({
         id: z.literal('true'),
         value: z.literal(true),
-        label: InlineRichTextSchema,
+        label: RichContentSchema,
       }),
       z.object({
         id: z.literal('false'),
         value: z.literal(false),
-        label: InlineRichTextSchema,
+        label: RichContentSchema,
       }),
     ]),
     answer: TrueFalseAnswerSchema,
 
-    hint: InlineRichTextSchema.optional(),
-    solution: InlineRichTextSchema.optional(),
-    fullSolution: InlineRichTextSchema.optional(),
+    hint: RichContentSchema.optional(),
+    solution: RichContentSchema.optional(),
+    fullSolution: RichContentSchema.optional(),
   })
   .strict()
 
@@ -123,12 +215,12 @@ const QuestionSelectMcqSchema = z
     type: z.literal('question_select'),
     variant: z.literal('mcq'),
     selectionMode: z.enum(['single', 'multiple']),
-    prompt: InlineRichTextSchema,
+    prompt: RichContentSchema,
     answer: McqAnswerSchema,
 
-    hint: InlineRichTextSchema.optional(),
-    solution: InlineRichTextSchema.optional(),
-    fullSolution: InlineRichTextSchema.optional(),
+    hint: RichContentSchema.optional(),
+    solution: RichContentSchema.optional(),
+    fullSolution: RichContentSchema.optional(),
   })
   .strict()
 
@@ -142,12 +234,12 @@ export const QuestionFreeResponseBlockSchema = z
   .object({
     id: z.string().min(1),
     type: z.literal('question_free_response'),
-    prompt: InlineRichTextSchema,
+    prompt: RichContentSchema,
     answer: FreeResponseAnswerSchema,
 
-    hint: InlineRichTextSchema.optional(),
-    solution: InlineRichTextSchema.optional(),
-    fullSolution: InlineRichTextSchema.optional(),
+    hint: RichContentSchema.optional(),
+    solution: RichContentSchema.optional(),
+    fullSolution: RichContentSchema.optional(),
   })
   .strict()
 
@@ -236,11 +328,11 @@ export const QuestionTableBlockSchema = z
   .object({
     id: z.string().min(1),
     type: z.literal('question_table'),
-    prompt: InlineRichTextSchema,
+    prompt: RichContentSchema,
     table: TableBlockSchema,
-    hint: InlineRichTextSchema.optional(),
-    solution: InlineRichTextSchema.optional(),
-    fullSolution: InlineRichTextSchema.optional(),
+    hint: RichContentSchema.optional(),
+    solution: RichContentSchema.optional(),
+    fullSolution: RichContentSchema.optional(),
   })
   .strict()
 
@@ -250,7 +342,7 @@ export const QuestionTableBlockSchema = z
 const MatchingOptionSchema = z
   .object({
     id: z.string().min(1),
-    content: InlineRichTextSchema,
+    content: RichContentSchema,
   })
   .strict()
 
@@ -271,14 +363,14 @@ export const QuestionMatchingBlockSchema = z
   .object({
     id: z.string().min(1),
     type: z.literal('question_matching'),
-    prompt: InlineRichTextSchema,
+    prompt: RichContentSchema,
     leftColumn: z.array(MatchingOptionSchema).min(2),
     rightColumn: z.array(MatchingOptionSchema).min(2),
     correctPairs: z.array(MatchingPairSchema).min(1),
     shuffleRightColumn: z.boolean().default(true),
-    hint: InlineRichTextSchema.optional(),
-    solution: InlineRichTextSchema.optional(),
-    fullSolution: InlineRichTextSchema.optional(),
+    hint: RichContentSchema.optional(),
+    solution: RichContentSchema.optional(),
+    fullSolution: RichContentSchema.optional(),
   })
   .strict()
   .superRefine((data, ctx) => {
@@ -324,13 +416,13 @@ const SvgBlockSchema = z
     type: z.literal('svg'),
     value: z.string().min(1),
     altText: z.string().optional(),
-    caption: InlineRichTextSchema.optional(),
+    caption: RichContentSchema.optional(),
     interactive: z.boolean().optional(),
     hotspots: z.array(SvgHotspotSchema).optional(),
     correctHotspotIds: z.array(z.string().min(1)).optional(),
-    hint: InlineRichTextSchema.optional(),
-    solution: InlineRichTextSchema.optional(),
-    fullSolution: InlineRichTextSchema.optional(),
+    hint: RichContentSchema.optional(),
+    solution: RichContentSchema.optional(),
+    fullSolution: RichContentSchema.optional(),
   })
   .strict()
   .superRefine((data, ctx) => {
@@ -409,13 +501,13 @@ export const QuestionGeometryBlockSchema = z
   .object({
     id: z.string().min(1),
     type: z.literal('question_geometry'),
-    prompt: InlineRichTextSchema,
+    prompt: RichContentSchema,
     layout: GraphLayoutSchema,
     geometry: GeometrySpecV1Schema,
     answer: QuestionAnswerSchema.optional(),
-    hint: InlineRichTextSchema.optional(),
-    solution: InlineRichTextSchema.optional(),
-    fullSolution: InlineRichTextSchema.optional(),
+    hint: RichContentSchema.optional(),
+    solution: RichContentSchema.optional(),
+    fullSolution: RichContentSchema.optional(),
   })
   .strict()
 
@@ -431,14 +523,14 @@ export const QuestionAxisBlockSchema = z
   .object({
     id: z.string().min(1),
     type: z.literal('question_axis'),
-    prompt: InlineRichTextSchema,
+    prompt: RichContentSchema,
     layout: GraphLayoutSchema,
     axis: AxisSpecV1Schema,
     displaySize: DisplaySizeSchema,
     answer: QuestionAnswerSchema.optional(),
-    hint: InlineRichTextSchema.optional(),
-    solution: InlineRichTextSchema.optional(),
-    fullSolution: InlineRichTextSchema.optional(),
+    hint: RichContentSchema.optional(),
+    solution: RichContentSchema.optional(),
+    fullSolution: RichContentSchema.optional(),
   })
   .strict()
 
@@ -461,7 +553,7 @@ export const QuestionMultiAxisBlockSchema = z
   .object({
     id: z.string().min(1),
     type: z.literal('question_multi_axis'),
-    prompt: InlineRichTextSchema.optional(),
+    prompt: RichContentSchema.optional(),
     textPosition: z.enum(['above', 'below']).default('above'),
     graphs: z.array(MultiAxisGraphItemSchema).min(1).max(4),
   })

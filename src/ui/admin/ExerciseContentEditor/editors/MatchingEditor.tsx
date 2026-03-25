@@ -6,7 +6,7 @@ import type {
   MatchingOption,
   MatchingPair,
 } from '@/server/payload/collections/Exercises/types'
-import { InlineRichTextEditor } from './InlineRichTextEditor'
+import { ContentSlotEditor } from '../ContentSlotEditor'
 import { HintSolutionPanel } from './HintSolutionPanel'
 import { ColumnEditor } from '../components/matching/ColumnEditor'
 import { MatchingPairsList } from '../components/matching/MatchingPairsList'
@@ -38,7 +38,7 @@ export const MatchingEditor: React.FC<MatchingEditorProps> = ({ block, onChange 
     <div className="matching-editor">
       <div className="question-editor-section">
         <label className="question-editor-label">Prompt</label>
-        <InlineRichTextEditor
+        <ContentSlotEditor
           value={block.prompt}
           onChange={(prompt) => onChange({ ...block, prompt })}
           placeholder="Enter your matching question..."

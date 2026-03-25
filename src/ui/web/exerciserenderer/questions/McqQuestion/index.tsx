@@ -10,6 +10,8 @@ import { cn } from '@/infra/utils/ui'
 import { Checkbox } from '@/ui/web/components/checkbox'
 import { AlertCircle } from 'lucide-react'
 import type { QuestionSelectMcqBlock, UserAnswer, CheckResult, RichTextBlock } from '../../types'
+import type { RichContent } from '@/server/payload/collections/Exercises/types'
+import { ContentSlotRenderer } from '../../blocks/ContentSlotRenderer'
 import { RichTextRenderer } from '../../blocks/RichTextRenderer'
 
 interface McqQuestionProps {
@@ -55,17 +57,10 @@ export function McqQuestion({
     onChange({ type: 'mcq', selectedIds: newSelectedIds })
   }
 
-  // Convert InlineRichText to RichTextBlock for renderer
-  const promptBlock: RichTextBlock = {
-    ...question.prompt,
-    id: `${question.id}-prompt`,
-    mediaIds: question.prompt.mediaIds || [],
-  }
-
   return (
     <div className="flex flex-col gap-content-gap">
       <div className="text-body-md font-medium text-foreground leading-relaxed">
-        <RichTextRenderer block={promptBlock} />
+        <ContentSlotRenderer content={question.prompt as RichContent} />
       </div>
       <div className="flex items-center gap-1.5 text-body-sm text-muted-foreground">
         <AlertCircle className="w-4 h-4" />
@@ -113,7 +108,7 @@ export function McqQuestion({
                   {isSelected && <div className="w-2 h-2 rounded-full bg-primary-foreground" />}
                 </div>
               )}
-              <div className="flex-1 text-lg text-foreground">
+              <div className="flex-1 text-body-lg text-foreground">
                 <RichTextRenderer block={optionBlock} />
               </div>
             </label>

@@ -2,8 +2,9 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Info } from 'lucide-react'
-import type { QuestionMatchingBlock, UserAnswer, CheckResult, RichTextBlock } from '../../types'
-import { RichTextRenderer } from '../../blocks/RichTextRenderer'
+import type { QuestionMatchingBlock, UserAnswer, CheckResult } from '../../types'
+import type { RichContent } from '@/server/payload/collections/Exercises/types'
+import { ContentSlotRenderer } from '../../blocks/ContentSlotRenderer'
 import { MatchingColumn } from './MatchingColumn'
 import { MatchingLines } from './MatchingLines'
 import { seededShuffle, type LinePosition } from './matchingUtils'
@@ -132,16 +133,10 @@ export function MatchingQuestion({
       if (el) refs.current.set(id, el)
     }
 
-  const promptBlock: RichTextBlock = {
-    ...question.prompt,
-    id: `${question.id}-prompt`,
-    mediaIds: question.prompt.mediaIds || [],
-  }
-
   return (
     <div className="flex flex-col gap-content-gap">
       <div className="text-body-md font-medium text-foreground leading-relaxed">
-        <RichTextRenderer block={promptBlock} />
+        <ContentSlotRenderer content={question.prompt as RichContent} />
       </div>
 
       <div className="flex items-center gap-content-gap-xs px-4 py-3 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-body-sm text-blue-600 dark:text-blue-400">

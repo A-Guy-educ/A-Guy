@@ -2,7 +2,8 @@
 
 import React from 'react'
 import type { QuestionSelectTrueFalseBlock } from '@/server/payload/collections/Exercises/types'
-import { InlineRichTextEditor } from './InlineRichTextEditor'
+import { getRichContentText } from '@/server/payload/collections/Exercises/types'
+import { ContentSlotEditor } from '../ContentSlotEditor'
 import { HintSolutionPanel } from './HintSolutionPanel'
 
 interface TrueFalseEditorProps {
@@ -16,8 +17,8 @@ export const TrueFalseEditor: React.FC<TrueFalseEditorProps> = ({ block, onChang
   const trueOption = block.options?.[0]
   const falseOption = block.options?.[1]
 
-  const trueLabel = trueOption?.label?.value ?? 'True'
-  const falseLabel = falseOption?.label?.value ?? 'False'
+  const trueLabel = trueOption?.label ? getRichContentText(trueOption.label) : 'True'
+  const falseLabel = falseOption?.label ? getRichContentText(falseOption.label) : 'False'
 
   const updateOptionLabel = (optionIndex: number, newValue: string) => {
     if (!block.options) return
@@ -33,7 +34,7 @@ export const TrueFalseEditor: React.FC<TrueFalseEditorProps> = ({ block, onChang
     <div className="true-false-editor">
       <div className="question-editor-section">
         <label className="question-editor-label">Prompt</label>
-        <InlineRichTextEditor
+        <ContentSlotEditor
           value={block.prompt}
           onChange={(newPrompt) => onChange({ ...block, prompt: newPrompt })}
           placeholder="Enter your True/False question..."

@@ -3,7 +3,7 @@
 import React, { useCallback } from 'react'
 import type { QuestionAxisBlock, GraphLayout } from '@/server/payload/collections/Exercises/types'
 import type { AxisSpecV1 } from '@/infra/contracts/graphics/axis.v1'
-import { InlineRichTextEditor } from './InlineRichTextEditor'
+import { ContentSlotEditor } from '../ContentSlotEditor'
 import { AxisCanvas } from '../components/axis/AxisCanvas'
 import { AxisConfigPanel } from '../components/axis/AxisConfigPanel'
 import { AxisPointsPanel } from '../components/axis/AxisPointsPanel'
@@ -71,7 +71,7 @@ export const AxisEditor: React.FC<AxisEditorProps> = ({ block, onChange }) => {
 
       <div className="question-editor-section">
         <label className="question-editor-label">Prompt</label>
-        <InlineRichTextEditor
+        <ContentSlotEditor
           value={block.prompt}
           onChange={(prompt) => onChange({ ...block, prompt })}
           placeholder="Enter your axis/graph question..."

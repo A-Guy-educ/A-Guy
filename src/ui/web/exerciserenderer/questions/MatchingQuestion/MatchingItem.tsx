@@ -3,8 +3,9 @@
 import React from 'react'
 import { cn } from '@/infra/utils/ui'
 import { Check, X } from 'lucide-react'
-import type { RichTextBlock, MatchingOption } from '../../types'
-import { RichTextRenderer } from '../../blocks/RichTextRenderer'
+import type { MatchingOption } from '../../types'
+import type { RichContent } from '@/server/payload/collections/Exercises/types'
+import { ContentSlotRenderer } from '../../blocks/ContentSlotRenderer'
 import { getLetter } from './matchingUtils'
 
 interface MatchingItemProps {
@@ -25,7 +26,7 @@ export function MatchingItem({
   item,
   index,
   side,
-  questionId,
+  questionId: _questionId,
   isSelected,
   isConnected,
   correctState,
@@ -35,12 +36,6 @@ export function MatchingItem({
   onRef,
 }: MatchingItemProps) {
   const badge = side === 'left' ? `${index + 1}.` : `${getLetter(index)}.`
-
-  const optionBlock: RichTextBlock = {
-    ...item.content,
-    id: `${questionId}-${side}-${item.id}`,
-    mediaIds: item.content.mediaIds || [],
-  }
 
   return (
     <button
@@ -73,7 +68,7 @@ export function MatchingItem({
         {badge}
       </span>
       <span className="flex-1">
-        <RichTextRenderer block={optionBlock} />
+        <ContentSlotRenderer content={item.content as RichContent} />
       </span>
       {correctState === true && <Check className="w-5 h-5 text-green-600 shrink-0" />}
       {correctState === false && <X className="w-5 h-5 text-destructive shrink-0" />}

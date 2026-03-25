@@ -1,18 +1,21 @@
 'use client'
 
-import React from 'react'
-import type { QuestionSelectMcqBlock } from '@/server/payload/collections/Exercises/types'
+import type {
+  QuestionSelectMcqBlock,
+  RichContent,
+} from '@/server/payload/collections/Exercises/types'
 import { generateId } from '@/server/payload/collections/Exercises/types'
-import { InlineRichTextEditor } from './InlineRichTextEditor'
+import { MoveDown, MoveUp, Plus, Trash2 } from 'lucide-react'
+import React from 'react'
+import { ContentSlotEditor } from '../ContentSlotEditor'
 import { HintSolutionPanel } from './HintSolutionPanel'
 import {
+  addOptionAndNormalize,
   changeSelectionMode,
   removeOptionAndNormalize,
   toggleCorrectOption,
-  addOptionAndNormalize,
   updateOptionAndNormalize,
 } from './normalizers'
-import { Plus, Trash2, MoveUp, MoveDown } from 'lucide-react'
 
 interface McqEditorProps {
   block: QuestionSelectMcqBlock
@@ -45,10 +48,7 @@ export const McqEditor: React.FC<McqEditorProps> = ({ block, onChange }) => {
     onChange(addOptionAndNormalize(block, newOption))
   }
 
-  const handleOptionContentChange = (
-    optionId: string,
-    content: { type: 'rich_text'; format: 'md-math-v1'; value: string; mediaIds: string[] },
-  ) => {
+  const handleOptionContentChange = (optionId: string, content: RichContent) => {
     onChange(updateOptionAndNormalize(block, optionId, { content }))
   }
 
@@ -73,9 +73,9 @@ export const McqEditor: React.FC<McqEditorProps> = ({ block, onChange }) => {
     <div className="mcq-editor">
       <div className="question-editor-section">
         <label className="question-editor-label">Prompt</label>
-        <InlineRichTextEditor
+        <ContentSlotEditor
           value={block.prompt}
-          onChange={(newPrompt) => onChange({ ...block, prompt: newPrompt })}
+          onChange={(newPrompt: RichContent) => onChange({ ...block, prompt: newPrompt })}
           placeholder="Enter your multiple choice question..."
         />
       </div>
@@ -120,7 +120,7 @@ export const McqEditor: React.FC<McqEditorProps> = ({ block, onChange }) => {
                 </button>
               </div>
               <div className="mcq-option-content">
-                <InlineRichTextEditor
+                <ContentSlotEditor
                   value={option.content}
                   onChange={(newContent) => handleOptionContentChange(option.id, newContent)}
                   placeholder={`Option ${index + 1}...`}

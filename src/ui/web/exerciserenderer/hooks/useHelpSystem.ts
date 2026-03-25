@@ -10,6 +10,11 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { systemEventBus, SYSTEM_EVENTS } from '@/infra/system-events'
 import type { HelpUsageState, QuestionBlock } from '../types'
+import {
+  hasRichContentText,
+  getRichContentText,
+  type RichContent,
+} from '@/server/payload/collections/Exercises/types'
 
 interface UseHelpSystemProps {
   questionBlocks: QuestionBlock[]
@@ -98,12 +103,14 @@ export function useHelpSystem({
 
         // If no backend hint content, dispatch to chat for AI generation
         const question = questionBlocks.find((q) => q.id === questionId)
-        if (question && !question.hint?.value) {
+        if (question && !hasRichContentText(question.hint as RichContent | undefined)) {
           window.dispatchEvent(
             new CustomEvent('exercise-help-action', {
               detail: {
                 type: 'hint',
-                questionContent: question.prompt?.value,
+                questionContent: question.prompt
+                  ? getRichContentText(question.prompt as RichContent)
+                  : undefined,
                 exerciseId,
                 lessonId,
               },
@@ -160,8 +167,12 @@ export function useHelpSystem({
             new CustomEvent('exercise-help-action', {
               detail: {
                 type: 'guiding',
-                questionContent: question.prompt?.value,
-                backendContent: question.solution?.value,
+                questionContent: question.prompt
+                  ? getRichContentText(question.prompt as RichContent)
+                  : undefined,
+                backendContent: question.solution
+                  ? getRichContentText(question.solution as RichContent)
+                  : undefined,
                 exerciseId,
                 lessonId,
               },
@@ -215,8 +226,12 @@ export function useHelpSystem({
             new CustomEvent('exercise-help-action', {
               detail: {
                 type: 'solution',
-                questionContent: question.prompt?.value,
-                backendContent: question.fullSolution?.value,
+                questionContent: question.prompt
+                  ? getRichContentText(question.prompt as RichContent)
+                  : undefined,
+                backendContent: question.fullSolution
+                  ? getRichContentText(question.fullSolution as RichContent)
+                  : undefined,
                 exerciseId,
                 lessonId,
               },

@@ -7,17 +7,18 @@
  * - Caps output at 2000 characters
  */
 
-import type {
-  LatexBlock,
-  QuestionAxisBlock,
-  QuestionFreeResponseBlock,
-  QuestionGeometryBlock,
-  QuestionMatchingBlock,
-  QuestionSelectMcqBlock,
-  QuestionSelectTrueFalseBlock,
-  QuestionTableBlock,
-  RichTextBlock,
-  SvgBlock,
+import {
+  getRichContentText,
+  type LatexBlock,
+  type QuestionAxisBlock,
+  type QuestionFreeResponseBlock,
+  type QuestionGeometryBlock,
+  type QuestionMatchingBlock,
+  type QuestionSelectMcqBlock,
+  type QuestionSelectTrueFalseBlock,
+  type QuestionTableBlock,
+  type RichTextBlock,
+  type SvgBlock,
 } from '@/server/payload/collections/Exercises/types'
 
 export interface MediaItem {
@@ -138,31 +139,33 @@ function formatRichTextBlock(block: RichTextBlock, index: number, maxLength?: nu
 }
 
 function formatTrueFalseBlock(block: QuestionSelectTrueFalseBlock, index: number): string {
-  const prompt = truncateText(block.prompt.value, 100)
-  const options = block.options.map((o) => o.label.value).join(', ')
-  const hint = block.hint ? ` | Hint: ${truncateText(block.hint.value, 50)}` : ''
+  const prompt = truncateText(getRichContentText(block.prompt), 100)
+  const options = block.options.map((o) => getRichContentText(o.label)).join(', ')
+  const hint = block.hint ? ` | Hint: ${truncateText(getRichContentText(block.hint), 50)}` : ''
   return `${index}. [Question: True/False] ${prompt} | Options: ${options}${hint}`
 }
 
 function formatMcqBlock(block: QuestionSelectMcqBlock, index: number): string {
-  const prompt = truncateText(block.prompt.value, 100)
-  const options = block.answer.options.map((o) => truncateText(o.content.value, 30)).join(', ')
-  const hint = block.hint ? ` | Hint: ${truncateText(block.hint.value, 50)}` : ''
+  const prompt = truncateText(getRichContentText(block.prompt), 100)
+  const options = block.answer.options
+    .map((o) => truncateText(getRichContentText(o.content), 30))
+    .join(', ')
+  const hint = block.hint ? ` | Hint: ${truncateText(getRichContentText(block.hint), 50)}` : ''
   return `${index}. [Question: MCQ] ${prompt} | Options: ${options}${hint}`
 }
 
 function formatFreeResponseBlock(block: QuestionFreeResponseBlock, index: number): string {
-  const prompt = truncateText(block.prompt.value, 100)
+  const prompt = truncateText(getRichContentText(block.prompt), 100)
   const answerCount = block.answer.acceptedAnswers.length
-  const hint = block.hint ? ` | Hint: ${truncateText(block.hint.value, 50)}` : ''
+  const hint = block.hint ? ` | Hint: ${truncateText(getRichContentText(block.hint), 50)}` : ''
   return `${index}. [Question: FreeResponse] ${prompt} | Accepted: ${answerCount} answer(s)${hint}`
 }
 
 function formatTableBlock(block: QuestionTableBlock, index: number): string {
-  const prompt = truncateText(block.prompt.value, 80)
+  const prompt = truncateText(getRichContentText(block.prompt), 80)
   const rows = block.table.rowsData.length
   const cols = block.table.headers.length
-  const hint = block.hint ? ` | Hint: ${truncateText(block.hint.value, 50)}` : ''
+  const hint = block.hint ? ` | Hint: ${truncateText(getRichContentText(block.hint), 50)}` : ''
   return `${index}. [Question: Table] ${prompt} | ${cols} columns × ${rows} rows${hint}`
 }
 
@@ -172,11 +175,11 @@ function formatLatexBlock(block: LatexBlock, index: number): string {
 }
 
 function formatMatchingBlock(block: QuestionMatchingBlock, index: number): string {
-  const prompt = truncateText(block.prompt.value, 80)
+  const prompt = truncateText(getRichContentText(block.prompt), 80)
   const leftCount = block.leftColumn.length
   const rightCount = block.rightColumn.length
   const pairs = block.correctPairs.length
-  const hint = block.hint ? ` | Hint: ${truncateText(block.hint.value, 50)}` : ''
+  const hint = block.hint ? ` | Hint: ${truncateText(getRichContentText(block.hint), 50)}` : ''
   return `${index}. [Question: Matching] ${prompt} | ${leftCount} items → ${rightCount} targets | ${pairs} pairs${hint}`
 }
 
@@ -186,14 +189,14 @@ function formatSvgBlock(block: SvgBlock, index: number): string {
 }
 
 function formatGeometryBlock(block: QuestionGeometryBlock, index: number): string {
-  const prompt = truncateText(block.prompt.value, 100)
-  const hint = block.hint ? ` | Hint: ${truncateText(block.hint.value, 50)}` : ''
+  const prompt = truncateText(getRichContentText(block.prompt), 100)
+  const hint = block.hint ? ` | Hint: ${truncateText(getRichContentText(block.hint), 50)}` : ''
   return `${index}. [Question: Geometry] ${prompt}${hint}`
 }
 
 function formatAxisBlock(block: QuestionAxisBlock, index: number): string {
-  const prompt = truncateText(block.prompt.value, 100)
-  const hint = block.hint ? ` | Hint: ${truncateText(block.hint.value, 50)}` : ''
+  const prompt = truncateText(getRichContentText(block.prompt), 100)
+  const hint = block.hint ? ` | Hint: ${truncateText(getRichContentText(block.hint), 50)}` : ''
   return `${index}. [Question: Axis] ${prompt}${hint}`
 }
 

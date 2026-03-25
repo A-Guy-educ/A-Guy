@@ -10,7 +10,10 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import React from 'react'
 
-import type { QuestionAxisBlock } from '@/server/payload/collections/Exercises/types'
+import {
+  type QuestionAxisBlock,
+  getRichContentText,
+} from '@/server/payload/collections/Exercises/types'
 
 // Simple mock for testing the UI behavior
 const MockAxisEditor: React.FC<{
@@ -42,7 +45,7 @@ const MockAxisEditor: React.FC<{
       </div>
       <div data-testid="prompt-section">
         <label>Prompt</label>
-        <div data-testid="prompt-value">{block.prompt?.value || ''}</div>
+        <div data-testid="prompt-value">{block.prompt ? getRichContentText(block.prompt) : ''}</div>
       </div>
     </div>
   )

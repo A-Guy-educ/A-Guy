@@ -7,8 +7,9 @@
 'use client'
 
 import React, { useState, useCallback, useMemo } from 'react'
-import type { QuestionTableBlock, UserAnswer, RichTextBlock, TableCellResult } from '../../types'
-import { RichTextRenderer } from '../../blocks/RichTextRenderer'
+import type { QuestionTableBlock, UserAnswer, TableCellResult } from '../../types'
+import type { RichContent } from '@/server/payload/collections/Exercises/types'
+import { ContentSlotRenderer } from '../../blocks/ContentSlotRenderer'
 import { ExerciseTable } from './ExerciseTable'
 import { validateTableAnswers } from '../../utils/tableValidation'
 import { Button } from '@/ui/web/components/button'
@@ -41,12 +42,6 @@ export function TableQuestion({
   const cellValues = answer.type === 'table' ? answer.cellValues : EMPTY_CELLS
   const hasFillableCells = question.table.solutionFill && !!question.table.answers
 
-  const promptBlock: RichTextBlock = {
-    ...question.prompt,
-    id: `${question.id}-prompt`,
-    mediaIds: question.prompt.mediaIds || [],
-  }
-
   const handleCellChange = useCallback(
     (key: string, value: string) => {
       const updated = { ...cellValues, [key]: value }
@@ -68,7 +63,7 @@ export function TableQuestion({
   return (
     <div className="flex flex-col gap-content-gap">
       <div className="text-body-md font-medium text-foreground leading-relaxed">
-        <RichTextRenderer block={promptBlock} />
+        <ContentSlotRenderer content={question.prompt as RichContent} />
       </div>
 
       <ExerciseTable

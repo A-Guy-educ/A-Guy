@@ -14,6 +14,8 @@ import type {
   CheckResult,
   RichTextBlock,
 } from '../../types'
+import type { RichContent } from '@/server/payload/collections/Exercises/types'
+import { ContentSlotRenderer } from '../../blocks/ContentSlotRenderer'
 import { RichTextRenderer } from '../../blocks/RichTextRenderer'
 
 interface TrueFalseQuestionProps {
@@ -57,17 +59,10 @@ export function TrueFalseQuestion({
     },
   ]
 
-  // Convert InlineRichText to RichTextBlock for renderer
-  const promptBlock: RichTextBlock = {
-    ...question.prompt,
-    id: `${question.id}-prompt`,
-    mediaIds: question.prompt.mediaIds || [],
-  }
-
   return (
     <div className="flex flex-col gap-content-gap">
       <div className="text-body-md font-medium text-foreground leading-relaxed">
-        <RichTextRenderer block={promptBlock} />
+        <ContentSlotRenderer content={question.prompt as RichContent} />
       </div>
       <div className="flex gap-3">
         {options.map((option) => {

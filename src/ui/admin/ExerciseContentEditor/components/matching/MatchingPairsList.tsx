@@ -2,6 +2,7 @@
 
 import React from 'react'
 import type { MatchingOption, MatchingPair } from '@/server/payload/collections/Exercises/types'
+import { getRichContentText } from '@/server/payload/collections/Exercises/types'
 import { Plus, Trash2 } from 'lucide-react'
 
 interface MatchingPairsListProps {
@@ -13,7 +14,7 @@ interface MatchingPairsListProps {
 
 const getLabel = (options: MatchingOption[], id: string, fallbackIdx: number) => {
   const opt = options.find((o) => o.id === id)
-  const text = opt?.content.value?.slice(0, 30)
+  const text = opt ? getRichContentText(opt.content)?.slice(0, 30) : undefined
   return text || `Item ${fallbackIdx + 1}`
 }
 

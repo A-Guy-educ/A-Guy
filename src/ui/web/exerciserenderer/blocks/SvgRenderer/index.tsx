@@ -3,7 +3,8 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { cn } from '@/infra/utils/ui'
 import type { SvgBlock, CheckResult } from '../../types'
-import { RichTextRenderer } from '../RichTextRenderer'
+import type { RichContent } from '@/server/payload/collections/Exercises/types'
+import { ContentSlotRenderer } from '../ContentSlotRenderer'
 import { sanitizeSvg } from '../../utils/svgSanitize'
 
 interface SvgRendererProps {
@@ -105,9 +106,7 @@ export function SvgRenderer({
     onHotspotToggle,
   ])
 
-  const captionBlock = block.caption
-    ? { ...block.caption, id: `${block.id}-caption`, mediaIds: block.caption.mediaIds || [] }
-    : null
+  const hasCaption = !!block.caption
 
   return (
     <div>
@@ -121,9 +120,9 @@ export function SvgRenderer({
         )}
         dangerouslySetInnerHTML={{ __html: sanitizedSvg }}
       />
-      {captionBlock && (
+      {hasCaption && (
         <div className="mt-2 text-body-sm text-muted-foreground text-center">
-          <RichTextRenderer block={captionBlock} />
+          <ContentSlotRenderer content={block.caption as RichContent} />
         </div>
       )}
     </div>

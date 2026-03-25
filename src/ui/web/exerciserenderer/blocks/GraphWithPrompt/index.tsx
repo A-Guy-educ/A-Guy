@@ -10,14 +10,15 @@
 
 import React from 'react'
 import { cn } from '@/infra/utils/ui'
-import type { GraphLayout, InlineRichText } from '@/server/payload/collections/Exercises/types'
-import { RichTextRenderer } from '../RichTextRenderer'
+import type { GraphLayout, RichContent } from '@/server/payload/collections/Exercises/types'
+import { hasRichContentText } from '@/server/payload/collections/Exercises/types'
+import { ContentSlotRenderer } from '../ContentSlotRenderer'
 
 interface GraphWithPromptProps {
   /** Layout mode for positioning prompt relative to graph */
   layout?: GraphLayout
-  /** Prompt text to display */
-  prompt?: InlineRichText
+  /** Prompt content to display */
+  prompt?: RichContent
   /** Unique ID for this block (used for synthetic RichTextRenderer block ID) */
   blockId: string
   /** Child graph renderer (GeometryRenderer or AxisRenderer) */
@@ -56,7 +57,7 @@ function getLayoutClasses(layout: GraphLayout): string {
 export function GraphWithPrompt({
   layout = 'textRight',
   prompt,
-  blockId,
+  blockId: _blockId,
   children,
   className = '',
 }: GraphWithPromptProps) {
@@ -66,7 +67,7 @@ export function GraphWithPrompt({
   const showGraphFirst = layout === 'textBelow' || layout === 'textRight'
 
   // Check if prompt has content
-  const hasPrompt = prompt && prompt.value && prompt.value.trim().length > 0
+  const hasPrompt = hasRichContentText(prompt)
 
   // For side-by-side layouts, add minimum width and gap
   const isSideBySide = layout === 'textLeft' || layout === 'textRight'
@@ -74,17 +75,6 @@ export function GraphWithPrompt({
 
   // Minimum width threshold for side-by-side (per clarified.md)
   const minWidthClass = isSideBySide ? 'min-w-[280px]' : ''
-
-  // Convert InlineRichText to RichTextBlock for RichTextRenderer
-  const promptBlock = prompt
-    ? {
-        type: 'rich_text' as const,
-        format: 'md-math-v1' as const,
-        value: prompt.value,
-        mediaIds: prompt.mediaIds || [],
-        id: `${blockId}-prompt`,
-      }
-    : null
 
   return (
     <div className={cn('my-4', containerClasses, gapClass, className)}>
@@ -95,13 +85,13 @@ export function GraphWithPrompt({
             {children}
           </div>
           {/* Prompt second */}
-          {hasPrompt && promptBlock && (
+          {hasPrompt && prompt && (
             <div
               className={cn('flex-1', !isSideBySide && 'min-h-[60px]')}
               data-testid="prompt-wrapper"
             >
               <div className="prose prose-slate dark:prose-invert max-w-none text-foreground leading-relaxed">
-                <RichTextRenderer block={promptBlock} />
+                <ContentSlotRenderer content={prompt} />
               </div>
             </div>
           )}
@@ -109,13 +99,13 @@ export function GraphWithPrompt({
       ) : (
         <>
           {/* Prompt first (top in vertical above, left in horizontal left) */}
-          {hasPrompt && promptBlock && (
+          {hasPrompt && prompt && (
             <div
               className={cn('flex-1', !isSideBySide && 'min-h-[60px]')}
               data-testid="prompt-wrapper"
             >
               <div className="prose prose-slate dark:prose-invert max-w-none text-foreground leading-relaxed">
-                <RichTextRenderer block={promptBlock} />
+                <ContentSlotRenderer content={prompt} />
               </div>
             </div>
           )}

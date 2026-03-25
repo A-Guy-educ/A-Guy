@@ -16,7 +16,7 @@ import { PointsPanel } from '../components/geometry/PointsPanel'
 import { ShapesPanel } from '../components/geometry/ShapesPanel'
 import { TextsPanel } from '../components/geometry/TextsPanel'
 import { VectorsPanel } from '../components/geometry/VectorsPanel'
-import { InlineRichTextEditor } from './InlineRichTextEditor'
+import { ContentSlotEditor } from '../ContentSlotEditor'
 
 interface GeometryEditorProps {
   block: QuestionGeometryBlock
@@ -103,7 +103,7 @@ export const GeometryEditor: React.FC<GeometryEditorProps> = ({ block, onChange 
     <div className="geometry-editor">
       <div className="question-editor-section">
         <label className="question-editor-label">Prompt</label>
-        <InlineRichTextEditor
+        <ContentSlotEditor
           value={block.prompt}
           onChange={(prompt) => onChange({ ...block, prompt })}
           placeholder="Enter your geometry question..."

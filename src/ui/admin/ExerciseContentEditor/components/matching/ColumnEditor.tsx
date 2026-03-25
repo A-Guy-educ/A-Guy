@@ -1,10 +1,10 @@
 'use client'
 
-import React from 'react'
 import type { MatchingOption } from '@/server/payload/collections/Exercises/types'
 import { generateId } from '@/server/payload/collections/Exercises/types'
-import { InlineRichTextEditor } from '../../editors/InlineRichTextEditor'
 import { Plus, Trash2 } from 'lucide-react'
+import React from 'react'
+import { ContentSlotEditor } from '../../ContentSlotEditor'
 
 interface ColumnEditorProps {
   label: string
@@ -32,10 +32,7 @@ export const ColumnEditor: React.FC<ColumnEditorProps> = ({
     onChange(options.filter((o) => o.id !== optionId))
   }
 
-  const handleContentChange = (
-    optionId: string,
-    content: { type: 'rich_text'; format: 'md-math-v1'; value: string; mediaIds: string[] },
-  ) => {
+  const handleContentChange = (optionId: string, content: MatchingOption['content']) => {
     onChange(options.map((o) => (o.id === optionId ? { ...o, content } : o)))
   }
 
@@ -47,7 +44,7 @@ export const ColumnEditor: React.FC<ColumnEditorProps> = ({
           <div key={option.id} className="matching-column-row">
             <span className="matching-column-number">{index + 1}</span>
             <div className="matching-column-content">
-              <InlineRichTextEditor
+              <ContentSlotEditor
                 value={option.content}
                 onChange={(c) => handleContentChange(option.id, c)}
                 placeholder={`Item ${index + 1}...`}

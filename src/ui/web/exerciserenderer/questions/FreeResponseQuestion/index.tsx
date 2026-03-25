@@ -12,8 +12,9 @@ import { Textarea } from '@/ui/web/components/textarea'
 import { MathMarkdown } from '@/ui/web/shared/MathMarkdown'
 import { FormulaComposer } from '@/ui/web/shared/MathInput/FormulaComposer'
 import { FunctionSquare } from 'lucide-react'
-import type { QuestionFreeResponseBlock, UserAnswer, CheckResult, RichTextBlock } from '../../types'
-import { RichTextRenderer } from '../../blocks/RichTextRenderer'
+import type { QuestionFreeResponseBlock, UserAnswer, CheckResult } from '../../types'
+import type { RichContent } from '@/server/payload/collections/Exercises/types'
+import { ContentSlotRenderer } from '../../blocks/ContentSlotRenderer'
 
 interface FreeResponseQuestionProps {
   question: QuestionFreeResponseBlock
@@ -38,12 +39,6 @@ export function FreeResponseQuestion({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [composerOpen, setComposerOpen] = useState(false)
-
-  const promptBlock: RichTextBlock = {
-    ...question.prompt,
-    id: `${question.id}-prompt`,
-    mediaIds: question.prompt.mediaIds || [],
-  }
 
   const MAX_HEIGHT = 160
 
@@ -98,7 +93,7 @@ export function FreeResponseQuestion({
   return (
     <div className="flex flex-col gap-3">
       <div className="text-body-md font-medium text-foreground leading-relaxed">
-        <RichTextRenderer block={promptBlock} />
+        <ContentSlotRenderer content={question.prompt as RichContent} />
       </div>
 
       {/* Answer box with formula button on edge */}

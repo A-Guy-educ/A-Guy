@@ -7,6 +7,7 @@ import type {
   QuestionMatchingBlock,
   QuestionSelectMcqBlock,
   QuestionTableBlock,
+  RichContent,
 } from '@/server/payload/collections/Exercises/types'
 
 /**
@@ -90,7 +91,7 @@ export function addOptionAndNormalize(
   block: QuestionSelectMcqBlock,
   newOption: {
     id: string
-    content: { type: 'rich_text'; format: 'md-math-v1'; value: string; mediaIds: string[] }
+    content: RichContent
   },
 ): QuestionSelectMcqBlock {
   const newBlock: QuestionSelectMcqBlock = {
@@ -116,7 +117,7 @@ export function updateOptionAndNormalize(
   block: QuestionSelectMcqBlock,
   optionId: string,
   updates: Partial<{
-    content: { type: 'rich_text'; format: 'md-math-v1'; value: string; mediaIds: string[] }
+    content: RichContent
   }>,
 ): QuestionSelectMcqBlock {
   const newBlock: QuestionSelectMcqBlock = {

@@ -39,7 +39,7 @@ export interface TrueFalseAnswer {
 
 export interface McqOption {
   id: string
-  content: InlineRichText
+  content: RichContent
 }
 
 export interface McqAnswer {
@@ -60,16 +60,16 @@ export interface QuestionSelectTrueFalseBlock {
   type: 'question_select'
   variant: 'true_false'
   selectionMode: 'single'
-  prompt: InlineRichText
+  prompt: RichContent
   options: ReadonlyArray<{
     id: 'true' | 'false'
     value: boolean
-    label: InlineRichText
+    label: RichContent
   }>
   answer: TrueFalseAnswer
-  hint?: InlineRichText
-  solution?: InlineRichText
-  fullSolution?: InlineRichText
+  hint?: RichContent
+  solution?: RichContent
+  fullSolution?: RichContent
 }
 
 // ---------------------------------
@@ -80,11 +80,11 @@ export interface QuestionSelectMcqBlock {
   type: 'question_select'
   variant: 'mcq'
   selectionMode: 'single' | 'multiple'
-  prompt: InlineRichText
+  prompt: RichContent
   answer: McqAnswer
-  hint?: InlineRichText
-  solution?: InlineRichText
-  fullSolution?: InlineRichText
+  hint?: RichContent
+  solution?: RichContent
+  fullSolution?: RichContent
 }
 
 // ---------------------------------
@@ -93,11 +93,11 @@ export interface QuestionSelectMcqBlock {
 export interface QuestionFreeResponseBlock {
   id: string
   type: 'question_free_response'
-  prompt: InlineRichText
+  prompt: RichContent
   answer: FreeResponseAnswer
-  hint?: InlineRichText
-  solution?: InlineRichText
-  fullSolution?: InlineRichText
+  hint?: RichContent
+  solution?: RichContent
+  fullSolution?: RichContent
 }
 
 // ---------------------------------
@@ -119,11 +119,11 @@ export interface TableBlock {
 export interface QuestionTableBlock {
   id: string
   type: 'question_table'
-  prompt: InlineRichText
+  prompt: RichContent
   table: TableBlock
-  hint?: InlineRichText
-  solution?: InlineRichText
-  fullSolution?: InlineRichText
+  hint?: RichContent
+  solution?: RichContent
+  fullSolution?: RichContent
 }
 
 // ---------------------------------
@@ -141,7 +141,7 @@ export interface LatexBlock {
 // ---------------------------------
 export interface MatchingOption {
   id: string
-  content: InlineRichText
+  content: RichContent
 }
 
 // ---------------------------------
@@ -158,14 +158,14 @@ export interface MatchingPair {
 export interface QuestionMatchingBlock {
   id: string
   type: 'question_matching'
-  prompt: InlineRichText
+  prompt: RichContent
   leftColumn: MatchingOption[] // Items to match from
   rightColumn: MatchingOption[] // Items to match to
   correctPairs: MatchingPair[] // Answer key
   shuffleRightColumn?: boolean // UI can shuffle for display
-  hint?: InlineRichText
-  solution?: InlineRichText
-  fullSolution?: InlineRichText
+  hint?: RichContent
+  solution?: RichContent
+  fullSolution?: RichContent
 }
 
 // ---------------------------------
@@ -185,13 +185,13 @@ export interface SvgBlock {
   type: 'svg'
   value: string // Raw SVG markup
   altText?: string // Accessibility description
-  caption?: InlineRichText
+  caption?: RichContent
   interactive?: boolean // If true, hotspots are clickable
   hotspots?: SvgHotspot[] // Clickable regions (only when interactive=true)
   correctHotspotIds?: string[] // Answer key: which hotspot IDs are correct
-  hint?: InlineRichText
-  solution?: InlineRichText
-  fullSolution?: InlineRichText
+  hint?: RichContent
+  solution?: RichContent
+  fullSolution?: RichContent
 }
 
 // ---------------------------------
@@ -215,13 +215,13 @@ export type GraphLayout = 'textAbove' | 'textBelow' | 'textLeft' | 'textRight'
 export interface QuestionGeometryBlock {
   id: string
   type: 'question_geometry'
-  prompt: InlineRichText
+  prompt: RichContent
   layout?: GraphLayout
   geometry: GeometrySpecV1
   answer?: QuestionAnswer
-  hint?: InlineRichText
-  solution?: InlineRichText
-  fullSolution?: InlineRichText
+  hint?: RichContent
+  solution?: RichContent
+  fullSolution?: RichContent
 }
 
 // ---------------------------------
@@ -230,14 +230,14 @@ export interface QuestionGeometryBlock {
 export interface QuestionAxisBlock {
   id: string
   type: 'question_axis'
-  prompt: InlineRichText
+  prompt: RichContent
   layout?: GraphLayout
   axis: AxisSpecV1
   displaySize?: 'small' | 'medium' | 'large' | 'full'
   answer?: QuestionAnswer
-  hint?: InlineRichText
-  solution?: InlineRichText
-  fullSolution?: InlineRichText
+  hint?: RichContent
+  solution?: RichContent
+  fullSolution?: RichContent
 }
 
 // ---------------------------------
@@ -256,7 +256,7 @@ export interface MultiAxisGraphItem {
 export interface QuestionMultiAxisBlock {
   id: string
   type: 'question_multi_axis'
-  prompt?: InlineRichText
+  prompt?: RichContent
   textPosition: 'above' | 'below'
   graphs: MultiAxisGraphItem[]
 }
@@ -305,6 +305,53 @@ export interface ContentData {
 }
 
 // ---------------------------------
+// Display-only variants — portable Axis/Geometry without question/answer fields
+// ---------------------------------
+export interface AxisDisplayData {
+  type: 'axis_display'
+  axis: AxisSpecV1
+  displaySize?: 'small' | 'medium' | 'large' | 'full'
+}
+
+export interface GeometryDisplayData {
+  type: 'geometry_display'
+  geometry: GeometrySpecV1
+}
+
+// ---------------------------------
+// ContentSlot Item Data Types (leaf nodes for slots)
+// ---------------------------------
+export type ContentSlotItemData =
+  | { type: 'rich_text'; format: 'md-math-v1'; value: string; mediaIds: string[] }
+  | { type: 'latex'; latex: string; renderMode?: 'block' | 'inline' }
+  | { type: 'svg'; value: string; altText?: string }
+  | { type: 'media'; mediaId: string }
+  | AxisDisplayData
+  | GeometryDisplayData
+  | { type: 'html'; html: string }
+
+// ---------------------------------
+// ContentSlot Item (wrapper with id)
+// ---------------------------------
+export interface ContentSlotItem {
+  id: string
+  data: ContentSlotItemData
+}
+
+// ---------------------------------
+// ContentSlot - Universal container for rich content (v2)
+// ---------------------------------
+export interface ContentSlot {
+  version: 2
+  items: ContentSlotItem[]
+}
+
+// ---------------------------------
+// RichContent Union - supports both v1 (InlineRichText) and v2 (ContentSlot)
+// ---------------------------------
+export type RichContent = InlineRichText | ContentSlot
+
+// ---------------------------------
 // ID Generator (browser and server compatible)
 // ---------------------------------
 export function generateId(): string {
@@ -312,4 +359,189 @@ export function generateId(): string {
     return crypto.randomUUID()
   }
   return 'b-' + Math.random().toString(36).substring(2, 9)
+}
+
+// ---------------------------------
+// Type Guards
+// ---------------------------------
+
+/**
+ * Check if a value is a ContentSlot (v2)
+ */
+export function isContentSlot(value: unknown): value is ContentSlot {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'version' in value &&
+    (value as ContentSlot).version === 2 &&
+    'items' in value &&
+    Array.isArray((value as ContentSlot).items)
+  )
+}
+
+/**
+ * Check if a value is InlineRichText (v1)
+ * Mutually exclusive with isContentSlot - checks that version is NOT present
+ */
+export function isInlineRichText(value: unknown): value is InlineRichText {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !('version' in value) && // Exclude ContentSlot which has version: 2
+    'type' in value &&
+    (value as InlineRichText).type === 'rich_text' &&
+    'format' in value &&
+    (value as InlineRichText).format === 'md-math-v1'
+  )
+}
+
+/**
+ * Check if a value is RichContent (union of v1 and v2)
+ */
+export function isRichContent(value: unknown): value is RichContent {
+  return isInlineRichText(value) || isContentSlot(value)
+}
+
+// ---------------------------------
+// Helper Functions for RichContent
+// ---------------------------------
+
+/**
+ * Extract text from RichContent regardless of format
+ */
+export function getRichContentText(rc: RichContent): string {
+  if (isInlineRichText(rc)) {
+    return rc.value
+  }
+  // ContentSlot - extract text from all rich_text items
+  return rc.items
+    .filter(
+      (item): item is ContentSlotItem & { data: { type: 'rich_text'; value: string } } =>
+        item.data.type === 'rich_text',
+    )
+    .map((item) => item.data.value)
+    .join('\n')
+}
+
+/**
+ * Extract media IDs from RichContent regardless of format
+ */
+export function getRichContentMediaIds(rc: RichContent): string[] {
+  if (isInlineRichText(rc)) {
+    return rc.mediaIds
+  }
+  // ContentSlot - extract mediaIds from all rich_text items
+  return rc.items
+    .filter(
+      (item): item is ContentSlotItem & { data: { type: 'rich_text'; mediaIds: string[] } } =>
+        item.data.type === 'rich_text',
+    )
+    .flatMap((item) => item.data.mediaIds)
+}
+
+/**
+ * Check if RichContent has meaningful text content
+ */
+export function hasRichContentText(rc: RichContent | undefined): boolean {
+  if (!rc) return false
+  return getRichContentText(rc).trim().length > 0
+}
+
+// ---------------------------------
+// Conversion Functions (for backward compatibility)
+// ---------------------------------
+
+/**
+ * Convert InlineRichText (v1) to ContentSlot (v2)
+ */
+export function inlineRichTextToSlot(irt: InlineRichText): ContentSlot {
+  return {
+    version: 2,
+    items: [
+      {
+        id: generateId(),
+        data: {
+          type: 'rich_text',
+          format: irt.format,
+          value: irt.value,
+          mediaIds: irt.mediaIds,
+        },
+      },
+    ],
+  }
+}
+
+/**
+ * Convert ContentSlot (v2) back to InlineRichText (v1)
+ * Only works if slot has exactly one rich_text item
+ */
+export function contentSlotToInlineRichText(slot: ContentSlot): InlineRichText | null {
+  if (slot.items.length !== 1) {
+    return null
+  }
+  const item = slot.items[0]
+  if (item.data.type !== 'rich_text') {
+    return null
+  }
+  return {
+    type: 'rich_text',
+    format: item.data.format,
+    value: item.data.value,
+    mediaIds: item.data.mediaIds,
+  }
+}
+
+// ---------------------------------
+// AI Chat Serialization Functions
+// ---------------------------------
+
+/**
+ * Convert a ContentSlotItem to plain text for AI chat context
+ */
+export function contentSlotItemToText(item: ContentSlotItem): string {
+  const data = item.data
+
+  switch (data.type) {
+    case 'rich_text':
+      return data.value
+
+    case 'latex':
+      return `$$${data.latex}$$`
+
+    case 'svg':
+      return data.altText ? `[SVG: ${data.altText}]` : '[SVG]'
+
+    case 'media':
+      return '[Media]'
+
+    case 'axis_display':
+      return '[Graph: coordinate plane]'
+
+    case 'geometry_display':
+      return '[Geometry: construction]'
+
+    case 'html':
+      // Strip tags, keep text
+      return data.html.replace(/<[^>]*>/g, '').trim()
+
+    default:
+      return '[Unknown content]'
+  }
+}
+
+/**
+ * Convert a ContentSlot to plain text for AI chat context
+ */
+export function contentSlotToText(slot: ContentSlot): string {
+  return slot.items.map(contentSlotItemToText).join('\n')
+}
+
+/**
+ * Convert RichContent (v1 or v2) to plain text for AI chat context
+ */
+export function richContentToText(content: RichContent): string {
+  if (isInlineRichText(content)) {
+    return content.value
+  }
+  return contentSlotToText(content)
 }

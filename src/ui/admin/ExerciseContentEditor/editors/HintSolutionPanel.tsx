@@ -1,26 +1,27 @@
 'use client'
 
 import React from 'react'
-import type { InlineRichText } from '@/server/payload/collections/Exercises/types'
+import type { RichContent } from '@/server/payload/collections/Exercises/types'
+import { hasRichContentText } from '@/server/payload/collections/Exercises/types'
 import { createInlineRichText } from '@/server/payload/endpoints/exercises/generate-support/support-block-utils'
 import { useDocumentInfo } from '@payloadcms/ui'
 import { CollapsibleSection } from '../../shared/CollapsibleSection'
-import { InlineRichTextEditor } from './InlineRichTextEditor'
+import { ContentSlotEditor } from '../ContentSlotEditor'
 import { useGenerateSupport } from './useGenerateSupport'
 import { Plus, X, Sparkles, Loader2 } from 'lucide-react'
 
 export interface SupportFields {
-  hint?: InlineRichText
-  solution?: InlineRichText
-  fullSolution?: InlineRichText
+  hint?: RichContent
+  solution?: RichContent
+  fullSolution?: RichContent
 }
 
 interface HintSolutionPanelProps {
-  hint?: InlineRichText
-  solution?: InlineRichText
-  fullSolution?: InlineRichText
+  hint?: RichContent
+  solution?: RichContent
+  fullSolution?: RichContent
   blockId: string
-  onChange: (field: 'hint' | 'solution' | 'fullSolution', value: InlineRichText | undefined) => void
+  onChange: (field: 'hint' | 'solution' | 'fullSolution', value: RichContent | undefined) => void
   onBatchChange: (fields: SupportFields) => void
 }
 
@@ -42,7 +43,8 @@ export const HintSolutionPanel: React.FC<HintSolutionPanelProps> = ({
     onExpandPanel: () => setExpanded(true),
   })
 
-  const hasContent = Boolean(hint?.value || solution?.value || fullSolution?.value)
+  const hasContent =
+    hasRichContentText(hint) || hasRichContentText(solution) || hasRichContentText(fullSolution)
 
   return (
     <CollapsibleSection
@@ -115,8 +117,8 @@ function GenerateBar({
 
 const HintSolutionField: React.FC<{
   label: string
-  value?: InlineRichText
-  onChange: (value: InlineRichText | undefined) => void
+  value?: RichContent
+  onChange: (value: RichContent | undefined) => void
 }> = ({ label, value, onChange }) => {
   if (!value) {
     return (
@@ -146,7 +148,7 @@ const HintSolutionField: React.FC<{
           <X size={14} />
         </button>
       </div>
-      <InlineRichTextEditor
+      <ContentSlotEditor
         value={value}
         onChange={onChange}
         placeholder={`Enter ${label.toLowerCase()}...`}

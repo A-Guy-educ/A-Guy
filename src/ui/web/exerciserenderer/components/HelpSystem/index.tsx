@@ -9,6 +9,11 @@
 
 import React from 'react'
 import type { HelpUsageState, QuestionBlock } from '../../types'
+import {
+  hasRichContentText,
+  getRichContentText,
+  type RichContent,
+} from '@/server/payload/collections/Exercises/types'
 import { HelpSystemButtons } from './HelpSystemButtons'
 import { HelpSystemContent } from './HelpSystemContent'
 
@@ -36,7 +41,9 @@ export function HelpSystem({
   solutionLabel,
 }: HelpSystemProps) {
   // Determine which content to show inline (hint only when backend content exists)
-  const inlineContent = activeHelp === 'hint' && question.hint?.value ? question.hint.value : null
+  const hint = question.hint as RichContent | undefined
+  const inlineContent =
+    activeHelp === 'hint' && hint && hasRichContentText(hint) ? getRichContentText(hint) : null
 
   return (
     <div className="mt-4 border-t border-gray-100/60 pt-3">
