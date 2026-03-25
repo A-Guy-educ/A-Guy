@@ -13,8 +13,10 @@ import {
   Triangle,
 } from 'lucide-react'
 import React from 'react'
+import { HtmlBlockEditor } from '../editors/HtmlBlockEditor'
 import { InlineRichTextEditor } from '../editors/InlineRichTextEditor'
 import { MediaBlockEditor } from '../editors/MediaBlockEditor'
+import { SvgEditor } from '../editors/SvgEditor'
 
 // Display-only editors for axis and geometry
 import { AxisDisplayEditor } from './AxisDisplayEditor'
@@ -148,22 +150,17 @@ export const ContentSlotItemEditor: React.FC<ContentSlotItemEditorProps> = ({
 
       case 'svg':
         return (
-          <div className="slot-item-svg-editor">
-            <textarea
-              className="slot-item-svg-input"
-              value={data.value || ''}
-              onChange={(e) => onUpdate({ data: { ...data, value: e.target.value } })}
-              placeholder="Enter SVG markup..."
-              rows={4}
-            />
-            <input
-              type="text"
-              className="slot-item-svg-alt"
-              value={data.altText || ''}
-              onChange={(e) => onUpdate({ data: { ...data, altText: e.target.value } })}
-              placeholder="Accessibility description"
-            />
-          </div>
+          <SvgEditor
+            block={{
+              id: item.id,
+              type: 'svg',
+              value: data.value || '',
+              altText: data.altText,
+            }}
+            onChange={(updated) => {
+              onUpdate({ data: { ...data, value: updated.value, altText: updated.altText } })
+            }}
+          />
         )
 
       case 'media':
@@ -210,15 +207,12 @@ export const ContentSlotItemEditor: React.FC<ContentSlotItemEditorProps> = ({
 
       case 'html':
         return (
-          <div className="slot-item-html-editor">
-            <textarea
-              className="slot-item-html-input"
-              value={data.html || ''}
-              onChange={(e) => onUpdate({ data: { ...data, html: e.target.value } })}
-              placeholder="Enter HTML..."
-              rows={4}
-            />
-          </div>
+          <HtmlBlockEditor
+            block={{ id: item.id, type: 'html', html: data.html || '' }}
+            onChange={(updated) => {
+              onUpdate({ data: { ...data, html: updated.html } })
+            }}
+          />
         )
 
       default:
