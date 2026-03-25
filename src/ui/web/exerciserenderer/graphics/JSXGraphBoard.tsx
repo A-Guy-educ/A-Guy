@@ -65,6 +65,8 @@ export function JSXGraphBoard({
                 withLabel: axisConfig?.showLabels ?? true,
                 // Standardized title position: far right, slightly below
                 label: { position: 'rt', offset: [0, 12] },
+                // Arrow at positive end to indicate direction
+                lastArrow: true,
               },
               y: {
                 ticks: {
@@ -79,6 +81,8 @@ export function JSXGraphBoard({
                 withLabel: axisConfig?.showLabels ?? true,
                 // Standardized title position: near top, slightly to right
                 label: { position: 'rt', offset: [15, 0] },
+                // Arrow at positive end to indicate direction
+                lastArrow: true,
               },
             },
           }
