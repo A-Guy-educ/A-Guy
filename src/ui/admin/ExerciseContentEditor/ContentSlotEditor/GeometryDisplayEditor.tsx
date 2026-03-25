@@ -2,6 +2,7 @@
 
 import type { GeometrySpecV1 } from '@/infra/contracts/graphics/geometry.v1'
 import React from 'react'
+import { CollapsibleSection } from '@/ui/admin/shared/CollapsibleSection'
 import { AnglesPanel } from '../components/geometry/AnglesPanel'
 import { CanvasConfigPanel } from '../components/geometry/CanvasConfigPanel'
 import { CirclesPanel } from '../components/geometry/CirclesPanel'
@@ -20,8 +21,8 @@ interface GeometryDisplayEditorProps {
 /**
  * GeometryDisplayEditor - Display-only geometry editor for ContentSlot
  *
- * Stripped down from GeometryEditor - only shows canvas config and elements.
- * No prompt, answer, hint, or solution fields.
+ * Uses the same layout (graph-editor-layout) and CollapsibleSection panels
+ * as the full GeometryEditor, without prompt/answer/hint fields.
  */
 export const GeometryDisplayEditor: React.FC<GeometryDisplayEditorProps> = ({
   geometry,
@@ -41,21 +42,11 @@ export const GeometryDisplayEditor: React.FC<GeometryDisplayEditorProps> = ({
     [geometry.elements, updateGeometry],
   )
 
-  // Generate unique ID for canvas
   const canvasId = React.useMemo(
     () => `geometry-display-${Math.random().toString(36).substring(7)}`,
     [],
   )
 
-  // Handle canvas config changes
-  const handleCanvasChange = React.useCallback(
-    (canvasUpdates: { width?: number; height?: number; background?: string; grid?: boolean }) => {
-      updateGeometry({ canvas: { ...geometry.canvas, ...canvasUpdates } })
-    },
-    [geometry.canvas, updateGeometry],
-  )
-
-  // Handle point drag
   const handlePointMoved = React.useCallback(
     (name: string, x: number, y: number) => {
       const newPoints = geometry.elements.points.map((p) => (p.name === name ? { ...p, x, y } : p))
@@ -64,11 +55,10 @@ export const GeometryDisplayEditor: React.FC<GeometryDisplayEditorProps> = ({
     [geometry.elements.points, updateElements],
   )
 
-  // Handle adding new point
   const handlePointAdded = React.useCallback(
     (x: number, y: number) => {
       const nextIndex = geometry.elements.points.length + 1
-      const name = String.fromCharCode(64 + nextIndex) // A, B, C, ...
+      const name = String.fromCharCode(64 + nextIndex)
       updateElements({
         points: [...geometry.elements.points, { name, x, y, position: 'r' }],
       })
@@ -76,7 +66,6 @@ export const GeometryDisplayEditor: React.FC<GeometryDisplayEditorProps> = ({
     [geometry.elements.points, updateElements],
   )
 
-  // Handle grid toggle
   const handleGridToggle = React.useCallback(
     (showGrid: boolean) => {
       updateGeometry({ canvas: { ...geometry.canvas, grid: showGrid } })
@@ -84,7 +73,6 @@ export const GeometryDisplayEditor: React.FC<GeometryDisplayEditorProps> = ({
     [geometry.canvas, updateGeometry],
   )
 
-  // Handle text moved
   const handleTextMoved = React.useCallback(
     (index: number, x: number, y: number) => {
       const newTexts = (geometry.elements.texts || []).map((t, i) =>
@@ -95,7 +83,6 @@ export const GeometryDisplayEditor: React.FC<GeometryDisplayEditorProps> = ({
     [geometry.elements.texts, updateElements],
   )
 
-  // Handle point label moved
   const handlePointLabelMoved = React.useCallback(
     (name: string, position: string) => {
       type PointPosition = GeometrySpecV1['elements']['points'][number]['position']
@@ -108,101 +95,97 @@ export const GeometryDisplayEditor: React.FC<GeometryDisplayEditorProps> = ({
   )
 
   return (
-    <div className="geometry-display-editor">
-      <div className="geometry-display-editor-panels">
-        <div className="geometry-display-editor-form">
-          <div className="geometry-display-editor-panel">
-            <div className="geometry-display-editor-panel-header">Canvas</div>
-            <CanvasConfigPanel canvas={geometry.canvas} onChange={handleCanvasChange} />
-          </div>
-
-          <div className="geometry-display-editor-panel">
-            <div className="geometry-display-editor-panel-header">
-              Points ({geometry.elements.points.length})
-            </div>
-            <PointsPanel
-              points={geometry.elements.points}
-              onChange={(points) => updateElements({ points })}
-            />
-          </div>
-
-          <div className="geometry-display-editor-panel">
-            <div className="geometry-display-editor-panel-header">
-              Lines ({geometry.elements.lines.length})
-            </div>
-            <LinesPanel
-              points={geometry.elements.points}
-              lines={geometry.elements.lines}
-              onChange={(lines) => updateElements({ lines })}
-            />
-          </div>
-
-          <div className="geometry-display-editor-panel">
-            <div className="geometry-display-editor-panel-header">
-              Circles ({geometry.elements.circles.length})
-            </div>
-            <CirclesPanel
-              points={geometry.elements.points}
-              circles={geometry.elements.circles}
-              onChange={(circles) => updateElements({ circles })}
-            />
-          </div>
-
-          <div className="geometry-display-editor-panel">
-            <div className="geometry-display-editor-panel-header">
-              Angles ({geometry.elements.angles.length})
-            </div>
-            <AnglesPanel
-              points={geometry.elements.points}
-              angles={geometry.elements.angles}
-              onChange={(angles) => updateElements({ angles })}
-            />
-          </div>
-
-          <div className="geometry-display-editor-panel">
-            <div className="geometry-display-editor-panel-header">
-              Vectors ({(geometry.elements.vectors || []).length})
-            </div>
-            <VectorsPanel
-              vectors={geometry.elements.vectors || []}
-              points={geometry.elements.points}
-              onChange={(vectors) => updateElements({ vectors })}
-            />
-          </div>
-
-          <div className="geometry-display-editor-panel">
-            <div className="geometry-display-editor-panel-header">Shapes</div>
-            <ShapesPanel
-              triangles={geometry.elements.triangles || []}
-              rectangles={geometry.elements.rectangles || []}
-              points={geometry.elements.points}
-              onTrianglesChange={(triangles) => updateElements({ triangles })}
-              onRectanglesChange={(rectangles) => updateElements({ rectangles })}
-            />
-          </div>
-
-          <div className="geometry-display-editor-panel">
-            <div className="geometry-display-editor-panel-header">
-              Texts ({(geometry.elements.texts || []).length})
-            </div>
-            <TextsPanel
-              texts={geometry.elements.texts || []}
-              onChange={(texts) => updateElements({ texts })}
-            />
-          </div>
-        </div>
-
-        <div className="geometry-display-editor-preview">
-          <GeometryCanvasWithToolbar
-            id={canvasId}
-            geometry={geometry}
-            onPointMoved={handlePointMoved}
-            onPointAdded={handlePointAdded}
-            onGridToggle={handleGridToggle}
-            onTextMoved={handleTextMoved}
-            onPointLabelMoved={handlePointLabelMoved}
+    <div className="graph-editor-layout">
+      <div className="graph-editor-form">
+        <CollapsibleSection title="Canvas" defaultExpanded={false}>
+          <CanvasConfigPanel
+            canvas={geometry.canvas}
+            onChange={(canvas) => updateGeometry({ canvas })}
           />
-        </div>
+        </CollapsibleSection>
+
+        <CollapsibleSection title={`Points (${geometry.elements.points.length})`} defaultExpanded>
+          <PointsPanel
+            points={geometry.elements.points}
+            onChange={(points) => updateElements({ points })}
+          />
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          title={`Lines (${geometry.elements.lines.length})`}
+          defaultExpanded={false}
+        >
+          <LinesPanel
+            lines={geometry.elements.lines}
+            points={geometry.elements.points}
+            onChange={(lines) => updateElements({ lines })}
+          />
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          title={`Circles (${geometry.elements.circles.length})`}
+          defaultExpanded={false}
+        >
+          <CirclesPanel
+            points={geometry.elements.points}
+            circles={geometry.elements.circles}
+            onChange={(circles) => updateElements({ circles })}
+          />
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          title={`Angles (${geometry.elements.angles.length})`}
+          defaultExpanded={false}
+        >
+          <AnglesPanel
+            points={geometry.elements.points}
+            angles={geometry.elements.angles}
+            onChange={(angles) => updateElements({ angles })}
+          />
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          title={`Vectors (${(geometry.elements.vectors || []).length})`}
+          defaultExpanded={false}
+        >
+          <VectorsPanel
+            vectors={geometry.elements.vectors || []}
+            points={geometry.elements.points}
+            onChange={(vectors) => updateElements({ vectors })}
+          />
+        </CollapsibleSection>
+
+        <CollapsibleSection title="Shapes" defaultExpanded={false}>
+          <ShapesPanel
+            triangles={geometry.elements.triangles || []}
+            rectangles={geometry.elements.rectangles || []}
+            points={geometry.elements.points}
+            onTrianglesChange={(triangles) => updateElements({ triangles })}
+            onRectanglesChange={(rectangles) => updateElements({ rectangles })}
+          />
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          title={`Texts (${(geometry.elements.texts || []).length})`}
+          defaultExpanded={false}
+        >
+          <TextsPanel
+            texts={geometry.elements.texts || []}
+            onChange={(texts) => updateElements({ texts })}
+          />
+        </CollapsibleSection>
+      </div>
+
+      <div className="graph-editor-canvas">
+        <GeometryCanvasWithToolbar
+          id={canvasId}
+          geometry={geometry}
+          onPointMoved={handlePointMoved}
+          onPointAdded={handlePointAdded}
+          onGridToggle={handleGridToggle}
+          onTextMoved={handleTextMoved}
+          onPointLabelMoved={handlePointLabelMoved}
+        />
       </div>
     </div>
   )

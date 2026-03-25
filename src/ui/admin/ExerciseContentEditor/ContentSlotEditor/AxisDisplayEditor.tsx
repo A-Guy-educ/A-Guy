@@ -2,8 +2,10 @@
 
 import type { AxisSpecV1 } from '@/infra/contracts/graphics/axis.v1'
 import React from 'react'
+import { CollapsibleSection } from '@/ui/admin/shared/CollapsibleSection'
 import { AxisCanvas } from '../components/axis/AxisCanvas'
 import { AxisConfigPanel } from '../components/axis/AxisConfigPanel'
+import { AxisPointsPanel } from '../components/axis/AxisPointsPanel'
 import { GraphsPanel } from '../components/axis/GraphsPanel'
 
 interface AxisDisplayEditorProps {
@@ -18,8 +20,8 @@ interface AxisDisplayEditorProps {
 /**
  * AxisDisplayEditor - Display-only axis graph editor for ContentSlot
  *
- * Stripped down from AxisEditor - only shows config, graphs, and preview.
- * No prompt, answer, hint, or solution fields.
+ * Uses the same layout (graph-editor-layout) and CollapsibleSection panels
+ * as the full AxisEditor, without prompt/answer/hint fields.
  */
 export const AxisDisplayEditor: React.FC<AxisDisplayEditorProps> = ({
   axis,
@@ -40,48 +42,58 @@ export const AxisDisplayEditor: React.FC<AxisDisplayEditorProps> = ({
     [axis.elements, updateAxis],
   )
 
+  const canvasId = React.useMemo(
+    () => `axis-display-${Math.random().toString(36).substring(7)}`,
+    [],
+  )
+
   return (
-    <div className="axis-display-editor">
-      <div className="axis-display-editor-config">
-        <div className="axis-display-size-select">
-          <label>Display Size:</label>
-          <select
-            value={displaySize}
-            onChange={(e) =>
-              onChange({
-                axis,
-                displaySize: e.target.value as 'small' | 'medium' | 'large' | 'full',
-              })
-            }
-          >
-            <option value="small">Small</option>
-            <option value="medium">Medium</option>
-            <option value="large">Large</option>
-            <option value="full">Full</option>
-          </select>
-        </div>
+    <div>
+      <div className="flex items-center gap-content-gap mb-3">
+        <label className="text-body-xs font-medium text-muted-foreground">Display Size:</label>
+        <select
+          className="px-2 py-1 border border-input rounded-md text-body-xs bg-background text-foreground"
+          value={displaySize}
+          onChange={(e) =>
+            onChange({
+              axis,
+              displaySize: e.target.value as 'small' | 'medium' | 'large' | 'full',
+            })
+          }
+        >
+          <option value="small">Small</option>
+          <option value="medium">Medium</option>
+          <option value="large">Large</option>
+          <option value="full">Full</option>
+        </select>
       </div>
 
-      <div className="axis-display-editor-panels">
-        <div className="axis-display-editor-form">
-          <div className="axis-display-editor-panel">
-            <div className="axis-display-editor-panel-header">Configuration</div>
-            <AxisConfigPanel spec={axis} onChange={updateAxis} />
-          </div>
+      <div className="graph-editor-layout">
+        <div className="graph-editor-form">
+          <CollapsibleSection title="Configuration" defaultExpanded={false}>
+            <AxisConfigPanel spec={axis} onChange={(s) => onChange({ axis: s, displaySize })} />
+          </CollapsibleSection>
 
-          <div className="axis-display-editor-panel">
-            <div className="axis-display-editor-panel-header">
-              Graphs ({axis.elements.graphs.length})
-            </div>
+          <CollapsibleSection title={`Graphs (${axis.elements.graphs.length})`} defaultExpanded>
             <GraphsPanel
               graphs={axis.elements.graphs}
               onChange={(graphs) => updateElements({ graphs })}
             />
-          </div>
+          </CollapsibleSection>
+
+          <CollapsibleSection
+            title={`Points (${axis.elements.points.length})`}
+            defaultExpanded={false}
+          >
+            <AxisPointsPanel
+              points={axis.elements.points}
+              onChange={(points) => updateElements({ points })}
+            />
+          </CollapsibleSection>
         </div>
 
-        <div className="axis-display-editor-preview">
-          <AxisCanvas id={`axis-display-${Math.random().toString(36).substring(7)}}`} axis={axis} />
+        <div className="graph-editor-canvas">
+          <AxisCanvas id={canvasId} axis={axis} />
         </div>
       </div>
     </div>
