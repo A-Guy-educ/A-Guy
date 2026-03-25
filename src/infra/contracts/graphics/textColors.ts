@@ -22,9 +22,29 @@ function hslStringToHex(hslStr: string): string {
   return `#${f(0)}${f(8)}${f(4)}`
 }
 
+/** Fallback colors when CSS variables are unavailable (e.g. Payload admin panel) */
+const CSS_VAR_FALLBACKS: Record<string, string> = {
+  '--foreground': '#1a1a2e',
+  '--text-highlight-1': '#dc2626',
+  '--text-highlight-2': '#ea580c',
+  '--text-highlight-3': '#ca8a04',
+  '--text-highlight-4': '#16a34a',
+  '--text-highlight-5': '#2563eb',
+  '--text-highlight-6': '#9333ea',
+  '--text-highlight-7': '#db2777',
+  '--text-highlight-8': '#6b7280',
+  '--card': '#ffffff',
+  '--muted': '#f3f4f6',
+  '--border': '#e5e7eb',
+  '--primary': '#2563eb',
+  '--primary-foreground': '#ffffff',
+}
+
 /** Read a CSS variable from :root and convert its HSL value to hex */
 export function cssVarToHex(varName: string): string {
+  if (typeof document === 'undefined') return CSS_VAR_FALLBACKS[varName] ?? '#000000'
   const value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim()
+  if (!value) return CSS_VAR_FALLBACKS[varName] ?? '#000000'
   return hslStringToHex(value)
 }
 
