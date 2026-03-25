@@ -8,6 +8,9 @@ import { ConvertForm } from '../ConvertForm'
 import { ConvertV2Button } from '../ConvertV2Button'
 import { ConvertV3Button } from '../ConvertV3Button'
 import { DraftExercisesList } from '../DraftExercisesList'
+import { LatexImportSection } from '../LatexImportSection'
+import { TexFileUpload } from '../TexFileUpload'
+import { TexImportButton } from '../TexImportButton'
 import { V2StatusPanel } from '../V2StatusPanel'
 
 interface MediaItem {
@@ -113,6 +116,11 @@ export const LessonConversionPanel = () => {
     (m) => m.mimeType === 'application/pdf' || m.mimeType?.startsWith('image/'),
   )
 
+  // Filter for .tex files
+  const texFiles = mediaItems.filter(
+    (m) => m.filename?.endsWith('.tex') || m.mimeType === 'application/x-tex',
+  )
+
   if (!lessonId) {
     return null // Don't show on create form
   }
@@ -142,7 +150,7 @@ export const LessonConversionPanel = () => {
     )
   }
 
-  if (supportedFiles.length === 0) {
+  if (supportedFiles.length === 0 && texFiles.length === 0) {
     return (
       <div
         style={{
@@ -165,6 +173,10 @@ export const LessonConversionPanel = () => {
         <p style={{ fontSize: 12, color: 'var(--theme-elevation-500)' }}>
           No PDFs or images attached.
         </p>
+        <div style={{ marginTop: 4 }}>
+          <TexFileUpload lessonId={String(lessonId)} />
+        </div>
+        <LatexImportSection lessonId={String(lessonId)} />
       </div>
     )
   }
@@ -307,6 +319,57 @@ export const LessonConversionPanel = () => {
           )}
         </div>
       ))}
+
+      {/* .tex file import */}
+      {texFiles.map((file) => (
+        <div
+          key={file.id}
+          style={{
+            marginBottom: 8,
+            padding: 8,
+            border: '1px solid var(--theme-elevation-200)',
+            borderRadius: 4,
+            backgroundColor: 'var(--theme-elevation-0)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--theme-elevation-600)' }}>
+              TEX
+            </span>
+            <span
+              style={{
+                flex: 1,
+                fontSize: 12,
+                fontWeight: 500,
+                color: 'var(--theme-elevation-1000)',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {file.filename || file.id}
+            </span>
+            <TexImportButton
+              lessonId={String(lessonId)}
+              mediaId={file.id}
+              filename={String(file.filename || file.id)}
+            />
+          </div>
+        </div>
+      ))}
+
+      {/* Upload .tex + LaTeX paste import */}
+      <div
+        style={{
+          marginTop: 4,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+        }}
+      >
+        <TexFileUpload lessonId={String(lessonId)} />
+      </div>
+      <LatexImportSection lessonId={String(lessonId)} />
     </div>
   )
 }
