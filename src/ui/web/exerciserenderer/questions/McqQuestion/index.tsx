@@ -9,10 +9,9 @@ import React from 'react'
 import { cn } from '@/infra/utils/ui'
 import { Checkbox } from '@/ui/web/components/checkbox'
 import { AlertCircle } from 'lucide-react'
-import type { QuestionSelectMcqBlock, UserAnswer, CheckResult, RichTextBlock } from '../../types'
+import type { QuestionSelectMcqBlock, UserAnswer, CheckResult } from '../../types'
 import type { RichContent } from '@/server/payload/collections/Exercises/types'
 import { ContentSlotRenderer } from '../../blocks/ContentSlotRenderer'
-import { RichTextRenderer } from '../../blocks/RichTextRenderer'
 
 interface McqQuestionProps {
   question: QuestionSelectMcqBlock
@@ -21,15 +20,6 @@ interface McqQuestionProps {
   disabled: boolean
   checkResult: CheckResult | null
   t: (key: string) => string
-}
-
-/**
- * Transform \frac to \dfrac for display-style fractions in MCQ options
- * This improves readability by rendering fractions larger
- * Note: \frac does not occur as substring in \dfrac, so simple replacement is safe
- */
-function transformFractionsToDisplayStyle(content: string): string {
-  return content.replace(/\\frac\b/g, '\\dfrac')
 }
 
 export function McqQuestion({
@@ -69,14 +59,6 @@ export function McqQuestion({
       <div className="flex flex-col gap-3">
         {question.answer.options.map((option) => {
           const isSelected = selectedIds.includes(option.id)
-          // Transform fractions to display style for better readability in MCQ options
-          const transformedValue = transformFractionsToDisplayStyle(option.content.value)
-          const optionBlock: RichTextBlock = {
-            ...option.content,
-            value: transformedValue,
-            id: `${question.id}-option-${option.id}`,
-            mediaIds: option.content.mediaIds || [],
-          }
           return (
             <label
               key={option.id}
@@ -109,7 +91,7 @@ export function McqQuestion({
                 </div>
               )}
               <div className="flex-1 text-body-lg text-foreground">
-                <RichTextRenderer block={optionBlock} />
+                <ContentSlotRenderer content={option.content as RichContent} />
               </div>
             </label>
           )

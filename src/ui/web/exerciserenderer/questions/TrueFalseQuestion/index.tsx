@@ -8,15 +8,9 @@
 import React from 'react'
 import { cn } from '@/infra/utils/ui'
 import { CheckCircle2, XCircle } from 'lucide-react'
-import type {
-  QuestionSelectTrueFalseBlock,
-  UserAnswer,
-  CheckResult,
-  RichTextBlock,
-} from '../../types'
+import type { QuestionSelectTrueFalseBlock, UserAnswer, CheckResult } from '../../types'
 import type { RichContent } from '@/server/payload/collections/Exercises/types'
 import { ContentSlotRenderer } from '../../blocks/ContentSlotRenderer'
-import { RichTextRenderer } from '../../blocks/RichTextRenderer'
 
 interface TrueFalseQuestionProps {
   question: QuestionSelectTrueFalseBlock
@@ -69,11 +63,7 @@ export function TrueFalseQuestion({
           const isSelected = value === option.value
           const showFeedback = checkResult !== null
 
-          const labelBlock: RichTextBlock = {
-            ...option.label,
-            id: `${question.id}-option-${option.id}`,
-            mediaIds: option.label.mediaIds || [],
-          }
+          const labelContent = option.label as RichContent
           return (
             <button
               key={option.id}
@@ -100,7 +90,7 @@ export function TrueFalseQuestion({
               )}
             >
               <div className="flex items-center justify-center gap-content-gap-xs">
-                <RichTextRenderer block={labelBlock} />
+                <ContentSlotRenderer content={labelContent} />
                 {showFeedback && isSelected && (
                   <span className="text-heading-xl font-bold">
                     {checkResult.isCorrect ? (
