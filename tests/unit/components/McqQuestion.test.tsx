@@ -562,7 +562,7 @@ describe('McqQuestion component', () => {
       },
     }
 
-    it('renders option text with text-lg class for better readability', () => {
+    it('renders option text with text-body-lg class for better readability', () => {
       const answer: UserAnswer = { type: 'mcq', selectedIds: [] }
       const { container } = render(
         <McqQuestion
@@ -581,13 +581,13 @@ describe('McqQuestion component', () => {
       // There should be 2 options
       expect(textWrappers.length).toBe(2)
 
-      // Each option text wrapper should have text-lg class for larger font
+      // Each option text wrapper should have text-body-lg class for larger font
       textWrappers.forEach((wrapper) => {
-        expect(wrapper.classList.contains('text-lg')).toBe(true)
+        expect(wrapper.classList.contains('text-body-lg')).toBe(true)
       })
     })
 
-    it('does not apply text-lg to the prompt text', () => {
+    it('does not apply text-body-lg to the prompt text', () => {
       const answer: UserAnswer = { type: 'mcq', selectedIds: [] }
       const { container } = render(
         <McqQuestion
@@ -600,7 +600,7 @@ describe('McqQuestion component', () => {
         />,
       )
 
-      // The prompt should NOT have text-lg (it uses text-body-md per design system)
+      // The prompt should NOT have text-body-lg (it uses text-body-md per design system)
       const promptContainer = container.querySelector('.text-body-md.font-medium')
       expect(promptContainer).toBeTruthy()
     })
