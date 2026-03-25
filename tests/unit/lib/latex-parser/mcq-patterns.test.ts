@@ -1,3 +1,4 @@
+import { getRichContentText } from '@/server/payload/collections/Exercises/types'
 import { describe, it, expect } from 'vitest'
 import { parseExamClsMcq } from '@/lib/latex-parser/mcq-exam-cls'
 import { parseEnumitemMcq } from '@/lib/latex-parser/mcq-enumitem'
@@ -13,7 +14,7 @@ describe('parseExamClsMcq', () => {
     expect(block!.variant).toBe('mcq')
     expect(block!.answer.options).toHaveLength(4)
     expect(block!.answer.correctOptionIds).toHaveLength(1)
-    expect(block!.prompt.value).toContain('2+2')
+    expect(getRichContentText(block!.prompt)).toContain('2+2')
   })
 
   it('handles multiple \\CorrectChoice marks', () => {

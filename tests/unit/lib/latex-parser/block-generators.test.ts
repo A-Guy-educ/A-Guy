@@ -1,3 +1,4 @@
+import { getRichContentText } from '@/server/payload/collections/Exercises/types'
 import { describe, it, expect } from 'vitest'
 import {
   makeRichTextBlock,
@@ -63,7 +64,7 @@ describe('makeMcqBlock', () => {
     expect(block.answer.options).toHaveLength(2)
     expect(block.answer.correctOptionIds).toHaveLength(1)
     expect(block.answer.multiSelect).toBe(false)
-    expect(block.prompt.value).toBe('What is 2+2?')
+    expect(getRichContentText(block.prompt)).toBe('What is 2+2?')
   })
 
   it('creates a multi-select MCQ block when multiple correct options', () => {

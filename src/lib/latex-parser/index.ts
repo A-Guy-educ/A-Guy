@@ -24,6 +24,7 @@ import {
 } from '@/lib/latex-parser/tikz-axis-parser'
 import { parseTikzGeometry, hasTikzGeometry } from '@/lib/latex-parser/tikz-geometry-parser'
 import { makeRichTextBlock, makeLatexBlock } from '@/lib/latex-parser/block-generators'
+import { getRichContentText } from '@/server/payload/collections/Exercises/types'
 import type { ContentBlock } from '@/server/payload/collections/Exercises/types'
 
 /**
@@ -327,7 +328,7 @@ function attachSolutions(blocks: ContentBlock[], solutionBlocks: ContentBlock[])
       target.fullSolution = {
         type: 'rich_text',
         format: 'md-math-v1',
-        value: solBlock.prompt.value,
+        value: getRichContentText(solBlock.prompt),
         mediaIds: [],
       }
     }

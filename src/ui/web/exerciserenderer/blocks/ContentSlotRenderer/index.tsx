@@ -90,19 +90,17 @@ function ContentSlotItemRenderer({ item }: ContentSlotItemRendererProps) {
         </div>
       )
 
-    case 'latex':
+    case 'latex': {
+      // Wrap raw LaTeX in delimiters so MathMarkdown renders it as math
+      const latexContent = data.renderMode === 'block'
+        ? `$$${data.latex || ''}$$`
+        : `$${data.latex || ''}$`
       return (
-        <div
-          className={`content-slot-item content-slot-item--latex ${
-            data.renderMode === 'block' ? 'latex-block' : 'latex-inline'
-          }`}
-        >
-          <MathMarkdown
-            content={data.latex || ''}
-            className={data.renderMode === 'block' ? 'block-math' : 'inline-math'}
-          />
+        <div className="content-slot-item content-slot-item--latex">
+          <MathMarkdown content={latexContent} />
         </div>
       )
+    }
 
     case 'svg':
       return (
