@@ -208,7 +208,10 @@ function syncPoints(
     const pointSize = point.size ?? 4
     const labelPos = mapLabelPosition(point.position)
 
-    if (existing && existing.moveTo) {
+    // Check if label position changed — JSXGraph doesn't reliably update
+    // label position via setAttribute, so we force recreation.
+    const prevPos = existing ? (existing as unknown as { _labelPos?: string })._labelPos : undefined
+    if (existing && existing.moveTo && prevPos === labelPos) {
       existing.moveTo([point.x, point.y])
       existing.setAttribute({
         visible: point.visible !== false,
@@ -217,10 +220,6 @@ function syncPoints(
         strokeColor: pointColor,
         size: pointSize,
       })
-      const existingLabel = (existing as unknown as PointElWithLabel).label
-      if (existingLabel) {
-        existingLabel.setAttribute({ position: labelPos })
-      }
     } else {
       if (existing) {
         board.removeObject(existing)
@@ -263,6 +262,8 @@ function syncPoints(
         })
       }
 
+      // Track label position for change detection
+      ;(el as unknown as { _labelPos?: string })._labelPos = labelPos
       elementsRef.current.set(elemId, el)
     }
   }
@@ -399,14 +400,12 @@ function syncAngles(
     const ray2El = elementsRef.current.get(`point-${angle.ray2}`)
     if (!ray1El || !centerEl || !ray2El) continue
 
+    // Always remove and recreate — JSXGraph angle elements don't support
+    // reliable in-place label updates via setAttribute.
     const existing = elementsRef.current.get(elemId)
     if (existing) {
-      existing.setAttribute({
-        strokeColor: angle.color || getDefaultAngleColor(),
-        fillColor: angle.color || getDefaultAngleColor(),
-        radius: angle.arcRadius || 30,
-      })
-      continue
+      board.removeObject(existing)
+      elementsRef.current.delete(elemId)
     }
 
     const isSquare = angle.style === 'square'
@@ -440,7 +439,14 @@ function syncPolygons(
     const tri = triangles[i]
     const elemId = `triangle-${tri.points.join('-')}`
     newIds.add(elemId)
-    if (elementsRef.current.has(elemId)) continue
+
+    // Remove existing so color/fill changes take effect
+    const existingTri = elementsRef.current.get(elemId)
+    if (existingTri) {
+      board.removeObject(existingTri)
+      elementsRef.current.delete(elemId)
+    }
+
     const ptEls = tri.points.map((name) => elementsRef.current.get(`point-${name}`)).filter(Boolean)
     if (ptEls.length < 3) continue
     const el = board.create('polygon', ptEls, {
@@ -458,7 +464,14 @@ function syncPolygons(
     const rect = rectangles[i]
     const elemId = `rectangle-${rect.points.join('-')}`
     newIds.add(elemId)
-    if (elementsRef.current.has(elemId)) continue
+
+    // Remove existing so color/fill changes take effect
+    const existingRect = elementsRef.current.get(elemId)
+    if (existingRect) {
+      board.removeObject(existingRect)
+      elementsRef.current.delete(elemId)
+    }
+
     const ptEls = rect.points
       .map((name) => elementsRef.current.get(`point-${name}`))
       .filter(Boolean)
