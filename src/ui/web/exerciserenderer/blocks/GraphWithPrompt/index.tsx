@@ -86,8 +86,14 @@ export function GraphWithPrompt({
       }
     : null
 
+  // For side-by-side layouts, force LTR on the flex container so that
+  // "Text Left" / "Text Right" always match the physical visual position
+  // regardless of page direction (RTL Hebrew). Text content inside still
+  // inherits its own direction from the document.
+  const dirProp = isSideBySide ? 'ltr' : undefined
+
   return (
-    <div className={cn('my-4', containerClasses, gapClass, className)}>
+    <div className={cn('my-4', containerClasses, gapClass, className)} dir={dirProp}>
       {showGraphFirst ? (
         <>
           {/* Graph first (left in horizontal, top in vertical below) */}
@@ -99,6 +105,7 @@ export function GraphWithPrompt({
             <div
               className={cn('flex-1', !isSideBySide && 'min-h-[60px]')}
               data-testid="prompt-wrapper"
+              dir="auto"
             >
               <div className="prose prose-slate dark:prose-invert max-w-none text-foreground leading-relaxed">
                 <RichTextRenderer block={promptBlock} />
@@ -113,6 +120,7 @@ export function GraphWithPrompt({
             <div
               className={cn('flex-1', !isSideBySide && 'min-h-[60px]')}
               data-testid="prompt-wrapper"
+              dir="auto"
             >
               <div className="prose prose-slate dark:prose-invert max-w-none text-foreground leading-relaxed">
                 <RichTextRenderer block={promptBlock} />
