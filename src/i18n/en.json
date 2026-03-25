@@ -242,6 +242,8 @@
     "mathPreview": "Preview",
     "closeMathTools": "Close math tools",
     "insertFormula": "Insert Formula",
+    "formulaSheetTitle": "Formula Sheet",
+    "formulaSheetEmpty": "No content available",
     "notesSubtitle": "Personal Notes",
     "notesPlaceholder": "Add your notes here...",
     "selectBadge": "Select",

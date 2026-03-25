@@ -84,11 +84,11 @@ const CascadeDeleteButton: React.FC<{ collection: CollectionSlug }> = ({ collect
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-[90%] max-w-[440px] rounded-lg bg-[var(--theme-elevation-0)] p-6 shadow-xl"
+            className="w-[90%] max-w-[440px] rounded-lg bg-[var(--theme-elevation-0)] p-card-padding shadow-card-hover"
           >
-            <h3 className="mb-2 text-base font-bold text-error">Cascade Delete {label}</h3>
+            <h3 className="mb-2 text-body-md font-bold text-error">Cascade Delete {label}</h3>
 
-            <p className="mb-5 text-sm leading-relaxed text-[var(--theme-elevation-800)]">
+            <p className="mb-5 text-body-sm leading-relaxed text-[var(--theme-elevation-800)]">
               This will permanently delete this {label.toLowerCase()} and{' '}
               <strong>{descendants}</strong> that belong to it. This action cannot be undone.
             </p>
@@ -103,7 +103,7 @@ const CascadeDeleteButton: React.FC<{ collection: CollectionSlug }> = ({ collect
               </p>
             )}
 
-            <div className="flex justify-end gap-2.5">
+            <div className="flex justify-end gap-content-gap-xs.5">
               <button
                 type="button"
                 onClick={() => {

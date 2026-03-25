@@ -38,6 +38,8 @@ interface LessonPagerProps {
   validFiles?: MediaType[]
   /** Lesson ID for chat context (defaults to lessonId) */
   chatLessonId?: string
+  /** Formula sheet data (passed to ChatInterface) */
+  formulaSheet?: import('@/payload-types').FormulaSheet | null
 }
 
 export function LessonPager({
@@ -52,6 +54,7 @@ export function LessonPager({
   contentPageBodies,
   validFiles,
   chatLessonId,
+  formulaSheet,
 }: LessonPagerProps) {
   const t = useTranslations('courses')
   const {
@@ -178,6 +181,7 @@ export function LessonPager({
             }
             translationNamespace="courses"
             showMathTools={true}
+            formulaSheet={formulaSheet}
           />
         }
       />
@@ -300,6 +304,7 @@ export function LessonPager({
             lessonId={chatLessonId ?? lessonId}
             translationNamespace="courses"
             showMathTools={true}
+            formulaSheet={formulaSheet}
           />
         }
       />

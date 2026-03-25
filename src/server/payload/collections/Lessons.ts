@@ -5,9 +5,9 @@ import { tenantField } from '@/server/payload/fields/tenant'
 import { contentLocaleField } from '@/server/payload/fields/contentLocale'
 import { adminOnly } from '../access/adminOnly'
 import { publishedAndActive } from '../access/publishedAndActive'
+import { contentStatusFields } from '../fields/contentStatus'
 import { createdByField } from '../fields/createdBy'
 import { formatSlug } from '../fields/formatSlug'
-import { contentStatusFields } from '../fields/contentStatus'
 import { translatedFromField } from '../fields/translatedFrom'
 
 export const Lessons: CollectionConfig = {
@@ -252,6 +252,19 @@ export const Lessons: CollectionConfig = {
 
     // Content Status
     ...contentStatusFields,
+
+    // Formula Sheet (optional)
+    {
+      name: 'formulaSheet',
+      type: 'relationship',
+      relationTo: 'formula-sheets',
+      maxDepth: 0,
+      index: true,
+      admin: {
+        position: 'sidebar',
+        description: 'Lesson-specific formula sheet (overrides course default)',
+      },
+    },
 
     // Created By
     createdByField,

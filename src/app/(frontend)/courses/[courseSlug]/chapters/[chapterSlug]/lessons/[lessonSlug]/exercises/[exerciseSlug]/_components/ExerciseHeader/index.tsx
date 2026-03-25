@@ -63,14 +63,14 @@ export function ExerciseHeader({
       </button>
 
       {/* Center: Exercise Title */}
-      <h1 className="absolute left-1/2 -translate-x-1/2 text-primary text-lg font-extrabold tracking-tight cursor-move max-w-[40%] text-center truncate">
+      <h1 className="absolute left-1/2 -translate-x-1/2 text-primary text-body-lg font-extrabold tracking-tight cursor-move max-w-[40%] text-center truncate">
         {exerciseTitle}
       </h1>
 
       {/* Right side in LTR / Left side in RTL - Fixed positioning to viewport edge */}
       <div
         className={cn(
-          'flex items-center gap-2 flex-shrink-0 fixed top-[10px] z-[101]',
+          'flex items-center gap-content-gap-xs flex-shrink-0 fixed top-[10px] z-[101]',
           rtl ? 'flex-row-reverse' : 'flex-row',
         )}
         style={{
@@ -92,13 +92,16 @@ export function ExerciseHeader({
         )}
 
         {/* Desktop Auth Section */}
-        <div className="hidden lg:flex items-center gap-2" data-testid="exercise-header-auth">
+        <div
+          className="hidden lg:flex items-center gap-content-gap-xs"
+          data-testid="exercise-header-auth"
+        >
           {isAuthLoading ? (
             <div className="w-20 h-8 animate-pulse bg-muted rounded" aria-hidden="true" />
           ) : user ? (
             <UserDropdown user={user} />
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-content-gap-xs">
               <Button size="sm" asChild>
                 <SystemLink href={`/login${returnToParam}`}>{tCommon('login')}</SystemLink>
               </Button>

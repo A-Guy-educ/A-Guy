@@ -12,6 +12,7 @@ import { Progress } from '@/ui/web/components/progress'
 import { useExercisesPager } from './useExercisesPager'
 import { ExerciseWorkspace } from '@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseWorkspace'
 import { ChatInterface } from '@/ui/web/chat'
+
 interface ExercisesPagerProps {
   exercises: Exercise[]
   lessonTitle: string
@@ -21,6 +22,8 @@ interface ExercisesPagerProps {
   lessonSlug: string
   lessonId: string
   mediaMap?: Record<string, MediaType>
+  /** Formula sheet data (passed to ChatInterface) */
+  formulaSheet?: import('@/payload-types').FormulaSheet | null
 }
 
 export function ExercisesPager({
@@ -32,6 +35,7 @@ export function ExercisesPager({
   lessonSlug,
   lessonId,
   mediaMap,
+  formulaSheet,
 }: ExercisesPagerProps) {
   const t = useTranslations('courses')
   const {
@@ -235,6 +239,7 @@ export function ExercisesPager({
             }
             translationNamespace="courses"
             showMathTools={true}
+            formulaSheet={formulaSheet}
           />
         }
       />

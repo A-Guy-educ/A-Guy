@@ -20,6 +20,8 @@ interface PdfLessonPagerProps {
   lessonSlug: string
   lessonId: string
   chatLessonId: string
+  /** Formula sheet data (passed to ChatInterface) */
+  formulaSheet?: import('@/payload-types').FormulaSheet | null
 }
 
 export function PdfLessonPager({
@@ -31,6 +33,7 @@ export function PdfLessonPager({
   lessonSlug,
   lessonId,
   chatLessonId,
+  formulaSheet,
 }: PdfLessonPagerProps) {
   const t = useTranslations('courses')
   const {
@@ -108,6 +111,7 @@ export function PdfLessonPager({
             lessonId={chatLessonId}
             translationNamespace="courses"
             showMathTools={true}
+            formulaSheet={formulaSheet}
           />
         }
       />

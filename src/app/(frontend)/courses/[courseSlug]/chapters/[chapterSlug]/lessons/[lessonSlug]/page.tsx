@@ -8,6 +8,8 @@ import { RenderBlocks } from '@/server/payload/blocks/RenderBlocks'
 import { isValidContentLocale } from '@/server/payload/fields/contentLocale'
 import { queryCourseBySlug } from '@/server/repos/queries/courses'
 import { queryExercisesByLesson } from '@/server/repos/queries/exercises'
+import { resolveFormulaSheet } from '@/server/repos/queries/formula-sheets'
+import type { FormulaSheet } from '@/payload-types'
 import { queryLessonBlocks } from '@/server/repos/queries/lesson-blocks'
 import { queryLessonBySlug } from '@/server/repos/queries/lessons'
 import { queryMediaByIds } from '@/server/repos/queries/media'
@@ -45,6 +47,23 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
   if (!course || !lesson) {
     notFound()
+  }
+
+  // Resolve formula sheet for this lesson (with course fallback)
+  // JSON.parse(JSON.stringify()) strips non-serializable data (Dates, circular refs)
+  // that would crash Next.js server → client prop serialization
+  let formulaSheet: FormulaSheet | null = null
+  try {
+    const result = contentLocale
+      ? await resolveFormulaSheet({
+          lessonId: lesson.id,
+          courseId: course.id,
+          locale: contentLocale,
+        })
+      : null
+    formulaSheet = result?.sheet ? JSON.parse(JSON.stringify(result.sheet)) : null
+  } catch {
+    // Formula sheet resolution failed — continue without it
   }
 
   const lessonChapter = typeof lesson.chapter === 'string' ? null : lesson.chapter
@@ -154,6 +173,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
           contentPageBodies={contentPageBodies}
           validFiles={validFiles}
           chatLessonId={lesson.id}
+          formulaSheet={formulaSheet}
         />
       </AccessGateProvider>
     )
@@ -197,6 +217,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
             lessonSlug={lessonSlug}
             lessonId={lesson.id}
             mediaMap={mediaMap}
+            formulaSheet={formulaSheet}
           />
         ) : (
           // Empty lesson: show ExerciseWorkspace with DynamicLesson as primaryContent
@@ -211,6 +232,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
                   lessonId={chatLessonId}
                   translationNamespace="courses"
                   showMathTools={true}
+                  formulaSheet={formulaSheet}
                 />
               }
             />
@@ -238,6 +260,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
         lessonSlug={lessonSlug}
         lessonId={lesson.id}
         chatLessonId={chatLessonId}
+        formulaSheet={formulaSheet}
       />
     </AccessGateProvider>
   )

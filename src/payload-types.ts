@@ -83,6 +83,7 @@ export interface Config {
     'content-pages': ContentPage;
     exercises: Exercise;
     'extraction-logs': ExtractionLog;
+    'formula-sheets': FormulaSheet;
     prompts: Prompt;
     teacher_profiles: TeacherProfile;
     user_settings: UserSetting;
@@ -126,6 +127,7 @@ export interface Config {
     'content-pages': ContentPagesSelect<false> | ContentPagesSelect<true>;
     exercises: ExercisesSelect<false> | ExercisesSelect<true>;
     'extraction-logs': ExtractionLogsSelect<false> | ExtractionLogsSelect<true>;
+    'formula-sheets': FormulaSheetsSelect<false> | FormulaSheetsSelect<true>;
     prompts: PromptsSelect<false> | PromptsSelect<true>;
     teacher_profiles: TeacherProfilesSelect<false> | TeacherProfilesSelect<true>;
     user_settings: UserSettingsSelect<false> | UserSettingsSelect<true>;
@@ -571,6 +573,10 @@ export interface Course {
    */
   contentStatusExpiresAt?: string | null;
   /**
+   * Default formula sheet for lessons in this course (lesson-specific sheets take precedence)
+   */
+  formulaSheet?: (string | null) | FormulaSheet;
+  /**
    * User who created this document
    */
   createdBy?: (string | null) | User;
@@ -717,9 +723,107 @@ export interface Prompt {
   /**
    * Purpose of this prompt: chat conversation, PDF extraction, PDF verification, or context extraction for AI tutor
    */
-  usage?: ('chat' | 'extractor' | 'verifier' | 'context_extractor') | null;
+  usage?: ('chat' | 'extractor' | 'verifier' | 'context_extractor' | 'translator') | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * Manage reusable formula sheet content for math reference
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "formula-sheets".
+ */
+export interface FormulaSheet {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * Content language
+   */
+  locale: 'en' | 'he';
+  /**
+   * Display title for the formula sheet
+   */
+  title: string;
+  /**
+   * Choose how to display the formula content
+   */
+  contentType: 'blocks' | 'richText' | 'pdf';
+  /**
+   * Upload a PDF file containing formulas
+   */
+  pdfFile?: (string | null) | Media;
+  /**
+   * Rich text content with LaTeX support for mathematical formulas
+   */
+  richTextContent?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Build formula sheet using content blocks with LaTeX support
+   */
+  bodyBlocks?: (ContentBlock | HtmlBlock | MediaBlock | TableBlock)[] | null;
+  /**
+   * Publication status
+   */
+  status: 'draft' | 'published';
+  publishedAt?: string | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "HtmlBlock".
+ */
+export interface HtmlBlock {
+  /**
+   * Enter HTML content. Links must be relative (/path or #anchor). Allowed attributes: class, id, data-* on all tags; href (required), title, class, id, data-* on <a> tags; colspan, rowspan, scope on table cells; plus safe SVG attributes (e.g., viewBox, fill, stroke, d). No style=, target=, or on*= attributes allowed. The <style> tag is allowed.
+   */
+  html: string;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'html';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "MediaBlock".
+ */
+export interface MediaBlock {
+  media: string | Media;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'mediaBlock';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TableBlock".
+ */
+export interface TableBlock {
+  headers: string;
+  rows: string;
+  showBorders?: boolean | null;
+  showHeader?: boolean | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'tableBlock';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -920,19 +1024,6 @@ export interface Form {
     | null;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "HtmlBlock".
- */
-export interface HtmlBlock {
-  /**
-   * Enter HTML content. Links must be relative (/path or #anchor). Allowed attributes: class, id, data-* on all tags; href (required), title, class, id, data-* on <a> tags; colspan, rowspan, scope on table cells; plus safe SVG attributes (e.g., viewBox, fill, stroke, d). No style=, target=, or on*= attributes allowed. The <style> tag is allowed.
-   */
-  html: string;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'html';
 }
 /**
  * Tenant-scoped encrypted secrets. All values are always encrypted.
@@ -1356,6 +1447,10 @@ export interface Lesson {
    */
   contentStatusExpiresAt?: string | null;
   /**
+   * Lesson-specific formula sheet (overrides course default)
+   */
+  formulaSheet?: (string | null) | FormulaSheet;
+  /**
    * User who created this document
    */
   createdBy?: (string | null) | User;
@@ -1642,29 +1737,6 @@ export interface ContentPage {
   createdBy?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "MediaBlock".
- */
-export interface MediaBlock {
-  media: string | Media;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'mediaBlock';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "TableBlock".
- */
-export interface TableBlock {
-  headers: string;
-  rows: string;
-  showBorders?: boolean | null;
-  showHeader?: boolean | null;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'tableBlock';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2614,6 +2686,10 @@ export interface PayloadLockedDocument {
         value: string | ExtractionLog;
       } | null)
     | ({
+        relationTo: 'formula-sheets';
+        value: string | FormulaSheet;
+      } | null)
+    | ({
         relationTo: 'prompts';
         value: string | Prompt;
       } | null)
@@ -3068,6 +3144,7 @@ export interface CoursesSelect<T extends boolean = true> {
   contentStatus?: T;
   contentStatusVisible?: T;
   contentStatusExpiresAt?: T;
+  formulaSheet?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -3118,6 +3195,7 @@ export interface LessonsSelect<T extends boolean = true> {
   contentStatus?: T;
   contentStatusVisible?: T;
   contentStatusExpiresAt?: T;
+  formulaSheet?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -3236,6 +3314,31 @@ export interface ExtractionLogsSelect<T extends boolean = true> {
   pipelineVersion?: T;
   processingTimeMs?: T;
   model?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "formula-sheets_select".
+ */
+export interface FormulaSheetsSelect<T extends boolean = true> {
+  tenant?: T;
+  locale?: T;
+  title?: T;
+  contentType?: T;
+  pdfFile?: T;
+  richTextContent?: T;
+  bodyBlocks?:
+    | T
+    | {
+        content?: T | ContentBlockSelect<T>;
+        html?: T | HtmlBlockSelect<T>;
+        mediaBlock?: T | MediaBlockSelect<T>;
+        tableBlock?: T | TableBlockSelect<T>;
+      };
+  status?: T;
+  publishedAt?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }

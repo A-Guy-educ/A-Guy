@@ -12,12 +12,13 @@ import { ChatAssets } from '@/server/payload/collections/ChatAssets'
 import { ConfigAuditLogs } from '@/server/payload/collections/ConfigAuditLogs'
 import { ConfigSecrets } from '@/server/payload/collections/ConfigSecrets'
 import { ConfigValues } from '@/server/payload/collections/ConfigValues'
+import { ContentPages } from '@/server/payload/collections/ContentPages'
 import { Conversations } from '@/server/payload/collections/Conversations'
 import { Courses } from '@/server/payload/collections/Courses'
 import { ExerciseAssets } from '@/server/payload/collections/ExerciseAssets'
-import { ContentPages } from '@/server/payload/collections/ContentPages'
 import { Exercises } from '@/server/payload/collections/Exercises'
 import { ExtractionLogs } from '@/server/payload/collections/ExtractionLogs'
+import { FormulaSheets } from '@/server/payload/collections/FormulaSheets'
 import { GuestSessions } from '@/server/payload/collections/GuestSessions'
 import { Lessons } from '@/server/payload/collections/Lessons'
 import { MCPAuditLogs } from '@/server/payload/collections/MCPAuditLogs'
@@ -32,12 +33,12 @@ import { Tenants } from '@/server/payload/collections/Tenants'
 import { TranslationGlossary } from '@/server/payload/collections/TranslationGlossary'
 import { UploadSessions } from '@/server/payload/collections/UploadSessions'
 import { UserProgress } from '@/server/payload/collections/UserProgress'
-import { UserStats } from '@/server/payload/collections/UserStats'
 import { Users } from '@/server/payload/collections/Users'
 import { UserSettings } from '@/server/payload/collections/UserSettings'
+import { UserStats } from '@/server/payload/collections/UserStats'
+import { generateSupportEndpoint } from '@/server/payload/endpoints/exercises/generate-support'
 import { importExerciseFromImage } from '@/server/payload/endpoints/exercises/import-from-image'
 import { importExerciseFromLesson } from '@/server/payload/endpoints/exercises/import-from-lesson'
-import { generateSupportEndpoint } from '@/server/payload/endpoints/exercises/generate-support'
 import { translateContentEndpoint } from '@/server/payload/endpoints/translation/translate-content'
 import { cascadeDeleteEndpoint } from '@/server/payload/endpoints/cascade-delete'
 import { defaultLexical } from '@/server/payload/fields/defaultLexical'
@@ -163,6 +164,7 @@ export default buildConfig({
     ContentPages,
     Exercises,
     ExtractionLogs,
+    FormulaSheets,
     Prompts,
     TeacherProfiles,
     UserSettings,
