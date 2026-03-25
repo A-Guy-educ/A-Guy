@@ -11,6 +11,7 @@ import { JSONInspector } from './JSONInspector'
 import { InlineRichTextEditor } from './editors/InlineRichTextEditor'
 import { FreeResponseEditor } from './editors/FreeResponseEditor'
 import { AxisEditor } from './editors/AxisEditor'
+import { MultiAxisEditor } from './editors/MultiAxisEditor'
 import { GeometryEditor } from './editors/GeometryEditor'
 import { HtmlBlockEditor } from './editors/HtmlBlockEditor'
 import { MediaBlockEditor } from './editors/MediaBlockEditor'
@@ -288,7 +289,7 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
   const selectedBlock = blocks.find((b) => b.id === selectedBlockId) || null
 
   if (!localValue) {
-    return <div className="p-4 text-muted-foreground">Loading editor...</div>
+    return <div className="p-card-padding-sm text-muted-foreground">Loading editor...</div>
   }
 
   return (
@@ -416,6 +417,7 @@ function getBlockTypeLabel(block: ContentBlock): string {
   if (block.type === 'media') return 'Media'
   if (block.type === 'question_geometry') return 'Geometry'
   if (block.type === 'question_axis') return 'Axis Graph'
+  if (block.type === 'question_multi_axis') return 'Multi Axis Graph'
   return block.type
 }
 
@@ -602,6 +604,29 @@ function renderQuestionEditor(
       >
         <AxisEditor
           block={block as import('@/server/payload/collections/Exercises/types').QuestionAxisBlock}
+          onChange={onChange}
+        />
+      </QuestionBlockWrapper>
+    )
+  }
+  if (block.type === ('question_multi_axis' as string)) {
+    return (
+      <QuestionBlockWrapper
+        blockType={getBlockTypeLabel(block)}
+        block={block}
+        onBlockChange={onChange}
+        onMoveUp={onMoveUp}
+        onMoveDown={onMoveDown}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+        canMoveUp={blockIndex > 0}
+        canMoveDown={blockIndex < blockCount - 1}
+        canDelete={blockCount > 1}
+      >
+        <MultiAxisEditor
+          block={
+            block as import('@/server/payload/collections/Exercises/types').QuestionMultiAxisBlock
+          }
           onChange={onChange}
         />
       </QuestionBlockWrapper>
