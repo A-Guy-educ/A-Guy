@@ -1768,6 +1768,10 @@ export interface ContentPage {
    */
   isActive: boolean;
   /**
+   * Default vertical spacing between layout blocks
+   */
+  defaultBlockSpacing?: ('none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
+  /**
    * User who created this document
    */
   createdBy?: (string | null) | User;
@@ -3271,6 +3275,7 @@ export interface ContentPagesSelect<T extends boolean = true> {
       };
   status?: T;
   isActive?: T;
+  defaultBlockSpacing?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
