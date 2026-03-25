@@ -115,6 +115,15 @@ export const Exercises: CollectionConfig = {
             beforeValidate: [generateSlug, validateSlugUniqueness],
           },
         },
+        {
+          name: 'showQuestionNumbering',
+          type: 'checkbox',
+          defaultValue: false,
+          admin: {
+            description:
+              'Show exercise question numbering (the circled number above questions). Enable when multiple exercises share a page.',
+          },
+        },
       ],
     },
 

@@ -1492,6 +1492,10 @@ export interface Exercise {
    */
   slug?: string | null;
   /**
+   * Show exercise question numbering (the circled number above questions). Enable when multiple exercises share a page.
+   */
+  showQuestionNumbering?: boolean | null;
+  /**
    * Ordered blocks stream. Use question_* blocks to add questions, and rich_text blocks for instructions/notes between questions.
    */
   content:
@@ -3277,6 +3281,7 @@ export interface ExercisesSelect<T extends boolean = true> {
   order?: T;
   lesson?: T;
   slug?: T;
+  showQuestionNumbering?: T;
   content?: T;
   createdBy?: T;
   origin?: T;
