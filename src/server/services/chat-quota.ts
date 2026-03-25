@@ -6,14 +6,25 @@
  * @pattern rolling-window-quota
  * @ai-summary Checks and increments authenticated user chat quota (rolling window)
  */
-import { getStudentChatConfig } from '@/server/config/student-chat-config'
+import { getChatConfig } from '@/infra/llm/providers/shared/chat-config'
 import type { Payload } from 'payload'
+
+const QUOTA_DEFAULTS = { maxQuestions: 15, windowHours: 12 }
 
 export interface ChatQuotaResult {
   allowed: boolean
   questionsUsed: number
   maxQuestions: number
   resetAt: string | null
+}
+
+async function getQuotaConfig() {
+  try {
+    const config = await getChatConfig()
+    return { ...QUOTA_DEFAULTS, ...config.quota }
+  } catch {
+    return QUOTA_DEFAULTS
+  }
 }
 
 /**
@@ -24,7 +35,7 @@ export async function checkAndIncrementChatQuota(
   payload: Payload,
   userId: string,
 ): Promise<ChatQuotaResult> {
-  const config = await getStudentChatConfig()
+  const { maxQuestions, windowHours } = await getQuotaConfig()
   const now = new Date()
 
   const user = await payload.findByID({ collection: 'users', id: userId })
@@ -32,7 +43,7 @@ export async function checkAndIncrementChatQuota(
   let questionsUsed = user.chatQuestionsUsed ?? 0
 
   // If no window or window expired, start fresh
-  const windowMs = config.window_hours * 60 * 60 * 1000
+  const windowMs = windowHours * 60 * 60 * 1000
   const windowExpired = !windowStart || now.getTime() - windowStart.getTime() > windowMs
 
   if (windowExpired) {
@@ -40,9 +51,9 @@ export async function checkAndIncrementChatQuota(
   }
 
   // Check limit
-  if (questionsUsed >= config.max_questions) {
+  if (questionsUsed >= maxQuestions) {
     const resetAt = windowStart ? new Date(windowStart.getTime() + windowMs).toISOString() : null
-    return { allowed: false, questionsUsed, maxQuestions: config.max_questions, resetAt }
+    return { allowed: false, questionsUsed, maxQuestions, resetAt }
   }
 
   // Increment
@@ -63,7 +74,7 @@ export async function checkAndIncrementChatQuota(
     ? new Date(new Date(newWindowStart).getTime() + windowMs).toISOString()
     : null
 
-  return { allowed: true, questionsUsed: newCount, maxQuestions: config.max_questions, resetAt }
+  return { allowed: true, questionsUsed: newCount, maxQuestions, resetAt }
 }
 
 /**
@@ -73,14 +84,14 @@ export async function getChatQuotaStatus(
   payload: Payload,
   userId: string,
 ): Promise<ChatQuotaResult> {
-  const config = await getStudentChatConfig()
+  const { maxQuestions, windowHours } = await getQuotaConfig()
   const now = new Date()
 
   const user = await payload.findByID({ collection: 'users', id: userId })
   const windowStart = user.chatWindowStart ? new Date(user.chatWindowStart) : null
   let questionsUsed = user.chatQuestionsUsed ?? 0
 
-  const windowMs = config.window_hours * 60 * 60 * 1000
+  const windowMs = windowHours * 60 * 60 * 1000
   const windowExpired = !windowStart || now.getTime() - windowStart.getTime() > windowMs
 
   if (windowExpired) {
@@ -91,9 +102,9 @@ export async function getChatQuotaStatus(
     windowStart && !windowExpired ? new Date(windowStart.getTime() + windowMs).toISOString() : null
 
   return {
-    allowed: questionsUsed < config.max_questions,
+    allowed: questionsUsed < maxQuestions,
     questionsUsed,
-    maxQuestions: config.max_questions,
+    maxQuestions,
     resetAt,
   }
 }
