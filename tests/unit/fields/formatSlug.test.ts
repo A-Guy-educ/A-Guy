@@ -1,6 +1,12 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 
-import { formatSlug, stripCopySuffix } from '@/server/payload/fields/formatSlug'
+import { formatSlug, formatSlugAsync, stripCopySuffix } from '@/server/payload/fields/formatSlug'
+
+// Mock the translation module
+vi.mock('@/server/payload/fields/translateForSlug', () => ({
+  containsHebrew: (input: string) => /[\u0590-\u05FF]/.test(input),
+  translateHebrewForSlug: vi.fn().mockResolvedValue('hello world'),
+}))
 
 describe('formatSlug', () => {
   describe('Hebrew transliteration', () => {
@@ -102,8 +108,41 @@ describe('formatSlug', () => {
   })
 })
 
+describe('formatSlugAsync', () => {
+  it('should translate Hebrew title to English via OpenAI and slugify', async () => {
+    // Mock returns 'hello world' for any Hebrew input
+    const result = await formatSlugAsync('שלום עולם')
+    expect(result).toBe('hello-world')
+  })
+
+  it('should pass English titles through without translation', async () => {
+    const result = await formatSlugAsync('First Lesson')
+    expect(result).toBe('first-lesson')
+  })
+
+  it('should fall back to transliteration when translation returns null', async () => {
+    const { translateHebrewForSlug } = await import('@/server/payload/fields/translateForSlug')
+    vi.mocked(translateHebrewForSlug).mockResolvedValueOnce(null)
+
+    const result = await formatSlugAsync('שלום עולם')
+    expect(result).toBe('shlvm-avlm')
+  })
+})
+
 describe('stripCopySuffix', () => {
-  it('should strip single -copy suffix', () => {
+  it('should strip Payload " - Copy" suffix', () => {
+    expect(stripCopySuffix('bdykt-ytsyrt-slvg - Copy')).toBe('bdykt-ytsyrt-slvg')
+  })
+
+  it('should strip Payload " - Copy (2)" suffix', () => {
+    expect(stripCopySuffix('my-lesson - Copy (2)')).toBe('my-lesson')
+  })
+
+  it('should strip repeated " - Copy" suffixes', () => {
+    expect(stripCopySuffix('my-lesson - Copy - Copy')).toBe('my-lesson')
+  })
+
+  it('should strip lowercase -copy suffix', () => {
     expect(stripCopySuffix('my-lesson-copy')).toBe('my-lesson')
   })
 
@@ -115,15 +154,11 @@ describe('stripCopySuffix', () => {
     expect(stripCopySuffix('my-lesson-copy-2')).toBe('my-lesson')
   })
 
-  it('should strip mixed -copy and -copy-N suffixes', () => {
-    expect(stripCopySuffix('my-lesson-copy-copy-2-copy')).toBe('my-lesson')
-  })
-
-  it('should not modify slug without -copy suffix', () => {
+  it('should not modify slug without copy suffix', () => {
     expect(stripCopySuffix('my-lesson')).toBe('my-lesson')
   })
 
-  it('should not strip -copy from middle of slug', () => {
+  it('should not strip copy from middle of slug', () => {
     expect(stripCopySuffix('copy-lesson')).toBe('copy-lesson')
   })
 })

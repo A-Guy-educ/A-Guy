@@ -5,6 +5,12 @@ import { Courses } from '@/server/payload/collections/Courses'
 import { Chapters } from '@/server/payload/collections/Chapters'
 import { Lessons } from '@/server/payload/collections/Lessons'
 
+// Mock the translation module so tests don't call OpenAI
+vi.mock('@/server/payload/fields/translateForSlug', () => ({
+  containsHebrew: (input: string) => /[\u0590-\u05FF]/.test(input),
+  translateHebrewForSlug: vi.fn().mockResolvedValue('first lesson'),
+}))
+
 describe('formatSlug integration with collections', () => {
   describe('Courses beforeChange hook', () => {
     const beforeChangeHook = Courses.hooks?.beforeChange?.[0]
@@ -56,7 +62,6 @@ describe('formatSlug integration with collections', () => {
 
       expect(result.slug).toBeDefined()
       expect(result.slug.length).toBeGreaterThan(0)
-      // Should be transliterated, not a fallback
       expect(result.slug).not.toMatch(/^item-/)
     })
 
@@ -89,7 +94,7 @@ describe('formatSlug integration with collections', () => {
       mockPayloadFind.mockReset()
     })
 
-    it('should generate transliterated slug for Hebrew title', async () => {
+    it('should translate Hebrew title to English for slug on create', async () => {
       expect(beforeChangeHook).toBeDefined()
       mockPayloadFind.mockResolvedValue({ docs: [] })
 
@@ -101,10 +106,11 @@ describe('formatSlug integration with collections', () => {
         req: mockReq,
       })
 
-      expect(result.slug).toBe('shyavr-rshvn')
+      // Mock returns 'first lesson' → slugified to 'first-lesson'
+      expect(result.slug).toBe('first-lesson')
     })
 
-    it('should generate slug from English title', async () => {
+    it('should generate slug from English title on create', async () => {
       mockPayloadFind.mockResolvedValue({ docs: [] })
 
       const mockData = { title: 'First Lesson' }
@@ -118,25 +124,39 @@ describe('formatSlug integration with collections', () => {
       expect(result.slug).toBe('first-lesson')
     })
 
-    it('should keep existing slug on update when unchanged', async () => {
-      const mockData = { title: 'New Title', slug: 'existing-lesson-slug' }
+    it('should regenerate slug when title changes on update', async () => {
+      mockPayloadFind.mockResolvedValue({ docs: [] })
+
+      const mockData = { title: 'New Lesson Title', slug: 'old-slug' }
       // @ts-expect-error - Hook has complex signature
       const result = await beforeChangeHook({
         data: mockData,
         operation: 'update',
-        originalDoc: { id: 'my-id', slug: 'existing-lesson-slug' },
+        originalDoc: { id: 'my-id', title: 'Old Title', slug: 'old-slug' },
         req: mockReq,
       })
 
-      expect(result.slug).toBe('existing-lesson-slug')
-      // No DB query needed since slug didn't change
+      expect(result.slug).toBe('new-lesson-title')
+    })
+
+    it('should keep slug when title is unchanged on update', async () => {
+      const mockData = { title: 'Same Title', slug: 'existing-slug' }
+      // @ts-expect-error - Hook has complex signature
+      const result = await beforeChangeHook({
+        data: mockData,
+        operation: 'update',
+        originalDoc: { id: 'my-id', title: 'Same Title', slug: 'existing-slug' },
+        req: mockReq,
+      })
+
+      expect(result.slug).toBe('existing-slug')
       expect(mockPayloadFind).not.toHaveBeenCalled()
     })
 
-    it('should strip -copy suffix and regenerate slug', async () => {
+    it('should keep " - Copy" slug from duplication as-is', async () => {
       mockPayloadFind.mockResolvedValue({ docs: [] })
 
-      const mockData = { title: 'First Lesson', slug: 'first-lesson-copy' }
+      const mockData = { title: 'First Lesson', slug: 'first-lesson - Copy' }
       // @ts-expect-error - Hook has complex signature
       const result = await beforeChangeHook({
         data: mockData,
@@ -144,30 +164,15 @@ describe('formatSlug integration with collections', () => {
         req: mockReq,
       })
 
-      expect(result.slug).toBe('first-lesson')
-    })
-
-    it('should strip repeated -copy-copy suffixes and regenerate', async () => {
-      mockPayloadFind.mockResolvedValue({ docs: [] })
-
-      const mockData = {
-        title: 'First Lesson',
-        slug: 'first-lesson-copy-copy-copy',
-      }
-      // @ts-expect-error - Hook has complex signature
-      const result = await beforeChangeHook({
-        data: mockData,
-        operation: 'create',
-        req: mockReq,
-      })
-
-      expect(result.slug).toBe('first-lesson')
+      // Title matches (duplication copies title too), so no regeneration
+      // Slug kept as-is, uniqueness checked
+      expect(result.slug).toBe('first-lesson - Copy')
     })
 
     it('should add numeric suffix when slug already exists', async () => {
       mockPayloadFind
-        .mockResolvedValueOnce({ docs: [{ id: 'other-id' }] }) // first-lesson taken
-        .mockResolvedValueOnce({ docs: [] }) // first-lesson-1 available
+        .mockResolvedValueOnce({ docs: [{ id: 'other-id' }] })
+        .mockResolvedValueOnce({ docs: [] })
 
       const mockData = { title: 'First Lesson' }
       // @ts-expect-error - Hook has complex signature
@@ -180,37 +185,21 @@ describe('formatSlug integration with collections', () => {
       expect(result.slug).toBe('first-lesson-1')
     })
 
-    it('should check uniqueness when slug changes on update', async () => {
+    it('should ensure uniqueness when title changes to existing slug', async () => {
       mockPayloadFind
-        .mockResolvedValueOnce({ docs: [{ id: 'other-id' }] }) // new-slug taken
-        .mockResolvedValueOnce({ docs: [] }) // new-slug-1 available
+        .mockResolvedValueOnce({ docs: [{ id: 'other-id' }] })
+        .mockResolvedValueOnce({ docs: [] })
 
-      const mockData = { title: 'First Lesson', slug: 'new-slug' }
+      const mockData = { title: 'Taken Title', slug: 'old-slug' }
       // @ts-expect-error - Hook has complex signature
       const result = await beforeChangeHook({
         data: mockData,
         operation: 'update',
-        originalDoc: { id: 'my-id', slug: 'old-slug' },
+        originalDoc: { id: 'my-id', title: 'Old Title', slug: 'old-slug' },
         req: mockReq,
       })
 
-      expect(result.slug).toBe('new-slug-1')
-    })
-
-    it('should deduplicate slug on create even without -copy suffix', async () => {
-      mockPayloadFind
-        .mockResolvedValueOnce({ docs: [{ id: 'existing-id' }] }) // first-lesson taken
-        .mockResolvedValueOnce({ docs: [] }) // first-lesson-1 available
-
-      const mockData = { title: 'Other Title', slug: 'first-lesson' }
-      // @ts-expect-error - Hook has complex signature
-      const result = await beforeChangeHook({
-        data: mockData,
-        operation: 'create',
-        req: mockReq,
-      })
-
-      expect(result.slug).toBe('first-lesson-1')
+      expect(result.slug).toBe('taken-title-1')
     })
   })
 })

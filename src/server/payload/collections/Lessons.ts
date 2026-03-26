@@ -7,7 +7,7 @@ import { adminOnly } from '../access/adminOnly'
 import { publishedAndActive } from '../access/publishedAndActive'
 import { contentStatusFields } from '../fields/contentStatus'
 import { createdByField } from '../fields/createdBy'
-import { formatSlug, stripCopySuffix } from '../fields/formatSlug'
+import { formatSlugAsync } from '../fields/formatSlug'
 import { translatedFromField } from '../fields/translatedFrom'
 
 export const Lessons: CollectionConfig = {
@@ -24,16 +24,16 @@ export const Lessons: CollectionConfig = {
       async ({ data, operation, originalDoc, req }) => {
         if (!data) return data
 
-        const title = data.title || originalDoc?.title
+        const title = data.title
+        const titleChanged = operation === 'update' && title && title !== originalDoc?.title
 
-        // Strip -copy suffixes from Payload duplication
-        if (data.slug) {
-          data.slug = stripCopySuffix(data.slug.trim())
-        }
-
-        // Generate slug from title when missing
-        if (!data.slug && title) {
-          data.slug = formatSlug(title)
+        // When title changes → always regenerate slug from the new title
+        // When no slug → generate from title
+        // Otherwise → keep slug as-is (including " - Copy" from duplication)
+        if (titleChanged || (!data.slug && title)) {
+          data.slug = await formatSlugAsync(title)
+        } else if (data.slug) {
+          data.slug = data.slug.trim()
         }
 
         // On create, always ensure uniqueness (handles duplication & conflicts)

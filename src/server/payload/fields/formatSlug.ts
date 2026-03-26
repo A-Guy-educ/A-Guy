@@ -1,8 +1,10 @@
 import slugify from 'slugify'
 
+import { containsHebrew, translateHebrewForSlug } from './translateForSlug'
+
 /**
  * Hebrew-to-Latin transliteration map.
- * Covers standard Hebrew consonants and final forms (sofit).
+ * Used as fallback when translation API is unavailable.
  */
 const HEBREW_MAP: Record<string, string> = {
   א: '',
@@ -40,7 +42,6 @@ const HEBREW_MAP: Record<string, string> = {
  * Hebrew niqqud (diacritics, U+0591–U+05C7) are stripped.
  */
 function transliterateHebrew(input: string): string {
-  // Strip Hebrew diacritics (niqqud)
   const stripped = input.replace(/[\u0591-\u05C7]/g, '')
 
   let result = ''
@@ -54,21 +55,8 @@ function transliterateHebrew(input: string): string {
   return result
 }
 
-/**
- * Hebrew-safe slug formatting utility.
- *
- * Transliterates Hebrew characters to Latin equivalents, then uses slugify
- * for final URL-safe formatting. Falls back to a timestamp-based slug
- * for empty/invalid input.
- *
- * @param input - The string to convert to a slug
- * @param fallback - Optional fallback string if the result is empty
- * @returns A URL-safe, lowercase slug string
- */
-export function formatSlug(input: string, fallback?: string): string {
-  const transliterated = transliterateHebrew(input.trim())
-
-  const slug = slugify(transliterated, {
+function toSlug(input: string, fallback?: string): string {
+  const slug = slugify(input, {
     lower: true,
     strict: true,
     remove: /[*#@]/g,
@@ -86,8 +74,39 @@ export function formatSlug(input: string, fallback?: string): string {
 }
 
 /**
- * Strip Payload CMS duplication suffixes (-copy, -copy-2, etc.) from a slug.
+ * Synchronous slug formatting with transliteration fallback.
+ * Use formatSlugAsync when possible for better Hebrew support via translation.
+ */
+export function formatSlug(input: string, fallback?: string): string {
+  const transliterated = transliterateHebrew(input.trim())
+  return toSlug(transliterated, fallback)
+}
+
+/**
+ * Async slug formatting that translates Hebrew titles to English via OpenAI.
+ * Falls back to transliteration if translation fails or API is unavailable.
+ */
+export async function formatSlugAsync(input: string, fallback?: string): Promise<string> {
+  const trimmed = input.trim()
+
+  if (containsHebrew(trimmed)) {
+    const translated = await translateHebrewForSlug(trimmed)
+    if (translated) {
+      return toSlug(translated, fallback)
+    }
+  }
+
+  // Fallback: transliteration for Hebrew, direct slugify for Latin
+  const transliterated = transliterateHebrew(trimmed)
+  return toSlug(transliterated, fallback)
+}
+
+/**
+ * Strip Payload CMS duplication suffixes from a slug.
+ * Handles both formats:
+ *   - " - Copy", " - Copy (2)" (Payload's actual format with spaces + capital C)
+ *   - "-copy", "-copy-2" (URL-encoded variant)
  */
 export function stripCopySuffix(slug: string): string {
-  return slug.replace(/(-copy(-\d+)?)+$/g, '')
+  return slug.replace(/(\s*-\s*Copy(\s*\(\d+\))?)+$/g, '').replace(/(-copy(-\d+)?)+$/g, '')
 }
