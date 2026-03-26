@@ -6,7 +6,7 @@ import { queryChaptersByCourse } from './chapters'
 export const queryLessonsByChapter = cache(async ({ chapterId }: { chapterId: string }) => {
   const payload = await getPayload({ config: configPromise })
 
-  // First verify the chapter is published+active and its course is published+active
+  // Verify chapter is published+active
   const chapterResult = await payload.findByID({
     collection: 'chapters',
     id: chapterId,
@@ -19,61 +19,61 @@ export const queryLessonsByChapter = cache(async ({ chapterId }: { chapterId: st
     return []
   }
 
-  // Verify parent chapter's course is published+active (hierarchy invariant)
-  // chapterResult.course is an ID when using depth: 0
+  // Verify parent course and fetch lessons in parallel — both depend only on chapter data
   const courseId =
     typeof chapterResult.course === 'string' ? chapterResult.course : chapterResult.course?.id
 
   if (!courseId) return []
 
-  const courseResult = await payload.findByID({
-    collection: 'courses',
-    id: courseId,
-    depth: 0,
-    overrideAccess: false,
-    disableErrors: true,
-  })
+  const [courseResult, lessonsResult] = await Promise.all([
+    payload.findByID({
+      collection: 'courses',
+      id: courseId,
+      depth: 0,
+      overrideAccess: false,
+      disableErrors: true,
+    }),
+    payload.find({
+      collection: 'lessons',
+      where: {
+        and: [
+          {
+            chapter: {
+              equals: chapterId,
+            },
+          },
+          {
+            status: {
+              equals: 'published',
+            },
+          },
+          {
+            isActive: {
+              equals: true,
+            },
+          },
+          // Exclude "Soon" content that is not visible to students
+          {
+            or: [
+              { contentStatus: { not_equals: 'soon' } },
+              { contentStatusVisible: { equals: true } },
+            ],
+          },
+        ],
+      },
+      sort: 'order',
+      limit: 1000,
+      pagination: false,
+      depth: 1,
+      overrideAccess: false,
+    }),
+  ])
 
   if (!courseResult || courseResult.status !== 'published' || !courseResult.isActive) {
     return []
   }
 
-  const result = await payload.find({
-    collection: 'lessons',
-    where: {
-      and: [
-        {
-          chapter: {
-            equals: chapterId,
-          },
-        },
-        {
-          status: {
-            equals: 'published',
-          },
-        },
-        {
-          isActive: {
-            equals: true,
-          },
-        },
-        // Exclude "Soon" content that is not visible to students
-        {
-          or: [
-            { contentStatus: { not_equals: 'soon' } },
-            { contentStatusVisible: { equals: true } },
-          ],
-        },
-      ],
-    },
-    sort: 'order',
-    limit: 1000,
-    pagination: false,
-    depth: 1,
-    overrideAccess: false,
-  })
-
-  return result.docs
+  return lessonsResult.docs
 })
 
 export const queryLessonBySlug = cache(async ({ slug }: { slug: string }) => {
@@ -117,10 +117,37 @@ export const queryLessonBySlug = cache(async ({ slug }: { slug: string }) => {
   if (!lesson) return null
 
   // Verify parent chapter is published+active
-  const chapterId = typeof lesson.chapter === 'string' ? lesson.chapter : lesson.chapter?.id
+  // lesson.chapter is populated (depth: 1), so check directly when possible
+  const chapterObj =
+    typeof lesson.chapter === 'object' && lesson.chapter !== null ? lesson.chapter : null
+  const chapterId = chapterObj?.id ?? (typeof lesson.chapter === 'string' ? lesson.chapter : null)
 
   if (!chapterId) return null
 
+  // If chapter is populated, validate inline and skip the extra DB call
+  if (chapterObj && 'status' in chapterObj) {
+    if (chapterObj.status !== 'published' || !chapterObj.isActive) return null
+
+    const courseId =
+      typeof chapterObj.course === 'string' ? chapterObj.course : chapterObj.course?.id
+    if (!courseId) return null
+
+    const courseResult = await payload.findByID({
+      collection: 'courses',
+      id: courseId,
+      depth: 0,
+      overrideAccess: false,
+      disableErrors: true,
+    })
+
+    if (!courseResult || courseResult.status !== 'published' || !courseResult.isActive) {
+      return null
+    }
+
+    return lesson
+  }
+
+  // Fallback: chapter not populated, fetch it
   const chapterResult = await payload.findByID({
     collection: 'chapters',
     id: chapterId,
@@ -133,7 +160,6 @@ export const queryLessonBySlug = cache(async ({ slug }: { slug: string }) => {
     return null
   }
 
-  // Verify grandparent course is published+active (hierarchy invariant)
   const courseId =
     typeof chapterResult.course === 'string' ? chapterResult.course : chapterResult.course?.id
 

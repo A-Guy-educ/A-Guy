@@ -84,22 +84,23 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
           }
           setCourseInfo(info)
 
-          // Check entitlement if course is paid
+          // Check entitlement if course is paid (non-blocking — don't await)
           const isPaid = info.coursePageAccessType === 'paid' || info.courseAccessType === 'paid'
           if (isPaid && info.courseId) {
-            try {
-              const entRes = await fetch(`/api/entitlements/check?courseId=${info.courseId}`)
-              if (entRes.ok) {
-                const entData = await entRes.json()
-                setRequiresEntitlement(!entData.hasAccess)
-                setIsAuthenticated(true)
-              } else if (entRes.status === 401) {
-                setRequiresEntitlement(true)
-                setIsAuthenticated(false)
-              }
-            } catch {
-              // If check fails, don't block — fail open
-            }
+            fetch(`/api/entitlements/check?courseId=${info.courseId}`)
+              .then(async (entRes) => {
+                if (entRes.ok) {
+                  const entData = await entRes.json()
+                  setRequiresEntitlement(!entData.hasAccess)
+                  setIsAuthenticated(true)
+                } else if (entRes.status === 401) {
+                  setRequiresEntitlement(true)
+                  setIsAuthenticated(false)
+                }
+              })
+              .catch(() => {
+                // If check fails, don't block — fail open
+              })
           }
         }
       } catch (error) {

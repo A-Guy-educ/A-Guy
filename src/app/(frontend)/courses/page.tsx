@@ -7,6 +7,9 @@ import { EmptyState } from './_components/EmptyState'
 import { CourseShopHeader } from './_components/CourseShopHeader'
 import { CourseCatalogHeader } from './_components/CourseCatalogHeader'
 
+// Revalidate every 60 seconds — courses rarely change
+export const revalidate = 60
+
 export default async function CoursesPage() {
   const locale = await getSystemLocale()
   const contentLocale = isValidContentLocale(locale) ? locale : undefined
@@ -26,7 +29,7 @@ export default async function CoursesPage() {
           {courses.length === 0 ? (
             <EmptyState type="noCourses" />
           ) : (
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-content-gap-xl md:grid-cols-2 lg:grid-cols-3">
               {courses.map((course) => (
                 <CourseCard key={course.id} course={course} />
               ))}
