@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useDebounce } from '@/client/hooks/useDebounce'
+import { getUserProfile } from '@/client/state/localStorage/userProfile'
 
 interface SearchResultLesson {
   id: string
@@ -43,6 +44,47 @@ interface UseCourseSearchReturn {
 export function extractCourseSlugFromPath(pathname: string): string | null {
   const match = pathname.match(/^\/courses\/([^/]+)/)
   return match?.[1] ?? null
+}
+
+/** Pages where course content is displayed (resolved via grade profile) */
+const COURSE_CONTEXT_PAGES = ['/study', '/practice', '/ask']
+
+/**
+ * Resolves the courseSlug from the URL path or the user's grade profile.
+ * On /study, /practice, /ask pages the course is determined by the user's
+ * selected grade level stored in localStorage.
+ */
+export function useCourseSlug(pathname: string): string | null {
+  const [slugFromProfile, setSlugFromProfile] = useState<string | null>(null)
+
+  const slugFromPath = extractCourseSlugFromPath(pathname)
+  const isCoursePage = COURSE_CONTEXT_PAGES.some((p) => pathname.startsWith(p))
+
+  useEffect(() => {
+    if (slugFromPath || !isCoursePage) {
+      setSlugFromProfile(null)
+      return
+    }
+
+    const profile = getUserProfile()
+    if (!profile?.gradeLevel) {
+      setSlugFromProfile(null)
+      return
+    }
+
+    fetch(`/api/chapters/by-grade?grade=${profile.gradeLevel}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.courseSlug) {
+          setSlugFromProfile(data.courseSlug)
+        }
+      })
+      .catch(() => {
+        setSlugFromProfile(null)
+      })
+  }, [slugFromPath, isCoursePage, pathname])
+
+  return slugFromPath ?? slugFromProfile
 }
 
 export function useCourseSearch(query: string, courseSlug: string | null): UseCourseSearchReturn {

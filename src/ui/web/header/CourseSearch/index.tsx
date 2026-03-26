@@ -5,7 +5,7 @@ import { SearchIcon, X, Loader2, BookOpen, FileText, HelpCircle } from 'lucide-r
 import { usePathname } from 'next/navigation'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { useTranslations } from '@/ui/web/providers/I18n'
-import { useCourseSearch, extractCourseSlugFromPath } from '@/client/hooks/useCourseSearch'
+import { useCourseSearch, useCourseSlug } from '@/client/hooks/useCourseSearch'
 
 interface CourseSearchProps {
   variant: 'desktop' | 'mobile'
@@ -14,7 +14,7 @@ interface CourseSearchProps {
 
 export const CourseSearch: React.FC<CourseSearchProps> = ({ variant, onNavigate }) => {
   const pathname = usePathname()
-  const courseSlug = extractCourseSlugFromPath(pathname)
+  const courseSlug = useCourseSlug(pathname)
   const t = useTranslations('common.courseSearch')
 
   const [isExpanded, setIsExpanded] = useState(false)
