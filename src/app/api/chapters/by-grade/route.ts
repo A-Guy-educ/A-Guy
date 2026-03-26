@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
         sort: 'order',
         limit: 1000,
         pagination: false,
-        depth: 0,
+        depth: 2,
       })
       lessons = lessonsResult.docs
     }
