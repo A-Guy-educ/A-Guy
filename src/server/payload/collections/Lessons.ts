@@ -26,25 +26,21 @@ export const Lessons: CollectionConfig = {
 
         const title = data.title || originalDoc?.title
 
-        // Determine if slug needs regeneration:
-        // 1. No slug at all → generate from title
-        // 2. Slug contains -copy suffix (duplication) → regenerate from title
-        // 3. Existing slug → keep it (just trim)
-        let needsGeneration = !data.slug
+        // Strip -copy suffixes from Payload duplication
         if (data.slug) {
-          const cleaned = stripCopySuffix(data.slug.trim())
-          if (cleaned !== data.slug.trim()) {
-            // Had -copy suffix → regenerate from title instead
-            needsGeneration = true
-          } else {
-            data.slug = data.slug.trim()
-          }
+          data.slug = stripCopySuffix(data.slug.trim())
         }
 
-        if (needsGeneration && title) {
-          const baseSlug = formatSlug(title)
+        // Generate slug from title when missing
+        if (!data.slug && title) {
+          data.slug = formatSlug(title)
+        }
 
-          // Check uniqueness and add numeric suffix if needed
+        // On create, always ensure uniqueness (handles duplication & conflicts)
+        // On update, ensure uniqueness only if slug changed
+        const slugChanged = operation === 'update' && data.slug !== originalDoc?.slug
+        if (data.slug && (operation === 'create' || slugChanged)) {
+          const baseSlug = data.slug
           let slug = baseSlug
           let counter = 1
           const MAX_ATTEMPTS = 100
@@ -58,10 +54,7 @@ export const Lessons: CollectionConfig = {
               req,
             })
 
-            const isOwnDoc =
-              operation === 'update' && originalDoc?.id && existing.docs[0]?.id === originalDoc.id
-
-            if (existing.docs.length === 0 || isOwnDoc) {
+            if (existing.docs.length === 0) {
               data.slug = slug
               return data
             }

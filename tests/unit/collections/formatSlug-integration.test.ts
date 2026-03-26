@@ -118,16 +118,19 @@ describe('formatSlug integration with collections', () => {
       expect(result.slug).toBe('first-lesson')
     })
 
-    it('should NOT overwrite existing slug on update', async () => {
+    it('should keep existing slug on update when unchanged', async () => {
       const mockData = { title: 'New Title', slug: 'existing-lesson-slug' }
       // @ts-expect-error - Hook has complex signature
       const result = await beforeChangeHook({
         data: mockData,
         operation: 'update',
+        originalDoc: { id: 'my-id', slug: 'existing-lesson-slug' },
         req: mockReq,
       })
 
       expect(result.slug).toBe('existing-lesson-slug')
+      // No DB query needed since slug didn't change
+      expect(mockPayloadFind).not.toHaveBeenCalled()
     })
 
     it('should strip -copy suffix and regenerate slug', async () => {
@@ -177,19 +180,37 @@ describe('formatSlug integration with collections', () => {
       expect(result.slug).toBe('first-lesson-1')
     })
 
-    it('should allow own slug on update', async () => {
-      mockPayloadFind.mockResolvedValue({ docs: [{ id: 'my-id' }] })
+    it('should check uniqueness when slug changes on update', async () => {
+      mockPayloadFind
+        .mockResolvedValueOnce({ docs: [{ id: 'other-id' }] }) // new-slug taken
+        .mockResolvedValueOnce({ docs: [] }) // new-slug-1 available
 
-      const mockData = { title: 'First Lesson' }
+      const mockData = { title: 'First Lesson', slug: 'new-slug' }
       // @ts-expect-error - Hook has complex signature
       const result = await beforeChangeHook({
         data: mockData,
         operation: 'update',
-        originalDoc: { id: 'my-id' },
+        originalDoc: { id: 'my-id', slug: 'old-slug' },
         req: mockReq,
       })
 
-      expect(result.slug).toBe('first-lesson')
+      expect(result.slug).toBe('new-slug-1')
+    })
+
+    it('should deduplicate slug on create even without -copy suffix', async () => {
+      mockPayloadFind
+        .mockResolvedValueOnce({ docs: [{ id: 'existing-id' }] }) // first-lesson taken
+        .mockResolvedValueOnce({ docs: [] }) // first-lesson-1 available
+
+      const mockData = { title: 'Other Title', slug: 'first-lesson' }
+      // @ts-expect-error - Hook has complex signature
+      const result = await beforeChangeHook({
+        data: mockData,
+        operation: 'create',
+        req: mockReq,
+      })
+
+      expect(result.slug).toBe('first-lesson-1')
     })
   })
 })
