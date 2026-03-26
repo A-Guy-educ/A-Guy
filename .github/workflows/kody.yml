@@ -103,7 +103,7 @@ jobs:
 
           # Validate mode
           case "$MODE" in
-            full|rerun|status|approve) ;;
+            full|rerun|fix|status|approve) ;;
             *)
               # If first arg isn't a mode, it might be a task-id or nothing
               if [ -n "$MODE" ] && [ "$MODE" != "" ]; then
@@ -113,19 +113,29 @@ jobs:
               ;;
           esac
 
-          # Auto-generate task-id if not provided
           ISSUE_NUM="${{ github.event.issue.number }}"
-          if [ -z "$TASK_ID" ]; then
-            TASK_ID="${ISSUE_NUM}-$(date +%y%m%d-%H%M%S)"
-          fi
 
           # For approve mode: extract answer body and convert to rerun
+          # Must run BEFORE task-id generation so we don't create a new task
+          # approve: extract answers, convert to rerun
           if [ "$MODE" = "approve" ]; then
-            # Everything after @kody approve [task-id] is the feedback
             APPROVE_BODY=$(echo "$BODY" | sed -n '/\(@kody\|\/kody\)\s*approve/,$p' | tail -n +2)
             FEEDBACK="$APPROVE_BODY"
             MODE="rerun"
-            # FROM_STAGE will be determined by entry.ts from paused state
+          fi
+
+          # fix: extract description as feedback, convert to fix command
+          if [ "$MODE" = "fix" ]; then
+            FIX_BODY=$(echo "$BODY" | sed -n '/\(@kody\|\/kody\)\s*fix/,$p' | tail -n +2)
+            if [ -n "$FIX_BODY" ]; then
+              FEEDBACK="$FIX_BODY"
+            fi
+            # Leave TASK_ID empty — entry.ts finds latest task for issue
+          fi
+
+          # Auto-generate task-id if not provided (only for full mode)
+          if [ -z "$TASK_ID" ] && [ "$MODE" = "full" ]; then
+            TASK_ID="${ISSUE_NUM}-$(date +%y%m%d-%H%M%S)"
           fi
 
           echo "task_id=$TASK_ID" >> $GITHUB_OUTPUT
@@ -164,6 +174,17 @@ jobs:
           persist-credentials: true
           token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
 
+      - name: Checkout PR branch (for fix/rerun on PRs)
+        if: github.event.issue.pull_request && (needs.parse.outputs.mode == 'fix' || needs.parse.outputs.mode == 'rerun')
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUM="${{ github.event.issue.number }}"
+          PR_BRANCH=$(gh pr view "$PR_NUM" --json headRefName -q '.headRefName')
+          echo "Checking out PR branch: $PR_BRANCH"
+          git checkout "$PR_BRANCH"
+          git pull origin "$PR_BRANCH"
+
       - uses: pnpm/action-setup@v4
         with:
           version: latest
@@ -196,7 +217,16 @@ jobs:
           FEEDBACK: ${{ github.event.inputs.feedback || needs.parse.outputs.feedback }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: kody-engine-lite run --task-id "$TASK_ID" --issue-number "$ISSUE_NUMBER"
+        run: |
+          CMD="run"
+          [ "$MODE" = "rerun" ] && CMD="rerun"
+          [ "$MODE" = "fix" ] && CMD="fix"
+          ARGS="--issue-number $ISSUE_NUMBER"
+          [ -n "$TASK_ID" ] && ARGS="$ARGS --task-id $TASK_ID"
+          [ -n "$FROM_STAGE" ] && ARGS="$ARGS --from $FROM_STAGE"
+          [ -n "$FEEDBACK" ] && ARGS="$ARGS --feedback \"$FEEDBACK\""
+          [ "$DRY_RUN" = "true" ] && ARGS="$ARGS --dry-run"
+          kody-engine-lite $CMD $ARGS
 
       - name: Pipeline summary
         if: always()
