@@ -24,9 +24,53 @@ function resolveCookieDomain(host: string): string | undefined {
   return `.${apex}`
 }
 
+/**
+ * Extensions that must stay proxied through the API (same-origin requirement).
+ * PDF.js viewer requires same-origin URLs to render documents.
+ */
+const PROXY_ONLY_EXTENSIONS = new Set(['.pdf'])
+
+/**
+ * Extract the Vercel Blob public base URL from the BLOB_READ_WRITE_TOKEN.
+ * Token format: vercel_blob_rw_{storeId}_{random}
+ * Public URL:   https://{storeId}.public.blob.vercel-storage.com
+ */
+function getBlobBaseUrl(): string | null {
+  const token = process.env.BLOB_READ_WRITE_TOKEN
+  if (!token) return null
+  const match = token.match(/^vercel_blob_rw_([a-z\d]+)_[a-z\d]+$/i)
+  if (!match) return null
+  return `https://${match[1].toLowerCase()}.public.blob.vercel-storage.com`
+}
+
+/**
+ * Redirect media file requests directly to Vercel Blob CDN instead of
+ * proxying through a serverless function. This eliminates the main
+ * bottleneck causing multi-second (or minute-long) media load times.
+ */
+function handleMediaRedirect(request: NextRequest): NextResponse | null {
+  const { pathname } = request.nextUrl
+  if (!pathname.startsWith('/api/media/file/')) return null
+
+  const filename = pathname.slice('/api/media/file/'.length)
+  if (!filename) return null
+
+  const ext = filename.slice(filename.lastIndexOf('.')).toLowerCase()
+  if (PROXY_ONLY_EXTENSIONS.has(ext)) return null
+
+  const blobBaseUrl = getBlobBaseUrl()
+  if (!blobBaseUrl) return null
+
+  return NextResponse.redirect(`${blobBaseUrl}/${filename}`, { status: 302 })
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const host = request.headers.get('host') || ''
+
+  // Redirect media files to Vercel Blob CDN (skip serverless proxy)
+  const mediaRedirect = handleMediaRedirect(request)
+  if (mediaRedirect) return mediaRedirect
 
   // Exclude paths from locale handling (double safety, even though matcher already excludes many)
   const shouldExclude =
@@ -94,7 +138,9 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // exclude admin as well so middleware won't run there at all
+    // Media files — redirect to Blob CDN (must run before the general exclude)
+    '/api/media/file/:path*',
+    // Locale handling — exclude admin, other api routes, static assets
     '/((?!api|admin|_next|_static|.*\\..*).*)',
   ],
 }

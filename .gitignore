@@ -61,3 +61,6 @@ scripts/browser-agent/.env
 .tasks/*/opencode-data/opencode/storage/
 .tasks/*/opencode-data/opencode/worktree/
 .env*.local
+
+# Task specs (local only)
+shay-tassk/
