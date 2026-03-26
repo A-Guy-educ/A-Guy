@@ -2,11 +2,14 @@
  * @fileType api-endpoint
  * @domain cody
  * @pattern copilotkit-runtime
- * @ai-summary Simple AI chat endpoint for Cody dashboard
+ * @ai-summary Simple AI chat endpoint for Cody dashboard (authenticated)
  */
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { logger } from '@/infra/utils/logger/logger'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
+import { z } from 'zod'
+
+import { withApiHandler } from '@/server/api/with-api-handler'
 
 // Use Node.js runtime because we use GoogleGenerativeAI
 export const runtime = 'nodejs'
@@ -88,29 +91,43 @@ export async function GET() {
   return NextResponse.json({ status: 'Chat endpoint ready' })
 }
 
-export async function POST(request: NextRequest) {
-  const requestId = crypto.randomUUID()
+const chatBodySchema = z.object({
+  message: z.string().min(1, 'Message is required'),
+  history: z
+    .array(
+      z.object({
+        role: z.string(),
+        content: z.string(),
+      }),
+    )
+    .default([]),
+})
 
-  try {
-    const geminiApiKey = process.env.GEMINI_API_KEY
-    if (!geminiApiKey) {
-      return NextResponse.json({ error: 'GEMINI_API_KEY is not configured' }, { status: 503 })
-    }
+type ChatBody = z.infer<typeof chatBodySchema>
 
-    const body = await request.json()
-    const { message, history = [] } = body
+export const POST = withApiHandler<ChatBody, unknown>(
+  {
+    auth: 'authenticated',
+    bodySchema: chatBodySchema,
+  },
+  async ({ body }) => {
+    const requestId = crypto.randomUUID()
 
-    if (!message) {
-      return NextResponse.json({ error: 'Message is required' }, { status: 400 })
-    }
+    try {
+      const geminiApiKey = process.env.GEMINI_API_KEY
+      if (!geminiApiKey) {
+        return NextResponse.json({ error: 'GEMINI_API_KEY is not configured' }, { status: 503 })
+      }
 
-    logger.info({ requestId, message: message.slice(0, 100) }, 'Chat request received')
+      const { message, history } = body
 
-    // Get full dashboard context
-    const dashboardData = await getDashboardContext()
+      logger.info({ requestId, message: message.slice(0, 100) }, 'Chat request received')
 
-    // Build system prompt with dashboard context
-    const systemPrompt = `You are a helpful assistant for the Cody Operations Dashboard, which shows GitHub issues from the A-Guy repository.
+      // Get full dashboard context
+      const dashboardData = await getDashboardContext()
+
+      // Build system prompt with dashboard context
+      const systemPrompt = `You are a helpful assistant for the Cody Operations Dashboard, which shows GitHub issues from the A-Guy repository.
 
 You help users understand the dashboard, manage issues, and answer questions about the project.
 
@@ -135,31 +152,32 @@ When answering:
 - If asked to create/manage issues, users can use the "+ New Task" button in the dashboard
 - You can help explain what different columns mean (Open, Building, Done, etc.)`
 
-    // Create chat with history
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
-      systemInstruction: systemPrompt,
-    })
+      // Create chat with history
+      const model = genAI.getGenerativeModel({
+        model: 'gemini-2.5-flash',
+        systemInstruction: systemPrompt,
+      })
 
-    // Create chat with history
-    const chat = model.startChat({
-      history: history.map((msg: { role: string; content: string }) => ({
-        role: msg.role === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.content }],
-      })),
-    })
+      // Create chat with history
+      const chat = model.startChat({
+        history: history.map((msg: { role: string; content: string }) => ({
+          role: msg.role === 'user' ? 'user' : 'model',
+          parts: [{ text: msg.content }],
+        })),
+      })
 
-    // Send message
-    const result = await chat.sendMessage(message)
-    const response = result.response
-    const text = response.text()
+      // Send message
+      const result = await chat.sendMessage(message)
+      const response = result.response
+      const text = response.text()
 
-    return NextResponse.json({
-      response: text,
-      requestId,
-    })
-  } catch (error) {
-    const { captureAndRespond } = await import('@/server/api/capture-and-respond')
-    return captureAndRespond(error, { route: '/api/copilotkit', requestId })
-  }
-}
+      return NextResponse.json({
+        response: text,
+        requestId,
+      })
+    } catch (error) {
+      const { captureAndRespond } = await import('@/server/api/capture-and-respond')
+      return captureAndRespond(error, { route: '/api/copilotkit', requestId })
+    }
+  },
+)
