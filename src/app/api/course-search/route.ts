@@ -11,7 +11,7 @@ import type { ContentBlock } from '@/server/payload/collections/Exercises/types'
 
 const searchParamsSchema = z.object({
   q: z.string().min(2).max(200),
-  courseSlug: z.string().min(1),
+  courseSlug: z.string().min(1).optional(),
 })
 
 interface SearchResultLesson {
@@ -54,6 +54,23 @@ export async function GET(request: NextRequest) {
   const { q: query, courseSlug } = parsed.data
 
   try {
+    // If no courseSlug, search across all courses
+    if (!courseSlug) {
+      const { searchCourseContent } = await import('@/server/repos/queries/course-search')
+      const results = await searchCourseContent({ query, limit: 20 })
+      const lessons = results
+        .filter((r) => r.type === 'lesson')
+        .map((r) => ({ id: r.id, title: r.title, type: 'learning', url: r.url }))
+      const exercises = results
+        .filter((r) => r.type === 'exercise')
+        .map((r) => ({ id: r.id, title: r.title, lessonTitle: r.subtitle, url: r.url }))
+      return NextResponse.json({
+        enrolled: true,
+        results: { lessons, exercises, questions: [] },
+        total: lessons.length + exercises.length,
+      })
+    }
+
     const payload = await getPayload({ config: configPromise })
 
     // 1. Resolve course

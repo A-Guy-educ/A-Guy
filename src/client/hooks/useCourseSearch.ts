@@ -112,7 +112,7 @@ export function useCourseSearch(query: string, courseSlug: string | null): UseCo
   const debouncedQuery = useDebounce(query, 300)
 
   useEffect(() => {
-    if (!courseSlug || debouncedQuery.length < 2) {
+    if (debouncedQuery.length < 2) {
       setResults(null)
       setEnrolled(null)
       setError(null)
@@ -127,7 +127,9 @@ export function useCourseSearch(query: string, courseSlug: string | null): UseCo
     setIsLoading(true)
     setError(null)
 
-    const searchUrl = `/api/course-search?q=${encodeURIComponent(debouncedQuery)}&courseSlug=${encodeURIComponent(courseSlug)}`
+    const params = new URLSearchParams({ q: debouncedQuery })
+    if (courseSlug) params.set('courseSlug', courseSlug)
+    const searchUrl = `/api/course-search?${params.toString()}`
 
     fetch(searchUrl, {
       signal: controller.signal,
