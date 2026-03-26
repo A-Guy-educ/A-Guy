@@ -1,19 +1,17 @@
-import { OpenAI } from 'openai'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 
 import { logger } from '@/infra/utils/logger'
 
-let openai: OpenAI | null = null
+let gemini: GoogleGenerativeAI | null = null
 
-function getOpenAIClient(): OpenAI {
-  if (!openai) {
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY environment variable is not set')
+function getGeminiClient(): GoogleGenerativeAI {
+  if (!gemini) {
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY environment variable is not set')
     }
-    openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    })
+    gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
   }
-  return openai
+  return gemini
 }
 
 const HEBREW_REGEX = /[\u0590-\u05FF]/
@@ -27,27 +25,26 @@ export function containsHebrew(input: string): boolean {
 
 /**
  * Translate a Hebrew title to English for use as a URL slug.
- * Uses gpt-4o-mini for cost efficiency (~0.01¢ per call).
+ * Uses Gemini Flash Lite for cost efficiency.
  * Returns null on failure so callers can fall back to transliteration.
  */
 export async function translateHebrewForSlug(title: string): Promise<string | null> {
   try {
-    const client = getOpenAIClient()
-    const response = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
-      temperature: 0,
-      max_tokens: 100,
-      messages: [
-        {
-          role: 'system',
-          content:
-            'Translate the following Hebrew text to English. Return ONLY the English translation, nothing else. Keep it concise — this will be used as a URL slug.',
-        },
-        { role: 'user', content: title },
-      ],
+    const client = getGeminiClient()
+    const model = client.getGenerativeModel({
+      model: 'gemini-2.0-flash-lite',
+      generationConfig: {
+        temperature: 0,
+        maxOutputTokens: 100,
+      },
     })
 
-    const translation = response.choices[0]?.message?.content?.trim()
+    const result = await model.generateContent(
+      'Translate the following Hebrew text to English. Return ONLY the English translation, nothing else. Keep it concise — this will be used as a URL slug.\n\n' +
+        title,
+    )
+
+    const translation = result.response.text()?.trim()
     if (!translation) return null
 
     return translation
