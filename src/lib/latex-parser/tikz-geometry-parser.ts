@@ -122,6 +122,48 @@ const CANVAS_WIDTH = 500
 const CANVAS_HEIGHT = 400
 
 /** Padding factor for bounding box (fraction of range to add on each side) */
+const BBOX_PADDING = 0.1
+
+/**
+ * Compute a JSXGraph bounding box [xMin, yMax, xMax, yMin] that fits all
+ * points and circles with padding. Preserves original TikZ coordinates.
+ */
+function computeBoundingBox(
+  points: ParsedPoint[],
+  circles: Array<{ center: string; radius: number }>,
+  pointMap: Map<string, ParsedPoint>,
+): [number, number, number, number] {
+  let minX = Infinity
+  let maxX = -Infinity
+  let minY = Infinity
+  let maxY = -Infinity
+
+  for (const p of points) {
+    minX = Math.min(minX, p.x)
+    maxX = Math.max(maxX, p.x)
+    minY = Math.min(minY, p.y)
+    maxY = Math.max(maxY, p.y)
+  }
+
+  // Expand for circles
+  for (const c of circles) {
+    const center = pointMap.get(c.center)
+    if (center) {
+      minX = Math.min(minX, center.x - c.radius)
+      maxX = Math.max(maxX, center.x + c.radius)
+      minY = Math.min(minY, center.y - c.radius)
+      maxY = Math.max(maxY, center.y + c.radius)
+    }
+  }
+
+  const rangeX = maxX - minX || 1
+  const rangeY = maxY - minY || 1
+  const padX = rangeX * BBOX_PADDING
+  const padY = rangeY * BBOX_PADDING
+
+  // JSXGraph bounding box: [xMin, yMax, xMax, yMin]
+  return [minX - padX, maxY + padY, maxX + padX, minY - padY]
+}
 
 /**
  * Attempts to parse a tikzpicture (non-axis) into a QuestionGeometryBlock.
@@ -135,17 +177,22 @@ export function parseTikzGeometry(tikzContent: string): QuestionGeometryBlock | 
   if (coordinates.length === 0) return null
 
   const knownPoints = new Set(coordinates.map((p) => p.name))
+  const pointMap = new Map(coordinates.map((p) => [p.name, p]))
   const labels = parseLabeledPoints(tikzContent)
   const drawLines = parseDrawLines(tikzContent, knownPoints)
   const circles = parseCircles(tikzContent, knownPoints)
   const rightAngles = parseRightAngles(tikzContent, knownPoints)
+
+  // Compute bounding box from raw TikZ coordinates — no normalization needed
+  const boundingBox = computeBoundingBox(coordinates, circles, pointMap)
 
   const geometry: GeometrySpecV1 = {
     kind: 'euclidean',
     canvas: {
       width: CANVAS_WIDTH,
       height: CANVAS_HEIGHT,
-      grid: true,
+      axis: true,
+      boundingBox,
     },
     elements: {
       points: coordinates.map((p) => ({
