@@ -10,16 +10,17 @@
 import type { CollectionConfig } from 'payload'
 
 import { DEFAULT_ACCESS_TYPE, DEFAULT_PAGE_ACCESS_TYPE } from '@/server/constants/access-types'
-import { tenantField } from '@/server/payload/fields/tenant'
 import { contentLocaleField } from '@/server/payload/fields/contentLocale'
+import { tenantField } from '@/server/payload/fields/tenant'
 import { adminOnly } from '../access/adminOnly'
 import { publishedAndActive } from '../access/publishedAndActive'
+import { contentStatusFields } from '../fields/contentStatus'
 import { createdByField } from '../fields/createdBy'
 import { formatSlug } from '../fields/formatSlug'
-import { contentStatusFields } from '../fields/contentStatus'
+import { translatedFromField } from '../fields/translatedFrom'
 import { cascadeAdminTitle } from '../hooks/courses/cascadeAdminTitle'
-import { enforceFieldLocaleUniqueness } from '../hooks/validateLocaleUniqueness'
 import { validateTreeIsolationOnPublish } from '../hooks/courses/validateTreeIsolation'
+import { enforceFieldLocaleUniqueness } from '../hooks/validateLocaleUniqueness'
 
 export const Courses: CollectionConfig = {
   slug: 'courses',
@@ -47,6 +48,14 @@ export const Courses: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
+    components: {
+      edit: {
+        beforeDocumentControls: [
+          '@/ui/admin/TranslationButton#TranslateCourseAction',
+          '@/ui/admin/CascadeDeleteButton#CourseCascadeDelete',
+        ],
+      },
+    },
     defaultColumns: [
       'courseLabel',
       'title',
@@ -65,6 +74,8 @@ export const Courses: CollectionConfig = {
     tenantField,
     // Content locale
     contentLocaleField,
+    // Translation link
+    translatedFromField('courses'),
     {
       name: 'courseLabel',
       type: 'text',
@@ -237,6 +248,20 @@ export const Courses: CollectionConfig = {
 
     // Content Status
     ...contentStatusFields,
+
+    // Formula Sheet (optional)
+    {
+      name: 'formulaSheet',
+      type: 'relationship',
+      relationTo: 'formula-sheets',
+      maxDepth: 0,
+      index: true,
+      admin: {
+        position: 'sidebar',
+        description:
+          'Default formula sheet for lessons in this course (lesson-specific sheets take precedence)',
+      },
+    },
 
     // Created By
     createdByField,

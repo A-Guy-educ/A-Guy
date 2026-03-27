@@ -29,6 +29,8 @@ import { useTTS } from '../hooks/useTTS'
 import { FormulaComposer } from '@/ui/web/shared/MathInput/FormulaComposer'
 import { MathMarkdown } from '@/ui/web/shared/MathMarkdown'
 import { FunctionSquare } from 'lucide-react'
+import { FormulaSheetButton } from '@/ui/web/shared/FormulaSheetViewer/FormulaSheetButton'
+import { FormulaSheetContent } from '@/ui/web/shared/FormulaSheetViewer/FormulaSheetContent'
 
 export type ViewMode = 'PDF' | 'Chat'
 
@@ -79,6 +81,9 @@ interface ChatInterfaceProps {
   showResetButton?: boolean
   showMathTools?: boolean
 
+  // Formula Sheet
+  formulaSheet?: import('@/payload-types').FormulaSheet | null
+
   // Override computed contextKey (e.g. for Ask page per-session conversations)
   contextKeyOverride?: string
 
@@ -110,6 +115,7 @@ export function ChatInterface({
   showQuickActions = false,
   showResetButton = false,
   showMathTools = false,
+  formulaSheet,
   contextKeyOverride,
   onConversationCreated,
   displayMode = 'full',
@@ -313,6 +319,7 @@ export function ChatInterface({
   }, [currentExercise, injectExerciseContext, mediaMap])
 
   const [formulaComposerOpen, setFormulaComposerOpen] = useState(false)
+  const [formulaSheetOpen, setFormulaSheetOpen] = useState(false)
   const [isChatInputFocused, setIsChatInputFocused] = useState(false)
 
   const handleFormulaInsert = useCallback(
@@ -393,12 +400,24 @@ export function ChatInterface({
         </div>
       )}
 
-      {/* Messages Area - Hidden when displayMode is 'input-only' */}
+      {/* Formula Sheet Content - overlays chat messages when open */}
+      {formulaSheetOpen && formulaSheet && (
+        <div className="flex-grow overflow-y-auto p-5 min-h-0">
+          <div className="mb-4">
+            <h2 className="text-body-lg font-semibold text-foreground">{formulaSheet.title}</h2>
+            <p className="text-body-sm text-muted-foreground">{tCourses('formulaSheetTitle')}</p>
+          </div>
+          <FormulaSheetContent sheet={formulaSheet} />
+        </div>
+      )}
+
+      {/* Messages Area - Hidden when displayMode is 'input-only' or formula sheet is open */}
       <div
         ref={messagesContainerRef}
         className={cn(
           'flex-grow overflow-y-auto p-5 space-y-4 min-h-0',
           displayMode === 'input-only' && 'hidden',
+          formulaSheetOpen && 'hidden',
         )}
       >
         {isLoadingHistory && (
@@ -484,6 +503,16 @@ export function ChatInterface({
         )}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Formula Sheet Toggle Button */}
+      {formulaSheet && (
+        <div className="flex gap-content-gap-xs px-5 pt-3">
+          <FormulaSheetButton
+            isOpen={formulaSheetOpen}
+            onToggle={() => setFormulaSheetOpen(!formulaSheetOpen)}
+          />
+        </div>
+      )}
 
       {/* Quick Actions */}
       {showQuickActions && (

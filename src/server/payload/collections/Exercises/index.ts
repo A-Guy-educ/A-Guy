@@ -2,9 +2,11 @@ import type { Access, CollectionConfig } from 'payload'
 
 import type { User } from '@/payload-types'
 import { tenantField } from '@/server/payload/fields/tenant'
+import { contentLocaleField } from '@/server/payload/fields/contentLocale'
 import { anyone } from '../../access/anyone'
 import { authenticated } from '../../access/authenticated'
 import { createdByField } from '../../fields/createdBy'
+import { translatedFromField } from '../../fields/translatedFrom'
 import { AccountRole } from '../Users/roles'
 import { DEFAULT_CONTENT } from './defaults'
 import { ContentSchema } from './schemas'
@@ -56,11 +58,20 @@ export const Exercises: CollectionConfig = {
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['order', 'title', 'lesson', 'updatedAt'],
+    components: {
+      edit: {
+        beforeDocumentControls: ['@/ui/admin/TranslationButton#TranslateExerciseAction'],
+      },
+    },
   },
 
   fields: [
     // Tenant
     tenantField,
+    // Content locale
+    contentLocaleField,
+    // Translation link
+    translatedFromField('exercises'),
     // Section 1: Exercise Meta (Basics)
     {
       type: 'collapsible',
@@ -102,6 +113,15 @@ export const Exercises: CollectionConfig = {
           },
           hooks: {
             beforeValidate: [generateSlug, validateSlugUniqueness],
+          },
+        },
+        {
+          name: 'showQuestionNumbering',
+          type: 'checkbox',
+          defaultValue: false,
+          admin: {
+            description:
+              'Show exercise question numbering (the circled number above questions). Enable when multiple exercises share a page.',
           },
         },
       ],

@@ -209,6 +209,118 @@ export const RegistrationCompletedSchema = z
 export type RegistrationCompletedPayload = z.infer<typeof RegistrationCompletedSchema>
 
 // ============================================================================
+// Coupon & Access Events
+// ============================================================================
+
+export const CouponCodeEnteredSchema = z
+  .object({
+    coupon_code: z.string().min(1, 'coupon_code is required'),
+    lesson_id: z.string().min(1, 'lesson_id is required'),
+    course_id: z.string().min(1, 'course_id is required'),
+  })
+  .strict()
+
+export type CouponCodeEnteredPayload = z.infer<typeof CouponCodeEnteredSchema>
+
+export const AccessGateShownSchema = z
+  .object({
+    gate_type: z.enum(['free', 'login', 'paid', 'coupon']),
+    lesson_id: z.string().min(1, 'lesson_id is required'),
+    course_id: z.string().min(1, 'course_id is required'),
+  })
+  .strict()
+
+export type AccessGateShownPayload = z.infer<typeof AccessGateShownSchema>
+
+export const AccessGrantedSchema = z
+  .object({
+    access_type: z.enum(['free', 'coupon', 'paid']),
+    coupon_code: z.string().optional(),
+    lesson_id: z.string().min(1, 'lesson_id is required'),
+    course_id: z.string().min(1, 'course_id is required'),
+  })
+  .strict()
+
+export type AccessGrantedPayload = z.infer<typeof AccessGrantedSchema>
+
+// ============================================================================
+// Exercise Quality Events
+// ============================================================================
+
+export const AnswerCorrectSchema = z
+  .object({
+    exercise_id: z.string().min(1, 'exercise_id is required'),
+    lesson_id: z.string().min(1, 'lesson_id is required'),
+    time_seconds: z.number().nonnegative(),
+    attempt_number: z.number().int().positive(),
+    difficulty_level: z.enum(['easy', 'medium', 'hard']),
+  })
+  .strict()
+
+export type AnswerCorrectPayload = z.infer<typeof AnswerCorrectSchema>
+
+export const AnswerIncorrectSchema = z
+  .object({
+    exercise_id: z.string().min(1, 'exercise_id is required'),
+    lesson_id: z.string().min(1, 'lesson_id is required'),
+    attempt_number: z.number().int().positive(),
+    max_attempts: z.number().int().positive(),
+    time_seconds: z.number().nonnegative(),
+  })
+  .strict()
+
+export type AnswerIncorrectPayload = z.infer<typeof AnswerIncorrectSchema>
+
+export const ExerciseSkippedSchema = z
+  .object({
+    exercise_id: z.string().min(1, 'exercise_id is required'),
+    lesson_id: z.string().min(1, 'lesson_id is required'),
+    reason: z.string().min(1, 'reason is required'),
+  })
+  .strict()
+
+export type ExerciseSkippedPayload = z.infer<typeof ExerciseSkippedSchema>
+
+// ============================================================================
+// Engagement Signal Events
+// ============================================================================
+
+export const LessonAbandonedSchema = z
+  .object({
+    lesson_id: z.string().min(1, 'lesson_id is required'),
+    course_id: z.string().min(1, 'course_id is required'),
+    time_spent_seconds: z.number().nonnegative(),
+    progress_percent: z.number().min(0).max(100),
+    exercises_attempted: z.number().int().nonnegative(),
+    exercises_completed: z.number().int().nonnegative(),
+  })
+  .strict()
+
+export type LessonAbandonedPayload = z.infer<typeof LessonAbandonedSchema>
+
+export const ChapterCompletedSchema = z
+  .object({
+    course_id: z.string().min(1, 'course_id is required'),
+    chapter_id: z.string().min(1, 'chapter_id is required'),
+    total_lessons: z.number().int().positive(),
+    completion_time_seconds: z.number().nonnegative(),
+  })
+  .strict()
+
+export type ChapterCompletedPayload = z.infer<typeof ChapterCompletedSchema>
+
+export const TimeOnPageSchema = z
+  .object({
+    page_url: z.string().min(1, 'page_url is required'),
+    time_seconds: z.number().nonnegative(),
+    scroll_depth_percent: z.number().min(0).max(100).optional(),
+    user_interacted: z.boolean(),
+  })
+  .strict()
+
+export type TimeOnPagePayload = z.infer<typeof TimeOnPageSchema>
+
+// ============================================================================
 // PII Rejection Rules
 // ============================================================================
 
@@ -267,6 +379,21 @@ export const eventSchemas = {
   [SYSTEM_EVENTS.STUDY_PLAN_VIEWED]: StudyPlanViewedSchema,
   [SYSTEM_EVENTS.STUDY_PLAN_GENERATED]: StudyPlanGeneratedSchema,
   [SYSTEM_EVENTS.STUDY_PLAN_DAY_COMPLETED]: StudyPlanDayCompletedSchema,
+
+  // Coupon & Access
+  [SYSTEM_EVENTS.COUPON_CODE_ENTERED]: CouponCodeEnteredSchema,
+  [SYSTEM_EVENTS.ACCESS_GATE_SHOWN]: AccessGateShownSchema,
+  [SYSTEM_EVENTS.ACCESS_GRANTED]: AccessGrantedSchema,
+
+  // Exercise Quality
+  [SYSTEM_EVENTS.ANSWER_CORRECT]: AnswerCorrectSchema,
+  [SYSTEM_EVENTS.ANSWER_INCORRECT]: AnswerIncorrectSchema,
+  [SYSTEM_EVENTS.EXERCISE_SKIPPED]: ExerciseSkippedSchema,
+
+  // Engagement Signals
+  [SYSTEM_EVENTS.LESSON_ABANDONED]: LessonAbandonedSchema,
+  [SYSTEM_EVENTS.CHAPTER_COMPLETED]: ChapterCompletedSchema,
+  [SYSTEM_EVENTS.TIME_ON_PAGE]: TimeOnPageSchema,
 } as const
 
 /**

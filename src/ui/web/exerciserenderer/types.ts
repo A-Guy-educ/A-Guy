@@ -201,6 +201,8 @@ export interface ExerciseRendererProps {
   mediaMap?: Record<string, import('@/payload-types').Media>
   /** Exercise number to display in the bubble (defaults to 1) */
   exerciseNumber?: number
+  /** Whether to show the exercise number bubble (defaults to false — enable when multiple exercises share a page) */
+  showExerciseNumber?: boolean
   /** Lesson ID for analytics and help system */
   lessonId?: string
   /** Exercise ID for analytics and help system */

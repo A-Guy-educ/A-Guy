@@ -121,6 +121,9 @@ export function useNotebookChat({
   // Track last injected exercise ID to avoid duplicate context injection
   const lastInjectedExerciseId = useRef<string | null>(null)
 
+  // Guard to prevent concurrent context injections
+  const isInjectingRef = useRef(false)
+
   // Compute contextKey based on available context
   // For admin mode: use users:{userId} (user-scoped conversation)
   // Priority for regular mode: Lesson > Exercise (fallback) > Chapter > Course > Category
@@ -427,7 +430,12 @@ export function useNotebookChat({
         courseId?: string
         categoryId?: string
       },
-      options?: { hidden?: boolean; contextKeyOverride?: string; hidePromptOnly?: boolean },
+      options?: {
+        hidden?: boolean
+        contextKeyOverride?: string
+        hidePromptOnly?: boolean
+        silent?: boolean
+      },
     ) => {
       try {
         const stream = apiService.chatStream(message, acknowledgment, context, options)
@@ -463,14 +471,19 @@ export function useNotebookChat({
             // Check if this is an auth error (contains "auth" or "authentication")
             if (errMsg?.toLowerCase().includes('auth')) {
               hasAuthError = true
-              setChatError({ type: 'auth' as const, message: authRequiredMessage })
+              if (!options?.silent) {
+                setChatError({ type: 'auth' as const, message: authRequiredMessage })
+              }
             } else if (errMsg?.toLowerCase().includes('guest message limit')) {
-              setChatError({
-                type: 'limit' as const,
-                message:
-                  guestLimitMessage || 'Guest message limit reached. Sign up for unlimited access.',
-              })
-            } else {
+              if (!options?.silent) {
+                setChatError({
+                  type: 'limit' as const,
+                  message:
+                    guestLimitMessage ||
+                    'Guest message limit reached. Sign up for unlimited access.',
+                })
+              }
+            } else if (!options?.silent) {
               toast.error(errMsg || errorMessage)
             }
             // Remove the empty/partial message on error
@@ -493,8 +506,10 @@ export function useNotebookChat({
           })
         }
       } catch (error) {
-        console.error('Stream message failed:', error)
-        toast.error(errorMessage)
+        if (!options?.silent) {
+          console.error('Stream message failed:', error)
+          toast.error(errorMessage)
+        }
       } finally {
         setIsLoading(false)
         inputRef.current?.focus()
@@ -678,19 +693,25 @@ export function useNotebookChat({
       >,
     ) => {
       if (isLoadingRef.current || isLoadingHistoryRef.current) return
+      if (isInjectingRef.current) return
       if (lastInjectedExerciseId.current === exercise.id) return
 
+      isInjectingRef.current = true
       lastInjectedExerciseId.current = exercise.id
 
-      const formatted = formatExerciseContextMessage(
-        exercise.title,
-        exercise.content.blocks,
-        mediaMap,
-      )
-      const prompt = `The student is now viewing the following exercise. Use this context to help them if they ask questions.\n\n${formatted}`
+      try {
+        const formatted = formatExerciseContextMessage(
+          exercise.title,
+          exercise.content.blocks,
+          mediaMap,
+        )
+        const prompt = `The student is now viewing the following exercise. Use this context to help them if they ask questions.\n\n${formatted}`
 
-      const context = { exerciseId, lessonId, chapterId, courseId, categoryId }
-      await streamMessage(prompt, acknowledgment, context, { hidden: true })
+        const context = { exerciseId, lessonId, chapterId, courseId, categoryId }
+        await streamMessage(prompt, acknowledgment, context, { hidden: true, silent: true })
+      } finally {
+        isInjectingRef.current = false
+      }
     },
     [streamMessage, acknowledgment, exerciseId, lessonId, chapterId, courseId, categoryId],
   )

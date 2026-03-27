@@ -108,6 +108,7 @@ describe('Chapter adminTitle', () => {
         status: 'published',
         isActive: true,
         tenant: tenantId,
+        locale: 'he',
       },
     })
     chapter1Id = chapter1.id
@@ -125,6 +126,7 @@ describe('Chapter adminTitle', () => {
         status: 'published',
         isActive: true,
         tenant: tenantId,
+        locale: 'he',
       },
     })
     chapter2Id = chapter2.id

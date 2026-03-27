@@ -4,8 +4,8 @@ import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { cn } from '@/infra/utils/ui'
 import type { Lesson } from '@/payload-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
-import { ProgressCircle } from '@/ui/web/shared/ProgressCircle'
 import { ContentStatusBadge } from '@/ui/web/shared/ContentStatusBadge'
+import { ProgressCircle } from '@/ui/web/shared/ProgressCircle'
 import { Clock } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -50,36 +50,36 @@ export function CourseLessonCard({
   return (
     <div
       className={cn(
-        'rounded-2xl overflow-hidden border border-border/40 shadow-sm transition-all',
+        'relative rounded-2xl overflow-visible border border-border/40 shadow-elevation-1 transition-all',
         !isSoon && 'active:scale-[0.98]',
         isSoon && 'opacity-60',
       )}
       style={{ borderTopWidth: 3, borderTopColor: accentColor }}
     >
+      <ContentStatusBadge
+        contentStatus={lesson.contentStatus}
+        contentStatusExpiresAt={lesson.contentStatusExpiresAt ?? undefined}
+        contentStatusLabel={lesson.contentStatusLabel ?? undefined}
+        className="absolute -top-3 right-4 z-10"
+      />
       <SystemLink
         href={isSoon ? '#' : href}
         onClick={handleLessonClick}
         className={cn(
           'bg-card p-5',
-          'flex flex-row-reverse items-center justify-between',
+          'flex items-center justify-between',
           isSoon ? 'cursor-not-allowed' : 'cursor-pointer',
         )}
       >
-        <div className="flex flex-col text-end">
+        <div className="flex flex-col text-start">
           <span
             className="text-[10px] font-bold mb-1 uppercase tracking-wide"
             style={{ color: accentColor }}
           >
             {tc('lesson')} {index}
           </span>
-          <div className="flex items-center gap-2">
-            <h3 className="text-lg font-bold text-card-foreground">{lesson.title}</h3>
-            <ContentStatusBadge
-              contentStatus={lesson.contentStatus}
-              contentStatusExpiresAt={lesson.contentStatusExpiresAt ?? undefined}
-            />
-          </div>
-          <p className="text-xs text-muted-foreground mt-1 flex items-center justify-end gap-1">
+          <h3 className="text-body-lg font-bold text-card-foreground">{lesson.title}</h3>
+          <p className="text-body-xs text-muted-foreground mt-1 flex items-center justify-start gap-1">
             {progress === 0 && <Clock className="w-3 h-3" />}
             {progressText}
           </p>
@@ -97,7 +97,7 @@ export function CourseLessonCard({
               y="50%"
               textAnchor="middle"
               dy=".3em"
-              className="text-sm font-bold fill-foreground"
+              className="text-body-sm font-bold fill-foreground"
             >
               {Math.round(progress)}%
             </text>

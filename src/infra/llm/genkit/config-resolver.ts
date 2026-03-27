@@ -126,6 +126,7 @@ function mapModelKeyToConfigKey(modelKey: AIModelKey): keyof ChatConfig['models'
     PDF_TO_EXERCISE: 'pdfToExercise',
     ANSWER_VALIDATION: 'answerValidation',
     SUPPORT_GENERATION: 'supportGeneration',
+    CONTENT_TRANSLATION: 'supportGeneration',
   }
   return mapping[modelKey]
 }

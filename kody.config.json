@@ -1,0 +1,29 @@
+{
+  "quality": {
+    "typecheck": "pnpm typecheck",
+    "lint": "pnpm lint",
+    "lintFix": "pnpm lint:fix",
+    "format": "pnpm format:check",
+    "formatFix": "pnpm format",
+    "testUnit": "pnpm test:unit"
+  },
+  "git": {
+    "defaultBranch": "dev"
+  },
+  "github": {
+    "owner": "A-Guy-educ",
+    "repo": "A-Guy"
+  },
+  "paths": {
+    "taskDir": ".tasks"
+  },
+  "agent": {
+    "runner": "claude-code",
+    "defaultRunner": "claude",
+    "modelMap": {
+      "cheap": "haiku",
+      "mid": "sonnet",
+      "strong": "opus"
+    }
+  }
+}
