@@ -142,16 +142,12 @@ export function initAnalyticsSubscriber(): () => void {
       const payload = envelope.payload as {
         pdf_url?: string
         pdf_title?: string
-        page_number?: number
-        duration_seconds?: number
-        user_id?: string
+        page_count?: number
       }
       analytics.track(PRODUCT_EVENTS.PDF_VIEWED, {
-        pdf_url: payload.pdf_url,
-        pdf_title: payload.pdf_title,
-        page_number: payload.page_number,
-        duration_seconds: payload.duration_seconds,
-        user_id: payload.user_id,
+        document_id: payload.pdf_url ?? 'unknown',
+        file_name: payload.pdf_title,
+        page_count: payload.page_count,
       })
     }),
 

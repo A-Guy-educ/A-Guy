@@ -17,8 +17,10 @@ import {
 } from '@/server/constants/lesson-types'
 import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
 import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
+import { ContentStatusBadge } from '@/ui/web/shared/ContentStatusBadge'
 import { ProgressCircle } from '@/ui/web/shared/ProgressCircle'
 import { BarChart3, Clock, GraduationCap, Sparkles } from 'lucide-react'
+import { toast } from 'sonner'
 import { useEffect, useMemo, useState } from 'react'
 import { useProgressMap } from '@/client/hooks/useProgressMap'
 
@@ -127,7 +129,7 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-section-md">
         <div className="text-center text-muted-foreground">{ts('loading')}</div>
       </div>
     )
@@ -149,19 +151,19 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
       isAuthenticated={isAuthenticated}
     >
       {/* Centered title area - clean background */}
-      <div className="w-full py-6 px-6">
+      <div className="w-full py-section-sm px-6">
         <div className="max-w-5xl mx-auto text-center">
           <ExamReminderBubble courseId={courseInfo?.courseId ?? ''} />
-          <h1 className="text-3xl md:text-4xl font-black text-foreground mt-4 text-center">
+          <h1 className="text-display-sm md:text-display-md font-black text-foreground mt-4 text-center">
             {sectionTitle}
           </h1>
         </div>
       </div>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-6 max-w-5xl">
+      <main className="container mx-auto px-6 py-section-sm max-w-5xl">
         {filteredLessons.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-content-gap-lg">
             {filteredLessons.map((lesson, idx) => (
               <LessonGridCard
                 key={lesson.id}
@@ -176,28 +178,28 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
           </div>
         ) : (
           <div className="text-center py-20 text-muted-foreground italic">
-            <p className="text-lg">{ts('noTopicsAvailable')}</p>
+            <p className="text-body-lg">{ts('noTopicsAvailable')}</p>
           </div>
         )}
 
         {/* Footer actions with divider */}
         <div className="mt-16 pt-8 border-t border-border">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-content-gap">
             <SystemLink
               href="/stats"
-              className="flex items-center justify-center gap-2 text-sm font-bold text-foreground bg-card border border-border px-6 py-3 rounded-full hover:bg-muted/50 transition-all"
+              className="flex items-center justify-center gap-content-gap-xs text-body-sm font-bold text-foreground bg-card border border-border px-6 py-3 rounded-full hover:bg-muted/50 transition-all"
             >
               <BarChart3 className="w-4 h-4" />
               {t('statsAndPerformance')}
             </SystemLink>
             <SystemLink
               href="/study-plan"
-              className="flex items-center justify-center gap-2 text-sm font-bold text-primary-foreground bg-primary px-6 py-3 rounded-full shadow-lg hover:opacity-90 transition-all"
+              className="flex items-center justify-center gap-content-gap-xs text-body-sm font-bold text-primary-foreground bg-primary px-6 py-3 rounded-full shadow-card hover:opacity-90 transition-all"
             >
               <GraduationCap className="w-4 h-4" />
               {t('upcomingExam')}
             </SystemLink>
-            <button className="flex items-center justify-center gap-2 text-sm font-bold text-foreground bg-card border border-border px-6 py-3 rounded-full hover:bg-muted/50 transition-all">
+            <button className="flex items-center justify-center gap-content-gap-xs text-body-sm font-bold text-foreground bg-card border border-border px-6 py-3 rounded-full hover:bg-muted/50 transition-all">
               <Sparkles className="w-4 h-4" />
               {t('bagrutTransition')}
             </button>
@@ -225,7 +227,7 @@ function ExamReminderBubble({ courseId }: { courseId: string }) {
 
   return (
     <div className="flex justify-center mt-4 animate-in fade-in">
-      <span className="bg-primary text-white text-sm font-bold px-6 py-2 rounded-full">
+      <span className="bg-primary text-white text-body-sm font-bold px-6 py-2 rounded-full">
         {message}
       </span>
     </div>
@@ -257,27 +259,42 @@ function LessonGridCard({
   if (!lesson.slug) return null
 
   const href = `/courses/${courseSlug}/chapters/${chapterSlug}/lessons/${lesson.slug}`
+  const isSoon = lesson.contentStatus === 'soon'
   const progress = progressProp ?? 0
   const progressText =
-    progress >= 100
-      ? t('lessonCompleted')
-      : progress > 0
-        ? t('lessonsRemaining').replace('{count}', String(3))
-        : t('notStarted')
+    progress >= 100 ? t('lessonCompleted') : progress > 0 ? t('statusInProgress') : t('notStarted')
 
   const accentColor = tabColor?.stroke ?? 'hsl(var(--primary))'
 
+  const handleLessonClick = (e: React.MouseEvent) => {
+    if (isSoon) {
+      e.preventDefault()
+      toast.info(tc('contentLocked'))
+    }
+  }
+
   return (
     <div
-      className="rounded-2xl overflow-hidden border border-border/40 shadow-sm transition-all active:scale-[0.98]"
+      className={cn(
+        'relative rounded-2xl overflow-visible border border-border/40 shadow-elevation-1 transition-all',
+        !isSoon && 'active:scale-[0.98]',
+        isSoon && 'opacity-60',
+      )}
       style={{ borderTopWidth: 3, borderTopColor: accentColor }}
     >
+      <ContentStatusBadge
+        contentStatus={lesson.contentStatus}
+        contentStatusExpiresAt={lesson.contentStatusExpiresAt ?? undefined}
+        contentStatusLabel={lesson.contentStatusLabel ?? undefined}
+        className="absolute -top-3 right-4 z-10"
+      />
       <SystemLink
-        href={href}
+        href={isSoon ? '#' : href}
+        onClick={handleLessonClick}
         className={cn(
           'bg-card p-5',
           'flex flex-row-reverse items-center justify-between',
-          'cursor-pointer',
+          isSoon ? 'cursor-not-allowed' : 'cursor-pointer',
         )}
       >
         <div className="flex flex-col text-end">
@@ -287,8 +304,8 @@ function LessonGridCard({
           >
             {tc('lesson')} {index}
           </span>
-          <h3 className="text-lg font-bold text-card-foreground">{lesson.title}</h3>
-          <p className="text-xs text-muted-foreground mt-1 flex items-center justify-end gap-1">
+          <h3 className="text-body-lg font-bold text-card-foreground">{lesson.title}</h3>
+          <p className="text-body-xs text-muted-foreground mt-1 flex items-center justify-end gap-1">
             {progress === 0 && <Clock className="w-3 h-3" />}
             {progressText}
           </p>
@@ -306,7 +323,7 @@ function LessonGridCard({
               y="50%"
               textAnchor="middle"
               dy=".3em"
-              className="text-sm font-bold fill-foreground"
+              className="text-body-sm font-bold fill-foreground"
             >
               {Math.round(progress)}%
             </text>

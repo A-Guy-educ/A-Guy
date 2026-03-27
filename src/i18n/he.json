@@ -265,7 +265,9 @@
     "startLesson": "התחל שיעור",
     "soonBadge": "בקרוב",
     "justAddedBadge": "חדש",
-    "contentLocked": "תוכן זה בהכנה ויהיה זמין בקרוב."
+    "contentLocked": "תוכן זה בהכנה ויהיה זמין בקרוב.",
+    "formulaSheetTitle": "דף נוסחאות",
+    "formulaSheetEmpty": "אין תוכן זמין"
   },
   "homepage": {
     "nav": {

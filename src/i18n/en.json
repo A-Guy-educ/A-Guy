@@ -265,7 +265,9 @@
     "startLesson": "Start Lesson",
     "soonBadge": "Soon",
     "justAddedBadge": "New",
-    "contentLocked": "This content is being prepared and will be available soon."
+    "contentLocked": "This content is being prepared and will be available soon.",
+    "formulaSheetTitle": "Formula Sheet",
+    "formulaSheetEmpty": "No content available"
   },
   "homepage": {
     "nav": {

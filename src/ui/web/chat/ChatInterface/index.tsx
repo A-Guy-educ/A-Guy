@@ -404,8 +404,8 @@ export function ChatInterface({
       {formulaSheetOpen && formulaSheet && (
         <div className="flex-grow overflow-y-auto p-5 min-h-0">
           <div className="mb-4">
-            <h2 className="text-lg font-semibold text-foreground">{formulaSheet.title}</h2>
-            <p className="text-sm text-muted-foreground">{tCourses('formulaSheetTitle')}</p>
+            <h2 className="text-body-lg font-semibold text-foreground">{formulaSheet.title}</h2>
+            <p className="text-body-sm text-muted-foreground">{tCourses('formulaSheetTitle')}</p>
           </div>
           <FormulaSheetContent sheet={formulaSheet} />
         </div>

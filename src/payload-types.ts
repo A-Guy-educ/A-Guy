@@ -563,7 +563,7 @@ export interface Course {
   /**
    * Content status badge displayed to students
    */
-  contentStatus: 'none' | 'soon' | 'justAdded';
+  contentStatus: 'none' | 'soon' | 'justAdded' | 'custom';
   /**
    * When unchecked, "Soon" content is completely hidden from student listings
    */
@@ -572,6 +572,10 @@ export interface Course {
    * Badge auto-expires after this date (leave empty for permanent badge)
    */
   contentStatusExpiresAt?: string | null;
+  /**
+   * Custom badge text (e.g. "מותאם לבגרות")
+   */
+  contentStatusLabel?: string | null;
   /**
    * Default formula sheet for lessons in this course (lesson-specific sheets take precedence)
    */
@@ -1437,7 +1441,7 @@ export interface Lesson {
   /**
    * Content status badge displayed to students
    */
-  contentStatus: 'none' | 'soon' | 'justAdded';
+  contentStatus: 'none' | 'soon' | 'justAdded' | 'custom';
   /**
    * When unchecked, "Soon" content is completely hidden from student listings
    */
@@ -1446,6 +1450,10 @@ export interface Lesson {
    * Badge auto-expires after this date (leave empty for permanent badge)
    */
   contentStatusExpiresAt?: string | null;
+  /**
+   * Custom badge text (e.g. "מותאם לבגרות")
+   */
+  contentStatusLabel?: string | null;
   /**
    * Lesson-specific formula sheet (overrides course default)
    */
@@ -3148,6 +3156,7 @@ export interface CoursesSelect<T extends boolean = true> {
   contentStatus?: T;
   contentStatusVisible?: T;
   contentStatusExpiresAt?: T;
+  contentStatusLabel?: T;
   formulaSheet?: T;
   createdBy?: T;
   updatedAt?: T;
@@ -3199,6 +3208,7 @@ export interface LessonsSelect<T extends boolean = true> {
   contentStatus?: T;
   contentStatusVisible?: T;
   contentStatusExpiresAt?: T;
+  contentStatusLabel?: T;
   formulaSheet?: T;
   createdBy?: T;
   updatedAt?: T;
