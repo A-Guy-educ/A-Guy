@@ -1,9 +1,9 @@
 {
+  "$schema": "https://raw.githubusercontent.com/aharonyaircohen/Kody-Engine-Lite/main/kody.config.schema.json",
   "quality": {
     "typecheck": "pnpm typecheck",
     "lint": "pnpm lint",
     "lintFix": "pnpm lint:fix",
-    "format": "pnpm format:check",
     "formatFix": "pnpm format",
     "testUnit": "pnpm test:unit"
   },
@@ -14,17 +14,12 @@
     "owner": "A-Guy-educ",
     "repo": "A-Guy"
   },
-  "paths": {
-    "taskDir": ".tasks"
-  },
   "agent": {
-    "runner": "claude-code",
     "defaultRunner": "claude",
     "modelMap": {
       "cheap": "haiku",
       "mid": "sonnet",
       "strong": "opus"
     }
-  },
-  "$schema": "https://raw.githubusercontent.com/aharonyaircohen/Kody-Engine-Lite/main/kody.config.schema.json"
+  }
 }
