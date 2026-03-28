@@ -1,24 +1,20 @@
-# A-Guy Architecture
+# Architecture
 
-**Framework**: Next.js 15 (App Router) | **CMS**: Payload 3.73 | **Database**: MongoDB Atlas with Vector Search | **Language**: TypeScript | **Styling**: Tailwind CSS + shadcn/ui
+A-Guy is an AI-powered educational platform built on **Next.js 15** (App Router) and **Payload CMS 3.73**, with **MongoDB Atlas** + Vector Search for intelligent memory. Key components:
 
-## Core Structure
+- **Frontend**: Next.js 15, Tailwind CSS, shadcn/ui, React
+- **Backend**: Payload CMS collections, Express APIs, TypeScript
+- **Database**: MongoDB Atlas with Vector Search for AI context
+- **AI Features**: Google Gemini, OpenAI integration
+- **Testing**: Vitest (unit/integration), Playwright (E2E)
+- **Multi-tenant**: Namespace isolation per organization
 
-- **src/app** — Next.js App Router pages and layouts
-- **src/server** — Payload CMS collections and hooks
-- **src/infra** — Backend services (AI embeddings, vector search, PDF processing)
-- **src/ui** — React components (admin panel, web, exercise renderer)
-- **tests** — Vitest unit/integration tests + Playwright E2E
+**Directory Structure**:
 
-## Key Features
+- `src/app/` — Next.js routes, API endpoints
+- `src/ui/` — React components (web, admin, exercise renderer)
+- `src/server/` — Payload collections, business logic
+- `src/infra/` — Infrastructure (AI, media embed, vector search)
+- `src/lib/` — Shared utilities
 
-- **Hierarchical Content**: Courses → Chapters → Lessons → Exercises
-- **AI Tutor**: Long-term memory via MongoDB Vector Search + Google Gemini/OpenAI
-- **PDF Extraction**: Vision AI extracts exercises from documents
-- **Multi-Tenant**: Isolated data per organization/user
-- **Admin CMS**: Payload collections with custom layout builder blocks
-- **Bilingual**: English (en) and Hebrew (he) i18n support
-
-## Data Flow
-
-Users interact with Next.js frontend → Next.js API routes → Payload backend → MongoDB (vectors + documents) → AI services (Gemini, OpenAI)
+Unifies course management, AI tutoring with memory, PDF processing, and CMS.
