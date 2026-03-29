@@ -3,6 +3,7 @@
 import { CalendarPlus, Trash2 } from 'lucide-react'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { Button } from '@/ui/web/components/button'
+import { StaggerGrid, StaggerItem } from '@/ui/web/components/motion'
 import { useExamCountdown } from '@/client/hooks/useExamCountdown'
 import { AddExamDialog } from '../AddExamDialog'
 
@@ -44,43 +45,45 @@ export function ExamsTab({ courseId, accentColor }: ExamsTabProps) {
       </div>
 
       {upcomingExams.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <StaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {upcomingExams.map((exam) => {
             const days = Math.ceil(
               (new Date(exam.date).getTime() - new Date().setHours(0, 0, 0, 0)) /
                 (1000 * 60 * 60 * 24),
             )
             return (
-              <ExamCard
-                key={exam.id}
-                label={exam.label}
-                date={exam.date}
-                daysLeftText={t('daysLeft').replace('{days}', String(days))}
-                onDelete={() => removeExam(exam.id)}
-                deleteText={t('deleteExam')}
-                accentColor={accentColor}
-              />
+              <StaggerItem key={exam.id}>
+                <ExamCard
+                  label={exam.label}
+                  date={exam.date}
+                  daysLeftText={t('daysLeft').replace('{days}', String(days))}
+                  onDelete={() => removeExam(exam.id)}
+                  deleteText={t('deleteExam')}
+                  accentColor={accentColor}
+                />
+              </StaggerItem>
             )
           })}
-        </div>
+        </StaggerGrid>
       )}
 
       {pastExams.length > 0 && (
         <div>
           <h4 className="text-body-sm font-bold text-muted-foreground mb-3">{t('pastExams')}</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 opacity-60">
+          <StaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 opacity-60">
             {pastExams.map((exam) => (
-              <ExamCard
-                key={exam.id}
-                label={exam.label}
-                date={exam.date}
-                isPast
-                onDelete={() => removeExam(exam.id)}
-                deleteText={t('deleteExam')}
-                accentColor={accentColor}
-              />
+              <StaggerItem key={exam.id}>
+                <ExamCard
+                  label={exam.label}
+                  date={exam.date}
+                  isPast
+                  onDelete={() => removeExam(exam.id)}
+                  deleteText={t('deleteExam')}
+                  accentColor={accentColor}
+                />
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerGrid>
         </div>
       )}
     </div>

@@ -43,7 +43,7 @@ function LoginFormContent() {
   }
 
   return (
-    <Card className="rounded-2xl shadow-card hover:shadow-card-hover transition-shadow duration-normal border-0 bg-card px-8 py-6">
+    <Card className="rounded-2xl shadow-elevation-4 border border-primary/10 bg-card/80 backdrop-blur-xl px-8 py-6">
       <CardHeader className="pb-3">
         {/* Logo */}
         <div className="flex flex-col items-center gap-1">
@@ -149,7 +149,7 @@ export function LoginForm() {
 
 function LoginFormSkeleton() {
   return (
-    <Card className="rounded-2xl shadow-card border-0 bg-card px-8 py-6">
+    <Card className="rounded-2xl shadow-elevation-4 border border-primary/10 bg-card/80 backdrop-blur-xl px-8 py-6">
       <CardHeader className="pb-3">
         <div className="flex flex-col items-center gap-1">
           <div className="h-24 w-24 bg-muted animate-pulse rounded-full" />

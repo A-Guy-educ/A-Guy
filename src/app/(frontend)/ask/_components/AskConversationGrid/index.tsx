@@ -9,6 +9,7 @@ import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { cn } from '@/infra/utils/ui'
 import { logger } from '@/infra/utils/logger'
+import { StaggerGrid, StaggerItem } from '@/ui/web/components/motion'
 
 interface ConversationItem {
   id: string
@@ -125,8 +126,9 @@ export function AskConversationGrid() {
           </h2>
         </section>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-content-gap">
+        <StaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-content-gap">
           {/* New Question Card */}
+          <StaggerItem>
           <button
             disabled={isCreating}
             onClick={handleNewQuestion}
@@ -149,11 +151,12 @@ export function AskConversationGrid() {
               <Sparkles className="w-6 h-6 text-primary-foreground fill-current" />
             </div>
           </button>
+          </StaggerItem>
 
           {/* Past Conversation Cards */}
           {conversations.map((conv, idx) => (
+            <StaggerItem key={conv.id}>
             <SystemLink
-              key={conv.id}
               href={`/ask?chat=${conv.id}&ctx=${encodeURIComponent(conv.contextKey ?? '')}`}
               className={cn(
                 'bg-card rounded-3xl p-6 shadow-card',
@@ -175,8 +178,9 @@ export function AskConversationGrid() {
                 <MessageSquare className="w-5 h-5 text-muted-foreground" />
               </div>
             </SystemLink>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerGrid>
 
         {/* Footer */}
         <div className="mt-16 pt-8 border-t border-border text-center">

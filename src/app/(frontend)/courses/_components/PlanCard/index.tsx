@@ -100,7 +100,7 @@ export function PlanCard({
         'relative bg-card rounded-[2.5rem] p-8 flex flex-col min-w-[300px] md:min-w-0',
         borderClass,
         'shadow-card',
-        'transition-all duration-slow hover:-translate-y-1 hover:shadow-card-hover',
+        'transition-all duration-slow hover:-translate-y-1 hover:shadow-card-hover hover:border-primary/15',
       )}
     >
       {badge && (

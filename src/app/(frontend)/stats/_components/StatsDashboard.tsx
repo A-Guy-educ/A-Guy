@@ -1,13 +1,15 @@
 /**
  * Stats Dashboard Component
  *
- * Main client component for the statistics dashboard
+ * Main client component for the statistics dashboard.
+ * Uses a bento grid layout with staggered motion animations.
  */
 
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
 
+import { motion } from 'framer-motion'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { SummaryCards } from './SummaryCards'
 import { CategoryProgress } from './CategoryProgress'
@@ -47,6 +49,26 @@ interface StatsDashboardProps {
   initialCourseId: string
   initialTimeframe: 'week' | 'month' | 'overall'
   courses: Course[]
+}
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.05,
+    },
+  },
+}
+
+const staggerItem = {
+  hidden: { opacity: 0, y: 16 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const },
+  },
 }
 
 export function StatsDashboard({
@@ -114,15 +136,35 @@ export function StatsDashboard({
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
         </div>
       ) : data ? (
-        <>
-          <SummaryCards summary={data.summary} categoryProgress={data.categoryProgress} />
-          <CategoryProgress data={data.categoryProgress} />
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-content-gap">
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+          className="grid grid-cols-1 lg:grid-cols-2 gap-content-gap"
+        >
+          {/* Summary Cards — spans full width for bento layout */}
+          <motion.div variants={staggerItem} className="lg:col-span-2">
+            <SummaryCards summary={data.summary} categoryProgress={data.categoryProgress} />
+          </motion.div>
+
+          {/* Category Progress — spans full width */}
+          <motion.div variants={staggerItem} className="lg:col-span-2">
+            <CategoryProgress data={data.categoryProgress} />
+          </motion.div>
+
+          {/* Practiced Items — side by side */}
+          <motion.div variants={staggerItem}>
             <PracticedItems items={data.practicedLessons} type="lessons" />
+          </motion.div>
+          <motion.div variants={staggerItem}>
             <PracticedItems items={data.practicedExams} type="exams" />
-          </div>
-          <ActivityTimeline />
-        </>
+          </motion.div>
+
+          {/* Activity Timeline — spans full width */}
+          <motion.div variants={staggerItem} className="lg:col-span-2">
+            <ActivityTimeline />
+          </motion.div>
+        </motion.div>
       ) : (
         <div className="text-center py-12 text-muted-foreground">{t('errorLoading')}</div>
       )}

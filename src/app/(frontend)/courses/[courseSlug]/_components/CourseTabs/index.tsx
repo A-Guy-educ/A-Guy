@@ -1,6 +1,7 @@
 'use client'
 
 import { cn } from '@/infra/utils/ui'
+import { motion } from 'framer-motion'
 import { useTranslations } from '@/ui/web/providers/I18n'
 
 export type CourseTab = 'learn' | 'practice' | 'ask' | 'exams'
@@ -32,11 +33,19 @@ export function CourseTabs({ activeTab, onTabChange }: CourseTabsProps) {
               key={tab}
               onClick={() => onTabChange(tab)}
               className={cn(
-                'flex-1 px-6 py-2 text-body-sm rounded-full transition-all duration-fast font-semibold',
-                isActive ? 'bg-card shadow-card' : 'hover:opacity-hover',
+                'relative flex-1 px-6 py-2 text-body-sm rounded-full transition-colors duration-fast font-semibold',
+                !isActive && 'hover:opacity-hover',
               )}
               style={{ color: TAB_COLORS[tab].text }}
             >
+              {isActive && (
+                <motion.div
+                  layoutId="activeTab"
+                  className="absolute inset-0 bg-card rounded-full shadow-card"
+                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                  style={{ zIndex: -1 }}
+                />
+              )}
               {t(tab)}
             </button>
           )

@@ -1,7 +1,9 @@
 /**
  * Summary Cards Component
  *
- * Two summary metric cards for the stats dashboard: Time Spent and Daily Streak
+ * Bento-style summary metric cards for the stats dashboard.
+ * Primary metric (Time Spent) spans 2 columns with a gradient background.
+ * Secondary metric (Daily Streak) is a standard single-column card.
  */
 
 'use client'
@@ -41,12 +43,12 @@ export function SummaryCards({ summary, categoryProgress }: SummaryCardsProps) {
   const t = useTranslations('stats')
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-content-gap">
-      {/* Time Spent */}
-      <Card className="shadow-elevation-1 transition-shadow duration-normal hover:shadow-elevation-2">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-content-gap">
+      {/* Time Spent — Featured card spanning 2 columns */}
+      <Card className="md:col-span-2 bg-gradient-to-br from-primary/10 to-accent/5 border shadow-card rounded-xl p-card-padding hover:shadow-card-hover transition-all duration-normal">
         <CardHeader className="pb-2">
           <CardTitle className="text-body-sm font-medium text-muted-foreground flex items-center gap-2">
-            <Clock className="w-4 h-4" />
+            <Clock className="w-5 h-5 text-primary" />
             {t('timeSpent')}
           </CardTitle>
         </CardHeader>
@@ -58,11 +60,11 @@ export function SummaryCards({ summary, categoryProgress }: SummaryCardsProps) {
         </CardContent>
       </Card>
 
-      {/* Daily Streak */}
-      <Card className="shadow-elevation-1 transition-shadow duration-normal hover:shadow-elevation-2">
+      {/* Daily Streak — Standard card */}
+      <Card className="bg-card border shadow-elevation-1 rounded-xl p-card-padding border-l-4 border-l-warning hover:shadow-card-hover transition-all duration-normal">
         <CardHeader className="pb-2">
           <CardTitle className="text-body-sm font-medium text-muted-foreground flex items-center gap-2">
-            <Flame className="w-4 h-4 text-warning" />
+            <Flame className="w-5 h-5 text-warning" />
             {t('dailyStreak')}
           </CardTitle>
         </CardHeader>

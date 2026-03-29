@@ -84,6 +84,7 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
     <div
       className={cn(
         'relative bg-card p-card-padding rounded-[2rem] flex flex-col',
+        'gradient-border',
         borderClass,
         'shadow-card',
         'transition-all duration-normal hover:-translate-y-0.5 hover:shadow-card-hover',

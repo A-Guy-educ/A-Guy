@@ -1,13 +1,15 @@
 /**
  * Activity Timeline Component
  *
- * Displays recent user activity chronologically
+ * Displays recent user activity chronologically with a staggered
+ * timeline layout and a connecting left border line.
  */
 
 'use client'
 
 import { useEffect, useState } from 'react'
 
+import { motion } from 'framer-motion'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { Card, CardContent, CardHeader, CardTitle } from '@/ui/web/components/card'
 import { CheckCircle2, FileQuestion, MessageCircle, HelpCircle, Activity } from 'lucide-react'
@@ -52,6 +54,19 @@ function formatRelativeTime(timestamp: string): string {
   return date.toLocaleDateString()
 }
 
+const timelineItemVariants = {
+  hidden: { opacity: 0, x: -8 },
+  visible: (i: number) => ({
+    opacity: 1,
+    x: 0,
+    transition: {
+      delay: i * 0.06,
+      duration: 0.3,
+      ease: [0.25, 0.46, 0.45, 0.94] as const,
+    },
+  }),
+}
+
 export function ActivityTimeline() {
   const t = useTranslations('stats')
   const [activities, setActivities] = useState<Activity[]>([])
@@ -80,7 +95,7 @@ export function ActivityTimeline() {
 
   if (loading) {
     return (
-      <Card className="shadow-elevation-1">
+      <Card className="bg-card border shadow-elevation-1 rounded-xl">
         <CardHeader>
           <CardTitle>{t('recentActivity')}</CardTitle>
         </CardHeader>
@@ -95,7 +110,7 @@ export function ActivityTimeline() {
 
   if (activities.length === 0) {
     return (
-      <Card className="shadow-elevation-1">
+      <Card className="bg-card border shadow-elevation-1 rounded-xl">
         <CardHeader>
           <CardTitle>{t('recentActivity')}</CardTitle>
         </CardHeader>
@@ -107,23 +122,38 @@ export function ActivityTimeline() {
   }
 
   return (
-    <Card className="shadow-elevation-1">
+    <Card className="bg-card border shadow-elevation-1 rounded-xl hover:shadow-card-hover transition-all duration-normal">
       <CardHeader>
         <CardTitle>{t('recentActivity')}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
-          {activities.map((activity, index) => (
-            <div key={`${activity.targetId}-${index}`} className="flex items-start gap-3">
-              {getActivityIcon(activity.actionType)}
-              <div className="flex-1">
-                <p className="text-body-sm font-medium">{activity.label}</p>
-                <p className="text-body-xs text-muted-foreground">
-                  {formatRelativeTime(activity.timestamp)}
-                </p>
-              </div>
-            </div>
-          ))}
+        <div className="relative">
+          {/* Connecting vertical line */}
+          <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border" />
+
+          <div className="space-y-1">
+            {activities.map((activity, index) => (
+              <motion.div
+                key={`${activity.targetId}-${index}`}
+                custom={index}
+                variants={timelineItemVariants}
+                initial="hidden"
+                animate="visible"
+                className="relative flex items-start gap-3 py-2 pl-1"
+              >
+                {/* Icon sits on top of the vertical line */}
+                <div className="relative z-10 flex-shrink-0 rounded-full bg-card p-0.5">
+                  {getActivityIcon(activity.actionType)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-body-sm font-medium">{activity.label}</p>
+                  <p className="text-body-xs text-muted-foreground">
+                    {formatRelativeTime(activity.timestamp)}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </CardContent>
     </Card>

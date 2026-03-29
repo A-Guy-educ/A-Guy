@@ -1,7 +1,8 @@
 /**
  * Practiced Items Table Component
  *
- * Displays a compact table of practiced lessons or exams
+ * Displays a compact table of practiced lessons or exams with
+ * alternating row backgrounds for visual scanning.
  * Columns: Title | Time Spent | Chat Questions Count
  */
 
@@ -42,7 +43,7 @@ export function PracticedItems({ items, type }: PracticedItemsProps) {
 
   if (items.length === 0) {
     return (
-      <Card className="shadow-elevation-1">
+      <Card className="bg-card border shadow-elevation-1 rounded-xl hover:shadow-card-hover transition-all duration-normal">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Icon className="w-5 h-5" />
@@ -57,7 +58,7 @@ export function PracticedItems({ items, type }: PracticedItemsProps) {
   }
 
   return (
-    <Card className="shadow-elevation-1">
+    <Card className="bg-card border shadow-elevation-1 rounded-xl hover:shadow-card-hover transition-all duration-normal">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Icon className="w-5 h-5" />
@@ -87,8 +88,13 @@ export function PracticedItems({ items, type }: PracticedItemsProps) {
               </tr>
             </thead>
             <tbody>
-              {items.map((item) => (
-                <tr key={item.lessonId} className="border-b border-border/50 last:border-b-0">
+              {items.map((item, index) => (
+                <tr
+                  key={item.lessonId}
+                  className={`border-b border-border/50 last:border-b-0 ${
+                    index % 2 === 1 ? 'bg-muted/30' : ''
+                  }`}
+                >
                   <td className="py-2.5 font-medium">{item.title}</td>
                   <td className="py-2.5 text-center text-muted-foreground">
                     {formatTime(item.timeSpentSeconds)}

@@ -69,7 +69,7 @@ export function ExerciseCard({
   const badge = questionTypes.length > 0 ? getQuestionTypeBadge(questionTypes[0] as string) : null
 
   return (
-    <Card className="hover:shadow-card-hover transition-all duration-normal">
+    <Card className="hover:shadow-card-hover hover:border-primary/15 transition-all duration-normal">
       <CardHeader>
         <div className="flex items-center gap-3 mb-2">
           <span className="text-body-sm font-semibold text-muted-foreground">

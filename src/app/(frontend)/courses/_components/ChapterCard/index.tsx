@@ -21,7 +21,7 @@ export function ChapterCard({ chapter, courseSlug }: ChapterCardProps) {
   }
 
   return (
-    <Card className={cn('hover:shadow-card-hover transition-all duration-normal')}>
+    <Card className={cn('hover:shadow-card-hover hover:border-primary/15 transition-all duration-normal')}>
       <CardHeader>
         {chapter.chapterLabel && (
           <div className="mb-2">

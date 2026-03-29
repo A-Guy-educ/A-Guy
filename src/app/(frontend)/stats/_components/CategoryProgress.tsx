@@ -1,7 +1,8 @@
 /**
  * Category Progress Component
  *
- * Displays progress by category using TAB_COLORS
+ * Displays progress by category with colored progress bars and left border accents.
+ * Uses TAB_COLORS for per-category theming.
  */
 
 'use client'
@@ -10,7 +11,6 @@ import { useTranslations } from '@/ui/web/providers/I18n'
 import { Card, CardContent, CardHeader, CardTitle } from '@/ui/web/components/card'
 import { TAB_COLORS } from '@/app/(frontend)/courses/[courseSlug]/_components/CourseTabs'
 import { GraduationCap, Pencil, FileText, MessageCircle } from 'lucide-react'
-import { Progress } from '@/ui/web/components/progress'
 
 interface CategoryProgressData {
   learn: { count: number; total: number }
@@ -66,7 +66,11 @@ export function CategoryProgress({ data }: CategoryProgressProps) {
       {categories.map((category) => {
         const Icon = category.icon
         return (
-          <Card key={category.key} className="shadow-elevation-1 transition-shadow duration-normal hover:shadow-elevation-2">
+          <Card
+            key={category.key}
+            className="bg-card border shadow-elevation-1 rounded-xl p-card-padding border-l-4 hover:shadow-card-hover transition-all duration-normal"
+            style={{ borderLeftColor: category.color }}
+          >
             <CardHeader className="pb-2">
               <CardTitle
                 className="text-body-sm font-medium flex items-center gap-2"
@@ -78,15 +82,19 @@ export function CategoryProgress({ data }: CategoryProgressProps) {
             </CardHeader>
             <CardContent>
               <div className="text-heading-lg font-semibold">{category.value}</div>
-              <Progress
-                value={category.progress}
-                className="mt-2"
-                style={
-                  {
-                    '--progressforeground': category.color,
-                  } as React.CSSProperties
-                }
-              />
+              {/* Colored progress bar */}
+              <div className="relative w-full overflow-hidden bg-muted rounded-full h-2 mt-3">
+                <div
+                  className="h-full rounded-full transition-all duration-700 ease-out"
+                  style={{
+                    width: `${Math.min(100, Math.max(0, category.progress))}%`,
+                    backgroundColor: category.color,
+                  }}
+                />
+              </div>
+              <p className="text-body-xs text-muted-foreground mt-1.5">
+                {category.progress}%
+              </p>
             </CardContent>
           </Card>
         )

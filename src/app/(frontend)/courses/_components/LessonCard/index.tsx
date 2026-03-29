@@ -47,7 +47,7 @@ export function LessonCard({ lesson, courseSlug, chapterSlug }: LessonCardProps)
 
   return (
     <Card
-      className={cn('relative hover:shadow-elevation-3 transition-all duration-normal', isSoon && 'opacity-60')}
+      className={cn('relative hover:shadow-elevation-3 hover:border-primary/15 transition-all duration-normal', isSoon && 'opacity-60')}
     >
       <ContentStatusBadge
         contentStatus={lesson.contentStatus}

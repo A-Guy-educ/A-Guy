@@ -6,6 +6,7 @@ import { Sparkles } from 'lucide-react'
 import { cn } from '@/infra/utils/ui'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { Button } from '@/ui/web/components/button'
+import { StaggerGrid, StaggerItem } from '@/ui/web/components/motion'
 import { ConversationCard } from '../ConversationCard'
 
 interface ConversationSummary {
@@ -65,8 +66,9 @@ export function AskTab({ courseId, accentColor }: AskTabProps) {
   const visible = conversations.slice(0, visibleCount)
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <StaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {/* New Question card */}
+      <StaggerItem>
       <button
         onClick={() => router.push('/ask')}
         className={cn(
@@ -87,6 +89,7 @@ export function AskTab({ courseId, accentColor }: AskTabProps) {
           <Sparkles className="w-6 h-6 text-primary-foreground fill-current" />
         </div>
       </button>
+      </StaggerItem>
 
       {loading && (
         <div className="col-span-full text-center text-muted-foreground py-8">{t('loading')}</div>
@@ -94,15 +97,16 @@ export function AskTab({ courseId, accentColor }: AskTabProps) {
 
       {/* Conversation cards */}
       {visible.map((conv, idx) => (
-        <ConversationCard
-          key={conv.id}
-          index={total - idx}
-          title={conv.title || `${t('question')} ${total - idx}`}
-          subtitle={`${conv.messageCount} messages`}
-          onClick={() => router.push(`/ask?conversationId=${conv.id}`)}
-          onDelete={() => handleDelete(conv.id)}
-          accentColor={accentColor}
-        />
+        <StaggerItem key={conv.id}>
+          <ConversationCard
+            index={total - idx}
+            title={conv.title || `${t('question')} ${total - idx}`}
+            subtitle={`${conv.messageCount} messages`}
+            onClick={() => router.push(`/ask?conversationId=${conv.id}`)}
+            onDelete={() => handleDelete(conv.id)}
+            accentColor={accentColor}
+          />
+        </StaggerItem>
       ))}
 
       {/* Show more */}
@@ -113,6 +117,6 @@ export function AskTab({ courseId, accentColor }: AskTabProps) {
           </Button>
         </div>
       )}
-    </div>
+    </StaggerGrid>
   )
 }

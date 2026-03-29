@@ -5,6 +5,7 @@ import type { Chapter, Lesson } from '@/payload-types'
 import { getEffectiveLessonType } from '@/server/constants/lesson-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { useProgressMap } from '@/client/hooks/useProgressMap'
+import { StaggerGrid, StaggerItem } from '@/ui/web/components/motion'
 import { CourseLessonCard } from '../CourseLessonCard'
 import type { LessonProgress } from '../CoursePageContent'
 
@@ -60,7 +61,7 @@ export function PracticeTab({
         </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <StaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {practiceLessons.map((lesson, idx) => {
           const chapter = chapters.find((ch) => {
             const lessonChapterId =
@@ -70,18 +71,19 @@ export function PracticeTab({
           const chapterSlug = chapter?.slug ?? ''
 
           return (
-            <CourseLessonCard
-              key={lesson.id}
-              lesson={lesson}
-              index={idx + 1}
-              courseSlug={courseSlug}
-              chapterSlug={chapterSlug}
-              tabColor={tabColor}
-              progress={lessonProgressMap[lesson.id]?.percent ?? progressMap[lesson.id] ?? 0}
-            />
+            <StaggerItem key={lesson.id}>
+              <CourseLessonCard
+                lesson={lesson}
+                index={idx + 1}
+                courseSlug={courseSlug}
+                chapterSlug={chapterSlug}
+                tabColor={tabColor}
+                progress={lessonProgressMap[lesson.id]?.percent ?? progressMap[lesson.id] ?? 0}
+              />
+            </StaggerItem>
           )
         })}
-      </div>
+      </StaggerGrid>
     </>
   )
 }
