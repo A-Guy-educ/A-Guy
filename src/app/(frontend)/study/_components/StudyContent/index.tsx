@@ -16,10 +16,11 @@ import {
   type LessonType,
 } from '@/server/constants/lesson-types'
 import { Skeleton, SkeletonCard } from '@/ui/web/components/skeleton'
+import { ProgressCircle } from '@/ui/web/shared/ProgressCircle'
 import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
 import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { ContentStatusBadge } from '@/ui/web/shared/ContentStatusBadge'
-import { BarChart3, BookOpen, Clock, FileText, GraduationCap, PlayCircle, Sparkles, Target, Trophy } from 'lucide-react'
+import { BarChart3, BookOpen, FileText, GraduationCap, PlayCircle, Sparkles, Target, Trophy } from 'lucide-react'
 import { Button } from '@/ui/web/components/button'
 import { Progress } from '@/ui/web/components/progress'
 import { motion } from 'framer-motion'
@@ -482,8 +483,6 @@ function LessonGridCard({
   const href = `/courses/${courseSlug}/chapters/${chapterSlug}/lessons/${lesson.slug}`
   const isSoon = lesson.contentStatus === 'soon'
   const progress = progressProp ?? 0
-  const progressText =
-    progress >= 100 ? t('lessonCompleted') : progress > 0 ? t('statusInProgress') : t('notStarted')
 
   const accentColor = tabColor?.stroke ?? 'hsl(var(--primary))'
 
@@ -550,22 +549,25 @@ function LessonGridCard({
         </div>
 
         {/* Progress */}
-        <div className="shrink-0 flex flex-col items-end gap-1">
-          {progress > 0 ? (
-            <>
-              <span className="text-body-sm font-semibold" style={{ color: accentColor }}>
+        <div className="shrink-0">
+          <ProgressCircle
+            percentage={progress}
+            size={40}
+            strokeWidth={3}
+            strokeColor={accentColor}
+          >
+            {progress > 0 ? (
+              <text
+                x="50%"
+                y="50%"
+                textAnchor="middle"
+                dy=".3em"
+                className="text-[10px] font-bold fill-foreground"
+              >
                 {Math.round(progress)}%
-              </span>
-              <div className="w-14 h-1 rounded-full bg-muted overflow-hidden">
-                <div className="h-full rounded-full" style={{ width: `${progress}%`, backgroundColor: accentColor }} />
-              </div>
-            </>
-          ) : (
-            <span className="text-body-xs text-muted-foreground flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              {progressText}
-            </span>
-          )}
+              </text>
+            ) : null}
+          </ProgressCircle>
         </div>
       </SystemLink>
     </div>
