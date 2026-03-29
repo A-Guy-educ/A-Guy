@@ -19,7 +19,16 @@ interface McqEditorProps {
   onChange: (block: QuestionSelectMcqBlock) => void
 }
 
-export const McqEditor: React.FC<McqEditorProps> = ({ block, onChange }) => {
+export const McqEditor: React.FC<McqEditorProps> = ({ block: rawBlock, onChange }) => {
+  // Defensive defaults for malformed data from the database
+  const block = {
+    ...rawBlock,
+    answer: {
+      ...rawBlock.answer,
+      options: rawBlock.answer?.options ?? [],
+      correctOptionIds: rawBlock.answer?.correctOptionIds ?? [],
+    },
+  }
   const handleSelectionModeChange = (mode: 'single' | 'multiple') => {
     onChange(changeSelectionMode(block, mode))
   }

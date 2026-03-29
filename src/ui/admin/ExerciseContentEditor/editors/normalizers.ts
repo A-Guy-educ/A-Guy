@@ -15,7 +15,14 @@ import type {
  * If selectionMode is 'multiple', ensure multiSelect is true.
  */
 export function normalizeMcq(block: QuestionSelectMcqBlock): QuestionSelectMcqBlock {
-  const newBlock = { ...block }
+  const newBlock = {
+    ...block,
+    answer: {
+      ...block.answer,
+      options: block.answer?.options ?? [],
+      correctOptionIds: block.answer?.correctOptionIds ?? [],
+    },
+  }
 
   if (newBlock.selectionMode === 'single') {
     newBlock.answer.multiSelect = false
@@ -42,21 +49,22 @@ export function removeOptionAndNormalize(
   block: QuestionSelectMcqBlock,
   optionId: string,
 ): QuestionSelectMcqBlock {
+  const options = block.answer?.options ?? []
+  const correctOptionIds = block.answer?.correctOptionIds ?? []
+
   const newBlock = { ...block }
 
   // Actually remove the option from the options array
   newBlock.answer = {
     ...newBlock.answer,
-    options: newBlock.answer.options.filter((o) => o.id !== optionId),
+    options: options.filter((o) => o.id !== optionId),
   }
 
   // Get remaining option IDs from the filtered options
   const optionIds = new Set(newBlock.answer.options.map((o) => o.id))
 
   // Remove deleted option from correctOptionIds
-  newBlock.answer.correctOptionIds = newBlock.answer.correctOptionIds.filter((id) =>
-    optionIds.has(id),
-  )
+  newBlock.answer.correctOptionIds = correctOptionIds.filter((id) => optionIds.has(id))
 
   // If no correct options remain but options still exist, auto-select first
   if (newBlock.answer.correctOptionIds.length === 0 && optionIds.size > 0) {
@@ -73,11 +81,12 @@ export function changeSelectionMode(
   block: QuestionSelectMcqBlock,
   mode: 'single' | 'multiple',
 ): QuestionSelectMcqBlock {
+  const correctOptionIds = block.answer?.correctOptionIds ?? []
   const newBlock = { ...block, selectionMode: mode }
 
-  if (mode === 'single' && newBlock.answer.correctOptionIds.length > 0) {
+  if (mode === 'single' && correctOptionIds.length > 0) {
     // Keep only first correct option
-    newBlock.answer.correctOptionIds = [newBlock.answer.correctOptionIds[0]]
+    newBlock.answer = { ...newBlock.answer, correctOptionIds: [correctOptionIds[0]] }
   }
 
   return normalizeMcq(newBlock)
@@ -93,11 +102,15 @@ export function addOptionAndNormalize(
     content: { type: 'rich_text'; format: 'md-math-v1'; value: string; mediaIds: string[] }
   },
 ): QuestionSelectMcqBlock {
+  const options = block.answer?.options ?? []
+  const correctOptionIds = block.answer?.correctOptionIds ?? []
+
   const newBlock: QuestionSelectMcqBlock = {
     ...block,
     answer: {
       ...block.answer,
-      options: [...block.answer.options, { id: newOption.id, content: newOption.content }],
+      options: [...options, { id: newOption.id, content: newOption.content }],
+      correctOptionIds,
     },
   }
 
@@ -119,13 +132,13 @@ export function updateOptionAndNormalize(
     content: { type: 'rich_text'; format: 'md-math-v1'; value: string; mediaIds: string[] }
   }>,
 ): QuestionSelectMcqBlock {
+  const options = block.answer?.options ?? []
+
   const newBlock: QuestionSelectMcqBlock = {
     ...block,
     answer: {
       ...block.answer,
-      options: block.answer.options.map((opt) =>
-        opt.id === optionId ? { ...opt, ...updates } : opt,
-      ),
+      options: options.map((opt) => (opt.id === optionId ? { ...opt, ...updates } : opt)),
     },
   }
 
@@ -139,20 +152,25 @@ export function toggleCorrectOption(
   block: QuestionSelectMcqBlock,
   optionId: string,
 ): QuestionSelectMcqBlock {
+  const correctOptionIds = block.answer?.correctOptionIds ?? []
   const newBlock: QuestionSelectMcqBlock = { ...block }
 
   if (block.selectionMode === 'single') {
     // Single mode: only this option can be correct
-    newBlock.answer.correctOptionIds = [optionId]
+    newBlock.answer = { ...newBlock.answer, correctOptionIds: [optionId] }
   } else {
     // Multiple mode: toggle
-    const isCorrect = newBlock.answer.correctOptionIds.includes(optionId)
+    const isCorrect = correctOptionIds.includes(optionId)
     if (isCorrect) {
-      newBlock.answer.correctOptionIds = newBlock.answer.correctOptionIds.filter(
-        (id) => id !== optionId,
-      )
+      newBlock.answer = {
+        ...newBlock.answer,
+        correctOptionIds: correctOptionIds.filter((id) => id !== optionId),
+      }
     } else {
-      newBlock.answer.correctOptionIds = [...newBlock.answer.correctOptionIds, optionId]
+      newBlock.answer = {
+        ...newBlock.answer,
+        correctOptionIds: [...correctOptionIds, optionId],
+      }
     }
   }
 
