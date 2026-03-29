@@ -15,7 +15,7 @@
     "repo": "A-Guy"
   },
   "agent": {
-    "defaultRunner": "claude",
+    "provider": "anthropic",
     "modelMap": {
       "cheap": "haiku",
       "mid": "sonnet",

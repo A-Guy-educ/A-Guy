@@ -254,7 +254,7 @@ jobs:
             [ -n "$TASK_ID" ] && ARGS="$ARGS --task-id $TASK_ID"
             [ -n "$PR_NUMBER" ] && ARGS="$ARGS --pr-number $PR_NUMBER"
             [ -n "$FROM_STAGE" ] && ARGS="$ARGS --from $FROM_STAGE"
-            [ -n "$FEEDBACK" ] && ARGS="$ARGS --feedback \"$FEEDBACK\""
+            # FEEDBACK is passed via env var, not CLI arg (avoids shell escaping issues)
             [ "$DRY_RUN" = "true" ] && ARGS="$ARGS --dry-run"
             kody-engine-lite $CMD $ARGS
           fi
@@ -263,7 +263,7 @@ jobs:
         if: always()
         run: |
           TASK_ID="${{ github.event.inputs.task_id || needs.parse.outputs.task_id }}"
-          STATUS_FILE=".tasks/${TASK_ID}/status.json"
+          STATUS_FILE=".kody/tasks/${TASK_ID}/status.json"
           if [ -f "$STATUS_FILE" ]; then
             STATE=$(jq -r '.state' "$STATUS_FILE")
             ICON="❌"
@@ -355,11 +355,11 @@ jobs:
         run: kody-engine-lite --help
       - name: Dry run
         run: |
-          mkdir -p .tasks/smoke-test
-          echo "Smoke test task" > .tasks/smoke-test/task.md
+          mkdir -p .kody/tasks/smoke-test
+          echo "Smoke test task" > .kody/tasks/smoke-test/task.md
           kody-engine-lite run --task-id smoke-test --dry-run || true
-          if [ -f ".tasks/smoke-test/status.json" ]; then
+          if [ -f ".kody/tasks/smoke-test/status.json" ]; then
             echo "✓ status.json created"
-            cat .tasks/smoke-test/status.json
+            cat .kody/tasks/smoke-test/status.json
           fi
-          rm -rf .tasks/smoke-test
+          rm -rf .kody/tasks/smoke-test
