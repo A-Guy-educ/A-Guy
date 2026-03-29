@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react'
 import { X, Menu } from 'lucide-react'
+import { cn } from '@/infra/utils/ui'
 import { CMSLink } from '@/ui/web/Link'
 import type { Header as HeaderType, User } from '@/payload-types'
 import { LanguageSwitcher } from '@/ui/web/LanguageSwitcher'
@@ -56,23 +57,25 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   return (
     <>
       <div
-        className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] transition-opacity duration-slow ${
-          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
+        className={cn(
+          'fixed inset-0 bg-black/50 backdrop-blur-sm z-modal-backdrop transition-opacity duration-slow',
+          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none',
+        )}
         onClick={onClose}
       />
 
       <div
         ref={portalContainerRef}
-        className={`fixed top-0 right-0 h-full w-[280px] sm:w-[320px] bg-background border-l border-border z-[70] transform transition-transform duration-slow ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
+        className={cn(
+          'fixed top-0 right-0 h-full w-[280px] sm:w-[320px] bg-background border-l border-border z-modal shadow-modal transition-transform duration-slow ease-in-out',
+          isOpen ? 'translate-x-0' : 'translate-x-full',
+        )}
       >
         <div className="flex items-center justify-between p-card-padding border-b border-border">
           <h2 className="text-body-lg font-semibold">{tMenu('title')}</h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-muted transition-colors"
+            className="p-2 rounded-lg hover:bg-muted transition-all duration-normal"
             aria-label="Close menu"
           >
             <X className="w-5 h-5" />
@@ -98,7 +101,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                     <CMSLink
                       {...link}
                       appearance="link"
-                      className="block py-2 px-3 rounded-lg hover:bg-muted transition-colors text-body-md"
+                      className="block py-2 px-3 rounded-lg hover:bg-muted transition-all duration-normal text-body-md"
                     />
                   </div>
                 ))}
@@ -117,7 +120,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                     <CMSLink
                       {...link}
                       appearance="link"
-                      className="block py-2 px-3 rounded-lg hover:bg-muted transition-colors text-body-md"
+                      className="block py-2 px-3 rounded-lg hover:bg-muted transition-all duration-normal text-body-md"
                     />
                   </div>
                 ))}
@@ -154,7 +157,7 @@ export const MobileMenuButton: React.FC<{ onClick: () => void }> = ({ onClick })
   return (
     <button
       onClick={onClick}
-      className="p-2 rounded-lg hover:bg-muted transition-colors lg:hidden text-foreground"
+      className="p-2 rounded-lg hover:bg-muted transition-all duration-normal lg:hidden text-foreground"
       aria-label="Open menu"
     >
       <Menu className="w-6 h-6 text-foreground" />

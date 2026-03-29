@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { getUserProfile } from '@/client/state/localStorage/userProfile'
 import { ChatInterface } from '@/ui/web/chat'
 import { logger } from '@/infra/utils/logger'
+import { cn } from '@/infra/utils/ui'
 import { Loader2 } from 'lucide-react'
 import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { ExerciseWorkspace } from '@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseWorkspace'
@@ -59,17 +60,19 @@ export function AskContent({ conversationContextKey }: AskContentProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="w-6 h-6 animate-spin mr-2 text-muted-foreground" />
-        <span className="text-muted-foreground">{t('loading')}</span>
+      <div className={cn('flex items-center justify-center h-screen')}>
+        <Loader2 className={cn('w-icon-lg h-icon-lg animate-spin me-2 text-muted-foreground')} />
+        <span className={cn('text-body-sm text-muted-foreground')}>{t('loading')}</span>
       </div>
     )
   }
 
   if (!courseId) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center text-muted-foreground py-12">{t('noCourse')}</div>
+      <div className={cn('flex items-center justify-center h-screen')}>
+        <div className={cn('text-center text-muted-foreground py-section-md text-body-md')}>
+          {t('noCourse')}
+        </div>
       </div>
     )
   }

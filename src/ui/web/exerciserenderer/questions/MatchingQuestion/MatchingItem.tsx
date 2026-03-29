@@ -53,17 +53,17 @@ export function MatchingItem({
         !disabled &&
           !isSelected &&
           !isConnected &&
-          'hover:border-blue-400 hover:shadow-elevation-3 hover:-translate-y-0.5 cursor-pointer',
+          'hover:border-primary/60 hover:shadow-elevation-3 hover:-translate-y-0.5 cursor-pointer',
         canSelect && !isConnected && 'cursor-pointer',
         isSelected &&
-          'border-blue-500 bg-blue-50 dark:bg-blue-500/15 border-[3px] shadow-[0_0_10px_rgba(59,130,246,0.3)]',
+          'border-primary bg-primary/10 border-[3px] shadow-elevation-3',
         isConnected &&
           !isSelected &&
           !hasResult(correctState) &&
-          'border-blue-400 bg-blue-50 dark:bg-blue-500/10',
-        disabled && 'cursor-not-allowed opacity-70',
-        correctState === true && 'border-green-500 bg-green-50 dark:bg-green-500/10',
-        correctState === false && 'border-destructive bg-red-50 dark:bg-destructive/10',
+          'border-primary/60 bg-primary/5',
+        disabled && 'cursor-not-allowed opacity-disabled',
+        correctState === true && 'border-success bg-success/10',
+        correctState === false && 'border-destructive bg-destructive/10',
       )}
       role="option"
       aria-selected={isSelected}
@@ -75,7 +75,7 @@ export function MatchingItem({
       <span className="flex-1">
         <RichTextRenderer block={optionBlock} />
       </span>
-      {correctState === true && <Check className="w-5 h-5 text-green-600 shrink-0" />}
+      {correctState === true && <Check className="w-5 h-5 text-success shrink-0" />}
       {correctState === false && <X className="w-5 h-5 text-destructive shrink-0" />}
     </button>
   )

@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { SearchIcon, X, Loader2, BookOpen, FileText, HelpCircle, GraduationCap } from 'lucide-react'
 import { usePathname } from 'next/navigation'
+import { cn } from '@/infra/utils/ui'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { useCourseSearch, useCourseSlug } from '@/client/hooks/useCourseSearch'
@@ -85,7 +86,7 @@ export const CourseSearch: React.FC<CourseSearchProps> = ({ variant, onNavigate 
         {!isExpanded ? (
           <button
             onClick={() => setIsExpanded(true)}
-            className="p-2 rounded-lg hover:bg-hover transition-colors"
+            className="p-2 rounded-lg hover:bg-hover transition-all duration-normal"
             aria-label="Search"
           >
             <SearchIcon className="w-5" />
@@ -107,7 +108,7 @@ export const CourseSearch: React.FC<CourseSearchProps> = ({ variant, onNavigate 
                   setIsExpanded(false)
                   setQuery('')
                 }}
-                className="absolute end-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-muted transition-colors"
+                className="absolute end-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-muted transition-all duration-normal"
                 aria-label="Close search"
               >
                 <X className="w-3.5 h-3.5 text-muted-foreground" />
@@ -186,11 +187,12 @@ const SearchDropdown: React.FC<SearchDropdownProps> = ({
   onResultClick,
   mobile,
 }) => {
-  const positionClass = mobile ? 'mt-2 w-full' : 'absolute top-full end-0 mt-2 w-80'
-
   return (
     <div
-      className={`${positionClass} rounded-lg border border-border bg-background shadow-card z-50 max-h-80 overflow-y-auto`}
+      className={cn(
+        'rounded-lg border border-border bg-background shadow-dropdown z-dropdown max-h-80 overflow-y-auto',
+        mobile ? 'mt-2 w-full' : 'absolute top-full end-0 mt-2 w-80',
+      )}
     >
       {/* Loading */}
       {isLoading && (
@@ -320,7 +322,7 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({ href, title, subtit
   <SystemLink
     href={href}
     onClick={onClick}
-    className="block px-3 py-2 hover:bg-muted transition-colors"
+    className="block px-3 py-2 hover:bg-muted transition-all duration-normal"
   >
     <p className="text-body-sm text-foreground truncate">{title}</p>
     {subtitle && <p className="text-body-xs text-muted-foreground truncate">{subtitle}</p>}
