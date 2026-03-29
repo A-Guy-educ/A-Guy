@@ -44,16 +44,40 @@ function getBlobBaseUrl(): string | null {
 }
 
 /**
+ * Map of collection slug to Blob storage prefix.
+ * Must match the prefixes used by @payloadcms/storage-vercel-blob.
+ * The plugin defaults to the collection slug as prefix.
+ */
+const COLLECTION_PREFIX: Record<string, string> = {
+  media: 'media',
+  'exercise-assets': 'exercise-assets',
+}
+
+/**
  * Redirect media file requests directly to Vercel Blob CDN instead of
  * proxying through a serverless function. This eliminates the main
  * bottleneck causing multi-second (or minute-long) media load times.
+ *
+ * Handles two URL patterns:
+ *   /api/media/file/{filename}           → collection "media"
+ *   /api/exercise-assets/file/{filename}  → collection "exercise-assets"
  */
 function handleMediaRedirect(request: NextRequest): NextResponse | null {
   const { pathname } = request.nextUrl
-  if (!pathname.startsWith('/api/media/file/')) return null
 
-  const filename = pathname.slice('/api/media/file/'.length)
-  if (!filename) return null
+  // Match /api/{collection}/file/{filename}
+  let collectionSlug: string | null = null
+  let filename: string | null = null
+
+  if (pathname.startsWith('/api/media/file/')) {
+    collectionSlug = 'media'
+    filename = pathname.slice('/api/media/file/'.length)
+  } else if (pathname.startsWith('/api/exercise-assets/file/')) {
+    collectionSlug = 'exercise-assets'
+    filename = pathname.slice('/api/exercise-assets/file/'.length)
+  }
+
+  if (!collectionSlug || !filename) return null
 
   const ext = filename.slice(filename.lastIndexOf('.')).toLowerCase()
   if (PROXY_ONLY_EXTENSIONS.has(ext)) return null
@@ -61,7 +85,11 @@ function handleMediaRedirect(request: NextRequest): NextResponse | null {
   const blobBaseUrl = getBlobBaseUrl()
   if (!blobBaseUrl) return null
 
-  return NextResponse.redirect(`${blobBaseUrl}/${filename}`, { status: 302 })
+  // Build the Blob URL with the collection prefix, matching the plugin's storage path:
+  //   {baseUrl}/{prefix}/{encodedFilename}
+  const prefix = COLLECTION_PREFIX[collectionSlug] || collectionSlug
+  const encodedFilename = encodeURIComponent(decodeURIComponent(filename))
+  return NextResponse.redirect(`${blobBaseUrl}/${prefix}/${encodedFilename}`, { status: 302 })
 }
 
 export function middleware(request: NextRequest) {
@@ -140,6 +168,7 @@ export const config = {
   matcher: [
     // Media files — redirect to Blob CDN (must run before the general exclude)
     '/api/media/file/:path*',
+    '/api/exercise-assets/file/:path*',
     // Locale handling — exclude admin, other api routes, static assets
     '/((?!api|admin|_next|_static|.*\\..*).*)',
   ],
