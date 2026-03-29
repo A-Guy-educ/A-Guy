@@ -327,7 +327,13 @@ export function LessonPager({
                       {bodyRendered}
                     </div>
                   ) : (
-                    <p className="text-muted-foreground text-center">No content</p>
+                    <div className="text-center py-8">
+                      <div className="w-12 h-12 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
+                        <FileText className="w-6 h-6 text-muted-foreground/50" />
+                      </div>
+                      <p className="text-body-sm font-medium text-muted-foreground">No content</p>
+                      <p className="text-body-xs text-muted-foreground/60 mt-1">This page has no content yet</p>
+                    </div>
                   )}
                 </div>
               </motion.div>

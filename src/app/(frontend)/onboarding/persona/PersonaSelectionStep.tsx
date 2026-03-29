@@ -10,6 +10,7 @@ import { Button } from '@/ui/web/components/button'
 import { Card } from '@/ui/web/components/card'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { toast } from 'sonner'
+import { Users } from 'lucide-react'
 
 const PERSONA_COOKIE_NAME = 'onboarding_persona'
 const PERSONA_COOKIE_MAX_AGE = 600 // 10 minutes
@@ -155,7 +156,12 @@ export function PersonaSelectionStep({ returnTo }: PersonaSelectionStepProps) {
             ))}
           </div>
         ) : (
-          <p className="text-center text-muted-foreground">{t('noProfiles')}</p>
+          <div className="text-center py-8">
+            <div className="w-12 h-12 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
+              <Users className="w-6 h-6 text-muted-foreground/50" />
+            </div>
+            <p className="text-body-sm font-medium text-muted-foreground">{t('noProfiles')}</p>
+          </div>
         )}
 
         <div className="flex justify-between items-center mt-8">

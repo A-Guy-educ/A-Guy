@@ -7,6 +7,7 @@ import { logger } from '@/infra/utils/logger'
 import { cn } from '@/infra/utils/ui'
 import { Skeleton, SkeletonText } from '@/ui/web/components/skeleton'
 import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
+import { BookOpen } from 'lucide-react'
 import { ExerciseWorkspace } from '@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseWorkspace'
 import { AskPrimaryContent } from '../AskPrimaryContent'
 
@@ -86,8 +87,12 @@ export function AskContent({ conversationContextKey }: AskContentProps) {
   if (!courseId) {
     return (
       <div className={cn('flex items-center justify-center h-screen')}>
-        <div className={cn('text-center text-muted-foreground py-section-md text-body-md')}>
-          {t('noCourse')}
+        <div className="text-center">
+          <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
+            <BookOpen className="w-8 h-8 text-muted-foreground/50" />
+          </div>
+          <p className="text-body-lg font-medium text-muted-foreground">{t('noCourse')}</p>
+          <p className="text-body-sm text-muted-foreground/60 mt-1">{t('noCourseHint')}</p>
         </div>
       </div>
     )

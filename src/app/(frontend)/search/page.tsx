@@ -5,7 +5,7 @@ import { searchCourseContent } from '@/server/repos/queries/course-search'
 import { CollectionArchive } from '@/ui/web/CollectionArchive'
 import { Search } from '@/ui/web/search/Component'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
-import { BookOpen, FileText } from 'lucide-react'
+import { BookOpen, FileText, SearchX } from 'lucide-react'
 import PageClient from './page.client'
 
 type Args = {
@@ -39,7 +39,15 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
       </div>
 
       {!query ? null : !hasResults ? (
-        <div className="container text-body-md text-muted-foreground">No results found.</div>
+        <div className="container">
+          <div className="text-center py-16">
+            <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
+              <SearchX className="w-8 h-8 text-muted-foreground/50" />
+            </div>
+            <p className="text-body-lg font-medium text-muted-foreground">No results found</p>
+            <p className="text-body-sm text-muted-foreground/60 mt-1">Try a different search term</p>
+          </div>
+        </div>
       ) : (
         <>
           {/* Course Content Results */}

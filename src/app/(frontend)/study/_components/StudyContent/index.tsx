@@ -399,8 +399,12 @@ export function StudyContent({
             })}
           </div>
         ) : (
-          <div className="text-center py-20 text-muted-foreground italic">
-            <p className="text-body-lg">{ts('noTopicsAvailable')}</p>
+          <div className="text-center py-16">
+            <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
+              <BookOpen className="w-8 h-8 text-muted-foreground/50" />
+            </div>
+            <p className="text-body-lg font-medium text-muted-foreground">{ts('noTopicsAvailable')}</p>
+            <p className="text-body-sm text-muted-foreground/60 mt-1">Check back later for new content</p>
           </div>
         )}
 
@@ -500,8 +504,8 @@ function LessonGridCard({
   return (
     <div
       className={cn(
-        'relative group rounded-xl bg-card border border-border/30 transition-all duration-normal',
-        !isSoon && 'hover:border-border/50',
+        'relative group rounded-xl bg-card border border-border/30 transition-all duration-normal will-change-transform',
+        !isSoon && 'hover:border-border/50 active:scale-[0.98]',
         isSoon && 'opacity-50',
       )}
       style={{

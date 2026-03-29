@@ -7,6 +7,7 @@ import { Badge } from '@/ui/web/components/badge'
 import { Card } from '@/ui/web/components/card'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { toast } from 'sonner'
+import { Users } from 'lucide-react'
 
 interface TeacherProfile {
   slug: string
@@ -96,8 +97,11 @@ export function TeachersProfileSection() {
 
   if (profiles.length === 0) {
     return (
-      <div className="py-4">
-        <p className="text-muted-foreground">{t('noProfiles')}</p>
+      <div className="text-center py-8">
+        <div className="w-12 h-12 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
+          <Users className="w-6 h-6 text-muted-foreground/50" />
+        </div>
+        <p className="text-body-sm font-medium text-muted-foreground">{t('noProfiles')}</p>
       </div>
     )
   }

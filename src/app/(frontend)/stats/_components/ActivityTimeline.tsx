@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { Card, CardContent, CardHeader, CardTitle } from '@/ui/web/components/card'
-import { CheckCircle2, FileQuestion, MessageCircle, HelpCircle, Activity } from 'lucide-react'
+import { CheckCircle2, FileQuestion, MessageCircle, HelpCircle, Activity as ActivityIcon } from 'lucide-react'
 
 interface Activity {
   actionType: string
@@ -35,7 +35,7 @@ function getActivityIcon(actionType: string) {
     case 'conversation_started':
       return <MessageCircle className="w-4 h-4 text-accent-foreground" />
     default:
-      return <Activity className="w-4 h-4 text-muted-foreground" />
+      return <ActivityIcon className="w-4 h-4 text-muted-foreground" />
   }
 }
 
@@ -115,7 +115,13 @@ export function ActivityTimeline() {
           <CardTitle>{t('recentActivity')}</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground text-center py-4">{t('noActivity')}</p>
+          <div className="text-center py-6">
+            <div className="w-12 h-12 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
+              <ActivityIcon className="w-6 h-6 text-muted-foreground/50" />
+            </div>
+            <p className="text-body-sm font-medium text-muted-foreground">{t('noActivity')}</p>
+            <p className="text-body-xs text-muted-foreground/60 mt-1">{t('noActivitySub')}</p>
+          </div>
         </CardContent>
       </Card>
     )

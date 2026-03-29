@@ -37,7 +37,7 @@ export function CourseLessonCard({
   const progressText =
     progress >= 100 ? t('lessonCompleted') : progress > 0 ? t('statusInProgress') : t('notStarted')
 
-  const accentColor = tabColor?.stroke ?? 'hsl(var(--primary))'
+  const accentColor = isSoon ? 'var(--border)' : (tabColor?.stroke ?? 'hsl(var(--primary))')
 
   const handleLessonClick = (e: React.MouseEvent) => {
     // If lesson is "Soon", show locked message and prevent navigation
@@ -51,12 +51,14 @@ export function CourseLessonCard({
     <div
       className={cn(
         'group relative rounded-2xl bg-card border border-border/40 shadow-elevation-1',
-        'transition-all duration-normal overflow-hidden',
-        'border-s-4',
-        !isSoon && 'hover:shadow-card-hover hover:-translate-y-0.5',
+        'transition-all duration-normal overflow-hidden will-change-transform',
+        !isSoon && 'hover:border-border/50 active:scale-[0.98]',
         isSoon && 'opacity-60',
       )}
-      style={{ borderInlineStartColor: accentColor }}
+      style={{
+        borderInlineStartWidth: '3px',
+        borderInlineStartColor: accentColor,
+      }}
     >
       <ContentStatusBadge
         contentStatus={lesson.contentStatus}
@@ -91,11 +93,11 @@ export function CourseLessonCard({
           </p>
         </div>
 
-        <div className="relative shrink-0 w-16 h-16">
+        <div className="relative shrink-0 w-10 h-10">
           <ProgressCircle
             percentage={progress}
-            size={64}
-            strokeWidth={4}
+            size={40}
+            strokeWidth={3}
             strokeColor={tabColor?.stroke}
           >
             <text
@@ -103,7 +105,7 @@ export function CourseLessonCard({
               y="50%"
               textAnchor="middle"
               dy=".3em"
-              className="text-body-sm font-bold fill-foreground"
+              className="text-[10px] font-bold fill-foreground"
             >
               {Math.round(progress)}%
             </text>

@@ -21,7 +21,13 @@ export function ChapterCard({ chapter, courseSlug }: ChapterCardProps) {
   }
 
   return (
-    <Card className={cn('border-s-4 border-s-primary hover:shadow-card-hover hover:-translate-y-0.5')}>
+    <Card
+      className={cn('hover:border-border/50 active:scale-[0.98] will-change-transform')}
+      style={{
+        borderInlineStartWidth: '3px',
+        borderInlineStartColor: 'hsl(var(--primary))',
+      }}
+    >
       <CardHeader>
         {chapter.chapterLabel && (
           <div className="mb-2">
