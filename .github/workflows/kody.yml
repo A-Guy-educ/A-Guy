@@ -292,8 +292,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: kody-tasks-${{ github.event.inputs.task_id || needs.parse.outputs.task_id }}
-          path: .kody/tasks/
-          retention-days: 7
+          path: .tasks/
+          retention-days: 3
 
   # ─── Error Notifications ─────────────────────────────────────────────────────
   notify-parse-error:
