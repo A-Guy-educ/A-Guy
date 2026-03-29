@@ -38,6 +38,8 @@ interface LessonPagerProps {
   validFiles?: MediaType[]
   /** Lesson ID for chat context (defaults to lessonId) */
   chatLessonId?: string
+  /** Whether the lesson has context text (controls chat visibility) */
+  hasLessonContext?: boolean
   /** Formula sheet data (passed to ChatInterface) */
   formulaSheet?: import('@/payload-types').FormulaSheet | null
 }
@@ -54,6 +56,7 @@ export function LessonPager({
   contentPageBodies,
   validFiles,
   chatLessonId,
+  hasLessonContext,
   formulaSheet,
 }: LessonPagerProps) {
   const t = useTranslations('courses')
@@ -155,35 +158,39 @@ export function LessonPager({
           </div>
         }
         chatContent={
-          <ChatInterface
-            lessonId={lessonId}
-            exerciseId={exercise.id}
-            currentExercise={{
-              id: exercise.id,
-              title: exercise.title ?? '',
-              content: {
-                blocks: (exercise.content as unknown as ExerciseContentData).blocks.map((block) => {
-                  const { id, type, ...rest } = block
-                  return { id, type, ...rest }
-                }),
-              },
-            }}
-            mediaMap={
-              mediaMap as Record<
-                string,
-                {
-                  id: string
-                  url?: string | null
-                  filename?: string
-                  mimeType?: string
-                  altText?: string
-                }
-              >
-            }
-            translationNamespace="courses"
-            showMathTools={true}
-            formulaSheet={formulaSheet}
-          />
+          hasLessonContext ? (
+            <ChatInterface
+              lessonId={lessonId}
+              exerciseId={exercise.id}
+              currentExercise={{
+                id: exercise.id,
+                title: exercise.title ?? '',
+                content: {
+                  blocks: (exercise.content as unknown as ExerciseContentData).blocks.map(
+                    (block) => {
+                      const { id, type, ...rest } = block
+                      return { id, type, ...rest }
+                    },
+                  ),
+                },
+              }}
+              mediaMap={
+                mediaMap as Record<
+                  string,
+                  {
+                    id: string
+                    url?: string | null
+                    filename?: string
+                    mimeType?: string
+                    altText?: string
+                  }
+                >
+              }
+              translationNamespace="courses"
+              showMathTools={true}
+              formulaSheet={formulaSheet}
+            />
+          ) : null
         }
       />
     )
@@ -301,12 +308,14 @@ export function LessonPager({
           </div>
         }
         chatContent={
-          <ChatInterface
-            lessonId={chatLessonId ?? lessonId}
-            translationNamespace="courses"
-            showMathTools={true}
-            formulaSheet={formulaSheet}
-          />
+          hasLessonContext ? (
+            <ChatInterface
+              lessonId={chatLessonId ?? lessonId}
+              translationNamespace="courses"
+              showMathTools={true}
+              formulaSheet={formulaSheet}
+            />
+          ) : null
         }
       />
     )

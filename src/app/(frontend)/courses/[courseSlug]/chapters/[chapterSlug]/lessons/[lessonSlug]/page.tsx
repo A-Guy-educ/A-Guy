@@ -122,6 +122,8 @@ export default async function LessonPage({ params }: LessonPageProps) {
     }
   }
 
+  const hasLessonContext = Boolean(lesson.lessonContextText?.trim())
+
   // Resolve content files (PDFs, etc.) — needed by both blocks and legacy paths
   const validFiles =
     lesson.contentFiles
@@ -175,6 +177,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
           contentPageBodies={contentPageBodies}
           validFiles={validFiles}
           chatLessonId={lesson.id}
+          hasLessonContext={hasLessonContext}
           formulaSheet={formulaSheet}
         />
       </AccessGateProvider>
@@ -219,6 +222,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
             lessonSlug={lessonSlug}
             lessonId={lesson.id}
             mediaMap={mediaMap}
+            hasLessonContext={hasLessonContext}
             formulaSheet={formulaSheet}
           />
         ) : (
@@ -230,12 +234,14 @@ export default async function LessonPage({ params }: LessonPageProps) {
               backUrl={backUrl}
               primaryContent={<EmptyLessonPlaceholder />}
               chatContent={
-                <ChatInterface
-                  lessonId={chatLessonId}
-                  translationNamespace="courses"
-                  showMathTools={true}
-                  formulaSheet={formulaSheet}
-                />
+                hasLessonContext ? (
+                  <ChatInterface
+                    lessonId={chatLessonId}
+                    translationNamespace="courses"
+                    showMathTools={true}
+                    formulaSheet={formulaSheet}
+                  />
+                ) : null
               }
             />
           </>
@@ -262,6 +268,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
         lessonSlug={lessonSlug}
         lessonId={lesson.id}
         chatLessonId={chatLessonId}
+        hasLessonContext={hasLessonContext}
         formulaSheet={formulaSheet}
       />
     </AccessGateProvider>

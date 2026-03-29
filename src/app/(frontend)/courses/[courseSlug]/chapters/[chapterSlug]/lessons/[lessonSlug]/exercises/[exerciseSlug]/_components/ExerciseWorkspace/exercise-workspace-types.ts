@@ -15,8 +15,8 @@ export interface ExerciseWorkspaceProps {
   backUrl?: string
   /** Primary content to display (PDF or exercise content) */
   primaryContent: React.ReactNode
-  /** Chat interface component */
-  chatContent: React.ReactNode
+  /** Chat interface component (omit to hide chat) */
+  chatContent?: React.ReactNode
 }
 
 /**

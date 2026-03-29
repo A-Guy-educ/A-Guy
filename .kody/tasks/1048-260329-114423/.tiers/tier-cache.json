@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "entries": {
+    "task.md": {
+      "source": "/home/runner/work/A-Guy/A-Guy/.kody/tasks/1048-260329-114423/task.md",
+      "hash": "e9b4a12e60593edd",
+      "L0": "# Chat should be hidden if  lesson has no context text\nChat should be hidden if  lesson has no context text.",
+      "L1": "# Chat should be hidden if  lesson has no context text\n# 🐞 Bug Report\n## 1. Title\nChat should be hidden if  lesson has no context text\n## 2. Environment\n- Environment: dev\n- User Role / Tenant: Student\n## 3. Preconditions\n_None specified_\n## 4. Steps to Reproduce\nhttps://dev.aguy.co.il/courses/grade-9/chapters/makbilim/lessons/leffon-with-pdf-without-context/view\n## 5. Expected Result\nchat should be hidden because lesson has no context text\n## 6. Actual Result\nchat is visible\n## 7. Priority\n🔴 P0 — Critical\n## 8. Reproducibility\nalways",
+      "L2": "# Chat should be hidden if  lesson has no context text\n\n# 🐞 Bug Report\n\n## 1. Title\nChat should be hidden if  lesson has no context text\n\n## 2. Environment\n- Environment: dev\n- User Role / Tenant: Student\n\n## 3. Preconditions\n_None specified_\n\n## 4. Steps to Reproduce\nhttps://dev.aguy.co.il/courses/grade-9/chapters/makbilim/lessons/leffon-with-pdf-without-context/view\n\n\n\n## 5. Expected Result\nchat should be hidden because lesson has no context text\n\n## 6. Actual Result\nchat is visible\n\n## 7. Priority\n🔴 P0 — Critical\n\n## 8. Reproducibility\nalways\n"
+    },
+    "task.json": {
+      "source": "/home/runner/work/A-Guy/A-Guy/.kody/tasks/1048-260329-114423/task.json",
+      "hash": "759631939a3d6be9",
+      "L0": "Title: Hide chat when lesson has no context text | Type: bugfix | Risk: low",
+      "L1": "- task_type: bugfix\n- title: Hide chat when lesson has no context text\n- description: Chat interface should be hidden if lesson's lessonContextText field is empty or null. Currently, chat is always visible regardless of whether lesson context exists.\n- scope: [4 items] src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/page.tsx, src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/PdfLessonPager/index.tsx, src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ExercisesPager/index.tsx\n- risk_level: low\n- questions: [0 items] ",
+      "L2": "```json\n{\n  \"task_type\": \"bugfix\",\n  \"title\": \"Hide chat when lesson has no context text\",\n  \"description\": \"Chat interface should be hidden if lesson's lessonContextText field is empty or null. Currently, chat is always visible regardless of whether lesson context exists.\",\n  \"scope\": [\n    \"src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/page.tsx\",\n    \"src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/PdfLessonPager/index.tsx\",\n    \"src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ExercisesPager/index.tsx\",\n    \"src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/index.tsx\"\n  ],\n  \"risk_level\": \"low\",\n  \"questions\": []\n}\n```\n"
+    },
+    "context.md": {
+      "source": "/home/runner/work/A-Guy/A-Guy/.kody/tasks/1048-260329-114423/context.md",
+      "hash": "17b763e9525fbc37",
+      "L0": "### taskify (2026-03-29T11:47:22)\nNow I have a complete understanding of the bug.",
+      "L1": "### taskify (2026-03-29T11:47:22)\nNow I have a complete understanding of the bug. Let me classify this task:",
+      "L2": "\n### taskify (2026-03-29T11:47:22)\nNow I have a complete understanding of the bug. Let me classify this task:\n\n```json\n{\n  \"task_type\": \"bugfix\",\n  \"title\": \"Hide chat when lesson has no context text\",\n  \"description\": \"Chat interface should be hidden in lesson views (PDF, exercises, content pages) when the lesson's 'lessonContextText' field is empty or null. Currently, chat is shown unconditionally in all lesson views regardless of whether context text exists.\",\n  \"scope\": [\n    \"src/app/(frontend)/courses/[courseSlug]/chapters/\n...(truncated)\n"
+    }
+  }
+}
