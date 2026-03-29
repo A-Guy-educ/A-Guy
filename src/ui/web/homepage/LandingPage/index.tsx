@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect } from 'react'
 import { cn } from '@/infra/utils/ui'
 import { Button } from '@/ui/web/components/button'
 import { useTranslations } from '@/ui/web/providers/I18n'
@@ -46,11 +45,7 @@ const STEPS = [
 export function LandingPage({ onGetStarted }: LandingPageProps) {
   const t = useTranslations('landing')
 
-  // Hide header and footer for immersive landing experience
-  useEffect(() => {
-    document.body.classList.add('landing-page')
-    return () => document.body.classList.remove('landing-page')
-  }, [])
+  // Header/footer hiding is managed by HomePage parent component
 
   return (
     <div className="overflow-hidden">

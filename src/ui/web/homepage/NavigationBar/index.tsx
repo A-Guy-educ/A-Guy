@@ -6,7 +6,6 @@ import { useTranslations } from '@/ui/web/providers/I18n'
 import { cn } from '@/infra/utils/ui'
 import { motion } from 'framer-motion'
 import { BookOpen, Target, MessageCircle, ClipboardCheck, type LucideIcon } from 'lucide-react'
-import { OnboardingTip } from '@/ui/web/components/onboarding-tip'
 
 interface NavItem {
   key: string
@@ -68,20 +67,6 @@ export function NavigationBar() {
                 )}
               </SystemLink>
             )
-
-            if (item.key === 'ask') {
-              return (
-                <OnboardingTip
-                  key={item.key}
-                  id="nav-ask"
-                  tip={t('askTip')}
-                  position="bottom"
-                  className="flex-1"
-                >
-                  {link}
-                </OnboardingTip>
-              )
-            }
 
             return link
           })}

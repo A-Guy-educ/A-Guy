@@ -14,6 +14,12 @@ export function HomePage() {
   const router = useRouter()
   const t = useTranslations('homepage.greeting')
 
+  // Hide header and footer for immersive onboarding experience
+  useEffect(() => {
+    document.body.classList.add('landing-page')
+    return () => document.body.classList.remove('landing-page')
+  }, [])
+
   useEffect(() => {
     const profile = getUserProfile()
     if (profile?.gradeLevel) {

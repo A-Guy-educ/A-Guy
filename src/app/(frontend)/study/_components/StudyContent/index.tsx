@@ -23,7 +23,6 @@ import { ProgressCircle } from '@/ui/web/shared/ProgressCircle'
 import { BarChart3, Clock, GraduationCap, PlayCircle, Sparkles } from 'lucide-react'
 import { Button } from '@/ui/web/components/button'
 import { Progress } from '@/ui/web/components/progress'
-import { OnboardingTip } from '@/ui/web/components/onboarding-tip'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { useEffect, useMemo, useState } from 'react'
@@ -329,7 +328,7 @@ export function StudyContent({
               className="mt-4 max-w-sm mx-auto"
             >
               <div className="flex items-center justify-between text-body-xs text-muted-foreground mb-1.5">
-                <span>{ts('overallProgress') ?? `${overallProgress}%`}</span>
+                <span>{`${overallProgress}%`}</span>
                 <span className="font-bold" style={{ color: tabColor.stroke }}>
                   {overallProgress}%
                 </span>
@@ -446,24 +445,17 @@ export function StudyContent({
         {/* Footer actions as styled cards */}
         <div className="mt-16 pt-8 border-t border-border">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-content-gap">
-            <OnboardingTip
-              id="study-stats"
-              tip={t('statsTip')}
-              position="top"
-              className="flex"
+            <SystemLink
+              href="/stats"
+              className="group flex flex-col items-center gap-2 bg-card border border-border rounded-2xl p-6 hover:border-primary/30 hover:shadow-elevation-2 transition-all"
             >
-              <SystemLink
-                href="/stats"
-                className="group flex flex-1 flex-col items-center gap-2 bg-card border border-border rounded-2xl p-6 hover:border-primary/30 hover:shadow-elevation-2 transition-all"
-              >
-                <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                  <BarChart3 className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                </div>
-                <span className="text-body-sm font-bold text-foreground">
-                  {t('statsAndPerformance')}
-                </span>
-              </SystemLink>
-            </OnboardingTip>
+              <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                <BarChart3 className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+              </div>
+              <span className="text-body-sm font-bold text-foreground">
+                {t('statsAndPerformance')}
+              </span>
+            </SystemLink>
             <SystemLink
               href="/study-plan"
               className="group flex flex-col items-center gap-2 bg-primary text-primary-foreground rounded-2xl p-6 shadow-elevation-2 hover:opacity-90 transition-all"
