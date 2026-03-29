@@ -36,9 +36,15 @@ const PROXY_ONLY_EXTENSIONS = new Set(['.pdf'])
  * Public URL:   https://{storeId}.public.blob.vercel-storage.com
  */
 function getBlobBaseUrl(): string | null {
+  // Prefer explicit base URL if set (avoids token parsing edge cases)
+  const explicitUrl = process.env.BLOB_PUBLIC_BASE_URL
+  if (explicitUrl) return explicitUrl.replace(/\/$/, '')
+
+  // Otherwise extract storeId from token
+  // Token format: vercel_blob_rw_{storeId}_{rest...}
   const token = process.env.BLOB_READ_WRITE_TOKEN
   if (!token) return null
-  const match = token.match(/^vercel_blob_rw_([a-z\d]+)_[a-z\d]+$/i)
+  const match = token.match(/^vercel_blob_rw_([a-z\d]+)_/i)
   if (!match) return null
   return `https://${match[1].toLowerCase()}.public.blob.vercel-storage.com`
 }
