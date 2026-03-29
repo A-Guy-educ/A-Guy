@@ -26,6 +26,11 @@ const config = {
     'bg-success/30',
     'border-warning',
     'bg-warning/30',
+    'my-0',
+    'my-4',
+    'my-8',
+    'my-16',
+    'my-24',
   ],
   theme: {
     container: {

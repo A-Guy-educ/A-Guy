@@ -1,5 +1,6 @@
 import type { Block } from 'payload'
 
+import { blockSpacingField } from '../../fields/blockSpacing'
 import { validateHtml } from './validate-html'
 
 export const HtmlBlock: Block = {
@@ -24,5 +25,6 @@ export const HtmlBlock: Block = {
       },
       validate: validateHtml,
     },
+    blockSpacingField,
   ],
 }
