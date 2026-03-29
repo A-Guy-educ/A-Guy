@@ -543,6 +543,12 @@ math-field:focus-within {
   color: hsl(var(--text-highlight-8));
 }
 
+/* Landing page: hide chrome for immersive experience */
+body.landing-page header,
+body.landing-page footer {
+  display: none !important;
+}
+
 /* Document Mode Print Styles */
 @media print {
   .document-mode {

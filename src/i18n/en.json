@@ -1,4 +1,55 @@
 {
+  "landing": {
+    "hero": {
+      "badge": "Your digital math teacher",
+      "title": "Learn Math the Smart Way",
+      "subtitle": "Interactive lessons, guided practice, instant answers to your questions, and exam preparation — all in one place.",
+      "cta": "Start Learning",
+      "secondaryCta": "Explore Courses"
+    },
+    "features": {
+      "heading": "Everything You Need to Succeed",
+      "subheading": "Four powerful tools designed to help you master math at your own pace",
+      "study": {
+        "title": "Study",
+        "description": "Structured lessons that break down complex topics into clear, digestible steps. Learn at your own pace with interactive content."
+      },
+      "practice": {
+        "title": "Practice",
+        "description": "Targeted exercises that reinforce what you've learned. Get instant feedback and track your progress over time."
+      },
+      "ask": {
+        "title": "Ask",
+        "description": "Stuck on a problem? Ask your AI teacher for help. Get step-by-step explanations tailored to your level."
+      },
+      "test": {
+        "title": "Test",
+        "description": "Prepare for exams with realistic practice tests. Identify your strengths and areas that need more work."
+      }
+    },
+    "howItWorks": {
+      "heading": "Get Started in 3 Steps",
+      "steps": {
+        "choose": {
+          "title": "Choose Your Course",
+          "description": "Select your grade level and course to get a personalized learning path."
+        },
+        "learn": {
+          "title": "Learn & Practice",
+          "description": "Work through lessons, solve exercises, and ask questions when you need help."
+        },
+        "master": {
+          "title": "Master & Test",
+          "description": "Track your progress, take practice tests, and build confidence for exams."
+        }
+      }
+    },
+    "cta": {
+      "heading": "Ready to Start Learning?",
+      "subheading": "Join and start improving your math skills today. It only takes a minute to get started.",
+      "button": "Get Started Now"
+    }
+  },
   "home": {
     "title": "Home - A-Guy",
     "description": "Your digital teacher - learning, practice, questions and exams"

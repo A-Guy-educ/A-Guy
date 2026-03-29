@@ -3,26 +3,27 @@
 import { useState, useEffect } from 'react'
 import { getUserProfile } from '@/client/state/localStorage/userProfile'
 import { GreetingFlow } from '@/ui/web/homepage/GreetingFlow'
+import { LandingPage } from '@/ui/web/homepage/LandingPage'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from '@/ui/web/providers/I18n'
 
+type HomeView = 'loading' | 'landing' | 'greeting'
+
 export function HomePage() {
-  const [showGreeting, setShowGreeting] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
+  const [view, setView] = useState<HomeView>('loading')
   const router = useRouter()
   const t = useTranslations('homepage.greeting')
 
   useEffect(() => {
     const profile = getUserProfile()
-    if (!profile || !profile.gradeLevel) {
-      setShowGreeting(true)
-    } else {
+    if (profile?.gradeLevel) {
       router.push('/study')
+    } else {
+      setView('landing')
     }
-    setIsLoading(false)
   }, [router])
 
-  if (isLoading) {
+  if (view === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-muted-foreground">{t('loading')}</div>
@@ -30,9 +31,9 @@ export function HomePage() {
     )
   }
 
-  if (showGreeting) {
+  if (view === 'greeting') {
     return <GreetingFlow onComplete={() => router.push('/study')} />
   }
 
-  return null
+  return <LandingPage onGetStarted={() => setView('greeting')} />
 }
