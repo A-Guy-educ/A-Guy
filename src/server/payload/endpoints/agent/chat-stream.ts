@@ -31,6 +31,9 @@ import {
   formatDoneEvent,
   formatErrorEvent,
 } from './chat/sse-helpers'
+import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
+import { AccountRole } from '@/server/payload/collections/Users/roles'
+import { checkAndIncrementChatQuota } from '@/server/services/chat-quota'
 import { checkRateLimit } from '@/server/services/rate-limit'
 import {
   buildGuestSessionCookieHeader,
@@ -161,6 +164,28 @@ export async function agentChatStream(
         { error: 'Admin mode is not supported in streaming mode' },
         { status: 400 },
       )
+    }
+
+    // Check authenticated user chat quota (skip for admins, guests, and hidden messages)
+    if (user && !validated.hidden) {
+      const userRole = isUsersCollectionUser(user)
+        ? ((user as unknown as { role: AccountRole }).role as AccountRole)
+        : AccountRole.Student
+      if (userRole !== AccountRole.Admin) {
+        const quota = await checkAndIncrementChatQuota(req.payload, user.id)
+        if (!quota.allowed) {
+          return Response.json(
+            {
+              error: 'Chat limit reached. Try again later.',
+              quotaExceeded: true,
+              questionsUsed: quota.questionsUsed,
+              maxQuestions: quota.maxQuestions,
+              resetAt: quota.resetAt,
+            },
+            { status: 429 },
+          )
+        }
+      }
     }
 
     // 4) Check for media attachments - streaming doesn't support multimodal

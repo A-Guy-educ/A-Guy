@@ -49,6 +49,11 @@ export interface ChatConfig {
       capabilities: string[]
     }
   }
+  /** Student chat quota settings */
+  quota?: {
+    maxQuestions: number
+    windowHours: number
+  }
 }
 
 export async function getChatConfig(): Promise<ChatConfig> {

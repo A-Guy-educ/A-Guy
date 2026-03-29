@@ -151,6 +151,24 @@ export const Users: CollectionConfig = {
         },
       ],
     },
+    // Chat quota fields (rolling window)
+    {
+      name: 'chatQuestionsUsed',
+      type: 'number',
+      defaultValue: 0,
+      admin: {
+        position: 'sidebar',
+        description: 'Questions used in current window',
+      },
+    },
+    {
+      name: 'chatWindowStart',
+      type: 'date',
+      admin: {
+        position: 'sidebar',
+        description: 'When the current chat quota window started',
+      },
+    },
     {
       name: 'oauthLoginSecretEnc',
       type: 'text',

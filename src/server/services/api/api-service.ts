@@ -13,6 +13,10 @@ export interface ChatApiResponse {
   error?: string
   authRequired?: boolean
   guestLimitReached?: boolean
+  quotaExceeded?: boolean
+  questionsUsed?: number
+  maxQuestions?: number
+  resetAt?: string | null
   conversationId?: string
   contextKey?: string
   isGuestMode?: boolean
@@ -110,6 +114,16 @@ export const apiService = {
             success: false,
             error: data.error || 'Message limit reached',
             guestLimitReached: true,
+          }
+        }
+        if (response.status === 429 && data.quotaExceeded) {
+          return {
+            success: false,
+            error: data.error || 'Chat limit reached',
+            quotaExceeded: true,
+            questionsUsed: data.questionsUsed,
+            maxQuestions: data.maxQuestions,
+            resetAt: data.resetAt,
           }
         }
         return { success: false, error: data.error || 'Request failed' }
@@ -287,6 +301,10 @@ export const apiService = {
       }
 
       const errorData = await response.json().catch(() => ({}))
+      if (response.status === 429 && errorData.quotaExceeded) {
+        yield { type: 'error', error: `quota_exceeded:${JSON.stringify(errorData)}` }
+        return
+      }
       yield { type: 'error', error: errorData.error || 'Request failed' }
       return
     }
