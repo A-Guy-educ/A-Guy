@@ -152,6 +152,19 @@ export const ChatMessageSentSchema = z.object({
 })
 
 /**
+ * photo_sent_to_chat - Track photo/file upload to chat
+ * Destination: Mixpanel
+ * Priority: P1
+ *
+ * NO file content - only metadata
+ */
+export const PhotoSentToChatSchema = z.object({
+  conversation_id: z.string().describe('Chat conversation ID'),
+  file_count: z.number().int().positive().describe('Number of files uploaded'),
+  file_types: z.array(z.string()).describe('MIME types of uploaded files'),
+})
+
+/**
  * login_modal_shown - Auth gate modal appeared for anonymous user
  * Destination: Mixpanel
  * Priority: P0
@@ -433,6 +446,7 @@ export const eventSchemas = {
   [PRODUCT_EVENTS.LESSON_COMPLETED]: LessonCompletedSchema,
   [PRODUCT_EVENTS.PDF_VIEWED]: PdfViewedSchema,
   [PRODUCT_EVENTS.CHAT_MESSAGE_SENT]: ChatMessageSentSchema,
+  [PRODUCT_EVENTS.PHOTO_SENT_TO_CHAT]: PhotoSentToChatSchema,
   [PRODUCT_EVENTS.LOGIN_MODAL_SHOWN]: LoginModalShownSchema,
   [PRODUCT_EVENTS.REGISTRATION_PROMPT_SHOWN]: RegistrationPromptShownSchema,
   [PRODUCT_EVENTS.REGISTRATION_COMPLETED]: RegistrationCompletedSchema,
@@ -478,6 +492,7 @@ export type LessonStartedProperties = z.infer<typeof LessonStartedSchema>
 export type LessonCompletedProperties = z.infer<typeof LessonCompletedSchema>
 export type PdfViewedProperties = z.infer<typeof PdfViewedSchema>
 export type ChatMessageSentProperties = z.infer<typeof ChatMessageSentSchema>
+export type PhotoSentToChatProperties = z.infer<typeof PhotoSentToChatSchema>
 export type LoginModalShownProperties = z.infer<typeof LoginModalShownSchema>
 export type RegistrationPromptShownProperties = z.infer<typeof RegistrationPromptShownSchema>
 export type RegistrationCompletedProperties = z.infer<typeof RegistrationCompletedSchema>
@@ -523,6 +538,7 @@ export type EventProperties =
   | LessonCompletedProperties
   | PdfViewedProperties
   | ChatMessageSentProperties
+  | PhotoSentToChatProperties
   | LoginModalShownProperties
   | RegistrationPromptShownProperties
   | RegistrationCompletedProperties

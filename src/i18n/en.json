@@ -28,6 +28,18 @@
       "myAccount": "My Account",
       "logout": "Logout",
       "loggingOut": "Logging out..."
+    },
+    "courseSearch": {
+      "placeholder": "Search...",
+      "noResults": "No results found",
+      "enrollRequired": "You must enroll first",
+      "courses": "Courses",
+      "lessons": "Lessons",
+      "exercises": "Exercises",
+      "questions": "Questions",
+      "minChars": "Type at least 2 characters",
+      "searching": "Searching...",
+      "error": "Search failed. Please try again."
     }
   },
   "auth": {
@@ -242,8 +254,6 @@
     "mathPreview": "Preview",
     "closeMathTools": "Close math tools",
     "insertFormula": "Insert Formula",
-    "formulaSheetTitle": "Formula Sheet",
-    "formulaSheetEmpty": "No content available",
     "notesSubtitle": "Personal Notes",
     "notesPlaceholder": "Add your notes here...",
     "selectBadge": "Select",
@@ -267,7 +277,9 @@
     "startLesson": "Start Lesson",
     "soonBadge": "Soon",
     "justAddedBadge": "New",
-    "contentLocked": "This content is being prepared and will be available soon."
+    "contentLocked": "This content is being prepared and will be available soon.",
+    "formulaSheetTitle": "Formula Sheet",
+    "formulaSheetEmpty": "No content available"
   },
   "homepage": {
     "nav": {

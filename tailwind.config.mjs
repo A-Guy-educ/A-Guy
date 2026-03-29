@@ -26,6 +26,11 @@ const config = {
     'bg-success/30',
     'border-warning',
     'bg-warning/30',
+    'my-0',
+    'my-4',
+    'my-8',
+    'my-16',
+    'my-24',
   ],
   theme: {
     container: {
@@ -147,6 +152,7 @@ const config = {
       fontFamily: {
         mono: ['var(--font-geist-mono)'],
         sans: ['var(--font-geist-sans)'],
+        serif: ['var(--font-stix-two-text)', 'serif'],
       },
       keyframes: {
         'accordion-down': {

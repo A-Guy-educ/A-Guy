@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockSpacingField } from '../../fields/blockSpacing'
+
 export const GeometryBlock: Block = {
   slug: 'geometryBlock',
   interfaceName: 'GeometryBlock',
@@ -18,5 +20,6 @@ export const GeometryBlock: Block = {
         },
       },
     },
+    blockSpacingField,
   ],
 }

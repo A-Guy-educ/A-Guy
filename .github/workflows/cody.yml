@@ -579,7 +579,7 @@ jobs:
         with:
           name: cody-${{ needs.parse.outputs.task_id }}-${{ github.run_id }}
           path: .tasks/${{ needs.parse.outputs.task_id }}/
-          retention-days: 7
+          retention-days: 3
 
       # Upload LLM recordings if in record mode
       - name: Upload LLM recordings
@@ -589,7 +589,7 @@ jobs:
         with:
           name: llm-recordings
           path: scripts/system-test/recordings/
-          retention-days: 30
+          retention-days: 3
 
       # Clean workspace for self-hosted runners (no-op on GitHub-hosted since VM is discarded)
       - name: Cleanup workspace (self-hosted)

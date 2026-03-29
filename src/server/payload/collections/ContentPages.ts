@@ -9,6 +9,7 @@ import { MediaBlock } from '../blocks/MediaBlock/config'
 import { TableBlock } from '../blocks/TableBlock/config'
 import { adminOnly } from '../access/adminOnly'
 import { publishedAndActive } from '../access/publishedAndActive'
+import { pageDefaultSpacingField } from '../fields/blockSpacing'
 import { createdByField } from '../fields/createdBy'
 import { formatSlug } from '../fields/formatSlug'
 
@@ -107,6 +108,7 @@ export const ContentPages: CollectionConfig = {
         description: 'Whether this content page is currently active',
       },
     },
+    pageDefaultSpacingField,
     createdByField,
   ],
 }

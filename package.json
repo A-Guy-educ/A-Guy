@@ -1,6 +1,6 @@
 {
   "name": "a-guy",
-  "version": "0.18.0",
+  "version": "0.22.0",
   "description": "Website template for Payload",
   "license": "MIT",
   "type": "module",
@@ -95,8 +95,6 @@
     "remote:agent": "tsx scripts/remote-agent/server.ts",
     "remote:agent:dev": "tsx watch scripts/remote-agent/server.ts",
     "remote:agent:funnel": "tsx scripts/remote-agent/start-with-funnel.ts",
-    "design:tokens:codemod": "pnpm tsx scripts/design-tokens/codemod.ts",
-    "design:tokens:codemod:dry": "pnpm tsx scripts/design-tokens/codemod.ts --dry-run --verbose",
     "design:tokens:audit": "pnpm tsx scripts/design-tokens/audit.ts",
     "design:tokens:audit:fixable": "pnpm tsx scripts/design-tokens/audit.ts --fixable",
     "design:tokens:audit:verbose": "pnpm tsx scripts/design-tokens/audit.ts --verbose"

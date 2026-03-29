@@ -7,7 +7,7 @@ import { adminOnly } from '../access/adminOnly'
 import { publishedAndActive } from '../access/publishedAndActive'
 import { contentStatusFields } from '../fields/contentStatus'
 import { createdByField } from '../fields/createdBy'
-import { formatSlug } from '../fields/formatSlug'
+import { formatSlugAsync } from '../fields/formatSlug'
 import { translatedFromField } from '../fields/translatedFrom'
 
 export const Lessons: CollectionConfig = {
@@ -21,19 +21,52 @@ export const Lessons: CollectionConfig = {
   },
   hooks: {
     beforeChange: [
-      ({ data }) => {
-        if (data?.slug) {
+      async ({ data, operation, originalDoc, req }) => {
+        if (!data) return data
+
+        const title = data.title
+        const titleChanged = operation === 'update' && title && title !== originalDoc?.title
+
+        // When title changes → always regenerate slug from the new title
+        // When no slug → generate from title
+        // Otherwise → keep slug as-is (including " - Copy" from duplication)
+        if (titleChanged || (!data.slug && title)) {
+          data.slug = await formatSlugAsync(title)
+        } else if (data.slug) {
           data.slug = data.slug.trim()
         }
-        if (data?.title && !data?.slug) {
-          // Generate unique slug from title
-          // Include timestamp for uniqueness, falling back to random if timestamp not available
-          const timestamp =
-            typeof data.createdAt === 'string'
-              ? data.createdAt.replace(/[^0-9]/g, '').slice(-6)
-              : Date.now().toString().slice(-6)
-          data.slug = `${formatSlug(data.title)}-${timestamp}`
+
+        // On create, always ensure uniqueness (handles duplication & conflicts)
+        // On update, ensure uniqueness only if slug changed
+        const slugChanged = operation === 'update' && data.slug !== originalDoc?.slug
+        if (data.slug && (operation === 'create' || slugChanged)) {
+          const baseSlug = data.slug
+          let slug = baseSlug
+          let counter = 1
+          const MAX_ATTEMPTS = 100
+
+          for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+            const existing = await req.payload.find({
+              collection: 'lessons',
+              where: { slug: { equals: slug } },
+              limit: 1,
+              depth: 0,
+              req,
+            })
+
+            if (existing.docs.length === 0) {
+              data.slug = slug
+              return data
+            }
+
+            slug = `${baseSlug}-${counter}`
+            counter++
+          }
+
+          // Fallback: append timestamp if all numeric suffixes taken
+          data.slug = `${baseSlug}-${Date.now().toString(36)}`
         }
+
         return data
       },
       // Auto-populate parentCourse from chapter -> course
