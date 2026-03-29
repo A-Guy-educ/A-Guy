@@ -19,7 +19,6 @@ import { Skeleton, SkeletonCard } from '@/ui/web/components/skeleton'
 import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
 import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { ContentStatusBadge } from '@/ui/web/shared/ContentStatusBadge'
-import { ProgressCircle } from '@/ui/web/shared/ProgressCircle'
 import { BarChart3, BookOpen, Clock, FileText, GraduationCap, PlayCircle, Sparkles, Target, Trophy } from 'lucide-react'
 import { Button } from '@/ui/web/components/button'
 import { Progress } from '@/ui/web/components/progress'
@@ -503,9 +502,13 @@ function LessonGridCard({
     <div
       className={cn(
         'relative group rounded-xl bg-card border border-border/30 transition-all duration-normal',
-        !isSoon && 'hover:bg-muted/30 hover:border-border/50',
+        !isSoon && 'hover:border-border/50',
         isSoon && 'opacity-50',
       )}
+      style={{
+        borderInlineStartWidth: '3px',
+        borderInlineStartColor: isSoon ? 'var(--border)' : accentColor,
+      }}
     >
       <ContentStatusBadge
         contentStatus={lesson.contentStatus}
@@ -524,7 +527,7 @@ function LessonGridCard({
         {/* Lesson icon */}
         <div
           className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
-          style={{ backgroundColor: `${accentColor.replace(')', ' / 0.1)')}` }}
+          style={{ backgroundColor: `${accentColor.replace(')', ' / 0.15)')}` }}
         >
           <TypeIcon className="w-5 h-5" style={{ color: accentColor }} />
         </div>
