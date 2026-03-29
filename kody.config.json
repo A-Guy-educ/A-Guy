@@ -1,0 +1,25 @@
+{
+  "$schema": "https://raw.githubusercontent.com/aharonyaircohen/Kody-Engine-Lite/main/kody.config.schema.json",
+  "quality": {
+    "typecheck": "pnpm typecheck",
+    "lint": "pnpm lint",
+    "lintFix": "pnpm lint:fix",
+    "formatFix": "pnpm format",
+    "testUnit": "pnpm test:unit"
+  },
+  "git": {
+    "defaultBranch": "dev"
+  },
+  "github": {
+    "owner": "A-Guy-educ",
+    "repo": "A-Guy"
+  },
+  "agent": {
+    "provider": "anthropic",
+    "modelMap": {
+      "cheap": "haiku",
+      "mid": "sonnet",
+      "strong": "opus"
+    }
+  }
+}

@@ -390,6 +390,18 @@ export function useNotebookChat({
       message_length: message.length,
     })
 
+    // Track photo uploads to chat
+    if (completedChatAssetIds.length > 0) {
+      const fileTypes = directUploads
+        .filter((f) => f.status === 'complete' && f.chatAssetId)
+        .map((f) => f.file.type)
+      systemEventBus.emit(SYSTEM_EVENTS.PHOTO_SENT_TO_CHAT, {
+        conversation_id: contextKey || 'unknown',
+        file_count: completedChatAssetIds.length,
+        file_types: fileTypes,
+      })
+    }
+
     const context = {
       exerciseId,
       lessonId,

@@ -1,0 +1,32 @@
+Now I have a clear understanding. Let me classify this security vulnerability:
+
+```json
+{
+  "task_type": "bugfix",
+  "title": "Add authentication to 8 unprotected API routes",
+  "description": "Add missing authentication to routes that perform mutations or access sensitive data. Routes include: (1) copilotkit chat endpoint (user-authenticated), (2) 4 cron cleanup endpoints (CRON_SECRET validation), (3) 3 exercise/lesson conversion endpoints (admin-authenticated). The copilotkit route needs user authentication per requirements; cron endpoints need CRON_SECRET Bearer token validation; conversion endpoints need explicit auth wrapping if not already present.",
+  "scope": [
+    "src/app/api/copilotkit/route.ts",
+    "src/app/api/cron/chat-asset-expiry/route.ts",
+    "src/app/api/cron/guest-sessions-cleanup/route.ts",
+    "src/app/api/cron/media-expiry/route.ts",
+    "src/app/api/cron/upload-session-cleanup/route.ts",
+    "src/app/api/exercises/convert/single/route.ts",
+    "src/app/api/exercises/convert/single/create/route.ts",
+    "src/app/api/lessons/convert-context/route.ts",
+    "src/server/api/with-api-handler.ts"
+  ],
+  "risk_level": "high",
+  "questions": [
+    "Should the copilotkit endpoint require admin-level access or just authenticated user access?",
+    "Are there any other cron endpoints besides the 4 cleanup jobs that need CRON_SECRET validation?",
+    "Should failed authentication attempts on cron endpoints log security events for monitoring?"
+  ]
+}
+```
+
+This is a **high-risk security issue** because:
+- Routes perform mutations (POST) without authentication
+- Copilotkit exposes AI chat functionality to unauthenticated users
+- Cron endpoints can trigger data deletion operations if exploited
+- Conversion endpoints can create/modify course content if the scanner is correct about missing auth

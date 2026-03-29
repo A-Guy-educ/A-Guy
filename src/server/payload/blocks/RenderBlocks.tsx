@@ -9,6 +9,7 @@ import { GraphBlock } from '@/server/payload/blocks/GraphBlock/Component'
 import { HtmlBlock } from '@/server/payload/blocks/HtmlBlock/Component'
 import { MediaBlock } from '@/server/payload/blocks/MediaBlock/Component'
 import { TableBlock } from '@/server/payload/blocks/TableBlock/Component'
+import { resolveSpacingClass } from '@/server/payload/fields/blockSpacing'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const blockComponents: Record<string, React.FC<any>> = {
@@ -24,9 +25,10 @@ const blockComponents: Record<string, React.FC<any>> = {
 }
 
 export const RenderBlocks: React.FC<{
-  blocks: { blockType: string }[]
+  blocks: { blockType: string; spacingAfter?: string | null }[]
+  defaultSpacing?: string | null
 }> = (props) => {
-  const { blocks } = props
+  const { blocks, defaultSpacing } = props
 
   const hasBlocks = blocks && Array.isArray(blocks) && blocks.length > 0
 
@@ -39,7 +41,7 @@ export const RenderBlocks: React.FC<{
 
           if (Block) {
             return (
-              <div className="my-16" key={index}>
+              <div className={resolveSpacingClass(block.spacingAfter, defaultSpacing)} key={index}>
                 <Block {...block} disableInnerContainer />
               </div>
             )

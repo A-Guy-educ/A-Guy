@@ -16,6 +16,7 @@ import {
   LoginModalShownSchema,
   PageViewedSchema,
   PdfViewedSchema,
+  PhotoSentToChatSchema,
   PII_FIELDS,
   RegistrationCompletedSchema,
   RegistrationPromptShownSchema,
@@ -278,7 +279,7 @@ describe('Schema Validation', () => {
 describe('Schema Registry', () => {
   it('contains all system events', () => {
     const eventNames = Object.keys(eventSchemas)
-    expect(eventNames.length).toBe(33)
+    expect(eventNames.length).toBe(34)
   })
 
   it('maps each event name to its schema', () => {
@@ -291,6 +292,7 @@ describe('Schema Registry', () => {
     expect(eventSchemas[SYSTEM_EVENTS.LESSON_ENDED]).toBe(LessonEndedSchema)
     expect(eventSchemas[SYSTEM_EVENTS.PDF_VIEWED]).toBe(PdfViewedSchema)
     expect(eventSchemas[SYSTEM_EVENTS.CHAT_MESSAGE_SUBMITTED]).toBe(ChatMessageSubmittedSchema)
+    expect(eventSchemas[SYSTEM_EVENTS.PHOTO_SENT_TO_CHAT]).toBe(PhotoSentToChatSchema)
     expect(eventSchemas[SYSTEM_EVENTS.LOGIN_MODAL_SHOWN]).toBe(LoginModalShownSchema)
     expect(eventSchemas[SYSTEM_EVENTS.REGISTRATION_PROMPT_SHOWN]).toBe(
       RegistrationPromptShownSchema,
