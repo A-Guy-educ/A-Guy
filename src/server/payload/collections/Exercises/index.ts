@@ -1,29 +1,31 @@
 import type { Access, CollectionConfig } from 'payload'
 
+import { AccountRole, isAdvancedContentEditor } from '@/infra/auth/roles'
 import type { User } from '@/payload-types'
-import { tenantField } from '@/server/payload/fields/tenant'
 import { contentLocaleField } from '@/server/payload/fields/contentLocale'
+import { tenantField } from '@/server/payload/fields/tenant'
 import { anyone } from '../../access/anyone'
 import { authenticated } from '../../access/authenticated'
 import { createdByField } from '../../fields/createdBy'
 import { translatedFromField } from '../../fields/translatedFrom'
-import { AccountRole } from '../Users/roles'
 import { DEFAULT_CONTENT } from './defaults'
-import { ContentSchema } from './schemas'
 import { generateSlug, validateSlugUniqueness } from './hooks'
+import { enforceContentStructure } from './hooks/enforceContentStructure'
+import { ContentSchema } from './schemas'
 
 /**
  * Access control - Exercise-specific
- * Admin or owner can update/delete
+ * Admin or AdvancedContentEditor can update/delete, OR owner can update their own exercises
  */
 const isAdminOrOwner: Access = ({ req }) => {
   const user = req.user as User | null
   if (!user) return false
 
-  // Admin
-  if (user.role === AccountRole.Admin) return true
+  // Admin or AdvancedContentEditor can update any exercise
+  if (user.role === AccountRole.Admin || isAdvancedContentEditor(user.role as AccountRole))
+    return true
 
-  // Owner
+  // Owner can update their own exercises
   return {
     owner: {
       equals: user.id,
@@ -293,6 +295,10 @@ export const Exercises: CollectionConfig = {
       },
     },
   ],
+
+  hooks: {
+    beforeChange: [enforceContentStructure],
+  },
 }
 
 // Re-export types and utilities for backward compatibility
