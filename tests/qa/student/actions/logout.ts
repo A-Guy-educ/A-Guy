@@ -6,7 +6,7 @@
  * @domain qa
  * @pattern session-actions
  */
-import type { ActionContext, ActionHandler } from './types'
+import type { ActionHandler } from './types'
 import { LABELS } from '../shared/locales'
 
 export const logout: ActionHandler = async (ctx) => {

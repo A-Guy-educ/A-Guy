@@ -5,7 +5,10 @@ const Card: React.FC<
   { ref?: React.Ref<HTMLDivElement> } & React.HTMLAttributes<HTMLDivElement>
 > = ({ className, ref, ...props }) => (
   <div
-    className={cn('rounded-lg border bg-card text-card-foreground shadow-elevation-1', className)}
+    className={cn(
+      'rounded-xl bg-card text-card-foreground border border-border/30 transition-all duration-normal',
+      className,
+    )}
     ref={ref}
     {...props}
   />
@@ -14,14 +17,14 @@ const Card: React.FC<
 const CardHeader: React.FC<
   { ref?: React.Ref<HTMLDivElement> } & React.HTMLAttributes<HTMLDivElement>
 > = ({ className, ref, ...props }) => (
-  <div className={cn('flex flex-col space-y-1.5 p-card-padding', className)} ref={ref} {...props} />
+  <div className={cn('flex flex-col space-y-1.5 p-5', className)} ref={ref} {...props} />
 )
 
 const CardTitle: React.FC<
   { ref?: React.Ref<HTMLHeadingElement> } & React.HTMLAttributes<HTMLHeadingElement>
 > = ({ className, ref, ...props }) => (
   <h3
-    className={cn('text-display-xl font-semibold leading-none tracking-tight', className)}
+    className={cn('text-heading-md font-bold leading-none tracking-tight', className)}
     ref={ref}
     {...props}
   />
@@ -36,13 +39,13 @@ const CardDescription: React.FC<
 const CardContent: React.FC<
   { ref?: React.Ref<HTMLDivElement> } & React.HTMLAttributes<HTMLDivElement>
 > = ({ className, ref, ...props }) => (
-  <div className={cn('p-card-padding pt-0', className)} ref={ref} {...props} />
+  <div className={cn('p-5 pt-0', className)} ref={ref} {...props} />
 )
 
 const CardFooter: React.FC<
   { ref?: React.Ref<HTMLDivElement> } & React.HTMLAttributes<HTMLDivElement>
 > = ({ className, ref, ...props }) => (
-  <div className={cn('flex items-center p-card-padding pt-0', className)} ref={ref} {...props} />
+  <div className={cn('flex items-center p-5 pt-0', className)} ref={ref} {...props} />
 )
 
 export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }

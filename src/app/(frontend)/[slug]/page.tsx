@@ -53,7 +53,7 @@ export default async function Page({ params: paramsPromise }: Args) {
   const { hero, layout, defaultBlockSpacing } = page
 
   return (
-    <article className="pt-16 pb-24">
+    <article className="pt-section-md pb-section-lg">
       <PageClient />
       {/* Allows redirects for valid pages too */}
       <PayloadRedirects disableNotFound url={url} />

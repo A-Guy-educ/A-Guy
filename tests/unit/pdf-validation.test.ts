@@ -17,7 +17,7 @@ function isPdfSizeAllowed(size: number, maxBytes: number): boolean {
   return size <= maxBytes
 }
 
-const PROXY_TO_STAGE: Record<string, string> = {
+const _PROXY_TO_STAGE: Record<string, string> = {
   MEDIA_NOT_FOUND: 'MEDIA_NOT_FOUND',
   NOT_PDF: 'NOT_PDF',
   INVALID_PDF: 'INVALID_PDF',

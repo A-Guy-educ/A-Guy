@@ -54,7 +54,7 @@ export async function Footer() {
           {navItems.map(({ link }, i) => {
             return (
               <CMSLink
-                className="text-card-foreground hover:text-primary transition-colors text-body-xs whitespace-nowrap"
+                className="text-card-foreground hover:text-primary transition-all duration-normal text-body-xs whitespace-nowrap"
                 key={i}
                 {...link}
               />

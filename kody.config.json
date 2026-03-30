@@ -8,18 +8,18 @@
     "testUnit": "pnpm test:unit"
   },
   "git": {
-    "defaultBranch": "dev"
+    "defaultBranch": "kody"
   },
   "github": {
     "owner": "A-Guy-educ",
     "repo": "A-Guy"
   },
   "agent": {
-    "provider": "anthropic",
+    "provider": "minimax",
     "modelMap": {
-      "cheap": "haiku",
-      "mid": "sonnet",
-      "strong": "opus"
+      "cheap": "MiniMax-M2.7-highspeed",
+      "mid": "MiniMax-M2.7-highspeed",
+      "strong": "MiniMax-M2.7-highspeed"
     }
   }
 }

@@ -158,7 +158,7 @@ describe('Conversations Schema', () => {
         },
       ]
 
-      scenarios.forEach(({ name, shouldBeAllowed }) => {
+      scenarios.forEach(({ name, shouldBeAllowed: _shouldBeAllowed }) => {
         // This test documents expected behavior from partial unique index
         // Actual enforcement happens at MongoDB level
         expect(name).toBeDefined()

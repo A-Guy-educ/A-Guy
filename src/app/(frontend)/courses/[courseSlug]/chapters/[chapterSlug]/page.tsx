@@ -73,18 +73,25 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
       gatedDelayMs={gatedDelayMs}
       gatedWarningMs={gatedWarningMs}
     >
-      <div className="container mx-auto px-4 py-8">
-        <ChapterPageBreadcrumb
-          courseTitle={course.title}
-          courseSlug={courseSlug}
-          chapterTitle={chapter.title}
-        />
+      <div className="container mx-auto px-4 py-section-md max-w-5xl">
+        {/* Enhanced breadcrumb area */}
+        <div className="mb-6 pb-4 border-b border-border/40">
+          <ChapterPageBreadcrumb
+            courseTitle={course.title}
+            courseSlug={courseSlug}
+            chapterTitle={chapter.title}
+          />
+        </div>
 
-        <ChapterHeader
-          chapterLabel={chapter.chapterLabel}
-          title={chapter.title}
-          description={chapter.description}
-        />
+        {/* Chapter header with accent color bar */}
+        <div className="relative pl-5 mb-10">
+          <div className="absolute left-0 top-0 bottom-0 w-1 rounded-full bg-primary" />
+          <ChapterHeader
+            chapterLabel={chapter.chapterLabel}
+            title={chapter.title}
+            description={chapter.description}
+          />
+        </div>
 
         <section>
           <LessonsSectionTitle />
@@ -92,7 +99,7 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
           {lessons.length === 0 ? (
             <EmptyState type="noLessons" />
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {lessons.map((lesson) => (
                 <LessonCard
                   key={lesson.id}

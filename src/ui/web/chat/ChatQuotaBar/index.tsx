@@ -1,5 +1,6 @@
 'use client'
 
+import { cn } from '@/infra/utils/ui'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { useEffect, useState } from 'react'
 
@@ -39,7 +40,10 @@ export function ChatQuotaBar({ questionsUsed, maxQuestions, resetAt }: ChatQuota
       <div className="flex items-center gap-1.5">
         <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all ${isExhausted ? 'bg-warning' : 'bg-primary'}`}
+            className={cn(
+              'h-full rounded-full transition-all duration-normal',
+              isExhausted ? 'bg-warning' : 'bg-primary',
+            )}
             style={{ width: `${percentage}%` }}
           />
         </div>

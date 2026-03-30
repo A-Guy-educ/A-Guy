@@ -21,21 +21,21 @@ export function DetailsSection({ user }: DetailsSectionProps) {
   const t = useTranslations('auth.account')
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-4">
+    <div className="flex flex-col gap-content-gap">
+      <div className="flex items-center gap-content-gap">
         <Avatar className="h-16 w-16">
-          <AvatarFallback className="text-lg">{getInitials(user.name)}</AvatarFallback>
+          <AvatarFallback className="text-heading-lg">{getInitials(user.name)}</AvatarFallback>
         </Avatar>
         <div className="flex flex-col gap-1">
           <div>
-            <p className="text-sm text-muted-foreground">{t('name')}</p>
-            <p className="text-base font-medium">{user.name || t('missing')}</p>
+            <p className="text-body-sm text-muted-foreground">{t('name')}</p>
+            <p className="text-body-md font-medium">{user.name || t('missing')}</p>
           </div>
         </div>
       </div>
       <div>
-        <p className="text-sm text-muted-foreground">{t('email')}</p>
-        <p className="text-base font-medium">{user.email}</p>
+        <p className="text-body-sm text-muted-foreground">{t('email')}</p>
+        <p className="text-body-md font-medium">{user.email}</p>
       </div>
     </div>
   )

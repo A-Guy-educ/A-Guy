@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 
+import { cn } from '@/infra/utils/ui'
 import type { StudyPlanDay, TopicInput } from '@/server/services/study-plan'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { CheckCircle2, Edit2 } from 'lucide-react'
@@ -50,9 +51,9 @@ export function DayCard({ day, topics, onToggleStatus, onEdit }: DayCardProps) {
 
   if (isEditing) {
     return (
-      <div className="bg-card rounded-2xl border-2 border-primary/50 p-5 shadow-sm">
+      <div className="rounded-2xl bg-card border border-border/40 border-s-4 border-s-primary shadow-elevation-1 overflow-hidden p-5">
         <div className="flex items-start justify-between mb-3">
-          <span className="text-sm font-semibold text-muted-foreground">
+          <span className="text-body-sm font-semibold text-muted-foreground">
             {new Date(day.date).toLocaleDateString('he-IL', {
               weekday: 'short',
               day: 'numeric',
@@ -60,9 +61,10 @@ export function DayCard({ day, topics, onToggleStatus, onEdit }: DayCardProps) {
             })}
           </span>
           <span
-            className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${
-              ACTIVITY_COLORS[day.activityType]
-            }`}
+            className={cn(
+              'px-2.5 py-1 text-body-xs font-semibold rounded-full border',
+              ACTIVITY_COLORS[day.activityType],
+            )}
           >
             {t(`activity.${day.activityType}`)}
           </span>
@@ -70,7 +72,7 @@ export function DayCard({ day, topics, onToggleStatus, onEdit }: DayCardProps) {
 
         {/* Topic selection */}
         <div className="mb-4">
-          <label className="block text-xs font-medium text-muted-foreground mb-2">
+          <label className="block text-body-xs font-medium text-muted-foreground mb-2">
             {t('topicsTitle')}
           </label>
           <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
@@ -79,11 +81,12 @@ export function DayCard({ day, topics, onToggleStatus, onEdit }: DayCardProps) {
                 key={topic.topicId}
                 type="button"
                 onClick={() => toggleTopic(topic.topicId)}
-                className={`px-2 py-0.5 text-xs font-medium rounded-md transition-colors ${
+                className={cn(
+                  'px-2 py-0.5 text-body-xs font-medium rounded-md transition-colors duration-normal',
                   selectedTopics.includes(topic.topicId)
                     ? 'bg-foreground text-background'
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                }`}
+                    : 'bg-muted text-muted-foreground hover:bg-muted/80',
+                )}
               >
                 {topic.topicLabel}
               </button>
@@ -95,13 +98,13 @@ export function DayCard({ day, topics, onToggleStatus, onEdit }: DayCardProps) {
         <div className="flex gap-2">
           <button
             onClick={handleSaveEdit}
-            className="flex-1 px-4 py-2 text-sm font-medium text-background bg-foreground rounded-lg hover:bg-foreground/90 transition-colors"
+            className="flex-1 px-4 py-2 text-body-sm font-medium text-background bg-foreground rounded-lg hover:bg-foreground/90 transition-colors duration-normal"
           >
             {t('saveEdit')}
           </button>
           <button
             onClick={handleCancelEdit}
-            className="px-4 py-2 text-sm font-medium text-muted-foreground bg-muted rounded-lg hover:bg-muted/80 transition-colors"
+            className="px-4 py-2 text-body-sm font-medium text-muted-foreground bg-muted rounded-lg hover:bg-muted/80 transition-colors duration-normal"
           >
             {t('cancelEdit')}
           </button>
@@ -113,15 +116,19 @@ export function DayCard({ day, topics, onToggleStatus, onEdit }: DayCardProps) {
   // Display mode
   return (
     <div
-      className={`relative bg-card rounded-2xl border-2 p-5 transition-all ${
-        isCompleted ? 'border-success/30 opacity-60' : 'border-border hover:border-border shadow-sm'
-      }`}
+      className={cn(
+        'relative rounded-2xl bg-card border border-border/40 shadow-elevation-1 p-5 transition-all duration-normal overflow-hidden',
+        'border-s-4',
+        isCompleted
+          ? 'border-s-success opacity-60'
+          : 'border-s-primary hover:shadow-card-hover hover:-translate-y-0.5',
+      )}
     >
       {/* Edit button - only show when not completed */}
       {!isCompleted && onEdit && (
         <button
           onClick={() => setIsEditing(true)}
-          className="absolute top-3 end-3 p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+          className="absolute top-3 end-3 p-1.5 text-muted-foreground hover:text-foreground transition-colors duration-normal"
           title={t('editDay')}
         >
           <Edit2 className="w-4 h-4" />
@@ -130,7 +137,7 @@ export function DayCard({ day, topics, onToggleStatus, onEdit }: DayCardProps) {
 
       <div className="flex items-start justify-between mb-3">
         <div>
-          <span className="text-sm font-semibold text-muted-foreground">
+          <span className="text-body-sm font-semibold text-muted-foreground">
             {new Date(day.date).toLocaleDateString('he-IL', {
               weekday: 'short',
               day: 'numeric',
@@ -140,15 +147,16 @@ export function DayCard({ day, topics, onToggleStatus, onEdit }: DayCardProps) {
         </div>
         <div className="flex items-center gap-1.5">
           {isCompleted && (
-            <span className="flex items-center gap-1 text-success text-xs font-medium">
+            <span className="flex items-center gap-1 text-success text-body-xs font-medium">
               <CheckCircle2 className="w-4 h-4" />
               {t('completed')}
             </span>
           )}
           <span
-            className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${
-              ACTIVITY_COLORS[day.activityType]
-            }`}
+            className={cn(
+              'px-2.5 py-1 text-body-xs font-semibold rounded-full border',
+              ACTIVITY_COLORS[day.activityType],
+            )}
           >
             {t(`activity.${day.activityType}`)}
           </span>
@@ -163,7 +171,7 @@ export function DayCard({ day, topics, onToggleStatus, onEdit }: DayCardProps) {
             return (
               <span
                 key={idx}
-                className="px-2 py-0.5 text-xs font-medium bg-muted text-foreground rounded-md"
+                className="px-2 py-0.5 text-body-xs font-medium bg-muted text-foreground rounded-md"
               >
                 {label}
               </span>
@@ -175,11 +183,12 @@ export function DayCard({ day, topics, onToggleStatus, onEdit }: DayCardProps) {
       <div className="flex items-center justify-end">
         <button
           onClick={onToggleStatus}
-          className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+          className={cn(
+            'px-4 py-2 text-body-sm font-medium rounded-lg transition-colors duration-normal',
             isCompleted
               ? 'text-muted-foreground bg-muted hover:bg-muted/80'
-              : 'text-background bg-foreground hover:bg-foreground/90'
-          }`}
+              : 'text-background bg-foreground hover:bg-foreground/90',
+          )}
         >
           {isCompleted ? t('undoComplete') : t('markComplete')}
         </button>

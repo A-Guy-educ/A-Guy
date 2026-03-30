@@ -16,12 +16,12 @@ export function ChapterHeader({ title, description }: ChapterHeaderProps) {
 
   return (
     <div className="mb-8">
-      <h1 className="text-4xl font-bold mb-4">{title}</h1>
+      <h1 className="text-display-md font-bold mb-4">{title}</h1>
       {shouldShowDescription && (
         <SafeHtml
           html={description!}
           enableProse
-          className="text-xl text-muted-foreground [&_p]:m-0"
+          className="text-body-xl text-muted-foreground [&_p]:m-0"
         />
       )}
     </div>

@@ -7,7 +7,15 @@ interface ProgressProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(
   ({ className, value = 0, ...props }, ref) => (
-    <div ref={ref} className={cn('relative w-full overflow-hidden bg-muted', className)} {...props}>
+    <div
+      ref={ref}
+      role="progressbar"
+      aria-valuenow={Math.round(Math.min(100, Math.max(0, value)))}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      className={cn('relative w-full overflow-hidden bg-muted', className)}
+      {...props}
+    >
       <div
         className="h-full bg-primary transition-all duration-700 ease-out"
         style={{ width: `${Math.min(100, Math.max(0, value))}%` }}

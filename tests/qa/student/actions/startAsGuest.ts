@@ -6,7 +6,7 @@
  * @domain qa
  * @pattern session-actions
  */
-import type { ActionContext, ActionHandler } from './types'
+import type { ActionHandler } from './types'
 
 export const startAsGuest: ActionHandler = async (ctx) => {
   const { page } = ctx

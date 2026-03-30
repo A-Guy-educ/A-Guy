@@ -465,7 +465,7 @@ export interface Category {
 export interface User {
   id: string;
   name?: string | null;
-  role: 'admin' | 'student';
+  role: 'admin' | 'advanced-content-editor' | 'student';
   googleSub?: string | null;
   verifiedEmail?: string | null;
   registrationMethod?: ('google' | 'email') | null;
@@ -1109,7 +1109,7 @@ export interface ConfigValue {
   /**
    * Feature domain for this configuration
    */
-  domain: 'chat' | 'pdf_conversion' | 'global' | 'guest_chat' | 'student_chat';
+  domain: 'chat' | 'pdf_conversion' | 'global' | 'guest_chat' | 'latex_conversion';
   /**
    * Tenant this configuration belongs to
    */

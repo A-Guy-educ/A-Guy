@@ -33,7 +33,7 @@ export function AuthGateModal({ isOpen, title, description, returnTo }: AuthGate
           <GoogleLoginButton returnTo={returnTo} className="w-full" />
           <Link
             href="/courses"
-            className="text-body-sm text-muted-foreground underline hover:text-foreground"
+            className="text-body-sm text-muted-foreground underline hover:text-foreground transition-all duration-normal"
           >
             {t('browseCourses')}
           </Link>

@@ -56,19 +56,13 @@ export function LessonContent({
         {viewMode === 'non-interactive' ? (
           <>
             {hasContent ? (
-              <div className="flex flex-col gap-0">
+              <div className="flex flex-col gap-0 max-w-4xl mx-auto px-4 sm:px-6">
                 {validFiles.map((file, index) => (
                   <div key={file.id} className="w-full min-h-[841px] flex-shrink-0">
                     {index > 0 && (
-                      <div
-                        className="h-0.5 my-8 flex-shrink-0"
-                        style={{
-                          background:
-                            'linear-gradient(to right, transparent, hsl(var(--border)) 20%, hsl(var(--border)) 80%, transparent)',
-                        }}
-                      />
+                      <div className="h-0.5 my-8 flex-shrink-0 bg-gradient-to-r from-transparent via-border to-transparent" />
                     )}
-                    <div className="border rounded-lg overflow-hidden bg-gray-50">
+                    <div className="border rounded-lg overflow-hidden bg-muted shadow-card">
                       <MediaComponent resource={file} className="w-full" htmlElement={null} />
                     </div>
                   </div>
@@ -80,10 +74,12 @@ export function LessonContent({
           </>
         ) : (
           <>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-content-gap max-w-3xl mx-auto px-4 sm:px-6">
               <div className="mb-6">
-                <h2 className="text-2xl font-bold">{t('exercisesTitle')}</h2>
-                <p className="text-muted-foreground">{t('exercisesDescription')}</p>
+                <h2 className="text-heading-xl font-bold text-foreground">{t('exercisesTitle')}</h2>
+                <p className="text-muted-foreground text-body-md mt-1">
+                  {t('exercisesDescription')}
+                </p>
               </div>
               {hasExercises ? (
                 <div className="flex flex-col gap-3">
@@ -99,8 +95,10 @@ export function LessonContent({
                   ))}
                 </div>
               ) : (
-                <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-                  <p className="text-muted-foreground mb-4">No exercises yet for this lesson</p>
+                <div className="border-2 border-dashed border-border rounded-xl p-10 text-center">
+                  <p className="text-muted-foreground mb-4 text-body-md">
+                    No exercises yet for this lesson
+                  </p>
                   {isAdmin && hasContent && (
                     <div className="mt-6">
                       <ConvertButton lessonId={lessonId} />

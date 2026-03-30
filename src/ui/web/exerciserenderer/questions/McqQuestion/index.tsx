@@ -91,7 +91,7 @@ export function McqQuestion({
                 !disabled && 'hover:border-muted-foreground hover:bg-muted',
                 'focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2',
                 isSelected && 'border-primary bg-primary/10 shadow-elevation-1',
-                disabled && 'opacity-60 cursor-not-allowed',
+                disabled && 'opacity-disabled cursor-not-allowed',
               )}
               onClick={() => !question.answer.multiSelect && handleOptionClick(option.id)}
             >
@@ -113,7 +113,7 @@ export function McqQuestion({
                   {isSelected && <div className="w-2 h-2 rounded-full bg-primary-foreground" />}
                 </div>
               )}
-              <div className="flex-1 text-lg text-foreground">
+              <div className="flex-1 text-body-lg text-foreground">
                 <RichTextRenderer block={optionBlock} />
               </div>
             </label>

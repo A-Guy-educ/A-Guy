@@ -20,7 +20,7 @@ export const ExercisePreview: React.FC = () => {
 
   if (!hasContent) {
     return (
-      <div className="p-4 text-center text-muted-foreground text-sm">
+      <div className="p-card-padding-sm text-center text-muted-foreground text-body-sm">
         <p>Add content blocks to enable preview</p>
       </div>
     )
@@ -29,13 +29,13 @@ export const ExercisePreview: React.FC = () => {
   // If exercise is saved, link to the existing exercise page
   if (exerciseId) {
     return (
-      <div className="p-4">
-        <p className="text-sm text-muted-foreground mb-3">View the saved exercise</p>
+      <div className="p-card-padding-sm">
+        <p className="text-body-sm text-muted-foreground mb-3">View the saved exercise</p>
         <a
           href={`/exercises/${exerciseId}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center justify-center px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90"
+          className="inline-flex items-center justify-center px-4 py-2 bg-primary text-primary-foreground rounded-md text-body-sm font-medium hover:bg-primary/90"
         >
           View Exercise
         </a>
@@ -45,8 +45,8 @@ export const ExercisePreview: React.FC = () => {
 
   // For unsaved drafts, show a message
   return (
-    <div className="p-4">
-      <p className="text-sm text-muted-foreground">Save the exercise to preview it</p>
+    <div className="p-card-padding-sm">
+      <p className="text-body-sm text-muted-foreground">Save the exercise to preview it</p>
     </div>
   )
 }

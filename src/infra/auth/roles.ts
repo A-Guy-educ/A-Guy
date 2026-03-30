@@ -14,6 +14,7 @@
 
 export enum AccountRole {
   Admin = 'admin',
+  AdvancedContentEditor = 'advanced-content-editor',
   Student = 'student',
 }
 
@@ -39,12 +40,17 @@ export const ALL_ACCOUNT_ROLES: AccountRole[] = Object.values(AccountRole)
  */
 export const ACCOUNT_ROLE_LABEL: Record<AccountRole, string> = {
   [AccountRole.Admin]: 'Admin',
+  [AccountRole.AdvancedContentEditor]: 'Advanced Content Editor',
   [AccountRole.Student]: 'Student',
 }
 
 // Type-safe role checking functions
 export function isAdmin(role: AccountRole): boolean {
   return role === AccountRole.Admin
+}
+
+export function isAdvancedContentEditor(role: AccountRole): boolean {
+  return role === AccountRole.AdvancedContentEditor
 }
 
 export function isStudent(role: AccountRole): boolean {

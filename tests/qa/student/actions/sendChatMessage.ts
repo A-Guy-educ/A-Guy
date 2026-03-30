@@ -5,7 +5,7 @@
  * @domain qa
  * @pattern chat-actions
  */
-import type { ActionContext, ActionHandler } from './types'
+import type { ActionHandler } from './types'
 import { LABELS } from '../shared/locales'
 
 export const sendChatMessage: ActionHandler = async (ctx, input) => {

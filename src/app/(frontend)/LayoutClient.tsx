@@ -8,6 +8,7 @@
 'use client'
 
 import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
+import { restoreAccent } from '@/ui/web/components/accent-picker'
 import { useEffect } from 'react'
 
 export function LayoutClient() {
@@ -15,6 +16,20 @@ export function LayoutClient() {
   // Other services (like analytics) subscribe to this event
   useEffect(() => {
     systemEventBus.emit(SYSTEM_EVENTS.SITE_INIT, {})
+  }, [])
+
+  // Restore user's saved accent color preference
+  useEffect(() => {
+    restoreAccent()
+  }, [])
+
+  // Register service worker for offline support
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {
+        // Silent fail - SW is optional
+      })
+    }
   }, [])
 
   return null
