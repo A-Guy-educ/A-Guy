@@ -12,11 +12,12 @@ Now I have a complete picture. Let me create the implementation plan.
 **Verify:** `pnpm generate:types` compiles without errors.
 
 Schema change:
+
 ```
 fields:
   - slug (unchanged)
   - label_en (text, required) — English label
-  - label_he (text, required) — Hebrew label  
+  - label_he (text, required) — Hebrew label
   - description_en (textarea) — English description
   - description_he (textarea) — Hebrew description
   - systemPrompt (unchanged)
@@ -99,6 +100,7 @@ Translations for the 5 profiles:
 
 **Change:** Run type generation and all checks.
 **Verify:**
+
 ```bash
 pnpm generate:types
 pnpm typecheck

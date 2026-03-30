@@ -1,5 +1,5 @@
-
 ### taskify (2026-03-30T07:58:35)
+
 ```json
 {
   "task_type": "feature",
@@ -42,5 +42,6 @@ All fixes applied. Here's a summary of changes made based on your feedback:
 
 2. **`src/i18n/get-locale-from-request.ts`** (new) - Extracted the duplicated `getLocaleFromRequest` function into a shared utility
 
-3. **`teacher-profiles/route.ts`** - Uses shared locale utility, sorts by locale-appropriate field (`label_he` or `label_en`), adds `?? ''` fallback for nullable 
+3. **`teacher-profiles/route.ts`** - Uses shared locale utility, sorts by locale-appropriate field (`label_he` or `label_en`), adds `?? ''` fallback for nullable
 ...(truncated)
+```
