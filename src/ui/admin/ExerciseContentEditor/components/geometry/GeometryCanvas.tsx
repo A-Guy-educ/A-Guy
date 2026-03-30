@@ -35,18 +35,20 @@ const DISPLAY_HEIGHT = 320
 
 const round1 = (n: number) => Math.round(n * 10) / 10
 
-function mapLabelPosition(pos?: string): string {
-  const map: Record<string, string> = {
-    tr: 'urt',
-    tl: 'ult',
-    br: 'lrt',
-    bl: 'llft',
-    t: 'top',
-    b: 'bot',
-    l: 'left',
-    r: 'right',
+/** Map compass direction to a pixel [x, y] offset for JSXGraph labels. */
+function mapLabelOffset(pos?: string): [number, number] {
+  const d = 15
+  const map: Record<string, [number, number]> = {
+    tl: [-d, d],
+    t: [0, d],
+    tr: [d, d],
+    l: [-d, 0],
+    r: [d, 0],
+    bl: [-d, -d],
+    b: [0, -d],
+    br: [d, -d],
   }
-  return map[pos || 'r'] || 'right'
+  return map[pos || 'r'] || [d, 0]
 }
 
 function angleToLabelPosition(angleDeg: number): string {
@@ -220,12 +222,13 @@ function syncPoints(
 
     const pointColor = point.color ?? getDefaultCanvasElementColor()
     const pointSize = point.size ?? 4
-    const labelPos = mapLabelPosition(point.position)
+    const labelOffset = mapLabelOffset(point.position)
+    const labelKey = labelOffset.join(',')
 
     // Check if label position changed — JSXGraph doesn't reliably update
-    // label position via setAttribute, so we force recreation.
-    const prevPos = existing ? (existing as unknown as { _labelPos?: string })._labelPos : undefined
-    if (existing && existing.moveTo && prevPos === labelPos) {
+    // label offset via setAttribute, so we force recreation.
+    const prevKey = existing ? (existing as unknown as { _labelKey?: string })._labelKey : undefined
+    if (existing && existing.moveTo && prevKey === labelKey) {
       existing.moveTo([point.x, point.y])
       existing.setAttribute({
         visible: point.visible !== false,
@@ -247,7 +250,7 @@ function syncPoints(
         strokeColor: pointColor,
         visible: point.visible !== false,
         withLabel: true,
-        label: { position: labelPos, fontSize: point.fontSize || 14 },
+        label: { offset: labelOffset, fontSize: point.fontSize || 14 },
       })
       el.on('drag', () => {
         if (isSyncingRef.current) return
@@ -271,14 +274,13 @@ function syncPoints(
           const dy = labelEl.Y() - elWithLabel.Y()
           const angleDeg = Math.atan2(dy, dx) * (180 / Math.PI)
           const snapped = angleToLabelPosition(angleDeg)
-          labelEl.setAttribute({ position: mapLabelPosition(snapped) })
           onPointLabelMovedRef.current?.(point.name, snapped)
           isDraggingRef.current = false
         })
       }
 
-      // Track label position for change detection
-      ;(el as unknown as { _labelPos?: string })._labelPos = labelPos
+      // Track label offset for change detection
+      ;(el as unknown as { _labelKey?: string })._labelKey = labelKey
       elementsRef.current.set(elemId, el)
     }
   }
@@ -364,6 +366,7 @@ function syncLineLabels(
         fontSize: line.label.fontSize || 12,
         anchorX: 'middle',
         anchorY: 'middle',
+        display: 'internal',
         rotate: () => {
           const dx = t.X() - f.X()
           const dy = t.Y() - f.Y()

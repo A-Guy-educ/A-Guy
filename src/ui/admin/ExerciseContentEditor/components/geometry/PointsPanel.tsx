@@ -16,7 +16,7 @@ interface PointsPanelProps {
   onChange: (points: GeoPoint[]) => void
 }
 
-const DEFAULT_POINT_SIZE = 1
+const DEFAULT_POINT_SIZE = 4
 const DEFAULT_POINT_POSITION = 'r' as const
 
 const COMPASS_CELLS = [
