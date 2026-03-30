@@ -14,20 +14,20 @@ export const DocumentPreview: React.FC = () => {
 
   if (!url) {
     return (
-      <div className="p-4">
+      <div className="p-card-padding-sm">
         <p>No document uploaded yet</p>
       </div>
     )
   }
 
   return (
-    <div className="p-4">
+    <div className="p-card-padding-sm">
       <h3 className="mb-2">Document Preview</h3>
       <p className="mb-2">
         <strong>Filename:</strong> {filename || 'Unknown'}
       </p>
       {filesize && (
-        <p className="mb-4 text-sm text-muted-foreground">
+        <p className="mb-4 text-body-sm text-muted-foreground">
           <strong>Size:</strong> {Math.round(filesize / 1024)} KB
         </p>
       )}

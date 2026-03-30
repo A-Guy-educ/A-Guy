@@ -27,7 +27,7 @@ export function GoogleLoginButton({ returnTo = '/', className }: GoogleLoginButt
         'bg-card text-card-foreground border border-border',
         'transition-all duration-fast hover:scale-[1.03] hover:shadow-card hover:bg-muted',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-        isNavigating && 'opacity-60 pointer-events-none',
+        isNavigating && 'opacity-disabled pointer-events-none',
         className,
       )}
       onClick={handleGoogleLogin}

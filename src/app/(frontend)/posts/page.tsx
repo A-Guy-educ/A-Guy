@@ -14,15 +14,13 @@ export default async function Page() {
   const result = await queryPublishedPosts({ limit: 12 })
 
   return (
-    <div className="pt-24 pb-24">
+    <div className="pt-section-lg pb-section-lg">
       <PageClient />
-      <div className="container mb-16">
-        <div className="prose dark:prose-invert max-w-none">
-          <h1>Posts</h1>
-        </div>
+      <div className="container mb-section-md">
+        <h1 className="text-display-md text-foreground">Posts</h1>
       </div>
 
-      <div className="container mb-8">
+      <div className="container mb-content-gap-lg">
         <PageRange
           collection="posts"
           currentPage={result.page}

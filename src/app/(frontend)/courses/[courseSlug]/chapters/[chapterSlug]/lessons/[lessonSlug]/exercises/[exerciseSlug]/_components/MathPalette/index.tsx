@@ -21,9 +21,9 @@ export function MathPalette({ isOpen, onInject }: MathPaletteProps) {
           className={cn(
             'flex-shrink-0 h-10 min-w-[44px] px-2.5',
             'bg-muted rounded-[100px] border border-input',
-            'text-primary font-bold text-sm',
+            'text-primary font-bold text-body-sm',
             'hover:bg-primary-soft hover:border-primary',
-            'transition-colors',
+            'transition-colors duration-normal',
           )}
           onClick={() => onInject(key.template, key.offset)}
         >

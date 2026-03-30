@@ -41,13 +41,13 @@ export default async function ExercisePage({ params: paramsPromise }: Args) {
       <div className="container py-10 max-w-4xl mx-auto">
         <Card className="mb-8 border-none shadow-none bg-transparent">
           <CardHeader className="px-0">
-            <CardTitle className="text-display-sm font-bold text-slate-900">
+            <CardTitle className="text-display-sm font-bold text-foreground">
               {exercise.title}
             </CardTitle>
           </CardHeader>
         </Card>
 
-        <Card className="shadow-elevation-1 border-slate-200">
+        <Card className="shadow-elevation-1 border-border">
           <CardContent className="p-card-padding-lg">
             <ExerciseRenderer
               content={content}
@@ -59,10 +59,10 @@ export default async function ExercisePage({ params: paramsPromise }: Args) {
         </Card>
 
         <div className="mt-8 flex items-center gap-content-gap-xs">
-          <span className="text-body-xs text-slate-400 font-medium uppercase tracking-wider">
+          <span className="text-body-xs text-muted-foreground font-medium uppercase tracking-wider">
             Exercise ID:
           </span>
-          <Badge variant="outline" className="font-mono text-[10px] text-slate-500">
+          <Badge variant="outline" className="font-mono text-label text-muted-foreground">
             {exercise.id}
           </Badge>
         </div>

@@ -400,7 +400,7 @@ export function ChatInterface({
               <button
                 onClick={handleReset}
                 disabled={isLoading}
-                className="flex items-center gap-1 text-body-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                className="flex items-center gap-1 text-body-xs text-muted-foreground hover:text-foreground transition-all duration-normal disabled:opacity-disabled disabled:cursor-not-allowed"
                 title={tCourses('chatReset')}
               >
                 <RefreshCw className="w-3 h-3" />
@@ -447,7 +447,7 @@ export function ChatInterface({
               <div
                 key={msg.id}
                 className={cn(
-                  'max-w-[85%] px-[18px] py-3.5 text-body-md leading-relaxed shadow-elevation-1',
+                  'max-w-[85%] px-[18px] py-3.5 text-body-md leading-relaxed shadow-elevation-1 animate-in fade-in-0 duration-normal',
                   msg.role === ChatMessageRole.User
                     ? 'ms-auto bg-primary text-primary-foreground rounded-chat-lg rounded-bl-[4px]'
                     : 'me-auto bg-card text-foreground border border-border rounded-chat-lg rounded-br-[4px]',
@@ -507,7 +507,7 @@ export function ChatInterface({
             )
           })}
         {isLoading && (
-          <div className="me-auto bg-card text-foreground border border-border px-[18px] py-3.5 rounded-chat-lg rounded-br-[4px] max-w-[85%] flex items-center gap-content-gap-xs shadow-elevation-1">
+          <div className="me-auto bg-card text-foreground border border-border px-[18px] py-3.5 rounded-chat-lg rounded-br-chat-sm max-w-[85%] flex items-center gap-content-gap-xs shadow-elevation-1">
             <Loader2 className="w-4 h-4 animate-spin" />
             <span>{tCourses('chatThinking')}</span>
           </div>
@@ -529,27 +529,27 @@ export function ChatInterface({
       {showQuickActions && (
         <div className="flex gap-content-gap-xs p-3 border-t border-border">
           <button
-            className="flex-1 flex items-center justify-center gap-content-gap-xs py-2 px-3 rounded-lg bg-muted hover:bg-muted/80 text-body-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 flex items-center justify-center gap-content-gap-xs py-2 px-3 rounded-lg bg-muted hover:bg-muted/80 text-body-sm font-medium transition-all duration-normal disabled:opacity-disabled disabled:cursor-not-allowed"
             onClick={() => handleQuickAction('hint')}
             disabled={isLoading}
           >
-            <Lightbulb className="w-4 h-4 text-yellow-400" />
+            <Lightbulb className="w-4 h-4 text-warning" />
             <span>{tCourses('chatHint')}</span>
           </button>
           <button
-            className="flex-1 flex items-center justify-center gap-content-gap-xs py-2 px-3 rounded-lg bg-muted hover:bg-muted/80 text-body-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 flex items-center justify-center gap-content-gap-xs py-2 px-3 rounded-lg bg-muted hover:bg-muted/80 text-body-sm font-medium transition-all duration-normal disabled:opacity-disabled disabled:cursor-not-allowed"
             onClick={() => handleQuickAction('solution')}
             disabled={isLoading}
           >
-            <CheckCircle className="w-4 h-4 text-green-500" />
+            <CheckCircle className="w-4 h-4 text-success" />
             <span>{tCourses('chatSolution')}</span>
           </button>
           <button
-            className="flex-1 flex items-center justify-center gap-content-gap-xs py-2 px-3 rounded-lg bg-muted hover:bg-muted/80 text-body-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 flex items-center justify-center gap-content-gap-xs py-2 px-3 rounded-lg bg-muted hover:bg-muted/80 text-body-sm font-medium transition-all duration-normal disabled:opacity-disabled disabled:cursor-not-allowed"
             onClick={() => handleQuickAction('full')}
             disabled={isLoading}
           >
-            <BookOpen className="w-4 h-4 text-blue-500" />
+            <BookOpen className="w-4 h-4 text-primary" />
             <span>{tCourses('chatFullSolution')}</span>
           </button>
         </div>
@@ -624,10 +624,8 @@ export function ChatInterface({
                 key={file.localId}
                 className={cn(
                   'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-body-sm border',
-                  file.status === 'complete' &&
-                    'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950',
-                  file.status === 'failed' &&
-                    'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950',
+                  file.status === 'complete' && 'border-success/30 bg-success/10',
+                  file.status === 'failed' && 'border-destructive/30 bg-destructive/10',
                   file.status === 'uploading' && 'border-border bg-muted',
                   file.status === 'finalizing' && 'border-border bg-muted',
                   file.status === 'cancelled' && 'border-muted bg-muted/50',
@@ -638,14 +636,14 @@ export function ChatInterface({
                   <ImageIcon
                     className={cn(
                       'w-4 h-4',
-                      file.status === 'failed' ? 'text-red-500' : 'text-muted-foreground',
+                      file.status === 'failed' ? 'text-destructive' : 'text-muted-foreground',
                     )}
                   />
                 ) : (
                   <FileUp
                     className={cn(
                       'w-4 h-4',
-                      file.status === 'failed' ? 'text-red-500' : 'text-muted-foreground',
+                      file.status === 'failed' ? 'text-destructive' : 'text-muted-foreground',
                     )}
                   />
                 )}
@@ -653,13 +651,11 @@ export function ChatInterface({
                 {file.status === 'uploading' && (
                   <span className="text-body-xs text-muted-foreground">{file.progress}%</span>
                 )}
-                {file.status === 'complete' && (
-                  <CheckCircle className="w-3.5 h-3.5 text-green-500" />
-                )}
+                {file.status === 'complete' && <CheckCircle className="w-3.5 h-3.5 text-success" />}
                 {file.status === 'failed' && (
                   <>
                     <span
-                      className="text-body-xs text-red-500 max-w-[100px] truncate"
+                      className="text-body-xs text-destructive max-w-[100px] truncate"
                       title={file.error}
                     >
                       {file.error || 'Failed'}
@@ -739,7 +735,7 @@ export function ChatInterface({
               type="button"
               className={cn(
                 'p-1.5 text-muted-foreground hover:text-primary transition-colors',
-                isDirectUploading && 'opacity-50 cursor-not-allowed',
+                isDirectUploading && 'opacity-disabled cursor-not-allowed',
               )}
               onClick={openFilePicker}
               disabled={
@@ -770,7 +766,7 @@ export function ChatInterface({
             {/* Send Button */}
             <button
               type="submit"
-              className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-input hover:bg-primary/90 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-input hover:bg-primary/90 transition-all hover:scale-105 disabled:opacity-disabled disabled:cursor-not-allowed"
               disabled={
                 isLoading ||
                 isDirectUploading ||

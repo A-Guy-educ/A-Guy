@@ -95,6 +95,17 @@ When the diff introduces a new enum value, status string, tier name, or type con
 - Comments/docstrings describing old behavior after code changed
 - Version mismatch between PR title and VERSION/CHANGELOG
 
+### Design System Compliance (frontend files only)
+
+- Inline `style={{}}` for typography or colors — use className with design tokens
+- Hardcoded Tailwind colors (`text-red-500`, `bg-gray-50`, `text-slate-900`) — use semantic colors (`text-destructive`, `bg-muted`, `text-foreground`)
+- Direct HSL variable access (`[hsl(var(--xxx))]`) — use Tailwind color utilities (`bg-primary`, `text-success`)
+- Arbitrary Tailwind typography (`text-sm`, `text-4xl`) — use semantic tokens (`text-body-sm`, `text-display-md`)
+- Hardcoded shadow values — use `shadow-elevation-*` or `shadow-card` tokens
+- Missing transitions on interactive elements — add `transition-all duration-normal`
+- Template literal classNames — use `cn()` from `@/infra/utils/ui`
+- See `.kody/memory/design-system.md` for complete rules
+
 ### Crypto & Entropy
 
 - Truncation instead of hashing — less entropy, easier collisions
@@ -258,5 +269,7 @@ All Payload API calls use `getPayload({ config })`, pass `req` to nested operati
 - [ ] Schema changes followed by `pnpm generate:types` and `pnpm generate:importmap`
 - [ ] Immutable updates only — spread operator for state, no mutations
 - [ ] Tests cover security paths: auth, CSRF, input validation, LLM trust boundaries
+- [ ] Frontend: semantic design tokens used (no inline styles, hardcoded colors, arbitrary Tailwind sizes)
+- [ ] Frontend: interactive elements have transitions (`transition-all duration-normal`)
 
 {{TASK_CONTEXT}}

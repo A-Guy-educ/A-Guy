@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react'
 
+import { cn } from '@/infra/utils/ui'
 import { Badge } from '@/ui/web/components/badge'
 import { Card } from '@/ui/web/components/card'
 import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { toast } from 'sonner'
+import { Users } from 'lucide-react'
 
 interface TeacherProfile {
   slug: string
@@ -88,7 +90,7 @@ export function TeachersProfileSection() {
 
   if (loading) {
     return (
-      <div className="py-4">
+      <div className="py-content-gap">
         <p className="text-muted-foreground">{t('loading')}</p>
       </div>
     )
@@ -96,33 +98,39 @@ export function TeachersProfileSection() {
 
   if (profiles.length === 0) {
     return (
-      <div className="py-4">
-        <p className="text-muted-foreground">{t('noProfiles')}</p>
+      <div className="text-center py-section-md">
+        <div className="w-12 h-12 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
+          <Users className="w-6 h-6 text-muted-foreground/50" />
+        </div>
+        <p className="text-body-sm font-medium text-muted-foreground">{t('noProfiles')}</p>
       </div>
     )
   }
 
   return (
-    <div className="py-4 space-y-4">
-      <p className="text-sm text-muted-foreground">{t('description')}</p>
+    <div className="py-content-gap space-y-4">
+      <p className="text-body-sm text-muted-foreground">{t('description')}</p>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-content-gap sm:grid-cols-2">
         {profiles.map((profile) => (
           <Card
             key={profile.slug}
-            className={`cursor-pointer transition-all hover:border-primary/50 ${
-              selectedSlug === profile.slug ? 'ring-2 ring-primary border-primary' : 'border-border'
-            }`}
+            className={cn(
+              'cursor-pointer transition-all duration-normal hover:border-primary/50',
+              selectedSlug === profile.slug
+                ? 'ring-2 ring-primary border-primary'
+                : 'border-border',
+            )}
             onClick={() => handleSelect(profile.slug)}
           >
-            <div className="p-4">
+            <div className="p-card-padding">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="font-medium">{profile.label}</h3>
                 {selectedSlug === profile.slug && (
                   <Badge variant="secondary">{t('selected')}</Badge>
                 )}
               </div>
-              <p className="text-sm text-muted-foreground">{profile.description}</p>
+              <p className="text-body-sm text-muted-foreground">{profile.description}</p>
             </div>
           </Card>
         ))}

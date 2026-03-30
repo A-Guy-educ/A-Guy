@@ -133,7 +133,8 @@ describe('FormulaSheetContent', () => {
       const { container } = render(<FormulaSheetContent sheet={sheet} />)
       const img = container.querySelector('img')
       expect(img).toBeDefined()
-      expect(img?.getAttribute('src')).toBe('/media/formula.png')
+      // Next.js Image component transforms src to /_next/image URL
+      expect(img?.getAttribute('src')).toContain('formula.png')
       expect(img?.getAttribute('alt')).toBe('Formula diagram')
     })
 

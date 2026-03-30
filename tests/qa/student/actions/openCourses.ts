@@ -5,7 +5,7 @@
  * @domain qa
  * @pattern navigation-actions
  */
-import type { ActionContext, ActionHandler } from './types'
+import type { ActionHandler } from './types'
 
 export const openCourses: ActionHandler = async (ctx) => {
   const { page } = ctx

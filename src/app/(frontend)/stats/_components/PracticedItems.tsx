@@ -1,7 +1,8 @@
 /**
  * Practiced Items Table Component
  *
- * Displays a compact table of practiced lessons or exams
+ * Displays a compact table of practiced lessons or exams with
+ * alternating row backgrounds for visual scanning.
  * Columns: Title | Time Spent | Chat Questions Count
  */
 
@@ -42,7 +43,7 @@ export function PracticedItems({ items, type }: PracticedItemsProps) {
 
   if (items.length === 0) {
     return (
-      <Card>
+      <Card className="bg-card border shadow-elevation-1 rounded-xl hover:shadow-card-hover transition-all duration-normal">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Icon className="w-5 h-5" />
@@ -50,14 +51,22 @@ export function PracticedItems({ items, type }: PracticedItemsProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground text-center py-4">{emptyMessage}</p>
+          <div className="text-center py-section-sm">
+            <div className="w-12 h-12 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
+              <Icon className="w-6 h-6 text-muted-foreground/50" />
+            </div>
+            <p className="text-body-sm font-medium text-muted-foreground">{emptyMessage}</p>
+            <p className="text-body-xs text-muted-foreground/60 mt-1">
+              {isExam ? t('startPracticingExams') : t('startPracticingLessons')}
+            </p>
+          </div>
         </CardContent>
       </Card>
     )
   }
 
   return (
-    <Card>
+    <Card className="bg-card border shadow-elevation-1 rounded-xl hover:shadow-card-hover transition-all duration-normal">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Icon className="w-5 h-5" />
@@ -66,7 +75,7 @@ export function PracticedItems({ items, type }: PracticedItemsProps) {
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-body-sm">
             <thead>
               <tr className="border-b border-border">
                 <th className="text-start py-2 font-medium text-muted-foreground">
@@ -87,8 +96,13 @@ export function PracticedItems({ items, type }: PracticedItemsProps) {
               </tr>
             </thead>
             <tbody>
-              {items.map((item) => (
-                <tr key={item.lessonId} className="border-b border-border/50 last:border-b-0">
+              {items.map((item, index) => (
+                <tr
+                  key={item.lessonId}
+                  className={`border-b border-border/50 last:border-b-0 ${
+                    index % 2 === 1 ? 'bg-muted/30' : ''
+                  }`}
+                >
                   <td className="py-2.5 font-medium">{item.title}</td>
                   <td className="py-2.5 text-center text-muted-foreground">
                     {formatTime(item.timeSpentSeconds)}

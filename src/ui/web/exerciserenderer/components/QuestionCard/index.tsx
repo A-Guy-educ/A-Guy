@@ -62,7 +62,7 @@ export function QuestionCard({
               : 'justify-start text-left gap-content-gap-xs',
           )}
         >
-          <div className="w-5 h-5 rounded-full flex items-center justify-center bg-slate-50 border border-slate-200 shadow-elevation-1">
+          <div className="w-5 h-5 rounded-full flex items-center justify-center bg-muted border border-border shadow-elevation-1">
             <span className="font-bold text-body-xs">{questionLabel}</span>
           </div>
         </div>

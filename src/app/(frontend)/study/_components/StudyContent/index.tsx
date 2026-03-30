@@ -8,21 +8,27 @@ import { useExamCountdown } from '@/client/hooks/useExamCountdown'
 import { getUserProfile } from '@/client/state/localStorage/userProfile'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { logger } from '@/infra/utils/logger'
-import { cn } from '@/infra/utils/ui'
+// cn import removed - not currently used
 import type { Chapter, Lesson } from '@/payload-types'
 import {
   DEFAULT_LESSON_TYPE,
   getEffectiveLessonType,
   type LessonType,
 } from '@/server/constants/lesson-types'
+import { Skeleton, SkeletonCard } from '@/ui/web/components/skeleton'
+// ProgressCircle import removed - not currently used
 import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
 import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
-import { ContentStatusBadge } from '@/ui/web/shared/ContentStatusBadge'
-import { ProgressCircle } from '@/ui/web/shared/ProgressCircle'
-import { BarChart3, Clock, GraduationCap, Sparkles } from 'lucide-react'
-import { toast } from 'sonner'
+// ContentStatusBadge import removed - not currently used
+import { PageTransition } from '@/ui/web/components/page-transition'
+import { BarChart3, BookOpen, GraduationCap, PlayCircle, Sparkles } from 'lucide-react'
+import { Button } from '@/ui/web/components/button'
+import { Progress } from '@/ui/web/components/progress'
+import { motion } from 'framer-motion'
+// toast import removed - not currently used
 import { useEffect, useMemo, useState } from 'react'
 import { useProgressMap } from '@/client/hooks/useProgressMap'
+import { CourseLessonCard } from '@/app/(frontend)/courses/[courseSlug]/_components/CourseLessonCard'
 
 interface ChapterWithLessons extends Chapter {
   lessons: Lesson[]
@@ -55,6 +61,19 @@ interface StudyContentProps {
   lessonType?: LessonType
   /** Server-side prefetched data — skips client-side API fetch when provided */
   prefetchedData?: PrefetchedData | null
+}
+
+interface FilteredLesson extends Lesson {
+  _chapterSlug: string
+  _chapterTitle: string
+  _chapterLabel: string | null | undefined
+}
+
+interface ChapterGroup {
+  chapterSlug: string
+  chapterTitle: string
+  chapterLabel: string | null | undefined
+  lessons: FilteredLesson[]
 }
 
 export function StudyContent({
@@ -170,94 +189,260 @@ export function StudyContent({
         const chapterSlug = chapter.slug || ''
         return (chapter.lessons ?? [])
           .filter((lesson) => getEffectiveLessonType(lesson.type) === lessonType)
-          .map((lesson) => ({ ...lesson, _chapterSlug: chapterSlug }))
+          .map((lesson) => ({
+            ...lesson,
+            _chapterSlug: chapterSlug,
+            _chapterTitle: chapter.title,
+            _chapterLabel: chapter.chapterLabel,
+          }))
       }),
     [chapters, lessonType],
   )
 
+  /** Group lessons by chapter for section-based rendering */
+  const chapterGroups = useMemo(() => {
+    const groups: ChapterGroup[] = []
+    const groupMap = new Map<string, ChapterGroup>()
+
+    for (const lesson of filteredLessons) {
+      const key = lesson._chapterSlug
+      const existing = groupMap.get(key)
+      if (existing) {
+        existing.lessons.push(lesson)
+      } else {
+        const group: ChapterGroup = {
+          chapterSlug: lesson._chapterSlug,
+          chapterTitle: lesson._chapterTitle,
+          chapterLabel: lesson._chapterLabel,
+          lessons: [lesson],
+        }
+        groupMap.set(key, group)
+        groups.push(group)
+      }
+    }
+
+    return groups
+  }, [filteredLessons])
+
   const lessonIds = useMemo(() => filteredLessons.map((l) => l.id), [filteredLessons])
   const { progressMap } = useProgressMap({ recordType: 'lesson', recordIds: lessonIds })
 
+  /** Compute overall progress across all filtered lessons */
+  const overallProgress = useMemo(() => {
+    if (filteredLessons.length === 0) return 0
+    const totalProgress = filteredLessons.reduce(
+      (sum, lesson) => sum + (progressMap[lesson.id] ?? 0),
+      0,
+    )
+    return Math.round(totalProgress / filteredLessons.length)
+  }, [filteredLessons, progressMap])
+
+  /** Find the in-progress lesson with the highest progress for "continue" card */
+  const continueLesson = useMemo(() => {
+    let best: { title: string; progress: number; href: string } | null = null
+    for (const lesson of filteredLessons) {
+      const p = progressMap[lesson.id] ?? 0
+      if (p > 0 && p < 100) {
+        if (!best || p > best.progress) {
+          const href = `/courses/${courseInfo?.courseSlug ?? ''}/chapters/${lesson._chapterSlug}/lessons/${lesson.slug}`
+          best = { title: lesson.title, progress: Math.round(p), href }
+        }
+      }
+    }
+    return best
+  }, [filteredLessons, progressMap, courseInfo?.courseSlug])
+
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-section-md">
-        <div className="text-center text-muted-foreground">{ts('loading')}</div>
+      <div className="container mx-auto px-6 py-section-sm max-w-5xl">
+        <div className="max-w-5xl mx-auto text-center mb-8">
+          <Skeleton className="h-7 w-24 rounded-full mx-auto mb-3" />
+          <Skeleton className="h-10 w-72 mx-auto mb-4" />
+          <div className="max-w-sm mx-auto space-y-2">
+            <div className="flex justify-between">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-10" />
+            </div>
+            <Skeleton className="h-2 w-full rounded-full" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-content-gap-lg">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
       </div>
     )
   }
 
   const sectionTitle = courseInfo?.courseTitle || ts('studyTopics')
+  const hasMultipleChapters = chapterGroups.length > 1
 
   return (
-    <AccessGateProvider
-      accessType={
-        courseInfo?.coursePageAccessType === 'paid' || courseInfo?.courseAccessType === 'paid'
-          ? 'paid'
-          : (courseInfo?.coursePageAccessType ?? 'free')
-      }
-      courseSlug={courseInfo?.courseSlug ?? ''}
-      gatedDelayMs={courseInfo?.gatedDelayMs}
-      gatedWarningMs={courseInfo?.gatedWarningMs}
-      requiresEntitlement={requiresEntitlement}
-      isAuthenticated={isAuthenticated}
-    >
-      {/* Centered title area - clean background */}
-      <div className="w-full py-section-sm px-6">
-        <div className="max-w-5xl mx-auto text-center">
-          <ExamReminderBubble courseId={courseInfo?.courseId ?? ''} />
-          <h1 className="text-display-sm md:text-display-md font-black text-foreground mt-4 text-center">
-            {sectionTitle}
-          </h1>
-        </div>
-      </div>
+    <PageTransition>
+      <AccessGateProvider
+        accessType={
+          courseInfo?.coursePageAccessType === 'paid' || courseInfo?.courseAccessType === 'paid'
+            ? 'paid'
+            : (courseInfo?.coursePageAccessType ?? 'free')
+        }
+        courseSlug={courseInfo?.courseSlug ?? ''}
+        gatedDelayMs={courseInfo?.gatedDelayMs}
+        gatedWarningMs={courseInfo?.gatedWarningMs}
+        requiresEntitlement={requiresEntitlement}
+        isAuthenticated={isAuthenticated}
+      >
+        {/* Course context header */}
+        <div className="w-full py-section-sm px-6">
+          <div className="max-w-5xl mx-auto text-center">
+            <ExamReminderBubble courseId={courseInfo?.courseId ?? ''} />
 
-      {/* Main Content */}
-      <main className="container mx-auto px-6 py-section-sm max-w-5xl">
-        {filteredLessons.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-content-gap-lg">
-            {filteredLessons.map((lesson, idx) => (
-              <LessonGridCard
-                key={lesson.id}
-                lesson={lesson}
-                index={idx + 1}
-                courseSlug={courseInfo?.courseSlug ?? ''}
-                chapterSlug={lesson._chapterSlug}
-                tabColor={tabColor}
-                progress={progressMap[lesson.id] ?? 0}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-20 text-muted-foreground italic">
-            <p className="text-body-lg">{ts('noTopicsAvailable')}</p>
-          </div>
-        )}
+            <h1 className="text-heading-xl md:text-4xl font-black text-foreground mt-4">
+              {sectionTitle}
+            </h1>
 
-        {/* Footer actions with divider */}
-        <div className="mt-16 pt-8 border-t border-border">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-content-gap">
-            <SystemLink
-              href="/stats"
-              className="flex items-center justify-center gap-content-gap-xs text-body-sm font-bold text-foreground bg-card border border-border px-6 py-3 rounded-full hover:bg-muted/50 transition-all"
-            >
-              <BarChart3 className="w-4 h-4" />
-              {t('statsAndPerformance')}
-            </SystemLink>
-            <SystemLink
-              href="/study-plan"
-              className="flex items-center justify-center gap-content-gap-xs text-body-sm font-bold text-primary-foreground bg-primary px-6 py-3 rounded-full shadow-card hover:opacity-90 transition-all"
-            >
-              <GraduationCap className="w-4 h-4" />
-              {t('upcomingExam')}
-            </SystemLink>
-            <button className="flex items-center justify-center gap-content-gap-xs text-body-sm font-bold text-foreground bg-card border border-border px-6 py-3 rounded-full hover:bg-muted/50 transition-all">
-              <Sparkles className="w-4 h-4" />
-              {t('bagrutTransition')}
-            </button>
+            {/* Overall progress bar */}
+            {filteredLessons.length > 0 && overallProgress > 0 && (
+              <div className="mt-3 max-w-xs mx-auto">
+                <div className="flex items-center gap-3">
+                  <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
+                    <motion.div
+                      className="h-full rounded-full"
+                      style={{ backgroundColor: tabColor.stroke }}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${overallProgress}%` }}
+                      transition={{ duration: 0.6, ease: 'easeOut' }}
+                    />
+                  </div>
+                  <span className="text-body-xs font-bold text-muted-foreground">
+                    {overallProgress}%
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      </main>
-    </AccessGateProvider>
+
+        {/* Main Content */}
+        <main className="container mx-auto px-6 py-section-sm max-w-5xl">
+          {continueLesson && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-content-gap-lg"
+            >
+              <div className="bg-gradient-to-r from-primary/10 via-card to-accent/5 border border-primary/20 rounded-2xl p-card-padding flex items-center gap-content-gap">
+                <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <PlayCircle className="w-7 h-7 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-body-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">
+                    {ts('continueLearning')}
+                  </p>
+                  <h3 className="text-heading-md font-bold truncate">{continueLesson.title}</h3>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Progress value={continueLesson.progress} className="h-1.5 flex-1 max-w-32" />
+                    <span className="text-body-xs text-muted-foreground">
+                      {continueLesson.progress}%
+                    </span>
+                  </div>
+                </div>
+                <Button asChild>
+                  <SystemLink href={continueLesson.href}>{ts('continue')}</SystemLink>
+                </Button>
+              </div>
+            </motion.div>
+          )}
+
+          {filteredLessons.length > 0 ? (
+            <div className="space-y-8">
+              {chapterGroups.map((group, groupIdx) => {
+                const startIndex = chapterGroups
+                  .slice(0, groupIdx)
+                  .reduce((sum, g) => sum + g.lessons.length, 0)
+
+                return (
+                  <section key={group.chapterSlug}>
+                    {hasMultipleChapters && (
+                      <div className="flex items-center gap-2 mb-4">
+                        <div
+                          className="w-0.5 h-5 rounded-full shrink-0"
+                          style={{ backgroundColor: tabColor.stroke }}
+                        />
+                        <h2 className="text-heading-sm font-semibold text-muted-foreground">
+                          {group.chapterLabel && <span>{group.chapterLabel} </span>}
+                          {group.chapterTitle}
+                        </h2>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-content-gap">
+                      {group.lessons.map((lesson, idx) => (
+                        <motion.div
+                          key={lesson.id}
+                          initial={{ opacity: 0, y: 16 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{
+                            duration: 0.3,
+                            delay: (startIndex + idx) * 0.04,
+                            ease: 'easeOut',
+                          }}
+                        >
+                          <CourseLessonCard
+                            lesson={lesson}
+                            index={startIndex + idx + 1}
+                            courseSlug={courseInfo?.courseSlug ?? ''}
+                            chapterSlug={lesson._chapterSlug}
+                            tabColor={tabColor}
+                            progress={progressMap[lesson.id] ?? 0}
+                          />
+                        </motion.div>
+                      ))}
+                    </div>
+                  </section>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-section-lg">
+              <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
+                <BookOpen className="w-8 h-8 text-muted-foreground/50" />
+              </div>
+              <p className="text-body-lg font-medium text-muted-foreground">
+                {ts('noTopicsAvailable')}
+              </p>
+              <p className="text-body-sm text-muted-foreground/60 mt-1">
+                Check back later for new content
+              </p>
+            </div>
+          )}
+
+          {/* Footer actions */}
+          <div className="mt-16 pt-8 border-t border-border">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-content-gap">
+              <SystemLink
+                href="/stats"
+                className="flex items-center justify-center gap-2 text-body-sm font-bold text-foreground bg-card border border-border px-6 py-3 rounded-full hover:bg-muted/50 transition-all"
+              >
+                <BarChart3 className="w-4 h-4" />
+                {t('statsAndPerformance')}
+              </SystemLink>
+              <SystemLink
+                href="/study-plan"
+                className="flex items-center justify-center gap-2 text-body-sm font-bold text-primary-foreground bg-primary px-6 py-3 rounded-full shadow-elevation-3 hover:opacity-90 transition-all"
+              >
+                <GraduationCap className="w-4 h-4" />
+                {t('upcomingExam')}
+              </SystemLink>
+              <button className="flex items-center justify-center gap-2 text-body-sm font-bold text-foreground bg-card border border-border px-6 py-3 rounded-full hover:bg-muted/50 transition-all">
+                <Sparkles className="w-4 h-4" />
+                {t('bagrutTransition')}
+              </button>
+            </div>
+          </div>
+        </main>
+      </AccessGateProvider>
+    </PageTransition>
   )
 }
 
@@ -281,106 +466,6 @@ function ExamReminderBubble({ courseId }: { courseId: string }) {
       <span className="bg-primary text-white text-body-sm font-bold px-6 py-2 rounded-full">
         {message}
       </span>
-    </div>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/* Lesson grid card matching the HTML design                           */
-/* ------------------------------------------------------------------ */
-
-function LessonGridCard({
-  lesson,
-  index,
-  courseSlug,
-  chapterSlug,
-  tabColor,
-  progress: progressProp,
-}: {
-  lesson: Lesson
-  index: number
-  courseSlug: string
-  chapterSlug: string
-  tabColor?: { text: string; stroke: string }
-  progress?: number
-}) {
-  const t = useTranslations('coursePage')
-  const tc = useTranslations('courses')
-
-  if (!lesson.slug) return null
-
-  const href = `/courses/${courseSlug}/chapters/${chapterSlug}/lessons/${lesson.slug}`
-  const isSoon = lesson.contentStatus === 'soon'
-  const progress = progressProp ?? 0
-  const progressText =
-    progress >= 100 ? t('lessonCompleted') : progress > 0 ? t('statusInProgress') : t('notStarted')
-
-  const accentColor = tabColor?.stroke ?? 'hsl(var(--primary))'
-
-  const handleLessonClick = (e: React.MouseEvent) => {
-    if (isSoon) {
-      e.preventDefault()
-      toast.info(tc('contentLocked'))
-    }
-  }
-
-  return (
-    <div
-      className={cn(
-        'relative rounded-2xl overflow-visible border border-border/40 shadow-elevation-1 transition-all',
-        !isSoon && 'active:scale-[0.98]',
-        isSoon && 'opacity-60',
-      )}
-      style={{ borderTopWidth: 3, borderTopColor: accentColor }}
-    >
-      <ContentStatusBadge
-        contentStatus={lesson.contentStatus}
-        contentStatusExpiresAt={lesson.contentStatusExpiresAt ?? undefined}
-        contentStatusLabel={lesson.contentStatusLabel ?? undefined}
-        className="absolute -top-3 right-4 z-10"
-      />
-      <SystemLink
-        href={isSoon ? '#' : href}
-        onClick={handleLessonClick}
-        className={cn(
-          'bg-card p-5',
-          'flex flex-row-reverse items-center justify-between',
-          isSoon ? 'cursor-not-allowed' : 'cursor-pointer',
-        )}
-      >
-        <div className="flex flex-col text-end">
-          <span
-            className="text-[10px] font-bold mb-1 uppercase tracking-wide"
-            style={{ color: accentColor }}
-          >
-            {tc('lesson')} {index}
-          </span>
-          <h3 className="text-body-lg font-bold text-card-foreground">{lesson.title}</h3>
-          <p className="text-body-xs text-muted-foreground mt-1 flex items-center justify-end gap-1">
-            {progress === 0 && <Clock className="w-3 h-3" />}
-            {progressText}
-          </p>
-        </div>
-
-        <div className="relative shrink-0 w-14 h-14">
-          <ProgressCircle
-            percentage={progress}
-            size={56}
-            strokeWidth={3}
-            strokeColor={tabColor?.stroke}
-          >
-            <text
-              x="50%"
-              y="50%"
-              textAnchor="middle"
-              dy=".3em"
-              className="text-body-sm font-bold fill-foreground"
-            >
-              {Math.round(progress)}%
-            </text>
-          </ProgressCircle>
-        </div>
-      </SystemLink>
     </div>
   )
 }
