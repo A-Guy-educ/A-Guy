@@ -99,6 +99,8 @@ async function createTeacherProfile(slug: string, promptId: string, isEnabled = 
     data: {
       slug,
       label: `Teacher ${slug}`,
+      description: `Description for ${slug}`,
+      locale: 'he',
       systemPrompt: promptId,
       isEnabled,
     } as any,

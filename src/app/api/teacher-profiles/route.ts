@@ -9,6 +9,7 @@ import { getPayload } from 'payload'
 
 import config from '@payload-config'
 import { cookieName, defaultLocale, type Locale, locales } from '@/i18n/config'
+import { localeWhereClause } from '@/server/payload/fields/contentLocale'
 
 function getLocaleFromRequest(req: Request): Locale {
   const cookieHeader = req.headers.get('cookie') ?? ''
@@ -28,21 +29,21 @@ export async function GET(req: Request) {
 
   const locale = getLocaleFromRequest(req)
 
-  // Fetch active teacher profiles
+  // Fetch active teacher profiles for the user's locale
   const profiles = await payload.find({
     collection: 'teacher_profiles',
     where: {
-      isEnabled: { equals: true },
+      and: [{ isEnabled: { equals: true } }, localeWhereClause(locale)],
     },
-    sort: 'label_en',
+    sort: 'label',
     overrideAccess: true, // Collection is adminOnly, but we're authenticated
   })
 
-  // Map to safe response (no systemPrompt/template), resolving locale fields
+  // Map to safe response (no systemPrompt/template)
   const responseProfiles = profiles.docs.map((profile) => ({
     slug: profile.slug,
-    label: locale === 'he' ? (profile.label_he ?? profile.label_en) : (profile.label_en ?? profile.label_he),
-    description: locale === 'he' ? (profile.description_he ?? profile.description_en) : (profile.description_en ?? profile.description_he),
+    label: profile.label,
+    description: profile.description ?? '',
     isEnabled: profile.isEnabled,
   }))
 

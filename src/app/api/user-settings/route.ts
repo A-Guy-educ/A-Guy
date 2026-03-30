@@ -13,6 +13,7 @@ import { z } from 'zod'
 
 import config from '@payload-config'
 import { cookieName, defaultLocale, type Locale, locales } from '@/i18n/config'
+import { localeWhereClause } from '@/server/payload/fields/contentLocale'
 
 function getLocaleFromRequest(req: Request): Locale {
   const cookieHeader = req.headers.get('cookie') ?? ''
@@ -60,25 +61,32 @@ export async function GET(req: Request) {
 
   const userSettings = settings.docs[0]
 
-  // Map to safe response (no systemPrompt/template), resolving locale fields
-  type PopulatedTeacherProfile = {
-    slug?: string
-    label_en?: string
-    label_he?: string
-    description_en?: string
-    description_he?: string
-  }
+  // The stored teacherProfile may be in any locale.
+  // Look up the locale-matching version by slug.
+  type PopulatedProfile = { slug?: string }
+  const storedProfile = userSettings.teacherProfile as PopulatedProfile | string | null
 
-  const teacherProfile = userSettings.teacherProfile
-    ? (() => {
-        const p = userSettings.teacherProfile as PopulatedTeacherProfile
-        return {
-          slug: p.slug,
-          label: locale === 'he' ? (p.label_he ?? p.label_en) : (p.label_en ?? p.label_he),
-          description: locale === 'he' ? (p.description_he ?? p.description_en) : (p.description_en ?? p.description_he),
-        }
-      })()
-    : null
+  let teacherProfile = null
+
+  if (storedProfile && typeof storedProfile === 'object' && storedProfile.slug) {
+    const localeProfile = await payload.find({
+      collection: 'teacher_profiles',
+      where: {
+        and: [{ slug: { equals: storedProfile.slug } }, localeWhereClause(locale)],
+      },
+      limit: 1,
+      overrideAccess: true,
+    })
+
+    const profile = localeProfile.docs[0]
+    if (profile) {
+      teacherProfile = {
+        slug: profile.slug,
+        label: profile.label,
+        description: profile.description ?? '',
+      }
+    }
+  }
 
   return Response.json({
     settings: {
@@ -118,7 +126,7 @@ export async function PATCH(req: Request) {
 
   const { teacherProfileSlug } = validation.data
 
-  // Verify profile exists and is enabled
+  // Verify profile exists and is enabled (any locale doc suffices for validation)
   const profileResult = await payload.find({
     collection: 'teacher_profiles',
     where: {
