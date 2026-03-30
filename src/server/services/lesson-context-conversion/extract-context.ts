@@ -230,13 +230,62 @@ export async function extractLessonContext(
       warnings.push(...validation.errors)
     }
 
-    if (validation.isTruncated) {
-      warnings.push(
-        'The output appears truncated — some exercises at the end may be missing. Try extracting a shorter PDF or splitting it into parts.',
-      )
-    }
+    let extractedText = validation.sanitizedText
 
-    const extractedText = validation.sanitizedText
+    // ========== Step 8b: If truncated, retry with solutions-only pass ==========
+    if (validation.isTruncated) {
+      warnings.push('First pass was truncated — running a second pass for solutions only.')
+
+      const solutionsPrompt = `You are given LaTeX code of math exercises that was extracted from a PDF. The extraction was cut off before the solutions could be completed.
+
+Your task: Generate ONLY the solutions section for these exercises. Output valid LaTeX starting from \\newpage and the solutions sections.
+
+Rules:
+- Start with \\newpage
+- Use \\section*{פתרון תרגיל X} for each solution
+- Solutions must be highly detailed, showing formulas, derivatives, and logical steps
+- Match the solution list format: \\begin{enumerate}[label=\\textbf{\\alph*.}]
+- Do NOT repeat the exercises — only output the solutions
+- Do NOT include \\documentclass, \\usepackage, \\begin{document}, or \\end{document}
+
+Here are the exercises that need solutions:
+
+${extractedText}`
+
+      try {
+        const solutionsResponse = await adapter.generateMultimodalCompletion(
+          {
+            prompt: solutionsPrompt,
+            model: modelConfig,
+            attachments: [{ data: base64Data, mimeType }],
+          },
+          payload,
+        )
+
+        const solutionsText = solutionsResponse.text?.trim()
+
+        if (solutionsText) {
+          // Remove any duplicate preamble/document tags the LLM might add
+          const cleanedSolutions = solutionsText
+            .replace(/\\documentclass[\s\S]*?\\begin\{document\}/g, '')
+            .replace(/\\end\{document\}/g, '')
+            .trim()
+
+          if (cleanedSolutions) {
+            // Remove empty solution stubs from the first pass before appending real solutions
+            const textWithoutEmptyStubs = extractedText.replace(/\\newpage[\s\S]*$/, '').trim()
+
+            extractedText = `${textWithoutEmptyStubs}\n\n${cleanedSolutions}`
+            warnings.push('Solutions were extracted in a second pass and appended successfully.')
+          }
+        }
+      } catch (solutionsError) {
+        const msg = solutionsError instanceof Error ? solutionsError.message : 'Unknown error'
+        warnings.push(
+          `Second pass for solutions failed: ${msg}. Exercises were saved without full solutions.`,
+        )
+      }
+    }
 
     // ========== Step 9: Store result based on mode ==========
     let updatedContextText: string
