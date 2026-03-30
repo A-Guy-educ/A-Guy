@@ -32,3 +32,15 @@ All done. Here's a summary of what was implemented:
 
 3. **`src/app/api/teacher-profiles/route.ts`** — Reads lo
 ...(truncated)
+
+### review (2026-03-30T08:16:06)
+All fixes applied. Here's a summary of changes made based on your feedback:
+
+**Changes:**
+
+1. **`TeacherProfiles.ts`** - Changed `useAsTitle` from `label_en` to `slug` (you said "no" to using `label_en`)
+
+2. **`src/i18n/get-locale-from-request.ts`** (new) - Extracted the duplicated `getLocaleFromRequest` function into a shared utility
+
+3. **`teacher-profiles/route.ts`** - Uses shared locale utility, sorts by locale-appropriate field (`label_he` or `label_en`), adds `?? ''` fallback for nullable 
+...(truncated)
