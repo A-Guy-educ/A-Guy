@@ -127,10 +127,6 @@ export async function createGenkitUnifiedAdapter(
               const result = await ai.generate({
                 model: config.model,
                 prompt,
-                config: {
-                  temperature: config.temperature,
-                  maxOutputTokens: config.maxOutputTokens,
-                },
               })
 
               return {
@@ -331,10 +327,6 @@ export async function createGenkitUnifiedAdapter(
                 tools: genkitTools as never,
                 toolChoice: 'auto',
                 maxTurns: 5,
-                config: {
-                  temperature: config.temperature,
-                  maxOutputTokens: config.maxOutputTokens,
-                },
               })
 
               return {
