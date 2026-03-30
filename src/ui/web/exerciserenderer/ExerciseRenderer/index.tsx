@@ -436,6 +436,7 @@ export function ExerciseRenderer({
                     mediaIds?: string[]
                   }
                   textPosition?: 'above' | 'below'
+                  columnsPerRow?: 1 | 2 | 4
                 }
                 return (
                   <div key={multiAxisBlock.id}>
@@ -444,6 +445,7 @@ export function ExerciseRenderer({
                       graphs={multiAxisBlock.graphs}
                       prompt={multiAxisBlock.prompt}
                       textPosition={multiAxisBlock.textPosition ?? 'above'}
+                      columnsPerRow={multiAxisBlock.columnsPerRow}
                     />
                   </div>
                 )

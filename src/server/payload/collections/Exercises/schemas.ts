@@ -463,6 +463,7 @@ export const QuestionMultiAxisBlockSchema = z
     type: z.literal('question_multi_axis'),
     prompt: InlineRichTextSchema.optional(),
     textPosition: z.enum(['above', 'below']).default('above'),
+    columnsPerRow: z.union([z.literal(1), z.literal(2), z.literal(4)]).optional(),
     graphs: z.array(MultiAxisGraphItemSchema).min(1).max(4),
   })
   .strict()

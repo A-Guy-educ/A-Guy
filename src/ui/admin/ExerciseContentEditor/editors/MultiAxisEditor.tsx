@@ -128,6 +128,21 @@ export const MultiAxisEditor: React.FC<MultiAxisEditorProps> = ({ block, onChang
       </div>
 
       <div className="question-editor-section">
+        <label className="question-editor-label">Columns Per Row</label>
+        <select
+          className="panel-field-select"
+          value={block.columnsPerRow ?? 2}
+          onChange={(e) =>
+            onChange({ ...block, columnsPerRow: Number(e.target.value) as 1 | 2 | 4 })
+          }
+        >
+          <option value={1}>1 per row</option>
+          <option value={2}>2 per row</option>
+          <option value={4}>4 per row</option>
+        </select>
+      </div>
+
+      <div className="question-editor-section">
         <label className="question-editor-label">Graphs ({block.graphs.length}/4)</label>
 
         {block.graphs.map((graph, idx) => (
