@@ -5,7 +5,6 @@ import {
   getDefaultAngleColor,
   getDefaultCanvasBackground,
   getDefaultCanvasElementColor,
-  getDefaultTextColor,
   sizeScaleToPixels,
 } from '@/infra/contracts/graphics/textColors'
 import type { JXGBoard, JXGElement } from 'jsxgraph'
@@ -96,7 +95,7 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
       const existingIds = new Set(elementsRef.current.keys())
       const newIds = new Set<string>()
 
-      syncPoints(
+      const recreatedPoints = syncPoints(
         board,
         geometry,
         newIds,
@@ -106,6 +105,19 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
         onPointMovedRef,
         onPointLabelMovedRef,
       )
+
+      // When points are recreated (e.g. label position change), dependent
+      // elements hold stale JSXGraph references.  Remove them so the sync
+      // functions below recreate them against the new point objects.
+      if (recreatedPoints.size > 0) {
+        for (const [id, el] of elementsRef.current) {
+          if (id.startsWith('point-')) continue
+          if (id.startsWith('text-')) continue
+          board.removeObject(el)
+          elementsRef.current.delete(id)
+        }
+      }
+
       syncSegments(board, geometry, newIds, elementsRef)
       syncLineLabels(board, geometry, newIds, elementsRef)
       syncCircles(board, geometry, newIds, elementsRef)
@@ -199,7 +211,8 @@ function syncPoints(
   isDraggingRef: React.MutableRefObject<boolean>,
   onPointMovedRef: React.RefObject<((name: string, x: number, y: number) => void) | undefined>,
   onPointLabelMovedRef: React.RefObject<((name: string, position: string) => void) | undefined>,
-) {
+): Set<string> {
+  const recreated = new Set<string>()
   for (const point of geometry.elements.points) {
     const elemId = `point-${point.name}`
     newIds.add(elemId)
@@ -225,6 +238,7 @@ function syncPoints(
       if (existing) {
         board.removeObject(existing)
         elementsRef.current.delete(elemId)
+        recreated.add(point.name)
       }
       const el = board.create('point', [point.x, point.y], {
         name: point.name,
@@ -268,6 +282,7 @@ function syncPoints(
       elementsRef.current.set(elemId, el)
     }
   }
+  return recreated
 }
 
 function syncSegments(
@@ -287,14 +302,14 @@ function syncSegments(
     const existing = elementsRef.current.get(elemId)
     if (existing) {
       existing.setAttribute({
-        strokeColor: line.color || getDefaultTextColor(),
+        strokeColor: line.color || getDefaultCanvasElementColor(),
         strokeWidth: line.thickness || 2,
         dash: line.style === 'dashed' ? 2 : 0,
       })
       continue
     }
     const el = board.create('segment', [fromEl, toEl], {
-      strokeColor: line.color || getDefaultTextColor(),
+      strokeColor: line.color || getDefaultCanvasElementColor(),
       strokeWidth: line.thickness || 2,
       dash: line.style === 'dashed' ? 2 : 0,
       fixed: true,
@@ -326,10 +341,25 @@ function syncLineLabels(
 
     const f = fromEl as unknown as { X: () => number; Y: () => number }
     const t = toEl as unknown as { X: () => number; Y: () => number }
-    const offset = line.label.position === 'b' ? -1.5 : line.label.position === 'm' ? 0 : 1.5
+    const offsetDist = line.label.position === 'b' ? -1.5 : line.label.position === 'm' ? 0 : 1.5
     const el = board.create(
       'text',
-      [() => (f.X() + t.X()) / 2, () => (f.Y() + t.Y()) / 2 + offset, line.label.value],
+      [
+        () => {
+          // Offset perpendicular to the line direction
+          const dx = t.X() - f.X()
+          const dy = t.Y() - f.Y()
+          const len = Math.sqrt(dx * dx + dy * dy) || 1
+          return (f.X() + t.X()) / 2 + (-dy / len) * offsetDist
+        },
+        () => {
+          const dx = t.X() - f.X()
+          const dy = t.Y() - f.Y()
+          const len = Math.sqrt(dx * dx + dy * dy) || 1
+          return (f.Y() + t.Y()) / 2 + (dx / len) * offsetDist
+        },
+        line.label.value,
+      ],
       {
         fontSize: line.label.fontSize || 12,
         anchorX: 'middle',
@@ -368,7 +398,7 @@ function syncCircles(
     const existing = elementsRef.current.get(elemId)
     if (existing) {
       existing.setAttribute({
-        strokeColor: circle.color || getDefaultTextColor(),
+        strokeColor: circle.color || getDefaultCanvasElementColor(),
         dash: circle.style === 'dashed' ? 2 : 0,
       })
       continue
@@ -377,7 +407,7 @@ function syncCircles(
       ? [centerEl, elementsRef.current.get(`point-${circle.through}`) || centerEl]
       : [centerEl, circle.radius || 50]
     const el = board.create('circle', parents, {
-      strokeColor: circle.color || getDefaultTextColor(),
+      strokeColor: circle.color || getDefaultCanvasElementColor(),
       dash: circle.style === 'dashed' ? 2 : 0,
       fixed: true,
     })
@@ -451,7 +481,10 @@ function syncPolygons(
     const ptEls = tri.points.map((name) => elementsRef.current.get(`point-${name}`)).filter(Boolean)
     if (ptEls.length < 3) continue
     const el = board.create('polygon', ptEls, {
-      borders: { strokeColor: tri.color || getDefaultTextColor(), strokeWidth: tri.thickness || 2 },
+      borders: {
+        strokeColor: tri.color || getDefaultCanvasElementColor(),
+        strokeWidth: tri.thickness || 2,
+      },
       fillColor: tri.fill || 'transparent',
       fillOpacity: tri.fill ? 0.3 : 0,
       hasInnerPoints: true,
@@ -479,7 +512,7 @@ function syncPolygons(
     if (ptEls.length < 4) continue
     const el = board.create('polygon', ptEls, {
       borders: {
-        strokeColor: rect.color || getDefaultTextColor(),
+        strokeColor: rect.color || getDefaultCanvasElementColor(),
         strokeWidth: rect.thickness || 2,
       },
       fillColor: rect.fill || 'transparent',
@@ -552,7 +585,7 @@ function syncTexts(
       elementsRef.current.delete(elemId)
     }
 
-    const color = text.color ?? getDefaultTextColor()
+    const color = text.color ?? getDefaultCanvasElementColor()
     const fontSize =
       text.sizeScale !== undefined ? sizeScaleToPixels(text.sizeScale) : (text.fontSize ?? 14)
 
