@@ -3,5 +3,5 @@ interface BreadcrumbCurrentProps {
 }
 
 export function BreadcrumbCurrent({ label }: BreadcrumbCurrentProps) {
-  return <span className="text-gray-600">{label}</span>
+  return <span className="text-muted-foreground">{label}</span>
 }

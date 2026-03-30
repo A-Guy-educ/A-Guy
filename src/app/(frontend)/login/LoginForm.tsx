@@ -43,7 +43,7 @@ function LoginFormContent() {
   }
 
   return (
-    <Card className="rounded-2xl shadow-lg border-0 bg-card px-8 py-6">
+    <Card className="rounded-2xl shadow-elevation-4 border border-primary/10 bg-card/80 backdrop-blur-xl px-8 py-section-sm">
       <CardHeader className="pb-3">
         {/* Logo */}
         <div className="flex flex-col items-center gap-1">
@@ -53,14 +53,14 @@ function LoginFormContent() {
         {/* Section label with decorative line */}
         <div className="flex flex-col items-center mt-3">
           <div className="w-8 h-px bg-border mb-2" />
-          <p className="text-sm text-muted-foreground">{t('quickLogin')}</p>
+          <p className="text-body-sm text-muted-foreground">{t('quickLogin')}</p>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Google SSO Button */}
         <GoogleLoginButton
           returnTo={returnTo}
-          className="w-full h-14 rounded-xl text-base font-semibold"
+          className="w-full h-14 rounded-xl text-body-md font-semibold"
         />
 
         {/* Registration Link - appears below Google button when password is disabled */}
@@ -69,12 +69,12 @@ function LoginFormContent() {
             <div className="flex justify-center">
               <SystemLink
                 href="/signup"
-                className="bg-muted text-primary font-bold rounded-full px-6 py-2 text-sm hover:bg-primary-soft transition-colors inline-block"
+                className="bg-muted text-primary font-bold rounded-full px-6 py-2 text-body-sm hover:bg-primary-soft transition-colors duration-normal inline-block"
               >
                 {t('freeRegistration')}
               </SystemLink>
             </div>
-            <p className="text-sm text-muted-foreground text-center pt-2">
+            <p className="text-body-sm text-muted-foreground text-center pt-2">
               {t('secureAccess')}
               <br />
               {t('oneClickEntry')}
@@ -87,7 +87,7 @@ function LoginFormContent() {
           <>
             <div className="flex items-center w-full gap-3">
               <div className="flex-1 h-px bg-border" />
-              <span className="text-xs text-muted-foreground">{tOauth('orDivider')}</span>
+              <span className="text-body-xs text-muted-foreground">{tOauth('orDivider')}</span>
               <div className="flex-1 h-px bg-border" />
             </div>
 
@@ -112,7 +112,7 @@ function LoginFormContent() {
                   required
                 />
               </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
+              {error && <p className="text-body-sm text-destructive">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? t('loggingIn') : t('loginButton')}
               </Button>
@@ -122,11 +122,11 @@ function LoginFormContent() {
             <div className="flex flex-col items-center gap-2 pt-2">
               <SystemLink
                 href="/signup"
-                className="bg-muted text-primary font-bold rounded-full px-6 py-2 text-sm hover:bg-primary-soft transition-colors inline-block"
+                className="bg-muted text-primary font-bold rounded-full px-6 py-2 text-body-sm hover:bg-primary-soft transition-colors duration-normal inline-block"
               >
                 {t('freeRegistration')}
               </SystemLink>
-              <p className="text-sm text-muted-foreground text-center">
+              <p className="text-body-sm text-muted-foreground text-center">
                 {t('secureAccess')}
                 <br />
                 {t('oneClickEntry')}
@@ -149,7 +149,7 @@ export function LoginForm() {
 
 function LoginFormSkeleton() {
   return (
-    <Card className="rounded-2xl shadow-lg border-0 bg-card px-8 py-6">
+    <Card className="rounded-2xl shadow-elevation-4 border border-primary/10 bg-card/80 backdrop-blur-xl px-8 py-section-sm">
       <CardHeader className="pb-3">
         <div className="flex flex-col items-center gap-1">
           <div className="h-24 w-24 bg-muted animate-pulse rounded-full" />

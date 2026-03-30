@@ -37,14 +37,14 @@ describe('withApiHandler Types', () => {
 
     it('should allow body schema only', () => {
       const options: HandlerOptions<{ jobId: string }, unknown> = {
-        bodySchema: { parse: (data: unknown) => ({ jobId: '123' }) } as any,
+        bodySchema: { parse: (_data: unknown) => ({ jobId: '123' }) } as any,
       }
       expect(options.bodySchema).toBeDefined()
     })
 
     it('should allow query schema only', () => {
       const options: HandlerOptions<unknown, { limit: number }> = {
-        querySchema: { parse: (data: unknown) => ({ limit: 10 }) } as any,
+        querySchema: { parse: (_data: unknown) => ({ limit: 10 }) } as any,
       }
       expect(options.querySchema).toBeDefined()
     })
@@ -52,8 +52,8 @@ describe('withApiHandler Types', () => {
     it('should allow combined options', () => {
       const options: HandlerOptions<{ jobId: string }, { limit: number }> = {
         auth: 'admin',
-        bodySchema: { parse: (data: unknown) => ({ jobId: '123' }) } as any,
-        querySchema: { parse: (data: unknown) => ({ limit: 10 }) } as any,
+        bodySchema: { parse: (_data: unknown) => ({ jobId: '123' }) } as any,
+        querySchema: { parse: (_data: unknown) => ({ limit: 10 }) } as any,
       }
       expect(options.auth).toBe('admin')
       expect(options.bodySchema).toBeDefined()

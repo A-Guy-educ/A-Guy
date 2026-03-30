@@ -93,14 +93,13 @@ export function MembershipPlans() {
     <section className="mb-24">
       <div className="text-center mb-12">
         <h2
-          className="text-card-foreground uppercase tracking-widest"
-          style={{ fontSize: '24px', fontWeight: 900 }}
+          className="text-heading-xl font-black text-card-foreground uppercase tracking-widest"
         >
           {t('membershipPlans')}
         </h2>
       </div>
 
-      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
+      <div className="grid gap-content-gap-xl md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
         {membershipPlans.map((plan, index) => (
           <PlanCard key={index} {...plan} />
         ))}

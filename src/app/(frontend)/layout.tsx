@@ -84,6 +84,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <Providers>
             <ActiveTimeProvider>
               <PasswordLoginProvider enabled={passwordLoginEnabled}>
+                <a
+                  href="#main-content"
+                  className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:start-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:shadow-elevation-3"
+                >
+                  Skip to content
+                </a>
                 <RouteLoadingIndicator />
                 <LayoutClient />
                 <AdminBar
@@ -92,7 +98,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   }}
                 />
                 <Header />
-                {children}
+                <div id="main-content">{children}</div>
                 <Footer />
                 <Toaster />
               </PasswordLoginProvider>
@@ -106,6 +112,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.aguy.co.il'),
+  manifest: '/manifest.json',
   title: {
     default: 'A-Guy | תרגול מתמטיקה אינטראקטיבי',
     template: '%s | A-Guy',
@@ -116,6 +123,15 @@ export const metadata: Metadata = {
   authors: [{ name: 'A-Guy', url: 'https://www.aguy.co.il' }],
   creator: 'A-Guy',
   publisher: 'A-Guy',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'A-Guy',
+  },
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#91262C' },
+    { media: '(prefers-color-scheme: dark)', color: '#0f172a' },
+  ],
   robots: {
     index: true,
     follow: true,
@@ -147,9 +163,6 @@ export const metadata: Metadata = {
   icons: {
     icon: '/favicon.svg',
     shortcut: '/favicon.ico',
-    apple: '/apple-touch-icon.png',
-  },
-  other: {
-    'theme-color': '#0f172a',
+    apple: '/favicon.svg',
   },
 }

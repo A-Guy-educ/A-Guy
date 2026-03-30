@@ -5,7 +5,7 @@
  * @domain qa
  * @pattern navigation-actions
  */
-import type { ActionContext, ActionHandler } from './types'
+import type { ActionHandler } from './types'
 import { LABELS } from '../shared/locales'
 
 type TabType = 'study' | 'practice' | 'ask' | 'test' | 'learn' | 'exams'

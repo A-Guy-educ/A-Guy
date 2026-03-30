@@ -52,7 +52,7 @@ export function ChatErrorSurface({ type, message, onDismiss, className }: ChatEr
       <button
         type="button"
         onClick={onDismiss}
-        className="p-1 hover:bg-destructive/20 rounded-full transition-colors flex-shrink-0"
+        className="p-1 hover:bg-destructive/20 rounded-full transition-all duration-normal flex-shrink-0"
         aria-label={tCourses('chatErrorDismiss')}
       >
         <X className="w-4 h-4" />

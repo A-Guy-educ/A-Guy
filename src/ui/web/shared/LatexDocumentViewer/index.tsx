@@ -83,12 +83,12 @@ export function LatexDocumentViewer({
       )}
     >
       <div className="px-12 py-10 font-serif sm:px-16 sm:py-12">
-        {title && <h1 className="text-foreground mb-8 text-center text-2xl font-bold">{title}</h1>}
+        {title && <h1 className="text-foreground mb-8 text-center text-heading-xl font-bold">{title}</h1>}
 
         {diagrams.length === 0 ? (
           <MathMarkdown
             content={segments[0]}
-            className="rich-text-content latex-document text-foreground text-base leading-relaxed"
+            className="rich-text-content latex-document text-foreground text-body-md leading-relaxed"
           />
         ) : (
           <>
@@ -97,7 +97,7 @@ export function LatexDocumentViewer({
                 {segment && (
                   <MathMarkdown
                     content={segment}
-                    className="rich-text-content latex-document text-foreground text-base leading-relaxed"
+                    className="rich-text-content latex-document text-foreground text-body-md leading-relaxed"
                   />
                 )}
                 {i < diagrams.length && <DiagramRenderer diagram={diagrams[i]} />}

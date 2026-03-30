@@ -879,11 +879,21 @@ export const Posts: CollectionConfig = {
 
 ### Styling Components
 
-This project uses **Tailwind CSS** for styling. Use Tailwind utility classes directly in JSX:
+This project uses **Tailwind CSS** with a **semantic design token system**. See `.kody/memory/design-system.md` for complete rules.
+
+**Key rules:**
+- Use semantic typography tokens (`text-body-sm`, `text-heading-lg`, `text-display-md`) — never `text-sm`, `text-xl`, `text-4xl`
+- Use Tailwind color utilities (`bg-primary`, `text-success`) — never `[hsl(var(--xxx))]` or hardcoded colors (`text-red-500`)
+- Use shadow tokens (`shadow-elevation-1`, `shadow-card`) — never `shadow-sm`, `shadow-md`
+- Use spacing tokens for layout (`p-card-padding`, `gap-content-gap`) — never `p-6`, `gap-8`
+- All interactive elements need `transition-all duration-normal`
+- Use `cn()` for className composition — never template literals
+- Never use inline `style={{}}` for typography or colors
 
 ```tsx
+// CORRECT
 export function MyComponent() {
-  return <div className="bg-muted text-foreground p-4 rounded-md">Content</div>
+  return <div className="bg-card text-card-foreground p-card-padding rounded-lg shadow-elevation-1">Content</div>
 }
 ```
 

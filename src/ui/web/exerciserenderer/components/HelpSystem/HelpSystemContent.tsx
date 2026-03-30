@@ -8,6 +8,7 @@
 'use client'
 
 import React from 'react'
+import { cn } from '@/infra/utils/ui'
 import { Lightbulb, HelpCircle, CheckCircle2 } from 'lucide-react'
 import { MathMarkdown } from '@/ui/web/shared/MathMarkdown'
 import { preprocessNewlines } from '@/infra/utils/textPreprocessing'
@@ -23,18 +24,18 @@ interface HelpSystemContentProps {
 const CONFIG = {
   hint: {
     icon: Lightbulb,
-    gradientClass: 'from-amber-50/80 to-white border-amber-100/60',
-    iconClass: 'text-amber-500',
+    gradientClass: 'bg-warning/5 border-warning/20',
+    iconClass: 'text-warning',
   },
   guiding: {
     icon: HelpCircle,
-    gradientClass: 'from-purple-50/80 to-white border-purple-100/60',
-    iconClass: 'text-purple-500',
+    gradientClass: 'bg-accent/5 border-accent/20',
+    iconClass: 'text-accent',
   },
   solution: {
     icon: CheckCircle2,
-    gradientClass: 'from-blue-50/80 to-white border-blue-100/60',
-    iconClass: 'text-blue-500',
+    gradientClass: 'bg-primary/5 border-primary/20',
+    iconClass: 'text-primary',
   },
 } as const
 
@@ -51,11 +52,14 @@ export function HelpSystemContent({
 
   return (
     <div
-      className={`p-card-padding-sm rounded-2xl bg-gradient-to-br ${gradientClass} border shadow-elevation-1 animate-in slide-in-from-top-2 duration-slow`}
+      className={cn(
+        'p-card-padding-sm rounded-2xl border shadow-elevation-1 animate-in slide-in-from-top-2 duration-slow',
+        gradientClass,
+      )}
     >
       <div className="flex items-center gap-content-gap-xs mb-2">
-        <Icon className={`w-4 h-4 ${iconClass}`} />
-        <span className="text-body-xs font-medium text-gray-600">{label}</span>
+        <Icon className={cn('w-4 h-4', iconClass)} />
+        <span className="text-body-xs font-medium text-muted-foreground">{label}</span>
       </div>
       <div className="prose prose-sm prose-slate dark:prose-invert max-w-none">
         <MathMarkdown

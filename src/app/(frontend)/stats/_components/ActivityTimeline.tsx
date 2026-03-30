@@ -1,16 +1,18 @@
 /**
  * Activity Timeline Component
  *
- * Displays recent user activity chronologically
+ * Displays recent user activity chronologically with a staggered
+ * timeline layout and a connecting left border line.
  */
 
 'use client'
 
 import { useEffect, useState } from 'react'
 
+import { motion } from 'framer-motion'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { Card, CardContent, CardHeader, CardTitle } from '@/ui/web/components/card'
-import { CheckCircle2, FileQuestion, MessageCircle, HelpCircle, Activity } from 'lucide-react'
+import { CheckCircle2, FileQuestion, MessageCircle, HelpCircle, Activity as ActivityIcon } from 'lucide-react'
 
 interface Activity {
   actionType: string
@@ -23,17 +25,17 @@ interface Activity {
 function getActivityIcon(actionType: string) {
   switch (actionType) {
     case 'lesson_completed':
-      return <CheckCircle2 className="w-4 h-4 text-green-500" />
+      return <CheckCircle2 className="w-4 h-4 text-success" />
     case 'exercise_attempted':
-      return <FileQuestion className="w-4 h-4 text-blue-500" />
+      return <FileQuestion className="w-4 h-4 text-primary" />
     case 'exercise_completed':
-      return <CheckCircle2 className="w-4 h-4 text-green-600" />
+      return <CheckCircle2 className="w-4 h-4 text-success" />
     case 'question_asked':
-      return <HelpCircle className="w-4 h-4 text-orange-500" />
+      return <HelpCircle className="w-4 h-4 text-warning" />
     case 'conversation_started':
-      return <MessageCircle className="w-4 h-4 text-purple-500" />
+      return <MessageCircle className="w-4 h-4 text-accent-foreground" />
     default:
-      return <Activity className="w-4 h-4 text-gray-500" />
+      return <ActivityIcon className="w-4 h-4 text-muted-foreground" />
   }
 }
 
@@ -50,6 +52,19 @@ function formatRelativeTime(timestamp: string): string {
   if (diffHours < 24) return `${diffHours}h ago`
   if (diffDays < 7) return `${diffDays}d ago`
   return date.toLocaleDateString()
+}
+
+const timelineItemVariants = {
+  hidden: { opacity: 0, x: -8 },
+  visible: (i: number) => ({
+    opacity: 1,
+    x: 0,
+    transition: {
+      delay: i * 0.06,
+      duration: 0.3,
+      ease: [0.25, 0.46, 0.45, 0.94] as const,
+    },
+  }),
 }
 
 export function ActivityTimeline() {
@@ -80,12 +95,12 @@ export function ActivityTimeline() {
 
   if (loading) {
     return (
-      <Card>
+      <Card className="bg-card border shadow-elevation-1 rounded-xl">
         <CardHeader>
           <CardTitle>{t('recentActivity')}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center py-8">
+          <div className="flex items-center justify-center py-section-md">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
           </div>
         </CardContent>
@@ -95,35 +110,56 @@ export function ActivityTimeline() {
 
   if (activities.length === 0) {
     return (
-      <Card>
+      <Card className="bg-card border shadow-elevation-1 rounded-xl">
         <CardHeader>
           <CardTitle>{t('recentActivity')}</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground text-center py-4">{t('noActivity')}</p>
+          <div className="text-center py-section-sm">
+            <div className="w-12 h-12 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
+              <ActivityIcon className="w-6 h-6 text-muted-foreground/50" />
+            </div>
+            <p className="text-body-sm font-medium text-muted-foreground">{t('noActivity')}</p>
+            <p className="text-body-xs text-muted-foreground/60 mt-1">{t('noActivitySub')}</p>
+          </div>
         </CardContent>
       </Card>
     )
   }
 
   return (
-    <Card>
+    <Card className="bg-card border shadow-elevation-1 rounded-xl hover:shadow-card-hover transition-all duration-normal">
       <CardHeader>
         <CardTitle>{t('recentActivity')}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
-          {activities.map((activity, index) => (
-            <div key={`${activity.targetId}-${index}`} className="flex items-start gap-3">
-              {getActivityIcon(activity.actionType)}
-              <div className="flex-1">
-                <p className="text-sm font-medium">{activity.label}</p>
-                <p className="text-xs text-muted-foreground">
-                  {formatRelativeTime(activity.timestamp)}
-                </p>
-              </div>
-            </div>
-          ))}
+        <div className="relative">
+          {/* Connecting vertical line */}
+          <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border" />
+
+          <div className="space-y-1">
+            {activities.map((activity, index) => (
+              <motion.div
+                key={`${activity.targetId}-${index}`}
+                custom={index}
+                variants={timelineItemVariants}
+                initial="hidden"
+                animate="visible"
+                className="relative flex items-start gap-3 py-2 pl-1"
+              >
+                {/* Icon sits on top of the vertical line */}
+                <div className="relative z-10 flex-shrink-0 rounded-full bg-card p-0.5">
+                  {getActivityIcon(activity.actionType)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-body-sm font-medium">{activity.label}</p>
+                  <p className="text-body-xs text-muted-foreground">
+                    {formatRelativeTime(activity.timestamp)}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </CardContent>
     </Card>

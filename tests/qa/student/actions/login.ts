@@ -6,7 +6,7 @@
  * @domain qa
  * @pattern session-actions
  */
-import type { ActionContext, ActionHandler, ActionRef } from './types'
+import type { ActionHandler, ActionRef } from './types'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 

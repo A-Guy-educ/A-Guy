@@ -288,7 +288,7 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
   const selectedBlock = blocks.find((b) => b.id === selectedBlockId) || null
 
   if (!localValue) {
-    return <div className="p-4 text-muted-foreground">Loading editor...</div>
+    return <div className="p-card-padding-sm text-muted-foreground">Loading editor...</div>
   }
 
   return (

@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react'
 import { getUserProfile } from '@/client/state/localStorage/userProfile'
 import { ChatInterface } from '@/ui/web/chat'
 import { logger } from '@/infra/utils/logger'
-import { Loader2 } from 'lucide-react'
+import { cn } from '@/infra/utils/ui'
+import { Skeleton, SkeletonText } from '@/ui/web/components/skeleton'
 import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
+import { BookOpen } from 'lucide-react'
 import { ExerciseWorkspace } from '@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseWorkspace'
 import { AskPrimaryContent } from '../AskPrimaryContent'
 
@@ -59,17 +61,39 @@ export function AskContent({ conversationContextKey }: AskContentProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="w-6 h-6 animate-spin mr-2 text-muted-foreground" />
-        <span className="text-muted-foreground">{t('loading')}</span>
+      <div className="min-h-screen flex flex-col">
+        {/* Top bar skeleton */}
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
+          <Skeleton className="h-8 w-8 rounded-md" />
+          <Skeleton className="h-6 w-48" />
+        </div>
+
+        {/* Content area skeleton */}
+        <div className="flex-1 flex flex-col lg:flex-row">
+          <div className="flex-1 p-card-padding space-y-4">
+            <Skeleton className="h-8 w-64" />
+            <SkeletonText lines={4} />
+          </div>
+          <div className="hidden lg:block w-[400px] border-s border-border p-card-padding-sm space-y-4">
+            <Skeleton className="h-6 w-32" />
+            <SkeletonText lines={3} />
+            <Skeleton className="h-10 w-full rounded-md" />
+          </div>
+        </div>
       </div>
     )
   }
 
   if (!courseId) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center text-muted-foreground py-12">{t('noCourse')}</div>
+      <div className={cn('flex items-center justify-center h-screen')}>
+        <div className="text-center">
+          <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
+            <BookOpen className="w-8 h-8 text-muted-foreground/50" />
+          </div>
+          <p className="text-body-lg font-medium text-muted-foreground">{t('noCourse')}</p>
+          <p className="text-body-sm text-muted-foreground/60 mt-1">{t('noCourseHint')}</p>
+        </div>
       </div>
     )
   }

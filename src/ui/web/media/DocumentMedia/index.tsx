@@ -24,7 +24,7 @@ export const DocumentMedia: React.FC<MediaProps> = (props) => {
         <a
           href={docUrl}
           download
-          className="inline-flex items-center gap-content-gap-xs px-4 py-3 border border-border rounded text-inherit no-underline"
+          className="inline-flex items-center gap-content-gap-xs px-4 py-3 border border-border rounded-md text-inherit no-underline hover:bg-accent transition-colors"
         >
           <span>📄</span>
           <span>{filename || 'Document'}</span>

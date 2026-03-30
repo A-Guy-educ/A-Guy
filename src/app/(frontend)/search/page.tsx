@@ -5,7 +5,7 @@ import { searchCourseContent } from '@/server/repos/queries/course-search'
 import { CollectionArchive } from '@/ui/web/CollectionArchive'
 import { Search } from '@/ui/web/search/Component'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
-import { BookOpen, FileText } from 'lucide-react'
+import { BookOpen, FileText, SearchX } from 'lucide-react'
 import PageClient from './page.client'
 
 type Args = {
@@ -39,19 +39,27 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
       </div>
 
       {!query ? null : !hasResults ? (
-        <div className="container">No results found.</div>
+        <div className="container">
+          <div className="text-center py-section-lg">
+            <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
+              <SearchX className="w-8 h-8 text-muted-foreground/50" />
+            </div>
+            <p className="text-body-lg font-medium text-muted-foreground">No results found</p>
+            <p className="text-body-sm text-muted-foreground/60 mt-1">Try a different search term</p>
+          </div>
+        </div>
       ) : (
         <>
           {/* Course Content Results */}
           {courseResults && courseResults.length > 0 && (
             <div className="container mb-16">
-              <h2 className="text-display-xs font-bold mb-6">Courses & Lessons</h2>
+              <h2 className="text-heading-xl font-bold mb-6">Courses & Lessons</h2>
               <div className="grid gap-3">
                 {courseResults.map((result) => (
                   <SystemLink
                     key={result.id}
                     href={result.url}
-                    className="flex items-center gap-content-gap p-card-padding-sm rounded-lg border border-border bg-card hover:bg-muted transition-colors"
+                    className="flex items-center gap-content-gap p-card-padding-sm rounded-lg border border-border bg-card hover:bg-muted transition-colors duration-normal"
                   >
                     {result.type === 'lesson' ? (
                       <BookOpen className="w-5 h-5 text-primary shrink-0" />

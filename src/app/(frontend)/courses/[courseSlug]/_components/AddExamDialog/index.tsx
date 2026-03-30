@@ -42,25 +42,25 @@ export function AddExamDialog({ onAdd, trigger }: AddExamDialogProps) {
         <DialogHeader>
           <DialogTitle>{t('addExam')}</DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col gap-4 py-2">
+        <div className="flex flex-col gap-content-gap py-2">
           <div>
-            <label className="text-sm font-medium mb-1 block">{t('examDate')}</label>
+            <label className="text-body-sm font-medium mb-1 block">{t('examDate')}</label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-body-sm transition-colors duration-normal focus:border-primary focus:outline-none"
               min={new Date().toISOString().split('T')[0]}
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-1 block">{t('examLabel')}</label>
+            <label className="text-body-sm font-medium mb-1 block">{t('examLabel')}</label>
             <input
               type="text"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               placeholder={t('examLabelPlaceholder')}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-body-sm transition-colors duration-normal focus:border-primary focus:outline-none"
               maxLength={50}
             />
           </div>

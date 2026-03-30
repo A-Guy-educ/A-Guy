@@ -28,6 +28,14 @@ All source files include JSDoc headers:
 - **Security**: Environment variables only, no hardcoded secrets
 - **Transactions**: Always pass `req` to nested Payload operations
 
+## Styling
+
+See [design-system.md](./design-system.md) for complete rules. Key points:
+- Use semantic design tokens (typography, shadows, spacing) — never arbitrary Tailwind or inline styles
+- Use Tailwind color utilities (`bg-primary`, `text-success`) — never `[hsl(var(--xxx))]` or hardcoded colors
+- All interactive elements need `transition-all duration-normal`
+- Use `cn()` for className composition, never template literals
+
 ## Development
 
 - Run `pnpm generate:types` after collection/global changes

@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import telescopeSvg from './telescope.svg'
 import React from 'react'
-import clsx from 'clsx'
+import { cn } from '@/infra/utils/ui'
 
 interface TelescopeLogoProps {
   className?: string
@@ -9,7 +9,7 @@ interface TelescopeLogoProps {
 
 export function TelescopeLogo({ className }: TelescopeLogoProps) {
   return (
-    <div className={clsx('flex items-center gap-content-gap-xs', className)}>
+    <div className={cn('flex items-center gap-content-gap-xs', className)}>
       <Image
         src={telescopeSvg}
         alt="Telescope Logo"

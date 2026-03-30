@@ -39,7 +39,7 @@ export function HelpSystem({
   const inlineContent = activeHelp === 'hint' && question.hint?.value ? question.hint.value : null
 
   return (
-    <div className="mt-4 border-t border-gray-100/60 pt-3">
+    <div className="mt-4 border-t border-border pt-3">
       <HelpSystemButtons
         helpUsage={helpUsage}
         activeHelp={activeHelp}

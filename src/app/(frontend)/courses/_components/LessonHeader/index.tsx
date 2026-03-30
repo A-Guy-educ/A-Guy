@@ -34,21 +34,21 @@ export function LessonHeader({ order, title, description }: LessonHeaderProps) {
       <button
         onClick={handleBack}
         className={cn(
-          'absolute -top-2 flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+          'absolute -top-2 flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors duration-normal cursor-pointer',
           rtl ? 'right-0' : 'left-0',
         )}
         aria-label={t('back')}
       >
         {rtl ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
-        <span className="text-sm">{t('back')}</span>
+        <span className="text-body-sm">{t('back')}</span>
       </button>
       <div className="mb-2 mt-8">
-        <span className="text-sm font-semibold text-muted-foreground">
+        <span className="text-body-sm font-semibold text-muted-foreground">
           {t('lesson')} {order}
         </span>
       </div>
-      <h1 className="text-4xl font-bold mb-4">{title}</h1>
-      {shouldShowDescription && <p className="text-xl text-muted-foreground">{description}</p>}
+      <h1 className="text-display-md font-bold mb-4">{title}</h1>
+      {shouldShowDescription && <p className="text-body-xl text-muted-foreground">{description}</p>}
     </header>
   )
 }

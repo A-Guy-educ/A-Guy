@@ -44,7 +44,7 @@ export const AdminBar: React.FC<{
 
   return (
     <div
-      className={cn('py-2 bg-black text-white sm:hidden', {
+      className={cn('py-2 bg-foreground text-background sm:hidden', {
         block: show,
         hidden: !show,
       })}
@@ -52,11 +52,11 @@ export const AdminBar: React.FC<{
       <div className="container">
         <PayloadAdminBar
           {...adminBarProps}
-          className="py-2 text-white"
+          className="py-2 text-background"
           classNames={{
-            controls: 'font-medium text-white',
-            logo: 'text-white',
-            user: 'text-white',
+            controls: 'font-medium text-background',
+            logo: 'text-background',
+            user: 'text-background',
           }}
           cmsURL={getClientSideURL()}
           collectionSlug={collection}
@@ -72,12 +72,7 @@ export const AdminBar: React.FC<{
               router.refresh()
             })
           }}
-          style={{
-            backgroundColor: 'transparent',
-            padding: 0,
-            position: 'relative',
-            zIndex: 'unset',
-          }}
+          style={{ backgroundColor: 'transparent', padding: 0, position: 'relative', zIndex: 'unset' }}
         />
       </div>
     </div>

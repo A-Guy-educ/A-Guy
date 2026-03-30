@@ -54,7 +54,7 @@ export function ExerciseHeader({
       <button
         onClick={handleBack}
         className={cn(
-          'flex items-center justify-center p-2 text-foreground hover:text-primary transition-colors flex-shrink-0 absolute cursor-pointer',
+          'flex items-center justify-center p-2 text-foreground hover:text-primary transition-colors duration-normal flex-shrink-0 absolute cursor-pointer',
           rtl ? 'right-5' : 'left-5',
         )}
         aria-label={t('backToLesson')}
@@ -71,11 +71,8 @@ export function ExerciseHeader({
       <div
         className={cn(
           'flex items-center gap-content-gap-xs flex-shrink-0 fixed top-[10px] z-[101]',
-          rtl ? 'flex-row-reverse' : 'flex-row',
+          rtl ? 'flex-row-reverse left-5' : 'flex-row right-5',
         )}
-        style={{
-          [rtl ? 'left' : 'right']: '20px',
-        }}
       >
         {/* Logo - Hidden on mobile, shown on desktop */}
         <TelescopeLogo className="h-8 w-auto hidden lg:flex" />
@@ -84,7 +81,7 @@ export function ExerciseHeader({
         {onMenuClick && (
           <button
             onClick={onMenuClick}
-            className="p-2 rounded-lg hover:bg-muted transition-colors lg:hidden text-foreground"
+            className="p-2 rounded-lg hover:bg-muted transition-colors duration-normal lg:hidden text-foreground"
             aria-label="Open menu"
           >
             <Menu className="w-6 h-6 text-foreground" />

@@ -10,11 +10,9 @@ export default function NotFound() {
   const t = useTranslations('common.notFound')
 
   return (
-    <div className="container py-28">
-      <div className="prose max-w-none">
-        <h1 style={{ marginBottom: 0 }}>{t('title')}</h1>
-        <p className="mb-4">{t('message')}</p>
-      </div>
+    <div className="container py-section-lg flex flex-col items-center justify-center text-center animate-in fade-in">
+      <h1 className="text-display-md font-bold mb-2">{t('title')}</h1>
+      <p className="text-body-lg text-muted-foreground mb-8">{t('message')}</p>
       <Button asChild variant="default">
         <Link href="/">{t('goHome')}</Link>
       </Button>
