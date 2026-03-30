@@ -28,8 +28,8 @@ export function GeometryRenderer({ blockId, spec }: GeometryRendererProps) {
 
   const { canvas } = spec
   const boundingBox = useMemo<[number, number, number, number]>(
-    () => [0, canvas.height, canvas.width, 0],
-    [canvas.width, canvas.height],
+    () => canvas.boundingBox ?? [0, canvas.height, canvas.width, 0],
+    [canvas.boundingBox, canvas.width, canvas.height],
   )
 
   return (
@@ -40,7 +40,7 @@ export function GeometryRenderer({ blockId, spec }: GeometryRendererProps) {
         height={canvas.height}
         boundingBox={boundingBox}
         showGrid={canvas.grid ?? false}
-        showAxis={false}
+        showAxis={canvas.axis ?? false}
         onBoardReady={handleBoardReady}
         className="border-border"
       />

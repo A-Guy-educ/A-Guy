@@ -98,7 +98,6 @@ export interface Config {
     'pricing-plans': PricingPlan;
     'access-codes': AccessCode;
     'mcp-audit-logs': McpAuditLog;
-    'translation-glossary': TranslationGlossary;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -142,7 +141,6 @@ export interface Config {
     'pricing-plans': PricingPlansSelect<false> | PricingPlansSelect<true>;
     'access-codes': AccessCodesSelect<false> | AccessCodesSelect<true>;
     'mcp-audit-logs': McpAuditLogsSelect<false> | McpAuditLogsSelect<true>;
-    'translation-glossary': TranslationGlossarySelect<false> | TranslationGlossarySelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -283,6 +281,10 @@ export interface Page {
   generateSlug?: boolean | null;
   slug: string;
   /**
+   * Default vertical spacing between layout blocks
+   */
+  defaultBlockSpacing?: ('none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
+  /**
    * User who created this document
    */
   createdBy?: (string | null) | User;
@@ -329,6 +331,10 @@ export interface CallToActionBlock {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Override the page default spacing after this block
+   */
+  spacingAfter?: ('inherit' | 'none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'cta';
@@ -374,6 +380,10 @@ export interface ContentBlock {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Override the page default spacing after this block
+   */
+  spacingAfter?: ('inherit' | 'none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'content';
@@ -408,6 +418,10 @@ export interface ArchiveBlock {
         value: string | Course;
       }[]
     | null;
+  /**
+   * Override the page default spacing after this block
+   */
+  spacingAfter?: ('inherit' | 'none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'archive';
@@ -470,6 +484,14 @@ export interface User {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Questions used in current window
+   */
+  chatQuestionsUsed?: number | null;
+  /**
+   * When the current chat quota window started
+   */
+  chatWindowStart?: string | null;
   oauthLoginSecretEnc?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -563,7 +585,7 @@ export interface Course {
   /**
    * Content status badge displayed to students
    */
-  contentStatus: 'none' | 'soon' | 'justAdded';
+  contentStatus: 'none' | 'soon' | 'justAdded' | 'custom';
   /**
    * When unchecked, "Soon" content is completely hidden from student listings
    */
@@ -572,6 +594,10 @@ export interface Course {
    * Badge auto-expires after this date (leave empty for permanent badge)
    */
   contentStatusExpiresAt?: string | null;
+  /**
+   * Custom badge text (e.g. "מותאם לבגרות")
+   */
+  contentStatusLabel?: string | null;
   /**
    * Default formula sheet for lessons in this course (lesson-specific sheets take precedence)
    */
@@ -798,6 +824,10 @@ export interface HtmlBlock {
    * Enter HTML content. Links must be relative (/path or #anchor). Allowed attributes: class, id, data-* on all tags; href (required), title, class, id, data-* on <a> tags; colspan, rowspan, scope on table cells; plus safe SVG attributes (e.g., viewBox, fill, stroke, d). No style=, target=, or on*= attributes allowed. The <style> tag is allowed.
    */
   html: string;
+  /**
+   * Override the page default spacing after this block
+   */
+  spacingAfter?: ('inherit' | 'none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'html';
@@ -808,6 +838,10 @@ export interface HtmlBlock {
  */
 export interface MediaBlock {
   media: string | Media;
+  /**
+   * Override the page default spacing after this block
+   */
+  spacingAfter?: ('inherit' | 'none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'mediaBlock';
@@ -821,6 +855,10 @@ export interface TableBlock {
   rows: string;
   showBorders?: boolean | null;
   showHeader?: boolean | null;
+  /**
+   * Override the page default spacing after this block
+   */
+  spacingAfter?: ('inherit' | 'none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'tableBlock';
@@ -847,6 +885,10 @@ export interface FormBlock {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * Override the page default spacing after this block
+   */
+  spacingAfter?: ('inherit' | 'none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'formBlock';
@@ -1067,7 +1109,7 @@ export interface ConfigValue {
   /**
    * Feature domain for this configuration
    */
-  domain: 'chat' | 'pdf_conversion' | 'global' | 'guest_chat';
+  domain: 'chat' | 'pdf_conversion' | 'global' | 'guest_chat' | 'latex_conversion';
   /**
    * Tenant this configuration belongs to
    */
@@ -1437,7 +1479,7 @@ export interface Lesson {
   /**
    * Content status badge displayed to students
    */
-  contentStatus: 'none' | 'soon' | 'justAdded';
+  contentStatus: 'none' | 'soon' | 'justAdded' | 'custom';
   /**
    * When unchecked, "Soon" content is completely hidden from student listings
    */
@@ -1446,6 +1488,10 @@ export interface Lesson {
    * Badge auto-expires after this date (leave empty for permanent badge)
    */
   contentStatusExpiresAt?: string | null;
+  /**
+   * Custom badge text (e.g. "מותאם לבגרות")
+   */
+  contentStatusLabel?: string | null;
   /**
    * Lesson-specific formula sheet (overrides course default)
    */
@@ -1736,6 +1782,10 @@ export interface ContentPage {
    */
   isActive: boolean;
   /**
+   * Default vertical spacing between layout blocks
+   */
+  defaultBlockSpacing?: ('none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
+  /**
    * User who created this document
    */
   createdBy?: (string | null) | User;
@@ -1748,6 +1798,10 @@ export interface ContentPage {
  */
 export interface GeometryBlock {
   spec: string;
+  /**
+   * Override the page default spacing after this block
+   */
+  spacingAfter?: ('inherit' | 'none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'geometryBlock';
@@ -1759,6 +1813,10 @@ export interface GeometryBlock {
 export interface GraphBlock {
   spec: string;
   displaySize?: ('small' | 'medium' | 'large' | 'full') | null;
+  /**
+   * Override the page default spacing after this block
+   */
+  spacingAfter?: ('inherit' | 'none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'graphBlock';
@@ -2341,39 +2399,6 @@ export interface McpAuditLog {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "translation-glossary".
- */
-export interface TranslationGlossary {
-  id: string;
-  /**
-   * Tenant scope for this document
-   */
-  tenant: string | Tenant;
-  /**
-   * Term in Hebrew (e.g., "יתר")
-   */
-  hebrewTerm: string;
-  /**
-   * Term in English (e.g., "hypotenuse")
-   */
-  englishTerm: string;
-  /**
-   * Subject area for this term
-   */
-  subject?: ('math' | 'science' | 'general') | null;
-  /**
-   * Usage notes or context for translators
-   */
-  notes?: string | null;
-  /**
-   * User who created this document
-   */
-  createdBy?: (string | null) | User;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -2750,10 +2775,6 @@ export interface PayloadLockedDocument {
         value: string | McpAuditLog;
       } | null)
     | ({
-        relationTo: 'translation-glossary';
-        value: string | TranslationGlossary;
-      } | null)
-    | ({
         relationTo: 'redirects';
         value: string | Redirect;
       } | null)
@@ -2871,6 +2892,7 @@ export interface PagesSelect<T extends boolean = true> {
   publishedAt?: T;
   generateSlug?: T;
   slug?: T;
+  defaultBlockSpacing?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -2897,6 +2919,7 @@ export interface CallToActionBlockSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  spacingAfter?: T;
   id?: T;
   blockName?: T;
 }
@@ -2923,6 +2946,7 @@ export interface ContentBlockSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  spacingAfter?: T;
   id?: T;
   blockName?: T;
 }
@@ -2937,6 +2961,7 @@ export interface ArchiveBlockSelect<T extends boolean = true> {
   categories?: T;
   limit?: T;
   selectedDocs?: T;
+  spacingAfter?: T;
   id?: T;
   blockName?: T;
 }
@@ -2948,6 +2973,7 @@ export interface FormBlockSelect<T extends boolean = true> {
   form?: T;
   enableIntro?: T;
   introContent?: T;
+  spacingAfter?: T;
   id?: T;
   blockName?: T;
 }
@@ -2957,6 +2983,7 @@ export interface FormBlockSelect<T extends boolean = true> {
  */
 export interface HtmlBlockSelect<T extends boolean = true> {
   html?: T;
+  spacingAfter?: T;
   id?: T;
   blockName?: T;
 }
@@ -3148,6 +3175,7 @@ export interface CoursesSelect<T extends boolean = true> {
   contentStatus?: T;
   contentStatusVisible?: T;
   contentStatusExpiresAt?: T;
+  contentStatusLabel?: T;
   formulaSheet?: T;
   createdBy?: T;
   updatedAt?: T;
@@ -3199,6 +3227,7 @@ export interface LessonsSelect<T extends boolean = true> {
   contentStatus?: T;
   contentStatusVisible?: T;
   contentStatusExpiresAt?: T;
+  contentStatusLabel?: T;
   formulaSheet?: T;
   createdBy?: T;
   updatedAt?: T;
@@ -3225,6 +3254,7 @@ export interface ContentPagesSelect<T extends boolean = true> {
       };
   status?: T;
   isActive?: T;
+  defaultBlockSpacing?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -3235,6 +3265,7 @@ export interface ContentPagesSelect<T extends boolean = true> {
  */
 export interface MediaBlockSelect<T extends boolean = true> {
   media?: T;
+  spacingAfter?: T;
   id?: T;
   blockName?: T;
 }
@@ -3247,6 +3278,7 @@ export interface TableBlockSelect<T extends boolean = true> {
   rows?: T;
   showBorders?: T;
   showHeader?: T;
+  spacingAfter?: T;
   id?: T;
   blockName?: T;
 }
@@ -3256,6 +3288,7 @@ export interface TableBlockSelect<T extends boolean = true> {
  */
 export interface GeometryBlockSelect<T extends boolean = true> {
   spec?: T;
+  spacingAfter?: T;
   id?: T;
   blockName?: T;
 }
@@ -3266,6 +3299,7 @@ export interface GeometryBlockSelect<T extends boolean = true> {
 export interface GraphBlockSelect<T extends boolean = true> {
   spec?: T;
   displaySize?: T;
+  spacingAfter?: T;
   id?: T;
   blockName?: T;
 }
@@ -3431,6 +3465,8 @@ export interface UsersSelect<T extends boolean = true> {
         grantedAt?: T;
         id?: T;
       };
+  chatQuestionsUsed?: T;
+  chatWindowStart?: T;
   oauthLoginSecretEnc?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -3674,20 +3710,6 @@ export interface McpAuditLogsSelect<T extends boolean = true> {
   timestamp?: T;
   requestId?: T;
   durationMs?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "translation-glossary_select".
- */
-export interface TranslationGlossarySelect<T extends boolean = true> {
-  tenant?: T;
-  hebrewTerm?: T;
-  englishTerm?: T;
-  subject?: T;
-  notes?: T;
-  createdBy?: T;
-  updatedAt?: T;
-  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

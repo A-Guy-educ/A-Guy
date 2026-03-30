@@ -24,15 +24,16 @@ describe('contentStatusFields', () => {
     it('exports an array of 3 Field objects', () => {
       expect(contentStatusFields).toBeDefined()
       expect(Array.isArray(contentStatusFields)).toBe(true)
-      expect(contentStatusFields).toHaveLength(3)
+      expect(contentStatusFields).toHaveLength(4)
     })
 
-    it('contains contentStatus, contentStatusVisible, and contentStatusExpiresAt fields', () => {
+    it('contains contentStatus, contentStatusVisible, contentStatusExpiresAt, and contentStatusLabel fields', () => {
       const fields = contentStatusFields as BasicField[]
       const fieldNames = fields.map((f) => f.name)
       expect(fieldNames).toContain('contentStatus')
       expect(fieldNames).toContain('contentStatusVisible')
       expect(fieldNames).toContain('contentStatusExpiresAt')
+      expect(fieldNames).toContain('contentStatusLabel')
     })
   })
 
@@ -48,8 +49,8 @@ describe('contentStatusFields', () => {
       const field = fields.find((f) => f.name === 'contentStatus')
       expect(field?.options).toBeDefined()
       const options = field?.options as Array<{ label: string; value: string }>
-      expect(options).toHaveLength(3)
-      expect(options.map((o) => o.value)).toEqual(['none', 'soon', 'justAdded'])
+      expect(options).toHaveLength(4)
+      expect(options.map((o) => o.value)).toEqual(['none', 'soon', 'justAdded', 'custom'])
     })
 
     it('defaults to "none"', () => {

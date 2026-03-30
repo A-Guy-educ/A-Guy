@@ -38,7 +38,7 @@ coverage/
 *.lcov
 
 # Auditor run bundles (ephemeral, only auditor.json is durable)
-.tasks/*/runs/*/bundle.json
+*/runs/*/bundle.json
 
 # Browser Agent
 scripts/browser-agent/.auth/
@@ -51,13 +51,19 @@ scripts/browser-agent/.env
 
 # OpenCode runtime files (per-task isolated data dirs)
 # Only opencode.db is committed for session continuation across reruns
-.tasks/*/opencode-data/opencode/opencode.db-wal
-.tasks/*/opencode-data/opencode/opencode.db-shm
-.tasks/*/opencode-data/opencode/snapshot/
-.tasks/*/opencode-data/opencode/logs/
-.tasks/*/opencode-data/opencode/auth.json
-.tasks/*/opencode-data/opencode/bin/
-.tasks/*/opencode-data/opencode/tool-output/
-.tasks/*/opencode-data/opencode/storage/
-.tasks/*/opencode-data/opencode/worktree/
+*/opencode-data/opencode/opencode.db-wal
+*/opencode-data/opencode/opencode.db-shm
+*/opencode-data/opencode/snapshot/
+*/opencode-data/opencode/logs/
+*/opencode-data/opencode/auth.json
+*/opencode-data/opencode/bin/
+*/opencode-data/opencode/tool-output/
+*/opencode-data/opencode/storage/
+*/opencode-data/opencode/worktree/
 .env*.local
+
+# Task specs (local only)
+shay-tassk/
+
+# LaTeX example files (local only)
+latex_examples/

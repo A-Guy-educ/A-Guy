@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation'
 import { useTranslations } from '@/ui/web/providers/I18n'
 
 export interface ChatErrorSurfaceProps {
-  type: 'auth' | 'limit' | 'general'
+  type: 'auth' | 'limit' | 'quota' | 'general'
   message: string
   onDismiss: () => void
   className?: string
@@ -35,7 +35,7 @@ export function ChatErrorSurface({ type, message, onDismiss, className }: ChatEr
       <div className="flex-1 min-w-0">
         <p className="text-body-sm font-medium leading-relaxed">{message}</p>
 
-        {/* Auth Error CTA */}
+        {/* Auth/Guest Limit CTA — not shown for authenticated user quota */}
         {(type === 'auth' || type === 'limit') && (
           <div className="flex items-center gap-content-gap-xs mt-2 text-body-sm">
             <SystemLink

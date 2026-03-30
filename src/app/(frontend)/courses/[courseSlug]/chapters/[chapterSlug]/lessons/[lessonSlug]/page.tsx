@@ -149,7 +149,9 @@ export default async function LessonPage({ params }: LessonPageProps) {
         Array.isArray(block.data.body) &&
         block.data.body.length > 0
       ) {
-        contentPageBodies[block.data.id] = <RenderBlocks blocks={block.data.body} />
+        contentPageBodies[block.data.id] = (
+          <RenderBlocks blocks={block.data.body} defaultSpacing={block.data.defaultBlockSpacing} />
+        )
       }
     }
 

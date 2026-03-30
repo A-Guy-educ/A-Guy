@@ -103,6 +103,7 @@ export function AxisRenderer({ blockId, spec, displaySize = 'full' }: AxisRender
           ticks: spec.axes.ticks,
           labels: spec.axes.labels,
           tickPosition: spec.axes.tickPosition ?? { x: 'default', y: 'default' },
+          origin: spec.axes.origin,
         }}
         onBoardReady={handleBoardReady}
         className="border-border"

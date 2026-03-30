@@ -55,6 +55,7 @@ if (process.env.PAYLOAD_GENERATE_TYPES !== 'true') {
   if (isValidToken || (!isTestMode && blobToken)) {
     vercelBlobPlugin = vercelBlobStorage({
       addRandomSuffix: true,
+      cacheControlMaxAge: 60 * 60 * 24 * 30, // 30 days — safe because addRandomSuffix guarantees unique filenames
       clientUploads: false,
       // Use proxy mode - URLs are /api/media/file/... and static handler proxies to blob
       // This ensures PDF viewer works (same-origin URLs) and backward compatibility

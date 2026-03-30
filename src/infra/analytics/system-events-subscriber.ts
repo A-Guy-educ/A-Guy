@@ -142,16 +142,12 @@ export function initAnalyticsSubscriber(): () => void {
       const payload = envelope.payload as {
         pdf_url?: string
         pdf_title?: string
-        page_number?: number
-        duration_seconds?: number
-        user_id?: string
+        page_count?: number
       }
       analytics.track(PRODUCT_EVENTS.PDF_VIEWED, {
-        pdf_url: payload.pdf_url,
-        pdf_title: payload.pdf_title,
-        page_number: payload.page_number,
-        duration_seconds: payload.duration_seconds,
-        user_id: payload.user_id,
+        document_id: payload.pdf_url ?? 'unknown',
+        file_name: payload.pdf_title,
+        page_count: payload.page_count,
       })
     }),
 
@@ -168,6 +164,19 @@ export function initAnalyticsSubscriber(): () => void {
         message_type: payload.message_type,
         message_length: payload.message_length,
         user_id: payload.user_id,
+      })
+    }),
+
+    safeSubscribe(SYSTEM_EVENTS.PHOTO_SENT_TO_CHAT, (envelope) => {
+      const payload = envelope.payload as {
+        conversation_id?: string
+        file_count?: number
+        file_types?: string[]
+      }
+      analytics.track(PRODUCT_EVENTS.PHOTO_SENT_TO_CHAT, {
+        conversation_id: payload.conversation_id,
+        file_count: payload.file_count,
+        file_types: payload.file_types,
       })
     }),
 

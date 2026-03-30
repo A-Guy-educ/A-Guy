@@ -166,6 +166,21 @@ export const ChatMessageSubmittedSchema = z
 export type ChatMessageSubmittedPayload = z.infer<typeof ChatMessageSubmittedSchema>
 
 // ============================================================================
+// Photo Sent to Chat Event
+// ============================================================================
+
+export const PhotoSentToChatSchema = z
+  .object({
+    conversation_id: z.string().min(1, 'conversation_id is required'),
+    file_count: z.number().int().positive(),
+    file_types: z.array(z.string()),
+    locale: z.string().optional(),
+  })
+  .strict()
+
+export type PhotoSentToChatPayload = z.infer<typeof PhotoSentToChatSchema>
+
+// ============================================================================
 // Login Modal Shown Event
 // ============================================================================
 
@@ -360,6 +375,7 @@ export const eventSchemas = {
   [SYSTEM_EVENTS.LESSON_ENDED]: LessonEndedSchema,
   [SYSTEM_EVENTS.PDF_VIEWED]: PdfViewedSchema,
   [SYSTEM_EVENTS.CHAT_MESSAGE_SUBMITTED]: ChatMessageSubmittedSchema,
+  [SYSTEM_EVENTS.PHOTO_SENT_TO_CHAT]: PhotoSentToChatSchema,
   [SYSTEM_EVENTS.LOGIN_MODAL_SHOWN]: LoginModalShownSchema,
   [SYSTEM_EVENTS.REGISTRATION_PROMPT_SHOWN]: RegistrationPromptShownSchema,
   [SYSTEM_EVENTS.REGISTRATION_COMPLETED]: RegistrationCompletedSchema,

@@ -103,6 +103,7 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
       <ContentStatusBadge
         contentStatus={course.contentStatus}
         contentStatusExpiresAt={course.contentStatusExpiresAt ?? undefined}
+        contentStatusLabel={course.contentStatusLabel ?? undefined}
         className="absolute -top-3 end-6"
       />
 

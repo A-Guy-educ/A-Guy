@@ -28,6 +28,18 @@
       "resources": "משאבים",
       "search": "חיפוש",
       "language": "שפה"
+    },
+    "courseSearch": {
+      "placeholder": "חיפוש...",
+      "noResults": "לא נמצאו תוצאות",
+      "enrollRequired": "תחילה יש להירשם",
+      "courses": "קורסים",
+      "lessons": "שיעורים",
+      "exercises": "תרגילים",
+      "questions": "שאלות",
+      "minChars": "הקלד/י לפחות 2 תווים",
+      "searching": "מחפש...",
+      "error": "החיפוש נכשל. אנא נסה שוב."
     }
   },
   "auth": {
@@ -228,6 +240,9 @@
     "chatFileTooLarge": "הקובץ גדול מדי (מקסימום 10MB)",
     "chatMaxFiles": "מותר עד 5 קבצים",
     "chatUploadFailed": "העלאת הקובץ נכשלה",
+    "chatQuotaCounter": "{used}/{max} שאלות נוצלו",
+    "chatQuotaResetIn": "מתאפס בעוד {time}",
+    "chatQuotaExhausted": "הגעת למגבלת השאלות שלך. נסה שוב בעוד {time}",
     "chatReadAloud": "הקראה",
     "chatStopReading": "עצירת הקראה",
     "uploadFile": "העלאת קובץ",
@@ -242,8 +257,6 @@
     "mathPreview": "תצוגה מקדימה",
     "closeMathTools": "סגור כלי מתמטיקה",
     "insertFormula": "הוסף נוסחה",
-    "formulaSheetTitle": "דף נוסחאות",
-    "formulaSheetEmpty": "אין תוכן זמין",
     "notesSubtitle": "הערות אישיות",
     "notesPlaceholder": "הוסף הערות כאן...",
     "selectBadge": "בחירה",
@@ -267,7 +280,9 @@
     "startLesson": "התחל שיעור",
     "soonBadge": "בקרוב",
     "justAddedBadge": "חדש",
-    "contentLocked": "תוכן זה בהכנה ויהיה זמין בקרוב."
+    "contentLocked": "תוכן זה בהכנה ויהיה זמין בקרוב.",
+    "formulaSheetTitle": "דף נוסחאות",
+    "formulaSheetEmpty": "אין תוכן זמין"
   },
   "homepage": {
     "nav": {

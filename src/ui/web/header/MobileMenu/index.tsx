@@ -3,13 +3,12 @@
 import React, { useEffect, useRef } from 'react'
 import { X, Menu } from 'lucide-react'
 import { CMSLink } from '@/ui/web/Link'
-import { SystemLink } from '@/infra/loading/components/SystemLink'
-import { SearchIcon } from 'lucide-react'
 import type { Header as HeaderType, User } from '@/payload-types'
 import { LanguageSwitcher } from '@/ui/web/LanguageSwitcher'
 import { usePasswordLogin } from '@/ui/web/providers/PasswordLoginProvider'
 import { useTranslations, useLocale } from '@/ui/web/providers/I18n'
 import { getNavItemsForLocale } from '@/ui/web/nav-variants'
+import { CourseSearch } from '@/ui/web/header/CourseSearch'
 import { MobileMenuAuthSection } from './MobileMenuAuthSection'
 
 interface MobileMenuProps {
@@ -126,16 +125,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
             </div>
           )}
 
-          <div className="px-6 py-section-xs border-b border-border">
-            <SystemLink
-              href="/search"
-              onClick={onClose}
-              className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-muted transition-colors"
-            >
-              <SearchIcon className="w-5 h-5 text-primary" />
-              <span className="text-body-md">{tMenu('search')}</span>
-            </SystemLink>
-          </div>
+          <CourseSearch variant="mobile" onNavigate={onClose} />
 
           <div className="px-6 py-section-xs">
             <h3 className="text-body-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">

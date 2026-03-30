@@ -11,6 +11,7 @@ import { AccountRole } from '../Users/roles'
 import { DEFAULT_CONTENT } from './defaults'
 import { ContentSchema } from './schemas'
 import { generateSlug, validateSlugUniqueness } from './hooks'
+import { addBlockToLesson, removeBlockFromLesson } from '../../hooks/lessons/syncLessonBlocks'
 
 /**
  * Access control - Exercise-specific
@@ -53,6 +54,64 @@ export const Exercises: CollectionConfig = {
     delete: isAdminOrOwner,
     read: anyone,
     update: isAdminOrOwner,
+  },
+
+  hooks: {
+    afterChange: [
+      async ({ doc, previousDoc, req }) => {
+        if (req.context?._skipBlockSync) return doc
+
+        const newLessonId =
+          typeof doc.lesson === 'string' ? doc.lesson : (doc.lesson as { id?: string })?.id
+        const oldLessonId = previousDoc
+          ? typeof previousDoc.lesson === 'string'
+            ? previousDoc.lesson
+            : (previousDoc.lesson as { id?: string })?.id
+          : null
+
+        // Lesson changed — remove from old, add to new
+        if (oldLessonId && oldLessonId !== newLessonId) {
+          await removeBlockFromLesson({
+            payload: req.payload,
+            req,
+            lessonId: oldLessonId,
+            refId: doc.id,
+            blockType: 'exerciseRef',
+          })
+        }
+
+        if (newLessonId) {
+          await addBlockToLesson({
+            payload: req.payload,
+            req,
+            lessonId: newLessonId,
+            refId: doc.id,
+            blockType: 'exerciseRef',
+          })
+        }
+
+        return doc
+      },
+    ],
+    afterDelete: [
+      async ({ doc, req }) => {
+        if (req.context?._skipBlockSync) return doc
+
+        const lessonId =
+          typeof doc.lesson === 'string' ? doc.lesson : (doc.lesson as { id?: string })?.id
+        if (lessonId) {
+          await removeBlockFromLesson({
+            payload: req.payload,
+            req,
+            lessonId,
+            refId: doc.id,
+            blockType: 'exerciseRef',
+          })
+        }
+
+        return doc
+      },
+    ],
   },
 
   admin: {
