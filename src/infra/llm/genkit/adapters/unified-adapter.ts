@@ -228,6 +228,10 @@ export async function createGenkitUnifiedAdapter(
       const modelKey = getModelKeyFromModelName(input.model.name) || 'IMAGE_TO_EXERCISE'
       const config = await resolveGenkitConfig(modelKey, tenantId, payloadInstance)
 
+      // Prefer caller-provided config over resolved config (caller knows the intended model key)
+      const effectiveMaxOutputTokens = input.model.maxOutputTokens || config.maxOutputTokens
+      const effectiveTemperature = input.model.temperature ?? config.temperature
+
       const ai = await getGenkitInstance(payloadInstance, tenantId)
 
       return circuitBreaker.execute(() =>
@@ -245,8 +249,8 @@ export async function createGenkitUnifiedAdapter(
                 model: config.model,
                 prompt: [...mediaContents, { text: input.prompt }],
                 config: {
-                  temperature: config.temperature,
-                  maxOutputTokens: config.maxOutputTokens,
+                  temperature: effectiveTemperature,
+                  maxOutputTokens: effectiveMaxOutputTokens,
                 },
               })
 
