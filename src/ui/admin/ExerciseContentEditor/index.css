@@ -2421,6 +2421,7 @@
   border: 1px solid var(--theme-elevation-150);
   border-radius: 6px;
   background: var(--theme-elevation-0);
+  flex-wrap: wrap;
 }
 
 .panel-item-row--selected {

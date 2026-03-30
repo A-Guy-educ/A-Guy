@@ -79,6 +79,15 @@ export function getDefaultAngleColor(): string {
   return cssVarToHex('--text-highlight-5')
 }
 
+/**
+ * Default color for geometry elements rendered on a white canvas.
+ * Uses the hardcoded foreground fallback so elements are always visible
+ * regardless of the host page's theme (e.g. dark Payload admin).
+ */
+export function getDefaultCanvasElementColor(): string {
+  return CSS_VAR_FALLBACKS['--foreground']
+}
+
 /** Default canvas background resolved from --card CSS variable */
 export function getDefaultCanvasBackground(): string {
   return cssVarToHex('--card')

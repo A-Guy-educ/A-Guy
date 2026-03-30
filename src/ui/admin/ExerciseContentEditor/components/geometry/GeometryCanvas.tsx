@@ -4,6 +4,7 @@ import type { GeometrySpecV1 } from '@/infra/contracts/graphics/geometry.v1'
 import {
   getDefaultAngleColor,
   getDefaultCanvasBackground,
+  getDefaultCanvasElementColor,
   getDefaultTextColor,
   sizeScaleToPixels,
 } from '@/infra/contracts/graphics/textColors'
@@ -204,7 +205,7 @@ function syncPoints(
     newIds.add(elemId)
     const existing = elementsRef.current.get(elemId)
 
-    const pointColor = point.color ?? getDefaultTextColor()
+    const pointColor = point.color ?? getDefaultCanvasElementColor()
     const pointSize = point.size ?? 4
     const labelPos = mapLabelPosition(point.position)
 
@@ -325,7 +326,7 @@ function syncLineLabels(
 
     const f = fromEl as unknown as { X: () => number; Y: () => number }
     const t = toEl as unknown as { X: () => number; Y: () => number }
-    const offset = line.label.position === 'b' ? -1.5 : 1.5
+    const offset = line.label.position === 'b' ? -1.5 : line.label.position === 'm' ? 0 : 1.5
     const el = board.create(
       'text',
       [() => (f.X() + t.X()) / 2, () => (f.Y() + t.Y()) / 2 + offset, line.label.value],

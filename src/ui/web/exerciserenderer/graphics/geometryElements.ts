@@ -59,7 +59,7 @@ function renderLines(board: JXG.Board, lines: LineSpec[], pointMap: Map<string, 
     if (line.label?.value) {
       const midX = (from.X() + to.X()) / 2
       const midY = (from.Y() + to.Y()) / 2
-      const offset = line.label.position === 'b' ? -0.5 : 0.5
+      const offset = line.label.position === 'b' ? -0.5 : line.label.position === 'm' ? 0 : 0.5
       board.create('text', [midX, midY + offset, line.label.value], {
         fontSize: line.label.fontSize ?? 12,
         anchorX: 'middle',
