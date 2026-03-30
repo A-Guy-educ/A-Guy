@@ -55,6 +55,7 @@ const isAdminOrOwner: Access = ({ req }) => {
  */
 const exerciseHooks: CollectionConfig['hooks'] = {
   beforeChange: [
+    enforceContentStructure,
     // Auto-populate course from lesson -> chapter -> course
     async ({ data, req }) => {
       if (data?.lesson) {
@@ -208,10 +209,6 @@ export const Exercises: CollectionConfig = {
     delete: isAdminOrOwner,
     read: anyone,
     update: isAdminOrOwner,
-        return doc
-      },
-    ],
-    beforeChange: [enforceContentStructure],
   },
   hooks: exerciseHooks,
 
