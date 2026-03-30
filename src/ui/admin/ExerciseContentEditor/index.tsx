@@ -3,23 +3,24 @@
 import { ExerciseBlockDefaults, generateId } from '@/server/payload/collections/Exercises/defaults'
 import type { ContentBlock, InlineRichText } from '@/server/payload/collections/Exercises/types'
 import { useField, useForm } from '@payloadcms/ui'
-import { Code, Copy, MoveDown, MoveUp, Plus, Trash2 } from 'lucide-react'
+import { Copy, FileCode, MoveDown, MoveUp, Plus, Trash2 } from 'lucide-react'
 import React from 'react'
 import { BlockTypeSelector } from './BlockTypeSelector'
-import './index.css'
+import { FullJsonEditor } from './FullJsonEditor'
 import { JSONInspector } from './JSONInspector'
-import { InlineRichTextEditor } from './editors/InlineRichTextEditor'
-import { FreeResponseEditor } from './editors/FreeResponseEditor'
 import { AxisEditor } from './editors/AxisEditor'
+import { FreeResponseEditor } from './editors/FreeResponseEditor'
 import { GeometryEditor } from './editors/GeometryEditor'
 import { HtmlBlockEditor } from './editors/HtmlBlockEditor'
-import { MediaBlockEditor } from './editors/MediaBlockEditor'
+import { InlineRichTextEditor } from './editors/InlineRichTextEditor'
 import { MatchingEditor } from './editors/MatchingEditor'
-import { SvgEditor } from './editors/SvgEditor'
 import { McqEditor } from './editors/McqEditor'
+import { MediaBlockEditor } from './editors/MediaBlockEditor'
 import { QuestionBlockWrapper } from './editors/QuestionBlockWrapper'
+import { SvgEditor } from './editors/SvgEditor'
 import { TableEditor } from './editors/TableEditor'
 import { TrueFalseEditor } from './editors/TrueFalseEditor'
+import './index.css'
 import { deepCloneBlock } from './utils'
 
 /**
@@ -47,6 +48,11 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
   const { value: fieldValue, setValue } = useField<any>({ path })
   const form = useForm()
 
+  // Note: Full JSON editor is available to admin and advanced content editor roles.
+  // The access control is enforced at the collection level, so we show the button
+  // to anyone who can access the exercise editor. Role check happens on save.
+  const isAdvancedUser = true // Show button, server validates on save
+
   // Local state to hold unsaved changes
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [localValue, setLocalValue] = React.useState<any>(fieldValue)
@@ -56,21 +62,17 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
   const modifyTimeoutRef = React.useRef<NodeJS.Timeout | null>(null)
 
   const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null)
-  const [isJsonPanelOpen, setIsJsonPanelOpen] = React.useState(false)
   const [blockTypeSelectorOpen, setBlockTypeSelectorOpen] = React.useState(false)
   const [insertAtIndex, setInsertAtIndex] = React.useState<number | undefined>(undefined)
-  const [jsonPanelWidth, setJsonPanelWidth] = React.useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('exercise-editor-json-panel-width')
-      return saved ? parseInt(saved, 10) : 400
-    }
-    return 400
-  })
-  const [isResizing, setIsResizing] = React.useState(false)
   const [mobileView, setMobileView] = React.useState<'editor' | 'json'>('editor')
   const [isMobile, setIsMobile] = React.useState(false)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const lastSyncedValueRef = React.useRef<any>(fieldValue)
+
+  // Full JSON mode state
+  const [isFullJsonMode, setIsFullJsonMode] = React.useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const originalContentRef = React.useRef<any>(fieldValue)
 
   // Helper to update local state and prevent form modification
   const updateLocalValue = React.useCallback(
@@ -251,44 +253,52 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
     }
   }
 
-  // Handle resizing
-  React.useEffect(() => {
-    if (!isResizing) return
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const container = document.querySelector('.editor-layout') as HTMLElement
-      if (!container) return
-
-      const containerRect = container.getBoundingClientRect()
-      const newWidth = containerRect.right - e.clientX
-      const minWidth = 300
-      const maxWidth = containerRect.width * 0.5
-
-      if (newWidth >= minWidth && newWidth <= maxWidth) {
-        setJsonPanelWidth(newWidth)
-      }
-    }
-
-    const handleMouseUp = () => {
-      setIsResizing(false)
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('exercise-editor-json-panel-width', jsonPanelWidth.toString())
-      }
-    }
-
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
-    }
-  }, [isResizing, jsonPanelWidth])
-
   const selectedBlock = blocks.find((b) => b.id === selectedBlockId) || null
 
   if (!localValue) {
     return <div className="p-card-padding-sm text-muted-foreground">Loading editor...</div>
+  }
+
+  // Handle entering full JSON mode
+  const handleEnterFullJsonMode = () => {
+    originalContentRef.current = fieldValue
+    setIsFullJsonMode(true)
+  }
+
+  // Handle applying changes from full JSON mode
+  const handleFullJsonApply = (newContent: unknown) => {
+    updateLocalValue(newContent)
+    setIsFullJsonMode(false)
+    // Trigger save
+    setValue(newContent)
+    setTimeout(() => {
+      if (form.setModified) {
+        form.setModified(true)
+      }
+      const saveButton = document.querySelector('button[type="submit"]') as HTMLButtonElement
+      if (saveButton && !saveButton.disabled) {
+        saveButton.click()
+      }
+    }, 100)
+  }
+
+  // Handle cancelling full JSON mode
+  const handleFullJsonCancel = () => {
+    setIsFullJsonMode(false)
+    // Reset to original
+    setLocalValue(originalContentRef.current)
+  }
+
+  // Render full JSON mode
+  if (isFullJsonMode && isAdvancedUser) {
+    return (
+      <FullJsonEditor
+        content={localValue}
+        originalContent={originalContentRef.current}
+        onApply={handleFullJsonApply}
+        onCancel={handleFullJsonCancel}
+      />
+    )
   }
 
   return (
@@ -297,11 +307,13 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
         <div>
           <h3>Exercise Content</h3>
           <p className="editor-description">
-            Flat list of content blocks. Each block is Markdown with LaTeX math support.
+            {isFullJsonMode
+              ? 'Full JSON editing mode'
+              : 'Flat list of content blocks. Each block is Markdown with LaTeX math support.'}
           </p>
         </div>
         <div className="editor-header-actions">
-          {hasUnsavedChanges && (
+          {hasUnsavedChanges && !isFullJsonMode && (
             <button
               className="editor-save-button"
               onClick={handleSave}
@@ -312,15 +324,17 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
               {isSaving ? 'Saving...' : 'Save Changes'}
             </button>
           )}
-          <button
-            className={`icon-button ${isJsonPanelOpen ? 'active' : ''}`}
-            onClick={() => setIsJsonPanelOpen(!isJsonPanelOpen)}
-            title={isJsonPanelOpen ? 'Hide JSON' : 'Show JSON'}
-            type="button"
-          >
-            <Code size={16} />
-          </button>
-          <div className="editor-badge">Flat Blocks</div>
+          {isAdvancedUser && (
+            <button
+              className={`icon-button ${isFullJsonMode ? 'active' : ''}`}
+              onClick={handleEnterFullJsonMode}
+              title="Full JSON Editor"
+              type="button"
+            >
+              <FileCode size={16} />
+            </button>
+          )}
+          <div className="editor-badge">{isFullJsonMode ? 'JSON' : 'Flat Blocks'}</div>
         </div>
       </div>
 
@@ -378,21 +392,6 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
               onDuplicateBlock={handleDuplicateBlock}
             />
           </div>
-
-          {isJsonPanelOpen && (
-            <>
-              <div
-                className="editor-splitter"
-                onMouseDown={(e) => {
-                  e.preventDefault()
-                  setIsResizing(true)
-                }}
-              />
-              <div className="editor-json-panel" style={{ width: `${jsonPanelWidth}px` }}>
-                <JSONInspector block={selectedBlock} mode="edit" onApply={handleJsonApply} />
-              </div>
-            </>
-          )}
         </div>
       )}
 

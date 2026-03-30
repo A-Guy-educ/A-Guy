@@ -12,6 +12,7 @@ export {
   ACCOUNT_ROLE_LABEL,
   isAdmin,
   isStudent,
+  isAdvancedContentEditor,
   Role,
   isRole,
   parseRole,
