@@ -392,7 +392,6 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
               onDuplicateBlock={handleDuplicateBlock}
             />
           </div>
-
         </div>
       )}
 

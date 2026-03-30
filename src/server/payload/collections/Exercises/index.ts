@@ -355,7 +355,6 @@ export const Exercises: CollectionConfig = {
       },
     },
   ],
-
 }
 
 // Re-export types and utilities for backward compatibility
