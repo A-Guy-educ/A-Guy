@@ -82,7 +82,9 @@ export async function resolveGenkitConfig(
     const modelSettings = chatConfig.models[mapModelKeyToConfigKey(modelKey)]
 
     modelName = providerType === 'gemini' ? modelSettings.gemini : modelSettings.openaiCompatible
-    maxOutputTokens = modelSettings.maxOutputTokens
+    // Use the higher of DB config and code registry to prevent truncation
+    const registryEntry = MODEL_REGISTRY[modelKey]
+    maxOutputTokens = Math.max(modelSettings.maxOutputTokens, registryEntry.maxOutputTokens)
     temperature = chatConfig.temperature.default
     timeout = Math.floor(chatConfig.chatSettings.defaultChatTimeoutMs / 1000)
   } catch {
