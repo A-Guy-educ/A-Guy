@@ -4,7 +4,7 @@ import React from 'react'
 import type { GeometrySpecV1 } from '@/infra/contracts/graphics/geometry.v1'
 import {
   cssVarToHex,
-  getDefaultCanvasElementColor,
+  getDefaultTextColor,
   getTextColorPalette,
 } from '@/infra/contracts/graphics/textColors'
 import { Plus, Trash2 } from 'lucide-react'
@@ -16,7 +16,7 @@ interface PointsPanelProps {
   onChange: (points: GeoPoint[]) => void
 }
 
-const DEFAULT_POINT_SIZE = 4
+const DEFAULT_POINT_SIZE = 1
 const DEFAULT_POINT_POSITION = 'r' as const
 
 const COMPASS_CELLS = [
@@ -47,7 +47,7 @@ export const PointsPanel: React.FC<PointsPanelProps> = ({ points, onChange }) =>
       x: 0,
       y: 0,
       visible: true,
-      color: getDefaultCanvasElementColor(),
+      color: getDefaultTextColor(),
       size: DEFAULT_POINT_SIZE,
       position: DEFAULT_POINT_POSITION,
     }
@@ -102,7 +102,7 @@ export const PointsPanel: React.FC<PointsPanelProps> = ({ points, onChange }) =>
                   <button
                     key={colorOption.hex}
                     type="button"
-                    className={`color-swatch ${point.color === colorOption.hex || (!point.color && colorOption.hex === getDefaultCanvasElementColor()) ? 'color-swatch--selected' : ''}`}
+                    className={`color-swatch ${point.color === colorOption.hex || (!point.color && colorOption.hex === getDefaultTextColor()) ? 'color-swatch--selected' : ''}`}
                     style={{ backgroundColor: colorOption.hex }}
                     title={colorOption.label}
                     onClick={() => handleUpdate(index, { color: colorOption.hex })}

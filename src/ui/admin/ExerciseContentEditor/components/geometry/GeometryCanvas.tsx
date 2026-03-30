@@ -343,30 +343,14 @@ function syncLineLabels(
 
     const f = fromEl as unknown as { X: () => number; Y: () => number }
     const t = toEl as unknown as { X: () => number; Y: () => number }
-    const offsetDist = line.label.position === 'b' ? -1.5 : line.label.position === 'm' ? 0 : 1.5
+    const offset = line.label.position === 'b' ? -1.5 : 1.5
     const el = board.create(
       'text',
-      [
-        () => {
-          // Offset perpendicular to the line direction
-          const dx = t.X() - f.X()
-          const dy = t.Y() - f.Y()
-          const len = Math.sqrt(dx * dx + dy * dy) || 1
-          return (f.X() + t.X()) / 2 + (-dy / len) * offsetDist
-        },
-        () => {
-          const dx = t.X() - f.X()
-          const dy = t.Y() - f.Y()
-          const len = Math.sqrt(dx * dx + dy * dy) || 1
-          return (f.Y() + t.Y()) / 2 + (dx / len) * offsetDist
-        },
-        line.label.value,
-      ],
+      [() => (f.X() + t.X()) / 2, () => (f.Y() + t.Y()) / 2 + offset, line.label.value],
       {
         fontSize: line.label.fontSize || 12,
         anchorX: 'middle',
         anchorY: 'middle',
-        display: 'internal',
         rotate: () => {
           const dx = t.X() - f.X()
           const dy = t.Y() - f.Y()

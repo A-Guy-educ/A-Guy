@@ -58,23 +58,13 @@ function renderLines(board: JXG.Board, lines: LineSpec[], pointMap: Map<string, 
     board.create('segment', [from, to], attrs)
 
     if (line.label?.value) {
-      const offsetDist = line.label.position === 'b' ? -0.5 : line.label.position === 'm' ? 0 : 0.5
-      const dx = to.X() - from.X()
-      const dy = to.Y() - from.Y()
-      const len = Math.sqrt(dx * dx + dy * dy) || 1
-      // Perpendicular offset so label stays above/below even on sloped lines
-      const midX = (from.X() + to.X()) / 2 + (-dy / len) * offsetDist
-      const midY = (from.Y() + to.Y()) / 2 + (dx / len) * offsetDist
-      // Rotate label to match line slope
-      let deg = (Math.atan2(dy, dx) * 180) / Math.PI
-      if (deg > 90) deg -= 180
-      if (deg < -90) deg += 180
-      board.create('text', [midX, midY, line.label.value], {
+      const midX = (from.X() + to.X()) / 2
+      const midY = (from.Y() + to.Y()) / 2
+      const offset = line.label.position === 'b' ? -0.5 : 0.5
+      board.create('text', [midX, midY + offset, line.label.value], {
         fontSize: line.label.fontSize ?? 12,
         anchorX: 'middle',
         anchorY: 'middle',
-        display: 'internal',
-        rotate: deg,
       })
     }
   }
