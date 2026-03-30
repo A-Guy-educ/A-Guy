@@ -1901,25 +1901,25 @@ export interface ExtractionLog {
 export interface TeacherProfile {
   id: string;
   /**
+   * Content language
+   */
+  locale: 'en' | 'he';
+  /**
+   * Source document this was translated from
+   */
+  translatedFrom?: (string | null) | TeacherProfile;
+  /**
    * Machine-readable identifier (e.g., "teacher_strict")
    */
   slug: string;
   /**
-   * Human-readable name displayed in UI (English)
+   * Human-readable name displayed in UI
    */
-  label_en: string;
+  label: string;
   /**
-   * Human-readable name displayed in UI (Hebrew)
+   * Short explanation shown in profile selection UI (1-2 sentences)
    */
-  label_he: string;
-  /**
-   * Short explanation shown in profile selection UI — English (1-2 sentences)
-   */
-  description_en?: string | null;
-  /**
-   * Short explanation shown in profile selection UI — Hebrew (1-2 sentences)
-   */
-  description_he?: string | null;
+  description?: string | null;
   /**
    * The prompt template that defines this teacher's behavior
    */
@@ -3411,11 +3411,11 @@ export interface PromptsSelect<T extends boolean = true> {
  * via the `definition` "teacher_profiles_select".
  */
 export interface TeacherProfilesSelect<T extends boolean = true> {
+  locale?: T;
+  translatedFrom?: T;
   slug?: T;
-  label_en?: T;
-  label_he?: T;
-  description_en?: T;
-  description_he?: T;
+  label?: T;
+  description?: T;
   systemPrompt?: T;
   isEnabled?: T;
   updatedAt?: T;

@@ -1,45 +1,23 @@
 /**
  * Migration: Localize Teacher Profiles
  *
- * Backfills dual-language fields (label_en, label_he, description_en, description_he)
- * for all existing teacher profile documents.
+ * Backfills the `locale` field on existing teacher profile documents that were
+ * created before the per-locale document pattern was adopted.
  *
- * Idempotent — skips profiles that already have label_en populated.
+ * Existing profiles are assumed to be in the default content locale (Hebrew).
+ * The seed creates English translations separately.
+ *
+ * Idempotent — skips profiles that already have a `locale` value.
  *
  * @fileType migration
  * @domain ai
  * @pattern migration
- * @ai-summary One-time migration to add localized label/description fields to teacher profiles
+ * @ai-summary One-time migration to add locale field to existing teacher profiles
  */
 
 import type { Payload } from 'payload'
 
-/**
- * Known Hebrew translations keyed by slug.
- * Profiles not in this map will have label_he default to label_en.
- */
-const HEBREW_TRANSLATIONS: Record<string, { label_he: string; description_he: string }> = {
-  teacher_strict: {
-    label_he: 'מורה קפדן',
-    description_he: 'שומר על סטנדרטים גבוהים ומצפה לתשובות מדויקות.',
-  },
-  teacher_thorough: {
-    label_he: 'מורה יסודי',
-    description_he: 'מספק הסברים מקיפים עם פרוט נרחב.',
-  },
-  teacher_patient: {
-    label_he: 'מורה סבלני',
-    description_he: 'ניגש ללמידה עם סבלנות ועידוד.',
-  },
-  teacher_focused: {
-    label_he: 'מורה ממוקד',
-    description_he: 'שומר על השיעורים ממוקדים עם יעדים ברורים.',
-  },
-  teacher_challenging: {
-    label_he: 'מורה מאתגר',
-    description_he: 'מאתגר תלמידים עם שאלות מעוררות מחשבה וחומר מתקדם.',
-  },
-}
+import { DEFAULT_CONTENT_LOCALE } from '../fields/contentLocale'
 
 export async function localizeTeacherProfiles(
   payload: Payload,
@@ -48,40 +26,25 @@ export async function localizeTeacherProfiles(
   let skipped = 0
   let errors = 0
 
-  const result = await payload.find({
-    collection: 'teacher_profiles',
-    limit: 0, // fetch count first
-    overrideAccess: true,
-  })
-
   const allProfiles = await payload.find({
     collection: 'teacher_profiles',
-    limit: result.totalDocs || 100,
+    limit: 1000,
     overrideAccess: true,
   })
 
   for (const profile of allProfiles.docs) {
-    // Skip if already migrated (label_en already set)
-    if (profile.label_en) {
+    // Skip if already migrated (locale field present)
+    if (profile.locale) {
       skipped++
       continue
     }
 
     try {
-      const slug = profile.slug as string
-      const hebrew = HEBREW_TRANSLATIONS[slug]
-
-      // Cast to access legacy fields that existed before schema change
-      const legacy = profile as unknown as { label?: string; description?: string }
-
       await payload.update({
         collection: 'teacher_profiles',
         id: profile.id,
         data: {
-          label_en: legacy.label ?? slug,
-          label_he: hebrew?.label_he ?? legacy.label ?? slug,
-          description_en: legacy.description ?? '',
-          description_he: hebrew?.description_he ?? legacy.description ?? '',
+          locale: DEFAULT_CONTENT_LOCALE,
         },
         overrideAccess: true,
       })

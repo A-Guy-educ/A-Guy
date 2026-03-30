@@ -4,12 +4,17 @@
  * @fileType collection-config
  * @domain ai
  * @pattern teacher-profile
- * @ai-summary Collection for managing teacher profiles that define AI chat behavior
+ * @ai-summary Collection for managing teacher profiles that define AI chat behavior.
+ *   Uses per-locale documents (contentLocaleField + translatedFromField) consistent
+ *   with Courses, Chapters, and Lessons.
  */
 
 import type { CollectionConfig } from 'payload'
 
 import { adminOnly } from '../access/adminOnly'
+import { contentLocaleField } from '../fields/contentLocale'
+import { translatedFromField } from '../fields/translatedFrom'
+import { enforceFieldLocaleUniqueness } from '../hooks/validateLocaleUniqueness'
 
 export const TeacherProfiles: CollectionConfig = {
   slug: 'teacher_profiles',
@@ -20,16 +25,20 @@ export const TeacherProfiles: CollectionConfig = {
     delete: adminOnly,
   },
   admin: {
-    useAsTitle: 'label_en',
-    defaultColumns: ['label_en', 'label_he', 'slug', 'systemPrompt', 'isEnabled', 'createdAt'],
+    useAsTitle: 'label',
+    defaultColumns: ['label', 'slug', 'locale', 'systemPrompt', 'isEnabled', 'createdAt'],
     group: 'AI',
   },
+  hooks: {
+    beforeChange: [enforceFieldLocaleUniqueness('teacher_profiles')],
+  },
   fields: [
+    contentLocaleField,
+    translatedFromField('teacher_profiles'),
     {
       name: 'slug',
       type: 'text',
       required: true,
-      unique: true,
       index: true,
       admin: {
         description: 'Machine-readable identifier (e.g., "teacher_strict")',
@@ -37,34 +46,18 @@ export const TeacherProfiles: CollectionConfig = {
       },
     },
     {
-      name: 'label_en',
+      name: 'label',
       type: 'text',
       required: true,
       admin: {
-        description: 'Human-readable name displayed in UI (English)',
+        description: 'Human-readable name displayed in UI',
       },
     },
     {
-      name: 'label_he',
-      type: 'text',
-      required: true,
-      admin: {
-        description: 'Human-readable name displayed in UI (Hebrew)',
-      },
-    },
-    {
-      name: 'description_en',
+      name: 'description',
       type: 'textarea',
       admin: {
-        description: 'Short explanation shown in profile selection UI — English (1-2 sentences)',
-        rows: 2,
-      },
-    },
-    {
-      name: 'description_he',
-      type: 'textarea',
-      admin: {
-        description: 'Short explanation shown in profile selection UI — Hebrew (1-2 sentences)',
+        description: 'Short explanation shown in profile selection UI (1-2 sentences)',
         rows: 2,
       },
     },
