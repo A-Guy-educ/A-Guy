@@ -30,7 +30,7 @@ interface SummaryCardsProps {
   categoryProgress: CategoryProgress
 }
 
-function formatTime(seconds: number): string {
+function _formatTime(seconds: number): string {
   const hours = Math.floor(seconds / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)
 

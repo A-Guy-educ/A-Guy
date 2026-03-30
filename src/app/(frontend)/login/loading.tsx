@@ -2,7 +2,7 @@ import { Skeleton } from '@/ui/web/components/skeleton'
 
 export default function LoginLoading() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center py-12">
+    <div className="min-h-screen flex flex-col items-center justify-center py-section-lg">
       {/* Heading */}
       <div className="text-center mb-6 px-4">
         <Skeleton className="h-10 w-48 mx-auto" />

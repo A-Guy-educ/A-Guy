@@ -23,7 +23,7 @@ vi.mock('@/ui/web/Link', () => ({
 // Mock RichText component
 vi.mock('@/ui/web/RichText', () => ({
   __esModule: true,
-  default: ({ data, className }: { data?: unknown; className?: string }) => (
+  default: ({ data: _data, className }: { data?: unknown; className?: string }) => (
     <div data-testid="richtext-mock" className={className}>
       RichText Mock
     </div>

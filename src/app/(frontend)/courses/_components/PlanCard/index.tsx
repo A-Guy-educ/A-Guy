@@ -127,7 +127,7 @@ export function PlanCard({
         </div>
       )}
 
-      <div className="p-8 flex flex-col flex-1">
+      <div className="p-card-padding-lg flex flex-col flex-1">
         {/* Plan header */}
         <div className="mb-8">
           <span

@@ -23,7 +23,7 @@ export const Default: Story = {
 
 export const WithLabel: Story = {
   render: () => (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-content-gap">
       <span className="text-body-sm font-medium text-foreground">Accent Color</span>
       <AccentPicker />
     </div>

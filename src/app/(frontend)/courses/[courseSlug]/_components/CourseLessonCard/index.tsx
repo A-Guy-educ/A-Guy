@@ -43,8 +43,8 @@ export function CourseLessonCard({
     }
   }
 
-  const TypeIcon = lesson.type === 'practice' ? Target : lesson.type === 'exam' ? Trophy : BookOpen
-  const hasFiles = (lesson.contentFiles?.length ?? 0) > 0
+  const _TypeIcon = lesson.type === 'practice' ? Target : lesson.type === 'exam' ? Trophy : BookOpen
+  const _hasFiles = (lesson.contentFiles?.length ?? 0) > 0
 
   return (
     <div

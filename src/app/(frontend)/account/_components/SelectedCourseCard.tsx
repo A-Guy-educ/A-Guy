@@ -104,7 +104,7 @@ export function SelectedCourseCard() {
           <CardTitle>{t('selectedCourse')}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center py-8">
+          <div className="flex items-center justify-center py-section-md">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
           </div>
         </CardContent>
@@ -168,7 +168,7 @@ export function SelectedCourseCard() {
       <CardContent className="space-y-4">
         {course && (
           <>
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start justify-between gap-content-gap">
               <div className="space-y-1">
                 <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full mb-2">
                   {course.courseLabel}

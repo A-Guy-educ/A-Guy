@@ -66,7 +66,7 @@ export function AskTab({ courseId, accentColor }: AskTabProps) {
   const visible = conversations.slice(0, visibleCount)
 
   return (
-    <StaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <StaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-content-gap-lg">
       {/* New Question card */}
       <StaggerItem>
       <button
@@ -92,7 +92,7 @@ export function AskTab({ courseId, accentColor }: AskTabProps) {
       </StaggerItem>
 
       {loading && (
-        <div className="col-span-full text-center text-muted-foreground py-8">{t('loading')}</div>
+        <div className="col-span-full text-center text-muted-foreground py-section-md">{t('loading')}</div>
       )}
 
       {/* Conversation cards */}

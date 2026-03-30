@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { z, ZodError } from 'zod'
+import { z } from 'zod'
 import { zodPathToDotPath, zodErrorToPayloadErrors } from '@/infra/utils/zodToPayloadError'
 
 describe('zodPathToDotPath', () => {

@@ -7,7 +7,7 @@
  * @pattern assertion-actions
  */
 import { expect } from '@playwright/test'
-import type { ActionContext, ActionHandler } from './types'
+import type { ActionHandler } from './types'
 
 export const expectUrl: ActionHandler = async (ctx, input) => {
   const { page } = ctx

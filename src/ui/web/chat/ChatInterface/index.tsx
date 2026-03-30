@@ -507,7 +507,7 @@ export function ChatInterface({
             )
           })}
         {isLoading && (
-          <div className="me-auto bg-card text-foreground border border-border px-[18px] py-3.5 rounded-chat-lg rounded-br-[4px] max-w-[85%] flex items-center gap-content-gap-xs shadow-elevation-1">
+          <div className="me-auto bg-card text-foreground border border-border px-[18px] py-3.5 rounded-chat-lg rounded-br-chat-sm max-w-[85%] flex items-center gap-content-gap-xs shadow-elevation-1">
             <Loader2 className="w-4 h-4 animate-spin" />
             <span>{tCourses('chatThinking')}</span>
           </div>

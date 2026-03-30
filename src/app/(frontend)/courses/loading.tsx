@@ -4,7 +4,7 @@ export default function CoursesLoading() {
   return (
     <div className="min-h-screen text-card-foreground antialiased">
       {/* Shop header skeleton */}
-      <div className="py-8 px-6">
+      <div className="py-section-md px-6">
         <div className="h-10 w-64 bg-muted animate-pulse rounded-md mx-auto" />
       </div>
 

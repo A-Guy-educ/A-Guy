@@ -66,7 +66,7 @@ export function NotebookWorkspace({
       </button>
 
       {/* Main content area */}
-      <main className="flex-1 overflow-y-auto p-8 flex justify-center items-start bg-background min-h-0 lg:mr-[360px]">
+      <main className="flex-1 overflow-y-auto p-card-padding-lg flex justify-center items-start bg-background min-h-0 lg:mr-[360px]">
         <div className="w-full max-w-[920px] max-h-full bg-card border border-border rounded-xl p-12 text-foreground shadow-elevation-4 overflow-auto flex flex-col lg:p-8 md:max-w-full md:w-full md:min-w-0 md:rounded-none md:border-l-0 md:border-r-0 md:border-t-0 md:shadow-none sm:p-card-padding">
           {content}
         </div>
@@ -81,7 +81,7 @@ export function NotebookWorkspace({
             : 'translate-x-full lg:translate-x-0',
         )}
       >
-        <header className="flex-col p-6 pb-0 bg-card border-b border-border gap-4 flex-shrink-0 overflow-visible flex">
+        <header className="flex-col p-card-padding pb-0 bg-card border-b border-border gap-content-gap flex-shrink-0 overflow-visible flex">
           <div className="flex items-center justify-between">
             <span className="bg-muted text-foreground px-3 py-1 rounded-md text-body-xs font-bold uppercase tracking-wide">
               {t('notebookTitle')}

@@ -74,7 +74,7 @@ export function LessonContent({
           </>
         ) : (
           <>
-            <div className="flex flex-col gap-4 max-w-3xl mx-auto px-4 sm:px-6">
+            <div className="flex flex-col gap-content-gap max-w-3xl mx-auto px-4 sm:px-6">
               <div className="mb-6">
                 <h2 className="text-heading-xl font-bold text-foreground">{t('exercisesTitle')}</h2>
                 <p className="text-muted-foreground text-body-md mt-1">

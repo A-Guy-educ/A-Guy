@@ -9,7 +9,7 @@ export function SignupPageContent() {
   const t = useTranslations('auth.signup')
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background via-primary/5 to-accent/5 py-12">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background via-primary/5 to-accent/5 py-section-lg">
       {/* Decorative gradient circle */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-accent/10 to-primary/10 blur-3xl pointer-events-none" />
 

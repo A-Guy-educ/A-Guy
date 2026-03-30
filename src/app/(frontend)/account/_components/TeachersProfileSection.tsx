@@ -89,7 +89,7 @@ export function TeachersProfileSection() {
 
   if (loading) {
     return (
-      <div className="py-4">
+      <div className="py-content-gap">
         <p className="text-muted-foreground">{t('loading')}</p>
       </div>
     )
@@ -97,7 +97,7 @@ export function TeachersProfileSection() {
 
   if (profiles.length === 0) {
     return (
-      <div className="text-center py-8">
+      <div className="text-center py-section-md">
         <div className="w-12 h-12 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
           <Users className="w-6 h-6 text-muted-foreground/50" />
         </div>
@@ -107,7 +107,7 @@ export function TeachersProfileSection() {
   }
 
   return (
-    <div className="py-4 space-y-4">
+    <div className="py-content-gap space-y-4">
       <p className="text-body-sm text-muted-foreground">{t('description')}</p>
 
       <div className="grid gap-content-gap sm:grid-cols-2">

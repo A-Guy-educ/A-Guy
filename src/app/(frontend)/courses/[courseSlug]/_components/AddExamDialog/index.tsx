@@ -42,7 +42,7 @@ export function AddExamDialog({ onAdd, trigger }: AddExamDialogProps) {
         <DialogHeader>
           <DialogTitle>{t('addExam')}</DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col gap-4 py-2">
+        <div className="flex flex-col gap-content-gap py-2">
           <div>
             <label className="text-body-sm font-medium mb-1 block">{t('examDate')}</label>
             <input

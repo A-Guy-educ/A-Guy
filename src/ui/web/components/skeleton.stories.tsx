@@ -63,7 +63,7 @@ export const CardSkeleton: Story = {
 
 export const CardGrid: Story = {
   render: () => (
-    <div className="grid grid-cols-2 gap-4 w-[500px]">
+    <div className="grid grid-cols-2 gap-content-gap w-[500px]">
       <SkeletonCard />
       <SkeletonCard />
     </div>

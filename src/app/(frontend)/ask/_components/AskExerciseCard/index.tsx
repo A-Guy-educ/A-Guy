@@ -40,7 +40,7 @@ export function AskExerciseCard({ file }: AskExerciseCardProps) {
       </div>
 
       <div className="p-5">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-content-gap">
           <div>
             <h3 className="text-heading-md font-bold text-card-foreground">{file.title}</h3>
             <p className="text-body-sm text-muted-foreground mt-1">{file.date}</p>

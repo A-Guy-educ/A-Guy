@@ -206,7 +206,7 @@ export function LessonPager({
             </div>
 
             {/* Fixed bottom navigation bar */}
-            <div className="sticky bottom-0 z-30 bg-card/80 backdrop-blur-xl border-t border-border/50 px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <div className="sticky bottom-0 z-30 bg-card/80 backdrop-blur-xl border-t border-border/50 px-6 py-content-gap pb-[max(1rem,env(safe-area-inset-bottom))]">
               <div className="max-w-3xl mx-auto flex items-center justify-between">
                 <Button
                   variant="ghost"
@@ -327,7 +327,7 @@ export function LessonPager({
                       {bodyRendered}
                     </div>
                   ) : (
-                    <div className="text-center py-8">
+                    <div className="text-center py-section-md">
                       <div className="w-12 h-12 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
                         <FileText className="w-6 h-6 text-muted-foreground/50" />
                       </div>
@@ -342,7 +342,7 @@ export function LessonPager({
         </main>
 
         {/* Fixed bottom navigation bar */}
-        <div className="sticky bottom-0 z-30 bg-card/80 backdrop-blur-xl border-t border-border/50 px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div className="sticky bottom-0 z-30 bg-card/80 backdrop-blur-xl border-t border-border/50 px-6 py-content-gap pb-[max(1rem,env(safe-area-inset-bottom))]">
           <div className="max-w-3xl mx-auto flex items-center justify-between">
             <Button
               variant="ghost"
@@ -409,7 +409,7 @@ export function LessonPager({
             </div>
 
             {/* Fixed bottom navigation bar */}
-            <div className="sticky bottom-0 z-30 bg-card/80 backdrop-blur-xl border-t border-border/50 px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <div className="sticky bottom-0 z-30 bg-card/80 backdrop-blur-xl border-t border-border/50 px-6 py-content-gap pb-[max(1rem,env(safe-area-inset-bottom))]">
               <div className="max-w-3xl mx-auto flex items-center justify-between">
                 <Button
                   variant="ghost"
@@ -479,7 +479,7 @@ export function LessonPager({
                 <div className="w-12 h-0.5 bg-primary mx-auto rounded-full" />
               </header>
 
-              <div className="bg-card rounded-2xl p-6 md:p-8 border border-border/40 text-center max-w-lg mx-auto">
+              <div className="bg-card rounded-2xl p-card-padding md:p-8 border border-border/40 text-center max-w-lg mx-auto">
                 <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-5">
                   <BookOpen className="w-7 h-7 text-primary" />
                 </div>
@@ -493,7 +493,7 @@ export function LessonPager({
                 </p>
 
                 {/* Lesson contents summary */}
-                <div className="flex items-center justify-center gap-4 mb-6">
+                <div className="flex items-center justify-center gap-content-gap mb-6">
                   {exerciseCount > 0 && (
                     <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-muted rounded-lg text-body-sm">
                       <Layers className="w-4 h-4 text-primary" />
@@ -563,7 +563,7 @@ export function LessonPager({
                   </p>
 
                   {/* Summary stats */}
-                  <div className="flex items-center justify-center gap-6 mb-10">
+                  <div className="flex items-center justify-center gap-content-gap-lg mb-10">
                     {exerciseCount > 0 && (
                       <div className="inline-flex items-center gap-2 px-4 py-2 bg-secondary/5 rounded-xl border border-secondary/10">
                         <Layers className="w-4 h-4 text-secondary" />

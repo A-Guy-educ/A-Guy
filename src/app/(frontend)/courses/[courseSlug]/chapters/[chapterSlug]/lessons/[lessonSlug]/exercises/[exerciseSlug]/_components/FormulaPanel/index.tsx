@@ -16,7 +16,7 @@ export function FormulaPanel({ isOpen, onClose, onInject }: FormulaPanelProps) {
   if (!isOpen) return null
 
   return (
-    <div className="absolute bottom-full left-2.5 right-2.5 mb-2.5 bg-card rounded-2xl border border-input shadow-dropdown max-h-[280px] overflow-y-auto p-4 z-30 animate-slide-up">
+    <div className="absolute bottom-full left-2.5 right-2.5 mb-2.5 bg-card rounded-2xl border border-input shadow-dropdown max-h-[280px] overflow-y-auto p-card-padding-sm z-30 animate-slide-up">
       {/* Algebra Section */}
       <div className="mb-4">
         <h4 className="text-primary text-body-sm font-semibold mb-2 pb-1 border-b border-border">

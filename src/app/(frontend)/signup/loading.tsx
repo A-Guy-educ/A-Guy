@@ -2,7 +2,7 @@ import { Skeleton } from '@/ui/web/components/skeleton'
 
 export default function SignupLoading() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center py-12">
+    <div className="min-h-screen flex flex-col items-center justify-center py-section-lg">
       <div className="mx-auto max-w-md w-full px-4">
         {/* Title + subtitle */}
         <div className="text-center mb-8 space-y-2">

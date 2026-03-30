@@ -20,7 +20,7 @@ type Story = StoryObj<typeof meta>
 export const FadeInDefault: Story = {
   render: () => (
     <FadeIn>
-      <div className="p-6 bg-card border rounded-lg text-card-foreground w-[300px]">
+      <div className="p-card-padding bg-card border rounded-lg text-card-foreground w-[300px]">
         <h3 className="font-semibold mb-2">Fade In</h3>
         <p className="text-body-sm text-muted-foreground">
           This content fades up into view on mount.
@@ -34,13 +34,13 @@ export const FadeInWithDelay: Story = {
   render: () => (
     <div className="space-y-4">
       <FadeIn delay={0}>
-        <div className="p-4 bg-card border rounded-lg">First (no delay)</div>
+        <div className="p-card-padding-sm bg-card border rounded-lg">First (no delay)</div>
       </FadeIn>
       <FadeIn delay={0.2}>
-        <div className="p-4 bg-card border rounded-lg">Second (0.2s delay)</div>
+        <div className="p-card-padding-sm bg-card border rounded-lg">Second (0.2s delay)</div>
       </FadeIn>
       <FadeIn delay={0.4}>
-        <div className="p-4 bg-card border rounded-lg">Third (0.4s delay)</div>
+        <div className="p-card-padding-sm bg-card border rounded-lg">Third (0.4s delay)</div>
       </FadeIn>
     </div>
   ),
@@ -48,10 +48,10 @@ export const FadeInWithDelay: Story = {
 
 export const StaggerGridDefault: Story = {
   render: () => (
-    <StaggerGrid className="grid grid-cols-3 gap-4 w-[500px]">
+    <StaggerGrid className="grid grid-cols-3 gap-content-gap w-[500px]">
       {[1, 2, 3, 4, 5, 6].map((i) => (
         <StaggerItem key={i}>
-          <div className="p-4 bg-card border rounded-lg text-center text-card-foreground">
+          <div className="p-card-padding-sm bg-card border rounded-lg text-center text-card-foreground">
             Card {i}
           </div>
         </StaggerItem>
@@ -62,10 +62,10 @@ export const StaggerGridDefault: Story = {
 
 export const StaggerGridTwoColumns: Story = {
   render: () => (
-    <StaggerGrid className="grid grid-cols-2 gap-4 w-[400px]">
+    <StaggerGrid className="grid grid-cols-2 gap-content-gap w-[400px]">
       {['Alpha', 'Beta', 'Gamma', 'Delta'].map((name) => (
         <StaggerItem key={name}>
-          <div className="p-6 bg-card border rounded-lg">
+          <div className="p-card-padding bg-card border rounded-lg">
             <h4 className="font-semibold text-card-foreground">{name}</h4>
             <p className="text-body-sm text-muted-foreground mt-1">Sample item</p>
           </div>

@@ -104,7 +104,7 @@ export function AskConversationGrid() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-section-md">
         <div className="text-center text-muted-foreground">{ts('loading')}</div>
       </div>
     )
@@ -185,7 +185,7 @@ export function AskConversationGrid() {
 
         {/* Footer */}
         <div className="mt-16 pt-8 border-t border-border text-center">
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="flex flex-wrap justify-center gap-content-gap">
             <button className="text-body-sm font-bold text-muted-foreground bg-card shadow-card px-8 py-3 rounded-full hover:bg-muted transition-all duration-normal text-nowrap">
               {t('viewStats')}
             </button>
@@ -208,7 +208,7 @@ function GradeSection({ courseId, courseLabel }: { courseId: string; courseLabel
   const { hasUpcomingExam, daysUntil } = useExamCountdown(courseId)
 
   return (
-    <div className="w-full bg-card/50 py-4 border-b border-border">
+    <div className="w-full bg-card/50 py-content-gap border-b border-border">
       <div className="max-w-5xl mx-auto px-6 flex flex-col">
         <div className="text-center">
           <span className="text-body-sm md:text-body-md font-extrabold text-primary uppercase tracking-[0.3em]">

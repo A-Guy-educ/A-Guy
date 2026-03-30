@@ -99,7 +99,7 @@ export function MembershipPlans() {
         </h2>
       </div>
 
-      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
+      <div className="grid gap-content-gap-xl md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
         {membershipPlans.map((plan, index) => (
           <PlanCard key={index} {...plan} />
         ))}

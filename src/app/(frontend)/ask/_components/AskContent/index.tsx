@@ -70,11 +70,11 @@ export function AskContent({ conversationContextKey }: AskContentProps) {
 
         {/* Content area skeleton */}
         <div className="flex-1 flex flex-col lg:flex-row">
-          <div className="flex-1 p-6 space-y-4">
+          <div className="flex-1 p-card-padding space-y-4">
             <Skeleton className="h-8 w-64" />
             <SkeletonText lines={4} />
           </div>
-          <div className="hidden lg:block w-[400px] border-s border-border p-4 space-y-4">
+          <div className="hidden lg:block w-[400px] border-s border-border p-card-padding-sm space-y-4">
             <Skeleton className="h-6 w-32" />
             <SkeletonText lines={3} />
             <Skeleton className="h-10 w-full rounded-md" />

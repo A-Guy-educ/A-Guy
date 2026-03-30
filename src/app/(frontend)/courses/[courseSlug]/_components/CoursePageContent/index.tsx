@@ -54,7 +54,7 @@ export function CoursePageContent({
       <CourseTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* Course title area with gradient accent */}
-      <div className="w-full py-6 px-6 relative overflow-hidden">
+      <div className="w-full py-section-sm px-6 relative overflow-hidden">
         {/* Subtle gradient accent behind the title */}
         <div
           className="absolute inset-0 opacity-[0.04] pointer-events-none"
@@ -71,7 +71,7 @@ export function CoursePageContent({
       </div>
 
       {/* Main content with AnimatePresence for smooth tab transitions */}
-      <main className="container mx-auto px-6 py-6 max-w-5xl">
+      <main className="container mx-auto px-6 py-section-sm max-w-5xl">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -110,7 +110,7 @@ export function CoursePageContent({
 
         {/* Footer actions with divider */}
         <div className="mt-16 pt-8 border-t border-border">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-content-gap">
             <SystemLink
               href={`/stats?courseId=${course.id}`}
               className="flex items-center justify-center gap-2 text-body-sm font-bold text-foreground bg-card border border-border px-6 py-3 rounded-full hover:bg-muted/50 transition-all duration-normal"

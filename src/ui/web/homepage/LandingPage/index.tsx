@@ -111,7 +111,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
           </motion.p>
 
           {/* CTA */}
-          <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 justify-center">
+          <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-content-gap justify-center">
             <Button
               size="lg"
               onClick={onGetStarted}
@@ -135,14 +135,14 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
             className="mt-16 relative"
           >
             <div className="relative mx-auto max-w-3xl">
-              <div className="bg-card/60 backdrop-blur-xl rounded-2xl border border-border/50 shadow-elevation-4 p-6 md:p-8">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-card/60 backdrop-blur-xl rounded-2xl border border-border/50 shadow-elevation-4 p-card-padding md:p-8">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-content-gap">
                   {FEATURES.map((f) => {
                     const Icon = f.icon
                     return (
                       <div
                         key={f.key}
-                        className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/50"
+                        className="flex flex-col items-center gap-2 p-card-padding-sm rounded-xl bg-muted/50"
                       >
                         <div
                           className="w-10 h-10 rounded-lg flex items-center justify-center"
@@ -180,7 +180,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
           </motion.div>
 
           <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 gap-6"
+            className="grid grid-cols-1 md:grid-cols-2 gap-content-gap-lg"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: '-50px' }}
@@ -232,7 +232,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
           </motion.div>
 
           <motion.div
-            className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12"
+            className="grid grid-cols-1 md:grid-cols-3 gap-content-gap-xl md:gap-12"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: '-50px' }}

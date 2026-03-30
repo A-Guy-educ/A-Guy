@@ -15,7 +15,7 @@ export default function LessonLoading() {
       {/* Content area — two-pane layout */}
       <div className="flex-1 flex flex-col lg:flex-row">
         {/* Primary content pane */}
-        <div className="flex-1 p-6 space-y-6">
+        <div className="flex-1 p-card-padding space-y-6">
           <Skeleton className="h-8 w-64" />
           <SkeletonText lines={6} />
           <Skeleton className="h-48 w-full rounded-lg" />
@@ -23,7 +23,7 @@ export default function LessonLoading() {
         </div>
 
         {/* Chat sidebar skeleton (visible on lg+) */}
-        <div className="hidden lg:block w-[400px] border-s border-border p-4 space-y-4">
+        <div className="hidden lg:block w-[400px] border-s border-border p-card-padding-sm space-y-4">
           <Skeleton className="h-6 w-32" />
           <div className="flex-1 space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (

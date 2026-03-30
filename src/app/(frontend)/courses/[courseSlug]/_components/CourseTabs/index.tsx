@@ -24,7 +24,7 @@ export function CourseTabs({ activeTab, onTabChange }: CourseTabsProps) {
   const t = useTranslations('coursePage.tabs')
 
   return (
-    <div className="py-4">
+    <div className="py-content-gap">
       <div
         role="tablist"
         className="bg-muted/50 p-1 rounded-full flex items-center justify-center gap-0 max-w-md mx-auto"

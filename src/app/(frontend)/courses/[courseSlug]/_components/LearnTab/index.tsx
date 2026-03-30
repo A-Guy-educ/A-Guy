@@ -62,7 +62,7 @@ export function LearnTab({
         </span>
       </div>
 
-      <StaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <StaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-content-gap">
         {learningLessons.map((lesson, idx) => {
           const chapter = chapters.find((ch) => {
             const lessonChapterId =

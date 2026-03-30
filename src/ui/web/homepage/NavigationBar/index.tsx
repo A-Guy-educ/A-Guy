@@ -45,7 +45,7 @@ export function NavigationBar() {
                 {isActive && (
                   <motion.div
                     layoutId="navIndicator"
-                    className="absolute inset-0 bg-card rounded-lg shadow-sm"
+                    className="absolute inset-0 bg-card rounded-lg shadow-elevation-1"
                     style={{ zIndex: 0 }}
                     transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                   />

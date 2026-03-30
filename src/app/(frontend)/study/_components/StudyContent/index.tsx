@@ -8,7 +8,7 @@ import { useExamCountdown } from '@/client/hooks/useExamCountdown'
 import { getUserProfile } from '@/client/state/localStorage/userProfile'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { logger } from '@/infra/utils/logger'
-import { cn } from '@/infra/utils/ui'
+// cn import removed - not currently used
 import type { Chapter, Lesson } from '@/payload-types'
 import {
   DEFAULT_LESSON_TYPE,
@@ -16,16 +16,16 @@ import {
   type LessonType,
 } from '@/server/constants/lesson-types'
 import { Skeleton, SkeletonCard } from '@/ui/web/components/skeleton'
-import { ProgressCircle } from '@/ui/web/shared/ProgressCircle'
+// ProgressCircle import removed - not currently used
 import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
 import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
-import { ContentStatusBadge } from '@/ui/web/shared/ContentStatusBadge'
+// ContentStatusBadge import removed - not currently used
 import { PageTransition } from '@/ui/web/components/page-transition'
-import { BarChart3, BookOpen, Clock, FileText, GraduationCap, PlayCircle, Sparkles, Target, Trophy } from 'lucide-react'
+import { BarChart3, BookOpen, GraduationCap, PlayCircle, Sparkles } from 'lucide-react'
 import { Button } from '@/ui/web/components/button'
 import { Progress } from '@/ui/web/components/progress'
 import { motion } from 'framer-motion'
-import { toast } from 'sonner'
+// toast import removed - not currently used
 import { useEffect, useMemo, useState } from 'react'
 import { useProgressMap } from '@/client/hooks/useProgressMap'
 import { CourseLessonCard } from '@/app/(frontend)/courses/[courseSlug]/_components/CourseLessonCard'
@@ -293,11 +293,11 @@ export function StudyContent({
       isAuthenticated={isAuthenticated}
     >
       {/* Course context header */}
-      <div className="w-full py-6 px-6">
+      <div className="w-full py-section-sm px-6">
         <div className="max-w-5xl mx-auto text-center">
           <ExamReminderBubble courseId={courseInfo?.courseId ?? ''} />
 
-          <h1 className="text-3xl md:text-4xl font-black text-foreground mt-4">
+          <h1 className="text-heading-xl md:text-4xl font-black text-foreground mt-4">
             {sectionTitle}
           </h1>
 
@@ -324,7 +324,7 @@ export function StudyContent({
       </div>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-6 max-w-5xl">
+      <main className="container mx-auto px-6 py-section-sm max-w-5xl">
         {continueLesson && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -374,7 +374,7 @@ export function StudyContent({
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-content-gap">
                     {group.lessons.map((lesson, idx) => (
                       <motion.div
                         key={lesson.id}
@@ -402,7 +402,7 @@ export function StudyContent({
             })}
           </div>
         ) : (
-          <div className="text-center py-16">
+          <div className="text-center py-section-lg">
             <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
               <BookOpen className="w-8 h-8 text-muted-foreground/50" />
             </div>
@@ -413,22 +413,22 @@ export function StudyContent({
 
         {/* Footer actions */}
         <div className="mt-16 pt-8 border-t border-border">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-content-gap">
             <SystemLink
               href="/stats"
-              className="flex items-center justify-center gap-2 text-sm font-bold text-foreground bg-card border border-border px-6 py-3 rounded-full hover:bg-muted/50 transition-all"
+              className="flex items-center justify-center gap-2 text-body-sm font-bold text-foreground bg-card border border-border px-6 py-3 rounded-full hover:bg-muted/50 transition-all"
             >
               <BarChart3 className="w-4 h-4" />
               {t('statsAndPerformance')}
             </SystemLink>
             <SystemLink
               href="/study-plan"
-              className="flex items-center justify-center gap-2 text-sm font-bold text-primary-foreground bg-primary px-6 py-3 rounded-full shadow-lg hover:opacity-90 transition-all"
+              className="flex items-center justify-center gap-2 text-body-sm font-bold text-primary-foreground bg-primary px-6 py-3 rounded-full shadow-elevation-3 hover:opacity-90 transition-all"
             >
               <GraduationCap className="w-4 h-4" />
               {t('upcomingExam')}
             </SystemLink>
-            <button className="flex items-center justify-center gap-2 text-sm font-bold text-foreground bg-card border border-border px-6 py-3 rounded-full hover:bg-muted/50 transition-all">
+            <button className="flex items-center justify-center gap-2 text-body-sm font-bold text-foreground bg-card border border-border px-6 py-3 rounded-full hover:bg-muted/50 transition-all">
               <Sparkles className="w-4 h-4" />
               {t('bagrutTransition')}
             </button>

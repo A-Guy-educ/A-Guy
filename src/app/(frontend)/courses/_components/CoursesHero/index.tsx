@@ -13,7 +13,7 @@ export function CoursesHero() {
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-accent/20 rounded-full blur-3xl opacity-50" />
 
       <div className="container relative">
-        <div className="py-16 md:py-24 lg:py-32 max-w-4xl">
+        <div className="py-section-lg md:py-24 lg:py-32 max-w-4xl">
           <div className="space-y-6">
             {/* Title */}
             <h1 className="text-display-md md:text-display-xl lg:text-display-2xl font-bold tracking-tight">
@@ -29,7 +29,7 @@ export function CoursesHero() {
             </p>
 
             {/* Optional CTA or stats */}
-            <div className="flex flex-wrap gap-4 pt-4">
+            <div className="flex flex-wrap gap-content-gap pt-4">
               <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-card/50 border border-border/50">
                 <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                 <span className="text-body-sm text-muted-foreground">

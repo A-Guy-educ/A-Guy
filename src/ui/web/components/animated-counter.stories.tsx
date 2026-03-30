@@ -57,7 +57,7 @@ export const SlowDuration: Story = {
 
 export const MultipleCounters: Story = {
   render: () => (
-    <div className="flex gap-8">
+    <div className="flex gap-content-gap-xl">
       <div className="text-center">
         <AnimatedCounter value={128} className="text-display-xl font-bold" />
         <p className="text-body-sm text-muted-foreground mt-1">Projects</p>

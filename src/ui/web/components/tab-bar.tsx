@@ -66,7 +66,7 @@ const TabBar: React.FC<TabBarProps> = ({
                 {isActive && (
                   <motion.div
                     layoutId={`${layoutId}Indicator`}
-                    className="absolute inset-0 bg-card rounded-lg shadow-sm"
+                    className="absolute inset-0 bg-card rounded-lg shadow-elevation-1"
                     style={{ zIndex: 0 }}
                     transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                   />

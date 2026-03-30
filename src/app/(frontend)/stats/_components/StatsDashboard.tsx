@@ -139,7 +139,7 @@ export function StatsDashboard({
           {/* Summary cards skeleton — full width */}
           <div className="lg:col-span-2">
             <div className="rounded-lg border bg-card p-card-padding">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-content-gap">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className="space-y-2">
                     <Skeleton className="h-4 w-20" />
@@ -154,7 +154,7 @@ export function StatsDashboard({
           <div className="lg:col-span-2">
             <div className="rounded-lg border bg-card p-card-padding space-y-4">
               <Skeleton className="h-5 w-40" />
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-content-gap">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className="space-y-3">
                     <Skeleton className="h-4 w-16" />
@@ -209,7 +209,7 @@ export function StatsDashboard({
           </motion.div>
         </motion.div>
       ) : (
-        <div className="text-center py-12 text-muted-foreground">{t('errorLoading')}</div>
+        <div className="text-center py-section-lg text-muted-foreground">{t('errorLoading')}</div>
       )}
     </div>
     </PageTransition>

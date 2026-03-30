@@ -2,7 +2,7 @@ import { Skeleton } from '@/ui/web/components/skeleton'
 
 export default function PersonaLoading() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center py-12 px-4">
+    <div className="min-h-screen flex flex-col items-center justify-center py-section-lg px-4">
       {/* Title + subtitle */}
       <div className="text-center mb-8 space-y-3">
         <Skeleton className="h-9 w-56 mx-auto" />

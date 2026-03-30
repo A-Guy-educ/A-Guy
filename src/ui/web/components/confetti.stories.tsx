@@ -32,7 +32,7 @@ export const Default: Story = {
     }
 
     return (
-      <div className="flex flex-col items-center gap-4">
+      <div className="flex flex-col items-center gap-content-gap">
         <Button onClick={trigger}>Launch Confetti</Button>
         <Confetti active={active} />
       </div>
@@ -50,7 +50,7 @@ export const LongDuration: Story = {
     }
 
     return (
-      <div className="flex flex-col items-center gap-4">
+      <div className="flex flex-col items-center gap-content-gap">
         <Button onClick={trigger}>Launch Confetti (5s)</Button>
         <Confetti active={active} duration={5000} />
       </div>

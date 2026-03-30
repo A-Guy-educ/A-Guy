@@ -47,7 +47,7 @@ export function CompleteContent({ backUrl, lessonId }: CompleteContentProps) {
       <Progress value={100} className="h-0.5 rounded-none" />
 
       <main className="flex-1 overflow-y-auto">
-        <div className="container mx-auto px-4 sm:px-6 py-8 md:py-12 max-w-3xl">
+        <div className="container mx-auto px-4 sm:px-6 py-section-md md:py-12 max-w-3xl">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}

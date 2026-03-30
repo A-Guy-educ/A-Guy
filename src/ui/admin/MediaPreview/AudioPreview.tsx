@@ -12,19 +12,19 @@ export const AudioPreview: React.FC = () => {
 
   if (!url) {
     return (
-      <div className="p-4">
+      <div className="p-card-padding-sm">
         <p>No audio uploaded yet</p>
       </div>
     )
   }
 
   return (
-    <div className="p-4">
+    <div className="p-card-padding-sm">
       <audio controls className="w-full">
         <source src={url} />
         Your browser does not support the audio tag.
       </audio>
-      {filename && <p className="mt-2 text-sm text-muted-foreground">{filename}</p>}
+      {filename && <p className="mt-2 text-body-sm text-muted-foreground">{filename}</p>}
     </div>
   )
 }

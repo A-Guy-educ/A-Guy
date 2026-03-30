@@ -13,14 +13,14 @@ export const ImagePreview: React.FC = () => {
 
   if (!url) {
     return (
-      <div className="p-4">
+      <div className="p-card-padding-sm">
         <p>No image uploaded yet</p>
       </div>
     )
   }
 
   return (
-    <div className="p-4">
+    <div className="p-card-padding-sm">
       <Image
         src={url}
         alt={alt || 'Preview'}

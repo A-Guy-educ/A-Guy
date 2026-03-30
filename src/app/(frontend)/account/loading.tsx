@@ -10,7 +10,7 @@ export default function AccountLoading() {
         {/* Profile card */}
         <div className="rounded-lg border bg-card p-card-padding space-y-6">
           {/* Avatar + name */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-content-gap">
             <Skeleton className="h-16 w-16 rounded-full" />
             <div className="space-y-2">
               <Skeleton className="h-5 w-40" />

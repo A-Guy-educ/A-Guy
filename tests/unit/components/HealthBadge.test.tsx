@@ -64,7 +64,7 @@ describe('HealthBadge - AbortController functionality', () => {
 
   it('should NOT set error state when fetch is aborted', async () => {
     // Create a promise that we can reject after abort is called
-    let abortController: AbortController | null = null
+    const _abortController: AbortController | null = null
 
     // Override fetch mock to properly handle abort signal
     fetchMock.mockImplementation((_url: string, options?: { signal?: AbortSignal }) => {

@@ -264,7 +264,7 @@ export function ExercisesPager({
             </div>
 
             {/* Fixed bottom navigation bar */}
-            <div className="sticky bottom-0 z-30 bg-card/80 backdrop-blur-xl border-t border-border/50 px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <div className="sticky bottom-0 z-30 bg-card/80 backdrop-blur-xl border-t border-border/50 px-6 py-content-gap pb-[max(1rem,env(safe-area-inset-bottom))]">
               <div className="max-w-3xl mx-auto flex items-center justify-between">
                 <Button
                   variant="ghost"
@@ -442,7 +442,7 @@ export function ExercisesPager({
                   </p>
 
                   {/* Summary stats */}
-                  <div className="flex items-center justify-center gap-4 mb-10">
+                  <div className="flex items-center justify-center gap-content-gap mb-10">
                     <div className="inline-flex items-center gap-2 px-4 py-2 bg-secondary/5 rounded-xl border border-secondary/10">
                       <Layers className="w-4 h-4 text-secondary" />
                       <span className="text-secondary font-medium">{totalExercises}</span>

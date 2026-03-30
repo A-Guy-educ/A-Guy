@@ -156,7 +156,7 @@ export function PersonaSelectionStep({ returnTo }: PersonaSelectionStepProps) {
             ))}
           </div>
         ) : (
-          <div className="text-center py-8">
+          <div className="text-center py-section-md">
             <div className="w-12 h-12 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
               <Users className="w-6 h-6 text-muted-foreground/50" />
             </div>

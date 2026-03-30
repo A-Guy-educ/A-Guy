@@ -12,19 +12,19 @@ export const VideoPreview: React.FC = () => {
 
   if (!url) {
     return (
-      <div className="p-4">
+      <div className="p-card-padding-sm">
         <p>No video uploaded yet</p>
       </div>
     )
   }
 
   return (
-    <div className="p-4">
+    <div className="p-card-padding-sm">
       <video controls className="max-w-full h-auto rounded">
         <source src={url} />
         Your browser does not support the video tag.
       </video>
-      {filename && <p className="mt-2 text-sm text-muted-foreground">{filename}</p>}
+      {filename && <p className="mt-2 text-body-sm text-muted-foreground">{filename}</p>}
     </div>
   )
 }

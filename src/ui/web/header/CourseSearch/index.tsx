@@ -198,7 +198,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onNavigate }
               <div className="max-h-80 overflow-y-auto">
                 {/* Loading */}
                 {isLoading && (
-                  <div className="p-4 space-y-3">
+                  <div className="p-card-padding-sm space-y-3">
                     {[1, 2, 3].map((i) => (
                       <div key={i} className="flex items-center gap-3 animate-pulse">
                         <div className="w-8 h-8 rounded-lg bg-muted" />
@@ -213,7 +213,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onNavigate }
 
                 {/* Not enrolled */}
                 {!isLoading && enrolled === false && (
-                  <div className="p-8 text-center">
+                  <div className="p-card-padding-lg text-center">
                     <Lock className="w-10 h-10 text-warning mx-auto mb-3 opacity-60" />
                     <p className="text-body-sm font-medium text-warning">
                       {t('enrollRequired')}
@@ -226,14 +226,14 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onNavigate }
 
                 {/* Error */}
                 {!isLoading && error && (
-                  <div className="p-8 text-center text-body-sm text-destructive">
+                  <div className="p-card-padding-lg text-center text-body-sm text-destructive">
                     {t('error')}
                   </div>
                 )}
 
                 {/* No results */}
                 {!isLoading && enrolled === true && results && !hasResults && (
-                  <div className="p-8 text-center">
+                  <div className="p-card-padding-lg text-center">
                     <SearchIcon className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-40" />
                     <p className="text-body-sm text-muted-foreground">
                       {t('noResults')}
@@ -310,7 +310,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onNavigate }
 
             {/* Empty state hint */}
             {!showResults && (
-              <div className="px-4 py-6 text-center">
+              <div className="px-4 py-section-sm text-center">
                 <p className="text-body-xs text-muted-foreground">
                   {t('placeholder')}
                 </p>

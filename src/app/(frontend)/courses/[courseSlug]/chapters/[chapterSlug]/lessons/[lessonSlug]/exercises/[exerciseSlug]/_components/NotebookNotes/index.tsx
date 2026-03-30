@@ -13,7 +13,7 @@ export function NotebookNotes() {
         {t('notesSubtitle')}
       </h3>
       <textarea
-        className="flex-1 border-none bg-muted text-foreground rounded-lg p-4 text-body-md leading-relaxed resize-none focus:outline-none focus:border focus:border-primary transition-colors duration-normal"
+        className="flex-1 border-none bg-muted text-foreground rounded-lg p-card-padding-sm text-body-md leading-relaxed resize-none focus:outline-none focus:border focus:border-primary transition-colors duration-normal"
         placeholder={t('notesPlaceholder')}
         value={value}
         onChange={(e) => setValue(e.target.value)}

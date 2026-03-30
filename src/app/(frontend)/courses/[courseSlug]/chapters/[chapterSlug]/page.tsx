@@ -73,7 +73,7 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
       gatedDelayMs={gatedDelayMs}
       gatedWarningMs={gatedWarningMs}
     >
-      <div className="container mx-auto px-4 py-8 max-w-5xl">
+      <div className="container mx-auto px-4 py-section-md max-w-5xl">
         {/* Enhanced breadcrumb area */}
         <div className="mb-6 pb-4 border-b border-border/40">
           <ChapterPageBreadcrumb

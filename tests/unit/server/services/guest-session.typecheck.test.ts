@@ -10,7 +10,6 @@ import type {
   getGuestSessionByToken,
   updateGuestSessionActivity,
   revokeGuestSession,
-  checkAndIncrementGuestMessageCount,
 } from '@/server/services/guest-session'
 
 describe('guest-session type safety', () => {

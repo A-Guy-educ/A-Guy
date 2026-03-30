@@ -100,7 +100,7 @@ export function ActivityTimeline() {
           <CardTitle>{t('recentActivity')}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center py-8">
+          <div className="flex items-center justify-center py-section-md">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
           </div>
         </CardContent>
@@ -115,7 +115,7 @@ export function ActivityTimeline() {
           <CardTitle>{t('recentActivity')}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-6">
+          <div className="text-center py-section-sm">
             <div className="w-12 h-12 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
               <ActivityIcon className="w-6 h-6 text-muted-foreground/50" />
             </div>

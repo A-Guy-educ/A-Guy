@@ -19,7 +19,7 @@ export function ConversationCard({
   subtitle,
   onClick,
   onDelete,
-  accentColor,
+  accentColor: _accentColor,
 }: ConversationCardProps) {
   const t = useTranslations('coursePage')
 

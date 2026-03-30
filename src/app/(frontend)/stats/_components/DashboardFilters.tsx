@@ -39,7 +39,7 @@ export function DashboardFilters({
   const t = useTranslations('stats')
 
   return (
-    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+    <div className="flex flex-col sm:flex-row gap-content-gap items-start sm:items-center">
       {/* Course Filter */}
       <div className="w-full sm:w-64">
         <Select value={selectedCourseId} onValueChange={onCourseChange}>

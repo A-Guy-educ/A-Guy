@@ -51,7 +51,7 @@ export function PracticedItems({ items, type }: PracticedItemsProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-6">
+          <div className="text-center py-section-sm">
             <div className="w-12 h-12 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
               <Icon className="w-6 h-6 text-muted-foreground/50" />
             </div>
