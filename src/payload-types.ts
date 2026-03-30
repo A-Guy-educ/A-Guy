@@ -1109,7 +1109,7 @@ export interface ConfigValue {
   /**
    * Feature domain for this configuration
    */
-  domain: 'chat' | 'pdf_conversion' | 'global' | 'guest_chat' | 'student_chat';
+  domain: 'chat' | 'pdf_conversion' | 'global' | 'guest_chat' | 'latex_conversion';
   /**
    * Tenant this configuration belongs to
    */
