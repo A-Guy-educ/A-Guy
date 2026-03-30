@@ -123,18 +123,20 @@ const rule = {
           })
         }
 
-        // Check for partial matches (e.g., rounded-[20px])
-        for (const [pattern, replacement] of Object.entries(DESIGN_TOKEN_SUGGESTIONS)) {
-          if (pattern.includes('[') && cls.startsWith(pattern.split('[')[0])) {
-            context.report({
-              node,
-              messageId: 'preferToken',
-              data: {
-                token: cls,
-                raw: cls,
-                suggestion: replacement,
-              },
-            })
+        // Check for partial matches (e.g., rounded-[20px]) — only for bracket values
+        if (cls.includes('[')) {
+          for (const [pattern, replacement] of Object.entries(DESIGN_TOKEN_SUGGESTIONS)) {
+            if (pattern.includes('[') && cls.startsWith(pattern.split('[')[0])) {
+              context.report({
+                node,
+                messageId: 'preferToken',
+                data: {
+                  token: cls,
+                  raw: cls,
+                  suggestion: replacement,
+                },
+              })
+            }
           }
         }
       }

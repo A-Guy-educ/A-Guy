@@ -42,6 +42,7 @@ import {
   hashIP,
   hashUserAgent,
 } from '@/server/services/guest-session'
+import { checkAndIncrementChatQuota } from '@/server/services/chat-quota'
 import { checkRateLimit } from '@/server/services/rate-limit'
 import type { PayloadRequest } from 'payload'
 import type { Logger } from 'pino'
@@ -207,6 +208,23 @@ export async function agentChat(req: PayloadRequest & { json?: () => Promise<unk
       ? ((user as unknown as { role: AccountRole }).role as AccountRole)
       : AccountRole.Student
     const isAdmin = userRole === AccountRole.Admin
+
+    // Check authenticated user chat quota (skip for admins, guests, and hidden messages)
+    if (userId && !isAdmin && !validated.hidden) {
+      const quota = await checkAndIncrementChatQuota(req.payload, userId)
+      if (!quota.allowed) {
+        return Response.json(
+          {
+            error: 'Chat limit reached. Try again later.',
+            quotaExceeded: true,
+            questionsUsed: quota.questionsUsed,
+            maxQuestions: quota.maxQuestions,
+            resetAt: quota.resetAt,
+          },
+          { status: 429 },
+        )
+      }
+    }
 
     // 3) Check if admin mode (guests cannot use admin mode)
     const adminMode = isAdmin && validated.adminMode === true

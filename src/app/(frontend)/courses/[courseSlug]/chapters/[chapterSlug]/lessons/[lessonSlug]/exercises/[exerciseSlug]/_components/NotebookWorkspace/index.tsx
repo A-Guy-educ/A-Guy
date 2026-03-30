@@ -50,7 +50,7 @@ export function NotebookWorkspace({
       {/* Mobile backdrop */}
       <div
         className={cn(
-          'fixed inset-0 bg-black/50 backdrop-blur-sm z-[55] transition-opacity duration-300 lg:hidden',
+          'fixed inset-0 bg-black/50 backdrop-blur-sm z-[55] transition-opacity duration-slow lg:hidden',
           isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none',
         )}
         onClick={() => setIsSidebarOpen(false)}
@@ -58,7 +58,7 @@ export function NotebookWorkspace({
 
       {/* Mobile menu button */}
       <button
-        className="fixed top-4 left-4 z-[60] w-11 h-11 rounded-lg bg-card border border-border text-foreground flex items-center justify-center shadow-lg transition-all hover:bg-muted lg:hidden"
+        className="fixed top-4 left-4 z-[60] w-11 h-11 rounded-lg bg-card border border-border text-foreground flex items-center justify-center shadow-elevation-3 transition-all duration-normal hover:bg-muted lg:hidden"
         onClick={() => setIsSidebarOpen(true)}
         aria-label="Open notebook"
       >
@@ -66,8 +66,8 @@ export function NotebookWorkspace({
       </button>
 
       {/* Main content area */}
-      <main className="flex-1 overflow-y-auto p-8 flex justify-center items-start bg-background min-h-0 lg:mr-[360px]">
-        <div className="w-full max-w-[920px] max-h-full bg-card border border-border rounded-[10px] p-12 text-foreground shadow-[0_10px_30px_hsl(var(--border))] overflow-auto flex flex-col lg:p-8 md:max-w-full md:w-full md:min-w-0 md:rounded-none md:border-l-0 md:border-r-0 md:border-t-0 md:shadow-none sm:p-6">
+      <main className="flex-1 overflow-y-auto p-card-padding-lg flex justify-center items-start bg-background min-h-0 lg:mr-[360px]">
+        <div className="w-full max-w-[920px] max-h-full bg-card border border-border rounded-xl p-12 text-foreground shadow-elevation-4 overflow-auto flex flex-col lg:p-8 md:max-w-full md:w-full md:min-w-0 md:rounded-none md:border-l-0 md:border-r-0 md:border-t-0 md:shadow-none sm:p-card-padding">
           {content}
         </div>
       </main>
@@ -75,20 +75,18 @@ export function NotebookWorkspace({
       {/* Sidebar */}
       <aside
         className={cn(
-          'w-[360px] bg-card border-l border-border flex flex-col min-h-0 overflow-hidden fixed top-0 right-0 h-screen z-50 transition-transform duration-300 md:w-80 lg:translate-x-0',
-          isSidebarOpen
-            ? 'translate-x-0 z-[60] shadow-[-4px_0_16px_hsl(var(--black)_/_0.1)]'
-            : 'translate-x-full lg:translate-x-0',
+          'w-[360px] bg-card border-l border-border flex flex-col min-h-0 overflow-hidden fixed top-0 right-0 h-screen z-50 transition-transform duration-slow md:w-80 lg:translate-x-0',
+          isSidebarOpen ? 'translate-x-0 z-[60] shadow-modal' : 'translate-x-full lg:translate-x-0',
         )}
       >
-        <header className="flex-col p-6 pb-0 bg-card border-b border-border gap-4 flex-shrink-0 overflow-visible flex">
+        <header className="flex-col p-card-padding pb-0 bg-card border-b border-border gap-content-gap flex-shrink-0 overflow-visible flex">
           <div className="flex items-center justify-between">
-            <span className="bg-muted text-foreground px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wide">
+            <span className="bg-muted text-foreground px-3 py-1 rounded-md text-body-xs font-bold uppercase tracking-wide">
               {t('notebookTitle')}
             </span>
             <Link
               href={lessonUrl}
-              className="flex items-center justify-center w-8 h-8 rounded-md bg-transparent text-muted-foreground transition-all hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="flex items-center justify-center w-8 h-8 rounded-md bg-transparent text-muted-foreground transition-all duration-normal hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               aria-label="Close notebook"
             >
               <X className="w-5 h-5" />
@@ -98,7 +96,7 @@ export function NotebookWorkspace({
           <nav className="flex gap-0 border-t border-border">
             <button
               className={cn(
-                'flex items-center gap-2 py-1.5 px-0 bg-transparent border-none border-b-[3px] text-[0.95rem] font-semibold transition-all cursor-pointer',
+                'flex items-center gap-2 py-1.5 px-0 bg-transparent border-none border-b-[3px] text-body-md font-semibold transition-all duration-normal cursor-pointer',
                 activeTab === 'chat'
                   ? 'text-primary border-primary'
                   : 'text-muted-foreground border-transparent hover:text-foreground',
@@ -113,7 +111,7 @@ export function NotebookWorkspace({
               type="button"
               onClick={() => setActiveTab('formulas')}
               className={cn(
-                'flex items-center gap-2 py-1.5 px-0 ml-6 bg-transparent border-none border-b-[3px] text-[0.95rem] font-semibold transition-all cursor-pointer',
+                'flex items-center gap-2 py-1.5 px-0 ml-6 bg-transparent border-none border-b-[3px] text-body-md font-semibold transition-all duration-normal cursor-pointer',
                 activeTab === 'formulas'
                   ? 'text-primary border-primary'
                   : 'text-muted-foreground border-transparent hover:text-foreground',
@@ -126,7 +124,7 @@ export function NotebookWorkspace({
               type="button"
               onClick={() => setActiveTab('notes')}
               className={cn(
-                'flex items-center gap-2 py-1.5 px-0 ml-6 bg-transparent border-none border-b-[3px] text-[0.95rem] font-semibold transition-all cursor-pointer',
+                'flex items-center gap-2 py-1.5 px-0 ml-6 bg-transparent border-none border-b-[3px] text-body-md font-semibold transition-all duration-normal cursor-pointer',
                 activeTab === 'notes'
                   ? 'text-primary border-primary'
                   : 'text-muted-foreground border-transparent hover:text-foreground',

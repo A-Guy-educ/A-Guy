@@ -15,7 +15,7 @@ export const AdminChatDashboardWidget: React.FC = () => {
   return (
     <div className="mb-6">
       <div
-        className="p-4"
+        className="p-card-padding-sm"
         style={{
           backgroundColor: 'var(--theme-elevation-50)',
           borderRadius: 'var(--border-radius)',

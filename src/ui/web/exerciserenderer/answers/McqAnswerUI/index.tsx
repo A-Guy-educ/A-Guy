@@ -68,7 +68,7 @@ export function McqAnswerUI({
                 'bg-background hover:bg-muted hover:border-muted-foreground',
                 isSelected && 'border-2 border-primary bg-primary/5',
                 showAsCorrect && 'border-2 border-success bg-success/5',
-                disabled && 'opacity-60 cursor-not-allowed',
+                disabled && 'opacity-disabled cursor-not-allowed',
               )}
               onClick={() => handleOptionClick(option.id)}
             >

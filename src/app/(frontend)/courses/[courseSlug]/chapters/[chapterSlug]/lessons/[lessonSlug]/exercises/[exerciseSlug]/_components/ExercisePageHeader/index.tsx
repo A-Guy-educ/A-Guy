@@ -47,7 +47,7 @@ export function ExercisePageHeader({
         <div className="flex items-center gap-2">
           <Badge variant={badge.variant}>{badge.label}</Badge>
         </div>
-        <h1 className="text-4xl md:text-3xl font-bold leading-tight text-foreground m-0">
+        <h1 className="text-display-md md:text-display-sm font-bold leading-tight text-foreground m-0">
           {title}
         </h1>
       </div>

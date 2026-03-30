@@ -151,7 +151,7 @@ describe('ConvertV3Button', () => {
 
   it('sends promptId to endpoint when prompt is selected', async () => {
     let callCount = 0
-    const fetchMock = vi.fn().mockImplementation((url: unknown) => {
+    const fetchMock = vi.fn().mockImplementation((_url: unknown) => {
       if (callCount === 0) {
         callCount++
         return Promise.resolve({
@@ -203,7 +203,7 @@ describe('ConvertV3Button', () => {
 
   it('omits promptId from request when default is selected', async () => {
     let callCount = 0
-    const fetchMock = vi.fn().mockImplementation((url: unknown) => {
+    const fetchMock = vi.fn().mockImplementation((_url: unknown) => {
       if (callCount === 0) {
         callCount++
         return Promise.resolve({
@@ -328,7 +328,7 @@ describe('ConvertV3Button', () => {
 
   it('shows success message with exercise link after conversion', async () => {
     let callCount = 0
-    const fetchMock = vi.fn().mockImplementation((url: unknown) => {
+    const fetchMock = vi.fn().mockImplementation((_url: unknown) => {
       if (callCount === 0) {
         callCount++
         return Promise.resolve({
@@ -370,7 +370,7 @@ describe('ConvertV3Button', () => {
 
   it('shows error message when conversion fails', async () => {
     let callCount = 0
-    const fetchMock = vi.fn().mockImplementation((url: unknown) => {
+    const fetchMock = vi.fn().mockImplementation((_url: unknown) => {
       if (callCount === 0) {
         callCount++
         return Promise.resolve({

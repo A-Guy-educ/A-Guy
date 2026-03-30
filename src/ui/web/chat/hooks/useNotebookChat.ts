@@ -25,7 +25,7 @@ export interface UploadedMedia {
 }
 
 export interface ChatError {
-  type: 'auth' | 'limit' | 'general'
+  type: 'auth' | 'limit' | 'quota' | 'general'
   message: string
 }
 
@@ -390,6 +390,18 @@ export function useNotebookChat({
       message_length: message.length,
     })
 
+    // Track photo uploads to chat
+    if (completedChatAssetIds.length > 0) {
+      const fileTypes = directUploads
+        .filter((f) => f.status === 'complete' && f.chatAssetId)
+        .map((f) => f.file.type)
+      systemEventBus.emit(SYSTEM_EVENTS.PHOTO_SENT_TO_CHAT, {
+        conversation_id: contextKey || 'unknown',
+        file_count: completedChatAssetIds.length,
+        file_types: fileTypes,
+      })
+    }
+
     const context = {
       exerciseId,
       lessonId,
@@ -483,6 +495,11 @@ export function useNotebookChat({
                     'Guest message limit reached. Sign up for unlimited access.',
                 })
               }
+            } else if (errMsg?.startsWith('quota_exceeded:')) {
+              setChatError({
+                type: 'quota' as const,
+                message: 'Chat limit reached. Try again later.',
+              })
             } else if (!options?.silent) {
               toast.error(errMsg || errorMessage)
             }
@@ -554,6 +571,11 @@ export function useNotebookChat({
             type: 'limit' as const,
             message:
               guestLimitMessage || 'Guest message limit reached. Sign up for unlimited access.',
+          })
+        } else if (result.quotaExceeded) {
+          setChatError({
+            type: 'quota' as const,
+            message: result.error || 'Chat limit reached. Try again later.',
           })
         } else {
           toast.error(result.error || errorMessage)

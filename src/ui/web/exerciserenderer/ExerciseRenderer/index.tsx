@@ -359,7 +359,7 @@ export function ExerciseRenderer({
           <div className="w-full flex items-center justify-between mb-6">
             <div
               className={cn(
-                'w-7 h-7 rounded-full flex items-center justify-center bg-slate-50 border border-slate-200 shadow-elevation-1',
+                'w-7 h-7 rounded-full flex items-center justify-center bg-muted border border-border shadow-elevation-1',
                 isHebrew ? 'ml-auto' : 'mr-auto',
               )}
             >

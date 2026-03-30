@@ -6,8 +6,8 @@ import type { Header as HeaderType, User } from '@/payload-types'
 
 import { CMSLink } from '@/ui/web/Link'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
-import { SearchIcon } from 'lucide-react'
 import { LanguageSwitcher } from '@/ui/web/LanguageSwitcher'
+import { CourseSearch } from '@/ui/web/header/CourseSearch'
 import { usePasswordLogin } from '@/ui/web/providers/PasswordLoginProvider'
 import { useTranslations, useLocale } from '@/ui/web/providers/I18n'
 import { Button } from '@/ui/web/components/button'
@@ -68,13 +68,7 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({ data, user, isAuthLoading 
       )}
 
       {/* Search */}
-      <SystemLink
-        href="/search"
-        className="p-2 rounded-lg hover:bg-hover transition-colors"
-        aria-label="Search"
-      >
-        <SearchIcon className="w-5" />
-      </SystemLink>
+      <CourseSearch variant="desktop" />
 
       {/* Separator before language switcher */}
       <div className="h-6 w-px bg-border" />

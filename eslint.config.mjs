@@ -71,6 +71,12 @@ const eslintConfig = [
       'build/',
       'coverage/',
       'src/app/(payload)/custom.scss',
+      '*.config.*',
+      'scripts/**',
+      'eslint-plugin-aguy/**',
+      'tailwind.tokens.mjs',
+      '.claude/scripts/**',
+      'next-env.d.ts',
     ],
   },
 

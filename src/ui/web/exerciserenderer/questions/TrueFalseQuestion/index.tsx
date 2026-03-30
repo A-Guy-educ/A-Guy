@@ -101,7 +101,7 @@ export function TrueFalseQuestion({
                   isSelected &&
                   !checkResult.isCorrect &&
                   'border-destructive bg-destructive/10 text-destructive shadow-elevation-1',
-                disabled && 'opacity-60 cursor-not-allowed',
+                disabled && 'opacity-disabled cursor-not-allowed',
               )}
             >
               <div className="flex items-center justify-center gap-content-gap-xs">

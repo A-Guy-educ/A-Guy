@@ -135,7 +135,7 @@ function FillableInput({ cellKey, value, onChange, result, disabled, align }: Fi
         result === true && 'border-success bg-success/10 text-success-foreground',
         result === false && 'border-destructive bg-destructive/10 text-destructive',
         result === undefined && 'border-input focus:border-ring focus:outline-none',
-        disabled && 'opacity-70 cursor-not-allowed',
+        disabled && 'opacity-disabled cursor-not-allowed',
       )}
     />
   )

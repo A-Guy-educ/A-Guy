@@ -23,6 +23,7 @@ import type {
   AnswerIncorrectPayload,
   ChapterCompletedPayload,
   ChatMessageSubmittedPayload,
+  PhotoSentToChatPayload,
   CouponCodeEnteredPayload,
   CourseEnteredPayload,
   ExerciseSkippedPayload,
@@ -80,6 +81,7 @@ export type SystemEventPayloads = {
   'system.lesson_ended': LessonEndedPayload
   'system.pdf_viewed': PdfViewedPayload
   'system.chat_message_submitted': ChatMessageSubmittedPayload
+  'system.photo_sent_to_chat': PhotoSentToChatPayload
   'system.login_modal_shown': LoginModalShownPayload
   'system.registration_prompt_shown': RegistrationPromptShownPayload
   'system.registration_completed': RegistrationCompletedPayload

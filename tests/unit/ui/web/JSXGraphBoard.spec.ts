@@ -4,8 +4,7 @@
  * Tests the axisConfig prop with tickPosition field to ensure
  * tick numbers appear on correct sides of axis lines.
  */
-import { describe, expect, it, vi } from 'vitest'
-import { renderHook } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
 
 // We need to test the axisConfig construction logic
 // Since JSXGraphBoard is a client component that dynamically imports jsxgraph,

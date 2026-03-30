@@ -1,16 +1,8 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { useField, useDocumentInfo } from '@payloadcms/ui'
-import {
-  GripVertical,
-  Plus,
-  Trash2,
-  ChevronUp,
-  ChevronDown,
-  BookOpen,
-  FileText,
-} from 'lucide-react'
+import { useField } from '@payloadcms/ui'
+import { GripVertical, ChevronUp, ChevronDown, BookOpen, FileText } from 'lucide-react'
 
 function generateBlockId(): string {
   return Math.random().toString(36).slice(2, 14)
@@ -91,8 +83,6 @@ function parseBlocks(val: unknown): RawBlock[] {
 
 export const LessonBlocksField: React.FC<{ path: string }> = ({ path }) => {
   const { value, setValue } = useField<string>({ path })
-  const docInfo = useDocumentInfo()
-  const lessonId = docInfo?.id
 
   const blocks: RawBlock[] = useMemo(() => parseBlocks(value), [value])
 
@@ -238,86 +228,6 @@ export const LessonBlocksField: React.FC<{ path: string }> = ({ path }) => {
     setDropTarget(null)
   }, [])
 
-  const removeBlock = useCallback(
-    (index: number) => {
-      updateBlocks(blocks.filter((_, i) => i !== index))
-    },
-    [blocks, updateBlocks],
-  )
-
-  // Picker state
-  const [showPicker, setShowPicker] = useState<'exercise' | 'contentPage' | null>(null)
-  const [pickerResults, setPickerResults] = useState<Array<{ id: string; title: string }>>([])
-  const [pickerLoading, setPickerLoading] = useState(false)
-  const [pickerSearch, setPickerSearch] = useState('')
-
-  const openPicker = useCallback(
-    (type: 'exercise' | 'contentPage') => {
-      setShowPicker(type)
-      setPickerSearch('')
-      setPickerResults([])
-      setPickerLoading(true)
-
-      const collection = type === 'exercise' ? 'exercises' : 'content-pages'
-      const params = new URLSearchParams({ depth: '0', limit: '50', sort: 'title' })
-
-      if (type === 'exercise' && lessonId) {
-        params.set('where[lesson][equals]', String(lessonId))
-      }
-      if (type === 'contentPage' && lessonId) {
-        params.set('where[lesson][equals]', String(lessonId))
-        params.set('where[status][equals]', 'published')
-        params.set('where[isActive][equals]', 'true')
-      }
-
-      fetch(`/api/${collection}?${params}`, { credentials: 'include' })
-        .then((res) => res.json())
-        .then((data) => {
-          setPickerResults(
-            (data.docs || []).map((doc: { id: string; title?: string }) => ({
-              id: doc.id,
-              title: doc.title || doc.id,
-            })),
-          )
-        })
-        .catch(() => setPickerResults([]))
-        .finally(() => setPickerLoading(false))
-    },
-    [lessonId],
-  )
-
-  const addBlock = useCallback(
-    (type: 'exercise' | 'contentPage', refId: string, title: string) => {
-      const newBlock: RawBlock =
-        type === 'exercise'
-          ? { id: generateBlockId(), blockType: 'exerciseRef', exercise: refId }
-          : { id: generateBlockId(), blockType: 'contentPageRef', contentPage: refId }
-
-      // Read current value directly to avoid stale closure
-      const current = parseBlocks(value)
-      updateBlocks([...current, newBlock])
-      setTitleCache((prev) => ({ ...prev, [refId]: title }))
-      setShowPicker(null)
-    },
-    [value, updateBlocks],
-  )
-
-  const filteredResults = useMemo(() => {
-    if (!pickerSearch) return pickerResults
-    const q = pickerSearch.toLowerCase()
-    return pickerResults.filter((r) => r.title.toLowerCase().includes(q))
-  }, [pickerResults, pickerSearch])
-
-  const addedIds = useMemo(() => {
-    const ids = new Set<string>()
-    for (const block of blocks) {
-      const refField = block.blockType === 'exerciseRef' ? block.exercise : block.contentPage
-      const id = extractId(refField)
-      if (id) ids.add(id)
-    }
-    return ids
-  }, [blocks])
-
   return (
     <div style={{ marginBottom: 24 }}>
       <label
@@ -359,7 +269,7 @@ export const LessonBlocksField: React.FC<{ path: string }> = ({ path }) => {
               fontSize: 13,
             }}
           >
-            No blocks added yet. Add exercises or content pages below.
+            No blocks yet. Create exercises or content pages for this lesson.
           </div>
         )}
 
@@ -494,192 +404,9 @@ export const LessonBlocksField: React.FC<{ path: string }> = ({ path }) => {
             >
               <ChevronDown size={14} />
             </button>
-
-            <button
-              type="button"
-              onClick={() => removeBlock(row.index)}
-              style={{
-                padding: 4,
-                border: 'none',
-                background: 'transparent',
-                cursor: 'pointer',
-                opacity: 0.5,
-                color: 'var(--theme-error-500, #ef4444)',
-              }}
-              title="Remove"
-            >
-              <Trash2 size={14} />
-            </button>
           </div>
         ))}
       </div>
-
-      {/* Add buttons */}
-      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-        <button
-          type="button"
-          onClick={() => openPicker('exercise')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '6px 14px',
-            border: '1px dashed var(--theme-elevation-150)',
-            borderRadius: 6,
-            background: 'transparent',
-            cursor: 'pointer',
-            color: 'var(--theme-text)',
-            fontSize: 13,
-          }}
-        >
-          <Plus size={14} />
-          <BookOpen size={14} />
-          Add Exercise
-        </button>
-        <button
-          type="button"
-          onClick={() => openPicker('contentPage')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '6px 14px',
-            border: '1px dashed var(--theme-elevation-150)',
-            borderRadius: 6,
-            background: 'transparent',
-            cursor: 'pointer',
-            color: 'var(--theme-text)',
-            fontSize: 13,
-          }}
-        >
-          <Plus size={14} />
-          <FileText size={14} />
-          Add Content Page
-        </button>
-      </div>
-
-      {/* Picker modal */}
-      {showPicker && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 10000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(0,0,0,0.5)',
-          }}
-          onClick={() => setShowPicker(null)}
-        >
-          <div
-            style={{
-              background: 'var(--theme-bg)',
-              borderRadius: 8,
-              padding: 20,
-              width: 480,
-              maxHeight: '70vh',
-              display: 'flex',
-              flexDirection: 'column',
-              border: '1px solid var(--theme-elevation-150)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 style={{ margin: '0 0 12px', fontSize: 16, fontWeight: 600 }}>
-              {showPicker === 'exercise' ? 'Select Exercise' : 'Select Content Page'}
-            </h3>
-
-            <input
-              type="text"
-              placeholder="Search..."
-              value={pickerSearch}
-              onChange={(e) => setPickerSearch(e.target.value)}
-              autoFocus
-              style={{
-                padding: '8px 12px',
-                border: '1px solid var(--theme-elevation-150)',
-                borderRadius: 4,
-                background: 'var(--theme-input-bg)',
-                color: 'var(--theme-text)',
-                fontSize: 14,
-                marginBottom: 12,
-              }}
-            />
-
-            <div style={{ flex: 1, overflowY: 'auto' }}>
-              {pickerLoading && (
-                <p
-                  style={{
-                    textAlign: 'center',
-                    color: 'var(--theme-elevation-400)',
-                    padding: 20,
-                  }}
-                >
-                  Loading...
-                </p>
-              )}
-              {!pickerLoading && filteredResults.length === 0 && (
-                <p
-                  style={{
-                    textAlign: 'center',
-                    color: 'var(--theme-elevation-400)',
-                    padding: 20,
-                  }}
-                >
-                  No results found
-                </p>
-              )}
-              {filteredResults.map((result) => {
-                const alreadyAdded = addedIds.has(result.id)
-                return (
-                  <button
-                    key={result.id}
-                    type="button"
-                    disabled={alreadyAdded}
-                    onClick={() => addBlock(showPicker, result.id, result.title)}
-                    style={{
-                      display: 'block',
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: 'none',
-                      borderBottom: '1px solid var(--theme-elevation-100)',
-                      background: alreadyAdded ? 'var(--theme-elevation-50)' : 'transparent',
-                      cursor: alreadyAdded ? 'not-allowed' : 'pointer',
-                      textAlign: 'start',
-                      fontSize: 14,
-                      color: alreadyAdded ? 'var(--theme-elevation-300)' : 'var(--theme-text)',
-                    }}
-                  >
-                    {result.title}
-                    {alreadyAdded && (
-                      <span style={{ fontSize: 11, marginInlineStart: 8, opacity: 0.6 }}>
-                        (already added)
-                      </span>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setShowPicker(null)}
-              style={{
-                marginTop: 12,
-                padding: '8px 16px',
-                border: '1px solid var(--theme-elevation-150)',
-                borderRadius: 4,
-                background: 'transparent',
-                cursor: 'pointer',
-                color: 'var(--theme-text)',
-                fontSize: 13,
-              }}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

@@ -31,9 +31,9 @@ export function SignupFormFields({ t, isLoading, errors }: SignupFormFieldsProps
           placeholder={t('namePlaceholder')}
           required
           disabled={isLoading}
-          className={errors.name ? 'border-red-500' : ''}
+          className={errors.name ? 'border-destructive' : ''}
         />
-        {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
+        {errors.name && <p className="text-body-sm text-destructive">{errors.name}</p>}
       </div>
 
       <div className="space-y-2">
@@ -45,9 +45,9 @@ export function SignupFormFields({ t, isLoading, errors }: SignupFormFieldsProps
           placeholder={t('emailPlaceholder')}
           required
           disabled={isLoading}
-          className={errors.email ? 'border-red-500' : ''}
+          className={errors.email ? 'border-destructive' : ''}
         />
-        {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
+        {errors.email && <p className="text-body-sm text-destructive">{errors.email}</p>}
       </div>
 
       <div className="space-y-2">
@@ -59,9 +59,9 @@ export function SignupFormFields({ t, isLoading, errors }: SignupFormFieldsProps
           placeholder={t('passwordPlaceholder')}
           required
           disabled={isLoading}
-          className={errors.password ? 'border-red-500' : ''}
+          className={errors.password ? 'border-destructive' : ''}
         />
-        {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
+        {errors.password && <p className="text-body-sm text-destructive">{errors.password}</p>}
       </div>
 
       <div className="space-y-2">
@@ -73,15 +73,17 @@ export function SignupFormFields({ t, isLoading, errors }: SignupFormFieldsProps
           placeholder={t('passwordPlaceholder')}
           required
           disabled={isLoading}
-          className={errors.confirmPassword ? 'border-red-500' : ''}
+          className={errors.confirmPassword ? 'border-destructive' : ''}
         />
-        {errors.confirmPassword && <p className="text-sm text-red-500">{errors.confirmPassword}</p>}
+        {errors.confirmPassword && (
+          <p className="text-body-sm text-destructive">{errors.confirmPassword}</p>
+        )}
       </div>
 
       {/* Generic error banner */}
       {errors.general && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-          <p className="text-sm text-red-600">{errors.general}</p>
+        <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+          <p className="text-body-sm text-destructive">{errors.general}</p>
         </div>
       )}
     </>

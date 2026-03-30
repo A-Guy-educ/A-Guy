@@ -11,7 +11,7 @@ import {
   clearAnonymousIdCookie,
   ANONYMOUS_ID_COOKIE_NAME,
 } from '@/infra/analytics/utils/anonymous-id'
-import { getCookie, deleteCookie } from '@/infra/analytics/utils/cookies'
+import { getCookie } from '@/infra/analytics/utils/cookies'
 
 describe('Anonymous ID Management', () => {
   let originalCookieDescriptor: PropertyDescriptor | undefined

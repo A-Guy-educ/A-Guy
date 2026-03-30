@@ -1,4 +1,55 @@
 {
+  "landing": {
+    "hero": {
+      "badge": "Your digital math teacher",
+      "title": "Learn Math the Smart Way",
+      "subtitle": "Interactive lessons, guided practice, instant answers to your questions, and exam preparation — all in one place.",
+      "cta": "Start Learning",
+      "secondaryCta": "Explore Courses"
+    },
+    "features": {
+      "heading": "Everything You Need to Succeed",
+      "subheading": "Four powerful tools designed to help you master math at your own pace",
+      "study": {
+        "title": "Study",
+        "description": "Structured lessons that break down complex topics into clear, digestible steps. Learn at your own pace with interactive content."
+      },
+      "practice": {
+        "title": "Practice",
+        "description": "Targeted exercises that reinforce what you've learned. Get instant feedback and track your progress over time."
+      },
+      "ask": {
+        "title": "Ask",
+        "description": "Stuck on a problem? Ask your AI teacher for help. Get step-by-step explanations tailored to your level."
+      },
+      "test": {
+        "title": "Test",
+        "description": "Prepare for exams with realistic practice tests. Identify your strengths and areas that need more work."
+      }
+    },
+    "howItWorks": {
+      "heading": "Get Started in 3 Steps",
+      "steps": {
+        "choose": {
+          "title": "Choose Your Course",
+          "description": "Select your grade level and course to get a personalized learning path."
+        },
+        "learn": {
+          "title": "Learn & Practice",
+          "description": "Work through lessons, solve exercises, and ask questions when you need help."
+        },
+        "master": {
+          "title": "Master & Test",
+          "description": "Track your progress, take practice tests, and build confidence for exams."
+        }
+      }
+    },
+    "cta": {
+      "heading": "Ready to Start Learning?",
+      "subheading": "Join and start improving your math skills today. It only takes a minute to get started.",
+      "button": "Get Started Now"
+    }
+  },
   "home": {
     "title": "Home - A-Guy",
     "description": "Your digital teacher - learning, practice, questions and exams"
@@ -28,6 +79,18 @@
       "myAccount": "My Account",
       "logout": "Logout",
       "loggingOut": "Logging out..."
+    },
+    "courseSearch": {
+      "placeholder": "Search...",
+      "noResults": "No results found",
+      "enrollRequired": "You must enroll first",
+      "courses": "Courses",
+      "lessons": "Lessons",
+      "exercises": "Exercises",
+      "questions": "Questions",
+      "minChars": "Type at least 2 characters",
+      "searching": "Searching...",
+      "error": "Search failed. Please try again."
     }
   },
   "auth": {
@@ -88,6 +151,7 @@
       "collapse": "Collapse",
       "preferencesPlaceholder": "Preferences settings will be available soon.",
       "buildExamStudyPlan": "Build exam study plan",
+      "accentColor": "Accent Color",
       "teachersProfilePlaceholder": "Teachers profile features coming soon.",
       "teacherProfile": {
         "description": "Choose how your AI teacher interacts with you. This affects your chat experience.",
@@ -228,6 +292,9 @@
     "chatFileTooLarge": "File too large (max 10MB)",
     "chatMaxFiles": "Maximum 5 files allowed",
     "chatUploadFailed": "Failed to upload file",
+    "chatQuotaCounter": "{used}/{max} questions used",
+    "chatQuotaResetIn": "Resets in {time}",
+    "chatQuotaExhausted": "You've reached your question limit. Try again in {time}",
     "chatReadAloud": "Read aloud",
     "chatStopReading": "Stop reading",
     "uploadFile": "Upload File",
@@ -242,8 +309,6 @@
     "mathPreview": "Preview",
     "closeMathTools": "Close math tools",
     "insertFormula": "Insert Formula",
-    "formulaSheetTitle": "Formula Sheet",
-    "formulaSheetEmpty": "No content available",
     "notesSubtitle": "Personal Notes",
     "notesPlaceholder": "Add your notes here...",
     "selectBadge": "Select",
@@ -267,14 +332,17 @@
     "startLesson": "Start Lesson",
     "soonBadge": "Soon",
     "justAddedBadge": "New",
-    "contentLocked": "This content is being prepared and will be available soon."
+    "contentLocked": "This content is being prepared and will be available soon.",
+    "formulaSheetTitle": "Formula Sheet",
+    "formulaSheetEmpty": "No content available"
   },
   "homepage": {
     "nav": {
       "study": "Study",
       "practice": "Practice",
       "ask": "Ask",
-      "test": "Test"
+      "test": "Test",
+      "askTip": "Stuck on a problem? Ask your AI teacher here"
     },
     "greeting": {
       "welcome": "Hello! I'm your digital teacher 🤖",
@@ -301,7 +369,8 @@
       "chatInputPlaceholder": "Ask a question...",
       "chatAuthRequired": "Please sign in to ask questions",
       "loading": "Loading...",
-      "noCourse": "No course selected. Please select a course from the home page.",
+      "noCourse": "No course selected",
+      "noCourseHint": "Please select a course from the home page",
       "pageTitle": "My Practice Space",
       "pageSubtitle": "Personal progress for every goal.",
       "uploadButton": "Upload New Exercise",
@@ -350,7 +419,9 @@
     "chooseCourse": "Choose Course",
     "noCoursesAvailable": "No courses available",
     "studyTopics": "Study Topics",
-    "noTopicsAvailable": "No topics available in this course"
+    "noTopicsAvailable": "No topics available in this course",
+    "continueLearning": "Continue learning",
+    "continue": "Continue"
   },
   "coursePage": {
     "tabs": {
@@ -383,6 +454,7 @@
     "viewStats": "View Full Statistics",
     "continueLastPoint": "Continue from Last Point",
     "statsAndPerformance": "Statistics & Performance",
+    "statsTip": "Track your progress and see how you're improving",
     "upcomingExam": "Upcoming Exam",
     "bagrutTransition": "Bagrut Transition",
     "lessonCompleted": "Completed all tasks",
@@ -419,7 +491,8 @@
     "questionsAsked": "questions asked",
     "conversationsStarted": "conversations",
     "recentActivity": "Recent Activity",
-    "noActivity": "No activity yet. Start learning to see your progress!",
+    "noActivity": "No activity yet",
+    "noActivitySub": "Start learning to see your progress here",
     "continue": "Continue",
     "practiceWeakest": "Practice",
     "reviewSummary": "Review Summary",
@@ -430,6 +503,8 @@
     "practicedExams": "Exams Practiced",
     "noLessonsPracticed": "No lessons practiced yet",
     "noExamsPracticed": "No exams practiced yet",
+    "startPracticingLessons": "Complete a lesson to track your progress",
+    "startPracticingExams": "Take an exam to track your results",
     "lessonName": "Lesson",
     "examName": "Exam",
     "chatQuestions": "Chat Questions"

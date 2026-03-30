@@ -38,6 +38,7 @@ export const eventDestinations: Record<ProductEvent, AnalyticsDestination[]> = {
   // Content Events (Mixpanel only - product analytics)
   [PRODUCT_EVENTS.PDF_VIEWED]: ['mixpanel'],
   [PRODUCT_EVENTS.CHAT_MESSAGE_SENT]: ['mixpanel'],
+  [PRODUCT_EVENTS.PHOTO_SENT_TO_CHAT]: ['mixpanel'],
 
   // Auth Gate Events
   [PRODUCT_EVENTS.LOGIN_MODAL_SHOWN]: ['mixpanel'], // Product funnel - modal shown to anon user

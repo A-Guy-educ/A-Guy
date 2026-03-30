@@ -19,7 +19,7 @@ export const MediaPreview: UIFieldClientComponent = () => {
   const type = typeField?.value as MediaType | undefined
 
   if (!type) {
-    return <div className="p-4">No media type selected</div>
+    return <div className="p-card-padding-sm">No media type selected</div>
   }
 
   switch (type) {

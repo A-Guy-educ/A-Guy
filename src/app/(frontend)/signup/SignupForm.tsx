@@ -108,23 +108,21 @@ function SignupFormContent() {
   }
 
   return (
-    <Card>
+    <Card className="rounded-2xl shadow-elevation-4 border border-primary/10 bg-card/80 backdrop-blur-xl">
       <CardHeader>
-        <p className="text-sm text-muted-foreground text-center">
+        <p className="text-body-sm text-muted-foreground text-center">
           Fill in the form below to create your account
         </p>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-card-padding-lg">
         <div className="space-y-4">
           <GoogleLoginButton returnTo={returnTo} className="w-full" />
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                {tOauth('orDivider')}
-              </span>
+            <div className="relative flex justify-center text-body-xs uppercase">
+              <span className="bg-card/80 px-2 text-muted-foreground">{tOauth('orDivider')}</span>
             </div>
           </div>
         </div>
@@ -144,9 +142,12 @@ function SignupFormContent() {
         </form>
       </CardContent>
       <CardFooter className="flex justify-center">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-body-sm text-muted-foreground">
           {t('alreadyHaveAccount')}{' '}
-          <SystemLink href="/login" className="text-primary hover:underline">
+          <SystemLink
+            href="/login"
+            className="text-primary hover:underline transition-colors duration-normal"
+          >
             {t('login')}
           </SystemLink>
         </p>
@@ -166,13 +167,13 @@ export function SignupForm() {
 function SignupFormSkeleton() {
   const _t = useTranslations('auth.signup')
   return (
-    <Card>
+    <Card className="rounded-2xl shadow-elevation-4 border border-primary/10 bg-card/80 backdrop-blur-xl">
       <CardHeader>
-        <p className="text-sm text-muted-foreground text-center">
+        <p className="text-body-sm text-muted-foreground text-center">
           Fill in the form below to create your account
         </p>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-card-padding-lg">
         <div className="space-y-4">
           <div className="w-full h-10 bg-muted animate-pulse rounded" />
           <div className="relative">
