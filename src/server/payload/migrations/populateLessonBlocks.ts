@@ -141,7 +141,9 @@ export async function populateLessonBlocks(
       blocksAdded += toAdd.length
     } catch {
       errors++
-      payload.logger?.warn(`[populateLessonBlocks] Failed to populate blocks for lesson ${lessonId}`)
+      payload.logger?.warn(
+        `[populateLessonBlocks] Failed to populate blocks for lesson ${lessonId}`,
+      )
     }
   }
 

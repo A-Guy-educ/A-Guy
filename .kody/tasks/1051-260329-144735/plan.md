@@ -333,7 +333,9 @@ function parseBlocks(raw: unknown): BlockEntry[] {
     try {
       const parsed = JSON.parse(raw)
       if (Array.isArray(parsed)) return parsed as BlockEntry[]
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
   return []
 }
@@ -418,14 +420,14 @@ export async function populateLessonBlocks(
       const existingRefs = new Set<string>()
       for (const b of existingBlocks) {
         if (b.blockType === 'exerciseRef' && b.exercise) existingRefs.add(`exercise:${b.exercise}`)
-        if (b.blockType === 'contentPageRef' && b.contentPage) existingRefs.add(`contentPage:${b.contentPage}`)
+        if (b.blockType === 'contentPageRef' && b.contentPage)
+          existingRefs.add(`contentPage:${b.contentPage}`)
       }
 
       // Only add blocks that don't already exist
       const toAdd = newBlocks.filter((b) => {
-        const key = b.blockType === 'exerciseRef'
-          ? `exercise:${b.exercise}`
-          : `contentPage:${b.contentPage}`
+        const key =
+          b.blockType === 'exerciseRef' ? `exercise:${b.exercise}` : `contentPage:${b.contentPage}`
         return !existingRefs.has(key)
       })
 
@@ -489,6 +491,7 @@ await runPopulateLessonBlocksOnInit(payload)
 
 **File:** `src/ui/admin/LessonBlocksField/index.tsx`
 **Change:**
+
 1. Remove the `removeBlock` callback and the `<Trash2>` button from each row (lines 241-246, 498-512)
 2. Remove the "Add Exercise" and "Add Content Page" buttons (lines 517-559)
 3. Remove the picker modal and all picker-related state/callbacks (`showPicker`, `pickerResults`, `pickerLoading`, `pickerSearch`, `openPicker`, `addBlock`, `filteredResults`, `addedIds` — lines 248-319, 561-682)

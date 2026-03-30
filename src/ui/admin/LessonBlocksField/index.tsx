@@ -2,13 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useField } from '@payloadcms/ui'
-import {
-  GripVertical,
-  ChevronUp,
-  ChevronDown,
-  BookOpen,
-  FileText,
-} from 'lucide-react'
+import { GripVertical, ChevronUp, ChevronDown, BookOpen, FileText } from 'lucide-react'
 
 function generateBlockId(): string {
   return Math.random().toString(36).slice(2, 14)
