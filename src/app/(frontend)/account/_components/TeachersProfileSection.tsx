@@ -116,7 +116,9 @@ export function TeachersProfileSection() {
             key={profile.slug}
             className={cn(
               'cursor-pointer transition-all duration-normal hover:border-primary/50',
-              selectedSlug === profile.slug ? 'ring-2 ring-primary border-primary' : 'border-border',
+              selectedSlug === profile.slug
+                ? 'ring-2 ring-primary border-primary'
+                : 'border-border',
             )}
             onClick={() => handleSelect(profile.slug)}
           >

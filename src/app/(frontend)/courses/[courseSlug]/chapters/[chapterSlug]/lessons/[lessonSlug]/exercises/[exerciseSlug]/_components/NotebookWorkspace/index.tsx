@@ -76,9 +76,7 @@ export function NotebookWorkspace({
       <aside
         className={cn(
           'w-[360px] bg-card border-l border-border flex flex-col min-h-0 overflow-hidden fixed top-0 right-0 h-screen z-50 transition-transform duration-slow md:w-80 lg:translate-x-0',
-          isSidebarOpen
-            ? 'translate-x-0 z-[60] shadow-modal'
-            : 'translate-x-full lg:translate-x-0',
+          isSidebarOpen ? 'translate-x-0 z-[60] shadow-modal' : 'translate-x-full lg:translate-x-0',
         )}
       >
         <header className="flex-col p-card-padding pb-0 bg-card border-b border-border gap-content-gap flex-shrink-0 overflow-visible flex">

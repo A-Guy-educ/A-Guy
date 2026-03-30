@@ -170,12 +170,17 @@ export function SelectedCourseCard() {
           <>
             <div className="flex items-start justify-between gap-content-gap">
               <div className="space-y-1">
-                <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full mb-2">
+                <Badge
+                  variant="secondary"
+                  className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full mb-2"
+                >
                   {course.courseLabel}
                 </Badge>
                 <p className="font-bold text-heading-md">{course.title}</p>
                 {course.description && (
-                  <p className="text-body-sm text-muted-foreground line-clamp-2">{course.description}</p>
+                  <p className="text-body-sm text-muted-foreground line-clamp-2">
+                    {course.description}
+                  </p>
                 )}
               </div>
             </div>

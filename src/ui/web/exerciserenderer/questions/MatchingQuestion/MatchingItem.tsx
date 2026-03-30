@@ -55,12 +55,8 @@ export function MatchingItem({
           !isConnected &&
           'hover:border-primary/60 hover:shadow-elevation-3 hover:-translate-y-0.5 cursor-pointer',
         canSelect && !isConnected && 'cursor-pointer',
-        isSelected &&
-          'border-primary bg-primary/10 border-[3px] shadow-elevation-3',
-        isConnected &&
-          !isSelected &&
-          !hasResult(correctState) &&
-          'border-primary/60 bg-primary/5',
+        isSelected && 'border-primary bg-primary/10 border-[3px] shadow-elevation-3',
+        isConnected && !isSelected && !hasResult(correctState) && 'border-primary/60 bg-primary/5',
         disabled && 'cursor-not-allowed opacity-disabled',
         correctState === true && 'border-success bg-success/10',
         correctState === false && 'border-destructive bg-destructive/10',

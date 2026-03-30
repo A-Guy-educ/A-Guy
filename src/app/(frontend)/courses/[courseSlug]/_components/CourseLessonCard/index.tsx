@@ -89,12 +89,7 @@ export function CourseLessonCard({
         </div>
 
         <div className="shrink-0 w-14 h-14">
-          <ProgressCircle
-            percentage={progress}
-            size={56}
-            strokeWidth={3}
-            strokeColor={accentColor}
-          >
+          <ProgressCircle percentage={progress} size={56} strokeWidth={3} strokeColor={accentColor}>
             <text
               x="50%"
               y="50%"

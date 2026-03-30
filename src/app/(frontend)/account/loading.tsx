@@ -28,7 +28,10 @@ export default function AccountLoading() {
           {/* Settings rows */}
           <div className="space-y-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="flex items-center justify-between py-3 border-b border-border">
+              <div
+                key={i}
+                className="flex items-center justify-between py-3 border-b border-border"
+              >
                 <Skeleton className="h-4 w-32" />
                 <Skeleton className="h-9 w-20 rounded-md" />
               </div>

@@ -39,7 +39,9 @@ export function NavigationBar() {
                 href={item.href}
                 className={cn(
                   'relative flex-1 flex items-center justify-center gap-1.5 py-2 px-2 md:px-3 min-h-[44px] text-body-xs md:text-body-sm rounded-lg transition-colors active:opacity-70',
-                  isActive ? 'font-bold' : 'font-medium text-muted-foreground hover:text-foreground',
+                  isActive
+                    ? 'font-bold'
+                    : 'font-medium text-muted-foreground hover:text-foreground',
                 )}
               >
                 {isActive && (

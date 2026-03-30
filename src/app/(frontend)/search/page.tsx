@@ -45,7 +45,9 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
               <SearchX className="w-8 h-8 text-muted-foreground/50" />
             </div>
             <p className="text-body-lg font-medium text-muted-foreground">No results found</p>
-            <p className="text-body-sm text-muted-foreground/60 mt-1">Try a different search term</p>
+            <p className="text-body-sm text-muted-foreground/60 mt-1">
+              Try a different search term
+            </p>
           </div>
         </div>
       ) : (

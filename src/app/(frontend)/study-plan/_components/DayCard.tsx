@@ -119,7 +119,9 @@ export function DayCard({ day, topics, onToggleStatus, onEdit }: DayCardProps) {
       className={cn(
         'relative rounded-2xl bg-card border border-border/40 shadow-elevation-1 p-5 transition-all duration-normal overflow-hidden',
         'border-s-4',
-        isCompleted ? 'border-s-success opacity-60' : 'border-s-primary hover:shadow-card-hover hover:-translate-y-0.5',
+        isCompleted
+          ? 'border-s-success opacity-60'
+          : 'border-s-primary hover:shadow-card-hover hover:-translate-y-0.5',
       )}
     >
       {/* Edit button - only show when not completed */}

@@ -24,7 +24,11 @@ const SIZE_MAP = {
   full: '100%',
 } as const
 
-const MockAxisRenderer: React.FC<AxisRendererProps> = ({ blockId: _blockId, spec, displaySize = 'full' }) => {
+const MockAxisRenderer: React.FC<AxisRendererProps> = ({
+  blockId: _blockId,
+  spec,
+  displaySize = 'full',
+}) => {
   const widthPercent = SIZE_MAP[displaySize]
 
   return (

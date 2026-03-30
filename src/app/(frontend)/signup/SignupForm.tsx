@@ -122,9 +122,7 @@ function SignupFormContent() {
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-body-xs uppercase">
-              <span className="bg-card/80 px-2 text-muted-foreground">
-                {tOauth('orDivider')}
-              </span>
+              <span className="bg-card/80 px-2 text-muted-foreground">{tOauth('orDivider')}</span>
             </div>
           </div>
         </div>
@@ -146,7 +144,10 @@ function SignupFormContent() {
       <CardFooter className="flex justify-center">
         <p className="text-body-sm text-muted-foreground">
           {t('alreadyHaveAccount')}{' '}
-          <SystemLink href="/login" className="text-primary hover:underline transition-colors duration-normal">
+          <SystemLink
+            href="/login"
+            className="text-primary hover:underline transition-colors duration-normal"
+          >
             {t('login')}
           </SystemLink>
         </p>

@@ -1,7 +1,16 @@
 'use client'
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { SearchIcon, X, BookOpen, FileText, HelpCircle, GraduationCap, ChevronRight, Lock } from 'lucide-react'
+import {
+  SearchIcon,
+  X,
+  BookOpen,
+  FileText,
+  HelpCircle,
+  GraduationCap,
+  ChevronRight,
+  Lock,
+} from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/infra/utils/ui'
@@ -55,11 +64,7 @@ export const CourseSearch: React.FC<CourseSearchProps> = ({ variant, onNavigate 
       )}
 
       {/* Command palette modal */}
-      <SearchModal
-        isOpen={isOpen}
-        onClose={close}
-        onNavigate={onNavigate}
-      />
+      <SearchModal isOpen={isOpen} onClose={close} onNavigate={onNavigate} />
     </>
   )
 }
@@ -86,8 +91,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onNavigate }
   const { results, isLoading, enrolled, error } = useCourseSearch(query, courseSlug)
 
   const showResults =
-    query.length >= 2 &&
-    (isLoading || results !== null || enrolled === false || error)
+    query.length >= 2 && (isLoading || results !== null || enrolled === false || error)
 
   // Focus input when opened
   useEffect(() => {
@@ -121,7 +125,9 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onNavigate }
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
-      return () => { document.body.style.overflow = '' }
+      return () => {
+        document.body.style.overflow = ''
+      }
     }
   }, [isOpen])
 
@@ -215,9 +221,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onNavigate }
                 {!isLoading && enrolled === false && (
                   <div className="p-card-padding-lg text-center">
                     <Lock className="w-10 h-10 text-warning mx-auto mb-3 opacity-60" />
-                    <p className="text-body-sm font-medium text-warning">
-                      {t('enrollRequired')}
-                    </p>
+                    <p className="text-body-sm font-medium text-warning">{t('enrollRequired')}</p>
                     <p className="text-body-xs text-muted-foreground mt-1">
                       {t('enrollRequiredHint')}
                     </p>
@@ -235,9 +239,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onNavigate }
                 {!isLoading && enrolled === true && results && !hasResults && (
                   <div className="p-card-padding-lg text-center">
                     <SearchIcon className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-40" />
-                    <p className="text-body-sm text-muted-foreground">
-                      {t('noResults')}
-                    </p>
+                    <p className="text-body-sm text-muted-foreground">{t('noResults')}</p>
                   </div>
                 )}
 
@@ -311,9 +313,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onNavigate }
             {/* Empty state hint */}
             {!showResults && (
               <div className="px-4 py-section-sm text-center">
-                <p className="text-body-xs text-muted-foreground">
-                  {t('placeholder')}
-                </p>
+                <p className="text-body-xs text-muted-foreground">{t('placeholder')}</p>
               </div>
             )}
           </motion.div>
@@ -353,7 +353,13 @@ interface SearchResultItemProps {
   onClick: () => void
 }
 
-const SearchResultItem: React.FC<SearchResultItemProps> = ({ href, title, subtitle, dotColor, onClick }) => (
+const SearchResultItem: React.FC<SearchResultItemProps> = ({
+  href,
+  title,
+  subtitle,
+  dotColor,
+  onClick,
+}) => (
   <SystemLink
     href={href}
     onClick={onClick}

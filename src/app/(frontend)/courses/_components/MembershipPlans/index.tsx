@@ -92,9 +92,7 @@ export function MembershipPlans() {
   return (
     <section className="mb-24">
       <div className="text-center mb-12">
-        <h2
-          className="text-heading-xl font-black text-card-foreground uppercase tracking-widest"
-        >
+        <h2 className="text-heading-xl font-black text-card-foreground uppercase tracking-widest">
           {t('membershipPlans')}
         </h2>
       </div>

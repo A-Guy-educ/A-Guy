@@ -225,11 +225,7 @@ export function ExercisesPager({
                 </div>
 
                 <AnimatePresence mode="wait">
-                  <motion.div
-                    key={currentExercise.id}
-                    {...pageTransition}
-                    className="space-y-4"
-                  >
+                  <motion.div key={currentExercise.id} {...pageTransition} className="space-y-4">
                     <div className="bg-card rounded-2xl border border-border/60 shadow-elevation-1 overflow-hidden">
                       <div className="p-5 md:p-card-padding">
                         <div className="flex items-center gap-3 mb-2">
@@ -283,13 +279,9 @@ export function ExercisesPager({
                 </Button>
                 <div className="flex flex-col items-center">
                   <span className="text-body-xs text-muted-foreground">
-                    {exerciseOrdinal !== null
-                      ? `${exerciseOrdinal} / ${totalExercises}`
-                      : ''}
+                    {exerciseOrdinal !== null ? `${exerciseOrdinal} / ${totalExercises}` : ''}
                   </span>
-                  <span className="text-[10px] text-muted-foreground/50 hidden sm:block">
-                    ← →
-                  </span>
+                  <span className="text-[10px] text-muted-foreground/50 hidden sm:block">← →</span>
                 </div>
                 <Button
                   onClick={handleNext}
@@ -297,9 +289,7 @@ export function ExercisesPager({
                   aria-label="Next page"
                   className="px-6 py-2 min-h-[44px] rounded-xl text-body-sm cursor-pointer gap-2"
                 >
-                  {isNavigating ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : null}
+                  {isNavigating ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   {t('exercisesPagerNext')}
                   <ArrowLeft className="w-4 h-4 rtl:rotate-0 ltr:rotate-180" />
                 </Button>
@@ -446,9 +436,7 @@ export function ExercisesPager({
                     <div className="inline-flex items-center gap-2 px-4 py-2 bg-secondary/5 rounded-xl border border-secondary/10">
                       <Layers className="w-4 h-4 text-secondary" />
                       <span className="text-secondary font-medium">{totalExercises}</span>
-                      <span className="text-body-xs text-muted-foreground">
-                        {t('exercise')}
-                      </span>
+                      <span className="text-body-xs text-muted-foreground">{t('exercise')}</span>
                     </div>
                   </div>
 

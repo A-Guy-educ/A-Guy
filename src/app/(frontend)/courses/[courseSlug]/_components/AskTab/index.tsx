@@ -69,30 +69,32 @@ export function AskTab({ courseId, accentColor }: AskTabProps) {
     <StaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-content-gap-lg">
       {/* New Question card */}
       <StaggerItem>
-      <button
-        onClick={() => router.push('/ask')}
-        className={cn(
-          'bg-primary text-primary-foreground rounded-3xl p-6 shadow-card',
-          'flex items-center justify-between',
-          'transition-all duration-normal cursor-pointer border border-transparent hover:opacity-95',
-          'text-start',
-        )}
-      >
-        <div className="flex flex-col">
-          <span className="text-label font-bold text-primary-foreground/60 mb-1 uppercase tracking-wide">
-            {t('quickAction')}
-          </span>
-          <h3 className="text-heading-lg font-bold">{t('newQuestion')}</h3>
-          <p className="text-body-xs text-primary-foreground/70 mt-1">{t('newQuestionSub')}</p>
-        </div>
-        <div className="w-14 h-14 bg-primary-foreground/20 rounded-full flex items-center justify-center shrink-0 ms-3">
-          <Sparkles className="w-6 h-6 text-primary-foreground fill-current" />
-        </div>
-      </button>
+        <button
+          onClick={() => router.push('/ask')}
+          className={cn(
+            'bg-primary text-primary-foreground rounded-3xl p-6 shadow-card',
+            'flex items-center justify-between',
+            'transition-all duration-normal cursor-pointer border border-transparent hover:opacity-95',
+            'text-start',
+          )}
+        >
+          <div className="flex flex-col">
+            <span className="text-label font-bold text-primary-foreground/60 mb-1 uppercase tracking-wide">
+              {t('quickAction')}
+            </span>
+            <h3 className="text-heading-lg font-bold">{t('newQuestion')}</h3>
+            <p className="text-body-xs text-primary-foreground/70 mt-1">{t('newQuestionSub')}</p>
+          </div>
+          <div className="w-14 h-14 bg-primary-foreground/20 rounded-full flex items-center justify-center shrink-0 ms-3">
+            <Sparkles className="w-6 h-6 text-primary-foreground fill-current" />
+          </div>
+        </button>
       </StaggerItem>
 
       {loading && (
-        <div className="col-span-full text-center text-muted-foreground py-section-md">{t('loading')}</div>
+        <div className="col-span-full text-center text-muted-foreground py-section-md">
+          {t('loading')}
+        </div>
       )}
 
       {/* Conversation cards */}

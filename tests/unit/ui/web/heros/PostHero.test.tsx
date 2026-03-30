@@ -14,7 +14,13 @@ vi.mock('@/ui/web/providers/HeaderTheme', () => ({
 
 // Mock Media component
 vi.mock('@/ui/web/media', () => ({
-  Media: ({ fill, className: _className, imgClassName: _imgClassName, priority, resource: _resource }: any) => (
+  Media: ({
+    fill,
+    className: _className,
+    imgClassName: _imgClassName,
+    priority,
+    resource: _resource,
+  }: any) => (
     <div data-testid="media-mock" data-fill={fill} data-priority={priority}>
       Media Mock
     </div>

@@ -12,12 +12,7 @@ interface BackToChapterProps {
 export function BackToChapter({ href }: BackToChapterProps) {
   const t = useTranslations('courses')
   return (
-    <Button
-      asChild
-      variant="outline"
-      size="lg"
-      className={cn('transition-all duration-normal')}
-    >
+    <Button asChild variant="outline" size="lg" className={cn('transition-all duration-normal')}>
       <SystemLink href={href}>{t('backToChapter')}</SystemLink>
     </Button>
   )

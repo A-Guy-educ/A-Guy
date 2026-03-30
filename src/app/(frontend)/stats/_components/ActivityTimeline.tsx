@@ -12,7 +12,13 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { Card, CardContent, CardHeader, CardTitle } from '@/ui/web/components/card'
-import { CheckCircle2, FileQuestion, MessageCircle, HelpCircle, Activity as ActivityIcon } from 'lucide-react'
+import {
+  CheckCircle2,
+  FileQuestion,
+  MessageCircle,
+  HelpCircle,
+  Activity as ActivityIcon,
+} from 'lucide-react'
 
 interface Activity {
   actionType: string

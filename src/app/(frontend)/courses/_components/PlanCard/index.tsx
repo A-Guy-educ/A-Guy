@@ -121,9 +121,7 @@ export function PlanCard({
             'text-white px-6 py-2 rounded-full shadow-lg',
           )}
         >
-          <span className="uppercase tracking-widest text-[10px] font-black">
-            {badge}
-          </span>
+          <span className="uppercase tracking-widest text-[10px] font-black">{badge}</span>
         </div>
       )}
 
@@ -155,11 +153,10 @@ export function PlanCard({
                 isPremium ? 'text-primary' : 'text-card-foreground',
               )}
             >
-              {'\u20AA'}{price}
+              {'\u20AA'}
+              {price}
             </span>
-            <span className="text-body-sm font-normal text-muted-foreground">
-              / {period}
-            </span>
+            <span className="text-body-sm font-normal text-muted-foreground">/ {period}</span>
           </div>
         </div>
 
@@ -171,10 +168,7 @@ export function PlanCard({
           {features.map((feature, featureIndex) => (
             <li
               key={featureIndex}
-              className={cn(
-                'flex items-center gap-3 text-body-sm',
-                getFeatureStyle(feature.style),
-              )}
+              className={cn('flex items-center gap-3 text-body-sm', getFeatureStyle(feature.style))}
             >
               {getFeatureIcon(feature.icon)}
               <span>{feature.text}</span>

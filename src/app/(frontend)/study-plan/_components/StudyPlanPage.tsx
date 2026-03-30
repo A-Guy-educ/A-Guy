@@ -153,116 +153,120 @@ export function StudyPlanPage() {
 
   return (
     <PageTransition>
-    <div className="min-h-screen bg-background py-section-sm px-4">
-      <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-warning/10 rounded-xl mb-4">
-            <Zap className="w-6 h-6 text-warning" />
-          </div>
-          <h1 className="text-heading-xl font-bold text-foreground mb-2">{t('pageTitle')}</h1>
-          <p className="text-muted-foreground">{t('pageSubtitle')}</p>
-        </div>
-
-        {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-content-gap">
-          {/* Sidebar */}
-          <div className="lg:col-span-1 space-y-content-gap">
-            {/* Exam Date Card */}
-            <div className="bg-card rounded-2xl border border-border p-card-padding shadow-elevation-1">
-              <div className="flex items-center gap-2 mb-4">
-                <Calendar className="w-5 h-5 text-muted-foreground" />
-                <h2 className="text-heading-lg font-semibold text-foreground">{t('examDate')}</h2>
-              </div>
-              <input
-                type="date"
-                value={examDate}
-                onChange={(e) => {
-                  pendingRegeneration.current = true
-                  setExamDate(e.target.value)
-                }}
-                className="w-full px-4 py-2.5 border border-border rounded-lg text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-              />
+      <div className="min-h-screen bg-background py-section-sm px-4">
+        <div className="max-w-5xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-warning/10 rounded-xl mb-4">
+              <Zap className="w-6 h-6 text-warning" />
             </div>
-
-            {/* Topics Card */}
-            <div className="bg-card rounded-2xl border border-border p-card-padding shadow-elevation-1">
-              <h2 className="text-heading-lg font-semibold text-foreground mb-4">{t('topicsTitle')}</h2>
-
-              <div className="space-y-2 mb-4">
-                {topics.map((topic) => (
-                  <TopicRow
-                    key={topic.topicId}
-                    topic={topic}
-                    onMasteryChange={(mastery) => handleMasteryChange(topic.topicId, mastery)}
-                    onDelete={() => handleRemoveTopic(topic.topicId)}
-                  />
-                ))}
-              </div>
-
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newTopic}
-                  onChange={(e) => setNewTopic(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAddTopic()}
-                  placeholder={t('addTopicPlaceholder')}
-                  className="flex-1 px-3 py-2 border border-border rounded-lg text-foreground bg-card text-body-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-                />
-                <button
-                  onClick={handleAddTopic}
-                  className="p-2 bg-foreground text-background rounded-lg hover:bg-foreground/90 transition-colors duration-normal"
-                >
-                  <Plus className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Generate Plan Button */}
-            <Button
-              onClick={handleGeneratePlan}
-              disabled={!examDate || topics.length === 0 || isLoading}
-              size="lg"
-              className="w-full"
-            >
-              <Zap className="w-5 h-5 me-2" />
-              {t('generateButton')}
-            </Button>
+            <h1 className="text-heading-xl font-bold text-foreground mb-2">{t('pageTitle')}</h1>
+            <p className="text-muted-foreground">{t('pageSubtitle')}</p>
           </div>
 
-          {/* Main Content */}
-          <div className="lg:col-span-2">
-            {isLoading && hasGenerated ? (
-              <div className="flex flex-col items-center justify-center py-section-md px-4 border-2 border-dashed border-border rounded-2xl">
-                <div className="w-8 h-8 border-4 border-border border-t-foreground rounded-full animate-spin mb-4" />
-                <p className="text-muted-foreground">{t('loading')}</p>
-              </div>
-            ) : hasGenerated && plan ? (
-              <div>
-                <div className="mb-4">
-                  <h2 className="text-heading-lg font-semibold text-foreground">{t('scheduleTitle')}</h2>
-                  <p className="text-body-sm text-muted-foreground">{t('scheduleSubtitle')}</p>
+          {/* Main Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-content-gap">
+            {/* Sidebar */}
+            <div className="lg:col-span-1 space-y-content-gap">
+              {/* Exam Date Card */}
+              <div className="bg-card rounded-2xl border border-border p-card-padding shadow-elevation-1">
+                <div className="flex items-center gap-2 mb-4">
+                  <Calendar className="w-5 h-5 text-muted-foreground" />
+                  <h2 className="text-heading-lg font-semibold text-foreground">{t('examDate')}</h2>
                 </div>
+                <input
+                  type="date"
+                  value={examDate}
+                  onChange={(e) => {
+                    pendingRegeneration.current = true
+                    setExamDate(e.target.value)
+                  }}
+                  className="w-full px-4 py-2.5 border border-border rounded-lg text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                />
+              </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-content-gap">
-                  {plan.days.map((day) => (
-                    <DayCard
-                      key={day.dayId}
-                      day={day}
-                      topics={topics}
-                      onToggleStatus={() => handleMarkComplete(day.dayId)}
-                      onEdit={(edits) => editDay(day.dayId, edits)}
+              {/* Topics Card */}
+              <div className="bg-card rounded-2xl border border-border p-card-padding shadow-elevation-1">
+                <h2 className="text-heading-lg font-semibold text-foreground mb-4">
+                  {t('topicsTitle')}
+                </h2>
+
+                <div className="space-y-2 mb-4">
+                  {topics.map((topic) => (
+                    <TopicRow
+                      key={topic.topicId}
+                      topic={topic}
+                      onMasteryChange={(mastery) => handleMasteryChange(topic.topicId, mastery)}
+                      onDelete={() => handleRemoveTopic(topic.topicId)}
                     />
                   ))}
                 </div>
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newTopic}
+                    onChange={(e) => setNewTopic(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddTopic()}
+                    placeholder={t('addTopicPlaceholder')}
+                    className="flex-1 px-3 py-2 border border-border rounded-lg text-foreground bg-card text-body-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                  />
+                  <button
+                    onClick={handleAddTopic}
+                    className="p-2 bg-foreground text-background rounded-lg hover:bg-foreground/90 transition-colors duration-normal"
+                  >
+                    <Plus className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
-            ) : (
-              <EmptyPlanState />
-            )}
+
+              {/* Generate Plan Button */}
+              <Button
+                onClick={handleGeneratePlan}
+                disabled={!examDate || topics.length === 0 || isLoading}
+                size="lg"
+                className="w-full"
+              >
+                <Zap className="w-5 h-5 me-2" />
+                {t('generateButton')}
+              </Button>
+            </div>
+
+            {/* Main Content */}
+            <div className="lg:col-span-2">
+              {isLoading && hasGenerated ? (
+                <div className="flex flex-col items-center justify-center py-section-md px-4 border-2 border-dashed border-border rounded-2xl">
+                  <div className="w-8 h-8 border-4 border-border border-t-foreground rounded-full animate-spin mb-4" />
+                  <p className="text-muted-foreground">{t('loading')}</p>
+                </div>
+              ) : hasGenerated && plan ? (
+                <div>
+                  <div className="mb-4">
+                    <h2 className="text-heading-lg font-semibold text-foreground">
+                      {t('scheduleTitle')}
+                    </h2>
+                    <p className="text-body-sm text-muted-foreground">{t('scheduleSubtitle')}</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-content-gap">
+                    {plan.days.map((day) => (
+                      <DayCard
+                        key={day.dayId}
+                        day={day}
+                        topics={topics}
+                        onToggleStatus={() => handleMarkComplete(day.dayId)}
+                        onEdit={(edits) => editDay(day.dayId, edits)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <EmptyPlanState />
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
     </PageTransition>
   )
 }

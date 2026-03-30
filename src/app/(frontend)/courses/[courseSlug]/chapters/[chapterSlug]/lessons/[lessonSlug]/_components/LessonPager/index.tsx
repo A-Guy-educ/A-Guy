@@ -172,11 +172,7 @@ export function LessonPager({
                 </div>
 
                 <AnimatePresence mode="wait">
-                  <motion.div
-                    key={pageState.blockIndex}
-                    {...pageTransition}
-                    className="space-y-4"
-                  >
+                  <motion.div key={pageState.blockIndex} {...pageTransition} className="space-y-4">
                     <div className="bg-card rounded-2xl border border-border/60 shadow-elevation-1 overflow-hidden">
                       <div className="p-5 md:p-card-padding">
                         <div className="flex items-center gap-3 mb-2">
@@ -234,9 +230,7 @@ export function LessonPager({
                   aria-label="Next page"
                   className="px-6 py-2 min-h-[44px] rounded-xl text-body-sm cursor-pointer gap-2"
                 >
-                  {isNavigating ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : null}
+                  {isNavigating ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   {t('exercisesPagerNext')}
                   <ArrowLeft className="w-4 h-4 rtl:rotate-0 ltr:rotate-180" />
                 </Button>
@@ -332,7 +326,9 @@ export function LessonPager({
                         <FileText className="w-6 h-6 text-muted-foreground/50" />
                       </div>
                       <p className="text-body-sm font-medium text-muted-foreground">No content</p>
-                      <p className="text-body-xs text-muted-foreground/60 mt-1">This page has no content yet</p>
+                      <p className="text-body-xs text-muted-foreground/60 mt-1">
+                        This page has no content yet
+                      </p>
                     </div>
                   )}
                 </div>
@@ -426,9 +422,7 @@ export function LessonPager({
                   <ArrowRight className="w-4 h-4 rtl:rotate-0 ltr:rotate-180" />
                   {t('exercisesPagerPrev')}
                 </Button>
-                <span className="text-body-xs text-muted-foreground">
-                  {t('exercise')}
-                </span>
+                <span className="text-body-xs text-muted-foreground">{t('exercise')}</span>
                 <Button
                   onClick={handleNext}
                   disabled={!canGoNext || isNavigating}
@@ -510,11 +504,7 @@ export function LessonPager({
                   )}
                 </div>
 
-                <Button
-                  onClick={handleStart}
-                  size="lg"
-                  className="px-10 rounded-xl cursor-pointer"
-                >
+                <Button onClick={handleStart} size="lg" className="px-10 rounded-xl cursor-pointer">
                   {t('exercisesPagerStart')}{' '}
                   <ChevronLeft className="w-5 h-5 ms-2 rtl:rotate-0 ltr:rotate-180" />
                 </Button>
@@ -568,9 +558,7 @@ export function LessonPager({
                       <div className="inline-flex items-center gap-2 px-4 py-2 bg-secondary/5 rounded-xl border border-secondary/10">
                         <Layers className="w-4 h-4 text-secondary" />
                         <span className="text-secondary font-medium">{exerciseCount}</span>
-                        <span className="text-body-xs text-muted-foreground">
-                          {t('exercise')}
-                        </span>
+                        <span className="text-body-xs text-muted-foreground">{t('exercise')}</span>
                       </div>
                     )}
                     {contentPageCount > 0 && (

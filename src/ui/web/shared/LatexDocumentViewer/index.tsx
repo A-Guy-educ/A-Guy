@@ -83,7 +83,9 @@ export function LatexDocumentViewer({
       )}
     >
       <div className="px-12 py-10 font-serif sm:px-16 sm:py-12">
-        {title && <h1 className="text-foreground mb-8 text-center text-heading-xl font-bold">{title}</h1>}
+        {title && (
+          <h1 className="text-foreground mb-8 text-center text-heading-xl font-bold">{title}</h1>
+        )}
 
         {diagrams.length === 0 ? (
           <MathMarkdown

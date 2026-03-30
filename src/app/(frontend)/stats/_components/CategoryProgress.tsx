@@ -92,9 +92,7 @@ export function CategoryProgress({ data }: CategoryProgressProps) {
                   }}
                 />
               </div>
-              <p className="text-body-xs text-muted-foreground mt-1.5">
-                {category.progress}%
-              </p>
+              <p className="text-body-xs text-muted-foreground mt-1.5">{category.progress}%</p>
             </CardContent>
           </Card>
         )

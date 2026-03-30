@@ -122,7 +122,11 @@ export function PersonaSelectionStep({ returnTo }: PersonaSelectionStepProps) {
         </div>
 
         {profiles.length > 0 ? (
-          <div className="grid gap-content-gap sm:grid-cols-2" role="radiogroup" aria-label={t('title')}>
+          <div
+            className="grid gap-content-gap sm:grid-cols-2"
+            role="radiogroup"
+            aria-label={t('title')}
+          >
             {profiles.map((profile) => (
               <Card
                 key={profile.slug}

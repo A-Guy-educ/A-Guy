@@ -57,8 +57,7 @@ export function SummaryCards({ summary, categoryProgress }: SummaryCardsProps) {
           <div className="text-display-sm font-bold">
             {Math.floor(summary.timeSpent / 3600) > 0 && (
               <>
-                <AnimatedCounter value={Math.floor(summary.timeSpent / 3600)} suffix="h" />
-                {' '}
+                <AnimatedCounter value={Math.floor(summary.timeSpent / 3600)} suffix="h" />{' '}
               </>
             )}
             <AnimatedCounter value={Math.floor((summary.timeSpent % 3600) / 60)} suffix="m" />
@@ -70,7 +69,10 @@ export function SummaryCards({ summary, categoryProgress }: SummaryCardsProps) {
       </Card>
 
       {/* Daily Streak — Standard card */}
-      <Card className="bg-card border shadow-elevation-1 rounded-xl p-card-padding border-l-warning hover:border-border/50 active:scale-[0.98] will-change-transform transition-all duration-normal" style={{ borderInlineStartWidth: '3px' }}>
+      <Card
+        className="bg-card border shadow-elevation-1 rounded-xl p-card-padding border-l-warning hover:border-border/50 active:scale-[0.98] will-change-transform transition-all duration-normal"
+        style={{ borderInlineStartWidth: '3px' }}
+      >
         <CardHeader className="pb-2">
           <CardTitle className="text-body-sm font-medium text-muted-foreground flex items-center gap-2">
             <Flame className="w-5 h-5 text-warning" />

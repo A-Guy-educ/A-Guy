@@ -75,7 +75,9 @@ export function SignupFormFields({ t, isLoading, errors }: SignupFormFieldsProps
           disabled={isLoading}
           className={errors.confirmPassword ? 'border-destructive' : ''}
         />
-        {errors.confirmPassword && <p className="text-body-sm text-destructive">{errors.confirmPassword}</p>}
+        {errors.confirmPassword && (
+          <p className="text-body-sm text-destructive">{errors.confirmPassword}</p>
+        )}
       </div>
 
       {/* Generic error banner */}

@@ -29,8 +29,12 @@ export const Default: Story = {
         <p>Card content with some sample text to demonstrate the layout.</p>
       </CardContent>
       <CardFooter>
-        <Button variant="outline" size="sm">Cancel</Button>
-        <Button size="sm" className="ml-auto">Save</Button>
+        <Button variant="outline" size="sm">
+          Cancel
+        </Button>
+        <Button size="sm" className="ml-auto">
+          Save
+        </Button>
       </CardFooter>
     </Card>
   ),
@@ -80,7 +84,9 @@ export const FullComposition: Story = {
       </CardHeader>
       <CardContent className="space-y-2">
         <div className="text-body-sm text-muted-foreground">Project Name</div>
-        <div className="h-10 w-full rounded-md border bg-form px-3 py-2 text-body-sm">my-project</div>
+        <div className="h-10 w-full rounded-md border bg-form px-3 py-2 text-body-sm">
+          my-project
+        </div>
         <div className="text-body-sm text-muted-foreground">Framework</div>
         <div className="h-10 w-full rounded-md border bg-form px-3 py-2 text-body-sm">Next.js</div>
       </CardContent>

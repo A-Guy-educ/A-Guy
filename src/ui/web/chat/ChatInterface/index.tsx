@@ -624,10 +624,8 @@ export function ChatInterface({
                 key={file.localId}
                 className={cn(
                   'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-body-sm border',
-                  file.status === 'complete' &&
-                    'border-success/30 bg-success/10',
-                  file.status === 'failed' &&
-                    'border-destructive/30 bg-destructive/10',
+                  file.status === 'complete' && 'border-success/30 bg-success/10',
+                  file.status === 'failed' && 'border-destructive/30 bg-destructive/10',
                   file.status === 'uploading' && 'border-border bg-muted',
                   file.status === 'finalizing' && 'border-border bg-muted',
                   file.status === 'cancelled' && 'border-muted bg-muted/50',
@@ -653,9 +651,7 @@ export function ChatInterface({
                 {file.status === 'uploading' && (
                   <span className="text-body-xs text-muted-foreground">{file.progress}%</span>
                 )}
-                {file.status === 'complete' && (
-                  <CheckCircle className="w-3.5 h-3.5 text-success" />
-                )}
+                {file.status === 'complete' && <CheckCircle className="w-3.5 h-3.5 text-success" />}
                 {file.status === 'failed' && (
                   <>
                     <span

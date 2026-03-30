@@ -30,10 +30,30 @@ const scaleIn = {
 }
 
 const FEATURES = [
-  { key: 'study', icon: BookOpen, color: 'hsl(217 91% 60%)', bgClass: 'from-blue-500/20 to-blue-600/5' },
-  { key: 'practice', icon: Target, color: 'hsl(0 72% 51%)', bgClass: 'from-red-500/20 to-red-600/5' },
-  { key: 'ask', icon: MessageCircle, color: 'hsl(142 71% 45%)', bgClass: 'from-green-500/20 to-green-600/5' },
-  { key: 'test', icon: Trophy, color: 'hsl(330 81% 60%)', bgClass: 'from-pink-500/20 to-pink-600/5' },
+  {
+    key: 'study',
+    icon: BookOpen,
+    color: 'hsl(217 91% 60%)',
+    bgClass: 'from-blue-500/20 to-blue-600/5',
+  },
+  {
+    key: 'practice',
+    icon: Target,
+    color: 'hsl(0 72% 51%)',
+    bgClass: 'from-red-500/20 to-red-600/5',
+  },
+  {
+    key: 'ask',
+    icon: MessageCircle,
+    color: 'hsl(142 71% 45%)',
+    bgClass: 'from-green-500/20 to-green-600/5',
+  },
+  {
+    key: 'test',
+    icon: Trophy,
+    color: 'hsl(330 81% 60%)',
+    bgClass: 'from-pink-500/20 to-pink-600/5',
+  },
 ] as const
 
 const STEPS = [
@@ -111,7 +131,10 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
           </motion.p>
 
           {/* CTA */}
-          <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-content-gap justify-center">
+          <motion.div
+            variants={fadeUp}
+            className="flex flex-col sm:flex-row gap-content-gap justify-center"
+          >
             <Button
               size="lg"
               onClick={onGetStarted}
@@ -130,10 +153,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
           </motion.div>
 
           {/* Floating preview cards (decorative) */}
-          <motion.div
-            variants={fadeUp}
-            className="mt-16 relative"
-          >
+          <motion.div variants={fadeUp} className="mt-16 relative">
             <div className="relative mx-auto max-w-3xl">
               <div className="bg-card/60 backdrop-blur-xl rounded-2xl border border-border/50 shadow-elevation-4 p-card-padding md:p-8">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-content-gap">
@@ -150,7 +170,9 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
                         >
                           <Icon className="w-5 h-5" style={{ color: f.color }} />
                         </div>
-                        <span className="text-body-sm font-medium">{t(`features.${f.key}.title`)}</span>
+                        <span className="text-body-sm font-medium">
+                          {t(`features.${f.key}.title`)}
+                        </span>
                       </div>
                     )
                   })}
@@ -171,10 +193,16 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
             viewport={{ once: true, margin: '-100px' }}
             variants={container}
           >
-            <motion.h2 variants={fadeUp} className="text-display-sm md:text-display-md font-bold mb-4">
+            <motion.h2
+              variants={fadeUp}
+              className="text-display-sm md:text-display-md font-bold mb-4"
+            >
               {t('features.heading')}
             </motion.h2>
-            <motion.p variants={fadeUp} className="text-body-lg text-muted-foreground max-w-xl mx-auto">
+            <motion.p
+              variants={fadeUp}
+              className="text-body-lg text-muted-foreground max-w-xl mx-auto"
+            >
               {t('features.subheading')}
             </motion.p>
           </motion.div>
@@ -205,7 +233,9 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
                   >
                     <Icon className="w-7 h-7" style={{ color: feature.color }} />
                   </div>
-                  <h3 className="text-heading-lg font-bold mb-2">{t(`features.${feature.key}.title`)}</h3>
+                  <h3 className="text-heading-lg font-bold mb-2">
+                    {t(`features.${feature.key}.title`)}
+                  </h3>
                   <p className="text-body-md text-muted-foreground leading-relaxed">
                     {t(`features.${feature.key}.description`)}
                   </p>
@@ -226,7 +256,10 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
             viewport={{ once: true, margin: '-100px' }}
             variants={container}
           >
-            <motion.h2 variants={fadeUp} className="text-display-sm md:text-display-md font-bold mb-4">
+            <motion.h2
+              variants={fadeUp}
+              className="text-display-sm md:text-display-md font-bold mb-4"
+            >
               {t('howItWorks.heading')}
             </motion.h2>
           </motion.div>
@@ -241,11 +274,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
             {STEPS.map((step, i) => {
               const Icon = step.icon
               return (
-                <motion.div
-                  key={step.key}
-                  variants={fadeUp}
-                  className="text-center relative"
-                >
+                <motion.div key={step.key} variants={fadeUp} className="text-center relative">
                   {/* Connecting line (hidden on mobile) */}
                   {i < STEPS.length - 1 && (
                     <div className="hidden md:block absolute top-8 start-[60%] w-full h-px bg-border" />
@@ -257,7 +286,9 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
                       {i + 1}
                     </span>
                   </div>
-                  <h3 className="text-heading-md font-bold mb-2">{t(`howItWorks.steps.${step.key}.title`)}</h3>
+                  <h3 className="text-heading-md font-bold mb-2">
+                    {t(`howItWorks.steps.${step.key}.title`)}
+                  </h3>
                   <p className="text-body-sm text-muted-foreground">
                     {t(`howItWorks.steps.${step.key}.description`)}
                   </p>

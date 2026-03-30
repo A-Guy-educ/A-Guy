@@ -24,9 +24,7 @@ export function ConversationCard({
   const t = useTranslations('coursePage')
 
   return (
-    <div
-      className="rounded-2xl bg-card border border-border/40 shadow-elevation-1 transition-all duration-normal overflow-hidden border-s-4 border-s-success hover:shadow-card-hover hover:-translate-y-0.5"
-    >
+    <div className="rounded-2xl bg-card border border-border/40 shadow-elevation-1 transition-all duration-normal overflow-hidden border-s-4 border-s-success hover:shadow-card-hover hover:-translate-y-0.5">
       <div
         className={cn('p-5', 'flex items-center justify-between', 'cursor-pointer')}
         onClick={onClick}
@@ -39,7 +37,9 @@ export function ConversationCard({
             {t('question')} {index}
           </span>
           <h3 className="text-heading-md font-bold text-card-foreground truncate">{title}</h3>
-          {subtitle && <p className="text-body-sm text-muted-foreground mt-1 truncate">{subtitle}</p>}
+          {subtitle && (
+            <p className="text-body-sm text-muted-foreground mt-1 truncate">{subtitle}</p>
+          )}
         </div>
         <div className="flex items-center gap-2 shrink-0 ms-3">
           <button

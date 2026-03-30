@@ -110,7 +110,10 @@ function ExamCard({
   return (
     <div
       className="rounded-xl border border-border/30 transition-all duration-normal will-change-transform hover:border-border/50 active:scale-[0.98]"
-      style={{ borderInlineStartWidth: '3px', borderInlineStartColor: accentColor ?? 'hsl(var(--primary))' }}
+      style={{
+        borderInlineStartWidth: '3px',
+        borderInlineStartColor: accentColor ?? 'hsl(var(--primary))',
+      }}
     >
       <div className="bg-card p-5 flex flex-col gap-2">
         <div className="flex items-start justify-between">

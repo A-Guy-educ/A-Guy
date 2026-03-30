@@ -10,7 +10,9 @@ export function EmptyPlanState() {
         <Clock className="w-8 h-8 text-primary/60" />
       </div>
       <h3 className="text-heading-lg font-semibold text-foreground mb-2">{t('empty.title')}</h3>
-      <p className="text-body-sm text-muted-foreground text-center max-w-md">{t('empty.description')}</p>
+      <p className="text-body-sm text-muted-foreground text-center max-w-md">
+        {t('empty.description')}
+      </p>
     </div>
   )
 }

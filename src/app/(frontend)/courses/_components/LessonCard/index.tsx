@@ -47,7 +47,10 @@ export function LessonCard({ lesson, courseSlug, chapterSlug }: LessonCardProps)
 
   return (
     <Card
-      className={cn('relative border-s-4 border-s-primary hover:shadow-card-hover hover:-translate-y-0.5 active:scale-[0.98] will-change-transform', isSoon && 'opacity-60')}
+      className={cn(
+        'relative border-s-4 border-s-primary hover:shadow-card-hover hover:-translate-y-0.5 active:scale-[0.98] will-change-transform',
+        isSoon && 'opacity-60',
+      )}
     >
       <ContentStatusBadge
         contentStatus={lesson.contentStatus}

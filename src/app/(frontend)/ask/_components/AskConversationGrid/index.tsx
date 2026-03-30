@@ -129,56 +129,60 @@ export function AskConversationGrid() {
         <StaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-content-gap">
           {/* New Question Card */}
           <StaggerItem>
-          <button
-            disabled={isCreating}
-            onClick={handleNewQuestion}
-            className={cn(
-              'bg-primary text-primary-foreground rounded-2xl p-5 shadow-elevation-1',
-              'flex items-center justify-between',
-              'border border-border/40 hover:opacity-95',
-              'transition-all duration-normal cursor-pointer hover:shadow-card-hover hover:-translate-y-0.5',
-              'text-right overflow-hidden',
-            )}
-          >
-            <div className="flex flex-col">
-              <span className="text-label font-bold text-primary-foreground/60 mb-1 uppercase tracking-wide">
-                {t('quickAction')}
-              </span>
-              <h3 className="text-heading-lg font-bold">{t('newQuestion')}</h3>
-              <p className="text-body-xs text-primary-foreground/70 mt-1">{t('newQuestionSub')}</p>
-            </div>
-            <div className="w-14 h-14 bg-primary-foreground/20 rounded-full flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-primary-foreground fill-current" />
-            </div>
-          </button>
+            <button
+              disabled={isCreating}
+              onClick={handleNewQuestion}
+              className={cn(
+                'bg-primary text-primary-foreground rounded-2xl p-5 shadow-elevation-1',
+                'flex items-center justify-between',
+                'border border-border/40 hover:opacity-95',
+                'transition-all duration-normal cursor-pointer hover:shadow-card-hover hover:-translate-y-0.5',
+                'text-right overflow-hidden',
+              )}
+            >
+              <div className="flex flex-col">
+                <span className="text-label font-bold text-primary-foreground/60 mb-1 uppercase tracking-wide">
+                  {t('quickAction')}
+                </span>
+                <h3 className="text-heading-lg font-bold">{t('newQuestion')}</h3>
+                <p className="text-body-xs text-primary-foreground/70 mt-1">
+                  {t('newQuestionSub')}
+                </p>
+              </div>
+              <div className="w-14 h-14 bg-primary-foreground/20 rounded-full flex items-center justify-center">
+                <Sparkles className="w-6 h-6 text-primary-foreground fill-current" />
+              </div>
+            </button>
           </StaggerItem>
 
           {/* Past Conversation Cards */}
           {conversations.map((conv, idx) => (
             <StaggerItem key={conv.id}>
-            <SystemLink
-              href={`/ask?chat=${conv.id}&ctx=${encodeURIComponent(conv.contextKey ?? '')}`}
-              className={cn(
-                'bg-card rounded-2xl p-5 shadow-elevation-1',
-                'flex items-center justify-between',
-                'border border-border/40 border-s-4 border-s-success',
-                'transition-all duration-normal cursor-pointer hover:shadow-card-hover hover:-translate-y-0.5',
-                'overflow-hidden',
-              )}
-            >
-              <div className="flex flex-col">
-                <span className="text-label font-bold text-muted-foreground mb-1 uppercase tracking-wide">
-                  {t('question')} {conversations.length - idx}
-                </span>
-                <h3 className="text-heading-md font-bold text-card-foreground">{conv.title || '...'}</h3>
-                <p className="text-body-sm text-muted-foreground mt-1">
-                  {conv.messageCount} {conv.messageCount === 1 ? 'message' : 'messages'}
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center border border-border">
-                <MessageSquare className="w-5 h-5 text-muted-foreground" />
-              </div>
-            </SystemLink>
+              <SystemLink
+                href={`/ask?chat=${conv.id}&ctx=${encodeURIComponent(conv.contextKey ?? '')}`}
+                className={cn(
+                  'bg-card rounded-2xl p-5 shadow-elevation-1',
+                  'flex items-center justify-between',
+                  'border border-border/40 border-s-4 border-s-success',
+                  'transition-all duration-normal cursor-pointer hover:shadow-card-hover hover:-translate-y-0.5',
+                  'overflow-hidden',
+                )}
+              >
+                <div className="flex flex-col">
+                  <span className="text-label font-bold text-muted-foreground mb-1 uppercase tracking-wide">
+                    {t('question')} {conversations.length - idx}
+                  </span>
+                  <h3 className="text-heading-md font-bold text-card-foreground">
+                    {conv.title || '...'}
+                  </h3>
+                  <p className="text-body-sm text-muted-foreground mt-1">
+                    {conv.messageCount} {conv.messageCount === 1 ? 'message' : 'messages'}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center border border-border">
+                  <MessageSquare className="w-5 h-5 text-muted-foreground" />
+                </div>
+              </SystemLink>
             </StaggerItem>
           ))}
         </StaggerGrid>

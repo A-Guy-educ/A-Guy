@@ -882,6 +882,7 @@ export const Posts: CollectionConfig = {
 This project uses **Tailwind CSS** with a **semantic design token system**. See `.kody/memory/design-system.md` for complete rules.
 
 **Key rules:**
+
 - Use semantic typography tokens (`text-body-sm`, `text-heading-lg`, `text-display-md`) — never `text-sm`, `text-xl`, `text-4xl`
 - Use Tailwind color utilities (`bg-primary`, `text-success`) — never `[hsl(var(--xxx))]` or hardcoded colors (`text-red-500`)
 - Use shadow tokens (`shadow-elevation-1`, `shadow-card`) — never `shadow-sm`, `shadow-md`
@@ -893,7 +894,11 @@ This project uses **Tailwind CSS** with a **semantic design token system**. See 
 ```tsx
 // CORRECT
 export function MyComponent() {
-  return <div className="bg-card text-card-foreground p-card-padding rounded-lg shadow-elevation-1">Content</div>
+  return (
+    <div className="bg-card text-card-foreground p-card-padding rounded-lg shadow-elevation-1">
+      Content
+    </div>
+  )
 }
 ```
 

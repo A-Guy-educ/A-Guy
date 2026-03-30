@@ -11,9 +11,7 @@ export function PreferencesSection() {
 
   return (
     <div className={cn('py-card-padding-sm')}>
-      <p className={cn('text-body-md text-muted-foreground')}>
-        {t('preferencesPlaceholder')}
-      </p>
+      <p className={cn('text-body-md text-muted-foreground')}>{t('preferencesPlaceholder')}</p>
 
       {/* Accent Color picker */}
       <div className={cn('mt-content-gap')}>
@@ -24,11 +22,7 @@ export function PreferencesSection() {
       </div>
 
       <div className={cn('mt-content-gap-sm')}>
-        <Button
-          asChild
-          variant="secondary"
-          className={cn('transition-all duration-normal')}
-        >
+        <Button asChild variant="secondary" className={cn('transition-all duration-normal')}>
           <Link href="/study-plan">{t('buildExamStudyPlan')}</Link>
         </Button>
       </div>

@@ -72,7 +72,12 @@ export const AdminBar: React.FC<{
               router.refresh()
             })
           }}
-          style={{ backgroundColor: 'transparent', padding: 0, position: 'relative', zIndex: 'unset' }}
+          style={{
+            backgroundColor: 'transparent',
+            padding: 0,
+            position: 'relative',
+            zIndex: 'unset',
+          }}
         />
       </div>
     </div>

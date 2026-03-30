@@ -36,7 +36,13 @@ export function AskExerciseCard({ file }: AskExerciseCardProps) {
   return (
     <div className="rounded-2xl bg-card border border-border/40 shadow-elevation-1 transition-all duration-normal overflow-hidden border-s-4 border-s-accent hover:shadow-card-hover hover:-translate-y-0.5 mb-6">
       <div className="aspect-video relative overflow-hidden bg-muted">
-        <Image src={file.url} alt={file.title} fill className="object-contain" sizes="(max-width: 768px) 100vw, 50vw" />
+        <Image
+          src={file.url}
+          alt={file.title}
+          fill
+          className="object-contain"
+          sizes="(max-width: 768px) 100vw, 50vw"
+        />
       </div>
 
       <div className="p-5">
