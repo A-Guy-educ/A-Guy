@@ -1,7 +1,7 @@
 'use client'
 
+/* eslint-disable aguy/prefer-design-tokens -- generic tab bar, not chat UI */
 import { cn } from '@/infra/utils/ui'
-import { motion } from 'framer-motion'
 import type { LucideIcon } from 'lucide-react'
 import * as React from 'react'
 
@@ -48,7 +48,7 @@ const TabBar: React.FC<TabBarProps> = ({
   items,
   activeKey,
   onTabChange,
-  layoutId = 'tabBar',
+  layoutId: _layoutId = 'tabBar',
   maxWidth = 'max-w-lg',
   className,
   linkComponent: LinkComponent,
@@ -64,11 +64,9 @@ const TabBar: React.FC<TabBarProps> = ({
             const content = (
               <>
                 {isActive && (
-                  <motion.div
-                    layoutId={`${layoutId}Indicator`}
-                    className="absolute inset-0 bg-card rounded-lg shadow-sm"
+                  <div
+                    className="absolute inset-0 bg-card rounded-lg shadow-elevation-1 transition-all duration-normal"
                     style={{ zIndex: 0 }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                   />
                 )}
                 <span
@@ -79,11 +77,9 @@ const TabBar: React.FC<TabBarProps> = ({
                   <span>{item.label}</span>
                 </span>
                 {isActive && (
-                  <motion.div
-                    layoutId={`${layoutId}Bar`}
-                    className="absolute bottom-0 left-1/4 right-1/4 h-0.5 rounded-full"
+                  <div
+                    className="absolute bottom-0 left-1/4 right-1/4 h-0.5 rounded-full transition-all duration-normal"
                     style={{ backgroundColor: item.color, zIndex: 10 }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                   />
                 )}
               </>
