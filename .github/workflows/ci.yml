@@ -181,7 +181,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .next
-          key: ${{ runner.os }}-next-${{ github.sha }}
+          key: ${{ runner.os }}-next-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-next-
 
