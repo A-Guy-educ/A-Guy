@@ -1,0 +1,17 @@
+```json
+{
+  "task_type": "feature",
+  "title": "Auto-populate lesson blocks from exercises and content pages",
+  "description": "Automatically populate lesson blocks (exercises, content pages) based on their lesson relationship field. When an exercise or content page is created/published with a lesson reference, it automatically appears in that lesson's blocks array. When deleted or lesson reference changes, it's automatically removed. Remove manual \"Add Exercise\" and \"Add Content Page\" buttons, remove delete buttons from block rows, keep drag-and-drop reordering. Run one-time migration to populate all existing lessons.",
+  "scope": [
+    "src/ui/admin/LessonBlocksField/index.tsx",
+    "src/server/payload/collections/Exercises/index.ts",
+    "src/server/payload/collections/ContentPages.ts",
+    "scripts/migrate-lesson-blocks.ts"
+  ],
+  "risk_level": "medium",
+  "questions": [
+    "During the one-time migration, if a lesson already has manually-ordered blocks, should we append missing exercises/content pages to the end, or regenerate the entire blocks array from scratch based on creation order?"
+  ]
+}
+```

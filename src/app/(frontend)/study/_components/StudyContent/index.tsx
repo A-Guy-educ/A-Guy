@@ -39,17 +39,47 @@ interface CourseInfo {
   gatedWarningMs?: number
 }
 
-interface StudyContentProps {
-  lessonType?: LessonType
+interface PrefetchedData {
+  chapters: ChapterWithLessons[]
+  courseSlug: string
+  courseId: string
+  courseTitle: string
+  courseLabel: string
+  coursePageAccessType: string
+  courseAccessType: string
+  gatedDelayMs?: number
+  gatedWarningMs?: number
 }
 
-export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentProps) {
+interface StudyContentProps {
+  lessonType?: LessonType
+  /** Server-side prefetched data — skips client-side API fetch when provided */
+  prefetchedData?: PrefetchedData | null
+}
+
+export function StudyContent({
+  lessonType = DEFAULT_LESSON_TYPE,
+  prefetchedData,
+}: StudyContentProps) {
   const t = useTranslations('coursePage')
   const ts = useTranslations('study')
   const locale = useLocale()
-  const [chapters, setChapters] = useState<ChapterWithLessons[]>([])
-  const [courseInfo, setCourseInfo] = useState<CourseInfo | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [chapters, setChapters] = useState<ChapterWithLessons[]>(prefetchedData?.chapters ?? [])
+  const [courseInfo, setCourseInfo] = useState<CourseInfo | null>(
+    prefetchedData
+      ? {
+          courseSlug: prefetchedData.courseSlug,
+          courseId: prefetchedData.courseId,
+          courseTitle: prefetchedData.courseTitle,
+          courseLabel: prefetchedData.courseLabel,
+          coursePageAccessType: prefetchedData.coursePageAccessType,
+          courseAccessType: prefetchedData.courseAccessType,
+          gatedDelayMs: prefetchedData.gatedDelayMs,
+          gatedWarningMs: prefetchedData.gatedWarningMs,
+        }
+      : null,
+  )
+  const [isLoading, setIsLoading] = useState(!prefetchedData)
   const [requiresEntitlement, setRequiresEntitlement] = useState<boolean | undefined>(undefined)
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | undefined>(undefined)
 
@@ -58,6 +88,29 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
   const tabColor = TAB_COLORS[tabForLessonType]
 
   useEffect(() => {
+    // Skip fetch if server already prefetched the data
+    if (prefetchedData) {
+      // Still check entitlements client-side (needs auth cookies)
+      const info = prefetchedData
+      const isPaid = info.coursePageAccessType === 'paid' || info.courseAccessType === 'paid'
+      if (isPaid && info.courseId) {
+        fetch(`/api/entitlements/check?courseId=${info.courseId}`)
+          .then(async (entRes) => {
+            if (entRes.ok) {
+              const entData = await entRes.json()
+              setRequiresEntitlement(!entData.hasAccess)
+              setIsAuthenticated(true)
+            } else if (entRes.status === 401) {
+              setRequiresEntitlement(true)
+              setIsAuthenticated(false)
+            }
+          })
+          .catch(() => {})
+      }
+      return
+    }
+
+    // Fallback: client-side fetch (no grade cookie available)
     async function loadData() {
       const profile = getUserProfile()
       if (!profile?.gradeLevel) {
@@ -84,22 +137,20 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
           }
           setCourseInfo(info)
 
-          // Check entitlement if course is paid
           const isPaid = info.coursePageAccessType === 'paid' || info.courseAccessType === 'paid'
           if (isPaid && info.courseId) {
-            try {
-              const entRes = await fetch(`/api/entitlements/check?courseId=${info.courseId}`)
-              if (entRes.ok) {
-                const entData = await entRes.json()
-                setRequiresEntitlement(!entData.hasAccess)
-                setIsAuthenticated(true)
-              } else if (entRes.status === 401) {
-                setRequiresEntitlement(true)
-                setIsAuthenticated(false)
-              }
-            } catch {
-              // If check fails, don't block — fail open
-            }
+            fetch(`/api/entitlements/check?courseId=${info.courseId}`)
+              .then(async (entRes) => {
+                if (entRes.ok) {
+                  const entData = await entRes.json()
+                  setRequiresEntitlement(!entData.hasAccess)
+                  setIsAuthenticated(true)
+                } else if (entRes.status === 401) {
+                  setRequiresEntitlement(true)
+                  setIsAuthenticated(false)
+                }
+              })
+              .catch(() => {})
           }
         }
       } catch (error) {
@@ -111,7 +162,7 @@ export function StudyContent({ lessonType = DEFAULT_LESSON_TYPE }: StudyContentP
     }
 
     loadData()
-  }, [locale])
+  }, [locale, prefetchedData])
 
   const filteredLessons = useMemo(
     () =>

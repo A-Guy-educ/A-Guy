@@ -79,6 +79,22 @@ const nextConfig = {
   },
   reactStrictMode: true,
   redirects,
+  async rewrites() {
+    const blobBaseUrl = (process.env.BLOB_PUBLIC_BASE_URL || '').replace(/\/$/, '')
+    if (!blobBaseUrl) return []
+
+    return [
+      // Rewrite PDF media requests to Blob CDN at the edge (same-origin preserved for PDF.js)
+      {
+        source: '/api/media/file/:filename(.*\\.pdf$)',
+        destination: `${blobBaseUrl}/:filename`,
+      },
+      {
+        source: '/api/exercise-assets/file/:filename(.*\\.pdf$)',
+        destination: `${blobBaseUrl}/:filename`,
+      },
+    ]
+  },
   async headers() {
     return [
       // General routes - CSP optimized for Next.js

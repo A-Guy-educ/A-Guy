@@ -25,7 +25,7 @@ export interface UploadedMedia {
 }
 
 export interface ChatError {
-  type: 'auth' | 'limit' | 'general'
+  type: 'auth' | 'limit' | 'quota' | 'general'
   message: string
 }
 
@@ -495,6 +495,11 @@ export function useNotebookChat({
                     'Guest message limit reached. Sign up for unlimited access.',
                 })
               }
+            } else if (errMsg?.startsWith('quota_exceeded:')) {
+              setChatError({
+                type: 'quota' as const,
+                message: 'Chat limit reached. Try again later.',
+              })
             } else if (!options?.silent) {
               toast.error(errMsg || errorMessage)
             }
@@ -566,6 +571,11 @@ export function useNotebookChat({
             type: 'limit' as const,
             message:
               guestLimitMessage || 'Guest message limit reached. Sign up for unlimited access.',
+          })
+        } else if (result.quotaExceeded) {
+          setChatError({
+            type: 'quota' as const,
+            message: result.error || 'Chat limit reached. Try again later.',
           })
         } else {
           toast.error(result.error || errorMessage)

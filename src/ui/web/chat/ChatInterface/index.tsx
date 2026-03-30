@@ -22,7 +22,9 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { ChatErrorSurface } from '../ChatErrorSurface'
 import { ChatMessageContent } from '../ChatMessageContent'
+import { ChatQuotaBar } from '../ChatQuotaBar'
 import { TTSButton } from '../TTSButton'
+import { useChatQuota } from '../hooks/useChatQuota'
 import { useNotebookChat } from '../hooks/useNotebookChat'
 import { useTeacherProfileLabel } from '../hooks/useTeacherProfileLabel'
 import { useTTS } from '../hooks/useTTS'
@@ -192,6 +194,8 @@ export function ChatInterface({
   // Teacher profile badge (authenticated users only)
   const { user: currentUser } = useCurrentUser()
   const { label: teacherProfileLabel } = useTeacherProfileLabel(!!currentUser)
+  const isAdmin = (currentUser as unknown as { role?: string })?.role === 'admin'
+  const quota = useChatQuota()
 
   // Auto-send contextual help on incorrect answer (ref pattern for stable listener)
   const incorrectAnswerRef = useRef<(e: Event) => void>(() => {})
@@ -369,6 +373,11 @@ export function ChatInterface({
     }
 
     handleSubmit(e)
+
+    // Refresh quota after a short delay to allow backend to process
+    if (currentUser && !isAdmin) {
+      setTimeout(() => quota.refreshQuota(), 2000)
+    }
   }
 
   const showChatViewOverlay = showMathTools && !isChatInputFocused && inputValue.includes('$')
@@ -386,17 +395,19 @@ export function ChatInterface({
               </span>
             )}
           </div>
-          {contextKey && (
-            <button
-              onClick={handleReset}
-              disabled={isLoading}
-              className="flex items-center gap-1 text-body-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-              title={tCourses('chatReset')}
-            >
-              <RefreshCw className="w-3 h-3" />
-              <span>{tCourses('chatReset')}</span>
-            </button>
-          )}
+          <div className="flex items-center gap-content-gap-xs">
+            {contextKey && (
+              <button
+                onClick={handleReset}
+                disabled={isLoading}
+                className="flex items-center gap-1 text-body-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                title={tCourses('chatReset')}
+              >
+                <RefreshCw className="w-3 h-3" />
+                <span>{tCourses('chatReset')}</span>
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -551,6 +562,17 @@ export function ChatInterface({
             type={chatError.type}
             message={chatError.message}
             onDismiss={dismissError}
+          />
+        </div>
+      )}
+
+      {/* Chat Quota Counter */}
+      {currentUser && !isAdmin && quota.isLoaded && (
+        <div className="flex-grow-0 flex-shrink-0 px-5 pt-2">
+          <ChatQuotaBar
+            questionsUsed={quota.questionsUsed}
+            maxQuestions={quota.maxQuestions}
+            resetAt={quota.resetAt}
           />
         </div>
       )}
@@ -752,7 +774,8 @@ export function ChatInterface({
               disabled={
                 isLoading ||
                 isDirectUploading ||
-                (!inputValue.trim() && completedChatAssetIds.length === 0)
+                (!inputValue.trim() && completedChatAssetIds.length === 0) ||
+                !!(currentUser && !isAdmin && quota.isLimitReached)
               }
               aria-label={tCourses('sendMessage')}
             >
