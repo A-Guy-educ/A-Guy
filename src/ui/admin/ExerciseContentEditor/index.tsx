@@ -62,17 +62,8 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
   const modifyTimeoutRef = React.useRef<NodeJS.Timeout | null>(null)
 
   const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null)
-  const [isJsonPanelOpen, setIsJsonPanelOpen] = React.useState(false)
   const [blockTypeSelectorOpen, setBlockTypeSelectorOpen] = React.useState(false)
   const [insertAtIndex, setInsertAtIndex] = React.useState<number | undefined>(undefined)
-  const [jsonPanelWidth, setJsonPanelWidth] = React.useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('exercise-editor-json-panel-width')
-      return saved ? parseInt(saved, 10) : 400
-    }
-    return 400
-  })
-  const [isResizing, setIsResizing] = React.useState(false)
   const [mobileView, setMobileView] = React.useState<'editor' | 'json'>('editor')
   const [isMobile, setIsMobile] = React.useState(false)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -262,40 +253,6 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
     }
   }
 
-  // Handle resizing
-  React.useEffect(() => {
-    if (!isResizing) return
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const container = document.querySelector('.editor-layout') as HTMLElement
-      if (!container) return
-
-      const containerRect = container.getBoundingClientRect()
-      const newWidth = containerRect.right - e.clientX
-      const minWidth = 300
-      const maxWidth = containerRect.width * 0.5
-
-      if (newWidth >= minWidth && newWidth <= maxWidth) {
-        setJsonPanelWidth(newWidth)
-      }
-    }
-
-    const handleMouseUp = () => {
-      setIsResizing(false)
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('exercise-editor-json-panel-width', jsonPanelWidth.toString())
-      }
-    }
-
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
-    }
-  }, [isResizing, jsonPanelWidth])
-
   const selectedBlock = blocks.find((b) => b.id === selectedBlockId) || null
 
   if (!localValue) {
@@ -436,20 +393,6 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
             />
           </div>
 
-          {isJsonPanelOpen && (
-            <>
-              <div
-                className="editor-splitter"
-                onMouseDown={(e) => {
-                  e.preventDefault()
-                  setIsResizing(true)
-                }}
-              />
-              <div className="editor-json-panel" style={{ width: `${jsonPanelWidth}px` }}>
-                <JSONInspector block={selectedBlock} mode="edit" onApply={handleJsonApply} />
-              </div>
-            </>
-          )}
         </div>
       )}
 
