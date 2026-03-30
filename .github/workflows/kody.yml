@@ -8,16 +8,16 @@ on:
         type: string
       mode:
         type: string
-        default: "full"
+        default: 'full'
       from_stage:
         type: string
-        default: ""
+        default: ''
       issue_number:
         type: string
-        default: ""
+        default: ''
       feedback:
         type: string
-        default: ""
+        default: ''
       dry_run:
         type: boolean
         default: false
@@ -30,7 +30,7 @@ on:
 
   push:
     branches: [main, dev]
-    paths: ["src/**", "kody.config.json", "package.json"]
+    paths: ['src/**', 'kody.config.json', 'package.json']
 
 concurrency:
   group: kody-${{ github.event.inputs.task_id || github.event.issue.number || github.event.pull_request.number || github.sha }}
