@@ -27,15 +27,16 @@ All source files include JSDoc headers:
 - **Validation**: Zod schemas for input validation
 - **Security**: Environment variables only, no hardcoded secrets
 - **Transactions**: Always pass `req` to nested Payload operations
+- **OAuth**: State-based CSRF protection, email verification, collision handling
 
 ## Styling
 
-See [design-system.md](./design-system.md) for complete rules. Key points:
+See design system in [src/app/(frontend)/globals.css](<./src/app/(frontend)/globals.css>) and [tailwind.tokens.mjs](./tailwind.tokens.mjs). Key rules:
 
-- Use semantic design tokens (typography, shadows, spacing) — never arbitrary Tailwind or inline styles
-- Use Tailwind color utilities (`bg-primary`, `text-success`) — never `[hsl(var(--xxx))]` or hardcoded colors
+- Use semantic design tokens (colors, typography, shadows, spacing) — never arbitrary Tailwind
+- Use Tailwind color utilities (`bg-primary`, `text-success`) — never hardcoded colors
 - All interactive elements need `transition-all duration-normal`
-- Use `cn()` for className composition, never template literals
+- Use `cn()` for className composition
 
 ## Development
 
