@@ -10,9 +10,16 @@ import { isVercelBlobUrl } from '@/infra/blob/vercel-blob-adapter'
 import { fetchBuffer } from '@/infra/utils/http'
 import type { Lesson, Media, Prompt } from '@/payload-types'
 import { getPdfBufferFromBlob, normalizeToAbsoluteUrl } from '@/server/services/pdf-fetcher'
+import { getPageCount } from '@/server/utils/pdf-metadata'
 import type { Payload, User } from 'payload'
 
 import { validateExtractedLatex } from './validate-latex'
+
+/**
+ * PDFs longer than this will show a warning that output may be incomplete.
+ * Based on observed behavior: ~10 pages of exercises + solutions fits in 16384 output tokens.
+ */
+const PDF_PAGE_WARNING_THRESHOLD = 12
 
 export interface ExtractContextInput {
   lessonId: string
@@ -157,13 +164,29 @@ export async function extractLessonContext(
       return { success: false, error: 'Failed to download media file' }
     }
 
-    // ========== Step 5: Build prompt with lesson metadata ==========
+    // ========== Step 5: Check PDF page count and warn if large ==========
+    const warnings: string[] = []
+
+    if (isPdf) {
+      try {
+        const pageCount = await getPageCount(fileBuffer)
+        if (pageCount > PDF_PAGE_WARNING_THRESHOLD) {
+          warnings.push(
+            `This PDF has ${pageCount} pages. Extraction works best with up to ~${PDF_PAGE_WARNING_THRESHOLD} pages. Some content at the end may be missing — check the result and re-run if needed.`,
+          )
+        }
+      } catch {
+        // Page count is informational — don't fail if we can't read it
+      }
+    }
+
+    // ========== Step 6: Build prompt with lesson metadata ==========
     const lessonTitle = lessonTyped.title || 'Untitled Lesson'
     const lessonDescription = lessonTyped.description || ''
     const metadataText = `Lesson: ${lessonTitle}\nDescription: ${lessonDescription}`
     const fullPrompt = `${promptTyped.template}\n\n${metadataText}`
 
-    // ========== Step 6: Call LLM via adapter ==========
+    // ========== Step 7: Call LLM via adapter ==========
     const { createGenkitUnifiedAdapter } =
       await import('@/infra/llm/genkit/adapters/unified-adapter')
     const adapter = await createGenkitUnifiedAdapter(payload)
@@ -188,27 +211,34 @@ export async function extractLessonContext(
       payload,
     )
 
-    // ========== Step 7: Validate response ==========
+    // ========== Step 8: Validate response ==========
     const responseText = response.text?.trim()
 
     if (!responseText) {
-      return { success: false, error: 'AI returned empty response' }
+      return {
+        success: false,
+        error:
+          'AI returned empty response. The PDF may be unreadable or contain only images without text.',
+        warnings: warnings.length > 0 ? warnings : undefined,
+      }
     }
 
     const validation = validateExtractedLatex(responseText)
-    const warnings: string[] = [...validation.warnings]
+    warnings.push(...validation.warnings)
 
     if (!validation.valid) {
       warnings.push(...validation.errors)
     }
 
     if (validation.isTruncated) {
-      warnings.push('Output appears truncated')
+      warnings.push(
+        'The output appears truncated — some exercises at the end may be missing. Try extracting a shorter PDF or splitting it into parts.',
+      )
     }
 
     const extractedText = validation.sanitizedText
 
-    // ========== Step 8: Store result based on mode ==========
+    // ========== Step 9: Store result based on mode ==========
     let updatedContextText: string
 
     if (mode === 'append') {
@@ -221,7 +251,7 @@ export async function extractLessonContext(
       updatedContextText = extractedText
     }
 
-    // ========== Step 9: Update lesson ==========
+    // ========== Step 10: Update lesson ==========
     await payload.update({
       collection: 'lessons',
       id: lessonId,
@@ -242,6 +272,30 @@ export async function extractLessonContext(
     console.error('[extractLessonContext] Error:', error)
 
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+
+    // Provide user-friendly messages for common failures
+    if (errorMessage.includes('timeout') || errorMessage.includes('ETIMEDOUT')) {
+      return {
+        success: false,
+        error: 'The extraction timed out. The PDF may be too large — try a shorter document.',
+      }
+    }
+
+    if (errorMessage.includes('quota') || errorMessage.includes('rate')) {
+      return {
+        success: false,
+        error: 'AI service rate limit reached. Please wait a minute and try again.',
+      }
+    }
+
+    if (errorMessage.includes('too large') || errorMessage.includes('payload')) {
+      return {
+        success: false,
+        error:
+          'The PDF is too large for processing. Try splitting it into smaller parts (under 10 pages).',
+      }
+    }
+
     return { success: false, error: errorMessage }
   }
 }
