@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { ColorStringSchema, PositionEnumSchema } from '../primitives'
-import { EvaluationModeSchema, InteractionToolSchema } from './interaction.base'
+import { InteractionToolSchema, EvaluationModeSchema } from './interaction.base'
 
 /**
  * GeometrySpecV1 - Declarative JSON specification for Euclidean geometry
@@ -13,6 +13,9 @@ const CanvasSchema = z.object({
   height: z.number().positive(),
   background: ColorStringSchema.optional(),
   grid: z.boolean().optional(),
+  axis: z.boolean().optional(),
+  /** JSXGraph bounding box [xMin, yMax, xMax, yMin] — overrides width/height-based box when set */
+  boundingBox: z.tuple([z.number(), z.number(), z.number(), z.number()]).optional(),
 })
 
 /** Point element */

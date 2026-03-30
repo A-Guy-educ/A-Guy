@@ -11,9 +11,26 @@ import { useTranslations } from '@/ui/web/providers/I18n'
 import { SafeHtml } from '@/ui/web/SafeHtml'
 import { ContentStatusBadge } from '@/ui/web/shared/ContentStatusBadge'
 import { ProgressCircle } from '@/ui/web/shared/ProgressCircle'
-import { BookOpen, CheckCircle, Loader2 } from 'lucide-react'
+import { CheckCircle, Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+
+const COURSE_COLORS = [
+  { accent: 'hsl(217 91% 60%)', bg: 'from-blue-500/5 to-transparent' },
+  { accent: 'hsl(142 71% 45%)', bg: 'from-green-500/5 to-transparent' },
+  { accent: 'hsl(271 91% 65%)', bg: 'from-purple-500/5 to-transparent' },
+  { accent: 'hsl(25 95% 53%)', bg: 'from-orange-500/5 to-transparent' },
+  { accent: 'hsl(330 81% 60%)', bg: 'from-pink-500/5 to-transparent' },
+]
+
+function getCourseColorIndex(label?: string | null): number {
+  if (!label) return 0
+  let hash = 0
+  for (let i = 0; i < label.length; i++) {
+    hash = label.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  return Math.abs(hash) % COURSE_COLORS.length
+}
 
 interface CourseCardProps {
   course: Course
@@ -76,68 +93,71 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
     router.push('/')
   }
 
-  const borderClass = isOwned
-    ? 'border-2 border-[hsl(var(--primary))]/20'
-    : 'border border-transparent hover:border-[hsl(var(--primary-soft))]'
+  const colorIndex = getCourseColorIndex(course.courseLabel)
+  const courseColor = COURSE_COLORS[colorIndex]
 
   return (
     <div
       className={cn(
-        'relative bg-card p-card-padding rounded-[2rem] flex flex-col',
-        borderClass,
-        'shadow-[0_1px_2px_0_rgba(60,64,67,.3),0_1px_3px_1px_rgba(60,64,67,.15)]',
-        'transition-all hover:-translate-y-0.5',
-        isSoon && 'opacity-75',
+        'group relative rounded-xl bg-card border border-border/30',
+        'transition-all duration-normal will-change-transform',
+        'hover:border-border/50 active:scale-[0.98]',
+        'flex flex-col',
+        isSoon && 'opacity-50',
       )}
+      style={{
+        borderInlineStartWidth: '3px',
+        borderInlineStartColor: courseColor.accent,
+      }}
     >
-      {isOwned && (
-        <span
-          className="absolute -top-3 start-6 bg-[hsl(var(--success))] text-white px-4 py-1 rounded-full shadow-elevation-3 uppercase tracking-wider"
-          style={{ fontSize: '9px', fontWeight: 900 }}
-        >
-          הקורס שלך
-        </span>
-      )}
+      <div className="p-5 flex flex-col flex-1">
+        {isOwned && (
+          <span className="absolute -top-3 start-6 bg-success text-white px-4 py-1 rounded-full shadow-elevation-3 uppercase tracking-wider text-[9px] font-black z-10">
+            {t('yourCourse') ?? '\u05D4\u05E7\u05D5\u05E8\u05E1 \u05E9\u05DC\u05DA'}
+          </span>
+        )}
 
-      {/* Content Status Badge - top right */}
-      <ContentStatusBadge
-        contentStatus={course.contentStatus}
-        contentStatusExpiresAt={course.contentStatusExpiresAt ?? undefined}
-        contentStatusLabel={course.contentStatusLabel ?? undefined}
-        className="absolute -top-3 end-6"
-      />
+        {/* Content Status Badge - top right */}
+        <ContentStatusBadge
+          contentStatus={course.contentStatus}
+          contentStatusExpiresAt={course.contentStatusExpiresAt ?? undefined}
+          contentStatusLabel={course.contentStatusLabel ?? undefined}
+          className="absolute -top-3 end-6 z-10"
+        />
 
-      <div className="mb-6 flex justify-between items-start gap-content-gap">
-        <div className="flex-1">
-          {course.courseLabel && (
-            <span
-              className="block mb-1 uppercase tracking-widest text-primary"
-              style={{ fontSize: '10px', fontWeight: 900 }}
-            >
-              {course.courseLabel}
-            </span>
-          )}
-          <h4
-            className="text-card-foreground text-start"
-            style={{ fontSize: '20px', fontWeight: 900 }}
-          >
-            {course.title}
-          </h4>
-          {course.description && (
-            <SafeHtml
-              html={course.description}
-              className="text-muted-foreground mt-1 line-clamp-2 text-start [&_p]:m-0"
-              style={{ fontSize: '12px' }}
-            />
-          )}
-        </div>
-        <div className="flex-shrink-0">
-          {isOwned && courseProgress > 0 ? (
-            <div className="w-12 h-12 relative">
-              <ProgressCircle percentage={courseProgress} size={48} strokeWidth={3}>
+        {/* Course label as muted badge */}
+        {course.courseLabel && (
+          <span className="inline-block self-start mb-3 bg-muted text-foreground text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">
+            {course.courseLabel}
+          </span>
+        )}
+
+        {/* Title */}
+        <h4 className="text-heading-md font-bold text-card-foreground text-start mb-2 break-words">
+          {course.title}
+        </h4>
+
+        {/* Description */}
+        {course.description && (
+          <SafeHtml
+            html={course.description}
+            className="text-body-sm text-muted-foreground line-clamp-2 text-start [&_p]:m-0 break-words"
+          />
+        )}
+
+        {/* Progress ring - hero element for owned courses with progress */}
+        {isOwned && courseProgress > 0 && (
+          <div className="flex justify-center my-6">
+            <div className="w-16 h-16 relative">
+              <ProgressCircle
+                percentage={courseProgress}
+                size={64}
+                strokeWidth={4}
+                strokeColor={courseColor.accent}
+              >
                 {courseProgress >= 100 ? (
                   <foreignObject x="25%" y="25%" width="50%" height="50%">
-                    <CheckCircle className="w-full h-full text-[hsl(var(--success))]" />
+                    <CheckCircle className="w-full h-full text-success" />
                   </foreignObject>
                 ) : (
                   <text
@@ -145,52 +165,43 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
                     y="50%"
                     textAnchor="middle"
                     dy=".3em"
-                    className="text-[10px] font-bold fill-foreground"
+                    className="text-body-sm font-bold fill-foreground"
                   >
                     {Math.round(courseProgress)}%
                   </text>
                 )}
               </ProgressCircle>
             </div>
-          ) : (
-            <div
-              className={cn(
-                'w-12 h-12 rounded-2xl flex items-center justify-center',
-                isOwned ? 'bg-[hsl(var(--success))]/10' : 'bg-muted',
-              )}
-            >
-              {isOwned ? (
-                <CheckCircle className="w-6 h-6 text-[hsl(var(--success))]" />
-              ) : (
-                <BookOpen className="w-6 h-6 text-primary" />
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+          </div>
+        )}
 
-      <div className="mt-auto pt-6 border-t border-border">
-        <Button
-          onClick={handleCourseSelect}
-          disabled={isLoading || isSoon}
-          className={cn(
-            'w-full',
-            isOwned
-              ? 'bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/20'
-              : isSoon
-                ? 'bg-muted text-muted-foreground cursor-not-allowed'
-                : 'bg-muted text-primary hover:bg-[hsl(var(--primary-soft))]',
-          )}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin me-2" />
-              {t('openCourse')}
-            </>
-          ) : (
-            t('openCourse')
-          )}
-        </Button>
+        {/* Spacer to push button to bottom */}
+        <div className="flex-1" />
+
+        {/* Action area */}
+        <div className="mt-6 pt-5 border-t border-border/50">
+          <Button
+            onClick={handleCourseSelect}
+            disabled={isLoading || isSoon}
+            className={cn(
+              'w-full min-h-[44px]',
+              isOwned
+                ? 'bg-success/10 text-success hover:bg-success/20'
+                : isSoon
+                  ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                  : 'bg-muted text-primary hover:bg-primary/5',
+            )}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin me-2" />
+                {t('openCourse')}
+              </>
+            ) : (
+              t('openCourse')
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   )

@@ -167,6 +167,19 @@ export function initAnalyticsSubscriber(): () => void {
       })
     }),
 
+    safeSubscribe(SYSTEM_EVENTS.PHOTO_SENT_TO_CHAT, (envelope) => {
+      const payload = envelope.payload as {
+        conversation_id?: string
+        file_count?: number
+        file_types?: string[]
+      }
+      analytics.track(PRODUCT_EVENTS.PHOTO_SENT_TO_CHAT, {
+        conversation_id: payload.conversation_id,
+        file_count: payload.file_count,
+        file_types: payload.file_types,
+      })
+    }),
+
     // Auth Gate
     safeSubscribe(SYSTEM_EVENTS.LOGIN_MODAL_SHOWN, (envelope) => {
       const payload = envelope.payload as {

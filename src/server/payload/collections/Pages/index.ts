@@ -21,6 +21,7 @@ import {
 } from '@payloadcms/plugin-seo/fields'
 import { createdByField } from '../../fields/createdBy'
 import { contentLocaleField } from '../../fields/contentLocale'
+import { pageDefaultSpacingField } from '../../fields/blockSpacing'
 import { enforceFieldLocaleUniqueness } from '../../hooks/validateLocaleUniqueness'
 
 export const Pages: CollectionConfig<'pages'> = {
@@ -118,6 +119,9 @@ export const Pages: CollectionConfig<'pages'> = {
       },
     },
     slugField(),
+
+    // Block spacing
+    pageDefaultSpacingField,
 
     // Created By
     createdByField,

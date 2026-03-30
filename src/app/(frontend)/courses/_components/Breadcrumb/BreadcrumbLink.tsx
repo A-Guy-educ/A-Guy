@@ -7,7 +7,10 @@ interface BreadcrumbLinkProps {
 
 export function BreadcrumbLink({ href, label }: BreadcrumbLinkProps) {
   return (
-    <SystemLink href={href} className="text-blue-600 hover:underline">
+    <SystemLink
+      href={href}
+      className="text-primary hover:underline transition-colors duration-normal"
+    >
       {label}
     </SystemLink>
   )

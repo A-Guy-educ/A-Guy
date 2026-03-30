@@ -5,7 +5,7 @@
  * @domain qa
  * @pattern exercise-actions
  */
-import type { ActionContext, ActionHandler } from './types'
+import type { ActionHandler } from './types'
 import { LABELS } from '../shared/locales'
 
 export const requestHint: ActionHandler = async (ctx, input) => {

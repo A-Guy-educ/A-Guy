@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockSpacingField } from '../../fields/blockSpacing'
+
 export const GraphBlock: Block = {
   slug: 'graphBlock',
   interfaceName: 'GraphBlock',
@@ -29,5 +31,6 @@ export const GraphBlock: Block = {
         { label: 'Full', value: 'full' },
       ],
     },
+    blockSpacingField,
   ],
 }

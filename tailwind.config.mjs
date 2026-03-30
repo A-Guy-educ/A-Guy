@@ -26,6 +26,11 @@ const config = {
     'bg-success/30',
     'border-warning',
     'bg-warning/30',
+    'my-0',
+    'my-4',
+    'my-8',
+    'my-16',
+    'my-24',
   ],
   theme: {
     container: {
@@ -115,15 +120,25 @@ const config = {
         primary: {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
+          soft: 'hsl(var(--primary-soft))',
         },
         ring: 'hsl(var(--ring))',
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
           foreground: 'hsl(var(--secondary-foreground))',
         },
-        success: 'hsl(var(--success))',
-        error: 'hsl(var(--error))',
-        warning: 'hsl(var(--warning))',
+        success: {
+          DEFAULT: 'hsl(var(--success))',
+          foreground: 'hsl(var(--success-foreground))',
+        },
+        error: {
+          DEFAULT: 'hsl(var(--error))',
+          foreground: 'hsl(var(--error-foreground))',
+        },
+        warning: {
+          DEFAULT: 'hsl(var(--warning))',
+          foreground: 'hsl(var(--warning-foreground))',
+        },
         header: {
           DEFAULT: 'hsl(var(--header-bg))',
           foreground: 'hsl(var(--header-fg))',
@@ -147,6 +162,7 @@ const config = {
       fontFamily: {
         mono: ['var(--font-geist-mono)'],
         sans: ['var(--font-geist-sans)'],
+        serif: ['var(--font-stix-two-text)', 'serif'],
       },
       keyframes: {
         'accordion-down': {

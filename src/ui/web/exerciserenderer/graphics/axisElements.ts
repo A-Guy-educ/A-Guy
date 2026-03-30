@@ -4,7 +4,11 @@ import { parseMathExpression } from '../utils/safeMathEval'
 type GraphSpec = AxisSpecV1['elements']['graphs'][number]
 type PointSpec = AxisSpecV1['elements']['points'][number]
 
-function renderGraphs(board: JXG.Board, graphs: GraphSpec[]): void {
+function renderGraphs(
+  board: JXG.Board,
+  graphs: GraphSpec[],
+  viewport: AxisSpecV1['viewport'],
+): void {
   for (const graph of graphs) {
     const parsed = parseMathExpression(graph.fn)
     if (!parsed.valid) continue
@@ -15,14 +19,11 @@ function renderGraphs(board: JXG.Board, graphs: GraphSpec[]): void {
     }
     if (graph.color) attrs.strokeColor = graph.color
 
-    const rangeFrom = graph.range?.fromX ?? undefined
-    const rangeTo = graph.range?.toX ?? undefined
+    // Always clip to domain or viewport — prevents polynomial explosion outside visible range
+    const rangeFrom = graph.range?.fromX ?? viewport?.xMin ?? -5
+    const rangeTo = graph.range?.toX ?? viewport?.xMax ?? 5
 
-    if (rangeFrom !== undefined && rangeTo !== undefined) {
-      board.create('functiongraph', [parsed.evaluate, rangeFrom, rangeTo], attrs)
-    } else {
-      board.create('functiongraph', [parsed.evaluate], attrs)
-    }
+    board.create('functiongraph', [parsed.evaluate, rangeFrom, rangeTo], attrs)
   }
 }
 
@@ -123,7 +124,7 @@ function renderLineBetweenPoints(
  * Render all axis elements from an AxisSpecV1 onto a JSXGraph board.
  */
 export function renderAxisSpec(board: JXG.Board, spec: AxisSpecV1): void {
-  renderGraphs(board, spec.elements.graphs)
+  renderGraphs(board, spec.elements.graphs, spec.viewport)
   renderAxisPoints(board, spec.elements.points)
 
   if (spec.elements.asymptotesVertical?.length) {

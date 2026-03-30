@@ -9,8 +9,10 @@ import { MediaBlock } from '../blocks/MediaBlock/config'
 import { TableBlock } from '../blocks/TableBlock/config'
 import { adminOnly } from '../access/adminOnly'
 import { publishedAndActive } from '../access/publishedAndActive'
+import { pageDefaultSpacingField } from '../fields/blockSpacing'
 import { createdByField } from '../fields/createdBy'
 import { formatSlug } from '../fields/formatSlug'
+import { addBlockToLesson, removeBlockFromLesson } from '../hooks/lessons/syncLessonBlocks'
 
 export const ContentPages: CollectionConfig = {
   slug: 'content-pages',
@@ -38,6 +40,61 @@ export const ContentPages: CollectionConfig = {
           data.slug = `${formatSlug(data.title)}-${timestamp}`
         }
         return data
+      },
+    ],
+    afterChange: [
+      async ({ doc, previousDoc, req }) => {
+        if (req.context?._skipBlockSync) return doc
+
+        const newLessonId =
+          typeof doc.lesson === 'string' ? doc.lesson : (doc.lesson as { id?: string })?.id
+        const oldLessonId = previousDoc
+          ? typeof previousDoc.lesson === 'string'
+            ? previousDoc.lesson
+            : (previousDoc.lesson as { id?: string })?.id
+          : null
+
+        // Lesson changed — remove from old, add to new
+        if (oldLessonId && oldLessonId !== newLessonId) {
+          await removeBlockFromLesson({
+            payload: req.payload,
+            req,
+            lessonId: oldLessonId,
+            refId: doc.id,
+            blockType: 'contentPageRef',
+          })
+        }
+
+        if (newLessonId) {
+          await addBlockToLesson({
+            payload: req.payload,
+            req,
+            lessonId: newLessonId,
+            refId: doc.id,
+            blockType: 'contentPageRef',
+          })
+        }
+
+        return doc
+      },
+    ],
+    afterDelete: [
+      async ({ doc, req }) => {
+        if (req.context?._skipBlockSync) return doc
+
+        const lessonId =
+          typeof doc.lesson === 'string' ? doc.lesson : (doc.lesson as { id?: string })?.id
+        if (lessonId) {
+          await removeBlockFromLesson({
+            payload: req.payload,
+            req,
+            lessonId,
+            refId: doc.id,
+            blockType: 'contentPageRef',
+          })
+        }
+
+        return doc
       },
     ],
   },
@@ -107,6 +164,7 @@ export const ContentPages: CollectionConfig = {
         description: 'Whether this content page is currently active',
       },
     },
+    pageDefaultSpacingField,
     createdByField,
   ],
 }

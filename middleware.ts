@@ -24,6 +24,9 @@ function resolveCookieDomain(host: string): string | undefined {
   return `.${apex}`
 }
 
+// Media CDN redirects are handled by next.config.js redirects (baked in at build time).
+// This avoids Edge middleware env var availability issues.
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const host = request.headers.get('host') || ''
@@ -94,7 +97,7 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // exclude admin as well so middleware won't run there at all
+    // Locale handling — exclude admin, api routes, static assets
     '/((?!api|admin|_next|_static|.*\\..*).*)',
   ],
 }

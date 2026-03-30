@@ -32,6 +32,7 @@ export const PRODUCT_EVENTS = {
   // Content Events (Mixpanel only)
   PDF_VIEWED: 'pdf_viewed',
   CHAT_MESSAGE_SENT: 'chat_message_sent',
+  PHOTO_SENT_TO_CHAT: 'photo_sent_to_chat',
 
   // Auth Gate Events
   LOGIN_MODAL_SHOWN: 'login_modal_shown', // Mixpanel only - auth gate modal appeared

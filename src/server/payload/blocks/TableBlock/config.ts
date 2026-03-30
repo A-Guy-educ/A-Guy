@@ -1,5 +1,7 @@
 import type { Block } from 'payload'
 
+import { blockSpacingField } from '../../fields/blockSpacing'
+
 export const TableBlock: Block = {
   slug: 'tableBlock',
   interfaceName: 'TableBlock',
@@ -38,5 +40,6 @@ export const TableBlock: Block = {
       type: 'checkbox',
       defaultValue: true,
     },
+    blockSpacingField,
   ],
 }

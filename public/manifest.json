@@ -1,0 +1,26 @@
+{
+  "name": "A-Guy - Your Digital Math Teacher",
+  "short_name": "A-Guy",
+  "description": "Interactive math learning with AI-powered tutoring",
+  "start_url": "/study",
+  "display": "standalone",
+  "background_color": "#f4f7fa",
+  "theme_color": "#91262C",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "32x32",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["education", "productivity"],
+  "lang": "he",
+  "dir": "rtl"
+}

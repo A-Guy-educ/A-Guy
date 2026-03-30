@@ -1,3 +1,3 @@
 export function BreadcrumbSeparator() {
-  return <span className="text-gray-400">/</span>
+  return <span className="text-muted-foreground">/</span>
 }

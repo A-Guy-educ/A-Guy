@@ -10,6 +10,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { adminOnly } from '../../access/adminOnly'
+import { adminOrContentEditor } from '../../access/adminOrContentEditor'
 import { adminOrSelf } from '../../access/adminOrSelf'
 // anyone import kept for future re-enablement of public signup
 import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
@@ -23,7 +24,7 @@ import { ACCOUNT_ROLE_LABEL, AccountRole } from './roles'
 export const Users: CollectionConfig = {
   slug: 'users',
   access: {
-    admin: adminOnly, // Only admins can access the admin panel
+    admin: adminOrContentEditor, // Admins and Advanced Content Editors can access the admin panel
     create: anyone, // Anyone can create (signup). OAuth also uses overrideAccess.
     delete: adminOnly, // Only admins can delete users
     read: adminOrSelf, // Admins can read all, users can read their own
@@ -150,6 +151,24 @@ export const Users: CollectionConfig = {
           admin: { readOnly: true },
         },
       ],
+    },
+    // Chat quota fields (rolling window)
+    {
+      name: 'chatQuestionsUsed',
+      type: 'number',
+      defaultValue: 0,
+      admin: {
+        position: 'sidebar',
+        description: 'Questions used in current window',
+      },
+    },
+    {
+      name: 'chatWindowStart',
+      type: 'date',
+      admin: {
+        position: 'sidebar',
+        description: 'When the current chat quota window started',
+      },
     },
     {
       name: 'oauthLoginSecretEnc',

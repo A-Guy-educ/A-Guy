@@ -6,7 +6,7 @@
  * @domain qa
  * @pattern exercise-actions
  */
-import type { ActionContext, ActionHandler, UserAnswer } from './types'
+import type { ActionHandler, UserAnswer } from './types'
 import { LABELS } from '../shared/locales'
 
 export const submitAnswer: ActionHandler = async (ctx, input) => {
@@ -18,7 +18,7 @@ export const submitAnswer: ActionHandler = async (ctx, input) => {
     throw new Error('submitAnswer action requires questionIndex and value inputs')
   }
 
-  const labels = LABELS[locale]
+  const _labels = LABELS[locale]
 
   // Find the question container at the given index
   const questionContainers = page.locator('[class*="question"], [class*="exercise"]')

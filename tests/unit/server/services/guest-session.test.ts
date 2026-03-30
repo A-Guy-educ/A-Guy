@@ -88,7 +88,7 @@ describe('guest-session service - Transaction Safety', () => {
         options: { ipHash?: string; userAgentHash?: string },
       ) => Promise<{ session: any; token: string }>
 
-      const result = await createWithPayload(mockPayload, {
+      await createWithPayload(mockPayload, {
         ipHash: 'test-ip',
         userAgentHash: 'test-ua',
       })
@@ -125,7 +125,7 @@ describe('guest-session service - Transaction Safety', () => {
         token: string,
       ) => Promise<any>
 
-      const result = await getByTokenWithPayload(mockPayload, 'test-token')
+      await getByTokenWithPayload(mockPayload, 'test-token')
 
       // Before fix: mockPayloadFind is NOT called
       // After fix: mockPayloadFind IS called
@@ -153,7 +153,7 @@ describe('guest-session service - Transaction Safety', () => {
         sessionId: string,
       ) => Promise<any>
 
-      const result = await updateWithPayload(mockPayload, 'session-123')
+      await updateWithPayload(mockPayload, 'session-123')
 
       // Before fix: mockPayloadFindByID and mockPayloadUpdate are NOT called
       // After fix: both are called
@@ -178,7 +178,7 @@ describe('guest-session service - Transaction Safety', () => {
         claimedByUser: string,
       ) => Promise<any>
 
-      const result = await revokeWithPayload(mockPayload, 'session-123', 'user-123')
+      await revokeWithPayload(mockPayload, 'session-123', 'user-123')
 
       // Before fix: mockPayloadUpdate is NOT called
       // After fix: mockPayloadUpdate IS called
@@ -206,7 +206,7 @@ describe('guest-session service - Transaction Safety', () => {
         guestSessionId: string,
       ) => Promise<any>
 
-      const result = await checkWithPayload(mockPayload, 'session-123')
+      await checkWithPayload(mockPayload, 'session-123')
 
       // Before fix: mockPayloadFindByID and mockPayloadUpdate are NOT called
       // After fix: both are called

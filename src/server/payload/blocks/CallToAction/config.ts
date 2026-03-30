@@ -8,6 +8,7 @@ import {
 } from '@payloadcms/richtext-lexical'
 
 import { linkGroup } from '../../fields/linkGroup'
+import { blockSpacingField } from '../../fields/blockSpacing'
 
 export const CallToAction: Block = {
   slug: 'cta',
@@ -34,6 +35,7 @@ export const CallToAction: Block = {
         maxRows: 2,
       },
     }),
+    blockSpacingField,
   ],
   labels: {
     plural: 'Calls to Action',

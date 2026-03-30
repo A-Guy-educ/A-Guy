@@ -21,7 +21,12 @@ export async function GET(request: NextRequest) {
   const locale = localeParam && isValidContentLocale(localeParam) ? localeParam : undefined
 
   try {
-    const chapters = await queryChaptersByGrade({ gradeLevel: grade, locale })
+    // Fetch chapters and system params in parallel — they're independent
+    const [chapters, [gatedDelayMs, gatedWarningMs]] = await Promise.all([
+      queryChaptersByGrade({ gradeLevel: grade, locale }),
+      Promise.all([SystemParams.getGatedDelayMs(), SystemParams.getGatedWarningMs()]),
+    ])
+
     const course = chapters[0]?.course
     const courseObj = typeof course === 'object' && course !== null ? course : null
     const courseSlug = courseObj && 'slug' in courseObj ? (courseObj.slug as string) : ''
@@ -91,12 +96,7 @@ export async function GET(request: NextRequest) {
       lessons: lessonsByChapter[chapter.id] || [],
     }))
 
-    const [gatedDelayMs, gatedWarningMs] = await Promise.all([
-      SystemParams.getGatedDelayMs(),
-      SystemParams.getGatedWarningMs(),
-    ])
-
-    return NextResponse.json({
+    const response = NextResponse.json({
       chapters: chaptersWithLessons,
       courseSlug,
       courseId,
@@ -107,6 +107,11 @@ export async function GET(request: NextRequest) {
       gatedDelayMs,
       gatedWarningMs,
     })
+
+    // Cache for 60s on CDN, serve stale up to 5min while revalidating
+    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300')
+
+    return response
   } catch (error) {
     const { captureAndRespond } = await import('@/server/api/capture-and-respond')
     return captureAndRespond(error, { route: '/api/chapters/by-grade' })

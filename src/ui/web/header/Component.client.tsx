@@ -1,6 +1,7 @@
 'use client'
 import { useHeaderTheme } from '@/ui/web/providers/HeaderTheme'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
+import { cn } from '@/infra/utils/ui'
 import { usePathname } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 
@@ -63,11 +64,12 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data, version }) => 
   return (
     <>
       <header
-        className={`sticky top-0 z-40 w-full transition-all duration-slow ${
+        className={cn(
+          'sticky top-0 z-40 w-full transition-all duration-slow border-b',
           isScrolled
-            ? 'bg-header/95 backdrop-blur-xl border-b border-border shadow-card shadow-black/5'
-            : 'bg-header/80 backdrop-blur-md border-b border-border'
-        }`}
+            ? 'bg-header/70 backdrop-blur-2xl border-border/50 shadow-elevation-2 saturate-[1.8]'
+            : 'bg-header/60 backdrop-blur-sm border-transparent',
+        )}
         {...(theme ? { 'data-theme': theme } : {})}
       >
         <div className="container">

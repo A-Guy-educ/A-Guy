@@ -9,7 +9,7 @@ import type { Media } from '@/payload-types'
 const PDFMedia = dynamic(() => import('@/ui/web/media/PDFMedia').then((mod) => mod.PDFMedia), {
   ssr: false,
   loading: () => (
-    <div className="flex items-center justify-center p-8">
+    <div className="flex items-center justify-center p-card-padding-lg">
       <div className="text-muted-foreground">Loading PDF viewer...</div>
     </div>
   ),
@@ -21,7 +21,7 @@ export const PDFPreview: React.FC = () => {
 
   if (!url) {
     return (
-      <div className="p-4">
+      <div className="p-card-padding-sm">
         <p>No PDF uploaded yet</p>
       </div>
     )
@@ -35,7 +35,7 @@ export const PDFPreview: React.FC = () => {
   }
 
   return (
-    <div className="p-4 h-[500px]">
+    <div className="p-card-padding-sm h-[500px]">
       <PDFMedia resource={mediaResource as Media} className="w-full h-full" />
     </div>
   )

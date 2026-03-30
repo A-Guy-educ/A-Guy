@@ -158,7 +158,7 @@ describe('PDF Fetcher Vercel Blob Handling', () => {
         'https://<random>.public.blob.vercel-storage.com/<filename>',
       ]
 
-      patterns.forEach((pattern) => {
+      patterns.forEach((_pattern) => {
         // Just verify the function handles various blob URL formats
         const randomId = Math.random().toString(36).substring(7)
         const blobUrl = `https://${randomId}.blob.vercel-storage.com/media/test.pdf`

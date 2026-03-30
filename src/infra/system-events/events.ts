@@ -47,6 +47,8 @@ export const SYSTEM_EVENTS = {
   STUDENT_ANSWER_SUBMITTED: 'system.student_answer_submitted',
   /** Student selected an answer option (MCQ/TF) */
   ANSWER_SELECTED: 'system.answer_selected',
+  /** User sent a photo/file to chat */
+  PHOTO_SENT_TO_CHAT: 'system.photo_sent_to_chat',
   /** Chat was auto-triggered (e.g. on incorrect answer) */
   CHAT_AUTO_TRIGGERED: 'system.chat_auto_triggered',
   /** User viewed an exercise */

@@ -63,7 +63,7 @@ export function ContentStatusBadge({
       <span
         className={cn(
           'inline-flex items-center rounded-full px-2.5 py-0.5 text-body-xs font-bold',
-          'bg-emerald-500 text-white animate-pulse',
+          'bg-success text-success-foreground animate-pulse',
           className,
         )}
       >

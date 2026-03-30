@@ -2,10 +2,13 @@ import { getDirection } from '@/i18n/config'
 import { getSystemLocale } from '@/i18n/server-locale'
 import { isValidContentLocale } from '@/server/payload/fields/contentLocale'
 import { queryPublishedCourses } from '@/server/repos/queries/courses'
-import { CourseCard } from './_components/CourseCard'
+import { CourseCardGrid } from './_components/CourseCardGrid'
 import { EmptyState } from './_components/EmptyState'
 import { CourseShopHeader } from './_components/CourseShopHeader'
 import { CourseCatalogHeader } from './_components/CourseCatalogHeader'
+
+// Revalidate every 60 seconds — courses rarely change
+export const revalidate = 60
 
 export default async function CoursesPage() {
   const locale = await getSystemLocale()
@@ -26,11 +29,7 @@ export default async function CoursesPage() {
           {courses.length === 0 ? (
             <EmptyState type="noCourses" />
           ) : (
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-              {courses.map((course) => (
-                <CourseCard key={course.id} course={course} />
-              ))}
-            </div>
+            <CourseCardGrid courses={courses} />
           )}
         </section>
       </div>

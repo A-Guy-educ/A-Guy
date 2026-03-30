@@ -102,7 +102,7 @@ export function AskDrawingCanvas({ onCheckSolution }: AskDrawingCanvasProps) {
           <div className="flex items-center gap-3">
             <button
               onClick={clearCanvas}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-body-xs font-bold text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-normal"
             >
               <Trash2 className="w-4 h-4" />
               <span>{t('clearCanvas')}</span>
@@ -110,7 +110,7 @@ export function AskDrawingCanvas({ onCheckSolution }: AskDrawingCanvasProps) {
             <button
               onClick={handleCheck}
               disabled={isChecking}
-              className="px-4 py-1.5 rounded-lg text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition-all disabled:opacity-50"
+              className="px-4 py-1.5 rounded-lg text-body-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-normal disabled:opacity-50"
             >
               {isChecking ? t('checking') : t('checkSolution')}
             </button>
