@@ -20,6 +20,19 @@ function parseStartIndex(envContent: string): number {
   return startMatch ? parseInt(startMatch[1], 10) : 1
 }
 
+/**
+ * Detect if this enumerate is a top-level exercise list.
+ * Must use \arabic*. label (with period, not parens) AND have large itemsep.
+ * This distinguishes exercise lists from MCQ sub-options.
+ */
+function isExerciseEnumerate(envContent: string): boolean {
+  // Must have \arabic*. or \arabic* followed by a period in the label
+  const hasArabicLabel = /label\s*=\s*\\textbf\{\\arabic\*\.\}/.test(envContent)
+  // Large itemsep indicates exercise-level spacing (>= 1cm)
+  const hasLargeSpacing = /itemsep\s*=\s*(1(\.\d+)?|[2-9](\.\d+)?)\s*cm/.test(envContent)
+  return hasArabicLabel && hasLargeSpacing
+}
+
 /** Convert a 1-based index to a Hebrew-style label (a, b, c...) */
 function indexToLabel(index: number): string {
   return String.fromCharCode(96 + index) // 1->a, 2->b, etc.
@@ -27,50 +40,85 @@ function indexToLabel(index: number): string {
 
 /** Clean LaTeX formatting from item text */
 function cleanItemText(text: string): string {
-  return text
-    .replace(/\\textbf\{([^}]*)\}/g, '**$1**')
-    .replace(/\\textit\{([^}]*)\}/g, '*$1*')
-    .replace(/\\emph\{([^}]*)\}/g, '*$1*')
-    .replace(/\\underline\{([^}]*)\}/g, '$1')
-    .replace(/\\text\{([^}]*)\}/g, '$1')
-    .replace(/\\\\/g, '\n')
-    .replace(/\\vspace\{[^}]*\}/g, '')
-    .replace(/\\noindent/g, '')
-    .trim()
+  return (
+    text
+      // Convert \begin{itemize}...\end{itemize} to bullet points
+      .replace(/\\begin\{itemize\}([\s\S]*?)\\end\{itemize\}/g, (_match, inner: string) => {
+        const items = inner.split(/\\item\s*/).filter((s: string) => s.trim())
+        return items.map((item: string) => `\n• ${item.trim()}`).join('')
+      })
+      // Strip color commands
+      .replace(/\{\\color\{[^}]*\}\s*/g, '')
+      .replace(/\\color\{[^}]*\}/g, '')
+      .replace(/\\textbf\{([^}]*)\}/g, '**$1**')
+      .replace(/\\textit\{([^}]*)\}/g, '*$1*')
+      .replace(/\\emph\{([^}]*)\}/g, '*$1*')
+      .replace(/\\underline\{([^}]*)\}/g, '$1')
+      .replace(/\\text\{([^}]*)\}/g, '$1')
+      .replace(/\\\\/g, '\n')
+      .replace(/\\vspace\{[^}]*\}/g, '')
+      .replace(/\\noindent/g, '')
+      .trim()
+  )
 }
 
 /**
  * Parses the inner content of an enumerate environment into content blocks.
  * Each \item becomes a question_free_response block.
+ *
+ * Supports two label styles:
+ *   - label=\alph*. with optional start=N  →  auto-generated a, b, c labels
+ *   - \item[\textbf{א.}] explicit Hebrew labels
  */
 export function parseEnumerate(innerContent: string): ContentBlock[] {
   const blocks: ContentBlock[] = []
 
   // Extract start index from the enumerate options (if present in the raw env text)
   const startIndex = parseStartIndex(innerContent)
+  const isNumbered = isExerciseEnumerate(innerContent)
 
-  // Split on \item markers
-  const parts = innerContent.split(/\\item\s*/)
+  // Pre-process: convert nested \begin{itemize}...\end{itemize} to bullet text
+  // before splitting on \item, to avoid splitting inside nested environments
+  const preprocessed = innerContent.replace(
+    /\\begin\{itemize\}([\s\S]*?)\\end\{itemize\}/g,
+    (_match, inner: string) => {
+      const items = inner.split(/\\item\s*/).filter((s: string) => s.trim())
+      return items.map((item: string) => `\n(${item.trim()})`).join(' ')
+    },
+  )
+
+  // Split on \item markers — handles both \item and \item[label]
+  const parts = preprocessed.split(/\\item\s*/)
 
   // First part is pre-item text (options, whitespace) — skip it
   for (let i = 1; i < parts.length; i++) {
     const raw = parts[i].trim()
     if (!raw) continue
 
-    const label = indexToLabel(startIndex + i - 1)
-    const cleaned = cleanItemText(raw)
+    // Check for explicit label: [\textbf{א.}] or [\textbf{(1)}] at the start
+    const explicitLabelMatch = /^\[\\textbf\{([^}]*)\}\]\s*/.exec(raw)
+    let label: string
+    let content: string
 
+    if (explicitLabelMatch) {
+      label = explicitLabelMatch[1].replace(/\.$/, '') // "א." → "א"
+      content = raw.slice(explicitLabelMatch[0].length).trim()
+    } else {
+      label = isNumbered ? String(startIndex + i - 1) : indexToLabel(startIndex + i - 1)
+      content = raw
+    }
+
+    const cleaned = cleanItemText(content)
     if (!cleaned) continue
 
-    // Check if this has sub-parts like (1), (2)
-    const hasSubParts = /\(1\)/.test(cleaned)
-
-    if (hasSubParts) {
-      // Keep as a single free response with sub-parts in the prompt
-      blocks.push(makeFreeResponseBlock(`${label}. ${cleaned}`))
-    } else {
-      blocks.push(makeFreeResponseBlock(`${label}. ${cleaned}`))
+    // For numbered exercises (\arabic* label), emit an exercise heading
+    // so that parseLatexToExercises can split on it
+    if (isNumbered) {
+      const num = startIndex + i - 1
+      blocks.push(makeRichTextBlock(`## תרגיל ${num}`))
     }
+
+    blocks.push(makeFreeResponseBlock(`${label}. ${cleaned}`))
   }
 
   return blocks
@@ -95,20 +143,48 @@ export function parseEnumerateSolutions(innerContent: string): string[] {
 
 /**
  * Checks if this is a solution section header.
- * Matches: \section*{פתרון תרגיל 1} or similar Hebrew patterns.
+ * Matches: \section*{פתרון תרגיל 1}, \subsection*{פתרון תרגיל 1},
+ * \textbf{פתרון שאלה 1:}, \section*{פתרונות לתרגילים},
+ * \subsection*{תשובה סופית - שאלה 1}
  */
 export function isSolutionHeader(text: string): boolean {
-  return /\\section\*?\{פתרון/.test(text)
+  return (
+    /\\(?:section|subsection)\*?\{פתרון/.test(text) ||
+    /\\(?:section|subsection)\*?\{פתרונות/.test(text) ||
+    /\\textbf\{פתרון\s+(?:תרגיל|שאלה)/.test(text) ||
+    /\\(?:section|subsection)\*?\{תשובה\s+סופית/.test(text)
+  )
 }
 
 /**
  * Detects if this is an exercise title.
- * Matches: \textbf{תרגיל 1 - Title} or \textbf{תרגיל 1}
+ * Matches:
+ *   \textbf{תרגיל 1 - Title} or \textbf{תרגיל 1}
+ *   \section*{תרגיל 1: Title} or \subsection*{תרגיל 1}
+ *   \section*{שאלה 1} or \subsection*{שאלה 1}
+ *   \textbf{N.} standalone numbered exercise (e.g. \textbf{1.})
  */
 export function isExerciseTitle(text: string): { title: string; number: number } | null {
-  const match = /\\textbf\{(תרגיל\s+(\d+)[^}]*)\}/.exec(text)
-  if (!match) return null
-  return { title: match[1], number: parseInt(match[2], 10) }
+  // \textbf{תרגיל N ...}
+  const textbfMatch = /\\textbf\{(תרגיל\s+(\d+)[^}]*)\}/.exec(text)
+  if (textbfMatch) return { title: textbfMatch[1], number: parseInt(textbfMatch[2], 10) }
+
+  // \section*{תרגיל N ...} or \subsection*{תרגיל N ...}
+  const sectionExMatch = /\\(?:section|subsection)\*?\{(תרגיל\s+(\d+)[^}]*)\}/.exec(text)
+  if (sectionExMatch) return { title: sectionExMatch[1], number: parseInt(sectionExMatch[2], 10) }
+
+  // \section*{שאלה N ...} or \subsection*{שאלה N ...}
+  const sectionQMatch = /\\(?:section|subsection)\*?\{(שאלה\s+(\d+)[^}]*)\}/.exec(text)
+  if (sectionQMatch) return { title: sectionQMatch[1], number: parseInt(sectionQMatch[2], 10) }
+
+  // \textbf{N.} — standalone numbered exercise boundary
+  const numberedMatch = /^\\textbf\{(\d+)\.\s*\}$/.exec(text.trim())
+  if (numberedMatch) {
+    const num = parseInt(numberedMatch[1], 10)
+    return { title: `תרגיל ${num}`, number: num }
+  }
+
+  return null
 }
 
 /** Check if text contains an enumerate-style exercise pattern */

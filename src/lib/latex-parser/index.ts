@@ -86,7 +86,14 @@ const PREAMBLE_COMMANDS = new Set([
 ])
 
 /** Environments that just wrap content — recurse into children */
-const PASSTHROUGH_ENVS = new Set(['document', 'minipage', 'center', 'flushleft', 'flushright'])
+const PASSTHROUGH_ENVS = new Set([
+  'document',
+  'minipage',
+  'center',
+  'flushleft',
+  'flushright',
+  'spacing',
+])
 
 /** Layout/formatting commands to silently skip */
 const SKIP_COMMANDS = new Set([
@@ -108,12 +115,26 @@ const SKIP_COMMANDS = new Set([
   'large',
   'renewcommand',
   'arraystretch',
+  'definecolor',
+  'color',
+  'centering',
+  'cfoot',
+  'lfoot',
+  'fancyhf',
+  'headrulewidth',
+  'thepage',
+  'footnotesize',
+  'itemsep',
 ])
 
 /** Clean LaTeX text: strip formatting commands, normalize whitespace */
 function cleanText(text: string): string {
   return (
     text
+      // Strip {\color{name} content} → content (preserves inner text)
+      .replace(/\{\\color\{[^}]*\}\s*/g, '')
+      // Strip orphaned closing braces left from color stripping
+      // (handled carefully to not break math)
       .replace(/\\textbf\{([^}]*)\}/g, '**$1**')
       .replace(/\\textit\{([^}]*)\}/g, '*$1*')
       .replace(/\\emph\{([^}]*)\}/g, '*$1*')
@@ -127,6 +148,8 @@ function cleanText(text: string): string {
       .replace(/\\begingroup/g, '')
       .replace(/\\endgroup/g, '')
       .replace(/\\arraystretch/g, '')
+      .replace(/\\definecolor\{[^}]*\}\{[^}]*\}\{[^}]*\}/g, '')
+      .replace(/\\color\{[^}]*\}/g, '')
       // Strip leading line-break spacing like [0.2cm], [5mm]
       .replace(/^\s*\[\d+(\.\d+)?(cm|mm|pt|em|ex)\]\s*/g, '')
       .trim()
@@ -176,6 +199,14 @@ function processTokens(
       } else if (envName === 'questions') {
         const inner = extractInner(token)
         processQuestionsEnv(inner, blocks, warnings, token.line)
+      } else if (envName === 'itemize') {
+        // Convert itemize to bullet-point rich text
+        const inner = extractInner(token)
+        const items = inner.split(/\\item\s*/).filter((s) => s.trim())
+        const bullets = items.map((item) => `• ${cleanText(item)}`).join('\n')
+        if (bullets) {
+          blocks.push(makeRichTextBlock(bullets))
+        }
       } else if (envName === 'enumerate') {
         const inner = extractInner(token)
         const enumBlocks = parseEnumerate(inner)
@@ -251,15 +282,21 @@ function processTokens(
       const cmdName = token.name ?? ''
       if (SKIP_COMMANDS.has(cmdName)) {
         // Silently skip
-      } else if (cmdName === 'section') {
-        const titleMatch = /\\section\*?\{([^}]*)\}/.exec(token.value)
+      } else if (cmdName === 'section' || cmdName === 'subsection') {
+        const titleMatch = /\\(?:section|subsection)\*?\{([^}]*)\}/.exec(token.value)
         const title = titleMatch ? titleMatch[1] : token.value
         if (isSolutionHeader(token.value)) {
           inSolutionSection = true
           // Don't emit solution headers as blocks — solutions are attached to questions
         } else {
           inSolutionSection = false
-          blocks.push(makeRichTextBlock(`## ${title}`))
+          // Check if this is an exercise title (תרגיל N or שאלה N)
+          const exerciseInfo = isExerciseTitle(token.value)
+          if (exerciseInfo) {
+            blocks.push(makeRichTextBlock(`## ${exerciseInfo.title}`))
+          } else {
+            blocks.push(makeRichTextBlock(`## ${title}`))
+          }
         }
       } else if (cmdName === 'textbf') {
         // Check if this is an exercise title like \textbf{תרגיל 1 - Title}
@@ -453,10 +490,10 @@ function mergeAdjacentRichText(blocks: ContentBlock[]): ContentBlock[] {
 }
 
 /**
- * Exercise title pattern: `## תרגיל N` or `## תרגיל N - Title`
+ * Exercise title pattern: `## תרגיל N` or `## שאלה N` or `## תרגיל N - Title`
  * These are emitted by processTokens when isExerciseTitle() matches.
  */
-const EXERCISE_HEADING_RE = /^## תרגיל\s+(\d+)/
+const EXERCISE_HEADING_RE = /^## (?:תרגיל|שאלה)\s+(\d+)/
 
 /**
  * Parses LaTeX into multiple exercises split on `\textbf{תרגיל N}` boundaries.
