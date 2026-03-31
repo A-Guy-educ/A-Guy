@@ -157,6 +157,12 @@ function stripColorAndSizing(text: string): string {
 function cleanText(text: string): string {
   return (
     stripColorAndSizing(text)
+      // Strip leaked environment tags
+      .replace(
+        /\\(?:begin|end)\{(?:enumerate|center|itemize|tikzpicture|tabular\*?|tcolorbox)\}(?:\[[^\]]*\])?/g,
+        '',
+      )
+      .replace(/\\begin\{tikzpicture\}[\s\S]*?\\end\{tikzpicture\}/g, '')
       .replace(/\\textbf\{([^}]*)\}/g, '**$1**')
       .replace(/\\textit\{([^}]*)\}/g, '*$1*')
       .replace(/\\emph\{([^}]*)\}/g, '*$1*')

@@ -65,6 +65,16 @@ function cleanItemText(text: string): string {
         const items = inner.split(/\\item\s*/).filter((s: string) => s.trim())
         return items.map((item: string) => `\n• ${item.trim()}`).join('')
       })
+      // Strip leaked environment tags
+      .replace(
+        /\\(?:begin|end)\{(?:enumerate|center|itemize|tabular\*?|tcolorbox)\}(?:\[[^\]]*\])?/g,
+        '',
+      )
+      .replace(/\\selectlanguage\{[^}]*\}/g, '')
+      // Strip tikzpicture blocks that leaked into items
+      .replace(/\\begin\{tikzpicture\}[\s\S]*?\\end\{tikzpicture\}/g, '')
+      // Strip [(N)] labels that survived pre-processing
+      .replace(/^\[\(?\d+\)?\]\s*/g, '')
       .replace(/\\textbf\{([^}]*)\}/g, '**$1**')
       .replace(/\\textit\{([^}]*)\}/g, '*$1*')
       .replace(/\\emph\{([^}]*)\}/g, '*$1*')
@@ -122,8 +132,10 @@ export function parseEnumerate(innerContent: string): ContentBlock[] {
     const raw = parts[i].trim()
     if (!raw) continue
 
-    // Strip explicit label: [\textbf{א.}] or [\textbf{(1)}] at the start
-    const explicitLabelMatch = /^\[\\textbf\{([^}]*)\}\]\s*/.exec(raw)
+    // Strip explicit label at the start:
+    //   [\textbf{א.}]  [\textbf{(1)}]  [(1)]  [(א)]  [א.]
+    const explicitLabelMatch =
+      /^\[\\textbf\{([^}]*)\}\]\s*/.exec(raw) || /^\[\(?[\u0590-\u05FFa-z\d]+\.?\)?\]\s*/.exec(raw)
     const content = explicitLabelMatch ? raw.slice(explicitLabelMatch[0].length).trim() : raw
 
     const cleaned = cleanItemText(content)
