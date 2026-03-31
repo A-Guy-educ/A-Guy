@@ -155,6 +155,9 @@ export const CourseLessonsSorter: React.FC = () => {
       if (!chapter) return
       if (toIndex < 0 || toIndex >= chapter.lessons.length) return
 
+      // Save state before optimistic update for revert on failure
+      const chaptersBeforeMove = chapters
+
       // Optimistic update
       const newChapters = [...chapters]
       const chapterIndex = newChapters.findIndex((c) => c.id === chapterId)
@@ -187,10 +190,12 @@ export const CourseLessonsSorter: React.FC = () => {
 
         if (!response.ok) {
           // Revert on failure
-          setChapters((prev) => prev)
+          setChapters(chaptersBeforeMove)
           setError('Failed to save order')
         }
       } catch {
+        // Revert on failure
+        setChapters(chaptersBeforeMove)
         setError('Failed to save order')
       } finally {
         setSavingLessonId(null)
@@ -381,7 +386,7 @@ export const CourseLessonsSorter: React.FC = () => {
                     cursor: idx === 0 ? 'not-allowed' : 'pointer',
                     opacity: idx === 0 ? 0.2 : 0.6,
                     color: 'var(--theme-text)',
-                    transition: 'opacity 0.15s',
+                    transition: 'all 0.2s',
                   }}
                   title="Move up"
                 >
@@ -398,7 +403,7 @@ export const CourseLessonsSorter: React.FC = () => {
                     cursor: idx === group.lessons.length - 1 ? 'not-allowed' : 'pointer',
                     opacity: idx === group.lessons.length - 1 ? 0.2 : 0.6,
                     color: 'var(--theme-text)',
-                    transition: 'opacity 0.15s',
+                    transition: 'all 0.2s',
                   }}
                   title="Move down"
                 >
