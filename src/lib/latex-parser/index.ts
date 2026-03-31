@@ -129,29 +129,26 @@ const SKIP_COMMANDS = new Set([
 
 /**
  * Strip \color{...} and {\color{...} content} from any string (text or math).
- * Also strips \Large and other sizing commands, and cleans orphaned braces.
+ * Also strips \Large and other sizing commands.
  *
  * Handles the pattern: ${\color{winered} 70 }$ → $70$
  * and: ${\Large\color{winered} s \approx 10.2 }$ → $s \approx 10.2$
+ *
+ * IMPORTANT: We match the full balanced {cmd content} group to avoid
+ * eating legitimate closing braces (e.g. \frac{1}{55}).
  */
 function stripColorAndSizing(text: string): string {
-  // First pass: handle {\color{name} content } → content  (full brace group)
-  // This regex matches the opening { + \color{...} and its matching closing }
-  let result = text.replace(/\{\\(?:color\{[^}]*\}|Large|large|huge|Huge)\s*/g, '')
-  // Remove the orphaned closing } left from the above
-  // Strategy: repeatedly strip unbalanced } that aren't part of LaTeX commands
+  let result = text
+  // Match full balanced group: {\color{name} content} or {\Large content}
+  // The outer { } pair wraps the color/sizing scope — remove both braces + command, keep content
+  result = result.replace(/\{\\(?:Large|large|huge|Huge)\s*\\color\{[^}]*\}\s*([^}]*)\}/g, '$1')
+  result = result.replace(/\{\\color\{[^}]*\}\s*([^}]*)\}/g, '$1')
+  result = result.replace(/\{\\(?:Large|large|huge|Huge)\s*([^}]*)\}/g, '$1')
+  // Strip bare commands (not wrapped in braces)
   result = result
     .replace(/\\(?:Large|large|huge|Huge|normalsize|small|footnotesize|tiny)\s*/g, '')
     .replace(/\\color\{[^}]*\}/g, '')
     .replace(/\\definecolor\{[^}]*\}\{[^}]*\}\{[^}]*\}/g, '')
-
-  // Clean orphaned } inside $...$ math expressions
-  // Match $ ... content } ... $ and remove the orphaned }
-  result = result.replace(/(\$[^$]*?)\s*\}\s*(\$)/g, '$1$2')
-  // Also handle } before commas, periods, spaces in text
-  result = result.replace(/\s+\}(?=[\s,.)$])/g, '')
-  // Trailing orphaned }
-  result = result.replace(/\s*\}\s*$/g, '')
 
   return result
 }

@@ -40,18 +40,19 @@ function _indexToLabel(index: number): string {
 
 /**
  * Strip \color{...}, {\color{...} ...}, \Large, etc. from any string.
- * Shared between text and math contexts.
+ * Matches full balanced brace groups to avoid eating legitimate closing braces.
  */
 function stripColorAndSizing(text: string): string {
-  let result = text.replace(/\{\\(?:color\{[^}]*\}|Large|large|huge|Huge)\s*/g, '')
+  let result = text
+  // Match full balanced group: {\Large\color{name} content} → content
+  result = result.replace(/\{\\(?:Large|large|huge|Huge)\s*\\color\{[^}]*\}\s*([^}]*)\}/g, '$1')
+  result = result.replace(/\{\\color\{[^}]*\}\s*([^}]*)\}/g, '$1')
+  result = result.replace(/\{\\(?:Large|large|huge|Huge)\s*([^}]*)\}/g, '$1')
+  // Strip bare commands
   result = result
     .replace(/\\(?:Large|large|huge|Huge|normalsize|small|footnotesize|tiny)\s*/g, '')
     .replace(/\\color\{[^}]*\}/g, '')
     .replace(/\\definecolor\{[^}]*\}\{[^}]*\}\{[^}]*\}/g, '')
-  // Clean orphaned } inside $...$ math expressions
-  result = result.replace(/(\$[^$]*?)\s*\}\s*(\$)/g, '$1$2')
-  result = result.replace(/\s+\}(?=[\s,.)$])/g, '')
-  result = result.replace(/\s*\}\s*$/g, '')
   return result
 }
 
