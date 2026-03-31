@@ -33,23 +33,37 @@ function isExerciseEnumerate(envContent: string): boolean {
   return hasArabicLabel && hasLargeSpacing
 }
 
-/** Convert a 1-based index to a Hebrew-style label (a, b, c...) */
-function indexToLabel(index: number): string {
+/** Convert a 1-based index to a label (a, b, c...) — kept for potential future use */
+function _indexToLabel(index: number): string {
   return String.fromCharCode(96 + index) // 1->a, 2->b, etc.
+}
+
+/**
+ * Strip \color{...}, {\color{...} ...}, \Large, etc. from any string.
+ * Shared between text and math contexts.
+ */
+function stripColorAndSizing(text: string): string {
+  let result = text.replace(/\{\\(?:color\{[^}]*\}|Large|large|huge|Huge)\s*/g, '')
+  result = result
+    .replace(/\\(?:Large|large|huge|Huge|normalsize|small|footnotesize|tiny)\s*/g, '')
+    .replace(/\\color\{[^}]*\}/g, '')
+    .replace(/\\definecolor\{[^}]*\}\{[^}]*\}\{[^}]*\}/g, '')
+  // Clean orphaned } inside $...$ math expressions
+  result = result.replace(/(\$[^$]*?)\s*\}\s*(\$)/g, '$1$2')
+  result = result.replace(/\s+\}(?=[\s,.)$])/g, '')
+  result = result.replace(/\s*\}\s*$/g, '')
+  return result
 }
 
 /** Clean LaTeX formatting from item text */
 function cleanItemText(text: string): string {
   return (
-    text
+    stripColorAndSizing(text)
       // Convert \begin{itemize}...\end{itemize} to bullet points
       .replace(/\\begin\{itemize\}([\s\S]*?)\\end\{itemize\}/g, (_match, inner: string) => {
         const items = inner.split(/\\item\s*/).filter((s: string) => s.trim())
         return items.map((item: string) => `\n• ${item.trim()}`).join('')
       })
-      // Strip color commands
-      .replace(/\{\\color\{[^}]*\}\s*/g, '')
-      .replace(/\\color\{[^}]*\}/g, '')
       .replace(/\\textbf\{([^}]*)\}/g, '**$1**')
       .replace(/\\textit\{([^}]*)\}/g, '*$1*')
       .replace(/\\emph\{([^}]*)\}/g, '*$1*')
@@ -77,13 +91,23 @@ export function parseEnumerate(innerContent: string): ContentBlock[] {
   const startIndex = parseStartIndex(innerContent)
   const isNumbered = isExerciseEnumerate(innerContent)
 
-  // Pre-process: convert nested \begin{itemize}...\end{itemize} to bullet text
+  // Pre-process: convert nested environments to inline text
   // before splitting on \item, to avoid splitting inside nested environments
-  const preprocessed = innerContent.replace(
+  let preprocessed = innerContent
+  // Convert \begin{itemize}...\end{itemize} to inline bullet text
+  preprocessed = preprocessed.replace(
     /\\begin\{itemize\}([\s\S]*?)\\end\{itemize\}/g,
     (_match, inner: string) => {
       const items = inner.split(/\\item\s*/).filter((s: string) => s.trim())
       return items.map((item: string) => `\n(${item.trim()})`).join(' ')
+    },
+  )
+  // Convert nested \begin{enumerate}...\end{enumerate} (MCQ sub-options) to inline text
+  preprocessed = preprocessed.replace(
+    /\\begin\{enumerate\}\s*\[label=\(\\textbf\{\\arabic\*\}\)[^\]]*\]([\s\S]*?)\\end\{enumerate\}/g,
+    (_match, inner: string) => {
+      const items = inner.split(/\\item\s*/).filter((s: string) => s.trim())
+      return items.map((item: string, idx: number) => `\n(${idx + 1}) ${item.trim()}`).join('')
     },
   )
 
@@ -95,18 +119,9 @@ export function parseEnumerate(innerContent: string): ContentBlock[] {
     const raw = parts[i].trim()
     if (!raw) continue
 
-    // Check for explicit label: [\textbf{א.}] or [\textbf{(1)}] at the start
+    // Strip explicit label: [\textbf{א.}] or [\textbf{(1)}] at the start
     const explicitLabelMatch = /^\[\\textbf\{([^}]*)\}\]\s*/.exec(raw)
-    let label: string
-    let content: string
-
-    if (explicitLabelMatch) {
-      label = explicitLabelMatch[1].replace(/\.$/, '') // "א." → "א"
-      content = raw.slice(explicitLabelMatch[0].length).trim()
-    } else {
-      label = isNumbered ? String(startIndex + i - 1) : indexToLabel(startIndex + i - 1)
-      content = raw
-    }
+    const content = explicitLabelMatch ? raw.slice(explicitLabelMatch[0].length).trim() : raw
 
     const cleaned = cleanItemText(content)
     if (!cleaned) continue
@@ -118,7 +133,8 @@ export function parseEnumerate(innerContent: string): ContentBlock[] {
       blocks.push(makeRichTextBlock(`## תרגיל ${num}`))
     }
 
-    blocks.push(makeFreeResponseBlock(`${label}. ${cleaned}`))
+    // Don't prepend labels — the frontend handles numbering automatically
+    blocks.push(makeFreeResponseBlock(cleaned))
   }
 
   return blocks
