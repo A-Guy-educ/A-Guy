@@ -34,26 +34,23 @@ interface MultiAxisRendererProps {
     mediaIds?: string[]
   }
   textPosition: 'above' | 'below'
+  columnsPerRow?: 1 | 2 | 4
 }
 
 /**
- * Get responsive grid classes based on the number of graphs
+ * Get responsive grid classes based on configured columns per row.
+ * Falls back to auto-detecting from graph count when not set.
  */
-function getGridClasses(graphCount: number): string {
-  switch (graphCount) {
+function getGridClasses(columnsPerRow: number): string {
+  switch (columnsPerRow) {
     case 1:
-      // Single graph: full width
       return 'grid-cols-1'
     case 2:
-      // Two graphs: 1 col mobile, 2 cols tablet+
       return 'grid-cols-1 sm:grid-cols-2'
-    case 3:
-      // Three graphs: 1 col mobile, 2 cols tablet, 3 cols desktop
-      return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
     case 4:
-    default:
-      // Four graphs: 1 col mobile, 2 cols tablet, 4 cols desktop
       return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
+    default:
+      return 'grid-cols-1 sm:grid-cols-2'
   }
 }
 
@@ -62,11 +59,12 @@ export function MultiAxisRenderer({
   graphs,
   prompt,
   textPosition,
+  columnsPerRow,
 }: MultiAxisRendererProps) {
   // Sort graphs by order field (ascending)
   const sortedGraphs = useMemo(() => [...graphs].sort((a, b) => a.order - b.order), [graphs])
 
-  const gridClasses = getGridClasses(graphs.length)
+  const gridClasses = getGridClasses(columnsPerRow ?? graphs.length)
 
   // Render prompt text (if exists) above the grid
   const promptAbove =

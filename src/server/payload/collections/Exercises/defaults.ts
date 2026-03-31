@@ -12,6 +12,7 @@ import type {
   LatexBlock,
   MediaBlock,
   QuestionAxisBlock,
+  QuestionMultiAxisBlock,
   QuestionFreeResponseBlock,
   QuestionGeometryBlock,
   QuestionMatchingBlock,
@@ -347,5 +348,33 @@ export const ExerciseBlockDefaults: Record<string, () => ContentBlock> = {
     hint: DEFAULT_HINT_SOLUTION(),
     solution: DEFAULT_HINT_SOLUTION(),
     fullSolution: DEFAULT_HINT_SOLUTION(),
+  }),
+
+  question_multi_axis: (): QuestionMultiAxisBlock => ({
+    id: generateId(),
+    type: 'question_multi_axis',
+    prompt: DEFAULT_HINT_SOLUTION(),
+    textPosition: 'above',
+    graphs: [
+      {
+        id: generateId(),
+        label: 'Graph 1',
+        axis: {
+          kind: 'cartesian',
+          units: 1,
+          grid: { enabled: true, color: '#e0e0e0' },
+          axes: {
+            showNumbers: true,
+            showLabels: true,
+            ticks: 1,
+            labels: { x: 'x', y: 'y' },
+            origin: { x: 0, y: 0 },
+          },
+          viewport: { xMin: -10, xMax: 10, yMin: -10, yMax: 10 },
+          elements: { points: [], graphs: [] },
+        },
+        order: 0,
+      },
+    ],
   }),
 }

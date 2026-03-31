@@ -2,7 +2,7 @@
 
 import React from 'react'
 import type { GeometrySpecV1 } from '@/infra/contracts/graphics/geometry.v1'
-import { getDefaultShapeFill } from '@/infra/contracts/graphics/textColors'
+import { getDefaultShapeFill, getDefaultTextColor } from '@/infra/contracts/graphics/textColors'
 import { Plus, Trash2 } from 'lucide-react'
 
 type GeoTriangle = NonNullable<GeometrySpecV1['elements']['triangles']>[number]
@@ -91,6 +91,15 @@ export const ShapesPanel: React.FC<ShapesPanelProps> = ({
               </select>
             ))}
             <div className="panel-field">
+              <span className="panel-field-label">Edge</span>
+              <input
+                type="color"
+                className="panel-color-input"
+                value={tri.color || getDefaultTextColor()}
+                onChange={(e) => updateTri(tIdx, { color: e.target.value })}
+              />
+            </div>
+            <div className="panel-field">
               <span className="panel-field-label">Fill</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 <input
@@ -151,6 +160,15 @@ export const ShapesPanel: React.FC<ShapesPanelProps> = ({
                 ))}
               </select>
             ))}
+            <div className="panel-field">
+              <span className="panel-field-label">Edge</span>
+              <input
+                type="color"
+                className="panel-color-input"
+                value={rect.color || getDefaultTextColor()}
+                onChange={(e) => updateRect(rIdx, { color: e.target.value })}
+              />
+            </div>
             <div className="panel-field">
               <span className="panel-field-label">Fill</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
