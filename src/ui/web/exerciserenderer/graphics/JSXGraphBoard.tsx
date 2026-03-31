@@ -75,6 +75,7 @@ export function JSXGraphBoard({
                   name: axisConfig?.labels?.x ?? 'x',
                   withLabel: showLabels,
                   label: { position: 'rt', offset: [0, 12] },
+                  lastArrow: true,
                 },
                 y: {
                   ticks: {
@@ -87,6 +88,7 @@ export function JSXGraphBoard({
                   name: axisConfig?.labels?.y ?? 'y',
                   withLabel: showLabels,
                   label: { position: 'rt', offset: [15, 0] },
+                  lastArrow: true,
                 },
               },
             }

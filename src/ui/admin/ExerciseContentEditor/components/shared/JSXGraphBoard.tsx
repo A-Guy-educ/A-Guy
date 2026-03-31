@@ -80,6 +80,8 @@ export const JSXGraphBoard: React.FC<JSXGraphBoardProps> = ({
                 withLabel: axisConfig.showLabels ?? true,
                 // Standardized title position: far right, slightly below
                 label: { position: 'rt', offset: [0, 12] as [number, number] },
+                // Arrow at positive end to indicate direction
+                lastArrow: true,
               },
               y: {
                 ticks: {
@@ -97,6 +99,8 @@ export const JSXGraphBoard: React.FC<JSXGraphBoardProps> = ({
                 withLabel: axisConfig.showLabels ?? true,
                 // Standardized title position: near top, slightly to right
                 label: { position: 'rt', offset: [15, 0] as [number, number] },
+                // Arrow at positive end to indicate direction
+                lastArrow: true,
               },
             },
           }

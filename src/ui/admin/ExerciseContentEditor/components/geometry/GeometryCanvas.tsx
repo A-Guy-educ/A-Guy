@@ -4,7 +4,7 @@ import type { GeometrySpecV1 } from '@/infra/contracts/graphics/geometry.v1'
 import {
   getDefaultAngleColor,
   getDefaultCanvasBackground,
-  getDefaultTextColor,
+  getDefaultCanvasElementColor,
   sizeScaleToPixels,
 } from '@/infra/contracts/graphics/textColors'
 import type { JXGBoard, JXGElement } from 'jsxgraph'
@@ -35,18 +35,20 @@ const DISPLAY_HEIGHT = 320
 
 const round1 = (n: number) => Math.round(n * 10) / 10
 
-function mapLabelPosition(pos?: string): string {
-  const map: Record<string, string> = {
-    tr: 'urt',
-    tl: 'ult',
-    br: 'lrt',
-    bl: 'llft',
-    t: 'top',
-    b: 'bot',
-    l: 'left',
-    r: 'right',
+/** Map compass direction to a pixel [x, y] offset for JSXGraph labels. */
+function mapLabelOffset(pos?: string): [number, number] {
+  const d = 15
+  const map: Record<string, [number, number]> = {
+    tl: [-d, d],
+    t: [0, d],
+    tr: [d, d],
+    l: [-d, 0],
+    r: [d, 0],
+    bl: [-d, -d],
+    b: [0, -d],
+    br: [d, -d],
   }
-  return map[pos || 'r'] || 'right'
+  return map[pos || 'r'] || [d, 0]
 }
 
 function angleToLabelPosition(angleDeg: number): string {
@@ -95,7 +97,7 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
       const existingIds = new Set(elementsRef.current.keys())
       const newIds = new Set<string>()
 
-      syncPoints(
+      const recreatedPoints = syncPoints(
         board,
         geometry,
         newIds,
@@ -105,6 +107,19 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
         onPointMovedRef,
         onPointLabelMovedRef,
       )
+
+      // When points are recreated (e.g. label position change), dependent
+      // elements hold stale JSXGraph references.  Remove them so the sync
+      // functions below recreate them against the new point objects.
+      if (recreatedPoints.size > 0) {
+        for (const [id, el] of elementsRef.current) {
+          if (id.startsWith('point-')) continue
+          if (id.startsWith('text-')) continue
+          board.removeObject(el)
+          elementsRef.current.delete(id)
+        }
+      }
+
       syncSegments(board, geometry, newIds, elementsRef)
       syncLineLabels(board, geometry, newIds, elementsRef)
       syncCircles(board, geometry, newIds, elementsRef)
@@ -198,17 +213,22 @@ function syncPoints(
   isDraggingRef: React.MutableRefObject<boolean>,
   onPointMovedRef: React.RefObject<((name: string, x: number, y: number) => void) | undefined>,
   onPointLabelMovedRef: React.RefObject<((name: string, position: string) => void) | undefined>,
-) {
+): Set<string> {
+  const recreated = new Set<string>()
   for (const point of geometry.elements.points) {
     const elemId = `point-${point.name}`
     newIds.add(elemId)
     const existing = elementsRef.current.get(elemId)
 
-    const pointColor = point.color ?? getDefaultTextColor()
+    const pointColor = point.color ?? getDefaultCanvasElementColor()
     const pointSize = point.size ?? 4
-    const labelPos = mapLabelPosition(point.position)
+    const labelOffset = mapLabelOffset(point.position)
+    const labelKey = labelOffset.join(',')
 
-    if (existing && existing.moveTo) {
+    // Check if label position changed — JSXGraph doesn't reliably update
+    // label offset via setAttribute, so we force recreation.
+    const prevKey = existing ? (existing as unknown as { _labelKey?: string })._labelKey : undefined
+    if (existing && existing.moveTo && prevKey === labelKey) {
       existing.moveTo([point.x, point.y])
       existing.setAttribute({
         visible: point.visible !== false,
@@ -217,14 +237,11 @@ function syncPoints(
         strokeColor: pointColor,
         size: pointSize,
       })
-      const existingLabel = (existing as unknown as PointElWithLabel).label
-      if (existingLabel) {
-        existingLabel.setAttribute({ position: labelPos })
-      }
     } else {
       if (existing) {
         board.removeObject(existing)
         elementsRef.current.delete(elemId)
+        recreated.add(point.name)
       }
       const el = board.create('point', [point.x, point.y], {
         name: point.name,
@@ -233,7 +250,7 @@ function syncPoints(
         strokeColor: pointColor,
         visible: point.visible !== false,
         withLabel: true,
-        label: { position: labelPos, fontSize: point.fontSize || 14 },
+        label: { offset: labelOffset, fontSize: point.fontSize || 14 },
       })
       el.on('drag', () => {
         if (isSyncingRef.current) return
@@ -257,15 +274,17 @@ function syncPoints(
           const dy = labelEl.Y() - elWithLabel.Y()
           const angleDeg = Math.atan2(dy, dx) * (180 / Math.PI)
           const snapped = angleToLabelPosition(angleDeg)
-          labelEl.setAttribute({ position: mapLabelPosition(snapped) })
           onPointLabelMovedRef.current?.(point.name, snapped)
           isDraggingRef.current = false
         })
       }
 
+      // Track label offset for change detection
+      ;(el as unknown as { _labelKey?: string })._labelKey = labelKey
       elementsRef.current.set(elemId, el)
     }
   }
+  return recreated
 }
 
 function syncSegments(
@@ -285,14 +304,14 @@ function syncSegments(
     const existing = elementsRef.current.get(elemId)
     if (existing) {
       existing.setAttribute({
-        strokeColor: line.color || getDefaultTextColor(),
+        strokeColor: line.color || getDefaultCanvasElementColor(),
         strokeWidth: line.thickness || 2,
         dash: line.style === 'dashed' ? 2 : 0,
       })
       continue
     }
     const el = board.create('segment', [fromEl, toEl], {
-      strokeColor: line.color || getDefaultTextColor(),
+      strokeColor: line.color || getDefaultCanvasElementColor(),
       strokeWidth: line.thickness || 2,
       dash: line.style === 'dashed' ? 2 : 0,
       fixed: true,
@@ -366,7 +385,7 @@ function syncCircles(
     const existing = elementsRef.current.get(elemId)
     if (existing) {
       existing.setAttribute({
-        strokeColor: circle.color || getDefaultTextColor(),
+        strokeColor: circle.color || getDefaultCanvasElementColor(),
         dash: circle.style === 'dashed' ? 2 : 0,
       })
       continue
@@ -375,7 +394,7 @@ function syncCircles(
       ? [centerEl, elementsRef.current.get(`point-${circle.through}`) || centerEl]
       : [centerEl, circle.radius || 50]
     const el = board.create('circle', parents, {
-      strokeColor: circle.color || getDefaultTextColor(),
+      strokeColor: circle.color || getDefaultCanvasElementColor(),
       dash: circle.style === 'dashed' ? 2 : 0,
       fixed: true,
     })
@@ -399,14 +418,12 @@ function syncAngles(
     const ray2El = elementsRef.current.get(`point-${angle.ray2}`)
     if (!ray1El || !centerEl || !ray2El) continue
 
+    // Always remove and recreate — JSXGraph angle elements don't support
+    // reliable in-place label updates via setAttribute.
     const existing = elementsRef.current.get(elemId)
     if (existing) {
-      existing.setAttribute({
-        strokeColor: angle.color || getDefaultAngleColor(),
-        fillColor: angle.color || getDefaultAngleColor(),
-        radius: angle.arcRadius || 30,
-      })
-      continue
+      board.removeObject(existing)
+      elementsRef.current.delete(elemId)
     }
 
     const isSquare = angle.style === 'square'
@@ -440,11 +457,21 @@ function syncPolygons(
     const tri = triangles[i]
     const elemId = `triangle-${tri.points.join('-')}`
     newIds.add(elemId)
-    if (elementsRef.current.has(elemId)) continue
+
+    // Remove existing so color/fill changes take effect
+    const existingTri = elementsRef.current.get(elemId)
+    if (existingTri) {
+      board.removeObject(existingTri)
+      elementsRef.current.delete(elemId)
+    }
+
     const ptEls = tri.points.map((name) => elementsRef.current.get(`point-${name}`)).filter(Boolean)
     if (ptEls.length < 3) continue
     const el = board.create('polygon', ptEls, {
-      borders: { strokeColor: tri.color || getDefaultTextColor(), strokeWidth: tri.thickness || 2 },
+      borders: {
+        strokeColor: tri.color || getDefaultCanvasElementColor(),
+        strokeWidth: tri.thickness || 2,
+      },
       fillColor: tri.fill || 'transparent',
       fillOpacity: tri.fill ? 0.3 : 0,
       hasInnerPoints: true,
@@ -458,14 +485,21 @@ function syncPolygons(
     const rect = rectangles[i]
     const elemId = `rectangle-${rect.points.join('-')}`
     newIds.add(elemId)
-    if (elementsRef.current.has(elemId)) continue
+
+    // Remove existing so color/fill changes take effect
+    const existingRect = elementsRef.current.get(elemId)
+    if (existingRect) {
+      board.removeObject(existingRect)
+      elementsRef.current.delete(elemId)
+    }
+
     const ptEls = rect.points
       .map((name) => elementsRef.current.get(`point-${name}`))
       .filter(Boolean)
     if (ptEls.length < 4) continue
     const el = board.create('polygon', ptEls, {
       borders: {
-        strokeColor: rect.color || getDefaultTextColor(),
+        strokeColor: rect.color || getDefaultCanvasElementColor(),
         strokeWidth: rect.thickness || 2,
       },
       fillColor: rect.fill || 'transparent',
@@ -538,7 +572,7 @@ function syncTexts(
       elementsRef.current.delete(elemId)
     }
 
-    const color = text.color ?? getDefaultTextColor()
+    const color = text.color ?? getDefaultCanvasElementColor()
     const fontSize =
       text.sizeScale !== undefined ? sizeScaleToPixels(text.sizeScale) : (text.fontSize ?? 14)
 
