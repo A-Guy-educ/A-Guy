@@ -246,6 +246,7 @@ async function resolveModelConfig(modelKey: AIModelKey): Promise<AIModel> {
   return {
     name: getProviderModelName(LLMProviderType.GEMINI, modelKey),
     ...entry,
+    modelKey,
   }
 }
 

@@ -197,6 +197,7 @@ export async function extractLessonContext(
     const modelConfig = {
       name: getProviderModelName(LLMProviderType.GEMINI, 'PDF_TO_EXERCISE'),
       ...modelEntry,
+      modelKey: 'PDF_TO_EXERCISE' as const,
     }
 
     const mimeType = isPdf ? 'application/pdf' : mediaTyped.mimeType || 'image/png'
@@ -285,6 +286,53 @@ ${extractedText}`
           `Second pass for solutions failed: ${msg}. Exercises were saved without full solutions.`,
         )
       }
+    }
+
+    // ========== Step 8c: Verify solution accuracy ==========
+    // Ask the LLM to check if solutions are mathematically correct.
+    // If errors are found, flag them as warnings so they can be reviewed.
+    try {
+      const solutionVerifyPrompt = `You are a math teacher verifying student solutions. Check the following LaTeX document for mathematical errors in the SOLUTIONS section only.
+
+For each solution that contains a mathematical error (wrong calculation, incorrect formula application, wrong final answer), report it in this exact JSON format:
+{ "errors": [{ "exercise": "exercise number or title", "description": "what is wrong and what the correct answer should be" }] }
+
+If all solutions are correct, return: { "errors": [] }
+
+IMPORTANT: Only report clear mathematical errors, not stylistic issues.
+
+Document to verify:
+${extractedText}`
+
+      const verifyResponse = await adapter.generateChatCompletion(
+        {
+          system: 'You are a precise math verification assistant. Return only valid JSON.',
+          messages: [{ role: 'user', content: solutionVerifyPrompt }],
+          model: modelConfig,
+          acknowledgment: 'Verifying solutions...',
+        },
+        payload,
+      )
+
+      const verifyText = verifyResponse.text?.trim()
+      if (verifyText) {
+        try {
+          const jsonMatch = verifyText.match(/\{[\s\S]*\}/)
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0])
+            if (Array.isArray(parsed.errors) && parsed.errors.length > 0) {
+              for (const err of parsed.errors) {
+                warnings.push(`Solution accuracy issue in ${err.exercise}: ${err.description}`)
+              }
+            }
+          }
+        } catch {
+          // JSON parse failure is non-fatal — skip verification
+        }
+      }
+    } catch {
+      // Verification is best-effort — don't fail extraction if it errors
+      warnings.push('Solution verification step was skipped due to an error.')
     }
 
     // ========== Step 9: Store result based on mode ==========

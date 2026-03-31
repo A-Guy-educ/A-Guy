@@ -85,7 +85,9 @@ export async function resolveGenkitConfig(
     // Use the higher of DB config and code registry to prevent truncation
     const registryEntry = MODEL_REGISTRY[modelKey]
     maxOutputTokens = Math.max(modelSettings.maxOutputTokens, registryEntry.maxOutputTokens)
-    temperature = chatConfig.temperature.default
+    // Use model-specific temperature from registry (e.g., 0.1 for PDF extraction)
+    // instead of the global chat default which is meant for conversational models
+    temperature = registryEntry.temperature
     timeout = Math.floor(chatConfig.chatSettings.defaultChatTimeoutMs / 1000)
   } catch {
     // Fallback to MODEL_REGISTRY defaults if ConfigValues not available

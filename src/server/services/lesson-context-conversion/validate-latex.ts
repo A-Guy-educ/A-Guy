@@ -73,8 +73,14 @@ export function validateExtractedLatex(text: string): LatexValidationResult {
     warnings.push('Output appears truncated')
   }
 
+  // Normalize fonts for Overleaf compatibility
+  const normalized = normalizeHebrewFonts(trimmed)
+  if (normalized !== trimmed) {
+    warnings.push('Replaced non-standard Hebrew fonts with Overleaf-compatible alternatives')
+  }
+
   const valid = errors.length === 0
-  return { valid, warnings, errors, sanitizedText: trimmed, isTruncated }
+  return { valid, warnings, errors, sanitizedText: normalized, isTruncated }
 }
 
 /**
@@ -152,6 +158,30 @@ function detectTruncation(text: string, braceBalance: number, envIssues: string[
   if (hasEmptySolutionStubs(text)) return true
 
   return false
+}
+
+/**
+ * Replace non-standard Hebrew fonts (David CLM, Miriam CLM, etc.) with
+ * universally available alternatives that work on Overleaf without manual
+ * font uploads. FreeSerif/FreeSans/FreeMono are pre-installed on TeX Live
+ * and support Hebrew glyphs.
+ */
+function normalizeHebrewFonts(text: string): string {
+  // Map non-standard fonts to universally available alternatives
+  const fontReplacements: Array<[RegExp, string]> = [
+    [/David CLM/g, 'FreeSerif'],
+    [/Miriam Mono CLM/g, 'FreeMono'],
+    [/Miriam CLM/g, 'FreeSans'],
+    [/Hadasim CLM/g, 'FreeSerif'],
+    [/Nachlieli CLM/g, 'FreeSans'],
+    [/Frank Ruehl CLM/g, 'FreeSerif'],
+  ]
+
+  let result = text
+  for (const [pattern, replacement] of fontReplacements) {
+    result = result.replace(pattern, replacement)
+  }
+  return result
 }
 
 /**

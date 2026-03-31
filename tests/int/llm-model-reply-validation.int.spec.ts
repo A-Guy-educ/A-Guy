@@ -109,9 +109,9 @@ describe('LLM Model Configuration Validation', () => {
       expect(imageConfig.temperature).toBe(0.2)
       expect(imageConfig.temperature).toBeLessThan(0.5) // Should be lower for consistency
 
-      // PDF_TO_EXERCISE: Lowest temperature (0.1) for accurate extraction
+      // PDF_TO_EXERCISE: Zero temperature for deterministic extraction
       const pdfConfig = getProviderModelConfig(LLMProviderType.GEMINI, 'PDF_TO_EXERCISE')
-      expect(pdfConfig.temperature).toBe(0.1)
+      expect(pdfConfig.temperature).toBe(0)
       expect(pdfConfig.temperature).toBeLessThan(0.3) // Should be lowest for accuracy
     })
 
@@ -340,7 +340,7 @@ describe('LLM Model API Validation (Manual Test)', () => {
       async () => {
         const modelConfig = getProviderModelConfig(LLMProviderType.GEMINI, 'PDF_TO_EXERCISE')
         expect(modelConfig.name).toBe('gemini-3.1-pro')
-        expect(modelConfig.temperature).toBe(0.1)
+        expect(modelConfig.temperature).toBe(0)
         expect(modelConfig.maxOutputTokens).toBe(32768)
         // Actual API call would go here in a full integration test
       },
@@ -395,7 +395,7 @@ describe('LLM Model API Validation (Manual Test)', () => {
           'PDF_TO_EXERCISE',
         )
         expect(modelConfig.name).toBe('MiniMax-M2.1')
-        expect(modelConfig.temperature).toBe(0.1)
+        expect(modelConfig.temperature).toBe(0)
         expect(modelConfig.maxOutputTokens).toBe(32768)
         // Actual API call would go here in a full integration test
       },

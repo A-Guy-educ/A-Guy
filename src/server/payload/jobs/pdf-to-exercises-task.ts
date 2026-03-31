@@ -444,7 +444,32 @@ Return a JSON array of exercises with this schema:
     payload,
   )
 
-  const rawExtracted = parseExtractorResponseText(extractorResult.text)
+  let rawExtracted = parseExtractorResponseText(extractorResult.text)
+
+  // ========== Exercise Count Check with Auto-Retry ==========
+  // If the extraction returned suspiciously few exercises (e.g., 2 instead of 8),
+  // retry once — run-to-run variance is a known issue with LLM extraction.
+  const minExpectedPerPage = 1 // At least 1 exercise per page on average
+  const minExpected = Math.max(1, segment.pageEnd - segment.pageStart + 1) * minExpectedPerPage
+  if (Array.isArray(rawExtracted) && rawExtracted.length < minExpected) {
+    console.warn(
+      `[PDF→Exercises] Segment pages ${segment.pageStart}-${segment.pageEnd}: ` +
+        `extracted only ${rawExtracted.length} exercises (expected ≥${minExpected}), retrying...`,
+    )
+    const retryResult = await provider.generateMultimodalCompletion(
+      {
+        prompt: extractorPromptWithContext,
+        model: modelConfig,
+        attachments,
+      },
+      payload,
+    )
+    const retryExtracted = parseExtractorResponseText(retryResult.text)
+    // Use whichever extraction returned more exercises
+    if (Array.isArray(retryExtracted) && retryExtracted.length > rawExtracted.length) {
+      rawExtracted = retryExtracted
+    }
+  }
 
   // ========== Schema Validation for Extractor Output ==========
   // Lenient validation: skips invalid exercises and logs errors (mirrors verifier pattern)
