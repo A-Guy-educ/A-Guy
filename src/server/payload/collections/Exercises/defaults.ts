@@ -306,9 +306,9 @@ export const ExerciseBlockDefaults: Record<string, () => ContentBlock> = {
       canvas: { width: 600, height: 400, background: '#ffffff', grid: true },
       elements: {
         points: [
-          { name: 'A', x: 150, y: 100, position: 'tl', visible: true },
-          { name: 'B', x: 350, y: 100, position: 'tr', visible: true },
-          { name: 'C', x: 250, y: 300, position: 'b', visible: true },
+          { name: 'A', x: 150, y: 100, position: 'tl', visible: true, color: '#1a1a2e' },
+          { name: 'B', x: 350, y: 100, position: 'tr', visible: true, color: '#1a1a2e' },
+          { name: 'C', x: 250, y: 300, position: 'b', visible: true, color: '#1a1a2e' },
         ],
         lines: [],
         circles: [],

@@ -41,7 +41,12 @@ function renderPoints(board: JXG.Board, points: PointSpec[]): Map<string, any> {
   return pointMap
 }
 
-function renderLines(board: JXG.Board, lines: LineSpec[], pointMap: Map<string, any>) {
+function renderLines(
+  board: JXG.Board,
+  lines: LineSpec[],
+  pointMap: Map<string, any>,
+  canvasHeight: number,
+) {
   for (const line of lines) {
     const from = pointMap.get(line.from)
     const to = pointMap.get(line.to)
@@ -58,13 +63,23 @@ function renderLines(board: JXG.Board, lines: LineSpec[], pointMap: Map<string, 
     board.create('segment', [from, to], attrs)
 
     if (line.label?.value) {
-      const midX = (from.X() + to.X()) / 2
-      const midY = (from.Y() + to.Y()) / 2
-      const offset = line.label.position === 'b' ? -0.5 : 0.5
-      board.create('text', [midX, midY + offset, line.label.value], {
+      const dx = to.X() - from.X()
+      const dy = to.Y() - from.Y()
+      const len = Math.sqrt(dx * dx + dy * dy) || 1
+      const baseOffset = canvasHeight * 0.03
+      const offsetDist =
+        line.label.position === 'b' ? -baseOffset : line.label.position === 'm' ? 0 : baseOffset
+      const midX = (from.X() + to.X()) / 2 + (-dy / len) * offsetDist
+      const midY = (from.Y() + to.Y()) / 2 + (dx / len) * offsetDist
+      let deg = (Math.atan2(dy, dx) * 180) / Math.PI
+      if (deg > 90) deg -= 180
+      if (deg < -90) deg += 180
+      board.create('text', [midX, midY, line.label.value], {
         fontSize: line.label.fontSize ?? 12,
         anchorX: 'middle',
         anchorY: 'middle',
+        display: 'internal',
+        rotate: deg,
       })
     }
   }
@@ -117,7 +132,7 @@ function renderAngles(board: JXG.Board, angles: AngleSpec[], pointMap: Map<strin
  */
 export function renderGeometrySpec(board: JXG.Board, spec: GeometrySpecV1): void {
   const pointMap = renderPoints(board, spec.elements.points)
-  renderLines(board, spec.elements.lines, pointMap)
+  renderLines(board, spec.elements.lines, pointMap, spec.canvas.height)
   renderCircles(board, spec.elements.circles, pointMap)
   renderAngles(board, spec.elements.angles, pointMap)
 

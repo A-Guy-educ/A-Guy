@@ -3,7 +3,7 @@
 import type { GeometrySpecV1 } from '@/infra/contracts/graphics/geometry.v1'
 import {
   getDefaultAngleColor,
-  getDefaultCanvasBackground,
+  getAdminCanvasBackground,
   getDefaultCanvasElementColor,
   sizeScaleToPixels,
 } from '@/infra/contracts/graphics/textColors'
@@ -182,7 +182,7 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
   return (
     <div
       className={`geo-canvas-wrap geo-canvas-wrap--${interactionMode}`}
-      style={{ background: canvas.background || getDefaultCanvasBackground() }}
+      style={{ background: canvas.background || getAdminCanvasBackground() }}
     >
       <JSXGraphBoard
         id={id}
@@ -343,14 +343,32 @@ function syncLineLabels(
 
     const f = fromEl as unknown as { X: () => number; Y: () => number }
     const t = toEl as unknown as { X: () => number; Y: () => number }
-    const offset = line.label.position === 'b' ? -1.5 : 1.5
+    // Scale offset to ~3% of canvas height so it's visible on large coordinate spaces
+    const baseOffset = geometry.canvas.height * 0.03
+    const offsetDist =
+      line.label.position === 'b' ? -baseOffset : line.label.position === 'm' ? 0 : baseOffset
     const el = board.create(
       'text',
-      [() => (f.X() + t.X()) / 2, () => (f.Y() + t.Y()) / 2 + offset, line.label.value],
+      [
+        () => {
+          const dx = t.X() - f.X()
+          const dy = t.Y() - f.Y()
+          const len = Math.sqrt(dx * dx + dy * dy) || 1
+          return (f.X() + t.X()) / 2 + (-dy / len) * offsetDist
+        },
+        () => {
+          const dx = t.X() - f.X()
+          const dy = t.Y() - f.Y()
+          const len = Math.sqrt(dx * dx + dy * dy) || 1
+          return (f.Y() + t.Y()) / 2 + (dx / len) * offsetDist
+        },
+        line.label.value,
+      ],
       {
         fontSize: line.label.fontSize || 12,
         anchorX: 'middle',
         anchorY: 'middle',
+        display: 'internal',
         rotate: () => {
           const dx = t.X() - f.X()
           const dy = t.Y() - f.Y()
