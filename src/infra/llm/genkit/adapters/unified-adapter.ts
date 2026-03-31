@@ -172,7 +172,12 @@ export async function createGenkitUnifiedAdapter(
       // A hung stream could block a serverless function until execution time limit
       const streamTimeoutMs = input.timeoutMs ?? 30_000
       const result = await withTimeout(
-        async () => ai.generateStream({ model: config.model, prompt }),
+        async () =>
+          ai.generateStream({
+            model: config.model,
+            prompt,
+            config: { temperature: config.temperature },
+          }),
         { timeoutMs: streamTimeoutMs, message: 'Stream initialization timed out' },
       )
 
