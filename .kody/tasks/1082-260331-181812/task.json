@@ -1,0 +1,11 @@
+{
+  "task_type": "feature",
+  "title": "Add course lessons sorter to admin course edit page",
+  "description": "Add a custom UI component in the admin course edit view (positioned before the meta group) that displays all lessons for the course, grouped by chapter, with drag-and-drop and button-based sorting of lessons within each chapter. Sorting updates the lesson's order field via API calls. The component should follow the existing LessonBlocksField pattern for sorting UI.",
+  "scope": [
+    "src/ui/admin/CourseLessonsSorter/index.tsx",
+    "src/server/payload/collections/Courses.ts"
+  ],
+  "risk_level": "medium",
+  "questions": []
+}

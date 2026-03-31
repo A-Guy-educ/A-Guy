@@ -231,6 +231,18 @@ export const Courses: CollectionConfig = {
         description: 'URL-friendly identifier (auto-generated from title if empty)',
       },
     },
+
+    // Course Lessons Sorter (UI component)
+    {
+      name: 'lessonsSorter',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/ui/admin/CourseLessonsSorter#CourseLessonsSorter',
+        },
+      },
+    },
+
     {
       name: 'meta',
       type: 'group',
