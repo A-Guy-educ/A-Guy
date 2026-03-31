@@ -23,7 +23,7 @@ import {
   hasTikzDrawPlot,
 } from '@/lib/latex-parser/tikz-axis-parser'
 import { parseTikzGeometry, hasTikzGeometry } from '@/lib/latex-parser/tikz-geometry-parser'
-import { makeRichTextBlock, makeLatexBlock } from '@/lib/latex-parser/block-generators'
+import { makeRichTextBlock } from '@/lib/latex-parser/block-generators'
 import type { ContentBlock } from '@/server/payload/collections/Exercises/types'
 
 /**
@@ -340,11 +340,10 @@ function processTokens(
     } else if (token.type === 'math') {
       // Strip color/sizing commands from math expressions
       const val = stripColorAndSizing(token.value)
-      if (val.startsWith('$$') && val.endsWith('$$')) {
-        blocks.push(makeLatexBlock(val.slice(2, -2).trim()))
-      } else {
-        blocks.push(makeRichTextBlock(val))
-      }
+      // Emit all math as rich_text with md-math-v1 format
+      // The frontend renderer handles $...$ (inline) and $$...$$ (display) in rich_text
+      // but does NOT render standalone 'latex' block types
+      blocks.push(makeRichTextBlock(val))
     } else if (token.type === 'command') {
       const cmdName = token.name ?? ''
       if (SKIP_COMMANDS.has(cmdName)) {
