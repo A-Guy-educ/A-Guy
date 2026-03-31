@@ -127,14 +127,39 @@ const SKIP_COMMANDS = new Set([
   'itemsep',
 ])
 
+/**
+ * Strip \color{...} and {\color{...} content} from any string (text or math).
+ * Also strips \Large and other sizing commands, and cleans orphaned braces.
+ *
+ * Handles the pattern: ${\color{winered} 70 }$ → $70$
+ * and: ${\Large\color{winered} s \approx 10.2 }$ → $s \approx 10.2$
+ */
+function stripColorAndSizing(text: string): string {
+  // First pass: handle {\color{name} content } → content  (full brace group)
+  // This regex matches the opening { + \color{...} and its matching closing }
+  let result = text.replace(/\{\\(?:color\{[^}]*\}|Large|large|huge|Huge)\s*/g, '')
+  // Remove the orphaned closing } left from the above
+  // Strategy: repeatedly strip unbalanced } that aren't part of LaTeX commands
+  result = result
+    .replace(/\\(?:Large|large|huge|Huge|normalsize|small|footnotesize|tiny)\s*/g, '')
+    .replace(/\\color\{[^}]*\}/g, '')
+    .replace(/\\definecolor\{[^}]*\}\{[^}]*\}\{[^}]*\}/g, '')
+
+  // Clean orphaned } inside $...$ math expressions
+  // Match $ ... content } ... $ and remove the orphaned }
+  result = result.replace(/(\$[^$]*?)\s*\}\s*(\$)/g, '$1$2')
+  // Also handle } before commas, periods, spaces in text
+  result = result.replace(/\s+\}(?=[\s,.)$])/g, '')
+  // Trailing orphaned }
+  result = result.replace(/\s*\}\s*$/g, '')
+
+  return result
+}
+
 /** Clean LaTeX text: strip formatting commands, normalize whitespace */
 function cleanText(text: string): string {
   return (
-    text
-      // Strip {\color{name} content} → content (preserves inner text)
-      .replace(/\{\\color\{[^}]*\}\s*/g, '')
-      // Strip orphaned closing braces left from color stripping
-      // (handled carefully to not break math)
+    stripColorAndSizing(text)
       .replace(/\\textbf\{([^}]*)\}/g, '**$1**')
       .replace(/\\textit\{([^}]*)\}/g, '*$1*')
       .replace(/\\emph\{([^}]*)\}/g, '*$1*')
@@ -148,8 +173,6 @@ function cleanText(text: string): string {
       .replace(/\\begingroup/g, '')
       .replace(/\\endgroup/g, '')
       .replace(/\\arraystretch/g, '')
-      .replace(/\\definecolor\{[^}]*\}\{[^}]*\}\{[^}]*\}/g, '')
-      .replace(/\\color\{[^}]*\}/g, '')
       // Strip leading line-break spacing like [0.2cm], [5mm]
       .replace(/^\s*\[\d+(\.\d+)?(cm|mm|pt|em|ex)\]\s*/g, '')
       .trim()
@@ -272,7 +295,8 @@ function processTokens(
         }
       }
     } else if (token.type === 'math') {
-      const val = token.value
+      // Strip color/sizing commands from math expressions
+      const val = stripColorAndSizing(token.value)
       if (val.startsWith('$$') && val.endsWith('$$')) {
         blocks.push(makeLatexBlock(val.slice(2, -2).trim()))
       } else {
