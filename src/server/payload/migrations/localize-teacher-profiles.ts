@@ -102,24 +102,35 @@ export async function localizeTeacherProfiles(
       })
       updated++
 
-      // Create English translation doc
+      // Create English translation doc (if not already exists)
       const enLabel = profile.label_en ?? profile.label ?? profile.slug
       const enDescription = profile.description_en ?? profile.description ?? ''
 
-      await payload.create({
+      const existingEn = await payload.find({
         collection: 'teacher_profiles',
-        data: {
-          slug: profile.slug,
-          locale: 'en',
-          translatedFrom: profile.id,
-          label: enLabel,
-          description: enDescription,
-          systemPrompt: promptId,
-          isEnabled: profile.isEnabled ?? true,
+        where: {
+          and: [{ slug: { equals: profile.slug } }, { locale: { equals: 'en' } }],
         },
+        limit: 1,
         overrideAccess: true,
       })
-      created++
+
+      if (existingEn.docs.length === 0) {
+        await payload.create({
+          collection: 'teacher_profiles',
+          data: {
+            slug: profile.slug,
+            locale: 'en',
+            translatedFrom: profile.id,
+            label: enLabel,
+            description: enDescription,
+            systemPrompt: promptId,
+            isEnabled: profile.isEnabled ?? true,
+          },
+          overrideAccess: true,
+        })
+        created++
+      }
     } catch (err) {
       payload.logger?.warn(
         `[localizeTeacherProfiles] Failed to migrate profile ${profile.id}: ${err}`,

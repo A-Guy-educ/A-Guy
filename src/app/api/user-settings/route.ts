@@ -13,7 +13,6 @@ import { z } from 'zod'
 
 import config from '@payload-config'
 import { cookieName, defaultLocale, type Locale, locales } from '@/i18n/config'
-import { localeWhereClause } from '@/server/payload/fields/contentLocale'
 
 function getLocaleFromRequest(req: Request): Locale {
   const cookieHeader = req.headers.get('cookie') ?? ''
@@ -72,7 +71,7 @@ export async function GET(req: Request) {
     const localeProfile = await payload.find({
       collection: 'teacher_profiles',
       where: {
-        and: [{ slug: { equals: storedProfile.slug } }, localeWhereClause(locale)],
+        and: [{ slug: { equals: storedProfile.slug } }, { locale: { equals: locale } }],
       },
       limit: 1,
       overrideAccess: true,
