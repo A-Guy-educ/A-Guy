@@ -1,0 +1,10 @@
+```json
+{
+  "task_type": "bugfix",
+  "title": "Fix /api/copilotkit GET route missing authentication",
+  "description": "The GET handler in /api/copilotkit/route.ts was not wrapped with withApiHandler, making it implicitly unauthenticated. Wrapped it with withApiHandler<undefined, undefined>({ auth: 'public' }) to explicitly mark it as a public health check endpoint. The other 3 flagged routes already have proper auth via withApiHandler with auth: 'admin' - the scanner has a false positive for those.",
+  "scope": ["src/app/api/copilotkit/route.ts"],
+  "risk_level": "low",
+  "questions": []
+}
+```
