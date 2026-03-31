@@ -88,7 +88,7 @@ export const MODEL_REGISTRY: Record<AIModelKey, Omit<AIModel, 'name'>> = {
     capabilities: ['multimodal', 'chat'],
   },
   PDF_TO_EXERCISE: {
-    temperature: 0,
+    temperature: 0.1,
     maxOutputTokens: 32768,
     capabilities: ['document', 'extraction'],
   },

@@ -340,7 +340,7 @@ describe('LLM Model API Validation (Manual Test)', () => {
       async () => {
         const modelConfig = getProviderModelConfig(LLMProviderType.GEMINI, 'PDF_TO_EXERCISE')
         expect(modelConfig.name).toBe('gemini-3.1-pro')
-        expect(modelConfig.temperature).toBe(0)
+        expect(modelConfig.temperature).toBe(0.1)
         expect(modelConfig.maxOutputTokens).toBe(32768)
         // Actual API call would go here in a full integration test
       },
@@ -395,7 +395,7 @@ describe('LLM Model API Validation (Manual Test)', () => {
           'PDF_TO_EXERCISE',
         )
         expect(modelConfig.name).toBe('MiniMax-M2.1')
-        expect(modelConfig.temperature).toBe(0)
+        expect(modelConfig.temperature).toBe(0.1)
         expect(modelConfig.maxOutputTokens).toBe(32768)
         // Actual API call would go here in a full integration test
       },
