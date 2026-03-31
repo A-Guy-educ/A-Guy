@@ -23,21 +23,6 @@ import type { Payload } from 'payload'
 
 import { DEFAULT_CONTENT_LOCALE } from '../fields/contentLocale'
 
-/** Legacy fields that existed before the per-locale refactor */
-interface LegacyTeacherProfile {
-  id: string
-  slug: string
-  label?: string
-  label_en?: string
-  label_he?: string
-  description?: string
-  description_en?: string
-  description_he?: string
-  systemPrompt: string | { id: string }
-  isEnabled?: boolean
-  locale?: string
-}
-
 export async function localizeTeacherProfiles(
   payload: Payload,
 ): Promise<{ updated: number; created: number; skipped: number; errors: number }> {
@@ -73,7 +58,7 @@ export async function localizeTeacherProfiles(
   })
 
   for (const doc of allProfiles.docs) {
-    const profile = doc as unknown as LegacyTeacherProfile
+    const profile = doc as any
 
     // Skip if fully migrated (has locale AND label)
     if (profile.locale && profile.label) {

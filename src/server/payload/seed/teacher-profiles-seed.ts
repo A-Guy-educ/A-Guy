@@ -19,10 +19,14 @@ import type { Payload } from 'payload'
 const TEACHER_PROFILES = [
   {
     slug: 'teacher_strict',
-    label_he: 'מורה קפדן',
-    label_en: 'Strict Teacher',
-    description_he: 'שומר על סטנדרטים גבוהים ומצפה לתשובות מדויקות.',
-    description_en: 'Maintains high standards and expects precise, accurate responses.',
+    he: {
+      label: 'מורה קפדן',
+      description: 'שומר על סטנדרטים גבוהים ומצפה לתשובות מדויקות.',
+    },
+    en: {
+      label: 'Strict Teacher',
+      description: 'Maintains high standards and expects precise, accurate responses.',
+    },
     promptKey: 'teacher-strict-v1',
     promptTitle: 'Strict Teacher v1',
     promptTemplate: `You are a strict but fair teacher who maintains high academic standards.
@@ -34,10 +38,14 @@ const TEACHER_PROFILES = [
   },
   {
     slug: 'teacher_thorough',
-    label_he: 'מורה יסודי',
-    label_en: 'Thorough Teacher',
-    description_he: 'מספק הסברים מקיפים עם פרוט נרחב.',
-    description_en: 'Provides comprehensive explanations with extensive detail.',
+    he: {
+      label: 'מורה יסודי',
+      description: 'מספק הסברים מקיפים עם פרוט נרחב.',
+    },
+    en: {
+      label: 'Thorough Teacher',
+      description: 'Provides comprehensive explanations with extensive detail.',
+    },
     promptKey: 'teacher-thorough-v1',
     promptTitle: 'Thorough Teacher v1',
     promptTemplate: `You are a thorough teacher who provides comprehensive, detailed explanations.
@@ -49,10 +57,14 @@ const TEACHER_PROFILES = [
   },
   {
     slug: 'teacher_patient',
-    label_he: 'מורה סבלני',
-    label_en: 'Patient Teacher',
-    description_he: 'ניגש ללמידה עם סבלנות ועידוד.',
-    description_en: 'Approaches learning with patience and encouragement.',
+    he: {
+      label: 'מורה סבלני',
+      description: 'ניגש ללמידה עם סבלנות ועידוד.',
+    },
+    en: {
+      label: 'Patient Teacher',
+      description: 'Approaches learning with patience and encouragement.',
+    },
     promptKey: 'teacher-patient-v1',
     promptTitle: 'Patient Teacher v1',
     promptTemplate: `You are a patient, supportive teacher who prioritizes student confidence.
@@ -64,10 +76,14 @@ const TEACHER_PROFILES = [
   },
   {
     slug: 'teacher_focused',
-    label_he: 'מורה ממוקד',
-    label_en: 'Focused Teacher',
-    description_he: 'שומר על השיעורים ממוקדים עם יעדים ברורים.',
-    description_en: 'Keeps lessons on track with clear objectives and efficient delivery.',
+    he: {
+      label: 'מורה ממוקד',
+      description: 'שומר על השיעורים ממוקדים עם יעדים ברורים.',
+    },
+    en: {
+      label: 'Focused Teacher',
+      description: 'Keeps lessons on track with clear objectives and efficient delivery.',
+    },
     promptKey: 'teacher-focused-v1',
     promptTitle: 'Focused Teacher v1',
     promptTemplate: `You are a focused teacher who keeps lessons efficient and goal-oriented.
@@ -79,10 +95,14 @@ const TEACHER_PROFILES = [
   },
   {
     slug: 'teacher_challenging',
-    label_he: 'מורה מאתגר',
-    label_en: 'Challenging Teacher',
-    description_he: 'מאתגר תלמידים עם שאלות מעוררות מחשבה וחומר מתקדם.',
-    description_en: 'Pushes students with thought-provoking questions and advanced material.',
+    he: {
+      label: 'מורה מאתגר',
+      description: 'מאתגר תלמידים עם שאלות מעוררות מחשבה וחומר מתקדם.',
+    },
+    en: {
+      label: 'Challenging Teacher',
+      description: 'Pushes students with thought-provoking questions and advanced material.',
+    },
     promptKey: 'teacher-challenging-v1',
     promptTitle: 'Challenging Teacher v1',
     promptTemplate: `You are a challenging teacher who pushes students to reach their full potential.
@@ -178,8 +198,8 @@ export async function seedTeacherProfiles(payload: Payload): Promise<void> {
         collection: 'teacher_profiles',
         id: heDocId,
         data: {
-          label: profile.label_he,
-          description: profile.description_he,
+          label: profile.he.label,
+          description: profile.he.description,
           systemPrompt: promptId,
         },
         overrideAccess: true,
@@ -191,8 +211,8 @@ export async function seedTeacherProfiles(payload: Payload): Promise<void> {
         data: {
           slug: profile.slug,
           locale: 'he',
-          label: profile.label_he,
-          description: profile.description_he,
+          label: profile.he.label,
+          description: profile.he.description,
           systemPrompt: promptId,
           isEnabled: true,
         },
@@ -217,8 +237,8 @@ export async function seedTeacherProfiles(payload: Payload): Promise<void> {
         collection: 'teacher_profiles',
         id: existingEn.docs[0].id,
         data: {
-          label: profile.label_en,
-          description: profile.description_en,
+          label: profile.en.label,
+          description: profile.en.description,
           translatedFrom: heDocId,
           systemPrompt: promptId,
         },
@@ -232,8 +252,8 @@ export async function seedTeacherProfiles(payload: Payload): Promise<void> {
           slug: profile.slug,
           locale: 'en',
           translatedFrom: heDocId,
-          label: profile.label_en,
-          description: profile.description_en,
+          label: profile.en.label,
+          description: profile.en.description,
           systemPrompt: promptId,
           isEnabled: true,
         },
