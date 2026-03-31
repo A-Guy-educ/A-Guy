@@ -3,6 +3,7 @@
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import { NavigationBar } from '@/ui/web/homepage/NavigationBar'
+import { PageTransition } from '@/ui/web/components/page-transition'
 import { RequireCourseSelection } from '@/ui/web/guards/RequireCourseSelection'
 import { AskConversationGrid } from '../AskConversationGrid'
 import { AskContent } from '../AskContent'
@@ -27,10 +28,12 @@ function AskPageInner() {
 
 export function AskPageClient() {
   return (
-    <RequireCourseSelection>
-      <Suspense>
-        <AskPageInner />
-      </Suspense>
-    </RequireCourseSelection>
+    <PageTransition>
+      <RequireCourseSelection>
+        <Suspense>
+          <AskPageInner />
+        </Suspense>
+      </RequireCourseSelection>
+    </PageTransition>
   )
 }

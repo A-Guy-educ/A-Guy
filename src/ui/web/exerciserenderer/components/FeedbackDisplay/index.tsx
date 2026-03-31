@@ -20,7 +20,7 @@ export function FeedbackDisplay({ checkResult, correctText, incorrectText }: Fee
   return (
     <div
       className={cn(
-        'mt-card-padding p-card-padding-sm rounded-lg border-2',
+        'mt-card-padding p-card-padding-sm rounded-lg border-2 animate-in fade-in slide-in-from-bottom-2 duration-normal',
         checkResult.isCorrect ? 'border-success bg-success/10' : 'border-error bg-error/10',
       )}
     >

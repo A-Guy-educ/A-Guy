@@ -41,13 +41,13 @@ export function ConvertButton({ lessonId }: ConvertButtonProps) {
       <button
         onClick={handleConvert}
         disabled={isConverting}
-        className="inline-flex items-center px-6 py-3 bg-gradient-to-br from-primary to-accent text-primary-foreground border-0 rounded-xl font-semibold text-base cursor-pointer transition-all duration-300 shadow-[0_4px_6px_hsl(var(--primary)/0.25)] hover:translate-y-[-2px] hover:shadow-[0_6px_12px_hsl(var(--primary)/0.35)] disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
+        className="inline-flex items-center px-6 py-3 bg-gradient-to-br from-primary to-accent text-primary-foreground border-0 rounded-xl font-semibold text-body-md cursor-pointer transition-all duration-slow shadow-elevation-3 hover:translate-y-[-2px] hover:shadow-elevation-4 disabled:opacity-disabled disabled:cursor-not-allowed disabled:transform-none"
       >
         {isConverting ? '🔄 Converting...' : '🪄 Convert to Exercise (AI)'}
       </button>
 
       {error && (
-        <div className="px-4 py-3 bg-destructive/10 text-destructive rounded-lg text-sm text-center max-w-[400px]">
+        <div className="px-4 py-3 bg-destructive/10 text-destructive rounded-lg text-body-sm text-center max-w-[400px]">
           {error}
         </div>
       )}

@@ -20,7 +20,7 @@ export default function AdminChatPage() {
 
   if (isLoading) {
     return (
-      <div className="p-4">
+      <div className="p-card-padding-sm">
         <div className="loading">Loading...</div>
       </div>
     )
@@ -28,7 +28,7 @@ export default function AdminChatPage() {
 
   if (!user) {
     return (
-      <div className="p-4">
+      <div className="p-card-padding-sm">
         <div className="error">Please log in to access admin chat</div>
       </div>
     )

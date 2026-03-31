@@ -15,8 +15,8 @@
 
   :root,
   [data-theme='light'] {
-    /* Light background - light gray-blue for exercise view */
-    --background: 210 33% 97%; /* #f4f7fa */
+    /* Light background - warm neutral */
+    --background: 40 20% 97%; /* #f9f8f6 */
     --foreground: 220 9% 11%; /* #1a1c1e */
 
     /* Card: pure white for elevated surfaces */
@@ -123,7 +123,7 @@
 
     /* Muted: dark gray-blue */
     --muted: 215 20% 14%;
-    --muted-foreground: 215 15% 60%;
+    --muted-foreground: 215 15% 65%;
 
     /* Accent: vibrant purple (complementary to coral) */
     --accent: 261 75% 65%;
@@ -132,8 +132,8 @@
     --destructive: 0 70% 35%;
     --destructive-foreground: 0 0% 95%;
 
-    /* Borders - subtle borders with alpha */
-    --border: 222 25% 18% / 0.7;
+    /* Borders - visible borders with alpha (must survive /30 modifier) */
+    --border: 220 20% 28% / 0.8;
     --input: 222 20% 14%;
 
     /* Focus ring follows primary */
@@ -177,20 +177,20 @@
     --surface-elevated-fg: var(--card-foreground);
 
     /* Text highlight tokens - for markdown ::text-highlight-N{} syntax */
-    --text-highlight-1: 0 72% 51%; /* Red */
-    --text-highlight-2: 25 95% 53%; /* Orange */
-    --text-highlight-3: 45 93% 47%; /* Yellow */
-    --text-highlight-4: 142 71% 45%; /* Green */
-    --text-highlight-5: 217 91% 60%; /* Blue */
-    --text-highlight-6: 271 91% 65%; /* Purple */
-    --text-highlight-7: 330 81% 60%; /* Pink */
-    --text-highlight-8: 220 8% 45%; /* Gray */
+    --text-highlight-1: 0 72% 62%; /* Red - brightened */
+    --text-highlight-2: 25 95% 62%; /* Orange - brightened */
+    --text-highlight-3: 45 93% 60%; /* Yellow - brightened */
+    --text-highlight-4: 142 71% 55%; /* Green - brightened */
+    --text-highlight-5: 217 91% 68%; /* Blue - brightened */
+    --text-highlight-6: 271 91% 72%; /* Purple - brightened */
+    --text-highlight-7: 330 81% 68%; /* Pink - brightened */
+    --text-highlight-8: 220 10% 65%; /* Gray - brightened for readability */
 
-    /* Course tab accent colors */
-    --tab-learn: 217 91% 60%; /* Blue */
-    --tab-practice: 0 72% 51%; /* Red */
-    --tab-exams: 330 81% 60%; /* Pink */
-    --tab-ask: 142 71% 45%; /* Green */
+    /* Course tab accent colors - brightened for dark backgrounds */
+    --tab-learn: 217 91% 68%; /* Blue */
+    --tab-practice: 0 72% 62%; /* Red */
+    --tab-exams: 330 81% 68%; /* Pink */
+    --tab-ask: 142 71% 55%; /* Green */
   }
 }
 
@@ -206,6 +206,7 @@
       BlinkMacSystemFont,
       'Segoe UI',
       sans-serif;
+    overscroll-behavior-y: contain;
   }
 }
 
@@ -541,6 +542,19 @@ math-field:focus-within {
 
 .aguy-text-highlight-8 {
   color: hsl(var(--text-highlight-8));
+}
+
+/* Landing page: hide chrome for immersive experience */
+body.landing-page header,
+body.landing-page footer {
+  display: none !important;
+}
+
+/* Mobile safe area insets for notch/home indicator */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 
 /* Document Mode Print Styles */

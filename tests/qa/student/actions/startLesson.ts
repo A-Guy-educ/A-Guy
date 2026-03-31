@@ -5,7 +5,7 @@
  * @domain qa
  * @pattern lesson-actions
  */
-import type { ActionContext, ActionHandler } from './types'
+import type { ActionHandler } from './types'
 import { LABELS } from '../shared/locales'
 
 export const startLesson: ActionHandler = async (ctx) => {

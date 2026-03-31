@@ -45,10 +45,13 @@ export function CommandPalette() {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50" onClick={() => setOpen(false)}>
-      <div className="fixed start-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl">
+    <div
+      className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm animate-in fade-in-0 duration-normal"
+      onClick={() => setOpen(false)}
+    >
+      <div className="fixed start-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl animate-in fade-in-0 zoom-in-95 duration-normal">
         <div onClick={(e) => e.stopPropagation()}>
-          <Command className="rounded-lg border shadow-elevation-3">
+          <Command className="rounded-lg border shadow-modal">
             <CommandInput placeholder="Type a command or search..." />
             <CommandList>
               <CommandEmpty>No results found.</CommandEmpty>

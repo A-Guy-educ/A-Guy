@@ -1,7 +1,8 @@
 /**
  * Category Progress Component
  *
- * Displays progress by category using TAB_COLORS
+ * Displays progress by category with colored progress bars and left border accents.
+ * Uses TAB_COLORS for per-category theming.
  */
 
 'use client'
@@ -10,7 +11,6 @@ import { useTranslations } from '@/ui/web/providers/I18n'
 import { Card, CardContent, CardHeader, CardTitle } from '@/ui/web/components/card'
 import { TAB_COLORS } from '@/app/(frontend)/courses/[courseSlug]/_components/CourseTabs'
 import { GraduationCap, Pencil, FileText, MessageCircle } from 'lucide-react'
-import { Progress } from '@/ui/web/components/progress'
 
 interface CategoryProgressData {
   learn: { count: number; total: number }
@@ -62,14 +62,18 @@ export function CategoryProgress({ data }: CategoryProgressProps) {
   ]
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-content-gap">
       {categories.map((category) => {
         const Icon = category.icon
         return (
-          <Card key={category.key}>
+          <Card
+            key={category.key}
+            className="bg-card border shadow-elevation-1 rounded-xl p-card-padding hover:border-border/50 active:scale-[0.98] will-change-transform transition-all duration-normal"
+            style={{ borderInlineStartWidth: '3px', borderInlineStartColor: category.color }}
+          >
             <CardHeader className="pb-2">
               <CardTitle
-                className="text-sm font-medium flex items-center gap-2"
+                className="text-body-sm font-medium flex items-center gap-2"
                 style={{ color: category.color }}
               >
                 <Icon className="w-4 h-4" style={{ color: category.color }} />
@@ -77,16 +81,18 @@ export function CategoryProgress({ data }: CategoryProgressProps) {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-lg font-semibold">{category.value}</div>
-              <Progress
-                value={category.progress}
-                className="mt-2"
-                style={
-                  {
-                    '--progressforeground': category.color,
-                  } as React.CSSProperties
-                }
-              />
+              <div className="text-heading-lg font-semibold">{category.value}</div>
+              {/* Colored progress bar */}
+              <div className="relative w-full overflow-hidden bg-muted rounded-full h-2 mt-3">
+                <div
+                  className="h-full rounded-full transition-all duration-700 ease-out"
+                  style={{
+                    width: `${Math.min(100, Math.max(0, category.progress))}%`,
+                    backgroundColor: category.color,
+                  }}
+                />
+              </div>
+              <p className="text-body-xs text-muted-foreground mt-1.5">{category.progress}%</p>
             </CardContent>
           </Card>
         )

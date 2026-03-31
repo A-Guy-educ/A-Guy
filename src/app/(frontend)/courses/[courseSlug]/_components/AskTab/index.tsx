@@ -6,6 +6,7 @@ import { Sparkles } from 'lucide-react'
 import { cn } from '@/infra/utils/ui'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { Button } from '@/ui/web/components/button'
+import { StaggerGrid, StaggerItem } from '@/ui/web/components/motion'
 import { ConversationCard } from '../ConversationCard'
 
 interface ConversationSummary {
@@ -65,44 +66,49 @@ export function AskTab({ courseId, accentColor }: AskTabProps) {
   const visible = conversations.slice(0, visibleCount)
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <StaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-content-gap-lg">
       {/* New Question card */}
-      <button
-        onClick={() => router.push('/ask')}
-        className={cn(
-          'bg-primary text-primary-foreground rounded-3xl p-6 shadow-card',
-          'flex items-center justify-between',
-          'transition-all cursor-pointer border border-transparent hover:opacity-95',
-          'text-start',
-        )}
-      >
-        <div className="flex flex-col">
-          <span className="text-[10px] font-bold text-primary-foreground/60 mb-1 uppercase tracking-wide">
-            {t('quickAction')}
-          </span>
-          <h3 className="text-xl font-bold">{t('newQuestion')}</h3>
-          <p className="text-xs text-primary-foreground/70 mt-1">{t('newQuestionSub')}</p>
-        </div>
-        <div className="w-14 h-14 bg-primary-foreground/20 rounded-full flex items-center justify-center shrink-0 ms-3">
-          <Sparkles className="w-6 h-6 text-primary-foreground fill-current" />
-        </div>
-      </button>
+      <StaggerItem>
+        <button
+          onClick={() => router.push('/ask')}
+          className={cn(
+            'bg-primary text-primary-foreground rounded-3xl p-6 shadow-card',
+            'flex items-center justify-between',
+            'transition-all duration-normal cursor-pointer border border-transparent hover:opacity-95',
+            'text-start',
+          )}
+        >
+          <div className="flex flex-col">
+            <span className="text-label font-bold text-primary-foreground/60 mb-1 uppercase tracking-wide">
+              {t('quickAction')}
+            </span>
+            <h3 className="text-heading-lg font-bold">{t('newQuestion')}</h3>
+            <p className="text-body-xs text-primary-foreground/70 mt-1">{t('newQuestionSub')}</p>
+          </div>
+          <div className="w-14 h-14 bg-primary-foreground/20 rounded-full flex items-center justify-center shrink-0 ms-3">
+            <Sparkles className="w-6 h-6 text-primary-foreground fill-current" />
+          </div>
+        </button>
+      </StaggerItem>
 
       {loading && (
-        <div className="col-span-full text-center text-muted-foreground py-8">{t('loading')}</div>
+        <div className="col-span-full text-center text-muted-foreground py-section-md">
+          {t('loading')}
+        </div>
       )}
 
       {/* Conversation cards */}
       {visible.map((conv, idx) => (
-        <ConversationCard
-          key={conv.id}
-          index={total - idx}
-          title={conv.title || `${t('question')} ${total - idx}`}
-          subtitle={`${conv.messageCount} messages`}
-          onClick={() => router.push(`/ask?conversationId=${conv.id}`)}
-          onDelete={() => handleDelete(conv.id)}
-          accentColor={accentColor}
-        />
+        <StaggerItem key={conv.id}>
+          <ConversationCard
+            index={total - idx}
+            title={conv.title || `${t('question')} ${total - idx}`}
+            subtitle={`${conv.messageCount} messages`}
+            onClick={() => router.push(`/ask?conversationId=${conv.id}`)}
+            onDelete={() => handleDelete(conv.id)}
+            accentColor={accentColor}
+          />
+        </StaggerItem>
       ))}
 
       {/* Show more */}
@@ -113,6 +119,6 @@ export function AskTab({ courseId, accentColor }: AskTabProps) {
           </Button>
         </div>
       )}
-    </div>
+    </StaggerGrid>
   )
 }

@@ -11,10 +11,10 @@ export function CourseHeader({ courseLabel, title, description }: CourseHeaderPr
   return (
     <header className="mb-8">
       <div className="mb-2">
-        <span className="text-sm font-semibold text-muted-foreground">{courseLabel}</span>
+        <span className="text-body-sm font-semibold text-muted-foreground">{courseLabel}</span>
       </div>
-      <h1 className="text-4xl font-bold mb-4">{title}</h1>
-      {shouldShowDescription && <p className="text-xl text-muted-foreground">{description}</p>}
+      <h1 className="text-display-md font-bold mb-4">{title}</h1>
+      {shouldShowDescription && <p className="text-body-xl text-muted-foreground">{description}</p>}
     </header>
   )
 }

@@ -22,7 +22,8 @@ vi.mock('@/ui/web/exerciserenderer/blocks/RichTextRenderer', () => ({
 }))
 
 // Type-only import - will fail at compile if component doesn't exist (expected in TDD)
-import type { GraphLayout } from '@/server/payload/collections/Exercises/types'
+// Type-only import kept as compile-time check (prefixed to satisfy lint)
+import type { GraphLayout as _GraphLayout } from '@/server/payload/collections/Exercises/types'
 
 // Import actual implementation
 import { GraphWithPrompt } from '@/ui/web/exerciserenderer/blocks/GraphWithPrompt'

@@ -42,8 +42,8 @@ export function HelpSystemButtons({
         className={cn(
           'flex items-center gap-1.5 px-4 py-2 rounded-xl text-body-xs transition-all duration-slow border shadow-elevation-1',
           activeHelp === 'hint'
-            ? 'bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-200/60 text-amber-700 shadow-amber-100'
-            : 'bg-white border-gray-200/60 text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:shadow-elevation-3',
+            ? 'bg-warning/10 border-warning/30 text-warning'
+            : 'bg-card border-border text-muted-foreground hover:bg-muted hover:border-muted-foreground hover:shadow-elevation-3',
         )}
       >
         <Lightbulb className="w-4 h-4" />
@@ -57,8 +57,8 @@ export function HelpSystemButtons({
         className={cn(
           'flex items-center gap-1.5 px-4 py-2 rounded-xl text-body-xs transition-all duration-slow border shadow-elevation-1',
           activeHelp === 'guiding'
-            ? 'bg-gradient-to-br from-purple-50 to-purple-100/50 border-purple-200/60 text-purple-700 shadow-purple-100'
-            : 'bg-white border-gray-200/60 text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:shadow-elevation-3',
+            ? 'bg-accent/10 border-accent/30 text-accent'
+            : 'bg-card border-border text-muted-foreground hover:bg-muted hover:border-muted-foreground hover:shadow-elevation-3',
         )}
       >
         <HelpCircle className="w-4 h-4" />
@@ -73,8 +73,8 @@ export function HelpSystemButtons({
           className={cn(
             'flex items-center gap-1.5 px-4 py-2 rounded-xl text-body-xs transition-all duration-slow border shadow-elevation-1',
             activeHelp === 'solution'
-              ? 'bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200/60 text-blue-700 shadow-blue-100'
-              : 'bg-white border-gray-200/60 text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:shadow-elevation-3',
+              ? 'bg-primary/10 border-primary/30 text-primary'
+              : 'bg-card border-border text-muted-foreground hover:bg-muted hover:border-muted-foreground hover:shadow-elevation-3',
           )}
         >
           <CheckCircle2 className="w-4 h-4" />

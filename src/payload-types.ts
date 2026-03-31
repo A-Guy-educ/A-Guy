@@ -465,7 +465,7 @@ export interface Category {
 export interface User {
   id: string;
   name?: string | null;
-  role: 'admin' | 'student';
+  role: 'admin' | 'advanced-content-editor' | 'student';
   googleSub?: string | null;
   verifiedEmail?: string | null;
   registrationMethod?: ('google' | 'email') | null;

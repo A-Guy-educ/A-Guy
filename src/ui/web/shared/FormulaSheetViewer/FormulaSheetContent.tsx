@@ -9,6 +9,7 @@
 
 'use client'
 
+import Image from 'next/image'
 import type { FormulaSheet } from '@/payload-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { PDFEmbed } from '../../courses/PDFViewer/PDFEmbed'
@@ -62,8 +63,14 @@ export function FormulaSheetContent({ sheet }: FormulaSheetContentProps) {
                 return (
                   <div key={block.id ?? index} className="rounded-lg overflow-hidden">
                     {media.mimeType?.startsWith('image/') ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={media.url} alt={media.alt || ''} className="w-full h-auto" />
+                      <Image
+                        src={media.url}
+                        alt={media.alt || ''}
+                        width={media.width || 800}
+                        height={media.height || 600}
+                        className="w-full h-auto"
+                        sizes="(max-width: 768px) 100vw, 800px"
+                      />
                     ) : (
                       <a href={media.url} className="text-primary underline">
                         {media.filename || 'Download'}

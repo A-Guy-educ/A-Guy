@@ -58,7 +58,7 @@ export function AccountHub({ user, initialSection }: AccountHubProps) {
       {/* My Progress & Stats - outside accordion */}
       <SystemLink
         href="/stats"
-        className="flex items-center gap-2 text-sm font-bold text-primary px-4 py-2 hover:bg-muted/50 rounded-lg transition-all w-full"
+        className="flex items-center gap-2 text-body-sm font-bold text-primary px-4 py-2 hover:bg-muted/50 rounded-lg transition-all duration-normal w-full"
       >
         <BarChart3 className="w-4 h-4" />
         {t('myProgressAndStats')}

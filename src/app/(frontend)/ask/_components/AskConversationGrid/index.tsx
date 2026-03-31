@@ -9,6 +9,7 @@ import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { cn } from '@/infra/utils/ui'
 import { logger } from '@/infra/utils/logger'
+import { StaggerGrid, StaggerItem } from '@/ui/web/components/motion'
 
 interface ConversationItem {
   id: string
@@ -103,7 +104,7 @@ export function AskConversationGrid() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-section-md">
         <div className="text-center text-muted-foreground">{ts('loading')}</div>
       </div>
     )
@@ -120,71 +121,79 @@ export function AskConversationGrid() {
       {/* Main Content */}
       <main className="container mx-auto px-6 py-10 max-w-5xl">
         <section className="mb-8 text-right px-2">
-          <h2 className="text-2xl md:text-3xl font-black text-foreground leading-tight">
+          <h2 className="text-heading-xl md:text-display-sm font-black text-foreground leading-tight">
             {t('sectionTitle.ask')}
           </h2>
         </section>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <StaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-content-gap">
           {/* New Question Card */}
-          <button
-            disabled={isCreating}
-            onClick={handleNewQuestion}
-            className={cn(
-              'bg-primary text-primary-foreground rounded-3xl p-6 shadow-card',
-              'flex items-center justify-between',
-              'border border-transparent hover:opacity-95',
-              'transition-all cursor-pointer active:scale-[0.98]',
-              'text-right',
-            )}
-          >
-            <div className="flex flex-col">
-              <span className="text-[10px] font-bold text-primary-foreground/60 mb-1 uppercase tracking-wide">
-                {t('quickAction')}
-              </span>
-              <h3 className="text-xl font-bold">{t('newQuestion')}</h3>
-              <p className="text-xs text-primary-foreground/70 mt-1">{t('newQuestionSub')}</p>
-            </div>
-            <div className="w-14 h-14 bg-primary-foreground/20 rounded-full flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-primary-foreground fill-current" />
-            </div>
-          </button>
-
-          {/* Past Conversation Cards */}
-          {conversations.map((conv, idx) => (
-            <SystemLink
-              key={conv.id}
-              href={`/ask?chat=${conv.id}&ctx=${encodeURIComponent(conv.contextKey ?? '')}`}
+          <StaggerItem>
+            <button
+              disabled={isCreating}
+              onClick={handleNewQuestion}
               className={cn(
-                'bg-card rounded-3xl p-6 shadow-card',
+                'bg-primary text-primary-foreground rounded-2xl p-5 shadow-elevation-1',
                 'flex items-center justify-between',
-                'border border-transparent hover:border-primary/20',
-                'transition-all cursor-pointer active:scale-[0.98]',
+                'border border-border/40 hover:opacity-95',
+                'transition-all duration-normal cursor-pointer hover:shadow-card-hover hover:-translate-y-0.5',
+                'text-right overflow-hidden',
               )}
             >
               <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-muted-foreground mb-1 uppercase tracking-wide">
-                  {t('question')} {conversations.length - idx}
+                <span className="text-label font-bold text-primary-foreground/60 mb-1 uppercase tracking-wide">
+                  {t('quickAction')}
                 </span>
-                <h3 className="text-lg font-bold text-card-foreground">{conv.title || '...'}</h3>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {conv.messageCount} {conv.messageCount === 1 ? 'message' : 'messages'}
+                <h3 className="text-heading-lg font-bold">{t('newQuestion')}</h3>
+                <p className="text-body-xs text-primary-foreground/70 mt-1">
+                  {t('newQuestionSub')}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center border border-border">
-                <MessageSquare className="w-5 h-5 text-muted-foreground" />
+              <div className="w-14 h-14 bg-primary-foreground/20 rounded-full flex items-center justify-center">
+                <Sparkles className="w-6 h-6 text-primary-foreground fill-current" />
               </div>
-            </SystemLink>
+            </button>
+          </StaggerItem>
+
+          {/* Past Conversation Cards */}
+          {conversations.map((conv, idx) => (
+            <StaggerItem key={conv.id}>
+              <SystemLink
+                href={`/ask?chat=${conv.id}&ctx=${encodeURIComponent(conv.contextKey ?? '')}`}
+                className={cn(
+                  'bg-card rounded-2xl p-5 shadow-elevation-1',
+                  'flex items-center justify-between',
+                  'border border-border/40 border-s-4 border-s-success',
+                  'transition-all duration-normal cursor-pointer hover:shadow-card-hover hover:-translate-y-0.5',
+                  'overflow-hidden',
+                )}
+              >
+                <div className="flex flex-col">
+                  <span className="text-label font-bold text-muted-foreground mb-1 uppercase tracking-wide">
+                    {t('question')} {conversations.length - idx}
+                  </span>
+                  <h3 className="text-heading-md font-bold text-card-foreground">
+                    {conv.title || '...'}
+                  </h3>
+                  <p className="text-body-sm text-muted-foreground mt-1">
+                    {conv.messageCount} {conv.messageCount === 1 ? 'message' : 'messages'}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center border border-border">
+                  <MessageSquare className="w-5 h-5 text-muted-foreground" />
+                </div>
+              </SystemLink>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerGrid>
 
         {/* Footer */}
         <div className="mt-16 pt-8 border-t border-border text-center">
-          <div className="flex flex-wrap justify-center gap-4">
-            <button className="text-sm font-bold text-muted-foreground bg-card shadow-card px-8 py-3 rounded-full hover:bg-muted transition-all text-nowrap">
+          <div className="flex flex-wrap justify-center gap-content-gap">
+            <button className="text-body-sm font-bold text-muted-foreground bg-card shadow-card px-8 py-3 rounded-full hover:bg-muted transition-all duration-normal text-nowrap">
               {t('viewStats')}
             </button>
-            <button className="text-sm font-bold text-primary-foreground bg-primary px-8 py-3 rounded-full shadow-lg hover:opacity-90 transition-all text-nowrap">
+            <button className="text-body-sm font-bold text-primary-foreground bg-primary px-8 py-3 rounded-full shadow-card hover:opacity-90 transition-all duration-normal text-nowrap">
               {t('continueLastPoint')}
             </button>
           </div>
@@ -203,21 +212,21 @@ function GradeSection({ courseId, courseLabel }: { courseId: string; courseLabel
   const { hasUpcomingExam, daysUntil } = useExamCountdown(courseId)
 
   return (
-    <div className="w-full bg-card/50 py-4 border-b border-border">
+    <div className="w-full bg-card/50 py-content-gap border-b border-border">
       <div className="max-w-5xl mx-auto px-6 flex flex-col">
         <div className="text-center">
-          <span className="text-sm md:text-base font-extrabold text-primary uppercase tracking-[0.3em]">
+          <span className="text-body-sm md:text-body-md font-extrabold text-primary uppercase tracking-[0.3em]">
             {t('grade')} {courseLabel}
           </span>
         </div>
         {hasUpcomingExam && daysUntil !== null && (
           <div className="flex items-center justify-end gap-3 mt-3 animate-in fade-in">
             <div className="bg-card shadow-card border border-primary/10 rounded-2xl rounded-tr-none px-4 py-2">
-              <p className="text-xs md:text-sm font-bold text-primary">
+              <p className="text-body-xs md:text-body-sm font-bold text-primary">
                 {t('examReminder').replace('{days}', String(daysUntil))}
               </p>
             </div>
-            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-md shrink-0">
+            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-elevation-2 shrink-0">
               <Sparkles className="w-4 h-4 text-primary-foreground fill-current" />
             </div>
           </div>

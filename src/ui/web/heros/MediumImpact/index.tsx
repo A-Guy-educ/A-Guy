@@ -7,9 +7,9 @@ import RichText from '@/ui/web/RichText'
 
 export const MediumImpactHero: React.FC<Page['hero']> = ({ links, richText }) => {
   return (
-    <div className="">
-      <div className="container mb-8">
-        {richText && <RichText className="mb-6" data={richText} enableGutter={false} />}
+    <div className="py-section-sm">
+      <div className="container mb-content-gap-lg">
+        {richText && <RichText className="mb-content-gap" data={richText} enableGutter={false} />}
 
         {Array.isArray(links) && links.length > 0 && (
           <ul className="flex gap-content-gap">

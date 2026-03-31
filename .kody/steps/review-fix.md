@@ -79,5 +79,6 @@ try {
 - [ ] No hardcoded secrets or credentials in edited files
 - [ ] If modifying Payload collections/globals: note in PR that `pnpm generate:types && pnpm generate:importmap` must run post-merge
 - [ ] All error messages are user-friendly (no raw stack traces in responses)
+- [ ] Frontend: semantic design tokens used — see `.kody/memory/design-system.md`
 
 {{TASK_CONTEXT}}

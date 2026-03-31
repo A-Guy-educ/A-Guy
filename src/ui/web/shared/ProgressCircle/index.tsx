@@ -1,6 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import { cn } from '@/infra/utils/ui'
 
 interface ProgressCircleProps {
   percentage: number
@@ -16,7 +17,7 @@ export function ProgressCircle({
   size = 60,
   strokeWidth = 4,
   strokeColor,
-  className = '',
+  className,
   children,
 }: ProgressCircleProps) {
   const radius = (size - strokeWidth) / 2
@@ -27,7 +28,7 @@ export function ProgressCircle({
     strokeColor ?? (percentage >= 100 ? 'hsl(var(--success))' : 'hsl(var(--primary))')
 
   return (
-    <svg width={size} height={size} className={className}>
+    <svg width={size} height={size} className={cn(className)}>
       <circle
         cx={size / 2}
         cy={size / 2}

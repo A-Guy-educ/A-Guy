@@ -131,7 +131,7 @@ export function FreeResponseQuestion({
           <button
             type="button"
             onClick={() => setComposerOpen(!composerOpen)}
-            className="absolute end-1.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors z-10"
+            className="absolute end-1.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all duration-normal z-10"
             title={t('insertFormula')}
           >
             <FunctionSquare className="w-4 h-4" />

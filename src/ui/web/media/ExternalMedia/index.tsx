@@ -74,7 +74,7 @@ function GenericEmbed({
       <iframe
         src={url}
         title={title || 'External content'}
-        className="w-full h-[400px] border border-border rounded"
+        className="w-full h-[400px] border border-border rounded-lg"
         loading="lazy"
       />
     </div>

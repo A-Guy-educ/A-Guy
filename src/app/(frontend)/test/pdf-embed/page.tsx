@@ -22,30 +22,30 @@ export default async function PDFEmbedPage({ searchParams }: PDFEmbedPageProps) 
   const title = params.title || 'Test PDF'
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-muted/30 p-section-sm">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold mb-4">PDF Embed Test Page</h1>
+        <h1 className="text-heading-xl font-bold mb-4">PDF Embed Test Page</h1>
 
-        <div className="mb-4 p-4 bg-white rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-2">Test Parameters</h2>
-          <ul className="text-sm space-y-1">
+        <div className="mb-4 p-card-padding bg-card rounded-lg shadow-elevation-1 border border-border">
+          <h2 className="text-heading-md font-semibold mb-2">Test Parameters</h2>
+          <ul className="text-body-sm space-y-1">
             <li>
               <span className="font-medium">URL:</span>{' '}
-              <code className="bg-gray-100 px-2 py-1 rounded">{pdfUrl || '(none)'}</code>
+              <code className="bg-muted px-2 py-1 rounded text-body-xs">{pdfUrl || '(none)'}</code>
             </li>
             <li>
               <span className="font-medium">Title:</span>{' '}
-              <code className="bg-gray-100 px-2 py-1 rounded">{title}</code>
+              <code className="bg-muted px-2 py-1 rounded text-body-xs">{title}</code>
             </li>
           </ul>
         </div>
 
         {pdfUrl ? (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="bg-card rounded-lg shadow-elevation-1 border border-border overflow-hidden">
             <PDFEmbed pdfUrl={pdfUrl} title={title} />
           </div>
         ) : (
-          <div className="p-8 bg-white rounded-lg shadow text-center text-gray-500">
+          <div className="p-section-sm bg-card rounded-lg shadow-elevation-1 border border-border text-center text-muted-foreground">
             No PDF URL provided. Add ?url=&lt;encoded_url&gt; to the URL.
           </div>
         )}

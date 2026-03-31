@@ -16,10 +16,10 @@ export function FormulaPanel({ isOpen, onClose, onInject }: FormulaPanelProps) {
   if (!isOpen) return null
 
   return (
-    <div className="absolute bottom-full left-2.5 right-2.5 mb-2.5 bg-card rounded-2xl border border-input shadow-panel max-h-[280px] overflow-y-auto p-4 z-30 animate-slide-up">
+    <div className="absolute bottom-full left-2.5 right-2.5 mb-2.5 bg-card rounded-2xl border border-input shadow-dropdown max-h-[280px] overflow-y-auto p-card-padding-sm z-30 animate-slide-up">
       {/* Algebra Section */}
       <div className="mb-4">
-        <h4 className="text-primary text-sm font-semibold mb-2 pb-1 border-b border-border">
+        <h4 className="text-primary text-body-sm font-semibold mb-2 pb-1 border-b border-border">
           {t('algebraFormulas')}
         </h4>
         <div className="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-2">
@@ -27,7 +27,7 @@ export function FormulaPanel({ isOpen, onClose, onInject }: FormulaPanelProps) {
             <button
               key={idx}
               type="button"
-              className="bg-muted border border-input rounded-lg p-2.5 text-center text-xs hover:bg-primary-soft hover:border-primary transition-colors"
+              className="bg-muted border border-input rounded-lg p-2.5 text-center text-body-xs hover:bg-primary-soft hover:border-primary transition-colors duration-normal"
               onClick={() => {
                 onInject(formula.template, formula.offset)
                 onClose()
@@ -41,7 +41,7 @@ export function FormulaPanel({ isOpen, onClose, onInject }: FormulaPanelProps) {
 
       {/* Trigonometry Section */}
       <div>
-        <h4 className="text-primary text-sm font-semibold mb-2 pb-1 border-b border-border">
+        <h4 className="text-primary text-body-sm font-semibold mb-2 pb-1 border-b border-border">
           {t('trigonometryFormulas')}
         </h4>
         <div className="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-2">
@@ -49,7 +49,7 @@ export function FormulaPanel({ isOpen, onClose, onInject }: FormulaPanelProps) {
             <button
               key={idx}
               type="button"
-              className="bg-muted border border-input rounded-lg p-2.5 text-center text-xs hover:bg-primary-soft hover:border-primary transition-colors"
+              className="bg-muted border border-input rounded-lg p-2.5 text-center text-body-xs hover:bg-primary-soft hover:border-primary transition-colors duration-normal"
               onClick={() => {
                 onInject(formula.template, formula.offset)
                 onClose()

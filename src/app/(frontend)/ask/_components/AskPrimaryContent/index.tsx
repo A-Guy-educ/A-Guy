@@ -104,10 +104,10 @@ export function AskPrimaryContent() {
   }
 
   return (
-    <div className="h-full overflow-y-auto p-6 md:p-10">
+    <div className="h-full overflow-y-auto p-card-padding md:p-10">
       <div className="max-w-2xl mx-auto">
         <header className="mb-10 text-center md:text-right">
-          <h1 className="text-4xl font-black mb-2">{t('pageTitle')}</h1>
+          <h1 className="text-display-md font-black mb-2">{t('pageTitle')}</h1>
           <p className="text-muted-foreground">{t('pageSubtitle')}</p>
         </header>
 
@@ -117,12 +117,12 @@ export function AskPrimaryContent() {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="flex items-center gap-3 px-8 py-4 rounded-2xl font-black bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-lg hover:-translate-y-0.5 group disabled:opacity-50"
+              className="flex items-center gap-3 px-8 py-content-gap rounded-2xl font-black bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-normal shadow-elevation-3 hover:shadow-elevation-4 hover:-translate-y-0.5 group disabled:opacity-50"
             >
               {isUploading ? (
                 <Loader2 className="w-6 h-6 animate-spin" />
               ) : (
-                <PlusCircle className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
+                <PlusCircle className="w-6 h-6 group-hover:rotate-90 transition-transform duration-slow" />
               )}
               <span>{t('uploadButton')}</span>
             </button>
