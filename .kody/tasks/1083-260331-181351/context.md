@@ -37,3 +37,25 @@ Implementation complete. Changes made to `src/ui/admin/LessonBlocksField/index.t
 
 4. **Added buttons** (l
 ...(truncated)
+
+### review (2026-03-31T18:20:32)
+## Verdict: PASS
+
+## Summary
+
+Added edit (Pencil) and delete (Trash2) buttons to the `LessonBlocksField` component with `deleteBlock` and `editBlock` callbacks following immutable patterns. The edit button navigates to the appropriate admin collection URL based on block type.
+
+## Findings
+
+### Critical
+
+None.
+
+### Major
+
+None.
+
+### Minor
+
+- `src/ui/admin/LessonBlocksField/index.tsx:295` — `rows.map` uses filtered `refId` index, but drag handlers pass `idx` from `blocks.map` (unfiltered). After d
+...(truncated)
