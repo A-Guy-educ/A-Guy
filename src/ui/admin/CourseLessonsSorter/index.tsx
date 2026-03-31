@@ -381,6 +381,7 @@ export const CourseLessonsSorter: React.FC = () => {
                     cursor: idx === 0 ? 'not-allowed' : 'pointer',
                     opacity: idx === 0 ? 0.2 : 0.6,
                     color: 'var(--theme-text)',
+                    transition: 'opacity 0.15s',
                   }}
                   title="Move up"
                 >
@@ -397,6 +398,7 @@ export const CourseLessonsSorter: React.FC = () => {
                     cursor: idx === group.lessons.length - 1 ? 'not-allowed' : 'pointer',
                     opacity: idx === group.lessons.length - 1 ? 0.2 : 0.6,
                     color: 'var(--theme-text)',
+                    transition: 'opacity 0.15s',
                   }}
                   title="Move down"
                 >
