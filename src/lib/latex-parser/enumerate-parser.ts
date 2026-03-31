@@ -69,9 +69,11 @@ function cleanItemText(text: string): string {
       .replace(/\\emph\{([^}]*)\}/g, '*$1*')
       .replace(/\\underline\{([^}]*)\}/g, '$1')
       .replace(/\\text\{([^}]*)\}/g, '$1')
-      .replace(/\\\\/g, '\n')
-      .replace(/\\vspace\{[^}]*\}/g, '')
+      .replace(/\\\\/g, ' ')
+      .replace(/\\vspace\{[^}]*\}/g, ' ')
       .replace(/\\noindent/g, '')
+      // Collapse whitespace into single spaces
+      .replace(/\s+/g, ' ')
       .trim()
   )
 }

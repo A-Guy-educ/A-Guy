@@ -191,7 +191,7 @@ export function parseTikzGeometry(tikzContent: string): QuestionGeometryBlock | 
     canvas: {
       width: CANVAS_WIDTH,
       height: CANVAS_HEIGHT,
-      axis: true,
+      axis: false,
       boundingBox,
     },
     elements: {
