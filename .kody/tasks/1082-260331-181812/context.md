@@ -45,3 +45,74 @@ Implementation complete. Here's a summary of the changes:
 - Fetches chapters sorted by `order`, then lessons per chapter
 - Groups lessons 
 ...(truncated)
+
+### review (2026-03-31T18:33:06)
+
+## Verdict: FAIL
+
+## Summary
+
+This feature adds a `CourseLessonsSorter` UI component and a PATCH API endpoint to update lesson order. The implementation has one **critical authorization bug** where admin access check uses the wrong field name (`roles` instead of `role`), causing admin users to be rejected.
+
+## Findings
+
+### Critical
+
+- `src/app/api/lessons/[id]/route.ts:49` — `user.roles?.includes('admin')` is incorrect. The `role` field is a string (`'admin'`), not an array. This means **no ad
+...(truncated)
+
+### review-fix (2026-03-31T18:33:41)
+Fixed the critical authorization bug. Changed:
+- `user.roles?.includes('admin')` → `user.role === 'admin'`
+- `roles?: any[]` → `role?: any`
+
+The Payload CMS `role` field is a string (`'admin'`), not an array, so the correct comparison is `user.role === 'admin'`.
+
+
+### review (2026-03-31T18:34:15)
+## Verdict: FAIL
+
+## Summary
+
+The critical authorization bug (`roles` vs `role`) has been fixed. The remaining issues are one **major** (broken revert on API failure) and one **minor** (missing transition styles on buttons, consistent with the existing `LessonBlocksField` pattern in the codebase).
+
+## Findings
+
+### Critical
+
+None — the authorization bug has been resolved.
+
+### Major
+
+- `src/ui/admin/CourseLessonsSorter/index.tsx:190` — **Revert on failure is a no-op**. When the API call fails, `
+...(truncated)
+
+### review-fix (2026-03-31T18:34:57)
+The Major revert bug is now fixed. Changes:
+- Added `const previousChapters = chapters` before the optimistic update
+- Changed `setChapters((prev) => prev)` to `setChapters(previousChapters)` in both the `!response.ok` and `catch` branches
+
+This ensures the UI properly reverts to the previous state when the API call fails.
+
+
+### review (2026-03-31T18:35:12)
+## Verdict: PASS
+
+## Summary
+
+The critical authorization bug and the major revert-on-failure logic bug have both been fixed. The remaining issues are all **minor** and consistent with the existing `LessonBlocksField` pattern in the codebase — transitions on sort buttons and the `collection` guard on the admin check are omissions shared with sibling components, not new deviations.
+
+## Findings
+
+### Critical
+
+None.
+
+### Major
+
+None.
+
+### Minor
+
+- `src/ui/admin/CourseLessonsSorter/index.tsx:373-404
+...(truncated)
