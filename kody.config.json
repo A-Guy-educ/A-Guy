@@ -21,5 +21,11 @@
       "mid": "MiniMax-M2.7-highspeed",
       "strong": "MiniMax-M2.7-highspeed"
     }
+  },
+  "mcp": {
+    "devServer": {
+      "command": "pnpm dev",
+      "url": "http://localhost:3000"
+    }
   }
 }
