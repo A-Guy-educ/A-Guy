@@ -105,6 +105,7 @@ export async function PATCH(req: Request) {
   }
 
   const userId = authResult.user.id
+  const locale = getLocaleFromRequest(req)
 
   // Validate request body
   let body: unknown
@@ -125,12 +126,15 @@ export async function PATCH(req: Request) {
 
   const { teacherProfileSlug } = validation.data
 
-  // Verify profile exists and is enabled (any locale doc suffices for validation)
+  // Verify profile exists, is enabled, and matches user's locale
   const profileResult = await payload.find({
     collection: 'teacher_profiles',
     where: {
-      slug: { equals: teacherProfileSlug },
-      isEnabled: { equals: true },
+      and: [
+        { slug: { equals: teacherProfileSlug } },
+        { isEnabled: { equals: true } },
+        { locale: { equals: locale } },
+      ],
     },
     limit: 1,
     overrideAccess: true,
