@@ -128,22 +128,59 @@ const SKIP_COMMANDS = new Set([
 ])
 
 /**
- * Strip \color{...} and {\color{...} content} from any string (text or math).
- * Also strips \Large and other sizing commands.
+ * Find the matching closing brace for an opening brace, handling nesting.
+ * Returns the index of the matching }, or -1 if not found.
+ */
+function findMatchingBrace(text: string, openPos: number): number {
+  let depth = 1
+  for (let i = openPos + 1; i < text.length; i++) {
+    if (text[i] === '{') depth++
+    else if (text[i] === '}') {
+      depth--
+      if (depth === 0) return i
+    }
+  }
+  return -1
+}
+
+/**
+ * Strip {\color{name} content} and {\Large\color{name} content} groups,
+ * using proper brace counting to handle nested braces like \frac{1}{...}.
  *
- * Handles the pattern: ${\color{winered} 70 }$ → $70$
- * and: ${\Large\color{winered} s \approx 10.2 }$ → $s \approx 10.2$
- *
- * IMPORTANT: We match the full balanced {cmd content} group to avoid
- * eating legitimate closing braces (e.g. \frac{1}{55}).
+ * Handles: ${\color{winered} g(x) = \frac{1}{f(x) + b} }$ → $g(x) = \frac{1}{f(x) + b}$
  */
 function stripColorAndSizing(text: string): string {
   let result = text
-  // Match full balanced group: {\color{name} content} or {\Large content}
-  // The outer { } pair wraps the color/sizing scope — remove both braces + command, keep content
-  result = result.replace(/\{\\(?:Large|large|huge|Huge)\s*\\color\{[^}]*\}\s*([^}]*)\}/g, '$1')
-  result = result.replace(/\{\\color\{[^}]*\}\s*([^}]*)\}/g, '$1')
-  result = result.replace(/\{\\(?:Large|large|huge|Huge)\s*([^}]*)\}/g, '$1')
+
+  // Process {\color{name} ...} and {\Large\color{name} ...} groups with brace counting
+  // We scan for { followed by \color or \Large\color, find the matching }, and remove the wrapper
+  let i = 0
+  let output = ''
+  while (i < result.length) {
+    if (result[i] === '{') {
+      // Check if this opens a color/sizing group
+      const after = result.slice(i + 1)
+      const cmdMatch =
+        /^\\(?:Large|large|huge|Huge)\s*\\color\{[^}]*\}\s*/.exec(after) ||
+        /^\\color\{[^}]*\}\s*/.exec(after) ||
+        /^\\(?:Large|large|huge|Huge)\s*/.exec(after)
+
+      if (cmdMatch) {
+        const closingBrace = findMatchingBrace(result, i)
+        if (closingBrace > i) {
+          // Extract the content between the command and the closing brace
+          const contentStart = i + 1 + cmdMatch[0].length
+          output += result.slice(contentStart, closingBrace)
+          i = closingBrace + 1
+          continue
+        }
+      }
+    }
+    output += result[i]
+    i++
+  }
+  result = output
+
   // Strip bare commands (not wrapped in braces)
   result = result
     .replace(/\\(?:Large|large|huge|Huge|normalsize|small|footnotesize|tiny)\s*/g, '')

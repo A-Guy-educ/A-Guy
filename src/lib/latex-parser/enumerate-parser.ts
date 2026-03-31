@@ -38,18 +38,47 @@ function _indexToLabel(index: number): string {
   return String.fromCharCode(96 + index) // 1->a, 2->b, etc.
 }
 
+/** Find matching closing brace with nesting support. */
+function findMatchingBrace(text: string, openPos: number): number {
+  let depth = 1
+  for (let i = openPos + 1; i < text.length; i++) {
+    if (text[i] === '{') depth++
+    else if (text[i] === '}') {
+      depth--
+      if (depth === 0) return i
+    }
+  }
+  return -1
+}
+
 /**
- * Strip \color{...}, {\color{...} ...}, \Large, etc. from any string.
- * Matches full balanced brace groups to avoid eating legitimate closing braces.
+ * Strip {\color{...} content} groups using brace counting
+ * to handle nested braces like \frac{1}{...}.
  */
 function stripColorAndSizing(text: string): string {
   let result = text
-  // Match full balanced group: {\Large\color{name} content} → content
-  result = result.replace(/\{\\(?:Large|large|huge|Huge)\s*\\color\{[^}]*\}\s*([^}]*)\}/g, '$1')
-  result = result.replace(/\{\\color\{[^}]*\}\s*([^}]*)\}/g, '$1')
-  result = result.replace(/\{\\(?:Large|large|huge|Huge)\s*([^}]*)\}/g, '$1')
-  // Strip bare commands
-  result = result
+  let i = 0
+  let output = ''
+  while (i < result.length) {
+    if (result[i] === '{') {
+      const after = result.slice(i + 1)
+      const cmdMatch =
+        /^\\(?:Large|large|huge|Huge)\s*\\color\{[^}]*\}\s*/.exec(after) ||
+        /^\\color\{[^}]*\}\s*/.exec(after) ||
+        /^\\(?:Large|large|huge|Huge)\s*/.exec(after)
+      if (cmdMatch) {
+        const closingBrace = findMatchingBrace(result, i)
+        if (closingBrace > i) {
+          output += result.slice(i + 1 + cmdMatch[0].length, closingBrace)
+          i = closingBrace + 1
+          continue
+        }
+      }
+    }
+    output += result[i]
+    i++
+  }
+  result = output
     .replace(/\\(?:Large|large|huge|Huge|normalsize|small|footnotesize|tiny)\s*/g, '')
     .replace(/\\color\{[^}]*\}/g, '')
     .replace(/\\definecolor\{[^}]*\}\{[^}]*\}\{[^}]*\}/g, '')
