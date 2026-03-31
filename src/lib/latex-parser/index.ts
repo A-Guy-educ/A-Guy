@@ -165,8 +165,8 @@ function cleanText(text: string): string {
       .replace(/\\emph\{([^}]*)\}/g, '*$1*')
       .replace(/\\underline\{([^}]*)\}/g, '$1')
       .replace(/\\text\{([^}]*)\}/g, '$1')
-      .replace(/\\\\/g, '\n')
-      .replace(/\\vspace\{[^}]*\}/g, '')
+      .replace(/\\\\/g, ' ')
+      .replace(/\\vspace\{[^}]*\}/g, ' ')
       .replace(/\\hspace\*?\{[^}]*\}/g, ' ')
       .replace(/\\noindent/g, '')
       .replace(/\\selectlanguage\{[^}]*\}/g, '')
@@ -175,6 +175,9 @@ function cleanText(text: string): string {
       .replace(/\\arraystretch/g, '')
       // Strip leading line-break spacing like [0.2cm], [5mm]
       .replace(/^\s*\[\d+(\.\d+)?(cm|mm|pt|em|ex)\]\s*/g, '')
+      // Collapse all whitespace into single spaces — prevents the frontend
+      // from splitting text into "context outside box" vs "content inside box"
+      .replace(/\s+/g, ' ')
       .trim()
   )
 }
