@@ -69,10 +69,74 @@ export const Lessons: CollectionConfig = {
 
         return data
       },
+      // Auto-populate course from chapter -> course
+      async ({ data, req }) => {
+        if (data?.chapter) {
+          try {
+            const chapterId = typeof data.chapter === 'string' ? data.chapter : data.chapter?.id
+            if (chapterId) {
+              const chapter = await req.payload.findByID({
+                collection: 'chapters',
+                id: chapterId,
+                depth: 0,
+                select: { course: true },
+              })
+              if (chapter?.course) {
+                data.course =
+                  typeof chapter.course === 'string' ? chapter.course : chapter.course?.id
+              }
+            }
+          } catch {
+            // Silently skip — course is a convenience field
+          }
+        }
+        return data
+      },
+    ],
+    afterRead: [
+      // Lazy backfill: when a lesson is read and its denormalized course field is
+      // empty, resolve it from chapter -> course and persist to the DB.
+      // One-time write per record — subsequent reads skip (already populated).
+      // Skipped during build/seed (no req.user) to avoid slow static generation.
+      async ({ doc, req }) => {
+        if (!doc?.chapter) return doc
+        if (doc.course) return doc
+        if (!req.user) return doc
+
+        try {
+          const chapterId = typeof doc.chapter === 'string' ? doc.chapter : doc.chapter?.id
+          if (!chapterId) return doc
+
+          const chapter = await req.payload.findByID({
+            collection: 'chapters',
+            id: chapterId,
+            depth: 0,
+            select: { course: true },
+          })
+          const courseId =
+            typeof chapter?.course === 'string' ? chapter.course : chapter?.course?.id
+
+          if (courseId) {
+            // Persist to DB so list-view filters match on the next query
+            await req.payload.update({
+              collection: 'lessons',
+              id: doc.id,
+              data: { course: courseId } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+              overrideAccess: true,
+            })
+            doc.course = courseId
+          }
+        } catch {
+          // Silently skip — backfill is best-effort
+        }
+
+        return doc
+      },
     ],
   },
   admin: {
     useAsTitle: 'title',
+    listSearchableFields: ['chapter.course.courseLabel', 'chapter.course.title'],
     components: {
       edit: {
         beforeDocumentControls: [
@@ -109,6 +173,16 @@ export const Lessons: CollectionConfig = {
       index: true,
       admin: {
         description: 'The chapter this lesson belongs to',
+      },
+    },
+    {
+      name: 'course',
+      type: 'relationship',
+      relationTo: 'courses',
+      index: true,
+      admin: {
+        hidden: true,
+        description: 'Auto-populated from chapter. Used for filtering lessons by course.',
       },
     },
     {
@@ -296,6 +370,18 @@ export const Lessons: CollectionConfig = {
       admin: {
         position: 'sidebar',
         description: 'Lesson-specific formula sheet (overrides course default)',
+      },
+    },
+
+    // Content hierarchy navigation (sidebar)
+    {
+      name: 'contentNavigation',
+      type: 'ui',
+      admin: {
+        position: 'sidebar',
+        components: {
+          Field: '@/ui/admin/ContentNavigation#LessonNavigation',
+        },
       },
     },
 

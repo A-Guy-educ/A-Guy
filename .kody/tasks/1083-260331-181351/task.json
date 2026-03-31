@@ -1,0 +1,10 @@
+{
+  "task_type": "feature",
+  "title": "Add edit and delete buttons to Lesson Blocks",
+  "description": "Add trash icon to delete a block from the lesson and edit icon to navigate to the admin edit page for exercises and content pages in the Lesson Blocks field component.",
+  "scope": [
+    "src/ui/admin/LessonBlocksField/index.tsx"
+  ],
+  "risk_level": "medium",
+  "questions": []
+}

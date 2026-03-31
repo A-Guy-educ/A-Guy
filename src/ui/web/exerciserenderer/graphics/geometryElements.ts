@@ -7,19 +7,20 @@ type LineSpec = GeometrySpecV1['elements']['lines'][number]
 type CircleSpec = GeometrySpecV1['elements']['circles'][number]
 type AngleSpec = GeometrySpecV1['elements']['angles'][number]
 
-function mapPosition(pos?: string): string {
-  const map: Record<string, string> = {
-    tr: 'urt',
-    tl: 'ult',
-    br: 'lrt',
-    bl: 'llft',
-    t: 'top',
-    b: 'bot',
-    l: 'left',
-    r: 'right',
-    m: 'top',
+/** Map compass direction to a pixel [x, y] offset for JSXGraph labels. */
+function mapLabelOffset(pos?: string): [number, number] {
+  const d = 15
+  const map: Record<string, [number, number]> = {
+    tl: [-d, d],
+    t: [0, d],
+    tr: [d, d],
+    l: [-d, 0],
+    r: [d, 0],
+    bl: [-d, -d],
+    b: [0, -d],
+    br: [d, -d],
   }
-  return map[pos || 'r'] || 'right'
+  return map[pos || 'r'] || [d, 0]
 }
 
 function renderPoints(board: JXG.Board, points: PointSpec[]): Map<string, any> {
@@ -33,7 +34,7 @@ function renderPoints(board: JXG.Board, points: PointSpec[]): Map<string, any> {
       fillColor: pointColor,
       strokeColor: pointColor,
       size: p.size ?? 4,
-      label: { position: mapPosition(p.position), fontSize: p.fontSize ?? 14 },
+      label: { offset: mapLabelOffset(p.position), fontSize: p.fontSize ?? 14 },
     })
     pointMap.set(p.name, pt)
   }

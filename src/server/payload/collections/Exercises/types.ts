@@ -258,6 +258,7 @@ export interface QuestionMultiAxisBlock {
   type: 'question_multi_axis'
   prompt?: InlineRichText
   textPosition: 'above' | 'below'
+  columnsPerRow?: 1 | 2 | 4
   graphs: MultiAxisGraphItem[]
 }
 

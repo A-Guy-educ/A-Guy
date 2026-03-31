@@ -7,6 +7,7 @@ import {
   Edit3,
   FileText,
   Image as ImageIcon,
+  LayoutGrid,
   LineChart,
   List,
   Table as TableIcon,
@@ -100,6 +101,12 @@ export const BlockTypeSelector: React.FC<BlockTypeSelectorProps> = ({
       label: 'Axis Graph',
       description: 'Coordinate graph with functions',
       icon: <LineChart size={20} />,
+    },
+    {
+      type: 'question_multi_axis',
+      label: 'Multi Axis Graph',
+      description: 'Up to 4 graphs side by side (1, 2, or 4 per row)',
+      icon: <LayoutGrid size={20} />,
     },
   ]
 

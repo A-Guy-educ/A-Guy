@@ -111,6 +111,39 @@ export const AnglesPanel: React.FC<AnglesPanelProps> = ({ angles, points, onChan
                 onChange={(e) => handleUpdate(index, { arcRadius: Number(e.target.value) || 30 })}
               />
             </div>
+            <div className="panel-field">
+              <span className="panel-field-label">Label</span>
+              <input
+                type="text"
+                className="panel-field-input panel-field-input--short"
+                placeholder="e.g. α"
+                value={angle.label?.value || ''}
+                onChange={(e) => {
+                  const value = e.target.value
+                  handleUpdate(index, {
+                    label: value
+                      ? { ...angle.label, value, position: angle.label?.position || 'inside' }
+                      : undefined,
+                  })
+                }}
+              />
+            </div>
+            <div className="panel-field">
+              <span className="panel-field-label">Font</span>
+              <input
+                type="number"
+                className="panel-field-input panel-field-input--short"
+                value={angle.label?.fontSize || 12}
+                min={8}
+                max={32}
+                onChange={(e) => {
+                  if (!angle.label?.value) return
+                  handleUpdate(index, {
+                    label: { ...angle.label, fontSize: Number(e.target.value) || 12 },
+                  })
+                }}
+              />
+            </div>
             <button type="button" className="panel-remove-btn" onClick={() => handleRemove(index)}>
               <Trash2 size={14} />
             </button>
