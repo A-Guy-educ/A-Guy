@@ -2,7 +2,8 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useField } from '@payloadcms/ui'
-import { GripVertical, ChevronUp, ChevronDown, BookOpen, FileText } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { GripVertical, ChevronUp, ChevronDown, BookOpen, FileText, Trash2, Pencil } from 'lucide-react'
 
 function generateBlockId(): string {
   return Math.random().toString(36).slice(2, 14)
@@ -83,6 +84,7 @@ function parseBlocks(val: unknown): RawBlock[] {
 
 export const LessonBlocksField: React.FC<{ path: string }> = ({ path }) => {
   const { value, setValue } = useField<string>({ path })
+  const router = useRouter()
 
   const blocks: RawBlock[] = useMemo(() => parseBlocks(value), [value])
 
@@ -192,6 +194,23 @@ export const LessonBlocksField: React.FC<{ path: string }> = ({ path }) => {
       updateBlocks(next)
     },
     [blocks, updateBlocks],
+  )
+
+  const deleteBlock = useCallback(
+    (index: number) => {
+      const next = [...blocks]
+      next.splice(index, 1)
+      updateBlocks(next)
+    },
+    [blocks, updateBlocks],
+  )
+
+  const editBlock = useCallback(
+    (refId: string, blockType: string) => {
+      const collection = blockType === 'exerciseRef' ? 'exercises' : 'content-pages'
+      router.push(`/admin/collections/${collection}/${refId}`)
+    },
+    [router],
   )
 
   const handleDragStart = useCallback((e: React.DragEvent, idx: number) => {
@@ -403,6 +422,36 @@ export const LessonBlocksField: React.FC<{ path: string }> = ({ path }) => {
               title="Move down"
             >
               <ChevronDown size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={() => editBlock(row.refId, row.blockType)}
+              style={{
+                padding: 4,
+                border: 'none',
+                background: 'transparent',
+                cursor: 'pointer',
+                opacity: 0.6,
+                color: 'var(--theme-text)',
+              }}
+              title="Edit"
+            >
+              <Pencil size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={() => deleteBlock(row.index)}
+              style={{
+                padding: 4,
+                border: 'none',
+                background: 'transparent',
+                cursor: 'pointer',
+                opacity: 0.6,
+                color: 'var(--theme-error-500, #ef4444)',
+              }}
+              title="Delete"
+            >
+              <Trash2 size={14} />
             </button>
           </div>
         ))}
