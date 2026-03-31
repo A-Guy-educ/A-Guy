@@ -6,6 +6,7 @@ import { cn } from '@/infra/utils/ui'
 import type { StudyPlanDay, TopicInput } from '@/server/services/study-plan'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { CheckCircle2, Edit2 } from 'lucide-react'
+import Link from 'next/link'
 
 const ACTIVITY_COLORS = {
   practice: 'bg-primary/10 text-primary border-primary/20',
@@ -166,14 +167,27 @@ export function DayCard({ day, topics, onToggleStatus, onEdit }: DayCardProps) {
       <div className="mb-4">
         <div className="flex flex-wrap gap-1.5">
           {(day.userTopicIds || day.topicIds).map((id, idx) => {
-            const label = topics.find((t) => t.topicId === id)?.topicLabel
-            if (!label) return null
+            const topic = topics.find((t) => t.topicId === id)
+            if (!topic) return null
+
+            if (topic.lessonRef) {
+              return (
+                <Link
+                  key={idx}
+                  href={topic.lessonRef.lessonUrl}
+                  className="px-2 py-0.5 text-body-xs font-medium bg-muted text-foreground rounded-md transition-all duration-normal hover:bg-primary/10 hover:text-primary"
+                >
+                  {topic.topicLabel}
+                </Link>
+              )
+            }
+
             return (
               <span
                 key={idx}
                 className="px-2 py-0.5 text-body-xs font-medium bg-muted text-foreground rounded-md"
               >
-                {label}
+                {topic.topicLabel}
               </span>
             )
           })}

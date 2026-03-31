@@ -246,6 +246,7 @@ const eslintConfig = [
       'src/app/api/study-plan/**',
       'src/app/api/chapters/**',
       'src/app/api/progress/**',
+      'src/app/api/course-syllabus/**',
     ],
     rules: {
       'no-restricted-imports': [

@@ -3,14 +3,15 @@
 import { cn } from '@/infra/utils/ui'
 import { PageTransition } from '@/ui/web/components/page-transition'
 import { useTranslations } from '@/ui/web/providers/I18n'
-import { Calendar, Plus, Trash2, Zap } from 'lucide-react'
+import { Calendar, ChevronDown, ChevronRight, Plus, Trash2, Zap } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { addExamDate, getExamDates, setExamDates } from '@/client/state/localStorage/examDates'
-import type { MasteryLevel, TopicInput } from '@/server/services/study-plan'
+import type { LessonRef, MasteryLevel, TopicInput } from '@/server/services/study-plan'
 import { Button } from '@/ui/web/components/button'
 import { DayCard } from './DayCard'
 import { EmptyPlanState } from './EmptyPlanState'
+import { LessonSelector } from './LessonSelector'
 import { useStudyPlan } from './useStudyPlan'
 
 const MASTERY_COLORS = {
@@ -70,6 +71,7 @@ export function StudyPlanPage() {
   const [topics, setTopics] = useState<TopicInput[]>([])
   const [newTopic, setNewTopic] = useState('')
   const [hasGenerated, setHasGenerated] = useState(false)
+  const [showCourseSelector, setShowCourseSelector] = useState(false)
 
   // Load sidebar fields from saved plan and show schedule if plan was loaded from DB
   useEffect(() => {
@@ -102,6 +104,17 @@ export function StudyPlanPage() {
   const handleMasteryChange = useCallback((topicId: string, mastery: MasteryLevel) => {
     pendingRegeneration.current = true
     setTopics((prev) => prev.map((t) => (t.topicId === topicId ? { ...t, mastery } : t)))
+  }, [])
+
+  const handleAddLessonsFromCourse = useCallback((lessonRefs: LessonRef[]) => {
+    pendingRegeneration.current = true
+    const newTopics: TopicInput[] = lessonRefs.map((ref) => ({
+      topicId: `topic-${ref.lessonId}-${Date.now()}`,
+      topicLabel: ref.lessonUrl.split('/').pop() ?? ref.lessonId,
+      mastery: 'weak' as MasteryLevel,
+      lessonRef: ref,
+    }))
+    setTopics((prev) => [...prev, ...newTopics])
   }, [])
 
   const handleMarkComplete = useCallback(
@@ -190,6 +203,33 @@ export function StudyPlanPage() {
                 <h2 className="text-heading-lg font-semibold text-foreground mb-4">
                   {t('topicsTitle')}
                 </h2>
+
+                {/* Select from Course toggle */}
+                <button
+                  type="button"
+                  onClick={() => setShowCourseSelector((prev) => !prev)}
+                  className="w-full flex items-center gap-2 px-3 py-2 mb-3 text-body-sm font-medium text-primary bg-primary/5 hover:bg-primary/10 rounded-lg border border-primary/20 transition-colors duration-normal"
+                >
+                  {showCourseSelector ? (
+                    <ChevronDown className="w-4 h-4" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
+                  {t('selectFromCourse')}
+                </button>
+
+                {/* Course lesson selector */}
+                {showCourseSelector && (
+                  <div className="mb-4">
+                    <p className="text-body-xs text-muted-foreground mb-2">
+                      {t('selectLessonsHint')}
+                    </p>
+                    <LessonSelector
+                      courseId="default-course"
+                      onAddLessons={handleAddLessonsFromCourse}
+                    />
+                  </div>
+                )}
 
                 <div className="space-y-2 mb-4">
                   {topics.map((topic) => (
