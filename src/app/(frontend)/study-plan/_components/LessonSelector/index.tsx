@@ -8,6 +8,14 @@ import { useTranslations } from '@/ui/web/providers/I18n'
 import { ChevronDown, ChevronRight, Check, Loader2, AlertCircle, BookOpen } from 'lucide-react'
 
 // =============================================================================
+// Helpers
+// =============================================================================
+
+function buildLessonUrl(courseSlug: string, chapterSlug: string, lessonSlug: string): string {
+  return `/courses/${courseSlug}/chapters/${chapterSlug}/lessons/${lessonSlug}`
+}
+
+// =============================================================================
 // Types (mirrored from API response)
 // =============================================================================
 
@@ -33,7 +41,7 @@ interface SyllabusChapter {
 // =============================================================================
 
 interface LessonSelectorProps {
-  courseId: string
+  gradeLevel: string
   onAddLessons: (lessonRefs: LessonRef[]) => void
 }
 
@@ -43,16 +51,17 @@ const LESSON_TYPE_COLORS = {
   exam: 'bg-error/10 text-error border-error/20',
 } as const
 
-export function LessonSelector({ courseId, onAddLessons }: LessonSelectorProps) {
+export function LessonSelector({ gradeLevel, onAddLessons }: LessonSelectorProps) {
   const t = useTranslations('studyPlan')
 
   const [syllabus, setSyllabus] = useState<SyllabusChapter[]>([])
+  const [courseSlug, setCourseSlug] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedLessonIds, setSelectedLessonIds] = useState<Set<string>>(new Set())
   const [openChapters, setOpenChapters] = useState<Set<string>>(new Set())
 
-  // Fetch syllabus on mount or courseId change
+  // Fetch syllabus via existing grade-based endpoint
   useEffect(() => {
     const controller = new AbortController()
 
@@ -62,7 +71,7 @@ export function LessonSelector({ courseId, onAddLessons }: LessonSelectorProps) 
         setError(null)
 
         const response = await fetch(
-          `/api/course-syllabus?courseId=${encodeURIComponent(courseId)}`,
+          `/api/chapters/by-grade?grade=${encodeURIComponent(gradeLevel)}`,
           {
             signal: controller.signal,
           },
@@ -74,15 +83,56 @@ export function LessonSelector({ courseId, onAddLessons }: LessonSelectorProps) 
 
         const data = await response.json()
 
-        if (!data.success || !data.data) {
-          throw new Error(data.error || 'Failed to fetch syllabus')
+        if (!data.chapters || data.chapters.length === 0) {
+          setSyllabus([])
+          return
         }
 
-        setSyllabus(data.data)
+        setCourseSlug(data.courseSlug ?? '')
+
+        // Transform chapters/lessons into our syllabus shape
+        const chapters: SyllabusChapter[] = data.chapters.map(
+          (ch: {
+            id: string
+            chapterLabel?: string
+            title?: string
+            slug?: string
+            lessons?: {
+              id: string
+              title?: string
+              slug?: string
+              order?: number
+              type?: string
+            }[]
+          }) => ({
+            chapterId: ch.id,
+            chapterLabel: ch.chapterLabel ?? '',
+            chapterTitle: ch.title ?? '',
+            chapterSlug: ch.slug ?? '',
+            lessons: (ch.lessons ?? []).map(
+              (lesson: {
+                id: string
+                title?: string
+                slug?: string
+                order?: number
+                type?: string
+              }) => ({
+                lessonId: lesson.id,
+                lessonTitle: lesson.title ?? '',
+                lessonSlug: lesson.slug ?? '',
+                lessonOrder: lesson.order ?? 0,
+                lessonType: (lesson.type ?? 'learning') as 'learning' | 'practice' | 'exam',
+                lessonUrl: buildLessonUrl(data.courseSlug ?? '', ch.slug ?? '', lesson.slug ?? ''),
+              }),
+            ),
+          }),
+        )
+
+        setSyllabus(chapters)
 
         // Auto-open first chapter
-        if (data.data.length > 0) {
-          setOpenChapters(new Set([data.data[0].chapterId]))
+        if (chapters.length > 0) {
+          setOpenChapters(new Set([chapters[0].chapterId]))
         }
       } catch (err) {
         if (err instanceof Error && err.name !== 'AbortError') {
@@ -98,7 +148,7 @@ export function LessonSelector({ courseId, onAddLessons }: LessonSelectorProps) 
     fetchSyllabus()
 
     return () => controller.abort()
-  }, [courseId])
+  }, [gradeLevel])
 
   const toggleChapter = useCallback((chapterId: string) => {
     setOpenChapters((prev) => {
@@ -130,16 +180,12 @@ export function LessonSelector({ courseId, onAddLessons }: LessonSelectorProps) 
     for (const chapter of syllabus) {
       for (const lesson of chapter.lessons) {
         if (selectedLessonIds.has(lesson.lessonId)) {
-          // Extract courseSlug from the first lesson's URL: /courses/{courseSlug}/...
-          const urlParts = lesson.lessonUrl.split('/')
-          const courseSlugIndex = urlParts.indexOf('courses')
-          const courseSlug = courseSlugIndex !== -1 ? (urlParts[courseSlugIndex + 1] ?? '') : ''
-
           lessonRefs.push({
             lessonId: lesson.lessonId,
             lessonSlug: lesson.lessonSlug,
             chapterSlug: chapter.chapterSlug,
             courseSlug,
+            lessonTitle: lesson.lessonTitle,
             lessonUrl: lesson.lessonUrl,
           })
         }
@@ -150,7 +196,7 @@ export function LessonSelector({ courseId, onAddLessons }: LessonSelectorProps) 
       onAddLessons(lessonRefs)
       setSelectedLessonIds(new Set())
     }
-  }, [syllabus, selectedLessonIds, onAddLessons])
+  }, [syllabus, courseSlug, selectedLessonIds, onAddLessons])
 
   if (isLoading) {
     return (

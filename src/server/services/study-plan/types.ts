@@ -12,6 +12,8 @@ export interface LessonRef {
   lessonSlug: string
   chapterSlug: string
   courseSlug: string
+  /** Human-readable lesson title */
+  lessonTitle: string
   /** Pre-computed URL for fast access */
   lessonUrl: string
 }

@@ -7,6 +7,7 @@ import { Calendar, ChevronDown, ChevronRight, Plus, Trash2, Zap } from 'lucide-r
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { addExamDate, getExamDates, setExamDates } from '@/client/state/localStorage/examDates'
+import { getUserProfile } from '@/client/state/localStorage/userProfile'
 import type { LessonRef, MasteryLevel, TopicInput } from '@/server/services/study-plan'
 import { Button } from '@/ui/web/components/button'
 import { DayCard } from './DayCard'
@@ -66,6 +67,8 @@ export function StudyPlanPage() {
   const t = useTranslations('studyPlan')
   const { plan, isLoading, generatePlan, toggleDayStatus, editDay } = useStudyPlan()
 
+  const gradeLevel = getUserProfile()?.gradeLevel || 'default'
+
   const pendingRegeneration = useRef(false)
   const [examDate, setExamDate] = useState('')
   const [topics, setTopics] = useState<TopicInput[]>([])
@@ -110,7 +113,7 @@ export function StudyPlanPage() {
     pendingRegeneration.current = true
     const newTopics: TopicInput[] = lessonRefs.map((ref) => ({
       topicId: `topic-${ref.lessonId}-${Date.now()}`,
-      topicLabel: ref.lessonUrl.split('/').pop() ?? ref.lessonId,
+      topicLabel: ref.lessonTitle,
       mastery: 'weak' as MasteryLevel,
       lessonRef: ref,
     }))
@@ -225,7 +228,7 @@ export function StudyPlanPage() {
                       {t('selectLessonsHint')}
                     </p>
                     <LessonSelector
-                      courseId="default-course"
+                      gradeLevel={gradeLevel}
                       onAddLessons={handleAddLessonsFromCourse}
                     />
                   </div>
