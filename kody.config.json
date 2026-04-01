@@ -19,13 +19,17 @@
   },
   "agent": {
     "modelMap": {
-      "cheap": "MiniMax-M2.7-highspeed",
-      "mid": "MiniMax-M2.7-highspeed",
-      "strong": "MiniMax-M2.7-highspeed"
+      "cheap": "claude-haiku-4-5-20251001",
+      "mid": "claude-sonnet-4-6",
+      "strong": "claude-opus-4-6"
     },
-    "default": {
-      "provider": "minimax",
-      "model": "MiniMax-M2.7-highspeed"
+    "stages": {
+      "taskify": { "provider": "openai", "model": "gpt-5.3-codex" },
+      "plan": { "provider": "claude", "model": "claude-opus-4-6" },
+      "build": { "provider": "gemini", "model": "gemini-2.5-flash" },
+      "review": { "provider": "claude", "model": "claude-sonnet-4-6" },
+      "review-fix": { "provider": "gemini", "model": "gemini-2.5-flash" },
+      "ship": { "provider": "gemini", "model": "gemini-2.5-flash" }
     }
   },
   "mcp": {
