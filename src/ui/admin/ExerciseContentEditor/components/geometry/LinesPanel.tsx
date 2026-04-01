@@ -99,6 +99,28 @@ export const LinesPanel: React.FC<LinesPanelProps> = ({ lines, points, onChange 
                 }
               />
             </div>
+            {line.label?.value && (
+              <div className="panel-field">
+                <span className="panel-field-label">Label Pos</span>
+                <select
+                  className="panel-field-select"
+                  value={line.label?.position || 't'}
+                  onChange={(e) =>
+                    handleUpdate(index, {
+                      label: {
+                        ...line.label,
+                        value: line.label?.value || '',
+                        position: e.target.value as 't' | 'b' | 'm',
+                      },
+                    })
+                  }
+                >
+                  <option value="t">Above</option>
+                  <option value="m">On line</option>
+                  <option value="b">Below</option>
+                </select>
+              </div>
+            )}
             <button
               type="button"
               className="panel-remove-btn"
