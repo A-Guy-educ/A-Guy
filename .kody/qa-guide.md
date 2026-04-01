@@ -8,9 +8,9 @@
 
 <!-- Fill in your test/preview environment credentials below -->
 
-| Role  | Email                        | Password |
-| ----- | ---------------------------- | -------- |
-| Admin | aguy.aharon.yair@gmail.com   | As121212 |
+| Role  | Email                      | Password |
+| ----- | -------------------------- | -------- |
+| Admin | aguy.aharon.yair@gmail.com | As121212 |
 
 ### Login Steps
 
