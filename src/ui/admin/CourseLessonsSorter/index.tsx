@@ -174,21 +174,26 @@ export const CourseLessonsSorter: React.FC = () => {
       newChapters[chapterIndex] = { ...chapter, lessons: updatedLessons }
       setChapters(newChapters)
 
-      // Persist the moved lesson's new order
-      const lessonToUpdate = updatedLessons[toIndex]
-      if (!lessonToUpdate) return
+      // Persist all lessons whose order changed
+      const originalOrderById = new Map(chapter.lessons.map((l) => [l.id, l.order]))
+      const lessonsToUpdate = updatedLessons.filter((l) => l.order !== originalOrderById.get(l.id))
+      if (lessonsToUpdate.length === 0) return
 
-      setSavingLessonId(lessonToUpdate.id)
+      setSavingLessonId(lessonsToUpdate[0]!.id)
 
       try {
-        const response = await fetch(`/api/lessons/${lessonToUpdate.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ order: toIndex }),
-        })
+        const results = await Promise.all(
+          lessonsToUpdate.map((lesson) =>
+            fetch(`/api/lessons/${lesson.id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ order: lesson.order }),
+            }),
+          ),
+        )
 
-        if (!response.ok) {
+        if (results.some((r) => !r.ok)) {
           // Revert on failure
           setChapters(chaptersBeforeMove)
           setError('Failed to save order')
