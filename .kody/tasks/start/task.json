@@ -1,0 +1,13 @@
+```json
+{
+  "task_type": "bugfix",
+  "title": "Fix internal error message leakage in API responses",
+  "description": "Remove internal error details from API error responses to prevent information disclosure (CWE-209). The captureAndRespond function and validate-answer route currently expose raw error messages that may contain database structure, ORM details, or stack traces. Replace with generic error messages while preserving detailed logging server-side.",
+  "scope": [
+    "src/server/api/capture-and-respond.ts",
+    "src/app/api/exercises/validate-answer/route.ts"
+  ],
+  "risk_level": "low",
+  "questions": []
+}
+```
