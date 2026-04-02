@@ -1829,7 +1829,7 @@ packages:
     resolution: {integrity: sha512-4JQNk+3mVzK3xh2rqd6RB4J46qUR19azEHBneZyTZM+c456qOrbbM/5xcR8huNCCcbVt7+UmizG6GuUvPvKUYg==}
 
   '@kody-ade/kody-engine-lite@0.1.141':
-    resolution: {integrity: sha512-E+AmknQvCI50TENm7AXbHd6rRD9ULLOjrGpE4lXZU9YNiU3wYXtY4EftFj1uHJijnAdhON54ANqoMgO7zE26Qg==
+    resolution: {integrity: sha512-E+AmknQvCI50TENm7AXbHd6rRD9ULLOjrGpE4lXZU9YNiU3wYXtY4EftFj1uHJijnAdhON54ANqoMgO7zE26Qg==}
     engines: {node: '>=22'}
     hasBin: true
 
