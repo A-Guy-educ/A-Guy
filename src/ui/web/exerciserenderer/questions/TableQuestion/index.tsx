@@ -86,7 +86,7 @@ export function TableQuestion({
             disabled={allCorrect}
             size="lg"
             className={cn(
-              'font-semibold',
+              'rounded-xl font-bold text-body-md',
               allCorrect && 'bg-success hover:bg-success/90 text-white',
             )}
           >
