@@ -111,7 +111,7 @@
     "@copilotkit/runtime": "^1.51.4",
     "@genkit-ai/googleai": "^1.28.0",
     "@google/generative-ai": "^0.24.1",
-    "@kody-ade/kody-engine-lite": "^0.1.129",
+    "@kody-ade/kody-engine-lite": "^0.1.134",
     "@marsidev/react-turnstile": "^1.4.1",
     "@modelcontextprotocol/sdk": "^1.27.1",
     "@napi-rs/canvas": "^0.1.89",
