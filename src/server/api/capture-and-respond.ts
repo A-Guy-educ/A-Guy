@@ -10,8 +10,6 @@ export function captureAndRespond(
   error: unknown,
   context: { route: string; requestId?: string },
 ): NextResponse {
-  const message = error instanceof Error ? error.message : 'Unknown error'
-
   apiLogger.error(
     {
       err: error,
@@ -26,5 +24,5 @@ export function captureAndRespond(
     extra: { requestId: context.requestId },
   })
 
-  return NextResponse.json({ error: 'Internal server error', message }, { status: 500 })
+  return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
 }
