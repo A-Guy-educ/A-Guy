@@ -88,9 +88,30 @@ export function getDefaultCanvasElementColor(): string {
   return CSS_VAR_FALLBACKS['--foreground']
 }
 
+/**
+ * Color palette using hardcoded fallback values instead of CSS variable resolution.
+ * Use this in the Payload admin panel where :root CSS variables belong to the
+ * admin theme (e.g. --foreground is white in dark mode) and don't match the
+ * geometry canvas's white background.
+ */
+export function getCanvasColorPalette(): ReadonlyArray<{ label: string; hex: string }> {
+  return PALETTE_VARS.map(({ label, cssVar }) => ({
+    label,
+    hex: CSS_VAR_FALLBACKS[cssVar] ?? '#000000',
+  }))
+}
+
 /** Default canvas background resolved from --card CSS variable */
 export function getDefaultCanvasBackground(): string {
   return cssVarToHex('--card')
+}
+
+/**
+ * Hardcoded canvas background for admin context where :root CSS variables
+ * belong to Payload's theme and resolve to dark colors in dark mode.
+ */
+export function getAdminCanvasBackground(): string {
+  return CSS_VAR_FALLBACKS['--card']
 }
 
 /** Default shape fill resolved from --muted CSS variable */

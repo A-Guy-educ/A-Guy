@@ -660,6 +660,16 @@
       "noExamDate": "Select an exam date"
     },
     "loading": "Loading...",
-    "generateButton": "Build Focus Plan"
+    "generateButton": "Build Focus Plan",
+    "selectFromCourse": "Select from Course",
+    "selectLessonsHint": "Choose lessons from your course to add as study topics",
+    "noCourseSelected": "No course selected",
+    "selectedCount": "lesson selected",
+    "selectedCount_plural": "lessons selected",
+    "lessonTypes": {
+      "learning": "Learning",
+      "practice": "Practice",
+      "exam": "Exam"
+    }
   }
 }

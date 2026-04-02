@@ -39,93 +39,193 @@ IRON LAW: NO FIXES WITHOUT INVESTIGATION FIRST. Do not jump to changing code. Un
 - Minimal diff — use Edit for surgical changes, not Write for rewrites
 - If the failure is pre-existing (not caused by this PR's changes), document it and move on
 
+## Repository Context
+
+### Architecture
+
+# Architecture
+
+## Tech Stack
+
+- **Frontend**: Next.js 15 (App Router) + Tailwind CSS + shadcn/ui
+- **CMS**: Payload CMS 3.73 with custom collections/globals/hooks
+- **Database**: MongoDB Atlas with Vector Search for long-term memory
+- **Language**: TypeScript (strict mode, ES2022)
+- **AI**: Google Gemini + OpenAI APIs
+- **Testing**: Vitest (integration) + Playwright (E2E)
+- **Deployment**: Vercel
+
+## Directory Structure
+
+```
+src/
+├── app/                    # Next.js App Router (frontend + payload admin)
+├── server/payload/         # Payload collections, globals, hooks, endpoints
+├── server/services/        # Business logic (exercise conversion, embedding, etc.)
+├── infra/                  # Auth (OAuth), LLM, media, config
+├── ui/                     # React components (admin, cody, web)
+├── client/                 # Client hooks, state, utils
+└── i18n/                   # Internationalization (en.json, he.json)
+```
+
+## Data Flow
+
+Next.js frontend/admin → Payload CMS (Local API) → MongoDB Atlas + Vector Search
+
+## Key Features
+
+- OAuth (Google) with CSRF protection
+- PDF processing for exercise extraction (Vision AI)
+- Multi-tenant architecture
+- Vector embeddings for semantic search
+- Real-time admin panel with import maps
+- Comprehensive CLI for setup and code generation
+
+### Conventions
+
+# Conventions
+
+## Import Style
+
+- Use `@/` aliases for src imports (e.g., `@/infra/auth/oauth`)
+- Relative imports within same directory
+
+## File Organization
+
+- Target 200-400 lines, max 800 lines per file
+- Use file annotations: `@fileType`, `@domain`, `@pattern`, `@ai-summary`
+- No `lib/` folder; use domain-specific directories
+
+## API Response Format
+
+```typescript
+interface ApiResponse<T> {
+  success: boolean
+  data?: T
+  error?: string
+  meta?: { total: number; page: number; limit: number }
+}
+```
+
+## Code Patterns
+
+- **Immutability**: Use spread operator for updates, never mutate
+- **Error Handling**: Try-catch with async/await
+- **Validation**: Zod for schema-based validation
+- **Repository Pattern**: Encapsulate data access
+
+## Payload CMS Rules
+
+- Run `pnpm generate:types` after schema changes
+- Pass `req` to nested operations in hooks
+- Always use Local API for server-side operations
+- Configure access control via roles
+
+## Testing & Quality
+
+- **TDD mandatory**: Write tests first (RED → GREEN → REFACTOR)
+- **80%+ coverage** required
+- **Pre-commit hooks**: Typecheck, lint, format
+- **E2E**: Playwright for critical user flows
+
+## Translations
+
+- Update both `messages/en.json` and `messages/he.json`
+
+---
+
 ## Repo Patterns
 
-### Path Aliases
+### File Annotations
 
-Always use `@/` for src imports, `@payload-config` for Payload config:
+All source files must include a docblock with `@fileType`, `@domain`, `@pattern`, and `@ai-summary`:
 
 ```typescript
-// ✅ Correct
-import { getPayload } from 'payload'
-import config from '@payload-config'
-import { validateOAuthState } from '@/infra/auth/oauth_state'
-
-// ❌ Wrong
-import { validateOAuthState } from '../../infra/auth/oauth_state'
+/**
+ * @fileType utility | component | api-route | service | hook
+ * @domain auth | media | exercise | admin | etc.
+ * @pattern oauth | embed-provider | idempotency | etc.
+ * @ai-summary One-line description of purpose
+ */
 ```
 
-### Type Imports & Payload Types
+**Example**: `src/app/api/oauth/google/callback/route.ts` — API route for Google OAuth with CSRF validation
 
-Use Payload-generated types from strict mode config:
+### Immutability Pattern
+
+Use spread operator for all updates; never mutate objects in place:
 
 ```typescript
-// ✅ Correct
-import type { Payload } from 'payload'
-import { getPayload } from 'payload'
-import type { Course } from '@/payload-types'
+// CORRECT: Immutable update
+const updated = { ...original, field: newValue }
 
-// Fix type mismatches by updating source, not adding assertions
+// WRONG: Mutation
+original.field = newValue
 ```
 
-### Error Handling Pattern
+**Reference**: `src/server/services/exercise-conversion/idempotency.ts` demonstrates immutable data handling
 
-Use try-catch with context-specific error utilities:
+### Error Handling
+
+Use async/await with try-catch; provide context in error messages:
 
 ```typescript
-// src/app/api/oauth/google/callback/route.ts pattern
 try {
   const result = await riskyOperation()
   return result
 } catch (error) {
-  logOAuthError(error, correlationId) // Use domain-specific logger
-  res.headers.set('Location', new URL('/login?error=...', req.url).toString())
-  return res
+  logError('Operation context', error)
+  throw new Error('User-friendly message')
 }
 ```
 
+**Example**: `src/app/api/oauth/google/callback/route.ts` — OAuth callback with comprehensive error handling
+
 ### Validation Pattern
 
-Use Zod schemas for input validation at system boundaries:
+Use Zod for schema validation at system boundaries:
 
 ```typescript
-// Domain example: src/server/services/exercise-conversion/
-const schema = z.object({
-  tenantId: z.string(),
-  lessonId: z.string(),
-  pages: z.array(z.number()),
-})
+import { z } from 'zod'
+const schema = z.object({ email: z.string().email() })
 const validated = schema.parse(input)
 ```
 
-## Improvement Areas
+### API Response Envelope
 
-### JSDoc Headers
-
-Files should include JSDoc metadata but sometimes are missing. Example: `src/server/services/exercise-conversion/idempotency.ts` has full headers; ensure all new files include:
+All API responses must follow the envelope format:
 
 ```typescript
-/**
- * @fileType utility|api-route|hook|component
- * @domain auth|media|exercises|...
- * @ai-summary Brief description
- */
+{ success: boolean, data?: T, error?: string, meta?: { total, page, limit } }
 ```
 
-### Import Organization
+---
 
-Verify imports follow pattern: external libs → Payload → `@/` aliases → relative imports (same dir only). Lint should catch, but watch for Payload types mixed with utilities.
+## Improvement Areas
+
+- **File Annotations**: Not all utility files in `src/infra` and `src/server/services` consistently use `@fileType`/`@domain` annotations
+- **Type Generation**: Scripts may skip `pnpm generate:types` after Payload schema changes, causing stale types
+- **Import Map Regeneration**: After adding admin components to `src/ui/admin`, `pnpm generate:importmap` may not be run, breaking admin panel
+- **Payload Access Control**: Some hooks may not pass `req` correctly to nested operations, bypassing access control
+- **Test Coverage**: Utility files in `src/infra/media/embed/` lack integration tests for URL pattern matching
+- **Console Statements**: Some debug code may have `console.log` left in production paths
+
+---
 
 ## Acceptance Criteria
 
-- [ ] All reported errors fixed (typecheck, lint, test)
-- [ ] No new errors introduced by changes
-- [ ] `pnpm typecheck` passes cleanly
-- [ ] `pnpm lint` passes with no new violations
-- [ ] `pnpm test:int` and `pnpm test:e2e` pass (if affected)
-- [ ] No unused imports or console.log statements in src files
-- [ ] All `@/` path aliases used correctly (no relative paths for src imports)
-- [ ] Changes are minimal and surgical (use Edit, not rewrite)
-- [ ] If modifying Payload collections/globals, verify `generate:types` is needed and documented
+- [ ] All modified files include proper docblock annotations (@fileType, @domain, @pattern, @ai-summary)
+- [ ] All imports use `@/` aliases (except same-directory relative imports)
+- [ ] API responses follow envelope format (success, data, error, meta)
+- [ ] All data updates use spread operator or immutable patterns (no mutations)
+- [ ] Error handling uses try-catch with descriptive messages
+- [ ] Input validation uses Zod for schema-based checks
+- [ ] TypeScript strict mode passes (`tsc --noEmit`)
+- [ ] Tests updated or added if behavior changed (80%+ coverage)
+- [ ] No `console.log` statements in production code
+- [ ] Pre-commit hooks pass: `pnpm lint`, `pnpm format:check`, `pnpm typecheck`
+- [ ] If Payload schema changed: `pnpm generate:types` was run
+- [ ] If admin components added: `pnpm generate:importmap` was run
+- [ ] Translations updated in both `messages/en.json` and `messages/he.json` (if user-facing text added)
 
 {{TASK_CONTEXT}}

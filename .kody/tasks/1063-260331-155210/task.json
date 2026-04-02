@@ -1,0 +1,24 @@
+{
+  "task_type": "feature",
+  "title": "Add course lesson selection to study plan",
+  "description": "Add hybrid input system allowing students to select exam topics from their registered course lessons instead of only manual text entry. Features: (1) 'Select from Course' toggle alongside existing free-text input, (2) display course syllabus with chapters/lessons, (3) auto-add selected lessons to material list, (4) navigation links to lesson pages, (5) dynamic content mapping via lesson IDs rather than labels.",
+  "scope": [
+    "src/app/(frontend)/study-plan/_components/StudyPlanPage.tsx",
+    "src/app/(frontend)/study-plan/_components/useStudyPlan.ts",
+    "src/app/(frontend)/study-plan/_components/DayCard.tsx",
+    "src/server/services/study-plan/types.ts",
+    "src/server/services/study-plan/engine.ts",
+    "src/server/repos/queries/chapters.ts",
+    "src/server/utils/course-url-builder.ts",
+    "src/app/api/study-plan/route.ts",
+    "src/app/api/chapters/by-grade/route.ts",
+    "src/i18n/en.json",
+    "src/i18n/he.json"
+  ],
+  "risk_level": "medium",
+  "questions": [
+    "How should lessons be displayed in the selection UI - as a flat list, grouped by chapter, or with a tree/accordion structure?",
+    "Should lesson video players (if available) also be linkable from the study plan navigation, or only the lesson page?",
+    "What should happen if a lesson is renamed or deleted by an instructor - should the study plan keep the old label, show 'Lesson no longer available', or auto-update to the new title?"
+  ]
+}

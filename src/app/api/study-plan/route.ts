@@ -17,10 +17,20 @@ import { generateStudyPlan } from '@/server/services/study-plan'
 import { queryUserProgressByGrade } from '@/server/repos/queries/userProgress'
 
 // Zod validation schemas
+const LessonRefSchema = z.object({
+  lessonId: z.string().min(1),
+  lessonSlug: z.string(),
+  chapterSlug: z.string(),
+  courseSlug: z.string(),
+  lessonTitle: z.string(),
+  lessonUrl: z.string(),
+})
+
 const TopicInputSchema = z.object({
   topicId: z.string().min(1),
   topicLabel: z.string().min(1),
   mastery: z.enum(['weak', 'medium', 'strong']),
+  lessonRef: LessonRefSchema.optional(),
 })
 
 const GenerateRequestSchema = z.object({
