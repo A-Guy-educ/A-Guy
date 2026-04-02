@@ -8,7 +8,7 @@
     "testUnit": "pnpm test:unit"
   },
   "git": {
-    "defaultBranch": "kody"
+    "defaultBranch": "dev"
   },
   "github": {
     "owner": "A-Guy-educ",
@@ -24,12 +24,30 @@
       "strong": "claude-opus-4-6"
     },
     "stages": {
-      "taskify": { "provider": "claude", "model": "claude-sonnet-4-6" },
-      "plan": { "provider": "claude", "model": "claude-opus-4-6" },
-      "build": { "provider": "claude", "model": "claude-sonnet-4-6" },
-      "review": { "provider": "claude", "model": "claude-opus-4-6" },
-      "review-fix": { "provider": "claude", "model": "claude-sonnet-4-6" },
-      "ship": { "provider": "claude", "model": "claude-haiku-4-5-20251001" }
+      "taskify": {
+        "provider": "claude",
+        "model": "claude-sonnet-4-6"
+      },
+      "plan": {
+        "provider": "claude",
+        "model": "claude-opus-4-6"
+      },
+      "build": {
+        "provider": "claude",
+        "model": "claude-sonnet-4-6"
+      },
+      "review": {
+        "provider": "claude",
+        "model": "claude-opus-4-6"
+      },
+      "review-fix": {
+        "provider": "claude",
+        "model": "claude-sonnet-4-6"
+      },
+      "ship": {
+        "provider": "claude",
+        "model": "claude-haiku-4-5-20251001"
+      }
     }
   },
   "mcp": {
