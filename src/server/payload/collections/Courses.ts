@@ -156,6 +156,18 @@ export const Courses: CollectionConfig = {
         description: 'Whether this course is currently active',
       },
     },
+
+    // Course Lessons Sorter (UI component)
+    {
+      name: 'lessonsSorter',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/ui/admin/CourseLessonsSorter#CourseLessonsSorter',
+        },
+      },
+    },
+
     {
       name: 'pageAccessType',
       type: 'select',
@@ -229,17 +241,6 @@ export const Courses: CollectionConfig = {
       admin: {
         position: 'sidebar',
         description: 'URL-friendly identifier (auto-generated from title if empty)',
-      },
-    },
-
-    // Course Lessons Sorter (UI component)
-    {
-      name: 'lessonsSorter',
-      type: 'ui',
-      admin: {
-        components: {
-          Field: '@/ui/admin/CourseLessonsSorter#CourseLessonsSorter',
-        },
       },
     },
 
