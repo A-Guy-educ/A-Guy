@@ -12,6 +12,7 @@
 import Image from 'next/image'
 import type { FormulaSheet } from '@/payload-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
+import { SafeHtml } from '@/ui/web/SafeHtml'
 import { PDFEmbed } from '../../courses/PDFViewer/PDFEmbed'
 
 export interface FormulaSheetContentProps {
@@ -50,10 +51,10 @@ export function FormulaSheetContent({ sheet }: FormulaSheetContentProps) {
           {bodyBlocks.map((block, index) => {
             if (block.blockType === 'html' && 'html' in block) {
               return (
-                <div
+                <SafeHtml
                   key={block.id ?? index}
                   className="rich-text-content"
-                  dangerouslySetInnerHTML={{ __html: block.html }}
+                  html={block.html}
                 />
               )
             }

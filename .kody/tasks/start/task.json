@@ -1,0 +1,12 @@
+```json
+{
+  "task_type": "bugfix",
+  "title": "Fix XSS vulnerability in FormulaSheetContent via unsafe HTML rendering",
+  "description": "Replace unsanitized dangerouslySetInnerHTML in FormulaSheetContent.tsx with the existing SafeHtml component (using DOMPurify) to prevent stored XSS attacks when admin users or attackers inject malicious HTML into formula sheet HTML blocks. This is a security-critical fix that impacts all students viewing formula sheets.",
+  "scope": [
+    "src/ui/web/shared/FormulaSheetViewer/FormulaSheetContent.tsx"
+  ],
+  "risk_level": "low",
+  "questions": []
+}
+```
