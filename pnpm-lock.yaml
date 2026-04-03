@@ -39,8 +39,8 @@ importers:
         specifier: ^0.24.1
         version: 0.24.1
       '@kody-ade/kody-engine-lite':
-        specifier: ^0.1.136
-        version: 0.1.136
+        specifier: ^0.1.148
+        version: 0.1.148
       '@marsidev/react-turnstile':
         specifier: ^1.4.1
         version: 1.4.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -1828,8 +1828,8 @@ packages:
   '@jsdevtools/ono@7.1.3':
     resolution: {integrity: sha512-4JQNk+3mVzK3xh2rqd6RB4J46qUR19azEHBneZyTZM+c456qOrbbM/5xcR8huNCCcbVt7+UmizG6GuUvPvKUYg==}
 
-  '@kody-ade/kody-engine-lite@0.1.136':
-    resolution: {integrity: sha512-eG/ybgnM2Ltxv4QaGXeivVyR6KuQ6EHp97/jZXMCa4pGZ2F40K8DwZ01IIRCb5+CBog9N+VeiuSAuymeflPjDQ==}
+  '@kody-ade/kody-engine-lite@0.1.148':
+    resolution: {integrity: sha512-DNYmCqs5H3PElvsv8IwWWX361kCVVUKdzqx9156wkli1EXvUizg7R/C1GaGZpzWbwkT29JQykiXq6sY58ZidyA==}
     engines: {node: '>=22'}
     hasBin: true
 
@@ -12682,7 +12682,7 @@ snapshots:
 
   '@jsdevtools/ono@7.1.3': {}
 
-  '@kody-ade/kody-engine-lite@0.1.136':
+  '@kody-ade/kody-engine-lite@0.1.148':
     dependencies:
       dotenv: 16.6.1
       yaml: 2.8.3

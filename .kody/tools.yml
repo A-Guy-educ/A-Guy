@@ -1,0 +1,8 @@
+# Kody Tools Configuration
+# Find skills at https://skills.sh
+
+playwright:
+  detect: ['playwright.config.ts', 'playwright.config.js']
+  stages: ['build', 'review', 'review-fix']
+  setup: 'npx playwright install --with-deps chromium'
+  skill: 'microsoft/playwright-cli@playwright-cli'
