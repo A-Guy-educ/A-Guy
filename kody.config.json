@@ -54,7 +54,7 @@
     "command": "pnpm dev",
     "url": "http://localhost:3000",
     "readyPattern": "Ready in|compiled|started server|Local:|localhost:|✓ Ready",
-    "readyTimeout": 120,
+    "readyTimeout": 180,
     "env": [
       "AI_BASE_URL",
       "AI_KEY",
