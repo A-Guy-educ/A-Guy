@@ -184,7 +184,7 @@ jobs:
       - name: Warm up Next.js build cache
         continue-on-error: true
         run: npx next build
-        timeout-minutes: 5
+        timeout-minutes: 15
 
       - name: Run Kody pipeline
         env:
