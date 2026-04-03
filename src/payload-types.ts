@@ -109,7 +109,11 @@ export interface Config {
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
-  collectionsJoins: {};
+  collectionsJoins: {
+    courses: {
+      chapters: 'chapters';
+    };
+  };
   collectionsSelect: {
     pages: PagesSelect<false> | PagesSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
@@ -603,6 +607,14 @@ export interface Course {
    */
   formulaSheet?: (string | null) | FormulaSheet;
   /**
+   * Chapters belonging to this course
+   */
+  chapters?: {
+    docs?: (string | Chapter)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  /**
    * User who created this document
    */
   createdBy?: (string | null) | User;
@@ -862,6 +874,71 @@ export interface TableBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'tableBlock';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "chapters".
+ */
+export interface Chapter {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * Content language
+   */
+  locale: 'en' | 'he';
+  /**
+   * Source document this was translated from
+   */
+  translatedFrom?: (string | null) | Chapter;
+  /**
+   * The course this chapter belongs to
+   */
+  course: string | Course;
+  /**
+   * Chapter identifier (e.g., "1", "A", "א")
+   */
+  chapterLabel?: string | null;
+  /**
+   * Chapter title
+   */
+  title: string;
+  /**
+   * Auto-computed display title for admin (chapter title — course title)
+   */
+  adminTitle?: string | null;
+  /**
+   * Detailed description of the chapter
+   */
+  description?: string | null;
+  /**
+   * Upload chapter-related media files (images, videos, documents, etc.)
+   */
+  mediaFiles?: (string | Media)[] | null;
+  /**
+   * Sort order within the course
+   */
+  order: number;
+  /**
+   * Publication status of the chapter
+   */
+  status: 'draft' | 'published' | 'archived';
+  /**
+   * Whether this chapter is currently active
+   */
+  isActive: boolean;
+  /**
+   * URL-friendly identifier (auto-generated from title if empty)
+   */
+  slug?: string | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1340,71 +1417,6 @@ export interface GuestSession {
    */
   messageCount: number;
   updatedAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "chapters".
- */
-export interface Chapter {
-  id: string;
-  /**
-   * Tenant scope for this document
-   */
-  tenant: string | Tenant;
-  /**
-   * Content language
-   */
-  locale: 'en' | 'he';
-  /**
-   * Source document this was translated from
-   */
-  translatedFrom?: (string | null) | Chapter;
-  /**
-   * The course this chapter belongs to
-   */
-  course: string | Course;
-  /**
-   * Chapter identifier (e.g., "1", "A", "א")
-   */
-  chapterLabel?: string | null;
-  /**
-   * Chapter title
-   */
-  title: string;
-  /**
-   * Auto-computed display title for admin (chapter title — course title)
-   */
-  adminTitle?: string | null;
-  /**
-   * Detailed description of the chapter
-   */
-  description?: string | null;
-  /**
-   * Upload chapter-related media files (images, videos, documents, etc.)
-   */
-  mediaFiles?: (string | Media)[] | null;
-  /**
-   * Sort order within the course
-   */
-  order: number;
-  /**
-   * Publication status of the chapter
-   */
-  status: 'draft' | 'published' | 'archived';
-  /**
-   * Whether this chapter is currently active
-   */
-  isActive: boolean;
-  /**
-   * URL-friendly identifier (auto-generated from title if empty)
-   */
-  slug?: string | null;
-  /**
-   * User who created this document
-   */
-  createdBy?: (string | null) | User;
-  updatedAt: string;
-  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3189,6 +3201,7 @@ export interface CoursesSelect<T extends boolean = true> {
   contentStatusExpiresAt?: T;
   contentStatusLabel?: T;
   formulaSheet?: T;
+  chapters?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;

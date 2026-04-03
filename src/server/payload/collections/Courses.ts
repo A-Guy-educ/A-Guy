@@ -64,6 +64,7 @@ export const Courses: CollectionConfig = {
       'slug',
       'order',
       'status',
+      'chapters',
       'isActive',
       'contentStatus',
       'updatedAt',
@@ -260,6 +261,17 @@ export const Courses: CollectionConfig = {
         position: 'sidebar',
         description:
           'Default formula sheet for lessons in this course (lesson-specific sheets take precedence)',
+      },
+    },
+
+    // Chapters (virtual reverse relationship for count display in admin list)
+    {
+      name: 'chapters',
+      type: 'join',
+      collection: 'chapters',
+      on: 'course',
+      admin: {
+        description: 'Chapters belonging to this course',
       },
     },
 
