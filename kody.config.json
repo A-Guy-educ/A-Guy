@@ -74,5 +74,30 @@
         "SLACK_WEBHOOK_URL_DEV"
       ]
     }
+  },
+  "devServer": {
+    "command": "pnpm dev",
+    "url": "http://localhost:3000",
+    "readyPattern": "Ready in|compiled|started server|Local:|localhost:|✓ Ready",
+    "readyTimeout": 120,
+    "env": [
+      "AI_BASE_URL",
+      "AI_KEY",
+      "AI_MODEL",
+      "BLOB_READ_WRITE_TOKEN",
+      "BRAIN_AUTH_KEY",
+      "CRON_SECRET",
+      "DATABASE_URL",
+      "DATABASE_URL_ATLAS",
+      "FIGMA_API_KEY",
+      "GEMINI_API_KEY",
+      "GROQ_API_KEY",
+      "MINIMAX_API_KEY",
+      "NEXT_PUBLIC_SERVER_URL",
+      "OPENAI_API_KEY",
+      "PAYLOAD_SECRET",
+      "SLACK_WEBHOOK_URL",
+      "SLACK_WEBHOOK_URL_DEV"
+    ]
   }
 }
