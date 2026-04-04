@@ -101,6 +101,7 @@ export default buildConfig({
         '@/ui/admin/VersionInfo',
       ],
       beforeNavLinks: ['@/ui/admin/AdminChat/SidebarLink', '@/ui/admin/PdfConversion/SidebarLink'],
+      afterNavLinks: ['@/ui/admin/UserEmail'],
     },
     importMap: {
       baseDir: path.resolve(dirname),

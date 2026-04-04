@@ -1,4 +1,3 @@
-```json
 {
   "task_type": "bugfix",
   "title": "Fix access code redemption TOCTOU race condition",
@@ -15,4 +14,3 @@
     "Do existing access codes need migration to add the unique compound index, or can we apply it prospectively?"
   ]
 }
-```
