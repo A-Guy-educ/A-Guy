@@ -207,7 +207,7 @@ jobs:
         run: |
           if [ "$MODE" = "bootstrap" ]; then
             echo "Running bootstrap..."
-            npx kody-engine bootstrap
+            kody-engine bootstrap
           elif [ "$MODE" = "taskify" ]; then
             echo "Running taskify..."
             ARGS=""
@@ -215,7 +215,7 @@ jobs:
             [ -n "$PRD_FILE" ] && ARGS="$ARGS --file $PRD_FILE"
             [ -n "$ISSUE_NUMBER" ] && ARGS="$ARGS --issue-number $ISSUE_NUMBER"
             [ -n "$TASK_ID" ] && ARGS="$ARGS --task-id $TASK_ID"
-            npx kody-engine taskify $ARGS
+            kody-engine taskify $ARGS
           else
             CMD="run"
             [ "$MODE" = "rerun" ] && CMD="rerun"
@@ -231,7 +231,7 @@ jobs:
             # FEEDBACK is also passed via env var (avoids shell escaping issues)
             [ -n "$FEEDBACK" ] && ARGS="$ARGS --feedback \"$FEEDBACK\""
             [ "$DRY_RUN" = "true" ] && ARGS="$ARGS --dry-run"
-            npx kody-engine $CMD $ARGS
+            kody-engine $CMD $ARGS
           fi
 
       - name: Pipeline summary
@@ -343,13 +343,13 @@ jobs:
 
   notify-orchestrate-error:
     if: failure() && needs.orchestrate.result == 'failure'
-    needs: [orchestrate]
+    needs: [parse, orchestrate]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v7
         with:
           script: |
-            const issueNumber = Number('${{ github.event.inputs.issue_number || needs.parse.outputs.issue_number || 0 }}');
+            const issueNumber = Number('${{ github.event.inputs.issue_number || needs.parse.outputs.issue_number || github.event.issue.number || 0 }}');
             if (issueNumber > 0) {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
@@ -441,12 +441,12 @@ jobs:
       - name: Typecheck
         run: pnpm tsc --noEmit
       - name: CLI loads
-        run: npx kody-engine --help
+        run: kody-engine --help
       - name: Dry run
         run: |
           mkdir -p .kody/tasks/smoke-test
           echo "Smoke test task" > .kody/tasks/smoke-test/task.md
-          npx kody-engine run --task-id smoke-test --dry-run || true
+          kody-engine run --task-id smoke-test --dry-run || true
           if [ -f ".kody/tasks/smoke-test/status.json" ]; then
             echo "✓ status.json created"
             cat .kody/tasks/smoke-test/status.json
