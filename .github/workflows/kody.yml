@@ -163,6 +163,9 @@ jobs:
       - name: Install LiteLLM proxy
         run: pip install 'litellm[proxy]'
 
+      - name: Install Kody Engine
+        run: npm install -g @kody-ade/engine
+
       - name: Configure git
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -433,6 +436,8 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Install Kody Engine
+        run: npm install -g @kody-ade/engine
       - name: Typecheck
         run: pnpm tsc --noEmit
       - name: CLI loads
