@@ -16,7 +16,19 @@ import '@/infra/config/server-init'
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
+import { z } from 'zod'
+import type { User } from '@/payload-types'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
+
+const bulkReorderSchema = z.object({
+  courseId: z.string().min(1),
+  orderedIds: z.array(z.string().min(1)).min(1),
+})
+
+const singleMoveSchema = z.object({
+  id: z.string().min(1),
+  direction: z.enum(['up', 'down']),
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,18 +36,52 @@ export async function POST(request: NextRequest) {
 
     // Authenticate — admin only
     const { user } = await payload.auth({ headers: request.headers })
-    if (!user || (user as { role?: string }).role !== AccountRole.Admin) {
+    const typedUser = user as User | null
+    if (!typedUser || typedUser.role !== AccountRole.Admin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
+    const rawBody = await request.json()
 
-    if (body.orderedIds && body.courseId) {
-      // Bulk reorder mode: update all chapters to match the provided order
-      const { courseId, orderedIds } = body as { courseId: string; orderedIds: string[] }
+    // ── Bulk reorder mode ──────────────────────────────────────────────────
+    if (rawBody.orderedIds !== undefined || rawBody.courseId !== undefined) {
+      const parsed = bulkReorderSchema.safeParse(rawBody)
+      if (!parsed.success) {
+        return NextResponse.json(
+          { error: 'Invalid payload', details: parsed.error.flatten() },
+          { status: 400 },
+        )
+      }
+      const { courseId, orderedIds } = parsed.data
 
-      if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
-        return NextResponse.json({ error: 'orderedIds must be a non-empty array' }, { status: 400 })
+      // Verify all orderedIds belong to the specified course and that
+      // they form a complete permutation (no additions, no omissions).
+      const courseChapters = await payload.find({
+        collection: 'chapters',
+        where: { course: { equals: courseId } },
+        limit: 1000,
+        pagination: false,
+        depth: 0,
+        overrideAccess: false,
+        user: typedUser,
+      })
+
+      const courseChapterIds = new Set(courseChapters.docs.map((c) => c.id))
+
+      if (orderedIds.length !== courseChapterIds.size) {
+        return NextResponse.json(
+          { error: 'orderedIds length does not match the number of chapters in the course' },
+          { status: 400 },
+        )
+      }
+
+      for (const id of orderedIds) {
+        if (!courseChapterIds.has(id)) {
+          return NextResponse.json(
+            { error: `Chapter ${id} does not belong to course ${courseId}` },
+            { status: 400 },
+          )
+        }
       }
 
       await Promise.all(
@@ -45,7 +91,7 @@ export async function POST(request: NextRequest) {
             id: chapterId,
             data: { order: index + 1 },
             overrideAccess: false,
-            user,
+            user: typedUser,
           }),
         ),
       )
@@ -53,83 +99,107 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, courseId, count: orderedIds.length })
     }
 
-    if (body.id && body.direction) {
-      // Single move mode: swap with the adjacent chapter (up or down)
-      const { id, direction } = body as { id: string; direction: 'up' | 'down' }
-
-      if (direction !== 'up' && direction !== 'down') {
-        return NextResponse.json(
-          { error: 'direction must be "up" or "down"' },
-          { status: 400 },
-        )
-      }
-
-      // Fetch the target chapter
-      const chapter = await payload.findByID({
-        collection: 'chapters',
-        id,
-        overrideAccess: false,
-        user,
-      })
-
-      const courseId = typeof chapter.course === 'string' ? chapter.course : chapter.course?.id
-
-      // Fetch all chapters in the same course sorted by order
-      const result = await payload.find({
-        collection: 'chapters',
-        where: { course: { equals: courseId } },
-        sort: 'order',
-        limit: 1000,
-        pagination: false,
-        overrideAccess: false,
-        user,
-      })
-
-      const chapters = result.docs
-      const currentIndex = chapters.findIndex((c) => c.id === id)
-
-      if (currentIndex === -1) {
-        return NextResponse.json({ error: 'Chapter not found in course' }, { status: 404 })
-      }
-
-      const swapIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
-
-      if (swapIndex < 0 || swapIndex >= chapters.length) {
-        return NextResponse.json(
-          { error: 'Chapter is already at the boundary' },
-          { status: 400 },
-        )
-      }
-
-      // Rebalance: build the new order by swapping the two chapters
-      const reordered = [...chapters]
-      const temp = reordered[currentIndex]
-      reordered[currentIndex] = reordered[swapIndex]
-      reordered[swapIndex] = temp
-
-      // Update all chapters with sequential order values
-      await Promise.all(
-        reordered.map((c, index) =>
-          payload.update({
-            collection: 'chapters',
-            id: c.id,
-            data: { order: index + 1 },
-            overrideAccess: false,
-            user,
-          }),
-        ),
+    // ── Single move mode ───────────────────────────────────────────────────
+    const parsed = singleMoveSchema.safeParse(rawBody)
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          error:
+            'Provide either { id, direction } for single move or { courseId, orderedIds } for bulk reorder',
+        },
+        { status: 400 },
       )
+    }
+    const { id, direction } = parsed.data
 
-      return NextResponse.json({ success: true, courseId, count: reordered.length })
+    // Fetch the target chapter
+    const chapter = await payload.findByID({
+      collection: 'chapters',
+      id,
+      overrideAccess: false,
+      user: typedUser,
+    })
+
+    const courseId = typeof chapter.course === 'string' ? chapter.course : chapter.course?.id
+
+    // Fetch all chapters in the same course sorted by order
+    const result = await payload.find({
+      collection: 'chapters',
+      where: { course: { equals: courseId } },
+      sort: 'order',
+      limit: 1000,
+      pagination: false,
+      depth: 0,
+      overrideAccess: false,
+      user: typedUser,
+    })
+
+    const chapters = result.docs
+    const currentIndex = chapters.findIndex((c) => c.id === id)
+
+    if (currentIndex === -1) {
+      return NextResponse.json({ error: 'Chapter not found in course' }, { status: 404 })
     }
 
-    return NextResponse.json(
-      {
-        error:
-          'Provide either { id, direction } for single move or { courseId, orderedIds } for bulk reorder',
-      },
-      { status: 400 },
+    const swapIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+
+    if (swapIndex < 0 || swapIndex >= chapters.length) {
+      return NextResponse.json(
+        { error: 'Chapter is already at the boundary' },
+        { status: 400 },
+      )
+    }
+
+    // Build the new order by swapping the two chapters (immutable)
+    const reordered = [...chapters]
+    const temp = reordered[currentIndex]!
+    reordered[currentIndex] = reordered[swapIndex]!
+    reordered[swapIndex] = temp
+
+    // Update all chapters with sequential order values
+    await Promise.all(
+      reordered.map((c, index) =>
+        payload.update({
+          collection: 'chapters',
+          id: c.id,
+          data: { order: index + 1 },
+          overrideAccess: false,
+          user: typedUser,
+        }),
+      ),
     )
+
+    // Optimistic concurrency guard: re-read the two affected chapters and
+    // confirm their order values match what we wrote.  If another request
+    // raced and overwrote them, return a conflict error so the client can retry.
+    const [updated1, updated2] = await Promise.all([
+      payload.findByID({
+        collection: 'chapters',
+        id: reordered[currentIndex]!.id,
+        depth: 0,
+        overrideAccess: false,
+        user: typedUser,
+      }),
+      payload.findByID({
+        collection: 'chapters',
+        id: reordered[swapIndex]!.id,
+        depth: 0,
+        overrideAccess: false,
+        user: typedUser,
+      }),
+    ])
+
+    const expectedOrder1 = currentIndex + 1
+    const expectedOrder2 = swapIndex + 1
+
+    if (updated1.order !== expectedOrder1 || updated2.order !== expectedOrder2) {
+      return NextResponse.json(
+        { error: 'Concurrent modification detected — please refresh and try again' },
+        { status: 409 },
+      )
+    }
+
+    return NextResponse.json({ success: true, courseId, count: reordered.length })
   } catch (error) {
     const { captureAndRespond } = await import('@/server/api/capture-and-respond')
     return captureAndRespond(error, { route: '/api/chapters/reorder' })

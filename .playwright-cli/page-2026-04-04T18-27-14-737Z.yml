@@ -1,0 +1,362 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - button "Close Menu" [ref=e4] [cursor=pointer]:
+      - generic "Collapse" [ref=e6]:
+        - img [ref=e7]
+    - generic [ref=e10]:
+      - banner [ref=e11]:
+        - generic [ref=e14]:
+          - generic "Dashboard" [ref=e18]:
+            - img [ref=e19]
+          - link "Account" [ref=e22] [cursor=pointer]:
+            - /url: /admin/account
+            - img "yas" [ref=e23]
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - button "⠿ Sort Chapters" [ref=e26] [cursor=pointer]
+          - generic [ref=e27]: Filter by course first, then drag to reorder
+        - generic [ref=e28]:
+          - banner [ref=e29]:
+            - generic [ref=e31]:
+              - heading "Chapters" [level=1] [ref=e32]
+              - link "Create new Chapter" [ref=e34] [cursor=pointer]:
+                - /url: /admin/collections/chapters/create
+                - generic:
+                  - generic: Create New
+          - generic [ref=e38]:
+            - img
+            - textbox "Search by Admin Title" [ref=e40]
+            - generic [ref=e41]:
+              - button "Columns" [ref=e42] [cursor=pointer]:
+                - generic [ref=e43]: Columns
+                - img [ref=e45]
+              - button "Filters" [ref=e47] [cursor=pointer]:
+                - generic [ref=e48]: Filters
+                - img [ref=e50]
+          - table [ref=e55]:
+            - rowgroup [ref=e56]:
+              - row "select-all Course Sort by Course Ascending Sort by Course Descending Chapter Label Sort by Chapter Label Ascending Sort by Chapter Label Descending Title Sort by Title Ascending Sort by Title Descending Locale Sort by Locale Ascending Sort by Locale Descending Order Sort by Order Ascending Sort by Order Descending Status Sort by Status Ascending Sort by Status Descending Is Active Sort by Is Active Ascending Sort by Is Active Descending Updated At Sort by Updated At Ascending Sort by Updated At Descending" [ref=e57]:
+                - columnheader "select-all" [ref=e58]:
+                  - checkbox "select-all" [ref=e61]
+                - columnheader "Course Sort by Course Ascending Sort by Course Descending" [ref=e62]:
+                  - generic [ref=e63]:
+                    - generic [ref=e64]: Course
+                    - generic [ref=e65]:
+                      - button "Sort by Course Ascending" [ref=e66] [cursor=pointer]:
+                        - img [ref=e67]
+                      - button "Sort by Course Descending" [ref=e69] [cursor=pointer]:
+                        - img [ref=e70]
+                - columnheader "Chapter Label Sort by Chapter Label Ascending Sort by Chapter Label Descending" [ref=e72]:
+                  - generic [ref=e73]:
+                    - generic [ref=e74]: Chapter Label
+                    - generic [ref=e75]:
+                      - button "Sort by Chapter Label Ascending" [ref=e76] [cursor=pointer]:
+                        - img [ref=e77]
+                      - button "Sort by Chapter Label Descending" [ref=e79] [cursor=pointer]:
+                        - img [ref=e80]
+                - columnheader "Title Sort by Title Ascending Sort by Title Descending" [ref=e82]:
+                  - generic [ref=e83]:
+                    - generic [ref=e84]: Title
+                    - generic [ref=e85]:
+                      - button "Sort by Title Ascending" [ref=e86] [cursor=pointer]:
+                        - img [ref=e87]
+                      - button "Sort by Title Descending" [ref=e89] [cursor=pointer]:
+                        - img [ref=e90]
+                - columnheader "Locale Sort by Locale Ascending Sort by Locale Descending" [ref=e92]:
+                  - generic [ref=e93]:
+                    - generic [ref=e94]: Locale
+                    - generic [ref=e95]:
+                      - button "Sort by Locale Ascending" [ref=e96] [cursor=pointer]:
+                        - img [ref=e97]
+                      - button "Sort by Locale Descending" [ref=e99] [cursor=pointer]:
+                        - img [ref=e100]
+                - columnheader "Order Sort by Order Ascending Sort by Order Descending" [ref=e102]:
+                  - generic [ref=e103]:
+                    - generic [ref=e104]: Order
+                    - generic [ref=e105]:
+                      - button "Sort by Order Ascending" [ref=e106] [cursor=pointer]:
+                        - img [ref=e107]
+                      - button "Sort by Order Descending" [ref=e109] [cursor=pointer]:
+                        - img [ref=e110]
+                - columnheader "Status Sort by Status Ascending Sort by Status Descending" [ref=e112]:
+                  - generic [ref=e113]:
+                    - generic [ref=e114]: Status
+                    - generic [ref=e115]:
+                      - button "Sort by Status Ascending" [ref=e116] [cursor=pointer]:
+                        - img [ref=e117]
+                      - button "Sort by Status Descending" [ref=e119] [cursor=pointer]:
+                        - img [ref=e120]
+                - columnheader "Is Active Sort by Is Active Ascending Sort by Is Active Descending" [ref=e122]:
+                  - generic [ref=e123]:
+                    - generic [ref=e124]: Is Active
+                    - generic [ref=e125]:
+                      - button "Sort by Is Active Ascending" [ref=e126] [cursor=pointer]:
+                        - img [ref=e127]
+                      - button "Sort by Is Active Descending" [ref=e129] [cursor=pointer]:
+                        - img [ref=e130]
+                - columnheader "Updated At Sort by Updated At Ascending Sort by Updated At Descending" [ref=e132]:
+                  - generic [ref=e133]:
+                    - generic [ref=e134]: Updated At
+                    - generic [ref=e135]:
+                      - button "Sort by Updated At Ascending" [ref=e136] [cursor=pointer]:
+                        - img [ref=e137]
+                      - button "Sort by Updated At Descending" [ref=e139] [cursor=pointer]:
+                        - img [ref=e140]
+            - rowgroup [ref=e142]:
+              - row "<No Course> 1 Test Chapter HE 1 ↑ ↓ Published true Loading..." [ref=e143]:
+                - cell [ref=e144]:
+                  - checkbox [ref=e147]
+                - cell "<No Course>" [ref=e148]:
+                  - link "<No Course>" [ref=e149] [cursor=pointer]:
+                    - /url: /admin/collections/chapters/69d037e167859e6d3b894718
+                    - generic [ref=e150]: <No Course>
+                - cell "1" [ref=e151]:
+                  - generic [ref=e152]: "1"
+                - cell "Test Chapter" [ref=e153]:
+                  - generic [ref=e154]: Test Chapter
+                - cell "HE" [ref=e155]:
+                  - generic [ref=e156]: HE
+                - cell "1 ↑ ↓" [ref=e157]:
+                  - generic [ref=e158]:
+                    - generic [ref=e159]: "1"
+                    - button "↑" [ref=e160] [cursor=pointer]
+                    - button "↓" [ref=e161] [cursor=pointer]
+                - cell "Published" [ref=e162]:
+                  - generic [ref=e163]: Published
+                - cell "true" [ref=e164]:
+                  - code [ref=e166]:
+                    - generic [ref=e167]: "true"
+                - cell "Loading..." [ref=e168]:
+                  - generic [ref=e169]: Loading...
+              - row "<No Course> 1 Test Chapter HE 0 ↑ ↓ Published true Loading..." [ref=e170]:
+                - cell [ref=e171]:
+                  - checkbox [ref=e174]
+                - cell "<No Course>" [ref=e175]:
+                  - link "<No Course>" [ref=e176] [cursor=pointer]:
+                    - /url: /admin/collections/chapters/69d01ac322e519073b481c5c
+                    - generic [ref=e177]: <No Course>
+                - cell "1" [ref=e178]:
+                  - generic [ref=e179]: "1"
+                - cell "Test Chapter" [ref=e180]:
+                  - generic [ref=e181]: Test Chapter
+                - cell "HE" [ref=e182]:
+                  - generic [ref=e183]: HE
+                - cell "0 ↑ ↓" [ref=e184]:
+                  - generic [ref=e185]:
+                    - generic [ref=e186]: "0"
+                    - button "↑" [ref=e187] [cursor=pointer]
+                    - button "↓" [ref=e188] [cursor=pointer]
+                - cell "Published" [ref=e189]:
+                  - generic [ref=e190]: Published
+                - cell "true" [ref=e191]:
+                  - code [ref=e193]:
+                    - generic [ref=e194]: "true"
+                - cell "Loading..." [ref=e195]:
+                  - generic [ref=e196]: Loading...
+              - row "<No Course> DC1 Chapter Under Draft Course 1773005621085 HE 0 ↑ ↓ Published true Loading..." [ref=e197]:
+                - cell [ref=e198]:
+                  - checkbox [ref=e201]
+                - cell "<No Course>" [ref=e202]:
+                  - link "<No Course>" [ref=e203] [cursor=pointer]:
+                    - /url: /admin/collections/chapters/69adeb5039f225b11cf734d7
+                    - generic [ref=e204]: <No Course>
+                - cell "DC1" [ref=e205]:
+                  - generic [ref=e206]: DC1
+                - cell "Chapter Under Draft Course 1773005621085" [ref=e207]:
+                  - generic [ref=e208]: Chapter Under Draft Course 1773005621085
+                - cell "HE" [ref=e209]:
+                  - generic [ref=e210]: HE
+                - cell "0 ↑ ↓" [ref=e211]:
+                  - generic [ref=e212]:
+                    - generic [ref=e213]: "0"
+                    - button "↑" [ref=e214] [cursor=pointer]
+                    - button "↓" [ref=e215] [cursor=pointer]
+                - cell "Published" [ref=e216]:
+                  - generic [ref=e217]: Published
+                - cell "true" [ref=e218]:
+                  - code [ref=e220]:
+                    - generic [ref=e221]: "true"
+                - cell "Loading..." [ref=e222]:
+                  - generic [ref=e223]: Loading...
+              - row "<No Course> D1 Draft Chapter 1773005621085 HE 0 ↑ ↓ Draft true Loading..." [ref=e224]:
+                - cell [ref=e225]:
+                  - checkbox [ref=e228]
+                - cell "<No Course>" [ref=e229]:
+                  - link "<No Course>" [ref=e230] [cursor=pointer]:
+                    - /url: /admin/collections/chapters/69adeb4f39f225b11cf734c0
+                    - generic [ref=e231]: <No Course>
+                - cell "D1" [ref=e232]:
+                  - generic [ref=e233]: D1
+                - cell "Draft Chapter 1773005621085" [ref=e234]:
+                  - generic [ref=e235]: Draft Chapter 1773005621085
+                - cell "HE" [ref=e236]:
+                  - generic [ref=e237]: HE
+                - cell "0 ↑ ↓" [ref=e238]:
+                  - generic [ref=e239]:
+                    - generic [ref=e240]: "0"
+                    - button "↑" [ref=e241] [cursor=pointer]
+                    - button "↓" [ref=e242] [cursor=pointer]
+                - cell "Draft" [ref=e243]:
+                  - generic [ref=e244]: Draft
+                - cell "true" [ref=e245]:
+                  - code [ref=e247]:
+                    - generic [ref=e248]: "true"
+                - cell "Loading..." [ref=e249]:
+                  - generic [ref=e250]: Loading...
+              - row "<No Course> P1 Published Chapter 1773005621085 HE 0 ↑ ↓ Published true Loading..." [ref=e251]:
+                - cell [ref=e252]:
+                  - checkbox [ref=e255]
+                - cell "<No Course>" [ref=e256]:
+                  - link "<No Course>" [ref=e257] [cursor=pointer]:
+                    - /url: /admin/collections/chapters/69adeb4e39f225b11cf734a9
+                    - generic [ref=e258]: <No Course>
+                - cell "P1" [ref=e259]:
+                  - generic [ref=e260]: P1
+                - cell "Published Chapter 1773005621085" [ref=e261]:
+                  - generic [ref=e262]: Published Chapter 1773005621085
+                - cell "HE" [ref=e263]:
+                  - generic [ref=e264]: HE
+                - cell "0 ↑ ↓" [ref=e265]:
+                  - generic [ref=e266]:
+                    - generic [ref=e267]: "0"
+                    - button "↑" [ref=e268] [cursor=pointer]
+                    - button "↓" [ref=e269] [cursor=pointer]
+                - cell "Published" [ref=e270]:
+                  - generic [ref=e271]: Published
+                - cell "true" [ref=e272]:
+                  - code [ref=e274]:
+                    - generic [ref=e275]: "true"
+                - cell "Loading..." [ref=e276]:
+                  - generic [ref=e277]: Loading...
+              - row "<No Course> L-1772694226270 Lesson Types Chapter 1772694226270 HE 0 ↑ ↓ Published true Loading..." [ref=e278]:
+                - cell [ref=e279]:
+                  - checkbox [ref=e282]
+                - cell "<No Course>" [ref=e283]:
+                  - link "<No Course>" [ref=e284] [cursor=pointer]:
+                    - /url: /admin/collections/chapters/69a92ad32a2e53d1e834b607
+                    - generic [ref=e285]: <No Course>
+                - cell "L-1772694226270" [ref=e286]:
+                  - generic [ref=e287]: L-1772694226270
+                - cell "Lesson Types Chapter 1772694226270" [ref=e288]:
+                  - generic [ref=e289]: Lesson Types Chapter 1772694226270
+                - cell "HE" [ref=e290]:
+                  - generic [ref=e291]: HE
+                - cell "0 ↑ ↓" [ref=e292]:
+                  - generic [ref=e293]:
+                    - generic [ref=e294]: "0"
+                    - button "↑" [ref=e295] [cursor=pointer]
+                    - button "↓" [ref=e296] [cursor=pointer]
+                - cell "Published" [ref=e297]:
+                  - generic [ref=e298]: Published
+                - cell "true" [ref=e299]:
+                  - code [ref=e301]:
+                    - generic [ref=e302]: "true"
+                - cell "Loading..." [ref=e303]:
+                  - generic [ref=e304]: Loading...
+              - row "<No Course> I Introduction HE 0 ↑ ↓ Published true Loading..." [ref=e305]:
+                - cell [ref=e306]:
+                  - checkbox [ref=e309]
+                - cell "<No Course>" [ref=e310]:
+                  - link "<No Course>" [ref=e311] [cursor=pointer]:
+                    - /url: /admin/collections/chapters/69a92ac991d0758385184456
+                    - generic [ref=e312]: <No Course>
+                - cell "I" [ref=e313]:
+                  - generic [ref=e314]: I
+                - cell "Introduction" [ref=e315]:
+                  - generic [ref=e316]: Introduction
+                - cell "HE" [ref=e317]:
+                  - generic [ref=e318]: HE
+                - cell "0 ↑ ↓" [ref=e319]:
+                  - generic [ref=e320]:
+                    - generic [ref=e321]: "0"
+                    - button "↑" [ref=e322] [cursor=pointer]
+                    - button "↓" [ref=e323] [cursor=pointer]
+                - cell "Published" [ref=e324]:
+                  - generic [ref=e325]: Published
+                - cell "true" [ref=e326]:
+                  - code [ref=e328]:
+                    - generic [ref=e329]: "true"
+                - cell "Loading..." [ref=e330]:
+                  - generic [ref=e331]: Loading...
+              - row "<No Course> I Introduction HE 0 ↑ ↓ Published true Loading..." [ref=e332]:
+                - cell [ref=e333]:
+                  - checkbox [ref=e336]
+                - cell "<No Course>" [ref=e337]:
+                  - link "<No Course>" [ref=e338] [cursor=pointer]:
+                    - /url: /admin/collections/chapters/69a92ac991d075838518444f
+                    - generic [ref=e339]: <No Course>
+                - cell "I" [ref=e340]:
+                  - generic [ref=e341]: I
+                - cell "Introduction" [ref=e342]:
+                  - generic [ref=e343]: Introduction
+                - cell "HE" [ref=e344]:
+                  - generic [ref=e345]: HE
+                - cell "0 ↑ ↓" [ref=e346]:
+                  - generic [ref=e347]:
+                    - generic [ref=e348]: "0"
+                    - button "↑" [ref=e349] [cursor=pointer]
+                    - button "↓" [ref=e350] [cursor=pointer]
+                - cell "Published" [ref=e351]:
+                  - generic [ref=e352]: Published
+                - cell "true" [ref=e353]:
+                  - code [ref=e355]:
+                    - generic [ref=e356]: "true"
+                - cell "Loading..." [ref=e357]:
+                  - generic [ref=e358]: Loading...
+              - row "<No Course> 1 Test Chapter HE 0 ↑ ↓ Published true Loading..." [ref=e359]:
+                - cell [ref=e360]:
+                  - checkbox [ref=e363]
+                - cell "<No Course>" [ref=e364]:
+                  - link "<No Course>" [ref=e365] [cursor=pointer]:
+                    - /url: /admin/collections/chapters/696bccc13b2c3f53b032f483
+                    - generic [ref=e366]: <No Course>
+                - cell "1" [ref=e367]:
+                  - generic [ref=e368]: "1"
+                - cell "Test Chapter" [ref=e369]:
+                  - generic [ref=e370]: Test Chapter
+                - cell "HE" [ref=e371]:
+                  - generic [ref=e372]: HE
+                - cell "0 ↑ ↓" [ref=e373]:
+                  - generic [ref=e374]:
+                    - generic [ref=e375]: "0"
+                    - button "↑" [ref=e376] [cursor=pointer]
+                    - button "↓" [ref=e377] [cursor=pointer]
+                - cell "Published" [ref=e378]:
+                  - generic [ref=e379]: Published
+                - cell "true" [ref=e380]:
+                  - code [ref=e382]:
+                    - generic [ref=e383]: "true"
+                - cell "Loading..." [ref=e384]:
+                  - generic [ref=e385]: Loading...
+              - row "<No Course> <No Chapter Label> Conversations Integration Test Chapter HE 0 ↑ ↓ Published true Loading..." [ref=e386]:
+                - cell [ref=e387]:
+                  - checkbox [ref=e390]
+                - cell "<No Course>" [ref=e391]:
+                  - link "<No Course>" [ref=e392] [cursor=pointer]:
+                    - /url: /admin/collections/chapters/696a71de9d993bc341edd0f5
+                    - generic [ref=e393]: <No Course>
+                - cell "<No Chapter Label>" [ref=e394]:
+                  - generic [ref=e395]: <No Chapter Label>
+                - cell "Conversations Integration Test Chapter" [ref=e396]:
+                  - generic [ref=e397]: Conversations Integration Test Chapter
+                - cell "HE" [ref=e398]:
+                  - generic [ref=e399]: HE
+                - cell "0 ↑ ↓" [ref=e400]:
+                  - generic [ref=e401]:
+                    - generic [ref=e402]: "0"
+                    - button "↑" [ref=e403] [cursor=pointer]
+                    - button "↓" [ref=e404] [cursor=pointer]
+                - cell "Published" [ref=e405]:
+                  - generic [ref=e406]: Published
+                - cell "true" [ref=e407]:
+                  - code [ref=e409]:
+                    - generic [ref=e410]: "true"
+                - cell "Loading..." [ref=e411]:
+                  - generic [ref=e412]: Loading...
+          - generic [ref=e413]:
+            - generic [ref=e414]: 1-10 of 10
+            - 'button "Per Page: 10" [ref=e418] [cursor=pointer]':
+              - generic [ref=e419]:
+                - generic [ref=e420]: "Per Page: 10"
+                - img [ref=e421]
+  - region "Notifications alt+T"

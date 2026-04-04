@@ -1,0 +1,31 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e13]:
+    - img [ref=e15]
+    - paragraph [ref=e29]: Welcome to your dashboard! This is where site admins will log in to manage your website.
+    - generic [ref=e30]:
+      - generic [ref=e31]:
+        - generic [ref=e32]:
+          - generic [ref=e33]:
+            - text: Email
+            - generic [ref=e34]: "*"
+          - textbox "Email *" [ref=e36]: aguy.aharon.yair@gmail.com
+        - generic [ref=e37]:
+          - generic [ref=e38]:
+            - text: Password
+            - generic [ref=e39]: "*"
+          - textbox "Password" [ref=e42]: As121212
+      - link "Forgot password?" [ref=e43] [cursor=pointer]:
+        - /url: /admin/forgot
+      - button "Login" [ref=e45] [cursor=pointer]:
+        - generic:
+          - generic: Login
+  - status [ref=e46]
+  - region "Notifications alt+T":
+    - list:
+      - listitem [ref=e47]:
+        - button "Close toast" [ref=e48] [cursor=pointer]:
+          - img [ref=e49]
+        - generic [ref=e52]: The email or password provided is incorrect.
+  - button "Open Next.js Dev Tools" [ref=e7] [cursor=pointer]:
+    - img [ref=e8]
+  - alert [ref=e11]

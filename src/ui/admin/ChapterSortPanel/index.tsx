@@ -240,7 +240,7 @@ export const ChapterSortPanel: React.FC = () => {
                   onReorder={setChapters}
                   style={{ listStyle: 'none', margin: 0, padding: 0 }}
                 >
-                  {chapters.map((chapter) => (
+                  {chapters.map((chapter, index) => (
                     <Reorder.Item
                       key={chapter.id}
                       value={chapter}
@@ -275,7 +275,7 @@ export const ChapterSortPanel: React.FC = () => {
                           flexShrink: 0,
                         }}
                       >
-                        #{chapters.indexOf(chapter) + 1}
+                        #{index + 1}
                       </span>
                       <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {labelFor(chapter)}
