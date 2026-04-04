@@ -13,11 +13,9 @@
  */
 
 import React, { useCallback, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import type { DefaultCellComponentProps } from 'payload'
 
 export const ChapterOrderCell: React.FC<DefaultCellComponentProps> = ({ cellData, rowData }) => {
-  const router = useRouter()
   const [loading, setLoading] = useState(false)
 
   const order = typeof cellData === 'number' ? cellData : Number(cellData ?? 0)
@@ -35,13 +33,13 @@ export const ChapterOrderCell: React.FC<DefaultCellComponentProps> = ({ cellData
           body: JSON.stringify({ id: chapterId, direction }),
         })
         if (res.ok) {
-          router.refresh()
+          window.location.reload()
         }
       } finally {
         setLoading(false)
       }
     },
-    [chapterId, loading, router],
+    [chapterId, loading],
   )
 
   return (
