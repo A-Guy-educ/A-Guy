@@ -136,6 +136,7 @@ export const Lessons: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
+    listSearchableFields: ['chapter.course.courseLabel', 'chapter.course.title'],
     components: {
       edit: {
         beforeDocumentControls: [

@@ -6,7 +6,9 @@
 'use client'
 
 import React from 'react'
+import { motion } from 'framer-motion'
 import { cn } from '@/infra/utils/ui'
+import { Check, X } from 'lucide-react'
 import { MathMarkdown } from '@/ui/web/shared/MathMarkdown'
 import type { TableBlock, TableCellResult } from '../../types'
 
@@ -45,15 +47,12 @@ export function ExerciseTable({
 }: ExerciseTableProps) {
   const resultMap = getCellResultMap(cellResults)
   const alignClass = { left: 'text-left', center: 'text-center', right: 'text-right' }
-  const borderCls = table.showBorders ? 'border border-border' : 'border-0'
+  const borderCls = table.showBorders ? 'border border-border/30' : 'border-0'
 
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="w-full overflow-x-auto rounded-xl border border-border/20 shadow-elevation-1">
       <table
-        className={cn(
-          'w-full border-collapse table-fixed',
-          table.showBorders && 'shadow-elevation-1 rounded-md overflow-hidden',
-        )}
+        className={cn('w-full border-collapse table-fixed', table.showBorders && 'overflow-hidden')}
       >
         {table.showHeader && (
           <thead>
@@ -62,9 +61,10 @@ export function ExerciseTable({
                 <th
                   key={ci}
                   className={cn(
-                    'p-3 font-semibold bg-muted',
+                    'p-3.5 font-semibold text-body-sm bg-muted/50',
                     alignClass[getAlignment(table, ci)],
                     borderCls,
+                    'border-b-2 border-b-border/20',
                   )}
                 >
                   <MathMarkdown content={header} />
@@ -75,7 +75,13 @@ export function ExerciseTable({
         )}
         <tbody>
           {table.rowsData.map((row, ri) => (
-            <tr key={ri} className={ri % 2 === 1 ? 'bg-muted/30' : ''}>
+            <motion.tr
+              key={ri}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.2, delay: ri * 0.03 }}
+              className={ri % 2 === 1 ? 'bg-muted/15' : ''}
+            >
               {row.map((cell, ci) => {
                 const key = `${ri}-${ci}`
                 const fillable = isFillableCell(table, ri, ci)
@@ -83,7 +89,7 @@ export function ExerciseTable({
                 const align = getAlignment(table, ci)
 
                 return (
-                  <td key={ci} className={cn('p-3', alignClass[align], borderCls)}>
+                  <td key={ci} className={cn('p-3.5', alignClass[align], borderCls)}>
                     {fillable ? (
                       <FillableInput
                         cellKey={key}
@@ -101,7 +107,7 @@ export function ExerciseTable({
                   </td>
                 )
               })}
-            </tr>
+            </motion.tr>
           ))}
         </tbody>
       </table>
@@ -120,23 +126,46 @@ interface FillableInputProps {
 
 function FillableInput({ cellKey, value, onChange, result, disabled, align }: FillableInputProps) {
   return (
-    <input
-      type="text"
-      dir="ltr"
-      value={value}
-      onChange={(e) => onChange(cellKey, e.target.value)}
-      readOnly={disabled}
-      className={cn(
-        'w-full min-w-[120px] px-2 py-1.5 rounded-md border-2 text-body-sm',
-        'bg-background transition-colors duration-normal',
-        align === 'left' && 'text-left',
-        align === 'center' && 'text-center',
-        align === 'right' && 'text-right',
-        result === true && 'border-success bg-success/10 text-success-foreground',
-        result === false && 'border-destructive bg-destructive/10 text-destructive',
-        result === undefined && 'border-input focus:border-ring focus:outline-none',
-        disabled && 'opacity-disabled cursor-not-allowed',
+    <div className="relative">
+      <input
+        type="text"
+        dir="ltr"
+        value={value}
+        onChange={(e) => onChange(cellKey, e.target.value)}
+        readOnly={disabled}
+        className={cn(
+          'w-full min-w-[120px] px-3 py-2 rounded-lg border-2 text-body-sm',
+          'bg-background transition-all duration-normal',
+          align === 'left' && 'text-left',
+          align === 'center' && 'text-center',
+          align === 'right' && 'text-right',
+          result === true && 'border-success bg-success/6 text-success-foreground pe-8',
+          result === false && 'border-destructive bg-destructive/6 text-destructive pe-8',
+          result === undefined &&
+            'border-dashed border-primary/25 bg-primary/3 focus:border-solid focus:border-primary focus:bg-card focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.08)] focus:outline-none',
+          disabled && 'opacity-50 cursor-not-allowed',
+        )}
+      />
+      {result === true && (
+        <motion.span
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+          className="absolute end-2 top-1/2 -translate-y-1/2 text-success"
+        >
+          <Check className="w-4 h-4" />
+        </motion.span>
       )}
-    />
+      {result === false && (
+        <motion.span
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+          className="absolute end-2 top-1/2 -translate-y-1/2 text-destructive"
+        >
+          <X className="w-4 h-4" />
+        </motion.span>
+      )}
+    </div>
   )
 }

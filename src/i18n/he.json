@@ -660,6 +660,16 @@
       "noExamDate": "בחר תאריך בחינה"
     },
     "loading": "טוען...",
-    "generateButton": "בנה תכנית מיקוד"
+    "generateButton": "בנה תכנית מיקוד",
+    "selectFromCourse": "בחר מהקורס",
+    "selectLessonsHint": "בחר שיעורים מהקורס שלך להוספה כנושאי לימוד",
+    "noCourseSelected": "לא נבחר קורס",
+    "selectedCount": "שיעור נבחר",
+    "selectedCount_plural": "שיעורים נבחרו",
+    "lessonTypes": {
+      "learning": "למידה",
+      "practice": "תרגול",
+      "exam": "בחינה"
+    }
   }
 }

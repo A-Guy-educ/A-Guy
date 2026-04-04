@@ -8,6 +8,7 @@
 'use client'
 
 import React from 'react'
+import { AnimatePresence } from 'framer-motion'
 import type { HelpUsageState, QuestionBlock } from '../../types'
 import { HelpSystemButtons } from './HelpSystemButtons'
 import { HelpSystemContent } from './HelpSystemContent'
@@ -51,17 +52,19 @@ export function HelpSystem({
         solutionLabel={solutionLabel}
       />
 
-      {inlineContent && (
-        <div className="mt-3">
-          <HelpSystemContent
-            type="hint"
-            content={inlineContent}
-            hintLabel={hintLabel}
-            guidingLabel={guidingLabel}
-            solutionLabel={solutionLabel}
-          />
-        </div>
-      )}
+      <AnimatePresence>
+        {inlineContent && (
+          <div className="mt-3">
+            <HelpSystemContent
+              type="hint"
+              content={inlineContent}
+              hintLabel={hintLabel}
+              guidingLabel={guidingLabel}
+              solutionLabel={solutionLabel}
+            />
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
