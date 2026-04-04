@@ -34,6 +34,7 @@ export const Chapters: CollectionConfig = {
   admin: {
     useAsTitle: 'adminTitle',
     components: {
+      beforeList: ['@/ui/admin/ChapterSortPanel#ChapterSortPanel'],
       edit: {
         beforeDocumentControls: [
           '@/ui/admin/TranslationButton#TranslateChapterAction',
@@ -121,6 +122,9 @@ export const Chapters: CollectionConfig = {
       min: 0,
       admin: {
         description: 'Sort order within the course',
+        components: {
+          Cell: '@/ui/admin/ChapterOrderCell#ChapterOrderCell',
+        },
       },
     },
     {
