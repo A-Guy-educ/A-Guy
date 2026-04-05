@@ -21,7 +21,6 @@ vi.mock('@/ui/web/exerciserenderer/blocks/RichTextRenderer', () => ({
   ),
 }))
 
-// Type-only import - will fail at compile if component doesn't exist (expected in TDD)
 // Type-only import kept as compile-time check (prefixed to satisfy lint)
 import type { GraphLayout as _GraphLayout } from '@/server/payload/collections/Exercises/types'
 
@@ -174,6 +173,34 @@ describe('GraphWithPrompt Component', () => {
 
       // Should have gap class
       expect(wrapper.className).toMatch(/gap-/)
+    })
+  })
+
+  describe('RTL layout stability', () => {
+    it('forces LTR direction on side-by-side containers to prevent RTL reversal', () => {
+      const { container: containerLeft } = renderWithGraph('textLeft')
+      const wrapperLeft = containerLeft.firstChild as HTMLElement
+      expect(wrapperLeft.getAttribute('dir')).toBe('ltr')
+
+      const { container: containerRight } = renderWithGraph('textRight')
+      const wrapperRight = containerRight.firstChild as HTMLElement
+      expect(wrapperRight.getAttribute('dir')).toBe('ltr')
+    })
+
+    it('does not force direction on vertical layouts', () => {
+      const { container: containerAbove } = renderWithGraph('textAbove')
+      const wrapperAbove = containerAbove.firstChild as HTMLElement
+      expect(wrapperAbove.getAttribute('dir')).toBeNull()
+
+      const { container: containerBelow } = renderWithGraph('textBelow')
+      const wrapperBelow = containerBelow.firstChild as HTMLElement
+      expect(wrapperBelow.getAttribute('dir')).toBeNull()
+    })
+
+    it('sets dir="auto" on prompt wrapper for correct text direction', () => {
+      const { container } = renderWithGraph('textRight')
+      const promptWrapper = container.querySelector('[data-testid="prompt-wrapper"]')
+      expect(promptWrapper?.getAttribute('dir')).toBe('auto')
     })
   })
 

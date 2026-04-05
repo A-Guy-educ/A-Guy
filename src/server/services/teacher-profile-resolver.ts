@@ -76,11 +76,13 @@ function isPromptValid(
  *
  * @param payload - Payload instance
  * @param userId - Optional user ID (omit for guest)
+ * @param locale - Optional locale for filtering profiles (defaults to Hebrew)
  * @returns Resolved teacher profile with all necessary details
  */
 export async function resolveTeacherProfile(
   payload: Payload,
   userId?: string,
+  locale?: string,
 ): Promise<ResolvedTeacherProfile> {
   // Authenticated user resolution path
   if (userId) {
@@ -90,12 +92,12 @@ export async function resolveTeacherProfile(
   }
 
   // Tier 2: Default profile by slug
-  const tier2Result = await resolveTier2DefaultProfile(payload)
+  const tier2Result = await resolveTier2DefaultProfile(payload, locale)
   if (tier2Result) return tier2Result
 
   // Tier 3: First active profile (authenticated users only)
   if (userId) {
-    const tier3Result = await resolveTier3FirstActive(payload)
+    const tier3Result = await resolveTier3FirstActive(payload, locale)
     if (tier3Result) return tier3Result
   }
 
@@ -161,14 +163,17 @@ async function resolveTier1UserSettings(
  */
 async function resolveTier2DefaultProfile(
   payload: Payload,
+  locale?: string,
 ): Promise<ResolvedTeacherProfile | null> {
   try {
+    const baseWhere = {
+      slug: { equals: DEFAULT_TEACHER_PROFILE_SLUG },
+      isEnabled: { equals: true },
+    }
+
     const result = await payload.find({
       collection: 'teacher_profiles',
-      where: {
-        slug: { equals: DEFAULT_TEACHER_PROFILE_SLUG },
-        isEnabled: { equals: true },
-      },
+      where: locale ? { and: [baseWhere, { locale: { equals: locale } }] } : baseWhere,
       depth: 1, // Populate systemPrompt one level
       limit: 1,
       overrideAccess: true, // Server-side read, collection is adminOnly
@@ -202,13 +207,16 @@ async function resolveTier2DefaultProfile(
 /**
  * Tier 3: First active profile (authenticated users only)
  */
-async function resolveTier3FirstActive(payload: Payload): Promise<ResolvedTeacherProfile | null> {
+async function resolveTier3FirstActive(
+  payload: Payload,
+  locale?: string,
+): Promise<ResolvedTeacherProfile | null> {
   try {
+    const baseWhere = { isEnabled: { equals: true } }
+
     const result = await payload.find({
       collection: 'teacher_profiles',
-      where: {
-        isEnabled: { equals: true },
-      },
+      where: locale ? { and: [baseWhere, { locale: { equals: locale } }] } : baseWhere,
       depth: 1,
       limit: 1,
       sort: 'createdAt',

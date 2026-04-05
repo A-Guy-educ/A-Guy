@@ -22,9 +22,29 @@ function hslStringToHex(hslStr: string): string {
   return `#${f(0)}${f(8)}${f(4)}`
 }
 
+/** Fallback colors when CSS variables are unavailable (e.g. Payload admin panel) */
+const CSS_VAR_FALLBACKS: Record<string, string> = {
+  '--foreground': '#1a1a2e',
+  '--text-highlight-1': '#dc2626',
+  '--text-highlight-2': '#ea580c',
+  '--text-highlight-3': '#ca8a04',
+  '--text-highlight-4': '#16a34a',
+  '--text-highlight-5': '#2563eb',
+  '--text-highlight-6': '#9333ea',
+  '--text-highlight-7': '#db2777',
+  '--text-highlight-8': '#6b7280',
+  '--card': '#ffffff',
+  '--muted': '#f3f4f6',
+  '--border': '#e5e7eb',
+  '--primary': '#2563eb',
+  '--primary-foreground': '#ffffff',
+}
+
 /** Read a CSS variable from :root and convert its HSL value to hex */
 export function cssVarToHex(varName: string): string {
+  if (typeof document === 'undefined') return CSS_VAR_FALLBACKS[varName] ?? '#000000'
   const value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim()
+  if (!value) return CSS_VAR_FALLBACKS[varName] ?? '#000000'
   return hslStringToHex(value)
 }
 
@@ -59,9 +79,39 @@ export function getDefaultAngleColor(): string {
   return cssVarToHex('--text-highlight-5')
 }
 
+/**
+ * Default color for geometry elements rendered on a white canvas.
+ * Uses the hardcoded foreground fallback so elements are always visible
+ * regardless of the host page's theme (e.g. dark Payload admin).
+ */
+export function getDefaultCanvasElementColor(): string {
+  return CSS_VAR_FALLBACKS['--foreground']
+}
+
+/**
+ * Color palette using hardcoded fallback values instead of CSS variable resolution.
+ * Use this in the Payload admin panel where :root CSS variables belong to the
+ * admin theme (e.g. --foreground is white in dark mode) and don't match the
+ * geometry canvas's white background.
+ */
+export function getCanvasColorPalette(): ReadonlyArray<{ label: string; hex: string }> {
+  return PALETTE_VARS.map(({ label, cssVar }) => ({
+    label,
+    hex: CSS_VAR_FALLBACKS[cssVar] ?? '#000000',
+  }))
+}
+
 /** Default canvas background resolved from --card CSS variable */
 export function getDefaultCanvasBackground(): string {
   return cssVarToHex('--card')
+}
+
+/**
+ * Hardcoded canvas background for admin context where :root CSS variables
+ * belong to Payload's theme and resolve to dark colors in dark mode.
+ */
+export function getAdminCanvasBackground(): string {
+  return CSS_VAR_FALLBACKS['--card']
 }
 
 /** Default shape fill resolved from --muted CSS variable */

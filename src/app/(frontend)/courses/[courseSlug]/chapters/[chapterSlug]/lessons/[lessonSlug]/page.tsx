@@ -164,7 +164,12 @@ export default async function LessonPage({ params }: LessonPageProps) {
         gatedDelayMs={gatedDelayMs}
         gatedWarningMs={gatedWarningMs}
       >
-        <LessonAnalytics lessonId={lesson.id} courseId={course.id} lessonTitle={lesson.title} />
+        <LessonAnalytics
+          lessonId={lesson.id}
+          courseId={course.id}
+          lessonTitle={lesson.title}
+          contentType="blocks"
+        />
         <LessonPager
           blocks={resolvedBlocks}
           lessonTitle={lesson.title}
@@ -211,7 +216,12 @@ export default async function LessonPage({ params }: LessonPageProps) {
         gatedDelayMs={gatedDelayMs}
         gatedWarningMs={gatedWarningMs}
       >
-        <LessonAnalytics lessonId={lesson.id} courseId={course.id} lessonTitle={lesson.title} />
+        <LessonAnalytics
+          lessonId={lesson.id}
+          courseId={course.id}
+          lessonTitle={lesson.title}
+          contentType="exercises"
+        />
         {hasExercises ? (
           <ExercisesPager
             exercises={exercises}
@@ -228,7 +238,6 @@ export default async function LessonPage({ params }: LessonPageProps) {
         ) : (
           // Empty lesson: show ExerciseWorkspace with DynamicLesson as primaryContent
           <>
-            <LessonAnalytics lessonId={lesson.id} courseId={course.id} lessonTitle={lesson.title} />
             <ExerciseWorkspace
               exerciseTitle={lesson.title}
               backUrl={backUrl}
@@ -258,7 +267,12 @@ export default async function LessonPage({ params }: LessonPageProps) {
       gatedDelayMs={gatedDelayMs}
       gatedWarningMs={gatedWarningMs}
     >
-      <LessonAnalytics lessonId={lesson.id} courseId={course.id} lessonTitle={lesson.title} />
+      <LessonAnalytics
+        lessonId={lesson.id}
+        courseId={course.id}
+        lessonTitle={lesson.title}
+        contentType="pdf"
+      />
       <PdfLessonPager
         validFiles={validFiles}
         lessonTitle={lesson.title}

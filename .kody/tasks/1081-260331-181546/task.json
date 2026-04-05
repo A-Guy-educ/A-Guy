@@ -1,0 +1,9 @@
+{
+  "task_type": "chore",
+  "title": "Based on my analysis:  **The Issue**: In Payload admin, when searching t",
+  "description": "Based on my analysis:\n\n**The Issue**: In Payload admin, when searching the Lessons collection, users can only search by the lesson's own title. The search doesn't traverse the relationship path `lesson → chapter → course` to also search by the course's `courseLabel` and `title`.\n\n**The Fix**: Add `admin.searchFilters` to the Lessons collection to enable searching through the chapter->course relationship.\n\n```json\n{\n  \"task_type\": \"bugfix\",\n  \"title\": \"Add course search filters to lessons admin\",",
+  "scope": [],
+  "risk_level": "low",
+  "hasUI": false,
+  "questions": []
+}

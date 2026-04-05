@@ -68,6 +68,11 @@ export const eventDestinations: Record<ProductEvent, AnalyticsDestination[]> = {
   [PRODUCT_EVENTS.ANSWER_INCORRECT]: ['mixpanel'],
   [PRODUCT_EVENTS.EXERCISE_SKIPPED]: ['mixpanel'],
 
+  // Lesson Loading Lifecycle Events (Mixpanel only)
+  [PRODUCT_EVENTS.LESSON_OPEN_ATTEMPTED]: ['mixpanel'],
+  [PRODUCT_EVENTS.LESSON_LOAD_SUCCESS]: ['mixpanel'],
+  [PRODUCT_EVENTS.LESSON_LOAD_FAILED]: ['mixpanel'],
+
   // Engagement Signal Events (Mixpanel only)
   [PRODUCT_EVENTS.LESSON_ABANDONED]: ['mixpanel'],
   [PRODUCT_EVENTS.CHAPTER_COMPLETED]: ['mixpanel'],

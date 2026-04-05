@@ -49,6 +49,159 @@ const isAdminOrOwner: Access = ({ req }) => {
  *   - answer (required)        <-- ONLY grading data
  *   - hint/solution/fullSolution (optional)  <-- teacher/explanation data
  */
+/**
+ * Hooks — extracted to avoid TS1117 on CI (duplicate property detection
+ * in large inline object literals).
+ */
+const exerciseHooks: CollectionConfig['hooks'] = {
+  beforeChange: [
+    enforceContentStructure,
+    // Auto-populate course from lesson -> chapter -> course
+    async ({ data, req }) => {
+      if (data?.lesson) {
+        try {
+          const lessonId = typeof data.lesson === 'string' ? data.lesson : data.lesson?.id
+          if (lessonId) {
+            const lesson = await req.payload.findByID({
+              collection: 'lessons',
+              id: lessonId,
+              depth: 0,
+              select: { chapter: true },
+            })
+            const chapterId =
+              typeof lesson?.chapter === 'string' ? lesson.chapter : lesson?.chapter?.id
+            if (chapterId) {
+              data.chapter = chapterId
+              const chapter = await req.payload.findByID({
+                collection: 'chapters',
+                id: chapterId,
+                depth: 0,
+                select: { course: true },
+              })
+              if (chapter?.course) {
+                data.course =
+                  typeof chapter.course === 'string' ? chapter.course : chapter.course?.id
+              }
+            }
+          }
+        } catch {
+          // Silently skip — course is a convenience field
+        }
+      }
+      return data
+    },
+  ],
+  afterRead: [
+    // Lazy backfill: when an exercise is read and its denormalized course/chapter
+    // fields are empty, resolve them from the hierarchy and persist to the DB.
+    // This is a one-time write per record — subsequent reads skip (already populated).
+    // Skipped during build/seed (no req.user) to avoid slow static generation.
+    async ({ doc, req }) => {
+      if (!doc?.lesson) return doc
+      if (doc.course && doc.chapter) return doc
+      if (!req.user) return doc
+
+      try {
+        const lessonId = typeof doc.lesson === 'string' ? doc.lesson : doc.lesson?.id
+        if (!lessonId) return doc
+
+        const lesson = await req.payload.findByID({
+          collection: 'lessons',
+          id: lessonId,
+          depth: 0,
+          select: { chapter: true },
+        })
+        const chapterId = typeof lesson?.chapter === 'string' ? lesson.chapter : lesson?.chapter?.id
+        if (!chapterId) return doc
+
+        const chapter = await req.payload.findByID({
+          collection: 'chapters',
+          id: chapterId,
+          depth: 0,
+          select: { course: true },
+        })
+        const courseId = typeof chapter?.course === 'string' ? chapter.course : chapter?.course?.id
+
+        const updates: Record<string, string> = {}
+        if (chapterId && !doc.chapter) updates.chapter = chapterId
+        if (courseId && !doc.course) updates.course = courseId
+
+        if (Object.keys(updates).length > 0) {
+          // Persist to DB so list-view filters match on the next query
+          await req.payload.update({
+            collection: 'exercises',
+            id: doc.id,
+            data: updates as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+            overrideAccess: true,
+            context: { _skipBlockSync: true },
+          })
+          if (updates.chapter) doc.chapter = chapterId
+          if (updates.course) doc.course = courseId
+        }
+      } catch {
+        // Silently skip — backfill is best-effort
+      }
+
+      return doc
+    },
+  ],
+  afterChange: [
+    async ({ doc, previousDoc, req }) => {
+      if (req.context?._skipBlockSync) return doc
+
+      const newLessonId =
+        typeof doc.lesson === 'string' ? doc.lesson : (doc.lesson as { id?: string })?.id
+      const oldLessonId = previousDoc
+        ? typeof previousDoc.lesson === 'string'
+          ? previousDoc.lesson
+          : (previousDoc.lesson as { id?: string })?.id
+        : null
+
+      // Lesson changed — remove from old, add to new
+      if (oldLessonId && oldLessonId !== newLessonId) {
+        await removeBlockFromLesson({
+          payload: req.payload,
+          req,
+          lessonId: oldLessonId,
+          refId: doc.id,
+          blockType: 'exerciseRef',
+        })
+      }
+
+      if (newLessonId) {
+        await addBlockToLesson({
+          payload: req.payload,
+          req,
+          lessonId: newLessonId,
+          refId: doc.id,
+          blockType: 'exerciseRef',
+        })
+      }
+
+      return doc
+    },
+  ],
+  afterDelete: [
+    async ({ doc, req }) => {
+      if (req.context?._skipBlockSync) return doc
+
+      const lessonId =
+        typeof doc.lesson === 'string' ? doc.lesson : (doc.lesson as { id?: string })?.id
+      if (lessonId) {
+        await removeBlockFromLesson({
+          payload: req.payload,
+          req,
+          lessonId,
+          refId: doc.id,
+          blockType: 'exerciseRef',
+        })
+      }
+
+      return doc
+    },
+  ],
+}
+
 export const Exercises: CollectionConfig = {
   slug: 'exercises',
   access: {
@@ -57,65 +210,7 @@ export const Exercises: CollectionConfig = {
     read: anyone,
     update: isAdminOrOwner,
   },
-
-  hooks: {
-    afterChange: [
-      async ({ doc, previousDoc, req }) => {
-        if (req.context?._skipBlockSync) return doc
-
-        const newLessonId =
-          typeof doc.lesson === 'string' ? doc.lesson : (doc.lesson as { id?: string })?.id
-        const oldLessonId = previousDoc
-          ? typeof previousDoc.lesson === 'string'
-            ? previousDoc.lesson
-            : (previousDoc.lesson as { id?: string })?.id
-          : null
-
-        // Lesson changed — remove from old, add to new
-        if (oldLessonId && oldLessonId !== newLessonId) {
-          await removeBlockFromLesson({
-            payload: req.payload,
-            req,
-            lessonId: oldLessonId,
-            refId: doc.id,
-            blockType: 'exerciseRef',
-          })
-        }
-
-        if (newLessonId) {
-          await addBlockToLesson({
-            payload: req.payload,
-            req,
-            lessonId: newLessonId,
-            refId: doc.id,
-            blockType: 'exerciseRef',
-          })
-        }
-
-        return doc
-      },
-    ],
-    afterDelete: [
-      async ({ doc, req }) => {
-        if (req.context?._skipBlockSync) return doc
-
-        const lessonId =
-          typeof doc.lesson === 'string' ? doc.lesson : (doc.lesson as { id?: string })?.id
-        if (lessonId) {
-          await removeBlockFromLesson({
-            payload: req.payload,
-            req,
-            lessonId,
-            refId: doc.id,
-            blockType: 'exerciseRef',
-          })
-        }
-
-        return doc
-      },
-    ],
-    beforeChange: [enforceContentStructure],
-  },
+  hooks: exerciseHooks,
 
   admin: {
     useAsTitle: 'title',
@@ -163,6 +258,28 @@ export const Exercises: CollectionConfig = {
           required: true,
           index: true,
           admin: { description: 'The lesson this exercise belongs to' },
+        },
+        {
+          name: 'chapter',
+          type: 'relationship',
+          relationTo: 'chapters',
+          index: true,
+          admin: {
+            hidden: true,
+            description:
+              'Auto-populated from lesson hierarchy. Used for filtering exercises by chapter.',
+          },
+        },
+        {
+          name: 'course',
+          type: 'relationship',
+          relationTo: 'courses',
+          index: true,
+          admin: {
+            hidden: true,
+            description:
+              'Auto-populated from lesson hierarchy. Used for filtering exercises by course.',
+          },
         },
         {
           name: 'slug',
@@ -341,6 +458,18 @@ export const Exercises: CollectionConfig = {
           },
         },
       ],
+    },
+
+    // Content hierarchy navigation (sidebar)
+    {
+      name: 'contentNavigation',
+      type: 'ui',
+      admin: {
+        position: 'sidebar',
+        components: {
+          Field: '@/ui/admin/ContentNavigation#ExerciseNavigation',
+        },
+      },
     },
 
     // Preview field (sidebar)

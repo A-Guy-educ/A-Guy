@@ -400,14 +400,21 @@ export async function getPdfBufferFromUrl(url: string): Promise<Buffer> {
     throw new Error(`Invalid Vercel Blob URL: ${url}`)
   }
 
-  const response = await fetch(url)
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 30000)
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`)
+  try {
+    const response = await fetch(url, { signal: controller.signal })
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`)
+    }
+
+    const arrayBuffer = await response.arrayBuffer()
+    return Buffer.from(arrayBuffer)
+  } finally {
+    clearTimeout(timeoutId)
   }
-
-  const arrayBuffer = await response.arrayBuffer()
-  return Buffer.from(arrayBuffer)
 }
 
 /**

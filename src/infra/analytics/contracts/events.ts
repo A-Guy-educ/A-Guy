@@ -62,6 +62,11 @@ export const PRODUCT_EVENTS = {
   ANSWER_INCORRECT: 'answer_incorrect',
   EXERCISE_SKIPPED: 'exercise_skipped',
 
+  // Lesson Loading Lifecycle Events (Mixpanel only)
+  LESSON_OPEN_ATTEMPTED: 'lesson_open_attempted',
+  LESSON_LOAD_SUCCESS: 'lesson_load_success',
+  LESSON_LOAD_FAILED: 'lesson_load_failed',
+
   // Engagement Signal Events (Mixpanel only)
   LESSON_ABANDONED: 'lesson_abandoned',
   CHAPTER_COMPLETED: 'chapter_completed',

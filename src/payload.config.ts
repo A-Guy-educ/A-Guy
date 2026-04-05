@@ -46,6 +46,7 @@ import { pdfToExercisesTask } from '@/server/payload/jobs/pdf-to-exercises-task'
 import { pdfToExercisesV2Task } from '@/server/payload/jobs/pdf-to-exercises-v2-task'
 import type { JobDocument } from '@/server/payload/jobs/types'
 import { runBackfillOnInit } from '@/server/payload/migrations/backfillAdminTitle'
+import { runLocalizeTeacherProfilesOnInit } from '@/server/payload/migrations/localize-teacher-profiles'
 import { runPopulateLessonBlocksOnInit } from '@/server/payload/migrations/populateLessonBlocks'
 import { plugins } from '@/server/payload/plugins'
 import { seedTeacherProfiles } from '@/server/payload/seed/teacher-profiles-seed'
@@ -101,6 +102,7 @@ export default buildConfig({
         '@/ui/admin/VersionInfo',
       ],
       beforeNavLinks: ['@/ui/admin/AdminChat/SidebarLink', '@/ui/admin/PdfConversion/SidebarLink'],
+      afterNavLinks: ['@/ui/admin/UserEmail'],
     },
     importMap: {
       baseDir: path.resolve(dirname),
@@ -335,6 +337,7 @@ export default buildConfig({
 
     await runBackfillOnInit(payload)
     await runPopulateLessonBlocksOnInit(payload)
+    await runLocalizeTeacherProfilesOnInit(payload)
     await seedTeacherProfiles(payload)
   },
 })

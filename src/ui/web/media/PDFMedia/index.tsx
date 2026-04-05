@@ -2,11 +2,16 @@
 
 import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 import { cn } from '@/infra/utils/ui'
-import React, { useEffect } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import type { Props as MediaProps } from '../types'
 
+/** Timeout (ms) to detect PDF iframe that never loads */
+const PDF_LOAD_TIMEOUT_MS = 30_000
+
 export const PDFMedia: React.FC<MediaProps> = (props) => {
-  const { resource, className } = props
+  const { resource, className, lessonId, courseId } = props
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+  const loadedRef = useRef(false)
 
   const pdfUrl = React.useMemo(() => {
     if (resource && typeof resource === 'object') {
@@ -32,6 +37,42 @@ export const PDFMedia: React.FC<MediaProps> = (props) => {
     }
   }, [pdfUrl, resource])
 
+  // Track PDF load timeout
+  useEffect(() => {
+    if (!pdfUrl || !lessonId) return
+
+    loadedRef.current = false
+
+    const timer = setTimeout(() => {
+      if (!loadedRef.current) {
+        systemEventBus.emit(SYSTEM_EVENTS.LESSON_LOAD_FAILED, {
+          lesson_id: lessonId,
+          content_type: 'pdf' as const,
+          error_type: 'timeout' as const,
+          error_message: `PDF iframe did not load within ${PDF_LOAD_TIMEOUT_MS}ms`,
+          course_id: courseId,
+        })
+      }
+    }, PDF_LOAD_TIMEOUT_MS)
+
+    return () => clearTimeout(timer)
+  }, [pdfUrl, lessonId, courseId])
+
+  const handleIframeLoad = useCallback(() => {
+    loadedRef.current = true
+  }, [])
+
+  const handleIframeError = useCallback(() => {
+    if (!lessonId) return
+    systemEventBus.emit(SYSTEM_EVENTS.LESSON_LOAD_FAILED, {
+      lesson_id: lessonId,
+      content_type: 'pdf' as const,
+      error_type: '404' as const,
+      error_message: 'PDF iframe failed to load',
+      course_id: courseId,
+    })
+  }, [lessonId, courseId])
+
   if (!pdfUrl) {
     return null
   }
@@ -42,7 +83,14 @@ export const PDFMedia: React.FC<MediaProps> = (props) => {
 
   return (
     <div className={cn('w-full h-full min-h-0', className)}>
-      <iframe src={viewerUrl} className="w-full h-full border-0" title="PDF Viewer" />
+      <iframe
+        ref={iframeRef}
+        src={viewerUrl}
+        className="w-full h-full border-0"
+        title="PDF Viewer"
+        onLoad={handleIframeLoad}
+        onError={handleIframeError}
+      />
     </div>
   )
 }

@@ -3,10 +3,27 @@ export type ActivityType = 'practice' | 'hybrid' | 'full_simulation' | 'reinforc
 export type DayStatus = 'planned' | 'completed'
 export type TimeframeMode = 'survival' | 'high_intensity' | 'balanced'
 
+/**
+ * Reference to a course lesson for URL generation.
+ * Stored on TopicInput when a topic is selected from the course syllabus.
+ */
+export interface LessonRef {
+  lessonId: string
+  lessonSlug: string
+  chapterSlug: string
+  courseSlug: string
+  /** Human-readable lesson title */
+  lessonTitle: string
+  /** Pre-computed URL for fast access */
+  lessonUrl: string
+}
+
 export interface TopicInput {
   topicId: string
   topicLabel: string
   mastery: MasteryLevel
+  /** Present when topic was selected from course syllabus */
+  lessonRef?: LessonRef
 }
 
 export interface StudyPlanDay {

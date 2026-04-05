@@ -65,7 +65,7 @@ export const GeometryEditor: React.FC<GeometryEditorProps> = ({ block, onChange 
       const nextIndex = geo.elements.points.length + 1
       const name = String.fromCharCode(64 + nextIndex) // A, B, C, ...
       updateElements({
-        points: [...geo.elements.points, { name, x, y, position: 'r' as const }],
+        points: [...geo.elements.points, { name, x, y, position: 'r' as const, color: '#1a1a2e' }],
       })
     },
     [geo.elements.points, updateElements],

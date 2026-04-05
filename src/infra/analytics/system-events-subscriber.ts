@@ -101,6 +101,15 @@ export function initAnalyticsSubscriber(): () => void {
         course_title: payload.course_title,
         user_id: payload.user_id,
       })
+
+      // Update Mixpanel People profile with selected course
+      const userId = payload.user_id || sessionStorage.getItem('analytics_tracked_user_id')
+      if (payload.course_id && userId) {
+        analytics.identify(userId, {
+          selected_course: payload.course_id,
+          selected_course_title: payload.course_title,
+        })
+      }
     }),
 
     safeSubscribe(SYSTEM_EVENTS.LESSON_STARTED, (envelope) => {
@@ -420,13 +429,20 @@ export function initAnalyticsSubscriber(): () => void {
         coupon_code?: string
         lesson_id?: string
         course_id?: string
+        course_slug?: string
       }
       analytics.track(PRODUCT_EVENTS.ACCESS_GRANTED, {
         access_type: payload.access_type,
         coupon_code: payload.coupon_code,
         lesson_id: payload.lesson_id,
         course_id: payload.course_id,
+        course_slug: payload.course_slug,
       })
+
+      // Re-fetch user data and update Mixpanel People profile with new entitlements
+      if (payload.course_id) {
+        refreshUserEntitlementsInMixpanel()
+      }
     }),
 
     // Exercise Quality Events
@@ -474,6 +490,54 @@ export function initAnalyticsSubscriber(): () => void {
         exercise_id: payload.exercise_id,
         lesson_id: payload.lesson_id,
         reason: payload.reason,
+      })
+    }),
+
+    // Lesson Loading Lifecycle Events
+    safeSubscribe(SYSTEM_EVENTS.LESSON_OPEN_ATTEMPTED, (envelope) => {
+      const payload = envelope.payload as {
+        lesson_id?: string
+        content_type?: 'pdf' | 'exercises' | 'blocks'
+        platform?: string
+        course_id?: string
+      }
+      analytics.track(PRODUCT_EVENTS.LESSON_OPEN_ATTEMPTED, {
+        lesson_id: payload.lesson_id,
+        content_type: payload.content_type,
+        platform: payload.platform,
+        course_id: payload.course_id,
+      })
+    }),
+
+    safeSubscribe(SYSTEM_EVENTS.LESSON_LOAD_SUCCESS, (envelope) => {
+      const payload = envelope.payload as {
+        lesson_id?: string
+        content_type?: 'pdf' | 'exercises' | 'blocks'
+        load_time_ms?: number
+        course_id?: string
+      }
+      analytics.track(PRODUCT_EVENTS.LESSON_LOAD_SUCCESS, {
+        lesson_id: payload.lesson_id,
+        content_type: payload.content_type,
+        load_time_ms: payload.load_time_ms,
+        course_id: payload.course_id,
+      })
+    }),
+
+    safeSubscribe(SYSTEM_EVENTS.LESSON_LOAD_FAILED, (envelope) => {
+      const payload = envelope.payload as {
+        lesson_id?: string
+        content_type?: 'pdf' | 'exercises' | 'blocks'
+        error_type?: '404' | 'timeout' | 'js_error'
+        error_message?: string
+        course_id?: string
+      }
+      analytics.track(PRODUCT_EVENTS.LESSON_LOAD_FAILED, {
+        lesson_id: payload.lesson_id,
+        content_type: payload.content_type,
+        error_type: payload.error_type,
+        error_message: payload.error_message,
+        course_id: payload.course_id,
       })
     }),
 
@@ -535,6 +599,32 @@ export function initAnalyticsSubscriber(): () => void {
   )
 
   return () => cleanup()
+}
+
+/**
+ * Re-fetches user data and updates Mixpanel People profile with current course entitlements.
+ * Called after ACCESS_GRANTED to ensure the user profile reflects the new entitlement immediately.
+ */
+async function refreshUserEntitlementsInMixpanel(): Promise<void> {
+  try {
+    const response = await fetch('/api/users/me', { credentials: 'include' })
+    if (!response.ok) return
+
+    const data = await response.json()
+    const user = data.user
+    if (!user?.id || !Array.isArray(user.courseEntitlements)) return
+
+    const entry = user.courseEntitlements[0] as {
+      course: string | { id: string }
+    }
+    const courseId = typeof entry.course === 'string' ? entry.course : entry.course.id
+
+    analytics.identify(user.id, {
+      enrolled_course: courseId,
+    })
+  } catch {
+    // Silently fail — analytics should never break the user flow
+  }
 }
 
 function cleanup(): void {

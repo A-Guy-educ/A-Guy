@@ -4,8 +4,14 @@
  * POST /api/entitlements/redeem
  * Body: { code: string }
  * Returns: { success: boolean, error?: string }
+ *
+ * @fileType api-route
+ * @domain entitlements
+ * @pattern atomic-update
+ * @ai-summary Redeems access codes using atomic MongoDB operations to prevent TOCTOU race conditions
  */
 
+import { ObjectId } from 'mongodb'
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import { z } from 'zod'
@@ -38,7 +44,7 @@ export async function POST(request: NextRequest) {
 
   const code = parsed.data.code
 
-  // Find the access code
+  // Find the access code (non-atomic read for early validation and to get maxUses/courseId)
   const accessCodes = await payload.find({
     collection: 'access-codes',
     where: {
@@ -55,72 +61,113 @@ export async function POST(request: NextRequest) {
 
   const accessCode = accessCodes.docs[0]
 
-  // Validate the code is active
+  // Early validation (also enforced atomically in step 1 below)
   if (!accessCode.isActive) {
     return NextResponse.json({ success: false, error: 'code_inactive' }, { status: 400 })
   }
-
-  // Check expiration
   if (accessCode.expiresAt && new Date(accessCode.expiresAt) < new Date()) {
     return NextResponse.json({ success: false, error: 'code_expired' }, { status: 400 })
   }
 
-  // Check usage limit
   const maxUses = accessCode.maxUses ?? 0
-  const currentUses = accessCode.currentUses ?? 0
-  if (maxUses > 0 && currentUses >= maxUses) {
-    return NextResponse.json({ success: false, error: 'code_exhausted' }, { status: 400 })
-  }
-
   const courseId = typeof accessCode.course === 'string' ? accessCode.course : accessCode.course.id
 
-  // Get current user with entitlements
-  const fullUser = await payload.findByID({
-    collection: 'users',
-    id: user.id,
-    depth: 0,
-    overrideAccess: true,
-    select: { courseEntitlements: true },
-  })
+  const accessCodesCollection = payload.db.collections['access-codes']
+  const usersCollection = payload.db.collections.users
 
-  const existing = fullUser.courseEntitlements || []
-
-  // Check if user already has this course
-  const alreadyHas = existing.some((e) => {
-    const entCourseId = typeof e.course === 'string' ? e.course : e.course?.id
-    return entCourseId === courseId
-  })
-
-  if (alreadyHas) {
-    return NextResponse.json({ success: false, error: 'already_entitled' }, { status: 409 })
-  }
-
-  // Add entitlement to user's array
-  await payload.update({
-    collection: 'users',
-    id: user.id,
-    data: {
-      courseEntitlements: [
-        ...existing,
-        {
-          course: courseId,
-          grantMethod: 'code' as const,
-          grantedAt: new Date().toISOString(),
-        },
+  try {
+    // --- Atomic Step 1: Increment access code usage ---
+    // Uses updateOne with conditions to atomically check-and-increment.
+    // Includes isActive and expiresAt in the filter to prevent races with admin deactivation.
+    const incrementFilter: Record<string, unknown> = {
+      _id: new ObjectId(accessCode.id),
+      isActive: true,
+      $or: [
+        { expiresAt: { $exists: false } },
+        { expiresAt: null },
+        { expiresAt: { $gt: new Date() } },
       ],
-    },
-    overrideAccess: true,
-  })
+    }
+    if (maxUses > 0) {
+      incrementFilter.currentUses = { $lt: maxUses }
+    }
 
-  // Increment usage count
-  await payload.update({
-    collection: 'access-codes',
-    id: accessCode.id,
-    data: {
-      currentUses: currentUses + 1,
-    },
-    overrideAccess: true,
-  })
+    const incrementResult = await accessCodesCollection.updateOne(incrementFilter, {
+      $inc: { currentUses: 1 },
+    })
 
-  return NextResponse.json({ success: true })
+    if (incrementResult.modifiedCount === 0) {
+      // The atomic filter includes isActive, expiresAt, and currentUses < maxUses.
+      // We cannot distinguish which condition caused the failure without a non-atomic re-read,
+      // so we return a generic error. The early validation above already handles the obvious
+      // inactive/expired cases; reaching here most likely means the code was exhausted or
+      // an admin changed the code state concurrently.
+      return NextResponse.json({ success: false, error: 'code_unavailable' }, { status: 409 })
+    }
+
+    // --- Atomic Step 2: Add entitlement only if user doesn't already have it ---
+    // Uses updateOne with a $ne filter on courseEntitlements.course combined with $push.
+    // If the user already has this course, modifiedCount will be 0.
+    const courseObjectId = new ObjectId(courseId)
+
+    let entitlementResult
+    try {
+      entitlementResult = await usersCollection.updateOne(
+        {
+          _id: new ObjectId(user.id),
+          'courseEntitlements.course': { $ne: courseObjectId },
+        },
+        {
+          $push: {
+            courseEntitlements: {
+              _id: new ObjectId(),
+              course: courseObjectId,
+              grantMethod: 'code',
+              grantedAt: new Date().toISOString(),
+            },
+          },
+        },
+      )
+    } catch (entitlementError) {
+      // Step 2 threw — roll back step 1
+      await rollBackIncrement(accessCodesCollection, accessCode.id, payload, user.id, courseId)
+      throw entitlementError
+    }
+
+    if (entitlementResult.modifiedCount === 0) {
+      // User already had this course entitlement — roll back the access code increment
+      await rollBackIncrement(accessCodesCollection, accessCode.id, payload, user.id, courseId)
+      return NextResponse.json({ success: false, error: 'already_entitled' }, { status: 409 })
+    }
+
+    return NextResponse.json({ success: true, courseId })
+  } catch (error) {
+    payload.logger.error(
+      { error, accessCodeId: accessCode.id, userId: user.id, courseId },
+      'Access code redemption failed',
+    )
+    return NextResponse.json({ success: false, error: 'internal_error' }, { status: 500 })
+  }
+}
+
+/** Roll back an access code increment, guarding against going below zero. */
+async function rollBackIncrement(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- direct MongoDB collection access
+  collection: any,
+  accessCodeId: string,
+  payload: Awaited<ReturnType<typeof getPayload>>,
+  userId: string,
+  courseId: string,
+): Promise<void> {
+  try {
+    await collection.updateOne(
+      { _id: new ObjectId(accessCodeId), currentUses: { $gt: 0 } },
+      { $inc: { currentUses: -1 } },
+    )
+  } catch (rollbackError) {
+    payload.logger.error(
+      { accessCodeId, userId, courseId, error: rollbackError },
+      'Failed to roll back access code increment after duplicate entitlement detection',
+    )
+  }
 }

@@ -20,4 +20,6 @@ export interface Props {
   src?: StaticImageData // for static media
   videoClassName?: string
   page?: number // for PDF only - page number to display
+  lessonId?: string // for PDF only - lesson load failure tracking
+  courseId?: string // for PDF only - lesson load failure tracking
 }

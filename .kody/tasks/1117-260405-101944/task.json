@@ -1,0 +1,12 @@
+{
+  "task_type": "bugfix",
+  "title": "Fix missing timeouts on fetch calls causing media timeouts",
+  "description": "The `getPdfBufferFromUrl` function in `src/infra/blob/vercel-blob-adapter.ts` (line 403) and `readMediaFile` in `src/infra/llm/providers/shared/media-reader.ts` (lines 59, 129) use `fetch()` without timeout configuration. Large video/audio files cause serverless functions to hang indefinitely, resulting in 504 Gateway Timeout errors. Also `fetchText` in `src/infra/pdfjs/template-loader.ts` (line 12) lacks a timeout on its fetch call. These should use `AbortController` with a timeout like the existing `fetchBuffer` utility does.",
+  "scope": [
+    "src/infra/blob/vercel-blob-adapter.ts",
+    "src/infra/llm/providers/shared/media-reader.ts",
+    "src/infra/pdfjs/template-loader.ts"
+  ],
+  "risk_level": "medium",
+  "questions": []
+}

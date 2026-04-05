@@ -1,0 +1,21 @@
+{
+  "task_type": "feature",
+  "title": "Localize teacher profile selection UI and content (Hebrew/English)",
+  "description": "Add Hebrew and English language support to teacher profile selection interface and profile content. Implement dual-language fields in TeacherProfiles collection (label, description), update API endpoints to serve localized content, and ensure UI dynamically displays content in the user's active language. Includes data migration for existing profiles.",
+  "scope": [
+    "src/server/payload/collections/TeacherProfiles.ts",
+    "src/server/payload/seed/teacher-profiles-seed.ts",
+    "src/app/(frontend)/account/_components/TeachersProfileSection.tsx",
+    "src/app/(frontend)/onboarding/persona/PersonaSelectionStep.tsx",
+    "src/app/api/teacher-profiles/route.ts",
+    "src/app/api/user-settings/route.ts",
+    "src/i18n/en.json",
+    "src/i18n/he.json"
+  ],
+  "risk_level": "medium",
+  "questions": [
+    "Should existing teacher profiles be migrated to the new dual-language schema with translations, or should only new profiles use the localized fields?",
+    "How should the language be determined in the frontend—from the user's locale context, browser language, or explicit language switcher selection?",
+    "Should the Payload admin CMS display separate edit fields for Hebrew and English labels/descriptions, or manage them through a single interface?"
+  ]
+}
