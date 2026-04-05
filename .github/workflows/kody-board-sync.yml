@@ -2,12 +2,21 @@ name: Sync Kody Labels to Project Board
 
 on:
   issues:
-    types: [labeled]
+    types: [opened, labeled]
 
 jobs:
+  auto-label-backlog:
+    runs-on: ubuntu-latest
+    if: github.event.action == 'opened'
+    steps:
+      - name: Add kody:backlog label
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+        run: gh issue edit ${{ github.event.issue.number }} --repo ${{ github.repository }} --add-label "kody:backlog"
+
   sync-label-to-project:
     runs-on: ubuntu-latest
-    if: startsWith(github.event.label.name, 'kody:')
+    if: github.event.action == 'labeled' && startsWith(github.event.label.name, 'kody:')
     steps:
       - name: Map label to project status
         id: map
