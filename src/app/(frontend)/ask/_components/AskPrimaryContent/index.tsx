@@ -144,7 +144,7 @@ export function AskPrimaryContent() {
               type="file"
               ref={fileInputRef}
               onChange={handleFileUpload}
-              accept="image/*"
+              accept="image/*,application/pdf"
               className="hidden"
             />
           </div>

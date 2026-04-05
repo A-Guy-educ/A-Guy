@@ -380,7 +380,12 @@
       "clearCanvas": "Clear",
       "checkSolution": "Check Solution",
       "checking": "Checking...",
-      "uploadFailed": "Failed to upload image. Please try again."
+      "uploadFailed": "Failed to upload image. Please try again.",
+      "generateLesson": "Generate Explanation",
+      "generatingLesson": "Generating interactive explanation...",
+      "player": {
+        "stepOf": "Step {current} of {total}"
+      }
     }
   },
   "admin": {

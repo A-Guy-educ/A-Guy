@@ -380,7 +380,12 @@
       "clearCanvas": "נקה",
       "checkSolution": "בדוק פתרון",
       "checking": "בודק...",
-      "uploadFailed": "העלאת התמונה נכשלה. נסה שוב."
+      "uploadFailed": "העלאת התמונה נכשלה. נסה שוב.",
+      "generateLesson": "צור הסבר אינטראקטיבי",
+      "generatingLesson": "יוצר הסבר אינטראקטיבי...",
+      "player": {
+        "stepOf": "שלב {current} מתוך {total}"
+      }
     }
   },
   "admin": {
