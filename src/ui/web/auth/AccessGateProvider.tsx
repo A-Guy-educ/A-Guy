@@ -118,7 +118,12 @@ export function AccessGateProvider({
 
       {/* Paid content modal */}
       {showPaidModal && (
-        <PaidContentModal isAuthenticated={isAuthenticated} pathname={pathname} t={t} />
+        <PaidContentModal
+          isAuthenticated={isAuthenticated}
+          pathname={pathname}
+          courseSlug={courseSlug}
+          t={t}
+        />
       )}
 
       {isBlocked ? (
@@ -140,10 +145,12 @@ export function AccessGateProvider({
 function PaidContentModal({
   isAuthenticated,
   pathname,
+  courseSlug,
   t,
 }: {
   isAuthenticated?: boolean
   pathname: string
+  courseSlug: string
   t: (key: string) => string
 }) {
   const router = useRouter()
@@ -174,6 +181,14 @@ function PaidContentModal({
       const data = await res.json()
 
       if (data.success) {
+        // Emit ACCESS_GRANTED event so analytics tracks the entitlement
+        systemEventBus.emit(SYSTEM_EVENTS.ACCESS_GRANTED, {
+          access_type: 'coupon' as const,
+          coupon_code: trimmed,
+          course_id: data.courseId,
+          course_slug: courseSlug,
+        })
+
         setShowSuccess(true)
         setTimeout(() => {
           window.location.reload()

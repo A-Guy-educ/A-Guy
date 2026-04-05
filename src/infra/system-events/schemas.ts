@@ -251,8 +251,9 @@ export const AccessGrantedSchema = z
   .object({
     access_type: z.enum(['free', 'coupon', 'paid']),
     coupon_code: z.string().optional(),
-    lesson_id: z.string().min(1, 'lesson_id is required'),
+    lesson_id: z.string().min(1, 'lesson_id is required').optional(),
     course_id: z.string().min(1, 'course_id is required'),
+    course_slug: z.string().optional(),
   })
   .strict()
 
