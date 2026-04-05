@@ -53,7 +53,7 @@ export function usePdfLessonPager({
 
   const basePath = `/courses/${courseSlug}/chapters/${chapterSlug}/lessons/${lessonSlug}`
   const introUrl = basePath
-  const viewUrl = `${basePath}/view`
+  const pdfUrl = basePath
   const completeUrl = `${basePath}/complete`
 
   useEffect(() => {
@@ -63,11 +63,11 @@ export function usePdfLessonPager({
 
     if (pathname === completeUrl) {
       setPageState({ type: 'outro', pageNumber: 2 })
-    } else if (pathname === viewUrl) {
+    } else if (pathname === pdfUrl) {
       setPageState({ type: 'pdf', pageNumber: 1 })
     }
     // Default stays on intro (pageNumber: 0)
-  }, [basePath, completeUrl, viewUrl])
+  }, [basePath, completeUrl, pdfUrl])
 
   const syncUrl = useCallback(
     (state: PageState) => {
@@ -77,7 +77,7 @@ export function usePdfLessonPager({
       if (state.type === 'intro') {
         newUrl = introUrl
       } else if (state.type === 'pdf') {
-        newUrl = viewUrl
+        newUrl = pdfUrl
       } else if (state.type === 'outro') {
         newUrl = completeUrl
       } else {
@@ -89,7 +89,7 @@ export function usePdfLessonPager({
         window.history.replaceState(null, '', newUrl)
       }
     },
-    [introUrl, viewUrl, completeUrl],
+    [introUrl, pdfUrl, completeUrl],
   )
 
   const pageToState = useCallback((page: number): PageState => {
