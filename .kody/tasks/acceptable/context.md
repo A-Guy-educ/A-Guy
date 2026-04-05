@@ -35,3 +35,30 @@ The integration tests had some pre-existing data seeding issues (warnings about 
 
 The implementation is complete with all 6 steps from the plan executed successfully.
 
+
+### review (2026-04-05T13:57:53)
+## Verdict: PASS
+
+## Summary
+
+Implements fixes for intermittent PDF loading failures: (1) `isVercelBlobUrl` now detects `.public.blob.vercel-storage.com` URLs, (2) `fetchBuffer` and `getPdfBufferFromUrl` gained retry logic with exponential backoff for 5xx/network errors, (3) `PDFMedia` component now shows user-friendly error UI with a retry button.
+
+## Findings
+
+### Critical
+None.
+
+### Major
+None.
+
+### Minor
+None.
+
+---
+
+## Two-Pass Review
+
+**Pass 1 — CRITICAL (must fix before merge):**
+
+### SQL 
+...(truncated)
