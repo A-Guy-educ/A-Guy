@@ -31,7 +31,12 @@ export async function generateInteractiveLesson(
   try {
     const { createGenkitUnifiedAdapter } = await import('../../genkit/adapters/unified-adapter')
     const adapter = await createGenkitUnifiedAdapter(payload)
-    modelConfig = resolveModelConfig('IMAGE_TO_EXERCISE')
+    modelConfig = {
+      ...resolveModelConfig('IMAGE_TO_EXERCISE'),
+      // Gemini 2.5 Flash uses thinking tokens that count against maxOutputTokens.
+      // The base IMAGE_TO_EXERCISE limit (8192) is too low — thinking alone uses ~8k.
+      maxOutputTokens: 65536,
+    }
 
     const prompt = buildPrompt(input.locale)
     const { attachmentData, sizeBytes } = await prepareImage(input)
