@@ -7,7 +7,12 @@ import { useCallback, useState, useEffect } from 'react'
 
 import { upload } from '@vercel/blob/client'
 
-import { CHAT_ASSET_ALLOWED_MIME_TYPES, CHAT_ASSET_MAX_BYTES } from '@/server/chat-assets/constants'
+import {
+  CHAT_ASSET_ALLOWED_MIME_TYPES,
+  CHAT_ASSET_MAX_BYTES,
+  CHAT_ASSET_MIN_IMAGE_HEIGHT,
+  CHAT_ASSET_MIN_IMAGE_WIDTH,
+} from '@/server/chat-assets/constants'
 
 export interface UploadingFile {
   localId: string
@@ -53,6 +58,62 @@ function generateLocalId(): string {
 
 function isRetryableError(status: number): boolean {
   return status === 0 || status === 429 || status >= 500
+}
+
+function getImageDimensions(file: File): Promise<{ width: number; height: number } | null> {
+  return new Promise((resolve) => {
+    if (!file.type.startsWith('image/')) {
+      resolve(null)
+      return
+    }
+
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      resolve({ width: img.naturalWidth, height: img.naturalHeight })
+    }
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      resolve(null)
+    }
+
+    img.src = url
+  })
+}
+
+function isImageTooSmall(file: File): Promise<{ tooSmall: boolean; width?: number; height?: number }> {
+  return new Promise((resolve) => {
+    if (!file.type.startsWith('image/')) {
+      resolve({ tooSmall: false })
+      return
+    }
+
+    getImageDimensions(file).then((dimensions) => {
+      if (!dimensions) {
+        resolve({ tooSmall: false })
+        return
+      }
+
+      const tooSmall =
+        dimensions.width < CHAT_ASSET_MIN_IMAGE_WIDTH ||
+        dimensions.height < CHAT_ASSET_MIN_IMAGE_HEIGHT
+      resolve({ tooSmall, ...dimensions })
+    })
+  })
+}
+
+function extractBlobErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    // Vercel Blob errors may have a serverMessage property with more details
+    if ('serverMessage' in error && typeof (error as Record<string, unknown>).serverMessage === 'string') {
+      return (error as { serverMessage: string }).serverMessage
+    }
+    return error.message
+  }
+  return 'Upload failed'
 }
 
 export function useDirectChatAssetUpload(): UseDirectChatAssetUploadReturn {
@@ -151,6 +212,25 @@ export function useDirectChatAssetUpload(): UseDirectChatAssetUploadReturn {
       return
     }
 
+    // Validate image dimensions for image files
+    if (file.type.startsWith('image/')) {
+      const dimensionCheck = await isImageTooSmall(file)
+      if (dimensionCheck.tooSmall) {
+        setUploadingFiles((prev) =>
+          prev.map((f) =>
+            f.localId === localId
+              ? {
+                  ...f,
+                  status: 'failed' as const,
+                  error: `Image is too small. Minimum size is ${CHAT_ASSET_MIN_IMAGE_WIDTH}x${CHAT_ASSET_MIN_IMAGE_HEIGHT} pixels, but this image is ${dimensionCheck.width}x${dimensionCheck.height} pixels.`,
+                }
+              : f,
+          ),
+        )
+        return
+      }
+    }
+
     const abortController = new AbortController()
     const clientPayload = JSON.stringify({
       originalFilename: file.name,
@@ -232,7 +312,7 @@ export function useDirectChatAssetUpload(): UseDirectChatAssetUploadReturn {
           )
         }
 
-        const errorMessage = error instanceof Error ? error.message : 'Upload failed'
+        const errorMessage = extractBlobErrorMessage(error)
         return prev.map((f) =>
           f.localId === localId
             ? { ...f, status: 'failed' as const, error: errorMessage, abortController: undefined }

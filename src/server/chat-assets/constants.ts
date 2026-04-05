@@ -19,3 +19,7 @@ export const CHAT_ASSET_UPLOAD_SESSION_TTL_HOURS = 24
 export const CHAT_ASSET_RETENTION_DAYS = 30
 
 export const CHAT_ASSET_TOKEN_VALID_MINUTES = 10
+
+// Image dimension constraints for chat assets (in pixels)
+export const CHAT_ASSET_MIN_IMAGE_WIDTH = 100
+export const CHAT_ASSET_MIN_IMAGE_HEIGHT = 100

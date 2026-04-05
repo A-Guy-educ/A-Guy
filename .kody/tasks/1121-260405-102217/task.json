@@ -1,0 +1,16 @@
+{
+  "task_type": "bugfix",
+  "title": "Fix image upload error handling with quality constraints",
+  "description": "When users upload low-resolution or highly compressed images in the chat interface, they receive a generic 'Upload failed' error instead of an actionable message. The error handling defaults to retry 3 times on status=0 before showing generic error. Need to add client-side image dimension validation with actionable error messages and improve error extraction from Vercel Blob responses.",
+  "scope": [
+    "src/ui/web/chat/hooks/useDirectChatAssetUpload.ts",
+    "src/server/chat-assets/constants.ts",
+    "src/app/api/chat-assets/finalize/route.ts"
+  ],
+  "risk_level": "medium",
+  "questions": [
+    "What should be the minimum image dimension requirement (width/height in pixels)?",
+    "Should we reject images below the threshold or attempt processing with a warning?",
+    "Is there a specific file size limit beyond which we should reject low-resolution images?"
+  ]
+}
