@@ -180,7 +180,7 @@ const nextConfig = {
   },
 }
 
-const configWithPayload = withPayload(nextConfig, { devBundleServerPackages: false })
+const configWithPayload = withPayload(nextConfig, { devBundleServerPackages: true })
 
 export default withSentryConfig(configWithPayload, {
   org: process.env.SENTRY_ORG,
