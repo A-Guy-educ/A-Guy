@@ -1,5 +1,655 @@
 ## 0.22.0 (2026-03-25)
 
+## [0.23.0] - 2026-04-05
+
+### Features
+
+- Enable @kody release command
+- **chat:** implement task
+- **1118-260405-102030:** implement task
+- **1117-260405-101944:** implement task
+- Send selected course to Mixpanel user profile on course selection
+- Send enrolled course to Mixpanel user profile
+- Switch to MiniMax provider for all stages
+- Add Next.js build warmup step before pipeline
+- **1109-260403-091343:** implement task
+- **1109-260403-085917:** implement task
+- Add playwright-cli tool for browser verification
+- add top-level devServer with 120s timeout and stdout detection
+- Exercise UI/UX redesign with animations across all question types
+- **1094-260402-111508:** implement task
+- all-Claude model config for maximum reliability
+- all-Claude model config for maximum reliability
+- multi-provider model config — GPT-5.3 Codex, Claude, Gemini per stage
+- multi-provider model config — GPT-5.3 Codex, Claude, Gemini per stage
+- enable Playwright MCP for UI task verification
+- **1081-260331-181546:** implement task
+- **1083-260331-181351:** implement task
+- Add Mixpanel tracking for lesson loading lifecycle
+- **1063-260331-155210:** implement task
+- Multi-axis graph block and geometry admin panel fixes
+- **fix-pr-1059-260331-124107:** implement task
+- Add afterRead lazy backfill for course/chapter filter fields
+- Rename parentCourse to course, add chapter filter to exercises
+- **1057-260330-075754:** implement task
+- add shared design abstractions and unified card layout
+- page transitions, stats alignment, mobile touch refinements
+- UI polish batch — card unification, empty states, skeletons, dark mode, micro-interactions
+- add Tier 4 infrastructure — Storybook stories, visual regression tests, PWA
+- add UX improvements — mobile, a11y, performance, celebrations, onboarding, search, themes
+- redesign course cards, lesson view, and navigation
+- add immersive landing page with animated hero, features, and CTA sections
+- add visual polish — gradient borders, stagger animations, glass header, bento stats, auth redesign
+- **1051-260329-144735:** implement task
+- **1048-260329-114423:** implement task
+- Add content hierarchy navigation and course filtering in admin
+- Add full exercise JSON edit with structural validation
+- Wire script parser to import-latex endpoint
+- AI-powered LaTeX import with per-exercise chunking
+- Show courses in global search results
+- Add course-specific search in header dropdown (#732) (#732)
+- **1031-260326-124709:** implement task
+- Translate Hebrew titles to English via OpenAI for lesson slugs
+- LaTeX document viewer and graph/geometry rendering fixes
+- Add default block spacing to Content Pages collection
+- LaTeX document viewer and graph/geometry rendering fixes
+- Add configurable block spacing with page-level default and per-block override
+- Add chat usage limit — 15 questions per 12-hour rolling window
+
+### Bug Fixes
+
+- **chat:** address review
+- Ignore .agents and .kody dirs in prettier checks
+- Remove duplicate LessonAnalytics and dead LessonLoadTimeoutTracker
+- update @kody-ade/engine to 0.1.23, use local dep instead of global install
+- use global kody-engine binary, fix notify job missing issue number
+- add missing kody-engine install to orchestrate and smoke-test jobs
+- Increase build warmup memory limit to 4GB
+- Increase build warmup memory limit to 4GB
+- Increase build warmup timeout to 15 minutes
+- Increase dev server timeout to 180s for cold starts
+- **1109-260403-091343:** address review
+- Regenerate lockfile for kody-engine-lite v0.1.148
+- **1109-260403-085917:** address review
+- Remove MCP config, use playwright-cli for browser verification
+- Enable MCP for Playwright browser verification with Claude
+- Regenerate lockfile for kody-engine-lite v0.1.147
+- restore @napi-rs/canvas version corrupted by sed
+- repair broken lockfile integrity hash
+- set defaultBranch to dev (was kody, breaking @kody resolve)
+- **1094-260402-111508:** address review
+- Align kody.config.json with schema and add per-stage config support
+- Align kody.config.json with schema and add per-stage config support
+- use heredoc syntax for multiline secret values in GITHUB_ENV
+- use project-local kody-engine-lite instead of global install
+- persist lessonRef through study plan API so lesson links work
+- Line labels, dot defaults, and admin canvas background
+- sync kody.yml with dev to unblock push
+- strip carriage returns from comment body before parsing
+- format LessonBlocksField imports
+- update kody.yml to latest template with fix-ci and resolve support
+- resolve course lookup in LessonSelector using grade level
+- Update system events schema count in test (34 → 37)
+- **fix-pr-1059-260331-124107:** address review
+- reduce kody artifact retention and scope to current task only
+- **ci:** Downgrade actions to v4 and reduce artifact storage usage
+- Re-process partially migrated profiles missing label field
+- Filter profiles by exact locale match and deduplicate by slug
+- Migration converts legacy dual-field profiles to per-locale docs
+- **ci:** Upload build artifact on main push for QA Scenarios
+- Repair broken merge in Exercises collection config
+- Extract exercise hooks to avoid TS1117 on CI
+- use lockfile hash for Next.js build cache key
+- Address Kody review feedback
+- Skip afterRead lazy backfill during build-time reads
+- remove unused JSON side panel state and resize logic
+- remove old JSON panel toggle button from exercise editor
+- update tests to match design token migration and actual source code
+- resolve merge conflicts with dev (keep CSS transitions over framer-motion)
+- Format kody.yml to pass Prettier check in CI
+- Remove undeclared framer-motion dependency breaking CI typecheck
+- resolve all ESLint errors and design token warnings
+- Re-fetch teacher profiles on locale change without page refresh
+- add missing Clock import and progressText variable
+- top accent bar cards + 3-column grid for lesson cards
+- Skip build artifact upload on non-E2E CI runs
+- Skip build artifact upload on non-E2E CI runs
+- Format pattern-index.json for pre-push verification
+- Format files and fix task.json markdown fences to pass CI
+- Merge duplicate hooks blocks in Exercises collection
+- CourseCard badge clipping — remove overflow-hidden, modernize styling
+- align course page with new design — single column, unified cards, compact search icon
+- restore ProgressCircle in lesson cards
+- add color accent bar to lesson cards and fix badge clipping
+- proportional UI improvements across study page and lesson view
+- hide header during full onboarding flow, remove broken onboarding tips
+- Remove media/ prefix from blob CDN redirect
+- Move media CDN redirect to next.config.js redirects
+- Relax blob token regex, add BLOB_PUBLIC_BASE_URL fallback
+- Add collection prefix to media CDN redirect URL
+- Compute bounding box for geometry so points aren't clumped at origin
+- Simplify course slug detection to URL path only
+- Always show expandable search dropdown, never navigate to /search
+- **1031-260326-124709:** address review
+- Make search work globally and add course content to /search page
+- Resolve courseSlug from grade profile on /study, /practice, /ask pages
+- Revert lessons query depth back to 2
+- **1031-260326-124709:** address review
+- Update system events contract test for photo_sent_to_chat
+- Use gemini-2.5-flash-lite model (2.0 is deprecated for this API key)
+- Use Gemini instead of OpenAI for Hebrew slug translation
+- Ensure slug uniqueness on create/duplication even without -copy suffix
+- Auto-generate lesson slugs from Hebrew titles with transliteration (#758) (#758)
+- Add bare domain blob.vercel-storage.com to CSP connect-src
+- Add blob.vercel-storage.com to CSP connect-src and track photo uploads in Mixpanel
+- Redirect media to Vercel Blob CDN, bypass serverless proxy
+- Resolve merge conflict in useNotebookChat with dev
+- Move quota bar outside header so it shows without reset button
+- Add jsdelivr to style-src CSP for Monaco editor styles
+- Show proper quota message instead of guest login CTA
+
+### Performance
+
+- Optimize build time by externalizing server packages and improving bundling
+- Rewrite PDF requests to Blob CDN at edge
+- Server-side prefetch for study/test/practice pages
+- Parallelize DB queries, reduce depth, add cache headers
+
+### CI/CD
+
+- Auto-remove closed issues from project board
+- Auto-label new issues with kody:backlog
+- Use PROJECT_TOKEN for org project board sync
+- Add workflow to sync kody labels to project board
+
+### Documentation
+
+- codify design system conventions for Kody agents
+
+### Maintenance
+
+- Bump @kody-ade/engine to 0.1.32
+- Bump @kody-ade/engine to 0.1.31
+- Bump @kody-ade/engine to 0.1.30
+- add kody task artifacts [skip ci]
+- bump @kody-ade/engine to 0.1.24 (approve parsing fix)
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- Redeploy with updated Mixpanel token
+- Trigger Vercel preview redeploy
+- Fix Prettier formatting on merged files
+- Migrate to @kody-ade/engine package
+- Fix malformed task.json and format task files
+- Fix prettier formatting — add missing trailing newlines
+- add kody task artifacts [skip ci]
+- Upgrade kody-engine-lite to v0.1.148
+- add kody task artifacts [skip ci]
+- upgrade kody-engine-lite to v0.1.147
+- update lockfile for kody-engine-lite 0.1.141
+- Bump kody-engine-lite to ^0.1.141
+- update lockfile for kody-engine-lite 0.1.137
+- Bump kody-engine-lite to ^0.1.137
+- update lockfile for kody-engine-lite 0.1.136
+- Bump kody-engine-lite to ^0.1.136
+- Format generated pattern index
+- Bump kody-engine-lite to ^0.1.134
+- Bump kody-engine-lite to ^0.1.129
+- Disable MCP dev server in CI
+- Bump kody-engine-lite to ^0.1.125
+- add kody task artifacts [skip ci]
+- Format kody task artifacts
+- Fix prettier formatting on config files
+- Sync kody.yml with engine template v0.1.107
+- auto-forward all GitHub secrets as env vars in kody workflow
+- add dev server env secrets to kody config
+- Format files from dev merge
+- Merge dev into kody
+- Update lockfile to kody-engine-lite 0.1.104
+- pin kody-engine-lite to ^0.1.104
+- merge dev into kody
+- add QA guide with routes, auth, and test credentials
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- Add Kody project memory and step files
+- Fix formatting in kody task artifacts
+- Fix formatting in kody task artifacts
+- Rename MINIMAX_API_KEY to ANTHROPIC_COMPATIBLE_API_KEY in kody workflow
+- Retrigger CI
+- sync workflow template from Kody-Engine-Lite (add litellm, minimax, bootstrap)
+- update local agent config to minimax and add opencode config
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- Sync lockfile with package.json kody-engine-lite specifier
+- Remove redeploy trigger file
+- Remove time.ts from branch
+- Merge dev, update lockfile
+- Add kody-engine-lite as local dep, remove cody workflow, update gitignore
+- add kody task artifacts [skip ci]
+- Add backfill script for parentCourse denormalized field
+- Trigger redeploy for env var pickup
+- **ci:** Reduce artifact retention to 3 days
+- Add Kody project memory and step files
+- Add Kody Engine workflow and config
+- Clean kody.config.json to match updated engine schema
+- Remove bootstrap files for GH Actions bootstrap test
+- Add Kody project memory and step files
+- Add Kody Engine configuration
+- Update kody workflow v0.1.16
+- Update kody workflow v0.1.15
+- Update kody workflow v0.1.13
+- Update kody workflow v0.1.11
+- Trigger redeploy with Mixpanel preview token
+- Gitignore latex_examples and shay-tassk directories
+- Add kody-engine-lite workflow, config, and memory
+
+### Other Changes
+
+- Merge pull request #1049 from A-Guy-educ/1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge remote-tracking branch 'origin/dev' into 1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge pull request #1124 from A-Guy-educ/1118--bug-broken-lesson-url-generation-view-suffix
+- Merge pull request #1080 from A-Guy-educ/feat/mixpanel-lesson-loading-tracking
+- Merge pull request #1116 from A-Guy-educ/feat/mixpanel-user-data-check
+- Merge pull request #1122 from A-Guy-educ/1117--bug-system-slowness-media-timeouts
+- Merge remote-tracking branch 'origin/dev' into feat/mixpanel-lesson-loading-tracking
+- Merge pull request #1059 from A-Guy-educ/1057--localization-teacher-profile-selection-hebrew
+- Merge branch 'main' into dev
+- Merge branch 'chore/migrate-engine-package'
+- Merge branch 'chore/migrate-engine-package'
+- Merge pull request #1110 from A-Guy-educ/1109--fix-admin-dashboard-header-should-display-curre
+- Merge branch 'dev' into kody
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge pull request #1104 from A-Guy-educ/1094--bug-access-code-redemption-toctou-race-conditio
+- Merge pull request #1105 from A-Guy-educ/feat/exercise-ui-redesign
+- Re-enable MCP dev server
+- Merge branch 'dev' into kody
+- Merge branch 'dev' into 1057--localization-teacher-profile-selection-hebrew
+- Merge pull request #1079 from A-Guy-educ/1063--course-integrated-exam-prep-enhancement
+- Merge remote-tracking branch 'origin/dev' into 1063--course-integrated-exam-prep-enhancement
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge pull request #1087 from A-Guy-educ/1081--lesson-search-in-admin-should-also-search-by-cou
+- Merge pull request #1084 from A-Guy-educ/1083--admin-should-be-able-to-edit-and-delete-exercise
+- Merge pull request #1074 from A-Guy-educ/fix/ci-workflow-versions
+- Merge remote-tracking branch 'origin/kody' into 1057--localization-teacher-profile-selection-hebrew
+- Merge pull request #1047 from A-Guy-educ/feat/admin-content-navigation-links
+- Merge pull request #1076 from A-Guy-educ/kody-bootstrap-1774955768848
+- Revert "chore: Fix formatting in kody task artifacts"
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into 1057--localization-teacher-profile-selection-hebrew
+- Merge pull request #1068 from A-Guy-educ/dev
+- Merge branch 'dev' into feat/admin-content-navigation-links
+- fix prettier formatting in kody task files
+- Merge remote-tracking branch 'origin/dev' into 1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge pull request #1045 from A-Guy-educ/feat/json-edit-in-admin
+- Fix prettier formatting
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- update feat/json-edit-in-admin from origin/dev
+- fix prettier formatting across 53 files
+- Merge pull request #1054 from A-Guy-educ/refactor/modernize-ui-consistency
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into 1057--localization-teacher-profile-selection-hebrew
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- Merge branch 'dev' into 1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- Merge pull request #1053 from A-Guy-educ/1051--auto-populate-lesson-blocks-from-related-content
+- Merge pull request #1021 from A-Guy-educ/feat/chat-usage-limit
+- Merge pull request #1032 from A-Guy-educ/fix/media-cdn-redirect
+- Merge remote-tracking branch 'origin/dev' into fix/media-cdn-redirect
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- Merge pull request #960 from A-Guy-educ/main
+- Merge pull request #1035 from A-Guy-educ/1031--security-8x-route-without-authentication
+- Merge pull request #1036 from A-Guy-educ/feat/course-header-dropdown
+- Merge pull request #1033 from A-Guy-educ/feat/upload-pic-iphone
+- Merge pull request #1027 from A-Guy-educ/feat/spacing-block-control
+- Merge pull request #1034 from A-Guy-educ/feat/automatic-slug
+- Merge pull request #1014 from A-Guy-educ/feat/latex-ai-converter
+- Merge pull request #1043 from A-Guy-educ/kody/bootstrap-1774769461678
+- Merge pull request #1013 from A-Guy-educ/feat/latex-renderer
+- Merge pull request #1044 from A-Guy-educ/feat/fix-ci-build
+- Merge branch 'dev' into feat/fix-ci-build
+- Merge branch 'feat/latex-renderer' of https://github.com/A-Guy-educ/A-Guy into feat/latex-renderer
+- Merge remote-tracking branch 'origin/dev' into 1031--security-8x-route-without-authentication
+
+### Refactoring
+
+- Use per-locale documents for TeacherProfiles instead of dual fields
+- study page uses shared CourseLessonCard instead of duplicate LessonGridCard
+- unified card design with top accent bars, 3-col grid, design abstractions
+- convert search from inline header to command palette modal
+- unify all 13 card components with one visual design language
+- complete UI modernization — all remaining components
+- modernize UI with consistent design tokens across 87 files
+- Extract time conversion to shared util
+- Use existing chat config domain for quota settings
+
+
+## [0.23.0] - 2026-04-05
+
+### Features
+
+- Enable @kody release command
+- **chat:** implement task
+- **1118-260405-102030:** implement task
+- **1117-260405-101944:** implement task
+- Send selected course to Mixpanel user profile on course selection
+- Send enrolled course to Mixpanel user profile
+- Switch to MiniMax provider for all stages
+- Add Next.js build warmup step before pipeline
+- **1109-260403-091343:** implement task
+- **1109-260403-085917:** implement task
+- Add playwright-cli tool for browser verification
+- add top-level devServer with 120s timeout and stdout detection
+- Exercise UI/UX redesign with animations across all question types
+- **1094-260402-111508:** implement task
+- all-Claude model config for maximum reliability
+- all-Claude model config for maximum reliability
+- multi-provider model config — GPT-5.3 Codex, Claude, Gemini per stage
+- multi-provider model config — GPT-5.3 Codex, Claude, Gemini per stage
+- enable Playwright MCP for UI task verification
+- **1081-260331-181546:** implement task
+- **1083-260331-181351:** implement task
+- Add Mixpanel tracking for lesson loading lifecycle
+- **1063-260331-155210:** implement task
+- Multi-axis graph block and geometry admin panel fixes
+- **fix-pr-1059-260331-124107:** implement task
+- Add afterRead lazy backfill for course/chapter filter fields
+- Rename parentCourse to course, add chapter filter to exercises
+- **1057-260330-075754:** implement task
+- add shared design abstractions and unified card layout
+- page transitions, stats alignment, mobile touch refinements
+- UI polish batch — card unification, empty states, skeletons, dark mode, micro-interactions
+- add Tier 4 infrastructure — Storybook stories, visual regression tests, PWA
+- add UX improvements — mobile, a11y, performance, celebrations, onboarding, search, themes
+- redesign course cards, lesson view, and navigation
+- add immersive landing page with animated hero, features, and CTA sections
+- add visual polish — gradient borders, stagger animations, glass header, bento stats, auth redesign
+- **1051-260329-144735:** implement task
+- **1048-260329-114423:** implement task
+- Add content hierarchy navigation and course filtering in admin
+- Add full exercise JSON edit with structural validation
+- Wire script parser to import-latex endpoint
+- AI-powered LaTeX import with per-exercise chunking
+- Show courses in global search results
+- Add course-specific search in header dropdown (#732) (#732)
+- **1031-260326-124709:** implement task
+- Translate Hebrew titles to English via OpenAI for lesson slugs
+- LaTeX document viewer and graph/geometry rendering fixes
+- Add default block spacing to Content Pages collection
+- LaTeX document viewer and graph/geometry rendering fixes
+- Add configurable block spacing with page-level default and per-block override
+- Add chat usage limit — 15 questions per 12-hour rolling window
+
+### Bug Fixes
+
+- **chat:** address review
+- Ignore .agents and .kody dirs in prettier checks
+- Remove duplicate LessonAnalytics and dead LessonLoadTimeoutTracker
+- update @kody-ade/engine to 0.1.23, use local dep instead of global install
+- use global kody-engine binary, fix notify job missing issue number
+- add missing kody-engine install to orchestrate and smoke-test jobs
+- Increase build warmup memory limit to 4GB
+- Increase build warmup memory limit to 4GB
+- Increase build warmup timeout to 15 minutes
+- Increase dev server timeout to 180s for cold starts
+- **1109-260403-091343:** address review
+- Regenerate lockfile for kody-engine-lite v0.1.148
+- **1109-260403-085917:** address review
+- Remove MCP config, use playwright-cli for browser verification
+- Enable MCP for Playwright browser verification with Claude
+- Regenerate lockfile for kody-engine-lite v0.1.147
+- restore @napi-rs/canvas version corrupted by sed
+- repair broken lockfile integrity hash
+- set defaultBranch to dev (was kody, breaking @kody resolve)
+- **1094-260402-111508:** address review
+- Align kody.config.json with schema and add per-stage config support
+- Align kody.config.json with schema and add per-stage config support
+- use heredoc syntax for multiline secret values in GITHUB_ENV
+- use project-local kody-engine-lite instead of global install
+- persist lessonRef through study plan API so lesson links work
+- Line labels, dot defaults, and admin canvas background
+- sync kody.yml with dev to unblock push
+- strip carriage returns from comment body before parsing
+- format LessonBlocksField imports
+- update kody.yml to latest template with fix-ci and resolve support
+- resolve course lookup in LessonSelector using grade level
+- Update system events schema count in test (34 → 37)
+- **fix-pr-1059-260331-124107:** address review
+- reduce kody artifact retention and scope to current task only
+- **ci:** Downgrade actions to v4 and reduce artifact storage usage
+- Re-process partially migrated profiles missing label field
+- Filter profiles by exact locale match and deduplicate by slug
+- Migration converts legacy dual-field profiles to per-locale docs
+- **ci:** Upload build artifact on main push for QA Scenarios
+- Repair broken merge in Exercises collection config
+- Extract exercise hooks to avoid TS1117 on CI
+- use lockfile hash for Next.js build cache key
+- Address Kody review feedback
+- Skip afterRead lazy backfill during build-time reads
+- remove unused JSON side panel state and resize logic
+- remove old JSON panel toggle button from exercise editor
+- update tests to match design token migration and actual source code
+- resolve merge conflicts with dev (keep CSS transitions over framer-motion)
+- Format kody.yml to pass Prettier check in CI
+- Remove undeclared framer-motion dependency breaking CI typecheck
+- resolve all ESLint errors and design token warnings
+- Re-fetch teacher profiles on locale change without page refresh
+- add missing Clock import and progressText variable
+- top accent bar cards + 3-column grid for lesson cards
+- Skip build artifact upload on non-E2E CI runs
+- Skip build artifact upload on non-E2E CI runs
+- Format pattern-index.json for pre-push verification
+- Format files and fix task.json markdown fences to pass CI
+- Merge duplicate hooks blocks in Exercises collection
+- CourseCard badge clipping — remove overflow-hidden, modernize styling
+- align course page with new design — single column, unified cards, compact search icon
+- restore ProgressCircle in lesson cards
+- add color accent bar to lesson cards and fix badge clipping
+- proportional UI improvements across study page and lesson view
+- hide header during full onboarding flow, remove broken onboarding tips
+- Remove media/ prefix from blob CDN redirect
+- Move media CDN redirect to next.config.js redirects
+- Relax blob token regex, add BLOB_PUBLIC_BASE_URL fallback
+- Add collection prefix to media CDN redirect URL
+- Compute bounding box for geometry so points aren't clumped at origin
+- Simplify course slug detection to URL path only
+- Always show expandable search dropdown, never navigate to /search
+- **1031-260326-124709:** address review
+- Make search work globally and add course content to /search page
+- Resolve courseSlug from grade profile on /study, /practice, /ask pages
+- Revert lessons query depth back to 2
+- **1031-260326-124709:** address review
+- Update system events contract test for photo_sent_to_chat
+- Use gemini-2.5-flash-lite model (2.0 is deprecated for this API key)
+- Use Gemini instead of OpenAI for Hebrew slug translation
+- Ensure slug uniqueness on create/duplication even without -copy suffix
+- Auto-generate lesson slugs from Hebrew titles with transliteration (#758) (#758)
+- Add bare domain blob.vercel-storage.com to CSP connect-src
+- Add blob.vercel-storage.com to CSP connect-src and track photo uploads in Mixpanel
+- Redirect media to Vercel Blob CDN, bypass serverless proxy
+- Resolve merge conflict in useNotebookChat with dev
+- Move quota bar outside header so it shows without reset button
+- Add jsdelivr to style-src CSP for Monaco editor styles
+- Show proper quota message instead of guest login CTA
+
+### Performance
+
+- Optimize build time by externalizing server packages and improving bundling
+- Rewrite PDF requests to Blob CDN at edge
+- Server-side prefetch for study/test/practice pages
+- Parallelize DB queries, reduce depth, add cache headers
+
+### CI/CD
+
+- Auto-remove closed issues from project board
+- Auto-label new issues with kody:backlog
+- Use PROJECT_TOKEN for org project board sync
+- Add workflow to sync kody labels to project board
+
+### Documentation
+
+- codify design system conventions for Kody agents
+
+### Maintenance
+
+- Bump @kody-ade/engine to 0.1.32
+- Bump @kody-ade/engine to 0.1.31
+- Bump @kody-ade/engine to 0.1.30
+- add kody task artifacts [skip ci]
+- bump @kody-ade/engine to 0.1.24 (approve parsing fix)
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- Redeploy with updated Mixpanel token
+- Trigger Vercel preview redeploy
+- Fix Prettier formatting on merged files
+- Migrate to @kody-ade/engine package
+- Fix malformed task.json and format task files
+- Fix prettier formatting — add missing trailing newlines
+- add kody task artifacts [skip ci]
+- Upgrade kody-engine-lite to v0.1.148
+- add kody task artifacts [skip ci]
+- upgrade kody-engine-lite to v0.1.147
+- update lockfile for kody-engine-lite 0.1.141
+- Bump kody-engine-lite to ^0.1.141
+- update lockfile for kody-engine-lite 0.1.137
+- Bump kody-engine-lite to ^0.1.137
+- update lockfile for kody-engine-lite 0.1.136
+- Bump kody-engine-lite to ^0.1.136
+- Format generated pattern index
+- Bump kody-engine-lite to ^0.1.134
+- Bump kody-engine-lite to ^0.1.129
+- Disable MCP dev server in CI
+- Bump kody-engine-lite to ^0.1.125
+- add kody task artifacts [skip ci]
+- Format kody task artifacts
+- Fix prettier formatting on config files
+- Sync kody.yml with engine template v0.1.107
+- auto-forward all GitHub secrets as env vars in kody workflow
+- add dev server env secrets to kody config
+- Format files from dev merge
+- Merge dev into kody
+- Update lockfile to kody-engine-lite 0.1.104
+- pin kody-engine-lite to ^0.1.104
+- merge dev into kody
+- add QA guide with routes, auth, and test credentials
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- Add Kody project memory and step files
+- Fix formatting in kody task artifacts
+- Fix formatting in kody task artifacts
+- Rename MINIMAX_API_KEY to ANTHROPIC_COMPATIBLE_API_KEY in kody workflow
+- Retrigger CI
+- sync workflow template from Kody-Engine-Lite (add litellm, minimax, bootstrap)
+- update local agent config to minimax and add opencode config
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- Sync lockfile with package.json kody-engine-lite specifier
+- Remove redeploy trigger file
+- Remove time.ts from branch
+- Merge dev, update lockfile
+- Add kody-engine-lite as local dep, remove cody workflow, update gitignore
+- add kody task artifacts [skip ci]
+- Add backfill script for parentCourse denormalized field
+- Trigger redeploy for env var pickup
+- **ci:** Reduce artifact retention to 3 days
+- Add Kody project memory and step files
+- Add Kody Engine workflow and config
+- Clean kody.config.json to match updated engine schema
+- Remove bootstrap files for GH Actions bootstrap test
+- Add Kody project memory and step files
+- Add Kody Engine configuration
+- Update kody workflow v0.1.16
+- Update kody workflow v0.1.15
+- Update kody workflow v0.1.13
+- Update kody workflow v0.1.11
+- Trigger redeploy with Mixpanel preview token
+- Gitignore latex_examples and shay-tassk directories
+- Add kody-engine-lite workflow, config, and memory
+
+### Other Changes
+
+- Merge pull request #1049 from A-Guy-educ/1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge remote-tracking branch 'origin/dev' into 1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge pull request #1124 from A-Guy-educ/1118--bug-broken-lesson-url-generation-view-suffix
+- Merge pull request #1080 from A-Guy-educ/feat/mixpanel-lesson-loading-tracking
+- Merge pull request #1116 from A-Guy-educ/feat/mixpanel-user-data-check
+- Merge pull request #1122 from A-Guy-educ/1117--bug-system-slowness-media-timeouts
+- Merge remote-tracking branch 'origin/dev' into feat/mixpanel-lesson-loading-tracking
+- Merge pull request #1059 from A-Guy-educ/1057--localization-teacher-profile-selection-hebrew
+- Merge branch 'main' into dev
+- Merge branch 'chore/migrate-engine-package'
+- Merge branch 'chore/migrate-engine-package'
+- Merge pull request #1110 from A-Guy-educ/1109--fix-admin-dashboard-header-should-display-curre
+- Merge branch 'dev' into kody
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge pull request #1104 from A-Guy-educ/1094--bug-access-code-redemption-toctou-race-conditio
+- Merge pull request #1105 from A-Guy-educ/feat/exercise-ui-redesign
+- Re-enable MCP dev server
+- Merge branch 'dev' into kody
+- Merge branch 'dev' into 1057--localization-teacher-profile-selection-hebrew
+- Merge pull request #1079 from A-Guy-educ/1063--course-integrated-exam-prep-enhancement
+- Merge remote-tracking branch 'origin/dev' into 1063--course-integrated-exam-prep-enhancement
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge pull request #1087 from A-Guy-educ/1081--lesson-search-in-admin-should-also-search-by-cou
+- Merge pull request #1084 from A-Guy-educ/1083--admin-should-be-able-to-edit-and-delete-exercise
+- Merge pull request #1074 from A-Guy-educ/fix/ci-workflow-versions
+- Merge remote-tracking branch 'origin/kody' into 1057--localization-teacher-profile-selection-hebrew
+- Merge pull request #1047 from A-Guy-educ/feat/admin-content-navigation-links
+- Merge pull request #1076 from A-Guy-educ/kody-bootstrap-1774955768848
+- Revert "chore: Fix formatting in kody task artifacts"
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into 1057--localization-teacher-profile-selection-hebrew
+- Merge pull request #1068 from A-Guy-educ/dev
+- Merge branch 'dev' into feat/admin-content-navigation-links
+- fix prettier formatting in kody task files
+- Merge remote-tracking branch 'origin/dev' into 1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge pull request #1045 from A-Guy-educ/feat/json-edit-in-admin
+- Fix prettier formatting
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- update feat/json-edit-in-admin from origin/dev
+- fix prettier formatting across 53 files
+- Merge pull request #1054 from A-Guy-educ/refactor/modernize-ui-consistency
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into 1057--localization-teacher-profile-selection-hebrew
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- Merge branch 'dev' into 1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- Merge pull request #1053 from A-Guy-educ/1051--auto-populate-lesson-blocks-from-related-content
+- Merge pull request #1021 from A-Guy-educ/feat/chat-usage-limit
+- Merge pull request #1032 from A-Guy-educ/fix/media-cdn-redirect
+- Merge remote-tracking branch 'origin/dev' into fix/media-cdn-redirect
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- Merge pull request #960 from A-Guy-educ/main
+- Merge pull request #1035 from A-Guy-educ/1031--security-8x-route-without-authentication
+- Merge pull request #1036 from A-Guy-educ/feat/course-header-dropdown
+- Merge pull request #1033 from A-Guy-educ/feat/upload-pic-iphone
+- Merge pull request #1027 from A-Guy-educ/feat/spacing-block-control
+- Merge pull request #1034 from A-Guy-educ/feat/automatic-slug
+- Merge pull request #1014 from A-Guy-educ/feat/latex-ai-converter
+- Merge pull request #1043 from A-Guy-educ/kody/bootstrap-1774769461678
+- Merge pull request #1013 from A-Guy-educ/feat/latex-renderer
+- Merge pull request #1044 from A-Guy-educ/feat/fix-ci-build
+- Merge branch 'dev' into feat/fix-ci-build
+- Merge branch 'feat/latex-renderer' of https://github.com/A-Guy-educ/A-Guy into feat/latex-renderer
+- Merge remote-tracking branch 'origin/dev' into 1031--security-8x-route-without-authentication
+
+### Refactoring
+
+- Use per-locale documents for TeacherProfiles instead of dual fields
+- study page uses shared CourseLessonCard instead of duplicate LessonGridCard
+- unified card design with top accent bars, 3-col grid, design abstractions
+- convert search from inline header to command palette modal
+- unify all 13 card components with one visual design language
+- complete UI modernization — all remaining components
+- modernize UI with consistent design tokens across 87 files
+- Extract time conversion to shared util
+- Use existing chat config domain for quota settings
+
+
 * Merge branch 'dev' into feat/equations-addition ([54a6954](https://github.com/A-Guy-educ/A-Guy/commit/54a6954))
 * Merge branch 'feat/equations-addition' of https://github.com/A-Guy-educ/A-Guy into feat/equations-ad ([54d0a6d](https://github.com/A-Guy-educ/A-Guy/commit/54d0a6d))
 * Merge pull request #1005 from A-Guy-educ/feat/equations-addition ([9e56083](https://github.com/A-Guy-educ/A-Guy/commit/9e56083)), closes [#1005](https://github.com/A-Guy-educ/A-Guy/issues/1005)
