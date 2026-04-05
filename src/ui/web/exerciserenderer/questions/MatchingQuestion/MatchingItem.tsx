@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { motion } from 'framer-motion'
 import { cn } from '@/infra/utils/ui'
 import { Check, X } from 'lucide-react'
 import type { RichTextBlock, MatchingOption } from '../../types'
@@ -19,6 +20,10 @@ interface MatchingItemProps {
   disabled: boolean
   onClick: (id: string) => void
   onRef: (id: string, el: HTMLButtonElement | null) => void
+}
+
+function hasResult(state: boolean | null): boolean {
+  return state !== null
 }
 
 export function MatchingItem({
@@ -43,29 +48,34 @@ export function MatchingItem({
   }
 
   return (
-    <button
+    <motion.button
       ref={(el) => onRef(item.id, el)}
       onClick={() => onClick(item.id)}
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, delay: index * 0.04 }}
+      whileHover={!disabled && !isSelected && !isConnected ? { y: -2 } : undefined}
+      whileTap={!disabled ? { scale: 0.97 } : undefined}
       className={cn(
-        'flex items-center gap-content-gap-xs px-3 py-2 rounded-md border-2 text-start',
+        'flex items-center gap-content-gap-xs p-3.5 rounded-xl border-2 text-start',
         'transition-all duration-normal min-h-[44px]',
-        'border-border bg-card',
+        'bg-card shadow-elevation-1',
         !disabled &&
           !isSelected &&
           !isConnected &&
-          'hover:border-primary/60 hover:shadow-elevation-3 hover:-translate-y-0.5 cursor-pointer',
+          'border-border/30 hover:border-primary/40 hover:shadow-card-hover cursor-pointer',
         canSelect && !isConnected && 'cursor-pointer',
-        isSelected && 'border-primary bg-primary/10 border-[3px] shadow-elevation-3',
-        isConnected && !isSelected && !hasResult(correctState) && 'border-primary/60 bg-primary/5',
-        disabled && 'cursor-not-allowed opacity-disabled',
-        correctState === true && 'border-success bg-success/10',
-        correctState === false && 'border-destructive bg-destructive/10',
+        isSelected && 'border-primary bg-primary/8 border-[3px] shadow-elevation-2',
+        isConnected && !isSelected && !hasResult(correctState) && 'border-primary/40 bg-primary/4',
+        disabled && 'cursor-not-allowed opacity-50',
+        correctState === true && 'border-success bg-success/8',
+        correctState === false && 'border-destructive bg-destructive/8',
       )}
       role="option"
       aria-selected={isSelected}
       disabled={disabled}
     >
-      <span className="font-bold text-body-lg text-muted-foreground min-w-[28px] shrink-0">
+      <span className="w-6 h-6 rounded-lg bg-muted flex items-center justify-center font-bold text-body-xs text-muted-foreground min-w-[24px] shrink-0 border border-border/20">
         {badge}
       </span>
       <span className="flex-1">
@@ -73,10 +83,6 @@ export function MatchingItem({
       </span>
       {correctState === true && <Check className="w-5 h-5 text-success shrink-0" />}
       {correctState === false && <X className="w-5 h-5 text-destructive shrink-0" />}
-    </button>
+    </motion.button>
   )
-}
-
-function hasResult(state: boolean | null): boolean {
-  return state !== null
 }

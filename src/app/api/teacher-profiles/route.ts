@@ -8,6 +8,14 @@
 import { getPayload } from 'payload'
 
 import config from '@payload-config'
+import { cookieName, defaultLocale, type Locale, locales } from '@/i18n/config'
+
+function getLocaleFromRequest(req: Request): Locale {
+  const cookieHeader = req.headers.get('cookie') ?? ''
+  const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)${cookieName}=([^;]+)`))
+  const value = match?.[1] as Locale | undefined
+  return value && locales.includes(value) ? value : defaultLocale
+}
 
 export async function GET(req: Request) {
   const payload = await getPayload({ config })
@@ -18,23 +26,32 @@ export async function GET(req: Request) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Fetch active teacher profiles
+  const locale = getLocaleFromRequest(req)
+
+  // Fetch active teacher profiles for the user's locale
   const profiles = await payload.find({
     collection: 'teacher_profiles',
     where: {
-      isEnabled: { equals: true },
+      and: [{ isEnabled: { equals: true } }, { locale: { equals: locale } }],
     },
     sort: 'label',
     overrideAccess: true, // Collection is adminOnly, but we're authenticated
   })
 
-  // Map to safe response (no systemPrompt/template)
-  const responseProfiles = profiles.docs.map((profile) => ({
-    slug: profile.slug,
-    label: profile.label,
-    description: profile.description,
-    isEnabled: profile.isEnabled,
-  }))
+  // Map to safe response (no systemPrompt/template), deduplicate by slug
+  const seen = new Set<string>()
+  const responseProfiles = profiles.docs
+    .filter((profile) => {
+      if (seen.has(profile.slug)) return false
+      seen.add(profile.slug)
+      return true
+    })
+    .map((profile) => ({
+      slug: profile.slug,
+      label: profile.label,
+      description: profile.description ?? '',
+      isEnabled: profile.isEnabled,
+    }))
 
   return Response.json({
     profiles: responseProfiles,

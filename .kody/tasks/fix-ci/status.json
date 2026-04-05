@@ -1,0 +1,37 @@
+{
+  "taskId": "fix-ci",
+  "state": "running",
+  "stages": {
+    "taskify": {
+      "state": "pending",
+      "retries": 0
+    },
+    "plan": {
+      "state": "pending",
+      "retries": 0
+    },
+    "build": {
+      "state": "pending",
+      "retries": 0
+    },
+    "verify": {
+      "state": "pending",
+      "retries": 0
+    },
+    "review": {
+      "state": "pending",
+      "retries": 0
+    },
+    "review-fix": {
+      "state": "pending",
+      "retries": 0
+    },
+    "ship": {
+      "state": "running",
+      "startedAt": "2026-03-31T20:03:54.252Z",
+      "retries": 0
+    }
+  },
+  "createdAt": "2026-03-31T20:03:51.019Z",
+  "updatedAt": "2026-03-31T20:03:54.252Z"
+}

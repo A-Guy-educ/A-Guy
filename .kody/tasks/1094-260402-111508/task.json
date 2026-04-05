@@ -1,0 +1,16 @@
+{
+  "task_type": "bugfix",
+  "title": "Fix access code redemption TOCTOU race condition",
+  "description": "Fix Time-Of-Check-Time-Of-Use race condition in access code redemption endpoint that allows over-redemption beyond maxUses limit and duplicate entitlements. Replace sequential read-check-write flow with atomic MongoDB operations using $inc and $lt to ensure only one concurrent redemption succeeds. Add unique compound index on (user, course) to prevent entitlement duplication.",
+  "scope": [
+    "src/app/api/entitlements/redeem/route.ts",
+    "src/payload/collections/access-codes.ts",
+    "tests/int/entitlements.redeem.int.spec.ts"
+  ],
+  "risk_level": "high",
+  "questions": [
+    "Should concurrent redemption requests beyond maxUses return 409 Conflict, or should we implement a queue/retry pattern?",
+    "How should we handle rollback of duplicate entitlements that may already exist from the race condition?",
+    "Do existing access codes need migration to add the unique compound index, or can we apply it prospectively?"
+  ]
+}

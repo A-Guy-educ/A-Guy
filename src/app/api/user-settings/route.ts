@@ -12,6 +12,14 @@ import { getPayload } from 'payload'
 import { z } from 'zod'
 
 import config from '@payload-config'
+import { cookieName, defaultLocale, type Locale, locales } from '@/i18n/config'
+
+function getLocaleFromRequest(req: Request): Locale {
+  const cookieHeader = req.headers.get('cookie') ?? ''
+  const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)${cookieName}=([^;]+)`))
+  const value = match?.[1] as Locale | undefined
+  return value && locales.includes(value) ? value : defaultLocale
+}
 
 const patchSchema = z.object({
   teacherProfileSlug: z.string(),
@@ -27,6 +35,7 @@ export async function GET(req: Request) {
   }
 
   const userId = authResult.user.id
+  const locale = getLocaleFromRequest(req)
 
   // Fetch user settings with populated teacher profile
   const settings = await payload.find({
@@ -51,14 +60,32 @@ export async function GET(req: Request) {
 
   const userSettings = settings.docs[0]
 
-  // Map to safe response (no systemPrompt/template)
-  const teacherProfile = userSettings.teacherProfile
-    ? {
-        slug: (userSettings.teacherProfile as { slug?: string }).slug,
-        label: (userSettings.teacherProfile as { label?: string }).label,
-        description: (userSettings.teacherProfile as { description?: string }).description,
+  // The stored teacherProfile may be in any locale.
+  // Look up the locale-matching version by slug.
+  type PopulatedProfile = { slug?: string }
+  const storedProfile = userSettings.teacherProfile as PopulatedProfile | string | null
+
+  let teacherProfile = null
+
+  if (storedProfile && typeof storedProfile === 'object' && storedProfile.slug) {
+    const localeProfile = await payload.find({
+      collection: 'teacher_profiles',
+      where: {
+        and: [{ slug: { equals: storedProfile.slug } }, { locale: { equals: locale } }],
+      },
+      limit: 1,
+      overrideAccess: true,
+    })
+
+    const profile = localeProfile.docs[0]
+    if (profile) {
+      teacherProfile = {
+        slug: profile.slug,
+        label: profile.label,
+        description: profile.description ?? '',
       }
-    : null
+    }
+  }
 
   return Response.json({
     settings: {
@@ -78,6 +105,7 @@ export async function PATCH(req: Request) {
   }
 
   const userId = authResult.user.id
+  const locale = getLocaleFromRequest(req)
 
   // Validate request body
   let body: unknown
@@ -98,12 +126,15 @@ export async function PATCH(req: Request) {
 
   const { teacherProfileSlug } = validation.data
 
-  // Verify profile exists and is enabled
+  // Verify profile exists, is enabled, and matches user's locale
   const profileResult = await payload.find({
     collection: 'teacher_profiles',
     where: {
-      slug: { equals: teacherProfileSlug },
-      isEnabled: { equals: true },
+      and: [
+        { slug: { equals: teacherProfileSlug } },
+        { isEnabled: { equals: true } },
+        { locale: { equals: locale } },
+      ],
     },
     limit: 1,
     overrideAccess: true,

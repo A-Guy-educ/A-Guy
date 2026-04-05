@@ -110,7 +110,7 @@ export function SvgRenderer({
     : null
 
   return (
-    <div>
+    <div className="rounded-xl border border-border/20 overflow-hidden bg-card shadow-elevation-1 p-3">
       <div
         ref={containerRef}
         role={isInteractive ? 'application' : 'img'}

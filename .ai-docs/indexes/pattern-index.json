@@ -55,6 +55,7 @@
         "src/app/(frontend)/courses/_components/ChapterPageBreadcrumb/index.tsx",
         "src/app/(frontend)/courses/_components/ChaptersSectionTitle/index.tsx",
         "src/app/(frontend)/courses/_components/CourseCard/index.tsx",
+        "src/app/(frontend)/courses/_components/CourseCardGrid/index.tsx",
         "src/app/(frontend)/courses/_components/CourseCatalogHeader/index.tsx",
         "src/app/(frontend)/courses/_components/CourseShopHeader/index.tsx",
         "src/app/(frontend)/courses/_components/CoursesHero/index.tsx",
@@ -70,6 +71,7 @@
         "src/app/(frontend)/login/LoginForm.tsx",
         "src/app/(frontend)/login/LoginPageContent.tsx",
         "src/app/(frontend)/not-found.tsx",
+        "src/app/(frontend)/offline/page.tsx",
         "src/app/(frontend)/onboarding/persona/PersonaSelectionStep.tsx",
         "src/app/(frontend)/posts/[slug]/page.client.tsx",
         "src/app/(frontend)/posts/page.client.tsx",
@@ -84,6 +86,7 @@
         "src/app/(frontend)/stats/_components/StatsDashboard.tsx",
         "src/app/(frontend)/stats/_components/SummaryCards.tsx",
         "src/app/(frontend)/study-plan/_components/DayCard.tsx",
+        "src/app/(frontend)/study-plan/_components/LessonSelector/index.tsx",
         "src/app/(frontend)/study-plan/_components/StudyPlanPage.tsx",
         "src/app/(frontend)/study-plan/_components/useStudyPlan.ts",
         "src/app/(frontend)/study/_components/StudyContent/index.tsx",
@@ -124,7 +127,9 @@
         "src/ui/admin/AdminChat/SidebarLink/index.tsx",
         "src/ui/admin/AnswerSpecJsonField/index.tsx",
         "src/ui/admin/CascadeDeleteButton/index.tsx",
+        "src/ui/admin/ContentNavigation/index.tsx",
         "src/ui/admin/ExerciseContentEditor/BlockTypeSelector.tsx",
+        "src/ui/admin/ExerciseContentEditor/FullJsonEditor.tsx",
         "src/ui/admin/ExerciseContentEditor/JSONInspector.tsx",
         "src/ui/admin/ExerciseContentEditor/RichTextEditor.tsx",
         "src/ui/admin/ExerciseContentEditor/components/axis/AsymptotesPanel.tsx",
@@ -158,6 +163,7 @@
         "src/ui/admin/ExerciseContentEditor/editors/MatchingEditor.tsx",
         "src/ui/admin/ExerciseContentEditor/editors/McqEditor.tsx",
         "src/ui/admin/ExerciseContentEditor/editors/MediaBlockEditor.tsx",
+        "src/ui/admin/ExerciseContentEditor/editors/MultiAxisEditor.tsx",
         "src/ui/admin/ExerciseContentEditor/editors/QuestionBlockWrapper.tsx",
         "src/ui/admin/ExerciseContentEditor/editors/SvgEditor.tsx",
         "src/ui/admin/ExerciseContentEditor/editors/TableEditor.tsx",
@@ -234,13 +240,20 @@
         "src/ui/web/chat/hooks/useTTS.ts",
         "src/ui/web/chat/hooks/useTeacherProfileLabel.ts",
         "src/ui/web/components/HealthBadge.tsx",
+        "src/ui/web/components/accent-picker.tsx",
         "src/ui/web/components/accordion.tsx",
+        "src/ui/web/components/animated-counter.tsx",
         "src/ui/web/components/avatar.tsx",
         "src/ui/web/components/checkbox.tsx",
         "src/ui/web/components/command.tsx",
+        "src/ui/web/components/confetti.stories.tsx",
+        "src/ui/web/components/confetti.tsx",
         "src/ui/web/components/dialog.tsx",
         "src/ui/web/components/dropdown-menu.tsx",
         "src/ui/web/components/label.tsx",
+        "src/ui/web/components/motion.tsx",
+        "src/ui/web/components/onboarding-tip.tsx",
+        "src/ui/web/components/page-transition.tsx",
         "src/ui/web/components/resizable-pane.tsx",
         "src/ui/web/components/select.tsx",
         "src/ui/web/components/sheet.tsx",
@@ -286,6 +299,7 @@
         "src/ui/web/heros/HighImpact/index.tsx",
         "src/ui/web/heros/PostHero/index.tsx",
         "src/ui/web/homepage/GreetingFlow/index.tsx",
+        "src/ui/web/homepage/LandingPage/index.tsx",
         "src/ui/web/homepage/NavigationBar/index.tsx",
         "src/ui/web/homepage/TopicCard/index.tsx",
         "src/ui/web/media/AudioMedia/index.tsx",
@@ -382,6 +396,7 @@
         "src/app/(frontend)/stats/_components/SummaryCards.tsx",
         "src/app/(frontend)/study-plan/_components/DayCard.tsx",
         "src/app/(frontend)/study-plan/_components/EmptyPlanState.tsx",
+        "src/app/(frontend)/study-plan/_components/LessonSelector/index.tsx",
         "src/app/(frontend)/study-plan/_components/StudyPlanPage.tsx",
         "src/app/(frontend)/study/_components/StudyContent/index.tsx",
         "src/ui/web/LanguageSwitcher/index.tsx",
@@ -399,6 +414,7 @@
         "src/ui/web/header/MobileMenu/index.tsx",
         "src/ui/web/header/Nav/index.tsx",
         "src/ui/web/homepage/GreetingFlow/index.tsx",
+        "src/ui/web/homepage/LandingPage/index.tsx",
         "src/ui/web/homepage/NavigationBar/index.tsx",
         "src/ui/web/providers/I18n/index.tsx",
         "src/ui/web/shared/ContentStatusBadge/index.tsx",
@@ -411,6 +427,9 @@
       "pattern": "tailwind-component",
       "description": "Component using Tailwind CSS utilities",
       "files": [
+        "src/app/(frontend)/account/_components/PreferencesSection.tsx",
+        "src/app/(frontend)/account/_components/TeachersProfileSection.tsx",
+        "src/app/(frontend)/ask/_components/AskContent/index.tsx",
         "src/app/(frontend)/ask/_components/AskConversationGrid/index.tsx",
         "src/app/(frontend)/ask/_components/AskDrawingCanvas/index.tsx",
         "src/app/(frontend)/ask/_components/AskExerciseCard/index.tsx",
@@ -418,15 +437,26 @@
         "src/app/(frontend)/courses/[courseSlug]/_components/ConversationCard/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/_components/CourseLessonCard/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/_components/CourseTabs/index.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ExercisesPager/index.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/index.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ViewToggle.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseHeader/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/MathPalette/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/NotebookWorkspace/index.tsx",
+        "src/app/(frontend)/courses/_components/BackToChapter/index.tsx",
+        "src/app/(frontend)/courses/_components/Breadcrumb/index.tsx",
+        "src/app/(frontend)/courses/_components/ChapterCard/index.tsx",
         "src/app/(frontend)/courses/_components/CourseCard/index.tsx",
+        "src/app/(frontend)/courses/_components/EmptyState/index.tsx",
         "src/app/(frontend)/courses/_components/LessonCard/index.tsx",
         "src/app/(frontend)/courses/_components/LessonHeader/index.tsx",
         "src/app/(frontend)/courses/_components/PlanCard/index.tsx",
         "src/app/(frontend)/layout.tsx",
-        "src/app/(frontend)/study/_components/StudyContent/index.tsx",
+        "src/app/(frontend)/onboarding/persona/PersonaSelectionStep.tsx",
+        "src/app/(frontend)/stats/_components/DashboardFilters.tsx",
+        "src/app/(frontend)/study-plan/_components/DayCard.tsx",
+        "src/app/(frontend)/study-plan/_components/LessonSelector/index.tsx",
+        "src/app/(frontend)/study-plan/_components/StudyPlanPage.tsx",
         "src/infra/loading/components/RouteLoadingIndicator.tsx",
         "src/infra/loading/components/Spinner.tsx",
         "src/infra/loading/components/SystemLink.tsx",
@@ -438,15 +468,19 @@
         "src/ui/web/Card/index.tsx",
         "src/ui/web/CollectionArchive/index.tsx",
         "src/ui/web/Link/index.tsx",
+        "src/ui/web/PageRange/index.tsx",
         "src/ui/web/Pagination/index.tsx",
         "src/ui/web/RichText/index.tsx",
         "src/ui/web/SafeHtml/index.tsx",
+        "src/ui/web/TelescopeLogo/index.tsx",
         "src/ui/web/auth/GoogleLoginButton.tsx",
         "src/ui/web/chat/ChatErrorSurface/index.tsx",
         "src/ui/web/chat/ChatInterface/index.tsx",
         "src/ui/web/chat/ChatMessageContent/index.tsx",
+        "src/ui/web/chat/ChatQuotaBar/index.tsx",
         "src/ui/web/chat/TTSButton/index.tsx",
         "src/ui/web/components/accent-card.tsx",
+        "src/ui/web/components/accent-picker.tsx",
         "src/ui/web/components/accordion.tsx",
         "src/ui/web/components/avatar.tsx",
         "src/ui/web/components/badge.tsx",
@@ -462,12 +496,14 @@
         "src/ui/web/components/icon-badge.tsx",
         "src/ui/web/components/input.tsx",
         "src/ui/web/components/label.tsx",
+        "src/ui/web/components/onboarding-tip.tsx",
         "src/ui/web/components/page-section.tsx",
         "src/ui/web/components/pagination.tsx",
         "src/ui/web/components/progress.tsx",
         "src/ui/web/components/resizable-pane.tsx",
         "src/ui/web/components/select.tsx",
         "src/ui/web/components/sheet.tsx",
+        "src/ui/web/components/skeleton.tsx",
         "src/ui/web/components/split-pane-layout.tsx",
         "src/ui/web/components/tab-bar.tsx",
         "src/ui/web/components/tabs.tsx",
@@ -481,6 +517,7 @@
         "src/ui/web/exerciserenderer/blocks/SvgRenderer/index.tsx",
         "src/ui/web/exerciserenderer/components/FeedbackDisplay/index.tsx",
         "src/ui/web/exerciserenderer/components/HelpSystem/HelpSystemButtons.tsx",
+        "src/ui/web/exerciserenderer/components/HelpSystem/HelpSystemContent.tsx",
         "src/ui/web/exerciserenderer/components/MediaAttachments/index.tsx",
         "src/ui/web/exerciserenderer/components/QuestionCard/index.tsx",
         "src/ui/web/exerciserenderer/components/VideoPlayer/index.tsx",
@@ -490,6 +527,10 @@
         "src/ui/web/exerciserenderer/questions/TableQuestion/ExerciseTable.tsx",
         "src/ui/web/exerciserenderer/questions/TableQuestion/index.tsx",
         "src/ui/web/exerciserenderer/questions/TrueFalseQuestion/index.tsx",
+        "src/ui/web/header/Component.client.tsx",
+        "src/ui/web/header/CourseSearch/index.tsx",
+        "src/ui/web/header/MobileMenu/index.tsx",
+        "src/ui/web/homepage/LandingPage/index.tsx",
         "src/ui/web/homepage/NavigationBar/index.tsx",
         "src/ui/web/media/AudioMedia/index.tsx",
         "src/ui/web/media/DocumentMedia/index.tsx",
@@ -514,6 +555,7 @@
         "src/ui/web/shared/MathInput/MathField.tsx",
         "src/ui/web/shared/MathInput/MathFieldToolbar.tsx",
         "src/ui/web/shared/MathMarkdown/index.tsx",
+        "src/ui/web/shared/ProgressCircle/index.tsx",
         "src/ui/web/shared/TypingAnimation/index.tsx",
         "src/ui/web/shared/Typography/Heading.tsx",
         "src/ui/web/shared/Typography/Text.tsx"
@@ -591,6 +633,7 @@
         "src/app/api/chapters/by-grade/route.ts",
         "src/app/api/conversations/by-context/route.ts",
         "src/app/api/course-search/route.ts",
+        "src/app/api/course-syllabus/route.ts",
         "src/app/api/entitlements/check/route.ts",
         "src/app/api/entitlements/redeem/route.ts",
         "src/app/api/example/route.ts",
@@ -624,6 +667,7 @@
         "src/app/api/agent/reset-chat/route.ts",
         "src/app/api/blob/upload-token/route.ts",
         "src/app/api/course-search/route.ts",
+        "src/app/api/course-syllabus/route.ts",
         "src/app/api/entitlements/redeem/route.ts",
         "src/app/api/exercises/[id]/blocks/[blockId]/route.ts",
         "src/app/api/exercises/convert/single/create/route.ts",
@@ -644,6 +688,11 @@
       "pattern": "copilotkit-runtime",
       "description": "No description available",
       "files": ["src/app/api/copilotkit/route.ts"]
+    },
+    "course-syllabus": {
+      "pattern": "course-syllabus",
+      "description": "No description available",
+      "files": ["src/app/api/course-syllabus/route.ts"]
     },
     "validation": {
       "pattern": "validation",
@@ -1526,7 +1575,7 @@
       "path": "src/app/(frontend)/account/_components/PreferencesSection.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["i18n-component", "client-component"],
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
       "dependencies": ["next/link"]
     },
@@ -1542,15 +1591,15 @@
       "path": "src/app/(frontend)/account/_components/TeachersProfileSection.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["i18n-component", "client-component"],
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "sonner"]
+      "dependencies": ["react", "sonner", "lucide-react"]
     },
     "src/app/(frontend)/ask/_components/AskContent/index.tsx": {
       "path": "src/app/(frontend)/ask/_components/AskContent/index.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["i18n-component", "client-component"],
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
       "dependencies": ["react", "lucide-react"]
     },
@@ -1576,7 +1625,7 @@
       "domain": "general",
       "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["lucide-react", "react"]
+      "dependencies": ["next/image", "lucide-react", "react"]
     },
     "src/app/(frontend)/ask/_components/AskPageClient/index.tsx": {
       "path": "src/app/(frontend)/ask/_components/AskPageClient/index.tsx",
@@ -1640,7 +1689,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["lucide-react", "react"]
+      "dependencies": ["lucide-react", "react", "framer-motion"]
     },
     "src/app/(frontend)/courses/[courseSlug]/_components/CourseTabs/index.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/_components/CourseTabs/index.tsx",
@@ -1648,7 +1697,7 @@
       "domain": "general",
       "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": []
+      "dependencies": ["framer-motion"]
     },
     "src/app/(frontend)/courses/[courseSlug]/_components/ExamReminderBubble/index.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/_components/ExamReminderBubble/index.tsx",
@@ -1694,9 +1743,9 @@
       "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ExercisesPager/index.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["i18n-component", "client-component"],
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "lucide-react"]
+      "dependencies": ["react", "framer-motion"]
     },
     "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonAnalytics.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonAnalytics.tsx",
@@ -1718,9 +1767,9 @@
       "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/index.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["i18n-component", "client-component"],
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react"]
+      "dependencies": ["react", "framer-motion"]
     },
     "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/useLessonPager.ts": {
       "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/useLessonPager.ts",
@@ -1750,9 +1799,9 @@
       "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ViewToggle.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["i18n-component", "client-component"],
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react"]
+      "dependencies": ["react", "lucide-react"]
     },
     "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/complete/CompleteContent.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/complete/CompleteContent.tsx",
@@ -1760,7 +1809,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "lucide-react"]
+      "dependencies": ["react", "lucide-react", "framer-motion"]
     },
     "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseHeader/index.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseHeader/index.tsx",
@@ -1838,7 +1887,7 @@
       "path": "src/app/(frontend)/courses/_components/BackToChapter/index.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["i18n-component", "client-component"],
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
       "dependencies": []
     },
@@ -1850,11 +1899,19 @@
       "aiSummary": "",
       "dependencies": []
     },
+    "src/app/(frontend)/courses/_components/Breadcrumb/index.tsx": {
+      "path": "src/app/(frontend)/courses/_components/Breadcrumb/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["tailwind-component"],
+      "aiSummary": "",
+      "dependencies": ["next/link"]
+    },
     "src/app/(frontend)/courses/_components/ChapterCard/index.tsx": {
       "path": "src/app/(frontend)/courses/_components/ChapterCard/index.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["i18n-component", "client-component"],
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
       "dependencies": []
     },
@@ -1889,6 +1946,14 @@
       "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
       "dependencies": ["lucide-react", "react", "sonner"]
+    },
+    "src/app/(frontend)/courses/_components/CourseCardGrid/index.tsx": {
+      "path": "src/app/(frontend)/courses/_components/CourseCardGrid/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": []
     },
     "src/app/(frontend)/courses/_components/CourseCatalogHeader/index.tsx": {
       "path": "src/app/(frontend)/courses/_components/CourseCatalogHeader/index.tsx",
@@ -1926,9 +1991,9 @@
       "path": "src/app/(frontend)/courses/_components/EmptyState/index.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["i18n-component", "client-component"],
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": []
+      "dependencies": ["lucide-react"]
     },
     "src/app/(frontend)/courses/_components/ExerciseCard/index.tsx": {
       "path": "src/app/(frontend)/courses/_components/ExerciseCard/index.tsx",
@@ -2016,7 +2081,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["lucide-react"]
+      "dependencies": ["lucide-react", "framer-motion"]
     },
     "src/app/(frontend)/next/preview/route.ts": {
       "path": "src/app/(frontend)/next/preview/route.ts",
@@ -2048,13 +2113,21 @@
       "aiSummary": "",
       "dependencies": ["next/link", "react"]
     },
+    "src/app/(frontend)/offline/page.tsx": {
+      "path": "src/app/(frontend)/offline/page.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": []
+    },
     "src/app/(frontend)/onboarding/persona/PersonaSelectionStep.tsx": {
       "path": "src/app/(frontend)/onboarding/persona/PersonaSelectionStep.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["i18n-component", "client-component"],
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "sonner"]
+      "dependencies": ["react", "sonner", "lucide-react"]
     },
     "src/app/(frontend)/posts/[slug]/page.client.tsx": {
       "path": "src/app/(frontend)/posts/[slug]/page.client.tsx",
@@ -2102,7 +2175,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react"]
+      "dependencies": ["react", "framer-motion"]
     },
     "src/app/(frontend)/stats/_components/ActivityTimeline.tsx": {
       "path": "src/app/(frontend)/stats/_components/ActivityTimeline.tsx",
@@ -2110,7 +2183,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "lucide-react"]
+      "dependencies": ["react", "framer-motion"]
     },
     "src/app/(frontend)/stats/_components/CategoryProgress.tsx": {
       "path": "src/app/(frontend)/stats/_components/CategoryProgress.tsx",
@@ -2124,7 +2197,7 @@
       "path": "src/app/(frontend)/stats/_components/DashboardFilters.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["i18n-component", "client-component"],
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
       "dependencies": []
     },
@@ -2142,7 +2215,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react"]
+      "dependencies": ["react", "framer-motion"]
     },
     "src/app/(frontend)/stats/_components/SummaryCards.tsx": {
       "path": "src/app/(frontend)/stats/_components/SummaryCards.tsx",
@@ -2156,17 +2229,17 @@
       "path": "src/app/(frontend)/study/_components/StudyContent/index.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["tailwind-component", "i18n-component", "client-component"],
+      "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["lucide-react", "sonner", "react"]
+      "dependencies": ["lucide-react", "framer-motion", "react"]
     },
     "src/app/(frontend)/study-plan/_components/DayCard.tsx": {
       "path": "src/app/(frontend)/study-plan/_components/DayCard.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["i18n-component", "client-component"],
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "lucide-react"]
+      "dependencies": ["react", "lucide-react", "next/link"]
     },
     "src/app/(frontend)/study-plan/_components/EmptyPlanState.tsx": {
       "path": "src/app/(frontend)/study-plan/_components/EmptyPlanState.tsx",
@@ -2176,11 +2249,19 @@
       "aiSummary": "",
       "dependencies": ["lucide-react"]
     },
+    "src/app/(frontend)/study-plan/_components/LessonSelector/index.tsx": {
+      "path": "src/app/(frontend)/study-plan/_components/LessonSelector/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "lucide-react"]
+    },
     "src/app/(frontend)/study-plan/_components/StudyPlanPage.tsx": {
       "path": "src/app/(frontend)/study-plan/_components/StudyPlanPage.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["i18n-component", "client-component"],
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
       "dependencies": ["lucide-react", "react"]
     },
@@ -2303,6 +2384,14 @@
       "patterns": ["api-endpoint", "authenticated-endpoint", "validated-endpoint"],
       "aiSummary": "",
       "dependencies": ["next/server", "zod", "payload", "@payload-config"]
+    },
+    "src/app/api/course-syllabus/route.ts": {
+      "path": "src/app/api/course-syllabus/route.ts",
+      "type": "api-route",
+      "domain": "courses",
+      "patterns": ["course-syllabus", "api-endpoint", "validated-endpoint"],
+      "aiSummary": "Returns full syllabus (chapters + lessons) for a course",
+      "dependencies": ["next/server", "zod"]
     },
     "src/app/api/entitlements/check/route.ts": {
       "path": "src/app/api/entitlements/check/route.ts",
@@ -4008,6 +4097,14 @@
       "aiSummary": "",
       "dependencies": ["@payloadcms/ui", "next/navigation", "react"]
     },
+    "src/ui/admin/ContentNavigation/index.tsx": {
+      "path": "src/ui/admin/ContentNavigation/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["@payloadcms/ui", "react"]
+    },
     "src/ui/admin/ExerciseContentEditor/BlockTypeSelector.tsx": {
       "path": "src/ui/admin/ExerciseContentEditor/BlockTypeSelector.tsx",
       "type": "unknown",
@@ -4015,6 +4112,14 @@
       "patterns": ["client-component"],
       "aiSummary": "",
       "dependencies": ["react"]
+    },
+    "src/ui/admin/ExerciseContentEditor/FullJsonEditor.tsx": {
+      "path": "src/ui/admin/ExerciseContentEditor/FullJsonEditor.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["lucide-react", "react"]
     },
     "src/ui/admin/ExerciseContentEditor/JSONInspector.tsx": {
       "path": "src/ui/admin/ExerciseContentEditor/JSONInspector.tsx",
@@ -4280,6 +4385,14 @@
       "aiSummary": "",
       "dependencies": ["@payloadcms/ui", "next/image", "react", "lucide-react"]
     },
+    "src/ui/admin/ExerciseContentEditor/editors/MultiAxisEditor.tsx": {
+      "path": "src/ui/admin/ExerciseContentEditor/editors/MultiAxisEditor.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "lucide-react"]
+    },
     "src/ui/admin/ExerciseContentEditor/editors/QuestionBlockWrapper.tsx": {
       "path": "src/ui/admin/ExerciseContentEditor/editors/QuestionBlockWrapper.tsx",
       "type": "unknown",
@@ -4390,7 +4503,7 @@
       "domain": "general",
       "patterns": ["client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "@payloadcms/ui", "lucide-react"]
+      "dependencies": ["react", "@payloadcms/ui", "next/navigation"]
     },
     "src/ui/admin/MediaPreview/AudioPreview.tsx": {
       "path": "src/ui/admin/MediaPreview/AudioPreview.tsx",
@@ -4776,6 +4889,14 @@
       "aiSummary": "",
       "dependencies": ["@payloadcms/live-preview-react", "next/navigation", "react"]
     },
+    "src/ui/web/PageRange/index.tsx": {
+      "path": "src/ui/web/PageRange/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["tailwind-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
     "src/ui/web/Pagination/index.tsx": {
       "path": "src/ui/web/Pagination/index.tsx",
       "type": "unknown",
@@ -4799,6 +4920,14 @@
       "patterns": ["tailwind-component", "client-component"],
       "aiSummary": "",
       "dependencies": ["dompurify", "react"]
+    },
+    "src/ui/web/TelescopeLogo/index.tsx": {
+      "path": "src/ui/web/TelescopeLogo/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["tailwind-component"],
+      "aiSummary": "",
+      "dependencies": ["next/image", "react"]
     },
     "src/ui/web/UserDropdown/index.tsx": {
       "path": "src/ui/web/UserDropdown/index.tsx",
@@ -4860,7 +4989,7 @@
       "path": "src/ui/web/chat/ChatQuotaBar/index.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["i18n-component", "client-component"],
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
       "dependencies": ["react"]
     },
@@ -4920,6 +5049,14 @@
       "aiSummary": "",
       "dependencies": ["react"]
     },
+    "src/ui/web/components/accent-picker.tsx": {
+      "path": "src/ui/web/components/accent-picker.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["tailwind-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "lucide-react"]
+    },
     "src/ui/web/components/accordion.tsx": {
       "path": "src/ui/web/components/accordion.tsx",
       "type": "unknown",
@@ -4927,6 +5064,14 @@
       "patterns": ["tailwind-component", "client-component"],
       "aiSummary": "",
       "dependencies": ["react", "@radix-ui/react-accordion", "lucide-react"]
+    },
+    "src/ui/web/components/animated-counter.tsx": {
+      "path": "src/ui/web/components/animated-counter.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "framer-motion"]
     },
     "src/ui/web/components/avatar.tsx": {
       "path": "src/ui/web/components/avatar.tsx",
@@ -4984,6 +5129,22 @@
       "aiSummary": "",
       "dependencies": ["react", "cmdk", "lucide-react"]
     },
+    "src/ui/web/components/confetti.stories.tsx": {
+      "path": "src/ui/web/components/confetti.stories.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["@storybook/react", "react"]
+    },
+    "src/ui/web/components/confetti.tsx": {
+      "path": "src/ui/web/components/confetti.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "framer-motion"]
+    },
     "src/ui/web/components/dialog.tsx": {
       "path": "src/ui/web/components/dialog.tsx",
       "type": "unknown",
@@ -5040,6 +5201,22 @@
       "aiSummary": "",
       "dependencies": ["@radix-ui/react-label", "class-variance-authority", "react"]
     },
+    "src/ui/web/components/motion.tsx": {
+      "path": "src/ui/web/components/motion.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["framer-motion", "react"]
+    },
+    "src/ui/web/components/onboarding-tip.tsx": {
+      "path": "src/ui/web/components/onboarding-tip.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["tailwind-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "framer-motion", "lucide-react"]
+    },
     "src/ui/web/components/page-section.tsx": {
       "path": "src/ui/web/components/page-section.tsx",
       "type": "unknown",
@@ -5047,6 +5224,14 @@
       "patterns": ["tailwind-component"],
       "aiSummary": "",
       "dependencies": ["react"]
+    },
+    "src/ui/web/components/page-transition.tsx": {
+      "path": "src/ui/web/components/page-transition.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["framer-motion", "react"]
     },
     "src/ui/web/components/pagination.tsx": {
       "path": "src/ui/web/components/pagination.tsx",
@@ -5093,6 +5278,14 @@
         "react"
       ]
     },
+    "src/ui/web/components/skeleton.tsx": {
+      "path": "src/ui/web/components/skeleton.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["tailwind-component"],
+      "aiSummary": "",
+      "dependencies": []
+    },
     "src/ui/web/components/split-pane-layout.tsx": {
       "path": "src/ui/web/components/split-pane-layout.tsx",
       "type": "unknown",
@@ -5107,7 +5300,7 @@
       "domain": "general",
       "patterns": ["tailwind-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["framer-motion", "lucide-react", "react"]
+      "dependencies": ["lucide-react", "react"]
     },
     "src/ui/web/components/tabs.tsx": {
       "path": "src/ui/web/components/tabs.tsx",
@@ -5227,7 +5420,7 @@
       "domain": "general",
       "patterns": ["tailwind-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "lucide-react"]
+      "dependencies": ["react", "framer-motion", "lucide-react"]
     },
     "src/ui/web/exerciserenderer/components/HelpSystem/HelpSystemButtons.tsx": {
       "path": "src/ui/web/exerciserenderer/components/HelpSystem/HelpSystemButtons.tsx",
@@ -5235,15 +5428,15 @@
       "domain": "general",
       "patterns": ["tailwind-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "lucide-react"]
+      "dependencies": ["react", "framer-motion", "lucide-react"]
     },
     "src/ui/web/exerciserenderer/components/HelpSystem/HelpSystemContent.tsx": {
       "path": "src/ui/web/exerciserenderer/components/HelpSystem/HelpSystemContent.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["client-component"],
+      "patterns": ["tailwind-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "lucide-react"]
+      "dependencies": ["react", "framer-motion", "lucide-react"]
     },
     "src/ui/web/exerciserenderer/components/HelpSystem/index.tsx": {
       "path": "src/ui/web/exerciserenderer/components/HelpSystem/index.tsx",
@@ -5251,7 +5444,7 @@
       "domain": "general",
       "patterns": ["client-component"],
       "aiSummary": "",
-      "dependencies": ["react"]
+      "dependencies": ["react", "framer-motion"]
     },
     "src/ui/web/exerciserenderer/components/MediaAttachments/index.tsx": {
       "path": "src/ui/web/exerciserenderer/components/MediaAttachments/index.tsx",
@@ -5267,7 +5460,7 @@
       "domain": "general",
       "patterns": ["tailwind-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "lucide-react"]
+      "dependencies": ["react", "framer-motion", "lucide-react"]
     },
     "src/ui/web/exerciserenderer/components/VideoPlayer/index.tsx": {
       "path": "src/ui/web/exerciserenderer/components/VideoPlayer/index.tsx",
@@ -5307,7 +5500,7 @@
       "domain": "general",
       "patterns": ["client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "lucide-react"]
+      "dependencies": ["react", "framer-motion", "lucide-react"]
     },
     "src/ui/web/exerciserenderer/questions/MatchingQuestion/MatchingColumn.tsx": {
       "path": "src/ui/web/exerciserenderer/questions/MatchingQuestion/MatchingColumn.tsx",
@@ -5323,7 +5516,7 @@
       "domain": "general",
       "patterns": ["tailwind-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "lucide-react"]
+      "dependencies": ["react", "framer-motion", "lucide-react"]
     },
     "src/ui/web/exerciserenderer/questions/MatchingQuestion/MatchingLines.tsx": {
       "path": "src/ui/web/exerciserenderer/questions/MatchingQuestion/MatchingLines.tsx",
@@ -5331,7 +5524,7 @@
       "domain": "general",
       "patterns": ["client-component"],
       "aiSummary": "",
-      "dependencies": ["react"]
+      "dependencies": ["react", "framer-motion"]
     },
     "src/ui/web/exerciserenderer/questions/MatchingQuestion/index.tsx": {
       "path": "src/ui/web/exerciserenderer/questions/MatchingQuestion/index.tsx",
@@ -5347,7 +5540,7 @@
       "domain": "general",
       "patterns": ["tailwind-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "lucide-react"]
+      "dependencies": ["react", "framer-motion", "lucide-react"]
     },
     "src/ui/web/exerciserenderer/questions/TableQuestion/ExerciseTable.tsx": {
       "path": "src/ui/web/exerciserenderer/questions/TableQuestion/ExerciseTable.tsx",
@@ -5355,7 +5548,7 @@
       "domain": "general",
       "patterns": ["tailwind-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react"]
+      "dependencies": ["react", "framer-motion", "lucide-react"]
     },
     "src/ui/web/exerciserenderer/questions/TableQuestion/index.tsx": {
       "path": "src/ui/web/exerciserenderer/questions/TableQuestion/index.tsx",
@@ -5371,7 +5564,7 @@
       "domain": "general",
       "patterns": ["tailwind-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "lucide-react"]
+      "dependencies": ["react", "framer-motion", "lucide-react"]
     },
     "src/ui/web/footer/RowLabel.tsx": {
       "path": "src/ui/web/footer/RowLabel.tsx",
@@ -5401,7 +5594,7 @@
       "path": "src/ui/web/header/Component.client.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["client-component"],
+      "patterns": ["tailwind-component", "client-component"],
       "aiSummary": "",
       "dependencies": ["next/navigation", "react"]
     },
@@ -5409,9 +5602,9 @@
       "path": "src/ui/web/header/CourseSearch/index.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["i18n-component", "client-component"],
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "lucide-react", "next/navigation"]
+      "dependencies": ["react", "next/navigation", "framer-motion"]
     },
     "src/ui/web/header/MobileMenu/MobileMenuAuthSection.tsx": {
       "path": "src/ui/web/header/MobileMenu/MobileMenuAuthSection.tsx",
@@ -5425,7 +5618,7 @@
       "path": "src/ui/web/header/MobileMenu/index.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["i18n-component", "client-component"],
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
       "dependencies": ["react", "lucide-react"]
     },
@@ -5477,13 +5670,21 @@
       "aiSummary": "",
       "dependencies": ["react"]
     },
+    "src/ui/web/homepage/LandingPage/index.tsx": {
+      "path": "src/ui/web/homepage/LandingPage/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["framer-motion", "lucide-react"]
+    },
     "src/ui/web/homepage/NavigationBar/index.tsx": {
       "path": "src/ui/web/homepage/NavigationBar/index.tsx",
       "type": "unknown",
       "domain": "general",
       "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["next/navigation"]
+      "dependencies": ["next/navigation", "framer-motion", "lucide-react"]
     },
     "src/ui/web/homepage/TopicCard/index.tsx": {
       "path": "src/ui/web/homepage/TopicCard/index.tsx",
@@ -5651,7 +5852,7 @@
       "domain": "formula-sheets",
       "patterns": ["content-renderer", "i18n-component", "client-component"],
       "aiSummary": "Client-side renderer for formula sheet content (PDF or HTML blocks)",
-      "dependencies": []
+      "dependencies": ["next/image"]
     },
     "src/ui/web/shared/Icon/Icon.tsx": {
       "path": "src/ui/web/shared/Icon/Icon.tsx",
@@ -5769,7 +5970,7 @@
       "path": "src/ui/web/shared/ProgressCircle/index.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["client-component"],
+      "patterns": ["tailwind-component", "client-component"],
       "aiSummary": "",
       "dependencies": ["react"]
     },
@@ -5799,8 +6000,8 @@
     }
   },
   "metadata": {
-    "generatedAt": "2026-03-30T07:10:58.582Z",
-    "totalFiles": 534,
-    "totalPatterns": 135
+    "generatedAt": "2026-04-02T15:35:25.477Z",
+    "totalFiles": 553,
+    "totalPatterns": 136
   }
 }

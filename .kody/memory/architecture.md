@@ -36,5 +36,6 @@ src/
 - **OAuth Handler**: Google → user creation/updates
 - **Admin CMS**: Payload admin UI with custom components
 - **Type Generation**: `generate:types`, `generate:importmap` post-schema changes
+- **AI Documentation Pipeline**: Automated generation of doc chunks, pattern indexes, and route maps for AI context (scripts: `ai:generate-docs`, `ai:generate-patterns`, `ai:generate-all-indexes`)
 
 Refer to [AGENTS.md](./AGENTS.md) for Payload-specific patterns and [CLAUDE.md](./CLAUDE.md) for development commands.

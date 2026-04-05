@@ -4,12 +4,17 @@
  * @fileType collection-config
  * @domain ai
  * @pattern teacher-profile
- * @ai-summary Collection for managing teacher profiles that define AI chat behavior
+ * @ai-summary Collection for managing teacher profiles that define AI chat behavior.
+ *   Uses per-locale documents (contentLocaleField + translatedFromField) consistent
+ *   with Courses, Chapters, and Lessons.
  */
 
 import type { CollectionConfig } from 'payload'
 
 import { adminOnly } from '../access/adminOnly'
+import { contentLocaleField } from '../fields/contentLocale'
+import { translatedFromField } from '../fields/translatedFrom'
+import { enforceFieldLocaleUniqueness } from '../hooks/validateLocaleUniqueness'
 
 export const TeacherProfiles: CollectionConfig = {
   slug: 'teacher_profiles',
@@ -21,15 +26,19 @@ export const TeacherProfiles: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'label',
-    defaultColumns: ['label', 'slug', 'systemPrompt', 'isEnabled', 'createdAt'],
+    defaultColumns: ['label', 'slug', 'locale', 'systemPrompt', 'isEnabled', 'createdAt'],
     group: 'AI',
   },
+  hooks: {
+    beforeChange: [enforceFieldLocaleUniqueness('teacher_profiles')],
+  },
   fields: [
+    contentLocaleField,
+    translatedFromField('teacher_profiles'),
     {
       name: 'slug',
       type: 'text',
       required: true,
-      unique: true,
       index: true,
       admin: {
         description: 'Machine-readable identifier (e.g., "teacher_strict")',

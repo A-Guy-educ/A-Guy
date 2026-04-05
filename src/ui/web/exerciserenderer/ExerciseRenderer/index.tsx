@@ -27,6 +27,10 @@ import type {
 } from '../types'
 import type { GeometrySpecV1, AxisSpecV1 } from '@/infra/contracts'
 import type { DisplaySize } from '../blocks/AxisRenderer'
+import { FadeIn } from '@/ui/web/components/motion'
+import { Confetti } from '@/ui/web/components/confetti'
+import { Progress } from '@/ui/web/components/progress'
+import { Sparkles } from 'lucide-react'
 import { HtmlBlockRenderer } from '../blocks/HtmlBlockRenderer'
 import { RichTextRenderer } from '../blocks/RichTextRenderer'
 import { SvgRenderer } from '../blocks/SvgRenderer'
@@ -212,14 +216,27 @@ export function ExerciseRenderer({
   const [isChecking, setIsChecking] = useState<Record<string, boolean>>({})
   const chatTriggeredRef = useRef<Set<string>>(new Set())
 
+  // Aggregate correctness tracking
+  const totalQuestions = questionBlocks.length
+  const correctCount = Object.values(checkResults).filter((r) => r.isCorrect).length
+  const allQuestionsCorrect = totalQuestions > 0 && correctCount === totalQuestions
+  const allCorrectFiredRef = useRef(false)
+  const [showAllCorrectConfetti, setShowAllCorrectConfetti] = useState(false)
+
   // Report aggregate correctness to parent when check results change
   useEffect(() => {
     if (!onResultsChange) return
-    const totalQuestions = questionBlocks.length
     const checkedCount = Object.keys(checkResults).length
-    const correctCount = Object.values(checkResults).filter((r) => r.isCorrect).length
     onResultsChange({ totalQuestions, checkedCount, correctCount })
-  }, [checkResults, onResultsChange, questionBlocks.length])
+  }, [checkResults, onResultsChange, totalQuestions, correctCount])
+
+  // Fire all-correct celebration once
+  useEffect(() => {
+    if (allQuestionsCorrect && !allCorrectFiredRef.current) {
+      allCorrectFiredRef.current = true
+      setShowAllCorrectConfetti(true)
+    }
+  }, [allQuestionsCorrect])
 
   // SVG hotspot state (interactive SVGs are separate from QuestionBlock flow)
   const [svgAnswers, setSvgAnswers] = useState<Record<string, UserAnswer>>({})
@@ -368,6 +385,31 @@ export function ExerciseRenderer({
           </div>
         )}
 
+        {/* Progress Bar — only when 2+ questions */}
+        {totalQuestions >= 2 && (
+          <div className="mb-2">
+            <Progress
+              value={totalQuestions > 0 ? (correctCount / totalQuestions) * 100 : 0}
+              className="h-[3px] rounded-none"
+            />
+            <p className="text-body-xs text-muted-foreground mt-1.5">
+              {correctCount} / {totalQuestions}
+            </p>
+          </div>
+        )}
+
+        {/* All-correct celebration */}
+        <Confetti active={showAllCorrectConfetti} duration={3000} />
+        {allQuestionsCorrect && (
+          <FadeIn>
+            <div className="rounded-xl bg-success/8 border border-success/20 p-card-padding-sm text-center flex items-center justify-center gap-content-gap-xs">
+              <Sparkles className="w-5 h-5 text-success" />
+              <span className="text-heading-sm font-bold text-success">{t('correct')}</span>
+              <Sparkles className="w-5 h-5 text-success" />
+            </div>
+          </FadeIn>
+        )}
+
         <div className="flex flex-col gap-content-gap-lg">
           {(() => {
             let questionIndex = 0
@@ -454,12 +496,11 @@ export function ExerciseRenderer({
               // Rich text block - just render content
               if (block.type === 'rich_text') {
                 return (
-                  <div
-                    key={block.id}
-                    className="prose prose-slate dark:prose-invert max-w-none text-foreground leading-relaxed"
-                  >
-                    <RichTextRenderer block={block} />
-                  </div>
+                  <FadeIn key={block.id}>
+                    <div className="prose prose-slate dark:prose-invert max-w-none text-foreground leading-relaxed">
+                      <RichTextRenderer block={block} />
+                    </div>
+                  </FadeIn>
                 )
               }
 
@@ -623,6 +664,7 @@ export function ExerciseRenderer({
                   questionLabel={questionLabel}
                   dir={dir}
                   helpSystem={helpSystemNode}
+                  animationDelay={questionIndex * 0.08}
                 >
                   {/* Render appropriate question component based on type */}
                   {question.type === 'question_select' && question.variant === 'true_false' && (

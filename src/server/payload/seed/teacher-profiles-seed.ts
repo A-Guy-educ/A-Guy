@@ -1,8 +1,11 @@
 /**
  * Teacher Profiles Seed
  *
- * Seeds 5 Prompt entries and 5 TeacherProfile entries for teacher profile functionality.
- * Idempotent - checks by key/slug before creating.
+ * Seeds 5 Prompt entries and 5 TeacherProfile entries (×2 locales = 10 docs)
+ * for teacher profile functionality. Uses the per-locale document pattern
+ * consistent with Courses, Chapters, and Lessons.
+ *
+ * Idempotent - checks by slug + locale before creating.
  *
  * @fileType seed
  * @domain ai
@@ -16,8 +19,14 @@ import type { Payload } from 'payload'
 const TEACHER_PROFILES = [
   {
     slug: 'teacher_strict',
-    label: 'Strict Teacher',
-    description: 'Maintains high standards and expects precise, accurate responses.',
+    he: {
+      label: 'מורה קפדן',
+      description: 'שומר על סטנדרטים גבוהים ומצפה לתשובות מדויקות.',
+    },
+    en: {
+      label: 'Strict Teacher',
+      description: 'Maintains high standards and expects precise, accurate responses.',
+    },
     promptKey: 'teacher-strict-v1',
     promptTitle: 'Strict Teacher v1',
     promptTemplate: `You are a strict but fair teacher who maintains high academic standards.
@@ -29,8 +38,14 @@ const TEACHER_PROFILES = [
   },
   {
     slug: 'teacher_thorough',
-    label: 'Thorough Teacher',
-    description: 'Provides comprehensive explanations with extensive detail.',
+    he: {
+      label: 'מורה יסודי',
+      description: 'מספק הסברים מקיפים עם פרוט נרחב.',
+    },
+    en: {
+      label: 'Thorough Teacher',
+      description: 'Provides comprehensive explanations with extensive detail.',
+    },
     promptKey: 'teacher-thorough-v1',
     promptTitle: 'Thorough Teacher v1',
     promptTemplate: `You are a thorough teacher who provides comprehensive, detailed explanations.
@@ -42,8 +57,14 @@ const TEACHER_PROFILES = [
   },
   {
     slug: 'teacher_patient',
-    label: 'Patient Teacher',
-    description: 'Approaches learning with patience and encouragement.',
+    he: {
+      label: 'מורה סבלני',
+      description: 'ניגש ללמידה עם סבלנות ועידוד.',
+    },
+    en: {
+      label: 'Patient Teacher',
+      description: 'Approaches learning with patience and encouragement.',
+    },
     promptKey: 'teacher-patient-v1',
     promptTitle: 'Patient Teacher v1',
     promptTemplate: `You are a patient, supportive teacher who prioritizes student confidence.
@@ -55,8 +76,14 @@ const TEACHER_PROFILES = [
   },
   {
     slug: 'teacher_focused',
-    label: 'Focused Teacher',
-    description: 'Keeps lessons on track with clear objectives and efficient delivery.',
+    he: {
+      label: 'מורה ממוקד',
+      description: 'שומר על השיעורים ממוקדים עם יעדים ברורים.',
+    },
+    en: {
+      label: 'Focused Teacher',
+      description: 'Keeps lessons on track with clear objectives and efficient delivery.',
+    },
     promptKey: 'teacher-focused-v1',
     promptTitle: 'Focused Teacher v1',
     promptTemplate: `You are a focused teacher who keeps lessons efficient and goal-oriented.
@@ -68,8 +95,14 @@ const TEACHER_PROFILES = [
   },
   {
     slug: 'teacher_challenging',
-    label: 'Challenging Teacher',
-    description: 'Pushes students with thought-provoking questions and advanced material.',
+    he: {
+      label: 'מורה מאתגר',
+      description: 'מאתגר תלמידים עם שאלות מעוררות מחשבה וחומר מתקדם.',
+    },
+    en: {
+      label: 'Challenging Teacher',
+      description: 'Pushes students with thought-provoking questions and advanced material.',
+    },
     promptKey: 'teacher-challenging-v1',
     promptTitle: 'Challenging Teacher v1',
     promptTemplate: `You are a challenging teacher who pushes students to reach their full potential.
@@ -82,8 +115,9 @@ const TEACHER_PROFILES = [
 ]
 
 /**
- * Seed teacher profiles and their associated prompts
- * Idempotent - safe to re-run
+ * Seed teacher profiles and their associated prompts.
+ * Creates per-locale documents (Hebrew as source, English as translation).
+ * Idempotent - safe to re-run.
  */
 export async function seedTeacherProfiles(payload: Payload): Promise<void> {
   payload.logger.info('[TeacherProfilesSeed] Starting teacher profiles seed...')
@@ -109,7 +143,7 @@ export async function seedTeacherProfiles(payload: Payload): Promise<void> {
   const tenantId = tenants.docs[0].id as string
 
   for (const profile of TEACHER_PROFILES) {
-    // Check if prompt already exists
+    // --- Ensure prompt exists ---
     const existingPrompt = await payload.find({
       collection: 'prompts',
       where: { promptKey: { equals: profile.promptKey } },
@@ -125,7 +159,6 @@ export async function seedTeacherProfiles(payload: Payload): Promise<void> {
         `[TeacherProfilesSeed] Prompt ${profile.promptKey} already exists, skipping`,
       )
     } else {
-      // Create prompt
       const createdPrompt = await payload.create({
         collection: 'prompts',
         data: {
@@ -146,32 +179,87 @@ export async function seedTeacherProfiles(payload: Payload): Promise<void> {
       payload.logger.info(`[TeacherProfilesSeed] Created prompt ${profile.promptKey}`)
     }
 
-    // Check if teacher profile already exists
-    const existingProfile = await payload.find({
+    // --- Ensure Hebrew (source) document exists ---
+    const existingHe = await payload.find({
       collection: 'teacher_profiles',
-      where: { slug: { equals: profile.slug } },
+      where: {
+        and: [{ slug: { equals: profile.slug } }, { locale: { equals: 'he' } }],
+      },
       limit: 1,
       overrideAccess: true,
     })
 
-    if (existingProfile.docs.length > 0) {
-      payload.logger.info(
-        `[TeacherProfilesSeed] Teacher profile ${profile.slug} already exists, skipping`,
-      )
+    let heDocId: string
+
+    if (existingHe.docs.length > 0) {
+      heDocId = existingHe.docs[0].id as string
+      // Update in case labels/descriptions changed
+      await payload.update({
+        collection: 'teacher_profiles',
+        id: heDocId,
+        data: {
+          label: profile.he.label,
+          description: profile.he.description,
+          systemPrompt: promptId,
+        },
+        overrideAccess: true,
+      })
+      payload.logger.info(`[TeacherProfilesSeed] Updated teacher profile ${profile.slug} (he)`)
     } else {
-      // Create teacher profile
-      await payload.create({
+      const created = await payload.create({
         collection: 'teacher_profiles',
         data: {
           slug: profile.slug,
-          label: profile.label,
-          description: profile.description,
+          locale: 'he',
+          label: profile.he.label,
+          description: profile.he.description,
           systemPrompt: promptId,
           isEnabled: true,
         },
         overrideAccess: true,
       })
-      payload.logger.info(`[TeacherProfilesSeed] Created teacher profile ${profile.slug}`)
+      heDocId = created.id as string
+      payload.logger.info(`[TeacherProfilesSeed] Created teacher profile ${profile.slug} (he)`)
+    }
+
+    // --- Ensure English (translation) document exists ---
+    const existingEn = await payload.find({
+      collection: 'teacher_profiles',
+      where: {
+        and: [{ slug: { equals: profile.slug } }, { locale: { equals: 'en' } }],
+      },
+      limit: 1,
+      overrideAccess: true,
+    })
+
+    if (existingEn.docs.length > 0) {
+      await payload.update({
+        collection: 'teacher_profiles',
+        id: existingEn.docs[0].id,
+        data: {
+          label: profile.en.label,
+          description: profile.en.description,
+          translatedFrom: heDocId,
+          systemPrompt: promptId,
+        },
+        overrideAccess: true,
+      })
+      payload.logger.info(`[TeacherProfilesSeed] Updated teacher profile ${profile.slug} (en)`)
+    } else {
+      await payload.create({
+        collection: 'teacher_profiles',
+        data: {
+          slug: profile.slug,
+          locale: 'en',
+          translatedFrom: heDocId,
+          label: profile.en.label,
+          description: profile.en.description,
+          systemPrompt: promptId,
+          isEnabled: true,
+        },
+        overrideAccess: true,
+      })
+      payload.logger.info(`[TeacherProfilesSeed] Created teacher profile ${profile.slug} (en)`)
     }
   }
 

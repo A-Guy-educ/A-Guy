@@ -25,15 +25,22 @@ on:
   issue_comment:
     types: [created]
 
+  pull_request:
+    types: [closed]
+
   pull_request_review:
     types: [submitted]
+
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
 
   push:
     branches: [main, dev]
     paths: ['src/**', 'kody.config.json', 'package.json']
 
 concurrency:
-  group: kody-${{ github.event.inputs.task_id || github.event.issue.number || github.event.pull_request.number || github.sha }}
+  group: kody-${{ github.event.inputs.task_id || github.event.issue.number || github.event.pull_request.number || github.event.workflow_run.id || github.sha }}
   cancel-in-progress: false
 
 permissions:
@@ -56,6 +63,10 @@ jobs:
       issue_number: ${{ steps.parse.outputs.issue_number }}
       pr_number: ${{ steps.parse.outputs.pr_number }}
       feedback: ${{ steps.parse.outputs.feedback }}
+      ci_run_id: ${{ steps.parse.outputs.ci_run_id }}
+      ticket_id: ${{ steps.parse.outputs.ticket_id }}
+      prd_file: ${{ steps.parse.outputs.prd_file }}
+      dry_run: ${{ steps.parse.outputs.dry_run }}
       valid: ${{ steps.parse.outputs.valid }}
     steps:
       - uses: actions/setup-node@v4
@@ -63,7 +74,7 @@ jobs:
           node-version: 22
 
       - name: Install Kody Engine
-        run: npm install -g @kody-ade/kody-engine-lite
+        run: npm install -g @kody-ade/engine
 
       - name: Validate author
         id: safety
@@ -93,84 +104,12 @@ jobs:
       - name: Parse inputs
         if: steps.safety.outputs.valid == 'true'
         id: parse
-        run: |
-          BODY="${{ github.event.comment.body }}"
-          # Extract: @kody [mode] [task-id] [--from stage]
-          KODY_ARGS=$(echo "$BODY" | grep -oP '(?:@kody|/kody)\s+\K.*' || echo "")
-          MODE=$(echo "$KODY_ARGS" | awk '{print $1}')
-          RAW_TASK_ID=$(echo "$KODY_ARGS" | awk '{print $2}')
-          # Don't treat flags (--from, --feedback) as task IDs
-          case "$RAW_TASK_ID" in
-            --*) TASK_ID="" ;;
-            *)   TASK_ID="$RAW_TASK_ID" ;;
-          esac
-          FROM_STAGE=$(echo "$KODY_ARGS" | grep -oP '(?<=--from )\S+' || echo "")
-          FEEDBACK=$(echo "$KODY_ARGS" | grep -oP '(?<=--feedback ")[^"]*' || echo "")
-
-          # Validate mode
-          case "$MODE" in
-            full|rerun|fix|status|approve|review|bootstrap) ;;
-            *)
-              # If first arg isn't a mode, it might be a task-id or nothing
-              if [ -n "$MODE" ] && [ "$MODE" != "" ]; then
-                TASK_ID="$MODE"
-              fi
-              MODE="full"
-              ;;
-          esac
-
-          ISSUE_NUM="${{ github.event.issue.number }}"
-
-          # For approve mode: extract answer body and convert to rerun
-          # Must run BEFORE task-id generation so we don't create a new task
-          # approve: extract answers, convert to rerun
-          if [ "$MODE" = "approve" ]; then
-            APPROVE_BODY=$(echo "$BODY" | sed -n '/\(@kody\|\/kody\)\s*approve/,$p' | tail -n +2)
-            FEEDBACK="$APPROVE_BODY"
-            MODE="rerun"
-          fi
-
-          # fix: extract description as feedback, convert to fix command
-          if [ "$MODE" = "fix" ]; then
-            FIX_BODY=$(echo "$BODY" | sed -n '/\(@kody\|\/kody\)\s*fix/,$p' | tail -n +2)
-            if [ -n "$FIX_BODY" ]; then
-              FEEDBACK="$FIX_BODY"
-            fi
-            # Leave TASK_ID empty — entry.ts finds latest task for issue
-          fi
-
-          # Bootstrap mode: set task-id and skip normal pipeline
-          if [ "$MODE" = "bootstrap" ]; then
-            TASK_ID="bootstrap-$(date +%y%m%d-%H%M%S)"
-          fi
-
-          # Auto-generate task-id if not provided (only for full mode)
-          if [ -z "$TASK_ID" ] && [ "$MODE" = "full" ]; then
-            TASK_ID="${ISSUE_NUM}-$(date +%y%m%d-%H%M%S)"
-          fi
-
-          # Detect if this comment is on a PR (PRs are issues in GitHub API)
-          PR_NUMBER=""
-          if [ -n "${{ github.event.issue.pull_request }}" ]; then
-            PR_NUMBER="$ISSUE_NUM"
-          fi
-
-          # For review mode on a PR comment: use the PR number directly
-          if [ "$MODE" = "review" ] && [ -n "$PR_NUMBER" ]; then
-            TASK_ID="review-pr-${PR_NUMBER}-$(date +%y%m%d-%H%M%S)"
-          fi
-
-          echo "task_id=$TASK_ID" >> $GITHUB_OUTPUT
-          echo "mode=$MODE" >> $GITHUB_OUTPUT
-          echo "from_stage=$FROM_STAGE" >> $GITHUB_OUTPUT
-          echo "issue_number=$ISSUE_NUM" >> $GITHUB_OUTPUT
-          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-          {
-            echo "feedback<<KODY_EOF"
-            echo "$FEEDBACK"
-            echo "KODY_EOF"
-          } >> $GITHUB_OUTPUT
-          echo "valid=true" >> $GITHUB_OUTPUT
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_IS_PR: ${{ github.event.issue.pull_request && 'true' || '' }}
+          TRIGGER_TYPE: comment
+        run: kody-engine ci-parse
 
   # ─── Orchestrate ─────────────────────────────────────────────────────────────
   orchestrate:
@@ -198,7 +137,7 @@ jobs:
           token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
 
       - name: Checkout PR branch (for fix/rerun/review on PRs)
-        if: github.event.issue.pull_request && (needs.parse.outputs.mode == 'fix' || needs.parse.outputs.mode == 'rerun' || needs.parse.outputs.mode == 'review')
+        if: github.event.issue.pull_request && (needs.parse.outputs.mode == 'fix' || needs.parse.outputs.mode == 'fix-ci' || needs.parse.outputs.mode == 'rerun' || needs.parse.outputs.mode == 'review' || needs.parse.outputs.mode == 'resolve')
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
         run: |
@@ -218,9 +157,6 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Install Kody Engine
-        run: npm install -g @kody-ade/kody-engine-lite
-
       - name: Install Claude Code CLI
         run: npm install -g @anthropic-ai/claude-code
 
@@ -232,10 +168,26 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
 
+      - name: Export project secrets
+        env:
+          ALL_SECRETS: ${{ toJSON(secrets) }}
+        run: |
+          echo "$ALL_SECRETS" | jq -r 'to_entries[] | select(.key | test("^(GITHUB_TOKEN)$") | not) | @json' | while IFS= read -r entry; do
+            KEY=$(echo "$entry" | jq -r '.key')
+            VALUE=$(echo "$entry" | jq -r '.value')
+            DELIM="KODY_EOF_${KEY}"
+            echo "${KEY}<<${DELIM}" >> $GITHUB_ENV
+            echo "${VALUE}" >> $GITHUB_ENV
+            echo "${DELIM}" >> $GITHUB_ENV
+          done
+
+      - name: Warm up Next.js build cache
+        continue-on-error: true
+        run: npx cross-env NODE_OPTIONS='--max-old-space-size=4096' next build
+        timeout-minutes: 15
+
       - name: Run Kody pipeline
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          ANTHROPIC_COMPATIBLE_API_KEY: ${{ secrets.ANTHROPIC_COMPATIBLE_API_KEY }}
           GH_TOKEN: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
           TASK_ID: ${{ github.event.inputs.task_id || needs.parse.outputs.task_id }}
           MODE: ${{ github.event.inputs.mode || needs.parse.outputs.mode || 'full' }}
@@ -243,25 +195,40 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.inputs.issue_number || needs.parse.outputs.issue_number }}
           PR_NUMBER: ${{ needs.parse.outputs.pr_number }}
           FEEDBACK: ${{ github.event.inputs.feedback || needs.parse.outputs.feedback }}
-          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          COMPLEXITY: ${{ needs.parse.outputs.complexity }}
+          CI_RUN_ID: ${{ needs.parse.outputs.ci_run_id }}
+          TICKET_ID: ${{ needs.parse.outputs.ticket_id }}
+          PRD_FILE: ${{ needs.parse.outputs.prd_file }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || needs.parse.outputs.dry_run || 'false' }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           if [ "$MODE" = "bootstrap" ]; then
             echo "Running bootstrap..."
-            kody-engine-lite bootstrap
+            pnpm exec kody-engine bootstrap
+          elif [ "$MODE" = "taskify" ]; then
+            echo "Running taskify..."
+            ARGS=""
+            [ -n "$TICKET_ID" ] && ARGS="$ARGS --ticket $TICKET_ID"
+            [ -n "$PRD_FILE" ] && ARGS="$ARGS --file $PRD_FILE"
+            [ -n "$ISSUE_NUMBER" ] && ARGS="$ARGS --issue-number $ISSUE_NUMBER"
+            [ -n "$TASK_ID" ] && ARGS="$ARGS --task-id $TASK_ID"
+            pnpm exec kody-engine taskify $ARGS
           else
             CMD="run"
             [ "$MODE" = "rerun" ] && CMD="rerun"
             [ "$MODE" = "fix" ] && CMD="fix"
+            [ "$MODE" = "fix-ci" ] && CMD="fix-ci"
             [ "$MODE" = "review" ] && CMD="review"
+            [ "$MODE" = "resolve" ] && CMD="resolve"
             ARGS="--issue-number $ISSUE_NUMBER"
             [ -n "$TASK_ID" ] && ARGS="$ARGS --task-id $TASK_ID"
             [ -n "$PR_NUMBER" ] && ARGS="$ARGS --pr-number $PR_NUMBER"
             [ -n "$FROM_STAGE" ] && ARGS="$ARGS --from $FROM_STAGE"
+            [ -n "$COMPLEXITY" ] && ARGS="$ARGS --complexity $COMPLEXITY"
             # FEEDBACK is also passed via env var (avoids shell escaping issues)
             [ -n "$FEEDBACK" ] && ARGS="$ARGS --feedback \"$FEEDBACK\""
             [ "$DRY_RUN" = "true" ] && ARGS="$ARGS --dry-run"
-            kody-engine-lite $CMD $ARGS
+            pnpm exec kody-engine $CMD $ARGS
           fi
 
       - name: Pipeline summary
@@ -298,9 +265,59 @@ jobs:
         continue-on-error: true
         with:
           name: kody-tasks-${{ github.event.inputs.task_id || needs.parse.outputs.task_id }}
-          path: .kody/tasks/${{ github.event.inputs.task_id || needs.parse.outputs.task_id }}/
-          retention-days: 1
-          overwrite: true
+          path: .kody/tasks/
+          retention-days: 3
+
+  # ─── Close Issue on PR Merge ────────────────────────────────────────────────
+  close-issue-on-merge:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Generate App token
+        id: app-token
+        if: vars.KODY_APP_ID != ''
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.KODY_APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          repositories: ${{ github.event.repository.name }}
+
+      - name: Close linked issue
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+          script: |
+            // Extract issue number from branch name (e.g. "42--feature-name")
+            const branch = context.payload.pull_request.head.ref;
+            const match = branch.match(/^(\d+)--/);
+            if (!match) return;
+            const issueNumber = parseInt(match[1], 10);
+
+            // Verify the issue exists and is open
+            try {
+              const { data: issue } = await github.rest.issues.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+              });
+              if (issue.state === 'closed') return;
+              if (issue.pull_request) return; // Skip if it's a PR, not an issue
+
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                state: 'closed',
+                state_reason: 'completed',
+              });
+              core.info(`Closed issue #${issueNumber} after PR #${context.payload.pull_request.number} was merged`);
+            } catch (e) {
+              core.warning(`Could not close issue #${issueNumber}: ${e.message}`);
+            }
 
   # ─── Error Notifications ─────────────────────────────────────────────────────
   notify-parse-error:
@@ -323,13 +340,13 @@ jobs:
 
   notify-orchestrate-error:
     if: failure() && needs.orchestrate.result == 'failure'
-    needs: [orchestrate]
+    needs: [parse, orchestrate]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v7
         with:
           script: |
-            const issueNumber = Number('${{ github.event.inputs.issue_number || needs.parse.outputs.issue_number || 0 }}');
+            const issueNumber = Number('${{ github.event.inputs.issue_number || needs.parse.outputs.issue_number || github.event.issue.number || 0 }}');
             if (issueNumber > 0) {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
@@ -338,6 +355,68 @@ jobs:
                 body: `❌ Pipeline failed. [View logs](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`
               });
             }
+
+  # ─── Fix-CI Auto-trigger (workflow_run trigger) ─────────────────────────────
+  fix-ci-trigger:
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.pull_requests[0]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Check loop guard and post fix-ci comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.workflow_run.pull_requests[0];
+            const prNumber = pr.number;
+
+            // Check recent comments for existing fix-ci attempt (last 24h)
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              per_page: 30,
+            });
+
+            const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+            const recentFixCi = comments.data.filter(
+              (c) => c.body.includes('@kody fix-ci') && new Date(c.created_at) > oneDayAgo
+            );
+
+            if (recentFixCi.length >= 1) {
+              core.info('Loop guard: @kody fix-ci already commented in last 24h, skipping');
+              return;
+            }
+
+            // Check if last commit was from a bot (kody's previous fix attempt)
+            const commits = await github.rest.pulls.listCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+              per_page: 1,
+            });
+            const lastAuthor = commits.data[commits.data.length - 1]?.commit?.author?.name;
+            if (lastAuthor === 'github-actions[bot]' || lastAuthor === 'kody[bot]') {
+              core.info('Loop guard: last commit from bot, skipping');
+              return;
+            }
+
+            // Post fix-ci comment
+            const runId = context.payload.workflow_run.id;
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}`;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: `@kody fix-ci\nCI failed: [View logs](${runUrl})\nRun ID: ${runId}`,
+            });
+            core.info(`Posted @kody fix-ci on PR #${prNumber} for run ${runId}`);
 
   # ─── Smoke Test (push trigger) ──────────────────────────────────────────────
   smoke-test:
@@ -354,17 +433,15 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Install Kody Engine
-        run: npm install -g @kody-ade/kody-engine-lite
       - name: Typecheck
         run: pnpm tsc --noEmit
       - name: CLI loads
-        run: kody-engine-lite --help
+        run: pnpm exec kody-engine --help
       - name: Dry run
         run: |
           mkdir -p .kody/tasks/smoke-test
           echo "Smoke test task" > .kody/tasks/smoke-test/task.md
-          kody-engine-lite run --task-id smoke-test --dry-run || true
+          pnpm exec kody-engine run --task-id smoke-test --dry-run || true
           if [ -f ".kody/tasks/smoke-test/status.json" ]; then
             echo "✓ status.json created"
             cat .kody/tasks/smoke-test/status.json
