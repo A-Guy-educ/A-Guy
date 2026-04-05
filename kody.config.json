@@ -25,6 +25,10 @@
       "strong": "MiniMax-M2.7-highspeed"
     }
   },
+  "release": {
+    "releaseBranch": "main",
+    "versionFiles": ["package.json"]
+  },
   "devServer": {
     "command": "pnpm dev",
     "url": "http://localhost:3000",
