@@ -96,10 +96,12 @@ Return ONLY valid JSON (no markdown code blocks, no explanations):
 - highlightPoints: Array of point labels to highlight in this step
 
 ### Step Order
-- Start with given information ("נתון")
+- Start with given information ("נתון") — each given fact is its own step
 - Build logically: each step uses previous steps or known theorems
+- Include ALL intermediate steps (congruence criteria, angle theorems, etc.)
 - End with the conclusion (what was asked to prove)
-- Aim for 3-6 steps
+- If the problem has multiple sub-questions, solve ALL of them
+- Use as many steps as the proof requires — typically 4-8 steps, but do NOT cut short
 
 ### Language
 - Match the language of the original image
