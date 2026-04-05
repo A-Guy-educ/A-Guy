@@ -52,6 +52,8 @@ interface LessonPagerProps {
   chatLessonId?: string
   /** Whether the lesson has context text (controls chat visibility) */
   hasLessonContext?: boolean
+  /** Whether the lesson has exercises (controls chat visibility) */
+  hasExercises?: boolean
   /** Formula sheet data (passed to ChatInterface) */
   formulaSheet?: import('@/payload-types').FormulaSheet | null
 }
@@ -69,6 +71,7 @@ export function LessonPager({
   validFiles,
   chatLessonId,
   hasLessonContext,
+  hasExercises,
   formulaSheet,
 }: LessonPagerProps) {
   const t = useTranslations('courses')
@@ -242,7 +245,7 @@ export function LessonPager({
           </div>
         }
         chatContent={
-          hasLessonContext ? (
+          hasLessonContext || hasExercises ? (
             <ChatInterface
               lessonId={lessonId}
               exerciseId={exercise.id}
@@ -447,7 +450,7 @@ export function LessonPager({
           </div>
         }
         chatContent={
-          hasLessonContext ? (
+          hasLessonContext || hasExercises ? (
             <ChatInterface
               lessonId={chatLessonId ?? lessonId}
               translationNamespace="courses"

@@ -141,6 +141,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
       .map((b) => b.data as import('@/payload-types').Exercise)
     const mediaMap =
       blockExercises.length > 0 ? await queryMediaByIds(extractAllMediaIds(blockExercises)) : {}
+    const hasExercises = blockExercises.length > 0
 
     // Pre-render content page bodies server-side
     const contentPageBodies: Record<string, React.ReactNode> = {}
@@ -183,6 +184,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
           validFiles={validFiles}
           chatLessonId={lesson.id}
           hasLessonContext={hasLessonContext}
+          hasExercises={hasExercises}
           formulaSheet={formulaSheet}
         />
       </AccessGateProvider>
@@ -233,6 +235,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
             lessonId={lesson.id}
             mediaMap={mediaMap}
             hasLessonContext={hasLessonContext}
+            hasExercises={hasExercises}
             formulaSheet={formulaSheet}
           />
         ) : (
