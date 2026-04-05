@@ -286,6 +286,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
         lessonId={lesson.id}
         chatLessonId={chatLessonId}
         hasLessonContext={hasLessonContext}
+        hasExercises={hasExercises}
         formulaSheet={formulaSheet}
       />
     </AccessGateProvider>
