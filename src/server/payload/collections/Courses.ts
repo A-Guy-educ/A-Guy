@@ -45,6 +45,31 @@ export const Courses: CollectionConfig = {
       validateTreeIsolationOnPublish,
     ],
     afterChange: [cascadeAdminTitle],
+    afterRead: [
+      async ({ doc, req }) => {
+        if (!doc?.id) return doc
+
+        try {
+          const courseId = typeof doc.id === 'string' ? doc.id : doc.id.toString()
+          const result = await req.payload.find({
+            collection: 'chapters',
+            where: {
+              course: {
+                equals: courseId,
+              },
+            },
+            limit: 0,
+            pagination: false,
+          })
+          doc.chapterCount = result.totalDocs
+        } catch {
+          // Silent fail - chapterCount is not critical
+          doc.chapterCount = 0
+        }
+
+        return doc
+      },
+    ],
   },
   admin: {
     useAsTitle: 'title',
@@ -66,6 +91,7 @@ export const Courses: CollectionConfig = {
       'status',
       'isActive',
       'contentStatus',
+      'chapterCount',
       'updatedAt',
     ],
   },
@@ -260,6 +286,16 @@ export const Courses: CollectionConfig = {
         position: 'sidebar',
         description:
           'Default formula sheet for lessons in this course (lesson-specific sheets take precedence)',
+      },
+    },
+
+    // Chapter Count (computed via afterRead hook for admin list view)
+    {
+      name: 'chapterCount',
+      type: 'number',
+      admin: {
+        hidden: true,
+        description: 'Number of chapters in this course (computed automatically)',
       },
     },
 

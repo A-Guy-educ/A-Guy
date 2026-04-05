@@ -603,6 +603,10 @@ export interface Course {
    */
   formulaSheet?: (string | null) | FormulaSheet;
   /**
+   * Number of chapters in this course (computed automatically)
+   */
+  chapterCount?: number | null;
+  /**
    * User who created this document
    */
   createdBy?: (string | null) | User;
@@ -3197,6 +3201,7 @@ export interface CoursesSelect<T extends boolean = true> {
   contentStatusExpiresAt?: T;
   contentStatusLabel?: T;
   formulaSheet?: T;
+  chapterCount?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;

@@ -1,0 +1,8 @@
+{
+  "task_type": "chore",
+  "title": "Done. I made the following changes to `src/server/payload/collections/Co",
+  "description": "Done. I made the following changes to `src/server/payload/collections/Courses.ts`:\n\n1. **Added `chapterCount` field** (lines 292-300) - A hidden number field that stores the computed chapter count\n\n2. **Added `afterRead` hook** (lines 48-72) - Queries the `chapters` collection to count how many chapters belong to each course and populates the `chapterCount` field\n\n3. **Added `chapterCount` to `defaultColumns`** (line 94) - The chapter count column will now appear in the admin list view\n\nThe `sta",
+  "scope": [],
+  "risk_level": "low",
+  "questions": []
+}
