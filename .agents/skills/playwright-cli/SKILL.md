@@ -160,21 +160,36 @@ playwright-cli video-chapter "Chapter Title" --description="Details" --duration=
 playwright-cli video-stop
 ```
 
-## Open parameters
+## Raw output
 
+The global `--raw` option strips page status, generated code, and snapshot sections from the output, returning only the result value. Use it to pipe command output into other tools. Commands that don't produce output return nothing.
+
+```bash
+playwright-cli --raw eval "JSON.stringify(performance.timing)" | jq '.loadEventEnd - .navigationStart'
+playwright-cli --raw eval "JSON.stringify([...document.querySelectorAll('a')].map(a => a.href))" > links.json
+playwright-cli --raw snapshot > before.yml
+playwright-cli click e5
+playwright-cli --raw snapshot > after.yml
+diff before.yml after.yml
+TOKEN=$(playwright-cli --raw cookie-get session_id)
+playwright-cli --raw localstorage-get theme
+```
+
+## Open parameters
 ```bash
 # Use specific browser when creating session
 playwright-cli open --browser=chrome
 playwright-cli open --browser=firefox
 playwright-cli open --browser=webkit
 playwright-cli open --browser=msedge
-# Connect to browser via extension
-playwright-cli open --extension
 
 # Use persistent profile (by default profile is in-memory)
 playwright-cli open --persistent
 # Use persistent profile with custom directory
 playwright-cli open --profile=/path/to/profile
+
+# Connect to browser via extension
+playwright-cli attach --extension
 
 # Start with config file
 playwright-cli open --config=my-config.json
@@ -318,12 +333,12 @@ playwright-cli close
 
 ## Specific tasks
 
-- **Running and Debugging Playwright tests** [references/playwright-tests.md](references/playwright-tests.md)
-- **Request mocking** [references/request-mocking.md](references/request-mocking.md)
-- **Running Playwright code** [references/running-code.md](references/running-code.md)
-- **Browser session management** [references/session-management.md](references/session-management.md)
-- **Storage state (cookies, localStorage)** [references/storage-state.md](references/storage-state.md)
-- **Test generation** [references/test-generation.md](references/test-generation.md)
-- **Tracing** [references/tracing.md](references/tracing.md)
-- **Video recording** [references/video-recording.md](references/video-recording.md)
-- **Inspecting element attributes** [references/element-attributes.md](references/element-attributes.md)
+* **Running and Debugging Playwright tests** [references/playwright-tests.md](references/playwright-tests.md)
+* **Request mocking** [references/request-mocking.md](references/request-mocking.md)
+* **Running Playwright code** [references/running-code.md](references/running-code.md)
+* **Browser session management** [references/session-management.md](references/session-management.md)
+* **Storage state (cookies, localStorage)** [references/storage-state.md](references/storage-state.md)
+* **Test generation** [references/test-generation.md](references/test-generation.md)
+* **Tracing** [references/tracing.md](references/tracing.md)
+* **Video recording** [references/video-recording.md](references/video-recording.md)
+* **Inspecting element attributes** [references/element-attributes.md](references/element-attributes.md)
