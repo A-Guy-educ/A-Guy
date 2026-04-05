@@ -2,7 +2,7 @@ name: Sync Kody Labels to Project Board
 
 on:
   issues:
-    types: [opened, labeled]
+    types: [opened, labeled, closed]
 
 jobs:
   auto-label-backlog:
@@ -13,6 +13,53 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
         run: gh issue edit ${{ github.event.issue.number }} --repo ${{ github.repository }} --add-label "kody:backlog"
+
+  remove-closed-from-board:
+    runs-on: ubuntu-latest
+    if: github.event.action == 'closed'
+    steps:
+      - name: Remove issue from project board
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+        run: |
+          ISSUE_NODE_ID="${{ github.event.issue.node_id }}"
+          PROJECT_NUMBER=3
+          ORG="A-Guy-educ"
+
+          PROJECT_ID=$(gh api graphql -f query='
+            query {
+              organization(login: "'"$ORG"'") {
+                projectV2(number: '"$PROJECT_NUMBER"') { id }
+              }
+            }' --jq '.data.organization.projectV2.id')
+
+          # Find the item ID for this issue
+          ITEM_ID=$(gh api graphql -f query='
+            query {
+              node(id: "'"$ISSUE_NODE_ID"'") {
+                ... on Issue {
+                  projectItems(first: 10) {
+                    nodes {
+                      id
+                      project { id }
+                    }
+                  }
+                }
+              }
+            }' --jq '.data.node.projectItems.nodes[] | select(.project.id == "'"$PROJECT_ID"'") | .id')
+
+          if [ -n "$ITEM_ID" ]; then
+            gh api graphql -f query='
+              mutation {
+                deleteProjectV2Item(input: {
+                  projectId: "'"$PROJECT_ID"'"
+                  itemId: "'"$ITEM_ID"'"
+                }) { deletedItemId }
+              }'
+            echo "✅ Removed issue #${{ github.event.issue.number }} from board"
+          else
+            echo "Issue not on board, nothing to remove"
+          fi
 
   sync-label-to-project:
     runs-on: ubuntu-latest
