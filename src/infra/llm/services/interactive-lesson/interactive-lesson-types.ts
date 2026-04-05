@@ -4,20 +4,79 @@
  * and the player component consumes.
  */
 
-/** A single animation step in an interactive lesson */
+// ─────────────────────────────────────────────────────────────────────────────
+// Geometry data — extracted by the LLM, rendered deterministically by us
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** A labeled point in the diagram */
+export interface GeoPoint {
+  label: string
+  x: number
+  y: number
+}
+
+/** A line segment between two labeled points */
+export interface GeoSegment {
+  from: string
+  to: string
+  /** Optional style: solid (default), dashed, bold */
+  style?: 'solid' | 'dashed' | 'bold'
+  /** Optional color override (design system key) */
+  color?: string
+}
+
+/** An angle marker between three points (vertex is the middle point) */
+export interface GeoAngle {
+  points: [string, string, string]
+  /** true for 90-degree square marker */
+  rightAngle?: boolean
+}
+
+/** A text label placed at specific coordinates */
+export interface GeoLabel {
+  text: string
+  x: number
+  y: number
+  fontSize?: number
+}
+
+/** Full geometry diagram data extracted from the image */
+export interface GeometryData {
+  points: GeoPoint[]
+  segments: GeoSegment[]
+  angles?: GeoAngle[]
+  labels?: GeoLabel[]
+  /** viewBox dimensions */
+  width: number
+  height: number
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Steps & Lesson
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** A single step in an interactive lesson */
 export interface InteractiveLessonStep {
   /** Unique step identifier (1-based) */
   id: number
-  /** Step title shown in the player UI */
+  /** Step title shown in the step table */
   title: string
+  /** Mathematical claim for the proof table (e.g., "BC = CD") */
+  claim: string
+  /** Reason/justification for the claim (e.g., "נתון") */
+  reason: string
   /** Narration text for TTS and closed captions */
   narration: string
-  /** HTML content to render for this step (SVG, text, formulas) */
-  htmlContent: string
+  /** Longer explanation shown in the explanation box */
+  explanation: string
   /** Estimated duration in seconds for this step's narration */
   durationSeconds: number
   /** Base64-encoded MP3 audio for this step (null if TTS failed) */
   audioBase64?: string | null
+  /** Segments to highlight: array of [from, to] label pairs */
+  highlightSegments?: string[][]
+  /** Points to highlight during this step */
+  highlightPoints?: string[]
 }
 
 /** Full interactive lesson generated from an image */
@@ -28,8 +87,8 @@ export interface InteractiveLesson {
   locale: 'he' | 'en'
   /** Ordered list of explanation steps */
   steps: InteractiveLessonStep[]
-  /** Global CSS styles for the HTML content */
-  globalStyles: string
+  /** Structured geometry data for deterministic SVG rendering */
+  geometry: GeometryData
 }
 
 /** Response from the generation pipeline */

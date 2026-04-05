@@ -383,8 +383,15 @@
       "uploadFailed": "העלאת התמונה נכשלה. נסה שוב.",
       "generateLesson": "צור הסבר אינטראקטיבי",
       "generatingLesson": "יוצר הסבר אינטראקטיבי...",
+      "backToUpload": "חזרה לתרגיל",
       "player": {
-        "stepOf": "שלב {current} מתוך {total}"
+        "stepOf": "שלב {current} מתוך {total}",
+        "subtitle": "לחצו על כפתור ההפעלה כדי לבנות את ההוכחה שלב אחר שלב",
+        "playButton": "הסבר ובנית ההוכחה",
+        "playing": "מופעל...",
+        "resetButton": "איפוס",
+        "claim": "טענה",
+        "reason": "נימוק"
       }
     }
   },
