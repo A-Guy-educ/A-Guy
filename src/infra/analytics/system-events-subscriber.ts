@@ -101,6 +101,15 @@ export function initAnalyticsSubscriber(): () => void {
         course_title: payload.course_title,
         user_id: payload.user_id,
       })
+
+      // Update Mixpanel People profile with selected course
+      const userId = payload.user_id || sessionStorage.getItem('analytics_tracked_user_id')
+      if (payload.course_id && userId) {
+        analytics.identify(userId, {
+          selected_course: payload.course_id,
+          selected_course_title: payload.course_title,
+        })
+      }
     }),
 
     safeSubscribe(SYSTEM_EVENTS.LESSON_STARTED, (envelope) => {
