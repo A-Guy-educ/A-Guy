@@ -234,12 +234,6 @@ export default async function LessonPage({ params }: LessonPageProps) {
         ) : (
           // Empty lesson: show ExerciseWorkspace with DynamicLesson as primaryContent
           <>
-            <LessonAnalytics
-              lessonId={lesson.id}
-              courseId={course.id}
-              lessonTitle={lesson.title}
-              contentType="exercises"
-            />
             <ExerciseWorkspace
               exerciseTitle={lesson.title}
               backUrl={backUrl}

@@ -5,9 +5,6 @@ import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 import { useSetCurrentLesson } from '@/client/providers/ActiveTimeProvider'
 import { useEffect, useRef } from 'react'
 
-/** Timeout threshold (ms) after which we consider the lesson "never loaded" */
-const LOAD_TIMEOUT_MS = 30_000
-
 export type LessonContentType = 'pdf' | 'exercises' | 'blocks'
 
 interface LessonAnalyticsProps {
@@ -67,43 +64,6 @@ export function LessonAnalytics({
       })
     }
   }, [lessonId, courseId, lessonTitle, contentType])
-
-  return null
-}
-
-/**
- * Wrapper that tracks lesson load timeout.
- * Place this alongside LessonAnalytics — if the lesson page takes too long
- * (e.g., PDF never loads, JS error prevents render), this fires LESSON_LOAD_FAILED.
- *
- * The timeout is cancelled if the component mounts (meaning the page rendered).
- * For pages that render but have content that fails to load (e.g., PDF 404),
- * the PDFMedia component handles that case separately.
- */
-export function LessonLoadTimeoutTracker({
-  lessonId,
-  courseId,
-  contentType,
-}: {
-  lessonId: string
-  courseId: string
-  contentType: LessonContentType
-}) {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      systemEventBus.emit(SYSTEM_EVENTS.LESSON_LOAD_FAILED, {
-        lesson_id: lessonId,
-        content_type: contentType,
-        error_type: 'timeout' as const,
-        error_message: `Content did not render within ${LOAD_TIMEOUT_MS}ms`,
-        course_id: courseId,
-      })
-    }, LOAD_TIMEOUT_MS)
-
-    // If the component mounts successfully, cancel the timeout
-    // The success event is already tracked by LessonAnalytics
-    return () => clearTimeout(timer)
-  }, [lessonId, courseId, contentType])
 
   return null
 }
