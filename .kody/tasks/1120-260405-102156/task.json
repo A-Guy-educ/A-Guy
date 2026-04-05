@@ -1,0 +1,8 @@
+{
+  "task_type": "chore",
+  "title": "Based on my exploration, I can now classify this task.  ```json {   \"tas",
+  "description": "Based on my exploration, I can now classify this task.\n\n```json\n{\n  \"task_type\": \"bugfix\",\n  \"title\": \"Fix LaTeX rendering failure in chat interface\",\n  \"description\": \"Chat interface displays raw LaTeX syntax (e.g., $E=mc^2$) instead of rendering formatted mathematical equations. The issue occurs when users send messages containing standard LaTeX inline math syntax ($...$). The rendering pipeline (normalizeLatexDelimiters → MathMarkdown → KaTeX) appears to have an edge case bug preventing prope",
+  "scope": [],
+  "risk_level": "low",
+  "questions": []
+}
