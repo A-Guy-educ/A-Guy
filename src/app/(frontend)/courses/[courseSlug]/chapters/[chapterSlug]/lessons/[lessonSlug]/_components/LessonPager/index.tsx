@@ -161,7 +161,7 @@ export function LessonPager({
             >
               <div className="w-full p-card-padding-sm md:p-card-padding space-y-4">
                 {/* Breadcrumb step indicator */}
-                <div className="flex items-center gap-2 text-body-sm text-muted-foreground pt-3">
+                <div className="flex items-center gap-content-gap-xs text-body-sm text-muted-foreground pt-3">
                   <span className="truncate max-w-[200px]">{lessonTitle}</span>
                   <ChevronRight className="w-3 h-3 shrink-0 rtl:rotate-180" />
                   <span className="text-foreground font-medium">
@@ -210,7 +210,7 @@ export function LessonPager({
                   disabled={!canGoPrev || isNavigating}
                   aria-label="Previous page"
                   className={cn(
-                    'text-body-sm gap-2 min-h-[44px] cursor-pointer transition-all duration-normal',
+                    'text-body-sm gap-content-gap-xs min-h-[44px] cursor-pointer transition-all duration-normal',
                     !canGoPrev || isNavigating
                       ? 'text-muted-foreground/40'
                       : 'text-muted-foreground hover:text-foreground',
@@ -228,7 +228,7 @@ export function LessonPager({
                   onClick={handleNext}
                   disabled={!canGoNext || isNavigating}
                   aria-label="Next page"
-                  className="px-6 py-2 min-h-[44px] rounded-xl text-body-sm cursor-pointer gap-2"
+                  className="px-6 py-2 min-h-[44px] rounded-xl text-body-sm cursor-pointer gap-content-gap-xs"
                 >
                   {isNavigating ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   {t('exercisesPagerNext')}
@@ -296,7 +296,7 @@ export function LessonPager({
             <AnimatePresence mode="wait">
               <motion.div key={pageState.blockIndex} {...pageTransition} className="space-y-8">
                 {/* Breadcrumb step indicator */}
-                <div className="flex items-center gap-2 text-body-sm text-muted-foreground">
+                <div className="flex items-center gap-content-gap-xs text-body-sm text-muted-foreground">
                   <span className="truncate max-w-[200px]">{lessonTitle}</span>
                   <ChevronRight className="w-3 h-3 shrink-0 rtl:rotate-180" />
                   <span className="text-foreground font-medium">
@@ -346,7 +346,7 @@ export function LessonPager({
               disabled={!canGoPrev || isNavigating}
               aria-label="Previous page"
               className={cn(
-                'text-body-sm gap-2 min-h-[44px] cursor-pointer transition-all duration-normal',
+                'text-body-sm gap-content-gap-xs min-h-[44px] cursor-pointer transition-all duration-normal',
                 !canGoPrev || isNavigating
                   ? 'text-muted-foreground/40'
                   : 'text-muted-foreground hover:text-foreground',
@@ -362,7 +362,7 @@ export function LessonPager({
               onClick={handleNext}
               disabled={!canGoNext || isNavigating}
               aria-label="Next page"
-              className="px-6 py-2 min-h-[44px] rounded-xl text-body-sm cursor-pointer gap-2"
+              className="px-6 py-2 min-h-[44px] rounded-xl text-body-sm cursor-pointer gap-content-gap-xs"
             >
               {isNavigating ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               {t('exercisesPagerNext')}
@@ -397,6 +397,8 @@ export function LessonPager({
                         resource={file}
                         className="w-full h-full"
                         htmlElement={null}
+                        lessonId={lessonId}
+                        courseId={courseSlug}
                       />
                     </div>
                   </div>
@@ -413,7 +415,7 @@ export function LessonPager({
                   disabled={!canGoPrev || isNavigating}
                   aria-label="Previous page"
                   className={cn(
-                    'text-body-sm gap-2 min-h-[44px] cursor-pointer transition-all duration-normal',
+                    'text-body-sm gap-content-gap-xs min-h-[44px] cursor-pointer transition-all duration-normal',
                     !canGoPrev || isNavigating
                       ? 'text-muted-foreground/40'
                       : 'text-muted-foreground hover:text-foreground',
@@ -427,7 +429,7 @@ export function LessonPager({
                   onClick={handleNext}
                   disabled={!canGoNext || isNavigating}
                   aria-label="Next page"
-                  className="px-6 py-2 min-h-[44px] rounded-xl text-body-sm cursor-pointer gap-2"
+                  className="px-6 py-2 min-h-[44px] rounded-xl text-body-sm cursor-pointer gap-content-gap-xs"
                 >
                   {isNavigating ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   {t('exercisesPagerNext')}
@@ -473,7 +475,7 @@ export function LessonPager({
                 <div className="w-12 h-0.5 bg-primary mx-auto rounded-full" />
               </header>
 
-              <div className="bg-card rounded-2xl p-card-padding md:p-8 border border-border/40 text-center max-w-lg mx-auto">
+              <div className="bg-card rounded-2xl p-card-padding md:p-card-padding-lg border border-border/40 text-center max-w-lg mx-auto">
                 <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-5">
                   <BookOpen className="w-7 h-7 text-primary" />
                 </div>
@@ -489,14 +491,14 @@ export function LessonPager({
                 {/* Lesson contents summary */}
                 <div className="flex items-center justify-center gap-content-gap mb-6">
                   {exerciseCount > 0 && (
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-muted rounded-lg text-body-sm">
+                    <div className="inline-flex items-center gap-content-gap-xs px-3 py-1.5 bg-muted rounded-lg text-body-sm">
                       <Layers className="w-4 h-4 text-primary" />
                       <span className="text-primary font-semibold">{exerciseCount}</span>
                       <span className="text-muted-foreground">{t('exercise')}</span>
                     </div>
                   )}
                   {contentPageCount > 0 && (
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-muted rounded-lg text-body-sm">
+                    <div className="inline-flex items-center gap-content-gap-xs px-3 py-1.5 bg-muted rounded-lg text-body-sm">
                       <FileText className="w-4 h-4 text-primary" />
                       <span className="text-primary font-semibold">{contentPageCount}</span>
                       <span className="text-muted-foreground">{t('contentPages') ?? 'Pages'}</span>
@@ -555,14 +557,14 @@ export function LessonPager({
                   {/* Summary stats */}
                   <div className="flex items-center justify-center gap-content-gap-lg mb-10">
                     {exerciseCount > 0 && (
-                      <div className="inline-flex items-center gap-2 px-4 py-2 bg-secondary/5 rounded-xl border border-secondary/10">
+                      <div className="inline-flex items-center gap-content-gap-xs px-4 py-2 bg-secondary/5 rounded-xl border border-secondary/10">
                         <Layers className="w-4 h-4 text-secondary" />
                         <span className="text-secondary font-medium">{exerciseCount}</span>
                         <span className="text-body-xs text-muted-foreground">{t('exercise')}</span>
                       </div>
                     )}
                     {contentPageCount > 0 && (
-                      <div className="inline-flex items-center gap-2 px-4 py-2 bg-secondary/5 rounded-xl border border-secondary/10">
+                      <div className="inline-flex items-center gap-content-gap-xs px-4 py-2 bg-secondary/5 rounded-xl border border-secondary/10">
                         <FileText className="w-4 h-4 text-secondary" />
                         <span className="text-secondary font-medium">{contentPageCount}</span>
                         <span className="text-body-xs text-muted-foreground">
@@ -592,7 +594,7 @@ export function LessonPager({
                   onClick={handlePrev}
                   disabled={isNavigating}
                   aria-label="Previous page"
-                  className="text-muted-foreground text-body-sm min-h-[44px] hover:text-foreground transition-colors duration-slow gap-2 cursor-pointer"
+                  className="text-muted-foreground text-body-sm min-h-[44px] hover:text-foreground transition-colors duration-slow gap-content-gap-xs cursor-pointer"
                 >
                   <ArrowRight className="w-4 h-4 rtl:rotate-0 ltr:rotate-180" />
                   {t('exercisesPagerPrev')}

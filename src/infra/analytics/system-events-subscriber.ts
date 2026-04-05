@@ -493,6 +493,54 @@ export function initAnalyticsSubscriber(): () => void {
       })
     }),
 
+    // Lesson Loading Lifecycle Events
+    safeSubscribe(SYSTEM_EVENTS.LESSON_OPEN_ATTEMPTED, (envelope) => {
+      const payload = envelope.payload as {
+        lesson_id?: string
+        content_type?: 'pdf' | 'exercises' | 'blocks'
+        platform?: string
+        course_id?: string
+      }
+      analytics.track(PRODUCT_EVENTS.LESSON_OPEN_ATTEMPTED, {
+        lesson_id: payload.lesson_id,
+        content_type: payload.content_type,
+        platform: payload.platform,
+        course_id: payload.course_id,
+      })
+    }),
+
+    safeSubscribe(SYSTEM_EVENTS.LESSON_LOAD_SUCCESS, (envelope) => {
+      const payload = envelope.payload as {
+        lesson_id?: string
+        content_type?: 'pdf' | 'exercises' | 'blocks'
+        load_time_ms?: number
+        course_id?: string
+      }
+      analytics.track(PRODUCT_EVENTS.LESSON_LOAD_SUCCESS, {
+        lesson_id: payload.lesson_id,
+        content_type: payload.content_type,
+        load_time_ms: payload.load_time_ms,
+        course_id: payload.course_id,
+      })
+    }),
+
+    safeSubscribe(SYSTEM_EVENTS.LESSON_LOAD_FAILED, (envelope) => {
+      const payload = envelope.payload as {
+        lesson_id?: string
+        content_type?: 'pdf' | 'exercises' | 'blocks'
+        error_type?: '404' | 'timeout' | 'js_error'
+        error_message?: string
+        course_id?: string
+      }
+      analytics.track(PRODUCT_EVENTS.LESSON_LOAD_FAILED, {
+        lesson_id: payload.lesson_id,
+        content_type: payload.content_type,
+        error_type: payload.error_type,
+        error_message: payload.error_message,
+        course_id: payload.course_id,
+      })
+    }),
+
     // Engagement Signal Events
     safeSubscribe(SYSTEM_EVENTS.LESSON_ABANDONED, (envelope) => {
       const payload = envelope.payload as {

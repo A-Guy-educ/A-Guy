@@ -60,7 +60,13 @@ export function PdfLessonPager({
         {validFiles.map((file) => (
           <div key={file.id} className="w-full h-[calc(100vh-120px)]">
             <div className="border rounded-lg overflow-hidden bg-card shadow-card h-full">
-              <MediaComponent resource={file} className="w-full h-full" htmlElement={null} />
+              <MediaComponent
+                resource={file}
+                className="w-full h-full"
+                htmlElement={null}
+                lessonId={lessonId}
+                courseId={courseSlug}
+              />
             </div>
           </div>
         ))}

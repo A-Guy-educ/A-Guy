@@ -29,6 +29,9 @@ import type {
   ExerciseSkippedPayload,
   LessonAbandonedPayload,
   LessonEndedPayload,
+  LessonLoadFailedPayload,
+  LessonLoadSuccessPayload,
+  LessonOpenAttemptedPayload,
   LessonStartedPayload,
   LoginModalShownPayload,
   PageViewedPayload,
@@ -111,6 +114,11 @@ export type SystemEventPayloads = {
   'system.answer_correct': AnswerCorrectPayload
   'system.answer_incorrect': AnswerIncorrectPayload
   'system.exercise_skipped': ExerciseSkippedPayload
+
+  // Lesson Loading Lifecycle
+  'system.lesson_open_attempted': LessonOpenAttemptedPayload
+  'system.lesson_load_success': LessonLoadSuccessPayload
+  'system.lesson_load_failed': LessonLoadFailedPayload
 
   // Engagement Signals
   'system.lesson_abandoned': LessonAbandonedPayload
