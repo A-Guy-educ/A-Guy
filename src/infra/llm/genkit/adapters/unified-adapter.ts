@@ -253,6 +253,9 @@ export async function createGenkitUnifiedAdapter(
                 config: {
                   temperature: effectiveTemperature,
                   maxOutputTokens: effectiveMaxOutputTokens,
+                  thinkingConfig: {
+                    thinkingBudget: 24576,
+                  },
                 },
               })
 
