@@ -84,7 +84,9 @@ function getImageDimensions(file: File): Promise<{ width: number; height: number
   })
 }
 
-function isImageTooSmall(file: File): Promise<{ tooSmall: boolean; width?: number; height?: number }> {
+function isImageTooSmall(
+  file: File,
+): Promise<{ tooSmall: boolean; width?: number; height?: number }> {
   return new Promise((resolve) => {
     if (!file.type.startsWith('image/')) {
       resolve({ tooSmall: false })
@@ -108,7 +110,10 @@ function isImageTooSmall(file: File): Promise<{ tooSmall: boolean; width?: numbe
 function extractBlobErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     // Vercel Blob errors may have a serverMessage property with more details
-    if ('serverMessage' in error && typeof (error as Record<string, unknown>).serverMessage === 'string') {
+    if (
+      'serverMessage' in error &&
+      typeof (error as Record<string, unknown>).serverMessage === 'string'
+    ) {
       return (error as { serverMessage: string }).serverMessage
     }
     return error.message
@@ -190,7 +195,12 @@ export function useDirectChatAssetUpload(): UseDirectChatAssetUploadReturn {
       setUploadingFiles((prev) =>
         prev.map((f) =>
           f.localId === localId
-            ? { ...f, status: 'failed' as const, error: 'File is too large. Maximum size is 20 MB — please reduce the file size or compress the image and try again.' }
+            ? {
+                ...f,
+                status: 'failed' as const,
+                error:
+                  'File is too large. Maximum size is 20 MB — please reduce the file size or compress the image and try again.',
+              }
             : f,
         ),
       )
@@ -205,7 +215,12 @@ export function useDirectChatAssetUpload(): UseDirectChatAssetUploadReturn {
       setUploadingFiles((prev) =>
         prev.map((f) =>
           f.localId === localId
-            ? { ...f, status: 'failed' as const, error: 'File type not supported. Please upload a JPEG, PNG, WebP image or a PDF file.' }
+            ? {
+                ...f,
+                status: 'failed' as const,
+                error:
+                  'File type not supported. Please upload a JPEG, PNG, WebP image or a PDF file.',
+              }
             : f,
         ),
       )
