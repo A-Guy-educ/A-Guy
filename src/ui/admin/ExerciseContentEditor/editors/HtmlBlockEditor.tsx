@@ -5,6 +5,8 @@ import DOMPurify from 'dompurify'
 import dynamic from 'next/dynamic'
 import React, { useMemo, useState } from 'react'
 import 'react-quill-new/dist/quill.snow.css'
+import { SAFE_HTML_PURIFY_CONFIG } from '@/ui/web/SafeHtml/sanitize-config'
+import { SafeHtml } from '@/ui/web/SafeHtml'
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false })
 
@@ -35,61 +37,7 @@ const QUILL_FORMATS = [
   'direction',
 ]
 
-const SANITIZE_CONFIG = {
-  ALLOWED_TAGS: [
-    'p',
-    'br',
-    'hr',
-    'span',
-    'h1',
-    'h2',
-    'h3',
-    'h4',
-    'h5',
-    'h6',
-    'strong',
-    'b',
-    'em',
-    'i',
-    'u',
-    's',
-    'del',
-    'ins',
-    'mark',
-    'sub',
-    'sup',
-    'ul',
-    'ol',
-    'li',
-    'blockquote',
-    'pre',
-    'code',
-    'a',
-    'img',
-    'div',
-    'section',
-    'table',
-    'thead',
-    'tbody',
-    'tr',
-    'th',
-    'td',
-  ],
-  ALLOWED_ATTR: [
-    'href',
-    'src',
-    'alt',
-    'title',
-    'class',
-    'id',
-    'rel',
-    'width',
-    'height',
-    'colspan',
-    'rowspan',
-    'dir',
-  ],
-}
+type EditorMode = 'visual' | 'source' | 'preview'
 
 interface HtmlBlockEditorProps {
   block: HtmlBlock
@@ -97,7 +45,7 @@ interface HtmlBlockEditorProps {
 }
 
 export const HtmlBlockEditor: React.FC<HtmlBlockEditorProps> = ({ block, onChange }) => {
-  const [showSource, setShowSource] = useState(false)
+  const [mode, setMode] = useState<EditorMode>('visual')
 
   // Memoize to prevent Quill re-initialization on re-render
   const modules = useMemo(() => QUILL_MODULES, [])
@@ -111,31 +59,48 @@ export const HtmlBlockEditor: React.FC<HtmlBlockEditorProps> = ({ block, onChang
     onChange({ ...block, html: e.target.value })
   }
 
-  const handleToggleSource = () => {
-    // Sanitize when leaving source view to strip any dangerous content pasted as raw HTML
-    if (showSource && block.html) {
-      const sanitized = DOMPurify.sanitize(block.html, SANITIZE_CONFIG)
+  const switchMode = (next: EditorMode) => {
+    // When leaving source view, sanitize so any dangerous raw HTML pasted
+    // by the author is stripped before it hits the database.
+    if (mode === 'source' && next !== 'source' && block.html) {
+      const sanitized = DOMPurify.sanitize(block.html, SAFE_HTML_PURIFY_CONFIG)
       if (sanitized !== block.html) {
         onChange({ ...block, html: sanitized })
       }
     }
-    setShowSource(!showSource)
+    setMode(next)
   }
 
   return (
     <div className="html-block-editor">
       <div className="html-block-editor-header">
         <span className="html-block-editor-label">HTML Block</span>
-        <button
-          type="button"
-          className={`html-editor-source-toggle ${showSource ? 'html-editor-source-toggle--active' : ''}`}
-          onClick={handleToggleSource}
-        >
-          {showSource ? 'Visual Editor' : 'HTML Source'}
-        </button>
+        <div className="html-block-editor-mode-switch">
+          <button
+            type="button"
+            className={`html-editor-source-toggle ${mode === 'visual' ? 'html-editor-source-toggle--active' : ''}`}
+            onClick={() => switchMode('visual')}
+          >
+            Visual
+          </button>
+          <button
+            type="button"
+            className={`html-editor-source-toggle ${mode === 'source' ? 'html-editor-source-toggle--active' : ''}`}
+            onClick={() => switchMode('source')}
+          >
+            HTML Source
+          </button>
+          <button
+            type="button"
+            className={`html-editor-source-toggle ${mode === 'preview' ? 'html-editor-source-toggle--active' : ''}`}
+            onClick={() => switchMode('preview')}
+          >
+            Render Preview
+          </button>
+        </div>
       </div>
 
-      {showSource ? (
+      {mode === 'source' && (
         <textarea
           className="html-block-source-textarea"
           value={block.html}
@@ -143,7 +108,9 @@ export const HtmlBlockEditor: React.FC<HtmlBlockEditorProps> = ({ block, onChang
           placeholder="Enter raw HTML here..."
           rows={12}
         />
-      ) : (
+      )}
+
+      {mode === 'visual' && (
         <ReactQuill
           theme="snow"
           value={block.html}
@@ -152,6 +119,12 @@ export const HtmlBlockEditor: React.FC<HtmlBlockEditorProps> = ({ block, onChang
           formats={QUILL_FORMATS}
           placeholder="Start typing your content here..."
         />
+      )}
+
+      {mode === 'preview' && (
+        <div className="html-block-preview-pane">
+          <SafeHtml html={block.html} enableProse />
+        </div>
       )}
     </div>
   )

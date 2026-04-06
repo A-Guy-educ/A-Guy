@@ -1777,6 +1777,18 @@
   background: var(--theme-elevation-200);
 }
 
+.html-block-editor-mode-switch {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.html-block-preview-pane {
+  padding: 1rem;
+  min-height: 200px;
+  background: var(--theme-elevation-0);
+  border-top: 1px dashed var(--theme-elevation-150);
+}
+
 .html-block-source-textarea {
   width: 100%;
   min-height: 200px;

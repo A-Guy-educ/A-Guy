@@ -1,64 +1,10 @@
 'use client'
 
 import DOMPurify from 'dompurify'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { cn } from '@/infra/utils/ui'
-
-const PURIFY_CONFIG = {
-  ALLOWED_TAGS: [
-    'p',
-    'br',
-    'hr',
-    'span',
-    'h1',
-    'h2',
-    'h3',
-    'h4',
-    'h5',
-    'h6',
-    'strong',
-    'b',
-    'em',
-    'i',
-    'u',
-    's',
-    'del',
-    'ins',
-    'mark',
-    'sub',
-    'sup',
-    'ul',
-    'ol',
-    'li',
-    'blockquote',
-    'pre',
-    'code',
-    'a',
-    'img',
-    'div',
-    'section',
-    'table',
-    'thead',
-    'tbody',
-    'tr',
-    'th',
-    'td',
-  ],
-  ALLOWED_ATTR: [
-    'href',
-    'src',
-    'alt',
-    'title',
-    'class',
-    'target',
-    'rel',
-    'width',
-    'height',
-    'colspan',
-    'rowspan',
-    'dir',
-  ],
-}
+import { SAFE_HTML_PURIFY_CONFIG } from './sanitize-config'
+import { handleSafeHtmlButtonClick } from './handleButtonAction'
 
 /** Default prose classes applied when enableProse is true */
 const PROSE_CLASSES = 'prose prose-slate dark:prose-invert max-w-none'
@@ -79,6 +25,7 @@ interface SafeHtmlProps {
 
 export function SafeHtml({ html, className, style, enableProse = false }: SafeHtmlProps) {
   const [isMounted, setIsMounted] = useState(false)
+  const containerRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     DOMPurify.addHook('afterSanitizeAttributes', (node) => {
@@ -94,8 +41,17 @@ export function SafeHtml({ html, className, style, enableProse = false }: SafeHt
 
   const cleanHtml = useMemo(() => {
     if (!isMounted || !html?.trim()) return ''
-    return DOMPurify.sanitize(html, PURIFY_CONFIG)
+    return DOMPurify.sanitize(html, SAFE_HTML_PURIFY_CONFIG)
   }, [isMounted, html])
+
+  // Event delegation for author-wired <button data-action="..."> elements.
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container || !cleanHtml) return
+    const onClick = (event: MouseEvent) => handleSafeHtmlButtonClick(event, container)
+    container.addEventListener('click', onClick)
+    return () => container.removeEventListener('click', onClick)
+  }, [cleanHtml])
 
   if (!cleanHtml) return null
 
@@ -103,6 +59,7 @@ export function SafeHtml({ html, className, style, enableProse = false }: SafeHt
 
   return (
     <div
+      ref={containerRef}
       className={mergedClassName || undefined}
       style={style}
       dangerouslySetInnerHTML={{ __html: cleanHtml }}

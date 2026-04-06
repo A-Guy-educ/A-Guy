@@ -1,7 +1,9 @@
 'use client'
 
 import DOMPurify from 'dompurify'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { SAFE_HTML_PURIFY_CONFIG } from '@/ui/web/SafeHtml/sanitize-config'
+import { handleSafeHtmlButtonClick } from '@/ui/web/SafeHtml/handleButtonAction'
 
 interface HtmlBlockRendererProps {
   block: {
@@ -10,64 +12,9 @@ interface HtmlBlockRendererProps {
   }
 }
 
-const PURIFY_CONFIG = {
-  ALLOWED_TAGS: [
-    'p',
-    'br',
-    'hr',
-    'span',
-    'h1',
-    'h2',
-    'h3',
-    'h4',
-    'h5',
-    'h6',
-    'strong',
-    'b',
-    'em',
-    'i',
-    'u',
-    's',
-    'del',
-    'ins',
-    'mark',
-    'sub',
-    'sup',
-    'ul',
-    'ol',
-    'li',
-    'blockquote',
-    'pre',
-    'code',
-    'a',
-    'img',
-    'div',
-    'section',
-    'table',
-    'thead',
-    'tbody',
-    'tr',
-    'th',
-    'td',
-  ],
-  ALLOWED_ATTR: [
-    'href',
-    'src',
-    'alt',
-    'title',
-    'class',
-    'target',
-    'rel',
-    'width',
-    'height',
-    'colspan',
-    'rowspan',
-    'dir',
-  ],
-}
-
 export function HtmlBlockRenderer({ block }: HtmlBlockRendererProps) {
   const [isMounted, setIsMounted] = useState(false)
+  const containerRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     // Force rel="noopener noreferrer" on links with target attribute to prevent tabnapping
@@ -84,10 +31,24 @@ export function HtmlBlockRenderer({ block }: HtmlBlockRendererProps) {
 
   const cleanHtml = useMemo(() => {
     if (!isMounted || !block.html?.trim()) return ''
-    return DOMPurify.sanitize(block.html, PURIFY_CONFIG)
+    return DOMPurify.sanitize(block.html, SAFE_HTML_PURIFY_CONFIG)
   }, [isMounted, block.html])
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container || !cleanHtml) return
+    const onClick = (event: MouseEvent) => handleSafeHtmlButtonClick(event, container)
+    container.addEventListener('click', onClick)
+    return () => container.removeEventListener('click', onClick)
+  }, [cleanHtml])
 
   if (!cleanHtml) return null
 
-  return <div className="html-block-content" dangerouslySetInnerHTML={{ __html: cleanHtml }} />
+  return (
+    <div
+      ref={containerRef}
+      className="html-block-content"
+      dangerouslySetInnerHTML={{ __html: cleanHtml }}
+    />
+  )
 }
