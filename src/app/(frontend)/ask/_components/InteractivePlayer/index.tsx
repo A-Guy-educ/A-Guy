@@ -52,15 +52,19 @@ export function InteractivePlayer({ lesson, onStepChange }: InteractivePlayerPro
         <p className="text-body-sm text-muted-foreground mt-1">{t('subtitle')}</p>
       </div>
 
-      {/* Geometry canvas */}
-      <div className="mx-4 rounded-2xl border border-border bg-card p-card-padding-sm shadow-elevation-1">
-        <GeometryCanvas
-          geometry={lesson.geometry}
-          highlightSegments={currentHighlightSegments}
-          highlightPoints={currentHighlightPoints}
-          allHighlightSegments={allHighlightSegments}
-          allHighlightPoints={allHighlightPoints}
-        />
+      {/* Canvas area — geometry diagram OR equation display */}
+      <div className="mx-4 rounded-2xl border border-border bg-card p-card-padding-sm shadow-elevation-1 min-h-[280px] flex items-center justify-center">
+        {lesson.geometry.points.length > 0 ? (
+          <GeometryCanvas
+            geometry={lesson.geometry}
+            highlightSegments={currentHighlightSegments}
+            highlightPoints={currentHighlightPoints}
+            allHighlightSegments={allHighlightSegments}
+            allHighlightPoints={allHighlightPoints}
+          />
+        ) : (
+          <EquationDisplay claim={currentStep?.claim || ''} title={currentStep?.title || ''} />
+        )}
       </div>
 
       {/* Play / Reset buttons */}
@@ -101,6 +105,21 @@ export function InteractivePlayer({ lesson, onStepChange }: InteractivePlayerPro
           </p>
         </div>
       )}
+    </div>
+  )
+}
+
+/**
+ * Fallback display for non-geometric problems (algebra, calculus, etc).
+ * Shows the current step's claim prominently as the "visual" content.
+ */
+function EquationDisplay({ claim, title }: { claim: string; title: string }) {
+  return (
+    <div className="text-center w-full px-6 py-section-xs">
+      {title && <div className="text-body-sm text-muted-foreground mb-3">{title}</div>}
+      <div className="text-heading-xl font-bold text-foreground leading-relaxed break-words">
+        {claim}
+      </div>
     </div>
   )
 }
