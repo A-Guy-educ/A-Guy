@@ -130,11 +130,7 @@ function parseContextText(contextText: string): ParsedSegment[] {
 }
 
 /** Simple read-only rich text display component */
-function RichTextDisplay({
-  value,
-}: {
-  value: string
-}) {
+function RichTextDisplay({ value }: { value: string }) {
   // For now, render as pre-formatted text since this is read-only display
   // The LaTeX content is shown as-is for admins to verify extraction quality
   return (
@@ -182,9 +178,7 @@ function ExerciseCard({ exercise }: { exercise: ParsedExercise }) {
           alignItems: 'center',
           gap: 8,
           padding: '10px 12px',
-          backgroundColor: isExpanded
-            ? 'var(--theme-elevation-50)'
-            : 'var(--theme-elevation-0)',
+          backgroundColor: isExpanded ? 'var(--theme-elevation-50)' : 'var(--theme-elevation-0)',
           border: 'none',
           cursor: 'pointer',
           textAlign: 'left',
@@ -336,7 +330,10 @@ export const ContextExerciseViewer: React.FC = () => {
             </span>
           )}
           {segment.exercises.map((exercise) => (
-            <ExerciseCard key={`${segment.extractionIndex}-${exercise.number}`} exercise={exercise} />
+            <ExerciseCard
+              key={`${segment.extractionIndex}-${exercise.number}`}
+              exercise={exercise}
+            />
           ))}
         </div>
       ))}
