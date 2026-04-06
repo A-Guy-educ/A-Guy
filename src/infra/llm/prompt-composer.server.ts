@@ -31,24 +31,31 @@ When referencing exercise content, always wrap mathematical expressions in \\(..
  */
 const IMAGE_HANDLING_INSTRUCTIONS = `## Image Handling (CRITICAL)
 
-When a student uploads an image, you MUST first determine whether it contains a valid math or science exercise before responding to it. Follow these rules strictly:
+When a student uploads an image, you MUST first determine whether it contains a valid, complete, and readable math or science exercise before responding to it. Follow these rules strictly:
 
 1. **No educational content detected**: If the image does not contain a math or science exercise, equation, graph, diagram, or anything academically relevant (e.g., it is a blank image, a dark/black photo, a selfie, a screenshot of something unrelated, etc.), you MUST:
-   - Explain what is wrong with the image (e.g., "The image is completely dark", "This appears to be a selfie, not an exercise", "This is a screenshot of a chat conversation").
-   - Tell the student what a good image looks like (e.g., "Please upload a clear, well-lit photo of your math or science exercise, making sure the text and numbers are readable").
-   Example: "התמונה שהעלית כהה לחלוטין ולא ניתן לראות בה תוכן. אנא העלה תמונה ברורה ומוארת של התרגיל שאתה צריך עזרה בו, וודא שהטקסט והמספרים קריאים."
+   - Explain what is wrong with the image (e.g., "התמונה כהה לחלוטין", "זו לא נראית כמו תמונה של תרגיל").
+   - Tell the student what a good image looks like (e.g., "אנא העלה תמונה ברורה ומוארת של התרגיל, וודא שהטקסט והמספרים קריאים").
 
-2. **Unreadable / low quality**: If the image seems to contain an exercise but is blurry, too dark, too bright, or the text/numbers are not legible, tell the student exactly what is wrong and ask them to retake the photo with better focus and lighting.
+2. **Cropped or cut off**: If the image appears to show only part of an exercise (text is cut off at the edges, a question appears incomplete, or parts of a diagram are missing), tell the student what is missing and ask them to re-upload the full exercise. Example: "נראה שהתמונה חתוכה — אני רואה רק חלק מהשאלה. אנא צלם שוב את התרגיל המלא כדי שאוכל לעזור."
 
-3. **Too small to read**: If the content is too tiny to make out, ask the student to upload a larger or higher-resolution version.
+3. **Unreadable / low quality**: If the image seems to contain an exercise but is blurry, too dark, too bright, overexposed, rotated, or the text/numbers are not legible, tell the student exactly what is wrong and how to fix it (e.g., better lighting, hold camera steady, avoid glare, rotate the image).
 
-4. **Partially readable**: If you can read some parts but not others, describe what you can see and ask the student to clarify or re-upload the unclear parts.
+4. **Too small to read**: If the content is too tiny to make out, ask the student to upload a larger or higher-resolution version, or to zoom in on the specific exercise.
 
-5. **Supported formats**: Only JPEG, PNG, WebP images and PDF files are accepted. Maximum file size is 20 MB. Images must be at least 100×100 pixels. If the student mentions an issue with uploading, remind them of these limits.
+5. **Partially readable**: If you can read some parts but not others, describe what you can see and ask the student to clarify or re-upload the unclear parts.
 
-6. **Multiple issues**: If there are several problems, list all of them so the student can fix everything in one attempt.
+6. **Upside down or rotated**: If the image is rotated or upside down, tell the student and ask them to re-upload it in the correct orientation.
 
-IMPORTANT: Always explain what is wrong with the image AND how to take a better one. Never just say "this isn't an exercise" without explaining why and what to do next.`
+7. **Multiple exercises**: If the image contains multiple exercises, ask the student which one they need help with, or ask them to upload a photo of just the specific exercise.
+
+8. **Supported formats**: Only JPEG, PNG, WebP images and PDF files are accepted. Maximum file size is 20 MB. Images must be at least 100×100 pixels. If the student mentions an issue with uploading, remind them of these limits.
+
+9. **Multiple issues**: If there are several problems, list all of them so the student can fix everything in one attempt.
+
+IMPORTANT:
+- Always respond in the SAME LANGUAGE the student used. If the student writes in Hebrew, you MUST respond in Hebrew. If in English, respond in English.
+- Always explain what is wrong with the image AND how to take a better one.`
 
 /**
  * Composes final system instructions for AI chat.
