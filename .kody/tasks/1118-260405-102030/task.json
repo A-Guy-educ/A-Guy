@@ -1,0 +1,8 @@
+{
+  "task_type": "chore",
+  "title": "I found the issue. Both `useLessonPager.ts` and `usePdfLessonPager.ts` c",
+  "description": "I found the issue. Both `useLessonPager.ts` and `usePdfLessonPager.ts` construct a `viewUrl` with a `/view` suffix, but there's no `/view` route defined for lessons. When the pager syncs the URL for PDF state, it causes a 404.\n\nThe PDF viewer is displayed on the same lesson page (same basePath URL), so the `/view` suffix is incorrect. The fix is to remove the `/view` suffix from the PDF URL and use the basePath instead.\n\n```json\n{\n  \"task_type\": \"bugfix\",\n  \"title\": \"Fix lesson URL generation re",
+  "scope": [],
+  "risk_level": "low",
+  "questions": []
+}

@@ -1913,6 +1913,14 @@ export interface ExtractionLog {
 export interface TeacherProfile {
   id: string;
   /**
+   * Content language
+   */
+  locale: 'en' | 'he';
+  /**
+   * Source document this was translated from
+   */
+  translatedFrom?: (string | null) | TeacherProfile;
+  /**
    * Machine-readable identifier (e.g., "teacher_strict")
    */
   slug: string;
@@ -3418,6 +3426,8 @@ export interface PromptsSelect<T extends boolean = true> {
  * via the `definition` "teacher_profiles_select".
  */
 export interface TeacherProfilesSelect<T extends boolean = true> {
+  locale?: T;
+  translatedFrom?: T;
   slug?: T;
   label?: T;
   description?: T;

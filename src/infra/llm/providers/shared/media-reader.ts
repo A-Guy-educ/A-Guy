@@ -56,10 +56,16 @@ export async function readMediaFile(
         headers['Cookie'] = req.headers.cookie
       }
 
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 30000)
+
       const fetchResponse = await fetch(publicUrl, {
         method: 'GET',
         headers,
+        signal: controller.signal,
       })
+
+      clearTimeout(timeoutId)
 
       if (!fetchResponse.ok) {
         throw new Error(`Failed to fetch blob: ${fetchResponse.status} ${fetchResponse.statusText}`)
@@ -126,7 +132,12 @@ export async function readMediaFile(
           `[${providerName}MediaReader] Fetching file with auth headers`,
         )
 
-        const response = await fetch(fetchUrl, { headers })
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 30000)
+
+        const response = await fetch(fetchUrl, { headers, signal: controller.signal })
+
+        clearTimeout(timeoutId)
         if (!response.ok) {
           throw new Error(`HTTP fetch failed: ${response.status} ${response.statusText}`)
         }

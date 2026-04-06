@@ -8,9 +8,13 @@ export async function fetchText(
   url: string,
   options?: { revalidate?: number },
 ): Promise<{ ok: true; text: string } | { ok: false; status: number; statusText: string }> {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 10000)
+
   try {
     const response = await fetch(url, {
       next: { revalidate: options?.revalidate ?? CACHE_CONFIG.revalidateSeconds },
+      signal: controller.signal,
     })
 
     if (!response.ok) {
@@ -30,6 +34,8 @@ export async function fetchText(
       status: 0,
       statusText: error instanceof Error ? error.message : 'Unknown error',
     }
+  } finally {
+    clearTimeout(timeoutId)
   }
 }
 

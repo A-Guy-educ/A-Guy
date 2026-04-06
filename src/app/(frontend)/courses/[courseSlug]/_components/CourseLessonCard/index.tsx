@@ -1,6 +1,8 @@
 'use client'
 
+import { storeLessonOpenTimestamp } from '@/infra/analytics/utils/lesson-load-timing'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
+import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 import { cn } from '@/infra/utils/ui'
 import type { Lesson } from '@/payload-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
@@ -40,7 +42,17 @@ export function CourseLessonCard({
     if (isSoon) {
       e.preventDefault()
       toast.info(tc('contentLocked'))
+      return
     }
+
+    // Track lesson open attempt
+    storeLessonOpenTimestamp(lesson.id)
+    systemEventBus.emit(SYSTEM_EVENTS.LESSON_OPEN_ATTEMPTED, {
+      lesson_id: lesson.id,
+      content_type: (lesson.contentFiles?.length ?? 0) > 0 ? 'pdf' : 'exercises',
+      platform: 'web',
+      course_id: courseSlug,
+    })
   }
 
   const _TypeIcon = lesson.type === 'practice' ? Target : lesson.type === 'exam' ? Trophy : BookOpen
@@ -68,7 +80,7 @@ export function CourseLessonCard({
         href={isSoon ? '#' : href}
         onClick={handleLessonClick}
         className={cn(
-          'p-5 flex items-center justify-between gap-4',
+          'p-5 flex items-center justify-between gap-content-gap',
           isSoon ? 'cursor-not-allowed' : 'cursor-pointer',
         )}
       >

@@ -43,3 +43,6 @@ See [design-system.md](./design-system.md) for complete rules. Key points:
 - Run `pnpm generate:importmap` after admin components
 - Use `pnpm dev:clean` for cache reset
 - See [CLAUDE.md](./CLAUDE.md) for all commands
+
+## Learned 2026-04-05 (task: 1117-260405-101944)
+- Active directories: src/infra/blob, src/infra/llm/providers/shared, src/infra/pdfjs

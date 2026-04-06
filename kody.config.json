@@ -25,6 +25,11 @@
       "strong": "MiniMax-M2.7-highspeed"
     }
   },
+  "release": {
+    "releaseBranch": "main",
+    "versionFiles": ["package.json"],
+    "notifyCommand": "curl -s -X POST \"$SLACK_WEBHOOK_URL\" -H 'Content-Type: application/json' -d '{\"text\": \"🚀 a-guy v$VERSION released — https://github.com/A-Guy-educ/A-Guy/releases/tag/v$VERSION\"}'"
+  },
   "devServer": {
     "command": "pnpm dev",
     "url": "http://localhost:3000",

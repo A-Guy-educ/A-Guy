@@ -1,0 +1,147 @@
+name: Sync Kody Labels to Project Board
+
+on:
+  issues:
+    types: [opened, labeled, closed]
+
+jobs:
+  auto-label-backlog:
+    runs-on: ubuntu-latest
+    if: github.event.action == 'opened'
+    steps:
+      - name: Add kody:backlog label
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+        run: gh issue edit ${{ github.event.issue.number }} --repo ${{ github.repository }} --add-label "kody:backlog"
+
+  remove-closed-from-board:
+    runs-on: ubuntu-latest
+    if: github.event.action == 'closed'
+    steps:
+      - name: Remove issue from project board
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+        run: |
+          ISSUE_NODE_ID="${{ github.event.issue.node_id }}"
+          PROJECT_NUMBER=3
+          ORG="A-Guy-educ"
+
+          PROJECT_ID=$(gh api graphql -f query='
+            query {
+              organization(login: "'"$ORG"'") {
+                projectV2(number: '"$PROJECT_NUMBER"') { id }
+              }
+            }' --jq '.data.organization.projectV2.id')
+
+          # Find the item ID for this issue
+          ITEM_ID=$(gh api graphql -f query='
+            query {
+              node(id: "'"$ISSUE_NODE_ID"'") {
+                ... on Issue {
+                  projectItems(first: 10) {
+                    nodes {
+                      id
+                      project { id }
+                    }
+                  }
+                }
+              }
+            }' --jq '.data.node.projectItems.nodes[] | select(.project.id == "'"$PROJECT_ID"'") | .id')
+
+          if [ -n "$ITEM_ID" ]; then
+            gh api graphql -f query='
+              mutation {
+                deleteProjectV2Item(input: {
+                  projectId: "'"$PROJECT_ID"'"
+                  itemId: "'"$ITEM_ID"'"
+                }) { deletedItemId }
+              }'
+            echo "✅ Removed issue #${{ github.event.issue.number }} from board"
+          else
+            echo "Issue not on board, nothing to remove"
+          fi
+
+  sync-label-to-project:
+    runs-on: ubuntu-latest
+    if: github.event.action == 'labeled' && startsWith(github.event.label.name, 'kody:')
+    steps:
+      - name: Map label to project status
+        id: map
+        run: |
+          LABEL="${{ github.event.label.name }}"
+          case "$LABEL" in
+            kody:backlog)   STATUS="Backlog" ;;
+            kody:planning)  STATUS="Planning" ;;
+            kody:building)  STATUS="Building" ;;
+            kody:verifying) STATUS="Verifying" ;;
+            kody:review)    STATUS="Review" ;;
+            kody:fixing)    STATUS="Fixing" ;;
+            kody:shipping)  STATUS="Shipping" ;;
+            kody:done)      STATUS="Done" ;;
+            kody:failed)    STATUS="Failed" ;;
+            kody:waiting)   STATUS="Waiting" ;;
+            *)              STATUS="" ;;
+          esac
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+
+      - name: Update project board status
+        if: steps.map.outputs.status != ''
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+        run: |
+          STATUS="${{ steps.map.outputs.status }}"
+          ISSUE_NODE_ID="${{ github.event.issue.node_id }}"
+          PROJECT_NUMBER=3
+          ORG="A-Guy-educ"
+
+          # Get project ID
+          PROJECT_ID=$(gh api graphql -f query='
+            query {
+              organization(login: "'"$ORG"'") {
+                projectV2(number: '"$PROJECT_NUMBER"') { id }
+              }
+            }' --jq '.data.organization.projectV2.id')
+
+          # Add issue to project (idempotent — returns existing item if already added)
+          ITEM_ID=$(gh api graphql -f query='
+            mutation {
+              addProjectV2ItemById(input: {
+                projectId: "'"$PROJECT_ID"'"
+                contentId: "'"$ISSUE_NODE_ID"'"
+              }) {
+                item { id }
+              }
+            }' --jq '.data.addProjectV2ItemById.item.id')
+
+          # Get Status field ID and option ID
+          FIELD_DATA=$(gh api graphql -f query='
+            query {
+              node(id: "'"$PROJECT_ID"'") {
+                ... on ProjectV2 {
+                  field(name: "Status") {
+                    ... on ProjectV2SingleSelectField {
+                      id
+                      options { id name }
+                    }
+                  }
+                }
+              }
+            }')
+
+          FIELD_ID=$(echo "$FIELD_DATA" | jq -r '.data.node.field.id')
+          OPTION_ID=$(echo "$FIELD_DATA" | jq -r '.data.node.field.options[] | select(.name == "'"$STATUS"'") | .id')
+
+          # Set the status
+          gh api graphql -f query='
+            mutation {
+              updateProjectV2ItemFieldValue(input: {
+                projectId: "'"$PROJECT_ID"'"
+                itemId: "'"$ITEM_ID"'"
+                fieldId: "'"$FIELD_ID"'"
+                value: { singleSelectOptionId: "'"$OPTION_ID"'" }
+              }) {
+                projectV2Item { id }
+              }
+            }'
+
+          echo "✅ Set issue #${{ github.event.issue.number }} status to: $STATUS"

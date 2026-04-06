@@ -80,6 +80,15 @@ export function UserIdentificationTracker() {
               // Add current login timestamp
               userProperties.last_login = new Date().toISOString()
 
+              // Add enrolled course ID to Mixpanel People profile
+              if (Array.isArray(user.courseEntitlements) && user.courseEntitlements.length > 0) {
+                const entry = user.courseEntitlements[0] as {
+                  course: string | { id: string }
+                }
+                userProperties.enrolled_course =
+                  typeof entry.course === 'string' ? entry.course : entry.course.id
+              }
+
               // Add locale if available from browser or user settings
               if (typeof window !== 'undefined') {
                 userProperties.locale = detectBrowserLocale()

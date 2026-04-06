@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'already_entitled' }, { status: 409 })
     }
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, courseId })
   } catch (error) {
     payload.logger.error(
       { error, accessCodeId: accessCode.id, userId: user.id, courseId },

@@ -122,6 +122,8 @@ export default async function LessonPage({ params }: LessonPageProps) {
     }
   }
 
+  const hasLessonContext = Boolean(lesson.lessonContextText?.trim())
+
   // Resolve content files (PDFs, etc.) — needed by both blocks and legacy paths
   const validFiles =
     lesson.contentFiles
@@ -139,6 +141,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
       .map((b) => b.data as import('@/payload-types').Exercise)
     const mediaMap =
       blockExercises.length > 0 ? await queryMediaByIds(extractAllMediaIds(blockExercises)) : {}
+    const hasExercises = blockExercises.length > 0
 
     // Pre-render content page bodies server-side
     const contentPageBodies: Record<string, React.ReactNode> = {}
@@ -162,7 +165,12 @@ export default async function LessonPage({ params }: LessonPageProps) {
         gatedDelayMs={gatedDelayMs}
         gatedWarningMs={gatedWarningMs}
       >
-        <LessonAnalytics lessonId={lesson.id} courseId={course.id} lessonTitle={lesson.title} />
+        <LessonAnalytics
+          lessonId={lesson.id}
+          courseId={course.id}
+          lessonTitle={lesson.title}
+          contentType="blocks"
+        />
         <LessonPager
           blocks={resolvedBlocks}
           lessonTitle={lesson.title}
@@ -175,6 +183,8 @@ export default async function LessonPage({ params }: LessonPageProps) {
           contentPageBodies={contentPageBodies}
           validFiles={validFiles}
           chatLessonId={lesson.id}
+          hasLessonContext={hasLessonContext}
+          hasExercises={hasExercises}
           formulaSheet={formulaSheet}
         />
       </AccessGateProvider>
@@ -208,7 +218,12 @@ export default async function LessonPage({ params }: LessonPageProps) {
         gatedDelayMs={gatedDelayMs}
         gatedWarningMs={gatedWarningMs}
       >
-        <LessonAnalytics lessonId={lesson.id} courseId={course.id} lessonTitle={lesson.title} />
+        <LessonAnalytics
+          lessonId={lesson.id}
+          courseId={course.id}
+          lessonTitle={lesson.title}
+          contentType="exercises"
+        />
         {hasExercises ? (
           <ExercisesPager
             exercises={exercises}
@@ -219,23 +234,26 @@ export default async function LessonPage({ params }: LessonPageProps) {
             lessonSlug={lessonSlug}
             lessonId={lesson.id}
             mediaMap={mediaMap}
+            hasLessonContext={hasLessonContext}
+            hasExercises={hasExercises}
             formulaSheet={formulaSheet}
           />
         ) : (
           // Empty lesson: show ExerciseWorkspace with DynamicLesson as primaryContent
           <>
-            <LessonAnalytics lessonId={lesson.id} courseId={course.id} lessonTitle={lesson.title} />
             <ExerciseWorkspace
               exerciseTitle={lesson.title}
               backUrl={backUrl}
               primaryContent={<EmptyLessonPlaceholder />}
               chatContent={
-                <ChatInterface
-                  lessonId={chatLessonId}
-                  translationNamespace="courses"
-                  showMathTools={true}
-                  formulaSheet={formulaSheet}
-                />
+                hasLessonContext ? (
+                  <ChatInterface
+                    lessonId={chatLessonId}
+                    translationNamespace="courses"
+                    showMathTools={true}
+                    formulaSheet={formulaSheet}
+                  />
+                ) : null
               }
             />
           </>
@@ -252,7 +270,12 @@ export default async function LessonPage({ params }: LessonPageProps) {
       gatedDelayMs={gatedDelayMs}
       gatedWarningMs={gatedWarningMs}
     >
-      <LessonAnalytics lessonId={lesson.id} courseId={course.id} lessonTitle={lesson.title} />
+      <LessonAnalytics
+        lessonId={lesson.id}
+        courseId={course.id}
+        lessonTitle={lesson.title}
+        contentType="pdf"
+      />
       <PdfLessonPager
         validFiles={validFiles}
         lessonTitle={lesson.title}
@@ -262,6 +285,8 @@ export default async function LessonPage({ params }: LessonPageProps) {
         lessonSlug={lessonSlug}
         lessonId={lesson.id}
         chatLessonId={chatLessonId}
+        hasLessonContext={hasLessonContext}
+        hasExercises={hasExercises}
         formulaSheet={formulaSheet}
       />
     </AccessGateProvider>

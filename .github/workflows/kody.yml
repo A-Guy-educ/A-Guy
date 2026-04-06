@@ -67,6 +67,10 @@ jobs:
       ticket_id: ${{ steps.parse.outputs.ticket_id }}
       prd_file: ${{ steps.parse.outputs.prd_file }}
       dry_run: ${{ steps.parse.outputs.dry_run }}
+      bump: ${{ steps.parse.outputs.bump }}
+      finalize: ${{ steps.parse.outputs.finalize }}
+      no_publish: ${{ steps.parse.outputs.no_publish }}
+      no_notify: ${{ steps.parse.outputs.no_notify }}
       valid: ${{ steps.parse.outputs.valid }}
     steps:
       - uses: actions/setup-node@v4
@@ -105,6 +109,8 @@ jobs:
         if: steps.safety.outputs.valid == 'true'
         id: parse
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           COMMENT_BODY: ${{ github.event.comment.body }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           ISSUE_IS_PR: ${{ github.event.issue.pull_request && 'true' || '' }}
@@ -157,11 +163,14 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - name: Install Kody Engine
+        run: npm install -g @kody-ade/engine
+
       - name: Install Claude Code CLI
         run: npm install -g @anthropic-ai/claude-code
 
       - name: Install LiteLLM proxy
-        run: pip install 'litellm[proxy]'
+        run: pip install 'litellm[proxy]' prisma && python -m prisma py fetch
 
       - name: Configure git
         run: |
@@ -183,7 +192,7 @@ jobs:
 
       - name: Warm up Next.js build cache
         continue-on-error: true
-        run: npx cross-env NODE_OPTIONS='--max-old-space-size=4096' next build
+        run: npx next build 2>/dev/null || true
         timeout-minutes: 15
 
       - name: Run Kody pipeline
@@ -200,11 +209,24 @@ jobs:
           TICKET_ID: ${{ needs.parse.outputs.ticket_id }}
           PRD_FILE: ${{ needs.parse.outputs.prd_file }}
           DRY_RUN: ${{ github.event.inputs.dry_run || needs.parse.outputs.dry_run || 'false' }}
+          BUMP: ${{ needs.parse.outputs.bump }}
+          FINALIZE: ${{ needs.parse.outputs.finalize }}
+          NO_PUBLISH: ${{ needs.parse.outputs.no_publish }}
+          NO_NOTIFY: ${{ needs.parse.outputs.no_notify }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          if [ "$MODE" = "bootstrap" ]; then
+          if [ "$MODE" = "release" ]; then
+            echo "Running release..."
+            ARGS=""
+            [ "$FINALIZE" = "true" ] && ARGS="$ARGS --finalize"
+            [ -n "$BUMP" ] && ARGS="$ARGS --bump=$BUMP"
+            [ "$NO_PUBLISH" = "true" ] && ARGS="$ARGS --no-publish"
+            [ "$NO_NOTIFY" = "true" ] && ARGS="$ARGS --no-notify"
+            [ "$DRY_RUN" = "true" ] && ARGS="$ARGS --dry-run"
+            kody-engine release $ARGS
+          elif [ "$MODE" = "bootstrap" ]; then
             echo "Running bootstrap..."
-            npx kody-engine bootstrap
+            kody-engine bootstrap
           elif [ "$MODE" = "taskify" ]; then
             echo "Running taskify..."
             ARGS=""
@@ -212,7 +234,7 @@ jobs:
             [ -n "$PRD_FILE" ] && ARGS="$ARGS --file $PRD_FILE"
             [ -n "$ISSUE_NUMBER" ] && ARGS="$ARGS --issue-number $ISSUE_NUMBER"
             [ -n "$TASK_ID" ] && ARGS="$ARGS --task-id $TASK_ID"
-            npx kody-engine taskify $ARGS
+            kody-engine taskify $ARGS
           else
             CMD="run"
             [ "$MODE" = "rerun" ] && CMD="rerun"
@@ -220,6 +242,7 @@ jobs:
             [ "$MODE" = "fix-ci" ] && CMD="fix-ci"
             [ "$MODE" = "review" ] && CMD="review"
             [ "$MODE" = "resolve" ] && CMD="resolve"
+            [ "$MODE" = "status" ] && CMD="status"
             ARGS="--issue-number $ISSUE_NUMBER"
             [ -n "$TASK_ID" ] && ARGS="$ARGS --task-id $TASK_ID"
             [ -n "$PR_NUMBER" ] && ARGS="$ARGS --pr-number $PR_NUMBER"
@@ -228,7 +251,7 @@ jobs:
             # FEEDBACK is also passed via env var (avoids shell escaping issues)
             [ -n "$FEEDBACK" ] && ARGS="$ARGS --feedback \"$FEEDBACK\""
             [ "$DRY_RUN" = "true" ] && ARGS="$ARGS --dry-run"
-            npx kody-engine $CMD $ARGS
+            kody-engine $CMD $ARGS
           fi
 
       - name: Pipeline summary
@@ -291,9 +314,9 @@ jobs:
         with:
           github-token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
           script: |
-            // Extract issue number from branch name (e.g. "42--feature-name")
+            // Extract issue number from branch name (e.g. "42-feature-name")
             const branch = context.payload.pull_request.head.ref;
-            const match = branch.match(/^(\d+)--/);
+            const match = branch.match(/^(\d+)-/);
             if (!match) return;
             const issueNumber = parseInt(match[1], 10);
 
@@ -436,12 +459,12 @@ jobs:
       - name: Typecheck
         run: pnpm tsc --noEmit
       - name: CLI loads
-        run: npx kody-engine --help
+        run: kody-engine --help
       - name: Dry run
         run: |
           mkdir -p .kody/tasks/smoke-test
           echo "Smoke test task" > .kody/tasks/smoke-test/task.md
-          npx kody-engine run --task-id smoke-test --dry-run || true
+          kody-engine run --task-id smoke-test --dry-run || true
           if [ -f ".kody/tasks/smoke-test/status.json" ]; then
             echo "✓ status.json created"
             cat .kody/tasks/smoke-test/status.json
