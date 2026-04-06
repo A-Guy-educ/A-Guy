@@ -115,6 +115,4 @@ export const SAFE_HTML_PURIFY_CONFIG = {
   ALLOW_ARIA_ATTR: true,
   // Keep content inside elements that get stripped (defensive default).
   KEEP_CONTENT: true,
-  // Never allow MathML/SVG here — exercises use dedicated SVG/Latex blocks.
-  USE_PROFILES: { html: true },
 }
