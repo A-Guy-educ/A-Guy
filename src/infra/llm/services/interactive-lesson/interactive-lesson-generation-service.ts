@@ -33,8 +33,11 @@ export async function generateInteractiveLesson(
     const adapter = await createGenkitUnifiedAdapter(payload)
     modelConfig = {
       ...resolveModelConfig('IMAGE_TO_EXERCISE'),
-      // Gemini 2.5 Flash uses thinking tokens that count against maxOutputTokens.
-      // The base IMAGE_TO_EXERCISE limit (8192) is too low — thinking alone uses ~8k.
+      // Use Gemini 2.5 Flash explicitly — 2.0 Flash produces only ~4 steps on
+      // complex multi-part geometry proofs. 2.5 Flash with thinking produces 18-20.
+      // The "googleai/" prefix tells the adapter to skip DB config resolution.
+      name: 'googleai/gemini-2.5-flash',
+      // Thinking tokens count against maxOutputTokens — budget for both.
       maxOutputTokens: 65536,
     }
 
