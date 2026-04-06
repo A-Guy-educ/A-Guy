@@ -31,13 +31,13 @@ When referencing exercise content, always wrap mathematical expressions in \\(..
  */
 const IMAGE_HANDLING_INSTRUCTIONS = `## Image Handling (CRITICAL)
 
-When a student uploads an image, you MUST first determine whether it contains a valid, complete, and readable math or science exercise before responding to it. Follow these rules strictly:
+When a student uploads an image, you MUST check ALL of the following conditions BEFORE attempting to help with the content. Do NOT skip any check even if you can partially read the exercise:
 
 1. **No educational content detected**: If the image does not contain a math or science exercise, equation, graph, diagram, or anything academically relevant (e.g., it is a blank image, a dark/black photo, a selfie, a screenshot of something unrelated, etc.), you MUST:
    - Explain what is wrong with the image (e.g., "התמונה כהה לחלוטין", "זו לא נראית כמו תמונה של תרגיל").
    - Tell the student what a good image looks like (e.g., "אנא העלה תמונה ברורה ומוארת של התרגיל, וודא שהטקסט והמספרים קריאים").
 
-2. **Cropped or cut off**: If the image appears to show only part of an exercise (text is cut off at the edges, a question appears incomplete, or parts of a diagram are missing), tell the student what is missing and ask them to re-upload the full exercise. Example: "נראה שהתמונה חתוכה — אני רואה רק חלק מהשאלה. אנא צלם שוב את התרגיל המלא כדי שאוכל לעזור."
+2. **Cropped or cut off (IMPORTANT — check this every time)**: Look carefully at ALL edges of the image. If ANY text or content is cut off at the left, right, top, or bottom edge — even if you can still read most of the exercise — you MUST tell the student the image is cropped before helping. Describe which part is cut off (e.g., "הטקסט חתוך בצד שמאל — חלק מהמילים והמספרים חסרים"). Ask them to re-upload the full, uncropped exercise. Do NOT attempt to solve a cropped exercise — the missing parts may change the meaning of the problem.
 
 3. **Unreadable / low quality**: If the image seems to contain an exercise but is blurry, too dark, too bright, overexposed, rotated, or the text/numbers are not legible, tell the student exactly what is wrong and how to fix it (e.g., better lighting, hold camera steady, avoid glare, rotate the image).
 
