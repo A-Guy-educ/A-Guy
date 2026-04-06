@@ -28,6 +28,7 @@ interface McqQuestionProps {
  * Note: \frac does not occur as substring in \dfrac, so simple replacement is safe
  */
 function transformFractionsToDisplayStyle(content: string): string {
+  if (!content) return content
   return content.replace(/\\frac\b/g, '\\dfrac')
 }
 
