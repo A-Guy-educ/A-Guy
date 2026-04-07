@@ -1,7 +1,8 @@
 'use client'
 
 import { detectBrowserLocale } from '@/i18n/config'
-import { identify } from '@/infra/analytics/core/tracker'
+import { alias, identify } from '@/infra/analytics/core/tracker'
+import { getOrCreateAnonymousId } from '@/infra/analytics/utils/anonymous-id'
 import { updateCachedUserProperties } from '@/infra/analytics/utils/user-properties-cache'
 import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 import { GoogleLoginButton } from '@/ui/web/auth/GoogleLoginButton'
@@ -60,12 +61,7 @@ function SignupFormContent() {
 
       // Track registration completed and user resolved
       if (result.data?.userId) {
-        systemEventBus.emit(SYSTEM_EVENTS.REGISTRATION_COMPLETED, {
-          user_id: result.data.userId,
-          auth_method: 'email',
-        })
-
-        // Track user_resolved with enriched user properties
+        // Build enriched user properties
         const userProperties: Record<string, unknown> = {
           user_id: result.data.userId,
           is_new_user: true,
@@ -91,14 +87,21 @@ function SignupFormContent() {
         // Cache user properties for future sessions
         updateCachedUserProperties(userProperties)
 
-        // Emit user_resolved event via system event bus
+        // CRITICAL: alias + identify BEFORE emitting events
+        // so all events fire under the real user ID and anonymous history merges
+        alias(result.data.userId, getOrCreateAnonymousId())
+        identify(result.data.userId, userProperties)
+
+        // Now emit events — they will fire under the identified user
+        systemEventBus.emit(SYSTEM_EVENTS.REGISTRATION_COMPLETED, {
+          user_id: result.data.userId,
+          auth_method: 'email',
+        })
+
         systemEventBus.emit(SYSTEM_EVENTS.USER_RESOLVED, {
           user_id: result.data.userId,
           is_anonymous: false,
         })
-
-        // Also call identify() to ensure Mixpanel People properties are set
-        identify(result.data.userId, userProperties)
       }
 
       // Redirect to persona selection (onboarding step) for new users

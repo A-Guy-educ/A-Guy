@@ -9,6 +9,7 @@ import type { SystemEventEnvelope, SystemEventName, Unsubscribe } from '@/infra/
 import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 import { PRODUCT_EVENTS } from './contracts/events'
 import { analytics } from './core/tracker'
+import { getOrCreateAnonymousId } from './utils/anonymous-id'
 
 let initialized = false
 let cleanupFns: Unsubscribe[] = []
@@ -76,17 +77,18 @@ export function initAnalyticsSubscriber(): () => void {
 
     safeSubscribe(SYSTEM_EVENTS.USER_RESOLVED, (envelope) => {
       const payload = envelope.payload as { user_id?: string; auth_method?: string }
-      // Map to USER_IDENTIFIED event
-      analytics.track(PRODUCT_EVENTS.USER_IDENTIFIED, {
-        user_id: payload.user_id,
-        is_new_user: false,
-      })
-      // Also call identify for vendor SDKs
+      // Identify user first so the USER_IDENTIFIED event fires under the real user ID
+      // NOTE: No alias() here — alias is only for signup (REGISTRATION_COMPLETED handler)
       if (payload.user_id) {
         analytics.identify(payload.user_id, {
           auth_method: payload.auth_method,
         })
       }
+      // Map to USER_IDENTIFIED event (fires after identify)
+      analytics.track(PRODUCT_EVENTS.USER_IDENTIFIED, {
+        user_id: payload.user_id,
+        is_new_user: false,
+      })
     }),
 
     // Course & Lesson Lifecycle
@@ -229,7 +231,7 @@ export function initAnalyticsSubscriber(): () => void {
       // Alias anonymous user to registered user, THEN identify
       if (payload.user_id) {
         // CRITICAL: Call alias BEFORE identify to merge anonymous history
-        analytics.alias(payload.user_id)
+        analytics.alias(payload.user_id, getOrCreateAnonymousId())
         analytics.identify(payload.user_id, {
           registration_method: payload.registration_method,
         })
