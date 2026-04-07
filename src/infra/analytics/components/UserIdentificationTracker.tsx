@@ -32,7 +32,8 @@ export function UserIdentificationTracker() {
           const trackedUserId = sessionStorage.getItem('analytics_tracked_user_id')
 
           if (trackedUserId !== cached.user_id) {
-            // Identify user with cached properties
+            // CRITICAL: Call alias() BEFORE identify() to merge anonymous session
+            alias(cached.user_id, getOrCreateAnonymousId())
             identify(cached.user_id, { ...cached })
             sessionStorage.setItem('analytics_tracked_user_id', cached.user_id)
           }
@@ -98,17 +99,18 @@ export function UserIdentificationTracker() {
               // Cache user properties for future sessions
               updateCachedUserProperties(userProperties)
 
-              // Track user_resolved event with enriched properties
-              // This will trigger both event tracking AND people.set() in Mixpanel
+              // CRITICAL: Call alias() BEFORE any identify/track calls
+              // to merge anonymous session with identified user
+              alias(user.id, getOrCreateAnonymousId())
+
+              // Now identify with full user properties
+              identify(user.id, userProperties)
+
+              // Emit user_resolved AFTER alias+identify so events fire under the real user
               systemEventBus.emit(SYSTEM_EVENTS.USER_RESOLVED, {
                 user_id: user.id,
                 is_anonymous: false,
               })
-
-              // Additionally call identify() to ensure user properties are set
-              // CRITICAL: Call alias() BEFORE identify() to merge anonymous session with identified user
-              alias(user.id, getOrCreateAnonymousId())
-              identify(user.id, userProperties)
 
               sessionStorage.setItem('analytics_tracked_user_id', user.id)
             }
