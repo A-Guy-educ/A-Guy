@@ -5,7 +5,11 @@ import { Loader2, PlusCircle } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import type { AskMediaAttachEvent, AskMediaRestoreEvent, ExerciseFile } from '../ask-types'
-import { ASK_MEDIA_ATTACH_EVENT, ASK_MEDIA_CLEAR_EVENT, ASK_MEDIA_RESTORE_EVENT } from '../ask-types'
+import {
+  ASK_MEDIA_ATTACH_EVENT,
+  ASK_MEDIA_CLEAR_EVENT,
+  ASK_MEDIA_RESTORE_EVENT,
+} from '../ask-types'
 import { AskExerciseCard } from '../AskExerciseCard'
 
 function dispatchMediaAttach(detail: AskMediaAttachEvent) {
