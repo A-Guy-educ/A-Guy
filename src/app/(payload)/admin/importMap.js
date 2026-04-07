@@ -20,6 +20,7 @@ import { CourseCascadeDelete as CourseCascadeDelete_8b707dd02fbf8886630a64bffcae
 import { TranslateChapterAction as TranslateChapterAction_5e03fe73ee4379dfd96d492849856d43 } from '@/ui/admin/TranslationButton'
 import { ChapterCascadeDelete as ChapterCascadeDelete_8b707dd02fbf8886630a64bffcae6998 } from '@/ui/admin/CascadeDeleteButton'
 import { LessonBlocksField as LessonBlocksField_c3ff48da65f411ef372b497cb7c724ee } from '@/ui/admin/LessonBlocksField'
+import { ContextExerciseViewer as ContextExerciseViewer_00433017acccf596fc613f093ab15a2d } from '@/ui/admin/context-exercise-viewer'
 import { LessonConversionPanel as LessonConversionPanel_057daf3b86f654d90edf003b44c43703 } from '@/ui/admin/exercise-conversion/LessonConversionPanel'
 import { LessonNavigation as LessonNavigation_3633cb4a281c7c581bfc453746b3dc60 } from '@/ui/admin/ContentNavigation'
 import { TranslateLessonAction as TranslateLessonAction_5e03fe73ee4379dfd96d492849856d43 } from '@/ui/admin/TranslationButton'
@@ -73,6 +74,7 @@ export const importMap = {
   "@/ui/admin/TranslationButton#TranslateChapterAction": TranslateChapterAction_5e03fe73ee4379dfd96d492849856d43,
   "@/ui/admin/CascadeDeleteButton#ChapterCascadeDelete": ChapterCascadeDelete_8b707dd02fbf8886630a64bffcae6998,
   "@/ui/admin/LessonBlocksField#LessonBlocksField": LessonBlocksField_c3ff48da65f411ef372b497cb7c724ee,
+  "@/ui/admin/context-exercise-viewer#ContextExerciseViewer": ContextExerciseViewer_00433017acccf596fc613f093ab15a2d,
   "@/ui/admin/exercise-conversion/LessonConversionPanel#LessonConversionPanel": LessonConversionPanel_057daf3b86f654d90edf003b44c43703,
   "@/ui/admin/ContentNavigation#LessonNavigation": LessonNavigation_3633cb4a281c7c581bfc453746b3dc60,
   "@/ui/admin/TranslationButton#TranslateLessonAction": TranslateLessonAction_5e03fe73ee4379dfd96d492849856d43,

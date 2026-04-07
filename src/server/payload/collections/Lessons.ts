@@ -305,6 +305,16 @@ export const Lessons: CollectionConfig = {
         },
       },
     },
+    // Context Exercise Viewer (displays parsed exercises from lessonContextText)
+    {
+      name: 'contextExerciseViewer',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/ui/admin/context-exercise-viewer#ContextExerciseViewer',
+        },
+      },
+    },
     // --- Lesson Content ---
     {
       name: 'contentFiles',
