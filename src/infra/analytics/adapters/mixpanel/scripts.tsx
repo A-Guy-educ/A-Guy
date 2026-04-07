@@ -134,10 +134,26 @@ export function MixpanelScripts() {
             // synchronous getter that only works on the real SDK instance.
             // We must wait for 'loaded' to call it safely.
             loaded: function(mp) {
-              // Identify with our cookie-based anon ID (e.g. anon_759df79d-...)
-              // so People profile uses a readable, stable identifier.
-              // anonymousId is set synchronously above before init().
-              mp.identify(anonymousId);
+              // Check if user was previously identified (cached in localStorage)
+              var cachedUser = null;
+              try {
+                var raw = localStorage.getItem('analytics_user_properties');
+                if (raw) cachedUser = JSON.parse(raw);
+              } catch(e) {}
+
+              if (cachedUser && cachedUser.user_id) {
+                // Returning identified user — keep their real ID
+                mp.identify(cachedUser.user_id);
+                if (${analyticsConfig.debugMode}) {
+                  console.log('[Analytics/Mixpanel] SDK loaded, identified as user:', cachedUser.user_id);
+                }
+              } else {
+                // Anonymous user — use our cookie-based anon ID
+                mp.identify(anonymousId);
+                if (${analyticsConfig.debugMode}) {
+                  console.log('[Analytics/Mixpanel] SDK loaded, identified as anon:', anonymousId);
+                }
+              }
 
               // Create People profile immediately (no need to wait for first event)
               mp.people.set_once({
@@ -145,10 +161,6 @@ export function MixpanelScripts() {
                 initial_landing_page: window.location.href,
                 initial_referrer: document.referrer || '$direct',
               });
-
-              if (${analyticsConfig.debugMode}) {
-                console.log('[Analytics/Mixpanel] SDK loaded, identified as:', anonymousId);
-              }
             },
           });
         `}
