@@ -39,13 +39,58 @@ const QUILL_FORMATS = [
 
 type EditorMode = 'visual' | 'source' | 'preview'
 
+/**
+ * Tags Quill can round-trip without data loss. Anything outside this set
+ * (e.g. <details>, <dialog>, <button>, <section>, inline `style="..."`)
+ * gets stripped or rewritten when Quill imports the HTML, so we refuse
+ * to switch into Visual mode and force the author to stay in Source.
+ */
+const QUILL_SAFE_TAGS = new Set([
+  'p',
+  'br',
+  'span',
+  'h1',
+  'h2',
+  'h3',
+  'strong',
+  'b',
+  'em',
+  'i',
+  'u',
+  's',
+  'ol',
+  'ul',
+  'li',
+  'blockquote',
+  'pre',
+  'code',
+  'a',
+  'img',
+])
+
+function htmlIsQuillSafe(html: string): boolean {
+  if (!html) return true
+  // Reject any inline style attribute — Quill drops them.
+  if (/\sstyle\s*=/i.test(html)) return false
+  const tagPattern = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi
+  let match
+  while ((match = tagPattern.exec(html)) !== null) {
+    if (!QUILL_SAFE_TAGS.has(match[1].toLowerCase())) return false
+  }
+  return true
+}
+
 interface HtmlBlockEditorProps {
   block: HtmlBlock
   onChange: (block: HtmlBlock) => void
 }
 
 export const HtmlBlockEditor: React.FC<HtmlBlockEditorProps> = ({ block, onChange }) => {
-  const [mode, setMode] = useState<EditorMode>('visual')
+  // Default to Source mode when the existing content has advanced HTML —
+  // dropping authors into Visual would silently destroy their markup.
+  const [mode, setMode] = useState<EditorMode>(() =>
+    htmlIsQuillSafe(block.html) ? 'visual' : 'source',
+  )
 
   // Memoize to prevent Quill re-initialization on re-render
   const modules = useMemo(() => QUILL_MODULES, [])
@@ -60,6 +105,18 @@ export const HtmlBlockEditor: React.FC<HtmlBlockEditorProps> = ({ block, onChang
   }
 
   const switchMode = (next: EditorMode) => {
+    // Block switching to Visual when content has advanced HTML — Quill would
+    // strip styles, <details>, <dialog>, <button>, etc. and silently destroy
+    // the author's work. Force them back to Source instead.
+    if (next === 'visual' && !htmlIsQuillSafe(block.html)) {
+      window.alert(
+        'This block uses advanced HTML (inline styles, <details>, <dialog>, <button>, ' +
+          'or other tags Quill cannot represent). Visual mode would discard those ' +
+          'features, so it stays disabled. Use HTML Source to edit and Render Preview ' +
+          'to verify the result.',
+      )
+      return
+    }
     // When leaving source view, sanitize so any dangerous raw HTML pasted
     // by the author is stripped before it hits the database.
     if (mode === 'source' && next !== 'source' && block.html) {
@@ -71,6 +128,8 @@ export const HtmlBlockEditor: React.FC<HtmlBlockEditorProps> = ({ block, onChang
     setMode(next)
   }
 
+  const visualDisabled = !htmlIsQuillSafe(block.html)
+
   return (
     <div className="html-block-editor">
       <div className="html-block-editor-header">
@@ -80,6 +139,12 @@ export const HtmlBlockEditor: React.FC<HtmlBlockEditorProps> = ({ block, onChang
             type="button"
             className={`html-editor-source-toggle ${mode === 'visual' ? 'html-editor-source-toggle--active' : ''}`}
             onClick={() => switchMode('visual')}
+            disabled={visualDisabled}
+            title={
+              visualDisabled
+                ? 'Visual editor disabled — content uses advanced HTML Quill cannot render.'
+                : undefined
+            }
           >
             Visual
           </button>

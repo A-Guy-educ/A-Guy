@@ -484,46 +484,15 @@ export const QuestionMultiAxisBlockSchema = z
 // Zod: HTML Block (WYSIWYG content stored as sanitized HTML string)
 // ---------------------------------
 
-// Allowlist of tags Quill can produce + safe formatting tags
-const HTML_ALLOWED_TAGS = new Set([
-  'p',
-  'br',
-  'hr',
-  'span',
-  'h1',
-  'h2',
-  'h3',
-  'h4',
-  'h5',
-  'h6',
-  'strong',
-  'b',
-  'em',
-  'i',
-  'u',
-  's',
-  'del',
-  'ins',
-  'mark',
-  'sub',
-  'sup',
-  'ul',
-  'ol',
-  'li',
-  'blockquote',
-  'pre',
-  'code',
-  'a',
-  'img',
-  'div',
-  'section',
-  'table',
-  'thead',
-  'tbody',
-  'tr',
-  'th',
-  'td',
-])
+// Allowlist of tags permitted inside HTML blocks. Sourced from the shared
+// SafeHtml sanitizer config so the server-side validator and the client-side
+// DOMPurify sanitizer cannot drift. Includes advanced authoring elements
+// (details/summary/dialog, button with data-action, semantic layout tags).
+import { SAFE_HTML_PURIFY_CONFIG } from '@/ui/web/SafeHtml/sanitize-config'
+
+const HTML_ALLOWED_TAGS = new Set<string>(
+  SAFE_HTML_PURIFY_CONFIG.ALLOWED_TAGS.map((t) => t.toLowerCase()),
+)
 
 // Patterns that are dangerous regardless of tag allowlist
 const DANGEROUS_HTML_PATTERNS = [
