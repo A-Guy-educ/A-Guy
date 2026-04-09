@@ -4,6 +4,7 @@ import { getUserProfile, setUserProfile } from '@/client/state/localStorage/user
 import { useLoadingState } from '@/infra/loading/hooks/useLoadingState'
 import { useRouterWithLoading } from '@/infra/loading/hooks/useRouterWithLoading'
 import { LOADING_KEYS } from '@/infra/loading/keys'
+import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 import { cn } from '@/infra/utils/ui'
 import type { Course } from '@/payload-types'
 import { Button } from '@/ui/web/components/button'
@@ -87,6 +88,12 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
       gradeLevel,
       mood: existingProfile?.mood || '',
       lastVisit: new Date().toISOString(),
+    })
+
+    // Track course selection in analytics
+    systemEventBus.emit(SYSTEM_EVENTS.COURSE_ENTERED, {
+      course_id: course.id,
+      course_title: course.title,
     })
 
     // Navigate to home page after localStorage is updated

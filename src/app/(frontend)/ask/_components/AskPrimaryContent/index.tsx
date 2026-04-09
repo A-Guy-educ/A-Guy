@@ -5,7 +5,11 @@ import { Loader2, PlusCircle } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import type { AskMediaAttachEvent, AskMediaRestoreEvent, ExerciseFile } from '../ask-types'
-import { ASK_MEDIA_ATTACH_EVENT, ASK_MEDIA_RESTORE_EVENT } from '../ask-types'
+import {
+  ASK_MEDIA_ATTACH_EVENT,
+  ASK_MEDIA_CLEAR_EVENT,
+  ASK_MEDIA_RESTORE_EVENT,
+} from '../ask-types'
 import { AskExerciseCard } from '../AskExerciseCard'
 
 function dispatchMediaAttach(detail: AskMediaAttachEvent) {
@@ -25,6 +29,16 @@ export function AskPrimaryContent() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- cleanup only on unmount
   }, [])
+
+  // Clear image when AI rejects it so student can upload a new one
+  useEffect(() => {
+    const handler = () => {
+      if (currentFile?.url.startsWith('blob:')) URL.revokeObjectURL(currentFile.url)
+      setCurrentFile(null)
+    }
+    window.addEventListener(ASK_MEDIA_CLEAR_EVENT, handler)
+    return () => window.removeEventListener(ASK_MEDIA_CLEAR_EVENT, handler)
+  }, [currentFile])
 
   // Restore image from conversation history when re-entering
   useEffect(() => {

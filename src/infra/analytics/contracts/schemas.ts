@@ -394,6 +394,46 @@ export const ExerciseSkippedPropertiesSchema = z.object({
 })
 
 /**
+ * lesson_open_attempted - Track user clicking to open a lesson
+ * Destination: Mixpanel
+ * Priority: P0
+ */
+export const LessonOpenAttemptedPropertiesSchema = z.object({
+  lesson_id: z.string().describe('Lesson identifier'),
+  content_type: z.enum(['pdf', 'exercises', 'blocks']).describe('Type of lesson content'),
+  platform: z.string().describe('Client platform (web)'),
+  course_id: z.string().optional().describe('Parent course ID'),
+})
+
+/**
+ * lesson_load_success - Track successful lesson content render
+ * Destination: Mixpanel
+ * Priority: P0
+ */
+export const LessonLoadSuccessPropertiesSchema = z.object({
+  lesson_id: z.string().describe('Lesson identifier'),
+  content_type: z.enum(['pdf', 'exercises', 'blocks']).describe('Type of lesson content'),
+  load_time_ms: z.number().nonnegative().describe('Time from click to render in ms'),
+  course_id: z.string().optional().describe('Parent course ID'),
+})
+
+/**
+ * lesson_load_failed - Track lesson load failure
+ * Destination: Mixpanel
+ * Priority: P0
+ */
+export const LessonLoadFailedPropertiesSchema = z.object({
+  lesson_id: z.string().describe('Lesson identifier'),
+  content_type: z
+    .enum(['pdf', 'exercises', 'blocks'])
+    .optional()
+    .describe('Type of lesson content'),
+  error_type: z.enum(['404', 'timeout', 'js_error']).describe('Category of failure'),
+  error_message: z.string().optional().describe('Error details (no PII)'),
+  course_id: z.string().optional().describe('Parent course ID'),
+})
+
+/**
  * lesson_abandoned - Track lesson abandonment
  * Destination: Mixpanel
  * Priority: P0
@@ -472,6 +512,11 @@ export const eventSchemas = {
   [PRODUCT_EVENTS.ANSWER_INCORRECT]: AnswerIncorrectPropertiesSchema,
   [PRODUCT_EVENTS.EXERCISE_SKIPPED]: ExerciseSkippedPropertiesSchema,
 
+  // Lesson Loading Lifecycle Events
+  [PRODUCT_EVENTS.LESSON_OPEN_ATTEMPTED]: LessonOpenAttemptedPropertiesSchema,
+  [PRODUCT_EVENTS.LESSON_LOAD_SUCCESS]: LessonLoadSuccessPropertiesSchema,
+  [PRODUCT_EVENTS.LESSON_LOAD_FAILED]: LessonLoadFailedPropertiesSchema,
+
   // Engagement Signal Events
   [PRODUCT_EVENTS.LESSON_ABANDONED]: LessonAbandonedPropertiesSchema,
   [PRODUCT_EVENTS.CHAPTER_COMPLETED]: ChapterCompletedPropertiesSchema,
@@ -518,6 +563,11 @@ export type AnswerCorrectProperties = z.infer<typeof AnswerCorrectPropertiesSche
 export type AnswerIncorrectProperties = z.infer<typeof AnswerIncorrectPropertiesSchema>
 export type ExerciseSkippedProperties = z.infer<typeof ExerciseSkippedPropertiesSchema>
 
+// Lesson Loading Lifecycle
+export type LessonOpenAttemptedProperties = z.infer<typeof LessonOpenAttemptedPropertiesSchema>
+export type LessonLoadSuccessProperties = z.infer<typeof LessonLoadSuccessPropertiesSchema>
+export type LessonLoadFailedProperties = z.infer<typeof LessonLoadFailedPropertiesSchema>
+
 // Engagement Signals
 export type LessonAbandonedProperties = z.infer<typeof LessonAbandonedPropertiesSchema>
 export type ChapterCompletedProperties = z.infer<typeof ChapterCompletedPropertiesSchema>
@@ -557,6 +607,9 @@ export type EventProperties =
   | AnswerCorrectProperties
   | AnswerIncorrectProperties
   | ExerciseSkippedProperties
+  | LessonOpenAttemptedProperties
+  | LessonLoadSuccessProperties
+  | LessonLoadFailedProperties
   | LessonAbandonedProperties
   | ChapterCompletedProperties
   | TimeOnPageProperties

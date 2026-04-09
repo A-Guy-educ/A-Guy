@@ -41,6 +41,10 @@ interface ExercisesPagerProps {
   lessonSlug: string
   lessonId: string
   mediaMap?: Record<string, MediaType>
+  /** Whether the lesson has context text (controls chat visibility) */
+  hasLessonContext?: boolean
+  /** Whether the lesson has exercises (controls chat visibility) */
+  hasExercises?: boolean
   /** Formula sheet data (passed to ChatInterface) */
   formulaSheet?: import('@/payload-types').FormulaSheet | null
 }
@@ -54,6 +58,8 @@ export function ExercisesPager({
   lessonSlug,
   lessonId,
   mediaMap,
+  hasLessonContext,
+  hasExercises,
   formulaSheet,
 }: ExercisesPagerProps) {
   const t = useTranslations('courses')
@@ -298,37 +304,39 @@ export function ExercisesPager({
           </div>
         }
         chatContent={
-          <ChatInterface
-            lessonId={lessonId}
-            exerciseId={currentExercise.id}
-            currentExercise={{
-              id: currentExercise.id,
-              title: currentExercise.title ?? '',
-              content: {
-                blocks: (currentExercise.content as unknown as ExerciseContentData).blocks.map(
-                  (block) => {
-                    const { id, type, ...rest } = block
-                    return { id, type, ...rest }
-                  },
-                ),
-              },
-            }}
-            mediaMap={
-              mediaMap as Record<
-                string,
-                {
-                  id: string
-                  url?: string | null
-                  filename?: string
-                  mimeType?: string
-                  altText?: string
-                }
-              >
-            }
-            translationNamespace="courses"
-            showMathTools={true}
-            formulaSheet={formulaSheet}
-          />
+          hasLessonContext || hasExercises ? (
+            <ChatInterface
+              lessonId={lessonId}
+              exerciseId={currentExercise.id}
+              currentExercise={{
+                id: currentExercise.id,
+                title: currentExercise.title ?? '',
+                content: {
+                  blocks: (currentExercise.content as unknown as ExerciseContentData).blocks.map(
+                    (block) => {
+                      const { id, type, ...rest } = block
+                      return { id, type, ...rest }
+                    },
+                  ),
+                },
+              }}
+              mediaMap={
+                mediaMap as Record<
+                  string,
+                  {
+                    id: string
+                    url?: string | null
+                    filename?: string
+                    mimeType?: string
+                    altText?: string
+                  }
+                >
+              }
+              translationNamespace="courses"
+              showMathTools={true}
+              formulaSheet={formulaSheet}
+            />
+          ) : null
         }
       />
     )

@@ -251,8 +251,9 @@ export const AccessGrantedSchema = z
   .object({
     access_type: z.enum(['free', 'coupon', 'paid']),
     coupon_code: z.string().optional(),
-    lesson_id: z.string().min(1, 'lesson_id is required'),
+    lesson_id: z.string().min(1, 'lesson_id is required').optional(),
     course_id: z.string().min(1, 'course_id is required'),
+    course_slug: z.string().optional(),
   })
   .strict()
 
@@ -295,6 +296,47 @@ export const ExerciseSkippedSchema = z
   .strict()
 
 export type ExerciseSkippedPayload = z.infer<typeof ExerciseSkippedSchema>
+
+// ============================================================================
+// Lesson Loading Lifecycle Events
+// ============================================================================
+
+export const LessonOpenAttemptedSchema = z
+  .object({
+    lesson_id: z.string().min(1, 'lesson_id is required'),
+    content_type: z.enum(['pdf', 'exercises', 'blocks']),
+    platform: z.string().min(1, 'platform is required'),
+    course_id: z.string().optional(),
+    locale: z.string().optional(),
+  })
+  .strict()
+
+export type LessonOpenAttemptedPayload = z.infer<typeof LessonOpenAttemptedSchema>
+
+export const LessonLoadSuccessSchema = z
+  .object({
+    lesson_id: z.string().min(1, 'lesson_id is required'),
+    content_type: z.enum(['pdf', 'exercises', 'blocks']),
+    load_time_ms: z.number().nonnegative(),
+    course_id: z.string().optional(),
+    locale: z.string().optional(),
+  })
+  .strict()
+
+export type LessonLoadSuccessPayload = z.infer<typeof LessonLoadSuccessSchema>
+
+export const LessonLoadFailedSchema = z
+  .object({
+    lesson_id: z.string().min(1, 'lesson_id is required'),
+    content_type: z.enum(['pdf', 'exercises', 'blocks']).optional(),
+    error_type: z.enum(['404', 'timeout', 'js_error']),
+    error_message: z.string().optional(),
+    course_id: z.string().optional(),
+    locale: z.string().optional(),
+  })
+  .strict()
+
+export type LessonLoadFailedPayload = z.infer<typeof LessonLoadFailedSchema>
 
 // ============================================================================
 // Engagement Signal Events
@@ -405,6 +447,11 @@ export const eventSchemas = {
   [SYSTEM_EVENTS.ANSWER_CORRECT]: AnswerCorrectSchema,
   [SYSTEM_EVENTS.ANSWER_INCORRECT]: AnswerIncorrectSchema,
   [SYSTEM_EVENTS.EXERCISE_SKIPPED]: ExerciseSkippedSchema,
+
+  // Lesson Loading Lifecycle
+  [SYSTEM_EVENTS.LESSON_OPEN_ATTEMPTED]: LessonOpenAttemptedSchema,
+  [SYSTEM_EVENTS.LESSON_LOAD_SUCCESS]: LessonLoadSuccessSchema,
+  [SYSTEM_EVENTS.LESSON_LOAD_FAILED]: LessonLoadFailedSchema,
 
   // Engagement Signals
   [SYSTEM_EVENTS.LESSON_ABANDONED]: LessonAbandonedSchema,

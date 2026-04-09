@@ -136,6 +136,7 @@ export const Lessons: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
+    listSearchableFields: ['chapter.course.courseLabel', 'chapter.course.title'],
     components: {
       edit: {
         beforeDocumentControls: [
@@ -301,6 +302,16 @@ export const Lessons: CollectionConfig = {
         description: 'Ordered playlist of exercises and content pages. Defines the lesson flow.',
         components: {
           Field: '@/ui/admin/LessonBlocksField#LessonBlocksField',
+        },
+      },
+    },
+    // Context Exercise Viewer (displays parsed exercises from lessonContextText)
+    {
+      name: 'contextExerciseViewer',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/ui/admin/context-exercise-viewer#ContextExerciseViewer',
         },
       },
     },

@@ -124,7 +124,12 @@ export default async function ContentPageRoute({ params }: ContentPageRouteProps
       gatedDelayMs={gatedDelayMs}
       gatedWarningMs={gatedWarningMs}
     >
-      <LessonAnalytics lessonId={lesson.id} courseId={course.id} lessonTitle={lesson.title} />
+      <LessonAnalytics
+        lessonId={lesson.id}
+        courseId={course.id}
+        lessonTitle={lesson.title}
+        contentType="blocks"
+      />
       <LessonPager
         blocks={resolvedBlocks}
         lessonTitle={lesson.title}

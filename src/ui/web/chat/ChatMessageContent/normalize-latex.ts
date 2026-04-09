@@ -20,20 +20,24 @@
 export function normalizeLatexDelimiters(content: string): string {
   if (!content) return content
 
-  // Use a function replacer to avoid $$ special replacement pattern issues
+  // Collapse deep indentation (4+ spaces) to 2 spaces.
+  // CommonMark treats 4+ space-indented lines as <pre><code> blocks,
+  // inside which remark-math won't detect $...$ or $$...$$ delimiters.
+  // LLMs often use deep indentation for nested list content, so we flatten it.
   let result = content
+    .replace(/^ {4,}/gm, '  ')
     // Pre-process: detect bare brackets containing LaTeX commands
     // Closed: [ \frac{a}{b} ] → \[ \frac{a}{b} \] (but not markdown links [text](url))
-    // Use negative lookbehind (?<!\\) to avoid matching already-escaped \[ or \\[
-    .replace(/(?<!\\)\[([^\]]*\\[a-zA-Z]+[^\]]*)\](?!\()/g, '\\[$1\\]')
+    // Lookbehinds: (?<!\\) excludes \[ display math, (?<![a-zA-Z]) excludes \left[, \right[, \bigl[, etc.
+    .replace(/(?<!\\)(?<![a-zA-Z])\[([^\]]*\\[a-zA-Z]+[^\]]*)\](?!\()/g, '\\[$1\\]')
     // Unclosed (no closing ]): [ \frac{a}{b} (end of line) → \[ \frac{a}{b} \]
-    .replace(/(?<!\\)\[([^\]\n]*\\[a-zA-Z]+[^\]\n]*)$/gm, '\\[$1\\]')
-    // Convert block math delimiters: \\\[, \\[, \[ → $$ (with newline for remark-math)
-    .replace(/\\{1,3}\[/g, () => '\n$$\n')
-    .replace(/\\{1,3}\]/g, () => '\n$$\n')
-    // Convert inline math delimiters: \\\(, \\(, \( → $ (preserves inline flow)
-    .replace(/\\{1,3}\(/g, () => '$')
-    .replace(/\\{1,3}\)/g, () => '$')
+    .replace(/(?<!\\)(?<![a-zA-Z])\[([^\]\n]*\\[a-zA-Z]+[^\]\n]*)$/gm, '\\[$1\\]')
+    // Convert matched block math delimiter pairs: \[...\] → $$...$$ (with newlines for remark-math)
+    // Matches pairs to avoid creating unmatched $$ during streaming when only \[ has arrived.
+    .replace(/\\{1,3}\[([\s\S]*?)\\{1,3}\]/g, (_, expr) => `\n$$\n${expr}\n$$\n`)
+    // Convert matched inline math delimiter pairs: \(...\) → $...$ (preserves inline flow)
+    // Matches pairs to avoid creating unmatched $ during streaming when only \( has arrived.
+    .replace(/\\{1,3}\(([\s\S]*?)\\{1,3}\)/g, (_, expr) => `$${expr}$`)
     // Normalize over-escaped LaTeX commands: \\frac → \frac, \\sigma → \sigma
     .replace(/\\\\([a-zA-Z])/g, '\\$1')
     // Remove escaped equals: \= → =
@@ -43,6 +47,14 @@ export function normalizeLatexDelimiters(content: string): string {
   // LLMs sometimes output $$...$$ inline with text, which breaks block math detection.
   // Match complete $$...$$ pairs and ensure newlines around them.
   result = result.replace(/\$\$([\s\S]*?)\$\$/g, (_, expr) => `\n$$\n${expr.trim()}\n$$\n`)
+
+  // Trim spaces inside inline $...$ delimiters (e.g. $ x $ → $x$).
+  // LLMs often output $ \mu $ with spaces, but remark-math requires tight delimiters
+  // (no space after opening $ or before closing $) to recognize inline math.
+  // The lookbehind ensures we only match opening $ (preceded by whitespace, start, or
+  // non-ASCII chars like Hebrew), not the closing $ of a previous expression
+  // (e.g. $x$ and $\mu$ stays intact because the middle $ follows ASCII letter 'x').
+  result = result.replace(/(?<=\s|^|[^\x00-\x7F])\$\s+([^$\n]+?)\s+\$/g, (_, expr) => `$${expr}$`)
 
   // Escape mismatched $ pairs that contain Hebrew text (RTL chars).
   // When the LLM misuses $ delimiters, remarkMath may pair them incorrectly,
@@ -74,21 +86,38 @@ export function normalizeLatexDelimiters(content: string): string {
 const HEBREW_REGEX = /[\u0590-\u05FF\uFB1D-\uFB4F]/
 
 /**
- * Escapes $ signs that are part of mismatched pairs containing Hebrew text.
+ * Maximum length for a legitimate inline math expression.
+ * Inline math like $\frac{a}{b}$ is typically short. Expressions longer than
+ * this are almost certainly mismatched delimiter pairs spanning across text.
+ */
+const MAX_INLINE_MATH_LENGTH = 150
+
+/**
+ * Escapes $ signs that are part of mismatched pairs.
  *
- * When the LLM uses $ for math but mismatches them, remarkMath may pair
- * a $ with the wrong closing $, creating a huge "expression" with Hebrew
- * text inside. KaTeX can't parse Hebrew, producing red error text.
+ * When the LLM outputs many $...$ expressions, remarkMath may pair the wrong
+ * opening $ with the wrong closing $, creating a huge "expression" that contains
+ * text, Hebrew, or other $ signs. KaTeX can't parse these, producing red error text.
  *
- * This function finds $...$ pairs where the content contains Hebrew characters
- * and escapes the $ so the text renders as plain text instead.
- * Legitimate math like $\frac{a}{b}$ won't contain Hebrew, so this is safe.
+ * This function detects mismatched pairs by checking for:
+ * 1. Hebrew characters inside (Hebrew is never valid in LaTeX)
+ * 2. Excessive length (real inline math is short)
+ * 3. Multiple spaces suggesting natural language, not math
  */
 function escapeMismatchedDollarSigns(content: string): string {
   // Match $...$ pairs (not $$) — non-greedy, single line only
-  return content.replace(/\$([^$\n]+?)\$/g, (match, inner) => {
-    // If the content between $ contains Hebrew characters, it's not valid math
+  return content.replace(/\$([^$\n]+?)\$/g, (match, inner: string) => {
+    // Hebrew text inside → not valid math
     if (HEBREW_REGEX.test(inner)) {
+      return `\\$${inner}\\$`
+    }
+    // Too long for inline math → likely mismatched delimiters
+    if (inner.length > MAX_INLINE_MATH_LENGTH) {
+      return `\\$${inner}\\$`
+    }
+    // Contains 3+ consecutive word characters separated by spaces → natural language, not math
+    // (math has commands like \frac, symbols, but not "word word word")
+    if (/[a-zA-Z]{3,}\s+[a-zA-Z]{3,}\s+[a-zA-Z]{3,}/.test(inner)) {
       return `\\$${inner}\\$`
     }
     return match

@@ -20,6 +20,10 @@ interface PdfLessonPagerProps {
   lessonSlug: string
   lessonId: string
   chatLessonId: string
+  /** Whether the lesson has context text (controls chat visibility) */
+  hasLessonContext?: boolean
+  /** Whether the lesson has exercises (controls chat visibility) */
+  hasExercises?: boolean
   /** Formula sheet data (passed to ChatInterface) */
   formulaSheet?: import('@/payload-types').FormulaSheet | null
 }
@@ -33,6 +37,8 @@ export function PdfLessonPager({
   lessonSlug,
   lessonId,
   chatLessonId,
+  hasLessonContext,
+  hasExercises,
   formulaSheet,
 }: PdfLessonPagerProps) {
   const t = useTranslations('courses')
@@ -60,7 +66,13 @@ export function PdfLessonPager({
         {validFiles.map((file) => (
           <div key={file.id} className="w-full h-[calc(100vh-120px)]">
             <div className="border rounded-lg overflow-hidden bg-card shadow-card h-full">
-              <MediaComponent resource={file} className="w-full h-full" htmlElement={null} />
+              <MediaComponent
+                resource={file}
+                className="w-full h-full"
+                htmlElement={null}
+                lessonId={lessonId}
+                courseId={courseSlug}
+              />
             </div>
           </div>
         ))}
@@ -107,12 +119,14 @@ export function PdfLessonPager({
           </div>
         }
         chatContent={
-          <ChatInterface
-            lessonId={chatLessonId}
-            translationNamespace="courses"
-            showMathTools={true}
-            formulaSheet={formulaSheet}
-          />
+          hasLessonContext || hasExercises ? (
+            <ChatInterface
+              lessonId={chatLessonId}
+              translationNamespace="courses"
+              showMathTools={true}
+              formulaSheet={formulaSheet}
+            />
+          ) : null
         }
       />
     )

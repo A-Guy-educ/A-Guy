@@ -23,7 +23,7 @@ import {
   hasTikzDrawPlot,
 } from '@/lib/latex-parser/tikz-axis-parser'
 import { parseTikzGeometry, hasTikzGeometry } from '@/lib/latex-parser/tikz-geometry-parser'
-import { makeRichTextBlock, makeLatexBlock } from '@/lib/latex-parser/block-generators'
+import { makeRichTextBlock } from '@/lib/latex-parser/block-generators'
 import type { ContentBlock } from '@/server/payload/collections/Exercises/types'
 
 /**
@@ -86,7 +86,14 @@ const PREAMBLE_COMMANDS = new Set([
 ])
 
 /** Environments that just wrap content — recurse into children */
-const PASSTHROUGH_ENVS = new Set(['document', 'minipage', 'center', 'flushleft', 'flushright'])
+const PASSTHROUGH_ENVS = new Set([
+  'document',
+  'minipage',
+  'center',
+  'flushleft',
+  'flushright',
+  'spacing',
+])
 
 /** Layout/formatting commands to silently skip */
 const SKIP_COMMANDS = new Set([
@@ -108,19 +115,98 @@ const SKIP_COMMANDS = new Set([
   'large',
   'renewcommand',
   'arraystretch',
+  'definecolor',
+  'color',
+  'centering',
+  'cfoot',
+  'lfoot',
+  'fancyhf',
+  'headrulewidth',
+  'thepage',
+  'footnotesize',
+  'itemsep',
 ])
+
+/**
+ * Find the matching closing brace for an opening brace, handling nesting.
+ * Returns the index of the matching }, or -1 if not found.
+ */
+function findMatchingBrace(text: string, openPos: number): number {
+  let depth = 1
+  for (let i = openPos + 1; i < text.length; i++) {
+    if (text[i] === '{') depth++
+    else if (text[i] === '}') {
+      depth--
+      if (depth === 0) return i
+    }
+  }
+  return -1
+}
+
+/**
+ * Strip {\color{name} content} and {\Large\color{name} content} groups,
+ * using proper brace counting to handle nested braces like \frac{1}{...}.
+ *
+ * Handles: ${\color{winered} g(x) = \frac{1}{f(x) + b} }$ → $g(x) = \frac{1}{f(x) + b}$
+ */
+function stripColorAndSizing(text: string): string {
+  let result = text
+
+  // Process {\color{name} ...} and {\Large\color{name} ...} groups with brace counting
+  // We scan for { followed by \color or \Large\color, find the matching }, and remove the wrapper
+  let i = 0
+  let output = ''
+  while (i < result.length) {
+    if (result[i] === '{') {
+      // Check if this opens a color/sizing group
+      const after = result.slice(i + 1)
+      const cmdMatch =
+        /^\\(?:Large|large|huge|Huge)\s*\\color\{[^}]*\}\s*/.exec(after) ||
+        /^\\color\{[^}]*\}\s*/.exec(after) ||
+        /^\\(?:Large|large|huge|Huge)\s*/.exec(after)
+
+      if (cmdMatch) {
+        const closingBrace = findMatchingBrace(result, i)
+        if (closingBrace > i) {
+          // Extract the content between the command and the closing brace
+          const contentStart = i + 1 + cmdMatch[0].length
+          output += result.slice(contentStart, closingBrace)
+          i = closingBrace + 1
+          continue
+        }
+      }
+    }
+    output += result[i]
+    i++
+  }
+  result = output
+
+  // Strip bare commands (not wrapped in braces)
+  result = result
+    .replace(/\\(?:Large|large|huge|Huge|normalsize|small|footnotesize|tiny)\s*/g, '')
+    .replace(/\\color\{[^}]*\}/g, '')
+    .replace(/\\definecolor\{[^}]*\}\{[^}]*\}\{[^}]*\}/g, '')
+
+  return result
+}
 
 /** Clean LaTeX text: strip formatting commands, normalize whitespace */
 function cleanText(text: string): string {
   return (
-    text
+    stripColorAndSizing(text)
+      // Strip leaked environment tags
+      .replace(
+        /\\(?:begin|end)\{(?:enumerate|center|itemize|tikzpicture|tabular\*?|tcolorbox)\}(?:\[[^\]]*\])?/g,
+        '',
+      )
+      .replace(/\\begin\{tikzpicture\}[\s\S]*?\\end\{tikzpicture\}/g, '')
       .replace(/\\textbf\{([^}]*)\}/g, '**$1**')
       .replace(/\\textit\{([^}]*)\}/g, '*$1*')
       .replace(/\\emph\{([^}]*)\}/g, '*$1*')
       .replace(/\\underline\{([^}]*)\}/g, '$1')
       .replace(/\\text\{([^}]*)\}/g, '$1')
-      .replace(/\\\\/g, '\n')
-      .replace(/\\vspace\{[^}]*\}/g, '')
+      .replace(/\\\\/g, ' ')
+      .replace(/\\vspace\{[^}]*\}/g, ' ')
       .replace(/\\hspace\*?\{[^}]*\}/g, ' ')
       .replace(/\\noindent/g, '')
       .replace(/\\selectlanguage\{[^}]*\}/g, '')
@@ -129,6 +215,9 @@ function cleanText(text: string): string {
       .replace(/\\arraystretch/g, '')
       // Strip leading line-break spacing like [0.2cm], [5mm]
       .replace(/^\s*\[\d+(\.\d+)?(cm|mm|pt|em|ex)\]\s*/g, '')
+      // Collapse all whitespace into single spaces — prevents the frontend
+      // from splitting text into "context outside box" vs "content inside box"
+      .replace(/\s+/g, ' ')
       .trim()
   )
 }
@@ -176,6 +265,14 @@ function processTokens(
       } else if (envName === 'questions') {
         const inner = extractInner(token)
         processQuestionsEnv(inner, blocks, warnings, token.line)
+      } else if (envName === 'itemize') {
+        // Convert itemize to bullet-point rich text
+        const inner = extractInner(token)
+        const items = inner.split(/\\item\s*/).filter((s) => s.trim())
+        const bullets = items.map((item) => `• ${cleanText(item)}`).join('\n')
+        if (bullets) {
+          blocks.push(makeRichTextBlock(bullets))
+        }
       } else if (envName === 'enumerate') {
         const inner = extractInner(token)
         const enumBlocks = parseEnumerate(inner)
@@ -241,25 +338,31 @@ function processTokens(
         }
       }
     } else if (token.type === 'math') {
-      const val = token.value
-      if (val.startsWith('$$') && val.endsWith('$$')) {
-        blocks.push(makeLatexBlock(val.slice(2, -2).trim()))
-      } else {
-        blocks.push(makeRichTextBlock(val))
-      }
+      // Strip color/sizing commands from math expressions
+      const val = stripColorAndSizing(token.value)
+      // Emit all math as rich_text with md-math-v1 format
+      // The frontend renderer handles $...$ (inline) and $$...$$ (display) in rich_text
+      // but does NOT render standalone 'latex' block types
+      blocks.push(makeRichTextBlock(val))
     } else if (token.type === 'command') {
       const cmdName = token.name ?? ''
       if (SKIP_COMMANDS.has(cmdName)) {
         // Silently skip
-      } else if (cmdName === 'section') {
-        const titleMatch = /\\section\*?\{([^}]*)\}/.exec(token.value)
+      } else if (cmdName === 'section' || cmdName === 'subsection') {
+        const titleMatch = /\\(?:section|subsection)\*?\{([^}]*)\}/.exec(token.value)
         const title = titleMatch ? titleMatch[1] : token.value
         if (isSolutionHeader(token.value)) {
           inSolutionSection = true
           // Don't emit solution headers as blocks — solutions are attached to questions
         } else {
           inSolutionSection = false
-          blocks.push(makeRichTextBlock(`## ${title}`))
+          // Check if this is an exercise title (תרגיל N or שאלה N)
+          const exerciseInfo = isExerciseTitle(token.value)
+          if (exerciseInfo) {
+            blocks.push(makeRichTextBlock(`## ${exerciseInfo.title}`))
+          } else {
+            blocks.push(makeRichTextBlock(`## ${title}`))
+          }
         }
       } else if (cmdName === 'textbf') {
         // Check if this is an exercise title like \textbf{תרגיל 1 - Title}
@@ -453,10 +556,10 @@ function mergeAdjacentRichText(blocks: ContentBlock[]): ContentBlock[] {
 }
 
 /**
- * Exercise title pattern: `## תרגיל N` or `## תרגיל N - Title`
+ * Exercise title pattern: `## תרגיל N` or `## שאלה N` or `## תרגיל N - Title`
  * These are emitted by processTokens when isExerciseTitle() matches.
  */
-const EXERCISE_HEADING_RE = /^## תרגיל\s+(\d+)/
+const EXERCISE_HEADING_RE = /^## (?:תרגיל|שאלה)\s+(\d+)/
 
 /**
  * Parses LaTeX into multiple exercises split on `\textbf{תרגיל N}` boundaries.

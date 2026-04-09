@@ -80,6 +80,14 @@ export const SYSTEM_EVENTS = {
   /** User skips exercise without answering */
   EXERCISE_SKIPPED: 'system.exercise_skipped',
 
+  // Lesson Loading Lifecycle Events
+  /** User clicked to open a lesson (before navigation) */
+  LESSON_OPEN_ATTEMPTED: 'system.lesson_open_attempted',
+  /** Lesson content fully rendered successfully */
+  LESSON_LOAD_SUCCESS: 'system.lesson_load_success',
+  /** Lesson content failed to load (404, timeout, JS error) */
+  LESSON_LOAD_FAILED: 'system.lesson_load_failed',
+
   // Engagement Signal Events
   /** User leaves lesson incomplete */
   LESSON_ABANDONED: 'system.lesson_abandoned',

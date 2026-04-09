@@ -46,6 +46,7 @@ import { pdfToExercisesTask } from '@/server/payload/jobs/pdf-to-exercises-task'
 import { pdfToExercisesV2Task } from '@/server/payload/jobs/pdf-to-exercises-v2-task'
 import type { JobDocument } from '@/server/payload/jobs/types'
 import { runBackfillOnInit } from '@/server/payload/migrations/backfillAdminTitle'
+import { runLocalizeTeacherProfilesOnInit } from '@/server/payload/migrations/localize-teacher-profiles'
 import { runPopulateLessonBlocksOnInit } from '@/server/payload/migrations/populateLessonBlocks'
 import { plugins } from '@/server/payload/plugins'
 import { seedTeacherProfiles } from '@/server/payload/seed/teacher-profiles-seed'
@@ -101,6 +102,7 @@ export default buildConfig({
         '@/ui/admin/VersionInfo',
       ],
       beforeNavLinks: ['@/ui/admin/AdminChat/SidebarLink', '@/ui/admin/PdfConversion/SidebarLink'],
+      afterNavLinks: ['@/ui/admin/UserEmail'],
     },
     importMap: {
       baseDir: path.resolve(dirname),
@@ -136,17 +138,21 @@ export default buildConfig({
     connectOptions: {
       // Hardened connection pool configuration to prevent Atlas connection exhaustion
       // Tests: maxPoolSize=5 (default)
-      // Production: maxPoolSize=2 (default, configurable via MONGODB_MAX_POOL_SIZE)
-      // Rationale: With 500 connection limit, this allows 250 concurrent serverless instances
-      // vs only 5 instances with the previous maxPoolSize=100 setting
+      // Production: maxPoolSize=10 (configurable via MONGODB_MAX_POOL_SIZE)
+      // Rationale: Atlas M10+ supports 500 connections. At 10/instance, this allows
+      // 50 concurrent serverless instances before hitting limits.
       maxPoolSize: parseInt(
-        process.env.MONGODB_MAX_POOL_SIZE ?? (process.env.VITEST ? '5' : '2'),
+        process.env.MONGODB_MAX_POOL_SIZE ?? (process.env.VITEST ? '5' : '10'),
         10,
       ),
       // Allow pool to fully drain when idle
       minPoolSize: 0,
       // Close idle connections after 10 seconds
       maxIdleTimeMS: 10000,
+      // Fail fast if MongoDB is unreachable — don't hang serverless functions
+      connectTimeoutMS: 5000,
+      // Socket timeout for long-running operations
+      socketTimeoutMS: 30000,
     },
   }),
   collections: [
@@ -310,6 +316,14 @@ export default buildConfig({
     }),
   },
   onInit: async (payload) => {
+    // Skip expensive init tasks on Vercel serverless — they run on every cold start
+    // and the tenant + seed data already exist in production. These ops are idempotent
+    // but waste ~500ms+ per new serverless instance spinning up.
+    const isVercelProduction = process.env.VERCEL === '1' && process.env.NODE_ENV === 'production'
+    if (isVercelProduction) {
+      payload.logger.info('[onInit] Skipping expensive init tasks on Vercel production')
+      return
+    }
     // Ensure default tenant exists BEFORE seedTeacherProfiles runs
     // This is required because TeacherProfilesSeed needs a tenant to link prompts to
     const defaultTenantSlug = process.env.DEFAULT_TENANT_SLUG || 'default'
@@ -335,6 +349,7 @@ export default buildConfig({
 
     await runBackfillOnInit(payload)
     await runPopulateLessonBlocksOnInit(payload)
+    await runLocalizeTeacherProfilesOnInit(payload)
     await seedTeacherProfiles(payload)
   },
 })

@@ -49,11 +49,11 @@ describe('parseLatexToBlocks', () => {
     expect(result.errors).toHaveLength(0)
   })
 
-  it('handles standalone display math as latex block', () => {
+  it('handles standalone display math as rich_text with $$ delimiters', () => {
     const latex = '$$\\int_0^1 x^2 dx = \\frac{1}{3}$$'
     const result = parseLatexToBlocks(latex)
-    const latexBlocks = result.blocks.filter((b) => b.type === 'latex')
-    expect(latexBlocks).toHaveLength(1)
+    const mathBlocks = result.blocks.filter((b) => b.type === 'rich_text' && b.value.includes('$$'))
+    expect(mathBlocks).toHaveLength(1)
   })
 
   it('handles mixed content with text and questions', () => {

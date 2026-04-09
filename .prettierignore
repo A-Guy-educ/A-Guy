@@ -26,6 +26,8 @@ test-results
 src/app/(payload)/admin/importMap.js
 .tasks/**
 .opencode/**
+.agents/**
+.kody/**
 docs/ai/indexes/*.json
 public/sitemap*.xml
 mixpanelstuff/**

@@ -9,13 +9,50 @@ const NEXT_PUBLIC_SERVER_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Externalize pdfjs-dist to avoid bundled worker path issues in server contexts
-  // This allows pdfjs-dist to load from node_modules at runtime, where worker paths work correctly
+  // Externalize server-only packages to skip webpack bundling — loaded from node_modules at runtime.
+  // This reduces build time and memory by removing ~55 MB from the compilation graph.
   serverExternalPackages: [
+    // Original externals
     'pdfjs-dist',
     '@napi-rs/canvas',
     'require-in-the-middle',
     'import-in-the-middle',
+
+    // Genkit + OpenTelemetry/gRPC chain (transitive deps, ~36 MB)
+    'genkit',
+    'genkitx-openai',
+    '@genkit-ai/ai',
+    '@genkit-ai/core',
+    '@opentelemetry/api',
+    '@opentelemetry/core',
+    '@opentelemetry/instrumentation',
+    '@opentelemetry/otlp-transformer',
+    '@opentelemetry/otlp-exporter-base',
+    '@opentelemetry/sdk-metrics',
+    '@opentelemetry/sdk-trace-base',
+    '@opentelemetry/semantic-conventions',
+    '@opentelemetry/resources',
+    '@grpc/grpc-js',
+    '@grpc/proto-loader',
+    'protobufjs',
+    'thriftrw',
+
+    // Heavy server-only packages
+    // graphql — large (~200KB) transitive dep from Payload, load from node_modules at runtime
+    'graphql',
+    'prism-react-renderer',
+    'openai',
+    'undici',
+    'pdf-lib',
+    '@redis/client',
+    'redis',
+    'handlebars',
+    '@modelcontextprotocol/sdk',
+    '@google/generative-ai',
+    'yaml',
+    'ajv',
+    'sharp',
+    'tesseract.js',
   ],
   images: {
     remotePatterns: [
@@ -51,6 +88,16 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'avatars.githubusercontent.com',
       },
+    ],
+  },
+  experimental: {
+    // Tree-shake barrel exports to avoid parsing entire packages on each import
+    optimizePackageImports: [
+      'lucide-react',
+      'framer-motion',
+      'date-fns',
+      '@payloadcms/ui',
+      'react-hook-form',
     ],
   },
   eslint: { ignoreDuringBuilds: true },
@@ -142,9 +189,12 @@ export default withSentryConfig(configWithPayload, {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
   silent: !process.env.CI,
-  widenClientFileUpload: true,
+  widenClientFileUpload: false,
   tunnelRoute: '/monitoring',
   hideSourceMaps: true,
+  sourcemaps: {
+    deleteSourcemapsAfterUpload: true,
+  },
   webpack: {
     treeshake: {
       removeDebugLogging: true,

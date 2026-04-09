@@ -1,6 +1,8 @@
 'use client'
 
+import { storeLessonOpenTimestamp } from '@/infra/analytics/utils/lesson-load-timing'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
+import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 import { cn } from '@/infra/utils/ui'
 import type { Lesson } from '@/payload-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
@@ -43,6 +45,15 @@ export function LessonCard({ lesson, courseSlug, chapterSlug }: LessonCardProps)
       toast.info(t('contentLocked'))
       return
     }
+
+    // Track lesson open attempt
+    storeLessonOpenTimestamp(lesson.id)
+    systemEventBus.emit(SYSTEM_EVENTS.LESSON_OPEN_ATTEMPTED, {
+      lesson_id: lesson.id,
+      content_type: (lesson.contentFiles?.length ?? 0) > 0 ? 'pdf' : 'exercises',
+      platform: 'web',
+      course_id: courseSlug,
+    })
   }
 
   return (
@@ -82,7 +93,9 @@ export function LessonCard({ lesson, courseSlug, chapterSlug }: LessonCardProps)
         ) : (
           // Normal lesson: Button with asChild renders SystemLink as the button element
           <Button asChild>
-            <SystemLink href={href}>{t('viewLesson')}</SystemLink>
+            <SystemLink href={href} onClick={handleLessonClick}>
+              {t('viewLesson')}
+            </SystemLink>
           </Button>
         )}
       </CardFooter>
