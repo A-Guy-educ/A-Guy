@@ -92,6 +92,13 @@ function SignupFormContent() {
         alias(result.data.userId, getOrCreateAnonymousId())
         identify(result.data.userId, userProperties)
 
+        // Track registration popup funnel action if user came from a popup
+        systemEventBus.emit(SYSTEM_EVENTS.REGISTRATION_POPUP_ACTION, {
+          outcome: 'Registered',
+          method: 'Email',
+          page_path: returnTo,
+        })
+
         // Now emit events — they will fire under the identified user
         systemEventBus.emit(SYSTEM_EVENTS.REGISTRATION_COMPLETED, {
           user_id: result.data.userId,
@@ -134,7 +141,7 @@ function SignupFormContent() {
 
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? (
-              <span className="flex items-center gap-2">
+              <span className="flex items-center gap-content-gap-xs">
                 <Spinner size="sm" />
                 {t('creatingAccount')}
               </span>

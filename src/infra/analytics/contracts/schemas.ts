@@ -190,6 +190,32 @@ export const RegistrationPromptShownSchema = z.object({
 })
 
 /**
+ * registration_popup_shown - Auth gate popup shown to anonymous user
+ * Destination: Mixpanel
+ * Priority: P0
+ */
+export const RegistrationPopupShownSchema = z.object({
+  page_path: z.string().describe('Page URL where the popup was shown'),
+  trigger_type: z
+    .enum(['mandatory', 'gated', 'warning'])
+    .describe('Which access gate triggered the popup'),
+  course_slug: z.string().optional().describe('Course where popup appeared'),
+})
+
+/**
+ * registration_popup_action - User action on registration popup
+ * Destination: Mixpanel
+ * Priority: P0
+ */
+export const RegistrationPopupActionSchema = z.object({
+  outcome: z
+    .enum(['Registered', 'Did Not Register'])
+    .describe('Whether the user registered or dismissed'),
+  method: z.string().optional().describe('Registration method (Email, Google)'),
+  page_path: z.string().optional().describe('Page URL where action was taken'),
+})
+
+/**
  * registration_completed - Track successful signup
  * Destination: GA4 + Mixpanel
  * Priority: P0
@@ -489,6 +515,8 @@ export const eventSchemas = {
   [PRODUCT_EVENTS.PHOTO_SENT_TO_CHAT]: PhotoSentToChatSchema,
   [PRODUCT_EVENTS.LOGIN_MODAL_SHOWN]: LoginModalShownSchema,
   [PRODUCT_EVENTS.REGISTRATION_PROMPT_SHOWN]: RegistrationPromptShownSchema,
+  [PRODUCT_EVENTS.REGISTRATION_POPUP_SHOWN]: RegistrationPopupShownSchema,
+  [PRODUCT_EVENTS.REGISTRATION_POPUP_ACTION]: RegistrationPopupActionSchema,
   [PRODUCT_EVENTS.REGISTRATION_COMPLETED]: RegistrationCompletedSchema,
 
   // Exercise Help System Events
@@ -540,6 +568,8 @@ export type ChatMessageSentProperties = z.infer<typeof ChatMessageSentSchema>
 export type PhotoSentToChatProperties = z.infer<typeof PhotoSentToChatSchema>
 export type LoginModalShownProperties = z.infer<typeof LoginModalShownSchema>
 export type RegistrationPromptShownProperties = z.infer<typeof RegistrationPromptShownSchema>
+export type RegistrationPopupShownProperties = z.infer<typeof RegistrationPopupShownSchema>
+export type RegistrationPopupActionProperties = z.infer<typeof RegistrationPopupActionSchema>
 export type RegistrationCompletedProperties = z.infer<typeof RegistrationCompletedSchema>
 
 // Exercise Help System
@@ -591,6 +621,8 @@ export type EventProperties =
   | PhotoSentToChatProperties
   | LoginModalShownProperties
   | RegistrationPromptShownProperties
+  | RegistrationPopupShownProperties
+  | RegistrationPopupActionProperties
   | RegistrationCompletedProperties
   | HintClickedProperties
   | GuidingQuestionClickedProperties
