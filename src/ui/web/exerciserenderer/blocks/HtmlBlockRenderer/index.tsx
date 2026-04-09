@@ -22,6 +22,11 @@ export function HtmlBlockRenderer({ block }: HtmlBlockRendererProps) {
       if (node.tagName === 'A' && node.getAttribute('target')) {
         node.setAttribute('rel', 'noopener noreferrer')
       }
+      // Force every <button> to type="button" so author content cannot
+      // accidentally submit a surrounding form.
+      if (node.tagName === 'BUTTON') {
+        node.setAttribute('type', 'button')
+      }
     })
     setIsMounted(true)
     return () => {

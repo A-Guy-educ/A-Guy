@@ -32,6 +32,12 @@ export function SafeHtml({ html, className, style, enableProse = false }: SafeHt
       if (node.tagName === 'A' && node.getAttribute('target')) {
         node.setAttribute('rel', 'noopener noreferrer')
       }
+      // Force every <button> to type="button" so author content cannot
+      // accidentally submit a surrounding form (e.g. the Payload admin
+      // editor's form, which would save/publish the document on click).
+      if (node.tagName === 'BUTTON') {
+        node.setAttribute('type', 'button')
+      }
     })
     setIsMounted(true)
     return () => {
