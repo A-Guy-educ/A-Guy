@@ -43,6 +43,7 @@ interface ChatConfig {
     pdfToExercise: { gemini: string; openaiCompatible: string; maxOutputTokens: number }
     answerValidation: { gemini: string; openaiCompatible: string; maxOutputTokens: number }
     supportGeneration: { gemini: string; openaiCompatible: string; maxOutputTokens: number }
+    contentTranslation: { gemini: string; openaiCompatible: string; maxOutputTokens: number }
   }
 }
 
@@ -82,8 +83,12 @@ export async function resolveGenkitConfig(
     const modelSettings = chatConfig.models[mapModelKeyToConfigKey(modelKey)]
 
     modelName = providerType === 'gemini' ? modelSettings.gemini : modelSettings.openaiCompatible
-    maxOutputTokens = modelSettings.maxOutputTokens
-    temperature = chatConfig.temperature.default
+    // Use the higher of DB config and code registry to prevent truncation
+    const registryEntry = MODEL_REGISTRY[modelKey]
+    maxOutputTokens = Math.max(modelSettings.maxOutputTokens, registryEntry.maxOutputTokens)
+    // Use model-specific temperature from registry (e.g., 0.1 for PDF extraction)
+    // instead of the global chat default which is meant for conversational models
+    temperature = registryEntry.temperature
     timeout = Math.floor(chatConfig.chatSettings.defaultChatTimeoutMs / 1000)
   } catch {
     // Fallback to MODEL_REGISTRY defaults if ConfigValues not available
@@ -126,7 +131,7 @@ function mapModelKeyToConfigKey(modelKey: AIModelKey): keyof ChatConfig['models'
     PDF_TO_EXERCISE: 'pdfToExercise',
     ANSWER_VALIDATION: 'answerValidation',
     SUPPORT_GENERATION: 'supportGeneration',
-    CONTENT_TRANSLATION: 'supportGeneration',
+    CONTENT_TRANSLATION: 'contentTranslation',
   }
   return mapping[modelKey]
 }

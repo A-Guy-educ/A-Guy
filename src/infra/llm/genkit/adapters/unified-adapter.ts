@@ -60,7 +60,7 @@ function buildToolDescription(
 interface ChatCompletionInput {
   system: string
   messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>
-  model: AIModel
+  model: AIModel & { modelKey?: AIModelKey }
   acknowledgment: string
   timeoutMs?: number
 }
@@ -70,7 +70,7 @@ interface ChatCompletionInput {
  */
 interface MultimodalCompletionInput {
   prompt: string
-  model: AIModel
+  model: AIModel & { modelKey?: AIModelKey }
   attachments: Array<{ data: string; mimeType: string }>
   timeoutMs?: number
 }
@@ -81,7 +81,7 @@ interface MultimodalCompletionInput {
 interface ToolCallingInput {
   system: string
   messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>
-  model: AIModel
+  model: AIModel & { modelKey?: AIModelKey }
   acknowledgment: string
   tools: Array<{
     name: string
@@ -110,7 +110,7 @@ export async function createGenkitUnifiedAdapter(
      * Generate chat completion
      */
     generateChatCompletion: async (input: ChatCompletionInput, payloadInstance: Payload) => {
-      const modelKey = getModelKeyFromModelName(input.model.name) || 'EXERCISE_CHAT'
+      const modelKey = input.model.modelKey || 'EXERCISE_CHAT'
       const config = await resolveGenkitConfig(modelKey, tenantId, payloadInstance)
 
       const ai = await getGenkitInstance(payloadInstance, tenantId)
@@ -127,6 +127,7 @@ export async function createGenkitUnifiedAdapter(
               const result = await ai.generate({
                 model: config.model,
                 prompt,
+                config: { temperature: config.temperature },
               })
 
               return {
@@ -158,7 +159,7 @@ export async function createGenkitUnifiedAdapter(
       input: ChatCompletionInput,
       payloadInstance: Payload,
     ) => {
-      const modelKey = getModelKeyFromModelName(input.model.name) || 'EXERCISE_CHAT'
+      const modelKey = input.model.modelKey || 'EXERCISE_CHAT'
       const config = await resolveGenkitConfig(modelKey, tenantId, payloadInstance)
 
       const ai = await getGenkitInstance(payloadInstance, tenantId)
@@ -171,7 +172,12 @@ export async function createGenkitUnifiedAdapter(
       // A hung stream could block a serverless function until execution time limit
       const streamTimeoutMs = input.timeoutMs ?? 30_000
       const result = await withTimeout(
-        async () => ai.generateStream({ model: config.model, prompt }),
+        async () =>
+          ai.generateStream({
+            model: config.model,
+            prompt,
+            config: { temperature: config.temperature },
+          }),
         { timeoutMs: streamTimeoutMs, message: 'Stream initialization timed out' },
       )
 
@@ -221,8 +227,12 @@ export async function createGenkitUnifiedAdapter(
       input: MultimodalCompletionInput,
       payloadInstance: Payload,
     ) => {
-      const modelKey = getModelKeyFromModelName(input.model.name) || 'IMAGE_TO_EXERCISE'
+      const modelKey = input.model.modelKey || 'IMAGE_TO_EXERCISE'
       const config = await resolveGenkitConfig(modelKey, tenantId, payloadInstance)
+
+      // Prefer caller-provided config over resolved config (caller knows the intended model key)
+      const effectiveMaxOutputTokens = input.model.maxOutputTokens || config.maxOutputTokens
+      const effectiveTemperature = input.model.temperature ?? config.temperature
 
       const ai = await getGenkitInstance(payloadInstance, tenantId)
 
@@ -240,6 +250,10 @@ export async function createGenkitUnifiedAdapter(
               const result = await ai.generate({
                 model: config.model,
                 prompt: [...mediaContents, { text: input.prompt }],
+                config: {
+                  temperature: effectiveTemperature,
+                  maxOutputTokens: effectiveMaxOutputTokens,
+                },
               })
 
               return {
@@ -267,7 +281,7 @@ export async function createGenkitUnifiedAdapter(
      * Generate chat completion with tools
      */
     generateChatCompletionWithTools: async (input: ToolCallingInput, payloadInstance: Payload) => {
-      const modelKey = getModelKeyFromModelName(input.model.name) || 'EXERCISE_CHAT'
+      const modelKey = input.model.modelKey || 'EXERCISE_CHAT'
       const config = await resolveGenkitConfig(modelKey, tenantId, payloadInstance)
 
       const ai = await getGenkitInstance(payloadInstance, tenantId)
@@ -360,25 +374,6 @@ export async function createGenkitUnifiedAdapter(
      */
     errorCodes: LLMErrorCode,
   }
-}
-
-/**
- * Map model name back to AIModelKey
- */
-function getModelKeyFromModelName(modelName: string): AIModelKey | undefined {
-  const name = modelName.toLowerCase()
-
-  if (name.includes('image') || name.includes('vision')) {
-    return 'IMAGE_TO_EXERCISE'
-  }
-  if (name.includes('pdf') || name.includes('document')) {
-    return 'PDF_TO_EXERCISE'
-  }
-  if (name.includes('chat')) {
-    return 'EXERCISE_CHAT'
-  }
-
-  return 'EXERCISE_CHAT'
 }
 
 /**

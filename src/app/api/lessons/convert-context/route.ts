@@ -14,6 +14,7 @@ const convertContextSchema = z.object({
   lessonId: z.string().min(1, 'lessonId is required'),
   promptId: z.string().min(1, 'promptId is required'),
   mediaId: z.string().min(1, 'mediaId is required'),
+  mode: z.enum(['replace', 'append']).default('replace'),
 })
 
 type ConvertContextBody = z.infer<typeof convertContextSchema>
@@ -25,13 +26,14 @@ export const POST = withApiHandler<ConvertContextBody, unknown>(
     bodySchema: convertContextSchema,
   },
   async ({ payload, user, body }) => {
-    const { lessonId, promptId, mediaId } = body
+    const { lessonId, promptId, mediaId, mode } = body
 
     // Call the extraction service (user is guaranteed non-null by auth: 'admin')
     const result = await extractLessonContext(payload, user!, {
       lessonId,
       promptId,
       mediaId,
+      mode,
     })
 
     if (!result.success) {
@@ -41,6 +43,7 @@ export const POST = withApiHandler<ConvertContextBody, unknown>(
     return apiSuccess({
       updatedContextText: result.updatedContextText,
       extractedChunkLength: result.extractedChunkLength,
+      warnings: result.warnings,
     })
   },
 )

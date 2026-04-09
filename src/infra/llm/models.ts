@@ -46,6 +46,8 @@ export interface AIModel {
   maxOutputTokens: number
   /** Optional capability tags for feature detection */
   capabilities?: string[]
+  /** The model key this config was built from — used by adapters to resolve config without reverse-mapping */
+  modelKey?: AIModelKey
 }
 
 /**
@@ -87,7 +89,7 @@ export const MODEL_REGISTRY: Record<AIModelKey, Omit<AIModel, 'name'>> = {
   },
   PDF_TO_EXERCISE: {
     temperature: 0.1,
-    maxOutputTokens: 8192,
+    maxOutputTokens: 32768,
     capabilities: ['document', 'extraction'],
   },
   ANSWER_VALIDATION: {
@@ -178,26 +180,32 @@ export const AI_MODELS: Record<AIModelKey, AIModel> = {
   IMAGE_TO_EXERCISE: {
     ...MODEL_REGISTRY.IMAGE_TO_EXERCISE,
     name: PROVIDER_MODEL_NAMES[LLMProviderType.GEMINI].IMAGE_TO_EXERCISE,
+    modelKey: 'IMAGE_TO_EXERCISE',
   },
   EXERCISE_CHAT: {
     ...MODEL_REGISTRY.EXERCISE_CHAT,
     name: PROVIDER_MODEL_NAMES[LLMProviderType.GEMINI].EXERCISE_CHAT,
+    modelKey: 'EXERCISE_CHAT',
   },
   PDF_TO_EXERCISE: {
     ...MODEL_REGISTRY.PDF_TO_EXERCISE,
     name: PROVIDER_MODEL_NAMES[LLMProviderType.GEMINI].PDF_TO_EXERCISE,
+    modelKey: 'PDF_TO_EXERCISE',
   },
   ANSWER_VALIDATION: {
     ...MODEL_REGISTRY.ANSWER_VALIDATION,
     name: PROVIDER_MODEL_NAMES[LLMProviderType.GEMINI].ANSWER_VALIDATION,
+    modelKey: 'ANSWER_VALIDATION',
   },
   SUPPORT_GENERATION: {
     ...MODEL_REGISTRY.SUPPORT_GENERATION,
     name: PROVIDER_MODEL_NAMES[LLMProviderType.GEMINI].SUPPORT_GENERATION,
+    modelKey: 'SUPPORT_GENERATION',
   },
   CONTENT_TRANSLATION: {
     ...MODEL_REGISTRY.CONTENT_TRANSLATION,
     name: PROVIDER_MODEL_NAMES[LLMProviderType.GEMINI].CONTENT_TRANSLATION,
+    modelKey: 'CONTENT_TRANSLATION',
   },
 } as const
 

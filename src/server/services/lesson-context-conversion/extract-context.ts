@@ -2,7 +2,7 @@
  * Lesson Context Extraction Service
  *
  * Extracts context text from lesson content files (PDF/images) using AI prompts.
- * The extracted text is appended to the lesson's lessonContextText field.
+ * The extracted text is stored in the lesson's lessonContextText field.
  *
  * PDFs are processed page-by-page with controlled concurrency (3 pages at a time)
  * for better extraction quality and to avoid truncation on longer documents.
@@ -40,7 +40,10 @@ export interface ExtractContextResult {
 }
 
 /**
- * Extract context text from a lesson content file and append to lessonContextText
+ * Extract context text from a lesson content file and store in lessonContextText.
+ *
+ * Sends the entire file to the LLM in a single call, validates the LaTeX output,
+ * and stores the result. Supports replace (default) and append modes.
  *
  * @param payload - Payload instance
  * @param user - Authenticated user for access control
@@ -102,17 +105,14 @@ export async function extractLessonContext(
 
     const promptTyped = prompt as unknown as Prompt
 
-    // Validate prompt usage
     if (promptTyped.usage !== 'context_extractor') {
       return { success: false, error: 'Prompt is not a context_extractor' }
     }
 
-    // Validate prompt status
     if (promptTyped.status !== 'published') {
       return { success: false, error: 'Prompt is not published' }
     }
 
-    // Validate tenant match
     const promptTenant =
       typeof promptTyped.tenant === 'object' ? promptTyped.tenant?.id : promptTyped.tenant
 
@@ -150,15 +150,12 @@ export async function extractLessonContext(
     if (isPdf) {
       fileBuffer = await getPdfBufferFromBlob(mediaId, payload)
     } else {
-      // For images, fetch using the URL
       let fetchUrl = mediaTyped.url
 
-      // Normalize relative URLs to absolute
       if (!fetchUrl.startsWith('http://') && !fetchUrl.startsWith('https://')) {
         fetchUrl = await normalizeToAbsoluteUrl(fetchUrl)
       }
 
-      // Handle Vercel Blob URLs
       if (isVercelBlobUrl(fetchUrl)) {
         const { getPdfBufferFromUrl } = await import('@/infra/blob/vercel-blob-adapter')
         fileBuffer = await getPdfBufferFromUrl(fetchUrl)
@@ -171,28 +168,40 @@ export async function extractLessonContext(
       return { success: false, error: 'Failed to download media file' }
     }
 
-    // ========== Step 5: Build prompt with lesson metadata ==========
+    // ========== Step 5: Check PDF page count and warn if large ==========
+    const warnings: string[] = []
+
+    if (isPdf) {
+      try {
+        const pageCount = await getPageCount(fileBuffer)
+        if (pageCount > PDF_PAGE_WARNING_THRESHOLD) {
+          warnings.push(
+            `This PDF has ${pageCount} pages. Extraction works best with up to ~${PDF_PAGE_WARNING_THRESHOLD} pages. Some content at the end may be missing — check the result and re-run if needed.`,
+          )
+        }
+      } catch {
+        // Page count is informational — don't fail if we can't read it
+      }
+    }
+
+    // ========== Step 6: Build prompt with lesson metadata ==========
     const lessonTitle = lessonTyped.title || 'Untitled Lesson'
     const lessonDescription = lessonTyped.description || ''
-
-    // Simple text description for context
     const metadataText = `Lesson: ${lessonTitle}\nDescription: ${lessonDescription}`
-
-    // Build the full prompt
     const fullPrompt = `${promptTyped.template}\n\n${metadataText}`
 
-    // ========== Step 6: Call LLM via adapter ==========
+    // ========== Step 7: Call LLM via adapter ==========
     const { createGenkitUnifiedAdapter } =
       await import('@/infra/llm/genkit/adapters/unified-adapter')
     const adapter = await createGenkitUnifiedAdapter(payload)
 
-    // Use PDF_TO_EXERCISE model (established pattern for document processing)
     const { getModelRegistryEntry, getProviderModelName } = await import('@/infra/llm/models')
     const { LLMProviderType } = await import('@/infra/llm/providers/types')
     const modelEntry = getModelRegistryEntry('PDF_TO_EXERCISE')
     const modelConfig = {
       name: getProviderModelName(LLMProviderType.GEMINI, 'PDF_TO_EXERCISE'),
       ...modelEntry,
+      modelKey: 'PDF_TO_EXERCISE' as const,
     }
 
     // ========== Process based on media type ==========
@@ -333,13 +342,37 @@ export async function extractLessonContext(
       success: true,
       updatedContextText,
       extractedChunkLength: extractedText.length,
-      warnings,
+      warnings: warnings.length > 0 ? warnings : undefined,
     }
   } catch (error) {
     console.error('[extractLessonContext] Error:', error)
 
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    return { success: false, error: errorMessage, warnings }
+
+    // Provide user-friendly messages for common failures
+    if (errorMessage.includes('timeout') || errorMessage.includes('ETIMEDOUT')) {
+      return {
+        success: false,
+        error: 'The extraction timed out. The PDF may be too large — try a shorter document.',
+      }
+    }
+
+    if (errorMessage.includes('quota') || errorMessage.includes('rate')) {
+      return {
+        success: false,
+        error: 'AI service rate limit reached. Please wait a minute and try again.',
+      }
+    }
+
+    if (errorMessage.includes('too large') || errorMessage.includes('payload')) {
+      return {
+        success: false,
+        error:
+          'The PDF is too large for processing. Try splitting it into smaller parts (under 10 pages).',
+      }
+    }
+
+    return { success: false, error: errorMessage }
   }
 }
 

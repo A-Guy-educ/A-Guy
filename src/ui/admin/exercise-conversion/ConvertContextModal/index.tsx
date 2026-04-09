@@ -29,10 +29,12 @@ export function ConvertContextModal({
 }: ConvertContextModalProps) {
   const [prompts, setPrompts] = useState<PromptOption[]>([])
   const [selectedPromptId, setSelectedPromptId] = useState<string>('')
+  const [mode, setMode] = useState<'replace' | 'append'>('replace')
   const [isLoading, setIsLoading] = useState(true)
   const [isConverting, setIsConverting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [warnings, setWarnings] = useState<string[]>([])
 
   // Get the lessonContextText field for updating using useField pattern
   const { setValue: setContextText } = useField<string>({ path: 'lessonContextText' })
@@ -76,6 +78,7 @@ export function ConvertContextModal({
       setSelectedPromptId('')
       setError(null)
       setSuccess(null)
+      setWarnings([])
     }
   }, [isOpen])
 
@@ -88,6 +91,7 @@ export function ConvertContextModal({
     setIsConverting(true)
     setError(null)
     setSuccess(null)
+    setWarnings([])
 
     try {
       const response = await fetch('/api/lessons/convert-context', {
@@ -97,6 +101,7 @@ export function ConvertContextModal({
           lessonId,
           mediaId,
           promptId: selectedPromptId,
+          mode,
         }),
         credentials: 'include',
       })
@@ -114,7 +119,11 @@ export function ConvertContextModal({
       }
 
       const charCount = data.data?.extractedChunkLength || 0
-      setSuccess(`Extracted ${charCount} characters! Context text updated.`)
+      setSuccess(`Extracted ${charCount} characters. Context text updated.`)
+
+      if (data.data?.warnings) {
+        setWarnings(data.data.warnings)
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Conversion failed')
     } finally {
@@ -222,6 +231,47 @@ export function ConvertContextModal({
           </div>
         )}
 
+        {/* Mode toggle */}
+        {!isLoading && prompts.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <label
+              style={{
+                display: 'block',
+                fontSize: 12,
+                fontWeight: 500,
+                marginBottom: 6,
+                color: 'var(--theme-elevation-700)',
+              }}
+            >
+              Mode
+            </label>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13 }}>
+                <input
+                  type="radio"
+                  name="mode"
+                  value="replace"
+                  checked={mode === 'replace'}
+                  onChange={() => setMode('replace')}
+                  disabled={isConverting}
+                />
+                Replace
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13 }}>
+                <input
+                  type="radio"
+                  name="mode"
+                  value="append"
+                  checked={mode === 'append'}
+                  onChange={() => setMode('append')}
+                  disabled={isConverting}
+                />
+                Append
+              </label>
+            </div>
+          </div>
+        )}
+
         {/* Error state */}
         {error && (
           <div
@@ -251,6 +301,27 @@ export function ConvertContextModal({
             }}
           >
             {success}
+          </div>
+        )}
+
+        {/* Warnings */}
+        {warnings.length > 0 && (
+          <div
+            style={{
+              fontSize: 12,
+              color: 'var(--theme-elevation-800)',
+              padding: '8px 12px',
+              backgroundColor: 'var(--theme-elevation-100)',
+              borderRadius: 4,
+              borderLeft: '3px solid orange',
+              marginBottom: 16,
+            }}
+          >
+            {warnings.map((w, i) => (
+              <div key={i} style={{ marginBottom: i < warnings.length - 1 ? 4 : 0 }}>
+                {w}
+              </div>
+            ))}
           </div>
         )}
 
