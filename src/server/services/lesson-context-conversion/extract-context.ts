@@ -4,8 +4,8 @@
  * Extracts context text from lesson content files (PDF/images) using AI prompts.
  * The extracted text is stored in the lesson's lessonContextText field.
  *
- * PDFs are processed page-by-page with controlled concurrency (3 pages at a time)
- * for better extraction quality and to avoid truncation on longer documents.
+ * PDFs are processed page-by-page: each page is split into a single-page PDF,
+ * sent to the LLM independently, validated, then stitched into one LaTeX document.
  *
  * All Payload Local API calls use overrideAccess: false + user context for security.
  */
@@ -16,6 +16,7 @@ import type { UnifiedLLMProvider } from '@/infra/llm/providers/factory'
 import type { AIModel } from '@/infra/llm/models'
 import { getPdfBufferFromBlob, normalizeToAbsoluteUrl } from '@/server/services/pdf-fetcher'
 import { splitPdfIntoPages } from '@/server/utils/pdf-page-splitter'
+import { validateExtractedLatex } from './validate-latex'
 import type { Payload, User } from 'payload'
 
 // Controlled concurrency for page-by-page PDF processing
@@ -42,8 +43,9 @@ export interface ExtractContextResult {
 /**
  * Extract context text from a lesson content file and store in lessonContextText.
  *
- * Sends the entire file to the LLM in a single call, validates the LaTeX output,
- * and stores the result. Supports replace (default) and append modes.
+ * For PDFs: splits into individual pages, processes each page independently,
+ * validates LaTeX output, then stitches results into one document.
+ * For images: single LLM call with the full image.
  *
  * @param payload - Payload instance
  * @param user - Authenticated user for access control
@@ -55,7 +57,7 @@ export async function extractLessonContext(
   user: User,
   input: ExtractContextInput,
 ): Promise<ExtractContextResult> {
-  const { lessonId, promptId, mediaId, mode = 'append' } = input
+  const { lessonId, promptId, mediaId, mode = 'replace' } = input
   const warnings: string[] = []
 
   try {
@@ -168,29 +170,13 @@ export async function extractLessonContext(
       return { success: false, error: 'Failed to download media file' }
     }
 
-    // ========== Step 5: Check PDF page count and warn if large ==========
-    const warnings: string[] = []
-
-    if (isPdf) {
-      try {
-        const pageCount = await getPageCount(fileBuffer)
-        if (pageCount > PDF_PAGE_WARNING_THRESHOLD) {
-          warnings.push(
-            `This PDF has ${pageCount} pages. Extraction works best with up to ~${PDF_PAGE_WARNING_THRESHOLD} pages. Some content at the end may be missing — check the result and re-run if needed.`,
-          )
-        }
-      } catch {
-        // Page count is informational — don't fail if we can't read it
-      }
-    }
-
-    // ========== Step 6: Build prompt with lesson metadata ==========
+    // ========== Step 5: Build prompt with lesson metadata ==========
     const lessonTitle = lessonTyped.title || 'Untitled Lesson'
     const lessonDescription = lessonTyped.description || ''
     const metadataText = `Lesson: ${lessonTitle}\nDescription: ${lessonDescription}`
     const fullPrompt = `${promptTyped.template}\n\n${metadataText}`
 
-    // ========== Step 7: Call LLM via adapter ==========
+    // ========== Step 6: Create LLM adapter and model config ==========
     const { createGenkitUnifiedAdapter } =
       await import('@/infra/llm/genkit/adapters/unified-adapter')
     const adapter = await createGenkitUnifiedAdapter(payload)
@@ -204,7 +190,7 @@ export async function extractLessonContext(
       modelKey: 'PDF_TO_EXERCISE' as const,
     }
 
-    // ========== Process based on media type ==========
+    // ========== Step 7: Process based on media type ==========
     let extractedText: string
 
     if (isPdf) {
@@ -220,18 +206,20 @@ export async function extractLessonContext(
       for (let i = 0; i < pages.length; i += PAGE_CONCURRENCY) {
         const batch = pages.slice(i, i + PAGE_CONCURRENCY)
         const batchResults = await Promise.allSettled(
-          batch.map((pageBuffer, _batchIdx) =>
+          batch.map((pageBuffer) =>
             extractSinglePage(adapter, modelConfig, fullPrompt, pageBuffer, payload),
           ),
         )
 
-        // Collect results
         for (let j = 0; j < batchResults.length; j++) {
           const result = batchResults[j]
           const pageIndex = i + j
 
           if (result.status === 'fulfilled') {
             results.push({ pageIndex, latex: result.value.latex, warning: result.value.warning })
+            warnings.push(
+              `Page ${pageIndex + 1}/${totalPages}: extracted successfully (${result.value.latex.length} chars)`,
+            )
           } else {
             const errorMsg =
               result.reason instanceof Error ? result.reason.message : 'Unknown error'
@@ -256,7 +244,7 @@ export async function extractLessonContext(
         }
       }
 
-      // Report skipped pages
+      // Report summary
       const skippedCount = results.filter((r) => r.latex === null).length
       if (skippedCount > 0) {
         warnings.push(
@@ -272,20 +260,8 @@ export async function extractLessonContext(
       // Add size warning if needed
       if (extractedText.length > LATEX_SIZE_WARNING_THRESHOLD) {
         warnings.push(
-          `Warning: Extracted LaTeX (${extractedText.length} chars) exceeds ${LATEX_SIZE_WARNING_THRESHOLD} char threshold. Consider splitting into multiple lessons.`,
+          `Combined LaTeX is ${extractedText.length} chars (threshold: ${LATEX_SIZE_WARNING_THRESHOLD}). May approach lessonContextText limit.`,
         )
-      }
-
-      // Add per-page success messages
-      for (const r of results) {
-        if (r.latex !== null) {
-          warnings.push(
-            `Page ${r.pageIndex + 1}/${totalPages}: extracted successfully (${r.latex.length} chars)`,
-          )
-        }
-        if (r.warning) {
-          warnings.push(`Page ${r.pageIndex + 1}/${totalPages}: ${r.warning}`)
-        }
       }
     } else {
       // ========== Non-PDF (image): Single call, existing behavior ==========
@@ -296,25 +272,22 @@ export async function extractLessonContext(
         {
           prompt: fullPrompt,
           model: modelConfig,
-          attachments: [
-            {
-              data: base64Data,
-              mimeType,
-            },
-          ],
+          attachments: [{ data: base64Data, mimeType }],
         },
         payload,
       )
 
-      // Validate non-empty response
-      extractedText = response.text?.trim()
-
-      if (!extractedText) {
+      const responseText = response.text?.trim()
+      if (!responseText) {
         return { success: false, error: 'AI returned empty response', warnings }
       }
+
+      const validation = validateExtractedLatex(responseText)
+      warnings.push(...validation.warnings)
+      extractedText = validation.sanitizedText
     }
 
-    // ========== Step 7: Update lessonContextText based on mode ==========
+    // ========== Step 8: Update lessonContextText based on mode ==========
     let updatedContextText: string
     if (mode === 'append') {
       const existingContext = lessonTyped.lessonContextText || ''
@@ -323,11 +296,10 @@ export async function extractLessonContext(
         ? `${existingContext}${delimiter}${extractedText}`
         : extractedText
     } else {
-      // replace mode
       updatedContextText = extractedText
     }
 
-    // ========== Step 8: Update lesson ==========
+    // ========== Step 9: Update lesson ==========
     await payload.update({
       collection: 'lessons',
       id: lessonId,
@@ -349,11 +321,11 @@ export async function extractLessonContext(
 
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
 
-    // Provide user-friendly messages for common failures
     if (errorMessage.includes('timeout') || errorMessage.includes('ETIMEDOUT')) {
       return {
         success: false,
         error: 'The extraction timed out. The PDF may be too large — try a shorter document.',
+        warnings: warnings.length > 0 ? warnings : undefined,
       }
     }
 
@@ -361,6 +333,7 @@ export async function extractLessonContext(
       return {
         success: false,
         error: 'AI service rate limit reached. Please wait a minute and try again.',
+        warnings: warnings.length > 0 ? warnings : undefined,
       }
     }
 
@@ -369,15 +342,21 @@ export async function extractLessonContext(
         success: false,
         error:
           'The PDF is too large for processing. Try splitting it into smaller parts (under 10 pages).',
+        warnings: warnings.length > 0 ? warnings : undefined,
       }
     }
 
-    return { success: false, error: errorMessage }
+    return {
+      success: false,
+      error: errorMessage,
+      warnings: warnings.length > 0 ? warnings : undefined,
+    }
   }
 }
 
 /**
  * Extract LaTeX content from a single PDF page.
+ * Uses validateExtractedLatex for full validation (braces, environments, fonts, sanitization).
  */
 async function extractSinglePage(
   adapter: UnifiedLLMProvider,
@@ -392,12 +371,7 @@ async function extractSinglePage(
     {
       prompt,
       model: modelConfig,
-      attachments: [
-        {
-          data: base64Data,
-          mimeType: 'application/pdf',
-        },
-      ],
+      attachments: [{ data: base64Data, mimeType: 'application/pdf' }],
     },
     payload,
   )
@@ -408,81 +382,154 @@ async function extractSinglePage(
     throw new Error('AI returned empty response')
   }
 
-  // LaTeX validation - check for balanced braces (ignoring escaped braces like \{ \})
-  let braceBalance = 0
-  for (let i = 0; i < extractedText.length; i++) {
-    if (extractedText[i] === '\\') {
-      i++ // skip escaped character
-      continue
-    }
-    if (extractedText[i] === '{') braceBalance++
-    if (extractedText[i] === '}') braceBalance--
-  }
+  const validation = validateExtractedLatex(extractedText)
+  const allWarnings = [...validation.warnings, ...validation.errors]
+  const warning = allWarnings.length > 0 ? allWarnings.join('; ') : undefined
 
-  if (braceBalance !== 0) {
-    const warning =
-      braceBalance > 0
-        ? `LaTeX validation warning — ${braceBalance} unclosed {`
-        : `LaTeX validation warning — ${Math.abs(braceBalance)} extra }`
-    // Still return the text, but include a warning
-    return { latex: extractedText, warning }
-  }
-
-  return { latex: extractedText }
+  return { latex: validation.sanitizedText, warning }
 }
 
 /**
  * Stitch multiple LaTeX page results into a single valid LaTeX document.
  *
- * - Keeps the preamble (\documentclass through \begin{document}) from the first page only
- * - Extracts content from BETWEEN \begin{document} and \end{document} for all pages
- * - Joins content in page order
- * - Ensures one \end{document} at the end
+ * Strategy:
+ * 1. Take the preamble (\documentclass through \begin{document}) from page 1
+ * 2. Extract content between \begin{document} and \end{document} from ALL pages
+ * 3. Strip per-page artifacts: outline comments, page headers, \begin{hebrew}/\end{hebrew}
+ * 4. Separate exercise content from solution content
+ * 5. Combine: preamble + all exercises + all solutions + \end{document}
  */
 function stitchLatexPages(pages: string[]): string {
   if (pages.length === 0) return ''
   if (pages.length === 1) return pages[0]
 
-  /**
-   * Extract content between \begin{document} and \end{document}.
-   * Returns the content INSIDE the document environment, or the whole page if no environment found.
-   */
-  function extractContent(page: string): string {
-    const beginDoc = page.indexOf('\\begin{document}')
-    const endDoc = page.indexOf('\\end{document}')
-
-    if (beginDoc !== -1 && endDoc !== -1 && beginDoc < endDoc) {
-      // Extract content between \begin{document} and \end{document}
-      return page.slice(beginDoc + '\\begin{document}'.length, endDoc).trim()
-    }
-
-    // Fallback: return the whole page (no standard preamble found)
-    return page.trim()
-  }
-
-  /**
-   * Extract the preamble (everything up to and including \begin{document}).
-   */
-  function extractPreamble(page: string): string {
-    const beginDoc = page.indexOf('\\begin{document}')
-
-    if (beginDoc !== -1) {
-      return page.slice(0, beginDoc + '\\begin{document}'.length)
-    }
-
-    return ''
-  }
-
   const preamble = extractPreamble(pages[0])
-  const allContent = pages
-    .map(extractContent)
-    .filter((c) => c.length > 0)
-    .join('\n\n')
+  const allContent = pages.map(extractDocumentContent)
+
+  // Separate exercises from solutions across all pages
+  const exerciseParts: string[] = []
+  const solutionParts: string[] = []
+
+  for (const content of allContent) {
+    const { exercises, solutions } = splitExercisesAndSolutions(content)
+    if (exercises.trim()) exerciseParts.push(exercises.trim())
+    if (solutions.trim()) solutionParts.push(solutions.trim())
+  }
+
+  // Build final document
+  const parts: string[] = []
+
+  if (exerciseParts.length > 0) {
+    parts.push(exerciseParts.join('\n\n'))
+  }
+
+  if (solutionParts.length > 0) {
+    parts.push('\\newpage\n\\section*{פתרונות}\n\n' + solutionParts.join('\n\n'))
+  }
+
+  const body = parts.join('\n\n')
 
   if (preamble) {
-    return `${preamble}\n\n${allContent}\n\n\\end{document}`
+    return `${preamble}\n\n${body}\n\n\\end{document}`
   }
 
-  // No preamble found - just join content
-  return allContent
+  return body
+}
+
+/**
+ * Extract the preamble (everything up to and including \begin{document}).
+ */
+function extractPreamble(page: string): string {
+  const beginDoc = page.indexOf('\\begin{document}')
+  if (beginDoc !== -1) {
+    return page.slice(0, beginDoc + '\\begin{document}'.length)
+  }
+  return ''
+}
+
+/**
+ * Extract content between \begin{document} and \end{document},
+ * then clean up per-page artifacts.
+ */
+function extractDocumentContent(page: string): string {
+  let content = page
+
+  // Extract between \begin{document} and \end{document} if present
+  const beginDoc = content.indexOf('\\begin{document}')
+  const endDoc = content.indexOf('\\end{document}')
+  if (beginDoc !== -1 && endDoc !== -1 && beginDoc < endDoc) {
+    content = content.slice(beginDoc + '\\begin{document}'.length, endDoc)
+  }
+
+  // Strip preamble fragments that might appear without \begin{document}
+  content = content.replace(/\\documentclass[\s\S]*?(?=\\begin\{|\\section|\\noindent|$)/m, '')
+
+  // Strip \begin{hebrew} and \end{hebrew} — we'll handle language wrapping at document level
+  content = content.replace(/\\begin\{hebrew\}/g, '')
+  content = content.replace(/\\end\{hebrew\}/g, '')
+
+  // Strip outline comment blocks (% OUTLINE: ... through next non-comment line)
+  content = content.replace(/^%\s*(?:OUTLINE|\\begin\{comment\})[\s\S]*?(?=\n[^%\n])/gm, '')
+  // Strip individual % comment lines at the start
+  content = content.replace(/^%[^\n]*\n/gm, '')
+
+  // Strip repeated page headers like "מתמטיקה, חורף תשפ"ה, מס' 35471 + נספח"
+  content = content.replace(/^\\noindent\s*\n*מתמטיקה,.*$/gm, '')
+
+  // Strip page number lines like "-3-", "- 5 -", "05"
+  content = content.replace(/^\\noindent\s*\n*-\s*\d+\s*-\s*$/gm, '')
+  content = content.replace(/^\s*0\d\s*$/gm, '')
+
+  // Strip "המשך מעבר לדף" / "המשך בעמוד N" continuation lines
+  content = content.replace(/^\\noindent\s*\n*\/המשך.*\/\s*$/gm, '')
+
+  // Strip bare \section*{} with empty braces (stitching artifacts)
+  content = content.replace(/\\section\*\{\s*\}/g, '')
+
+  // Clean up excessive blank lines
+  content = content.replace(/\n{4,}/g, '\n\n\n')
+
+  return content.trim()
+}
+
+/**
+ * Split page content into exercises part and solutions part.
+ * Solutions are identified by \section*{פתרונות} or \subsection*{פתרון שאלה N} headers.
+ */
+function splitExercisesAndSolutions(content: string): {
+  exercises: string
+  solutions: string
+} {
+  // Find the first solutions section marker
+  const solutionsMarkers = [/\\newpage\s*\\section\*\{פתרונות\}/, /\\section\*\{פתרונות\}/]
+
+  let splitIndex = -1
+  for (const marker of solutionsMarkers) {
+    const match = content.match(marker)
+    if (match && match.index !== undefined) {
+      splitIndex = match.index
+      break
+    }
+  }
+
+  if (splitIndex === -1) {
+    // No solutions section found — check for individual solution headers
+    const solMatch = content.match(/\\subsection\*\{פתרון שאלה/)
+    if (solMatch && solMatch.index !== undefined) {
+      splitIndex = solMatch.index
+    }
+  }
+
+  if (splitIndex === -1) {
+    return { exercises: content, solutions: '' }
+  }
+
+  const exercises = content.slice(0, splitIndex).trim()
+  let solutions = content.slice(splitIndex).trim()
+
+  // Strip the \section*{פתרונות} header itself — we'll add one unified header during stitching
+  solutions = solutions.replace(/^\\newpage\s*/, '')
+  solutions = solutions.replace(/^\\section\*\{פתרונות\}\s*/, '')
+
+  return { exercises, solutions }
 }
