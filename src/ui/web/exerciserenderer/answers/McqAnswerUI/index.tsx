@@ -65,7 +65,9 @@ export function McqAnswerUI({
               key={option.id}
               className={cn(
                 'relative flex items-start gap-3 p-card-padding-sm border-2 rounded-xl cursor-pointer transition-all duration-normal bg-background/50 dark:bg-card dark:shadow-card overflow-hidden',
-                !isSelected && !showAsCorrect && 'border-border/40 dark:border-border/50 hover:border-[hsl(var(--tab-learn)/0.5)] dark:hover:shadow-card-hover',
+                !isSelected &&
+                  !showAsCorrect &&
+                  'border-border/40 dark:border-border/50 hover:border-[hsl(var(--tab-learn)/0.5)] dark:hover:shadow-card-hover',
                 isSelected && 'border-[hsl(var(--tab-learn))] bg-[hsl(var(--tab-learn)/0.07)]',
                 showAsCorrect && 'border-success bg-success/10',
                 disabled && 'opacity-50 cursor-not-allowed',

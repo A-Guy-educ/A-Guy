@@ -69,7 +69,10 @@ export function McqQuestion({
       {/* Question container — translucent in light mode, solid in dark */}
       <div className="rounded-2xl border border-border/40 bg-background/60 dark:bg-card dark:border-border/60 dark:shadow-card p-content-gap">
         {/* Color accent bar */}
-        <div className="w-8 h-1 rounded-full mb-3" style={{ backgroundColor: 'hsl(var(--tab-learn))' }} />
+        <div
+          className="w-8 h-1 rounded-full mb-3"
+          style={{ backgroundColor: 'hsl(var(--tab-learn))' }}
+        />
         <div className="text-body-md font-medium text-foreground leading-relaxed">
           <RichTextRenderer block={promptBlock} />
         </div>

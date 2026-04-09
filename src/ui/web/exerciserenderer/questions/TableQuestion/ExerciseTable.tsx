@@ -89,8 +89,10 @@ export function ExerciseTable({
                 const align = getAlignment(table, ci)
 
                 return (
-                  <td key={ci} className={cn('p-3.5', alignClass[align], 'border border-border/30')}>
-
+                  <td
+                    key={ci}
+                    className={cn('p-3.5', alignClass[align], 'border border-border/30')}
+                  >
                     {fillable ? (
                       <FillableInput
                         cellKey={key}
@@ -139,8 +141,10 @@ function FillableInput({ cellKey, value, onChange, result, disabled, align }: Fi
           align === 'left' && 'text-left',
           align === 'center' && 'text-center',
           align === 'right' && 'text-right',
-          result === true && 'border-success bg-success/10 text-success-foreground pe-8 shadow-card',
-          result === false && 'border-destructive bg-destructive/10 text-destructive pe-8 shadow-card',
+          result === true &&
+            'border-success bg-success/10 text-success-foreground pe-8 shadow-card',
+          result === false &&
+            'border-destructive bg-destructive/10 text-destructive pe-8 shadow-card',
           result === undefined &&
             'border-[hsl(var(--tab-learn)/0.4)] bg-[hsl(var(--tab-learn)/0.04)] focus:border-solid focus:border-[hsl(var(--tab-learn))] focus:bg-card focus:shadow-[0_0_0_3px_hsl(var(--tab-learn)/0.15)] focus:outline-none',
           disabled && 'opacity-50 cursor-not-allowed',

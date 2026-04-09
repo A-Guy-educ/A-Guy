@@ -103,7 +103,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 />
                 <Header />
                 <NavigationBar />
-                <div id="main-content" className="flex-1">{children}</div>
+                <div id="main-content" className="flex-1">
+                  {children}
+                </div>
                 <Footer />
                 <Toaster />
               </PasswordLoginProvider>

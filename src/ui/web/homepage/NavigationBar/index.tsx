@@ -47,9 +47,7 @@ export function NavigationBar() {
                 className={cn(
                   'relative z-10 flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 min-h-[48px] text-body-sm rounded-xl transition-all duration-fast font-semibold cursor-pointer',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                  isActive
-                    ? ''
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                  isActive ? '' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
                 )}
               >
                 {isActive && (

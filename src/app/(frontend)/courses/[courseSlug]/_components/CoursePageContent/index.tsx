@@ -15,7 +15,6 @@ import { ExamReminderBubble } from '../ExamReminderBubble'
 import { ExamsTab } from '../ExamsTab'
 import { LessonListTab } from '../LessonListTab'
 
-
 interface CoursePageContentProps {
   course: Course
   chapters: Chapter[]

@@ -370,7 +370,11 @@ export function StudyContent({
                           style={{ backgroundColor: tabColor.stroke }}
                         />
                         <h2 className="text-heading-sm font-bold text-muted-foreground tracking-wide">
-                          {group.chapterLabel && <span className="uppercase text-[10px] tracking-widest mr-2 opacity-70">{group.chapterLabel}</span>}
+                          {group.chapterLabel && (
+                            <span className="uppercase text-[10px] tracking-widest mr-2 opacity-70">
+                              {group.chapterLabel}
+                            </span>
+                          )}
                           {group.chapterTitle}
                         </h2>
                       </div>

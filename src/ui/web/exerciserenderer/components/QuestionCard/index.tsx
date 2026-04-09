@@ -90,7 +90,9 @@ export function QuestionCard({
               }}
               className="w-8 h-8 rounded-xl flex items-center justify-center bg-primary/10 border-2 border-primary/20 shadow-card"
             >
-              <span className="font-extrabold text-body-sm text-primary tracking-tight">{questionLabel}</span>
+              <span className="font-extrabold text-body-sm text-primary tracking-tight">
+                {questionLabel}
+              </span>
             </motion.div>
           </div>
         )}

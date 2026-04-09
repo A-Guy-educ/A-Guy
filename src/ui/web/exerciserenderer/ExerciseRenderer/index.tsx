@@ -398,9 +398,7 @@ export function ExerciseRenderer({
                   const result = checkResults[q.id]
                   const isCorrect = result?.isCorrect
                   const isChecked = !!result
-                  const qLabel = isHebrew
-                    ? HEBREW_LETTERS[i] || String(i + 1)
-                    : String(i + 1)
+                  const qLabel = isHebrew ? HEBREW_LETTERS[i] || String(i + 1) : String(i + 1)
                   return (
                     <div
                       key={q.id}
@@ -408,7 +406,9 @@ export function ExerciseRenderer({
                       className={cn(
                         'w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold transition-all duration-300',
                         !isChecked && 'bg-muted border border-border/40 text-muted-foreground',
-                        isChecked && !isCorrect && 'bg-destructive/15 border border-destructive/30 text-destructive',
+                        isChecked &&
+                          !isCorrect &&
+                          'bg-destructive/15 border border-destructive/30 text-destructive',
                         isCorrect && 'bg-success/15 border border-success/30 text-success',
                       )}
                     >

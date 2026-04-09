@@ -100,14 +100,20 @@ export function FreeResponseQuestion({
     <div className="flex flex-col gap-3">
       {/* Question container */}
       <div className="rounded-2xl border border-border/40 bg-background/60 dark:bg-card dark:border-border/60 dark:shadow-card p-content-gap">
-        <div className="w-8 h-1 rounded-full mb-3" style={{ backgroundColor: 'hsl(var(--tab-ask))' }} />
+        <div
+          className="w-8 h-1 rounded-full mb-3"
+          style={{ backgroundColor: 'hsl(var(--tab-ask))' }}
+        />
         <div className="text-body-md font-medium text-foreground leading-relaxed">
           <RichTextRenderer block={promptBlock} />
         </div>
       </div>
 
       {/* Answer box with formula button */}
-      <div className="relative rounded-xl border-2 border-[hsl(var(--tab-ask)/0.3)] bg-[hsl(var(--tab-ask)/0.04)] dark:border-[hsl(var(--tab-ask)/0.4)] dark:shadow-card overflow-hidden" data-math-controls>
+      <div
+        className="relative rounded-xl border-2 border-[hsl(var(--tab-ask)/0.3)] bg-[hsl(var(--tab-ask)/0.04)] dark:border-[hsl(var(--tab-ask)/0.4)] dark:shadow-card overflow-hidden"
+        data-math-controls
+      >
         {/* Textarea — always mounted, hidden behind overlay when in view mode */}
         <Textarea
           ref={textareaRef}

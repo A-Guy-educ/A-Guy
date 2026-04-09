@@ -66,7 +66,10 @@ export function MatchingItem({
           'border-border/40 dark:border-border/50 hover:border-[hsl(var(--tab-exams)/0.5)] dark:hover:shadow-card-hover cursor-pointer',
         canSelect && !isConnected && 'cursor-pointer',
         isSelected && 'border-[hsl(var(--tab-exams))] bg-[hsl(var(--tab-exams)/0.08)]',
-        isConnected && !isSelected && !hasResult(correctState) && 'border-[hsl(var(--tab-exams)/0.4)] bg-[hsl(var(--tab-exams)/0.04)]',
+        isConnected &&
+          !isSelected &&
+          !hasResult(correctState) &&
+          'border-[hsl(var(--tab-exams)/0.4)] bg-[hsl(var(--tab-exams)/0.04)]',
         disabled && 'cursor-not-allowed opacity-50',
         correctState === true && 'border-success bg-success/10',
         correctState === false && 'border-destructive bg-destructive/10',
@@ -88,10 +91,7 @@ export function MatchingItem({
               : isConnected
                 ? 'hsl(var(--tab-exams)/0.5)'
                 : 'transparent',
-          opacity:
-            isSelected || hasResult(correctState) || isConnected
-              ? 1
-              : 0,
+          opacity: isSelected || hasResult(correctState) || isConnected ? 1 : 0,
         }}
       />
       <span className="w-6 h-6 rounded-lg bg-muted flex items-center justify-center font-bold text-body-xs text-muted-foreground min-w-[24px] shrink-0 border border-border/30">

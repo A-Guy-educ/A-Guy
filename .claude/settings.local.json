@@ -43,7 +43,10 @@
       "Bash(gh issue list:*)",
       "Bash(gh run list:*)",
       "Bash(gh branch list:*)",
-      "Bash(pnpm -s tsc:*)"
+      "Bash(pnpm -s tsc:*)",
+      "WebFetch(domain:minimax-algeng-chat-tts-us.oss-us-east-1.aliyuncs.com)",
+      "Bash(pnpm dev:clean)",
+      "Bash(pnpm exec:*)"
     ]
   },
   "mcpServers": {}

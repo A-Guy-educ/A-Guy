@@ -69,7 +69,10 @@ export function TrueFalseQuestion({
     <div className="flex flex-col gap-content-gap">
       {/* Question container */}
       <div className="rounded-2xl border border-border/40 bg-background/60 dark:bg-card dark:border-border/60 dark:shadow-card p-content-gap">
-        <div className="w-8 h-1 rounded-full mb-3" style={{ backgroundColor: 'hsl(var(--tab-practice))' }} />
+        <div
+          className="w-8 h-1 rounded-full mb-3"
+          style={{ backgroundColor: 'hsl(var(--tab-practice))' }}
+        />
         <div className="text-body-md font-medium text-foreground leading-relaxed">
           <RichTextRenderer block={promptBlock} />
         </div>
@@ -107,7 +110,9 @@ export function TrueFalseQuestion({
                 !disabled &&
                   !isSelected &&
                   'border-border/40 dark:border-border/50 hover:border-[hsl(var(--tab-practice)/0.5)] dark:hover:shadow-card-hover cursor-pointer',
-                isSelected && !showFeedback && `border-[hsl(var(--tab-practice))] bg-[hsl(var(--tab-practice)/0.08)]`,
+                isSelected &&
+                  !showFeedback &&
+                  `border-[hsl(var(--tab-practice))] bg-[hsl(var(--tab-practice)/0.08)]`,
                 showFeedback &&
                   isSelected &&
                   checkResult.isCorrect &&

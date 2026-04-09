@@ -142,7 +142,10 @@ export function MatchingQuestion({
     <div className="flex flex-col gap-content-gap">
       {/* Question container */}
       <div className="rounded-2xl border border-border/40 bg-background/60 dark:bg-card dark:border-border/60 dark:shadow-card p-content-gap">
-        <div className="w-8 h-1 rounded-full mb-3" style={{ backgroundColor: 'hsl(var(--tab-exams))' }} />
+        <div
+          className="w-8 h-1 rounded-full mb-3"
+          style={{ backgroundColor: 'hsl(var(--tab-exams))' }}
+        />
         <div className="text-body-md font-medium text-foreground leading-relaxed">
           <RichTextRenderer block={promptBlock} />
         </div>

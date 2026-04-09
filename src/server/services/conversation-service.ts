@@ -316,13 +316,15 @@ export class ConversationService {
    * Validate context access for a user
    * Checks enrollment/ownership for the target context
    *
-   * NOTE: This implementation assumes open access for now.
-   * In production, this should check actual enrollment data.
+   * ⚠️  ENROLLMENT CHECK NOT YET IMPLEMENTED
+   * Currently grants open access to all authenticated users.
+   * This is a known security gap — enrollment validation must be wired up
+   * before this service is used in production with paid/restricted content.
    *
-   * TODO: Implement based on your enrollment model
-   * - Check Enrollments collection
-   * - Or check User.enrolledCourses field
-   * - Or check Course.students relationship
+   * To implement:
+   * - Option A: Add `User.enrolledCourses` field and check membership
+   * - Option B: Add `Course.students` relationship field
+   * - Option C: Add `Enrollments` collection with user/course refs
    */
   async validateContextAccess(
     userId: string,
@@ -335,38 +337,31 @@ export class ConversationService {
       return true
     }
 
-    // TODO: Implement actual enrollment check
-    // For now, return true (all authenticated users can access)
-    // Replace with real logic when enrollment system is implemented
+    // ⚠️  Open access — all authenticated users can access all content.
+    // Replace this with real enrollment validation once the enrollment model exists.
     //
     // Example implementation:
     // const { relationTo, value: contextId } = contextRef
     // switch (relationTo) {
-    //   case 'exercises':
-    //     const exercise = await this.payload.findByID({
-    //       collection: 'exercises',
-    //       id: contextId,
-    //     })
+    //   case 'exercises': {
+    //     const exercise = await this.payload.findByID({ collection: 'exercises', id: contextId })
     //     return this.isEnrolledInCourse(userId, exercise.lesson)
-    //   case 'lessons':
-    //     const lesson = await this.payload.findByID({
-    //       collection: 'lessons',
-    //       id: contextId,
-    //     })
+    //   }
+    //   case 'lessons': {
+    //     const lesson = await this.payload.findByID({ collection: 'lessons', id: contextId })
     //     return this.isEnrolledInCourse(userId, lesson.chapter)
-    //   case 'chapters':
-    //     const chapter = await this.payload.findByID({
-    //       collection: 'chapters',
-    //       id: contextId,
-    //     })
+    //   }
+    //   case 'chapters': {
+    //     const chapter = await this.payload.findByID({ collection: 'chapters', id: contextId })
     //     return this.isEnrolledInCourse(userId, chapter.course)
+    //   }
     //   case 'courses':
     //     return this.isEnrolledInCourse(userId, contextId)
     //   default:
     //     return false
     // }
 
-    logger.debug({ userId, contextRef }, 'Context access granted (open access mode)')
+    logger.warn({ userId, contextRef }, 'Context access granted — enrollment check not implemented')
     return true
   }
 
