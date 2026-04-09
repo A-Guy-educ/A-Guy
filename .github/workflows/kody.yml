@@ -451,4 +451,3 @@ jobs:
               body: `@kody fix-ci\nCI failed: [View logs](${runUrl})\nRun ID: ${runId}`,
             });
             core.info(`Posted @kody fix-ci on PR #${prNumber} for run ${runId}`);
-
