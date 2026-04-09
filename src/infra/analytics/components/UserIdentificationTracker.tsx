@@ -3,7 +3,8 @@
 import { detectBrowserLocale } from '@/i18n/config'
 import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 import { useEffect } from 'react'
-import { identify } from '../core/tracker'
+import { alias, identify } from '../core/tracker'
+import { getOrCreateAnonymousId } from '../utils/anonymous-id'
 import {
   getCachedUserProperties,
   shouldRefreshUserProperties,
@@ -97,8 +98,31 @@ export function UserIdentificationTracker() {
               // Cache user properties for future sessions
               updateCachedUserProperties(userProperties)
 
-              // Identify user with full properties (login only needs identify, not alias)
-              identify(user.id, userProperties)
+              // Check if this is a new Google OAuth registration (cookie set by OAuth callback)
+              const isNewOAuthRegistration = document.cookie.includes('new_oauth_registration=1')
+
+              if (isNewOAuthRegistration) {
+                // New OAuth user: alias anonymous history, then identify
+                alias(user.id, getOrCreateAnonymousId())
+                identify(user.id, { ...userProperties, is_new_user: true })
+
+                // Fire registration funnel events
+                systemEventBus.emit(SYSTEM_EVENTS.REGISTRATION_POPUP_ACTION, {
+                  outcome: 'Registered',
+                  method: 'Google',
+                })
+
+                systemEventBus.emit(SYSTEM_EVENTS.REGISTRATION_COMPLETED, {
+                  user_id: user.id,
+                  auth_method: 'google',
+                })
+
+                // Clear the cookie
+                document.cookie = 'new_oauth_registration=; max-age=0; path=/'
+              } else {
+                // Existing user login: identify only (no alias)
+                identify(user.id, userProperties)
+              }
 
               // Emit user_resolved after identify so events fire under the real user
               systemEventBus.emit(SYSTEM_EVENTS.USER_RESOLVED, {

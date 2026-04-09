@@ -205,6 +205,33 @@ export function initAnalyticsSubscriber(): () => void {
       })
     }),
 
+    // Registration Popup Funnel
+    safeSubscribe(SYSTEM_EVENTS.REGISTRATION_POPUP_SHOWN, (envelope) => {
+      const payload = envelope.payload as {
+        page_path?: string
+        trigger_type?: string
+        course_slug?: string
+      }
+      analytics.track(PRODUCT_EVENTS.REGISTRATION_POPUP_SHOWN, {
+        page_path: payload.page_path,
+        trigger_type: payload.trigger_type,
+        course_slug: payload.course_slug,
+      })
+    }),
+
+    safeSubscribe(SYSTEM_EVENTS.REGISTRATION_POPUP_ACTION, (envelope) => {
+      const payload = envelope.payload as {
+        outcome?: string
+        method?: string
+        page_path?: string
+      }
+      analytics.track(PRODUCT_EVENTS.REGISTRATION_POPUP_ACTION, {
+        outcome: payload.outcome,
+        method: payload.method,
+        page_path: payload.page_path,
+      })
+    }),
+
     // Registration Funnel
     safeSubscribe(SYSTEM_EVENTS.REGISTRATION_PROMPT_SHOWN, (envelope) => {
       const payload = envelope.payload as {

@@ -194,6 +194,15 @@ export async function createNewOAuthUser(
     // Redirect new OAuth users to persona selection (onboarding step)
     res.headers.set('Location', new URL(getOnboardingRedirect(returnTo), req.url).toString())
     setAuthCookie(res, payload, token)
+
+    // Set short-lived cookie so client can fire registration funnel events
+    res.cookies.set('new_oauth_registration', '1', {
+      maxAge: 300,
+      path: '/',
+      httpOnly: false,
+      sameSite: 'lax',
+    })
+
     return res
   } catch (error) {
     logOAuthError('session_issuance_failed', error, correlationId)

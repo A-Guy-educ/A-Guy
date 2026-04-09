@@ -210,6 +210,34 @@ export const RegistrationPromptShownSchema = z
 export type RegistrationPromptShownPayload = z.infer<typeof RegistrationPromptShownSchema>
 
 // ============================================================================
+// Registration Popup Shown Event
+// ============================================================================
+
+export const RegistrationPopupShownSchema = z
+  .object({
+    page_path: z.string().min(1, 'page_path is required'),
+    trigger_type: z.enum(['mandatory', 'gated', 'warning']),
+    course_slug: z.string().optional(),
+  })
+  .strict()
+
+export type RegistrationPopupShownPayload = z.infer<typeof RegistrationPopupShownSchema>
+
+// ============================================================================
+// Registration Popup Action Event
+// ============================================================================
+
+export const RegistrationPopupActionSchema = z
+  .object({
+    outcome: z.enum(['Registered', 'Did Not Register']),
+    method: z.string().optional(),
+    page_path: z.string().optional(),
+  })
+  .strict()
+
+export type RegistrationPopupActionPayload = z.infer<typeof RegistrationPopupActionSchema>
+
+// ============================================================================
 // Registration Completed Event
 // ============================================================================
 
@@ -420,6 +448,8 @@ export const eventSchemas = {
   [SYSTEM_EVENTS.PHOTO_SENT_TO_CHAT]: PhotoSentToChatSchema,
   [SYSTEM_EVENTS.LOGIN_MODAL_SHOWN]: LoginModalShownSchema,
   [SYSTEM_EVENTS.REGISTRATION_PROMPT_SHOWN]: RegistrationPromptShownSchema,
+  [SYSTEM_EVENTS.REGISTRATION_POPUP_SHOWN]: RegistrationPopupShownSchema,
+  [SYSTEM_EVENTS.REGISTRATION_POPUP_ACTION]: RegistrationPopupActionSchema,
   [SYSTEM_EVENTS.REGISTRATION_COMPLETED]: RegistrationCompletedSchema,
 
   // Exercise Help System
