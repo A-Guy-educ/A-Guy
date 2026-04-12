@@ -2,12 +2,11 @@
 
 import DOMPurify from 'dompurify'
 import { useEffect, useMemo, useState } from 'react'
+import type { HtmlBlock } from '@/server/payload/collections/Exercises/types'
+import { GuidedExplanationRunner } from '@/ui/web/GuidedExplanationRunner'
 
 interface HtmlBlockRendererProps {
-  block: {
-    type: 'html'
-    html: string
-  }
+  block: HtmlBlock
 }
 
 const PURIFY_CONFIG = {
@@ -67,10 +66,19 @@ const PURIFY_CONFIG = {
 }
 
 export function HtmlBlockRenderer({ block }: HtmlBlockRendererProps) {
+  // When a guided explanation payload is present, render the trusted runner
+  // instead of static HTML. Scripts are ours; Gemini sends parameters only.
+  if (block.guidedExplanation) {
+    return <GuidedExplanationRunner payload={block.guidedExplanation} />
+  }
+
+  return <StaticHtmlRenderer html={block.html} />
+}
+
+function StaticHtmlRenderer({ html }: { html: string }) {
   const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
-    // Force rel="noopener noreferrer" on links with target attribute to prevent tabnapping
     DOMPurify.addHook('afterSanitizeAttributes', (node) => {
       if (node.tagName === 'A' && node.getAttribute('target')) {
         node.setAttribute('rel', 'noopener noreferrer')
@@ -83,9 +91,9 @@ export function HtmlBlockRenderer({ block }: HtmlBlockRendererProps) {
   }, [])
 
   const cleanHtml = useMemo(() => {
-    if (!isMounted || !block.html?.trim()) return ''
-    return DOMPurify.sanitize(block.html, PURIFY_CONFIG)
-  }, [isMounted, block.html])
+    if (!isMounted || !html?.trim()) return ''
+    return DOMPurify.sanitize(html, PURIFY_CONFIG)
+  }, [isMounted, html])
 
   if (!cleanHtml) return null
 
