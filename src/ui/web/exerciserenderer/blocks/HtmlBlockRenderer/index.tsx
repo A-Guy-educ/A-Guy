@@ -88,6 +88,11 @@ function StaticHtmlRenderer({ html }: { html: string }) {
       if (node.tagName === 'A' && node.getAttribute('target')) {
         node.setAttribute('rel', 'noopener noreferrer')
       }
+      // Force every <button> to type="button" so author content cannot
+      // submit a surrounding form (e.g. the Payload admin editor).
+      if (node.tagName === 'BUTTON') {
+        node.setAttribute('type', 'button')
+      }
     })
     setIsMounted(true)
     return () => {
