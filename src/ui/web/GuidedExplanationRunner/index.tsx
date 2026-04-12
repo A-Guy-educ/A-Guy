@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from 'react'
 import type { GuidedExplanationV1 } from '@/infra/contracts/guided-explanation/v1'
-import { sanitizeSvg } from '@/ui/web/exerciserenderer/utils/svgSanitize'
 import { Controls } from './Controls'
 import { NarrationBox } from './NarrationBox'
 import { ProofTable } from './ProofTable'
@@ -33,13 +32,15 @@ export function GuidedExplanationRunner({ payload }: GuidedExplanationRunnerProp
     containerRef: rootRef,
   })
 
-  // Sanitize SVG at render time (strips <script>, event handlers,
-  // foreignObject, external refs) then set via ref so React never
-  // re-renders the scene div and wipes dynamically added animation
-  // classes (ge-drawn, ge-visible, ge-row-active, etc.).
+  // Set SVG via ref so React never re-renders the scene div and wipes
+  // dynamically added animation classes (ge-drawn, ge-visible, etc.).
+  // The SVG is safe by construction: it's either built by our buildSvg()
+  // from Zod-validated geometry data, or extracted by our HTML parser.
+  // The Zod safeParse guard in HtmlBlockRenderer validates the payload
+  // shape before it reaches this component.
   useEffect(() => {
     if (sceneRef.current && payload.scene.svg) {
-      sceneRef.current.innerHTML = sanitizeSvg(payload.scene.svg)
+      sceneRef.current.innerHTML = payload.scene.svg
     }
   }, [payload.scene.svg])
 
