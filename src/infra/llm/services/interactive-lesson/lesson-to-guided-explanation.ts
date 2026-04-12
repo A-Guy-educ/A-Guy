@@ -20,8 +20,9 @@ function pointMap(geometry: GeometryData): Map<string, GeoPoint> {
   return map
 }
 
+/** Canonical segment id — always alphabetically sorted so A-D and D-A map to the same id. */
 function segmentId(from: string, to: string): string {
-  return `seg-${from}-${to}`
+  return from < to ? `seg-${from}-${to}` : `seg-${to}-${from}`
 }
 
 function buildSvg(geometry: GeometryData): string {

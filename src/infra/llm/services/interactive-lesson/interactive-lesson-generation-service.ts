@@ -37,8 +37,9 @@ export async function generateInteractiveLesson(
       // complex multi-part geometry proofs. 2.5 Flash with thinking produces 18-20.
       // The "googleai/" prefix tells the adapter to skip DB config resolution.
       name: 'googleai/gemini-2.5-flash',
-      // Thinking tokens count against maxOutputTokens — budget for both.
-      maxOutputTokens: 65536,
+      // Thinking tokens count against maxOutputTokens — budget generously
+      // to avoid truncated JSON on complex multi-step problems.
+      maxOutputTokens: 131072,
     }
 
     const prompt = buildPrompt(input.locale)
