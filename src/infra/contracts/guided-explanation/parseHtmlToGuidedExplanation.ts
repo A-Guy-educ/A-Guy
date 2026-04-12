@@ -97,12 +97,20 @@ function parseScriptSteps(script: string): RawStep[] {
   const steps: RawStep[] = []
   let current: RawStep = { actions: [] }
 
-  // Split the animation function body into lines
-  const lines = script.split('\n').map((l) => l.trim())
+  // Split the animation function body into statements. First split by
+  // newlines, then split each line by `;` so that multiple calls on one
+  // line (e.g. `show('a'); show('b'); show('c');`) are each processed.
+  const statements: string[] = []
+  for (const line of script.split('\n')) {
+    for (const part of line.split(';')) {
+      const trimmed = part.trim()
+      if (trimmed) statements.push(trimmed)
+    }
+  }
 
-  for (const line of lines) {
+  for (const stmt of statements) {
     // sayAndWait("display", "speech?")
-    const sayMatch = line.match(
+    const sayMatch = stmt.match(
       /sayAndWait\(\s*["'`]([\s\S]*?)["'`](?:\s*,\s*["'`]([\s\S]*?)["'`])?\s*\)/,
     )
     if (sayMatch) {
@@ -124,21 +132,21 @@ function parseScriptSteps(script: string): RawStep[] {
     }
 
     // show('id')
-    const showMatch = line.match(/\bshow\(\s*['"`]([^'"`]+)['"`]\s*\)/)
+    const showMatch = stmt.match(/\bshow\(\s*['"`]([^'"`]+)['"`]\s*\)/)
     if (showMatch) {
       current.actions.push({ op: 'show', id: showMatch[1] })
       continue
     }
 
     // draw('id')
-    const drawMatch = line.match(/\bdraw\(\s*['"`]([^'"`]+)['"`]\s*\)/)
+    const drawMatch = stmt.match(/\bdraw\(\s*['"`]([^'"`]+)['"`]\s*\)/)
     if (drawMatch) {
       current.actions.push({ op: 'draw', id: drawMatch[1] })
       continue
     }
 
     // highlightRow(N) — N might be a number or a string
-    const highlightMatch = line.match(/\bhighlightRow\(\s*['"`]?([^'"`\s)]+)['"`]?\s*\)/)
+    const highlightMatch = stmt.match(/\bhighlightRow\(\s*['"`]?([^'"`\s)]+)['"`]?\s*\)/)
     if (highlightMatch) {
       const rowId = `row-${highlightMatch[1]}`
       current.actions.push({ op: 'highlightRow', rowId })
@@ -146,7 +154,7 @@ function parseScriptSteps(script: string): RawStep[] {
     }
 
     // await sleep(ms)
-    const sleepMatch = line.match(/sleep\(\s*(\d+)\s*\)/)
+    const sleepMatch = stmt.match(/sleep\(\s*(\d+)\s*\)/)
     if (sleepMatch) {
       current.actions.push({ op: 'wait', ms: parseInt(sleepMatch[1], 10) })
       continue
