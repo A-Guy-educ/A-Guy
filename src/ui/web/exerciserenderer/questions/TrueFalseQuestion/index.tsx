@@ -84,7 +84,6 @@ export function TrueFalseQuestion({
           const showFeedback = checkResult !== null
           // True = blue, False = orange-red — distinct identities
           const optionColor = option.value === true ? 'hsl(217 91% 60%)' : 'hsl(25 95% 53%)'
-          const optionColorVar = option.value === true ? 'var(--tab-learn)' : 'var(--badge-orange)'
 
           const labelBlock: RichTextBlock = {
             ...option.label,
