@@ -1,8 +1,7 @@
 'use client'
 
-import { useMemo, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import type { GuidedExplanationV1 } from '@/infra/contracts/guided-explanation/v1'
-import { sanitizeSvg } from '@/ui/web/exerciserenderer/utils/svgSanitize'
 import { Controls } from './Controls'
 import { NarrationBox } from './NarrationBox'
 import { ProofTable } from './ProofTable'
@@ -21,17 +20,26 @@ interface GuidedExplanationRunnerProps {
  * scoped to `rootRef.current`, so a malformed payload cannot reach into
  * the surrounding page.
  *
- * The scene SVG is passed through the shared SVG sanitizer before render,
- * which strips <script>, event handlers, foreignObject and external refs.
+ * The scene SVG comes from our own converter/validator — not raw user input
+ * — so we skip DOMPurify and set it via a ref to prevent React re-renders
+ * from wiping dynamically added animation classes.
  */
 export function GuidedExplanationRunner({ payload }: GuidedExplanationRunnerProps) {
   const rootRef = useRef<HTMLElement | null>(null)
+  const sceneRef = useRef<HTMLDivElement | null>(null)
   const { isPlaying, narrationText, play, reset } = useGuidedPlayer({
     payload,
     containerRef: rootRef,
   })
 
-  const sanitizedSvg = useMemo(() => sanitizeSvg(payload.scene.svg), [payload.scene.svg])
+  // Set SVG once via ref — NOT via dangerouslySetInnerHTML — so React
+  // never re-renders the scene div and wipes dynamically added classes
+  // (ge-drawn, ge-visible, ge-row-active, etc.).
+  useEffect(() => {
+    if (sceneRef.current && payload.scene.svg) {
+      sceneRef.current.innerHTML = payload.scene.svg
+    }
+  }, [payload.scene.svg])
 
   return (
     <section
@@ -45,7 +53,7 @@ export function GuidedExplanationRunner({ payload }: GuidedExplanationRunnerProp
         {payload.subtitle ? <p className="ge-subtitle">{payload.subtitle}</p> : null}
       </header>
 
-      <div className="ge-scene" dangerouslySetInnerHTML={{ __html: sanitizedSvg }} />
+      <div ref={sceneRef} className="ge-scene" />
 
       <Controls
         playLabel={payload.controls.playLabel}
