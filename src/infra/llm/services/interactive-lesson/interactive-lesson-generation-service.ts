@@ -141,10 +141,26 @@ function validateLesson(parsed: Record<string, unknown>, locale: 'he' | 'en'): I
       narration: String(step.narration || ''),
       explanation: String(step.explanation || ''),
       durationSeconds: typeof step.durationSeconds === 'number' ? step.durationSeconds : 5,
-      highlightSegments: Array.isArray(step.highlightSegments) ? step.highlightSegments : [],
+      highlightSegments: Array.isArray(step.highlightSegments)
+        ? normalizeHighlightSegments(step.highlightSegments as unknown[])
+        : [],
       highlightPoints: Array.isArray(step.highlightPoints) ? step.highlightPoints : [],
     })),
   }
+}
+
+/**
+ * Gemini returns highlightSegments in varying formats:
+ *   - ["AB", "CD"]          → flat strings (2+ chars = label pairs)
+ *   - [["A","B"],["C","D"]] → already paired
+ * Normalize to [["A","B"],["C","D"]] so the converter can match segment ids.
+ */
+function normalizeHighlightSegments(raw: unknown[]): string[][] {
+  return raw.flatMap((item) => {
+    if (Array.isArray(item) && item.length === 2) return [[String(item[0]), String(item[1])]]
+    if (typeof item === 'string' && item.length >= 2) return [[item[0], item.slice(1)]]
+    return []
+  })
 }
 
 function validatePoint(p: Record<string, unknown>) {
@@ -152,14 +168,24 @@ function validatePoint(p: Record<string, unknown>) {
 }
 
 function validateSegment(s: Record<string, unknown>) {
+  // Gemini returns segments in varying formats:
+  //   { from: "A", to: "B" }
+  //   { p1: "A", p2: "B" }
+  //   { points: ["A", "B"] }
+  const pts = Array.isArray(s.points) ? s.points : []
+  const from = String(s.from || s.p1 || pts[0] || '')
+  const to = String(s.to || s.p2 || pts[1] || '')
   return {
-    from: String(s.from || ''),
-    to: String(s.to || ''),
+    from,
+    to,
     style: (['solid', 'dashed', 'bold'].includes(s.style as string) ? s.style : 'solid') as
       | 'solid'
       | 'dashed'
       | 'bold',
-    color: typeof s.color === 'string' ? s.color : undefined,
+    color:
+      typeof s.color === 'string' && !['solid', 'dashed', 'bold'].includes(s.color)
+        ? s.color
+        : undefined,
   }
 }
 
