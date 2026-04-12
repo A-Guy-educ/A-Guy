@@ -81,12 +81,24 @@ function parseContextText(contextText: string): ParsedSegment[] {
       solutionMatches.push({ index: match.index, number, fullMatch: match[0] })
     }
 
-    // Find the start of solutions section — check for \section*{פתרונות} or first solution header
+    // Find the start of solutions/post-exercise section
     const solutionsSectionMatch = runText.match(/\\section\*?\{פתרונות\}/)
     const solutionsSectionStart = solutionsSectionMatch?.index ?? runText.length
     const firstSolutionHeader =
       solutionMatches.length > 0 ? solutionMatches[0].index : runText.length
     const firstSolutionIndex = Math.min(solutionsSectionStart, firstSolutionHeader)
+
+    // Find end of exercise section — "בהצלחה!" after questions marks the boundary
+    // (answer summaries and דגשים sections come after it but before solutions)
+    // Use the LAST "בהצלחה!" before firstSolutionIndex as the exercise boundary
+    let exerciseEndIndex = firstSolutionIndex
+    const behatzlachaPattern = /בהצלחה!/g
+    let behatzlachaMatch
+    while ((behatzlachaMatch = behatzlachaPattern.exec(runText)) !== null) {
+      if (behatzlachaMatch.index < firstSolutionIndex) {
+        exerciseEndIndex = behatzlachaMatch.index
+      }
+    }
 
     // Find all exercise boundaries
     const exerciseMatches: Array<{
@@ -110,8 +122,8 @@ function parseContextText(contextText: string): ParsedSegment[] {
     // Also detect \setcounter{enumi}{N} + \item style exercises
     if (exerciseMatches.length === 0) {
       while ((match = setCounterPattern.exec(runText)) !== null) {
-        // Skip matches inside the solutions section
-        if (match.index >= firstSolutionIndex) continue
+        // Skip matches past the exercise section (answer summaries, solutions)
+        if (match.index >= exerciseEndIndex) continue
 
         const enumi = parseInt(match[1], 10)
         const number = enumi + 1 // \setcounter{enumi}{0} means exercise 1
@@ -146,7 +158,7 @@ function parseContextText(contextText: string): ParsedSegment[] {
         if (foundNumbers.has(ex.number + 1)) continue
 
         const searchStart = ex.index + ex.fullMatch.length
-        const region = runText.slice(searchStart, firstSolutionIndex)
+        const region = runText.slice(searchStart, exerciseEndIndex)
 
         let level = 0
         let exerciseNum = ex.number
@@ -162,7 +174,7 @@ function parseContextText(contextText: string): ParsedSegment[] {
             exerciseNum++
             const absIndex = searchStart + tokenMatch.index
             if (
-              absIndex >= firstSolutionIndex ||
+              absIndex >= exerciseEndIndex ||
               foundNumbers.has(exerciseNum) ||
               continuations.some((e) => e.number === exerciseNum)
             ) {
@@ -198,7 +210,7 @@ function parseContextText(contextText: string): ParsedSegment[] {
         const prevEx = byPos.filter((e) => e.number < gapStart).pop()
         const nextEx = byPos.find((e) => e.number > gapEnd)
         const regionStart = prevEx ? prevEx.index + prevEx.fullMatch.length : 0
-        const regionEnd = nextEx ? nextEx.index : firstSolutionIndex
+        const regionEnd = nextEx ? nextEx.index : exerciseEndIndex
         const region = runText.slice(regionStart, regionEnd)
 
         // Find top-level \item entries in \begin{enumerate} blocks without \setcounter
