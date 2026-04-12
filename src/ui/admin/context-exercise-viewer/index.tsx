@@ -218,6 +218,7 @@ function parseContextText(contextText: string): ParsedSegment[] {
           } else if (tok[0] === '\\end{enumerate}') {
             if (level === 1) inOrphan = false
             level--
+            if (level < 0) level = 0 // Reset: exited a block, back to ground
           } else if (tok[0].startsWith('\\setcounter')) {
             if (level === 1) inOrphan = false
           } else if (tok[0] === '\\item' && level === 1 && inOrphan) {
