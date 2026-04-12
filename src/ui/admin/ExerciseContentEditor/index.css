@@ -1777,6 +1777,30 @@
   background: var(--theme-elevation-200);
 }
 
+.html-block-editor-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.html-block-guided-info {
+  padding: 1rem;
+  background: var(--theme-elevation-50);
+  border-top: 2px solid var(--theme-success-500, #22c55e);
+}
+
+.html-block-guided-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--theme-text);
+  margin: 0;
+}
+
+.html-block-guided-meta {
+  font-size: 0.75rem;
+  color: var(--theme-elevation-500);
+  margin: 0.25rem 0 0;
+}
+
 .html-block-source-textarea {
   width: 100%;
   min-height: 200px;
