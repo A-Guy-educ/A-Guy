@@ -95,7 +95,7 @@ async function runStep(step: GuidedExplanationStep, ctx: RunStepCtx): Promise<vo
     const display = stripNiqqud(step.narrate.display)
     ctx.setNarrationText(display)
     const toSpeak = step.narrate.speech ?? step.narrate.display
-    await speak(toSpeak, ctx.locale, ctx.shouldCancel)
+    await speak(toSpeak, ctx.locale)
   }
   if (step.wait && !ctx.shouldCancel()) {
     await new Promise((r) => setTimeout(r, step.wait))

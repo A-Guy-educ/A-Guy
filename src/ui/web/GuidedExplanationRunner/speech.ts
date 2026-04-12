@@ -52,7 +52,7 @@ export function primeSpeechVoices(): void {
  * Falls back to a text-length-proportional timeout when speechSynthesis is
  * unavailable, matching the reference implementation.
  */
-export function speak(text: string, locale: string, _shouldCancel: () => boolean): Promise<void> {
+export function speak(text: string, locale: string): Promise<void> {
   return new Promise((resolve) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
       setTimeout(resolve, text.length * 80)

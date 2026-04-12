@@ -264,6 +264,9 @@ export function parseHtmlToGuidedExplanation(html: string): GuidedExplanationV1 
   if (!svgTag) return null // No SVG means this isn't a guided explanation
 
   const viewBox = extractAttr(svgTag, 'viewBox') || '0 0 450 300'
+  // Rewrite CSS class names to the engine's ge- prefix. SVG sanitization
+  // (stripping <script>, event handlers, foreignObject) happens at render
+  // time in GuidedExplanationRunner via sanitizeSvg().
   const rewrittenSvg = rewriteSvgClasses(svgTag)
 
   // Proof table

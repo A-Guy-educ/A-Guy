@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import type { GuidedExplanationV1 } from '@/infra/contracts/guided-explanation/v1'
+import { sanitizeSvg } from '@/ui/web/exerciserenderer/utils/svgSanitize'
 import { Controls } from './Controls'
 import { NarrationBox } from './NarrationBox'
 import { ProofTable } from './ProofTable'
@@ -32,12 +33,13 @@ export function GuidedExplanationRunner({ payload }: GuidedExplanationRunnerProp
     containerRef: rootRef,
   })
 
-  // Set SVG once via ref — NOT via dangerouslySetInnerHTML — so React
-  // never re-renders the scene div and wipes dynamically added classes
-  // (ge-drawn, ge-visible, ge-row-active, etc.).
+  // Sanitize SVG at render time (strips <script>, event handlers,
+  // foreignObject, external refs) then set via ref so React never
+  // re-renders the scene div and wipes dynamically added animation
+  // classes (ge-drawn, ge-visible, ge-row-active, etc.).
   useEffect(() => {
     if (sceneRef.current && payload.scene.svg) {
-      sceneRef.current.innerHTML = payload.scene.svg
+      sceneRef.current.innerHTML = sanitizeSvg(payload.scene.svg)
     }
   }, [payload.scene.svg])
 
