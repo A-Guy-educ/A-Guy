@@ -1,31 +1,22 @@
 'use client'
 
+import { interactiveLessonToGuidedExplanation } from '@/infra/llm/services/interactive-lesson/lesson-to-guided-explanation'
+import { GuidedExplanationRunner } from '@/ui/web/GuidedExplanationRunner'
 import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { ArrowRight, Loader2, PlusCircle } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import type {
-  AskMediaAttachEvent,
-  AskMediaRestoreEvent,
-  AskStepChangeEvent,
-  ExerciseFile,
-} from '../ask-types'
+import type { AskMediaAttachEvent, AskMediaRestoreEvent, ExerciseFile } from '../ask-types'
 import {
   ASK_MEDIA_ATTACH_EVENT,
   ASK_MEDIA_CLEAR_EVENT,
   ASK_MEDIA_RESTORE_EVENT,
-  ASK_STEP_CHANGE_EVENT,
 } from '../ask-types'
 import { AskExerciseCard } from '../AskExerciseCard'
-import { InteractivePlayer } from '../InteractivePlayer'
 import { useGenerateLesson } from '../InteractivePlayer/useGenerateLesson'
 
 function dispatchMediaAttach(detail: AskMediaAttachEvent) {
   window.dispatchEvent(new CustomEvent(ASK_MEDIA_ATTACH_EVENT, { detail }))
-}
-
-function dispatchStepChange(detail: AskStepChangeEvent) {
-  window.dispatchEvent(new CustomEvent(ASK_STEP_CHANGE_EVENT, { detail }))
 }
 
 export function AskPrimaryContent() {
@@ -120,30 +111,15 @@ export function AskPrimaryContent() {
     generate(currentFile.mediaId, locale === 'he' ? 'he' : 'en')
   }
 
-  const handleStepChange = useCallback(
-    (stepId: number) => {
-      if (!lesson) return
-      const step = lesson.steps.find((s) => s.id === stepId)
-      if (!step) return
-      dispatchStepChange({
-        stepId,
-        totalSteps: lesson.steps.length,
-        stepTitle: step.title,
-        stepNarration: step.narration,
-      })
-    },
-    [lesson],
-  )
-
   const handleBackToUpload = () => {
     // Reset — go back to upload view (lesson data discarded)
     window.location.reload()
   }
 
-  const showPlayer = status === 'done' && lesson
+  const guidedPayload = lesson ? interactiveLessonToGuidedExplanation(lesson) : null
 
   // Full-screen player takeover
-  if (showPlayer) {
+  if (status === 'done' && guidedPayload) {
     return (
       <div className="h-full flex flex-col">
         <button
@@ -153,8 +129,8 @@ export function AskPrimaryContent() {
           <ArrowRight className="w-4 h-4" />
           {t('backToUpload')}
         </button>
-        <div className="flex-1 overflow-hidden">
-          <InteractivePlayer lesson={lesson} onStepChange={handleStepChange} />
+        <div className="flex-1 overflow-auto py-section-xs">
+          <GuidedExplanationRunner payload={guidedPayload} />
         </div>
       </div>
     )
