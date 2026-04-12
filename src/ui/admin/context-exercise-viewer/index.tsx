@@ -58,9 +58,14 @@ function parseContextText(contextText: string): ParsedSegment[] {
 
     const exercises: ParsedExercise[] = []
 
-    // Pattern to match exercise titles: \textbf{תרגיל N ...} or \section*{תרגיל N ...}
+    // Pattern to match exercise titles:
+    //   \textbf{תרגיל N ...} or \section*{תרגיל N ...} or \subsection*{תרגיל N ...}
     const exercisePattern =
       /(?:\\textbf\{(תרגיל\s+(\d+)[^}]*)\}|\\section\*?\{(תרגיל\s+(\d+)[^}]*)\}|\\subsection\*?\{(תרגיל\s+(\d+)[^}]*)\})/g
+
+    // Pattern to match exercises defined via \setcounter{enumi}{N} followed by \item
+    const setCounterPattern =
+      /\\begin\{enumerate\}\s*\n?\s*\\setcounter\{enumi\}\{(\d+)\}\s*\n?\s*\\item\b/g
 
     // Find all exercise boundaries
     const exerciseMatches: Array<{
@@ -82,9 +87,23 @@ function parseContextText(contextText: string): ParsedSegment[] {
       })
     }
 
-    // Find all solution boundaries
+    // Also detect \setcounter{enumi}{N} + \item style exercises
+    if (exerciseMatches.length === 0) {
+      while ((match = setCounterPattern.exec(runText)) !== null) {
+        const enumi = parseInt(match[1], 10)
+        const number = enumi + 1 // \setcounter{enumi}{0} means exercise 1
+        exerciseMatches.push({
+          index: match.index,
+          title: `תרגיל ${number}`,
+          number,
+          fullMatch: match[0],
+        })
+      }
+    }
+
+    // Find all solution boundaries (matches both פתרון תרגיל N and פתרון שאלה N)
     const solutionPattern =
-      /(?:\\section\*?\{(פתרון\s+תרגיל\s+(\d+))\}|\\subsection\*?\{(פתרון\s+תרגיל\s+(\d+))\})/g
+      /(?:\\section\*?\{(פתרון\s+(?:תרגיל|שאלה)\s+(\d+))\}|\\subsection\*?\{(פתרון\s+(?:תרגיל|שאלה)\s+(\d+))\})/g
     const solutionMatches: Array<{
       index: number
       number: number
