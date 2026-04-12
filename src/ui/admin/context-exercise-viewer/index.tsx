@@ -127,8 +127,48 @@ function parseContextText(contextText: string): ParsedSegment[] {
         })
       }
 
-      // Sort by position in text to ensure correct order
-      exerciseMatches.sort((a, b) => a.index - b.index)
+      // Find continuation exercises: plain \item at the same enumerate level
+      // after a detected setcounter exercise (e.g. exercise 5 after setcounter{3}+\item)
+      const continuations: typeof exerciseMatches = []
+      for (const ex of exerciseMatches) {
+        const searchStart = ex.index + ex.fullMatch.length
+        const searchEnd = firstSolutionIndex
+        const region = runText.slice(searchStart, searchEnd)
+
+        let level = 0
+        let exerciseNum = ex.number
+        const tokenPattern = /\\begin\{enumerate\}|\\end\{enumerate\}|\\item\b/g
+        let tokenMatch
+        while ((tokenMatch = tokenPattern.exec(region)) !== null) {
+          if (tokenMatch[0] === '\\begin{enumerate}') {
+            level++
+          } else if (tokenMatch[0] === '\\end{enumerate}') {
+            level--
+            if (level < 0) break // Exited the containing enumerate block
+          } else if (tokenMatch[0] === '\\item' && level === 0) {
+            exerciseNum++
+            const absIndex = searchStart + tokenMatch.index
+            // Skip if already detected or past solutions
+            if (
+              absIndex >= firstSolutionIndex ||
+              exerciseMatches.some((e) => e.number === exerciseNum) ||
+              continuations.some((e) => e.number === exerciseNum)
+            ) {
+              continue
+            }
+            continuations.push({
+              index: absIndex,
+              title: `תרגיל ${exerciseNum}`,
+              number: exerciseNum,
+              fullMatch: tokenMatch[0],
+            })
+          }
+        }
+      }
+      exerciseMatches.push(...continuations)
+
+      // Sort by exercise number for consistent display order
+      exerciseMatches.sort((a, b) => a.number - b.number)
     }
 
     if (exerciseMatches.length === 0) {
