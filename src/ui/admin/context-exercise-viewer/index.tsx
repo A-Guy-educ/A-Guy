@@ -289,17 +289,19 @@ function parseContextText(contextText: string): ParsedSegment[] {
 
         const latexContent = runText.slice(contentStart, contentEnd).trim()
 
-        // Find matching solution
-        const solMatch = solutionMatches.find((s) => s.number === current.number)
+        // Find matching solution — prefer the longest match when duplicates exist
+        const solCandidates = solutionMatches.filter((s) => s.number === current.number)
         let solution: string | null = null
         let solutionHeader: string | null = null
-        if (solMatch) {
-          solutionHeader = solMatch.fullMatch
+        for (const solMatch of solCandidates) {
           const solContentStart = solMatch.index + solMatch.fullMatch.length
-          // Solution ends at next solution or end of text
           const nextSol = solutionMatches.find((s) => s.index > solMatch.index)
           const solContentEnd = nextSol ? nextSol.index : runText.length
-          solution = runText.slice(solContentStart, solContentEnd).trim()
+          const candidate = runText.slice(solContentStart, solContentEnd).trim()
+          if (candidate.length > (solution?.length ?? 0)) {
+            solutionHeader = solMatch.fullMatch
+            solution = candidate
+          }
         }
 
         exercises.push({
