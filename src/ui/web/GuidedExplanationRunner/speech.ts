@@ -1,10 +1,9 @@
 /**
- * Hebrew-aware speechSynthesis wrapper used by the GuidedExplanationRunner.
+ * Locale-aware speechSynthesis wrapper used by the GuidedExplanationRunner.
  *
- * Extracted verbatim from the manager's reference HTML so behaviour matches
- * the example 1:1: prefer Hila/Carmit voices, fall back to Google/Premium,
- * finally any Hebrew voice, finally the default. Rate/pitch tuned for a
- * teacher-explanation cadence.
+ * For Hebrew: prefers Hila/Carmit voices, falls back to Google/Premium,
+ * then any Hebrew voice, finally the browser default. Rate/pitch tuned
+ * for a teacher-explanation cadence.
  */
 
 const HEBREW_NIQQUD_REGEX = /[\u0591-\u05C7]/g
@@ -14,21 +13,27 @@ export function stripNiqqud(text: string): string {
   return text.replace(HEBREW_NIQQUD_REGEX, '')
 }
 
-/**
- * Pick the best available Hebrew voice. Returns undefined when no Hebrew
- * voice is installed — callers should set `utterance.lang = 'he-IL'` in
- * that case and let the browser substitute.
- */
-function pickHebrewVoice(): SpeechSynthesisVoice | undefined {
+const LOCALE_TO_LANG: Record<string, string> = {
+  he: 'he-IL',
+  en: 'en-US',
+}
+
+function pickVoiceForLocale(locale: string): SpeechSynthesisVoice | undefined {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return undefined
   const voices = window.speechSynthesis.getVoices()
-  const hebrew = voices.filter((v) => v.lang.includes('he') || v.lang.includes('iw'))
-  if (hebrew.length === 0) return undefined
+  const langPrefix = locale === 'he' ? ['he', 'iw'] : [locale]
+  const matching = voices.filter((v) => langPrefix.some((p) => v.lang.includes(p)))
+  if (matching.length === 0) return undefined
+  if (locale === 'he') {
+    return (
+      matching.find((v) => v.name.includes('Natural') || v.name.includes('Online')) ??
+      matching.find((v) => v.name.includes('Hila') || v.name.includes('Carmit')) ??
+      matching.find((v) => v.name.includes('Google') || v.name.includes('Premium')) ??
+      matching[0]
+    )
+  }
   return (
-    hebrew.find((v) => v.name.includes('Natural') || v.name.includes('Online')) ??
-    hebrew.find((v) => v.name.includes('Hila') || v.name.includes('Carmit')) ??
-    hebrew.find((v) => v.name.includes('Google') || v.name.includes('Premium')) ??
-    hebrew[0]
+    matching.find((v) => v.name.includes('Natural') || v.name.includes('Google')) ?? matching[0]
   )
 }
 
@@ -43,14 +48,11 @@ export function primeSpeechVoices(): void {
 
 /**
  * Speak `text` and resolve when the utterance finishes (or errors).
- * `shouldCancel()` is polled on voice end/error; if it returns true the
- * promise resolves immediately without waiting — used by the sequence
- * cancellation mechanism in `useGuidedPlayer`.
  *
  * Falls back to a text-length-proportional timeout when speechSynthesis is
  * unavailable, matching the reference implementation.
  */
-export function speak(text: string, shouldCancel: () => boolean): Promise<void> {
+export function speak(text: string, locale: string, _shouldCancel: () => boolean): Promise<void> {
   return new Promise((resolve) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
       setTimeout(resolve, text.length * 80)
@@ -58,16 +60,13 @@ export function speak(text: string, shouldCancel: () => boolean): Promise<void> 
     }
     window.speechSynthesis.cancel()
     const utterance = new SpeechSynthesisUtterance(text)
-    const voice = pickHebrewVoice()
+    const voice = pickVoiceForLocale(locale)
     if (voice) utterance.voice = voice
-    else utterance.lang = 'he-IL'
+    else utterance.lang = LOCALE_TO_LANG[locale] ?? 'en-US'
     utterance.rate = 0.85
     utterance.pitch = 0.95
     utterance.onend = () => {
-      setTimeout(() => {
-        if (!shouldCancel()) resolve()
-        else resolve()
-      }, 400)
+      setTimeout(resolve, 400)
     }
     utterance.onerror = () => {
       setTimeout(resolve, 1500)

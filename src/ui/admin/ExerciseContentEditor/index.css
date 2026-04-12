@@ -1785,7 +1785,7 @@
 .html-block-guided-info {
   padding: 1rem;
   background: var(--theme-elevation-50);
-  border-top: 2px solid var(--theme-success-500, #22c55e);
+  border-top: 2px solid var(--theme-success-500);
 }
 
 .html-block-guided-title {

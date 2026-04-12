@@ -66,13 +66,13 @@ export function useGuidedPlayer({
       try {
         for (const step of payload.steps) {
           if (shouldCancel()) return
-          await runStep(step, { root, shouldCancel, setNarrationText })
+          await runStep(step, { root, locale: payload.locale, shouldCancel, setNarrationText })
         }
       } finally {
         if (!shouldCancel()) setIsPlaying(false)
       }
     })()
-  }, [isPlaying, payload.steps, containerRef])
+  }, [isPlaying, payload.steps, payload.locale, containerRef])
 
   return { isPlaying, narrationText, play, reset }
 }
@@ -81,6 +81,7 @@ export function useGuidedPlayer({
 
 interface RunStepCtx {
   root: HTMLElement
+  locale: string
   shouldCancel: () => boolean
   setNarrationText: (text: string) => void
 }
@@ -94,7 +95,7 @@ async function runStep(step: GuidedExplanationStep, ctx: RunStepCtx): Promise<vo
     const display = stripNiqqud(step.narrate.display)
     ctx.setNarrationText(display)
     const toSpeak = step.narrate.speech ?? step.narrate.display
-    await speak(toSpeak, ctx.shouldCancel)
+    await speak(toSpeak, ctx.locale, ctx.shouldCancel)
   }
   if (step.wait && !ctx.shouldCancel()) {
     await new Promise((r) => setTimeout(r, step.wait))

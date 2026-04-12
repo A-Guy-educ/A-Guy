@@ -2,6 +2,7 @@
 
 import DOMPurify from 'dompurify'
 import { useEffect, useMemo, useState } from 'react'
+import { GuidedExplanationV1Schema } from '@/infra/contracts/guided-explanation/v1'
 import type { HtmlBlock } from '@/server/payload/collections/Exercises/types'
 import { GuidedExplanationRunner } from '@/ui/web/GuidedExplanationRunner'
 
@@ -66,10 +67,14 @@ const PURIFY_CONFIG = {
 }
 
 export function HtmlBlockRenderer({ block }: HtmlBlockRendererProps) {
-  // When a guided explanation payload is present, render the trusted runner
-  // instead of static HTML. Scripts are ours; Gemini sends parameters only.
+  // When a guided explanation payload is present and valid, render the
+  // trusted runner. safeParse guards against malformed data from DB
+  // migrations or API bugs — falls back to static HTML on failure.
   if (block.guidedExplanation) {
-    return <GuidedExplanationRunner payload={block.guidedExplanation} />
+    const parsed = GuidedExplanationV1Schema.safeParse(block.guidedExplanation)
+    if (parsed.success) {
+      return <GuidedExplanationRunner payload={parsed.data} />
+    }
   }
 
   return <StaticHtmlRenderer html={block.html} />

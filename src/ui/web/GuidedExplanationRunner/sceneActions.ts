@@ -25,10 +25,7 @@ function escapeId(id: string): string {
 
 function findElement(root: HTMLElement, id: string): HTMLElement | null {
   const el = root.querySelector(`#${escapeId(id)}`)
-  if (!el) {
-    console.warn(`[GuidedExplanationRunner] element not found: #${id}`)
-    return null
-  }
+  if (!el) return null
   return el as HTMLElement
 }
 
