@@ -172,6 +172,66 @@ function parseContextText(contextText: string): ParsedSegment[] {
       }
       exerciseMatches.push(...continuations)
 
+      // Third pass: fill remaining gaps by finding orphan \begin{enumerate} blocks
+      // (no \setcounter, no [label=]) between known exercises
+      const allFound = new Set(exerciseMatches.map((e) => e.number))
+      const maxNum = Math.max(...exerciseMatches.map((e) => e.number))
+      const byPos = [...exerciseMatches].sort((a, b) => a.index - b.index)
+
+      for (let gapStart = 1; gapStart <= maxNum; gapStart++) {
+        if (allFound.has(gapStart)) continue
+        // Find consecutive gap: gapStart..gapEnd
+        let gapEnd = gapStart
+        while (gapEnd + 1 <= maxNum && !allFound.has(gapEnd + 1)) gapEnd++
+        const gapCount = gapEnd - gapStart + 1
+
+        // Find text region: between last exercise before gap and first after
+        const prevEx = byPos.filter((e) => e.number < gapStart).pop()
+        const nextEx = byPos.find((e) => e.number > gapEnd)
+        const regionStart = prevEx ? prevEx.index + prevEx.fullMatch.length : 0
+        const regionEnd = nextEx ? nextEx.index : firstSolutionIndex
+        const region = runText.slice(regionStart, regionEnd)
+
+        // Find top-level \item entries in \begin{enumerate} blocks without \setcounter
+        const orphanItems: number[] = []
+        let level = 0
+        let inOrphan = false
+        const tokPat =
+          /\\begin\{enumerate\}(\[[^\]]*\])?|\\end\{enumerate\}|\\setcounter\{enumi\}|\\item\b/g
+        let tok
+        while ((tok = tokPat.exec(region)) !== null) {
+          if (tok[0].startsWith('\\begin{enumerate}')) {
+            level++
+            if (level === 1) {
+              // Orphan if no [label=...] option (those are sub-item blocks)
+              inOrphan = !tok[1]
+            }
+          } else if (tok[0] === '\\end{enumerate}') {
+            if (level === 1) inOrphan = false
+            level--
+          } else if (tok[0].startsWith('\\setcounter')) {
+            if (level === 1) inOrphan = false
+          } else if (tok[0] === '\\item' && level === 1 && inOrphan) {
+            orphanItems.push(regionStart + tok.index)
+          }
+        }
+
+        const toAssign = Math.min(orphanItems.length, gapCount)
+        for (let i = 0; i < toAssign; i++) {
+          const num = gapStart + i
+          exerciseMatches.push({
+            index: orphanItems[i],
+            title: `תרגיל ${num}`,
+            number: num,
+            fullMatch: '\\item',
+          })
+          allFound.add(num)
+        }
+
+        // Skip past this gap group
+        gapStart = gapEnd
+      }
+
       // Sort by exercise number for consistent display order
       exerciseMatches.sort((a, b) => a.number - b.number)
     }
