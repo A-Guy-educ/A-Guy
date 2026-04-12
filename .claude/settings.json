@@ -1,8 +1,9 @@
 {
   "permissions": {
-    "additionalDirectories": ["\\tmp"],
     "allow": [
-      "Bash(diff /tmp/lesson-pager-dev.tsx \"src/app/\\(frontend\\)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/index.tsx\")"
-    ]
+      "Bash(diff /tmp/lesson-pager-dev.tsx \"src/app/\\(frontend\\)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/index.tsx\")",
+      "Bash(wc -l /c/Users/avni1/Documents/GitHub/A-Guy/src/server/payload/endpoints/agent/*.ts)"
+    ],
+    "additionalDirectories": ["\\tmp"]
   }
 }
