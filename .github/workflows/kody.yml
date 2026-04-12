@@ -116,6 +116,7 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           ISSUE_IS_PR: ${{ github.event.issue.pull_request && 'true' || '' }}
           TRIGGER_TYPE: comment
+          COMMENT_AUTHOR_ASSOC: ${{ github.event.comment.author_association }}
         run: kody-engine ci-parse
 
   # ─── Orchestrate ─────────────────────────────────────────────────────────────
