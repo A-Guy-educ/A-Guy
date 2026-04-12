@@ -57,9 +57,9 @@
     --radius: 0.75rem; /* 12px - default */
 
     /* Shadow system - for card elevation on light backgrounds */
-    --shadow-card: 0 4px 16px 0 rgb(0 0 0 / 0.10), 0 2px 6px -1px rgb(0 0 0 / 0.07);
+    --shadow-card: 0 4px 16px 0 rgb(0 0 0 / 0.1), 0 2px 6px -1px rgb(0 0 0 / 0.07);
     --shadow-card-hover: 0 8px 24px 0 rgb(0 0 0 / 0.15), 0 4px 8px -1px rgb(0 0 0 / 0.08);
-    --shadow-modal: 0 10px 25px -5px rgb(0 0 0 / 0.15), 0 4px 10px -2px rgb(0 0 0 / 0.10);
+    --shadow-modal: 0 10px 25px -5px rgb(0 0 0 / 0.15), 0 4px 10px -2px rgb(0 0 0 / 0.1);
 
     --success: 142 71% 45%;
     --warning: 38 92% 50%;
@@ -223,12 +223,18 @@
 @layer utilities {
   /* Subtle top radial glow — ambient light effect, visible in both themes */
   [data-theme='light'] {
-    background-image:
-      radial-gradient(ellipse 80% 60% at 50% -10%, hsl(40 20% 95% / 0.6) 0%, transparent 70%);
+    background-image: radial-gradient(
+      ellipse 80% 60% at 50% -10%,
+      hsl(40 20% 95% / 0.6) 0%,
+      transparent 70%
+    );
   }
   [data-theme='dark'] {
-    background-image:
-      radial-gradient(ellipse 80% 60% at 50% -10%, hsl(30 10% 18% / 0.5) 0%, transparent 70%);
+    background-image: radial-gradient(
+      ellipse 80% 60% at 50% -10%,
+      hsl(30 10% 18% / 0.5) 0%,
+      transparent 70%
+    );
   }
 
   /* Decorative accent line under headings */
