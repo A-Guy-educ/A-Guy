@@ -7,6 +7,9 @@
  */
 import { buildLessonContextPrompt } from './lesson-context'
 
+// Exercise context is pre-built by buildExerciseContextPrompt() and passed as a string.
+// We simply append it to the prompt when present.
+
 export const SYSTEM_PROMPT_SEPARATOR = '\n\n---\n\n'
 
 /**
@@ -82,8 +85,9 @@ IMPORTANT:
  *
  * @param systemPrompts - Array of system prompt templates (can be empty)
  * @param lessonPromptTemplate - Resolved lesson prompt template
- * @param lessonContextText - Optional lesson context to inject
+ * @param lessonContextText - Optional lesson context to inject (skipped when exerciseContextText is provided)
  * @param teacherProfileBlock - Optional teacher profile block to inject
+ * @param exerciseContextText - Optional pre-built exercise context (takes priority over lessonContextText)
  * @returns Final composed system instructions string
  */
 export function composeSystemInstructions(
@@ -91,6 +95,7 @@ export function composeSystemInstructions(
   lessonPromptTemplate: string,
   lessonContextText?: string,
   teacherProfileBlock?: string,
+  exerciseContextText?: string,
 ): string {
   // Step 1: Join system prompts (if any)
   const systemPart =
@@ -112,6 +117,10 @@ export function composeSystemInstructions(
   // Step 5: Append mandatory image handling instructions
   const withImageHandling = withMathFormatting + '\n\n' + IMAGE_HANDLING_INSTRUCTIONS
 
-  // Step 6: Inject lesson context (reuse existing function)
+  // Step 6: Inject context — exercise-specific context takes priority over lesson context
+  if (exerciseContextText?.trim()) {
+    // Exercise context is pre-built with delimiters; just append it
+    return withImageHandling + '\n' + exerciseContextText
+  }
   return buildLessonContextPrompt(withImageHandling, lessonContextText)
 }

@@ -5,11 +5,18 @@
 import type { Payload } from 'payload'
 import type { Logger } from 'pino'
 
+import {
+  buildExerciseContextPrompt,
+  extractLessonPreamble,
+  serializeContentBlocks,
+} from '@/infra/llm/exercise-context'
+import { parseExerciseReferences } from '@/infra/llm/exercise-reference-parser'
 import { composeSystemInstructions } from '@/infra/llm/prompt-composer.server'
 import { resolveAgentSystemPrompt } from '@/infra/llm/prompt-resolver.server'
 import { fetchPublishedSystemPrompts } from '@/infra/llm/system-prompts.server'
 import { buildTeacherProfileBlock } from '@/infra/llm/teacher-profile-block'
 import type { Prompt } from '@/payload-types'
+import type { ContentBlock, ContentData } from '@/server/payload/collections/Exercises/types'
 import { resolveTeacherProfile } from '@/server/services/teacher-profile-resolver'
 
 import type { ResolvedContext } from './context-resolution'
@@ -195,6 +202,159 @@ async function fetchCourseContext(
   }
 }
 
+// ---------------------------------------------------------------
+// Exercise-specific context fetching
+// ---------------------------------------------------------------
+
+export interface ExerciseContextResult {
+  exerciseTitle: string
+  serializedBlocks: string
+}
+
+/**
+ * Fetch an exercise's content blocks and serialize them for LLM injection.
+ * Returns null if the exercise has no content blocks.
+ */
+export async function fetchExerciseBlocks(
+  payload: Payload,
+  exerciseId: string,
+  user: { id: string },
+  reqLogger: Logger,
+): Promise<ExerciseContextResult | null> {
+  try {
+    const exercise = await payload.findByID({
+      collection: 'exercises',
+      id: exerciseId,
+      depth: 0,
+      user,
+      overrideAccess: true, // Student may not have direct read access
+    })
+
+    const title = (exercise as unknown as { title?: string }).title || 'Exercise'
+    const content = (exercise as unknown as { content?: ContentData }).content
+    const blocks = content?.blocks as ContentBlock[] | undefined
+
+    if (!blocks || blocks.length === 0) {
+      reqLogger.debug(
+        { exerciseId },
+        'Exercise has no content blocks, falling back to lesson context',
+      )
+      return null
+    }
+
+    const serializedBlocks = serializeContentBlocks(blocks)
+    if (!serializedBlocks) return null
+
+    reqLogger.info(
+      { exerciseId, blockCount: blocks.length, serializedLength: serializedBlocks.length },
+      'Serialized exercise blocks for context injection',
+    )
+
+    return { exerciseTitle: title, serializedBlocks }
+  } catch (error) {
+    reqLogger.warn(
+      { err: error, exerciseId },
+      'Failed to fetch exercise blocks, falling back to lesson context',
+    )
+    return null
+  }
+}
+
+/**
+ * Resolve an exercise by number within a lesson.
+ * Used for the explicit flow: student says "help with question 5".
+ */
+export async function resolveExerciseFromMessage(
+  payload: Payload,
+  message: string,
+  lessonId: string,
+  user: { id: string },
+  reqLogger: Logger,
+): Promise<ExerciseContextResult | null> {
+  const refs = parseExerciseReferences(message)
+  if (refs.length === 0) return null
+
+  // For multiple references, serialize all of them
+  const exerciseNumbers = refs.map((r) => r.exerciseNumber)
+  reqLogger.info({ exerciseNumbers, lessonId }, 'Detected exercise references in message')
+
+  try {
+    // Fetch all exercises for this lesson, sorted by display order
+    const exercisesResult = await payload.find({
+      collection: 'exercises',
+      where: { lesson: { equals: lessonId } },
+      sort: 'order',
+      limit: 100,
+      depth: 0,
+      overrideAccess: true,
+    })
+
+    const exercises = exercisesResult.docs
+    if (exercises.length === 0) return null
+
+    // Map 1-indexed exercise numbers to exercises
+    const allParts: string[] = []
+    const allTitles: string[] = []
+
+    for (const num of exerciseNumbers) {
+      const exercise = exercises[num - 1] // 1-indexed
+      if (!exercise) {
+        reqLogger.debug(
+          { exerciseNumber: num, totalExercises: exercises.length },
+          'Exercise number out of range',
+        )
+        continue
+      }
+
+      const title = (exercise as unknown as { title?: string }).title || `Exercise ${num}`
+      const content = (exercise as unknown as { content?: ContentData }).content
+      const blocks = content?.blocks as ContentBlock[] | undefined
+
+      if (blocks && blocks.length > 0) {
+        const serialized = serializeContentBlocks(blocks)
+        if (serialized) {
+          allParts.push(`## Exercise ${num}: ${title}\n\n${serialized}`)
+          allTitles.push(title)
+        }
+      }
+    }
+
+    if (allParts.length === 0) return null
+
+    return {
+      exerciseTitle: allTitles.length === 1 ? allTitles[0] : allTitles.join(', '),
+      serializedBlocks: allParts.join('\n\n---\n\n'),
+    }
+  } catch (error) {
+    reqLogger.warn({ err: error, lessonId }, 'Failed to resolve exercise from message')
+    return null
+  }
+}
+
+/**
+ * Build exercise context text from exercise blocks + preamble.
+ * Returns undefined if no exercise context is available.
+ */
+export function buildExerciseContext(
+  exerciseResult: ExerciseContextResult,
+  lessonContextText?: string,
+  courseContextText?: string,
+): string {
+  // Prefer courseContextText as preamble; fall back to lesson preamble extraction
+  const preamble = courseContextText?.trim()
+    ? courseContextText.trim()
+    : lessonContextText
+      ? extractLessonPreamble(lessonContextText)
+      : undefined
+
+  return buildExerciseContextPrompt(
+    '',
+    exerciseResult.exerciseTitle,
+    exerciseResult.serializedBlocks,
+    preamble,
+  )
+}
+
 /**
  * Fetch lesson context based on resolved context type
  * Also fetches course context if courseId is provided
@@ -263,6 +423,7 @@ export async function composeFullSystemInstructions(
   coursePrompt?: Prompt | null,
   courseContextText?: string,
   userId?: string,
+  exerciseContextText?: string,
 ): Promise<ComposedSystemInstructions> {
   // Fetch published system prompts (always included)
   const systemPromptsResult = await fetchPublishedSystemPrompts(payload)
@@ -311,12 +472,13 @@ export async function composeFullSystemInstructions(
   )
 
   // Compose final system instructions: system prompts + teacher profile + lesson/course prompt + lesson/course context
-  // Priority: lesson context > course context
+  // Priority: exercise context > lesson context > course context
   const instructions = composeSystemInstructions(
     systemPromptsResult.templates,
     promptResolution.template,
-    lessonContextText || courseContextText,
+    exerciseContextText ? undefined : lessonContextText || courseContextText,
     teacherProfileBlock,
+    exerciseContextText,
   )
 
   return {

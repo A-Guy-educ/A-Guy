@@ -19,13 +19,16 @@ import type { PayloadRequest } from 'payload'
 import type { Logger } from 'pino'
 import { z } from 'zod'
 import {
+  buildExerciseContext,
   composeFullSystemInstructions,
   extractContextCandidate,
+  fetchExerciseBlocks,
   fetchLessonContextForContext,
   getOrCreateConversation,
   processChatAssetAttachments,
   processMediaAttachments,
   resolveContext,
+  resolveExerciseFromMessage,
   retrieveMemories,
   validateContextAccess,
   validateContextExists,
@@ -224,6 +227,44 @@ export async function runChatPipeline(
     validated.courseId,
   )
 
+  // Resolve exercise-specific context (implicit or explicit flow)
+  let exerciseContextText: string | undefined
+
+  // Implicit flow: exerciseId present in request
+  if (validated.exerciseId) {
+    const exerciseResult = await fetchExerciseBlocks(
+      req.payload,
+      validated.exerciseId,
+      { id: ownerId },
+      reqLogger as Logger,
+    )
+    if (exerciseResult) {
+      exerciseContextText = buildExerciseContext(
+        exerciseResult,
+        lessonContext.lessonContextText,
+        lessonContext.courseContextText,
+      )
+    }
+  }
+
+  // Explicit flow: parse message for exercise references (only when no implicit context)
+  if (!exerciseContextText && validated.lessonId) {
+    const exerciseResult = await resolveExerciseFromMessage(
+      req.payload,
+      validated.message,
+      validated.lessonId,
+      { id: ownerId },
+      reqLogger as Logger,
+    )
+    if (exerciseResult) {
+      exerciseContextText = buildExerciseContext(
+        exerciseResult,
+        lessonContext.lessonContextText,
+        lessonContext.courseContextText,
+      )
+    }
+  }
+
   let composedInstructions
   try {
     composedInstructions = await composeFullSystemInstructions(
@@ -234,6 +275,7 @@ export async function runChatPipeline(
       lessonContext.coursePrompt,
       lessonContext.courseContextText,
       req.user?.id,
+      exerciseContextText,
     )
   } catch (error) {
     if (error instanceof Error && error.message.includes('exceeds maximum')) {

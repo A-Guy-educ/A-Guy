@@ -1,208 +1,214 @@
 /**
- * Exercise Context Formatting Utility
+ * Exercise Context Injection
  *
- * Formats exercise content into a readable message for the LLM.
- * - Strips solutions and correct answers (prevent leakage)
- * - Includes hints (helps LLM guide student)
- * - Caps output at 2000 characters
+ * Serializes an exercise's ContentBlock[] into a text format suitable for
+ * LLM injection. Replaces the full lessonContextText with a focused,
+ * exercise-specific context when the chat is scoped to an exercise.
+ *
+ * @fileType ai-utility
+ * @domain chat
+ * @pattern single-responsibility, runtime-injection
  */
+import type { ContentBlock } from '@/server/payload/collections/Exercises/types'
 
-import type {
-  LatexBlock,
-  QuestionAxisBlock,
-  QuestionFreeResponseBlock,
-  QuestionGeometryBlock,
-  QuestionMatchingBlock,
-  QuestionSelectMcqBlock,
-  QuestionSelectTrueFalseBlock,
-  QuestionTableBlock,
-  RichTextBlock,
-  SvgBlock,
-} from '@/server/payload/collections/Exercises/types'
-
-export interface MediaItem {
-  id: string
-  url?: string | null
-  filename?: string
-  mimeType?: string
-  altText?: string
-}
-
-const MAX_OUTPUT_LENGTH = 2000
-const TRUNCATE_SUFFIX = '...'
+import { parseContextText } from '@/lib/context-exercise-parser'
 
 /**
- * Format exercise content blocks into a readable message for the LLM.
+ * Format exercise content blocks into a readable message for client-side context injection.
+ * Used by useNotebookChat to send exercise context as a hidden message.
  */
 export function formatExerciseContextMessage(
   exerciseTitle: string,
-  blocks: Array<{
-    id: string
-    type: string
-    [key: string]: unknown
-  }>,
-  mediaMap?: Record<string, MediaItem>,
+  blocks: Array<{ id: string; type: string; [key: string]: unknown }>,
+  _mediaMap?: Record<string, unknown>,
 ): string {
-  const parts: string[] = []
+  const serialized = serializeContentBlocks(blocks as unknown as ContentBlock[])
+  const parts = [
+    '[EXERCISE CONTEXT]',
+    `Exercise: "${exerciseTitle}"`,
+    '',
+    serialized || '[No content blocks]',
+    '',
+    '[END EXERCISE CONTEXT]',
+  ]
+  return parts.join('\n')
+}
 
-  // Header
-  parts.push('[EXERCISE CONTEXT]')
-  parts.push(`Exercise: "${exerciseTitle}"`)
-  parts.push('')
-  parts.push('Content Blocks:')
-  parts.push('')
+export const EXERCISE_CONTEXT_BLOCK_START = 'EXERCISE_CONTEXT_START'
+export const EXERCISE_CONTEXT_BLOCK_END = 'EXERCISE_CONTEXT_END'
+export const EXERCISE_CONTEXT_MAX_CHARS = 50_000 // ~25K tokens
+const DEFAULT_PREAMBLE_MAX_CHARS = 2_000
 
-  // Format each block
-  let currentLength = parts.join('\n').length
-  let blockIndex = 0
-
-  for (const block of blocks) {
-    // Check if we're at the limit
-    const remaining = MAX_OUTPUT_LENGTH - currentLength
-    if (remaining < 50) {
-      break
-    }
-
-    blockIndex++
-    const line = formatBlock(block, blockIndex, mediaMap, remaining)
-
-    if (line) {
-      parts.push(line)
-      currentLength += line.length + 1 // +1 for newline
-    }
-  }
-
-  // Footer
-  parts.push('')
-  parts.push('[END EXERCISE CONTEXT]')
-
-  const result = parts.join('\n')
-  return result.length > MAX_OUTPUT_LENGTH
-    ? result.substring(0, MAX_OUTPUT_LENGTH - TRUNCATE_SUFFIX.length) + TRUNCATE_SUFFIX
-    : result
+/**
+ * Serialize an InlineRichText prompt to plain string.
+ */
+function inlineToString(
+  irt: { type: 'rich_text'; format: string; value: string } | undefined,
+): string {
+  return irt?.value ?? ''
 }
 
 /**
- * Format a single content block into a readable line.
+ * Serialize a single ContentBlock into a human-readable text representation.
+ *
+ * SECURITY: The following fields are intentionally EXCLUDED to prevent answer leakage:
+ * - answer (correctOptionIds, acceptedAnswers, correctPairs, etc.)
+ * - hint, solution, fullSolution
+ * - table.answers, table.solutionFill
+ * - correctHotspotIds (SVG)
+ * Any new ContentBlock type MUST be reviewed for answer leakage before adding here.
  */
-function formatBlock(
-  block: {
-    id: string
-    type: string
-    [key: string]: unknown
-  },
-  index: number,
-  mediaMap?: Record<string, MediaItem>,
-  maxLength?: number,
-): string | null {
+function serializeBlock(block: ContentBlock): string {
   switch (block.type) {
-    case 'rich_text':
-      return formatRichTextBlock(block as unknown as RichTextBlock, index, maxLength)
+    case 'latex':
+      return block.latex
 
-    case 'question_select':
-      if ((block as unknown as QuestionSelectTrueFalseBlock).variant === 'true_false') {
-        return formatTrueFalseBlock(block as unknown as QuestionSelectTrueFalseBlock, index)
+    case 'rich_text':
+      return block.value
+
+    case 'question_select': {
+      const prompt = inlineToString(block.prompt)
+      if (block.variant === 'true_false') {
+        return `${prompt}\n(True / False)`
       }
-      return formatMcqBlock(block as unknown as QuestionSelectMcqBlock, index)
+      // MCQ — list options without revealing correct answer
+      const options = block.answer.options
+        .map((opt, i) => {
+          const letter = String.fromCharCode(65 + i)
+          return `  ${letter}) ${inlineToString(opt.content)}`
+        })
+        .join('\n')
+      return `${prompt}\n${options}`
+    }
 
     case 'question_free_response':
-      return formatFreeResponseBlock(block as unknown as QuestionFreeResponseBlock, index)
+      return inlineToString(block.prompt)
 
-    case 'question_table':
-      return formatTableBlock(block as unknown as QuestionTableBlock, index)
+    case 'question_table': {
+      const prompt = inlineToString(block.prompt)
+      const { headers, rowsData } = block.table
+      const headerRow = headers.length > 0 ? `| ${headers.join(' | ')} |` : ''
+      const separator = headers.length > 0 ? `| ${headers.map(() => '---').join(' | ')} |` : ''
+      const rows = rowsData.map((row) => `| ${row.join(' | ')} |`).join('\n')
+      return [prompt, headerRow, separator, rows].filter(Boolean).join('\n')
+    }
 
-    case 'latex':
-      return formatLatexBlock(block as unknown as LatexBlock, index)
-
-    case 'question_matching':
-      return formatMatchingBlock(block as unknown as QuestionMatchingBlock, index)
-
-    case 'svg':
-      return formatSvgBlock(block as unknown as SvgBlock, index)
+    case 'question_matching': {
+      const prompt = inlineToString(block.prompt)
+      const left = block.leftColumn.map((o) => `  - ${inlineToString(o.content)}`).join('\n')
+      const right = block.rightColumn.map((o) => `  - ${inlineToString(o.content)}`).join('\n')
+      return `${prompt}\nColumn A:\n${left}\nColumn B:\n${right}`
+    }
 
     case 'question_geometry':
-      return formatGeometryBlock(block as unknown as QuestionGeometryBlock, index)
+      return `${inlineToString(block.prompt)}\n[Geometry diagram]`
 
     case 'question_axis':
-      return formatAxisBlock(block as unknown as QuestionAxisBlock, index)
+      return `${inlineToString(block.prompt)}\n[Graph diagram]`
+
+    case 'question_multi_axis': {
+      const prompt = block.prompt ? inlineToString(block.prompt) : ''
+      return `${prompt}\n[Multiple graphs: ${block.graphs.length} diagrams]`.trim()
+    }
+
+    case 'svg':
+      return block.altText || '[SVG diagram]'
+
+    case 'html':
+      return block.html
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+
+    case 'media':
+      return '[Media attachment]'
 
     default:
-      return `${index}. [${block.type}]`
+      return ''
   }
-}
-
-function formatRichTextBlock(block: RichTextBlock, index: number, maxLength?: number): string {
-  const preview = truncateText(block.value, maxLength ? maxLength - 50 : 150)
-  const mediaInfo = block.mediaIds.length > 0 ? ` | Media: ${block.mediaIds.length} item(s)` : ''
-  return `${index}. [RichText] ${preview}${mediaInfo}`
-}
-
-function formatTrueFalseBlock(block: QuestionSelectTrueFalseBlock, index: number): string {
-  const prompt = truncateText(block.prompt.value, 100)
-  const options = block.options.map((o) => o.label.value).join(', ')
-  const hint = block.hint ? ` | Hint: ${truncateText(block.hint.value, 50)}` : ''
-  return `${index}. [Question: True/False] ${prompt} | Options: ${options}${hint}`
-}
-
-function formatMcqBlock(block: QuestionSelectMcqBlock, index: number): string {
-  const prompt = truncateText(block.prompt.value, 100)
-  const options = block.answer.options.map((o) => truncateText(o.content.value, 30)).join(', ')
-  const hint = block.hint ? ` | Hint: ${truncateText(block.hint.value, 50)}` : ''
-  return `${index}. [Question: MCQ] ${prompt} | Options: ${options}${hint}`
-}
-
-function formatFreeResponseBlock(block: QuestionFreeResponseBlock, index: number): string {
-  const prompt = truncateText(block.prompt.value, 100)
-  const answerCount = block.answer.acceptedAnswers.length
-  const hint = block.hint ? ` | Hint: ${truncateText(block.hint.value, 50)}` : ''
-  return `${index}. [Question: FreeResponse] ${prompt} | Accepted: ${answerCount} answer(s)${hint}`
-}
-
-function formatTableBlock(block: QuestionTableBlock, index: number): string {
-  const prompt = truncateText(block.prompt.value, 80)
-  const rows = block.table.rowsData.length
-  const cols = block.table.headers.length
-  const hint = block.hint ? ` | Hint: ${truncateText(block.hint.value, 50)}` : ''
-  return `${index}. [Question: Table] ${prompt} | ${cols} columns × ${rows} rows${hint}`
-}
-
-function formatLatexBlock(block: LatexBlock, index: number): string {
-  const preview = truncateText(block.latex, 100)
-  return `${index}. [LaTeX] ${preview}`
-}
-
-function formatMatchingBlock(block: QuestionMatchingBlock, index: number): string {
-  const prompt = truncateText(block.prompt.value, 80)
-  const leftCount = block.leftColumn.length
-  const rightCount = block.rightColumn.length
-  const pairs = block.correctPairs.length
-  const hint = block.hint ? ` | Hint: ${truncateText(block.hint.value, 50)}` : ''
-  return `${index}. [Question: Matching] ${prompt} | ${leftCount} items → ${rightCount} targets | ${pairs} pairs${hint}`
-}
-
-function formatSvgBlock(block: SvgBlock, index: number): string {
-  const description = block.altText || 'Diagram'
-  return `${index}. [SVG] ${description}`
-}
-
-function formatGeometryBlock(block: QuestionGeometryBlock, index: number): string {
-  const prompt = truncateText(block.prompt.value, 100)
-  const hint = block.hint ? ` | Hint: ${truncateText(block.hint.value, 50)}` : ''
-  return `${index}. [Question: Geometry] ${prompt}${hint}`
-}
-
-function formatAxisBlock(block: QuestionAxisBlock, index: number): string {
-  const prompt = truncateText(block.prompt.value, 100)
-  const hint = block.hint ? ` | Hint: ${truncateText(block.hint.value, 50)}` : ''
-  return `${index}. [Question: Axis] ${prompt}${hint}`
 }
 
 /**
- * Truncate text to a maximum length with ellipsis if needed.
+ * Serialize an exercise's ContentBlock[] into a text representation
+ * suitable for LLM context injection.
+ *
+ * @param blocks - The exercise's content blocks
+ * @returns Serialized text, or empty string if no blocks
  */
-function truncateText(text: string, maxLength: number): string {
-  if (text.length <= maxLength) {
-    return text
+export function serializeContentBlocks(blocks: ContentBlock[]): string {
+  if (!blocks || blocks.length === 0) return ''
+
+  return blocks
+    .map((block) => serializeBlock(block))
+    .filter(Boolean)
+    .join('\n\n')
+}
+
+/**
+ * Extract the LaTeX preamble (text before the first exercise) from lessonContextText.
+ * This typically contains document class, package declarations, and section headers.
+ *
+ * @param lessonContextText - The full lesson context LaTeX text
+ * @param maxChars - Maximum characters to include (default 2000)
+ * @returns The preamble text, or empty string if none found
+ */
+export function extractLessonPreamble(
+  lessonContextText: string,
+  maxChars: number = DEFAULT_PREAMBLE_MAX_CHARS,
+): string {
+  if (!lessonContextText?.trim()) return ''
+
+  const segments = parseContextText(lessonContextText)
+  if (segments.length === 0 || segments[0].exercises.length === 0) return ''
+
+  const firstExerciseStart = segments[0].exercises[0].startIndex
+  if (firstExerciseStart <= 0) return ''
+
+  const preamble = segments[0].originalText.slice(0, firstExerciseStart).trim()
+  if (preamble.length <= maxChars) return preamble
+  return preamble.slice(0, maxChars) + '\n[... preamble truncated]'
+}
+
+/**
+ * Build a system prompt with exercise-specific context injected.
+ *
+ * @param baseSystemPrompt - The base system prompt to enhance
+ * @param exerciseTitle - Title of the current exercise
+ * @param serializedBlocks - Serialized content blocks text
+ * @param preamble - Optional lesson/course preamble for shared context
+ * @returns Enhanced system prompt with exercise context
+ * @throws Error if the combined context exceeds EXERCISE_CONTEXT_MAX_CHARS
+ */
+export function buildExerciseContextPrompt(
+  baseSystemPrompt: string,
+  exerciseTitle: string,
+  serializedBlocks: string,
+  preamble?: string,
+): string {
+  if (!serializedBlocks.trim()) return baseSystemPrompt
+
+  const contextParts = [`## Current Exercise: ${exerciseTitle}`, '']
+
+  if (preamble?.trim()) {
+    contextParts.push('### Lesson Context')
+    contextParts.push(preamble.trim())
+    contextParts.push('')
   }
-  return text.substring(0, maxLength - 3) + '...'
+
+  contextParts.push('### Exercise Content')
+  contextParts.push(serializedBlocks.trim())
+
+  const contextBody = contextParts.join('\n')
+
+  if (contextBody.length > EXERCISE_CONTEXT_MAX_CHARS) {
+    throw new Error('Exercise context exceeds maximum allowed size')
+  }
+
+  return [
+    baseSystemPrompt,
+    '',
+    EXERCISE_CONTEXT_BLOCK_START,
+    contextBody,
+    EXERCISE_CONTEXT_BLOCK_END,
+  ].join('\n')
 }
