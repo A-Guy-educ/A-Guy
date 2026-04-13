@@ -34,10 +34,10 @@ export function GuidedExplanationRunner({ payload }: GuidedExplanationRunnerProp
 
   // Set SVG via ref so React never re-renders the scene div and wipes
   // dynamically added animation classes (ge-drawn, ge-visible, etc.).
-  // The SVG is safe by construction: it's either built by our buildSvg()
-  // from Zod-validated geometry data, or extracted by our HTML parser.
-  // The Zod safeParse guard in HtmlBlockRenderer validates the payload
-  // shape before it reaches this component.
+  // SVG safety: buildSvg() escapes all LLM values (safeLabel, escapeXml,
+  // safeColor). parseHtmlToGuidedExplanation sanitizes with
+  // sanitizeSvgMarkup at import time. Zod safeParse in HtmlBlockRenderer
+  // validates payload shape before it reaches this component.
   useEffect(() => {
     if (sceneRef.current && payload.scene.svg) {
       sceneRef.current.innerHTML = payload.scene.svg

@@ -19,6 +19,34 @@ import type {
 } from '@/infra/contracts/guided-explanation/v1'
 
 // ---------------------------------------------------------------------------
+// SVG sanitization for the HTML import path.
+// Strips dangerous elements and attributes from SVG extracted from untrusted
+// HTML (Gemini output). This runs at import time so the stored payload is
+// clean. The buildSvg() path in lesson-to-guided-explanation.ts does NOT
+// need this — it generates SVG from validated structured data.
+// ---------------------------------------------------------------------------
+
+/** Strip dangerous tags and attributes from SVG markup. */
+function sanitizeSvgMarkup(svg: string): string {
+  // Remove dangerous elements entirely (with content)
+  let cleaned = svg
+  cleaned = cleaned.replace(/<script[\s\S]*?<\/script>/gi, '')
+  cleaned = cleaned.replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi, '')
+  cleaned = cleaned.replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
+  cleaned = cleaned.replace(/<embed[\s\S]*?<\/embed>/gi, '')
+  cleaned = cleaned.replace(/<object[\s\S]*?<\/object>/gi, '')
+  // Remove self-closing dangerous tags
+  cleaned = cleaned.replace(/<(?:script|foreignObject|iframe|embed|object)\b[^>]*\/>/gi, '')
+  // Remove ALL event handler attributes (on*)
+  cleaned = cleaned.replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, '')
+  cleaned = cleaned.replace(/\s+on\w+\s*=\s*[^\s>]*/gi, '')
+  // Remove javascript: and data: URIs in href/xlink:href attributes
+  cleaned = cleaned.replace(/(href\s*=\s*["'])\s*javascript:/gi, '$1#blocked:')
+  cleaned = cleaned.replace(/(href\s*=\s*["'])\s*data:/gi, '$1#blocked:')
+  return cleaned
+}
+
+// ---------------------------------------------------------------------------
 // CSS class rewriting — Gemini outputs unprefixed class names; our renderer
 // expects the `ge-` prefix to scope styles.
 // ---------------------------------------------------------------------------
@@ -264,10 +292,10 @@ export function parseHtmlToGuidedExplanation(html: string): GuidedExplanationV1 
   if (!svgTag) return null // No SVG means this isn't a guided explanation
 
   const viewBox = extractAttr(svgTag, 'viewBox') || '0 0 450 300'
-  // Rewrite CSS class names to the engine's ge- prefix. SVG sanitization
-  // (stripping <script>, event handlers, foreignObject) happens at render
-  // time in GuidedExplanationRunner via sanitizeSvg().
-  const rewrittenSvg = rewriteSvgClasses(svgTag)
+  // Sanitize the SVG extracted from untrusted HTML (strips <script>,
+  // event handlers, foreignObject, javascript: URIs), then rewrite CSS
+  // class names to the engine's ge- prefix.
+  const rewrittenSvg = rewriteSvgClasses(sanitizeSvgMarkup(svgTag))
 
   // Proof table
   const proofTable = parseProofTable(html)
