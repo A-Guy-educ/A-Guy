@@ -40,6 +40,7 @@ export async function generateInteractiveLesson(
       // Thinking tokens count against maxOutputTokens — budget generously
       // to avoid truncated JSON on complex multi-step problems.
       maxOutputTokens: 131072,
+      thinkingBudget: 24576,
     }
 
     const prompt = buildPrompt(input.locale)

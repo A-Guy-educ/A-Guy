@@ -92,7 +92,7 @@ function buildSvg(geometry: GeometryData): string {
       const p2 = pts.get(p2Label)
       if (!p1 || !vertex || !p2) continue
 
-      const id = `angle-${vertexLabel}-${i}`
+      const id = `angle-${safeLabel(vertexLabel)}-${i}`
       if (angle.rightAngle) {
         const size = 12
         const dx1 = ((p1.x - vertex.x) / Math.hypot(p1.x - vertex.x, p1.y - vertex.y)) * size
@@ -168,7 +168,7 @@ function buildStepActions(
   // Show point labels new to this step
   if (step.highlightPoints) {
     for (const label of step.highlightPoints) {
-      const id = `label-${label}`
+      const id = `label-${safeLabel(label)}`
       if (!allPreviousPoints.has(id)) {
         actions.push({ op: 'show', id })
         allPreviousPoints.add(id)

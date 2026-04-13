@@ -255,9 +255,11 @@ export async function createGenkitUnifiedAdapter(
                 config: {
                   temperature: effectiveTemperature,
                   maxOutputTokens: effectiveMaxOutputTokens,
-                  thinkingConfig: {
-                    thinkingBudget: 24576,
-                  },
+                  // Only enable thinking when the caller explicitly requests it
+                  // via thinkingBudget on the model config. No-op for non-thinking models.
+                  ...(input.model.thinkingBudget
+                    ? { thinkingConfig: { thinkingBudget: input.model.thinkingBudget } }
+                    : {}),
                 },
               })
 
