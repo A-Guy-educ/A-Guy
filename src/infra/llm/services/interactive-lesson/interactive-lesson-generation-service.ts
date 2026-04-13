@@ -43,7 +43,7 @@ export async function generateInteractiveLesson(
       thinkingBudget: 24576,
     }
 
-    const prompt = buildPrompt(input.locale)
+    const prompt = await buildPrompt(input.locale, payload)
     const { attachmentData, sizeBytes } = await prepareImage(input)
 
     const result = await adapter.generateMultimodalCompletion(
@@ -88,12 +88,22 @@ export async function generateInteractiveLesson(
   }
 }
 
-function buildPrompt(locale: 'he' | 'en'): string {
+async function buildPrompt(locale: 'he' | 'en', payload: Payload): Promise<string> {
+  // Read prompt from admin panel, fall back to hardcoded default
+  let basePrompt = INTERACTIVE_LESSON_PROMPT
+  try {
+    const settings = await payload.findGlobal({ slug: 'ai-settings' })
+    if (settings?.interactiveLessonPrompt) {
+      basePrompt = settings.interactiveLessonPrompt as string
+    }
+  } catch {
+    // DB not available or global not seeded — use hardcoded default
+  }
   const localeInstruction =
     locale === 'he'
       ? '\n\nIMPORTANT: Generate ALL narration, claims, reasons, and explanations in Hebrew.'
       : '\n\nIMPORTANT: Generate ALL narration, claims, reasons, and explanations in English.'
-  return `${INTERACTIVE_LESSON_PROMPT}${localeInstruction}`
+  return `${basePrompt}${localeInstruction}`
 }
 
 async function prepareImage(input: InteractiveLessonInput) {
