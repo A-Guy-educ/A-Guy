@@ -89,15 +89,24 @@ export async function generateInteractiveLesson(
 }
 
 async function buildPrompt(locale: 'he' | 'en', payload: Payload): Promise<string> {
-  // Read prompt from admin panel, fall back to hardcoded default
+  // Look up a published interactive_lesson prompt from the Prompts collection,
+  // fall back to the hardcoded default if none exists.
   let basePrompt = INTERACTIVE_LESSON_PROMPT
   try {
-    const settings = await payload.findGlobal({ slug: 'ai-settings' })
-    if (settings?.interactiveLessonPrompt) {
-      basePrompt = settings.interactiveLessonPrompt as string
+    const result = await payload.find({
+      collection: 'prompts',
+      where: {
+        usage: { equals: 'interactive_lesson' },
+        status: { equals: 'published' },
+      },
+      limit: 1,
+      overrideAccess: true,
+    })
+    if (result.docs.length > 0 && result.docs[0].template) {
+      basePrompt = result.docs[0].template
     }
   } catch {
-    // DB not available or global not seeded — use hardcoded default
+    // DB not available or collection empty — use hardcoded default
   }
   const localeInstruction =
     locale === 'he'

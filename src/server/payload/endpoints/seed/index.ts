@@ -40,7 +40,7 @@ export const seed = async ({
         slug: global,
         data: {
           variants: [],
-        } as Record<string, unknown>,
+        },
         depth: 0,
         context: {
           disableRevalidate: true,

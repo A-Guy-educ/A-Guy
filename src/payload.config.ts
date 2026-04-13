@@ -50,7 +50,6 @@ import { runLocalizeTeacherProfilesOnInit } from '@/server/payload/migrations/lo
 import { runPopulateLessonBlocksOnInit } from '@/server/payload/migrations/populateLessonBlocks'
 import { plugins } from '@/server/payload/plugins'
 import { seedTeacherProfiles } from '@/server/payload/seed/teacher-profiles-seed'
-import { AISettings } from '@/server/payload/globals/AISettings'
 import { Footer } from '@/ui/web/footer/config'
 import { Header } from '@/ui/web/header/config'
 
@@ -189,7 +188,7 @@ export default buildConfig({
     MCPAuditLogs,
   ],
   cors: [getServerSideURL()].filter(Boolean),
-  globals: [Header, Footer, AISettings],
+  globals: [Header, Footer],
   plugins,
   secret:
     process.env.PAYLOAD_SECRET ||

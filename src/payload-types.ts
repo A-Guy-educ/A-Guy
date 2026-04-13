@@ -159,12 +159,10 @@ export interface Config {
   globals: {
     header: Header;
     footer: Footer;
-    'ai-settings': AiSetting;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
-    'ai-settings': AiSettingsSelect<false> | AiSettingsSelect<true>;
   };
   locale: null;
   user:
@@ -4115,21 +4113,6 @@ export interface Footer {
   createdAt?: string | null;
 }
 /**
- * Configure AI prompts and generation settings. Changes take effect immediately.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "ai-settings".
- */
-export interface AiSetting {
-  id: string;
-  /**
-   * The system prompt sent to Gemini for generating interactive lesson explanations from uploaded math images. Must instruct the model to return JSON with geometry + steps.
-   */
-  interactiveLessonPrompt?: string | null;
-  updatedAt?: string | null;
-  createdAt?: string | null;
-}
-/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
@@ -4183,16 +4166,6 @@ export interface FooterSelect<T extends boolean = true> {
             };
         id?: T;
       };
-  updatedAt?: T;
-  createdAt?: T;
-  globalType?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "ai-settings_select".
- */
-export interface AiSettingsSelect<T extends boolean = true> {
-  interactiveLessonPrompt?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
