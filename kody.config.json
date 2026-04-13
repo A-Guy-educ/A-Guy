@@ -27,8 +27,11 @@
   },
   "release": {
     "releaseBranch": "main",
-    "versionFiles": ["package.json"],
-    "notifyCommand": "curl -s -X POST \"$SLACK_WEBHOOK_URL\" -H 'Content-Type: application/json' -d '{\"text\": \"🚀 a-guy v$VERSION released — https://github.com/A-Guy-educ/A-Guy/releases/tag/v$VERSION\"}'"
+    "versionFiles": [
+      "package.json"
+    ],
+    "notifyCommand": "curl -s -X POST \"$SLACK_WEBHOOK_URL\" -H 'Content-Type: application/json' -d '{\"text\": \"\ud83d\ude80 a-guy v$VERSION released \u2014 https://github.com/A-Guy-educ/A-Guy/releases/tag/v$VERSION\"}'",
+    "e2eCommand": "pnpm test:e2e"
   },
   "watch": {
     "enabled": true,
@@ -39,7 +42,7 @@
   "devServer": {
     "command": "pnpm dev",
     "url": "http://localhost:3000",
-    "readyPattern": "Ready in|compiled|started server|Local:|localhost:|✓ Ready",
+    "readyPattern": "Ready in|compiled|started server|Local:|localhost:|\u2713 Ready",
     "readyTimeout": 180,
     "env": [
       "AI_BASE_URL",
