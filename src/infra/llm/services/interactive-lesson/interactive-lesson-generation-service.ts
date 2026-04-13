@@ -42,8 +42,12 @@ export async function generateInteractiveLesson(
       temperature: 0,
       // Thinking tokens count against maxOutputTokens — budget generously
       // to avoid truncated JSON on complex multi-step problems.
-      maxOutputTokens: 131072,
-      thinkingBudget: 24576,
+      maxOutputTokens: 65536,
+      // Lower thinking budget — complex geometry proofs cause Gemini to
+      // think extensively, consuming most of the output token budget and
+      // truncating the JSON response. 8K thinking is enough for structured
+      // extraction; the actual math reasoning happens in the JSON steps.
+      thinkingBudget: 8192,
     }
 
     const prompt = await buildPrompt(input.locale, payload)
