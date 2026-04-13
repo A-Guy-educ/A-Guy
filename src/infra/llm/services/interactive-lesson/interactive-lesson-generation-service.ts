@@ -33,51 +33,33 @@ export async function generateInteractiveLesson(
     const adapter = await createGenkitUnifiedAdapter(payload)
     modelConfig = {
       ...resolveModelConfig('IMAGE_TO_EXERCISE'),
-      // Use Gemini 2.5 Flash explicitly — 2.0 Flash produces only ~4 steps on
-      // complex multi-part geometry proofs. 2.5 Flash with thinking produces 18-20.
-      // The "googleai/" prefix tells the adapter to skip DB config resolution.
       name: 'googleai/gemini-2.5-flash',
-      // Temperature 0 for deterministic structured JSON output — higher values
-      // cause format inconsistencies (p1/p2 vs from/to, missing fields).
       temperature: 0,
-      // Thinking tokens count against maxOutputTokens — budget generously
-      // to avoid truncated JSON on complex multi-step problems.
       maxOutputTokens: 65536,
-      // Thinking disabled — complex problems cause Gemini to spend most of
-      // the output budget on internal reasoning, truncating the JSON. With
-      // thinking off, responses are fast (~12s), consistent, and never
-      // truncated. The model still produces correct multi-step solutions.
+      // Explicitly disable thinking — without this, Gemini 2.5 Flash defaults
+      // to thinking mode which consumes 80K+ tokens and causes truncated JSON.
+      // thinkingBudget: 0 must be passed as !== undefined (not falsy) so the
+      // adapter includes it in the config.
       thinkingBudget: 0,
     }
 
     const prompt = await buildPrompt(input.locale, payload)
     const { attachmentData, sizeBytes } = await prepareImage(input)
 
-    // Retry up to 2 times on empty responses or malformed JSON — Gemini
-    // occasionally returns empty output or truncated JSON when thinking
-    // consumes most of the output token budget.
-    const MAX_ATTEMPTS = 3
-    let parsed: Record<string, unknown> | null = null
-    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-      const result = await adapter.generateMultimodalCompletion(
-        {
-          prompt,
-          model: modelConfig,
-          attachments: [{ data: attachmentData, mimeType: input.mimeType }],
-        },
-        payload,
-      )
+    const result = await adapter.generateMultimodalCompletion(
+      {
+        prompt,
+        model: modelConfig,
+        attachments: [{ data: attachmentData, mimeType: input.mimeType }],
+      },
+      payload,
+    )
 
-      parsed = parseResponse(result.text)
-      if (parsed.error === 'PARSE_ERROR' || parsed.error === 'EMPTY_RESPONSE') {
-        if (attempt < MAX_ATTEMPTS) continue
-      }
-      break
-    }
+    const parsed = parseResponse(result.text)
 
-    if (!parsed || parsed.error) {
+    if (parsed.error) {
       return buildErrorResponse(
-        String(parsed?.message || parsed?.error || 'Generation failed'),
+        String(parsed.message || parsed.error),
         modelConfig,
         startTime,
         sizeBytes,
