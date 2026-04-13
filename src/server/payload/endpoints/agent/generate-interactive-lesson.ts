@@ -6,7 +6,6 @@
 import type { PayloadRequest } from 'payload'
 import { logger } from '@/infra/utils/logger/logger'
 import { generateInteractiveLesson } from '@/infra/llm/services/interactive-lesson/interactive-lesson-generation-service'
-import { generateStepAudio } from '@/infra/llm/services/interactive-lesson/tts-generation-service'
 
 interface GenerateRequestBody {
   mediaId: string
@@ -43,16 +42,9 @@ export async function agentGenerateInteractiveLesson(
       return Response.json(result, { status: 422 })
     }
 
-    // Generate TTS audio for each step (non-blocking — gracefully degrades)
-    if (result.data?.steps.length) {
-      reqLogger.info({ stepCount: result.data.steps.length }, 'Generating TTS audio')
-      const audioResults = await generateStepAudio(result.data.steps)
-      result.data.steps = result.data.steps.map((step, i) => ({
-        ...step,
-        audioBase64: audioResults[i]?.audioBase64 ?? null,
-        durationSeconds: audioResults[i]?.estimatedDurationSeconds ?? step.durationSeconds,
-      }))
-    }
+    // TTS skipped — GuidedExplanationRunner uses browser speechSynthesis
+    // for narration. OpenAI TTS can be re-enabled here if higher-quality
+    // pre-generated audio is needed in the future.
 
     reqLogger.info(
       {
