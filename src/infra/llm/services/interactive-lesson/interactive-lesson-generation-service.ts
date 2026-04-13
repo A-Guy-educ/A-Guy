@@ -33,14 +33,13 @@ export async function generateInteractiveLesson(
     const adapter = await createGenkitUnifiedAdapter(payload)
     modelConfig = {
       ...resolveModelConfig('IMAGE_TO_EXERCISE'),
-      name: 'googleai/gemini-2.5-flash',
+      // Use Flash Lite — no thinking mode, so it can't get stuck reasoning
+      // for 2+ minutes on complex geometry. Gemini 2.5 Flash ignores
+      // thinkingBudget: 0 on hard problems, producing 130K chars of
+      // reasoning instead of JSON. Lite is fast (~12s) and consistent.
+      name: 'googleai/gemini-2.5-flash-lite',
       temperature: 0,
       maxOutputTokens: 65536,
-      // Explicitly disable thinking — without this, Gemini 2.5 Flash defaults
-      // to thinking mode which consumes 80K+ tokens and causes truncated JSON.
-      // thinkingBudget: 0 must be passed as !== undefined (not falsy) so the
-      // adapter includes it in the config.
-      thinkingBudget: 0,
     }
 
     const prompt = await buildPrompt(input.locale, payload)
