@@ -37,6 +37,9 @@ export async function generateInteractiveLesson(
       // complex multi-part geometry proofs. 2.5 Flash with thinking produces 18-20.
       // The "googleai/" prefix tells the adapter to skip DB config resolution.
       name: 'googleai/gemini-2.5-flash',
+      // Temperature 0 for deterministic structured JSON output — higher values
+      // cause format inconsistencies (p1/p2 vs from/to, missing fields).
+      temperature: 0,
       // Thinking tokens count against maxOutputTokens — budget generously
       // to avoid truncated JSON on complex multi-step problems.
       maxOutputTokens: 131072,
@@ -46,20 +49,31 @@ export async function generateInteractiveLesson(
     const prompt = await buildPrompt(input.locale, payload)
     const { attachmentData, sizeBytes } = await prepareImage(input)
 
-    const result = await adapter.generateMultimodalCompletion(
-      {
-        prompt,
-        model: modelConfig,
-        attachments: [{ data: attachmentData, mimeType: input.mimeType }],
-      },
-      payload,
-    )
+    // Retry up to 2 times on empty responses or malformed JSON — Gemini
+    // occasionally returns empty output or truncated JSON when thinking
+    // consumes most of the output token budget.
+    const MAX_ATTEMPTS = 3
+    let parsed: Record<string, unknown> | null = null
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      const result = await adapter.generateMultimodalCompletion(
+        {
+          prompt,
+          model: modelConfig,
+          attachments: [{ data: attachmentData, mimeType: input.mimeType }],
+        },
+        payload,
+      )
 
-    const parsed = parseResponse(result.text)
+      parsed = parseResponse(result.text)
+      if (parsed.error === 'PARSE_ERROR' || parsed.error === 'EMPTY_RESPONSE') {
+        if (attempt < MAX_ATTEMPTS) continue
+      }
+      break
+    }
 
-    if (parsed.error) {
+    if (!parsed || parsed.error) {
       return buildErrorResponse(
-        String(parsed.message || parsed.error),
+        String(parsed?.message || parsed?.error || 'Generation failed'),
         modelConfig,
         startTime,
         sizeBytes,
@@ -130,6 +144,9 @@ async function prepareImage(input: InteractiveLessonInput) {
 }
 
 function parseResponse(responseText: string): Record<string, unknown> {
+  if (!responseText || responseText.trim().length === 0) {
+    return { error: 'EMPTY_RESPONSE', message: 'LLM returned an empty response.' }
+  }
   const cleaned = responseText
     .trim()
     .replace(/^```json\s*/i, '')
