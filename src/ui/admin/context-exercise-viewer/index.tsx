@@ -255,65 +255,17 @@ export const ContextExerciseViewer: React.FC = () => {
 
   return (
     <div style={{ marginBottom: 24 }}>
-      <div
+      <label
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          display: 'block',
           marginBottom: 8,
+          fontWeight: 600,
+          fontSize: 14,
+          color: 'var(--theme-text)',
         }}
       >
-        <label
-          style={{
-            fontWeight: 600,
-            fontSize: 14,
-            color: 'var(--theme-text)',
-          }}
-        >
-          Context Exercises
-        </label>
-        <button
-          type="button"
-          onClick={handleCreateExercises}
-          disabled={isCreating || totalExercises === 0}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '2px 8px',
-            fontSize: 11,
-            fontWeight: 500,
-            border: '1px solid #000',
-            borderRadius: 4,
-            backgroundColor: isCreating ? 'var(--theme-elevation-300)' : '#fff',
-            color: '#000',
-            cursor: isCreating || totalExercises === 0 ? 'not-allowed' : 'pointer',
-            opacity: totalExercises === 0 ? 0.5 : 1,
-          }}
-        >
-          {isCreating ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
-          {isCreating ? 'Creating...' : 'Create Exercises'}
-        </button>
-      </div>
-
-      {createResult && (
-        <div
-          style={{
-            fontSize: 12,
-            padding: '8px 12px',
-            borderRadius: 4,
-            marginBottom: 12,
-            color: createResult.type === 'success' ? 'var(--theme-success)' : 'var(--theme-error)',
-            backgroundColor:
-              createResult.type === 'success'
-                ? 'var(--theme-success-100)'
-                : 'var(--theme-error-100)',
-          }}
-        >
-          {createResult.message}
-        </div>
-      )}
-
+        Context Exercises
+      </label>
       <p
         style={{
           fontSize: 12,
@@ -365,6 +317,48 @@ export const ContextExerciseViewer: React.FC = () => {
           ))}
         </div>
       ))}
+
+      <button
+        type="button"
+        onClick={handleCreateExercises}
+        disabled={isCreating || totalExercises === 0}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          padding: '2px 8px',
+          fontSize: 11,
+          fontWeight: 500,
+          border: '1px solid #000',
+          borderRadius: 4,
+          backgroundColor: isCreating ? 'var(--theme-elevation-300)' : '#fff',
+          color: '#000',
+          cursor: isCreating || totalExercises === 0 ? 'not-allowed' : 'pointer',
+          opacity: totalExercises === 0 ? 0.5 : 1,
+          marginTop: 8,
+        }}
+      >
+        {isCreating ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+        {isCreating ? 'Creating...' : 'Create Exercises'}
+      </button>
+
+      {createResult && (
+        <div
+          style={{
+            fontSize: 12,
+            padding: '8px 12px',
+            borderRadius: 4,
+            marginTop: 8,
+            color: createResult.type === 'success' ? 'var(--theme-success)' : 'var(--theme-error)',
+            backgroundColor:
+              createResult.type === 'success'
+                ? 'var(--theme-success-100)'
+                : 'var(--theme-error-100)',
+          }}
+        >
+          {createResult.message}
+        </div>
+      )}
     </div>
   )
 }
