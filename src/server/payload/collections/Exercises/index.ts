@@ -357,6 +357,7 @@ export const Exercises: CollectionConfig = {
             { label: 'Manual', value: 'manual' },
             { label: 'Conversion', value: 'conversion' },
             { label: 'Import', value: 'import' },
+            { label: 'Context Extraction', value: 'context_extraction' },
           ],
           defaultValue: 'manual',
           required: true,
