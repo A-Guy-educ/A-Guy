@@ -21,12 +21,12 @@ export const LatexBlockEditor: React.FC<LatexBlockEditorProps> = ({ block, onCha
 
   return (
     <div className="latex-block-editor">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-        <label style={{ fontSize: '13px', fontWeight: 500 }}>Render Mode:</label>
+      <div className="flex items-center gap-content-gap-xs mb-2">
+        <label className="text-label">Render Mode:</label>
         <select
           value={renderMode}
           onChange={handleRenderModeChange}
-          style={{ fontSize: '13px', padding: '2px 6px' }}
+          className="text-label px-1 py-0.5"
         >
           <option value="block">Block (display math)</option>
           <option value="inline">Inline</option>
@@ -34,12 +34,11 @@ export const LatexBlockEditor: React.FC<LatexBlockEditorProps> = ({ block, onCha
       </div>
 
       <textarea
-        className="html-block-source-textarea"
+        className="html-block-source-textarea font-mono"
         value={block.latex}
         onChange={handleLatexChange}
         placeholder="Enter LaTeX code here..."
         rows={8}
-        style={{ fontFamily: 'monospace' }}
       />
     </div>
   )
