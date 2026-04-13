@@ -350,13 +350,13 @@ export function ConvertContextModal({
               padding: '8px 16px',
               fontSize: 13,
               fontWeight: 500,
-              border: 'none',
+              border: '1px solid var(--theme-elevation-200)',
               borderRadius: 4,
               backgroundColor: success
                 ? 'var(--theme-success)'
                 : isConverting
                   ? 'var(--theme-elevation-400)'
-                  : 'var(--theme-primary)',
+                  : 'var(--theme-elevation-1000)',
               color: 'var(--theme-elevation-0)',
               cursor: isConverting || success ? 'not-allowed' : 'pointer',
               opacity: isConverting ? 0.6 : 1,
