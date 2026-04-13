@@ -14,6 +14,38 @@ import type { InteractiveLesson, GeometryData, GeoPoint } from './interactive-le
 // SVG generation from structured geometry data
 // ---------------------------------------------------------------------------
 
+/** Escape XML special chars to prevent SVG injection from LLM output. */
+function escapeXml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+/** Strip a label down to safe alphanumeric + common math chars only. */
+function safeLabel(label: string): string {
+  return label.replace(/[^a-zA-Z0-9_\-αβγδ′]/g, '')
+}
+
+const ALLOWED_COLORS = new Set(['blue', 'red', 'green', 'orange', 'purple'])
+const COLOR_MAP: Record<string, string> = {
+  blue: '#2563eb',
+  red: '#ef4444',
+  green: '#10b981',
+  orange: '#f59e0b',
+  purple: '#8b5cf6',
+}
+
+function safeColor(color: string | undefined): string {
+  if (!color) return '#2563eb'
+  if (ALLOWED_COLORS.has(color)) return COLOR_MAP[color]
+  // Accept valid hex colors only
+  if (/^#[0-9a-fA-F]{3,6}$/.test(color)) return color
+  return '#2563eb'
+}
+
 function pointMap(geometry: GeometryData): Map<string, GeoPoint> {
   const map = new Map<string, GeoPoint>()
   for (const p of geometry.points) map.set(p.label, p)
@@ -22,7 +54,9 @@ function pointMap(geometry: GeometryData): Map<string, GeoPoint> {
 
 /** Canonical segment id — always alphabetically sorted so A-D and D-A map to the same id. */
 function segmentId(from: string, to: string): string {
-  return from < to ? `seg-${from}-${to}` : `seg-${to}-${from}`
+  const sf = safeLabel(from)
+  const st = safeLabel(to)
+  return sf < st ? `seg-${sf}-${st}` : `seg-${st}-${sf}`
 }
 
 function buildSvg(geometry: GeometryData): string {
@@ -39,7 +73,7 @@ function buildSvg(geometry: GeometryData): string {
     const p1 = pts.get(seg.from)
     const p2 = pts.get(seg.to)
     if (!p1 || !p2) continue
-    const color = seg.color || '#2563eb'
+    const color = safeColor(seg.color)
     const width = seg.style === 'bold' ? 4 : 3
     const dasharray = seg.style === 'dashed' ? ' stroke-dasharray="8 4"' : ''
     const id = segmentId(seg.from, seg.to)
@@ -85,9 +119,10 @@ function buildSvg(geometry: GeometryData): string {
 
   // Point labels
   for (const p of geometry.points) {
+    const label = safeLabel(p.label)
     const offsetY = p.y < geometry.height / 2 ? -12 : 20
     lines.push(
-      `    <text id="label-${p.label}" class="ge-fade-element" x="${p.x}" y="${p.y + offsetY}" text-anchor="middle">${p.label}</text>`,
+      `    <text id="label-${label}" class="ge-fade-element" x="${p.x}" y="${p.y + offsetY}" text-anchor="middle">${escapeXml(p.label)}</text>`,
     )
   }
 
@@ -95,9 +130,9 @@ function buildSvg(geometry: GeometryData): string {
   if (geometry.labels) {
     for (let i = 0; i < geometry.labels.length; i++) {
       const lbl = geometry.labels[i]
-      const fontSize = lbl.fontSize || 12
+      const fontSize = Math.min(Math.max(Number(lbl.fontSize) || 12, 8), 24)
       lines.push(
-        `    <text id="geo-label-${i}" class="ge-fade-element" x="${lbl.x}" y="${lbl.y}" font-size="${fontSize}" text-anchor="middle">${lbl.text}</text>`,
+        `    <text id="geo-label-${i}" class="ge-fade-element" x="${lbl.x}" y="${lbl.y}" font-size="${fontSize}" text-anchor="middle">${escapeXml(lbl.text)}</text>`,
       )
     }
   }

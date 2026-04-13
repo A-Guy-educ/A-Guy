@@ -116,7 +116,11 @@ function parseResponse(responseText: string): Record<string, unknown> {
     .replace(/^```\s*/, '')
     .replace(/```\s*$/, '')
     .trim()
-  return JSON.parse(cleaned)
+  try {
+    return JSON.parse(cleaned)
+  } catch {
+    return { error: 'PARSE_ERROR', message: 'LLM returned malformed JSON. Please try again.' }
+  }
 }
 
 function validateLesson(parsed: Record<string, unknown>, locale: 'he' | 'en'): InteractiveLesson {
@@ -183,10 +187,10 @@ function validateSegment(s: Record<string, unknown>) {
       | 'solid'
       | 'dashed'
       | 'bold',
-    color:
-      typeof s.color === 'string' && !['solid', 'dashed', 'bold'].includes(s.color)
-        ? s.color
-        : undefined,
+    // Only accept documented color names — arbitrary strings could inject into SVG
+    color: ['blue', 'red', 'green', 'orange', 'purple'].includes(s.color as string)
+      ? (s.color as string)
+      : undefined,
   }
 }
 
