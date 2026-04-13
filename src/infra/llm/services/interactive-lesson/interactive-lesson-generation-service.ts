@@ -179,16 +179,32 @@ function validateLesson(parsed: Record<string, unknown>, locale: 'he' | 'en'): I
 
 /**
  * Gemini returns highlightSegments in varying formats:
- *   - ["AB", "CD"]          → flat strings (2+ chars = label pairs)
- *   - [["A","B"],["C","D"]] → already paired
+ *   - ["AB", "CD"]              → 2+ char strings = label pairs
+ *   - [["A","B"],["C","D"]]    → already paired arrays
+ *   - ["A","B","C","D"]         → flat single-char labels = consecutive pairs
  * Normalize to [["A","B"],["C","D"]] so the converter can match segment ids.
  */
 function normalizeHighlightSegments(raw: unknown[]): string[][] {
-  return raw.flatMap((item) => {
-    if (Array.isArray(item) && item.length === 2) return [[String(item[0]), String(item[1])]]
-    if (typeof item === 'string' && item.length >= 2) return [[item[0], item.slice(1)]]
-    return []
-  })
+  // Check if it's already paired arrays
+  if (raw.length > 0 && Array.isArray(raw[0])) {
+    return raw
+      .filter((item) => Array.isArray(item) && item.length === 2)
+      .map((item) => [(item as string[])[0], (item as string[])[1]])
+  }
+  // Check if it's multi-char strings like "AB", "CD"
+  if (raw.length > 0 && typeof raw[0] === 'string' && (raw[0] as string).length >= 2) {
+    return raw
+      .filter((item) => typeof item === 'string' && (item as string).length >= 2)
+      .map((item) => [(item as string)[0], (item as string).slice(1)])
+  }
+  // Flat single-char labels: ["A","B","C","D"] → [["A","B"],["C","D"]]
+  const pairs: string[][] = []
+  for (let i = 0; i + 1 < raw.length; i += 2) {
+    const a = String(raw[i])
+    const b = String(raw[i + 1])
+    if (a.length === 1 && b.length === 1) pairs.push([a, b])
+  }
+  return pairs
 }
 
 function validatePoint(p: Record<string, unknown>) {
