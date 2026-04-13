@@ -31,35 +31,55 @@ export async function generateInteractiveLesson(
   try {
     const { createGenkitUnifiedAdapter } = await import('../../genkit/adapters/unified-adapter')
     const adapter = await createGenkitUnifiedAdapter(payload)
-    modelConfig = {
-      ...resolveModelConfig('IMAGE_TO_EXERCISE'),
-      // Use Flash Lite — no thinking mode, so it can't get stuck reasoning
-      // for 2+ minutes on complex geometry. Gemini 2.5 Flash ignores
-      // thinkingBudget: 0 on hard problems, producing 130K chars of
-      // reasoning instead of JSON. Lite is fast (~12s) and consistent.
-      name: 'googleai/gemini-2.5-flash-lite',
-      temperature: 0,
-      maxOutputTokens: 65536,
-    }
-
     const prompt = await buildPrompt(input.locale, payload)
     const { attachmentData, sizeBytes } = await prepareImage(input)
 
-    const result = await adapter.generateMultimodalCompletion(
-      {
-        prompt,
-        model: modelConfig,
-        attachments: [{ data: attachmentData, mimeType: input.mimeType }],
-      },
-      payload,
-    )
+    // Try Gemini 2.5 Flash first (smarter, has thinking). If it times out
+    // (stuck in a reasoning loop on hard problems), fall back to Flash Lite
+    // (no thinking mode, always fast).
+    const models = [
+      { name: 'googleai/gemini-2.5-flash', timeoutMs: 45_000 },
+      { name: 'googleai/gemini-2.5-flash-lite', timeoutMs: 45_000 },
+    ]
 
-    const parsed = parseResponse(result.text)
+    let parsed: Record<string, unknown> | null = null
+    for (const { name, timeoutMs } of models) {
+      modelConfig = {
+        ...resolveModelConfig('IMAGE_TO_EXERCISE'),
+        name,
+        temperature: 0,
+        maxOutputTokens: 65536,
+        thinkingBudget: 0,
+      }
 
-    if (parsed.error) {
+      try {
+        const result = await Promise.race([
+          adapter.generateMultimodalCompletion(
+            {
+              prompt,
+              model: modelConfig,
+              attachments: [{ data: attachmentData, mimeType: input.mimeType }],
+            },
+            payload,
+          ),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('TIMEOUT')), timeoutMs),
+          ),
+        ])
+
+        parsed = parseResponse(result.text)
+        if (!parsed.error) break
+      } catch (err) {
+        const isTimeout = err instanceof Error && err.message === 'TIMEOUT'
+        if (!isTimeout) throw err
+        // Timeout — try next model
+      }
+    }
+
+    if (!parsed || parsed.error) {
       return buildErrorResponse(
-        String(parsed.message || parsed.error),
-        modelConfig,
+        String(parsed?.message || parsed?.error || 'Generation timed out'),
+        modelConfig ?? { name: 'unknown', temperature: 0, maxOutputTokens: 0 },
         startTime,
         sizeBytes,
       )
@@ -71,7 +91,7 @@ export async function generateInteractiveLesson(
       success: true,
       data: lesson,
       metadata: {
-        model: modelConfig.name,
+        model: modelConfig?.name ?? 'unknown',
         processingTimeMs: Date.now() - startTime,
         imageSizeBytes: sizeBytes,
       },
