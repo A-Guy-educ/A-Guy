@@ -23,7 +23,7 @@ import type { Payload, User } from 'payload'
 const PAGE_CONCURRENCY = 3
 
 // Warning threshold for combined LaTeX size
-const LATEX_SIZE_WARNING_THRESHOLD = 80000
+const LATEX_SIZE_WARNING_THRESHOLD = 160000
 
 export interface ExtractContextInput {
   lessonId: string

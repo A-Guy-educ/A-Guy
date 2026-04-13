@@ -338,7 +338,7 @@ export const Lessons: CollectionConfig = {
     {
       name: 'lessonContextText',
       type: 'textarea',
-      maxLength: 100_000, // Match LESSON_CONTEXT_MAX_CHARS in src/lib/ai/lesson-context.ts
+      maxLength: 200_000, // Match LESSON_CONTEXT_MAX_CHARS in src/infra/llm/lesson-context.ts
       admin: {
         description:
           'AI context text for this lesson. Injected into chat prompts at runtime. NOT indexed or searchable.',

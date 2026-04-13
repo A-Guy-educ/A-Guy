@@ -10,7 +10,7 @@
  * @pattern single-responsibility, runtime-injection
  */
 
-export const LESSON_CONTEXT_MAX_CHARS = 100_000 // ~50K tokens
+export const LESSON_CONTEXT_MAX_CHARS = 200_000 // ~100K tokens
 export const LESSON_CONTEXT_BLOCK_START = 'LESSON_CONTEXT_START'
 export const LESSON_CONTEXT_BLOCK_END = 'LESSON_CONTEXT_END'
 
