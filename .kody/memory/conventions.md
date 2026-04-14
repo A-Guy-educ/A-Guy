@@ -52,3 +52,6 @@ See [design-system.md](./design-system.md) for complete rules. Key points:
 
 ## Learned 2026-04-05 (task: acceptable)
 - Active directories: src/infra/blob, src/ui/web/courses/PDFViewer, src/ui/web/media/PDFMedia, src/server/services
+
+## Learned 2026-04-14 (task: 1211-260414-141107)
+- Active directories: src/infra/utils, src/ui/web/chat/hooks, src/ui/web/chat/TTSButton, src/i18n, src/ui/web/GuidedExplanationRunner

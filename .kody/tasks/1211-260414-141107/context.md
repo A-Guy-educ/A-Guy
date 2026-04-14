@@ -36,3 +36,63 @@ Typecheck passes. Let me provide a summary of what was implemented:
    - Supports `en` and `he` locales
    - Lookup table for 
 ...(truncated)
+
+### review (2026-04-14T15:00:49)
+Based on my analysis of the diff and source files, here is my structured review:
+
+## Verdict: FAIL
+
+## Summary
+
+The implementation adds a bilingual LaTeX-to-speech engine with playback controls (pause/resume, speed selector) for the chat TTS system. The core math-to-speech logic and UI controls are functional, but there are **two significant bugs** that need fixing before merge.
+
+---
+
+## Findings
+
+### Critical
+
+None.
+
+### Major
+
+**1. `src/ui/web/chat/hooks/useTTS.ts:69-73` — `setRate` doesn't ap
+...(truncated)
+
+### review-fix (2026-04-14T15:03:53)
+## Fixes Applied
+
+### Major Issue 1: `setRate` rate multiplier bug ✅
+
+**File**: `src/ui/web/chat/hooks/useTTS.ts:72`
+
+**Before**: `utteranceRef.current.rate = rate` — directly set the rate without the 0.85 teacher-cadence multiplier
+
+**After**: `utteranceRef.current.rate = 0.85 * rate` — applies the multiplier consistently
+
+This ensures that when `setRate(1.5)` is called mid-speech, the effective rate is 1.275 (0.85 × 1.5), matching the intended teacher-cadence behavior.
+
+---
+
+### Major Issue 2:
+...(truncated)
+
+### review (2026-04-14T15:08:21)
+## Verdict: PASS
+
+## Summary
+
+The implementation adds a bilingual LaTeX-to-speech engine with playback controls (pause/resume, speed selector 0.5x–2.0x) for the chat TTS system. The two major issues from the prior review have been fixed: the `setRate` function now correctly applies the 0.85 teacher-cadence multiplier, and the duplicate `pickVoiceForLocale` function has been extracted to a shared utility.
+
+---
+
+## Findings
+
+### Critical
+
+None.
+
+### Major
+
+None. Both previously identified major is
+...(truncated)
