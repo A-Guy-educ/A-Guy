@@ -35,17 +35,19 @@
       "promptTokens": 5906
     },
     "review-fix": {
-      "state": "running",
-      "startedAt": "2026-04-14T15:21:47.953Z",
-      "retries": 0
+      "state": "completed",
+      "completedAt": "2026-04-14T15:23:17.629Z",
+      "retries": 0,
+      "promptTokens": 4608
     },
     "ship": {
-      "state": "pending",
+      "state": "running",
+      "startedAt": "2026-04-14T15:23:17.774Z",
       "retries": 0
     }
   },
   "createdAt": "2026-04-14T15:11:43.633Z",
-  "updatedAt": "2026-04-14T15:21:47.953Z",
+  "updatedAt": "2026-04-14T15:23:17.774Z",
   "sessions": {
     "explore": "8c5ed9f9-6a04-48c6-ab05-f5255d908427",
     "build": "866398c1-5c57-4436-986a-f77661161e5d",
