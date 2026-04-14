@@ -98,7 +98,15 @@ Draw a horizontal \`line\`, tick marks with small vertical \`line\`s, \`text\` l
 - Put ALL drawing ops first in the list (static scene setup).
 - Then the timeline: narrate → show/drawAnimated → narrate → wait → etc.
 - Structure like a tutorial: introduce, explain step by step, conclude.
-- 6-15 \`narrate\` ops is a good range. Each should be one pedagogical thought.
+- **Keep total op count under 100.** Concise is better than comprehensive.
+
+## Length limits — CRITICAL
+Your output MUST fit in a normal-sized JSON response. Be CONCISE:
+- Total ops: ≤ 100 (combined drawing + timeline)
+- \`narrate.display\`: ≤ 150 characters per op. Short sentences, one idea each.
+- \`narrate.speech\`: OMIT unless the display text genuinely needs niqqud for pronunciation. Adding niqqud to every narrate doubles response size.
+- \`explanation\` fields: don't add them — we don't use them.
+- 6-12 narrate ops total is the sweet spot. More is worse, not better.
 
 ## Language
 - Match the image's language. For Hebrew use Hebrew in \`narrate.display\` and optionally add \`speech\` with niqqud for better pronunciation.

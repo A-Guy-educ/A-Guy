@@ -45,14 +45,21 @@ export async function generateInteractiveLesson(
     const prompt = await buildPrompt(input.locale, payload)
     const { attachmentData, sizeBytes } = await prepareImage(input)
 
-    // Try 2.5 Flash first; fall back to Flash Lite if it times out.
-    const models = [
-      { name: 'googleai/gemini-2.5-flash', timeoutMs: 45_000 },
-      { name: 'googleai/gemini-2.5-flash-lite', timeoutMs: 45_000 },
+    // Three attempts: Flash → Flash Lite → Flash Lite with strict brevity.
+    // Brevity attempt added because some images cause Flash Lite to ignore
+    // conciseness instructions and produce 130K+ char responses that hit
+    // MAX_TOKENS and truncate the JSON.
+    const BREVITY_ADDENDUM =
+      '\n\nCRITICAL: Your previous attempt was too long. Generate a MUCH shorter response: maximum 30 ops, maximum 6 narrate ops, narration text under 100 chars each, NO speech field on any narrate. Be radically concise.'
+
+    const attempts = [
+      { name: 'googleai/gemini-2.5-flash', timeoutMs: 45_000, extraPrompt: '' },
+      { name: 'googleai/gemini-2.5-flash-lite', timeoutMs: 45_000, extraPrompt: '' },
+      { name: 'googleai/gemini-2.5-flash-lite', timeoutMs: 45_000, extraPrompt: BREVITY_ADDENDUM },
     ]
 
     let parsed: Record<string, unknown> | null = null
-    for (const { name, timeoutMs } of models) {
+    for (const { name, timeoutMs, extraPrompt } of attempts) {
       modelConfig = {
         ...resolveModelConfig('IMAGE_TO_EXERCISE'),
         name,
@@ -65,7 +72,7 @@ export async function generateInteractiveLesson(
         const result = await Promise.race([
           adapter.generateMultimodalCompletion(
             {
-              prompt,
+              prompt: prompt + extraPrompt,
               model: modelConfig,
               attachments: [{ data: attachmentData, mimeType: input.mimeType }],
             },
@@ -77,7 +84,9 @@ export async function generateInteractiveLesson(
         ])
 
         parsed = parseResponse(result.text)
+        // PARSE_ERROR usually means MAX_TOKENS truncation — retry with brevity
         if (!parsed.error) break
+        if (parsed.error !== 'PARSE_ERROR') break
       } catch (err) {
         const isTimeout = err instanceof Error && err.message === 'TIMEOUT'
         if (!isTimeout) throw err
