@@ -1,0 +1,5 @@
+{
+  "name": "release-publisher",
+  "description": "Automates the full release lifecycle: creates tracking issue, runs kody release, monitors PR until ready, merges to main, and finalizes (E2E gate, tag, GitHub Release, publish, notify)",
+  "cron": "0 10 * * 1"
+}
