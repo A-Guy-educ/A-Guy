@@ -19,11 +19,7 @@
       "runId": "1197-260414-150706",
       "step": "taskify"
     },
-    "hooksFired": [
-      "github-label",
-      "log",
-      "webhook"
-    ],
+    "hooksFired": ["github-label", "log", "webhook"],
     "hookErrors": {},
     "emittedAt": "2026-04-14T15:12:19.439Z"
   },
@@ -47,11 +43,7 @@
       "runId": "1197-260414-150706",
       "step": "plan"
     },
-    "hooksFired": [
-      "github-label",
-      "log",
-      "webhook"
-    ],
+    "hooksFired": ["github-label", "log", "webhook"],
     "hookErrors": {},
     "emittedAt": "2026-04-14T15:15:22.315Z"
   },
@@ -75,11 +67,7 @@
       "runId": "1197-260414-150706",
       "step": "build"
     },
-    "hooksFired": [
-      "github-label",
-      "log",
-      "webhook"
-    ],
+    "hooksFired": ["github-label", "log", "webhook"],
     "hookErrors": {},
     "emittedAt": "2026-04-14T15:15:53.921Z"
   },
@@ -127,11 +115,7 @@
       "runId": "1197-260414-150706",
       "step": "review"
     },
-    "hooksFired": [
-      "github-label",
-      "log",
-      "webhook"
-    ],
+    "hooksFired": ["github-label", "log", "webhook"],
     "hookErrors": {},
     "emittedAt": "2026-04-14T15:19:51.499Z"
   },
@@ -155,11 +139,7 @@
       "runId": "1197-260414-150706",
       "step": "review-fix"
     },
-    "hooksFired": [
-      "github-label",
-      "log",
-      "webhook"
-    ],
+    "hooksFired": ["github-label", "log", "webhook"],
     "hookErrors": {},
     "emittedAt": "2026-04-14T15:21:51.442Z"
   }
