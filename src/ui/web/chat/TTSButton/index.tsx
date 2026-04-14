@@ -39,8 +39,8 @@ export function TTSButton({
       {/* Speed selector pills */}
       {isPlaying && (
         <div className="flex items-center gap-1 animate-in fade-in slide-in-from-top-2 duration-normal">
-          <span className="text-body-xs text-muted-foreground pe-1 rtl:pe-0 rtl:ps-1">{labelSpeed}</span>
-          <div className="flex items-center rounded-full bg-muted/80 p-0.5 shadow-elevation-1">
+          <span className="text-[10px] text-muted-foreground pe-1 rtl:pe-0 rtl:ps-1">{labelSpeed}</span>
+          <div className="flex items-center rounded-full bg-muted/80 p-px shadow-elevation-1">
             {SPEED_PRESETS.map((speed) => (
               <button
                 key={speed}
@@ -50,7 +50,7 @@ export function TTSButton({
                   onSetRate(speed)
                 }}
                 className={cn(
-                  'w-7 h-6 rounded-full text-body-xs font-medium transition-all duration-normal',
+                  'w-6 h-5 rounded-full text-[10px] font-medium transition-all duration-normal',
                   currentRate === speed
                     ? 'bg-primary text-primary-foreground shadow-elevation-1'
                     : 'text-muted-foreground hover:text-foreground hover:bg-muted',
