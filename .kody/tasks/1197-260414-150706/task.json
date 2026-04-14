@@ -1,0 +1,24 @@
+## Summary
+
+I investigated the security vulnerability report for 5 routes missing authentication.
+
+### Investigation Results
+
+**Fixed:**
+- `src/app/api/copilotkit/route.ts:90-95` — The GET handler was not wrapped with `withApiHandler`. I wrapped it with `withApiHandler({ auth: 'public' })` since it only returns a status check. The POST was already properly protected with `auth: 'authenticated'`.
+
+**Already Protected (verified):**
+- `src/app/api/exercises/convert/single/create/route.ts:57` — POST has `auth: 'admin'`
+- `src/app/api/exercises/convert/single/route.ts:30` — POST has `auth: 'admin'`
+- `src/app/api/lessons/convert-context/route.ts:23` — POST has `auth: 'admin'`
+- `src/app/api/lessons/create-context-exercises/route.ts:23` — POST has `auth: 'admin'`
+
+### Conclusion
+
+The scanner may have been flagging stale code or there may be a scanner issue. All 5 routes currently have proper authentication:
+- The copilotkit route now has both GET and POST wrapped with `withApiHandler`
+- The other 4 routes only have POST (which is correct — they don't need GET), and their POST handlers are properly protected with `auth: 'admin'`
+
+**Verification:** `pnpm typecheck` and `pnpm lint` both pass.
+
+Would you like me to investigate further into why the scanner flagged the other 4 routes, or shall I proceed with committing this fix?

@@ -1,0 +1,5 @@
+{
+  "name": "release-publisher",
+  "description": "Full release lifecycle: creates issue, runs kody release (dev), merges, finalize (E2E/tag/release/publish/notify), creates promotion PR dev→main, merges to main",
+  "cron": "0 10 * * 1"
+}

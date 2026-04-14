@@ -106,7 +106,7 @@
     "@anthropic-ai/sdk": "^0.80.0",
     "@genkit-ai/googleai": "^1.28.0",
     "@google/generative-ai": "^0.24.1",
-    "@kody-ade/engine": "^0.1.32",
+    "@kody-ade/engine": "^0.1.118",
     "@modelcontextprotocol/sdk": "^1.27.1",
     "@napi-rs/canvas": "^0.1.89",
     "@payloadcms/admin-bar": "3.73.0",
