@@ -74,7 +74,6 @@ jobs:
           WATCH_DIGEST_ISSUE_FUNCTIONAL: ${{ vars.WATCH_DIGEST_ISSUE_FUNCTIONAL }}
           WATCH_DIGEST_ISSUE_INFRA: ${{ vars.WATCH_DIGEST_ISSUE_INFRA }}
           WATCH_DIGEST_ISSUE_ANALYTICS: ${{ vars.WATCH_DIGEST_ISSUE_ANALYTICS }}
-          WATCH_DIGEST_ISSUE_SYSTEM_TEST: ${{ vars.WATCH_DIGEST_ISSUE_SYSTEM_TEST }}
           PREVIEW_URL: ${{ vars.PREVIEW_URL }}
           DRY_RUN: ${{ inputs.dry_run || 'false' }}
         run: |
