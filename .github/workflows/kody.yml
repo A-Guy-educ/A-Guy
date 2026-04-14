@@ -21,6 +21,15 @@ on:
       dry_run:
         type: boolean
         default: false
+      provider:
+        type: string
+        default: ''
+      model:
+        type: string
+        default: ''
+      auto_mode:
+        type: boolean
+        default: false
 
   issue_comment:
     types: [created]
@@ -53,6 +62,8 @@ jobs:
   parse:
     if: >-
       github.event_name == 'issue_comment' &&
+      github.event.issue.state != 'closed' &&
+      github.event.comment.user.type != 'Bot' &&
       (contains(github.event.comment.body, '@kody') || contains(github.event.comment.body, '/kody'))
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -211,12 +222,13 @@ jobs:
           TICKET_ID: ${{ needs.parse.outputs.ticket_id }}
           PRD_FILE: ${{ needs.parse.outputs.prd_file }}
           DRY_RUN: ${{ github.event.inputs.dry_run || needs.parse.outputs.dry_run || 'false' }}
+          AUTO_MODE: ${{ github.event.inputs.auto_mode }}
           BUMP: ${{ needs.parse.outputs.bump }}
           FINALIZE: ${{ needs.parse.outputs.finalize }}
           NO_PUBLISH: ${{ needs.parse.outputs.no_publish }}
           NO_NOTIFY: ${{ needs.parse.outputs.no_notify }}
           REVERT_TARGET: ${{ needs.parse.outputs.revert_target }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RUN-URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           if [ "$MODE" = "release" ]; then
             echo "Running release..."
@@ -263,6 +275,7 @@ jobs:
             # FEEDBACK is also passed via env var (avoids shell escaping issues)
             [ -n "$FEEDBACK" ] && ARGS="$ARGS --feedback \"$FEEDBACK\""
             [ "$DRY_RUN" = "true" ] && ARGS="$ARGS --dry-run"
+            [ "$AUTO_MODE" = "true" ] && ARGS="$ARGS --auto-mode"
             kody-engine $CMD $ARGS
           fi
 
@@ -370,7 +383,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: '❌ Failed to parse command.\n\nUsage: `@kody [full|rerun|status] <task-id> [--from <stage>] [--feedback "<text>"]`'
+              body: '❌ Failed to parse command.\n\nUsage: `@kody [full|rerun|fix|fix-ci|review|resolve|status] [--from <stage>] [--feedback "<text>"]`'
             })
 
   notify-orchestrate-error:
@@ -452,3 +465,35 @@ jobs:
               body: `@kody fix-ci\nCI failed: [View logs](${runUrl})\nRun ID: ${runId}`,
             });
             core.info(`Posted @kody fix-ci on PR #${prNumber} for run ${runId}`);
+
+  # ─── Smoke Test (push trigger) ──────────────────────────────────────────────
+  smoke-test:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install Kody Engine
+        run: npm install -g @kody-ade/engine
+      - name: Typecheck
+        run: pnpm tsc --noEmit
+      - name: CLI loads
+        run: kody-engine --help
+      - name: Dry run
+        run: |
+          mkdir -p .kody/tasks/smoke-test
+          echo "Smoke test task" > .kody/tasks/smoke-test/task.md
+          kody-engine run --task-id smoke-test --dry-run || true
+          if [ -f ".kody/tasks/smoke-test/status.json" ]; then
+            echo "✓ status.json created"
+            cat .kody/tasks/smoke-test/status.json
+          fi
+          rm -rf .kody/tasks/smoke-test
