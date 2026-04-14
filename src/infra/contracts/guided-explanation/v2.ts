@@ -31,7 +31,8 @@ const ColorSchema = z.union([
   z.string().regex(/^#[0-9a-fA-F]{3,8}$/),
 ])
 
-const CoordSchema = z.number().finite()
+/** Coordinate — defaults to 0 if Gemini omits the field. */
+const CoordSchema = z.number().finite().default(0)
 
 const IdSchema = z
   .string()
