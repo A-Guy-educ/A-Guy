@@ -262,7 +262,10 @@ async function handleRaceCondition(
         return res
       } catch (sessionError) {
         logOAuthError('session_issuance_failed', sessionError, correlationId)
-        res.headers.set('Location', new URL('/login?error=session_issue_failed', req.url).toString())
+        res.headers.set(
+          'Location',
+          new URL('/login?error=session_issue_failed', req.url).toString(),
+        )
         return res
       }
     }
