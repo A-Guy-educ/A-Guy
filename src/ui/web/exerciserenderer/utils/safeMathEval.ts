@@ -24,8 +24,8 @@ export function parseMathExpression(expr: string): ParseResult {
     return { valid: false, evaluate: () => NaN, error: 'Invalid expression' }
   }
 
-  // Normalize the expression
-  const normalized = expr.toLowerCase().replace(/\s+/g, '').replace(/\^/g, '**') // Convert ^ to ** for exponentiation
+  // Normalize the expression (mathjs uses ^ for exponentiation natively)
+  const normalized = expr.toLowerCase().replace(/\s+/g, '')
 
   try {
     // Pre-validate the expression by attempting to evaluate with x=0

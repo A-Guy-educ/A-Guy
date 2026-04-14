@@ -38,3 +38,42 @@ The fix is complete and verified. Here's a summary:
    - All math functions (`sin`, `cos`, `tan`, `sqrt`, etc.) and constants (`PI`, `E`) are passed explicitly via scope
    - Add
 ...(truncated)
+
+### review (2026-04-14T14:33:35)
+## Verdict: PASS
+
+## Summary
+
+Fixed a critical code injection vulnerability in `safeMathEval.ts` by replacing the dangerous `eval()` call with `mathjs.evaluate()`. The mathjs library only evaluates mathematical expressions and cannot execute arbitrary JavaScript code, preventing the stored XSS/code injection attack vector.
+
+## Findings
+
+### Critical
+
+None.
+
+### Major
+
+None.
+
+### Minor
+
+1. `src/ui/web/exerciserenderer/utils/safeMathEval.ts` — **No test coverage**. The file has no unit or integrat
+...(truncated)
+
+### review-fix (2026-04-14T14:38:43)
+## Summary
+
+The review-fix task is complete. Here's what was done:
+
+### Fixes Applied
+
+1. **`src/ui/web/exerciserenderer/utils/safeMathEval.ts`**:
+   - Fixed the exponentiation operator - removed `replace(/\^/g, '**')` since mathjs uses `^` for exponentiation natively (and `**` causes a SyntaxError in mathjs)
+
+2. **`tests/unit/ui/web/safeMathEval.spec.ts`** (new file):
+   - Added 49 unit tests covering:
+     - Basic arithmetic operations
+     - Variable `x` substitution
+     - Math functions (`s
+...(truncated)

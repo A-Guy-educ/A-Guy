@@ -1,0 +1,27 @@
+## Summary
+
+The review-fix task is complete. Here's what was done:
+
+### Fixes Applied
+
+1. **`src/ui/web/exerciserenderer/utils/safeMathEval.ts`**:
+   - Fixed the exponentiation operator - removed `replace(/\^/g, '**')` since mathjs uses `^` for exponentiation natively (and `**` causes a SyntaxError in mathjs)
+
+2. **`tests/unit/ui/web/safeMathEval.spec.ts`** (new file):
+   - Added 49 unit tests covering:
+     - Basic arithmetic operations
+     - Variable `x` substitution
+     - Math functions (`sin`, `cos`, `sqrt`, `abs`, `log`, `exp`, `floor`, `ceil`, `round`)
+     - Constants (`PI`, `E`)
+     - Whitespace and case normalization
+     - Invalid expression handling
+     - **Code injection prevention** (11 tests verifying `require()`, `process.exit()`, template literals, spread operator, function definitions, etc. are all rejected)
+     - Edge cases
+
+### Verification
+- TypeScript compiles cleanly
+- ESLint passes (warnings are pre-existing in unrelated files)
+- All 49 unit tests pass
+
+### Security
+The fix prevents code injection because `mathjs.evaluate()` only parses mathematical expressions and cannot execute arbitrary JavaScript. Even if an attacker injects `require('child_process')` or similar, mathjs throws an error since `require` is not a valid math expression.
