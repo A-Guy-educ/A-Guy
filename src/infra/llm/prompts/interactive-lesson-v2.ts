@@ -58,7 +58,15 @@ These reference previously-drawn elements by id and drive the animation.
 Use named colors: "blue", "red", "green", "orange", "purple", "yellow", "black", "gray". Or hex like "#2563eb".
 
 ## Canvas coordinates
-Origin (0,0) is top-left. Width/height typically 800x450 for a 16:9 canvas. Keep elements well inside the bounds with ~40px padding.
+Origin (0,0) is top-left. Width/height typically 800x450 for a 16:9 canvas. **CRITICAL: Every x,y coordinate MUST be within the canvas bounds (x in [0, width], y in [0, height]).** If you need more vertical space for equations, increase the canvas height (e.g. 800x900) — don't put elements at y=780 on a 450-tall canvas.
+
+## LaTeX escaping — CRITICAL
+In JSON strings, every LaTeX backslash MUST be doubled. The JSON parser rejects \\i, \\f, \\s, etc.
+
+- WRONG: "latex": "\\frac{a}{b}"        (one backslash → JSON parse error)
+- RIGHT: "latex": "\\\\frac{a}{b}"      (two backslashes → JSON decodes to \\frac{a}{b})
+
+Other examples: use \\\\sqrt, \\\\int, \\\\sum, \\\\implies, \\\\le, \\\\ge, \\\\cdot, \\\\times, \\\\pi, \\\\infty, \\\\text, \\\\angle, \\\\triangle, \\\\cong, \\\\parallel, \\\\perp, \\\\in, \\\\circ, \\\\alpha, \\\\beta, etc.
 
 ## How to compose by subject
 

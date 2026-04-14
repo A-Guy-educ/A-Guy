@@ -176,6 +176,71 @@ export function renderDrawingOp(op: GuidedExplanationOp): DrawResult | null {
   }
 }
 
+/**
+ * Compute the SVG viewBox. Takes the larger of the declared canvas and the
+ * actual bounding box of all drawing ops — Gemini sometimes emits coords
+ * that exceed the declared canvas, and without this adjustment those
+ * elements would be rendered off-screen.
+ */
+export function computeViewBox(
+  ops: GuidedExplanationOp[],
+  canvas: { width: number; height: number },
+): string {
+  let maxX = canvas.width
+  let maxY = canvas.height
+  let minX = 0
+  let minY = 0
+
+  for (const op of ops) {
+    switch (op.op) {
+      case 'line':
+      case 'arrow':
+        maxX = Math.max(maxX, op.x1, op.x2)
+        maxY = Math.max(maxY, op.y1, op.y2)
+        minX = Math.min(minX, op.x1, op.x2)
+        minY = Math.min(minY, op.y1, op.y2)
+        break
+      case 'circle':
+        maxX = Math.max(maxX, op.cx + op.r)
+        maxY = Math.max(maxY, op.cy + op.r)
+        minX = Math.min(minX, op.cx - op.r)
+        minY = Math.min(minY, op.cy - op.r)
+        break
+      case 'rect':
+        maxX = Math.max(maxX, op.x + op.width)
+        maxY = Math.max(maxY, op.y + op.height)
+        minX = Math.min(minX, op.x)
+        minY = Math.min(minY, op.y)
+        break
+      case 'polygon':
+        for (const [x, y] of op.points) {
+          maxX = Math.max(maxX, x)
+          maxY = Math.max(maxY, y)
+          minX = Math.min(minX, x)
+          minY = Math.min(minY, y)
+        }
+        break
+      case 'text':
+      case 'equation':
+      case 'point':
+        maxX = Math.max(maxX, op.x + 40)
+        maxY = Math.max(maxY, op.y + 40)
+        minX = Math.min(minX, op.x - 40)
+        minY = Math.min(minY, op.y - 40)
+        break
+    }
+  }
+
+  // Add a small padding margin
+  const pad = 20
+  minX -= pad
+  minY -= pad
+  maxX += pad
+  maxY += pad
+
+  return `${minX} ${minY} ${maxX - minX} ${maxY - minY}`
+}
+
 /** Static SVG defs shared by the scene (arrow marker etc.). */
 export const SVG_DEFS = `<defs>
   <marker id="ge2-arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">

@@ -4,7 +4,7 @@ import katex from 'katex'
 import 'katex/dist/katex.min.css'
 import { useEffect, useMemo, useRef } from 'react'
 import type { GuidedExplanationV2 } from '@/infra/contracts/guided-explanation/v2'
-import { assignIds, renderDrawingOp, SVG_DEFS } from './primitives'
+import { assignIds, computeViewBox, renderDrawingOp, SVG_DEFS } from './primitives'
 import { useV2Player } from './useV2Player'
 import './v2.css'
 
@@ -24,6 +24,14 @@ export function GuidedExplanationRunnerV2({ payload }: Props) {
 
   // Auto-assign ids to drawing ops without one (so timeline ops can reference them).
   const opsWithIds = useMemo(() => assignIds(payload.ops), [payload.ops])
+
+  // Compute the actual bounding box of all drawing ops. Gemini sometimes
+  // uses coordinates that exceed the declared canvas size — we expand the
+  // viewBox so nothing is off-screen.
+  const viewBox = useMemo(
+    () => computeViewBox(opsWithIds, payload.canvas),
+    [opsWithIds, payload.canvas],
+  )
 
   // Build the initial SVG from all drawing ops.
   const sceneSvg = useMemo(() => {
@@ -84,11 +92,7 @@ export function GuidedExplanationRunnerV2({ payload }: Props) {
       </header>
 
       <div className="ge2-scene">
-        <svg
-          ref={svgRef}
-          viewBox={`0 0 ${payload.canvas.width} ${payload.canvas.height}`}
-          xmlns="http://www.w3.org/2000/svg"
-        />
+        <svg ref={svgRef} viewBox={viewBox} xmlns="http://www.w3.org/2000/svg" />
       </div>
 
       <div className="ge2-controls">

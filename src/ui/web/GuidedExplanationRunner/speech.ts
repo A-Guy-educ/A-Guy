@@ -58,6 +58,19 @@ export function speak(text: string, locale: string): Promise<void> {
       setTimeout(resolve, text.length * 80)
       return
     }
+    let resolved = false
+    const safeResolve = () => {
+      if (resolved) return
+      resolved = true
+      resolve()
+    }
+
+    // Hard timeout — some browsers (notably Chrome on long Hebrew text) fail
+    // to fire onend/onerror, leaving the timeline stuck forever. Calculate a
+    // generous upper bound based on text length and bail out if we pass it.
+    const hardTimeoutMs = Math.min(Math.max(text.length * 120, 5_000), 30_000)
+    const timeoutId = setTimeout(safeResolve, hardTimeoutMs)
+
     window.speechSynthesis.cancel()
     const utterance = new SpeechSynthesisUtterance(text)
     const voice = pickVoiceForLocale(locale)
@@ -66,10 +79,12 @@ export function speak(text: string, locale: string): Promise<void> {
     utterance.rate = 0.85
     utterance.pitch = 0.95
     utterance.onend = () => {
-      setTimeout(resolve, 400)
+      clearTimeout(timeoutId)
+      setTimeout(safeResolve, 400)
     }
     utterance.onerror = () => {
-      setTimeout(resolve, 1500)
+      clearTimeout(timeoutId)
+      setTimeout(safeResolve, 1500)
     }
     window.speechSynthesis.speak(utterance)
   })

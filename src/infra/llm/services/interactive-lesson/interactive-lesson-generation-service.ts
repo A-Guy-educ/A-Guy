@@ -169,6 +169,17 @@ async function prepareImage(input: InteractiveLessonInput) {
   }
 }
 
+/**
+ * Escape unescaped backslashes before letters that aren't valid JSON escapes.
+ * Gemini emits LaTeX like `\implies`, `\frac`, `\sqrt` inside JSON strings
+ * without doubling the backslash, which breaks JSON.parse. Valid JSON
+ * escapes are \", \\, \/, \b, \f, \n, \r, \t, \uXXXX — anything else needs
+ * its backslash doubled.
+ */
+function fixLatexEscapes(text: string): string {
+  return text.replace(/\\([^"\\/bfnrtu])/g, '\\\\$1')
+}
+
 function parseResponse(responseText: string): Record<string, unknown> {
   if (!responseText || responseText.trim().length === 0) {
     return { error: 'EMPTY_RESPONSE', message: 'LLM returned an empty response.' }
@@ -182,7 +193,12 @@ function parseResponse(responseText: string): Record<string, unknown> {
   try {
     return JSON.parse(cleaned)
   } catch {
-    return { error: 'PARSE_ERROR', message: 'LLM returned malformed JSON. Please try again.' }
+    // Retry after fixing unescaped LaTeX backslashes
+    try {
+      return JSON.parse(fixLatexEscapes(cleaned))
+    } catch {
+      return { error: 'PARSE_ERROR', message: 'LLM returned malformed JSON. Please try again.' }
+    }
   }
 }
 
