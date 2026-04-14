@@ -1,6 +1,5 @@
 'use client'
 
-import { useField } from '@payloadcms/ui'
 import { useEffect, useState } from 'react'
 
 interface ConvertContextModalProps {
@@ -9,6 +8,7 @@ interface ConvertContextModalProps {
   filename: string
   isOpen: boolean
   onClose: () => void
+  onExtractionComplete?: () => void
 }
 
 interface PromptOption {
@@ -26,6 +26,7 @@ export function ConvertContextModal({
   filename,
   isOpen,
   onClose,
+  onExtractionComplete,
 }: ConvertContextModalProps) {
   const [prompts, setPrompts] = useState<PromptOption[]>([])
   const [selectedPromptId, setSelectedPromptId] = useState<string>('')
@@ -35,9 +36,6 @@ export function ConvertContextModal({
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [warnings, setWarnings] = useState<string[]>([])
-
-  // Get the lessonContextText field for updating using useField pattern
-  const { setValue: setContextText } = useField<string>({ path: 'lessonContextText' })
 
   // Load prompts when modal opens
   useEffect(() => {
@@ -113,13 +111,12 @@ export function ConvertContextModal({
 
       const data = await response.json()
 
-      // Update the form field with the new context text
-      if (data.data?.updatedContextText) {
-        setContextText(data.data.updatedContextText)
-      }
-
       const charCount = data.data?.extractedChunkLength || 0
-      setSuccess(`Extracted ${charCount} characters. Context text updated.`)
+      setSuccess(`Extracted ${charCount} characters. Extraction saved.`)
+      onExtractionComplete?.()
+
+      // Notify ContextExerciseViewer to refresh
+      window.dispatchEvent(new Event('context-extraction-updated'))
 
       if (data.data?.warnings) {
         setWarnings(data.data.warnings)
