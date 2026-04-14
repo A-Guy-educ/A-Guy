@@ -42,14 +42,10 @@ export async function agentGenerateInteractiveLesson(
       return Response.json(result, { status: 422 })
     }
 
-    // TTS skipped — GuidedExplanationRunner uses browser speechSynthesis
-    // for narration. OpenAI TTS can be re-enabled here if higher-quality
-    // pre-generated audio is needed in the future.
-
     reqLogger.info(
       {
         mediaId,
-        stepCount: result.data?.steps.length,
+        opCount: result.data?.ops.length,
         processingTimeMs: result.metadata.processingTimeMs,
       },
       'Interactive lesson generated successfully',

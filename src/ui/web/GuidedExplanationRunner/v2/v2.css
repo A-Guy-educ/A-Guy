@@ -1,0 +1,133 @@
+/*
+ * GuidedExplanationRunner v2 styles.
+ * Scoped under .guided-explanation-v2 — no collisions with v1 or page.
+ */
+
+.guided-explanation-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  border-radius: 1rem;
+  box-shadow: var(--shadow-card, 0 4px 12px rgba(0, 0, 0, 0.08));
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+.guided-explanation-v2[dir='rtl'] {
+  text-align: right;
+}
+
+.ge2-header {
+  text-align: center;
+}
+
+.ge2-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.ge2-subtitle {
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  margin-top: 0.25rem;
+}
+
+.ge2-scene {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: hsl(var(--muted) / 0.3);
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.75rem;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ge2-scene svg {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+}
+
+/* Path animation — lines and paths use stroke-dashoffset */
+.ge2-scene .ge2-path {
+  stroke-dasharray: 2000;
+  stroke-dashoffset: 2000;
+  transition: stroke-dashoffset 1s ease-in-out;
+}
+
+.ge2-scene .ge2-path.ge2-drawn {
+  stroke-dashoffset: 0;
+}
+
+/* Fade animation — circles, rects, text, etc. use opacity */
+.ge2-scene .ge2-fade {
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.ge2-scene .ge2-fade.ge2-visible {
+  opacity: 1;
+}
+
+/* Highlight flash */
+.ge2-scene .ge2-highlighted {
+  filter: drop-shadow(0 0 6px hsl(var(--warning, 48 96% 53%)));
+  transition: filter 0.3s ease;
+}
+
+/* Controls */
+.ge2-controls {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.ge2-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.5rem;
+  font-weight: 700;
+  border-radius: 9999px;
+  border: 0;
+  cursor: pointer;
+}
+
+.ge2-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ge2-btn-primary {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.ge2-btn-secondary {
+  background: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+}
+
+/* Narration box */
+.ge2-narration-box {
+  background: hsl(var(--muted) / 0.5);
+  border-inline-start: 4px solid hsl(var(--primary));
+  border-radius: 0.375rem;
+  padding: 1rem;
+}
+
+.ge2-narration-text {
+  font-size: 1.125rem;
+  font-weight: 500;
+}
+
+/* KaTeX equation styling */
+.ge2-equation {
+  overflow: visible;
+}

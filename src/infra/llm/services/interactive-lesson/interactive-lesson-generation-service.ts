@@ -1,26 +1,37 @@
 /**
- * Interactive lesson generation service.
- * Takes an image of a geometry problem and generates structured
- * geometry data + proof table steps using the LLM.
+ * Interactive lesson generation service — GuidedExplanationV2.
  *
- * Two-pass approach: LLM extracts geometry + proof, we render SVG deterministically.
+ * Takes an image of a math problem and returns a validated V2 payload
+ * (drawing + timeline primitives) that the GuidedExplanationRunnerV2
+ * executes on the client. Gemini composes the explanation from the
+ * primitive vocabulary; we validate every op via Zod before returning.
  */
 import type { Payload } from 'payload'
+import { GuidedExplanationV2Schema } from '@/infra/contracts/guided-explanation/v2'
+import type { GuidedExplanationV2 } from '@/infra/contracts/guided-explanation/v2'
 import type { AIModel, AIModelKey } from '../../models'
 import { getModelRegistryEntry, getProviderModelName } from '../../models'
-import { INTERACTIVE_LESSON_PROMPT } from '../../prompts/interactive-lesson-generation'
+import { INTERACTIVE_LESSON_V2_PROMPT } from '../../prompts/interactive-lesson-v2'
 import { LLMProviderType } from '../../providers/types'
 import { optimizeImageForAI } from '../image-optimizer-service'
-import type {
-  InteractiveLesson,
-  InteractiveLessonInput,
-  InteractiveLessonResponse,
-} from './interactive-lesson-types'
 
-/**
- * Generate an interactive lesson from an uploaded image.
- * Returns structured geometry data and proof steps.
- */
+export interface InteractiveLessonInput {
+  imageBuffer: Buffer
+  mimeType: string
+  locale: 'he' | 'en'
+}
+
+export interface InteractiveLessonResponse {
+  success: boolean
+  data?: GuidedExplanationV2
+  error?: string
+  metadata: {
+    model: string
+    processingTimeMs: number
+    imageSizeBytes: number
+  }
+}
+
 export async function generateInteractiveLesson(
   input: InteractiveLessonInput,
   payload: Payload,
@@ -34,9 +45,7 @@ export async function generateInteractiveLesson(
     const prompt = await buildPrompt(input.locale, payload)
     const { attachmentData, sizeBytes } = await prepareImage(input)
 
-    // Try Gemini 2.5 Flash first (smarter, has thinking). If it times out
-    // (stuck in a reasoning loop on hard problems), fall back to Flash Lite
-    // (no thinking mode, always fast).
+    // Try 2.5 Flash first; fall back to Flash Lite if it times out.
     const models = [
       { name: 'googleai/gemini-2.5-flash', timeoutMs: 45_000 },
       { name: 'googleai/gemini-2.5-flash-lite', timeoutMs: 45_000 },
@@ -72,7 +81,6 @@ export async function generateInteractiveLesson(
       } catch (err) {
         const isTimeout = err instanceof Error && err.message === 'TIMEOUT'
         if (!isTimeout) throw err
-        // Timeout — try next model
       }
     }
 
@@ -85,11 +93,27 @@ export async function generateInteractiveLesson(
       )
     }
 
-    const lesson = validateLesson(parsed, input.locale)
+    // Ensure version field is present (Gemini occasionally omits it)
+    if (!parsed.version) parsed.version = 'guided-explanation/v2'
+
+    // Validate against V2 schema
+    const validation = GuidedExplanationV2Schema.safeParse(parsed)
+    if (!validation.success) {
+      const issueStr = validation.error.issues
+        .slice(0, 5)
+        .map((i) => `[${i.path.join('.')}] ${i.message}`)
+        .join('; ')
+      return buildErrorResponse(
+        `LLM returned invalid payload: ${issueStr}`,
+        modelConfig ?? { name: 'unknown', temperature: 0, maxOutputTokens: 0 },
+        startTime,
+        sizeBytes,
+      )
+    }
 
     return {
       success: true,
-      data: lesson,
+      data: validation.data,
       metadata: {
         model: modelConfig?.name ?? 'unknown',
         processingTimeMs: Date.now() - startTime,
@@ -97,10 +121,9 @@ export async function generateInteractiveLesson(
       },
     }
   } catch (error) {
-    const errorModelName = modelConfig?.name ?? 'unknown'
     return buildErrorResponse(
       error instanceof Error ? error.message : 'Unknown error',
-      { name: errorModelName } as AIModel,
+      modelConfig ?? { name: 'unknown', temperature: 0, maxOutputTokens: 0 },
       startTime,
       0,
     )
@@ -108,9 +131,7 @@ export async function generateInteractiveLesson(
 }
 
 async function buildPrompt(locale: 'he' | 'en', payload: Payload): Promise<string> {
-  // Look up a published interactive_lesson prompt from the Prompts collection,
-  // fall back to the hardcoded default if none exists.
-  let basePrompt = INTERACTIVE_LESSON_PROMPT
+  let basePrompt = INTERACTIVE_LESSON_V2_PROMPT
   try {
     const result = await payload.find({
       collection: 'prompts',
@@ -125,12 +146,12 @@ async function buildPrompt(locale: 'he' | 'en', payload: Payload): Promise<strin
       basePrompt = result.docs[0].template
     }
   } catch {
-    // DB not available or collection empty — use hardcoded default
+    /* fall through to default */
   }
   const localeInstruction =
     locale === 'he'
-      ? '\n\nIMPORTANT: Generate ALL narration, claims, reasons, and explanations in Hebrew.'
-      : '\n\nIMPORTANT: Generate ALL narration, claims, reasons, and explanations in English.'
+      ? '\n\nIMPORTANT: Generate ALL narration, text, and titles in Hebrew.'
+      : '\n\nIMPORTANT: Generate ALL narration, text, and titles in English.'
   return `${basePrompt}${localeInstruction}`
 }
 
@@ -162,110 +183,6 @@ function parseResponse(responseText: string): Record<string, unknown> {
     return JSON.parse(cleaned)
   } catch {
     return { error: 'PARSE_ERROR', message: 'LLM returned malformed JSON. Please try again.' }
-  }
-}
-
-function validateLesson(parsed: Record<string, unknown>, locale: 'he' | 'en'): InteractiveLesson {
-  const steps = Array.isArray(parsed.steps) ? parsed.steps : []
-  const geo = (parsed.geometry || {}) as Record<string, unknown>
-
-  return {
-    title: typeof parsed.title === 'string' ? parsed.title : 'Untitled',
-    locale,
-    geometry: {
-      width: typeof geo.width === 'number' ? geo.width : 400,
-      height: typeof geo.height === 'number' ? geo.height : 300,
-      points: Array.isArray(geo.points) ? geo.points.map(validatePoint) : [],
-      segments: Array.isArray(geo.segments) ? geo.segments.map(validateSegment) : [],
-      angles: Array.isArray(geo.angles) ? geo.angles.map(validateAngle) : [],
-      labels: Array.isArray(geo.labels) ? geo.labels.map(validateLabel) : [],
-    },
-    steps: steps.map((step: Record<string, unknown>, i: number) => ({
-      id: typeof step.id === 'number' ? step.id : i + 1,
-      title: String(step.title || `Step ${i + 1}`),
-      claim: String(step.claim || ''),
-      reason: String(step.reason || ''),
-      narration: String(step.narration || ''),
-      explanation: String(step.explanation || ''),
-      durationSeconds: typeof step.durationSeconds === 'number' ? step.durationSeconds : 5,
-      highlightSegments: Array.isArray(step.highlightSegments)
-        ? normalizeHighlightSegments(step.highlightSegments as unknown[])
-        : [],
-      highlightPoints: Array.isArray(step.highlightPoints) ? step.highlightPoints : [],
-    })),
-  }
-}
-
-/**
- * Gemini returns highlightSegments in varying formats:
- *   - ["AB", "CD"]              → 2+ char strings = label pairs
- *   - [["A","B"],["C","D"]]    → already paired arrays
- *   - ["A","B","C","D"]         → flat single-char labels = consecutive pairs
- * Normalize to [["A","B"],["C","D"]] so the converter can match segment ids.
- */
-function normalizeHighlightSegments(raw: unknown[]): string[][] {
-  // Check if it's already paired arrays
-  if (raw.length > 0 && Array.isArray(raw[0])) {
-    return raw
-      .filter((item) => Array.isArray(item) && item.length === 2)
-      .map((item) => [(item as string[])[0], (item as string[])[1]])
-  }
-  // Check if it's multi-char strings like "AB", "CD"
-  if (raw.length > 0 && typeof raw[0] === 'string' && (raw[0] as string).length >= 2) {
-    return raw
-      .filter((item) => typeof item === 'string' && (item as string).length >= 2)
-      .map((item) => [(item as string)[0], (item as string).slice(1)])
-  }
-  // Flat single-char labels: ["A","B","C","D"] → [["A","B"],["C","D"]]
-  const pairs: string[][] = []
-  for (let i = 0; i + 1 < raw.length; i += 2) {
-    const a = String(raw[i])
-    const b = String(raw[i + 1])
-    if (a.length === 1 && b.length === 1) pairs.push([a, b])
-  }
-  return pairs
-}
-
-function validatePoint(p: Record<string, unknown>) {
-  return { label: String(p.label || ''), x: Number(p.x || 0), y: Number(p.y || 0) }
-}
-
-function validateSegment(s: Record<string, unknown>) {
-  // Gemini returns segments in varying formats:
-  //   { from: "A", to: "B" }
-  //   { p1: "A", p2: "B" }
-  //   { points: ["A", "B"] }
-  const pts = Array.isArray(s.points) ? s.points : []
-  const from = String(s.from || s.p1 || pts[0] || '')
-  const to = String(s.to || s.p2 || pts[1] || '')
-  return {
-    from,
-    to,
-    style: (['solid', 'dashed', 'bold'].includes(s.style as string) ? s.style : 'solid') as
-      | 'solid'
-      | 'dashed'
-      | 'bold',
-    // Only accept documented color names — arbitrary strings could inject into SVG
-    color: ['blue', 'red', 'green', 'orange', 'purple'].includes(s.color as string)
-      ? (s.color as string)
-      : undefined,
-  }
-}
-
-function validateAngle(a: Record<string, unknown>) {
-  const pts = Array.isArray(a.points) ? a.points.map(String) : ['', '', '']
-  return {
-    points: [pts[0], pts[1], pts[2]] as [string, string, string],
-    rightAngle: a.rightAngle === true,
-  }
-}
-
-function validateLabel(l: Record<string, unknown>) {
-  return {
-    text: String(l.text || ''),
-    x: Number(l.x || 0),
-    y: Number(l.y || 0),
-    fontSize: Number(l.fontSize || 12),
   }
 }
 

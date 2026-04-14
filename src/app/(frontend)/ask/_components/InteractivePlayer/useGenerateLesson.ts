@@ -1,12 +1,12 @@
 'use client'
 
 import { useCallback, useState } from 'react'
-import type { InteractiveLesson } from '@/infra/llm/services/interactive-lesson/interactive-lesson-types'
+import type { GuidedExplanationV2 } from '@/infra/contracts/guided-explanation/v2'
 
 type GenerationStatus = 'idle' | 'generating' | 'done' | 'error'
 
 interface UseGenerateLessonResult {
-  lesson: InteractiveLesson | null
+  lesson: GuidedExplanationV2 | null
   status: GenerationStatus
   error: string | null
   generate: (mediaId: string, locale: 'he' | 'en') => Promise<void>
@@ -14,10 +14,10 @@ interface UseGenerateLessonResult {
 
 /**
  * Hook to trigger interactive lesson generation from an uploaded image.
- * Calls the /api/agent/generate-interactive-lesson endpoint.
+ * Returns a validated GuidedExplanationV2 payload.
  */
 export function useGenerateLesson(): UseGenerateLessonResult {
-  const [lesson, setLesson] = useState<InteractiveLesson | null>(null)
+  const [lesson, setLesson] = useState<GuidedExplanationV2 | null>(null)
   const [status, setStatus] = useState<GenerationStatus>('idle')
   const [error, setError] = useState<string | null>(null)
 

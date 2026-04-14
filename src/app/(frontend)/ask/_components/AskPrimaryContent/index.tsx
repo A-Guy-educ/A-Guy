@@ -1,7 +1,6 @@
 'use client'
 
-import { interactiveLessonToGuidedExplanation } from '@/infra/llm/services/interactive-lesson/lesson-to-guided-explanation'
-import { GuidedExplanationRunner } from '@/ui/web/GuidedExplanationRunner'
+import { GuidedExplanationRunnerV2 } from '@/ui/web/GuidedExplanationRunner/v2'
 import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { ArrowRight, Loader2, PlusCircle } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
@@ -116,7 +115,7 @@ export function AskPrimaryContent() {
     window.location.reload()
   }
 
-  const guidedPayload = lesson ? interactiveLessonToGuidedExplanation(lesson) : null
+  const guidedPayload = lesson
 
   // Full-screen player takeover
   if (status === 'done' && guidedPayload) {
@@ -130,7 +129,7 @@ export function AskPrimaryContent() {
           {t('backToUpload')}
         </button>
         <div className="flex-1 overflow-auto py-section-xs">
-          <GuidedExplanationRunner payload={guidedPayload} />
+          <GuidedExplanationRunnerV2 payload={guidedPayload} />
         </div>
       </div>
     )
