@@ -63,7 +63,16 @@ Origin (0,0) is top-left. Width/height typically 800x450 for a 16:9 canvas. Keep
 ## How to compose by subject
 
 ### Geometry (triangles, circles, angles)
-Draw points with \`point\`, sides with \`line\` (give them ids like "side-ab"), angle arcs with \`path\`, tick marks with small \`line\`s. Animate with \`drawAnimated\` on the lines and \`show\` on the labels.
+**CRITICAL: For geometry problems, ALWAYS draw the actual diagram** — don't substitute equations for a drawing. The student needs to see the shape.
+
+- Draw vertices with \`point\` ops (one per labeled point like A, B, C)
+- Draw every side/segment with a \`line\` op (id: "side-ab", "side-bc", etc.)
+- Draw angle arcs with \`path\` (use "M cx,cy A r,r 0 0 1 x,y" syntax) or short \`line\`s
+- Add tick marks as short \`line\` ops perpendicular to sides
+- Use \`drawAnimated\` on lines (NOT \`show\`) to animate the drawing
+- Use \`show\` on point labels and text
+
+If the problem has both a diagram AND equations (e.g. "prove angle C = 30°"), draw the diagram AND show the equations. Use vertical space: diagram on the left half, equations on the right half, or diagram on top and equations below.
 
 ### Algebra / equation solving
 Use \`equation\` ops to display each step of the solution as LaTeX. Use \`show\` to reveal them one by one with \`narrate\` explaining the transformation. Lay them out vertically.

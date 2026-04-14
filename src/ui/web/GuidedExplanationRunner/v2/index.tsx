@@ -36,14 +36,32 @@ export function GuidedExplanationRunnerV2({ payload }: Props) {
     return fragments.join('\n')
   }, [opsWithIds])
 
-  // Imperatively set the SVG innerHTML (avoids React re-rendering and
-  // wiping dynamically added animation classes). Also renders any
-  // <foreignObject data-latex="..."> placeholders via KaTeX.
+  // Imperatively build the scene via DOMParser so SVG namespaces are
+  // preserved — critical for <foreignObject> to render KaTeX correctly.
+  // innerHTML on SVG elements puts foreignObject children in the wrong
+  // namespace, which silently breaks all equations.
   useEffect(() => {
-    if (!svgRef.current) return
-    svgRef.current.innerHTML = sceneSvg
-    // Render KaTeX equations
-    svgRef.current.querySelectorAll('[data-latex]').forEach((el) => {
+    const svgEl = svgRef.current
+    if (!svgEl) return
+
+    // Clear existing children
+    while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild)
+
+    // Parse the scene SVG string in a proper SVG document
+    const wrapped = `<svg xmlns="http://www.w3.org/2000/svg">${sceneSvg}</svg>`
+    const doc = new DOMParser().parseFromString(wrapped, 'image/svg+xml')
+    const parsed = doc.documentElement
+    if (parsed.tagName === 'parsererror') return
+
+    // Move each child into our live SVG element, preserving namespaces
+    while (parsed.firstChild) {
+      const node = parsed.firstChild
+      svgEl.appendChild(document.importNode(node, true))
+      parsed.removeChild(parsed.firstChild)
+    }
+
+    // Render KaTeX into foreignObject placeholders
+    svgEl.querySelectorAll('[data-latex]').forEach((el) => {
       const latex = el.getAttribute('data-latex') ?? ''
       try {
         katex.render(latex, el as HTMLElement, { throwOnError: false, output: 'html' })
