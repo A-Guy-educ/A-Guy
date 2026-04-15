@@ -109,6 +109,29 @@ async function prepareImage(input: InteractiveLessonInput) {
   }
 }
 
+/**
+ * Escape unescaped backslashes before letters that aren't valid JSON escapes.
+ * Gemini emits LaTeX like `\implies`, `\frac`, `\sqrt` inside JSON strings
+ * without doubling the backslash, which breaks JSON.parse.
+ */
+function fixLatexEscapes(text: string): string {
+  return text.replace(/\\([^"\\/bfnrtu])/g, '\\\\$1')
+}
+
+/**
+ * Fix common JSON mistakes from LLM output:
+ * - trailing commas before } or ]
+ * - single-quoted strings (conservative replacement)
+ * - unquoted property names
+ */
+function loosenJson(text: string): string {
+  // Strip trailing commas: ", }" → " }" and ", ]" → " ]"
+  let t = text.replace(/,(\s*[}\]])/g, '$1')
+  // Quote unquoted property names: { foo: → { "foo":
+  t = t.replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)(\s*:)/g, '$1"$2"$3')
+  return t
+}
+
 function parseResponse(responseText: string): Record<string, unknown> {
   const cleaned = responseText
     .trim()
@@ -116,7 +139,22 @@ function parseResponse(responseText: string): Record<string, unknown> {
     .replace(/^```\s*/, '')
     .replace(/```\s*$/, '')
     .trim()
-  return JSON.parse(cleaned)
+  try {
+    return JSON.parse(cleaned)
+  } catch {
+    // Try fixing unescaped LaTeX backslashes (Gemini's favorite mistake)
+    try {
+      return JSON.parse(fixLatexEscapes(cleaned))
+    } catch {
+      // Try fixing trailing commas + unquoted property names + latex escapes
+      try {
+        return JSON.parse(loosenJson(fixLatexEscapes(cleaned)))
+      } catch (e) {
+        const err = e instanceof Error ? e.message : 'unknown'
+        throw new Error(`JSON parse failed after repairs: ${err}`)
+      }
+    }
+  }
 }
 
 function validateLesson(parsed: Record<string, unknown>, locale: 'he' | 'en'): InteractiveLesson {
