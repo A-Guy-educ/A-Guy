@@ -3,7 +3,5 @@
   "description": "Runs core QA scenarios against the preview deployment and reports failures",
   "domain": "qa",
   "labels": ["kody:watch:functional"],
-  "schedule": {
-    "every": 1
-  }
+  "cron": "0 8 * * *"
 }

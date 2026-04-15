@@ -3,7 +3,5 @@
   "description": "Verifies Mixpanel event firing, intercepts PII leaks, and checks console errors",
   "domain": "analytics",
   "labels": ["kody:watch:analytics"],
-  "schedule": {
-    "every": 1
-  }
+  "cron": "0 8 * * *"
 }

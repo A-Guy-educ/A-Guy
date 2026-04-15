@@ -35,8 +35,9 @@ export function MixpanelScripts() {
 
   return (
     <>
-      {/* Load Mixpanel SDK */}
-      <Script id="mixpanel-loader" strategy="afterInteractive">
+      {/* Load Mixpanel SDK — beforeInteractive ensures SDK is ready before app code fires events */}
+      {/* eslint-disable-next-line @next/next/no-before-interactive-script-outside-document */}
+      <Script id="mixpanel-loader" strategy="beforeInteractive">
         {`
           var MIXPANEL_CUSTOM_LIB_URL = "https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js";
           (function(f,b){if(!b.__SV){var e,g,i,h;window.mixpanel=b;b._i=[];b.init=function(e,f,c){function g(a,d){var b=d.split(".");2==b.length&&(a=a[b[0]],d=b[1]);a[d]=function(){a.push([d].concat(Array.prototype.slice.call(arguments,0)))}}var a=b;"undefined"!==typeof c?a=b[c]=[]:c="mixpanel";a.people=a.people||[];a.toString=function(a){var d="mixpanel";"mixpanel"!==c&&(d+="."+c);a||(d+=" (stub)");return d};a.people.toString=function(){return a.toString(1)+".people (stub)"};i="disable time_event track track_pageview track_links track_forms track_with_groups add_group set_group remove_group register register_once alias unregister identify name_tag set_config reset opt_in_tracking opt_out_tracking has_opted_in_tracking has_opted_out_tracking clear_opt_in_out_tracking start_batch_senders people.set people.set_once people.unset people.increment people.append people.union people.track_charge people.clear_charges people.delete_user people.remove".split(" ");
@@ -44,8 +45,9 @@ export function MixpanelScripts() {
         `}
       </Script>
 
-      {/* Initialize Mixpanel with anonymous ID from cookie */}
-      <Script id="mixpanel-init" strategy="afterInteractive">
+      {/* Initialize Mixpanel — beforeInteractive ensures init runs before subscriber fires events */}
+      {/* eslint-disable-next-line @next/next/no-before-interactive-script-outside-document */}
+      <Script id="mixpanel-init" strategy="beforeInteractive">
         {`
           // Helper: Get cookie value by name
           function getCookie(name) {

@@ -2,8 +2,9 @@ name: kody-watch
 
 on:
   schedule:
-    # Every day at 08:00 UTC
-    - cron: '0 8 * * *'
+    # Every day at 07:30 UTC — starts early enough that kody engine is up by 08:00-08:30
+    # when system-test agent's cron window (0 8 * * *) is active
+    - cron: '30 7 * * *'
   workflow_dispatch:
     inputs:
       dry_run:

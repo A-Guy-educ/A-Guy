@@ -12,7 +12,7 @@ The SSE connection to the brain server is fragile and can drop unexpectedly, cau
 1. **No keep-alive mechanism** — SSE connections time out after idle
 2. **No reconnection strategy** — Dropped connections aren't automatically recovered
 3. **No health monitoring** — Brain crashes go unnoticed until a request fails
-4. **No watchdog** — Brain container can crash and stay down until manually restarted
+4. **No auto-recovery** — Brain container can crash and stay down until manually restarted
 
 ---
 
@@ -56,72 +56,9 @@ const result = await Promise.race([
 ])
 ```
 
----
+## Phase 2: Server-Side Health Checks
 
-## Phase 2: Server-Side Watchdog (VPS)
-
-### 2.1 systemd Watchdog for Brain Container
-
-Create a watchdog service that monitors and auto-restarts:
-
-```ini
-# /etc/systemd/system/brain-watchdog.service
-[Unit]
-Description=Brain Server Watchdog
-After=network.target docker.service
-
-[Service]
-Type=simple
-ExecStart=/opt/brain-server/watchdog.sh
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-```
-
-### 2.2 Watchdog Script
-
-```bash
-#!/bin/bash
-# /opt/brain-server/watchdog.sh
-# Monitors brain server health and restarts if unhealthy
-
-BRAIN_URL="http://localhost:4097"
-HEALTH_FILE="/tmp/brain-health.json"
-MAX_FAILURES=3
-FAILURE_COUNT=0
-
-while true; do
-  # Check if container is running
-  if ! docker ps | grep -q brain-server-brain-1; then
-    echo "[$(date)] Container not running, restarting..."
-    docker restart brain-server-brain-1
-    FAILURE_COUNT=0
-  fi
-
-  # Check if brain responds
-  RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 $BRAIN_URL/sse 2>/dev/null)
-  
-  if [ "$RESPONSE" = "200" ]; then
-    FAILURE_COUNT=0
-    echo "[$(date)] Brain healthy"
-  else
-    FAILURE_COUNT=$((FAILURE_COUNT + 1))
-    echo "[$(date)] Brain unhealthy (response: $RESPONSE, failures: $FAILURE_COUNT)"
-    
-    if [ $FAILURE_COUNT -ge $MAX_FAILURES ]; then
-      echo "[$(date)] Max failures reached, restarting brain..."
-      docker restart brain-server-brain-1
-      FAILURE_COUNT=0
-    fi
-  fi
-  
-  sleep 30
-done
-```
-
-### 2.3 Docker Healthcheck
+### 2.1 Docker Healthcheck
 
 Add health check to docker-compose:
 
@@ -138,7 +75,7 @@ services:
     restart: unless-stopped
 ```
 
-### 2.4 Restart Policies
+### 2.2 Restart Policies
 
 Ensure `restart: unless-stopped` is set (already in docker-compose.yml).
 
@@ -184,7 +121,7 @@ Add log rotation to prevent disk full:
 
 ---
 
-## Phase 4: Process Manager (Alternative to systemd)
+## Phase 3: Process Manager (Alternative to systemd)
 
 If systemd isn't available, use [PM2](https://pm2.io/):
 
@@ -218,17 +155,15 @@ PM2 advantages:
 | Priority | Item | Effort | Impact |
 |----------|------|--------|--------|
 | 1 | Docker healthcheck | 30 min | Detects crashes |
-| 2 | Watchdog script | 1 hour | Auto-restarts |
-| 3 | systemd service | 1 hour | Persistent watchdog |
-| 4 | Client retry logic | 2 hours | Resilient calls |
-| 5 | Uptime monitoring | 1 hour | Proactive alerts |
-| 6 | PM2 alternative | 1 hour | If systemd unavailable |
+| 2 | Client retry logic | 2 hours | Resilient calls |
+| 3 | Uptime monitoring | 1 hour | Proactive alerts |
+| 4 | PM2 alternative | 1 hour | If systemd unavailable |
 
 ---
 
 ## Estimated Time
 
-Total: ~7 hours across all phases
+Total: ~5 hours across all phases
 
 ---
 
@@ -237,12 +172,6 @@ Total: ~7 hours across all phases
 After implementation, verify with:
 
 ```bash
-# Simulate crash
-ssh root@184.174.39.227 "docker kill brain-server-brain-1"
-
-# Should auto-restart within 30s
-ssh root@184.174.39.227 "docker ps | grep brain"
-
 # Should respond
 BRAIN_SERVER_URL=http://100.66.248.120:4097/sse pnpm brain --tools
 ```
