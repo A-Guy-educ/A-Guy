@@ -29,6 +29,21 @@ function safeLabel(str: string): string {
   return str.replace(/[^a-zA-Z0-9_\-]/g, '')
 }
 
+/** Allowlist segment colors — maps known names to hex, falls back to blue. */
+const COLOR_MAP: Record<string, string> = {
+  blue: '#2563eb',
+  red: '#ef4444',
+  green: '#10b981',
+  orange: '#f59e0b',
+  purple: '#8b5cf6',
+}
+function safeColor(color: string | undefined): string {
+  if (!color) return COLOR_MAP.blue
+  if (COLOR_MAP[color]) return COLOR_MAP[color]
+  if (/^#[0-9a-fA-F]{3,8}$/.test(color)) return color
+  return COLOR_MAP.blue
+}
+
 function pointMap(geometry: GeometryData): Map<string, GeoPoint> {
   const map = new Map<string, GeoPoint>()
   for (const p of geometry.points) map.set(p.label, p)
@@ -56,7 +71,9 @@ function buildSvg(geometry: GeometryData): string {
     const p1 = pts.get(seg.from)
     const p2 = pts.get(seg.to)
     if (!p1 || !p2) continue
-    const color = seg.color || '#2563eb'
+    // Allowlist: only known color names map to hex; anything else falls back.
+    // Prevents attribute breakout from a hallucinated color like `red" foo="bar`.
+    const color = safeColor(seg.color)
     const width = seg.style === 'bold' ? 4 : 3
     const dasharray = seg.style === 'dashed' ? ' stroke-dasharray="8 4"' : ''
     const id = segmentId(seg.from, seg.to)
