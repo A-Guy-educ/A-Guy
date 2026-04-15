@@ -49,3 +49,51 @@ The security scanner fix has been properly implemented. Here's the summary:
 ### Root Cause
 The original regex `/withApiHandler\s*\(/` failed to match when `withApiHandler` was used with TypeScript generics like `withApiHandler<T, U>({ auth: '
 ...(truncated)
+
+### review (2026-04-15T09:34:07)
+## Verdict: PASS
+
+## Summary
+
+Fixed the security scanner's regex pattern for detecting `withApiHandler` authentication. The original pattern `/withApiHandler\s*\(/` failed to match when TypeScript generics were present (e.g., `withApiHandler<T, U>({ auth: 'admin' })`), causing routes using generic syntax to be falsely flagged as missing authentication.
+
+## Findings
+
+### Critical
+
+None.
+
+### Major
+
+None.
+
+### Minor
+
+None.
+
+---
+
+## Two-Pass Review
+
+**Pass 1 — CRITICAL:**
+
+### SQL & Data Safety
+
+No
+...(truncated)
+
+### review-fix (2026-04-15T09:35:40)
+## Status: Complete
+
+The review passed with no issues found:
+
+| Severity | Count |
+|----------|-------|
+| Critical | 0 |
+| Major | 0 |
+| Minor | 0 |
+
+**All 8 security scanner unit tests pass.**
+
+The fix (updating the regex pattern to handle TypeScript generics) was correctly applied and verified. No further code changes are needed.
+
