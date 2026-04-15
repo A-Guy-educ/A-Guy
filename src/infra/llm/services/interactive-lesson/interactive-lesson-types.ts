@@ -71,8 +71,6 @@ export interface InteractiveLessonStep {
   explanation: string
   /** Estimated duration in seconds for this step's narration */
   durationSeconds: number
-  /** Base64-encoded MP3 audio for this step (null if TTS failed) */
-  audioBase64?: string | null
   /** Segments to highlight: array of [from, to] label pairs */
   highlightSegments?: string[][]
   /** Points to highlight during this step */

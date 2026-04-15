@@ -20,11 +20,6 @@ import type {
 /**
  * Generate an interactive lesson from an uploaded image.
  * Returns structured geometry data and proof steps.
- *
- * Three-tier retry:
- *   1. Gemini 2.5 Flash (moderate thinking budget 4K) — best quality
- *   2. Gemini 2.5 Flash Lite (no thinking) — fast fallback
- *   3. Flash Lite + brevity addendum — catches MAX_TOKENS truncation
  */
 export async function generateInteractiveLesson(
   input: InteractiveLessonInput,
@@ -36,65 +31,35 @@ export async function generateInteractiveLesson(
   try {
     const { createGenkitUnifiedAdapter } = await import('../../genkit/adapters/unified-adapter')
     const adapter = await createGenkitUnifiedAdapter(payload)
-    const prompt = await buildPrompt(input.locale, payload)
-    const { attachmentData, sizeBytes } = await prepareImage(input)
-
-    const BREVITY_ADDENDUM =
-      '\n\nCRITICAL: Your previous attempt was too long. Generate a MUCH shorter response: fewer geometry points, maximum 8 steps, narration under 100 chars per step. Be radically concise.'
-
-    const attempts = [
-      // Flash with moderate thinking — quality but bounded
-      { name: 'googleai/gemini-2.5-flash', timeoutMs: 45_000, thinking: 4096, extra: '' },
-      // Flash Lite fallback (no thinking) — fast, no loops
-      { name: 'googleai/gemini-2.5-flash-lite', timeoutMs: 45_000, thinking: 0, extra: '' },
-      // Flash Lite + brevity — catches MAX_TOKENS truncation
-      {
-        name: 'googleai/gemini-2.5-flash-lite',
-        timeoutMs: 45_000,
-        thinking: 0,
-        extra: BREVITY_ADDENDUM,
-      },
-    ]
-
-    let parsed: Record<string, unknown> | null = null
-    for (const { name, timeoutMs, thinking, extra } of attempts) {
-      modelConfig = {
-        ...resolveModelConfig('IMAGE_TO_EXERCISE'),
-        name,
-        temperature: 0,
-        maxOutputTokens: 65536,
-        thinkingBudget: thinking,
-      }
-
-      try {
-        const result = await Promise.race([
-          adapter.generateMultimodalCompletion(
-            {
-              prompt: prompt + extra,
-              model: modelConfig,
-              attachments: [{ data: attachmentData, mimeType: input.mimeType }],
-            },
-            payload,
-          ),
-          new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('TIMEOUT')), timeoutMs),
-          ),
-        ])
-
-        parsed = parseResponse(result.text)
-        if (!parsed.error) break
-        // Retry on truncation/empty; bail on other errors (IMAGE_UNCLEAR, NOT_MATH)
-        if (parsed.error !== 'PARSE_ERROR' && parsed.error !== 'EMPTY_RESPONSE') break
-      } catch (err) {
-        const isTimeout = err instanceof Error && err.message === 'TIMEOUT'
-        if (!isTimeout) throw err
-      }
+    modelConfig = {
+      ...resolveModelConfig('IMAGE_TO_EXERCISE'),
+      // Use Gemini 2.5 Flash explicitly — 2.0 Flash produces only ~4 steps on
+      // complex multi-part geometry proofs. 2.5 Flash with thinking produces 18-20.
+      // The "googleai/" prefix tells the adapter to skip DB config resolution.
+      name: 'googleai/gemini-2.5-flash',
+      // Thinking tokens count against maxOutputTokens — budget for both.
+      maxOutputTokens: 65536,
+      thinkingBudget: 24576,
     }
 
-    if (!parsed || parsed.error) {
+    const prompt = buildPrompt(input.locale)
+    const { attachmentData, sizeBytes } = await prepareImage(input)
+
+    const result = await adapter.generateMultimodalCompletion(
+      {
+        prompt,
+        model: modelConfig,
+        attachments: [{ data: attachmentData, mimeType: input.mimeType }],
+      },
+      payload,
+    )
+
+    const parsed = parseResponse(result.text)
+
+    if (parsed.error) {
       return buildErrorResponse(
-        String(parsed?.message || parsed?.error || 'Generation timed out'),
-        modelConfig ?? { name: 'unknown', temperature: 0, maxOutputTokens: 0 },
+        String(parsed.message || parsed.error),
+        modelConfig,
         startTime,
         sizeBytes,
       )
@@ -106,7 +71,7 @@ export async function generateInteractiveLesson(
       success: true,
       data: lesson,
       metadata: {
-        model: modelConfig?.name ?? 'unknown',
+        model: modelConfig.name,
         processingTimeMs: Date.now() - startTime,
         imageSizeBytes: sizeBytes,
       },
@@ -122,31 +87,12 @@ export async function generateInteractiveLesson(
   }
 }
 
-async function buildPrompt(locale: 'he' | 'en', payload: Payload): Promise<string> {
-  // Look up a published interactive_lesson prompt from the admin Prompts
-  // collection, fall back to the hardcoded default.
-  let basePrompt = INTERACTIVE_LESSON_PROMPT
-  try {
-    const result = await payload.find({
-      collection: 'prompts',
-      where: {
-        usage: { equals: 'interactive_lesson' },
-        status: { equals: 'published' },
-      },
-      limit: 1,
-      overrideAccess: true,
-    })
-    if (result.docs.length > 0 && result.docs[0].template) {
-      basePrompt = result.docs[0].template
-    }
-  } catch {
-    /* fall through to default */
-  }
+function buildPrompt(locale: 'he' | 'en'): string {
   const localeInstruction =
     locale === 'he'
       ? '\n\nIMPORTANT: Generate ALL narration, claims, reasons, and explanations in Hebrew.'
       : '\n\nIMPORTANT: Generate ALL narration, claims, reasons, and explanations in English.'
-  return `${basePrompt}${localeInstruction}`
+  return `${INTERACTIVE_LESSON_PROMPT}${localeInstruction}`
 }
 
 async function prepareImage(input: InteractiveLessonInput) {
@@ -163,37 +109,14 @@ async function prepareImage(input: InteractiveLessonInput) {
   }
 }
 
-/**
- * Escape unescaped backslashes before letters that aren't valid JSON escapes.
- * Gemini emits LaTeX like `\implies`, `\frac`, `\sqrt` inside JSON strings
- * without doubling the backslash, which breaks JSON.parse. Valid JSON
- * escapes are \", \\, \/, \b, \f, \n, \r, \t, \uXXXX — anything else needs
- * its backslash doubled.
- */
-function fixLatexEscapes(text: string): string {
-  return text.replace(/\\([^"\\/bfnrtu])/g, '\\\\$1')
-}
-
 function parseResponse(responseText: string): Record<string, unknown> {
-  if (!responseText || responseText.trim().length === 0) {
-    return { error: 'EMPTY_RESPONSE', message: 'LLM returned an empty response.' }
-  }
   const cleaned = responseText
     .trim()
     .replace(/^```json\s*/i, '')
     .replace(/^```\s*/, '')
     .replace(/```\s*$/, '')
     .trim()
-  try {
-    return JSON.parse(cleaned)
-  } catch {
-    // Retry after fixing unescaped LaTeX backslashes
-    try {
-      return JSON.parse(fixLatexEscapes(cleaned))
-    } catch {
-      return { error: 'PARSE_ERROR', message: 'LLM returned malformed JSON. Please try again.' }
-    }
-  }
+  return JSON.parse(cleaned)
 }
 
 function validateLesson(parsed: Record<string, unknown>, locale: 'he' | 'en'): InteractiveLesson {
@@ -229,29 +152,16 @@ function validateLesson(parsed: Record<string, unknown>, locale: 'he' | 'en'): I
 
 /**
  * Gemini returns highlightSegments in varying formats:
- *   - ["AB", "CD"]              → 2+ char strings = label pairs
- *   - [["A","B"],["C","D"]]    → already paired arrays
- *   - ["A","B","C","D"]         → flat single-char labels = consecutive pairs
+ *   - ["AB", "CD"]          → flat strings (2+ chars = label pairs)
+ *   - [["A","B"],["C","D"]] → already paired
  * Normalize to [["A","B"],["C","D"]] so the converter can match segment ids.
  */
 function normalizeHighlightSegments(raw: unknown[]): string[][] {
-  if (raw.length > 0 && Array.isArray(raw[0])) {
-    return raw
-      .filter((item) => Array.isArray(item) && item.length === 2)
-      .map((item) => [(item as string[])[0], (item as string[])[1]])
-  }
-  if (raw.length > 0 && typeof raw[0] === 'string' && (raw[0] as string).length >= 2) {
-    return raw
-      .filter((item) => typeof item === 'string' && (item as string).length >= 2)
-      .map((item) => [(item as string)[0], (item as string).slice(1)])
-  }
-  const pairs: string[][] = []
-  for (let i = 0; i + 1 < raw.length; i += 2) {
-    const a = String(raw[i])
-    const b = String(raw[i + 1])
-    if (a.length === 1 && b.length === 1) pairs.push([a, b])
-  }
-  return pairs
+  return raw.flatMap((item) => {
+    if (Array.isArray(item) && item.length === 2) return [[String(item[0]), String(item[1])]]
+    if (typeof item === 'string' && item.length >= 2) return [[item[0], item.slice(1)]]
+    return []
+  })
 }
 
 function validatePoint(p: Record<string, unknown>) {
@@ -273,9 +183,10 @@ function validateSegment(s: Record<string, unknown>) {
       | 'solid'
       | 'dashed'
       | 'bold',
-    color: ['blue', 'red', 'green', 'orange', 'purple'].includes(s.color as string)
-      ? (s.color as string)
-      : undefined,
+    color:
+      typeof s.color === 'string' && !['solid', 'dashed', 'bold'].includes(s.color)
+        ? s.color
+        : undefined,
   }
 }
 

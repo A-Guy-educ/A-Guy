@@ -158,8 +158,6 @@ export function ChatInterface({
     addExternalMedia,
     askMedia: _askMedia,
     clearAskMedia: _clearAskMedia,
-    // Interactive player step context
-    playerStepContextRef,
     // Programmatic message injection
     injectExerciseContext,
     addAssistantMessage,
@@ -280,21 +278,6 @@ export function ChatInterface({
     window.addEventListener('ask-action', handler)
     return () => window.removeEventListener('ask-action', handler)
   }, [])
-
-  // Interactive player: track current step for context-aware chat
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail as {
-        stepId: number
-        totalSteps: number
-        stepTitle: string
-        stepNarration: string
-      }
-      playerStepContextRef.current = detail
-    }
-    window.addEventListener('ask-step-change', handler)
-    return () => window.removeEventListener('ask-step-change', handler)
-  }, [playerStepContextRef])
 
   // Exercise help system actions (hint/guiding/solution from HelpSystem component)
   const exerciseHelpRef = useRef<(e: Event) => void>(() => {})

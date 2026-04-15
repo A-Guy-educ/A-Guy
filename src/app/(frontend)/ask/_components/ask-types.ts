@@ -28,16 +28,7 @@ export interface AskMediaRestoreEvent {
   url: string
 }
 
-/** Event payload when the interactive player step changes */
-export interface AskStepChangeEvent {
-  stepId: number
-  totalSteps: number
-  stepTitle: string
-  stepNarration: string
-}
-
 export const ASK_ACTION_EVENT = 'ask-action' as const
 export const ASK_MEDIA_ATTACH_EVENT = 'ask-media-attach' as const
 export const ASK_MEDIA_RESTORE_EVENT = 'ask-media-restore' as const
 export const ASK_MEDIA_CLEAR_EVENT = 'ask-media-clear' as const
-export const ASK_STEP_CHANGE_EVENT = 'ask-step-change' as const
