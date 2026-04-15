@@ -184,25 +184,15 @@ export async function createGenkitUnifiedAdapter(
       // result.stream is already an AsyncIterable<GenerateResponseChunk>
       const genkitStream = result.stream
 
-      // Wrap to return { text: string } format
-      const stream: AsyncIterable<{ text: string }> = {
-        [Symbol.asyncIterator]: () => {
-          const iterator = genkitStream[Symbol.asyncIterator]()
-          return {
-            async next() {
-              const chunkResult = await iterator.next()
-              if (chunkResult.done) {
-                return { done: true, value: undefined }
-              }
-              // Genkit chunks have .text property
-              return {
-                done: false,
-                value: { text: chunkResult.value?.text || '' },
-              }
-            },
-          }
-        },
+      // Wrap Genkit's stream to return { text: string } format
+      // Use a plain async generator to avoid double-wrapping issues with
+      // Node.js 22's Web Streams implementation (controller[kState].transformAlgorithm)
+      async function* streamGenerator(): AsyncGenerator<{ text: string }> {
+        for await (const chunk of genkitStream) {
+          yield { text: chunk.text || '' }
+        }
       }
+      const stream: AsyncIterable<{ text: string }> = streamGenerator()
 
       // Create response promise that handles errors
       const response = (async () => {
