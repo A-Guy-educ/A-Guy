@@ -50,6 +50,10 @@ jobs:
       - name: Install Kody Engine
         run: npm install -g @kody-ade/engine
 
+      - name: Install project dependencies
+        if: hashFiles('.kody/watch/agents/*/agent.json') != ''
+        run: pnpm install --frozen-lockfile
+
       - name: Install LiteLLM proxy
         if: hashFiles('.kody/watch/agents/*/agent.json') != ''
         run: pip install 'litellm[proxy]' prisma && python -m prisma py fetch
@@ -67,11 +71,20 @@ jobs:
             echo "${DELIM}" >> $GITHUB_ENV
           done
 
-      - name: Debug MINIMAX_API_KEY
-        run: |
-          echo "MINIMAX_API_KEY set: [${MINIMAX_API_KEY:+yes (length: ${#MINIMAX_API_KEY})}]"
-          echo "MINIMAX_API_KEY prefix: ${MINIMAX_API_KEY:0:8}..."
-          echo "AI_BASE_URL: ${AI_BASE_URL:-not set}"
+      - name: Get Playwright version
+        id: playwright-version
+        run: echo "version=$(pnpm exec playwright --version | head -1)" >> $GITHUB_OUTPUT
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}
+
+      - name: Install Playwright browsers
+        if: hashFiles('.kody/watch/agents/*/agent.json') != '' && steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium
 
       - name: Run Kody Watch
         env:
@@ -82,6 +95,7 @@ jobs:
           WATCH_DIGEST_ISSUE_INFRA: ${{ vars.WATCH_DIGEST_ISSUE_INFRA }}
           WATCH_DIGEST_ISSUE_ANALYTICS: ${{ vars.WATCH_DIGEST_ISSUE_ANALYTICS }}
           PREVIEW_URL: ${{ vars.PREVIEW_URL }}
+          NEXT_PUBLIC_SERVER_URL: ${{ secrets.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000' }}
           DRY_RUN: ${{ inputs.dry_run || 'false' }}
           AGENTS: ${{ inputs.agents }}
         run: |
