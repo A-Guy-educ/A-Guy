@@ -181,18 +181,29 @@ export async function createGenkitUnifiedAdapter(
         { timeoutMs: streamTimeoutMs, message: 'Stream initialization timed out' },
       )
 
-      // result.stream is already an AsyncIterable<GenerateResponseChunk>
+      // result.stream is a Genkit Channel<GenerateResponseChunk> (AsyncIterable)
       const genkitStream = result.stream
 
-      // Wrap Genkit's stream to return { text: string } format
-      // Use a plain async generator to avoid double-wrapping issues with
-      // Node.js 22's Web Streams implementation (controller[kState].transformAlgorithm)
-      async function* streamGenerator(): AsyncGenerator<{ text: string }> {
-        for await (const chunk of genkitStream) {
-          yield { text: chunk.text || '' }
+      // Use ReadableStream.from() to bridge Genkit's AsyncIterable to a web ReadableStream.
+      // Node.js 22 has a known incompatibility where iterating a ReadableStream-as-AsyncIterable
+      // inside another ReadableStream start() callback causes:
+      //   TypeError: controller[kState].transformAlgorithm is not a function
+      // ReadableStream.from() is the correct, Node.js-native way to convert an AsyncIterable.
+      // Node.js ReadableStream.from() bridges AsyncIterable → ReadableStream cleanly.
+      // Cast via `as any` because TypeScript's DOM lib doesn't include ReadableStream.from().
+      // Cast result to AsyncIterable via `as unknown as` because Node.js ReadableStream
+      // implements AsyncIterable at runtime but TS DOM types don't reflect this.
+      const stream = (
+        ReadableStream as unknown as {
+          from: (iterable: AsyncIterable<{ text: string }>) => ReadableStream<{ text: string }>
         }
-      }
-      const stream: AsyncIterable<{ text: string }> = streamGenerator()
+      ).from(
+        (async function* (): AsyncGenerator<{ text: string }> {
+          for await (const chunk of genkitStream) {
+            yield { text: chunk.text || '' }
+          }
+        })(),
+      ) as unknown as AsyncIterable<{ text: string }>
 
       // Create response promise that handles errors
       const response = (async () => {
