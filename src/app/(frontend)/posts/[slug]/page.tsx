@@ -38,7 +38,23 @@ export default async function Post({ params: paramsPromise }: Args) {
   // Decode to support slugs with special characters
   const decodedSlug = decodeURIComponent(slug)
   const url = '/posts/' + decodedSlug
-  const post = await queryPostBySlug({ slug: decodedSlug })
+
+  let post
+  try {
+    post = await queryPostBySlug({ slug: decodedSlug })
+  } catch (error) {
+    // Gracefully handle MongoDB connection failures during build
+    console.warn('Failed to fetch post:', error)
+    return (
+      <article className="pt-section-md pb-section-md">
+        <PageClient />
+        <PayloadRedirects disableNotFound url={url} />
+        <div className="container">
+          <p>Post content is temporarily unavailable.</p>
+        </div>
+      </article>
+    )
+  }
 
   if (!post) return <PayloadRedirects url={url} />
 

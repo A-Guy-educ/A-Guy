@@ -3,5 +3,10 @@
   "description": "Verifies Mixpanel event firing, intercepts PII leaks, and checks console errors",
   "domain": "analytics",
   "labels": ["kody:watch:analytics"],
-  "cron": "0 8 * * *"
+  "cron": "0 8 * * *",
+  "notify": {
+    "channels": ["slack"],
+    "color": "danger",
+    "when": "on-critical"
+  }
 }

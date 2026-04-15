@@ -31,8 +31,8 @@ export async function teardown() {
     }
     console.log('[global-int-teardown] DB connection destroyed')
   } catch {
-    // Fine — Payload may not have initialized (tests were skipped)
-    console.log('[global-int-teardown] No Payload instance to clean up')
+    // Fine — Payload may not have initialized (tests were skipped) or MongoDB is unavailable
+    console.log('[global-int-teardown] No Payload instance to clean up (or DB unavailable)')
   }
 
   // Clean up MongoDB container (only when not using CI service)
