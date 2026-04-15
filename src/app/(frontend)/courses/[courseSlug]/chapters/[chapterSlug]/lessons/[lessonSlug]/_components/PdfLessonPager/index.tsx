@@ -20,8 +20,6 @@ interface PdfLessonPagerProps {
   lessonSlug: string
   lessonId: string
   chatLessonId: string
-  /** Whether the lesson has context text (controls chat visibility) */
-  hasLessonContext?: boolean
   /** Whether the lesson has exercises (controls chat visibility) */
   hasExercises?: boolean
   /** Formula sheet data (passed to ChatInterface) */
@@ -37,7 +35,6 @@ export function PdfLessonPager({
   lessonSlug,
   lessonId,
   chatLessonId,
-  hasLessonContext,
   hasExercises,
   formulaSheet,
 }: PdfLessonPagerProps) {
@@ -119,7 +116,7 @@ export function PdfLessonPager({
           </div>
         }
         chatContent={
-          hasLessonContext || hasExercises ? (
+          hasExercises ? (
             <ChatInterface
               lessonId={chatLessonId}
               translationNamespace="courses"

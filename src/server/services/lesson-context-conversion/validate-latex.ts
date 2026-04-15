@@ -2,7 +2,7 @@
  * LaTeX Validation Utilities
  *
  * Validates extracted LaTeX text for structural correctness
- * before storing in lessonContextText.
+ * before storing in ContextExtractions.
  *
  * @fileType utility
  * @domain conversion

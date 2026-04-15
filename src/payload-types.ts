@@ -751,7 +751,7 @@ export interface Prompt {
   /**
    * Purpose of this prompt: chat conversation, PDF extraction, PDF verification, or context extraction for AI tutor
    */
-  usage?: ('chat' | 'extractor' | 'verifier' | 'context_extractor' | 'translator' | 'interactive_lesson') | null;
+  usage?: ('chat' | 'extractor' | 'verifier' | 'context_extractor' | 'translator') | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1470,10 +1470,6 @@ export interface Lesson {
    * Upload lesson content files (PDFs, videos, images, etc.)
    */
   contentFiles?: (string | Media)[] | null;
-  /**
-   * AI context text for this lesson. Injected into chat prompts at runtime. NOT indexed or searchable.
-   */
-  lessonContextText?: string | null;
   /**
    * AI system prompt for this lesson (uses default if not set)
    */
@@ -3268,7 +3264,6 @@ export interface LessonsSelect<T extends boolean = true> {
   accessType?: T;
   blocks?: T;
   contentFiles?: T;
-  lessonContextText?: T;
   prompt?: T;
   slug?: T;
   contentStatus?: T;

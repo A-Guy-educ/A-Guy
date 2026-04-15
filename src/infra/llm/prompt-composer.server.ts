@@ -5,7 +5,6 @@
  * @domain chat
  * @pattern server-only
  */
-import { buildLessonContextPrompt } from './lesson-context'
 
 export const SYSTEM_PROMPT_SEPARATOR = '\n\n---\n\n'
 
@@ -78,18 +77,15 @@ IMPORTANT:
  * 3. Lesson-specific resolved prompt
  * 4. Mandatory math formatting instructions
  * 5. Mandatory image handling instructions
- * 6. Lesson context text injection (via buildLessonContextPrompt)
  *
  * @param systemPrompts - Array of system prompt templates (can be empty)
  * @param lessonPromptTemplate - Resolved lesson prompt template
- * @param lessonContextText - Optional lesson context to inject
  * @param teacherProfileBlock - Optional teacher profile block to inject
  * @returns Final composed system instructions string
  */
 export function composeSystemInstructions(
   systemPrompts: string[],
   lessonPromptTemplate: string,
-  lessonContextText?: string,
   teacherProfileBlock?: string,
 ): string {
   // Step 1: Join system prompts (if any)
@@ -110,8 +106,5 @@ export function composeSystemInstructions(
   const withMathFormatting = withLessonPrompt + '\n\n' + MATH_FORMATTING_INSTRUCTIONS
 
   // Step 5: Append mandatory image handling instructions
-  const withImageHandling = withMathFormatting + '\n\n' + IMAGE_HANDLING_INSTRUCTIONS
-
-  // Step 6: Inject lesson context (reuse existing function)
-  return buildLessonContextPrompt(withImageHandling, lessonContextText)
+  return withMathFormatting + '\n\n' + IMAGE_HANDLING_INSTRUCTIONS
 }

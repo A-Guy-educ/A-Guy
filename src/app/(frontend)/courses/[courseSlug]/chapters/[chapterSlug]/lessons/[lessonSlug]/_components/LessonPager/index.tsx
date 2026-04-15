@@ -50,8 +50,6 @@ interface LessonPagerProps {
   validFiles?: MediaType[]
   /** Lesson ID for chat context (defaults to lessonId) */
   chatLessonId?: string
-  /** Whether the lesson has context text (controls chat visibility) */
-  hasLessonContext?: boolean
   /** Whether the lesson has exercises (controls chat visibility) */
   hasExercises?: boolean
   /** Formula sheet data (passed to ChatInterface) */
@@ -70,7 +68,6 @@ export function LessonPager({
   contentPageBodies,
   validFiles,
   chatLessonId,
-  hasLessonContext,
   hasExercises,
   formulaSheet,
 }: LessonPagerProps) {
@@ -245,7 +242,7 @@ export function LessonPager({
           </div>
         }
         chatContent={
-          hasLessonContext || hasExercises ? (
+          hasExercises ? (
             <ChatInterface
               lessonId={lessonId}
               exerciseId={exercise.id}
@@ -450,7 +447,7 @@ export function LessonPager({
           </div>
         }
         chatContent={
-          hasLessonContext || hasExercises ? (
+          hasExercises ? (
             <ChatInterface
               lessonId={chatLessonId ?? lessonId}
               translationNamespace="courses"

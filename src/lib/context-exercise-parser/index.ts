@@ -1,7 +1,7 @@
 /**
  * Context Exercise Parser
  *
- * Parses lessonContextText (LaTeX) into structured exercise segments.
+ * Parses ContextExtractions LaTeX text into structured exercise segments.
  * Shared between the admin ContextExerciseViewer (client) and the
  * server-side exercise creation service.
  */
@@ -361,7 +361,7 @@ export function parseContextText(contextText: string): ParsedSegment[] {
 }
 
 /**
- * Reconstruct the full lessonContextText from edited segments.
+ * Reconstruct the full ContextExtractions text from edited segments.
  * Rebuilds each run by replacing exercise/solution content while preserving
  * the document preamble, headers, and delimiters.
  */
