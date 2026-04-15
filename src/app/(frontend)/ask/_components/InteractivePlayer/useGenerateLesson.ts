@@ -10,6 +10,7 @@ interface UseGenerateLessonResult {
   status: GenerationStatus
   error: string | null
   generate: (mediaId: string, locale: 'he' | 'en') => Promise<void>
+  reset: () => void
 }
 
 /**
@@ -49,5 +50,11 @@ export function useGenerateLesson(): UseGenerateLessonResult {
     }
   }, [])
 
-  return { lesson, status, error, generate }
+  const reset = useCallback(() => {
+    setLesson(null)
+    setStatus('idle')
+    setError(null)
+  }, [])
+
+  return { lesson, status, error, generate, reset }
 }

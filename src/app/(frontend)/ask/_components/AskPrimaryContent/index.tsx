@@ -25,7 +25,7 @@ export function AskPrimaryContent() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [currentFile, setCurrentFile] = useState<ExerciseFile | null>(null)
   const [isUploading, setIsUploading] = useState(false)
-  const { lesson, status, error, generate } = useGenerateLesson()
+  const { lesson, status, error, generate, reset: resetLesson } = useGenerateLesson()
 
   // Revoke blob URL on unmount
   useEffect(() => {
@@ -112,8 +112,10 @@ export function AskPrimaryContent() {
   }
 
   const handleBackToUpload = () => {
-    // Reset — go back to upload view (lesson data discarded)
-    window.location.reload()
+    // Reset in-memory state without a full page reload.
+    if (currentFile?.url.startsWith('blob:')) URL.revokeObjectURL(currentFile.url)
+    setCurrentFile(null)
+    resetLesson()
   }
 
   const guidedPayload = lesson ? interactiveLessonToGuidedExplanation(lesson) : null

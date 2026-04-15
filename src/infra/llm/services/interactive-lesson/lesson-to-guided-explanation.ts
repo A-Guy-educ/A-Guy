@@ -14,14 +14,32 @@ import type { InteractiveLesson, GeometryData, GeoPoint } from './interactive-le
 // SVG generation from structured geometry data
 // ---------------------------------------------------------------------------
 
+/** Escape XML special chars to prevent DOM breakage from LLM-supplied labels. */
+function escapeXml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+/** Strip a label to alphanumeric only — used in id attributes. */
+function safeLabel(str: string): string {
+  return str.replace(/[^a-zA-Z0-9_\-]/g, '')
+}
+
 function pointMap(geometry: GeometryData): Map<string, GeoPoint> {
   const map = new Map<string, GeoPoint>()
   for (const p of geometry.points) map.set(p.label, p)
   return map
 }
 
+/** Canonical segment id — always alphabetically sorted so A-D and D-A map to the same id. */
 function segmentId(from: string, to: string): string {
-  return `seg-${from}-${to}`
+  const a = safeLabel(from)
+  const b = safeLabel(to)
+  return a < b ? `seg-${a}-${b}` : `seg-${b}-${a}`
 }
 
 function buildSvg(geometry: GeometryData): string {
@@ -86,7 +104,7 @@ function buildSvg(geometry: GeometryData): string {
   for (const p of geometry.points) {
     const offsetY = p.y < geometry.height / 2 ? -12 : 20
     lines.push(
-      `    <text id="label-${p.label}" class="ge-fade-element" x="${p.x}" y="${p.y + offsetY}" text-anchor="middle">${p.label}</text>`,
+      `    <text id="label-${safeLabel(p.label)}" class="ge-fade-element" x="${p.x}" y="${p.y + offsetY}" text-anchor="middle">${escapeXml(p.label)}</text>`,
     )
   }
 
@@ -94,9 +112,9 @@ function buildSvg(geometry: GeometryData): string {
   if (geometry.labels) {
     for (let i = 0; i < geometry.labels.length; i++) {
       const lbl = geometry.labels[i]
-      const fontSize = lbl.fontSize || 12
+      const fontSize = Math.min(Math.max(Number(lbl.fontSize) || 12, 8), 48)
       lines.push(
-        `    <text id="geo-label-${i}" class="ge-fade-element" x="${lbl.x}" y="${lbl.y}" font-size="${fontSize}" text-anchor="middle">${lbl.text}</text>`,
+        `    <text id="geo-label-${i}" class="ge-fade-element" x="${lbl.x}" y="${lbl.y}" font-size="${fontSize}" text-anchor="middle">${escapeXml(lbl.text)}</text>`,
       )
     }
   }
@@ -132,7 +150,7 @@ function buildStepActions(
   // Show point labels new to this step
   if (step.highlightPoints) {
     for (const label of step.highlightPoints) {
-      const id = `label-${label}`
+      const id = `label-${safeLabel(label)}`
       if (!allPreviousPoints.has(id)) {
         actions.push({ op: 'show', id })
         allPreviousPoints.add(id)

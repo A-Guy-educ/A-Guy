@@ -6,7 +6,6 @@
 import type { PayloadRequest } from 'payload'
 import { logger } from '@/infra/utils/logger/logger'
 import { generateInteractiveLesson } from '@/infra/llm/services/interactive-lesson/interactive-lesson-generation-service'
-import { generateStepAudio } from '@/infra/llm/services/interactive-lesson/tts-generation-service'
 
 interface GenerateRequestBody {
   mediaId: string
@@ -43,16 +42,8 @@ export async function agentGenerateInteractiveLesson(
       return Response.json(result, { status: 422 })
     }
 
-    // Generate TTS audio for each step (non-blocking — gracefully degrades)
-    if (result.data?.steps.length) {
-      reqLogger.info({ stepCount: result.data.steps.length }, 'Generating TTS audio')
-      const audioResults = await generateStepAudio(result.data.steps)
-      result.data.steps = result.data.steps.map((step, i) => ({
-        ...step,
-        audioBase64: audioResults[i]?.audioBase64 ?? null,
-        durationSeconds: audioResults[i]?.estimatedDurationSeconds ?? step.durationSeconds,
-      }))
-    }
+    // TTS skipped — GuidedExplanationRunner uses browser speechSynthesis
+    // for narration; OpenAI TTS output was never consumed by the client.
 
     reqLogger.info(
       {
@@ -65,11 +56,13 @@ export async function agentGenerateInteractiveLesson(
 
     return Response.json(result)
   } catch (error) {
+    // Log full detail server-side, return a generic message to the client
+    // so Gemini/Payload/OpenAI internals don't leak to users.
     reqLogger.error({ err: error }, 'Interactive lesson generation error')
     return Response.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Internal server error',
+        error: 'Failed to generate lesson. Please try again.',
       },
       { status: 500 },
     )
