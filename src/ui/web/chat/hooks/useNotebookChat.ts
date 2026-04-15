@@ -113,6 +113,14 @@ export function useNotebookChat({
   // Persistent media for Ask page — sent with every message, not cleared after send
   const [askMedia, setAskMedia] = useState<UploadedMedia | null>(null)
 
+  // Interactive player step context — appended invisibly to AI messages
+  const playerStepContextRef = useRef<{
+    stepId: number
+    totalSteps: number
+    stepTitle: string
+    stepNarration: string
+  } | null>(null)
+
   // Error state
   const [chatError, setChatError] = useState<ChatError | null>(null)
 
@@ -411,15 +419,21 @@ export function useNotebookChat({
       categoryId,
     }
 
+    // Append interactive player step context invisibly to the API message
+    const stepCtx = playerStepContextRef.current
+    const apiMessage = stepCtx
+      ? `${message}\n\n[CONTEXT: Student is currently viewing Step ${stepCtx.stepId} of ${stepCtx.totalSteps}: "${stepCtx.stepTitle}". Step content: ${stepCtx.stepNarration}]`
+      : message
+
     // Use streaming when no attachments and not in admin mode
     const hasAttachments = completedChatAssetIds.length > 0 || askMediaIds.length > 0
     const useStreaming = !hasAttachments && !adminMode
 
     if (useStreaming) {
-      await streamMessage(message, acknowledgment, context, { contextKeyOverride })
+      await streamMessage(apiMessage, acknowledgment, context, { contextKeyOverride })
     } else {
       await sendMessageSync(
-        message,
+        apiMessage,
         acknowledgment,
         context,
         askMediaIds,
@@ -891,6 +905,8 @@ export function useNotebookChat({
     // Persistent Ask-page media (sent with every message)
     askMedia,
     clearAskMedia,
+    // Interactive player step context
+    playerStepContextRef,
     // Error handling
     chatError,
     dismissError,
