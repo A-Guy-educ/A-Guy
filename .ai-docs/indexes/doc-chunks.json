@@ -67,23 +67,23 @@
     {
       "id": "AGENTS-project-structure",
       "title": "Project Structure",
-      "content": "```\nsrc/\n├── app/\n│   ├── (frontend)/          # Frontend routes\n│   └── (payload)/           # Payload admin routes\n├── collections/              # Collection configs\n├── globals/                 # Global configs\n├── ui/                      # React components (PAYLOAD-FIRST - use this directory)\n│   ├── admin/               # Payload admin UI components\n│   └── web/                 # Frontend/consumer UI components\n├── hooks/                   # Hook functions\n├── access/                  # Access control functions\n├── server/                  # Server-side code\n└── payload.config.ts        # Main config\n```\n\n> ⚠️ **DEPRECATED**: `src/components/` is deprecated. Migrate all components to `src/ui/web/` or `src/ui/admin/`.\n> See [src/FILE_STRUCTURE_GUIDE.md](./src/FILE_STRUCTURE_GUIDE.md) for migration patterns.",
+      "content": "```\nsrc/\n├── app/                         # Next.js App Router\n│   ├── (frontend)/              # Frontend routes\n│   ├── (payload)/               # Payload admin routes\n│   └── api/                     # API routes\n├── client/                      # Client-side hooks, state, utils\n├── infra/                       # Infrastructure (analytics, auth, blob, LLM, config)\n├── server/                      # Server-side code\n│   ├── payload/\n│   │   ├── collections/         # Collection configs\n│   │   ├── globals/             # Global configs\n│   │   ├── hooks/              # Hook functions\n│   │   ├── access/             # Access control functions\n│   │   ├── endpoints/          # Custom endpoints\n│   │   └── jobs/               # Background jobs\n│   └── services/                # Business logic services\n├── ui/                          # React components\n│   ├── admin/                   # Payload admin UI components\n│   ├── cody/                    # Cody pipeline components\n│   └── web/                     # Frontend/consumer UI components\n├── i18n/                        # Internationalization\n├── types/                       # Type declarations\n└── payload.config.ts            # Main config\n```\n\n> **Note**: Do NOT create a `lib/` folder under `src/`. Place shared utilities in appropriate domain-specific directories (e.g., `src/ui/cody/`, `src/server/services/`, `src/infra/`).",
       "keywords": [
-        "components",
         "payload",
-        "admin",
+        "components",
         "frontend",
         "routes",
-        "configs",
-        "functions",
-        "access",
+        "admin",
         "config",
-        "deprecated"
+        "services",
+        "cody",
+        "hooks",
+        "infra"
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
       "startLine": 20,
-      "endLine": 41,
+      "endLine": 50,
       "priority": 8
     },
     {
@@ -93,8 +93,8 @@
       "keywords": ["configuration"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 41,
-      "endLine": 43,
+      "startLine": 50,
+      "endLine": 52,
       "priority": 8
     },
     {
@@ -115,8 +115,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 43,
-      "endLine": 74,
+      "startLine": 52,
+      "endLine": 83,
       "priority": 7
     },
     {
@@ -126,8 +126,8 @@
       "keywords": ["collections"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 74,
-      "endLine": 76,
+      "startLine": 83,
+      "endLine": 85,
       "priority": 8
     },
     {
@@ -148,8 +148,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 76,
-      "endLine": 97,
+      "startLine": 85,
+      "endLine": 106,
       "priority": 7
     },
     {
@@ -170,8 +170,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 97,
-      "endLine": 120,
+      "startLine": 106,
+      "endLine": 129,
       "priority": 7
     },
     {
@@ -181,8 +181,8 @@
       "keywords": ["fields"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 120,
-      "endLine": 122,
+      "startLine": 129,
+      "endLine": 131,
       "priority": 8
     },
     {
@@ -203,8 +203,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 122,
-      "endLine": 158,
+      "startLine": 131,
+      "endLine": 167,
       "priority": 7
     },
     {
@@ -214,8 +214,8 @@
       "keywords": ["critical", "security", "patterns"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 158,
-      "endLine": 160,
+      "startLine": 167,
+      "endLine": 169,
       "priority": 8
     },
     {
@@ -236,8 +236,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 160,
-      "endLine": 185,
+      "startLine": 169,
+      "endLine": 194,
       "priority": 7
     },
     {
@@ -258,8 +258,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 185,
-      "endLine": 217,
+      "startLine": 194,
+      "endLine": 226,
       "priority": 7
     },
     {
@@ -280,8 +280,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 217,
-      "endLine": 252,
+      "startLine": 226,
+      "endLine": 261,
       "priority": 7
     },
     {
@@ -291,8 +291,8 @@
       "keywords": ["access", "control"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 252,
-      "endLine": 254,
+      "startLine": 261,
+      "endLine": 263,
       "priority": 8
     },
     {
@@ -313,8 +313,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 254,
-      "endLine": 289,
+      "startLine": 263,
+      "endLine": 298,
       "priority": 7
     },
     {
@@ -335,8 +335,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 289,
-      "endLine": 311,
+      "startLine": 298,
+      "endLine": 320,
       "priority": 7
     },
     {
@@ -357,8 +357,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 311,
-      "endLine": 338,
+      "startLine": 320,
+      "endLine": 347,
       "priority": 7
     },
     {
@@ -368,8 +368,8 @@
       "keywords": ["advanced", "access", "control", "patterns"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 338,
-      "endLine": 340,
+      "startLine": 347,
+      "endLine": 349,
       "priority": 8
     },
     {
@@ -390,8 +390,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 340,
-      "endLine": 358,
+      "startLine": 349,
+      "endLine": 367,
       "priority": 7
     },
     {
@@ -412,8 +412,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 358,
-      "endLine": 394,
+      "startLine": 367,
+      "endLine": 403,
       "priority": 7
     },
     {
@@ -434,8 +434,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 394,
-      "endLine": 427,
+      "startLine": 403,
+      "endLine": 436,
       "priority": 7
     },
     {
@@ -456,8 +456,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 427,
-      "endLine": 451,
+      "startLine": 436,
+      "endLine": 460,
       "priority": 7
     },
     {
@@ -467,8 +467,8 @@
       "keywords": ["hooks"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 451,
-      "endLine": 453,
+      "startLine": 460,
+      "endLine": 462,
       "priority": 8
     },
     {
@@ -489,8 +489,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 453,
-      "endLine": 516,
+      "startLine": 462,
+      "endLine": 525,
       "priority": 7
     },
     {
@@ -500,8 +500,8 @@
       "keywords": ["queries"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 516,
-      "endLine": 518,
+      "startLine": 525,
+      "endLine": 527,
       "priority": 8
     },
     {
@@ -522,8 +522,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 518,
-      "endLine": 566,
+      "startLine": 527,
+      "endLine": 575,
       "priority": 7
     },
     {
@@ -544,8 +544,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 566,
-      "endLine": 595,
+      "startLine": 575,
+      "endLine": 604,
       "priority": 7
     },
     {
@@ -565,8 +565,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 595,
-      "endLine": 613,
+      "startLine": 604,
+      "endLine": 622,
       "priority": 7
     },
     {
@@ -587,14 +587,14 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 613,
-      "endLine": 642,
+      "startLine": 622,
+      "endLine": 651,
       "priority": 8
     },
     {
       "id": "AGENTS-components",
       "title": "Components",
-      "content": "The Admin Panel can be extensively customized using React Components. Custom Components can be Server Components (default) or Client Components.\n\n> **Note**: The component examples below demonstrate Payload CMS patterns and capabilities. They are illustrative examples showing what's possible, not documentation of components in this specific project. See `src/components/` for actual implementations in this project.",
+      "content": "The Admin Panel can be extensively customized using React Components. Custom Components can be Server Components (default) or Client Components.\n\n> **Note**: The component examples below demonstrate Payload CMS patterns and capabilities. They are illustrative examples showing what's possible, not documentation of components in this specific project. See `src/ui/` for actual implementations in this project.",
       "keywords": [
         "components",
         "examples",
@@ -609,8 +609,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 642,
-      "endLine": 648,
+      "startLine": 651,
+      "endLine": 657,
       "priority": 8
     },
     {
@@ -631,8 +631,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 648,
-      "endLine": 707,
+      "startLine": 657,
+      "endLine": 716,
       "priority": 7
     },
     {
@@ -653,8 +653,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 707,
-      "endLine": 714,
+      "startLine": 716,
+      "endLine": 723,
       "priority": 7
     },
     {
@@ -675,8 +675,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 714,
-      "endLine": 721,
+      "startLine": 723,
+      "endLine": 730,
       "priority": 7
     },
     {
@@ -697,8 +697,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 721,
-      "endLine": 756,
+      "startLine": 730,
+      "endLine": 765,
       "priority": 7
     },
     {
@@ -719,8 +719,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 756,
-      "endLine": 783,
+      "startLine": 765,
+      "endLine": 792,
       "priority": 7
     },
     {
@@ -741,8 +741,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 783,
-      "endLine": 809,
+      "startLine": 792,
+      "endLine": 818,
       "priority": 7
     },
     {
@@ -763,8 +763,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 809,
-      "endLine": 847,
+      "startLine": 818,
+      "endLine": 856,
       "priority": 7
     },
     {
@@ -785,30 +785,30 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 847,
-      "endLine": 871,
+      "startLine": 856,
+      "endLine": 880,
       "priority": 7
     },
     {
       "id": "AGENTS-styling-components",
       "title": "Styling Components",
-      "content": "Components can be styled using SCSS files. Import a `.scss` file colocated with your component:\n\n```tsx\nimport './index.scss' // Component-specific styles\n\nexport function MyComponent() {\n  return <div className=\"my-component\">Content</div>\n}\n```\n\n```scss\n// Use Payload's CSS variables\n.my-component {\n  background-color: var(--theme-elevation-500);\n  color: var(--theme-text);\n  padding: var(--base);\n  border-radius: var(--border-radius-m);\n}\n\n// Import Payload's SCSS library for mixins and utilities\n@import '~@payloadcms/ui/scss';\n\n.my-component {\n  @include mid-break {\n    background-color: var(--theme-elevation-900);\n  }\n}\n```\n\n**Project Convention**: This project uses `index.scss` naming convention. Place styles alongside your component file:\n\n- Component: `src/components/MyComponent/index.tsx`\n- Styles: `src/components/MyComponent/index.scss`",
+      "content": "This project uses **Tailwind CSS** with a **semantic design token system**. See `.kody/memory/design-system.md` for complete rules.\n\n**Key rules:**\n\n- Use semantic typography tokens (`text-body-sm`, `text-heading-lg`, `text-display-md`) — never `text-sm`, `text-xl`, `text-4xl`\n- Use Tailwind color utilities (`bg-primary`, `text-success`) — never `[hsl(var(--xxx))]` or hardcoded colors (`text-red-500`)\n- Use shadow tokens (`shadow-elevation-1`, `shadow-card`) — never `shadow-sm`, `shadow-md`\n- Use spacing tokens for layout (`p-card-padding`, `gap-content-gap`) — never `p-6`, `gap-8`\n- All interactive elements need `transition-all duration-normal`\n- Use `cn()` for className composition — never template literals\n- Never use inline `style={{}}` for typography or colors\n\n```tsx\n// CORRECT\nexport function MyComponent() {\n  return (\n    <div className=\"bg-card text-card-foreground p-card-padding rounded-lg shadow-elevation-1\">\n      Content\n    </div>\n  )\n}\n```\n\nFor Payload admin components, you can use Payload's CSS variables via Tailwind's arbitrary value syntax:\n\n```tsx\n<div className=\"bg-[var(--theme-elevation-500)] text-[var(--theme-text)]\">Admin content</div>\n```\n\n**Project Convention**: Place components alongside their related feature code:\n\n- Admin components: `src/ui/admin/MyComponent/index.tsx`\n- Web components: `src/ui/web/MyComponent/index.tsx`",
       "keywords": [
-        "scss",
+        "never",
         "components",
-        "import",
-        "index",
-        "component",
-        "styles",
+        "admin",
+        "tailwind",
+        "tokens",
+        "classname",
         "mycomponent",
-        "my-component",
-        "file",
-        "payload"
+        "project",
+        "semantic",
+        "rules"
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 871,
-      "endLine": 907,
+      "startLine": 880,
+      "endLine": 916,
       "priority": 7
     },
     {
@@ -829,8 +829,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 907,
-      "endLine": 923,
+      "startLine": 916,
+      "endLine": 932,
       "priority": 7
     },
     {
@@ -851,14 +851,14 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 923,
-      "endLine": 946,
+      "startLine": 932,
+      "endLine": 955,
       "priority": 7
     },
     {
       "id": "AGENTS-project-specific-components",
       "title": "Project-Specific Components",
-      "content": "This project includes the following custom components in `src/components/`:\n\n- **AdminBar** - Frontend admin controls with editing shortcuts\n- **BeforeDashboard** - Dashboard header with seed button\n- **BeforeLogin** - Login page customizations\n- **Card** - Reusable card component\n- **CollectionArchive** - Archive list views\n- **Link** - Custom link component\n- **LivePreviewListener** - Live preview functionality\n- **Logo** - Custom branding logo\n- **Media** - Media rendering components\n- **PageRange** - Pagination range display\n- **Pagination** - Pagination controls\n- **PayloadRedirects** - Client-side redirect handling\n- **RichText** - Rich text rendering\n- **ui/** - Shadcn/UI components (button, card, checkbox, input, label, pagination, select, textarea)",
+      "content": "This project includes the following custom components in `src/ui/`:\n\n- **AdminBar** - Frontend admin controls with editing shortcuts\n- **BeforeDashboard** - Dashboard header with seed button\n- **BeforeLogin** - Login page customizations\n- **Card** - Reusable card component\n- **CollectionArchive** - Archive list views\n- **Link** - Custom link component\n- **LivePreviewListener** - Live preview functionality\n- **Logo** - Custom branding logo\n- **Media** - Media rendering components\n- **PageRange** - Pagination range display\n- **Pagination** - Pagination controls\n- **PayloadRedirects** - Client-side redirect handling\n- **RichText** - Rich text rendering\n- **ui/** - Shadcn/UI components (button, card, checkbox, input, label, pagination, select, textarea)",
       "keywords": [
         "components",
         "pagination",
@@ -873,8 +873,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 946,
-      "endLine": 965,
+      "startLine": 955,
+      "endLine": 974,
       "priority": 7
     },
     {
@@ -895,8 +895,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 965,
-      "endLine": 1008,
+      "startLine": 974,
+      "endLine": 1017,
       "priority": 8
     },
     {
@@ -917,8 +917,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1008,
-      "endLine": 1046,
+      "startLine": 1017,
+      "endLine": 1055,
       "priority": 8
     },
     {
@@ -939,8 +939,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1046,
-      "endLine": 1081,
+      "startLine": 1055,
+      "endLine": 1090,
       "priority": 8
     },
     {
@@ -950,8 +950,8 @@
       "keywords": ["plugins"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1081,
-      "endLine": 1083,
+      "startLine": 1090,
+      "endLine": 1092,
       "priority": 8
     },
     {
@@ -972,8 +972,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1083,
-      "endLine": 1101,
+      "startLine": 1092,
+      "endLine": 1110,
       "priority": 7
     },
     {
@@ -994,8 +994,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1101,
-      "endLine": 1127,
+      "startLine": 1110,
+      "endLine": 1136,
       "priority": 7
     },
     {
@@ -1005,8 +1005,8 @@
       "keywords": ["best", "practices"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1127,
-      "endLine": 1129,
+      "startLine": 1136,
+      "endLine": 1138,
       "priority": 8
     },
     {
@@ -1027,8 +1027,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1129,
-      "endLine": 1137,
+      "startLine": 1138,
+      "endLine": 1146,
       "priority": 7
     },
     {
@@ -1049,8 +1049,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1137,
-      "endLine": 1145,
+      "startLine": 1146,
+      "endLine": 1154,
       "priority": 7
     },
     {
@@ -1071,8 +1071,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1145,
-      "endLine": 1153,
+      "startLine": 1154,
+      "endLine": 1162,
       "priority": 7
     },
     {
@@ -1093,8 +1093,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1153,
-      "endLine": 1161,
+      "startLine": 1162,
+      "endLine": 1170,
       "priority": 7
     },
     {
@@ -1115,8 +1115,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1161,
-      "endLine": 1169,
+      "startLine": 1170,
+      "endLine": 1178,
       "priority": 7
     },
     {
@@ -1137,14 +1137,14 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1169,
-      "endLine": 1181,
+      "startLine": 1178,
+      "endLine": 1190,
       "priority": 8
     },
     {
       "id": "AGENTS-additional-documentation",
       "title": "Additional Documentation",
-      "content": "For deeper exploration of specific topics, refer to the README files throughout the project:\n\n| Topic            | Location                          |\n| ---------------- | --------------------------------- |\n| Access Control   | `docs/access-control/README.md`   |\n| Admin Components | `docs/admin-components/README.md` |\n| AI Services      | `docs/ai-services/README.md`      |\n| Block Rendering  | `docs/block-rendering/README.md`  |\n| Collections      | `src/collections/README.md`       |\n| Components       | `src/components/README.md`        |\n| Course Hierarchy | `docs/course-hierarchy/README.md` |\n| Exercises        | `docs/exercises/README.md`        |\n| Exercise Import  | `docs/exercise-import/README.md`  |\n| Testing          | `tests/README.md`                 |",
+      "content": "For deeper exploration of specific topics, refer to the README files throughout the project:\n\n| Topic            | Location                          |\n| ---------------- | --------------------------------- |\n| Access Control   | `docs/access-control/README.md`   |\n| Admin Components | `docs/admin-components/README.md` |\n| AI Services      | `docs/ai-services/README.md`      |\n| Block Rendering  | `docs/block-rendering/README.md`  |\n| Collections      | `src/server/payload/collections/` |\n| Components       | `src/ui/`                         |\n| Course Hierarchy | `docs/course-hierarchy/README.md` |\n| Exercises        | `docs/exercises/README.md`        |\n| Exercise Import  | `docs/exercise-import/README.md`  |\n| Testing          | `tests/README.md`                 |",
       "keywords": [
         "readme",
         "docs",
@@ -1159,8 +1159,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1181,
-      "endLine": 1198,
+      "startLine": 1190,
+      "endLine": 1207,
       "priority": 8
     },
     {
@@ -1181,8 +1181,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1198,
-      "endLine": 1206,
+      "startLine": 1207,
+      "endLine": 1215,
       "priority": 7
     },
     {
@@ -1203,8 +1203,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1206,
-      "endLine": 1216,
+      "startLine": 1215,
+      "endLine": 1225,
       "priority": 8
     },
     {
@@ -1225,8 +1225,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1216,
-      "endLine": 1236,
+      "startLine": 1225,
+      "endLine": 1245,
       "priority": 7
     },
     {
@@ -1247,8 +1247,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1236,
-      "endLine": 1243,
+      "startLine": 1245,
+      "endLine": 1252,
       "priority": 8
     },
     {
@@ -1634,14 +1634,101 @@
       "priority": 7
     },
     {
+      "id": "DESIGN_SYSTEM-chat-bubble-radius-tokens",
+      "title": "Chat Bubble Radius Tokens",
+      "content": "Chat bubbles use specific border radius values for a consistent look:\n\n```tsx\n// Chat bubbles - use these instead of raw values like rounded-[20px]\n<div className=\"rounded-chat-xs\">   {/* 8px - compact */}\n<div className=\"rounded-chat-sm\">   {/* 12px */}\n<div className=\"rounded-chat-md\">   {/* 16px */}\n<div className=\"rounded-chat-lg\">   {/* 20px - standard */}\n<div className=\"rounded-chat-xl\">   {/* 24px */}\n<div className=\"rounded-chat-2xl\">  {/* 30px - large */}\n```",
+      "keywords": [
+        "classname",
+        "chat",
+        "radius",
+        "bubbles",
+        "values",
+        "20px",
+        "bubble",
+        "tokens",
+        "specific",
+        "border"
+      ],
+      "category": "styling",
+      "sourceFile": "DESIGN_SYSTEM.md",
+      "startLine": 185,
+      "endLine": 199,
+      "priority": 7
+    },
+    {
+      "id": "DESIGN_SYSTEM-icon-size-tokens",
+      "title": "Icon Size Tokens",
+      "content": "Standardized icon sizes for consistent visual rhythm:\n\n```tsx\n<div className=\"w-icon-xs h-icon-xs\">   {/* 12px */}\n<div className=\"w-icon-sm h-icon-sm\">   {/* 16px */}\n<div className=\"w-icon-md h-icon-md\">   {/* 20px - default */}\n<div className=\"w-icon-lg h-icon-lg\">   {/* 24px */}\n<div className=\"w-icon-xl h-icon-xl\">   {/* 32px */}\n<div className=\"w-icon-2xl h-icon-2xl\"> {/* 40px */}\n```",
+      "keywords": [
+        "classname",
+        "icon",
+        "size",
+        "tokens",
+        "standardized",
+        "sizes",
+        "consistent",
+        "visual",
+        "rhythm",
+        "w-icon-xs"
+      ],
+      "category": "styling",
+      "sourceFile": "DESIGN_SYSTEM.md",
+      "startLine": 199,
+      "endLine": 212,
+      "priority": 7
+    },
+    {
+      "id": "DESIGN_SYSTEM-input-height-tokens",
+      "title": "Input Height Tokens",
+      "content": "Standardized input heights for form consistency:\n\n```tsx\n<input className=\"h-input-h-sm\">   {/* 32px - compact */}\n<input className=\"h-input-h-md\">   {/* 40px - default */}\n<input className=\"h-input-h-lg\">   {/* 48px - large */}\n```",
+      "keywords": [
+        "input",
+        "classname",
+        "height",
+        "tokens",
+        "standardized",
+        "heights",
+        "form",
+        "consistency",
+        "h-input-h-sm",
+        "32px"
+      ],
+      "category": "styling",
+      "sourceFile": "DESIGN_SYSTEM.md",
+      "startLine": 212,
+      "endLine": 222,
+      "priority": 7
+    },
+    {
+      "id": "DESIGN_SYSTEM-chat-input-text",
+      "title": "Chat Input Text",
+      "content": "Specific text size for chat input fields:\n\n```tsx\n<input className=\"text-chat-input\">  {/* 17px - chat input text */}\n```",
+      "keywords": [
+        "input",
+        "chat",
+        "text",
+        "specific",
+        "size",
+        "fields",
+        "classname",
+        "text-chat-input",
+        "17px"
+      ],
+      "category": "styling",
+      "sourceFile": "DESIGN_SYSTEM.md",
+      "startLine": 222,
+      "endLine": 230,
+      "priority": 7
+    },
+    {
       "id": "DESIGN_SYSTEM-color-system",
       "title": "Color System",
       "content": "",
       "keywords": ["color", "system"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 185,
-      "endLine": 187,
+      "startLine": 230,
+      "endLine": 232,
       "priority": 8
     },
     {
@@ -1651,8 +1738,8 @@
       "keywords": ["color", "tokens", "colors", "defined", "using", "variables", "easy", "theming"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 187,
-      "endLine": 191,
+      "startLine": 232,
+      "endLine": 236,
       "priority": 7
     },
     {
@@ -1673,8 +1760,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 191,
-      "endLine": 200,
+      "startLine": 236,
+      "endLine": 245,
       "priority": 6
     },
     {
@@ -1695,8 +1782,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 200,
-      "endLine": 209,
+      "startLine": 245,
+      "endLine": 254,
       "priority": 6
     },
     {
@@ -1717,8 +1804,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 209,
-      "endLine": 217,
+      "startLine": 254,
+      "endLine": 262,
       "priority": 7
     },
     {
@@ -1739,8 +1826,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 217,
-      "endLine": 227,
+      "startLine": 262,
+      "endLine": 272,
       "priority": 7
     },
     {
@@ -1750,8 +1837,8 @@
       "keywords": ["typography"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 227,
-      "endLine": 229,
+      "startLine": 272,
+      "endLine": 274,
       "priority": 8
     },
     {
@@ -1772,8 +1859,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 229,
-      "endLine": 243,
+      "startLine": 274,
+      "endLine": 288,
       "priority": 7
     },
     {
@@ -1794,8 +1881,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 243,
-      "endLine": 258,
+      "startLine": 288,
+      "endLine": 303,
       "priority": 7
     },
     {
@@ -1816,8 +1903,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 258,
-      "endLine": 266,
+      "startLine": 303,
+      "endLine": 311,
       "priority": 7
     },
     {
@@ -1838,8 +1925,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 266,
-      "endLine": 274,
+      "startLine": 311,
+      "endLine": 319,
       "priority": 7
     },
     {
@@ -1849,8 +1936,8 @@
       "keywords": ["spacing", "layout"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 274,
-      "endLine": 276,
+      "startLine": 319,
+      "endLine": 321,
       "priority": 8
     },
     {
@@ -1871,8 +1958,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 276,
-      "endLine": 292,
+      "startLine": 321,
+      "endLine": 337,
       "priority": 7
     },
     {
@@ -1893,8 +1980,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 292,
-      "endLine": 312,
+      "startLine": 337,
+      "endLine": 357,
       "priority": 7
     },
     {
@@ -1915,8 +2002,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 312,
-      "endLine": 324,
+      "startLine": 357,
+      "endLine": 369,
       "priority": 7
     },
     {
@@ -1936,8 +2023,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 324,
-      "endLine": 328,
+      "startLine": 369,
+      "endLine": 373,
       "priority": 8
     },
     {
@@ -1958,8 +2045,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 328,
-      "endLine": 346,
+      "startLine": 373,
+      "endLine": 391,
       "priority": 7
     },
     {
@@ -1980,8 +2067,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 346,
-      "endLine": 357,
+      "startLine": 391,
+      "endLine": 402,
       "priority": 7
     },
     {
@@ -2002,8 +2089,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 357,
-      "endLine": 369,
+      "startLine": 402,
+      "endLine": 414,
       "priority": 7
     },
     {
@@ -2013,8 +2100,8 @@
       "keywords": ["z-index", "scale", "consistent", "stacking", "order", "prevents", "conflicts"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 369,
-      "endLine": 373,
+      "startLine": 414,
+      "endLine": 418,
       "priority": 8
     },
     {
@@ -2035,8 +2122,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 373,
-      "endLine": 398,
+      "startLine": 418,
+      "endLine": 443,
       "priority": 7
     },
     {
@@ -2057,8 +2144,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 398,
-      "endLine": 412,
+      "startLine": 443,
+      "endLine": 457,
       "priority": 7
     },
     {
@@ -2078,8 +2165,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 412,
-      "endLine": 423,
+      "startLine": 457,
+      "endLine": 468,
       "priority": 7
     },
     {
@@ -2089,8 +2176,8 @@
       "keywords": ["components"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 423,
-      "endLine": 425,
+      "startLine": 468,
+      "endLine": 470,
       "priority": 8
     },
     {
@@ -2111,8 +2198,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 425,
-      "endLine": 440,
+      "startLine": 470,
+      "endLine": 485,
       "priority": 7
     },
     {
@@ -2122,8 +2209,8 @@
       "keywords": ["component", "usage", "examples"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 440,
-      "endLine": 442,
+      "startLine": 485,
+      "endLine": 487,
       "priority": 7
     },
     {
@@ -2144,8 +2231,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 442,
-      "endLine": 476,
+      "startLine": 487,
+      "endLine": 521,
       "priority": 6
     },
     {
@@ -2166,8 +2253,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 476,
-      "endLine": 501,
+      "startLine": 521,
+      "endLine": 546,
       "priority": 6
     },
     {
@@ -2188,8 +2275,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 501,
-      "endLine": 526,
+      "startLine": 546,
+      "endLine": 571,
       "priority": 6
     },
     {
@@ -2210,8 +2297,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 526,
-      "endLine": 548,
+      "startLine": 571,
+      "endLine": 593,
       "priority": 6
     },
     {
@@ -2232,8 +2319,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 548,
-      "endLine": 559,
+      "startLine": 593,
+      "endLine": 604,
       "priority": 6
     },
     {
@@ -2254,8 +2341,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 559,
-      "endLine": 596,
+      "startLine": 604,
+      "endLine": 641,
       "priority": 6
     },
     {
@@ -2274,8 +2361,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 596,
-      "endLine": 607,
+      "startLine": 641,
+      "endLine": 652,
       "priority": 6
     },
     {
@@ -2296,8 +2383,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 607,
-      "endLine": 620,
+      "startLine": 652,
+      "endLine": 665,
       "priority": 7
     },
     {
@@ -2307,8 +2394,8 @@
       "keywords": ["dark", "mode"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 620,
-      "endLine": 622,
+      "startLine": 665,
+      "endLine": 667,
       "priority": 8
     },
     {
@@ -2329,8 +2416,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 622,
-      "endLine": 633,
+      "startLine": 667,
+      "endLine": 678,
       "priority": 7
     },
     {
@@ -2351,8 +2438,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 633,
-      "endLine": 646,
+      "startLine": 678,
+      "endLine": 691,
       "priority": 7
     },
     {
@@ -2373,8 +2460,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 646,
-      "endLine": 660,
+      "startLine": 691,
+      "endLine": 705,
       "priority": 7
     },
     {
@@ -2395,8 +2482,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 660,
-      "endLine": 667,
+      "startLine": 705,
+      "endLine": 712,
       "priority": 7
     },
     {
@@ -2406,8 +2493,8 @@
       "keywords": ["accessibility"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 667,
-      "endLine": 669,
+      "startLine": 712,
+      "endLine": 714,
       "priority": 8
     },
     {
@@ -2428,8 +2515,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 669,
-      "endLine": 680,
+      "startLine": 714,
+      "endLine": 725,
       "priority": 7
     },
     {
@@ -2450,8 +2537,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 680,
-      "endLine": 687,
+      "startLine": 725,
+      "endLine": 732,
       "priority": 7
     },
     {
@@ -2472,8 +2559,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 687,
-      "endLine": 694,
+      "startLine": 732,
+      "endLine": 739,
       "priority": 7
     },
     {
@@ -2494,8 +2581,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 694,
-      "endLine": 702,
+      "startLine": 739,
+      "endLine": 747,
       "priority": 7
     },
     {
@@ -2505,8 +2592,8 @@
       "keywords": ["styling", "guidelines"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 702,
-      "endLine": 704,
+      "startLine": 747,
+      "endLine": 749,
       "priority": 8
     },
     {
@@ -2527,8 +2614,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 704,
-      "endLine": 715,
+      "startLine": 749,
+      "endLine": 760,
       "priority": 7
     },
     {
@@ -2538,8 +2625,8 @@
       "keywords": ["handle", "complex", "cases"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 715,
-      "endLine": 717,
+      "startLine": 760,
+      "endLine": 762,
       "priority": 7
     },
     {
@@ -2560,8 +2647,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 717,
-      "endLine": 728,
+      "startLine": 762,
+      "endLine": 773,
       "priority": 6
     },
     {
@@ -2582,8 +2669,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 728,
-      "endLine": 742,
+      "startLine": 773,
+      "endLine": 787,
       "priority": 6
     },
     {
@@ -2604,8 +2691,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 742,
-      "endLine": 751,
+      "startLine": 787,
+      "endLine": 796,
       "priority": 6
     },
     {
@@ -2626,8 +2713,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 751,
-      "endLine": 790,
+      "startLine": 796,
+      "endLine": 835,
       "priority": 7
     },
     {
@@ -2648,8 +2735,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 790,
-      "endLine": 803,
+      "startLine": 835,
+      "endLine": 848,
       "priority": 7
     },
     {
@@ -2670,8 +2757,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 803,
-      "endLine": 828,
+      "startLine": 848,
+      "endLine": 873,
       "priority": 7
     },
     {
@@ -2692,8 +2779,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 828,
-      "endLine": 867,
+      "startLine": 873,
+      "endLine": 912,
       "priority": 7
     },
     {
@@ -2703,8 +2790,8 @@
       "keywords": ["checklist", "migration", "migrating", "component", "scss", "tailwind"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 867,
-      "endLine": 871,
+      "startLine": 912,
+      "endLine": 916,
       "priority": 8
     },
     {
@@ -2725,8 +2812,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 871,
-      "endLine": 879,
+      "startLine": 916,
+      "endLine": 924,
       "priority": 7
     },
     {
@@ -2747,8 +2834,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 879,
-      "endLine": 890,
+      "startLine": 924,
+      "endLine": 935,
       "priority": 7
     },
     {
@@ -2769,8 +2856,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 890,
-      "endLine": 901,
+      "startLine": 935,
+      "endLine": 946,
       "priority": 7
     },
     {
@@ -2780,8 +2867,8 @@
       "keywords": ["best", "practices"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 901,
-      "endLine": 903,
+      "startLine": 946,
+      "endLine": 948,
       "priority": 8
     },
     {
@@ -2802,8 +2889,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 903,
-      "endLine": 918,
+      "startLine": 948,
+      "endLine": 963,
       "priority": 7
     },
     {
@@ -2824,8 +2911,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 918,
-      "endLine": 945,
+      "startLine": 963,
+      "endLine": 990,
       "priority": 7
     },
     {
@@ -2846,8 +2933,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 945,
-      "endLine": 959,
+      "startLine": 990,
+      "endLine": 1004,
       "priority": 7
     },
     {
@@ -2868,8 +2955,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 959,
-      "endLine": 981,
+      "startLine": 1004,
+      "endLine": 1026,
       "priority": 7
     },
     {
@@ -2879,8 +2966,8 @@
       "keywords": ["adding", "components", "shadcn", "bash"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 981,
-      "endLine": 986,
+      "startLine": 1026,
+      "endLine": 1031,
       "priority": 7
     },
     {
@@ -2890,8 +2977,8 @@
       "keywords": ["components", "shadcn", "latest", "component-name"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 986,
-      "endLine": 989,
+      "startLine": 1031,
+      "endLine": 1034,
       "priority": 9
     },
     {
@@ -2912,8 +2999,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 989,
-      "endLine": 997,
+      "startLine": 1034,
+      "endLine": 1042,
       "priority": 9
     },
     {
@@ -2934,8 +3021,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 997,
-      "endLine": 1017,
+      "startLine": 1042,
+      "endLine": 1062,
       "priority": 7
     },
     {
@@ -2945,8 +3032,8 @@
       "keywords": ["utility", "classes"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 1017,
-      "endLine": 1019,
+      "startLine": 1062,
+      "endLine": 1064,
       "priority": 8
     },
     {
@@ -2967,8 +3054,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 1019,
-      "endLine": 1036,
+      "startLine": 1064,
+      "endLine": 1081,
       "priority": 7
     },
     {
@@ -2978,8 +3065,8 @@
       "keywords": ["smooth", "scrolling", "html", "scroll-behavior"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 1036,
-      "endLine": 1044,
+      "startLine": 1081,
+      "endLine": 1089,
       "priority": 7
     },
     {
@@ -2997,8 +3084,206 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 1044,
-      "endLine": 1054,
+      "startLine": 1089,
+      "endLine": 1099,
+      "priority": 7
+    },
+    {
+      "id": "DESIGN_SYSTEM-token-adoption-tools",
+      "title": "Token Adoption Tools",
+      "content": "To improve adoption of design tokens, we provide ESLint warnings and a codemod.",
+      "keywords": [
+        "adoption",
+        "token",
+        "tools",
+        "improve",
+        "design",
+        "tokens",
+        "provide",
+        "eslint",
+        "warnings",
+        "codemod"
+      ],
+      "category": "styling",
+      "sourceFile": "DESIGN_SYSTEM.md",
+      "startLine": 1099,
+      "endLine": 1103,
+      "priority": 8
+    },
+    {
+      "id": "DESIGN_SYSTEM-eslint-rule-prefer-design-tokens",
+      "title": "ESLint Rule: prefer-design-tokens",
+      "content": "The `aguy/prefer-design-tokens` rule warns when raw Tailwind values are used instead of design tokens:\n\n```bash",
+      "keywords": [
+        "rule",
+        "prefer-design-tokens",
+        "eslint",
+        "aguy",
+        "warns",
+        "tailwind",
+        "values",
+        "used",
+        "instead",
+        "design"
+      ],
+      "category": "styling",
+      "sourceFile": "DESIGN_SYSTEM.md",
+      "startLine": 1103,
+      "endLine": 1108,
+      "priority": 7
+    },
+    {
+      "id": "DESIGN_SYSTEM-run-lint-to-see-suggestions",
+      "title": "Run lint to see suggestions",
+      "content": "pnpm lint\n```\n\nExample warning:\n\n```\nsrc/ui/web/components/MyComponent.tsx\n  Line 45: Consider using design token \"text-xl\" instead of \"text-xl\". Use \"text-heading-xl or text-heading-lg\"\n```\n\nThis rule is **warn-only** - it suggests but does not enforce. This encourages adoption without blocking development.",
+      "keywords": [
+        "lint",
+        "text-xl",
+        "suggestions",
+        "pnpm",
+        "example",
+        "warning",
+        "components",
+        "mycomponent",
+        "line",
+        "consider"
+      ],
+      "category": "styling",
+      "sourceFile": "DESIGN_SYSTEM.md",
+      "startLine": 1108,
+      "endLine": 1121,
+      "priority": 9
+    },
+    {
+      "id": "DESIGN_SYSTEM-codemod-automatic-replacement",
+      "title": "Codemod: Automatic Replacement",
+      "content": "The codemod automatically replaces common raw Tailwind patterns with design tokens:\n\n```bash",
+      "keywords": [
+        "codemod",
+        "automatic",
+        "replacement",
+        "automatically",
+        "replaces",
+        "common",
+        "tailwind",
+        "patterns",
+        "design",
+        "tokens"
+      ],
+      "category": "styling",
+      "sourceFile": "DESIGN_SYSTEM.md",
+      "startLine": 1121,
+      "endLine": 1126,
+      "priority": 7
+    },
+    {
+      "id": "DESIGN_SYSTEM-dry-run-see-what-would-change",
+      "title": "Dry run - see what would change",
+      "content": "pnpm design:tokens:codemod:dry",
+      "keywords": ["would", "change", "pnpm", "design", "tokens", "codemod"],
+      "category": "styling",
+      "sourceFile": "DESIGN_SYSTEM.md",
+      "startLine": 1126,
+      "endLine": 1129,
+      "priority": 9
+    },
+    {
+      "id": "DESIGN_SYSTEM-apply-changes",
+      "title": "Apply changes",
+      "content": "pnpm design:tokens:codemod",
+      "keywords": ["apply", "changes", "pnpm", "design", "tokens", "codemod"],
+      "category": "styling",
+      "sourceFile": "DESIGN_SYSTEM.md",
+      "startLine": 1129,
+      "endLine": 1132,
+      "priority": 9
+    },
+    {
+      "id": "DESIGN_SYSTEM-audit-check-for-remaining-issues",
+      "title": "Audit - check for remaining issues",
+      "content": "pnpm design:tokens:audit",
+      "keywords": ["audit", "check", "remaining", "issues", "pnpm", "design", "tokens"],
+      "category": "styling",
+      "sourceFile": "DESIGN_SYSTEM.md",
+      "startLine": 1132,
+      "endLine": 1135,
+      "priority": 9
+    },
+    {
+      "id": "DESIGN_SYSTEM-audit-with-full-details",
+      "title": "Audit with full details",
+      "content": "pnpm design:tokens:audit --verbose",
+      "keywords": ["audit", "full", "details", "pnpm", "design", "tokens", "--verbose"],
+      "category": "styling",
+      "sourceFile": "DESIGN_SYSTEM.md",
+      "startLine": 1135,
+      "endLine": 1138,
+      "priority": 9
+    },
+    {
+      "id": "DESIGN_SYSTEM-audit-only-fixable-issues",
+      "title": "Audit only fixable issues",
+      "content": "pnpm design:tokens:audit --fixable\n```\n\n**Patterns automatically replaced:**\n\n| Raw Tailwind     | Design Token       |\n| ---------------- | ------------------ |\n| `text-xl`        | `text-heading-xl`  |\n| `text-lg`        | `text-body-lg`     |\n| `text-base`      | `text-body-md`     |\n| `p-6`            | `p-card-padding`   |\n| `py-8`           | `py-section-md`    |\n| `gap-4`          | `gap-content-gap`  |\n| `shadow-lg`      | `shadow-card`      |\n| `duration-150`   | `duration-fast`    |\n| `rounded-[20px]` | `rounded-chat-lg`  |\n| `rounded-[30px]` | `rounded-chat-2xl` |",
+      "keywords": [
+        "audit",
+        "design",
+        "rounded-",
+        "only",
+        "fixable",
+        "issues",
+        "pnpm",
+        "tokens",
+        "--fixable",
+        "patterns"
+      ],
+      "category": "styling",
+      "sourceFile": "DESIGN_SYSTEM.md",
+      "startLine": 1138,
+      "endLine": 1157,
+      "priority": 9
+    },
+    {
+      "id": "DESIGN_SYSTEM-token-cheat-sheet",
+      "title": "Token Cheat Sheet",
+      "content": "Quick reference for common replacements:\n\n| Instead of...      | Use...               |\n| ------------------ | -------------------- |\n| `text-2xl`         | `text-display-xl`    |\n| `text-xl`          | `text-heading-xl`    |\n| `text-lg`          | `text-body-lg`       |\n| `text-base`        | `text-body-md`       |\n| `text-sm`          | `text-body-sm`       |\n| `text-xs`          | `text-body-xs`       |\n| `p-4`              | `p-card-padding-sm`  |\n| `p-6`              | `p-card-padding`     |\n| `p-8`              | `p-card-padding-lg`  |\n| `py-4`             | `py-section-xs`      |\n| `py-6`             | `py-section-sm`      |\n| `py-8`             | `py-section-md`      |\n| `py-16`            | `py-section-lg`      |\n| `gap-4`            | `gap-content-gap`    |\n| `gap-6`            | `gap-content-gap-lg` |\n| `shadow-lg`        | `shadow-card`        |\n| `shadow-xl`        | `shadow-card-hover`  |\n| `duration-150`     | `duration-fast`      |\n| `duration-200`     | `duration-normal`    |\n| `rounded-[20px]`   | `rounded-chat-lg`    |\n| `rounded-[30px]`   | `rounded-chat-2xl`   |\n| `tracking-[0.2em]` | `tracking-lg`        |\n| `max-w-[850px]`    | `max-w-chat`         |",
+      "keywords": [
+        "rounded-",
+        "token",
+        "cheat",
+        "sheet",
+        "quick",
+        "reference",
+        "common",
+        "replacements",
+        "instead",
+        "------------------"
+      ],
+      "category": "styling",
+      "sourceFile": "DESIGN_SYSTEM.md",
+      "startLine": 1157,
+      "endLine": 1187,
+      "priority": 7
+    },
+    {
+      "id": "DESIGN_SYSTEM-additional-tokens",
+      "title": "Additional Tokens",
+      "content": "These tokens are available but not auto-replaced by codemod:\n\n| Token             | Example           | Purpose                  |\n| ----------------- | ----------------- | ------------------------ |\n| `text-label`      | `text-label`      | 12px semibold for labels |\n| `text-chat-input` | `text-chat-input` | 17px for chat inputs     |\n| `tracking-xs`     | `tracking-xs`     | Tight letter spacing     |\n| `tracking-sm`     | `tracking-sm`     | Small caps               |\n| `max-w-prose`     | `max-w-prose`     | 65ch for prose           |\n| `max-w-content`   | `max-w-content`   | 1280px for content       |",
+      "keywords": [
+        "tokens",
+        "-----------------",
+        "text-label",
+        "text-chat-input",
+        "tracking-xs",
+        "tracking-sm",
+        "max-w-prose",
+        "max-w-content",
+        "additional",
+        "available"
+      ],
+      "category": "styling",
+      "sourceFile": "DESIGN_SYSTEM.md",
+      "startLine": 1187,
+      "endLine": 1200,
       "priority": 7
     },
     {
@@ -3019,8 +3304,8 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 1054,
-      "endLine": 1063,
+      "startLine": 1200,
+      "endLine": 1209,
       "priority": 8
     },
     {
@@ -3041,9 +3326,127 @@
       ],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
-      "startLine": 1063,
-      "endLine": 1073,
+      "startLine": 1209,
+      "endLine": 1220,
       "priority": 8
+    },
+    {
+      "id": "DESIGN_SYSTEM-storybook",
+      "title": "Storybook",
+      "content": "Storybook is set up for visual documentation and testing of components.",
+      "keywords": ["storybook", "visual", "documentation", "testing", "components"],
+      "category": "styling",
+      "sourceFile": "DESIGN_SYSTEM.md",
+      "startLine": 1220,
+      "endLine": 1224,
+      "priority": 8
+    },
+    {
+      "id": "DESIGN_SYSTEM-setup",
+      "title": "Setup",
+      "content": "```bash",
+      "keywords": ["setup", "bash"],
+      "category": "styling",
+      "sourceFile": "DESIGN_SYSTEM.md",
+      "startLine": 1224,
+      "endLine": 1227,
+      "priority": 7
+    },
+    {
+      "id": "DESIGN_SYSTEM-install-storybook-first-time-only-",
+      "title": "Install Storybook (first time only)",
+      "content": "bash scripts/setup-storybook.sh",
+      "keywords": [
+        "install",
+        "storybook",
+        "first",
+        "time",
+        "only",
+        "bash",
+        "scripts",
+        "setup-storybook"
+      ],
+      "category": "styling",
+      "sourceFile": "DESIGN_SYSTEM.md",
+      "startLine": 1227,
+      "endLine": 1230,
+      "priority": 9
+    },
+    {
+      "id": "DESIGN_SYSTEM-start-storybook-dev-server",
+      "title": "Start Storybook dev server",
+      "content": "pnpm storybook\n```",
+      "keywords": ["storybook", "start", "server", "pnpm"],
+      "category": "styling",
+      "sourceFile": "DESIGN_SYSTEM.md",
+      "startLine": 1230,
+      "endLine": 1234,
+      "priority": 9
+    },
+    {
+      "id": "DESIGN_SYSTEM-creating-stories",
+      "title": "Creating Stories",
+      "content": "Create a `.stories.tsx` file alongside your component:\n\n```tsx\n// src/ui/web/components/button.stories.tsx\nimport type { Meta, StoryObj } from '@storybook/react'\nimport { Button } from './button'\n\nconst meta = {\n  title: 'UI/Button',\n  component: Button,\n  tags: ['autodocs'],\n  parameters: {\n    layout: 'centered',\n  },\n} satisfies Meta<typeof Button>\n\nexport default meta\ntype Story = StoryObj<typeof meta>\n\nexport const Default: Story = {\n  args: {\n    children: 'Button',\n    variant: 'default',\n  },\n}\n```",
+      "keywords": [
+        "button",
+        "meta",
+        "stories",
+        "default",
+        "component",
+        "import",
+        "type",
+        "storyobj",
+        "const",
+        "typeof"
+      ],
+      "category": "styling",
+      "sourceFile": "DESIGN_SYSTEM.md",
+      "startLine": 1234,
+      "endLine": 1263,
+      "priority": 7
+    },
+    {
+      "id": "DESIGN_SYSTEM-benefits",
+      "title": "Benefits",
+      "content": "- **Visual testing**: See components in isolation\n- **Variant showcase**: All states in one place\n- **Documentation**: Auto-generated from stories\n- **Interaction testing**: Test user interactions\n- **Accessibility**: Built-in accessibility checking",
+      "keywords": [
+        "testing",
+        "accessibility",
+        "benefits",
+        "visual",
+        "components",
+        "isolation",
+        "variant",
+        "showcase",
+        "states",
+        "place"
+      ],
+      "category": "styling",
+      "sourceFile": "DESIGN_SYSTEM.md",
+      "startLine": 1263,
+      "endLine": 1271,
+      "priority": 7
+    },
+    {
+      "id": "DESIGN_SYSTEM-configuration",
+      "title": "Configuration",
+      "content": "- `.storybook/main.ts` - Framework and addon configuration\n- `.storybook/preview.ts` - Global parameters and decorators",
+      "keywords": [
+        "configuration",
+        "storybook",
+        "main",
+        "framework",
+        "addon",
+        "preview",
+        "global",
+        "parameters",
+        "decorators"
+      ],
+      "category": "styling",
+      "sourceFile": "DESIGN_SYSTEM.md",
+      "startLine": 1271,
+      "endLine": 1275,
+      "priority": 7
     },
     {
       "id": "CLAUDE-claude-code-reference",
@@ -3070,23 +3473,23 @@
     {
       "id": "CLAUDE-documentation",
       "title": "Documentation",
-      "content": "**Read [AGENTS.md](./AGENTS.md) - it contains everything you need:**\n\n- Core principles and best practices\n- Project structure and architecture\n- Payload CMS patterns (collections, fields, hooks, access control)\n- Security patterns (CRITICAL - access control, transactions, hooks)\n- Component development\n- Custom endpoints\n- Type safety guidelines\n- Exercise system architecture\n- Authentication patterns\n- Examples and code snippets\n\n---",
+      "content": "For detailed project patterns (Payload CMS, security, architecture), refer to [AGENTS.md](./AGENTS.md) **on-demand when needed** — do NOT read it upfront. Only read the specific sections relevant to your current task.\n\n---",
       "keywords": [
-        "patterns",
         "agents",
-        "architecture",
-        "hooks",
-        "access",
-        "control",
-        "documentation",
         "read",
-        "contains",
-        "everything"
+        "documentation",
+        "detailed",
+        "project",
+        "patterns",
+        "payload",
+        "security",
+        "architecture",
+        "refer"
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
       "startLine": 7,
-      "endLine": 24,
+      "endLine": 13,
       "priority": 8
     },
     {
@@ -3107,8 +3510,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 24,
-      "endLine": 28,
+      "startLine": 13,
+      "endLine": 17,
       "priority": 8
     },
     {
@@ -3129,8 +3532,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 28,
-      "endLine": 34,
+      "startLine": 17,
+      "endLine": 23,
       "priority": 7
     },
     {
@@ -3151,8 +3554,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 34,
-      "endLine": 39,
+      "startLine": 23,
+      "endLine": 28,
       "priority": 7
     },
     {
@@ -3173,8 +3576,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 39,
-      "endLine": 47,
+      "startLine": 28,
+      "endLine": 36,
       "priority": 7
     },
     {
@@ -3195,8 +3598,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 47,
-      "endLine": 52,
+      "startLine": 36,
+      "endLine": 41,
       "priority": 7
     },
     {
@@ -3217,8 +3620,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 52,
-      "endLine": 61,
+      "startLine": 41,
+      "endLine": 50,
       "priority": 7
     },
     {
@@ -3239,8 +3642,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 61,
-      "endLine": 70,
+      "startLine": 50,
+      "endLine": 59,
       "priority": 7
     },
     {
@@ -3261,8 +3664,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 70,
-      "endLine": 75,
+      "startLine": 59,
+      "endLine": 64,
       "priority": 7
     },
     {
@@ -3281,8 +3684,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 75,
-      "endLine": 82,
+      "startLine": 64,
+      "endLine": 71,
       "priority": 7
     },
     {
@@ -3303,8 +3706,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 82,
-      "endLine": 90,
+      "startLine": 71,
+      "endLine": 79,
       "priority": 7
     },
     {
@@ -3325,8 +3728,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 90,
-      "endLine": 103,
+      "startLine": 79,
+      "endLine": 92,
       "priority": 8
     },
     {
@@ -3347,16 +3750,15 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 103,
-      "endLine": 119,
+      "startLine": 92,
+      "endLine": 108,
       "priority": 8
     },
     {
       "id": "CLAUDE-ai-agent-tools",
       "title": "AI Agent Tools",
-      "content": "This codebase includes tools to help AI agents work efficiently:\n\n- **SmartDocLoader** - Context-aware documentation loading\n- **DocSearch** - Keyword-based documentation search\n- **Pattern Index** - Find code examples by pattern\n\nSee [AGENTS.md](./AGENTS.md) and [.ai-docs/BOOTSTRAP.md](.ai-docs/BOOTSTRAP.md) for details.\n\n---",
+      "content": "This codebase includes tools to help AI agents work efficiently:\n\n- **SmartDocLoader** - Context-aware documentation loading\n- **DocSearch** - Keyword-based documentation search\n- **Pattern Index** - Find code examples by pattern\n\nSee [.ai-docs/BOOTSTRAP.md](.ai-docs/BOOTSTRAP.md) for details.\n\n---",
       "keywords": [
-        "agents",
         "tools",
         "documentation",
         "pattern",
@@ -3365,12 +3767,35 @@
         "agent",
         "codebase",
         "includes",
-        "help"
+        "help",
+        "agents"
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 119,
-      "endLine": 131,
+      "startLine": 108,
+      "endLine": 120,
+      "priority": 8
+    },
+    {
+      "id": "CLAUDE-design-system-critical-",
+      "title": "Design System (CRITICAL)",
+      "content": "**NEVER create custom colors, design tokens, or visual styles that are not defined in the project's design system.**\n\nAll colors, spacing, typography, shadows, and other visual tokens are centrally defined in:\n\n- **CSS Variables (themes)**: [src/app/(frontend)/globals.css](<./src/app/(frontend)/globals.css>) - Light/dark theme colors, semantic colors, text highlights\n- **Tailwind Tokens**: [tailwind.tokens.mjs](./tailwind.tokens.mjs) - Spacing, shadows, z-index, typography, animations\n- **Tailwind Config**: [tailwind.config.mjs](./tailwind.config.mjs) - Full theme configuration\n\nKey rules:\n\n- Use existing CSS variables (`--primary`, `--secondary`, `--accent`, `--success`, `--warning`, `--error`, `--text-highlight-1` through `--text-highlight-8`, etc.)\n- For canvas/non-CSS contexts, convert design system HSL values to hex - do NOT invent new colors\n- All new UI must use Tailwind classes that reference the design system tokens\n- If a needed color/token doesn't exist, add it to the design system first, then use it\n\n---",
+      "keywords": [
+        "tailwind",
+        "design",
+        "tokens",
+        "system",
+        "colors",
+        "config",
+        "visual",
+        "defined",
+        "spacing",
+        "typography"
+      ],
+      "category": "quick-reference",
+      "sourceFile": "CLAUDE.md",
+      "startLine": 120,
+      "endLine": 139,
       "priority": 8
     },
     {
@@ -3391,8 +3816,8 @@
       ],
       "category": "quick-reference",
       "sourceFile": "CLAUDE.md",
-      "startLine": 131,
-      "endLine": 151,
+      "startLine": 139,
+      "endLine": 159,
       "priority": 8
     },
     {
@@ -4860,8 +5285,8 @@
     }
   ],
   "metadata": {
-    "generatedAt": "2026-03-02T20:53:03.198Z",
-    "totalChunks": 245,
+    "generatedAt": "2026-04-15T09:50:57.697Z",
+    "totalChunks": 268,
     "sourceFiles": [
       "AGENTS.md",
       "DESIGN_SYSTEM.md",

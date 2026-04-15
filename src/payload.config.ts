@@ -13,6 +13,7 @@ import { ConfigAuditLogs } from '@/server/payload/collections/ConfigAuditLogs'
 import { ConfigSecrets } from '@/server/payload/collections/ConfigSecrets'
 import { ConfigValues } from '@/server/payload/collections/ConfigValues'
 import { ContentPages } from '@/server/payload/collections/ContentPages'
+import { ContextExtractions } from '@/server/payload/collections/ContextExtractions'
 import { Conversations } from '@/server/payload/collections/Conversations'
 import { Courses } from '@/server/payload/collections/Courses'
 import { ExerciseAssets } from '@/server/payload/collections/ExerciseAssets'
@@ -169,6 +170,7 @@ export default buildConfig({
     Chapters,
     Lessons,
     ContentPages,
+    ContextExtractions,
     Exercises,
     ExtractionLogs,
     FormulaSheets,

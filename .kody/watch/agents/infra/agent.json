@@ -3,7 +3,5 @@
   "description": "Monitors site availability, API latency, console errors, and CI health",
   "domain": "infra",
   "labels": ["kody:watch:infra"],
-  "schedule": {
-    "every": 1
-  }
+  "cron": "0 8 * * *"
 }

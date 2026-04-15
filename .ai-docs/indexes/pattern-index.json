@@ -155,6 +155,7 @@
         "src/ui/admin/ExerciseContentEditor/editors/HintSolutionPanel.tsx",
         "src/ui/admin/ExerciseContentEditor/editors/HtmlBlockEditor.tsx",
         "src/ui/admin/ExerciseContentEditor/editors/InlineRichTextEditor.tsx",
+        "src/ui/admin/ExerciseContentEditor/editors/LatexBlockEditor.tsx",
         "src/ui/admin/ExerciseContentEditor/editors/MatchingEditor.tsx",
         "src/ui/admin/ExerciseContentEditor/editors/McqEditor.tsx",
         "src/ui/admin/ExerciseContentEditor/editors/MediaBlockEditor.tsx",
@@ -219,6 +220,8 @@
         "src/ui/web/Card/index.tsx",
         "src/ui/web/CommandPalette.tsx",
         "src/ui/web/ExampleForm.tsx",
+        "src/ui/web/GuidedExplanationRunner/index.tsx",
+        "src/ui/web/GuidedExplanationRunner/useGuidedPlayer.ts",
         "src/ui/web/LanguageSwitcher/index.tsx",
         "src/ui/web/LivePreviewListener/index.tsx",
         "src/ui/web/Pagination/index.tsx",
@@ -269,6 +272,7 @@
         "src/ui/web/exerciserenderer/blocks/AxisRenderer/index.tsx",
         "src/ui/web/exerciserenderer/blocks/GeometryRenderer/index.tsx",
         "src/ui/web/exerciserenderer/blocks/HtmlBlockRenderer/index.tsx",
+        "src/ui/web/exerciserenderer/blocks/LatexBlockRenderer/index.tsx",
         "src/ui/web/exerciserenderer/blocks/MultiAxisRenderer/index.tsx",
         "src/ui/web/exerciserenderer/blocks/SvgRenderer/index.tsx",
         "src/ui/web/exerciserenderer/components/FeedbackDisplay/index.tsx",
@@ -671,6 +675,7 @@
         "src/app/api/exercises/[id]/blocks/[blockId]/route.ts",
         "src/app/api/exercises/convert/single/create/route.ts",
         "src/app/api/exercises/import-latex-ai/route.ts",
+        "src/app/api/lessons/create-context-exercises/route.ts",
         "src/app/api/progress/route.ts",
         "src/app/api/stats/activity/route.ts",
         "src/app/api/study-plan/route.ts",
@@ -2508,6 +2513,14 @@
       "patterns": ["api-endpoint", "authenticated-endpoint"],
       "aiSummary": "",
       "dependencies": ["@payload-config", "mongodb", "next/server", "payload"]
+    },
+    "src/app/api/lessons/create-context-exercises/route.ts": {
+      "path": "src/app/api/lessons/create-context-exercises/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["validated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["zod"]
     },
     "src/app/api/oauth/google/callback/oauth_callback_helpers.ts": {
       "path": "src/app/api/oauth/google/callback/oauth_callback_helpers.ts",
@@ -4365,6 +4378,14 @@
       "aiSummary": "",
       "dependencies": ["react", "@payloadcms/ui", "next/image"]
     },
+    "src/ui/admin/ExerciseContentEditor/editors/LatexBlockEditor.tsx": {
+      "path": "src/ui/admin/ExerciseContentEditor/editors/LatexBlockEditor.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
     "src/ui/admin/ExerciseContentEditor/editors/MatchingEditor.tsx": {
       "path": "src/ui/admin/ExerciseContentEditor/editors/MatchingEditor.tsx",
       "type": "unknown",
@@ -4884,6 +4905,22 @@
       "patterns": ["client-component"],
       "aiSummary": "",
       "dependencies": ["react", "sonner"]
+    },
+    "src/ui/web/GuidedExplanationRunner/index.tsx": {
+      "path": "src/ui/web/GuidedExplanationRunner/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/ui/web/GuidedExplanationRunner/useGuidedPlayer.ts": {
+      "path": "src/ui/web/GuidedExplanationRunner/useGuidedPlayer.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
     },
     "src/ui/web/LanguageSwitcher/index.tsx": {
       "path": "src/ui/web/LanguageSwitcher/index.tsx",
@@ -5457,6 +5494,14 @@
       "patterns": ["client-component"],
       "aiSummary": "",
       "dependencies": ["dompurify", "react"]
+    },
+    "src/ui/web/exerciserenderer/blocks/LatexBlockRenderer/index.tsx": {
+      "path": "src/ui/web/exerciserenderer/blocks/LatexBlockRenderer/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
     },
     "src/ui/web/exerciserenderer/blocks/MultiAxisRenderer/index.tsx": {
       "path": "src/ui/web/exerciserenderer/blocks/MultiAxisRenderer/index.tsx",
@@ -6060,8 +6105,8 @@
     }
   },
   "metadata": {
-    "generatedAt": "2026-04-12T11:30:29.736Z",
-    "totalFiles": 558,
+    "generatedAt": "2026-04-15T09:50:58.208Z",
+    "totalFiles": 563,
     "totalPatterns": 139
   }
 }

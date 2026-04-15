@@ -39,40 +39,39 @@ interface AnalyticsProviderProps {
  * Handles script loading and initialization
  */
 export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
-  // Initialize analytics and subscribe to system events synchronously
-  // This must happen BEFORE any children render to prevent race conditions
-  // where usePageView fires before handlers are registered
+  // Single initialization effect — runs once on mount, before child effects
   useEffect(() => {
-    // Initialize analytics core
     initializeAnalytics()
-
-    // Initialize system events subscriber (analytics integration)
     const cleanupSubscriber = initAnalyticsSubscriber()
 
-    // Track session_started once per session via system event bus
+    // Expose internals on window for E2E testing only
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(window as any).__systemEventBus = systemEventBus
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(window as any).__capturedMixpanelEvents = []
+
+    // Emit session_started once per session
     const sessionStartedKey = 'system_events_session_started'
-    const sessionStarted = sessionStorage.getItem(sessionStartedKey)
-
-    if (!sessionStarted && analyticsConfig.enabled) {
-      // getSessionId() creates the session ID if it doesn't exist
-      const sessionId = getSessionId()
+    if (!sessionStorage.getItem(sessionStartedKey) && analyticsConfig.enabled) {
       systemEventBus.emit(SYSTEM_EVENTS.SESSION_STARTED, {
-        session_id: sessionId,
-        is_anonymous: true, // Will be updated on user_resolved
+        session_id: getSessionId(),
+        is_anonymous: true,
       })
-
       sessionStorage.setItem(sessionStartedKey, 'true')
     }
 
     return () => {
+      // Clean up test exposure on unmount
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (window as any).__systemEventBus
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (window as any).__capturedMixpanelEvents
       cleanupSubscriber()
     }
   }, [])
 
   return (
     <AnalyticsContext.Provider value={analytics}>
-      {/* Initialize subscriber synchronously before children effects run */}
-      <SubscriberInitializer />
       {/* Load analytics scripts */}
       <GA4Scripts />
       <MixpanelScripts />
@@ -90,18 +89,6 @@ export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
 }
 
 /**
- * Synchronous subscriber initializer
- * Registers handlers IMMEDIATELY on mount, before any child effects run
- * This ensures events emitted during render or in child useEffects are captured
- * CRITICAL: Must be rendered BEFORE any component that uses usePageView
- */
-function SubscriberInitializer() {
-  // Register handlers synchronously - this must happen before any usePageView effects
-  initAnalyticsSubscriber()
-  return null
-}
-
-/**
  * Analytics Hooks
  * Runs page view, session duration, and page abandonment tracking hooks.
  * Rendered inside the provider so hooks activate after scripts and subscriber are ready.
@@ -110,6 +97,34 @@ function AnalyticsHooks() {
   usePageView()
   useSessionDuration()
   usePageAbandonment()
+
+  // Patch mixpanel.track to capture events for E2E testing
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const mp = (window as unknown as Record<string, unknown>).mixpanel as
+        | {
+            track?: (event: string, props?: Record<string, unknown>) => void
+          }
+        | undefined
+      if (mp?.track && !(mp.track as unknown as { __captured?: boolean }).__captured) {
+        const originalTrack = mp.track.bind(mp)
+        ;(mp.track as unknown as { __captured?: boolean }).__captured = true
+        mp.track = (event, properties) => {
+          originalTrack(event, properties)
+          // Push to shared capture array for E2E tests
+          const captured = (window as unknown as Record<string, unknown>)
+            .__capturedMixpanelEvents as
+            | Array<{ event: string; properties: Record<string, unknown> }>
+            | undefined
+          captured?.push({ event, properties: properties || {} })
+        }
+        clearInterval(interval)
+      }
+    }, 200)
+
+    return () => clearInterval(interval)
+  }, [])
+
   return null
 }
 

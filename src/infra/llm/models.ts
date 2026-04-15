@@ -46,6 +46,8 @@ export interface AIModel {
   maxOutputTokens: number
   /** Optional capability tags for feature detection */
   capabilities?: string[]
+  /** Optional thinking budget for Gemini 2.5+ models. When set, enables thinking mode. */
+  thinkingBudget?: number
   /** The model key this config was built from — used by adapters to resolve config without reverse-mapping */
   modelKey?: AIModelKey
 }

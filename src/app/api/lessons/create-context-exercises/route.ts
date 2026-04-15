@@ -2,8 +2,8 @@
  * Create Exercises from Context API
  *
  * POST /api/lessons/create-context-exercises
- * Parses lessonContextText into individual exercises and creates Exercise
- * documents with LaTeX blocks for each one.
+ * Reads the latest ContextExtraction for the lesson, parses its LaTeX text
+ * into individual exercises, and creates Exercise documents with LaTeX blocks.
  *
  * Idempotent: deletes previous context_extraction exercises before creating new ones.
  */
@@ -11,7 +11,6 @@ import { apiError, apiSuccess } from '@/server/api/responses'
 import { withApiHandler } from '@/server/api/with-api-handler'
 import { parseContextText } from '@/lib/context-exercise-parser'
 import { makeLatexBlock } from '@/lib/latex-parser/block-generators'
-import type { Lesson } from '@/payload-types'
 import { z } from 'zod'
 
 const createContextExercisesSchema = z.object({
@@ -25,39 +24,38 @@ export const POST = withApiHandler<CreateContextExercisesBody, unknown>(
     auth: 'admin',
     bodySchema: createContextExercisesSchema,
   },
-  async ({ payload, user, body }) => {
+  async ({ payload, body }) => {
     const { lessonId } = body
 
-    // Fetch lesson and read lessonContextText
-    let lesson: Lesson
-    try {
-      lesson = (await payload.findByID({
-        collection: 'lessons',
-        id: lessonId,
-        depth: 0,
-        user: user!,
-        overrideAccess: false,
-      })) as unknown as Lesson
-    } catch (err) {
-      const message = err instanceof Error ? err.message : ''
-      if (message.includes('not found') || message.includes('Not Found')) {
-        return apiError('LESSON_NOT_FOUND', 'Lesson not found', 404)
-      }
-      throw err
-    }
+    // Fetch the latest context extraction for this lesson
+    const extractionResult = await payload.find({
+      collection: 'context-extractions',
+      where: { lesson: { equals: lessonId } },
+      sort: '-updatedAt',
+      limit: 1,
+      depth: 0,
+    })
 
-    const lessonContextText = lesson.lessonContextText
-
-    if (!lessonContextText || !lessonContextText.trim()) {
+    if (extractionResult.docs.length === 0) {
       return apiError(
         'VALIDATION_ERROR',
-        'Lesson has no context text to extract exercises from',
+        'No context extraction found for this lesson. Run "Convert Context" first.',
+        400,
+      )
+    }
+
+    const extractionText = (extractionResult.docs[0] as unknown as { text: string }).text
+
+    if (!extractionText?.trim()) {
+      return apiError(
+        'VALIDATION_ERROR',
+        'Context extraction is empty. Run "Convert Context" again.',
         400,
       )
     }
 
     // Parse into exercises
-    const segments = parseContextText(lessonContextText)
+    const segments = parseContextText(extractionText)
     const allExercises = segments.flatMap((seg) => seg.exercises)
 
     if (allExercises.length === 0) {
@@ -105,6 +103,7 @@ export const POST = withApiHandler<CreateContextExercisesBody, unknown>(
             order: startOrder + i,
           },
           draft: true,
+          context: { _skipBlockSync: true },
         })
         createdIds.push(created.id)
       } catch (err) {

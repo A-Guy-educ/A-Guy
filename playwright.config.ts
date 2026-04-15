@@ -96,6 +96,9 @@ export default defineConfig({
       NODE_OPTIONS: process.env.NODE_OPTIONS || '',
       OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
       SKIP_BUILD: 'true',
+      // Enable analytics in E2E tests with dummy tokens (adapters are mocked, no real calls)
+      NEXT_PUBLIC_GA4_MEASUREMENT_ID: 'G-TESTMOCK123',
+      NEXT_PUBLIC_MIXPANEL_TOKEN: 'mp-test-mock-token',
     },
   },
 })

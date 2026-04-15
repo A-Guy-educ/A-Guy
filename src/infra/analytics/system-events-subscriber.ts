@@ -249,18 +249,23 @@ export function initAnalyticsSubscriber(): () => void {
     safeSubscribe(SYSTEM_EVENTS.REGISTRATION_COMPLETED, (envelope) => {
       const payload = envelope.payload as {
         user_id?: string
-        registration_method?: 'email' | 'social' | 'anonymous_upgrade'
+        auth_method?: string
       }
       analytics.track(PRODUCT_EVENTS.REGISTRATION_COMPLETED, {
         user_id: payload.user_id,
-        registration_method: payload.registration_method,
+        registration_method: payload.auth_method as
+          | 'email'
+          | 'google'
+          | 'social'
+          | 'anonymous_upgrade'
+          | undefined,
       })
       // Alias anonymous user to registered user, THEN identify
       if (payload.user_id) {
         // CRITICAL: Call alias BEFORE identify to merge anonymous history
         analytics.alias(payload.user_id, getOrCreateAnonymousId())
         analytics.identify(payload.user_id, {
-          registration_method: payload.registration_method,
+          auth_method: payload.auth_method,
         })
       }
     }),
