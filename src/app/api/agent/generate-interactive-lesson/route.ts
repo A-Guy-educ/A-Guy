@@ -32,12 +32,14 @@ export async function POST(request: NextRequest) {
 
     return await agentGenerateInteractiveLesson(payloadRequest)
   } catch (error) {
+    // Log full detail server-side; return a generic message so internals
+    // (Gemini/Payload/OpenAI) don't leak to users.
     logger.error({ err: error, requestId }, 'Generate interactive lesson route error')
 
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Internal server error',
+        error: 'Failed to generate lesson. Please try again.',
         requestId,
       },
       { status: 500 },
