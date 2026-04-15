@@ -51,10 +51,7 @@ describe('Auth Middleware - Learning Feature Protection', () => {
   })
 
   describe('Public routes - should pass through without redirect', () => {
-    const publicRoutes = [
-      '/',
-      '/courses',
-    ]
+    const publicRoutes = ['/', '/courses']
 
     it.each(publicRoutes)('should allow unauthenticated request to %s', (route) => {
       const request = createRequest(route)
@@ -80,7 +77,11 @@ describe('Auth Middleware - Learning Feature Protection', () => {
 
     it.each(allRoutes)('should allow authenticated request to %s', (route) => {
       // Create request with a payload token cookie (simulating authenticated user)
-      const request = createRequest(route, 'example.com', 'payload-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test')
+      const request = createRequest(
+        route,
+        'example.com',
+        'payload-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test',
+      )
       const response = middleware(request)
 
       // Should pass through without redirect
