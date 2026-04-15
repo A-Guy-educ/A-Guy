@@ -25,6 +25,10 @@ export function AskPrimaryContent() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [currentFile, setCurrentFile] = useState<ExerciseFile | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  // Hides the player without discarding the lesson, so user can return to the
+  // exercise card view (image + buttons) and re-enter the same lesson via
+  // the Resume button without regenerating.
+  const [showPlayer, setShowPlayer] = useState(true)
   const { lesson, status, error, generate, reset: resetLesson } = useGenerateLesson()
 
   // Revoke blob URL on unmount
@@ -108,24 +112,37 @@ export function AskPrimaryContent() {
 
   const handleGenerate = () => {
     if (!currentFile?.mediaId || status === 'generating') return
+    setShowPlayer(true)
     generate(currentFile.mediaId, locale === 'he' ? 'he' : 'en')
   }
 
-  const handleBackToUpload = () => {
-    // Reset in-memory state without a full page reload.
+  // Hide the player but keep the image + lesson intact, so the user can
+  // re-enter via "Resume" without regenerating.
+  const handleBackToExercise = () => {
+    setShowPlayer(false)
+  }
+
+  // Re-enter the existing player without regenerating.
+  const handleResumePlayer = () => {
+    setShowPlayer(true)
+  }
+
+  // Full reset — clears everything including the lesson and the image.
+  const handleStartOver = () => {
     if (currentFile?.url.startsWith('blob:')) URL.revokeObjectURL(currentFile.url)
     setCurrentFile(null)
     resetLesson()
+    setShowPlayer(true)
   }
 
   const guidedPayload = lesson ? interactiveLessonToGuidedExplanation(lesson) : null
 
-  // Full-screen player takeover
-  if (status === 'done' && guidedPayload) {
+  // Full-screen player takeover (only when explicitly showing it)
+  if (status === 'done' && guidedPayload && showPlayer) {
     return (
       <div className="h-full flex flex-col">
         <button
-          onClick={handleBackToUpload}
+          onClick={handleBackToExercise}
           className="flex items-center gap-content-gap-xs px-4 py-2 text-body-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowRight className="w-4 h-4" />
@@ -188,6 +205,9 @@ export function AskPrimaryContent() {
             file={currentFile}
             onGenerate={handleGenerate}
             generationStatus={status}
+            hasLesson={status === 'done' && !!guidedPayload}
+            onResumeLesson={handleResumePlayer}
+            onStartOver={handleStartOver}
           />
         )}
       </div>
