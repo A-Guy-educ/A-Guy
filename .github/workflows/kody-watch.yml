@@ -62,8 +62,8 @@ jobs:
             KEY=$(echo "$entry" | jq -r '.key')
             VALUE=$(echo "$entry" | jq -r '.value')
             DELIM="KODY_EOF_${KEY}"
-            echo "+{KEY}<<${DELIM}" >> $GITHUB_ENV
-            echo "+{VALUE}" >> $GITHUB_ENV
+            echo "${KEY}<<${DELIM}" >> $GITHUB_ENV
+            echo "${VALUE}" >> $GITHUB_ENV
             echo "${DELIM}" >> $GITHUB_ENV
           done
 
