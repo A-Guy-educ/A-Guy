@@ -110,6 +110,7 @@ export const Prompts: CollectionConfig = {
         { label: 'PDF Verifier', value: 'verifier' },
         { label: 'Context Extractor', value: 'context_extractor' },
         { label: 'Translator', value: 'translator' },
+        { label: 'Interactive Lesson', value: 'interactive_lesson' },
       ],
       defaultValue: 'chat',
       admin: {

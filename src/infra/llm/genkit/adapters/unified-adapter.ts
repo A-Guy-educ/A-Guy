@@ -231,9 +231,11 @@ export async function createGenkitUnifiedAdapter(
       const modelKey = input.model.modelKey || 'IMAGE_TO_EXERCISE'
       const config = await resolveGenkitConfig(modelKey, tenantId, payloadInstance)
 
-      // Prefer caller-provided config over resolved config (caller knows the intended model key)
+      // Prefer caller-provided config over resolved config
       const effectiveMaxOutputTokens = input.model.maxOutputTokens || config.maxOutputTokens
       const effectiveTemperature = input.model.temperature ?? config.temperature
+      // Allow callers to override the resolved model name by passing a prefixed name
+      const modelToUse = input.model.name.includes('/') ? input.model.name : config.model
 
       const ai = await getGenkitInstance(payloadInstance, tenantId)
 
@@ -249,11 +251,17 @@ export async function createGenkitUnifiedAdapter(
               }))
 
               const result = await ai.generate({
-                model: config.model,
+                model: modelToUse,
                 prompt: [...mediaContents, { text: input.prompt }],
                 config: {
                   temperature: effectiveTemperature,
                   maxOutputTokens: effectiveMaxOutputTokens,
+                  // Pass thinkingConfig when the caller sets thinkingBudget (including 0
+                  // to explicitly disable thinking). Omit when undefined so non-thinking
+                  // models are unaffected.
+                  ...(input.model.thinkingBudget !== undefined
+                    ? { thinkingConfig: { thinkingBudget: input.model.thinkingBudget } }
+                    : {}),
                 },
               })
 
