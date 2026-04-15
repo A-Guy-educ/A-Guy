@@ -56,7 +56,8 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Security audit
-        run: pnpm audit --audit-level=high || true # npm retired the audit endpoint as of 2025
+        run: pnpm audit --audit-level=high
+        continue-on-error: true
 
       - name: Run typecheck
         run: pnpm typecheck
