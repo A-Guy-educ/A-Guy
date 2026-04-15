@@ -23,15 +23,20 @@
       "retries": 0
     },
     "review-fix": {
-      "state": "running",
-      "startedAt": "2026-04-15T09:57:49.334Z",
-      "retries": 0
+      "state": "completed",
+      "completedAt": "2026-04-15T10:15:15.166Z",
+      "retries": 0,
+      "promptTokens": 3944
     },
     "ship": {
-      "state": "pending",
+      "state": "running",
+      "startedAt": "2026-04-15T10:15:15.324Z",
       "retries": 0
     }
   },
   "createdAt": "2026-04-15T09:57:14.045Z",
-  "updatedAt": "2026-04-15T09:57:49.334Z"
+  "updatedAt": "2026-04-15T10:15:15.324Z",
+  "sessions": {
+    "build": "6f5ad40f-1ec3-4e33-bd2c-a03053075207"
+  }
 }
