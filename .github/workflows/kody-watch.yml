@@ -77,9 +77,11 @@ jobs:
           WATCH_DIGEST_ISSUE_ANALYTICS: ${{ vars.WATCH_DIGEST_ISSUE_ANALYTICS }}
           PREVIEW_URL: ${{ vars.PREVIEW_URL }}
           DRY_RUN: ${{ inputs.dry_run || 'false' }}
+          AGENTS: ${{ inputs.agents }}
         run: |
           ARGS="watch"
           [ "$DRY_RUN" = "true" ] && ARGS="$ARGS --dry-run"
+          [ -n "$AGENTS" ] && ARGS="$ARGS --agent $AGENTS"
           kody-engine $ARGS
 
       - name: Upload watch memory artifacts
