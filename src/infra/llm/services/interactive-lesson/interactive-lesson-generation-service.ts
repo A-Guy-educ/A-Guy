@@ -37,6 +37,8 @@ export async function generateInteractiveLesson(
       // complex multi-part geometry proofs. 2.5 Flash with thinking produces 18-20.
       // The "googleai/" prefix tells the adapter to skip DB config resolution.
       name: 'googleai/gemini-2.5-flash',
+      // Temperature 0 for more deterministic structured JSON output.
+      temperature: 0,
       // Thinking tokens count against maxOutputTokens — budget for both.
       maxOutputTokens: 65536,
       thinkingBudget: 24576,
@@ -109,6 +111,15 @@ async function prepareImage(input: InteractiveLessonInput) {
   }
 }
 
+/**
+ * Escape unescaped backslashes before letters that aren't valid JSON escapes.
+ * Gemini emits LaTeX like `\implies`, `\frac`, `\sqrt` inside JSON strings
+ * without doubling the backslash, which breaks JSON.parse.
+ */
+function fixLatexEscapes(text: string): string {
+  return text.replace(/\\([^"\\/bfnrtu])/g, '\\\\$1')
+}
+
 function parseResponse(responseText: string): Record<string, unknown> {
   const cleaned = responseText
     .trim()
@@ -116,7 +127,12 @@ function parseResponse(responseText: string): Record<string, unknown> {
     .replace(/^```\s*/, '')
     .replace(/```\s*$/, '')
     .trim()
-  return JSON.parse(cleaned)
+  try {
+    return JSON.parse(cleaned)
+  } catch {
+    // Retry after fixing unescaped LaTeX backslashes
+    return JSON.parse(fixLatexEscapes(cleaned))
+  }
 }
 
 function validateLesson(parsed: Record<string, unknown>, locale: 'he' | 'en'): InteractiveLesson {
