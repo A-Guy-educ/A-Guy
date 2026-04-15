@@ -15,26 +15,38 @@ interface UseGuidedPlayerArgs {
 
 interface UseGuidedPlayerResult {
   isPlaying: boolean
+  isPaused: boolean
   narrationText: string
   play: () => void
+  pause: () => void
+  resume: () => void
   reset: () => void
 }
 
 /**
  * State machine driving the guided explanation sequence.
  *
- * Cancellation model mirrors the reference HTML: a monotonic counter
- * (`sequenceRef`) is captured in closure at play-start; any in-flight
- * async work compares against the live counter via `shouldCancel()` and
- * bails out the moment the counter changes (i.e. reset or replay).
+ * Cancellation: monotonic counter (`sequenceRef`) — each play captures the
+ * counter; reset/replay bumps it; in-flight async work bails out the next
+ * tick when its captured value no longer matches.
+ *
+ * Pause: `pauseRef` is checked between ops via `waitWhilePaused()`. When
+ * paused, the loop awaits a promise that resolves when `resume()` is called.
+ * Browser speechSynthesis natively supports pause/resume.
  */
 export function useGuidedPlayer({
   payload,
   containerRef,
 }: UseGuidedPlayerArgs): UseGuidedPlayerResult {
   const [isPlaying, setIsPlaying] = useState(false)
+  const [isPaused, setIsPaused] = useState(false)
   const [narrationText, setNarrationText] = useState(payload.narrationBox.placeholder)
   const sequenceRef = useRef(0)
+
+  // Pause primitives — resolver is replaced with a new pending promise on pause,
+  // and called/cleared on resume so awaiting ops continue.
+  const pausedRef = useRef(false)
+  const pauseResolverRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
     primeSpeechVoices()
@@ -43,13 +55,48 @@ export function useGuidedPlayer({
     }
   }, [])
 
+  const waitWhilePaused = useCallback(async (): Promise<void> => {
+    if (!pausedRef.current) return
+    await new Promise<void>((resolve) => {
+      pauseResolverRef.current = resolve
+    })
+  }, [])
+
   const reset = useCallback(() => {
     sequenceRef.current += 1
+    pausedRef.current = false
+    if (pauseResolverRef.current) {
+      pauseResolverRef.current()
+      pauseResolverRef.current = null
+    }
     cancelSpeech()
     setIsPlaying(false)
+    setIsPaused(false)
     setNarrationText(payload.narrationBox.placeholder)
     if (containerRef.current) resetScene(containerRef.current)
   }, [payload.narrationBox.placeholder, containerRef])
+
+  const pause = useCallback(() => {
+    if (!isPlaying || pausedRef.current) return
+    pausedRef.current = true
+    setIsPaused(true)
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.pause()
+    }
+  }, [isPlaying])
+
+  const resume = useCallback(() => {
+    if (!pausedRef.current) return
+    pausedRef.current = false
+    setIsPaused(false)
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.resume()
+    }
+    if (pauseResolverRef.current) {
+      pauseResolverRef.current()
+      pauseResolverRef.current = null
+    }
+  }, [])
 
   const play = useCallback(() => {
     if (isPlaying) return
@@ -61,20 +108,34 @@ export function useGuidedPlayer({
     const shouldCancel = () => sequenceRef.current !== mySequence
 
     setIsPlaying(true)
+    setIsPaused(false)
+    pausedRef.current = false
 
     void (async () => {
       try {
         for (const step of payload.steps) {
           if (shouldCancel()) return
-          await runStep(step, { root, locale: payload.locale, shouldCancel, setNarrationText })
+          await waitWhilePaused()
+          if (shouldCancel()) return
+          await runStep(step, {
+            root,
+            locale: payload.locale,
+            shouldCancel,
+            waitWhilePaused,
+            setNarrationText,
+          })
         }
       } finally {
-        if (!shouldCancel()) setIsPlaying(false)
+        if (!shouldCancel()) {
+          setIsPlaying(false)
+          setIsPaused(false)
+          pausedRef.current = false
+        }
       }
     })()
-  }, [isPlaying, payload.steps, payload.locale, containerRef])
+  }, [isPlaying, payload.steps, payload.locale, containerRef, waitWhilePaused])
 
-  return { isPlaying, narrationText, play, reset }
+  return { isPlaying, isPaused, narrationText, play, pause, resume, reset }
 }
 
 // ---------------------------------------------------------------------------
@@ -83,21 +144,27 @@ interface RunStepCtx {
   root: HTMLElement
   locale: string
   shouldCancel: () => boolean
+  waitWhilePaused: () => Promise<void>
   setNarrationText: (text: string) => void
 }
 
 async function runStep(step: GuidedExplanationStep, ctx: RunStepCtx): Promise<void> {
   for (const action of step.actions) {
     if (ctx.shouldCancel()) return
+    await ctx.waitWhilePaused()
+    if (ctx.shouldCancel()) return
     await runAction(action, { root: ctx.root, shouldCancel: ctx.shouldCancel })
   }
   if (step.narrate && !ctx.shouldCancel()) {
+    await ctx.waitWhilePaused()
+    if (ctx.shouldCancel()) return
     const display = stripNiqqud(step.narrate.display)
     ctx.setNarrationText(display)
     const toSpeak = step.narrate.speech ?? step.narrate.display
     await speak(toSpeak, ctx.locale)
   }
   if (step.wait && !ctx.shouldCancel()) {
-    await new Promise((r) => setTimeout(r, step.wait))
+    await ctx.waitWhilePaused()
+    if (!ctx.shouldCancel()) await new Promise((r) => setTimeout(r, step.wait))
   }
 }

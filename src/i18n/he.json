@@ -384,6 +384,8 @@
       "generateLesson": "צור הסבר אינטראקטיבי",
       "generatingLesson": "יוצר הסבר אינטראקטיבי...",
       "backToUpload": "חזרה לתרגיל",
+      "resumeLesson": "המשך סרטון",
+      "startOver": "התחל מחדש",
       "player": {
         "stepOf": "שלב {current} מתוך {total}",
         "subtitle": "לחצו על כפתור ההפעלה כדי לבנות את ההוכחה שלב אחר שלב",

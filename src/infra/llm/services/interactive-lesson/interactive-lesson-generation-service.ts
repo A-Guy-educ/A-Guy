@@ -40,7 +40,8 @@ export async function generateInteractiveLesson(
       // Temperature 0 for more deterministic structured JSON output.
       temperature: 0,
       // Thinking tokens count against maxOutputTokens — budget for both.
-      maxOutputTokens: 65536,
+      // Bumped to 96K to reduce mid-JSON truncation on long outputs.
+      maxOutputTokens: 98304,
       thinkingBudget: 24576,
     }
 

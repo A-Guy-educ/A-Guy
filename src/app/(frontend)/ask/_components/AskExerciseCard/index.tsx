@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { cn } from '@/infra/utils/ui'
 import { useTranslations } from '@/ui/web/providers/I18n'
-import { Award, Edit3, Lightbulb, Loader2, Play } from 'lucide-react'
+import { Award, Edit3, Lightbulb, Loader2, Play, RotateCcw } from 'lucide-react'
 import { useState } from 'react'
 import type { AskActionEvent, ExerciseFile } from '../ask-types'
 import { ASK_ACTION_EVENT } from '../ask-types'
@@ -13,13 +13,26 @@ interface AskExerciseCardProps {
   file: ExerciseFile
   onGenerate: () => void
   generationStatus: string
+  /** True when a lesson has been generated and is available to resume. */
+  hasLesson?: boolean
+  /** Re-enter the existing player without regenerating. */
+  onResumeLesson?: () => void
+  /** Discard the current lesson and image, return to upload view. */
+  onStartOver?: () => void
 }
 
 function dispatchAskAction(detail: AskActionEvent) {
   window.dispatchEvent(new CustomEvent(ASK_ACTION_EVENT, { detail }))
 }
 
-export function AskExerciseCard({ file, onGenerate, generationStatus }: AskExerciseCardProps) {
+export function AskExerciseCard({
+  file,
+  onGenerate,
+  generationStatus,
+  hasLesson,
+  onResumeLesson,
+  onStartOver,
+}: AskExerciseCardProps) {
   const t = useTranslations('homepage.ask')
   const [isOpen, setIsOpen] = useState(false)
 
@@ -70,18 +83,41 @@ export function AskExerciseCard({ file, onGenerate, generationStatus }: AskExerc
             >
               <Award className="w-5 h-5" />
             </ActionButton>
-            <ActionButton
-              onClick={onGenerate}
-              disabled={file.isUploading || !file.mediaId || generationStatus === 'generating'}
-              variant="accent"
-              label={t('generateLesson')}
-            >
-              {generationStatus === 'generating' ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <Play className="w-5 h-5" />
-              )}
-            </ActionButton>
+            {hasLesson && onResumeLesson ? (
+              <>
+                <ActionButton
+                  onClick={onResumeLesson}
+                  disabled={file.isUploading}
+                  variant="accent"
+                  label={t('resumeLesson')}
+                >
+                  <Play className="w-5 h-5" />
+                </ActionButton>
+                {onStartOver && (
+                  <ActionButton
+                    onClick={onStartOver}
+                    disabled={file.isUploading}
+                    variant="warning"
+                    label={t('startOver')}
+                  >
+                    <RotateCcw className="w-5 h-5" />
+                  </ActionButton>
+                )}
+              </>
+            ) : (
+              <ActionButton
+                onClick={onGenerate}
+                disabled={file.isUploading || !file.mediaId || generationStatus === 'generating'}
+                variant="accent"
+                label={t('generateLesson')}
+              >
+                {generationStatus === 'generating' ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Play className="w-5 h-5" />
+                )}
+              </ActionButton>
+            )}
             <button
               onClick={() => setIsOpen(!isOpen)}
               className={cn(
