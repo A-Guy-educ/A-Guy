@@ -21,7 +21,8 @@ export function stripMarkdown(text: string, locale: SupportedLocale = 'en'): str
   let result = normalizeLatexDelimiters(text)
 
   // Convert block math $$...$$ to spoken text
-  result = result.replace(/\$\$([^$]+)\$\$/g, (_, latex) => {
+  // Use [\s\S] instead of [^$] to match newlines added by normalizeLatexDelimiters
+  result = result.replace(/\n?\$\$\n?([\s\S]+?)\n?\$\$\n?/g, (_, latex) => {
     const spoken = latexToSpeech(latex.trim(), locale)
     return spoken ? ` ${spoken} ` : ''
   })
