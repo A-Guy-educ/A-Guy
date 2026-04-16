@@ -40,3 +40,25 @@ The plan explicitly states:
 
 The scope files (`.github/workflows/ci.yml`, `playwright.e2e-gat
 ...(truncated)
+
+### review (2026-04-16T07:39:02)
+## Verdict: PASS
+
+## Summary
+
+This PR introduces a dedicated Playwright config for the E2E gate (`playwright.e2e-gate.config.ts`) that narrows test scope to only `verification/**/*.spec.ts` and `analytics-events.e2e.spec.ts`, removes the `@critical` grep filter from the main config, and updates CI to use the new gate config. These changes fix E2E infrastructure timeouts by reducing test scope to truly gate-blocking tests.
+
+## Findings
+
+### Critical
+
+None.
+
+### Major
+
+None.
+
+### Minor
+
+- `playwri
+...(truncated)
