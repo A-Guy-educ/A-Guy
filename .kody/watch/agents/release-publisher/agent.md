@@ -135,12 +135,36 @@ Running finalize...
 
 ---
 
-## Step 5: Run kody-engine release --finalize --version
+## Step 5: Run kody release --finalize via GitHub Actions workflow
 
-Once merged to dev, run finalize:
+Once merged to dev, trigger the `kody` workflow to run finalize. kody-engine is not available in this environment — use `gh workflow run` to dispatch it:
 
 ```bash
-kody-engine release --finalize --version {new_version}
+gh workflow run kody.yml \
+  --field task_id=release-finalize-{$issue_number}-$(date +%Y%m%d%H%M%S) \
+  --field mode=release \
+  --field finalize=true \
+  --field issue_number={$issue_number} \
+  --field dry_run=false
+```
+
+Replace `{$issue_number}` with the tracking issue number. The version is determined automatically from the `package.json` on the dev branch (which was already bumped in Step 3).
+
+After triggering, capture the run ID and poll until completion:
+
+```bash
+# Trigger the workflow and capture the run ID
+WORKFLOW_RUN_ID=$(gh workflow run kody.yml \
+  --field task_id=release-finalize-{$issue_number}-$(date +%Y%m%d%H%M%S) \
+  --field mode=release \
+  --field finalize=true \
+  --field issue_number={$issue_number} \
+  --field dry_run=false \
+  --repo $REPO | grep -oE '[0-9]+$')
+
+# Poll until the workflow completes (can take 10-30 minutes due to E2E gate)
+gh run view $WORKFLOW_RUN_ID --json status,conclusion --repo $REPO
+# Keep polling with a delay until status is "completed"
 ```
 
 This will:

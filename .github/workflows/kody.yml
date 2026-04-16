@@ -30,6 +30,9 @@ on:
       auto_mode:
         type: boolean
         default: false
+      finalize:
+        type: boolean
+        default: false
 
   issue_comment:
     types: [created]
@@ -224,7 +227,7 @@ jobs:
           DRY_RUN: ${{ github.event.inputs.dry_run || needs.parse.outputs.dry_run || 'false' }}
           AUTO_MODE: ${{ github.event.inputs.auto_mode }}
           BUMP: ${{ needs.parse.outputs.bump }}
-          FINALIZE: ${{ needs.parse.outputs.finalize }}
+          FINALIZE: ${{ github.event.inputs.finalize || needs.parse.outputs.finalize }}
           NO_PUBLISH: ${{ needs.parse.outputs.no_publish }}
           NO_NOTIFY: ${{ needs.parse.outputs.no_notify }}
           REVERT_TARGET: ${{ needs.parse.outputs.revert_target }}
