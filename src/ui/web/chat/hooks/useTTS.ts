@@ -61,6 +61,7 @@ export function useTTS(): UseTTSReturn {
   const charIndexRef = useRef(0)
   const fullTextRef = useRef('')
   const localeRef = useRef<SupportedLocale>('en')
+  const isRateChangeRef = useRef(false)
 
   // Prime voice list on mount (Chrome loads voices async)
   useEffect(() => {
@@ -132,7 +133,9 @@ export function useTTS(): UseTTSReturn {
         const remainingText = fullTextRef.current.slice(charIndexRef.current)
         if (!remainingText) return
 
+        isRateChangeRef.current = true
         window.speechSynthesis.cancel()
+        isRateChangeRef.current = false
         utteranceRef.current = null
 
         const utterance = new SpeechSynthesisUtterance(remainingText)
@@ -148,11 +151,13 @@ export function useTTS(): UseTTSReturn {
           charIndexRef.current = baseOffset + event.charIndex
         }
         utterance.onend = () => {
+          if (isRateChangeRef.current) return
           setPlayingMessageId(null)
           utteranceRef.current = null
           setIsPaused(false)
         }
         utterance.onerror = () => {
+          if (isRateChangeRef.current) return
           setPlayingMessageId(null)
           utteranceRef.current = null
           setIsPaused(false)
@@ -247,11 +252,13 @@ export function useTTS(): UseTTSReturn {
         charIndexRef.current = event.charIndex
       }
       utterance.onend = () => {
+        if (isRateChangeRef.current) return
         setPlayingMessageId(null)
         utteranceRef.current = null
         setIsPaused(false)
       }
       utterance.onerror = () => {
+        if (isRateChangeRef.current) return
         setPlayingMessageId(null)
         utteranceRef.current = null
         setIsPaused(false)
