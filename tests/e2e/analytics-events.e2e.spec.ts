@@ -1,6 +1,8 @@
 /**
  * Analytics Events E2E Tests
  *
+ * @tags @critical
+ *
  * Verifies analytics events fire correctly through real user interactions in a real browser:
  * - session_started fires on page load
  * - page_view fires on navigation

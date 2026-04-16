@@ -137,13 +137,13 @@ export default buildConfig({
   db: mongooseAdapter({
     url: databaseUrl,
     connectOptions: {
-      // Hardened connection pool configuration to prevent Atlas connection exhaustion
-      // Tests: maxPoolSize=5 (default)
-      // Production: maxPoolSize=10 (configurable via MONGODB_MAX_POOL_SIZE)
-      // Rationale: Atlas M10+ supports 500 connections. At 10/instance, this allows
-      // 50 concurrent serverless instances before hitting limits.
+      // ⚠️ CONNECTION POOL GUARDRAIL — DO NOT increase without updating the guardrail test
+      // Atlas limit: 500 connections. At maxPoolSize=N, max safe instances = 500/N.
+      // Default: 3 (production), 5 (tests). Override via MONGODB_MAX_POOL_SIZE env var.
+      // History: =100 caused outage, =10 caused Atlas alert, =3 is safe (166 instances).
+      // Guardrail test: tests/unit/mongodb-pool-config.test.ts
       maxPoolSize: parseInt(
-        process.env.MONGODB_MAX_POOL_SIZE ?? (process.env.VITEST ? '5' : '10'),
+        process.env.MONGODB_MAX_POOL_SIZE ?? (process.env.VITEST ? '5' : '3'),
         10,
       ),
       // Allow pool to fully drain when idle

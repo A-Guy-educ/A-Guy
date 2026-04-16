@@ -41,14 +41,16 @@ interface AnalyticsProviderProps {
 export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
   // Single initialization effect — runs once on mount, before child effects
   useEffect(() => {
-    initializeAnalytics()
-    const cleanupSubscriber = initAnalyticsSubscriber()
-
-    // Expose internals on window for E2E testing only
+    // Initialize capture array BEFORE subscriber fires any events.
+    // initAnalyticsSubscriber() registers handlers synchronously via systemEventBus.on(),
+    // so the array must exist on window before any component calls systemEventBus.emit().
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any).__systemEventBus = systemEventBus
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any).__capturedMixpanelEvents = []
+
+    initializeAnalytics()
+    const cleanupSubscriber = initAnalyticsSubscriber()
 
     // Emit session_started once per session
     const sessionStartedKey = 'system_events_session_started'

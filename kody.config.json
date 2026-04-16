@@ -28,8 +28,9 @@
   "release": {
     "releaseBranch": "main",
     "versionFiles": ["package.json"],
-    "notifyCommand": "curl -s -X POST \"$SLACK_WEBHOOK_URL\" -H 'Content-Type: application/json' -d '{\"text\": \"\ud83d\ude80 a-guy v$VERSION released \u2014 https://github.com/A-Guy-educ/A-Guy/releases/tag/v$VERSION\"}'",
-    "e2eCommand": "pnpm test:e2e"
+    "notifyCommand": "NOTIFY_RESULT=always NOTIFY_VERSION=$VERSION pnpm tsx scripts/kody/notify.ts --agent release-publisher --channels slack --when always --color good --title \"🚀 A-Guy v$VERSION released\" --body \"Release $VERSION finalized — https://github.com/A-Guy-educ/A-Guy/releases/tag/v$VERSION\"",
+    "e2eCommand": "pnpm test:e2e",
+    "timeoutMs": 1800000
   },
   "watch": {
     "enabled": true,

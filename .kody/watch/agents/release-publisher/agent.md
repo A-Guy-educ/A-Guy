@@ -4,15 +4,38 @@ This agent automates the full release lifecycle: creates a tracking issue, runs 
 
 ---
 
-## Step 1: Check for existing tracking issue
+## Step 1: Check for existing tracking issue and retry state
 
-Before doing anything, check if a release tracking issue already exists for this cycle:
+Before doing anything, check if a release is already in progress or failed:
 
 ```bash
-gh issue list --label "kody:watch:release" --state open --limit 5
+# List all open release tracking issues
+gh issue list --label "kody:watch:release" --state open --limit 10
 ```
 
-If an open issue with `kody:watch:release` label already exists, skip to **Step 3**.
+For each open issue, check if there is a linked failed finalize:
+
+```bash
+gh issue view {issue_number} --comments
+```
+
+Look in the comments for:
+- `Fix release vX.Y.Z finalize failure` — failed finalize that needs retry
+- `Tracking this cycle: Issue #N` — indicates this is a retry chain
+
+**If a failed finalize is found:**
+1. Extract the version `vX.Y.Z` from the fix issue title
+2. Extract the tracking issue number
+3. Proceed to **Step 4** to check if the release PR is already merged to dev
+4. If PR is merged, proceed to **Step 5** to retry finalize
+
+**If no failed finalize found, but open tracking issue exists:**
+- Extract the version from the issue title
+- Go to **Step 3** to check if the release PR is already created
+
+**Otherwise:** Proceed to Step 2 to create a new tracking issue and run a fresh release.
+
+> **Important:** Only create a new release if no prior cycle is in progress or failed. A prior cycle that failed finalize should always be retried with the same version, not a new one.
 
 ---
 
@@ -32,9 +55,17 @@ Save the issue number — all subsequent steps will post comments on this issue.
 
 ---
 
-## Step 3: Run kody release
+## Step 3: Run kody release (or skip if PR already exists)
 
-Run the release command to create the release PR targeting `dev`:
+Check if a release PR already exists for this version:
+
+```bash
+gh pr list --head "release/v{new_version}" --state all --json number,title,url,state
+```
+
+**If PR already exists and is MERGED:** Go to **Step 4**.
+**If PR exists and is OPEN:** Skip `kody release`, post a comment noting it already exists, and go to **Step 4**.
+**If no PR exists:** Run the release command:
 
 ```bash
 kody release
@@ -88,6 +119,8 @@ gh pr view "release/v{new_version}" --json mergeableState --jq '{mergeableState}
 - All CI checks have passed
 - The PR state is `OPEN`
 
+**If PR is already merged:** Skip polling and go directly to finalize.
+
 Once ready, merge the PR:
 
 ```bash
@@ -137,7 +170,16 @@ Creating promotion PR dev → main...
 
 ## Step 6: Create and merge promotion PR dev → main
 
-After finalize succeeds, create a PR to promote dev to main:
+After finalize succeeds, check if the promotion PR already exists:
+
+```bash
+gh pr list --base main --head dev --state all --json number,title,state
+```
+
+**If PR already exists and is MERGED:** Skip to the final comment.
+**If PR exists and is OPEN:** Poll until CI passes, then merge.
+
+Otherwise, create the PR:
 
 ```bash
 # Create PR dev → main
@@ -163,12 +205,16 @@ Post on the tracking issue:
 Production release v{new_version} complete!
 ```
 
+Close the tracking issue after completion.
+
 ---
 
 ## Notes
 
 - Always check for existing open `kody:watch:release` issues before creating a new one.
+- **Failed finalize must be retried, not restarted.** If a finalize fails, always retry with the same version — do not run `kody release` again, as that creates a new version.
 - Extract the new version from the PR title created by `kody release` — do not try to compute it yourself.
 - If E2E fails in Step 5, create a fix issue and exit — do NOT proceed to Step 6.
 - Use `gh pr view` and `gh pr checks` to monitor status; do not guess or assume.
 - The promotion PR (Step 6) has no code changes — it only exists to trigger any CI/CD that runs on merge to main.
+- Always check if PRs already exist before creating them — this makes the agent idempotent for retry scenarios.

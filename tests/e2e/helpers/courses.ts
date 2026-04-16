@@ -224,6 +224,8 @@ export async function seedTestCourseData(): Promise<TestCourseData | null> {
         accessType: 'inherit',
         contentStatus: 'none',
         contentStatusVisible: true,
+        // Enable chat interface — ChatInterface renders when lessonContextText is non-empty
+        lessonContextText: 'This is a test lesson for E2E testing with AI chat functionality.',
       },
     })
 

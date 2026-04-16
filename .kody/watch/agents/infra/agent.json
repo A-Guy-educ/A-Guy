@@ -3,5 +3,10 @@
   "description": "Monitors site availability, API latency, console errors, and CI health",
   "domain": "infra",
   "labels": ["kody:watch:infra"],
-  "cron": "0 8 * * *"
+  "cron": "0 8 * * *",
+  "notify": {
+    "channels": ["slack"],
+    "color": "danger",
+    "when": "on-failure"
+  }
 }

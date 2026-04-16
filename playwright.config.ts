@@ -84,7 +84,7 @@ export default defineConfig({
   ],
   webServer: {
     command: 'test -d .next && pnpm start',
-    reuseExistingServer: true,
+    reuseExistingServer: !process.env.CI,
     url: 'http://localhost:3000/api/health',
     timeout: 120000,
     stdout: 'pipe',
@@ -93,12 +93,13 @@ export default defineConfig({
       PAYLOAD_SECRET: process.env.PAYLOAD_SECRET || 'test-secret-key-for-integration-tests-only',
       DATABASE_URL: databaseUrl,
       NEXT_PUBLIC_SERVER_URL: process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000',
+      NODE_ENV: 'test',
       NODE_OPTIONS: process.env.NODE_OPTIONS || '',
       OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
       SKIP_BUILD: 'true',
-      // Enable analytics in E2E tests with dummy tokens (adapters are mocked, no real calls)
-      NEXT_PUBLIC_GA4_MEASUREMENT_ID: 'G-TESTMOCK123',
-      NEXT_PUBLIC_MIXPANEL_TOKEN: 'mp-test-mock-token',
+      // Analytics: use env vars if set, otherwise use test-only dummy values (adapters are mocked in E2E, no real calls)
+      NEXT_PUBLIC_GA4_MEASUREMENT_ID: process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID || 'G-TESTMOCK123',
+      NEXT_PUBLIC_MIXPANEL_TOKEN: process.env.NEXT_PUBLIC_MIXPANEL_TOKEN || 'mp-test-mock-token',
     },
   },
 })
