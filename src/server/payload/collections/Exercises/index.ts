@@ -480,6 +480,17 @@ export const Exercises: CollectionConfig = {
       },
     },
 
+    // In-place LaTeX block → structured content conversion (V1-258/260)
+    {
+      name: 'convertLatexBlock',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/ui/admin/exercise-conversion/ConvertLatexBlockButton#ConvertLatexBlockButton',
+        },
+      },
+    },
+
     // Preview field (sidebar)
     {
       name: 'preview',
