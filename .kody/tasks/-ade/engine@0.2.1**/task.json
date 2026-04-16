@@ -1,0 +1,12 @@
+{
+  "task_type": "chore",
+  "title": "Complete v0.25.0 release finalize after E2E infrastructure fixes",
+  "description": "Finalize release v0.25.0 which has been blocked at the E2E gate step due to infrastructure issues. E2E fixes have been deployed: @kody-ade/engine@0.2.1 update, Playwright config fixes, and 30-minute timeout increase. The kody pipeline is now retrying the finalize process.",
+  "scope": [
+    ".github/workflows/ci.yml",
+    "playwright.e2e-gate.config.ts",
+    "playwright.config.ts"
+  ],
+  "risk_level": "medium",
+  "questions": []
+}

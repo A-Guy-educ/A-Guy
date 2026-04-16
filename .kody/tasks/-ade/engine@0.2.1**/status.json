@@ -1,0 +1,46 @@
+{
+  "taskId": "-ade/engine@0.2.1**",
+  "state": "running",
+  "stages": {
+    "taskify": {
+      "state": "completed",
+      "completedAt": "2026-04-16T07:32:48.551Z",
+      "retries": 0,
+      "outputFile": "task.json",
+      "promptTokens": 2206
+    },
+    "plan": {
+      "state": "completed",
+      "completedAt": "2026-04-16T07:33:43.543Z",
+      "retries": 0,
+      "outputFile": "plan.md",
+      "promptTokens": 2682
+    },
+    "build": {
+      "state": "running",
+      "startedAt": "2026-04-16T07:33:43.544Z",
+      "retries": 0
+    },
+    "verify": {
+      "state": "pending",
+      "retries": 0
+    },
+    "review": {
+      "state": "pending",
+      "retries": 0
+    },
+    "review-fix": {
+      "state": "pending",
+      "retries": 0
+    },
+    "ship": {
+      "state": "pending",
+      "retries": 0
+    }
+  },
+  "createdAt": "2026-04-16T07:30:42.038Z",
+  "updatedAt": "2026-04-16T07:33:43.544Z",
+  "sessions": {
+    "explore": "6a1b571a-1cd7-4904-bb64-6be90b179cc7"
+  }
+}
