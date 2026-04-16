@@ -227,6 +227,7 @@ export async function POST(request: NextRequest) {
           content: { blocks: validation.data.blocks },
           origin: 'import',
           order: startOrder + i,
+          sourceLatex: latex,
         },
         draft: true,
       })
