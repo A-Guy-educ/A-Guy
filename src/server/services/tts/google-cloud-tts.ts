@@ -18,8 +18,8 @@ export const synthesizeRequestSchema = z.object({
 export type SynthesizeRequest = z.infer<typeof synthesizeRequestSchema>
 
 const VOICE_CONFIG: Record<string, { languageCode: string; name: string; ssmlGender: string }> = {
-  he: { languageCode: 'he-IL', name: 'he-IL-Wavenet-A', ssmlGender: 'FEMALE' },
-  en: { languageCode: 'en-US', name: 'en-US-Wavenet-D', ssmlGender: 'MALE' },
+  he: { languageCode: 'he-IL', name: 'he-IL-Neural2-A', ssmlGender: 'FEMALE' },
+  en: { languageCode: 'en-US', name: 'en-US-Neural2-D', ssmlGender: 'MALE' },
 }
 
 const TTS_API_URL = 'https://texttospeech.googleapis.com/v1/text:synthesize'
