@@ -97,6 +97,8 @@ export default defineConfig({
       NODE_OPTIONS: process.env.NODE_OPTIONS || '',
       OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
       SKIP_BUILD: 'true',
+      // Disable MCP to avoid DEFAULT_TENANT_SLUG requirement during E2E
+      MCP_ENABLED: 'false',
       // Analytics: use env vars if set, otherwise use test-only dummy values (adapters are mocked in E2E, no real calls)
       NEXT_PUBLIC_GA4_MEASUREMENT_ID: process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID || 'G-TESTMOCK123',
       NEXT_PUBLIC_MIXPANEL_TOKEN: process.env.NEXT_PUBLIC_MIXPANEL_TOKEN || 'mp-test-mock-token',
