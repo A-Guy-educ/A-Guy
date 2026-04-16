@@ -6,6 +6,7 @@
  */
 
 import { latexToSpeech, type SupportedLocale } from './latexToSpeech'
+import { normalizeLatexDelimiters } from '@/ui/web/chat/ChatMessageContent/normalize-latex'
 
 /**
  * Convert LaTeX math expressions within text to spoken equivalents,
@@ -15,8 +16,12 @@ import { latexToSpeech, type SupportedLocale } from './latexToSpeech'
  * to natural spoken text using latexToSpeech before removing other markup.
  */
 export function stripMarkdown(text: string, locale: SupportedLocale = 'en'): string {
-  // First, convert block math $$...$$ to spoken text
-  let result = text.replace(/\$\$([^$]+)\$\$/g, (_, latex) => {
+  // Normalize LLM-style delimiters (\[...\], \(...\)) to $$...$$ / $...$
+  // so the math-to-speech regex below can find them
+  let result = normalizeLatexDelimiters(text)
+
+  // Convert block math $$...$$ to spoken text
+  result = result.replace(/\$\$([^$]+)\$\$/g, (_, latex) => {
     const spoken = latexToSpeech(latex.trim(), locale)
     return spoken ? ` ${spoken} ` : ''
   })
