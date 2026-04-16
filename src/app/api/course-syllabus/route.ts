@@ -56,7 +56,15 @@ export async function GET(request: NextRequest) {
       }),
     )
 
-    return NextResponse.json({ success: true, data: syllabus })
+    return NextResponse.json(
+      { success: true, data: syllabus },
+      {
+        headers: {
+          // Stable per-courseId data — cache on CDN for 5 min, serve stale for 1 hour
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=3600',
+        },
+      },
+    )
   } catch (error) {
     console.error('[/api/course-syllabus]', error)
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 })

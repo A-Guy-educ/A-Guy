@@ -708,19 +708,12 @@ async function handleContextScopedChat(
     composedInstructions = await composeFullSystemInstructions(
       req.payload,
       lessonContext.lessonPrompt,
-      lessonContext.lessonContextText,
       logger as Logger,
       lessonContext.coursePrompt,
       lessonContext.courseContextText,
       userId,
     )
   } catch (error) {
-    if (error instanceof Error && error.message.includes('exceeds maximum')) {
-      return jsonWithCookie(
-        { error: 'Lesson context exceeds maximum allowed size' },
-        { status: 400, cookieHeader: guestCookieHeader },
-      )
-    }
     throw error
   }
 

@@ -346,7 +346,10 @@ export function getPrivateBlobAdapter(): VercelBlobAdapter {
 export function isVercelBlobUrl(url: string): boolean {
   try {
     const parsed = new URL(url)
-    return parsed.hostname.endsWith('.blob.vercel-storage.com')
+    return (
+      parsed.hostname.endsWith('.blob.vercel-storage.com') ||
+      parsed.hostname.endsWith('.public.blob.vercel-storage.com')
+    )
   } catch {
     return false
   }
@@ -400,21 +403,41 @@ export async function getPdfBufferFromUrl(url: string): Promise<Buffer> {
     throw new Error(`Invalid Vercel Blob URL: ${url}`)
   }
 
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 30000)
+  const MAX_RETRIES = 3
+  const BASE_DELAY_MS = 500
+  let lastError: Error | null = null
 
-  try {
-    const response = await fetch(url, { signal: controller.signal })
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 30000)
 
-    if (!response.ok) {
+    try {
+      const response = await fetch(url, { signal: controller.signal })
+
+      if (response.ok) {
+        const arrayBuffer = await response.arrayBuffer()
+        return Buffer.from(arrayBuffer)
+      }
+
+      if (!response.ok && attempt < MAX_RETRIES) {
+        lastError = new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`)
+        await new Promise((r) => setTimeout(r, BASE_DELAY_MS * Math.pow(2, attempt)))
+        continue
+      }
+
       throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`)
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error))
+      if (attempt < MAX_RETRIES) {
+        await new Promise((r) => setTimeout(r, BASE_DELAY_MS * Math.pow(2, attempt)))
+        continue
+      }
+    } finally {
+      clearTimeout(timeoutId)
     }
-
-    const arrayBuffer = await response.arrayBuffer()
-    return Buffer.from(arrayBuffer)
-  } finally {
-    clearTimeout(timeoutId)
   }
+
+  throw lastError || new Error('Failed to fetch PDF after retries')
 }
 
 /**

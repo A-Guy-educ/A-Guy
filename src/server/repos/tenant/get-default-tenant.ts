@@ -9,7 +9,16 @@ export function getDefaultTenantSlug(): string {
   return slug
 }
 
+// Module-level cache — survives across requests within the same serverless instance.
+// Cleared when the module is re-evaluated (e.g., on new serverless cold start).
+let cachedTenantId: string | null = null
+
 export async function getDefaultTenantId(payload: Payload): Promise<string> {
+  // Return cached ID if already resolved for this instance
+  if (cachedTenantId) {
+    return cachedTenantId
+  }
+
   const slug = getDefaultTenantSlug()
   const result = await payload.find({
     collection: 'tenants',
@@ -31,8 +40,10 @@ export async function getDefaultTenantId(payload: Payload): Promise<string> {
       overrideAccess: true,
     })
 
+    cachedTenantId = created.id
     return created.id
   }
 
+  cachedTenantId = tenant.id
   return tenant.id
 }

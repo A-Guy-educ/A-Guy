@@ -98,7 +98,7 @@ const config = {
           foreground: 'hsl(var(--accent-foreground))',
         },
         background: 'hsl(var(--background))',
-        border: 'hsla(var(--border))',
+        border: 'hsl(var(--border))',
         card: {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',

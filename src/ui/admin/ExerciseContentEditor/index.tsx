@@ -13,6 +13,7 @@ import { FreeResponseEditor } from './editors/FreeResponseEditor'
 import { MultiAxisEditor } from './editors/MultiAxisEditor'
 import { GeometryEditor } from './editors/GeometryEditor'
 import { HtmlBlockEditor } from './editors/HtmlBlockEditor'
+import { LatexBlockEditor } from './editors/LatexBlockEditor'
 import { InlineRichTextEditor } from './editors/InlineRichTextEditor'
 import { MatchingEditor } from './editors/MatchingEditor'
 import { McqEditor } from './editors/McqEditor'
@@ -414,6 +415,7 @@ function getBlockTypeLabel(block: ContentBlock): string {
   if (block.type === 'question_matching') return 'Matching'
   if (block.type === 'svg') return 'SVG Image'
   if (block.type === 'media') return 'Media'
+  if (block.type === 'latex') return 'LaTeX'
   if (block.type === 'question_geometry') return 'Geometry'
   if (block.type === 'question_axis') return 'Axis Graph'
   if (block.type === 'question_multi_axis') return 'Multi Axis Graph'
@@ -603,6 +605,27 @@ function renderQuestionEditor(
       >
         <AxisEditor
           block={block as import('@/server/payload/collections/Exercises/types').QuestionAxisBlock}
+          onChange={onChange}
+        />
+      </QuestionBlockWrapper>
+    )
+  }
+  if (block.type === 'latex') {
+    return (
+      <QuestionBlockWrapper
+        blockType={getBlockTypeLabel(block)}
+        block={block}
+        onBlockChange={onChange}
+        onMoveUp={onMoveUp}
+        onMoveDown={onMoveDown}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+        canMoveUp={blockIndex > 0}
+        canMoveDown={blockIndex < blockCount - 1}
+        canDelete={blockCount > 1}
+      >
+        <LatexBlockEditor
+          block={block as import('@/server/payload/collections/Exercises/types').LatexBlock}
           onChange={onChange}
         />
       </QuestionBlockWrapper>

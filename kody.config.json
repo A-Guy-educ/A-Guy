@@ -28,12 +28,38 @@
   "release": {
     "releaseBranch": "main",
     "versionFiles": ["package.json"],
-    "notifyCommand": "curl -s -X POST \"$SLACK_WEBHOOK_URL\" -H 'Content-Type: application/json' -d '{\"text\": \"🚀 a-guy v$VERSION released — https://github.com/A-Guy-educ/A-Guy/releases/tag/v$VERSION\"}'"
+    "notifyCommand": "NOTIFY_RESULT=always NOTIFY_VERSION=$VERSION pnpm tsx scripts/kody/notify.ts --agent release-publisher --channels slack --when always --color good --title \"🚀 A-Guy v$VERSION released\" --body \"Release $VERSION finalized — https://github.com/A-Guy-educ/A-Guy/releases/tag/v$VERSION\"",
+    "e2eCommand": "USE_MONGO_SERVICE=true DATABASE_URL=mongodb://localhost:27017/test NEXT_PUBLIC_SERVER_URL=http://localhost:3000 SKIP_BUILD=true pnpm exec playwright test --config=playwright.e2e-gate.config.ts",
+    "timeoutMs": 1800000
+  },
+  "watch": {
+    "enabled": true,
+    "digestIssue": null,
+    "model": "MiniMax-M2.7-highspeed",
+    "provider": "minimax"
+  },
+  "stages": {
+    "taskify": { "maxTurns": 300, "maxBudgetUsd": 15.0 },
+    "plan": { "maxTurns": 300, "maxBudgetUsd": 10.0 },
+    "build": { "maxTurns": 1000, "maxBudgetUsd": 50.0 },
+    "verify": { "maxTurns": 200, "maxBudgetUsd": 5.0 },
+    "review": { "maxTurns": 300, "maxBudgetUsd": 10.0 },
+    "review-fix": { "maxTurns": 600, "maxBudgetUsd": 30.0 },
+    "ship": { "maxTurns": 200, "maxBudgetUsd": 5.0 }
+  },
+  "timeouts": {
+    "taskify": 6000,
+    "plan": 6000,
+    "build": 24000,
+    "verify": 3000,
+    "review": 6000,
+    "review-fix": 12000,
+    "ship": 2400
   },
   "devServer": {
     "command": "pnpm dev",
     "url": "http://localhost:3000",
-    "readyPattern": "Ready in|compiled|started server|Local:|localhost:|✓ Ready",
+    "readyPattern": "Ready in|compiled|started server|Local:|localhost:|\u2713 Ready",
     "readyTimeout": 180,
     "env": [
       "AI_BASE_URL",

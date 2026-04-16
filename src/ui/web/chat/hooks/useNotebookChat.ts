@@ -2,6 +2,7 @@
 
 import { ChatRole } from '@/infra/llm/chat-message-role'
 import { formatExerciseContextMessage } from '@/infra/llm/exercise-context'
+import { IMAGE_REJECTED_TAG } from '@/server/chat-assets/constants'
 import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 
 import { logger } from '@/infra/utils/logger'
@@ -594,12 +595,24 @@ export function useNotebookChat({
       }
 
       if (result.message) {
+        // Check if AI rejected the uploaded image
+        const isImageRejected = result.message.includes(IMAGE_REJECTED_TAG)
+        const cleanMessage = isImageRejected
+          ? result.message.replace(IMAGE_REJECTED_TAG, '').trimEnd()
+          : result.message
+
         const assistantMessage: ChatMessage = {
           id: crypto.randomUUID(),
           role: ChatRole.Assistant,
-          content: result.message,
+          content: cleanMessage,
         }
         setMessages((prev) => [...prev, assistantMessage])
+
+        // Clear the Ask-page image so student can upload a corrected one
+        if (isImageRejected && askMedia) {
+          clearAskMedia()
+          window.dispatchEvent(new CustomEvent('ask-media-clear'))
+        }
       }
     } catch (error) {
       console.error('Send message sync failed:', error)

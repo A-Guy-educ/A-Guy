@@ -39,11 +39,11 @@ describe('Analytics Validator', () => {
     })
 
     it('should reject missing required properties', () => {
-      // lesson_started requires lesson_id and course_id
+      // lesson_started requires lesson_id (course_id is optional)
       expect(() => {
         validateEvent(PRODUCT_EVENTS.LESSON_STARTED, {
-          lesson_id: '123',
-          // missing course_id
+          course_id: '456',
+          // missing lesson_id
         })
       }).toThrow()
     })

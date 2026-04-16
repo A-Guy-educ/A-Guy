@@ -46,3 +46,12 @@ See [design-system.md](./design-system.md) for complete rules. Key points:
 
 ## Learned 2026-04-05 (task: 1117-260405-101944)
 - Active directories: src/infra/blob, src/infra/llm/providers/shared, src/infra/pdfjs
+
+## Learned 2026-04-05 (task: 1121-260405-102217)
+- Active directories: src/ui/web/chat/hooks, src/server/chat-assets, src/app/api/chat-assets/finalize
+
+## Learned 2026-04-05 (task: acceptable)
+- Active directories: src/infra/blob, src/ui/web/courses/PDFViewer, src/ui/web/media/PDFMedia, src/server/services
+
+## Learned 2026-04-15 (task: 1225-260415-142959)
+- Uses Payload CMS collections

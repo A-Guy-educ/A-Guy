@@ -21,6 +21,18 @@ on:
       dry_run:
         type: boolean
         default: false
+      provider:
+        type: string
+        default: ''
+      model:
+        type: string
+        default: ''
+      auto_mode:
+        type: boolean
+        default: false
+      finalize:
+        type: boolean
+        default: false
 
   issue_comment:
     types: [created]
@@ -53,6 +65,8 @@ jobs:
   parse:
     if: >-
       github.event_name == 'issue_comment' &&
+      github.event.issue.state != 'closed' &&
+      github.event.comment.user.type != 'Bot' &&
       (contains(github.event.comment.body, '@kody') || contains(github.event.comment.body, '/kody'))
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -71,6 +85,7 @@ jobs:
       finalize: ${{ steps.parse.outputs.finalize }}
       no_publish: ${{ steps.parse.outputs.no_publish }}
       no_notify: ${{ steps.parse.outputs.no_notify }}
+      revert_target: ${{ steps.parse.outputs.revert_target }}
       valid: ${{ steps.parse.outputs.valid }}
     steps:
       - uses: actions/setup-node@v4
@@ -115,17 +130,28 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           ISSUE_IS_PR: ${{ github.event.issue.pull_request && 'true' || '' }}
           TRIGGER_TYPE: comment
+          COMMENT_AUTHOR_ASSOC: ${{ github.event.comment.author_association }}
         run: kody-engine ci-parse
 
   # ─── Orchestrate ─────────────────────────────────────────────────────────────
   orchestrate:
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      (needs.parse.result == 'success' && needs.parse.outputs.valid == 'true') ||
-      (github.event_name == 'pull_request_review' && github.event.review.state == 'changes_requested')
+      github.event_name == 'pull_request_review' ||
+      (github.event_name == 'issue_comment' && needs.parse.result == 'success' && needs.parse.outputs.valid == 'true')
     needs: [parse]
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Generate App token
         id: app-token
@@ -140,7 +166,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: true
-          token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Checkout PR branch (for fix/rerun/review on PRs)
         if: github.event.issue.pull_request && (needs.parse.outputs.mode == 'fix' || needs.parse.outputs.mode == 'fix-ci' || needs.parse.outputs.mode == 'rerun' || needs.parse.outputs.mode == 'review' || needs.parse.outputs.mode == 'resolve')
@@ -172,6 +198,18 @@ jobs:
       - name: Install LiteLLM proxy
         run: pip install 'litellm[proxy]' prisma && python -m prisma py fetch
 
+      - name: Get Playwright version
+        run: echo "version=$(pnpm exec playwright --version | head -1)" >> $GITHUB_OUTPUT
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
       - name: Configure git
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -181,6 +219,8 @@ jobs:
         env:
           ALL_SECRETS: ${{ toJSON(secrets) }}
         run: |
+          # Override MCP_ENABLED from secrets — Payload requires DEFAULT_TENANT_SLUG when MCP is on
+          echo "MCP_ENABLED=false" >> $GITHUB_ENV
           echo "$ALL_SECRETS" | jq -r 'to_entries[] | select(.key | test("^(GITHUB_TOKEN)$") | not) | @json' | while IFS= read -r entry; do
             KEY=$(echo "$entry" | jq -r '.key')
             VALUE=$(echo "$entry" | jq -r '.value')
@@ -191,13 +231,12 @@ jobs:
           done
 
       - name: Warm up Next.js build cache
-        continue-on-error: true
-        run: npx next build 2>/dev/null || true
-        timeout-minutes: 15
+        run: NODE_OPTIONS='--max-old-space-size=6144' npx next build
+        timeout-minutes: 20
 
       - name: Run Kody pipeline
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN || secrets.GITHUB_TOKEN }}
           TASK_ID: ${{ github.event.inputs.task_id || needs.parse.outputs.task_id }}
           MODE: ${{ github.event.inputs.mode || needs.parse.outputs.mode || 'full' }}
           FROM_STAGE: ${{ github.event.inputs.from_stage || needs.parse.outputs.from_stage }}
@@ -209,11 +248,13 @@ jobs:
           TICKET_ID: ${{ needs.parse.outputs.ticket_id }}
           PRD_FILE: ${{ needs.parse.outputs.prd_file }}
           DRY_RUN: ${{ github.event.inputs.dry_run || needs.parse.outputs.dry_run || 'false' }}
+          AUTO_MODE: ${{ github.event.inputs.auto_mode }}
           BUMP: ${{ needs.parse.outputs.bump }}
-          FINALIZE: ${{ needs.parse.outputs.finalize }}
+          FINALIZE: ${{ github.event.inputs.finalize || needs.parse.outputs.finalize }}
           NO_PUBLISH: ${{ needs.parse.outputs.no_publish }}
           NO_NOTIFY: ${{ needs.parse.outputs.no_notify }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          REVERT_TARGET: ${{ needs.parse.outputs.revert_target }}
+          RUN-URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           if [ "$MODE" = "release" ]; then
             echo "Running release..."
@@ -223,7 +264,15 @@ jobs:
             [ "$NO_PUBLISH" = "true" ] && ARGS="$ARGS --no-publish"
             [ "$NO_NOTIFY" = "true" ] && ARGS="$ARGS --no-notify"
             [ "$DRY_RUN" = "true" ] && ARGS="$ARGS --dry-run"
+            [ -n "$ISSUE_NUMBER" ] && ARGS="$ARGS --issue-number $ISSUE_NUMBER"
             kody-engine release $ARGS
+          elif [ "$MODE" = "revert" ]; then
+            echo "Running revert..."
+            ARGS=""
+            [ -n "$REVERT_TARGET" ] && ARGS="$ARGS --target $REVERT_TARGET"
+            [ -n "$ISSUE_NUMBER" ] && ARGS="$ARGS --issue-number $ISSUE_NUMBER"
+            [ "$DRY_RUN" = "true" ] && ARGS="$ARGS --dry-run"
+            kody-engine revert $ARGS
           elif [ "$MODE" = "bootstrap" ]; then
             echo "Running bootstrap..."
             kody-engine bootstrap
@@ -243,6 +292,7 @@ jobs:
             [ "$MODE" = "review" ] && CMD="review"
             [ "$MODE" = "resolve" ] && CMD="resolve"
             [ "$MODE" = "status" ] && CMD="status"
+            [ "$MODE" = "hotfix" ] && CMD="hotfix"
             ARGS="--issue-number $ISSUE_NUMBER"
             [ -n "$TASK_ID" ] && ARGS="$ARGS --task-id $TASK_ID"
             [ -n "$PR_NUMBER" ] && ARGS="$ARGS --pr-number $PR_NUMBER"
@@ -251,6 +301,7 @@ jobs:
             # FEEDBACK is also passed via env var (avoids shell escaping issues)
             [ -n "$FEEDBACK" ] && ARGS="$ARGS --feedback \"$FEEDBACK\""
             [ "$DRY_RUN" = "true" ] && ARGS="$ARGS --dry-run"
+            [ "$AUTO_MODE" = "true" ] && ARGS="$ARGS --auto-mode"
             kody-engine $CMD $ARGS
           fi
 
@@ -358,7 +409,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: '❌ Failed to parse command.\n\nUsage: `@kody [full|rerun|status] <task-id> [--from <stage>] [--feedback "<text>"]`'
+              body: '❌ Failed to parse command.\n\nUsage: `@kody [full|rerun|fix|fix-ci|review|resolve|status] [--from <stage>] [--feedback "<text>"]`'
             })
 
   notify-orchestrate-error:
@@ -440,33 +491,3 @@ jobs:
               body: `@kody fix-ci\nCI failed: [View logs](${runUrl})\nRun ID: ${runId}`,
             });
             core.info(`Posted @kody fix-ci on PR #${prNumber} for run ${runId}`);
-
-  # ─── Smoke Test (push trigger) ──────────────────────────────────────────────
-  smoke-test:
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: latest
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: Typecheck
-        run: pnpm tsc --noEmit
-      - name: CLI loads
-        run: kody-engine --help
-      - name: Dry run
-        run: |
-          mkdir -p .kody/tasks/smoke-test
-          echo "Smoke test task" > .kody/tasks/smoke-test/task.md
-          kody-engine run --task-id smoke-test --dry-run || true
-          if [ -f ".kody/tasks/smoke-test/status.json" ]; then
-            echo "✓ status.json created"
-            cat .kody/tasks/smoke-test/status.json
-          fi
-          rm -rf .kody/tasks/smoke-test

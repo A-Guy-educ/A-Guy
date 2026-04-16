@@ -21,19 +21,61 @@ import { clearCachedUserProperties } from '../utils/user-properties-cache'
 let ga4Adapter: typeof import('../adapters/ga4/adapter') | null = null
 let mixpanelAdapter: typeof import('../adapters/mixpanel/adapter') | null = null
 
+// Track whether adapters have been initialized
+let adaptersInitialized = false
+
+// In-memory event queue for events fired before adapters are ready
+// Max 100 events to prevent memory issues
+const MAX_QUEUE_SIZE = 100
+const eventQueue: EventPayload[] = []
+
 /**
- * Initialize adapters lazily (client-side only)
+ * Eagerly initialize adapters once (client-side only).
+ * Uses a singleton promise so concurrent callers share the same initialization.
+ * Sets adaptersInitialized = true when done so queued events are sent immediately.
  */
-async function initializeAdapters() {
-  if (typeof window === 'undefined') return
+let initializationPromise: Promise<void> | null = null
 
-  if (!ga4Adapter && analyticsConfig.ga4.enabled) {
-    ga4Adapter = await import('../adapters/ga4/adapter')
+function getInitializationPromise(): Promise<void> {
+  if (typeof window === 'undefined') return Promise.resolve()
+  if (initializationPromise) return initializationPromise
+
+  initializationPromise = doInitializeAdapters().then(() => {
+    adaptersInitialized = true
+    flushEventQueue()
+  })
+
+  return initializationPromise
+}
+
+async function doInitializeAdapters(): Promise<void> {
+  const initFns: Promise<void>[] = []
+
+  if (analyticsConfig.ga4.enabled) {
+    initFns.push(
+      import('../adapters/ga4/adapter')
+        .then((m) => {
+          ga4Adapter = m
+        })
+        .catch((err) => {
+          console.error('[Analytics] GA4 adapter init failed:', err)
+        }),
+    )
   }
 
-  if (!mixpanelAdapter && analyticsConfig.mixpanel.enabled) {
-    mixpanelAdapter = await import('../adapters/mixpanel/adapter')
+  if (analyticsConfig.mixpanel.enabled) {
+    initFns.push(
+      import('../adapters/mixpanel/adapter')
+        .then((m) => {
+          mixpanelAdapter = m
+        })
+        .catch((err) => {
+          console.error('[Analytics] Mixpanel adapter init failed:', err)
+        }),
+    )
   }
+
+  await Promise.all(initFns)
 }
 
 /**
@@ -52,6 +94,78 @@ export function getSessionId(): string {
   }
 
   return sessionId
+}
+
+/**
+ * Build a standardized event payload with enrichment.
+ */
+function buildPayload(event: ProductEvent, properties: Record<string, unknown>): EventPayload {
+  return {
+    event,
+    properties,
+    timestamp: new Date().toISOString(),
+    sessionId: getSessionId(),
+  }
+}
+
+/**
+ * Queue an event for delivery.
+ * If adapters are initialized, sends immediately. Otherwise, queues it.
+ */
+function queueOrSend(payload: EventPayload, destinations: string[]): void {
+  if (adaptersInitialized) {
+    sendToDestinations(payload, destinations)
+  } else {
+    if (eventQueue.length < MAX_QUEUE_SIZE) {
+      eventQueue.push(payload)
+    }
+    void getInitializationPromise()
+  }
+}
+
+/**
+ * Flush all queued events to their destinations.
+ * Called once when adapters finish initializing.
+ */
+function flushEventQueue(): void {
+  const queue = eventQueue.splice(0, eventQueue.length)
+  if (queue.length === 0) return
+
+  for (const payload of queue) {
+    const dests = getEventDestinations(payload.event)
+    sendToDestinations(payload, dests)
+  }
+}
+
+/**
+ * Send a payload to configured destinations.
+ */
+function sendToDestinations(payload: EventPayload, destinations: string[]): void {
+  if (destinations.includes('ga4') && analyticsConfig.ga4.enabled && ga4Adapter) {
+    ga4Adapter.sendToGA4(payload)
+  }
+
+  if (destinations.includes('mixpanel') && analyticsConfig.mixpanel.enabled && mixpanelAdapter) {
+    mixpanelAdapter.sendToMixpanel(payload)
+  }
+}
+
+function sendIdentify(userId: string, properties?: Record<string, unknown>): void {
+  if (analyticsConfig.mixpanel.enabled && mixpanelAdapter) {
+    mixpanelAdapter.identifyUser(userId, properties)
+  }
+}
+
+function sendAlias(userId: string, anonymousId?: string): void {
+  if (analyticsConfig.mixpanel.enabled && mixpanelAdapter) {
+    mixpanelAdapter.aliasUser(userId, anonymousId)
+  }
+}
+
+function sendReset(): void {
+  if (analyticsConfig.mixpanel.enabled && mixpanelAdapter) {
+    mixpanelAdapter.resetUser()
+  }
 }
 
 /**
@@ -84,12 +198,7 @@ export function track(event: ProductEvent, properties?: Record<string, unknown>)
     }
 
     // Enrich with session data
-    const payload: EventPayload = {
-      event,
-      properties: validation.data || {},
-      timestamp: new Date().toISOString(),
-      sessionId: getSessionId(),
-    }
+    const payload = buildPayload(event, validation.data || {})
 
     // Debug mode - log event
     if (analyticsConfig.debugMode) {
@@ -99,22 +208,8 @@ export function track(event: ProductEvent, properties?: Record<string, unknown>)
     // Get destinations for this event
     const destinations = getEventDestinations(event)
 
-    // Initialize adapters if needed
-    void initializeAdapters().then(() => {
-      // Send to GA4
-      if (destinations.includes('ga4') && analyticsConfig.ga4.enabled && ga4Adapter) {
-        ga4Adapter.sendToGA4(payload)
-      }
-
-      // Send to Mixpanel
-      if (
-        destinations.includes('mixpanel') &&
-        analyticsConfig.mixpanel.enabled &&
-        mixpanelAdapter
-      ) {
-        mixpanelAdapter.sendToMixpanel(payload)
-      }
-    })
+    // Queue or send immediately
+    queueOrSend(payload, destinations)
   } catch (err) {
     // Never break user flows
     console.error('[Analytics] Track failed:', err)
@@ -136,11 +231,9 @@ export function identify(userId: string, properties?: Record<string, unknown>): 
       console.log('[Analytics] Identify:', { userId, properties })
     }
 
-    void initializeAdapters().then(() => {
-      // Only Mixpanel handles user identification
-      if (analyticsConfig.mixpanel.enabled && mixpanelAdapter) {
-        mixpanelAdapter.identifyUser(userId, properties)
-      }
+    // Ensure adapters are initialized before identifying
+    void getInitializationPromise().then(() => {
+      sendIdentify(userId, properties)
     })
   } catch (err) {
     console.error('[Analytics] Identify failed:', err)
@@ -165,11 +258,9 @@ export function alias(userId: string, anonymousId?: string): void {
       console.log('[Analytics] Alias:', { userId, anonymousId })
     }
 
-    void initializeAdapters().then(() => {
-      // Only Mixpanel handles aliasing
-      if (analyticsConfig.mixpanel.enabled && mixpanelAdapter) {
-        mixpanelAdapter.aliasUser(userId, anonymousId)
-      }
+    // Ensure adapters are initialized before aliasing
+    void getInitializationPromise().then(() => {
+      sendAlias(userId, anonymousId)
     })
   } catch (err) {
     console.error('[Analytics] Alias failed:', err)
@@ -194,11 +285,8 @@ export function reset(): void {
     // Clear session tracking
     sessionStorage.removeItem('analytics_tracked_user_id')
 
-    void initializeAdapters().then(() => {
-      // Only Mixpanel handles user reset
-      if (analyticsConfig.mixpanel.enabled && mixpanelAdapter) {
-        mixpanelAdapter.resetUser()
-      }
+    void getInitializationPromise().then(() => {
+      sendReset()
     })
   } catch (err) {
     console.error('[Analytics] Reset failed:', err)
@@ -216,6 +304,9 @@ export function initializeAnalytics(): void {
   if (analyticsConfig.debugMode) {
     console.log('[Analytics] Initialized')
   }
+
+  // Trigger eager adapter initialization (non-blocking)
+  void getInitializationPromise()
 }
 
 /**

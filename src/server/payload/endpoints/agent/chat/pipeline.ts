@@ -229,21 +229,12 @@ export async function runChatPipeline(
     composedInstructions = await composeFullSystemInstructions(
       req.payload,
       lessonContext.lessonPrompt,
-      lessonContext.lessonContextText,
       reqLogger as Logger,
       lessonContext.coursePrompt,
       lessonContext.courseContextText,
       req.user?.id,
     )
   } catch (error) {
-    if (error instanceof Error && error.message.includes('exceeds maximum')) {
-      return {
-        response: Response.json(
-          { error: 'Lesson context exceeds maximum allowed size' },
-          { status: 400 },
-        ),
-      }
-    }
     throw error
   }
 

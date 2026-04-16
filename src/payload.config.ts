@@ -13,6 +13,7 @@ import { ConfigAuditLogs } from '@/server/payload/collections/ConfigAuditLogs'
 import { ConfigSecrets } from '@/server/payload/collections/ConfigSecrets'
 import { ConfigValues } from '@/server/payload/collections/ConfigValues'
 import { ContentPages } from '@/server/payload/collections/ContentPages'
+import { ContextExtractions } from '@/server/payload/collections/ContextExtractions'
 import { Conversations } from '@/server/payload/collections/Conversations'
 import { Courses } from '@/server/payload/collections/Courses'
 import { ExerciseAssets } from '@/server/payload/collections/ExerciseAssets'
@@ -136,19 +137,23 @@ export default buildConfig({
   db: mongooseAdapter({
     url: databaseUrl,
     connectOptions: {
-      // Hardened connection pool configuration to prevent Atlas connection exhaustion
-      // Tests: maxPoolSize=5 (default)
-      // Production: maxPoolSize=2 (default, configurable via MONGODB_MAX_POOL_SIZE)
-      // Rationale: With 500 connection limit, this allows 250 concurrent serverless instances
-      // vs only 5 instances with the previous maxPoolSize=100 setting
+      // ⚠️ CONNECTION POOL GUARDRAIL — DO NOT increase without updating the guardrail test
+      // Atlas limit: 500 connections. At maxPoolSize=N, max safe instances = 500/N.
+      // Default: 3 (production), 5 (tests). Override via MONGODB_MAX_POOL_SIZE env var.
+      // History: =100 caused outage, =10 caused Atlas alert, =3 is safe (166 instances).
+      // Guardrail test: tests/unit/mongodb-pool-config.test.ts
       maxPoolSize: parseInt(
-        process.env.MONGODB_MAX_POOL_SIZE ?? (process.env.VITEST ? '5' : '2'),
+        process.env.MONGODB_MAX_POOL_SIZE ?? (process.env.VITEST ? '5' : '3'),
         10,
       ),
       // Allow pool to fully drain when idle
       minPoolSize: 0,
       // Close idle connections after 10 seconds
       maxIdleTimeMS: 10000,
+      // Fail fast if MongoDB is unreachable — don't hang serverless functions
+      connectTimeoutMS: 5000,
+      // Socket timeout for long-running operations
+      socketTimeoutMS: 30000,
     },
   }),
   collections: [
@@ -165,6 +170,7 @@ export default buildConfig({
     Chapters,
     Lessons,
     ContentPages,
+    ContextExtractions,
     Exercises,
     ExtractionLogs,
     FormulaSheets,
@@ -312,6 +318,14 @@ export default buildConfig({
     }),
   },
   onInit: async (payload) => {
+    // Skip expensive init tasks on Vercel serverless — they run on every cold start
+    // and the tenant + seed data already exist in production. These ops are idempotent
+    // but waste ~500ms+ per new serverless instance spinning up.
+    const isVercelProduction = process.env.VERCEL === '1' && process.env.NODE_ENV === 'production'
+    if (isVercelProduction) {
+      payload.logger.info('[onInit] Skipping expensive init tasks on Vercel production')
+      return
+    }
     // Ensure default tenant exists BEFORE seedTeacherProfiles runs
     // This is required because TeacherProfilesSeed needs a tenant to link prompts to
     const defaultTenantSlug = process.env.DEFAULT_TENANT_SLUG || 'default'

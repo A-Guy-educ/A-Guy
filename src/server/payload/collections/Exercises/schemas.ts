@@ -8,6 +8,7 @@ export type ContentData = import('./types').ContentData
 // Import graphics contracts for Geometry and Axis schemas
 import { AxisSpecV1Schema } from '@/infra/contracts/graphics/axis.v1'
 import { GeometrySpecV1Schema } from '@/infra/contracts/graphics/geometry.v1'
+import { GuidedExplanationV1Schema } from '@/infra/contracts/guided-explanation/v1'
 
 // ---------------------------------
 // Zod: Inline Rich Text (NO id)
@@ -558,6 +559,12 @@ export const HtmlBlockSchema = z
         (html) => !DANGEROUS_HTML_PATTERNS.some((pattern) => pattern.test(html)),
         'HTML contains blocked content (event handlers, javascript:, vbscript:, or data: URLs)',
       ),
+    /**
+     * When present, the block renders a GuidedExplanationRunner (trusted
+     * engine) instead of static HTML. Gemini sends this as structured JSON
+     * — the scripts are ours, Gemini only sends parameters.
+     */
+    guidedExplanation: GuidedExplanationV1Schema.optional(),
   })
   .strict()
 

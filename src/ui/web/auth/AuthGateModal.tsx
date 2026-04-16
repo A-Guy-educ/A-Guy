@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 
+import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 import {
   Dialog,
   DialogContent,
@@ -22,6 +23,13 @@ interface AuthGateModalProps {
 export function AuthGateModal({ isOpen, title, description, returnTo }: AuthGateModalProps) {
   const t = useTranslations('accessControl')
 
+  const handleBrowseCoursesClick = () => {
+    systemEventBus.emit(SYSTEM_EVENTS.REGISTRATION_POPUP_ACTION, {
+      outcome: 'Did Not Register',
+      page_path: returnTo,
+    })
+  }
+
   return (
     <Dialog open={isOpen}>
       <DialogContent allowDismiss={false} className="sm:max-w-md">
@@ -33,6 +41,7 @@ export function AuthGateModal({ isOpen, title, description, returnTo }: AuthGate
           <GoogleLoginButton returnTo={returnTo} className="w-full" />
           <Link
             href="/courses"
+            onClick={handleBrowseCoursesClick}
             className="text-body-sm text-muted-foreground underline hover:text-foreground transition-all duration-normal"
           >
             {t('browseCourses')}

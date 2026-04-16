@@ -1,0 +1,19 @@
+All 8 integration tests passed. 
+
+## Summary
+
+The task to remove `lessonContextText` field from the Lessons collection is complete. In addition to the previously completed code changes, I updated **8 outdated comments** across these files to reflect the new architecture where context is stored in the `ContextExtractions` collection instead:
+
+| File | Change |
+|------|--------|
+| `src/app/api/lessons/convert-context/route.ts` | Updated comment |
+| `src/lib/context-exercise-parser/index.ts` | Updated 2 comments |
+| `src/server/services/lesson-context-conversion/extract-context.ts` | Updated 3 comments |
+| `src/server/services/lesson-context-conversion/validate-latex.ts` | Updated 1 comment |
+| `src/server/payload/collections/Lessons.ts` | Updated 1 comment |
+| `src/server/payload/collections/ContextExtractions.ts` | Updated 1 comment |
+
+**Verification:**
+- `pnpm typecheck` ✓
+- `pnpm lint` ✓ (pre-existing warnings only)
+- `pnpm exec vitest run tests/int/agent-chat.int.spec.ts` ✓ (8/8 tests passed)

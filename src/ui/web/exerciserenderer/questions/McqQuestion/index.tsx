@@ -28,6 +28,7 @@ interface McqQuestionProps {
  * Note: \frac does not occur as substring in \dfrac, so simple replacement is safe
  */
 function transformFractionsToDisplayStyle(content: string): string {
+  if (!content) return content
   return content.replace(/\\frac\b/g, '\\dfrac')
 }
 
@@ -65,13 +66,23 @@ export function McqQuestion({
 
   return (
     <div className="flex flex-col gap-content-gap">
-      <div className="text-body-md font-medium text-foreground leading-relaxed">
-        <RichTextRenderer block={promptBlock} />
+      {/* Question container — translucent in light mode, solid in dark */}
+      <div className="rounded-2xl border border-border/40 bg-background/60 dark:bg-card dark:border-border/60 dark:shadow-card p-content-gap">
+        {/* Color accent bar */}
+        <div
+          className="w-8 h-1 rounded-full mb-3"
+          style={{ backgroundColor: 'hsl(var(--tab-learn))' }}
+        />
+        <div className="text-body-md font-medium text-foreground leading-relaxed">
+          <RichTextRenderer block={promptBlock} />
+        </div>
       </div>
+
       <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted text-muted-foreground text-body-xs border border-border/20 w-fit">
         <AlertCircle className="w-3.5 h-3.5" />
         {question.answer.multiSelect ? t('selectMultiple') : t('selectOne')}
       </div>
+
       <div className="flex flex-col gap-3.5">
         {question.answer.options.map((option, index) => {
           const isSelected = selectedIds.includes(option.id)
@@ -91,17 +102,30 @@ export function McqQuestion({
               transition={{ duration: 0.3, delay: index * 0.06 }}
               whileHover={!disabled ? { y: -2 } : undefined}
               className={cn(
-                'flex items-start gap-3 p-card-padding-sm rounded-xl border-2 transition-all duration-normal cursor-pointer',
-                'bg-card shadow-elevation-1',
+                'relative flex items-start gap-3 p-card-padding-sm rounded-xl border-2 transition-all duration-normal cursor-pointer overflow-hidden',
+                'bg-background/50 dark:bg-card',
                 'focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2',
                 !disabled &&
                   !isSelected &&
-                  'border-border/30 hover:border-primary/20 hover:shadow-card-hover',
-                isSelected && 'border-primary bg-primary/6 shadow-elevation-2',
+                  'border-border/40 dark:border-border/50 hover:border-[hsl(var(--tab-learn)/0.5)] dark:hover:shadow-card-hover',
+                isSelected &&
+                  'border-[hsl(var(--tab-learn))] bg-[hsl(var(--tab-learn)/0.07)] dark:shadow-card-hover',
                 disabled && 'opacity-50 cursor-not-allowed',
               )}
               onClick={() => !question.answer.multiSelect && handleOptionClick(option.id)}
             >
+              {/* Colored left accent bar — shows on hover and selected */}
+              {!disabled && (
+                <div
+                  className={cn(
+                    'absolute start-0 top-0 bottom-0 w-1 rounded-l-xl transition-all duration-normal',
+                  )}
+                  style={{
+                    backgroundColor: isSelected ? 'hsl(var(--tab-learn))' : 'transparent',
+                    opacity: isSelected ? 1 : 0,
+                  }}
+                />
+              )}
               {question.answer.multiSelect ? (
                 <Checkbox
                   checked={isSelected}
@@ -113,8 +137,10 @@ export function McqQuestion({
                 <div
                   className={cn(
                     'w-6 h-6 mt-0.5 rounded-full border-2 flex items-center justify-center transition-all shrink-0',
-                    'border-border bg-background',
-                    isSelected && 'border-primary bg-primary ring-2 ring-primary/20 ring-offset-2',
+                    'bg-background',
+                    !isSelected && 'border-border',
+                    isSelected &&
+                      'border-[hsl(var(--tab-learn))] bg-[hsl(var(--tab-learn))] ring-2 ring-[hsl(var(--tab-learn)/0.2)] ring-offset-2',
                   )}
                 >
                   {isSelected && (
@@ -122,7 +148,7 @@ export function McqQuestion({
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-                      className="w-2.5 h-2.5 rounded-full bg-primary-foreground"
+                      className="w-2.5 h-2.5 rounded-full bg-white"
                     />
                   )}
                 </div>

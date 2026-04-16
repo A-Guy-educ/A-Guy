@@ -37,6 +37,8 @@ import type {
   PageViewedPayload,
   PdfViewedPayload,
   RegistrationCompletedPayload,
+  RegistrationPopupActionPayload,
+  RegistrationPopupShownPayload,
   RegistrationPromptShownPayload,
   SessionStartedPayload,
   SiteInitPayload,
@@ -87,6 +89,8 @@ export type SystemEventPayloads = {
   'system.photo_sent_to_chat': PhotoSentToChatPayload
   'system.login_modal_shown': LoginModalShownPayload
   'system.registration_prompt_shown': RegistrationPromptShownPayload
+  'system.registration_popup_shown': RegistrationPopupShownPayload
+  'system.registration_popup_action': RegistrationPopupActionPayload
   'system.registration_completed': RegistrationCompletedPayload
 
   // Exercise Help System

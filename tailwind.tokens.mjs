@@ -42,8 +42,8 @@ export const boxShadow = {
   'elevation-4': '0 10px 15px -3px rgb(0 0 0 / 0.1)',
 
   // Component-specific shadows
-  card: '0 2px 8px 0 rgb(0 0 0 / 0.08)',
-  'card-hover': '0 4px 12px 0 rgb(0 0 0 / 0.12)',
+  card: '0 4px 16px 0 rgb(0 0 0 / 0.10), 0 2px 6px -1px rgb(0 0 0 / 0.07)',
+  'card-hover': '0 8px 24px 0 rgb(0 0 0 / 0.15), 0 4px 8px -1px rgb(0 0 0 / 0.08)',
   modal: '0 10px 25px -5px rgb(0 0 0 / 0.15)',
   dropdown: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -1px rgb(0 0 0 / 0.06)',
   'focus-ring': '0 0 0 3px hsl(var(--ring) / 0.5)',

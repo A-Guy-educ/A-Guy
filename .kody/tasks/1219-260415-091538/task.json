@@ -1,0 +1,19 @@
+## Summary
+
+**Root Cause**: The security scanner's regex pattern `/withApiHandler\s*\(/` couldn't detect authentication when `withApiHandler` was used with TypeScript generics like `withApiHandler<T, U>({ auth: 'admin' })`. The `<T, U>` syntax caused the pattern to fail matching.
+
+**Fix**: Updated the regex pattern in `scripts/inspector/plugins/project/security-scanner/rules.ts` from:
+```javascript
+/withApiHandler\s*\(/
+```
+to:
+```javascript
+/withApiHandler(?:\s*<[^>]+>)?\s*\(/
+```
+
+This now correctly matches both `withApiHandler()` and `withApiHandler<T, U>()` syntax.
+
+**Verification**:
+- All 5 routes from the task are no longer falsely flagged
+- The security scanner unit tests pass (8/8)
+- The 2 remaining routes (`course-syllabus/route.ts`, `cron/warmup/route.ts`) are genuinely missing auth but weren't part of the original 5 findings

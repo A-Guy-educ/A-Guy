@@ -10,10 +10,36 @@ import config from '@payload-config'
 import {
   CHAT_ASSET_ALLOWED_MIME_TYPES,
   CHAT_ASSET_MAX_BYTES,
+  CHAT_ASSET_MIN_IMAGE_HEIGHT,
+  CHAT_ASSET_MIN_IMAGE_WIDTH,
   CHAT_ASSET_RETENTION_DAYS,
 } from '@/server/chat-assets/constants'
 import { head } from '@vercel/blob'
 import { isVercelBlobUrl } from '@/infra/blob/vercel-blob-adapter'
+import sharp from 'sharp'
+
+/**
+ * Get image dimensions from a URL using sharp
+ * Returns null if the file is not an image or cannot be read
+ */
+async function getImageDimensionsFromUrl(
+  url: string,
+): Promise<{ width: number; height: number } | null> {
+  try {
+    const response = await fetch(url)
+    if (!response.ok) {
+      return null
+    }
+    const buffer = await response.arrayBuffer()
+    const metadata = await sharp(Buffer.from(buffer)).metadata()
+    if (!metadata.width || !metadata.height) {
+      return null
+    }
+    return { width: metadata.width, height: metadata.height }
+  } catch {
+    return null
+  }
+}
 
 const finalizeSchema = z
   .object({
@@ -196,6 +222,26 @@ export async function POST(request: Request): Promise<Response> {
       )
     ) {
       return Response.json({ error: 'Content type not allowed' }, { status: 415 })
+    }
+
+    // Server-side image dimension validation for image types
+    if (blobContentType?.startsWith('image/')) {
+      const dimensions = await getImageDimensionsFromUrl(resolvedBlobUrl)
+      if (dimensions) {
+        if (
+          dimensions.width < CHAT_ASSET_MIN_IMAGE_WIDTH ||
+          dimensions.height < CHAT_ASSET_MIN_IMAGE_HEIGHT
+        ) {
+          return Response.json(
+            {
+              error: `Image is too small. Minimum size is ${CHAT_ASSET_MIN_IMAGE_WIDTH}x${CHAT_ASSET_MIN_IMAGE_HEIGHT} pixels, but this image is ${dimensions.width}x${dimensions.height} pixels.`,
+            },
+            { status: 422 },
+          )
+        }
+      }
+      // If dimensions cannot be determined, allow the upload to proceed
+      // (the client-side validation should have caught invalid images)
     }
 
     const expiresAt = new Date(Date.now() + CHAT_ASSET_RETENTION_DAYS * 24 * 60 * 60 * 1000)

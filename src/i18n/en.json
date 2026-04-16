@@ -380,7 +380,21 @@
       "clearCanvas": "Clear",
       "checkSolution": "Check Solution",
       "checking": "Checking...",
-      "uploadFailed": "Failed to upload image. Please try again."
+      "uploadFailed": "Failed to upload image. Please try again.",
+      "generateLesson": "Generate Explanation",
+      "generatingLesson": "Generating interactive explanation...",
+      "backToUpload": "Back to exercise",
+      "resumeLesson": "Resume video",
+      "startOver": "Start over",
+      "player": {
+        "stepOf": "Step {current} of {total}",
+        "subtitle": "Press the play button to build the proof step by step",
+        "playButton": "Explain & Build Proof",
+        "playing": "Playing...",
+        "resetButton": "Reset",
+        "claim": "Claim",
+        "reason": "Reason"
+      }
     }
   },
   "admin": {

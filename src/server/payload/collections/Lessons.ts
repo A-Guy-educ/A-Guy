@@ -305,6 +305,16 @@ export const Lessons: CollectionConfig = {
         },
       },
     },
+    // Context Exercise Viewer (displays parsed exercises from ContextExtractions)
+    {
+      name: 'contextExerciseViewer',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/ui/admin/context-exercise-viewer#ContextExerciseViewer',
+        },
+      },
+    },
     // --- Lesson Content ---
     {
       name: 'contentFiles',
@@ -324,16 +334,6 @@ export const Lessons: CollectionConfig = {
           Field: '@/ui/admin/exercise-conversion/LessonConversionPanel#LessonConversionPanel',
         },
       },
-    },
-    {
-      name: 'lessonContextText',
-      type: 'textarea',
-      maxLength: 100_000, // Match LESSON_CONTEXT_MAX_CHARS in src/lib/ai/lesson-context.ts
-      admin: {
-        description:
-          'AI context text for this lesson. Injected into chat prompts at runtime. NOT indexed or searchable.',
-      },
-      // NOT indexed, NOT required
     },
     {
       name: 'prompt',

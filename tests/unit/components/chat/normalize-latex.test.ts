@@ -3,12 +3,12 @@ import { describe, expect, it } from 'vitest'
 
 describe('normalizeLatexDelimiters', () => {
   describe('block math \\[...\\]', () => {
-    it('converts \\[ to $$ with newlines', () => {
-      expect(normalizeLatexDelimiters('\\[')).toBe('\n$$\n')
+    it('leaves lone \\[ unchanged (streaming safety)', () => {
+      expect(normalizeLatexDelimiters('\\[')).toBe('\\[')
     })
 
-    it('converts \\] to $$ with newlines', () => {
-      expect(normalizeLatexDelimiters('\\]')).toBe('\n$$\n')
+    it('leaves lone \\] unchanged (streaming safety)', () => {
+      expect(normalizeLatexDelimiters('\\]')).toBe('\\]')
     })
 
     it('converts full block math expression', () => {
@@ -27,12 +27,12 @@ describe('normalizeLatexDelimiters', () => {
   })
 
   describe('inline math \\(...\\) preserved as inline', () => {
-    it('converts \\( to $', () => {
-      expect(normalizeLatexDelimiters('\\(')).toBe('$')
+    it('leaves lone \\( unchanged (streaming safety)', () => {
+      expect(normalizeLatexDelimiters('\\(')).toBe('\\(')
     })
 
-    it('converts \\) to $', () => {
-      expect(normalizeLatexDelimiters('\\)')).toBe('$')
+    it('leaves lone \\) unchanged (streaming safety)', () => {
+      expect(normalizeLatexDelimiters('\\)')).toBe('\\)')
     })
 
     it('converts full inline math expression to inline $...$', () => {
@@ -76,13 +76,12 @@ describe('normalizeLatexDelimiters', () => {
   })
 
   describe('JSON-escaped backslashes', () => {
-    it('converts JSON-escaped \\[ to $$', () => {
-      // Double backslash - JSON escaped version
-      expect(normalizeLatexDelimiters('\\\\[')).toBe('\n$$\n')
+    it('leaves lone JSON-escaped \\[ unchanged (streaming safety)', () => {
+      expect(normalizeLatexDelimiters('\\\\[')).toBe('\\\\[')
     })
 
-    it('converts JSON-escaped \\] to $$', () => {
-      expect(normalizeLatexDelimiters('\\\\]')).toBe('\n$$\n')
+    it('leaves lone JSON-escaped \\] unchanged (streaming safety)', () => {
+      expect(normalizeLatexDelimiters('\\\\]')).toBe('\\\\]')
     })
 
     it('converts full JSON-escaped block math expression', () => {
@@ -91,12 +90,12 @@ describe('normalizeLatexDelimiters', () => {
       expect(normalizeLatexDelimiters(input)).toBe(expected)
     })
 
-    it('converts JSON-escaped \\( to $', () => {
-      expect(normalizeLatexDelimiters('\\\\(')).toBe('$')
+    it('leaves lone JSON-escaped \\( unchanged (streaming safety)', () => {
+      expect(normalizeLatexDelimiters('\\\\(')).toBe('\\\\(')
     })
 
-    it('converts JSON-escaped \\) to $', () => {
-      expect(normalizeLatexDelimiters('\\\\)')).toBe('$')
+    it('leaves lone JSON-escaped \\) unchanged (streaming safety)', () => {
+      expect(normalizeLatexDelimiters('\\\\)')).toBe('\\\\)')
     })
 
     it('converts full JSON-escaped inline math expression to inline $', () => {
@@ -107,17 +106,17 @@ describe('normalizeLatexDelimiters', () => {
   })
 
   describe('triple-escaped backslashes (LLM over-escaping)', () => {
-    it('converts triple-escaped \\\\\\[ to $$', () => {
-      expect(normalizeLatexDelimiters('\\\\\\[')).toBe('\n$$\n')
+    it('leaves lone triple-escaped \\\\\\[ unchanged (streaming safety)', () => {
+      expect(normalizeLatexDelimiters('\\\\\\[')).toBe('\\\\\\[')
     })
 
-    it('converts triple-escaped \\\\\\] to $$', () => {
-      expect(normalizeLatexDelimiters('\\\\\\]')).toBe('\n$$\n')
+    it('leaves lone triple-escaped \\\\\\] unchanged (streaming safety)', () => {
+      expect(normalizeLatexDelimiters('\\\\\\]')).toBe('\\\\\\]')
     })
 
-    it('converts triple-escaped inline delimiters to inline $', () => {
-      expect(normalizeLatexDelimiters('\\\\\\(')).toBe('$')
-      expect(normalizeLatexDelimiters('\\\\\\)')).toBe('$')
+    it('leaves lone triple-escaped inline delimiters unchanged (streaming safety)', () => {
+      expect(normalizeLatexDelimiters('\\\\\\(')).toBe('\\\\\\(')
+      expect(normalizeLatexDelimiters('\\\\\\)')).toBe('\\\\\\)')
     })
 
     it('normalizes over-escaped LaTeX commands (\\\\frac → \\frac) and wraps in $', () => {
@@ -157,6 +156,35 @@ describe('normalizeLatexDelimiters', () => {
       const input = '\\[ a \\] and \\[ b \\]'
       const expected = '\n\n$$\na\n$$\n\n and \n\n$$\nb\n$$\n\n'
       expect(normalizeLatexDelimiters(input)).toBe(expected)
+    })
+  })
+
+  describe('deep indentation collapsing (prevents <pre><code> blocks)', () => {
+    it('collapses 8-space indentation to prevent code blocks', () => {
+      const input = '1.  **Title:**\n        text with \\(f\\) here'
+      const result = normalizeLatexDelimiters(input)
+      // 8 spaces should be halved to 4, then to 2
+      expect(result).not.toMatch(/^ {4,}/m)
+      expect(result).toContain('$f$')
+    })
+
+    it('collapses 4-space indentation', () => {
+      const input = '    *   text with \\(x\\) math'
+      const result = normalizeLatexDelimiters(input)
+      expect(result).not.toMatch(/^ {4,}/m)
+      expect(result).toContain('$x$')
+    })
+
+    it('preserves 2-space indentation', () => {
+      const input = '  - nested item'
+      expect(normalizeLatexDelimiters(input)).toBe('  - nested item')
+    })
+
+    it('handles nested list with math that would become code block', () => {
+      const input = '1.  **Title:**\n    *   כאשר \\(\\mu\\) הוא הממוצע\n        \\[f(x) = x^2\\]'
+      const result = normalizeLatexDelimiters(input)
+      expect(result).toContain('$\\mu$')
+      expect(result).toContain('$$')
     })
   })
 
@@ -221,6 +249,21 @@ describe('normalizeLatexDelimiters', () => {
     it('preserves array index brackets [0]', () => {
       const input = 'array[0] = 5'
       expect(normalizeLatexDelimiters(input)).toBe(input)
+    })
+
+    it('preserves \\left[...\\right] inside display math', () => {
+      const input = '\\[ \\int f(\\tau) \\left[ \\int g(t-\\tau) dt \\right] d\\tau \\]'
+      const result = normalizeLatexDelimiters(input)
+      expect(result).toContain('\\left[')
+      expect(result).toContain('\\right]')
+      expect(result).toContain('$$')
+    })
+
+    it('preserves \\bigl[...\\bigr] inside display math', () => {
+      const input = '\\[ \\bigl[ \\frac{a}{b} \\bigr] \\]'
+      const result = normalizeLatexDelimiters(input)
+      expect(result).toContain('\\bigl[')
+      expect(result).toContain('\\bigr]')
     })
 
     it('handles Hebrew text before bare bracket math', () => {
@@ -321,6 +364,42 @@ describe('normalizeLatexDelimiters', () => {
       expect(result).toContain('\n$$\n')
       expect(result).toContain('a + b')
       expect(result).toContain('c + d')
+    })
+  })
+
+  describe('inline $ internal spacing (LLM outputs $ x $ with spaces)', () => {
+    it('trims spaces inside $ delimiters: $ x $ → $x$', () => {
+      const input = '$ x $'
+      expect(normalizeLatexDelimiters(input)).toBe('$x$')
+    })
+
+    it('trims spaces around LaTeX commands: $ \\mu $ → $\\mu$', () => {
+      const input = '$ \\mu $'
+      expect(normalizeLatexDelimiters(input)).toBe('$\\mu$')
+    })
+
+    it('trims spaces in complex expression: $ \\frac{a}{b} $ → $\\frac{a}{b}$', () => {
+      const input = '$ \\frac{a}{b} $'
+      expect(normalizeLatexDelimiters(input)).toBe('$\\frac{a}{b}$')
+    })
+
+    it('handles multiple spaced inline math in one string', () => {
+      const input = '$ X $ הוא הערך ו$ \\mu $ הוא הממוצע'
+      const result = normalizeLatexDelimiters(input)
+      expect(result).toContain('$X$')
+      expect(result).toContain('$\\mu$')
+    })
+
+    it('does not trim tight $...$ (already correct)', () => {
+      const input = '$x$ and $\\mu$'
+      expect(normalizeLatexDelimiters(input)).toBe('$x$ and $\\mu$')
+    })
+
+    it('handles mixed spaced and tight inline math', () => {
+      const input = '$ \\sigma $ and $x$'
+      const result = normalizeLatexDelimiters(input)
+      expect(result).toContain('$\\sigma$')
+      expect(result).toContain('$x$')
     })
   })
 

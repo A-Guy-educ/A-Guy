@@ -47,10 +47,10 @@ export function ExerciseTable({
 }: ExerciseTableProps) {
   const resultMap = getCellResultMap(cellResults)
   const alignClass = { left: 'text-left', center: 'text-center', right: 'text-right' }
-  const borderCls = table.showBorders ? 'border border-border/30' : 'border-0'
+  const borderCls = table.showBorders ? 'border border-border/40' : 'border-0'
 
   return (
-    <div className="w-full overflow-x-auto rounded-xl border border-border/20 shadow-elevation-1">
+    <div className="w-full overflow-x-auto rounded-xl border border-border/40 bg-background/60 dark:bg-card dark:shadow-card">
       <table
         className={cn('w-full border-collapse table-fixed', table.showBorders && 'overflow-hidden')}
       >
@@ -61,10 +61,10 @@ export function ExerciseTable({
                 <th
                   key={ci}
                   className={cn(
-                    'p-3.5 font-semibold text-body-sm bg-muted/50',
+                    'p-3.5 font-bold text-body-sm text-foreground',
                     alignClass[getAlignment(table, ci)],
                     borderCls,
-                    'border-b-2 border-b-border/20',
+                    'border-b-2 border-b-border/50 bg-muted/30',
                   )}
                 >
                   <MathMarkdown content={header} />
@@ -80,7 +80,7 @@ export function ExerciseTable({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.2, delay: ri * 0.03 }}
-              className={ri % 2 === 1 ? 'bg-muted/15' : ''}
+              className={ri % 2 === 1 ? 'bg-[hsl(var(--tab-learn)/0.02)]' : ''}
             >
               {row.map((cell, ci) => {
                 const key = `${ri}-${ci}`
@@ -89,7 +89,10 @@ export function ExerciseTable({
                 const align = getAlignment(table, ci)
 
                 return (
-                  <td key={ci} className={cn('p-3.5', alignClass[align], borderCls)}>
+                  <td
+                    key={ci}
+                    className={cn('p-3.5', alignClass[align], 'border border-border/30')}
+                  >
                     {fillable ? (
                       <FillableInput
                         cellKey={key}
@@ -134,15 +137,16 @@ function FillableInput({ cellKey, value, onChange, result, disabled, align }: Fi
         onChange={(e) => onChange(cellKey, e.target.value)}
         readOnly={disabled}
         className={cn(
-          'w-full min-w-[120px] px-3 py-2 rounded-lg border-2 text-body-sm',
-          'bg-background transition-all duration-normal',
+          'w-full min-w-[120px] px-3 py-2 rounded-lg border-2 text-body-sm transition-all duration-normal',
           align === 'left' && 'text-left',
           align === 'center' && 'text-center',
           align === 'right' && 'text-right',
-          result === true && 'border-success bg-success/6 text-success-foreground pe-8',
-          result === false && 'border-destructive bg-destructive/6 text-destructive pe-8',
+          result === true &&
+            'border-success bg-success/10 text-success-foreground pe-8 shadow-card',
+          result === false &&
+            'border-destructive bg-destructive/10 text-destructive pe-8 shadow-card',
           result === undefined &&
-            'border-dashed border-primary/25 bg-primary/3 focus:border-solid focus:border-primary focus:bg-card focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.08)] focus:outline-none',
+            'border-[hsl(var(--tab-learn)/0.4)] bg-[hsl(var(--tab-learn)/0.04)] focus:border-solid focus:border-[hsl(var(--tab-learn))] focus:bg-card focus:shadow-[0_0_0_3px_hsl(var(--tab-learn)/0.15)] focus:outline-none',
           disabled && 'opacity-50 cursor-not-allowed',
         )}
       />

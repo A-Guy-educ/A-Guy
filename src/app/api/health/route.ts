@@ -34,7 +34,16 @@ export async function GET(): Promise<
   const gitSha = process.env.GIT_SHA || 'unknown'
   const timestamp = new Date().toISOString()
 
-  return NextResponse.json({ ok, checks, version, gitSha, timestamp }, { status: ok ? 200 : 503 })
+  return NextResponse.json(
+    { ok, checks, version, gitSha, timestamp },
+    {
+      status: ok ? 200 : 503,
+      headers: {
+        'Cache-Control': 'no-store',
+        'X-Health-Check': 'ok',
+      },
+    },
+  )
 }
 
 // Simple ping endpoint for load balancers - no expensive operations

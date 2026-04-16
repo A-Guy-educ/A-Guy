@@ -41,8 +41,6 @@ interface ExercisesPagerProps {
   lessonSlug: string
   lessonId: string
   mediaMap?: Record<string, MediaType>
-  /** Whether the lesson has context text (controls chat visibility) */
-  hasLessonContext?: boolean
   /** Whether the lesson has exercises (controls chat visibility) */
   hasExercises?: boolean
   /** Formula sheet data (passed to ChatInterface) */
@@ -58,7 +56,6 @@ export function ExercisesPager({
   lessonSlug,
   lessonId,
   mediaMap,
-  hasLessonContext,
   hasExercises,
   formulaSheet,
 }: ExercisesPagerProps) {
@@ -304,7 +301,7 @@ export function ExercisesPager({
           </div>
         }
         chatContent={
-          hasLessonContext || hasExercises ? (
+          hasExercises ? (
             <ChatInterface
               lessonId={lessonId}
               exerciseId={currentExercise.id}

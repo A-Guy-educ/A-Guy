@@ -15,7 +15,6 @@ import { resolveTeacherProfile } from '@/server/services/teacher-profile-resolve
 import type { ResolvedContext } from './context-resolution'
 
 interface LessonContext {
-  lessonContextText?: string
   lessonPrompt: Prompt | null
   courseContextText?: string
   coursePrompt: Prompt | null
@@ -38,8 +37,6 @@ async function fetchLessonContext(
     overrideAccess: false,
   })
 
-  const lessonContextText =
-    (lesson as { lessonContextText?: string }).lessonContextText ?? undefined
   let lessonPrompt: Prompt | null = null
 
   // Fetch prompt separately if lesson has one (admin-only, requires override)
@@ -61,7 +58,7 @@ async function fetchLessonContext(
     }
   }
 
-  return { lessonContextText, lessonPrompt, courseContextText: undefined, coursePrompt: null }
+  return { lessonPrompt, courseContextText: undefined, coursePrompt: null }
 }
 
 /**
@@ -83,7 +80,6 @@ async function fetchExerciseLessonContext(
 
   if (!(exercise as { lesson?: unknown }).lesson) {
     return {
-      lessonContextText: undefined,
       lessonPrompt: null,
       courseContextText: undefined,
       coursePrompt: null,
@@ -104,8 +100,6 @@ async function fetchExerciseLessonContext(
       overrideAccess: true, // Use overrideAccess since student role may not have lesson read access
     })
 
-    const lessonContextText =
-      (lesson as { lessonContextText?: string }).lessonContextText ?? undefined
     let lessonPrompt: Prompt | null = null
 
     // Fetch prompt separately if lesson has one
@@ -127,14 +121,13 @@ async function fetchExerciseLessonContext(
       }
     }
 
-    return { lessonContextText, lessonPrompt, courseContextText: undefined, coursePrompt: null }
+    return { lessonPrompt, courseContextText: undefined, coursePrompt: null }
   } catch (error) {
     reqLogger.warn(
       { err: error, lessonId, exerciseId },
       'Failed to fetch lesson for exercise context, continuing without lesson context',
     )
     return {
-      lessonContextText: undefined,
       lessonPrompt: null,
       courseContextText: undefined,
       coursePrompt: null,
@@ -214,7 +207,6 @@ export async function fetchLessonContextForContext(
     lessonContext = await fetchExerciseLessonContext(payload, context.value, user, reqLogger)
   } else {
     lessonContext = {
-      lessonContextText: undefined,
       lessonPrompt: null,
       courseContextText: undefined,
       coursePrompt: null,
@@ -258,7 +250,6 @@ export interface ComposedSystemInstructions {
 export async function composeFullSystemInstructions(
   payload: Payload,
   lessonPrompt: Prompt | null,
-  lessonContextText: string | undefined,
   reqLogger: Logger,
   coursePrompt?: Prompt | null,
   courseContextText?: string,
@@ -310,12 +301,10 @@ export async function composeFullSystemInstructions(
     'Resolved teacher profile',
   )
 
-  // Compose final system instructions: system prompts + teacher profile + lesson/course prompt + lesson/course context
-  // Priority: lesson context > course context
+  // Compose final system instructions: system prompts + teacher profile + lesson/course prompt + course context
   const instructions = composeSystemInstructions(
     systemPromptsResult.templates,
     promptResolution.template,
-    lessonContextText || courseContextText,
     teacherProfileBlock,
   )
 

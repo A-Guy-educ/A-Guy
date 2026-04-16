@@ -156,6 +156,7 @@ function resolveModelConfig(modelKey: AIModelKey): AIModel {
   return {
     name: getProviderModelName(LLMProviderType.GEMINI, modelKey),
     ...entry,
+    modelKey,
   }
 }
 

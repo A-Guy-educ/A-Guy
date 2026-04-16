@@ -380,7 +380,21 @@
       "clearCanvas": "נקה",
       "checkSolution": "בדוק פתרון",
       "checking": "בודק...",
-      "uploadFailed": "העלאת התמונה נכשלה. נסה שוב."
+      "uploadFailed": "העלאת התמונה נכשלה. נסה שוב.",
+      "generateLesson": "צור הסבר אינטראקטיבי",
+      "generatingLesson": "יוצר הסבר אינטראקטיבי...",
+      "backToUpload": "חזרה לתרגיל",
+      "resumeLesson": "המשך סרטון",
+      "startOver": "התחל מחדש",
+      "player": {
+        "stepOf": "שלב {current} מתוך {total}",
+        "subtitle": "לחצו על כפתור ההפעלה כדי לבנות את ההוכחה שלב אחר שלב",
+        "playButton": "הסבר ובנית ההוכחה",
+        "playing": "מופעל...",
+        "resetButton": "איפוס",
+        "claim": "טענה",
+        "reason": "נימוק"
+      }
     }
   },
   "admin": {

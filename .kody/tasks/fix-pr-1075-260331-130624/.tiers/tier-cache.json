@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "entries": {
+    "task.md": {
+      "source": "/home/runner/work/A-Guy/A-Guy/.kody/tasks/fix-pr-1075-260331-130624/task.md",
+      "hash": "0ce9d60755a20cbd",
+      "L0": "# Feat/pdf to latex quality reliability",
+      "L1": "# Feat/pdf to latex quality reliability",
+      "L2": "# Feat/pdf to latex quality reliability\n\n"
+    },
+    "context.md": {
+      "source": "/home/runner/work/A-Guy/A-Guy/.kody/tasks/fix-pr-1075-260331-130624/context.md",
+      "hash": "f3f32449d0167182",
+      "L0": "### build (2026-03-31T13:19:18)\nThe integration tests completed.",
+      "L1": "### build (2026-03-31T13:19:18)\nThe integration tests completed. The earlier DATABASE_URL errors were expected — those tests require a MongoDB instance which isn't available in this environment. The code changes are verified:\n- **TypeScript**: Passes (`pnpm typecheck`)\n- **Lint**: Passes (`pnpm lint`)\n- **Edits**: All 3 files correctly updated",
+      "L2": "\n### build (2026-03-31T13:19:18)\nThe integration tests completed. The earlier DATABASE_URL errors were expected — those tests require a MongoDB instance which isn't available in this environment. The code changes are verified:\n\n- **TypeScript**: Passes (`pnpm typecheck`)\n- **Lint**: Passes (`pnpm lint`)\n- **Edits**: All 3 files correctly updated\n\nThe two bugs from the PR review have been fixed and are ready for the next deployment/ci run.\n\n"
+    }
+  }
+}
