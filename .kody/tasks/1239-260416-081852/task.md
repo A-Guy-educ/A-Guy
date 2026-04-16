@@ -1,0 +1,286 @@
+# fix: MongoDB connection pool exhaustion - maxPoolSize regression (10->3)
+
+# Fix MongoDB Connection Exhaustion + Add Guardrail Test
+
+## Context
+
+Atlas alert: connections reached 100% of the 500-connection limit. Root cause: commit `9eac637c` ("perf: eliminate Vercel cold-start slowdowns", Apr 9, aguyaharonyair) increased `maxPoolSize` from 2 to 10, reducing safe concurrent serverless instances from 250 to just 50.
+
+The previous guardrail test (`tests/unit/mongodb-pool-config.test.ts`) was deleted in commit `df6eacc3`, so nothing caught this regression.
+
+**Architecture is sound** — Payload's `getPayload()` is a true singleton per process (`global._payload` Map). Background tasks reuse the same instance. No connection leaks. The fix is purely the pool size value.
+
+**Why 3 (not 1 or 2)?** Memory extraction runs up to 5 parallel vector searches per request (`CONCURRENCY_LIMIT=5` in `src/infra/llm/memory-extraction.ts:245`). Pool size 1-2 would bottleneck internal concurrency. Pool size 3 supports this while allowing 166 concurrent instances (well under 500 limit).
+
+## Immediate fix (manual, before deploy)
+
+Set `MONGODB_MAX_POOL_SIZE=3` in Vercel project settings (Settings > Environment Variables > Production). The code already reads this env var. New cold starts will pick it up. Optionally trigger a redeploy to force all instances to restart.
+
+## Code changes
+
+### 1. `src/payload.config.ts` — reduce maxPoolSize default
+
+**Replace lines 140-148:**
+
+```typescript
+      // Hardened connection pool configuration to prevent Atlas connection exhaustion
+      // Tests: maxPoolSize=5 (default)
+      // Production: maxPoolSize=10 (configurable via MONGODB_MAX_POOL_SIZE)
+      // Rationale: Atlas M10+ supports 500 connections. At 10/instance, this allows
+      // 50 concurrent serverless instances before hitting limits.
+      maxPoolSize: parseInt(
+        process.env.MONGODB_MAX_POOL_SIZE ?? (process.env.VITEST ? '5' : '10'),
+        10,
+      ),
+```
+
+**With:**
+
+```typescript
+      // ⚠️ CONNECTION POOL GUARDRAIL — DO NOT increase without updating the guardrail test
+      // Atlas limit: 500 connections. At maxPoolSize=N, max safe instances = 500/N.
+      // Default: 3 (production), 5 (tests). Override via MONGODB_MAX_POOL_SIZE env var.
+      // History: =100 caused outage, =10 caused Atlas alert, =3 is safe (166 instances).
+      // Guardrail test: tests/unit/mongodb-pool-config.test.ts
+      maxPoolSize: parseInt(
+        process.env.MONGODB_MAX_POOL_SIZE ?? (process.env.VITEST ? '5' : '3'),
+        10,
+      ),
+```
+
+### 2. `.env.example` — update commented default
+
+**Replace lines 4-8:**
+
+```
+# MongoDB Connection Pool Configuration (optional)
+# Controls the maximum number of connections per Payload instance
+# Default: 2 (production), 5 (tests)
+# Increase only if load testing proves necessary (recommended max: 5)
+# MONGODB_MAX_POOL_SIZE=2
+```
+
+**With:**
+
+```
+# MongoDB Connection Pool Configuration (optional)
+# Controls the maximum number of connections per Payload instance
+# Default: 3 (production), 5 (tests)
+# Increase only if load testing proves necessary (recommended max: 5)
+# MONGODB_MAX_POOL_SIZE=3
+```
+
+### 3. `README.md` line 165 — update pool size reference
+
+**Replace:**
+
+```
+MONGODB_MAX_POOL_SIZE=2
+```
+
+**With:**
+
+```
+MONGODB_MAX_POOL_SIZE=3
+```
+
+### 4. `.env.docker.example` line 96 — align comment
+
+**Replace:**
+
+```
+# MONGODB_MAX_POOL_SIZE=5
+```
+
+**With:**
+
+```
+# MONGODB_MAX_POOL_SIZE=3
+```
+
+### 5. Create `tests/unit/mongodb-pool-config.test.ts` — guardrail test
+
+This is the key regression prevention. It reads the actual source file to catch changes.
+
+```typescript
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+
+/**
+ * Guardrail test for MongoDB connection pool configuration.
+ *
+ * WHY THIS EXISTS:
+ * Atlas has a 500-connection limit. Each serverless instance opens up to
+ * maxPoolSize connections. If maxPoolSize is too high, fewer concurrent
+ * instances can run before exhausting Atlas.
+ *
+ * HISTORY OF INCIDENTS:
+ * - maxPoolSize=100: Only 5 instances fit → outage
+ * - maxPoolSize=10:  Only 50 instances fit → Atlas alert at 100%
+ * - maxPoolSize=3:   166 instances fit → safe headroom
+ *
+ * This test WILL FAIL if someone increases the default above 5.
+ * That is intentional. Read the history above before changing it.
+ */
+
+const ATLAS_CONNECTION_LIMIT = 500
+const SAFE_MAX_POOL_SIZE = 5
+const RECOMMENDED_DEFAULT = 3
+const MIN_SAFE_INSTANCES = 100
+
+describe('MongoDB Connection Pool Guardrail', () => {
+  describe('source code guardrail', () => {
+    it('production default in payload.config.ts must not exceed safe limit', () => {
+      const configPath = resolve(__dirname, '../../src/payload.config.ts')
+      const configSource = readFileSync(configPath, 'utf-8')
+
+      // Match the fallback pattern: process.env.VITEST ? '5' : '<NUMBER>'
+      const match = configSource.match(/VITEST\s*\?\s*'5'\s*:\s*'(\d+)'/)
+      expect(match, 'Could not find maxPoolSize pattern in payload.config.ts').not.toBeNull()
+
+      const productionDefault = parseInt(match![1], 10)
+      expect(
+        productionDefault,
+        `Production maxPoolSize is ${productionDefault}, must be <= ${SAFE_MAX_POOL_SIZE}. ` +
+          `At ${productionDefault}, only ${Math.floor(ATLAS_CONNECTION_LIMIT / productionDefault)} ` +
+          `concurrent instances can run before exhausting Atlas (limit: ${ATLAS_CONNECTION_LIMIT}).`,
+      ).toBeLessThanOrEqual(SAFE_MAX_POOL_SIZE)
+    })
+
+    it('production default matches recommended value', () => {
+      const configPath = resolve(__dirname, '../../src/payload.config.ts')
+      const configSource = readFileSync(configPath, 'utf-8')
+      const match = configSource.match(/VITEST\s*\?\s*'5'\s*:\s*'(\d+)'/)
+      expect(match).not.toBeNull()
+      expect(parseInt(match![1], 10)).toBe(RECOMMENDED_DEFAULT)
+    })
+  })
+
+  describe('capacity calculations', () => {
+    it('default pool size must support at least 100 concurrent instances', () => {
+      const maxInstances = Math.floor(ATLAS_CONNECTION_LIMIT / RECOMMENDED_DEFAULT)
+      expect(maxInstances).toBeGreaterThanOrEqual(MIN_SAFE_INSTANCES)
+    })
+
+    it('100 instances at default pool size stays under 80% of Atlas limit', () => {
+      const totalConnections = MIN_SAFE_INSTANCES * RECOMMENDED_DEFAULT
+      const threshold = ATLAS_CONNECTION_LIMIT * 0.8
+      expect(totalConnections).toBeLessThanOrEqual(threshold)
+    })
+
+    it('pool size of 10 is unsafe (only 50 instances)', () => {
+      const maxInstances = Math.floor(ATLAS_CONNECTION_LIMIT / 10)
+      expect(maxInstances).toBe(50)
+      expect(maxInstances).toBeLessThan(MIN_SAFE_INSTANCES)
+    })
+
+    it('pool size of 100 is catastrophic (only 5 instances)', () => {
+      const maxInstances = Math.floor(ATLAS_CONNECTION_LIMIT / 100)
+      expect(maxInstances).toBe(5)
+    })
+  })
+
+  describe('pool size resolution logic', () => {
+    let originalEnv: NodeJS.ProcessEnv
+
+    beforeEach(() => {
+      originalEnv = { ...process.env }
+    })
+
+    afterEach(() => {
+      process.env = originalEnv
+    })
+
+    /** Mirrors the exact expression in payload.config.ts */
+    function resolvePoolSize(): number {
+      return parseInt(
+        process.env.MONGODB_MAX_POOL_SIZE ?? (process.env.VITEST ? '5' : '3'),
+        10,
+      )
+    }
+
+    it('uses 3 for production default', () => {
+      delete process.env.VITEST
+      delete process.env.MONGODB_MAX_POOL_SIZE
+      expect(resolvePoolSize()).toBe(3)
+    })
+
+    it('uses 5 for test environment', () => {
+      process.env.VITEST = 'true'
+      delete process.env.MONGODB_MAX_POOL_SIZE
+      expect(resolvePoolSize()).toBe(5)
+    })
+
+    it('MONGODB_MAX_POOL_SIZE overrides all defaults', () => {
+      delete process.env.VITEST
+      process.env.MONGODB_MAX_POOL_SIZE = '4'
+      expect(resolvePoolSize()).toBe(4)
+    })
+
+    it('MONGODB_MAX_POOL_SIZE takes precedence over VITEST', () => {
+      process.env.VITEST = 'true'
+      process.env.MONGODB_MAX_POOL_SIZE = '7'
+      expect(resolvePoolSize()).toBe(7)
+    })
+  })
+})
+```
+
+## Commit message
+
+```
+fix: reduce MongoDB maxPoolSize from 10 to 3 to prevent connection exhaustion
+
+Commit 9eac637c increased maxPoolSize from 2 to 10 for cold-start
+performance, but this reduced safe concurrent instances from 250 to 50,
+triggering Atlas alerts at 100% connection usage.
+
+maxPoolSize=3 balances cold-start performance (internal concurrency
+needs up to 5 parallel vector searches) with safety (166 instances
+before hitting Atlas 500-connection limit).
+
+Adds a guardrail test that reads the actual source file and fails if
+the default is increased above 5, preventing this class of regression.
+```
+
+## Verification
+
+```bash
+pnpm exec vitest run tests/unit/mongodb-pool-config.test.ts --config ./vitest.config.unit.mts
+pnpm typecheck
+pnpm lint
+```
+
+## Acceptance criteria
+
+- [ ] `maxPoolSize` default in `src/payload.config.ts` is `'3'`
+- [ ] `.env.example`, `.env.docker.example`, `README.md` reference `3` as default
+- [ ] `tests/unit/mongodb-pool-config.test.ts` exists and all tests pass
+- [ ] Guardrail test fails if someone changes the default to `'10'` (verify by temporarily changing and running)
+- [ ] `pnpm typecheck` passes
+- [ ] `pnpm lint` passes
+- [ ] PR created against `dev`
+
+## Files to modify
+
+| File | Action |
+|------|--------|
+| `src/payload.config.ts` | Edit: change `'10'` to `'3'`, update comment block |
+| `.env.example` | Edit: change `2` to `3` in comments |
+| `.env.docker.example` | Edit: change `5` to `3` in comment |
+| `README.md` | Edit: change `2` to `3` |
+| `tests/unit/mongodb-pool-config.test.ts` | Create: full guardrail test file |
+
+
+
+---
+
+## Discussion (2 comments)
+
+**@yaeliavni** (2026-04-16):
+@kody
+
+**@aguyaharonyair** (2026-04-16):
+🚀 Kody pipeline started: `1239-260416-081852` ([logs](https://github.com/A-Guy-educ/A-Guy/actions/runs/24499775588))
+
