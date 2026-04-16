@@ -1,0 +1,23 @@
+## Summary
+
+The task is complete. Here's the status:
+
+**PR #1240** - `fix: reduce MongoDB maxPoolSize from 10 to 3 to prevent connection exhaustion`
+
+**Changes verified:**
+| File | Status |
+|------|--------|
+| `src/payload.config.ts` | ✅ maxPoolSize default is `'3'` |
+| `.env.example` | ✅ `MONGODB_MAX_POOL_SIZE=3` |
+| `.env.docker.example` | ✅ `MONGODB_MAX_POOL_SIZE=3` |
+| `README.md` | ✅ `MONGODB_MAX_POOL_SIZE=3` |
+| `tests/unit/mongodb-pool-config.test.ts` | ✅ Created with 10 tests |
+
+**Quality gates:**
+- ✅ `pnpm test:unit` - 192 test files, 2505 tests passed
+- ✅ `pnpm typecheck` - passes
+- ✅ `pnpm lint` - passes (pre-existing warnings in unrelated file)
+
+**Guardrail test verified:** The test correctly fails if the default is changed to `'10'` (only 50 instances fit vs. the safe minimum of 100).
+
+The branch is ready to merge into `dev`.
