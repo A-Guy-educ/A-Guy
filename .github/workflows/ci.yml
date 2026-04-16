@@ -263,7 +263,7 @@ jobs:
         run: pnpm exec playwright install-deps chromium
 
       - name: Run E2E tests (E2E gate)
-        run: pnpm exec playwright test --config=playwright.config.ts --project=chromium --grep="@critical"
+        run: pnpm exec playwright test --config=playwright.e2e-gate.config.ts
         env:
           USE_MONGO_SERVICE: 'true'
           SKIP_BUILD: 'true'
