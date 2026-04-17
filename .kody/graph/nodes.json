@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "nodes": {
+    "facts_authpayload_access_control_1241829512719": {
+      "id": "facts_authpayload_access_control_1241829512719",
+      "type": "facts",
+      "hall": "facts",
+      "room": "auth/Payload access control",
+      "content": "Add a comment whenever a role is intentionally excluded from an access check — it makes the design rationale explicit and saves future readers from questioning the exclusion.",
+      "episodeId": "ep_stage_diary_001",
+      "validFrom": "2026-04-17T20:39:05.722Z",
+      "validTo": null,
+      "tags": [
+        "stage:review",
+        "task:fix-pr-1266-260417-202804",
+        "kind:lesson"
+      ],
+      "confidence": 0.7
+    },
+    "conventions_lms_role_model_1241830890546": {
+      "id": "conventions_lms_role_model_1241830890546",
+      "type": "conventions",
+      "hall": "conventions",
+      "room": "LMS role model",
+      "content": "AdvancedContentEditor is the exercise-editor role (manages exercises) and is distinct from course-manager roles — they should not have course-level read access by design.",
+      "episodeId": "ep_stage_diary_001",
+      "validFrom": "2026-04-17T20:39:05.723Z",
+      "validTo": null,
+      "tags": [
+        "stage:review",
+        "task:fix-pr-1266-260417-202804",
+        "kind:convention"
+      ],
+      "confidence": 0.7
+    },
+    "facts_code_review_3797636122155": {
+      "id": "facts_code_review_3797636122155",
+      "type": "facts",
+      "hall": "facts",
+      "room": "code review",
+      "content": "Adding a clarifying comment is a valid fix when the behavior is correct by design but not self-explanatory to future readers.",
+      "episodeId": "ep_stage_diary_002",
+      "validFrom": "2026-04-17T21:21:41.529Z",
+      "validTo": null,
+      "tags": [
+        "stage:review-fix",
+        "task:fix-pr-1266-260417-202804",
+        "kind:decision"
+      ],
+      "confidence": 0.7
+    },
+    "thoughts_lmspermissions_3797637550988": {
+      "id": "thoughts_lmspermissions_3797637550988",
+      "type": "thoughts",
+      "hall": "thoughts",
+      "room": "LMS/permissions",
+      "content": "AdvancedContentEditor is an exercise-editor role, not a course-manager role — intentionally excluded from instructor list read access.",
+      "episodeId": "ep_stage_diary_002",
+      "validFrom": "2026-04-17T21:21:41.530Z",
+      "validTo": null,
+      "tags": [
+        "stage:review-fix",
+        "task:fix-pr-1266-260417-202804",
+        "kind:gotcha"
+      ],
+      "confidence": 0.7
+    },
+    "facts_pr_workflow_3797638808744": {
+      "id": "facts_pr_workflow_3797638808744",
+      "type": "facts",
+      "hall": "facts",
+      "room": "PR workflow",
+      "content": "When fixing review feedback, prefer the minimal appropriate solution rather than over-engineering.",
+      "episodeId": "ep_stage_diary_002",
+      "validFrom": "2026-04-17T21:21:41.531Z",
+      "validTo": null,
+      "tags": [
+        "stage:review-fix",
+        "task:fix-pr-1266-260417-202804",
+        "kind:lesson"
+      ],
+      "confidence": 0.7
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "id": "ep_stage_diary_001",
+  "runId": "fix-pr-1266-260417-202804",
+  "source": "stage_diary",
+  "taskId": "fix-pr-1266-260417-202804",
+  "createdAt": "2026-04-17T20:39:05.717Z",
+  "rawContent": "{\"stage\":\"review\",\"insights\":[{\"kind\":\"lesson\",\"text\":\"Add a comment whenever a role is intentionally excluded from an access check — it makes the design rationale explicit and saves future readers from questioning the exclusion.\",\"scope\":\"auth/Payload access control\"},{\"kind\":\"convention\",\"text\":\"AdvancedContentEditor is the exercise-editor role (manages exercises) and is distinct from course-manager roles — they should not have course-level read access by design.\",\"scope\":\"LMS role model\"}]}",
+  "extractedNodeIds": [],
+  "linkedFiles": [],
+  "metadata": {
+    "stage": "review"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "id": "ep_stage_diary_002",
+  "runId": "fix-pr-1266-260417-202804",
+  "source": "stage_diary",
+  "taskId": "fix-pr-1266-260417-202804",
+  "createdAt": "2026-04-17T21:21:41.525Z",
+  "rawContent": "{\"stage\":\"review-fix\",\"insights\":[{\"kind\":\"decision\",\"text\":\"Adding a clarifying comment is a valid fix when the behavior is correct by design but not self-explanatory to future readers.\",\"scope\":\"code review\"},{\"kind\":\"gotcha\",\"text\":\"AdvancedContentEditor is an exercise-editor role, not a course-manager role — intentionally excluded from instructor list read access.\",\"scope\":\"LMS/permissions\"},{\"kind\":\"lesson\",\"text\":\"When fixing review feedback, prefer the minimal appropriate solution rather than over-engineering.\",\"scope\":\"PR workflow\"}]}",
+  "extractedNodeIds": [],
+  "linkedFiles": [],
+  "metadata": {
+    "stage": "review-fix"
+  }
+}
