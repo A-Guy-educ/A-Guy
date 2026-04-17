@@ -1,0 +1,43 @@
+{
+  "taskId": "fix-pr-1266-260417-202804",
+  "state": "running",
+  "stages": {
+    "taskify": {
+      "state": "pending",
+      "retries": 0
+    },
+    "plan": {
+      "state": "completed",
+      "completedAt": "2026-04-17T20:29:48.716Z",
+      "retries": 0,
+      "outputFile": "plan.md",
+      "promptTokens": 3319
+    },
+    "build": {
+      "state": "running",
+      "startedAt": "2026-04-17T20:29:48.717Z",
+      "retries": 0
+    },
+    "verify": {
+      "state": "pending",
+      "retries": 0
+    },
+    "review": {
+      "state": "pending",
+      "retries": 0
+    },
+    "review-fix": {
+      "state": "pending",
+      "retries": 0
+    },
+    "ship": {
+      "state": "pending",
+      "retries": 0
+    }
+  },
+  "createdAt": "2026-04-17T20:28:19.103Z",
+  "updatedAt": "2026-04-17T20:29:48.717Z",
+  "sessions": {
+    "explore": "3cfb97a3-26d4-4d59-947b-e27c0900a8ef"
+  }
+}

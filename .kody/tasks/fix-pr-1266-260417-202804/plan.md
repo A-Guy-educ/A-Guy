@@ -1,0 +1,1 @@
+The plan is ready for your review. The fix is a single comment addition — `AdvancedContentEditor` not having access is correct by design (they're exercise editors, not course managers), but a comment makes that explicit to future readers.

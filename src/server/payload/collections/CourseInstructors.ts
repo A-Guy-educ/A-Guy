@@ -95,6 +95,8 @@ export const CourseInstructors: CollectionConfig = {
           },
         }
       }
+      // AdvancedContentEditor is intentionally excluded — they are exercise editors,
+      // not course managers, and do not need to view instructor assignments.
       return false
     },
     create: adminOnly,
