@@ -122,9 +122,7 @@ export function InstructorDashboardContent({
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="font-medium">{course.title}</div>
-                        <div className="text-sm text-text-secondary">
-                          {course.courseLabel}
-                        </div>
+                        <div className="text-sm text-text-secondary">{course.courseLabel}</div>
                       </div>
                       <div className="text-accent">→</div>
                     </div>

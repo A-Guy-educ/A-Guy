@@ -1,9 +1,7 @@
 /**
  * Test helpers for instructor and course-instructor assignment management
  */
-import config from '@payload-config'
 import type { Payload } from 'payload'
-import { getPayload } from 'payload'
 
 import { logger } from '@/infra/utils/logger'
 
@@ -31,10 +29,7 @@ export async function seedCourseInstructor(
   const existing = await payload.find({
     collection: 'course-instructors',
     where: {
-      and: [
-        { instructor: { equals: instructorId } },
-        { course: { equals: courseId } },
-      ],
+      and: [{ instructor: { equals: instructorId } }, { course: { equals: courseId } }],
     },
     limit: 1,
     overrideAccess: true,
@@ -85,10 +80,7 @@ export async function removeCourseInstructor(
   const assignments = await payload.find({
     collection: 'course-instructors',
     where: {
-      and: [
-        { instructor: { equals: instructorId } },
-        { course: { equals: courseId } },
-      ],
+      and: [{ instructor: { equals: instructorId } }, { course: { equals: courseId } }],
     },
     limit: 1,
     overrideAccess: true,
@@ -137,10 +129,7 @@ export async function isInstructorAssignedToCourse(
   const assignments = await payload.find({
     collection: 'course-instructors',
     where: {
-      and: [
-        { instructor: { equals: instructorId } },
-        { course: { equals: courseId } },
-      ],
+      and: [{ instructor: { equals: instructorId } }, { course: { equals: courseId } }],
     },
     limit: 1,
     overrideAccess: true,

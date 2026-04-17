@@ -13,7 +13,7 @@ import {
   setupAuthenticatedUser,
 } from './helpers/auth'
 import { seedCourseInstructor } from './helpers/instructors'
-import { getTestCourseData, seedTestCourseData } from './helpers/courses'
+import { seedTestCourseData } from './helpers/courses'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 
@@ -74,7 +74,9 @@ test.describe('Instructor Role - Authentication & Access', () => {
       // Check for access denied message or redirect
       const bodyText = await page.locator('body').textContent()
       expect(
-        bodyText?.includes('access') || bodyText?.includes('denied') || bodyText?.includes('Unauthorized'),
+        bodyText?.includes('access') ||
+          bodyText?.includes('denied') ||
+          bodyText?.includes('Unauthorized'),
       ).toBeTruthy()
     }
   })
@@ -86,8 +88,6 @@ test.describe('Instructor Role - Course Assignment', () => {
   let testCourseData: Awaited<ReturnType<typeof seedTestCourseData>>
 
   test.beforeAll(async () => {
-    const payload = await getPayload({ config })
-
     // Create instructor user
     instructorEmail = generateTestUserEmail('instructor-course-assignment-test')
     instructor = await createTestUser(
@@ -163,8 +163,6 @@ test.describe('Instructor Role - TA and Guest Roles', () => {
   let testCourseData: Awaited<ReturnType<typeof seedTestCourseData>>
 
   test.beforeAll(async () => {
-    const payload = await getPayload({ config })
-
     // Create TA user
     taEmail = generateTestUserEmail('ta-role-test')
     ta = await createTestUser({ email: taEmail, password: 'TestPassword123!' }, 'instructor')
@@ -205,9 +203,7 @@ test.describe('Instructor Role - TA and Guest Roles', () => {
     await setupAuthenticatedUser(page, ta, 'instructor')
 
     // Access gradebook directly via API
-    const response = await page.request.get(
-      `/api/instructor/gradebook/${testCourseData.courseId}`,
-    )
+    const response = await page.request.get(`/api/instructor/gradebook/${testCourseData.courseId}`)
 
     // TA with canGrade=true should be able to access
     expect(response.status()).toBe(200)
@@ -247,9 +243,7 @@ test.describe('Instructor Role - Gradebook Access', () => {
     await setupAuthenticatedUser(page, instructor, 'instructor')
 
     // Access gradebook API
-    const response = await page.request.get(
-      `/api/instructor/gradebook/${testCourseData.courseId}`,
-    )
+    const response = await page.request.get(`/api/instructor/gradebook/${testCourseData.courseId}`)
 
     expect(response.status()).toBe(200)
     const data = await response.json()
@@ -259,8 +253,6 @@ test.describe('Instructor Role - Gradebook Access', () => {
   })
 
   test('instructor cannot access another instructor course gradebook', async ({ page }) => {
-    const payload = await getPayload({ config })
-
     // Create another instructor
     const otherInstructorEmail = generateTestUserEmail('other-instructor-gradebook-test')
     const otherInstructor = await createTestUser(
@@ -284,19 +276,11 @@ test.describe('Instructor Role - Gradebook Access', () => {
 })
 
 test.describe('Admin Journey - Instructor Assignment Management', () => {
-  let adminEmail: string
-  let admin: Awaited<ReturnType<typeof createTestUser>>
   let instructorEmail: string
   let instructor: Awaited<ReturnType<typeof createTestUser>>
   let testCourseData: Awaited<ReturnType<typeof seedTestCourseData>>
 
   test.beforeAll(async () => {
-    const payload = await getPayload({ config })
-
-    // Create admin user
-    adminEmail = generateTestUserEmail('admin-instructor-test')
-    admin = await createTestUser({ email: adminEmail, password: 'TestPassword123!' }, 'admin')
-
     // Create instructor user
     instructorEmail = generateTestUserEmail('admin-assigned-instructor-test')
     instructor = await createTestUser(

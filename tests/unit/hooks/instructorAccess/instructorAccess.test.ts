@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { AccountRole } from '@/infra/auth/roles'
 import {
@@ -191,7 +191,11 @@ describe('instructorAccess Hook', () => {
         }),
       }
 
-      const result = await canInstructorMessageStudents(mockPayload as any, 'user-123', 'course-456')
+      const result = await canInstructorMessageStudents(
+        mockPayload as any,
+        'user-123',
+        'course-456',
+      )
 
       expect(result).toBe(true)
     })
@@ -203,7 +207,11 @@ describe('instructorAccess Hook', () => {
         }),
       }
 
-      const result = await canInstructorMessageStudents(mockPayload as any, 'user-123', 'course-456')
+      const result = await canInstructorMessageStudents(
+        mockPayload as any,
+        'user-123',
+        'course-456',
+      )
 
       expect(result).toBe(false)
     })
@@ -213,7 +221,11 @@ describe('instructorAccess Hook', () => {
         find: vi.fn().mockResolvedValue({ docs: [] }),
       }
 
-      const result = await canInstructorMessageStudents(mockPayload as any, 'user-123', 'course-456')
+      const result = await canInstructorMessageStudents(
+        mockPayload as any,
+        'user-123',
+        'course-456',
+      )
 
       expect(result).toBe(false)
     })
