@@ -128,7 +128,7 @@ async function fetchGradebookData(payload: Payload, courseId: string): Promise<G
   })
 
   // Build progress map: userId -> progressRecords
-  const progressMap = new Map<string, typeof userProgress.docs[0]['progressRecords']>()
+  const progressMap = new Map<string, (typeof userProgress.docs)[0]['progressRecords']>()
   for (const progress of userProgress.docs) {
     if (progress.user && typeof progress.user === 'object') {
       const userObj = progress.user as { id?: string }
