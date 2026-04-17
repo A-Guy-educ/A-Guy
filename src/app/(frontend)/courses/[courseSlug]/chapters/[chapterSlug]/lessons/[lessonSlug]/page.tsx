@@ -19,12 +19,10 @@ import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
 import { extractAllMediaIds } from '@/ui/web/exerciserenderer/utils/extractMediaIds'
 import { stripHtml } from '@/utils/strip-html'
 import { notFound } from 'next/navigation'
-import { EmptyLessonPlaceholder } from './_components/EmptyLessonPlaceholder'
 import { ExercisesPager } from './_components/ExercisesPager'
 import { LessonAnalytics } from './_components/LessonAnalytics'
 import { LessonPager } from './_components/LessonPager'
 import { PdfLessonPager } from './_components/PdfLessonPager'
-import { ExerciseWorkspace } from './exercises/[exerciseSlug]/_components/ExerciseWorkspace'
 
 interface LessonPageProps {
   params: Promise<{
@@ -220,30 +218,18 @@ export default async function LessonPage({ params }: LessonPageProps) {
           lessonTitle={lesson.title}
           contentType="exercises"
         />
-        {hasExercises ? (
-          <ExercisesPager
-            exercises={exercises}
-            lessonTitle={lesson.title}
-            backUrl={backUrl}
-            courseSlug={courseSlug}
-            chapterSlug={chapterSlug}
-            lessonSlug={lessonSlug}
-            lessonId={lesson.id}
-            mediaMap={mediaMap}
-            hasExercises={hasExercises}
-            formulaSheet={formulaSheet}
-          />
-        ) : (
-          // Empty lesson: show ExerciseWorkspace with DynamicLesson as primaryContent
-          <>
-            <ExerciseWorkspace
-              exerciseTitle={lesson.title}
-              backUrl={backUrl}
-              primaryContent={<EmptyLessonPlaceholder />}
-              chatContent={null}
-            />
-          </>
-        )}
+        <ExercisesPager
+          exercises={exercises}
+          lessonTitle={lesson.title}
+          backUrl={backUrl}
+          courseSlug={courseSlug}
+          chapterSlug={chapterSlug}
+          lessonSlug={lessonSlug}
+          lessonId={lesson.id}
+          mediaMap={mediaMap}
+          hasExercises={hasExercises}
+          formulaSheet={formulaSheet}
+        />
       </AccessGateProvider>
     )
   }

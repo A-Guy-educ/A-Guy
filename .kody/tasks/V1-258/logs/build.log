@@ -1,0 +1,30 @@
+**V1-258/259/260 Implementation Complete**
+
+Build and typecheck pass. Here's a summary of the changes made:
+
+**New file created:**
+- `src/app/api/exercises/import-latex-unified/route.ts` - Unified LaTeX import endpoint with script→AI fallback logic
+
+**Modified files:**
+
+1. **Exercises collection** (`src/server/payload/collections/Exercises/index.ts`):
+   - Added `sourceLatex` text field for source linkage
+
+2. **Analytics** (`src/infra/analytics/contracts/events.ts`, `destinations.ts`, `schemas.ts`):
+   - Added `LATEX_IMPORT_FALLBACK` event with schema
+
+3. **LatexQuickImport** (`src/ui/admin/LatexQuickImport/index.tsx`):
+   - Unified to use single `/api/exercises/import-latex-unified` endpoint
+   - Added inline LaTeX preview using `MathMarkdown`
+   - Added analytics tracking for `ai_fallback` method
+
+4. **ExercisesPager** (`src/app/(frontend)/...ExercisesPager/index.tsx`):
+   - Moved `ConvertButton` from `LessonContent` - shown to admins only when no exercises exist
+
+5. **LessonContent** (`src/app/(frontend)/...LessonContent.tsx`):
+   - Removed `ConvertButton` (moved to ExercisesPager)
+
+6. **Lesson page** (`src/app/(frontend)/.../page.tsx`):
+   - Simplified legacy path to always render `ExercisesPager`
+
+**Pending:** Run `pnpm generate:types` after merge to regenerate Payload types with the new `sourceLatex` field, which will remove the `as any` cast in the route.

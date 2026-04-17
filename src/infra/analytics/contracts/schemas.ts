@@ -504,6 +504,17 @@ export const TimeOnPagePropertiesSchema = z.object({
 })
 
 /**
+ * latex_import_fallback - Track LaTeX import falling back to AI
+ * Destination: Mixpanel
+ * Priority: P1
+ */
+export const LatexImportFallbackPropertiesSchema = z.object({
+  lesson_id: z.string().describe('Lesson identifier'),
+  script_errors: z.array(z.string()).optional().describe('Errors from script parser'),
+  ai_succeeded: z.boolean().describe('Whether AI fallback succeeded'),
+})
+
+/**
  * Master schema mapping
  */
 export const eventSchemas = {
@@ -555,6 +566,9 @@ export const eventSchemas = {
   [PRODUCT_EVENTS.LESSON_ABANDONED]: LessonAbandonedPropertiesSchema,
   [PRODUCT_EVENTS.CHAPTER_COMPLETED]: ChapterCompletedPropertiesSchema,
   [PRODUCT_EVENTS.TIME_ON_PAGE]: TimeOnPagePropertiesSchema,
+
+  // LaTeX Import Events
+  [PRODUCT_EVENTS.LATEX_IMPORT_FALLBACK]: LatexImportFallbackPropertiesSchema,
 } as const
 
 /**
@@ -608,6 +622,9 @@ export type LessonLoadFailedProperties = z.infer<typeof LessonLoadFailedProperti
 export type LessonAbandonedProperties = z.infer<typeof LessonAbandonedPropertiesSchema>
 export type ChapterCompletedProperties = z.infer<typeof ChapterCompletedPropertiesSchema>
 export type TimeOnPageProperties = z.infer<typeof TimeOnPagePropertiesSchema>
+
+// LaTeX Import
+export type LatexImportFallbackProperties = z.infer<typeof LatexImportFallbackPropertiesSchema>
 
 /**
  * Union type of all event properties

@@ -79,6 +79,9 @@ export const eventDestinations: Record<ProductEvent, AnalyticsDestination[]> = {
   [PRODUCT_EVENTS.LESSON_ABANDONED]: ['mixpanel'],
   [PRODUCT_EVENTS.CHAPTER_COMPLETED]: ['mixpanel'],
   [PRODUCT_EVENTS.TIME_ON_PAGE]: ['mixpanel'],
+
+  // LaTeX Import Events (Mixpanel only)
+  [PRODUCT_EVENTS.LATEX_IMPORT_FALLBACK]: ['mixpanel'],
 }
 
 /**

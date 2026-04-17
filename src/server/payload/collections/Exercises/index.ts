@@ -382,6 +382,14 @@ export const Exercises: CollectionConfig = {
           admin: { description: 'Original PDF media for conversion exercises' },
         },
         {
+          name: 'sourceLatex',
+          type: 'text',
+          admin: {
+            description: 'Original LaTeX source chunk for LaTeX-imported exercises',
+            hidden: true,
+          },
+        },
+        {
           name: 'conversionJobId',
           type: 'text',
           admin: { description: 'Payload job ID that created this exercise' },

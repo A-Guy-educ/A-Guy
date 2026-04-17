@@ -24,6 +24,8 @@ import { ChatInterface } from '@/ui/web/chat'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/infra/utils/ui'
 import { Confetti } from '@/ui/web/components/confetti'
+import { useCurrentUser } from '@/client/hooks/useCurrentUser'
+import { ConvertButton } from '../ConvertButton'
 
 const pageTransition = {
   initial: { opacity: 0, x: 20 },
@@ -60,6 +62,8 @@ export function ExercisesPager({
   formulaSheet,
 }: ExercisesPagerProps) {
   const t = useTranslations('courses')
+  const { user: currentUser } = useCurrentUser()
+  const isAdmin = (currentUser as unknown as { role?: string })?.role === 'admin'
   const {
     pageState,
     progressPercent,
@@ -353,6 +357,13 @@ export function ExercisesPager({
               transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
               className="space-y-8"
             >
+              {/* Admin-only slot: Convert button when no exercises exist */}
+              {totalExercises === 0 && isAdmin && (
+                <div className="flex justify-center py-4">
+                  <ConvertButton lessonId={lessonId} />
+                </div>
+              )}
+
               <header className="text-center">
                 <span className="inline-block px-4 py-1.5 bg-muted text-muted-foreground rounded-full text-label tracking-[0.2em] uppercase mb-5 border border-border/40">
                   {t('exercisesPagerIntro')}

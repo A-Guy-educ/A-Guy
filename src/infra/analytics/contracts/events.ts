@@ -73,6 +73,9 @@ export const PRODUCT_EVENTS = {
   LESSON_ABANDONED: 'lesson_abandoned',
   CHAPTER_COMPLETED: 'chapter_completed',
   TIME_ON_PAGE: 'time_on_page',
+
+  // LaTeX Import Events (Mixpanel only)
+  LATEX_IMPORT_FALLBACK: 'latex_import_fallback',
 } as const
 
 /**

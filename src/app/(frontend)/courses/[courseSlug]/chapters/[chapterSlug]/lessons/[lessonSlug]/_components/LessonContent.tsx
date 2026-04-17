@@ -6,7 +6,6 @@ import type { Exercise, Media as MediaType } from '@/payload-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { Media as MediaComponent } from '@/ui/web/media'
 import { useState } from 'react'
-import { ConvertButton } from './ConvertButton'
 import { ViewToggle } from './ViewToggle'
 
 type ViewMode = 'non-interactive' | 'interactive'
@@ -29,7 +28,7 @@ export function LessonContent({
   courseSlug,
   chapterSlug,
   lessonSlug,
-  lessonId,
+  lessonId: _lessonId,
   isAdmin,
 }: LessonContentProps) {
   const t = useTranslations('courses')
@@ -99,11 +98,6 @@ export function LessonContent({
                   <p className="text-muted-foreground mb-4 text-body-md">
                     No exercises yet for this lesson
                   </p>
-                  {isAdmin && hasContent && (
-                    <div className="mt-6">
-                      <ConvertButton lessonId={lessonId} />
-                    </div>
-                  )}
                 </div>
               )}
             </div>
