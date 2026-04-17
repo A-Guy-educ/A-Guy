@@ -64,7 +64,6 @@ export type SupportedTimezones =
 export interface Config {
   auth: {
     users: UserAuthOperations;
-    'payload-mcp-api-keys': PayloadMcpApiKeyAuthOperations;
   };
   blocks: {};
   collections: {
@@ -99,11 +98,11 @@ export interface Config {
     'pricing-plans': PricingPlan;
     'access-codes': AccessCode;
     'mcp-audit-logs': McpAuditLog;
+    'course-instructors': CourseInstructor;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
     search: Search;
-    'payload-mcp-api-keys': PayloadMcpApiKey;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
@@ -143,11 +142,11 @@ export interface Config {
     'pricing-plans': PricingPlansSelect<false> | PricingPlansSelect<true>;
     'access-codes': AccessCodesSelect<false> | AccessCodesSelect<true>;
     'mcp-audit-logs': McpAuditLogsSelect<false> | McpAuditLogsSelect<true>;
+    'course-instructors': CourseInstructorsSelect<false> | CourseInstructorsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     search: SearchSelect<false> | SearchSelect<true>;
-    'payload-mcp-api-keys': PayloadMcpApiKeysSelect<false> | PayloadMcpApiKeysSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -167,13 +166,9 @@ export interface Config {
     footer: FooterSelect<false> | FooterSelect<true>;
   };
   locale: null;
-  user:
-    | (User & {
-        collection: 'users';
-      })
-    | (PayloadMcpApiKey & {
-        collection: 'payload-mcp-api-keys';
-      });
+  user: User & {
+    collection: 'users';
+  };
   jobs: {
     tasks: {
       pdf_to_exercises: TaskPdfToExercises;
@@ -188,24 +183,6 @@ export interface Config {
   };
 }
 export interface UserAuthOperations {
-  forgotPassword: {
-    email: string;
-    password: string;
-  };
-  login: {
-    email: string;
-    password: string;
-  };
-  registerFirstUser: {
-    email: string;
-    password: string;
-  };
-  unlock: {
-    email: string;
-    password: string;
-  };
-}
-export interface PayloadMcpApiKeyAuthOperations {
   forgotPassword: {
     email: string;
     password: string;
@@ -467,7 +444,7 @@ export interface Category {
 export interface User {
   id: string;
   name?: string | null;
-  role: 'admin' | 'advanced-content-editor' | 'student';
+  role: 'admin' | 'advanced-content-editor' | 'student' | 'instructor';
   googleSub?: string | null;
   verifiedEmail?: string | null;
   registrationMethod?: ('google' | 'email') | null;
@@ -2436,6 +2413,41 @@ export interface McpAuditLog {
   durationMs?: number | null;
 }
 /**
+ * Assign instructors to specific courses
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "course-instructors".
+ */
+export interface CourseInstructor {
+  id: string;
+  /**
+   * The instructor being assigned
+   */
+  instructor: string | User;
+  /**
+   * The course this instructor is assigned to
+   */
+  course: string | Course;
+  /**
+   * The role of this instructor for the course
+   */
+  role?: ('primary' | 'ta' | 'guest') | null;
+  /**
+   * Can grade student work for this course
+   */
+  canGrade?: boolean | null;
+  /**
+   * Can send messages to students in this course
+   */
+  canMessageStudents?: boolean | null;
+  /**
+   * When this instructor was assigned to the course
+   */
+  assignedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
@@ -2507,74 +2519,6 @@ export interface Search {
     | null;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * API keys control which collections, resources, tools, and prompts MCP clients can access
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "payload-mcp-api-keys".
- */
-export interface PayloadMcpApiKey {
-  id: string;
-  /**
-   * The user that the API key is associated with.
-   */
-  user: string | User;
-  /**
-   * A useful label for the API key.
-   */
-  label?: string | null;
-  /**
-   * The purpose of the API key.
-   */
-  description?: string | null;
-  courses?: {
-    /**
-     * Allow clients to find courses.
-     */
-    find?: boolean | null;
-    /**
-     * Allow clients to create courses.
-     */
-    create?: boolean | null;
-  };
-  chapters?: {
-    /**
-     * Allow clients to find chapters.
-     */
-    find?: boolean | null;
-    /**
-     * Allow clients to create chapters.
-     */
-    create?: boolean | null;
-  };
-  lessons?: {
-    /**
-     * Allow clients to find lessons.
-     */
-    find?: boolean | null;
-    /**
-     * Allow clients to create lessons.
-     */
-    create?: boolean | null;
-  };
-  exercises?: {
-    /**
-     * Allow clients to find exercises.
-     */
-    find?: boolean | null;
-  };
-  media?: {
-    /**
-     * Allow clients to find media.
-     */
-    find?: boolean | null;
-  };
-  updatedAt: string;
-  createdAt: string;
-  enableAPIKey?: boolean | null;
-  apiKey?: string | null;
-  apiKeyIndex?: string | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2817,6 +2761,10 @@ export interface PayloadLockedDocument {
         value: string | McpAuditLog;
       } | null)
     | ({
+        relationTo: 'course-instructors';
+        value: string | CourseInstructor;
+      } | null)
+    | ({
         relationTo: 'redirects';
         value: string | Redirect;
       } | null)
@@ -2831,21 +2779,12 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'search';
         value: string | Search;
-      } | null)
-    | ({
-        relationTo: 'payload-mcp-api-keys';
-        value: string | PayloadMcpApiKey;
       } | null);
   globalSlug?: string | null;
-  user:
-    | {
-        relationTo: 'users';
-        value: string | User;
-      }
-    | {
-        relationTo: 'payload-mcp-api-keys';
-        value: string | PayloadMcpApiKey;
-      };
+  user: {
+    relationTo: 'users';
+    value: string | User;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -2855,15 +2794,10 @@ export interface PayloadLockedDocument {
  */
 export interface PayloadPreference {
   id: string;
-  user:
-    | {
-        relationTo: 'users';
-        value: string | User;
-      }
-    | {
-        relationTo: 'payload-mcp-api-keys';
-        value: string | PayloadMcpApiKey;
-      };
+  user: {
+    relationTo: 'users';
+    value: string | User;
+  };
   key?: string | null;
   value?:
     | {
@@ -3770,6 +3704,20 @@ export interface McpAuditLogsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "course-instructors_select".
+ */
+export interface CourseInstructorsSelect<T extends boolean = true> {
+  instructor?: T;
+  course?: T;
+  role?: T;
+  canGrade?: T;
+  canMessageStudents?: T;
+  assignedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects_select".
  */
 export interface RedirectsSelect<T extends boolean = true> {
@@ -3958,48 +3906,6 @@ export interface SearchSelect<T extends boolean = true> {
       };
   updatedAt?: T;
   createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "payload-mcp-api-keys_select".
- */
-export interface PayloadMcpApiKeysSelect<T extends boolean = true> {
-  user?: T;
-  label?: T;
-  description?: T;
-  courses?:
-    | T
-    | {
-        find?: T;
-        create?: T;
-      };
-  chapters?:
-    | T
-    | {
-        find?: T;
-        create?: T;
-      };
-  lessons?:
-    | T
-    | {
-        find?: T;
-        create?: T;
-      };
-  exercises?:
-    | T
-    | {
-        find?: T;
-      };
-  media?:
-    | T
-    | {
-        find?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
-  enableAPIKey?: T;
-  apiKey?: T;
-  apiKeyIndex?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

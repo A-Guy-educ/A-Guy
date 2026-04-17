@@ -1,0 +1,59 @@
+## Implementation Complete
+
+I've implemented the Instructor role and per-course permissions feature for the LMS. Here's a summary:
+
+### Files Created/Modified:
+
+**1. Added Instructor role to AccountRole enum** (`src/infra/auth/roles.ts`)
+- Added `Instructor = 'instructor'` to the enum
+- Added `ACCOUNT_ROLE_LABEL[AccountRole.Instructor]` 
+- Added `isInstructor()` helper function
+
+**2. Created CourseInstructors collection** (`src/server/payload/collections/CourseInstructors.ts`)
+- Links instructors to specific courses
+- Fields: instructor, course, role (primary/TA/guest), canGrade, canMessageStudents, assignedAt
+- Admin-only create/update/delete access
+
+**3. Updated payload.config.ts** 
+- Imported and added CourseInstructors to collections array
+
+**4. Created instructorAccess hook** (`src/server/payload/hooks/auth/instructorAccess.ts`)
+- `isInstructor()` - checks if user has instructor role
+- `isAdminUser()` - checks if user has admin role  
+- `isInstructorForCourse()` - checks course-specific assignment
+- `canInstructorGrade()` - checks grading permission
+- `canInstructorMessageStudents()` - checks messaging permission
+- `getInstructorCourseIds()` - gets all courses for an instructor
+- `getInstructorRoleForCourse()` - gets instructor's role in a course
+
+**5. Created instructor gradebook API** (`src/app/api/instructor/gradebook/[courseId]/route.ts`)
+- GET endpoint for viewing student grades
+- Access control: admins see all, instructors see only assigned courses
+
+**6. Created instructor dashboard API** (`src/app/api/instructor/dashboard/route.ts`)
+- GET endpoint for instructor dashboard data
+
+**7. Created instructor dashboard page** (`src/app/(frontend)/instructor/page.tsx`)
+- Route protection for instructor/admin only
+- Shows assigned courses and stats
+
+**8. Created E2E helper** (`tests/e2e/helpers/instructors.ts`)
+- `seedCourseInstructor()` - assign instructor to course
+- `removeCourseInstructor()` - remove assignment
+- `getInstructorAssignments()` - list assignments
+- `isInstructorAssignedToCourse()` - check assignment
+
+**9. Created E2E tests** (`tests/e2e/lms-instructor-role.e2e.spec.ts`)
+- Instructor access control tests
+- Course assignment tests
+- Gradebook access tests
+- Admin assignment management tests
+
+**10. Created unit tests** (`tests/unit/hooks/instructorAccess/instructorAccess.test.ts`)
+- 25 tests covering all permission logic functions
+
+### Key Design Decisions:
+- Payload-first approach as specified
+- CourseInstructors collection is clean and extensible for future gradebook (#1251) builds on it
+- Role types added to `AccountRole` enum - automatically reflected in Payload admin UI
+- All access control checks use `overrideAccess: true` for server-side operations

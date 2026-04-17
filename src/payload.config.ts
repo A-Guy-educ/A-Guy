@@ -10,6 +10,7 @@ import { Categories } from '@/server/payload/collections/Categories'
 import { Chapters } from '@/server/payload/collections/Chapters'
 import { ChatAssets } from '@/server/payload/collections/ChatAssets'
 import { ConfigAuditLogs } from '@/server/payload/collections/ConfigAuditLogs'
+import { CourseInstructors } from '@/server/payload/collections/CourseInstructors'
 import { ConfigSecrets } from '@/server/payload/collections/ConfigSecrets'
 import { ConfigValues } from '@/server/payload/collections/ConfigValues'
 import { ContentPages } from '@/server/payload/collections/ContentPages'
@@ -188,6 +189,7 @@ export default buildConfig({
     PricingPlans,
     AccessCodes,
     MCPAuditLogs,
+    CourseInstructors,
   ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],

@@ -29,7 +29,7 @@ export function generateTestUserEmail(prefix = 'e2e-test'): string {
  */
 export async function createTestUser(
   user: TestUser,
-  role: 'admin' | 'student' = 'student',
+  role: 'admin' | 'student' | 'instructor' = 'student',
 ): Promise<TestUser> {
   const payload = await getPayload({ config })
 
@@ -255,7 +255,7 @@ export async function cleanupTestUsers(): Promise<void> {
 export async function setupAuthenticatedUser(
   page: Page,
   user: TestUser,
-  role: 'admin' | 'student' = 'student',
+  role: 'admin' | 'student' | 'instructor' = 'student',
 ): Promise<TestUser> {
   // Create user if needed (via Local API) - this ensures user exists
   const testUser = await createTestUser(user, role)
