@@ -2,7 +2,7 @@ name: Build & Deploy to Vercel
 
 on:
   push:
-    branches: [dev]
+    branches: [main]
     paths:
       - 'src/**'
       - 'app/**'
@@ -13,6 +13,11 @@ on:
       - 'tsconfig.json'
 
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to deploy'
+        required: false
+        default: 'main'
 
 concurrency:
   group: vercel-deploy
