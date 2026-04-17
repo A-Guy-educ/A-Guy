@@ -3,29 +3,36 @@
   "state": "running",
   "stages": {
     "taskify": {
-      "state": "completed",
+      "state": "pending",
       "retries": 0
     },
     "plan": {
-      "state": "completed",
+      "state": "pending",
       "retries": 0
     },
     "build": {
       "state": "completed",
-      "retries": 0
+      "completedAt": "2026-04-17T14:10:29.011Z",
+      "retries": 0,
+      "promptTokens": 3115
     },
     "verify": {
       "state": "completed",
-      "retries": 0,
-      "completedAt": "2026-04-17T13:38:00.000Z"
+      "completedAt": "2026-04-17T14:12:08.026Z",
+      "retries": 0
     },
     "review": {
-      "state": "pending",
-      "retries": 0
+      "state": "completed",
+      "completedAt": "2026-04-17T14:21:40.519Z",
+      "retries": 0,
+      "outputFile": "review.md",
+      "promptTokens": 5176
     },
     "review-fix": {
-      "state": "pending",
-      "retries": 0
+      "state": "completed",
+      "completedAt": "2026-04-17T14:25:00.000Z",
+      "retries": 0,
+      "outcome": "no-fixes-required"
     },
     "ship": {
       "state": "pending",
@@ -33,5 +40,9 @@
     }
   },
   "createdAt": "2026-04-17T13:25:00.308Z",
-  "updatedAt": "2026-04-17T13:38:00.000Z"
+  "updatedAt": "2026-04-17T14:25:00.000Z",
+  "sessions": {
+    "build": "132f3c36-2254-449d-a243-4eb9b73f2660",
+    "review": "781ef0a3-f7ed-4f11-afff-c89eca09fe9f"
+  }
 }
