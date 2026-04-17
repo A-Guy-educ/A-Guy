@@ -1,0 +1,18 @@
+**Critical fix applied:**
+
+Added missing `lms.instructor` i18n translations to both:
+- `src/i18n/en.json` - English translations
+- `src/i18n/he.json` - Hebrew translations
+
+Keys added:
+- `title`: "Instructor Dashboard" / "לוח המורה"
+- `subtitle`: "View your courses and student progress" / "צפה בקורסים שלך ובהתקדמות התלמידים"
+- `coursesAssigned`: "Courses Assigned" / "קורסים משולבים"
+- `totalStudents`: "Total Students" / "סה״כ תלמידים"
+- `pendingGrading`: "Pending Grading" / "בהמתנה לבדיקה"
+- `yourCourses`: "Your Courses" / "הקורסים שלך"
+- `noCoursesAssigned`: "No courses assigned yet" / "אין קורסים משולבים עדיין"
+
+**Verification:**
+- TypeScript: ✅ Pass
+- Lint: ✅ Pass (no errors)

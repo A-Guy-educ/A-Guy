@@ -574,5 +574,85 @@
     ],
     "hookErrors": {},
     "emittedAt": "2026-04-17T05:38:45.299Z"
+  },
+  {
+    "id": "1776407243549-2eqc2ec",
+    "runId": "1244-260416-172516",
+    "event": "step.complete",
+    "payload": {
+      "runId": "1244-260416-172516",
+      "step": "build"
+    },
+    "hooksFired": [],
+    "hookErrors": {},
+    "emittedAt": "2026-04-17T06:27:23.550Z"
+  },
+  {
+    "id": "1776407243551-kfpxjs4",
+    "runId": "1244-260416-172516",
+    "event": "step.started",
+    "payload": {
+      "runId": "1244-260416-172516",
+      "step": "verify"
+    },
+    "hooksFired": [],
+    "hookErrors": {},
+    "emittedAt": "2026-04-17T06:27:23.551Z"
+  },
+  {
+    "id": "1776407246480-xrb6jia",
+    "runId": "1244-260416-172516",
+    "event": "step.complete",
+    "payload": {
+      "runId": "1244-260416-172516",
+      "step": "verify"
+    },
+    "hooksFired": [],
+    "hookErrors": {},
+    "emittedAt": "2026-04-17T06:27:26.480Z"
+  },
+  {
+    "id": "1776407246481-l4fgqga",
+    "runId": "1244-260416-172516",
+    "event": "step.started",
+    "payload": {
+      "runId": "1244-260416-172516",
+      "step": "review"
+    },
+    "hooksFired": [
+      "github-label",
+      "log",
+      "webhook"
+    ],
+    "hookErrors": {},
+    "emittedAt": "2026-04-17T06:27:26.481Z"
+  },
+  {
+    "id": "1776409919375-cteqwip",
+    "runId": "1244-260416-172516",
+    "event": "step.complete",
+    "payload": {
+      "runId": "1244-260416-172516",
+      "step": "review"
+    },
+    "hooksFired": [],
+    "hookErrors": {},
+    "emittedAt": "2026-04-17T07:11:59.375Z"
+  },
+  {
+    "id": "1776409919376-3mppmuu",
+    "runId": "1244-260416-172516",
+    "event": "step.started",
+    "payload": {
+      "runId": "1244-260416-172516",
+      "step": "review-fix"
+    },
+    "hooksFired": [
+      "github-label",
+      "log",
+      "webhook"
+    ],
+    "hookErrors": {},
+    "emittedAt": "2026-04-17T07:11:59.376Z"
   }
 ]

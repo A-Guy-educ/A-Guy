@@ -50,6 +50,17 @@
       "button": "להתחיל עכשיו"
     }
   },
+  "lms": {
+    "instructor": {
+      "title": "לוח המורה",
+      "subtitle": "צפה בקורסים שלך ובהתקדמות התלמידים",
+      "coursesAssigned": "קורסים משולבים",
+      "totalStudents": "סה״כ תלמידים",
+      "pendingGrading": "בהמתנה לבדיקה",
+      "yourCourses": "הקורסים שלך",
+      "noCoursesAssigned": "אין קורסים משולבים עדיין"
+    }
+  },
   "home": {
     "title": "דף הבית - A-Guy",
     "description": "המורה הדיגיטלי שלך - לימוד, תרגול, שאלות ומבחנים"

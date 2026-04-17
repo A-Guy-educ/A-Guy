@@ -44,3 +44,34 @@ The unit test runner has a configuration that only includes `*.int.spec.ts` file
 | Files created | ✅ All expected files exist |
 | Implementation | ✅ Correct per acceptance 
 ...(truncated)
+
+### review (2026-04-17T07:11:55)
+The integration tests completed but with pre-existing errors (lesson block population failures). My review stands: **FAIL** due to the missing `lms.instructor` i18n namespace.
+
+**Critical fix required:** Add the translation keys to `src/i18n/en.json` and `src/i18n/he.json`:
+
+```json
+"lms": {
+  "instructor": {
+    "title": "Instructor Dashboard",
+    "subtitle": "View your courses and student progress",
+    "coursesAssigned": "Courses Assigned",
+    "totalStudents": "Total Students",
+    "pending
+...(truncated)
+
+### review-fix (2026-04-17T07:15:39)
+**Critical fix applied:**
+
+Added missing `lms.instructor` i18n translations to both:
+- `src/i18n/en.json` - English translations
+- `src/i18n/he.json` - Hebrew translations
+
+Keys added:
+- `title`: "Instructor Dashboard" / "לוח המורה"
+- `subtitle`: "View your courses and student progress" / "צפה בקורסים שלך ובהתקדמות התלמידים"
+- `coursesAssigned`: "Courses Assigned" / "קורסים משולבים"
+- `totalStudents`: "Total Students" / "סה״כ תלמידים"
+- `pendingGrading`: "Pending Grading" / "בהמתנה לבדיקה"
+- `yo
+...(truncated)
