@@ -38,9 +38,9 @@ export function LatexQuickImport({ lessonId, onImportSuccess }: LatexQuickImport
       // Track analytics if AI fallback was used
       if (data.data.method === 'ai_fallback') {
         analytics.track(PRODUCT_EVENTS.LATEX_IMPORT_FALLBACK, {
-          lessonId,
-          scriptErrors: data.data.scriptErrors || [],
-          aiSucceeded: true,
+          lesson_id: lessonId,
+          script_errors: data.data.scriptErrors || [],
+          ai_succeeded: true,
         })
       }
 
