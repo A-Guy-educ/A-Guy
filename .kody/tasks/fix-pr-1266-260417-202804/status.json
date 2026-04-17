@@ -33,21 +33,21 @@
     },
     "review-fix": {
       "state": "completed",
-      "completedAt": "2026-04-17T21:20:57.000Z",
+      "completedAt": "2026-04-17T21:21:41.532Z",
       "retries": 0,
-      "notes": "No Critical/Major issues found by review. The AdvancedContentEditor exclusion comment (lines 98-99) was confirmed present. Typecheck clean, CourseInstructors.ts lint-clean, 25/25 instructorAccess unit tests pass. 3 pre-existing integration test failures unrelated to this change."
+      "promptTokens": 2873
     },
     "ship": {
-      "state": "pending",
+      "state": "running",
+      "startedAt": "2026-04-17T21:21:41.647Z",
       "retries": 0
     }
   },
   "createdAt": "2026-04-17T20:28:19.103Z",
-  "updatedAt": "2026-04-17T21:20:57.000Z",
+  "updatedAt": "2026-04-17T21:21:41.647Z",
   "sessions": {
     "explore": "3cfb97a3-26d4-4d59-947b-e27c0900a8ef",
     "build": "c34d6c17-23f4-4470-83e6-8ac6f71219d6",
-    "review": "0b5d39b4-0395-4959-bdb1-253915e35451",
-    "review-fix": "f9a7e2b1-c3d4-4567-8901-234567890abc"
+    "review": "0b5d39b4-0395-4959-bdb1-253915e35451"
   }
 }

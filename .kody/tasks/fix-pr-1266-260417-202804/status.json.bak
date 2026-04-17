@@ -32,8 +32,10 @@
       "promptTokens": 5779
     },
     "review-fix": {
-      "state": "pending",
-      "retries": 0
+      "state": "completed",
+      "completedAt": "2026-04-17T21:21:41.532Z",
+      "retries": 0,
+      "promptTokens": 2873
     },
     "ship": {
       "state": "pending",
@@ -41,7 +43,7 @@
     }
   },
   "createdAt": "2026-04-17T20:28:19.103Z",
-  "updatedAt": "2026-04-17T20:39:06.807Z",
+  "updatedAt": "2026-04-17T21:21:41.644Z",
   "sessions": {
     "explore": "3cfb97a3-26d4-4d59-947b-e27c0900a8ef",
     "build": "c34d6c17-23f4-4470-83e6-8ac6f71219d6",
