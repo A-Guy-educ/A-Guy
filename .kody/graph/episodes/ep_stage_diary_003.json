@@ -1,0 +1,13 @@
+{
+  "id": "ep_stage_diary_003",
+  "runId": "1269-260417-150933",
+  "source": "stage_diary",
+  "taskId": "1269-260417-150933",
+  "createdAt": "2026-04-17T15:41:13.919Z",
+  "rawContent": "{\"stage\":\"review-fix\",\"insights\":[{\"kind\":\"lesson\",\"text\":\"Payload CMS exposes afterOpenConnection callback in payload.config.ts for connection lifecycle monitoring and logging.\",\"scope\":\"src/payload.config.ts\"},{\"kind\":\"gotcha\",\"text\":\"Stale comments referencing removed types (PayloadMcpApiKey) were left behind after cleanup — keep comments in sync when removing types.\",\"scope\":\"src/payload.config.ts\"},{\"kind\":\"convention\",\"text\":\"MongoDB pool monitoring utilities belong in src/infra/db/ following the existing infrastructure directory structure.\",\"scope\":\"src/infra/db\"},{\"kind\":\"decision\",\"text\":\"MongooseAdapter already exposes pool stats via _pool — use the built-in interface rather than wrapping with custom state.\",\"scope\":\"src/infra/db/pool-stats.ts\"}]}",
+  "extractedNodeIds": [],
+  "linkedFiles": [],
+  "metadata": {
+    "stage": "review-fix"
+  }
+}

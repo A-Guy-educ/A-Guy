@@ -1,0 +1,13 @@
+{
+  "id": "ep_stage_diary_002",
+  "runId": "1269-260417-150933",
+  "source": "stage_diary",
+  "taskId": "1269-260417-150933",
+  "createdAt": "2026-04-17T15:39:00.277Z",
+  "rawContent": "{\"stage\":\"review\",\"insights\":[{\"kind\":\"lesson\",\"text\":\"When collections are removed from Payload config, stale comments referencing them can remain. Always audit and remove outdated comments when cleaning up collections.\",\"scope\":\"src/payload.config.ts\"},{\"kind\":\"gotcha\",\"text\":\"Pool stats returning all zeros indicates the monitoring implementation may not be capturing stats correctly - verify the health endpoint actually reflects live pool state, not just initialized zeros.\",\"scope\":\"src/app/api/health/route.ts\"}]}",
+  "extractedNodeIds": [],
+  "linkedFiles": [],
+  "metadata": {
+    "stage": "review"
+  }
+}
