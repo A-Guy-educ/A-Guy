@@ -9,13 +9,21 @@
 
 import type { CollectionConfig } from 'payload'
 
+import { AccountRole } from '@/infra/auth/roles'
 import { adminOnly } from '../access/adminOnly'
 
 export const CourseInstructors: CollectionConfig = {
   slug: 'course-instructors',
   admin: {
     description: 'Assign instructors to specific courses',
-    defaultColumns: ['instructor', 'course', 'role', 'canGrade', 'canMessageStudents', 'assignedAt'],
+    defaultColumns: [
+      'instructor',
+      'course',
+      'role',
+      'canGrade',
+      'canMessageStudents',
+      'assignedAt',
+    ],
     useAsTitle: 'instructor',
   },
   fields: [
@@ -77,10 +85,10 @@ export const CourseInstructors: CollectionConfig = {
   ],
   access: {
     read: ({ req: { user } }) => {
-      if (!user) return false
-      if (user.role === 'admin') return true
+      if (!user || user.collection !== 'users') return false
+      if (user.role === AccountRole.Admin) return true
       // Instructors can read their own assignments
-      if (user.role === 'instructor') {
+      if (user.role === AccountRole.Instructor) {
         return {
           instructor: {
             equals: user.id,
