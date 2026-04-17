@@ -20,9 +20,9 @@
   "agent": {
     "provider": "minimax",
     "modelMap": {
-      "cheap": "MiniMax-M2.7-highspeed",
-      "mid": "MiniMax-M2.7-highspeed",
-      "strong": "MiniMax-M2.7-highspeed"
+      "cheap": "minimax/MiniMax-M2.7-highspeed",
+      "mid": "minimax/MiniMax-M2.7-highspeed",
+      "strong": "minimax/MiniMax-M2.7-highspeed"
     }
   },
   "release": {
@@ -35,7 +35,7 @@
   "watch": {
     "enabled": true,
     "digestIssue": null,
-    "model": "MiniMax-M2.7-highspeed",
+    "model": "minimax/MiniMax-M2.7-highspeed",
     "provider": "minimax"
   },
   "stages": {
