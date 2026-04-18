@@ -685,5 +685,25 @@
       "practice": "Practice",
       "exam": "Exam"
     }
+  },
+  "enrollment": {
+    "title": "My Enrollments",
+    "subtitle": "Track your course enrollment requests and active enrollments",
+    "browseCourses": "Browse Courses",
+    "activeEnrollments": "Active Enrollments",
+    "pendingRequests": "Pending Requests",
+    "pastEnrollments": "Past Enrollments",
+    "noEnrollments": "No Enrollments Yet",
+    "noEnrollmentsHint": "Browse available courses and request enrollment to get started.",
+    "requestedOn": "Requested on",
+    "processedOn": "Processed on",
+    "expiresOn": "Expires on",
+    "goToCourse": "Go to Course",
+    "cancelRequest": "Cancel Request",
+    "requestEnrollment": "Request Enrollment",
+    "enrollmentRequested": "Enrollment requested!",
+    "enrollmentRequestFailed": "Failed to request enrollment",
+    "alreadyEnrolled": "You are already enrolled",
+    "pendingEnrollmentExists": "You already have a pending enrollment request"
   }
 }

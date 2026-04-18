@@ -13,6 +13,7 @@ import { ConfigAuditLogs } from '@/server/payload/collections/ConfigAuditLogs'
 import { ConfigSecrets } from '@/server/payload/collections/ConfigSecrets'
 import { ConfigValues } from '@/server/payload/collections/ConfigValues'
 import { ContentPages } from '@/server/payload/collections/ContentPages'
+import { Enrollments } from '@/server/payload/collections/Enrollments'
 import { ContextExtractions } from '@/server/payload/collections/ContextExtractions'
 import { Conversations } from '@/server/payload/collections/Conversations'
 import { Courses } from '@/server/payload/collections/Courses'
@@ -168,6 +169,7 @@ export default buildConfig({
     Tenants,
     Courses,
     Chapters,
+    Enrollments,
     Lessons,
     ContentPages,
     ContextExtractions,

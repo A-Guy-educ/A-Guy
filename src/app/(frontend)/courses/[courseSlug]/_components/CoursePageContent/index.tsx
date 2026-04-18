@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { AskTab } from '../AskTab'
 import { CourseAnalytics } from '../CourseAnalytics'
 import { CourseTabs, TAB_COLORS, type CourseTab } from '../CourseTabs'
+import { EnrollButton } from '../EnrollButton'
 import { ExamReminderBubble } from '../ExamReminderBubble'
 import { ExamsTab } from '../ExamsTab'
 import { LessonListTab } from '../LessonListTab'
@@ -58,9 +59,12 @@ export function CoursePageContent({
         />
         <div className="max-w-5xl mx-auto text-center relative">
           {hasUpcomingExam && daysUntil !== null && <ExamReminderBubble daysUntil={daysUntil} />}
-          <h1 className="text-display-sm md:text-display-md font-black text-foreground mt-4 text-center">
-            {course.title}
-          </h1>
+          <div className="flex items-center justify-center gap-3 flex-wrap">
+            <h1 className="text-display-sm md:text-display-md font-black text-foreground text-center">
+              {course.title}
+            </h1>
+            <EnrollButton course={course} />
+          </div>
         </div>
       </div>
 

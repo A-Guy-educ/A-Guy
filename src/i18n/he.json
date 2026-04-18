@@ -685,5 +685,25 @@
       "practice": "תרגול",
       "exam": "בחינה"
     }
+  },
+  "enrollment": {
+    "title": "הרשמות שלי",
+    "subtitle": "מעקב אחר בקשות הרשמה לקורסים והרשמות פעילות",
+    "browseCourses": "עיון בקורסים",
+    "activeEnrollments": "הרשמות פעילות",
+    "pendingRequests": "בקשות ממתינות",
+    "pastEnrollments": "הרשמות קודמות",
+    "noEnrollments": "אין הרשמות עדיין",
+    "noEnrollmentsHint": "עיין בקורסים הזמינים ובקש הרשמה כדי להתחיל.",
+    "requestedOn": "התבקש ב",
+    "processedOn": "טופל ב",
+    "expiresOn": "פג תוקף ב",
+    "goToCourse": "לקורס",
+    "cancelRequest": "ביטול בקשה",
+    "requestEnrollment": "בקשת הרשמה",
+    "enrollmentRequested": "הבקשה נשלחה!",
+    "enrollmentRequestFailed": "נכשל לשלוח בקשה",
+    "alreadyEnrolled": "כבר רשום לקורס זה",
+    "pendingEnrollmentExists": "כבר יש לך בקשת הרשמה ממתינה"
   }
 }
