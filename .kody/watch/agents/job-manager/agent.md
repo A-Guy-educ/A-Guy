@@ -90,8 +90,9 @@ Classify the current state of the task:
 
 1. **All stages through `ship` completed and `ship.outputFile` contains a PR URL** → task is done. Go to Phase 4 (completion).
 2. **Any stage in `state: "failed"`** → failure path. Go to Phase 3a.
-3. **Pipeline waiting on a gate** (a stage in `state: "waiting"` or the workflow is paused on input) → gate path. Go to Phase 3b.
-4. **All stages `state: "running"` or `"pending"` with no errors** → still working. No action this cycle; update the progress comment with stage progress and exit.
+3. **Pipeline paused on clarify questions** → the most recent bot-authored comment on the issue starts with `🤔` / contains "Kody has questions" / consists of numbered interrogatives. Go to Phase 3c (clarify answering).
+4. **Pipeline waiting on a proceed/approval gate** (a stage in `state: "waiting"` with no open questions — just a "continue?" signal) → Phase 3b (auto-resolve).
+5. **All stages `state: "running"` or `"pending"` with no errors** → still working. No action this cycle; update the progress comment with stage progress and exit.
 
 #### Phase 3a — Failure handling (LLM-only decision)
 
@@ -185,6 +186,74 @@ EOF
 
 Record `currentAction: "gate-resolve"`.
 
+#### Phase 3c — Clarify question answering
+
+The pipeline paused to ask design/scoping questions. Your job is to answer them if you can reason about them confidently; otherwise escalate with the specific question that blocked you.
+
+**Step 1 — Gather context.** Read everything needed to answer:
+
+```bash
+# The questions (most recent bot comment)
+gh issue view "$ISSUE_NUMBER" --repo "$REPO" --json comments --jq '.comments | sort_by(.createdAt) | reverse | .[0].body'
+
+# The original task request
+gh issue view "$ISSUE_NUMBER" --repo "$REPO" --json body --jq '.body'
+
+# Structured task + current plan
+cat ".kody/tasks/$CURRENT_TASK/task.json" 2>/dev/null
+cat ".kody/tasks/$CURRENT_TASK/plan.md" 2>/dev/null | head -300
+```
+
+Also consult the codebase — read neighbouring collections, schemas, or utilities that the question touches, since convention often answers the question (e.g., if all other collections track `approvedBy` only for approval, use that convention).
+
+**Step 2 — Answer each question, applying the confidence floor.** For every question, classify:
+
+- **Engineering judgment** — the question is about naming, schema shape, scope of a field, consistency with existing code, standard patterns. You can answer with confidence. Example: *"Should `approvedBy` track only approved enrollments or also cancelled ones?"* → answer based on existing collection conventions.
+- **Product decision** — the question asks which feature to build, which users to support, what the UX should be, business rules that weren't in the original request. You **cannot** answer these; they require real human product input. Example: *"Should we support OAuth or SAML or both?"*
+
+**Step 3 — Act on the classification.**
+
+- **Every question is engineering judgment and has a confident answer** → post the answers and request the pipeline to proceed:
+
+   ```bash
+   gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body "$(cat <<EOF
+   🤖 Job manager answering clarify questions:
+
+   **1.** <concise answer, 1–2 sentences, cite reasoning from existing code/task context>
+   **2.** <concise answer>
+   ...
+
+   @kody rerun --from plan --feedback "Clarify answers: 1) <brief>. 2) <brief>. ..."
+   EOF
+   )"
+   ```
+
+   Record `currentAction: "clarify-answered"`.
+
+- **One or more questions is a product decision** → escalate, highlighting only the unanswerable question(s):
+
+   ```bash
+   gh issue edit "$ISSUE_NUMBER" --repo "$REPO" --remove-label 'kody:manager'
+   gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body "$(cat <<EOF
+   🚧 Job manager escalating — clarify question needs human product input.
+
+   **Blocking question:**
+   <the specific question I cannot answer>
+
+   **My attempted analysis:**
+   <why this is a product decision, not engineering judgment>
+
+   **Questions I could answer** (provided here for reference, not applied): <list if any>
+
+   Re-apply \`kody:manager\` after answering the blocking question inline.
+   EOF
+   )"
+   ```
+
+   Record `currentAction: "escalate-clarify"`, clear `currentTaskId` / `currentIssueNumber`, set `lastAdvanceAt`.
+
+**Rule:** when in doubt between engineering judgment and product decision, escalate. False confidence here produces wrong features.
+
 ### Phase 4 — Completion
 
 `ship` stage is completed and a PR URL is in the ship output. Read the PR URL:
@@ -268,7 +337,7 @@ If found, write it into `state.json.currentTaskId`. If not found and `currentAct
 
 ### Phase 6 — Write cycle memory
 
-Append to `.kody/memory/watch-job-manager.json` following the standard watch-agent format. Include: `lastCycle` timestamp, the action taken (`none`, `monitor`, `rerun-with-fix`, `bypass`, `gate-resolve`, `escalate`, `complete`, `dispatch-new`), the affected issue number, and any notable outcome. Keep only the last 100 cycles.
+Append to `.kody/memory/watch-job-manager.json` following the standard watch-agent format. Include: `lastCycle` timestamp, the action taken (`none`, `monitor`, `rerun-with-fix`, `bypass`, `gate-resolve`, `clarify-answered`, `escalate-clarify`, `escalate`, `complete`, `dispatch-new`), the affected issue number, and any notable outcome. Keep only the last 100 cycles.
 
 ## Edge cases
 
