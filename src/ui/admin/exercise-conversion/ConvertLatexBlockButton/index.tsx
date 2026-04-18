@@ -32,6 +32,8 @@ interface ConvertSuccess {
   warnings?: { line: number; message: string; rawLatex: string }[]
 }
 
+type ImportMethod = 'script' | 'ai_fallback'
+
 export const ConvertLatexBlockButton = () => {
   const { id: exerciseId } = useDocumentInfo()
   const router = useRouter()
@@ -52,6 +54,7 @@ export const ConvertLatexBlockButton = () => {
   const [isConverting, setIsConverting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<ConvertSuccess | null>(null)
+  const [method, setMethod] = useState<ImportMethod | null>(null)
   const [showPreview, setShowPreview] = useState(false)
 
   if (!exerciseId || latexBlocks.length === 0) {
@@ -77,6 +80,7 @@ export const ConvertLatexBlockButton = () => {
         return
       }
       setResult(data.data as ConvertSuccess)
+      setMethod((data.method as ImportMethod) || 'script')
       // Refresh the admin page so the editor picks up the new content blocks.
       router.refresh()
     } catch {
@@ -179,10 +183,12 @@ export const ConvertLatexBlockButton = () => {
         <p style={{ color: 'var(--theme-success-500)', marginTop: 8, fontSize: 12 }}>
           Converted {result.replacedBlockIds.length} LaTeX block
           {result.replacedBlockIds.length === 1 ? '' : 's'} into {result.addedBlockCount} structured
-          block{result.addedBlockCount === 1 ? '' : 's'}.
+          block{result.addedBlockCount === 1 ? '' : 's'}
+          {method === 'ai_fallback' ? ' via AI fallback' : ''}
           {result.warnings && result.warnings.length > 0
             ? ` (${result.warnings.length} warning${result.warnings.length === 1 ? '' : 's'})`
             : ''}
+          .
         </p>
       )}
     </div>
