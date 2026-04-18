@@ -30,17 +30,18 @@
     },
     "review-fix": {
       "state": "completed",
-      "completedAt": "2026-04-18T11:19:20.947Z",
+      "completedAt": "2026-04-18T11:19:44.608Z",
       "retries": 0,
-      "notes": "No Critical/Major findings — no code changes required. Review verdict: PASS."
+      "promptTokens": 4290
     },
     "ship": {
-      "state": "pending",
+      "state": "running",
+      "startedAt": "2026-04-18T11:19:44.771Z",
       "retries": 0
     }
   },
   "createdAt": "2026-04-18T10:20:34.918Z",
-  "updatedAt": "2026-04-18T11:18:21.637Z",
+  "updatedAt": "2026-04-18T11:19:44.771Z",
   "sessions": {
     "build": "4d6408dc-ecdf-468f-8476-24fc5a20bd4b",
     "review": "8ffae404-7eaa-493d-88cc-c5d61e9a35cb"
