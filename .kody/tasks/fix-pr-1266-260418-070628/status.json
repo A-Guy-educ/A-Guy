@@ -30,17 +30,18 @@
     },
     "review-fix": {
       "state": "completed",
-      "completedAt": "2026-04-18T12:08:00.000Z",
+      "completedAt": "2026-04-18T07:35:53.664Z",
       "retries": 0,
-      "notes": "No Critical or Major findings. Verdict: PASS. Clarifying comment at CourseInstructors.ts:98-99 already present in fix branch."
+      "promptTokens": 3424
     },
     "ship": {
-      "state": "pending",
+      "state": "running",
+      "startedAt": "2026-04-18T07:35:53.764Z",
       "retries": 0
     }
   },
   "createdAt": "2026-04-18T07:06:44.240Z",
-  "updatedAt": "2026-04-18T12:08:00.000Z",
+  "updatedAt": "2026-04-18T07:35:53.764Z",
   "sessions": {
     "build": "8f56f627-7c7f-408d-b91f-72a77ae94c96",
     "review": "cc4fe269-6879-411c-8c52-cac8641ef296"
