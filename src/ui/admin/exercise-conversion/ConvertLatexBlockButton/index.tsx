@@ -65,8 +65,10 @@ export const ConvertLatexBlockButton = () => {
     setError(null)
     setResult(null)
     try {
-      const response = await fetch(`/api/exercises/${exerciseId}/convert-latex-block`, {
+      const response = await fetch('/api/exercises/convert-latex-block', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ exerciseId }),
         credentials: 'include',
       })
       const data = await response.json()
