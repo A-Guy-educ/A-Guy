@@ -1,0 +1,13 @@
+{
+  "id": "ep_stage_diary_006",
+  "runId": "fix-pr-1266-260418-093152",
+  "source": "stage_diary",
+  "taskId": "fix-pr-1266-260418-093152",
+  "createdAt": "2026-04-18T09:47:48.706Z",
+  "rawContent": "{\"stage\":\"review-fix\",\"insights\":[{\"kind\":\"convention\",\"text\":\"Translations must update both messages/en.json and messages/he.json whenever new UI text is added.\",\"scope\":\"i18n\"},{\"kind\":\"convention\",\"text\":\"API endpoints branch on isAdmin/role to return filtered (user-scoped) vs. unfiltered (admin) datasets.\",\"scope\":\"API design\"},{\"kind\":\"decision\",\"text\":\"Admin dashboard uses courses[].instructors[] array on course entity rather than separate instructor->courses mapping.\",\"scope\":\"data model\"}]}",
+  "extractedNodeIds": [],
+  "linkedFiles": [],
+  "metadata": {
+    "stage": "review-fix"
+  }
+}

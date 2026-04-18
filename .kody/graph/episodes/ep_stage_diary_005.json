@@ -1,0 +1,13 @@
+{
+  "id": "ep_stage_diary_005",
+  "runId": "fix-pr-1266-260418-093152",
+  "source": "stage_diary",
+  "taskId": "fix-pr-1266-260418-093152",
+  "createdAt": "2026-04-18T09:44:07.292Z",
+  "rawContent": "{\"stage\":\"review\",\"insights\":[{\"kind\":\"lesson\",\"text\":\"Admin/superuser views often get stubbed with TODO initially — always verify the admin branch returns data, not just instructor views.\",\"scope\":\"UI branching\"},{\"kind\":\"convention\",\"text\":\"Design token warnings in lint are acceptable in this project (not blocking) — only actual errors fail the gate.\",\"scope\":\"lint\"},{\"kind\":\"decision\",\"text\":\"When roles share a route, branch on role at both API (data) and UI (view) layers to keep concerns separated.\",\"scope\":\"auth routing\"},{\"kind\":\"convention\",\"text\":\"Use Payload's `where` clause operators (equals, in) for parameterized queries — never string interpolation.\",\"scope\":\"payload api\"}]}",
+  "extractedNodeIds": [],
+  "linkedFiles": [],
+  "metadata": {
+    "stage": "review"
+  }
+}

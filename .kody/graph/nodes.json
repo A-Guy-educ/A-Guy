@@ -187,6 +187,118 @@
         "kind:gotcha"
       ],
       "confidence": 0.7
+    },
+    "facts_ui_branching_1372881329486": {
+      "id": "facts_ui_branching_1372881329486",
+      "type": "facts",
+      "hall": "facts",
+      "room": "UI branching",
+      "content": "Admin/superuser views often get stubbed with TODO initially — always verify the admin branch returns data, not just instructor views.",
+      "episodeId": "ep_stage_diary_005",
+      "validFrom": "2026-04-18T09:44:07.299Z",
+      "validTo": null,
+      "tags": [
+        "stage:review",
+        "task:fix-pr-1266-260418-093152",
+        "kind:lesson"
+      ],
+      "confidence": 0.7
+    },
+    "conventions_lint_1372883181204": {
+      "id": "conventions_lint_1372883181204",
+      "type": "conventions",
+      "hall": "conventions",
+      "room": "lint",
+      "content": "Design token warnings in lint are acceptable in this project (not blocking) — only actual errors fail the gate.",
+      "episodeId": "ep_stage_diary_005",
+      "validFrom": "2026-04-18T09:44:07.301Z",
+      "validTo": null,
+      "tags": [
+        "stage:review",
+        "task:fix-pr-1266-260418-093152",
+        "kind:convention"
+      ],
+      "confidence": 0.7
+    },
+    "facts_auth_routing_1372885506271": {
+      "id": "facts_auth_routing_1372885506271",
+      "type": "facts",
+      "hall": "facts",
+      "room": "auth routing",
+      "content": "When roles share a route, branch on role at both API (data) and UI (view) layers to keep concerns separated.",
+      "episodeId": "ep_stage_diary_005",
+      "validFrom": "2026-04-18T09:44:07.303Z",
+      "validTo": null,
+      "tags": [
+        "stage:review",
+        "task:fix-pr-1266-260418-093152",
+        "kind:decision"
+      ],
+      "confidence": 0.7
+    },
+    "conventions_payload_api_1372887929785": {
+      "id": "conventions_payload_api_1372887929785",
+      "type": "conventions",
+      "hall": "conventions",
+      "room": "payload api",
+      "content": "Use Payload's `where` clause operators (equals, in) for parameterized queries — never string interpolation.",
+      "episodeId": "ep_stage_diary_005",
+      "validFrom": "2026-04-18T09:44:07.306Z",
+      "validTo": null,
+      "tags": [
+        "stage:review",
+        "task:fix-pr-1266-260418-093152",
+        "kind:convention"
+      ],
+      "confidence": 0.7
+    },
+    "conventions_i18n_1594293977890": {
+      "id": "conventions_i18n_1594293977890",
+      "type": "conventions",
+      "hall": "conventions",
+      "room": "i18n",
+      "content": "Translations must update both messages/en.json and messages/he.json whenever new UI text is added.",
+      "episodeId": "ep_stage_diary_006",
+      "validFrom": "2026-04-18T09:47:48.712Z",
+      "validTo": null,
+      "tags": [
+        "stage:review-fix",
+        "task:fix-pr-1266-260418-093152",
+        "kind:convention"
+      ],
+      "confidence": 0.7
+    },
+    "conventions_api_design_1594297855202": {
+      "id": "conventions_api_design_1594297855202",
+      "type": "conventions",
+      "hall": "conventions",
+      "room": "API design",
+      "content": "API endpoints branch on isAdmin/role to return filtered (user-scoped) vs. unfiltered (admin) datasets.",
+      "episodeId": "ep_stage_diary_006",
+      "validFrom": "2026-04-18T09:47:48.716Z",
+      "validTo": null,
+      "tags": [
+        "stage:review-fix",
+        "task:fix-pr-1266-260418-093152",
+        "kind:convention"
+      ],
+      "confidence": 0.7
+    },
+    "facts_data_model_1594302596613": {
+      "id": "facts_data_model_1594302596613",
+      "type": "facts",
+      "hall": "facts",
+      "room": "data model",
+      "content": "Admin dashboard uses courses[].instructors[] array on course entity rather than separate instructor->courses mapping.",
+      "episodeId": "ep_stage_diary_006",
+      "validFrom": "2026-04-18T09:47:48.721Z",
+      "validTo": null,
+      "tags": [
+        "stage:review-fix",
+        "task:fix-pr-1266-260418-093152",
+        "kind:decision"
+      ],
+      "confidence": 0.7
     }
   }
 }
