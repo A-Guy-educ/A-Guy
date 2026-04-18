@@ -1114,5 +1114,33 @@
     ],
     "hookErrors": {},
     "emittedAt": "2026-04-18T09:44:11.181Z"
+  },
+  {
+    "id": "1776507649524-ej3r3jf",
+    "runId": "fix-pr-1266-260418-102014",
+    "event": "pipeline.started",
+    "payload": {
+      "runId": "fix-pr-1266-260418-102014",
+      "issueNumber": 1266
+    },
+    "hooksFired": [],
+    "hookErrors": {},
+    "emittedAt": "2026-04-18T10:20:49.524Z"
+  },
+  {
+    "id": "1776507649525-mvisvb7",
+    "runId": "fix-pr-1266-260418-102014",
+    "event": "step.started",
+    "payload": {
+      "runId": "fix-pr-1266-260418-102014",
+      "step": "build"
+    },
+    "hooksFired": [
+      "github-label",
+      "log",
+      "webhook"
+    ],
+    "hookErrors": {},
+    "emittedAt": "2026-04-18T10:20:49.525Z"
   }
 ]

@@ -58,7 +58,17 @@
       "totalStudents": "סה״כ תלמידים",
       "pendingGrading": "בהמתנה לבדיקה",
       "yourCourses": "הקורסים שלך",
-      "noCoursesAssigned": "אין קורסים משולבים עדיין"
+      "noCoursesAssigned": "אין קורסים משולבים עדיין",
+      "adminDashboardTitle": "פיקוח קורסים",
+      "adminDashboardSubtitle": "פקח על כל הקורסים ומינויי המורים",
+      "totalCoursesAdmin": "סה״כ קורסים",
+      "allCourses": "כל הקורסים",
+      "noInstructorsAssigned": "אין מורים משולבים",
+      "instructorRole": {
+        "primary": "ראשי",
+        "ta": "עוזר הוראה",
+        "guest": "אורח"
+      }
     }
   },
   "home": {

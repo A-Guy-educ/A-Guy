@@ -34,16 +34,72 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    let courseIds: string[] = []
-
-    // Admins see all courses (for now, show empty state for admin dashboard expansion later)
+    // Admins get a supervisory overview of all courses with instructor assignments
     if (typedUser.role === AccountRole.Admin) {
-      // Admin dashboard will be expanded in future to show all courses with instructors
-      courseIds = []
-    } else {
-      // Instructors see only their assigned courses
-      courseIds = await getInstructorCourseIds(payload, String(typedUser.id))
+      // Fetch all courses
+      const allCourses = await payload.find({
+        collection: 'courses',
+        limit: 1000,
+        overrideAccess: true,
+      })
+
+      // Fetch all course-instructor assignments with populated instructor
+      const allAssignments = await payload.find({
+        collection: 'course-instructors',
+        limit: 1000,
+        depth: 1,
+        overrideAccess: true,
+      })
+
+      // Build a map of courseId -> instructors
+      const instructorsByCourse = new Map<
+        string,
+        Array<{ id: string; name: string; role: 'primary' | 'ta' | 'guest' }>
+      >()
+      for (const assignment of allAssignments.docs) {
+        const courseId = assignment.course as string
+        if (!courseId) continue
+        const instructorUser = assignment.instructor as { id: string; name?: string } | null
+        if (!instructorUser) continue
+        const existing = instructorsByCourse.get(courseId) ?? []
+        existing.push({
+          id: instructorUser.id,
+          name: instructorUser.name ?? 'Unknown',
+          role: (assignment.role as 'primary' | 'ta' | 'guest') ?? 'guest',
+        })
+        instructorsByCourse.set(courseId, existing)
+      }
+
+      // Fetch total students across all courses
+      const enrolledUsers = await payload.find({
+        collection: 'users',
+        where: {
+          'courseEntitlements.course': {
+            in: allCourses.docs.map((c) => c.id),
+          },
+        },
+        limit: 1000,
+        overrideAccess: true,
+      })
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          courses: allCourses.docs.map((course) => ({
+            id: course.id,
+            title: course.title,
+            slug: course.slug,
+            courseLabel: course.courseLabel,
+            instructors: instructorsByCourse.get(course.id) ?? [],
+          })),
+          totalStudents: enrolledUsers.totalDocs,
+          totalCourses: allCourses.totalDocs,
+        },
+      })
     }
+
+    // Instructor branch: only their assigned courses
+    const courseIds = await getInstructorCourseIds(payload, String(typedUser.id))
 
     if (courseIds.length === 0) {
       return NextResponse.json({

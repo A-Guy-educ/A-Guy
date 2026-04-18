@@ -58,7 +58,17 @@
       "totalStudents": "Total Students",
       "pendingGrading": "Pending Grading",
       "yourCourses": "Your Courses",
-      "noCoursesAssigned": "No courses assigned yet"
+      "noCoursesAssigned": "No courses assigned yet",
+      "adminDashboardTitle": "Course Oversight",
+      "adminDashboardSubtitle": "Supervise all courses and instructor assignments",
+      "totalCoursesAdmin": "Total Courses",
+      "allCourses": "All Courses",
+      "noInstructorsAssigned": "No instructors assigned",
+      "instructorRole": {
+        "primary": "Primary",
+        "ta": "TA",
+        "guest": "Guest"
+      }
     }
   },
   "home": {

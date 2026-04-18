@@ -334,3 +334,144 @@ test.describe('Admin Journey - Instructor Assignment Management', () => {
     expect(isAssigned).toBe(false)
   })
 })
+
+test.describe('Admin Dashboard - Course Oversight View', () => {
+  let adminEmail: string
+  let admin: Awaited<ReturnType<typeof createTestUser>>
+  let instructorEmail: string
+  let instructor: Awaited<ReturnType<typeof createTestUser>>
+  let testCourseData: Awaited<ReturnType<typeof seedTestCourseData>>
+
+  test.beforeAll(async () => {
+    // Create admin user
+    adminEmail = generateTestUserEmail('admin-dashboard-test')
+    admin = await createTestUser({ email: adminEmail, password: 'TestPassword123!' }, 'admin')
+
+    // Create instructor user
+    instructorEmail = generateTestUserEmail('admin-dashboard-instructor-test')
+    instructor = await createTestUser(
+      { email: instructorEmail, password: 'TestPassword123!' },
+      'instructor',
+    )
+
+    // Seed test course data
+    testCourseData = await seedTestCourseData()
+
+    // Assign instructor to course
+    if (testCourseData) {
+      const payload = await getPayload({ config })
+      await seedCourseInstructor(payload, instructor.id!, testCourseData.courseId, 'primary')
+    }
+  })
+
+  test('admin sees Course Oversight heading on /instructor page', async ({ page }) => {
+    await setupAuthenticatedUser(page, admin, 'admin')
+    await page.goto('/instructor')
+    await page.waitForLoadState('domcontentloaded')
+
+    // Should see admin-specific heading
+    const heading = page.locator('h1')
+    const headingText = await heading.textContent({ timeout: 10000 })
+    expect(headingText).toMatch(/Course Oversight|פיקוח קורסים/i)
+  })
+
+  test('admin sees all courses in the system', async ({ page }) => {
+    if (!testCourseData) {
+      test.skip(true, 'No test course data available')
+      return
+    }
+
+    await setupAuthenticatedUser(page, admin, 'admin')
+    await page.goto('/instructor')
+    await page.waitForLoadState('domcontentloaded')
+
+    // Should see the test course
+    const courseElement = page.locator(`text=${testCourseData.courseSlug}`)
+    await expect(courseElement).toBeVisible({ timeout: 10000 })
+  })
+
+  test('admin sees instructor badges on courses with assignments', async ({ page }) => {
+    if (!testCourseData) {
+      test.skip(true, 'No test course data available')
+      return
+    }
+
+    await setupAuthenticatedUser(page, admin, 'admin')
+    await page.goto('/instructor')
+    await page.waitForLoadState('domcontentloaded')
+
+    // Should see instructor badges (role labels)
+    const primaryBadge = page.locator('text=/Primary|ראשי/i')
+    await expect(primaryBadge).toBeVisible({ timeout: 10000 })
+  })
+
+  test('admin API endpoint returns all courses with instructor data', async ({ page }) => {
+    if (!testCourseData) {
+      test.skip(true, 'No test course data available')
+      return
+    }
+
+    await setupAuthenticatedUser(page, admin, 'admin')
+
+    // Make API request directly
+    const response = await page.request.get('/api/instructor/dashboard')
+
+    expect(response.status()).toBe(200)
+    const data = await response.json()
+
+    expect(data.success).toBe(true)
+    expect(data.data).toHaveProperty('courses')
+    expect(Array.isArray(data.data.courses)).toBe(true)
+    expect(data.data.courses.length).toBeGreaterThan(0)
+
+    // At least one course should have instructors
+    const courseWithInstructors = data.data.courses.find(
+      (c: { instructors?: Array<{ role: string }> }) =>
+        c.instructors && c.instructors.length > 0,
+    )
+    expect(courseWithInstructors).toBeDefined()
+    expect(courseWithInstructors.instructors[0]).toHaveProperty('role')
+    expect(['primary', 'ta', 'guest']).toContain(courseWithInstructors.instructors[0].role)
+  })
+
+  test('instructor does not see admin heading or instructor badges', async ({ page }) => {
+    await setupAuthenticatedUser(page, instructor, 'instructor')
+    await page.goto('/instructor')
+    await page.waitForLoadState('domcontentloaded')
+
+    // Should see regular instructor heading (not admin)
+    const heading = page.locator('h1')
+    const headingText = await heading.textContent({ timeout: 10000 })
+
+    // Should NOT see the admin heading
+    expect(headingText).not.toMatch(/Course Oversight|פיקוח קורסים/i)
+
+    // Should see instructor heading
+    expect(headingText).toMatch(/Instructor Dashboard|לוח המורה/i)
+  })
+
+  test('instructor API endpoint does not include instructors field in response', async ({
+    page,
+  }) => {
+    if (!testCourseData) {
+      test.skip(true, 'No test course data available')
+      return
+    }
+
+    await setupAuthenticatedUser(page, instructor, 'instructor')
+
+    // Make API request
+    const response = await page.request.get('/api/instructor/dashboard')
+
+    expect(response.status()).toBe(200)
+    const data = await response.json()
+
+    expect(data.success).toBe(true)
+    expect(data.data).toHaveProperty('courses')
+
+    // Courses should NOT have instructors field for instructor branch
+    for (const course of data.data.courses) {
+      expect(course).not.toHaveProperty('instructors')
+    }
+  })
+})
