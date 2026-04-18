@@ -14,11 +14,7 @@
     "owner": "A-Guy-educ",
     "repo": "A-Guy"
   },
-  "paths": {
-    "taskDir": ".kody/tasks"
-  },
   "agent": {
-    "provider": "minimax",
     "modelMap": {
       "cheap": "minimax/MiniMax-M2.7-highspeed",
       "mid": "minimax/MiniMax-M2.7-highspeed",
@@ -43,9 +39,7 @@
   },
   "watch": {
     "enabled": true,
-    "digestIssue": null,
-    "model": "minimax/MiniMax-M2.7-highspeed",
-    "provider": "minimax"
+    "model": "minimax/MiniMax-M2.7-highspeed"
   },
   "timeouts": {
     "taskify": 6000,
