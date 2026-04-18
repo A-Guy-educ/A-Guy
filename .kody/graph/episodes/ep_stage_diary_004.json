@@ -1,0 +1,13 @@
+{
+  "id": "ep_stage_diary_004",
+  "runId": "fix-pr-1266-260418-070628",
+  "source": "stage_diary",
+  "taskId": "fix-pr-1266-260418-070628",
+  "createdAt": "2026-04-18T07:35:53.655Z",
+  "rawContent": "{\"stage\":\"review-fix\",\"insights\":[{\"kind\":\"lesson\",\"text\":\"Document intentional security exclusions in comments near the exclusion logic, explaining why access is denied rather than granted — this resolves ambiguity during review.\",\"scope\":\"src/payload/collections/CourseInstructors.ts\"},{\"kind\":\"convention\",\"text\":\"LMS access control uses a dedicated helper file (instructorAccess.ts) rather than inlining permissions, keeping collection configs clean and reusable.\",\"scope\":\"src/payload/access/instructorAccess.ts\"},{\"kind\":\"gotcha\",\"text\":\"AdvancedContentEditor must be explicitly excluded from read access in instructor permissions; omitting this exclusion silently grants broader read access than intended.\",\"scope\":\"LMS instructor permissions\"}]}",
+  "extractedNodeIds": [],
+  "linkedFiles": [],
+  "metadata": {
+    "stage": "review-fix"
+  }
+}

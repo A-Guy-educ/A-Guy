@@ -11,21 +11,28 @@
       "retries": 0
     },
     "build": {
-      "state": "running",
-      "startedAt": "2026-04-18T07:06:58.407Z",
-      "retries": 0
+      "state": "completed",
+      "completedAt": "2026-04-18T07:27:05.865Z",
+      "retries": 1,
+      "promptTokens": 3228
     },
     "verify": {
-      "state": "pending",
+      "state": "completed",
+      "completedAt": "2026-04-18T07:29:24.429Z",
       "retries": 0
     },
     "review": {
-      "state": "pending",
-      "retries": 0
+      "state": "completed",
+      "completedAt": "2026-04-18T07:33:15.277Z",
+      "retries": 0,
+      "outputFile": "review.md",
+      "promptTokens": 5293
     },
     "review-fix": {
-      "state": "pending",
-      "retries": 0
+      "state": "completed",
+      "completedAt": "2026-04-18T12:08:00.000Z",
+      "retries": 0,
+      "notes": "No Critical or Major findings. Verdict: PASS. Clarifying comment at CourseInstructors.ts:98-99 already present in fix branch."
     },
     "ship": {
       "state": "pending",
@@ -33,5 +40,9 @@
     }
   },
   "createdAt": "2026-04-18T07:06:44.240Z",
-  "updatedAt": "2026-04-18T07:06:58.408Z"
+  "updatedAt": "2026-04-18T12:08:00.000Z",
+  "sessions": {
+    "build": "8f56f627-7c7f-408d-b91f-72a77ae94c96",
+    "review": "cc4fe269-6879-411c-8c52-cac8641ef296"
+  }
 }

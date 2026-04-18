@@ -1,0 +1,9 @@
+{
+  "id": "ep_review_001",
+  "runId": "fix-pr-1266-260418-070628",
+  "source": "review",
+  "taskId": "fix-pr-1266-260418-070628",
+  "createdAt": "2026-04-18T07:33:14.509Z",
+  "rawContent": "I now have a complete picture of the PR. Here is the structured review.\n\n---\n\n## Verdict: PASS\n\n## Summary\n\nPR #1266 implements the Instructor role and per-course permissions for the LMS. The primary change is a clarifying comment in `CourseInstructors.ts` (lines 98–99) explaining why `AdvancedContentEditor` is intentionally excluded from read access — resolving the sole open item from the previous Kody review. Supporting infrastructure includes the `CourseInstructors` collection, `instructorAccess.ts` helpers, and the `/api/instructor/gradebook/[courseId]` endpoint.\n\n## Findings\n\n### Critical\nNone.\n\n### Major\nNone.\n\n### Minor\nNone — the previously flagged minor item (missing design-rationale comment) is now resolved at `CourseInstructors.ts:98–99`.\n\n---\n\n## Two-Pass Review\n\n**Pass 1 — CRITICAL:**\n\n### SQL & Data Safety\nAll queries use Payload's parameterized `where` clauses (`equals`, `in` operators). No string interpolation in queries. The gradebook route uses `enrolledUsers.docs.map",
+  "extractedNodeIds": []
+}

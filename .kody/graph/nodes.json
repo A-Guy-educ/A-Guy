@@ -80,6 +80,113 @@
         "kind:lesson"
       ],
       "confidence": 0.7
+    },
+    "conventions_auth_2263530381047": {
+      "id": "conventions_auth_2263530381047",
+      "type": "conventions",
+      "hall": "conventions",
+      "room": "auth",
+      "content": "Code with surprising exclusions (like AdvancedContentEditor from read access) should include a clarifying comment at the exclusion site explaining the design rationale, not just the intent.",
+      "episodeId": "ep_stage_diary_003",
+      "validFrom": "2026-04-18T07:33:14.503Z",
+      "validTo": null,
+      "tags": [
+        "stage:review",
+        "task:fix-pr-1266-260418-070628",
+        "kind:convention"
+      ],
+      "confidence": 0.7
+    },
+    "facts_codereview_2263532192762": {
+      "id": "facts_codereview_2263532192762",
+      "type": "facts",
+      "hall": "facts",
+      "room": "code-review",
+      "content": "Multi-pass structured review (CRI-Triage → CRI-Detail → CRII-Context → CRIII-Holistic) catches both correctness issues and design-rationale gaps that single-pass reviews miss.",
+      "episodeId": "ep_stage_diary_003",
+      "validFrom": "2026-04-18T07:33:14.505Z",
+      "validTo": null,
+      "tags": [
+        "stage:review",
+        "task:fix-pr-1266-260418-070628",
+        "kind:lesson"
+      ],
+      "confidence": 0.7
+    },
+    "thoughts_auth_2263533838566": {
+      "id": "thoughts_auth_2263533838566",
+      "type": "thoughts",
+      "hall": "thoughts",
+      "room": "auth",
+      "content": "Without an inline comment at the exclusion site itself, reviewers cannot distinguish intentional design from accidental omission — always comment the 'why' at the decision point.",
+      "episodeId": "ep_stage_diary_003",
+      "validFrom": "2026-04-18T07:33:14.507Z",
+      "validTo": null,
+      "tags": [
+        "stage:review",
+        "task:fix-pr-1266-260418-070628",
+        "kind:gotcha"
+      ],
+      "confidence": 0.7
+    },
+    "conventions_general_2263540517110": {
+      "id": "conventions_general_2263540517110",
+      "type": "conventions",
+      "hall": "conventions",
+      "room": "general",
+      "content": "tested with mocks covering all branches including empty/null guards",
+      "episodeId": "ep_review_001",
+      "validFrom": "2026-04-18T07:33:14.513Z",
+      "validTo": null,
+      "confidence": 0.9
+    },
+    "facts_srcpayloadcollectionscourseinstructorsts_2422685741826": {
+      "id": "facts_srcpayloadcollectionscourseinstructorsts_2422685741826",
+      "type": "facts",
+      "hall": "facts",
+      "room": "src/payload/collections/CourseInstructors.ts",
+      "content": "Document intentional security exclusions in comments near the exclusion logic, explaining why access is denied rather than granted — this resolves ambiguity during review.",
+      "episodeId": "ep_stage_diary_004",
+      "validFrom": "2026-04-18T07:35:53.658Z",
+      "validTo": null,
+      "tags": [
+        "stage:review-fix",
+        "task:fix-pr-1266-260418-070628",
+        "kind:lesson"
+      ],
+      "confidence": 0.7
+    },
+    "conventions_srcpayloadaccessinstructoraccessts_2422688047306": {
+      "id": "conventions_srcpayloadaccessinstructoraccessts_2422688047306",
+      "type": "conventions",
+      "hall": "conventions",
+      "room": "src/payload/access/instructorAccess.ts",
+      "content": "LMS access control uses a dedicated helper file (instructorAccess.ts) rather than inlining permissions, keeping collection configs clean and reusable.",
+      "episodeId": "ep_stage_diary_004",
+      "validFrom": "2026-04-18T07:35:53.661Z",
+      "validTo": null,
+      "tags": [
+        "stage:review-fix",
+        "task:fix-pr-1266-260418-070628",
+        "kind:convention"
+      ],
+      "confidence": 0.7
+    },
+    "thoughts_lms_instructor_permissions_2422690155540": {
+      "id": "thoughts_lms_instructor_permissions_2422690155540",
+      "type": "thoughts",
+      "hall": "thoughts",
+      "room": "LMS instructor permissions",
+      "content": "AdvancedContentEditor must be explicitly excluded from read access in instructor permissions; omitting this exclusion silently grants broader read access than intended.",
+      "episodeId": "ep_stage_diary_004",
+      "validFrom": "2026-04-18T07:35:53.663Z",
+      "validTo": null,
+      "tags": [
+        "stage:review-fix",
+        "task:fix-pr-1266-260418-070628",
+        "kind:gotcha"
+      ],
+      "confidence": 0.7
     }
   }
 }

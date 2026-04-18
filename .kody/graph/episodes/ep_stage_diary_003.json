@@ -1,0 +1,13 @@
+{
+  "id": "ep_stage_diary_003",
+  "runId": "fix-pr-1266-260418-070628",
+  "source": "stage_diary",
+  "taskId": "fix-pr-1266-260418-070628",
+  "createdAt": "2026-04-18T07:33:14.490Z",
+  "rawContent": "{\"stage\":\"review\",\"insights\":[{\"kind\":\"convention\",\"text\":\"Code with surprising exclusions (like AdvancedContentEditor from read access) should include a clarifying comment at the exclusion site explaining the design rationale, not just the intent.\",\"scope\":\"auth\"},{\"kind\":\"lesson\",\"text\":\"Multi-pass structured review (CRI-Triage → CRI-Detail → CRII-Context → CRIII-Holistic) catches both correctness issues and design-rationale gaps that single-pass reviews miss.\",\"scope\":\"code-review\"},{\"kind\":\"gotcha\",\"text\":\"Without an inline comment at the exclusion site itself, reviewers cannot distinguish intentional design from accidental omission — always comment the 'why' at the decision point.\",\"scope\":\"auth\"}]}",
+  "extractedNodeIds": [],
+  "linkedFiles": [],
+  "metadata": {
+    "stage": "review"
+  }
+}
