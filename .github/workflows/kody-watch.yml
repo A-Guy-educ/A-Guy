@@ -89,7 +89,10 @@ jobs:
 
       - name: Run Kody Watch
         env:
-          GH_TOKEN: ${{ github.token }}
+          # Prefer PROJECT_TOKEN (user PAT) so agent-authored comments appear as
+          # a human user, which lets @kody comment-triggers posted by agents
+          # (e.g. job-manager) bypass the bot filter in kody.yml's parse job.
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN || github.token }}
           REPO: ${{ github.repository }}
           WATCH_DIGEST_ISSUE: ${{ vars.WATCH_DIGEST_ISSUE }}
           WATCH_DIGEST_ISSUE_FUNCTIONAL: ${{ vars.WATCH_DIGEST_ISSUE_FUNCTIONAL }}
