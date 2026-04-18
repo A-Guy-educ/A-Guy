@@ -8,7 +8,6 @@ import { ConvertForm } from '../ConvertForm'
 import { ConvertV2Button } from '../ConvertV2Button'
 import { ConvertV3Button } from '../ConvertV3Button'
 import { DraftExercisesList } from '../DraftExercisesList'
-import { LatexImportSection } from '../LatexImportSection'
 import { TexFileUpload } from '../TexFileUpload'
 import { TexImportButton } from '../TexImportButton'
 import { V2StatusPanel } from '../V2StatusPanel'
@@ -176,7 +175,6 @@ export const LessonConversionPanel = () => {
         <div style={{ marginTop: 4 }}>
           <TexFileUpload lessonId={String(lessonId)} />
         </div>
-        <LatexImportSection lessonId={String(lessonId)} />
       </div>
     )
   }
@@ -369,7 +367,6 @@ export const LessonConversionPanel = () => {
       >
         <TexFileUpload lessonId={String(lessonId)} />
       </div>
-      <LatexImportSection lessonId={String(lessonId)} />
     </div>
   )
 }
