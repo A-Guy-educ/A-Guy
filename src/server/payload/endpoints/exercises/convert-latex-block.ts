@@ -45,7 +45,12 @@ export async function convertLatexBlockOnExercise(
   // Fetch the exercise.
   let exercise
   try {
-    exercise = await req.payload.findByID({ collection: 'exercises', id: exerciseId, depth: 0 })
+    exercise = await req.payload.findByID({
+      collection: 'exercises',
+      id: exerciseId,
+      depth: 0,
+      overrideAccess: true,
+    })
   } catch {
     return Response.json({ success: false, error: 'Exercise not found' }, { status: 404 })
   }
@@ -126,6 +131,7 @@ export async function convertLatexBlockOnExercise(
         sourceLatex: combinedSourceLatex,
       },
       draft: true,
+      overrideAccess: true, // Auth already checked at route level; we intentionally change structure
     })
 
     reqLogger.info(
