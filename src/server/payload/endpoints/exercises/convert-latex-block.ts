@@ -50,6 +50,7 @@ export async function convertLatexBlockOnExercise(
       id: exerciseId,
       depth: 0,
       overrideAccess: true,
+      req: { payload: req.payload, user: req.user } as never,
     })
   } catch {
     return Response.json({ success: false, error: 'Exercise not found' }, { status: 404 })
@@ -131,7 +132,8 @@ export async function convertLatexBlockOnExercise(
         sourceLatex: combinedSourceLatex,
       },
       draft: true,
-      overrideAccess: true, // Auth already checked at route level; we intentionally change structure
+      overrideAccess: true,
+      req: { payload: req.payload, user: req.user } as never,
     })
 
     reqLogger.info(
