@@ -1,0 +1,13 @@
+{
+  "id": "ep_stage_diary_007",
+  "runId": "fix-pr-1266-260418-102014",
+  "source": "stage_diary",
+  "taskId": "fix-pr-1266-260418-102014",
+  "createdAt": "2026-04-18T11:18:20.671Z",
+  "rawContent": "{\"stage\":\"review\",\"insights\":[{\"kind\":\"decision\",\"text\":\"Using a dedicated `course-instructors` collection (not embedded array) for per-course role assignments enables Payload access control and querying per course.\",\"scope\":\"auth/permissions\"},{\"kind\":\"decision\",\"text\":\"The `primary`/`ta`/`guest` trinary permission model on course-instructors provides sufficient granularity for instructor hierarchy without overcomplicating the role system.\",\"scope\":\"auth/permissions\"},{\"kind\":\"decision\",\"text\":\"Branching the dashboard API handler on user role (admin vs instructor) keeps the endpoint unified while enabling role-specific logic and data shaping.\",\"scope\":\"src/server/api\"},{\"kind\":\"gotcha\",\"text\":\"UI rendering logic must be verified in-browser — heading text (e.g. 'Course Oversight') and conditional rendering depend on role context not always visible in unit tests.\",\"scope\":\"E2E testing\"},{\"kind\":\"lesson\",\"text\":\"Browser verification of role-dependent UI text catches discrepancies that un",
+  "extractedNodeIds": [],
+  "linkedFiles": [],
+  "metadata": {
+    "stage": "review"
+  }
+}

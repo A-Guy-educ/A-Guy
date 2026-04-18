@@ -299,6 +299,134 @@
         "kind:decision"
       ],
       "confidence": 0.7
+    },
+    "facts_authpermissions_4129429319920": {
+      "id": "facts_authpermissions_4129429319920",
+      "type": "facts",
+      "hall": "facts",
+      "room": "auth/permissions",
+      "content": "Using a dedicated `course-instructors` collection (not embedded array) for per-course role assignments enables Payload access control and querying per course.",
+      "episodeId": "ep_stage_diary_007",
+      "validFrom": "2026-04-18T11:18:20.690Z",
+      "validTo": null,
+      "tags": [
+        "stage:review",
+        "task:fix-pr-1266-260418-102014",
+        "kind:decision"
+      ],
+      "confidence": 0.7
+    },
+    "facts_authpermissions_4129433934303": {
+      "id": "facts_authpermissions_4129433934303",
+      "type": "facts",
+      "hall": "facts",
+      "room": "auth/permissions",
+      "content": "The `primary`/`ta`/`guest` trinary permission model on course-instructors provides sufficient granularity for instructor hierarchy without overcomplicating the role system.",
+      "episodeId": "ep_stage_diary_007",
+      "validFrom": "2026-04-18T11:18:20.694Z",
+      "validTo": null,
+      "tags": [
+        "stage:review",
+        "task:fix-pr-1266-260418-102014",
+        "kind:decision"
+      ],
+      "confidence": 0.7
+    },
+    "facts_srcserverapi_4129436391274": {
+      "id": "facts_srcserverapi_4129436391274",
+      "type": "facts",
+      "hall": "facts",
+      "room": "src/server/api",
+      "content": "Branching the dashboard API handler on user role (admin vs instructor) keeps the endpoint unified while enabling role-specific logic and data shaping.",
+      "episodeId": "ep_stage_diary_007",
+      "validFrom": "2026-04-18T11:18:20.697Z",
+      "validTo": null,
+      "tags": [
+        "stage:review",
+        "task:fix-pr-1266-260418-102014",
+        "kind:decision"
+      ],
+      "confidence": 0.7
+    },
+    "thoughts_e2e_testing_4129438911571": {
+      "id": "thoughts_e2e_testing_4129438911571",
+      "type": "thoughts",
+      "hall": "thoughts",
+      "room": "E2E testing",
+      "content": "UI rendering logic must be verified in-browser — heading text (e.g. 'Course Oversight') and conditional rendering depend on role context not always visible in unit tests.",
+      "episodeId": "ep_stage_diary_007",
+      "validFrom": "2026-04-18T11:18:20.699Z",
+      "validTo": null,
+      "tags": [
+        "stage:review",
+        "task:fix-pr-1266-260418-102014",
+        "kind:gotcha"
+      ],
+      "confidence": 0.7
+    },
+    "facts_e2e_testing_4129442584871": {
+      "id": "facts_e2e_testing_4129442584871",
+      "type": "facts",
+      "hall": "facts",
+      "room": "E2E testing",
+      "content": "Browser verification of role-dependent UI text catches discrepancies that unit tests miss when mocking auth context.",
+      "episodeId": "ep_stage_diary_007",
+      "validFrom": "2026-04-18T11:18:20.703Z",
+      "validTo": null,
+      "tags": [
+        "stage:review",
+        "task:fix-pr-1266-260418-102014",
+        "kind:lesson"
+      ],
+      "confidence": 0.7
+    },
+    "facts_authpermissions_4213339929040": {
+      "id": "facts_authpermissions_4213339929040",
+      "type": "facts",
+      "hall": "facts",
+      "room": "auth/permissions",
+      "content": "Storing per-course role assignments in a dedicated 'course-instructors' collection (with primary/ta/guest roles) rather than embedding in course documents.",
+      "episodeId": "ep_stage_diary_008",
+      "validFrom": "2026-04-18T11:19:44.600Z",
+      "validTo": null,
+      "tags": [
+        "stage:review-fix",
+        "task:fix-pr-1266-260418-102014",
+        "kind:decision"
+      ],
+      "confidence": 0.7
+    },
+    "facts_srcserver_4213342609535": {
+      "id": "facts_srcserver_4213342609535",
+      "type": "facts",
+      "hall": "facts",
+      "room": "src/server",
+      "content": "Branching dashboard API at /api/instructor/dashboard by user role (admin vs. instructor) instead of separate endpoints.",
+      "episodeId": "ep_stage_diary_008",
+      "validFrom": "2026-04-18T11:19:44.603Z",
+      "validTo": null,
+      "tags": [
+        "stage:review-fix",
+        "task:fix-pr-1266-260418-102014",
+        "kind:decision"
+      ],
+      "confidence": 0.7
+    },
+    "conventions_testing_4213345805805": {
+      "id": "conventions_testing_4213345805805",
+      "type": "conventions",
+      "hall": "conventions",
+      "room": "testing",
+      "content": "All new features require unit + integration + E2E tests plus browser verification before passing review.",
+      "episodeId": "ep_stage_diary_008",
+      "validFrom": "2026-04-18T11:19:44.606Z",
+      "validTo": null,
+      "tags": [
+        "stage:review-fix",
+        "task:fix-pr-1266-260418-102014",
+        "kind:convention"
+      ],
+      "confidence": 0.7
     }
   }
 }

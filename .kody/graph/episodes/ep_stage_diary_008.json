@@ -1,0 +1,13 @@
+{
+  "id": "ep_stage_diary_008",
+  "runId": "fix-pr-1266-260418-102014",
+  "source": "stage_diary",
+  "taskId": "fix-pr-1266-260418-102014",
+  "createdAt": "2026-04-18T11:19:44.593Z",
+  "rawContent": "{\"stage\":\"review-fix\",\"insights\":[{\"kind\":\"decision\",\"text\":\"Storing per-course role assignments in a dedicated 'course-instructors' collection (with primary/ta/guest roles) rather than embedding in course documents.\",\"scope\":\"auth/permissions\"},{\"kind\":\"decision\",\"text\":\"Branching dashboard API at /api/instructor/dashboard by user role (admin vs. instructor) instead of separate endpoints.\",\"scope\":\"src/server\"},{\"kind\":\"convention\",\"text\":\"All new features require unit + integration + E2E tests plus browser verification before passing review.\",\"scope\":\"testing\"}]}",
+  "extractedNodeIds": [],
+  "linkedFiles": [],
+  "metadata": {
+    "stage": "review-fix"
+  }
+}

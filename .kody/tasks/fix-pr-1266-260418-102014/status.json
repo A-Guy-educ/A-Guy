@@ -11,21 +11,28 @@
       "retries": 0
     },
     "build": {
-      "state": "running",
-      "startedAt": "2026-04-18T10:20:48.539Z",
-      "retries": 0
+      "state": "completed",
+      "completedAt": "2026-04-18T11:11:33.145Z",
+      "retries": 0,
+      "promptTokens": 4029
     },
     "verify": {
-      "state": "pending",
+      "state": "completed",
+      "completedAt": "2026-04-18T11:13:18.867Z",
       "retries": 0
     },
     "review": {
-      "state": "pending",
-      "retries": 0
+      "state": "completed",
+      "completedAt": "2026-04-18T11:18:21.634Z",
+      "retries": 0,
+      "outputFile": "review.md",
+      "promptTokens": 6200
     },
     "review-fix": {
-      "state": "pending",
-      "retries": 0
+      "state": "completed",
+      "completedAt": "2026-04-18T11:19:20.947Z",
+      "retries": 0,
+      "notes": "No Critical/Major findings — no code changes required. Review verdict: PASS."
     },
     "ship": {
       "state": "pending",
@@ -33,5 +40,9 @@
     }
   },
   "createdAt": "2026-04-18T10:20:34.918Z",
-  "updatedAt": "2026-04-18T10:20:48.539Z"
+  "updatedAt": "2026-04-18T11:18:21.637Z",
+  "sessions": {
+    "build": "4d6408dc-ecdf-468f-8476-24fc5a20bd4b",
+    "review": "8ffae404-7eaa-493d-88cc-c5d61e9a35cb"
+  }
 }
