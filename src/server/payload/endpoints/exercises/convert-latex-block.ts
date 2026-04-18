@@ -93,8 +93,13 @@ export async function convertLatexBlockOnExercise(
     outcome.warnings.push(...result.warnings)
     outcome.errors.push(...result.errors)
 
-    if (result.blocks.length > 0 && result.errors.length === 0) {
-      // Script succeeded
+    const scriptUsable =
+      result.blocks.length > 0 &&
+      result.errors.length === 0 &&
+      isScriptOutputMeaningful(latexBlock.latex, result.blocks)
+
+    if (scriptUsable) {
+      // Script succeeded with meaningful output
       outcome.replacedBlockIds.push(latexBlock.id)
       outcome.addedBlockCount += result.blocks.length
       sourceLatexChunks.unshift(latexBlock.latex)
@@ -104,8 +109,13 @@ export async function convertLatexBlockOnExercise(
 
     // --- Attempt 2: AI fallback ---
     reqLogger.info(
-      { blockId: latexBlock.id, scriptErrors: result.errors.length },
-      'Script parser failed, checking AI fallback',
+      {
+        blockId: latexBlock.id,
+        scriptErrors: result.errors.length,
+        scriptBlocks: result.blocks.length,
+        scriptUsable,
+      },
+      'Script parser output not usable, checking AI fallback',
     )
 
     const fallbackEnabled = await isFallbackEnabled()
@@ -299,6 +309,34 @@ function deriveOrigin(req: PayloadRequest): string {
     // fall through
   }
   return process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+}
+
+/**
+ * Sanity-check that the script parser produced meaningful output.
+ * If the total text content of all parsed blocks is tiny compared to the
+ * source LaTeX, the parser likely dropped most of the content and we should
+ * fall through to AI instead of persisting garbage.
+ */
+function isScriptOutputMeaningful(sourceLatex: string, parsedBlocks: ContentBlock[]): boolean {
+  const totalContent = parsedBlocks
+    .map((b) => {
+      if ('value' in b && typeof b.value === 'string') return b.value
+      if ('latex' in b && typeof b.latex === 'string') return b.latex
+      return ''
+    })
+    .join('')
+
+  // If source is non-trivial but output captured less than 10% of it, it's garbage.
+  if (sourceLatex.length > 50 && totalContent.length < sourceLatex.length * 0.1) {
+    return false
+  }
+
+  // If output is under 10 chars total regardless, it's garbage.
+  if (totalContent.length < 10) {
+    return false
+  }
+
+  return true
 }
 
 function emitFallbackAnalytics(
