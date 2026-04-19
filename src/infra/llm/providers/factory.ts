@@ -164,8 +164,6 @@ export interface UnifiedLLMProvider {
       }
       attachments: Array<{ data: string; mimeType: string }>
       timeoutMs?: number
-      /** Optional Zod schema — constrains model output to a specific shape. */
-      responseSchema?: unknown
     },
     payload: Payload,
   ) => Promise<{ text: string; raw?: unknown }>

@@ -7,10 +7,12 @@
  */
 import type { Payload } from 'payload'
 import { z } from 'zod'
-import type { AIModel, AIModelKey } from '../../models'
-import { getModelRegistryEntry, getProviderModelName } from '../../models'
+import type { AIModel } from '../../models'
 import { INTERACTIVE_LESSON_PROMPT } from '../../prompts/interactive-lesson-generation'
-import { LLMProviderType } from '../../providers/types'
+import { getCircuitBreaker } from '../../providers/shared/circuit-breaker'
+import { withRetry } from '../../providers/shared/retry'
+import { withTimeout } from '../../providers/shared/timeout'
+import { logger } from '@/infra/utils/logger/logger'
 import { optimizeImageForAI } from '../image-optimizer-service'
 import { InteractiveLessonResponseSchema } from './interactive-lesson-schema'
 import type {
@@ -18,6 +20,19 @@ import type {
   InteractiveLessonInput,
   InteractiveLessonResponse,
 } from './interactive-lesson-types'
+
+// Single source of truth for the Gemini call config. Used for both the API
+// request and metadata reporting so they can't diverge.
+const GEMINI_CONFIG = {
+  modelName: 'gemini-2.5-flash',
+  temperature: 0,
+  maxOutputTokens: 98304,
+  thinkingBudget: 24576,
+  timeoutMs: 180_000,
+  maxRetries: 2,
+} as const
+
+const circuitBreaker = getCircuitBreaker('interactive-lesson-gemini')
 
 /**
  * Generate an interactive lesson from an uploaded image.
@@ -34,28 +49,40 @@ export async function generateInteractiveLesson(
     const apiKey = process.env.GEMINI_API_KEY
     if (!apiKey) throw new Error('GEMINI_API_KEY not configured')
 
-    const modelName = 'gemini-2.5-flash'
     modelConfig = {
-      ...resolveModelConfig('IMAGE_TO_EXERCISE'),
-      name: `googleai/${modelName}`,
-      temperature: 0,
-      maxOutputTokens: 98304,
-      thinkingBudget: 24576,
+      name: `googleai/${GEMINI_CONFIG.modelName}`,
+      temperature: GEMINI_CONFIG.temperature,
+      maxOutputTokens: GEMINI_CONFIG.maxOutputTokens,
+      thinkingBudget: GEMINI_CONFIG.thinkingBudget,
     }
 
     const prompt = buildPrompt(input.locale)
     const { attachmentData, sizeBytes } = await prepareImage(input)
 
-    // Direct Gemini call with responseSchema so the model is constrained
-    // to produce exactly the shape we expect. Eliminates most field-name
-    // variations (id vs label, p1 vs from, etc.) at the source.
-    const responseText = await callGeminiWithSchema({
-      apiKey,
-      modelName,
-      prompt,
-      attachmentData,
-      attachmentMimeType: input.mimeType,
-    })
+    // Direct Gemini call with responseSchema so the model is constrained to
+    // produce exactly the shape we expect. Wrapped in the same reliability
+    // primitives the Genkit adapter uses (timeout + retry + circuit breaker)
+    // so a transient 5xx/429 doesn't fail the user's request on first try.
+    const responseText = await circuitBreaker.execute(() =>
+      withRetry(
+        () =>
+          withTimeout(
+            () =>
+              callGeminiWithSchema({
+                apiKey,
+                prompt,
+                attachmentData,
+                attachmentMimeType: input.mimeType,
+              }),
+            { timeoutMs: GEMINI_CONFIG.timeoutMs, message: 'Gemini request timed out' },
+          ),
+        {
+          maxRetries: GEMINI_CONFIG.maxRetries,
+          isRetryable: isRetryableGeminiError,
+          logPrefix: '[InteractiveLesson]',
+        },
+      ),
+    )
 
     const parsed = parseResponse(responseText)
 
@@ -99,16 +126,38 @@ function buildPrompt(locale: 'he' | 'en'): string {
 }
 
 /**
+ * Custom error that carries the HTTP status so withRetry can decide
+ * whether to retry based on the code (5xx/429 yes, 4xx no).
+ */
+class GeminiApiError extends Error {
+  constructor(
+    readonly status: number,
+    message: string,
+  ) {
+    super(message)
+    this.name = 'GeminiApiError'
+  }
+}
+
+function isRetryableGeminiError(err: Error): boolean {
+  if (err instanceof GeminiApiError) {
+    return err.status >= 500 || err.status === 429
+  }
+  // Timeouts and network errors are retryable
+  return err.name === 'TimeoutError' || err.message.includes('fetch failed')
+}
+
+/**
  * Call Gemini 2.5 Flash directly with a responseSchema constraint.
  *
- * Bypasses the Genkit adapter so we can pass responseSchema to Gemini's
- * v1beta generateContent endpoint — the model is then forced to produce
- * JSON matching our exact shape, eliminating field-name variations
- * (id vs label, p1 vs from, etc.) at the source.
+ * We bypass the Genkit adapter to pass responseSchema to Gemini's v1beta
+ * generateContent endpoint — the model is then forced to produce JSON
+ * matching our exact shape, eliminating field-name variations (id vs
+ * label, p1 vs from, etc.) at the source. Timeout/retry/circuit-breaker
+ * are applied by the caller.
  */
 async function callGeminiWithSchema(args: {
   apiKey: string
-  modelName: string
   prompt: string
   attachmentData: string
   attachmentMimeType: string
@@ -116,7 +165,7 @@ async function callGeminiWithSchema(args: {
   const schemaForGemini = zodToGeminiSchema(InteractiveLessonResponseSchema)
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${args.modelName}:generateContent?key=${args.apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_CONFIG.modelName}:generateContent?key=${args.apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -130,9 +179,9 @@ async function callGeminiWithSchema(args: {
           },
         ],
         generationConfig: {
-          temperature: 0,
-          maxOutputTokens: 98304,
-          thinkingConfig: { thinkingBudget: 24576 },
+          temperature: GEMINI_CONFIG.temperature,
+          maxOutputTokens: GEMINI_CONFIG.maxOutputTokens,
+          thinkingConfig: { thinkingBudget: GEMINI_CONFIG.thinkingBudget },
           responseMimeType: 'application/json',
           responseSchema: schemaForGemini,
         },
@@ -141,8 +190,11 @@ async function callGeminiWithSchema(args: {
   )
 
   if (!res.ok) {
+    // Log the raw body server-side for debugging, but don't include it in
+    // the thrown error message so nothing leaks upstream.
     const body = await res.text()
-    throw new Error(`Gemini API error ${res.status}: ${body.slice(0, 200)}`)
+    logger.error({ status: res.status, body: body.slice(0, 500) }, 'Gemini API error')
+    throw new GeminiApiError(res.status, `Gemini API returned ${res.status}`)
   }
 
   const json = await res.json()
@@ -300,13 +352,6 @@ function validateLabel(l: Record<string, unknown>) {
     x: Number(l.x || 0),
     y: Number(l.y || 0),
     fontSize: Number(l.fontSize || 12),
-  }
-}
-
-function resolveModelConfig(modelKey: AIModelKey): AIModel {
-  return {
-    name: getProviderModelName(LLMProviderType.GEMINI, modelKey),
-    ...getModelRegistryEntry(modelKey),
   }
 }
 

@@ -73,12 +73,6 @@ interface MultimodalCompletionInput {
   model: AIModel & { modelKey?: AIModelKey }
   attachments: Array<{ data: string; mimeType: string }>
   timeoutMs?: number
-  /**
-   * Optional Zod schema — when provided, the model is constrained to
-   * produce JSON matching this schema via Gemini's responseSchema feature.
-   * Genkit bridges Zod to the provider-specific structured-output contract.
-   */
-  responseSchema?: unknown
 }
 
 /**
@@ -269,16 +263,6 @@ export async function createGenkitUnifiedAdapter(
                     ? { thinkingConfig: { thinkingBudget: input.model.thinkingBudget } }
                     : {}),
                 },
-                // Constrain output to a Zod schema when provided. Genkit
-                // translates this to Gemini's responseSchema/responseMimeType.
-                ...(input.responseSchema
-                  ? {
-                      output: {
-                        schema: input.responseSchema as never,
-                        format: 'json' as const,
-                      },
-                    }
-                  : {}),
               })
 
               return {
