@@ -82,6 +82,7 @@ export interface Config {
     lessons: Lesson;
     'content-pages': ContentPage;
     'context-extractions': ContextExtraction;
+    'interactive-lessons': InteractiveLesson;
     exercises: Exercise;
     'extraction-logs': ExtractionLog;
     'formula-sheets': FormulaSheet;
@@ -126,6 +127,7 @@ export interface Config {
     lessons: LessonsSelect<false> | LessonsSelect<true>;
     'content-pages': ContentPagesSelect<false> | ContentPagesSelect<true>;
     'context-extractions': ContextExtractionsSelect<false> | ContextExtractionsSelect<true>;
+    'interactive-lessons': InteractiveLessonsSelect<false> | InteractiveLessonsSelect<true>;
     exercises: ExercisesSelect<false> | ExercisesSelect<true>;
     'extraction-logs': ExtractionLogsSelect<false> | ExtractionLogsSelect<true>;
     'formula-sheets': FormulaSheetsSelect<false> | FormulaSheetsSelect<true>;
@@ -1860,6 +1862,44 @@ export interface ContextExtraction {
   createdAt: string;
 }
 /**
+ * Cached Gemini responses for the Ask page interactive lesson player
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "interactive-lessons".
+ */
+export interface InteractiveLesson {
+  id: string;
+  user: string | User;
+  media: string | Media;
+  locale: 'he' | 'en';
+  /**
+   * Version tag for the prompt + schema used to generate this lesson. Bump when the prompt or response schema changes; old rows are ignored by cache lookups but kept for audit.
+   */
+  promptVersion: string;
+  /**
+   * Full InteractiveLesson payload as returned by the validator.
+   */
+  lesson:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Model name used for generation (e.g. googleai/gemini-2.5-flash).
+   */
+  model?: string | null;
+  /**
+   * Time taken by the Gemini call, in milliseconds.
+   */
+  processingTimeMs?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "extraction-logs".
  */
@@ -2757,6 +2797,10 @@ export interface PayloadLockedDocument {
         value: string | ContextExtraction;
       } | null)
     | ({
+        relationTo: 'interactive-lessons';
+        value: string | InteractiveLesson;
+      } | null)
+    | ({
         relationTo: 'exercises';
         value: string | Exercise;
       } | null)
@@ -3362,6 +3406,21 @@ export interface ContextExtractionsSelect<T extends boolean = true> {
   lesson?: T;
   sourceMedia?: T;
   text?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "interactive-lessons_select".
+ */
+export interface InteractiveLessonsSelect<T extends boolean = true> {
+  user?: T;
+  media?: T;
+  locale?: T;
+  promptVersion?: T;
+  lesson?: T;
+  model?: T;
+  processingTimeMs?: T;
   updatedAt?: T;
   createdAt?: T;
 }

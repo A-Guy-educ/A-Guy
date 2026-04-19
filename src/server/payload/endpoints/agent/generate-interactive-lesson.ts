@@ -35,7 +35,10 @@ export async function agentGenerateInteractiveLesson(
     // Fetch the uploaded media file
     const { imageBuffer, mimeType } = await fetchMediaImage(req, mediaId)
 
-    const result = await generateInteractiveLesson({ imageBuffer, mimeType, locale }, req.payload)
+    const result = await generateInteractiveLesson(
+      { imageBuffer, mimeType, locale, userId: req.user.id, mediaId },
+      req.payload,
+    )
 
     if (!result.success) {
       reqLogger.warn({ error: result.error, mediaId }, 'Generation failed')

@@ -32,6 +32,13 @@ const GEMINI_CONFIG = {
   maxRetries: 2,
 } as const
 
+/**
+ * Version tag for the prompt + response schema. Bump this when the prompt
+ * text or the response schema changes materially — cache entries with an
+ * older version are ignored on lookup so stale shapes don't get served.
+ */
+export const INTERACTIVE_LESSON_PROMPT_VERSION = 'v1'
+
 const circuitBreaker = getCircuitBreaker('interactive-lesson-gemini')
 
 /**
@@ -40,10 +47,25 @@ const circuitBreaker = getCircuitBreaker('interactive-lesson-gemini')
  */
 export async function generateInteractiveLesson(
   input: InteractiveLessonInput,
-  _payload: Payload,
+  payload: Payload,
 ): Promise<InteractiveLessonResponse> {
   const startTime = Date.now()
   let modelConfig: AIModel | null = null
+
+  // Read-through cache: if this (user, media, locale, promptVersion) was
+  // generated before, return the stored payload instead of re-calling Gemini.
+  const cached = await readCache(payload, input)
+  if (cached) {
+    return {
+      success: true,
+      data: cached.lesson,
+      metadata: {
+        model: `${cached.model} (cached)`,
+        processingTimeMs: Date.now() - startTime,
+        imageSizeBytes: 0,
+      },
+    }
+  }
 
   try {
     const apiKey = process.env.GEMINI_API_KEY
@@ -96,13 +118,18 @@ export async function generateInteractiveLesson(
     }
 
     const lesson = validateLesson(parsed, input.locale)
+    const processingTimeMs = Date.now() - startTime
+
+    // Write-through cache. Fire-and-forget — if this fails (e.g. DB
+    // unavailable), we still return the lesson we just generated.
+    void writeCache(payload, input, lesson, modelConfig.name, processingTimeMs)
 
     return {
       success: true,
       data: lesson,
       metadata: {
         model: modelConfig.name,
-        processingTimeMs: Date.now() - startTime,
+        processingTimeMs,
         imageSizeBytes: sizeBytes,
       },
     }
@@ -114,6 +141,73 @@ export async function generateInteractiveLesson(
       startTime,
       0,
     )
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Read-through cache (interactive-lessons collection)
+// ---------------------------------------------------------------------------
+
+interface CachedEntry {
+  lesson: InteractiveLesson
+  model: string
+}
+
+async function readCache(
+  payload: Payload,
+  input: InteractiveLessonInput,
+): Promise<CachedEntry | null> {
+  try {
+    const result = await payload.find({
+      collection: 'interactive-lessons',
+      where: {
+        and: [
+          { user: { equals: input.userId } },
+          { media: { equals: input.mediaId } },
+          { locale: { equals: input.locale } },
+          { promptVersion: { equals: INTERACTIVE_LESSON_PROMPT_VERSION } },
+        ],
+      },
+      limit: 1,
+      sort: '-createdAt',
+      overrideAccess: true,
+    })
+    if (result.docs.length === 0) return null
+    const doc = result.docs[0]
+    return {
+      lesson: doc.lesson as unknown as InteractiveLesson,
+      model: (doc.model as string) ?? 'unknown',
+    }
+  } catch (err) {
+    // Never fail generation just because the cache lookup failed.
+    logger.warn({ err }, 'Interactive lesson cache read failed')
+    return null
+  }
+}
+
+async function writeCache(
+  payload: Payload,
+  input: InteractiveLessonInput,
+  lesson: InteractiveLesson,
+  model: string,
+  processingTimeMs: number,
+): Promise<void> {
+  try {
+    await payload.create({
+      collection: 'interactive-lessons',
+      data: {
+        user: String(input.userId),
+        media: String(input.mediaId),
+        locale: input.locale,
+        promptVersion: INTERACTIVE_LESSON_PROMPT_VERSION,
+        lesson: lesson as unknown as Record<string, unknown>,
+        model,
+        processingTimeMs,
+      },
+      overrideAccess: true,
+    })
+  } catch (err) {
+    logger.warn({ err }, 'Interactive lesson cache write failed')
   }
 }
 

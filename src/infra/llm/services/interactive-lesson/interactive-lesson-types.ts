@@ -106,6 +106,10 @@ export interface InteractiveLessonInput {
   imageBuffer: Buffer
   mimeType: string
   locale: 'he' | 'en'
+  /** For the cache lookup: identifies who owns this lesson. */
+  userId: string | number
+  /** For the cache lookup: identifies which uploaded image. */
+  mediaId: string | number
 }
 
 /** Playback state shared between player and chat */
