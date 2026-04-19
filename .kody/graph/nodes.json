@@ -32,6 +32,134 @@
         "kind:lesson"
       ],
       "confidence": 0.7
+    },
+    "thoughts_testing_3273739172994": {
+      "id": "thoughts_testing_3273739172994",
+      "type": "thoughts",
+      "hall": "thoughts",
+      "room": "testing",
+      "content": "vitest.config.mts only includes tests/int/** patterns by default; tests/unit/** files are silently excluded from the test suite",
+      "episodeId": "ep_stage_diary_002",
+      "validFrom": "2026-04-19T12:53:12.453Z",
+      "validTo": null,
+      "tags": [
+        "stage:review",
+        "task:1279-260419-120101",
+        "kind:gotcha"
+      ],
+      "confidence": 0.7
+    },
+    "conventions_srcapppayload_3273740786039": {
+      "id": "conventions_srcapppayload_3273740786039",
+      "type": "conventions",
+      "hall": "conventions",
+      "room": "src/app/(payload)",
+      "content": "Schema changes in Payload require running `pnpm generate:types` before the build reflects the new types",
+      "episodeId": "ep_stage_diary_002",
+      "validFrom": "2026-04-19T12:53:12.455Z",
+      "validTo": null,
+      "tags": [
+        "stage:review",
+        "task:1279-260419-120101",
+        "kind:convention"
+      ],
+      "confidence": 0.7
+    },
+    "thoughts_testing_4338802623283": {
+      "id": "thoughts_testing_4338802623283",
+      "type": "thoughts",
+      "hall": "thoughts",
+      "room": "testing",
+      "content": "Vitest config patterns referencing non-existent test files cause tests to silently become no-ops — build stays green with 0 tests run.",
+      "episodeId": "ep_stage_diary_003",
+      "validFrom": "2026-04-19T13:10:57.517Z",
+      "validTo": null,
+      "tags": [
+        "stage:review",
+        "task:1279-260419-120101",
+        "kind:gotcha"
+      ],
+      "confidence": 0.7
+    },
+    "facts_testing_4338804717781": {
+      "id": "facts_testing_4338804717781",
+      "type": "facts",
+      "hall": "facts",
+      "room": "testing",
+      "content": "Task plans that include creating new test files must verify the files actually exist, not just that the code they test was created.",
+      "episodeId": "ep_stage_diary_003",
+      "validFrom": "2026-04-19T13:10:57.519Z",
+      "validTo": null,
+      "tags": [
+        "stage:review",
+        "task:1279-260419-120101",
+        "kind:lesson"
+      ],
+      "confidence": 0.7
+    },
+    "conventions_testing_4338806275312": {
+      "id": "conventions_testing_4338806275312",
+      "type": "conventions",
+      "hall": "conventions",
+      "room": "testing",
+      "content": "PRs must include ALL files referenced in the task — failing to create tests described in the task leaves the task incomplete regardless of other changes.",
+      "episodeId": "ep_stage_diary_003",
+      "validFrom": "2026-04-19T13:10:57.520Z",
+      "validTo": null,
+      "tags": [
+        "stage:review",
+        "task:1279-260419-120101",
+        "kind:convention"
+      ],
+      "confidence": 0.7
+    },
+    "thoughts_srcliblatexparser_4338808481080": {
+      "id": "thoughts_srcliblatexparser_4338808481080",
+      "type": "thoughts",
+      "hall": "thoughts",
+      "room": "src/lib/latex-parser",
+      "content": "JSDoc contract on a utility must match what ALL callers actually do; if one caller's format differs, the contract is wrong and needs updating.",
+      "episodeId": "ep_stage_diary_003",
+      "validFrom": "2026-04-19T13:10:57.523Z",
+      "validTo": null,
+      "tags": [
+        "stage:review",
+        "task:1279-260419-120101",
+        "kind:gotcha"
+      ],
+      "confidence": 0.7
+    },
+    "thoughts_testing_4718216034597": {
+      "id": "thoughts_testing_4718216034597",
+      "type": "thoughts",
+      "hall": "thoughts",
+      "room": "testing",
+      "content": "Vitest config can declare test patterns for files that don't exist yet and still pass, masking missing tests at the CI level.",
+      "episodeId": "ep_stage_diary_004",
+      "validFrom": "2026-04-19T13:17:16.930Z",
+      "validTo": null,
+      "tags": [
+        "stage:review-fix",
+        "task:1279-260419-120101",
+        "kind:gotcha"
+      ],
+      "confidence": 0.7
+    },
+    "facts_srcliblatexparser_4718217538370": {
+      "id": "facts_srcliblatexparser_4718217538370",
+      "type": "facts",
+      "hall": "facts",
+      "room": "src/lib/latex-parser",
+      "content": "When extracting utilities, JSDoc contracts must match the actual caller behavior — document what the code DOES, not what you wish it did.",
+      "episodeId": "ep_stage_diary_004",
+      "validFrom": "2026-04-19T13:17:16.932Z",
+      "validTo": null,
+      "tags": [
+        "stage:review-fix",
+        "task:1279-260419-120101",
+        "kind:lesson"
+      ],
+      "confidence": 0.7
     }
   }
 }

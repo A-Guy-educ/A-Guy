@@ -1,0 +1,13 @@
+{
+  "id": "ep_stage_diary_003",
+  "runId": "1279-260419-120101",
+  "source": "stage_diary",
+  "taskId": "1279-260419-120101",
+  "createdAt": "2026-04-19T13:10:57.513Z",
+  "rawContent": "{\"stage\":\"review\",\"insights\":[{\"kind\":\"gotcha\",\"text\":\"Vitest config patterns referencing non-existent test files cause tests to silently become no-ops — build stays green with 0 tests run.\",\"scope\":\"testing\"},{\"kind\":\"lesson\",\"text\":\"Task plans that include creating new test files must verify the files actually exist, not just that the code they test was created.\",\"scope\":\"testing\"},{\"kind\":\"convention\",\"text\":\"PRs must include ALL files referenced in the task — failing to create tests described in the task leaves the task incomplete regardless of other changes.\",\"scope\":\"testing\"},{\"kind\":\"gotcha\",\"text\":\"JSDoc contract on a utility must match what ALL callers actually do; if one caller's format differs, the contract is wrong and needs updating.\",\"scope\":\"src/lib/latex-parser\"}]}",
+  "extractedNodeIds": [],
+  "linkedFiles": [],
+  "metadata": {
+    "stage": "review"
+  }
+}

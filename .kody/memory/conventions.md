@@ -55,3 +55,7 @@ See [design-system.md](./design-system.md) for complete rules. Key points:
 
 ## Learned 2026-04-15 (task: 1225-260415-142959)
 - Uses Payload CMS collections
+
+## Learned 2026-04-19 (task: 1279-260419-120101)
+- Uses @/ path aliases for imports
+- Active directories: src/lib/latex-parser, src/app/api/exercises/import-latex-ai, src/app/api/lessons/create-context-exercises, tests/unit/lib/latex-parser, tests/unit/app/api/lessons/create-context-exercises

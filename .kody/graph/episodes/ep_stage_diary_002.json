@@ -1,0 +1,13 @@
+{
+  "id": "ep_stage_diary_002",
+  "runId": "1279-260419-120101",
+  "source": "stage_diary",
+  "taskId": "1279-260419-120101",
+  "createdAt": "2026-04-19T12:53:12.448Z",
+  "rawContent": "{\"stage\":\"review\",\"insights\":[{\"kind\":\"gotcha\",\"text\":\"vitest.config.mts only includes tests/int/** patterns by default; tests/unit/** files are silently excluded from the test suite\",\"scope\":\"testing\"},{\"kind\":\"convention\",\"text\":\"Schema changes in Payload require running `pnpm generate:types` before the build reflects the new types\",\"scope\":\"src/app/(payload)\"}]}",
+  "extractedNodeIds": [],
+  "linkedFiles": [],
+  "metadata": {
+    "stage": "review"
+  }
+}
