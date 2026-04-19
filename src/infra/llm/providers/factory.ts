@@ -155,9 +155,17 @@ export interface UnifiedLLMProvider {
   generateMultimodalCompletion: (
     input: {
       prompt: string
-      model: { name: string; temperature: number; maxOutputTokens: number; modelKey?: AIModelKey }
+      model: {
+        name: string
+        temperature: number
+        maxOutputTokens: number
+        modelKey?: AIModelKey
+        thinkingBudget?: number
+      }
       attachments: Array<{ data: string; mimeType: string }>
       timeoutMs?: number
+      /** Optional Zod schema — constrains model output to a specific shape. */
+      responseSchema?: unknown
     },
     payload: Payload,
   ) => Promise<{ text: string; raw?: unknown }>

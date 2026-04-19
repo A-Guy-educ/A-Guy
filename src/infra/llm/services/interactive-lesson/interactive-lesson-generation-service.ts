@@ -6,11 +6,13 @@
  * Two-pass approach: LLM extracts geometry + proof, we render SVG deterministically.
  */
 import type { Payload } from 'payload'
+import { z } from 'zod'
 import type { AIModel, AIModelKey } from '../../models'
 import { getModelRegistryEntry, getProviderModelName } from '../../models'
 import { INTERACTIVE_LESSON_PROMPT } from '../../prompts/interactive-lesson-generation'
 import { LLMProviderType } from '../../providers/types'
 import { optimizeImageForAI } from '../image-optimizer-service'
+import { InteractiveLessonResponseSchema } from './interactive-lesson-schema'
 import type {
   InteractiveLesson,
   InteractiveLessonInput,
@@ -23,24 +25,20 @@ import type {
  */
 export async function generateInteractiveLesson(
   input: InteractiveLessonInput,
-  payload: Payload,
+  _payload: Payload,
 ): Promise<InteractiveLessonResponse> {
   const startTime = Date.now()
   let modelConfig: AIModel | null = null
 
   try {
-    const { createGenkitUnifiedAdapter } = await import('../../genkit/adapters/unified-adapter')
-    const adapter = await createGenkitUnifiedAdapter(payload)
+    const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey) throw new Error('GEMINI_API_KEY not configured')
+
+    const modelName = 'gemini-2.5-flash'
     modelConfig = {
       ...resolveModelConfig('IMAGE_TO_EXERCISE'),
-      // Use Gemini 2.5 Flash explicitly — 2.0 Flash produces only ~4 steps on
-      // complex multi-part geometry proofs. 2.5 Flash with thinking produces 18-20.
-      // The "googleai/" prefix tells the adapter to skip DB config resolution.
-      name: 'googleai/gemini-2.5-flash',
-      // Temperature 0 for more deterministic structured JSON output.
+      name: `googleai/${modelName}`,
       temperature: 0,
-      // Thinking tokens count against maxOutputTokens — budget for both.
-      // Bumped to 96K to reduce mid-JSON truncation on long outputs.
       maxOutputTokens: 98304,
       thinkingBudget: 24576,
     }
@@ -48,16 +46,18 @@ export async function generateInteractiveLesson(
     const prompt = buildPrompt(input.locale)
     const { attachmentData, sizeBytes } = await prepareImage(input)
 
-    const result = await adapter.generateMultimodalCompletion(
-      {
-        prompt,
-        model: modelConfig,
-        attachments: [{ data: attachmentData, mimeType: input.mimeType }],
-      },
-      payload,
-    )
+    // Direct Gemini call with responseSchema so the model is constrained
+    // to produce exactly the shape we expect. Eliminates most field-name
+    // variations (id vs label, p1 vs from, etc.) at the source.
+    const responseText = await callGeminiWithSchema({
+      apiKey,
+      modelName,
+      prompt,
+      attachmentData,
+      attachmentMimeType: input.mimeType,
+    })
 
-    const parsed = parseResponse(result.text)
+    const parsed = parseResponse(responseText)
 
     if (parsed.error) {
       return buildErrorResponse(
@@ -96,6 +96,85 @@ function buildPrompt(locale: 'he' | 'en'): string {
       ? '\n\nIMPORTANT: Generate ALL narration, claims, reasons, and explanations in Hebrew.'
       : '\n\nIMPORTANT: Generate ALL narration, claims, reasons, and explanations in English.'
   return `${INTERACTIVE_LESSON_PROMPT}${localeInstruction}`
+}
+
+/**
+ * Call Gemini 2.5 Flash directly with a responseSchema constraint.
+ *
+ * Bypasses the Genkit adapter so we can pass responseSchema to Gemini's
+ * v1beta generateContent endpoint — the model is then forced to produce
+ * JSON matching our exact shape, eliminating field-name variations
+ * (id vs label, p1 vs from, etc.) at the source.
+ */
+async function callGeminiWithSchema(args: {
+  apiKey: string
+  modelName: string
+  prompt: string
+  attachmentData: string
+  attachmentMimeType: string
+}): Promise<string> {
+  const schemaForGemini = zodToGeminiSchema(InteractiveLessonResponseSchema)
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${args.modelName}:generateContent?key=${args.apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              { inlineData: { mimeType: args.attachmentMimeType, data: args.attachmentData } },
+              { text: args.prompt },
+            ],
+          },
+        ],
+        generationConfig: {
+          temperature: 0,
+          maxOutputTokens: 98304,
+          thinkingConfig: { thinkingBudget: 24576 },
+          responseMimeType: 'application/json',
+          responseSchema: schemaForGemini,
+        },
+      }),
+    },
+  )
+
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`Gemini API error ${res.status}: ${body.slice(0, 200)}`)
+  }
+
+  const json = await res.json()
+  const text =
+    json.candidates?.[0]?.content?.parts
+      ?.filter((p: { text?: string }) => p.text)
+      ?.map((p: { text: string }) => p.text)
+      ?.join('') || ''
+  return text
+}
+
+/**
+ * Convert a Zod schema to the OpenAPI 3.0 subset Gemini's responseSchema
+ * accepts. Strips $schema and additionalProperties recursively — both
+ * are in JSON Schema but rejected by Gemini's endpoint.
+ */
+function zodToGeminiSchema(schema: z.ZodType): Record<string, unknown> {
+  const jsonSchema = z.toJSONSchema(schema) as Record<string, unknown>
+  return stripUnsupportedKeys(jsonSchema) as Record<string, unknown>
+}
+
+function stripUnsupportedKeys(node: unknown): unknown {
+  if (Array.isArray(node)) return node.map(stripUnsupportedKeys)
+  if (node && typeof node === 'object') {
+    const out: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(node)) {
+      if (k === '$schema' || k === 'additionalProperties') continue
+      out[k] = stripUnsupportedKeys(v)
+    }
+    return out
+  }
+  return node
 }
 
 async function prepareImage(input: InteractiveLessonInput) {
