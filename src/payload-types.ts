@@ -1471,6 +1471,10 @@ export interface Lesson {
    */
   contentFiles?: (string | Media)[] | null;
   /**
+   * AI context text for this lesson. Injected into chat prompts at runtime. NOT indexed or searchable.
+   */
+  lessonContextText?: string | null;
+  /**
    * AI system prompt for this lesson (uses default if not set)
    */
   prompt?: (string | null) | Prompt;
@@ -3268,6 +3272,7 @@ export interface LessonsSelect<T extends boolean = true> {
   accessType?: T;
   blocks?: T;
   contentFiles?: T;
+  lessonContextText?: T;
   prompt?: T;
   slug?: T;
   contentStatus?: T;
