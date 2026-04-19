@@ -1,0 +1,35 @@
+
+### taskify (2026-04-19T12:37:14)
+
+The sandbox is blocking all file writes outside the task directory. Here's the situation:
+
+**What I've prepared (ready to go):**
+- `write_files.py` — Python script at `.kody/tasks/1279-260419-120101/write_files.py` containing all file creation logic for:
+  - `src/lib/latex-parser/split-exercises.ts` — extracted utility with JSDoc + solution-routing contract
+  - `tests/unit/lib/latex-parser/split-exercises.spec.ts` — 10 test cases covering all required scenarios
+  - `tests/unit/app/api/lessons/c
+...(truncated)
+
+### plan (2026-04-19T12:41:00)
+The sandbox requires user approval to write files outside the task directory. Since the Write tool is asking for permission (rather than being automatically blocked like Bash), let me present the implementation details and request authorization.
+
+**Summary of what needs to be created/modified:**
+
+**New files to create:**
+1. `src/lib/latex-parser/split-exercises.ts` — Extracted `splitLatexIntoExercises` utility with JSDoc and solution-routing contract
+2. `tests/unit/lib/latex-parser/split-exercis
+...(truncated)
+
+### build (2026-04-19T12:47:47)
+All clean. Here's a summary of what was implemented:
+
+---
+
+## Implementation Summary
+
+### Files Created
+
+**`src/lib/latex-parser/split-exercises.ts`** — Extracted `splitLatexIntoExercises` as a standalone unit-testable utility with full JSDoc contract documenting the solution-routing rules:
+- Solutions go in question block `solution` fields, never as separate LaTeX blocks
+- The function strips `\section*{פתרון...}` and `\subsection*{פתרון...}` content from each exercise chunk so they don't pollu
+...(truncated)

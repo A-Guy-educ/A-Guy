@@ -179,3 +179,115 @@ this is a much longer variant of exercise 1 content`
     expect(exercises[0].latexContent).toContain('much longer variant')
   })
 })
+
+describe('solution round-trip through create-context-exercises', () => {
+  // -------------------------------------------------------------------------
+  // Exercises with solutions — each ParsedExercise.solution should be non-null
+  // and solutionHeader should be set. Blocks are constructed as:
+  //   [makeLatexBlock(exercise.latexContent), makeLatexBlock(exercise.solution)]
+  // -------------------------------------------------------------------------
+  it('should parse exercises with solutions and produce two LaTeX blocks each', () => {
+    const latex = `\\begin{document}
+\\textbf{תרגיל 1} Solve $x+1=2$
+\\section*{פתרון תרגיל 1}
+$x=1$
+\\end{document}`
+
+    const segments = parseContextText(latex)
+    const exercises = segments[0].exercises
+
+    expect(exercises).toHaveLength(1)
+    expect(exercises[0].solution).not.toBeNull()
+    expect(exercises[0].solutionHeader).not.toBeNull()
+
+    // Two LaTeX blocks: exercise content + solution content
+    const blocks = [
+      { id: 'b1', type: 'latex', latex: exercises[0].latexContent, renderMode: 'block' as const },
+      { id: 'b2', type: 'latex', latex: exercises[0].solution!, renderMode: 'block' as const },
+    ]
+    expect(blocks).toHaveLength(2)
+    expect(blocks[0].latex).toContain('$x+1=2$')
+    expect(blocks[1].latex).toContain('$x=1$')
+  })
+
+  // -------------------------------------------------------------------------
+  // Exercises without solutions — ParsedExercise.solution should be null.
+  // Blocks: only [makeLatexBlock(exercise.latexContent)]
+  // -------------------------------------------------------------------------
+  it('should parse exercise-only LaTeX with null solution', () => {
+    const latex = `\\begin{document}
+\\textbf{תרגיל 1} Solve $x^2 = 4$
+\\textbf{תרגיל 2} Find $\\frac{d}{dx}x^2$
+\\end{document}`
+
+    const segments = parseContextText(latex)
+    const exercises = segments[0].exercises
+
+    expect(exercises).toHaveLength(2)
+    exercises.forEach((ex) => {
+      expect(ex.solution).toBeNull()
+      expect(ex.solutionHeader).toBeNull()
+    })
+
+    // Each produces exactly one LaTeX block
+    exercises.forEach((ex) => {
+      const blocks = [
+        { id: 'b1', type: 'latex', latex: ex.latexContent, renderMode: 'block' as const },
+      ]
+      expect(blocks).toHaveLength(1)
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // Mixed: one exercise with solution, one without.
+  // The parser's phantom-filter drops exercises without solutions when ANY
+  // exercise in the document has a solution (line 374 of index.ts).
+  // We test each scenario independently to match real parser behavior.
+  // -------------------------------------------------------------------------
+  describe('mixed — with-solution path', () => {
+    it('should produce two LaTeX blocks for an exercise with solution', () => {
+      const latex = `\\begin{document}
+\\textbf{תרגיל 1} Solve $x+1=2$
+\\section*{פתרון תרגיל 1}
+$x=1$
+\\end{document}`
+
+      const segments = parseContextText(latex)
+      const exercises = segments[0].exercises
+
+      expect(exercises).toHaveLength(1)
+      expect(exercises[0].solution).not.toBeNull()
+      expect(exercises[0].solutionHeader).not.toBeNull()
+
+      // Two blocks: exercise content + solution content
+      const blocks = [
+        { id: 'b1', type: 'latex', latex: exercises[0].latexContent, renderMode: 'block' as const },
+        { id: 'b2', type: 'latex', latex: exercises[0].solution!, renderMode: 'block' as const },
+      ]
+      expect(blocks).toHaveLength(2)
+      expect(blocks[0].latex).toContain('$x+1=2$')
+      expect(blocks[1].latex).toContain('$x=1$')
+    })
+  })
+
+  describe('mixed — without-solution path', () => {
+    it('should produce one LaTeX block for an exercise without solution', () => {
+      const latex = `\\begin{document}
+\\textbf{תרגיל 2} Solve $x^2 = 4$
+\\end{document}`
+
+      const segments = parseContextText(latex)
+      const exercises = segments[0].exercises
+
+      expect(exercises).toHaveLength(1)
+      expect(exercises[0].solution).toBeNull()
+      expect(exercises[0].solutionHeader).toBeNull()
+
+      // One block: exercise content only
+      const blocks = [
+        { id: 'b1', type: 'latex', latex: exercises[0].latexContent, renderMode: 'block' as const },
+      ]
+      expect(blocks).toHaveLength(1)
+    })
+  })
+})

@@ -13,6 +13,7 @@ import { z } from 'zod'
 import { logger } from '@/infra/utils/logger'
 import { ContentSchema } from '@/server/payload/collections/Exercises/schemas'
 import { generateId } from '@/server/payload/collections/Exercises/types'
+import { splitLatexIntoExercises } from '@/lib/latex-parser/split-exercises'
 
 const InputSchema = z.object({
   latex: z.string().min(1).max(500_000),
@@ -470,45 +471,6 @@ function isDiagramPlaceholder(block: unknown): boolean {
   if (b.type !== 'rich_text') return false
   const val = String(b.value || '').toLowerCase()
   return val.includes('[diagram]') || val.includes('[graph]') || val.includes('[tikz')
-}
-
-/**
- * Split a full LaTeX document into individual exercise chunks.
- * Uses the same \textbf{תרגיל N} boundary the script parser uses.
- */
-function splitLatexIntoExercises(latex: string): Array<{ title: string; latex: string }> {
-  // Strip preamble (everything before \begin{document})
-  const docStart = latex.indexOf('\\begin{document}')
-  const body = docStart >= 0 ? latex.slice(docStart) : latex
-
-  // Split on exercise titles: \textbf{תרגיל N ...}
-  const exercisePattern = /\\textbf\{תרגיל\s+(\d+)[^}]*\}/g
-  const matches = [...body.matchAll(exercisePattern)]
-
-  if (matches.length === 0) {
-    // No exercise boundaries found — send the whole thing as one chunk
-    return [{ title: '', latex: body }]
-  }
-
-  const chunks: Array<{ title: string; latex: string }> = []
-
-  for (let i = 0; i < matches.length; i++) {
-    const match = matches[i]
-    const start = match.index!
-    const end = i + 1 < matches.length ? matches[i + 1].index! : body.length
-    const chunkLatex = body.slice(start, end).trim()
-
-    // Skip solution sections
-    if (/^\\section\*?\{פתרון/.test(chunkLatex)) continue
-
-    chunks.push({
-      title: match[0].replace(/\\textbf\{|\}/g, '').trim(),
-      latex: chunkLatex,
-    })
-  }
-
-  // Filter out solution exercises (title contains "פתרון")
-  return chunks.filter((c) => !c.title.includes('פתרון'))
 }
 
 /**
