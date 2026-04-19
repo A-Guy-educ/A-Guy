@@ -15,6 +15,7 @@
     "repo": "A-Guy"
   },
   "agent": {
+    "model": "minimax/MiniMax-M2.7-highspeed",
     "modelMap": {
       "cheap": "minimax/MiniMax-M2.7-highspeed",
       "mid": "minimax/MiniMax-M2.7-highspeed",
