@@ -353,30 +353,25 @@ export async function GET(req: Request) {
     courseIdToTitle.set(course.id, course.title || 'Untitled')
   }
 
-  // With depth:1, course entitlements should have populated course objects
+  // Count enrollments — course field may be a string ID or populated object
   const enrollmentCounts = new Map<string, number>()
   for (const user of usersWithEntitlements.docs as Array<{
     courseEntitlements?: Array<{ course?: string | { id: string; title?: string } }>
   }>) {
     for (const ent of user.courseEntitlements || []) {
       if (!ent.course) continue
-      // With depth:1, course should be populated as an object
-      if (typeof ent.course === 'object' && ent.course.id) {
-        const id = ent.course.id
-        // Use title from populated object, fallback to map
-        if (!courseIdToTitle.has(id) && ent.course.title) {
-          courseIdToTitle.set(id, ent.course.title)
-        }
-        enrollmentCounts.set(id, (enrollmentCounts.get(id) || 0) + 1)
-      } else if (typeof ent.course === 'string') {
-        enrollmentCounts.set(ent.course, (enrollmentCounts.get(ent.course) || 0) + 1)
+      const courseId = typeof ent.course === 'object' ? ent.course.id : ent.course
+      // Capture title from populated object
+      if (typeof ent.course === 'object' && ent.course.title) {
+        courseIdToTitle.set(courseId, ent.course.title)
       }
+      enrollmentCounts.set(courseId, (enrollmentCounts.get(courseId) || 0) + 1)
     }
   }
 
   const courseEnrollments: CourseEnrollment[] = Array.from(enrollmentCounts.entries())
     .map(([id, count]) => ({
-      courseTitle: courseIdToTitle.get(id) || `Course ${id.slice(-6)}`,
+      courseTitle: courseIdToTitle.get(id) || 'Unknown',
       count,
     }))
     .sort((a, b) => b.count - a.count)
