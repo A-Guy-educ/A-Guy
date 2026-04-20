@@ -55,3 +55,7 @@ See [design-system.md](./design-system.md) for complete rules. Key points:
 
 ## Learned 2026-04-15 (task: 1225-260415-142959)
 - Uses Payload CMS collections
+
+## Learned 2026-04-19 (task: 2)
+- Uses @/ path aliases for imports
+- Active directories: src/app/api/instructor/dashboard, src/app/(frontend)/instructor/_components, tests/int, tests/e2e

@@ -229,7 +229,7 @@ jobs:
         run: |
           # Override MCP_ENABLED from secrets — Payload requires DEFAULT_TENANT_SLUG when MCP is on
           echo "MCP_ENABLED=false" >> $GITHUB_ENV
-          echo "$ALL_SECRETS" | jq -r 'to_entries[] | select(.key | test("^(GITHUB_TOKEN)$") | not) | @json' | while IFS= read -r entry; do
+          echo "$ALL_SECRETS" | jq -r 'to_entries[] | select(.key | test("^(GITHUB_TOKEN|MODEL|PROVIDER)$") | not) | @json' | while IFS= read -r entry; do
             KEY=$(echo "$entry" | jq -r '.key')
             VALUE=$(echo "$entry" | jq -r '.value')
             DELIM="KODY_EOF_${KEY}"

@@ -1,0 +1,13 @@
+{
+  "id": "ep_stage_diary_001",
+  "runId": "2",
+  "source": "stage_diary",
+  "taskId": "2",
+  "createdAt": "2026-04-19T15:42:54.026Z",
+  "rawContent": "{\"stage\":\"build\",\"insights\":[{\"kind\":\"lesson\",\"text\":\"The `totalCourses` field on the dashboard response distinguishes 'no courses assigned' (0) from 'viewing without courses' — always include a count field alongside array data for frontend conditional r\",\"scope\":\"src/app/api/instructor/dashboard/route.ts\"},{\"kind\":\"convention\",\"text\":\"Admin oversight UI uses a distinct 'Course Oversight' heading (not the instructor's 'Your Courses' heading) to differentiate the admin supervisory view from the instructor self-view.\",\"scope\":\"src/app/(frontend)/instructor-dashboard/InstructorDashboardContent.tsx\"},{\"kind\":\"decision\",\"text\":\"The server-side pattern builds an `instructorsByCourse` map from `courses` + `course-instructors` collections, then injects the per-course instructor array into each course object before returning — a\",\"scope\":\"src/app/api/instructor/dashboard/route.ts\"},{\"kind\":\"gotcha\",\"text\":\"The InstructorDashboardContent component conditionally renders the admin 'Course Oversigh",
+  "extractedNodeIds": [],
+  "linkedFiles": [],
+  "metadata": {
+    "stage": "build"
+  }
+}
