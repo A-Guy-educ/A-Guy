@@ -84,32 +84,39 @@ export async function convertLatexBlockOnExercise(
   }
   const sourceLatexChunks: string[] = []
 
-  // Pre-scan: identify which LaTeX blocks are solution blocks.
-  // Solution blocks will be combined with their preceding exercise block
-  // when sent to the AI, so the AI can place solutions in the `solution` field.
+  // Identify solution blocks. Two detection methods:
+  // 1. Header detection: first line matches isSolutionHeader() (e.g. \section*{פתרון})
+  // 2. Positional: if there are exactly 2 LaTeX blocks, the second is the solution
+  //    (this is how create-context-exercises always creates them)
   const solutionBlockIndices = new Set<number>()
-  for (const idx of latexBlockIndices) {
-    const lb = blocks[idx] as LatexBlock
-    const firstLine =
-      lb.latex
-        .trim()
-        .split('\n')
-        .find((l) => l.trim().length > 0) || ''
-    if (isSolutionHeader(firstLine)) {
-      solutionBlockIndices.add(idx)
+
+  if (latexBlockIndices.length === 2) {
+    // Positional: second LaTeX block is the solution
+    solutionBlockIndices.add(latexBlockIndices[1])
+  } else {
+    // Header detection for exercises with more than 2 LaTeX blocks
+    for (const idx of latexBlockIndices) {
+      const lb = blocks[idx] as LatexBlock
+      const firstLine =
+        lb.latex
+          .trim()
+          .split('\n')
+          .find((l) => l.trim().length > 0) || ''
+      if (isSolutionHeader(firstLine)) {
+        solutionBlockIndices.add(idx)
+      }
     }
   }
 
-  // Build a map: exercise block index → combined LaTeX (exercise + following solution)
-  const combinedLatexForAI = new Map<number, string>()
+  // Build a map: exercise block index → solution LaTeX to attach after conversion
+  const solutionForExercise = new Map<number, string>()
   for (const idx of latexBlockIndices) {
-    if (solutionBlockIndices.has(idx)) continue // skip solution blocks
-    const exerciseLatex = (blocks[idx] as LatexBlock).latex
-    // Check if the next block is a solution block
-    const nextIdx = latexBlockIndices[latexBlockIndices.indexOf(idx) + 1]
+    if (solutionBlockIndices.has(idx)) continue
+    // Find the next LaTeX block — if it's a solution, pair them
+    const posInList = latexBlockIndices.indexOf(idx)
+    const nextIdx = latexBlockIndices[posInList + 1]
     if (nextIdx !== undefined && solutionBlockIndices.has(nextIdx)) {
-      const solutionLatex = (blocks[nextIdx] as LatexBlock).latex
-      combinedLatexForAI.set(idx, `${exerciseLatex}\n\n${solutionLatex}`)
+      solutionForExercise.set(idx, (blocks[nextIdx] as LatexBlock).latex)
     }
   }
 
@@ -144,11 +151,8 @@ export async function convertLatexBlockOnExercise(
 
       // If there's a paired solution block, attach its content to
       // the question blocks' `solution` field.
-      const solutionLatex = combinedLatexForAI.has(idx)
-        ? (blocks[latexBlockIndices[latexBlockIndices.indexOf(idx) + 1]] as LatexBlock).latex
-        : null
-      if (solutionLatex) {
-        attachSolutionToBlocks(result.blocks, solutionLatex)
+      if (solutionForExercise.has(idx)) {
+        attachSolutionToBlocks(result.blocks, solutionForExercise.get(idx)!)
       }
 
       nextBlocks.splice(idx, 1, ...result.blocks)
@@ -162,7 +166,7 @@ export async function convertLatexBlockOnExercise(
         scriptErrors: result.errors.length,
         scriptBlocks: result.blocks.length,
         scriptUsable,
-        hasSolutionBlock: combinedLatexForAI.has(idx),
+        hasSolutionBlock: solutionForExercise.has(idx),
       },
       'Script parser output not usable, checking AI fallback',
     )
@@ -180,7 +184,10 @@ export async function convertLatexBlockOnExercise(
 
     // Send combined exercise+solution LaTeX to AI so it can place
     // solutions in the question blocks' `solution` field.
-    const latexForAI = combinedLatexForAI.get(idx) || latexBlock.latex
+    const pairedSolution = solutionForExercise.get(idx)
+    const latexForAI = pairedSolution
+      ? `${latexBlock.latex}\n\n${pairedSolution}`
+      : latexBlock.latex
     const aiBlocks = await tryAiFallback(req, latexForAI, lessonId, reqLogger)
     if (aiBlocks && aiBlocks.length > 0) {
       outcome.method = 'ai_fallback'
