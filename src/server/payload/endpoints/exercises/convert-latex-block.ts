@@ -85,16 +85,19 @@ export async function convertLatexBlockOnExercise(
   const sourceLatexChunks: string[] = []
 
   // Identify solution blocks. Two detection methods:
-  // 1. Header detection: first line matches isSolutionHeader() (e.g. \section*{פתרון})
-  // 2. Positional: if there are exactly 2 LaTeX blocks, the second is the solution
-  //    (this is how create-context-exercises always creates them)
+  // 1. Origin-based: exercises created by create-context-exercises (origin: 'context_extraction')
+  //    always have [exercise block, solution block] — the last LaTeX block is the solution
+  // 2. Header detection: first line matches isSolutionHeader() (e.g. \section*{פתרון})
   const solutionBlockIndices = new Set<number>()
+  const exerciseOrigin = (exercise as unknown as Record<string, unknown>).origin as
+    | string
+    | undefined
 
-  if (latexBlockIndices.length === 2) {
-    // Positional: second LaTeX block is the solution
-    solutionBlockIndices.add(latexBlockIndices[1])
+  if (exerciseOrigin === 'context_extraction' && latexBlockIndices.length >= 2) {
+    // Context extraction exercises: last LaTeX block is always the solution
+    solutionBlockIndices.add(latexBlockIndices[latexBlockIndices.length - 1])
   } else {
-    // Header detection for exercises with more than 2 LaTeX blocks
+    // Other origins: detect by solution header
     for (const idx of latexBlockIndices) {
       const lb = blocks[idx] as LatexBlock
       const firstLine =
