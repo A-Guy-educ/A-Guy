@@ -5,6 +5,7 @@ import sharp from 'sharp'
 import { fileURLToPath } from 'url'
 
 import { getServerSideURL } from '@/infra/utils/getURL'
+import { logger } from '@/infra/utils/logger'
 import { AccessCodes } from '@/server/payload/collections/AccessCodes'
 import { Categories } from '@/server/payload/collections/Categories'
 import { Chapters } from '@/server/payload/collections/Chapters'
@@ -162,14 +163,9 @@ export default buildConfig({
       // Socket timeout for long-running operations
       socketTimeoutMS: 30000,
     },
-    afterOpenConnection: async (adapter) => {
-      // Log connection establishment for monitoring
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const pool = (adapter.connection as any).pool
-      if (pool) {
-        const poolSize = pool.size ?? 'unknown'
-        console.info(`[MongoDB] Connection pool opened with maxSize=${poolSize}`)
-      }
+    afterOpenConnection: async () => {
+      const maxPoolSize = process.env.MONGODB_MAX_POOL_SIZE ?? (process.env.VITEST ? '5' : '3')
+      logger.info({ maxPoolSize: parseInt(maxPoolSize, 10) }, '[MongoDB] Connection pool opened')
     },
   }),
   collections: [

@@ -1,17 +1,10 @@
 import { NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
-import { MongooseAdapter } from '@payloadcms/db-mongodb'
-import { getPoolStats } from '@/infra/db/pool-stats'
+import type { MongooseAdapter } from '@payloadcms/db-mongodb'
+import { getPoolStats, type PoolStats } from '@/infra/db/pool-stats'
 
 export const dynamic = 'force-dynamic'
-
-interface PoolStatus {
-  poolSize: number
-  available: number
-  inUse: number
-  queued: number
-}
 
 interface HealthResponse {
   ok: boolean
@@ -21,7 +14,7 @@ interface HealthResponse {
   version: string
   gitSha: string
   timestamp: string
-  pool?: PoolStatus
+  pool?: PoolStats
 }
 
 export async function GET(): Promise<
@@ -31,7 +24,7 @@ export async function GET(): Promise<
     database: false,
   }
 
-  let pool = undefined
+  let pool: PoolStats | undefined = undefined
 
   try {
     const payload = await getPayload({ config: configPromise })
