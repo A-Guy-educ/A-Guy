@@ -349,29 +349,41 @@ export async function GET(req: Request) {
 
   // Course enrollment distribution — build ID→title map
   const courseIdToTitle = new Map<string, string>()
-  for (const course of coursesWithTitles.docs as Array<{ id: string; title?: string }>) {
-    courseIdToTitle.set(course.id, course.title || 'Untitled')
+  for (const course of coursesWithTitles.docs) {
+    const c = course as unknown as { id: string; title?: string; courseLabel?: string }
+    const id = String(c.id)
+    const title = c.title || c.courseLabel || 'Untitled'
+    courseIdToTitle.set(id, title)
   }
 
-  // Count enrollments — course field may be a string ID or populated object
+  // Count enrollments — with depth:1, course is populated as object with title
   const enrollmentCounts = new Map<string, number>()
-  for (const user of usersWithEntitlements.docs as Array<{
-    courseEntitlements?: Array<{ course?: string | { id: string; title?: string } }>
-  }>) {
-    for (const ent of user.courseEntitlements || []) {
+  const enrollmentTitles = new Map<string, string>()
+  for (const user of usersWithEntitlements.docs) {
+    const u = user as unknown as {
+      courseEntitlements?: Array<{
+        course?: string | { id: string; title?: string; courseLabel?: string }
+      }>
+    }
+    for (const ent of u.courseEntitlements || []) {
       if (!ent.course) continue
-      const courseId = typeof ent.course === 'object' ? ent.course.id : ent.course
-      // Capture title from populated object
-      if (typeof ent.course === 'object' && ent.course.title) {
-        courseIdToTitle.set(courseId, ent.course.title)
+      let courseId: string
+      let courseTitle: string | undefined
+      if (typeof ent.course === 'object') {
+        courseId = String(ent.course.id)
+        courseTitle = ent.course.title || ent.course.courseLabel
+      } else {
+        courseId = String(ent.course)
       }
+      if (!courseId) continue
       enrollmentCounts.set(courseId, (enrollmentCounts.get(courseId) || 0) + 1)
+      if (courseTitle) enrollmentTitles.set(courseId, courseTitle)
     }
   }
 
   const courseEnrollments: CourseEnrollment[] = Array.from(enrollmentCounts.entries())
     .map(([id, count]) => ({
-      courseTitle: courseIdToTitle.get(id) || 'Unknown',
+      courseTitle: enrollmentTitles.get(id) || courseIdToTitle.get(id) || 'Unknown',
       count,
     }))
     .sort((a, b) => b.count - a.count)
