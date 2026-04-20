@@ -101,6 +101,7 @@ export default buildConfig({
       beforeDashboard: [
         '@/ui/admin/ConversionTracking/UserMetricsWidget',
         '@/ui/admin/ConversionTracking/ContentCountsWidget',
+        '@/ui/admin/ConversionTracking/EngagementWidget',
         '@/ui/admin/AdminChat/DashboardWidget',
         '@/ui/admin/VersionInfo',
       ],

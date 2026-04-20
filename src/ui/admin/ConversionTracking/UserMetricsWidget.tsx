@@ -1,16 +1,10 @@
 'use client'
 
-import { Activity, CalendarDays, TrendingUp, UserPlus } from 'lucide-react'
+import { Activity, CalendarDays, Eye, TrendingUp, UserPlus, Users } from 'lucide-react'
 import React from 'react'
 
 import { MetricCard } from './MetricCard'
-import {
-  errorStyle,
-  loadingStyle,
-  userGridStyle,
-  widgetContainerStyle,
-  widgetTitleStyle,
-} from './styles'
+import { errorStyle, loadingStyle, widgetContainerStyle, widgetTitleStyle } from './styles'
 import { useMetrics } from './useMetrics'
 
 function calcTrend(current: number, previous: number): { value: number; label: string } | null {
@@ -21,7 +15,6 @@ function calcTrend(current: number, previous: number): { value: number; label: s
 const UserMetricsWidget: React.FC = () => {
   const { data, loading, error } = useMetrics()
 
-  // Admin-only: render nothing for non-admins
   if (error === 'admin-only') return null
 
   if (loading) {
@@ -46,15 +39,51 @@ const UserMetricsWidget: React.FC = () => {
   const weekTrend = calcTrend(userMetrics.registeredThisWeek, userMetrics.registeredLastWeek)
   const monthTrend = calcTrend(userMetrics.registeredThisMonth, userMetrics.registeredLastMonth)
 
+  const conversionRate =
+    userMetrics.totalGuestSessions > 0
+      ? ((userMetrics.guestToRegisteredCount / userMetrics.totalGuestSessions) * 100).toFixed(1)
+      : '0'
+
   return (
     <div style={widgetContainerStyle}>
       <h3 style={widgetTitleStyle}>User Statistics</h3>
-      <div style={userGridStyle}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: 16,
+          marginBottom: 16,
+        }}
+      >
+        <MetricCard
+          label="Total registered users"
+          value={userMetrics.totalUsers}
+          icon={<Users size={20} />}
+          accentColor="#6366f1"
+          large
+        />
+        <MetricCard
+          label="Anonymous visitors"
+          value={userMetrics.totalGuestSessions}
+          icon={<Eye size={20} />}
+          accentColor="#8b5cf6"
+          large
+        />
+        <MetricCard
+          label="Guest → Registered"
+          value={userMetrics.guestToRegisteredCount}
+          icon={<UserPlus size={20} />}
+          accentColor="#06b6d4"
+          suffix={`(${conversionRate}%)`}
+          large
+        />
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
         <MetricCard
           label="Active users today"
           value={userMetrics.activeUsersToday}
           icon={<Activity size={20} />}
-          accentColor="var(--theme-success)"
+          accentColor="#10b981"
           trend={activeTrend}
           large
         />
@@ -62,14 +91,14 @@ const UserMetricsWidget: React.FC = () => {
           label="Registered yesterday"
           value={userMetrics.registeredYesterday}
           icon={<UserPlus size={20} />}
-          accentColor="var(--theme-info)"
+          accentColor="#3b82f6"
           large
         />
         <MetricCard
           label="Registered this week"
           value={userMetrics.registeredThisWeek}
           icon={<CalendarDays size={20} />}
-          accentColor="var(--theme-warning)"
+          accentColor="#f59e0b"
           trend={weekTrend}
           large
         />
@@ -77,7 +106,7 @@ const UserMetricsWidget: React.FC = () => {
           label="Registered this month"
           value={userMetrics.registeredThisMonth}
           icon={<TrendingUp size={20} />}
-          accentColor="var(--theme-error)"
+          accentColor="#ef4444"
           trend={monthTrend}
           large
         />
