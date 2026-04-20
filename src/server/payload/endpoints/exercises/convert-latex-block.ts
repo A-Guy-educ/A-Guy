@@ -141,6 +141,16 @@ export async function convertLatexBlockOnExercise(
       outcome.replacedBlockIds.push(latexBlock.id)
       outcome.addedBlockCount += result.blocks.length
       sourceLatexChunks.unshift(latexBlock.latex)
+
+      // If there's a paired solution block, attach its content to
+      // the question blocks' `solution` field.
+      const solutionLatex = combinedLatexForAI.has(idx)
+        ? (blocks[latexBlockIndices[latexBlockIndices.indexOf(idx) + 1]] as LatexBlock).latex
+        : null
+      if (solutionLatex) {
+        attachSolutionToBlocks(result.blocks, solutionLatex)
+      }
+
       nextBlocks.splice(idx, 1, ...result.blocks)
       continue
     }
@@ -379,6 +389,57 @@ function isScriptOutputMeaningful(sourceLatex: string, parsedBlocks: ContentBloc
   }
 
   return true
+}
+
+/**
+ * Attach solution LaTeX content to the question blocks' `solution` field.
+ * Finds all question blocks and distributes the solution text.
+ * For a single question, the entire solution goes to it.
+ * For multiple questions, the full solution is attached to the last one
+ * (most solutions are a single block covering all sub-questions).
+ */
+function attachSolutionToBlocks(blocks: ContentBlock[], solutionLatex: string): void {
+  // Clean solution: strip the header line, keep the content
+  const lines = solutionLatex.split('\n')
+  const firstLine = lines.find((l) => l.trim().length > 0) || ''
+  const contentWithoutHeader = isSolutionHeader(firstLine)
+    ? lines
+        .slice(lines.indexOf(firstLine) + 1)
+        .join('\n')
+        .trim()
+    : solutionLatex.trim()
+
+  if (!contentWithoutHeader) return
+
+  // Find question blocks
+  const questionIndices: number[] = []
+  for (let i = 0; i < blocks.length; i++) {
+    const t = blocks[i].type
+    if (
+      t === 'question_free_response' ||
+      t === 'question_select' ||
+      t === 'question_table' ||
+      t === 'question_axis' ||
+      t === 'question_geometry'
+    ) {
+      questionIndices.push(i)
+    }
+  }
+
+  if (questionIndices.length === 0) return
+
+  // Attach to the last question block (covers the common case of
+  // one solution covering all sub-questions)
+  const lastIdx = questionIndices[questionIndices.length - 1]
+  const qBlock = blocks[lastIdx] as ContentBlock & {
+    solution?: { type: string; format: string; value: string; mediaIds: string[] }
+  }
+  qBlock.solution = {
+    type: 'rich_text',
+    format: 'md-math-v1',
+    value: contentWithoutHeader,
+    mediaIds: [],
+  }
 }
 
 function emitFallbackAnalytics(
