@@ -5,7 +5,6 @@ import { queryPublishedCourses } from '@/server/repos/queries/courses'
 import { CourseCardGrid } from './_components/CourseCardGrid'
 import { EmptyState } from './_components/EmptyState'
 import { CourseShopHeader } from './_components/CourseShopHeader'
-import { CourseCatalogHeader } from './_components/CourseCatalogHeader'
 
 // Revalidate every 60 seconds — courses rarely change
 export const revalidate = 60
@@ -24,8 +23,6 @@ export default async function CoursesPage() {
       <div className="max-w-7xl mx-auto px-6 py-20">
         {/* Courses Section */}
         <section>
-          <CourseCatalogHeader />
-
           {courses.length === 0 ? (
             <EmptyState type="noCourses" />
           ) : (

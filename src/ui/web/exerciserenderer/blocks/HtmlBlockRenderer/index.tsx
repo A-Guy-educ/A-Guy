@@ -2,12 +2,12 @@
 
 import DOMPurify from 'dompurify'
 import { useEffect, useMemo, useState } from 'react'
+import { GuidedExplanationV1Schema } from '@/infra/contracts/guided-explanation/v1'
+import type { HtmlBlock } from '@/server/payload/collections/Exercises/types'
+import { GuidedExplanationRunner } from '@/ui/web/GuidedExplanationRunner'
 
 interface HtmlBlockRendererProps {
-  block: {
-    type: 'html'
-    html: string
-  }
+  block: HtmlBlock
 }
 
 const PURIFY_CONFIG = {
@@ -67,13 +67,31 @@ const PURIFY_CONFIG = {
 }
 
 export function HtmlBlockRenderer({ block }: HtmlBlockRendererProps) {
+  // When a guided explanation payload is present and valid, render the
+  // trusted runner. safeParse guards against malformed data from DB
+  // migrations or API bugs — falls back to static HTML on failure.
+  if (block.guidedExplanation) {
+    const parsed = GuidedExplanationV1Schema.safeParse(block.guidedExplanation)
+    if (parsed.success) {
+      return <GuidedExplanationRunner payload={parsed.data} />
+    }
+  }
+
+  return <StaticHtmlRenderer html={block.html} />
+}
+
+function StaticHtmlRenderer({ html }: { html: string }) {
   const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
-    // Force rel="noopener noreferrer" on links with target attribute to prevent tabnapping
     DOMPurify.addHook('afterSanitizeAttributes', (node) => {
       if (node.tagName === 'A' && node.getAttribute('target')) {
         node.setAttribute('rel', 'noopener noreferrer')
+      }
+      // Force every <button> to type="button" so author content cannot
+      // submit a surrounding form (e.g. the Payload admin editor).
+      if (node.tagName === 'BUTTON') {
+        node.setAttribute('type', 'button')
       }
     })
     setIsMounted(true)
@@ -83,9 +101,9 @@ export function HtmlBlockRenderer({ block }: HtmlBlockRendererProps) {
   }, [])
 
   const cleanHtml = useMemo(() => {
-    if (!isMounted || !block.html?.trim()) return ''
-    return DOMPurify.sanitize(block.html, PURIFY_CONFIG)
-  }, [isMounted, block.html])
+    if (!isMounted || !html?.trim()) return ''
+    return DOMPurify.sanitize(html, PURIFY_CONFIG)
+  }, [isMounted, html])
 
   if (!cleanHtml) return null
 

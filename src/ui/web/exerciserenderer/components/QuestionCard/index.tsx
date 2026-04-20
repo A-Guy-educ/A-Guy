@@ -61,8 +61,12 @@ export function QuestionCard({
     >
       <Card
         className={cn(
-          'p-card-padding shadow-elevation-1 transition-all duration-normal',
-          isCorrect && 'border-s-3 border-s-success bg-success/5',
+          'p-card-padding border border-border/40 transition-all duration-normal',
+          // Light mode: translucent bg so it blends with warm cream page — no floating effect
+          'bg-background/70 [data-theme="light"]:bg-background/70 dark:bg-card',
+          // Dark mode: slight elevation with shadow
+          'dark:shadow-card',
+          isCorrect && 'border-success/30 bg-success/5',
         )}
       >
         {/* Question Label */}
@@ -84,9 +88,11 @@ export function QuestionCard({
                 damping: 20,
                 delay: animationDelay + 0.2,
               }}
-              className="w-7 h-7 rounded-lg flex items-center justify-center bg-primary/10 border border-primary/20 shadow-elevation-1"
+              className="w-8 h-8 rounded-xl flex items-center justify-center bg-primary/10 border-2 border-primary/20 shadow-card"
             >
-              <span className="font-bold text-body-sm text-primary">{questionLabel}</span>
+              <span className="font-extrabold text-body-sm text-primary tracking-tight">
+                {questionLabel}
+              </span>
             </motion.div>
           </div>
         )}

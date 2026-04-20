@@ -64,7 +64,6 @@ export type SupportedTimezones =
 export interface Config {
   auth: {
     users: UserAuthOperations;
-    'payload-mcp-api-keys': PayloadMcpApiKeyAuthOperations;
   };
   blocks: {};
   collections: {
@@ -81,6 +80,7 @@ export interface Config {
     chapters: Chapter;
     lessons: Lesson;
     'content-pages': ContentPage;
+    'context-extractions': ContextExtraction;
     exercises: Exercise;
     'extraction-logs': ExtractionLog;
     'formula-sheets': FormulaSheet;
@@ -102,7 +102,6 @@ export interface Config {
     forms: Form;
     'form-submissions': FormSubmission;
     search: Search;
-    'payload-mcp-api-keys': PayloadMcpApiKey;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
@@ -124,6 +123,7 @@ export interface Config {
     chapters: ChaptersSelect<false> | ChaptersSelect<true>;
     lessons: LessonsSelect<false> | LessonsSelect<true>;
     'content-pages': ContentPagesSelect<false> | ContentPagesSelect<true>;
+    'context-extractions': ContextExtractionsSelect<false> | ContextExtractionsSelect<true>;
     exercises: ExercisesSelect<false> | ExercisesSelect<true>;
     'extraction-logs': ExtractionLogsSelect<false> | ExtractionLogsSelect<true>;
     'formula-sheets': FormulaSheetsSelect<false> | FormulaSheetsSelect<true>;
@@ -145,7 +145,6 @@ export interface Config {
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     search: SearchSelect<false> | SearchSelect<true>;
-    'payload-mcp-api-keys': PayloadMcpApiKeysSelect<false> | PayloadMcpApiKeysSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -165,13 +164,9 @@ export interface Config {
     footer: FooterSelect<false> | FooterSelect<true>;
   };
   locale: null;
-  user:
-    | (User & {
-        collection: 'users';
-      })
-    | (PayloadMcpApiKey & {
-        collection: 'payload-mcp-api-keys';
-      });
+  user: User & {
+    collection: 'users';
+  };
   jobs: {
     tasks: {
       pdf_to_exercises: TaskPdfToExercises;
@@ -186,24 +181,6 @@ export interface Config {
   };
 }
 export interface UserAuthOperations {
-  forgotPassword: {
-    email: string;
-    password: string;
-  };
-  login: {
-    email: string;
-    password: string;
-  };
-  registerFirstUser: {
-    email: string;
-    password: string;
-  };
-  unlock: {
-    email: string;
-    password: string;
-  };
-}
-export interface PayloadMcpApiKeyAuthOperations {
   forgotPassword: {
     email: string;
     password: string;
@@ -1569,11 +1546,15 @@ export interface Exercise {
    * User who created this document
    */
   createdBy?: (string | null) | User;
-  origin: 'manual' | 'conversion' | 'import';
+  origin: 'manual' | 'conversion' | 'import' | 'context_extraction';
   /**
    * Original PDF media for conversion exercises
    */
   sourceDoc?: (string | null) | Media;
+  /**
+   * Raw LaTeX chunk this exercise was derived from (for LaTeX imports)
+   */
+  sourceLatex?: string | null;
   /**
    * Payload job ID that created this exercise
    */
@@ -1832,6 +1813,26 @@ export interface GraphBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'graphBlock';
+}
+/**
+ * Raw LaTeX extractions from PDFs for exercise creation
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "context-extractions".
+ */
+export interface ContextExtraction {
+  id: string;
+  lesson: string | Lesson;
+  /**
+   * The PDF or image this extraction was created from
+   */
+  sourceMedia: string | Media;
+  /**
+   * Raw LaTeX text extracted from the source media
+   */
+  text: string;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2491,74 +2492,6 @@ export interface Search {
   createdAt: string;
 }
 /**
- * API keys control which collections, resources, tools, and prompts MCP clients can access
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "payload-mcp-api-keys".
- */
-export interface PayloadMcpApiKey {
-  id: string;
-  /**
-   * The user that the API key is associated with.
-   */
-  user: string | User;
-  /**
-   * A useful label for the API key.
-   */
-  label?: string | null;
-  /**
-   * The purpose of the API key.
-   */
-  description?: string | null;
-  courses?: {
-    /**
-     * Allow clients to find courses.
-     */
-    find?: boolean | null;
-    /**
-     * Allow clients to create courses.
-     */
-    create?: boolean | null;
-  };
-  chapters?: {
-    /**
-     * Allow clients to find chapters.
-     */
-    find?: boolean | null;
-    /**
-     * Allow clients to create chapters.
-     */
-    create?: boolean | null;
-  };
-  lessons?: {
-    /**
-     * Allow clients to find lessons.
-     */
-    find?: boolean | null;
-    /**
-     * Allow clients to create lessons.
-     */
-    create?: boolean | null;
-  };
-  exercises?: {
-    /**
-     * Allow clients to find exercises.
-     */
-    find?: boolean | null;
-  };
-  media?: {
-    /**
-     * Allow clients to find media.
-     */
-    find?: boolean | null;
-  };
-  updatedAt: string;
-  createdAt: string;
-  enableAPIKey?: boolean | null;
-  apiKey?: string | null;
-  apiKeyIndex?: string | null;
-}
-/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -2727,6 +2660,10 @@ export interface PayloadLockedDocument {
         value: string | ContentPage;
       } | null)
     | ({
+        relationTo: 'context-extractions';
+        value: string | ContextExtraction;
+      } | null)
+    | ({
         relationTo: 'exercises';
         value: string | Exercise;
       } | null)
@@ -2809,21 +2746,12 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'search';
         value: string | Search;
-      } | null)
-    | ({
-        relationTo: 'payload-mcp-api-keys';
-        value: string | PayloadMcpApiKey;
       } | null);
   globalSlug?: string | null;
-  user:
-    | {
-        relationTo: 'users';
-        value: string | User;
-      }
-    | {
-        relationTo: 'payload-mcp-api-keys';
-        value: string | PayloadMcpApiKey;
-      };
+  user: {
+    relationTo: 'users';
+    value: string | User;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -2833,15 +2761,10 @@ export interface PayloadLockedDocument {
  */
 export interface PayloadPreference {
   id: string;
-  user:
-    | {
-        relationTo: 'users';
-        value: string | User;
-      }
-    | {
-        relationTo: 'payload-mcp-api-keys';
-        value: string | PayloadMcpApiKey;
-      };
+  user: {
+    relationTo: 'users';
+    value: string | User;
+  };
   key?: string | null;
   value?:
     | {
@@ -3326,6 +3249,17 @@ export interface GraphBlockSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "context-extractions_select".
+ */
+export interface ContextExtractionsSelect<T extends boolean = true> {
+  lesson?: T;
+  sourceMedia?: T;
+  text?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "exercises_select".
  */
 export interface ExercisesSelect<T extends boolean = true> {
@@ -3343,6 +3277,7 @@ export interface ExercisesSelect<T extends boolean = true> {
   createdBy?: T;
   origin?: T;
   sourceDoc?: T;
+  sourceLatex?: T;
   conversionJobId?: T;
   sourcePageStart?: T;
   sourcePageEnd?: T;
@@ -3926,48 +3861,6 @@ export interface SearchSelect<T extends boolean = true> {
       };
   updatedAt?: T;
   createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "payload-mcp-api-keys_select".
- */
-export interface PayloadMcpApiKeysSelect<T extends boolean = true> {
-  user?: T;
-  label?: T;
-  description?: T;
-  courses?:
-    | T
-    | {
-        find?: T;
-        create?: T;
-      };
-  chapters?:
-    | T
-    | {
-        find?: T;
-        create?: T;
-      };
-  lessons?:
-    | T
-    | {
-        find?: T;
-        create?: T;
-      };
-  exercises?:
-    | T
-    | {
-        find?: T;
-      };
-  media?:
-    | T
-    | {
-        find?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
-  enableAPIKey?: T;
-  apiKey?: T;
-  apiKeyIndex?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

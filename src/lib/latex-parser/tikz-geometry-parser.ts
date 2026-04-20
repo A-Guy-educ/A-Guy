@@ -34,6 +34,65 @@ function parseCoordinates(content: string): ParsedPoint[] {
   return points
 }
 
+/**
+ * Extract inline coordinates from \draw commands like:
+ *   \draw (0,0) node[below]{B} -- (5,0) node[right]{C} -- (6.5,3) node[above]{D} -- cycle;
+ * Returns points with names from node labels, and constructs line segments.
+ */
+function parseInlineDrawCoordinates(content: string): {
+  points: ParsedPoint[]
+  labels: Map<string, string>
+  lines: Array<{ from: string; to: string; style: 'solid' | 'dashed' }>
+} {
+  const points: ParsedPoint[] = []
+  const labels = new Map<string, string>()
+  const lines: Array<{ from: string; to: string; style: 'solid' | 'dashed' }> = []
+  const seen = new Map<string, string>() // "x,y" → point name
+
+  const drawRegex = /\\draw\s*(?:\[([^\]]*)\])?\s*([^;]+);/gs
+  let drawMatch: RegExpExecArray | null
+  while ((drawMatch = drawRegex.exec(content)) !== null) {
+    const opts = drawMatch[1] || ''
+    const path = drawMatch[2]
+    const isDashed = opts.includes('dashed')
+    const style: 'solid' | 'dashed' = isDashed ? 'dashed' : 'solid'
+
+    // Match (x,y) optionally followed by node[...]{Label}
+    const coordRegex =
+      /\((-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\)\s*(?:node\s*\[[^\]]*\]\s*(?:\{([^}]*)\})?)?/g
+    const segmentPoints: string[] = []
+    let coordMatch: RegExpExecArray | null
+    while ((coordMatch = coordRegex.exec(path)) !== null) {
+      const x = parseFloat(coordMatch[1])
+      const y = parseFloat(coordMatch[2])
+      const label = coordMatch[3]?.trim()
+      const key = `${x},${y}`
+
+      let name: string
+      if (seen.has(key)) {
+        name = seen.get(key)!
+      } else {
+        name = label || `_p${points.length}`
+        seen.set(key, name)
+        points.push({ name, x, y })
+        if (label) labels.set(name, label)
+      }
+      segmentPoints.push(name)
+    }
+
+    // Build line segments from consecutive points
+    for (let i = 0; i < segmentPoints.length - 1; i++) {
+      lines.push({ from: segmentPoints[i], to: segmentPoints[i + 1], style })
+    }
+    // Handle -- cycle
+    if (/--\s*cycle/.test(path) && segmentPoints.length > 2) {
+      lines.push({ from: segmentPoints[segmentPoints.length - 1], to: segmentPoints[0], style })
+    }
+  }
+
+  return { points, labels, lines }
+}
+
 /** Parse \draw[...] (A) -- (B) -- (C); line chains */
 function parseDrawLines(
   content: string,
@@ -173,15 +232,31 @@ export function parseTikzGeometry(tikzContent: string): QuestionGeometryBlock | 
   // Skip if this is an axis plot
   if (tikzContent.includes('\\begin{axis}')) return null
 
-  const coordinates = parseCoordinates(tikzContent)
-  if (coordinates.length === 0) return null
+  let coordinates = parseCoordinates(tikzContent)
+  let labels: Map<string, string>
+  let drawLines: Array<{ from: string; to: string; style: 'solid' | 'dashed' }>
+  let circles: Array<{ center: string; radius: number }>
+  let rightAngles: Array<{ center: string; ray1: string; ray2: string }>
 
-  const knownPoints = new Set(coordinates.map((p) => p.name))
+  if (coordinates.length > 0) {
+    // Standard path: explicit \coordinate definitions
+    const knownPoints = new Set(coordinates.map((p) => p.name))
+    labels = parseLabeledPoints(tikzContent)
+    drawLines = parseDrawLines(tikzContent, knownPoints)
+    circles = parseCircles(tikzContent, knownPoints)
+    rightAngles = parseRightAngles(tikzContent, knownPoints)
+  } else {
+    // Fallback: extract inline coordinates from \draw commands
+    const inline = parseInlineDrawCoordinates(tikzContent)
+    if (inline.points.length === 0) return null
+    coordinates = inline.points
+    labels = inline.labels
+    drawLines = inline.lines
+    circles = []
+    rightAngles = []
+  }
+
   const pointMap = new Map(coordinates.map((p) => [p.name, p]))
-  const labels = parseLabeledPoints(tikzContent)
-  const drawLines = parseDrawLines(tikzContent, knownPoints)
-  const circles = parseCircles(tikzContent, knownPoints)
-  const rightAngles = parseRightAngles(tikzContent, knownPoints)
 
   // Compute bounding box from raw TikZ coordinates — no normalization needed
   const boundingBox = computeBoundingBox(coordinates, circles, pointMap)
@@ -191,7 +266,7 @@ export function parseTikzGeometry(tikzContent: string): QuestionGeometryBlock | 
     canvas: {
       width: CANVAS_WIDTH,
       height: CANVAS_HEIGHT,
-      axis: true,
+      axis: false,
       boundingBox,
     },
     elements: {
@@ -225,5 +300,10 @@ export function parseTikzGeometry(tikzContent: string): QuestionGeometryBlock | 
 
 /** Check if a tikzpicture is coordinate-based geometry (not axis) */
 export function hasTikzGeometry(content: string): boolean {
-  return content.includes('\\coordinate') && !content.includes('\\begin{axis}')
+  if (content.includes('\\begin{axis}')) return false
+  // Has explicit \coordinate definitions
+  if (content.includes('\\coordinate')) return true
+  // Has \draw with inline numeric coordinates like (0,0) -- (5,3)
+  if (/\\draw[\s\[][^;]*\(\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?\)/.test(content)) return true
+  return false
 }

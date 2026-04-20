@@ -3,6 +3,7 @@
 import { useExamCountdown } from '@/client/hooks/useExamCountdown'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
 import type { Chapter, Course, Lesson } from '@/payload-types'
+import type { LessonProgress } from '../types'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { BarChart3, GraduationCap, Sparkles } from 'lucide-react'
 import { useState } from 'react'
@@ -12,14 +13,7 @@ import { CourseAnalytics } from '../CourseAnalytics'
 import { CourseTabs, TAB_COLORS, type CourseTab } from '../CourseTabs'
 import { ExamReminderBubble } from '../ExamReminderBubble'
 import { ExamsTab } from '../ExamsTab'
-import { LearnTab } from '../LearnTab'
-import { PracticeTab } from '../PracticeTab'
-
-export interface LessonProgress {
-  completed: number
-  total: number
-  percent: number
-}
+import { LessonListTab } from '../LessonListTab'
 
 interface CoursePageContentProps {
   course: Course
@@ -81,22 +75,14 @@ export function CoursePageContent({
             exit="exit"
             transition={{ duration: 0.2, ease: 'easeInOut' }}
           >
-            {activeTab === 'learn' && (
-              <LearnTab
+            {(activeTab === 'learn' || activeTab === 'practice') && (
+              <LessonListTab
                 lessons={lessons}
                 chapters={chapters}
                 courseSlug={courseSlug}
                 tabColor={TAB_COLORS[activeTab]}
                 lessonProgressMap={lessonProgressMap}
-              />
-            )}
-            {activeTab === 'practice' && (
-              <PracticeTab
-                lessons={lessons}
-                chapters={chapters}
-                courseSlug={courseSlug}
-                tabColor={TAB_COLORS[activeTab]}
-                lessonProgressMap={lessonProgressMap}
+                lessonType={activeTab === 'learn' ? 'learning' : activeTab}
               />
             )}
             {activeTab === 'ask' && (

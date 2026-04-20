@@ -2,7 +2,6 @@
 
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
-import { NavigationBar } from '@/ui/web/homepage/NavigationBar'
 import { PageTransition } from '@/ui/web/components/page-transition'
 import { RequireCourseSelection } from '@/ui/web/guards/RequireCourseSelection'
 import { AskConversationGrid } from '../AskConversationGrid'
@@ -18,12 +17,7 @@ function AskPageInner() {
     return <AskContent conversationContextKey={ctxParam ?? undefined} />
   }
 
-  return (
-    <div>
-      <NavigationBar />
-      <AskConversationGrid />
-    </div>
-  )
+  return <AskConversationGrid />
 }
 
 export function AskPageClient() {

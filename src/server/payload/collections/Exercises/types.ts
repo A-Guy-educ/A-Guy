@@ -263,12 +263,14 @@ export interface QuestionMultiAxisBlock {
 }
 
 // ---------------------------------
-// HTML Block (WYSIWYG rich content)
+// HTML Block (WYSIWYG rich content + optional guided explanation)
 // ---------------------------------
 export interface HtmlBlock {
   id: string
   type: 'html'
   html: string
+  /** When present, the block renders a guided explanation runner instead of static HTML. */
+  guidedExplanation?: import('@/infra/contracts/guided-explanation/v1').GuidedExplanationV1
 }
 
 // ---------------------------------

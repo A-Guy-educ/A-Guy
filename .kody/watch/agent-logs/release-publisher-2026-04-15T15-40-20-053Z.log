@@ -1,0 +1,10 @@
+warn: CPU lacks AVX support, strange crashes may occur. Reinstall Bun or use *-baseline build:
+  https://github.com/oven-sh/bun/releases/download/bun-v1.3.11/bun-darwin-x64-baseline.zip
+**Release v0.24.0 Status Update:**
+
+- **Tracking issue:** #1231
+- **Release PR #1230** was successfully merged to dev
+- **Finalize failed** at E2E gate with timeout error (`ETIMEDOUT`)
+- **Fix issue created:** #1232
+
+The E2E tests timed out during the finalize step, blocking the release. As per the instructions, I am exiting without proceeding to the promotion PR step. The fix issue #1232 has been created to address the E2E timeout.

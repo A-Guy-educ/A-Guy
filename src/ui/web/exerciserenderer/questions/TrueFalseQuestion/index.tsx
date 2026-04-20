@@ -67,13 +67,23 @@ export function TrueFalseQuestion({
 
   return (
     <div className="flex flex-col gap-content-gap">
-      <div className="text-body-md font-medium text-foreground leading-relaxed">
-        <RichTextRenderer block={promptBlock} />
+      {/* Question container */}
+      <div className="rounded-2xl border border-border/40 bg-background/60 dark:bg-card dark:border-border/60 dark:shadow-card p-content-gap">
+        <div
+          className="w-8 h-1 rounded-full mb-3"
+          style={{ backgroundColor: 'hsl(var(--tab-practice))' }}
+        />
+        <div className="text-body-md font-medium text-foreground leading-relaxed">
+          <RichTextRenderer block={promptBlock} />
+        </div>
       </div>
+
       <div className="grid grid-cols-2 gap-content-gap">
         {options.map((option, index) => {
           const isSelected = value === option.value
           const showFeedback = checkResult !== null
+          // True = blue, False = orange-red — distinct identities
+          const optionColor = option.value === true ? 'hsl(217 91% 60%)' : 'hsl(25 95% 53%)'
 
           const labelBlock: RichTextBlock = {
             ...option.label,
@@ -94,23 +104,34 @@ export function TrueFalseQuestion({
               whileTap={!disabled ? { scale: 0.97 } : undefined}
               className={cn(
                 'relative overflow-hidden rounded-xl border-2 p-5 text-heading-sm font-bold transition-all duration-normal',
-                'bg-card shadow-elevation-1',
+                'bg-background/50 dark:bg-card dark:shadow-card',
                 'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
                 !disabled &&
                   !isSelected &&
-                  'border-border/30 hover:border-primary/30 hover:shadow-card-hover cursor-pointer',
-                isSelected && !showFeedback && 'border-primary bg-primary/8 shadow-elevation-2',
+                  'border-border/40 dark:border-border/50 hover:border-[hsl(var(--tab-practice)/0.5)] dark:hover:shadow-card-hover cursor-pointer',
+                isSelected &&
+                  !showFeedback &&
+                  `border-[hsl(var(--tab-practice))] bg-[hsl(var(--tab-practice)/0.08)]`,
                 showFeedback &&
                   isSelected &&
                   checkResult.isCorrect &&
-                  'border-success bg-success/8 shadow-elevation-2',
+                  'border-success bg-success/10',
                 showFeedback &&
                   isSelected &&
                   !checkResult.isCorrect &&
-                  'border-destructive bg-destructive/8 shadow-elevation-2',
+                  'border-destructive bg-destructive/10',
                 disabled && 'opacity-50 cursor-not-allowed',
               )}
             >
+              {/* Colored top accent bar */}
+              <div
+                className="absolute top-0 start-0 end-0 h-1 rounded-t-xl"
+                style={{
+                  backgroundColor: isSelected ? optionColor : 'transparent',
+                  opacity: isSelected ? 1 : 0,
+                  transition: 'all 0.2s',
+                }}
+              />
               <div className="flex items-center justify-center gap-content-gap-xs">
                 <RichTextRenderer block={labelBlock} />
               </div>
@@ -122,7 +143,7 @@ export function TrueFalseQuestion({
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 15 }}
                   className={cn(
-                    'absolute -top-1.5 -end-1.5 w-6 h-6 rounded-full flex items-center justify-center',
+                    'absolute -top-1.5 -end-1.5 w-7 h-7 rounded-full flex items-center justify-center shadow-elevation-2',
                     checkResult.isCorrect ? 'bg-success text-white' : 'bg-destructive text-white',
                   )}
                 >

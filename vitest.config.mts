@@ -9,7 +9,7 @@ loadEnv({ path: '.env.test', override: true })
 export default defineConfig({
   plugins: [tsconfigPaths(), react()],
   test: {
-    fileParallelism: true, // Run test files in parallel for faster execution (shared MongoDB container enables this)
+    fileParallelism: false, // Run test files sequentially to avoid exhausting MongoDB connection pool
     pool: 'forks', // Use forks pool for better isolation
     globalSetup: ['./tests/setup/global-int-setup.ts'],
     environment: 'node',

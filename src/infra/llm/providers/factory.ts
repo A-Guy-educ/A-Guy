@@ -129,7 +129,7 @@ export interface UnifiedLLMProvider {
     input: {
       system: string
       messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>
-      model: { name: string; temperature: number; maxOutputTokens: number }
+      model: { name: string; temperature: number; maxOutputTokens: number; modelKey?: AIModelKey }
       acknowledgment: string
       timeoutMs?: number
     },
@@ -141,7 +141,7 @@ export interface UnifiedLLMProvider {
     input: {
       system: string
       messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>
-      model: { name: string; temperature: number; maxOutputTokens: number }
+      model: { name: string; temperature: number; maxOutputTokens: number; modelKey?: AIModelKey }
       acknowledgment: string
       timeoutMs?: number
     },
@@ -155,7 +155,13 @@ export interface UnifiedLLMProvider {
   generateMultimodalCompletion: (
     input: {
       prompt: string
-      model: { name: string; temperature: number; maxOutputTokens: number }
+      model: {
+        name: string
+        temperature: number
+        maxOutputTokens: number
+        modelKey?: AIModelKey
+        thinkingBudget?: number
+      }
       attachments: Array<{ data: string; mimeType: string }>
       timeoutMs?: number
     },
@@ -167,7 +173,7 @@ export interface UnifiedLLMProvider {
     input: {
       system: string
       messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>
-      model: { name: string; temperature: number; maxOutputTokens: number }
+      model: { name: string; temperature: number; maxOutputTokens: number; modelKey?: AIModelKey }
       acknowledgment: string
       tools: Array<{
         name: string
@@ -207,6 +213,7 @@ export function getProviderModelConfig(
   return {
     name: modelName,
     ...MODEL_REGISTRY[modelKey],
+    modelKey,
   }
 }
 

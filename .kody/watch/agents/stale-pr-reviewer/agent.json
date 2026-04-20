@@ -1,0 +1,5 @@
+{
+  "name": "stale-pr-reviewer",
+  "description": "Finds pull requests with no recent activity and creates tracking issues",
+  "cron": "0 */6 * * *"
+}

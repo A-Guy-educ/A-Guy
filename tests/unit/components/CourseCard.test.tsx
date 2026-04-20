@@ -168,23 +168,19 @@ describe('CourseCard content status badges', () => {
     expect(screen.queryByText('New')).toBeNull()
   })
 
-  it('does NOT navigate when clicking a "Soon" course (button is disabled)', async () => {
+  it('shows toast and does NOT navigate when clicking a "Soon" course', async () => {
     const soonCourse = { ...mockCourse, contentStatus: 'soon' as const }
     renderWithI18n(soonCourse)
 
     const openButton = screen.getAllByRole('button', { name: enMessages.courses.openCourse })[0]
 
-    // Button should be disabled for "Soon" courses (accessibility)
-    expect((openButton as HTMLButtonElement).disabled).toBe(true)
-
-    // Clicking a disabled button doesn't trigger any events
     fireEvent.click(openButton)
+
+    // Toast should be shown
+    expect(toast.info).toHaveBeenCalled()
 
     // Navigation should NOT have been called
     expect(mockPush).not.toHaveBeenCalled()
-
-    // Toast should NOT have been shown (click event doesn't fire on disabled buttons)
-    expect(toast.info).not.toHaveBeenCalled()
   })
 
   it('navigates normally when course.contentStatus is "justAdded"', () => {
@@ -209,14 +205,15 @@ describe('CourseCard content status badges', () => {
     expect(screen.queryByText('New')).toBeNull()
   })
 
-  it('renders button as disabled when course.contentStatus is "soon"', () => {
+  it('renders button with no-pointer-events style for "soon" courses', () => {
     const soonCourse = { ...mockCourse, contentStatus: 'soon' as const }
     renderWithI18n(soonCourse)
 
     const openButton = screen.getAllByRole('button', {
       name: enMessages.courses.openCourse,
-    })[0] as HTMLButtonElement
-    expect(openButton.disabled).toBe(true)
+    })[0]
+    // Button has pointer-events-none class for "Soon" courses
+    expect(openButton.className).toContain('pointer-events-none')
   })
 
   it('renders badge when justAdded has future expiry date', () => {

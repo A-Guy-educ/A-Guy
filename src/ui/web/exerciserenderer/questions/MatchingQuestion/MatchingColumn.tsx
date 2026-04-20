@@ -31,7 +31,10 @@ export function MatchingColumn({
 }: MatchingColumnProps) {
   return (
     <div className="flex-1 flex flex-col gap-content-gap-xs relative z-[2] min-w-[180px] max-w-[350px]">
-      <div className="bg-primary/6 border border-primary/15 rounded-xl py-2.5 font-bold text-center text-primary/80 text-body-sm">
+      <div
+        className="bg-[hsl(var(--tab-exams)/0.08)] border border-[hsl(var(--tab-exams)/0.2)] rounded-xl py-2.5 font-bold text-center text-body-sm"
+        style={{ color: 'hsl(var(--tab-exams))' }}
+      >
         {header}
       </div>
       {items.map((item, i) => (

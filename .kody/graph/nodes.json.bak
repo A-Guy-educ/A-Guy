@@ -1,0 +1,140 @@
+{
+  "version": 1,
+  "nodes": {
+    "thoughts_mongodbpool_monitoring_1433967375574": {
+      "id": "thoughts_mongodbpool_monitoring_1433967375574",
+      "type": "thoughts",
+      "hall": "thoughts",
+      "room": "MongoDB/Pool monitoring",
+      "content": "MongooseAdapter pool stats are accessed via `mongoose.connection.adapter` not directly on the connection object",
+      "episodeId": "ep_stage_diary_001",
+      "validFrom": "2026-04-17T15:32:48.831Z",
+      "validTo": null,
+      "tags": [
+        "stage:build",
+        "task:1269-260417-150933",
+        "kind:gotcha"
+      ]
+    },
+    "conventions_project_structure_1433968648195": {
+      "id": "conventions_project_structure_1433968648195",
+      "type": "conventions",
+      "hall": "conventions",
+      "room": "Project structure",
+      "content": "Database infrastructure code lives in `src/infra/db/` directory",
+      "episodeId": "ep_stage_diary_001",
+      "validFrom": "2026-04-17T15:32:48.832Z",
+      "validTo": null,
+      "tags": [
+        "stage:build",
+        "task:1269-260417-150933",
+        "kind:convention"
+      ]
+    },
+    "facts_payload_cms_config_1433969885259": {
+      "id": "facts_payload_cms_config_1433969885259",
+      "type": "facts",
+      "hall": "facts",
+      "room": "Payload CMS config",
+      "content": "Used `afterOpenConnection` callback in Payload connection string options to hook into connection lifecycle",
+      "episodeId": "ep_stage_diary_001",
+      "validFrom": "2026-04-17T15:32:48.833Z",
+      "validTo": null,
+      "tags": [
+        "stage:build",
+        "task:1269-260417-150933",
+        "kind:decision"
+      ]
+    },
+    "facts_mongodbpool_monitoring_1433971420751": {
+      "id": "facts_mongodbpool_monitoring_1433971420751",
+      "type": "facts",
+      "hall": "facts",
+      "room": "MongoDB/Pool monitoring",
+      "content": "Pool stats structure: `pool.size` (max), `pool.available`, `pool.inUse`, `pool.waitQueues` on MongooseAdapter",
+      "episodeId": "ep_stage_diary_001",
+      "validFrom": "2026-04-17T15:32:48.835Z",
+      "validTo": null,
+      "tags": [
+        "stage:build",
+        "task:1269-260417-150933",
+        "kind:lesson"
+      ]
+    },
+    "facts_srcpayloadconfigts_1805416567002": {
+      "id": "facts_srcpayloadconfigts_1805416567002",
+      "type": "facts",
+      "hall": "facts",
+      "room": "src/payload.config.ts",
+      "content": "When collections are removed from Payload config, stale comments referencing them can remain. Always audit and remove outdated comments when cleaning up collections.",
+      "episodeId": "ep_stage_diary_002",
+      "validFrom": "2026-04-17T15:39:00.280Z",
+      "validTo": null,
+      "tags": [
+        "stage:review",
+        "task:1269-260417-150933",
+        "kind:lesson"
+      ]
+    },
+    "thoughts_srcappapihealthroutets_1805418096282": {
+      "id": "thoughts_srcappapihealthroutets_1805418096282",
+      "type": "thoughts",
+      "hall": "thoughts",
+      "room": "src/app/api/health/route.ts",
+      "content": "Pool stats returning all zeros indicates the monitoring implementation may not be capturing stats correctly - verify the health endpoint actually reflects live pool state, not just initialized zeros.",
+      "episodeId": "ep_stage_diary_002",
+      "validFrom": "2026-04-17T15:39:00.281Z",
+      "validTo": null,
+      "tags": [
+        "stage:review",
+        "task:1269-260417-150933",
+        "kind:gotcha"
+      ]
+    },
+    "facts_srcpayloadconfigts_1939059098375": {
+      "id": "facts_srcpayloadconfigts_1939059098375",
+      "type": "facts",
+      "hall": "facts",
+      "room": "src/payload.config.ts",
+      "content": "Payload CMS exposes afterOpenConnection callback in payload.config.ts for connection lifecycle monitoring and logging.",
+      "episodeId": "ep_stage_diary_003",
+      "validFrom": "2026-04-17T15:41:13.922Z",
+      "validTo": null,
+      "tags": [
+        "stage:review-fix",
+        "task:1269-260417-150933",
+        "kind:lesson"
+      ]
+    },
+    "thoughts_srcpayloadconfigts_1939060482244": {
+      "id": "thoughts_srcpayloadconfigts_1939060482244",
+      "type": "thoughts",
+      "hall": "thoughts",
+      "room": "src/payload.config.ts",
+      "content": "Stale comments referencing removed types (PayloadMcpApiKey) were left behind after cleanup — keep comments in sync when removing types.",
+      "episodeId": "ep_stage_diary_003",
+      "validFrom": "2026-04-17T15:41:13.924Z",
+      "validTo": null,
+      "tags": [
+        "stage:review-fix",
+        "task:1269-260417-150933",
+        "kind:gotcha"
+      ]
+    },
+    "conventions_srcinfradb_1939061790713": {
+      "id": "conventions_srcinfradb_1939061790713",
+      "type": "conventions",
+      "hall": "conventions",
+      "room": "src/infra/db",
+      "content": "MongoDB pool monitoring utilities belong in src/infra/db/ following the existing infrastructure directory structure.",
+      "episodeId": "ep_stage_diary_003",
+      "validFrom": "2026-04-17T15:41:13.925Z",
+      "validTo": null,
+      "tags": [
+        "stage:review-fix",
+        "task:1269-260417-150933",
+        "kind:convention"
+      ]
+    }
+  }
+}

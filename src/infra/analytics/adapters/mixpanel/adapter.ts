@@ -41,6 +41,15 @@ export function sendToMixpanel(payload: EventPayload): void {
   if (typeof window === 'undefined') return
   if (!analyticsConfig.mixpanel.enabled) return
 
+  // E2E test capture — push before SDK check so events are caught
+  // regardless of whether the Mixpanel CDN SDK has finished loading.
+  const captured = (window as unknown as Record<string, unknown>).__capturedMixpanelEvents as
+    | Array<{ event: string; properties: Record<string, unknown> }>
+    | undefined
+  if (captured) {
+    captured.push({ event: payload.event, properties: payload.properties })
+  }
+
   const { mixpanel } = window
 
   if (!mixpanel) {

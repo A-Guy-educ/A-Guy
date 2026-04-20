@@ -39,6 +39,8 @@ export const PRODUCT_EVENTS = {
 
   // Registration Events
   REGISTRATION_PROMPT_SHOWN: 'registration_prompt_shown',
+  REGISTRATION_POPUP_SHOWN: 'registration_popup_shown', // Mixpanel - popup shown to anon user
+  REGISTRATION_POPUP_ACTION: 'registration_popup_action', // Mixpanel - user action on popup
   REGISTRATION_COMPLETED: 'registration_completed', // GA4 + Mixpanel
 
   // Exercise Help System Events (Mixpanel only)

@@ -279,7 +279,7 @@ describe('Schema Validation', () => {
 describe('Schema Registry', () => {
   it('contains all system events', () => {
     const eventNames = Object.keys(eventSchemas)
-    expect(eventNames.length).toBe(37)
+    expect(eventNames.length).toBe(39)
   })
 
   it('maps each event name to its schema', () => {

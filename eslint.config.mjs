@@ -1,4 +1,7 @@
-import { FlatCompat } from '@eslint/eslintrc'
+import nextPlugin from '@next/eslint-plugin-next'
+import tseslint from '@typescript-eslint/eslint-plugin'
+import tsparser from '@typescript-eslint/parser'
+import reactHooksPlugin from 'eslint-plugin-react-hooks'
 import { dirname } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -7,13 +10,28 @@ import aguyPlugin from './eslint-plugin-aguy/index.mjs'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-})
-
 const eslintConfig = [
-  ...compat.extends('next/core-web-vitals', 'next/typescript'),
   {
+    files: ['**/*.ts', '**/*.tsx'],
+    plugins: {
+      '@typescript-eslint': tseslint,
+      'react-hooks': reactHooksPlugin,
+    },
+    languageOptions: {
+      parser: tsparser,
+      parserOptions: {
+        ecmaFeatures: { jsx: true },
+        sourceType: 'module',
+      },
+    },
+  },
+  nextPlugin.configs['core-web-vitals'],
+  {
+    files: ['**/*.{ts,tsx}'],
+    plugins: {
+      '@typescript-eslint': tseslint,
+      'react-hooks': reactHooksPlugin,
+    },
     rules: {
       // TypeScript rules
       '@typescript-eslint/ban-ts-comment': 'warn',

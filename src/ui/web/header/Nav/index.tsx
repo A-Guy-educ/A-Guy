@@ -48,7 +48,7 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({ data, user, isAuthLoading 
       {primaryLinks.length > 0 && (
         <div className="flex gap-3 items-center">
           {primaryLinks.map(({ link }, i) => (
-            <CMSLink key={i} {...link} appearance="link" />
+            <CMSLink key={i} {...link} appearance="default" />
           ))}
         </div>
       )}
@@ -62,7 +62,7 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({ data, user, isAuthLoading 
       {secondaryLinks.length > 0 && (
         <div className="flex gap-3 items-center">
           {secondaryLinks.map(({ link }, i) => (
-            <CMSLink key={i} {...link} appearance="link" />
+            <CMSLink key={i} {...link} appearance="default" />
           ))}
         </div>
       )}

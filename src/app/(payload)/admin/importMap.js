@@ -20,6 +20,7 @@ import { CourseCascadeDelete as CourseCascadeDelete_8b707dd02fbf8886630a64bffcae
 import { TranslateChapterAction as TranslateChapterAction_5e03fe73ee4379dfd96d492849856d43 } from '@/ui/admin/TranslationButton'
 import { ChapterCascadeDelete as ChapterCascadeDelete_8b707dd02fbf8886630a64bffcae6998 } from '@/ui/admin/CascadeDeleteButton'
 import { LessonBlocksField as LessonBlocksField_c3ff48da65f411ef372b497cb7c724ee } from '@/ui/admin/LessonBlocksField'
+import { ContextExerciseViewer as ContextExerciseViewer_00433017acccf596fc613f093ab15a2d } from '@/ui/admin/context-exercise-viewer'
 import { LessonConversionPanel as LessonConversionPanel_057daf3b86f654d90edf003b44c43703 } from '@/ui/admin/exercise-conversion/LessonConversionPanel'
 import { LessonNavigation as LessonNavigation_3633cb4a281c7c581bfc453746b3dc60 } from '@/ui/admin/ContentNavigation'
 import { TranslateLessonAction as TranslateLessonAction_5e03fe73ee4379dfd96d492849856d43 } from '@/ui/admin/TranslationButton'
@@ -30,6 +31,7 @@ import { IntroGeometrySpecField as IntroGeometrySpecField_c2c1761cbe819b0609cad9
 import { IntroGraphSpecField as IntroGraphSpecField_8d1eea97d57da5692323d9664ac06d67 } from '@/ui/admin/IntroGraphField'
 import { ExerciseContentEditor as ExerciseContentEditor_d0c5d070052b5cabcf602f1e9878afd8 } from '@/ui/admin/ExerciseContentEditor'
 import { ExerciseNavigation as ExerciseNavigation_3633cb4a281c7c581bfc453746b3dc60 } from '@/ui/admin/ContentNavigation'
+import { ConvertLatexBlockButton as ConvertLatexBlockButton_d913e8ffad94b4f98328d710b349e10d } from '@/ui/admin/exercise-conversion/ConvertLatexBlockButton'
 import { ExercisePreview as ExercisePreview_79d54f4a9901df303ad8ae2cc7d44435 } from '@/ui/admin/ExercisePreview'
 import { TranslateExerciseAction as TranslateExerciseAction_5e03fe73ee4379dfd96d492849856d43 } from '@/ui/admin/TranslationButton'
 import { MediaPreview as MediaPreview_4b980c9a407724ef7c1755e3482d0258 } from '@/ui/admin/MediaPreview'
@@ -73,6 +75,7 @@ export const importMap = {
   "@/ui/admin/TranslationButton#TranslateChapterAction": TranslateChapterAction_5e03fe73ee4379dfd96d492849856d43,
   "@/ui/admin/CascadeDeleteButton#ChapterCascadeDelete": ChapterCascadeDelete_8b707dd02fbf8886630a64bffcae6998,
   "@/ui/admin/LessonBlocksField#LessonBlocksField": LessonBlocksField_c3ff48da65f411ef372b497cb7c724ee,
+  "@/ui/admin/context-exercise-viewer#ContextExerciseViewer": ContextExerciseViewer_00433017acccf596fc613f093ab15a2d,
   "@/ui/admin/exercise-conversion/LessonConversionPanel#LessonConversionPanel": LessonConversionPanel_057daf3b86f654d90edf003b44c43703,
   "@/ui/admin/ContentNavigation#LessonNavigation": LessonNavigation_3633cb4a281c7c581bfc453746b3dc60,
   "@/ui/admin/TranslationButton#TranslateLessonAction": TranslateLessonAction_5e03fe73ee4379dfd96d492849856d43,
@@ -83,6 +86,7 @@ export const importMap = {
   "@/ui/admin/IntroGraphField#IntroGraphSpecField": IntroGraphSpecField_8d1eea97d57da5692323d9664ac06d67,
   "@/ui/admin/ExerciseContentEditor#ExerciseContentEditor": ExerciseContentEditor_d0c5d070052b5cabcf602f1e9878afd8,
   "@/ui/admin/ContentNavigation#ExerciseNavigation": ExerciseNavigation_3633cb4a281c7c581bfc453746b3dc60,
+  "@/ui/admin/exercise-conversion/ConvertLatexBlockButton#ConvertLatexBlockButton": ConvertLatexBlockButton_d913e8ffad94b4f98328d710b349e10d,
   "@/ui/admin/ExercisePreview#ExercisePreview": ExercisePreview_79d54f4a9901df303ad8ae2cc7d44435,
   "@/ui/admin/TranslationButton#TranslateExerciseAction": TranslateExerciseAction_5e03fe73ee4379dfd96d492849856d43,
   "@/ui/admin/MediaPreview#MediaPreview": MediaPreview_4b980c9a407724ef7c1755e3482d0258,

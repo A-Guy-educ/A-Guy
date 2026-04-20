@@ -1,0 +1,7 @@
+{
+  "name": "job-manager",
+  "description": "Drives kody:manager-labeled issues to a PR: dispatches the Kody pipeline, monitors runs, diagnoses failures with an LLM, resolves gates, and escalates only when no path forward is identified",
+  "cron": "*/10 * * * *",
+  "reportOnFailure": true,
+  "timeoutMs": 600000
+}

@@ -1,0 +1,13 @@
+{
+  "task_type": "bugfix",
+  "title": "Fix intermittent PDF loading failures (404/silent)",
+  "description": "Users experience intermittent PDF loading failures: 404 errors from storage/CDN and silent failures where PDF viewer shows blank screen. Root causes include: isVercelBlobUrl doesn't detect public.blob.vercel-storage.com URLs, no retry mechanism for transient network failures, and no user-friendly error UI when PDF fetch fails.",
+  "scope": [
+    "src/infra/blob/vercel-blob-adapter.ts",
+    "src/ui/web/courses/PDFViewer/PDFEmbed.tsx",
+    "src/ui/web/media/PDFMedia/index.tsx",
+    "src/server/services/pdf-fetcher.ts"
+  ],
+  "risk_level": "medium",
+  "questions": []
+}

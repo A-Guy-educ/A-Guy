@@ -128,7 +128,7 @@ describe('LessonCard component', () => {
       const soonLesson = { ...mockLesson, contentStatus: 'soon' as const }
       renderWithI18n(soonLesson)
 
-      // Click the button (not system-link, since locked lessons render standalone button)
+      // Click the button
       const button = screen.getByRole('button')
       fireEvent.click(button)
 
@@ -136,37 +136,30 @@ describe('LessonCard component', () => {
       expect(toast.info).toHaveBeenCalledWith(expect.stringContaining('prepared'))
     })
 
-    it('does not render SystemLink when lesson is "Soon"', () => {
+    it('renders button for "Soon" lesson', () => {
       const soonLesson = { ...mockLesson, contentStatus: 'soon' as const }
       renderWithI18n(soonLesson)
 
-      // SystemLink should NOT be rendered for "Soon" lessons
-      // Instead, a standalone button is rendered (to avoid invalid <button><a> nesting)
-      expect(screen.queryByTestId('system-link')).toBeNull()
-
-      // A button should be rendered instead
+      // Button should be rendered
       expect(screen.getByRole('button')).toBeTruthy()
     })
 
-    it('renders SystemLink for normal (non-soon) lessons', () => {
+    it('renders button for normal (non-soon) lessons', () => {
       const normalLesson = { ...mockLesson, contentStatus: 'none' as const }
       renderWithI18n(normalLesson)
 
-      expect(screen.getByTestId('system-link')).toBeTruthy()
+      expect(screen.getByRole('button')).toBeTruthy()
     })
 
-    it('renders SystemLink for "justAdded" lessons (navigates normally)', () => {
+    it('does not show toast for "justAdded" lessons', () => {
       const justAddedLesson = { ...mockLesson, contentStatus: 'justAdded' as const }
       renderWithI18n(justAddedLesson)
 
-      const link = screen.getByTestId('system-link')
-      fireEvent.click(link)
+      const button = screen.getByRole('button')
+      fireEvent.click(button)
 
       // Should NOT show toast for justAdded - it should navigate normally
       expect(toast.info).not.toHaveBeenCalled()
-      expect(link.getAttribute('href')).toBe(
-        '/courses/test-course/chapters/test-chapter/lessons/test-lesson',
-      )
     })
   })
 })

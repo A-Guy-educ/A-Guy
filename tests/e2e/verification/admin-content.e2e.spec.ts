@@ -37,6 +37,7 @@ test.describe('Scenario #19 – Course Creation', () => {
     const course = await payload.create({
       collection: 'courses',
       data: {
+        courseLabel: 'VERIFY',
         title: 'Verification Test Course',
         slug,
         status: 'published',
@@ -45,8 +46,11 @@ test.describe('Scenario #19 – Course Creation', () => {
         order: 999,
         pageAccessType: 'free',
         accessType: 'free',
+        categories: data?.course ? [data.course.courseId] : [],
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      locale: 'he' as any,
       overrideAccess: true,
       draft: false,
     })
@@ -54,10 +58,8 @@ test.describe('Scenario #19 – Course Creation', () => {
     try {
       await loginAsAdmin(page)
       await page.goto('/courses')
-      await page.waitForLoadState('domcontentloaded')
-
-      const body = await page.locator('body').textContent()
-      expect(body).toContain('Verification Test Course')
+      await page.waitForLoadState('networkidle')
+      await expect(page.getByText('Verification Test Course')).toBeVisible({ timeout: 10_000 })
     } finally {
       await payload.delete({
         collection: 'courses',
@@ -76,6 +78,7 @@ test.describe('Scenario #20 – Course Archiving', () => {
     const course = await payload.create({
       collection: 'courses',
       data: {
+        courseLabel: 'VERIFY',
         title: 'Archive Test Course',
         slug,
         status: 'draft',
@@ -84,8 +87,11 @@ test.describe('Scenario #20 – Course Archiving', () => {
         order: 999,
         pageAccessType: 'free',
         accessType: 'free',
+        categories: data?.course ? [data.course.courseId] : [],
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      locale: 'he' as any,
       overrideAccess: true,
       draft: false,
     })
@@ -93,10 +99,8 @@ test.describe('Scenario #20 – Course Archiving', () => {
     try {
       await loginAsAdmin(page)
       await page.goto('/courses')
-      await page.waitForLoadState('domcontentloaded')
-
-      const body = await page.locator('body').textContent()
-      expect(body).not.toContain('Archive Test Course')
+      await page.waitForLoadState('networkidle')
+      await expect(page.getByText('Archive Test Course')).not.toBeVisible({ timeout: 5_000 })
     } finally {
       await payload.delete({
         collection: 'courses',

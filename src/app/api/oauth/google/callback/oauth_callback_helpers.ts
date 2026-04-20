@@ -185,7 +185,7 @@ export async function createNewOAuthUser(
     userId = newUser.id
     await logOAuthEvent('user_created', { correlationId, userId, googleSub: sub })
   } catch (error: unknown) {
-    return await handleRaceCondition(payload, req, res, error, sub, correlationId)
+    return await handleRaceCondition(payload, req, res, error, sub, correlationId, returnTo)
   }
 
   // Issue session using the plain secret we just set
@@ -194,6 +194,15 @@ export async function createNewOAuthUser(
     // Redirect new OAuth users to persona selection (onboarding step)
     res.headers.set('Location', new URL(getOnboardingRedirect(returnTo), req.url).toString())
     setAuthCookie(res, payload, token)
+
+    // Set short-lived cookie so client can fire registration funnel events
+    res.cookies.set('new_oauth_registration', '1', {
+      maxAge: 300,
+      path: '/',
+      httpOnly: false,
+      sameSite: 'lax',
+    })
+
     return res
   } catch (error) {
     logOAuthError('session_issuance_failed', error, correlationId)
@@ -209,6 +218,7 @@ async function handleRaceCondition(
   error: unknown,
   sub: string,
   correlationId: string,
+  returnTo: string,
 ): Promise<NextResponse> {
   const errorObj = error as { code?: number; name?: string; message?: string }
   const isDuplicateKey =
@@ -242,7 +252,22 @@ async function handleRaceCondition(
         userId: user.id,
         googleSub: sub,
       })
-      return res
+
+      // Issue session for the recovered user
+      try {
+        const { token } = await issueSession(user.email, user.oauthLoginSecretEnc!)
+        const redirectUrl = new URL(returnTo, req.url).toString()
+        res.headers.set('Location', redirectUrl)
+        setAuthCookie(res, payload, token)
+        return res
+      } catch (sessionError) {
+        logOAuthError('session_issuance_failed', sessionError, correlationId)
+        res.headers.set(
+          'Location',
+          new URL('/login?error=session_issue_failed', req.url).toString(),
+        )
+        return res
+      }
     }
   }
 

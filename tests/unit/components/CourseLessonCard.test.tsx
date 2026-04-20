@@ -7,20 +7,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { toast } from 'sonner'
 import enMessages from '../../../src/i18n/en.json'
 
-// Mock SystemLink component
-vi.mock('@/infra/loading/components/SystemLink', () => ({
-  SystemLink: ({ href, children, onClick, className }: any) => (
-    <a href={href} onClick={onClick} className={className} data-testid="system-link">
-      {children}
-    </a>
-  ),
-}))
-
 // Mock sonner toast
 vi.mock('sonner', () => ({
   toast: {
     info: vi.fn(() => 'mock-toast-id'),
   },
+}))
+
+// Mock loadingManager
+vi.mock('@/infra/loading/LoadingManager', () => ({
+  loadingManager: { register: vi.fn() },
 }))
 
 const mockLesson: Lesson = {
@@ -102,7 +98,7 @@ describe('CourseLessonCard component', () => {
       const soonLesson = { ...mockLesson, contentStatus: 'soon' as const }
       renderWithI18n(soonLesson)
 
-      const link = screen.getByTestId('system-link')
+      const link = screen.getByRole('link')
       fireEvent.click(link)
 
       expect(toast.info).toHaveBeenCalled()
@@ -114,7 +110,7 @@ describe('CourseLessonCard component', () => {
       const justAddedLesson = { ...mockLesson, contentStatus: 'justAdded' as const }
       renderWithI18n(justAddedLesson)
 
-      const link = screen.getByTestId('system-link')
+      const link = screen.getByRole('link')
       fireEvent.click(link)
 
       // Should NOT show toast for justAdded - it should navigate normally

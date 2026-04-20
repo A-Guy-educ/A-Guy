@@ -107,8 +107,10 @@ export const CourseEnteredSchema = z.object({
  */
 export const LessonStartedSchema = z.object({
   lesson_id: z.string().describe('Lesson identifier'),
-  course_id: z.string().describe('Parent course ID'),
+  course_id: z.string().optional().describe('Parent course ID'),
+  chapter_id: z.string().optional().describe('Parent chapter ID'),
   lesson_title: z.string().optional().describe('Lesson name'),
+  locale: z.string().optional().describe('User locale'),
 })
 
 /**
@@ -118,9 +120,10 @@ export const LessonStartedSchema = z.object({
  */
 export const LessonCompletedSchema = z.object({
   lesson_id: z.string().describe('Lesson identifier'),
-  course_id: z.string().describe('Parent course ID'),
+  course_id: z.string().optional().describe('Parent course ID'),
   lesson_title: z.string().optional().describe('Lesson name'),
   duration_seconds: z.number().optional().describe('Time spent on lesson'),
+  completion_percentage: z.number().min(0).max(100).optional().describe('Lesson completion %'),
 })
 
 /**
@@ -190,13 +193,42 @@ export const RegistrationPromptShownSchema = z.object({
 })
 
 /**
+ * registration_popup_shown - Auth gate popup shown to anonymous user
+ * Destination: Mixpanel
+ * Priority: P0
+ */
+export const RegistrationPopupShownSchema = z.object({
+  page_path: z.string().describe('Page URL where the popup was shown'),
+  trigger_type: z
+    .enum(['mandatory', 'gated', 'warning'])
+    .describe('Which access gate triggered the popup'),
+  course_slug: z.string().optional().describe('Course where popup appeared'),
+})
+
+/**
+ * registration_popup_action - User action on registration popup
+ * Destination: Mixpanel
+ * Priority: P0
+ */
+export const RegistrationPopupActionSchema = z.object({
+  outcome: z
+    .enum(['Registered', 'Did Not Register'])
+    .describe('Whether the user registered or dismissed'),
+  method: z.string().optional().describe('Registration method (Email, Google)'),
+  page_path: z.string().optional().describe('Page URL where action was taken'),
+})
+
+/**
  * registration_completed - Track successful signup
  * Destination: GA4 + Mixpanel
  * Priority: P0
  */
 export const RegistrationCompletedSchema = z.object({
   user_id: z.string().describe('MongoDB user ID'),
-  auth_method: z.enum(['google', 'email']).describe('Auth provider'),
+  registration_method: z
+    .enum(['google', 'email', 'social', 'anonymous_upgrade'])
+    .optional()
+    .describe('Auth provider'),
   // NO email, NO name - handled separately in user_identified
 })
 
@@ -489,6 +521,8 @@ export const eventSchemas = {
   [PRODUCT_EVENTS.PHOTO_SENT_TO_CHAT]: PhotoSentToChatSchema,
   [PRODUCT_EVENTS.LOGIN_MODAL_SHOWN]: LoginModalShownSchema,
   [PRODUCT_EVENTS.REGISTRATION_PROMPT_SHOWN]: RegistrationPromptShownSchema,
+  [PRODUCT_EVENTS.REGISTRATION_POPUP_SHOWN]: RegistrationPopupShownSchema,
+  [PRODUCT_EVENTS.REGISTRATION_POPUP_ACTION]: RegistrationPopupActionSchema,
   [PRODUCT_EVENTS.REGISTRATION_COMPLETED]: RegistrationCompletedSchema,
 
   // Exercise Help System Events
@@ -540,6 +574,8 @@ export type ChatMessageSentProperties = z.infer<typeof ChatMessageSentSchema>
 export type PhotoSentToChatProperties = z.infer<typeof PhotoSentToChatSchema>
 export type LoginModalShownProperties = z.infer<typeof LoginModalShownSchema>
 export type RegistrationPromptShownProperties = z.infer<typeof RegistrationPromptShownSchema>
+export type RegistrationPopupShownProperties = z.infer<typeof RegistrationPopupShownSchema>
+export type RegistrationPopupActionProperties = z.infer<typeof RegistrationPopupActionSchema>
 export type RegistrationCompletedProperties = z.infer<typeof RegistrationCompletedSchema>
 
 // Exercise Help System
@@ -591,6 +627,8 @@ export type EventProperties =
   | PhotoSentToChatProperties
   | LoginModalShownProperties
   | RegistrationPromptShownProperties
+  | RegistrationPopupShownProperties
+  | RegistrationPopupActionProperties
   | RegistrationCompletedProperties
   | HintClickedProperties
   | GuidingQuestionClickedProperties

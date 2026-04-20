@@ -46,7 +46,7 @@ export function useLessonPager({
 
   const basePath = `/courses/${courseSlug}/chapters/${chapterSlug}/lessons/${lessonSlug}`
   const introUrl = basePath
-  const viewUrl = `${basePath}/view`
+  const pdfUrl = basePath
   const completeUrl = `${basePath}/complete`
 
   const getBlockUrl = useCallback(
@@ -69,7 +69,7 @@ export function useLessonPager({
 
     if (pathname === completeUrl) {
       setPageState({ type: 'outro', pageNumber: totalPages - 1 })
-    } else if (hasPdfFiles && pathname === viewUrl) {
+    } else if (hasPdfFiles && pathname === pdfUrl) {
       setPageState({ type: 'pdf', pageNumber: blocks.length + 1 })
     } else if (pathname.startsWith(`${basePath}/exercises/`)) {
       const slug = pathname.split('/exercises/')[1]
@@ -88,7 +88,7 @@ export function useLessonPager({
         setPageState({ type: 'block', pageNumber: index + 1, blockIndex: index })
       }
     }
-  }, [basePath, completeUrl, viewUrl, blocks, hasPdfFiles, totalPages])
+  }, [basePath, completeUrl, pdfUrl, blocks, hasPdfFiles, totalPages])
 
   const syncUrl = useCallback(
     (state: PageState) => {
@@ -100,7 +100,7 @@ export function useLessonPager({
       } else if (state.type === 'block' && state.blockIndex !== undefined) {
         newUrl = getBlockUrl(state.blockIndex)
       } else if (state.type === 'pdf') {
-        newUrl = viewUrl
+        newUrl = pdfUrl
       } else if (state.type === 'outro') {
         newUrl = completeUrl
       } else {
@@ -112,7 +112,7 @@ export function useLessonPager({
         window.history.replaceState(null, '', newUrl)
       }
     },
-    [introUrl, viewUrl, completeUrl, getBlockUrl],
+    [introUrl, pdfUrl, completeUrl, getBlockUrl],
   )
 
   const pageToState = useCallback(

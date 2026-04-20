@@ -14,10 +14,9 @@ export async function generateStaticParams() {
   try {
     const pages = await queryAllPageSlugs()
     return pages
-  } catch (error) {
+  } catch {
     // Gracefully handle MongoDB connection failures during build
     // Return empty array to allow build to continue
-    console.warn('Failed to generate static params for pages:', error)
     return []
   }
 }
@@ -42,9 +41,24 @@ export default async function Page({ params: paramsPromise }: Args) {
   const decodedSlug = decodeURIComponent(slug)
   const url = '/' + decodedSlug
 
-  const page = await queryPageBySlug({
-    slug: decodedSlug,
-  })
+  let page
+  try {
+    page = await queryPageBySlug({
+      slug: decodedSlug,
+    })
+  } catch (error) {
+    // Gracefully handle MongoDB connection failures during build
+    console.warn('Failed to fetch page:', error)
+    return (
+      <article className="pt-section-md pb-section-lg">
+        <PageClient />
+        <PayloadRedirects disableNotFound url={url} />
+        <div className="container">
+          <p>Page content is temporarily unavailable.</p>
+        </div>
+      </article>
+    )
+  }
 
   if (!page) {
     return <PayloadRedirects url={url} />

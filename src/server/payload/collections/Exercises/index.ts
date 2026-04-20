@@ -357,6 +357,7 @@ export const Exercises: CollectionConfig = {
             { label: 'Manual', value: 'manual' },
             { label: 'Conversion', value: 'conversion' },
             { label: 'Import', value: 'import' },
+            { label: 'Context Extraction', value: 'context_extraction' },
           ],
           defaultValue: 'manual',
           required: true,
@@ -379,6 +380,13 @@ export const Exercises: CollectionConfig = {
           relationTo: 'media',
           index: true,
           admin: { description: 'Original PDF media for conversion exercises' },
+        },
+        {
+          name: 'sourceLatex',
+          type: 'textarea',
+          admin: {
+            description: 'Raw LaTeX chunk this exercise was derived from (for LaTeX imports)',
+          },
         },
         {
           name: 'conversionJobId',
@@ -468,6 +476,17 @@ export const Exercises: CollectionConfig = {
         position: 'sidebar',
         components: {
           Field: '@/ui/admin/ContentNavigation#ExerciseNavigation',
+        },
+      },
+    },
+
+    // In-place LaTeX block → structured content conversion (V1-258/260)
+    {
+      name: 'convertLatexBlock',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/ui/admin/exercise-conversion/ConvertLatexBlockButton#ConvertLatexBlockButton',
         },
       },
     },
