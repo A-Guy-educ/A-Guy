@@ -87,9 +87,12 @@ export const POST = withApiHandler<CreateContextExercisesBody, unknown>(
       const exercise = allExercises[i]
       const blocks = [makeLatexBlock(exercise.latexContent)]
 
-      // If exercise has a solution, add it as a second LaTeX block
+      // If exercise has a solution, add it as a second LaTeX block.
+      // Prepend a solution header so convert-latex-block can detect it
+      // and route the content to the question block's `solution` field.
       if (exercise.solution) {
-        blocks.push(makeLatexBlock(exercise.solution))
+        const solutionHeader = `\\section*{פתרון ${exercise.title || `תרגיל ${exercise.number}`}}`
+        blocks.push(makeLatexBlock(`${solutionHeader}\n${exercise.solution}`))
       }
 
       try {
