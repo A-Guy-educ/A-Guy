@@ -1,0 +1,6007 @@
+## 0.22.0 (2026-03-25)
+
+## [0.25.0] - 2026-04-15
+
+### Features
+
+- **watch:** Add notify.ts dispatcher and notify.config.json
+- Pause/resume player and preserve image when navigating back
+- Ask page interactive lesson player (V1 with V2 learnings)
+- **1219-260415-091538:** implement task
+- **1206-260414-135048:** implement task
+- **1197-260414-150706:** implement task
+- Decouple PDF extraction storage from lessonContextText
+- add system-test agent to kody-watch, increase timeout to 90min
+- add e2eCommand to release config
+- add system-test watch agent
+- add system-test watch agent
+- Create exercises from context text as LaTeX blocks
+- HTML-to-GuidedExplanation converter with Import HTML button
+- Merge guided explanation into HTML block
+- Guided explanation runner with triangle proof demo
+- Add LaTeX block UI (admin editor + frontend renderer)
+- Increase lessonContextText limit from 100K to 200K chars
+- Refactor card components and introduce UnifiedCard
+- **kody-watch:** trigger on PR merge to dev, not daily schedule
+- add 3 watch agents for continuous QA monitoring
+- **fix-pr-1168-260409-133302:** implement task
+- **1167-260409-114345:** implement task
+- Add registration popup funnel tracking for Mixpanel
+- make context exercise viewer editable per exercise
+- auto-clear rejected image in Ask tab so student can re-upload
+- **fix-pr-1125-260406-124006:** implement task
+- **1146-260406-104845:** implement task
+- Add ContextExerciseViewer UI component for lesson context
+- **fix-pr-1145-260406-105358:** implement task
+- **1144-260406-100413:** implement task
+- strengthen cropped image detection — check all edges before helping
+- cover all image issue cases and enforce language matching
+- require AI to explain image issues and give upload tips
+- strengthen image handling instructions to reject non-educational images
+- inject image handling instructions into chat prompt pipeline
+- Extract geometry from inline \draw coordinates
+- Scale LaTeX parser to handle all 55 lesson formats
+- add actionable image feedback in chat and improve upload error messages
+- Enable @kody release command
+- **chat:** implement task
+- **1098-260405-135505:** implement task
+- **acceptable:** implement task
+- **1121-260405-102217:** implement task
+- **1118-260405-102030:** implement task
+- **1117-260405-101944:** implement task
+- Send selected course to Mixpanel user profile on course selection
+- Send enrolled course to Mixpanel user profile
+- Switch to MiniMax provider for all stages
+- Add Next.js build warmup step before pipeline
+- **1109-260403-091343:** implement task
+- **1109-260403-085917:** implement task
+- Add playwright-cli tool for browser verification
+- add top-level devServer with 120s timeout and stdout detection
+- Exercise UI/UX redesign with animations across all question types
+- **1094-260402-111508:** implement task
+- all-Claude model config for maximum reliability
+- all-Claude model config for maximum reliability
+- multi-provider model config — GPT-5.3 Codex, Claude, Gemini per stage
+- multi-provider model config — GPT-5.3 Codex, Claude, Gemini per stage
+- enable Playwright MCP for UI task verification
+- **1081-260331-181546:** implement task
+- **1083-260331-181351:** implement task
+- Add Mixpanel tracking for lesson loading lifecycle
+- **1063-260331-155210:** implement task
+- **fix-pr-1075-260331-155519:** implement task
+- Multi-axis graph block and geometry admin panel fixes
+- **fix-pr-1075-260331-130624:** implement task
+- **fix-pr-1059-260331-124107:** implement task
+- Add exercise count validation with auto-retry on extraction
+- PDF-to-LaTeX quality, reliability & adapter refactor
+- Add afterRead lazy backfill for course/chapter filter fields
+- Add two-pass extraction — retry with solutions-only if truncated
+- Rename parentCourse to course, add chapter filter to exercises
+- **1057-260330-075754:** implement task
+- add shared design abstractions and unified card layout
+- Add user-facing warnings for PDF extraction edge cases
+- page transitions, stats alignment, mobile touch refinements
+- UI polish batch — card unification, empty states, skeletons, dark mode, micro-interactions
+- add Tier 4 infrastructure — Storybook stories, visual regression tests, PWA
+- add UX improvements — mobile, a11y, performance, celebrations, onboarding, search, themes
+- redesign course cards, lesson view, and navigation
+- add immersive landing page with animated hero, features, and CTA sections
+- add visual polish — gradient borders, stagger animations, glass header, bento stats, auth redesign
+- **1051-260329-144735:** implement task
+- **1048-260329-114423:** implement task
+- Add segmented PDF-to-LaTeX extraction for lesson context
+- Add content hierarchy navigation and course filtering in admin
+- Add full exercise JSON edit with structural validation
+- Wire script parser to import-latex endpoint
+- AI-powered LaTeX import with per-exercise chunking
+- Show courses in global search results
+- Add course-specific search in header dropdown (#732) (#732)
+- **1031-260326-124709:** implement task
+- Translate Hebrew titles to English via OpenAI for lesson slugs
+- LaTeX document viewer and graph/geometry rendering fixes
+- Add default block spacing to Content Pages collection
+- LaTeX document viewer and graph/geometry rendering fixes
+- Add configurable block spacing with page-level default and per-block override
+- Add chat usage limit — 15 questions per 12-hour rolling window
+
+### Bug Fixes
+
+- **release:** Increase shell hook timeout to 20 minutes
+- **release:** Increase shell hook timeout to 20 minutes
+- **watch:** Increase release-publisher timeout to 2 hours
+- **ci:** Resolve dev branch CI failures
+- Handle pnpm audit npm endpoint retirement in CI
+- Format event-log.json with Prettier
+- Handle pnpm audit npm endpoint retirement in CI
+- Format event-log.json with Prettier
+- Update locale middleware test import path to src/middleware
+- Move middleware.ts to src/ so Next.js actually loads it
+- Format auth middleware test file with Prettier
+- Address PR review findings (color escape, PDF accept, error leak, prompt enum)
+- Add temperature 0 and LaTeX escape repair
+- Three-stage JSON parse recovery for LLM output
+- Restore original V1 quality and remove review-flagged dead code
+- **1219-260415-091538:** address review
+- **llm:** Use ReadableStream.from() for Genkit stream bridging
+- Replace custom AsyncIterable wrapper with async generator
+- Skip e2e-gate when PR targets dev branch
+- Skip e2e-gate when source branch is dev
+- Skip e2e-gate on PRs to dev branch
+- **release:** Agent regenerates pnpm-lock.yaml after version bump
+- **deps:** Update pnpm-lock.yaml for @kody-ade/engine ^0.1.118
+- **1206-260414-135048:** address review
+- **1197-260414-150706:** address review
+- **ci:** remove smoke-test job from kody workflow
+- Normalize formatting in kody.config.json
+- Prevent context exercises from auto-adding to lesson blocks
+- Handle all exercise numbering patterns in context-exercise-parser
+- Format kody.config.json to pass prettier check
+- agent creates its own issue, no WATCH_DIGEST_ISSUE_SYSTEM_TEST needed
+- remove WATCH_DIGEST_ISSUE_SYSTEM_TEST (agent creates its own issue)
+- Resolve merge conflict with dev, update shared parser
+- Make Convert Context button visible with correct styling
+- Move Create Exercises button below exercise cards
+- Reduce Create Exercises button size to match title height
+- Add context_extraction origin to Exercises collection
+- Use white background with black border for Create Exercises button
+- Improve Create Exercises button contrast in dark mode
+- Remove unused ApiErrors import
+- Replace inline styles with Tailwind classes in LatexBlockEditor
+- **kody:** add COMMENT_AUTHOR_ASSOC env var so @kody review works on PRs
+- Remove unnecessary preview from LatexBlockEditor
+- Force type=button on author HTML buttons
+- Sanitize SVG to prevent XSS and remove dead shouldCancel param
+- Address PR review findings
+- Parse all function calls per line in HTML converter
+- Use ref for SVG scene to prevent animation class wipe
+- Pick longest solution when duplicate solution headers exist
+- Use בהצלחה as exercise section boundary to prevent false exercises
+- Reset nesting level in orphan detection when exiting blocks
+- Keep last setcounter occurrence for duplicate exercise numbers
+- Detect exercises in orphan enumerate blocks for remaining gaps
+- Only scan for continuation exercises when next number is missing
+- Use text position for content boundaries, number for display order
+- Detect continuation exercises and sort by number
+- Improve setcounter exercise detection in context viewer
+- Resolve pre-existing lint and tooling issues
+- add missing eslint-config-next dependency and format globals.css
+- context exercise viewer now detects setcounter-style exercise boundaries
+- **ci:** migrate ESLint config to flat format and fix lint errors
+- rewrite stitching logic and restore validation in page-by-page extraction
+- add provider to watch config so kody-engine watch runs
+- **fix-pr-1168-260409-133302:** address review
+- Update system events count in contract test for new registration popup events
+- preserve identified user on Mixpanel SDK init instead of resetting to anonymous
+- remove alias() from login flow — only use it on signup
+- call alias() before events in signup flow to merge anonymous history
+- call alias() before identify() on login to merge anonymous Mixpanel profiles
+- use PROJECT_TOKEN so label changes trigger board sync
+- use PROJECT_TOKEN for pipeline so label changes trigger board sync
+- **fix-pr-1125-260406-124006:** address review
+- **fix-pr-1145-260406-105358:** address review
+- **mcq:** guard against undefined content in fraction transform
+- Emit display math as rich_text instead of latex blocks
+- Use brace-counting for color stripping instead of regex
+- Strip leaked env tags, fix bracket labels, improve quality to 97%
+- Use balanced brace matching for color stripping
+- Collapse whitespace in parsed text, disable geometry axes
+- Strip color/sizing from math, remove labels, fix orphaned braces
+- **ci:** Use pnpm exec for kody-engine in smoke-test job
+- Normalize spaced LaTeX delimiters and prevent raw JSON in chat
+- **chat:** address review
+- Ignore .agents and .kody dirs in prettier checks
+- Remove duplicate LessonAnalytics and dead LessonLoadTimeoutTracker
+- update @kody-ade/engine to 0.1.23, use local dep instead of global install
+- use global kody-engine binary, fix notify job missing issue number
+- add missing kody-engine install to orchestrate and smoke-test jobs
+- Increase build warmup memory limit to 4GB
+- Increase build warmup memory limit to 4GB
+- Increase build warmup timeout to 15 minutes
+- Increase dev server timeout to 180s for cold starts
+- **1109-260403-091343:** address review
+- Regenerate lockfile for kody-engine-lite v0.1.148
+- **1109-260403-085917:** address review
+- Remove MCP config, use playwright-cli for browser verification
+- Enable MCP for Playwright browser verification with Claude
+- Regenerate lockfile for kody-engine-lite v0.1.147
+- restore @napi-rs/canvas version corrupted by sed
+- repair broken lockfile integrity hash
+- set defaultBranch to dev (was kody, breaking @kody resolve)
+- **1094-260402-111508:** address review
+- Align kody.config.json with schema and add per-stage config support
+- Align kody.config.json with schema and add per-stage config support
+- use heredoc syntax for multiline secret values in GITHUB_ENV
+- use project-local kody-engine-lite instead of global install
+- persist lessonRef through study plan API so lesson links work
+- Line labels, dot defaults, and admin canvas background
+- sync kody.yml with dev to unblock push
+- strip carriage returns from comment body before parsing
+- format LessonBlocksField imports
+- update kody.yml to latest template with fix-ci and resolve support
+- resolve course lookup in LessonSelector using grade level
+- Update system events schema count in test (34 → 37)
+- **fix-pr-1075-260331-155519:** address review
+- **fix-pr-1075-260331-130624:** address review
+- **fix-pr-1059-260331-124107:** address review
+- Update missed test assertion for PDF_TO_EXERCISE temperature 0.1
+- Revert PDF_TO_EXERCISE temperature to 0.1
+- reduce kody artifact retention and scope to current task only
+- Iterative solution passes to handle truncation of long exams
+- **ci:** Downgrade actions to v4 and reduce artifact storage usage
+- Re-process partially migrated profiles missing label field
+- Filter profiles by exact locale match and deduplicate by slug
+- Migration converts legacy dual-field profiles to per-locale docs
+- **ci:** Upload build artifact on main push for QA Scenarios
+- Repair broken merge in Exercises collection config
+- Extract exercise hooks to avoid TS1117 on CI
+- use lockfile hash for Next.js build cache key
+- Address Kody review feedback
+- Skip afterRead lazy backfill during build-time reads
+- remove unused JSON side panel state and resize logic
+- remove old JSON panel toggle button from exercise editor
+- update tests to match design token migration and actual source code
+- resolve merge conflicts with dev (keep CSS transitions over framer-motion)
+- Format kody.yml to pass Prettier check in CI
+- Remove undeclared framer-motion dependency breaking CI typecheck
+- Revert config additions for chat and tool-calling generate calls
+- Bump PDF_TO_EXERCISE maxOutputTokens to 65536
+- resolve all ESLint errors and design token warnings
+- Use caller's maxOutputTokens when provided in multimodal completion
+- Use Math.max for maxOutputTokens to prevent DB config truncation
+- Re-fetch teacher profiles on locale change without page refresh
+- Pass temperature and maxOutputTokens to Genkit ai.generate()
+- add missing Clock import and progressText variable
+- top accent bar cards + 3-column grid for lesson cards
+- Skip build artifact upload on non-E2E CI runs
+- Skip build artifact upload on non-E2E CI runs
+- Format pattern-index.json for pre-push verification
+- Format files and fix task.json markdown fences to pass CI
+- Merge duplicate hooks blocks in Exercises collection
+- CourseCard badge clipping — remove overflow-hidden, modernize styling
+- align course page with new design — single column, unified cards, compact search icon
+- restore ProgressCircle in lesson cards
+- add color accent bar to lesson cards and fix badge clipping
+- proportional UI improvements across study page and lesson view
+- hide header during full onboarding flow, remove broken onboarding tips
+- Remove media/ prefix from blob CDN redirect
+- Move media CDN redirect to next.config.js redirects
+- Relax blob token regex, add BLOB_PUBLIC_BASE_URL fallback
+- Add collection prefix to media CDN redirect URL
+- Compute bounding box for geometry so points aren't clumped at origin
+- Simplify course slug detection to URL path only
+- Always show expandable search dropdown, never navigate to /search
+- **1031-260326-124709:** address review
+- Make search work globally and add course content to /search page
+- Resolve courseSlug from grade profile on /study, /practice, /ask pages
+- Revert lessons query depth back to 2
+- **1031-260326-124709:** address review
+- Update system events contract test for photo_sent_to_chat
+- Use gemini-2.5-flash-lite model (2.0 is deprecated for this API key)
+- Use Gemini instead of OpenAI for Hebrew slug translation
+- Ensure slug uniqueness on create/duplication even without -copy suffix
+- Auto-generate lesson slugs from Hebrew titles with transliteration (#758) (#758)
+- Add bare domain blob.vercel-storage.com to CSP connect-src
+- Add blob.vercel-storage.com to CSP connect-src and track photo uploads in Mixpanel
+- Redirect media to Vercel Blob CDN, bypass serverless proxy
+- Resolve merge conflict in useNotebookChat with dev
+- Move quota bar outside header so it shows without reset button
+- Add jsdelivr to style-src CSP for Monaco editor styles
+- Show proper quota message instead of guest login CTA
+
+### Performance
+
+- eliminate Vercel cold-start slowdowns
+- Optimize build time by externalizing server packages and improving bundling
+- Rewrite PDF requests to Blob CDN at edge
+- Server-side prefetch for study/test/practice pages
+- Parallelize DB queries, reduce depth, add cache headers
+
+### CI/CD
+
+- Skip e2e-gate on PRs targeting dev branch
+- Remove dev branch from push trigger in CI workflow
+- retrigger CI to pick up e2e-gate job
+- add E2E gate job on PRs to main
+- Auto-remove closed issues from project board
+- Auto-label new issues with kody:backlog
+- Use PROJECT_TOKEN for org project board sync
+- Add workflow to sync kody labels to project board
+
+### Documentation
+
+- codify design system conventions for Kody agents
+
+### Maintenance
+
+- release v0.24.0 (#1230) (#1230)
+- Update pnpm-lock.yaml
+- Update pnpm-lock.yaml
+- Update release-publisher cron and add kody watch agents
+- Add analytics env vars to playwright config and lint e2e test
+- add kody task artifacts [skip ci]
+- **release:** Update release-publisher agent for full flow
+- **deps:** Update @kody-ade/engine to ^0.1.118
+- **deps:** Update @kody-ade/engine to ^0.1.117
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- Sync kody.yml from engine and preserve A-Guy customizations
+- 10x budget increase for all pipeline stages (debug)
+- 10x budget increase for all pipeline stages (debug)
+- release v0.23.0
+- Regenerate payload types for context_extraction origin
+- Remove triangle proof fixture
+- Remove dev-only guided explanation demo page
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- **ci:** remove redundant smoke-test job from kody workflow
+- **ci:** remove redundant smoke-test job from kody workflow
+- merge dev, resolve .kody conflict
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- format PDFMedia and http-retry test
+- Replace semantic-release with @kody release
+- Add Slack notification to release config
+- release v0.23.0
+- Bump @kody-ade/engine to 0.1.32
+- Bump @kody-ade/engine to 0.1.31
+- Bump @kody-ade/engine to 0.1.30
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- bump @kody-ade/engine to 0.1.24 (approve parsing fix)
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- Redeploy with updated Mixpanel token
+- Trigger Vercel preview redeploy
+- Fix Prettier formatting on merged files
+- Migrate to @kody-ade/engine package
+- Fix malformed task.json and format task files
+- Fix prettier formatting — add missing trailing newlines
+- add kody task artifacts [skip ci]
+- Upgrade kody-engine-lite to v0.1.148
+- add kody task artifacts [skip ci]
+- upgrade kody-engine-lite to v0.1.147
+- update lockfile for kody-engine-lite 0.1.141
+- Bump kody-engine-lite to ^0.1.141
+- update lockfile for kody-engine-lite 0.1.137
+- Bump kody-engine-lite to ^0.1.137
+- update lockfile for kody-engine-lite 0.1.136
+- Bump kody-engine-lite to ^0.1.136
+- Format generated pattern index
+- Bump kody-engine-lite to ^0.1.134
+- Bump kody-engine-lite to ^0.1.129
+- Disable MCP dev server in CI
+- Bump kody-engine-lite to ^0.1.125
+- add kody task artifacts [skip ci]
+- Format kody task artifacts
+- Fix prettier formatting on config files
+- Sync kody.yml with engine template v0.1.107
+- auto-forward all GitHub secrets as env vars in kody workflow
+- add dev server env secrets to kody config
+- Format files from dev merge
+- Merge dev into kody
+- Update lockfile to kody-engine-lite 0.1.104
+- pin kody-engine-lite to ^0.1.104
+- merge dev into kody
+- add QA guide with routes, auth, and test credentials
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- Add Kody project memory and step files
+- Fix formatting in kody task artifacts
+- Fix formatting in kody task artifacts
+- Rename MINIMAX_API_KEY to ANTHROPIC_COMPATIBLE_API_KEY in kody workflow
+- Retrigger CI
+- sync workflow template from Kody-Engine-Lite (add litellm, minimax, bootstrap)
+- update local agent config to minimax and add opencode config
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- Sync lockfile with package.json kody-engine-lite specifier
+- Remove redeploy trigger file
+- Remove time.ts from branch
+- Merge dev, update lockfile
+- Add kody-engine-lite as local dep, remove cody workflow, update gitignore
+- add kody task artifacts [skip ci]
+- Add backfill script for parentCourse denormalized field
+- Trigger redeploy for env var pickup
+- **ci:** Reduce artifact retention to 3 days
+- Add Kody project memory and step files
+- Add Kody Engine workflow and config
+- Clean kody.config.json to match updated engine schema
+- Remove bootstrap files for GH Actions bootstrap test
+- Add Kody project memory and step files
+- Add Kody Engine configuration
+- Update kody workflow v0.1.16
+- Update kody workflow v0.1.15
+- Update kody workflow v0.1.13
+- Update kody workflow v0.1.11
+- Trigger redeploy with Mixpanel preview token
+- Gitignore latex_examples and shay-tassk directories
+- Add kody-engine-lite workflow, config, and memory
+
+### Other Changes
+
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev
+- Merge pull request #1224 from A-Guy-educ/chore/update-release-publisher-cron
+- Undo local CI fixes from dev
+- Merge pull request #1221 from A-Guy-educ/1219--security-5x-route-without-authentication
+- Merge pull request #1216 from A-Guy-educ/1206--fix-restrict-all-learning-features-to-registere
+- Merge pull request #1222 from A-Guy-educ/chore/analytics-ai-docs-workflow-updates
+- Merge branch 'dev' into 1206--fix-restrict-all-learning-features-to-registere
+- Merge pull request #1200 from A-Guy-educ/feat/replace-lesson-context-in-convert-process
+- Revert "fix: Three-stage JSON parse recovery for LLM output"
+- Fix prettier formatting in copilotkit route and kody event log
+- Merge pull request #1215 from A-Guy-educ/1197--security-5x-route-without-authentication
+- Format long line in oauth_callback_helpers.ts
+- Merge pull request #1133 from A-Guy-educ/1098--bug-oauth-race-recovery-returns-302-with-no-loc
+- Merge pull request #1210 from A-Guy-educ/fix/kody-config-format
+- Merge pull request #1208 from A-Guy-educ/chore/10x-pipeline-budget
+- Merge branch 'main' into dev
+- Merge pull request #1204 from A-Guy-educ/release/v0.23.0
+- Merge remote-tracking branch 'origin/dev' into feat/replace-lesson-context-in-convert-process
+- Merge pull request #1202 from A-Guy-educ/fix/context-exercise-parser-gaps
+- Merge pull request #1201 from A-Guy-educ/feat/fix-ci
+- Merge pull request #1189 from A-Guy-educ/feat/context-blocks-to-exe
+- Merge pull request #1194 from A-Guy-educ/feat/fix-convert-context-button-color
+- Merge pull request #1181 from A-Guy-educ/feat/fix-context-exe-from-pdf
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into feat/context-blocks-to-exe
+- Merge pull request #1193 from A-Guy-educ/feat/fix-ci-fail
+- Revert "chore: Regenerate payload types for context_extraction origin"
+- Format context-exercise-viewer with Prettier
+- Merge pull request #1187 from A-Guy-educ/feat/create-latex-block
+- Merge pull request #1186 from A-Guy-educ/feat/increase-lesson-context-limit
+- Merge remote-tracking branch 'origin/dev' into feat/fix-context-exe-from-pdf
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev
+- Merge pull request #1185 from A-Guy-educ/fix/pre-existing-lint-prettier
+- Revert "style: Format .claude/settings.json with Prettier"
+- Format .claude/settings.json with Prettier
+- Merge branch 'fix/pre-existing-lint-prettier' into feat/fix-context-exe-from-pdf
+- Merge pull request #1168 from A-Guy-educ/1167--implement-iterative-page-by-page-pdf-to-latex-ex
+- apply Prettier formatting to all modified files
+- Revert "feat(kody-watch): trigger on PR merge to dev, not daily schedule"
+- Merge branch 'dev' into 1167--implement-iterative-page-by-page-pdf-to-latex-ex
+- Merge pull request #1075 from A-Guy-educ/feat/pdf-to-latex-quality-reliability
+- Merge pull request #1165 from A-Guy-educ/feat/mixpanel-update
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into feat/pdf-to-latex-quality-reliability
+- Merge pull request #1145 from A-Guy-educ/1144--fix-mixpanel-user-identity-merging-on-login
+- Merge pull request #1148 from A-Guy-educ/1146--context-exercise-viewer-display-parsed-exercis
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into 1144--fix-mixpanel-user-identity-merging-on-login
+- Merge remote-tracking branch 'origin/dev' into 1146--context-exercise-viewer-display-parsed-exercis
+- Merge pull request #1125 from A-Guy-educ/1121--image-upload-error-handling-quality-constraint
+- format kody.yml with prettier
+- format AskPrimaryContent with prettier
+- Merge remote-tracking branch 'origin/dev' into 1121--image-upload-error-handling-quality-constraint
+- Merge pull request #1129 from A-Guy-educ/1119--intermittent-pdf-loading-failures-404-silent
+- Merge remote-tracking branch 'origin/dev' into 1121--image-upload-error-handling-quality-constraint
+- Merge pull request #1127 from A-Guy-educ/fix/latex-chat-rendering
+- format exercise-chat-agent-prompt.md with prettier
+- Merge remote-tracking branch 'origin/dev' into 1119--intermittent-pdf-loading-failures-404-silent
+- format useDirectChatAssetUpload with prettier
+- Merge pull request #1140 from A-Guy-educ/release/v0.23.0
+- Merge branch 'dev' into release/v0.23.0
+- Merge pull request #1049 from A-Guy-educ/1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge remote-tracking branch 'origin/dev' into 1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge pull request #1124 from A-Guy-educ/1118--bug-broken-lesson-url-generation-view-suffix
+- Merge pull request #1080 from A-Guy-educ/feat/mixpanel-lesson-loading-tracking
+- Merge pull request #1116 from A-Guy-educ/feat/mixpanel-user-data-check
+- Merge pull request #1122 from A-Guy-educ/1117--bug-system-slowness-media-timeouts
+- Merge remote-tracking branch 'origin/dev' into feat/mixpanel-lesson-loading-tracking
+- Merge pull request #1059 from A-Guy-educ/1057--localization-teacher-profile-selection-hebrew
+- Merge branch 'main' into dev
+- Merge branch 'chore/migrate-engine-package'
+- Merge branch 'chore/migrate-engine-package'
+- Merge pull request #1110 from A-Guy-educ/1109--fix-admin-dashboard-header-should-display-curre
+- Merge branch 'dev' into kody
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge pull request #1104 from A-Guy-educ/1094--bug-access-code-redemption-toctou-race-conditio
+- Merge pull request #1105 from A-Guy-educ/feat/exercise-ui-redesign
+- Re-enable MCP dev server
+- Merge branch 'dev' into kody
+- Merge branch 'dev' into 1057--localization-teacher-profile-selection-hebrew
+- Format kody task files for Prettier
+- Merge pull request #1079 from A-Guy-educ/1063--course-integrated-exam-prep-enhancement
+- Merge remote-tracking branch 'origin/dev' into 1063--course-integrated-exam-prep-enhancement
+- Merge branch 'dev' into feat/pdf-to-latex-quality-reliability
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge pull request #1087 from A-Guy-educ/1081--lesson-search-in-admin-should-also-search-by-cou
+- Merge pull request #1084 from A-Guy-educ/1083--admin-should-be-able-to-edit-and-delete-exercise
+- Merge remote-tracking branch 'origin/kody' into feat/pdf-to-latex-quality-reliability
+- Merge pull request #1074 from A-Guy-educ/fix/ci-workflow-versions
+- Merge remote-tracking branch 'origin/kody' into 1057--localization-teacher-profile-selection-hebrew
+- Merge pull request #1047 from A-Guy-educ/feat/admin-content-navigation-links
+- Merge pull request #1076 from A-Guy-educ/kody-bootstrap-1774955768848
+- Merge remote-tracking branch 'origin/dev' into feat/pdf-to-latex-quality-reliability
+- Revert "chore: Fix formatting in kody task artifacts"
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into 1057--localization-teacher-profile-selection-hebrew
+- Merge pull request #1068 from A-Guy-educ/dev
+- Merge branch 'dev' into feat/admin-content-navigation-links
+- fix prettier formatting in kody task files
+- Merge remote-tracking branch 'origin/dev' into 1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge pull request #1045 from A-Guy-educ/feat/json-edit-in-admin
+- Fix prettier formatting
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- update feat/json-edit-in-admin from origin/dev
+- fix prettier formatting across 53 files
+- Merge pull request #1054 from A-Guy-educ/refactor/modernize-ui-consistency
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into 1057--localization-teacher-profile-selection-hebrew
+- Merge remote-tracking branch 'origin/dev' into feat/pdf-to-latex-audit
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- Merge remote-tracking branch 'origin/dev' into feat/pdf-to-latex-audit
+- Revert "fix: Bump PDF_TO_EXERCISE maxOutputTokens to 65536"
+- Merge branch 'dev' into 1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- Merge pull request #1053 from A-Guy-educ/1051--auto-populate-lesson-blocks-from-related-content
+- Merge pull request #1021 from A-Guy-educ/feat/chat-usage-limit
+- Merge pull request #1032 from A-Guy-educ/fix/media-cdn-redirect
+- Merge remote-tracking branch 'origin/dev' into fix/media-cdn-redirect
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- Merge pull request #960 from A-Guy-educ/main
+- Merge pull request #1035 from A-Guy-educ/1031--security-8x-route-without-authentication
+- Merge pull request #1036 from A-Guy-educ/feat/course-header-dropdown
+- Merge pull request #1033 from A-Guy-educ/feat/upload-pic-iphone
+- Merge pull request #1027 from A-Guy-educ/feat/spacing-block-control
+- Merge pull request #1034 from A-Guy-educ/feat/automatic-slug
+- Merge pull request #1014 from A-Guy-educ/feat/latex-ai-converter
+- Merge pull request #1043 from A-Guy-educ/kody/bootstrap-1774769461678
+- Merge pull request #1013 from A-Guy-educ/feat/latex-renderer
+- Merge pull request #1044 from A-Guy-educ/feat/fix-ci-build
+- Merge branch 'dev' into feat/fix-ci-build
+- Merge branch 'feat/latex-renderer' of https://github.com/A-Guy-educ/A-Guy into feat/latex-renderer
+- Merge remote-tracking branch 'origin/dev' into 1031--security-8x-route-without-authentication
+
+### Refactoring
+
+- redesign dark mode, exercise UI, and NavigationBar
+- Use per-locale documents for TeacherProfiles instead of dual fields
+- study page uses shared CourseLessonCard instead of duplicate LessonGridCard
+- unified card design with top accent bars, 3-col grid, design abstractions
+- convert search from inline header to command palette modal
+- unify all 13 card components with one visual design language
+- complete UI modernization — all remaining components
+- modernize UI with consistent design tokens across 87 files
+- Simplify PDF-to-LaTeX extraction back to single LLM call
+- Extract time conversion to shared util
+- Use existing chat config domain for quota settings
+
+### Tests
+
+- Update display math test to expect rich_text instead of latex
+- Update PDF_TO_EXERCISE maxOutputTokens assertions to 32768
+
+
+## [0.25.0] - 2026-04-15
+
+### Features
+
+- **watch:** Add notify.ts dispatcher and notify.config.json
+- Pause/resume player and preserve image when navigating back
+- Ask page interactive lesson player (V1 with V2 learnings)
+- **1219-260415-091538:** implement task
+- **1206-260414-135048:** implement task
+- **1197-260414-150706:** implement task
+- Decouple PDF extraction storage from lessonContextText
+- add system-test agent to kody-watch, increase timeout to 90min
+- add e2eCommand to release config
+- add system-test watch agent
+- add system-test watch agent
+- Create exercises from context text as LaTeX blocks
+- HTML-to-GuidedExplanation converter with Import HTML button
+- Merge guided explanation into HTML block
+- Guided explanation runner with triangle proof demo
+- Add LaTeX block UI (admin editor + frontend renderer)
+- Increase lessonContextText limit from 100K to 200K chars
+- Refactor card components and introduce UnifiedCard
+- **kody-watch:** trigger on PR merge to dev, not daily schedule
+- add 3 watch agents for continuous QA monitoring
+- **fix-pr-1168-260409-133302:** implement task
+- **1167-260409-114345:** implement task
+- Add registration popup funnel tracking for Mixpanel
+- make context exercise viewer editable per exercise
+- auto-clear rejected image in Ask tab so student can re-upload
+- **fix-pr-1125-260406-124006:** implement task
+- **1146-260406-104845:** implement task
+- Add ContextExerciseViewer UI component for lesson context
+- **fix-pr-1145-260406-105358:** implement task
+- **1144-260406-100413:** implement task
+- strengthen cropped image detection — check all edges before helping
+- cover all image issue cases and enforce language matching
+- require AI to explain image issues and give upload tips
+- strengthen image handling instructions to reject non-educational images
+- inject image handling instructions into chat prompt pipeline
+- Extract geometry from inline \draw coordinates
+- Scale LaTeX parser to handle all 55 lesson formats
+- add actionable image feedback in chat and improve upload error messages
+- Enable @kody release command
+- **chat:** implement task
+- **1098-260405-135505:** implement task
+- **acceptable:** implement task
+- **1121-260405-102217:** implement task
+- **1118-260405-102030:** implement task
+- **1117-260405-101944:** implement task
+- Send selected course to Mixpanel user profile on course selection
+- Send enrolled course to Mixpanel user profile
+- Switch to MiniMax provider for all stages
+- Add Next.js build warmup step before pipeline
+- **1109-260403-091343:** implement task
+- **1109-260403-085917:** implement task
+- Add playwright-cli tool for browser verification
+- add top-level devServer with 120s timeout and stdout detection
+- Exercise UI/UX redesign with animations across all question types
+- **1094-260402-111508:** implement task
+- all-Claude model config for maximum reliability
+- all-Claude model config for maximum reliability
+- multi-provider model config — GPT-5.3 Codex, Claude, Gemini per stage
+- multi-provider model config — GPT-5.3 Codex, Claude, Gemini per stage
+- enable Playwright MCP for UI task verification
+- **1081-260331-181546:** implement task
+- **1083-260331-181351:** implement task
+- Add Mixpanel tracking for lesson loading lifecycle
+- **1063-260331-155210:** implement task
+- **fix-pr-1075-260331-155519:** implement task
+- Multi-axis graph block and geometry admin panel fixes
+- **fix-pr-1075-260331-130624:** implement task
+- **fix-pr-1059-260331-124107:** implement task
+- Add exercise count validation with auto-retry on extraction
+- PDF-to-LaTeX quality, reliability & adapter refactor
+- Add afterRead lazy backfill for course/chapter filter fields
+- Add two-pass extraction — retry with solutions-only if truncated
+- Rename parentCourse to course, add chapter filter to exercises
+- **1057-260330-075754:** implement task
+- add shared design abstractions and unified card layout
+- Add user-facing warnings for PDF extraction edge cases
+- page transitions, stats alignment, mobile touch refinements
+- UI polish batch — card unification, empty states, skeletons, dark mode, micro-interactions
+- add Tier 4 infrastructure — Storybook stories, visual regression tests, PWA
+- add UX improvements — mobile, a11y, performance, celebrations, onboarding, search, themes
+- redesign course cards, lesson view, and navigation
+- add immersive landing page with animated hero, features, and CTA sections
+- add visual polish — gradient borders, stagger animations, glass header, bento stats, auth redesign
+- **1051-260329-144735:** implement task
+- **1048-260329-114423:** implement task
+- Add segmented PDF-to-LaTeX extraction for lesson context
+- Add content hierarchy navigation and course filtering in admin
+- Add full exercise JSON edit with structural validation
+- Wire script parser to import-latex endpoint
+- AI-powered LaTeX import with per-exercise chunking
+- Show courses in global search results
+- Add course-specific search in header dropdown (#732) (#732)
+- **1031-260326-124709:** implement task
+- Translate Hebrew titles to English via OpenAI for lesson slugs
+- LaTeX document viewer and graph/geometry rendering fixes
+- Add default block spacing to Content Pages collection
+- LaTeX document viewer and graph/geometry rendering fixes
+- Add configurable block spacing with page-level default and per-block override
+- Add chat usage limit — 15 questions per 12-hour rolling window
+
+### Bug Fixes
+
+- **release:** Increase shell hook timeout to 20 minutes
+- **release:** Increase shell hook timeout to 20 minutes
+- **watch:** Increase release-publisher timeout to 2 hours
+- **ci:** Resolve dev branch CI failures
+- Handle pnpm audit npm endpoint retirement in CI
+- Format event-log.json with Prettier
+- Handle pnpm audit npm endpoint retirement in CI
+- Format event-log.json with Prettier
+- Update locale middleware test import path to src/middleware
+- Move middleware.ts to src/ so Next.js actually loads it
+- Format auth middleware test file with Prettier
+- Address PR review findings (color escape, PDF accept, error leak, prompt enum)
+- Add temperature 0 and LaTeX escape repair
+- Three-stage JSON parse recovery for LLM output
+- Restore original V1 quality and remove review-flagged dead code
+- **1219-260415-091538:** address review
+- **llm:** Use ReadableStream.from() for Genkit stream bridging
+- Replace custom AsyncIterable wrapper with async generator
+- Skip e2e-gate when PR targets dev branch
+- Skip e2e-gate when source branch is dev
+- Skip e2e-gate on PRs to dev branch
+- **release:** Agent regenerates pnpm-lock.yaml after version bump
+- **deps:** Update pnpm-lock.yaml for @kody-ade/engine ^0.1.118
+- **1206-260414-135048:** address review
+- **1197-260414-150706:** address review
+- **ci:** remove smoke-test job from kody workflow
+- Normalize formatting in kody.config.json
+- Prevent context exercises from auto-adding to lesson blocks
+- Handle all exercise numbering patterns in context-exercise-parser
+- Format kody.config.json to pass prettier check
+- agent creates its own issue, no WATCH_DIGEST_ISSUE_SYSTEM_TEST needed
+- remove WATCH_DIGEST_ISSUE_SYSTEM_TEST (agent creates its own issue)
+- Resolve merge conflict with dev, update shared parser
+- Make Convert Context button visible with correct styling
+- Move Create Exercises button below exercise cards
+- Reduce Create Exercises button size to match title height
+- Add context_extraction origin to Exercises collection
+- Use white background with black border for Create Exercises button
+- Improve Create Exercises button contrast in dark mode
+- Remove unused ApiErrors import
+- Replace inline styles with Tailwind classes in LatexBlockEditor
+- **kody:** add COMMENT_AUTHOR_ASSOC env var so @kody review works on PRs
+- Remove unnecessary preview from LatexBlockEditor
+- Force type=button on author HTML buttons
+- Sanitize SVG to prevent XSS and remove dead shouldCancel param
+- Address PR review findings
+- Parse all function calls per line in HTML converter
+- Use ref for SVG scene to prevent animation class wipe
+- Pick longest solution when duplicate solution headers exist
+- Use בהצלחה as exercise section boundary to prevent false exercises
+- Reset nesting level in orphan detection when exiting blocks
+- Keep last setcounter occurrence for duplicate exercise numbers
+- Detect exercises in orphan enumerate blocks for remaining gaps
+- Only scan for continuation exercises when next number is missing
+- Use text position for content boundaries, number for display order
+- Detect continuation exercises and sort by number
+- Improve setcounter exercise detection in context viewer
+- Resolve pre-existing lint and tooling issues
+- add missing eslint-config-next dependency and format globals.css
+- context exercise viewer now detects setcounter-style exercise boundaries
+- **ci:** migrate ESLint config to flat format and fix lint errors
+- rewrite stitching logic and restore validation in page-by-page extraction
+- add provider to watch config so kody-engine watch runs
+- **fix-pr-1168-260409-133302:** address review
+- Update system events count in contract test for new registration popup events
+- preserve identified user on Mixpanel SDK init instead of resetting to anonymous
+- remove alias() from login flow — only use it on signup
+- call alias() before events in signup flow to merge anonymous history
+- call alias() before identify() on login to merge anonymous Mixpanel profiles
+- use PROJECT_TOKEN so label changes trigger board sync
+- use PROJECT_TOKEN for pipeline so label changes trigger board sync
+- **fix-pr-1125-260406-124006:** address review
+- **fix-pr-1145-260406-105358:** address review
+- **mcq:** guard against undefined content in fraction transform
+- Emit display math as rich_text instead of latex blocks
+- Use brace-counting for color stripping instead of regex
+- Strip leaked env tags, fix bracket labels, improve quality to 97%
+- Use balanced brace matching for color stripping
+- Collapse whitespace in parsed text, disable geometry axes
+- Strip color/sizing from math, remove labels, fix orphaned braces
+- **ci:** Use pnpm exec for kody-engine in smoke-test job
+- Normalize spaced LaTeX delimiters and prevent raw JSON in chat
+- **chat:** address review
+- Ignore .agents and .kody dirs in prettier checks
+- Remove duplicate LessonAnalytics and dead LessonLoadTimeoutTracker
+- update @kody-ade/engine to 0.1.23, use local dep instead of global install
+- use global kody-engine binary, fix notify job missing issue number
+- add missing kody-engine install to orchestrate and smoke-test jobs
+- Increase build warmup memory limit to 4GB
+- Increase build warmup memory limit to 4GB
+- Increase build warmup timeout to 15 minutes
+- Increase dev server timeout to 180s for cold starts
+- **1109-260403-091343:** address review
+- Regenerate lockfile for kody-engine-lite v0.1.148
+- **1109-260403-085917:** address review
+- Remove MCP config, use playwright-cli for browser verification
+- Enable MCP for Playwright browser verification with Claude
+- Regenerate lockfile for kody-engine-lite v0.1.147
+- restore @napi-rs/canvas version corrupted by sed
+- repair broken lockfile integrity hash
+- set defaultBranch to dev (was kody, breaking @kody resolve)
+- **1094-260402-111508:** address review
+- Align kody.config.json with schema and add per-stage config support
+- Align kody.config.json with schema and add per-stage config support
+- use heredoc syntax for multiline secret values in GITHUB_ENV
+- use project-local kody-engine-lite instead of global install
+- persist lessonRef through study plan API so lesson links work
+- Line labels, dot defaults, and admin canvas background
+- sync kody.yml with dev to unblock push
+- strip carriage returns from comment body before parsing
+- format LessonBlocksField imports
+- update kody.yml to latest template with fix-ci and resolve support
+- resolve course lookup in LessonSelector using grade level
+- Update system events schema count in test (34 → 37)
+- **fix-pr-1075-260331-155519:** address review
+- **fix-pr-1075-260331-130624:** address review
+- **fix-pr-1059-260331-124107:** address review
+- Update missed test assertion for PDF_TO_EXERCISE temperature 0.1
+- Revert PDF_TO_EXERCISE temperature to 0.1
+- reduce kody artifact retention and scope to current task only
+- Iterative solution passes to handle truncation of long exams
+- **ci:** Downgrade actions to v4 and reduce artifact storage usage
+- Re-process partially migrated profiles missing label field
+- Filter profiles by exact locale match and deduplicate by slug
+- Migration converts legacy dual-field profiles to per-locale docs
+- **ci:** Upload build artifact on main push for QA Scenarios
+- Repair broken merge in Exercises collection config
+- Extract exercise hooks to avoid TS1117 on CI
+- use lockfile hash for Next.js build cache key
+- Address Kody review feedback
+- Skip afterRead lazy backfill during build-time reads
+- remove unused JSON side panel state and resize logic
+- remove old JSON panel toggle button from exercise editor
+- update tests to match design token migration and actual source code
+- resolve merge conflicts with dev (keep CSS transitions over framer-motion)
+- Format kody.yml to pass Prettier check in CI
+- Remove undeclared framer-motion dependency breaking CI typecheck
+- Revert config additions for chat and tool-calling generate calls
+- Bump PDF_TO_EXERCISE maxOutputTokens to 65536
+- resolve all ESLint errors and design token warnings
+- Use caller's maxOutputTokens when provided in multimodal completion
+- Use Math.max for maxOutputTokens to prevent DB config truncation
+- Re-fetch teacher profiles on locale change without page refresh
+- Pass temperature and maxOutputTokens to Genkit ai.generate()
+- add missing Clock import and progressText variable
+- top accent bar cards + 3-column grid for lesson cards
+- Skip build artifact upload on non-E2E CI runs
+- Skip build artifact upload on non-E2E CI runs
+- Format pattern-index.json for pre-push verification
+- Format files and fix task.json markdown fences to pass CI
+- Merge duplicate hooks blocks in Exercises collection
+- CourseCard badge clipping — remove overflow-hidden, modernize styling
+- align course page with new design — single column, unified cards, compact search icon
+- restore ProgressCircle in lesson cards
+- add color accent bar to lesson cards and fix badge clipping
+- proportional UI improvements across study page and lesson view
+- hide header during full onboarding flow, remove broken onboarding tips
+- Remove media/ prefix from blob CDN redirect
+- Move media CDN redirect to next.config.js redirects
+- Relax blob token regex, add BLOB_PUBLIC_BASE_URL fallback
+- Add collection prefix to media CDN redirect URL
+- Compute bounding box for geometry so points aren't clumped at origin
+- Simplify course slug detection to URL path only
+- Always show expandable search dropdown, never navigate to /search
+- **1031-260326-124709:** address review
+- Make search work globally and add course content to /search page
+- Resolve courseSlug from grade profile on /study, /practice, /ask pages
+- Revert lessons query depth back to 2
+- **1031-260326-124709:** address review
+- Update system events contract test for photo_sent_to_chat
+- Use gemini-2.5-flash-lite model (2.0 is deprecated for this API key)
+- Use Gemini instead of OpenAI for Hebrew slug translation
+- Ensure slug uniqueness on create/duplication even without -copy suffix
+- Auto-generate lesson slugs from Hebrew titles with transliteration (#758) (#758)
+- Add bare domain blob.vercel-storage.com to CSP connect-src
+- Add blob.vercel-storage.com to CSP connect-src and track photo uploads in Mixpanel
+- Redirect media to Vercel Blob CDN, bypass serverless proxy
+- Resolve merge conflict in useNotebookChat with dev
+- Move quota bar outside header so it shows without reset button
+- Add jsdelivr to style-src CSP for Monaco editor styles
+- Show proper quota message instead of guest login CTA
+
+### Performance
+
+- eliminate Vercel cold-start slowdowns
+- Optimize build time by externalizing server packages and improving bundling
+- Rewrite PDF requests to Blob CDN at edge
+- Server-side prefetch for study/test/practice pages
+- Parallelize DB queries, reduce depth, add cache headers
+
+### CI/CD
+
+- Skip e2e-gate on PRs targeting dev branch
+- Remove dev branch from push trigger in CI workflow
+- retrigger CI to pick up e2e-gate job
+- add E2E gate job on PRs to main
+- Auto-remove closed issues from project board
+- Auto-label new issues with kody:backlog
+- Use PROJECT_TOKEN for org project board sync
+- Add workflow to sync kody labels to project board
+
+### Documentation
+
+- codify design system conventions for Kody agents
+
+### Maintenance
+
+- release v0.24.0 (#1230) (#1230)
+- Update pnpm-lock.yaml
+- Update pnpm-lock.yaml
+- Update release-publisher cron and add kody watch agents
+- Add analytics env vars to playwright config and lint e2e test
+- add kody task artifacts [skip ci]
+- **release:** Update release-publisher agent for full flow
+- **deps:** Update @kody-ade/engine to ^0.1.118
+- **deps:** Update @kody-ade/engine to ^0.1.117
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- Sync kody.yml from engine and preserve A-Guy customizations
+- 10x budget increase for all pipeline stages (debug)
+- 10x budget increase for all pipeline stages (debug)
+- release v0.23.0
+- Regenerate payload types for context_extraction origin
+- Remove triangle proof fixture
+- Remove dev-only guided explanation demo page
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- **ci:** remove redundant smoke-test job from kody workflow
+- **ci:** remove redundant smoke-test job from kody workflow
+- merge dev, resolve .kody conflict
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- format PDFMedia and http-retry test
+- Replace semantic-release with @kody release
+- Add Slack notification to release config
+- release v0.23.0
+- Bump @kody-ade/engine to 0.1.32
+- Bump @kody-ade/engine to 0.1.31
+- Bump @kody-ade/engine to 0.1.30
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- bump @kody-ade/engine to 0.1.24 (approve parsing fix)
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- Redeploy with updated Mixpanel token
+- Trigger Vercel preview redeploy
+- Fix Prettier formatting on merged files
+- Migrate to @kody-ade/engine package
+- Fix malformed task.json and format task files
+- Fix prettier formatting — add missing trailing newlines
+- add kody task artifacts [skip ci]
+- Upgrade kody-engine-lite to v0.1.148
+- add kody task artifacts [skip ci]
+- upgrade kody-engine-lite to v0.1.147
+- update lockfile for kody-engine-lite 0.1.141
+- Bump kody-engine-lite to ^0.1.141
+- update lockfile for kody-engine-lite 0.1.137
+- Bump kody-engine-lite to ^0.1.137
+- update lockfile for kody-engine-lite 0.1.136
+- Bump kody-engine-lite to ^0.1.136
+- Format generated pattern index
+- Bump kody-engine-lite to ^0.1.134
+- Bump kody-engine-lite to ^0.1.129
+- Disable MCP dev server in CI
+- Bump kody-engine-lite to ^0.1.125
+- add kody task artifacts [skip ci]
+- Format kody task artifacts
+- Fix prettier formatting on config files
+- Sync kody.yml with engine template v0.1.107
+- auto-forward all GitHub secrets as env vars in kody workflow
+- add dev server env secrets to kody config
+- Format files from dev merge
+- Merge dev into kody
+- Update lockfile to kody-engine-lite 0.1.104
+- pin kody-engine-lite to ^0.1.104
+- merge dev into kody
+- add QA guide with routes, auth, and test credentials
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- Add Kody project memory and step files
+- Fix formatting in kody task artifacts
+- Fix formatting in kody task artifacts
+- Rename MINIMAX_API_KEY to ANTHROPIC_COMPATIBLE_API_KEY in kody workflow
+- Retrigger CI
+- sync workflow template from Kody-Engine-Lite (add litellm, minimax, bootstrap)
+- update local agent config to minimax and add opencode config
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- Sync lockfile with package.json kody-engine-lite specifier
+- Remove redeploy trigger file
+- Remove time.ts from branch
+- Merge dev, update lockfile
+- Add kody-engine-lite as local dep, remove cody workflow, update gitignore
+- add kody task artifacts [skip ci]
+- Add backfill script for parentCourse denormalized field
+- Trigger redeploy for env var pickup
+- **ci:** Reduce artifact retention to 3 days
+- Add Kody project memory and step files
+- Add Kody Engine workflow and config
+- Clean kody.config.json to match updated engine schema
+- Remove bootstrap files for GH Actions bootstrap test
+- Add Kody project memory and step files
+- Add Kody Engine configuration
+- Update kody workflow v0.1.16
+- Update kody workflow v0.1.15
+- Update kody workflow v0.1.13
+- Update kody workflow v0.1.11
+- Trigger redeploy with Mixpanel preview token
+- Gitignore latex_examples and shay-tassk directories
+- Add kody-engine-lite workflow, config, and memory
+
+### Other Changes
+
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev
+- Merge pull request #1224 from A-Guy-educ/chore/update-release-publisher-cron
+- Undo local CI fixes from dev
+- Merge pull request #1221 from A-Guy-educ/1219--security-5x-route-without-authentication
+- Merge pull request #1216 from A-Guy-educ/1206--fix-restrict-all-learning-features-to-registere
+- Merge pull request #1222 from A-Guy-educ/chore/analytics-ai-docs-workflow-updates
+- Merge branch 'dev' into 1206--fix-restrict-all-learning-features-to-registere
+- Merge pull request #1200 from A-Guy-educ/feat/replace-lesson-context-in-convert-process
+- Revert "fix: Three-stage JSON parse recovery for LLM output"
+- Fix prettier formatting in copilotkit route and kody event log
+- Merge pull request #1215 from A-Guy-educ/1197--security-5x-route-without-authentication
+- Format long line in oauth_callback_helpers.ts
+- Merge pull request #1133 from A-Guy-educ/1098--bug-oauth-race-recovery-returns-302-with-no-loc
+- Merge pull request #1210 from A-Guy-educ/fix/kody-config-format
+- Merge pull request #1208 from A-Guy-educ/chore/10x-pipeline-budget
+- Merge branch 'main' into dev
+- Merge pull request #1204 from A-Guy-educ/release/v0.23.0
+- Merge remote-tracking branch 'origin/dev' into feat/replace-lesson-context-in-convert-process
+- Merge pull request #1202 from A-Guy-educ/fix/context-exercise-parser-gaps
+- Merge pull request #1201 from A-Guy-educ/feat/fix-ci
+- Merge pull request #1189 from A-Guy-educ/feat/context-blocks-to-exe
+- Merge pull request #1194 from A-Guy-educ/feat/fix-convert-context-button-color
+- Merge pull request #1181 from A-Guy-educ/feat/fix-context-exe-from-pdf
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into feat/context-blocks-to-exe
+- Merge pull request #1193 from A-Guy-educ/feat/fix-ci-fail
+- Revert "chore: Regenerate payload types for context_extraction origin"
+- Format context-exercise-viewer with Prettier
+- Merge pull request #1187 from A-Guy-educ/feat/create-latex-block
+- Merge pull request #1186 from A-Guy-educ/feat/increase-lesson-context-limit
+- Merge remote-tracking branch 'origin/dev' into feat/fix-context-exe-from-pdf
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev
+- Merge pull request #1185 from A-Guy-educ/fix/pre-existing-lint-prettier
+- Revert "style: Format .claude/settings.json with Prettier"
+- Format .claude/settings.json with Prettier
+- Merge branch 'fix/pre-existing-lint-prettier' into feat/fix-context-exe-from-pdf
+- Merge pull request #1168 from A-Guy-educ/1167--implement-iterative-page-by-page-pdf-to-latex-ex
+- apply Prettier formatting to all modified files
+- Revert "feat(kody-watch): trigger on PR merge to dev, not daily schedule"
+- Merge branch 'dev' into 1167--implement-iterative-page-by-page-pdf-to-latex-ex
+- Merge pull request #1075 from A-Guy-educ/feat/pdf-to-latex-quality-reliability
+- Merge pull request #1165 from A-Guy-educ/feat/mixpanel-update
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into feat/pdf-to-latex-quality-reliability
+- Merge pull request #1145 from A-Guy-educ/1144--fix-mixpanel-user-identity-merging-on-login
+- Merge pull request #1148 from A-Guy-educ/1146--context-exercise-viewer-display-parsed-exercis
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into 1144--fix-mixpanel-user-identity-merging-on-login
+- Merge remote-tracking branch 'origin/dev' into 1146--context-exercise-viewer-display-parsed-exercis
+- Merge pull request #1125 from A-Guy-educ/1121--image-upload-error-handling-quality-constraint
+- format kody.yml with prettier
+- format AskPrimaryContent with prettier
+- Merge remote-tracking branch 'origin/dev' into 1121--image-upload-error-handling-quality-constraint
+- Merge pull request #1129 from A-Guy-educ/1119--intermittent-pdf-loading-failures-404-silent
+- Merge remote-tracking branch 'origin/dev' into 1121--image-upload-error-handling-quality-constraint
+- Merge pull request #1127 from A-Guy-educ/fix/latex-chat-rendering
+- format exercise-chat-agent-prompt.md with prettier
+- Merge remote-tracking branch 'origin/dev' into 1119--intermittent-pdf-loading-failures-404-silent
+- format useDirectChatAssetUpload with prettier
+- Merge pull request #1140 from A-Guy-educ/release/v0.23.0
+- Merge branch 'dev' into release/v0.23.0
+- Merge pull request #1049 from A-Guy-educ/1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge remote-tracking branch 'origin/dev' into 1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge pull request #1124 from A-Guy-educ/1118--bug-broken-lesson-url-generation-view-suffix
+- Merge pull request #1080 from A-Guy-educ/feat/mixpanel-lesson-loading-tracking
+- Merge pull request #1116 from A-Guy-educ/feat/mixpanel-user-data-check
+- Merge pull request #1122 from A-Guy-educ/1117--bug-system-slowness-media-timeouts
+- Merge remote-tracking branch 'origin/dev' into feat/mixpanel-lesson-loading-tracking
+- Merge pull request #1059 from A-Guy-educ/1057--localization-teacher-profile-selection-hebrew
+- Merge branch 'main' into dev
+- Merge branch 'chore/migrate-engine-package'
+- Merge branch 'chore/migrate-engine-package'
+- Merge pull request #1110 from A-Guy-educ/1109--fix-admin-dashboard-header-should-display-curre
+- Merge branch 'dev' into kody
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge pull request #1104 from A-Guy-educ/1094--bug-access-code-redemption-toctou-race-conditio
+- Merge pull request #1105 from A-Guy-educ/feat/exercise-ui-redesign
+- Re-enable MCP dev server
+- Merge branch 'dev' into kody
+- Merge branch 'dev' into 1057--localization-teacher-profile-selection-hebrew
+- Format kody task files for Prettier
+- Merge pull request #1079 from A-Guy-educ/1063--course-integrated-exam-prep-enhancement
+- Merge remote-tracking branch 'origin/dev' into 1063--course-integrated-exam-prep-enhancement
+- Merge branch 'dev' into feat/pdf-to-latex-quality-reliability
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge pull request #1087 from A-Guy-educ/1081--lesson-search-in-admin-should-also-search-by-cou
+- Merge pull request #1084 from A-Guy-educ/1083--admin-should-be-able-to-edit-and-delete-exercise
+- Merge remote-tracking branch 'origin/kody' into feat/pdf-to-latex-quality-reliability
+- Merge pull request #1074 from A-Guy-educ/fix/ci-workflow-versions
+- Merge remote-tracking branch 'origin/kody' into 1057--localization-teacher-profile-selection-hebrew
+- Merge pull request #1047 from A-Guy-educ/feat/admin-content-navigation-links
+- Merge pull request #1076 from A-Guy-educ/kody-bootstrap-1774955768848
+- Merge remote-tracking branch 'origin/dev' into feat/pdf-to-latex-quality-reliability
+- Revert "chore: Fix formatting in kody task artifacts"
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into 1057--localization-teacher-profile-selection-hebrew
+- Merge pull request #1068 from A-Guy-educ/dev
+- Merge branch 'dev' into feat/admin-content-navigation-links
+- fix prettier formatting in kody task files
+- Merge remote-tracking branch 'origin/dev' into 1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge pull request #1045 from A-Guy-educ/feat/json-edit-in-admin
+- Fix prettier formatting
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- update feat/json-edit-in-admin from origin/dev
+- fix prettier formatting across 53 files
+- Merge pull request #1054 from A-Guy-educ/refactor/modernize-ui-consistency
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into 1057--localization-teacher-profile-selection-hebrew
+- Merge remote-tracking branch 'origin/dev' into feat/pdf-to-latex-audit
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- Merge remote-tracking branch 'origin/dev' into feat/pdf-to-latex-audit
+- Revert "fix: Bump PDF_TO_EXERCISE maxOutputTokens to 65536"
+- Merge branch 'dev' into 1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- Merge pull request #1053 from A-Guy-educ/1051--auto-populate-lesson-blocks-from-related-content
+- Merge pull request #1021 from A-Guy-educ/feat/chat-usage-limit
+- Merge pull request #1032 from A-Guy-educ/fix/media-cdn-redirect
+- Merge remote-tracking branch 'origin/dev' into fix/media-cdn-redirect
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- Merge pull request #960 from A-Guy-educ/main
+- Merge pull request #1035 from A-Guy-educ/1031--security-8x-route-without-authentication
+- Merge pull request #1036 from A-Guy-educ/feat/course-header-dropdown
+- Merge pull request #1033 from A-Guy-educ/feat/upload-pic-iphone
+- Merge pull request #1027 from A-Guy-educ/feat/spacing-block-control
+- Merge pull request #1034 from A-Guy-educ/feat/automatic-slug
+- Merge pull request #1014 from A-Guy-educ/feat/latex-ai-converter
+- Merge pull request #1043 from A-Guy-educ/kody/bootstrap-1774769461678
+- Merge pull request #1013 from A-Guy-educ/feat/latex-renderer
+- Merge pull request #1044 from A-Guy-educ/feat/fix-ci-build
+- Merge branch 'dev' into feat/fix-ci-build
+- Merge branch 'feat/latex-renderer' of https://github.com/A-Guy-educ/A-Guy into feat/latex-renderer
+- Merge remote-tracking branch 'origin/dev' into 1031--security-8x-route-without-authentication
+
+### Refactoring
+
+- redesign dark mode, exercise UI, and NavigationBar
+- Use per-locale documents for TeacherProfiles instead of dual fields
+- study page uses shared CourseLessonCard instead of duplicate LessonGridCard
+- unified card design with top accent bars, 3-col grid, design abstractions
+- convert search from inline header to command palette modal
+- unify all 13 card components with one visual design language
+- complete UI modernization — all remaining components
+- modernize UI with consistent design tokens across 87 files
+- Simplify PDF-to-LaTeX extraction back to single LLM call
+- Extract time conversion to shared util
+- Use existing chat config domain for quota settings
+
+### Tests
+
+- Update display math test to expect rich_text instead of latex
+- Update PDF_TO_EXERCISE maxOutputTokens assertions to 32768
+
+
+## [0.24.0] - 2026-04-15
+
+### Features
+
+- **watch:** Add notify.ts dispatcher and notify.config.json
+- Pause/resume player and preserve image when navigating back
+- Ask page interactive lesson player (V1 with V2 learnings)
+- **1219-260415-091538:** implement task
+- **1206-260414-135048:** implement task
+- **1197-260414-150706:** implement task
+- Decouple PDF extraction storage from lessonContextText
+- add system-test agent to kody-watch, increase timeout to 90min
+- add e2eCommand to release config
+- add system-test watch agent
+- add system-test watch agent
+- Create exercises from context text as LaTeX blocks
+- HTML-to-GuidedExplanation converter with Import HTML button
+- Merge guided explanation into HTML block
+- Guided explanation runner with triangle proof demo
+- Add LaTeX block UI (admin editor + frontend renderer)
+- Increase lessonContextText limit from 100K to 200K chars
+- Refactor card components and introduce UnifiedCard
+- **kody-watch:** trigger on PR merge to dev, not daily schedule
+- add 3 watch agents for continuous QA monitoring
+- **fix-pr-1168-260409-133302:** implement task
+- **1167-260409-114345:** implement task
+- Add registration popup funnel tracking for Mixpanel
+- make context exercise viewer editable per exercise
+- auto-clear rejected image in Ask tab so student can re-upload
+- **fix-pr-1125-260406-124006:** implement task
+- **1146-260406-104845:** implement task
+- Add ContextExerciseViewer UI component for lesson context
+- **fix-pr-1145-260406-105358:** implement task
+- **1144-260406-100413:** implement task
+- strengthen cropped image detection — check all edges before helping
+- cover all image issue cases and enforce language matching
+- require AI to explain image issues and give upload tips
+- strengthen image handling instructions to reject non-educational images
+- inject image handling instructions into chat prompt pipeline
+- Extract geometry from inline \draw coordinates
+- Scale LaTeX parser to handle all 55 lesson formats
+- add actionable image feedback in chat and improve upload error messages
+- Enable @kody release command
+- **chat:** implement task
+- **1098-260405-135505:** implement task
+- **acceptable:** implement task
+- **1121-260405-102217:** implement task
+- **1118-260405-102030:** implement task
+- **1117-260405-101944:** implement task
+- Send selected course to Mixpanel user profile on course selection
+- Send enrolled course to Mixpanel user profile
+- Switch to MiniMax provider for all stages
+- Add Next.js build warmup step before pipeline
+- **1109-260403-091343:** implement task
+- **1109-260403-085917:** implement task
+- Add playwright-cli tool for browser verification
+- add top-level devServer with 120s timeout and stdout detection
+- Exercise UI/UX redesign with animations across all question types
+- **1094-260402-111508:** implement task
+- all-Claude model config for maximum reliability
+- all-Claude model config for maximum reliability
+- multi-provider model config — GPT-5.3 Codex, Claude, Gemini per stage
+- multi-provider model config — GPT-5.3 Codex, Claude, Gemini per stage
+- enable Playwright MCP for UI task verification
+- **1081-260331-181546:** implement task
+- **1083-260331-181351:** implement task
+- Add Mixpanel tracking for lesson loading lifecycle
+- **1063-260331-155210:** implement task
+- **fix-pr-1075-260331-155519:** implement task
+- Multi-axis graph block and geometry admin panel fixes
+- **fix-pr-1075-260331-130624:** implement task
+- **fix-pr-1059-260331-124107:** implement task
+- Add exercise count validation with auto-retry on extraction
+- PDF-to-LaTeX quality, reliability & adapter refactor
+- Add afterRead lazy backfill for course/chapter filter fields
+- Add two-pass extraction — retry with solutions-only if truncated
+- Rename parentCourse to course, add chapter filter to exercises
+- **1057-260330-075754:** implement task
+- add shared design abstractions and unified card layout
+- Add user-facing warnings for PDF extraction edge cases
+- page transitions, stats alignment, mobile touch refinements
+- UI polish batch — card unification, empty states, skeletons, dark mode, micro-interactions
+- add Tier 4 infrastructure — Storybook stories, visual regression tests, PWA
+- add UX improvements — mobile, a11y, performance, celebrations, onboarding, search, themes
+- redesign course cards, lesson view, and navigation
+- add immersive landing page with animated hero, features, and CTA sections
+- add visual polish — gradient borders, stagger animations, glass header, bento stats, auth redesign
+- **1051-260329-144735:** implement task
+- **1048-260329-114423:** implement task
+- Add segmented PDF-to-LaTeX extraction for lesson context
+- Add content hierarchy navigation and course filtering in admin
+- Add full exercise JSON edit with structural validation
+- Wire script parser to import-latex endpoint
+- AI-powered LaTeX import with per-exercise chunking
+- Show courses in global search results
+- Add course-specific search in header dropdown (#732) (#732)
+- **1031-260326-124709:** implement task
+- Translate Hebrew titles to English via OpenAI for lesson slugs
+- LaTeX document viewer and graph/geometry rendering fixes
+- Add default block spacing to Content Pages collection
+- LaTeX document viewer and graph/geometry rendering fixes
+- Add configurable block spacing with page-level default and per-block override
+- Add chat usage limit — 15 questions per 12-hour rolling window
+
+### Bug Fixes
+
+- **watch:** Increase release-publisher timeout to 2 hours
+- **ci:** Resolve dev branch CI failures
+- Handle pnpm audit npm endpoint retirement in CI
+- Format event-log.json with Prettier
+- Handle pnpm audit npm endpoint retirement in CI
+- Format event-log.json with Prettier
+- Update locale middleware test import path to src/middleware
+- Move middleware.ts to src/ so Next.js actually loads it
+- Format auth middleware test file with Prettier
+- Address PR review findings (color escape, PDF accept, error leak, prompt enum)
+- Add temperature 0 and LaTeX escape repair
+- Three-stage JSON parse recovery for LLM output
+- Restore original V1 quality and remove review-flagged dead code
+- **1219-260415-091538:** address review
+- **llm:** Use ReadableStream.from() for Genkit stream bridging
+- Replace custom AsyncIterable wrapper with async generator
+- Skip e2e-gate when PR targets dev branch
+- Skip e2e-gate when source branch is dev
+- Skip e2e-gate on PRs to dev branch
+- **release:** Agent regenerates pnpm-lock.yaml after version bump
+- **deps:** Update pnpm-lock.yaml for @kody-ade/engine ^0.1.118
+- **1206-260414-135048:** address review
+- **1197-260414-150706:** address review
+- **ci:** remove smoke-test job from kody workflow
+- Normalize formatting in kody.config.json
+- Prevent context exercises from auto-adding to lesson blocks
+- Handle all exercise numbering patterns in context-exercise-parser
+- Format kody.config.json to pass prettier check
+- agent creates its own issue, no WATCH_DIGEST_ISSUE_SYSTEM_TEST needed
+- remove WATCH_DIGEST_ISSUE_SYSTEM_TEST (agent creates its own issue)
+- Resolve merge conflict with dev, update shared parser
+- Make Convert Context button visible with correct styling
+- Move Create Exercises button below exercise cards
+- Reduce Create Exercises button size to match title height
+- Add context_extraction origin to Exercises collection
+- Use white background with black border for Create Exercises button
+- Improve Create Exercises button contrast in dark mode
+- Remove unused ApiErrors import
+- Replace inline styles with Tailwind classes in LatexBlockEditor
+- **kody:** add COMMENT_AUTHOR_ASSOC env var so @kody review works on PRs
+- Remove unnecessary preview from LatexBlockEditor
+- Force type=button on author HTML buttons
+- Sanitize SVG to prevent XSS and remove dead shouldCancel param
+- Address PR review findings
+- Parse all function calls per line in HTML converter
+- Use ref for SVG scene to prevent animation class wipe
+- Pick longest solution when duplicate solution headers exist
+- Use בהצלחה as exercise section boundary to prevent false exercises
+- Reset nesting level in orphan detection when exiting blocks
+- Keep last setcounter occurrence for duplicate exercise numbers
+- Detect exercises in orphan enumerate blocks for remaining gaps
+- Only scan for continuation exercises when next number is missing
+- Use text position for content boundaries, number for display order
+- Detect continuation exercises and sort by number
+- Improve setcounter exercise detection in context viewer
+- Resolve pre-existing lint and tooling issues
+- add missing eslint-config-next dependency and format globals.css
+- context exercise viewer now detects setcounter-style exercise boundaries
+- **ci:** migrate ESLint config to flat format and fix lint errors
+- rewrite stitching logic and restore validation in page-by-page extraction
+- add provider to watch config so kody-engine watch runs
+- **fix-pr-1168-260409-133302:** address review
+- Update system events count in contract test for new registration popup events
+- preserve identified user on Mixpanel SDK init instead of resetting to anonymous
+- remove alias() from login flow — only use it on signup
+- call alias() before events in signup flow to merge anonymous history
+- call alias() before identify() on login to merge anonymous Mixpanel profiles
+- use PROJECT_TOKEN so label changes trigger board sync
+- use PROJECT_TOKEN for pipeline so label changes trigger board sync
+- **fix-pr-1125-260406-124006:** address review
+- **fix-pr-1145-260406-105358:** address review
+- **mcq:** guard against undefined content in fraction transform
+- Emit display math as rich_text instead of latex blocks
+- Use brace-counting for color stripping instead of regex
+- Strip leaked env tags, fix bracket labels, improve quality to 97%
+- Use balanced brace matching for color stripping
+- Collapse whitespace in parsed text, disable geometry axes
+- Strip color/sizing from math, remove labels, fix orphaned braces
+- **ci:** Use pnpm exec for kody-engine in smoke-test job
+- Normalize spaced LaTeX delimiters and prevent raw JSON in chat
+- **chat:** address review
+- Ignore .agents and .kody dirs in prettier checks
+- Remove duplicate LessonAnalytics and dead LessonLoadTimeoutTracker
+- update @kody-ade/engine to 0.1.23, use local dep instead of global install
+- use global kody-engine binary, fix notify job missing issue number
+- add missing kody-engine install to orchestrate and smoke-test jobs
+- Increase build warmup memory limit to 4GB
+- Increase build warmup memory limit to 4GB
+- Increase build warmup timeout to 15 minutes
+- Increase dev server timeout to 180s for cold starts
+- **1109-260403-091343:** address review
+- Regenerate lockfile for kody-engine-lite v0.1.148
+- **1109-260403-085917:** address review
+- Remove MCP config, use playwright-cli for browser verification
+- Enable MCP for Playwright browser verification with Claude
+- Regenerate lockfile for kody-engine-lite v0.1.147
+- restore @napi-rs/canvas version corrupted by sed
+- repair broken lockfile integrity hash
+- set defaultBranch to dev (was kody, breaking @kody resolve)
+- **1094-260402-111508:** address review
+- Align kody.config.json with schema and add per-stage config support
+- Align kody.config.json with schema and add per-stage config support
+- use heredoc syntax for multiline secret values in GITHUB_ENV
+- use project-local kody-engine-lite instead of global install
+- persist lessonRef through study plan API so lesson links work
+- Line labels, dot defaults, and admin canvas background
+- sync kody.yml with dev to unblock push
+- strip carriage returns from comment body before parsing
+- format LessonBlocksField imports
+- update kody.yml to latest template with fix-ci and resolve support
+- resolve course lookup in LessonSelector using grade level
+- Update system events schema count in test (34 → 37)
+- **fix-pr-1075-260331-155519:** address review
+- **fix-pr-1075-260331-130624:** address review
+- **fix-pr-1059-260331-124107:** address review
+- Update missed test assertion for PDF_TO_EXERCISE temperature 0.1
+- Revert PDF_TO_EXERCISE temperature to 0.1
+- reduce kody artifact retention and scope to current task only
+- Iterative solution passes to handle truncation of long exams
+- **ci:** Downgrade actions to v4 and reduce artifact storage usage
+- Re-process partially migrated profiles missing label field
+- Filter profiles by exact locale match and deduplicate by slug
+- Migration converts legacy dual-field profiles to per-locale docs
+- **ci:** Upload build artifact on main push for QA Scenarios
+- Repair broken merge in Exercises collection config
+- Extract exercise hooks to avoid TS1117 on CI
+- use lockfile hash for Next.js build cache key
+- Address Kody review feedback
+- Skip afterRead lazy backfill during build-time reads
+- remove unused JSON side panel state and resize logic
+- remove old JSON panel toggle button from exercise editor
+- update tests to match design token migration and actual source code
+- resolve merge conflicts with dev (keep CSS transitions over framer-motion)
+- Format kody.yml to pass Prettier check in CI
+- Remove undeclared framer-motion dependency breaking CI typecheck
+- Revert config additions for chat and tool-calling generate calls
+- Bump PDF_TO_EXERCISE maxOutputTokens to 65536
+- resolve all ESLint errors and design token warnings
+- Use caller's maxOutputTokens when provided in multimodal completion
+- Use Math.max for maxOutputTokens to prevent DB config truncation
+- Re-fetch teacher profiles on locale change without page refresh
+- Pass temperature and maxOutputTokens to Genkit ai.generate()
+- add missing Clock import and progressText variable
+- top accent bar cards + 3-column grid for lesson cards
+- Skip build artifact upload on non-E2E CI runs
+- Skip build artifact upload on non-E2E CI runs
+- Format pattern-index.json for pre-push verification
+- Format files and fix task.json markdown fences to pass CI
+- Merge duplicate hooks blocks in Exercises collection
+- CourseCard badge clipping — remove overflow-hidden, modernize styling
+- align course page with new design — single column, unified cards, compact search icon
+- restore ProgressCircle in lesson cards
+- add color accent bar to lesson cards and fix badge clipping
+- proportional UI improvements across study page and lesson view
+- hide header during full onboarding flow, remove broken onboarding tips
+- Remove media/ prefix from blob CDN redirect
+- Move media CDN redirect to next.config.js redirects
+- Relax blob token regex, add BLOB_PUBLIC_BASE_URL fallback
+- Add collection prefix to media CDN redirect URL
+- Compute bounding box for geometry so points aren't clumped at origin
+- Simplify course slug detection to URL path only
+- Always show expandable search dropdown, never navigate to /search
+- **1031-260326-124709:** address review
+- Make search work globally and add course content to /search page
+- Resolve courseSlug from grade profile on /study, /practice, /ask pages
+- Revert lessons query depth back to 2
+- **1031-260326-124709:** address review
+- Update system events contract test for photo_sent_to_chat
+- Use gemini-2.5-flash-lite model (2.0 is deprecated for this API key)
+- Use Gemini instead of OpenAI for Hebrew slug translation
+- Ensure slug uniqueness on create/duplication even without -copy suffix
+- Auto-generate lesson slugs from Hebrew titles with transliteration (#758) (#758)
+- Add bare domain blob.vercel-storage.com to CSP connect-src
+- Add blob.vercel-storage.com to CSP connect-src and track photo uploads in Mixpanel
+- Redirect media to Vercel Blob CDN, bypass serverless proxy
+- Resolve merge conflict in useNotebookChat with dev
+- Move quota bar outside header so it shows without reset button
+- Add jsdelivr to style-src CSP for Monaco editor styles
+- Show proper quota message instead of guest login CTA
+
+### Performance
+
+- eliminate Vercel cold-start slowdowns
+- Optimize build time by externalizing server packages and improving bundling
+- Rewrite PDF requests to Blob CDN at edge
+- Server-side prefetch for study/test/practice pages
+- Parallelize DB queries, reduce depth, add cache headers
+
+### CI/CD
+
+- Skip e2e-gate on PRs targeting dev branch
+- Remove dev branch from push trigger in CI workflow
+- retrigger CI to pick up e2e-gate job
+- add E2E gate job on PRs to main
+- Auto-remove closed issues from project board
+- Auto-label new issues with kody:backlog
+- Use PROJECT_TOKEN for org project board sync
+- Add workflow to sync kody labels to project board
+
+### Documentation
+
+- codify design system conventions for Kody agents
+
+### Maintenance
+
+- Update pnpm-lock.yaml
+- Update pnpm-lock.yaml
+- Update release-publisher cron and add kody watch agents
+- Add analytics env vars to playwright config and lint e2e test
+- add kody task artifacts [skip ci]
+- **release:** Update release-publisher agent for full flow
+- **deps:** Update @kody-ade/engine to ^0.1.118
+- **deps:** Update @kody-ade/engine to ^0.1.117
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- Sync kody.yml from engine and preserve A-Guy customizations
+- 10x budget increase for all pipeline stages (debug)
+- 10x budget increase for all pipeline stages (debug)
+- release v0.23.0
+- Regenerate payload types for context_extraction origin
+- Remove triangle proof fixture
+- Remove dev-only guided explanation demo page
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- **ci:** remove redundant smoke-test job from kody workflow
+- **ci:** remove redundant smoke-test job from kody workflow
+- merge dev, resolve .kody conflict
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- format PDFMedia and http-retry test
+- Replace semantic-release with @kody release
+- Add Slack notification to release config
+- release v0.23.0
+- Bump @kody-ade/engine to 0.1.32
+- Bump @kody-ade/engine to 0.1.31
+- Bump @kody-ade/engine to 0.1.30
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- bump @kody-ade/engine to 0.1.24 (approve parsing fix)
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- Redeploy with updated Mixpanel token
+- Trigger Vercel preview redeploy
+- Fix Prettier formatting on merged files
+- Migrate to @kody-ade/engine package
+- Fix malformed task.json and format task files
+- Fix prettier formatting — add missing trailing newlines
+- add kody task artifacts [skip ci]
+- Upgrade kody-engine-lite to v0.1.148
+- add kody task artifacts [skip ci]
+- upgrade kody-engine-lite to v0.1.147
+- update lockfile for kody-engine-lite 0.1.141
+- Bump kody-engine-lite to ^0.1.141
+- update lockfile for kody-engine-lite 0.1.137
+- Bump kody-engine-lite to ^0.1.137
+- update lockfile for kody-engine-lite 0.1.136
+- Bump kody-engine-lite to ^0.1.136
+- Format generated pattern index
+- Bump kody-engine-lite to ^0.1.134
+- Bump kody-engine-lite to ^0.1.129
+- Disable MCP dev server in CI
+- Bump kody-engine-lite to ^0.1.125
+- add kody task artifacts [skip ci]
+- Format kody task artifacts
+- Fix prettier formatting on config files
+- Sync kody.yml with engine template v0.1.107
+- auto-forward all GitHub secrets as env vars in kody workflow
+- add dev server env secrets to kody config
+- Format files from dev merge
+- Merge dev into kody
+- Update lockfile to kody-engine-lite 0.1.104
+- pin kody-engine-lite to ^0.1.104
+- merge dev into kody
+- add QA guide with routes, auth, and test credentials
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- Add Kody project memory and step files
+- Fix formatting in kody task artifacts
+- Fix formatting in kody task artifacts
+- Rename MINIMAX_API_KEY to ANTHROPIC_COMPATIBLE_API_KEY in kody workflow
+- Retrigger CI
+- sync workflow template from Kody-Engine-Lite (add litellm, minimax, bootstrap)
+- update local agent config to minimax and add opencode config
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- Sync lockfile with package.json kody-engine-lite specifier
+- Remove redeploy trigger file
+- Remove time.ts from branch
+- Merge dev, update lockfile
+- Add kody-engine-lite as local dep, remove cody workflow, update gitignore
+- add kody task artifacts [skip ci]
+- Add backfill script for parentCourse denormalized field
+- Trigger redeploy for env var pickup
+- **ci:** Reduce artifact retention to 3 days
+- Add Kody project memory and step files
+- Add Kody Engine workflow and config
+- Clean kody.config.json to match updated engine schema
+- Remove bootstrap files for GH Actions bootstrap test
+- Add Kody project memory and step files
+- Add Kody Engine configuration
+- Update kody workflow v0.1.16
+- Update kody workflow v0.1.15
+- Update kody workflow v0.1.13
+- Update kody workflow v0.1.11
+- Trigger redeploy with Mixpanel preview token
+- Gitignore latex_examples and shay-tassk directories
+- Add kody-engine-lite workflow, config, and memory
+
+### Other Changes
+
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev
+- Merge pull request #1224 from A-Guy-educ/chore/update-release-publisher-cron
+- Undo local CI fixes from dev
+- Merge pull request #1221 from A-Guy-educ/1219--security-5x-route-without-authentication
+- Merge pull request #1216 from A-Guy-educ/1206--fix-restrict-all-learning-features-to-registere
+- Merge pull request #1222 from A-Guy-educ/chore/analytics-ai-docs-workflow-updates
+- Merge branch 'dev' into 1206--fix-restrict-all-learning-features-to-registere
+- Merge pull request #1200 from A-Guy-educ/feat/replace-lesson-context-in-convert-process
+- Revert "fix: Three-stage JSON parse recovery for LLM output"
+- Fix prettier formatting in copilotkit route and kody event log
+- Merge pull request #1215 from A-Guy-educ/1197--security-5x-route-without-authentication
+- Format long line in oauth_callback_helpers.ts
+- Merge pull request #1133 from A-Guy-educ/1098--bug-oauth-race-recovery-returns-302-with-no-loc
+- Merge pull request #1210 from A-Guy-educ/fix/kody-config-format
+- Merge pull request #1208 from A-Guy-educ/chore/10x-pipeline-budget
+- Merge branch 'main' into dev
+- Merge pull request #1204 from A-Guy-educ/release/v0.23.0
+- Merge remote-tracking branch 'origin/dev' into feat/replace-lesson-context-in-convert-process
+- Merge pull request #1202 from A-Guy-educ/fix/context-exercise-parser-gaps
+- Merge pull request #1201 from A-Guy-educ/feat/fix-ci
+- Merge pull request #1189 from A-Guy-educ/feat/context-blocks-to-exe
+- Merge pull request #1194 from A-Guy-educ/feat/fix-convert-context-button-color
+- Merge pull request #1181 from A-Guy-educ/feat/fix-context-exe-from-pdf
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into feat/context-blocks-to-exe
+- Merge pull request #1193 from A-Guy-educ/feat/fix-ci-fail
+- Revert "chore: Regenerate payload types for context_extraction origin"
+- Format context-exercise-viewer with Prettier
+- Merge pull request #1187 from A-Guy-educ/feat/create-latex-block
+- Merge pull request #1186 from A-Guy-educ/feat/increase-lesson-context-limit
+- Merge remote-tracking branch 'origin/dev' into feat/fix-context-exe-from-pdf
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev
+- Merge pull request #1185 from A-Guy-educ/fix/pre-existing-lint-prettier
+- Revert "style: Format .claude/settings.json with Prettier"
+- Format .claude/settings.json with Prettier
+- Merge branch 'fix/pre-existing-lint-prettier' into feat/fix-context-exe-from-pdf
+- Merge pull request #1168 from A-Guy-educ/1167--implement-iterative-page-by-page-pdf-to-latex-ex
+- apply Prettier formatting to all modified files
+- Revert "feat(kody-watch): trigger on PR merge to dev, not daily schedule"
+- Merge branch 'dev' into 1167--implement-iterative-page-by-page-pdf-to-latex-ex
+- Merge pull request #1075 from A-Guy-educ/feat/pdf-to-latex-quality-reliability
+- Merge pull request #1165 from A-Guy-educ/feat/mixpanel-update
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into feat/pdf-to-latex-quality-reliability
+- Merge pull request #1145 from A-Guy-educ/1144--fix-mixpanel-user-identity-merging-on-login
+- Merge pull request #1148 from A-Guy-educ/1146--context-exercise-viewer-display-parsed-exercis
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into 1144--fix-mixpanel-user-identity-merging-on-login
+- Merge remote-tracking branch 'origin/dev' into 1146--context-exercise-viewer-display-parsed-exercis
+- Merge pull request #1125 from A-Guy-educ/1121--image-upload-error-handling-quality-constraint
+- format kody.yml with prettier
+- format AskPrimaryContent with prettier
+- Merge remote-tracking branch 'origin/dev' into 1121--image-upload-error-handling-quality-constraint
+- Merge pull request #1129 from A-Guy-educ/1119--intermittent-pdf-loading-failures-404-silent
+- Merge remote-tracking branch 'origin/dev' into 1121--image-upload-error-handling-quality-constraint
+- Merge pull request #1127 from A-Guy-educ/fix/latex-chat-rendering
+- format exercise-chat-agent-prompt.md with prettier
+- Merge remote-tracking branch 'origin/dev' into 1119--intermittent-pdf-loading-failures-404-silent
+- format useDirectChatAssetUpload with prettier
+- Merge pull request #1140 from A-Guy-educ/release/v0.23.0
+- Merge branch 'dev' into release/v0.23.0
+- Merge pull request #1049 from A-Guy-educ/1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge remote-tracking branch 'origin/dev' into 1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge pull request #1124 from A-Guy-educ/1118--bug-broken-lesson-url-generation-view-suffix
+- Merge pull request #1080 from A-Guy-educ/feat/mixpanel-lesson-loading-tracking
+- Merge pull request #1116 from A-Guy-educ/feat/mixpanel-user-data-check
+- Merge pull request #1122 from A-Guy-educ/1117--bug-system-slowness-media-timeouts
+- Merge remote-tracking branch 'origin/dev' into feat/mixpanel-lesson-loading-tracking
+- Merge pull request #1059 from A-Guy-educ/1057--localization-teacher-profile-selection-hebrew
+- Merge branch 'main' into dev
+- Merge branch 'chore/migrate-engine-package'
+- Merge branch 'chore/migrate-engine-package'
+- Merge pull request #1110 from A-Guy-educ/1109--fix-admin-dashboard-header-should-display-curre
+- Merge branch 'dev' into kody
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge pull request #1104 from A-Guy-educ/1094--bug-access-code-redemption-toctou-race-conditio
+- Merge pull request #1105 from A-Guy-educ/feat/exercise-ui-redesign
+- Re-enable MCP dev server
+- Merge branch 'dev' into kody
+- Merge branch 'dev' into 1057--localization-teacher-profile-selection-hebrew
+- Format kody task files for Prettier
+- Merge pull request #1079 from A-Guy-educ/1063--course-integrated-exam-prep-enhancement
+- Merge remote-tracking branch 'origin/dev' into 1063--course-integrated-exam-prep-enhancement
+- Merge branch 'dev' into feat/pdf-to-latex-quality-reliability
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge pull request #1087 from A-Guy-educ/1081--lesson-search-in-admin-should-also-search-by-cou
+- Merge pull request #1084 from A-Guy-educ/1083--admin-should-be-able-to-edit-and-delete-exercise
+- Merge remote-tracking branch 'origin/kody' into feat/pdf-to-latex-quality-reliability
+- Merge pull request #1074 from A-Guy-educ/fix/ci-workflow-versions
+- Merge remote-tracking branch 'origin/kody' into 1057--localization-teacher-profile-selection-hebrew
+- Merge pull request #1047 from A-Guy-educ/feat/admin-content-navigation-links
+- Merge pull request #1076 from A-Guy-educ/kody-bootstrap-1774955768848
+- Merge remote-tracking branch 'origin/dev' into feat/pdf-to-latex-quality-reliability
+- Revert "chore: Fix formatting in kody task artifacts"
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into 1057--localization-teacher-profile-selection-hebrew
+- Merge pull request #1068 from A-Guy-educ/dev
+- Merge branch 'dev' into feat/admin-content-navigation-links
+- fix prettier formatting in kody task files
+- Merge remote-tracking branch 'origin/dev' into 1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge pull request #1045 from A-Guy-educ/feat/json-edit-in-admin
+- Fix prettier formatting
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- update feat/json-edit-in-admin from origin/dev
+- fix prettier formatting across 53 files
+- Merge pull request #1054 from A-Guy-educ/refactor/modernize-ui-consistency
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into 1057--localization-teacher-profile-selection-hebrew
+- Merge remote-tracking branch 'origin/dev' into feat/pdf-to-latex-audit
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- Merge remote-tracking branch 'origin/dev' into feat/pdf-to-latex-audit
+- Revert "fix: Bump PDF_TO_EXERCISE maxOutputTokens to 65536"
+- Merge branch 'dev' into 1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- Merge pull request #1053 from A-Guy-educ/1051--auto-populate-lesson-blocks-from-related-content
+- Merge pull request #1021 from A-Guy-educ/feat/chat-usage-limit
+- Merge pull request #1032 from A-Guy-educ/fix/media-cdn-redirect
+- Merge remote-tracking branch 'origin/dev' into fix/media-cdn-redirect
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- Merge pull request #960 from A-Guy-educ/main
+- Merge pull request #1035 from A-Guy-educ/1031--security-8x-route-without-authentication
+- Merge pull request #1036 from A-Guy-educ/feat/course-header-dropdown
+- Merge pull request #1033 from A-Guy-educ/feat/upload-pic-iphone
+- Merge pull request #1027 from A-Guy-educ/feat/spacing-block-control
+- Merge pull request #1034 from A-Guy-educ/feat/automatic-slug
+- Merge pull request #1014 from A-Guy-educ/feat/latex-ai-converter
+- Merge pull request #1043 from A-Guy-educ/kody/bootstrap-1774769461678
+- Merge pull request #1013 from A-Guy-educ/feat/latex-renderer
+- Merge pull request #1044 from A-Guy-educ/feat/fix-ci-build
+- Merge branch 'dev' into feat/fix-ci-build
+- Merge branch 'feat/latex-renderer' of https://github.com/A-Guy-educ/A-Guy into feat/latex-renderer
+- Merge remote-tracking branch 'origin/dev' into 1031--security-8x-route-without-authentication
+
+### Refactoring
+
+- redesign dark mode, exercise UI, and NavigationBar
+- Use per-locale documents for TeacherProfiles instead of dual fields
+- study page uses shared CourseLessonCard instead of duplicate LessonGridCard
+- unified card design with top accent bars, 3-col grid, design abstractions
+- convert search from inline header to command palette modal
+- unify all 13 card components with one visual design language
+- complete UI modernization — all remaining components
+- modernize UI with consistent design tokens across 87 files
+- Simplify PDF-to-LaTeX extraction back to single LLM call
+- Extract time conversion to shared util
+- Use existing chat config domain for quota settings
+
+### Tests
+
+- Update display math test to expect rich_text instead of latex
+- Update PDF_TO_EXERCISE maxOutputTokens assertions to 32768
+
+
+## [0.23.0] - 2026-04-14
+
+### Features
+
+- add system-test agent to kody-watch, increase timeout to 90min
+- add e2eCommand to release config
+- add system-test watch agent
+- add system-test watch agent
+- Create exercises from context text as LaTeX blocks
+- HTML-to-GuidedExplanation converter with Import HTML button
+- Merge guided explanation into HTML block
+- Guided explanation runner with triangle proof demo
+- Add LaTeX block UI (admin editor + frontend renderer)
+- Increase lessonContextText limit from 100K to 200K chars
+- Refactor card components and introduce UnifiedCard
+- **kody-watch:** trigger on PR merge to dev, not daily schedule
+- add 3 watch agents for continuous QA monitoring
+- **fix-pr-1168-260409-133302:** implement task
+- **1167-260409-114345:** implement task
+- Add registration popup funnel tracking for Mixpanel
+- make context exercise viewer editable per exercise
+- auto-clear rejected image in Ask tab so student can re-upload
+- **fix-pr-1125-260406-124006:** implement task
+- **1146-260406-104845:** implement task
+- Add ContextExerciseViewer UI component for lesson context
+- **fix-pr-1145-260406-105358:** implement task
+- **1144-260406-100413:** implement task
+- strengthen cropped image detection — check all edges before helping
+- cover all image issue cases and enforce language matching
+- require AI to explain image issues and give upload tips
+- strengthen image handling instructions to reject non-educational images
+- inject image handling instructions into chat prompt pipeline
+- Extract geometry from inline \draw coordinates
+- Scale LaTeX parser to handle all 55 lesson formats
+- add actionable image feedback in chat and improve upload error messages
+- Enable @kody release command
+- **chat:** implement task
+- **acceptable:** implement task
+- **1121-260405-102217:** implement task
+- **1118-260405-102030:** implement task
+- **1117-260405-101944:** implement task
+- Send selected course to Mixpanel user profile on course selection
+- Send enrolled course to Mixpanel user profile
+- Switch to MiniMax provider for all stages
+- Add Next.js build warmup step before pipeline
+- **1109-260403-091343:** implement task
+- **1109-260403-085917:** implement task
+- Add playwright-cli tool for browser verification
+- add top-level devServer with 120s timeout and stdout detection
+- Exercise UI/UX redesign with animations across all question types
+- **1094-260402-111508:** implement task
+- all-Claude model config for maximum reliability
+- all-Claude model config for maximum reliability
+- multi-provider model config — GPT-5.3 Codex, Claude, Gemini per stage
+- multi-provider model config — GPT-5.3 Codex, Claude, Gemini per stage
+- enable Playwright MCP for UI task verification
+- **1081-260331-181546:** implement task
+- **1083-260331-181351:** implement task
+- Add Mixpanel tracking for lesson loading lifecycle
+- **1063-260331-155210:** implement task
+- **fix-pr-1075-260331-155519:** implement task
+- Multi-axis graph block and geometry admin panel fixes
+- **fix-pr-1075-260331-130624:** implement task
+- **fix-pr-1059-260331-124107:** implement task
+- Add exercise count validation with auto-retry on extraction
+- PDF-to-LaTeX quality, reliability & adapter refactor
+- Add afterRead lazy backfill for course/chapter filter fields
+- Add two-pass extraction — retry with solutions-only if truncated
+- Rename parentCourse to course, add chapter filter to exercises
+- **1057-260330-075754:** implement task
+- add shared design abstractions and unified card layout
+- Add user-facing warnings for PDF extraction edge cases
+- page transitions, stats alignment, mobile touch refinements
+- UI polish batch — card unification, empty states, skeletons, dark mode, micro-interactions
+- add Tier 4 infrastructure — Storybook stories, visual regression tests, PWA
+- add UX improvements — mobile, a11y, performance, celebrations, onboarding, search, themes
+- redesign course cards, lesson view, and navigation
+- add immersive landing page with animated hero, features, and CTA sections
+- add visual polish — gradient borders, stagger animations, glass header, bento stats, auth redesign
+- **1051-260329-144735:** implement task
+- **1048-260329-114423:** implement task
+- Add segmented PDF-to-LaTeX extraction for lesson context
+- Add content hierarchy navigation and course filtering in admin
+- Add full exercise JSON edit with structural validation
+- Wire script parser to import-latex endpoint
+- AI-powered LaTeX import with per-exercise chunking
+- Show courses in global search results
+- Add course-specific search in header dropdown (#732) (#732)
+- **1031-260326-124709:** implement task
+- Translate Hebrew titles to English via OpenAI for lesson slugs
+- LaTeX document viewer and graph/geometry rendering fixes
+- Add default block spacing to Content Pages collection
+- LaTeX document viewer and graph/geometry rendering fixes
+- Add configurable block spacing with page-level default and per-block override
+- Add chat usage limit — 15 questions per 12-hour rolling window
+
+### Bug Fixes
+
+- Handle all exercise numbering patterns in context-exercise-parser
+- Format kody.config.json to pass prettier check
+- agent creates its own issue, no WATCH_DIGEST_ISSUE_SYSTEM_TEST needed
+- remove WATCH_DIGEST_ISSUE_SYSTEM_TEST (agent creates its own issue)
+- Resolve merge conflict with dev, update shared parser
+- Make Convert Context button visible with correct styling
+- Move Create Exercises button below exercise cards
+- Reduce Create Exercises button size to match title height
+- Add context_extraction origin to Exercises collection
+- Use white background with black border for Create Exercises button
+- Improve Create Exercises button contrast in dark mode
+- Remove unused ApiErrors import
+- Replace inline styles with Tailwind classes in LatexBlockEditor
+- **kody:** add COMMENT_AUTHOR_ASSOC env var so @kody review works on PRs
+- Remove unnecessary preview from LatexBlockEditor
+- Force type=button on author HTML buttons
+- Sanitize SVG to prevent XSS and remove dead shouldCancel param
+- Address PR review findings
+- Parse all function calls per line in HTML converter
+- Use ref for SVG scene to prevent animation class wipe
+- Pick longest solution when duplicate solution headers exist
+- Use בהצלחה as exercise section boundary to prevent false exercises
+- Reset nesting level in orphan detection when exiting blocks
+- Keep last setcounter occurrence for duplicate exercise numbers
+- Detect exercises in orphan enumerate blocks for remaining gaps
+- Only scan for continuation exercises when next number is missing
+- Use text position for content boundaries, number for display order
+- Detect continuation exercises and sort by number
+- Improve setcounter exercise detection in context viewer
+- Resolve pre-existing lint and tooling issues
+- add missing eslint-config-next dependency and format globals.css
+- context exercise viewer now detects setcounter-style exercise boundaries
+- **ci:** migrate ESLint config to flat format and fix lint errors
+- rewrite stitching logic and restore validation in page-by-page extraction
+- add provider to watch config so kody-engine watch runs
+- **fix-pr-1168-260409-133302:** address review
+- Update system events count in contract test for new registration popup events
+- preserve identified user on Mixpanel SDK init instead of resetting to anonymous
+- remove alias() from login flow — only use it on signup
+- call alias() before events in signup flow to merge anonymous history
+- call alias() before identify() on login to merge anonymous Mixpanel profiles
+- use PROJECT_TOKEN so label changes trigger board sync
+- use PROJECT_TOKEN for pipeline so label changes trigger board sync
+- **fix-pr-1125-260406-124006:** address review
+- **fix-pr-1145-260406-105358:** address review
+- **mcq:** guard against undefined content in fraction transform
+- Emit display math as rich_text instead of latex blocks
+- Use brace-counting for color stripping instead of regex
+- Strip leaked env tags, fix bracket labels, improve quality to 97%
+- Use balanced brace matching for color stripping
+- Collapse whitespace in parsed text, disable geometry axes
+- Strip color/sizing from math, remove labels, fix orphaned braces
+- **ci:** Use pnpm exec for kody-engine in smoke-test job
+- Normalize spaced LaTeX delimiters and prevent raw JSON in chat
+- **chat:** address review
+- Ignore .agents and .kody dirs in prettier checks
+- Remove duplicate LessonAnalytics and dead LessonLoadTimeoutTracker
+- update @kody-ade/engine to 0.1.23, use local dep instead of global install
+- use global kody-engine binary, fix notify job missing issue number
+- add missing kody-engine install to orchestrate and smoke-test jobs
+- Increase build warmup memory limit to 4GB
+- Increase build warmup memory limit to 4GB
+- Increase build warmup timeout to 15 minutes
+- Increase dev server timeout to 180s for cold starts
+- **1109-260403-091343:** address review
+- Regenerate lockfile for kody-engine-lite v0.1.148
+- **1109-260403-085917:** address review
+- Remove MCP config, use playwright-cli for browser verification
+- Enable MCP for Playwright browser verification with Claude
+- Regenerate lockfile for kody-engine-lite v0.1.147
+- restore @napi-rs/canvas version corrupted by sed
+- repair broken lockfile integrity hash
+- set defaultBranch to dev (was kody, breaking @kody resolve)
+- **1094-260402-111508:** address review
+- Align kody.config.json with schema and add per-stage config support
+- Align kody.config.json with schema and add per-stage config support
+- use heredoc syntax for multiline secret values in GITHUB_ENV
+- use project-local kody-engine-lite instead of global install
+- persist lessonRef through study plan API so lesson links work
+- Line labels, dot defaults, and admin canvas background
+- sync kody.yml with dev to unblock push
+- strip carriage returns from comment body before parsing
+- format LessonBlocksField imports
+- update kody.yml to latest template with fix-ci and resolve support
+- resolve course lookup in LessonSelector using grade level
+- Update system events schema count in test (34 → 37)
+- **fix-pr-1075-260331-155519:** address review
+- **fix-pr-1075-260331-130624:** address review
+- **fix-pr-1059-260331-124107:** address review
+- Update missed test assertion for PDF_TO_EXERCISE temperature 0.1
+- Revert PDF_TO_EXERCISE temperature to 0.1
+- reduce kody artifact retention and scope to current task only
+- Iterative solution passes to handle truncation of long exams
+- **ci:** Downgrade actions to v4 and reduce artifact storage usage
+- Re-process partially migrated profiles missing label field
+- Filter profiles by exact locale match and deduplicate by slug
+- Migration converts legacy dual-field profiles to per-locale docs
+- **ci:** Upload build artifact on main push for QA Scenarios
+- Repair broken merge in Exercises collection config
+- Extract exercise hooks to avoid TS1117 on CI
+- use lockfile hash for Next.js build cache key
+- Address Kody review feedback
+- Skip afterRead lazy backfill during build-time reads
+- remove unused JSON side panel state and resize logic
+- remove old JSON panel toggle button from exercise editor
+- update tests to match design token migration and actual source code
+- resolve merge conflicts with dev (keep CSS transitions over framer-motion)
+- Format kody.yml to pass Prettier check in CI
+- Remove undeclared framer-motion dependency breaking CI typecheck
+- Revert config additions for chat and tool-calling generate calls
+- Bump PDF_TO_EXERCISE maxOutputTokens to 65536
+- resolve all ESLint errors and design token warnings
+- Use caller's maxOutputTokens when provided in multimodal completion
+- Use Math.max for maxOutputTokens to prevent DB config truncation
+- Re-fetch teacher profiles on locale change without page refresh
+- Pass temperature and maxOutputTokens to Genkit ai.generate()
+- add missing Clock import and progressText variable
+- top accent bar cards + 3-column grid for lesson cards
+- Skip build artifact upload on non-E2E CI runs
+- Skip build artifact upload on non-E2E CI runs
+- Format pattern-index.json for pre-push verification
+- Format files and fix task.json markdown fences to pass CI
+- Merge duplicate hooks blocks in Exercises collection
+- CourseCard badge clipping — remove overflow-hidden, modernize styling
+- align course page with new design — single column, unified cards, compact search icon
+- restore ProgressCircle in lesson cards
+- add color accent bar to lesson cards and fix badge clipping
+- proportional UI improvements across study page and lesson view
+- hide header during full onboarding flow, remove broken onboarding tips
+- Remove media/ prefix from blob CDN redirect
+- Move media CDN redirect to next.config.js redirects
+- Relax blob token regex, add BLOB_PUBLIC_BASE_URL fallback
+- Add collection prefix to media CDN redirect URL
+- Compute bounding box for geometry so points aren't clumped at origin
+- Simplify course slug detection to URL path only
+- Always show expandable search dropdown, never navigate to /search
+- **1031-260326-124709:** address review
+- Make search work globally and add course content to /search page
+- Resolve courseSlug from grade profile on /study, /practice, /ask pages
+- Revert lessons query depth back to 2
+- **1031-260326-124709:** address review
+- Update system events contract test for photo_sent_to_chat
+- Use gemini-2.5-flash-lite model (2.0 is deprecated for this API key)
+- Use Gemini instead of OpenAI for Hebrew slug translation
+- Ensure slug uniqueness on create/duplication even without -copy suffix
+- Auto-generate lesson slugs from Hebrew titles with transliteration (#758) (#758)
+- Add bare domain blob.vercel-storage.com to CSP connect-src
+- Add blob.vercel-storage.com to CSP connect-src and track photo uploads in Mixpanel
+- Redirect media to Vercel Blob CDN, bypass serverless proxy
+- Resolve merge conflict in useNotebookChat with dev
+- Move quota bar outside header so it shows without reset button
+- Add jsdelivr to style-src CSP for Monaco editor styles
+- Show proper quota message instead of guest login CTA
+
+### Performance
+
+- eliminate Vercel cold-start slowdowns
+- Optimize build time by externalizing server packages and improving bundling
+- Rewrite PDF requests to Blob CDN at edge
+- Server-side prefetch for study/test/practice pages
+- Parallelize DB queries, reduce depth, add cache headers
+
+### CI/CD
+
+- Auto-remove closed issues from project board
+- Auto-label new issues with kody:backlog
+- Use PROJECT_TOKEN for org project board sync
+- Add workflow to sync kody labels to project board
+
+### Documentation
+
+- codify design system conventions for Kody agents
+
+### Maintenance
+
+- Regenerate payload types for context_extraction origin
+- Remove triangle proof fixture
+- Remove dev-only guided explanation demo page
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- **ci:** remove redundant smoke-test job from kody workflow
+- **ci:** remove redundant smoke-test job from kody workflow
+- merge dev, resolve .kody conflict
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- format PDFMedia and http-retry test
+- Replace semantic-release with @kody release
+- Add Slack notification to release config
+- Bump @kody-ade/engine to 0.1.32
+- Bump @kody-ade/engine to 0.1.31
+- Bump @kody-ade/engine to 0.1.30
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- bump @kody-ade/engine to 0.1.24 (approve parsing fix)
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- Redeploy with updated Mixpanel token
+- Trigger Vercel preview redeploy
+- Fix Prettier formatting on merged files
+- Migrate to @kody-ade/engine package
+- Fix malformed task.json and format task files
+- Fix prettier formatting — add missing trailing newlines
+- add kody task artifacts [skip ci]
+- Upgrade kody-engine-lite to v0.1.148
+- add kody task artifacts [skip ci]
+- upgrade kody-engine-lite to v0.1.147
+- update lockfile for kody-engine-lite 0.1.141
+- Bump kody-engine-lite to ^0.1.141
+- update lockfile for kody-engine-lite 0.1.137
+- Bump kody-engine-lite to ^0.1.137
+- update lockfile for kody-engine-lite 0.1.136
+- Bump kody-engine-lite to ^0.1.136
+- Format generated pattern index
+- Bump kody-engine-lite to ^0.1.134
+- Bump kody-engine-lite to ^0.1.129
+- Disable MCP dev server in CI
+- Bump kody-engine-lite to ^0.1.125
+- add kody task artifacts [skip ci]
+- Format kody task artifacts
+- Fix prettier formatting on config files
+- Sync kody.yml with engine template v0.1.107
+- auto-forward all GitHub secrets as env vars in kody workflow
+- add dev server env secrets to kody config
+- Format files from dev merge
+- Merge dev into kody
+- Update lockfile to kody-engine-lite 0.1.104
+- pin kody-engine-lite to ^0.1.104
+- merge dev into kody
+- add QA guide with routes, auth, and test credentials
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- Add Kody project memory and step files
+- Fix formatting in kody task artifacts
+- Fix formatting in kody task artifacts
+- Rename MINIMAX_API_KEY to ANTHROPIC_COMPATIBLE_API_KEY in kody workflow
+- Retrigger CI
+- sync workflow template from Kody-Engine-Lite (add litellm, minimax, bootstrap)
+- update local agent config to minimax and add opencode config
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- Sync lockfile with package.json kody-engine-lite specifier
+- Remove redeploy trigger file
+- Remove time.ts from branch
+- Merge dev, update lockfile
+- Add kody-engine-lite as local dep, remove cody workflow, update gitignore
+- add kody task artifacts [skip ci]
+- Add backfill script for parentCourse denormalized field
+- Trigger redeploy for env var pickup
+- **ci:** Reduce artifact retention to 3 days
+- Add Kody project memory and step files
+- Add Kody Engine workflow and config
+- Clean kody.config.json to match updated engine schema
+- Remove bootstrap files for GH Actions bootstrap test
+- Add Kody project memory and step files
+- Add Kody Engine configuration
+- Update kody workflow v0.1.16
+- Update kody workflow v0.1.15
+- Update kody workflow v0.1.13
+- Update kody workflow v0.1.11
+- Trigger redeploy with Mixpanel preview token
+- Gitignore latex_examples and shay-tassk directories
+- Add kody-engine-lite workflow, config, and memory
+
+### Other Changes
+
+- Merge pull request #1202 from A-Guy-educ/fix/context-exercise-parser-gaps
+- Merge pull request #1201 from A-Guy-educ/feat/fix-ci
+- Merge pull request #1189 from A-Guy-educ/feat/context-blocks-to-exe
+- Merge pull request #1194 from A-Guy-educ/feat/fix-convert-context-button-color
+- Merge pull request #1181 from A-Guy-educ/feat/fix-context-exe-from-pdf
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into feat/context-blocks-to-exe
+- Merge pull request #1193 from A-Guy-educ/feat/fix-ci-fail
+- Revert "chore: Regenerate payload types for context_extraction origin"
+- Format context-exercise-viewer with Prettier
+- Merge pull request #1187 from A-Guy-educ/feat/create-latex-block
+- Merge pull request #1186 from A-Guy-educ/feat/increase-lesson-context-limit
+- Merge remote-tracking branch 'origin/dev' into feat/fix-context-exe-from-pdf
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev
+- Merge pull request #1185 from A-Guy-educ/fix/pre-existing-lint-prettier
+- Revert "style: Format .claude/settings.json with Prettier"
+- Format .claude/settings.json with Prettier
+- Merge branch 'fix/pre-existing-lint-prettier' into feat/fix-context-exe-from-pdf
+- Merge pull request #1168 from A-Guy-educ/1167--implement-iterative-page-by-page-pdf-to-latex-ex
+- apply Prettier formatting to all modified files
+- Revert "feat(kody-watch): trigger on PR merge to dev, not daily schedule"
+- Merge branch 'dev' into 1167--implement-iterative-page-by-page-pdf-to-latex-ex
+- Merge pull request #1075 from A-Guy-educ/feat/pdf-to-latex-quality-reliability
+- Merge pull request #1165 from A-Guy-educ/feat/mixpanel-update
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into feat/pdf-to-latex-quality-reliability
+- Merge pull request #1145 from A-Guy-educ/1144--fix-mixpanel-user-identity-merging-on-login
+- Merge pull request #1148 from A-Guy-educ/1146--context-exercise-viewer-display-parsed-exercis
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into 1144--fix-mixpanel-user-identity-merging-on-login
+- Merge remote-tracking branch 'origin/dev' into 1146--context-exercise-viewer-display-parsed-exercis
+- Merge pull request #1125 from A-Guy-educ/1121--image-upload-error-handling-quality-constraint
+- format kody.yml with prettier
+- format AskPrimaryContent with prettier
+- Merge remote-tracking branch 'origin/dev' into 1121--image-upload-error-handling-quality-constraint
+- Merge pull request #1129 from A-Guy-educ/1119--intermittent-pdf-loading-failures-404-silent
+- Merge remote-tracking branch 'origin/dev' into 1121--image-upload-error-handling-quality-constraint
+- Merge pull request #1127 from A-Guy-educ/fix/latex-chat-rendering
+- format exercise-chat-agent-prompt.md with prettier
+- Merge remote-tracking branch 'origin/dev' into 1119--intermittent-pdf-loading-failures-404-silent
+- format useDirectChatAssetUpload with prettier
+- Merge pull request #1049 from A-Guy-educ/1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge remote-tracking branch 'origin/dev' into 1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge pull request #1124 from A-Guy-educ/1118--bug-broken-lesson-url-generation-view-suffix
+- Merge pull request #1080 from A-Guy-educ/feat/mixpanel-lesson-loading-tracking
+- Merge pull request #1116 from A-Guy-educ/feat/mixpanel-user-data-check
+- Merge pull request #1122 from A-Guy-educ/1117--bug-system-slowness-media-timeouts
+- Merge remote-tracking branch 'origin/dev' into feat/mixpanel-lesson-loading-tracking
+- Merge pull request #1059 from A-Guy-educ/1057--localization-teacher-profile-selection-hebrew
+- Merge branch 'main' into dev
+- Merge branch 'chore/migrate-engine-package'
+- Merge branch 'chore/migrate-engine-package'
+- Merge pull request #1110 from A-Guy-educ/1109--fix-admin-dashboard-header-should-display-curre
+- Merge branch 'dev' into kody
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge pull request #1104 from A-Guy-educ/1094--bug-access-code-redemption-toctou-race-conditio
+- Merge pull request #1105 from A-Guy-educ/feat/exercise-ui-redesign
+- Re-enable MCP dev server
+- Merge branch 'dev' into kody
+- Merge branch 'dev' into 1057--localization-teacher-profile-selection-hebrew
+- Format kody task files for Prettier
+- Merge pull request #1079 from A-Guy-educ/1063--course-integrated-exam-prep-enhancement
+- Merge remote-tracking branch 'origin/dev' into 1063--course-integrated-exam-prep-enhancement
+- Merge branch 'dev' into feat/pdf-to-latex-quality-reliability
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge pull request #1087 from A-Guy-educ/1081--lesson-search-in-admin-should-also-search-by-cou
+- Merge pull request #1084 from A-Guy-educ/1083--admin-should-be-able-to-edit-and-delete-exercise
+- Merge remote-tracking branch 'origin/kody' into feat/pdf-to-latex-quality-reliability
+- Merge pull request #1074 from A-Guy-educ/fix/ci-workflow-versions
+- Merge remote-tracking branch 'origin/kody' into 1057--localization-teacher-profile-selection-hebrew
+- Merge pull request #1047 from A-Guy-educ/feat/admin-content-navigation-links
+- Merge pull request #1076 from A-Guy-educ/kody-bootstrap-1774955768848
+- Merge remote-tracking branch 'origin/dev' into feat/pdf-to-latex-quality-reliability
+- Revert "chore: Fix formatting in kody task artifacts"
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into 1057--localization-teacher-profile-selection-hebrew
+- Merge pull request #1068 from A-Guy-educ/dev
+- Merge branch 'dev' into feat/admin-content-navigation-links
+- fix prettier formatting in kody task files
+- Merge remote-tracking branch 'origin/dev' into 1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge pull request #1045 from A-Guy-educ/feat/json-edit-in-admin
+- Fix prettier formatting
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- update feat/json-edit-in-admin from origin/dev
+- fix prettier formatting across 53 files
+- Merge pull request #1054 from A-Guy-educ/refactor/modernize-ui-consistency
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into 1057--localization-teacher-profile-selection-hebrew
+- Merge remote-tracking branch 'origin/dev' into feat/pdf-to-latex-audit
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- Merge remote-tracking branch 'origin/dev' into feat/pdf-to-latex-audit
+- Revert "fix: Bump PDF_TO_EXERCISE maxOutputTokens to 65536"
+- Merge branch 'dev' into 1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- Merge pull request #1053 from A-Guy-educ/1051--auto-populate-lesson-blocks-from-related-content
+- Merge pull request #1021 from A-Guy-educ/feat/chat-usage-limit
+- Merge pull request #1032 from A-Guy-educ/fix/media-cdn-redirect
+- Merge remote-tracking branch 'origin/dev' into fix/media-cdn-redirect
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- Merge pull request #960 from A-Guy-educ/main
+- Merge pull request #1035 from A-Guy-educ/1031--security-8x-route-without-authentication
+- Merge pull request #1036 from A-Guy-educ/feat/course-header-dropdown
+- Merge pull request #1033 from A-Guy-educ/feat/upload-pic-iphone
+- Merge pull request #1027 from A-Guy-educ/feat/spacing-block-control
+- Merge pull request #1034 from A-Guy-educ/feat/automatic-slug
+- Merge pull request #1014 from A-Guy-educ/feat/latex-ai-converter
+- Merge pull request #1043 from A-Guy-educ/kody/bootstrap-1774769461678
+- Merge pull request #1013 from A-Guy-educ/feat/latex-renderer
+- Merge pull request #1044 from A-Guy-educ/feat/fix-ci-build
+- Merge branch 'dev' into feat/fix-ci-build
+- Merge branch 'feat/latex-renderer' of https://github.com/A-Guy-educ/A-Guy into feat/latex-renderer
+- Merge remote-tracking branch 'origin/dev' into 1031--security-8x-route-without-authentication
+
+### Refactoring
+
+- redesign dark mode, exercise UI, and NavigationBar
+- Use per-locale documents for TeacherProfiles instead of dual fields
+- study page uses shared CourseLessonCard instead of duplicate LessonGridCard
+- unified card design with top accent bars, 3-col grid, design abstractions
+- convert search from inline header to command palette modal
+- unify all 13 card components with one visual design language
+- complete UI modernization — all remaining components
+- modernize UI with consistent design tokens across 87 files
+- Simplify PDF-to-LaTeX extraction back to single LLM call
+- Extract time conversion to shared util
+- Use existing chat config domain for quota settings
+
+### Tests
+
+- Update display math test to expect rich_text instead of latex
+- Update PDF_TO_EXERCISE maxOutputTokens assertions to 32768
+
+
+## [0.23.0] - 2026-04-14
+
+### Features
+
+- add system-test agent to kody-watch, increase timeout to 90min
+- add e2eCommand to release config
+- add system-test watch agent
+- add system-test watch agent
+- Create exercises from context text as LaTeX blocks
+- HTML-to-GuidedExplanation converter with Import HTML button
+- Merge guided explanation into HTML block
+- Guided explanation runner with triangle proof demo
+- Add LaTeX block UI (admin editor + frontend renderer)
+- Increase lessonContextText limit from 100K to 200K chars
+- Refactor card components and introduce UnifiedCard
+- **kody-watch:** trigger on PR merge to dev, not daily schedule
+- add 3 watch agents for continuous QA monitoring
+- **fix-pr-1168-260409-133302:** implement task
+- **1167-260409-114345:** implement task
+- Add registration popup funnel tracking for Mixpanel
+- make context exercise viewer editable per exercise
+- auto-clear rejected image in Ask tab so student can re-upload
+- **fix-pr-1125-260406-124006:** implement task
+- **1146-260406-104845:** implement task
+- Add ContextExerciseViewer UI component for lesson context
+- **fix-pr-1145-260406-105358:** implement task
+- **1144-260406-100413:** implement task
+- strengthen cropped image detection — check all edges before helping
+- cover all image issue cases and enforce language matching
+- require AI to explain image issues and give upload tips
+- strengthen image handling instructions to reject non-educational images
+- inject image handling instructions into chat prompt pipeline
+- Extract geometry from inline \draw coordinates
+- Scale LaTeX parser to handle all 55 lesson formats
+- add actionable image feedback in chat and improve upload error messages
+- Enable @kody release command
+- **chat:** implement task
+- **acceptable:** implement task
+- **1121-260405-102217:** implement task
+- **1118-260405-102030:** implement task
+- **1117-260405-101944:** implement task
+- Send selected course to Mixpanel user profile on course selection
+- Send enrolled course to Mixpanel user profile
+- Switch to MiniMax provider for all stages
+- Add Next.js build warmup step before pipeline
+- **1109-260403-091343:** implement task
+- **1109-260403-085917:** implement task
+- Add playwright-cli tool for browser verification
+- add top-level devServer with 120s timeout and stdout detection
+- Exercise UI/UX redesign with animations across all question types
+- **1094-260402-111508:** implement task
+- all-Claude model config for maximum reliability
+- all-Claude model config for maximum reliability
+- multi-provider model config — GPT-5.3 Codex, Claude, Gemini per stage
+- multi-provider model config — GPT-5.3 Codex, Claude, Gemini per stage
+- enable Playwright MCP for UI task verification
+- **1081-260331-181546:** implement task
+- **1083-260331-181351:** implement task
+- Add Mixpanel tracking for lesson loading lifecycle
+- **1063-260331-155210:** implement task
+- **fix-pr-1075-260331-155519:** implement task
+- Multi-axis graph block and geometry admin panel fixes
+- **fix-pr-1075-260331-130624:** implement task
+- **fix-pr-1059-260331-124107:** implement task
+- Add exercise count validation with auto-retry on extraction
+- PDF-to-LaTeX quality, reliability & adapter refactor
+- Add afterRead lazy backfill for course/chapter filter fields
+- Add two-pass extraction — retry with solutions-only if truncated
+- Rename parentCourse to course, add chapter filter to exercises
+- **1057-260330-075754:** implement task
+- add shared design abstractions and unified card layout
+- Add user-facing warnings for PDF extraction edge cases
+- page transitions, stats alignment, mobile touch refinements
+- UI polish batch — card unification, empty states, skeletons, dark mode, micro-interactions
+- add Tier 4 infrastructure — Storybook stories, visual regression tests, PWA
+- add UX improvements — mobile, a11y, performance, celebrations, onboarding, search, themes
+- redesign course cards, lesson view, and navigation
+- add immersive landing page with animated hero, features, and CTA sections
+- add visual polish — gradient borders, stagger animations, glass header, bento stats, auth redesign
+- **1051-260329-144735:** implement task
+- **1048-260329-114423:** implement task
+- Add segmented PDF-to-LaTeX extraction for lesson context
+- Add content hierarchy navigation and course filtering in admin
+- Add full exercise JSON edit with structural validation
+- Wire script parser to import-latex endpoint
+- AI-powered LaTeX import with per-exercise chunking
+- Show courses in global search results
+- Add course-specific search in header dropdown (#732) (#732)
+- **1031-260326-124709:** implement task
+- Translate Hebrew titles to English via OpenAI for lesson slugs
+- LaTeX document viewer and graph/geometry rendering fixes
+- Add default block spacing to Content Pages collection
+- LaTeX document viewer and graph/geometry rendering fixes
+- Add configurable block spacing with page-level default and per-block override
+- Add chat usage limit — 15 questions per 12-hour rolling window
+
+### Bug Fixes
+
+- Handle all exercise numbering patterns in context-exercise-parser
+- Format kody.config.json to pass prettier check
+- agent creates its own issue, no WATCH_DIGEST_ISSUE_SYSTEM_TEST needed
+- remove WATCH_DIGEST_ISSUE_SYSTEM_TEST (agent creates its own issue)
+- Resolve merge conflict with dev, update shared parser
+- Make Convert Context button visible with correct styling
+- Move Create Exercises button below exercise cards
+- Reduce Create Exercises button size to match title height
+- Add context_extraction origin to Exercises collection
+- Use white background with black border for Create Exercises button
+- Improve Create Exercises button contrast in dark mode
+- Remove unused ApiErrors import
+- Replace inline styles with Tailwind classes in LatexBlockEditor
+- **kody:** add COMMENT_AUTHOR_ASSOC env var so @kody review works on PRs
+- Remove unnecessary preview from LatexBlockEditor
+- Force type=button on author HTML buttons
+- Sanitize SVG to prevent XSS and remove dead shouldCancel param
+- Address PR review findings
+- Parse all function calls per line in HTML converter
+- Use ref for SVG scene to prevent animation class wipe
+- Pick longest solution when duplicate solution headers exist
+- Use בהצלחה as exercise section boundary to prevent false exercises
+- Reset nesting level in orphan detection when exiting blocks
+- Keep last setcounter occurrence for duplicate exercise numbers
+- Detect exercises in orphan enumerate blocks for remaining gaps
+- Only scan for continuation exercises when next number is missing
+- Use text position for content boundaries, number for display order
+- Detect continuation exercises and sort by number
+- Improve setcounter exercise detection in context viewer
+- Resolve pre-existing lint and tooling issues
+- add missing eslint-config-next dependency and format globals.css
+- context exercise viewer now detects setcounter-style exercise boundaries
+- **ci:** migrate ESLint config to flat format and fix lint errors
+- rewrite stitching logic and restore validation in page-by-page extraction
+- add provider to watch config so kody-engine watch runs
+- **fix-pr-1168-260409-133302:** address review
+- Update system events count in contract test for new registration popup events
+- preserve identified user on Mixpanel SDK init instead of resetting to anonymous
+- remove alias() from login flow — only use it on signup
+- call alias() before events in signup flow to merge anonymous history
+- call alias() before identify() on login to merge anonymous Mixpanel profiles
+- use PROJECT_TOKEN so label changes trigger board sync
+- use PROJECT_TOKEN for pipeline so label changes trigger board sync
+- **fix-pr-1125-260406-124006:** address review
+- **fix-pr-1145-260406-105358:** address review
+- **mcq:** guard against undefined content in fraction transform
+- Emit display math as rich_text instead of latex blocks
+- Use brace-counting for color stripping instead of regex
+- Strip leaked env tags, fix bracket labels, improve quality to 97%
+- Use balanced brace matching for color stripping
+- Collapse whitespace in parsed text, disable geometry axes
+- Strip color/sizing from math, remove labels, fix orphaned braces
+- **ci:** Use pnpm exec for kody-engine in smoke-test job
+- Normalize spaced LaTeX delimiters and prevent raw JSON in chat
+- **chat:** address review
+- Ignore .agents and .kody dirs in prettier checks
+- Remove duplicate LessonAnalytics and dead LessonLoadTimeoutTracker
+- update @kody-ade/engine to 0.1.23, use local dep instead of global install
+- use global kody-engine binary, fix notify job missing issue number
+- add missing kody-engine install to orchestrate and smoke-test jobs
+- Increase build warmup memory limit to 4GB
+- Increase build warmup memory limit to 4GB
+- Increase build warmup timeout to 15 minutes
+- Increase dev server timeout to 180s for cold starts
+- **1109-260403-091343:** address review
+- Regenerate lockfile for kody-engine-lite v0.1.148
+- **1109-260403-085917:** address review
+- Remove MCP config, use playwright-cli for browser verification
+- Enable MCP for Playwright browser verification with Claude
+- Regenerate lockfile for kody-engine-lite v0.1.147
+- restore @napi-rs/canvas version corrupted by sed
+- repair broken lockfile integrity hash
+- set defaultBranch to dev (was kody, breaking @kody resolve)
+- **1094-260402-111508:** address review
+- Align kody.config.json with schema and add per-stage config support
+- Align kody.config.json with schema and add per-stage config support
+- use heredoc syntax for multiline secret values in GITHUB_ENV
+- use project-local kody-engine-lite instead of global install
+- persist lessonRef through study plan API so lesson links work
+- Line labels, dot defaults, and admin canvas background
+- sync kody.yml with dev to unblock push
+- strip carriage returns from comment body before parsing
+- format LessonBlocksField imports
+- update kody.yml to latest template with fix-ci and resolve support
+- resolve course lookup in LessonSelector using grade level
+- Update system events schema count in test (34 → 37)
+- **fix-pr-1075-260331-155519:** address review
+- **fix-pr-1075-260331-130624:** address review
+- **fix-pr-1059-260331-124107:** address review
+- Update missed test assertion for PDF_TO_EXERCISE temperature 0.1
+- Revert PDF_TO_EXERCISE temperature to 0.1
+- reduce kody artifact retention and scope to current task only
+- Iterative solution passes to handle truncation of long exams
+- **ci:** Downgrade actions to v4 and reduce artifact storage usage
+- Re-process partially migrated profiles missing label field
+- Filter profiles by exact locale match and deduplicate by slug
+- Migration converts legacy dual-field profiles to per-locale docs
+- **ci:** Upload build artifact on main push for QA Scenarios
+- Repair broken merge in Exercises collection config
+- Extract exercise hooks to avoid TS1117 on CI
+- use lockfile hash for Next.js build cache key
+- Address Kody review feedback
+- Skip afterRead lazy backfill during build-time reads
+- remove unused JSON side panel state and resize logic
+- remove old JSON panel toggle button from exercise editor
+- update tests to match design token migration and actual source code
+- resolve merge conflicts with dev (keep CSS transitions over framer-motion)
+- Format kody.yml to pass Prettier check in CI
+- Remove undeclared framer-motion dependency breaking CI typecheck
+- Revert config additions for chat and tool-calling generate calls
+- Bump PDF_TO_EXERCISE maxOutputTokens to 65536
+- resolve all ESLint errors and design token warnings
+- Use caller's maxOutputTokens when provided in multimodal completion
+- Use Math.max for maxOutputTokens to prevent DB config truncation
+- Re-fetch teacher profiles on locale change without page refresh
+- Pass temperature and maxOutputTokens to Genkit ai.generate()
+- add missing Clock import and progressText variable
+- top accent bar cards + 3-column grid for lesson cards
+- Skip build artifact upload on non-E2E CI runs
+- Skip build artifact upload on non-E2E CI runs
+- Format pattern-index.json for pre-push verification
+- Format files and fix task.json markdown fences to pass CI
+- Merge duplicate hooks blocks in Exercises collection
+- CourseCard badge clipping — remove overflow-hidden, modernize styling
+- align course page with new design — single column, unified cards, compact search icon
+- restore ProgressCircle in lesson cards
+- add color accent bar to lesson cards and fix badge clipping
+- proportional UI improvements across study page and lesson view
+- hide header during full onboarding flow, remove broken onboarding tips
+- Remove media/ prefix from blob CDN redirect
+- Move media CDN redirect to next.config.js redirects
+- Relax blob token regex, add BLOB_PUBLIC_BASE_URL fallback
+- Add collection prefix to media CDN redirect URL
+- Compute bounding box for geometry so points aren't clumped at origin
+- Simplify course slug detection to URL path only
+- Always show expandable search dropdown, never navigate to /search
+- **1031-260326-124709:** address review
+- Make search work globally and add course content to /search page
+- Resolve courseSlug from grade profile on /study, /practice, /ask pages
+- Revert lessons query depth back to 2
+- **1031-260326-124709:** address review
+- Update system events contract test for photo_sent_to_chat
+- Use gemini-2.5-flash-lite model (2.0 is deprecated for this API key)
+- Use Gemini instead of OpenAI for Hebrew slug translation
+- Ensure slug uniqueness on create/duplication even without -copy suffix
+- Auto-generate lesson slugs from Hebrew titles with transliteration (#758) (#758)
+- Add bare domain blob.vercel-storage.com to CSP connect-src
+- Add blob.vercel-storage.com to CSP connect-src and track photo uploads in Mixpanel
+- Redirect media to Vercel Blob CDN, bypass serverless proxy
+- Resolve merge conflict in useNotebookChat with dev
+- Move quota bar outside header so it shows without reset button
+- Add jsdelivr to style-src CSP for Monaco editor styles
+- Show proper quota message instead of guest login CTA
+
+### Performance
+
+- eliminate Vercel cold-start slowdowns
+- Optimize build time by externalizing server packages and improving bundling
+- Rewrite PDF requests to Blob CDN at edge
+- Server-side prefetch for study/test/practice pages
+- Parallelize DB queries, reduce depth, add cache headers
+
+### CI/CD
+
+- Auto-remove closed issues from project board
+- Auto-label new issues with kody:backlog
+- Use PROJECT_TOKEN for org project board sync
+- Add workflow to sync kody labels to project board
+
+### Documentation
+
+- codify design system conventions for Kody agents
+
+### Maintenance
+
+- Regenerate payload types for context_extraction origin
+- Remove triangle proof fixture
+- Remove dev-only guided explanation demo page
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- **ci:** remove redundant smoke-test job from kody workflow
+- **ci:** remove redundant smoke-test job from kody workflow
+- merge dev, resolve .kody conflict
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- format PDFMedia and http-retry test
+- Replace semantic-release with @kody release
+- Add Slack notification to release config
+- Bump @kody-ade/engine to 0.1.32
+- Bump @kody-ade/engine to 0.1.31
+- Bump @kody-ade/engine to 0.1.30
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- bump @kody-ade/engine to 0.1.24 (approve parsing fix)
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- Redeploy with updated Mixpanel token
+- Trigger Vercel preview redeploy
+- Fix Prettier formatting on merged files
+- Migrate to @kody-ade/engine package
+- Fix malformed task.json and format task files
+- Fix prettier formatting — add missing trailing newlines
+- add kody task artifacts [skip ci]
+- Upgrade kody-engine-lite to v0.1.148
+- add kody task artifacts [skip ci]
+- upgrade kody-engine-lite to v0.1.147
+- update lockfile for kody-engine-lite 0.1.141
+- Bump kody-engine-lite to ^0.1.141
+- update lockfile for kody-engine-lite 0.1.137
+- Bump kody-engine-lite to ^0.1.137
+- update lockfile for kody-engine-lite 0.1.136
+- Bump kody-engine-lite to ^0.1.136
+- Format generated pattern index
+- Bump kody-engine-lite to ^0.1.134
+- Bump kody-engine-lite to ^0.1.129
+- Disable MCP dev server in CI
+- Bump kody-engine-lite to ^0.1.125
+- add kody task artifacts [skip ci]
+- Format kody task artifacts
+- Fix prettier formatting on config files
+- Sync kody.yml with engine template v0.1.107
+- auto-forward all GitHub secrets as env vars in kody workflow
+- add dev server env secrets to kody config
+- Format files from dev merge
+- Merge dev into kody
+- Update lockfile to kody-engine-lite 0.1.104
+- pin kody-engine-lite to ^0.1.104
+- merge dev into kody
+- add QA guide with routes, auth, and test credentials
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- Add Kody project memory and step files
+- Fix formatting in kody task artifacts
+- Fix formatting in kody task artifacts
+- Rename MINIMAX_API_KEY to ANTHROPIC_COMPATIBLE_API_KEY in kody workflow
+- Retrigger CI
+- sync workflow template from Kody-Engine-Lite (add litellm, minimax, bootstrap)
+- update local agent config to minimax and add opencode config
+- add kody task artifacts [skip ci]
+- add kody task artifacts [skip ci]
+- Sync lockfile with package.json kody-engine-lite specifier
+- Remove redeploy trigger file
+- Remove time.ts from branch
+- Merge dev, update lockfile
+- Add kody-engine-lite as local dep, remove cody workflow, update gitignore
+- add kody task artifacts [skip ci]
+- Add backfill script for parentCourse denormalized field
+- Trigger redeploy for env var pickup
+- **ci:** Reduce artifact retention to 3 days
+- Add Kody project memory and step files
+- Add Kody Engine workflow and config
+- Clean kody.config.json to match updated engine schema
+- Remove bootstrap files for GH Actions bootstrap test
+- Add Kody project memory and step files
+- Add Kody Engine configuration
+- Update kody workflow v0.1.16
+- Update kody workflow v0.1.15
+- Update kody workflow v0.1.13
+- Update kody workflow v0.1.11
+- Trigger redeploy with Mixpanel preview token
+- Gitignore latex_examples and shay-tassk directories
+- Add kody-engine-lite workflow, config, and memory
+
+### Other Changes
+
+- Merge pull request #1202 from A-Guy-educ/fix/context-exercise-parser-gaps
+- Merge pull request #1201 from A-Guy-educ/feat/fix-ci
+- Merge pull request #1189 from A-Guy-educ/feat/context-blocks-to-exe
+- Merge pull request #1194 from A-Guy-educ/feat/fix-convert-context-button-color
+- Merge pull request #1181 from A-Guy-educ/feat/fix-context-exe-from-pdf
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into feat/context-blocks-to-exe
+- Merge pull request #1193 from A-Guy-educ/feat/fix-ci-fail
+- Revert "chore: Regenerate payload types for context_extraction origin"
+- Format context-exercise-viewer with Prettier
+- Merge pull request #1187 from A-Guy-educ/feat/create-latex-block
+- Merge pull request #1186 from A-Guy-educ/feat/increase-lesson-context-limit
+- Merge remote-tracking branch 'origin/dev' into feat/fix-context-exe-from-pdf
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev
+- Merge pull request #1185 from A-Guy-educ/fix/pre-existing-lint-prettier
+- Revert "style: Format .claude/settings.json with Prettier"
+- Format .claude/settings.json with Prettier
+- Merge branch 'fix/pre-existing-lint-prettier' into feat/fix-context-exe-from-pdf
+- Merge pull request #1168 from A-Guy-educ/1167--implement-iterative-page-by-page-pdf-to-latex-ex
+- apply Prettier formatting to all modified files
+- Revert "feat(kody-watch): trigger on PR merge to dev, not daily schedule"
+- Merge branch 'dev' into 1167--implement-iterative-page-by-page-pdf-to-latex-ex
+- Merge pull request #1075 from A-Guy-educ/feat/pdf-to-latex-quality-reliability
+- Merge pull request #1165 from A-Guy-educ/feat/mixpanel-update
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into feat/pdf-to-latex-quality-reliability
+- Merge pull request #1145 from A-Guy-educ/1144--fix-mixpanel-user-identity-merging-on-login
+- Merge pull request #1148 from A-Guy-educ/1146--context-exercise-viewer-display-parsed-exercis
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into 1144--fix-mixpanel-user-identity-merging-on-login
+- Merge remote-tracking branch 'origin/dev' into 1146--context-exercise-viewer-display-parsed-exercis
+- Merge pull request #1125 from A-Guy-educ/1121--image-upload-error-handling-quality-constraint
+- format kody.yml with prettier
+- format AskPrimaryContent with prettier
+- Merge remote-tracking branch 'origin/dev' into 1121--image-upload-error-handling-quality-constraint
+- Merge pull request #1129 from A-Guy-educ/1119--intermittent-pdf-loading-failures-404-silent
+- Merge remote-tracking branch 'origin/dev' into 1121--image-upload-error-handling-quality-constraint
+- Merge pull request #1127 from A-Guy-educ/fix/latex-chat-rendering
+- format exercise-chat-agent-prompt.md with prettier
+- Merge remote-tracking branch 'origin/dev' into 1119--intermittent-pdf-loading-failures-404-silent
+- format useDirectChatAssetUpload with prettier
+- Merge pull request #1049 from A-Guy-educ/1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge remote-tracking branch 'origin/dev' into 1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge pull request #1124 from A-Guy-educ/1118--bug-broken-lesson-url-generation-view-suffix
+- Merge pull request #1080 from A-Guy-educ/feat/mixpanel-lesson-loading-tracking
+- Merge pull request #1116 from A-Guy-educ/feat/mixpanel-user-data-check
+- Merge pull request #1122 from A-Guy-educ/1117--bug-system-slowness-media-timeouts
+- Merge remote-tracking branch 'origin/dev' into feat/mixpanel-lesson-loading-tracking
+- Merge pull request #1059 from A-Guy-educ/1057--localization-teacher-profile-selection-hebrew
+- Merge branch 'main' into dev
+- Merge branch 'chore/migrate-engine-package'
+- Merge branch 'chore/migrate-engine-package'
+- Merge pull request #1110 from A-Guy-educ/1109--fix-admin-dashboard-header-should-display-curre
+- Merge branch 'dev' into kody
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge pull request #1104 from A-Guy-educ/1094--bug-access-code-redemption-toctou-race-conditio
+- Merge pull request #1105 from A-Guy-educ/feat/exercise-ui-redesign
+- Re-enable MCP dev server
+- Merge branch 'dev' into kody
+- Merge branch 'dev' into 1057--localization-teacher-profile-selection-hebrew
+- Format kody task files for Prettier
+- Merge pull request #1079 from A-Guy-educ/1063--course-integrated-exam-prep-enhancement
+- Merge remote-tracking branch 'origin/dev' into 1063--course-integrated-exam-prep-enhancement
+- Merge branch 'dev' into feat/pdf-to-latex-quality-reliability
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge remote-tracking branch 'origin/dev' into kody
+- Merge pull request #1087 from A-Guy-educ/1081--lesson-search-in-admin-should-also-search-by-cou
+- Merge pull request #1084 from A-Guy-educ/1083--admin-should-be-able-to-edit-and-delete-exercise
+- Merge remote-tracking branch 'origin/kody' into feat/pdf-to-latex-quality-reliability
+- Merge pull request #1074 from A-Guy-educ/fix/ci-workflow-versions
+- Merge remote-tracking branch 'origin/kody' into 1057--localization-teacher-profile-selection-hebrew
+- Merge pull request #1047 from A-Guy-educ/feat/admin-content-navigation-links
+- Merge pull request #1076 from A-Guy-educ/kody-bootstrap-1774955768848
+- Merge remote-tracking branch 'origin/dev' into feat/pdf-to-latex-quality-reliability
+- Revert "chore: Fix formatting in kody task artifacts"
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into 1057--localization-teacher-profile-selection-hebrew
+- Merge pull request #1068 from A-Guy-educ/dev
+- Merge branch 'dev' into feat/admin-content-navigation-links
+- fix prettier formatting in kody task files
+- Merge remote-tracking branch 'origin/dev' into 1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge pull request #1045 from A-Guy-educ/feat/json-edit-in-admin
+- Fix prettier formatting
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- update feat/json-edit-in-admin from origin/dev
+- fix prettier formatting across 53 files
+- Merge pull request #1054 from A-Guy-educ/refactor/modernize-ui-consistency
+- Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into 1057--localization-teacher-profile-selection-hebrew
+- Merge remote-tracking branch 'origin/dev' into feat/pdf-to-latex-audit
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- Merge remote-tracking branch 'origin/dev' into feat/pdf-to-latex-audit
+- Revert "fix: Bump PDF_TO_EXERCISE maxOutputTokens to 65536"
+- Merge branch 'dev' into 1048--chat-should-be-hidden-if-lesson-has-no-context
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- Merge pull request #1053 from A-Guy-educ/1051--auto-populate-lesson-blocks-from-related-content
+- Merge pull request #1021 from A-Guy-educ/feat/chat-usage-limit
+- Merge pull request #1032 from A-Guy-educ/fix/media-cdn-redirect
+- Merge remote-tracking branch 'origin/dev' into fix/media-cdn-redirect
+- Merge remote-tracking branch 'origin/dev' into feat/admin-content-navigation-links
+- Merge pull request #960 from A-Guy-educ/main
+- Merge pull request #1035 from A-Guy-educ/1031--security-8x-route-without-authentication
+- Merge pull request #1036 from A-Guy-educ/feat/course-header-dropdown
+- Merge pull request #1033 from A-Guy-educ/feat/upload-pic-iphone
+- Merge pull request #1027 from A-Guy-educ/feat/spacing-block-control
+- Merge pull request #1034 from A-Guy-educ/feat/automatic-slug
+- Merge pull request #1014 from A-Guy-educ/feat/latex-ai-converter
+- Merge pull request #1043 from A-Guy-educ/kody/bootstrap-1774769461678
+- Merge pull request #1013 from A-Guy-educ/feat/latex-renderer
+- Merge pull request #1044 from A-Guy-educ/feat/fix-ci-build
+- Merge branch 'dev' into feat/fix-ci-build
+- Merge branch 'feat/latex-renderer' of https://github.com/A-Guy-educ/A-Guy into feat/latex-renderer
+- Merge remote-tracking branch 'origin/dev' into 1031--security-8x-route-without-authentication
+
+### Refactoring
+
+- redesign dark mode, exercise UI, and NavigationBar
+- Use per-locale documents for TeacherProfiles instead of dual fields
+- study page uses shared CourseLessonCard instead of duplicate LessonGridCard
+- unified card design with top accent bars, 3-col grid, design abstractions
+- convert search from inline header to command palette modal
+- unify all 13 card components with one visual design language
+- complete UI modernization — all remaining components
+- modernize UI with consistent design tokens across 87 files
+- Simplify PDF-to-LaTeX extraction back to single LLM call
+- Extract time conversion to shared util
+- Use existing chat config domain for quota settings
+
+### Tests
+
+- Update display math test to expect rich_text instead of latex
+- Update PDF_TO_EXERCISE maxOutputTokens assertions to 32768
+
+
+* Merge branch 'dev' into feat/equations-addition ([54a6954](https://github.com/A-Guy-educ/A-Guy/commit/54a6954))
+* Merge branch 'feat/equations-addition' of https://github.com/A-Guy-educ/A-Guy into feat/equations-ad ([54d0a6d](https://github.com/A-Guy-educ/A-Guy/commit/54d0a6d))
+* Merge pull request #1005 from A-Guy-educ/feat/equations-addition ([9e56083](https://github.com/A-Guy-educ/A-Guy/commit/9e56083)), closes [#1005](https://github.com/A-Guy-educ/A-Guy/issues/1005)
+* Merge pull request #1012 from A-Guy-educ/feat/latex-script-converter ([98f0a62](https://github.com/A-Guy-educ/A-Guy/commit/98f0a62)), closes [#1012](https://github.com/A-Guy-educ/A-Guy/issues/1012)
+* Merge pull request #1018 from A-Guy-educ/fix/rtl-ltr-align-text-cards ([69b67a2](https://github.com/A-Guy-educ/A-Guy/commit/69b67a2)), closes [#1018](https://github.com/A-Guy-educ/A-Guy/issues/1018)
+* Merge pull request #1019 from A-Guy-educ/feat/invalid-request-error-between-exercises ([25f31d6](https://github.com/A-Guy-educ/A-Guy/commit/25f31d6)), closes [#1019](https://github.com/A-Guy-educ/A-Guy/issues/1019)
+* Merge pull request #1020 from A-Guy-educ/fix/course-status-badges ([1cfb6e1](https://github.com/A-Guy-educ/A-Guy/commit/1cfb6e1)), closes [#1020](https://github.com/A-Guy-educ/A-Guy/issues/1020)
+* Merge pull request #1022 from A-Guy-educ/feat/interactive-numbering ([0c1da83](https://github.com/A-Guy-educ/A-Guy/commit/0c1da83)), closes [#1022](https://github.com/A-Guy-educ/A-Guy/issues/1022)
+* Merge pull request #1023 from A-Guy-educ/fix/admin-csp-monaco ([350130c](https://github.com/A-Guy-educ/A-Guy/commit/350130c)), closes [#1023](https://github.com/A-Guy-educ/A-Guy/issues/1023)
+* Merge pull request #1024 from A-Guy-educ/fix/csp-mixpanel-connect ([ccd10dc](https://github.com/A-Guy-educ/A-Guy/commit/ccd10dc)), closes [#1024](https://github.com/A-Guy-educ/A-Guy/issues/1024)
+* Merge pull request #1030 from A-Guy-educ/dev ([1ac8e54](https://github.com/A-Guy-educ/A-Guy/commit/1ac8e54)), closes [#1030](https://github.com/A-Guy-educ/A-Guy/issues/1030)
+* Merge remote-tracking branch 'origin/dev' into feat/equations-addition ([77df8d6](https://github.com/A-Guy-educ/A-Guy/commit/77df8d6))
+* Merge remote-tracking branch 'origin/dev' into feat/equations-addition ([078aa21](https://github.com/A-Guy-educ/A-Guy/commit/078aa21))
+* Merge remote-tracking branch 'origin/dev' into feat/equations-addition ([747acdb](https://github.com/A-Guy-educ/A-Guy/commit/747acdb))
+* Merge remote-tracking branch 'origin/dev' into feat/equations-addition ([e90c5f3](https://github.com/A-Guy-educ/A-Guy/commit/e90c5f3))
+* Merge remote-tracking branch 'origin/dev' into feat/equations-addition ([4269c9b](https://github.com/A-Guy-educ/A-Guy/commit/4269c9b))
+* Merge remote-tracking branch 'origin/dev' into fix/course-status-badges ([0109706](https://github.com/A-Guy-educ/A-Guy/commit/0109706))
+* feat: Add admin toggle for exercise question numbering ([b6b27c4](https://github.com/A-Guy-educ/A-Guy/commit/b6b27c4))
+* feat: Add custom free-text badge option for content status ([0a12b5c](https://github.com/A-Guy-educ/A-Guy/commit/0a12b5c))
+* feat: Add engine contract spec — dashboard-engine interface ([0d35e13](https://github.com/A-Guy-educ/A-Guy/commit/0d35e13))
+* feat: Add formula sheet reference system for math lessons ([98d362a](https://github.com/A-Guy-educ/A-Guy/commit/98d362a))
+* feat: LaTeX conversion UI, .tex upload, and import endpoints ([db9e0b2](https://github.com/A-Guy-educ/A-Guy/commit/db9e0b2))
+* feat: LaTeX script parser and converter library ([681575a](https://github.com/A-Guy-educ/A-Guy/commit/681575a))
+* feat: Move formula sheet button to exercise help system buttons ([9c0b75a](https://github.com/A-Guy-educ/A-Guy/commit/9c0b75a))
+* fix: Add jsdelivr to style-src CSP for Monaco editor styles ([86ffeb1](https://github.com/A-Guy-educ/A-Guy/commit/86ffeb1))
+* fix: Add jsdelivr to style-src CSP for Monaco editor styles ([16d9633](https://github.com/A-Guy-educ/A-Guy/commit/16d9633))
+* fix: Add Mixpanel API domains to CSP connect-src ([6472cd6](https://github.com/A-Guy-educ/A-Guy/commit/6472cd6))
+* fix: Add status badges and Soon lock to /study LessonGridCard ([db7f15d](https://github.com/A-Guy-educ/A-Guy/commit/db7f15d))
+* fix: Add try-catch to fetchFormulaSheet and reduce depth to 1 ([fc3606b](https://github.com/A-Guy-educ/A-Guy/commit/fc3606b))
+* fix: Allow Monaco editor CDN in admin CSP ([e5ee36a](https://github.com/A-Guy-educ/A-Guy/commit/e5ee36a))
+* fix: Exclude formulaSheet from ALL course/lesson queries with depth:1 ([e39b8cf](https://github.com/A-Guy-educ/A-Guy/commit/e39b8cf))
+* fix: Exclude formulaSheet from course/lesson queries to prevent crash ([c694e97](https://github.com/A-Guy-educ/A-Guy/commit/c694e97))
+* fix: Force HTTPS for Mixpanel SDK and fix pdf_viewed schema mismatch ([9f0cd8d](https://github.com/A-Guy-educ/A-Guy/commit/9f0cd8d))
+* fix: Hide exercise number bubble when only one question per exercise ([062c50e](https://github.com/A-Guy-educ/A-Guy/commit/062c50e))
+* fix: Make FormulaSheetContent a pure client component ([6b2cbb3](https://github.com/A-Guy-educ/A-Guy/commit/6b2cbb3))
+* fix: Move formula sheet button to chat toolbar and revert codemod changes ([1d0f000](https://github.com/A-Guy-educ/A-Guy/commit/1d0f000))
+* fix: Pass formulaSheet to PdfLessonPager for PDF lessons ([99f1255](https://github.com/A-Guy-educ/A-Guy/commit/99f1255))
+* fix: Position lesson badges above card to match course card style ([07a1627](https://github.com/A-Guy-educ/A-Guy/commit/07a1627))
+* fix: Pre-render formula sheet content server-side to fix build ([7439c24](https://github.com/A-Guy-educ/A-Guy/commit/7439c24))
+* fix: Prevent "Invalid request" error when navigating between exercises ([e6b1699](https://github.com/A-Guy-educ/A-Guy/commit/e6b1699))
+* fix: Prevent formula sheet from crashing lesson page ([49b9199](https://github.com/A-Guy-educ/A-Guy/commit/49b9199))
+* fix: Render formula sheet button independently of showQuickActions ([478fd88](https://github.com/A-Guy-educ/A-Guy/commit/478fd88))
+* fix: Resolve merge conflict — keep jsdelivr and Mixpanel API domains ([b7ab128](https://github.com/A-Guy-educ/A-Guy/commit/b7ab128))
+* fix: Resolve merge conflict with dev ([a335a98](https://github.com/A-Guy-educ/A-Guy/commit/a335a98))
+* fix: Revert design token codemod changes in pager components ([b9f3755](https://github.com/A-Guy-educ/A-Guy/commit/b9f3755))
+* fix: Serialize formula sheet data before passing to client components ([0fe290b](https://github.com/A-Guy-educ/A-Guy/commit/0fe290b))
+* fix: Show formula sheet inline in chat panel, not as modal overlay ([64da60a](https://github.com/A-Guy-educ/A-Guy/commit/64da60a))
+* fix: Suppress error toasts from hidden exercise context injection ([c80151a](https://github.com/A-Guy-educ/A-Guy/commit/c80151a))
+* fix: Update tests for custom badge and fix badge overflow clipping ([dc32dcb](https://github.com/A-Guy-educ/A-Guy/commit/dc32dcb))
+* fix: Use logical CSS properties for RTL/LTR text alignment in lesson cards ([de29db7](https://github.com/A-Guy-educ/A-Guy/commit/de29db7))
+* fix: Use maxDepth:0 on formulaSheet field instead of select workaround ([63641f0](https://github.com/A-Guy-educ/A-Guy/commit/63641f0))
+* revert: Remove unrelated message-limit and trim changes ([7ccadff](https://github.com/A-Guy-educ/A-Guy/commit/7ccadff))
+* test: Add unit tests for formula sheet reference system ([a039904](https://github.com/A-Guy-educ/A-Guy/commit/a039904))
+* chore: Format .claude/settings.json ([e7fd098](https://github.com/A-Guy-educ/A-Guy/commit/e7fd098))
+
+## 0.21.0 (2026-03-23)
+
+* Merge branch 'main' into Fix-merge-from-main ([9dbc687](https://github.com/A-Guy-educ/A-Guy/commit/9dbc687))
+* Merge pull request #1001 from A-Guy-educ/feat/260318-auto-891-mixpanel-analytics-specification-c ([71103d0](https://github.com/A-Guy-educ/A-Guy/commit/71103d0)), closes [#1001](https://github.com/A-Guy-educ/A-Guy/issues/1001)
+* Merge pull request #1003 from A-Guy-educ/feat/into-page-pdf-lessson ([40b25fa](https://github.com/A-Guy-educ/A-Guy/commit/40b25fa)), closes [#1003](https://github.com/A-Guy-educ/A-Guy/issues/1003)
+* Merge pull request #1015 from A-Guy-educ/fix/pdf-viewer-cutoff ([eff3e63](https://github.com/A-Guy-educ/A-Guy/commit/eff3e63)), closes [#1015](https://github.com/A-Guy-educ/A-Guy/issues/1015)
+* Merge pull request #1016 from A-Guy-educ/Fix-merge-from-main ([3cf5b5a](https://github.com/A-Guy-educ/A-Guy/commit/3cf5b5a)), closes [#1016](https://github.com/A-Guy-educ/A-Guy/issues/1016)
+* Merge pull request #898 from A-Guy-educ/feat/lesson-translation-system ([543efd3](https://github.com/A-Guy-educ/A-Guy/commit/543efd3)), closes [#898](https://github.com/A-Guy-educ/A-Guy/issues/898)
+* Merge pull request #942 from A-Guy-educ/feat/cascade-delete ([7e6b924](https://github.com/A-Guy-educ/A-Guy/commit/7e6b924)), closes [#942](https://github.com/A-Guy-educ/A-Guy/issues/942)
+* Merge remote-tracking branch 'origin/dev' into feat/260318-auto-891-mixpanel-analytics-specification ([db26674](https://github.com/A-Guy-educ/A-Guy/commit/db26674))
+* Merge remote-tracking branch 'origin/dev' into feat/260318-auto-891-mixpanel-analytics-specification ([8b79b14](https://github.com/A-Guy-educ/A-Guy/commit/8b79b14))
+* Merge remote-tracking branch 'origin/dev' into feat/260318-auto-891-mixpanel-analytics-specification ([39cf83a](https://github.com/A-Guy-educ/A-Guy/commit/39cf83a))
+* Merge remote-tracking branch 'origin/dev' into feat/260318-auto-891-mixpanel-analytics-specification ([e9a3e3b](https://github.com/A-Guy-educ/A-Guy/commit/e9a3e3b))
+* Merge remote-tracking branch 'origin/dev' into feat/cascade-delete ([2a850a6](https://github.com/A-Guy-educ/A-Guy/commit/2a850a6))
+* Merge remote-tracking branch 'origin/dev' into feat/cascade-delete ([36c796c](https://github.com/A-Guy-educ/A-Guy/commit/36c796c))
+* Merge remote-tracking branch 'origin/dev' into feat/cascade-delete ([b9a0021](https://github.com/A-Guy-educ/A-Guy/commit/b9a0021))
+* Merge remote-tracking branch 'origin/dev' into feat/lesson-translation-system ([6aae532](https://github.com/A-Guy-educ/A-Guy/commit/6aae532))
+* Merge remote-tracking branch 'origin/dev' into feat/lesson-translation-system ([d6ca8dc](https://github.com/A-Guy-educ/A-Guy/commit/d6ca8dc))
+* Merge remote-tracking branch 'origin/dev' into feat/lesson-translation-system ([922f6de](https://github.com/A-Guy-educ/A-Guy/commit/922f6de))
+* Merge remote-tracking branch 'origin/dev' into feat/lesson-translation-system ([3e5b960](https://github.com/A-Guy-educ/A-Guy/commit/3e5b960))
+* test: Update PDFMedia tests to match viewport-height fix ([60876ea](https://github.com/A-Guy-educ/A-Guy/commit/60876ea))
+* fix: Add OK button and success/error states to translation modal ([699f959](https://github.com/A-Guy-educ/A-Guy/commit/699f959))
+* fix: Add overrideAccess and try-catch to translation handlers ([cd826ec](https://github.com/A-Guy-educ/A-Guy/commit/cd826ec))
+* fix: Add timestamp to translated slugs to avoid uniqueness collisions ([e72e4ae](https://github.com/A-Guy-educ/A-Guy/commit/e72e4ae))
+* fix: Make PDF embeds fill available viewport height instead of 400px ([c1f222f](https://github.com/A-Guy-educ/A-Guy/commit/c1f222f))
+* fix: Make Translate button visible on dark theme ([14ff9bf](https://github.com/A-Guy-educ/A-Guy/commit/14ff9bf))
+* fix: Merge duplicate components blocks in Courses and Lessons ([8627684](https://github.com/A-Guy-educ/A-Guy/commit/8627684))
+* fix: PDF viewer fills available height in PdfLessonPager ([1a4c6db](https://github.com/A-Guy-educ/A-Guy/commit/1a4c6db))
+* fix: Remove dead sidebar button components and fix type errors ([5e88957](https://github.com/A-Guy-educ/A-Guy/commit/5e88957))
+* fix: Remove deleted introEnabled/introDescription fields from lesson translation ([98086d4](https://github.com/A-Guy-educ/A-Guy/commit/98086d4))
+* fix: Remove stale tests referencing deleted files after dev merge ([313bef3](https://github.com/A-Guy-educ/A-Guy/commit/313bef3))
+* fix: Revert design-tokens codemod changes on LessonPager ([bdc627c](https://github.com/A-Guy-educ/A-Guy/commit/bdc627c))
+* fix: Show PDF viewer after content pages in LessonPager ([3f36324](https://github.com/A-Guy-educ/A-Guy/commit/3f36324))
+* fix: Update PDFMedia tests to check PdfLessonPager instead of page.tsx ([6abbaa8](https://github.com/A-Guy-educ/A-Guy/commit/6abbaa8))
+* fix: Update pnpm-lock.yaml to match package.json after merge from dev ([3b27ff9](https://github.com/A-Guy-educ/A-Guy/commit/3b27ff9))
+* fix(ci): Remove references to deleted cody workflow and scripts ([abdda50](https://github.com/A-Guy-educ/A-Guy/commit/abdda50))
+* fix(vercel): Add vercel pull to fetch project settings before build ([8c7a7e5](https://github.com/A-Guy-educ/A-Guy/commit/8c7a7e5))
+* fix(vercel): Pass token to vercel deploy command ([874c5e4](https://github.com/A-Guy-educ/A-Guy/commit/874c5e4))
+* feat: Add cascade delete button to admin UI for courses, chapters, and lessons ([2c6a90c](https://github.com/A-Guy-educ/A-Guy/commit/2c6a90c))
+* feat: Add cascade delete endpoint for courses, chapters, and lessons ([b8529db](https://github.com/A-Guy-educ/A-Guy/commit/b8529db))
+* feat: Add chapter translation and cascading target selectors ([b8cac9a](https://github.com/A-Guy-educ/A-Guy/commit/b8cac9a))
+* feat: Add intro/outro flow to PDF lessons ([d2c5c81](https://github.com/A-Guy-educ/A-Guy/commit/d2c5c81))
+* feat: Add prompt selection modal to translation flow ([9c08c99](https://github.com/A-Guy-educ/A-Guy/commit/9c08c99))
+* feat: Lesson translation system (clone-and-translate) ([cfba199](https://github.com/A-Guy-educ/A-Guy/commit/cfba199))
+* feat: Translate titles and descriptions via LLM instead of prefixing ([b88ef53](https://github.com/A-Guy-educ/A-Guy/commit/b88ef53))
+* feat(analytics): Add 9 critical Mixpanel events for issue #891 ([ef03391](https://github.com/A-Guy-educ/A-Guy/commit/ef03391)), closes [#891](https://github.com/A-Guy-educ/A-Guy/issues/891)
+* feat(cody): add cody pipeline workflow ([21f62ca](https://github.com/A-Guy-educ/A-Guy/commit/21f62ca))
+* chore: Format .claude/settings.json ([24cb72c](https://github.com/A-Guy-educ/A-Guy/commit/24cb72c))
+* chore: Remove Cody and add redirect to standalone app ([8a49315](https://github.com/A-Guy-educ/A-Guy/commit/8a49315))
+* chore: reorganize .opencode docs and update agent instructions ([9b20208](https://github.com/A-Guy-educ/A-Guy/commit/9b20208))
+* chore: Update pnpm lockfile after cody removal ([6be899e](https://github.com/A-Guy-educ/A-Guy/commit/6be899e))
+* refactor: Move cascade delete button to top bar with modal popup ([80051c5](https://github.com/A-Guy-educ/A-Guy/commit/80051c5))
+* refactor: Move translation to top bar with proper modal UI ([f095fcf](https://github.com/A-Guy-educ/A-Guy/commit/f095fcf))
+* refactor: Replace inline styles with Tailwind and design system color vars ([bd53560](https://github.com/A-Guy-educ/A-Guy/commit/bd53560))
+* ci(cody): commit task files for 260318-auto-581 ([d5e9843](https://github.com/A-Guy-educ/A-Guy/commit/d5e9843))
+* ci(cody): commit task files for 260318-auto-581 ([f592b0f](https://github.com/A-Guy-educ/A-Guy/commit/f592b0f))
+* ci(cody): commit task files for 260318-auto-581 ([e297d8f](https://github.com/A-Guy-educ/A-Guy/commit/e297d8f))
+* style: Format translation handlers with prettier ([3324d0d](https://github.com/A-Guy-educ/A-Guy/commit/3324d0d))
+
+## 0.20.0 (2026-03-22)
+
+* Merge branch 'dev' into fix/260318-auto-889-lesson-introduction-page-is-not-ed ([356e225](https://github.com/A-Guy-educ/A-Guy/commit/356e225))
+* Merge pull request #1000 from A-Guy-educ/dev ([eda760c](https://github.com/A-Guy-educ/A-Guy/commit/eda760c)), closes [#1000](https://github.com/A-Guy-educ/A-Guy/issues/1000)
+* Merge pull request #940 from A-Guy-educ/fix/260318-auto-889-lesson-introduction-page-is-not-ed ([1a30419](https://github.com/A-Guy-educ/A-Guy/commit/1a30419)), closes [#940](https://github.com/A-Guy-educ/A-Guy/issues/940) [#889](https://github.com/A-Guy-educ/A-Guy/issues/889)
+* Merge pull request #952 from A-Guy-educ/fix/260318-auto-901-increase-the-size-of-the-word-less ([2c85ab8](https://github.com/A-Guy-educ/A-Guy/commit/2c85ab8)), closes [#952](https://github.com/A-Guy-educ/A-Guy/issues/952) [#901](https://github.com/A-Guy-educ/A-Guy/issues/901)
+* Merge pull request #953 from A-Guy-educ/fix/260318-auto-907-ncrease-font-size-of-answer-option ([5a748dd](https://github.com/A-Guy-educ/A-Guy/commit/5a748dd)), closes [#953](https://github.com/A-Guy-educ/A-Guy/issues/953) [#907](https://github.com/A-Guy-educ/A-Guy/issues/907)
+* Merge pull request #998 from A-Guy-educ/feat/pdf-solver ([c68f9ec](https://github.com/A-Guy-educ/A-Guy/commit/c68f9ec)), closes [#998](https://github.com/A-Guy-educ/A-Guy/issues/998)
+* fix: Add minimax provider to opencode.test.json ([3923fd4](https://github.com/A-Guy-educ/A-Guy/commit/3923fd4))
+* fix: Allow PDF.js viewer iframe by setting X-Frame-Options to SAMEORIGIN ([9ebe275](https://github.com/A-Guy-educ/A-Guy/commit/9ebe275))
+* fix: correct readFileSync mock type in knowledge-base test ([8932016](https://github.com/A-Guy-educ/A-Guy/commit/8932016))
+* fix: Exclude pdfjs-viewer from X-Frame-Options DENY using negative lookahead ([b831b01](https://github.com/A-Guy-educ/A-Guy/commit/b831b01))
+* fix: Exclude storybook files from TypeScript checking ([0b9f0cb](https://github.com/A-Guy-educ/A-Guy/commit/0b9f0cb))
+* fix: format opencode.json ([0ec6773](https://github.com/A-Guy-educ/A-Guy/commit/0ec6773))
+* fix: Normalize model names in replayer to strip provider prefix ([04d1bfb](https://github.com/A-Guy-educ/A-Guy/commit/04d1bfb))
+* fix: Remove vercel.json build skip that may cause middleware errors ([45bf0fe](https://github.com/A-Guy-educ/A-Guy/commit/45bf0fe))
+* fix: resolve CI failures - formatting and test assertion ([aa17881](https://github.com/A-Guy-educ/A-Guy/commit/aa17881))
+* fix: update inline-styles test to use design token text-body-xs ([c07dc39](https://github.com/A-Guy-educ/A-Guy/commit/c07dc39))
+* fix: Use minimax models for system test recordings ([14604e5](https://github.com/A-Guy-educ/A-Guy/commit/14604e5))
+* fix(260318-auto-245): Issue Title ([72fbb3f](https://github.com/A-Guy-educ/A-Guy/commit/72fbb3f))
+* fix(260318-auto-461): Issue Title ([8caa6b8](https://github.com/A-Guy-educ/A-Guy/commit/8caa6b8))
+* fix(260318-auto-847): Issue Title ([2468cf5](https://github.com/A-Guy-educ/A-Guy/commit/2468cf5))
+* fix(889): Change lesson blocks field from blocks to json type ([f110c3e](https://github.com/A-Guy-educ/A-Guy/commit/f110c3e))
+* fix(889): Filter content page picker to show only published + active pages ([cd51bf3](https://github.com/A-Guy-educ/A-Guy/commit/cd51bf3))
+* fix(889): Filter exercise picker to show only exercises from current lesson ([0ee1afd](https://github.com/A-Guy-educ/A-Guy/commit/0ee1afd))
+* fix(889): Fix double-add bug in lesson blocks picker ([abfd6b5](https://github.com/A-Guy-educ/A-Guy/commit/abfd6b5))
+* fix(889): Fix lesson blocks persistence after save ([a82d295](https://github.com/A-Guy-educ/A-Guy/commit/a82d295))
+* fix(889): Fix merge conflict residue in ExercisesPager ([1600fa9](https://github.com/A-Guy-educ/A-Guy/commit/1600fa9))
+* fix(889): Link content pages to lessons and filter picker by lesson ([8f7aedf](https://github.com/A-Guy-educ/A-Guy/commit/8f7aedf))
+* fix(889): Remove legacy intro fields from Lessons collection ([6e47883](https://github.com/A-Guy-educ/A-Guy/commit/6e47883))
+* fix(889): Render intro blocks server-side to fix OOM build failure ([651fb8f](https://github.com/A-Guy-educ/A-Guy/commit/651fb8f))
+* fix(889): Switch block fields from code to textarea to avoid Monaco CSP ([cdab25e](https://github.com/A-Guy-educ/A-Guy/commit/cdab25e))
+* fix(889): Switch block fields from json to code type to fix Monaco CSP error ([215e160](https://github.com/A-Guy-educ/A-Guy/commit/215e160))
+* fix(889): Switch lesson blocks to textarea for reliable persistence ([7bf7408](https://github.com/A-Guy-educ/A-Guy/commit/7bf7408))
+* fix(ci): Add vercel pull step before build to fix No Project Settings error ([aab75d5](https://github.com/A-Guy-educ/A-Guy/commit/aab75d5))
+* fix(ci): fix parse-safety tests to use npx tsx instead of bun ([2fee527](https://github.com/A-Guy-educ/A-Guy/commit/2fee527))
+* fix(cody): Add opencode.json with real Minimax configuration ([9a4caae](https://github.com/A-Guy-educ/A-Guy/commit/9a4caae))
+* fix(cody): Add visible close button to mobile chat sheet ([0255f8d](https://github.com/A-Guy-educ/A-Guy/commit/0255f8d))
+* fix(cody): capture git stdout for 'nothing to commit' detection ([04afe45](https://github.com/A-Guy-educ/A-Guy/commit/04afe45))
+* fix(cody): check both error.message and stdout for 'nothing to commit' patterns ([389ab69](https://github.com/A-Guy-educ/A-Guy/commit/389ab69))
+* fix(cody): clarify build.md format requirement with example ([f4c05bf](https://github.com/A-Guy-educ/A-Guy/commit/f4c05bf))
+* fix(cody): handle 'nothing added to commit' git error message ([637ffed](https://github.com/A-Guy-educ/A-Guy/commit/637ffed))
+* fix(cody): Handle invalid Vercel preview URLs gracefully in getPreviewBypassUrl ([89b4ba9](https://github.com/A-Guy-educ/A-Guy/commit/89b4ba9))
+* fix(cody): increase fix stage timeout and add prioritization guidance ([452cef8](https://github.com/A-Guy-educ/A-Guy/commit/452cef8)), closes [#813](https://github.com/A-Guy-educ/A-Guy/issues/813)
+* fix(cody): Prevent chat re-opening after close with proper modal state tracking ([01ee42f](https://github.com/A-Guy-educ/A-Guy/commit/01ee42f))
+* fix(cody): resolve dashboard chat errors and improve stability ([8c74d5e](https://github.com/A-Guy-educ/A-Guy/commit/8c74d5e))
+* fix(cody): restore TDD test approach with parallel test+build ([1561350](https://github.com/A-Guy-educ/A-Guy/commit/1561350))
+* fix(cody): Stability improvements for pipeline reliability ([f66b10c](https://github.com/A-Guy-educ/A-Guy/commit/f66b10c))
+* fix(cody): Try redirecting API calls to mock server via environment variables ([fb5ce05](https://github.com/A-Guy-educ/A-Guy/commit/fb5ce05))
+* fix(cody): update integration test for parallel test+build stages ([62175c1](https://github.com/A-Guy-educ/A-Guy/commit/62175c1))
+* fix(cody): Update mock server to use Minimax instead of Groq ([32a93eb](https://github.com/A-Guy-educ/A-Guy/commit/32a93eb))
+* fix(deploy): use vercel build && deploy --prebuilt pattern ([21ef952](https://github.com/A-Guy-educ/A-Guy/commit/21ef952))
+* fix(deploy): use Vercel CLI directly to fix Next.js version detection ([8dfbeb1](https://github.com/A-Guy-educ/A-Guy/commit/8dfbeb1))
+* fix(docs): deploy to separate a-guy-wiki repository ([215b1ad](https://github.com/A-Guy-educ/A-Guy/commit/215b1ad))
+* fix(docs): deploy to wiki-pages instead of gh-pages ([f587b34](https://github.com/A-Guy-educ/A-Guy/commit/f587b34)), closes [#pages](https://github.com/A-Guy-educ/A-Guy/issues/pages) [#pages](https://github.com/A-Guy-educ/A-Guy/issues/pages)
+* fix(docs): Fix broken links in docs/README.md and format cody files ([bbfff6e](https://github.com/A-Guy-educ/A-Guy/commit/bbfff6e))
+* fix(inspector): Update tests to expect daily schedule (every: 1) ([67f5d45](https://github.com/A-Guy-educ/A-Guy/commit/67f5d45))
+* fix(opencode): Change MCP contextplus type from "sse" to "remote" ([9cb8e89](https://github.com/A-Guy-educ/A-Guy/commit/9cb8e89))
+* fix(system-test): Ensure upload recordings runs even when test fails ([426b932](https://github.com/A-Guy-educ/A-Guy/commit/426b932))
+* fix(system-test): Set use_mock=true in record mode so cody pipeline starts mock server ([db00dc0](https://github.com/A-Guy-educ/A-Guy/commit/db00dc0))
+* fix(system-test): Use scenarios input instead of hardcoded scenario name ([ed6b9d2](https://github.com/A-Guy-educ/A-Guy/commit/ed6b9d2)), closes [02-full-hi#complexity](https://github.com/02-full-hi/issues/complexity)
+* fix(test): Update git-utils test assertions to match current implementation ([380380d](https://github.com/A-Guy-educ/A-Guy/commit/380380d))
+* fix(tests): use bun run instead of npx tsx in parse-safety tests ([a2b7904](https://github.com/A-Guy-educ/A-Guy/commit/a2b7904))
+* fix(vercel-deploy): Add checkout step to fix git log error ([fa07bdf](https://github.com/A-Guy-educ/A-Guy/commit/fa07bdf))
+* fix(vercel): Remove vercel pull step that requires login ([2198fb8](https://github.com/A-Guy-educ/A-Guy/commit/2198fb8))
+* test: add ssr noExternal for zod in vitest unit config ([b4a9a8d](https://github.com/A-Guy-educ/A-Guy/commit/b4a9a8d))
+* test: cheap models for system test ([2265bc7](https://github.com/A-Guy-educ/A-Guy/commit/2265bc7))
+* test: mock models for system test ([df9a9aa](https://github.com/A-Guy-educ/A-Guy/commit/df9a9aa))
+* test(889): Update exercise query tests for createdAt sort ([48da109](https://github.com/A-Guy-educ/A-Guy/commit/48da109))
+* test(e2e): add Cody dashboard chat E2E tests ([470d41b](https://github.com/A-Guy-educ/A-Guy/commit/470d41b))
+* test(e2e): add Cody dashboard E2E tests for chat functionality ([743677c](https://github.com/A-Guy-educ/A-Guy/commit/743677c))
+* chore: Format pattern-index.json ([8f1a1d1](https://github.com/A-Guy-educ/A-Guy/commit/8f1a1d1))
+* chore: Format readme-index.json ([580f097](https://github.com/A-Guy-educ/A-Guy/commit/580f097))
+* chore: move e2e tests and qa scenarios from PR to nightly inspector run ([e62a367](https://github.com/A-Guy-educ/A-Guy/commit/e62a367))
+* chore: remove stale plan files and simplify OpenCode configuration ([709c2ea](https://github.com/A-Guy-educ/A-Guy/commit/709c2ea))
+* chore: Sort imports and fix mock type in knowledge-base test ([4367af5](https://github.com/A-Guy-educ/A-Guy/commit/4367af5))
+* chore(deps): Install missing MCP and Anthropic SDK packages ([dfba6dc](https://github.com/A-Guy-educ/A-Guy/commit/dfba6dc))
+* feat: add design tokens system and Storybook integration ([cf4f3c1](https://github.com/A-Guy-educ/A-Guy/commit/cf4f3c1))
+* feat: Add hash-based request matching to LLM mock replayer ([48c5dc9](https://github.com/A-Guy-educ/A-Guy/commit/48c5dc9))
+* feat: Add LLM recordings for system test scenario 02 ([feca47d](https://github.com/A-Guy-educ/A-Guy/commit/feca47d))
+* feat: add SSE stream parsing for Cody chat and tests ([6f39827](https://github.com/A-Guy-educ/A-Guy/commit/6f39827))
+* feat: Add Vercel deploy workflow with skip-build optimization ([2474f2c](https://github.com/A-Guy-educ/A-Guy/commit/2474f2c))
+* feat(889): Add native drag-and-drop to lesson blocks sortable list ([191adc1](https://github.com/A-Guy-educ/A-Guy/commit/191adc1))
+* feat(889): Add sortable lesson blocks admin UI ([ac6909c](https://github.com/A-Guy-educ/A-Guy/commit/ac6909c))
+* feat(889): Add table, geometry, and graph blocks to lesson intro content ([64b3f92](https://github.com/A-Guy-educ/A-Guy/commit/64b3f92))
+* feat(889): Add visual geometry and graph editors for lesson intro blocks ([a0e01bf](https://github.com/A-Guy-educ/A-Guy/commit/a0e01bf))
+* feat(889): Add visual table editor for lesson intro blocks ([b22c810](https://github.com/A-Guy-educ/A-Guy/commit/b22c810))
+* feat(889): Implement lesson blocks architecture with ContentPages ([9369bb1](https://github.com/A-Guy-educ/A-Guy/commit/9369bb1))
+* feat(agents): Add domain delegation with parallel sub-agent execution ([1bac5df](https://github.com/A-Guy-educ/A-Guy/commit/1bac5df))
+* feat(brain): Add brain-agent MCP server with OB1 integration ([647517e](https://github.com/A-Guy-educ/A-Guy/commit/647517e))
+* feat(cody): add knowledge base update post-action for pipeline learning ([f1e9003](https://github.com/A-Guy-educ/A-Guy/commit/f1e9003))
+* feat(cody): add Pipeline Observer for complex failure handling ([74ee15a](https://github.com/A-Guy-educ/A-Guy/commit/74ee15a))
+* feat(cody): Implement Scenario-First Development System ([1bdbe04](https://github.com/A-Guy-educ/A-Guy/commit/1bdbe04))
+* feat(cody): phases 2-5 improvements for open-source readiness ([9f46817](https://github.com/A-Guy-educ/A-Guy/commit/9f46817))
+* feat(inspector): Add system architect inspector plugin ([b501c6e](https://github.com/A-Guy-educ/A-Guy/commit/b501c6e))
+* feat(neuron): add agent instructions ([160591c](https://github.com/A-Guy-educ/A-Guy/commit/160591c))
+* feat(qa): Add hybrid QA approach with normalized actions and user stories ([c8bb56a](https://github.com/A-Guy-educ/A-Guy/commit/c8bb56a))
+* feat(system-test): Add minimal test scenario ([29c90b9](https://github.com/A-Guy-educ/A-Guy/commit/29c90b9))
+* refactor(cody): Harden gate commands, remove degraded fallback, split large files ([d623fcd](https://github.com/A-Guy-educ/A-Guy/commit/d623fcd))
+* refactor(cody): Micro-component architecture for ScenarioWizard ([87a69c6](https://github.com/A-Guy-educ/A-Guy/commit/87a69c6))
+* refactor(cody): Replace scenario editor with wizard UI ([375baac](https://github.com/A-Guy-educ/A-Guy/commit/375baac))
+* refactor(cody): simplify dashboard UI by consolidating actions ([60fd7eb](https://github.com/A-Guy-educ/A-Guy/commit/60fd7eb))
+* refactor(inspector): Simplify to daily cron with all plugins running once per day ([e2af20a](https://github.com/A-Guy-educ/A-Guy/commit/e2af20a))
+* revert(docs): restore gh-pages deployment ([9a3366f](https://github.com/A-Guy-educ/A-Guy/commit/9a3366f)), closes [#pages](https://github.com/A-Guy-educ/A-Guy/issues/pages) [#pages](https://github.com/A-Guy-educ/A-Guy/issues/pages)
+* style: Format metadata.json with prettier ([c548afe](https://github.com/A-Guy-educ/A-Guy/commit/c548afe))
+* ci(cody): commit task files for 260318-auto-245 ([d620634](https://github.com/A-Guy-educ/A-Guy/commit/d620634))
+* ci(cody): commit task files for 260318-auto-245 ([3882662](https://github.com/A-Guy-educ/A-Guy/commit/3882662))
+* ci(cody): commit task files for 260318-auto-461 ([7c944ef](https://github.com/A-Guy-educ/A-Guy/commit/7c944ef))
+* ci(cody): commit task files for 260318-auto-461 ([284a4e5](https://github.com/A-Guy-educ/A-Guy/commit/284a4e5))
+* ci(cody): commit task files for 260318-auto-847 ([1b9989f](https://github.com/A-Guy-educ/A-Guy/commit/1b9989f))
+* ci(cody): commit task files for 260318-auto-847 ([6b8d682](https://github.com/A-Guy-educ/A-Guy/commit/6b8d682))
+
+## 0.19.0 (2026-03-20)
+
+* Merge branch 'dev' into feat/260313-auto-780-control-graph-display-size-in-exer ([35d9cd7](https://github.com/A-Guy-educ/A-Guy/commit/35d9cd7))
+* Merge branch 'dev' into feat/260315-auto-835-p3-student-statistics-dashboard ([3f73ba7](https://github.com/A-Guy-educ/A-Guy/commit/3f73ba7))
+* Merge branch 'dev' into feat/260316-auto-822-qa-implementation-plan-critical-hi ([cf636d9](https://github.com/A-Guy-educ/A-Guy/commit/cf636d9))
+* Merge branch 'dev' into feat/links-connection-to-buttons ([92e8e04](https://github.com/A-Guy-educ/A-Guy/commit/92e8e04))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([e2069e6](https://github.com/A-Guy-educ/A-Guy/commit/e2069e6))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([92b44da](https://github.com/A-Guy-educ/A-Guy/commit/92b44da))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([dad0db9](https://github.com/A-Guy-educ/A-Guy/commit/dad0db9))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([0ee3d15](https://github.com/A-Guy-educ/A-Guy/commit/0ee3d15))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([ed8b13f](https://github.com/A-Guy-educ/A-Guy/commit/ed8b13f))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([c555f39](https://github.com/A-Guy-educ/A-Guy/commit/c555f39))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([1d80460](https://github.com/A-Guy-educ/A-Guy/commit/1d80460))
+* Merge pull request #679 from A-Guy-educ/fix/260303-auto-673- ([dc80176](https://github.com/A-Guy-educ/A-Guy/commit/dc80176)), closes [#679](https://github.com/A-Guy-educ/A-Guy/issues/679) [#673](https://github.com/A-Guy-educ/A-Guy/issues/673)
+* Merge pull request #747 from A-Guy-educ/feat/ai-support-generation ([11e6e2a](https://github.com/A-Guy-educ/A-Guy/commit/11e6e2a)), closes [#747](https://github.com/A-Guy-educ/A-Guy/issues/747)
+* Merge pull request #784 from A-Guy-educ/feat/pre-launch-e2e-verification ([134c5fe](https://github.com/A-Guy-educ/A-Guy/commit/134c5fe)), closes [#784](https://github.com/A-Guy-educ/A-Guy/issues/784)
+* Merge pull request #811 from A-Guy-educ/feat/260313-auto-778-configure-axis-labeltick-position- ([cd8eb86](https://github.com/A-Guy-educ/A-Guy/commit/cd8eb86)), closes [#811](https://github.com/A-Guy-educ/A-Guy/issues/811) [#778](https://github.com/A-Guy-educ/A-Guy/issues/778)
+* Merge pull request #813 from A-Guy-educ/feat/260313-auto-780-control-graph-display-size-in-exer ([aaf0e99](https://github.com/A-Guy-educ/A-Guy/commit/aaf0e99)), closes [#813](https://github.com/A-Guy-educ/A-Guy/issues/813) [#780](https://github.com/A-Guy-educ/A-Guy/issues/780)
+* Merge pull request #849 from A-Guy-educ/feat/260315-auto-835-p3-student-statistics-dashboard ([f460201](https://github.com/A-Guy-educ/A-Guy/commit/f460201)), closes [#849](https://github.com/A-Guy-educ/A-Guy/issues/849) [#835](https://github.com/A-Guy-educ/A-Guy/issues/835)
+* Merge pull request #856 from A-Guy-educ/main ([21fea1b](https://github.com/A-Guy-educ/A-Guy/commit/21fea1b)), closes [#856](https://github.com/A-Guy-educ/A-Guy/issues/856) [#854](https://github.com/A-Guy-educ/A-Guy/issues/854)
+* Merge pull request #865 from A-Guy-educ/fix/260317-auto-852- ([105c3ef](https://github.com/A-Guy-educ/A-Guy/commit/105c3ef)), closes [#865](https://github.com/A-Guy-educ/A-Guy/issues/865) [#852](https://github.com/A-Guy-educ/A-Guy/issues/852)
+* Merge pull request #887 from A-Guy-educ/feat/260316-auto-822-qa-implementation-plan-critical-hi ([a22f383](https://github.com/A-Guy-educ/A-Guy/commit/a22f383)), closes [#887](https://github.com/A-Guy-educ/A-Guy/issues/887)
+* Merge pull request #941 from A-Guy-educ/feat/fixes ([1bb5176](https://github.com/A-Guy-educ/A-Guy/commit/1bb5176)), closes [#941](https://github.com/A-Guy-educ/A-Guy/issues/941)
+* Merge pull request #946 from A-Guy-educ/feat/links-connection-to-buttons ([18839de](https://github.com/A-Guy-educ/A-Guy/commit/18839de)), closes [#946](https://github.com/A-Guy-educ/A-Guy/issues/946)
+* Merge pull request #959 from A-Guy-educ/dev ([f81a19b](https://github.com/A-Guy-educ/A-Guy/commit/f81a19b)), closes [#959](https://github.com/A-Guy-educ/A-Guy/issues/959)
+* Merge remote-tracking branch 'origin/dev' into dev ([a75e2b2](https://github.com/A-Guy-educ/A-Guy/commit/a75e2b2))
+* Merge remote-tracking branch 'origin/dev' into feat/260313-auto-778-configure-axis-labeltick-positio ([156183c](https://github.com/A-Guy-educ/A-Guy/commit/156183c))
+* Merge remote-tracking branch 'origin/dev' into feat/260313-auto-780-control-graph-display-size-in-ex ([2a5468b](https://github.com/A-Guy-educ/A-Guy/commit/2a5468b))
+* Merge remote-tracking branch 'origin/dev' into feat/260313-auto-780-control-graph-display-size-in-ex ([c4ddabf](https://github.com/A-Guy-educ/A-Guy/commit/c4ddabf))
+* Merge remote-tracking branch 'origin/dev' into feat/260313-auto-780-control-graph-display-size-in-ex ([f4e8f36](https://github.com/A-Guy-educ/A-Guy/commit/f4e8f36))
+* Merge remote-tracking branch 'origin/dev' into feat/260315-auto-835-p3-student-statistics-dashboard ([fbb334e](https://github.com/A-Guy-educ/A-Guy/commit/fbb334e))
+* Merge remote-tracking branch 'origin/dev' into feat/260315-auto-835-p3-student-statistics-dashboard ([9aa3833](https://github.com/A-Guy-educ/A-Guy/commit/9aa3833))
+* Merge remote-tracking branch 'origin/dev' into feat/260316-auto-822-qa-implementation-plan-critical- ([394647e](https://github.com/A-Guy-educ/A-Guy/commit/394647e))
+* Merge remote-tracking branch 'origin/dev' into feat/260316-auto-822-qa-implementation-plan-critical- ([3a2adcc](https://github.com/A-Guy-educ/A-Guy/commit/3a2adcc))
+* Merge remote-tracking branch 'origin/dev' into feat/260316-auto-822-qa-implementation-plan-critical- ([8d04d19](https://github.com/A-Guy-educ/A-Guy/commit/8d04d19))
+* Merge remote-tracking branch 'origin/dev' into feat/260316-auto-822-qa-implementation-plan-critical- ([5b67f7d](https://github.com/A-Guy-educ/A-Guy/commit/5b67f7d))
+* Merge remote-tracking branch 'origin/dev' into feat/260316-auto-822-qa-implementation-plan-critical- ([5e8722f](https://github.com/A-Guy-educ/A-Guy/commit/5e8722f))
+* Merge remote-tracking branch 'origin/dev' into feat/260316-auto-822-qa-implementation-plan-critical- ([1abf908](https://github.com/A-Guy-educ/A-Guy/commit/1abf908))
+* Merge remote-tracking branch 'origin/dev' into feat/260316-auto-822-qa-implementation-plan-critical- ([34174aa](https://github.com/A-Guy-educ/A-Guy/commit/34174aa))
+* Merge remote-tracking branch 'origin/dev' into feat/260316-auto-822-qa-implementation-plan-critical- ([2ba71f2](https://github.com/A-Guy-educ/A-Guy/commit/2ba71f2))
+* Merge remote-tracking branch 'origin/dev' into feat/260316-auto-822-qa-implementation-plan-critical- ([340f854](https://github.com/A-Guy-educ/A-Guy/commit/340f854))
+* Merge remote-tracking branch 'origin/dev' into feat/260316-auto-822-qa-implementation-plan-critical- ([24c9607](https://github.com/A-Guy-educ/A-Guy/commit/24c9607))
+* Merge remote-tracking branch 'origin/dev' into feat/260316-auto-822-qa-implementation-plan-critical- ([dc68f3d](https://github.com/A-Guy-educ/A-Guy/commit/dc68f3d))
+* Merge remote-tracking branch 'origin/dev' into feat/260316-auto-822-qa-implementation-plan-critical- ([17e6220](https://github.com/A-Guy-educ/A-Guy/commit/17e6220))
+* Merge remote-tracking branch 'origin/dev' into feat/260316-auto-822-qa-implementation-plan-critical- ([f31c1c3](https://github.com/A-Guy-educ/A-Guy/commit/f31c1c3))
+* Merge remote-tracking branch 'origin/dev' into feat/260316-auto-822-qa-implementation-plan-critical- ([019ed2b](https://github.com/A-Guy-educ/A-Guy/commit/019ed2b))
+* Merge remote-tracking branch 'origin/dev' into feat/260316-auto-822-qa-implementation-plan-critical- ([aa1204c](https://github.com/A-Guy-educ/A-Guy/commit/aa1204c))
+* Merge remote-tracking branch 'origin/dev' into feat/260316-auto-822-qa-implementation-plan-critical- ([68be230](https://github.com/A-Guy-educ/A-Guy/commit/68be230))
+* Merge remote-tracking branch 'origin/dev' into feat/ai-support-generation ([16a7a8b](https://github.com/A-Guy-educ/A-Guy/commit/16a7a8b))
+* Merge remote-tracking branch 'origin/dev' into fix/260303-auto-673- ([636e727](https://github.com/A-Guy-educ/A-Guy/commit/636e727))
+* Merge remote-tracking branch 'origin/dev' into fix/260303-auto-673- ([d101c86](https://github.com/A-Guy-educ/A-Guy/commit/d101c86))
+* Merge remote-tracking branch 'origin/dev' into fix/260303-auto-673- ([c55e76d](https://github.com/A-Guy-educ/A-Guy/commit/c55e76d))
+* Merge remote-tracking branch 'origin/dev' into fix/260303-auto-673- ([ef2ebbd](https://github.com/A-Guy-educ/A-Guy/commit/ef2ebbd))
+* Merge remote-tracking branch 'origin/dev' into fix/260303-auto-673- ([07f5334](https://github.com/A-Guy-educ/A-Guy/commit/07f5334))
+* Merge remote-tracking branch 'origin/dev' into fix/260303-auto-673- ([36c2d2d](https://github.com/A-Guy-educ/A-Guy/commit/36c2d2d))
+* docs: add brain server phase 2 plan — auth and observability ([7c75cc6](https://github.com/A-Guy-educ/A-Guy/commit/7c75cc6))
+* docs: add brain server requirements and architecture plans ([2cfa7f0](https://github.com/A-Guy-educ/A-Guy/commit/2cfa7f0))
+* docs: Add LLM mock tool implementation plan ([8154147](https://github.com/A-Guy-educ/A-Guy/commit/8154147))
+* docs: split brain server plans into server setup and code changes ([8d8a440](https://github.com/A-Guy-educ/A-Guy/commit/8d8a440))
+* docs(260317-full-test): Full Pipeline Test ([2f310ca](https://github.com/A-Guy-educ/A-Guy/commit/2f310ca))
+* docs(brain): Add Claude MCP server option for brain setup ([dd8a656](https://github.com/A-Guy-educ/A-Guy/commit/dd8a656))
+* fix: 10 security, performance & bug fixes for Cody dashboard ([d271631](https://github.com/A-Guy-educ/A-Guy/commit/d271631))
+* fix: Add error logging to upload-token route ([fcf22c2](https://github.com/A-Guy-educ/A-Guy/commit/fcf22c2))
+* fix: Add fallback session lookup by user and filename in finalize ([73d489b](https://github.com/A-Guy-educ/A-Guy/commit/73d489b))
+* fix: add Google Tag Manager and Mixpanel to CSP script-src ([00ca650](https://github.com/A-Guy-educ/A-Guy/commit/00ca650))
+* fix: Add index.html for wiki homepage, skip Jekyll ([1022119](https://github.com/A-Guy-educ/A-Guy/commit/1022119))
+* fix: Add OG/Twitter metadata to Cody dashboard routes ([9b518af](https://github.com/A-Guy-educ/A-Guy/commit/9b518af))
+* fix: Add retry logic when LLM omits required fields ([02724ff](https://github.com/A-Guy-educ/A-Guy/commit/02724ff))
+* fix: Add vercel.live to script-src ([f6f4ea9](https://github.com/A-Guy-educ/A-Guy/commit/f6f4ea9))
+* fix: Auto-generate index pages for folders without README.md ([8779313](https://github.com/A-Guy-educ/A-Guy/commit/8779313))
+* fix: Autofix corrections for 260313-auto-573 ([dcdd6a2](https://github.com/A-Guy-educ/A-Guy/commit/dcdd6a2))
+* fix: Batch onChange to prevent stale closure overwrite ([dd99b0c](https://github.com/A-Guy-educ/A-Guy/commit/dd99b0c))
+* fix: Change solution field to guiding question (שאלה מכוונת) ([d112326](https://github.com/A-Guy-educ/A-Guy/commit/d112326))
+* fix: configure git to use app token for push in system test ([46df1d6](https://github.com/A-Guy-educ/A-Guy/commit/46df1d6))
+* fix: Enable Jekyll processing (peaceiris was auto-adding .nojekyll) ([eccc46e](https://github.com/A-Guy-educ/A-Guy/commit/eccc46e))
+* fix: Enable Jekyll with primer theme, exclude large JSON files ([12769f9](https://github.com/A-Guy-educ/A-Guy/commit/12769f9))
+* fix: Fix 5 critical inspector bugs preventing first successful run ([34e2c5c](https://github.com/A-Guy-educ/A-Guy/commit/34e2c5c))
+* fix: Fix Docsify config - remove relativePath, fix all links ([7931a2c](https://github.com/A-Guy-educ/A-Guy/commit/7931a2c))
+* fix: Fix typo in AxisRenderer import ([9b6d0b0](https://github.com/A-Guy-educ/A-Guy/commit/9b6d0b0))
+* fix: Force clean gh-pages deploy to remove stale .nojekyll ([895832c](https://github.com/A-Guy-educ/A-Guy/commit/895832c)), closes [#pages](https://github.com/A-Guy-educ/A-Guy/issues/pages)
+* fix: Handle invalid tokens gracefully in test mode ([33fc223](https://github.com/A-Guy-educ/A-Guy/commit/33fc223))
+* fix: Handle missing onUploadCompleted callback in finalize ([e334e0c](https://github.com/A-Guy-educ/A-Guy/commit/e334e0c))
+* fix: Improve E2E verification test reliability ([5fbf0d1](https://github.com/A-Guy-educ/A-Guy/commit/5fbf0d1))
+* fix: Improve support generation prompt ([796a32e](https://github.com/A-Guy-educ/A-Guy/commit/796a32e))
+* fix: In record mode, cody uses real API not mock ([078a7cb](https://github.com/A-Guy-educ/A-Guy/commit/078a7cb))
+* fix: Increase CI test timeouts for Vercel Blob tests ([699d419](https://github.com/A-Guy-educ/A-Guy/commit/699d419))
+* fix: Prettier ([00a8adc](https://github.com/A-Guy-educ/A-Guy/commit/00a8adc))
+* fix: Redirect backUrl to /study instead of course page ([9176b84](https://github.com/A-Guy-educ/A-Guy/commit/9176b84))
+* fix: Relax CSP to allow Next.js inline scripts and external resources ([bd14734](https://github.com/A-Guy-educ/A-Guy/commit/bd14734))
+* fix: Remove .nojekyll to enable Jekyll markdown rendering ([aca711b](https://github.com/A-Guy-educ/A-Guy/commit/aca711b))
+* fix: Remove environment restriction for dev branch deploy ([c7b4bc6](https://github.com/A-Guy-educ/A-Guy/commit/c7b4bc6))
+* fix: Remove invalid 'variables: write' permission from inspector workflow ([a3fa21e](https://github.com/A-Guy-educ/A-Guy/commit/a3fa21e))
+* fix: Remove pathname override from onBeforeGenerateToken ([c5074da](https://github.com/A-Guy-educ/A-Guy/commit/c5074da))
+* fix: Resolve all 16 inspector issues for reliable operation ([79a0d3b](https://github.com/A-Guy-educ/A-Guy/commit/79a0d3b)), closes [Hi#priority](https://github.com/Hi/issues/priority)
+* fix: Resolve upload-token 500 by providing valid pathname on session create ([a3cace8](https://github.com/A-Guy-educ/A-Guy/commit/a3cace8))
+* fix: Restructure no-exec-sync test to avoid vitest 4.x nesting error ([411fb01](https://github.com/A-Guy-educ/A-Guy/commit/411fb01))
+* fix: Skip blob integration tests when no valid token ([85e4804](https://github.com/A-Guy-educ/A-Guy/commit/85e4804))
+* fix: SPA wiki with client-side markdown rendering, no Jekyll needed ([62c1d33](https://github.com/A-Guy-educ/A-Guy/commit/62c1d33))
+* fix: Stronger prompt for all 3 fields and overwrite clearing ([fc1671d](https://github.com/A-Guy-educ/A-Guy/commit/fc1671d))
+* fix: Switch to legacy Pages deployment with peaceiris for markdown rendering ([9a0e1f0](https://github.com/A-Guy-educ/A-Guy/commit/9a0e1f0))
+* fix: Use blobUrl for finalize lookup instead of unavailable sessionId ([823a356](https://github.com/A-Guy-educ/A-Guy/commit/823a356))
+* fix: Use deploy-pages@v4 with environment for proper deployment ([b1d081b](https://github.com/A-Guy-educ/A-Guy/commit/b1d081b))
+* fix: Use head() instead of media adapter for chat asset blob verification ([ae6f3cf](https://github.com/A-Guy-educ/A-Guy/commit/ae6f3cf))
+* fix: Use peaceiris action for more reliable gh-pages deployment ([4b2daae](https://github.com/A-Guy-educ/A-Guy/commit/4b2daae)), closes [#pages](https://github.com/A-Guy-educ/A-Guy/issues/pages)
+* fix(260303-auto-17): Issue Title ([8073efc](https://github.com/A-Guy-educ/A-Guy/commit/8073efc))
+* fix(260316-auto-877): Fix Request ([9559e24](https://github.com/A-Guy-educ/A-Guy/commit/9559e24))
+* fix(auth): Migrate from GitHub OAuth App to GitHub App ([1f9e94b](https://github.com/A-Guy-educ/A-Guy/commit/1f9e94b))
+* fix(ci): Switch test config from groq to minimax-coding-plan/MiniMax-M2.5 ([3bf3e6b](https://github.com/A-Guy-educ/A-Guy/commit/3bf3e6b))
+* fix(ci): Update GitHub App ID to new app ([6414deb](https://github.com/A-Guy-educ/A-Guy/commit/6414deb))
+* fix(ci): Use repositories param for GitHub App token generation ([c3a31fb](https://github.com/A-Guy-educ/A-Guy/commit/c3a31fb))
+* fix(cody): Abort PR creation on push failure and rebuild pipeline after gate approval ([13ff5f1](https://github.com/A-Guy-educ/A-Guy/commit/13ff5f1))
+* fix(cody): Add fallbackOnMissingOutput for architect stage ([fca539b](https://github.com/A-Guy-educ/A-Guy/commit/fca539b))
+* fix(cody): Add GITHUB_TOKEN env var for push fallback ([9958775](https://github.com/A-Guy-educ/A-Guy/commit/9958775))
+* fix(cody): Add GROQ_API_KEY secret and fix app token config ([29c1b70](https://github.com/A-Guy-educ/A-Guy/commit/29c1b70))
+* fix(cody): Add use_test_config input to support test config ([d5b15e6](https://github.com/A-Guy-educ/A-Guy/commit/d5b15e6))
+* fix(cody): Allow uppercase in task-id validation ([3ed05b6](https://github.com/A-Guy-educ/A-Guy/commit/3ed05b6))
+* fix(cody): Check notification permission from browser API directly, add sound ([fadf489](https://github.com/A-Guy-educ/A-Guy/commit/fadf489))
+* fix(cody): Checkout feature branch early in rerun mode before reading task files ([7999c38](https://github.com/A-Guy-educ/A-Guy/commit/7999c38))
+* fix(cody): Detect completion via step_finish event to fix pipeline hang in fork mode ([bcefbbc](https://github.com/A-Guy-educ/A-Guy/commit/bcefbbc)), closes [#13](https://github.com/A-Guy-educ/A-Guy/issues/13)
+* fix(cody): Don't auto-request notification permission on mount ([fb080db](https://github.com/A-Guy-educ/A-Guy/commit/fb080db))
+* fix(cody): Don't backup to architect when fromStage is explicitly provided ([560e721](https://github.com/A-Guy-educ/A-Guy/commit/560e721))
+* fix(cody): Fall back to bot token when user token fails on approve gate ([6cea51d](https://github.com/A-Guy-educ/A-Guy/commit/6cea51d))
+* fix(cody): Fetch recordings from dev before starting mock ([8895760](https://github.com/A-Guy-educ/A-Guy/commit/8895760))
+* fix(cody): Fix rerun backup to architect and push conflicts ([60ee036](https://github.com/A-Guy-educ/A-Guy/commit/60ee036))
+* fix(cody): Improve voice chat reliability with silence detection and interrupt support ([6993588](https://github.com/A-Guy-educ/A-Guy/commit/6993588))
+* fix(cody): Make pages static for OG tags ([058a031](https://github.com/A-Guy-educ/A-Guy/commit/058a031))
+* fix(cody): Nudge agent session before full retry when output file missing ([763a951](https://github.com/A-Guy-educ/A-Guy/commit/763a951))
+* fix(cody): Persist build output as patch when push fails ([c43e80b](https://github.com/A-Guy-educ/A-Guy/commit/c43e80b))
+* fix(cody): Prevent mute button from closing voice overlay ([2508ce5](https://github.com/A-Guy-educ/A-Guy/commit/2508ce5))
+* fix(cody): Prevent stale dashboard status after gate-paused pipeline reruns ([b96a5bf](https://github.com/A-Guy-educ/A-Guy/commit/b96a5bf))
+* fix(cody): Recover session ID from DB when missing from events ([c95bd1f](https://github.com/A-Guy-educ/A-Guy/commit/c95bd1f))
+* fix(cody): Resolve 10 pipeline issues from deep analysis ([8a77d80](https://github.com/A-Guy-educ/A-Guy/commit/8a77d80))
+* fix(cody): Resolve 6 pipeline issues from deep analysis round 2 ([ce367b4](https://github.com/A-Guy-educ/A-Guy/commit/ce367b4))
+* fix(cody): Restore prev-run files from git when missing ([b6856cd](https://github.com/A-Guy-educ/A-Guy/commit/b6856cd))
+* fix(cody): Return 200 instead of 404 for non-configured remote users ([bc63723](https://github.com/A-Guy-educ/A-Guy/commit/bc63723))
+* fix(cody): Scope voice overlay to chat panel instead of full screen ([e1be1e2](https://github.com/A-Guy-educ/A-Guy/commit/e1be1e2))
+* fix(cody): Separate sign-out from re-login in dashboard ([18d47e4](https://github.com/A-Guy-educ/A-Guy/commit/18d47e4))
+* fix(cody): Show real GitHub error instead of blanket 'rate limited' on 403 ([fc03a2f](https://github.com/A-Guy-educ/A-Guy/commit/fc03a2f))
+* fix(cody): Skip git checkout in rerun dry-run mode to fix canary test in CI ([c818f4c](https://github.com/A-Guy-educ/A-Guy/commit/c818f4c))
+* fix(cody): Skip impl stages for spec_only pipelines and use impl task for system test ([f888a6f](https://github.com/A-Guy-educ/A-Guy/commit/f888a6f))
+* fix(cody): skip pipeline for issues with 'publish' label ([de880b7](https://github.com/A-Guy-educ/A-Guy/commit/de880b7))
+* fix(cody): Unset App token git config when using GITHUB_TOKEN fallback ([2761fab](https://github.com/A-Guy-educ/A-Guy/commit/2761fab))
+* fix(cody): Use app token for git push ([ba7ad92](https://github.com/A-Guy-educ/A-Guy/commit/ba7ad92))
+* fix(cody): Use bot token for collaborator check during OAuth login ([a268bc4](https://github.com/A-Guy-educ/A-Guy/commit/a268bc4))
+* fix(cody): Use GitHub App token for push to allow workflow file changes ([cfb6514](https://github.com/A-Guy-educ/A-Guy/commit/cfb6514)), closes [#822](https://github.com/A-Guy-educ/A-Guy/issues/822)
+* fix(cody): Use GITHUB_TOKEN for git push via HTTPS URL rewrite ([9906340](https://github.com/A-Guy-educ/A-Guy/commit/9906340))
+* fix(exercises): Persist student answers per exercise in localStorage ([5388177](https://github.com/A-Guy-educ/A-Guy/commit/5388177))
+* fix(inspector): Prevent duplicate issues via batching and cross-task dedup ([4a5e918](https://github.com/A-Guy-educ/A-Guy/commit/4a5e918))
+* fix(mock-llm): Fix TypeScript headers iteration issue ([0c56a19](https://github.com/A-Guy-educ/A-Guy/commit/0c56a19))
+* fix(mock-llm): Support incremental recording ([d09a0f6](https://github.com/A-Guy-educ/A-Guy/commit/d09a0f6))
+* fix(progress): Prevent 99% race condition by setting completion flag before exercise save ([af107fa](https://github.com/A-Guy-educ/A-Guy/commit/af107fa))
+* fix(qa): fix labels variable naming ([bf126ff](https://github.com/A-Guy-educ/A-Guy/commit/bf126ff))
+* fix(stats): Lower streak threshold from 5 minutes to 1 minute ([1d47205](https://github.com/A-Guy-educ/A-Guy/commit/1d47205))
+* fix(stats): Only track exercises/lessons when student actually answers ([ab31241](https://github.com/A-Guy-educ/A-Guy/commit/ab31241))
+* fix(stats): Re-fetch dashboard on tab focus and ensure auth credentials ([8698d0c](https://github.com/A-Guy-educ/A-Guy/commit/8698d0c))
+* fix(stats): Use real data for Learn progress, Ask count, and topic mastery ([129c137](https://github.com/A-Guy-educ/A-Guy/commit/129c137))
+* fix(stats): Wire dashboard to real system data instead of empty/mock values ([b8d5579](https://github.com/A-Guy-educ/A-Guy/commit/b8d5579))
+* fix(stats): Wire real data end-to-end for stats dashboard and course cards ([6294aed](https://github.com/A-Guy-educ/A-Guy/commit/6294aed))
+* fix(study-plan): Load saved study plan on page refresh ([58b0397](https://github.com/A-Guy-educ/A-Guy/commit/58b0397))
+* fix(study-plan): Show saved plan on refresh by setting hasGenerated when plan loads from DB ([4b2670a](https://github.com/A-Guy-educ/A-Guy/commit/4b2670a))
+* fix(system-test): Add back git checkout -b for branch creation ([5bd9beb](https://github.com/A-Guy-educ/A-Guy/commit/5bd9beb))
+* fix(system-test): Clean up stale test branches before creating new ones ([71f7532](https://github.com/A-Guy-educ/A-Guy/commit/71f7532))
+* fix(system-test): Cleanup finds issues by title prefix too ([57cfe3e](https://github.com/A-Guy-educ/A-Guy/commit/57cfe3e))
+* fix(system-test): Configure git credential helper for token auth ([8f90481](https://github.com/A-Guy-educ/A-Guy/commit/8f90481))
+* fix(system-test): Filter poll by workflow_dispatch event type ([e753b58](https://github.com/A-Guy-educ/A-Guy/commit/e753b58))
+* fix(system-test): Fix commit hook and app token permissions ([69db7ba](https://github.com/A-Guy-educ/A-Guy/commit/69db7ba))
+* fix(system-test): Hardcode app ID, use APP_PRIVATE_KEY secret ([158dc93](https://github.com/A-Guy-educ/A-Guy/commit/158dc93))
+* fix(system-test): Move gate auto-approve into label poll loop ([8f314b3](https://github.com/A-Guy-educ/A-Guy/commit/8f314b3))
+* fix(system-test): Poll by issue labels, auto-approve risk gate, fix PR match ([59012ea](https://github.com/A-Guy-educ/A-Guy/commit/59012ea))
+* fix(system-test): Remove branch matching from workflow poll ([f45f011](https://github.com/A-Guy-educ/A-Guy/commit/f45f011))
+* fix(system-test): Remove unused import ([aecd1cf](https://github.com/A-Guy-educ/A-Guy/commit/aecd1cf))
+* fix(system-test): Use consistent results directory with timestamps ([bd2917a](https://github.com/A-Guy-educ/A-Guy/commit/bd2917a))
+* fix(system-test): Use GitHub API URL with token for push ([7fb4b7a](https://github.com/A-Guy-educ/A-Guy/commit/7fb4b7a))
+* fix(system-test): Use GITHUB_TOKEN for push operations instead of app token ([cbf7131](https://github.com/A-Guy-educ/A-Guy/commit/cbf7131))
+* fix(system-test): Use mock config in test branch when MOCK_MODE is set ([dddc3a5](https://github.com/A-Guy-educ/A-Guy/commit/dddc3a5))
+* fix(system-test): Use YYMMDD-description format for task IDs ([23722c4](https://github.com/A-Guy-educ/A-Guy/commit/23722c4))
+* fix(test): Add missing usePathname mock to AccountHub tests ([d464575](https://github.com/A-Guy-educ/A-Guy/commit/d464575))
+* fix(test): correct tickPosition tests - missing fields use .default() not throw ([fea51eb](https://github.com/A-Guy-educ/A-Guy/commit/fea51eb))
+* fix(test): Update test mocks for getUserOctokit in auth module ([a9e94f2](https://github.com/A-Guy-educ/A-Guy/commit/a9e94f2))
+* fix(tests): Update tests for Figma MCP and remote status response ([3781069](https://github.com/A-Guy-educ/A-Guy/commit/3781069))
+* chore: Clean up temp extraction files for recordings ([92ce7af](https://github.com/A-Guy-educ/A-Guy/commit/92ce7af))
+* chore: Fix prettier and lint issues in pre-existing files ([4ec81ea](https://github.com/A-Guy-educ/A-Guy/commit/4ec81ea))
+* chore: Fix prettier formatting on pattern-index.json ([1cacf52](https://github.com/A-Guy-educ/A-Guy/commit/1cacf52))
+* chore: Format pattern-index.json ([c18ac97](https://github.com/A-Guy-educ/A-Guy/commit/c18ac97))
+* chore: Merge dev into feat/fixes, resolve conflicts with statistics dashboard ([ad0256d](https://github.com/A-Guy-educ/A-Guy/commit/ad0256d))
+* chore: Remove sample recordings to enable fresh recording ([f3775ab](https://github.com/A-Guy-educ/A-Guy/commit/f3775ab))
+* chore: Skip unit tests in pre-push ([2b40cad](https://github.com/A-Guy-educ/A-Guy/commit/2b40cad))
+* chore: sync pnpm-lock.yaml with package.json ([386db5c](https://github.com/A-Guy-educ/A-Guy/commit/386db5c))
+* chore: Update opencode.test.json to use MiniMax-M2.7-highspeed model ([a3dd641](https://github.com/A-Guy-educ/A-Guy/commit/a3dd641))
+* chore: Update readme index for AI docs ([514b533](https://github.com/A-Guy-educ/A-Guy/commit/514b533))
+* chore(opencode): Update agents to M2.7-highspeed model ([5edb8bb](https://github.com/A-Guy-educ/A-Guy/commit/5edb8bb))
+* chore(opencode): update test config Model ([87ce9a9](https://github.com/A-Guy-educ/A-Guy/commit/87ce9a9))
+* test: Add integration tests for chat asset upload flow ([9f10314](https://github.com/A-Guy-educ/A-Guy/commit/9f10314))
+* test: Add pre-launch E2E verification suite (30 scenarios) ([9631fe7](https://github.com/A-Guy-educ/A-Guy/commit/9631fe7))
+* test: Add unit tests for AI support generation ([470d7f2](https://github.com/A-Guy-educ/A-Guy/commit/470d7f2))
+* test: Update mocks for clearCache to targeted invalidation and auth changes ([27096db](https://github.com/A-Guy-educ/A-Guy/commit/27096db))
+* test: use mimo v2 flash free model for system tests ([ae44982](https://github.com/A-Guy-educ/A-Guy/commit/ae44982))
+* test(cody-cli): add spec-only, complexity-skip, and bad-spec scenarios ([2274739](https://github.com/A-Guy-educ/A-Guy/commit/2274739))
+* test(cody): Add CLI test workflow and results ([cf7c012](https://github.com/A-Guy-educ/A-Guy/commit/cf7c012))
+* test(cody): Add tests for per-user auth — token encryption and OAuth callback ([4b5e1c9](https://github.com/A-Guy-educ/A-Guy/commit/4b5e1c9))
+* test(cody): Update classification labels test for retry logic ([505a44a](https://github.com/A-Guy-educ/A-Guy/commit/505a44a))
+* test(mock-llm): Add tests for incremental recording feature ([053bc48](https://github.com/A-Guy-educ/A-Guy/commit/053bc48))
+* test(progress): Add integration tests for progress record upsert logic ([e03dd6b](https://github.com/A-Guy-educ/A-Guy/commit/e03dd6b))
+* test(progress): Add unit tests for progress API logic, remove redundant int tests ([a636ae4](https://github.com/A-Guy-educ/A-Guy/commit/a636ae4))
+* feat: Add AI support generation system for hints and solutions ([921dc00](https://github.com/A-Guy-educ/A-Guy/commit/921dc00))
+* feat: Add wiki docs and GitHub Pages deployment workflow ([6b14f18](https://github.com/A-Guy-educ/A-Guy/commit/6b14f18))
+* feat: Auto-collect all repo docs into wiki, auto-generate sidebar ([892b58d](https://github.com/A-Guy-educ/A-Guy/commit/892b58d))
+* feat: Link footer buttons to /stats and /study-plan ([a76ac0f](https://github.com/A-Guy-educ/A-Guy/commit/a76ac0f))
+* feat: QA implementation - security headers, error boundaries, Sentry, Zod validation ([9066e5a](https://github.com/A-Guy-educ/A-Guy/commit/9066e5a)), closes [hi#traffic](https://github.com/hi/issues/traffic) [#822](https://github.com/A-Guy-educ/A-Guy/issues/822)
+* feat: Replace broken SPA with Docsify wiki (sidebar, search, dark mode) ([d796477](https://github.com/A-Guy-educ/A-Guy/commit/d796477))
+* feat: Replace failure-analysis with pipeline-fixer plugin ([0c7597b](https://github.com/A-Guy-educ/A-Guy/commit/0c7597b))
+* feat(260313-auto-475): Issue Title ([4f94bf0](https://github.com/A-Guy-educ/A-Guy/commit/4f94bf0))
+* feat(260313-auto-573): Issue Title ([7548be9](https://github.com/A-Guy-educ/A-Guy/commit/7548be9))
+* feat(260315-auto-890): Issue Title ([edd5ef4](https://github.com/A-Guy-educ/A-Guy/commit/edd5ef4))
+* feat(brain-server): Add setup script and guide for Context+ brain VPS ([bba0de8](https://github.com/A-Guy-educ/A-Guy/commit/bba0de8))
+* feat(cody): Add animated status bars ([1268cb6](https://github.com/A-Guy-educ/A-Guy/commit/1268cb6))
+* feat(cody): Add complexity override to impl and post-actions stages ([8c1c80f](https://github.com/A-Guy-educ/A-Guy/commit/8c1c80f))
+* feat(cody): Add complexity param to parseInputs and test version branch ([3ce29c1](https://github.com/A-Guy-educ/A-Guy/commit/3ce29c1))
+* feat(cody): add Figma MCP support to chat route ([b69710b](https://github.com/A-Guy-educ/A-Guy/commit/b69710b))
+* feat(cody): Add LLM recordings for scenario-02 (181 calls) ([1bf6f97](https://github.com/A-Guy-educ/A-Guy/commit/1bf6f97))
+* feat(cody): Add mock LLM support to system test workflow ([49a6e38](https://github.com/A-Guy-educ/A-Guy/commit/49a6e38))
+* feat(cody): Add mock LLM support to workflow ([72a18ec](https://github.com/A-Guy-educ/A-Guy/commit/72a18ec))
+* feat(cody): Add notification center with in-app history, preferences, and distinct sounds ([9f0e76c](https://github.com/A-Guy-educ/A-Guy/commit/9f0e76c))
+* feat(cody): Add priority system with P0-P3 labels, filter, and sort ([e2697ec](https://github.com/A-Guy-educ/A-Guy/commit/e2697ec))
+* feat(cody): Add voice chat with full conversation mode ([fa6410c](https://github.com/A-Guy-educ/A-Guy/commit/fa6410c))
+* feat(cody): Implement 6 chat enhancements - sessions, tools, browsing ([99132f7](https://github.com/A-Guy-educ/A-Guy/commit/99132f7))
+* feat(cody): Implement LLM mock tool with record/replay modes ([e548698](https://github.com/A-Guy-educ/A-Guy/commit/e548698))
+* feat(cody): Per-user GitHub auth for dashboard operations ([38b9f67](https://github.com/A-Guy-educ/A-Guy/commit/38b9f67))
+* feat(cody): Record LLM calls when no recordings exist ([b967580](https://github.com/A-Guy-educ/A-Guy/commit/b967580))
+* feat(cody): Replace free-text task creation with structured dialog ([3471d36](https://github.com/A-Guy-educ/A-Guy/commit/3471d36))
+* feat(courses): Wire real lesson progress into course page cards ([ee94237](https://github.com/A-Guy-educ/A-Guy/commit/ee94237))
+* feat(progress): Persist lesson/exercise progress to DB and display real progress in UI ([1b7c64f](https://github.com/A-Guy-educ/A-Guy/commit/1b7c64f))
+* feat(qa): implement Scenario-Driven QA Architecture ([e622843](https://github.com/A-Guy-educ/A-Guy/commit/e622843))
+* feat(stats): Simplify dashboard and add per-lesson time tracking ([af5bb8d](https://github.com/A-Guy-educ/A-Guy/commit/af5bb8d))
+* feat(system-test): Migrate to GitHub App auth ([2a5945a](https://github.com/A-Guy-educ/A-Guy/commit/2a5945a))
+* perf(cody): Batch branch discovery to reduce GitHub API calls ([4a2d99d](https://github.com/A-Guy-educ/A-Guy/commit/4a2d99d))
+* ci(cody): commit task files for 260303-auto-17 ([af089f4](https://github.com/A-Guy-educ/A-Guy/commit/af089f4))
+* ci(cody): commit task files for 260303-auto-17 ([13ab06e](https://github.com/A-Guy-educ/A-Guy/commit/13ab06e))
+* ci(cody): commit task files for 260303-auto-17 ([92e99df](https://github.com/A-Guy-educ/A-Guy/commit/92e99df))
+* ci(cody): commit task files for 260303-auto-17 ([1117ff5](https://github.com/A-Guy-educ/A-Guy/commit/1117ff5))
+* ci(cody): commit task files for 260303-auto-17 ([a2cd8ac](https://github.com/A-Guy-educ/A-Guy/commit/a2cd8ac))
+* ci(cody): commit task files for 260303-auto-17 ([fdc9797](https://github.com/A-Guy-educ/A-Guy/commit/fdc9797))
+* ci(cody): commit task files for 260313-auto-475 ([79408ef](https://github.com/A-Guy-educ/A-Guy/commit/79408ef))
+* ci(cody): commit task files for 260313-auto-475 ([50f1cc6](https://github.com/A-Guy-educ/A-Guy/commit/50f1cc6))
+* ci(cody): commit task files for 260313-auto-573 ([c0f722e](https://github.com/A-Guy-educ/A-Guy/commit/c0f722e))
+* ci(cody): commit task files for 260313-auto-573 ([7b4be9d](https://github.com/A-Guy-educ/A-Guy/commit/7b4be9d))
+* ci(cody): commit task files for 260315-auto-890 ([5d559a8](https://github.com/A-Guy-educ/A-Guy/commit/5d559a8))
+* ci(cody): commit task files for 260315-auto-890 ([4d8f27b](https://github.com/A-Guy-educ/A-Guy/commit/4d8f27b))
+* ci(cody): commit task files for 260317-auto-901 ([e90741f](https://github.com/A-Guy-educ/A-Guy/commit/e90741f))
+* ci(cody): commit task files for 260317-auto-901 ([77830bb](https://github.com/A-Guy-educ/A-Guy/commit/77830bb))
+* ci(cody): commit task files for 260317-auto-901 ([1f20c79](https://github.com/A-Guy-educ/A-Guy/commit/1f20c79))
+* ci(cody): commit task files for 260317-full-test ([ba27b6b](https://github.com/A-Guy-educ/A-Guy/commit/ba27b6b))
+* ci(cody): gate architect approved by user for 260316-auto-648 ([7f9ca7c](https://github.com/A-Guy-educ/A-Guy/commit/7f9ca7c))
+* ci(cody): gate architect implicitly approved via @cody rerun for 260316-auto-648 ([dbf124d](https://github.com/A-Guy-educ/A-Guy/commit/dbf124d))
+* ci(cody): gate taskify approved by user for 260315-auto-890 ([18daa1b](https://github.com/A-Guy-educ/A-Guy/commit/18daa1b))
+* ci(cody): gate taskify approved by user for 260316-auto-648 ([5e17b0a](https://github.com/A-Guy-educ/A-Guy/commit/5e17b0a))
+* ci(cody): gate taskify approved by user for 260316-auto-648 ([6a415ce](https://github.com/A-Guy-educ/A-Guy/commit/6a415ce))
+* ci(cody): gate taskify approved for 260303-auto-17 ([d8c920c](https://github.com/A-Guy-educ/A-Guy/commit/d8c920c))
+* ci(cody): gate taskify approved for 260313-auto-475 ([eb4f5aa](https://github.com/A-Guy-educ/A-Guy/commit/eb4f5aa))
+* ci(cody): gate taskify approved for 260313-auto-573 ([f5c93be](https://github.com/A-Guy-educ/A-Guy/commit/f5c93be))
+* ci(cody): pause at architect gate for 260316-auto-648 ([3b9d808](https://github.com/A-Guy-educ/A-Guy/commit/3b9d808))
+* ci(cody): pause at architect gate for 260316-auto-648 ([e79c403](https://github.com/A-Guy-educ/A-Guy/commit/e79c403))
+* ci(cody): pause at architect gate for 260316-auto-648 ([968299d](https://github.com/A-Guy-educ/A-Guy/commit/968299d))
+* ci(cody): pause at architect gate for 260316-auto-648 ([f5fd82e](https://github.com/A-Guy-educ/A-Guy/commit/f5fd82e))
+* ci(cody): pause at taskify gate for 260303-auto-17 ([504cccd](https://github.com/A-Guy-educ/A-Guy/commit/504cccd))
+* ci(cody): pause at taskify gate for 260313-auto-475 ([439820c](https://github.com/A-Guy-educ/A-Guy/commit/439820c))
+* ci(cody): pause at taskify gate for 260313-auto-573 ([0f3a2ad](https://github.com/A-Guy-educ/A-Guy/commit/0f3a2ad))
+* ci(cody): pause at taskify gate for 260315-auto-890 ([08beede](https://github.com/A-Guy-educ/A-Guy/commit/08beede))
+* ci(cody): pause at taskify gate for 260316-auto-648 ([49ef680](https://github.com/A-Guy-educ/A-Guy/commit/49ef680))
+* ci(cody): pause at taskify gate for 260316-auto-648 ([b9d7bf3](https://github.com/A-Guy-educ/A-Guy/commit/b9d7bf3))
+* ci(cody): pause at taskify gate for 260316-auto-648 ([f66b03f](https://github.com/A-Guy-educ/A-Guy/commit/f66b03f))
+* ci(cody): pause at taskify gate for 260316-auto-648 ([18faea4](https://github.com/A-Guy-educ/A-Guy/commit/18faea4))
+* ci(cody): pause at taskify gate for 260316-auto-648 ([1d8bcea](https://github.com/A-Guy-educ/A-Guy/commit/1d8bcea))
+* ci(cody): pause at taskify gate for 260316-auto-648 ([163622f](https://github.com/A-Guy-educ/A-Guy/commit/163622f))
+* ci(cody): pause at taskify gate for 260316-auto-648 ([d510457](https://github.com/A-Guy-educ/A-Guy/commit/d510457))
+* ci(cody): pause at taskify gate for 260316-auto-648 ([1eeb4e4](https://github.com/A-Guy-educ/A-Guy/commit/1eeb4e4))
+* ci(cody): pause at taskify gate for 260316-auto-648 ([15a8ea6](https://github.com/A-Guy-educ/A-Guy/commit/15a8ea6))
+* ci(cody): pause at taskify gate for 260316-auto-648 ([46c1986](https://github.com/A-Guy-educ/A-Guy/commit/46c1986))
+* ci(cody): reset status to running for 260316-auto-648 ([b04c787](https://github.com/A-Guy-educ/A-Guy/commit/b04c787))
+* ci(cody): reset status to running for 260316-auto-648 ([5737c90](https://github.com/A-Guy-educ/A-Guy/commit/5737c90))
+* ci(cody): reset status to running for 260316-auto-648 ([02a3278](https://github.com/A-Guy-educ/A-Guy/commit/02a3278))
+* ci(cody): reset status to running for 260316-auto-648 ([4a66448](https://github.com/A-Guy-educ/A-Guy/commit/4a66448))
+* ci(cody): reset status to running for 260316-auto-648 ([dc5bc18](https://github.com/A-Guy-educ/A-Guy/commit/dc5bc18))
+* ci(cody): reset status to running for 260316-auto-648 ([0e2bdb8](https://github.com/A-Guy-educ/A-Guy/commit/0e2bdb8))
+* ci(cody): reset status to running for 260316-auto-648 ([93a8fa8](https://github.com/A-Guy-educ/A-Guy/commit/93a8fa8))
+* ci(cody): reset status to running for 260316-auto-648 ([dd0df96](https://github.com/A-Guy-educ/A-Guy/commit/dd0df96))
+* ci(cody): reset status to running for 260316-auto-648 ([978d4bb](https://github.com/A-Guy-educ/A-Guy/commit/978d4bb))
+* ci(cody): save failed pipeline state for 260314-auto-530 ([d95519d](https://github.com/A-Guy-educ/A-Guy/commit/d95519d))
+* ci(cody): save failed pipeline state for 260316-auto-648 ([7a63643](https://github.com/A-Guy-educ/A-Guy/commit/7a63643))
+* ci(cody): save failed pipeline state for 260316-auto-648 ([573e4dd](https://github.com/A-Guy-educ/A-Guy/commit/573e4dd))
+* ci(cody): save failed pipeline state for 260316-auto-648 ([91524d6](https://github.com/A-Guy-educ/A-Guy/commit/91524d6))
+* ci(cody): save failed pipeline state for 260316-auto-648 ([77c3568](https://github.com/A-Guy-educ/A-Guy/commit/77c3568))
+* style: Format files with Prettier ([a7a2b38](https://github.com/A-Guy-educ/A-Guy/commit/a7a2b38))
+* style: Format stats files with Prettier ([60c00c6](https://github.com/A-Guy-educ/A-Guy/commit/60c00c6))
+* merge: resolve conflict keeping both tickPosition and viewportMode tests ([cf3c2e0](https://github.com/A-Guy-educ/A-Guy/commit/cf3c2e0))
+* refactor: Deduplicate createInlineRichText across support generation ([f64ee3e](https://github.com/A-Guy-educ/A-Guy/commit/f64ee3e))
+
+## 0.18.0 (2026-03-16)
+
+* Merge branch 'dev' into feat/260308-auto-741-feature-prompt-selection-for-pdf-t ([58011ec](https://github.com/A-Guy-educ/A-Guy/commit/58011ec))
+* Merge branch 'dev' into feat/260313-auto-779-control-layout-of-graph-and-accomp ([3a6a8a6](https://github.com/A-Guy-educ/A-Guy/commit/3a6a8a6))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([0cfe40f](https://github.com/A-Guy-educ/A-Guy/commit/0cfe40f))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([56f341c](https://github.com/A-Guy-educ/A-Guy/commit/56f341c))
+* Merge branch 'feat/pipeline-type-safe-registry' into dev ([f07f132](https://github.com/A-Guy-educ/A-Guy/commit/f07f132))
+* Merge pull request #748 from A-Guy-educ/feat/260308-auto-741-feature-prompt-selection-for-pdf-t ([0f70b15](https://github.com/A-Guy-educ/A-Guy/commit/0f70b15)), closes [#748](https://github.com/A-Guy-educ/A-Guy/issues/748) [#741](https://github.com/A-Guy-educ/A-Guy/issues/741)
+* Merge pull request #786 from A-Guy-educ/feat/language-toggle-globe-icon ([561503c](https://github.com/A-Guy-educ/A-Guy/commit/561503c)), closes [#786](https://github.com/A-Guy-educ/A-Guy/issues/786)
+* Merge pull request #789 from A-Guy-educ/refactor/260310-auto-788-course-page-redesign ([96e5852](https://github.com/A-Guy-educ/A-Guy/commit/96e5852)), closes [#789](https://github.com/A-Guy-educ/A-Guy/issues/789) [#788](https://github.com/A-Guy-educ/A-Guy/issues/788)
+* Merge pull request #793 from A-Guy-educ/feat/figma-integration ([e8e7cb4](https://github.com/A-Guy-educ/A-Guy/commit/e8e7cb4)), closes [#793](https://github.com/A-Guy-educ/A-Guy/issues/793)
+* Merge pull request #794 from A-Guy-educ/feat/260310-auto-782-allow-viewing-and-editing-json-con ([ad8c4fe](https://github.com/A-Guy-educ/A-Guy/commit/ad8c4fe)), closes [#794](https://github.com/A-Guy-educ/A-Guy/issues/794) [#782](https://github.com/A-Guy-educ/A-Guy/issues/782)
+* Merge pull request #799 from A-Guy-educ/feat/geometry-editor-text-wysiwyg ([a6db6f4](https://github.com/A-Guy-educ/A-Guy/commit/a6db6f4)), closes [#799](https://github.com/A-Guy-educ/A-Guy/issues/799)
+* Merge pull request #807 from A-Guy-educ/feat/260313-auto-781-support-multiple-graph-coordinate- ([e447252](https://github.com/A-Guy-educ/A-Guy/commit/e447252)), closes [#807](https://github.com/A-Guy-educ/A-Guy/issues/807) [#781](https://github.com/A-Guy-educ/A-Guy/issues/781)
+* Merge pull request #808 from A-Guy-educ/fix/260313-auto-766-lesson-chat-starts-from-the-first- ([592ba5a](https://github.com/A-Guy-educ/A-Guy/commit/592ba5a)), closes [#808](https://github.com/A-Guy-educ/A-Guy/issues/808) [#766](https://github.com/A-Guy-educ/A-Guy/issues/766)
+* Merge pull request #810 from A-Guy-educ/feat/260313-auto-779-control-layout-of-graph-and-accomp ([2347568](https://github.com/A-Guy-educ/A-Guy/commit/2347568)), closes [#810](https://github.com/A-Guy-educ/A-Guy/issues/810) [#779](https://github.com/A-Guy-educ/A-Guy/issues/779)
+* Merge pull request #830 from A-Guy-educ/fix/260315-auto-828-resilient-fromstage-resolution ([2d32e44](https://github.com/A-Guy-educ/A-Guy/commit/2d32e44)), closes [#830](https://github.com/A-Guy-educ/A-Guy/issues/830) [#828](https://github.com/A-Guy-educ/A-Guy/issues/828)
+* Merge pull request #836 from A-Guy-educ/feat/mandatory-access-context-aware-practice ([2f62162](https://github.com/A-Guy-educ/A-Guy/commit/2f62162)), closes [#836](https://github.com/A-Guy-educ/A-Guy/issues/836)
+* Merge pull request #837 from A-Guy-educ/feat/access-code-gate ([c46505d](https://github.com/A-Guy-educ/A-Guy/commit/c46505d)), closes [#837](https://github.com/A-Guy-educ/A-Guy/issues/837)
+* Merge pull request #842 from A-Guy-educ/fix/260315-auto-841-implicit-gate-approval-on-cody-rer ([e34a169](https://github.com/A-Guy-educ/A-Guy/commit/e34a169)), closes [#842](https://github.com/A-Guy-educ/A-Guy/issues/842) [#841](https://github.com/A-Guy-educ/A-Guy/issues/841)
+* Merge pull request #850 from A-Guy-educ/feat/math-rendering ([3802aa3](https://github.com/A-Guy-educ/A-Guy/commit/3802aa3)), closes [#850](https://github.com/A-Guy-educ/A-Guy/issues/850)
+* Merge pull request #854 from A-Guy-educ/dev ([f5f24cd](https://github.com/A-Guy-educ/A-Guy/commit/f5f24cd)), closes [#854](https://github.com/A-Guy-educ/A-Guy/issues/854)
+* Merge remote-tracking branch 'origin/dev' into feat/260308-auto-741-feature-prompt-selection-for-pdf ([3c6afee](https://github.com/A-Guy-educ/A-Guy/commit/3c6afee))
+* Merge remote-tracking branch 'origin/dev' into feat/260310-auto-782-allow-viewing-and-editing-json-c ([2558a5d](https://github.com/A-Guy-educ/A-Guy/commit/2558a5d))
+* Merge remote-tracking branch 'origin/dev' into feat/260313-auto-781-support-multiple-graph-coordinat ([8c4cdbc](https://github.com/A-Guy-educ/A-Guy/commit/8c4cdbc))
+* Merge remote-tracking branch 'origin/dev' into feat/access-code-gate ([ebfb83c](https://github.com/A-Guy-educ/A-Guy/commit/ebfb83c))
+* Merge remote-tracking branch 'origin/dev' into feat/access-code-gate ([ca80748](https://github.com/A-Guy-educ/A-Guy/commit/ca80748))
+* Merge remote-tracking branch 'origin/dev' into feat/access-code-gate ([728896b](https://github.com/A-Guy-educ/A-Guy/commit/728896b))
+* Merge remote-tracking branch 'origin/dev' into feat/geometry-editor-text-wysiwyg ([5dd7325](https://github.com/A-Guy-educ/A-Guy/commit/5dd7325))
+* Merge remote-tracking branch 'origin/dev' into feat/github-oauth-actor-trail ([45fa8dc](https://github.com/A-Guy-educ/A-Guy/commit/45fa8dc))
+* Merge remote-tracking branch 'origin/dev' into refactor/260310-auto-788-course-page-redesign ([2d355b9](https://github.com/A-Guy-educ/A-Guy/commit/2d355b9))
+* Merge remote-tracking branch 'origin/dev' into refactor/260310-auto-788-course-page-redesign ([da1dc50](https://github.com/A-Guy-educ/A-Guy/commit/da1dc50))
+* fix: Add missing check-paid-access util and revert success copy ([ceedbaf](https://github.com/A-Guy-educ/A-Guy/commit/ceedbaf))
+* fix: Add missing findBranchByIssueNumber mock ([e550107](https://github.com/A-Guy-educ/A-Guy/commit/e550107))
+* fix: Add notify-orchestrate-error job for workflow failures ([a2b20a1](https://github.com/A-Guy-educ/A-Guy/commit/a2b20a1))
+* fix: Add pay-gate to /study, /practice, /test pages ([6a50d9c](https://github.com/A-Guy-educ/A-Guy/commit/6a50d9c))
+* fix: Add ThemeProvider to Cody dashboard so dark mode toggle works ([84e86a7](https://github.com/A-Guy-educ/A-Guy/commit/84e86a7))
+* fix: Admin bypass for client-side entitlement check and success modal reload ([6a525df](https://github.com/A-Guy-educ/A-Guy/commit/6a525df))
+* fix: Align error-handling tests with updated error messages ([d9c18e2](https://github.com/A-Guy-educ/A-Guy/commit/d9c18e2))
+* fix: Autofix corrections for 260313-auto-354 ([398a4b0](https://github.com/A-Guy-educ/A-Guy/commit/398a4b0))
+* fix: Clarify dashboard task statuses and fix stale pipeline display ([d3f7600](https://github.com/A-Guy-educ/A-Guy/commit/d3f7600))
+* fix: Close publish issue when dev→main PR is merged ([65931ae](https://github.com/A-Guy-educ/A-Guy/commit/65931ae))
+* fix: Course page pay-gate, X navigates back, no content leak, read-only fields ([bc3b86f](https://github.com/A-Guy-educ/A-Guy/commit/bc3b86f))
+* fix: Distinguish session auth 401 from server token 401 in dashboard ([82f5820](https://github.com/A-Guy-educ/A-Guy/commit/82f5820))
+* fix: document/pdf not displayed on desktop chrome but visible on mobile fo... - Closes #762 (#812) ([09e7ca6](https://github.com/A-Guy-educ/A-Guy/commit/09e7ca6)), closes [#762](https://github.com/A-Guy-educ/A-Guy/issues/762) [#812](https://github.com/A-Guy-educ/A-Guy/issues/812)
+* fix: Improve auth error messages and remove stale notification filter ([0745805](https://github.com/A-Guy-educ/A-Guy/commit/0745805))
+* fix: Migrate all Cody API routes to use requireCodyAuth ([62af78a](https://github.com/A-Guy-educ/A-Guy/commit/62af78a))
+* fix: Prefer active workflow runs over stale completed ones in dashboard links ([369d7a9](https://github.com/A-Guy-educ/A-Guy/commit/369d7a9))
+* fix: remove duplicate imports in GeometryEditor.tsx ([ad38f04](https://github.com/A-Guy-educ/A-Guy/commit/ad38f04))
+* fix: Remove server-side auth redirects from all Cody pages to stop redirect loops ([56e8b50](https://github.com/A-Guy-educ/A-Guy/commit/56e8b50))
+* fix: Remove variant prop from GoogleLoginButton usage ([81fa814](https://github.com/A-Guy-educ/A-Guy/commit/81fa814))
+* fix: Replace auto-redirect with login prompt on session expiry ([5f76656](https://github.com/A-Guy-educ/A-Guy/commit/5f76656))
+* fix: Replace hardcoded Tailwind colors with theme tokens ([38e3176](https://github.com/A-Guy-educ/A-Guy/commit/38e3176))
+* fix: Resolve 10 inspector bugs for state persistence, duplicate retries, and health API ([095ef73](https://github.com/A-Guy-educ/A-Guy/commit/095ef73))
+* fix: Stop polling and retries on session expiry to prevent refresh loop ([5d333fb](https://github.com/A-Guy-educ/A-Guy/commit/5d333fb))
+* fix: the lesson order defined in the admin panel is not reflected on the w... - Closes #770 (#816) ([edaf1a4](https://github.com/A-Guy-educ/A-Guy/commit/edaf1a4)), closes [#770](https://github.com/A-Guy-educ/A-Guy/issues/770) [#816](https://github.com/A-Guy-educ/A-Guy/issues/816)
+* fix: Update test mocks for verifyActorLogin auth migration and stale stage assertions ([b81f2ec](https://github.com/A-Guy-educ/A-Guy/commit/b81f2ec))
+* fix: Use correct state key 'queue:state' for queue-manager coordination ([8108e0b](https://github.com/A-Guy-educ/A-Guy/commit/8108e0b))
+* fix: X button navigates to course catalogue ([fad8afc](https://github.com/A-Guy-educ/A-Guy/commit/fad8afc))
+* fix(260313-auto-593): Issue Title ([3e9b04b](https://github.com/A-Guy-educ/A-Guy/commit/3e9b04b))
+* fix(260315-auto-599): Issue Title ([95e077f](https://github.com/A-Guy-educ/A-Guy/commit/95e077f))
+* fix(260315-auto-789): Issue Title ([1441a38](https://github.com/A-Guy-educ/A-Guy/commit/1441a38))
+* fix(chat): Add spacing around inline $ adjacent to Hebrew for remarkMath ([290955e](https://github.com/A-Guy-educ/A-Guy/commit/290955e))
+* fix(chat): Escape mismatched $ delimiters containing Hebrew text ([c74f4db](https://github.com/A-Guy-educ/A-Guy/commit/c74f4db))
+* fix(chat): Normalize inline $$ to block math for PDF lesson context ([3555a75](https://github.com/A-Guy-educ/A-Guy/commit/3555a75))
+* fix(ci): Replace flaky LLM smoke test with deterministic dry-run ([baf0698](https://github.com/A-Guy-educ/A-Guy/commit/baf0698))
+* fix(cody-chat): prevent empty commits from chat auto-save ([82868ec](https://github.com/A-Guy-educ/A-Guy/commit/82868ec))
+* fix(cody): Add gate rejection actor event ([a4d3a6d](https://github.com/A-Guy-educ/A-Guy/commit/a4d3a6d))
+* fix(cody): add workflows:write permission to allow pushing workflow file changes ([e927f8c](https://github.com/A-Guy-educ/A-Guy/commit/e927f8c)), closes [#824](https://github.com/A-Guy-educ/A-Guy/issues/824)
+* fix(cody): Fix P0-P2 issues — circular deps, turbo profile, type safety, stale code ([fd6299c](https://github.com/A-Guy-educ/A-Guy/commit/fd6299c))
+* fix(cody): Fix workflow false-failures and defensive label removal ([09099b2](https://github.com/A-Guy-educ/A-Guy/commit/09099b2))
+* fix(cody): Harden pipeline error handling, observability, and resilience (Phase 2 Steps 1-5) ([e32b23d](https://github.com/A-Guy-educ/A-Guy/commit/e32b23d))
+* fix(cody): Improve fix/verify pipeline resilience ([5d28c95](https://github.com/A-Guy-educ/A-Guy/commit/5d28c95))
+* fix(cody): Include labels in GitHub PR data ([ef3a91a](https://github.com/A-Guy-educ/A-Guy/commit/ef3a91a))
+* fix(cody): Merge dev before fix mode and export mergeDefaultBranch ([29598cd](https://github.com/A-Guy-educ/A-Guy/commit/29598cd))
+* fix(cody): Prefer failed stage over stale paused stage in rerun mode ([1e6655f](https://github.com/A-Guy-educ/A-Guy/commit/1e6655f))
+* fix(cody): Prevent keyboard shortcuts from opening modals when one is already open ([b2120d4](https://github.com/A-Guy-educ/A-Guy/commit/b2120d4))
+* fix(cody): remove invalid workflows permission ([875b063](https://github.com/A-Guy-educ/A-Guy/commit/875b063))
+* fix(cody): remove PR label reading from dashboard column derivation ([abca18d](https://github.com/A-Guy-educ/A-Guy/commit/abca18d))
+* fix(cody): Resolve auth type mismatch in requireCodyAuth ([a322266](https://github.com/A-Guy-educ/A-Guy/commit/a322266))
+* fix(cody): resolve profile before fromStage in rerun mode ([1f9b16f](https://github.com/A-Guy-educ/A-Guy/commit/1f9b16f))
+* fix(cody): Resolve Token error detection on dashboard ([af310e2](https://github.com/A-Guy-educ/A-Guy/commit/af310e2))
+* fix(cody): Separate stage name from agent name for prompt building ([53c9a69](https://github.com/A-Guy-educ/A-Guy/commit/53c9a69))
+* fix(cody): Show pipeline status for done tasks and display stage name in approval state ([707df37](https://github.com/A-Guy-educ/A-Guy/commit/707df37))
+* fix(cody): Update lifecycle label on rerun so dashboard shows correct status ([9ac93db](https://github.com/A-Guy-educ/A-Guy/commit/9ac93db))
+* fix(cody): Use dedicated CODY_PUBLIC_SERVER_URL for dashboard metadata ([ca53db0](https://github.com/A-Guy-educ/A-Guy/commit/ca53db0))
+* fix(cody): Use GitHub OAuth for all dashboard routes instead of Payload admin ([bc24a0e](https://github.com/A-Guy-educ/A-Guy/commit/bc24a0e))
+* fix(cody): Use PR labels to show correct status for rerun tasks ([b75b0dd](https://github.com/A-Guy-educ/A-Guy/commit/b75b0dd))
+* fix(geometry): Align text color palette with design system ([a8c559a](https://github.com/A-Guy-educ/A-Guy/commit/a8c559a))
+* fix(geometry): Remove all hardcoded colors, use design system CSS variables ([e348a6d](https://github.com/A-Guy-educ/A-Guy/commit/e348a6d)), closes [#000000](https://github.com/A-Guy-educ/A-Guy/issues/000000) [#ffffff](https://github.com/A-Guy-educ/A-Guy/issues/ffffff) [#3366cc](https://github.com/A-Guy-educ/A-Guy/issues/3366cc) [#cccccc](https://github.com/A-Guy-educ/A-Guy/issues/cccccc) [fff/#333](https://github.com/A-Guy-educ/A-Guy/issues/333)
+* fix(inspector): Clean up dead code and fix atomic write ([6a63da9](https://github.com/A-Guy-educ/A-Guy/commit/6a63da9))
+* fix(inspector): Fix 3 critical deferred infrastructure issues ([2b940c7](https://github.com/A-Guy-educ/A-Guy/commit/2b940c7))
+* fix(inspector): Persist state across CI runs via GitHub Actions variables ([1b65a21](https://github.com/A-Guy-educ/A-Guy/commit/1b65a21))
+* fix(inspector): Use full API path in security scanner messages ([b620965](https://github.com/A-Guy-educ/A-Guy/commit/b620965))
+* fix(test): Skip flaky success-tracker test ([e3ecd78](https://github.com/A-Guy-educ/A-Guy/commit/e3ecd78))
+* fix(test): Update jq selector in getLinkedIssueFromPR test ([d41b797](https://github.com/A-Guy-educ/A-Guy/commit/d41b797))
+* fix(tests): Add missing verifyActorLogin mock to UI cody API tests ([9430e6d](https://github.com/A-Guy-educ/A-Guy/commit/9430e6d))
+* fix(tests): Skip health API tests when DATABASE_URL is Atlas ([5d7c144](https://github.com/A-Guy-educ/A-Guy/commit/5d7c144))
+* fix(ui): Fix AskTab to correctly fetch conversations using contextKeyPrefix ([5f147a9](https://github.com/A-Guy-educ/A-Guy/commit/5f147a9))
+* fix(ui): Fix exam countdown not showing on /study page ([41a737f](https://github.com/A-Guy-educ/A-Guy/commit/41a737f))
+* fix(ui): Lighten exams color and remove unrelated file changes ([fdbc078](https://github.com/A-Guy-educ/A-Guy/commit/fdbc078))
+* fix(ui): Persist exam date to localStorage from study-plan page ([9bc860e](https://github.com/A-Guy-educ/A-Guy/commit/9bc860e))
+* fix(ui): Replace hardcoded hex colors with design system theme colors ([ab9951c](https://github.com/A-Guy-educ/A-Guy/commit/ab9951c))
+* fix(ui): Separate border wrapper from bg-card in ConversationCard and ExamCard ([cb5e8c3](https://github.com/A-Guy-educ/A-Guy/commit/cb5e8c3))
+* fix(ui): Swap exams/ask tab colors and remove task artifact files ([948643f](https://github.com/A-Guy-educ/A-Guy/commit/948643f))
+* fix(ui): Use inline styles for tab colors and add top-border accent design ([71aa34d](https://github.com/A-Guy-educ/A-Guy/commit/71aa34d))
+* feat: Add access codes and code redemption system ([b67314a](https://github.com/A-Guy-educ/A-Guy/commit/b67314a))
+* feat: Add course entitlements and pay-gate system ([c47b3d5](https://github.com/A-Guy-educ/A-Guy/commit/c47b3d5))
+* feat: Add Figma MCP integration for AI agents ([37060b9](https://github.com/A-Guy-educ/A-Guy/commit/37060b9))
+* feat: Add globe icon and native script labels to language switcher ([48d7a32](https://github.com/A-Guy-educ/A-Guy/commit/48d7a32))
+* feat: Add success popup, dismissible modal, course-level pay-gate ([9fa3c22](https://github.com/A-Guy-educ/A-Guy/commit/9fa3c22))
+* feat: configure graph display range (x and y) in admin graph editor - Closes #777 (#809) ([bee6d81](https://github.com/A-Guy-educ/A-Guy/commit/bee6d81)), closes [#777](https://github.com/A-Guy-educ/A-Guy/issues/777) [#809](https://github.com/A-Guy-educ/A-Guy/issues/809)
+* feat: content status badging ("soon" & "just added") - Closes #839 (#848) ([ac89e77](https://github.com/A-Guy-educ/A-Guy/commit/ac89e77)), closes [#839](https://github.com/A-Guy-educ/A-Guy/issues/839) [#848](https://github.com/A-Guy-educ/A-Guy/issues/848)
+* feat: Redesign Google login page with vibrant UI ([da4220b](https://github.com/A-Guy-educ/A-Guy/commit/da4220b))
+* feat(260308-auto-540): Issue Title ([ea593a9](https://github.com/A-Guy-educ/A-Guy/commit/ea593a9))
+* feat(260310-auto-320): Issue Title ([8dcd2d9](https://github.com/A-Guy-educ/A-Guy/commit/8dcd2d9))
+* feat(260313-auto-354): Issue Title ([eba9735](https://github.com/A-Guy-educ/A-Guy/commit/eba9735))
+* feat(260313-auto-949): Issue Title ([7b2ca90](https://github.com/A-Guy-educ/A-Guy/commit/7b2ca90))
+* feat(chat): Add safety net for undelimited LaTeX in chat responses ([fd1a056](https://github.com/A-Guy-educ/A-Guy/commit/fd1a056))
+* feat(chat): Fix math rendering — preserve inline math and add LaTeX formatting instructions ([fb33a5a](https://github.com/A-Guy-educ/A-Guy/commit/fb33a5a))
+* feat(cody-dashboard): Enhance dashboard with 9 new features ([91a6ed7](https://github.com/A-Guy-educ/A-Guy/commit/91a6ed7))
+* feat(cody): Add approve-ui and approve-pr actions to task dashboard ([a818bd3](https://github.com/A-Guy-educ/A-Guy/commit/a818bd3))
+* feat(cody): Add comment dialog to preview modal ([655d2a2](https://github.com/A-Guy-educ/A-Guy/commit/655d2a2))
+* feat(cody): Add GitHub OAuth actor trail for dashboard authentication ([0812664](https://github.com/A-Guy-educ/A-Guy/commit/0812664))
+* feat(cody): Add issueCreator to track issue owner in pipeline status ([702f107](https://github.com/A-Guy-educ/A-Guy/commit/702f107))
+* feat(cody): Add pipeline canary tests and CI gate ([c185b08](https://github.com/A-Guy-educ/A-Guy/commit/c185b08))
+* feat(cody): Add queue toggle button to task list items ([ec886cf](https://github.com/A-Guy-educ/A-Guy/commit/ec886cf))
+* feat(cody): Add Vercel preview iframe embedding ([caae88b](https://github.com/A-Guy-educ/A-Guy/commit/caae88b))
+* feat(cody): Auto-trigger pipeline when adding task to queue ([bea0f6f](https://github.com/A-Guy-educ/A-Guy/commit/bea0f6f))
+* feat(cody): Defer test writing to inspector plugin ([e27dbfc](https://github.com/A-Guy-educ/A-Guy/commit/e27dbfc))
+* feat(cody): Display issue owner in dashboard UI ([1add3d3](https://github.com/A-Guy-educ/A-Guy/commit/1add3d3))
+* feat(cody): Require UI and PR approval before merge ([5779e00](https://github.com/A-Guy-educ/A-Guy/commit/5779e00))
+* feat(course-page): align course page with Figma spec ([ef485e7](https://github.com/A-Guy-educ/A-Guy/commit/ef485e7))
+* feat(course-page): Change exams tab to orange, color inactive tab text ([f22c0d2](https://github.com/A-Guy-educ/A-Guy/commit/f22c0d2))
+* feat(course-page): Fix tab color variables and make active tab text colored ([3871964](https://github.com/A-Guy-educ/A-Guy/commit/3871964))
+* feat(course-page): Hardcode tab accent colors to fix CSS variable resolution ([a3b72c8](https://github.com/A-Guy-educ/A-Guy/commit/a3b72c8))
+* feat(geometry): Add color and size configuration for points ([589aa68](https://github.com/A-Guy-educ/A-Guy/commit/589aa68)), closes [#000000](https://github.com/A-Guy-educ/A-Guy/issues/000000)
+* feat(geometry): Add point label position picker with 8-direction compass and canvas snap ([138fa17](https://github.com/A-Guy-educ/A-Guy/commit/138fa17))
+* feat(geometry): WYSIWYG text rendering with color, size, and drag-drop in admin editor ([c41e58b](https://github.com/A-Guy-educ/A-Guy/commit/c41e58b))
+* feat(inspector): Add health-check, success-tracker, and zombie-reaper plugins ([da52968](https://github.com/A-Guy-educ/A-Guy/commit/da52968))
+* feat(inspector): Add project plugin and security scanning ([75b51a6](https://github.com/A-Guy-educ/A-Guy/commit/75b51a6))
+* feat(inspector): Add queue manager plugin for autonomous task processing ([cad85f8](https://github.com/A-Guy-educ/A-Guy/commit/cad85f8))
+* feat(nav): Color active nav tab text and fix exam card accent color ([4e15b73](https://github.com/A-Guy-educ/A-Guy/commit/4e15b73))
+* feat(ui): Add tab-based color theming for course page ([2422dcb](https://github.com/A-Guy-educ/A-Guy/commit/2422dcb))
+* feat(ui): Color lesson number labels and progress circle by tab theme ([01334e9](https://github.com/A-Guy-educ/A-Guy/commit/01334e9))
+* feat(ui): Extend tab color theming to AskTab and ExamsTab cards ([52ddfa4](https://github.com/A-Guy-educ/A-Guy/commit/52ddfa4))
+* feat(ui): Link upcoming exam button to study-plan page ([4aa3c2e](https://github.com/A-Guy-educ/A-Guy/commit/4aa3c2e))
+* style: Fix prettier formatting ([f32e3ca](https://github.com/A-Guy-educ/A-Guy/commit/f32e3ca))
+* style: Fix prettier formatting in pattern-index.json ([93fa563](https://github.com/A-Guy-educ/A-Guy/commit/93fa563))
+* style: Format login files with Prettier ([02b43c9](https://github.com/A-Guy-educ/A-Guy/commit/02b43c9))
+* style: Format pattern-index.json ([c41c4e8](https://github.com/A-Guy-educ/A-Guy/commit/c41c4e8))
+* style: Format readme-index.json ([44912a9](https://github.com/A-Guy-educ/A-Guy/commit/44912a9))
+* test: Add tests for 401 session vs token error handling in dashboard API ([e986f4e](https://github.com/A-Guy-educ/A-Guy/commit/e986f4e))
+* test: Add unit tests for pay-gate entitlement system ([aa06a9c](https://github.com/A-Guy-educ/A-Guy/commit/aa06a9c))
+* test: Update login page tests to match redesigned heading ([d9fed0e](https://github.com/A-Guy-educ/A-Guy/commit/d9fed0e))
+* test: Update pipeline tests for deferred test stage removal ([6bdda00](https://github.com/A-Guy-educ/A-Guy/commit/6bdda00))
+* test: Update tests for build agent replacing autofix in quality gates ([743176c](https://github.com/A-Guy-educ/A-Guy/commit/743176c))
+* test(cody): add profile-aware pipeline resolution tests ([f0e5478](https://github.com/A-Guy-educ/A-Guy/commit/f0e5478)), closes [#827](https://github.com/A-Guy-educ/A-Guy/issues/827)
+* refactor: Clean up pay-gate code after review ([8f3db34](https://github.com/A-Guy-educ/A-Guy/commit/8f3db34))
+* refactor: Deduplicate prompt-fetching into shared useConversionPrompts hook ([2fb7068](https://github.com/A-Guy-educ/A-Guy/commit/2fb7068))
+* refactor: Move entitlements from separate collection to User document ([c245b9e](https://github.com/A-Guy-educ/A-Guy/commit/c245b9e))
+* refactor(260310-auto-355): Issue Title ([faaf272](https://github.com/A-Guy-educ/A-Guy/commit/faaf272))
+* refactor(cody): Decompose god objects into focused modules (Phase 2 Steps 6-8) ([7abc8f0](https://github.com/A-Guy-educ/A-Guy/commit/7abc8f0))
+* refactor(cody): Improve pipeline execution and stage handling ([7fc70fe](https://github.com/A-Guy-educ/A-Guy/commit/7fc70fe))
+* refactor(cody): Make pipeline engine stage-agnostic and replace fragile tests ([f36562c](https://github.com/A-Guy-educ/A-Guy/commit/f36562c))
+* refactor(cody): Replace autofix agent with build agent for all fix loops ([603c6ec](https://github.com/A-Guy-educ/A-Guy/commit/603c6ec))
+* refactor(cody): Type-safe stage registry, ESM lint plugin, test architecture overhaul ([8d9ae64](https://github.com/A-Guy-educ/A-Guy/commit/8d9ae64))
+* refactor(geometry): Read text colors from CSS theme variables at runtime ([95fc005](https://github.com/A-Guy-educ/A-Guy/commit/95fc005))
+* refactor(ui): Apply course page redesign to /study route ([b7c7983](https://github.com/A-Guy-educ/A-Guy/commit/b7c7983))
+* refactor(ui): Redesign course page to match Figma spec ([786cffd](https://github.com/A-Guy-educ/A-Guy/commit/786cffd)), closes [#7C1D2A](https://github.com/A-Guy-educ/A-Guy/issues/7C1D2A)
+* docs: Add Cody pipeline stability overhaul plans ([e831e7b](https://github.com/A-Guy-educ/A-Guy/commit/e831e7b))
+* chore: Format CLAUDE.md with Prettier ([426c054](https://github.com/A-Guy-educ/A-Guy/commit/426c054))
+* chore: Format pattern-index.json ([0f21d6d](https://github.com/A-Guy-educ/A-Guy/commit/0f21d6d))
+* chore: Trigger Vercel deployment with correct author ([85bbeb6](https://github.com/A-Guy-educ/A-Guy/commit/85bbeb6))
+* chore: Trigger Vercel redeploy ([377cd3f](https://github.com/A-Guy-educ/A-Guy/commit/377cd3f))
+* chore(cody): Restrict edit to backlog items only ([1c91c3e](https://github.com/A-Guy-educ/A-Guy/commit/1c91c3e))
+* ci(cody): commit task files for 260308-auto-540 ([5b683ee](https://github.com/A-Guy-educ/A-Guy/commit/5b683ee))
+* ci(cody): commit task files for 260310-auto-320 ([6ff1776](https://github.com/A-Guy-educ/A-Guy/commit/6ff1776))
+* ci(cody): commit task files for 260310-auto-320 ([4a2c8f7](https://github.com/A-Guy-educ/A-Guy/commit/4a2c8f7))
+* ci(cody): commit task files for 260310-auto-355 ([dc92712](https://github.com/A-Guy-educ/A-Guy/commit/dc92712))
+* ci(cody): commit task files for 260310-auto-355 ([b7b7135](https://github.com/A-Guy-educ/A-Guy/commit/b7b7135))
+* ci(cody): commit task files for 260313-auto-354 ([a3e03a9](https://github.com/A-Guy-educ/A-Guy/commit/a3e03a9))
+* ci(cody): commit task files for 260313-auto-354 ([386cc34](https://github.com/A-Guy-educ/A-Guy/commit/386cc34))
+* ci(cody): commit task files for 260313-auto-593 ([d32b549](https://github.com/A-Guy-educ/A-Guy/commit/d32b549))
+* ci(cody): commit task files for 260313-auto-593 ([d94a341](https://github.com/A-Guy-educ/A-Guy/commit/d94a341))
+* ci(cody): commit task files for 260313-auto-949 ([e57c3d5](https://github.com/A-Guy-educ/A-Guy/commit/e57c3d5))
+* ci(cody): commit task files for 260313-auto-949 ([eb1180b](https://github.com/A-Guy-educ/A-Guy/commit/eb1180b))
+* ci(cody): commit task files for 260315-auto-599 ([3bf711e](https://github.com/A-Guy-educ/A-Guy/commit/3bf711e))
+* ci(cody): commit task files for 260315-auto-599 ([e25c893](https://github.com/A-Guy-educ/A-Guy/commit/e25c893))
+* ci(cody): commit task files for 260315-auto-789 ([1539e93](https://github.com/A-Guy-educ/A-Guy/commit/1539e93))
+* ci(cody): commit task files for 260315-auto-789 ([ee9a180](https://github.com/A-Guy-educ/A-Guy/commit/ee9a180))
+* ci(cody): gate taskify approved for 260310-auto-320 ([857bd47](https://github.com/A-Guy-educ/A-Guy/commit/857bd47))
+* ci(cody): gate taskify approved for 260313-auto-354 ([89bce86](https://github.com/A-Guy-educ/A-Guy/commit/89bce86))
+* ci(cody): gate taskify approved for 260313-auto-949 ([a2459ed](https://github.com/A-Guy-educ/A-Guy/commit/a2459ed))
+* ci(cody): pause at taskify gate for 260310-auto-320 ([45c9019](https://github.com/A-Guy-educ/A-Guy/commit/45c9019))
+* ci(cody): pause at taskify gate for 260310-auto-355 ([3a75417](https://github.com/A-Guy-educ/A-Guy/commit/3a75417))
+* ci(cody): pause at taskify gate for 260313-auto-354 ([c27869e](https://github.com/A-Guy-educ/A-Guy/commit/c27869e))
+* ci(cody): pause at taskify gate for 260313-auto-949 ([175ec3d](https://github.com/A-Guy-educ/A-Guy/commit/175ec3d))
+* cody: update chat history for 779 ([e4a0dfa](https://github.com/A-Guy-educ/A-Guy/commit/e4a0dfa))
+* cody: update chat history for 779 ([be1f5e5](https://github.com/A-Guy-educ/A-Guy/commit/be1f5e5))
+* cody: update chat history for 779 ([e4ada70](https://github.com/A-Guy-educ/A-Guy/commit/e4ada70))
+* cody: update chat history for 779 ([bce4cc2](https://github.com/A-Guy-educ/A-Guy/commit/bce4cc2))
+* cody: update chat history for 779 ([f4af35a](https://github.com/A-Guy-educ/A-Guy/commit/f4af35a))
+* cody: update chat history for 779 ([e4d2b37](https://github.com/A-Guy-educ/A-Guy/commit/e4d2b37))
+* cody: update chat history for 779 ([4688d59](https://github.com/A-Guy-educ/A-Guy/commit/4688d59))
+* cody: update chat history for 779 ([9ce3c4c](https://github.com/A-Guy-educ/A-Guy/commit/9ce3c4c))
+* cody: update chat history for 779 ([035dd44](https://github.com/A-Guy-educ/A-Guy/commit/035dd44))
+* cody: update chat history for 779 ([6b5d3b6](https://github.com/A-Guy-educ/A-Guy/commit/6b5d3b6))
+* cody: update chat history for 779 ([18c90e0](https://github.com/A-Guy-educ/A-Guy/commit/18c90e0))
+* cody: update chat history for 779 ([e9bdef1](https://github.com/A-Guy-educ/A-Guy/commit/e9bdef1))
+* cody: update chat history for 779 ([7f90b23](https://github.com/A-Guy-educ/A-Guy/commit/7f90b23))
+* cody: update chat history for 779 ([8644d60](https://github.com/A-Guy-educ/A-Guy/commit/8644d60))
+* cody: update chat history for 779 ([b96e9ea](https://github.com/A-Guy-educ/A-Guy/commit/b96e9ea))
+* cody: update chat history for 779 ([e8edb37](https://github.com/A-Guy-educ/A-Guy/commit/e8edb37))
+* cody: update chat history for 779 ([1f71dee](https://github.com/A-Guy-educ/A-Guy/commit/1f71dee))
+* cody: update chat history for 779 ([7e44de9](https://github.com/A-Guy-educ/A-Guy/commit/7e44de9))
+* cody: update chat history for 779 ([a1f5f1b](https://github.com/A-Guy-educ/A-Guy/commit/a1f5f1b))
+* cody: update chat history for 779 ([e7abbfe](https://github.com/A-Guy-educ/A-Guy/commit/e7abbfe))
+* cody: update chat history for 779 ([e0fc2fb](https://github.com/A-Guy-educ/A-Guy/commit/e0fc2fb))
+* cody: update chat history for 779 ([f72b166](https://github.com/A-Guy-educ/A-Guy/commit/f72b166))
+* cody: update chat history for 779 ([74faae7](https://github.com/A-Guy-educ/A-Guy/commit/74faae7))
+* cody: update chat history for 779 ([f59f648](https://github.com/A-Guy-educ/A-Guy/commit/f59f648))
+* cody: update chat history for 779 ([0a96fc2](https://github.com/A-Guy-educ/A-Guy/commit/0a96fc2))
+* cody: update chat history for 779 ([b1217ee](https://github.com/A-Guy-educ/A-Guy/commit/b1217ee))
+* cody: update chat history for 779 ([66d8bc7](https://github.com/A-Guy-educ/A-Guy/commit/66d8bc7))
+* cody: update chat history for 779 ([9d699da](https://github.com/A-Guy-educ/A-Guy/commit/9d699da))
+* cody: update chat history for 779 ([a5385d0](https://github.com/A-Guy-educ/A-Guy/commit/a5385d0))
+* cody: update chat history for 779 ([6b58f9c](https://github.com/A-Guy-educ/A-Guy/commit/6b58f9c))
+* cody: update chat history for 779 ([ce90c45](https://github.com/A-Guy-educ/A-Guy/commit/ce90c45))
+* cody: update chat history for 779 ([2491eda](https://github.com/A-Guy-educ/A-Guy/commit/2491eda))
+* cody: update chat history for 779 ([682c7eb](https://github.com/A-Guy-educ/A-Guy/commit/682c7eb))
+* cody: update chat history for 779 ([dec686a](https://github.com/A-Guy-educ/A-Guy/commit/dec686a))
+* cody: update chat history for 779 ([4b17abe](https://github.com/A-Guy-educ/A-Guy/commit/4b17abe))
+* cody: update chat history for 779 ([eae17cf](https://github.com/A-Guy-educ/A-Guy/commit/eae17cf))
+* cody: update chat history for 779 ([10b2019](https://github.com/A-Guy-educ/A-Guy/commit/10b2019))
+
+## 0.17.0 (2026-03-13)
+
+* Merge branch 'chore/remove-reflect-stage-move-docs-to-nightly' into dev ([f753d1a](https://github.com/A-Guy-educ/A-Guy/commit/f753d1a))
+* Merge branch 'fix/dashboard-status-consistency' into dev ([77800d4](https://github.com/A-Guy-educ/A-Guy/commit/77800d4))
+* Merge branch 'fix/inspector-watchdog' into dev ([82a0a06](https://github.com/A-Guy-educ/A-Guy/commit/82a0a06))
+* Merge origin/dev into dev ([3b1b38e](https://github.com/A-Guy-educ/A-Guy/commit/3b1b38e))
+* Merge pull request #792 from A-Guy-educ/fix/cody-workflow-reaction-error ([b3f74b9](https://github.com/A-Guy-educ/A-Guy/commit/b3f74b9)), closes [#792](https://github.com/A-Guy-educ/A-Guy/issues/792)
+* Merge pull request #815 from A-Guy-educ/dev ([296c9b1](https://github.com/A-Guy-educ/A-Guy/commit/296c9b1)), closes [#815](https://github.com/A-Guy-educ/A-Guy/issues/815)
+* style: Fix prettier formatting in pattern-index.json ([01a2563](https://github.com/A-Guy-educ/A-Guy/commit/01a2563))
+* style: Fix prettier formatting in pattern-index.json ([65d8d80](https://github.com/A-Guy-educ/A-Guy/commit/65d8d80))
+* style: Fix prettier formatting in pattern-index.json ([a86a62c](https://github.com/A-Guy-educ/A-Guy/commit/a86a62c))
+* style: Fix prettier formatting in pattern-index.json ([2237b92](https://github.com/A-Guy-educ/A-Guy/commit/2237b92))
+* style: Format pattern-index and readme-index ([6e7ba8e](https://github.com/A-Guy-educ/A-Guy/commit/6e7ba8e))
+* style: Format pattern-index.json ([4e5896f](https://github.com/A-Guy-educ/A-Guy/commit/4e5896f))
+* style(pattern-index): Reformat JSON for consistency ([263fc6b](https://github.com/A-Guy-educ/A-Guy/commit/263fc6b))
+* feat: Add e2e-test-writer agent and update build agent ([a5b91a4](https://github.com/A-Guy-educ/A-Guy/commit/a5b91a4))
+* feat: Add Running/Backlog view toggle to Cody dashboard ([183dbfe](https://github.com/A-Guy-educ/A-Guy/commit/183dbfe))
+* feat: Slow polling to 120s on backlog view to reduce GitHub API calls ([0573691](https://github.com/A-Guy-educ/A-Guy/commit/0573691))
+* feat(cody): Add docs stage to pipeline - updates project docs and creates memory file ([0043fd4](https://github.com/A-Guy-educ/A-Guy/commit/0043fd4))
+* feat(cody): Add model resolution and update model config ([a208869](https://github.com/A-Guy-educ/A-Guy/commit/a208869))
+* feat(cody): Add OG/Twitter social sharing meta tags to all dashboard routes ([ae14a04](https://github.com/A-Guy-educ/A-Guy/commit/ae14a04))
+* feat(cody): Add OG/Twitter social sharing meta tags to all dashboard routes ([d4a855d](https://github.com/A-Guy-educ/A-Guy/commit/d4a855d))
+* feat(cody): Add OpenCode server health check and improve agent robustness ([28e5ad1](https://github.com/A-Guy-educ/A-Guy/commit/28e5ad1))
+* feat(cody): Add PR preview and comment features ([7ca45d0](https://github.com/A-Guy-educ/A-Guy/commit/7ca45d0))
+* feat(cody): Add remote dev environment communication via Tailscale Funnel ([5fb102c](https://github.com/A-Guy-educ/A-Guy/commit/5fb102c))
+* feat(cody): Add stage name and timestamp to pipeline log lines ([5b0ab70](https://github.com/A-Guy-educ/A-Guy/commit/5b0ab70))
+* feat(cody): Add URL sync for modals and tabs in Cody dashboard ([b990bc5](https://github.com/A-Guy-educ/A-Guy/commit/b990bc5))
+* feat(cody): Complete OpenCode server mode with binary resolution and e2e fixes ([abff8ae](https://github.com/A-Guy-educ/A-Guy/commit/abff8ae))
+* feat(cody): Refactor stage prompts and fix complexity scoring tests ([ca341fc](https://github.com/A-Guy-educ/A-Guy/commit/ca341fc))
+* feat(cody): Replace single Workflow link with WorkflowRunsPopover showing all runs ([6ea4ee7](https://github.com/A-Guy-educ/A-Guy/commit/6ea4ee7))
+* feat(inspector): Defer docs+reflect to inspector, migrate nightly-docs, switch cody to github-hosted ([a0d3b5d](https://github.com/A-Guy-educ/A-Guy/commit/a0d3b5d))
+* feat(pipeline): Adopt GSD advantages in agent prompts ([9afaa05](https://github.com/A-Guy-educ/A-Guy/commit/9afaa05))
+* fix: Accept GH_PAT or GITHUB_TOKEN in chat endpoint env guard ([402cd16](https://github.com/A-Guy-educ/A-Guy/commit/402cd16))
+* fix: Add timeout to chat health check GET handler to prevent hanging ([4d4a816](https://github.com/A-Guy-educ/A-Guy/commit/4d4a816))
+* fix: Align complexity scoring thresholds across prompt, labels, comments, and docs ([70b95e5](https://github.com/A-Guy-educ/A-Guy/commit/70b95e5))
+* fix: Apply code review fixes for inspector plugins ([133f091](https://github.com/A-Guy-educ/A-Guy/commit/133f091))
+* fix: Apply Prettier formatting to Cody pipeline files ([930c7f7](https://github.com/A-Guy-educ/A-Guy/commit/930c7f7))
+* fix: Guard inspector digest/nudge actions against missing WATCHDOG_ISSUE and invalid issue numbers ([f9a748b](https://github.com/A-Guy-educ/A-Guy/commit/f9a748b)), closes [#0](https://github.com/A-Guy-educ/A-Guy/issues/0)
+* fix: Improve MCP client reliability with error recovery, 5s timeout, and tool scope filtering ([48e70e0](https://github.com/A-Guy-educ/A-Guy/commit/48e70e0))
+* fix: lesson introduction container is too narrow on both desktop and mobil... - Closes #738 (#803) ([42d3428](https://github.com/A-Guy-educ/A-Guy/commit/42d3428)), closes [#738](https://github.com/A-Guy-educ/A-Guy/issues/738) [#803](https://github.com/A-Guy-educ/A-Guy/issues/803)
+* fix: Locale content filtering returns zero courses when field missing ([a919aee](https://github.com/A-Guy-educ/A-Guy/commit/a919aee))
+* fix: the video is not displayed to the user - Closes #735 (#752) ([1bfd9c9](https://github.com/A-Guy-educ/A-Guy/commit/1bfd9c9)), closes [#735](https://github.com/A-Guy-educ/A-Guy/issues/735) [#752](https://github.com/A-Guy-educ/A-Guy/issues/752)
+* fix: Update cody integration test to expect 10 impl stages ([7263090](https://github.com/A-Guy-educ/A-Guy/commit/7263090))
+* fix: Update tests for reflect stage ([cd97d1a](https://github.com/A-Guy-educ/A-Guy/commit/cd97d1a))
+* fix: Use classic PAT for GitHub Copilot MCP authentication ([88e92cb](https://github.com/A-Guy-educ/A-Guy/commit/88e92cb))
+* fix(ci): Prevent reaction API failure from blocking Cody pipeline ([227938c](https://github.com/A-Guy-educ/A-Guy/commit/227938c))
+* fix(cody): Add client --attach smoke test and fix CLI arg parsing ([09a3a18](https://github.com/A-Guy-educ/A-Guy/commit/09a3a18))
+* fix(cody): Add pull-rebase-retry to pipeline git push for diverged branches ([07ade08](https://github.com/A-Guy-educ/A-Guy/commit/07ade08))
+* fix(cody): Fix PR lookup for Cody branches and mobile preview navigation ([40fcf82](https://github.com/A-Guy-educ/A-Guy/commit/40fcf82))
+* fix(cody): Fix preflight test for CI and add git identity to smoke test ([4a74ef9](https://github.com/A-Guy-educ/A-Guy/commit/4a74ef9))
+* fix(cody): Fix smoke test failing on ubuntu — handle attach timeouts and install CLI ([0009d50](https://github.com/A-Guy-educ/A-Guy/commit/0009d50))
+* fix(cody): Fix unit test failures on self-hosted CI runner ([4f696a7](https://github.com/A-Guy-educ/A-Guy/commit/4f696a7))
+* fix(cody): Gate labels (risk-gated/hard-stop) now override cody:planning and in_progress workflow ([2bf1d2f](https://github.com/A-Guy-educ/A-Guy/commit/2bf1d2f))
+* fix(cody): Gate labels (risk-gated/hard-stop) now override cody:planning and in_progress workflow ([342fb58](https://github.com/A-Guy-educ/A-Guy/commit/342fb58))
+* fix(cody): Improve risk gate review questions to require operator decisions only ([2ba189c](https://github.com/A-Guy-educ/A-Guy/commit/2ba189c))
+* fix(cody): Remove verifyClientAttach gate and log quality gate errors ([f8c6bb1](https://github.com/A-Guy-educ/A-Guy/commit/f8c6bb1))
+* fix(cody): Reset stale state in full-mode reruns and prevent process hanging ([a4fcc12](https://github.com/A-Guy-educ/A-Guy/commit/a4fcc12))
+* fix(cody): Robust JSON extraction from chat export and deduplicate classification labels ([661e702](https://github.com/A-Guy-educ/A-Guy/commit/661e702))
+* fix(cody): Shrink WorkflowRunsPopover and fix off-screen positioning ([f3ac989](https://github.com/A-Guy-educ/A-Guy/commit/f3ac989))
+* fix(cody): Surface agent reasoning text in pipeline logs ([38bbb43](https://github.com/A-Guy-educ/A-Guy/commit/38bbb43))
+* fix(cody): Use pipeline currentStage as authoritative source in status banner ([27465a2](https://github.com/A-Guy-educ/A-Guy/commit/27465a2))
+* fix(tests): Remove nonexistent docs/reflect stages from cody int test expectations ([018286e](https://github.com/A-Guy-educ/A-Guy/commit/018286e))
+* fix(tests): Update cody int tests to use canonical pipeline stage names ([6919972](https://github.com/A-Guy-educ/A-Guy/commit/6919972))
+* fix(tests): Update stage-prompts tests for docs stage ([17b4a5a](https://github.com/A-Guy-educ/A-Guy/commit/17b4a5a))
+* refactor(cody): Improve dashboard layout and add confirm dialog ([d3b20c8](https://github.com/A-Guy-educ/A-Guy/commit/d3b20c8))
+* refactor(cody): Merge commit-fix into commit, add per-stage cost tracking ([0f6b06c](https://github.com/A-Guy-educ/A-Guy/commit/0f6b06c))
+* refactor(cody): Merge spec stage into gap — gap now writes both spec.md and gap.md ([e8aa6bd](https://github.com/A-Guy-educ/A-Guy/commit/e8aa6bd))
+* refactor(cody): Remove heartbeat timer — real agent events provide progress ([1260df3](https://github.com/A-Guy-educ/A-Guy/commit/1260df3))
+* refactor(cody): Replace emoji pipeline status with Lucide icon vertical stepper ([d2b07ac](https://github.com/A-Guy-educ/A-Guy/commit/d2b07ac))
+* refactor(cody): Use pipeline state as primary column source and centralize display logic ([9aa3400](https://github.com/A-Guy-educ/A-Guy/commit/9aa3400))
+* chore: Add TDD workflow and split build test configuration ([ea32d5c](https://github.com/A-Guy-educ/A-Guy/commit/ea32d5c))
+* chore: Fix prettier formatting ([bb8f11b](https://github.com/A-Guy-educ/A-Guy/commit/bb8f11b))
+* chore: Format readme-index.json after lint-staged regeneration ([a9684c2](https://github.com/A-Guy-educ/A-Guy/commit/a9684c2))
+* chore: Remove gsd-* references from agent config files ([7778469](https://github.com/A-Guy-educ/A-Guy/commit/7778469))
+* chore: Remove reflect stage, move docs to nightly inspector (complexity threshold 30) ([300f93c](https://github.com/A-Guy-educ/A-Guy/commit/300f93c))
+* chore: Update agent docs and cheat sheet ([7abb00f](https://github.com/A-Guy-educ/A-Guy/commit/7abb00f))
+* chore: Update Cody pipeline scripts and workflow ([2e5b60a](https://github.com/A-Guy-educ/A-Guy/commit/2e5b60a))
+* docs(cody): Comprehensive pipeline architecture docs, expert agent, and cheat sheet ([96a88fc](https://github.com/A-Guy-educ/A-Guy/commit/96a88fc))
+* docs(cody): Remove stale GSD references from pipeline docs ([e20b96f](https://github.com/A-Guy-educ/A-Guy/commit/e20b96f))
+* test: Add comprehensive tests for view-mode filtering and count logic ([6cdbafa](https://github.com/A-Guy-educ/A-Guy/commit/6cdbafa))
+* test: Update stage-prompts test for new review instruction text ([4d432c7](https://github.com/A-Guy-educ/A-Guy/commit/4d432c7))
+* revert(cody): Remove GSD integration, restore architect/plan-gap/build pipeline ([5cea003](https://github.com/A-Guy-educ/A-Guy/commit/5cea003))
+
+## 0.16.0 (2026-03-10)
+
+* Merge branch 'dev' into feat/gsd-integration ([f9f55ac](https://github.com/A-Guy-educ/A-Guy/commit/f9f55ac))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([c652f46](https://github.com/A-Guy-educ/A-Guy/commit/c652f46))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([306cb4a](https://github.com/A-Guy-educ/A-Guy/commit/306cb4a))
+* Merge pull request #740 from A-Guy-educ/fix/system-stability-p3 ([20b78dc](https://github.com/A-Guy-educ/A-Guy/commit/20b78dc)), closes [#740](https://github.com/A-Guy-educ/A-Guy/issues/740)
+* Merge pull request #753 from A-Guy-educ/feat/locale-content-filtering ([0c15090](https://github.com/A-Guy-educ/A-Guy/commit/0c15090)), closes [#753](https://github.com/A-Guy-educ/A-Guy/issues/753)
+* Merge pull request #759 from A-Guy-educ/feat/test-teardown-cleanup ([35023d9](https://github.com/A-Guy-educ/A-Guy/commit/35023d9)), closes [#759](https://github.com/A-Guy-educ/A-Guy/issues/759)
+* Merge pull request #767 from A-Guy-educ/feat/review-fix-pipeline ([152e915](https://github.com/A-Guy-educ/A-Guy/commit/152e915)), closes [#767](https://github.com/A-Guy-educ/A-Guy/issues/767)
+* Merge pull request #768 from A-Guy-educ/main ([e161a5e](https://github.com/A-Guy-educ/A-Guy/commit/e161a5e)), closes [#768](https://github.com/A-Guy-educ/A-Guy/issues/768)
+* Merge pull request #772 from A-Guy-educ/feat/gsd-integration ([ac14ea7](https://github.com/A-Guy-educ/A-Guy/commit/ac14ea7)), closes [#772](https://github.com/A-Guy-educ/A-Guy/issues/772)
+* Merge pull request #790 from A-Guy-educ/dev ([97d706b](https://github.com/A-Guy-educ/A-Guy/commit/97d706b)), closes [#790](https://github.com/A-Guy-educ/A-Guy/issues/790)
+* Merge remote-tracking branch 'origin/dev' into feat/gsd-integration ([7e92ea1](https://github.com/A-Guy-educ/A-Guy/commit/7e92ea1))
+* fix: bug: global-error.tsx uses hardcoded english strings and inline styles - Closes #682 (#722) ([bf787c8](https://github.com/A-Guy-educ/A-Guy/commit/bf787c8)), closes [#682](https://github.com/A-Guy-educ/A-Guy/issues/682) [#722](https://github.com/A-Guy-educ/A-Guy/issues/722)
+* fix: bug: non-atomic guest session claim causes orphaned conversations and... - Closes #773 (#775) ([8721bd5](https://github.com/A-Guy-educ/A-Guy/commit/8721bd5)), closes [#773](https://github.com/A-Guy-educ/A-Guy/issues/773) [#775](https://github.com/A-Guy-educ/A-Guy/issues/775)
+* fix: Clean up task artifact commits and increase fix stage timeout ([8689449](https://github.com/A-Guy-educ/A-Guy/commit/8689449))
+* fix: Eliminate cascading query invalidations causing GitHub API rate limit exhaustion ([9b718ba](https://github.com/A-Guy-educ/A-Guy/commit/9b718ba))
+* fix: Parse @cody approve as gate approval ([b166a11](https://github.com/A-Guy-educ/A-Guy/commit/b166a11))
+* fix: Preserve returnTo in Cody dashboard login redirect ([6416d27](https://github.com/A-Guy-educ/A-Guy/commit/6416d27))
+* fix: Resolve merge conflict in unified-adapter — keep withTimeout wrapper ([27f70f8](https://github.com/A-Guy-educ/A-Guy/commit/27f70f8))
+* fix: Update cody integration tests for GSD stage names ([7cf31f0](https://github.com/A-Guy-educ/A-Guy/commit/7cf31f0))
+* fix: Update Gemini model name in integration tests ([7fee3ff](https://github.com/A-Guy-educ/A-Guy/commit/7fee3ff))
+* fix(260306-auto-665): Issue Title (#723) ([b8c7ffb](https://github.com/A-Guy-educ/A-Guy/commit/b8c7ffb)), closes [#723](https://github.com/A-Guy-educ/A-Guy/issues/723)
+* fix(ci): Add PAYLOAD_SECRET to Fast Gate for unit tests ([ac88e11](https://github.com/A-Guy-educ/A-Guy/commit/ac88e11))
+* fix(ci): Revert git identity to aguyaharonyair to unblock Vercel deployments ([768ab5a](https://github.com/A-Guy-educ/A-Guy/commit/768ab5a))
+* fix(cody): Robust review findings parsing and never skip fix in fix mode ([ac93b33](https://github.com/A-Guy-educ/A-Guy/commit/ac93b33))
+* fix(test): Fix media cleanup cron assertion and prettierignore ([8591d33](https://github.com/A-Guy-educ/A-Guy/commit/8591d33))
+* fix(tests): Update EXERCISE_CHAT model expectation to gemini-3.1-flash-lite-preview ([56ef58d](https://github.com/A-Guy-educ/A-Guy/commit/56ef58d))
+* fix(types): Add async to withTimeout callback for Genkit generateStream ([3bb8b5c](https://github.com/A-Guy-educ/A-Guy/commit/3bb8b5c))
+* feat: Add test teardown helpers and improve test data cleanup ([03fb68b](https://github.com/A-Guy-educ/A-Guy/commit/03fb68b))
+* feat: Filter courses and chapters by content locale ([5544f0f](https://github.com/A-Guy-educ/A-Guy/commit/5544f0f))
+* feat: Switch chat model to gemini-3.1-flash-lite-preview ([6e79147](https://github.com/A-Guy-educ/A-Guy/commit/6e79147))
+* feat(cody): Replace architect/plan-gap/build with GSD stages ([042dd12](https://github.com/A-Guy-educ/A-Guy/commit/042dd12))
+* chore: Fix pattern-index formatting after merge ([bbf040c](https://github.com/A-Guy-educ/A-Guy/commit/bbf040c))
+* chore: Format payload.config.ts with Prettier ([5728dcd](https://github.com/A-Guy-educ/A-Guy/commit/5728dcd))
+* chore: P3 system stability — config cleanup, CI optimization, streaming timeout ([9d7f54b](https://github.com/A-Guy-educ/A-Guy/commit/9d7f54b))
+* chore: Set Cody as git commit author in CI workflows ([173e576](https://github.com/A-Guy-educ/A-Guy/commit/173e576))
+* style: Bold Cody dashboard redesign — Linear-inspired task list, depth hierarchy, status banners ([cf3cc2e](https://github.com/A-Guy-educ/A-Guy/commit/cf3cc2e))
+* style: Modernize Cody dashboard UI with refined visual design ([43b8bbd](https://github.com/A-Guy-educ/A-Guy/commit/43b8bbd))
+* refactor: Improve Cody dashboard UX with TanStack Query optimizations ([3ee455e](https://github.com/A-Guy-educ/A-Guy/commit/3ee455e))
+
+## 0.15.0 (2026-03-09)
+
+* Add dynamic runner selection: --local flag for Cody + docker runner support in smoke test ([c7405ef](https://github.com/A-Guy-educ/A-Guy/commit/c7405ef))
+* Add self-hosted runner smoke test workflow with clean workspace enforcement ([0802cab](https://github.com/A-Guy-educ/A-Guy/commit/0802cab))
+* Clarify complete - spec ready ([60c2b36](https://github.com/A-Guy-educ/A-Guy/commit/60c2b36))
+* Delete .tasks/260223-auto-29 directory ([5bbe94e](https://github.com/A-Guy-educ/A-Guy/commit/5bbe94e))
+* Fix loading text to use translations instead of hardcoded Hebrew ([dada6ad](https://github.com/A-Guy-educ/A-Guy/commit/dada6ad))
+* Fix runs-on: target any self-hosted runner, not just 'local' label ([6e50a9f](https://github.com/A-Guy-educ/A-Guy/commit/6e50a9f))
+* Fix typo in cody workflow: rwrited -> write ([2911f2d](https://github.com/A-Guy-educ/A-Guy/commit/2911f2d))
+* Merge branch 'dev' into feat/html-rich-text ([806588b](https://github.com/A-Guy-educ/A-Guy/commit/806588b))
+* Merge branch 'dev' into feat/study-plan-generator ([7aab500](https://github.com/A-Guy-educ/A-Guy/commit/7aab500))
+* Merge branch 'dev' into feat/v3-convertor-additions ([095b237](https://github.com/A-Guy-educ/A-Guy/commit/095b237))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([e2d3a37](https://github.com/A-Guy-educ/A-Guy/commit/e2d3a37))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([d629538](https://github.com/A-Guy-educ/A-Guy/commit/d629538))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([1023ea4](https://github.com/A-Guy-educ/A-Guy/commit/1023ea4))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([7b303bc](https://github.com/A-Guy-educ/A-Guy/commit/7b303bc))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([ee12b07](https://github.com/A-Guy-educ/A-Guy/commit/ee12b07))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([338915e](https://github.com/A-Guy-educ/A-Guy/commit/338915e))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([4e59d71](https://github.com/A-Guy-educ/A-Guy/commit/4e59d71))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([a186a8a](https://github.com/A-Guy-educ/A-Guy/commit/a186a8a))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([c982cc8](https://github.com/A-Guy-educ/A-Guy/commit/c982cc8))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([5e1c0e0](https://github.com/A-Guy-educ/A-Guy/commit/5e1c0e0))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([329ad04](https://github.com/A-Guy-educ/A-Guy/commit/329ad04))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([ee70602](https://github.com/A-Guy-educ/A-Guy/commit/ee70602))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([67fcd07](https://github.com/A-Guy-educ/A-Guy/commit/67fcd07))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([e6a038b](https://github.com/A-Guy-educ/A-Guy/commit/e6a038b))
+* Merge branch 'fix/260221-auto-56' of https://github.com/A-Guy-educ/A-Guy into fix/260221-auto-56 ([476f068](https://github.com/A-Guy-educ/A-Guy/commit/476f068))
+* Merge branch 'fix/cody-run-log-noise' into dev ([87bc9fb](https://github.com/A-Guy-educ/A-Guy/commit/87bc9fb))
+* Merge branch 'fix/validate-src-changes' of https://github.com/A-Guy-educ/A-Guy into fix/validate-src ([aed18c6](https://github.com/A-Guy-educ/A-Guy/commit/aed18c6))
+* Merge branch 'test/audit-coverage-implementation' into test/audit-coverage-p1-implementation ([0858edb](https://github.com/A-Guy-educ/A-Guy/commit/0858edb))
+* Merge branch 'test/audit-coverage-implementation' into test/audit-coverage-p1-implementation ([db8c8c7](https://github.com/A-Guy-educ/A-Guy/commit/db8c8c7))
+* Merge dev into feat/direct-to-vercel-blob-uploads ([4469f46](https://github.com/A-Guy-educ/A-Guy/commit/4469f46))
+* Merge fix/merge-button-ci-status into dev ([15ecd8b](https://github.com/A-Guy-educ/A-Guy/commit/15ecd8b))
+* Merge fix/merge-button-ci-status into dev ([3a19ebe](https://github.com/A-Guy-educ/A-Guy/commit/3a19ebe))
+* Merge main into dev ([b1521ba](https://github.com/A-Guy-educ/A-Guy/commit/b1521ba))
+* Merge origin/dev into feat/direct-to-vercel-blob-uploads ([247f9c6](https://github.com/A-Guy-educ/A-Guy/commit/247f9c6))
+* Merge origin/dev into feat/direct-to-vercel-blob-uploads ([bf22cac](https://github.com/A-Guy-educ/A-Guy/commit/bf22cac))
+* Merge origin/dev into feat/html-rich-text - resolve conflicts ([15c31dc](https://github.com/A-Guy-educ/A-Guy/commit/15c31dc))
+* Merge origin/dev into feat/youtube-embed-integration ([6b3d998](https://github.com/A-Guy-educ/A-Guy/commit/6b3d998))
+* Merge pull request #327 from A-Guy-educ/feat/direct-to-vercel-blob-uploads ([5bd53df](https://github.com/A-Guy-educ/A-Guy/commit/5bd53df)), closes [#327](https://github.com/A-Guy-educ/A-Guy/issues/327)
+* Merge pull request #449 from A-Guy-educ/feat/access-control-per-course ([bd81552](https://github.com/A-Guy-educ/A-Guy/commit/bd81552)), closes [#449](https://github.com/A-Guy-educ/A-Guy/issues/449)
+* Merge pull request #497 from A-Guy-educ/opencode/issue494-20260219202105 ([f8ad319](https://github.com/A-Guy-educ/A-Guy/commit/f8ad319)), closes [#497](https://github.com/A-Guy-educ/A-Guy/issues/497)
+* Merge pull request #529 from A-Guy-educ/fix/260221-auto-56 ([f97dad6](https://github.com/A-Guy-educ/A-Guy/commit/f97dad6)), closes [#529](https://github.com/A-Guy-educ/A-Guy/issues/529)
+* Merge pull request #535 from A-Guy-educ/feat/exercise-renderer-new-question-types ([6c6d52a](https://github.com/A-Guy-educ/A-Guy/commit/6c6d52a)), closes [#535](https://github.com/A-Guy-educ/A-Guy/issues/535)
+* Merge pull request #549 from A-Guy-educ/feat/html-rich-text ([f668e3d](https://github.com/A-Guy-educ/A-Guy/commit/f668e3d)), closes [#549](https://github.com/A-Guy-educ/A-Guy/issues/549)
+* Merge pull request #555 from A-Guy-educ/feat/vimeo-support ([8a1d623](https://github.com/A-Guy-educ/A-Guy/commit/8a1d623)), closes [#555](https://github.com/A-Guy-educ/A-Guy/issues/555)
+* Merge pull request #575 from A-Guy-educ/dev ([d854ede](https://github.com/A-Guy-educ/A-Guy/commit/d854ede)), closes [#575](https://github.com/A-Guy-educ/A-Guy/issues/575)
+* Merge pull request #577 from A-Guy-educ/fix/ci-checkout-token ([7f68b45](https://github.com/A-Guy-educ/A-Guy/commit/7f68b45)), closes [#577](https://github.com/A-Guy-educ/A-Guy/issues/577)
+* Merge pull request #596 from A-Guy-educ/feat/study-plan-generator ([3325733](https://github.com/A-Guy-educ/A-Guy/commit/3325733)), closes [#596](https://github.com/A-Guy-educ/A-Guy/issues/596)
+* Merge pull request #670 from A-Guy-educ/fix/validate-src-changes ([67ab5dd](https://github.com/A-Guy-educ/A-Guy/commit/67ab5dd)), closes [#670](https://github.com/A-Guy-educ/A-Guy/issues/670)
+* Merge pull request #696 from A-Guy-educ/test/audit-coverage-implementation ([2fef0b8](https://github.com/A-Guy-educ/A-Guy/commit/2fef0b8)), closes [#696](https://github.com/A-Guy-educ/A-Guy/issues/696)
+* Merge pull request #698 from A-Guy-educ/test/audit-coverage-p1-implementation ([0c0c4d9](https://github.com/A-Guy-educ/A-Guy/commit/0c0c4d9)), closes [#698](https://github.com/A-Guy-educ/A-Guy/issues/698)
+* Merge pull request #706 from A-Guy-educ/test/audit-coverage-p2-implementation ([123b830](https://github.com/A-Guy-educ/A-Guy/commit/123b830)), closes [#706](https://github.com/A-Guy-educ/A-Guy/issues/706)
+* Merge pull request #708 from A-Guy-educ/fix/system-stability-improvements ([a55cebd](https://github.com/A-Guy-educ/A-Guy/commit/a55cebd)), closes [#708](https://github.com/A-Guy-educ/A-Guy/issues/708)
+* Merge pull request #710 from A-Guy-educ/feat/v3-convertor-additions ([d668f6b](https://github.com/A-Guy-educ/A-Guy/commit/d668f6b)), closes [#710](https://github.com/A-Guy-educ/A-Guy/issues/710)
+* Merge pull request #712 from A-Guy-educ/feat/generated-title-per-exercise-v3 ([a9b6710](https://github.com/A-Guy-educ/A-Guy/commit/a9b6710)), closes [#712](https://github.com/A-Guy-educ/A-Guy/issues/712)
+* Merge pull request #715 from A-Guy-educ/fix/260305-auto-697-math-expressions-rendering-as-code ([aa3784f](https://github.com/A-Guy-educ/A-Guy/commit/aa3784f)), closes [#715](https://github.com/A-Guy-educ/A-Guy/issues/715) [#697](https://github.com/A-Guy-educ/A-Guy/issues/697)
+* Merge pull request #716 from A-Guy-educ/fix/260305-auto-689-securityrefactor-chat-endpoints-du ([0d686ca](https://github.com/A-Guy-educ/A-Guy/commit/0d686ca)), closes [#716](https://github.com/A-Guy-educ/A-Guy/issues/716) [#689](https://github.com/A-Guy-educ/A-Guy/issues/689)
+* Merge pull request #717 from A-Guy-educ/fix/260306-auto-685-security-exerciseassets-collection ([3193489](https://github.com/A-Guy-educ/A-Guy/commit/3193489)), closes [#717](https://github.com/A-Guy-educ/A-Guy/issues/717) [#685](https://github.com/A-Guy-educ/A-Guy/issues/685)
+* Merge pull request #718 from A-Guy-educ/refactor/260306-auto-687-refactor-cody-api-routes-use-blank ([c6098b6](https://github.com/A-Guy-educ/A-Guy/commit/c6098b6)), closes [#718](https://github.com/A-Guy-educ/A-Guy/issues/718) [#687](https://github.com/A-Guy-educ/A-Guy/issues/687)
+* Merge pull request #727 from A-Guy-educ/dev ([3f2c608](https://github.com/A-Guy-educ/A-Guy/commit/3f2c608)), closes [#727](https://github.com/A-Guy-educ/A-Guy/issues/727)
+* Merge pull request #734 from A-Guy-educ/dev ([3396d32](https://github.com/A-Guy-educ/A-Guy/commit/3396d32)), closes [#734](https://github.com/A-Guy-educ/A-Guy/issues/734)
+* Merge pull request #737 from A-Guy-educ/fix/system-stability-p1 ([049aea7](https://github.com/A-Guy-educ/A-Guy/commit/049aea7)), closes [#737](https://github.com/A-Guy-educ/A-Guy/issues/737)
+* Merge pull request #739 from A-Guy-educ/fix/system-stability-p2 ([5b25b23](https://github.com/A-Guy-educ/A-Guy/commit/5b25b23)), closes [#739](https://github.com/A-Guy-educ/A-Guy/issues/739)
+* Merge pull request #743 from A-Guy-educ/fix/trim-slug-whitespace ([0e07ef8](https://github.com/A-Guy-educ/A-Guy/commit/0e07ef8)), closes [#743](https://github.com/A-Guy-educ/A-Guy/issues/743)
+* Merge pull request #745 from A-Guy-educ/feat/lesson-context-conversion ([f74d21b](https://github.com/A-Guy-educ/A-Guy/commit/f74d21b)), closes [#745](https://github.com/A-Guy-educ/A-Guy/issues/745)
+* Merge pull request #757 from A-Guy-educ/feat/review-fix-pipeline ([e0d561b](https://github.com/A-Guy-educ/A-Guy/commit/e0d561b)), closes [#757](https://github.com/A-Guy-educ/A-Guy/issues/757)
+* Merge pull request #761 from A-Guy-educ/dev ([d92f0e8](https://github.com/A-Guy-educ/A-Guy/commit/d92f0e8)), closes [#761](https://github.com/A-Guy-educ/A-Guy/issues/761)
+* Merge remote changes ([01c5536](https://github.com/A-Guy-educ/A-Guy/commit/01c5536))
+* Merge remote dev into local - resolve conflict in plugins/index.ts ([956c550](https://github.com/A-Guy-educ/A-Guy/commit/956c550))
+* Merge remote-tracking branch 'origin/dev' into dev ([0a59c0f](https://github.com/A-Guy-educ/A-Guy/commit/0a59c0f))
+* Merge remote-tracking branch 'origin/dev' into dev ([2941692](https://github.com/A-Guy-educ/A-Guy/commit/2941692))
+* Merge remote-tracking branch 'origin/dev' into feat/access-control-per-course ([e00c234](https://github.com/A-Guy-educ/A-Guy/commit/e00c234))
+* Merge remote-tracking branch 'origin/dev' into feat/lesson-context-conversion ([e74538e](https://github.com/A-Guy-educ/A-Guy/commit/e74538e))
+* Merge remote-tracking branch 'origin/dev' into feat/lesson-context-conversion ([ac98692](https://github.com/A-Guy-educ/A-Guy/commit/ac98692))
+* Merge remote-tracking branch 'origin/dev' into fix/260306-auto-685-security-exerciseassets-collectio ([0a9b3de](https://github.com/A-Guy-educ/A-Guy/commit/0a9b3de))
+* Merge remote-tracking branch 'origin/dev' into fix/system-stability-improvements ([1f60271](https://github.com/A-Guy-educ/A-Guy/commit/1f60271))
+* Merge remote-tracking branch 'origin/dev' into fix/validate-src-changes ([f51d082](https://github.com/A-Guy-educ/A-Guy/commit/f51d082))
+* Merge remote-tracking branch 'origin/dev' into test/audit-coverage-implementation ([4165173](https://github.com/A-Guy-educ/A-Guy/commit/4165173))
+* Merge remote-tracking branch 'origin/dev' into test/audit-coverage-implementation ([264176c](https://github.com/A-Guy-educ/A-Guy/commit/264176c))
+* Merge remote-tracking branch 'origin/dev' into test/audit-coverage-p1-implementation ([e00e16c](https://github.com/A-Guy-educ/A-Guy/commit/e00e16c))
+* Merge remote-tracking branch 'origin/dev' into test/audit-coverage-p2-implementation ([f429235](https://github.com/A-Guy-educ/A-Guy/commit/f429235))
+* Merge remote-tracking branch 'origin/dev' into test/audit-coverage-p2-implementation ([4dd1f39](https://github.com/A-Guy-educ/A-Guy/commit/4dd1f39))
+* Merge remote-tracking branch 'origin/dev' into test/audit-coverage-p2-implementation ([ff93cc0](https://github.com/A-Guy-educ/A-Guy/commit/ff93cc0))
+* Revert "fix(admin): Rename exercise help labels to match UI concepts" ([2aa2537](https://github.com/A-Guy-educ/A-Guy/commit/2aa2537))
+* Update page.tsx ([b74f02d](https://github.com/A-Guy-educ/A-Guy/commit/b74f02d))
+* Update page.tsx ([12fb075](https://github.com/A-Guy-educ/A-Guy/commit/12fb075))
+* fix: Add 60-second TTL to config values cache ([2b9e10f](https://github.com/A-Guy-educ/A-Guy/commit/2b9e10f))
+* fix: Add admin authentication to e2e tests accessing admin panel ([2bf8e90](https://github.com/A-Guy-educ/A-Guy/commit/2bf8e90))
+* fix: Add await to async runPrStage calls in tests ([816abe0](https://github.com/A-Guy-educ/A-Guy/commit/816abe0))
+* fix: Add backwards compatibility for header/footer nav items ([deeefb2](https://github.com/A-Guy-educ/A-Guy/commit/deeefb2))
+* fix: Add eslint-disable for pre-existing boundary violations ([ffde440](https://github.com/A-Guy-educ/A-Guy/commit/ffde440))
+* fix: Add pnpm setup to parse job in CI workflow ([c6458e0](https://github.com/A-Guy-educ/A-Guy/commit/c6458e0))
+* fix: Address critical and high-priority issues in blob upload feature ([6fa651d](https://github.com/A-Guy-educ/A-Guy/commit/6fa651d)), closes [hi#priority](https://github.com/hi/issues/priority)
+* fix: Align gap validator regex with agent template ([2689560](https://github.com/A-Guy-educ/A-Guy/commit/2689560))
+* fix: Always use standard spec order in rerun mode ([a6f4704](https://github.com/A-Guy-educ/A-Guy/commit/a6f4704))
+* fix: Auth, media persistence, contextKey guard, and image restore ([1456eff](https://github.com/A-Guy-educ/A-Guy/commit/1456eff))
+* fix: Autofix corrections for 260221-auto-56 ([675a8a0](https://github.com/A-Guy-educ/A-Guy/commit/675a8a0))
+* fix: Autofix corrections for 260221-auto-56 ([91cda4e](https://github.com/A-Guy-educ/A-Guy/commit/91cda4e))
+* fix: Autofix corrections for 260222-auto-01 ([bc055bd](https://github.com/A-Guy-educ/A-Guy/commit/bc055bd))
+* fix: Autofix corrections for 260222-auto-02 ([7de1068](https://github.com/A-Guy-educ/A-Guy/commit/7de1068))
+* fix: Autofix corrections for 260222-auto-37 ([cf2aa5b](https://github.com/A-Guy-educ/A-Guy/commit/cf2aa5b))
+* fix: Autofix corrections for 260222-auto-52 ([9b65a09](https://github.com/A-Guy-educ/A-Guy/commit/9b65a09))
+* fix: Autofix corrections for 260223-auto-29 ([f1f5883](https://github.com/A-Guy-educ/A-Guy/commit/f1f5883))
+* fix: Autofix corrections for 260223-auto-29 ([2291789](https://github.com/A-Guy-educ/A-Guy/commit/2291789))
+* fix: Autofix corrections for 260223-auto-87 ([b3677da](https://github.com/A-Guy-educ/A-Guy/commit/b3677da))
+* fix: Autofix corrections for 260224-auto-15 ([faefed6](https://github.com/A-Guy-educ/A-Guy/commit/faefed6))
+* fix: Autofix corrections for 260224-auto-40 ([0500892](https://github.com/A-Guy-educ/A-Guy/commit/0500892))
+* fix: Autofix corrections for 260224-auto-59 ([453abda](https://github.com/A-Guy-educ/A-Guy/commit/453abda))
+* fix: Autofix corrections for 260225-auto-21 ([6d028d5](https://github.com/A-Guy-educ/A-Guy/commit/6d028d5))
+* fix: Autofix corrections for 260225-auto-90 ([6ee0409](https://github.com/A-Guy-educ/A-Guy/commit/6ee0409))
+* fix: Autofix corrections for 260306-auto-330 ([a02dd3b](https://github.com/A-Guy-educ/A-Guy/commit/a02dd3b))
+* fix: Badge overlap inline layout + correct i18n labels ([dd6ba19](https://github.com/A-Guy-educ/A-Guy/commit/dd6ba19))
+* fix: bug: conversationservice — all payload operations missing req paramet... - Closes #507 (#624) ([8880a20](https://github.com/A-Guy-educ/A-Guy/commit/8880a20)), closes [#507](https://github.com/A-Guy-educ/A-Guy/issues/507) [#624](https://github.com/A-Guy-educ/A-Guy/issues/624)
+* fix: bug: logo component displays 'payload logo' instead of a-guy branding - Closes #680 (#690) ([1c9ef92](https://github.com/A-Guy-educ/A-Guy/commit/1c9ef92)), closes [#680](https://github.com/A-Guy-educ/A-Guy/issues/680) [#690](https://github.com/A-Guy-educ/A-Guy/issues/690)
+* fix: Cache gate approval and commit for future runs ([a9b6cff](https://github.com/A-Guy-educ/A-Guy/commit/a9b6cff))
+* fix: Complete PR body in report output and update related tests ([e1a142d](https://github.com/A-Guy-educ/A-Guy/commit/e1a142d))
+* fix: Concurrent callers now reach shared lazy load promise ([6b1d145](https://github.com/A-Guy-educ/A-Guy/commit/6b1d145))
+* fix: Consolidate analytics providers and fix Mixpanel identity ([9d77fc7](https://github.com/A-Guy-educ/A-Guy/commit/9d77fc7))
+* fix: Convert Buffer to Uint8Array for Payload file upload ([6b64be8](https://github.com/A-Guy-educ/A-Guy/commit/6b64be8))
+* fix: convert cody route to client components to resolve prerender error ([d125cee](https://github.com/A-Guy-educ/A-Guy/commit/d125cee))
+* fix: Convert require.main to ESM import.meta.url in all cody scripts ([90211ac](https://github.com/A-Guy-educ/A-Guy/commit/90211ac))
+* fix: Create conversation before navigating, remove sticky from nav bars ([1a36676](https://github.com/A-Guy-educ/A-Guy/commit/1a36676))
+* fix: Defer navigation spinner by 300ms to avoid flash on instant transitions ([9efc453](https://github.com/A-Guy-educ/A-Guy/commit/9efc453))
+* fix: disable body-max-line-length rule for automated commits ([8e915f7](https://github.com/A-Guy-educ/A-Guy/commit/8e915f7))
+* fix: Downgrade @vercel/blob to 0.22.3 for storage plugin compatibility ([6d6b729](https://github.com/A-Guy-educ/A-Guy/commit/6d6b729))
+* fix: Enable addRandomSuffix for Vercel Blob uploads ([2a11cbe](https://github.com/A-Guy-educ/A-Guy/commit/2a11cbe))
+* fix: Enable direct browser-to-blob uploads for media collection ([34d57b3](https://github.com/A-Guy-educ/A-Guy/commit/34d57b3))
+* fix: Ensure config lazy loading for SystemParams and add courses link ([d8f8e74](https://github.com/A-Guy-educ/A-Guy/commit/d8f8e74))
+* fix: Exclude .next from TypeScript to avoid generated type errors ([2e1cba5](https://github.com/A-Guy-educ/A-Guy/commit/2e1cba5))
+* fix: Filter CI status to only real CI checks, ignore Cody pipeline runs ([dabfd93](https://github.com/A-Guy-educ/A-Guy/commit/dabfd93))
+* fix: Fix 12 config test failures — hook bugs and test assertions ([e4a3deb](https://github.com/A-Guy-educ/A-Guy/commit/e4a3deb))
+* fix: Fix anonymous People profiles and add login_modal_shown event ([25ec82a](https://github.com/A-Guy-educ/A-Guy/commit/25ec82a))
+* fix: Fix config test failures — value validation and shared DB isolation ([063475d](https://github.com/A-Guy-educ/A-Guy/commit/063475d))
+* fix: Fix remaining test failures with env vars ([dc4442e](https://github.com/A-Guy-educ/A-Guy/commit/dc4442e))
+* fix: Footer single row, CourseTabs not sticky, conversation grid query ([ada7631](https://github.com/A-Guy-educ/A-Guy/commit/ada7631))
+* fix: Force @vercel/blob 2.0.0 to fix server-side upload header ([a55ba1c](https://github.com/A-Guy-educ/A-Guy/commit/a55ba1c))
+* fix: Format bug-exposure test file ([971dfe0](https://github.com/A-Guy-educ/A-Guy/commit/971dfe0))
+* fix: Format status.json for CI ([e037f2b](https://github.com/A-Guy-educ/A-Guy/commit/e037f2b))
+* fix: guard against undefined subQuestions in autoAssignDiagrams ([a3c7e1a](https://github.com/A-Guy-educ/A-Guy/commit/a3c7e1a))
+* fix: guard against undefined subQuestions in multiPartToPreviewDraft and multiPartToExerciseContent ([8b41864](https://github.com/A-Guy-educ/A-Guy/commit/8b41864))
+* fix: Handle optional exercise title in ExercisesPager ([0f621ec](https://github.com/A-Guy-educ/A-Guy/commit/0f621ec))
+* fix: Harden health endpoint and optimize hooks ([97d7796](https://github.com/A-Guy-educ/A-Guy/commit/97d7796))
+* fix: improve diagram classification in V3 converter prompt and add admin UI controls ([706aa02](https://github.com/A-Guy-educ/A-Guy/commit/706aa02))
+* fix: improve plan-review implementation with feedback preservation ([3b66770](https://github.com/A-Guy-educ/A-Guy/commit/3b66770))
+* fix: Make cody tests work in CI environment ([8c10bb7](https://github.com/A-Guy-educ/A-Guy/commit/8c10bb7))
+* fix: Move server-init import to route files instead of system-params ([3d1fbab](https://github.com/A-Guy-educ/A-Guy/commit/3d1fbab))
+* fix: New Question creates unique conversation and center footer ([26764aa](https://github.com/A-Guy-educ/A-Guy/commit/26764aa))
+* fix: Pass gated timing props in lesson page Case 2 render path ([b64198d](https://github.com/A-Guy-educ/A-Guy/commit/b64198d))
+* fix: Pass payload to getGuestSessionByToken in persist endpoint ([a0baa3a](https://github.com/A-Guy-educ/A-Guy/commit/a0baa3a))
+* fix: Persist ask conversations by updating URL with conversationId ([4238e42](https://github.com/A-Guy-educ/A-Guy/commit/4238e42))
+* fix: Prevent infinite loop and un-completing completed days ([173692d](https://github.com/A-Guy-educ/A-Guy/commit/173692d))
+* fix: Race condition in concurrent config lazy loading ([9e16e14](https://github.com/A-Guy-educ/A-Guy/commit/9e16e14))
+* fix: Re-run stages that were interrupted (running state) ([17ad977](https://github.com/A-Guy-educ/A-Guy/commit/17ad977))
+* fix: Read from environment variables in parseCliArgs ([7722672](https://github.com/A-Guy-educ/A-Guy/commit/7722672))
+* fix: Remove @cody trigger from gate approval comment ([382505a](https://github.com/A-Guy-educ/A-Guy/commit/382505a))
+* fix: Remove fake blob token from .env.test, skip blob plugin in tests ([f78098f](https://github.com/A-Guy-educ/A-Guy/commit/f78098f))
+* fix: Remove fake blob token, make blob plugin optional in tests ([2fe21b9](https://github.com/A-Guy-educ/A-Guy/commit/2fe21b9))
+* fix: Remove force-push from publish flow, use standard merge ([2a5d0a1](https://github.com/A-Guy-educ/A-Guy/commit/2a5d0a1))
+* fix: Remove rate limiting and @vercel/kv dependency ([917abf9](https://github.com/A-Guy-educ/A-Guy/commit/917abf9))
+* fix: Remove supervisor script to pass consolidation test ([bd0fed8](https://github.com/A-Guy-educ/A-Guy/commit/bd0fed8))
+* fix: remove tests for unimplemented CodyDashboard optimizations ([6e8c331](https://github.com/A-Guy-educ/A-Guy/commit/6e8c331))
+* fix: Remove unused variables (topicLabels, existingPlan) ([d331e8c](https://github.com/A-Guy-educ/A-Guy/commit/d331e8c))
+* fix: Remove unused variables for lint ([04bdb09](https://github.com/A-Guy-educ/A-Guy/commit/04bdb09))
+* fix: replace all any types with proper TypeScript types ([679ab40](https://github.com/A-Guy-educ/A-Guy/commit/679ab40))
+* fix: Replace foreignObject with absolute-positioned overlay ([af8c08e](https://github.com/A-Guy-educ/A-Guy/commit/af8c08e))
+* fix: Replace in-memory rate limiter with Redis-backed limiter for Vercel production ([f968224](https://github.com/A-Guy-educ/A-Guy/commit/f968224))
+* fix: Replace PAYLOAD_PUBLIC_SERVER_URL with NEXT_PUBLIC_SERVER_URL ([23a2c30](https://github.com/A-Guy-educ/A-Guy/commit/23a2c30))
+* fix: Resolve #629, #630, #631 — typo, eslint-disable, console.log cleanup ([746f51e](https://github.com/A-Guy-educ/A-Guy/commit/746f51e)), closes [#629](https://github.com/A-Guy-educ/A-Guy/issues/629) [#630](https://github.com/A-Guy-educ/A-Guy/issues/630) [#631](https://github.com/A-Guy-educ/A-Guy/issues/631) [#629](https://github.com/A-Guy-educ/A-Guy/issues/629) [#630](https://github.com/A-Guy-educ/A-Guy/issues/630) [#631](https://github.com/A-Guy-educ/A-Guy/issues/631)
+* fix: resolve 6 failing unit tests in scripted-stages ([445a79b](https://github.com/A-Guy-educ/A-Guy/commit/445a79b))
+* fix: resolve ESLint warning and improve commit message sanitization ([11ebf99](https://github.com/A-Guy-educ/A-Guy/commit/11ebf99))
+* fix: Resolve lesson 404 caused by depth reduction in security commit ([d926a12](https://github.com/A-Guy-educ/A-Guy/commit/d926a12))
+* fix: resolve lint warnings in route.ts, vercel-blob-adapter.ts, and hero components ([be0658e](https://github.com/A-Guy-educ/A-Guy/commit/be0658e))
+* fix: Resolve merge button always disabled due to GitHub blocked state ([7ccff80](https://github.com/A-Guy-educ/A-Guy/commit/7ccff80))
+* fix: Resolve merge button showing CI failed when CI is green ([e6928cc](https://github.com/A-Guy-educ/A-Guy/commit/e6928cc))
+* fix: Resolve merge conflict in .env.test — keep both additions ([c8bbdf3](https://github.com/A-Guy-educ/A-Guy/commit/c8bbdf3))
+* fix: Resolve typecheck errors after dev merge ([051f13e](https://github.com/A-Guy-educ/A-Guy/commit/051f13e))
+* fix: Resolve TypeScript and Prettier issues ([bd989d6](https://github.com/A-Guy-educ/A-Guy/commit/bd989d6))
+* fix: Resolve TypeScript error in config-manager test ([cbcea64](https://github.com/A-Guy-educ/A-Guy/commit/cbcea64))
+* fix: resolve TypeScript errors from lint fixes ([fc5d4cf](https://github.com/A-Guy-educ/A-Guy/commit/fc5d4cf))
+* fix: resolve TypeScript errors in guest-session.ts ([ee6dcf8](https://github.com/A-Guy-educ/A-Guy/commit/ee6dcf8))
+* fix: Retry on exit 0 without output file in agent-runner (#528) ([9a179b0](https://github.com/A-Guy-educ/A-Guy/commit/9a179b0)), closes [#528](https://github.com/A-Guy-educ/A-Guy/issues/528)
+* fix: Revert logical properties to fix RTL menu positioning ([351b36e](https://github.com/A-Guy-educ/A-Guy/commit/351b36e))
+* fix: security: content collections (courses, chapters, lessons) expose dra... - Closes #686 (#693) ([869c655](https://github.com/A-Guy-educ/A-Guy/commit/869c655)), closes [#686](https://github.com/A-Guy-educ/A-Guy/issues/686) [#693](https://github.com/A-Guy-educ/A-Guy/issues/693)
+* fix: Setup pnpm before checkout-task-branch step in orchestrate job ([e943fef](https://github.com/A-Guy-educ/A-Guy/commit/e943fef))
+* fix: Show gated warning banner at 10 seconds, not 50 ([b6564cd](https://github.com/A-Guy-educ/A-Guy/commit/b6564cd))
+* fix: Skip ESLint during next build to prevent Vercel OOM ([04da925](https://github.com/A-Guy-educ/A-Guy/commit/04da925))
+* fix: Skip husky scripts in parse job CI ([74e62fc](https://github.com/A-Guy-educ/A-Guy/commit/74e62fc))
+* fix: Skip media cleanup tests when Vercel Blob is not configured ([de45d44](https://github.com/A-Guy-educ/A-Guy/commit/de45d44))
+* fix: Supervisor test env awareness and autofix agent guardrails ([d052340](https://github.com/A-Guy-educ/A-Guy/commit/d052340))
+* fix: System stability improvements (P0 tasks + quick wins) ([2821b20](https://github.com/A-Guy-educ/A-Guy/commit/2821b20))
+* fix: Trim whitespace from slug fields to prevent 404s ([ca5a9a9](https://github.com/A-Guy-educ/A-Guy/commit/ca5a9a9))
+* fix: UI adjustments and conversation creation with contextKeyOverride ([f57fb62](https://github.com/A-Guy-educ/A-Guy/commit/f57fb62))
+* fix: Update bug report dialog tests to match simplified component ([45a823d](https://github.com/A-Guy-educ/A-Guy/commit/45a823d))
+* fix: Update config-resolver test to match gemini-3.1-pro model change ([a14711a](https://github.com/A-Guy-educ/A-Guy/commit/a14711a))
+* fix: Update E2E tests to handle missing data gracefully ([9ffe708](https://github.com/A-Guy-educ/A-Guy/commit/9ffe708))
+* fix: Update integration test model expectations to gemini-3.1-pro ([e1a25b3](https://github.com/A-Guy-educ/A-Guy/commit/e1a25b3))
+* fix: Update parse-safety tests to use TypeScript script ([4b4eafa](https://github.com/A-Guy-educ/A-Guy/commit/4b4eafa))
+* fix: Update pnpm-lock and remove broken tests ([7fd1968](https://github.com/A-Guy-educ/A-Guy/commit/7fd1968))
+* fix: update pnpm-lock.yaml to sync with package.json ([7a95cfb](https://github.com/A-Guy-educ/A-Guy/commit/7a95cfb))
+* fix: Update remaining test for CLI args precedence ([f905f57](https://github.com/A-Guy-educ/A-Guy/commit/f905f57))
+* fix: Update runner-backend tests for stdio change ([bb3fa10](https://github.com/A-Guy-educ/A-Guy/commit/bb3fa10))
+* fix: Update runner-backend tests for stdio change ([9d129cc](https://github.com/A-Guy-educ/A-Guy/commit/9d129cc))
+* fix: Update runner-backend tests to match implementation ([d25f2d3](https://github.com/A-Guy-educ/A-Guy/commit/d25f2d3))
+* fix: Update system event count in contracts test (20 → 23) ([5e313f0](https://github.com/A-Guy-educ/A-Guy/commit/5e313f0))
+* fix: Update tests to reflect CLI args take precedence over env vars ([d8b599c](https://github.com/A-Guy-educ/A-Guy/commit/d8b599c))
+* fix: Update unit tests for fetch-based PR creation and agent-runner constants ([6ba7422](https://github.com/A-Guy-educ/A-Guy/commit/6ba7422))
+* fix: Update unit tests for fetch-based PR creation and agent-runner constants ([f8da9c6](https://github.com/A-Guy-educ/A-Guy/commit/f8da9c6))
+* fix: update unit tests to match current implementation ([4133cf3](https://github.com/A-Guy-educ/A-Guy/commit/4133cf3))
+* fix: Use ESM import.meta.url instead of require.main ([ae9994e](https://github.com/A-Guy-educ/A-Guy/commit/ae9994e))
+* fix: Use GH_PAT for Publish Dev to Main workflow ([d7f29ea](https://github.com/A-Guy-educ/A-Guy/commit/d7f29ea))
+* fix: Use GitHub mergeable_state for reliable merge button status ([e2999cb](https://github.com/A-Guy-educ/A-Guy/commit/e2999cb))
+* fix: Use GitHub noreply email for Cody pipeline commits ([5f0c5d3](https://github.com/A-Guy-educ/A-Guy/commit/5f0c5d3))
+* fix: use GITHUB_TOKEN instead of missing RELEASE_TOKEN secret ([c4ae06d](https://github.com/A-Guy-educ/A-Guy/commit/c4ae06d))
+* fix: Use rerun mode in rebuildPipelineAfterTaskify ([0b81220](https://github.com/A-Guy-educ/A-Guy/commit/0b81220))
+* fix: Wire chat file upload to direct-to-blob path ([e6bf596](https://github.com/A-Guy-educ/A-Guy/commit/e6bf596))
+* fix(260221-auto-56): Description ([0985e6b](https://github.com/A-Guy-educ/A-Guy/commit/0985e6b))
+* fix(260221-auto-56): Description ([f1ab812](https://github.com/A-Guy-educ/A-Guy/commit/f1ab812))
+* fix(260222-auto-01): Description ([32a4c1f](https://github.com/A-Guy-educ/A-Guy/commit/32a4c1f))
+* fix(260222-auto-02): Description ([9403a58](https://github.com/A-Guy-educ/A-Guy/commit/9403a58))
+* fix(260222-auto-52): Description ([835368e](https://github.com/A-Guy-educ/A-Guy/commit/835368e))
+* fix(260223-auto-29): Description ([e555e65](https://github.com/A-Guy-educ/A-Guy/commit/e555e65))
+* fix(260223-auto-87): [x] Fix VideoMedia event listener memory leak ([6a74ae4](https://github.com/A-Guy-educ/A-Guy/commit/6a74ae4))
+* fix(260224-auto-15): Issue Title ([4744b64](https://github.com/A-Guy-educ/A-Guy/commit/4744b64))
+* fix(260224-auto-40): Issue Title ([be5b664](https://github.com/A-Guy-educ/A-Guy/commit/be5b664))
+* fix(260224-auto-59): Issue Title ([5489ba0](https://github.com/A-Guy-educ/A-Guy/commit/5489ba0))
+* fix(260225-auto-90): Issue Title ([7670bb1](https://github.com/A-Guy-educ/A-Guy/commit/7670bb1))
+* fix(260226-add-zod-validation): Issue Title ([c879e93](https://github.com/A-Guy-educ/A-Guy/commit/c879e93))
+* fix(260226-fix-admin-demotion-hook): Issue Title ([63d3da1](https://github.com/A-Guy-educ/A-Guy/commit/63d3da1))
+* fix(260226-fix-guest-session-as-any): Issue Title ([042990f](https://github.com/A-Guy-educ/A-Guy/commit/042990f))
+* fix(260226-fix-react-keys): Issue Title ([0968da3](https://github.com/A-Guy-educ/A-Guy/commit/0968da3))
+* fix(260226-fix-stream-message-callback): Issue Title ([4f4ff22](https://github.com/A-Guy-educ/A-Guy/commit/4f4ff22))
+* fix(260228-auto-25): Issue Title ([2eb13de](https://github.com/A-Guy-educ/A-Guy/commit/2eb13de))
+* fix(260228-auto-25): Issue Title ([c2a759f](https://github.com/A-Guy-educ/A-Guy/commit/c2a759f))
+* fix(260228-auto-35): Issue Title ([99dd94a](https://github.com/A-Guy-educ/A-Guy/commit/99dd94a))
+* fix(260228-auto-42): Issue Title ([4d0b9ca](https://github.com/A-Guy-educ/A-Guy/commit/4d0b9ca))
+* fix(260228-auto-74): Issue Title ([09cf03b](https://github.com/A-Guy-educ/A-Guy/commit/09cf03b))
+* fix(260228-auto-98): Issue Title ([a2c94f2](https://github.com/A-Guy-educ/A-Guy/commit/a2c94f2))
+* fix(260305-auto-782): Issue Title ([90d8a9a](https://github.com/A-Guy-educ/A-Guy/commit/90d8a9a))
+* fix(260305-auto-947): Issue Title ([4da8554](https://github.com/A-Guy-educ/A-Guy/commit/4da8554))
+* fix(260306-auto-487): Issue Title ([e16423f](https://github.com/A-Guy-educ/A-Guy/commit/e16423f))
+* fix(admin): Rename exercise help labels to match UI concepts ([5822299](https://github.com/A-Guy-educ/A-Guy/commit/5822299))
+* fix(admin): Replace HtmlBlock preview-only field with QuillField editor ([0ff925b](https://github.com/A-Guy-educ/A-Guy/commit/0ff925b))
+* fix(api): Simplify copilotkit route to fix build ([0b88c55](https://github.com/A-Guy-educ/A-Guy/commit/0b88c55))
+* fix(blob): disable clientUploads to fix content-length header error ([f3ba9d2](https://github.com/A-Guy-educ/A-Guy/commit/f3ba9d2))
+* fix(blob): disable clientUploads to fix content-length header error ([24aded6](https://github.com/A-Guy-educ/A-Guy/commit/24aded6))
+* fix(build): Change adminTitle backfill log level to warn ([7427681](https://github.com/A-Guy-educ/A-Guy/commit/7427681))
+* fix(chapters): Render chapter description as HTML instead of plain text ([eca0ed5](https://github.com/A-Guy-educ/A-Guy/commit/eca0ed5))
+* fix(Chat): Allow admin chat to create content directly without tools ([5265e3a](https://github.com/A-Guy-educ/A-Guy/commit/5265e3a))
+* fix(ci): Add BLOB_READ_WRITE_TOKEN to fast-gate and increase parse-safety test timeout ([8414c55](https://github.com/A-Guy-educ/A-Guy/commit/8414c55))
+* fix(ci): Add build success condition to e2e tests job ([940430b](https://github.com/A-Guy-educ/A-Guy/commit/940430b))
+* fix(ci): Add build success condition to e2e tests job ([9b0f10f](https://github.com/A-Guy-educ/A-Guy/commit/9b0f10f))
+* fix(ci): Add detailed debugging to build step ([b5fd3bf](https://github.com/A-Guy-educ/A-Guy/commit/b5fd3bf))
+* fix(ci): Add detailed debugging to build step ([99322ad](https://github.com/A-Guy-educ/A-Guy/commit/99322ad))
+* fix(ci): Add explicit token to checkout actions for private repo ([10a40ca](https://github.com/A-Guy-educ/A-Guy/commit/10a40ca))
+* fix(ci): Add explicit token to checkout actions for private repo ([74dc69b](https://github.com/A-Guy-educ/A-Guy/commit/74dc69b))
+* fix(ci): Add missing pnpm version to Inspector workflow ([59cfb4c](https://github.com/A-Guy-educ/A-Guy/commit/59cfb4c))
+* fix(ci): Find PR by commit SHA in preview comment workflow ([753ba23](https://github.com/A-Guy-educ/A-Guy/commit/753ba23))
+* fix(ci): Fix publish issue not closing and release workflow failing ([29202a2](https://github.com/A-Guy-educ/A-Guy/commit/29202a2))
+* fix(ci): Fix typo in cody workflow YAML ([632d1f3](https://github.com/A-Guy-educ/A-Guy/commit/632d1f3))
+* fix(ci): Improve artifact upload and download robustness ([8812bf1](https://github.com/A-Guy-educ/A-Guy/commit/8812bf1))
+* fix(ci): Improve artifact upload and download robustness ([7e5d0df](https://github.com/A-Guy-educ/A-Guy/commit/7e5d0df))
+* fix(ci): improve E2E test reliability and performance ([090d5c3](https://github.com/A-Guy-educ/A-Guy/commit/090d5c3)), closes [#594](https://github.com/A-Guy-educ/A-Guy/issues/594)
+* fix(ci): Include hidden files in artifact upload ([3c50603](https://github.com/A-Guy-educ/A-Guy/commit/3c50603))
+* fix(ci): Increase E2E timeout to 30min and enable parallel workers ([378750d](https://github.com/A-Guy-educ/A-Guy/commit/378750d))
+* fix(ci): Re-add MongoDB service to build job ([cc1693c](https://github.com/A-Guy-educ/A-Guy/commit/cc1693c))
+* fix(ci): Remove MongoDB from build job and add debugging ([0b01798](https://github.com/A-Guy-educ/A-Guy/commit/0b01798))
+* fix(ci): Remove MongoDB from build job and add debugging ([b14fd90](https://github.com/A-Guy-educ/A-Guy/commit/b14fd90))
+* fix(ci): Use absolute path for artifact upload ([95370f1](https://github.com/A-Guy-educ/A-Guy/commit/95370f1))
+* fix(ci): Use absolute path for artifact upload ([17fe7a8](https://github.com/A-Guy-educ/A-Guy/commit/17fe7a8))
+* fix(ci): Use github.token for inspector with GH_PAT for workflow dispatch ([a0c98e5](https://github.com/A-Guy-educ/A-Guy/commit/a0c98e5))
+* fix(ci): Use hardcoded node version in inspector workflow ([0ac2ad1](https://github.com/A-Guy-educ/A-Guy/commit/0ac2ad1))
+* fix(cody-chat): Disable MCP tools due to connection issues ([d7cf644](https://github.com/A-Guy-educ/A-Guy/commit/d7cf644))
+* fix(cody-chat): Fix frontend stream parsing to skip colon after prefix ([5e2ee95](https://github.com/A-Guy-educ/A-Guy/commit/5e2ee95))
+* fix(cody-chat): Use correct env var and gemini-3.1-pro-preview model ([d59be9f](https://github.com/A-Guy-educ/A-Guy/commit/d59be9f))
+* fix(cody-chat): Use GEMINI_API_KEY and gemini-3.1-pro-preview model ([d128964](https://github.com/A-Guy-educ/A-Guy/commit/d128964))
+* fix(cody-pipeline): post comment to issue after PR creation ([b71f186](https://github.com/A-Guy-educ/A-Guy/commit/b71f186))
+* fix(cody-pipeline): remove newlines from PR URL before posting comment ([be3da0b](https://github.com/A-Guy-educ/A-Guy/commit/be3da0b))
+* fix(cody-pipeline): trim PR URL before posting comment ([c79e4e2](https://github.com/A-Guy-educ/A-Guy/commit/c79e4e2))
+* fix(cody.yml): add checkout step to notify-parse-error job ([f6e4cb6](https://github.com/A-Guy-educ/A-Guy/commit/f6e4cb6))
+* fix(cody): --fresh flag closes old PR before cleanup, removes destructive branch reset from PR stage ([5619688](https://github.com/A-Guy-educ/A-Guy/commit/5619688))
+* fix(cody): --fresh flag now skips task ID re-discovery in entry.ts ([ba9b2ef](https://github.com/A-Guy-educ/A-Guy/commit/ba9b2ef))
+* fix(cody): @cody alone now defaults to full mode ([8904e89](https://github.com/A-Guy-educ/A-Guy/commit/8904e89))
+* fix(cody): 3-layer fix for plan-gap agent not writing plan-gap.md ([313cdce](https://github.com/A-Guy-educ/A-Guy/commit/313cdce))
+* fix(cody): 7 bug fixes in CI pipeline ([2ecba2a](https://github.com/A-Guy-educ/A-Guy/commit/2ecba2a))
+* fix(cody): Accept both @cody and /cody as workflow trigger patterns ([bfaf1ab](https://github.com/A-Guy-educ/A-Guy/commit/bfaf1ab))
+* fix(cody): Actually apply review fixes — remove .strict(), use flattenPipelineOrder ([86d5550](https://github.com/A-Guy-educ/A-Guy/commit/86d5550))
+* fix(cody): Add --fresh flag detection in parse-inputs ([10975a0](https://github.com/A-Guy-educ/A-Guy/commit/10975a0))
+* fix(cody): Add --github-hosted flag support ([641983b](https://github.com/A-Guy-educ/A-Guy/commit/641983b))
+* fix(cody): Add --help flag handling to entry.ts ([6aa47d1](https://github.com/A-Guy-educ/A-Guy/commit/6aa47d1))
+* fix(cody): add Anthropic API key and fix commit message format ([7a09f3c](https://github.com/A-Guy-educ/A-Guy/commit/7a09f3c))
+* fix(cody): Add architecture docs to agents, fix hydration mismatch ([326216a](https://github.com/A-Guy-educ/A-Guy/commit/326216a))
+* fix(cody): Add auditor and apply-audit to lightweight pipeline ([aa53039](https://github.com/A-Guy-educ/A-Guy/commit/aa53039)), closes [#515](https://github.com/A-Guy-educ/A-Guy/issues/515) [#511](https://github.com/A-Guy-educ/A-Guy/issues/511) [#510](https://github.com/A-Guy-educ/A-Guy/issues/510) [#508](https://github.com/A-Guy-educ/A-Guy/issues/508) [#512](https://github.com/A-Guy-educ/A-Guy/issues/512)
+* fix(cody): Add BLOB_READ_WRITE_TOKEN to cody.yml verify stage ([a834cca](https://github.com/A-Guy-educ/A-Guy/commit/a834cca))
+* fix(cody): Add complexity skip chain integration tests and M3 override fix ([c1656a6](https://github.com/A-Guy-educ/A-Guy/commit/c1656a6))
+* fix(cody): Add crash recovery for stale status.json state ([b21a68f](https://github.com/A-Guy-educ/A-Guy/commit/b21a68f))
+* fix(cody): Add DATABASE_URL to cody.yml verify stage ([1adf3f9](https://github.com/A-Guy-educ/A-Guy/commit/1adf3f9))
+* fix(cody): Add Edit tool instructions ([bf540fe](https://github.com/A-Guy-educ/A-Guy/commit/bf540fe))
+* fix(cody): Add Edit tool instructions ([d335ad8](https://github.com/A-Guy-educ/A-Guy/commit/d335ad8))
+* fix(cody): add git identity and create clarified.md automatically ([1326536](https://github.com/A-Guy-educ/A-Guy/commit/1326536))
+* fix(cody): Add instruction to update existing tests that verify buggy behavior ([d4dc3e4](https://github.com/A-Guy-educ/A-Guy/commit/d4dc3e4))
+* fix(cody): Add integration tests and fix double-write redundancy ([2a2fef5](https://github.com/A-Guy-educ/A-Guy/commit/2a2fef5))
+* fix(cody): Add integration tests and fix double-write redundancy ([bfcd251](https://github.com/A-Guy-educ/A-Guy/commit/bfcd251))
+* fix(cody): Add light mode styles to TaskList for dark/light mode support ([f660e4a](https://github.com/A-Guy-educ/A-Guy/commit/f660e4a))
+* fix(cody): Add MINIMAX_API_KEY to smoke test in CI ([cecc69d](https://github.com/A-Guy-educ/A-Guy/commit/cecc69d))
+* fix(cody): add missing pipeline agents and explicit output filename in prompts ([14a52d4](https://github.com/A-Guy-educ/A-Guy/commit/14a52d4))
+* fix(cody): add missing pipeline agents to opencode.json and explicit output filename in prompts ([62a3db3](https://github.com/A-Guy-educ/A-Guy/commit/62a3db3))
+* fix(cody): add missing pipeline agents to opencode.json and fix task ID discovery ([2d3c3c2](https://github.com/A-Guy-educ/A-Guy/commit/2d3c3c2))
+* fix(cody): add plan-review context, dynamic default branch, CI integration tests ([55574b8](https://github.com/A-Guy-educ/A-Guy/commit/55574b8))
+* fix(cody): Add resolveControlMode to check-gate test mock and update gate tests ([bbf9abb](https://github.com/A-Guy-educ/A-Guy/commit/bbf9abb))
+* fix(cody): Add sessionId to AgentRunResult type ([9317406](https://github.com/A-Guy-educ/A-Guy/commit/9317406))
+* fix(cody): Add stuck agent detection to prevent infinite polling ([adbdf4f](https://github.com/A-Guy-educ/A-Guy/commit/adbdf4f))
+* fix(cody): Add trivial fix promotion to skip build agent ([afbf9c4](https://github.com/A-Guy-educ/A-Guy/commit/afbf9c4))
+* fix(cody): additional pipeline improvements ([32515b4](https://github.com/A-Guy-educ/A-Guy/commit/32515b4))
+* fix(cody): Address code review findings for feedback loop ([689edb3](https://github.com/A-Guy-educ/A-Guy/commit/689edb3))
+* fix(cody): Apply 12 code review fixes and update editComment tests ([57d607d](https://github.com/A-Guy-educ/A-Guy/commit/57d607d))
+* fix(cody): Apply Prettier formatting fixes to Cody dashboard components ([109d42f](https://github.com/A-Guy-educ/A-Guy/commit/109d42f))
+* fix(cody): Apply Prettier formatting fixes to TaskList ([4d6f183](https://github.com/A-Guy-educ/A-Guy/commit/4d6f183))
+* fix(cody): Apply Prettier formatting to github-client.ts ([c7640c9](https://github.com/A-Guy-educ/A-Guy/commit/c7640c9))
+* fix(cody): Change build agent from subagent to primary mode ([e034bdd](https://github.com/A-Guy-educ/A-Guy/commit/e034bdd))
+* fix(cody): Change build agent mode from subagent to agent ([804675e](https://github.com/A-Guy-educ/A-Guy/commit/804675e))
+* fix(cody): Change build agent mode from subagent to agent ([f5850ab](https://github.com/A-Guy-educ/A-Guy/commit/f5850ab))
+* fix(cody): Change build agent mode from subagent to primary ([668db01](https://github.com/A-Guy-educ/A-Guy/commit/668db01))
+* fix(cody): Change stdin from pipe to ignore to prevent opencode blocking ([880b0ec](https://github.com/A-Guy-educ/A-Guy/commit/880b0ec))
+* fix(cody): Check paused stage before falling back to full pipeline ([f02ddf2](https://github.com/A-Guy-educ/A-Guy/commit/f02ddf2))
+* fix(cody): Clarify build stage is implementation not documentation ([ae701b2](https://github.com/A-Guy-educ/A-Guy/commit/ae701b2)), closes [#658](https://github.com/A-Guy-educ/A-Guy/issues/658)
+* fix(cody): Clean up noisy CI run logs — human-readable format, quiet stderr, grouped output ([efee707](https://github.com/A-Guy-educ/A-Guy/commit/efee707))
+* fix(cody): Clean up unused imports and fix React hooks rules ([b00843e](https://github.com/A-Guy-educ/A-Guy/commit/b00843e))
+* fix(cody): Clear cache after assign/unassign so assignee shows immediately in task detail ([6fcfd1f](https://github.com/A-Guy-educ/A-Guy/commit/6fcfd1f))
+* fix(cody): Clear server-side cache after close/reopen/reset so dashboard updates immediately ([0b501cc](https://github.com/A-Guy-educ/A-Guy/commit/0b501cc))
+* fix(cody): CLI args take precedence over env vars in parseCliArgs ([a2142ae](https://github.com/A-Guy-educ/A-Guy/commit/a2142ae))
+* fix(cody): Commit task files after apply-audit stage ([39b12bd](https://github.com/A-Guy-educ/A-Guy/commit/39b12bd))
+* fix(cody): Complete state machine rewrite ([13d3ddf](https://github.com/A-Guy-educ/A-Guy/commit/13d3ddf))
+* fix(cody): configure git identity in checkout script for CI ([c365b91](https://github.com/A-Guy-educ/A-Guy/commit/c365b91))
+* fix(cody): Correct runs-on value in workflow ([b4aa1c4](https://github.com/A-Guy-educ/A-Guy/commit/b4aa1c4)), closes [#673](https://github.com/A-Guy-educ/A-Guy/issues/673)
+* fix(cody): Create promoted stub files when input_quality.skip_stages is set ([839c1da](https://github.com/A-Guy-educ/A-Guy/commit/839c1da))
+* fix(cody): Create PRs as ready for review, not drafts ([e67156f](https://github.com/A-Guy-educ/A-Guy/commit/e67156f))
+* fix(cody): Critical bugs in state machine rewrite ([bb787ea](https://github.com/A-Guy-educ/A-Guy/commit/bb787ea))
+* fix(cody): Dashboard preview URLs now show correct Vercel deployment ([dcd6b23](https://github.com/A-Guy-educ/A-Guy/commit/dcd6b23))
+* fix(cody): Detect @cody as approval command in parse stage ([828f691](https://github.com/A-Guy-educ/A-Guy/commit/828f691))
+* fix(cody): Detect /cody approve comments in gate approval check ([2c44beb](https://github.com/A-Guy-educ/A-Guy/commit/2c44beb))
+* fix(cody): Detect and fail when build agent produces no source file changes ([dd6fc3d](https://github.com/A-Guy-educ/A-Guy/commit/dd6fc3d)), closes [#666](https://github.com/A-Guy-educ/A-Guy/issues/666)
+* fix(cody): Don't add task prefix to bug report titles ([e299d51](https://github.com/A-Guy-educ/A-Guy/commit/e299d51))
+* fix(cody): Don't switch to full mode after gate approval - continue rerun pipeline ([ea2b55a](https://github.com/A-Guy-educ/A-Guy/commit/ea2b55a))
+* fix(cody): eliminate shell injection vectors via execSync→execFileSync migration (round 3) ([af28b81](https://github.com/A-Guy-educ/A-Guy/commit/af28b81))
+* fix(cody): embed issue number in branch names and add anti-weakening agent rules ([1f53ba0](https://github.com/A-Guy-educ/A-Guy/commit/1f53ba0))
+* fix(cody): Enable merge button after CI success and close PR+branch on issue close ([2a8f457](https://github.com/A-Guy-educ/A-Guy/commit/2a8f457))
+* fix(cody): Enforce mandatory reproduction tests for bug fix tasks ([55c872a](https://github.com/A-Guy-educ/A-Guy/commit/55c872a))
+* fix(cody): Explicitly close stdin after spawning opencode ([8bd0687](https://github.com/A-Guy-educ/A-Guy/commit/8bd0687))
+* fix(cody): Filter pull requests from GitHub issues API response ([7b75bfb](https://github.com/A-Guy-educ/A-Guy/commit/7b75bfb))
+* fix(cody): Fix --fresh flag detection in parse-inputs ([72c84ac](https://github.com/A-Guy-educ/A-Guy/commit/72c84ac))
+* fix(cody): fix 12 critical and high-severity pipeline bugs ([5eabdce](https://github.com/A-Guy-educ/A-Guy/commit/5eabdce)), closes [hi#severity](https://github.com/hi/issues/severity)
+* fix(cody): fix 12 more pipeline bugs (round 2) — memory leaks, injection, type safety ([3a6869a](https://github.com/A-Guy-educ/A-Guy/commit/3a6869a))
+* fix(cody): Fix 5 bugs in review-fix-pipeline plan ([251afd7](https://github.com/A-Guy-educ/A-Guy/commit/251afd7))
+* fix(cody): fix 6 bugs — POSIX grep, stale exports, atomic writes, targeted staging, dirty state, pre ([5cf0510](https://github.com/A-Guy-educ/A-Guy/commit/5cf0510))
+* fix(cody): Fix agent-runner to handle non-.md output files ([9b822b3](https://github.com/A-Guy-educ/A-Guy/commit/9b822b3))
+* fix(cody): Fix agent-runner to handle non-.md output files ([1e012b9](https://github.com/A-Guy-educ/A-Guy/commit/1e012b9))
+* fix(cody): Fix branch checkout missing in CI mode causing push to protected dev ([d29f088](https://github.com/A-Guy-educ/A-Guy/commit/d29f088))
+* fix(cody): Fix branch checkout to match descriptive branch names ([889d8bf](https://github.com/A-Guy-educ/A-Guy/commit/889d8bf))
+* fix(cody): Fix branch checkout to match issue number ([dfe431c](https://github.com/A-Guy-educ/A-Guy/commit/dfe431c))
+* fix(cody): Fix CI test failures caused by env var leak and timeout ([f224b5c](https://github.com/A-Guy-educ/A-Guy/commit/f224b5c))
+* fix(cody): Fix critical and high severity pipeline bugs ([76cd670](https://github.com/A-Guy-educ/A-Guy/commit/76cd670))
+* fix(cody): Fix error message to say @cody instead of /cody ([40b5b00](https://github.com/A-Guy-educ/A-Guy/commit/40b5b00))
+* fix(cody): fix findRemoteBranch to check all prefixes before matching ([a7af4ba](https://github.com/A-Guy-educ/A-Guy/commit/a7af4ba))
+* fix(cody): Fix gate approval in CI — read COMMENT_BODY env and resume full pipeline for spec gates ([4633867](https://github.com/A-Guy-educ/A-Guy/commit/4633867))
+* fix(cody): Fix merge button bugs — cancelled CI, auth errors, label mismatch, merge method ([eda4a14](https://github.com/A-Guy-educ/A-Guy/commit/eda4a14))
+* fix(cody): Fix nine pipeline bugs ([0c06d91](https://github.com/A-Guy-educ/A-Guy/commit/0c06d91))
+* fix(cody): Fix OUTPUT_VALID never being set to true for comments ([f58b1c9](https://github.com/A-Guy-educ/A-Guy/commit/f58b1c9))
+* fix(cody): Fix parse-inputs.sh validation bugs ([7532a49](https://github.com/A-Guy-educ/A-Guy/commit/7532a49))
+* fix(cody): Fix rerun pipeline to include spec stages ([cf74584](https://github.com/A-Guy-educ/A-Guy/commit/cf74584))
+* fix(cody): Fix sed regex to properly parse @cody commands ([8bafecf](https://github.com/A-Guy-educ/A-Guy/commit/8bafecf))
+* fix(cody): Fix site URLs and rewrite publish endpoint to use GitHub API ([b856e17](https://github.com/A-Guy-educ/A-Guy/commit/b856e17))
+* fix(cody): Fix state mutation bugs and signal handler timeouts ([5bfaf81](https://github.com/A-Guy-educ/A-Guy/commit/5bfaf81))
+* fix(cody): Fix syntax error in runner-backend.ts ([1dbe76d](https://github.com/A-Guy-educ/A-Guy/commit/1dbe76d))
+* fix(cody): Fix task-id discovery blocked by premature empty default ([6c35afa](https://github.com/A-Guy-educ/A-Guy/commit/6c35afa))
+* fix(cody): Handle @cody prefix for gate approval ([e5a9f9c](https://github.com/A-Guy-educ/A-Guy/commit/e5a9f9c))
+* fix(cody): Handle git push rejection with rebase ([43bd306](https://github.com/A-Guy-educ/A-Guy/commit/43bd306))
+* fix(cody): Handle post-action errors and improve rerun validation ([7f1278b](https://github.com/A-Guy-educ/A-Guy/commit/7f1278b))
+* fix(cody): Harden pipeline with P0/P1 fixes and prevent build work loss ([5715402](https://github.com/A-Guy-educ/A-Guy/commit/5715402))
+* fix(cody): improve auditor reliability - add retries, prompt reinforcement, and fallback ([37d0559](https://github.com/A-Guy-educ/A-Guy/commit/37d0559))
+* fix(cody): Improve gate comment with scope display and assumptions ([cb031ac](https://github.com/A-Guy-educ/A-Guy/commit/cb031ac))
+* fix(cody): Improve pipeline reliability ([56e43e6](https://github.com/A-Guy-educ/A-Guy/commit/56e43e6))
+* fix(cody): Improve pipeline reliability (BUG-F) ([81152d1](https://github.com/A-Guy-educ/A-Guy/commit/81152d1))
+* fix(cody): Improve pipeline reliability with 4 critical fixes ([c869d10](https://github.com/A-Guy-educ/A-Guy/commit/c869d10))
+* fix(cody): Improve PR title generation from issue title ([ce63052](https://github.com/A-Guy-educ/A-Guy/commit/ce63052))
+* fix(cody): Improve publish flow with constants and validation ([51c4e53](https://github.com/A-Guy-educ/A-Guy/commit/51c4e53))
+* fix(cody): Improve task detail header and sidebar layout ([e6fc139](https://github.com/A-Guy-educ/A-Guy/commit/e6fc139))
+* fix(cody): Improve TaskList mobile responsiveness ([abbb3ae](https://github.com/A-Guy-educ/A-Guy/commit/abbb3ae))
+* fix(cody): Improve timeout detection and error reporting ([aafcfad](https://github.com/A-Guy-educ/A-Guy/commit/aafcfad))
+* fix(cody): Include issue number in PR title for GitHub auto-linking ([00f9c08](https://github.com/A-Guy-educ/A-Guy/commit/00f9c08))
+* fix(cody): Include run URL in all status comments and fix LLM keys for self-hosted runners ([1049529](https://github.com/A-Guy-educ/A-Guy/commit/1049529))
+* fix(cody): Increase changes tab height in task preview ([416e31d](https://github.com/A-Guy-educ/A-Guy/commit/416e31d))
+* fix(cody): Install @octokit/core peer dependency ([ac16714](https://github.com/A-Guy-educ/A-Guy/commit/ac16714))
+* fix(cody): Isolate CLI tests from CI env vars & fix gh pr list flag ([99ff7c0](https://github.com/A-Guy-educ/A-Guy/commit/99ff7c0))
+* fix(cody): Map cody:done to review column so merge button shows ([7553036](https://github.com/A-Guy-educ/A-Guy/commit/7553036))
+* fix(cody): Match exact issue number when finding branch ([015132a](https://github.com/A-Guy-educ/A-Guy/commit/015132a))
+* fix(cody): merge duplicate comments into single task marker ([6f1f2e3](https://github.com/A-Guy-educ/A-Guy/commit/6f1f2e3))
+* fix(cody): Multiple pipeline reliability improvements ([f0ae39a](https://github.com/A-Guy-educ/A-Guy/commit/f0ae39a))
+* fix(cody): Only read COMMENT_BODY env for comment triggers ([0ea7caa](https://github.com/A-Guy-educ/A-Guy/commit/0ea7caa))
+* fix(cody): Parse --from and --feedback flags in comment commands ([29e43b5](https://github.com/A-Guy-educ/A-Guy/commit/29e43b5))
+* fix(cody): Pass FRESH env var to checkout-task-branch.ts ([959b75e](https://github.com/A-Guy-educ/A-Guy/commit/959b75e))
+* fix(cody): Pass maxRetries from agent-handler to agent-runner ([9bc81ec](https://github.com/A-Guy-educ/A-Guy/commit/9bc81ec))
+* fix(cody): Pass maxRetries from agent-handler to agent-runner ([f12c9fb](https://github.com/A-Guy-educ/A-Guy/commit/f12c9fb))
+* fix(cody): patch 5 bugs in pipeline ([c6e1609](https://github.com/A-Guy-educ/A-Guy/commit/c6e1609))
+* fix(cody): pipeline improvements - remove model selection, fix staging, add safety ([83734a2](https://github.com/A-Guy-educ/A-Guy/commit/83734a2))
+* fix(cody): Pipeline rebuild now survives restarts — full mode includes all stages ([5c8bde2](https://github.com/A-Guy-educ/A-Guy/commit/5c8bde2))
+* fix(cody): Post run URL at start of pipeline ([0af14a9](https://github.com/A-Guy-educ/A-Guy/commit/0af14a9))
+* fix(cody): PR creation failure + concurrent workflow triggering ([91f1845](https://github.com/A-Guy-educ/A-Guy/commit/91f1845))
+* fix(cody): Prefix unused mode variable with underscore ([c4c0ddd](https://github.com/A-Guy-educ/A-Guy/commit/c4c0ddd))
+* fix(cody): Prevent apply-audit timeout by narrowing whitelist and bumping timeout ([b65cc0b](https://github.com/A-Guy-educ/A-Guy/commit/b65cc0b))
+* fix(cody): Prevent gate approval from being overwritten by resetFromStage ([49daa2c](https://github.com/A-Guy-educ/A-Guy/commit/49daa2c))
+* fix(cody): Prevent horizontal scroll on mobile task detail ([0fb0c2e](https://github.com/A-Guy-educ/A-Guy/commit/0fb0c2e))
+* fix(cody): Promoted spec stub includes validator-expected sections ([b5492b9](https://github.com/A-Guy-educ/A-Guy/commit/b5492b9))
+* fix(cody): Properly handle @cody approve with answers ([776dcba](https://github.com/A-Guy-educ/A-Guy/commit/776dcba))
+* fix(cody): Read assignees from correct API response location ([65f547b](https://github.com/A-Guy-educ/A-Guy/commit/65f547b))
+* fix(cody): Rebuild pipeline returns both spec and impl stages ([00eb52c](https://github.com/A-Guy-educ/A-Guy/commit/00eb52c))
+* fix(cody): Rebuild pipeline with impl mode to include build/commit/pr stages ([8917427](https://github.com/A-Guy-educ/A-Guy/commit/8917427))
+* fix(cody): Reduce GitHub API calls by 95% ([bbbe522](https://github.com/A-Guy-educ/A-Guy/commit/bbbe522))
+* fix(cody): Remove 'build' from trivial fix skip_stages ([90ced1a](https://github.com/A-Guy-educ/A-Guy/commit/90ced1a))
+* fix(cody): Remove duplicate 'Cody started' comment on GitHub issues ([a82d6c1](https://github.com/A-Guy-educ/A-Guy/commit/a82d6c1))
+* fix(cody): Remove quotes from git branch glob pattern ([14663e7](https://github.com/A-Guy-educ/A-Guy/commit/14663e7))
+* fix(cody): Remove redundant /pr/{number} from preview URL fallback ([c31d026](https://github.com/A-Guy-educ/A-Guy/commit/c31d026))
+* fix(cody): Remove sessionId extraction from stdout handler ([82a5131](https://github.com/A-Guy-educ/A-Guy/commit/82a5131))
+* fix(cody): Remove subagent validation from architect to prevent timeout ([676c761](https://github.com/A-Guy-educ/A-Guy/commit/676c761))
+* fix(cody): Remove throttling plugin, use manual rate limit handling ([42d9d40](https://github.com/A-Guy-educ/A-Guy/commit/42d9d40))
+* fix(cody): Remove unused fields from bug report dialog ([2fd427e](https://github.com/A-Guy-educ/A-Guy/commit/2fd427e))
+* fix(cody): Remove unused onApprove prop and fix failing tests ([c29babe](https://github.com/A-Guy-educ/A-Guy/commit/c29babe))
+* fix(cody): Remove unused useEffect import and apply formatting fixes ([c80ece5](https://github.com/A-Guy-educ/A-Guy/commit/c80ece5))
+* fix(cody): Rerun mode supports spec stages ([795f276](https://github.com/A-Guy-educ/A-Guy/commit/795f276))
+* fix(cody): Reset branch at START of pipeline when --fresh is set ([427c1e5](https://github.com/A-Guy-educ/A-Guy/commit/427c1e5))
+* fix(cody): Reset branch instead of creating new task with --fresh ([f23d03a](https://github.com/A-Guy-educ/A-Guy/commit/f23d03a))
+* fix(cody): resolve 7 bugs in pipeline scripts ([ee14f71](https://github.com/A-Guy-educ/A-Guy/commit/ee14f71))
+* fix(cody): Resolve critical pipeline bugs ([8f7e022](https://github.com/A-Guy-educ/A-Guy/commit/8f7e022))
+* fix(cody): Resolve styling issues and duplicate key error ([f6ce20b](https://github.com/A-Guy-educ/A-Guy/commit/f6ce20b))
+* fix(cody): Resolve styling issues and duplicate key error ([0348c49](https://github.com/A-Guy-educ/A-Guy/commit/0348c49))
+* fix(cody): Resolve taskify stage pipeline failures ([832ee7f](https://github.com/A-Guy-educ/A-Guy/commit/832ee7f))
+* fix(cody): Resolve taskify stage pipeline failures ([46a2311](https://github.com/A-Guy-educ/A-Guy/commit/46a2311))
+* fix(cody): Restore html/body tags in route group layout to fix blank page ([ba895ca](https://github.com/A-Guy-educ/A-Guy/commit/ba895ca))
+* fix(cody): Restore missing toolbar files after rebase ([36f12d8](https://github.com/A-Guy-educ/A-Guy/commit/36f12d8))
+* fix(cody): Restore proper CopilotKit runtime configuration ([99f23f1](https://github.com/A-Guy-educ/A-Guy/commit/99f23f1))
+* fix(cody): Resume pipeline after gate approval ([ab326c9](https://github.com/A-Guy-educ/A-Guy/commit/ab326c9))
+* fix(cody): Reuse frontend fonts, theme init, and favicon in cody layout ([cee14f0](https://github.com/A-Guy-educ/A-Guy/commit/cee14f0))
+* fix(cody): Revert - cody.yml triggers only on @cody, /cody uses legacy ([0555029](https://github.com/A-Guy-educ/A-Guy/commit/0555029))
+* fix(cody): Revert build agent to subagent mode ([63acb88](https://github.com/A-Guy-educ/A-Guy/commit/63acb88))
+* fix(cody): Run auditor after verify and add supervisor shell wrapper ([4ef93ea](https://github.com/A-Guy-educ/A-Guy/commit/4ef93ea))
+* fix(cody): Show building status when workflow in_progress despite gate labels ([0271c15](https://github.com/A-Guy-educ/A-Guy/commit/0271c15))
+* fix(cody): Show tooltip on disabled merge button ([5a85e9d](https://github.com/A-Guy-educ/A-Guy/commit/5a85e9d))
+* fix(cody): simplify opencode install via npm and add Google API key env var ([fcd35a9](https://github.com/A-Guy-educ/A-Guy/commit/fcd35a9))
+* fix(cody): Skip gates for auto controlMode and handle paused state in full mode ([2b50fae](https://github.com/A-Guy-educ/A-Guy/commit/2b50fae))
+* fix(cody): skip LLM key injection on self-hosted runners ([425a270](https://github.com/A-Guy-educ/A-Guy/commit/425a270))
+* fix(cody): Skip pre-push hooks during pipeline push and ignore .opencode in Prettier ([a9e573a](https://github.com/A-Guy-educ/A-Guy/commit/a9e573a))
+* fix(cody): Skip pre-push hooks in PR stage push ([a205ca4](https://github.com/A-Guy-educ/A-Guy/commit/a205ca4))
+* fix(cody): Skip task-id discovery when --fresh flag is set ([ec612ef](https://github.com/A-Guy-educ/A-Guy/commit/ec612ef))
+* fix(cody): spec pipeline branch creation + local runner prompt + gap agent ([ade2e55](https://github.com/A-Guy-educ/A-Guy/commit/ade2e55))
+* fix(cody): Stronger PR title prompt with step-by-step instructions ([45c6c79](https://github.com/A-Guy-educ/A-Guy/commit/45c6c79))
+* fix(cody): Support @cody approve/reject with answers + update cody-expert model ([7d8eada](https://github.com/A-Guy-educ/A-Guy/commit/7d8eada))
+* fix(cody): Target local macOS runner instead of Docker for self-hosted ([a213eb8](https://github.com/A-Guy-educ/A-Guy/commit/a213eb8))
+* fix(cody): Throw error when pipeline fails to fix silent failures ([724aee6](https://github.com/A-Guy-educ/A-Guy/commit/724aee6))
+* fix(cody): Throw error when pipeline fails to fix silent failures ([ad17214](https://github.com/A-Guy-educ/A-Guy/commit/ad17214))
+* fix(cody): Trigger on both @cody and /cody commands ([567de02](https://github.com/A-Guy-educ/A-Guy/commit/567de02))
+* fix(cody): Trigger only on @cody, remove /cody trigger ([765b051](https://github.com/A-Guy-educ/A-Guy/commit/765b051))
+* fix(cody): Unify tooltips for pipeline stages and actions ([8204c80](https://github.com/A-Guy-educ/A-Guy/commit/8204c80))
+* fix(cody): Update clarify workflow tests ([033df80](https://github.com/A-Guy-educ/A-Guy/commit/033df80))
+* fix(cody): Update ctx.taskDef in resolve-profile post-action ([807b64e](https://github.com/A-Guy-educ/A-Guy/commit/807b64e))
+* fix(cody): Update ctx.taskDef in resolve-profile post-action ([c9d4cab](https://github.com/A-Guy-educ/A-Guy/commit/c9d4cab))
+* fix(cody): Update gate messages to support both @cody and /cody commands ([dcecb41](https://github.com/A-Guy-educ/A-Guy/commit/dcecb41))
+* fix(cody): Update gate messages to support both @cody and /cody commands ([405b8f6](https://github.com/A-Guy-educ/A-Guy/commit/405b8f6))
+* fix(cody): Update integration test for new review/fix/commit-fix stage counts ([88c57d5](https://github.com/A-Guy-educ/A-Guy/commit/88c57d5))
+* fix(cody): update isValidStage tests for new pipeline stages ([97bdb55](https://github.com/A-Guy-educ/A-Guy/commit/97bdb55))
+* fix(cody): Update pipeline test to reflect auditor stage removal ([b251951](https://github.com/A-Guy-educ/A-Guy/commit/b251951))
+* fix(cody): Update tests for manual rate limit handling ([64c1a2a](https://github.com/A-Guy-educ/A-Guy/commit/64c1a2a))
+* fix(cody): Use GH_PAT in postComment so failure comments trigger supervisor workflow ([0c68403](https://github.com/A-Guy-educ/A-Guy/commit/0c68403))
+* fix(cody): Use local pnpm store ([9f30ee9](https://github.com/A-Guy-educ/A-Guy/commit/9f30ee9))
+* fix(cody): use opencode run --agent instead of github run ([e90f826](https://github.com/A-Guy-educ/A-Guy/commit/e90f826))
+* fix(cody): Use profile-aware rebuild after taskify instead of rerun mode ([39815b6](https://github.com/A-Guy-educ/A-Guy/commit/39815b6))
+* fix(cody): use REST API instead of gh CLI for PR creation ([b2069ad](https://github.com/A-Guy-educ/A-Guy/commit/b2069ad))
+* fix(cody): Write paused state to status.json before gate commit+push ([11247d9](https://github.com/A-Guy-educ/A-Guy/commit/11247d9))
+* fix(conversion): Align lesson media picker with persisted attachments ([6a7b89e](https://github.com/A-Guy-educ/A-Guy/commit/6a7b89e))
+* fix(conversion): bypass pdfjs-dist worker for V3 PDF extraction ([fb0424b](https://github.com/A-Guy-educ/A-Guy/commit/fb0424b))
+* fix(conversion): Disable PDF.js worker in serverless runtime ([cacd789](https://github.com/A-Guy-educ/A-Guy/commit/cacd789))
+* fix(conversion): Preload PDF.js worker handler for serverless ([0533777](https://github.com/A-Guy-educ/A-Guy/commit/0533777))
+* fix(conversion): Refresh exercise panel after saving content files ([4b0674b](https://github.com/A-Guy-educ/A-Guy/commit/4b0674b))
+* fix(conversion): Set stable PDF worker path for V2/V3 ([0f3ccc1](https://github.com/A-Guy-educ/A-Guy/commit/0f3ccc1))
+* fix(conversion): wire up V3 preview edits to exercise creation ([b7ec8fe](https://github.com/A-Guy-educ/A-Guy/commit/b7ec8fe))
+* fix(debug): Add logging to identify lesson 404 cause ([31feebb](https://github.com/A-Guy-educ/A-Guy/commit/31feebb))
+* fix(debug): Add more debug logging to queryLessonBySlug ([29cdd94](https://github.com/A-Guy-educ/A-Guy/commit/29cdd94))
+* fix(e2e): Correct chat message selector from ml-auto to ms-auto ([112038c](https://github.com/A-Guy-educ/A-Guy/commit/112038c))
+* fix(exercise-conversion): add auto-detect diagram placement heuristic ([b644f66](https://github.com/A-Guy-educ/A-Guy/commit/b644f66))
+* fix(exercise-editor): Fix 6 UX issues across editor types ([9378aa6](https://github.com/A-Guy-educ/A-Guy/commit/9378aa6))
+* fix(exercise-editor): Fix board recreation, point placement, and SVG preview ([efc57a0](https://github.com/A-Guy-educ/A-Guy/commit/efc57a0))
+* fix(exercise-editor): Fix geometry point drag snapping and element destruction ([1eecdec](https://github.com/A-Guy-educ/A-Guy/commit/1eecdec))
+* fix(exercise-editor): Improve geometry editor UX with toolbar and better layout ([38875ef](https://github.com/A-Guy-educ/A-Guy/commit/38875ef))
+* fix(exercise-editor): Line label rotation, shape fill, remove hint from media ([868ae0f](https://github.com/A-Guy-educ/A-Guy/commit/868ae0f))
+* fix(exercise-editor): Stabilize JSXGraph board lifecycle in geometry and axis canvases ([13d824b](https://github.com/A-Guy-educ/A-Guy/commit/13d824b))
+* fix(exercise-renderer): Fix matching lines crossing blocks and remove red pulse ([3634da6](https://github.com/A-Guy-educ/A-Guy/commit/3634da6))
+* fix(exercise-renderer): Only highlight matching items after selection, not as options ([1c149ce](https://github.com/A-Guy-educ/A-Guy/commit/1c149ce))
+* fix(exercise-renderer): Replace isomorphic-dompurify with browser-only dompurify ([49510f4](https://github.com/A-Guy-educ/A-Guy/commit/49510f4))
+* fix(exercise-renderer): Restore geometry/axis media rendering, remove hint/solution UI ([5e7fa33](https://github.com/A-Guy-educ/A-Guy/commit/5e7fa33))
+* fix(exercise-renderer): Use blue instead of red primary for matching highlights ([3f71694](https://github.com/A-Guy-educ/A-Guy/commit/3f71694))
+* fix(exercises): Always show help buttons with AI fallback ([1e43a34](https://github.com/A-Guy-educ/A-Guy/commit/1e43a34))
+* fix(exercises): Replace isomorphic-dompurify with dompurify to fix build ([27e3831](https://github.com/A-Guy-educ/A-Guy/commit/27e3831))
+* fix(frontend): show interactive exercises for V3-converted lessons ([937f6a3](https://github.com/A-Guy-educ/A-Guy/commit/937f6a3))
+* fix(geometry): Use fixed canvas bounding box in renderer ([812d3c7](https://github.com/A-Guy-educ/A-Guy/commit/812d3c7))
+* fix(inspector): Fix lint errors - unused variables ([29213f4](https://github.com/A-Guy-educ/A-Guy/commit/29213f4))
+* fix(int): Ensure default tenant exists before TeacherProfilesSeed runs ([d32ef3f](https://github.com/A-Guy-educ/A-Guy/commit/d32ef3f))
+* fix(lint): Fix unused vars in ChatInterface ([82de366](https://github.com/A-Guy-educ/A-Guy/commit/82de366))
+* fix(lint): Prefix unused isProbe variable with underscore ([cad284d](https://github.com/A-Guy-educ/A-Guy/commit/cad284d))
+* fix(lint): properly type exercises instead of using any ([1728fe5](https://github.com/A-Guy-educ/A-Guy/commit/1728fe5))
+* fix(lint): Replace eslint-disable comments with proper boundary rules ([c1f95ae](https://github.com/A-Guy-educ/A-Guy/commit/c1f95ae))
+* fix(media): Add 'vimeo' to embedProvider Payload select field options ([f405553](https://github.com/A-Guy-educ/A-Guy/commit/f405553))
+* fix(media): Add type guards to clientUploads access function ([0de6f61](https://github.com/A-Guy-educ/A-Guy/commit/0de6f61))
+* fix(media): Add type guards to clientUploads access function ([8ed61b2](https://github.com/A-Guy-educ/A-Guy/commit/8ed61b2))
+* fix(media): Allow External media type to save without file upload ([e6d013a](https://github.com/A-Guy-educ/A-Guy/commit/e6d013a))
+* fix(media): Disable clientUploads + add Vercel Blob integration tests ([63365ae](https://github.com/A-Guy-educ/A-Guy/commit/63365ae))
+* fix(media): Disable clientUploads to fix upload stuck/error ([ec9da99](https://github.com/A-Guy-educ/A-Guy/commit/ec9da99))
+* fix(media): Re-disable clientUploads after merge conflict revert ([a179e7a](https://github.com/A-Guy-educ/A-Guy/commit/a179e7a))
+* fix(media): Resolve PDF viewer and URL issues with Vercel Blob ([f3ee039](https://github.com/A-Guy-educ/A-Guy/commit/f3ee039))
+* fix(media): Show YouTube thumbnails for External media in admin and Exercise editor ([f16532b](https://github.com/A-Guy-educ/A-Guy/commit/f16532b))
+* fix(opencode): Change build agent mode from agent to primary ([3c64e76](https://github.com/A-Guy-educ/A-Guy/commit/3c64e76))
+* fix(study-plan): Anchor 7-day schedule to exam date with adaptive scaling ([d0013bd](https://github.com/A-Guy-educ/A-Guy/commit/d0013bd))
+* fix(study-plan): implement toggle, remove merge, add edit mode ([bbe3791](https://github.com/A-Guy-educ/A-Guy/commit/bbe3791))
+* fix(study-plan): Move generate button to sidebar, always visible ([abf6447](https://github.com/A-Guy-educ/A-Guy/commit/abf6447))
+* fix(study-plan): Remove suggested study times from day cards ([e042aba](https://github.com/A-Guy-educ/A-Guy/commit/e042aba))
+* fix(study-plan): Replace hardcoded light palette with theme tokens for dark mode ([6a6374a](https://github.com/A-Guy-educ/A-Guy/commit/6a6374a))
+* fix(study-plan): Show placeholder until user clicks generate ([136546c](https://github.com/A-Guy-educ/A-Guy/commit/136546c))
+* fix(test): Add as-any cast to user create calls missing role field ([8189e40](https://github.com/A-Guy-educ/A-Guy/commit/8189e40))
+* fix(test): Add CONFIG_MASTER_KEY to .env.test for CI ([44a15d6](https://github.com/A-Guy-educ/A-Guy/commit/44a15d6))
+* fix(test): Add missing GH_PAT env var to PR stage unit tests ([d9ed201](https://github.com/A-Guy-educ/A-Guy/commit/d9ed201))
+* fix(test): Align extractFromImageV3 mock with multi-part format ([9446bbf](https://github.com/A-Guy-educ/A-Guy/commit/9446bbf))
+* fix(test): Align health endpoint test with actual API response shape ([740a860](https://github.com/A-Guy-educ/A-Guy/commit/740a860))
+* fix(test): Align integration test assertions with Payload behavior ([d532988](https://github.com/A-Guy-educ/A-Guy/commit/d532988))
+* fix(test): fix 6 critical bugs in V3 integration test ([c0f01bb](https://github.com/A-Guy-educ/A-Guy/commit/c0f01bb))
+* fix(test): Fix admin role in tests — create then update to bypass hook ([6cecf84](https://github.com/A-Guy-educ/A-Guy/commit/6cecf84))
+* fix(test): Fix integration test failures on shared CI database ([5342b27](https://github.com/A-Guy-educ/A-Guy/commit/5342b27))
+* fix(test): Fix P1 test failures in CI shared MongoDB ([8f25964](https://github.com/A-Guy-educ/A-Guy/commit/8f25964))
+* fix(test): Fix runtime-config and system-params test cache issues ([e9a05cb](https://github.com/A-Guy-educ/A-Guy/commit/e9a05cb))
+* fix(test): Format mcp-audit-trail test with Prettier ([815c66d](https://github.com/A-Guy-educ/A-Guy/commit/815c66d))
+* fix(test): Guard against duplicate tenant slug in study-plan test ([1b9b0ad](https://github.com/A-Guy-educ/A-Guy/commit/1b9b0ad))
+* fix(test): Isolate prevent-last-admin-demotion from shared CI MongoDB ([0346116](https://github.com/A-Guy-educ/A-Guy/commit/0346116))
+* fix(test): mock pdf-fetcher to avoid file upload in CI ([c49e827](https://github.com/A-Guy-educ/A-Guy/commit/c49e827))
+* fix(test): Update P2 integration tests for current schema and behavior ([cf7c767](https://github.com/A-Guy-educ/A-Guy/commit/cf7c767))
+* fix(test): Update parallel stage test for auditor order change ([8e9d989](https://github.com/A-Guy-educ/A-Guy/commit/8e9d989))
+* fix(test): Update query tests for static generation limits ([e2ce8ff](https://github.com/A-Guy-educ/A-Guy/commit/e2ce8ff))
+* fix(test): Update v3-extraction-log-gate test body for multi-part schema ([cbbe8f0](https://github.com/A-Guy-educ/A-Guy/commit/cbbe8f0))
+* fix(test): Update v3-extraction-log-gate test body for multi-part schema ([df4de0b](https://github.com/A-Guy-educ/A-Guy/commit/df4de0b))
+* fix(test): Update v3-extraction-log-gate test body for multi-part schema ([6d32999](https://github.com/A-Guy-educ/A-Guy/commit/6d32999))
+* fix(test): Use unique media filename to avoid shared-DB collision ([5b6a88b](https://github.com/A-Guy-educ/A-Guy/commit/5b6a88b))
+* fix(test): Use unique media filename to avoid shared-DB collision ([d009033](https://github.com/A-Guy-educ/A-Guy/commit/d009033))
+* fix(tests): Fix tests to match improved PR title generation ([b28950d](https://github.com/A-Guy-educ/A-Guy/commit/b28950d))
+* fix(tests): Update ChapterHeader test selectors after SafeHtml migration ([b291903](https://github.com/A-Guy-educ/A-Guy/commit/b291903))
+* fix(tunnel): Add basic auth proxy for localtunnel ([f6f804e](https://github.com/A-Guy-educ/A-Guy/commit/f6f804e))
+* fix(tunnel): Remove unnecessary auth proxy from localtunnel script ([a1d1b7d](https://github.com/A-Guy-educ/A-Guy/commit/a1d1b7d))
+* fix(types): Fix 9 typecheck errors in factories and Genkit adapter ([4a3af8c](https://github.com/A-Guy-educ/A-Guy/commit/4a3af8c))
+* fix(ui): Enhance dark mode color palette with varied hues ([cc95e7a](https://github.com/A-Guy-educ/A-Guy/commit/cc95e7a))
+* feat: Add 'Aguy Learning Platform' to site-wide footer ([5b706d7](https://github.com/A-Guy-educ/A-Guy/commit/5b706d7))
+* feat: Add 'persona' type option to Prompts collection ([26b247b](https://github.com/A-Guy-educ/A-Guy/commit/26b247b))
+* feat: Add @browser agent with dual-MCP strategy + fix 30 broken README links ([d09f66d](https://github.com/A-Guy-educ/A-Guy/commit/d09f66d))
+* feat: Add 5 missing test factories for Tenant, Media, Prompt, UploadSession, ChatAsset ([814a795](https://github.com/A-Guy-educ/A-Guy/commit/814a795))
+* feat: Add adaptive practice schedule (7-day tactical planner) ([7f2b208](https://github.com/A-Guy-educ/A-Guy/commit/7f2b208))
+* feat: Add closeIssueWithCleanup ([3630bc7](https://github.com/A-Guy-educ/A-Guy/commit/3630bc7))
+* feat: Add cody-github-issue-execution skill for issue management ([4eb6000](https://github.com/A-Guy-educ/A-Guy/commit/4eb6000))
+* feat: Add cody-issue-queue skill for bulk issue processing ([87882b1](https://github.com/A-Guy-educ/A-Guy/commit/87882b1))
+* feat: Add configurable teacher profiles for AI chat identity ([6427392](https://github.com/A-Guy-educ/A-Guy/commit/6427392))
+* feat: Add content locale field to publishable collections ([95fe0d6](https://github.com/A-Guy-educ/A-Guy/commit/95fe0d6))
+* feat: Add loading feedback to Next/Prev buttons in lesson pager ([92cf555](https://github.com/A-Guy-educ/A-Guy/commit/92cf555))
+* feat: Add math expression input with MathLive FormulaComposer ([bc97306](https://github.com/A-Guy-educ/A-Guy/commit/bc97306))
+* feat: Add optional teacher persona selection during registration onboarding ([7ebfc66](https://github.com/A-Guy-educ/A-Guy/commit/7ebfc66))
+* feat: add plan and spec for HTML pages and lesson blocks feature ([b24a7de](https://github.com/A-Guy-educ/A-Guy/commit/b24a7de))
+* feat: Add platform intro as seedable Payload page ([0b665be](https://github.com/A-Guy-educ/A-Guy/commit/0b665be))
+* feat: Add pnpm cody:test for workflow dry-run smoke test ([834bab0](https://github.com/A-Guy-educ/A-Guy/commit/834bab0))
+* feat: Add Quill WYSIWYG editor to Course/Chapter/Lesson description fields ([8cad47a](https://github.com/A-Guy-educ/A-Guy/commit/8cad47a))
+* feat: Add run-cody-on-issue skill ([8713f94](https://github.com/A-Guy-educ/A-Guy/commit/8713f94))
+* feat: Add separate pageAccessType field for course page gating ([db504b4](https://github.com/A-Guy-educ/A-Guy/commit/db504b4))
+* feat: add supervisor script for failure analysis and retry tracking ([ef9e87a](https://github.com/A-Guy-educ/A-Guy/commit/ef9e87a))
+* feat: Add Supervisor workflow for automatic Cody failure analysis and retry ([a676e8c](https://github.com/A-Guy-educ/A-Guy/commit/a676e8c))
+* feat: Add tabbed course page with exam countdown and conversation history ([61037dd](https://github.com/A-Guy-educ/A-Guy/commit/61037dd))
+* feat: Add teacher profile debug logging and chat header badge ([7104217](https://github.com/A-Guy-educ/A-Guy/commit/7104217))
+* feat: Add validation-in-retry-loop to Cody pipeline ([226b3c6](https://github.com/A-Guy-educ/A-Guy/commit/226b3c6))
+* feat: Enable GitHub MCP tools in Cody chat ([cabc711](https://github.com/A-Guy-educ/A-Guy/commit/cabc711))
+* feat: Format pipeline JSON output for readability ([bcefe88](https://github.com/A-Guy-educ/A-Guy/commit/bcefe88))
+* feat: implement lesson context extraction feature ([a736c2e](https://github.com/A-Guy-educ/A-Guy/commit/a736c2e))
+* feat: login page redesign - Closes #729 (#730) ([b7b8c85](https://github.com/A-Guy-educ/A-Guy/commit/b7b8c85)), closes [#729](https://github.com/A-Guy-educ/A-Guy/issues/729) [#730](https://github.com/A-Guy-educ/A-Guy/issues/730)
+* feat: Make gated timer values admin-configurable ([8cd013d](https://github.com/A-Guy-educ/A-Guy/commit/8cd013d))
+* feat: Make issue numbers clickable links to GitHub in Cody dashboard ([d243044](https://github.com/A-Guy-educ/A-Guy/commit/d243044))
+* feat: P2 system stability — circuit breaker, rate limiting, test infra, config fixes ([d3d61b7](https://github.com/A-Guy-educ/A-Guy/commit/d3d61b7))
+* feat: Pause gated timer while warning modal is open ([d270f77](https://github.com/A-Guy-educ/A-Guy/commit/d270f77))
+* feat: Redesign Ask tab with conversation grid and fix ProgressCircle ([f9549fe](https://github.com/A-Guy-educ/A-Guy/commit/f9549fe))
+* feat: Redesign study pages to match HTML design ([41adcbd](https://github.com/A-Guy-educ/A-Guy/commit/41adcbd))
+* feat: Remove auto-generated title from V3 exercise conversion ([51e044f](https://github.com/A-Guy-educ/A-Guy/commit/51e044f))
+* feat: remove V3 preview step - single-click conversion ([219258b](https://github.com/A-Guy-educ/A-Guy/commit/219258b))
+* feat: Replace warning banner with dismissible countdown modal ([79d3543](https://github.com/A-Guy-educ/A-Guy/commit/79d3543))
+* feat: Support structured table rendering in chat messages ([b3424b4](https://github.com/A-Guy-educ/A-Guy/commit/b3424b4))
+* feat(260225-auto-21): Issue Title ([0474a8c](https://github.com/A-Guy-educ/A-Guy/commit/0474a8c))
+* feat(260227-auto-83): Issue Title ([093b8e6](https://github.com/A-Guy-educ/A-Guy/commit/093b8e6))
+* feat(260301-auto-20): Issue Title ([c38459c](https://github.com/A-Guy-educ/A-Guy/commit/c38459c))
+* feat(260302-auto-25): Issue Title ([c761e26](https://github.com/A-Guy-educ/A-Guy/commit/c761e26))
+* feat(260302-auto-66): Issue Title ([ea60eba](https://github.com/A-Guy-educ/A-Guy/commit/ea60eba))
+* feat(ask): Per-session conversations with contextKeyOverride ([3686682](https://github.com/A-Guy-educ/A-Guy/commit/3686682))
+* feat(auditor): Extend auditor with broader improvements and tracking ([eac43bc](https://github.com/A-Guy-educ/A-Guy/commit/eac43bc))
+* feat(auth): Add access control per course and lesson ([b69cbb6](https://github.com/A-Guy-educ/A-Guy/commit/b69cbb6))
+* feat(chat): Persist help system messages across page refresh ([ed0c7a4](https://github.com/A-Guy-educ/A-Guy/commit/ed0c7a4))
+* feat(cody-chat): Upgrade AI SDK to v6 for gemini-3.1-pro-preview thought_signature support ([4b096fa](https://github.com/A-Guy-educ/A-Guy/commit/4b096fa))
+* feat(cody-dashboard): Fix critical bugs and remove auth ([b54530e](https://github.com/A-Guy-educ/A-Guy/commit/b54530e))
+* feat(cody-dashboard): Phase 0-1 foundation - CopilotKit spike, types, github-client, API routes ([8ca77f9](https://github.com/A-Guy-educ/A-Guy/commit/8ca77f9))
+* feat(cody-dashboard): Phases 2-4 - UI components, pipeline, actions ([48a1586](https://github.com/A-Guy-educ/A-Guy/commit/48a1586))
+* feat(cody-pipeline): merge default branch into feature branch on re-runs ([bdef367](https://github.com/A-Guy-educ/A-Guy/commit/bdef367))
+* feat(cody): Add --fresh flag and PR vs Issue detection ([e58d404](https://github.com/A-Guy-educ/A-Guy/commit/e58d404))
+* feat(cody): Add --github flag to explicitly use GitHub-hosted runner ([d768313](https://github.com/A-Guy-educ/A-Guy/commit/d768313))
+* feat(cody): Add 3-layer smart feedback loop for self-healing pipeline ([44816c7](https://github.com/A-Guy-educ/A-Guy/commit/44816c7))
+* feat(cody): Add actual pipeline execution to smoke test ([2778a1d](https://github.com/A-Guy-educ/A-Guy/commit/2778a1d))
+* feat(cody): Add agent selection support and MCP timeout ([7ac696d](https://github.com/A-Guy-educ/A-Guy/commit/7ac696d))
+* feat(cody): Add assignee picker to task list and refine PRD agent prompt ([ff42a99](https://github.com/A-Guy-educ/A-Guy/commit/ff42a99))
+* feat(cody): Add attachment support to chat ([92e543a](https://github.com/A-Guy-educ/A-Guy/commit/92e543a))
+* feat(cody): add Autonomous Decision Control Framework ([b29faa6](https://github.com/A-Guy-educ/A-Guy/commit/b29faa6))
+* feat(cody): Add bug report dialog with structured template ([7068cd7](https://github.com/A-Guy-educ/A-Guy/commit/7068cd7))
+* feat(cody): Add build-manager agent for parallel orchestration ([792805d](https://github.com/A-Guy-educ/A-Guy/commit/792805d))
+* feat(cody): Add click feedback to dashboard action buttons ([656d79a](https://github.com/A-Guy-educ/A-Guy/commit/656d79a))
+* feat(cody): Add cody dashboard enhancements ([302290e](https://github.com/A-Guy-educ/A-Guy/commit/302290e))
+* feat(cody): Add cody-expert agent to opencode ([956ba6f](https://github.com/A-Guy-educ/A-Guy/commit/956ba6f))
+* feat(cody): Add complexity-based pipeline routing ([6d81031](https://github.com/A-Guy-educ/A-Guy/commit/6d81031))
+* feat(cody): add eyes reaction to acknowledge /cody command ([87ba142](https://github.com/A-Guy-educ/A-Guy/commit/87ba142))
+* feat(Cody): add gap stage ([449b208](https://github.com/A-Guy-educ/A-Guy/commit/449b208))
+* feat(cody): Add GitHub identity picker — forced on first visit, stored in localStorage ([84627aa](https://github.com/A-Guy-educ/A-Guy/commit/84627aa))
+* feat(cody): Add GitHub issue links to status banner ([1722c15](https://github.com/A-Guy-educ/A-Guy/commit/1722c15))
+* feat(cody): Add GitHub lifecycle labels for pipeline state tracking ([a452bae](https://github.com/A-Guy-educ/A-Guy/commit/a452bae))
+* feat(cody): Add GitHub lifecycle labels for pipeline state tracking ([a08204a](https://github.com/A-Guy-educ/A-Guy/commit/a08204a))
+* feat(cody): Add image upload for task creation ([e71be3b](https://github.com/A-Guy-educ/A-Guy/commit/e71be3b))
+* feat(cody): Add image upload to bug report dialog ([0597ad6](https://github.com/A-Guy-educ/A-Guy/commit/0597ad6))
+* feat(cody): Add legacy workflow from commit 453abda8 ([e23a4c2](https://github.com/A-Guy-educ/A-Guy/commit/e23a4c2))
+* feat(cody): Add legacy workflow from commit 453abda8 ([5138675](https://github.com/A-Guy-educ/A-Guy/commit/5138675))
+* feat(cody): Add lightweight pipeline profile for simple fixes ([bc27ffc](https://github.com/A-Guy-educ/A-Guy/commit/bc27ffc))
+* feat(cody): Add MiniPipelineProgress component for task card progress indication ([e506f8e](https://github.com/A-Guy-educ/A-Guy/commit/e506f8e))
+* feat(cody): Add multi-agent chat, task assignment UI, and bug fixes ([f7f936a](https://github.com/A-Guy-educ/A-Guy/commit/f7f936a))
+* feat(cody): Add pipeline versioning and cody-expert subagent ([4ca3cce](https://github.com/A-Guy-educ/A-Guy/commit/4ca3cce))
+* feat(cody): Add repo browsing chat with GitHub MCP tools ([43d69b6](https://github.com/A-Guy-educ/A-Guy/commit/43d69b6))
+* feat(cody): Add review_questions to gate comments for clearer approval decisions ([ef550dd](https://github.com/A-Guy-educ/A-Guy/commit/ef550dd))
+* feat(cody): Add review-fix-pipeline spec and implementation plan ([345985c](https://github.com/A-Guy-educ/A-Guy/commit/345985c))
+* feat(cody): Add review, fix, and commit-fix pipeline stages with verify→fix self-healing loop ([0672277](https://github.com/A-Guy-educ/A-Guy/commit/0672277))
+* feat(cody): Add rich tooltips across entire dashboard ([1c06638](https://github.com/A-Guy-educ/A-Guy/commit/1c06638))
+* feat(cody): Add smoke test job to validate cody on push ([321ff80](https://github.com/A-Guy-educ/A-Guy/commit/321ff80))
+* feat(cody): Add status indicators to task list columns ([949dba7](https://github.com/A-Guy-educ/A-Guy/commit/949dba7))
+* feat(cody): Add supervisor improvements and watchdog monitoring ([032cfa6](https://github.com/A-Guy-educ/A-Guy/commit/032cfa6))
+* feat(cody): Add task-scoped chat with persistence and pipeline progress ([b8b745d](https://github.com/A-Guy-educ/A-Guy/commit/b8b745d))
+* feat(cody): add TDD bug-fix workflow to pipeline ([ecb0cf8](https://github.com/A-Guy-educ/A-Guy/commit/ecb0cf8))
+* feat(cody): Add tooltips to preview links in TaskList and TaskDetail ([ab2b84e](https://github.com/A-Guy-educ/A-Guy/commit/ab2b84e))
+* feat(cody): add unified commitPipelineFiles function ([28d8f29](https://github.com/A-Guy-educ/A-Guy/commit/28d8f29))
+* feat(cody): Attribute all dashboard actions to selected GitHub user ([398712c](https://github.com/A-Guy-educ/A-Guy/commit/398712c))
+* feat(cody): Complete --fresh flag with branch suffixing ([20bdedd](https://github.com/A-Guy-educ/A-Guy/commit/20bdedd))
+* feat(cody): Default runner to self-hosted for all triggers ([71d39ad](https://github.com/A-Guy-educ/A-Guy/commit/71d39ad))
+* feat(cody): Derive descriptive branch names from issue title ([4199a94](https://github.com/A-Guy-educ/A-Guy/commit/4199a94))
+* feat(cody): Dynamically discover task documents from branch ([d0ada2a](https://github.com/A-Guy-educ/A-Guy/commit/d0ada2a))
+* feat(cody): Enhance CreateTaskDialog with larger size and markdown editor ([404687d](https://github.com/A-Guy-educ/A-Guy/commit/404687d))
+* feat(cody): Enhance operations dashboard with task management ([38b32c1](https://github.com/A-Guy-educ/A-Guy/commit/38b32c1))
+* feat(cody): extract clarify workflow to separate module ([5ca33d1](https://github.com/A-Guy-educ/A-Guy/commit/5ca33d1))
+* feat(cody): extract content validators to separate module ([e032302](https://github.com/A-Guy-educ/A-Guy/commit/e032302))
+* feat(cody): extract stage hooks to separate module ([c7f7853](https://github.com/A-Guy-educ/A-Guy/commit/c7f7853))
+* feat(cody): Fix pipeline data reliability and polish progress UI ([7c9e4a1](https://github.com/A-Guy-educ/A-Guy/commit/7c9e4a1))
+* feat(cody): Force-publish for dev→main PRs via ref update ([9e32b98](https://github.com/A-Guy-educ/A-Guy/commit/9e32b98))
+* feat(cody): implement comprehensive pipeline improvements ([bcf29ed](https://github.com/A-Guy-educ/A-Guy/commit/bcf29ed))
+* feat(cody): Implement explicit state machine architecture ([3995ac6](https://github.com/A-Guy-educ/A-Guy/commit/3995ac6))
+* feat(cody): Improve autofix for test failures ([a1265b1](https://github.com/A-Guy-educ/A-Guy/commit/a1265b1))
+* feat(cody): Improve task detail card UX with 7 enhancements ([122de6f](https://github.com/A-Guy-educ/A-Guy/commit/122de6f))
+* feat(cody): make unrecognized subcommands route to rerun mode ([25d2943](https://github.com/A-Guy-educ/A-Guy/commit/25d2943))
+* feat(cody): Mobile task detail UX round 4 — back button, labeled links, fixed overflow ([7d20566](https://github.com/A-Guy-educ/A-Guy/commit/7d20566)), closes [#issue](https://github.com/A-Guy-educ/A-Guy/issues/issue) [#pr](https://github.com/A-Guy-educ/A-Guy/issues/pr)
+* feat(cody): Mobile-optimized task list and task detail UX ([47f95e2](https://github.com/A-Guy-educ/A-Guy/commit/47f95e2))
+* feat(cody): Overhaul dashboard with 11 improvements and polished task detail ([ea85829](https://github.com/A-Guy-educ/A-Guy/commit/ea85829))
+* feat(cody): Publish flow via issue + CI-aware merge button ([f42c9ed](https://github.com/A-Guy-educ/A-Guy/commit/f42c9ed))
+* feat(cody): Redesign task list layout and bump font sizes across dashboard ([0d327c8](https://github.com/A-Guy-educ/A-Guy/commit/0d327c8))
+* feat(cody): reduce polling by fetching only open issues ([ec4e814](https://github.com/A-Guy-educ/A-Guy/commit/ec4e814))
+* feat(cody): replace LLM verify/pr stages with direct scripted execution ([e4ace90](https://github.com/A-Guy-educ/A-Guy/commit/e4ace90))
+* feat(cody): Responsive mobile dashboard with Sheet drawers ([8dda692](https://github.com/A-Guy-educ/A-Guy/commit/8dda692))
+* feat(cody): Restore CopilotKit chat integration to dashboard ([d7a0616](https://github.com/A-Guy-educ/A-Guy/commit/d7a0616))
+* feat(cody): Restrict /cody to admin-only access ([fbada2b](https://github.com/A-Guy-educ/A-Guy/commit/fbada2b))
+* feat(cody): Rewrite AssigneePicker with cached collaborators + add URL routing for task detail ([da45fd8](https://github.com/A-Guy-educ/A-Guy/commit/da45fd8))
+* feat(cody): Show Vercel preview links on tasks with PRs ([3202899](https://github.com/A-Guy-educ/A-Guy/commit/3202899))
+* feat(cody): simplify rerun command syntax ([fb8d0fe](https://github.com/A-Guy-educ/A-Guy/commit/fb8d0fe))
+* feat(cody): Smart auto-refresh polling and dead code cleanup ([541d29c](https://github.com/A-Guy-educ/A-Guy/commit/541d29c))
+* feat(cody): Strengthen test pipeline with Pre-commit gate ([ed5d47c](https://github.com/A-Guy-educ/A-Guy/commit/ed5d47c))
+* feat(cody): support resuming from local branch on failed run ([1a588da](https://github.com/A-Guy-educ/A-Guy/commit/1a588da))
+* feat(cody): sync pipeline improvements from A-Guy ([5a00376](https://github.com/A-Guy-educ/A-Guy/commit/5a00376))
+* feat(devenv): Add Docker-based dev environment with OpenCode and GitHub CLI ([e440337](https://github.com/A-Guy-educ/A-Guy/commit/e440337))
+* feat(exercise-conversion): implement multi-part exercise extraction for V3 converter ([e8ec1a9](https://github.com/A-Guy-educ/A-Guy/commit/e8ec1a9))
+* feat(exercise-editor): Add admin editors for matching, SVG, geometry, and axis question types ([c9db496](https://github.com/A-Guy-educ/A-Guy/commit/c9db496))
+* feat(exercise-editor): Add angle rendering, line labels, triangle binding fix, and shape group-move ([e24c05f](https://github.com/A-Guy-educ/A-Guy/commit/e24c05f))
+* feat(exercise-renderer): Add matching, SVG, geometry, and axis question types ([10da27f](https://github.com/A-Guy-educ/A-Guy/commit/10da27f))
+* feat(exercise): add LLM-generated titles for V3 exercise conversion ([cf781a9](https://github.com/A-Guy-educ/A-Guy/commit/cf781a9))
+* feat(exercises): Add help system with hint/guiding/solution progression ([99aa118](https://github.com/A-Guy-educ/A-Guy/commit/99aa118))
+* feat(exercises): add media type block to exercise content editor ([7bd850e](https://github.com/A-Guy-educ/A-Guy/commit/7bd850e))
+* feat(exercises): Add WYSIWYG HTML block for exercise content editor ([8f98440](https://github.com/A-Guy-educ/A-Guy/commit/8f98440))
+* feat(media): Add Vimeo embed support on top of YouTube embed infrastructure ([4c9b480](https://github.com/A-Guy-educ/A-Guy/commit/4c9b480)), closes [#1ab7ea](https://github.com/A-Guy-educ/A-Guy/issues/1ab7ea)
+* feat(media): Add YouTube embed integration for external media ([7f7b2c8](https://github.com/A-Guy-educ/A-Guy/commit/7f7b2c8))
+* feat(media): Add YouTube preview for External media type ([82940a2](https://github.com/A-Guy-educ/A-Guy/commit/82940a2))
+* feat(skills): Add scripts to 4 skills ([bd62552](https://github.com/A-Guy-educ/A-Guy/commit/bd62552))
+* feat(study-plan): Add generate button to empty state placeholder ([de1f1ed](https://github.com/A-Guy-educ/A-Guy/commit/de1f1ed))
+* feat(study-plan): Require explicit button click for initial plan generation ([8cede93](https://github.com/A-Guy-educ/A-Guy/commit/8cede93))
+* feat(supervisor): Fix trigger chain and enable auto-retry ([e2928f9](https://github.com/A-Guy-educ/A-Guy/commit/e2928f9))
+* feat(ui): Add enableProse prop to SafeHtml for responsive Quill content ([71e629f](https://github.com/A-Guy-educ/A-Guy/commit/71e629f))
+* feat(v3-converter): extract diagrams into rich text blocks ([320a6b2](https://github.com/A-Guy-educ/A-Guy/commit/320a6b2))
+* feat(v3-converter): per-sub-question diagram placement with enriched descriptions ([15d1f89](https://github.com/A-Guy-educ/A-Guy/commit/15d1f89))
+* refactor: bug: 30+ console.log debug statements in v2 exercise conversion pipeline - Closes #684 (#6 ([07f9977](https://github.com/A-Guy-educ/A-Guy/commit/07f9977)), closes [#684](https://github.com/A-Guy-educ/A-Guy/issues/684) [#691](https://github.com/A-Guy-educ/A-Guy/issues/691)
+* refactor: consolidate 21 Cody Dashboard tasks into 3 parallel PRs ([b33a6c3](https://github.com/A-Guy-educ/A-Guy/commit/b33a6c3))
+* refactor: migrate skills from .claude/skills to .agents/skills ([76e95db](https://github.com/A-Guy-educ/A-Guy/commit/76e95db))
+* refactor: refactor: duplicated formatslug function across 3 collections lacks h... - Closes #683 (#6 ([bc16e1c](https://github.com/A-Guy-educ/A-Guy/commit/bc16e1c)), closes [#683](https://github.com/A-Guy-educ/A-Guy/issues/683) [#692](https://github.com/A-Guy-educ/A-Guy/issues/692)
+* refactor: Remove dead code and deduplicate content-locale utilities ([7588aaa](https://github.com/A-Guy-educ/A-Guy/commit/7588aaa))
+* refactor: remove lib folder, move cody utilities to src/ui/cody ([ab98864](https://github.com/A-Guy-educ/A-Guy/commit/ab98864))
+* refactor: Replace with cody-local-exec skill ([dce7263](https://github.com/A-Guy-educ/A-Guy/commit/dce7263))
+* refactor: update plan and spec to make ContentPages generic and reusable ([c449cc8](https://github.com/A-Guy-educ/A-Guy/commit/c449cc8))
+* refactor: update plan and spec to remove backward compatibility ([456952f](https://github.com/A-Guy-educ/A-Guy/commit/456952f))
+* refactor(260222-auto-37): Description ([03e7052](https://github.com/A-Guy-educ/A-Guy/commit/03e7052))
+* refactor(260223-auto-29): Description ([7bea9cb](https://github.com/A-Guy-educ/A-Guy/commit/7bea9cb))
+* refactor(260226-add-missing-indexes): Issue Title ([63e6fc4](https://github.com/A-Guy-educ/A-Guy/commit/63e6fc4))
+* refactor(260228-auto-07): Issue Title ([ffe98ce](https://github.com/A-Guy-educ/A-Guy/commit/ffe98ce))
+* refactor(260306-auto-330): Issue Title ([380ad52](https://github.com/A-Guy-educ/A-Guy/commit/380ad52))
+* refactor(260306-auto-330): Issue Title ([eef2f4b](https://github.com/A-Guy-educ/A-Guy/commit/eef2f4b))
+* refactor(ci): Consolidate watchdog and supervisor into inspector framework ([b210ac5](https://github.com/A-Guy-educ/A-Guy/commit/b210ac5))
+* refactor(cody): Convert bash scripts to TypeScript ([fdeb5d6](https://github.com/A-Guy-educ/A-Guy/commit/fdeb5d6))
+* refactor(cody): optimize pipeline - clarify opt-in, TDD test-writer, scripted commit, apply-audit ([2cc1716](https://github.com/A-Guy-educ/A-Guy/commit/2cc1716))
+* refactor(cody): Replace continuous polling with exit-then-check approach ([8905ca7](https://github.com/A-Guy-educ/A-Guy/commit/8905ca7))
+* refactor(cody): replace plan-review gate with plan-gap agent ([c4a8567](https://github.com/A-Guy-educ/A-Guy/commit/c4a8567))
+* refactor(cody): replace skill-discovery with LLM-driven skill recommendations ([e9b05b9](https://github.com/A-Guy-educ/A-Guy/commit/e9b05b9))
+* refactor(cody): Rewrite README for AI agents ([66fbc6e](https://github.com/A-Guy-educ/A-Guy/commit/66fbc6e))
+* refactor(cody): Update review-fix-pipeline plan with implementation fixes ([1e0e64b](https://github.com/A-Guy-educ/A-Guy/commit/1e0e64b))
+* refactor(exercise-editor): Replace custom MediaPicker with Payload's useListDrawer ([8b3601c](https://github.com/A-Guy-educ/A-Guy/commit/8b3601c))
+* refactor(exercise-editor): Replace custom MediaPicker with Payload's useListDrawer ([c190377](https://github.com/A-Guy-educ/A-Guy/commit/c190377))
+* refactor(exercise-editor): Replace custom MediaPicker with Payload's useListDrawer ([7ceb51c](https://github.com/A-Guy-educ/A-Guy/commit/7ceb51c))
+* refactor(exercise-editor): Replace custom MediaPicker with Payload's useListDrawer ([5826bd3](https://github.com/A-Guy-educ/A-Guy/commit/5826bd3))
+* refactor(exercise-renderer): Improve matching question visuals and split into modules ([e4b2163](https://github.com/A-Guy-educ/A-Guy/commit/e4b2163))
+* refactor(exercise-renderer): Remove geometry/axis question logic, treat as media-only ([ecd5542](https://github.com/A-Guy-educ/A-Guy/commit/ecd5542))
+* refactor(study-plan): Delete lib folder, use CSS variable colors ([857a96c](https://github.com/A-Guy-educ/A-Guy/commit/857a96c))
+* refactor(tunnel): Replace bash tunnel scripts with TypeScript ngrok tunnel ([cf29e8b](https://github.com/A-Guy-educ/A-Guy/commit/cf29e8b))
+* perf: Double typing animation speed on main page ([8d0b354](https://github.com/A-Guy-educ/A-Guy/commit/8d0b354))
+* perf: Speed up verify script ([97fbb56](https://github.com/A-Guy-educ/A-Guy/commit/97fbb56))
+* perf(agents): Add efficiency directive to reduce narration tokens ([16f2d63](https://github.com/A-Guy-educ/A-Guy/commit/16f2d63))
+* perf(cody): optimize pipeline performance ([bdf6bda](https://github.com/A-Guy-educ/A-Guy/commit/bdf6bda))
+* perf(cody): Remove remote pnpm cache for self-hosted runner ([496b585](https://github.com/A-Guy-educ/A-Guy/commit/496b585))
+* perf(cody): Speed up pipeline for low-risk features ([f89fe4b](https://github.com/A-Guy-educ/A-Guy/commit/f89fe4b))
+* perf(verify): Run verification steps in parallel ([a36dff1](https://github.com/A-Guy-educ/A-Guy/commit/a36dff1))
+* chore: add task 260219-youtube-embed-integration spec files ([9b4822f](https://github.com/A-Guy-educ/A-Guy/commit/9b4822f))
+* chore: Add timing debug info to warning modal ([f717047](https://github.com/A-Guy-educ/A-Guy/commit/f717047))
+* chore: Add tunnel scripts and update package.json ([9a8e94e](https://github.com/A-Guy-educ/A-Guy/commit/9a8e94e))
+* chore: cody pipeline analysis - bugs found but deferred ([285f1bc](https://github.com/A-Guy-educ/A-Guy/commit/285f1bc))
+* chore: Format 11 files with Prettier ([b0f8975](https://github.com/A-Guy-educ/A-Guy/commit/b0f8975))
+* chore: Merge dev into feat/study-plan-generator and regenerate lockfile ([297ab6c](https://github.com/A-Guy-educ/A-Guy/commit/297ab6c))
+* chore: Merge dev into feature branch ([fdee01a](https://github.com/A-Guy-educ/A-Guy/commit/fdee01a))
+* chore: Reduce gated timer to 1 minute for testing ([94ed404](https://github.com/A-Guy-educ/A-Guy/commit/94ed404))
+* chore: Regenerate payload types for Conversation title field ([3bbc3c8](https://github.com/A-Guy-educ/A-Guy/commit/3bbc3c8))
+* chore: Remove cody-legacy workflow and scripts ([ca441b9](https://github.com/A-Guy-educ/A-Guy/commit/ca441b9))
+* chore: Remove dead legacy upload code ([77a99ea](https://github.com/A-Guy-educ/A-Guy/commit/77a99ea))
+* chore: Remove debug output from warning modal ([9ce1d10](https://github.com/A-Guy-educ/A-Guy/commit/9ce1d10))
+* chore: Remove stray blank lines from comment removal ([f853e76](https://github.com/A-Guy-educ/A-Guy/commit/f853e76))
+* chore: Remove unrelated cody pipeline changes from feature branch ([db6479a](https://github.com/A-Guy-educ/A-Guy/commit/db6479a))
+* chore: Remove unused GatedWarningBanner component ([cfdbe16](https://github.com/A-Guy-educ/A-Guy/commit/cfdbe16))
+* chore: rename cody:run to cody script ([a715126](https://github.com/A-Guy-educ/A-Guy/commit/a715126))
+* chore: Resolve lockfile conflict and regenerate pnpm-lock.yaml ([ceb9fe6](https://github.com/A-Guy-educ/A-Guy/commit/ceb9fe6))
+* chore: Simplify tunnel:ocode script to use opencode web + ngrok directly ([ba6849f](https://github.com/A-Guy-educ/A-Guy/commit/ba6849f))
+* chore: Track .tasks directory in git ([8cc4c83](https://github.com/A-Guy-educ/A-Guy/commit/8cc4c83))
+* chore: Trigger CI rebuild ([f9e99d2](https://github.com/A-Guy-educ/A-Guy/commit/f9e99d2))
+* chore: Trigger fresh CI run ([162d8fb](https://github.com/A-Guy-educ/A-Guy/commit/162d8fb))
+* chore: update agent configs ([fb7b84a](https://github.com/A-Guy-educ/A-Guy/commit/fb7b84a))
+* chore: update lockfile and add task artifacts ([4ec88f2](https://github.com/A-Guy-educ/A-Guy/commit/4ec88f2))
+* chore: update lockfile and add task artifacts ([f83d174](https://github.com/A-Guy-educ/A-Guy/commit/f83d174))
+* chore: Update OpenCode agent models from Gemini to GPT ([2bf78e0](https://github.com/A-Guy-educ/A-Guy/commit/2bf78e0))
+* chore: Update opencode.json model to claude-opus-4-6 ([f14dd73](https://github.com/A-Guy-educ/A-Guy/commit/f14dd73))
+* chore: Update opencode.json to use MiniMax-M2.5 model ([f8ce073](https://github.com/A-Guy-educ/A-Guy/commit/f8ce073))
+* chore: Update package dependencies ([f7714fb](https://github.com/A-Guy-educ/A-Guy/commit/f7714fb))
+* chore: Update pnpm lockfile ([a1d0033](https://github.com/A-Guy-educ/A-Guy/commit/a1d0033))
+* chore: Update regenerated types from pre-push verification ([4b4220a](https://github.com/A-Guy-educ/A-Guy/commit/4b4220a))
+* chore: update task specs and regenerate types ([5c20d2b](https://github.com/A-Guy-educ/A-Guy/commit/5c20d2b))
+* chore: update test-writer agent and add test-writer-fix task ([6547ca0](https://github.com/A-Guy-educ/A-Guy/commit/6547ca0))
+* chore(build): Optimize Next.js build times ([4dcf95e](https://github.com/A-Guy-educ/A-Guy/commit/4dcf95e))
+* chore(cody): add bug analysis tasks and test ([92d2a70](https://github.com/A-Guy-educ/A-Guy/commit/92d2a70))
+* chore(cody): Remove old bash scripts ([51916f4](https://github.com/A-Guy-educ/A-Guy/commit/51916f4))
+* chore(cody): update workflow permissions for CI ([1199ad0](https://github.com/A-Guy-educ/A-Guy/commit/1199ad0))
+* chore(exercise-editor): Remove dead MatchingLines component and orphan comment ([3d9bf2b](https://github.com/A-Guy-educ/A-Guy/commit/3d9bf2b))
+* chore(exercise-renderer): Clean up unused i18n keys, dead code, and naming ([29fc3b3](https://github.com/A-Guy-educ/A-Guy/commit/29fc3b3))
+* chore(llm): Change model to gemini-3.1-pro for context conversion ([cd33e29](https://github.com/A-Guy-educ/A-Guy/commit/cd33e29))
+* chore(opencode): update gemini model versions to 3.1-pro-preview ([bd565a4](https://github.com/A-Guy-educ/A-Guy/commit/bd565a4))
+* chore(release): 0.14.0 [skip ci] ([9c6791a](https://github.com/A-Guy-educ/A-Guy/commit/9c6791a))
+* chore(tunnel): Replace localtunnel with cloudflared ([4a13271](https://github.com/A-Guy-educ/A-Guy/commit/4a13271))
+* chore(tunnel): Replace ngrok with localtunnel for dev tunneling ([ab4cc2c](https://github.com/A-Guy-educ/A-Guy/commit/ab4cc2c))
+* test: Add P0 integration test suite (9 files, 78 assertions) ([1138d51](https://github.com/A-Guy-educ/A-Guy/commit/1138d51))
+* test: Add P1 integration test suite (4 files, 17 assertions) ([32aabc2](https://github.com/A-Guy-educ/A-Guy/commit/32aabc2))
+* test: Add P2 integration test suite (6 files, 22 assertions) ([58e9a48](https://github.com/A-Guy-educ/A-Guy/commit/58e9a48))
+* test: Add P2 integration tests for collections and API routes ([932c614](https://github.com/A-Guy-educ/A-Guy/commit/932c614))
+* test: Add unit tests for queryLessonBySlug ([eda710a](https://github.com/A-Guy-educ/A-Guy/commit/eda710a))
+* test: Add unit tests for Redis rate limiter ([80a6823](https://github.com/A-Guy-educ/A-Guy/commit/80a6823))
+* test: add V3 exercise conversion test suite ([c18db1a](https://github.com/A-Guy-educ/A-Guy/commit/c18db1a))
+* test: Add whitespace trimming tests for formatSlug ([16eea79](https://github.com/A-Guy-educ/A-Guy/commit/16eea79))
+* test: Update system events count to 20 after adding 9 exercise events ([b9fd99e](https://github.com/A-Guy-educ/A-Guy/commit/b9fd99e))
+* test: Update useNotebookChat tests for contextKeyOverride ([31ac53b](https://github.com/A-Guy-educ/A-Guy/commit/31ac53b))
+* test(cody): add comprehensive unit tests for all cody modules ([d45de4f](https://github.com/A-Guy-educ/A-Guy/commit/d45de4f))
+* test(cody): Add tests for pipeline reliability fixes ([c1ed29c](https://github.com/A-Guy-educ/A-Guy/commit/c1ed29c))
+* test(cody): Fix unit tests for execFileSync ([6599266](https://github.com/A-Guy-educ/A-Guy/commit/6599266))
+* test(cody): update runner-backend tests for new opencode run --agent implementation ([98373ce](https://github.com/A-Guy-educ/A-Guy/commit/98373ce))
+* test(cody): Update test mocks for execFileSync and getDefaultBranch fixes ([19862a6](https://github.com/A-Guy-educ/A-Guy/commit/19862a6))
+* docs: Add Cody CI fixes documentation ([a528408](https://github.com/A-Guy-educ/A-Guy/commit/a528408))
+* docs: Add initial cody state machine rewrite plan ([808689e](https://github.com/A-Guy-educ/A-Guy/commit/808689e))
+* docs: Add integration and E2E test coverage audit reports ([c570f59](https://github.com/A-Guy-educ/A-Guy/commit/c570f59))
+* docs: Add plan for 11 Cody dashboard improvements ([462f9ca](https://github.com/A-Guy-educ/A-Guy/commit/462f9ca))
+* docs: Add plan to simplify Cody orchestration layer ([cb46a4a](https://github.com/A-Guy-educ/A-Guy/commit/cb46a4a))
+* docs: Add platform introduction and link from README ([7a2f254](https://github.com/A-Guy-educ/A-Guy/commit/7a2f254))
+* docs: Add system stability, maintenance & AI agent optimization plan ([1d823f0](https://github.com/A-Guy-educ/A-Guy/commit/1d823f0))
+* docs: Add task planning docs ([87afa4f](https://github.com/A-Guy-educ/A-Guy/commit/87afa4f))
+* docs: Refresh README with accurate project description ([45f65b0](https://github.com/A-Guy-educ/A-Guy/commit/45f65b0))
+* docs: Update CODY-FIXES.md with fixes 6-11 ([6f537f8](https://github.com/A-Guy-educ/A-Guy/commit/6f537f8))
+* docs(260219-auto-41): Add build and plan documentation for dark mode color palette ([c3429f6](https://github.com/A-Guy-educ/A-Guy/commit/c3429f6))
+* docs(260219-auto-41): Add commit entry for build report update ([72157c9](https://github.com/A-Guy-educ/A-Guy/commit/72157c9))
+* docs(260219-auto-41): Update build report with correct branch name ([415f2eb](https://github.com/A-Guy-educ/A-Guy/commit/415f2eb))
+* docs(cody-dashboard): Update build.md with all phases complete ([89937e4](https://github.com/A-Guy-educ/A-Guy/commit/89937e4))
+* docs(cody): Add build-manager agent architecture plan ([ad41c1f](https://github.com/A-Guy-educ/A-Guy/commit/ad41c1f))
+* docs(cody): Add README.md with pipeline overview ([781cf86](https://github.com/A-Guy-educ/A-Guy/commit/781cf86))
+* docs(cody): Add technical details to README ([e811799](https://github.com/A-Guy-educ/A-Guy/commit/e811799))
+* ci: remove redundant workflows (manager, opencode, pipeline) ([5597c6e](https://github.com/A-Guy-educ/A-Guy/commit/5597c6e))
+* ci: run e2e tests only on PRs to main ([501275b](https://github.com/A-Guy-educ/A-Guy/commit/501275b))
+* ci(cody): commit task files for 260225-auto-90 ([9e73e3b](https://github.com/A-Guy-educ/A-Guy/commit/9e73e3b))
+* ci(cody): commit task files for 260225-auto-90 ([f853e88](https://github.com/A-Guy-educ/A-Guy/commit/f853e88))
+* ci(cody): commit task files for 260225-auto-90 ([3a25dd0](https://github.com/A-Guy-educ/A-Guy/commit/3a25dd0))
+* ci(cody): commit task files for 260225-smoke-test ([87140dd](https://github.com/A-Guy-educ/A-Guy/commit/87140dd))
+* ci(cody): commit task files for 260226-add-missing-indexes ([7f0c1ec](https://github.com/A-Guy-educ/A-Guy/commit/7f0c1ec))
+* ci(cody): commit task files for 260226-add-missing-indexes ([a2404e8](https://github.com/A-Guy-educ/A-Guy/commit/a2404e8))
+* ci(cody): commit task files for 260226-add-missing-indexes ([e31899b](https://github.com/A-Guy-educ/A-Guy/commit/e31899b))
+* ci(cody): commit task files for 260226-add-zod-validation ([a662d75](https://github.com/A-Guy-educ/A-Guy/commit/a662d75))
+* ci(cody): commit task files for 260226-add-zod-validation ([c8063d1](https://github.com/A-Guy-educ/A-Guy/commit/c8063d1))
+* ci(cody): commit task files for 260226-add-zod-validation ([08e61d4](https://github.com/A-Guy-educ/A-Guy/commit/08e61d4))
+* ci(cody): commit task files for 260226-fix-admin-demotion-hook ([9f5a992](https://github.com/A-Guy-educ/A-Guy/commit/9f5a992))
+* ci(cody): commit task files for 260226-fix-admin-demotion-hook ([f3d5bfd](https://github.com/A-Guy-educ/A-Guy/commit/f3d5bfd))
+* ci(cody): commit task files for 260226-fix-admin-demotion-hook ([1552e91](https://github.com/A-Guy-educ/A-Guy/commit/1552e91))
+* ci(cody): commit task files for 260226-fix-guest-session-as-any ([9d0223f](https://github.com/A-Guy-educ/A-Guy/commit/9d0223f))
+* ci(cody): commit task files for 260226-fix-guest-session-as-any ([024fd67](https://github.com/A-Guy-educ/A-Guy/commit/024fd67))
+* ci(cody): commit task files for 260226-fix-react-keys ([e38d6a8](https://github.com/A-Guy-educ/A-Guy/commit/e38d6a8))
+* ci(cody): commit task files for 260226-fix-react-keys ([f971e89](https://github.com/A-Guy-educ/A-Guy/commit/f971e89))
+* ci(cody): commit task files for 260226-fix-react-keys ([7b9f092](https://github.com/A-Guy-educ/A-Guy/commit/7b9f092))
+* ci(cody): commit task files for 260226-fix-stream-message-callback ([4cd12a0](https://github.com/A-Guy-educ/A-Guy/commit/4cd12a0))
+* ci(cody): commit task files for 260226-fix-stream-message-callback ([44203a0](https://github.com/A-Guy-educ/A-Guy/commit/44203a0))
+* ci(cody): commit task files for 260226-fix-stream-message-callback ([4a1b0ae](https://github.com/A-Guy-educ/A-Guy/commit/4a1b0ae))
+* ci(cody): commit task files for 260227-auto-83 ([6decf49](https://github.com/A-Guy-educ/A-Guy/commit/6decf49))
+* ci(cody): commit task files for 260228-auto-07 ([a98c13d](https://github.com/A-Guy-educ/A-Guy/commit/a98c13d))
+* ci(cody): commit task files for 260228-auto-25 ([d3928c9](https://github.com/A-Guy-educ/A-Guy/commit/d3928c9))
+* ci(cody): commit task files for 260228-auto-35 ([9de7638](https://github.com/A-Guy-educ/A-Guy/commit/9de7638))
+* ci(cody): commit task files for 260228-auto-42 ([1fe3fc4](https://github.com/A-Guy-educ/A-Guy/commit/1fe3fc4))
+* ci(cody): commit task files for 260228-auto-74 ([7403a35](https://github.com/A-Guy-educ/A-Guy/commit/7403a35))
+* ci(cody): commit task files for 260228-auto-74 ([8d3dd33](https://github.com/A-Guy-educ/A-Guy/commit/8d3dd33))
+* ci(cody): commit task files for 260228-auto-98 ([bbe2055](https://github.com/A-Guy-educ/A-Guy/commit/bbe2055))
+* ci(cody): commit task files for 260302-auto-25 ([e8a034e](https://github.com/A-Guy-educ/A-Guy/commit/e8a034e))
+* ci(cody): commit task files for 260302-auto-66 ([72ad63c](https://github.com/A-Guy-educ/A-Guy/commit/72ad63c))
+* ci(cody): commit task files for 260305-auto-947 ([34e76fc](https://github.com/A-Guy-educ/A-Guy/commit/34e76fc))
+* ci(cody): Fix commit message sentence-case for commitlint ([5b7a261](https://github.com/A-Guy-educ/A-Guy/commit/5b7a261))
+* ci(cody): gate architect approved for 260228-auto-74 ([a4591ea](https://github.com/A-Guy-educ/A-Guy/commit/a4591ea))
+* ci(cody): gate taskify approved for 260228-auto-07 ([f00dc58](https://github.com/A-Guy-educ/A-Guy/commit/f00dc58))
+* ci(cody): gate taskify approved for 260228-auto-74 ([cc99d5d](https://github.com/A-Guy-educ/A-Guy/commit/cc99d5d))
+* ci(cody): gate taskify approved for 260228-auto-98 ([95c7f7d](https://github.com/A-Guy-educ/A-Guy/commit/95c7f7d))
+* ci(cody): gate taskify approved for 260302-auto-25 ([a63cfbf](https://github.com/A-Guy-educ/A-Guy/commit/a63cfbf))
+* ci(cody): gate taskify approved for 260302-auto-66 ([f929784](https://github.com/A-Guy-educ/A-Guy/commit/f929784))
+* ci(cody): gate taskify approved for 260305-auto-782 ([b700048](https://github.com/A-Guy-educ/A-Guy/commit/b700048))
+* ci(cody): gate taskify approved for 260306-auto-330 ([d43ca80](https://github.com/A-Guy-educ/A-Guy/commit/d43ca80))
+* ci(cody): gate taskify approved for 260306-auto-487 ([8d009f4](https://github.com/A-Guy-educ/A-Guy/commit/8d009f4))
+* ci(cody): Increase build timeout to 45min and job timeout to 90min ([4eb583d](https://github.com/A-Guy-educ/A-Guy/commit/4eb583d))
+* ci(cody): pause at architect gate for 260225-auto-90 ([4af3e88](https://github.com/A-Guy-educ/A-Guy/commit/4af3e88))
+* ci(cody): pause at architect gate for 260225-auto-90 ([06049f0](https://github.com/A-Guy-educ/A-Guy/commit/06049f0))
+* ci(cody): pause at architect gate for 260225-auto-90 ([5d3d007](https://github.com/A-Guy-educ/A-Guy/commit/5d3d007))
+* ci(cody): pause at architect gate for 260225-auto-90 ([cdb82c5](https://github.com/A-Guy-educ/A-Guy/commit/cdb82c5))
+* ci(cody): pause at architect gate for 260225-auto-90 ([adaf9be](https://github.com/A-Guy-educ/A-Guy/commit/adaf9be))
+* ci(cody): pause at architect gate for 260228-auto-74 ([f060411](https://github.com/A-Guy-educ/A-Guy/commit/f060411))
+* ci(cody): pause at hard-stop gate for 260224-auto-15 ([a920f79](https://github.com/A-Guy-educ/A-Guy/commit/a920f79))
+* ci(cody): pause at hard-stop gate for 260224-auto-15 ([20025a3](https://github.com/A-Guy-educ/A-Guy/commit/20025a3))
+* ci(cody): pause at hard-stop gate for 260224-auto-40 ([eb350c8](https://github.com/A-Guy-educ/A-Guy/commit/eb350c8))
+* ci(cody): pause at hard-stop gate for 260224-auto-40 ([5464ad3](https://github.com/A-Guy-educ/A-Guy/commit/5464ad3))
+* ci(cody): pause at risk-gated gate for 260222-auto-01 ([589a229](https://github.com/A-Guy-educ/A-Guy/commit/589a229))
+* ci(cody): pause at risk-gated gate for 260224-auto-59 ([b07b362](https://github.com/A-Guy-educ/A-Guy/commit/b07b362))
+* ci(cody): pause at risk-gated gate for 260225-auto-21 ([c6d1d58](https://github.com/A-Guy-educ/A-Guy/commit/c6d1d58))
+* ci(cody): pause at taskify gate for 260225-auto-90 ([064ede3](https://github.com/A-Guy-educ/A-Guy/commit/064ede3))
+* ci(cody): pause at taskify gate for 260225-auto-90 ([8b39aa9](https://github.com/A-Guy-educ/A-Guy/commit/8b39aa9))
+* ci(cody): pause at taskify gate for 260225-auto-90 ([b7f9788](https://github.com/A-Guy-educ/A-Guy/commit/b7f9788))
+* ci(cody): pause at taskify gate for 260225-auto-90 ([2412ebc](https://github.com/A-Guy-educ/A-Guy/commit/2412ebc))
+* ci(cody): pause at taskify gate for 260225-auto-90 ([28f039c](https://github.com/A-Guy-educ/A-Guy/commit/28f039c))
+* ci(cody): pause at taskify gate for 260228-auto-07 ([0802c05](https://github.com/A-Guy-educ/A-Guy/commit/0802c05))
+* ci(cody): pause at taskify gate for 260228-auto-74 ([66b2c64](https://github.com/A-Guy-educ/A-Guy/commit/66b2c64))
+* ci(cody): pause at taskify gate for 260228-auto-98 ([60d0d5c](https://github.com/A-Guy-educ/A-Guy/commit/60d0d5c))
+* ci(cody): pause at taskify gate for 260302-auto-25 ([ea885e5](https://github.com/A-Guy-educ/A-Guy/commit/ea885e5))
+* ci(cody): pause at taskify gate for 260302-auto-66 ([d2a49f4](https://github.com/A-Guy-educ/A-Guy/commit/d2a49f4))
+* ci(cody): pause at taskify gate for 260305-auto-782 ([a219b17](https://github.com/A-Guy-educ/A-Guy/commit/a219b17))
+* ci(cody): pause at taskify gate for 260306-auto-330 ([c5b1f4d](https://github.com/A-Guy-educ/A-Guy/commit/c5b1f4d))
+* ci(cody): pause at taskify gate for 260306-auto-487 ([2e1d93d](https://github.com/A-Guy-educ/A-Guy/commit/2e1d93d))
+* ci(cody): Save task files for 260221-auto-56 ([3b5c74f](https://github.com/A-Guy-educ/A-Guy/commit/3b5c74f))
+* ci(cody): Save task files for 260221-auto-56 ([383f11f](https://github.com/A-Guy-educ/A-Guy/commit/383f11f))
+* ci(cody): Save task files for 260222-auto-01 ([b205355](https://github.com/A-Guy-educ/A-Guy/commit/b205355))
+* ci(cody): Save task files for 260222-auto-02 ([df867fb](https://github.com/A-Guy-educ/A-Guy/commit/df867fb))
+* ci(cody): Save task files for 260222-auto-37 ([dfa7309](https://github.com/A-Guy-educ/A-Guy/commit/dfa7309))
+* ci(cody): Save task files for 260222-auto-52 ([5eb6385](https://github.com/A-Guy-educ/A-Guy/commit/5eb6385))
+* ci(cody): Save task files for 260223-auto-29 ([dc6cf5f](https://github.com/A-Guy-educ/A-Guy/commit/dc6cf5f))
+* ci(cody): Save task files for 260223-auto-29 ([54f445f](https://github.com/A-Guy-educ/A-Guy/commit/54f445f))
+* ci(cody): Save task files for 260223-auto-87 ([0907cb0](https://github.com/A-Guy-educ/A-Guy/commit/0907cb0))
+* ci(cody): Save task files for 260224-auto-15 ([79cdc7a](https://github.com/A-Guy-educ/A-Guy/commit/79cdc7a))
+* ci(cody): Save task files for 260224-auto-40 ([b7eebf9](https://github.com/A-Guy-educ/A-Guy/commit/b7eebf9))
+* ci(cody): Save task files for 260224-auto-59 ([8d9a2d7](https://github.com/A-Guy-educ/A-Guy/commit/8d9a2d7))
+* ci(cody): Save task files for 260225-auto-21 ([759ee3e](https://github.com/A-Guy-educ/A-Guy/commit/759ee3e))
+* style: fix formatting ([5ffb042](https://github.com/A-Guy-educ/A-Guy/commit/5ffb042))
+* style: Fix formatting in runner-backend.ts ([03c0711](https://github.com/A-Guy-educ/A-Guy/commit/03c0711))
+* style: fix formatting in test files ([d74abe7](https://github.com/A-Guy-educ/A-Guy/commit/d74abe7))
+* style: fix prettier formatting ([1ca40a6](https://github.com/A-Guy-educ/A-Guy/commit/1ca40a6))
+* style: Fix prettier formatting in StudyPlanPage ([bd6573a](https://github.com/A-Guy-educ/A-Guy/commit/bd6573a))
+* style: format code with prettier ([6f903dc](https://github.com/A-Guy-educ/A-Guy/commit/6f903dc))
+* style: format create route and transform files ([a66b78e](https://github.com/A-Guy-educ/A-Guy/commit/a66b78e))
+* style(cody): Improve TaskDetail visual hierarchy and component organization ([1fe56cb](https://github.com/A-Guy-educ/A-Guy/commit/1fe56cb))
+* debug(cody): Add debug output to runner-backend to diagnose stdin issue ([b2ee2d3](https://github.com/A-Guy-educ/A-Guy/commit/b2ee2d3))
+* security(cody): Add admin-only auth plan for unauthenticated Cody/Copilotkit endpoints ([1fab8f6](https://github.com/A-Guy-educ/A-Guy/commit/1fab8f6))
+* Refactor(cody): simplify dashboard with TanStack Query hooks ([3c6bbf8](https://github.com/A-Guy-educ/A-Guy/commit/3c6bbf8))
+* merge: Resolve conflicts with origin/dev ([b235a0a](https://github.com/A-Guy-educ/A-Guy/commit/b235a0a))
+
+## 0.14.0 (2026-02-19)
+
+* Delete deleteme.txt ([abff9fa](https://github.com/A-Guy-educ/A-Guy/commit/abff9fa))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([5d0e6ce](https://github.com/A-Guy-educ/A-Guy/commit/5d0e6ce))
+* Merge origin/dev into feat/orchestrated-pipeline ([1056a13](https://github.com/A-Guy-educ/A-Guy/commit/1056a13))
+* Merge origin/dev into fix/cody-stop-for-clarification ([89e6230](https://github.com/A-Guy-educ/A-Guy/commit/89e6230))
+* Merge pull request #416 from A-Guy-educ/feat/ask-hybrid-layout ([6b28b80](https://github.com/A-Guy-educ/A-Guy/commit/6b28b80)), closes [#416](https://github.com/A-Guy-educ/A-Guy/issues/416)
+* Merge pull request #438 from A-Guy-educ/feat/orchestrated-pipeline ([d251bfe](https://github.com/A-Guy-educ/A-Guy/commit/d251bfe)), closes [#438](https://github.com/A-Guy-educ/A-Guy/issues/438)
+* Merge pull request #460 from A-Guy-educ/refactor/orchestrator-modules ([bf99e2f](https://github.com/A-Guy-educ/A-Guy/commit/bf99e2f)), closes [#460](https://github.com/A-Guy-educ/A-Guy/issues/460)
+* Merge pull request #469 from A-Guy-educ/fix/cody-stop-for-clarification ([6d0839c](https://github.com/A-Guy-educ/A-Guy/commit/6d0839c)), closes [#469](https://github.com/A-Guy-educ/A-Guy/issues/469)
+* Merge pull request #486 from A-Guy-educ/fix/cody-comment-newlines ([1ca7df9](https://github.com/A-Guy-educ/A-Guy/commit/1ca7df9)), closes [#486](https://github.com/A-Guy-educ/A-Guy/issues/486)
+* Merge pull request #490 from A-Guy-educ/dev ([b4b4324](https://github.com/A-Guy-educ/A-Guy/commit/b4b4324)), closes [#490](https://github.com/A-Guy-educ/A-Guy/issues/490)
+* Merge remote-tracking branch 'origin/dev' into feat/ask-hybrid-layout ([4c9918d](https://github.com/A-Guy-educ/A-Guy/commit/4c9918d))
+* Merge remote-tracking branch 'origin/dev' into feat/ask-hybrid-layout ([7ad417f](https://github.com/A-Guy-educ/A-Guy/commit/7ad417f))
+* Merge remote-tracking branch 'origin/dev' into refactor/orchestrator-modules ([a3ca47e](https://github.com/A-Guy-educ/A-Guy/commit/a3ca47e))
+* Spec valid, ready to implement ([cf35255](https://github.com/A-Guy-educ/A-Guy/commit/cf35255))
+* chore: Add commit hook skip support and build reports ([a58195c](https://github.com/A-Guy-educ/A-Guy/commit/a58195c))
+* chore: Add task files for exercise HTML WYSIWYG and orchestrator ([f8eb70d](https://github.com/A-Guy-educ/A-Guy/commit/f8eb70d))
+* chore: Ignore .tasks folder in prettier ([9b9475b](https://github.com/A-Guy-educ/A-Guy/commit/9b9475b))
+* chore: Remove invalid OPENCODE_API_KEY and unused openhands workflow ([23a31b6](https://github.com/A-Guy-educ/A-Guy/commit/23a31b6))
+* chore: Reset impl stages for 260219-auto-98 re-run ([a13ef9e](https://github.com/A-Guy-educ/A-Guy/commit/a13ef9e))
+* chore(260219-auto-98): Update build report with final branch name ([9820521](https://github.com/A-Guy-educ/A-Guy/commit/9820521))
+* chore(260219-auto-98): Update task context files for speed reduction ([d6d8248](https://github.com/A-Guy-educ/A-Guy/commit/d6d8248))
+* chore(release): 0.13.0 [skip ci] ([9fcf851](https://github.com/A-Guy-educ/A-Guy/commit/9fcf851))
+* fix: Add endOfLine auto to prettier config ([d951d1c](https://github.com/A-Guy-educ/A-Guy/commit/d951d1c))
+* fix: add text-right to RTL exercise header for proper text alignment ([7a8f77f](https://github.com/A-Guy-educ/A-Guy/commit/7a8f77f))
+* fix: clean diff and add precise comments for numbering logic ([4af635e](https://github.com/A-Guy-educ/A-Guy/commit/4af635e))
+* fix: Remove invalid OPENCODE_API_KEY secret from workflows ([dc6a625](https://github.com/A-Guy-educ/A-Guy/commit/dc6a625))
+* fix: Remove invalid OPENCODE_API_KEY secret from workflows ([795163f](https://github.com/A-Guy-educ/A-Guy/commit/795163f))
+* fix: RTL alignment and include question_table in numbering ([87f1c72](https://github.com/A-Guy-educ/A-Guy/commit/87f1c72))
+* fix: Use flat key for password login config lookup ([80dc51a](https://github.com/A-Guy-educ/A-Guy/commit/80dc51a))
+* fix(ask): Send canvas drawing as image to chat and remove placeholder ([7315495](https://github.com/A-Guy-educ/A-Guy/commit/7315495))
+* fix(ask): Send exercise image alongside canvas drawing for check ([a610442](https://github.com/A-Guy-educ/A-Guy/commit/a610442))
+* fix(auth): Filter signup link from CMS nav in Google-only auth mode ([ca615be](https://github.com/A-Guy-educ/A-Guy/commit/ca615be))
+* fix(auth): Update login integration test for Google-only auth ([fc00525](https://github.com/A-Guy-educ/A-Guy/commit/fc00525))
+* fix(chat): Fetch media from direct blob URL instead of auth-gated endpoint ([a59b4af](https://github.com/A-Guy-educ/A-Guy/commit/a59b4af))
+* fix(chat): Fetch media from direct blob URL instead of auth-gated endpoint ([99e7661](https://github.com/A-Guy-educ/A-Guy/commit/99e7661))
+* fix(chat): Use pre-resolved publicUrl for media fetch in sendMultimodalToGenkit ([10657e8](https://github.com/A-Guy-educ/A-Guy/commit/10657e8))
+* fix(chat): Use publicUrl with forwarded auth cookies for media fetch ([ed9fb3e](https://github.com/A-Guy-educ/A-Guy/commit/ed9fb3e))
+* fix(ci): Add branch creation and restrict spec pipeline git operations ([ae9941f](https://github.com/A-Guy-educ/A-Guy/commit/ae9941f)), closes [#1](https://github.com/A-Guy-educ/A-Guy/issues/1) [#3](https://github.com/A-Guy-educ/A-Guy/issues/3)
+* fix(ci): Fix pipeline orchestrator comment parsing bugs ([b23df06](https://github.com/A-Guy-educ/A-Guy/commit/b23df06))
+* fix(ci): Make auto-generated task IDs more descriptive ([1d6d40f](https://github.com/A-Guy-educ/A-Guy/commit/1d6d40f))
+* fix(ci): Replace broken OpenCode CLI install with proven cache+PATH pattern ([b8084ca](https://github.com/A-Guy-educ/A-Guy/commit/b8084ca))
+* fix(cody): Add valid value constraints to taskify prompt ([c23d6dd](https://github.com/A-Guy-educ/A-Guy/commit/c23d6dd))
+* fix(cody): Add valid value constraints to taskify prompt ([27f09f3](https://github.com/A-Guy-educ/A-Guy/commit/27f09f3))
+* fix(cody): Always post task marker comment for cross-trigger discovery ([6f0805d](https://github.com/A-Guy-educ/A-Guy/commit/6f0805d))
+* fix(cody): Extract clarification answers from GitHub comments ([2325992](https://github.com/A-Guy-educ/A-Guy/commit/2325992))
+* fix(cody): Fix 6 remaining bugs from pipeline audit ([e2f1691](https://github.com/A-Guy-educ/A-Guy/commit/e2f1691))
+* fix(cody): Fix verify timeout, improve prompts, prevent duplicate PRs ([94cc792](https://github.com/A-Guy-educ/A-Guy/commit/94cc792))
+* fix(cody): Fix verify timeout, improve prompts, prevent duplicate PRs ([c0c0d5d](https://github.com/A-Guy-educ/A-Guy/commit/c0c0d5d))
+* fix(cody): Get clarification answers from latest issue comment ([05bae4c](https://github.com/A-Guy-educ/A-Guy/commit/05bae4c))
+* fix(cody): Handle literal backslash-n in comment body parsing ([e5dc3bb](https://github.com/A-Guy-educ/A-Guy/commit/e5dc3bb))
+* fix(cody): Improve PR stage prompt for meaningful titles ([ab80db9](https://github.com/A-Guy-educ/A-Guy/commit/ab80db9))
+* fix(cody): Improve PR stage prompt for meaningful titles ([4fa7dea](https://github.com/A-Guy-educ/A-Guy/commit/4fa7dea))
+* fix(cody): Increase architect stage timeout from 5 to 15 minutes ([124e201](https://github.com/A-Guy-educ/A-Guy/commit/124e201))
+* fix(cody): Increase architect stage timeout from 5 to 15 minutes ([3d9d0e9](https://github.com/A-Guy-educ/A-Guy/commit/3d9d0e9))
+* fix(cody): Make the Cody pipeline flow solid (9 fixes) ([0b46df9](https://github.com/A-Guy-educ/A-Guy/commit/0b46df9))
+* fix(cody): Prevent silent pipeline death when taskify writes invalid task.json ([4d9c647](https://github.com/A-Guy-educ/A-Guy/commit/4d9c647))
+* fix(cody): Remove spec_only from taskify LLM choices ([5e8d10b](https://github.com/A-Guy-educ/A-Guy/commit/5e8d10b))
+* fix(cody): Stop at clarify stage if questions need answering ([f7a2156](https://github.com/A-Guy-educ/A-Guy/commit/f7a2156))
+* fix(cody): Stop at clarify stage if questions need answering ([1b66d86](https://github.com/A-Guy-educ/A-Guy/commit/1b66d86))
+* fix(cody): Use stdin pipe for GitHub issue comments ([a3cdbcc](https://github.com/A-Guy-educ/A-Guy/commit/a3cdbcc))
+* fix(cody): Use stdin pipe for GitHub issue comments ([80b50e9](https://github.com/A-Guy-educ/A-Guy/commit/80b50e9))
+* fix(homepage): Reduce typing animation speed by half in GreetingFlow ([e5d79eb](https://github.com/A-Guy-educ/A-Guy/commit/e5d79eb))
+* fix(hooks): skip branch naming check in CI environments ([62a7fd7](https://github.com/A-Guy-educ/A-Guy/commit/62a7fd7))
+* fix(orchestrator): Create task.md from issue body, auto-generate task ID ([860c4dd](https://github.com/A-Guy-educ/A-Guy/commit/860c4dd))
+* fix(orchestrator): Escape shell metacharacters in comments and skip hooks for agents ([748fbaa](https://github.com/A-Guy-educ/A-Guy/commit/748fbaa))
+* fix(pipeline-orchestrated): Resolve 15 issues blocking workflow execution ([649be94](https://github.com/A-Guy-educ/A-Guy/commit/649be94))
+* fix(pipeline-orchestrated): Resolve 15 issues blocking workflow execution ([2ed7f05](https://github.com/A-Guy-educ/A-Guy/commit/2ed7f05))
+* fix(pipeline): Use OpenCode GitHub App for all agent execution ([bd3ba81](https://github.com/A-Guy-educ/A-Guy/commit/bd3ba81))
+* fix(test): Update formatStatusComment tests to match implementation ([9d495c9](https://github.com/A-Guy-educ/A-Guy/commit/9d495c9))
+* fix(test): Update integration test assertions to match implementation ([eebbad8](https://github.com/A-Guy-educ/A-Guy/commit/eebbad8))
+* fix(workflow): allow /oc with no trailing space ([419a61b](https://github.com/A-Guy-educ/A-Guy/commit/419a61b))
+* fix(workflows): Fix opencode workflow - permissions and exclusion logic ([3691f3f](https://github.com/A-Guy-educ/A-Guy/commit/3691f3f))
+* feat: add exercise renderer new question types plan ([1604db7](https://github.com/A-Guy-educ/A-Guy/commit/1604db7))
+* feat: add question numbering with section bubbles ([ff88da0](https://github.com/A-Guy-educ/A-Guy/commit/ff88da0))
+* feat: Add TTS read aloud for assistant chat messages ([9f0fea9](https://github.com/A-Guy-educ/A-Guy/commit/9f0fea9))
+* feat: Bold question numbering and exercise-based progress bar ([0244cd1](https://github.com/A-Guy-educ/A-Guy/commit/0244cd1))
+* feat: harden MongoDB connection pool configuration ([6a62095](https://github.com/A-Guy-educ/A-Guy/commit/6a62095))
+* feat: Increase progress bar height and restore vertical spacing ([bff5da8](https://github.com/A-Guy-educ/A-Guy/commit/bff5da8))
+* feat: Make login.password config flag control auth UI ([6c6f739](https://github.com/A-Guy-educ/A-Guy/commit/6c6f739))
+* feat: Move Exercise X of Y label to separate line with increased size ([31c81c3](https://github.com/A-Guy-educ/A-Guy/commit/31c81c3))
+* feat: polish UI with RTL bubble positioning and smaller question bubbles ([ff7ecae](https://github.com/A-Guy-educ/A-Guy/commit/ff7ecae))
+* feat: Toggle signup and password login via config flag ([04ff384](https://github.com/A-Guy-educ/A-Guy/commit/04ff384))
+* feat(ask): Integrate hybrid dual-pane layout with ExerciseWorkspace ([db17886](https://github.com/A-Guy-educ/A-Guy/commit/db17886))
+* feat(ask): Single persistent image per chat session ([d7cf974](https://github.com/A-Guy-educ/A-Guy/commit/d7cf974))
+* feat(ask): Wire exercise image uploads to AI chat pipeline ([a566101](https://github.com/A-Guy-educ/A-Guy/commit/a566101))
+* feat(auth): Restrict login to Google OAuth only ([665d555](https://github.com/A-Guy-educ/A-Guy/commit/665d555))
+* feat(homepage): reduce typing animation speed by half ([7320e08](https://github.com/A-Guy-educ/A-Guy/commit/7320e08))
+* feat(orchestrator): Support positional mode and file args ([9e63f1e](https://github.com/A-Guy-educ/A-Guy/commit/9e63f1e))
+* feat(pipeline): Add orchestrated GitHub Actions pipeline ([c599fa7](https://github.com/A-Guy-educ/A-Guy/commit/c599fa7))
+* feat(pipeline): Add orchestrated GitHub Actions pipeline ([06eb386](https://github.com/A-Guy-educ/A-Guy/commit/06eb386))
+* feat(workflow): default /oc command to full pipeline mode ([2ef005b](https://github.com/A-Guy-educ/A-Guy/commit/2ef005b))
+* refactor: change numbering scheme to numeric exercise + letter questions ([002d9ec](https://github.com/A-Guy-educ/A-Guy/commit/002d9ec))
+* refactor: move section bubble to header and fix RTL detection ([f02779e](https://github.com/A-Guy-educ/A-Guy/commit/f02779e))
+* refactor: optimize question numbering computation and remove test file ([b8588cf](https://github.com/A-Guy-educ/A-Guy/commit/b8588cf))
+* refactor: remove extra documentation and test files, keep minimal PR ([df6eacc](https://github.com/A-Guy-educ/A-Guy/commit/df6eacc))
+* refactor: use single-pass counter for question numbering ([22f08b6](https://github.com/A-Guy-educ/A-Guy/commit/22f08b6))
+* refactor(cody): Rename orchestrator and pipeline to Cody ([1312b72](https://github.com/A-Guy-educ/A-Guy/commit/1312b72))
+* refactor(orchestrator): Extract business logic into modules and slim YAML workflow ([23c010d](https://github.com/A-Guy-educ/A-Guy/commit/23c010d))
+* refactor(pipeline): Unify orchestrator for local and CI use ([9eb13bc](https://github.com/A-Guy-educ/A-Guy/commit/9eb13bc))
+* docs: add build report for typing speed reduction ([a5cdde6](https://github.com/A-Guy-educ/A-Guy/commit/a5cdde6))
+* docs: add comprehensive final report for MongoDB connection pool hardening ([41d6839](https://github.com/A-Guy-educ/A-Guy/commit/41d6839))
+* docs: Add YouTube embed integration planning document ([3de51b4](https://github.com/A-Guy-educ/A-Guy/commit/3de51b4))
+* docs(build): Update build.md with test suite changes ([16ad503](https://github.com/A-Guy-educ/A-Guy/commit/16ad503))
+* docs(build): Update build.md with test suite changes ([d9f5d5a](https://github.com/A-Guy-educ/A-Guy/commit/d9f5d5a))
+* style: fix prettier formatting issues ([e49b19b](https://github.com/A-Guy-educ/A-Guy/commit/e49b19b))
+* style: Format files with Prettier ([ebe1eea](https://github.com/A-Guy-educ/A-Guy/commit/ebe1eea))
+* style: Format system-params.ts ([f8ad944](https://github.com/A-Guy-educ/A-Guy/commit/f8ad944))
+* test: Increase blob enforcement test timeout to 15s ([100d918](https://github.com/A-Guy-educ/A-Guy/commit/100d918))
+* test: Increase mcp-auth test timeout to 15s ([98676ab](https://github.com/A-Guy-educ/A-Guy/commit/98676ab))
+* test(orchestrator): Add full test suite for orchestrator.ts ([2a3e400](https://github.com/A-Guy-educ/A-Guy/commit/2a3e400))
+* test(orchestrator): Add full test suite for orchestrator.ts ([74b4378](https://github.com/A-Guy-educ/A-Guy/commit/74b4378))
+* test(orchestrator): Add mocked integration tests for orchestrator.ts ([7d2df64](https://github.com/A-Guy-educ/A-Guy/commit/7d2df64))
+* test(orchestrator): Add mocked integration tests for orchestrator.ts ([10fde7f](https://github.com/A-Guy-educ/A-Guy/commit/10fde7f))
+
+## 0.13.0 (2026-02-17)
+
+* Merge branch 'feat/260216-ex-gen-pdf' into dev ([b8f4bbc](https://github.com/A-Guy-educ/A-Guy/commit/b8f4bbc))
+* Merge dev into feat/exercise-context-injection ([be90782](https://github.com/A-Guy-educ/A-Guy/commit/be90782))
+* Merge pull request #405 from A-Guy-educ/main ([312210f](https://github.com/A-Guy-educ/A-Guy/commit/312210f)), closes [#405](https://github.com/A-Guy-educ/A-Guy/issues/405) [#404](https://github.com/A-Guy-educ/A-Guy/issues/404)
+* Merge pull request #414 from A-Guy-educ/feat/exercise-context-injection ([ee46f51](https://github.com/A-Guy-educ/A-Guy/commit/ee46f51)), closes [#414](https://github.com/A-Guy-educ/A-Guy/issues/414)
+* Merge pull request #418 from A-Guy-educ/feat/260216-ex-gen-pdf ([333aff5](https://github.com/A-Guy-educ/A-Guy/commit/333aff5)), closes [#418](https://github.com/A-Guy-educ/A-Guy/issues/418)
+* Merge pull request #427 from A-Guy-educ/dev ([837d1d0](https://github.com/A-Guy-educ/A-Guy/commit/837d1d0)), closes [#427](https://github.com/A-Guy-educ/A-Guy/issues/427)
+* style: Fix prettier formatting in verify.md ([57409ad](https://github.com/A-Guy-educ/A-Guy/commit/57409ad))
+* style: Fix prettier formatting in verify.md ([eb31211](https://github.com/A-Guy-educ/A-Guy/commit/eb31211))
+* style: Format code with prettier ([7bae2c6](https://github.com/A-Guy-educ/A-Guy/commit/7bae2c6))
+* style: Format code with prettier ([4ec71a7](https://github.com/A-Guy-educ/A-Guy/commit/4ec71a7))
+* style: format CSS file with prettier ([422a0b3](https://github.com/A-Guy-educ/A-Guy/commit/422a0b3))
+* style(prettier): format ExerciseContentEditor CSS ([f352e97](https://github.com/A-Guy-educ/A-Guy/commit/f352e97))
+* fix: remove broken V2 integration tests ([aa1bca5](https://github.com/A-Guy-educ/A-Guy/commit/aa1bca5))
+* fix: remove broken V2 integration tests ([871fd9d](https://github.com/A-Guy-educ/A-Guy/commit/871fd9d))
+* fix: remove broken V2StatusPanel test file ([86b1afe](https://github.com/A-Guy-educ/A-Guy/commit/86b1afe))
+* fix: remove broken V2StatusPanel test file ([0c9b997](https://github.com/A-Guy-educ/A-Guy/commit/0c9b997))
+* fix: remove missing css import in exercise content editor ([905d6c5](https://github.com/A-Guy-educ/A-Guy/commit/905d6c5))
+* fix: remove missing css import in exercise content editor ([39767ab](https://github.com/A-Guy-educ/A-Guy/commit/39767ab))
+* fix: restore missing CSS file for ExerciseContentEditor ([86ddb41](https://github.com/A-Guy-educ/A-Guy/commit/86ddb41))
+* fix(260216-ex-gen-pdf): Fix V2 PDF conversion issues ([6b45766](https://github.com/A-Guy-educ/A-Guy/commit/6b45766))
+* fix(260216-ex-gen-pdf): Fix V2 PDF conversion issues ([9cf2c22](https://github.com/A-Guy-educ/A-Guy/commit/9cf2c22))
+* fix(260216-ex-gen-pdf): replace canvas native module with @napi-rs/canvas ([439c310](https://github.com/A-Guy-educ/A-Guy/commit/439c310))
+* fix(260216-ex-gen-pdf): replace canvas native module with @napi-rs/canvas ([7db6a6e](https://github.com/A-Guy-educ/A-Guy/commit/7db6a6e))
+* fix(hidden-field): explicitly set hidden field in pipeline ([75463ac](https://github.com/A-Guy-educ/A-Guy/commit/75463ac))
+* feat: Add PDF to exercise conversion v2 services and admin UI enhancements ([321c543](https://github.com/A-Guy-educ/A-Guy/commit/321c543))
+* feat: Add PDF to exercise conversion v2 services and admin UI enhancements ([148241b](https://github.com/A-Guy-educ/A-Guy/commit/148241b))
+* feat: Show ExerciseWorkspace with DynamicLesson for empty lessons ([ba02336](https://github.com/A-Guy-educ/A-Guy/commit/ba02336))
+* feat: Update minimax model to M2.5 and add OpenCode workflow ([f937996](https://github.com/A-Guy-educ/A-Guy/commit/f937996))
+* feat(chat): Add exercise context injection ([bc74d67](https://github.com/A-Guy-educ/A-Guy/commit/bc74d67))
+* feat(chat): propagate hidden field to assistant responses ([2d5738f](https://github.com/A-Guy-educ/A-Guy/commit/2d5738f))
+* feat(ex-gen-pdf): implement V2 PDF-to-exercises conversion feature ([812a0a3](https://github.com/A-Guy-educ/A-Guy/commit/812a0a3))
+* feat(ex-gen-pdf): implement V2 PDF-to-exercises conversion feature ([ddbbbec](https://github.com/A-Guy-educ/A-Guy/commit/ddbbbec))
+* feat(exercise-conversion): implement V2 PDF-to-exercises image crop pipeline ([c76f06d](https://github.com/A-Guy-educ/A-Guy/commit/c76f06d))
+* feat(exercise-conversion): implement V2 PDF-to-exercises image crop pipeline ([099b4c0](https://github.com/A-Guy-educ/A-Guy/commit/099b4c0))
+* test(260216-ex-gen-pdf): Add V2 conversion tests for vision detection and error display ([eaf59e9](https://github.com/A-Guy-educ/A-Guy/commit/eaf59e9))
+* test(260216-ex-gen-pdf): Add V2 conversion tests for vision detection and error display ([ede8d48](https://github.com/A-Guy-educ/A-Guy/commit/ede8d48))
+* chore: Update task files for rerun ([aa43213](https://github.com/A-Guy-educ/A-Guy/commit/aa43213))
+* chore: Update task files for rerun ([0e92a81](https://github.com/A-Guy-educ/A-Guy/commit/0e92a81))
+
+## 0.12.0 (2026-02-17)
+
+* fix: remove broken V2 integration tests ([8733b86](https://github.com/A-Guy-educ/A-Guy/commit/8733b86))
+* fix: remove broken V2StatusPanel test file ([ad7a658](https://github.com/A-Guy-educ/A-Guy/commit/ad7a658))
+* fix: remove missing css import in exercise content editor ([f14dbcf](https://github.com/A-Guy-educ/A-Guy/commit/f14dbcf))
+* fix(260216-ex-gen-pdf): Fix V2 PDF conversion issues ([b9f1d40](https://github.com/A-Guy-educ/A-Guy/commit/b9f1d40))
+* fix(260216-ex-gen-pdf): replace canvas native module with @napi-rs/canvas ([dc50098](https://github.com/A-Guy-educ/A-Guy/commit/dc50098))
+* style: Fix prettier formatting in verify.md ([cb8eebc](https://github.com/A-Guy-educ/A-Guy/commit/cb8eebc))
+* style: Format code with prettier ([2a14d5a](https://github.com/A-Guy-educ/A-Guy/commit/2a14d5a))
+* feat: Add PDF to exercise conversion v2 services and admin UI enhancements ([2279c5a](https://github.com/A-Guy-educ/A-Guy/commit/2279c5a))
+* feat(ex-gen-pdf): implement V2 PDF-to-exercises conversion feature ([7185c45](https://github.com/A-Guy-educ/A-Guy/commit/7185c45))
+* feat(exercise-conversion): implement V2 PDF-to-exercises image crop pipeline ([6b37aab](https://github.com/A-Guy-educ/A-Guy/commit/6b37aab))
+* test(260216-ex-gen-pdf): Add V2 conversion tests for vision detection and error display ([9618f9a](https://github.com/A-Guy-educ/A-Guy/commit/9618f9a))
+* chore: Update task files for rerun ([43f2729](https://github.com/A-Guy-educ/A-Guy/commit/43f2729))
+
+## 0.11.0 (2026-02-16)
+
+* Add remark-color-syntax plugin and tests (19/25 passing) ([9397563](https://github.com/A-Guy-educ/A-Guy/commit/9397563))
+* Merge dev into feat/chapter-dropdown-display ([7a4d353](https://github.com/A-Guy-educ/A-Guy/commit/7a4d353))
+* Merge pull request #400 from A-Guy-educ/main ([3d6d719](https://github.com/A-Guy-educ/A-Guy/commit/3d6d719)), closes [#400](https://github.com/A-Guy-educ/A-Guy/issues/400)
+* Merge pull request #401 from A-Guy-educ/feat/chapter-dropdown-display ([2065d48](https://github.com/A-Guy-educ/A-Guy/commit/2065d48)), closes [#401](https://github.com/A-Guy-educ/A-Guy/issues/401)
+* Merge pull request #404 from A-Guy-educ/dev ([1de60fb](https://github.com/A-Guy-educ/A-Guy/commit/1de60fb)), closes [#404](https://github.com/A-Guy-educ/A-Guy/issues/404)
+* fix: Compute adminTitle on read for existing chapters ([d828089](https://github.com/A-Guy-educ/A-Guy/commit/d828089))
+* fix: Correct nested braces test expectation for remaining text ([52e4a86](https://github.com/A-Guy-educ/A-Guy/commit/52e4a86))
+* fix: Correct variable and function names after highlight token refactoring ([3ad5b0e](https://github.com/A-Guy-educ/A-Guy/commit/3ad5b0e))
+* fix: Make highlight tokens work in Admin UI ([9bdd376](https://github.com/A-Guy-educ/A-Guy/commit/9bdd376))
+* fix: Prevent partial edits when closing brace missing in color syntax ([7b74a24](https://github.com/A-Guy-educ/A-Guy/commit/7b74a24))
+* fix: Remove pure unit test file to resolve TypeScript errors ([935c746](https://github.com/A-Guy-educ/A-Guy/commit/935c746))
+* fix: Replace mdast import with local type definitions ([3f47975](https://github.com/A-Guy-educ/A-Guy/commit/3f47975))
+* fix: Resolve TypeScript error in visit call with multiple node types ([77d7dff](https://github.com/A-Guy-educ/A-Guy/commit/77d7dff))
+* fix: Rewrite color syntax parser to handle nested markdown correctly ([4b5ca2b](https://github.com/A-Guy-educ/A-Guy/commit/4b5ca2b))
+* fix: Update nested braces test to match simplified plugin behavior ([9cea5cf](https://github.com/A-Guy-educ/A-Guy/commit/9cea5cf))
+* fix(exercises): Add "Answer:" label to fill-in cell input ([53ba288](https://github.com/A-Guy-educ/A-Guy/commit/53ba288))
+* fix(exercises): Relax table schema and improve solutionFill editor UX ([4132615](https://github.com/A-Guy-educ/A-Guy/commit/4132615))
+* fix(exercises): Relax table schema validation for solutionFill editing ([5bf5124](https://github.com/A-Guy-educ/A-Guy/commit/5bf5124))
+* fix(exercises): Show detailed Zod errors in content validation ([22c3fce](https://github.com/A-Guy-educ/A-Guy/commit/22c3fce))
+* fix(tests): Resolve timestamp and slug conflicts in chapter adminTitle tests ([c208112](https://github.com/A-Guy-educ/A-Guy/commit/c208112))
+* feat: Add color picker to RichTextEditor toolbar ([72ddaf5](https://github.com/A-Guy-educ/A-Guy/commit/72ddaf5))
+* feat: Expand color palette from 3 to 8 colors ([e0b6c4b](https://github.com/A-Guy-educ/A-Guy/commit/e0b6c4b))
+* feat(exercises): add new question block types for exercises ([5a9394b](https://github.com/A-Guy-educ/A-Guy/commit/5a9394b))
+* feat(exercises): Add table question renderer for student lesson UI ([7f9199a](https://github.com/A-Guy-educ/A-Guy/commit/7f9199a))
+* docs(exercises): Add HLS for exercise table renderer in student UI ([8fe86e8](https://github.com/A-Guy-educ/A-Guy/commit/8fe86e8))
+* style: Fix Prettier formatting in remark-color-syntax test file ([1aa45d5](https://github.com/A-Guy-educ/A-Guy/commit/1aa45d5))
+* style: Fix Prettier formatting in remark-color-syntax.ts ([7cffa3d](https://github.com/A-Guy-educ/A-Guy/commit/7cffa3d))
+* style: Fix Prettier formatting in remark-color-syntax.ts ([67ce9b7](https://github.com/A-Guy-educ/A-Guy/commit/67ce9b7))
+* refactor: Fix color syntax plugin issues and add pure unit tests ([273bf96](https://github.com/A-Guy-educ/A-Guy/commit/273bf96))
+* refactor: Replace color names with numbered highlight tokens ([087c838](https://github.com/A-Guy-educ/A-Guy/commit/087c838))
+* refactor: Simplify remark-color-syntax to single-node only ([a66bd97](https://github.com/A-Guy-educ/A-Guy/commit/a66bd97))
+* chore: Fix formatting ([c4b9fca](https://github.com/A-Guy-educ/A-Guy/commit/c4b9fca))
+* chore: save local changes ([295508b](https://github.com/A-Guy-educ/A-Guy/commit/295508b))
+
+## 0.10.0 (2026-02-16)
+
+* Changes before error encountered ([7bedaad](https://github.com/A-Guy-educ/A-Guy/commit/7bedaad))
+* Changes before error encountered ([3ed9e83](https://github.com/A-Guy-educ/A-Guy/commit/3ed9e83))
+* Fix misleading red hover state on exercise answers in light mode ([77e8bac](https://github.com/A-Guy-educ/A-Guy/commit/77e8bac))
+* Implement auto-resize for FreeResponse textarea ([d97a5f0](https://github.com/A-Guy-educ/A-Guy/commit/d97a5f0))
+* Merge pull request #378 from A-Guy-educ/feat/260214-version-footer ([bcb4843](https://github.com/A-Guy-educ/A-Guy/commit/bcb4843)), closes [#378](https://github.com/A-Guy-educ/A-Guy/issues/378)
+* Merge pull request #399 from A-Guy-educ/dev ([adb77a2](https://github.com/A-Guy-educ/A-Guy/commit/adb77a2)), closes [#399](https://github.com/A-Guy-educ/A-Guy/issues/399)
+* fix: Add explicit cleanup to McqQuestion tests to prevent element duplication ([3ff3544](https://github.com/A-Guy-educ/A-Guy/commit/3ff3544))
+* fix: add pagination params to onboarding course fetch ([c47f803](https://github.com/A-Guy-educ/A-Guy/commit/c47f803))
+* fix: harden header duplicate normalization and tests ([ff2f1b5](https://github.com/A-Guy-educ/A-Guy/commit/ff2f1b5))
+* fix: onboarding greeting timing and mood options ([2e3068c](https://github.com/A-Guy-educ/A-Guy/commit/2e3068c)), closes [#23](https://github.com/A-Guy-educ/A-Guy/issues/23)
+* fix: onboarding greeting timing and mood options ([0026e24](https://github.com/A-Guy-educ/A-Guy/commit/0026e24)), closes [#23](https://github.com/A-Guy-educ/A-Guy/issues/23)
+* fix: Prevent duplicate title rendering in course/chapter/lesson headers ([2eb69ec](https://github.com/A-Guy-educ/A-Guy/commit/2eb69ec))
+* fix: Restore vitest config environment to node ([e70b3b0](https://github.com/A-Guy-educ/A-Guy/commit/e70b3b0))
+* fix(exercises): Use plain img/video instead of NextImage for media attachments ([4e60ed7](https://github.com/A-Guy-educ/A-Guy/commit/4e60ed7))
+* fix(pipeline): Auto-commit task files after verify ([0a13288](https://github.com/A-Guy-educ/A-Guy/commit/0a13288))
+* fix(pipeline): test agent runs once, no looping on failures ([877ab6f](https://github.com/A-Guy-educ/A-Guy/commit/877ab6f))
+* fix(pipeline): unused variable in preflight.ts ([f3fec1e](https://github.com/A-Guy-educ/A-Guy/commit/f3fec1e))
+* fix(pipeline): Use appropriate model per stage ([7e8737d](https://github.com/A-Guy-educ/A-Guy/commit/7e8737d))
+* fix(web): footer layout - version visible, compact single-row design ([d45e5c4](https://github.com/A-Guy-educ/A-Guy/commit/d45e5c4))
+* fix(web): read version directly from package.json ([f3d6050](https://github.com/A-Guy-educ/A-Guy/commit/f3d6050))
+* feat: add minimal duplicate-prevention logic to headers ([9a55f6c](https://github.com/A-Guy-educ/A-Guy/commit/9a55f6c))
+* feat: Add pipeline rerun functionality and version footer e2e test ([973c8e6](https://github.com/A-Guy-educ/A-Guy/commit/973c8e6))
+* feat: Systemic validation of duplicate header fix ([9325826](https://github.com/A-Guy-educ/A-Guy/commit/9325826))
+* feat: Transform \frac to \dfrac in MCQ answer options for better readability ([b054827](https://github.com/A-Guy-educ/A-Guy/commit/b054827))
+* feat: Update version footer implementation with rerun feedback ([ee199c2](https://github.com/A-Guy-educ/A-Guy/commit/ee199c2))
+* feat(chat): Add hidden message support for contextual help prompts ([2261bf8](https://github.com/A-Guy-educ/A-Guy/commit/2261bf8))
+* feat(exercises): Add loading spinner to check answer button during validation ([398377c](https://github.com/A-Guy-educ/A-Guy/commit/398377c))
+* feat(exercises): Add open-ended answer validation with DB normalization and LLM fallback ([76efd2c](https://github.com/A-Guy-educ/A-Guy/commit/76efd2c))
+* feat(exercises): Allow SVG, GIF, and video uploads in exercise MediaPicker ([699159b](https://github.com/A-Guy-educ/A-Guy/commit/699159b))
+* feat(exercises): Render media attachments inside interactive lessons ([57bf1de](https://github.com/A-Guy-educ/A-Guy/commit/57bf1de))
+* feat(web): add minimal version number to public footer ([b09fa90](https://github.com/A-Guy-educ/A-Guy/commit/b09fa90))
+* style: fix Prettier formatting in header-duplicate-prevention test ([0d3ea62](https://github.com/A-Guy-educ/A-Guy/commit/0d3ea62))
+* style: Fix Prettier formatting in header-duplicate-prevention test ([2c93b14](https://github.com/A-Guy-educ/A-Guy/commit/2c93b14))
+* refactor: Archive old tasks and update pipeline scripts ([59b5331](https://github.com/A-Guy-educ/A-Guy/commit/59b5331))
+* refactor: Refactor pipeline implementation ([87ab28b](https://github.com/A-Guy-educ/A-Guy/commit/87ab28b))
+* refactor: use case-sensitive comparison for duplicate prevention ([1911ec7](https://github.com/A-Guy-educ/A-Guy/commit/1911ec7))
+* refactor(exercises): Extract hardcoded values to JSON and i18n ([e0a6d28](https://github.com/A-Guy-educ/A-Guy/commit/e0a6d28))
+* revert: remove title/description normalization logic ([ae037ff](https://github.com/A-Guy-educ/A-Guy/commit/ae037ff))
+* chore: Add new pipeline scripts ([ff2e4e8](https://github.com/A-Guy-educ/A-Guy/commit/ff2e4e8))
+* chore: Clean up invalid dependency and config changes ([5892b60](https://github.com/A-Guy-educ/A-Guy/commit/5892b60))
+* chore: Update OpenCode config and types ([9f4ec8b](https://github.com/A-Guy-educ/A-Guy/commit/9f4ec8b))
+* chore: Update OpenCode config files ([7dde06a](https://github.com/A-Guy-educ/A-Guy/commit/7dde06a))
+* chore: update pnpm lockfile ([791b3b1](https://github.com/A-Guy-educ/A-Guy/commit/791b3b1))
+* chore(release): 0.9.0 [skip ci] ([37752f1](https://github.com/A-Guy-educ/A-Guy/commit/37752f1))
+* test: Add comprehensive header duplicate prevention tests ([17729f7](https://github.com/A-Guy-educ/A-Guy/commit/17729f7))
+* test(chat): Fix useNotebookChat test for new chatStream options param ([3da7329](https://github.com/A-Guy-educ/A-Guy/commit/3da7329))
+* test(exercises): Add unit tests for media rendering utilities and components ([b828eda](https://github.com/A-Guy-educ/A-Guy/commit/b828eda))
+* merge(dev): merge dev into feat/260214-version-footer ([28b5902](https://github.com/A-Guy-educ/A-Guy/commit/28b5902))
+* docs: enforce agent-only code implementation in DRIVER.md ([83d7372](https://github.com/A-Guy-educ/A-Guy/commit/83d7372))
+* docs(pipeline): Document how to provide requirements ([355ef6d](https://github.com/A-Guy-educ/A-Guy/commit/355ef6d))
+
+## 0.9.0 (2026-02-12)
+
+* Add documentation for newline rendering fix ([50d4a2b](https://github.com/A-Guy-educ/A-Guy/commit/50d4a2b))
+* Add newline preprocessing to RichTextRenderer for visible line breaks ([350374d](https://github.com/A-Guy-educ/A-Guy/commit/350374d))
+* Add PR summary document ([88ef046](https://github.com/A-Guy-educ/A-Guy/commit/88ef046))
+* Changes before error encountered ([afbc2c6](https://github.com/A-Guy-educ/A-Guy/commit/afbc2c6))
+* Clean up PR: remove docs, move utils to infra ([be9167f](https://github.com/A-Guy-educ/A-Guy/commit/be9167f))
+* Fix Prettier formatting issues ([4bedc64](https://github.com/A-Guy-educ/A-Guy/commit/4bedc64))
+* Merge pull request #369 from A-Guy-educ/refactor/shared-math-markdown ([3e38fa9](https://github.com/A-Guy-educ/A-Guy/commit/3e38fa9)), closes [#369](https://github.com/A-Guy-educ/A-Guy/issues/369)
+* Merge pull request #375 from A-Guy-educ/dev ([c8be814](https://github.com/A-Guy-educ/A-Guy/commit/c8be814)), closes [#375](https://github.com/A-Guy-educ/A-Guy/issues/375)
+* fix: Add onClick handler for single-answer MCQ selection ([f8f1225](https://github.com/A-Guy-educ/A-Guy/commit/f8f1225))
+* fix: Ensure git hooks are executable and auto-configured ([6e0b4aa](https://github.com/A-Guy-educ/A-Guy/commit/6e0b4aa))
+* fix: reorder hooks and add debug logging for duplicate investigation ([e97bebc](https://github.com/A-Guy-educ/A-Guy/commit/e97bebc))
+* fix(lessons): Bypass NextImage for intro media to fix Hebrew filename 400 ([caf485d](https://github.com/A-Guy-educ/A-Guy/commit/caf485d))
+* fix(lessons): Fix list bullet alignment and clean admin description ([ee1f5d5](https://github.com/A-Guy-educ/A-Guy/commit/ee1f5d5))
+* fix(lessons): Route lessons directly to pager, not standalone /about ([56dd7b1](https://github.com/A-Guy-educ/A-Guy/commit/56dd7b1))
+* fix(lessons): Use fill mode for intro page media to fix 400 error ([90811ce](https://github.com/A-Guy-educ/A-Guy/commit/90811ce))
+* fix(test): reduce MongoDB connection pool for integration tests ([d2f6560](https://github.com/A-Guy-educ/A-Guy/commit/d2f6560))
+* chore: remove accidental package-lock.json ([02ebc3b](https://github.com/A-Guy-educ/A-Guy/commit/02ebc3b))
+* chore: remove debug logging from slug hooks ([f155d13](https://github.com/A-Guy-educ/A-Guy/commit/f155d13))
+* chore(ci): Optimize CI pipeline ([bde7ac0](https://github.com/A-Guy-educ/A-Guy/commit/bde7ac0))
+* chore(lessons): Remove standalone /about route ([398baae](https://github.com/A-Guy-educ/A-Guy/commit/398baae))
+* chore(release): 0.8.0 [skip ci] ([ef8234a](https://github.com/A-Guy-educ/A-Guy/commit/ef8234a))
+* chore(types): Update generated Payload types ([76118a6](https://github.com/A-Guy-educ/A-Guy/commit/76118a6))
+* feat: Add block duplication to Exercise editor ([5632670](https://github.com/A-Guy-educ/A-Guy/commit/5632670))
+* feat(lessons): Add lesson intro/about page (pre-lesson context screen) ([3374b42](https://github.com/A-Guy-educ/A-Guy/commit/3374b42))
+* feat(lessons): Change introDescription to richText and reorder layout ([0651758](https://github.com/A-Guy-educ/A-Guy/commit/0651758))
+* feat(lessons): Integrate about page into ExercisesPager flow ([9b365f0](https://github.com/A-Guy-educ/A-Guy/commit/9b365f0))
+* feat(lessons): Switch intro description to HTML textarea for easy paste ([c915fc7](https://github.com/A-Guy-educ/A-Guy/commit/c915fc7))
+* refactor(shared): Extract MathMarkdown component for unified math rendering ([baee0cd](https://github.com/A-Guy-educ/A-Guy/commit/baee0cd))
+* refactor(shared): Extract MathMarkdown component for unified math rendering ([fc298d0](https://github.com/A-Guy-educ/A-Guy/commit/fc298d0))
+* refactor(tests): Move Math markdown test to tests/unit/components ([f1021b6](https://github.com/A-Guy-educ/A-Guy/commit/f1021b6))
+* Refactor: Extract preprocessNewlines to utils, improve algorithm ([e92edee](https://github.com/A-Guy-educ/A-Guy/commit/e92edee))
+
+## 0.8.0 (2026-02-11)
+
+* Add LLP verifier removal ([8a7e378](https://github.com/A-Guy-educ/A-Guy/commit/8a7e378))
+* Delete LLP_verifier_removal.md ([65ea283](https://github.com/A-Guy-educ/A-Guy/commit/65ea283))
+* Merge origin/dev into feat/guest-chat-sessions ([31d4ec8](https://github.com/A-Guy-educ/A-Guy/commit/31d4ec8))
+* Merge pull request #333 from A-Guy-educ/main ([2177e50](https://github.com/A-Guy-educ/A-Guy/commit/2177e50)), closes [#333](https://github.com/A-Guy-educ/A-Guy/issues/333)
+* Merge pull request #339 from A-Guy-educ/feat/lesson-step-pager-routing ([c43651c](https://github.com/A-Guy-educ/A-Guy/commit/c43651c)), closes [#339](https://github.com/A-Guy-educ/A-Guy/issues/339)
+* Merge pull request #345 from A-Guy-educ/feat/guest-chat-sessions ([939d7e4](https://github.com/A-Guy-educ/A-Guy/commit/939d7e4)), closes [#345](https://github.com/A-Guy-educ/A-Guy/issues/345)
+* Merge pull request #346 from A-Guy-educ/opencode/gentle-island ([fd34aa0](https://github.com/A-Guy-educ/A-Guy/commit/fd34aa0)), closes [#346](https://github.com/A-Guy-educ/A-Guy/issues/346)
+* Merge pull request #352 from A-Guy-educ/dev ([b003bd1](https://github.com/A-Guy-educ/A-Guy/commit/b003bd1)), closes [#352](https://github.com/A-Guy-educ/A-Guy/issues/352)
+* feat: Add ChatInterface to ExercisesPager with fullscreen workspace ([c1c91fb](https://github.com/A-Guy-educ/A-Guy/commit/c1c91fb))
+* feat: Add exercise pager with sticky navigation and split pane workspace ([f8f7ca0](https://github.com/A-Guy-educ/A-Guy/commit/f8f7ca0))
+* feat: Implement Auditor Agent for pipeline process improvement ([aef67fd](https://github.com/A-Guy-educ/A-Guy/commit/aef67fd))
+* feat: Implement lesson step pager routing with URL sync ([475a3a2](https://github.com/A-Guy-educ/A-Guy/commit/475a3a2))
+* feat: Implement lesson step pager routing with URL sync ([cfa5680](https://github.com/A-Guy-educ/A-Guy/commit/cfa5680))
+* feat: Make prev/next navigation buttons stick to bottom of exercise workspace ([539f6ea](https://github.com/A-Guy-educ/A-Guy/commit/539f6ea))
+* feat(admin): add card container with header and actions to question block editors ([74026c8](https://github.com/A-Guy-educ/A-Guy/commit/74026c8))
+* feat(admin): Add mediaIds support to InlineRichTextEditor with upload ([949ec7d](https://github.com/A-Guy-educ/A-Guy/commit/949ec7d))
+* feat(Admin): Add question_table support to ExerciseContentEditor ([4d30e92](https://github.com/A-Guy-educ/A-Guy/commit/4d30e92))
+* feat(admin): Add typed question block editors ([98a40a0](https://github.com/A-Guy-educ/A-Guy/commit/98a40a0))
+* feat(admin): Make True/False option labels editable in editor ([a1031f6](https://github.com/A-Guy-educ/A-Guy/commit/a1031f6))
+* feat(agents): Implement OpenCode pipeline orchestrator ([7904bc2](https://github.com/A-Guy-educ/A-Guy/commit/7904bc2))
+* feat(Exercises): Add question_table type with Zod schemas ([a68096a](https://github.com/A-Guy-educ/A-Guy/commit/a68096a))
+* feat(Exercises): Add Table Question Type ([6b093fa](https://github.com/A-Guy-educ/A-Guy/commit/6b093fa))
+* feat(exercises): Auto-open chat when student submits incorrect answer ([f95aef4](https://github.com/A-Guy-educ/A-Guy/commit/f95aef4))
+* feat(Exercises): Implement table question type schema and admin UI ([9dd9280](https://github.com/A-Guy-educ/A-Guy/commit/9dd9280))
+* feat(exercises): Send incorrect answer to AI for personalized help ([f8c8e87](https://github.com/A-Guy-educ/A-Guy/commit/f8c8e87))
+* feat(Guest Sessions): Implement anonymous chat with automatic upgrade ([657923d](https://github.com/A-Guy-educ/A-Guy/commit/657923d))
+* feat(guest-chat): Implement guest chat sessions feature ([d75b06c](https://github.com/A-Guy-educ/A-Guy/commit/d75b06c))
+* feat(guest-chat): Implement guest chat sessions feature ([0a183ba](https://github.com/A-Guy-educ/A-Guy/commit/0a183ba))
+* feat(guest-chat): Implement guest chat sessions feature ([3061025](https://github.com/A-Guy-educ/A-Guy/commit/3061025))
+* feat(guest-chat): Migrate session constants to config_values DB collection ([e08f2e5](https://github.com/A-Guy-educ/A-Guy/commit/e08f2e5))
+* feat(mcp): enable create permissions for courses, chapters, lessons ([548468b](https://github.com/A-Guy-educ/A-Guy/commit/548468b))
+* fix: add isGuestMode export to useNotebookChat return statement ([0601970](https://github.com/A-Guy-educ/A-Guy/commit/0601970))
+* fix: Lazy load Payload config in hooks to avoid env var requirement in unit tests ([76c7b4f](https://github.com/A-Guy-educ/A-Guy/commit/76c7b4f))
+* fix: remove broken postinstall script ([eefdbeb](https://github.com/A-Guy-educ/A-Guy/commit/eefdbeb))
+* fix: repair integration tests broken by guest session feature ([5978c0a](https://github.com/A-Guy-educ/A-Guy/commit/5978c0a))
+* fix: Split exercise content types to shared module to prevent server imports in client bundle ([849fcc6](https://github.com/A-Guy-educ/A-Guy/commit/849fcc6))
+* fix: Update lockfile after dependency removal ([0244639](https://github.com/A-Guy-educ/A-Guy/commit/0244639))
+* fix: update lockfile for CI compatibility ([231e48a](https://github.com/A-Guy-educ/A-Guy/commit/231e48a))
+* fix(admin): Actually remove MCQ option in removeOptionAndNormalize ([c673289](https://github.com/A-Guy-educ/A-Guy/commit/c673289))
+* fix(admin): Allow empty True/False option labels ([4f5802a](https://github.com/A-Guy-educ/A-Guy/commit/4f5802a))
+* fix(admin): do not auto-open JSON panel when adding question block ([b4e9d80](https://github.com/A-Guy-educ/A-Guy/commit/b4e9d80))
+* fix(chat): use logical padding for list markers in RTL ([17e4b33](https://github.com/A-Guy-educ/A-Guy/commit/17e4b33))
+* fix(exercises): Only trigger AI help once per question ([fc6a047](https://github.com/A-Guy-educ/A-Guy/commit/fc6a047))
+* fix(exercises): Send full question JSON to AI for personalized help ([642f5fe](https://github.com/A-Guy-educ/A-Guy/commit/642f5fe))
+* fix(Guest Sessions): Fix cookie persistence and add max conversations limit ([91c4d71](https://github.com/A-Guy-educ/A-Guy/commit/91c4d71))
+* fix(i18n): Set default locale to Hebrew ([1893db3](https://github.com/A-Guy-educ/A-Guy/commit/1893db3))
+* refactor: Simplify opencode plan agent ([2ab31f3](https://github.com/A-Guy-educ/A-Guy/commit/2ab31f3))
+* refactor(admin): Replace per-block + buttons with single Add Block button ([6418ba5](https://github.com/A-Guy-educ/A-Guy/commit/6418ba5))
+* chore: Add llp-v2 for lesson step pager routing ([bb542bc](https://github.com/A-Guy-educ/A-Guy/commit/bb542bc))
+* chore: Add task specs ([0e3b9dc](https://github.com/A-Guy-educ/A-Guy/commit/0e3b9dc))
+* chore: format test files with Prettier ([97f5ebc](https://github.com/A-Guy-educ/A-Guy/commit/97f5ebc))
+* chore: Update generated payload types ([07d2b04](https://github.com/A-Guy-educ/A-Guy/commit/07d2b04))
+* merge: Update opencode/gentle-island with dev branch ([014cf9e](https://github.com/A-Guy-educ/A-Guy/commit/014cf9e))
+
+## 0.7.0 (2026-02-09)
+
+* # Add Exercise Preview to Admin Sidebar ([4ff5983](https://github.com/A-Guy-educ/A-Guy/commit/4ff5983))
+* Fix exercise identity + dedup (contentHash + unique index) ([b5d3548](https://github.com/A-Guy-educ/A-Guy/commit/b5d3548))
+* Merge branch 'chore/update-generated-types' into feat/add-streaming-chat-endpoint ([a394b9d](https://github.com/A-Guy-educ/A-Guy/commit/a394b9d))
+* Merge branch 'dev' into conversion-exercises ([2f79e1e](https://github.com/A-Guy-educ/A-Guy/commit/2f79e1e))
+* Merge branch 'dev' into conversion-exercises ([1cab2ad](https://github.com/A-Guy-educ/A-Guy/commit/1cab2ad))
+* Merge branch 'dev' into feat/add-streaming-chat-endpoint ([ba2c70b](https://github.com/A-Guy-educ/A-Guy/commit/ba2c70b))
+* Merge dev into refactor/llm-model-registry ([7f44730](https://github.com/A-Guy-educ/A-Guy/commit/7f44730))
+* Merge dev: accept remote changes for LLM provider refactor ([5d82815](https://github.com/A-Guy-educ/A-Guy/commit/5d82815))
+* Merge pull request #265 from A-Guy-educ/feat/media-url-migration ([1d61dfa](https://github.com/A-Guy-educ/A-Guy/commit/1d61dfa)), closes [#265](https://github.com/A-Guy-educ/A-Guy/issues/265)
+* Merge pull request #291 from A-Guy-educ/feat/system-params-runtime-config ([924ed8d](https://github.com/A-Guy-educ/A-Guy/commit/924ed8d)), closes [#291](https://github.com/A-Guy-educ/A-Guy/issues/291)
+* Merge pull request #296 from A-Guy-educ/conversion-exercises ([707cf0f](https://github.com/A-Guy-educ/A-Guy/commit/707cf0f)), closes [#296](https://github.com/A-Guy-educ/A-Guy/issues/296)
+* Merge pull request #300 from A-Guy-educ/refactor/llm-model-registry ([49c5fb4](https://github.com/A-Guy-educ/A-Guy/commit/49c5fb4)), closes [#300](https://github.com/A-Guy-educ/A-Guy/issues/300)
+* Merge pull request #308 from A-Guy-educ/feat/diagram-roundtrip-pass ([ecc6e57](https://github.com/A-Guy-educ/A-Guy/commit/ecc6e57)), closes [#308](https://github.com/A-Guy-educ/A-Guy/issues/308)
+* Merge pull request #318 from A-Guy-educ/chore/update-generated-types ([f405821](https://github.com/A-Guy-educ/A-Guy/commit/f405821)), closes [#318](https://github.com/A-Guy-educ/A-Guy/issues/318)
+* Merge pull request #320 from A-Guy-educ/feat/add-streaming-chat-endpoint ([7624fb6](https://github.com/A-Guy-educ/A-Guy/commit/7624fb6)), closes [#320](https://github.com/A-Guy-educ/A-Guy/issues/320)
+* Merge pull request #322 from A-Guy-educ/feat/pipe-001-health-endpoint-badge ([f779e36](https://github.com/A-Guy-educ/A-Guy/commit/f779e36)), closes [#322](https://github.com/A-Guy-educ/A-Guy/issues/322)
+* Merge pull request #323 from A-Guy-educ/wknd ([3decfe3](https://github.com/A-Guy-educ/A-Guy/commit/3decfe3)), closes [#323](https://github.com/A-Guy-educ/A-Guy/issues/323)
+* Merge pull request #329 from A-Guy-educ/feat/free-response-answer-box ([3f09e3d](https://github.com/A-Guy-educ/A-Guy/commit/3f09e3d)), closes [#329](https://github.com/A-Guy-educ/A-Guy/issues/329)
+* Merge pull request #331 from A-Guy-educ/dev ([d5651bb](https://github.com/A-Guy-educ/A-Guy/commit/d5651bb)), closes [#331](https://github.com/A-Guy-educ/A-Guy/issues/331)
+* Merge remote-tracking branch 'origin/dev' into feat/diagram-roundtrip-pass ([44b90bb](https://github.com/A-Guy-educ/A-Guy/commit/44b90bb))
+* Merge remote-tracking branch 'origin/feat/lesson-exercises-pager-redesign' into feat/free-response-a ([5bcfa68](https://github.com/A-Guy-educ/A-Guy/commit/5bcfa68))
+* Merge remote-tracking branch 'origin/wknd' into feat/pipe-001-health-endpoint-badge ([53d78f7](https://github.com/A-Guy-educ/A-Guy/commit/53d78f7))
+* src\app\api\exercises\convert\queue\route.ts @@ -1,3 +1,4 @@ import { loadRuntimeConfig } from '@/in ([d0ebe9c](https://github.com/A-Guy-educ/A-Guy/commit/d0ebe9c))
+* fix: accept /api/media relative paths in PdfViewedSchema ([ef1339a](https://github.com/A-Guy-educ/A-Guy/commit/ef1339a))
+* fix: Add @genkit-ai/googleai dependency to fix PIPE-001 ([8a8011e](https://github.com/A-Guy-educ/A-Guy/commit/8a8011e))
+* fix: Add @genkit-ai/googleai dependency to fix PIPE-001 ([ec49f26](https://github.com/A-Guy-educ/A-Guy/commit/ec49f26))
+* fix: Add credentials include to prompts fetch + improve UX states ([8259de6](https://github.com/A-Guy-educ/A-Guy/commit/8259de6))
+* fix: Add lesson to streaming integration test ([5ab8c72](https://github.com/A-Guy-educ/A-Guy/commit/5ab8c72))
+* fix: Add missing hierarchy to streaming integration test ([8ff1a13](https://github.com/A-Guy-educ/A-Guy/commit/8ff1a13))
+* fix: Add missing Media fields for Vercel Blob storage ([1236c5b](https://github.com/A-Guy-educ/A-Guy/commit/1236c5b))
+* fix: add overrideAccess: true for exercise operations ([039614b](https://github.com/A-Guy-educ/A-Guy/commit/039614b))
+* fix: Add require-in-the-middle as direct dependency for Vercel ([e793d22](https://github.com/A-Guy-educ/A-Guy/commit/e793d22))
+* fix: Add URL normalization to multimodal-mapper to fix ECONNREFUSED errors ([57e0465](https://github.com/A-Guy-educ/A-Guy/commit/57e0465)), closes [#fix-pdf-exercises-econnrefused](https://github.com/A-Guy-educ/A-Guy/issues/fix-pdf-exercises-econnrefused)
+* fix: admin chat context and categoryId support ([6067de2](https://github.com/A-Guy-educ/A-Guy/commit/6067de2))
+* fix: call blob storage validation at module load time ([febd635](https://github.com/A-Guy-educ/A-Guy/commit/febd635))
+* fix: Correct Genkit streaming response access pattern ([a5a9ab1](https://github.com/A-Guy-educ/A-Guy/commit/a5a9ab1))
+* fix: disable pdfjs worker for Vercel serverless compatibility ([e26db9c](https://github.com/A-Guy-educ/A-Guy/commit/e26db9c))
+* fix: Disable pdfjs-dist worker for Vercel serverless compatibility ([2f49d83](https://github.com/A-Guy-educ/A-Guy/commit/2f49d83))
+* fix: dynamically fetch blob store URL instead of using env var ([ade4412](https://github.com/A-Guy-educ/A-Guy/commit/ade4412))
+* fix: Externalize require-in-the-middle for Vercel serverless ([975f04a](https://github.com/A-Guy-educ/A-Guy/commit/975f04a))
+* fix: Externalize require-in-the-middle for Vercel serverless ([6cb48a9](https://github.com/A-Guy-educ/A-Guy/commit/6cb48a9))
+* fix: Fix streaming integration test and adminMode validation ([03003b1](https://github.com/A-Guy-educ/A-Guy/commit/03003b1))
+* fix: Fix streaming integration test mock and assertions ([6024ee7](https://github.com/A-Guy-educ/A-Guy/commit/6024ee7))
+* fix: Format OpenAI provider files ([c8ce567](https://github.com/A-Guy-educ/A-Guy/commit/c8ce567))
+* fix: Handle missing blob read write token gracefully in sitemap routes ([1ac9521](https://github.com/A-Guy-educ/A-Guy/commit/1ac9521))
+* fix: lenient validation for extractor output - skip invalid exercises instead of failing segment ([340da45](https://github.com/A-Guy-educ/A-Guy/commit/340da45))
+* fix: lint fixes for pdf-fetcher ([65aa07c](https://github.com/A-Guy-educ/A-Guy/commit/65aa07c))
+* fix: load runtime config before PDF job execution ([292592f](https://github.com/A-Guy-educ/A-Guy/commit/292592f))
+* fix: normalize relative URLs using production server URL ([f870ec1](https://github.com/A-Guy-educ/A-Guy/commit/f870ec1))
+* fix: pass auth headers in PDF fetcher to resolve 401 error ([d0271ae](https://github.com/A-Guy-educ/A-Guy/commit/d0271ae))
+* fix: Refactor Health API tests ([5dc12ce](https://github.com/A-Guy-educ/A-Guy/commit/5dc12ce))
+* fix: Remove broken diagram-pass integration test ([cbe5dda](https://github.com/A-Guy-educ/A-Guy/commit/cbe5dda))
+* fix: remove broken effectiveModel override in tool calling providers ([d666eb6](https://github.com/A-Guy-educ/A-Guy/commit/d666eb6))
+* fix: Remove hard BLOB_READ_WRITE_TOKEN requirement during build ([f6b01ef](https://github.com/A-Guy-educ/A-Guy/commit/f6b01ef))
+* fix: Remove upload config from Media collection for blob plugin ([a8754f3](https://github.com/A-Guy-educ/A-Guy/commit/a8754f3))
+* fix: Replace pdfjs-dist with pdf-lib for serverless-compatible PDF page counting ([61c920a](https://github.com/A-Guy-educ/A-Guy/commit/61c920a))
+* fix: require Vercel Blob URLs for PDFs, remove getExternalStorageUrl ([44db4f8](https://github.com/A-Guy-educ/A-Guy/commit/44db4f8))
+* fix: Resolve config-values integration test failures ([6ce84f6](https://github.com/A-Guy-educ/A-Guy/commit/6ce84f6))
+* fix: Resolve duplicate element errors in health-badge tests ([b1ca516](https://github.com/A-Guy-educ/A-Guy/commit/b1ca516))
+* fix: Resolve media cleanup test timeout ([5d0a5b1](https://github.com/A-Guy-educ/A-Guy/commit/5d0a5b1))
+* fix: Resolve merge conflict in system-params.ts ([97847ef](https://github.com/A-Guy-educ/A-Guy/commit/97847ef))
+* fix: Resolve type errors for blob storage sizes in UI components ([7f55a5f](https://github.com/A-Guy-educ/A-Guy/commit/7f55a5f))
+* fix: Resolve vitest mock hoisting issue in diagram-pass tests ([3cf627f](https://github.com/A-Guy-educ/A-Guy/commit/3cf627f))
+* fix: Restore original import order in LayoutClient ([e88c6cb](https://github.com/A-Guy-educ/A-Guy/commit/e88c6cb))
+* fix: Restyle PDF conversion page with Payload admin design system ([1fbdb14](https://github.com/A-Guy-educ/A-Guy/commit/1fbdb14))
+* fix: revert PDF.js to hardcoded blob URL ([903ca18](https://github.com/A-Guy-educ/A-Guy/commit/903ca18))
+* fix: Set pdfjs-dist worker src to CDN for Vercel compatibility ([db00bd0](https://github.com/A-Guy-educ/A-Guy/commit/db00bd0))
+* fix: skip blob plugin during type generation ([1421df1](https://github.com/A-Guy-educ/A-Guy/commit/1421df1))
+* fix: skip blob validation during type generation ([baeb77c](https://github.com/A-Guy-educ/A-Guy/commit/baeb77c))
+* fix: sync payload-types.ts with dev branch ([27ca15c](https://github.com/A-Guy-educ/A-Guy/commit/27ca15c))
+* fix: sync payload.config.ts with dev branch ([6e5966d](https://github.com/A-Guy-educ/A-Guy/commit/6e5966d))
+* fix: Throw error when BLOB_READ_WRITE_TOKEN is not set ([3c639a8](https://github.com/A-Guy-educ/A-Guy/commit/3c639a8))
+* fix: Update PDF conversion helpers and add regression tests ([3851358](https://github.com/A-Guy-educ/A-Guy/commit/3851358))
+* fix: use correct Migration type format (up/down object) ([5d04d1e](https://github.com/A-Guy-educ/A-Guy/commit/5d04d1e))
+* fix: use NEXT_PUBLIC_SERVER_URL for getExternalStorageUrl ([02e00f8](https://github.com/A-Guy-educ/A-Guy/commit/02e00f8))
+* fix: use production URL in getExternalStorageUrl() for production env ([0191904](https://github.com/A-Guy-educ/A-Guy/commit/0191904))
+* fix(admin-chat): add adminMode to schema to avoid body double-read ([7d6bb47](https://github.com/A-Guy-educ/A-Guy/commit/7d6bb47))
+* fix(admin): use Payload admin CSS in DashboardWidget ([9abbe17](https://github.com/A-Guy-educ/A-Guy/commit/9abbe17))
+* fix(analytics): Add debug logging to diagnose GA4 loading issue ([51e2082](https://github.com/A-Guy-educ/A-Guy/commit/51e2082))
+* fix(analytics): Add sendBeacon transport for reliable session_ended tracking ([4bedab3](https://github.com/A-Guy-educ/A-Guy/commit/4bedab3))
+* fix(analytics): Fix GA4 not loading due to SSR config caching ([8979aa9](https://github.com/A-Guy-educ/A-Guy/commit/8979aa9))
+* fix(ci): add BLOB_READ_WRITE_TOKEN to e2e-system-tests job ([8ee8f75](https://github.com/A-Guy-educ/A-Guy/commit/8ee8f75))
+* fix(courses): Remove slug validation that was filtering out courses ([390f669](https://github.com/A-Guy-educ/A-Guy/commit/390f669))
+* fix(e2e): Add fast HEAD health endpoint and increase timeout ([3ef29ec](https://github.com/A-Guy-educ/A-Guy/commit/3ef29ec))
+* fix(e2e): Improve test selectors and add graceful skip handling ([138367c](https://github.com/A-Guy-educ/A-Guy/commit/138367c))
+* fix(exercises-pager): Align with spec naming and component conventions ([aac935a](https://github.com/A-Guy-educ/A-Guy/commit/aac935a))
+* fix(exercises-pager): Fix inverted arrows in RTL (Hebrew) layout ([cb3dbdc](https://github.com/A-Guy-educ/A-Guy/commit/cb3dbdc))
+* fix(exercises): Guard against undefined answer state in renderer ([c5442db](https://github.com/A-Guy-educ/A-Guy/commit/c5442db))
+* fix(int tests): add async/await to ConfigValues integration tests ([a224a7d](https://github.com/A-Guy-educ/A-Guy/commit/a224a7d))
+* fix(loading): Force cursor-wait style with important modifier ([075072d](https://github.com/A-Guy-educ/A-Guy/commit/075072d))
+* fix(loading): Use inline style for cursor-wait ([1cc5470](https://github.com/A-Guy-educ/A-Guy/commit/1cc5470))
+* fix(pdfjs): make CDN URLs dynamic from Vercel Blob storage ([c01c9df](https://github.com/A-Guy-educ/A-Guy/commit/c01c9df))
+* fix(shop): Improve dark mode styling with CSS variables ([cdabc1a](https://github.com/A-Guy-educ/A-Guy/commit/cdabc1a))
+* fix(shop): Remove remaining hardcoded gray colors from PlanCard ([bd2234c](https://github.com/A-Guy-educ/A-Guy/commit/bd2234c))
+* fix(shop): Replace hardcoded colors with CSS variables ([939bc0e](https://github.com/A-Guy-educ/A-Guy/commit/939bc0e))
+* fix(tests): Fix CourseCard button structure for accessibility tests ([a360760](https://github.com/A-Guy-educ/A-Guy/commit/a360760))
+* fix(tests): Increase timeout for slow integration tests ([ac5d88a](https://github.com/A-Guy-educ/A-Guy/commit/ac5d88a))
+* fix(tests): resolve async SystemParams functions and mock configuration ([15bab70](https://github.com/A-Guy-educ/A-Guy/commit/15bab70))
+* fix(tests): Resolve memory system test timeouts ([e720743](https://github.com/A-Guy-educ/A-Guy/commit/e720743))
+* fix(tests): Use .test.tsx naming and revert vitest config ([693b958](https://github.com/A-Guy-educ/A-Guy/commit/693b958))
+* fix(translations): Update exercises pager translation keys to match component usage ([d265c3a](https://github.com/A-Guy-educ/A-Guy/commit/d265c3a))
+* fix(translations): Update exercises pager translation keys to match component usage ([ac6697d](https://github.com/A-Guy-educ/A-Guy/commit/ac6697d))
+* feat: Add admin chat with MCP and Gemini tool calling ([88c2ea1](https://github.com/A-Guy-educ/A-Guy/commit/88c2ea1))
+* feat: add chat config validation and tests ([f62ac10](https://github.com/A-Guy-educ/A-Guy/commit/f62ac10))
+* feat: Add Claude Code integration ([acde2bd](https://github.com/A-Guy-educ/A-Guy/commit/acde2bd))
+* feat: add configvalues collection and runtime config ([dd21ec2](https://github.com/A-Guy-educ/A-Guy/commit/dd21ec2))
+* feat: Add dedicated PDF conversion admin page ([1fb048b](https://github.com/A-Guy-educ/A-Guy/commit/1fb048b))
+* feat: Add diagram generator prompt support to conversion API ([3cf1cee](https://github.com/A-Guy-educ/A-Guy/commit/3cf1cee))
+* feat: Add diagram roundtrip pass for TikZ generation ([403fbdd](https://github.com/A-Guy-educ/A-Guy/commit/403fbdd))
+* feat: add media migration script and blob handling ([7b2390a](https://github.com/A-Guy-educ/A-Guy/commit/7b2390a))
+* feat: add media migration script for blob storage ([b644e41](https://github.com/A-Guy-educ/A-Guy/commit/b644e41))
+* feat: Add OpenCode configuration and optimize AI instruction layer ([c6d144c](https://github.com/A-Guy-educ/A-Guy/commit/c6d144c))
+* feat: Add PDF segmentation tests and update PDF-to-exercises task ([7f779fd](https://github.com/A-Guy-educ/A-Guy/commit/7f779fd))
+* feat: Add streaming chat endpoint with SSE support ([c9d2dbb](https://github.com/A-Guy-educ/A-Guy/commit/c9d2dbb))
+* feat: Enforce file location patterns for AI agents ([3bb3d7e](https://github.com/A-Guy-educ/A-Guy/commit/3bb3d7e))
+* feat: Enforce Vercel Blob storage configuration ([5a263b7](https://github.com/A-Guy-educ/A-Guy/commit/5a263b7))
+* feat: implement Admin Chat MCP integration tests ([9765ddd](https://github.com/A-Guy-educ/A-Guy/commit/9765ddd))
+* feat: implement admin chat MCP integration with auth header forwarding ([9090a16](https://github.com/A-Guy-educ/A-Guy/commit/9090a16))
+* feat: Implement diagram roundtrip pass functionality ([cca37f8](https://github.com/A-Guy-educ/A-Guy/commit/cca37f8))
+* feat: Implement global loading system for user-facing UI ([b9ad303](https://github.com/A-Guy-educ/A-Guy/commit/b9ad303))
+* feat: merge streaming chat endpoint from feat/add-streaming-chat-endpoint ([19cbb46](https://github.com/A-Guy-educ/A-Guy/commit/19cbb46))
+* feat: Refactor PDF-to-exercise idempotency and cleanup migrations ([d5c0373](https://github.com/A-Guy-educ/A-Guy/commit/d5c0373))
+* feat: Remove diagram generator from PDF conversion flow (Stage 1) ([07f99de](https://github.com/A-Guy-educ/A-Guy/commit/07f99de))
+* feat: update system params ([f5ba0ed](https://github.com/A-Guy-educ/A-Guy/commit/f5ba0ed))
+* feat(admin): implement admin chat with MCP tools ([5e705a5](https://github.com/A-Guy-educ/A-Guy/commit/5e705a5))
+* feat(analytics): Add time-to-abandonment tracking and update tokens ([8ce602a](https://github.com/A-Guy-educ/A-Guy/commit/8ce602a))
+* feat(analytics): Enable Mixpanel session replay recording ([6c5c7b3](https://github.com/A-Guy-educ/A-Guy/commit/6c5c7b3))
+* feat(analytics): Unmask text in Mixpanel session replays ([43ac171](https://github.com/A-Guy-educ/A-Guy/commit/43ac171))
+* feat(config): Add SystemParam kind for runtime-configurable system constants ([09fe860](https://github.com/A-Guy-educ/A-Guy/commit/09fe860))
+* feat(config): Add SystemParam kind for runtime-configurable system constants ([9297d34](https://github.com/A-Guy-educ/A-Guy/commit/9297d34))
+* feat(courses): Add bilingual headers (Hebrew/English) ([37318fa](https://github.com/A-Guy-educ/A-Guy/commit/37318fa))
+* feat(courses): Add loading state to course navigation buttons ([1d5df87](https://github.com/A-Guy-educ/A-Guy/commit/1d5df87))
+* feat(courses): Use i18n translations for headers ([ae5493d](https://github.com/A-Guy-educ/A-Guy/commit/ae5493d))
+* feat(exercises): Implement idempotency-based deduplication for PDF→Exercises conversion ([1dfb2fd](https://github.com/A-Guy-educ/A-Guy/commit/1dfb2fd))
+* feat(exercises): Upgrade free response answer box to textarea ([89aa531](https://github.com/A-Guy-educ/A-Guy/commit/89aa531))
+* feat(lessons): Add exercises pager for lessons without documents ([7cdd1c1](https://github.com/A-Guy-educ/A-Guy/commit/7cdd1c1))
+* feat(lessons): Add exercises pager for lessons without documents ([9105c77](https://github.com/A-Guy-educ/A-Guy/commit/9105c77))
+* feat(lessons): Redesign exercises pager with Figma-based visual language ([dffb9c1](https://github.com/A-Guy-educ/A-Guy/commit/dffb9c1))
+* feat(llm): Add lazy loading for runtime config values ([32e829f](https://github.com/A-Guy-educ/A-Guy/commit/32e829f))
+* feat(llm): migrate to Firebase Genkit (complete) ([637a52d](https://github.com/A-Guy-educ/A-Guy/commit/637a52d))
+* feat(llm): Replace hardcoded constants with dynamic config loading ([68ffe9f](https://github.com/A-Guy-educ/A-Guy/commit/68ffe9f))
+* feat(loading): Add loading feedback to Google OAuth button ([133c29b](https://github.com/A-Guy-educ/A-Guy/commit/133c29b))
+* feat(loading): Add local loading indication to SystemLink ([c97830e](https://github.com/A-Guy-educ/A-Guy/commit/c97830e))
+* feat(loading): Add SystemLink to course navigation ([2db973c](https://github.com/A-Guy-educ/A-Guy/commit/2db973c))
+* feat(loading): Expand SystemLink to all navigation ([7bea5dc](https://github.com/A-Guy-educ/A-Guy/commit/7bea5dc))
+* feat(shop): Add courses store page with membership plans ([b85f9af](https://github.com/A-Guy-educ/A-Guy/commit/b85f9af))
+* feat(shop): Add i18n translations for Hebrew/English support ([632e47d](https://github.com/A-Guy-educ/A-Guy/commit/632e47d))
+* feat(system-events): Add SITE_INIT event and optimize integration tests ([39cd06b](https://github.com/A-Guy-educ/A-Guy/commit/39cd06b))
+* chore: Add AI documentation indices for improved agent context ([454399a](https://github.com/A-Guy-educ/A-Guy/commit/454399a))
+* chore: Add logging to troubleshoot missing course in catalog ([0c0a7a9](https://github.com/A-Guy-educ/A-Guy/commit/0c0a7a9))
+* chore: Add runtime config loading for PDF conversion endpoint ([9a40c80](https://github.com/A-Guy-educ/A-Guy/commit/9a40c80))
+* chore: Add verify script for pre-push hook ([9d47435](https://github.com/A-Guy-educ/A-Guy/commit/9d47435))
+* chore: cleanup deprecated task files ([bc1d704](https://github.com/A-Guy-educ/A-Guy/commit/bc1d704))
+* chore: Exclude custom.scss from eslint rules ([05d7e52](https://github.com/A-Guy-educ/A-Guy/commit/05d7e52))
+* chore: fix prettier formatting for openai provider files ([f7c8c8d](https://github.com/A-Guy-educ/A-Guy/commit/f7c8c8d))
+* chore: format openai provider files ([ac177fa](https://github.com/A-Guy-educ/A-Guy/commit/ac177fa))
+* chore: Merge dev into feat/lesson-exercises-pager-redesign ([97413b4](https://github.com/A-Guy-educ/A-Guy/commit/97413b4))
+* chore: Remove everything-claude-code source folder ([fd9ea2e](https://github.com/A-Guy-educ/A-Guy/commit/fd9ea2e))
+* chore: Remove shop.txt reference file ([3cea4b8](https://github.com/A-Guy-educ/A-Guy/commit/3cea4b8))
+* chore: remove unused debug code in courses query ([9799c62](https://github.com/A-Guy-educ/A-Guy/commit/9799c62))
+* chore: Revert unrelated formatting changes ([9b31eed](https://github.com/A-Guy-educ/A-Guy/commit/9b31eed))
+* chore: Sync local changes ([07ea44e](https://github.com/A-Guy-educ/A-Guy/commit/07ea44e))
+* chore: update generated Payload types ([9475e1c](https://github.com/A-Guy-educ/A-Guy/commit/9475e1c))
+* chore: Update generated types and config ([d02f55f](https://github.com/A-Guy-educ/A-Guy/commit/d02f55f))
+* chore: Update loading system plan ([d5f5c94](https://github.com/A-Guy-educ/A-Guy/commit/d5f5c94))
+* chore: Update loading system plan ([8aa54c0](https://github.com/A-Guy-educ/A-Guy/commit/8aa54c0))
+* chore: update local Claude settings ([3ee6fbc](https://github.com/A-Guy-educ/A-Guy/commit/3ee6fbc))
+* chore: Update MCP config and payload types ([fb57088](https://github.com/A-Guy-educ/A-Guy/commit/fb57088))
+* chore(courses): Hide membership plan cards temporarily ([e77059c](https://github.com/A-Guy-educ/A-Guy/commit/e77059c))
+* chore(llm): clean up console.log with structured logging ([7ab263c](https://github.com/A-Guy-educ/A-Guy/commit/7ab263c))
+* chore(llm): clean up console.log with structured logging ([c71a692](https://github.com/A-Guy-educ/A-Guy/commit/c71a692))
+* chore(release): 0.5.0 [skip ci] ([e8efea9](https://github.com/A-Guy-educ/A-Guy/commit/e8efea9))
+* chore(release): 0.6.0 [skip ci] ([6710a9a](https://github.com/A-Guy-educ/A-Guy/commit/6710a9a))
+* chore(shop): Remove README documentation file ([204f230](https://github.com/A-Guy-educ/A-Guy/commit/204f230))
+* refactor: Extract path utility functions from PayloadRedirects ([99ad385](https://github.com/A-Guy-educ/A-Guy/commit/99ad385))
+* refactor: LLM model registry single source of truth ([d80ff61](https://github.com/A-Guy-educ/A-Guy/commit/d80ff61))
+* refactor: LLM model registry single source of truth ([b91a20d](https://github.com/A-Guy-educ/A-Guy/commit/b91a20d))
+* refactor: Migrate PDF conversion constants to use SystemParams ([415b9e7](https://github.com/A-Guy-educ/A-Guy/commit/415b9e7))
+* refactor: Rename openai provider to openai-compatible ([04e3924](https://github.com/A-Guy-educ/A-Guy/commit/04e3924))
+* refactor: Split PDF conversion spec into 3 stage files ([f5538d9](https://github.com/A-Guy-educ/A-Guy/commit/f5538d9))
+* refactor: unify LLM model registry configuration ([e9ed689](https://github.com/A-Guy-educ/A-Guy/commit/e9ed689))
+* refactor: unify LLM model registry configuration ([92836b5](https://github.com/A-Guy-educ/A-Guy/commit/92836b5))
+* refactor(analytics): Decouple analytics from UI using event bus pattern ([56194cc](https://github.com/A-Guy-educ/A-Guy/commit/56194cc))
+* refactor(courses): Follow micro-component architecture ([28314a9](https://github.com/A-Guy-educ/A-Guy/commit/28314a9))
+* refactor(courses): Migrate shop page to /courses with design system colors ([1e2304d](https://github.com/A-Guy-educ/A-Guy/commit/1e2304d))
+* refactor(courses): Remove footer and swap section headers ([3c4dca8](https://github.com/A-Guy-educ/A-Guy/commit/3c4dca8))
+* refactor(exercises-pager): Split hook, fix hardcoded text, comply with guidelines ([5f3ae3e](https://github.com/A-Guy-educ/A-Guy/commit/5f3ae3e))
+* refactor(shop): Match Figma design pixel-perfectly ([5098981](https://github.com/A-Guy-educ/A-Guy/commit/5098981)), closes [#8B1D25](https://github.com/A-Guy-educ/A-Guy/issues/8B1D25) [#8B1D25](https://github.com/A-Guy-educ/A-Guy/issues/8B1D25)
+* refactor(shop): Use CardTitle/CardDescription and add hover effects ([445c0fe](https://github.com/A-Guy-educ/A-Guy/commit/445c0fe))
+* refactor(shop): Use design system CSS variables and remove duplicate nav ([ab411b1](https://github.com/A-Guy-educ/A-Guy/commit/ab411b1))
+* test: Add unit tests for LLM provider factory, observability, and OpenAI errors ([56392db](https://github.com/A-Guy-educ/A-Guy/commit/56392db))
+* test(courses): Update CourseCard tests and vitest config ([52c141e](https://github.com/A-Guy-educ/A-Guy/commit/52c141e))
+* test(loading): Fix CourseCard test for useRouterWithLoading ([cea3941](https://github.com/A-Guy-educ/A-Guy/commit/cea3941))
+* test(system-events): Update tests for 11 events (add SITE_INIT) ([057bf79](https://github.com/A-Guy-educ/A-Guy/commit/057bf79))
+* docs: Add missing readme files with agent guardrails ([c73538c](https://github.com/A-Guy-educ/A-Guy/commit/c73538c))
+* docs: Add OpenCode agent specs and A-Guy documentation ([5e7335d](https://github.com/A-Guy-educ/A-Guy/commit/5e7335d))
+* docs(loading): Remove cursor from loading indication spec ([614fbd6](https://github.com/A-Guy-educ/A-Guy/commit/614fbd6))
+* style: Add custom.scss for Payload admin styling ([213b903](https://github.com/A-Guy-educ/A-Guy/commit/213b903))
+* style: Fix formatting for .claude/settings.local.json ([7ca8bbb](https://github.com/A-Guy-educ/A-Guy/commit/7ca8bbb))
+* style: Format Claude Code files with Prettier ([f741203](https://github.com/A-Guy-educ/A-Guy/commit/f741203))
+* style: format PDFEmbed component ([afdae29](https://github.com/A-Guy-educ/A-Guy/commit/afdae29))
+* style: format PDFEmbed component ([584f99d](https://github.com/A-Guy-educ/A-Guy/commit/584f99d))
+* debug: add logging to getExternalStorageUrl and pdf-fetcher ([b147dc1](https://github.com/A-Guy-educ/A-Guy/commit/b147dc1))
+* revert: Remove all unnecessary changes from vercel-blob-adapter test ([a8cdc07](https://github.com/A-Guy-educ/A-Guy/commit/a8cdc07))
+* revert: Restore any types in vercel-blob-adapter test ([30bc4b3](https://github.com/A-Guy-educ/A-Guy/commit/30bc4b3))
+* Revert: undo worker disable that broke PDF viewer ([e915885](https://github.com/A-Guy-educ/A-Guy/commit/e915885))
+* ci: Add BLOB_READ_WRITE_TOKEN to CI workflows ([012d8c2](https://github.com/A-Guy-educ/A-Guy/commit/012d8c2))
+
+
+### BREAKING CHANGE
+
+* Old provider patterns are removed. All LLM operations now
+use the unified Genkit adapter via createGenkitUnifiedAdapter().
+
+## 0.6.0 (2026-02-01)
+
+* Add data attribute to verify ChapterHeader version in deployed build ([9ae9e1b](https://github.com/A-Guy-educ/A-Guy/commit/9ae9e1b))
+* Apply suggestion from @Copilot ([7b139ed](https://github.com/A-Guy-educ/A-Guy/commit/7b139ed))
+* Apply suggestion from @Copilot ([47c655d](https://github.com/A-Guy-educ/A-Guy/commit/47c655d))
+* Completely remove chapter label div and all its contents from ChapterHeader ([463d178](https://github.com/A-Guy-educ/A-Guy/commit/463d178))
+* Creating manager.yml and updating openhands' name ([3778d00](https://github.com/A-Guy-educ/A-Guy/commit/3778d00))
+* Delete .github/pull_request_template.md ([31dec00](https://github.com/A-Guy-educ/A-Guy/commit/31dec00))
+* Merge branch 'yac' into chore/api-jobs-backfill-from-dev ([9eeb1a9](https://github.com/A-Guy-educ/A-Guy/commit/9eeb1a9))
+* Merge pull request #256 from A-Guy-educ/feat/exercise-conversion-improvements ([1f32f1f](https://github.com/A-Guy-educ/A-Guy/commit/1f32f1f)), closes [#256](https://github.com/A-Guy-educ/A-Guy/issues/256)
+* Merge pull request #257 from A-Guy-educ/fix/exercise-conversion-debug-issues ([6e6a91b](https://github.com/A-Guy-educ/A-Guy/commit/6e6a91b)), closes [#257](https://github.com/A-Guy-educ/A-Guy/issues/257)
+* Merge pull request #258 from A-Guy-educ/chore/api-jobs-backfill-from-dev ([c13b5b9](https://github.com/A-Guy-educ/A-Guy/commit/c13b5b9)), closes [#258](https://github.com/A-Guy-educ/A-Guy/issues/258)
+* Merge pull request #259 from A-Guy-educ/yac ([3ce3de3](https://github.com/A-Guy-educ/A-Guy/commit/3ce3de3)), closes [#259](https://github.com/A-Guy-educ/A-Guy/issues/259)
+* Merge pull request #260 from A-Guy-educ/feat/system-events-bus-v0 ([c42b319](https://github.com/A-Guy-educ/A-Guy/commit/c42b319)), closes [#260](https://github.com/A-Guy-educ/A-Guy/issues/260)
+* Merge pull request #283 from A-Guy-educ/dev ([7335435](https://github.com/A-Guy-educ/A-Guy/commit/7335435)), closes [#283](https://github.com/A-Guy-educ/A-Guy/issues/283)
+* Redirect to home page after course selection instead of course detail page ([d7265d4](https://github.com/A-Guy-educ/A-Guy/commit/d7265d4))
+* Remove CoursesHero component from Courses page ([ba06b3b](https://github.com/A-Guy-educ/A-Guy/commit/ba06b3b))
+* Remove h1 header from study route ([6dc7e8e](https://github.com/A-Guy-educ/A-Guy/commit/6dc7e8e))
+* Remove small header div from ChapterHeader component ([568e369](https://github.com/A-Guy-educ/A-Guy/commit/568e369))
+* fix: add missing course fields to jobs-run-now test ([bb73a69](https://github.com/A-Guy-educ/A-Guy/commit/bb73a69))
+* fix: add missing course fields to jobs-run-now test ([6433549](https://github.com/A-Guy-educ/A-Guy/commit/6433549))
+* fix: Add missing tenant and categories fields to CourseCard test mock ([9df4206](https://github.com/A-Guy-educ/A-Guy/commit/9df4206))
+* fix: add nanoid dependency, move shared to lib, fix Vercel Blob storage support ([aff14b6](https://github.com/A-Guy-educ/A-Guy/commit/aff14b6))
+* fix: add nanoid dependency, move shared to lib, fix Vercel Blob storage support ([2027240](https://github.com/A-Guy-educ/A-Guy/commit/2027240))
+* fix: Add page_count to PDF_VIEWED event schema and component ([edca7c2](https://github.com/A-Guy-educ/A-Guy/commit/edca7c2))
+* fix: add pdfjs-dist dependency for PDF segmentation ([d43b2f5](https://github.com/A-Guy-educ/A-Guy/commit/d43b2f5))
+* fix: add pdfjs-dist dependency for PDF segmentation ([4cbf551](https://github.com/A-Guy-educ/A-Guy/commit/4cbf551))
+* fix: Add slug validation to prevent navigation to /courses/- ([97a84ba](https://github.com/A-Guy-educ/A-Guy/commit/97a84ba))
+* fix: convert CSS classes to inline styles for Tailwind compatibility ([2524f7b](https://github.com/A-Guy-educ/A-Guy/commit/2524f7b))
+* fix: convert exercise conversion UI to Tailwind classes ([0322f9f](https://github.com/A-Guy-educ/A-Guy/commit/0322f9f))
+* fix: correct Payload index format - use array instead of object ([397a878](https://github.com/A-Guy-educ/A-Guy/commit/397a878))
+* fix: correct Payload index format - use array instead of object ([d922071](https://github.com/A-Guy-educ/A-Guy/commit/d922071))
+* fix: implement Mixpanel anonymous user tracking with cookie persistence ([9c73fc1](https://github.com/A-Guy-educ/A-Guy/commit/9c73fc1))
+* fix: improve PDF fetching with filesystem-first strategy ([4845026](https://github.com/A-Guy-educ/A-Guy/commit/4845026)), closes [#173](https://github.com/A-Guy-educ/A-Guy/issues/173)
+* fix: Resolve build errors ([3a6507d](https://github.com/A-Guy-educ/A-Guy/commit/3a6507d))
+* fix: Resolve build errors ([6b424c8](https://github.com/A-Guy-educ/A-Guy/commit/6b424c8))
+* fix: resolve CI errors by adding missing build dependencies and lazy-loading VercelBlobAdapter ([d671996](https://github.com/A-Guy-educ/A-Guy/commit/d671996))
+* fix: resolve CI errors by adding missing build dependencies and lazy-loading VercelBlobAdapter ([f69c937](https://github.com/A-Guy-educ/A-Guy/commit/f69c937))
+* fix: resolve exercise conversion debug issues ([a893775](https://github.com/A-Guy-educ/A-Guy/commit/a893775))
+* fix: resolve exercise conversion debug issues ([c8c10ff](https://github.com/A-Guy-educ/A-Guy/commit/c8c10ff))
+* fix: resolve failing integration tests ([a267771](https://github.com/A-Guy-educ/A-Guy/commit/a267771))
+* fix: resolve failing integration tests ([5443b5b](https://github.com/A-Guy-educ/A-Guy/commit/5443b5b))
+* fix: resolve lint error - unused payload variable in catch block ([1b76b05](https://github.com/A-Guy-educ/A-Guy/commit/1b76b05))
+* fix: resolve lint error - unused payload variable in catch block ([dcc440f](https://github.com/A-Guy-educ/A-Guy/commit/dcc440f))
+* fix: resolve MongoDB connection issue in run-immediate endpoint ([d3e11d4](https://github.com/A-Guy-educ/A-Guy/commit/d3e11d4))
+* fix: resolve NEXT_PUBLIC_EXTERNAL_STORAGE_URL from ConfigEntries ([b82ef1a](https://github.com/A-Guy-educ/A-Guy/commit/b82ef1a))
+* fix: Resolve PDF fetch failure for non-Blob URLs ([040f5d1](https://github.com/A-Guy-educ/A-Guy/commit/040f5d1))
+* fix: resolve typecheck errors in run-immediate route and LessonConversionPanel ([4bb126d](https://github.com/A-Guy-educ/A-Guy/commit/4bb126d))
+* fix: resolve typecheck errors in run-immediate route and LessonConversionPanel ([3523d36](https://github.com/A-Guy-educ/A-Guy/commit/3523d36))
+* fix: simplify PDF fetching using existing blob adapter ([ea8a01d](https://github.com/A-Guy-educ/A-Guy/commit/ea8a01d)), closes [#173](https://github.com/A-Guy-educ/A-Guy/issues/173)
+* fix: Use getAllByRole()[0] to select first button in CourseCard tests ([1592ecf](https://github.com/A-Guy-educ/A-Guy/commit/1592ecf))
+* fix: Use getByRole instead of getByText in CourseCard unit tests ([ad332a9](https://github.com/A-Guy-educ/A-Guy/commit/ad332a9))
+* fix: use inline dialog components for Payload admin compatibility ([2fd39d5](https://github.com/A-Guy-educ/A-Guy/commit/2fd39d5))
+* fix: use own blob storage in jobs-run-now test ([60732ee](https://github.com/A-Guy-educ/A-Guy/commit/60732ee))
+* fix: use own blob storage in jobs-run-now test ([22e4644](https://github.com/A-Guy-educ/A-Guy/commit/22e4644))
+* fix: Use router.push with preventDefault for reliable course selection ([3959ca4](https://github.com/A-Guy-educ/A-Guy/commit/3959ca4))
+* fix: use shadcn Dialog and Button components for exercise conversion modal ([1ec9e0f](https://github.com/A-Guy-educ/A-Guy/commit/1ec9e0f))
+* fix: use simple CSS modal without Radix dependencies ([c57df00](https://github.com/A-Guy-educ/A-Guy/commit/c57df00))
+* fix: Use window.location.href for course navigation to ensure localStorage sync ([6aebc88](https://github.com/A-Guy-educ/A-Guy/commit/6aebc88))
+* fix(analytics): Validate system events subscriber uses full event names ([1a36e33](https://github.com/A-Guy-educ/A-Guy/commit/1a36e33))
+* fix(chat): Add 'use client' directive to useNotebookChat hook ([63e9def](https://github.com/A-Guy-educ/A-Guy/commit/63e9def))
+* fix(chat): Show mobile toggle automatically when mobile props provided ([244f8f5](https://github.com/A-Guy-educ/A-Guy/commit/244f8f5))
+* fix(test): Update CourseCard test navigation assertion ([36d69a2](https://github.com/A-Guy-educ/A-Guy/commit/36d69a2))
+* feat: add admin UI components and i18n strings for exercise conversion ([bd0aff7](https://github.com/A-Guy-educ/A-Guy/commit/bd0aff7))
+* feat: add admin UI components and i18n strings for exercise conversion ([b170b7a](https://github.com/A-Guy-educ/A-Guy/commit/b170b7a))
+* feat: add database migration for conversion indexes ([7b4336a](https://github.com/A-Guy-educ/A-Guy/commit/7b4336a))
+* feat: add database migration for conversion indexes ([c3f6b6f](https://github.com/A-Guy-educ/A-Guy/commit/c3f6b6f))
+* feat: add exercise conversion foundation - constants, schemas, helpers, hash utils ([318171d](https://github.com/A-Guy-educ/A-Guy/commit/318171d))
+* feat: add exercise conversion foundation - constants, schemas, helpers, hash utils ([1126e22](https://github.com/A-Guy-educ/A-Guy/commit/1126e22))
+* feat: add GitHub Actions workflow for exercise conversion runner ([1d51f24](https://github.com/A-Guy-educ/A-Guy/commit/1d51f24))
+* feat: add GitHub Actions workflow for exercise conversion runner ([73c0856](https://github.com/A-Guy-educ/A-Guy/commit/73c0856))
+* feat: add job task handler for PDF to exercises conversion ([b923dcd](https://github.com/A-Guy-educ/A-Guy/commit/b923dcd))
+* feat: add job task handler for PDF to exercises conversion ([3efe113](https://github.com/A-Guy-educ/A-Guy/commit/3efe113))
+* feat: add PDF fetcher, prompts API, queue and runner endpoints ([45d92c1](https://github.com/A-Guy-educ/A-Guy/commit/45d92c1))
+* feat: add PDF fetcher, prompts API, queue and runner endpoints ([23ff97d](https://github.com/A-Guy-educ/A-Guy/commit/23ff97d))
+* feat: exercise conversion implementation ([23791af](https://github.com/A-Guy-educ/A-Guy/commit/23791af))
+* feat: exercise conversion implementation ([341b7a4](https://github.com/A-Guy-educ/A-Guy/commit/341b7a4))
+* feat: exercise conversion improvements and Vercel blob adapter ([cd746a9](https://github.com/A-Guy-educ/A-Guy/commit/cd746a9))
+* feat: exercise conversion improvements and Vercel blob adapter ([bb989af](https://github.com/A-Guy-educ/A-Guy/commit/bb989af))
+* feat: implement exercise conversion system ([d7af6d2](https://github.com/A-Guy-educ/A-Guy/commit/d7af6d2))
+* feat: implement exercise conversion system ([bed2c2d](https://github.com/A-Guy-educ/A-Guy/commit/bed2c2d))
+* feat: Phase 2 - Analytics Integration with System Events Bus ([07cd581](https://github.com/A-Guy-educ/A-Guy/commit/07cd581))
+* feat: register pdf-to-exercises job task in Payload config ([f14843e](https://github.com/A-Guy-educ/A-Guy/commit/f14843e))
+* feat: register pdf-to-exercises job task in Payload config ([fc0971a](https://github.com/A-Guy-educ/A-Guy/commit/fc0971a))
+* feat: Update CourseCard to persist course selection in localStorage ([8400fa9](https://github.com/A-Guy-educ/A-Guy/commit/8400fa9))
+* feat(chat): Add error surface above input ([3bfc2d5](https://github.com/A-Guy-educ/A-Guy/commit/3bfc2d5))
+* feat(chat): Add login link to auth error surface ([929a8d6](https://github.com/A-Guy-educ/A-Guy/commit/929a8d6))
+* feat(chat): Add returnTo redirect for login/signup links ([a022f8f](https://github.com/A-Guy-educ/A-Guy/commit/a022f8f))
+* feat(system-events-bus): add missing event properties and fix tests ([0ce5c36](https://github.com/A-Guy-educ/A-Guy/commit/0ce5c36))
+* feat(system-events): Phase 1 - Core Event Bus v0 ([b915ba4](https://github.com/A-Guy-educ/A-Guy/commit/b915ba4))
+* test: Add E2E test for course selection localStorage behavior ([0338f18](https://github.com/A-Guy-educ/A-Guy/commit/0338f18))
+* test: add jsdom environment directive to analytics tests ([91be372](https://github.com/A-Guy-educ/A-Guy/commit/91be372))
+* test: add unit tests for env parsing, PDF validation, and hashing ([d11b90e](https://github.com/A-Guy-educ/A-Guy/commit/d11b90e))
+* test: add unit tests for env parsing, PDF validation, and hashing ([6fbe62c](https://github.com/A-Guy-educ/A-Guy/commit/6fbe62c))
+* test(chat): Update useNotebookChat test for error state behavior ([b7f9666](https://github.com/A-Guy-educ/A-Guy/commit/b7f9666))
+* style: format all remaining files with prettier ([414eb60](https://github.com/A-Guy-educ/A-Guy/commit/414eb60))
+* style: format all remaining files with prettier ([7094ef3](https://github.com/A-Guy-educ/A-Guy/commit/7094ef3))
+* style: format code with prettier ([8099e19](https://github.com/A-Guy-educ/A-Guy/commit/8099e19))
+* style: format code with prettier ([24d1add](https://github.com/A-Guy-educ/A-Guy/commit/24d1add))
+* style: Run Prettier formatting on test files ([602857d](https://github.com/A-Guy-educ/A-Guy/commit/602857d))
+* refactor: Consolidate exercise conversion plans and add architect rules ([68e0983](https://github.com/A-Guy-educ/A-Guy/commit/68e0983))
+* refactor: migrate lib folder to proper architecture locations ([58d1e4f](https://github.com/A-Guy-educ/A-Guy/commit/58d1e4f))
+* refactor(chat): Complete chat consolidation into unified component ([40ed6c5](https://github.com/A-Guy-educ/A-Guy/commit/40ed6c5))
+* refactor(chat): Consolidate chat implementations into single ChatInterface ([de9f723](https://github.com/A-Guy-educ/A-Guy/commit/de9f723))
+* refactor(exercise-conversion): Replace modal with inline form and apply Payload admin styling ([6da4807](https://github.com/A-Guy-educ/A-Guy/commit/6da4807))
+* chore: add api and jobs layer backfill from dev ([eab381c](https://github.com/A-Guy-educ/A-Guy/commit/eab381c))
+* chore: Commit remaining local changes ([77c9e78](https://github.com/A-Guy-educ/A-Guy/commit/77c9e78))
+* chore: update exercise conversion LLP to v2.1 ([0a41144](https://github.com/A-Guy-educ/A-Guy/commit/0a41144))
+* chore: update pnpm-lock.yaml for nanoid and pdfjs-dist dependencies ([3ea544f](https://github.com/A-Guy-educ/A-Guy/commit/3ea544f))
+* chore: update pnpm-lock.yaml for nanoid and pdfjs-dist dependencies ([10dc010](https://github.com/A-Guy-educ/A-Guy/commit/10dc010))
+
+## 0.5.0 (2026-01-28)
+
+* Add E2E tests for mobile and desktop language switcher ([fa68076](https://github.com/A-Guy-educ/A-Guy/commit/fa68076))
+* Add exercise conversion tasks documentation ([e678aab](https://github.com/A-Guy-educ/A-Guy/commit/e678aab))
+* add html block on payload files ([d32c25c](https://github.com/A-Guy-educ/A-Guy/commit/d32c25c))
+* Add lesson auth buttons push origin dev plan ([72cd33c](https://github.com/A-Guy-educ/A-Guy/commit/72cd33c))
+* Add mobile detection and native select for mobile devices ([13a8ae3](https://github.com/A-Guy-educ/A-Guy/commit/13a8ae3))
+* Fix KaTeX math box color in light mode - change to bg-muted ([8371bb2](https://github.com/A-Guy-educ/A-Guy/commit/8371bb2))
+* Fix mobile language switcher by using portal container instead of body ([6d5913b](https://github.com/A-Guy-educ/A-Guy/commit/6d5913b))
+* fixes ([04fdf08](https://github.com/A-Guy-educ/A-Guy/commit/04fdf08))
+* fixing text on preview ([f6ca858](https://github.com/A-Guy-educ/A-Guy/commit/f6ca858))
+* Merge dev branch and resolve conflicts in chat.ts ([3dfb780](https://github.com/A-Guy-educ/A-Guy/commit/3dfb780))
+* Merge pull request #229 from A-Guy-educ/feat/chat-media-upload ([8f11875](https://github.com/A-Guy-educ/A-Guy/commit/8f11875)), closes [#229](https://github.com/A-Guy-educ/A-Guy/issues/229)
+* Merge pull request #242 from A-Guy-educ/chore/cleanup-obsolete-task-files ([03061ff](https://github.com/A-Guy-educ/A-Guy/commit/03061ff)), closes [#242](https://github.com/A-Guy-educ/A-Guy/issues/242)
+* Merge pull request #244 from A-Guy-educ/cursor/merge-conflicts-3128 ([e9db453](https://github.com/A-Guy-educ/A-Guy/commit/e9db453)), closes [#244](https://github.com/A-Guy-educ/A-Guy/issues/244)
+* Merge pull request #245 from A-Guy-educ/cursor/agent-chat-conflicts-4315 ([dd35809](https://github.com/A-Guy-educ/A-Guy/commit/dd35809)), closes [#245](https://github.com/A-Guy-educ/A-Guy/issues/245)
+* Merge pull request #246 from A-Guy-educ/cursor/chat-and-prompt-type-issues-7afc ([72f0c54](https://github.com/A-Guy-educ/A-Guy/commit/72f0c54)), closes [#246](https://github.com/A-Guy-educ/A-Guy/issues/246)
+* Merge pull request #247 from A-Guy-educ/cursor/prompt-composition-formatting-4779 ([7c2484c](https://github.com/A-Guy-educ/A-Guy/commit/7c2484c)), closes [#247](https://github.com/A-Guy-educ/A-Guy/issues/247)
+* Merge pull request #248 from A-Guy-educ/dev ([6e315ed](https://github.com/A-Guy-educ/A-Guy/commit/6e315ed)), closes [#248](https://github.com/A-Guy-educ/A-Guy/issues/248)
+* Merge remote-tracking branch 'origin/main' into cursor/merge-conflicts-3128 ([7b22927](https://github.com/A-Guy-educ/A-Guy/commit/7b22927))
+* removed extra space ([badf3b2](https://github.com/A-Guy-educ/A-Guy/commit/badf3b2))
+* update config ([02000f7](https://github.com/A-Guy-educ/A-Guy/commit/02000f7))
+* update permissions ([6522b9b](https://github.com/A-Guy-educ/A-Guy/commit/6522b9b))
+* update tag permissions ([93bcf43](https://github.com/A-Guy-educ/A-Guy/commit/93bcf43))
+* update validation tests ([f282897](https://github.com/A-Guy-educ/A-Guy/commit/f282897))
+* fix: add media support to shared useNotebookChat hook and fix LessonContext type errors ([a23d612](https://github.com/A-Guy-educ/A-Guy/commit/a23d612))
+* fix: format prompt-composition.ts with prettier ([3806e5f](https://github.com/A-Guy-educ/A-Guy/commit/3806e5f))
+* fix(auth): Add maxAge to OAuth cookies to prevent session expiration ([3cd4229](https://github.com/A-Guy-educ/A-Guy/commit/3cd4229))
+* fix(auth): Enable account linking for Google OAuth and fix PAYLOAD_SECRET validation ([8ed6c17](https://github.com/A-Guy-educ/A-Guy/commit/8ed6c17))
+* fix(auth): Fix OAuth cookies for localhost development ([1277004](https://github.com/A-Guy-educ/A-Guy/commit/1277004))
+* fix(auth): Match OAuth cookie sameSite with Payload auth config ([08795ba](https://github.com/A-Guy-educ/A-Guy/commit/08795ba))
+* fix(auth): Preserve password hash during OAuth account linking ([91426d2](https://github.com/A-Guy-educ/A-Guy/commit/91426d2))
+* fix(auth): Use 302 redirect instead of 307 for OAuth callback ([626842c](https://github.com/A-Guy-educ/A-Guy/commit/626842c))
+* fix(chat): Add debug logging and defensive error handling for multimodal ([25ddf0e](https://github.com/A-Guy-educ/A-Guy/commit/25ddf0e))
+* fix(chat): Display media chips immediately after sending message ([52d54f6](https://github.com/A-Guy-educ/A-Guy/commit/52d54f6))
+* fix(chat): Make req.headers access defensive for test compatibility ([c895040](https://github.com/A-Guy-educ/A-Guy/commit/c895040))
+* fix(chat): Pass auth headers for serverless media fetch ([ad8dc14](https://github.com/A-Guy-educ/A-Guy/commit/ad8dc14))
+* fix(chat): Support serverless media processing in Vercel ([1416937](https://github.com/A-Guy-educ/A-Guy/commit/1416937))
+* fix(chat): Use correct Payload media endpoint URL ([6e08fc9](https://github.com/A-Guy-educ/A-Guy/commit/6e08fc9))
+* fix(chat): Validate media by user ownership instead of tenant ([fcb514a](https://github.com/A-Guy-educ/A-Guy/commit/fcb514a))
+* fix(deploy): Include prompt files in Vercel serverless bundles ([28fa786](https://github.com/A-Guy-educ/A-Guy/commit/28fa786))
+* fix(mobile): Implement manual resize for mobile chat split view ([32f6cc0](https://github.com/A-Guy-educ/A-Guy/commit/32f6cc0))
+* fix(tests): Provide file buffer for media cleanup tests ([9e0dc71](https://github.com/A-Guy-educ/A-Guy/commit/9e0dc71))
+* fix(tests): Update useNotebookChat tests for new mediaIds parameter ([3e9a688](https://github.com/A-Guy-educ/A-Guy/commit/3e9a688))
+* style: Fix prettier formatting for chat endpoint and ChatInterface ([62eccb4](https://github.com/A-Guy-educ/A-Guy/commit/62eccb4))
+* feat: Add account course selection flow with i18n support ([20af26b](https://github.com/A-Guy-educ/A-Guy/commit/20af26b))
+* feat: Add authenticated user icon on ExerciseHeader with returnTo support ([9c87556](https://github.com/A-Guy-educ/A-Guy/commit/9c87556))
+* feat: Add course-specific chat to Ask tab with admin-configurable prompts ([d570284](https://github.com/A-Guy-educ/A-Guy/commit/d570284))
+* feat: Enhance home page with start page and PayloadRedirects improvements ([dad7dc1](https://github.com/A-Guy-educ/A-Guy/commit/dad7dc1))
+* feat: Implement structured table rendering in chat ([2e1b453](https://github.com/A-Guy-educ/A-Guy/commit/2e1b453))
+* feat(chat): Add frontend UI and address PR review feedback ([2dee2df](https://github.com/A-Guy-educ/A-Guy/commit/2dee2df))
+* feat(chat): Add multimodal media upload support ([5090f82](https://github.com/A-Guy-educ/A-Guy/commit/5090f82))
+* feat(chat): Display media attachments as chips in chat interface ([46ebe44](https://github.com/A-Guy-educ/A-Guy/commit/46ebe44))
+* feat(chat): Display media attachments in chat messages ([e30d41e](https://github.com/A-Guy-educ/A-Guy/commit/e30d41e))
+* feat(mobile): Add mobile chat toggle with segmented control ([540767f](https://github.com/A-Guy-educ/A-Guy/commit/540767f))
+* test(workflow): Add comprehensive tests for media cleanup workflow ([1f65edd](https://github.com/A-Guy-educ/A-Guy/commit/1f65edd))
+* chore: cleanup obsolete task planning files ([ea9fed6](https://github.com/A-Guy-educ/A-Guy/commit/ea9fed6))
+* chore: Remove .tasks files from chat-mobile-toggle-redesign ([6c203f7](https://github.com/A-Guy-educ/A-Guy/commit/6c203f7))
+* chore: Remove remaining test media files ([2847e0a](https://github.com/A-Guy-educ/A-Guy/commit/2847e0a))
+* chore: resolve merge conflict with dev - accept dev version of lesson-auth-buttons/plan.md ([d9cd508](https://github.com/A-Guy-educ/A-Guy/commit/d9cd508))
+* chore(auth): Add detailed OAuth logging for linked accounts ([595afe3](https://github.com/A-Guy-educ/A-Guy/commit/595afe3))
+* chore(auth): Remove console.error and fix test picture URLs ([e5d720e](https://github.com/A-Guy-educ/A-Guy/commit/e5d720e))
+* chore(deps): update Payload CMS stack to 3.73.0 and fix MCP SDK vulnerability ([1efe43f](https://github.com/A-Guy-educ/A-Guy/commit/1efe43f))
+* docs: Add PR details template ([f98d631](https://github.com/A-Guy-educ/A-Guy/commit/f98d631))
+* docs: reorganize .tasks folder structure ([df6a175](https://github.com/A-Guy-educ/A-Guy/commit/df6a175))
+* docs: update course-selection plan with agent fixes ([210cdaf](https://github.com/A-Guy-educ/A-Guy/commit/210cdaf))
+* refactor(auth): Remove Google profile picture field ([7b80968](https://github.com/A-Guy-educ/A-Guy/commit/7b80968))
+* refactor(mobile): Move toggle to chat header and simplify to single button ([670d56b](https://github.com/A-Guy-educ/A-Guy/commit/670d56b))
+* revert: Undo structured table rendering in chat ([8359d92](https://github.com/A-Guy-educ/A-Guy/commit/8359d92))
+
+## 0.4.0 (2026-01-25)
+
+* Add comprehensive documentation for PDF security features ([47d10f8](https://github.com/A-Guy-educ/A-Guy/commit/47d10f8))
+* adding aider and openhands agents ([8c9b0b1](https://github.com/A-Guy-educ/A-Guy/commit/8c9b0b1))
+* Create deleteme ([14955e7](https://github.com/A-Guy-educ/A-Guy/commit/14955e7))
+* Delete .github/workflows/dev-agent-openhands-orchestrator.yml ([cd0411a](https://github.com/A-Guy-educ/A-Guy/commit/cd0411a))
+* Delete deleteme ([28d767b](https://github.com/A-Guy-educ/A-Guy/commit/28d767b))
+* Disable PDF download and print functionality in lesson viewer ([f04556c](https://github.com/A-Guy-educ/A-Guy/commit/f04556c))
+* Merge branch 'dev' into features/openhands-setup-only ([e90636e](https://github.com/A-Guy-educ/A-Guy/commit/e90636e))
+* Merge pull request #192 from A-Guy-educ/features/openhands-setup-only ([1bc3e8d](https://github.com/A-Guy-educ/A-Guy/commit/1bc3e8d)), closes [#192](https://github.com/A-Guy-educ/A-Guy/issues/192)
+* Merge pull request #217 from A-Guy-educ/dev ([7cfae9d](https://github.com/A-Guy-educ/A-Guy/commit/7cfae9d)), closes [#217](https://github.com/A-Guy-educ/A-Guy/issues/217)
+* Remove duplicate AGuy logo text in ExerciseHeader ([c9912ca](https://github.com/A-Guy-educ/A-Guy/commit/c9912ca))
+* update agent-orchestrator to mrs-smith ([77531c6](https://github.com/A-Guy-educ/A-Guy/commit/77531c6))
+* update fixes mrs-smith ([7578d77](https://github.com/A-Guy-educ/A-Guy/commit/7578d77))
+* update openhands orchestrator agent ([ed9609a](https://github.com/A-Guy-educ/A-Guy/commit/ed9609a))
+* update openhands orchestrator agent ([7b35b99](https://github.com/A-Guy-educ/A-Guy/commit/7b35b99))
+* Update renderViewerHtml documentation to include security features ([44bc972](https://github.com/A-Guy-educ/A-Guy/commit/44bc972))
+* chore: commit all local HLS plan and related files ([db6e888](https://github.com/A-Guy-educ/A-Guy/commit/db6e888))
+* chore: Consolidate agent rules to .roo directory ([89d6e41](https://github.com/A-Guy-educ/A-Guy/commit/89d6e41))
+* chore: Fix lint warnings in test files ([c41eab6](https://github.com/A-Guy-educ/A-Guy/commit/c41eab6))
+* chore: Stage 0 baseline - add verification scripts and fix MCP plugin ([861edea](https://github.com/A-Guy-educ/A-Guy/commit/861edea))
+* chore: Update AI doc chunks after roo rules migration ([f208cdf](https://github.com/A-Guy-educ/A-Guy/commit/f208cdf))
+* chore: Update dependencies and fix pages query ([bac9752](https://github.com/A-Guy-educ/A-Guy/commit/bac9752))
+* chore: update documentation and add AI tooling scripts ([ca636aa](https://github.com/A-Guy-educ/A-Guy/commit/ca636aa))
+* chore: update eslint config ([1c9150e](https://github.com/A-Guy-educ/A-Guy/commit/1c9150e))
+* chore: Update husky pre-push hook ([dba9af2](https://github.com/A-Guy-educ/A-Guy/commit/dba9af2))
+* chore: Update vitest configs and integration tests ([b6dc17d](https://github.com/A-Guy-educ/A-Guy/commit/b6dc17d))
+* fix: Conditionally load MCP plugin to prevent build memory exhaustion ([dc6db7e](https://github.com/A-Guy-educ/A-Guy/commit/dc6db7e))
+* fix: Ensure PAYLOAD_SECRET is set in OAuth test beforeAll hook ([32cf746](https://github.com/A-Guy-educ/A-Guy/commit/32cf746))
+* fix: Fix React hooks error in login/signup forms and add OAuth credentials ([b658877](https://github.com/A-Guy-educ/A-Guy/commit/b658877))
+* fix: Guard agent chat user type ([6b01167](https://github.com/A-Guy-educ/A-Guy/commit/6b01167))
+* fix: Increase Node heap size to 4GB for production builds ([d9beff9](https://github.com/A-Guy-educ/A-Guy/commit/d9beff9))
+* fix: Remove translation file import from AccountRole to fix build memory issue ([83c8ccd](https://github.com/A-Guy-educ/A-Guy/commit/83c8ccd))
+* fix: Update test PAYLOAD_SECRET to meet 32+ character requirement ([7215e5d](https://github.com/A-Guy-educ/A-Guy/commit/7215e5d))
+* fix: use lg:flex instead of lg:block to maintain inline logo layout ([735118f](https://github.com/A-Guy-educ/A-Guy/commit/735118f))
+* fix: Use window.location.href for Google OAuth to avoid CORS issues ([cc6fafe](https://github.com/A-Guy-educ/A-Guy/commit/cc6fafe))
+* fix(ci): Format code to fix CI errors ([3df0e79](https://github.com/A-Guy-educ/A-Guy/commit/3df0e79))
+* fix(ci): remove gh cli from orchestrator workflow ([be482f5](https://github.com/A-Guy-educ/A-Guy/commit/be482f5))
+* fix(ci): replace gh CLI with actions/github-script for label management ([863a73e](https://github.com/A-Guy-educ/A-Guy/commit/863a73e))
+* feat: Add agent indexes workflow, improve docs, and various improvements ([ea8fc8a](https://github.com/A-Guy-educ/A-Guy/commit/ea8fc8a))
+* feat: Add chat media upload planning documents ([76d7ea7](https://github.com/A-Guy-educ/A-Guy/commit/76d7ea7)), closes [hi#level](https://github.com/hi/issues/level)
+* feat: Add ConfigEntries and ConfigAuditLogs collections with admin-only access ([f53572f](https://github.com/A-Guy-educ/A-Guy/commit/f53572f))
+* feat: Add Google login UI and integration tests ([517fef5](https://github.com/A-Guy-educ/A-Guy/commit/517fef5))
+* feat: Add MCP tooling ([b2e3aae](https://github.com/A-Guy-educ/A-Guy/commit/b2e3aae))
+* feat: Add media access helpers ([4268264](https://github.com/A-Guy-educ/A-Guy/commit/4268264))
+* feat: Add runtime config and related changes ([1b53fd4](https://github.com/A-Guy-educ/A-Guy/commit/1b53fd4))
+* feat: add server layer boundary rules to eslint ([600e872](https://github.com/A-Guy-educ/A-Guy/commit/600e872))
+* feat: Add task directories for automation, admin-wizard, var-namager, and wiz-chat-integration ([811b25f](https://github.com/A-Guy-educ/A-Guy/commit/811b25f))
+* feat: apply feedback corrections to LLP ([300838d](https://github.com/A-Guy-educ/A-Guy/commit/300838d))
+* feat: complete folder restructure to architectural layering ([b293fba](https://github.com/A-Guy-educ/A-Guy/commit/b293fba))
+* feat: folder restructure phase 6 - UI and lib migration ([53d68b2](https://github.com/A-Guy-educ/A-Guy/commit/53d68b2))
+* feat: folder restructure stage 8 - client helpers migration ([1d509d9](https://github.com/A-Guy-educ/A-Guy/commit/1d509d9))
+* feat: folder restructure stage 9 - boundary enforcement ([cea88e8](https://github.com/A-Guy-educ/A-Guy/commit/cea88e8))
+* feat: implement google oauth with strategy 2a ([60b5b92](https://github.com/A-Guy-educ/A-Guy/commit/60b5b92))
+* feat: replace logo with hamburger menu on mobile in lesson view ([1040e78](https://github.com/A-Guy-educ/A-Guy/commit/1040e78))
+* feat(architecture): add HLS folder restructure low-level plan ([e012f13](https://github.com/A-Guy-educ/A-Guy/commit/e012f13))
+* feat(automation): Add Nightly Docs Agent for structural change detection ([0f3547e](https://github.com/A-Guy-educ/A-Guy/commit/0f3547e))
+* feat(config): Add tenant-scoped config manager with audit logging ([6726afb](https://github.com/A-Guy-educ/A-Guy/commit/6726afb))
+* feat(frontend): implement thin app layer with repo queries for posts/pages ([a9bae44](https://github.com/A-Guy-educ/A-Guy/commit/a9bae44))
+* docs: add content locale documentation ([37dfad4](https://github.com/A-Guy-educ/A-Guy/commit/37dfad4))
+* docs: Add directory READMEs for better project navigation ([3e00ce8](https://github.com/A-Guy-educ/A-Guy/commit/3e00ce8))
+* docs: Organize markdown files ([c008ae5](https://github.com/A-Guy-educ/A-Guy/commit/c008ae5))
+* refactor: Cleanup remaining folder structure issues ([66b8919](https://github.com/A-Guy-educ/A-Guy/commit/66b8919))
+* refactor: Consolidate UI layer into ui/web ([05282bd](https://github.com/A-Guy-educ/A-Guy/commit/05282bd))
+* refactor: folder restructure - infra & payload consolidation ([cbdfd4b](https://github.com/A-Guy-educ/A-Guy/commit/cbdfd4b))
+* refactor: Move utility files to infra directory ([541eced](https://github.com/A-Guy-educ/A-Guy/commit/541eced))
+* refactor: use existing mobile menu instead of duplicating it ([f1bdecd](https://github.com/A-Guy-educ/A-Guy/commit/f1bdecd))
+* cleanup: remove empty src/components directory ([85f0c54](https://github.com/A-Guy-educ/A-Guy/commit/85f0c54))
+* test: add E2E tests for mobile hamburger menu in lesson view ([4844166](https://github.com/A-Guy-educ/A-Guy/commit/4844166))
+* test: Increase timeouts for slow integration tests ([ca4c1c4](https://github.com/A-Guy-educ/A-Guy/commit/ca4c1c4))
+* test: Keep payload exports in logout mock ([033e647](https://github.com/A-Guy-educ/A-Guy/commit/033e647))
+* test: mock payload in logout action test ([d237c55](https://github.com/A-Guy-educ/A-Guy/commit/d237c55))
+* style: format oauth files with prettier ([2cf6282](https://github.com/A-Guy-educ/A-Guy/commit/2cf6282))
+* Fix: Remove z-50 from NavigationBar to fix mobile sidebar visibility ([b1d1909](https://github.com/A-Guy-educ/A-Guy/commit/b1d1909))
+* ci: install OpenHands from GitHub tag instead of PyPI ([f60937a](https://github.com/A-Guy-educ/A-Guy/commit/f60937a))
+* ci: run OpenHands resolver locally with hard timeout ([2f80027](https://github.com/A-Guy-educ/A-Guy/commit/2f80027))
+
+## 0.3.0 (2026-01-21)
+
+* add OpenHands git identity setup ([1018ef7](https://github.com/A-Guy-educ/A-Guy/commit/1018ef7))
+* add OpenHands git identity setup ([bc25f52](https://github.com/A-Guy-educ/A-Guy/commit/bc25f52))
+* add pat and remove concurrency ([121c8d0](https://github.com/A-Guy-educ/A-Guy/commit/121c8d0))
+* change agent's name to agent-orchestrator ([2d21635](https://github.com/A-Guy-educ/A-Guy/commit/2d21635))
+* Create deleteme.txt ([8956410](https://github.com/A-Guy-educ/A-Guy/commit/8956410))
+* Delete deleteme.txt ([8927a84](https://github.com/A-Guy-educ/A-Guy/commit/8927a84))
+* fix agent name to be consistent ([6bf175b](https://github.com/A-Guy-educ/A-Guy/commit/6bf175b))
+* fix format of yaml orchestrator agent ([cbe6bc4](https://github.com/A-Guy-educ/A-Guy/commit/cbe6bc4))
+* Merge branch 'dev' into cursor/chat-math-rendering-plan-7d43 ([23323f4](https://github.com/A-Guy-educ/A-Guy/commit/23323f4))
+* Merge branch 'dev' into features/openhands-setup-only ([323a4ce](https://github.com/A-Guy-educ/A-Guy/commit/323a4ce))
+* Merge branch 'features/openhands-setup-only' of https://github.com/A-Guy-educ/A-Guy into features/op ([e583fd0](https://github.com/A-Guy-educ/A-Guy/commit/e583fd0))
+* Merge pull request #172 from A-Guy-educ/chore/cleanup-mcp-types ([174c256](https://github.com/A-Guy-educ/A-Guy/commit/174c256)), closes [#172](https://github.com/A-Guy-educ/A-Guy/issues/172)
+* Merge pull request #181 from A-Guy-educ/features/openhands-setup-only ([71011ed](https://github.com/A-Guy-educ/A-Guy/commit/71011ed)), closes [#181](https://github.com/A-Guy-educ/A-Guy/issues/181)
+* Merge pull request #183 from A-Guy-educ/feat/chat-math-rendering ([472750f](https://github.com/A-Guy-educ/A-Guy/commit/472750f)), closes [#183](https://github.com/A-Guy-educ/A-Guy/issues/183)
+* Merge pull request #185 from A-Guy-educ/dev ([3721876](https://github.com/A-Guy-educ/A-Guy/commit/3721876)), closes [#185](https://github.com/A-Guy-educ/A-Guy/issues/185)
+* Merge remote-tracking branch 'origin/dev' into cursor/chat-math-rendering-plan-7d43 ([de6a7ab](https://github.com/A-Guy-educ/A-Guy/commit/de6a7ab))
+* update openhands agent to be orchestrator agent ([c4ec559](https://github.com/A-Guy-educ/A-Guy/commit/c4ec559))
+* fix: Add missing DEFAULT_TENANT_SLUG for e2e tests ([22dd55c](https://github.com/A-Guy-educ/A-Guy/commit/22dd55c))
+* fix: format ChatMessageContent ([c98bb27](https://github.com/A-Guy-educ/A-Guy/commit/c98bb27))
+* fix: Include user_id in mixpanel people properties ([86fd4a5](https://github.com/A-Guy-educ/A-Guy/commit/86fd4a5))
+* fix: Keep media changes out of tenant PR ([5d3436c](https://github.com/A-Guy-educ/A-Guy/commit/5d3436c))
+* fix(ci): remove gh cli from orchestrator workflow ([e165056](https://github.com/A-Guy-educ/A-Guy/commit/e165056))
+* fix(ci): replace gh CLI with actions/github-script for label management ([8d648f2](https://github.com/A-Guy-educ/A-Guy/commit/8d648f2))
+* feat: Add email and name to analytics user profiles ([c8aea1a](https://github.com/A-Guy-educ/A-Guy/commit/c8aea1a))
+* feat: Add tenant foundation ([eb7d94b](https://github.com/A-Guy-educ/A-Guy/commit/eb7d94b))
+* feat: Enhance mixpanel user identity persistence with enriched profiles ([a407f20](https://github.com/A-Guy-educ/A-Guy/commit/a407f20))
+* feat(chat): add math rendering with RTL/LTR isolation ([3f331c6](https://github.com/A-Guy-educ/A-Guy/commit/3f331c6))
+* feat(chat): add math rendering with RTL/LTR isolation ([1caa7b3](https://github.com/A-Guy-educ/A-Guy/commit/1caa7b3))
+* feat(chat): enhance chat message styling and fix LaTeX rendering ([b0d06cf](https://github.com/A-Guy-educ/A-Guy/commit/b0d06cf))
+* feat(chat): enhance math rendering and UI components ([8bac6fb](https://github.com/A-Guy-educ/A-Guy/commit/8bac6fb))
+* feat(i18n): Improve locale utilities and navigation ([bd528ee](https://github.com/A-Guy-educ/A-Guy/commit/bd528ee))
+* refactor(chat): refactor ChatMessageContent tests and add plan doc ([f89884c](https://github.com/A-Guy-educ/A-Guy/commit/f89884c))
+* refactor(chat): replace CSS classes with Tailwind utilities for math rendering ([9ea9399](https://github.com/A-Guy-educ/A-Guy/commit/9ea9399))
+* chore: Add Node options to increase memory in ci ([098f849](https://github.com/A-Guy-educ/A-Guy/commit/098f849))
+* chore: Add task specs for chat-math-rendering and static-assets-manager ([cb87730](https://github.com/A-Guy-educ/A-Guy/commit/cb87730))
+* chore: add timeout to OpenHands agent workflow ([1ee2f46](https://github.com/A-Guy-educ/A-Guy/commit/1ee2f46))
+* chore: format lessons collection for prettier ([b835075](https://github.com/A-Guy-educ/A-Guy/commit/b835075))
+* chore: Format tenant updates ([4e1c727](https://github.com/A-Guy-educ/A-Guy/commit/4e1c727))
+* chore: Plan for global loading system ([be195ff](https://github.com/A-Guy-educ/A-Guy/commit/be195ff))
+* chore: Remove MCP API key types and add Global Loading System plan ([1811779](https://github.com/A-Guy-educ/A-Guy/commit/1811779))
+* chore: Remove md files from format:check ([79cd477](https://github.com/A-Guy-educ/A-Guy/commit/79cd477))
+* chore: update OpenHands agent workflow formatting ([0877467](https://github.com/A-Guy-educ/A-Guy/commit/0877467))
+* chore: update OpenHands agent workflow with concurrency and improved condition ([0426ab6](https://github.com/A-Guy-educ/A-Guy/commit/0426ab6))
+* chore(ai): Update pattern index with new files and patterns ([1e06265](https://github.com/A-Guy-educ/A-Guy/commit/1e06265))
+* test: Set default tenant in vitest ([ce58187](https://github.com/A-Guy-educ/A-Guy/commit/ce58187))
+
+## 0.2.0 (2026-01-19)
+
+* Merge branch 'dev' into features/openhands-agent ([346bcef](https://github.com/A-Guy-educ/A-Guy/commit/346bcef))
+* Merge pull request #156 from A-Guy-educ/features/openhands-agent ([b2d6739](https://github.com/A-Guy-educ/A-Guy/commit/b2d6739)), closes [#156](https://github.com/A-Guy-educ/A-Guy/issues/156)
+* Merge pull request #158 from A-Guy-educ/dev ([5fc4664](https://github.com/A-Guy-educ/A-Guy/commit/5fc4664)), closes [#158](https://github.com/A-Guy-educ/A-Guy/issues/158)
+* Merge pull request #160 from A-Guy-educ/dev ([5a1f0a5](https://github.com/A-Guy-educ/A-Guy/commit/5a1f0a5)), closes [#160](https://github.com/A-Guy-educ/A-Guy/issues/160)
+* Update dev-agent-smith-openhands.yml ([30a4045](https://github.com/A-Guy-educ/A-Guy/commit/30a4045))
+* Update dev-agent-smith-openhands.yml ([950cfe9](https://github.com/A-Guy-educ/A-Guy/commit/950cfe9))
+* Update dev-agent-smith-openhands.yml ([52dd1e3](https://github.com/A-Guy-educ/A-Guy/commit/52dd1e3))
+* Update dev-agent-smith-openhands.yml ([158621a](https://github.com/A-Guy-educ/A-Guy/commit/158621a))
+* Update dev-agent-smith-openhands.yml ([1bbad61](https://github.com/A-Guy-educ/A-Guy/commit/1bbad61))
+* Update dev-agent-smith-openhands.yml ([27b3eed](https://github.com/A-Guy-educ/A-Guy/commit/27b3eed))
+* fix(ci): Remove invalid slackWebhook config syntax ([6316322](https://github.com/A-Guy-educ/A-Guy/commit/6316322))
+* fix(ci): Use correct env var name SLACK_WEBHOOK for slack-bot plugin ([7b402d1](https://github.com/A-Guy-educ/A-Guy/commit/7b402d1))
+* test: Add lesson type filtering coverage ([e37aedb](https://github.com/A-Guy-educ/A-Guy/commit/e37aedb))
+* feat: Add lesson type tabs ([e36c6e5](https://github.com/A-Guy-educ/A-Guy/commit/e36c6e5))
+
+## 0.1.0 (2026-01-19)
+
+* Add chat test coverage and infra ([4e542e2](https://github.com/A-Guy-educ/A-Guy/commit/4e542e2))
+* Add CourseCardDropdown component to display course information. ([3f06e22](https://github.com/A-Guy-educ/A-Guy/commit/3f06e22))
+* Add RELEASE.md template for comprehensive release notes documentation ([e7aa397](https://github.com/A-Guy-educ/A-Guy/commit/e7aa397))
+* Create deleteme.txt ([5582cc9](https://github.com/A-Guy-educ/A-Guy/commit/5582cc9))
+* Create dev-agent-smith-openhands.yml ([cb1b8b6](https://github.com/A-Guy-educ/A-Guy/commit/cb1b8b6))
+* Delete deleteme.txt ([7fa77cf](https://github.com/A-Guy-educ/A-Guy/commit/7fa77cf))
+* Delete scripts/make-admin.ts ([2e4ff0d](https://github.com/A-Guy-educ/A-Guy/commit/2e4ff0d))
+* Enhance StudyContent course display and add debug logs ([8ac70bc](https://github.com/A-Guy-educ/A-Guy/commit/8ac70bc))
+* Fix feature flag mocks in tests ([af572ba](https://github.com/A-Guy-educ/A-Guy/commit/af572ba))
+* Fix NotebookChat unit test interactions ([e1196d8](https://github.com/A-Guy-educ/A-Guy/commit/e1196d8))
+* Fix NotebookChat unit test selectors ([fb85c1e](https://github.com/A-Guy-educ/A-Guy/commit/fb85c1e))
+* Fix Tailwind CSS v4 configuration ([8bd6f40](https://github.com/A-Guy-educ/A-Guy/commit/8bd6f40))
+* Fix test mocks for feature flags and embeddings ([58e79ea](https://github.com/A-Guy-educ/A-Guy/commit/58e79ea))
+* Fix unit test React runtime issues ([9774737](https://github.com/A-Guy-educ/A-Guy/commit/9774737))
+* Handle ECONNRESET errors gracefully in chat endpoint ([266da82](https://github.com/A-Guy-educ/A-Guy/commit/266da82))
+* Introduce homepage, user onboarding, navigation, and core study features ([739260f](https://github.com/A-Guy-educ/A-Guy/commit/739260f))
+* Merge branch 'cursor/chat-test-coverage-d31b' of https://github.com/A-Guy-educ/A-Guy into chore/remo ([6a05ced](https://github.com/A-Guy-educ/A-Guy/commit/6a05ced))
+* Merge branch 'dev' into dependabot/github_actions/actions/checkout-6 ([0cb63bd](https://github.com/A-Guy-educ/A-Guy/commit/0cb63bd))
+* Merge branch 'dev' into dependabot/npm_and_yarn/dev-dependencies-f570bb0c2c ([116c9fb](https://github.com/A-Guy-educ/A-Guy/commit/116c9fb))
+* Merge branch 'dev' into dependabot/npm_and_yarn/dev-dependencies-f570bb0c2c ([fdce80b](https://github.com/A-Guy-educ/A-Guy/commit/fdce80b))
+* Merge branch 'dev' into dependabot/npm_and_yarn/vitest-4.0.16 ([5863b4f](https://github.com/A-Guy-educ/A-Guy/commit/5863b4f))
+* Merge branch 'dev' into implement_notebook_chat ([eac4c4c](https://github.com/A-Guy-educ/A-Guy/commit/eac4c4c))
+* Merge branch 'dev' into pr/admin-ai-tools ([a16d78b](https://github.com/A-Guy-educ/A-Guy/commit/a16d78b))
+* Merge branch 'dev' into pr/lesson-convert-ui ([ec63aed](https://github.com/A-Guy-educ/A-Guy/commit/ec63aed))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([49a88c5](https://github.com/A-Guy-educ/A-Guy/commit/49a88c5))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([f41c473](https://github.com/A-Guy-educ/A-Guy/commit/f41c473))
+* Merge branch 'dev' of https://github.com/A-Guy-educ/A-Guy into dev ([7581876](https://github.com/A-Guy-educ/A-Guy/commit/7581876))
+* Merge branch 'pr/admin-ai-tools' into pr/lesson-convert-ui ([02ce94e](https://github.com/A-Guy-educ/A-Guy/commit/02ce94e))
+* Merge branch 'pr/admin-ai-tools' into pr/lesson-convert-ui ([d925dd7](https://github.com/A-Guy-educ/A-Guy/commit/d925dd7))
+* Merge branch 'pr/admin-ai-tools' into pr/lesson-convert-ui ([7732202](https://github.com/A-Guy-educ/A-Guy/commit/7732202))
+* Merge branch 'pr/admin-ai-tools' into pr/lesson-convert-ui ([90e333b](https://github.com/A-Guy-educ/A-Guy/commit/90e333b))
+* Merge branch 'pr/admin-ai-tools' into pr/lesson-convert-ui ([5678ca1](https://github.com/A-Guy-educ/A-Guy/commit/5678ca1))
+* Merge branch 'pr/admin-ai-tools' into pr/lesson-convert-ui ([28ff7a4](https://github.com/A-Guy-educ/A-Guy/commit/28ff7a4))
+* Merge branch 'pr/admin-ai-tools' into pr/lesson-convert-ui ([f6d798a](https://github.com/A-Guy-educ/A-Guy/commit/f6d798a))
+* Merge branch 'pr/ai-service-layer' into pr/admin-ai-tools ([bf760c5](https://github.com/A-Guy-educ/A-Guy/commit/bf760c5))
+* Merge branch 'pr/ai-service-layer' into pr/admin-ai-tools ([4c07ec8](https://github.com/A-Guy-educ/A-Guy/commit/4c07ec8))
+* Merge dev branch and fix E2E test timeout ([c41c907](https://github.com/A-Guy-educ/A-Guy/commit/c41c907))
+* Merge dev branch: resolve conflicts keeping context-scoped implementation ([672ee01](https://github.com/A-Guy-educ/A-Guy/commit/672ee01))
+* Merge dev into dependabot branch, resolve pnpm-lock.yaml conflict ([21fffa2](https://github.com/A-Guy-educ/A-Guy/commit/21fffa2))
+* Merge dev into dependabot/npm_and_yarn/tailwindcss-4.1.18 ([5a57680](https://github.com/A-Guy-educ/A-Guy/commit/5a57680))
+* Merge dev into dependabot/npm_and_yarn/vitest-4.0.16 ([e9c06e6](https://github.com/A-Guy-educ/A-Guy/commit/e9c06e6))
+* Merge dev into feat/analytics-infrastructure ([5efef1c](https://github.com/A-Guy-educ/A-Guy/commit/5efef1c))
+* Merge pull request #100 from A-Guy-educ/cursor/gemini-api-key-configuration-e18e ([1fb068c](https://github.com/A-Guy-educ/A-Guy/commit/1fb068c)), closes [#100](https://github.com/A-Guy-educ/A-Guy/issues/100)
+* Merge pull request #101 from A-Guy-educ/cursor/gemini-api-key-ci-declaration-4fbf ([10d59bd](https://github.com/A-Guy-educ/A-Guy/commit/10d59bd)), closes [#101](https://github.com/A-Guy-educ/A-Guy/issues/101)
+* Merge pull request #102 from A-Guy-educ/cursor/branch-update-conflicts-8f3f ([0975e97](https://github.com/A-Guy-educ/A-Guy/commit/0975e97)), closes [#102](https://github.com/A-Guy-educ/A-Guy/issues/102)
+* Merge pull request #103 from A-Guy-educ/cursor/vector-search-results-validation-03a9 ([acad496](https://github.com/A-Guy-educ/A-Guy/commit/acad496)), closes [#103](https://github.com/A-Guy-educ/A-Guy/issues/103)
+* Merge pull request #104 from A-Guy-educ/cursor/chat-exercise-id-lesson-context-527a ([6d6bbb7](https://github.com/A-Guy-educ/A-Guy/commit/6d6bbb7)), closes [#104](https://github.com/A-Guy-educ/A-Guy/issues/104)
+* Merge pull request #105 from A-Guy-educ/cursor/agent-chat-route-formatting-02c9 ([fd0ea02](https://github.com/A-Guy-educ/A-Guy/commit/fd0ea02)), closes [#105](https://github.com/A-Guy-educ/A-Guy/issues/105)
+* Merge pull request #106 from A-Guy-educ/cursor/vector-search-empty-results-37ff ([03718fc](https://github.com/A-Guy-educ/A-Guy/commit/03718fc)), closes [#106](https://github.com/A-Guy-educ/A-Guy/issues/106)
+* Merge pull request #107 from A-Guy-educ/cursor/active-conversation-consistency-59ef ([1b263a7](https://github.com/A-Guy-educ/A-Guy/commit/1b263a7)), closes [#107](https://github.com/A-Guy-educ/A-Guy/issues/107)
+* Merge pull request #109 from A-Guy-educ/cursor/typecheck-and-test-errors-0eee ([b1cc383](https://github.com/A-Guy-educ/A-Guy/commit/b1cc383)), closes [#109](https://github.com/A-Guy-educ/A-Guy/issues/109)
+* Merge pull request #11 from A-Guy-educ/feat/reset-ex-editor ([83da048](https://github.com/A-Guy-educ/A-Guy/commit/83da048)), closes [#11](https://github.com/A-Guy-educ/A-Guy/issues/11)
+* Merge pull request #110 from A-Guy-educ/cursor/chat-history-loading-issue-af19 ([da9889c](https://github.com/A-Guy-educ/A-Guy/commit/da9889c)), closes [#110](https://github.com/A-Guy-educ/A-Guy/issues/110)
+* Merge pull request #112 from A-Guy-educ/cursor/chat-history-loading-issue-af19 ([014efc3](https://github.com/A-Guy-educ/A-Guy/commit/014efc3)), closes [#112](https://github.com/A-Guy-educ/A-Guy/issues/112)
+* Merge pull request #113 from A-Guy-educ/cursor/student-chat-conversations-validation-f100 ([81f4f01](https://github.com/A-Guy-educ/A-Guy/commit/81f4f01)), closes [#113](https://github.com/A-Guy-educ/A-Guy/issues/113)
+* Merge pull request #114 from A-Guy-educ/cursor/chat-conversation-user-filter-72a9 ([4f3ec21](https://github.com/A-Guy-educ/A-Guy/commit/4f3ec21)), closes [#114](https://github.com/A-Guy-educ/A-Guy/issues/114)
+* Merge pull request #115 from A-Guy-educ/cursor/test-environment-setup-45ab ([1171869](https://github.com/A-Guy-educ/A-Guy/commit/1171869)), closes [#115](https://github.com/A-Guy-educ/A-Guy/issues/115)
+* Merge pull request #116 from A-Guy-educ/cursor/test-environment-setup-45ab ([f938dee](https://github.com/A-Guy-educ/A-Guy/commit/f938dee)), closes [#116](https://github.com/A-Guy-educ/A-Guy/issues/116)
+* Merge pull request #117 from A-Guy-educ/cursor/test-environment-setup-45ab ([58f2a89](https://github.com/A-Guy-educ/A-Guy/commit/58f2a89)), closes [#117](https://github.com/A-Guy-educ/A-Guy/issues/117)
+* Merge pull request #118 from A-Guy-educ/cursor/fix-integration-tests-archivedAt ([b50e92e](https://github.com/A-Guy-educ/A-Guy/commit/b50e92e)), closes [#118](https://github.com/A-Guy-educ/A-Guy/issues/118)
+* Merge pull request #119 from A-Guy-educ/cursor/chat-history-user-context-dae4 ([d944de0](https://github.com/A-Guy-educ/A-Guy/commit/d944de0)), closes [#119](https://github.com/A-Guy-educ/A-Guy/issues/119)
+* Merge pull request #123 from A-Guy-educ/feat/analytics-infrastructure ([bd66458](https://github.com/A-Guy-educ/A-Guy/commit/bd66458)), closes [#123](https://github.com/A-Guy-educ/A-Guy/issues/123)
+* Merge pull request #124 from A-Guy-educ/feat/analytics-integrations ([379c7e6](https://github.com/A-Guy-educ/A-Guy/commit/379c7e6)), closes [#124](https://github.com/A-Guy-educ/A-Guy/issues/124)
+* Merge pull request #125 from A-Guy-educ/fix/chat-history-loading ([4807688](https://github.com/A-Guy-educ/A-Guy/commit/4807688)), closes [#125](https://github.com/A-Guy-educ/A-Guy/issues/125)
+* Merge pull request #127 from A-Guy-educ/chore/remove-memory-feature-flags ([a4ba325](https://github.com/A-Guy-educ/A-Guy/commit/a4ba325)), closes [#127](https://github.com/A-Guy-educ/A-Guy/issues/127)
+* Merge pull request #128 from A-Guy-educ/cursor/lesson-chat-history-loading-8c56 ([7fdb392](https://github.com/A-Guy-educ/A-Guy/commit/7fdb392)), closes [#128](https://github.com/A-Guy-educ/A-Guy/issues/128)
+* Merge pull request #129 from A-Guy-educ/cursor/lesson-chat-history-refresh-3209 ([c502d5e](https://github.com/A-Guy-educ/A-Guy/commit/c502d5e)), closes [#129](https://github.com/A-Guy-educ/A-Guy/issues/129)
+* Merge pull request #13 from A-Guy-educ/feature/notebook-ui ([183f7d2](https://github.com/A-Guy-educ/A-Guy/commit/183f7d2)), closes [#13](https://github.com/A-Guy-educ/A-Guy/issues/13)
+* Merge pull request #130 from A-Guy-educ/cursor/lesson-chat-history-loading-7723 ([e72bfeb](https://github.com/A-Guy-educ/A-Guy/commit/e72bfeb)), closes [#130](https://github.com/A-Guy-educ/A-Guy/issues/130)
+* Merge pull request #131 from A-Guy-educ/cursor/plan-document-content-38de ([f14a133](https://github.com/A-Guy-educ/A-Guy/commit/f14a133)), closes [#131](https://github.com/A-Guy-educ/A-Guy/issues/131)
+* Merge pull request #132 from A-Guy-educ/feat/lesson-context-validation ([c22aef4](https://github.com/A-Guy-educ/A-Guy/commit/c22aef4)), closes [#132](https://github.com/A-Guy-educ/A-Guy/issues/132)
+* Merge pull request #133 from A-Guy-educ/fix/e2e-chat-history-tests ([6d226f4](https://github.com/A-Guy-educ/A-Guy/commit/6d226f4)), closes [#133](https://github.com/A-Guy-educ/A-Guy/issues/133)
+* Merge pull request #134 from A-Guy-educ/feat/prompt-collection-task ([be2e858](https://github.com/A-Guy-educ/A-Guy/commit/be2e858)), closes [#134](https://github.com/A-Guy-educ/A-Guy/issues/134)
+* Merge pull request #135 from A-Guy-educ/feat/prompt-collection ([60d7be3](https://github.com/A-Guy-educ/A-Guy/commit/60d7be3)), closes [#135](https://github.com/A-Guy-educ/A-Guy/issues/135)
+* Merge pull request #136 from A-Guy-educ/feat/system-prompts-chat ([0645819](https://github.com/A-Guy-educ/A-Guy/commit/0645819)), closes [#136](https://github.com/A-Guy-educ/A-Guy/issues/136)
+* Merge pull request #138 from A-Guy-educ/security/harden-overwrite-agent ([d54f8d7](https://github.com/A-Guy-educ/A-Guy/commit/d54f8d7)), closes [#138](https://github.com/A-Guy-educ/A-Guy/issues/138)
+* Merge pull request #14 from A-Guy-educ/feat/add-containers ([31f17a3](https://github.com/A-Guy-educ/A-Guy/commit/31f17a3)), closes [#14](https://github.com/A-Guy-educ/A-Guy/issues/14)
+* Merge pull request #145 from A-Guy-educ/dev ([7db861b](https://github.com/A-Guy-educ/A-Guy/commit/7db861b)), closes [#145](https://github.com/A-Guy-educ/A-Guy/issues/145)
+* Merge pull request #149 from A-Guy-educ/dev ([1e48937](https://github.com/A-Guy-educ/A-Guy/commit/1e48937)), closes [#149](https://github.com/A-Guy-educ/A-Guy/issues/149)
+* Merge pull request #151 from A-Guy-educ/dev ([f507f8c](https://github.com/A-Guy-educ/A-Guy/commit/f507f8c)), closes [#151](https://github.com/A-Guy-educ/A-Guy/issues/151)
+* Merge pull request #153 from A-Guy-educ/dev ([f4606c1](https://github.com/A-Guy-educ/A-Guy/commit/f4606c1)), closes [#153](https://github.com/A-Guy-educ/A-Guy/issues/153)
+* Merge pull request #16 from A-Guy-educ/pr/ai-security-setup ([5954ed1](https://github.com/A-Guy-educ/A-Guy/commit/5954ed1)), closes [#16](https://github.com/A-Guy-educ/A-Guy/issues/16)
+* Merge pull request #17 from A-Guy-educ/pr/ai-service-layer ([3d1dd2a](https://github.com/A-Guy-educ/A-Guy/commit/3d1dd2a)), closes [#17](https://github.com/A-Guy-educ/A-Guy/issues/17)
+* Merge pull request #18 from A-Guy-educ/pr/admin-ai-tools ([0a0dc8c](https://github.com/A-Guy-educ/A-Guy/commit/0a0dc8c)), closes [#18](https://github.com/A-Guy-educ/A-Guy/issues/18)
+* Merge pull request #19 from A-Guy-educ/pr/lesson-convert-ui ([684fafe](https://github.com/A-Guy-educ/A-Guy/commit/684fafe)), closes [#19](https://github.com/A-Guy-educ/A-Guy/issues/19)
+* Merge pull request #20 from A-Guy-educ/fix/exercise-renderer-true-false-buttons ([9a16fc4](https://github.com/A-Guy-educ/A-Guy/commit/9a16fc4)), closes [#20](https://github.com/A-Guy-educ/A-Guy/issues/20)
+* Merge pull request #21 from A-Guy-educ/implement_notebook_chat ([befe47d](https://github.com/A-Guy-educ/A-Guy/commit/befe47d)), closes [#21](https://github.com/A-Guy-educ/A-Guy/issues/21)
+* Merge pull request #22 from A-Guy-educ/dependabot/github_actions/actions/github-script-8 ([9d6cb8e](https://github.com/A-Guy-educ/A-Guy/commit/9d6cb8e)), closes [#22](https://github.com/A-Guy-educ/A-Guy/issues/22)
+* Merge pull request #23 from A-Guy-educ/dependabot/github_actions/actions/checkout-6 ([e8951fd](https://github.com/A-Guy-educ/A-Guy/commit/e8951fd)), closes [#23](https://github.com/A-Guy-educ/A-Guy/issues/23)
+* Merge pull request #24 from A-Guy-educ/dependabot/github_actions/actions/setup-node-6 ([a012f5a](https://github.com/A-Guy-educ/A-Guy/commit/a012f5a)), closes [#24](https://github.com/A-Guy-educ/A-Guy/issues/24)
+* Merge pull request #25 from A-Guy-educ/dependabot/github_actions/actions/upload-artifact-6 ([7c3ad0e](https://github.com/A-Guy-educ/A-Guy/commit/7c3ad0e)), closes [#25](https://github.com/A-Guy-educ/A-Guy/issues/25)
+* Merge pull request #26 from A-Guy-educ/dependabot/github_actions/actions/cache-5 ([f40b9ef](https://github.com/A-Guy-educ/A-Guy/commit/f40b9ef)), closes [#26](https://github.com/A-Guy-educ/A-Guy/issues/26)
+* Merge pull request #28 from A-Guy-educ/dependabot/npm_and_yarn/dev-dependencies-f570bb0c2c ([7b2030e](https://github.com/A-Guy-educ/A-Guy/commit/7b2030e)), closes [#28](https://github.com/A-Guy-educ/A-Guy/issues/28)
+* Merge pull request #29 from A-Guy-educ/dependabot/npm_and_yarn/prod-dependencies-43d58cbc4e ([bc37640](https://github.com/A-Guy-educ/A-Guy/commit/bc37640)), closes [#29](https://github.com/A-Guy-educ/A-Guy/issues/29)
+* Merge pull request #30 from A-Guy-educ/dependabot/npm_and_yarn/vite-tsconfig-paths-6.0.3 ([879e877](https://github.com/A-Guy-educ/A-Guy/commit/879e877)), closes [#30](https://github.com/A-Guy-educ/A-Guy/issues/30)
+* Merge pull request #31 from A-Guy-educ/dependabot/npm_and_yarn/vitest-4.0.16 ([bfc9021](https://github.com/A-Guy-educ/A-Guy/commit/bfc9021)), closes [#31](https://github.com/A-Guy-educ/A-Guy/issues/31)
+* Merge pull request #32 from A-Guy-educ/dependabot/npm_and_yarn/tailwind-merge-3.4.0 ([c10a0d3](https://github.com/A-Guy-educ/A-Guy/commit/c10a0d3)), closes [#32](https://github.com/A-Guy-educ/A-Guy/issues/32)
+* Merge pull request #35 from A-Guy-educ/dependabot/npm_and_yarn/dotenv-17.2.3 ([af41fe5](https://github.com/A-Guy-educ/A-Guy/commit/af41fe5)), closes [#35](https://github.com/A-Guy-educ/A-Guy/issues/35)
+* Merge pull request #36 from A-Guy-educ/dependabot/npm_and_yarn/tailwindcss-4.1.18 ([186034b](https://github.com/A-Guy-educ/A-Guy/commit/186034b)), closes [#36](https://github.com/A-Guy-educ/A-Guy/issues/36)
+* Merge pull request #37 from A-Guy-educ/feat/chat-memory-system ([78ce694](https://github.com/A-Guy-educ/A-Guy/commit/78ce694)), closes [#37](https://github.com/A-Guy-educ/A-Guy/issues/37)
+* Merge pull request #38 from A-Guy-educ/feat/exercise-admin-only ([eb579f6](https://github.com/A-Guy-educ/A-Guy/commit/eb579f6)), closes [#38](https://github.com/A-Guy-educ/A-Guy/issues/38)
+* Merge pull request #39 from A-Guy-educ/feat/exercise-view-redesign ([1f27976](https://github.com/A-Guy-educ/A-Guy/commit/1f27976)), closes [#39](https://github.com/A-Guy-educ/A-Guy/issues/39)
+* Merge pull request #40 from A-Guy-educ/feat/enforce-pr-workflow ([c5bcb72](https://github.com/A-Guy-educ/A-Guy/commit/c5bcb72)), closes [#40](https://github.com/A-Guy-educ/A-Guy/issues/40)
+* Merge pull request #41 from A-Guy-educ/dev ([285be51](https://github.com/A-Guy-educ/A-Guy/commit/285be51)), closes [#41](https://github.com/A-Guy-educ/A-Guy/issues/41)
+* Merge pull request #42 from A-Guy-educ/dev ([6cc02bc](https://github.com/A-Guy-educ/A-Guy/commit/6cc02bc)), closes [#42](https://github.com/A-Guy-educ/A-Guy/issues/42)
+* Merge pull request #43 from A-Guy-educ/dev ([7c1edb8](https://github.com/A-Guy-educ/A-Guy/commit/7c1edb8)), closes [#43](https://github.com/A-Guy-educ/A-Guy/issues/43)
+* Merge pull request #44 from A-Guy-educ/dev ([22fbc9b](https://github.com/A-Guy-educ/A-Guy/commit/22fbc9b)), closes [#44](https://github.com/A-Guy-educ/A-Guy/issues/44)
+* Merge pull request #46 from A-Guy-educ/dev ([92d1122](https://github.com/A-Guy-educ/A-Guy/commit/92d1122)), closes [#46](https://github.com/A-Guy-educ/A-Guy/issues/46)
+* Merge pull request #47 from A-Guy-educ/dev ([81b928d](https://github.com/A-Guy-educ/A-Guy/commit/81b928d)), closes [#47](https://github.com/A-Guy-educ/A-Guy/issues/47)
+* Merge pull request #48 from A-Guy-educ/dev ([029d36d](https://github.com/A-Guy-educ/A-Guy/commit/029d36d)), closes [#48](https://github.com/A-Guy-educ/A-Guy/issues/48)
+* Merge pull request #49 from A-Guy-educ/dev ([66401d6](https://github.com/A-Guy-educ/A-Guy/commit/66401d6)), closes [#49](https://github.com/A-Guy-educ/A-Guy/issues/49)
+* Merge pull request #50 from A-Guy-educ/dev ([6735a8a](https://github.com/A-Guy-educ/A-Guy/commit/6735a8a)), closes [#50](https://github.com/A-Guy-educ/A-Guy/issues/50)
+* Merge pull request #53 from A-Guy-educ/dev ([ffbf574](https://github.com/A-Guy-educ/A-Guy/commit/ffbf574)), closes [#53](https://github.com/A-Guy-educ/A-Guy/issues/53)
+* Merge pull request #54 from A-Guy-educ/chore/remove-e2e-from-pre-push ([729b214](https://github.com/A-Guy-educ/A-Guy/commit/729b214)), closes [#54](https://github.com/A-Guy-educ/A-Guy/issues/54)
+* Merge pull request #55 from A-Guy-educ/fix/language-switching ([8bccabd](https://github.com/A-Guy-educ/A-Guy/commit/8bccabd)), closes [#55](https://github.com/A-Guy-educ/A-Guy/issues/55)
+* Merge pull request #56 from A-Guy-educ/feat/media-type-enum-system ([78322aa](https://github.com/A-Guy-educ/A-Guy/commit/78322aa)), closes [#56](https://github.com/A-Guy-educ/A-Guy/issues/56)
+* Merge pull request #58 from A-Guy-educ/feat/pdf-preview-component ([9c5d09a](https://github.com/A-Guy-educ/A-Guy/commit/9c5d09a)), closes [#58](https://github.com/A-Guy-educ/A-Guy/issues/58)
+* Merge pull request #60 from A-Guy-educ/feat/diff-scoped-v2 ([f12ca93](https://github.com/A-Guy-educ/A-Guy/commit/f12ca93)), closes [#60](https://github.com/A-Guy-educ/A-Guy/issues/60)
+* Merge pull request #62 from A-Guy-educ/feat/context-scoped-chat ([8ff81c4](https://github.com/A-Guy-educ/A-Guy/commit/8ff81c4)), closes [#62](https://github.com/A-Guy-educ/A-Guy/issues/62)
+* Merge pull request #63 from A-Guy-educ/docs/commit-guide-and-hooks ([064dfb5](https://github.com/A-Guy-educ/A-Guy/commit/064dfb5)), closes [#63](https://github.com/A-Guy-educ/A-Guy/issues/63)
+* Merge pull request #64 from A-Guy-educ/cursor/release-markdown-template-e1fa ([9dacdfe](https://github.com/A-Guy-educ/A-Guy/commit/9dacdfe)), closes [#64](https://github.com/A-Guy-educ/A-Guy/issues/64)
+* Merge pull request #65 from A-Guy-educ/feat/homepage-redesign ([202c54d](https://github.com/A-Guy-educ/A-Guy/commit/202c54d)), closes [#65](https://github.com/A-Guy-educ/A-Guy/issues/65)
+* Merge pull request #66 from A-Guy-educ/cursor/course-card-dropdown-display-c754 ([b783006](https://github.com/A-Guy-educ/A-Guy/commit/b783006)), closes [#66](https://github.com/A-Guy-educ/A-Guy/issues/66)
+* Merge pull request #67 from A-Guy-educ/cursor/telescope-logo-theme-support-b5e4 ([212d2a5](https://github.com/A-Guy-educ/A-Guy/commit/212d2a5)), closes [#67](https://github.com/A-Guy-educ/A-Guy/issues/67)
+* Merge pull request #68 from A-Guy-educ/docs/optimize-agent-specs ([444946c](https://github.com/A-Guy-educ/A-Guy/commit/444946c)), closes [#68](https://github.com/A-Guy-educ/A-Guy/issues/68)
+* Merge pull request #70 from A-Guy-educ/fix/admin-access-and-courses-api ([f47a01a](https://github.com/A-Guy-educ/A-Guy/commit/f47a01a)), closes [#70](https://github.com/A-Guy-educ/A-Guy/issues/70)
+* Merge pull request #72 from A-Guy-educ/cursor/prettier-format-check-aebc ([4a8ad88](https://github.com/A-Guy-educ/A-Guy/commit/4a8ad88)), closes [#72](https://github.com/A-Guy-educ/A-Guy/issues/72)
+* Merge pull request #73 from A-Guy-educ/cursor/lesson-view-media-parity-544e ([da15394](https://github.com/A-Guy-educ/A-Guy/commit/da15394)), closes [#73](https://github.com/A-Guy-educ/A-Guy/issues/73)
+* Merge pull request #75 from A-Guy-educ/cursor/prettier-formatting-issues-5ce8 ([7e16e5b](https://github.com/A-Guy-educ/A-Guy/commit/7e16e5b)), closes [#75](https://github.com/A-Guy-educ/A-Guy/issues/75)
+* Merge pull request #76 from A-Guy-educ/cursor/agent-chat-prompt-file-ac30 ([1e5bf40](https://github.com/A-Guy-educ/A-Guy/commit/1e5bf40)), closes [#76](https://github.com/A-Guy-educ/A-Guy/issues/76)
+* Merge pull request #78 from A-Guy-educ/feat/header-updates ([b48167a](https://github.com/A-Guy-educ/A-Guy/commit/b48167a)), closes [#78](https://github.com/A-Guy-educ/A-Guy/issues/78)
+* Merge pull request #80 from A-Guy-educ/cursor/aguy-logo-text-styling-b81d ([a65bd05](https://github.com/A-Guy-educ/A-Guy/commit/a65bd05)), closes [#80](https://github.com/A-Guy-educ/A-Guy/issues/80)
+* Merge pull request #82 from A-Guy-educ/cursor/header-theme-switching-bug-b142 ([0e85d0f](https://github.com/A-Guy-educ/A-Guy/commit/0e85d0f)), closes [#82](https://github.com/A-Guy-educ/A-Guy/issues/82)
+* Merge pull request #83 from A-Guy-educ/dev ([037375e](https://github.com/A-Guy-educ/A-Guy/commit/037375e)), closes [#83](https://github.com/A-Guy-educ/A-Guy/issues/83)
+* Merge pull request #84 from A-Guy-educ/docs/optimize-spec-workflow-structure ([f59b2bd](https://github.com/A-Guy-educ/A-Guy/commit/f59b2bd)), closes [#84](https://github.com/A-Guy-educ/A-Guy/issues/84)
+* Merge pull request #85 from A-Guy-educ/cursor/prettier-markdown-formatting-628e ([0dbe4e2](https://github.com/A-Guy-educ/A-Guy/commit/0dbe4e2)), closes [#85](https://github.com/A-Guy-educ/A-Guy/issues/85)
+* Merge pull request #88 from A-Guy-educ/docs/update-lesson-chat-plan-spec ([1020b17](https://github.com/A-Guy-educ/A-Guy/commit/1020b17)), closes [#88](https://github.com/A-Guy-educ/A-Guy/issues/88)
+* Merge pull request #9 from A-Guy-educ/admin-role ([9e7ab7a](https://github.com/A-Guy-educ/A-Guy/commit/9e7ab7a)), closes [#9](https://github.com/A-Guy-educ/A-Guy/issues/9)
+* Merge pull request #93 from A-Guy-educ/chore/memory-vector-search-tests ([8d5342f](https://github.com/A-Guy-educ/A-Guy/commit/8d5342f)), closes [#93](https://github.com/A-Guy-educ/A-Guy/issues/93)
+* Merge pull request #94 from A-Guy-educ/cursor/memory-system-summary-maintenance-8c57 ([1d83731](https://github.com/A-Guy-educ/A-Guy/commit/1d83731)), closes [#94](https://github.com/A-Guy-educ/A-Guy/issues/94)
+* Merge pull request #95 from A-Guy-educ/cursor/test-course-data-availability-379c ([24875ef](https://github.com/A-Guy-educ/A-Guy/commit/24875ef)), closes [#95](https://github.com/A-Guy-educ/A-Guy/issues/95)
+* Merge pull request #96 from A-Guy-educ/cursor/code-warnings-cleanup-0971 ([e02f54a](https://github.com/A-Guy-educ/A-Guy/commit/e02f54a)), closes [#96](https://github.com/A-Guy-educ/A-Guy/issues/96)
+* Merge pull request #97 from A-Guy-educ/cursor/missing-payload-secret-5b00 ([5a44cab](https://github.com/A-Guy-educ/A-Guy/commit/5a44cab)), closes [#97](https://github.com/A-Guy-educ/A-Guy/issues/97)
+* Merge pull request #98 from A-Guy-educ/chore/optimize-precommit-hooks ([00b27c1](https://github.com/A-Guy-educ/A-Guy/commit/00b27c1)), closes [#98](https://github.com/A-Guy-educ/A-Guy/issues/98)
+* Merge pull request #99 from A-Guy-educ/cursor/chat-endpoint-e2e-stability-5294 ([3389ff7](https://github.com/A-Guy-educ/A-Guy/commit/3389ff7)), closes [#99](https://github.com/A-Guy-educ/A-Guy/issues/99)
+* Merge remote-tracking branch 'origin/dev' into cursor/prettier-format-check-aebc ([799b774](https://github.com/A-Guy-educ/A-Guy/commit/799b774))
+* Merge remote-tracking branch 'origin/dev' into dependabot/npm_and_yarn/tailwindcss-4.1.18 ([84c7455](https://github.com/A-Guy-educ/A-Guy/commit/84c7455))
+* Merge remote-tracking branch 'origin/dev' into feat/pdf-preview-component ([fc7200a](https://github.com/A-Guy-educ/A-Guy/commit/fc7200a))
+* Merge remote-tracking branch 'origin/dev' into pr/lesson-convert-ui ([0d22b70](https://github.com/A-Guy-educ/A-Guy/commit/0d22b70))
+* Merge remote-tracking branch 'origin/main' into dependabot/npm_and_yarn/vitest-4.0.16 ([f330865](https://github.com/A-Guy-educ/A-Guy/commit/f330865))
+* Refactor StudyContent to navigate to course page on course click ([49ab8ed](https://github.com/A-Guy-educ/A-Guy/commit/49ab8ed))
+* Refine RELEASE.md template structure and placeholders. ([33f217a](https://github.com/A-Guy-educ/A-Guy/commit/33f217a))
+* Remove debug console logs from StudyContent. ([d85a0cf](https://github.com/A-Guy-educ/A-Guy/commit/d85a0cf))
+* Remove verify-conversations script as it's no longer needed. ([696bfe3](https://github.com/A-Guy-educ/A-Guy/commit/696bfe3))
+* Update deleteme.txt ([c68cbd2](https://github.com/A-Guy-educ/A-Guy/commit/c68cbd2))
+* Update dev-agent-smith-openhands.yml ([5fe735d](https://github.com/A-Guy-educ/A-Guy/commit/5fe735d))
+* Update dev-agent-smith-openhands.yml ([83dbcb7](https://github.com/A-Guy-educ/A-Guy/commit/83dbcb7))
+* Update dev-agent-smith-openhands.yml ([4c57bd7](https://github.com/A-Guy-educ/A-Guy/commit/4c57bd7))
+* Update dev-agent-smith-openhands.yml ([793d100](https://github.com/A-Guy-educ/A-Guy/commit/793d100))
+* Update dev-agent-smith-openhands.yml ([7f8ca81](https://github.com/A-Guy-educ/A-Guy/commit/7f8ca81))
+* Update dev-agent-smith-openhands.yml ([3d4ed1a](https://github.com/A-Guy-educ/A-Guy/commit/3d4ed1a))
+* fix: add beforeEach cleanup hooks for test isolation ([6e24232](https://github.com/A-Guy-educ/A-Guy/commit/6e24232))
+* fix: add contextKey to test memories in vector search tests ([3d42004](https://github.com/A-Guy-educ/A-Guy/commit/3d42004))
+* fix: Add DATABASE_URL and NEXT_PUBLIC_SERVER_URL to test.env ([4f4f00f](https://github.com/A-Guy-educ/A-Guy/commit/4f4f00f))
+* fix: Add default test environment variables for integration tests ([af09913](https://github.com/A-Guy-educ/A-Guy/commit/af09913))
+* fix: Add directConnection=true to MongoDB test container URI ([1f07e47](https://github.com/A-Guy-educ/A-Guy/commit/1f07e47))
+* fix: Add early return for missing URL in PDFPreview ([c78fe6f](https://github.com/A-Guy-educ/A-Guy/commit/c78fe6f))
+* fix: Add error handling to generateStaticParams and increase e2e timeout ([f4d3b4f](https://github.com/A-Guy-educ/A-Guy/commit/f4d3b4f))
+* fix: Add fallback DATABASE_URL for e2e tests ([baeece9](https://github.com/A-Guy-educ/A-Guy/commit/baeece9))
+* fix: Add fallback for payload secret in e2e tests ([b456dd8](https://github.com/A-Guy-educ/A-Guy/commit/b456dd8))
+* fix: add index cleanup and fix test isolation issues ([1698b65](https://github.com/A-Guy-educ/A-Guy/commit/1698b65))
+* fix: add index cleanup to get-conversation-endpoint test file ([b78beec](https://github.com/A-Guy-educ/A-Guy/commit/b78beec))
+* fix: Add loading state to ChatInterface and ensure proper state management in useNotebookChat ([3d9d80e](https://github.com/A-Guy-educ/A-Guy/commit/3d9d80e))
+* fix: add null check for data in Conversations beforeValidate hook ([519d35c](https://github.com/A-Guy-educ/A-Guy/commit/519d35c))
+* fix: Add packageName to slack bot config ([311c960](https://github.com/A-Guy-educ/A-Guy/commit/311c960))
+* fix: Add PAYLOAD_SECRET to test.env for E2E tests ([fd33145](https://github.com/A-Guy-educ/A-Guy/commit/fd33145))
+* fix: add polling to wait for vector search index updates in tests ([26a653b](https://github.com/A-Guy-educ/A-Guy/commit/26a653b))
+* fix: Add retry logic to handle read-after-write consistency in conversation loading ([2a6201d](https://github.com/A-Guy-educ/A-Guy/commit/2a6201d))
+* fix: Add retry mechanism for MongoDB container connection ([a82c7d6](https://github.com/A-Guy-educ/A-Guy/commit/a82c7d6))
+* fix: add test isolation for conversation-history-loading tests ([468b3e1](https://github.com/A-Guy-educ/A-Guy/commit/468b3e1))
+* fix: add webpack loader for markdown file imports ([02bc220](https://github.com/A-Guy-educ/A-Guy/commit/02bc220))
+* fix: Address analytics PR review feedback ([63ae2f3](https://github.com/A-Guy-educ/A-Guy/commit/63ae2f3))
+* fix: adjust notebook sidebar layout ([a57be4e](https://github.com/A-Guy-educ/A-Guy/commit/a57be4e))
+* fix: Align auth cookie options ([28696b2](https://github.com/A-Guy-educ/A-Guy/commit/28696b2))
+* fix: allow chat requests with lessonId or other context IDs ([f27d8d8](https://github.com/A-Guy-educ/A-Guy/commit/f27d8d8))
+* fix: Allow CI-initiated commits to main for releases ([94a5593](https://github.com/A-Guy-educ/A-Guy/commit/94a5593))
+* fix: Anchor chat input to bottom and fix RTL resize slider ([fda57bb](https://github.com/A-Guy-educ/A-Guy/commit/fda57bb))
+* fix: apply prettier formatting to HeaderTheme provider ([1782fa6](https://github.com/A-Guy-educ/A-Guy/commit/1782fa6))
+* fix: Change let to const in PDFPreview.client.tsx ([e9b33a3](https://github.com/A-Guy-educ/A-Guy/commit/e9b33a3))
+* fix: correct active conversation semantics implementation ([2815f6b](https://github.com/A-Guy-educ/A-Guy/commit/2815f6b))
+* fix: Correct event property names to match schemas ([8c29c68](https://github.com/A-Guy-educ/A-Guy/commit/8c29c68))
+* fix: correct migration comment, verify script types, and DB uniqueness tests ([7d4529f](https://github.com/A-Guy-educ/A-Guy/commit/7d4529f))
+* fix: create dedicated conversation endpoint with explicit user filtering ([935c4c7](https://github.com/A-Guy-educ/A-Guy/commit/935c4c7))
+* fix: critical security fixes - access control, transaction safety, and type safety ([12c76a6](https://github.com/A-Guy-educ/A-Guy/commit/12c76a6))
+* fix: Ensure loading indicator shows for minimum duration ([7caa4d0](https://github.com/A-Guy-educ/A-Guy/commit/7caa4d0))
+* fix: Ensure login action returns token ([14eb8ad](https://github.com/A-Guy-educ/A-Guy/commit/14eb8ad))
+* fix: Explicitly filter conversations by authenticated user ([b03be5d](https://github.com/A-Guy-educ/A-Guy/commit/b03be5d))
+* fix: Fix failing tests and memory deduplication bug ([dd2c435](https://github.com/A-Guy-educ/A-Guy/commit/dd2c435))
+* fix: Fix vector search test to use Atlas database connection ([bc8e220](https://github.com/A-Guy-educ/A-Guy/commit/bc8e220))
+* fix: format agent chat route file ([15999b1](https://github.com/A-Guy-educ/A-Guy/commit/15999b1))
+* fix: format chat.ts file to pass CI formatting check ([1f49d92](https://github.com/A-Guy-educ/A-Guy/commit/1f49d92))
+* fix: Format importMap.js file ([a525385](https://github.com/A-Guy-educ/A-Guy/commit/a525385))
+* fix: format markdown files with Prettier ([d612a39](https://github.com/A-Guy-educ/A-Guy/commit/d612a39))
+* fix: Format StudyContent component to pass Prettier check ([c7c3414](https://github.com/A-Guy-educ/A-Guy/commit/c7c3414))
+* fix: forward authentication cookies for internal image fetch ([f2aa8ba](https://github.com/A-Guy-educ/A-Guy/commit/f2aa8ba))
+* fix: handle missing GEMINI_API_KEY gracefully ([e1c88b0](https://github.com/A-Guy-educ/A-Guy/commit/e1c88b0))
+* fix: Handle non-JSON /me responses ([9db15f6](https://github.com/A-Guy-educ/A-Guy/commit/9db15f6))
+* fix: Handle password-protected preview deployments in validation ([34b6f95](https://github.com/A-Guy-educ/A-Guy/commit/34b6f95))
+* fix: header theme updates immediately when global theme changes ([99b2e93](https://github.com/A-Guy-educ/A-Guy/commit/99b2e93))
+* fix: improve chat history loading after page refresh ([32a5d02](https://github.com/A-Guy-educ/A-Guy/commit/32a5d02))
+* fix: improve chat UI aesthetics and fix welcome message ([da3af89](https://github.com/A-Guy-educ/A-Guy/commit/da3af89))
+* fix: improve conversation history loading after refresh ([91d6e85](https://github.com/A-Guy-educ/A-Guy/commit/91d6e85))
+* fix: Improve CourseSelector dropdown width for better card display ([3d44a1c](https://github.com/A-Guy-educ/A-Guy/commit/3d44a1c))
+* fix: improve visual contrast and admin editor validation ([76952ea](https://github.com/A-Guy-educ/A-Guy/commit/76952ea))
+* fix: include pnpm-lock.yaml and update with AI dependency ([1037772](https://github.com/A-Guy-educ/A-Guy/commit/1037772))
+* fix: Increase delay before hiding loading indicator to 150ms ([36c2cc8](https://github.com/A-Guy-educ/A-Guy/commit/36c2cc8))
+* fix: Increase timeout for Payload initialization in CI ([5708b02](https://github.com/A-Guy-educ/A-Guy/commit/5708b02))
+* fix: Increase timeout to 120s for MongoDB container + Payload init ([b23091c](https://github.com/A-Guy-educ/A-Guy/commit/b23091c))
+* fix: Increase timeout to 120s for MongoDB container + Payload init ([93d0c3a](https://github.com/A-Guy-educ/A-Guy/commit/93d0c3a))
+* fix: Increase webServer timeout and capture output for E2E tests ([5a19918](https://github.com/A-Guy-educ/A-Guy/commit/5a19918))
+* fix: Load conversation history properly after refresh/login ([c3ccccb](https://github.com/A-Guy-educ/A-Guy/commit/c3ccccb))
+* fix: Load payload config at runtime ([199f544](https://github.com/A-Guy-educ/A-Guy/commit/199f544))
+* fix: make exercise content scrollable inside notebook-workspace__paper ([14bd7f8](https://github.com/A-Guy-educ/A-Guy/commit/14bd7f8))
+* fix: make options field optional in QuestionSelectBlock for backward compatibility ([daf44ed](https://github.com/A-Guy-educ/A-Guy/commit/daf44ed))
+* fix: merge test isolation fixes from dev branch ([cb18bec](https://github.com/A-Guy-educ/A-Guy/commit/cb18bec))
+* fix: Mobile header layout and exercise scrolling improvements ([5db6538](https://github.com/A-Guy-educ/A-Guy/commit/5db6538))
+* fix: Move early return after hooks in PDFPreview ([14c7994](https://github.com/A-Guy-educ/A-Guy/commit/14c7994))
+* fix: Move outputFileTracingExcludes to root level ([d435e14](https://github.com/A-Guy-educ/A-Guy/commit/d435e14))
+* fix: Move user authentication to client side in Header ([2b5fc4a](https://github.com/A-Guy-educ/A-Guy/commit/2b5fc4a))
+* fix: Pass environment variables to Playwright webServer ([6c1506b](https://github.com/A-Guy-educ/A-Guy/commit/6c1506b))
+* fix: Pass SLACK_WEBHOOK_URL env var to semantic-release ([0cb4488](https://github.com/A-Guy-educ/A-Guy/commit/0cb4488))
+* fix: Pass SLACK_WEBHOOK_URL env var to semantic-release ([d4d6729](https://github.com/A-Guy-educ/A-Guy/commit/d4d6729))
+* fix: PDF viewer takes full available space and resizer improvements ([594afd7](https://github.com/A-Guy-educ/A-Guy/commit/594afd7))
+* fix: Prefix unused filename parameter with underscore ([1f3810b](https://github.com/A-Guy-educ/A-Guy/commit/1f3810b))
+* fix: Prefix unused lessonTitle parameter with underscore ([e97b1e2](https://github.com/A-Guy-educ/A-Guy/commit/e97b1e2))
+* fix: Prevent localhost MongoDB fallback when DATABASE_URL is set ([6f81d43](https://github.com/A-Guy-educ/A-Guy/commit/6f81d43))
+* fix: Read auth cookie prefix in getMeUser ([37bf616](https://github.com/A-Guy-educ/A-Guy/commit/37bf616))
+* fix: Remove broken PDFViewerFull and fix TypeScript strictness ([31d89f7](https://github.com/A-Guy-educ/A-Guy/commit/31d89f7))
+* fix: Remove custom courses API route and use Payload default API ([0e97161](https://github.com/A-Guy-educ/A-Guy/commit/0e97161))
+* fix: Remove headers() call from layout to prevent static-to-dynamic conversion ([d8fa25d](https://github.com/A-Guy-educ/A-Guy/commit/d8fa25d))
+* fix: remove invalid $schema property from answer spec JSON templates ([aae3daa](https://github.com/A-Guy-educ/A-Guy/commit/aae3daa))
+* fix: remove leftover merge conflict marker in conversations test ([82c3b38](https://github.com/A-Guy-educ/A-Guy/commit/82c3b38))
+* fix: Remove PDF viewer padding and fix double scrolling ([9336ec3](https://github.com/A-Guy-educ/A-Guy/commit/9336ec3))
+* fix: Remove required constraint from messages field ([c98b0ef](https://github.com/A-Guy-educ/A-Guy/commit/c98b0ef))
+* fix: remove trailing whitespace in HeaderTheme provider ([8e0ea7d](https://github.com/A-Guy-educ/A-Guy/commit/8e0ea7d))
+* fix: remove unused auth from lesson page ([8503585](https://github.com/A-Guy-educ/A-Guy/commit/8503585))
+* fix: Remove unused Exercise import ([0414514](https://github.com/A-Guy-educ/A-Guy/commit/0414514))
+* fix: Remove unused PDFViewerWithAnnotations component ([e1557d3](https://github.com/A-Guy-educ/A-Guy/commit/e1557d3))
+* fix: remove unused Where import from chat endpoint ([8d1d25d](https://github.com/A-Guy-educ/A-Guy/commit/8d1d25d))
+* fix: Replace Card component with ui/card for course selection ([ebf65c7](https://github.com/A-Guy-educ/A-Guy/commit/ebf65c7))
+* fix: Replace hardcoded colors with design system tokens ([99e6f2b](https://github.com/A-Guy-educ/A-Guy/commit/99e6f2b)), closes [#525659](https://github.com/A-Guy-educ/A-Guy/issues/525659) [#eef2f6](https://github.com/A-Guy-educ/A-Guy/issues/eef2f6) [#dee2e6](https://github.com/A-Guy-educ/A-Guy/issues/dee2e6) [#cbd5e0](https://github.com/A-Guy-educ/A-Guy/issues/cbd5e0)
+* fix: replace remaining console.error with logger in chat endpoints ([152ff58](https://github.com/A-Guy-educ/A-Guy/commit/152ff58))
+* fix: resolve all code warnings ([f1b964c](https://github.com/A-Guy-educ/A-Guy/commit/f1b964c))
+* fix: Resolve chat duplicate messages, layout, and split size persistence ([2310e85](https://github.com/A-Guy-educ/A-Guy/commit/2310e85))
+* fix: resolve convert button 404 and image fetch issues ([7f80707](https://github.com/A-Guy-educ/A-Guy/commit/7f80707))
+* fix: Resolve DYNAMIC_SERVER_USAGE error in layout and posts page ([a8d64d8](https://github.com/A-Guy-educ/A-Guy/commit/a8d64d8))
+* fix: Resolve E2E chat history test race conditions ([389b33a](https://github.com/A-Guy-educ/A-Guy/commit/389b33a))
+* fix: Resolve E2E test build errors ([b3a5561](https://github.com/A-Guy-educ/A-Guy/commit/b3a5561))
+* fix: resolve Media component type conflicts ([91125cc](https://github.com/A-Guy-educ/A-Guy/commit/91125cc))
+* fix: resolve memory system integration test failures ([c1f4098](https://github.com/A-Guy-educ/A-Guy/commit/c1f4098))
+* fix: resolve MongoDB index and access control query issues ([26b1662](https://github.com/A-Guy-educ/A-Guy/commit/26b1662))
+* fix: Resolve prettier formatting errors and JSON syntax issue ([20aeb52](https://github.com/A-Guy-educ/A-Guy/commit/20aeb52))
+* fix: resolve race condition in chat conversation history ([b088232](https://github.com/A-Guy-educ/A-Guy/commit/b088232))
+* fix: resolve schema and access control issues in conversations tests ([8c98f77](https://github.com/A-Guy-educ/A-Guy/commit/8c98f77))
+* fix: resolve TypeScript and test timeout errors ([4c3f157](https://github.com/A-Guy-educ/A-Guy/commit/4c3f157))
+* fix: Resolve TypeScript error with course.id type ([5894cd7](https://github.com/A-Guy-educ/A-Guy/commit/5894cd7))
+* fix: resolve TypeScript errors after merge ([bf0102d](https://github.com/A-Guy-educ/A-Guy/commit/bf0102d))
+* fix: resolve TypeScript errors in conversation-history-loading tests ([e8ac758](https://github.com/A-Guy-educ/A-Guy/commit/e8ac758))
+* fix: resolve TypeScript errors in lesson context tests ([d35b0e3](https://github.com/A-Guy-educ/A-Guy/commit/d35b0e3))
+* fix: resolve TypeScript errors in memory integration tests ([e29e37f](https://github.com/A-Guy-educ/A-Guy/commit/e29e37f))
+* fix: resolve vi.mock hoisting and .md file import issues ([913e2f9](https://github.com/A-Guy-educ/A-Guy/commit/913e2f9))
+* fix: resolve vi.mock hoisting error in memory-prompt-wiring tests ([bb3fe16](https://github.com/A-Guy-educ/A-Guy/commit/bb3fe16))
+* fix: resolve vi.mock hoisting issue in lesson-context-injection test ([6f0d7e2](https://github.com/A-Guy-educ/A-Guy/commit/6f0d7e2))
+* fix: Restore language switching with middleware + client cache pattern ([88ddab8](https://github.com/A-Guy-educ/A-Guy/commit/88ddab8))
+* fix: Revert dark mode colors and fix lint warnings ([cec5112](https://github.com/A-Guy-educ/A-Guy/commit/cec5112))
+* fix: Simplify course ID usage since it's already typed as string ([20a82a6](https://github.com/A-Guy-educ/A-Guy/commit/20a82a6))
+* fix: simplify type check in get-conversation endpoint ([bb05fee](https://github.com/A-Guy-educ/A-Guy/commit/bb05fee))
+* fix: stabilize login action in tests ([d9be2d6](https://github.com/A-Guy-educ/A-Guy/commit/d9be2d6))
+* fix: support new content structure in exercise renderer ([4e0ccff](https://github.com/A-Guy-educ/A-Guy/commit/4e0ccff))
+* fix: support new content structure in exercise renderer ([cf4e7e2](https://github.com/A-Guy-educ/A-Guy/commit/cf4e7e2))
+* fix: Sync auth state across UI ([746a406](https://github.com/A-Guy-educ/A-Guy/commit/746a406))
+* fix: sync mobile logout state ([917f1b9](https://github.com/A-Guy-educ/A-Guy/commit/917f1b9))
+* fix: Update E2E tests to handle missing test data ([7e09af6](https://github.com/A-Guy-educ/A-Guy/commit/7e09af6))
+* fix: update OpenAI mock for Vitest 4.0.16 and upgrade @vitest/coverage-v8 ([9fdb62a](https://github.com/A-Guy-educ/A-Guy/commit/9fdb62a))
+* fix: Update test helpers to support both ChatInterface and NotebookChat message classes ([430c3c0](https://github.com/A-Guy-educ/A-Guy/commit/430c3c0))
+* fix: use 'any' type for whereQuery to resolve TypeScript inference issues ([d154e1b](https://github.com/A-Guy-educ/A-Guy/commit/d154e1b))
+* fix: use ChatMessageRole enum in UI component ([9f53d13](https://github.com/A-Guy-educ/A-Guy/commit/9f53d13))
+* fix: use custom context flag for archivedAt protection ([ff328b7](https://github.com/A-Guy-educ/A-Guy/commit/ff328b7))
+* fix: Use dynamic import to prevent SSR issues with PDF.js ([32e98c9](https://github.com/A-Guy-educ/A-Guy/commit/32e98c9))
+* fix: Use installed pdfjs-dist package instead of CDN ([9c12ab4](https://github.com/A-Guy-educ/A-Guy/commit/9c12ab4))
+* fix: Use local worker file instead of CDN for PDF.js ([9c4c97f](https://github.com/A-Guy-educ/A-Guy/commit/9c4c97f))
+* fix: Use localhost for testcontainers MongoDB connection string ([a22eb34](https://github.com/A-Guy-educ/A-Guy/commit/a22eb34))
+* fix: Use MongoDB 6 instead of 7 for testcontainers ([fde25d1](https://github.com/A-Guy-educ/A-Guy/commit/fde25d1))
+* fix: Use payload cookie prefix ([4dffe04](https://github.com/A-Guy-educ/A-Guy/commit/4dffe04))
+* fix: Use Payload REST API with access control for conversation filtering ([41f23be](https://github.com/A-Guy-educ/A-Guy/commit/41f23be))
+* fix: use Promise.allSettled for vector search queries ([9a7c047](https://github.com/A-Guy-educ/A-Guy/commit/9a7c047))
+* fix: use request origin for relative URL image fetch in production ([1302105](https://github.com/A-Guy-educ/A-Guy/commit/1302105))
+* fix: Use requestAnimationFrame to ensure messages render before hiding loading ([cb6777a](https://github.com/A-Guy-educ/A-Guy/commit/cb6777a))
+* fix: Use setTimeout instead of requestAnimationFrame for test reliability ([cfb42bb](https://github.com/A-Guy-educ/A-Guy/commit/cfb42bb))
+* fix: Use testcontainers for api.int.spec.ts MongoDB connection ([4f280ea](https://github.com/A-Guy-educ/A-Guy/commit/4f280ea))
+* fix: Wrap draftMode() calls in try-catch to prevent static-to-dynamic errors ([8d00b5f](https://github.com/A-Guy-educ/A-Guy/commit/8d00b5f))
+* fix: Wrap long fetch call in StudyContent to pass Prettier check ([11f9e80](https://github.com/A-Guy-educ/A-Guy/commit/11f9e80))
+* fix(agent-chat): extract default prompts to files and add resilient loading for memory extraction ([5c9ed60](https://github.com/A-Guy-educ/A-Guy/commit/5c9ed60))
+* fix(agent-chat): make summary prompt loading robust and add tests ([b284f5a](https://github.com/A-Guy-educ/A-Guy/commit/b284f5a))
+* fix(chat): add explicit sort to conversation query to ensure correct user filtering ([4e53772](https://github.com/A-Guy-educ/A-Guy/commit/4e53772))
+* fix(chat): create custom endpoint with explicit user filtering for conversations ([399d744](https://github.com/A-Guy-educ/A-Guy/commit/399d744))
+* fix(chat): Stabilize lesson history ([3e14e8f](https://github.com/A-Guy-educ/A-Guy/commit/3e14e8f))
+* fix(ci): Add contents:read permission to preview validation workflow ([6561db0](https://github.com/A-Guy-educ/A-Guy/commit/6561db0))
+* fix(ci): add PAYLOAD_SECRET to test job environment ([2f68c1b](https://github.com/A-Guy-educ/A-Guy/commit/2f68c1b))
+* fix(ci): Remove dependency-review job that requires dependency graph ([a98b120](https://github.com/A-Guy-educ/A-Guy/commit/a98b120))
+* fix(ci): Set DATABASE_URL at job level for postinstall hook ([a40f5e3](https://github.com/A-Guy-educ/A-Guy/commit/a40f5e3))
+* fix(ci): Use PAT for release workflow to bypass branch protection ([c145ceb](https://github.com/A-Guy-educ/A-Guy/commit/c145ceb))
+* fix(e2e): add draft: false to category creation ([e56af28](https://github.com/A-Guy-educ/A-Guy/commit/e56af28))
+* fix(e2e): add required slug field to category creation ([7371ae9](https://github.com/A-Guy-educ/A-Guy/commit/7371ae9))
+* fix(e2e): seed test course data if missing ([d73e241](https://github.com/A-Guy-educ/A-Guy/commit/d73e241))
+* fix(e2e): use specific selector for chat messages in history test ([5f8365e](https://github.com/A-Guy-educ/A-Guy/commit/5f8365e))
+* fix(e2e): Use unique slug in test course data to avoid conflicts ([94d4b80](https://github.com/A-Guy-educ/A-Guy/commit/94d4b80))
+* fix(exercises): export missing Zod schemas ([dbaaee0](https://github.com/A-Guy-educ/A-Guy/commit/dbaaee0))
+* fix(i18n): add translations for exercise renderer ([395cded](https://github.com/A-Guy-educ/A-Guy/commit/395cded))
+* fix(test): access last mock call instead of first in system prompts test ([149952f](https://github.com/A-Guy-educ/A-Guy/commit/149952f))
+* fix(tests): add categories to courses and fix conversation queries ([c06e0f0](https://github.com/A-Guy-educ/A-Guy/commit/c06e0f0))
+* fix(tests): add getFeatureFlagStatus to feature-flags mock ([2939a3c](https://github.com/A-Guy-educ/A-Guy/commit/2939a3c))
+* fix(tests): drop and recreate MongoDB indexes with wrong definitions ([bb750fe](https://github.com/A-Guy-educ/A-Guy/commit/bb750fe))
+* fix(tests): fix integration test failures ([c0627e8](https://github.com/A-Guy-educ/A-Guy/commit/c0627e8))
+* fix(tests): fix remaining integration test failures ([d6cd662](https://github.com/A-Guy-educ/A-Guy/commit/d6cd662))
+* fix(tests): query database directly to verify archivedAt field is missing ([e68a231](https://github.com/A-Guy-educ/A-Guy/commit/e68a231))
+* fix(tests): skip agent-chat integration tests when DATABASE_URL is not set ([7268911](https://github.com/A-Guy-educ/A-Guy/commit/7268911))
+* feat: add admin role promotion system with access control ([553e284](https://github.com/A-Guy-educ/A-Guy/commit/553e284))
+* feat: add AI service layer for image-to-exercise conversion ([c8fea43](https://github.com/A-Guy-educ/A-Guy/commit/c8fea43))
+* feat: Add AI-powered memory system with vector search ([cf25c86](https://github.com/A-Guy-educ/A-Guy/commit/cf25c86))
+* feat: add AnswerSpecJsonField component and exercise editor improvements ([2e5ad68](https://github.com/A-Guy-educ/A-Guy/commit/2e5ad68))
+* feat: add automated README maintenance tools ([8fb697d](https://github.com/A-Guy-educ/A-Guy/commit/8fb697d))
+* feat: add automated release management with semantic-release ([6a038ad](https://github.com/A-Guy-educ/A-Guy/commit/6a038ad))
+* feat: Add canvas-based PDF renderer with navigation and translations ([63f3ad5](https://github.com/A-Guy-educ/A-Guy/commit/63f3ad5))
+* feat: add comprehensive automation improvements ([9bec8d7](https://github.com/A-Guy-educ/A-Guy/commit/9bec8d7))
+* feat: Add CourseSelector with card-based dropdown display ([bb79969](https://github.com/A-Guy-educ/A-Guy/commit/bb79969))
+* feat: add createdBy field to all collections ([523be62](https://github.com/A-Guy-educ/A-Guy/commit/523be62))
+* feat: add Cursor project commands and update documentation ([db16f2d](https://github.com/A-Guy-educ/A-Guy/commit/db16f2d))
+* feat: Add diff-scoped auto-fix workflow ([389ac60](https://github.com/A-Guy-educ/A-Guy/commit/389ac60))
+* feat: Add health check endpoint and update Playwright config ([d8d914a](https://github.com/A-Guy-educ/A-Guy/commit/d8d914a))
+* feat: add hint/solution/fullSolution fields and simplify free response ([37642c7](https://github.com/A-Guy-educ/A-Guy/commit/37642c7))
+* feat: Add login/account auth flow ([a3b5cd6](https://github.com/A-Guy-educ/A-Guy/commit/a3b5cd6))
+* feat: Add maxLength validation to lessonContextText field ([9a27ce6](https://github.com/A-Guy-educ/A-Guy/commit/9a27ce6))
+* feat: add notebook exercise layout and fix logger ([9882c60](https://github.com/A-Guy-educ/A-Guy/commit/9882c60))
+* feat: add notebook view with chat to lesson media page ([fa6a46b](https://github.com/A-Guy-educ/A-Guy/commit/fa6a46b))
+* feat: add one-click AI conversion UI to lesson page ([0286e3a](https://github.com/A-Guy-educ/A-Guy/commit/0286e3a))
+* feat: add one-click AI exercise conversion endpoint ([6fe2f2e](https://github.com/A-Guy-educ/A-Guy/commit/6fe2f2e)), closes [#2](https://github.com/A-Guy-educ/A-Guy/issues/2) [#2](https://github.com/A-Guy-educ/A-Guy/issues/2)
+* feat: Add page_view and session_started auto-tracking ([8d4ac68](https://github.com/A-Guy-educ/A-Guy/commit/8d4ac68))
+* feat: Add PDFPreview component using PDF.js ([f05c436](https://github.com/A-Guy-educ/A-Guy/commit/f05c436))
+* feat: add PR-based release workflow ([e38333a](https://github.com/A-Guy-educ/A-Guy/commit/e38333a))
+* feat: add pre-commit hook for AI index auto-generation ([6bbf266](https://github.com/A-Guy-educ/A-Guy/commit/6bbf266))
+* feat: add pre-commit hook to block CSS/SCSS files ([6c6c3d3](https://github.com/A-Guy-educ/A-Guy/commit/6c6c3d3))
+* feat: Add Prompt collection for lesson system prompts ([3aa6e49](https://github.com/A-Guy-educ/A-Guy/commit/3aa6e49))
+* feat: Add prompt collection task spec and plan ([a028009](https://github.com/A-Guy-educ/A-Guy/commit/a028009))
+* feat: Add Slack notification for PR merges to dev ([7e609f6](https://github.com/A-Guy-educ/A-Guy/commit/7e609f6)), closes [#dev-updates](https://github.com/A-Guy-educ/A-Guy/issues/dev-updates)
+* feat: Add Slack notifications for releases ([e55cfef](https://github.com/A-Guy-educ/A-Guy/commit/e55cfef))
+* feat: Add system prompts to chat endpoint ([8be5c55](https://github.com/A-Guy-educ/A-Guy/commit/8be5c55))
+* feat: Add telescope logo and refactor exercise view components ([d905157](https://github.com/A-Guy-educ/A-Guy/commit/d905157))
+* feat: add UX Engineer Expert skill for component architecture ([5c6277f](https://github.com/A-Guy-educ/A-Guy/commit/5c6277f))
+* feat: add vector memory chat integration tests ([f6b431b](https://github.com/A-Guy-educ/A-Guy/commit/f6b431b))
+* feat: add Vercel Blob storage, exercise media picker, and migrate lessons to media uploads ([d46f056](https://github.com/A-Guy-educ/A-Guy/commit/d46f056))
+* feat: add Zod runtime validation for exercise blocks ([492280d](https://github.com/A-Guy-educ/A-Guy/commit/492280d))
+* feat: complete design system migration to 100% tailwind css ([72c71ea](https://github.com/A-Guy-educ/A-Guy/commit/72c71ea))
+* feat: enforce active conversation semantics consistency ([3e5a4e5](https://github.com/A-Guy-educ/A-Guy/commit/3e5a4e5))
+* feat: Enforce PR workflow by blocking direct commits to main/dev ([94cd4c3](https://github.com/A-Guy-educ/A-Guy/commit/94cd4c3))
+* feat: enhance exercise content editor with tree view and navigation components ([8e30e17](https://github.com/A-Guy-educ/A-Guy/commit/8e30e17))
+* feat: enlarge quick action buttons (hint, solution, full) ([440b6ac](https://github.com/A-Guy-educ/A-Guy/commit/440b6ac))
+* feat: Extract hardcoded text to i18n messages ([86465ec](https://github.com/A-Guy-educ/A-Guy/commit/86465ec))
+* feat: implement AI chat helper for interactive exercises ([d7f8d39](https://github.com/A-Guy-educ/A-Guy/commit/d7f8d39))
+* feat: Implement canonical analytics wrapper with 10 product events ([4aff88e](https://github.com/A-Guy-educ/A-Guy/commit/4aff88e))
+* feat: Implement chat memory system with Payload CMS ([875cfd2](https://github.com/A-Guy-educ/A-Guy/commit/875cfd2))
+* feat: Implement chat optimization improvements ([d1246f2](https://github.com/A-Guy-educ/A-Guy/commit/d1246f2))
+* feat: Implement comprehensive automation and security improvements ([b81398d](https://github.com/A-Guy-educ/A-Guy/commit/b81398d))
+* feat: implement exercise view redesign with split-screen layout ([6b354c9](https://github.com/A-Guy-educ/A-Guy/commit/6b354c9)), closes [#91262C](https://github.com/A-Guy-educ/A-Guy/issues/91262C) [#5D725B](https://github.com/A-Guy-educ/A-Guy/issues/5D725B)
+* feat: Implement full-featured PDF viewer with Mozilla CDN integration ([e92ea48](https://github.com/A-Guy-educ/A-Guy/commit/e92ea48))
+* feat: implement lesson context injection for chat prompts ([9436d09](https://github.com/A-Guy-educ/A-Guy/commit/9436d09))
+* feat: Implement media type enum system with type-specific rendering ([6f8119d](https://github.com/A-Guy-educ/A-Guy/commit/6f8119d))
+* feat: implement multi-file media support for lessons, chapters, and courses ([e75a596](https://github.com/A-Guy-educ/A-Guy/commit/e75a596))
+* feat: improve chat UX with auth toast, send icon, and larger text ([c44acc2](https://github.com/A-Guy-educ/A-Guy/commit/c44acc2))
+* feat: improve notebook workspace UI and mobile experience ([1835bac](https://github.com/A-Guy-educ/A-Guy/commit/1835bac))
+* feat: Integrate 8 of 10 canonical analytics events into product code ([3fe67c6](https://github.com/A-Guy-educ/A-Guy/commit/3fe67c6))
+* feat: Integrate full PDF.js viewer with annotation tools ([8175b49](https://github.com/A-Guy-educ/A-Guy/commit/8175b49))
+* feat: migrate Cursor commands to Claude Code skills ([56d46da](https://github.com/A-Guy-educ/A-Guy/commit/56d46da))
+* feat: Migrate PDF viewer to Vercel Blob CDN with stable v4.4.168 ([f07f0ad](https://github.com/A-Guy-educ/A-Guy/commit/f07f0ad))
+* feat: modernize exercise renderer with clean UI using Tailwind and shadcn ([0811e13](https://github.com/A-Guy-educ/A-Guy/commit/0811e13))
+* feat: persist chat conversation when switching tabs ([4763309](https://github.com/A-Guy-educ/A-Guy/commit/4763309))
+* feat: Replace Payload logo with theme-aware Telescope logo ([27623b4](https://github.com/A-Guy-educ/A-Guy/commit/27623b4))
+* feat: reset exercise admin to payload default ([cba8277](https://github.com/A-Guy-educ/A-Guy/commit/cba8277))
+* feat: Restrict interactive exercises tab to admins only ([24e9da1](https://github.com/A-Guy-educ/A-Guy/commit/24e9da1))
+* feat: Track lesson_completed event on navigation away from lesson ([39f20b5](https://github.com/A-Guy-educ/A-Guy/commit/39f20b5))
+* feat: update exercise renderer to support new block-based structure ([1fcf2c9](https://github.com/A-Guy-educ/A-Guy/commit/1fcf2c9))
+* feat: Update header with site name and remove courses link ([d651dbb](https://github.com/A-Guy-educ/A-Guy/commit/d651dbb))
+* feat(admin): revamp exercise content editor v2 UI/UX ([63c105a](https://github.com/A-Guy-educ/A-Guy/commit/63c105a))
+* feat(admin): simplify exercise content editor to clean block list UI ([2e6b226](https://github.com/A-Guy-educ/A-Guy/commit/2e6b226))
+* feat(ai): Implement agent optimization improvements ([fc614b8](https://github.com/A-Guy-educ/A-Guy/commit/fc614b8))
+* feat(chat): Implement context-scoped conversations ([3469f53](https://github.com/A-Guy-educ/A-Guy/commit/3469f53))
+* feat(exercises): strict cut-over to content.blocks structure ([751a06e](https://github.com/A-Guy-educ/A-Guy/commit/751a06e))
+* feat(student): implement simple ExerciseRenderer v2 (Stages 1 & 2) ([164c541](https://github.com/A-Guy-educ/A-Guy/commit/164c541))
+* feat(tests): Add system prompt inclusion tests for agent chat ([2dd0a93](https://github.com/A-Guy-educ/A-Guy/commit/2dd0a93))
+* docs: Add agent activation instructions to workflow header ([f7b43dc](https://github.com/A-Guy-educ/A-Guy/commit/f7b43dc))
+* docs: Add AI efficiency task documentation ([13d0496](https://github.com/A-Guy-educ/A-Guy/commit/13d0496))
+* docs: Add comprehensive commit guide and update hooks ([b4c515f](https://github.com/A-Guy-educ/A-Guy/commit/b4c515f))
+* docs: Add detailed implementation plan for chat context feature ([b9c14b2](https://github.com/A-Guy-educ/A-Guy/commit/b9c14b2))
+* docs: add exercise view design migration plan ([62f52b1](https://github.com/A-Guy-educ/A-Guy/commit/62f52b1))
+* docs: Add feature specs and implementation plans ([aa66281](https://github.com/A-Guy-educ/A-Guy/commit/aa66281))
+* docs: add guide for running tests with Docker ([ed0eb37](https://github.com/A-Guy-educ/A-Guy/commit/ed0eb37))
+* docs: Add homepage redesign demo HTML ([1e05fc3](https://github.com/A-Guy-educ/A-Guy/commit/1e05fc3))
+* docs: add invariant verification document ([8ea6720](https://github.com/A-Guy-educ/A-Guy/commit/8ea6720))
+* docs: add phase 1 & 2 AI agent readability documentation ([ed0cce0](https://github.com/A-Guy-educ/A-Guy/commit/ed0cce0))
+* docs: Add PR template for release hook fix ([364f7ce](https://github.com/A-Guy-educ/A-Guy/commit/364f7ce))
+* docs: add refactoring policy to UX Engineer Expert skill ([e046707](https://github.com/A-Guy-educ/A-Guy/commit/e046707))
+* docs: add targeted README files for key directories ([72d412b](https://github.com/A-Guy-educ/A-Guy/commit/72d412b))
+* docs: Add TDD workflow and optimize agent documentation specs ([1eefab6](https://github.com/A-Guy-educ/A-Guy/commit/1eefab6))
+* docs: move project-specific patterns from AGENTS.md to CLAUDE_INTERNAL.md ([1057c0a](https://github.com/A-Guy-educ/A-Guy/commit/1057c0a))
+* docs: Remove SQLite references from documentation ([728add6](https://github.com/A-Guy-educ/A-Guy/commit/728add6))
+* docs: Restructure spec workflow and optimize output format ([2949b65](https://github.com/A-Guy-educ/A-Guy/commit/2949b65))
+* docs: Restructure spec workflow and optimize output format ([27f8ad5](https://github.com/A-Guy-educ/A-Guy/commit/27f8ad5))
+* docs: Update lesson document chat integration plan and spec ([d1b51e1](https://github.com/A-Guy-educ/A-Guy/commit/d1b51e1))
+* test: add access control validation for conversations endpoint ([cc642ca](https://github.com/A-Guy-educ/A-Guy/commit/cc642ca))
+* test: add overrideAccess test and align unit mocks with invariant ([30138ec](https://github.com/A-Guy-educ/A-Guy/commit/30138ec))
+* test: Add validation guard for memory isolation test ([0897883](https://github.com/A-Guy-educ/A-Guy/commit/0897883))
+* test: Align auth login test with shared DB ([462d570](https://github.com/A-Guy-educ/A-Guy/commit/462d570))
+* test: Enforce testcontainers for integration and E2E tests ([174e173](https://github.com/A-Guy-educ/A-Guy/commit/174e173))
+* test: Skip failing homepage e2e test temporarily ([16e8a87](https://github.com/A-Guy-educ/A-Guy/commit/16e8a87))
+* test(ai): add unit tests to validate system prompt files exist ([366df6b](https://github.com/A-Guy-educ/A-Guy/commit/366df6b))
+* test(chat): add comprehensive tests for REST API user filtering ([9e84016](https://github.com/A-Guy-educ/A-Guy/commit/9e84016))
+* test(chat): add test to validate Payload REST API endpoint structure ([c14adc5](https://github.com/A-Guy-educ/A-Guy/commit/c14adc5))
+* test(chat): add tests for user filtering and sort order in conversation query ([3792fa3](https://github.com/A-Guy-educ/A-Guy/commit/3792fa3))
+* test(chat): use testcontainers for MongoDB in conversation history tests ([2d94987](https://github.com/A-Guy-educ/A-Guy/commit/2d94987))
+* style: Fix Prettier formatting in CourseCardDropdown ([6bd6071](https://github.com/A-Guy-educ/A-Guy/commit/6bd6071))
+* style: Fix Prettier formatting issues ([0766684](https://github.com/A-Guy-educ/A-Guy/commit/0766684))
+* style: format code with prettier ([4dfe836](https://github.com/A-Guy-educ/A-Guy/commit/4dfe836))
+* style: Format PDFPreview.client.tsx with Prettier ([718faaa](https://github.com/A-Guy-educ/A-Guy/commit/718faaa))
+* style: make Aguy text in logo bold and use theme's red color ([3bcfdf1](https://github.com/A-Guy-educ/A-Guy/commit/3bcfdf1))
+* style: Update dark mode Telescope logo colors to match theme ([1baa4b3](https://github.com/A-Guy-educ/A-Guy/commit/1baa4b3)), closes [#3C83F6](https://github.com/A-Guy-educ/A-Guy/issues/3C83F6) [#52E0E0](https://github.com/A-Guy-educ/A-Guy/issues/52E0E0)
+* style: update exercise content editor styling and component refinements ([af377d4](https://github.com/A-Guy-educ/A-Guy/commit/af377d4))
+* style(tasks): fix formatting on task planning files ([126e7c1](https://github.com/A-Guy-educ/A-Guy/commit/126e7c1))
+* chore: add @google/generative-ai to package.json ([0b68ab2](https://github.com/A-Guy-educ/A-Guy/commit/0b68ab2)), closes [#1](https://github.com/A-Guy-educ/A-Guy/issues/1)
+* chore: add @google/generative-ai to package.json ([a9389fd](https://github.com/A-Guy-educ/A-Guy/commit/a9389fd)), closes [#1](https://github.com/A-Guy-educ/A-Guy/issues/1)
+* chore: add @google/generative-ai to package.json ([291110c](https://github.com/A-Guy-educ/A-Guy/commit/291110c)), closes [#1](https://github.com/A-Guy-educ/A-Guy/issues/1)
+* chore: add comprehensive logging for image fetch debugging ([941473e](https://github.com/A-Guy-educ/A-Guy/commit/941473e))
+* chore: add detailed AI extraction logging for debugging ([e2bc785](https://github.com/A-Guy-educ/A-Guy/commit/e2bc785))
+* chore: add detailed AI response logging to debug JSON parse error ([5493c98](https://github.com/A-Guy-educ/A-Guy/commit/5493c98))
+* chore: add git hooks for secret detection ([647d8cf](https://github.com/A-Guy-educ/A-Guy/commit/647d8cf))
+* chore: add lesson-type-tabs planning files ([dbfaed1](https://github.com/A-Guy-educ/A-Guy/commit/dbfaed1))
+* chore: Add public/pdfjs/ to prettierignore ([2d26a53](https://github.com/A-Guy-educ/A-Guy/commit/2d26a53))
+* chore: add security infrastructure and dependency setup ([f651b26](https://github.com/A-Guy-educ/A-Guy/commit/f651b26))
+* chore: Add TDD skill and update payload types ([7b759b7](https://github.com/A-Guy-educ/A-Guy/commit/7b759b7))
+* chore: Clean up unnecessary config changes ([7fb874d](https://github.com/A-Guy-educ/A-Guy/commit/7fb874d))
+* chore: Enforce test execution in git hooks and CI ([f4b1ea5](https://github.com/A-Guy-educ/A-Guy/commit/f4b1ea5))
+* chore: Exclude auto-generated files from Prettier checks ([aed1bff](https://github.com/A-Guy-educ/A-Guy/commit/aed1bff))
+* chore: fix formatting issues in media-related files ([68fbf9e](https://github.com/A-Guy-educ/A-Guy/commit/68fbf9e))
+* chore: Fix Prettier formatting for PDF viewer files ([9a29b46](https://github.com/A-Guy-educ/A-Guy/commit/9a29b46))
+* chore: fix prettier formatting issues ([3eb46d6](https://github.com/A-Guy-educ/A-Guy/commit/3eb46d6))
+* chore: Format code with Prettier ([3edd7e5](https://github.com/A-Guy-educ/A-Guy/commit/3edd7e5))
+* chore: Improve memory system vector search & tests ([f5e392b](https://github.com/A-Guy-educ/A-Guy/commit/f5e392b))
+* chore: merge dev into admin-role with single role enforcement ([1c25f36](https://github.com/A-Guy-educ/A-Guy/commit/1c25f36))
+* chore: Merge dev into feat/analytics-integrations ([4704124](https://github.com/A-Guy-educ/A-Guy/commit/4704124))
+* chore: merge dev into feat/exercise-view-redesign ([9916234](https://github.com/A-Guy-educ/A-Guy/commit/9916234))
+* chore: Merge dev into feat/pdf-preview-component ([7f7df14](https://github.com/A-Guy-educ/A-Guy/commit/7f7df14))
+* chore: merge dev into main [skip ci] ([10b3412](https://github.com/A-Guy-educ/A-Guy/commit/10b3412))
+* chore: merge dev into main [skip ci] ([6bd99ec](https://github.com/A-Guy-educ/A-Guy/commit/6bd99ec))
+* chore: merge dev into main [skip ci] ([d843091](https://github.com/A-Guy-educ/A-Guy/commit/d843091))
+* chore: merge dev into main [skip ci] ([cf52cc4](https://github.com/A-Guy-educ/A-Guy/commit/cf52cc4))
+* chore: merge dev into main [skip ci] ([54ad919](https://github.com/A-Guy-educ/A-Guy/commit/54ad919))
+* chore: merge dev into main [skip ci] ([ba38b44](https://github.com/A-Guy-educ/A-Guy/commit/ba38b44))
+* chore: merge dev into main [skip ci] ([aad5321](https://github.com/A-Guy-educ/A-Guy/commit/aad5321))
+* chore: merge dev into main [skip ci] ([58982b7](https://github.com/A-Guy-educ/A-Guy/commit/58982b7))
+* chore: merge dev into main [skip ci] ([11126ad](https://github.com/A-Guy-educ/A-Guy/commit/11126ad))
+* chore: merge dev into main [skip ci] ([418fd57](https://github.com/A-Guy-educ/A-Guy/commit/418fd57))
+* chore: merge dev into main [skip ci] ([0257ba5](https://github.com/A-Guy-educ/A-Guy/commit/0257ba5))
+* chore: Optimize pre-commit hooks for faster commits ([9283bcb](https://github.com/A-Guy-educ/A-Guy/commit/9283bcb))
+* chore: Remove CJK character maps from PDF.js ([fcf239a](https://github.com/A-Guy-educ/A-Guy/commit/fcf239a))
+* chore: Remove copied PDF.js files - use library from node_modules instead ([82a0b8c](https://github.com/A-Guy-educ/A-Guy/commit/82a0b8c))
+* chore: remove custom get-conversation route (use Payload REST API instead) ([fdeadde](https://github.com/A-Guy-educ/A-Guy/commit/fdeadde))
+* chore: Remove dependency-review job from CI ([c018d7c](https://github.com/A-Guy-educ/A-Guy/commit/c018d7c))
+* chore: remove duplicate old AI service files ([f536f73](https://github.com/A-Guy-educ/A-Guy/commit/f536f73)), closes [#2](https://github.com/A-Guy-educ/A-Guy/issues/2)
+* chore: remove duplicate old AI service files ([3691767](https://github.com/A-Guy-educ/A-Guy/commit/3691767))
+* chore: Remove e2e tests from pre-push hook ([71e114e](https://github.com/A-Guy-educ/A-Guy/commit/71e114e))
+* chore: Remove memory feature flags ([b30065d](https://github.com/A-Guy-educ/A-Guy/commit/b30065d))
+* chore: Remove mixpanelstuff folder and restore payload-types ([0645922](https://github.com/A-Guy-educ/A-Guy/commit/0645922))
+* chore: remove obsolete convert-lesson-image Next.js route ([886492e](https://github.com/A-Guy-educ/A-Guy/commit/886492e))
+* chore: remove redundant debug logging ([0c3568d](https://github.com/A-Guy-educ/A-Guy/commit/0c3568d))
+* chore: remove RUNNING_TESTS.md ([e93268f](https://github.com/A-Guy-educ/A-Guy/commit/e93268f))
+* chore: remove temporary verification document ([dc428f3](https://github.com/A-Guy-educ/A-Guy/commit/dc428f3))
+* chore: remove TEST_VALIDATION_GUIDE.md ([9ae838b](https://github.com/A-Guy-educ/A-Guy/commit/9ae838b))
+* chore: Remove unnecessary PDF.js files to reduce bundle size ([eb3ef41](https://github.com/A-Guy-educ/A-Guy/commit/eb3ef41))
+* chore: Reorder imports and format MediaComponent JSX ([1aa6142](https://github.com/A-Guy-educ/A-Guy/commit/1aa6142))
+* chore: Revert .husky/check-no-css and remove unnecessary README ([66f34ae](https://github.com/A-Guy-educ/A-Guy/commit/66f34ae))
+* chore: Revert prettierignore and eslint changes for PDF.js ([1998d45](https://github.com/A-Guy-educ/A-Guy/commit/1998d45))
+* chore: Trigger redeploy ([2a51dd7](https://github.com/A-Guy-educ/A-Guy/commit/2a51dd7))
+* chore: Update components, configurations, and services ([5e8c75a](https://github.com/A-Guy-educ/A-Guy/commit/5e8c75a))
+* chore: Update ExerciseHeader and payload types ([52607a4](https://github.com/A-Guy-educ/A-Guy/commit/52607a4))
+* chore: update importMap and default exercise content template ([bfed740](https://github.com/A-Guy-educ/A-Guy/commit/bfed740))
+* chore: Update local settings and add ESLint inline styles plan ([066b793](https://github.com/A-Guy-educ/A-Guy/commit/066b793))
+* chore: update lockfile with AI dependencies ([8ab81b9](https://github.com/A-Guy-educ/A-Guy/commit/8ab81b9))
+* chore: update lockfile with AI dependencies ([a2c69d0](https://github.com/A-Guy-educ/A-Guy/commit/a2c69d0))
+* chore: update lockfile with AI dependencies ([fe44f7c](https://github.com/A-Guy-educ/A-Guy/commit/fe44f7c))
+* chore: Update memory vector search tests and related configurations ([761db48](https://github.com/A-Guy-educ/A-Guy/commit/761db48))
+* chore: Update Playwright config and gitignore ([942d88f](https://github.com/A-Guy-educ/A-Guy/commit/942d88f))
+* chore: Update test configs and auto-generated files ([e457e1f](https://github.com/A-Guy-educ/A-Guy/commit/e457e1f))
+* chore: Update test infrastructure and CI workflow ([eb6fd73](https://github.com/A-Guy-educ/A-Guy/commit/eb6fd73))
+* chore(deps-dev): bump tailwindcss from 3.4.19 to 4.1.18 ([9bf6d30](https://github.com/A-Guy-educ/A-Guy/commit/9bf6d30))
+* chore(deps-dev): bump the dev-dependencies group with 9 updates ([6f37448](https://github.com/A-Guy-educ/A-Guy/commit/6f37448))
+* chore(deps-dev): bump vite-tsconfig-paths from 5.1.4 to 6.0.3 ([a38721e](https://github.com/A-Guy-educ/A-Guy/commit/a38721e))
+* chore(deps-dev): bump vitest from 3.2.3 to 4.0.16 ([59f97f1](https://github.com/A-Guy-educ/A-Guy/commit/59f97f1))
+* chore(deps): bump actions/cache from 4 to 5 ([f0ccdbf](https://github.com/A-Guy-educ/A-Guy/commit/f0ccdbf))
+* chore(deps): bump actions/checkout from 4 to 6 ([590c1a3](https://github.com/A-Guy-educ/A-Guy/commit/590c1a3))
+* chore(deps): bump actions/github-script from 7 to 8 ([a7265f2](https://github.com/A-Guy-educ/A-Guy/commit/a7265f2))
+* chore(deps): bump actions/setup-node from 4 to 6 ([71a6cff](https://github.com/A-Guy-educ/A-Guy/commit/71a6cff))
+* chore(deps): bump actions/upload-artifact from 4 to 6 ([dc10186](https://github.com/A-Guy-educ/A-Guy/commit/dc10186))
+* chore(deps): bump dotenv from 16.4.7 to 17.2.3 ([0bca232](https://github.com/A-Guy-educ/A-Guy/commit/0bca232))
+* chore(deps): bump tailwind-merge from 2.6.0 to 3.4.0 ([a2f20a7](https://github.com/A-Guy-educ/A-Guy/commit/a2f20a7))
+* chore(deps): bump the prod-dependencies group with 20 updates ([c8a11f4](https://github.com/A-Guy-educ/A-Guy/commit/c8a11f4))
+* chore(tasks): add and update task planning documents ([d4c8b26](https://github.com/A-Guy-educ/A-Guy/commit/d4c8b26))
+* security: Harden overwrite agent workflow ([906ab6f](https://github.com/A-Guy-educ/A-Guy/commit/906ab6f))
+* refactor: auto-fix payload-types to use Role enum ([6f349db](https://github.com/A-Guy-educ/A-Guy/commit/6f349db))
+* refactor: break ExerciseRenderer into smaller components with dedicated CSS ([7bd6ee8](https://github.com/A-Guy-educ/A-Guy/commit/7bd6ee8))
+* refactor: clean up chat implementation and remove dead code ([7ff865f](https://github.com/A-Guy-educ/A-Guy/commit/7ff865f))
+* refactor: consolidate MCQ into question_select with mcq variant ([30489ed](https://github.com/A-Guy-educ/A-Guy/commit/30489ed))
+* refactor: Consolidate PDF preview to use single PDFMedia component ([4c4b184](https://github.com/A-Guy-educ/A-Guy/commit/4c4b184))
+* refactor: create type-safe User type with Role enum ([6798e4e](https://github.com/A-Guy-educ/A-Guy/commit/6798e4e))
+* refactor: extract endpoint logic and use proper patterns ([8438e0c](https://github.com/A-Guy-educ/A-Guy/commit/8438e0c))
+* refactor: extract NotebookChat logic to custom hook for STRICTNESS compliance ([62a058b](https://github.com/A-Guy-educ/A-Guy/commit/62a058b))
+* refactor: Extract telescope logo SVG to separate file ([394052c](https://github.com/A-Guy-educ/A-Guy/commit/394052c))
+* refactor: implement project-specific patterns for chat feature ([cb46eb4](https://github.com/A-Guy-educ/A-Guy/commit/cb46eb4))
+* refactor: implement Role enum and clarify hook naming ([752be70](https://github.com/A-Guy-educ/A-Guy/commit/752be70))
+* refactor: Improve role naming clarity and standardize chat roles ([2df2a0c](https://github.com/A-Guy-educ/A-Guy/commit/2df2a0c))
+* refactor: merge AI service improvements from PR #2 ([811aa41](https://github.com/A-Guy-educ/A-Guy/commit/811aa41)), closes [#2](https://github.com/A-Guy-educ/A-Guy/issues/2)
+* refactor: Merge PDF preview admin files into single component ([967547f](https://github.com/A-Guy-educ/A-Guy/commit/967547f))
+* refactor: migrate convert-lesson-image to Payload endpoint ([cf7545f](https://github.com/A-Guy-educ/A-Guy/commit/cf7545f))
+* refactor: Modularize PDF viewer route with security hardening ([1c91bd8](https://github.com/A-Guy-educ/A-Guy/commit/1c91bd8))
+* refactor: move image-to-exercise to Payload endpoint ([a4189a5](https://github.com/A-Guy-educ/A-Guy/commit/a4189a5))
+* refactor: remove DEFAULT_PROMPT from convert-lesson-image ([d5ada82](https://github.com/A-Guy-educ/A-Guy/commit/d5ada82))
+* refactor: remove deprecated question_mcq type completely ([e2dbe95](https://github.com/A-Guy-educ/A-Guy/commit/e2dbe95))
+* refactor: Remove overly-specific CSS variables from globals.css ([b90c5d0](https://github.com/A-Guy-educ/A-Guy/commit/b90c5d0))
+* refactor: remove redundant text span from header logo ([e3304fa](https://github.com/A-Guy-educ/A-Guy/commit/e3304fa))
+* refactor: remove unused accompanyingText feature ([a7e8645](https://github.com/A-Guy-educ/A-Guy/commit/a7e8645))
+* refactor: rename AI service files for clarity ([83c0cdc](https://github.com/A-Guy-educ/A-Guy/commit/83c0cdc))
+* refactor: rename ChatMessageRole.Assistant to Model ([094963a](https://github.com/A-Guy-educ/A-Guy/commit/094963a))
+* refactor: rename for clarity and consistency ([0622bf4](https://github.com/A-Guy-educ/A-Guy/commit/0622bf4))
+* refactor: Replace dropdown with card-based course selection ([11e00e6](https://github.com/A-Guy-educ/A-Guy/commit/11e00e6))
+* refactor: replace hardcoded colors with CSS variables in LessonContent ([d566d21](https://github.com/A-Guy-educ/A-Guy/commit/d566d21))
+* refactor: replace hardcoded Gemini role strings with constants ([5bd0741](https://github.com/A-Guy-educ/A-Guy/commit/5bd0741))
+* refactor: replace hardcoded roles with enum and console with logger ([d4b9ed1](https://github.com/A-Guy-educ/A-Guy/commit/d4b9ed1))
+* refactor: replace setTimeout with router.refresh() in ConvertButton ([1afa698](https://github.com/A-Guy-educ/A-Guy/commit/1afa698))
+* refactor: Simplify analytics config to token-only approach ([7190ef0](https://github.com/A-Guy-educ/A-Guy/commit/7190ef0))
+* refactor: Simplify api.int.spec.ts by removing retry logic ([3a903a2](https://github.com/A-Guy-educ/A-Guy/commit/3a903a2))
+* refactor: simplify chat to single-message mode ([6f6d26f](https://github.com/A-Guy-educ/A-Guy/commit/6f6d26f))
+* refactor: Simplify Telescope logo to use original SVG only ([1479ef3](https://github.com/A-Guy-educ/A-Guy/commit/1479ef3))
+* refactor: Split Telescope logo into separate light and dark components ([0d11885](https://github.com/A-Guy-educ/A-Guy/commit/0d11885))
+* refactor: update ConvertButton to use /api/exercises/import endpoint ([d31fb2f](https://github.com/A-Guy-educ/A-Guy/commit/d31fb2f)), closes [#3](https://github.com/A-Guy-educ/A-Guy/issues/3)
+* refactor: update ConvertButton to use Payload endpoint ([8a742b8](https://github.com/A-Guy-educ/A-Guy/commit/8a742b8)), closes [#3](https://github.com/A-Guy-educ/A-Guy/issues/3)
+* refactor: update to use extractFromImage ([1e15a31](https://github.com/A-Guy-educ/A-Guy/commit/1e15a31))
+* refactor: use ExerciseBlockDefaults factory instead of building structure ([c51f184](https://github.com/A-Guy-educ/A-Guy/commit/c51f184))
+* refactor: use i18n translations for role labels ([c2209b6](https://github.com/A-Guy-educ/A-Guy/commit/c2209b6))
+* refactor: Use Payload's standard API routes instead of custom endpoint ([2f14fce](https://github.com/A-Guy-educ/A-Guy/commit/2f14fce))
+* refactor: Use pure Card component instead of CourseCardDropdown ([7d81ce5](https://github.com/A-Guy-educ/A-Guy/commit/7d81ce5))
+* refactor: use z-index instead of hiding header/footer on exercise pages ([86b6bc2](https://github.com/A-Guy-educ/A-Guy/commit/86b6bc2))
+* refactor: use Zod types for exercise structure validation ([982cbd4](https://github.com/A-Guy-educ/A-Guy/commit/982cbd4))
+* refactor(ai): restructure Gemini provider into modular structure ([4518b08](https://github.com/A-Guy-educ/A-Guy/commit/4518b08))
+* refactor(chat): use Payload REST API with access control for conversation fetching ([4047735](https://github.com/A-Guy-educ/A-Guy/commit/4047735))
+* ci: add GEMINI_API_KEY to test job environment variables ([97f8bf6](https://github.com/A-Guy-educ/A-Guy/commit/97f8bf6))
+* ci: make format check a warning instead of blocking failure ([48e4858](https://github.com/A-Guy-educ/A-Guy/commit/48e4858))
+* Cursor: Apply local changes for cloud agent ([3150301](https://github.com/A-Guy-educ/A-Guy/commit/3150301))
+* Cursor: Apply local changes for cloud agent ([7fe04a8](https://github.com/A-Guy-educ/A-Guy/commit/7fe04a8))
+* revert: remove payload-types enum post-processor ([d11cddf](https://github.com/A-Guy-educ/A-Guy/commit/d11cddf))
+
+
+### BREAKING CHANGE
+
+* Enum names changed (Role → AccountRole, ChatMessageRole → ChatRole)
+Note: Database values unchanged, backward compatibility exports added
+* Exercise content now ONLY supports
+{ blocks: RichTextBlock[] }
+
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+<!-- semantic-release will automatically update this file with each release -->
