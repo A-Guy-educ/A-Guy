@@ -15,6 +15,7 @@
  */
 import type { PayloadRequest } from 'payload'
 import { parseLatexToBlocks } from '@/lib/latex-parser'
+import { isSolutionHeader } from '@/lib/latex-parser/enumerate-parser'
 import { logger } from '@/infra/utils/logger'
 import { getConfigValueByKey } from '@/infra/config/runtime'
 import { ConfigDomain } from '@/infra/config/config-constants'
@@ -83,12 +84,49 @@ export async function convertLatexBlockOnExercise(
   }
   const sourceLatexChunks: string[] = []
 
+  // Pre-scan: identify which LaTeX blocks are solution blocks.
+  // Solution blocks will be combined with their preceding exercise block
+  // when sent to the AI, so the AI can place solutions in the `solution` field.
+  const solutionBlockIndices = new Set<number>()
+  for (const idx of latexBlockIndices) {
+    const lb = blocks[idx] as LatexBlock
+    const firstLine =
+      lb.latex
+        .trim()
+        .split('\n')
+        .find((l) => l.trim().length > 0) || ''
+    if (isSolutionHeader(firstLine)) {
+      solutionBlockIndices.add(idx)
+    }
+  }
+
+  // Build a map: exercise block index → combined LaTeX (exercise + following solution)
+  const combinedLatexForAI = new Map<number, string>()
+  for (const idx of latexBlockIndices) {
+    if (solutionBlockIndices.has(idx)) continue // skip solution blocks
+    const exerciseLatex = (blocks[idx] as LatexBlock).latex
+    // Check if the next block is a solution block
+    const nextIdx = latexBlockIndices[latexBlockIndices.indexOf(idx) + 1]
+    if (nextIdx !== undefined && solutionBlockIndices.has(nextIdx)) {
+      const solutionLatex = (blocks[nextIdx] as LatexBlock).latex
+      combinedLatexForAI.set(idx, `${exerciseLatex}\n\n${solutionLatex}`)
+    }
+  }
+
   // Iterate right-to-left so splice indices stay valid as we mutate nextBlocks.
   for (let i = latexBlockIndices.length - 1; i >= 0; i--) {
     const idx = latexBlockIndices[i]
     const latexBlock = blocks[idx] as LatexBlock
 
-    // --- Attempt 1: script parser ---
+    // Solution blocks: remove them — their content was combined with the
+    // preceding exercise block for AI processing.
+    if (solutionBlockIndices.has(idx)) {
+      outcome.replacedBlockIds.push(latexBlock.id)
+      nextBlocks.splice(idx, 1)
+      continue
+    }
+
+    // --- Attempt 1: script parser (exercise block only, no solution) ---
     const result = parseLatexToBlocks(latexBlock.latex)
     outcome.warnings.push(...result.warnings)
     outcome.errors.push(...result.errors)
@@ -107,13 +145,14 @@ export async function convertLatexBlockOnExercise(
       continue
     }
 
-    // --- Attempt 2: AI fallback ---
+    // --- Attempt 2: AI fallback (with solution content included) ---
     reqLogger.info(
       {
         blockId: latexBlock.id,
         scriptErrors: result.errors.length,
         scriptBlocks: result.blocks.length,
         scriptUsable,
+        hasSolutionBlock: combinedLatexForAI.has(idx),
       },
       'Script parser output not usable, checking AI fallback',
     )
@@ -129,7 +168,10 @@ export async function convertLatexBlockOnExercise(
       continue
     }
 
-    const aiBlocks = await tryAiFallback(req, latexBlock.latex, lessonId, reqLogger)
+    // Send combined exercise+solution LaTeX to AI so it can place
+    // solutions in the question blocks' `solution` field.
+    const latexForAI = combinedLatexForAI.get(idx) || latexBlock.latex
+    const aiBlocks = await tryAiFallback(req, latexForAI, lessonId, reqLogger)
     if (aiBlocks && aiBlocks.length > 0) {
       outcome.method = 'ai_fallback'
       outcome.replacedBlockIds.push(latexBlock.id)

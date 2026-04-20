@@ -619,7 +619,7 @@ Each block must have an "id" (random string like "b-abc1234") and a "type".
 { "id": "...", "type": "rich_text", "format": "md-math-v1", "value": "markdown with $inline$ or $$block$$ math", "mediaIds": [] }
 
 ### question_free_response
-{ "id": "...", "type": "question_free_response", "prompt": { "type": "rich_text", "format": "md-math-v1", "value": "question text with $math$", "mediaIds": [] }, "answer": { "acceptedAnswers": ["42"] } }
+{ "id": "...", "type": "question_free_response", "prompt": { "type": "rich_text", "format": "md-math-v1", "value": "question text with $math$", "mediaIds": [] }, "answer": { "acceptedAnswers": ["42"] }, "solution": { "type": "rich_text", "format": "md-math-v1", "value": "step-by-step solution text", "mediaIds": [] } }
 
 ### question_select (MCQ)
 { "id": "...", "type": "question_select", "variant": "mcq", "selectionMode": "single", "prompt": { "type": "rich_text", "format": "md-math-v1", "value": "question", "mediaIds": [] }, "answer": { "multiSelect": false, "options": [{ "id": "opt-1", "content": { "type": "rich_text", "format": "md-math-v1", "value": "option text", "mediaIds": [] } }], "correctOptionIds": ["opt-1"] } }
@@ -641,7 +641,7 @@ Each block must have an "id" (random string like "b-abc1234") and a "type".
 - Tables (\\begin{tabular}) become question_table blocks
 - For TikZ diagrams: create a rich_text block with "[diagram]" — do NOT try to reproduce the diagram content
 - Skip preamble, \\documentclass, \\usepackage, etc.
-- Skip solution sections (\\section*{פתרון ...})
+- If solution content is present (\\section*{פתרון ...}), place it in the matching question block's "solution" field — do NOT create separate blocks for solutions
 - Be CONCISE — minimal block content, no verbose explanations in values
 - Return ONLY valid JSON — no markdown fences, no comments, no explanatory text`
 
