@@ -28,10 +28,15 @@ interface GuidedExplanationRunnerProps {
 export function GuidedExplanationRunner({ payload }: GuidedExplanationRunnerProps) {
   const rootRef = useRef<HTMLElement | null>(null)
   const sceneRef = useRef<HTMLDivElement | null>(null)
-  const { isPlaying, narrationText, play, reset } = useGuidedPlayer({
+  const { isPlaying, isPaused, narrationText, play, pause, resume, reset } = useGuidedPlayer({
     payload,
     containerRef: rootRef,
   })
+
+  // Default labels for languages not supplied by the payload — Hebrew and
+  // English cover both locales the app currently supports.
+  const pauseLabel = payload.controls.pauseLabel ?? (payload.locale === 'he' ? 'השהיה' : 'Pause')
+  const resumeLabel = payload.controls.resumeLabel ?? (payload.locale === 'he' ? 'המשך' : 'Resume')
 
   // Sanitize SVG at render time (strips <script>, event handlers,
   // foreignObject, external refs) then set via ref so React never
@@ -60,8 +65,13 @@ export function GuidedExplanationRunner({ payload }: GuidedExplanationRunnerProp
       <Controls
         playLabel={payload.controls.playLabel}
         resetLabel={payload.controls.resetLabel}
+        pauseLabel={pauseLabel}
+        resumeLabel={resumeLabel}
         isPlaying={isPlaying}
+        isPaused={isPaused}
         onPlay={play}
+        onPause={pause}
+        onResume={resume}
         onReset={reset}
       />
 

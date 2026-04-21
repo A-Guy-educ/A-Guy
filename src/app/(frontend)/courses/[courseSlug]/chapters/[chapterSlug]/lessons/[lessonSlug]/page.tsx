@@ -142,6 +142,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
     const mediaMap =
       blockExercises.length > 0 ? await queryMediaByIds(extractAllMediaIds(blockExercises)) : {}
     const hasExercises = blockExercises.length > 0
+    const showChat = hasExercises || hasLessonContext
 
     // Pre-render content page bodies server-side
     const contentPageBodies: Record<string, React.ReactNode> = {}
@@ -183,8 +184,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
           contentPageBodies={contentPageBodies}
           validFiles={validFiles}
           chatLessonId={lesson.id}
-          hasLessonContext={hasLessonContext}
-          hasExercises={hasExercises}
+          showChat={showChat}
           formulaSheet={formulaSheet}
         />
       </AccessGateProvider>
@@ -200,6 +200,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
   const hasContent = validFiles.length > 0
   const hasExercises = exercises.length > 0
+  const showChat = hasExercises || hasLessonContext
 
   // Batch-fetch all media referenced inside exercise content blocks
   const mediaMap = hasExercises ? await queryMediaByIds(extractAllMediaIds(exercises)) : {}
@@ -234,8 +235,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
             lessonSlug={lessonSlug}
             lessonId={lesson.id}
             mediaMap={mediaMap}
-            hasLessonContext={hasLessonContext}
-            hasExercises={hasExercises}
+            showChat={showChat}
             formulaSheet={formulaSheet}
           />
         ) : (
@@ -246,7 +246,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
               backUrl={backUrl}
               primaryContent={<EmptyLessonPlaceholder />}
               chatContent={
-                hasLessonContext ? (
+                showChat ? (
                   <ChatInterface
                     lessonId={chatLessonId}
                     translationNamespace="courses"
@@ -285,8 +285,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
         lessonSlug={lessonSlug}
         lessonId={lesson.id}
         chatLessonId={chatLessonId}
-        hasLessonContext={hasLessonContext}
-        hasExercises={hasExercises}
+        showChat={showChat}
         formulaSheet={formulaSheet}
       />
     </AccessGateProvider>

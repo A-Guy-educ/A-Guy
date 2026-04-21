@@ -87,9 +87,9 @@ async function getDashboardContext() {
   }
 }
 
-export async function GET() {
+export const GET = withApiHandler<unknown, unknown>({ auth: 'public' }, async () => {
   return NextResponse.json({ status: 'Chat endpoint ready' })
-}
+})
 
 const chatBodySchema = z.object({
   message: z.string().min(1, 'Message is required'),

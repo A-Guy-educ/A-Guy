@@ -1,6 +1,6 @@
 'use client'
 
-import { useDocumentInfo, useField } from '@payloadcms/ui'
+import { useDocumentInfo } from '@payloadcms/ui'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { BookOpen, ChevronDown, ChevronRight, Plus, Loader2 } from 'lucide-react'
 import type { ParsedExercise, ParsedSegment } from '@/lib/context-exercise-parser'
@@ -10,7 +10,7 @@ import { parseContextText, reconstructContextText } from '@/lib/context-exercise
  * @fileType component
  * @domain admin|exercises
  * @pattern context-exercise-viewer
- * @ai-summary Displays and allows editing of parsed exercises from lessonContextText LaTeX content
+ * @ai-summary Displays and allows editing of parsed exercises from ContextExtractions collection
  */
 
 /** Editable LaTeX textarea component */
@@ -159,21 +159,55 @@ function ExerciseCard({
 }
 
 export const ContextExerciseViewer: React.FC = () => {
-  const { value: contextText, setValue } = useField<string>({ path: 'lessonContextText' })
   const { id: lessonId } = useDocumentInfo()
 
-  const segments = useMemo(() => parseContextText(contextText || ''), [contextText])
-
-  // Local editable state — initialized from parsed segments
-  const [editedSegments, setEditedSegments] = useState<ParsedSegment[]>([])
-  const [initialized, setInitialized] = useState(false)
+  const [contextText, setContextText] = useState<string | null>(null)
+  const [extractionId, setExtractionId] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
   const [createResult, setCreateResult] = useState<{
     type: 'success' | 'error'
     message: string
   } | null>(null)
 
-  // Sync parsed segments to editable state when contextText changes externally
+  // Fetch extraction text from API
+  const fetchExtraction = useCallback(async () => {
+    if (!lessonId) return
+    setIsLoading(true)
+    try {
+      const response = await fetch(`/api/lessons/context-extraction?lessonId=${lessonId}`, {
+        credentials: 'include',
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setContextText(data.data?.text || null)
+        setExtractionId(data.data?.extractionId || null)
+      }
+    } catch {
+      // Silent fail — viewer just shows nothing
+    } finally {
+      setIsLoading(false)
+    }
+  }, [lessonId])
+
+  useEffect(() => {
+    fetchExtraction()
+  }, [fetchExtraction])
+
+  // Expose refresh for parent components (e.g., ConvertContextModal)
+  useEffect(() => {
+    const handler = () => fetchExtraction()
+    window.addEventListener('context-extraction-updated', handler)
+    return () => window.removeEventListener('context-extraction-updated', handler)
+  }, [fetchExtraction])
+
+  const segments = useMemo(() => parseContextText(contextText || ''), [contextText])
+
+  // Local editable state — initialized from parsed segments
+  const [editedSegments, setEditedSegments] = useState<ParsedSegment[]>([])
+  const [initialized, setInitialized] = useState(false)
+
+  // Sync parsed segments to editable state when contextText changes
   useEffect(() => {
     if (segments.length > 0 || initialized) {
       setEditedSegments(segments)
@@ -184,7 +218,7 @@ export const ContextExerciseViewer: React.FC = () => {
 
   const totalExercises = editedSegments.reduce((sum, seg) => sum + seg.exercises.length, 0)
 
-  /** Update a specific exercise's content and write back to lessonContextText */
+  /** Update a specific exercise's content and write back to extraction */
   const updateExercise = useCallback(
     (
       segmentIndex: number,
@@ -204,14 +238,23 @@ export const ContextExerciseViewer: React.FC = () => {
           }
         })
 
-        // Reconstruct and write back to the Payload field
+        // Reconstruct and write back to the extraction via API
         const newContextText = reconstructContextText(updated)
-        setValue(newContextText)
+        setContextText(newContextText)
+
+        if (extractionId) {
+          fetch('/api/lessons/context-extraction', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ extractionId, text: newContextText }),
+            credentials: 'include',
+          })
+        }
 
         return updated
       })
     },
-    [setValue],
+    [extractionId],
   )
 
   const handleCreateExercises = useCallback(async () => {
@@ -248,7 +291,12 @@ export const ContextExerciseViewer: React.FC = () => {
     }
   }, [lessonId, isCreating])
 
-  // Show nothing when lessonContextText is empty
+  // Show loading state
+  if (isLoading) {
+    return null
+  }
+
+  // Show nothing when no extraction exists
   if (!contextText || !contextText.trim()) {
     return null
   }

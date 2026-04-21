@@ -1,0 +1,36 @@
+All changes have been completed successfully. Here's a summary:
+
+## Changes Made
+
+### Schema
+- **`src/server/payload/collections/Lessons.ts`** — Removed `lessonContextText` field (textarea, 200K chars)
+
+### Deleted Files
+- **`src/infra/llm/lesson-context.ts`** — Deleted entire file (`buildLessonContextPrompt()`, constants)
+
+### Chat Injection Pipeline
+- **`src/infra/llm/prompt-composer.server.ts`** — Removed `buildLessonContextPrompt` import, removed `lessonContextText` parameter from `composeSystemInstructions()`, removed step 6 (lesson context injection)
+- **`src/server/payload/endpoints/agent/chat/prompt-composition.ts`** — Removed `lessonContextText` from `LessonContext` interface, all fetch functions, and `composeFullSystemInstructions()`
+- **`src/server/payload/endpoints/agent/chat/pipeline.ts`** — Removed `lessonContextText` from `composeFullSystemInstructions()` call, removed error handling for max size
+- **`src/server/payload/endpoints/agent/chat.ts`** — Same updates as pipeline.ts
+
+### Frontend
+- **`src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/page.tsx`** — Removed `hasLessonContext` variable and prop from all pager components, removed unused `ChatInterface` import
+- **`src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/index.tsx`** — Removed `hasLessonContext` prop, updated `hasLessonContext || hasExercises` → `hasExercises`
+- **`src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ExercisesPager/index.tsx`** — Same updates
+- **`src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/PdfLessonPager/index.tsx`** — Same updates
+
+### Tests
+- Deleted `tests/int/lesson-context-injection.int.spec.ts`
+- Deleted `tests/unit/lib/ai/lesson-context.spec.ts`
+- Deleted `tests/unit/lib/ai/prompt-composer.test.ts`
+- Deleted `tests/unit/collections/lessons-schema.spec.ts`
+
+### Types
+- Ran `pnpm generate:types` to update `src/payload-types.ts`
+
+## Verification
+- `pnpm generate:types` ✓
+- `pnpm typecheck` ✓
+- `pnpm lint` ✓ (warnings are pre-existing)
+- `pnpm exec vitest run tests/int/agent-chat.int.spec.ts` — 8 tests passed

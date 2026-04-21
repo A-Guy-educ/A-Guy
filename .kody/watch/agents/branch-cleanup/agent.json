@@ -1,0 +1,5 @@
+{
+  "name": "branch-cleanup",
+  "description": "Finds stale remote branches with no recent activity and suggests cleanup",
+  "cron": "0 */12 * * *"
+}

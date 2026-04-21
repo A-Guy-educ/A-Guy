@@ -4,7 +4,7 @@
     "playwright-cli": {
       "source": "microsoft/playwright-cli",
       "sourceType": "github",
-      "computedHash": "f75195249064c00f8cc69f8df10b947ea09196a78b784c1356dd032e1bf67a36"
+      "computedHash": "a1243fa79a233960647c4cc4b7f3b743cb4893b63fb2d5b04f118c368d9e432b"
     },
     "vercel-react-best-practices": {
       "source": "vercel-labs/agent-skills",

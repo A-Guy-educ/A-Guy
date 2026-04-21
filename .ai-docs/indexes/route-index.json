@@ -1,0 +1,662 @@
+{
+  "routes": [
+    {
+      "routePath": "/",
+      "filePath": "src/app/(frontend)/error.tsx",
+      "kind": "error",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/",
+      "filePath": "src/app/(frontend)/layout.tsx",
+      "kind": "layout",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/",
+      "filePath": "src/app/(payload)/layout.tsx",
+      "kind": "layout",
+      "segmentGroup": "(payload)"
+    },
+    {
+      "routePath": "/",
+      "filePath": "src/app/(frontend)/not-found.tsx",
+      "kind": "not-found",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/",
+      "filePath": "src/app/(frontend)/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/:slug",
+      "filePath": "src/app/(frontend)/[slug]/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/account",
+      "filePath": "src/app/(frontend)/account/loading.tsx",
+      "kind": "loading",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/account",
+      "filePath": "src/app/(frontend)/account/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/admin/:[...segments]",
+      "filePath": "src/app/(payload)/admin/[[...segments]]/not-found.tsx",
+      "kind": "not-found",
+      "segmentGroup": "(payload)"
+    },
+    {
+      "routePath": "/admin/:[...segments]",
+      "filePath": "src/app/(payload)/admin/[[...segments]]/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(payload)"
+    },
+    {
+      "routePath": "/admin/chat",
+      "filePath": "src/app/(payload)/admin/chat/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(payload)"
+    },
+    {
+      "routePath": "/admin/pdf-conversion",
+      "filePath": "src/app/(payload)/admin/pdf-conversion/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(payload)"
+    },
+    {
+      "routePath": "/api-status",
+      "filePath": "src/app/(frontend)/api-status/loading.tsx",
+      "kind": "loading",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/api-status",
+      "filePath": "src/app/(frontend)/api-status/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/api/:...slug",
+      "filePath": "src/app/(payload)/api/[...slug]/route.ts",
+      "kind": "route",
+      "segmentGroup": "(payload)"
+    },
+    {
+      "routePath": "/api/agent/chat-quota",
+      "filePath": "src/app/api/agent/chat-quota/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/agent/chat",
+      "filePath": "src/app/api/agent/chat/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/agent/chat/stream",
+      "filePath": "src/app/api/agent/chat/stream/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/agent/conversation",
+      "filePath": "src/app/api/agent/conversation/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/agent/message/persist",
+      "filePath": "src/app/api/agent/message/persist/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/agent/reset-chat",
+      "filePath": "src/app/api/agent/reset-chat/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/blob/upload-token",
+      "filePath": "src/app/api/blob/upload-token/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/chapters/by-grade",
+      "filePath": "src/app/api/chapters/by-grade/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/chat-assets/finalize",
+      "filePath": "src/app/api/chat-assets/finalize/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/conversations/by-context",
+      "filePath": "src/app/api/conversations/by-context/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/copilotkit",
+      "filePath": "src/app/api/copilotkit/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/course-search",
+      "filePath": "src/app/api/course-search/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/course-syllabus",
+      "filePath": "src/app/api/course-syllabus/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/cron/chat-asset-expiry",
+      "filePath": "src/app/api/cron/chat-asset-expiry/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/cron/guest-sessions-cleanup",
+      "filePath": "src/app/api/cron/guest-sessions-cleanup/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/cron/media-expiry",
+      "filePath": "src/app/api/cron/media-expiry/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/cron/upload-session-cleanup",
+      "filePath": "src/app/api/cron/upload-session-cleanup/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/cron/warmup",
+      "filePath": "src/app/api/cron/warmup/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/entitlements/check",
+      "filePath": "src/app/api/entitlements/check/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/entitlements/redeem",
+      "filePath": "src/app/api/entitlements/redeem/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/example",
+      "filePath": "src/app/api/example/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/exercises/:id/blocks/:blockId",
+      "filePath": "src/app/api/exercises/[id]/blocks/[blockId]/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/exercises/convert/queue-v2",
+      "filePath": "src/app/api/exercises/convert/queue-v2/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/exercises/convert/queue",
+      "filePath": "src/app/api/exercises/convert/queue/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/exercises/convert/runner",
+      "filePath": "src/app/api/exercises/convert/runner/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/exercises/convert/single",
+      "filePath": "src/app/api/exercises/convert/single/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/exercises/convert/single/create",
+      "filePath": "src/app/api/exercises/convert/single/create/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/exercises/convert/status",
+      "filePath": "src/app/api/exercises/convert/status/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/exercises/generate-support",
+      "filePath": "src/app/api/exercises/generate-support/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/exercises/import-latex-ai",
+      "filePath": "src/app/api/exercises/import-latex-ai/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/exercises/import-latex",
+      "filePath": "src/app/api/exercises/import-latex/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/exercises/import",
+      "filePath": "src/app/api/exercises/import/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/exercises/validate-answer",
+      "filePath": "src/app/api/exercises/validate-answer/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/graphql-playground",
+      "filePath": "src/app/(payload)/api/graphql-playground/route.ts",
+      "kind": "route",
+      "segmentGroup": "(payload)"
+    },
+    {
+      "routePath": "/api/graphql",
+      "filePath": "src/app/(payload)/api/graphql/route.ts",
+      "kind": "route",
+      "segmentGroup": "(payload)"
+    },
+    {
+      "routePath": "/api/health",
+      "filePath": "src/app/api/health/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/jobs/run-immediate",
+      "filePath": "src/app/api/jobs/run-immediate/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/lessons/convert-context",
+      "filePath": "src/app/api/lessons/convert-context/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/lessons/create-context-exercises",
+      "filePath": "src/app/api/lessons/create-context-exercises/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/oauth/google",
+      "filePath": "src/app/api/oauth/google/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/oauth/google/callback",
+      "filePath": "src/app/api/oauth/google/callback/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/pdfjs-viewer",
+      "filePath": "src/app/api/pdfjs-viewer/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/progress",
+      "filePath": "src/app/api/progress/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/prompts/for-conversion",
+      "filePath": "src/app/api/prompts/for-conversion/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/stats/activity",
+      "filePath": "src/app/api/stats/activity/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/stats/dashboard",
+      "filePath": "src/app/api/stats/dashboard/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/stats/heartbeat",
+      "filePath": "src/app/api/stats/heartbeat/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/stats/streak",
+      "filePath": "src/app/api/stats/streak/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/stats/track-activity",
+      "filePath": "src/app/api/stats/track-activity/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/study-plan",
+      "filePath": "src/app/api/study-plan/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/teacher-profiles",
+      "filePath": "src/app/api/teacher-profiles/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/translation/translate",
+      "filePath": "src/app/api/translation/translate/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/api/user-settings",
+      "filePath": "src/app/api/user-settings/route.ts",
+      "kind": "route",
+      "segmentGroup": null
+    },
+    {
+      "routePath": "/ask",
+      "filePath": "src/app/(frontend)/ask/loading.tsx",
+      "kind": "loading",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/ask",
+      "filePath": "src/app/(frontend)/ask/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/courses",
+      "filePath": "src/app/(frontend)/courses/loading.tsx",
+      "kind": "loading",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/courses",
+      "filePath": "src/app/(frontend)/courses/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/courses/:courseSlug",
+      "filePath": "src/app/(frontend)/courses/[courseSlug]/loading.tsx",
+      "kind": "loading",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/courses/:courseSlug",
+      "filePath": "src/app/(frontend)/courses/[courseSlug]/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/courses/:courseSlug/chapters/:chapterSlug",
+      "filePath": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/courses/:courseSlug/chapters/:chapterSlug/lessons/:lessonSlug",
+      "filePath": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/loading.tsx",
+      "kind": "loading",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/courses/:courseSlug/chapters/:chapterSlug/lessons/:lessonSlug",
+      "filePath": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/courses/:courseSlug/chapters/:chapterSlug/lessons/:lessonSlug/complete",
+      "filePath": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/complete/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/courses/:courseSlug/chapters/:chapterSlug/lessons/:lessonSlug/content/:pageSlug",
+      "filePath": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/content/[pageSlug]/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/courses/:courseSlug/chapters/:chapterSlug/lessons/:lessonSlug/exercises/:exerciseSlug",
+      "filePath": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/exercises/:id",
+      "filePath": "src/app/(frontend)/exercises/[id]/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/login",
+      "filePath": "src/app/(frontend)/login/loading.tsx",
+      "kind": "loading",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/login",
+      "filePath": "src/app/(frontend)/login/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/next/exit-preview",
+      "filePath": "src/app/(frontend)/next/exit-preview/route.ts",
+      "kind": "route",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/next/preview",
+      "filePath": "src/app/(frontend)/next/preview/route.ts",
+      "kind": "route",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/next/seed",
+      "filePath": "src/app/(frontend)/next/seed/route.ts",
+      "kind": "route",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/offline",
+      "filePath": "src/app/(frontend)/offline/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/onboarding/persona",
+      "filePath": "src/app/(frontend)/onboarding/persona/loading.tsx",
+      "kind": "loading",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/onboarding/persona",
+      "filePath": "src/app/(frontend)/onboarding/persona/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/pages-sitemap.xml",
+      "filePath": "src/app/(frontend)/(sitemaps)/pages-sitemap.xml/route.ts",
+      "kind": "route",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/posts-sitemap.xml",
+      "filePath": "src/app/(frontend)/(sitemaps)/posts-sitemap.xml/route.ts",
+      "kind": "route",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/posts",
+      "filePath": "src/app/(frontend)/posts/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/posts/:slug",
+      "filePath": "src/app/(frontend)/posts/[slug]/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/posts/page/:pageNumber",
+      "filePath": "src/app/(frontend)/posts/page/[pageNumber]/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/practice",
+      "filePath": "src/app/(frontend)/practice/loading.tsx",
+      "kind": "loading",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/practice",
+      "filePath": "src/app/(frontend)/practice/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/search",
+      "filePath": "src/app/(frontend)/search/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/signup",
+      "filePath": "src/app/(frontend)/signup/loading.tsx",
+      "kind": "loading",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/signup",
+      "filePath": "src/app/(frontend)/signup/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/start",
+      "filePath": "src/app/(frontend)/start/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/stats",
+      "filePath": "src/app/(frontend)/stats/loading.tsx",
+      "kind": "loading",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/stats",
+      "filePath": "src/app/(frontend)/stats/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/study-plan",
+      "filePath": "src/app/(frontend)/study-plan/loading.tsx",
+      "kind": "loading",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/study-plan",
+      "filePath": "src/app/(frontend)/study-plan/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/study",
+      "filePath": "src/app/(frontend)/study/loading.tsx",
+      "kind": "loading",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/study",
+      "filePath": "src/app/(frontend)/study/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/test",
+      "filePath": "src/app/(frontend)/test/loading.tsx",
+      "kind": "loading",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/test",
+      "filePath": "src/app/(frontend)/test/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    },
+    {
+      "routePath": "/test/pdf-embed",
+      "filePath": "src/app/(frontend)/test/pdf-embed/page.tsx",
+      "kind": "page",
+      "segmentGroup": "(frontend)"
+    }
+  ],
+  "metadata": {
+    "generatedAt": "2026-04-15T09:51:04.850Z",
+    "totalRoutes": 109
+  }
+}

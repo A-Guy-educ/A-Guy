@@ -1,7 +1,7 @@
 {
   "*.{tsx,ts}": [
     "pnpm tsx scripts/design-tokens/codemod.ts",
-    "eslint --fix --max-warnings=0",
+    "eslint --fix --max-warnings=0 --no-warn-ignored",
     "prettier --write"
   ],
   "*.{js,jsx,mjs,cjs}": ["eslint --fix --max-warnings=0 --no-warn-ignored", "prettier --write"],

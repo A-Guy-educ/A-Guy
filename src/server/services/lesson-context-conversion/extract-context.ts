@@ -2,7 +2,7 @@
  * Lesson Context Extraction Service
  *
  * Extracts context text from lesson content files (PDF/images) using AI prompts.
- * The extracted text is stored in the lesson's lessonContextText field.
+ * The extracted text is stored in the ContextExtractions collection.
  *
  * PDFs are processed page-by-page: each page is split into a single-page PDF,
  * sent to the LLM independently, validated, then stitched into one LaTeX document.
@@ -41,7 +41,7 @@ export interface ExtractContextResult {
 }
 
 /**
- * Extract context text from a lesson content file and store in lessonContextText.
+ * Extract context text from a lesson content file and store in ContextExtractions.
  *
  * For PDFs: splits into individual pages, processes each page independently,
  * validates LaTeX output, then stitches results into one document.
@@ -260,7 +260,7 @@ export async function extractLessonContext(
       // Add size warning if needed
       if (extractedText.length > LATEX_SIZE_WARNING_THRESHOLD) {
         warnings.push(
-          `Combined LaTeX is ${extractedText.length} chars (threshold: ${LATEX_SIZE_WARNING_THRESHOLD}). May approach lessonContextText limit.`,
+          `Combined LaTeX is ${extractedText.length} chars (threshold: ${LATEX_SIZE_WARNING_THRESHOLD}). May approach size limit.`,
         )
       }
     } else {
@@ -287,28 +287,62 @@ export async function extractLessonContext(
       extractedText = validation.sanitizedText
     }
 
-    // ========== Step 8: Update lessonContextText based on mode ==========
+    // ========== Step 8: Build final text based on mode ==========
     let updatedContextText: string
     if (mode === 'append') {
-      const existingContext = lessonTyped.lessonContextText || ''
+      // Fetch existing extraction for this lesson+media (if any) to append to
+      const existing = await payload.find({
+        collection: 'context-extractions',
+        where: {
+          lesson: { equals: lessonId },
+          sourceMedia: { equals: mediaId },
+        },
+        sort: '-updatedAt',
+        limit: 1,
+        depth: 0,
+      })
+      const existingText =
+        existing.docs.length > 0 ? (existing.docs[0] as unknown as { text: string }).text : ''
       const delimiter = '\n\n---\n\n'
-      updatedContextText = existingContext
-        ? `${existingContext}${delimiter}${extractedText}`
+      updatedContextText = existingText
+        ? `${existingText}${delimiter}${extractedText}`
         : extractedText
     } else {
       updatedContextText = extractedText
     }
 
-    // ========== Step 9: Update lesson ==========
-    await payload.update({
-      collection: 'lessons',
-      id: lessonId,
-      data: {
-        lessonContextText: updatedContextText,
+    // ========== Step 9: Upsert context extraction ==========
+    const existingExtraction = await payload.find({
+      collection: 'context-extractions',
+      where: {
+        lesson: { equals: lessonId },
+        sourceMedia: { equals: mediaId },
       },
-      user,
-      overrideAccess: false,
+      limit: 1,
+      depth: 0,
     })
+
+    if (existingExtraction.docs.length > 0) {
+      await payload.update({
+        collection: 'context-extractions',
+        id: existingExtraction.docs[0].id,
+        data: { text: updatedContextText },
+        user,
+        overrideAccess: false,
+      })
+    } else {
+      await payload.create({
+        collection: 'context-extractions',
+        data: {
+          lesson: lessonId,
+          sourceMedia: mediaId,
+          text: updatedContextText,
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        user: user as any,
+        overrideAccess: false,
+      })
+    }
 
     return {
       success: true,

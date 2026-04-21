@@ -1,0 +1,25 @@
+## Verification Complete
+
+The security scanner fix has been properly implemented. Here's the summary:
+
+### Fix Applied
+**File:** `scripts/inspector/plugins/project/security-scanner/rules.ts` (line 38)
+
+```diff
+-  /withApiHandler\s*\(/,
++  /withApiHandler(?:\s*<[^>]+>)?\s*\(/, // Handles TypeScript generics: withApiHandler<T>()
+```
+
+### Root Cause
+The original regex `/withApiHandler\s*\(/` failed to match when `withApiHandler` was used with TypeScript generics like `withApiHandler<T, U>({ auth: 'admin' })` because the `<T, U>` syntax broke the pattern match.
+
+### Verification
+1. **Unit tests pass:** 8/8 security scanner tests ✓
+2. **All 5 flagged routes have proper authentication:**
+   - `src/app/api/copilotkit/route.ts` - uses `withApiHandler<unknown, unknown>({ auth: 'public' })` and `withApiHandler<ChatBody, unknown>({ auth: 'authenticated' })`
+   - `src/app/api/exercises/convert/single/create/route.ts` - uses `withApiHandler<CreateRequest, unknown>({ auth: 'admin' })`
+   - `src/app/api/exercises/convert/single/route.ts` - uses `withApiHandler<ExtractRequest, unknown>({ auth: 'admin' })`
+   - `src/app/api/lessons/convert-context/route.ts` - uses `withApiHandler<ConvertContextBody, unknown>({ auth: 'admin' })`
+   - `src/app/api/lessons/create-context-exercises/route.ts` - uses `withApiHandler<CreateContextExercisesBody, unknown>({ auth: 'admin' })`
+
+The security scanner now correctly detects `withApiHandler` regardless of whether TypeScript generics are present. The 5 routes were falsely flagged—they do have proper authentication.

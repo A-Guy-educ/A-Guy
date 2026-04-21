@@ -1,0 +1,56 @@
+{
+  "taskId": "1206-260414-135048",
+  "state": "running",
+  "stages": {
+    "taskify": {
+      "state": "completed",
+      "completedAt": "2026-04-14T14:41:15.842Z",
+      "retries": 0,
+      "outputFile": "task.json",
+      "promptTokens": 2702
+    },
+    "plan": {
+      "state": "completed",
+      "completedAt": "2026-04-14T14:43:21.125Z",
+      "retries": 0,
+      "outputFile": "plan.md",
+      "promptTokens": 3881
+    },
+    "build": {
+      "state": "completed",
+      "completedAt": "2026-04-14T15:29:09.438Z",
+      "retries": 0,
+      "promptTokens": 4225
+    },
+    "verify": {
+      "state": "completed",
+      "completedAt": "2026-04-14T15:31:03.602Z",
+      "retries": 0
+    },
+    "review": {
+      "state": "completed",
+      "completedAt": "2026-04-14T15:43:00.718Z",
+      "retries": 0,
+      "outputFile": "review.md",
+      "promptTokens": 6167
+    },
+    "review-fix": {
+      "state": "completed",
+      "completedAt": "2026-04-14T15:45:58.011Z",
+      "retries": 0,
+      "promptTokens": 4697
+    },
+    "ship": {
+      "state": "running",
+      "startedAt": "2026-04-14T15:45:58.200Z",
+      "retries": 0
+    }
+  },
+  "createdAt": "2026-04-14T13:55:50.454Z",
+  "updatedAt": "2026-04-14T15:45:58.200Z",
+  "sessions": {
+    "explore": "b60e76f0-34d4-4458-8bdb-6f35299d04e7",
+    "build": "4691a3a7-a1e0-4133-be24-aee84d75b993",
+    "review": "64bf3952-1d44-48c1-a926-eca943b55d43"
+  }
+}

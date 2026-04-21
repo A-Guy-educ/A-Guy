@@ -19,19 +19,36 @@ type Args = {
 
 export default async function Page({ params: paramsPromise }: Args) {
   const { pageNumber } = await paramsPromise
-  const payload = await getPayload({ config: configPromise })
 
   const sanitizedPageNumber = Number(pageNumber)
 
   if (!Number.isInteger(sanitizedPageNumber)) notFound()
 
-  const posts = await payload.find({
-    collection: 'posts',
-    depth: 1,
-    limit: 12,
-    page: sanitizedPageNumber,
-    overrideAccess: false,
-  })
+  let posts
+  try {
+    const payload = await getPayload({ config: configPromise })
+    posts = await payload.find({
+      collection: 'posts',
+      depth: 1,
+      limit: 12,
+      page: sanitizedPageNumber,
+      overrideAccess: false,
+    })
+  } catch (error) {
+    // Gracefully handle MongoDB connection failures during build
+    console.warn('Failed to fetch posts:', error)
+    return (
+      <div className="pt-24 pb-24">
+        <PageClient />
+        <div className="container mb-16">
+          <div className="prose dark:prose-invert max-w-none">
+            <h1>Posts</h1>
+          </div>
+        </div>
+        <div className="container">Posts are temporarily unavailable.</div>
+      </div>
+    )
+  }
 
   return (
     <div className="pt-24 pb-24">
@@ -89,10 +106,9 @@ export async function generateStaticParams() {
     }
 
     return pages
-  } catch (error) {
+  } catch {
     // Gracefully handle MongoDB connection failures during build
     // Return empty array to allow build to continue
-    console.warn('Failed to generate static params for post pages:', error)
     return []
   }
 }

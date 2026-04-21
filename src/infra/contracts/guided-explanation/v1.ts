@@ -162,6 +162,8 @@ const ControlsSchema = z
   .object({
     playLabel: z.string().min(1),
     resetLabel: z.string().min(1),
+    pauseLabel: z.string().min(1).optional(),
+    resumeLabel: z.string().min(1).optional(),
   })
   .strict()
 

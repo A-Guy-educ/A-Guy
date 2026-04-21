@@ -7,6 +7,13 @@
 
 import type { AnalyticsConfig } from './types'
 
+// Extend Window for E2E test override — set via Playwright addInitScript
+declare global {
+  interface Window {
+    __analyticsEnabled?: boolean
+  }
+}
+
 /**
  * Get analytics configuration from environment variables
  *
@@ -21,9 +28,13 @@ export function getAnalyticsConfig(): AnalyticsConfig {
   const ga4MeasurementId = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID
   const mixpanelToken = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN
 
-  // Analytics is enabled if at least one platform has credentials
-  const ga4Enabled = !!ga4MeasurementId
-  const mixpanelEnabled = !!mixpanelToken
+  // Test/E2E override: set __analyticsEnabled on window before config reads it.
+  // This avoids rebuilding the app when toggling analytics for E2E tests.
+  const forceEnabled = typeof window !== 'undefined' && window.__analyticsEnabled === true
+
+  // Analytics is enabled if at least one platform has credentials, or test override is set
+  const ga4Enabled = forceEnabled || !!ga4MeasurementId
+  const mixpanelEnabled = forceEnabled || !!mixpanelToken
   const enabled = ga4Enabled || mixpanelEnabled
 
   // Debug mode only in development

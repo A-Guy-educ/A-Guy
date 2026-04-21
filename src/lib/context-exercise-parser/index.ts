@@ -1,7 +1,7 @@
 /**
  * Context Exercise Parser
  *
- * Parses lessonContextText (LaTeX) into structured exercise segments.
+ * Parses ContextExtractions LaTeX text into structured exercise segments.
  * Shared between the admin ContextExerciseViewer (client) and the
  * server-side exercise creation service.
  */
@@ -113,6 +113,10 @@ export function parseContextText(contextText: string): ParsedSegment[] {
         fullMatch: match[0],
       })
     }
+
+    // Track whether matches came from the primary \textbf/\section pattern,
+    // so we know to apply phantom-exercise filtering (only safe for that path).
+    const usedPrimaryPattern = exerciseMatches.length > 0
 
     // Also detect \setcounter{enumi}{N} + \item style exercises
     // (runs even if primary pattern found some matches — handles mixed formats)
@@ -350,8 +354,28 @@ export function parseContextText(contextText: string): ParsedSegment[] {
       }
     }
 
+    // For the primary \textbf{תרגיל N} pattern only: dedup by exercise number
+    // (keeping the longest content variant), then if any exercise in this run
+    // has a matched solution, drop phantom matches that lack one. Why: the
+    // page-by-page LLM extraction occasionally emits stray \textbf{תרגיל N}
+    // headers over answer-summary fragments or sub-item labels (ה. ו.) that
+    // never get a corresponding \section*{פתרון תרגיל N}.
+    let finalExercises = exercises
+    if (usedPrimaryPattern) {
+      const byNumber = new Map<number, ParsedExercise>()
+      for (const ex of exercises) {
+        const existing = byNumber.get(ex.number)
+        if (!existing || ex.latexContent.length > existing.latexContent.length) {
+          byNumber.set(ex.number, ex)
+        }
+      }
+      const dedup = Array.from(byNumber.values())
+      const anyHasSolution = dedup.some((ex) => ex.solution !== null)
+      finalExercises = anyHasSolution ? dedup.filter((ex) => ex.solution !== null) : dedup
+    }
+
     segments.push({
-      exercises,
+      exercises: finalExercises,
       extractionIndex: runIndex + 1,
       originalText: runText,
     })
@@ -361,7 +385,7 @@ export function parseContextText(contextText: string): ParsedSegment[] {
 }
 
 /**
- * Reconstruct the full lessonContextText from edited segments.
+ * Reconstruct the full ContextExtractions text from edited segments.
  * Rebuilds each run by replacing exercise/solution content while preserving
  * the document preamble, headers, and delimiters.
  */

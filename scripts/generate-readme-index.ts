@@ -173,7 +173,7 @@ function generateReadmeIndex(): void {
   }
 
   // Ensure output directory exists
-  const outputDir = path.join(ROOT_DIR, '.ai-docs')
+  const outputDir = path.join(ROOT_DIR, '.ai-docs', 'indexes')
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true })
   }
