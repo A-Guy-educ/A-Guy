@@ -28,25 +28,29 @@ const rule = {
       recommended: true,
       url: 'https://github.com/aguy/A-Guy/blob/main/docs/file-location-rule.md',
     },
-    fixable: 'code',
-    hasSuggestions: true,
-    schema: {
-      type: 'object',
-      properties: {
-        allowList: {
-          type: 'array',
-          items: { type: 'string' },
-          description: 'Array of file patterns to allow in src/components/',
-          default: [],
+    // Note: hasSuggestions was previously set to true but the suggestion fix uses
+    // fixer.replaceText(node, ...) on the Program node which produces a range
+    // ESLint 9 rejects. The suggestion is removed entirely rather than broken;
+    // the rule still reports the error with the message.
+    schema: [
+      {
+        type: 'object',
+        properties: {
+          allowList: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Array of file patterns to allow in src/components/',
+            default: [],
+          },
+          suggestMigration: {
+            type: 'boolean',
+            description: 'Suggest migration path in error message',
+            default: true,
+          },
         },
-        suggestMigration: {
-          type: 'boolean',
-          description: 'Suggest migration path in error message',
-          default: true,
-        },
+        additionalProperties: false,
       },
-      additionalProperties: false,
-    },
+    ],
     messages: {
       deprecatedLocation:
         'React components should not be in src/components/. Migrate to {{destination}}.',
@@ -59,7 +63,6 @@ const rule = {
   create(context) {
     const options = context.options[0] || {}
     const allowList = options.allowList || []
-    const suggestMigration = options.suggestMigration !== false
 
     /**
      * Check if file path matches any allow list patterns
@@ -141,28 +144,11 @@ const rule = {
           // Check if it's a React component
           if (isReactComponent(sourceCode.getText())) {
             const destination = getMigrationDestination(filePath)
-            const suggest = suggestMigration
-              ? [
-                  {
-                    desc: `Migrate to ${destination}`,
-                    fix(fixer) {
-                      // Calculate the relative path from project root
-                      const projectRoot = filePath.substring(0, filePath.indexOf('src/'))
-                      const _newPath = `${projectRoot}${destination}`
-                      return fixer.replaceText(
-                        node.range,
-                        `// TODO: Migrate this file to ${destination}\n${sourceCode.getText()}`,
-                      )
-                    },
-                  },
-                ]
-              : []
 
             context.report({
               node,
               messageId: 'deprecatedLocation',
               data: { destination },
-              suggest,
             })
           }
         }
