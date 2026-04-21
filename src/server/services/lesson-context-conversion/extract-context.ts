@@ -176,19 +176,14 @@ export async function extractLessonContext(
     const metadataText = `Lesson: ${lessonTitle}\nDescription: ${lessonDescription}`
     const fullPrompt = `${promptTyped.template}\n\n${metadataText}`
 
-    // ========== Step 6: Create LLM adapter and model config ==========
+    // ========== Step 6: Create LLM adapter ONCE ==========
+    // The adapter is created here (before the batch loop) so that config resolution
+    // DB calls happen once upfront, not N times concurrently. This prevents the MongoDB
+    // connection pool from saturating during concurrent LLM calls, which would cause
+    // other requests (e.g. admin status polling) to fail with 401/500 errors.
     const { createGenkitUnifiedAdapter } =
       await import('@/infra/llm/genkit/adapters/unified-adapter')
     const adapter = await createGenkitUnifiedAdapter(payload)
-
-    const { getModelRegistryEntry, getProviderModelName } = await import('@/infra/llm/models')
-    const { LLMProviderType } = await import('@/infra/llm/providers/types')
-    const modelEntry = getModelRegistryEntry('PDF_TO_EXERCISE')
-    const modelConfig = {
-      name: getProviderModelName(LLMProviderType.GEMINI, 'PDF_TO_EXERCISE'),
-      ...modelEntry,
-      modelKey: 'PDF_TO_EXERCISE' as const,
-    }
 
     // ========== Step 7: Process based on media type ==========
     let extractedText: string
@@ -206,9 +201,7 @@ export async function extractLessonContext(
       for (let i = 0; i < pages.length; i += PAGE_CONCURRENCY) {
         const batch = pages.slice(i, i + PAGE_CONCURRENCY)
         const batchResults = await Promise.allSettled(
-          batch.map((pageBuffer) =>
-            extractSinglePage(adapter, modelConfig, fullPrompt, pageBuffer, payload),
-          ),
+          batch.map((pageBuffer) => extractSinglePage(adapter, fullPrompt, pageBuffer)),
         )
 
         for (let j = 0; j < batchResults.length; j++) {
@@ -271,10 +264,10 @@ export async function extractLessonContext(
       const response = await adapter.generateMultimodalCompletion(
         {
           prompt: fullPrompt,
-          model: modelConfig,
+          model: { name: 'PDF_TO_EXERCISE' } as AIModel,
           attachments: [{ data: base64Data, mimeType }],
         },
-        payload,
+        undefined as any,
       )
 
       const responseText = response.text?.trim()
@@ -287,7 +280,7 @@ export async function extractLessonContext(
       extractedText = validation.sanitizedText
     }
 
-    // ========== Step 8: Build final text based on mode ==========
+    // ========== Step 9: Build final text based on mode ==========
     let updatedContextText: string
     if (mode === 'append') {
       // Fetch existing extraction for this lesson+media (if any) to append to
@@ -311,7 +304,7 @@ export async function extractLessonContext(
       updatedContextText = extractedText
     }
 
-    // ========== Step 9: Upsert context extraction ==========
+    // ========== Step 10: Upsert context extraction ==========
     const existingExtraction = await payload.find({
       collection: 'context-extractions',
       where: {
@@ -391,23 +384,25 @@ export async function extractLessonContext(
 /**
  * Extract LaTeX content from a single PDF page.
  * Uses validateExtractedLatex for full validation (braces, environments, fonts, sanitization).
+ *
+ * @param adapter - Pre-created adapter (ensures config is resolved once, not N times)
+ * @param prompt - The prompt text to send to the LLM
+ * @param pageBuffer - PDF page as Buffer
  */
 async function extractSinglePage(
   adapter: UnifiedLLMProvider,
-  modelConfig: AIModel,
   prompt: string,
   pageBuffer: Buffer,
-  payload: Payload,
 ): Promise<{ latex: string; warning?: string }> {
   const base64Data = pageBuffer.toString('base64')
 
   const response = await adapter.generateMultimodalCompletion(
     {
       prompt,
-      model: modelConfig,
+      model: { name: 'PDF_TO_EXERCISE' } as AIModel,
       attachments: [{ data: base64Data, mimeType: 'application/pdf' }],
     },
-    payload,
+    undefined as any,
   )
 
   const extractedText = response.text?.trim()

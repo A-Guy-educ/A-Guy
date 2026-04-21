@@ -15,6 +15,7 @@ import {
   getLLMProvider,
   getProviderModelConfig,
   getProviderTypeFromEnv,
+  type UnifiedLLMProvider,
 } from '@/infra/llm/providers/factory'
 import {
   enrichBlockIds,
@@ -101,6 +102,12 @@ export const pdfToExercisesTask = {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const attachments = await convertMediaToAttachments([mediaPartWithPath], payload as any)
 
+      // Create LLM provider ONCE before processing segments.
+      // This ensures config resolution DB calls happen once upfront, not once per segment.
+      // Reusing the same provider across all segments and verifier calls prevents
+      // MongoDB connection pool exhaustion that would block concurrent admin requests.
+      const provider: UnifiedLLMProvider = await getLLMProvider(payload)
+
       // PASS 2: Extract + Verify + Persist
       // Idempotency-based upsert is always enabled (no feature flag)
 
@@ -110,14 +117,19 @@ export const pdfToExercisesTask = {
 
         try {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const exercises = await processSegmentWithMultimodal(payload as any, req as any, {
-            attachments, // Provider-agnostic attachment format
-            segment,
-            extractorPrompt: input.promptSnapshot.extractor,
-            verifierPrompt: input.promptSnapshot.verifier,
-            output, // v2.1: Pass output for exercisesSkipped tracking
-            tenantId, // For SystemParams access
-          })
+          const exercises = await processSegmentWithMultimodal(
+            provider,
+            payload as any,
+            req as any,
+            {
+              attachments, // Provider-agnostic attachment format
+              segment,
+              extractorPrompt: input.promptSnapshot.extractor,
+              verifierPrompt: input.promptSnapshot.verifier,
+              output, // v2.1: Pass output for exercisesSkipped tracking
+              tenantId, // For SystemParams access
+            },
+          )
 
           // ========== Stage 2: In-Memory Dedup ==========
           // Deduplicate by idempotency key before DB writes
@@ -399,6 +411,8 @@ async function segmentPdf(pdfBuffer: Buffer, maxPagesPerSegment: number) {
 
 async function processSegmentWithMultimodal(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  provider: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload: any,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   req: any,
@@ -430,8 +444,8 @@ Return a JSON array of exercises with this schema:
   }
 ]`
 
-  // Use factory provider with AI_MODELS configuration
-  const provider = await getLLMProvider(payload)
+  // Use pre-created provider (passed from handler) to avoid repeated config DB calls.
+  // Config resolution was done once when the provider was created in the handler loop.
   const providerType = await getProviderTypeFromEnv(payload)
   const modelConfig = getProviderModelConfig(providerType, 'PDF_TO_EXERCISE')
 
@@ -499,11 +513,21 @@ Source PDF pages: ${segment.pageStart}-${segment.pageEnd}
 Return JSON: { "valid": boolean, "reason": "..." }`
 
     // First verification attempt
-    let verification = await callVerifier(payload, attachments, verifierPromptWithContext)
+    let verification = await callVerifier(
+      provider,
+      modelConfig,
+      attachments,
+      verifierPromptWithContext,
+    )
 
     // Retry once if verification fails
     if (!verification.valid) {
-      verification = await callVerifier(payload, attachments, verifierPromptWithContext)
+      verification = await callVerifier(
+        provider,
+        modelConfig,
+        attachments,
+        verifierPromptWithContext,
+      )
     }
 
     // Skip invalid exercises instead of failing the job
@@ -530,27 +554,25 @@ Return JSON: { "valid": boolean, "reason": "..." }`
 }
 
 /**
- * Helper to call verifier using factory provider
+ * Helper to call verifier using a pre-created provider.
+ * Accepts provider + modelConfig as parameters to avoid creating a new adapter + config
+ * DB calls for each of the 2N verifier calls (N exercises × retry).
  */
-
 async function callVerifier(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  payload: any,
+  provider: any,
+  modelConfig: { name: string; temperature: number; maxOutputTokens: number; modelKey?: string },
   attachments: Array<{ data: string; mimeType: string }>,
   prompt: string,
 ): Promise<{ valid: boolean; reason?: string }> {
   try {
-    const provider = await getLLMProvider(payload)
-    const providerType = await getProviderTypeFromEnv(payload)
-    const modelConfig = getProviderModelConfig(providerType, 'PDF_TO_EXERCISE')
-
     const result = await provider.generateMultimodalCompletion(
       {
         prompt,
         model: modelConfig,
         attachments,
       },
-      payload,
+      undefined,
     )
     return parseVerifierResponseText(result.text)
   } catch (error) {
