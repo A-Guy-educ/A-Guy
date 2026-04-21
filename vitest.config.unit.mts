@@ -50,9 +50,10 @@ export default defineConfig({
         'src/lib/ai/services/**',
       ],
       thresholds: {
-        statements: 30,
-        branches: 25,
+        statements: 50,
+        branches: 45,
         functions: 30,
+        autoUpdate: false,
       },
     },
   },
