@@ -118,6 +118,16 @@ export function parseContextText(contextText: string): ParsedSegment[] {
     // so we know to apply phantom-exercise filtering (only safe for that path).
     const usedPrimaryPattern = exerciseMatches.length > 0
 
+    // Track short-answer blocks: when we see a duplicate \setcounter{enumi}{N}\item
+    // (same exercise number as one already seen), the second occurrence is typically
+    // a "short answer" block that contains the brief answers to the first exercise's
+    // sub-questions (e.g. "א. $S = 80$, ב. לא...").
+    //
+    // Map: exercise number → start index of the short-answer block.
+    // We use this later to bound the exercise content and extract the short answers
+    // as a solution when no full solution section exists.
+    const shortAnswerBlocks = new Map<number, { index: number; fullMatch: string }>()
+
     // Also detect \setcounter{enumi}{N} + \item style exercises
     // (runs even if primary pattern found some matches — handles mixed formats)
     if (exerciseMatches.length === 0) {
@@ -130,11 +140,15 @@ export function parseContextText(contextText: string): ParsedSegment[] {
 
         const existingIdx = exerciseMatches.findIndex((e) => e.number === number)
         if (existingIdx !== -1) {
-          exerciseMatches[existingIdx] = {
-            index: match.index,
-            title: `תרגיל ${number}`,
-            number,
-            fullMatch: match[0],
+          // Duplicate exercise number: treat the second occurrence as a short-answer
+          // block for the first exercise. Record it so we can bound the first
+          // exercise's content at this point and extract short answers as a solution.
+          // Only record the FIRST duplicate (ignore triple+ occurrences).
+          if (!shortAnswerBlocks.has(number)) {
+            shortAnswerBlocks.set(number, {
+              index: match.index,
+              fullMatch: match[0],
+            })
           }
           continue
         }
@@ -320,8 +334,15 @@ export function parseContextText(contextText: string): ParsedSegment[] {
 
         // Content starts after the exercise header
         const contentStart = current.index + current.fullMatch.length
-        // Content ends at the next exercise boundary (by position), solutions section, or end of text
-        const contentEnd = nextByPos ? nextByPos.index : firstSolutionIndex
+
+        // Content ends at the EARLIEST of:
+        //   - a short-answer block for this exercise number
+        //   - the next exercise boundary (by position)
+        //   - the solutions section
+        const shortAnswerBlock = shortAnswerBlocks.get(current.number)
+        const shortAnswerEnd = shortAnswerBlock?.index ?? Infinity
+        const nextExerciseEnd = nextByPos?.index ?? Infinity
+        const contentEnd = Math.min(shortAnswerEnd, nextExerciseEnd, firstSolutionIndex)
 
         const latexContent = runText.slice(contentStart, contentEnd).trim()
 
@@ -337,6 +358,29 @@ export function parseContextText(contextText: string): ParsedSegment[] {
           if (candidate.length > (solution?.length ?? 0)) {
             solutionHeader = solMatch.fullMatch
             solution = candidate
+          }
+        }
+
+        // If no formal \section*{פתרון} solution was found but there's a short-answer
+        // block for this exercise, use the short-answer block content as the solution.
+        // This gives at least brief answers (e.g. "א. $S = 80$, ב. לא...") instead of
+        // nothing when the LaTeX has no full solutions section.
+        if (!solution && shortAnswerBlock) {
+          const shortStart = shortAnswerBlock.index + shortAnswerBlock.fullMatch.length
+          // Short-answer block ends at the next exercise, next short-answer block,
+          // solutions section, or end of text — whichever comes first
+          const nextShortAnswer = [...shortAnswerBlocks.values()]
+            .filter((b) => b.index > shortAnswerBlock.index)
+            .sort((a, b) => a.index - b.index)[0]
+          const nextExerciseAfter = byPosition.find((e) => e.index > shortAnswerBlock.index)
+          const shortEnd = Math.min(
+            nextShortAnswer?.index ?? Infinity,
+            nextExerciseAfter?.index ?? Infinity,
+            firstSolutionIndex,
+          )
+          const shortContent = runText.slice(shortStart, shortEnd).trim()
+          if (shortContent) {
+            solution = shortContent
           }
         }
 

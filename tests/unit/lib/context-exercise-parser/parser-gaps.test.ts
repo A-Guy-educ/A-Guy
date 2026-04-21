@@ -178,4 +178,116 @@ this is a much longer variant of exercise 1 content`
     expect(exercises).toHaveLength(1)
     expect(exercises[0].latexContent).toContain('much longer variant')
   })
+
+  describe('short-answer block handling (duplicate \\setcounter)', () => {
+    it('treats duplicate \\setcounter{enumi}{N}\\item as short-answer solution, not a new exercise', () => {
+      // Typical bagrut pattern: real exercise, then short answer block with same exercise number
+      const latex = `\\begin{enumerate}
+\\setcounter{enumi}{0}
+\\item Real exercise 1 with a long question about finding x.
+\\end{enumerate}
+
+\\begin{enumerate}
+\\setcounter{enumi}{0}
+\\item א. $x = 5$
+ב. $y = 10$
+\\end{enumerate}`
+
+      const segments = parseContextText(latex)
+      const exercises = segments[0].exercises
+
+      // Should produce only ONE exercise, not two
+      expect(exercises).toHaveLength(1)
+      expect(exercises[0].number).toBe(1)
+      // The latex content should NOT contain the short answers
+      expect(exercises[0].latexContent).toContain('long question about finding x')
+      expect(exercises[0].latexContent).not.toContain('$x = 5$')
+      expect(exercises[0].latexContent).not.toContain('$y = 10$')
+      // The short answers should become the solution
+      expect(exercises[0].solution).not.toBeNull()
+      expect(exercises[0].solution).toContain('$x = 5$')
+      expect(exercises[0].solution).toContain('$y = 10$')
+    })
+
+    it('still prefers formal \\section*{פתרון} solution over short-answer block', () => {
+      const latex = `\\begin{enumerate}
+\\setcounter{enumi}{0}
+\\item Real exercise 1 question.
+\\end{enumerate}
+
+\\begin{enumerate}
+\\setcounter{enumi}{0}
+\\item א. short answer
+\\end{enumerate}
+
+\\section*{פתרון תרגיל 1}
+This is the full detailed solution with steps and explanations.`
+
+      const segments = parseContextText(latex)
+      const exercises = segments[0].exercises
+
+      expect(exercises).toHaveLength(1)
+      // Formal solution should win (it's longer and contains the expected text)
+      expect(exercises[0].solution).toContain('full detailed solution')
+      // Short answer text should NOT be in the solution
+      expect(exercises[0].solution).not.toContain('short answer')
+    })
+
+    it('handles multiple exercises each with their own short-answer block', () => {
+      const latex = `\\begin{enumerate}
+\\setcounter{enumi}{0}
+\\item Exercise 1 question content.
+\\end{enumerate}
+
+\\begin{enumerate}
+\\setcounter{enumi}{0}
+\\item answer for exercise 1
+\\end{enumerate}
+
+\\begin{enumerate}
+\\setcounter{enumi}{1}
+\\item Exercise 2 question content.
+\\end{enumerate}
+
+\\begin{enumerate}
+\\setcounter{enumi}{1}
+\\item answer for exercise 2
+\\end{enumerate}`
+
+      const segments = parseContextText(latex)
+      const exercises = segments[0].exercises
+
+      expect(exercises).toHaveLength(2)
+      expect(exercises[0].number).toBe(1)
+      expect(exercises[0].latexContent).toContain('Exercise 1 question content')
+      expect(exercises[0].solution).toContain('answer for exercise 1')
+      expect(exercises[1].number).toBe(2)
+      expect(exercises[1].latexContent).toContain('Exercise 2 question content')
+      expect(exercises[1].solution).toContain('answer for exercise 2')
+    })
+
+    it('works when only one exercise has a short-answer block', () => {
+      const latex = `\\begin{enumerate}
+\\setcounter{enumi}{0}
+\\item Exercise 1 question.
+\\end{enumerate}
+
+\\begin{enumerate}
+\\setcounter{enumi}{0}
+\\item answer for exercise 1
+\\end{enumerate}
+
+\\begin{enumerate}
+\\setcounter{enumi}{1}
+\\item Exercise 2 question (no short answer block).
+\\end{enumerate}`
+
+      const segments = parseContextText(latex)
+      const exercises = segments[0].exercises
+
+      expect(exercises).toHaveLength(2)
+      expect(exercises[0].solution).toContain('answer for exercise 1')
+      expect(exercises[1].solution).toBeNull()
+    })
+  })
 })
