@@ -9,7 +9,7 @@
  *
  * Usage: pnpm tsx scripts/cleanup-orphan-entitlements.ts
  */
-import { getPayload } from 'payload'
+import { getPayload, NotFound } from 'payload'
 
 import config from '@payload-config'
 
@@ -44,9 +44,15 @@ async function main() {
       })
       courseExistsCache.set(courseId, true)
       return true
-    } catch {
-      courseExistsCache.set(courseId, false)
-      return false
+    } catch (err) {
+      // Only treat "course not found" as missing. Other errors (network,
+      // auth, DB) must bubble up so we don't delete real entitlements on
+      // transient failures.
+      if (err instanceof NotFound || (err as { status?: number })?.status === 404) {
+        courseExistsCache.set(courseId, false)
+        return false
+      }
+      throw err
     }
   }
 
