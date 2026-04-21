@@ -19,6 +19,7 @@ import { createdByField } from '../fields/createdBy'
 import { formatSlug } from '../fields/formatSlug'
 import { translatedFromField } from '../fields/translatedFrom'
 import { cascadeAdminTitle } from '../hooks/courses/cascadeAdminTitle'
+import { cleanupOrphanEntitlements } from '../hooks/courses/cleanupOrphanEntitlements'
 import { validateTreeIsolationOnPublish } from '../hooks/courses/validateTreeIsolation'
 import { enforceFieldLocaleUniqueness } from '../hooks/validateLocaleUniqueness'
 
@@ -45,6 +46,7 @@ export const Courses: CollectionConfig = {
       validateTreeIsolationOnPublish,
     ],
     afterChange: [cascadeAdminTitle],
+    afterDelete: [cleanupOrphanEntitlements],
   },
   admin: {
     useAsTitle: 'title',

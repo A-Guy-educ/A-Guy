@@ -25,5 +25,33 @@ export default defineConfig({
     },
     maxConcurrency: 4, // Allow up to 4 tests to run concurrently
     outputFile: undefined, // Don't write to file (reduces I/O noise)
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'lcov'],
+      include: [
+        'src/lib/**/*.ts',
+        'src/server/payload/access/**/*.ts',
+        'src/server/payload/collections/**/*.ts',
+        'src/server/payload/hooks/**/*.ts',
+        'src/server/payload/endpoints/**/*.ts',
+        'src/server/services/**/*.ts',
+        'src/infra/llm/**/*.ts',
+        'src/infra/blob/**/*.ts',
+        'src/infra/config/**/*.ts',
+      ],
+      exclude: [
+        '**/*.spec.ts',
+        '**/*.test.ts',
+        '**/index.ts',
+        'src/lib/ai/prompts/**',
+        'src/lib/ai/services/**',
+      ],
+      thresholds: {
+        statements: 50,
+        branches: 45,
+        functions: 30,
+        autoUpdate: false,
+      },
+    },
   },
 })
