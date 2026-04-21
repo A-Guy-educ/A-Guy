@@ -1,0 +1,8 @@
+{
+  "task_type": "chore",
+  "title": "TypeScript compiles successfully.   **Summary of the fix:**  1. **Added ",
+  "description": "TypeScript compiles successfully. \n\n**Summary of the fix:**\n\n1. **Added `returnTo` parameter** to `handleRaceCondition` (line 212)\n\n2. **Updated the call site** in `createNewOAuthUser` (line 188) to pass `returnTo`\n\n3. **Fixed the success case** (lines 247-258): When race recovery finds an existing user with `oauthLoginSecretEnc` set, the code now:\n   - Issues a session using `issueSession(user.email, user.oauthLoginSecretEnc!)`\n   - Sets the `Location` header to the `returnTo` URL\n   - Sets the",
+  "scope": [],
+  "risk_level": "low",
+  "questions": []
+}

@@ -64,14 +64,28 @@ export function McqAnswerUI({
             <label
               key={option.id}
               className={cn(
-                'flex items-start gap-3 p-card-padding-sm border rounded-lg cursor-pointer transition-all duration-normal',
-                'bg-background hover:bg-muted hover:border-muted-foreground',
-                isSelected && 'border-2 border-primary bg-primary/5',
-                showAsCorrect && 'border-2 border-success bg-success/5',
-                disabled && 'opacity-disabled cursor-not-allowed',
+                'relative flex items-start gap-3 p-card-padding-sm border-2 rounded-xl cursor-pointer transition-all duration-normal bg-background/50 dark:bg-card dark:shadow-card overflow-hidden',
+                !isSelected &&
+                  !showAsCorrect &&
+                  'border-border/40 dark:border-border/50 hover:border-[hsl(var(--tab-learn)/0.5)] dark:hover:shadow-card-hover',
+                isSelected && 'border-[hsl(var(--tab-learn))] bg-[hsl(var(--tab-learn)/0.07)]',
+                showAsCorrect && 'border-success bg-success/10',
+                disabled && 'opacity-50 cursor-not-allowed',
               )}
               onClick={() => handleOptionClick(option.id)}
             >
+              {/* Left accent */}
+              <div
+                className="absolute start-0 top-0 bottom-0 w-1 rounded-l-xl"
+                style={{
+                  backgroundColor: showAsCorrect
+                    ? 'hsl(var(--success))'
+                    : isSelected
+                      ? 'hsl(var(--tab-learn))'
+                      : 'transparent',
+                  opacity: isSelected || showAsCorrect ? 1 : 0,
+                }}
+              />
               <input
                 type={spec.multiSelect ? 'checkbox' : 'radio'}
                 name="mcq-option"

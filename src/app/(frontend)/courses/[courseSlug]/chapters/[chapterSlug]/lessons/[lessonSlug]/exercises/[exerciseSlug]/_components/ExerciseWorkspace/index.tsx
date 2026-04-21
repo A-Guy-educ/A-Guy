@@ -10,7 +10,7 @@ interface ExerciseWorkspaceProps {
   exerciseTitle: string
   backUrl?: string
   primaryContent: React.ReactNode
-  chatContent: React.ReactNode
+  chatContent?: React.ReactNode
 }
 
 export function ExerciseWorkspace({

@@ -1,0 +1,29 @@
+## Fixes Applied
+
+### Major Issue 1: `setRate` rate multiplier bug ✅
+
+**File**: `src/ui/web/chat/hooks/useTTS.ts:72`
+
+**Before**: `utteranceRef.current.rate = rate` — directly set the rate without the 0.85 teacher-cadence multiplier
+
+**After**: `utteranceRef.current.rate = 0.85 * rate` — applies the multiplier consistently
+
+This ensures that when `setRate(1.5)` is called mid-speech, the effective rate is 1.275 (0.85 × 1.5), matching the intended teacher-cadence behavior.
+
+---
+
+### Major Issue 2: Duplicate `pickVoiceForLocale` ✅
+
+**Files modified**:
+1. `src/infra/utils/speechHelpers.ts` — added the shared `pickVoiceForLocale` function with JSDoc
+2. `src/ui/web/chat/hooks/useTTS.ts` — removed local definition, now imports from `speechHelpers`
+3. `src/ui/web/GuidedExplanationRunner/speech.ts` — removed local definition, now imports from `speechHelpers`
+
+The function is now defined once in `speechHelpers.ts` and shared between both TTS systems (chat TTS and guided explanation TTS).
+
+---
+
+**Verification**:
+- `pnpm tsc --noEmit` ✅ Passes
+- `pnpm lint` ✅ Passes (only pre-existing warnings in unrelated files)
+- `pnpm test:unit` ✅ 39 tests pass

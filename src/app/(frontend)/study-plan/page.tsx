@@ -1,13 +1,7 @@
-import { NavigationBar } from '@/ui/web/homepage/NavigationBar'
 import { StudyPlanPage } from './_components/StudyPlanPage'
 
 export default function StudyPlanRoute() {
-  return (
-    <div>
-      <NavigationBar />
-      <StudyPlanPage />
-    </div>
-  )
+  return <StudyPlanPage />
 }
 
 export async function generateMetadata() {

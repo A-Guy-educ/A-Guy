@@ -15,12 +15,12 @@
 
   :root,
   [data-theme='light'] {
-    /* Light background - warm neutral */
-    --background: 40 20% 97%; /* #f9f8f6 */
+    /* Light background - warm cream paper */
+    --background: 40 25% 97%; /* #fcfaf6 - warm cream, feels premium */
     --foreground: 220 9% 11%; /* #1a1c1e */
 
     /* Card: pure white for elevated surfaces */
-    --card: 0 0% 100%;
+    --card: 0 0% 99%; /* #fdfdfd — nearly white, very slight contrast from true white */
     --card-foreground: 220 9% 11%;
 
     --popover: 0 0% 100%;
@@ -46,8 +46,8 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Border: extremely subtle borders */
-    --border: 0 0% 0% / 0.05; /* rgba(0,0,0,0.05) */
+    /* Border: warm stone — premium stationery feel */
+    --border: 30, 8%, 82%; /* hsl(30,8%,82%) — warm light gray, not blue */
     --input: 210 14% 97%; /* #f8f9fa */
 
     /* Focus ring follows primary */
@@ -55,6 +55,11 @@
 
     /* Radius system */
     --radius: 0.75rem; /* 12px - default */
+
+    /* Shadow system - for card elevation on light backgrounds */
+    --shadow-card: 0 4px 16px 0 rgb(0 0 0 / 0.1), 0 2px 6px -1px rgb(0 0 0 / 0.07);
+    --shadow-card-hover: 0 8px 24px 0 rgb(0 0 0 / 0.15), 0 4px 8px -1px rgb(0 0 0 / 0.08);
+    --shadow-modal: 0 10px 25px -5px rgb(0 0 0 / 0.15), 0 4px 10px -2px rgb(0 0 0 / 0.1);
 
     --success: 142 71% 45%;
     --warning: 38 92% 50%;
@@ -93,48 +98,48 @@
     --text-highlight-7: 330 81% 60%; /* Pink */
     --text-highlight-8: 220 8% 45%; /* Gray */
 
-    /* Course tab accent colors */
-    --tab-learn: 217 91% 60%; /* Blue */
-    --tab-practice: 0 72% 51%; /* Red */
-    --tab-exams: 330 81% 60%; /* Pink */
-    --tab-ask: 142 71% 45%; /* Green */
+    /* Course tab accent colors — also used for exercise question type accents */
+    --tab-learn: 217 91% 60%; /* Blue — MCQ */
+    --tab-practice: 0 72% 51%; /* Red — True/False */
+    --tab-exams: 330 81% 60%; /* Pink — Matching */
+    --tab-ask: 142 71% 45%; /* Green — Free Response */
   }
 
   [data-theme='dark'] {
-    /* Deep navy blue background - slightly darker for depth */
-    --background: 222 47% 7%;
-    --foreground: 210 40% 98%;
+    /* Background: deep charcoal with warm undertone — NOT blue */
+    --background: 30 8% 7%;
+    --foreground: 30 10% 94%;
 
-    /* Card surfaces - slightly elevated from background */
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
+    /* Card: warm dark gray — clearly distinct from background */
+    --card: 30 6% 10%;
+    --card-foreground: 30 10% 94%;
 
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 30 6% 10%;
+    --popover-foreground: 30 10% 94%;
 
-    /* Primary: vibrant coral-red (brand-aligned with light mode burgundy) */
+    /* Primary: vibrant coral-red */
     --primary: 353 73% 56%;
     --primary-soft: 353 73% 15%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: muted blue-gray (different from muted) */
-    --secondary: 220 25% 16%;
-    --secondary-foreground: 210 40% 90%;
+    /* Secondary: medium warm gray */
+    --secondary: 30 8% 16%;
+    --secondary-foreground: 30 10% 85%;
 
-    /* Muted: dark gray-blue */
-    --muted: 215 20% 14%;
-    --muted-foreground: 215 15% 65%;
+    /* Muted: lighter warm surface for contrast */
+    --muted: 30 6% 18%;
+    --muted-foreground: 30 6% 55%;
 
-    /* Accent: vibrant purple (complementary to coral) */
+    /* Accent: vibrant purple — cool contrast to warm bg */
     --accent: 261 75% 65%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 70% 35%;
     --destructive-foreground: 0 0% 95%;
 
-    /* Borders - visible borders with alpha (must survive /30 modifier) */
-    --border: 220 20% 28% / 0.8;
-    --input: 222 20% 14%;
+    /* Borders: warm gray — visible, same family as bg/card */
+    --border: 30, 8%, 24%;
+    --input: 30 6% 15%;
 
     /* Focus ring follows primary */
     --ring: 353 73% 56%;
@@ -187,10 +192,10 @@
     --text-highlight-8: 220 10% 65%; /* Gray - brightened for readability */
 
     /* Course tab accent colors - brightened for dark backgrounds */
-    --tab-learn: 217 91% 68%; /* Blue */
-    --tab-practice: 0 72% 62%; /* Red */
-    --tab-exams: 330 81% 68%; /* Pink */
-    --tab-ask: 142 71% 55%; /* Green */
+    --tab-learn: 217 91% 68%; /* Blue — MCQ */
+    --tab-practice: 0 72% 62%; /* Red — True/False */
+    --tab-exams: 330 81% 68%; /* Pink — Matching */
+    --tab-ask: 142 71% 55%; /* Green — Free Response */
   }
 }
 
@@ -199,7 +204,11 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground min-h-[100vh] flex flex-col;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
     font-family:
       'Assistant',
       -apple-system,
@@ -207,10 +216,45 @@
       'Segoe UI',
       sans-serif;
     overscroll-behavior-y: contain;
+    position: relative;
   }
 }
 
 @layer utilities {
+  /* Subtle top radial glow — ambient light effect, visible in both themes */
+  [data-theme='light'] {
+    background-image: radial-gradient(
+      ellipse 80% 60% at 50% -10%,
+      hsl(40 20% 95% / 0.6) 0%,
+      transparent 70%
+    );
+  }
+  [data-theme='dark'] {
+    background-image: radial-gradient(
+      ellipse 80% 60% at 50% -10%,
+      hsl(30 10% 18% / 0.5) 0%,
+      transparent 70%
+    );
+  }
+
+  /* Decorative accent line under headings */
+  .section-accent {
+    position: relative;
+    display: inline-block;
+  }
+  .section-accent::after {
+    content: '';
+    display: block;
+    margin-top: 0.5rem;
+    width: 3rem;
+    height: 3px;
+    border-radius: 2px;
+    background: linear-gradient(to right, hsl(var(--primary)), hsl(var(--primary) / 0.6));
+  }
+  .section-accent:is([dir='rtl'])::after {
+    background: linear-gradient(to left, hsl(var(--primary)), hsl(var(--primary) / 0.6));
+  }
+
   /* Smooth scrolling for anchor links */
   html {
     scroll-behavior: smooth;
@@ -280,6 +324,8 @@
 
 html {
   opacity: 0;
+  /* Background on html prevents white flash on mobile scroll bounce / pull-to-refresh */
+  background-color: hsl(var(--background));
 }
 
 html[data-theme='dark'],

@@ -1,0 +1,195 @@
+{
+  "collections": [
+    {
+      "slug": "access-codes",
+      "filePath": "src/server/payload/collections/AccessCodes.ts",
+      "auth": null,
+      "versions": null
+    },
+    {
+      "slug": "categories",
+      "filePath": "src/server/payload/collections/Categories.ts",
+      "auth": null,
+      "versions": null
+    },
+    {
+      "slug": "chapters",
+      "filePath": "src/server/payload/collections/Chapters.ts",
+      "auth": null,
+      "versions": null
+    },
+    {
+      "slug": "chat-assets",
+      "filePath": "src/server/payload/collections/ChatAssets/index.ts",
+      "auth": null,
+      "versions": null
+    },
+    {
+      "slug": "config_audit_logs",
+      "filePath": "src/server/payload/collections/ConfigAuditLogs.ts",
+      "auth": null,
+      "versions": null
+    },
+    {
+      "slug": "config_secrets",
+      "filePath": "src/server/payload/collections/ConfigSecrets.ts",
+      "auth": null,
+      "versions": null
+    },
+    {
+      "slug": "config_values",
+      "filePath": "src/server/payload/collections/ConfigValues.ts",
+      "auth": null,
+      "versions": null
+    },
+    {
+      "slug": "content-pages",
+      "filePath": "src/server/payload/collections/ContentPages.ts",
+      "auth": null,
+      "versions": null
+    },
+    {
+      "slug": "conversations",
+      "filePath": "src/server/payload/collections/Conversations.ts",
+      "auth": null,
+      "versions": null
+    },
+    {
+      "slug": "courses",
+      "filePath": "src/server/payload/collections/Courses.ts",
+      "auth": null,
+      "versions": null
+    },
+    {
+      "slug": "exercise-assets",
+      "filePath": "src/server/payload/collections/ExerciseAssets.ts",
+      "auth": null,
+      "versions": null
+    },
+    {
+      "slug": "exercises",
+      "filePath": "src/server/payload/collections/Exercises/index.ts",
+      "auth": null,
+      "versions": null
+    },
+    {
+      "slug": "extraction-logs",
+      "filePath": "src/server/payload/collections/ExtractionLogs.ts",
+      "auth": null,
+      "versions": null
+    },
+    {
+      "slug": "formula-sheets",
+      "filePath": "src/server/payload/collections/FormulaSheets.ts",
+      "auth": null,
+      "versions": null
+    },
+    {
+      "slug": "guest-sessions",
+      "filePath": "src/server/payload/collections/GuestSessions.ts",
+      "auth": null,
+      "versions": null
+    },
+    {
+      "slug": "lessons",
+      "filePath": "src/server/payload/collections/Lessons.ts",
+      "auth": null,
+      "versions": null
+    },
+    {
+      "slug": "mcp-audit-logs",
+      "filePath": "src/server/payload/collections/MCPAuditLogs.ts",
+      "auth": null,
+      "versions": null
+    },
+    {
+      "slug": "media",
+      "filePath": "src/server/payload/collections/Media/index.ts",
+      "auth": null,
+      "versions": null
+    },
+    {
+      "slug": "memory_items",
+      "filePath": "src/server/payload/collections/MemoryItems.ts",
+      "auth": null,
+      "versions": null
+    },
+    {
+      "slug": "pages",
+      "filePath": "src/server/payload/collections/Pages/index.ts",
+      "auth": null,
+      "versions": true
+    },
+    {
+      "slug": "posts",
+      "filePath": "src/server/payload/collections/Posts/index.ts",
+      "auth": null,
+      "versions": true
+    },
+    {
+      "slug": "pricing-plans",
+      "filePath": "src/server/payload/collections/PricingPlans.ts",
+      "auth": null,
+      "versions": null
+    },
+    {
+      "slug": "prompts",
+      "filePath": "src/server/payload/collections/Prompts.ts",
+      "auth": null,
+      "versions": null
+    },
+    {
+      "slug": "teacher_profiles",
+      "filePath": "src/server/payload/collections/TeacherProfiles.ts",
+      "auth": null,
+      "versions": null
+    },
+    {
+      "slug": "tenants",
+      "filePath": "src/server/payload/collections/Tenants.ts",
+      "auth": null,
+      "versions": null
+    },
+    {
+      "slug": "translation-glossary",
+      "filePath": "src/server/payload/collections/TranslationGlossary.ts",
+      "auth": null,
+      "versions": null
+    },
+    {
+      "slug": "upload-sessions",
+      "filePath": "src/server/payload/collections/UploadSessions/index.ts",
+      "auth": null,
+      "versions": null
+    },
+    {
+      "slug": "user_settings",
+      "filePath": "src/server/payload/collections/UserSettings/index.ts",
+      "auth": null,
+      "versions": null
+    },
+    {
+      "slug": "user-progress",
+      "filePath": "src/server/payload/collections/UserProgress.ts",
+      "auth": null,
+      "versions": null
+    },
+    {
+      "slug": "user-stats",
+      "filePath": "src/server/payload/collections/UserStats.ts",
+      "auth": null,
+      "versions": true
+    },
+    {
+      "slug": "users",
+      "filePath": "src/server/payload/collections/Users/index.ts",
+      "auth": null,
+      "versions": null
+    }
+  ],
+  "metadata": {
+    "generatedAt": "2026-04-15T09:51:05.345Z",
+    "totalCollections": 31,
+    "sourceRoot": "src/server/payload/collections"
+  }
+}

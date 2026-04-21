@@ -122,6 +122,8 @@ export default async function LessonPage({ params }: LessonPageProps) {
     }
   }
 
+  const hasLessonContext = Boolean(lesson.lessonContextText?.trim())
+
   // Resolve content files (PDFs, etc.) — needed by both blocks and legacy paths
   const validFiles =
     lesson.contentFiles
@@ -139,6 +141,8 @@ export default async function LessonPage({ params }: LessonPageProps) {
       .map((b) => b.data as import('@/payload-types').Exercise)
     const mediaMap =
       blockExercises.length > 0 ? await queryMediaByIds(extractAllMediaIds(blockExercises)) : {}
+    const hasExercises = blockExercises.length > 0
+    const showChat = hasExercises || hasLessonContext
 
     // Pre-render content page bodies server-side
     const contentPageBodies: Record<string, React.ReactNode> = {}
@@ -180,6 +184,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
           contentPageBodies={contentPageBodies}
           validFiles={validFiles}
           chatLessonId={lesson.id}
+          showChat={showChat}
           formulaSheet={formulaSheet}
         />
       </AccessGateProvider>
@@ -195,6 +200,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
   const hasContent = validFiles.length > 0
   const hasExercises = exercises.length > 0
+  const showChat = hasExercises || hasLessonContext
 
   // Batch-fetch all media referenced inside exercise content blocks
   const mediaMap = hasExercises ? await queryMediaByIds(extractAllMediaIds(exercises)) : {}
@@ -229,6 +235,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
             lessonSlug={lessonSlug}
             lessonId={lesson.id}
             mediaMap={mediaMap}
+            showChat={showChat}
             formulaSheet={formulaSheet}
           />
         ) : (
@@ -239,12 +246,14 @@ export default async function LessonPage({ params }: LessonPageProps) {
               backUrl={backUrl}
               primaryContent={<EmptyLessonPlaceholder />}
               chatContent={
-                <ChatInterface
-                  lessonId={chatLessonId}
-                  translationNamespace="courses"
-                  showMathTools={true}
-                  formulaSheet={formulaSheet}
-                />
+                showChat ? (
+                  <ChatInterface
+                    lessonId={chatLessonId}
+                    translationNamespace="courses"
+                    showMathTools={true}
+                    formulaSheet={formulaSheet}
+                  />
+                ) : null
               }
             />
           </>
@@ -276,6 +285,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
         lessonSlug={lessonSlug}
         lessonId={lesson.id}
         chatLessonId={chatLessonId}
+        showChat={showChat}
         formulaSheet={formulaSheet}
       />
     </AccessGateProvider>

@@ -31,6 +31,10 @@ export const SYSTEM_EVENTS = {
   LOGIN_MODAL_SHOWN: 'system.login_modal_shown',
   /** Registration prompt shown to user */
   REGISTRATION_PROMPT_SHOWN: 'system.registration_prompt_shown',
+  /** Registration popup shown to anonymous user (auth gate) */
+  REGISTRATION_POPUP_SHOWN: 'system.registration_popup_shown',
+  /** User took action on registration popup (registered or dismissed) */
+  REGISTRATION_POPUP_ACTION: 'system.registration_popup_action',
   /** User completed registration */
   REGISTRATION_COMPLETED: 'system.registration_completed',
 

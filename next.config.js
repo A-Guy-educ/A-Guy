@@ -38,6 +38,9 @@ const nextConfig = {
     'thriftrw',
 
     // Heavy server-only packages
+    // graphql — large (~200KB) transitive dep from Payload, load from node_modules at runtime
+    'graphql',
+    'prism-react-renderer',
     'openai',
     'undici',
     'pdf-lib',
@@ -180,7 +183,7 @@ const nextConfig = {
   },
 }
 
-const configWithPayload = withPayload(nextConfig, { devBundleServerPackages: false })
+const configWithPayload = withPayload(nextConfig, { devBundleServerPackages: true })
 
 export default withSentryConfig(configWithPayload, {
   org: process.env.SENTRY_ORG,

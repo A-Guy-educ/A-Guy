@@ -1,6 +1,5 @@
 'use client'
 
-/* eslint-disable aguy/prefer-design-tokens -- generic tab bar, not chat UI */
 import { cn } from '@/infra/utils/ui'
 import type { LucideIcon } from 'lucide-react'
 import * as React from 'react'

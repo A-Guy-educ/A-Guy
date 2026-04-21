@@ -5,6 +5,7 @@
  */
 
 import type {
+  LatexBlock,
   QuestionMatchingBlock,
   SvgBlock,
   MatchingOption,
@@ -14,6 +15,7 @@ import type {
 } from '@/server/payload/collections/Exercises/types'
 
 export type {
+  LatexBlock,
   QuestionMatchingBlock,
   SvgBlock,
   MatchingOption,
@@ -171,7 +173,13 @@ export interface HtmlBlock {
   html: string
 }
 
-export type ContentBlock = RichTextBlock | HtmlBlock | QuestionBlock | SvgBlock | MediaBlock
+export type ContentBlock =
+  | RichTextBlock
+  | LatexBlock
+  | HtmlBlock
+  | QuestionBlock
+  | SvgBlock
+  | MediaBlock
 
 /**
  * Help system state per question

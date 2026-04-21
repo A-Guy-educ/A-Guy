@@ -6,7 +6,7 @@ import { GeistSans } from 'geist/font/sans'
 import { Assistant, STIX_Two_Text } from 'next/font/google'
 import React from 'react'
 
-import { reloadConfigValues } from '@/infra/config/runtime'
+import { loadConfigValues } from '@/infra/config/runtime'
 import { isPasswordLoginEnabled } from '@/infra/config/system-params'
 import { mergeOpenGraph } from '@/infra/utils/mergeOpenGraph'
 import { AdminBar } from '@/ui/web/AdminBar'
@@ -25,6 +25,7 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import './globals.css'
 import { LayoutClient } from './LayoutClient'
+import { NavigationBar } from '@/ui/web/homepage/NavigationBar'
 import { ActiveTimeProvider } from '@/client/providers/ActiveTimeProvider'
 
 const assistant = Assistant({
@@ -59,7 +60,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const dir = getDirection(locale)
 
   const payload = await getPayload({ config })
-  await reloadConfigValues(payload)
+  // loadConfigValues is idempotent — returns cached data on repeat calls.
+  // This runs once per serverless instance (not per request) because the
+  // module-level cache in config-values.ts survives across requests.
+  await loadConfigValues(payload)
   const passwordLoginEnabled = await isPasswordLoginEnabled()
 
   return (
@@ -98,7 +102,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   }}
                 />
                 <Header />
-                <div id="main-content">{children}</div>
+                <NavigationBar />
+                <div id="main-content" className="flex-1">
+                  {children}
+                </div>
                 <Footer />
                 <Toaster />
               </PasswordLoginProvider>

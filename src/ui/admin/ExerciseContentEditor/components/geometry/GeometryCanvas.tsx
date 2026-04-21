@@ -174,9 +174,12 @@ export const GeometryCanvas: React.FC<GeometryCanvasProps> = ({
   }, [])
 
   const { canvas } = geometry
+  // Respect the geometry's own boundingBox (needed for content with negative
+  // coordinates) — mirror the renderer logic so editor and rendered output
+  // share the same viewport. Fall back to width/height-based box when unset.
   const bbox = useMemo<[number, number, number, number]>(
-    () => [0, canvas.height, canvas.width, 0],
-    [canvas.width, canvas.height],
+    () => canvas.boundingBox ?? [0, canvas.height, canvas.width, 0],
+    [canvas.boundingBox, canvas.width, canvas.height],
   )
 
   return (

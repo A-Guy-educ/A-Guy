@@ -1,0 +1,8 @@
+{
+  "task_type": "chore",
+  "title": "The **ContextExerciseViewer** component has been implemented and committ",
+  "description": "The **ContextExerciseViewer** component has been implemented and committed. Here's a summary:\n\n**What was built:**\n- `src/ui/admin/context-exercise-viewer/index.tsx` - New UI component that:\n  - Reads `lessonContextText` field via `useField`\n  - Parses LaTeX content by `\\textbf{תרגיל N}` exercise boundaries\n  - Displays total exercise count (e.g., \"8 exercises found\")\n  - Shows expandable cards for each exercise with:\n    - Exercise title/number\n    - LaTeX content as formatted rich text (monosp",
+  "scope": [],
+  "risk_level": "low",
+  "questions": []
+}

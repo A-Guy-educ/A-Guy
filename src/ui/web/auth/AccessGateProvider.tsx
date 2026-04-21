@@ -75,6 +75,15 @@ export function AccessGateProvider({
         course_slug: courseSlug,
         current_page: pathname,
       })
+
+      // Fire registration popup shown for anonymous users only (not paid modal which is for authenticated users)
+      if (triggerType !== 'paid') {
+        systemEventBus.emit(SYSTEM_EVENTS.REGISTRATION_POPUP_SHOWN, {
+          page_path: pathname,
+          trigger_type: triggerType,
+          course_slug: courseSlug,
+        })
+      }
     }
 
     // Reset when all modals close so it fires again on next appearance
@@ -86,7 +95,18 @@ export function AccessGateProvider({
   return (
     <>
       {/* Dismissible warning modal - user can close and keep browsing */}
-      <Dialog open={showWarningModal} onOpenChange={(open) => !open && dismissWarning()}>
+      <Dialog
+        open={showWarningModal}
+        onOpenChange={(open) => {
+          if (!open) {
+            systemEventBus.emit(SYSTEM_EVENTS.REGISTRATION_POPUP_ACTION, {
+              outcome: 'Did Not Register',
+              page_path: pathname,
+            })
+            dismissWarning()
+          }
+        }}
+      >
         <DialogContent allowDismiss={true} className="sm:max-w-md">
           <DialogHeader className="text-center sm:text-center">
             <DialogTitle className="text-heading-xl">{t('gatedWarningTitle')}</DialogTitle>

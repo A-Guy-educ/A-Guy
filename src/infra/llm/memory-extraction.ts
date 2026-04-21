@@ -242,8 +242,11 @@ export async function persistMemoryItems(
         }),
     )
 
-    // Execute similarity checks with concurrency limit (avoid overwhelming DB)
-    const CONCURRENCY_LIMIT = 5
+    // Execute similarity checks with concurrency limit
+    // Keep at or below maxPoolSize (3) to avoid exhausting the connection pool.
+    // This runs in the background after the chat response is already sent, so
+    // slightly slower extraction has zero impact on user-facing latency.
+    const CONCURRENCY_LIMIT = 2
     const results: Array<{
       candidate: MemoryCandidate
       embedding: number[]

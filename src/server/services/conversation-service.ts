@@ -19,6 +19,7 @@ import { AccountRole } from '@/server/payload/collections/Users/roles'
 import { DEFAULT_CONTENT_LOCALE } from '@/server/payload/fields/contentLocale'
 import type { ContentLocale } from '@/server/payload/fields/contentLocale'
 import { logActivity } from '@/server/payload/hooks/stats/logActivity'
+import { hasEntitlement } from '@/server/services/entitlement_check'
 import type { Payload, PayloadRequest } from 'payload'
 
 export class GuestConversationLimitError extends Error {
@@ -314,74 +315,194 @@ export class ConversationService {
 
   /**
    * Validate context access for a user
-   * Checks enrollment/ownership for the target context
+   * Checks enrollment/entitlement for the target context
    *
-   * NOTE: This implementation assumes open access for now.
-   * In production, this should check actual enrollment data.
-   *
-   * TODO: Implement based on your enrollment model
-   * - Check Enrollments collection
-   * - Or check User.enrolledCourses field
-   * - Or check Course.students relationship
+   * Access rules:
+   * - Admins always have access
+   * - For paid courses: user must have course entitlement
+   * - For free/mandatory/gated courses: access is allowed (entitlement not required)
    */
   async validateContextAccess(
     userId: string,
     userRole: AccountRole,
     contextRef: ContextRef,
-    _req?: PayloadRequest,
+    req?: PayloadRequest,
   ): Promise<boolean> {
     // Admin always has access
     if (userRole === AccountRole.Admin) {
       return true
     }
 
-    // TODO: Implement actual enrollment check
-    // For now, return true (all authenticated users can access)
-    // Replace with real logic when enrollment system is implemented
-    //
-    // Example implementation:
-    // const { relationTo, value: contextId } = contextRef
-    // switch (relationTo) {
-    //   case 'exercises':
-    //     const exercise = await this.payload.findByID({
-    //       collection: 'exercises',
-    //       id: contextId,
-    //     })
-    //     return this.isEnrolledInCourse(userId, exercise.lesson)
-    //   case 'lessons':
-    //     const lesson = await this.payload.findByID({
-    //       collection: 'lessons',
-    //       id: contextId,
-    //     })
-    //     return this.isEnrolledInCourse(userId, lesson.chapter)
-    //   case 'chapters':
-    //     const chapter = await this.payload.findByID({
-    //       collection: 'chapters',
-    //       id: contextId,
-    //     })
-    //     return this.isEnrolledInCourse(userId, chapter.course)
-    //   case 'courses':
-    //     return this.isEnrolledInCourse(userId, contextId)
-    //   default:
-    //     return false
-    // }
+    // Get the course ID for this context
+    const courseId = await this.getCourseIdFromContext(contextRef, req)
+    if (!courseId) {
+      // No course found (e.g., categories, users) - allow access for non-paid contexts
+      logger.debug({ userId, contextRef }, 'Context access granted (no course association)')
+      return true
+    }
 
-    logger.debug({ userId, contextRef }, 'Context access granted (open access mode)')
-    return true
+    // Check if the course requires entitlement
+    const course = await this.payload.findByID({
+      collection: 'courses',
+      id: courseId,
+      depth: 0,
+      select: { accessType: true },
+      overrideAccess: true,
+    })
+
+    // Only paid courses require entitlement check
+    if (course.accessType !== 'paid') {
+      logger.debug(
+        { userId, contextRef, courseId, accessType: course.accessType },
+        'Context access granted (non-paid course)',
+      )
+      return true
+    }
+
+    // For paid courses, check entitlement
+    const entitled = await hasEntitlement({
+      payload: this.payload,
+      userId,
+      courseId,
+    })
+
+    if (!entitled) {
+      logger.info(
+        { userId, contextRef, courseId },
+        'Context access denied - no entitlement for paid course',
+      )
+    }
+
+    return entitled
   }
 
   /**
    * Validate guest session has access to context
-   * Guests have open access to all content (similar to authenticated users)
+   * Guests cannot access paid course content (they can't have entitlements)
    */
   async validateGuestContextAccess(
     guestSessionId: string,
     contextRef: ContextRef,
-    _req?: PayloadRequest,
+    req?: PayloadRequest,
   ): Promise<boolean> {
-    // Guests have open access to all content (tracked by session)
-    logger.debug({ guestSessionId, contextRef }, 'Guest context access granted')
+    // Get the course ID for this context
+    const courseId = await this.getCourseIdFromContext(contextRef, req)
+    if (!courseId) {
+      // No course found - allow access
+      logger.debug({ guestSessionId, contextRef }, 'Guest context access granted (no course)')
+      return true
+    }
+
+    // Check if the course requires entitlement
+    const course = await this.payload.findByID({
+      collection: 'courses',
+      id: courseId,
+      depth: 0,
+      select: { accessType: true },
+      overrideAccess: true,
+    })
+
+    // Guests cannot have entitlements - deny access to paid courses
+    if (course.accessType === 'paid') {
+      logger.info(
+        { guestSessionId, contextRef, courseId },
+        'Guest context access denied - paid course requires entitlement',
+      )
+      return false
+    }
+
+    logger.debug(
+      { guestSessionId, contextRef, courseId, accessType: course.accessType },
+      'Guest context access granted',
+    )
     return true
+  }
+
+  /**
+   * Get the course ID from a context reference by traversing the hierarchy.
+   * Exercise → Lesson → Chapter → Course
+   * Lesson → Chapter → Course
+   * Chapter → Course
+   * Course → Course
+   */
+  private async getCourseIdFromContext(
+    contextRef: ContextRef,
+    _req?: PayloadRequest,
+  ): Promise<string | null> {
+    const { relationTo, value: contextId } = contextRef
+
+    if (relationTo === 'courses') {
+      return contextId
+    }
+
+    if (relationTo === 'chapters') {
+      const chapter = await this.payload.findByID({
+        collection: 'chapters',
+        id: contextId,
+        depth: 0,
+        select: { course: true },
+        overrideAccess: true,
+      })
+      const courseId = typeof chapter.course === 'string' ? chapter.course : chapter.course?.id
+      return courseId || null
+    }
+
+    if (relationTo === 'lessons') {
+      const lesson = await this.payload.findByID({
+        collection: 'lessons',
+        id: contextId,
+        depth: 0,
+        select: { chapter: true },
+        overrideAccess: true,
+      })
+      const chapterId = typeof lesson.chapter === 'string' ? lesson.chapter : lesson.chapter?.id
+      if (!chapterId) return null
+
+      const chapter = await this.payload.findByID({
+        collection: 'chapters',
+        id: chapterId,
+        depth: 0,
+        select: { course: true },
+        overrideAccess: true,
+      })
+      const courseId = typeof chapter.course === 'string' ? chapter.course : chapter.course?.id
+      return courseId || null
+    }
+
+    if (relationTo === 'exercises') {
+      const exercise = await this.payload.findByID({
+        collection: 'exercises',
+        id: contextId,
+        depth: 0,
+        select: { lesson: true },
+        overrideAccess: true,
+      })
+      const lessonId = typeof exercise.lesson === 'string' ? exercise.lesson : exercise.lesson?.id
+      if (!lessonId) return null
+
+      const lesson = await this.payload.findByID({
+        collection: 'lessons',
+        id: lessonId,
+        depth: 0,
+        select: { chapter: true },
+        overrideAccess: true,
+      })
+      const chapterId = typeof lesson.chapter === 'string' ? lesson.chapter : lesson.chapter?.id
+      if (!chapterId) return null
+
+      const chapter = await this.payload.findByID({
+        collection: 'chapters',
+        id: chapterId,
+        depth: 0,
+        select: { course: true },
+        overrideAccess: true,
+      })
+      const courseId = typeof chapter.course === 'string' ? chapter.course : chapter.course?.id
+      return courseId || null
+    }
+
+    // categories, users, and other contexts don't have course associations
+    return null
   }
 
   /**
