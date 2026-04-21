@@ -11,7 +11,11 @@
  */
 import { describe, expect, it } from 'vitest'
 import { isSolutionHeader } from '@/lib/latex-parser/enumerate-parser'
-import { splitSolutionByLabels } from '@/server/payload/endpoints/exercises/convert-latex-block'
+import {
+  splitSolutionByLabels,
+  attachSolutionToBlocks,
+} from '@/server/payload/endpoints/exercises/convert-latex-block'
+import type { ContentBlock } from '@/server/payload/collections/Exercises/types'
 
 describe('convert-latex-block: solution detection', () => {
   describe('isSolutionHeader identifies solution LaTeX blocks', () => {
@@ -234,6 +238,182 @@ $$\\sigma = 80$$
       // We expect at least 5 parts (the exact count depends on whether ג. itself
       // is filtered as empty parent)
       expect(allParts.length).toBeGreaterThanOrEqual(5)
+    })
+  })
+
+  describe('edge case: single-line labels (no line breaks between labels)', () => {
+    it('returns only the first label when labels are all on one line (by design)', () => {
+      // The regex anchors on (^|\n) to avoid false positives inside content.
+      // If all labels are on one line, only the first is detected.
+      // This is a deliberate tradeoff — matching anywhere would catch "שאלה א." inside text.
+      const text = `א. content א ב. content ב ג. content ג ד. content ד`
+      const parts = splitSolutionByLabels(text, 'hebrew')
+      // Only the first label matches at position 0; others aren't at line start
+      expect(parts.length).toBe(1)
+      expect(parts[0]).toContain('content א')
+    })
+
+    it('correctly handles consecutive labels on separate lines (no content merging)', () => {
+      // Guards against the "greedy spanning" concern: each part should be
+      // strictly bounded by its label and the next label's position.
+      const text = `א. first
+ב. second
+ג. third
+ד. fourth`
+      const parts = splitSolutionByLabels(text, 'hebrew')
+      expect(parts).toHaveLength(4)
+      // Verify no content merging: each part contains ONLY its own content
+      expect(parts[0]).toContain('first')
+      expect(parts[0]).not.toContain('second')
+      expect(parts[1]).toContain('second')
+      expect(parts[1]).not.toContain('first')
+      expect(parts[1]).not.toContain('third')
+      expect(parts[2]).toContain('third')
+      expect(parts[2]).not.toContain('second')
+      expect(parts[2]).not.toContain('fourth')
+      expect(parts[3]).toContain('fourth')
+      expect(parts[3]).not.toContain('third')
+    })
+  })
+})
+
+describe('attachSolutionToBlocks', () => {
+  // Helper to build a question_free_response block
+  function makeQuestionBlock(id: string, prompt: string): ContentBlock {
+    return {
+      id,
+      type: 'question_free_response',
+      prompt: { type: 'rich_text', format: 'md-math-v1', value: prompt, mediaIds: [] },
+      answer: { acceptedAnswers: ['__imported__'] },
+    }
+  }
+
+  function makeRichTextBlock(id: string, value: string): ContentBlock {
+    return {
+      id,
+      type: 'rich_text',
+      format: 'md-math-v1',
+      value,
+      mediaIds: [],
+    }
+  }
+
+  describe('multi-block splice scenario (from Kody review concern #1)', () => {
+    it('correctly attaches per-sub-question solutions when script parser produces multiple blocks', () => {
+      // This mirrors what the script parser would produce for a multi-sub-question
+      // exercise. Each question block gets its matching solution part.
+      const blocks: ContentBlock[] = [
+        makeQuestionBlock('q1', 'question א'),
+        makeQuestionBlock('q2', 'question ב'),
+        makeQuestionBlock('q3', 'question ג'),
+        makeQuestionBlock('q4', 'question ד'),
+      ]
+
+      const solution = `א. solution for א
+ב. solution for ב
+ג. solution for ג
+ד. solution for ד`
+
+      attachSolutionToBlocks(blocks, solution)
+
+      const q1 = blocks[0] as ContentBlock & { solution?: { value: string } }
+      const q2 = blocks[1] as ContentBlock & { solution?: { value: string } }
+      const q3 = blocks[2] as ContentBlock & { solution?: { value: string } }
+      const q4 = blocks[3] as ContentBlock & { solution?: { value: string } }
+
+      expect(q1.solution?.value).toContain('solution for א')
+      expect(q2.solution?.value).toContain('solution for ב')
+      expect(q3.solution?.value).toContain('solution for ג')
+      expect(q4.solution?.value).toContain('solution for ד')
+
+      // Critical: verify no cross-contamination (the "stale index" concern)
+      expect(q1.solution?.value).not.toContain('solution for ב')
+      expect(q2.solution?.value).not.toContain('solution for ג')
+      expect(q3.solution?.value).not.toContain('solution for ד')
+    })
+
+    it('handles mixed rich_text and question blocks (rich_text blocks skipped)', () => {
+      // Script parser sometimes produces rich_text blocks interleaved with questions.
+      // The solution should only go to question blocks, in their document order.
+      const blocks: ContentBlock[] = [
+        makeRichTextBlock('r1', 'intro text'),
+        makeQuestionBlock('q1', 'question א'),
+        makeRichTextBlock('r2', 'between text'),
+        makeQuestionBlock('q2', 'question ב'),
+      ]
+
+      const solution = `א. solution א
+ב. solution ב`
+
+      attachSolutionToBlocks(blocks, solution)
+
+      const q1 = blocks[1] as ContentBlock & { solution?: { value: string } }
+      const q2 = blocks[3] as ContentBlock & { solution?: { value: string } }
+
+      expect(q1.solution?.value).toContain('solution א')
+      expect(q2.solution?.value).toContain('solution ב')
+
+      // rich_text blocks should not have a solution field
+      expect((blocks[0] as ContentBlock & { solution?: unknown }).solution).toBeUndefined()
+      expect((blocks[2] as ContentBlock & { solution?: unknown }).solution).toBeUndefined()
+    })
+
+    it('falls back to whole solution on last block when parts do not match', () => {
+      const blocks: ContentBlock[] = [
+        makeQuestionBlock('q1', 'question 1'),
+        makeQuestionBlock('q2', 'question 2'),
+        makeQuestionBlock('q3', 'question 3'),
+      ]
+
+      // Solution with only 2 labels but 3 question blocks — doesn't match
+      const solution = `א. solution א
+ב. solution ב`
+
+      attachSolutionToBlocks(blocks, solution)
+
+      const q1 = blocks[0] as ContentBlock & { solution?: { value: string } }
+      const q2 = blocks[1] as ContentBlock & { solution?: { value: string } }
+      const q3 = blocks[2] as ContentBlock & { solution?: { value: string } }
+
+      // Fallback: whole solution on the LAST question block
+      expect(q1.solution).toBeUndefined()
+      expect(q2.solution).toBeUndefined()
+      expect(q3.solution?.value).toContain('solution א')
+      expect(q3.solution?.value).toContain('solution ב')
+    })
+
+    it('attaches whole solution to a single question block (no labels needed)', () => {
+      const blocks: ContentBlock[] = [makeQuestionBlock('q1', 'only question')]
+
+      // Plain solution, no label format
+      const solution = 'This is the solution text without labels'
+
+      attachSolutionToBlocks(blocks, solution)
+
+      const q1 = blocks[0] as ContentBlock & { solution?: { value: string } }
+      expect(q1.solution?.value).toBe('This is the solution text without labels')
+    })
+
+    it('strips solution header when present before attaching', () => {
+      const blocks: ContentBlock[] = [makeQuestionBlock('q1', 'question')]
+
+      const solution = `\\section*{פתרון תרגיל 1}
+Actual solution content here.`
+
+      attachSolutionToBlocks(blocks, solution)
+
+      const q1 = blocks[0] as ContentBlock & { solution?: { value: string } }
+      expect(q1.solution?.value).toContain('Actual solution content here')
+      expect(q1.solution?.value).not.toContain('\\section*')
+    })
+
+    it('does nothing when there are zero question blocks', () => {
+      const blocks: ContentBlock[] = [makeRichTextBlock('r1', 'just text')]
+
+      attachSolutionToBlocks(blocks, 'some solution')
+
+      // No question block to attach to; rich_text block is unchanged
+      expect((blocks[0] as ContentBlock & { solution?: unknown }).solution).toBeUndefined()
     })
   })
 })

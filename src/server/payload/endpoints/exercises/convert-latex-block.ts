@@ -471,7 +471,7 @@ export function splitSolutionByLabels(text: string, mode: 'hebrew' | 'all'): str
  *      attach 1:1 by position
  *    - Otherwise fall back to attaching the whole solution to the last block
  */
-function attachSolutionToBlocks(blocks: ContentBlock[], solutionLatex: string): void {
+export function attachSolutionToBlocks(blocks: ContentBlock[], solutionLatex: string): void {
   // Clean solution: strip the header line, keep the content
   const lines = solutionLatex.split('\n')
   const firstLine = lines.find((l) => l.trim().length > 0) || ''
