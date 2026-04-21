@@ -12,6 +12,7 @@ import { getPayload } from 'payload'
 
 import {
   loadConfigValues,
+  loadRuntimeConfig,
   reloadConfigValues,
   setPayloadGetterForLazyLoading,
 } from '@/infra/config/runtime'
@@ -27,11 +28,14 @@ setPayloadGetterForLazyLoading(async () => {
   const payload = await getPayload({ config })
 
   // In development, always reload to pick up config changes from DB
-  // In production, use cached values for performance
+  // In production, load both in parallel for faster cold starts — they are
+  // independent and both hit different collections (config_values, config_secrets).
   if (isDevelopment) {
     await reloadConfigValues(payload)
   } else {
-    await loadConfigValues(payload)
+    // loadConfigValues and loadRuntimeConfig query different collections.
+    // Run them in parallel to halve the sequential DB wait time on cold start.
+    await Promise.all([loadConfigValues(payload), loadRuntimeConfig(payload)])
   }
 
   return payload

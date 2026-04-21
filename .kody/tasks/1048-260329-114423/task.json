@@ -1,0 +1,13 @@
+{
+  "task_type": "bugfix",
+  "title": "Hide chat when lesson has no context text",
+  "description": "Chat interface should be hidden if lesson's lessonContextText field is empty or null. Currently, chat is always visible regardless of whether lesson context exists.",
+  "scope": [
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/page.tsx",
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/PdfLessonPager/index.tsx",
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ExercisesPager/index.tsx",
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/index.tsx"
+  ],
+  "risk_level": "low",
+  "questions": []
+}

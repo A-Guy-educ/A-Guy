@@ -1,0 +1,10 @@
+**Fix Applied:**
+
+**Issue:** `middleware.ts:44` - Duplicate array values in `authCookieNames`
+- Changed from `['payload-token', 'payload-token']` to a simple check: `cookieStore.get('payload-token')?.value !== undefined`
+
+**Verification:**
+- Auth middleware tests: **19/19 passed** ✓
+- Typecheck: **passed** ✓
+
+The code is now cleaner and simpler - there's only one cookie name to check (`payload-token`), so no need for an array at all.

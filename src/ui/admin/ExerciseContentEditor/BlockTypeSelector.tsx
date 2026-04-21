@@ -10,6 +10,7 @@ import {
   LayoutGrid,
   LineChart,
   List,
+  Sigma,
   Table as TableIcon,
   Triangle,
   X,
@@ -71,6 +72,12 @@ export const BlockTypeSelector: React.FC<BlockTypeSelectorProps> = ({
       label: 'HTML Block',
       description: 'Rich WYSIWYG content (headings, lists, images, links)',
       icon: <Code size={20} />,
+    },
+    {
+      type: 'latex',
+      label: 'LaTeX',
+      description: 'Raw LaTeX code block with preview',
+      icon: <Sigma size={20} />,
     },
     {
       type: 'question_matching',

@@ -35,7 +35,7 @@ export const AUTH_PATTERNS: RegExp[] = [
   /requireDashboardAuth\s*\(/,
   /requireCodyAuth\s*\(/,
   /requireAdminOrTestSecret\s*\(/,
-  /withApiHandler\s*\(/,
+  /withApiHandler(?:\s*<[^>]+>)?\s*\(/, // Handles TypeScript generics: withApiHandler<T>()
   /withCronMiddleware\s*\(/,
   /CRON_SECRET/,
 ]

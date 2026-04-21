@@ -5,14 +5,13 @@ import type { ContentBlock, InlineRichText } from '@/server/payload/collections/
 import { useField, useForm } from '@payloadcms/ui'
 import { Copy, FileCode, MoveDown, MoveUp, Plus, Trash2 } from 'lucide-react'
 import React from 'react'
+import dynamic from 'next/dynamic'
 import { BlockTypeSelector } from './BlockTypeSelector'
 import { FullJsonEditor } from './FullJsonEditor'
 import { JSONInspector } from './JSONInspector'
-import { AxisEditor } from './editors/AxisEditor'
 import { FreeResponseEditor } from './editors/FreeResponseEditor'
-import { MultiAxisEditor } from './editors/MultiAxisEditor'
-import { GeometryEditor } from './editors/GeometryEditor'
 import { HtmlBlockEditor } from './editors/HtmlBlockEditor'
+import { LatexBlockEditor } from './editors/LatexBlockEditor'
 import { InlineRichTextEditor } from './editors/InlineRichTextEditor'
 import { MatchingEditor } from './editors/MatchingEditor'
 import { McqEditor } from './editors/McqEditor'
@@ -23,6 +22,23 @@ import { TableEditor } from './editors/TableEditor'
 import { TrueFalseEditor } from './editors/TrueFalseEditor'
 import './index.css'
 import { deepCloneBlock } from './utils'
+
+// Lazy-load heavy editors that use jsxgraph to reduce initial client bundle size
+const GeometryEditor = dynamic(() => import('./editors/GeometryEditor').then((m) => m.GeometryEditor), {
+  ssr: false,
+  loading: () => <div className="p-card-padding text-muted-foreground">Loading geometry editor...</div>,
+})
+const AxisEditor = dynamic(() => import('./editors/AxisEditor').then((m) => m.AxisEditor), {
+  ssr: false,
+  loading: () => <div className="p-card-padding text-muted-foreground">Loading axis editor...</div>,
+})
+const MultiAxisEditor = dynamic(
+  () => import('./editors/MultiAxisEditor').then((m) => m.MultiAxisEditor),
+  {
+    ssr: false,
+    loading: () => <div className="p-card-padding text-muted-foreground">Loading multi-axis editor...</div>,
+  },
+)
 
 /**
  * Exercise Content Editor - Strict Flat Blocks
@@ -414,6 +430,7 @@ function getBlockTypeLabel(block: ContentBlock): string {
   if (block.type === 'question_matching') return 'Matching'
   if (block.type === 'svg') return 'SVG Image'
   if (block.type === 'media') return 'Media'
+  if (block.type === 'latex') return 'LaTeX'
   if (block.type === 'question_geometry') return 'Geometry'
   if (block.type === 'question_axis') return 'Axis Graph'
   if (block.type === 'question_multi_axis') return 'Multi Axis Graph'
@@ -603,6 +620,27 @@ function renderQuestionEditor(
       >
         <AxisEditor
           block={block as import('@/server/payload/collections/Exercises/types').QuestionAxisBlock}
+          onChange={onChange}
+        />
+      </QuestionBlockWrapper>
+    )
+  }
+  if (block.type === 'latex') {
+    return (
+      <QuestionBlockWrapper
+        blockType={getBlockTypeLabel(block)}
+        block={block}
+        onBlockChange={onChange}
+        onMoveUp={onMoveUp}
+        onMoveDown={onMoveDown}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+        canMoveUp={blockIndex > 0}
+        canMoveDown={blockIndex < blockCount - 1}
+        canDelete={blockCount > 1}
+      >
+        <LatexBlockEditor
+          block={block as import('@/server/payload/collections/Exercises/types').LatexBlock}
           onChange={onChange}
         />
       </QuestionBlockWrapper>

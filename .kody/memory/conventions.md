@@ -49,3 +49,19 @@ See [design-system.md](./design-system.md) for complete rules. Key points:
 
 ## Learned 2026-04-05 (task: 1097-260405-135523)
 - Active directories: src/server/repos/mcp/client
+
+## Learned 2026-04-05 (task: 523-260405-133329)
+- Active directories: src/server/services, tests/unit/lib/services
+
+## Learned 2026-04-05 (task: 1121-260405-102217)
+- Active directories: src/ui/web/chat/hooks, src/server/chat-assets, src/app/api/chat-assets/finalize
+
+## Learned 2026-04-05 (task: acceptable)
+- Active directories: src/infra/blob, src/ui/web/courses/PDFViewer, src/ui/web/media/PDFMedia, src/server/services
+
+## Learned 2026-04-15 (task: 1225-260415-142959)
+- Uses Payload CMS collections
+
+## Learned 2026-04-19 (task: 2)
+- Uses @/ path aliases for imports
+- Active directories: src/app/api/instructor/dashboard, src/app/(frontend)/instructor/_components, tests/int, tests/e2e

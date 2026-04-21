@@ -1,0 +1,8 @@
+{
+  "task_type": "chore",
+  "title": "Implementation complete. Here's a summary of the changes:  ## Changes Ma",
+  "description": "Implementation complete. Here's a summary of the changes:\n\n## Changes Made\n\n### 1. New File: `src/server/utils/pdf-page-splitter.ts`\n- Uses `pdf-lib` to split a multi-page PDF buffer into individual single-page PDF buffers\n\n### 2. Modified: `src/server/services/lesson-context-conversion/extract-context.ts`\n- **For PDFs**: \n  - Split into individual pages using `splitPdfIntoPages()`\n  - Process pages with controlled concurrency (3 at a time) using `Promise.allSettled`\n  - Per-page failures are no",
+  "scope": [],
+  "risk_level": "low",
+  "questions": []
+}

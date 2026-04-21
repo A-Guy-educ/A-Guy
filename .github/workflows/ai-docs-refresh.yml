@@ -41,7 +41,7 @@ jobs:
       - name: Generate all AI docs (indexes + patterns + docs)
         run: pnpm run ai:generate-all
 
-      - name: Generate agent indexes (readme + route + collection-slug maps)
+      - name: Generate route + collection-slug indexes
         run: pnpm run ai:generate-all-indexes
 
       - name: Validate agent indexes

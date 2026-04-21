@@ -2,6 +2,7 @@
 
 import { ChatRole } from '@/infra/llm/chat-message-role'
 import { formatExerciseContextMessage } from '@/infra/llm/exercise-context'
+import { IMAGE_REJECTED_TAG } from '@/server/chat-assets/constants'
 import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 
 import { logger } from '@/infra/utils/logger'
@@ -594,10 +595,16 @@ export function useNotebookChat({
       }
 
       if (result.message) {
+        // Strip [IMAGE_REJECTED] but do NOT auto-clear askMedia — the AI is
+        // sometimes wrong about cropping (e.g. when asked about a section it
+        // didn't focus on), and silently deleting the reference image is a
+        // worse failure than the cautious response itself.
+        const cleanMessage = result.message.replace(IMAGE_REJECTED_TAG, '').trimEnd()
+
         const assistantMessage: ChatMessage = {
           id: crypto.randomUUID(),
           role: ChatRole.Assistant,
-          content: result.message,
+          content: cleanMessage,
         }
         setMessages((prev) => [...prev, assistantMessage])
       }

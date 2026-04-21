@@ -18,6 +18,9 @@ jobs:
   fix-links:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      # Skip husky commit-msg hooks for automated docs-fix commits
+      HUSKY: '0'
 
     steps:
       - name: Checkout

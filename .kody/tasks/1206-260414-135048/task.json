@@ -1,0 +1,36 @@
+## Summary
+
+I've implemented the fix to restrict all learning features to registered users only.
+
+### Changes Made
+
+**1. `middleware.ts`** - Added auth guard logic:
+- Added `isProtectedLearningPath()` function that returns true for:
+  - `/study`, `/practice`, `/test`, `/ask` (and any sub-paths)
+  - `/courses/[slug]/...` (individual course pages, but NOT `/courses` catalog)
+- Added `hasAuthToken()` function that checks for `payload-token` cookie
+- Added auth guard that redirects unauthenticated users to `/login?returnTo=<original_path>`
+- Public routes (`/` and `/courses` exactly) pass through without redirect
+
+**2. `tests/int/auth-middleware.int.spec.ts`** - Created integration test:
+- 19 tests covering:
+  - Protected routes redirect to login with returnTo param
+  - Public routes (`/`, `/courses`) pass through
+  - Authenticated requests pass through all routes
+  - Edge cases (query params, nested routes)
+
+**3. Login/Signup returnTo handling** - Already implemented:
+- Login form reads `returnTo` from search params and redirects after login
+- Signup form reads `returnTo` from search params
+- OAuth callback handles returnTo via state parameter
+
+### Test Results
+
+| Test Suite | Result |
+|------------|--------|
+| Auth middleware tests | **19/19 passed** |
+| Unit tests | **All passed** |
+| Auth-login.int.spec | **2/2 passed** |
+| Auth-logout.int.spec | **1/1 passed** |
+
+The failing tests in the full CI run (8 test suites) are **pre-existing issues** unrelated to this change (MongoDB write conflicts, test isolation problems, timeouts).

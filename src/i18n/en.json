@@ -380,7 +380,21 @@
       "clearCanvas": "Clear",
       "checkSolution": "Check Solution",
       "checking": "Checking...",
-      "uploadFailed": "Failed to upload image. Please try again."
+      "uploadFailed": "Failed to upload image. Please try again.",
+      "generateLesson": "Generate Explanation",
+      "generatingLesson": "Generating interactive explanation...",
+      "backToUpload": "Back to exercise",
+      "resumeLesson": "Resume video",
+      "startOver": "Start over",
+      "player": {
+        "stepOf": "Step {current} of {total}",
+        "subtitle": "Press the play button to build the proof step by step",
+        "playButton": "Explain & Build Proof",
+        "playing": "Playing...",
+        "resetButton": "Reset",
+        "claim": "Claim",
+        "reason": "Reason"
+      }
     }
   },
   "admin": {
@@ -441,6 +455,9 @@
     "newQuestionSub": "Ask the chat and get instant help",
     "quickAction": "Quick Action",
     "question": "Question",
+    "deleteQuestion": "Delete question",
+    "deleteQuestionConfirm": "Delete this question? This cannot be undone.",
+    "deleteQuestionFailed": "Failed to delete question",
     "showMore": "Show More",
     "noExams": "When is your next exam?",
     "noExamsSub": "Add your upcoming exam date to track your progress.",

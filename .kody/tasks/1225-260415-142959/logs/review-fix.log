@@ -1,0 +1,18 @@
+The review passed with **Verdict: PASS** — no Critical, Major, or Minor findings. The `lessonContextText` field removal is complete and verified.
+
+**Summary of the completed work:**
+
+| Change | Status |
+|--------|--------|
+| Removed `lessonContextText` field from Lessons schema | ✓ |
+| Deleted `src/infra/llm/lesson-context.ts` | ✓ |
+| Removed `lessonContextText` from prompt composition pipeline | ✓ |
+| Removed `hasLessonContext` prop from all pager components | ✓ |
+| Removed associated test files | ✓ |
+| Updated outdated comments referencing `lessonContextText` | ✓ |
+| Regenerated Payload types | ✓ |
+| `pnpm typecheck` | ✓ |
+| `pnpm lint` | ✓ |
+| `pnpm exec vitest run tests/int/agent-chat.int.spec.ts` | ✓ (8/8) |
+
+The orphaned `lessonContextText` field and all its references in the chat injection pipeline have been fully removed. The task is ready for commit.

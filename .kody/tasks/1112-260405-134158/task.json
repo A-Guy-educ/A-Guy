@@ -1,0 +1,8 @@
+{
+  "task_type": "chore",
+  "title": "Both typecheck and lint pass. Here's a summary of the changes made:  ## ",
+  "description": "Both typecheck and lint pass. Here's a summary of the changes made:\n\n## Summary\n\n**Fix 1: Enable Payload server bundle optimization**\n- Changed `devBundleServerPackages: false` to `true` in `next.config.js` (line 183)\n- This tells Payload to keep server-only code out of the client bundle\n\n**Fix 2: Lazy-load heavy editor components**\n- Modified `src/ui/admin/ExerciseContentEditor/index.tsx` to dynamically import `GeometryEditor`, `AxisEditor`, and `MultiAxisEditor` using `next/dynamic` with `ssr:",
+  "scope": [],
+  "risk_level": "low",
+  "questions": []
+}

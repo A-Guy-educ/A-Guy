@@ -37,6 +37,7 @@ import { SvgRenderer } from '../blocks/SvgRenderer'
 import { GeometryRenderer } from '../blocks/GeometryRenderer'
 import { AxisRenderer } from '../blocks/AxisRenderer'
 import { GraphWithPrompt } from '../blocks/GraphWithPrompt'
+import { LatexBlockRenderer } from '../blocks/LatexBlockRenderer'
 import { MultiAxisRenderer } from '../blocks/MultiAxisRenderer'
 import { TrueFalseQuestion } from '../questions/TrueFalseQuestion'
 import { McqQuestion } from '../questions/McqQuestion'
@@ -387,14 +388,41 @@ export function ExerciseRenderer({
 
         {/* Progress Bar — only when 2+ questions */}
         {totalQuestions >= 2 && (
-          <div className="mb-2">
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-body-xs text-muted-foreground">
+                {correctCount} / {totalQuestions} נכון
+              </p>
+              {/* Dot indicators — one per question */}
+              <div className="flex items-center gap-1.5">
+                {questionBlocks.map((q, i) => {
+                  const result = checkResults[q.id]
+                  const isCorrect = result?.isCorrect
+                  const isChecked = !!result
+                  const qLabel = isHebrew ? HEBREW_LETTERS[i] || String(i + 1) : String(i + 1)
+                  return (
+                    <div
+                      key={q.id}
+                      title={`שאלה ${qLabel}`}
+                      className={cn(
+                        'w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold transition-all duration-slow',
+                        !isChecked && 'bg-muted border border-border/40 text-muted-foreground',
+                        isChecked &&
+                          !isCorrect &&
+                          'bg-destructive/15 border border-destructive/30 text-destructive',
+                        isCorrect && 'bg-success/15 border border-success/30 text-success',
+                      )}
+                    >
+                      {qLabel}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
             <Progress
               value={totalQuestions > 0 ? (correctCount / totalQuestions) * 100 : 0}
-              className="h-[3px] rounded-none"
+              className="h-1.5 rounded-full"
             />
-            <p className="text-body-xs text-muted-foreground mt-1.5">
-              {correctCount} / {totalQuestions}
-            </p>
           </div>
         )}
 
@@ -402,10 +430,13 @@ export function ExerciseRenderer({
         <Confetti active={showAllCorrectConfetti} duration={3000} />
         {allQuestionsCorrect && (
           <FadeIn>
-            <div className="rounded-xl bg-success/8 border border-success/20 p-card-padding-sm text-center flex items-center justify-center gap-content-gap-xs">
-              <Sparkles className="w-5 h-5 text-success" />
-              <span className="text-heading-sm font-bold text-success">{t('correct')}</span>
-              <Sparkles className="w-5 h-5 text-success" />
+            <div className="rounded-2xl bg-gradient-to-r from-success/15 via-success/10 to-success/15 border-2 border-success/30 p-5 text-center flex flex-col items-center gap-content-gap-xs shadow-card">
+              <div className="flex items-center gap-content-gap-xs">
+                <Sparkles className="w-6 h-6 text-success" />
+                <span className="text-heading-lg font-black text-success">{t('correct')}</span>
+                <Sparkles className="w-6 h-6 text-success" />
+              </div>
+              <p className="text-body-sm text-success/70">כל התשובות נכונות</p>
             </div>
           </FadeIn>
         )}
@@ -499,6 +530,17 @@ export function ExerciseRenderer({
                   <FadeIn key={block.id}>
                     <div className="prose prose-slate dark:prose-invert max-w-none text-foreground leading-relaxed">
                       <RichTextRenderer block={block} />
+                    </div>
+                  </FadeIn>
+                )
+              }
+
+              // LaTeX block - render math via KaTeX
+              if (block.type === 'latex') {
+                return (
+                  <FadeIn key={block.id}>
+                    <div className="prose prose-slate dark:prose-invert max-w-none text-foreground leading-relaxed">
+                      <LatexBlockRenderer block={block} />
                     </div>
                   </FadeIn>
                 )

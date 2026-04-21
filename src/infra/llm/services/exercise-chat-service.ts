@@ -21,6 +21,7 @@ export interface ChatMessage {
   timestamp?: string
   hidden?: boolean
   media?: Array<{ mediaId: string }>
+  chatAssets?: Array<{ chatAssetId: string }>
 }
 
 export interface ExerciseChatInput {
@@ -246,6 +247,7 @@ async function resolveModelConfig(modelKey: AIModelKey): Promise<AIModel> {
   return {
     name: getProviderModelName(LLMProviderType.GEMINI, modelKey),
     ...entry,
+    modelKey,
   }
 }
 

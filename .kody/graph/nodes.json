@@ -1,0 +1,133 @@
+{
+  "version": 1,
+  "nodes": {
+    "facts_srcappapiinstructordashboardroutets_2217900467006": {
+      "id": "facts_srcappapiinstructordashboardroutets_2217900467006",
+      "type": "facts",
+      "hall": "facts",
+      "room": "src/app/api/instructor/dashboard/route.ts",
+      "content": "The `totalCourses` field on the dashboard response distinguishes 'no courses assigned' (0) from 'viewing without courses' — always include a count field alongside array data for frontend conditional r",
+      "episodeId": "ep_stage_diary_001",
+      "validFrom": "2026-04-19T15:42:54.052Z",
+      "validTo": null,
+      "tags": [
+        "stage:build",
+        "task:2",
+        "kind:lesson"
+      ],
+      "confidence": 0.7
+    },
+    "conventions_srcappfrontendinstructordashboardinstructordashboardcontenttsx_2217903135094": {
+      "id": "conventions_srcappfrontendinstructordashboardinstructordashboardcontenttsx_2217903135094",
+      "type": "conventions",
+      "hall": "conventions",
+      "room": "src/app/(frontend)/instructor-dashboard/InstructorDashboardContent.tsx",
+      "content": "Admin oversight UI uses a distinct 'Course Oversight' heading (not the instructor's 'Your Courses' heading) to differentiate the admin supervisory view from the instructor self-view.",
+      "episodeId": "ep_stage_diary_001",
+      "validFrom": "2026-04-19T15:42:54.054Z",
+      "validTo": null,
+      "tags": [
+        "stage:build",
+        "task:2",
+        "kind:convention"
+      ],
+      "confidence": 0.7
+    },
+    "facts_srcappapiinstructordashboardroutets_2217905532484": {
+      "id": "facts_srcappapiinstructordashboardroutets_2217905532484",
+      "type": "facts",
+      "hall": "facts",
+      "room": "src/app/api/instructor/dashboard/route.ts",
+      "content": "The server-side pattern builds an `instructorsByCourse` map from `courses` + `course-instructors` collections, then injects the per-course instructor array into each course object before returning — a",
+      "episodeId": "ep_stage_diary_001",
+      "validFrom": "2026-04-19T15:42:54.056Z",
+      "validTo": null,
+      "tags": [
+        "stage:build",
+        "task:2",
+        "kind:decision"
+      ],
+      "confidence": 0.7
+    },
+    "thoughts_srcappfrontendinstructordashboardinstructordashboardcontenttsx_2217907649127": {
+      "id": "thoughts_srcappfrontendinstructordashboardinstructordashboardcontenttsx_2217907649127",
+      "type": "thoughts",
+      "hall": "thoughts",
+      "room": "src/app/(frontend)/instructor-dashboard/InstructorDashboardContent.tsx",
+      "content": "The InstructorDashboardContent component conditionally renders the admin 'Course Oversight' view only when `isAdmin` is true — without this flag the stub showed empty results (totalCourses: 0) regardl",
+      "episodeId": "ep_stage_diary_001",
+      "validFrom": "2026-04-19T15:42:54.059Z",
+      "validTo": null,
+      "tags": [
+        "stage:build",
+        "task:2",
+        "kind:gotcha"
+      ],
+      "confidence": 0.7
+    },
+    "thoughts_srcserverpayloadcollectionsusersrolests_2948756705973": {
+      "id": "thoughts_srcserverpayloadcollectionsusersrolests_2948756705973",
+      "type": "thoughts",
+      "hall": "thoughts",
+      "room": "src/server/payload/collections/Users/roles.ts",
+      "content": "When reorganizing roles (e.g., moving them to a new module), update all backward-compat re-export files too — it's easy to forget them.",
+      "episodeId": "ep_stage_diary_002",
+      "validFrom": "2026-04-19T15:55:04.908Z",
+      "validTo": null,
+      "tags": [
+        "stage:review",
+        "task:2",
+        "kind:gotcha"
+      ],
+      "confidence": 0.7
+    },
+    "thoughts_srcserverpayloadbackendintegration_2948758272875": {
+      "id": "thoughts_srcserverpayloadbackendintegration_2948758272875",
+      "type": "thoughts",
+      "hall": "thoughts",
+      "room": "src/server/payload/backend-integration",
+      "content": "Backend-integration layers that import roles from shared infra need their import paths updated when roles are reorganized.",
+      "episodeId": "ep_stage_diary_002",
+      "validFrom": "2026-04-19T15:55:04.909Z",
+      "validTo": null,
+      "tags": [
+        "stage:review",
+        "task:2",
+        "kind:gotcha"
+      ],
+      "confidence": 0.7
+    },
+    "facts_codereview_workflow_2948759836058": {
+      "id": "facts_codereview_workflow_2948759836058",
+      "type": "facts",
+      "hall": "facts",
+      "room": "code-review workflow",
+      "content": "Always confirm the implementation branch is up to date with origin before reviewing, to avoid flagging issues that were already fixed.",
+      "episodeId": "ep_stage_diary_002",
+      "validFrom": "2026-04-19T15:55:04.911Z",
+      "validTo": null,
+      "tags": [
+        "stage:review",
+        "task:2",
+        "kind:lesson"
+      ],
+      "confidence": 0.7
+    },
+    "conventions_pr_review_workflow_2948763904386": {
+      "id": "conventions_pr_review_workflow_2948763904386",
+      "type": "conventions",
+      "hall": "conventions",
+      "room": "PR review workflow",
+      "content": "Quality gates (typecheck + lint + unit tests) must all pass before a PR review is marked verified.",
+      "episodeId": "ep_stage_diary_002",
+      "validFrom": "2026-04-19T15:55:04.915Z",
+      "validTo": null,
+      "tags": [
+        "stage:review",
+        "task:2",
+        "kind:convention"
+      ],
+      "confidence": 0.7
+    }
+  }
+}

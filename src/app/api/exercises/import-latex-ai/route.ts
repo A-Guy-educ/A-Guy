@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
     const modelConfig = {
       name: getProviderModelName(LLMProviderType.GEMINI, 'PDF_TO_EXERCISE'),
       ...modelEntry,
+      modelKey: 'PDF_TO_EXERCISE' as const,
     }
 
     // Process each exercise chunk: AI for text, script parser for diagrams (if available)
@@ -226,6 +227,7 @@ export async function POST(request: NextRequest) {
           content: { blocks: validation.data.blocks },
           origin: 'import',
           order: startOrder + i,
+          sourceLatex: latex,
         },
         draft: true,
       })

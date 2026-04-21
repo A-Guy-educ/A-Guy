@@ -98,12 +98,22 @@ export function FreeResponseQuestion({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="text-body-md font-medium text-foreground leading-relaxed">
-        <RichTextRenderer block={promptBlock} />
+      {/* Question container */}
+      <div className="rounded-2xl border border-border/40 bg-background/60 dark:bg-card dark:border-border/60 dark:shadow-card p-content-gap">
+        <div
+          className="w-8 h-1 rounded-full mb-3"
+          style={{ backgroundColor: 'hsl(var(--tab-ask))' }}
+        />
+        <div className="text-body-md font-medium text-foreground leading-relaxed">
+          <RichTextRenderer block={promptBlock} />
+        </div>
       </div>
 
       {/* Answer box with formula button */}
-      <div className="relative" data-math-controls>
+      <div
+        className="relative rounded-xl border-2 border-[hsl(var(--tab-ask)/0.3)] bg-[hsl(var(--tab-ask)/0.04)] dark:border-[hsl(var(--tab-ask)/0.4)] dark:shadow-card overflow-hidden"
+        data-math-controls
+      >
         {/* Textarea — always mounted, hidden behind overlay when in view mode */}
         <Textarea
           ref={textareaRef}
@@ -113,8 +123,8 @@ export function FreeResponseQuestion({
           onBlur={handleBlur}
           disabled={disabled}
           placeholder={t('enterAnswer')}
-          className="text-body-md min-h-0 resize-none overflow-hidden pe-10 rounded-xl border-2 border-border/30 shadow-elevation-1 focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.1)] transition-shadow duration-slow placeholder:text-muted-foreground/50 placeholder:italic"
-          rows={1}
+          className="text-body-md min-h-0 resize-none overflow-hidden pe-10 bg-transparent border-none shadow-none focus:outline-none focus:ring-0 focus:shadow-none placeholder:text-muted-foreground/50 placeholder:italic"
+          rows={3}
         />
 
         {/* View overlay: rendered content on top of textarea */}
@@ -126,7 +136,7 @@ export function FreeResponseQuestion({
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
               onClick={switchToEditMode}
-              className="absolute inset-0 px-3 py-2 pe-10 rounded-xl border-2 border-border/30 bg-card text-body-md leading-relaxed cursor-text overflow-hidden shadow-elevation-1"
+              className="absolute inset-0 px-3 py-2 pe-10 bg-transparent text-body-md leading-relaxed cursor-text overflow-hidden"
             >
               <MathMarkdown content={value} />
               {/* Edit indicator */}
@@ -144,7 +154,7 @@ export function FreeResponseQuestion({
           <button
             type="button"
             onClick={() => setComposerOpen(!composerOpen)}
-            className="absolute end-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all duration-normal z-10 text-body-xs font-medium"
+            className="absolute end-1.5 top-2 flex items-center gap-1 px-3 py-1.5 rounded-full bg-[hsl(var(--tab-ask))] text-white shadow-card hover:shadow-card-hover transition-all duration-normal z-10 text-body-xs font-semibold"
             title={t('insertFormula')}
           >
             <FunctionSquare className="w-3.5 h-3.5" />

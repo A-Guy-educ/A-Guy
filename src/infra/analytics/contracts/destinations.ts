@@ -45,6 +45,8 @@ export const eventDestinations: Record<ProductEvent, AnalyticsDestination[]> = {
 
   // Registration Events
   [PRODUCT_EVENTS.REGISTRATION_PROMPT_SHOWN]: ['mixpanel'], // Product funnel
+  [PRODUCT_EVENTS.REGISTRATION_POPUP_SHOWN]: ['mixpanel'], // Registration popup funnel
+  [PRODUCT_EVENTS.REGISTRATION_POPUP_ACTION]: ['mixpanel'], // Registration popup action
   [PRODUCT_EVENTS.REGISTRATION_COMPLETED]: ['ga4', 'mixpanel'], // Conversion event (both)
 
   // Exercise Help System (Mixpanel only - detailed product analytics)

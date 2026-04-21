@@ -109,7 +109,7 @@ describe('LLM Model Configuration Validation', () => {
       expect(imageConfig.temperature).toBe(0.2)
       expect(imageConfig.temperature).toBeLessThan(0.5) // Should be lower for consistency
 
-      // PDF_TO_EXERCISE: Lowest temperature (0.1) for accurate extraction
+      // PDF_TO_EXERCISE: Low temperature (0.1) for accurate extraction
       const pdfConfig = getProviderModelConfig(LLMProviderType.GEMINI, 'PDF_TO_EXERCISE')
       expect(pdfConfig.temperature).toBe(0.1)
       expect(pdfConfig.temperature).toBeLessThan(0.3) // Should be lowest for accuracy
@@ -125,9 +125,9 @@ describe('LLM Model Configuration Validation', () => {
       const imageConfig = getProviderModelConfig(LLMProviderType.GEMINI, 'IMAGE_TO_EXERCISE')
       expect(imageConfig.maxOutputTokens).toBe(8192)
 
-      // PDF_TO_EXERCISE: High tokens for document extraction (8192)
+      // PDF_TO_EXERCISE: High tokens for document extraction (32768)
       const pdfConfig = getProviderModelConfig(LLMProviderType.GEMINI, 'PDF_TO_EXERCISE')
-      expect(pdfConfig.maxOutputTokens).toBe(8192)
+      expect(pdfConfig.maxOutputTokens).toBe(32768)
     })
 
     it('should have temperature within valid range (0.0 - 2.0)', () => {
@@ -341,7 +341,7 @@ describe('LLM Model API Validation (Manual Test)', () => {
         const modelConfig = getProviderModelConfig(LLMProviderType.GEMINI, 'PDF_TO_EXERCISE')
         expect(modelConfig.name).toBe('gemini-3.1-pro')
         expect(modelConfig.temperature).toBe(0.1)
-        expect(modelConfig.maxOutputTokens).toBe(8192)
+        expect(modelConfig.maxOutputTokens).toBe(32768)
         // Actual API call would go here in a full integration test
       },
       30000,
@@ -396,7 +396,7 @@ describe('LLM Model API Validation (Manual Test)', () => {
         )
         expect(modelConfig.name).toBe('MiniMax-M2.1')
         expect(modelConfig.temperature).toBe(0.1)
-        expect(modelConfig.maxOutputTokens).toBe(8192)
+        expect(modelConfig.maxOutputTokens).toBe(32768)
         // Actual API call would go here in a full integration test
       },
       30000,

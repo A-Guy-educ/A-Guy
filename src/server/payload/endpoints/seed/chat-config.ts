@@ -49,7 +49,7 @@ const chatConfigData = {
     defaultChatTimeoutMs: 30000,
     defaultToolTimeoutMs: 60000,
   },
-  // Model settings - replaces hardcoded MODEL_REGISTRY
+  // Model settings — must stay in sync with MODEL_REGISTRY in @/infra/llm/models.ts
   models: {
     exerciseChat: {
       gemini: 'gemini-3.1-flash-lite-preview',
@@ -58,16 +58,34 @@ const chatConfigData = {
       capabilities: ['multimodal', 'chat'],
     },
     imageToExercise: {
-      gemini: 'gemini-2.0-flash-001',
+      gemini: 'gemini-3.1-pro',
       openaiCompatible: 'MiniMax-M2.1',
       maxOutputTokens: 8192,
       capabilities: ['multimodal', 'vision'],
     },
     pdfToExercise: {
-      gemini: 'gemini-2.0-flash-001',
+      gemini: 'gemini-3.1-pro',
+      openaiCompatible: 'MiniMax-M2.1',
+      maxOutputTokens: 32768,
+      capabilities: ['document', 'extraction'],
+    },
+    answerValidation: {
+      gemini: 'gemini-3.1-pro',
+      openaiCompatible: 'MiniMax-M2.1',
+      maxOutputTokens: 512,
+      capabilities: ['chat', 'validation'],
+    },
+    supportGeneration: {
+      gemini: 'gemini-3.1-pro',
+      openaiCompatible: 'MiniMax-M2.1',
+      maxOutputTokens: 4096,
+      capabilities: ['chat', 'generation'],
+    },
+    contentTranslation: {
+      gemini: 'gemini-3.1-pro',
       openaiCompatible: 'MiniMax-M2.1',
       maxOutputTokens: 8192,
-      capabilities: ['document', 'extraction'],
+      capabilities: ['chat', 'translation'],
     },
   },
 }

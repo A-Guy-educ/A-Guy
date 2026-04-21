@@ -14,6 +14,9 @@ node_modules
 # Payload default media upload directory
 public/media/
 
+# Local-only testing materials for interactive lesson / schema work
+schema-testing/
+
 public/robots.txt
 public/sitemap*.xml
 
@@ -67,3 +70,11 @@ shay-tassk/
 
 # LaTeX example files (local only)
 latex_examples/
+
+# kody graph transient artifacts (do not commit)
+.kody/graph/.graph-lock
+.kody/graph/.graph-lock.lock/
+.kody/graph/*.bak
+.kody/graph/*.tmp.*
+.kody/graph/episodes/*.bak
+.kody/graph/episodes/*.tmp.*

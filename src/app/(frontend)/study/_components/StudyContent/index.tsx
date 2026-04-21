@@ -293,11 +293,11 @@ export function StudyContent({
         isAuthenticated={isAuthenticated}
       >
         {/* Course context header */}
-        <div className="w-full py-section-sm px-6">
+        <div className="w-full py-section-sm px-6 bg-gradient-to-b from-primary/[0.04] via-background/50 to-background border-b border-border/50 dark:bg-gradient-to-b dark:from-primary/10 dark:to-transparent dark:border-border/60">
           <div className="max-w-5xl mx-auto text-center">
             <ExamReminderBubble courseId={courseInfo?.courseId ?? ''} />
 
-            <h1 className="text-heading-xl md:text-4xl font-black text-foreground mt-4">
+            <h1 className="text-heading-xl md:text-4xl font-black text-foreground mt-4 section-accent inline-block">
               {sectionTitle}
             </h1>
 
@@ -364,13 +364,17 @@ export function StudyContent({
                 return (
                   <section key={group.chapterSlug}>
                     {hasMultipleChapters && (
-                      <div className="flex items-center gap-2 mb-4">
+                      <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border/30">
                         <div
-                          className="w-0.5 h-5 rounded-full shrink-0"
+                          className="w-1 h-6 rounded-full shrink-0"
                           style={{ backgroundColor: tabColor.stroke }}
                         />
-                        <h2 className="text-heading-sm font-semibold text-muted-foreground">
-                          {group.chapterLabel && <span>{group.chapterLabel} </span>}
+                        <h2 className="text-heading-sm font-bold text-muted-foreground tracking-wide">
+                          {group.chapterLabel && (
+                            <span className="uppercase text-[10px] tracking-widest mr-2 opacity-70">
+                              {group.chapterLabel}
+                            </span>
+                          )}
                           {group.chapterTitle}
                         </h2>
                       </div>
@@ -418,7 +422,7 @@ export function StudyContent({
           )}
 
           {/* Footer actions */}
-          <div className="mt-16 pt-8 border-t border-border">
+          <div className="mt-16 pt-8 border-t border-border/40 bg-gradient-to-b from-muted/10 to-transparent rounded-2xl p-content-gap-lg -mx-4 px-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-content-gap">
               <SystemLink
                 href="/stats"

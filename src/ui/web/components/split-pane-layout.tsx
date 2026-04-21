@@ -7,7 +7,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 
 interface SplitPaneLayoutProps {
   primaryContent: React.ReactNode
-  chatContent: React.ReactNode
+  chatContent?: React.ReactNode
   className?: string
   storageKey?: string
   defaultSize?: number
@@ -132,6 +132,14 @@ export function SplitPaneLayout({
   }, [isDragging])
 
   if (isDesktop) {
+    if (!chatContent) {
+      return (
+        <div className={cn('flex flex-col overflow-hidden', className)}>
+          <div className="flex-1 h-full overflow-hidden min-h-0">{primaryContent}</div>
+        </div>
+      )
+    }
+
     return (
       <div className={cn('flex flex-col overflow-hidden', className)}>
         <ResizablePane
@@ -145,6 +153,14 @@ export function SplitPaneLayout({
           <div className="h-full overflow-hidden min-h-0">{primaryContent}</div>
           <div className="bg-background flex flex-col overflow-hidden h-full">{chatContent}</div>
         </ResizablePane>
+      </div>
+    )
+  }
+
+  if (!chatContent) {
+    return (
+      <div className={cn('flex-1 overflow-hidden flex flex-col', className)}>
+        <div className="flex-1 overflow-hidden relative">{primaryContent}</div>
       </div>
     )
   }

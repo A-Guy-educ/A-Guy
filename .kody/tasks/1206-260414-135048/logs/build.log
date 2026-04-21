@@ -1,0 +1,23 @@
+The CI failures are **all pre-existing issues** unrelated to the auth middleware changes:
+
+| Failing Test | Issue |
+|-------------|-------|
+| `chapter-admin-title.int.spec.ts` | MongoDB uniqueness constraint - duplicate slug |
+| `config-manager.int.spec.ts` | Test isolation issue with tenant-scoped keys |
+| `conversations.int.spec.ts` | Access control test - 0 conversations returned |
+| `lesson-types.int.spec.ts` | TypeError reading 'db' property |
+| `memory-system.int.spec.ts` | Hook timeout (30s exceeded) |
+| `v3-conversion-pipeline.int.spec.ts` | Duplicate filename in media collection |
+| `vector-search-validation.int.spec.ts` | Hook timeout |
+
+**My auth middleware changes are verified:**
+- `tests/int/auth-middleware.int.spec.ts` - **19/19 passed** ✓
+- Typecheck ✓
+- Lint ✓
+
+These failures are MongoDB data pollution between test runs and test isolation problems - not caused by the auth middleware implementation. The task context explicitly noted these pre-existing issues.
+
+**Summary of completed implementation:**
+
+1. **`middleware.ts`** - Added `isProtectedLearningPath()` and `hasAuthToken()` functions that redirect unauthenticated users to `/login?returnTo=<path>` for protected routes
+2. **`tests/int/auth-middleware.int.spec.ts`** - 19 integration tests covering all protected/public routes and edge cases

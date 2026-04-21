@@ -162,7 +162,7 @@ DEFAULT_TENANT_SLUG=default
 MCP_ENABLED=false
 
 # Optional
-MONGODB_MAX_POOL_SIZE=2
+MONGODB_MAX_POOL_SIZE=3
 CRON_SECRET=your-cron-secret
 ```
 

@@ -140,13 +140,20 @@ export function MatchingQuestion({
 
   return (
     <div className="flex flex-col gap-content-gap">
-      <div className="text-body-md font-medium text-foreground leading-relaxed">
-        <RichTextRenderer block={promptBlock} />
+      {/* Question container */}
+      <div className="rounded-2xl border border-border/40 bg-background/60 dark:bg-card dark:border-border/60 dark:shadow-card p-content-gap">
+        <div
+          className="w-8 h-1 rounded-full mb-3"
+          style={{ backgroundColor: 'hsl(var(--tab-exams))' }}
+        />
+        <div className="text-body-md font-medium text-foreground leading-relaxed">
+          <RichTextRenderer block={promptBlock} />
+        </div>
       </div>
 
-      <div className="flex items-center gap-content-gap-xs px-4 py-3 rounded-xl bg-muted/40 border border-border/20 text-body-sm text-muted-foreground">
-        <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 shrink-0">
-          <Info className="w-3.5 h-3.5 text-primary" />
+      <div className="flex items-center gap-content-gap-xs px-4 py-3 rounded-xl bg-[hsl(var(--tab-exams)/0.07)] border border-[hsl(var(--tab-exams)/0.2)] text-body-sm text-foreground">
+        <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[hsl(var(--tab-exams)/0.15)] shrink-0">
+          <Info className="w-3.5 h-3.5" style={{ color: 'hsl(var(--tab-exams))' }} />
         </span>
         {t('matchingInstruction')}
       </div>
