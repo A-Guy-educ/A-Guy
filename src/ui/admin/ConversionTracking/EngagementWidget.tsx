@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslation } from '@payloadcms/ui'
 import {
   BarChart3,
   BookOpen,
@@ -13,7 +14,9 @@ import {
 import React from 'react'
 import type { CSSProperties } from 'react'
 
+import { ACCENT, CHART_PALETTE } from './colors'
 import { useMetricsContext } from './MetricsProvider'
+import { getStrings } from './strings'
 import { errorStyle, loadingStyle, widgetContainerStyle, widgetTitleStyle } from './styles'
 
 const sectionStyle: CSSProperties = {
@@ -83,17 +86,19 @@ const enrollmentLabelStyle: CSSProperties = {
   justifyContent: 'space-between',
 }
 
-const COLORS = ['#6366f1', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+const COLORS = CHART_PALETTE
 
 const EngagementWidget: React.FC = () => {
   const { data, loading, error } = useMetricsContext()
+  const { i18n } = useTranslation()
+  const s = getStrings(i18n.language)
 
   if (error === 'admin-only') return null
 
   if (loading) {
     return (
       <div style={widgetContainerStyle}>
-        <div style={loadingStyle}>Loading engagement data...</div>
+        <div style={loadingStyle}>{s.loading(s.engagementAndUsage.toLowerCase())}</div>
       </div>
     )
   }
@@ -101,7 +106,9 @@ const EngagementWidget: React.FC = () => {
   if (error || !data) {
     return (
       <div style={widgetContainerStyle}>
-        <div style={errorStyle}>Failed to load engagement data: {error}</div>
+        <div style={errorStyle}>
+          {s.failedToLoad(s.engagementAndUsage.toLowerCase())}: {error}
+        </div>
       </div>
     )
   }
@@ -115,57 +122,64 @@ const EngagementWidget: React.FC = () => {
 
   return (
     <div style={widgetContainerStyle}>
-      <h3 style={widgetTitleStyle}>Engagement & Usage</h3>
+      <h3 style={widgetTitleStyle}>{s.engagementAndUsage}</h3>
       <div style={sectionStyle}>
         {/* Course Enrollment Distribution */}
         <div style={panelStyle}>
           <div style={panelTitleStyle}>
-            <GraduationCap size={16} color="#6366f1" />
-            Course Enrollments
+            <GraduationCap size={16} color={ACCENT.indigo} />
+            {s.courseEnrollments}
           </div>
           {engagement.courseEnrollments.length === 0 ? (
             <div style={{ fontSize: 13, color: 'var(--theme-elevation-400)' }}>
-              No enrollments yet
+              {s.noEnrollments}
             </div>
           ) : (
-            engagement.courseEnrollments.slice(0, 8).map((course, i) => (
-              <div key={course.courseTitle} style={enrollmentRowStyle}>
-                <div style={enrollmentLabelStyle}>
-                  <span>{course.courseTitle}</span>
-                  <span style={{ fontWeight: 600 }}>{course.count}</span>
+            engagement.courseEnrollments.slice(0, 8).map((course, i) => {
+              const displayTitle = course.courseTitle.startsWith('__DELETED__:')
+                ? `${s.deletedCourse} (${course.courseTitle.slice(12)})`
+                : course.courseTitle
+              return (
+                <div key={course.courseTitle} style={enrollmentRowStyle}>
+                  <div style={enrollmentLabelStyle}>
+                    <span>{displayTitle}</span>
+                    <span style={{ fontWeight: 600 }}>{course.count}</span>
+                  </div>
+                  <div style={barContainerStyle}>
+                    <div
+                      style={{
+                        height: '100%',
+                        width: `${(course.count / maxEnrollment) * 100}%`,
+                        backgroundColor: COLORS[i % COLORS.length],
+                        borderRadius: 3,
+                      }}
+                    />
+                  </div>
                 </div>
-                <div style={barContainerStyle}>
-                  <div
-                    style={{
-                      height: '100%',
-                      width: `${(course.count / maxEnrollment) * 100}%`,
-                      backgroundColor: COLORS[i % COLORS.length],
-                      borderRadius: 3,
-                    }}
-                  />
-                </div>
-              </div>
-            ))
+              )
+            })
           )}
         </div>
 
         {/* Feature Usage */}
         <div style={panelStyle}>
           <div style={panelTitleStyle}>
-            <BarChart3 size={16} color="#3b82f6" />
-            Feature Usage
+            <BarChart3 size={16} color={ACCENT.blue} />
+            {s.featureUsage}
           </div>
           <div style={statRowStyle}>
             <span style={statLabelStyle}>
-              <Clock size={14} color="#10b981" />
-              Avg time spent
+              <Clock size={14} color={ACCENT.emerald} />
+              {s.avgTimeSpent}
             </span>
-            <span style={statValueStyle}>{engagement.avgTimeSpentMinutes} min</span>
+            <span style={statValueStyle}>
+              {engagement.avgTimeSpentMinutes} {s.minutes}
+            </span>
           </div>
           <div style={statRowStyle}>
             <span style={statLabelStyle}>
-              <MessageCircle size={14} color="#6366f1" />
-              Questions asked
+              <MessageCircle size={14} color={ACCENT.indigo} />
+              {s.questionsAsked}
             </span>
             <span style={statValueStyle}>
               {engagement.featureUsage.questionsAsked.toLocaleString()}
@@ -173,8 +187,8 @@ const EngagementWidget: React.FC = () => {
           </div>
           <div style={statRowStyle}>
             <span style={statLabelStyle}>
-              <Timer size={14} color="#8b5cf6" />
-              Conversations
+              <Timer size={14} color={ACCENT.violet} />
+              {s.conversations}
             </span>
             <span style={statValueStyle}>
               {engagement.featureUsage.conversationsStarted.toLocaleString()}
@@ -182,8 +196,8 @@ const EngagementWidget: React.FC = () => {
           </div>
           <div style={statRowStyle}>
             <span style={statLabelStyle}>
-              <BookOpen size={14} color="#3b82f6" />
-              Lessons completed
+              <BookOpen size={14} color={ACCENT.blue} />
+              {s.lessonsCompleted}
             </span>
             <span style={statValueStyle}>
               {engagement.featureUsage.lessonsCompleted.toLocaleString()}
@@ -191,8 +205,8 @@ const EngagementWidget: React.FC = () => {
           </div>
           <div style={{ ...statRowStyle, borderBottom: 'none' }}>
             <span style={statLabelStyle}>
-              <PenTool size={14} color="#f59e0b" />
-              Exercises completed
+              <PenTool size={14} color={ACCENT.amber} />
+              {s.exercisesCompleted}
             </span>
             <span style={statValueStyle}>
               {engagement.featureUsage.exercisesCompleted.toLocaleString()}
@@ -203,27 +217,27 @@ const EngagementWidget: React.FC = () => {
         {/* Lesson Type Breakdown */}
         <div style={panelStyle}>
           <div style={panelTitleStyle}>
-            <FlaskConical size={16} color="#10b981" />
-            Content by Type
+            <FlaskConical size={16} color={ACCENT.emerald} />
+            {s.contentByType}
           </div>
           {[
             {
-              label: 'Learning',
+              label: s.typeLearning,
               count: engagement.lessonTypeUsage.learning,
-              color: '#3b82f6',
-              icon: <BookOpen size={14} color="#3b82f6" />,
+              color: ACCENT.blue,
+              icon: <BookOpen size={14} color={ACCENT.blue} />,
             },
             {
-              label: 'Practice',
+              label: s.typePractice,
               count: engagement.lessonTypeUsage.practice,
-              color: '#f59e0b',
-              icon: <PenTool size={14} color="#f59e0b" />,
+              color: ACCENT.amber,
+              icon: <PenTool size={14} color={ACCENT.amber} />,
             },
             {
-              label: 'Exam',
+              label: s.typeExam,
               count: engagement.lessonTypeUsage.exam,
-              color: '#ef4444',
-              icon: <GraduationCap size={14} color="#ef4444" />,
+              color: ACCENT.red,
+              icon: <GraduationCap size={14} color={ACCENT.red} />,
             },
           ].map((type) => (
             <div key={type.label} style={enrollmentRowStyle}>

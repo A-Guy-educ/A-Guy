@@ -1,11 +1,13 @@
 'use client'
 
+import { useTranslation } from '@payloadcms/ui'
 import React from 'react'
 import type { CSSProperties } from 'react'
 
 import type { Period } from '@/app/api/admin/dashboard-metrics/route'
 
 import { useMetricsContext } from './MetricsProvider'
+import { getStrings } from './strings'
 
 const headerStyle: CSSProperties = {
   display: 'flex',
@@ -39,22 +41,24 @@ const filterBtnBase: CSSProperties = {
   transition: 'all 0.15s',
 }
 
-const PERIODS: { value: Period; label: string }[] = [
-  { value: 'week', label: 'Week' },
-  { value: 'month', label: 'Month' },
-  { value: 'year', label: 'Year' },
-]
-
 const DashboardHeader: React.FC = () => {
   const { period, setPeriod, error } = useMetricsContext()
+  const { i18n } = useTranslation()
+  const s = getStrings(i18n.language)
+
+  const periods: { value: Period; label: string }[] = [
+    { value: 'week', label: s.period.week },
+    { value: 'month', label: s.period.month },
+    { value: 'year', label: s.period.year },
+  ]
 
   if (error === 'admin-only') return null
 
   return (
     <div style={headerStyle}>
-      <h2 style={titleStyle}>Dashboard</h2>
+      <h2 style={titleStyle}>{s.dashboard}</h2>
       <div style={filterContainerStyle}>
-        {PERIODS.map((p) => (
+        {periods.map((p) => (
           <button
             key={p.value}
             onClick={() => setPeriod(p.value)}

@@ -391,7 +391,7 @@ export async function GET(req: Request) {
       courseIdToTitle.set(String(c.id), resolveTitle(c))
     }
   }
-  // Also check coursesWithTitles as fallback
+  // Populate map from the all-courses query for any IDs missed by the targeted query
   for (const course of coursesWithTitles.docs) {
     const c = course as unknown as {
       id: string
@@ -405,29 +405,10 @@ export async function GET(req: Request) {
     }
   }
 
-  // Try fetching each missing course individually via findByID as a last resort
-  for (const id of uniqueCourseIds) {
-    if (courseIdToTitle.has(id)) continue
-    try {
-      const course = (await payload.findByID({
-        collection: 'courses',
-        id,
-        overrideAccess: true,
-      })) as unknown as {
-        id: string
-        title?: string
-        courseLabel?: string
-        slug?: string
-      }
-      if (course) courseIdToTitle.set(id, resolveTitle(course))
-    } catch {
-      // course no longer exists — orphaned entitlement
-    }
-  }
-
   const courseEnrollments: CourseEnrollment[] = Array.from(enrollmentCounts.entries())
     .map(([id, count]) => ({
-      courseTitle: courseIdToTitle.get(id) || `Deleted course (${id.slice(-6)})`,
+      // Client localizes "Deleted course" via the __DELETED__ marker
+      courseTitle: courseIdToTitle.get(id) || `__DELETED__:${id.slice(-6)}`,
       count,
     }))
     .sort((a, b) => b.count - a.count)

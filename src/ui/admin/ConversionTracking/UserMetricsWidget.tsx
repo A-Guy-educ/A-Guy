@@ -1,21 +1,17 @@
 'use client'
 
+import { useTranslation } from '@payloadcms/ui'
 import { Activity, Eye, RefreshCw, UserPlus } from 'lucide-react'
 import React, { useState } from 'react'
 import type { CSSProperties } from 'react'
 
+import { ACCENT, tint } from './colors'
 import { MetricCard } from './MetricCard'
 import { useMetricsContext } from './MetricsProvider'
+import { getStrings } from './strings'
 import { errorStyle, loadingStyle, widgetContainerStyle, widgetTitleStyle } from './styles'
 
 type RegFilter = 'yesterday' | 'week' | 'month' | 'total'
-
-const REG_OPTIONS: { value: RegFilter; label: string }[] = [
-  { value: 'yesterday', label: 'Yesterday' },
-  { value: 'week', label: 'This week' },
-  { value: 'month', label: 'This month' },
-  { value: 'total', label: 'Total' },
-]
 
 const pillContainerStyle: CSSProperties = {
   display: 'flex',
@@ -34,23 +30,30 @@ const pillBtnStyle: CSSProperties = {
   cursor: 'pointer',
 }
 
-function calcTrend(current: number, previous: number): { value: number; label: string } | null {
-  if (previous === 0) return current > 0 ? { value: 100, label: 'vs prior' } : null
-  return { value: ((current - previous) / previous) * 100, label: 'vs prior' }
-}
-
 const UserMetricsWidget: React.FC = () => {
   const { data, loading, error, period } = useMetricsContext()
+  const { i18n } = useTranslation()
+  const s = getStrings(i18n.language)
   const [regFilter, setRegFilter] = useState<RegFilter>('month')
+
+  function calcTrend(current: number, previous: number): { value: number; label: string } | null {
+    if (previous === 0) return current > 0 ? { value: 100, label: s.vsPrior } : null
+    return { value: ((current - previous) / previous) * 100, label: s.vsPrior }
+  }
+
   const periodLabel =
-    period === 'week' ? 'past week' : period === 'year' ? 'past year' : 'past month'
+    period === 'week'
+      ? s.periodLabelWeek
+      : period === 'year'
+        ? s.periodLabelYear
+        : s.periodLabelMonth
 
   if (error === 'admin-only') return null
 
   if (loading) {
     return (
       <div style={widgetContainerStyle}>
-        <div style={loadingStyle}>Loading user metrics...</div>
+        <div style={loadingStyle}>{s.loading(s.userStatistics.toLowerCase())}</div>
       </div>
     )
   }
@@ -58,13 +61,14 @@ const UserMetricsWidget: React.FC = () => {
   if (error || !data) {
     return (
       <div style={widgetContainerStyle}>
-        <div style={errorStyle}>Failed to load user metrics: {error}</div>
+        <div style={errorStyle}>
+          {s.failedToLoad(s.userStatistics.toLowerCase())}: {error}
+        </div>
       </div>
     )
   }
 
   const { userMetrics } = data
-
   const activeTrend = calcTrend(userMetrics.activeUsersToday, userMetrics.activeUsersYesterday)
 
   const conversionRate =
@@ -77,12 +81,15 @@ const UserMetricsWidget: React.FC = () => {
       ? ((userMetrics.returningUsers / userMetrics.returningUsersTotal) * 100).toFixed(1)
       : '0'
 
-  // Registration value + trend based on selected filter
+  const regOptions: { value: RegFilter; label: string }[] = [
+    { value: 'yesterday', label: s.registrationYesterday },
+    { value: 'week', label: s.registrationWeek },
+    { value: 'month', label: s.registrationMonth },
+    { value: 'total', label: s.registrationTotal },
+  ]
+
   const regMap: Record<RegFilter, { value: number; trend: ReturnType<typeof calcTrend> }> = {
-    yesterday: {
-      value: userMetrics.registeredYesterday,
-      trend: null,
-    },
+    yesterday: { value: userMetrics.registeredYesterday, trend: null },
     week: {
       value: userMetrics.registeredThisWeek,
       trend: calcTrend(userMetrics.registeredThisWeek, userMetrics.registeredLastWeek),
@@ -91,31 +98,22 @@ const UserMetricsWidget: React.FC = () => {
       value: userMetrics.registeredThisMonth,
       trend: calcTrend(userMetrics.registeredThisMonth, userMetrics.registeredLastMonth),
     },
-    total: {
-      value: userMetrics.totalUsers,
-      trend: null,
-    },
+    total: { value: userMetrics.totalUsers, trend: null },
   }
 
   const regData = regMap[regFilter]
 
   return (
     <div style={widgetContainerStyle}>
-      <h3 style={widgetTitleStyle}>User Statistics</h3>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(5, 1fr)',
-          gap: 16,
-        }}
-      >
+      <h3 style={widgetTitleStyle}>{s.userStatistics}</h3>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
         <MetricCard
-          label="Active users today"
+          label={s.activeUsersToday}
           value={userMetrics.activeUsersToday}
           icon={<Activity size={20} />}
-          accentColor="#10b981"
+          accentColor={ACCENT.emerald}
           trend={activeTrend}
-          hint="Users whose last active date is today. Trend compares to yesterday."
+          hint={s.activeUsersHint}
           large
         />
 
@@ -137,7 +135,7 @@ const UserMetricsWidget: React.FC = () => {
               left: 0,
               right: 0,
               height: 3,
-              background: '#3b82f6',
+              background: ACCENT.blue,
             }}
           />
           <div
@@ -149,14 +147,14 @@ const UserMetricsWidget: React.FC = () => {
               height: 40,
               borderRadius: 8,
               marginBottom: 12,
-              backgroundColor: 'rgba(59,130,246,0.1)',
-              color: '#3b82f6',
+              backgroundColor: tint(ACCENT.blue),
+              color: ACCENT.blue,
             }}
           >
             <UserPlus size={20} />
           </div>
           <div style={pillContainerStyle}>
-            {REG_OPTIONS.map((opt) => (
+            {regOptions.map((opt) => (
               <button
                 key={opt.value}
                 onClick={() => setRegFilter(opt.value)}
@@ -195,7 +193,7 @@ const UserMetricsWidget: React.FC = () => {
               marginTop: 4,
             }}
           >
-            Registered
+            {s.registered}
           </span>
           {regData.trend && isFinite(regData.trend.value) && (
             <div
@@ -216,36 +214,36 @@ const UserMetricsWidget: React.FC = () => {
               <span>{regData.trend.value >= 0 ? '▲' : '▼'}</span>
               <span>
                 {regData.trend.value >= 0 ? '+' : ''}
-                {regData.trend.value.toFixed(0)}% vs prior
+                {regData.trend.value.toFixed(0)}% {s.vsPrior}
               </span>
             </div>
           )}
         </div>
 
         <MetricCard
-          label="Anonymous visitors"
+          label={s.anonymousVisitors}
           value={userMetrics.totalGuestSessions}
           icon={<Eye size={20} />}
-          accentColor="#8b5cf6"
-          hint="Total number of guest sessions ever created — visitors who used the site without registering."
+          accentColor={ACCENT.violet}
+          hint={s.anonymousVisitorsHint}
           large
         />
         <MetricCard
-          label="Guest → Registered"
+          label={s.guestToRegistered}
           value={userMetrics.guestToRegisteredCount}
           icon={<UserPlus size={20} />}
-          accentColor="#06b6d4"
+          accentColor={ACCENT.cyan}
           suffix={`(${conversionRate}%)`}
-          hint="Guest sessions that were claimed by a registered user. % shows conversion rate vs total anonymous visitors."
+          hint={s.guestToRegisteredHint}
           large
         />
         <MetricCard
-          label="Retention rate"
+          label={s.retentionRate}
           value={Number(retentionRate)}
           icon={<RefreshCw size={20} />}
-          accentColor="#10b981"
+          accentColor={ACCENT.emerald}
           suffix="%"
-          hint={`% of users active in the ${periodLabel} out of all users who existed before it started. Uses last active date from user-stats.`}
+          hint={s.retentionRateHint(periodLabel)}
           large
         />
       </div>
