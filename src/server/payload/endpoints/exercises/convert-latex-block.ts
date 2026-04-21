@@ -402,11 +402,74 @@ function isScriptOutputMeaningful(sourceLatex: string, parsedBlocks: ContentBloc
 }
 
 /**
- * Attach solution LaTeX content to the question blocks' `solution` field.
- * Finds all question blocks and distributes the solution text.
- * For a single question, the entire solution goes to it.
- * For multiple questions, the full solution is attached to the last one
- * (most solutions are a single block covering all sub-questions).
+ * Split a solution LaTeX string by sub-question labels.
+ *
+ * Returns an array of solution parts in document order. Each part starts at
+ * a label and ends just before the next label.
+ *
+ * Modes:
+ * - 'hebrew': only top-level Hebrew letter labels (א., ב., ג., ...)
+ * - 'all': both Hebrew letter and parenthetical numeric labels ((1), (2), ...).
+ *   Empty parent labels (e.g. ג. immediately followed by (1)(2) with no
+ *   content in between) are filtered out so they don't create empty parts.
+ */
+export function splitSolutionByLabels(text: string, mode: 'hebrew' | 'all'): string[] {
+  const hebrewLetters = 'אבגדהוזחטי'
+  const labelRegexes: RegExp[] = [new RegExp(`(^|\\n)\\s*([${hebrewLetters}])\\.\\s`, 'g')]
+  if (mode === 'all') {
+    labelRegexes.push(/(^|\n)\s*\((\d+)\)\s/g)
+  }
+
+  // Collect all label match positions
+  const positions: number[] = []
+  for (const re of labelRegexes) {
+    let m: RegExpExecArray | null
+    while ((m = re.exec(text)) !== null) {
+      // m.index points to the leading char (^ or \n). Skip past the leading
+      // newline to anchor the part at the actual label character.
+      positions.push(m.index + (m[1] === '\n' ? 1 : 0))
+    }
+  }
+  positions.sort((a, b) => a - b)
+  // Deduplicate identical positions
+  const uniquePositions = positions.filter((p, i) => i === 0 || p !== positions[i - 1])
+  if (uniquePositions.length === 0) return []
+
+  // Build candidate parts: each part runs from this position to the next
+  // (or to the end of the text)
+  const candidates: string[] = []
+  for (let i = 0; i < uniquePositions.length; i++) {
+    const start = uniquePositions[i]
+    const end = i + 1 < uniquePositions.length ? uniquePositions[i + 1] : text.length
+    candidates.push(text.slice(start, end).trim())
+  }
+
+  // Filter out empty parent labels: a label whose content is just the label
+  // itself (e.g. "ג." with nothing after it before the next label). These
+  // happen when ג. is just a header before nested (1)(2).
+  const meaningful = candidates.filter((part) => {
+    // Strip leading label and check if anything substantial remains
+    const stripped = part.replace(/^\s*([אבגדהוזחטי]\.|\(\d+\))\s*/, '').trim()
+    return stripped.length > 0
+  })
+
+  return meaningful
+}
+
+/**
+ * Attach solution LaTeX content to question blocks' `solution` field.
+ *
+ * Strategy:
+ * 1. Strip the solution header (if present)
+ * 2. Find question blocks in document order
+ * 3. If 0 question blocks → nothing to do
+ * 4. If 1 question block → attach the whole solution to it
+ * 5. If 2+ question blocks → try two-pass label splitting:
+ *    - Pass 1: split by Hebrew letter labels only
+ *    - Pass 2: split by Hebrew letters + numeric labels
+ *    - If either pass produces exactly N parts (N = question block count),
+ *      attach 1:1 by position
+ *    - Otherwise fall back to attaching the whole solution to the last block
  */
 function attachSolutionToBlocks(blocks: ContentBlock[], solutionLatex: string): void {
   // Clean solution: strip the header line, keep the content
@@ -438,16 +501,46 @@ function attachSolutionToBlocks(blocks: ContentBlock[], solutionLatex: string): 
 
   if (questionIndices.length === 0) return
 
-  // Attach to the last question block (covers the common case of
-  // one solution covering all sub-questions)
-  const lastIdx = questionIndices[questionIndices.length - 1]
-  const qBlock = blocks[lastIdx] as ContentBlock & {
+  // Single question: whole solution goes to it
+  if (questionIndices.length === 1) {
+    setSolutionOnBlock(blocks[questionIndices[0]], contentWithoutHeader)
+    return
+  }
+
+  // Multiple questions: try splitting by labels
+  const targetCount = questionIndices.length
+
+  // Pass 1: Hebrew letters only
+  const hebrewParts = splitSolutionByLabels(contentWithoutHeader, 'hebrew')
+  if (hebrewParts.length === targetCount) {
+    for (let i = 0; i < targetCount; i++) {
+      setSolutionOnBlock(blocks[questionIndices[i]], hebrewParts[i])
+    }
+    return
+  }
+
+  // Pass 2: Hebrew letters + numeric labels
+  const allParts = splitSolutionByLabels(contentWithoutHeader, 'all')
+  if (allParts.length === targetCount) {
+    for (let i = 0; i < targetCount; i++) {
+      setSolutionOnBlock(blocks[questionIndices[i]], allParts[i])
+    }
+    return
+  }
+
+  // Fallback: dump the whole solution on the last question block
+  setSolutionOnBlock(blocks[questionIndices[questionIndices.length - 1]], contentWithoutHeader)
+}
+
+/** Set the `solution` field on a question block (md-math-v1 inline rich text). */
+function setSolutionOnBlock(block: ContentBlock, value: string): void {
+  const qBlock = block as ContentBlock & {
     solution?: { type: string; format: string; value: string; mediaIds: string[] }
   }
   qBlock.solution = {
     type: 'rich_text',
     format: 'md-math-v1',
-    value: contentWithoutHeader,
+    value,
     mediaIds: [],
   }
 }
