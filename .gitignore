@@ -31,6 +31,10 @@ node_modules/
 
 tsconfig.tsbuildinfo
 
+# Payload generated artifacts — regenerated on install/dev/build from payload.config.ts
+src/payload-types.ts
+src/app/(payload)/admin/importMap.js
+
 # Local AI development documentation
 CLAUDE_INTERNAL.md
 NAMING.md

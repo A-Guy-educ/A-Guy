@@ -2,7 +2,7 @@ name: Build & Deploy to Vercel
 
 on:
   push:
-    branches: [dev]
+    branches: [main]
     paths:
       - 'src/**'
       - 'app/**'
