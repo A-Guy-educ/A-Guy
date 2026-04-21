@@ -28,14 +28,6 @@ interface UserDoc {
 async function main() {
   const payload = await getPayload({ config })
 
-  const users = await payload.find({
-    collection: 'users',
-    where: { 'courseEntitlements.course': { exists: true } },
-    limit: 10000,
-    overrideAccess: true,
-    depth: 0,
-  })
-
   // Cache existence checks for course IDs to avoid duplicate findByID calls
   const courseExistsCache = new Map<string, boolean>()
 
@@ -58,60 +50,81 @@ async function main() {
     }
   }
 
+  const PAGE_SIZE = 500
+  let page = 1
   let usersScanned = 0
   let usersAffected = 0
   let orphansRemoved = 0
 
-  for (const user of users.docs as unknown as UserDoc[]) {
-    usersScanned++
-    const original = user.courseEntitlements || []
-    if (original.length === 0) continue
-
-    const filtered: Entitlement[] = []
-    let removedFromUser = 0
-
-    for (const ent of original) {
-      const courseId = typeof ent.course === 'object' ? ent.course?.id : ent.course
-      if (!courseId) {
-        // Entitlement with no course ref — drop it
-        removedFromUser++
-        continue
-      }
-      const exists = await checkCourseExists(String(courseId))
-      if (exists) {
-        filtered.push(ent)
-      } else {
-        removedFromUser++
-      }
-    }
-
-    if (removedFromUser === 0) continue
-
-    await payload.update({
+  while (true) {
+    const users = await payload.find({
       collection: 'users',
-      id: user.id,
-      data: { courseEntitlements: filtered },
+      where: { 'courseEntitlements.course': { exists: true } },
+      limit: PAGE_SIZE,
+      page,
       overrideAccess: true,
+      depth: 0,
     })
 
-    usersAffected++
-    orphansRemoved += removedFromUser
-    // eslint-disable-next-line no-console
-    console.log(
-      `  • Removed ${removedFromUser} orphan entitlement(s) from user ${user.email || user.id}`,
-    )
+    if (page === 1) {
+      // eslint-disable-next-line no-console
+      console.log(`Scanning ${users.totalDocs} user(s) with entitlements...`)
+    }
+
+    for (const user of users.docs as unknown as UserDoc[]) {
+      usersScanned++
+      const original = user.courseEntitlements || []
+      if (original.length === 0) continue
+
+      const filtered: Entitlement[] = []
+      let removedFromUser = 0
+
+      for (const ent of original) {
+        const courseId = typeof ent.course === 'object' ? ent.course?.id : ent.course
+        if (!courseId) {
+          // Entitlement with no course ref — drop it
+          removedFromUser++
+          continue
+        }
+        const exists = await checkCourseExists(String(courseId))
+        if (exists) {
+          filtered.push(ent)
+        } else {
+          removedFromUser++
+        }
+      }
+
+      if (removedFromUser === 0) continue
+
+      await payload.update({
+        collection: 'users',
+        id: user.id,
+        data: { courseEntitlements: filtered },
+        overrideAccess: true,
+      })
+
+      usersAffected++
+      orphansRemoved += removedFromUser
+      // eslint-disable-next-line no-console
+      console.log(
+        `  • Removed ${removedFromUser} orphan entitlement(s) from user ${user.email || user.id}`,
+      )
+    }
+
+    if (!users.hasNextPage) break
+    page++
   }
 
   // eslint-disable-next-line no-console
   console.log('\n=== Cleanup Summary ===')
   // eslint-disable-next-line no-console
   console.log(JSON.stringify({ usersScanned, usersAffected, orphansRemoved }, null, 2))
-
-  process.exit(0)
 }
 
-main().catch((err) => {
-  // eslint-disable-next-line no-console
-  console.error('Cleanup failed:', err)
-  process.exit(1)
-})
+main()
+  .then(() => process.exit(0))
+  .catch((err) => {
+    // eslint-disable-next-line no-console
+    console.error('Cleanup failed:', err)
+    process.exit(1)
+  })
