@@ -96,35 +96,43 @@ describe('require-auth-endpoints ESLint rule', () => {
     invalid: [],
   })
 
-  ruleTester.run('accepts endpoint with public endpoint comment (inside function body)', rule.default ?? rule, {
-    valid: [
-      {
-        code: `
+  ruleTester.run(
+    'accepts endpoint with public endpoint comment (inside function body)',
+    rule.default ?? rule,
+    {
+      valid: [
+        {
+          code: `
           export async function GET(req) {
             // public endpoint
             return Response.json({ public: true })
           }
         `,
-        filename: '/app/api/public-data/route.ts',
-      },
-    ],
-    invalid: [],
-  })
+          filename: '/app/api/public-data/route.ts',
+        },
+      ],
+      invalid: [],
+    },
+  )
 
-  ruleTester.run('accepts endpoint with no auth required comment (inside function body)', rule.default ?? rule, {
-    valid: [
-      {
-        code: `
+  ruleTester.run(
+    'accepts endpoint with no auth required comment (inside function body)',
+    rule.default ?? rule,
+    {
+      valid: [
+        {
+          code: `
           export async function POST(req) {
             // no auth required
             return Response.json({ ok: true })
           }
         `,
-        filename: '/app/api/webhooks/route.ts',
-      },
-    ],
-    invalid: [],
-  })
+          filename: '/app/api/webhooks/route.ts',
+        },
+      ],
+      invalid: [],
+    },
+  )
 
   ruleTester.run('ignores non-HTTP-method named functions', rule.default ?? rule, {
     valid: [
@@ -140,11 +148,14 @@ describe('require-auth-endpoints ESLint rule', () => {
     invalid: [],
   })
 
-  ruleTester.run('flags API file where helper outside exported fn has comment (comment not in fn body)', rule.default ?? rule, {
-    valid: [],
-    invalid: [
-      {
-        code: `
+  ruleTester.run(
+    'flags API file where helper outside exported fn has comment (comment not in fn body)',
+    rule.default ?? rule,
+    {
+      valid: [],
+      invalid: [
+        {
+          code: `
           async function processData(data) {
             // public endpoint
             return data
@@ -154,27 +165,32 @@ describe('require-auth-endpoints ESLint rule', () => {
             return Response.json(result)
           }
         `,
-        filename: '/app/api/process/route.ts',
-        errors: [{ messageId: 'missingAuth', data: { name: 'GET' } }],
-      },
-    ],
-  })
+          filename: '/app/api/process/route.ts',
+          errors: [{ messageId: 'missingAuth', data: { name: 'GET' } }],
+        },
+      ],
+    },
+  )
 
-  ruleTester.run('accepts endpoint with comment inside function body (not in separate helper)', rule.default ?? rule, {
-    valid: [
-      {
-        code: `
+  ruleTester.run(
+    'accepts endpoint with comment inside function body (not in separate helper)',
+    rule.default ?? rule,
+    {
+      valid: [
+        {
+          code: `
           export async function GET(req) {
             // public endpoint
             const data = await fetchData()
             return Response.json(data)
           }
         `,
-        filename: '/app/api/process/route.ts',
-      },
-    ],
-    invalid: [],
-  })
+          filename: '/app/api/process/route.ts',
+        },
+      ],
+      invalid: [],
+    },
+  )
 
   ruleTester.run('accepts DELETE endpoint with auth', rule.default ?? rule, {
     valid: [

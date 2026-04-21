@@ -146,10 +146,7 @@ describe('tailwind-only-components ESLint rule', () => {
         code: `import './base.scss'
           import './components/button.scss'`,
         filename: 'src/app/global.css',
-        errors: [
-          { messageId: 'scssImport' },
-          { messageId: 'scssImport' },
-        ],
+        errors: [{ messageId: 'scssImport' }, { messageId: 'scssImport' }],
       },
     ],
   })
@@ -164,15 +161,19 @@ describe('tailwind-only-components ESLint rule', () => {
     invalid: [],
   })
 
-  ruleTester.run('ignores src/ui/web/ SCSS imports (not admin but not /components/)', rule.default ?? rule, {
-    valid: [
-      {
-        code: `import styles from './web.module.scss'`,
-        filename: 'src/ui/web/CustomComponent.tsx',
-      },
-    ],
-    invalid: [],
-  })
+  ruleTester.run(
+    'ignores src/ui/web/ SCSS imports (not admin but not /components/)',
+    rule.default ?? rule,
+    {
+      valid: [
+        {
+          code: `import styles from './web.module.scss'`,
+          filename: 'src/ui/web/CustomComponent.tsx',
+        },
+      ],
+      invalid: [],
+    },
+  )
 
   ruleTester.run('flags .scss in deeply nested component path', rule.default ?? rule, {
     valid: [],

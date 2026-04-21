@@ -151,10 +151,13 @@ describe('require-collection-access ESLint rule', () => {
     ],
   })
 
-  ruleTester.run('accepts collection with access field with more than required ops', rule.default ?? rule, {
-    valid: [
-      {
-        code: `
+  ruleTester.run(
+    'accepts collection with access field with more than required ops',
+    rule.default ?? rule,
+    {
+      valid: [
+        {
+          code: `
           import type { CollectionConfig } from 'payload'
           export const Events: CollectionConfig = {
             slug: 'events',
@@ -168,8 +171,9 @@ describe('require-collection-access ESLint rule', () => {
             fields: []
           }
         `,
-      },
-    ],
-    invalid: [],
-  })
+        },
+      ],
+      invalid: [],
+    },
+  )
 })
