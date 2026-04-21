@@ -24,10 +24,15 @@ import './index.css'
 import { deepCloneBlock } from './utils'
 
 // Lazy-load heavy editors that use jsxgraph to reduce initial client bundle size
-const GeometryEditor = dynamic(() => import('./editors/GeometryEditor').then((m) => m.GeometryEditor), {
-  ssr: false,
-  loading: () => <div className="p-card-padding text-muted-foreground">Loading geometry editor...</div>,
-})
+const GeometryEditor = dynamic(
+  () => import('./editors/GeometryEditor').then((m) => m.GeometryEditor),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="p-card-padding text-muted-foreground">Loading geometry editor...</div>
+    ),
+  },
+)
 const AxisEditor = dynamic(() => import('./editors/AxisEditor').then((m) => m.AxisEditor), {
   ssr: false,
   loading: () => <div className="p-card-padding text-muted-foreground">Loading axis editor...</div>,
@@ -36,7 +41,9 @@ const MultiAxisEditor = dynamic(
   () => import('./editors/MultiAxisEditor').then((m) => m.MultiAxisEditor),
   {
     ssr: false,
-    loading: () => <div className="p-card-padding text-muted-foreground">Loading multi-axis editor...</div>,
+    loading: () => (
+      <div className="p-card-padding text-muted-foreground">Loading multi-axis editor...</div>
+    ),
   },
 )
 
