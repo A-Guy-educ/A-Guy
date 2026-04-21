@@ -40,8 +40,10 @@ function calcTrend(current: number, previous: number): { value: number; label: s
 }
 
 const UserMetricsWidget: React.FC = () => {
-  const { data, loading, error } = useMetricsContext()
+  const { data, loading, error, period } = useMetricsContext()
   const [regFilter, setRegFilter] = useState<RegFilter>('month')
+  const periodLabel =
+    period === 'week' ? 'past week' : period === 'year' ? 'past year' : 'past month'
 
   if (error === 'admin-only') return null
 
@@ -113,6 +115,7 @@ const UserMetricsWidget: React.FC = () => {
           icon={<Activity size={20} />}
           accentColor="#10b981"
           trend={activeTrend}
+          hint="Users whose last active date is today. Trend compares to yesterday."
           large
         />
 
@@ -224,6 +227,7 @@ const UserMetricsWidget: React.FC = () => {
           value={userMetrics.totalGuestSessions}
           icon={<Eye size={20} />}
           accentColor="#8b5cf6"
+          hint="Total number of guest sessions ever created — visitors who used the site without registering."
           large
         />
         <MetricCard
@@ -232,6 +236,7 @@ const UserMetricsWidget: React.FC = () => {
           icon={<UserPlus size={20} />}
           accentColor="#06b6d4"
           suffix={`(${conversionRate}%)`}
+          hint="Guest sessions that were claimed by a registered user. % shows conversion rate vs total anonymous visitors."
           large
         />
         <MetricCard
@@ -240,6 +245,7 @@ const UserMetricsWidget: React.FC = () => {
           icon={<RefreshCw size={20} />}
           accentColor="#10b981"
           suffix="%"
+          hint={`% of users active in the ${periodLabel} out of all users who existed before it started. Uses last active date from user-stats.`}
           large
         />
       </div>
