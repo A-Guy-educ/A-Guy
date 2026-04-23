@@ -4,7 +4,8 @@
  * POST /api/lessons/convert-context
  * Extracts context text from a lesson content file using AI and stores in ContextExtractions collection
  */
-import { ApiErrors, apiSuccess } from '@/server/api/responses'
+import { NextResponse } from 'next/server'
+import { apiSuccess } from '@/server/api/responses'
 import { withApiHandler } from '@/server/api/with-api-handler'
 import { extractLessonContext } from '@/server/services/lesson-context-conversion/extract-context'
 import { z } from 'zod'
@@ -37,7 +38,17 @@ export const POST = withApiHandler<ConvertContextBody, unknown>(
     })
 
     if (!result.success) {
-      return ApiErrors.internal(result.error || 'Failed to extract context')
+      // Include warnings array so the browser can see the underlying per-page errors
+      return NextResponse.json(
+        {
+          error: {
+            code: 'INTERNAL_ERROR',
+            message: result.error || 'Failed to extract context',
+          },
+          warnings: result.warnings,
+        },
+        { status: 500 },
+      )
     }
 
     return apiSuccess({
