@@ -233,6 +233,18 @@ export const Courses: CollectionConfig = {
         description: 'URL-friendly identifier (auto-generated from title if empty)',
       },
     },
+
+    // Lessons sorter — shows all course lessons grouped by chapter, with drag-and-drop and chevron sorting
+    {
+      name: 'lessonsSorter',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/ui/admin/CourseLessonsSorter#CourseLessonsSorter',
+        },
+      },
+    },
+
     {
       name: 'meta',
       type: 'group',
