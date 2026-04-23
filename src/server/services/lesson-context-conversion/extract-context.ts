@@ -182,8 +182,10 @@ export async function extractLessonContext(
     const adapter = await createGenkitUnifiedAdapter(payload)
 
     const { getModelRegistryEntry, getProviderModelName } = await import('@/infra/llm/models')
-    const { getProviderTypeFromEnv } = await import('@/infra/llm/providers/factory')
-    const providerType = await getProviderTypeFromEnv(payload)
+    const { LLMProviderType } = await import('@/infra/llm/providers/types')
+    // Conversion pipeline defaults to MiniMax (OpenAI-compatible).
+    // To switch back to Gemini, change to LLMProviderType.GEMINI.
+    const providerType = LLMProviderType.OPENAI_COMPATIBLE
     const modelEntry = getModelRegistryEntry('PDF_TO_EXERCISE')
     const modelConfig = {
       name: getProviderModelName(providerType, 'PDF_TO_EXERCISE'),

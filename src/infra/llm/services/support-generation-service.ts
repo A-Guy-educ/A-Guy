@@ -125,20 +125,13 @@ function mergeResults(first: GeneratedSupport, second: GeneratedSupport): Genera
   }
 }
 
-/**
- * Read provider type from LLM_PROVIDER env var (sync — env-only, no runtime config).
- * Used in places where we don't have async access to payload at call time.
- */
-function getProviderTypeFromEnvSync(): LLMProviderType {
-  const envValue = process.env.LLM_PROVIDER?.toLowerCase()
-  if (envValue === 'openai-compatible') return LLMProviderType.OPENAI_COMPATIBLE
-  return LLMProviderType.GEMINI
-}
-
 function resolveModelConfig(modelKey: AIModelKey): AIModel {
   const entry = getModelRegistryEntry(modelKey)
   return {
-    name: getProviderModelName(getProviderTypeFromEnvSync(), modelKey),
+    // Support generation (used during conversion's hint/solution AI fill)
+    // defaults to MiniMax (OpenAI-compatible). Change to LLMProviderType.GEMINI
+    // to switch back.
+    name: getProviderModelName(LLMProviderType.OPENAI_COMPATIBLE, modelKey),
     ...entry,
     modelKey,
   }
