@@ -305,6 +305,7 @@
     "chatPause": "השהיה",
     "chatResume": "המשך",
     "chatSpeed": "מהירות",
+    "chatStepContextBadge": "שלב {current} מתוך {total}",
     "uploadFile": "העלאת קובץ",
     "sendMessage": "שליחה",
     "switchToChat": "עבור לתצוגת צ'אט",

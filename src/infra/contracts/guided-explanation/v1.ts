@@ -112,6 +112,12 @@ const NarrationSchema = z
 export const StepSchema = z
   .object({
     id: z.string().min(1),
+    /**
+     * Short human-readable label for the step (e.g. "Apply SAS"). Surfaced to
+     * the chat panel alongside the step index so the tutor AI knows which
+     * step the student is asking about. Not rendered inside the scene.
+     */
+    title: z.string().optional(),
     narrate: NarrationSchema.optional(),
     actions: z.array(ActionSchema).default([]),
     /** Extra delay (ms) after actions + narration complete. Default 0. */
