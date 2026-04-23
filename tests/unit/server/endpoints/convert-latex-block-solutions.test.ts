@@ -23,6 +23,7 @@ import {
   splitSolutionByLabels,
   attachSolutionToBlocks,
   fillMissingSolutionsWithAI,
+  looksLikeSolutionContent,
 } from '@/server/payload/endpoints/exercises/convert-latex-block'
 import { generateSupport } from '@/infra/llm/services/support-generation-service'
 
@@ -433,9 +434,15 @@ describe('fillMissingSolutionsWithAI', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mockLogger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() } as any
 
-  function makeQuestion(id: string, prompt: string, solution?: string): ContentBlock {
+  function makeQuestion(
+    id: string,
+    prompt: string,
+    solution?: string,
+    hint?: string,
+  ): ContentBlock {
     const block: ContentBlock & {
       solution?: { type: string; format: string; value: string; mediaIds: string[] }
+      hint?: { type: string; format: string; value: string; mediaIds: string[] }
     } = {
       id,
       type: 'question_free_response',
@@ -444,6 +451,9 @@ describe('fillMissingSolutionsWithAI', () => {
     }
     if (solution) {
       block.solution = { type: 'rich_text', format: 'md-math-v1', value: solution, mediaIds: [] }
+    }
+    if (hint) {
+      block.hint = { type: 'rich_text', format: 'md-math-v1', value: hint, mediaIds: [] }
     }
     return block
   }
@@ -476,7 +486,9 @@ describe('fillMissingSolutionsWithAI', () => {
     expect(q2.solution?.value).toBe('AI-generated solution')
   })
 
-  it('skips question blocks that already have a solution', async () => {
+  it('only requests missing fields per block (hints + solution)', async () => {
+    // q1 has solution but no hint → should request only hints
+    // q2 has neither → should request both hints + solution
     const blocks: ContentBlock[] = [
       makeQuestion('q1', 'question one', 'existing solution'),
       makeQuestion('q2', 'question two'),
@@ -484,17 +496,21 @@ describe('fillMissingSolutionsWithAI', () => {
 
     vi.mocked(generateSupport).mockResolvedValue({
       success: true,
-      data: { solution: 'AI-generated solution' },
+      data: { solution: 'AI-generated solution', hints: ['AI hint'] },
     })
 
     await fillMissingSolutionsWithAI(blocks, mockPayload, mockLogger)
 
-    // Only q2 should trigger AI generation
-    expect(generateSupport).toHaveBeenCalledTimes(1)
+    expect(generateSupport).toHaveBeenCalledTimes(2)
+    // First call (q1): only hints requested
+    const firstCall = vi.mocked(generateSupport).mock.calls[0]
+    expect(firstCall[0].targetFields).toEqual(['hints'])
+    // Second call (q2): both fields requested
+    const secondCall = vi.mocked(generateSupport).mock.calls[1]
+    expect(secondCall[0].targetFields).toEqual(['hints', 'solution'])
+    // q1's existing solution is unchanged
     const q1 = blocks[0] as ContentBlock & { solution?: { value: string } }
-    const q2 = blocks[1] as ContentBlock & { solution?: { value: string } }
-    expect(q1.solution?.value).toBe('existing solution') // unchanged
-    expect(q2.solution?.value).toBe('AI-generated solution')
+    expect(q1.solution?.value).toBe('existing solution')
   })
 
   it('skips non-question blocks (rich_text, latex)', async () => {
@@ -515,10 +531,10 @@ describe('fillMissingSolutionsWithAI', () => {
     expect(generateSupport).toHaveBeenCalledTimes(1)
   })
 
-  it('does nothing (no AI calls) when all question blocks have solutions', async () => {
+  it('does nothing (no AI calls) when all question blocks have solution AND hint', async () => {
     const blocks: ContentBlock[] = [
-      makeQuestion('q1', 'q1', 'sol1'),
-      makeQuestion('q2', 'q2', 'sol2'),
+      makeQuestion('q1', 'q1', 'sol1', 'hint1'),
+      makeQuestion('q2', 'q2', 'sol2', 'hint2'),
     ]
 
     await fillMissingSolutionsWithAI(blocks, mockPayload, mockLogger)
@@ -572,5 +588,33 @@ describe('fillMissingSolutionsWithAI', () => {
     await fillMissingSolutionsWithAI(blocks, mockPayload, mockLogger)
 
     expect(generateSupport).not.toHaveBeenCalled()
+  })
+})
+
+describe('looksLikeSolutionContent', () => {
+  it('detects markdown header from \\section*{פתרון}', () => {
+    expect(looksLikeSolutionContent('## פתרון תרגיל 1\nsolution body')).toBe(true)
+    expect(looksLikeSolutionContent('### פתרונות\ncontent')).toBe(true)
+  })
+
+  it('detects bold from \\textbf{פתרון}', () => {
+    expect(looksLikeSolutionContent('**פתרון תרגיל 1:**\ncontent')).toBe(true)
+  })
+
+  it('detects plain prefix', () => {
+    expect(looksLikeSolutionContent('פתרון תרגיל 1\ncontent')).toBe(true)
+    expect(looksLikeSolutionContent('פתרונות\ncontent')).toBe(true)
+    expect(looksLikeSolutionContent('תשובה סופית - שאלה 1')).toBe(true)
+  })
+
+  it('does NOT detect regular content', () => {
+    expect(looksLikeSolutionContent('## תרגיל 1\nbody')).toBe(false)
+    expect(looksLikeSolutionContent('Just some text')).toBe(false)
+    expect(looksLikeSolutionContent('הציונים בבחינה')).toBe(false)
+    expect(looksLikeSolutionContent('')).toBe(false)
+  })
+
+  it('does NOT detect content where פתרון appears mid-text', () => {
+    expect(looksLikeSolutionContent('Some content\nfollowed by פתרון')).toBe(false)
   })
 })
