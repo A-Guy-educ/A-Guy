@@ -54,10 +54,14 @@ const chapterHeaderStyle: React.CSSProperties = {
   gap: 8,
 }
 
-const chapterTitleStyle: React.CSSProperties = {
+const chapterTitleLinkStyle: React.CSSProperties = {
   fontSize: 12,
   fontWeight: 600,
   color: 'var(--theme-text)',
+  textDecoration: 'underline',
+  textUnderlineOffset: '2px',
+  cursor: 'pointer',
+  transition: 'color 0.15s',
 }
 
 const lessonRowStyle = (
@@ -119,13 +123,17 @@ const typeBadgeStyle = (type: 'learning' | 'practice' | 'exam'): React.CSSProper
   }
 }
 
-const lessonTitleStyle: React.CSSProperties = {
+const lessonTitleLinkStyle: React.CSSProperties = {
   flex: 1,
   fontSize: 13,
   color: 'var(--theme-text)',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
+  textDecoration: 'underline',
+  textUnderlineOffset: '2px',
+  cursor: 'pointer',
+  transition: 'color 0.15s',
 }
 
 const chevronBtnStyle = (disabled: boolean): React.CSSProperties => ({
@@ -458,10 +466,16 @@ export const CourseLessonsSorter: React.FC = () => {
             {/* Chapter header */}
             <div style={chapterHeaderStyle}>
               <span style={sectionLabelStyle}>{s.chapter}:</span>
-              <span style={chapterTitleStyle}>
+              <a
+                href={`/admin/collections/chapters/${chapter.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={chapterTitleLinkStyle}
+                onClick={(e) => e.stopPropagation()}
+              >
                 {chapter.chapterLabel ? `${chapter.chapterLabel} — ` : ''}
                 {chapter.title}
-              </span>
+              </a>
               <span style={{ ...sectionLabelStyle, marginLeft: 'auto' }}>
                 {lessons.length} {s.lesson}
                 {lessons.length !== 1 ? 's' : ''}
@@ -510,7 +524,15 @@ export const CourseLessonsSorter: React.FC = () => {
                   </span>
 
                   {/* Title */}
-                  <span style={lessonTitleStyle}>{lesson.title}</span>
+                  <a
+                    href={`/admin/collections/lessons/${lesson.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={lessonTitleLinkStyle}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {lesson.title}
+                  </a>
 
                   {/* Chevron up */}
                   <button
