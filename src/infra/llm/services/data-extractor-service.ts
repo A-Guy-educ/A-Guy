@@ -149,21 +149,12 @@ export async function extractFromImage(
 }
 
 /**
- * Read provider type from LLM_PROVIDER env var (sync — env-only, no runtime config).
- */
-function getProviderTypeFromEnvSync(): LLMProviderType {
-  const envValue = process.env.LLM_PROVIDER?.toLowerCase()
-  if (envValue === 'openai-compatible') return LLMProviderType.OPENAI_COMPATIBLE
-  return LLMProviderType.GEMINI
-}
-
-/**
  * Resolve model config from MODEL_REGISTRY (mirrors getProviderModelConfig)
  */
 function resolveModelConfig(modelKey: AIModelKey): AIModel {
   const entry = getModelRegistryEntry(modelKey)
   return {
-    name: getProviderModelName(getProviderTypeFromEnvSync(), modelKey),
+    name: getProviderModelName(LLMProviderType.GEMINI, modelKey),
     ...entry,
     modelKey,
   }
