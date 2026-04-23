@@ -80,8 +80,7 @@ async function getApiKeyForProvider(
   payload: Payload,
   tenantId?: string,
 ): Promise<string> {
-  const secretKey =
-    providerType === LLMProviderType.GEMINI ? 'GEMINI_API_KEY' : 'OPENAI_COMPATIBLE_API_KEY'
+  const secretKey = providerType === LLMProviderType.GEMINI ? 'GEMINI_API_KEY' : 'MINIMAX_API_KEY'
 
   // Check if config is loaded
   if (!isConfigLoaded()) {
@@ -101,9 +100,13 @@ async function getApiKeyForProvider(
   }
 
   // Fallback to environment variable
-  const envKey =
-    providerType === LLMProviderType.GEMINI ? 'GEMINI_API_KEY' : 'OPENAI_COMPATIBLE_API_KEY'
-  const envValue = process.env[envKey]
+  // OpenAI-compatible provider primarily uses MINIMAX_API_KEY (since MiniMax
+  // is the configured model), with OPENAI_COMPATIBLE_API_KEY as a backwards-
+  // compatible fallback.
+  const envValue =
+    providerType === LLMProviderType.GEMINI
+      ? process.env.GEMINI_API_KEY
+      : process.env.MINIMAX_API_KEY || process.env.OPENAI_COMPATIBLE_API_KEY
 
   if (!envValue) {
     logger.warn(

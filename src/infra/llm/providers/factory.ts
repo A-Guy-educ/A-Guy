@@ -116,10 +116,11 @@ export function getOpenAICompatibleBaseUrl(): string | undefined {
 
 /**
  * Get API key for openai-compatible provider
- * ONLY uses OPENAI_COMPATIBLE_API_KEY - no fallback to OPENAI_API_KEY
+ * Primarily uses MINIMAX_API_KEY (MiniMax is the configured model);
+ * falls back to OPENAI_COMPATIBLE_API_KEY for backwards compatibility.
  */
 export function getOpenAICompatibleApiKey(): string | undefined {
-  return process.env.OPENAI_COMPATIBLE_API_KEY
+  return process.env.MINIMAX_API_KEY || process.env.OPENAI_COMPATIBLE_API_KEY
 }
 
 // Unified provider interface
