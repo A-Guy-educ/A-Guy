@@ -45,6 +45,12 @@ interface ExercisesPagerProps {
   showChat?: boolean
   /** Formula sheet data (passed to ChatInterface) */
   formulaSheet?: import('@/payload-types').FormulaSheet | null
+  /** Optional element rendered at the top of the primary pane (e.g. a dual-mode tab bar). */
+  headerSlot?: React.ReactNode
+  /** When true, forwards to ExerciseRenderer so `type: 'latex'` blocks are not rendered
+   * inside individual exercises (used by the dual-mode lesson view where LaTeX lives
+   * at the lesson level). */
+  hideLatexBlocks?: boolean
 }
 
 export function ExercisesPager({
@@ -58,6 +64,8 @@ export function ExercisesPager({
   mediaMap,
   showChat,
   formulaSheet,
+  headerSlot,
+  hideLatexBlocks,
 }: ExercisesPagerProps) {
   const t = useTranslations('courses')
   const {
@@ -204,6 +212,7 @@ export function ExercisesPager({
         backUrl={backUrl}
         primaryContent={
           <div className="h-full flex flex-col">
+            {headerSlot}
             {/* Top progress line */}
             <Progress value={progressPercent} className="h-0.5 rounded-none" />
 
@@ -255,6 +264,7 @@ export function ExercisesPager({
                         exerciseId={currentExercise.id}
                         showExerciseNumber={currentExercise.showQuestionNumbering ?? false}
                         onResultsChange={handleExerciseResultsChange}
+                        hideLatexBlocks={hideLatexBlocks}
                       />
                     </div>
                   </motion.div>
@@ -341,6 +351,7 @@ export function ExercisesPager({
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {headerSlot}
       <Confetti active={showConfetti} />
       <Progress value={progressPercent} className="h-0.5 rounded-none" />
 
