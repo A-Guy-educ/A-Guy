@@ -57,11 +57,12 @@ export async function POST(request: NextRequest) {
       await import('@/infra/llm/genkit/adapters/unified-adapter')
     const adapter = await createGenkitUnifiedAdapter(payload)
     const { getModelRegistryEntry, getProviderModelName } = await import('@/infra/llm/models')
-    const { LLMProviderType } = await import('@/infra/llm/providers/types')
+    const { getProviderTypeFromEnv } = await import('@/infra/llm/providers/factory')
+    const providerType = await getProviderTypeFromEnv(payload)
 
     const modelEntry = getModelRegistryEntry('PDF_TO_EXERCISE')
     const modelConfig = {
-      name: getProviderModelName(LLMProviderType.GEMINI, 'PDF_TO_EXERCISE'),
+      name: getProviderModelName(providerType, 'PDF_TO_EXERCISE'),
       ...modelEntry,
       modelKey: 'PDF_TO_EXERCISE' as const,
     }
