@@ -77,10 +77,57 @@ export async function convertLatexBlockOnExercise(
     .filter((i) => i !== -1)
 
   if (latexBlockIndices.length === 0) {
-    return Response.json(
-      { success: false, error: 'Exercise has no LaTeX block to convert' },
-      { status: 422 },
+    // No LaTeX blocks to convert. Check if there are question blocks missing
+    // hints/solutions — if so, run the AI fill step on the existing blocks.
+    // This makes re-clicking "Convert" useful for already-converted exercises:
+    // it triggers AI generation for any sub-question still missing support content.
+    const hasFillableBlocks = blocks.some((b) => {
+      if (!isQuestionBlock(b)) return false
+      const qb = b as ContentBlock & { hint?: InlineRichText; solution?: InlineRichText }
+      return !qb.hint?.value || !qb.solution?.value
+    })
+
+    if (!hasFillableBlocks) {
+      return Response.json(
+        {
+          success: false,
+          error:
+            'Exercise has no LaTeX block to convert and no question blocks need hints/solutions',
+        },
+        { status: 422 },
+      )
+    }
+
+    reqLogger.info(
+      'No LaTeX blocks but question blocks need hints/solutions — running AI fill only',
     )
+    const fillBlocks: ContentBlock[] = [...blocks]
+    await fillMissingSolutionsWithAI(fillBlocks, req.payload, reqLogger)
+
+    try {
+      const updated = await req.payload.update({
+        collection: 'exercises',
+        id: exerciseId,
+        data: { content: { blocks: fillBlocks as never } },
+        draft: true,
+        overrideAccess: true,
+        req: { payload: req.payload, user: req.user } as never,
+      })
+      return Response.json({
+        success: true,
+        method: 'ai_fill_only',
+        data: {
+          exerciseId: updated.id,
+          replacedBlockIds: [],
+          addedBlockCount: 0,
+          totalBlocks: fillBlocks.length,
+          warnings: [],
+        },
+      })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to save exercise'
+      return Response.json({ success: false, error: message }, { status: 500 })
+    }
   }
 
   const nextBlocks: ContentBlock[] = [...blocks]
