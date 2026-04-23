@@ -128,12 +128,12 @@ export const PROVIDER_MODEL_NAMES: Record<LLMProviderType, Record<AIModelKey, st
     CONTENT_TRANSLATION: 'gemini-3.1-pro',
   },
   [LLMProviderType.OPENAI_COMPATIBLE]: {
-    IMAGE_TO_EXERCISE: 'MiniMax-M2.1',
-    EXERCISE_CHAT: 'MiniMax-M2.1',
-    PDF_TO_EXERCISE: 'MiniMax-M2.1',
-    ANSWER_VALIDATION: 'MiniMax-M2.1',
-    SUPPORT_GENERATION: 'MiniMax-M2.1',
-    CONTENT_TRANSLATION: 'MiniMax-M2.1',
+    IMAGE_TO_EXERCISE: 'minimax/MiniMax-M2.7-highspeed',
+    EXERCISE_CHAT: 'minimax/MiniMax-M2.7-highspeed',
+    PDF_TO_EXERCISE: 'minimax/MiniMax-M2.7-highspeed',
+    ANSWER_VALIDATION: 'minimax/MiniMax-M2.7-highspeed',
+    SUPPORT_GENERATION: 'minimax/MiniMax-M2.7-highspeed',
+    CONTENT_TRANSLATION: 'minimax/MiniMax-M2.7-highspeed',
   },
 } as const
 
