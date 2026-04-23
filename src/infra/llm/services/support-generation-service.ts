@@ -35,8 +35,14 @@ export async function generateSupport(
   payload: Payload,
 ): Promise<SupportGenerationResponse> {
   try {
+    // Support generation defaults to MiniMax (OpenAI-compatible) — both the
+    // model config and the adapter must use the same provider.
     const { createGenkitUnifiedAdapter } = await import('../genkit/adapters/unified-adapter')
-    const adapter = await createGenkitUnifiedAdapter(payload)
+    const adapter = await createGenkitUnifiedAdapter(
+      payload,
+      undefined,
+      LLMProviderType.OPENAI_COMPATIBLE,
+    )
     const modelConfig = resolveModelConfig('SUPPORT_GENERATION')
     const userPrompt = buildSupportUserPrompt(input)
 

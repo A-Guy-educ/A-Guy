@@ -26,12 +26,23 @@ const instances = new Map<LLMProviderType, Genkit>()
  *
  * @param payload - Payload instance for config access
  * @param tenantId - Optional tenant ID for scoped configuration
+ * @param providerOverride - if provided, forces this provider type instead of
+ *   reading from LLM_PROVIDER env var
  * @returns Configured Genkit instance
  */
-export async function getGenkitInstance(payload: Payload, tenantId?: string): Promise<Genkit> {
+export async function getGenkitInstance(
+  payload: Payload,
+  tenantId?: string,
+  providerOverride?: LLMProviderType,
+): Promise<Genkit> {
   // Import dynamically to avoid circular dependency
-  const { getProviderTypeFromEnv } = await import('../providers/factory')
-  const providerType = await getProviderTypeFromEnv(payload)
+  let providerType: LLMProviderType
+  if (providerOverride) {
+    providerType = providerOverride
+  } else {
+    const { getProviderTypeFromEnv } = await import('../providers/factory')
+    providerType = await getProviderTypeFromEnv(payload)
+  }
 
   // Return cached instance if available
   if (instances.has(providerType)) {
