@@ -89,6 +89,44 @@ export interface GraphData {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Number-line data — inequalities, intervals, set operations
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** A single value marked on the number line (e.g. a boundary value, an answer). */
+export interface NumberLineMark {
+  id: string
+  value: number
+  label?: string
+  /** 'closed' (filled dot, value included) or 'open' (hollow dot, excluded). */
+  inclusion?: 'open' | 'closed'
+  color?: 'blue' | 'red' | 'green' | 'orange' | 'purple'
+}
+
+/**
+ * A contiguous interval drawn on the number line. Use `'unbounded'` on an
+ * inclusion side to draw an arrow (→ / ←) instead of an endpoint dot; the
+ * corresponding `from` / `to` is then the visible extent of the range.
+ */
+export interface NumberLineInterval {
+  id: string
+  from: number
+  to: number
+  fromInclusion: 'open' | 'closed' | 'unbounded'
+  toInclusion: 'open' | 'closed' | 'unbounded'
+  color?: 'blue' | 'red' | 'green' | 'orange' | 'purple'
+  label?: string
+}
+
+/** Horizontal number-line scene for inequalities / intervals / set ops. */
+export interface NumberLineData {
+  range: [number, number]
+  /** Tick spacing; default 1. */
+  step?: number
+  marks: NumberLineMark[]
+  intervals: NumberLineInterval[]
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Steps & Lesson
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -116,6 +154,10 @@ export interface InteractiveLessonStep {
   highlightPlots?: string[]
   /** Marker ids to reveal during this step (graph scene). */
   highlightMarkers?: string[]
+  /** Mark ids to reveal during this step (number-line scene). */
+  highlightMarks?: string[]
+  /** Interval ids to draw during this step (number-line scene). */
+  highlightIntervals?: string[]
 }
 
 /** Full interactive lesson generated from an image */
@@ -133,6 +175,11 @@ export interface InteractiveLesson {
    * rendering precedence over `geometry` when present and non-empty.
    */
   graph?: GraphData
+  /**
+   * Optional number-line scene for inequalities / intervals / set operations.
+   * Rendered when `graph` is empty but number line has marks or intervals.
+   */
+  numberLine?: NumberLineData
 }
 
 /** Response from the generation pipeline */

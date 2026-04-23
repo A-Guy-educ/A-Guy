@@ -14,9 +14,10 @@ export const INTERACTIVE_LESSON_PROMPT = `You are an expert math tutor creating 
 Analyze the provided image of a math problem and return structured primitives:
 1. **geometry** — for problems with a diagrammatic figure (triangles, circles, polygons).
 2. **graph** — for problems involving function plots on a coordinate plane (derivatives, integrals, function analysis).
-3. **steps** — always. A step-by-step solution table with claims and reasons.
+3. **numberLine** — for inequalities, interval solutions, domain/range, set operations on ℝ.
+4. **steps** — always. A step-by-step solution table with claims and reasons.
 
-Only ONE of geometry / graph should be populated per lesson. Leave the other with empty arrays / default ranges.
+Only ONE of geometry / graph / numberLine should be populated per lesson. Leave the others with empty arrays / default ranges.
 
 ## Output Format
 Return ONLY valid JSON (no markdown code blocks, no explanations):
@@ -37,6 +38,11 @@ Return ONLY valid JSON (no markdown code blocks, no explanations):
     "plots": [],
     "markers": []
   },
+  "numberLine": {
+    "range": [-10, 10],
+    "marks": [],
+    "intervals": []
+  },
   "steps": [
     {
       "id": 1,
@@ -49,7 +55,9 @@ Return ONLY valid JSON (no markdown code blocks, no explanations):
       "highlightSegments": [],
       "highlightPoints": [],
       "highlightPlots": [],
-      "highlightMarkers": []
+      "highlightMarkers": [],
+      "highlightMarks": [],
+      "highlightIntervals": []
     }
   ]
 }
@@ -65,9 +73,15 @@ Return ONLY valid JSON (no markdown code blocks, no explanations):
 - Function analysis (derivatives, integrals, limits, extrema)
 - Plotting a given expression
 - Intersections between curves
-- Visualizing inequalities over reals
+- Visualizing inequalities between functions (e.g. f(x) > g(x))
 
-**Use neither (both empty)** for pure algebra / numerical problems:
+**Use \`numberLine\`** for one-dimensional problems on ℝ:
+- Linear / quadratic / absolute-value inequalities (e.g. x > 3, |x − 2| ≤ 5, x² − 4 > 0)
+- Domain or range of a function expressed as intervals
+- Set operations: union / intersection of intervals
+- Sign charts for polynomials / rationals
+
+**Use none (all empty)** for pure algebra / numerical problems:
 - Solving equations (e.g., "Solve 2x² - 5x + 3 = 0") — step claims are the main visual
 - Simplification, factoring, expansion
 - Probability / statistics without plots
@@ -120,6 +134,34 @@ When neither scene is populated, step claims are shown full-size in the scene pa
 ### Step Highlights for Graph Scenes
 - \`highlightPlots\`: plot ids to draw in this step. A plot appears only when first highlighted; subsequent steps don't need to repeat it.
 - \`highlightMarkers\`: marker ids to fade in this step. Same semantics.
+
+## Number-Line Rules (only when the problem is 1-D on ℝ)
+
+### Range
+- \`range\`: [min, max] bounds of the displayed axis. Pick a comfortable window around the interesting values (boundaries, answer endpoints). E.g. for "x ∈ [1, 5)" use [-2, 8].
+- \`step\`: tick spacing. Default 1. Larger for wider ranges.
+
+### Marks
+- One entry per boundary value or answer point on the axis.
+- \`value\`: the numeric value along the axis.
+- \`inclusion\`: "closed" for a filled dot (value included), "open" for a hollow dot (excluded). Omit if it's a neutral mark (tick annotation).
+- \`label\`: rendered above the dot — use the exact value (e.g. "3", "-π/2", "x₁").
+
+### Intervals
+- One entry per colored stretch drawn above the axis.
+- \`from\`, \`to\`: endpoint values in data space.
+- \`fromInclusion\` / \`toInclusion\`:
+  - "closed" → filled-dot endpoint (value included).
+  - "open" → hollow-dot endpoint (value excluded).
+  - "unbounded" → renders an arrow extending to ±∞ in that direction. When "unbounded", set \`from\` / \`to\` to the edge of \`range\`.
+- Examples:
+  - "x > 3"  → { from: 3, to: 10, fromInclusion: "open", toInclusion: "unbounded" }
+  - "x ≤ 7"  → { from: -10, to: 7, fromInclusion: "unbounded", toInclusion: "closed" }
+  - "[2, 5)" → { from: 2, to: 5, fromInclusion: "closed", toInclusion: "open" }
+
+### Step Highlights for Number-Line Scenes
+- \`highlightMarks\`: mark ids to fade in this step.
+- \`highlightIntervals\`: interval ids to draw in this step. First appearance triggers the draw-in animation; later steps don't repeat.
 
 ## Solution Table Rules
 

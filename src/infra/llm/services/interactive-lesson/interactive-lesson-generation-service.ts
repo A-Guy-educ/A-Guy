@@ -273,6 +273,11 @@ function validateLesson(parsed: Record<string, unknown>, locale: 'he' | 'en'): I
   const graph = parsed.graph as Record<string, unknown> | undefined
   const hasGraphContent =
     !!graph && Array.isArray(graph.plots) && (graph.plots as unknown[]).length > 0
+  const numberLine = parsed.numberLine as Record<string, unknown> | undefined
+  const hasNumberLineContent =
+    !!numberLine &&
+    ((Array.isArray(numberLine.intervals) && (numberLine.intervals as unknown[]).length > 0) ||
+      (Array.isArray(numberLine.marks) && (numberLine.marks as unknown[]).length > 0))
 
   return {
     title: typeof parsed.title === 'string' ? parsed.title : 'Untitled',
@@ -286,6 +291,7 @@ function validateLesson(parsed: Record<string, unknown>, locale: 'he' | 'en'): I
       labels: Array.isArray(geo.labels) ? geo.labels.map(validateLabel) : [],
     },
     graph: hasGraphContent ? validateGraph(graph) : undefined,
+    numberLine: hasNumberLineContent ? validateNumberLine(numberLine) : undefined,
     steps: steps.map((step: Record<string, unknown>, i: number) => ({
       id: typeof step.id === 'number' ? step.id : i + 1,
       title: String(step.title || `Step ${i + 1}`),
@@ -303,6 +309,12 @@ function validateLesson(parsed: Record<string, unknown>, locale: 'he' | 'en'): I
         : [],
       highlightMarkers: Array.isArray(step.highlightMarkers)
         ? (step.highlightMarkers as unknown[]).map(String)
+        : [],
+      highlightMarks: Array.isArray(step.highlightMarks)
+        ? (step.highlightMarks as unknown[]).map(String)
+        : [],
+      highlightIntervals: Array.isArray(step.highlightIntervals)
+        ? (step.highlightIntervals as unknown[]).map(String)
         : [],
     })),
   }
@@ -420,6 +432,55 @@ function validateGraph(g: Record<string, unknown>) {
     yStep: typeof g.yStep === 'number' && g.yStep > 0 ? g.yStep : undefined,
     plots: Array.isArray(g.plots) ? g.plots.map(validatePlot) : [],
     markers: Array.isArray(g.markers) ? g.markers.map(validateMarker) : [],
+  }
+}
+
+const INCLUSION_OPTIONS = ['open', 'closed'] as const
+const INTERVAL_INCLUSION_OPTIONS = ['open', 'closed', 'unbounded'] as const
+type NumberLineMarkInclusion = (typeof INCLUSION_OPTIONS)[number]
+type NumberLineIntervalInclusion = (typeof INTERVAL_INCLUSION_OPTIONS)[number]
+
+function toMarkInclusion(value: unknown): NumberLineMarkInclusion | undefined {
+  return typeof value === 'string' && (INCLUSION_OPTIONS as readonly string[]).includes(value)
+    ? (value as NumberLineMarkInclusion)
+    : undefined
+}
+
+function toIntervalInclusion(value: unknown): NumberLineIntervalInclusion {
+  return typeof value === 'string' &&
+    (INTERVAL_INCLUSION_OPTIONS as readonly string[]).includes(value)
+    ? (value as NumberLineIntervalInclusion)
+    : 'closed'
+}
+
+function validateNumberLineMark(m: Record<string, unknown>, i: number) {
+  return {
+    id: String(m.id || `mark-${i + 1}`),
+    value: Number(m.value || 0),
+    label: typeof m.label === 'string' ? m.label : undefined,
+    inclusion: toMarkInclusion(m.inclusion),
+    color: toGraphColor(m.color),
+  }
+}
+
+function validateNumberLineInterval(iv: Record<string, unknown>, i: number) {
+  return {
+    id: String(iv.id || `interval-${i + 1}`),
+    from: Number(iv.from || 0),
+    to: Number(iv.to || 0),
+    fromInclusion: toIntervalInclusion(iv.fromInclusion),
+    toInclusion: toIntervalInclusion(iv.toInclusion),
+    color: toGraphColor(iv.color),
+    label: typeof iv.label === 'string' ? iv.label : undefined,
+  }
+}
+
+function validateNumberLine(nl: Record<string, unknown>) {
+  return {
+    range: toRange(nl.range, [-10, 10]),
+    step: typeof nl.step === 'number' && nl.step > 0 ? nl.step : undefined,
+    marks: Array.isArray(nl.marks) ? nl.marks.map(validateNumberLineMark) : [],
+    intervals: Array.isArray(nl.intervals) ? nl.intervals.map(validateNumberLineInterval) : [],
   }
 }
 

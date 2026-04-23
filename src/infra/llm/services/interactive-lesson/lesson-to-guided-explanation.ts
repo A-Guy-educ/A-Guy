@@ -22,6 +22,9 @@ import type {
   GraphMarker,
   GraphPlot,
   InteractiveLesson,
+  NumberLineData,
+  NumberLineInterval,
+  NumberLineMark,
 } from './interactive-lesson-types'
 
 // ---------------------------------------------------------------------------
@@ -420,6 +423,218 @@ function buildGraphStepActions(
 }
 
 // ---------------------------------------------------------------------------
+// Number-line scene — inequalities, intervals, set ops on ℝ
+// ---------------------------------------------------------------------------
+
+const NUMBER_LINE_SCENE_WIDTH = 600
+const NUMBER_LINE_SCENE_HEIGHT = 180
+const NUMBER_LINE_PADDING = 40
+const NUMBER_LINE_BASELINE_Y = 120
+/** Vertical offset between stacked intervals so they don't overlap. */
+const INTERVAL_LANE_GAP = 14
+
+function numberLineXToSvg(value: number, range: [number, number]): number {
+  const [min, max] = range
+  const span = max - min || 1
+  const plotWidth = NUMBER_LINE_SCENE_WIDTH - 2 * NUMBER_LINE_PADDING
+  return NUMBER_LINE_PADDING + ((value - min) / span) * plotWidth
+}
+
+function buildNumberLineAxis(range: [number, number], step: number): string[] {
+  const lines: string[] = []
+  const y = NUMBER_LINE_BASELINE_Y
+  const [min, max] = range
+  const leftX = NUMBER_LINE_PADDING - 8
+  const rightX = NUMBER_LINE_SCENE_WIDTH - NUMBER_LINE_PADDING + 8
+  // Main axis with arrowheads at both ends
+  lines.push(
+    `    <line x1="${leftX}" y1="${y}" x2="${rightX}" y2="${y}" stroke="currentColor" stroke-width="1.5" opacity="0.75" />`,
+  )
+  // Arrowheads as small triangles
+  lines.push(
+    `    <polygon points="${leftX - 6},${y} ${leftX},${y - 5} ${leftX},${y + 5}" fill="currentColor" opacity="0.75" />`,
+  )
+  lines.push(
+    `    <polygon points="${rightX + 6},${y} ${rightX},${y - 5} ${rightX},${y + 5}" fill="currentColor" opacity="0.75" />`,
+  )
+  // Ticks + labels
+  for (const tick of axisTicks(min, max, step)) {
+    const x = numberLineXToSvg(tick, range)
+    lines.push(
+      `    <line x1="${x}" y1="${y - 5}" x2="${x}" y2="${y + 5}" stroke="currentColor" stroke-width="1" opacity="0.6" />`,
+    )
+    lines.push(
+      `    <text x="${x}" y="${y + 20}" text-anchor="middle" font-size="11" fill="currentColor" opacity="0.7">${formatTick(tick)}</text>`,
+    )
+  }
+  return lines
+}
+
+function buildMark(
+  mark: NumberLineMark,
+  range: [number, number],
+  seenValuesByLane: Map<number, number>,
+): string {
+  const cx = numberLineXToSvg(mark.value, range)
+  const cy = NUMBER_LINE_BASELINE_Y
+  const color = safeColor(mark.color)
+  const filled = mark.inclusion !== 'open'
+  const id = `mark-${safeLabel(mark.id)}`
+  // Offset label above the dot to avoid stomping the axis number
+  const labelY = cy - 14
+  const labelText = mark.label
+    ? `<text x="${cx}" y="${labelY}" text-anchor="middle" font-size="12" font-weight="600" fill="${color}">${escapeXml(mark.label)}</text>`
+    : ''
+  const dotFill = filled ? color : 'white'
+  const result = `    <g id="${id}" class="ge-fade-element"><circle cx="${cx}" cy="${cy}" r="5" fill="${dotFill}" stroke="${color}" stroke-width="2" />${labelText}</g>`
+  // Track which lane each mark occupies so intervals can dodge them — simple
+  // approximation; for now always lane 0.
+  seenValuesByLane.set(mark.value, 0)
+  return result
+}
+
+function intervalLane(
+  intervalIndex: number,
+  usedLanes: number[],
+  spans: Array<[number, number]>,
+): number {
+  // Find the lowest lane that doesn't overlap with any previously-placed
+  // interval on the same lane. Intervals overlap if their spans share any x.
+  const [newFrom, newTo] = spans[intervalIndex]
+  for (let lane = 0; lane < 8; lane++) {
+    let collides = false
+    for (let prev = 0; prev < intervalIndex; prev++) {
+      if (usedLanes[prev] !== lane) continue
+      const [pf, pt] = spans[prev]
+      const overlap = Math.max(pf, newFrom) <= Math.min(pt, newTo)
+      if (overlap) {
+        collides = true
+        break
+      }
+    }
+    if (!collides) return lane
+  }
+  return 0
+}
+
+function intervalSpan(iv: NumberLineInterval): [number, number] {
+  return iv.from <= iv.to ? [iv.from, iv.to] : [iv.to, iv.from]
+}
+
+function buildInterval(iv: NumberLineInterval, range: [number, number], lane: number): string[] {
+  const color = safeColor(iv.color)
+  const y = NUMBER_LINE_BASELINE_Y - 22 - lane * INTERVAL_LANE_GAP
+  const xFrom = numberLineXToSvg(iv.from, range)
+  const xTo = numberLineXToSvg(iv.to, range)
+  const lines: string[] = []
+  const id = `interval-${safeLabel(iv.id)}`
+  // Draw the main segment (animated via ge-draw-path stroke-dashoffset).
+  lines.push(
+    `    <line id="${id}" class="ge-draw-path" x1="${xFrom}" y1="${y}" x2="${xTo}" y2="${y}" stroke="${color}" stroke-width="5" stroke-linecap="round" />`,
+  )
+  // Endpoint decorations — drawn static, appear alongside the line draw.
+  const endGroupId = `${id}-ends`
+  const endpoints: string[] = []
+  if (iv.fromInclusion === 'unbounded') {
+    // Left arrow
+    endpoints.push(
+      `<polygon points="${xFrom - 10},${y} ${xFrom},${y - 5} ${xFrom},${y + 5}" fill="${color}" />`,
+    )
+  } else {
+    const filled = iv.fromInclusion === 'closed'
+    endpoints.push(
+      `<circle cx="${xFrom}" cy="${y}" r="5" fill="${filled ? color : 'white'}" stroke="${color}" stroke-width="2" />`,
+    )
+  }
+  if (iv.toInclusion === 'unbounded') {
+    endpoints.push(
+      `<polygon points="${xTo + 10},${y} ${xTo},${y - 5} ${xTo},${y + 5}" fill="${color}" />`,
+    )
+  } else {
+    const filled = iv.toInclusion === 'closed'
+    endpoints.push(
+      `<circle cx="${xTo}" cy="${y}" r="5" fill="${filled ? color : 'white'}" stroke="${color}" stroke-width="2" />`,
+    )
+  }
+  lines.push(`    <g id="${endGroupId}" class="ge-fade-element">${endpoints.join('')}</g>`)
+  // Optional label — rendered above the midpoint
+  if (iv.label) {
+    const mid = (xFrom + xTo) / 2
+    lines.push(
+      `    <text id="${id}-label" class="ge-fade-element" x="${mid}" y="${y - 8}" text-anchor="middle" font-size="12" font-weight="600" fill="${color}">${escapeXml(iv.label)}</text>`,
+    )
+  }
+  return lines
+}
+
+function buildNumberLineSvg(data: NumberLineData): string {
+  const range = data.range
+  const step = data.step ?? 1
+  const lines: string[] = []
+  lines.push(
+    `<svg viewBox="0 0 ${NUMBER_LINE_SCENE_WIDTH} ${NUMBER_LINE_SCENE_HEIGHT}" xmlns="http://www.w3.org/2000/svg">`,
+  )
+  lines.push('  <g font-family="sans-serif" fill="currentColor">')
+
+  lines.push(...buildNumberLineAxis(range, step))
+
+  // Pre-compute a lane per interval so overlapping intervals stack cleanly.
+  const spans = data.intervals.map(intervalSpan)
+  const lanes: number[] = []
+  for (let i = 0; i < data.intervals.length; i++) {
+    lanes.push(intervalLane(i, lanes, spans))
+  }
+
+  for (let i = 0; i < data.intervals.length; i++) {
+    lines.push(...buildInterval(data.intervals[i], range, lanes[i]))
+  }
+
+  const seenValuesByLane = new Map<number, number>()
+  for (const mark of data.marks) {
+    lines.push(buildMark(mark, range, seenValuesByLane))
+  }
+
+  lines.push('  </g>')
+  lines.push('</svg>')
+  return lines.join('\n')
+}
+
+function buildNumberLineStepActions(
+  step: InteractiveLesson['steps'][number],
+  stepIndex: number,
+  seenMarks: Set<string>,
+  seenIntervals: Set<string>,
+  intervalsWithLabels: Set<string>,
+): GuidedExplanationAction[] {
+  const actions: GuidedExplanationAction[] = []
+
+  if (step.highlightIntervals) {
+    for (const rawId of step.highlightIntervals) {
+      const id = `interval-${safeLabel(rawId)}`
+      if (!seenIntervals.has(id)) {
+        actions.push({ op: 'draw', id })
+        actions.push({ op: 'show', id: `${id}-ends` })
+        if (intervalsWithLabels.has(id)) actions.push({ op: 'show', id: `${id}-label` })
+        seenIntervals.add(id)
+      }
+    }
+  }
+
+  if (step.highlightMarks) {
+    for (const rawId of step.highlightMarks) {
+      const id = `mark-${safeLabel(rawId)}`
+      if (!seenMarks.has(id)) {
+        actions.push({ op: 'show', id })
+        seenMarks.add(id)
+      }
+    }
+  }
+
+  actions.push({ op: 'highlightRow', rowId: `row-${stepIndex + 1}` })
+  return actions
+}
+
+// ---------------------------------------------------------------------------
 // Equation scene (used when the lesson has no geometric figure)
 // ---------------------------------------------------------------------------
 
@@ -478,10 +693,17 @@ function hasGraphContent(graph: GraphData | undefined): graph is GraphData {
   return !!graph && graph.plots.length > 0
 }
 
-type SceneKind = 'graph' | 'geometry' | 'equation'
+function hasNumberLineContent(
+  numberLine: NumberLineData | undefined,
+): numberLine is NumberLineData {
+  return !!numberLine && (numberLine.intervals.length > 0 || numberLine.marks.length > 0)
+}
+
+type SceneKind = 'graph' | 'numberLine' | 'geometry' | 'equation'
 
 function pickSceneKind(lesson: InteractiveLesson): SceneKind {
   if (hasGraphContent(lesson.graph)) return 'graph'
+  if (hasNumberLineContent(lesson.numberLine)) return 'numberLine'
   if (hasGeometricFigure(lesson.geometry)) return 'geometry'
   return 'equation'
 }
@@ -497,6 +719,11 @@ export function interactiveLessonToGuidedExplanation(
     scene = {
       svg: buildGraphSvg(lesson.graph),
       viewBox: `0 0 ${GRAPH_SCENE_WIDTH} ${GRAPH_SCENE_HEIGHT}`,
+    }
+  } else if (sceneKind === 'numberLine' && lesson.numberLine) {
+    scene = {
+      svg: buildNumberLineSvg(lesson.numberLine),
+      viewBox: `0 0 ${NUMBER_LINE_SCENE_WIDTH} ${NUMBER_LINE_SCENE_HEIGHT}`,
     }
   } else if (sceneKind === 'geometry') {
     scene = {
@@ -514,16 +741,25 @@ export function interactiveLessonToGuidedExplanation(
   const seenPoints = new Set<string>()
   const seenPlots = new Set<string>()
   const seenMarkers = new Set<string>()
+  const seenIntervals = new Set<string>()
+  const seenMarks = new Set<string>()
   const plotLabelIds = new Set<string>(
     (lesson.graph?.plots ?? [])
       .filter((p) => !!p.label)
       .map((p) => `plot-${safeLabel(p.id)}-label`),
+  )
+  const intervalsWithLabels = new Set<string>(
+    (lesson.numberLine?.intervals ?? [])
+      .filter((iv) => !!iv.label)
+      .map((iv) => `interval-${safeLabel(iv.id)}`),
   )
 
   const steps = lesson.steps.map((step, i) => {
     let actions: GuidedExplanationAction[]
     if (sceneKind === 'graph') {
       actions = buildGraphStepActions(step, i, seenPlots, seenMarkers, plotLabelIds)
+    } else if (sceneKind === 'numberLine') {
+      actions = buildNumberLineStepActions(step, i, seenMarks, seenIntervals, intervalsWithLabels)
     } else if (sceneKind === 'geometry') {
       actions = buildGeometryStepActions(step, i, seenSegments, seenPoints)
     } else {
