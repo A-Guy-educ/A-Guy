@@ -39,12 +39,13 @@
       "retries": 0
     },
     "ship": {
-      "state": "pending",
+      "state": "running",
+      "startedAt": "2026-04-19T15:55:06.528Z",
       "retries": 0
     }
   },
   "createdAt": "2026-04-19T15:16:31.748Z",
-  "updatedAt": "2026-04-19T15:55:05.735Z",
+  "updatedAt": "2026-04-19T15:55:06.528Z",
   "sessions": {
     "explore": "f88b2dd1-f090-447b-ad53-ba1d7bfee664",
     "build": "c16f18dd-0f0d-4443-b277-567b86b3f995",

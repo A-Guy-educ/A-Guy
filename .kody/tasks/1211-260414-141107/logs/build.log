@@ -1,0 +1,46 @@
+Typecheck passes. Let me provide a summary of what was implemented:
+
+## Implementation Summary
+
+**Phase 1 — Math-to-Speech Engine** ✅
+
+1. **Unit tests for `latexToSpeech`** (`tests/unit/infra/utils/latexToSpeech.test.ts`):
+   - 25 tests covering fractions, superscripts, subscripts, roots, Greek letters, comparison operators, sums, integrals, nested expressions
+
+2. **`src/infra/utils/latexToSpeech.ts`** — Bilingual LaTeX→speech converter:
+   - Supports `en` and `he` locales
+   - Lookup table for LaTeX commands (Greek letters, trig functions, comparison operators)
+   - Pattern-based handlers for fractions, roots, superscripts, subscripts, sums, integrals
+   - Handles `$...$` inline and `$$...$$` block math
+
+3. **`src/infra/utils/speechHelpers.ts`** — Replaced LaTeX stripping with verbalization:
+   - `stripMarkdown()` now converts LaTeX to spoken text using `latexToSpeech` instead of removing it
+   - `detectLanguage()` preserved for language detection
+
+4. **Ported voice selection + rate 0.85/pitch 0.95** to chat TTS hook:
+   - `pickVoiceForLocale()` from guided speech.ts adapted for chat TTS
+   - Hebrew preference chain: Natural/Online → Hila/Carmit → Google/Premium → any Hebrew
+   - Rate 0.85, pitch 0.95 for teacher-cadence tuning
+
+**Phase 2 — Playback Controls** ✅
+
+5. **`src/ui/web/chat/hooks/useTTS.ts`** — Added playback controls:
+   - `pause()`, `resume()`, `setRate()` methods
+   - `isPaused`, `currentRate` state
+   - Rate multiplier (0.5x–2.0x) applied to base rate 0.85
+
+6. **i18n keys** added in `en.json` and `he.json`:
+   - `chatPause`, `chatResume`, `chatSpeed`
+
+7. **`src/ui/web/chat/TTSButton/index.tsx`** — Speed selector + pause/resume:
+   - Speed preset pills: 0.5x, 0.75x, 1.0x, 1.25x, 1.5x, 2.0x
+   - Pause/Resume toggle button (appears when playing)
+   - RTL-aware layout with proper `rtl:` classes
+   - Design system tokens only (no hardcoded colors)
+
+8. **`src/ui/web/chat/ChatInterface/index.tsx`** — Wired new TTS controls:
+   - Passes `isPaused`, `currentRate`, `pause`, `resume`, `setRate` to TTSButton
+
+**Tests**: 39 unit tests passing
+**Lint**: Clean (only pre-existing warnings in unrelated files)
+**Typecheck**: ✅ Passes
