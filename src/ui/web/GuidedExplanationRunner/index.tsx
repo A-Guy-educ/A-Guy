@@ -1,8 +1,10 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
+import { Play, RotateCcw } from 'lucide-react'
 import type { GuidedExplanationV1 } from '@/infra/contracts/guided-explanation/v1'
 import { sanitizeSvg } from '@/ui/web/exerciserenderer/utils/svgSanitize'
+import { cn } from '@/infra/utils/ui'
 import { Controls } from './Controls'
 import { NarrationBox } from './NarrationBox'
 import { ProofTable } from './ProofTable'
@@ -31,6 +33,7 @@ export function GuidedExplanationRunner({ payload }: GuidedExplanationRunnerProp
   const {
     isPlaying,
     isPaused,
+    isComplete,
     narrationText,
     currentStep,
     totalSteps,
@@ -51,12 +54,19 @@ export function GuidedExplanationRunner({ payload }: GuidedExplanationRunnerProp
   const pauseLabel = payload.controls.pauseLabel ?? (isHebrew ? 'השהיה' : 'Pause')
   const resumeLabel = payload.controls.resumeLabel ?? (isHebrew ? 'המשך' : 'Resume')
   const speedLabel = isHebrew ? 'מהירות' : 'Speed'
-  const stepLabel =
-    currentStep > 0
-      ? isHebrew
-        ? `שלב ${currentStep} מתוך ${totalSteps}`
-        : `Step ${currentStep} of ${totalSteps}`
-      : null
+  const completeLabel = isHebrew ? 'הכל טוב! ✓' : 'Solved ✓'
+  const replayLabel = isHebrew ? 'חזרה מהתחלה' : 'Replay'
+  const playAriaLabel = isHebrew ? 'התחל הסבר' : 'Start explanation'
+
+  const currentStepTitle = currentStep > 0 ? (payload.steps[currentStep - 1]?.title ?? null) : null
+
+  const handleReplay = useCallback(() => {
+    reset()
+    // Let reset's state updates flush before the next play kicks off, so
+    // play() reads a clean isPlaying/currentStep closure instead of the
+    // stale "just finished" one.
+    setTimeout(() => play(), 0)
+  }, [reset, play])
 
   // Sanitize SVG at render time (strips <script>, event handlers,
   // foreignObject, external refs) then set via ref so React never
@@ -68,6 +78,9 @@ export function GuidedExplanationRunner({ payload }: GuidedExplanationRunnerProp
     }
   }, [payload.scene.svg])
 
+  const showPlayOverlay = !isPlaying && !isComplete && currentStep === 0
+  const showStepCard = isPlaying && currentStep > 0 && !!currentStepTitle
+
   return (
     <section
       ref={rootRef}
@@ -78,10 +91,59 @@ export function GuidedExplanationRunner({ payload }: GuidedExplanationRunnerProp
       <header className="ge-header">
         <h1 className="ge-title">{payload.title}</h1>
         {payload.subtitle ? <p className="ge-subtitle">{payload.subtitle}</p> : null}
-        {stepLabel ? <p className="ge-step-indicator">{stepLabel}</p> : null}
       </header>
 
-      <div ref={sceneRef} className="ge-scene" />
+      <div className="ge-scene" role="img" aria-label={payload.title}>
+        <div ref={sceneRef} className="ge-scene-inner" />
+
+        {showPlayOverlay && (
+          <button
+            type="button"
+            className="ge-play-overlay"
+            onClick={play}
+            aria-label={playAriaLabel}
+          >
+            <Play className="ge-play-overlay-icon" fill="currentColor" />
+          </button>
+        )}
+
+        {showStepCard && (
+          <div className="ge-step-card" aria-live="polite">
+            <span className="ge-step-card-number">{currentStep}</span>
+            <span className="ge-step-card-title">{currentStepTitle}</span>
+            <span className="ge-step-card-total">/ {totalSteps}</span>
+          </div>
+        )}
+
+        {isComplete && (
+          <div className="ge-completion-card" role="status">
+            <div className="ge-completion-checkmark">✓</div>
+            <h2 className="ge-completion-title">{completeLabel}</h2>
+            <p className="ge-completion-subtitle">{payload.title}</p>
+            <button
+              type="button"
+              className="ge-btn ge-btn-primary ge-completion-replay"
+              onClick={handleReplay}
+            >
+              <RotateCcw className="w-4 h-4" />
+              {replayLabel}
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="ge-progress" aria-hidden="true">
+        {Array.from({ length: totalSteps }).map((_, i) => (
+          <div
+            key={i}
+            className={cn(
+              'ge-progress-step',
+              i < currentStep && 'ge-progress-step-done',
+              i === currentStep - 1 && isPlaying && 'ge-progress-step-active',
+            )}
+          />
+        ))}
+      </div>
 
       <Controls
         playLabel={payload.controls.playLabel}

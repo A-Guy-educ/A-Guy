@@ -31,6 +31,7 @@ interface UseGuidedPlayerArgs {
 interface UseGuidedPlayerResult {
   isPlaying: boolean
   isPaused: boolean
+  isComplete: boolean
   narrationText: string
   currentStep: number
   totalSteps: number
@@ -63,6 +64,7 @@ export function useGuidedPlayer({
 }: UseGuidedPlayerArgs): UseGuidedPlayerResult {
   const [isPlaying, setIsPlaying] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
+  const [isComplete, setIsComplete] = useState(false)
   const [narrationText, setNarrationText] = useState(payload.narrationBox.placeholder)
   const [currentStep, setCurrentStep] = useState(0)
   const [speed, setSpeedState] = useState(1)
@@ -116,6 +118,7 @@ export function useGuidedPlayer({
     cancelSpeech()
     setIsPlaying(false)
     setIsPaused(false)
+    setIsComplete(false)
     setCurrentStep(0)
     setNarrationText(payload.narrationBox.placeholder)
     if (containerRef.current) resetScene(containerRef.current)
@@ -151,6 +154,7 @@ export function useGuidedPlayer({
 
     setIsPlaying(true)
     setIsPaused(false)
+    setIsComplete(false)
     pausedRef.current = false
 
     void (async () => {
@@ -181,6 +185,7 @@ export function useGuidedPlayer({
         if (!shouldCancel()) {
           setIsPlaying(false)
           setIsPaused(false)
+          setIsComplete(true)
           pausedRef.current = false
           activeAnimationRef.current = null
         }
@@ -200,6 +205,7 @@ export function useGuidedPlayer({
   return {
     isPlaying,
     isPaused,
+    isComplete,
     narrationText,
     currentStep,
     totalSteps,
