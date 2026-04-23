@@ -156,9 +156,13 @@ export default buildConfig({
       // Fail fast when all pool connections are in use — return error instead of
       // queuing indefinitely, which would cause cascading timeouts in serverless
       serverSelectionTimeoutMS: 5000,
-      // Wait at most 3s for a connection from the pool before failing.
-      // Prevents requests from piling up when the pool is saturated.
-      waitQueueTimeoutMS: 3000,
+      // Wait up to 10s for a connection from the pool before failing.
+      // 3s was too aggressive: with maxPoolSize=3, concurrent PDF extraction
+      // (see PAGE_CONCURRENCY in extract-context.ts) plus admin status polling
+      // caused transient contention to fast-fail payload.auth() → 401/500 (issue #1287).
+      // 10s tolerates brief bursts while still bounding serverless function waits;
+      // serverSelectionTimeoutMS above still guards "Atlas unreachable" fast-fail.
+      waitQueueTimeoutMS: 10000,
       // Socket timeout for long-running operations
       socketTimeoutMS: 30000,
     },
