@@ -12,6 +12,7 @@ interface Strings {
   learning: string
   practice: string
   exam: string
+  filterAll: string
   loading: string
   noLessons: string
   moveUp: string
@@ -27,6 +28,7 @@ const EN: Strings = {
   learning: 'Learning',
   practice: 'Practice',
   exam: 'Exam',
+  filterAll: 'All',
   loading: 'Loading lessons...',
   noLessons: 'No lessons yet.',
   moveUp: 'Move up',
@@ -42,6 +44,7 @@ const HE: Strings = {
   learning: 'למידה',
   practice: 'תרגול',
   exam: 'מבחן',
+  filterAll: 'הכל',
   loading: 'טוען שיעורים...',
   noLessons: 'אין שיעורים עדיין.',
   moveUp: 'העלה',

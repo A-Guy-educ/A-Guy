@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { useDocumentInfo, useTranslation } from '@payloadcms/ui'
+import { useDocumentInfo, useForm, useTranslation } from '@payloadcms/ui'
 import { GripVertical, ChevronUp, ChevronDown, BookOpen, Pencil, ClipboardList } from 'lucide-react'
 
 import { getStrings } from './strings'
@@ -156,10 +156,44 @@ const sectionLabelStyle: React.CSSProperties = {
   flexShrink: 0,
 }
 
+const filterBarStyle: React.CSSProperties = {
+  padding: '8px 16px',
+  borderBottom: '1px solid var(--theme-elevation-150)',
+  display: 'flex',
+  gap: 8,
+  alignItems: 'center',
+  flexWrap: 'wrap',
+}
+
+const filterBtnStyle = (active: boolean): React.CSSProperties => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 4,
+  padding: '4px 10px',
+  borderRadius: 4,
+  border: '1px solid',
+  fontSize: 11,
+  fontWeight: 600,
+  cursor: 'pointer',
+  transition: 'background 0.15s, border-color 0.15s',
+  ...(active
+    ? {
+        background: 'var(--theme-elevation-800)',
+        borderColor: 'var(--theme-elevation-800)',
+        color: 'var(--theme-elevation-50)',
+      }
+    : {
+        background: 'transparent',
+        borderColor: 'var(--theme-elevation-200)',
+        color: 'var(--theme-text)',
+      }),
+})
+
 export const CourseLessonsSorter: React.FC = () => {
   const { id } = useDocumentInfo()
   const { i18n } = useTranslation()
   const s = getStrings(i18n.language)
+  const { setModified } = useForm()
 
   const [loadingState, setLoadingState] = useState<LoadingState>('idle')
   const [chapters, setChapters] = useState<GroupedChapter[]>([])
@@ -169,6 +203,7 @@ export const CourseLessonsSorter: React.FC = () => {
   const [dropTargetIdx, setDropTargetIdx] = useState<{ chapterId: string; idx: number } | null>(
     null,
   )
+  const [activeFilter, setActiveFilter] = useState<'all' | 'learning' | 'practice' | 'exam'>('all')
 
   // Keep a ref to the latest chapters state so moveLesson can access it without stale-closure issues
   const chaptersRef = useRef<GroupedChapter[]>([])
@@ -271,6 +306,9 @@ export const CourseLessonsSorter: React.FC = () => {
         }),
       )
 
+      // Tell Payload's form the field is dirty so the Save button becomes enabled
+      setModified(true)
+
       // Persist new order values via PATCH
       try {
         await Promise.all(
@@ -289,7 +327,7 @@ export const CourseLessonsSorter: React.FC = () => {
         setChapters(snapshot)
       }
     },
-    [s.failedToReorder],
+    [s.failedToReorder, setModified],
   )
 
   // Drag-and-drop handlers
@@ -375,8 +413,45 @@ export const CourseLessonsSorter: React.FC = () => {
         <span style={sectionLabelStyle}>{s.courseLessons}</span>
       </div>
 
+      {/* Type filter buttons */}
+      <div style={filterBarStyle}>
+        <button
+          type="button"
+          style={filterBtnStyle(activeFilter === 'all')}
+          onClick={() => setActiveFilter('all')}
+        >
+          {s.filterAll}
+        </button>
+        <button
+          type="button"
+          style={filterBtnStyle(activeFilter === 'learning')}
+          onClick={() => setActiveFilter('learning')}
+        >
+          <BookOpen size={12} />
+          {s.learning}
+        </button>
+        <button
+          type="button"
+          style={filterBtnStyle(activeFilter === 'practice')}
+          onClick={() => setActiveFilter('practice')}
+        >
+          <Pencil size={12} />
+          {s.practice}
+        </button>
+        <button
+          type="button"
+          style={filterBtnStyle(activeFilter === 'exam')}
+          onClick={() => setActiveFilter('exam')}
+        >
+          <ClipboardList size={12} />
+          {s.exam}
+        </button>
+      </div>
+
       {chapters.map((group) => {
-        const { chapter, lessons } = group
+        const { chapter, lessons: allLessons } = group
+        const lessons =
+          activeFilter === 'all' ? allLessons : allLessons.filter((l) => l.type === activeFilter)
 
         return (
           <div key={chapter.id}>
