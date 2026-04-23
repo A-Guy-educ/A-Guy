@@ -5,7 +5,7 @@ import type {
   GuidedExplanationStep,
   GuidedExplanationV1,
 } from '@/infra/contracts/guided-explanation/v1'
-import { runAction, resetScene } from './sceneActions'
+import { runAction, resetScene, type PausableAnimation } from './sceneActions'
 import { cancelSpeech, primeSpeechVoices, speak, stripNiqqud } from './speech'
 
 interface UseGuidedPlayerArgs {
@@ -30,9 +30,11 @@ interface UseGuidedPlayerResult {
  * counter; reset/replay bumps it; in-flight async work bails out the next
  * tick when its captured value no longer matches.
  *
- * Pause: `pauseRef` is checked between ops via `waitWhilePaused()`. When
- * paused, the loop awaits a promise that resolves when `resume()` is called.
- * Browser speechSynthesis natively supports pause/resume.
+ * Pause: the currently-running Anime.js animation is registered via
+ * `activeAnimationRef`; pause/resume pipe through to it natively. A
+ * `pausedRef` + `waitWhilePaused()` guards the gaps between animations
+ * (e.g. when the sequence is paused during narration). Browser
+ * speechSynthesis natively supports pause/resume.
  */
 export function useGuidedPlayer({
   payload,
@@ -47,6 +49,7 @@ export function useGuidedPlayer({
   // and called/cleared on resume so awaiting ops continue.
   const pausedRef = useRef(false)
   const pauseResolverRef = useRef<(() => void) | null>(null)
+  const activeAnimationRef = useRef<PausableAnimation | null>(null)
 
   useEffect(() => {
     primeSpeechVoices()
@@ -62,6 +65,10 @@ export function useGuidedPlayer({
     })
   }, [])
 
+  const registerAnimation = useCallback((anim: PausableAnimation | null) => {
+    activeAnimationRef.current = anim
+  }, [])
+
   const reset = useCallback(() => {
     sequenceRef.current += 1
     pausedRef.current = false
@@ -69,6 +76,8 @@ export function useGuidedPlayer({
       pauseResolverRef.current()
       pauseResolverRef.current = null
     }
+    activeAnimationRef.current?.cancel?.()
+    activeAnimationRef.current = null
     cancelSpeech()
     setIsPlaying(false)
     setIsPaused(false)
@@ -80,6 +89,7 @@ export function useGuidedPlayer({
     if (!isPlaying || pausedRef.current) return
     pausedRef.current = true
     setIsPaused(true)
+    activeAnimationRef.current?.pause()
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.pause()
     }
@@ -89,6 +99,7 @@ export function useGuidedPlayer({
     if (!pausedRef.current) return
     pausedRef.current = false
     setIsPaused(false)
+    activeAnimationRef.current?.play()
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.resume()
     }
@@ -122,6 +133,7 @@ export function useGuidedPlayer({
             locale: payload.locale,
             shouldCancel,
             waitWhilePaused,
+            registerAnimation,
             setNarrationText,
           })
         }
@@ -130,10 +142,11 @@ export function useGuidedPlayer({
           setIsPlaying(false)
           setIsPaused(false)
           pausedRef.current = false
+          activeAnimationRef.current = null
         }
       }
     })()
-  }, [isPlaying, payload.steps, payload.locale, containerRef, waitWhilePaused])
+  }, [isPlaying, payload.steps, payload.locale, containerRef, waitWhilePaused, registerAnimation])
 
   return { isPlaying, isPaused, narrationText, play, pause, resume, reset }
 }
@@ -145,6 +158,7 @@ interface RunStepCtx {
   locale: string
   shouldCancel: () => boolean
   waitWhilePaused: () => Promise<void>
+  registerAnimation: (anim: PausableAnimation | null) => void
   setNarrationText: (text: string) => void
 }
 
@@ -153,7 +167,11 @@ async function runStep(step: GuidedExplanationStep, ctx: RunStepCtx): Promise<vo
     if (ctx.shouldCancel()) return
     await ctx.waitWhilePaused()
     if (ctx.shouldCancel()) return
-    await runAction(action, { root: ctx.root, shouldCancel: ctx.shouldCancel })
+    await runAction(action, {
+      root: ctx.root,
+      shouldCancel: ctx.shouldCancel,
+      registerAnimation: ctx.registerAnimation,
+    })
   }
   if (step.narrate && !ctx.shouldCancel()) {
     await ctx.waitWhilePaused()
