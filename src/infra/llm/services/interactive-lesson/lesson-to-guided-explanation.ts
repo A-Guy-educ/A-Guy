@@ -2,7 +2,14 @@
  * Converts an InteractiveLesson (from the Gemini generation pipeline)
  * into a GuidedExplanationV1 payload that the trusted HTML block renderer
  * can execute. This bridges the two systems: the LLM generates structured
- * geometry + steps, and the GuidedExplanationRunner renders them.
+ * primitives, and the GuidedExplanationRunner renders them.
+ *
+ * Two scene kinds:
+ *  - geometry: segments/points/angles from a diagram.
+ *  - equation: a stack of big centered text elements, one per step. Used
+ *    when the lesson has no geometric figure (algebra, calculus, etc.) —
+ *    step actions fade the previous claim out and the next one in, so the
+ *    scene pane stays visually active instead of sitting empty.
  */
 import type {
   GuidedExplanationV1,
@@ -11,7 +18,7 @@ import type {
 import type { InteractiveLesson, GeometryData, GeoPoint } from './interactive-lesson-types'
 
 // ---------------------------------------------------------------------------
-// SVG generation from structured geometry data
+// Shared helpers
 // ---------------------------------------------------------------------------
 
 /** Escape XML special chars to prevent DOM breakage from LLM-supplied labels. */
@@ -28,6 +35,10 @@ function escapeXml(str: string): string {
 function safeLabel(str: string): string {
   return str.replace(/[^a-zA-Z0-9_\-]/g, '')
 }
+
+// ---------------------------------------------------------------------------
+// Geometry scene
+// ---------------------------------------------------------------------------
 
 /** Allowlist segment colors — maps known names to hex, falls back to blue. */
 const COLOR_MAP: Record<string, string> = {
@@ -57,7 +68,7 @@ function segmentId(from: string, to: string): string {
   return a < b ? `seg-${a}-${b}` : `seg-${b}-${a}`
 }
 
-function buildSvg(geometry: GeometryData): string {
+function buildGeometrySvg(geometry: GeometryData): string {
   const pts = pointMap(geometry)
   const lines: string[] = []
 
@@ -141,11 +152,7 @@ function buildSvg(geometry: GeometryData): string {
   return lines.join('\n')
 }
 
-// ---------------------------------------------------------------------------
-// Step conversion
-// ---------------------------------------------------------------------------
-
-function buildStepActions(
+function buildGeometryStepActions(
   step: InteractiveLesson['steps'][number],
   stepIndex: number,
   allPreviousSegments: Set<string>,
@@ -182,14 +189,75 @@ function buildStepActions(
 }
 
 // ---------------------------------------------------------------------------
+// Equation scene (used when the lesson has no geometric figure)
+// ---------------------------------------------------------------------------
+
+const EQUATION_SCENE_WIDTH = 600
+const EQUATION_SCENE_HEIGHT = 300
+const EQUATION_FONT_MAX = 32
+const EQUATION_FONT_MIN = 14
+
+/** Rough character-budget heuristic so long claims still fit in the scene. */
+function equationFontSize(claim: string): number {
+  const len = Math.max(claim.length, 10)
+  // 800 empirically gives ~30px for a typical 25-char claim and scales down
+  // to the floor for very long ones.
+  return Math.max(EQUATION_FONT_MIN, Math.min(EQUATION_FONT_MAX, Math.floor(800 / len)))
+}
+
+function buildEquationSvg(steps: InteractiveLesson['steps']): string {
+  const lines: string[] = []
+  lines.push(
+    `<svg viewBox="0 0 ${EQUATION_SCENE_WIDTH} ${EQUATION_SCENE_HEIGHT}" xmlns="http://www.w3.org/2000/svg">`,
+  )
+  lines.push('  <g font-family="sans-serif" font-weight="500" fill="currentColor">')
+
+  steps.forEach((step, i) => {
+    const fontSize = equationFontSize(step.claim)
+    lines.push(
+      `    <text id="eq-${i + 1}" class="ge-fade-element" x="${EQUATION_SCENE_WIDTH / 2}" y="${EQUATION_SCENE_HEIGHT / 2}" text-anchor="middle" dominant-baseline="middle" font-size="${fontSize}">${escapeXml(step.claim)}</text>`,
+    )
+  })
+
+  lines.push('  </g>')
+  lines.push('</svg>')
+  return lines.join('\n')
+}
+
+function buildEquationStepActions(stepIndex: number): GuidedExplanationAction[] {
+  const actions: GuidedExplanationAction[] = []
+  // Fade the previous step's equation out so only the current one is visible.
+  if (stepIndex > 0) {
+    actions.push({ op: 'hide', id: `eq-${stepIndex}` })
+  }
+  actions.push({ op: 'show', id: `eq-${stepIndex + 1}` })
+  actions.push({ op: 'highlightRow', rowId: `row-${stepIndex + 1}` })
+  return actions
+}
+
+// ---------------------------------------------------------------------------
 // Main converter
 // ---------------------------------------------------------------------------
+
+function hasGeometricFigure(geometry: GeometryData): boolean {
+  return geometry.points.length > 0 || geometry.segments.length > 0
+}
 
 export function interactiveLessonToGuidedExplanation(
   lesson: InteractiveLesson,
 ): GuidedExplanationV1 {
-  const svg = buildSvg(lesson.geometry)
   const direction = lesson.locale === 'he' ? 'rtl' : 'ltr'
+  const useGeometry = hasGeometricFigure(lesson.geometry)
+
+  const scene = useGeometry
+    ? {
+        svg: buildGeometrySvg(lesson.geometry),
+        viewBox: `0 0 ${lesson.geometry.width} ${lesson.geometry.height}`,
+      }
+    : {
+        svg: buildEquationSvg(lesson.steps),
+        viewBox: `0 0 ${EQUATION_SCENE_WIDTH} ${EQUATION_SCENE_HEIGHT}`,
+      }
 
   const seenSegments = new Set<string>()
   const seenPoints = new Set<string>()
@@ -197,7 +265,9 @@ export function interactiveLessonToGuidedExplanation(
   const steps = lesson.steps.map((step, i) => ({
     id: `step-${step.id}`,
     title: step.title,
-    actions: buildStepActions(step, i, seenSegments, seenPoints),
+    actions: useGeometry
+      ? buildGeometryStepActions(step, i, seenSegments, seenPoints)
+      : buildEquationStepActions(i),
     narrate: {
       display: step.narration,
     },
@@ -208,10 +278,7 @@ export function interactiveLessonToGuidedExplanation(
     title: lesson.title,
     direction,
     locale: lesson.locale,
-    scene: {
-      svg,
-      viewBox: `0 0 ${lesson.geometry.width} ${lesson.geometry.height}`,
-    },
+    scene,
     proofTable: {
       columns: [
         '#',
