@@ -1,11 +1,20 @@
 /**
  * Payload endpoint handler for interactive lesson generation.
- * Takes an uploaded image and generates structured step-by-step
- * HTML animation data using the LLM pipeline.
+ *
+ * Takes an uploaded image, returns structured step-by-step animation data.
+ *
+ * Caching: a successful generation is persisted to the `interactive_lessons`
+ * collection keyed on `(user, media, locale)`. Re-requests for the same image
+ * in the same locale return the cached payload instead of re-hitting Gemini.
  */
-import type { PayloadRequest } from 'payload'
+import type { Payload, PayloadRequest } from 'payload'
+import type { InteractiveLesson as CachedLessonDoc } from '@/payload-types'
 import { logger } from '@/infra/utils/logger/logger'
 import { generateInteractiveLesson } from '@/infra/llm/services/interactive-lesson/interactive-lesson-generation-service'
+import type {
+  InteractiveLesson,
+  InteractiveLessonResponse,
+} from '@/infra/llm/services/interactive-lesson/interactive-lesson-types'
 
 interface GenerateRequestBody {
   mediaId: string
@@ -32,6 +41,26 @@ export async function agentGenerateInteractiveLesson(
 
     reqLogger.info({ mediaId, locale, userId: req.user.id }, 'Generating interactive lesson')
 
+    // Cache hit? Return immediately without regenerating.
+    const cached = await findCachedLesson(req.payload, {
+      userId: req.user.id,
+      mediaId,
+      locale,
+    })
+    if (cached) {
+      reqLogger.info({ cacheId: cached.id, mediaId }, 'Returning cached interactive lesson')
+      return Response.json({
+        success: true,
+        data: cached.lesson as unknown as InteractiveLesson,
+        metadata: (cached.generationMetadata ?? {
+          model: 'cache',
+          processingTimeMs: 0,
+          imageSizeBytes: 0,
+        }) as InteractiveLessonResponse['metadata'],
+        fromCache: true,
+      })
+    }
+
     // Fetch the uploaded media file
     const { imageBuffer, mimeType } = await fetchMediaImage(req, mediaId)
 
@@ -42,8 +71,18 @@ export async function agentGenerateInteractiveLesson(
       return Response.json(result, { status: 422 })
     }
 
-    // TTS skipped — GuidedExplanationRunner uses browser speechSynthesis
-    // for narration; OpenAI TTS output was never consumed by the client.
+    // Persist the primitive payload. Failure to cache is non-fatal — the
+    // client still gets a working lesson; we just pay the Gemini cost again
+    // next time.
+    await persistLesson(req.payload, {
+      userId: req.user.id,
+      mediaId,
+      locale,
+      lesson: result.data!,
+      metadata: result.metadata,
+    }).catch((err) => {
+      reqLogger.warn({ err, mediaId }, 'Failed to persist interactive lesson cache')
+    })
 
     reqLogger.info(
       {
@@ -67,6 +106,56 @@ export async function agentGenerateInteractiveLesson(
       { status: 500 },
     )
   }
+}
+
+interface CacheLookupArgs {
+  userId: string | number
+  mediaId: string
+  locale: 'he' | 'en'
+}
+
+async function findCachedLesson(
+  payload: Payload,
+  { userId, mediaId, locale }: CacheLookupArgs,
+): Promise<CachedLessonDoc | null> {
+  const result = await payload.find({
+    collection: 'interactive_lessons',
+    where: {
+      and: [
+        { user: { equals: userId } },
+        { media: { equals: mediaId } },
+        { locale: { equals: locale } },
+      ],
+    },
+    limit: 1,
+    overrideAccess: true,
+  })
+  return result.docs[0] ?? null
+}
+
+interface PersistArgs {
+  userId: string | number
+  mediaId: string
+  locale: 'he' | 'en'
+  lesson: InteractiveLesson
+  metadata: InteractiveLessonResponse['metadata']
+}
+
+async function persistLesson(
+  payload: Payload,
+  { userId, mediaId, locale, lesson, metadata }: PersistArgs,
+): Promise<void> {
+  await payload.create({
+    collection: 'interactive_lessons',
+    data: {
+      user: userId as CachedLessonDoc['user'],
+      media: mediaId as unknown as CachedLessonDoc['media'],
+      locale,
+      lesson: lesson as unknown as CachedLessonDoc['lesson'],
+      generationMetadata: metadata as unknown as CachedLessonDoc['generationMetadata'],
+    },
+    overrideAccess: true,
+  })
 }
 
 /**
