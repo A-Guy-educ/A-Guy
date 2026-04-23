@@ -303,6 +303,7 @@
     "chatPause": "Pause",
     "chatResume": "Resume",
     "chatSpeed": "Speed",
+    "chatStepContextBadge": "Step {current} of {total}",
     "uploadFile": "Upload File",
     "sendMessage": "Send",
     "switchToChat": "Switch to chat view",

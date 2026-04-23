@@ -196,6 +196,7 @@ export function interactiveLessonToGuidedExplanation(
 
   const steps = lesson.steps.map((step, i) => ({
     id: `step-${step.id}`,
+    title: step.title,
     actions: buildStepActions(step, i, seenSegments, seenPoints),
     narrate: {
       display: step.narration,

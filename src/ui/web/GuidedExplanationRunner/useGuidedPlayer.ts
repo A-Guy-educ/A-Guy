@@ -8,6 +8,21 @@ import type {
 import { runAction, resetScene, type PausableAnimation } from './sceneActions'
 import { cancelSpeech, primeSpeechVoices, speak, stripNiqqud } from './speech'
 
+/** Fired to the window so sibling UI (e.g. chat panel) knows the active step. */
+const STEP_CONTEXT_EVENT = 'ask-step-context'
+
+interface StepContextDetail {
+  currentStepId: number
+  totalSteps: number
+  stepTitle: string
+  stepNarration: string
+}
+
+function emitStepContext(detail: StepContextDetail | null): void {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new CustomEvent(STEP_CONTEXT_EVENT, { detail }))
+}
+
 interface UseGuidedPlayerArgs {
   payload: GuidedExplanationV1
   containerRef: React.MutableRefObject<HTMLElement | null>
@@ -55,6 +70,7 @@ export function useGuidedPlayer({
     primeSpeechVoices()
     return () => {
       cancelSpeech()
+      emitStepContext(null)
     }
   }, [])
 
@@ -83,6 +99,7 @@ export function useGuidedPlayer({
     setIsPaused(false)
     setNarrationText(payload.narrationBox.placeholder)
     if (containerRef.current) resetScene(containerRef.current)
+    emitStepContext(null)
   }, [payload.narrationBox.placeholder, containerRef])
 
   const pause = useCallback(() => {
@@ -122,12 +139,20 @@ export function useGuidedPlayer({
     setIsPaused(false)
     pausedRef.current = false
 
+    const totalSteps = payload.steps.length
     void (async () => {
       try {
-        for (const step of payload.steps) {
+        for (let i = 0; i < payload.steps.length; i++) {
+          const step = payload.steps[i]
           if (shouldCancel()) return
           await waitWhilePaused()
           if (shouldCancel()) return
+          emitStepContext({
+            currentStepId: i + 1,
+            totalSteps,
+            stepTitle: step.title ?? '',
+            stepNarration: step.narrate?.display ?? '',
+          })
           await runStep(step, {
             root,
             locale: payload.locale,

@@ -11,12 +11,45 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useDirectChatAssetUpload } from './useDirectChatAssetUpload'
 
+export interface ChatStepContext {
+  currentStepId: number
+  totalSteps: number
+  stepTitle: string
+  stepNarration: string
+}
+
 export interface ChatMessage {
   id: string
   role: ChatRole
   content: string
   media?: Array<{ mediaId: string; filename?: string; url?: string }>
   chatAssets?: Array<{ chatAssetId: string; filename?: string }>
+  /** Populated for user messages sent while the lesson player was on a step. */
+  stepContext?: ChatStepContext
+}
+
+/**
+ * Wraps the visible user message with an invisible context block the AI sees.
+ * The same prefix is stripped on history load before display so old messages
+ * don't show raw context markup.
+ */
+const STEP_CONTEXT_BLOCK_REGEX = /^<step-context[\s\S]*?<\/step-context>\s*/
+
+function buildPromptWithStepContext(message: string, step: ChatStepContext | null): string {
+  if (!step) return message
+  const title = step.stepTitle ? ` title="${step.stepTitle.replace(/"/g, "'")}"` : ''
+  const narration = step.stepNarration ? `\nNarration: ${step.stepNarration}` : ''
+  return (
+    `<step-context step="${step.currentStepId}" total="${step.totalSteps}"${title}>` +
+    `The student is currently watching step ${step.currentStepId} of ${step.totalSteps}` +
+    `${step.stepTitle ? `: "${step.stepTitle}"` : ''}.${narration}` +
+    `</step-context>\n\n` +
+    message
+  )
+}
+
+function stripStepContext(content: string): string {
+  return content.replace(STEP_CONTEXT_BLOCK_REGEX, '')
 }
 
 export interface UploadedMedia {
@@ -112,6 +145,20 @@ export function useNotebookChat({
 
   // Persistent media for Ask page — sent with every message, not cleared after send
   const [askMedia, setAskMedia] = useState<UploadedMedia | null>(null)
+
+  // Latest step context emitted by the interactive-lesson player. Cleared on
+  // player reset. Attached invisibly to outgoing prompts so the tutor AI
+  // knows which step the student is asking about.
+  const askStepContextRef = useRef<ChatStepContext | null>(null)
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as ChatStepContext | null
+      askStepContextRef.current = detail ?? null
+    }
+    window.addEventListener('ask-step-context', handler)
+    return () => window.removeEventListener('ask-step-context', handler)
+  }, [])
 
   // Error state
   const [chatError, setChatError] = useState<ChatError | null>(null)
@@ -241,7 +288,10 @@ export function useNotebookChat({
                     msg.role === ChatRole.User || msg.role === 'user'
                       ? ChatRole.User
                       : ChatRole.Assistant,
-                  content: String(msg.content),
+                  // Strip any persisted <step-context> prefix so the displayed
+                  // message bubble stays clean. The AI still sees it on the
+                  // server side (full content is retrieved for LLM context).
+                  content: stripStepContext(String(msg.content)),
                   media: raw.media,
                   chatAssets: raw.chatAssets,
                 }
@@ -373,12 +423,18 @@ export function useNotebookChat({
       ? [{ mediaId: askMedia.id, filename: askMedia.filename }]
       : undefined
 
+    // Capture active step context at send time so the badge reflects the
+    // step the student was on when they asked, even if they advance later.
+    const stepContext = askStepContextRef.current
+    const promptForAI = buildPromptWithStepContext(message, stepContext)
+
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
       role: ChatRole.User,
       content: message,
       chatAssets: chatAssetMetadata.length > 0 ? chatAssetMetadata : undefined,
       media: askMediaMeta,
+      stepContext: stepContext ?? undefined,
     }
     setMessages((prev) => [...prev, userMessage])
     setInputValue('')
@@ -416,10 +472,10 @@ export function useNotebookChat({
     const useStreaming = !hasAttachments && !adminMode
 
     if (useStreaming) {
-      await streamMessage(message, acknowledgment, context, { contextKeyOverride })
+      await streamMessage(promptForAI, acknowledgment, context, { contextKeyOverride })
     } else {
       await sendMessageSync(
-        message,
+        promptForAI,
         acknowledgment,
         context,
         askMediaIds,
