@@ -25,6 +25,7 @@ let payload: Payload
 let adminUserId: string
 let studentUserId: string
 let defaultTenantId: string
+let defaultTenantWasCreated = false // true when we created it (needs cleanup); false when reused (skip cleanup)
 let otherTenantId: string
 let defaultCourseId: string
 let otherCourseId: string
@@ -71,6 +72,7 @@ beforeAll(async () => {
   const existingTenants = await payload.find({ collection: 'tenants', limit: 1 })
   if (existingTenants.docs.length > 0) {
     defaultTenantId = existingTenants.docs[0].id
+    defaultTenantWasCreated = false
   } else {
     const tenant = await payload.create({
       collection: 'tenants',
@@ -78,6 +80,7 @@ beforeAll(async () => {
       overrideAccess: true,
     })
     defaultTenantId = tenant.id
+    defaultTenantWasCreated = true
   }
 
   // Create another tenant for isolation tests
@@ -167,6 +170,15 @@ afterAll(async () => {
       } catch {
         // ignore
       }
+    }
+  }
+
+  // Only clean up defaultTenantId if we created it; skip if it was an existing reused tenant
+  if (defaultTenantWasCreated && defaultTenantId) {
+    try {
+      await payload.delete({ collection: 'tenants', id: defaultTenantId, overrideAccess: true })
+    } catch {
+      // ignore
     }
   }
 
@@ -291,6 +303,15 @@ describe.skipIf(!hasDatabaseUrl)('AccessCodes Collection', () => {
 
       expect(updated.maxUses).toBe(20)
       expect(updated.isActive).toBe(false)
+
+      // Confirm persisted state matches by re-reading from DB
+      const reRead = await payload.findByID({
+        collection: 'access-codes',
+        id: created.id,
+        overrideAccess: true,
+      })
+      expect(reRead.maxUses).toBe(20)
+      expect(reRead.isActive).toBe(false)
     })
 
     it('should delete an access code', async () => {
@@ -351,6 +372,7 @@ describe.skipIf(!hasDatabaseUrl)('AccessCodes Collection', () => {
       }
 
       expect(error).not.toBeNull()
+      expect((error as any).status).toBeGreaterThanOrEqual(400)
     })
 
     it('should deny student from reading access codes', async () => {
@@ -382,6 +404,7 @@ describe.skipIf(!hasDatabaseUrl)('AccessCodes Collection', () => {
       }
 
       expect(error).not.toBeNull()
+      expect((error as any).status).toBeGreaterThanOrEqual(400)
     })
 
     it('should deny student from updating access codes', async () => {
@@ -414,6 +437,7 @@ describe.skipIf(!hasDatabaseUrl)('AccessCodes Collection', () => {
       }
 
       expect(error).not.toBeNull()
+      expect((error as any).status).toBeGreaterThanOrEqual(400)
     })
 
     it('should deny student from deleting access codes', async () => {
@@ -445,6 +469,7 @@ describe.skipIf(!hasDatabaseUrl)('AccessCodes Collection', () => {
       }
 
       expect(error).not.toBeNull()
+      expect((error as any).status).toBeGreaterThanOrEqual(400)
     })
   })
 
@@ -539,6 +564,39 @@ describe.skipIf(!hasDatabaseUrl)('AccessCodes Collection', () => {
       })
 
       expect(updated.isActive).toBe(false)
+    })
+
+    it('should store and retrieve expiresAt date (including past dates)', async () => {
+      const admin = await getAdminUser()
+      const yesterday = new Date()
+      yesterday.setDate(yesterday.getDate() - 1)
+      const expiresAtStr = yesterday.toISOString().split('T')[0]
+
+      const code = await payload.create({
+        collection: 'access-codes',
+        data: {
+          code: `EXPIRESAT-TEST-${Date.now()}`,
+          course: defaultCourseId,
+          tenant: defaultTenantId,
+          expiresAt: expiresAtStr,
+        },
+        user: admin as any,
+        overrideAccess: false,
+      })
+      trackAccessCode(code.id)
+
+      expect(code.expiresAt).toBeDefined()
+
+      // Re-read to confirm the date is persisted correctly
+      const reRead = await payload.findByID({
+        collection: 'access-codes',
+        id: code.id,
+        overrideAccess: true,
+      })
+      expect(reRead.expiresAt).toBeDefined()
+      // Compare just the date portion (YYYY-MM-DD) since DB may store full timestamp
+      const reReadDate = (reRead.expiresAt as string).split('T')[0]
+      expect(reReadDate).toBe(expiresAtStr)
     })
   })
 
