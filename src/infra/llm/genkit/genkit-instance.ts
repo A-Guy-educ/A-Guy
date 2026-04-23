@@ -99,14 +99,13 @@ async function getApiKeyForProvider(
     // ConfigSecrets not available, continue to environment fallback
   }
 
-  // Fallback to environment variable
-  // OpenAI-compatible provider primarily uses MINIMAX_API_KEY (since MiniMax
-  // is the configured model), with OPENAI_COMPATIBLE_API_KEY as a backwards-
-  // compatible fallback.
+  // Fallback to environment variable.
+  // OpenAI-compatible provider uses MINIMAX_API_KEY (the env var name set in
+  // GitHub/Vercel secrets).
   const envValue =
     providerType === LLMProviderType.GEMINI
       ? process.env.GEMINI_API_KEY
-      : process.env.MINIMAX_API_KEY || process.env.OPENAI_COMPATIBLE_API_KEY
+      : process.env.MINIMAX_API_KEY
 
   if (!envValue) {
     logger.warn(
