@@ -5,7 +5,7 @@
  * @ai-summary Safe math expression evaluator using mathjs to prevent code injection
  */
 
-import { evaluate } from 'mathjs'
+import { parse } from 'mathjs'
 
 interface ParseResult {
   valid: boolean
@@ -30,8 +30,8 @@ export function parseMathExpression(expr: string): ParseResult {
   try {
     // Pre-validate the expression by attempting to evaluate with x=0
     // This catches syntax errors before we return the evaluator
-    const testResult = evaluate(normalized, {
-      x: 0,
+    const compiled = parse(normalized).compile()
+    const scope = {
       sin: Math.sin,
       cos: Math.cos,
       tan: Math.tan,
@@ -46,8 +46,9 @@ export function parseMathExpression(expr: string): ParseResult {
       round: Math.round,
       PI: Math.PI,
       E: Math.E,
-    })
-    if (typeof testResult !== 'number' || !isFinite(testResult)) {
+    }
+    const testResult = compiled.evaluate({ ...scope, x: 0 })
+    if (typeof testResult !== 'number' || Number.isNaN(testResult)) {
       if (!normalized.includes('x')) {
         return { valid: false, evaluate: () => NaN, error: 'Invalid expression' }
       }
@@ -55,24 +56,8 @@ export function parseMathExpression(expr: string): ParseResult {
 
     const evaluateFn = (x: number): number => {
       try {
-        const result = evaluate(normalized, {
-          x,
-          sin: Math.sin,
-          cos: Math.cos,
-          tan: Math.tan,
-          sqrt: Math.sqrt,
-          abs: Math.abs,
-          log: Math.log,
-          log10: Math.log10,
-          exp: Math.exp,
-          pow: Math.pow,
-          floor: Math.floor,
-          ceil: Math.ceil,
-          round: Math.round,
-          PI: Math.PI,
-          E: Math.E,
-        })
-        return typeof result === 'number' && isFinite(result) ? result : NaN
+        const result = compiled.evaluate({ ...scope, x })
+        return typeof result === 'number' ? result : NaN
       } catch {
         return NaN
       }

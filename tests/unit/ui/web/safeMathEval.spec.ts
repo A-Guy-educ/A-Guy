@@ -301,8 +301,8 @@ describe('safeMathEval', () => {
 
     it('should reject complex number results like sqrt(-1)', () => {
       const result = parseMathExpression('sqrt(-1)')
-      // mathjs returns a complex number for sqrt(-1), not NaN
-      // Our implementation correctly rejects non-finite real numbers
+      // mathjs returns a complex number for sqrt(-1), not a real number
+      // Our implementation rejects non-real-number results
       expect(result.valid).toBe(false)
     })
 
