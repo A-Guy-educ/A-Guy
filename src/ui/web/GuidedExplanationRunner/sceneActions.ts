@@ -26,6 +26,8 @@ export interface PausableAnimation {
   pause: () => void
   play: () => void
   cancel?: () => void
+  /** Apply a new playback rate live (1 = normal, 2 = double-speed, etc.). */
+  setRate?: (rate: number) => void
 }
 
 export interface ActionContext {
@@ -34,6 +36,29 @@ export interface ActionContext {
   shouldCancel: () => boolean
   /** Register the currently-running animation so the player can pause/resume it. */
   registerAnimation: (anim: PausableAnimation | null) => void
+  /** Current playback speed (1 = normal). Read at animation-creation time. */
+  getSpeed: () => number
+}
+
+/**
+ * Wrap an anime.js animation as a PausableAnimation. Uses the library's
+ * `speed` property for live rate control (v4 exposes this on every instance).
+ */
+function wrapAnime(anim: unknown): PausableAnimation {
+  const a = anim as {
+    pause: () => void
+    play: () => void
+    cancel?: () => void
+    speed?: number
+  }
+  return {
+    pause: () => a.pause(),
+    play: () => a.play(),
+    cancel: () => a.cancel?.(),
+    setRate: (rate: number) => {
+      a.speed = rate
+    },
+  }
 }
 
 /**
@@ -51,6 +76,13 @@ function findElement(root: HTMLElement, id: string): HTMLElement | null {
   return el as HTMLElement
 }
 
+function startAnime(anim: unknown, ctx: ActionContext): PausableAnimation {
+  const wrapped = wrapAnime(anim)
+  wrapped.setRate?.(ctx.getSpeed())
+  ctx.registerAnimation(wrapped)
+  return wrapped
+}
+
 /** Animate a draw-in using stroke-dashoffset, sized to the path's real length. */
 async function animateDraw(el: HTMLElement, ctx: ActionContext, reverse: boolean): Promise<void> {
   const geo = el as unknown as SVGGeometryElement
@@ -65,7 +97,7 @@ async function animateDraw(el: HTMLElement, ctx: ActionContext, reverse: boolean
     duration,
     ease: 'inOutQuad',
   })
-  ctx.registerAnimation(anim as PausableAnimation)
+  startAnime(anim, ctx)
   await (anim as unknown as Promise<unknown>)
   ctx.registerAnimation(null)
 }
@@ -80,12 +112,12 @@ async function animateFade(el: HTMLElement, ctx: ActionContext, toVisible: boole
     duration: FADE_DURATION_MS,
     ease: 'inOutQuad',
   })
-  ctx.registerAnimation(anim as PausableAnimation)
+  startAnime(anim, ctx)
   await (anim as unknown as Promise<unknown>)
   ctx.registerAnimation(null)
 }
 
-/** Pauseable wait — runs a dummy tween so pause/resume work during delays. */
+/** Pauseable wait — runs a dummy tween so pause/resume/speed work during delays. */
 async function animateWait(ms: number, ctx: ActionContext): Promise<void> {
   const anim = animate(
     { t: 0 },
@@ -95,7 +127,7 @@ async function animateWait(ms: number, ctx: ActionContext): Promise<void> {
       ease: 'linear',
     },
   )
-  ctx.registerAnimation(anim as PausableAnimation)
+  startAnime(anim, ctx)
   await (anim as unknown as Promise<unknown>)
   ctx.registerAnimation(null)
 }

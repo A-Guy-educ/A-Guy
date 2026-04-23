@@ -28,15 +28,35 @@ interface GuidedExplanationRunnerProps {
 export function GuidedExplanationRunner({ payload }: GuidedExplanationRunnerProps) {
   const rootRef = useRef<HTMLElement | null>(null)
   const sceneRef = useRef<HTMLDivElement | null>(null)
-  const { isPlaying, isPaused, narrationText, play, pause, resume, reset } = useGuidedPlayer({
+  const {
+    isPlaying,
+    isPaused,
+    narrationText,
+    currentStep,
+    totalSteps,
+    speed,
+    play,
+    pause,
+    resume,
+    reset,
+    setSpeed,
+  } = useGuidedPlayer({
     payload,
     containerRef: rootRef,
   })
 
+  const isHebrew = payload.locale === 'he'
   // Default labels for languages not supplied by the payload — Hebrew and
   // English cover both locales the app currently supports.
-  const pauseLabel = payload.controls.pauseLabel ?? (payload.locale === 'he' ? 'השהיה' : 'Pause')
-  const resumeLabel = payload.controls.resumeLabel ?? (payload.locale === 'he' ? 'המשך' : 'Resume')
+  const pauseLabel = payload.controls.pauseLabel ?? (isHebrew ? 'השהיה' : 'Pause')
+  const resumeLabel = payload.controls.resumeLabel ?? (isHebrew ? 'המשך' : 'Resume')
+  const speedLabel = isHebrew ? 'מהירות' : 'Speed'
+  const stepLabel =
+    currentStep > 0
+      ? isHebrew
+        ? `שלב ${currentStep} מתוך ${totalSteps}`
+        : `Step ${currentStep} of ${totalSteps}`
+      : null
 
   // Sanitize SVG at render time (strips <script>, event handlers,
   // foreignObject, external refs) then set via ref so React never
@@ -58,6 +78,7 @@ export function GuidedExplanationRunner({ payload }: GuidedExplanationRunnerProp
       <header className="ge-header">
         <h1 className="ge-title">{payload.title}</h1>
         {payload.subtitle ? <p className="ge-subtitle">{payload.subtitle}</p> : null}
+        {stepLabel ? <p className="ge-step-indicator">{stepLabel}</p> : null}
       </header>
 
       <div ref={sceneRef} className="ge-scene" />
@@ -67,12 +88,15 @@ export function GuidedExplanationRunner({ payload }: GuidedExplanationRunnerProp
         resetLabel={payload.controls.resetLabel}
         pauseLabel={pauseLabel}
         resumeLabel={resumeLabel}
+        speedLabel={speedLabel}
         isPlaying={isPlaying}
         isPaused={isPaused}
+        speed={speed}
         onPlay={play}
         onPause={pause}
         onResume={resume}
         onReset={reset}
+        onSpeedChange={setSpeed}
       />
 
       {payload.proofTable ? <ProofTable table={payload.proofTable} /> : null}

@@ -3,12 +3,21 @@ interface ControlsProps {
   resetLabel: string
   pauseLabel: string
   resumeLabel: string
+  speedLabel: string
   isPlaying: boolean
   isPaused: boolean
+  speed: number
   onPlay: () => void
   onPause: () => void
   onResume: () => void
   onReset: () => void
+  onSpeedChange: (rate: number) => void
+}
+
+const SPEED_OPTIONS = [0.5, 0.75, 1, 1.5, 2] as const
+
+function formatSpeed(rate: number): string {
+  return Number.isInteger(rate) ? `${rate}×` : `${rate}×`
 }
 
 export function Controls({
@@ -16,12 +25,15 @@ export function Controls({
   resetLabel,
   pauseLabel,
   resumeLabel,
+  speedLabel,
   isPlaying,
   isPaused,
+  speed,
   onPlay,
   onPause,
   onResume,
   onReset,
+  onSpeedChange,
 }: ControlsProps) {
   // Three states:
   //   - idle (not playing) → show Play
@@ -47,6 +59,19 @@ export function Controls({
       <button type="button" className="ge-btn ge-btn-secondary" onClick={onReset}>
         {resetLabel}
       </button>
+      <div className="ge-speed-group" role="group" aria-label={speedLabel}>
+        {SPEED_OPTIONS.map((rate) => (
+          <button
+            key={rate}
+            type="button"
+            className={`ge-speed-btn${rate === speed ? ' ge-speed-btn-active' : ''}`}
+            onClick={() => onSpeedChange(rate)}
+            aria-pressed={rate === speed}
+          >
+            {formatSpeed(rate)}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }

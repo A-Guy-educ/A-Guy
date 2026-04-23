@@ -6,7 +6,7 @@ import type {
   GuidedExplanationV1,
 } from '@/infra/contracts/guided-explanation/v1'
 import { runAction, resetScene, type PausableAnimation } from './sceneActions'
-import { cancelSpeech, primeSpeechVoices, speak, stripNiqqud } from './speech'
+import { cancelSpeech, primeSpeechVoices, startSpeech, stripNiqqud } from './speech'
 
 /** Fired to the window so sibling UI (e.g. chat panel) knows the active step. */
 const STEP_CONTEXT_EVENT = 'ask-step-context'
@@ -32,10 +32,14 @@ interface UseGuidedPlayerResult {
   isPlaying: boolean
   isPaused: boolean
   narrationText: string
+  currentStep: number
+  totalSteps: number
+  speed: number
   play: () => void
   pause: () => void
   resume: () => void
   reset: () => void
+  setSpeed: (rate: number) => void
 }
 
 /**
@@ -45,11 +49,13 @@ interface UseGuidedPlayerResult {
  * counter; reset/replay bumps it; in-flight async work bails out the next
  * tick when its captured value no longer matches.
  *
- * Pause: the currently-running Anime.js animation is registered via
+ * Pause: the currently-running Anime.js animation OR audio is registered via
  * `activeAnimationRef`; pause/resume pipe through to it natively. A
- * `pausedRef` + `waitWhilePaused()` guards the gaps between animations
- * (e.g. when the sequence is paused during narration). Browser
- * speechSynthesis natively supports pause/resume.
+ * `pausedRef` + `waitWhilePaused()` guards the gaps between animations.
+ *
+ * Speed: `speedRef` is read by animation/speech creators so new ops spawn at
+ * the current rate; `setSpeed()` also forwards to the active instance via
+ * its `setRate()` hook for live changes.
  */
 export function useGuidedPlayer({
   payload,
@@ -58,13 +64,18 @@ export function useGuidedPlayer({
   const [isPlaying, setIsPlaying] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [narrationText, setNarrationText] = useState(payload.narrationBox.placeholder)
+  const [currentStep, setCurrentStep] = useState(0)
+  const [speed, setSpeedState] = useState(1)
   const sequenceRef = useRef(0)
+  const speedRef = useRef(1)
 
   // Pause primitives — resolver is replaced with a new pending promise on pause,
   // and called/cleared on resume so awaiting ops continue.
   const pausedRef = useRef(false)
   const pauseResolverRef = useRef<(() => void) | null>(null)
   const activeAnimationRef = useRef<PausableAnimation | null>(null)
+
+  const totalSteps = payload.steps.length
 
   useEffect(() => {
     primeSpeechVoices()
@@ -85,6 +96,14 @@ export function useGuidedPlayer({
     activeAnimationRef.current = anim
   }, [])
 
+  const getSpeed = useCallback(() => speedRef.current, [])
+
+  const setSpeed = useCallback((rate: number) => {
+    speedRef.current = rate
+    setSpeedState(rate)
+    activeAnimationRef.current?.setRate?.(rate)
+  }, [])
+
   const reset = useCallback(() => {
     sequenceRef.current += 1
     pausedRef.current = false
@@ -97,6 +116,7 @@ export function useGuidedPlayer({
     cancelSpeech()
     setIsPlaying(false)
     setIsPaused(false)
+    setCurrentStep(0)
     setNarrationText(payload.narrationBox.placeholder)
     if (containerRef.current) resetScene(containerRef.current)
     emitStepContext(null)
@@ -107,9 +127,6 @@ export function useGuidedPlayer({
     pausedRef.current = true
     setIsPaused(true)
     activeAnimationRef.current?.pause()
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.pause()
-    }
   }, [isPlaying])
 
   const resume = useCallback(() => {
@@ -117,9 +134,6 @@ export function useGuidedPlayer({
     pausedRef.current = false
     setIsPaused(false)
     activeAnimationRef.current?.play()
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.resume()
-    }
     if (pauseResolverRef.current) {
       pauseResolverRef.current()
       pauseResolverRef.current = null
@@ -139,7 +153,6 @@ export function useGuidedPlayer({
     setIsPaused(false)
     pausedRef.current = false
 
-    const totalSteps = payload.steps.length
     void (async () => {
       try {
         for (let i = 0; i < payload.steps.length; i++) {
@@ -147,6 +160,7 @@ export function useGuidedPlayer({
           if (shouldCancel()) return
           await waitWhilePaused()
           if (shouldCancel()) return
+          setCurrentStep(i + 1)
           emitStepContext({
             currentStepId: i + 1,
             totalSteps,
@@ -159,6 +173,7 @@ export function useGuidedPlayer({
             shouldCancel,
             waitWhilePaused,
             registerAnimation,
+            getSpeed,
             setNarrationText,
           })
         }
@@ -171,9 +186,30 @@ export function useGuidedPlayer({
         }
       }
     })()
-  }, [isPlaying, payload.steps, payload.locale, containerRef, waitWhilePaused, registerAnimation])
+  }, [
+    isPlaying,
+    payload.steps,
+    payload.locale,
+    totalSteps,
+    containerRef,
+    waitWhilePaused,
+    registerAnimation,
+    getSpeed,
+  ])
 
-  return { isPlaying, isPaused, narrationText, play, pause, resume, reset }
+  return {
+    isPlaying,
+    isPaused,
+    narrationText,
+    currentStep,
+    totalSteps,
+    speed,
+    play,
+    pause,
+    resume,
+    reset,
+    setSpeed,
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -184,6 +220,7 @@ interface RunStepCtx {
   shouldCancel: () => boolean
   waitWhilePaused: () => Promise<void>
   registerAnimation: (anim: PausableAnimation | null) => void
+  getSpeed: () => number
   setNarrationText: (text: string) => void
 }
 
@@ -196,6 +233,7 @@ async function runStep(step: GuidedExplanationStep, ctx: RunStepCtx): Promise<vo
       root: ctx.root,
       shouldCancel: ctx.shouldCancel,
       registerAnimation: ctx.registerAnimation,
+      getSpeed: ctx.getSpeed,
     })
   }
   if (step.narrate && !ctx.shouldCancel()) {
@@ -204,7 +242,10 @@ async function runStep(step: GuidedExplanationStep, ctx: RunStepCtx): Promise<vo
     const display = stripNiqqud(step.narrate.display)
     ctx.setNarrationText(display)
     const toSpeak = step.narrate.speech ?? step.narrate.display
-    await speak(toSpeak, ctx.locale)
+    const handle = await startSpeech(toSpeak, ctx.locale, ctx.getSpeed())
+    ctx.registerAnimation(handle)
+    await handle.finished
+    ctx.registerAnimation(null)
   }
   if (step.wait && !ctx.shouldCancel()) {
     await ctx.waitWhilePaused()
