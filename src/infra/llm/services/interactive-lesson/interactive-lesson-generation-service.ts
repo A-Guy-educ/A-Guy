@@ -270,6 +270,9 @@ function parseResponse(responseText: string): Record<string, unknown> {
 function validateLesson(parsed: Record<string, unknown>, locale: 'he' | 'en'): InteractiveLesson {
   const steps = Array.isArray(parsed.steps) ? parsed.steps : []
   const geo = (parsed.geometry || {}) as Record<string, unknown>
+  const graph = parsed.graph as Record<string, unknown> | undefined
+  const hasGraphContent =
+    !!graph && Array.isArray(graph.plots) && (graph.plots as unknown[]).length > 0
 
   return {
     title: typeof parsed.title === 'string' ? parsed.title : 'Untitled',
@@ -282,6 +285,7 @@ function validateLesson(parsed: Record<string, unknown>, locale: 'he' | 'en'): I
       angles: Array.isArray(geo.angles) ? geo.angles.map(validateAngle) : [],
       labels: Array.isArray(geo.labels) ? geo.labels.map(validateLabel) : [],
     },
+    graph: hasGraphContent ? validateGraph(graph) : undefined,
     steps: steps.map((step: Record<string, unknown>, i: number) => ({
       id: typeof step.id === 'number' ? step.id : i + 1,
       title: String(step.title || `Step ${i + 1}`),
@@ -294,6 +298,12 @@ function validateLesson(parsed: Record<string, unknown>, locale: 'he' | 'en'): I
         ? normalizeHighlightSegments(step.highlightSegments as unknown[])
         : [],
       highlightPoints: Array.isArray(step.highlightPoints) ? step.highlightPoints : [],
+      highlightPlots: Array.isArray(step.highlightPlots)
+        ? (step.highlightPlots as unknown[]).map(String)
+        : [],
+      highlightMarkers: Array.isArray(step.highlightMarkers)
+        ? (step.highlightMarkers as unknown[]).map(String)
+        : [],
     })),
   }
 }
@@ -352,6 +362,64 @@ function validateLabel(l: Record<string, unknown>) {
     x: Number(l.x || 0),
     y: Number(l.y || 0),
     fontSize: Number(l.fontSize || 12),
+  }
+}
+
+const GRAPH_COLORS = ['blue', 'red', 'green', 'orange', 'purple'] as const
+type GraphColor = (typeof GRAPH_COLORS)[number]
+
+function toGraphColor(value: unknown): GraphColor | undefined {
+  return typeof value === 'string' && (GRAPH_COLORS as readonly string[]).includes(value)
+    ? (value as GraphColor)
+    : undefined
+}
+
+function toRange(value: unknown, fallback: [number, number]): [number, number] {
+  if (Array.isArray(value) && value.length === 2) {
+    const a = Number(value[0])
+    const b = Number(value[1])
+    if (Number.isFinite(a) && Number.isFinite(b)) return [a, b]
+  }
+  return fallback
+}
+
+function validatePlot(p: Record<string, unknown>, i: number) {
+  const rawPoints = Array.isArray(p.points) ? p.points : []
+  const points: Array<[number, number]> = rawPoints.flatMap((pt) => {
+    if (Array.isArray(pt) && pt.length >= 2) {
+      const x = Number(pt[0])
+      const y = Number(pt[1])
+      if (Number.isFinite(x) && Number.isFinite(y)) return [[x, y] as [number, number]]
+    }
+    return []
+  })
+  return {
+    id: String(p.id || `plot-${i + 1}`),
+    points,
+    color: toGraphColor(p.color),
+    style: p.style === 'dashed' ? ('dashed' as const) : ('solid' as const),
+    label: typeof p.label === 'string' ? p.label : undefined,
+  }
+}
+
+function validateMarker(m: Record<string, unknown>, i: number) {
+  return {
+    id: String(m.id || `marker-${i + 1}`),
+    x: Number(m.x || 0),
+    y: Number(m.y || 0),
+    label: typeof m.label === 'string' ? m.label : undefined,
+    color: toGraphColor(m.color),
+  }
+}
+
+function validateGraph(g: Record<string, unknown>) {
+  return {
+    xRange: toRange(g.xRange, [-10, 10]),
+    yRange: toRange(g.yRange, [-10, 10]),
+    xStep: typeof g.xStep === 'number' && g.xStep > 0 ? g.xStep : undefined,
+    yStep: typeof g.yStep === 'number' && g.yStep > 0 ? g.yStep : undefined,
+    plots: Array.isArray(g.plots) ? g.plots.map(validatePlot) : [],
+    markers: Array.isArray(g.markers) ? g.markers.map(validateMarker) : [],
   }
 }
 

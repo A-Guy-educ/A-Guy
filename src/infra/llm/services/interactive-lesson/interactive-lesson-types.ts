@@ -52,6 +52,43 @@ export interface GeometryData {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Graph data — coordinate plane with plotted functions and marked points
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** A function plotted as a polyline of pre-sampled (x, y) pairs. */
+export interface GraphPlot {
+  /** Unique id targeted by step actions (e.g. "plot-f"). */
+  id: string
+  /** Sampled points in data space, ordered by x. */
+  points: Array<[number, number]>
+  color?: 'blue' | 'red' | 'green' | 'orange' | 'purple'
+  style?: 'solid' | 'dashed'
+  /** Optional label rendered near the end of the curve (e.g. "f(x) = x²"). */
+  label?: string
+}
+
+/** A single labeled point on the coordinate plane (root, extremum, intersection). */
+export interface GraphMarker {
+  id: string
+  x: number
+  y: number
+  label?: string
+  color?: 'blue' | 'red' | 'green' | 'orange' | 'purple'
+}
+
+/** Coordinate plane scene: axes + plotted curves + marked points. */
+export interface GraphData {
+  xRange: [number, number]
+  yRange: [number, number]
+  /** Tick spacing on the x-axis; default 1. */
+  xStep?: number
+  /** Tick spacing on the y-axis; default 1. */
+  yStep?: number
+  plots: GraphPlot[]
+  markers: GraphMarker[]
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Steps & Lesson
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -71,10 +108,14 @@ export interface InteractiveLessonStep {
   explanation: string
   /** Estimated duration in seconds for this step's narration */
   durationSeconds: number
-  /** Segments to highlight: array of [from, to] label pairs */
+  /** Segments to highlight: array of [from, to] label pairs (geometry). */
   highlightSegments?: string[][]
-  /** Points to highlight during this step */
+  /** Points to highlight during this step (geometry). */
   highlightPoints?: string[]
+  /** Plot ids to draw during this step (graph scene). */
+  highlightPlots?: string[]
+  /** Marker ids to reveal during this step (graph scene). */
+  highlightMarkers?: string[]
 }
 
 /** Full interactive lesson generated from an image */
@@ -87,6 +128,11 @@ export interface InteractiveLesson {
   steps: InteractiveLessonStep[]
   /** Structured geometry data for deterministic SVG rendering */
   geometry: GeometryData
+  /**
+   * Optional coordinate-plane scene for function-analysis problems. Takes
+   * rendering precedence over `geometry` when present and non-empty.
+   */
+  graph?: GraphData
 }
 
 /** Response from the generation pipeline */
