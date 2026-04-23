@@ -9,13 +9,22 @@
  * These tests verify the detection logic using isSolutionHeader,
  * which is the same function used by the endpoint.
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { isSolutionHeader } from '@/lib/latex-parser/enumerate-parser'
+import type { ContentBlock } from '@/server/payload/collections/Exercises/types'
+
+// Mock the support-generation-service before importing convert-latex-block
+// (which imports it transitively)
+vi.mock('@/infra/llm/services/support-generation-service', () => ({
+  generateSupport: vi.fn(),
+}))
+
 import {
   splitSolutionByLabels,
   attachSolutionToBlocks,
+  fillMissingSolutionsWithAI,
 } from '@/server/payload/endpoints/exercises/convert-latex-block'
-import type { ContentBlock } from '@/server/payload/collections/Exercises/types'
+import { generateSupport } from '@/infra/llm/services/support-generation-service'
 
 describe('convert-latex-block: solution detection', () => {
   describe('isSolutionHeader identifies solution LaTeX blocks', () => {
@@ -415,5 +424,153 @@ Actual solution content here.`
       // No question block to attach to; rich_text block is unchanged
       expect((blocks[0] as ContentBlock & { solution?: unknown }).solution).toBeUndefined()
     })
+  })
+})
+
+describe('fillMissingSolutionsWithAI', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mockPayload = {} as any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mockLogger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() } as any
+
+  function makeQuestion(id: string, prompt: string, solution?: string): ContentBlock {
+    const block: ContentBlock & {
+      solution?: { type: string; format: string; value: string; mediaIds: string[] }
+    } = {
+      id,
+      type: 'question_free_response',
+      prompt: { type: 'rich_text', format: 'md-math-v1', value: prompt, mediaIds: [] },
+      answer: { acceptedAnswers: ['__imported__'] },
+    }
+    if (solution) {
+      block.solution = { type: 'rich_text', format: 'md-math-v1', value: solution, mediaIds: [] }
+    }
+    return block
+  }
+
+  function makeRichText(id: string, value: string): ContentBlock {
+    return { id, type: 'rich_text', format: 'md-math-v1', value, mediaIds: [] }
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('fills solution for question blocks that have no solution', async () => {
+    const blocks: ContentBlock[] = [
+      makeQuestion('q1', 'question one'),
+      makeQuestion('q2', 'question two'),
+    ]
+
+    vi.mocked(generateSupport).mockResolvedValue({
+      success: true,
+      data: { solution: 'AI-generated solution' },
+    })
+
+    await fillMissingSolutionsWithAI(blocks, mockPayload, mockLogger)
+
+    expect(generateSupport).toHaveBeenCalledTimes(2)
+    const q1 = blocks[0] as ContentBlock & { solution?: { value: string } }
+    const q2 = blocks[1] as ContentBlock & { solution?: { value: string } }
+    expect(q1.solution?.value).toBe('AI-generated solution')
+    expect(q2.solution?.value).toBe('AI-generated solution')
+  })
+
+  it('skips question blocks that already have a solution', async () => {
+    const blocks: ContentBlock[] = [
+      makeQuestion('q1', 'question one', 'existing solution'),
+      makeQuestion('q2', 'question two'),
+    ]
+
+    vi.mocked(generateSupport).mockResolvedValue({
+      success: true,
+      data: { solution: 'AI-generated solution' },
+    })
+
+    await fillMissingSolutionsWithAI(blocks, mockPayload, mockLogger)
+
+    // Only q2 should trigger AI generation
+    expect(generateSupport).toHaveBeenCalledTimes(1)
+    const q1 = blocks[0] as ContentBlock & { solution?: { value: string } }
+    const q2 = blocks[1] as ContentBlock & { solution?: { value: string } }
+    expect(q1.solution?.value).toBe('existing solution') // unchanged
+    expect(q2.solution?.value).toBe('AI-generated solution')
+  })
+
+  it('skips non-question blocks (rich_text, latex)', async () => {
+    const blocks: ContentBlock[] = [
+      makeRichText('r1', 'intro'),
+      makeQuestion('q1', 'question'),
+      makeRichText('r2', 'outro'),
+    ]
+
+    vi.mocked(generateSupport).mockResolvedValue({
+      success: true,
+      data: { solution: 'AI solution' },
+    })
+
+    await fillMissingSolutionsWithAI(blocks, mockPayload, mockLogger)
+
+    // Only the question block should be processed
+    expect(generateSupport).toHaveBeenCalledTimes(1)
+  })
+
+  it('does nothing (no AI calls) when all question blocks have solutions', async () => {
+    const blocks: ContentBlock[] = [
+      makeQuestion('q1', 'q1', 'sol1'),
+      makeQuestion('q2', 'q2', 'sol2'),
+    ]
+
+    await fillMissingSolutionsWithAI(blocks, mockPayload, mockLogger)
+
+    expect(generateSupport).not.toHaveBeenCalled()
+  })
+
+  it('continues processing other blocks when one AI call fails', async () => {
+    const blocks: ContentBlock[] = [
+      makeQuestion('q1', 'question one'),
+      makeQuestion('q2', 'question two'),
+    ]
+
+    vi.mocked(generateSupport)
+      .mockResolvedValueOnce({ success: false, error: 'AI failed' })
+      .mockResolvedValueOnce({ success: true, data: { solution: 'AI solution for q2' } })
+
+    await fillMissingSolutionsWithAI(blocks, mockPayload, mockLogger)
+
+    expect(generateSupport).toHaveBeenCalledTimes(2)
+    const q1 = blocks[0] as ContentBlock & { solution?: { value: string } }
+    const q2 = blocks[1] as ContentBlock & { solution?: { value: string } }
+    expect(q1.solution).toBeUndefined() // failure → no solution
+    expect(q2.solution?.value).toBe('AI solution for q2')
+    expect(mockLogger.warn).toHaveBeenCalled()
+  })
+
+  it('continues processing when AI throws an exception', async () => {
+    const blocks: ContentBlock[] = [
+      makeQuestion('q1', 'question one'),
+      makeQuestion('q2', 'question two'),
+    ]
+
+    vi.mocked(generateSupport)
+      .mockRejectedValueOnce(new Error('Network error'))
+      .mockResolvedValueOnce({ success: true, data: { solution: 'AI solution for q2' } })
+
+    await fillMissingSolutionsWithAI(blocks, mockPayload, mockLogger)
+
+    expect(generateSupport).toHaveBeenCalledTimes(2)
+    const q1 = blocks[0] as ContentBlock & { solution?: { value: string } }
+    const q2 = blocks[1] as ContentBlock & { solution?: { value: string } }
+    expect(q1.solution).toBeUndefined()
+    expect(q2.solution?.value).toBe('AI solution for q2')
+    expect(mockLogger.warn).toHaveBeenCalled()
+  })
+
+  it('does nothing when there are no question blocks at all', async () => {
+    const blocks: ContentBlock[] = [makeRichText('r1', 'just text')]
+
+    await fillMissingSolutionsWithAI(blocks, mockPayload, mockLogger)
+
+    expect(generateSupport).not.toHaveBeenCalled()
   })
 })
