@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useDocumentInfo, useTranslation } from '@payloadcms/ui'
 import { GripVertical, ChevronUp, ChevronDown, BookOpen, Pencil, ClipboardList } from 'lucide-react'
 
@@ -81,8 +81,8 @@ const lessonRowStyle = (
   opacity: isDragging ? 0.5 : 1,
   borderTop: isDropTarget ? '2px solid var(--theme-success-500, #22c55e)' : 'none',
   transition: 'background 0.15s, opacity 0.15s',
-  cursor: 'grab',
   minHeight: 40,
+  cursor: 'grab', // must be on the draggable row, not a child span (draggable forces cursor:default on the element)
 })
 
 const lessonIndexStyle: React.CSSProperties = {
@@ -170,6 +170,12 @@ export const CourseLessonsSorter: React.FC = () => {
     null,
   )
 
+  // Keep a ref to the latest chapters state so moveLesson can access it without stale-closure issues
+  const chaptersRef = useRef<GroupedChapter[]>([])
+  useEffect(() => {
+    chaptersRef.current = chapters
+  }, [chapters])
+
   // Fetch chapters and lessons on mount using Payload REST API
   useEffect(() => {
     if (!id) return
@@ -246,13 +252,16 @@ export const CourseLessonsSorter: React.FC = () => {
     async (chapterId: string, fromIdx: number, toIdx: number) => {
       if (toIdx < 0) return
 
-      // Snapshot current state for persistence after optimistic update
-      const currentGroup = chapters.find((g) => g.chapter.id === chapterId)
+      // Read from ref to avoid stale-closure issues with rapid calls
+      const currentGroup = chaptersRef.current.find((g) => g.chapter.id === chapterId)
       if (!currentGroup) return
 
       const reorderedLessons = [...currentGroup.lessons]
       const [moved] = reorderedLessons.splice(fromIdx, 1)
       reorderedLessons.splice(toIdx, 0, moved)
+
+      // Snapshot prev state for rollback on PATCH failure
+      const snapshot = chaptersRef.current
 
       // Optimistic update
       setChapters((prev) =>
@@ -277,9 +286,10 @@ export const CourseLessonsSorter: React.FC = () => {
       } catch (err) {
         console.error('[CourseLessonsSorter] failed to reorder:', err)
         setErrorMsg(s.failedToReorder)
+        setChapters(snapshot)
       }
     },
-    [chapters, s.failedToReorder],
+    [s.failedToReorder],
   )
 
   // Drag-and-drop handlers
