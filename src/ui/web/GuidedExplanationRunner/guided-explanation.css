@@ -61,45 +61,23 @@
 }
 
 /* Animation primitives --------------------------------------------------- */
+/* Initial hidden states only — Anime.js drives the transitions via inline  */
+/* styles (stroke-dasharray/offset for draw, opacity for fade).             */
 
-.ge-scene .ge-draw-path {
-  stroke-dasharray: 1000;
-  stroke-dashoffset: 1000;
-  transition: stroke-dashoffset 1.5s ease-in-out;
-}
-
-.ge-scene .ge-draw-path.ge-drawn {
-  stroke-dashoffset: 0;
-}
-
+.ge-scene .ge-draw-path,
 .ge-scene .ge-draw-path-fast {
-  stroke-dasharray: 1000;
-  stroke-dashoffset: 1000;
-  transition: stroke-dashoffset 0.8s ease-in-out;
-}
-
-.ge-scene .ge-draw-path-fast.ge-drawn {
-  stroke-dashoffset: 0;
+  /* Start with the full path length hidden — Anime sets the real length    */
+  /* (from getTotalLength) before animating stroke-dashoffset to 0.         */
+  stroke-dasharray: 9999;
+  stroke-dashoffset: 9999;
 }
 
 .ge-scene .ge-fade-element {
   opacity: 0;
-  transition: opacity 0.5s ease-in-out;
-}
-
-.ge-scene .ge-fade-element.ge-visible {
-  opacity: 1;
 }
 
 .ge-scene .ge-highlight-poly {
   opacity: 0;
-  transition:
-    opacity 1s ease-in-out,
-    fill 1s ease-in-out;
-}
-
-.ge-scene .ge-highlight-poly.ge-visible {
-  opacity: 1;
   fill: hsl(var(--primary) / 0.2);
 }
 
