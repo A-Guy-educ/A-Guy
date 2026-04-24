@@ -24,6 +24,7 @@ import {
   attachSolutionToBlocks,
   fillMissingSolutionsWithAI,
   looksLikeSolutionContent,
+  removeRedundantTrailingSolution,
 } from '@/server/payload/endpoints/exercises/convert-latex-block'
 import { generateSupport } from '@/infra/llm/services/support-generation-service'
 
@@ -660,5 +661,77 @@ describe('looksLikeSolutionContent', () => {
 
   it('does NOT detect content where פתרון appears mid-text', () => {
     expect(looksLikeSolutionContent('Some content\nfollowed by פתרון')).toBe(false)
+  })
+})
+
+describe('removeRedundantTrailingSolution', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mockLogger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() } as any
+
+  function makeQuestion(id: string, prompt: string, solution?: string): ContentBlock {
+    const block: ContentBlock & {
+      solution?: { type: string; format: string; value: string; mediaIds: string[] }
+    } = {
+      id,
+      type: 'question_free_response',
+      prompt: { type: 'rich_text', format: 'md-math-v1', value: prompt, mediaIds: [] },
+      answer: { acceptedAnswers: ['__imported__'] },
+    }
+    if (solution) {
+      block.solution = { type: 'rich_text', format: 'md-math-v1', value: solution, mediaIds: [] }
+    }
+    return block
+  }
+
+  function makeRichText(id: string, value: string): ContentBlock {
+    return { id, type: 'rich_text', format: 'md-math-v1', value, mediaIds: [] }
+  }
+
+  it('removes trailing rich_text when all questions have solutions', () => {
+    const blocks: ContentBlock[] = [
+      makeQuestion('q1', 'q1 prompt', 'sol1'),
+      makeQuestion('q2', 'q2 prompt', 'sol2'),
+      makeRichText('r1', 'redundant solution dump'),
+    ]
+
+    removeRedundantTrailingSolution(blocks, mockLogger)
+
+    expect(blocks).toHaveLength(2)
+    expect(blocks[0].id).toBe('q1')
+    expect(blocks[1].id).toBe('q2')
+  })
+
+  it('keeps trailing rich_text when ANY question is missing a solution', () => {
+    const blocks: ContentBlock[] = [
+      makeQuestion('q1', 'q1 prompt', 'sol1'),
+      makeQuestion('q2', 'q2 prompt'), // no solution!
+      makeRichText('r1', 'might be the only place this content exists'),
+    ]
+
+    removeRedundantTrailingSolution(blocks, mockLogger)
+
+    // Trailing block kept since q2 has no solution
+    expect(blocks).toHaveLength(3)
+    expect(blocks[2].id).toBe('r1')
+  })
+
+  it('does nothing when last block is not rich_text', () => {
+    const blocks: ContentBlock[] = [
+      makeQuestion('q1', 'q1', 'sol1'),
+      makeQuestion('q2', 'q2', 'sol2'),
+    ]
+
+    removeRedundantTrailingSolution(blocks, mockLogger)
+
+    expect(blocks).toHaveLength(2)
+  })
+
+  it('does nothing when there are no question blocks before the trailing rich_text', () => {
+    const blocks: ContentBlock[] = [makeRichText('r1', 'some text')]
+
+    removeRedundantTrailingSolution(blocks, mockLogger)
+
+    // Nothing to be redundant against
+    expect(blocks).toHaveLength(1)
   })
 })

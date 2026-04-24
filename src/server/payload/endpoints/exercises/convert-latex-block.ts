@@ -288,6 +288,12 @@ export async function convertLatexBlockOnExercise(
   // This uses the same `generateSupport` service the admin "Generate with AI" button uses.
   await fillMissingSolutionsWithAI(nextBlocks, req.payload, reqLogger)
 
+  // After AI fill: if all question blocks now have solutions and there's
+  // a trailing rich_text block, it's almost certainly a redundant duplicate
+  // of the solution content that should be removed (otherwise it shows as a
+  // separate "page" of answer text after the questions).
+  removeRedundantTrailingSolution(nextBlocks, reqLogger)
+
   // Persist updated content and sourceLatex.
   const combinedSourceLatex = sourceLatexChunks.join('\n\n% --- %\n\n')
   try {
@@ -909,4 +915,52 @@ function stripSolutionHeaderLine(value: string): string {
     /^תשובה\s+סופית/.test(firstLine.trim())
   if (!isHeader) return value
   return lines.slice(firstNonEmptyIdx + 1).join('\n')
+}
+
+/**
+ * Remove a trailing rich_text block when all question blocks already have
+ * solution content populated. This catches redundant duplicates of the
+ * solution that survived earlier rerouting (e.g., when looksLikeSolutionContent
+ * didn't match the exact format).
+ *
+ * Only removes if:
+ * - The last block is a rich_text block
+ * - There are question blocks BEFORE it in the array
+ * - All question blocks have a non-empty `solution` field
+ *
+ * The third condition is the safety net: if any question still lacks a
+ * solution, we leave the trailing block alone — it may be the only place
+ * the solution content exists.
+ */
+export function removeRedundantTrailingSolution(
+  blocks: ContentBlock[],
+  reqLogger: typeof logger,
+): void {
+  if (blocks.length === 0) return
+
+  const last = blocks[blocks.length - 1]
+  if (last.type !== 'rich_text') return
+
+  // Collect question blocks before the trailing rich_text
+  const questionBlocks = blocks.slice(0, -1).filter((b) => isQuestionBlock(b))
+  if (questionBlocks.length === 0) return // nothing to be redundant against
+
+  // Check that ALL question blocks have a non-empty solution
+  const allHaveSolution = questionBlocks.every((b) => {
+    const qb = b as ContentBlock & { solution?: InlineRichText }
+    return Boolean(qb.solution?.value)
+  })
+
+  if (!allHaveSolution) {
+    // At least one question lacks a solution — keep the trailing block
+    // since it might be the only place that content exists
+    return
+  }
+
+  // Safe to remove — all questions have their own solutions
+  blocks.splice(blocks.length - 1, 1)
+  reqLogger.info(
+    { removedBlockId: last.id },
+    'Removed trailing rich_text block (all question blocks have solutions)',
+  )
 }
