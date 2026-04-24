@@ -35,14 +35,8 @@ export async function generateSupport(
   payload: Payload,
 ): Promise<SupportGenerationResponse> {
   try {
-    // Support generation defaults to MiniMax (OpenAI-compatible) — both the
-    // model config and the adapter must use the same provider.
     const { createGenkitUnifiedAdapter } = await import('../genkit/adapters/unified-adapter')
-    const adapter = await createGenkitUnifiedAdapter(
-      payload,
-      undefined,
-      LLMProviderType.OPENAI_COMPATIBLE,
-    )
+    const adapter = await createGenkitUnifiedAdapter(payload)
     const modelConfig = resolveModelConfig('SUPPORT_GENERATION')
     const userPrompt = buildSupportUserPrompt(input)
 
@@ -134,10 +128,7 @@ function mergeResults(first: GeneratedSupport, second: GeneratedSupport): Genera
 function resolveModelConfig(modelKey: AIModelKey): AIModel {
   const entry = getModelRegistryEntry(modelKey)
   return {
-    // Support generation (used during conversion's hint/solution AI fill)
-    // defaults to MiniMax (OpenAI-compatible). Change to LLMProviderType.GEMINI
-    // to switch back.
-    name: getProviderModelName(LLMProviderType.OPENAI_COMPATIBLE, modelKey),
+    name: getProviderModelName(LLMProviderType.GEMINI, modelKey),
     ...entry,
     modelKey,
   }
