@@ -73,7 +73,8 @@ describe('LLM Model Configuration Validation', () => {
     })
 
     it('should have correct model names for Gemini provider', () => {
-      // Gemini uses different models per task (EXERCISE_CHAT uses flash-lite)
+      // EXERCISE_CHAT, PDF_TO_EXERCISE, SUPPORT_GENERATION use flash-lite
+      // (pro doesn't exist in this account); IMAGE_TO_EXERCISE keeps pro.
       expect(getProviderModelConfig(LLMProviderType.GEMINI, 'EXERCISE_CHAT').name).toBe(
         'gemini-3.1-flash-lite-preview',
       )
@@ -81,7 +82,7 @@ describe('LLM Model Configuration Validation', () => {
         'gemini-3.1-pro',
       )
       expect(getProviderModelConfig(LLMProviderType.GEMINI, 'PDF_TO_EXERCISE').name).toBe(
-        'gemini-3.1-pro',
+        'gemini-3.1-flash-lite-preview',
       )
     })
 
@@ -166,7 +167,7 @@ describe('LLM Model Configuration Validation', () => {
         'gemini-3.1-pro',
       )
       expect(getProviderModelConfig(LLMProviderType.GEMINI, 'PDF_TO_EXERCISE').name).toBe(
-        'gemini-3.1-pro',
+        'gemini-3.1-flash-lite-preview',
       )
 
       // OpenAI-compatible provider
