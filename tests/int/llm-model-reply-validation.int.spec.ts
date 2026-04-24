@@ -86,16 +86,16 @@ describe('LLM Model Configuration Validation', () => {
     })
 
     it('should have correct model names for OpenAI-compatible provider', () => {
-      // OpenAI-compatible uses MiniMax-M2.7 for all models
+      // OpenAI-compatible uses MiniMax-M2.1 for all models
       expect(getProviderModelConfig(LLMProviderType.OPENAI_COMPATIBLE, 'EXERCISE_CHAT').name).toBe(
-        'MiniMax-M2.7',
+        'MiniMax-M2.1',
       )
       expect(
         getProviderModelConfig(LLMProviderType.OPENAI_COMPATIBLE, 'IMAGE_TO_EXERCISE').name,
-      ).toBe('MiniMax-M2.7')
+      ).toBe('MiniMax-M2.1')
       expect(
         getProviderModelConfig(LLMProviderType.OPENAI_COMPATIBLE, 'PDF_TO_EXERCISE').name,
-      ).toBe('MiniMax-M2.7')
+      ).toBe('MiniMax-M2.1')
     })
 
     it('should have appropriate temperature settings per model use case', () => {
@@ -171,14 +171,14 @@ describe('LLM Model Configuration Validation', () => {
 
       // OpenAI-compatible provider
       expect(getProviderModelConfig(LLMProviderType.OPENAI_COMPATIBLE, 'EXERCISE_CHAT').name).toBe(
-        'MiniMax-M2.7',
+        'MiniMax-M2.1',
       )
       expect(
         getProviderModelConfig(LLMProviderType.OPENAI_COMPATIBLE, 'IMAGE_TO_EXERCISE').name,
-      ).toBe('MiniMax-M2.7')
+      ).toBe('MiniMax-M2.1')
       expect(
         getProviderModelConfig(LLMProviderType.OPENAI_COMPATIBLE, 'PDF_TO_EXERCISE').name,
-      ).toBe('MiniMax-M2.7')
+      ).toBe('MiniMax-M2.1')
     })
   })
 
@@ -207,7 +207,7 @@ describe('LLM Model Configuration Validation', () => {
       expect(providerType).toBe(LLMProviderType.OPENAI_COMPATIBLE)
 
       const modelConfig = getProviderModelConfig(providerType, 'EXERCISE_CHAT')
-      expect(modelConfig.name).toBe('MiniMax-M2.7')
+      expect(modelConfig.name).toBe('MiniMax-M2.1')
     })
 
     it('should default to Gemini for unknown LLM_PROVIDER values', async () => {
@@ -364,7 +364,7 @@ describe('LLM Model API Validation (Manual Test)', () => {
           LLMProviderType.OPENAI_COMPATIBLE,
           'EXERCISE_CHAT',
         )
-        expect(modelConfig.name).toBe('MiniMax-M2.7')
+        expect(modelConfig.name).toBe('MiniMax-M2.1')
         expect(modelConfig.temperature).toBe(0.7)
         expect(modelConfig.maxOutputTokens).toBe(2048)
         // Actual API call would go here in a full integration test
@@ -379,7 +379,7 @@ describe('LLM Model API Validation (Manual Test)', () => {
           LLMProviderType.OPENAI_COMPATIBLE,
           'IMAGE_TO_EXERCISE',
         )
-        expect(modelConfig.name).toBe('MiniMax-M2.7')
+        expect(modelConfig.name).toBe('MiniMax-M2.1')
         expect(modelConfig.temperature).toBe(0.2)
         expect(modelConfig.maxOutputTokens).toBe(8192)
         // Actual API call would go here in a full integration test
@@ -394,7 +394,7 @@ describe('LLM Model API Validation (Manual Test)', () => {
           LLMProviderType.OPENAI_COMPATIBLE,
           'PDF_TO_EXERCISE',
         )
-        expect(modelConfig.name).toBe('MiniMax-M2.7')
+        expect(modelConfig.name).toBe('MiniMax-M2.1')
         expect(modelConfig.temperature).toBe(0.1)
         expect(modelConfig.maxOutputTokens).toBe(32768)
         // Actual API call would go here in a full integration test
