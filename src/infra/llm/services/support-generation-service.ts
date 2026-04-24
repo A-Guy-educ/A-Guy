@@ -35,8 +35,13 @@ export async function generateSupport(
   payload: Payload,
 ): Promise<SupportGenerationResponse> {
   try {
+    // Support generation forced to MiniMax (OpenAI-compatible).
     const { createGenkitUnifiedAdapter } = await import('../genkit/adapters/unified-adapter')
-    const adapter = await createGenkitUnifiedAdapter(payload)
+    const adapter = await createGenkitUnifiedAdapter(
+      payload,
+      undefined,
+      LLMProviderType.OPENAI_COMPATIBLE,
+    )
     const modelConfig = resolveModelConfig('SUPPORT_GENERATION')
     const userPrompt = buildSupportUserPrompt(input)
 
@@ -128,7 +133,7 @@ function mergeResults(first: GeneratedSupport, second: GeneratedSupport): Genera
 function resolveModelConfig(modelKey: AIModelKey): AIModel {
   const entry = getModelRegistryEntry(modelKey)
   return {
-    name: getProviderModelName(LLMProviderType.GEMINI, modelKey),
+    name: getProviderModelName(LLMProviderType.OPENAI_COMPATIBLE, modelKey),
     ...entry,
     modelKey,
   }

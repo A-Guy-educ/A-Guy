@@ -53,15 +53,18 @@ export async function POST(request: NextRequest) {
     reqLogger.info({ chunkCount: chunks.length }, 'Split LaTeX into exercise chunks for AI')
 
     // Use Genkit unified adapter for AI parsing
+    // Conversion pipeline forced to MiniMax (OpenAI-compatible).
+    const { LLMProviderType } = await import('@/infra/llm/providers/types')
+    const providerType = LLMProviderType.OPENAI_COMPATIBLE
+
     const { createGenkitUnifiedAdapter } =
       await import('@/infra/llm/genkit/adapters/unified-adapter')
-    const adapter = await createGenkitUnifiedAdapter(payload)
+    const adapter = await createGenkitUnifiedAdapter(payload, undefined, providerType)
     const { getModelRegistryEntry, getProviderModelName } = await import('@/infra/llm/models')
-    const { LLMProviderType } = await import('@/infra/llm/providers/types')
 
     const modelEntry = getModelRegistryEntry('PDF_TO_EXERCISE')
     const modelConfig = {
-      name: getProviderModelName(LLMProviderType.GEMINI, 'PDF_TO_EXERCISE'),
+      name: getProviderModelName(providerType, 'PDF_TO_EXERCISE'),
       ...modelEntry,
       modelKey: 'PDF_TO_EXERCISE' as const,
     }
