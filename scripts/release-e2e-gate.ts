@@ -31,7 +31,7 @@ let mongoContainerId: string | null = null
 function execFileAsync(
   cmd: string,
   args: string[],
-  options?: { env?: NodeJS.ProcessEnv; signal?: AbortSignal }
+  options?: { env?: NodeJS.ProcessEnv; signal?: AbortSignal },
 ): Promise<{ stdout: string; stderr: string; code: number | null }> {
   return new Promise((resolve) => {
     let stdout = ''
@@ -57,8 +57,11 @@ function execFileAsync(
 async function startMongoDB(): Promise<void> {
   console.log('[gate] Starting MongoDB container...')
   const { stdout, code } = await execFileAsync('docker', [
-    'run', '-d', '--rm',
-    '-p', `${MONGO_PORT}:${MONGO_PORT}`,
+    'run',
+    '-d',
+    '--rm',
+    '-p',
+    `${MONGO_PORT}:${MONGO_PORT}`,
     MONGO_IMAGE,
     '--storageEngine=wiredTiger',
   ])
@@ -105,10 +108,13 @@ function sleep(ms: number): Promise<void> {
 
 async function ensureChromium(): Promise<void> {
   console.log('[gate] Ensuring Chromium is installed...')
-  const { code, stdout, stderr } = await execFileAsync(
-    'pnpm',
-    ['exec', 'playwright', 'install', '--with-deps', 'chromium']
-  )
+  const { code, stdout, stderr } = await execFileAsync('pnpm', [
+    'exec',
+    'playwright',
+    'install',
+    '--with-deps',
+    'chromium',
+  ])
   if (code !== 0) {
     throw new Error(`playwright install failed (${code}): ${stdout}${stderr}`)
   }
@@ -127,11 +133,9 @@ async function runPlaywrightTests(): Promise<number> {
     SKIP_BUILD: 'true',
   }
   return new Promise((resolve) => {
-    const child = execFile(
-      'pnpm',
-      ['exec', 'playwright', 'test', '--config', PLAYWRIGHT_CONFIG],
-      { env }
-    )
+    const child = execFile('pnpm', ['exec', 'playwright', 'test', '--config', PLAYWRIGHT_CONFIG], {
+      env,
+    })
     let code = 1
     child.stdout?.on('data', (chunk) => process.stdout.write(chunk))
     child.stderr?.on('data', (chunk) => process.stderr.write(chunk))
