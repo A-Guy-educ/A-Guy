@@ -1,0 +1,16 @@
+{
+  "task_type": "feature",
+  "title": "Enhanced Voice Experience: Math-to-Speech & Playback Controls",
+  "description": "Upgrade chat TTS with three phases: (1) bilingual LaTeX-to-speech engine replacing silent-stripping, (2) playback controls (speed selector 0.5x-2.0x + pause/resume), (3) voice quality evaluation spike. Hebrew math terms use a lookup table (\"frac\" → \"chalki\"/\"over\"). Chat TTS adopts guided explanation's voice preference chain and rate/pitch tuning (0.85/0.95).",
+  "scope": [
+    "src/infra/utils/latexToSpeech.ts",
+    "src/infra/utils/speechHelpers.ts",
+    "src/ui/web/chat/hooks/useTTS.ts",
+    "src/ui/web/chat/TTSButton/index.tsx",
+    "src/i18n/en.json",
+    "src/i18n/he.json",
+    "src/ui/web/GuidedExplanationRunner/speech.ts"
+  ],
+  "risk_level": "medium",
+  "questions": []
+}

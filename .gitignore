@@ -14,6 +14,9 @@ node_modules
 # Payload default media upload directory
 public/media/
 
+# Local-only testing materials for interactive lesson / schema work
+schema-testing/
+
 public/robots.txt
 public/sitemap*.xml
 
@@ -27,6 +30,10 @@ node_modules/
 
 
 tsconfig.tsbuildinfo
+
+# Payload generated artifacts — regenerated on install/dev/build from payload.config.ts
+src/payload-types.ts
+src/app/(payload)/admin/importMap.js
 
 # Local AI development documentation
 CLAUDE_INTERNAL.md
@@ -67,3 +74,11 @@ shay-tassk/
 
 # LaTeX example files (local only)
 latex_examples/
+
+# kody graph transient artifacts (do not commit)
+.kody/graph/.graph-lock
+.kody/graph/.graph-lock.lock/
+.kody/graph/*.bak
+.kody/graph/*.tmp.*
+.kody/graph/episodes/*.bak
+.kody/graph/episodes/*.tmp.*

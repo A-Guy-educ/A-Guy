@@ -21,6 +21,7 @@ export interface ChatMessage {
   timestamp?: string
   hidden?: boolean
   media?: Array<{ mediaId: string }>
+  chatAssets?: Array<{ chatAssetId: string }>
 }
 
 export interface ExerciseChatInput {
