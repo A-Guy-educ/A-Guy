@@ -124,6 +124,8 @@ jobs:
           INIT_MESSAGE: ${{ inputs.message }}
           MODEL: ${{ inputs.model }}
           DASHBOARD_URL: ${{ inputs.dashboardUrl }}
+          USE_MONGO_SERVICE: 'true'
+          DATABASE_URL: mongodb://localhost:27017/test
         run: |
           if [ -n "$SESSION_ID" ]; then
             npx -y -p @kody-ade/kody-engine@latest kody chat
