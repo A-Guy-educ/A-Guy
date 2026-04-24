@@ -1,0 +1,2 @@
+{"event":"chat.message","payload":{"sessionId":"live-test-1776849549","role":"assistant","content":"ping","timestamp":"2026-04-22T09:20:24.004Z"},"runId":"chat-live-test-1776849549-message","emittedAt":"2026-04-22T09:20:24.004Z"}
+{"event":"chat.done","payload":{"sessionId":"live-test-1776849549"},"runId":"chat-live-test-1776849549-done","emittedAt":"2026-04-22T09:20:24.004Z"}

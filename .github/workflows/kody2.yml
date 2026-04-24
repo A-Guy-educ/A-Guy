@@ -1,0 +1,98 @@
+# Drop this file at .github/workflows/kody2.yml in your repo.
+#
+# Two triggers, two modes:
+#   - issue_comment / workflow_dispatch with issue_number → `kody2 ci`
+#     (the @kody2 issue/PR automation flow)
+#   - workflow_dispatch with sessionId                    → `kody2 chat`
+#     (dashboard-driven Gemini chat session)
+#
+# All orchestration lives in the kody2 npm package; future capabilities ship
+# via `npm publish`, not by editing this file.
+#
+# Required repo secrets: at least one model provider key (e.g. MINIMAX_API_KEY,
+# ANTHROPIC_API_KEY). kody2 reads any *_API_KEY secret automatically via
+# toJSON(secrets) — no need to list them here.
+#
+# Recommended: KODY_TOKEN secret — a fine-grained PAT or GitHub App token
+# with `repo` + `read:org` scopes. Without it, kody2's commits/PR-creation
+# still work via github.token, but two things degrade:
+#   1. PR body updates fail with "token lacks read:org scope" (cosmetic).
+#   2. Pushes from kody2 won't trigger downstream workflows.
+# Set KODY_TOKEN in repo Settings → Secrets → Actions.
+
+name: kody2
+
+on:
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "GitHub issue number (agent mode)"
+        type: string
+        default: ""
+      sessionId:
+        description: "Chat session ID (chat mode, from Kody-Dashboard)"
+        type: string
+        default: ""
+      message:
+        description: "Initial chat message (optional)"
+        type: string
+        default: ""
+      model:
+        description: "Model override (optional, e.g. anthropic/claude-haiku-4-5-20251001)"
+        type: string
+        default: ""
+      dashboardUrl:
+        description: "Dashboard event ingest URL with inline ?token=... (chat mode)"
+        type: string
+        default: ""
+  issue_comment:
+    types: [created]
+
+jobs:
+  run:
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' ||
+          (github.event_name == 'issue_comment' &&
+            contains(github.event.comment.body, '@kody2') &&
+            github.event.comment.user.login != 'kody2-bot' &&
+            github.event.comment.user.type != 'Bot') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    concurrency:
+      group: kody2-${{ inputs.sessionId || inputs.issue_number || github.event.issue.number || github.sha }}
+      cancel-in-progress: false
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.KODY_TOKEN || github.token }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Write pip cache key for LiteLLM
+        run: echo "litellm[proxy]" > .kody2-pip-requirements.txt
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: .kody2-pip-requirements.txt
+
+      - env:
+          ALL_SECRETS:   ${{ toJSON(secrets) }}
+          SESSION_ID:    ${{ inputs.sessionId }}
+          INIT_MESSAGE:  ${{ inputs.message }}
+          MODEL:         ${{ inputs.model }}
+          DASHBOARD_URL: ${{ inputs.dashboardUrl }}
+        run: |
+          if [ -n "$SESSION_ID" ]; then
+            npx -y -p @kody-ade/kody-engine@latest kody2 chat
+          else
+            npx -y -p @kody-ade/kody-engine@latest kody2 ci
+          fi
