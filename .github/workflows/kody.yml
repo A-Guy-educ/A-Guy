@@ -28,25 +28,25 @@ on:
   workflow_dispatch:
     inputs:
       issue_number:
-        description: "GitHub issue number (agent mode)"
+        description: 'GitHub issue number (agent mode)'
         type: string
-        default: ""
+        default: ''
       sessionId:
-        description: "Chat session ID (chat mode, from Kody-Dashboard)"
+        description: 'Chat session ID (chat mode, from Kody-Dashboard)'
         type: string
-        default: ""
+        default: ''
       message:
-        description: "Initial chat message (optional)"
+        description: 'Initial chat message (optional)'
         type: string
-        default: ""
+        default: ''
       model:
-        description: "Model override (optional, e.g. anthropic/claude-haiku-4-5-20251001)"
+        description: 'Model override (optional, e.g. anthropic/claude-haiku-4-5-20251001)'
         type: string
-        default: ""
+        default: ''
       dashboardUrl:
-        description: "Dashboard event ingest URL with inline ?token=... (chat mode)"
+        description: 'Dashboard event ingest URL with inline ?token=... (chat mode)'
         type: string
-        default: ""
+        default: ''
   issue_comment:
     types: [created]
 
@@ -82,15 +82,15 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-          cache: "pip"
+          python-version: '3.12'
+          cache: 'pip'
           cache-dependency-path: .kody-pip-requirements.txt
 
       - env:
-          ALL_SECRETS:   ${{ toJSON(secrets) }}
-          SESSION_ID:    ${{ inputs.sessionId }}
-          INIT_MESSAGE:  ${{ inputs.message }}
-          MODEL:         ${{ inputs.model }}
+          ALL_SECRETS: ${{ toJSON(secrets) }}
+          SESSION_ID: ${{ inputs.sessionId }}
+          INIT_MESSAGE: ${{ inputs.message }}
+          MODEL: ${{ inputs.model }}
           DASHBOARD_URL: ${{ inputs.dashboardUrl }}
         run: |
           if [ -n "$SESSION_ID" ]; then
