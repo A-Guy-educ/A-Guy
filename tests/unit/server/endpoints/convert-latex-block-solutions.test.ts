@@ -368,14 +368,14 @@ describe('attachSolutionToBlocks', () => {
       expect((blocks[2] as ContentBlock & { solution?: unknown }).solution).toBeUndefined()
     })
 
-    it('falls back to whole solution on last block when parts do not match', () => {
+    it('distributes available parts when there are fewer parts than questions (rest empty for AI fill)', () => {
       const blocks: ContentBlock[] = [
         makeQuestionBlock('q1', 'question 1'),
         makeQuestionBlock('q2', 'question 2'),
         makeQuestionBlock('q3', 'question 3'),
       ]
 
-      // Solution with only 2 labels but 3 question blocks — doesn't match
+      // 2 solution parts but 3 question blocks
       const solution = `א. solution א
 ב. solution ב`
 
@@ -385,11 +385,55 @@ describe('attachSolutionToBlocks', () => {
       const q2 = blocks[1] as ContentBlock & { solution?: { value: string } }
       const q3 = blocks[2] as ContentBlock & { solution?: { value: string } }
 
-      // Fallback: whole solution on the LAST question block
-      expect(q1.solution).toBeUndefined()
-      expect(q2.solution).toBeUndefined()
-      expect(q3.solution?.value).toContain('solution א')
-      expect(q3.solution?.value).toContain('solution ב')
+      // First M questions get the M parts, rest stay empty (AI fill handles)
+      expect(q1.solution?.value).toContain('solution א')
+      expect(q2.solution?.value).toContain('solution ב')
+      expect(q3.solution).toBeUndefined()
+    })
+
+    it('joins extras into last question when there are more parts than questions', () => {
+      const blocks: ContentBlock[] = [
+        makeQuestionBlock('q1', 'question 1'),
+        makeQuestionBlock('q2', 'question 2'),
+      ]
+
+      // 4 solution parts but only 2 question blocks
+      const solution = `א. sol א
+ב. sol ב
+ג. sol ג
+ד. sol ד`
+
+      attachSolutionToBlocks(blocks, solution)
+
+      const q1 = blocks[0] as ContentBlock & { solution?: { value: string } }
+      const q2 = blocks[1] as ContentBlock & { solution?: { value: string } }
+
+      // First (N-1) get 1:1, last gets the rest joined
+      expect(q1.solution?.value).toContain('sol א')
+      expect(q1.solution?.value).not.toContain('sol ב')
+      expect(q2.solution?.value).toContain('sol ב')
+      expect(q2.solution?.value).toContain('sol ג')
+      expect(q2.solution?.value).toContain('sol ד')
+    })
+
+    it('falls back to paragraph splitting when no labels found', () => {
+      const blocks: ContentBlock[] = [
+        makeQuestionBlock('q1', 'question 1'),
+        makeQuestionBlock('q2', 'question 2'),
+      ]
+
+      // No Hebrew or numeric labels, but separated by blank lines
+      const solution = `First paragraph with some content here.
+
+Second paragraph with different content here.`
+
+      attachSolutionToBlocks(blocks, solution)
+
+      const q1 = blocks[0] as ContentBlock & { solution?: { value: string } }
+      const q2 = blocks[1] as ContentBlock & { solution?: { value: string } }
+
+      expect(q1.solution?.value).toContain('First paragraph')
+      expect(q2.solution?.value).toContain('Second paragraph')
     })
 
     it('attaches whole solution to a single question block (no labels needed)', () => {

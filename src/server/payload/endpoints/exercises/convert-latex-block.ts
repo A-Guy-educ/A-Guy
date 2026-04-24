@@ -527,17 +527,22 @@ export function splitSolutionByLabels(text: string, mode: 'hebrew' | 'all'): str
 /**
  * Attach solution LaTeX content to question blocks' `solution` field.
  *
- * Strategy:
+ * Strategy (in order of preference):
  * 1. Strip the solution header (if present)
  * 2. Find question blocks in document order
  * 3. If 0 question blocks → nothing to do
  * 4. If 1 question block → attach the whole solution to it
- * 5. If 2+ question blocks → try two-pass label splitting:
- *    - Pass 1: split by Hebrew letter labels only
- *    - Pass 2: split by Hebrew letters + numeric labels
- *    - If either pass produces exactly N parts (N = question block count),
- *      attach 1:1 by position
- *    - Otherwise fall back to attaching the whole solution to the last block
+ * 5. If 2+ question blocks:
+ *    a. Pass 1: split by Hebrew letter labels only
+ *    b. Pass 2: split by Hebrew letters + numeric labels
+ *    c. Pass 3: split by paragraph (double-newline) when no labels found
+ *    For each pass, do best-effort distribution:
+ *      - parts == questions → 1:1
+ *      - parts > questions → first (N-1) get 1:1, last gets all remaining joined
+ *      - parts < questions → first M questions get parts, rest stay empty
+ *        (AI auto-fill will catch the empty ones in Phase 6)
+ *    The first pass to produce any parts wins.
+ * 6. If no pass produces any parts → fallback: dump on last question block
  */
 export function attachSolutionToBlocks(blocks: ContentBlock[], solutionLatex: string): void {
   // Clean solution: strip the header line, keep the content
@@ -575,29 +580,77 @@ export function attachSolutionToBlocks(blocks: ContentBlock[], solutionLatex: st
     return
   }
 
-  // Multiple questions: try splitting by labels
-  const targetCount = questionIndices.length
+  // Multiple questions: try increasingly aggressive splitting strategies.
+  // The first strategy that produces any parts wins; we then distribute
+  // best-effort even if counts don't match exactly.
+  const strategies: (() => string[])[] = [
+    () => splitSolutionByLabels(contentWithoutHeader, 'hebrew'),
+    () => splitSolutionByLabels(contentWithoutHeader, 'all'),
+    () => splitByParagraphs(contentWithoutHeader),
+  ]
 
-  // Pass 1: Hebrew letters only
-  const hebrewParts = splitSolutionByLabels(contentWithoutHeader, 'hebrew')
-  if (hebrewParts.length === targetCount) {
-    for (let i = 0; i < targetCount; i++) {
-      setSolutionOnBlock(blocks[questionIndices[i]], hebrewParts[i])
+  for (const strategy of strategies) {
+    const parts = strategy()
+    if (parts.length > 0) {
+      distributeParts(blocks, questionIndices, parts)
+      return
     }
-    return
   }
 
-  // Pass 2: Hebrew letters + numeric labels
-  const allParts = splitSolutionByLabels(contentWithoutHeader, 'all')
-  if (allParts.length === targetCount) {
-    for (let i = 0; i < targetCount; i++) {
-      setSolutionOnBlock(blocks[questionIndices[i]], allParts[i])
-    }
-    return
-  }
-
-  // Fallback: dump the whole solution on the last question block
+  // No strategy produced any parts — dump on last question block as ultimate fallback
   setSolutionOnBlock(blocks[questionIndices[questionIndices.length - 1]], contentWithoutHeader)
+}
+
+/**
+ * Split text by paragraph boundaries (double newlines). Used as a fallback
+ * when label-based splitting finds no labels.
+ *
+ * Returns paragraphs that have substantive content (>10 chars after trim).
+ */
+function splitByParagraphs(text: string): string[] {
+  const paragraphs = text
+    .split(/\n\s*\n+/)
+    .map((p) => p.trim())
+    .filter((p) => p.length > 10)
+  // Only useful as a strategy if we got more than one paragraph
+  return paragraphs.length >= 2 ? paragraphs : []
+}
+
+/**
+ * Distribute solution parts across question blocks with best-effort matching:
+ * - parts.length === questions.length → 1:1 by position
+ * - parts.length >  questions.length → first (N-1) get 1:1, last block gets
+ *   all remaining parts joined (so no content is lost)
+ * - parts.length <  questions.length → first M questions get a part each,
+ *   remaining questions stay empty (AI auto-fill in Phase 6 will fill them)
+ */
+function distributeParts(blocks: ContentBlock[], questionIndices: number[], parts: string[]): void {
+  const N = questionIndices.length
+  const M = parts.length
+
+  if (M === N) {
+    // Perfect 1:1 match
+    for (let i = 0; i < N; i++) {
+      setSolutionOnBlock(blocks[questionIndices[i]], parts[i])
+    }
+    return
+  }
+
+  if (M > N) {
+    // More parts than questions: first (N-1) get 1:1, last gets the rest
+    for (let i = 0; i < N - 1; i++) {
+      setSolutionOnBlock(blocks[questionIndices[i]], parts[i])
+    }
+    const remaining = parts.slice(N - 1).join('\n\n')
+    setSolutionOnBlock(blocks[questionIndices[N - 1]], remaining)
+    return
+  }
+
+  // M < N: fewer parts than questions. Assign each part to a question;
+  // remaining questions stay empty for the AI auto-fill step to handle.
+  for (let i = 0; i < M; i++) {
+    setSolutionOnBlock(blocks[questionIndices[i]], parts[i])
+  }
 }
 
 /** Set the `solution` field on a question block (md-math-v1 inline rich text). */
