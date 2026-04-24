@@ -63,6 +63,17 @@ jobs:
     concurrency:
       group: kody-${{ inputs.sessionId || inputs.issue_number || github.event.issue.number || github.sha }}
       cancel-in-progress: false
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     permissions:
       issues: write
       pull-requests: write
@@ -73,9 +84,30 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.KODY_TOKEN || github.token }}
 
-      - uses: actions/setup-node@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
-          node-version: 22
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Restore .next build from cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .next
+          key: ${{ runner.os }}-next-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-next-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
 
       - name: Write pip cache key for LiteLLM
         run: echo "litellm[proxy]" > .kody-pip-requirements.txt
