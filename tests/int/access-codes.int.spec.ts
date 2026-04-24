@@ -93,11 +93,15 @@ beforeAll(async () => {
 
   // Get or create a category (required for courses)
   const existingCategories = await payload.find({ collection: 'categories', limit: 1 })
-  const categoryId = existingCategories.docs[0]?.id ?? (await payload.create({
-    collection: 'categories',
-    data: { title: 'Test Category', slug: `access-codes-cat-${Date.now()}` } as any,
-    overrideAccess: true,
-  })).id
+  const categoryId =
+    existingCategories.docs[0]?.id ??
+    (
+      await payload.create({
+        collection: 'categories',
+        data: { title: 'Test Category', slug: `access-codes-cat-${Date.now()}` } as any,
+        overrideAccess: true,
+      })
+    ).id
 
   // Create a course in the default tenant
   const defaultCourse = await payload.create({
