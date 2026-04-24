@@ -153,12 +153,17 @@ export function parseContextText(contextText: string): ParsedSegment[] {
           continue
         }
 
-        exerciseMatches.push({
-          index: match.index,
-          title: `תרגיל ${number}`,
-          number,
-          fullMatch: match[0],
-        })
+        // Skip creating an exercise if this \stepcounter was just marked as a
+        // short-answer block (duplicate number). The short-answer block is NOT
+        // a new exercise — it provides the solution for the earlier exercise.
+        if (!shortAnswerBlocks.has(number)) {
+          exerciseMatches.push({
+            index: match.index,
+            title: `תרגיל ${number}`,
+            number,
+            fullMatch: match[0],
+          })
+        }
       }
 
       // Pass 1b: Find \item[N.] bracket-numbered exercises
