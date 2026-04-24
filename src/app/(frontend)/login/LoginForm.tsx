@@ -13,6 +13,7 @@ import { Label } from '@/ui/web/components/label'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { usePasswordLogin } from '@/ui/web/providers/PasswordLoginProvider'
 import { useTranslations } from '@/ui/web/providers/I18n'
+import { sanitizeReturnTo } from '@/infra/auth/oauth_sanitize'
 import { loginAction } from './login_authenticate-action'
 import telescopeSvg from '@/ui/web/TelescopeLogo/telescope.svg'
 
@@ -21,7 +22,7 @@ function LoginFormContent() {
   const tOauth = useTranslations('auth.oauth')
   const passwordEnabled = usePasswordLogin()
   const searchParams = useSearchParams()
-  const returnTo = searchParams?.get('returnTo') || '/'
+  const returnTo = sanitizeReturnTo(searchParams?.get('returnTo'))
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
