@@ -28,7 +28,7 @@ type DimensionResult =
  * Get image dimensions from a URL using sharp
  * Returns dimension info, or a specific error type if the image cannot be read
  */
-async function getImageDimensionsFromUrl(url: string): Promise<DimensionResult> {
+export async function getImageDimensionsFromUrl(url: string): Promise<DimensionResult> {
   try {
     const response = await fetch(url)
     if (!response.ok) {
@@ -270,8 +270,8 @@ export async function POST(request: Request): Promise<Response> {
         if (dimensionResult.error === 'corrupted') {
           return Response.json(
             {
-              error:
-                'This image could not be processed. It may be corrupted or in an unsupported format. Please try uploading a different image or resave it in a different format.',
+              error: 'IMAGE_CORRUPTED',
+              code: 'chatImageCorrupted',
             },
             { status: 422 },
           )
@@ -279,13 +279,16 @@ export async function POST(request: Request): Promise<Response> {
         if (dimensionResult.error === 'invalid_format') {
           return Response.json(
             {
-              error:
-                'Image format is not supported. Please upload a JPEG, PNG, WebP, or GIF image.',
+              error: 'IMAGE_INVALID_FORMAT',
+              code: 'chatImageInvalidFormat',
             },
             { status: 415 },
           )
         }
         // For network errors, allow the upload to proceed (blob exists, client validated)
+        console.warn(
+          `[chat-assets/finalize] Image metadata fetch failed for ${resolvedBlobUrl}, proceeding with upload`,
+        )
       } else {
         // dimensionResult is { width, height }
         const dimensions = dimensionResult as { width: number; height: number }
