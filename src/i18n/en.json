@@ -295,6 +295,8 @@
     "chatFileTooLarge": "File too large (max 10MB)",
     "chatMaxFiles": "Maximum 5 files allowed",
     "chatUploadFailed": "Failed to upload file",
+    "chatImageCorrupted": "This image could not be processed. It may be corrupted or in an unsupported format. Please try uploading a different image or resave it in a different format.",
+    "chatImageInvalidFormat": "Image format is not supported. Please upload a JPEG, PNG, WebP, or GIF image.",
     "chatQuotaCounter": "{used}/{max} questions used",
     "chatQuotaResetIn": "Resets in {time}",
     "chatQuotaExhausted": "You've reached your question limit. Try again in {time}",

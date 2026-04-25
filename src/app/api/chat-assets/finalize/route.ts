@@ -18,26 +18,63 @@ import { head } from '@vercel/blob'
 import { isVercelBlobUrl } from '@/infra/blob/vercel-blob-adapter'
 import sharp from 'sharp'
 
+type DimensionResult =
+  | { width: number; height: number }
+  | { error: 'corrupted' }
+  | { error: 'invalid_format' }
+  | { error: 'network' }
+
 /**
  * Get image dimensions from a URL using sharp
- * Returns null if the file is not an image or cannot be read
+ * Returns dimension info, or a specific error type if the image cannot be read
  */
-async function getImageDimensionsFromUrl(
-  url: string,
-): Promise<{ width: number; height: number } | null> {
+async function getImageDimensionsFromUrl(url: string): Promise<DimensionResult> {
   try {
     const response = await fetch(url)
     if (!response.ok) {
-      return null
+      return { error: 'network' }
     }
+
     const buffer = await response.arrayBuffer()
+    const uint8Array = new Uint8Array(buffer)
+
+    // Validate minimum buffer size for any image format
+    if (uint8Array.length < 12) {
+      return { error: 'invalid_format' }
+    }
+
+    // Check for valid image magic bytes (JPEG, PNG, WebP, GIF)
+    const isJPEG = uint8Array[0] === 0xff && uint8Array[1] === 0xd8 && uint8Array[2] === 0xff
+    const isPNG =
+      uint8Array[0] === 0x89 &&
+      uint8Array[1] === 0x50 &&
+      uint8Array[2] === 0x4e &&
+      uint8Array[3] === 0x47
+    const isWebP =
+      uint8Array[0] === 0x52 &&
+      uint8Array[1] === 0x49 &&
+      uint8Array[2] === 0x46 &&
+      uint8Array[3] === 0x46 &&
+      uint8Array[8] === 0x57 &&
+      uint8Array[9] === 0x45 &&
+      uint8Array[10] === 0x42 &&
+      uint8Array[11] === 0x50
+    const isGIF = uint8Array[0] === 0x47 && uint8Array[1] === 0x49 && uint8Array[2] === 0x46
+
+    if (!isJPEG && !isPNG && !isWebP && !isGIF) {
+      return { error: 'invalid_format' }
+    }
+
+    // Try to read metadata with sharp - this will fail for corrupted images
     const metadata = await sharp(Buffer.from(buffer)).metadata()
     if (!metadata.width || !metadata.height) {
-      return null
+      return { error: 'corrupted' }
     }
+
     return { width: metadata.width, height: metadata.height }
   } catch {
-    return null
+    // Any exception from sharp indicates a corrupted/unreadable image
+    return { error: 'corrupted' }
   }
 }
 
@@ -226,22 +263,44 @@ export async function POST(request: Request): Promise<Response> {
 
     // Server-side image dimension validation for image types
     if (blobContentType?.startsWith('image/')) {
-      const dimensions = await getImageDimensionsFromUrl(resolvedBlobUrl)
-      if (dimensions) {
+      const dimensionResult = await getImageDimensionsFromUrl(resolvedBlobUrl)
+
+      // Handle specific error cases
+      if ('error' in dimensionResult) {
+        if (dimensionResult.error === 'corrupted') {
+          return Response.json(
+            {
+              error:
+                'This image could not be processed. It may be corrupted or in an unsupported format. Please try uploading a different image or resave it in a different format.',
+            },
+            { status: 422 },
+          )
+        }
+        if (dimensionResult.error === 'invalid_format') {
+          return Response.json(
+            {
+              error:
+                'Image format is not supported. Please upload a JPEG, PNG, WebP, or GIF image.',
+            },
+            { status: 415 },
+          )
+        }
+        // For network errors, allow the upload to proceed (blob exists, client validated)
+      } else {
+        // dimensionResult is { width, height }
+        const dimensions = dimensionResult as { width: number; height: number }
         if (
           dimensions.width < CHAT_ASSET_MIN_IMAGE_WIDTH ||
           dimensions.height < CHAT_ASSET_MIN_IMAGE_HEIGHT
         ) {
           return Response.json(
             {
-              error: `Image is too small. Minimum size is ${CHAT_ASSET_MIN_IMAGE_WIDTH}x${CHAT_ASSET_MIN_IMAGE_HEIGHT} pixels, but this image is ${dimensions.width}x${dimensions.height} pixels.`,
+              error: `Image is too small. Minimum size is ${CHAT_ASSET_MIN_IMAGE_WIDTH}x${CHAT_ASSET_MIN_IMAGE_HEIGHT} pixels, but this image is ${dimensions.width}x${dimensions.height} pixels. Please upload a clearer photo.`,
             },
             { status: 422 },
           )
         }
       }
-      // If dimensions cannot be determined, allow the upload to proceed
-      // (the client-side validation should have caught invalid images)
     }
 
     const expiresAt = new Date(Date.now() + CHAT_ASSET_RETENTION_DAYS * 24 * 60 * 60 * 1000)
