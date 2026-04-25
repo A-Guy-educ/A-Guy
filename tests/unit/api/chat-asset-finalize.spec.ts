@@ -213,34 +213,33 @@ describe('getImageDimensionsFromUrl', () => {
       { name: 'WebP', bytes: validWebP, expected: true },
       { name: 'GIF', bytes: validGIF, expected: true },
       { name: 'invalid', bytes: invalidBytes, expected: false },
-    ])(
-      'correctly identifies $name format',
-      async ({ bytes, expected }) => {
-        mockFetch.mockResolvedValueOnce({
-          ok: true,
-          arrayBuffer: vi.fn().mockResolvedValue(bytes),
-        })
+    ])('correctly identifies $name format', async ({ bytes, expected }) => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        arrayBuffer: vi.fn().mockResolvedValue(bytes),
+      })
 
-        // Mock sharp to return dimensions for valid formats
-        const sharp = await import('sharp')
-        const mockSharp = sharp.default as unknown as ReturnType<typeof vi.fn>
-        if (expected) {
-          mockSharp.mockImplementationOnce(() => ({
-            metadata: vi.fn().mockResolvedValue({ width: 100, height: 100 }),
-          }))
-        } else {
-          // Invalid formats will fail at magic byte check
-        }
+      // Mock sharp to return dimensions for valid formats
+      const sharp = await import('sharp')
+      const mockSharp = sharp.default as unknown as ReturnType<typeof vi.fn>
+      if (expected) {
+        mockSharp.mockImplementationOnce(() => ({
+          metadata: vi.fn().mockResolvedValue({ width: 100, height: 100 }),
+        }))
+      } else {
+        // Invalid formats will fail at magic byte check
+      }
 
-        const result = await getImageDimensionsFromUrl(`https://example.com/test.${expected ? 'jpg' : 'txt'}`)
+      const result = await getImageDimensionsFromUrl(
+        `https://example.com/test.${expected ? 'jpg' : 'txt'}`,
+      )
 
-        if (expected) {
-          expect(result).toHaveProperty('width')
-          expect(result).toHaveProperty('height')
-        } else {
-          expect(result).toEqual({ error: 'invalid_format' })
-        }
-      },
-    )
+      if (expected) {
+        expect(result).toHaveProperty('width')
+        expect(result).toHaveProperty('height')
+      } else {
+        expect(result).toEqual({ error: 'invalid_format' })
+      }
+    })
   })
 })
