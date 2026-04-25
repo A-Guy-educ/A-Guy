@@ -64,7 +64,7 @@ describe('getImageDimensionsFromUrl', () => {
       expect(result).toEqual({ error: 'network' })
     })
 
-    it('when fetch throws network error - returns corrupted (catch-all for fetch errors)', async () => {
+    it('when fetch promise rejects - returns corrupted (catch-all for promise rejections)', async () => {
       mockFetch.mockRejectedValueOnce(new Error('Network error'))
 
       const result = await getImageDimensionsFromUrl('https://example.com/image.jpg')

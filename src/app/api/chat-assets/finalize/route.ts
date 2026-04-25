@@ -270,7 +270,8 @@ export async function POST(request: Request): Promise<Response> {
         if (dimensionResult.error === 'corrupted') {
           return Response.json(
             {
-              error: 'IMAGE_CORRUPTED',
+              error:
+                'This image could not be processed. It may be corrupted or in an unsupported format. Please try uploading a different image or resave it in a different format.',
               code: 'chatImageCorrupted',
             },
             { status: 422 },
@@ -279,7 +280,8 @@ export async function POST(request: Request): Promise<Response> {
         if (dimensionResult.error === 'invalid_format') {
           return Response.json(
             {
-              error: 'IMAGE_INVALID_FORMAT',
+              error:
+                'Image format is not supported. Please upload a JPEG, PNG, WebP, or GIF image.',
               code: 'chatImageInvalidFormat',
             },
             { status: 415 },
