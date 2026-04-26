@@ -442,4 +442,31 @@ describe('normalizeLatexDelimiters', () => {
       expect(result).toContain(" $f'(x)$ ")
     })
   })
+
+  describe('Issue #1089: Bug report examples', () => {
+    it('should pass through $E=mc^2$ unchanged (already correct format)', () => {
+      const input = '$E=mc^2$'
+      const result = normalizeLatexDelimiters(input)
+      // Should pass through unchanged - already has correct inline math delimiters
+      expect(result).toContain('$E=mc^2$')
+    })
+
+    it('should format $$\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$$ with newlines for remark-math', () => {
+      const input = '$$\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$$'
+      const result = normalizeLatexDelimiters(input)
+      // Block math should have newlines around $$ for remark-math to detect it
+      expect(result).toContain('\n$$\n')
+      expect(result).toContain('\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}')
+    })
+
+    it('should handle mixed inline and block math from bug report', () => {
+      const input = 'The equation $E=mc^2$ is famous. $$\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$$'
+      const result = normalizeLatexDelimiters(input)
+      // Inline math should pass through
+      expect(result).toContain('$E=mc^2$')
+      // Block math should be formatted with newlines
+      expect(result).toContain('\n$$\n')
+      expect(result).toContain('\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}')
+    })
+  })
 })

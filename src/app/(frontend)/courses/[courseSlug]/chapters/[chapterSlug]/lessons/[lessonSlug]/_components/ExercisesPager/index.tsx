@@ -40,11 +40,19 @@ interface ExercisesPagerProps {
   chapterSlug: string
   lessonSlug: string
   lessonId: string
+  /** Grade bucket for progress storage — must be the lesson's course label, not the user's profile grade. */
+  gradeLevel: string
   mediaMap?: Record<string, MediaType>
-  /** Whether the lesson has exercises (controls chat visibility) */
-  hasExercises?: boolean
+  /** Whether to show the chat panel (true when lesson has exercises or context text) */
+  showChat?: boolean
   /** Formula sheet data (passed to ChatInterface) */
   formulaSheet?: import('@/payload-types').FormulaSheet | null
+  /** Optional element rendered at the top of the primary pane (e.g. a dual-mode tab bar). */
+  headerSlot?: React.ReactNode
+  /** When true, forwards to ExerciseRenderer so `type: 'latex'` blocks are not rendered
+   * inside individual exercises (used by the dual-mode lesson view where LaTeX lives
+   * at the lesson level). */
+  hideLatexBlocks?: boolean
 }
 
 export function ExercisesPager({
@@ -55,9 +63,12 @@ export function ExercisesPager({
   chapterSlug,
   lessonSlug,
   lessonId,
+  gradeLevel,
   mediaMap,
-  hasExercises,
+  showChat,
   formulaSheet,
+  headerSlot,
+  hideLatexBlocks,
 }: ExercisesPagerProps) {
   const t = useTranslations('courses')
   const {
@@ -71,7 +82,7 @@ export function ExercisesPager({
     handleStart,
     getExerciseOrdinal,
     totalExercises,
-  } = useExercisesPager({ exercises, courseSlug, chapterSlug, lessonSlug, lessonId })
+  } = useExercisesPager({ exercises, courseSlug, chapterSlug, lessonSlug, lessonId, gradeLevel })
 
   const [showConfetti, setShowConfetti] = useState(false)
 
@@ -204,6 +215,7 @@ export function ExercisesPager({
         backUrl={backUrl}
         primaryContent={
           <div className="h-full flex flex-col">
+            {headerSlot}
             {/* Top progress line */}
             <Progress value={progressPercent} className="h-0.5 rounded-none" />
 
@@ -217,7 +229,7 @@ export function ExercisesPager({
             >
               <div className="w-full p-card-padding-sm md:p-card-padding space-y-4">
                 {/* Breadcrumb step indicator */}
-                <div className="flex items-center gap-2 text-body-sm text-muted-foreground pt-3">
+                <div className="flex items-center gap-content-gap-xs text-body-sm text-muted-foreground pt-3">
                   <span className="truncate max-w-[200px]">{lessonTitle}</span>
                   <ChevronRight className="w-3 h-3 shrink-0 rtl:rotate-180" />
                   <span className="text-foreground font-medium">
@@ -255,6 +267,7 @@ export function ExercisesPager({
                         exerciseId={currentExercise.id}
                         showExerciseNumber={currentExercise.showQuestionNumbering ?? false}
                         onResultsChange={handleExerciseResultsChange}
+                        hideLatexBlocks={hideLatexBlocks}
                       />
                     </div>
                   </motion.div>
@@ -271,7 +284,7 @@ export function ExercisesPager({
                   disabled={!canGoPrev || isNavigating}
                   aria-label="Previous page"
                   className={cn(
-                    'text-body-sm gap-2 min-h-[44px] cursor-pointer transition-all duration-normal',
+                    'text-body-sm gap-content-gap-xs min-h-[44px] cursor-pointer transition-all duration-normal',
                     !canGoPrev || isNavigating
                       ? 'text-muted-foreground/40'
                       : 'text-muted-foreground hover:text-foreground',
@@ -290,7 +303,7 @@ export function ExercisesPager({
                   onClick={handleNext}
                   disabled={!canGoNext || isNavigating}
                   aria-label="Next page"
-                  className="px-6 py-2 min-h-[44px] rounded-xl text-body-sm cursor-pointer gap-2"
+                  className="px-6 py-2 min-h-[44px] rounded-xl text-body-sm cursor-pointer gap-content-gap-xs"
                 >
                   {isNavigating ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   {t('exercisesPagerNext')}
@@ -301,7 +314,7 @@ export function ExercisesPager({
           </div>
         }
         chatContent={
-          hasExercises ? (
+          showChat ? (
             <ChatInterface
               lessonId={lessonId}
               exerciseId={currentExercise.id}
@@ -341,6 +354,7 @@ export function ExercisesPager({
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {headerSlot}
       <Confetti active={showConfetti} />
       <Progress value={progressPercent} className="h-0.5 rounded-none" />
 
@@ -438,7 +452,7 @@ export function ExercisesPager({
 
                   {/* Summary stats */}
                   <div className="flex items-center justify-center gap-content-gap mb-10">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-secondary/5 rounded-xl border border-secondary/10">
+                    <div className="inline-flex items-center gap-content-gap-xs px-4 py-2 bg-secondary/5 rounded-xl border border-secondary/10">
                       <Layers className="w-4 h-4 text-secondary" />
                       <span className="text-secondary font-medium">{totalExercises}</span>
                       <span className="text-body-xs text-muted-foreground">{t('exercise')}</span>
@@ -465,7 +479,7 @@ export function ExercisesPager({
                   onClick={handlePrev}
                   disabled={isNavigating}
                   aria-label="Previous page"
-                  className="text-muted-foreground text-body-sm min-h-[44px] hover:text-foreground transition-colors duration-slow gap-2 cursor-pointer"
+                  className="text-muted-foreground text-body-sm min-h-[44px] hover:text-foreground transition-colors duration-slow gap-content-gap-xs cursor-pointer"
                 >
                   <ArrowRight className="w-4 h-4 rtl:rotate-0 ltr:rotate-180" />
                   {t('exercisesPagerPrev')}

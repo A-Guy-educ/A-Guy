@@ -15,6 +15,7 @@ import { MetaTitleComponent as MetaTitleComponent_a8a977ebc872c5d5ea7ee689724c08
 import { MetaDescriptionComponent as MetaDescriptionComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
 import { PreviewComponent as PreviewComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
 import { SlugField as SlugField_3817bf644402e67bfe6577f60ef982de } from '@payloadcms/ui'
+import { CourseLessonsSorter as CourseLessonsSorter_219effcec2d3303f5f77bc687e0138e9 } from '@/ui/admin/CourseLessonsSorter'
 import { TranslateCourseAction as TranslateCourseAction_5e03fe73ee4379dfd96d492849856d43 } from '@/ui/admin/TranslationButton'
 import { CourseCascadeDelete as CourseCascadeDelete_8b707dd02fbf8886630a64bffcae6998 } from '@/ui/admin/CascadeDeleteButton'
 import { TranslateChapterAction as TranslateChapterAction_5e03fe73ee4379dfd96d492849856d43 } from '@/ui/admin/TranslationButton'
@@ -43,7 +44,7 @@ import { ReindexButton as ReindexButton_aead06e4cbf6b2620c5c51c9ab283634 } from 
 import { RowLabel as RowLabel_49a0f2da415e33c790acf24cb6dd5091 } from '@/ui/admin/Header'
 import { RowLabel as RowLabel_4ed9de7504772fe9568f4f8054c5cb47 } from '@/ui/admin/Footer'
 import { default as default_e7752c936f7e855267a963c057c607b8 } from '@/ui/admin/UserEmail'
-import { default as default_c259230fb9bab1a58b8cb0b2cc96501a } from '@/ui/admin/BeforeDashboard'
+import { default as default_651b6549ba90964af4bff3f3f8153ba6 } from '@/ui/admin/ConversionTracking/DashboardWidgets'
 import { default as default_016129c5e178a72215a550b5b56f066c } from '@/ui/admin/AdminChat/DashboardWidget'
 import { default as default_759821dbe781e78024abfaf95f6442c4 } from '@/ui/admin/VersionInfo'
 import { default as default_e8db4fbd97550d4d717940b5cf0234f3 } from '@/ui/admin/BeforeLogin'
@@ -70,6 +71,7 @@ export const importMap = {
   "@payloadcms/plugin-seo/client#MetaDescriptionComponent": MetaDescriptionComponent_a8a977ebc872c5d5ea7ee689724c0860,
   "@payloadcms/plugin-seo/client#PreviewComponent": PreviewComponent_a8a977ebc872c5d5ea7ee689724c0860,
   "@payloadcms/ui#SlugField": SlugField_3817bf644402e67bfe6577f60ef982de,
+  "@/ui/admin/CourseLessonsSorter#CourseLessonsSorter": CourseLessonsSorter_219effcec2d3303f5f77bc687e0138e9,
   "@/ui/admin/TranslationButton#TranslateCourseAction": TranslateCourseAction_5e03fe73ee4379dfd96d492849856d43,
   "@/ui/admin/CascadeDeleteButton#CourseCascadeDelete": CourseCascadeDelete_8b707dd02fbf8886630a64bffcae6998,
   "@/ui/admin/TranslationButton#TranslateChapterAction": TranslateChapterAction_5e03fe73ee4379dfd96d492849856d43,
@@ -98,7 +100,7 @@ export const importMap = {
   "@/ui/admin/Header#RowLabel": RowLabel_49a0f2da415e33c790acf24cb6dd5091,
   "@/ui/admin/Footer#RowLabel": RowLabel_4ed9de7504772fe9568f4f8054c5cb47,
   "@/ui/admin/UserEmail#default": default_e7752c936f7e855267a963c057c607b8,
-  "@/ui/admin/BeforeDashboard#default": default_c259230fb9bab1a58b8cb0b2cc96501a,
+  "@/ui/admin/ConversionTracking/DashboardWidgets#default": default_651b6549ba90964af4bff3f3f8153ba6,
   "@/ui/admin/AdminChat/DashboardWidget#default": default_016129c5e178a72215a550b5b56f066c,
   "@/ui/admin/VersionInfo#default": default_759821dbe781e78024abfaf95f6442c4,
   "@/ui/admin/BeforeLogin#default": default_e8db4fbd97550d4d717940b5cf0234f3,

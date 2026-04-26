@@ -50,10 +50,16 @@ interface LessonPagerProps {
   validFiles?: MediaType[]
   /** Lesson ID for chat context (defaults to lessonId) */
   chatLessonId?: string
-  /** Whether the lesson has exercises (controls chat visibility) */
-  hasExercises?: boolean
+  /** Whether to show the chat panel (true when lesson has exercises or context text) */
+  showChat?: boolean
   /** Formula sheet data (passed to ChatInterface) */
   formulaSheet?: import('@/payload-types').FormulaSheet | null
+  /** Optional element rendered at the top of the primary pane (e.g. a dual-mode tab bar). */
+  headerSlot?: React.ReactNode
+  /** When true, forwards to ExerciseRenderer so `type: 'latex'` blocks are not rendered
+   * inside individual exercises (used by the dual-mode lesson view where LaTeX lives
+   * at the lesson level). */
+  hideLatexBlocks?: boolean
 }
 
 export function LessonPager({
@@ -68,8 +74,10 @@ export function LessonPager({
   contentPageBodies,
   validFiles,
   chatLessonId,
-  hasExercises,
+  showChat,
   formulaSheet,
+  headerSlot,
+  hideLatexBlocks,
 }: LessonPagerProps) {
   const t = useTranslations('courses')
   const {
@@ -151,6 +159,7 @@ export function LessonPager({
         backUrl={backUrl}
         primaryContent={
           <div className="h-full flex flex-col">
+            {headerSlot}
             {/* Top progress line */}
             <Progress value={progressPercent} className="h-0.5 rounded-none" />
 
@@ -197,6 +206,7 @@ export function LessonPager({
                         lessonId={lessonId}
                         exerciseId={exercise.id}
                         showExerciseNumber={exercise.showQuestionNumbering ?? false}
+                        hideLatexBlocks={hideLatexBlocks}
                       />
                     </div>
                   </motion.div>
@@ -242,7 +252,7 @@ export function LessonPager({
           </div>
         }
         chatContent={
-          hasExercises ? (
+          showChat ? (
             <ChatInterface
               lessonId={lessonId}
               exerciseId={exercise.id}
@@ -288,6 +298,7 @@ export function LessonPager({
 
     return (
       <div className="min-h-screen bg-background flex flex-col">
+        {headerSlot}
         {/* Top progress line */}
         <Progress value={progressPercent} className="h-0.5 rounded-none" />
 
@@ -389,6 +400,7 @@ export function LessonPager({
         backUrl={backUrl}
         primaryContent={
           <div className="h-full flex flex-col min-h-0">
+            {headerSlot}
             {/* Top progress line */}
             <Progress value={progressPercent} className="h-0.5 rounded-none" />
 
@@ -447,7 +459,7 @@ export function LessonPager({
           </div>
         }
         chatContent={
-          hasExercises ? (
+          showChat ? (
             <ChatInterface
               lessonId={chatLessonId ?? lessonId}
               translationNamespace="courses"
@@ -463,6 +475,7 @@ export function LessonPager({
   // Intro and outro pages
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {headerSlot}
       <Confetti active={showConfetti} />
       <Progress value={progressPercent} className="h-0.5 rounded-none" />
       <main className="flex-1 overflow-y-auto">

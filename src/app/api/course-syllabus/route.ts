@@ -28,33 +28,40 @@ export async function GET(request: NextRequest) {
 
     const chapters = await queryChaptersByCourse({ courseId })
 
-    // Build syllabus with all nested data
-    const syllabus = await Promise.all(
-      chapters.map(async (chapter) => {
-        // chapter.course is populated at depth: 1, giving us courseSlug directly
-        const courseSlug =
-          typeof chapter.course === 'object' && chapter.course !== null
-            ? ((chapter.course as { slug?: string }).slug ?? '')
-            : ''
+    // Build syllabus — fetch lessons in batches of 2 to stay within the
+    // connection pool (maxPoolSize=3). Unbounded Promise.all on 10+ chapters
+    // would saturate the pool and contribute to Atlas connection exhaustion.
+    const CHAPTER_BATCH_SIZE = 2
+    const syllabus = []
+    for (let i = 0; i < chapters.length; i += CHAPTER_BATCH_SIZE) {
+      const batch = chapters.slice(i, i + CHAPTER_BATCH_SIZE)
+      const batchResults = await Promise.all(
+        batch.map(async (chapter) => {
+          const courseSlug =
+            typeof chapter.course === 'object' && chapter.course !== null
+              ? ((chapter.course as { slug?: string }).slug ?? '')
+              : ''
 
-        const lessons = await queryLessonsByChapter({ chapterId: chapter.id })
+          const lessons = await queryLessonsByChapter({ chapterId: chapter.id })
 
-        return {
-          chapterId: chapter.id,
-          chapterLabel: chapter.chapterLabel ?? '',
-          chapterTitle: chapter.title ?? '',
-          chapterSlug: chapter.slug ?? '',
-          lessons: lessons.map((lesson) => ({
-            lessonId: lesson.id,
-            lessonTitle: lesson.title ?? '',
-            lessonSlug: lesson.slug ?? '',
-            lessonOrder: lesson.order ?? 0,
-            lessonType: lesson.type ?? 'learning',
-            lessonUrl: buildLessonUrl(courseSlug, chapter.slug ?? '', lesson.slug ?? ''),
-          })),
-        }
-      }),
-    )
+          return {
+            chapterId: chapter.id,
+            chapterLabel: chapter.chapterLabel ?? '',
+            chapterTitle: chapter.title ?? '',
+            chapterSlug: chapter.slug ?? '',
+            lessons: lessons.map((lesson) => ({
+              lessonId: lesson.id,
+              lessonTitle: lesson.title ?? '',
+              lessonSlug: lesson.slug ?? '',
+              lessonOrder: lesson.order ?? 0,
+              lessonType: lesson.type ?? 'learning',
+              lessonUrl: buildLessonUrl(courseSlug, chapter.slug ?? '', lesson.slug ?? ''),
+            })),
+          }
+        }),
+      )
+      syllabus.push(...batchResults)
+    }
 
     return NextResponse.json(
       { success: true, data: syllabus },

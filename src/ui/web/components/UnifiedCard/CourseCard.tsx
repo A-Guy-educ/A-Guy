@@ -45,12 +45,14 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
   const isSoon = course.contentStatus === 'soon'
   const isLoading = wasClicked && isRouteLoading
 
-  // Fetch course-level progress for owned courses
+  // Fetch course-level progress for owned courses, scoped to *this card's* grade
+  // (course.courseLabel) — not the user's localStorage profile grade, so progress
+  // shows correctly even when browsing courses for other grades.
   useEffect(() => {
     if (!isOwned) return
-    const profile = getUserProfile()
-    if (!profile?.gradeLevel) return
-    fetch(`/api/progress?gradeLevel=${encodeURIComponent(profile.gradeLevel)}&scope=course`, {
+    const cardGradeLevel = course.courseLabel
+    if (!cardGradeLevel) return
+    fetch(`/api/progress?gradeLevel=${encodeURIComponent(cardGradeLevel)}&scope=course`, {
       credentials: 'include',
     })
       .then((res) => (res.ok ? res.json() : null))
@@ -60,7 +62,7 @@ export function CourseCard({ course, isOwned = false }: CourseCardProps) {
       .catch(() => {
         /* silent */
       })
-  }, [isOwned])
+  }, [isOwned, course.courseLabel])
 
   const handleCourseSelect = () => {
     if (isSoon) {

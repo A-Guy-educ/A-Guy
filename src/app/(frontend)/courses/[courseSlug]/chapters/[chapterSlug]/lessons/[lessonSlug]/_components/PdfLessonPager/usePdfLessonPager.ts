@@ -1,6 +1,5 @@
 'use client'
 
-import { getUserProfile } from '@/client/state/localStorage/userProfile'
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 
 type PageType = 'intro' | 'pdf' | 'outro'
@@ -16,22 +15,26 @@ interface UsePdfLessonPagerProps {
   chapterSlug: string
   lessonSlug: string
   lessonId: string
+  /** Grade bucket for progress storage — must be the lesson's course label, not the user's profile grade. */
+  gradeLevel: string
 }
 
 /** Fire-and-forget progress save (silently ignores errors / unauthenticated users) */
-function saveProgress(params: {
-  recordType: 'lesson' | 'chapter'
-  recordId: string
-  completionPercentage: number
-  status: 'not_started' | 'in_progress' | 'completed'
-}) {
-  const profile = getUserProfile()
-  if (!profile?.gradeLevel) return
+function saveProgress(
+  gradeLevel: string,
+  params: {
+    recordType: 'lesson' | 'chapter'
+    recordId: string
+    completionPercentage: number
+    status: 'not_started' | 'in_progress' | 'completed'
+  },
+) {
+  if (!gradeLevel) return
   fetch('/api/progress', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ ...params, gradeLevel: profile.gradeLevel }),
+    body: JSON.stringify({ ...params, gradeLevel }),
   }).catch(() => {
     /* silent – user may be anonymous */
   })
@@ -43,6 +46,7 @@ export function usePdfLessonPager({
   chapterSlug,
   lessonSlug,
   lessonId,
+  gradeLevel,
 }: UsePdfLessonPagerProps) {
   // Pages: intro(0) → pdf(1) → outro(2)
   const totalPages = 3 // intro + pdf + outro
@@ -128,7 +132,7 @@ export function usePdfLessonPager({
         // Save lesson completion when reaching the outro page
         if (nextState.type === 'outro' && !completionSavedRef.current) {
           completionSavedRef.current = true
-          saveProgress({
+          saveProgress(gradeLevel, {
             recordType: 'lesson',
             recordId: lessonId,
             completionPercentage: 100,
@@ -138,7 +142,7 @@ export function usePdfLessonPager({
 
         // Mark lesson as in_progress when moving from intro to pdf
         if (prev.type === 'intro' && nextState.type === 'pdf') {
-          saveProgress({
+          saveProgress(gradeLevel, {
             recordType: 'lesson',
             recordId: lessonId,
             completionPercentage: 50,
@@ -149,7 +153,7 @@ export function usePdfLessonPager({
         return nextState
       })
     })
-  }, [totalPages, pageToState, startTransition, lessonId])
+  }, [totalPages, pageToState, startTransition, lessonId, gradeLevel])
 
   const handlePrev = useCallback(() => {
     startTransition(() => {
@@ -163,14 +167,14 @@ export function usePdfLessonPager({
 
   const handleStart = useCallback(() => {
     // Mark lesson as in_progress when starting PDF view
-    saveProgress({
+    saveProgress(gradeLevel, {
       recordType: 'lesson',
       recordId: lessonId,
       completionPercentage: 50,
       status: 'in_progress',
     })
     setPageState({ type: 'pdf', pageNumber: 1 })
-  }, [lessonId])
+  }, [lessonId, gradeLevel])
 
   useEffect(() => {
     syncUrl(pageState)

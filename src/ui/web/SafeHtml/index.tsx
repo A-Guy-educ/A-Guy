@@ -3,6 +3,7 @@
 import DOMPurify from 'dompurify'
 import { useEffect, useMemo, useState } from 'react'
 import { cn } from '@/infra/utils/ui'
+import { registerPurifyHook, unregisterPurifyHook } from '@/ui/web/shared/DOMPurifyHooks'
 
 const PURIFY_CONFIG = {
   ALLOWED_TAGS: [
@@ -81,14 +82,10 @@ export function SafeHtml({ html, className, style, enableProse = false }: SafeHt
   const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
-    DOMPurify.addHook('afterSanitizeAttributes', (node) => {
-      if (node.tagName === 'A' && node.getAttribute('target')) {
-        node.setAttribute('rel', 'noopener noreferrer')
-      }
-    })
+    registerPurifyHook()
     setIsMounted(true)
     return () => {
-      DOMPurify.removeAllHooks()
+      unregisterPurifyHook()
     }
   }, [])
 

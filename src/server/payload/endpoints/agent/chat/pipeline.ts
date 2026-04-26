@@ -42,13 +42,21 @@ const MAX_MESSAGES_BEFORE_ASSISTANT = 95
  * Trim messages array to stay within maxRows limit
  */
 export function trimMessagesForUpdatePipeline(messages: Message[]): ChatMessage[] {
-  return messages.slice(-MAX_MESSAGES_BEFORE_ASSISTANT).map((m) => ({
-    role: m.role,
-    content: m.content,
-    timestamp: typeof m.timestamp === 'string' ? m.timestamp : m.timestamp.toISOString(),
-    media: (m as unknown as { media?: Array<{ mediaId: string }> })?.media,
-    hidden: (m as unknown as { hidden?: boolean })?.hidden === true,
-  }))
+  return messages.slice(-MAX_MESSAGES_BEFORE_ASSISTANT).map((m) => {
+    const extras = m as unknown as {
+      hidden?: boolean
+      media?: Array<{ mediaId: string }>
+      chatAssets?: Array<{ chatAssetId: string }>
+    }
+    return {
+      role: m.role,
+      content: m.content,
+      timestamp: typeof m.timestamp === 'string' ? m.timestamp : m.timestamp.toISOString(),
+      media: extras?.media,
+      chatAssets: extras?.chatAssets,
+      hidden: extras?.hidden === true,
+    }
+  })
 }
 
 /**

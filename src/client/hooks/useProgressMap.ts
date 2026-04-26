@@ -26,13 +26,20 @@ const EMPTY_RESULT: UseProgressMapResult = {
 /**
  * Batch-fetch progress for a list of record IDs.
  * Returns empty maps for unauthenticated users.
+ *
+ * `gradeLevel` should be the *content's* grade bucket (e.g. course.courseLabel),
+ * not the user's onboarding grade. When omitted, falls back to the user-profile
+ * grade in localStorage — only correct for dashboards that key off the active
+ * profile (e.g. /study).
  */
 export function useProgressMap({
   recordType,
   recordIds,
+  gradeLevel: gradeLevelOverride,
 }: {
   recordType: 'lesson' | 'exercise' | 'chapter'
   recordIds: string[]
+  gradeLevel?: string
 }): UseProgressMapResult {
   const [data, setData] = useState<Record<string, ProgressEntry>>({})
   const [isLoading, setIsLoading] = useState(false)
@@ -43,14 +50,14 @@ export function useProgressMap({
   useEffect(() => {
     if (!idsKey) return
 
-    const profile = getUserProfile()
-    if (!profile?.gradeLevel) return
+    const gradeLevel = gradeLevelOverride ?? getUserProfile()?.gradeLevel
+    if (!gradeLevel) return
 
     const controller = new AbortController()
     setIsLoading(true)
 
     fetch(
-      `/api/progress?gradeLevel=${encodeURIComponent(profile.gradeLevel)}&recordType=${recordType}&recordIds=${encodeURIComponent(idsKey)}`,
+      `/api/progress?gradeLevel=${encodeURIComponent(gradeLevel)}&recordType=${recordType}&recordIds=${encodeURIComponent(idsKey)}`,
       { credentials: 'include', signal: controller.signal },
     )
       .then((res) => {
@@ -66,7 +73,7 @@ export function useProgressMap({
       .finally(() => setIsLoading(false))
 
     return () => controller.abort()
-  }, [idsKey, recordType])
+  }, [idsKey, recordType, gradeLevelOverride])
 
   return useMemo(() => {
     if (!idsKey) return EMPTY_RESULT

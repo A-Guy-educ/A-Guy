@@ -1,13 +1,13 @@
-import { readFileSync } from 'fs'
-import { resolve } from 'path'
+import { readFileSync, readdirSync, statSync } from 'fs'
+import { resolve, join } from 'path'
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 
 /**
  * Guardrail test for MongoDB connection pool configuration.
  *
  * WHY THIS EXISTS:
- * Atlas has a 500-connection limit. Each serverless instance opens up to
- * maxPoolSize connections. If maxPoolSize is too high, fewer concurrent
+ * Atlas Flex tier has a 500-connection limit. Each serverless instance opens
+ * up to maxPoolSize connections. If maxPoolSize is too high, fewer concurrent
  * instances can run before exhausting Atlas.
  *
  * HISTORY OF INCIDENTS:
@@ -15,7 +15,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
  * - maxPoolSize=10:  Only 50 instances fit → Atlas alert at 100%
  * - maxPoolSize=3:   166 instances fit → safe headroom
  *
- * This test WILL FAIL if someone increases the default above 5.
+ * This test WILL FAIL if someone increases the default above 5
+ * or adds parallel DB operations that exceed the pool size.
  * That is intentional. Read the history above before changing it.
  */
 
@@ -114,6 +115,77 @@ describe('MongoDB Connection Pool Guardrail', () => {
       process.env.VITEST = 'true'
       process.env.MONGODB_MAX_POOL_SIZE = '7'
       expect(resolvePoolSize()).toBe(7)
+    })
+  })
+
+  describe('concurrency limits must not exceed pool size', () => {
+    /**
+     * WHY THIS EXISTS:
+     * Even with maxPoolSize=3, code that runs more parallel DB operations
+     * than the pool can handle will saturate connections. This happened with
+     * CONCURRENCY_LIMIT=5 in memory-extraction.ts and 3 parallel vector
+     * search queries — each chat message could consume 8+ connections from
+     * a pool of 3, causing cascading exhaustion across instances.
+     *
+     * This test scans source files for known concurrency patterns and
+     * ensures none exceed the pool size.
+     */
+
+    function findConcurrencyLimits(dir: string): Array<{ file: string; value: number }> {
+      const results: Array<{ file: string; value: number }> = []
+      const pattern = /CONCURRENCY_LIMIT\s*=\s*(\d+)/g
+
+      function walk(dirPath: string) {
+        for (const entry of readdirSync(dirPath)) {
+          const full = join(dirPath, entry)
+          if (entry === 'node_modules' || entry === '.next') continue
+          const stat = statSync(full)
+          if (stat.isDirectory()) {
+            walk(full)
+          } else if (
+            full.endsWith('.ts') &&
+            !full.endsWith('.test.ts') &&
+            !full.endsWith('.spec.ts')
+          ) {
+            const content = readFileSync(full, 'utf-8')
+            let match
+            while ((match = pattern.exec(content)) !== null) {
+              results.push({ file: full, value: parseInt(match[1], 10) })
+            }
+            pattern.lastIndex = 0
+          }
+        }
+      }
+
+      walk(dir)
+      return results
+    }
+
+    it('no CONCURRENCY_LIMIT in source exceeds maxPoolSize', () => {
+      const srcDir = resolve(__dirname, '../../src')
+      const limits = findConcurrencyLimits(srcDir)
+
+      for (const { file, value } of limits) {
+        const relPath = file.replace(resolve(__dirname, '../..') + '/', '')
+        expect(
+          value,
+          `${relPath} has CONCURRENCY_LIMIT=${value}, which exceeds maxPoolSize=${RECOMMENDED_DEFAULT}. ` +
+            `Parallel DB operations beyond pool size cause connection exhaustion. ` +
+            `Reduce to ${RECOMMENDED_DEFAULT} or lower.`,
+        ).toBeLessThanOrEqual(RECOMMENDED_DEFAULT)
+      }
+    })
+
+    it('connection timeout settings are configured for serverless', () => {
+      const configPath = resolve(__dirname, '../../src/payload.config.ts')
+      const configSource = readFileSync(configPath, 'utf-8')
+
+      expect(configSource, 'serverSelectionTimeoutMS must be set to fail fast').toContain(
+        'serverSelectionTimeoutMS',
+      )
+      expect(configSource, 'waitQueueTimeoutMS must be set to prevent pile-up').toContain(
+        'waitQueueTimeoutMS',
+      )
     })
   })
 })

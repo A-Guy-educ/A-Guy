@@ -19,6 +19,7 @@ import { createdByField } from '../fields/createdBy'
 import { formatSlug } from '../fields/formatSlug'
 import { translatedFromField } from '../fields/translatedFrom'
 import { cascadeAdminTitle } from '../hooks/courses/cascadeAdminTitle'
+import { cleanupOrphanEntitlements } from '../hooks/courses/cleanupOrphanEntitlements'
 import { validateTreeIsolationOnPublish } from '../hooks/courses/validateTreeIsolation'
 import { enforceFieldLocaleUniqueness } from '../hooks/validateLocaleUniqueness'
 
@@ -45,6 +46,7 @@ export const Courses: CollectionConfig = {
       validateTreeIsolationOnPublish,
     ],
     afterChange: [cascadeAdminTitle],
+    afterDelete: [cleanupOrphanEntitlements],
   },
   admin: {
     useAsTitle: 'title',
@@ -231,6 +233,18 @@ export const Courses: CollectionConfig = {
         description: 'URL-friendly identifier (auto-generated from title if empty)',
       },
     },
+
+    // Lessons sorter — shows all course lessons grouped by chapter, with drag-and-drop and chevron sorting
+    {
+      name: 'lessonsSorter',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/ui/admin/CourseLessonsSorter#CourseLessonsSorter',
+        },
+      },
+    },
+
     {
       name: 'meta',
       type: 'group',
