@@ -6,25 +6,25 @@ import { useTranslations } from '@/ui/web/providers/I18n'
 import { Button } from '@/ui/web/components/button'
 import { Progress } from '@/ui/web/components/progress'
 import { Sparkles, Trophy } from 'lucide-react'
-import { getUserProfile } from '@/client/state/localStorage/userProfile'
 import { motion } from 'framer-motion'
 import { Confetti } from '@/ui/web/components/confetti'
 
 interface CompleteContentProps {
   backUrl: string
   lessonId: string
+  /** Grade bucket for progress storage — must be the lesson's course label, not the user's profile grade. */
+  gradeLevel: string
 }
 
-export function CompleteContent({ backUrl, lessonId }: CompleteContentProps) {
+export function CompleteContent({ backUrl, lessonId, gradeLevel }: CompleteContentProps) {
   const t = useTranslations('courses')
   const savedRef = useRef(false)
 
   // Save lesson completion on mount (idempotent fallback for direct navigation)
   useEffect(() => {
     if (savedRef.current) return
+    if (!gradeLevel) return
     savedRef.current = true
-    const profile = getUserProfile()
-    if (!profile?.gradeLevel) return
     fetch('/api/progress', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -34,12 +34,12 @@ export function CompleteContent({ backUrl, lessonId }: CompleteContentProps) {
         recordId: lessonId,
         completionPercentage: 100,
         status: 'completed',
-        gradeLevel: profile.gradeLevel,
+        gradeLevel,
       }),
     }).catch(() => {
       /* silent – user may be anonymous */
     })
-  }, [lessonId])
+  }, [lessonId, gradeLevel])
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -47,7 +47,7 @@ export function CompleteContent({ backUrl, lessonId }: CompleteContentProps) {
       <Progress value={100} className="h-0.5 rounded-none" />
 
       <main className="flex-1 overflow-y-auto">
-        <div className="container mx-auto px-4 sm:px-6 py-section-md md:py-12 max-w-3xl">
+        <div className="container mx-auto px-4 sm:px-6 py-section-md md:py-section-lg max-w-3xl">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -107,7 +107,7 @@ export function CompleteContent({ backUrl, lessonId }: CompleteContentProps) {
               <Button
                 asChild
                 variant="ghost"
-                className="text-muted-foreground text-body-sm hover:text-foreground transition-colors duration-slow gap-2"
+                className="text-muted-foreground text-body-sm hover:text-foreground transition-colors duration-slow gap-content-gap-xs"
               >
                 <SystemLink href={backUrl}>
                   <Sparkles className="w-4 h-4 me-2" />

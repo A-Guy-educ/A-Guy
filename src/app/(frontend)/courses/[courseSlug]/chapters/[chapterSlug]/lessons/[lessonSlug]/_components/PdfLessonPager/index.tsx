@@ -19,6 +19,8 @@ interface PdfLessonPagerProps {
   chapterSlug: string
   lessonSlug: string
   lessonId: string
+  /** Grade bucket for progress storage — must be the lesson's course label, not the user's profile grade. */
+  gradeLevel: string
   chatLessonId: string
   /** Whether to show the chat panel (true when lesson has exercises or context text) */
   showChat?: boolean
@@ -34,6 +36,7 @@ export function PdfLessonPager({
   chapterSlug,
   lessonSlug,
   lessonId,
+  gradeLevel,
   chatLessonId,
   showChat,
   formulaSheet,
@@ -55,6 +58,7 @@ export function PdfLessonPager({
     chapterSlug,
     lessonSlug,
     lessonId,
+    gradeLevel,
   })
 
   if (pageState.type === 'pdf') {

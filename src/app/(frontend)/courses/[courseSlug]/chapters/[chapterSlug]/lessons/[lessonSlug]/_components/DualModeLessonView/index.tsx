@@ -37,6 +37,8 @@ interface DualModeLessonViewProps {
   courseSlug: string
   chapterSlug: string
   lessonSlug: string
+  /** Grade bucket for progress storage — must be the lesson's course label, not the user's profile grade. */
+  gradeLevel: string
   consolidatedLatex: string
   interactive: InteractiveSource
   mediaMap?: Record<string, MediaType>
@@ -53,6 +55,7 @@ export function DualModeLessonView(props: DualModeLessonViewProps) {
     courseSlug,
     chapterSlug,
     lessonSlug,
+    gradeLevel,
     consolidatedLatex,
     interactive,
     mediaMap,
@@ -154,6 +157,7 @@ export function DualModeLessonView(props: DualModeLessonViewProps) {
         chapterSlug={chapterSlug}
         lessonSlug={lessonSlug}
         lessonId={lessonId}
+        gradeLevel={gradeLevel}
         mediaMap={mediaMap}
         showChat={showChat}
         formulaSheet={formulaSheet}

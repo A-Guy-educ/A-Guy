@@ -13,6 +13,8 @@ interface LessonListTabProps {
   lessons: Lesson[]
   chapters: Chapter[]
   courseSlug: string
+  /** Grade bucket of the course these lessons belong to — used to read progress for the right grade. */
+  gradeLevel: string
   tabColor?: { text: string; stroke: string }
   lessonProgressMap?: Record<string, LessonProgress>
   lessonType: 'learning' | 'practice'
@@ -22,6 +24,7 @@ export function LessonListTab({
   lessons,
   chapters,
   courseSlug,
+  gradeLevel,
   tabColor,
   lessonProgressMap = {},
   lessonType,
@@ -30,7 +33,11 @@ export function LessonListTab({
   const filteredLessons = lessons.filter((l) => getEffectiveLessonType(l.type) === lessonType)
 
   const lessonIds = useMemo(() => filteredLessons.map((l) => l.id), [filteredLessons])
-  const { progressMap, statusMap } = useProgressMap({ recordType: 'lesson', recordIds: lessonIds })
+  const { progressMap, statusMap } = useProgressMap({
+    recordType: 'lesson',
+    recordIds: lessonIds,
+    gradeLevel,
+  })
 
   if (filteredLessons.length === 0) {
     return null
@@ -51,7 +58,7 @@ export function LessonListTab({
 
   return (
     <>
-      <div className="flex gap-2 justify-center mb-6 flex-wrap">
+      <div className="flex gap-content-gap-xs justify-center mb-6 flex-wrap">
         <span className="text-body-xs font-semibold px-3 py-1 rounded-full bg-muted text-muted-foreground">
           <span style={{ color: tabColor?.stroke }}>{completedCount}</span> {t('statusCompleted')}
         </span>

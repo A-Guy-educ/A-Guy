@@ -51,6 +51,8 @@ function renderDualMode(args: {
   gatedWarningMs: number
   lesson: { id: string; title: string }
   courseId: string
+  /** Course label that drives the progress storage bucket for this lesson. */
+  gradeLevel: string
   analyticsContentType: 'blocks' | 'exercises'
   backUrl: string
   consolidatedLatex: string
@@ -80,6 +82,7 @@ function renderDualMode(args: {
         courseSlug={args.courseSlug}
         chapterSlug={args.chapterSlug}
         lessonSlug={args.lessonSlug}
+        gradeLevel={args.gradeLevel}
         consolidatedLatex={args.consolidatedLatex}
         interactive={args.interactive}
         mediaMap={args.mediaMap}
@@ -229,6 +232,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
         gatedWarningMs,
         lesson: { id: lesson.id, title: lesson.title },
         courseId: course.id,
+        gradeLevel: course.courseLabel,
         analyticsContentType: 'blocks',
         backUrl: '/study',
         consolidatedLatex: consolidated.latex,
@@ -300,6 +304,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
         gatedWarningMs,
         lesson: { id: lesson.id, title: lesson.title },
         courseId: course.id,
+        gradeLevel: course.courseLabel,
         analyticsContentType: 'exercises',
         backUrl,
         consolidatedLatex: consolidated.latex,
@@ -341,6 +346,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
             chapterSlug={chapterSlug}
             lessonSlug={lessonSlug}
             lessonId={lesson.id}
+            gradeLevel={course.courseLabel}
             mediaMap={mediaMap}
             showChat={showChat}
             formulaSheet={formulaSheet}
@@ -391,6 +397,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
         chapterSlug={chapterSlug}
         lessonSlug={lessonSlug}
         lessonId={lesson.id}
+        gradeLevel={course.courseLabel}
         chatLessonId={chatLessonId}
         showChat={showChat}
         formulaSheet={formulaSheet}
