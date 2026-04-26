@@ -81,6 +81,7 @@ export interface Config {
     chapters: Chapter;
     lessons: Lesson;
     'content-pages': ContentPage;
+    'context-extractions': ContextExtraction;
     exercises: Exercise;
     'extraction-logs': ExtractionLog;
     'formula-sheets': FormulaSheet;
@@ -124,6 +125,7 @@ export interface Config {
     chapters: ChaptersSelect<false> | ChaptersSelect<true>;
     lessons: LessonsSelect<false> | LessonsSelect<true>;
     'content-pages': ContentPagesSelect<false> | ContentPagesSelect<true>;
+    'context-extractions': ContextExtractionsSelect<false> | ContextExtractionsSelect<true>;
     exercises: ExercisesSelect<false> | ExercisesSelect<true>;
     'extraction-logs': ExtractionLogsSelect<false> | ExtractionLogsSelect<true>;
     'formula-sheets': FormulaSheetsSelect<false> | FormulaSheetsSelect<true>;
@@ -1575,6 +1577,10 @@ export interface Exercise {
    */
   sourceDoc?: (string | null) | Media;
   /**
+   * Raw LaTeX chunk this exercise was derived from (for LaTeX imports)
+   */
+  sourceLatex?: string | null;
+  /**
    * Payload job ID that created this exercise
    */
   conversionJobId?: string | null;
@@ -1832,6 +1838,26 @@ export interface GraphBlock {
   id?: string | null;
   blockName?: string | null;
   blockType: 'graphBlock';
+}
+/**
+ * Raw LaTeX extractions from PDFs for exercise creation
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "context-extractions".
+ */
+export interface ContextExtraction {
+  id: string;
+  lesson: string | Lesson;
+  /**
+   * The PDF or image this extraction was created from
+   */
+  sourceMedia: string | Media;
+  /**
+   * Raw LaTeX text extracted from the source media
+   */
+  text: string;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2727,6 +2753,10 @@ export interface PayloadLockedDocument {
         value: string | ContentPage;
       } | null)
     | ({
+        relationTo: 'context-extractions';
+        value: string | ContextExtraction;
+      } | null)
+    | ({
         relationTo: 'exercises';
         value: string | Exercise;
       } | null)
@@ -3326,6 +3356,17 @@ export interface GraphBlockSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "context-extractions_select".
+ */
+export interface ContextExtractionsSelect<T extends boolean = true> {
+  lesson?: T;
+  sourceMedia?: T;
+  text?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "exercises_select".
  */
 export interface ExercisesSelect<T extends boolean = true> {
@@ -3343,6 +3384,7 @@ export interface ExercisesSelect<T extends boolean = true> {
   createdBy?: T;
   origin?: T;
   sourceDoc?: T;
+  sourceLatex?: T;
   conversionJobId?: T;
   sourcePageStart?: T;
   sourcePageEnd?: T;

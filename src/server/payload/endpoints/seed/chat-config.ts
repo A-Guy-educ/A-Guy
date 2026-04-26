@@ -64,7 +64,7 @@ const chatConfigData = {
       capabilities: ['multimodal', 'vision'],
     },
     pdfToExercise: {
-      gemini: 'gemini-3.1-pro',
+      gemini: 'gemini-2.5-flash',
       openaiCompatible: 'MiniMax-M2.1',
       maxOutputTokens: 32768,
       capabilities: ['document', 'extraction'],

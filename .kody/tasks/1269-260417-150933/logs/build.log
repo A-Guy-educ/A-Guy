@@ -1,0 +1,32 @@
+All tests pass and TypeScript compiles successfully. The implementation is complete:
+
+## Summary
+
+**MongoDB Connection Pool Exhaustion Fix - Complete**
+
+### Changes Made
+
+1. **`src/infra/db/pool-stats.ts`** (new)
+   - `PoolStats` interface with `poolSize`, `available`, `inUse`, `queued` metrics
+   - `getPoolStats()` utility to extract pool stats from MongooseAdapter
+   - `logPoolStats()` helper for debugging
+
+2. **`src/payload.config.ts`** (modified)
+   - `maxPoolSize`: 3 (production) / 5 (tests), configurable via `MONGODB_MAX_POOL_SIZE`
+   - `minPoolSize`: 0 (allows pool to drain when idle)
+   - `maxIdleTimeMS`: 10000 (closes idle connections after 10s)
+   - `connectTimeoutMS`: 5000 (fail fast on unreachable DB)
+   - `socketTimeoutMS`: 30000 (timeout for long-running ops)
+   - `afterOpenConnection` callback logs pool initialization
+
+3. **`src/app/api/health/route.ts`** (modified)
+   - Health endpoint now returns `pool` object with current stats
+   - Includes `poolSize`, `available`, `inUse`, `queued` metrics
+
+4. **`tests/unit/infra/db/pool-stats.test.ts`** (new)
+   - 7 unit tests covering `getPoolStats` and `logPoolStats` functions
+
+### Verification
+- TypeScript compiles without errors
+- All 7 unit tests pass
+- Health endpoint response now includes pool status

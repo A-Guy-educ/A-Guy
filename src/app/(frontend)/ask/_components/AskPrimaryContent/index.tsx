@@ -1,7 +1,9 @@
 'use client'
 
-import { useTranslations } from '@/ui/web/providers/I18n'
-import { Loader2, PlusCircle } from 'lucide-react'
+import { interactiveLessonToGuidedExplanation } from '@/infra/llm/services/interactive-lesson/lesson-to-guided-explanation'
+import { GuidedExplanationRunner } from '@/ui/web/GuidedExplanationRunner'
+import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
+import { ArrowRight, Loader2, PlusCircle } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import type { AskMediaAttachEvent, AskMediaRestoreEvent, ExerciseFile } from '../ask-types'
@@ -11,6 +13,7 @@ import {
   ASK_MEDIA_RESTORE_EVENT,
 } from '../ask-types'
 import { AskExerciseCard } from '../AskExerciseCard'
+import { useGenerateLesson } from '../InteractivePlayer/useGenerateLesson'
 
 function dispatchMediaAttach(detail: AskMediaAttachEvent) {
   window.dispatchEvent(new CustomEvent(ASK_MEDIA_ATTACH_EVENT, { detail }))
@@ -18,16 +21,22 @@ function dispatchMediaAttach(detail: AskMediaAttachEvent) {
 
 export function AskPrimaryContent() {
   const t = useTranslations('homepage.ask')
+  const locale = useLocale()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [currentFile, setCurrentFile] = useState<ExerciseFile | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  // Hides the player without discarding the lesson, so user can return to the
+  // exercise card view (image + buttons) and re-enter the same lesson via
+  // the Resume button without regenerating.
+  const [showPlayer, setShowPlayer] = useState(true)
+  const { lesson, status, error, generate, reset: resetLesson } = useGenerateLesson()
 
-  // Revoke blob URL on unmount to prevent memory leaks
+  // Revoke blob URL on unmount
   useEffect(() => {
     return () => {
       if (currentFile?.url.startsWith('blob:')) URL.revokeObjectURL(currentFile.url)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- cleanup only on unmount
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- cleanup only
   }, [])
 
   // Clear image when AI rejects it so student can upload a new one
@@ -40,7 +49,7 @@ export function AskPrimaryContent() {
     return () => window.removeEventListener(ASK_MEDIA_CLEAR_EVENT, handler)
   }, [currentFile])
 
-  // Restore image from conversation history when re-entering
+  // Restore image from conversation history
   useEffect(() => {
     const handler = (e: Event) => {
       const { mediaId, filename, url } = (e as CustomEvent<AskMediaRestoreEvent>).detail
@@ -52,7 +61,6 @@ export function AskPrimaryContent() {
         mediaId,
         isUploading: false,
       })
-      // Also notify chat pane so askMedia is set for future messages
       dispatchMediaAttach({ mediaId, filename })
     }
     window.addEventListener(ASK_MEDIA_RESTORE_EVENT, handler)
@@ -62,31 +70,22 @@ export function AskPrimaryContent() {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-
-    // Reset input immediately so same file can be re-uploaded
     e.target.value = ''
+    if (currentFile?.url.startsWith('blob:')) URL.revokeObjectURL(currentFile.url)
 
-    // Revoke previous blob URL before replacing
-    if (currentFile?.url.startsWith('blob:')) {
-      URL.revokeObjectURL(currentFile.url)
-    }
-
-    // Show preview immediately via object URL
     const previewUrl = URL.createObjectURL(file)
     const title = file.name.replace(/\.[^/.]+$/, '')
     const fileId = Date.now()
-    const newFile: ExerciseFile = {
+    setCurrentFile({
       id: fileId,
       title,
       url: previewUrl,
       date: new Date().toLocaleDateString('he-IL'),
       isUploading: true,
-    }
-    setCurrentFile(newFile)
+    })
     setIsUploading(true)
 
     try {
-      // Upload to /api/media so the AI can access this image
       const formData = new FormData()
       formData.append('file', file)
       const response = await fetch('/api/media', {
@@ -94,19 +93,13 @@ export function AskPrimaryContent() {
         credentials: 'include',
         body: formData,
       })
-
       if (!response.ok) throw new Error('Upload failed')
-
       const doc = await response.json()
       const mediaId = doc.doc?.id || doc.id
       const filename = doc.doc?.filename || doc.filename || file.name
-
-      // Mark upload complete and store mediaId
       setCurrentFile((prev) =>
         prev && prev.id === fileId ? { ...prev, mediaId, isUploading: false } : prev,
       )
-
-      // Notify the chat pane — this becomes the persistent image for all messages
       dispatchMediaAttach({ mediaId, filename })
     } catch {
       toast.error(t('uploadFailed'))
@@ -117,6 +110,51 @@ export function AskPrimaryContent() {
     }
   }
 
+  const handleGenerate = () => {
+    if (!currentFile?.mediaId || status === 'generating') return
+    setShowPlayer(true)
+    generate(currentFile.mediaId, locale === 'he' ? 'he' : 'en')
+  }
+
+  // Hide the player but keep the image + lesson intact, so the user can
+  // re-enter via "Resume" without regenerating.
+  const handleBackToExercise = () => {
+    setShowPlayer(false)
+  }
+
+  // Re-enter the existing player without regenerating.
+  const handleResumePlayer = () => {
+    setShowPlayer(true)
+  }
+
+  // Full reset — clears everything including the lesson and the image.
+  const handleStartOver = () => {
+    if (currentFile?.url.startsWith('blob:')) URL.revokeObjectURL(currentFile.url)
+    setCurrentFile(null)
+    resetLesson()
+    setShowPlayer(true)
+  }
+
+  const guidedPayload = lesson ? interactiveLessonToGuidedExplanation(lesson) : null
+
+  // Full-screen player takeover (only when explicitly showing it)
+  if (status === 'done' && guidedPayload && showPlayer) {
+    return (
+      <div className="h-full flex flex-col">
+        <button
+          onClick={handleBackToExercise}
+          className="flex items-center gap-content-gap-xs px-4 py-2 text-body-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowRight className="w-4 h-4" />
+          {t('backToUpload')}
+        </button>
+        <div className="flex-1 overflow-auto py-section-xs">
+          <GuidedExplanationRunner payload={guidedPayload} />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="h-full overflow-y-auto p-card-padding md:p-10">
       <div className="max-w-2xl mx-auto">
@@ -125,7 +163,6 @@ export function AskPrimaryContent() {
           <p className="text-muted-foreground">{t('pageSubtitle')}</p>
         </header>
 
-        {/* Show upload button only if no media has been attached yet */}
         {!currentFile?.mediaId && (
           <div className="flex justify-center mb-10">
             <button
@@ -150,7 +187,29 @@ export function AskPrimaryContent() {
           </div>
         )}
 
-        {currentFile && <AskExerciseCard file={currentFile} />}
+        {/* Generation loading/error */}
+        {status === 'generating' && (
+          <div className="flex items-center justify-center gap-3 py-section-sm">
+            <Loader2 className="w-6 h-6 text-primary animate-spin" />
+            <span className="text-body-md font-medium text-primary">{t('generatingLesson')}</span>
+          </div>
+        )}
+        {status === 'error' && error && (
+          <div className="px-5 py-3 mb-4 rounded-xl bg-error/5 border border-error/20">
+            <p className="text-body-sm text-error">{error}</p>
+          </div>
+        )}
+
+        {currentFile && (
+          <AskExerciseCard
+            file={currentFile}
+            onGenerate={handleGenerate}
+            generationStatus={status}
+            hasLesson={status === 'done' && !!guidedPayload}
+            onResumeLesson={handleResumePlayer}
+            onStartOver={handleStartOver}
+          />
+        )}
       </div>
     </div>
   )

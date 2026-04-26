@@ -1,0 +1,39 @@
+I've implemented the fixes for MongoDB connection pool exhaustion. Here's a summary of the changes:
+
+## Changes Made
+
+### 1. Created `/src/infra/db/pool-stats.ts`
+New utility module providing:
+- `PoolStats` interface with `poolSize`, `available`, `inUse`, `queued` metrics
+- `getPoolStats()` function to extract current pool stats from MongooseAdapter
+- `logPoolStats()` helper for debugging
+
+### 2. Updated `/src/payload.config.ts`
+- Added `afterOpenConnection` callback to log connection pool initialization
+- Logs pool size when connection opens: `[MongoDB] Connection pool opened with maxSize=N`
+- Existing pool configuration remains unchanged (maxPoolSize: 3 production / 5 tests)
+
+### 3. Updated `/src/app/api/health/route.ts`
+- Added `PoolStatus` interface to type pool metrics
+- Health endpoint now returns `pool` object with current stats when database is connected
+- Response includes: `poolSize`, `available`, `inUse`, `queued`
+
+## Verification
+- TypeScript compiles without errors
+- Lint passes (warnings only in unrelated files)
+- Format check passes
+
+The health endpoint now returns pool status like:
+```json
+{
+  "ok": true,
+  "checks": { "database": true },
+  "pool": {
+    "poolSize": 3,
+    "available": 2,
+    "inUse": 1,
+    "queued": 0
+  },
+  ...
+}
+```

@@ -2,7 +2,7 @@
  * Lesson Context Conversion API
  *
  * POST /api/lessons/convert-context
- * Extracts context text from a lesson content file using AI and appends to lessonContextText
+ * Extracts context text from a lesson content file using AI and stores in ContextExtractions collection
  */
 import { ApiErrors, apiSuccess } from '@/server/api/responses'
 import { withApiHandler } from '@/server/api/with-api-handler'

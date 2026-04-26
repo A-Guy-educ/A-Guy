@@ -1,0 +1,5 @@
+{
+  "name": "readme-health",
+  "description": "Checks if README.md exists and documents essential sections",
+  "cron": "0 */12 * * *"
+}

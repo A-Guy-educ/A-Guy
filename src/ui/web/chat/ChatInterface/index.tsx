@@ -189,7 +189,7 @@ export function ChatInterface({
     onConversationCreated,
   })
 
-  const { speak, playingMessageId } = useTTS()
+  const { speak, playingMessageId, pause, resume, setRate, isPaused, currentRate } = useTTS()
 
   // Teacher profile badge (authenticated users only)
   const { user: currentUser } = useCurrentUser()
@@ -498,9 +498,17 @@ export function ChatInterface({
                 {isAssistant && (
                   <TTSButton
                     isPlaying={isCurrentlyPlaying}
+                    isPaused={isPaused && isCurrentlyPlaying}
+                    currentRate={currentRate}
                     onToggle={() => speak(messageId, msg.content)}
+                    onPause={pause}
+                    onResume={resume}
+                    onSetRate={setRate}
                     labelPlay={tCourses('chatReadAloud')}
                     labelStop={tCourses('chatStopReading')}
+                    labelPause={tCourses('chatPause')}
+                    labelResume={tCourses('chatResume')}
+                    labelSpeed={tCourses('chatSpeed')}
                   />
                 )}
               </div>

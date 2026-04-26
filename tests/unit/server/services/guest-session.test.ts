@@ -47,11 +47,23 @@ const mockPayloadFind = vi.fn()
 const mockPayloadFindByID = vi.fn()
 const mockPayloadUpdate = vi.fn()
 
+// Mock collection for atomic findOneAndUpdate
+const mockFindOneAndUpdate = vi.fn()
+
+const mockCollection = {
+  findOneAndUpdate: mockFindOneAndUpdate,
+}
+
 const mockPayload = {
   create: mockPayloadCreate,
   find: mockPayloadFind,
   findByID: mockPayloadFindByID,
   update: mockPayloadUpdate,
+  db: {
+    connection: {
+      collection: () => mockCollection,
+    },
+  },
 } as unknown as Payload
 
 describe('guest-session service - Transaction Safety', () => {
@@ -187,17 +199,20 @@ describe('guest-session service - Transaction Safety', () => {
   })
 
   describe('checkAndIncrementGuestMessageCount accepts payload parameter', () => {
-    it('should accept payload as first argument and use it for database operations', async () => {
+    // Use valid ObjectId strings for testing
+    const validSessionId = '507f1f77bcf86cd799439011'
+
+    it('should use atomic findOneAndUpdate when under limit', async () => {
       mockPayloadFindByID.mockResolvedValue({
-        id: 'session-123',
+        id: validSessionId,
         messageCount: 5,
-        hardExpiresAt: new Date(Date.now() + 86400000 * 30).toISOString(),
         status: 'active',
       })
 
-      mockPayloadUpdate.mockResolvedValue({
-        id: 'session-123',
+      mockFindOneAndUpdate.mockResolvedValue({
+        _id: validSessionId,
         messageCount: 6,
+        status: 'active',
       })
 
       // Call with payload as first argument
@@ -206,12 +221,98 @@ describe('guest-session service - Transaction Safety', () => {
         guestSessionId: string,
       ) => Promise<any>
 
-      await checkWithPayload(mockPayload, 'session-123')
+      const result = await checkWithPayload(mockPayload, validSessionId)
 
-      // Before fix: mockPayloadFindByID and mockPayloadUpdate are NOT called
-      // After fix: both are called
+      // findByID should be called for existence/claiming guard
       expect(mockPayloadFindByID).toHaveBeenCalled()
-      expect(mockPayloadUpdate).toHaveBeenCalled()
+      // Atomic findOneAndUpdate should be called with correct filter
+      expect(mockFindOneAndUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          _id: expect.anything(),
+          status: 'active',
+          messageCount: { $lt: 10 },
+        }),
+        { $inc: { messageCount: 1 } },
+        { returnDocument: 'after' },
+      )
+      // payload.update should NOT be called on the main path
+      expect(mockPayloadUpdate).not.toHaveBeenCalled()
+      expect(result.allowed).toBe(true)
+      expect(result.current).toBe(6)
+      expect(result.remaining).toBe(4)
+    })
+
+    it('should return blocked: true when session is claiming', async () => {
+      mockPayloadFindByID.mockResolvedValue({
+        id: validSessionId,
+        messageCount: 5,
+        status: 'claiming',
+      })
+
+      const checkWithPayload = guestSession.checkAndIncrementGuestMessageCount as unknown as (
+        payload: Payload,
+        guestSessionId: string,
+      ) => Promise<any>
+
+      const result = await checkWithPayload(mockPayload, validSessionId)
+
+      // findByID should be called but atomic update should NOT be called
+      expect(mockPayloadFindByID).toHaveBeenCalled()
+      expect(mockFindOneAndUpdate).not.toHaveBeenCalled()
+      expect(result.allowed).toBe(false)
+      expect(result.blocked).toBe(true)
+    })
+
+    it('should fallback when atomic update returns null (at limit)', async () => {
+      // Track call count to return different values
+      let callCount = 0
+      mockPayloadFindByID.mockImplementation(() => {
+        callCount++
+        if (callCount === 1) {
+          return Promise.resolve({
+            id: validSessionId,
+            messageCount: 5,
+            status: 'active',
+          })
+        }
+        // Second call: fallback returns session at limit
+        return Promise.resolve({
+          id: validSessionId,
+          messageCount: 10,
+          status: 'active',
+        })
+      })
+
+      mockFindOneAndUpdate.mockResolvedValue(null) // Atomic update failed (at limit)
+
+      const checkWithPayload = guestSession.checkAndIncrementGuestMessageCount as unknown as (
+        payload: Payload,
+        guestSessionId: string,
+      ) => Promise<any>
+
+      const result = await checkWithPayload(mockPayload, validSessionId)
+
+      expect(mockFindOneAndUpdate).toHaveBeenCalled()
+      expect(result.allowed).toBe(false)
+      expect(result.remaining).toBe(0)
+      expect(result.current).toBe(10)
+    })
+
+    it('should return allowed: false when session not found', async () => {
+      mockPayloadFindByID.mockResolvedValue(null)
+
+      const checkWithPayload = guestSession.checkAndIncrementGuestMessageCount as unknown as (
+        payload: Payload,
+        guestSessionId: string,
+      ) => Promise<any>
+
+      const result = await checkWithPayload(mockPayload, '507f1f77bcf86cd799439012')
+
+      expect(mockPayloadFindByID).toHaveBeenCalled()
+      expect(mockFindOneAndUpdate).not.toHaveBeenCalled()
+      expect(result.allowed).toBe(false)
+      expect(result.current).toBe(0)
+      expect(result.remaining).toBe(0)
     })
   })
 

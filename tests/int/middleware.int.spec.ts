@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { NextRequest, NextResponse } from 'next/server'
-import { middleware } from '../../middleware'
+import { middleware } from '../../src/middleware'
 
 describe('Middleware - Locale Routing', () => {
   const createRequest = (host: string, pathname = '/', acceptLanguage?: string) => {

@@ -2,8 +2,10 @@ name: kody-watch
 
 on:
   schedule:
-    # Every day at 08:00 UTC
-    - cron: '0 8 * * *'
+    # Every 10 minutes. Each agent's own cron in agent.json still gates whether
+    # that specific agent executes on any given invocation, so daily agents stay
+    # daily — this cadence is driven by job-manager's need for a responsive queue.
+    - cron: '*/10 * * * *'
   workflow_dispatch:
     inputs:
       dry_run:
@@ -22,12 +24,12 @@ concurrency:
 permissions:
   issues: write
   contents: read
-  actions: read
+  actions: write
 
 jobs:
   watch:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
         with:
@@ -49,6 +51,10 @@ jobs:
       - name: Install Kody Engine
         run: npm install -g @kody-ade/engine
 
+      - name: Install project dependencies
+        if: hashFiles('.kody/watch/agents/*/agent.json') != ''
+        run: pnpm install --frozen-lockfile
+
       - name: Install LiteLLM proxy
         if: hashFiles('.kody/watch/agents/*/agent.json') != ''
         run: pip install 'litellm[proxy]' prisma && python -m prisma py fetch
@@ -61,24 +67,45 @@ jobs:
             KEY=$(echo "$entry" | jq -r '.key')
             VALUE=$(echo "$entry" | jq -r '.value')
             DELIM="KODY_EOF_${KEY}"
-            echo "+{KEY}<<${DELIM}" >> $GITHUB_ENV
-            echo "+{VALUE}" >> $GITHUB_ENV
+            echo "${KEY}<<${DELIM}" >> $GITHUB_ENV
+            echo "${VALUE}" >> $GITHUB_ENV
             echo "${DELIM}" >> $GITHUB_ENV
           done
 
+      - name: Get Playwright version
+        id: playwright-version
+        run: echo "version=$(pnpm exec playwright --version | head -1)" >> $GITHUB_OUTPUT
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}
+
+      - name: Install Playwright browsers
+        if: hashFiles('.kody/watch/agents/*/agent.json') != '' && steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium
+
       - name: Run Kody Watch
         env:
-          GH_TOKEN: ${{ github.token }}
+          # Prefer PROJECT_TOKEN (user PAT) so agent-authored comments appear as
+          # a human user, which lets @kody comment-triggers posted by agents
+          # (e.g. job-manager) bypass the bot filter in kody.yml's parse job.
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN || github.token }}
           REPO: ${{ github.repository }}
           WATCH_DIGEST_ISSUE: ${{ vars.WATCH_DIGEST_ISSUE }}
           WATCH_DIGEST_ISSUE_FUNCTIONAL: ${{ vars.WATCH_DIGEST_ISSUE_FUNCTIONAL }}
           WATCH_DIGEST_ISSUE_INFRA: ${{ vars.WATCH_DIGEST_ISSUE_INFRA }}
           WATCH_DIGEST_ISSUE_ANALYTICS: ${{ vars.WATCH_DIGEST_ISSUE_ANALYTICS }}
           PREVIEW_URL: ${{ vars.PREVIEW_URL }}
+          NEXT_PUBLIC_SERVER_URL: ${{ secrets.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000' }}
           DRY_RUN: ${{ inputs.dry_run || 'false' }}
+          AGENTS: ${{ inputs.agents }}
         run: |
           ARGS="watch"
           [ "$DRY_RUN" = "true" ] && ARGS="$ARGS --dry-run"
+          [ -n "$AGENTS" ] && ARGS="$ARGS --agent $AGENTS"
           kody-engine $ARGS
 
       - name: Upload watch memory artifacts
@@ -87,5 +114,7 @@ jobs:
         continue-on-error: true
         with:
           name: watch-memory-${{ github.run_id }}
-          path: .kody/memory/watch-*.json
+          path: |
+            .kody/memory/watch-*.json
+            .kody/watch/agent-logs/*.log
           retention-days: 7

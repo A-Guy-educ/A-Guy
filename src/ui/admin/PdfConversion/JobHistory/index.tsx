@@ -32,10 +32,18 @@ interface JobStatus {
     segmentsDone?: number
     segmentsFailed?: number
     exercisesCreated?: number
+    error?: string
+    errorCode?: string
+    errorProvider?: string
+    errorRetryable?: boolean
+    errorCause?: string
     errors?: Array<{
       stage: string
       code: string
       message: string
+      provider?: string
+      retryable?: boolean
+      cause?: string
     }>
   }
   updatedAt?: string
@@ -327,6 +335,7 @@ export function JobHistory({ refreshKey, selectedJobId, onSelectJob }: JobHistor
         {jobs.map((job) => {
           const badgeStyleObj = getBadgeStyle(job.status)
           const hasErrors = job.output?.errors && job.output.errors.length > 0
+          const hasTopLevelError = job.status === 'failed' && Boolean(job.output?.error)
           const progress = job.output?.segmentsTotal
             ? Math.round(((job.output.segmentsDone || 0) / job.output.segmentsTotal) * 100)
             : null
@@ -364,6 +373,29 @@ export function JobHistory({ refreshKey, selectedJobId, onSelectJob }: JobHistor
 
               <div style={dateStyle}>{formatDate(job.updatedAt || job.createdAt)}</div>
 
+              {hasTopLevelError && (
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: 'var(--theme-error)',
+                    marginBottom: 8,
+                    padding: 6,
+                    border: '1px solid var(--theme-error)',
+                    borderRadius: 3,
+                  }}
+                >
+                  <strong>
+                    {job.output?.errorCode || 'ERROR'}
+                    {job.output?.errorProvider ? ` (${job.output.errorProvider})` : ''}
+                    {job.output?.errorRetryable === true ? ' [retryable]' : ''}
+                  </strong>
+                  : {job.output?.error}
+                  {job.output?.errorCause ? (
+                    <div style={{ opacity: 0.8, marginTop: 4 }}>cause: {job.output.errorCause}</div>
+                  ) : null}
+                </div>
+              )}
+
               {hasErrors && (
                 <details style={{ marginBottom: 8 }}>
                   <summary style={errorSummaryStyle}>
@@ -372,7 +404,13 @@ export function JobHistory({ refreshKey, selectedJobId, onSelectJob }: JobHistor
                   <ul style={errorListStyle}>
                     {job.output?.errors?.map((err, idx) => (
                       <li key={idx}>
-                        {err.stage}: {err.message}
+                        <strong>
+                          {err.stage} [{err.code}
+                          {err.provider ? `/${err.provider}` : ''}
+                          {err.retryable === true ? ', retryable' : ''}]
+                        </strong>
+                        : {err.message}
+                        {err.cause ? <span style={{ opacity: 0.7 }}> — {err.cause}</span> : null}
                       </li>
                     ))}
                   </ul>

@@ -123,4 +123,59 @@ describe('context-exercise-parser: gap detection', () => {
 
     expect(exercises.map((e) => e.number)).toEqual([30, 31, 32, 33])
   })
+
+  it('should drop phantom \\textbf{תרגיל N} headers that have no matched solution when others do', () => {
+    // Reproduces the bug from lesson 69c914ed249b14b7e47b11a1: page-by-page
+    // LLM extraction emitted stray exercise headers over sub-item fragments
+    // and answer-summary garbage, producing 12 exercises for an 8-exercise PDF.
+    const latex = `\\textbf{תרגיל 1}
+First real exercise content
+\\textbf{תרגיל 2}
+Second real exercise content
+\\textbf{תרגיל 3}
+Third real exercise content
+\\section*{פתרונות}
+\\section*{פתרון תרגיל 1}
+solution one
+\\section*{פתרון תרגיל 2}
+solution two
+\\section*{פתרון תרגיל 3}
+solution three
+\\textbf{תרגיל 4}
+ה. כן, garbage sub-item fragment
+\\textbf{תרגיל 5}
+ו. $t=10$`
+
+    const segments = parseContextText(latex)
+    const exercises = segments[0].exercises
+
+    expect(exercises.map((e) => e.number)).toEqual([1, 2, 3])
+    expect(exercises.every((e) => e.solution !== null)).toBe(true)
+  })
+
+  it('should keep all exercises when none have solutions (no anomaly to detect)', () => {
+    // Guard: don't filter when there's nothing to compare against.
+    const latex = `\\textbf{תרגיל 1}
+First exercise
+\\textbf{תרגיל 2}
+Second exercise`
+
+    const segments = parseContextText(latex)
+    const exercises = segments[0].exercises
+
+    expect(exercises.map((e) => e.number)).toEqual([1, 2])
+  })
+
+  it('should dedup duplicate \\textbf{תרגיל N} headers, keeping the longest content', () => {
+    const latex = `\\textbf{תרגיל 1}
+short
+\\textbf{תרגיל 1}
+this is a much longer variant of exercise 1 content`
+
+    const segments = parseContextText(latex)
+    const exercises = segments[0].exercises
+
+    expect(exercises).toHaveLength(1)
+    expect(exercises[0].latexContent).toContain('much longer variant')
+  })
 })

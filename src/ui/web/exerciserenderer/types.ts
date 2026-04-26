@@ -221,4 +221,12 @@ export interface ExerciseRendererProps {
     checkedCount: number
     correctCount: number
   }) => void
+  /**
+   * When true, `type: 'latex'` blocks are skipped during render. Used by the
+   * dual-mode lesson view, which already surfaces consolidated LaTeX in its
+   * PDF tab and therefore doesn't want it duplicated inside individual
+   * exercises on the Interactive tab. Defaults to false — standalone exercise
+   * pages keep rendering LaTeX blocks as before.
+   */
+  hideLatexBlocks?: boolean
 }

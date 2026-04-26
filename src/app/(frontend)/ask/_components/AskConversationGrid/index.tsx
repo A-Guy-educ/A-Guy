@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { MessageSquare, Sparkles } from 'lucide-react'
+import { MessageSquare, Sparkles, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { getUserProfile } from '@/client/state/localStorage/userProfile'
 import { useExamCountdown } from '@/client/hooks/useExamCountdown'
 import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
@@ -35,6 +36,27 @@ export function AskConversationGrid() {
   const [courseInfo, setCourseInfo] = useState<CourseInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  async function handleDelete(conv: ConversationItem) {
+    if (deletingId) return
+    if (!window.confirm(t('deleteQuestionConfirm'))) return
+    setDeletingId(conv.id)
+    try {
+      const res = await fetch(`/api/conversations/by-context?id=${encodeURIComponent(conv.id)}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      setConversations((prev) => prev.filter((c) => c.id !== conv.id))
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error('Unknown error')
+      logger.error({ err, conversationId: conv.id }, 'Failed to delete conversation')
+      toast.error(t('deleteQuestionFailed'))
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   async function handleNewQuestion() {
     if (isCreating || !courseInfo?.courseId) return
@@ -158,31 +180,54 @@ export function AskConversationGrid() {
           {/* Past Conversation Cards */}
           {conversations.map((conv, idx) => (
             <StaggerItem key={conv.id}>
-              <SystemLink
-                href={`/ask?chat=${conv.id}&ctx=${encodeURIComponent(conv.contextKey ?? '')}`}
-                className={cn(
-                  'bg-card rounded-2xl p-5 shadow-elevation-1',
-                  'flex items-center justify-between',
-                  'border border-border/40 border-s-4 border-s-success',
-                  'transition-all duration-normal cursor-pointer hover:shadow-card-hover hover:-translate-y-0.5',
-                  'overflow-hidden',
-                )}
-              >
-                <div className="flex flex-col">
-                  <span className="text-label font-bold text-muted-foreground mb-1 uppercase tracking-wide">
-                    {t('question')} {conversations.length - idx}
-                  </span>
-                  <h3 className="text-heading-md font-bold text-card-foreground">
-                    {conv.title || '...'}
-                  </h3>
-                  <p className="text-body-sm text-muted-foreground mt-1">
-                    {conv.messageCount} {conv.messageCount === 1 ? 'message' : 'messages'}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center border border-border">
-                  <MessageSquare className="w-5 h-5 text-muted-foreground" />
-                </div>
-              </SystemLink>
+              <div className="relative">
+                <SystemLink
+                  href={`/ask?chat=${conv.id}&ctx=${encodeURIComponent(conv.contextKey ?? '')}`}
+                  className={cn(
+                    'bg-card rounded-2xl p-5 shadow-elevation-1',
+                    'flex items-center justify-between',
+                    'border border-border/40 border-s-4 border-s-success',
+                    'transition-all duration-normal cursor-pointer hover:shadow-card-hover hover:-translate-y-0.5',
+                    'overflow-hidden',
+                  )}
+                >
+                  <div className="flex flex-col">
+                    <span className="text-label font-bold text-muted-foreground mb-1 uppercase tracking-wide">
+                      {t('question')} {conversations.length - idx}
+                    </span>
+                    <h3 className="text-heading-md font-bold text-card-foreground">
+                      {conv.title || '...'}
+                    </h3>
+                    <p className="text-body-sm text-muted-foreground mt-1">
+                      {conv.messageCount} {conv.messageCount === 1 ? 'message' : 'messages'}
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center border border-border">
+                    <MessageSquare className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                </SystemLink>
+                <button
+                  type="button"
+                  aria-label={t('deleteQuestion')}
+                  title={t('deleteQuestion')}
+                  disabled={deletingId === conv.id}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    handleDelete(conv)
+                  }}
+                  className={cn(
+                    'absolute top-2 end-2 z-10',
+                    'w-8 h-8 rounded-full flex items-center justify-center',
+                    'bg-card/80 backdrop-blur-sm border border-border/40',
+                    'text-muted-foreground hover:text-error hover:border-error/40',
+                    'transition-colors duration-normal',
+                    'disabled:opacity-50 disabled:cursor-not-allowed',
+                  )}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </StaggerItem>
           ))}
         </StaggerGrid>

@@ -107,8 +107,10 @@ export const CourseEnteredSchema = z.object({
  */
 export const LessonStartedSchema = z.object({
   lesson_id: z.string().describe('Lesson identifier'),
-  course_id: z.string().describe('Parent course ID'),
+  course_id: z.string().optional().describe('Parent course ID'),
+  chapter_id: z.string().optional().describe('Parent chapter ID'),
   lesson_title: z.string().optional().describe('Lesson name'),
+  locale: z.string().optional().describe('User locale'),
 })
 
 /**
@@ -118,9 +120,10 @@ export const LessonStartedSchema = z.object({
  */
 export const LessonCompletedSchema = z.object({
   lesson_id: z.string().describe('Lesson identifier'),
-  course_id: z.string().describe('Parent course ID'),
+  course_id: z.string().optional().describe('Parent course ID'),
   lesson_title: z.string().optional().describe('Lesson name'),
   duration_seconds: z.number().optional().describe('Time spent on lesson'),
+  completion_percentage: z.number().min(0).max(100).optional().describe('Lesson completion %'),
 })
 
 /**
@@ -222,7 +225,10 @@ export const RegistrationPopupActionSchema = z.object({
  */
 export const RegistrationCompletedSchema = z.object({
   user_id: z.string().describe('MongoDB user ID'),
-  auth_method: z.enum(['google', 'email']).describe('Auth provider'),
+  registration_method: z
+    .enum(['google', 'email', 'social', 'anonymous_upgrade'])
+    .optional()
+    .describe('Auth provider'),
   // NO email, NO name - handled separately in user_identified
 })
 

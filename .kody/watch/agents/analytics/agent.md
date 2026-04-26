@@ -189,7 +189,23 @@ If `WATCH_DIGEST_ISSUE_ANALYTICS` env var is set, post to that issue:
 Report saved to `.kody/memory/watch-analytics.json`
 ```
 
-### Step 6: Create GitHub issues for critical findings
+### Step 6: Send Slack alert for critical findings
+
+If any critical findings exist (PII found, >3 console errors, or 5xx responses), send a Slack alert:
+
+```bash
+NOTIFY_RESULT=critical pnpm tsx scripts/kody/notify.ts \
+  --agent analytics \
+  --channels slack \
+  --when on-critical \
+  --color danger \
+  --title "watch-analytics | Cycle {cycle} — Critical findings detected" \
+  --body "PII findings: {piiCount} | Console errors: {errorCount} | 5xx responses: {networkErrorCount}"
+```
+
+Substitute `{cycle}`, `{piiCount}`, `{errorCount}`, and `{networkErrorCount}` with the actual values before running.
+
+### Step 7: Create GitHub issues for critical findings
 
 Create an issue (labeled `kody:watch:analytics`) IMMEDIATELY if:
 - **PII found**: Title `Watch: Analytics — PII leak detected in event stream`. Body: which event, which field, event properties.
