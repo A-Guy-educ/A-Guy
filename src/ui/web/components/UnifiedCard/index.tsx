@@ -150,11 +150,9 @@ export function UnifiedCard({
 
           {/* Progress ring — right side */}
           {showProgress && (
-            <div className="shrink-0 w-14 h-14">
+            <div className="shrink-0 w-14 h-14 relative">
               <ProgressCircle percentage={progress} size={56} strokeWidth={6} strokeColor={color}>
-                {progress >= 100 ? (
-                  <CheckCircle className="w-full h-full text-success" />
-                ) : (
+                {progress >= 100 ? null : (
                   <>
                     {progressLabel && (
                       <span className="text-[9px] font-bold fill-foreground leading-none">
@@ -173,6 +171,10 @@ export function UnifiedCard({
                   </>
                 )}
               </ProgressCircle>
+              {/* Completion checkmark — positioned over the progress circle */}
+              {progress >= 100 && (
+                <CheckCircle className="absolute inset-0 w-full h-full text-success" />
+              )}
             </div>
           )}
         </div>
