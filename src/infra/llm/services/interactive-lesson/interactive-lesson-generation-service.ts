@@ -13,6 +13,7 @@ import { getCircuitBreaker } from '../../providers/shared/circuit-breaker'
 import { withRetry } from '../../providers/shared/retry'
 import { withTimeout } from '../../providers/shared/timeout'
 import { logger } from '@/infra/utils/logger/logger'
+import { synthesizeSpeech } from '@/server/services/tts/google-cloud-tts'
 import { optimizeImageForAI } from '../image-optimizer-service'
 import { InteractiveLessonResponseSchema } from './interactive-lesson-schema'
 import type {
@@ -40,7 +41,7 @@ const circuitBreaker = getCircuitBreaker('interactive-lesson-gemini')
  */
 export async function generateInteractiveLesson(
   input: InteractiveLessonInput,
-  _payload: Payload,
+  payload: Payload,
 ): Promise<InteractiveLessonResponse> {
   const startTime = Date.now()
   let modelConfig: AIModel | null = null
@@ -96,6 +97,11 @@ export async function generateInteractiveLesson(
     }
 
     const lesson = validateLesson(parsed, input.locale)
+
+    // Bake narration audio into the lesson so the cache stores not just the
+    // primitives but the spoken audio too. Per-step TTS failures are
+    // non-fatal — those steps fall through to live cloud TTS at playback time.
+    await attachStepAudio(lesson, input.locale, payload)
 
     return {
       success: true,
@@ -499,4 +505,56 @@ function buildErrorResponse(
       imageSizeBytes: sizeBytes,
     },
   }
+}
+
+/**
+ * Mutates the lesson in place to attach a base64 MP3 to each step's narration.
+ * Steps with no narration text (or empty narration) are skipped. Per-step TTS
+ * failures are logged and silently dropped — the client falls back to live
+ * cloud TTS for those steps. Runs all step calls in parallel to keep the
+ * up-front generation cost bounded.
+ */
+async function attachStepAudio(
+  lesson: InteractiveLesson,
+  locale: 'he' | 'en',
+  payload: Payload,
+): Promise<void> {
+  const stepsToSpeak = lesson.steps
+    .map((step, index) => ({ step, index, text: (step.narration || '').trim() }))
+    .filter(({ text }) => text.length > 0)
+
+  if (stepsToSpeak.length === 0) return
+
+  const audioStartTime = Date.now()
+  const results = await Promise.allSettled(
+    stepsToSpeak.map(({ text }) => synthesizeSpeech(text, locale, payload)),
+  )
+
+  let attached = 0
+  let failed = 0
+  results.forEach((res, i) => {
+    const { step } = stepsToSpeak[i]
+    if (res.status === 'fulfilled' && res.value) {
+      step.audioBase64 = res.value
+      attached += 1
+    } else {
+      failed += 1
+      if (res.status === 'rejected') {
+        logger.warn(
+          { err: res.reason, stepId: step.id },
+          '[InteractiveLesson] TTS failed for step; will fall back at playback',
+        )
+      }
+    }
+  })
+
+  logger.info(
+    {
+      totalSteps: lesson.steps.length,
+      attached,
+      failed,
+      durationMs: Date.now() - audioStartTime,
+    },
+    '[InteractiveLesson] Step audio baked into lesson',
+  )
 }

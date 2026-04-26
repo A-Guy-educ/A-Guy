@@ -771,6 +771,7 @@ export function interactiveLessonToGuidedExplanation(
       actions,
       narrate: {
         display: step.narration,
+        audioBase64: step.audioBase64,
       },
     }
   })

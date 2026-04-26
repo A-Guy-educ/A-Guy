@@ -158,6 +158,13 @@ export interface InteractiveLessonStep {
   highlightMarks?: string[]
   /** Interval ids to draw during this step (number-line scene). */
   highlightIntervals?: string[]
+  /**
+   * Pre-generated narration MP3 (base64) baked in by the server at lesson
+   * generation. Persisted in the lesson cache, so subsequent plays don't
+   * re-call Google TTS. Optional — falls through to live cloud TTS when
+   * absent (older cached lessons or per-step TTS failures).
+   */
+  audioBase64?: string
 }
 
 /** Full interactive lesson generated from an image */
