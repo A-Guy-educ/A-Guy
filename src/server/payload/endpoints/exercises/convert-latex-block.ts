@@ -2,9 +2,10 @@
  * POST /api/exercises/convert-latex-block
  *
  * In-place conversion: if an exercise has one or more `{type:'latex'}` blocks,
- * parse each block's LaTeX via the deterministic script parser and replace the
- * original LaTeX block with the parsed structured blocks — same exercise, same
- * unit, content fleshed out.
+ * parse each block's LaTeX via the deterministic script parser and insert the
+ * parsed structured blocks immediately after the original LaTeX block — same
+ * exercise, same unit, content fleshed out. The original LaTeX block is kept
+ * as a source-of-truth reference; the exercise viewer hides it from students.
  *
  * Fallback (V1-259): when the script parser produces zero usable blocks for a
  * LaTeX block AND fallback is enabled, the AI import route is called internally.
@@ -23,7 +24,10 @@ import type { ContentBlock, LatexBlock } from '@/server/payload/collections/Exer
 type ImportMethod = 'script' | 'ai_fallback'
 
 interface ConversionOutcome {
-  replacedBlockIds: string[]
+  /** IDs of LaTeX blocks that were successfully parsed. The blocks themselves
+   *  remain in content (the viewer hides them); the parsed structured blocks
+   *  are inserted immediately after each. */
+  convertedBlockIds: string[]
   addedBlockCount: number
   method: ImportMethod
   warnings: { line: number; message: string; rawLatex: string }[]
@@ -75,7 +79,7 @@ export async function convertLatexBlockOnExercise(
 
   const nextBlocks: ContentBlock[] = [...blocks]
   const outcome: ConversionOutcome = {
-    replacedBlockIds: [],
+    convertedBlockIds: [],
     addedBlockCount: 0,
     method: 'script',
     warnings: [],
@@ -99,11 +103,12 @@ export async function convertLatexBlockOnExercise(
       isScriptOutputMeaningful(latexBlock.latex, result.blocks)
 
     if (scriptUsable) {
-      // Script succeeded with meaningful output
-      outcome.replacedBlockIds.push(latexBlock.id)
+      // Script succeeded — insert parsed blocks AFTER the LaTeX block, keeping
+      // the original LaTeX as a hidden source-of-truth reference in content.
+      outcome.convertedBlockIds.push(latexBlock.id)
       outcome.addedBlockCount += result.blocks.length
       sourceLatexChunks.unshift(latexBlock.latex)
-      nextBlocks.splice(idx, 1, ...result.blocks)
+      nextBlocks.splice(idx + 1, 0, ...result.blocks)
       continue
     }
 
@@ -132,10 +137,11 @@ export async function convertLatexBlockOnExercise(
     const aiBlocks = await tryAiFallback(req, latexBlock.latex, lessonId, reqLogger)
     if (aiBlocks && aiBlocks.length > 0) {
       outcome.method = 'ai_fallback'
-      outcome.replacedBlockIds.push(latexBlock.id)
+      outcome.convertedBlockIds.push(latexBlock.id)
       outcome.addedBlockCount += aiBlocks.length
       sourceLatexChunks.unshift(latexBlock.latex)
-      nextBlocks.splice(idx, 1, ...aiBlocks)
+      // Insert AFTER the LaTeX block so the original is preserved.
+      nextBlocks.splice(idx + 1, 0, ...aiBlocks)
 
       emitFallbackAnalytics(req, { lessonId, exerciseId, scriptErrors: result.errors.length })
     } else {
@@ -146,7 +152,7 @@ export async function convertLatexBlockOnExercise(
     }
   }
 
-  if (outcome.replacedBlockIds.length === 0) {
+  if (outcome.convertedBlockIds.length === 0) {
     return Response.json(
       {
         success: false,
@@ -176,11 +182,11 @@ export async function convertLatexBlockOnExercise(
     reqLogger.info(
       {
         method: outcome.method,
-        replaced: outcome.replacedBlockIds.length,
+        converted: outcome.convertedBlockIds.length,
         added: outcome.addedBlockCount,
         totalBlocks: nextBlocks.length,
       },
-      'LaTeX block(s) converted in place',
+      'LaTeX block(s) converted; originals preserved alongside parsed blocks',
     )
 
     return Response.json({
@@ -188,7 +194,7 @@ export async function convertLatexBlockOnExercise(
       method: outcome.method,
       data: {
         exerciseId: updated.id,
-        replacedBlockIds: outcome.replacedBlockIds,
+        convertedBlockIds: outcome.convertedBlockIds,
         addedBlockCount: outcome.addedBlockCount,
         totalBlocks: nextBlocks.length,
         warnings: outcome.warnings,
