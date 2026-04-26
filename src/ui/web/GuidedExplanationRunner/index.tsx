@@ -34,6 +34,7 @@ export function GuidedExplanationRunner({ payload }: GuidedExplanationRunnerProp
     isPlaying,
     isPaused,
     isComplete,
+    soundOn,
     narrationText,
     currentStep,
     totalSteps,
@@ -43,6 +44,7 @@ export function GuidedExplanationRunner({ payload }: GuidedExplanationRunnerProp
     resume,
     reset,
     setSpeed,
+    toggleSound,
   } = useGuidedPlayer({
     payload,
     containerRef: rootRef,
@@ -54,6 +56,8 @@ export function GuidedExplanationRunner({ payload }: GuidedExplanationRunnerProp
   const pauseLabel = payload.controls.pauseLabel ?? (isHebrew ? 'השהיה' : 'Pause')
   const resumeLabel = payload.controls.resumeLabel ?? (isHebrew ? 'המשך' : 'Resume')
   const speedLabel = isHebrew ? 'מהירות' : 'Speed'
+  const soundOnLabel = isHebrew ? 'סאונד דלוק (לחץ להשתקה)' : 'Sound on (click to mute)'
+  const soundOffLabel = isHebrew ? 'סאונד מושתק (לחץ להפעלה)' : 'Sound off (click to enable)'
   const completeLabel = isHebrew ? 'הכל טוב! ✓' : 'Solved ✓'
   const replayLabel = isHebrew ? 'חזרה מהתחלה' : 'Replay'
   const playAriaLabel = isHebrew ? 'התחל הסבר' : 'Start explanation'
@@ -151,14 +155,18 @@ export function GuidedExplanationRunner({ payload }: GuidedExplanationRunnerProp
         pauseLabel={pauseLabel}
         resumeLabel={resumeLabel}
         speedLabel={speedLabel}
+        soundOnLabel={soundOnLabel}
+        soundOffLabel={soundOffLabel}
         isPlaying={isPlaying}
         isPaused={isPaused}
         speed={speed}
+        soundOn={soundOn}
         onPlay={play}
         onPause={pause}
         onResume={resume}
         onReset={reset}
         onSpeedChange={setSpeed}
+        onToggleSound={toggleSound}
       />
 
       <NarrationBox text={narrationText} />

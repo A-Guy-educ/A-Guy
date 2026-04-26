@@ -32,6 +32,7 @@ interface UseGuidedPlayerResult {
   isPlaying: boolean
   isPaused: boolean
   isComplete: boolean
+  soundOn: boolean
   narrationText: string
   currentStep: number
   totalSteps: number
@@ -41,6 +42,7 @@ interface UseGuidedPlayerResult {
   resume: () => void
   reset: () => void
   setSpeed: (rate: number) => void
+  toggleSound: () => void
 }
 
 /**
@@ -68,8 +70,10 @@ export function useGuidedPlayer({
   const [narrationText, setNarrationText] = useState(payload.narrationBox.placeholder)
   const [currentStep, setCurrentStep] = useState(0)
   const [speed, setSpeedState] = useState(1)
+  const [soundOn, setSoundOnState] = useState(true)
   const sequenceRef = useRef(0)
   const speedRef = useRef(1)
+  const soundOnRef = useRef(true)
 
   // Pause primitives — resolver is replaced with a new pending promise on pause,
   // and called/cleared on resume so awaiting ops continue.
@@ -105,6 +109,19 @@ export function useGuidedPlayer({
     setSpeedState(rate)
     activeAnimationRef.current?.setRate?.(rate)
   }, [])
+
+  /**
+   * Toggle audio on/off. Cancels the in-flight speech handle so the new mode
+   * (sound or muted-with-captions) takes effect at the *next* step rather
+   * than mid-utterance — switching mid-narration would either cut audio off
+   * abruptly or jolt the timer.
+   */
+  const toggleSound = useCallback(() => {
+    soundOnRef.current = !soundOnRef.current
+    setSoundOnState(soundOnRef.current)
+  }, [])
+
+  const isMutedForSpeech = useCallback(() => !soundOnRef.current, [])
 
   const reset = useCallback(() => {
     sequenceRef.current += 1
@@ -178,6 +195,7 @@ export function useGuidedPlayer({
             waitWhilePaused,
             registerAnimation,
             getSpeed,
+            isMuted: isMutedForSpeech,
             setNarrationText,
           })
         }
@@ -200,12 +218,14 @@ export function useGuidedPlayer({
     waitWhilePaused,
     registerAnimation,
     getSpeed,
+    isMutedForSpeech,
   ])
 
   return {
     isPlaying,
     isPaused,
     isComplete,
+    soundOn,
     narrationText,
     currentStep,
     totalSteps,
@@ -215,6 +235,7 @@ export function useGuidedPlayer({
     resume,
     reset,
     setSpeed,
+    toggleSound,
   }
 }
 
@@ -227,6 +248,7 @@ interface RunStepCtx {
   waitWhilePaused: () => Promise<void>
   registerAnimation: (anim: PausableAnimation | null) => void
   getSpeed: () => number
+  isMuted: () => boolean
   setNarrationText: (text: string) => void
 }
 
@@ -248,7 +270,10 @@ async function runStep(step: GuidedExplanationStep, ctx: RunStepCtx): Promise<vo
     const display = stripNiqqud(step.narrate.display)
     ctx.setNarrationText(display)
     const toSpeak = step.narrate.speech ?? step.narrate.display
-    const handle = await startSpeech(toSpeak, ctx.locale, ctx.getSpeed())
+    const handle = await startSpeech(toSpeak, ctx.locale, ctx.getSpeed(), {
+      muted: ctx.isMuted(),
+      audioBase64: step.narrate.audioBase64 ?? null,
+    })
     ctx.registerAnimation(handle)
     await handle.finished
     ctx.registerAnimation(null)

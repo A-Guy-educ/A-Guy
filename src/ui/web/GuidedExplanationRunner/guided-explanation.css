@@ -307,6 +307,36 @@
   gap: 1rem;
 }
 
+.ge-sound-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  background: hsl(var(--muted) / 0.5);
+  color: hsl(var(--foreground));
+  border: 0;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.ge-sound-btn:hover {
+  background: hsl(var(--muted) / 0.8);
+}
+
+.ge-sound-btn-off {
+  background: hsl(var(--muted) / 0.4);
+  color: hsl(var(--muted-foreground));
+}
+
+.ge-sound-btn-off:hover {
+  color: hsl(var(--foreground));
+}
+
 .ge-speed-group {
   display: inline-flex;
   gap: 0.25rem;

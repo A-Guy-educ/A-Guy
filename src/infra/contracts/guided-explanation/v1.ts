@@ -106,6 +106,12 @@ const NarrationSchema = z
      * benefits from explicit niqqud.
      */
     speech: z.string().optional(),
+    /**
+     * Pre-generated MP3 (base64) baked in by the server at lesson generation
+     * so subsequent plays don't re-call Google TTS. When present, the client
+     * skips the cloud round-trip entirely.
+     */
+    audioBase64: z.string().optional(),
   })
   .strict()
 

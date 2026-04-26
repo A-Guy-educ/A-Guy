@@ -1,17 +1,21 @@
 /**
  * Speech playback for the GuidedExplanationRunner.
  *
- * Preferred path: Google Cloud TTS via `/api/tts/synthesize` (Neural2 voices,
- * native Hebrew support) played through an <audio> element with
- * `preservesPitch = true` so speed changes don't chipmunk the voice.
- *
- * Fallback path: browser `speechSynthesis`. Used only when the cloud call
- * fails (offline, unauthenticated, rate-limited, or returns no audio).
+ * Path priority:
+ *   1. Pre-fetched audio (`options.audioBase64`) — used when the lesson was
+ *      cached with TTS already baked in by the server.
+ *   2. Captions-only (`options.muted`) — runs a pauseable timer that resolves
+ *      after an estimated duration so the sequence advances without sound.
+ *   3. Google Cloud TTS via `/api/tts/synthesize` (Neural2 voices, native
+ *      Hebrew support) played through an <audio> element with
+ *      `preservesPitch = true` so speed changes don't chipmunk the voice.
+ *   4. Browser `speechSynthesis` — fallback if the cloud call fails.
  *
  * Returns a handle compatible with the player's PausableAnimation contract so
- * pause/resume/cancel/setRate work uniformly across animation and audio.
+ * pause/resume/cancel/setRate work uniformly across audio and silent timers.
  */
 
+import { animate } from 'animejs'
 import { pickVoiceForLocale } from '@/infra/utils/speechHelpers'
 
 const HEBREW_NIQQUD_REGEX = /[֑-ׇ]/g
@@ -34,6 +38,16 @@ export interface SpeechHandle {
   setRate: (rate: number) => void
 }
 
+export interface StartSpeechOptions {
+  /** Captions-only mode: no audio plays, sequence still advances on a timer. */
+  muted?: boolean
+  /**
+   * Pre-fetched base64 MP3 from the lesson cache. When present, skips the
+   * cloud TTS round-trip entirely.
+   */
+  audioBase64?: string | null
+}
+
 /** Warm up voice list — some browsers populate asynchronously. */
 export function primeSpeechVoices(): void {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
@@ -52,20 +66,73 @@ export function cancelSpeech(): void {
 /**
  * Start speech and return a handle whose `finished` promise resolves when
  * playback ends (or errors out). `rate` is applied at start; live rate
- * changes via `setRate()` work on the cloud-audio path. Browser-TTS fallback
- * ignores live rate changes — the next utterance picks up the new rate.
+ * changes via `setRate()` work on the cloud-audio + muted paths. Browser-TTS
+ * fallback ignores live rate changes — the next utterance picks up the new rate.
  */
 export async function startSpeech(
   text: string,
   locale: string,
   rate: number,
+  options: StartSpeechOptions = {},
 ): Promise<SpeechHandle> {
+  // Captions-only mode wins over everything: even if audio is pre-cached, the
+  // student has explicitly muted, so do not play it.
+  if (options.muted) {
+    return speakSilent(text, rate)
+  }
+  if (options.audioBase64) {
+    return playCloudAudio(options.audioBase64, rate)
+  }
   const ttsLocale: 'he' | 'en' = locale === 'he' ? 'he' : 'en'
   const audioContent = await fetchCloudTTS(text, ttsLocale)
   if (audioContent) {
     return playCloudAudio(audioContent, rate)
   }
   return speakBrowser(text, locale, rate)
+}
+
+// ---------------------------------------------------------------------------
+// Captions-only — pauseable timer, no audio
+// ---------------------------------------------------------------------------
+
+/**
+ * Estimate narration duration when no audio is playing. Calibrated so a
+ * typical 1-2 sentence step lasts long enough for a student to read along.
+ * Floor avoids snap-through on very short claims; cap prevents stalling on
+ * runaway narrations.
+ */
+function estimateDurationMs(text: string): number {
+  const charBudget = text.length * 60 // ~60ms per char ≈ moderate reading speed
+  return Math.max(2000, Math.min(charBudget, 30_000))
+}
+
+function speakSilent(text: string, rate: number): SpeechHandle {
+  const durationMs = estimateDurationMs(text)
+  const anim = animate(
+    { t: 0 },
+    {
+      t: 1,
+      duration: durationMs,
+      ease: 'linear',
+    },
+  )
+  const a = anim as unknown as {
+    pause: () => void
+    play: () => void
+    cancel?: () => void
+    speed?: number
+  }
+  // Apply current rate so muted playback also respects the speed picker.
+  a.speed = rate
+  return {
+    finished: anim as unknown as Promise<void>,
+    pause: () => a.pause(),
+    play: () => a.play(),
+    cancel: () => a.cancel?.(),
+    setRate: (nextRate: number) => {
+      a.speed = nextRate
+    },
+  }
 }
 
 // ---------------------------------------------------------------------------
