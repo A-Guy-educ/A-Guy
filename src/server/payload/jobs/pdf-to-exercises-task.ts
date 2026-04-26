@@ -304,12 +304,22 @@ export const pdfToExercisesTask = {
           })
         } catch (segmentError: unknown) {
           output.segmentsFailed = ((output.segmentsFailed as number) || 0) + 1
-          const err = segmentError as { code?: string; message?: string }
+          const err = segmentError as {
+            code?: string
+            message?: string
+            provider?: string
+            retryable?: boolean
+            cause?: { message?: string }
+            name?: string
+          }
           ;(output.errors as unknown[]).push({
             stage: 'PASS2_EXTRACT',
             pageRange: { start: segment.pageStart, end: segment.pageEnd },
-            code: err.code || 'SEGMENT_FAILED',
+            code: err.code || err.name || 'SEGMENT_FAILED',
             message: err.message || 'Segment processing failed',
+            provider: err.provider,
+            retryable: err.retryable,
+            cause: err.cause?.message,
           })
           ;(output.segments as unknown[]).push({
             index: i,
@@ -326,11 +336,22 @@ export const pdfToExercisesTask = {
       await updateJobStatus(payload as unknown as { db: unknown }, job.id, 'completed', output)
       return output
     } catch (error: unknown) {
-      const err = error as { message?: string }
+      const err = error as {
+        message?: string
+        code?: string
+        provider?: string
+        retryable?: boolean
+        cause?: { message?: string }
+        name?: string
+      }
       console.error(`[PDF→Exercises] Job ${job.id} failed:`, error)
       await updateJobStatus(payload as unknown as { db: unknown }, job.id, 'failed', {
         ...output,
         error: err.message,
+        errorCode: err.code || err.name,
+        errorProvider: err.provider,
+        errorRetryable: err.retryable,
+        errorCause: err.cause?.message,
       })
       throw error
     }

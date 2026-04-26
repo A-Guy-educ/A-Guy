@@ -80,6 +80,7 @@ export function CoursePageContent({
                 lessons={lessons}
                 chapters={chapters}
                 courseSlug={courseSlug}
+                gradeLevel={course.courseLabel}
                 tabColor={TAB_COLORS[activeTab]}
                 lessonProgressMap={lessonProgressMap}
                 lessonType={activeTab === 'learn' ? 'learning' : activeTab}
@@ -96,17 +97,17 @@ export function CoursePageContent({
 
         {/* Footer actions with divider */}
         <div className="mt-16 pt-8 border-t border-border">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-content-gap">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-content-gap">
             <SystemLink
               href={`/stats?courseId=${course.id}`}
-              className="flex items-center justify-center gap-2 text-body-sm font-bold text-foreground bg-card border border-border px-6 py-3 rounded-full hover:bg-muted/50 transition-all duration-normal"
+              className="flex items-center justify-center gap-content-gap-xs text-body-sm font-bold text-foreground bg-card border border-border px-6 py-3 rounded-full hover:bg-muted/50 transition-all duration-normal"
             >
               <BarChart3 className="w-4 h-4" />
               {t('statsAndPerformance')}
             </SystemLink>
             <SystemLink
               href="/study-plan"
-              className="flex items-center justify-center gap-2 text-body-sm font-bold text-primary-foreground bg-primary px-6 py-3 rounded-full shadow-elevation-3 hover:opacity-90 transition-all duration-normal"
+              className="flex items-center justify-center gap-content-gap-xs text-body-sm font-bold text-primary-foreground bg-primary px-6 py-3 rounded-full shadow-elevation-3 hover:opacity-90 transition-all duration-normal"
             >
               <GraduationCap className="w-4 h-4" />
               {t('upcomingExam')}
