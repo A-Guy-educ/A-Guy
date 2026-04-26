@@ -161,9 +161,9 @@ export function GuidedExplanationRunner({ payload }: GuidedExplanationRunnerProp
         onSpeedChange={setSpeed}
       />
 
-      {payload.proofTable ? <ProofTable table={payload.proofTable} /> : null}
-
       <NarrationBox text={narrationText} />
+
+      {payload.proofTable ? <ProofTable table={payload.proofTable} /> : null}
     </section>
   )
 }
