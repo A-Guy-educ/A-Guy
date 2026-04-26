@@ -40,6 +40,8 @@ interface ExercisesPagerProps {
   chapterSlug: string
   lessonSlug: string
   lessonId: string
+  /** Grade bucket for progress storage — must be the lesson's course label, not the user's profile grade. */
+  gradeLevel: string
   mediaMap?: Record<string, MediaType>
   /** Whether to show the chat panel (true when lesson has exercises or context text) */
   showChat?: boolean
@@ -61,6 +63,7 @@ export function ExercisesPager({
   chapterSlug,
   lessonSlug,
   lessonId,
+  gradeLevel,
   mediaMap,
   showChat,
   formulaSheet,
@@ -79,7 +82,7 @@ export function ExercisesPager({
     handleStart,
     getExerciseOrdinal,
     totalExercises,
-  } = useExercisesPager({ exercises, courseSlug, chapterSlug, lessonSlug, lessonId })
+  } = useExercisesPager({ exercises, courseSlug, chapterSlug, lessonSlug, lessonId, gradeLevel })
 
   const [showConfetti, setShowConfetti] = useState(false)
 

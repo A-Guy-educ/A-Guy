@@ -111,6 +111,7 @@ export default async function ExercisePage({ params }: ExercisePageProps) {
       chapterSlug={chapterSlug}
       lessonSlug={lessonSlug}
       lessonId={lesson.id}
+      gradeLevel={course.courseLabel}
       mediaMap={mediaMap}
     />
   )
