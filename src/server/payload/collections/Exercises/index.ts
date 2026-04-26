@@ -382,6 +382,13 @@ export const Exercises: CollectionConfig = {
           admin: { description: 'Original PDF media for conversion exercises' },
         },
         {
+          name: 'sourceLatex',
+          type: 'textarea',
+          admin: {
+            description: 'Raw LaTeX chunk this exercise was derived from (for LaTeX imports)',
+          },
+        },
+        {
           name: 'conversionJobId',
           type: 'text',
           admin: { description: 'Payload job ID that created this exercise' },
@@ -469,6 +476,17 @@ export const Exercises: CollectionConfig = {
         position: 'sidebar',
         components: {
           Field: '@/ui/admin/ContentNavigation#ExerciseNavigation',
+        },
+      },
+    },
+
+    // In-place LaTeX block → structured content conversion (V1-258/260)
+    {
+      name: 'convertLatexBlock',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/ui/admin/exercise-conversion/ConvertLatexBlockButton#ConvertLatexBlockButton',
         },
       },
     },

@@ -80,5 +80,5 @@ export default async function CompletePage({ params }: CompletePageProps) {
 
   const backUrl = '/study'
 
-  return <CompleteContent backUrl={backUrl} lessonId={lesson.id} />
+  return <CompleteContent backUrl={backUrl} lessonId={lesson.id} gradeLevel={course.courseLabel} />
 }

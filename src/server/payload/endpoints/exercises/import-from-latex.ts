@@ -68,6 +68,7 @@ export async function importExerciseFromLatex(req: PayloadRequest): Promise<Resp
           content: { blocks: group.blocks },
           origin: 'import',
           order: startOrder + i,
+          sourceLatex: latex,
         },
         draft: true,
       })

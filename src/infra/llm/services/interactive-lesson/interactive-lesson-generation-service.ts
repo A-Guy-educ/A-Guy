@@ -6,16 +6,33 @@
  * Two-pass approach: LLM extracts geometry + proof, we render SVG deterministically.
  */
 import type { Payload } from 'payload'
-import type { AIModel, AIModelKey } from '../../models'
-import { getModelRegistryEntry, getProviderModelName } from '../../models'
+import { z } from 'zod'
+import type { AIModel } from '../../models'
 import { INTERACTIVE_LESSON_PROMPT } from '../../prompts/interactive-lesson-generation'
-import { LLMProviderType } from '../../providers/types'
+import { getCircuitBreaker } from '../../providers/shared/circuit-breaker'
+import { withRetry } from '../../providers/shared/retry'
+import { withTimeout } from '../../providers/shared/timeout'
+import { logger } from '@/infra/utils/logger/logger'
 import { optimizeImageForAI } from '../image-optimizer-service'
+import { InteractiveLessonResponseSchema } from './interactive-lesson-schema'
 import type {
   InteractiveLesson,
   InteractiveLessonInput,
   InteractiveLessonResponse,
 } from './interactive-lesson-types'
+
+// Single source of truth for the Gemini call config. Used for both the API
+// request and metadata reporting so they can't diverge.
+const GEMINI_CONFIG = {
+  modelName: 'gemini-2.5-flash',
+  temperature: 0,
+  maxOutputTokens: 98304,
+  thinkingBudget: 24576,
+  timeoutMs: 180_000,
+  maxRetries: 2,
+} as const
+
+const circuitBreaker = getCircuitBreaker('interactive-lesson-gemini')
 
 /**
  * Generate an interactive lesson from an uploaded image.
@@ -23,41 +40,51 @@ import type {
  */
 export async function generateInteractiveLesson(
   input: InteractiveLessonInput,
-  payload: Payload,
+  _payload: Payload,
 ): Promise<InteractiveLessonResponse> {
   const startTime = Date.now()
   let modelConfig: AIModel | null = null
 
   try {
-    const { createGenkitUnifiedAdapter } = await import('../../genkit/adapters/unified-adapter')
-    const adapter = await createGenkitUnifiedAdapter(payload)
+    const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey) throw new Error('GEMINI_API_KEY not configured')
+
     modelConfig = {
-      ...resolveModelConfig('IMAGE_TO_EXERCISE'),
-      // Use Gemini 2.5 Flash explicitly — 2.0 Flash produces only ~4 steps on
-      // complex multi-part geometry proofs. 2.5 Flash with thinking produces 18-20.
-      // The "googleai/" prefix tells the adapter to skip DB config resolution.
-      name: 'googleai/gemini-2.5-flash',
-      // Temperature 0 for more deterministic structured JSON output.
-      temperature: 0,
-      // Thinking tokens count against maxOutputTokens — budget for both.
-      // Bumped to 96K to reduce mid-JSON truncation on long outputs.
-      maxOutputTokens: 98304,
-      thinkingBudget: 24576,
+      name: `googleai/${GEMINI_CONFIG.modelName}`,
+      temperature: GEMINI_CONFIG.temperature,
+      maxOutputTokens: GEMINI_CONFIG.maxOutputTokens,
+      thinkingBudget: GEMINI_CONFIG.thinkingBudget,
     }
 
     const prompt = buildPrompt(input.locale)
     const { attachmentData, sizeBytes } = await prepareImage(input)
 
-    const result = await adapter.generateMultimodalCompletion(
-      {
-        prompt,
-        model: modelConfig,
-        attachments: [{ data: attachmentData, mimeType: input.mimeType }],
-      },
-      payload,
+    // Direct Gemini call with responseSchema so the model is constrained to
+    // produce exactly the shape we expect. Wrapped in the same reliability
+    // primitives the Genkit adapter uses (timeout + retry + circuit breaker)
+    // so a transient 5xx/429 doesn't fail the user's request on first try.
+    const responseText = await circuitBreaker.execute(() =>
+      withRetry(
+        () =>
+          withTimeout(
+            () =>
+              callGeminiWithSchema({
+                apiKey,
+                prompt,
+                attachmentData,
+                attachmentMimeType: input.mimeType,
+              }),
+            { timeoutMs: GEMINI_CONFIG.timeoutMs, message: 'Gemini request timed out' },
+          ),
+        {
+          maxRetries: GEMINI_CONFIG.maxRetries,
+          isRetryable: isRetryableGeminiError,
+          logPrefix: '[InteractiveLesson]',
+        },
+      ),
     )
 
-    const parsed = parseResponse(result.text)
+    const parsed = parseResponse(responseText)
 
     if (parsed.error) {
       return buildErrorResponse(
@@ -96,6 +123,110 @@ function buildPrompt(locale: 'he' | 'en'): string {
       ? '\n\nIMPORTANT: Generate ALL narration, claims, reasons, and explanations in Hebrew.'
       : '\n\nIMPORTANT: Generate ALL narration, claims, reasons, and explanations in English.'
   return `${INTERACTIVE_LESSON_PROMPT}${localeInstruction}`
+}
+
+/**
+ * Custom error that carries the HTTP status so withRetry can decide
+ * whether to retry based on the code (5xx/429 yes, 4xx no).
+ */
+class GeminiApiError extends Error {
+  constructor(
+    readonly status: number,
+    message: string,
+  ) {
+    super(message)
+    this.name = 'GeminiApiError'
+  }
+}
+
+function isRetryableGeminiError(err: Error): boolean {
+  if (err instanceof GeminiApiError) {
+    return err.status >= 500 || err.status === 429
+  }
+  // Timeouts and network errors are retryable
+  return err.name === 'TimeoutError' || err.message.includes('fetch failed')
+}
+
+/**
+ * Call Gemini 2.5 Flash directly with a responseSchema constraint.
+ *
+ * We bypass the Genkit adapter to pass responseSchema to Gemini's v1beta
+ * generateContent endpoint — the model is then forced to produce JSON
+ * matching our exact shape, eliminating field-name variations (id vs
+ * label, p1 vs from, etc.) at the source. Timeout/retry/circuit-breaker
+ * are applied by the caller.
+ */
+async function callGeminiWithSchema(args: {
+  apiKey: string
+  prompt: string
+  attachmentData: string
+  attachmentMimeType: string
+}): Promise<string> {
+  const schemaForGemini = zodToGeminiSchema(InteractiveLessonResponseSchema)
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_CONFIG.modelName}:generateContent?key=${args.apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              { inlineData: { mimeType: args.attachmentMimeType, data: args.attachmentData } },
+              { text: args.prompt },
+            ],
+          },
+        ],
+        generationConfig: {
+          temperature: GEMINI_CONFIG.temperature,
+          maxOutputTokens: GEMINI_CONFIG.maxOutputTokens,
+          thinkingConfig: { thinkingBudget: GEMINI_CONFIG.thinkingBudget },
+          responseMimeType: 'application/json',
+          responseSchema: schemaForGemini,
+        },
+      }),
+    },
+  )
+
+  if (!res.ok) {
+    // Log the raw body server-side for debugging, but don't include it in
+    // the thrown error message so nothing leaks upstream.
+    const body = await res.text()
+    logger.error({ status: res.status, body: body.slice(0, 500) }, 'Gemini API error')
+    throw new GeminiApiError(res.status, `Gemini API returned ${res.status}`)
+  }
+
+  const json = await res.json()
+  const text =
+    json.candidates?.[0]?.content?.parts
+      ?.filter((p: { text?: string }) => p.text)
+      ?.map((p: { text: string }) => p.text)
+      ?.join('') || ''
+  return text
+}
+
+/**
+ * Convert a Zod schema to the OpenAPI 3.0 subset Gemini's responseSchema
+ * accepts. Strips $schema and additionalProperties recursively — both
+ * are in JSON Schema but rejected by Gemini's endpoint.
+ */
+function zodToGeminiSchema(schema: z.ZodType): Record<string, unknown> {
+  const jsonSchema = z.toJSONSchema(schema) as Record<string, unknown>
+  return stripUnsupportedKeys(jsonSchema) as Record<string, unknown>
+}
+
+function stripUnsupportedKeys(node: unknown): unknown {
+  if (Array.isArray(node)) return node.map(stripUnsupportedKeys)
+  if (node && typeof node === 'object') {
+    const out: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(node)) {
+      if (k === '$schema' || k === 'additionalProperties') continue
+      out[k] = stripUnsupportedKeys(v)
+    }
+    return out
+  }
+  return node
 }
 
 async function prepareImage(input: InteractiveLessonInput) {
@@ -221,13 +352,6 @@ function validateLabel(l: Record<string, unknown>) {
     x: Number(l.x || 0),
     y: Number(l.y || 0),
     fontSize: Number(l.fontSize || 12),
-  }
-}
-
-function resolveModelConfig(modelKey: AIModelKey): AIModel {
-  return {
-    name: getProviderModelName(LLMProviderType.GEMINI, modelKey),
-    ...getModelRegistryEntry(modelKey),
   }
 }
 

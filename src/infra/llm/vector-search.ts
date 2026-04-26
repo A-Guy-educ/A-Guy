@@ -101,12 +101,19 @@ export async function retrieveMemoryItems(
       '[VectorSearch] Building retrieval queries',
     )
 
-    // Prepare queries
-    const queries: Promise<{ items: MemoryItem[]; count: number; scope: string }>[] = []
+    // Retrieve memories in two phases to stay within maxPoolSize (3).
+    // Phase 1: conversation + context in parallel (at most 2 connections).
+    // Phase 2: global query sequentially (reuses a freed connection).
+    // This adds ~200ms vs fully parallel but avoids exhausting the pool.
+
+    type QueryResult = { items: MemoryItem[]; count: number; scope: string }
+
+    // --- Phase 1: conversation + context in parallel (max 2 queries) ---
+    const phase1: Promise<QueryResult>[] = []
 
     // 1. Conversation-scoped query
     if (conversationId) {
-      queries.push(
+      phase1.push(
         (async () => {
           const convResults = await collection
             .aggregate([
@@ -143,7 +150,7 @@ export async function retrieveMemoryItems(
 
     // 2. Context-hierarchy query (contextKey + parent keys)
     if (hierarchyKeys.length > 0) {
-      queries.push(
+      phase1.push(
         (async () => {
           const ctxResults = await collection
             .aggregate([
@@ -195,45 +202,50 @@ export async function retrieveMemoryItems(
       )
     }
 
-    // 3. User-global query (contextKey = 'global' or missing)
+    const phase1Results = await Promise.allSettled(phase1)
+
+    // --- Phase 2: global query (runs after phase 1 frees connections) ---
     // Note: MongoDB Atlas Vector Search filters support $in but not $or or $exists
     // For missing contextKey, we rely on the context-hierarchy query or ensure contextKey is set
-    queries.push(
-      (async () => {
-        const globalResults = await collection
-          .aggregate([
-            {
-              $vectorSearch: {
-                index: VECTOR_INDEX_NAME,
-                path: 'embedding',
-                queryVector,
-                numCandidates: NUM_CANDIDATES,
-                limit: 4,
-                filter: {
-                  userId: { $eq: userId },
-                  contextKey: { $eq: 'global' },
-                  status: { $eq: 'active' },
-                },
+    const globalResult = await (async (): Promise<QueryResult> => {
+      const globalResults = await collection
+        .aggregate([
+          {
+            $vectorSearch: {
+              index: VECTOR_INDEX_NAME,
+              path: 'embedding',
+              queryVector,
+              numCandidates: NUM_CANDIDATES,
+              limit: 4,
+              filter: {
+                userId: { $eq: userId },
+                contextKey: { $eq: 'global' },
+                status: { $eq: 'active' },
               },
             },
-            {
-              $project: {
-                embedding: 0,
-                score: { $meta: 'vectorSearchScore' },
-              },
+          },
+          {
+            $project: {
+              embedding: 0,
+              score: { $meta: 'vectorSearchScore' },
             },
-          ])
-          .toArray()
-        return {
-          items: globalResults as MemoryItem[],
-          count: globalResults.length,
-          scope: 'global',
-        }
-      })(),
-    )
+          },
+        ])
+        .toArray()
+      return {
+        items: globalResults as MemoryItem[],
+        count: globalResults.length,
+        scope: 'global',
+      }
+    })().catch((err) => {
+      logger.warn({ err }, '[VectorSearch] Global query failed, continuing with others')
+      return { items: [] as MemoryItem[], count: 0, scope: 'global' }
+    })
 
-    // Execute all queries in parallel (use allSettled so one failure doesn't break all)
-    const querySettledResults = await Promise.allSettled(queries)
+    const querySettledResults: PromiseSettledResult<QueryResult>[] = [
+      ...phase1Results,
+      { status: 'fulfilled' as const, value: globalResult },
+    ]
 
     // Process results with priority: conversation > context > global
     const seenIds = new Set<string>()

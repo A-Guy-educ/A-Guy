@@ -1,0 +1,10 @@
+{
+  "task_type": "bugfix",
+  "title": "Add timeout to MCP client fetch requests",
+  "description": "Add AbortController with 30-second timeout to MCPClient.request() to prevent serverless functions from hanging indefinitely when MCP server is slow or unresponsive. The fix wraps the fetch call with try-finally to ensure timeout cleanup.",
+  "scope": [
+    "src/server/repos/mcp/client/mcp-client.ts"
+  ],
+  "risk_level": "low",
+  "questions": []
+}

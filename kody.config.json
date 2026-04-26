@@ -14,11 +14,8 @@
     "owner": "A-Guy-educ",
     "repo": "A-Guy"
   },
-  "paths": {
-    "taskDir": ".kody/tasks"
-  },
   "agent": {
-    "provider": "minimax",
+    "model": "minimax/MiniMax-M2.7-highspeed",
     "modelMap": {
       "cheap": "minimax/MiniMax-M2.7-highspeed",
       "mid": "minimax/MiniMax-M2.7-highspeed",
@@ -38,7 +35,7 @@
     "releaseBranch": "main",
     "versionFiles": ["package.json"],
     "notifyCommand": "NOTIFY_RESULT=always NOTIFY_VERSION=$VERSION pnpm tsx scripts/kody/notify.ts --agent release-publisher --channels slack --when always --color good --title \"🚀 A-Guy v$VERSION released\" --body \"Release $VERSION finalized — https://github.com/A-Guy-educ/A-Guy/releases/tag/v$VERSION\"",
-    "e2eCommand": "USE_MONGO_SERVICE=true DATABASE_URL=mongodb://localhost:27017/test NEXT_PUBLIC_SERVER_URL=http://localhost:3000 SKIP_BUILD=true pnpm exec playwright test --config=playwright.e2e-gate.config.ts",
+    "e2eCommand": "npx tsx scripts/release-e2e-gate.ts",
     "timeoutMs": 1800000
   },
   "watch": {
@@ -48,18 +45,18 @@
     "provider": "minimax"
   },
   "timeouts": {
-    "taskify": 6000,
-    "plan": 6000,
-    "build": 24000,
-    "verify": 3000,
-    "review": 6000,
-    "review-fix": 12000,
-    "ship": 2400
+    "taskify": 18000,
+    "plan": 18000,
+    "build": 72000,
+    "verify": 9000,
+    "review": 18000,
+    "review-fix": 36000,
+    "ship": 7200
   },
   "devServer": {
     "command": "pnpm dev",
     "url": "http://localhost:3000",
-    "readyPattern": "Ready in|compiled|started server|Local:|localhost:|\u2713 Ready",
+    "readyPattern": "Ready in|compiled|started server|Local:|localhost:|✓ Ready",
     "readyTimeout": 180,
     "env": [
       "AI_BASE_URL",

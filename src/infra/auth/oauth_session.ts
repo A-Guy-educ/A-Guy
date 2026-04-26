@@ -7,9 +7,58 @@
  * @ai-summary Issue Payload auth sessions using payload.login() for OAuth users
  */
 
+import crypto from 'crypto'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { decrypt, generateSecret } from './oauth_crypto'
+import { SignJWT } from 'jose'
+import { decrypt } from './oauth_crypto'
+
+// Default token expiration in seconds (matches Payload's default)
+const TOKEN_EXPIRATION = 7200
+
+/**
+ * Generate a JWT token directly using jose (same algorithm as Payload).
+ * This avoids the dangerous password-swap pattern that risks locking out users.
+ */
+async function generateJWTToken({
+  userId,
+  email,
+  role,
+  sid,
+  secret,
+}: {
+  userId: string
+  email: string
+  role: string
+  sid?: string
+  secret: string
+}): Promise<string> {
+  // Payload derives the JWT signing key from config.secret this way
+  // (see payload/dist/index.js: this.secret = sha256(config.secret).hex.slice(0, 32)).
+  // We must mirror that derivation so tokens pass payload.auth() verification.
+  const derivedSecret = crypto.createHash('sha256').update(secret).digest('hex').slice(0, 32)
+  const secretKey = new TextEncoder().encode(derivedSecret)
+  const issuedAt = Math.floor(Date.now() / 1000)
+  const exp = issuedAt + TOKEN_EXPIRATION
+
+  const claims: Record<string, unknown> = {
+    id: userId,
+    collection: 'users',
+    email,
+    role,
+  }
+  if (sid) {
+    claims.sid = sid
+  }
+
+  const token = await new SignJWT(claims)
+    .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
+    .setIssuedAt(issuedAt)
+    .setExpirationTime(exp)
+    .sign(secretKey)
+
+  return token
+}
 
 export interface SessionResult {
   token: string
@@ -78,7 +127,10 @@ export async function issueSessionWithPlainSecret(
  * For linked accounts:
  * - User keeps their original password for email/password login
  * - We can't use payload.login() because OAuth secret ≠ password
- * - Instead, generate token directly after verifying googleSub
+ * - Instead, generate token directly using jose (same algorithm as Payload)
+ *
+ * SECURITY: This function generates the JWT directly without any password swap,
+ * avoiding the race condition that could lock users out during concurrent requests.
  *
  * @param userId - User ID (already verified via googleSub lookup)
  * @returns Session token
@@ -97,69 +149,50 @@ export async function issueSessionForLinkedAccount(userId: string): Promise<Sess
     throw new Error('User not found for session generation')
   }
 
-  // Save original state from MongoDB (has hash/salt)
-  const originalHash = userDoc.hash
-  const originalSalt = userDoc.salt
+  const email = userDoc.email as string
+  const role = userDoc.role as string
 
-  if (!originalHash || !originalSalt) {
-    throw new Error('User missing password hash/salt - cannot issue session for linked account')
+  if (!email) {
+    throw new Error('User missing email - cannot issue session for linked account')
   }
 
-  // Generate a temporary secret and use payload.login()
-  // This ensures the JWT is 100% compatible with Payload's expectations
-  const tempSecret = generateSecret()
+  // Get Payload secret from environment
+  const secret = process.env.PAYLOAD_SECRET
+  if (!secret) {
+    throw new Error('PAYLOAD_SECRET environment variable is required')
+  }
 
-  try {
-    // Temporarily set OAuth secret as password
-    await payload.update({
-      collection: 'users',
-      id: userId,
-      data: {
-        password: tempSecret,
-      },
-      overrideAccess: true,
-    })
-
-    // Login to get real Payload JWT
-    const loginResult = await payload.login({
-      collection: 'users',
-      data: {
-        email: userDoc.email as string,
-        password: tempSecret,
-      },
-    })
-
-    if (!loginResult || !('token' in loginResult) || !loginResult.token) {
-      throw new Error('Session issuance failed: no token returned')
-    }
-
-    // Restore original password hash using MongoDB direct update
+  // Payload's users collection has useSessions: true (the default in v3).
+  // The JWT strategy rejects tokens whose `sid` does not match an existing
+  // session record on the user, so we must add one and include its id in the
+  // token claims. Mirrors payload/dist/auth/sessions.js#addSessionToUser.
+  const usersCollection = payload.collections?.users
+  const useSessions = usersCollection?.config?.auth?.useSessions === true
+  let sid: string | undefined
+  if (useSessions) {
+    const { randomUUID } = await import('crypto')
+    sid = randomUUID()
+    const now = new Date()
+    const expiresAt = new Date(now.getTime() + TOKEN_EXPIRATION * 1000)
     await db.collections.users.updateOne(
       { _id: new ObjectId(userId) },
       {
-        $set: {
-          hash: originalHash,
-          salt: originalSalt,
+        $push: {
+          sessions: { id: sid, createdAt: now, expiresAt },
         },
       },
     )
-
-    return { token: loginResult.token }
-  } catch (error) {
-    // Try to restore password if login/token generation failed
-    try {
-      await db.collections.users.updateOne(
-        { _id: new ObjectId(userId) },
-        {
-          $set: {
-            hash: originalHash,
-            salt: originalSalt,
-          },
-        },
-      )
-    } catch (_restoreError) {
-      // Silent failure - already in error state
-    }
-    throw error
   }
+
+  // Generate JWT directly - no password swap needed
+  // This is safe for concurrent requests and serverless environments
+  const token = await generateJWTToken({
+    userId,
+    email,
+    role: role || 'student',
+    sid,
+    secret,
+  })
+
+  return { token }
 }

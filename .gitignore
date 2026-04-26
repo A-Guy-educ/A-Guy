@@ -14,6 +14,9 @@ node_modules
 # Payload default media upload directory
 public/media/
 
+# Local-only testing materials for interactive lesson / schema work
+schema-testing/
+
 public/robots.txt
 public/sitemap*.xml
 
@@ -27,6 +30,10 @@ node_modules/
 
 
 tsconfig.tsbuildinfo
+
+# Payload generated artifacts — regenerated on install/dev/build from payload.config.ts
+src/payload-types.ts
+src/app/(payload)/admin/importMap.js
 
 # Local AI development documentation
 CLAUDE_INTERNAL.md

@@ -81,7 +81,7 @@ describe('LLM Model Configuration Validation', () => {
         'gemini-3.1-pro',
       )
       expect(getProviderModelConfig(LLMProviderType.GEMINI, 'PDF_TO_EXERCISE').name).toBe(
-        'gemini-3.1-pro',
+        'gemini-2.5-flash',
       )
     })
 
@@ -166,7 +166,7 @@ describe('LLM Model Configuration Validation', () => {
         'gemini-3.1-pro',
       )
       expect(getProviderModelConfig(LLMProviderType.GEMINI, 'PDF_TO_EXERCISE').name).toBe(
-        'gemini-3.1-pro',
+        'gemini-2.5-flash',
       )
 
       // OpenAI-compatible provider
@@ -339,7 +339,7 @@ describe('LLM Model API Validation (Manual Test)', () => {
       'should validate PDF_TO_EXERCISE model configuration for Gemini API',
       async () => {
         const modelConfig = getProviderModelConfig(LLMProviderType.GEMINI, 'PDF_TO_EXERCISE')
-        expect(modelConfig.name).toBe('gemini-3.1-pro')
+        expect(modelConfig.name).toBe('gemini-2.5-flash')
         expect(modelConfig.temperature).toBe(0.1)
         expect(modelConfig.maxOutputTokens).toBe(32768)
         // Actual API call would go here in a full integration test

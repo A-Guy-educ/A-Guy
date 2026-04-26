@@ -595,11 +595,11 @@ export function useNotebookChat({
       }
 
       if (result.message) {
-        // Check if AI rejected the uploaded image
-        const isImageRejected = result.message.includes(IMAGE_REJECTED_TAG)
-        const cleanMessage = isImageRejected
-          ? result.message.replace(IMAGE_REJECTED_TAG, '').trimEnd()
-          : result.message
+        // Strip [IMAGE_REJECTED] but do NOT auto-clear askMedia — the AI is
+        // sometimes wrong about cropping (e.g. when asked about a section it
+        // didn't focus on), and silently deleting the reference image is a
+        // worse failure than the cautious response itself.
+        const cleanMessage = result.message.replace(IMAGE_REJECTED_TAG, '').trimEnd()
 
         const assistantMessage: ChatMessage = {
           id: crypto.randomUUID(),
@@ -607,12 +607,6 @@ export function useNotebookChat({
           content: cleanMessage,
         }
         setMessages((prev) => [...prev, assistantMessage])
-
-        // Clear the Ask-page image so student can upload a corrected one
-        if (isImageRejected && askMedia) {
-          clearAskMedia()
-          window.dispatchEvent(new CustomEvent('ask-media-clear'))
-        }
       }
     } catch (error) {
       console.error('Send message sync failed:', error)

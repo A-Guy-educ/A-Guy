@@ -72,11 +72,10 @@ jobs:
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
-        if: failure()
         with:
-          name: coverage-report
+          name: coverage-unit
           path: coverage/
-          retention-days: 1
+          retention-days: 3
 
       - name: Check for TODO/FIXME in production code
         run: |
@@ -129,9 +128,16 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run integration tests
-        run: pnpm test:int
+        run: pnpm test:int:coverage
         env:
           USE_MONGO_SERVICE: 'true'
+
+      - name: Upload integration coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-int
+          path: coverage/
+          retention-days: 3
 
   build:
     name: Build
