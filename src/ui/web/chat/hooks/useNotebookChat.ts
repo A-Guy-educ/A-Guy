@@ -36,11 +36,17 @@ export interface ChatMessage {
  * reading a user-uploaded image, so the values must be treated as untrusted.
  * Without escaping, an adversarial image could induce narration containing
  * a literal `</step-context>` tag and break out of the context block to
- * inject arbitrary instructions to the chat model. We escape `<`, `>`, and
- * `"` before interpolation, and use a greedy regex to strip any nested
- * blocks on history reload.
+ * inject arbitrary instructions to the chat model. We escape `<`, `>`, `&`,
+ * and `"` at write time, so the only `</step-context>` that can appear is
+ * the system-emitted closing tag.
+ *
+ * The strip regex is non-greedy so it stops at the FIRST `</step-context>`
+ * (the system's closing tag) and never consumes a user's legitimate
+ * `</step-context>` token elsewhere in the message body — e.g. someone
+ * asking about this very codebase. With escaping in place, that user
+ * occurrence can't be confused with the system tag anyway.
  */
-const STEP_CONTEXT_BLOCK_REGEX = /^<step-context[\s\S]*<\/step-context>\s*/
+const STEP_CONTEXT_BLOCK_REGEX = /^<step-context[\s\S]*?<\/step-context>\s*/
 
 /** Escape characters that could break the surrounding XML-ish tag. */
 function escapeStepContextField(value: string): string {
