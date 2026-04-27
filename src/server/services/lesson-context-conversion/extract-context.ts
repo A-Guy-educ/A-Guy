@@ -416,6 +416,12 @@ async function extractSinglePage(
     throw new Error('AI returned empty response')
   }
 
+  // Detect if LLM returned an error message instead of LaTeX
+  const errorPatterns = [/^an error occurred/i, /^error:/i, /^sorry,/i, /^i cannot/i, /^i'm sorry/i]
+  if (errorPatterns.some((pattern) => pattern.test(extractedText))) {
+    throw new Error(`AI returned error text: ${extractedText.substring(0, 100)}`)
+  }
+
   const validation = validateExtractedLatex(extractedText)
   const allWarnings = [...validation.warnings, ...validation.errors]
   const warning = allWarnings.length > 0 ? allWarnings.join('; ') : undefined
