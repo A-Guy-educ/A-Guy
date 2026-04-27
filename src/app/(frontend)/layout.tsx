@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 
+import * as Sentry from '@sentry/nextjs'
 import { cn } from '@/infra/utils/ui'
 import { GeistMono } from 'geist/font/mono'
 import { GeistSans } from 'geist/font/sans'
@@ -18,7 +19,7 @@ import { PasswordLoginProvider } from '@/ui/web/providers/PasswordLoginProvider'
 import { InitTheme } from '@/ui/web/providers/Theme/InitTheme'
 import { RouteLoadingIndicator } from '@/infra/loading/components/RouteLoadingIndicator'
 
-import { defaultLocale, getDirection } from '@/i18n/config'
+import { defaultLocale, getDirection, type Locale } from '@/i18n/config'
 import { getSystemLocale } from '@/i18n/server-locale'
 import { I18nProvider } from '@/ui/web/providers/I18n'
 import { getPayload } from 'payload'
@@ -27,6 +28,15 @@ import './globals.css'
 import { LayoutClient } from './LayoutClient'
 import { NavigationBar } from '@/ui/web/homepage/NavigationBar'
 import { ActiveTimeProvider } from '@/client/providers/ActiveTimeProvider'
+
+function reportLayoutError(stage: string, error: unknown): void {
+  console.error(`[RootLayout] ${stage} failed`, error)
+  try {
+    Sentry.captureException(error, { tags: { layoutStage: stage } })
+  } catch {
+    // Sentry must never crash the layout
+  }
+}
 
 const assistant = Assistant({
   subsets: ['latin', 'hebrew'],
@@ -44,9 +54,14 @@ const stixTwoText = STIX_Two_Text({
 async function getMessages(locale: string) {
   try {
     return (await import(`../../../src/i18n/${locale}.json`, { with: { type: 'json' } })).default
-  } catch {
-    return (await import(`../../../src/i18n/${defaultLocale}.json`, { with: { type: 'json' } }))
-      .default
+  } catch (primaryErr) {
+    try {
+      return (await import(`../../../src/i18n/${defaultLocale}.json`, { with: { type: 'json' } }))
+        .default
+    } catch (fallbackErr) {
+      reportLayoutError('getMessages', { primaryErr, fallbackErr })
+      return {} as Record<string, never>
+    }
   }
 }
 
@@ -55,16 +70,36 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // This avoids static-to-dynamic conversion errors
   const isEnabled = false
 
-  const locale = await getSystemLocale()
+  // Each step is guarded so a single transient failure (DB cold-start,
+  // missing locale cookie, etc.) cannot crash the root layout and
+  // trigger global-error.tsx. Errors are logged to Sentry for visibility.
+
+  let locale: Locale = defaultLocale
+  try {
+    locale = await getSystemLocale()
+  } catch (err) {
+    reportLayoutError('getSystemLocale', err)
+  }
+
   const messages = await getMessages(locale)
   const dir = getDirection(locale)
 
-  const payload = await getPayload({ config })
   // loadConfigValues is idempotent — returns cached data on repeat calls.
-  // This runs once per serverless instance (not per request) because the
-  // module-level cache in config-values.ts survives across requests.
-  await loadConfigValues(payload)
-  const passwordLoginEnabled = await isPasswordLoginEnabled()
+  // If getPayload or loadConfigValues fail (e.g. Atlas connection hiccup),
+  // we render with whatever cache exists / defaults rather than crashing.
+  try {
+    const payload = await getPayload({ config })
+    await loadConfigValues(payload)
+  } catch (err) {
+    reportLayoutError('loadConfigValues', err)
+  }
+
+  let passwordLoginEnabled = false
+  try {
+    passwordLoginEnabled = await isPasswordLoginEnabled()
+  } catch (err) {
+    reportLayoutError('isPasswordLoginEnabled', err)
+  }
 
   return (
     <html
