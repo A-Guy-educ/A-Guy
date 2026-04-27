@@ -20,7 +20,7 @@ export type Period = 'week' | 'month' | 'year'
  *
  * Returns null if the course cannot be extracted or is falsy.
  */
-function extractCourseId(course: unknown): string | null {
+export function extractCourseId(course: unknown): string | null {
   if (course === undefined || course === null) return null
 
   // String ID

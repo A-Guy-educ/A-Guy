@@ -1,3 +1,8 @@
+// @vitest-environment node
+// Node.js environment required: payload.login() uses jose JWT signing which depends on
+// Node.js's native TextEncoder/Uint8Array. The jsdom environment can cause a
+// Uint8Array realm mismatch that breaks jose's FlattenedSign constructor check.
+
 /**
  * Integration tests: Dashboard Metrics API — Course Enrollments
  *
@@ -11,10 +16,12 @@
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { NextRequest } from 'next/server'
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
 import { startMongoContainer, stopMongoContainer } from '@/infra/utils/test/mongodb-container'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
+import { extractCourseId } from '@/app/api/admin/dashboard-metrics/route'
 
 let payload: Payload
 let originalDatabaseUrl: string | undefined
@@ -26,6 +33,11 @@ let course1Id: string
 let course2Id: string
 let course3Id: string
 let adminUserId: string
+let adminEmail: string
+let adminToken: string
+
+// Route handler imported dynamically after DATABASE_URL is set
+let GET: (req: NextRequest) => Promise<Response>
 
 beforeAll(async () => {
   originalDatabaseUrl = process.env.DATABASE_URL
@@ -103,10 +115,11 @@ beforeAll(async () => {
   course3Id = course3.id
 
   // Create admin user for authentication
+  adminEmail = `admin-metrics-${Date.now()}@test.local`
   const adminUser = await payload.create({
     collection: 'users',
     data: {
-      email: `admin-metrics-${Date.now()}@test.local`,
+      email: adminEmail,
       password: 'test-password-1234',
       name: 'Metrics Admin',
       role: AccountRole.Admin,
@@ -178,6 +191,17 @@ beforeAll(async () => {
     } as any,
     overrideAccess: true,
   })
+
+  // Login admin user to get JWT token for API calls
+  const loginResult = await payload.login({
+    collection: 'users',
+    data: { email: adminEmail, password: 'test-password-1234' },
+  })
+  adminToken = loginResult.token as string
+
+  // Dynamic import after DATABASE_URL is set — ensures @payload-config is cached correctly
+  const route = await import('@/app/api/admin/dashboard-metrics/route')
+  GET = route.GET
 }, 120_000)
 
 afterAll(async () => {
@@ -209,7 +233,7 @@ describe('Dashboard Metrics API — Course Enrollments', () => {
       for (const user of users.docs) {
         const u = user as any
         for (const ent of u.courseEntitlements || []) {
-          const courseId = typeof ent.course === 'object' ? ent.course?.id : ent.course
+          const courseId = extractCourseId(ent.course)
           if (courseId) {
             enrollmentCounts.set(courseId, (enrollmentCounts.get(courseId) || 0) + 1)
           }
@@ -308,6 +332,54 @@ describe('Dashboard Metrics API — Course Enrollments', () => {
         // Should always get a valid course ID
         expect(courseId).toBeTruthy()
       }
+    })
+  })
+
+  describe('GET /api/admin/dashboard-metrics — HTTP API', () => {
+    it('returns all three courses in engagement.courseEnrollments with correct counts', async () => {
+      // Call the actual API endpoint with admin authentication
+      const req = new NextRequest('http://localhost/api/admin/dashboard-metrics?period=month', {
+        method: 'GET',
+        headers: { Cookie: `payload-token=${adminToken}` },
+      })
+      const res = await GET(req)
+
+      expect(res.status).toBe(200)
+      const body = await res.json()
+
+      expect(body.engagement).toBeDefined()
+      expect(body.engagement.courseEnrollments).toBeDefined()
+
+      const enrollments = body.engagement.courseEnrollments as Array<{
+        courseTitle: string
+        count: number
+      }>
+
+      // Should have at least 3 courses enrolled
+      expect(enrollments.length).toBeGreaterThanOrEqual(3)
+
+      // Build a map of courseTitle -> count
+      const titleToCount = new Map<string, number>()
+      for (const e of enrollments) {
+        titleToCount.set(e.courseTitle, e.count)
+      }
+
+      // Course 1 ("First Course") should have 3 enrollments (User1, User2, User5)
+      expect(titleToCount.get('First Course')).toBe(3)
+
+      // Course 2 ("Second Course") should have 2 enrollments (User3, User5)
+      expect(titleToCount.get('Second Course')).toBe(2)
+
+      // Course 3 ("Third Course") should have 1 enrollment (User4)
+      expect(titleToCount.get('Third Course')).toBe(1)
+    })
+
+    it('returns 401 when not authenticated', async () => {
+      const req = new NextRequest('http://localhost/api/admin/dashboard-metrics?period=month', {
+        method: 'GET',
+      })
+      const res = await GET(req)
+      expect(res.status).toBe(401)
     })
   })
 })

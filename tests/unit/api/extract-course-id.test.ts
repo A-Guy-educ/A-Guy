@@ -10,41 +10,7 @@
  * - Edge cases
  */
 import { describe, expect, it } from 'vitest'
-
-// We need to define the function here since it's not exported from the route module
-// This is a copy of the implementation for testing purposes
-function extractCourseId(course: unknown): string | null {
-  if (course === undefined || course === null) return null
-
-  // String ID
-  if (typeof course === 'string') return course
-
-  // Plain object with id property (e.g., { id: "abc123" })
-  if (typeof course === 'object' && 'id' in course) {
-    const obj = course as { id: unknown }
-    if (typeof obj.id === 'string') return obj.id
-    // Handle case where id might be a number or other serializable value
-    return String(obj.id) || null
-  }
-
-  // MongoDB ObjectId instance (has toString() but no .id property)
-  if (
-    typeof course === 'object' &&
-    typeof (course as { toString?: () => string }).toString === 'function'
-  ) {
-    const result = String(course)
-    // ObjectId.toString() returns something like "ObjectId('abc123')"
-    // We need to extract just the ID part
-    const match = result.match(/ObjectId\(['"]?([^'")]+)['"]?\)/)
-    if (match) return match[1]
-    // Fallback: if toString doesn't match ObjectId pattern, use it directly
-    if (result && result !== '[object Object]') return result
-  }
-
-  // Fallback: try to stringify
-  const str = String(course)
-  return str && str !== '[object Object]' ? str : null
-}
+import { extractCourseId } from '@/app/api/admin/dashboard-metrics/route'
 
 describe('extractCourseId', () => {
   describe('string IDs', () => {
