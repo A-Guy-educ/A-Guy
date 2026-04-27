@@ -9,13 +9,11 @@ import { logger } from '@/infra/utils/logger'
 import { apiService } from '@/server/services/api/api-service'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import {
-  ASK_STEP_CONTEXT_EVENT,
-  type AskStepContextEvent,
-} from '@/app/(frontend)/ask/_components/ask-types'
+import { ASK_STEP_CONTEXT_EVENT } from '@/app/(frontend)/ask/_components/ask-types'
 import { useDirectChatAssetUpload } from './useDirectChatAssetUpload'
+import { buildPromptWithStepContext, stripStepContext, type ChatStepContext } from './step-context'
 
-export type ChatStepContext = AskStepContextEvent
+export type { ChatStepContext } from './step-context'
 
 export interface ChatMessage {
   id: string
@@ -25,55 +23,6 @@ export interface ChatMessage {
   chatAssets?: Array<{ chatAssetId: string; filename?: string }>
   /** Populated for user messages sent while the lesson player was on a step. */
   stepContext?: ChatStepContext
-}
-
-/**
- * Wraps the visible user message with an invisible context block the AI sees.
- * The same prefix is stripped on history load before display so old messages
- * don't show raw context markup.
- *
- * Security: stepTitle and stepNarration ultimately originate from Gemini
- * reading a user-uploaded image, so the values must be treated as untrusted.
- * Without escaping, an adversarial image could induce narration containing
- * a literal `</step-context>` tag and break out of the context block to
- * inject arbitrary instructions to the chat model. We escape `<`, `>`, `&`,
- * and `"` at write time, so the only `</step-context>` that can appear is
- * the system-emitted closing tag.
- *
- * The strip regex is non-greedy so it stops at the FIRST `</step-context>`
- * (the system's closing tag) and never consumes a user's legitimate
- * `</step-context>` token elsewhere in the message body — e.g. someone
- * asking about this very codebase. With escaping in place, that user
- * occurrence can't be confused with the system tag anyway.
- */
-const STEP_CONTEXT_BLOCK_REGEX = /^<step-context[\s\S]*?<\/step-context>\s*/
-
-/** Escape characters that could break the surrounding XML-ish tag. */
-function escapeStepContextField(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-}
-
-function buildPromptWithStepContext(message: string, step: ChatStepContext | null): string {
-  if (!step) return message
-  const safeTitle = step.stepTitle ? escapeStepContextField(step.stepTitle) : ''
-  const safeNarration = step.stepNarration ? escapeStepContextField(step.stepNarration) : ''
-  const titleAttr = safeTitle ? ` title="${safeTitle}"` : ''
-  const narrationLine = safeNarration ? `\nNarration: ${safeNarration}` : ''
-  return (
-    `<step-context step="${step.currentStepId}" total="${step.totalSteps}"${titleAttr}>` +
-    `The student is currently watching step ${step.currentStepId} of ${step.totalSteps}` +
-    `${safeTitle ? `: "${safeTitle}"` : ''}.${narrationLine}` +
-    `</step-context>\n\n` +
-    message
-  )
-}
-
-function stripStepContext(content: string): string {
-  return content.replace(STEP_CONTEXT_BLOCK_REGEX, '')
 }
 
 export interface UploadedMedia {
