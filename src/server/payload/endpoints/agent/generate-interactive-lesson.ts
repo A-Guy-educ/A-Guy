@@ -16,6 +16,10 @@ import type {
   InteractiveLessonPromptSource,
   InteractiveLessonResponse,
 } from '@/infra/llm/services/interactive-lesson/interactive-lesson-types'
+import {
+  getPublishedInteractiveLessonPrompt,
+  normalizeIsoDate,
+} from '@/infra/llm/services/interactive-lesson/published-prompt-cache'
 
 interface GenerateRequestBody {
   mediaId: string
@@ -219,15 +223,10 @@ async function evictionReason(payload: Payload, cached: CachedLessonDoc): Promis
   // on the row carries the source provenance.
   if (!cached.promptId) return 'missing-prompt-provenance'
 
-  const result = await payload.find({
-    collection: 'prompts',
-    where: {
-      and: [{ usage: { equals: 'interactive_lesson' } }, { status: { equals: 'published' } }],
-    },
-    limit: 1,
-    overrideAccess: true,
-  })
-  const current = result.docs[0]
+  // Routes through the memoized prompt cache (30s TTL, eagerly invalidated
+  // by Prompts afterChange/afterDelete hooks). Without this, every cache
+  // hit costs a fresh prompts.find — defeating the point of the cache.
+  const current = await getPublishedInteractiveLessonPrompt(payload)
   if (!current) {
     // No published prompt at all anymore. The next generation attempt
     // will surface InteractiveLessonPromptMissingError, but for the
@@ -235,8 +234,10 @@ async function evictionReason(payload: Payload, cached: CachedLessonDoc): Promis
     return null
   }
 
-  if (String(current.id) !== cached.promptId) return 'prompt-id-changed'
-  if (String(current.updatedAt ?? '') !== (cached.promptUpdatedAt ?? '')) {
+  if (current.id !== cached.promptId) return 'prompt-id-changed'
+  // Compare normalized ISO strings so a Date-vs-string drift between two
+  // Payload reads doesn't false-positive into "evict on every read".
+  if (current.updatedAt !== normalizeIsoDate(cached.promptUpdatedAt)) {
     return 'prompt-updated'
   }
   return null

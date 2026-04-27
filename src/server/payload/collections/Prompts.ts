@@ -4,6 +4,7 @@ import { adminOnly } from '../access/adminOnly'
 import { contentLocaleField } from '../fields/contentLocale'
 import { tenantField } from '../fields/tenant'
 import { enforceFieldLocaleUniqueness } from '../hooks/validateLocaleUniqueness'
+import { invalidatePublishedInteractiveLessonPrompt } from '@/infra/llm/services/interactive-lesson/published-prompt-cache'
 
 export const Prompts: CollectionConfig = {
   slug: 'prompts',
@@ -29,6 +30,25 @@ export const Prompts: CollectionConfig = {
   },
   hooks: {
     beforeChange: [enforceFieldLocaleUniqueness('prompts', 'promptKey')],
+    // Eagerly drop the in-process memoization of the published
+    // interactive_lesson prompt whenever a row of that usage changes
+    // (saved, status flipped, deleted), so the next request sees the
+    // fresh template without waiting out the cache TTL. Other usages
+    // are no-ops here.
+    afterChange: [
+      ({ doc, previousDoc }) => {
+        if (doc?.usage === 'interactive_lesson' || previousDoc?.usage === 'interactive_lesson') {
+          invalidatePublishedInteractiveLessonPrompt()
+        }
+      },
+    ],
+    afterDelete: [
+      ({ doc }) => {
+        if (doc?.usage === 'interactive_lesson') {
+          invalidatePublishedInteractiveLessonPrompt()
+        }
+      },
+    ],
   },
   fields: [
     {

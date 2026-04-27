@@ -15,6 +15,7 @@ import { logger } from '@/infra/utils/logger/logger'
 import { synthesizeSpeech } from '@/server/services/tts/google-cloud-tts'
 import { optimizeImageForAI } from '../image-optimizer-service'
 import { InteractiveLessonResponseSchema } from './interactive-lesson-schema'
+import { getPublishedInteractiveLessonPrompt } from './published-prompt-cache'
 import type {
   InteractiveLesson,
   InteractiveLessonInput,
@@ -117,6 +118,24 @@ export async function generateInteractiveLesson(
     }
   } catch (error) {
     const errorModelName = modelConfig?.name ?? 'unknown'
+    // Special-case: missing prompt is an admin-config issue, not something
+    // the student can fix. The internal message includes admin-only
+    // instructions ("set up a Prompts row with usage=...") which we do
+    // NOT want to render to a student. Log the detail server-side and
+    // return a generic localized fallback that the chat-fallback card
+    // can pair with its "ask in chat instead" affordance.
+    if (error instanceof InteractiveLessonPromptMissingError) {
+      logger.error(
+        { err: error },
+        '[InteractiveLesson] Admin has not configured the interactive_lesson prompt; generation cannot proceed',
+      )
+      return buildErrorResponse(
+        userFacingMissingPromptMessage(input.locale),
+        { name: errorModelName } as AIModel,
+        startTime,
+        0,
+      )
+    }
     return buildErrorResponse(
       error instanceof Error ? error.message : 'Unknown error',
       { name: errorModelName } as AIModel,
@@ -124,6 +143,17 @@ export async function generateInteractiveLesson(
       0,
     )
   }
+}
+
+/**
+ * Generic, locale-aware message for the missing-prompt state. Hides the
+ * admin instructions in the InteractiveLessonPromptMissingError from the
+ * student bubble; the actionable detail is in the server logs.
+ */
+function userFacingMissingPromptMessage(locale: 'he' | 'en'): string {
+  return locale === 'he'
+    ? 'יצירת השיעור החזותי אינה זמינה כרגע. אפשר עדיין לשאול על התמונה הזו בצ׳אט.'
+    : 'Visual lesson generation is temporarily unavailable. You can still ask about this image in the chat.'
 }
 
 /**
@@ -137,18 +167,8 @@ async function buildPrompt(
   locale: 'he' | 'en',
   payload: Payload,
 ): Promise<{ prompt: string; promptSource: InteractiveLessonPromptSource }> {
-  const result = await payload.find({
-    collection: 'prompts',
-    where: {
-      and: [{ usage: { equals: 'interactive_lesson' } }, { status: { equals: 'published' } }],
-    },
-    limit: 1,
-    overrideAccess: true,
-  })
-
-  const doc = result.docs[0]
-  const template = doc?.template?.trim()
-  if (!doc || !template) {
+  const published = await getPublishedInteractiveLessonPrompt(payload)
+  if (!published) {
     throw new InteractiveLessonPromptMissingError()
   }
 
@@ -157,10 +177,10 @@ async function buildPrompt(
       ? '\n\nIMPORTANT: Generate ALL narration, claims, reasons, and explanations in Hebrew.'
       : '\n\nIMPORTANT: Generate ALL narration, claims, reasons, and explanations in English.'
   return {
-    prompt: `${template}${localeInstruction}`,
+    prompt: `${published.template}${localeInstruction}`,
     promptSource: {
-      id: String(doc.id),
-      updatedAt: String(doc.updatedAt ?? ''),
+      id: published.id,
+      updatedAt: published.updatedAt,
     },
   }
 }
