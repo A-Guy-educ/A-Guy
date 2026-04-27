@@ -358,7 +358,10 @@ function buildMarker(marker: GraphMarker, layout: GraphLayout): string {
   const labelText = marker.label
     ? `<text x="${cx + 8}" y="${cy - 8}" font-size="12" fill="currentColor" font-weight="600">${escapeXml(marker.label)}</text>`
     : ''
-  return `    <g id="${id}" class="ge-fade-element"><circle cx="${cx}" cy="${cy}" r="5" fill="${color}" stroke="white" stroke-width="2" />${labelText}</g>`
+  // Halo stroke uses the scene background color (via CSS class) so the
+  // marker dot stays visually separated from the curve in both light and
+  // dark themes — a hardcoded "white" stroke would disappear in dark mode.
+  return `    <g id="${id}" class="ge-fade-element"><circle cx="${cx}" cy="${cy}" r="5" fill="${color}" stroke-width="2" class="ge-bg-stroke" />${labelText}</g>`
 }
 
 function buildGraphSvg(graph: GraphData): string {
@@ -485,8 +488,10 @@ function buildMark(
   const labelText = mark.label
     ? `<text x="${cx}" y="${labelY}" text-anchor="middle" font-size="12" font-weight="600" fill="${color}">${escapeXml(mark.label)}</text>`
     : ''
-  const dotFill = filled ? color : 'white'
-  const result = `    <g id="${id}" class="ge-fade-element"><circle cx="${cx}" cy="${cy}" r="5" fill="${dotFill}" stroke="${color}" stroke-width="2" />${labelText}</g>`
+  // Open (hollow) inclusion = scene-background fill so it reads correctly in
+  // both light and dark themes. CSS class wins over absent `fill` attribute.
+  const fillAttr = filled ? `fill="${color}"` : `class="ge-bg-fill"`
+  const result = `    <g id="${id}" class="ge-fade-element"><circle cx="${cx}" cy="${cy}" r="5" ${fillAttr} stroke="${color}" stroke-width="2" />${labelText}</g>`
   // Track which lane each mark occupies so intervals can dodge them — simple
   // approximation; for now always lane 0.
   seenValuesByLane.set(mark.value, 0)
@@ -513,6 +518,16 @@ function intervalLane(
       }
     }
     if (!collides) return lane
+  }
+  // Past 8 overlapping intervals we run out of vertical room and collapse
+  // back to lane 0 — those intervals will visually stack on top of each
+  // other. Typical lessons have 1–3 intervals so this should never hit;
+  // if it does, the scene has more than the renderer is designed for.
+  if (typeof console !== 'undefined') {
+    console.warn(
+      '[interactive-lesson] Number-line interval lanes exhausted; collapsing onto lane 0',
+      { intervalIndex, totalIntervals: spans.length },
+    )
   }
   return 0
 }
@@ -542,8 +557,11 @@ function buildInterval(iv: NumberLineInterval, range: [number, number], lane: nu
     )
   } else {
     const filled = iv.fromInclusion === 'closed'
+    // Open (hollow) endpoint reads as "value excluded"; the fill matches the
+    // scene background via CSS class so it inverts cleanly in dark mode.
+    const fillAttr = filled ? `fill="${color}"` : `class="ge-bg-fill"`
     endpoints.push(
-      `<circle cx="${xFrom}" cy="${y}" r="5" fill="${filled ? color : 'white'}" stroke="${color}" stroke-width="2" />`,
+      `<circle cx="${xFrom}" cy="${y}" r="5" ${fillAttr} stroke="${color}" stroke-width="2" />`,
     )
   }
   if (iv.toInclusion === 'unbounded') {
@@ -552,8 +570,9 @@ function buildInterval(iv: NumberLineInterval, range: [number, number], lane: nu
     )
   } else {
     const filled = iv.toInclusion === 'closed'
+    const fillAttr = filled ? `fill="${color}"` : `class="ge-bg-fill"`
     endpoints.push(
-      `<circle cx="${xTo}" cy="${y}" r="5" fill="${filled ? color : 'white'}" stroke="${color}" stroke-width="2" />`,
+      `<circle cx="${xTo}" cy="${y}" r="5" ${fillAttr} stroke="${color}" stroke-width="2" />`,
     )
   }
   lines.push(`    <g id="${endGroupId}" class="ge-fade-element">${endpoints.join('')}</g>`)

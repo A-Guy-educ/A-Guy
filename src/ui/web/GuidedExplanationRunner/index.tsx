@@ -5,6 +5,7 @@ import { Play, RotateCcw } from 'lucide-react'
 import type { GuidedExplanationV1 } from '@/infra/contracts/guided-explanation/v1'
 import { sanitizeSvg } from '@/ui/web/exerciserenderer/utils/svgSanitize'
 import { cn } from '@/infra/utils/ui'
+import { useTranslations } from '@/ui/web/providers/I18n'
 import { Controls } from './Controls'
 import { NarrationBox } from './NarrationBox'
 import { ProofTable } from './ProofTable'
@@ -50,17 +51,23 @@ export function GuidedExplanationRunner({ payload }: GuidedExplanationRunnerProp
     containerRef: rootRef,
   })
 
+  // Player UI labels live in messages/{en,he}.json under
+  // homepage.ask.player.* so admins / translators can edit them without a
+  // code change. The runner is currently only mounted from the Ask page,
+  // which sets up the next-intl provider; if it's ever lifted out, the
+  // namespace will need to come along (or be passed as a prop).
+  const t = useTranslations('homepage.ask.player')
   const isHebrew = payload.locale === 'he'
-  // Default labels for languages not supplied by the payload — Hebrew and
-  // English cover both locales the app currently supports.
+  // pauseLabel / resumeLabel can still be overridden by the payload (legacy
+  // contract) and fall back to the i18n value otherwise.
   const pauseLabel = payload.controls.pauseLabel ?? (isHebrew ? 'השהיה' : 'Pause')
   const resumeLabel = payload.controls.resumeLabel ?? (isHebrew ? 'המשך' : 'Resume')
-  const speedLabel = isHebrew ? 'מהירות' : 'Speed'
-  const soundOnLabel = isHebrew ? 'סאונד דלוק (לחץ להשתקה)' : 'Sound on (click to mute)'
-  const soundOffLabel = isHebrew ? 'סאונד מושתק (לחץ להפעלה)' : 'Sound off (click to enable)'
-  const completeLabel = isHebrew ? 'הכל טוב! ✓' : 'Solved ✓'
-  const replayLabel = isHebrew ? 'חזרה מהתחלה' : 'Replay'
-  const playAriaLabel = isHebrew ? 'התחל הסבר' : 'Start explanation'
+  const speedLabel = t('speed')
+  const soundOnLabel = t('soundOn')
+  const soundOffLabel = t('soundOff')
+  const completeLabel = t('complete')
+  const replayLabel = t('replay')
+  const playAriaLabel = t('playAria')
 
   const currentStepTitle = currentStep > 0 ? (payload.steps[currentStep - 1]?.title ?? null) : null
 

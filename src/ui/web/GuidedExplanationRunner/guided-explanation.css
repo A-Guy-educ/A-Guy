@@ -292,6 +292,16 @@
   opacity: 0;
 }
 
+/* Hollow markers / open-endpoint interval dots / marker halos pull from the
+   theme background so light/dark modes both look right. The SVG generator
+   emits these classes in place of hardcoded fill="white" / stroke="white". */
+.ge-scene .ge-bg-fill {
+  fill: hsl(var(--background));
+}
+.ge-scene .ge-bg-stroke {
+  stroke: hsl(var(--background));
+}
+
 .ge-scene .ge-highlight-poly {
   opacity: 0;
   fill: hsl(var(--primary) / 0.2);
