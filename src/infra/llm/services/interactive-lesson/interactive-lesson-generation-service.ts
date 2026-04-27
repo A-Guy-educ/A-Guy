@@ -18,6 +18,7 @@ import { InteractiveLessonResponseSchema } from './interactive-lesson-schema'
 import type {
   InteractiveLesson,
   InteractiveLessonInput,
+  InteractiveLessonPromptSource,
   InteractiveLessonResponse,
 } from './interactive-lesson-types'
 
@@ -56,7 +57,7 @@ export async function generateInteractiveLesson(
       thinkingBudget: GEMINI_CONFIG.thinkingBudget,
     }
 
-    const prompt = await buildPrompt(input.locale, payload)
+    const { prompt, promptSource } = await buildPrompt(input.locale, payload)
     const { attachmentData, sizeBytes } = await prepareImage(input)
 
     // Direct Gemini call with responseSchema so the model is constrained to
@@ -112,6 +113,7 @@ export async function generateInteractiveLesson(
         processingTimeMs: Date.now() - startTime,
         imageSizeBytes: sizeBytes,
       },
+      promptSource,
     }
   } catch (error) {
     const errorModelName = modelConfig?.name ?? 'unknown'
@@ -131,7 +133,10 @@ export async function generateInteractiveLesson(
  * clear admin-facing error so the missing-config state can't silently
  * regress to a stale built-in copy.
  */
-async function buildPrompt(locale: 'he' | 'en', payload: Payload): Promise<string> {
+async function buildPrompt(
+  locale: 'he' | 'en',
+  payload: Payload,
+): Promise<{ prompt: string; promptSource: InteractiveLessonPromptSource }> {
   const result = await payload.find({
     collection: 'prompts',
     where: {
@@ -141,8 +146,9 @@ async function buildPrompt(locale: 'he' | 'en', payload: Payload): Promise<strin
     overrideAccess: true,
   })
 
-  const template = result.docs[0]?.template?.trim()
-  if (!template) {
+  const doc = result.docs[0]
+  const template = doc?.template?.trim()
+  if (!doc || !template) {
     throw new InteractiveLessonPromptMissingError()
   }
 
@@ -150,7 +156,13 @@ async function buildPrompt(locale: 'he' | 'en', payload: Payload): Promise<strin
     locale === 'he'
       ? '\n\nIMPORTANT: Generate ALL narration, claims, reasons, and explanations in Hebrew.'
       : '\n\nIMPORTANT: Generate ALL narration, claims, reasons, and explanations in English.'
-  return `${template}${localeInstruction}`
+  return {
+    prompt: `${template}${localeInstruction}`,
+    promptSource: {
+      id: String(doc.id),
+      updatedAt: String(doc.updatedAt ?? ''),
+    },
+  }
 }
 
 /**

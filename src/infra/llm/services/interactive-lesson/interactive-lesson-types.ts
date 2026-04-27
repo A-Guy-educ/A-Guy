@@ -189,6 +189,14 @@ export interface InteractiveLesson {
   numberLine?: NumberLineData
 }
 
+/** Provenance of the source admin Prompts row used to generate the lesson. */
+export interface InteractiveLessonPromptSource {
+  /** Source Prompts collection row id. */
+  id: string
+  /** updatedAt of the row at generation time, ISO string. */
+  updatedAt: string
+}
+
 /** Response from the generation pipeline */
 export interface InteractiveLessonResponse {
   success: boolean
@@ -199,6 +207,12 @@ export interface InteractiveLessonResponse {
     processingTimeMs: number
     imageSizeBytes: number
   }
+  /**
+   * Identity of the admin Prompts row used. Persisted on the cache row so
+   * a later prompt edit invalidates the cache automatically. Absent on
+   * error responses where no prompt lookup happened.
+   */
+  promptSource?: InteractiveLessonPromptSource
 }
 
 /** Input for the generation pipeline */

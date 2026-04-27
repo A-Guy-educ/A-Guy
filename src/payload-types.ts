@@ -1976,6 +1976,14 @@ export interface InteractiveLesson {
     | number
     | boolean
     | null;
+  /**
+   * Source admin Prompts row id at generation.
+   */
+  promptId?: string | null;
+  /**
+   * Source prompt updatedAt at generation (ISO string).
+   */
+  promptUpdatedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -3507,6 +3515,8 @@ export interface InteractiveLessonsSelect<T extends boolean = true> {
   locale?: T;
   lesson?: T;
   generationMetadata?: T;
+  promptId?: T;
+  promptUpdatedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
