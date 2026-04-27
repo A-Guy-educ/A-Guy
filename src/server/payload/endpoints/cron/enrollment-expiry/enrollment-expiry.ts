@@ -22,7 +22,18 @@ interface ExpiryStats {
 /**
  * Find and expire approved enrollments past their expiresAt date.
  */
-async function expireEnrollments(payload: Endpoint['handler'] extends (req: infer R) => unknown ? R extends { payload: infer P } ? P : never : never, reqLogger: Parameters<typeof withCronMiddleware>[0] extends (ctx: infer C) => unknown ? C extends { reqLogger: infer L } ? L : never : never): Promise<CronResult> {
+async function expireEnrollments(
+  payload: Endpoint['handler'] extends (req: infer R) => unknown
+    ? R extends { payload: infer P }
+      ? P
+      : never
+    : never,
+  reqLogger: Parameters<typeof withCronMiddleware>[0] extends (ctx: infer C) => unknown
+    ? C extends { reqLogger: infer L }
+      ? L
+      : never
+    : never,
+): Promise<CronResult> {
   // Dynamic import to avoid circular deps — payload is passed by middleware
   const { revokeCourseEntitlement } = await import('@/server/services/enrollment-grant')
 
@@ -51,12 +62,14 @@ async function expireEnrollments(payload: Endpoint['handler'] extends (req: infe
     hasMore = expiredEnrollments.length === 100
 
     for (const enrollment of expiredEnrollments) {
-      const studentId = typeof enrollment.student === 'string'
-        ? enrollment.student
-        : (enrollment.student as { id: string })?.id
-      const courseId = typeof enrollment.course === 'string'
-        ? enrollment.course
-        : (enrollment.course as { id: string })?.id
+      const studentId =
+        typeof enrollment.student === 'string'
+          ? enrollment.student
+          : (enrollment.student as { id: string })?.id
+      const courseId =
+        typeof enrollment.course === 'string'
+          ? enrollment.course
+          : (enrollment.course as { id: string })?.id
 
       if (!studentId || !courseId) continue
 
@@ -115,7 +128,9 @@ type PayloadType = any
 export const enrollmentExpiryEndpoint: Endpoint = {
   path: '/cron/enrollment-expiry',
   method: 'post',
-  handler: withCronMiddleware(async ({ reqLogger, payload }: { reqLogger: any; payload: PayloadType }) => {
-    return expireEnrollments(payload, reqLogger)
-  }),
+  handler: withCronMiddleware(
+    async ({ reqLogger, payload }: { reqLogger: any; payload: PayloadType }) => {
+      return expireEnrollments(payload, reqLogger)
+    },
+  ),
 }

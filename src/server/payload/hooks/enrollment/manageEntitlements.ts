@@ -9,10 +9,7 @@
 
 import type { CollectionAfterChangeHook, CollectionAfterDeleteHook } from 'payload'
 
-import {
-  grantCourseEntitlement,
-  revokeCourseEntitlement,
-} from '@/server/services/enrollment-grant'
+import { grantCourseEntitlement, revokeCourseEntitlement } from '@/server/services/enrollment-grant'
 import { logger } from '@/infra/utils/logger'
 
 /**
@@ -36,12 +33,9 @@ export const manageEntitlementsOnChange: CollectionAfterChangeHook = async ({
     expiresAt?: string | null
   }
 
-  const studentId = typeof enrollment.student === 'string'
-    ? enrollment.student
-    : enrollment.student?.id
-  const courseId = typeof enrollment.course === 'string'
-    ? enrollment.course
-    : enrollment.course?.id
+  const studentId =
+    typeof enrollment.student === 'string' ? enrollment.student : enrollment.student?.id
+  const courseId = typeof enrollment.course === 'string' ? enrollment.course : enrollment.course?.id
 
   if (!studentId || !courseId) {
     return doc
@@ -58,8 +52,7 @@ export const manageEntitlementsOnChange: CollectionAfterChangeHook = async ({
     // 'request' is mapped to 'admin' since it's not in Payload's grantMethod enum.
     const rawMethod = enrollment.grantMethod as string | undefined
     const mappedGrantMethod: 'admin' | 'payment' | 'code' =
-      rawMethod === 'payment' ? 'payment' :
-      rawMethod === 'code' ? 'code' : 'admin'
+      rawMethod === 'payment' ? 'payment' : rawMethod === 'code' ? 'code' : 'admin'
 
     // Grant entitlement on approval
     const result = await grantCourseEntitlement({
@@ -104,9 +97,7 @@ export const manageEntitlementsOnChange: CollectionAfterChangeHook = async ({
 /**
  * After enrollment is deleted — revoke entitlement if it was approved.
  */
-export const revokeEntitlementOnDelete: CollectionAfterDeleteHook = async ({
-  doc, req,
-}) => {
+export const revokeEntitlementOnDelete: CollectionAfterDeleteHook = async ({ doc, req }) => {
   const enrollment = doc as {
     id: string
     student?: string | { id: string }
@@ -114,12 +105,9 @@ export const revokeEntitlementOnDelete: CollectionAfterDeleteHook = async ({
     status?: string
   }
 
-  const studentId = typeof enrollment.student === 'string'
-    ? enrollment.student
-    : enrollment.student?.id
-  const courseId = typeof enrollment.course === 'string'
-    ? enrollment.course
-    : enrollment.course?.id
+  const studentId =
+    typeof enrollment.student === 'string' ? enrollment.student : enrollment.student?.id
+  const courseId = typeof enrollment.course === 'string' ? enrollment.course : enrollment.course?.id
 
   if (!studentId || !courseId) {
     return doc

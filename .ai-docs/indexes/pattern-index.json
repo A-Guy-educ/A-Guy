@@ -29,7 +29,11 @@
         "src/app/(frontend)/courses/[courseSlug]/_components/ExamReminderBubble/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/_components/ExamsTab/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/_components/LessonListTab/index.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ConsolidatedLatexLessonView/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ConvertButton.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/DualModeLessonView/TabButton.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/DualModeLessonView/index.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/DualModeLessonView/useLessonViewMode.ts",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ExercisesPager/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonAnalytics.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonContent.tsx",
@@ -124,6 +128,14 @@
         "src/ui/admin/AnswerSpecJsonField/index.tsx",
         "src/ui/admin/CascadeDeleteButton/index.tsx",
         "src/ui/admin/ContentNavigation/index.tsx",
+        "src/ui/admin/ConversionTracking/ContentCountsWidget.tsx",
+        "src/ui/admin/ConversionTracking/DashboardHeader.tsx",
+        "src/ui/admin/ConversionTracking/DashboardWidgets.tsx",
+        "src/ui/admin/ConversionTracking/EngagementWidget.tsx",
+        "src/ui/admin/ConversionTracking/MetricCard.tsx",
+        "src/ui/admin/ConversionTracking/MetricsProvider.tsx",
+        "src/ui/admin/ConversionTracking/UserMetricsWidget.tsx",
+        "src/ui/admin/CourseLessonsSorter/index.tsx",
         "src/ui/admin/ExerciseContentEditor/BlockTypeSelector.tsx",
         "src/ui/admin/ExerciseContentEditor/FullJsonEditor.tsx",
         "src/ui/admin/ExerciseContentEditor/JSONInspector.tsx",
@@ -361,6 +373,7 @@
         "src/app/(frontend)/courses/[courseSlug]/_components/ExamReminderBubble/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/_components/ExamsTab/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/_components/LessonListTab/index.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/DualModeLessonView/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ExercisesPager/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonContent.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/index.tsx",
@@ -443,6 +456,7 @@
         "src/app/(frontend)/courses/[courseSlug]/_components/AskTab/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/_components/ConversationCard/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/_components/CourseTabs/index.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/DualModeLessonView/TabButton.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ExercisesPager/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ViewToggle.tsx",
@@ -566,6 +580,20 @@
         "src/ui/web/shared/Typography/Text.tsx"
       ]
     },
+    "view": {
+      "pattern": "view",
+      "description": "No description available",
+      "files": [
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ConsolidatedLatexLessonView/index.tsx"
+      ]
+    },
+    "dual-view": {
+      "pattern": "dual-view",
+      "description": "No description available",
+      "files": [
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/DualModeLessonView/index.tsx"
+      ]
+    },
     "authenticated-endpoint": {
       "pattern": "authenticated-endpoint",
       "description": "API endpoint requiring authentication",
@@ -573,6 +601,7 @@
         "src/app/(frontend)/courses/[courseSlug]/page.tsx",
         "src/app/(frontend)/next/preview/route.ts",
         "src/app/(frontend)/next/seed/route.ts",
+        "src/app/api/admin/dashboard-metrics/route.ts",
         "src/app/api/agent/chat-quota/route.ts",
         "src/app/api/agent/chat/route.ts",
         "src/app/api/agent/chat/stream/route.ts",
@@ -606,8 +635,10 @@
         "src/app/api/study-plan/route.ts",
         "src/app/api/teacher-profiles/route.ts",
         "src/app/api/translation/translate/route.ts",
+        "src/app/api/tts/synthesize/route.ts",
         "src/app/api/user-settings/route.ts",
         "src/infra/analytics/system-events-subscriber.ts",
+        "src/infra/auth/oauth_session.ts",
         "src/server/api/with-api-handler.ts",
         "src/server/payload/endpoints/agent/auth-middleware.ts",
         "src/server/payload/endpoints/agent/chat-stream.ts",
@@ -661,6 +692,7 @@
         "src/app/api/progress/route.ts",
         "src/app/api/prompts/for-conversion/route.ts",
         "src/app/api/study-plan/route.ts",
+        "src/app/api/tts/synthesize/route.ts",
         "src/infra/auth/oauth_cookies.ts",
         "src/infra/auth/oauth_state.ts",
         "src/middleware.ts",
@@ -1072,6 +1104,11 @@
       "pattern": "viewport-calculation",
       "description": "No description available",
       "files": ["src/infra/utils/graphics/viewport-utils.ts"]
+    },
+    "math-to-speech": {
+      "pattern": "math-to-speech",
+      "description": "No description available",
+      "files": ["src/infra/utils/latexToSpeech.ts"]
     },
     "browser-api-types": {
       "pattern": "browser-api-types",
@@ -1524,6 +1561,11 @@
       "description": "No description available",
       "files": ["src/ui/web/components/tabs.tsx"]
     },
+    "math-expression-parser": {
+      "pattern": "math-expression-parser",
+      "description": "No description available",
+      "files": ["src/ui/web/exerciserenderer/utils/safeMathEval.ts"]
+    },
     "action-button": {
       "pattern": "action-button",
       "description": "No description available",
@@ -1533,6 +1575,11 @@
       "pattern": "content-renderer",
       "description": "No description available",
       "files": ["src/ui/web/shared/FormulaSheetViewer/FormulaSheetContent.tsx"]
+    },
+    "aggregator": {
+      "pattern": "aggregator",
+      "description": "No description available",
+      "files": ["src/ui/web/shared/LatexDocumentViewer/consolidate-latex-blocks.ts"]
     },
     "viewer": {
       "pattern": "viewer",
@@ -1761,6 +1808,14 @@
       "aiSummary": "",
       "dependencies": ["react"]
     },
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ConsolidatedLatexLessonView/index.tsx": {
+      "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ConsolidatedLatexLessonView/index.tsx",
+      "type": "component",
+      "domain": "lessons",
+      "patterns": ["view", "client-component"],
+      "aiSummary": "Renders every LaTeX block from a practice/exam lesson's exercises as a single",
+      "dependencies": ["react"]
+    },
     "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ConvertButton.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ConvertButton.tsx",
       "type": "unknown",
@@ -1768,6 +1823,30 @@
       "patterns": ["client-component"],
       "aiSummary": "",
       "dependencies": ["react", "next/navigation"]
+    },
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/DualModeLessonView/TabButton.tsx": {
+      "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/DualModeLessonView/TabButton.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["tailwind-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/DualModeLessonView/index.tsx": {
+      "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/DualModeLessonView/index.tsx",
+      "type": "component",
+      "domain": "lessons",
+      "patterns": ["dual-view", "i18n-component", "client-component"],
+      "aiSummary": "Two-tab lesson view that lets the student toggle between the consolidated",
+      "dependencies": ["react"]
+    },
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/DualModeLessonView/useLessonViewMode.ts": {
+      "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/DualModeLessonView/useLessonViewMode.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
     },
     "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ExercisesPager/index.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ExercisesPager/index.tsx",
@@ -2065,6 +2144,7 @@
       "aiSummary": "",
       "dependencies": [
         "next",
+        "@sentry/nextjs",
         "geist/font/mono",
         "geist/font/sans",
         "next/font/google",
@@ -2294,6 +2374,14 @@
       "patterns": ["admin-page", "client-component"],
       "aiSummary": "Dedicated admin page for PDF-to-exercise conversion",
       "dependencies": []
+    },
+    "src/app/api/admin/dashboard-metrics/route.ts": {
+      "path": "src/app/api/admin/dashboard-metrics/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["authenticated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["payload", "@payload-config"]
     },
     "src/app/api/agent/chat/route.ts": {
       "path": "src/app/api/agent/chat/route.ts",
@@ -2671,6 +2759,14 @@
       "aiSummary": "",
       "dependencies": ["next/server", "payload", "@payload-config"]
     },
+    "src/app/api/tts/synthesize/route.ts": {
+      "path": "src/app/api/tts/synthesize/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["api-endpoint", "authenticated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["@payload-config", "next/server", "payload"]
+    },
     "src/app/api/user-settings/route.ts": {
       "path": "src/app/api/user-settings/route.ts",
       "type": "unknown",
@@ -2883,9 +2979,9 @@
       "path": "src/infra/auth/oauth_session.ts",
       "type": "utility",
       "domain": "auth",
-      "patterns": ["oauth"],
+      "patterns": ["oauth", "authenticated-endpoint"],
       "aiSummary": "Issue Payload auth sessions using payload.login() for OAuth users",
-      "dependencies": ["payload", "@payload-config"]
+      "dependencies": ["crypto", "payload", "@payload-config", "jose"]
     },
     "src/infra/auth/oauth_state.ts": {
       "path": "src/infra/auth/oauth_state.ts",
@@ -3293,6 +3389,14 @@
       "domain": "graphics",
       "patterns": ["viewport-calculation"],
       "aiSummary": "Viewport utility functions for auto-calculating, validating, and resolving graph display ranges",
+      "dependencies": []
+    },
+    "src/infra/utils/latexToSpeech.ts": {
+      "path": "src/infra/utils/latexToSpeech.ts",
+      "type": "utility",
+      "domain": "shared",
+      "patterns": ["math-to-speech"],
+      "aiSummary": "Bilingual LaTeX-to-speech converter for English and Hebrew",
       "dependencies": []
     },
     "src/infra/utils/speech-recognition.d.ts": {
@@ -4005,7 +4109,7 @@
       "domain": "chat",
       "patterns": ["rolling-window-quota"],
       "aiSummary": "Checks and increments authenticated user chat quota (rolling window)",
-      "dependencies": ["payload"]
+      "dependencies": ["mongodb", "payload"]
     },
     "src/server/services/conversation-service.ts": {
       "path": "src/server/services/conversation-service.ts",
@@ -4109,7 +4213,7 @@
       "domain": "auth",
       "patterns": ["session-management"],
       "aiSummary": "Guest session lifecycle: create, validate, extend, revoke",
-      "dependencies": ["payload", "crypto"]
+      "dependencies": ["mongodb", "payload", "crypto"]
     },
     "src/server/services/lesson-context-conversion/validate-latex.ts": {
       "path": "src/server/services/lesson-context-conversion/validate-latex.ts",
@@ -4174,6 +4278,70 @@
       "patterns": ["client-component"],
       "aiSummary": "",
       "dependencies": ["@payloadcms/ui", "react"]
+    },
+    "src/ui/admin/ConversionTracking/ContentCountsWidget.tsx": {
+      "path": "src/ui/admin/ConversionTracking/ContentCountsWidget.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["@payloadcms/ui", "lucide-react", "react"]
+    },
+    "src/ui/admin/ConversionTracking/DashboardHeader.tsx": {
+      "path": "src/ui/admin/ConversionTracking/DashboardHeader.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["@payloadcms/ui", "react"]
+    },
+    "src/ui/admin/ConversionTracking/DashboardWidgets.tsx": {
+      "path": "src/ui/admin/ConversionTracking/DashboardWidgets.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/ui/admin/ConversionTracking/EngagementWidget.tsx": {
+      "path": "src/ui/admin/ConversionTracking/EngagementWidget.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["@payloadcms/ui", "react"]
+    },
+    "src/ui/admin/ConversionTracking/MetricCard.tsx": {
+      "path": "src/ui/admin/ConversionTracking/MetricCard.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["lucide-react", "react"]
+    },
+    "src/ui/admin/ConversionTracking/MetricsProvider.tsx": {
+      "path": "src/ui/admin/ConversionTracking/MetricsProvider.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/ui/admin/ConversionTracking/UserMetricsWidget.tsx": {
+      "path": "src/ui/admin/ConversionTracking/UserMetricsWidget.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["@payloadcms/ui", "lucide-react", "react"]
+    },
+    "src/ui/admin/CourseLessonsSorter/index.tsx": {
+      "path": "src/ui/admin/CourseLessonsSorter/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "@payloadcms/ui", "lucide-react"]
     },
     "src/ui/admin/ExerciseContentEditor/BlockTypeSelector.tsx": {
       "path": "src/ui/admin/ExerciseContentEditor/BlockTypeSelector.tsx",
@@ -5732,6 +5900,14 @@
       "aiSummary": "",
       "dependencies": ["react", "framer-motion", "lucide-react"]
     },
+    "src/ui/web/exerciserenderer/utils/safeMathEval.ts": {
+      "path": "src/ui/web/exerciserenderer/utils/safeMathEval.ts",
+      "type": "utility",
+      "domain": "exercises",
+      "patterns": ["math-expression-parser"],
+      "aiSummary": "Safe math expression evaluator using mathjs to prevent code injection",
+      "dependencies": ["mathjs"]
+    },
     "src/ui/web/footer/RowLabel.tsx": {
       "path": "src/ui/web/footer/RowLabel.tsx",
       "type": "unknown",
@@ -6028,6 +6204,14 @@
       "aiSummary": "",
       "dependencies": ["react", "class-variance-authority", "lucide-react"]
     },
+    "src/ui/web/shared/LatexDocumentViewer/consolidate-latex-blocks.ts": {
+      "path": "src/ui/web/shared/LatexDocumentViewer/consolidate-latex-blocks.ts",
+      "type": "utility",
+      "domain": "latex",
+      "patterns": ["aggregator"],
+      "aiSummary": "Walks an ordered list of exercises and concatenates every LaTeX block",
+      "dependencies": []
+    },
     "src/ui/web/shared/LatexDocumentViewer/index.tsx": {
       "path": "src/ui/web/shared/LatexDocumentViewer/index.tsx",
       "type": "component",
@@ -6166,8 +6350,8 @@
     }
   },
   "metadata": {
-    "generatedAt": "2026-04-21T07:56:18.855Z",
-    "totalFiles": 569,
-    "totalPatterns": 140
+    "generatedAt": "2026-04-27T10:15:34.039Z",
+    "totalFiles": 586,
+    "totalPatterns": 145
   }
 }

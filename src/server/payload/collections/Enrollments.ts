@@ -14,7 +14,10 @@ import { adminOnly } from '../access/adminOnly'
 import { isUsersCollectionUser } from '../access/isUsersCollectionUser'
 import { createdByField } from '../fields/createdBy'
 import { tenantField } from '../fields/tenant'
-import { manageEntitlementsOnChange, revokeEntitlementOnDelete } from '../hooks/enrollment/manageEntitlements'
+import {
+  manageEntitlementsOnChange,
+  revokeEntitlementOnDelete,
+} from '../hooks/enrollment/manageEntitlements'
 
 /** Enrollment status values */
 export const ENROLLMENT_STATUS = {
@@ -34,7 +37,8 @@ export const ENROLLMENT_GRANT_METHOD = {
   Request: 'request',
 } as const
 
-export type EnrollmentGrantMethod = (typeof ENROLLMENT_GRANT_METHOD)[keyof typeof ENROLLMENT_GRANT_METHOD]
+export type EnrollmentGrantMethod =
+  (typeof ENROLLMENT_GRANT_METHOD)[keyof typeof ENROLLMENT_GRANT_METHOD]
 
 /** Returns true if user is admin */
 function isAdmin(user: unknown): boolean {
@@ -92,7 +96,8 @@ export const Enrollments: CollectionConfig = {
         description: 'Student requesting enrollment',
       },
       access: {
-        read: ({ req: { user }, data }) => fieldReadAccess(user, data as { student?: string | { id: string } }),
+        read: ({ req: { user }, data }) =>
+          fieldReadAccess(user, data as { student?: string | { id: string } }),
       },
     },
     // Course — which course they want to enroll in
@@ -106,7 +111,8 @@ export const Enrollments: CollectionConfig = {
         description: 'Course to enroll in',
       },
       access: {
-        read: ({ req: { user }, data }) => fieldReadAccess(user, data as { student?: string | { id: string } }),
+        read: ({ req: { user }, data }) =>
+          fieldReadAccess(user, data as { student?: string | { id: string } }),
       },
     },
     // Status
@@ -127,7 +133,8 @@ export const Enrollments: CollectionConfig = {
         description: 'Current enrollment request status',
       },
       access: {
-        read: ({ req: { user }, data }) => fieldReadAccess(user, data as { student?: string | { id: string } }),
+        read: ({ req: { user }, data }) =>
+          fieldReadAccess(user, data as { student?: string | { id: string } }),
       },
     },
     // Reason for enrollment request (optional)
@@ -138,7 +145,8 @@ export const Enrollments: CollectionConfig = {
         description: 'Optional reason for the enrollment request',
       },
       access: {
-        read: ({ req: { user }, data }) => fieldReadAccess(user, data as { student?: string | { id: string } }),
+        read: ({ req: { user }, data }) =>
+          fieldReadAccess(user, data as { student?: string | { id: string } }),
       },
     },
     // When the request was made
@@ -161,7 +169,8 @@ export const Enrollments: CollectionConfig = {
         readOnly: true,
       },
       access: {
-        read: ({ req: { user }, data }) => fieldReadAccess(user, data as { student?: string | { id: string } }),
+        read: ({ req: { user }, data }) =>
+          fieldReadAccess(user, data as { student?: string | { id: string } }),
       },
     },
     // Admin who processed the request
@@ -174,7 +183,8 @@ export const Enrollments: CollectionConfig = {
         readOnly: true,
       },
       access: {
-        read: ({ req: { user }, data }) => fieldReadAccess(user, data as { student?: string | { id: string } }),
+        read: ({ req: { user }, data }) =>
+          fieldReadAccess(user, data as { student?: string | { id: string } }),
       },
     },
     // Enrollment expiry date (optional)
@@ -185,7 +195,8 @@ export const Enrollments: CollectionConfig = {
         description: 'Optional expiry date for this enrollment (leave empty for no expiry)',
       },
       access: {
-        read: ({ req: { user }, data }) => fieldReadAccess(user, data as { student?: string | { id: string } }),
+        read: ({ req: { user }, data }) =>
+          fieldReadAccess(user, data as { student?: string | { id: string } }),
       },
     },
     // How the entitlement was granted
@@ -203,7 +214,8 @@ export const Enrollments: CollectionConfig = {
         description: 'How the course entitlement was granted',
       },
       access: {
-        read: ({ req: { user }, data }) => fieldReadAccess(user, data as { student?: string | { id: string } }),
+        read: ({ req: { user }, data }) =>
+          fieldReadAccess(user, data as { student?: string | { id: string } }),
       },
     },
     // Admin notes (admin-only — no field-level read restriction needed)

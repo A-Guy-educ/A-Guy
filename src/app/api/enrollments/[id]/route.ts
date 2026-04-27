@@ -42,10 +42,10 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: 'Enrollment not found' }, { status: 404 })
   }
 
-  const isAdmin = user.collection === 'users' && (user as { role?: AccountRole }).role === AccountRole.Admin
-  const studentId = typeof enrollment.student === 'string'
-    ? enrollment.student
-    : enrollment.student?.id
+  const isAdmin =
+    user.collection === 'users' && (user as { role?: AccountRole }).role === AccountRole.Admin
+  const studentId =
+    typeof enrollment.student === 'string' ? enrollment.student : enrollment.student?.id
 
   if (!isAdmin && studentId !== user.id) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -69,7 +69,8 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const isAdmin = user.collection === 'users' && (user as { role?: AccountRole }).role === AccountRole.Admin
+  const isAdmin =
+    user.collection === 'users' && (user as { role?: AccountRole }).role === AccountRole.Admin
 
   // Fetch current enrollment
   const existing = await payload.findByID({
@@ -83,13 +84,12 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: 'Enrollment not found' }, { status: 404 })
   }
 
-  const studentId = typeof existing.student === 'string'
-    ? existing.student
-    : (existing.student as { id: string } | undefined)?.id
+  const studentId =
+    typeof existing.student === 'string'
+      ? existing.student
+      : (existing.student as { id: string } | undefined)?.id
 
-  const canUpdate =
-    isAdmin ||
-    (studentId === user.id && existing.status === 'pending')
+  const canUpdate = isAdmin || (studentId === user.id && existing.status === 'pending')
 
   if (!canUpdate) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })

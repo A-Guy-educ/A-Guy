@@ -65,12 +65,11 @@ interface EnrollmentCardProps {
 
 function EnrollmentCard({ enrollment, onCancel, cancelling }: EnrollmentCardProps) {
   const t = useTranslations('enrollment')
-  const courseTitle = typeof enrollment.course === 'string'
-    ? enrollment.course
-    : enrollment.course?.title ?? 'Unknown Course'
-  const courseSlug = typeof enrollment.course === 'string'
-    ? undefined
-    : enrollment.course?.slug
+  const courseTitle =
+    typeof enrollment.course === 'string'
+      ? enrollment.course
+      : (enrollment.course?.title ?? 'Unknown Course')
+  const courseSlug = typeof enrollment.course === 'string' ? undefined : enrollment.course?.slug
   const { label, icon: Icon, color } = statusConfig(enrollment.status)
 
   return (
@@ -81,9 +80,7 @@ function EnrollmentCard({ enrollment, onCancel, cancelling }: EnrollmentCardProp
             <Icon className="w-5 h-5" />
           </div>
           <div className="min-w-0">
-            <h3 className="text-body-md font-semibold text-foreground truncate">
-              {courseTitle}
-            </h3>
+            <h3 className="text-body-md font-semibold text-foreground truncate">{courseTitle}</h3>
             <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-body-sm text-muted-foreground">
               <span className={`font-medium ${color}`}>{label}</span>
               <span>
@@ -134,11 +131,7 @@ function EnrollmentCard({ enrollment, onCancel, cancelling }: EnrollmentCardProp
               disabled={cancelling}
               className="shrink-0"
             >
-              {cancelling ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                t('cancelRequest')
-              )}
+              {cancelling ? <Loader2 className="w-4 h-4 animate-spin" /> : t('cancelRequest')}
             </Button>
           )}
         </div>
@@ -171,23 +164,26 @@ export function EnrollmentsPageContent({ user: _user }: { user: User }) {
     fetchEnrollments()
   }, [fetchEnrollments])
 
-  const handleCancel = useCallback(async (id: string) => {
-    setCancellingId(id)
-    try {
-      const res = await fetch(`/api/enrollments/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ status: 'cancelled' }),
-      })
-      if (!res.ok) throw new Error('Failed to cancel enrollment')
-      await fetchEnrollments()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to cancel enrollment')
-    } finally {
-      setCancellingId(null)
-    }
-  }, [fetchEnrollments])
+  const handleCancel = useCallback(
+    async (id: string) => {
+      setCancellingId(id)
+      try {
+        const res = await fetch(`/api/enrollments/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ status: 'cancelled' }),
+        })
+        if (!res.ok) throw new Error('Failed to cancel enrollment')
+        await fetchEnrollments()
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Failed to cancel enrollment')
+      } finally {
+        setCancellingId(null)
+      }
+    },
+    [fetchEnrollments],
+  )
 
   const pending = enrollments.filter((e) => e.status === 'pending')
   const approved = enrollments.filter((e) => e.status === 'approved')
@@ -203,9 +199,7 @@ export function EnrollmentsPageContent({ user: _user }: { user: User }) {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-display-sm font-bold">{t('title')}</h1>
-              <p className="mt-1 text-body-sm text-muted-foreground">
-                {t('subtitle')}
-              </p>
+              <p className="mt-1 text-body-sm text-muted-foreground">{t('subtitle')}</p>
             </div>
             <Button size="sm" asChild variant="secondary">
               <Link href="/courses">{t('browseCourses')}</Link>

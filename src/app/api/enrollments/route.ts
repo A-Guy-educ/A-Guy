@@ -34,15 +34,14 @@ export async function GET(req: NextRequest) {
   const limit = Math.min(parseInt(searchParams.get('limit') ?? '20', 10), 100)
 
   // Admins can list all enrollments
-  const isAdmin = user.collection === 'users' && (user as { role?: AccountRole }).role === AccountRole.Admin
+  const isAdmin =
+    user.collection === 'users' && (user as { role?: AccountRole }).role === AccountRole.Admin
 
   if (listAll && !isAdmin) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const where: Where | undefined = listAll
-    ? undefined
-    : { student: { equals: user.id } }
+  const where: Where | undefined = listAll ? undefined : { student: { equals: user.id } }
 
   const result = await payload.find({
     collection: 'enrollments',
@@ -77,7 +76,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const isAdmin = user.collection === 'users' && (user as { role?: AccountRole }).role === AccountRole.Admin
+  const isAdmin =
+    user.collection === 'users' && (user as { role?: AccountRole }).role === AccountRole.Admin
 
   let body: Record<string, unknown>
   try {
