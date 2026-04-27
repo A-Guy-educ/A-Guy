@@ -288,6 +288,15 @@ async function runStep(step: GuidedExplanationStep, ctx: RunStepCtx): Promise<vo
       muted: ctx.isMuted(),
       audioBase64: step.narrate.audioBase64 ?? null,
     })
+    // The await above can take seconds on the no-cache path (a live
+    // /api/tts/synthesize fetch). If the user clicked Back-to-exercise or
+    // unmounted in that window, the handle is registered AFTER the cancel
+    // already fired, so audio starts playing into a torn-down player.
+    // Cancel the handle immediately and bail out instead.
+    if (ctx.shouldCancel()) {
+      handle.cancel()
+      return
+    }
     ctx.registerAnimation(handle)
     await handle.finished
     ctx.registerAnimation(null)
