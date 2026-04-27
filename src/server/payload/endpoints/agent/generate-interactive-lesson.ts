@@ -48,17 +48,31 @@ export async function agentGenerateInteractiveLesson(
       locale,
     })
     if (cached) {
-      reqLogger.info({ cacheId: cached.id, mediaId }, 'Returning cached interactive lesson')
-      return Response.json({
-        success: true,
-        data: cached.lesson as unknown as InteractiveLesson,
-        metadata: (cached.generationMetadata ?? {
-          model: 'cache',
-          processingTimeMs: 0,
-          imageSizeBytes: 0,
-        }) as InteractiveLessonResponse['metadata'],
-        fromCache: true,
-      })
+      // Sanity-check the cached payload shape before returning. If it has
+      // drifted (e.g. missing steps[] after a schema change), evict and
+      // fall through to a fresh generation rather than crash the client.
+      if (isWellFormedLesson(cached.lesson)) {
+        reqLogger.info({ cacheId: cached.id, mediaId }, 'Returning cached interactive lesson')
+        return Response.json({
+          success: true,
+          data: cached.lesson as unknown as InteractiveLesson,
+          metadata: (cached.generationMetadata ?? {
+            model: 'cache',
+            processingTimeMs: 0,
+            imageSizeBytes: 0,
+          }) as InteractiveLessonResponse['metadata'],
+          fromCache: true,
+        })
+      }
+      reqLogger.warn(
+        { cacheId: cached.id, mediaId },
+        'Cached lesson has malformed shape, evicting and regenerating',
+      )
+      await req.payload
+        .delete({ collection: 'interactive_lessons', id: cached.id, overrideAccess: true })
+        .catch((err) => {
+          reqLogger.warn({ err, cacheId: cached.id }, 'Failed to evict malformed cache row')
+        })
     }
 
     // Fetch the uploaded media file
@@ -145,17 +159,55 @@ async function persistLesson(
   payload: Payload,
   { userId, mediaId, locale, lesson, metadata }: PersistArgs,
 ): Promise<void> {
-  await payload.create({
-    collection: 'interactive_lessons',
-    data: {
-      user: userId as CachedLessonDoc['user'],
-      media: mediaId as unknown as CachedLessonDoc['media'],
-      locale,
-      lesson: lesson as unknown as CachedLessonDoc['lesson'],
-      generationMetadata: metadata as unknown as CachedLessonDoc['generationMetadata'],
-    },
-    overrideAccess: true,
-  })
+  try {
+    await payload.create({
+      collection: 'interactive_lessons',
+      data: {
+        user: userId as CachedLessonDoc['user'],
+        media: mediaId as unknown as CachedLessonDoc['media'],
+        locale,
+        lesson: lesson as unknown as CachedLessonDoc['lesson'],
+        generationMetadata: metadata as unknown as CachedLessonDoc['generationMetadata'],
+      },
+      overrideAccess: true,
+    })
+  } catch (err) {
+    // Two concurrent generations for the same (user, media, locale) can both
+    // miss the cache, both call Gemini, and both try to insert — the unique
+    // index on the collection ensures only one wins. The loser hits a
+    // duplicate-key error here, which we silently absorb: the winner's row
+    // is already in place, and the next read for either request will be a
+    // cache hit. Other errors (e.g. validation) still surface.
+    if (isDuplicateKeyError(err)) return
+    throw err
+  }
+}
+
+/**
+ * Mongo's duplicate-key error code is 11000. Payload wraps the driver error,
+ * but the original surfaces on `err.code` or in the message string.
+ */
+function isDuplicateKeyError(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false
+  const e = err as { code?: number; message?: string; name?: string }
+  if (e.code === 11000) return true
+  return /E11000|duplicate key/i.test(e.message ?? '')
+}
+
+/**
+ * Light structural sanity check on a cached lesson payload. Catches schema
+ * drift (e.g. older row missing a field that's now expected) so a stale
+ * cached row evicts itself rather than crashing the client. Not a full
+ * validation — Gemini's freshly-validated output goes through `validateLesson`
+ * before persist, so anything that lands in cache passed once already.
+ */
+function isWellFormedLesson(lesson: unknown): boolean {
+  if (!lesson || typeof lesson !== 'object') return false
+  const l = lesson as { title?: unknown; steps?: unknown; geometry?: unknown }
+  if (typeof l.title !== 'string') return false
+  if (!Array.isArray(l.steps) || l.steps.length === 0) return false
+  if (!l.geometry || typeof l.geometry !== 'object') return false
+  return true
 }
 
 /**

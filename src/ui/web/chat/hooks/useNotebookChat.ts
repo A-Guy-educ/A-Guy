@@ -9,14 +9,13 @@ import { logger } from '@/infra/utils/logger'
 import { apiService } from '@/server/services/api/api-service'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import {
+  ASK_STEP_CONTEXT_EVENT,
+  type AskStepContextEvent,
+} from '@/app/(frontend)/ask/_components/ask-types'
 import { useDirectChatAssetUpload } from './useDirectChatAssetUpload'
 
-export interface ChatStepContext {
-  currentStepId: number
-  totalSteps: number
-  stepTitle: string
-  stepNarration: string
-}
+export type ChatStepContext = AskStepContextEvent
 
 export interface ChatMessage {
   id: string
@@ -32,17 +31,36 @@ export interface ChatMessage {
  * Wraps the visible user message with an invisible context block the AI sees.
  * The same prefix is stripped on history load before display so old messages
  * don't show raw context markup.
+ *
+ * Security: stepTitle and stepNarration ultimately originate from Gemini
+ * reading a user-uploaded image, so the values must be treated as untrusted.
+ * Without escaping, an adversarial image could induce narration containing
+ * a literal `</step-context>` tag and break out of the context block to
+ * inject arbitrary instructions to the chat model. We escape `<`, `>`, and
+ * `"` before interpolation, and use a greedy regex to strip any nested
+ * blocks on history reload.
  */
-const STEP_CONTEXT_BLOCK_REGEX = /^<step-context[\s\S]*?<\/step-context>\s*/
+const STEP_CONTEXT_BLOCK_REGEX = /^<step-context[\s\S]*<\/step-context>\s*/
+
+/** Escape characters that could break the surrounding XML-ish tag. */
+function escapeStepContextField(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
 
 function buildPromptWithStepContext(message: string, step: ChatStepContext | null): string {
   if (!step) return message
-  const title = step.stepTitle ? ` title="${step.stepTitle.replace(/"/g, "'")}"` : ''
-  const narration = step.stepNarration ? `\nNarration: ${step.stepNarration}` : ''
+  const safeTitle = step.stepTitle ? escapeStepContextField(step.stepTitle) : ''
+  const safeNarration = step.stepNarration ? escapeStepContextField(step.stepNarration) : ''
+  const titleAttr = safeTitle ? ` title="${safeTitle}"` : ''
+  const narrationLine = safeNarration ? `\nNarration: ${safeNarration}` : ''
   return (
-    `<step-context step="${step.currentStepId}" total="${step.totalSteps}"${title}>` +
+    `<step-context step="${step.currentStepId}" total="${step.totalSteps}"${titleAttr}>` +
     `The student is currently watching step ${step.currentStepId} of ${step.totalSteps}` +
-    `${step.stepTitle ? `: "${step.stepTitle}"` : ''}.${narration}` +
+    `${safeTitle ? `: "${safeTitle}"` : ''}.${narrationLine}` +
     `</step-context>\n\n` +
     message
   )
@@ -156,8 +174,8 @@ export function useNotebookChat({
       const detail = (e as CustomEvent).detail as ChatStepContext | null
       askStepContextRef.current = detail ?? null
     }
-    window.addEventListener('ask-step-context', handler)
-    return () => window.removeEventListener('ask-step-context', handler)
+    window.addEventListener(ASK_STEP_CONTEXT_EVENT, handler)
+    return () => window.removeEventListener(ASK_STEP_CONTEXT_EVENT, handler)
   }, [])
 
   // Error state

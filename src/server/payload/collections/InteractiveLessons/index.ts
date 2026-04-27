@@ -31,6 +31,17 @@ export const InteractiveLessons: CollectionConfig = {
     defaultColumns: ['user', 'media', 'locale', 'createdAt'],
     group: 'AI',
   },
+  // Compound unique index — prevents two concurrent generate requests
+  // (e.g., a double-click on Generate, or a Try-Again retry racing the
+  // original) from each missing the cache and creating duplicate rows.
+  // The persist code below catches the duplicate-key error and silently
+  // ignores it so the loser of the race becomes a cache hit.
+  indexes: [
+    {
+      fields: ['user', 'media', 'locale'],
+      unique: true,
+    },
+  ],
   fields: [
     {
       name: 'user',
