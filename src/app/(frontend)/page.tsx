@@ -4,7 +4,6 @@ import { RenderHero } from '@/ui/web/heros/RenderHero'
 import { PayloadRedirects } from '@/ui/web/PayloadRedirects'
 import type { Metadata } from 'next'
 import { cookies, headers } from 'next/headers'
-import { redirect } from 'next/navigation'
 
 export default async function HomepagePage() {
   // Run redirects first - if no redirect applies, we'll fall through
@@ -18,7 +17,8 @@ export default async function HomepagePage() {
     const homePage = await queryPageBySlug({ slug: 'home' })
 
     if (!homePage) {
-      // Fall back to /start if no home page (or if DB lookup transiently failed)
+      // Fall back to /start if no home page
+      const { redirect } = await import('next/navigation')
       redirect('/start')
     }
 
