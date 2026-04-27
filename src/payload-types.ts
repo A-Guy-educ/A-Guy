@@ -1984,6 +1984,10 @@ export interface InteractiveLesson {
    * Source prompt updatedAt at generation (ISO string).
    */
   promptUpdatedAt?: string | null;
+  /**
+   * Cached lesson shape version (bumped on schema change).
+   */
+  cacheSchemaVersion?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -3517,6 +3521,7 @@ export interface InteractiveLessonsSelect<T extends boolean = true> {
   generationMetadata?: T;
   promptId?: T;
   promptUpdatedAt?: T;
+  cacheSchemaVersion?: T;
   updatedAt?: T;
   createdAt?: T;
 }

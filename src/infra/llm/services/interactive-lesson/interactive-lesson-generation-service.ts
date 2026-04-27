@@ -583,14 +583,24 @@ function buildErrorResponse(
  * up-front generation cost bounded.
  */
 /**
- * Maximum base64 MP3 size we're willing to bake into the cached lesson per
- * step. A typical TTS narration runs 30–60KB; this 600KB cap is generous
- * enough for unusually long narrations but bounds the cached document
- * size — even a 12-step lesson at the cap stays under ~7MB, well below
- * Mongo's 16MB document limit. Steps that exceed the cap skip caching
- * and fall through to live TTS at playback, so the lesson still works.
+ * Per-step base64 cap. A typical TTS narration runs 30–60KB; 600KB allows
+ * unusually long narrations through but bounds individual rows.
  */
 const MAX_STEP_AUDIO_BASE64_BYTES = 600_000
+
+/**
+ * Per-LESSON running budget for cached audio bytes. The per-step cap alone
+ * isn't enough — Gemini occasionally emits 20+ steps for a multi-part
+ * problem, and 25 × 600KB = 15MB would breach Mongo's 16MB document limit.
+ * The persist failure would silently swallow into the .catch in the
+ * endpoint and the user would re-pay Gemini on every reload.
+ *
+ * 8MB leaves 8MB of headroom for the lesson JSON, generationMetadata,
+ * promptId/promptUpdatedAt, indexes, and Mongo overhead. Steps past the
+ * budget skip caching and fall through to live TTS at playback (same path
+ * as per-step failures and oversized blobs).
+ */
+const MAX_LESSON_AUDIO_BASE64_BYTES = 8_000_000
 
 /**
  * Returns a new lesson with TTS audio attached per step. Steps with no
@@ -620,10 +630,15 @@ async function attachStepAudio(
   )
 
   // Map step index → audioBase64 (or null if it failed / was oversized).
+  // We attach in original step order so the early steps get cached first
+  // — students typically rewatch from the start, so prioritizing earlier
+  // steps when the per-lesson budget runs out is the right tradeoff.
   const audioByIndex = new Map<number, string>()
   let attached = 0
   let failed = 0
   let oversized = 0
+  let budgetExceeded = 0
+  let runningBytes = 0
   results.forEach((res, i) => {
     const { step, index } = stepsToSpeak[i]
     if (res.status === 'rejected') {
@@ -647,7 +662,21 @@ async function attachStepAudio(
       )
       return
     }
+    if (runningBytes + audio.length > MAX_LESSON_AUDIO_BASE64_BYTES) {
+      budgetExceeded += 1
+      logger.warn(
+        {
+          stepId: step.id,
+          sizeBytes: audio.length,
+          runningBytes,
+          budgetBytes: MAX_LESSON_AUDIO_BASE64_BYTES,
+        },
+        '[InteractiveLesson] Per-lesson audio budget exhausted, skipping cache for this step; will fall back at playback',
+      )
+      return
+    }
     audioByIndex.set(index, audio)
+    runningBytes += audio.length
     attached += 1
   })
 
@@ -665,6 +694,8 @@ async function attachStepAudio(
       attached,
       failed,
       oversized,
+      budgetExceeded,
+      runningBytes,
       durationMs: Date.now() - audioStartTime,
     },
     '[InteractiveLesson] Step audio baked into lesson',
