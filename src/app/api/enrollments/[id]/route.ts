@@ -42,7 +42,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: 'Enrollment not found' }, { status: 404 })
   }
 
-  const isAdmin = user.role === AccountRole.Admin
+  const isAdmin = user.collection === 'users' && (user as { role?: AccountRole }).role === AccountRole.Admin
   const studentId = typeof enrollment.student === 'string'
     ? enrollment.student
     : enrollment.student?.id
@@ -69,7 +69,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const isAdmin = user.role === AccountRole.Admin
+  const isAdmin = user.collection === 'users' && (user as { role?: AccountRole }).role === AccountRole.Admin
 
   // Fetch current enrollment
   const existing = await payload.findByID({
@@ -161,7 +161,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (user.role !== AccountRole.Admin) {
+  if (user.collection !== 'users' || (user as { role?: AccountRole }).role !== AccountRole.Admin) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
