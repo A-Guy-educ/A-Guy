@@ -8,7 +8,6 @@
 import type { Payload } from 'payload'
 import { z } from 'zod'
 import type { AIModel } from '../../models'
-import { INTERACTIVE_LESSON_PROMPT } from '../../prompts/interactive-lesson-generation'
 import { getCircuitBreaker } from '../../providers/shared/circuit-breaker'
 import { withRetry } from '../../providers/shared/retry'
 import { withTimeout } from '../../providers/shared/timeout'
@@ -57,7 +56,7 @@ export async function generateInteractiveLesson(
       thinkingBudget: GEMINI_CONFIG.thinkingBudget,
     }
 
-    const prompt = buildPrompt(input.locale)
+    const prompt = await buildPrompt(input.locale, payload)
     const { attachmentData, sizeBytes } = await prepareImage(input)
 
     // Direct Gemini call with responseSchema so the model is constrained to
@@ -123,12 +122,48 @@ export async function generateInteractiveLesson(
   }
 }
 
-function buildPrompt(locale: 'he' | 'en'): string {
+/**
+ * Build the Gemini prompt by loading the base template strictly from the
+ * admin Prompts collection. There is no hardcoded fallback — if no published
+ * prompt with usage="interactive_lesson" exists, generation fails with a
+ * clear admin-facing error so the missing-config state can't silently
+ * regress to a stale built-in copy.
+ */
+async function buildPrompt(locale: 'he' | 'en', payload: Payload): Promise<string> {
+  const result = await payload.find({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    collection: 'prompts' as any,
+    where: {
+      and: [{ usage: { equals: 'interactive_lesson' } }, { status: { equals: 'published' } }],
+    },
+    limit: 1,
+    overrideAccess: true,
+  })
+
+  const template = (result.docs[0] as { template?: string } | undefined)?.template?.trim()
+  if (!template) {
+    throw new InteractiveLessonPromptMissingError()
+  }
+
   const localeInstruction =
     locale === 'he'
       ? '\n\nIMPORTANT: Generate ALL narration, claims, reasons, and explanations in Hebrew.'
       : '\n\nIMPORTANT: Generate ALL narration, claims, reasons, and explanations in English.'
-  return `${INTERACTIVE_LESSON_PROMPT}${localeInstruction}`
+  return `${template}${localeInstruction}`
+}
+
+/**
+ * Sentinel error for missing-prompt configuration. Caught by the outer
+ * generation handler and surfaced as a clean error response to the client
+ * with an admin-facing message.
+ */
+class InteractiveLessonPromptMissingError extends Error {
+  constructor() {
+    super(
+      'No published "Interactive Lesson" prompt is configured. Set one up in the admin Prompts collection (usage = "interactive_lesson", status = "published") before generating lessons.',
+    )
+    this.name = 'InteractiveLessonPromptMissingError'
+  }
 }
 
 /**
