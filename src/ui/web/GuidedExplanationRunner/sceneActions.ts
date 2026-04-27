@@ -86,7 +86,17 @@ function startAnime(anim: unknown, ctx: ActionContext): PausableAnimation {
 /** Animate a draw-in using stroke-dashoffset, sized to the path's real length. */
 async function animateDraw(el: HTMLElement, ctx: ActionContext, reverse: boolean): Promise<void> {
   const geo = el as unknown as SVGGeometryElement
-  const length = typeof geo.getTotalLength === 'function' ? geo.getTotalLength() : 1000
+  const hasGetTotalLength = typeof geo.getTotalLength === 'function'
+  if (!hasGetTotalLength && typeof console !== 'undefined') {
+    // The legacy 1000 fallback yields a wrong dasharray and was the root
+    // cause of the "short segments snap, long ones lag" pre-Anime.js bug.
+    // Hitting this branch means the SVG generator emitted a draw target
+    // that isn't an SVG geometry element — not user-recoverable, but log
+    // so it shows up in production traces.
+
+    console.warn('[ge-scene] draw target is not an SVGGeometryElement', { id: el.id })
+  }
+  const length = hasGetTotalLength ? geo.getTotalLength() : 1000
   el.style.strokeDasharray = String(length)
   const duration = el.classList.contains(DRAW_FAST_CLASS) ? DRAW_DURATION_FAST_MS : DRAW_DURATION_MS
   const from = reverse ? 0 : length

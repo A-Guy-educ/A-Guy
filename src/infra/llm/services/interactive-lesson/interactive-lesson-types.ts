@@ -207,15 +207,3 @@ export interface InteractiveLessonInput {
   mimeType: string
   locale: 'he' | 'en'
 }
-
-/** Playback state shared between player and chat */
-export interface PlayerStepContext {
-  /** Current step being viewed (1-based) */
-  currentStepId: number
-  /** Total number of steps */
-  totalSteps: number
-  /** Title of current step */
-  stepTitle: string
-  /** Narration text of current step */
-  stepNarration: string
-}
