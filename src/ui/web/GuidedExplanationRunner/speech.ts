@@ -162,13 +162,29 @@ function playCloudAudio(base64: string, rate: number): SpeechHandle {
   audio.playbackRate = rate
   let cancelled = false
 
+  // Single resolver, idempotent — driven by whichever happens first:
+  // the audio ending naturally, an error event, an autoplay rejection
+  // from the initial play() call, or an explicit cancel(). Without this
+  // the runStep loop can hang forever if play() rejects (autoplay
+  // blocked, decode failure that fires neither onended nor onerror).
+  let resolveFinished: () => void = () => {}
   const finished = new Promise<void>((resolve) => {
-    const done = () => resolve()
-    audio.onended = done
-    audio.onerror = done
+    resolveFinished = resolve
   })
+  let settled = false
+  const settle = () => {
+    if (settled) return
+    settled = true
+    resolveFinished()
+  }
+  audio.onended = settle
+  audio.onerror = settle
 
-  void audio.play().catch(() => undefined)
+  audio.play().catch(() => {
+    // Autoplay rejection / decode failure that bypasses error events —
+    // resolve so the step sequence can advance instead of hanging.
+    settle()
+  })
 
   return {
     finished,
@@ -176,12 +192,13 @@ function playCloudAudio(base64: string, rate: number): SpeechHandle {
       if (!cancelled && !audio.paused) audio.pause()
     },
     play: () => {
-      if (!cancelled && audio.paused) void audio.play().catch(() => undefined)
+      if (!cancelled && audio.paused) audio.play().catch(() => settle())
     },
     cancel: () => {
       cancelled = true
       audio.pause()
       audio.src = ''
+      settle()
     },
     setRate: (nextRate: number) => {
       if (!cancelled) audio.playbackRate = nextRate

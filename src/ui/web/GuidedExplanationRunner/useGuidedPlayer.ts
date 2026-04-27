@@ -86,6 +86,15 @@ export function useGuidedPlayer({
   useEffect(() => {
     primeSpeechVoices()
     return () => {
+      // Cancel the active animation/audio handle FIRST. With cached cloud
+      // TTS now the common path, the live HTMLAudioElement is held inside
+      // activeAnimationRef — without this the audio keeps playing after
+      // the component unmounts (e.g. user clicks "Back to exercise"
+      // mid-step). cancelSpeech() only addresses the browser-fallback
+      // speechSynthesis case.
+      sequenceRef.current += 1
+      activeAnimationRef.current?.cancel?.()
+      activeAnimationRef.current = null
       cancelSpeech()
       emitStepContext(null)
     }
