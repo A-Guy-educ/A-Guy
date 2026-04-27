@@ -122,6 +122,19 @@ export const InteractiveLessons: CollectionConfig = {
         readOnly: true,
       },
     },
+    // Bumped whenever the InteractiveLesson cached shape changes (new
+    // primitive families, audio field rename, etc). Older rows with a
+    // mismatched version are evicted on read so the client never sees a
+    // payload shape its converter can't handle.
+    {
+      name: 'cacheSchemaVersion',
+      type: 'text',
+      required: false,
+      admin: {
+        description: 'Cached lesson shape version (bumped on schema change).',
+        readOnly: true,
+      },
+    },
   ],
   timestamps: true,
 }

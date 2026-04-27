@@ -20,6 +20,7 @@ import {
   getPublishedInteractiveLessonPrompt,
   normalizeIsoDate,
 } from '@/infra/llm/services/interactive-lesson/published-prompt-cache'
+import { INTERACTIVE_LESSON_CACHE_SCHEMA_VERSION } from '@/infra/llm/services/interactive-lesson/cache-schema-version'
 
 interface GenerateRequestBody {
   mediaId: string
@@ -175,6 +176,7 @@ async function persistLesson(
         generationMetadata: metadata as unknown as CachedLessonDoc['generationMetadata'],
         promptId: promptSource?.id,
         promptUpdatedAt: promptSource?.updatedAt,
+        cacheSchemaVersion: INTERACTIVE_LESSON_CACHE_SCHEMA_VERSION,
       },
       overrideAccess: true,
     })
@@ -215,6 +217,14 @@ function isDuplicateKeyError(err: unknown): boolean {
  *      pre-edit cache row would keep serving stale output forever.
  */
 async function evictionReason(payload: Payload, cached: CachedLessonDoc): Promise<string | null> {
+  // Cache shape version must match the running build. Catches schema drift
+  // (a converter-breaking change to InteractiveLesson / steps[i] shape)
+  // without depending on a structural ad-hoc check that would have to be
+  // updated every time. Bump the constant when the cached shape changes.
+  if (cached.cacheSchemaVersion !== INTERACTIVE_LESSON_CACHE_SCHEMA_VERSION) {
+    return 'cache-schema-version-mismatch'
+  }
+
   if (!isWellFormedLesson(cached.lesson)) return 'malformed-lesson-shape'
 
   // No prompt provenance was recorded — pre-this-feature row, can't tell
