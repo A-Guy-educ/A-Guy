@@ -151,7 +151,12 @@ export function UnifiedCard({
           {/* Progress ring — right side */}
           {showProgress && (
             <div className="shrink-0 w-14 h-14 relative">
-              <ProgressCircle percentage={progress} size={56} strokeWidth={6} strokeColor={progress >= 100 ? 'hsl(var(--success))' : color}>
+              <ProgressCircle
+                percentage={progress}
+                size={56}
+                strokeWidth={6}
+                strokeColor={progress >= 100 ? 'hsl(var(--success))' : color}
+              >
                 {progress >= 100 ? null : (
                   <>
                     {progressLabel && (
