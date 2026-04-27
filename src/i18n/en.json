@@ -447,9 +447,9 @@
   },
   "coursePage": {
     "tabs": {
-      "learn": "Learn",
+      "learn": "Study",
       "practice": "Practice",
-      "ask": "Ask",
+      "ask": "Questions",
       "exams": "Exams"
     },
     "grade": "Grade",
