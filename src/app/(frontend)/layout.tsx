@@ -30,6 +30,22 @@ import { NavigationBar } from '@/ui/web/homepage/NavigationBar'
 import { ActiveTimeProvider } from '@/client/providers/ActiveTimeProvider'
 
 function reportLayoutError(stage: string, error: unknown): void {
+  // Next.js uses thrown errors as control-flow signals (dynamic-route detection
+  // via headers()/cookies(), redirect(), notFound()). These have a `.digest`
+  // beginning with NEXT_ or DYNAMIC_SERVER_USAGE and MUST propagate — swallowing
+  // them breaks the build (static export of a dynamic route) and routing.
+  if (
+    error &&
+    typeof error === 'object' &&
+    'digest' in error &&
+    typeof (error as { digest?: unknown }).digest === 'string'
+  ) {
+    const digest = (error as { digest: string }).digest
+    if (digest.startsWith('NEXT_') || digest.startsWith('DYNAMIC_SERVER_USAGE')) {
+      throw error
+    }
+  }
+
   console.error(`[RootLayout] ${stage} failed`, error)
   try {
     Sentry.captureException(error, { tags: { layoutStage: stage } })

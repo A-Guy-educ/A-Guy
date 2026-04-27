@@ -20,6 +20,18 @@ async function getGlobal<S extends Global>(slug: S, depth = 0): Promise<GlobalDa
     const global = await payload.findGlobal({ slug, depth })
     return global as GlobalData<S>
   } catch (error) {
+    // Next.js uses thrown errors as control-flow signals — re-throw those.
+    if (
+      error &&
+      typeof error === 'object' &&
+      'digest' in error &&
+      typeof (error as { digest?: unknown }).digest === 'string'
+    ) {
+      const digest = (error as { digest: string }).digest
+      if (digest.startsWith('NEXT_') || digest.startsWith('DYNAMIC_SERVER_USAGE')) {
+        throw error
+      }
+    }
     console.error(`[getGlobal] failed to fetch global "${slug}"`, error)
     try {
       Sentry.captureException(error, { tags: { global: slug } })
