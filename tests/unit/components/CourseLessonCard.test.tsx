@@ -117,4 +117,50 @@ describe('CourseLessonCard component', () => {
       expect(toast.info).not.toHaveBeenCalled()
     })
   })
+
+  describe('exam label', () => {
+    it('shows "Exam 1" when lessonType is "exam"', () => {
+      render(
+        <I18nProvider locale="en" messages={enMessages}>
+          <CourseLessonCard
+            lesson={mockLesson}
+            index={1}
+            courseSlug="test-course"
+            chapterSlug="test-chapter"
+            lessonType="exam"
+          />
+        </I18nProvider>,
+      )
+      expect(screen.getByText('Exam 1')).toBeTruthy()
+    })
+
+    it('shows "Lesson 1" when lessonType is "learning"', () => {
+      render(
+        <I18nProvider locale="en" messages={enMessages}>
+          <CourseLessonCard
+            lesson={mockLesson}
+            index={1}
+            courseSlug="test-course"
+            chapterSlug="test-chapter"
+            lessonType="learning"
+          />
+        </I18nProvider>,
+      )
+      expect(screen.getByText('Lesson 1')).toBeTruthy()
+    })
+
+    it('shows "Lesson 1" when lessonType is omitted (backward compat)', () => {
+      render(
+        <I18nProvider locale="en" messages={enMessages}>
+          <CourseLessonCard
+            lesson={mockLesson}
+            index={1}
+            courseSlug="test-course"
+            chapterSlug="test-chapter"
+          />
+        </I18nProvider>,
+      )
+      expect(screen.getByText('Lesson 1')).toBeTruthy()
+    })
+  })
 })
