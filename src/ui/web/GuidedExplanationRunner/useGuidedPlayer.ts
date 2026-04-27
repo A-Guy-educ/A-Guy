@@ -210,6 +210,7 @@ export function useGuidedPlayer({
             registerAnimation,
             getSpeed,
             isMuted: isMutedForSpeech,
+            isPaused: () => pausedRef.current,
             setNarrationText,
           })
         }
@@ -263,6 +264,8 @@ interface RunStepCtx {
   registerAnimation: (anim: PausableAnimation | null) => void
   getSpeed: () => number
   isMuted: () => boolean
+  /** Read pausedRef directly so callers can honor it across async boundaries. */
+  isPaused: () => boolean
   setNarrationText: (text: string) => void
 }
 
@@ -297,6 +300,12 @@ async function runStep(step: GuidedExplanationStep, ctx: RunStepCtx): Promise<vo
       handle.cancel()
       return
     }
+    // If the user clicked Pause during the fetch, activeAnimationRef was
+    // empty so pause() couldn't reach into it — pausedRef was set but the
+    // audio would otherwise start playing the moment startSpeech resolves
+    // and ignore the paused state until the next action boundary. Honor
+    // the paused flag now that we have a real handle.
+    if (ctx.isPaused()) handle.pause()
     ctx.registerAnimation(handle)
     await handle.finished
     ctx.registerAnimation(null)

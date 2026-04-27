@@ -345,8 +345,14 @@ function validateLesson(parsed: Record<string, unknown>, locale: 'he' | 'en'): I
   const steps = Array.isArray(parsed.steps) ? parsed.steps : []
   const geo = (parsed.geometry || {}) as Record<string, unknown>
   const graph = parsed.graph as Record<string, unknown> | undefined
+  // A graph scene is worth rendering if EITHER plots or markers are
+  // populated. Marker-only graphs are valid for problems that ask the
+  // student to identify specific points on a coordinate plane (e.g.
+  // "find the intersections at A, B, C") where there's no curve to plot.
   const hasGraphContent =
-    !!graph && Array.isArray(graph.plots) && (graph.plots as unknown[]).length > 0
+    !!graph &&
+    ((Array.isArray(graph.plots) && (graph.plots as unknown[]).length > 0) ||
+      (Array.isArray(graph.markers) && (graph.markers as unknown[]).length > 0))
   const numberLine = parsed.numberLine as Record<string, unknown> | undefined
   const hasNumberLineContent =
     !!numberLine &&

@@ -709,7 +709,10 @@ function hasGeometricFigure(geometry: GeometryData): boolean {
 }
 
 function hasGraphContent(graph: GraphData | undefined): graph is GraphData {
-  return !!graph && graph.plots.length > 0
+  // Mirror the validator: marker-only graphs (no plotted curves but
+  // significant points called out) are still worth rendering as a graph
+  // scene rather than dropping through to the equation fallback.
+  return !!graph && (graph.plots.length > 0 || graph.markers.length > 0)
 }
 
 function hasNumberLineContent(
