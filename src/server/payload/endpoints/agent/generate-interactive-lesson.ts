@@ -13,6 +13,7 @@ import { logger } from '@/infra/utils/logger/logger'
 import { generateInteractiveLesson } from '@/infra/llm/services/interactive-lesson/interactive-lesson-generation-service'
 import type {
   InteractiveLesson,
+  InteractiveLessonPromptSource,
   InteractiveLessonResponse,
 } from '@/infra/llm/services/interactive-lesson/interactive-lesson-types'
 
@@ -48,10 +49,8 @@ export async function agentGenerateInteractiveLesson(
       locale,
     })
     if (cached) {
-      // Sanity-check the cached payload shape before returning. If it has
-      // drifted (e.g. missing steps[] after a schema change), evict and
-      // fall through to a fresh generation rather than crash the client.
-      if (isWellFormedLesson(cached.lesson)) {
+      const evictReason = await evictionReason(req.payload, cached)
+      if (!evictReason) {
         reqLogger.info({ cacheId: cached.id, mediaId }, 'Returning cached interactive lesson')
         return Response.json({
           success: true,
@@ -65,13 +64,13 @@ export async function agentGenerateInteractiveLesson(
         })
       }
       reqLogger.warn(
-        { cacheId: cached.id, mediaId },
-        'Cached lesson has malformed shape, evicting and regenerating',
+        { cacheId: cached.id, mediaId, reason: evictReason },
+        'Evicting cached interactive lesson and regenerating',
       )
       await req.payload
         .delete({ collection: 'interactive_lessons', id: cached.id, overrideAccess: true })
         .catch((err) => {
-          reqLogger.warn({ err, cacheId: cached.id }, 'Failed to evict malformed cache row')
+          reqLogger.warn({ err, cacheId: cached.id }, 'Failed to evict cache row')
         })
     }
 
@@ -94,6 +93,7 @@ export async function agentGenerateInteractiveLesson(
       locale,
       lesson: result.data!,
       metadata: result.metadata,
+      promptSource: result.promptSource,
     }).catch((err) => {
       reqLogger.warn({ err, mediaId }, 'Failed to persist interactive lesson cache')
     })
@@ -153,11 +153,12 @@ interface PersistArgs {
   locale: 'he' | 'en'
   lesson: InteractiveLesson
   metadata: InteractiveLessonResponse['metadata']
+  promptSource?: InteractiveLessonPromptSource
 }
 
 async function persistLesson(
   payload: Payload,
-  { userId, mediaId, locale, lesson, metadata }: PersistArgs,
+  { userId, mediaId, locale, lesson, metadata, promptSource }: PersistArgs,
 ): Promise<void> {
   try {
     await payload.create({
@@ -168,6 +169,8 @@ async function persistLesson(
         locale,
         lesson: lesson as unknown as CachedLessonDoc['lesson'],
         generationMetadata: metadata as unknown as CachedLessonDoc['generationMetadata'],
+        promptId: promptSource?.id,
+        promptUpdatedAt: promptSource?.updatedAt,
       },
       overrideAccess: true,
     })
@@ -195,12 +198,50 @@ function isDuplicateKeyError(err: unknown): boolean {
 }
 
 /**
- * Light structural sanity check on a cached lesson payload. Catches schema
- * drift (e.g. older row missing a field that's now expected) so a stale
- * cached row evicts itself rather than crashing the client. Not a full
- * validation — Gemini's freshly-validated output goes through `validateLesson`
- * before persist, so anything that lands in cache passed once already.
+ * Decide whether a cached row should be evicted before serving. Returns a
+ * short reason string if eviction is required, or null if the row is still
+ * valid. Two reasons trigger eviction:
+ *
+ *   1. The cached payload's shape has drifted (e.g. a schema change made
+ *      `steps` required when older rows didn't have it). Avoids crashing
+ *      the client.
+ *   2. The admin-managed Prompts row used to generate this lesson has been
+ *      edited or replaced since. The point of moving the prompt into the
+ *      DB was so admins could iterate on it; without invalidation, every
+ *      pre-edit cache row would keep serving stale output forever.
  */
+async function evictionReason(payload: Payload, cached: CachedLessonDoc): Promise<string | null> {
+  if (!isWellFormedLesson(cached.lesson)) return 'malformed-lesson-shape'
+
+  // No prompt provenance was recorded — pre-this-feature row, can't tell
+  // if it's stale. Treat as evict so the next read regenerates against
+  // the current published prompt; the user pays Gemini once and from then
+  // on the row carries the source provenance.
+  if (!cached.promptId) return 'missing-prompt-provenance'
+
+  const result = await payload.find({
+    collection: 'prompts',
+    where: {
+      and: [{ usage: { equals: 'interactive_lesson' } }, { status: { equals: 'published' } }],
+    },
+    limit: 1,
+    overrideAccess: true,
+  })
+  const current = result.docs[0]
+  if (!current) {
+    // No published prompt at all anymore. The next generation attempt
+    // will surface InteractiveLessonPromptMissingError, but for the
+    // cached row we just keep serving — no fresher option exists.
+    return null
+  }
+
+  if (String(current.id) !== cached.promptId) return 'prompt-id-changed'
+  if (String(current.updatedAt ?? '') !== (cached.promptUpdatedAt ?? '')) {
+    return 'prompt-updated'
+  }
+  return null
+}
+
 function isWellFormedLesson(lesson: unknown): boolean {
   if (!lesson || typeof lesson !== 'object') return false
   const l = lesson as { title?: unknown; steps?: unknown; geometry?: unknown }

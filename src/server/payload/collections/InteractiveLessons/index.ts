@@ -97,6 +97,31 @@ export const InteractiveLessons: CollectionConfig = {
         readOnly: true,
       },
     },
+    // Prompt provenance — the source admin Prompts row id + its updatedAt
+    // at the moment of generation. The endpoint compares these to the
+    // current prompt on every read; a mismatch (admin edited the template,
+    // or replaced the prompt with a different doc) evicts the cache row
+    // so the next read regenerates against the latest template instead of
+    // serving stale output forever.
+    {
+      name: 'promptId',
+      type: 'text',
+      required: false,
+      index: true,
+      admin: {
+        description: 'Source admin Prompts row id at generation.',
+        readOnly: true,
+      },
+    },
+    {
+      name: 'promptUpdatedAt',
+      type: 'text',
+      required: false,
+      admin: {
+        description: 'Source prompt updatedAt at generation (ISO string).',
+        readOnly: true,
+      },
+    },
   ],
   timestamps: true,
 }
