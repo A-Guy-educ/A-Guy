@@ -701,10 +701,36 @@ function hasNumberLineContent(
 
 type SceneKind = 'graph' | 'numberLine' | 'geometry' | 'equation'
 
+/**
+ * Pick which scene the player should render. Order: graph > numberLine >
+ * geometry > equation. The schema lets the model populate more than one
+ * (e.g. coordinate-geometry that has both axes-with-plots AND labeled
+ * vertices), but the renderer only shows one — the others are silently
+ * dropped, which can hide content. Log a warning so the gap is observable
+ * server-side; the prompt instructs the model to populate exactly one, and
+ * a hit here means it didn't follow that instruction.
+ */
 function pickSceneKind(lesson: InteractiveLesson): SceneKind {
-  if (hasGraphContent(lesson.graph)) return 'graph'
-  if (hasNumberLineContent(lesson.numberLine)) return 'numberLine'
-  if (hasGeometricFigure(lesson.geometry)) return 'geometry'
+  const haveGraph = hasGraphContent(lesson.graph)
+  const haveNumberLine = hasNumberLineContent(lesson.numberLine)
+  const haveGeometry = hasGeometricFigure(lesson.geometry)
+
+  const populated = [
+    haveGraph && 'graph',
+    haveNumberLine && 'numberLine',
+    haveGeometry && 'geometry',
+  ].filter(Boolean) as SceneKind[]
+
+  if (populated.length > 1 && typeof console !== 'undefined') {
+    console.warn('[interactive-lesson] Multiple scene kinds populated; rendering only the first.', {
+      populated,
+      title: lesson.title,
+    })
+  }
+
+  if (haveGraph) return 'graph'
+  if (haveNumberLine) return 'numberLine'
+  if (haveGeometry) return 'geometry'
   return 'equation'
 }
 

@@ -23,7 +23,7 @@ interface ControlsProps {
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.5, 2] as const
 
 function formatSpeed(rate: number): string {
-  return Number.isInteger(rate) ? `${rate}×` : `${rate}×`
+  return `${rate}×`
 }
 
 export function Controls({

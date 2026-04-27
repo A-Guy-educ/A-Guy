@@ -95,12 +95,14 @@ export async function generateInteractiveLesson(
       )
     }
 
-    const lesson = validateLesson(parsed, input.locale)
+    const lessonRaw = validateLesson(parsed, input.locale)
 
     // Bake narration audio into the lesson so the cache stores not just the
     // primitives but the spoken audio too. Per-step TTS failures are
     // non-fatal — those steps fall through to live cloud TTS at playback time.
-    await attachStepAudio(lesson, input.locale, payload)
+    // Returns a new lesson rather than mutating in place; the original is
+    // discarded.
+    const lesson = await attachStepAudio(lessonRaw, input.locale, payload)
 
     return {
       success: true,
@@ -131,8 +133,7 @@ export async function generateInteractiveLesson(
  */
 async function buildPrompt(locale: 'he' | 'en', payload: Payload): Promise<string> {
   const result = await payload.find({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    collection: 'prompts' as any,
+    collection: 'prompts',
     where: {
       and: [{ usage: { equals: 'interactive_lesson' } }, { status: { equals: 'published' } }],
     },
@@ -140,7 +141,7 @@ async function buildPrompt(locale: 'he' | 'en', payload: Payload): Promise<strin
     overrideAccess: true,
   })
 
-  const template = (result.docs[0] as { template?: string } | undefined)?.template?.trim()
+  const template = result.docs[0]?.template?.trim()
   if (!template) {
     throw new InteractiveLessonPromptMissingError()
   }
@@ -549,38 +550,81 @@ function buildErrorResponse(
  * cloud TTS for those steps. Runs all step calls in parallel to keep the
  * up-front generation cost bounded.
  */
+/**
+ * Maximum base64 MP3 size we're willing to bake into the cached lesson per
+ * step. A typical TTS narration runs 30–60KB; this 600KB cap is generous
+ * enough for unusually long narrations but bounds the cached document
+ * size — even a 12-step lesson at the cap stays under ~7MB, well below
+ * Mongo's 16MB document limit. Steps that exceed the cap skip caching
+ * and fall through to live TTS at playback, so the lesson still works.
+ */
+const MAX_STEP_AUDIO_BASE64_BYTES = 600_000
+
+/**
+ * Returns a new lesson with TTS audio attached per step. Steps with no
+ * narration text are skipped. Per-step TTS failures and oversized audio
+ * blobs are logged and dropped — those steps fall through to live cloud
+ * TTS at playback time. Runs all step calls in parallel to keep the
+ * up-front generation cost bounded.
+ *
+ * Returns a fresh lesson object (steps array + step entries replaced)
+ * rather than mutating the input — keeps the caching write deterministic
+ * and consistent with the project's immutability rule.
+ */
 async function attachStepAudio(
   lesson: InteractiveLesson,
   locale: 'he' | 'en',
   payload: Payload,
-): Promise<void> {
+): Promise<InteractiveLesson> {
   const stepsToSpeak = lesson.steps
     .map((step, index) => ({ step, index, text: (step.narration || '').trim() }))
     .filter(({ text }) => text.length > 0)
 
-  if (stepsToSpeak.length === 0) return
+  if (stepsToSpeak.length === 0) return lesson
 
   const audioStartTime = Date.now()
   const results = await Promise.allSettled(
     stepsToSpeak.map(({ text }) => synthesizeSpeech(text, locale, payload)),
   )
 
+  // Map step index → audioBase64 (or null if it failed / was oversized).
+  const audioByIndex = new Map<number, string>()
   let attached = 0
   let failed = 0
+  let oversized = 0
   results.forEach((res, i) => {
-    const { step } = stepsToSpeak[i]
-    if (res.status === 'fulfilled' && res.value) {
-      step.audioBase64 = res.value
-      attached += 1
-    } else {
+    const { step, index } = stepsToSpeak[i]
+    if (res.status === 'rejected') {
       failed += 1
-      if (res.status === 'rejected') {
-        logger.warn(
-          { err: res.reason, stepId: step.id },
-          '[InteractiveLesson] TTS failed for step; will fall back at playback',
-        )
-      }
+      logger.warn(
+        { err: res.reason, stepId: step.id },
+        '[InteractiveLesson] TTS failed for step; will fall back at playback',
+      )
+      return
     }
+    const audio = res.value
+    if (!audio) {
+      failed += 1
+      return
+    }
+    if (audio.length > MAX_STEP_AUDIO_BASE64_BYTES) {
+      oversized += 1
+      logger.warn(
+        { stepId: step.id, sizeBytes: audio.length, capBytes: MAX_STEP_AUDIO_BASE64_BYTES },
+        '[InteractiveLesson] TTS audio exceeds per-step cap, skipping cache; will fall back at playback',
+      )
+      return
+    }
+    audioByIndex.set(index, audio)
+    attached += 1
+  })
+
+  // Build a fresh steps array — only mutate the entries that actually got
+  // audio, leave the rest untouched (still no audioBase64, fallback path
+  // kicks in client-side).
+  const nextSteps = lesson.steps.map((step, index) => {
+    const audio = audioByIndex.get(index)
+    return audio ? { ...step, audioBase64: audio } : step
   })
 
   logger.info(
@@ -588,8 +632,11 @@ async function attachStepAudio(
       totalSteps: lesson.steps.length,
       attached,
       failed,
+      oversized,
       durationMs: Date.now() - audioStartTime,
     },
     '[InteractiveLesson] Step audio baked into lesson',
   )
+
+  return { ...lesson, steps: nextSteps }
 }
