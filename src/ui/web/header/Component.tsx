@@ -17,10 +17,14 @@ async function getVersion(): Promise<string> {
 }
 
 export async function Header() {
-  const headerData: HeaderType = await getCachedGlobal('header', 1)()
+  const headerData = await getCachedGlobal('header', 1)()
   const version = await getVersion()
+
+  // If the global fetch transiently fails (cold-start / pool timeout),
+  // render nothing rather than crashing the whole layout.
+  if (!headerData) return null
 
   // User will be fetched on the client side to avoid static-to-dynamic conversion
   // This allows pages to be statically generated without using cookies() on the server
-  return <HeaderClient data={headerData} version={version} />
+  return <HeaderClient data={headerData as HeaderType} version={version} />
 }
