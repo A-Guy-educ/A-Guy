@@ -16,8 +16,8 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { key: 'study', href: '/study', color: 'hsl(217 91% 60%)', icon: BookOpen },
   { key: 'practice', href: '/practice', color: 'hsl(0 72% 51%)', icon: Target },
-  { key: 'ask', href: '/ask', color: 'hsl(142 71% 45%)', icon: MessageCircle },
   { key: 'test', href: '/test', color: 'hsl(330 81% 60%)', icon: ClipboardCheck },
+  { key: 'ask', href: '/ask', color: 'hsl(142 71% 45%)', icon: MessageCircle },
 ]
 
 const VALID_ROUTES = new Set(['/study', '/practice', '/ask', '/test'])
