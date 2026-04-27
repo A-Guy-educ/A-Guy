@@ -169,4 +169,53 @@ describe('ChatMessageContent', () => {
       expect(inlineMath?.querySelector('.katex')).not.toBeNull()
     })
   })
+
+  describe('Issue #1089: Examples from bug report', () => {
+    it('should render $E=mc^2$ as KaTeX (inline math)', () => {
+      const { container } = render(<ChatMessageContent content="$E=mc^2$" />)
+
+      // Should have inline KaTeX element
+      const inlineMath = container.querySelector('.isolate.inline-block[dir="ltr"]')
+      expect(inlineMath).not.toBeNull()
+      expect(inlineMath?.querySelector('.katex')).not.toBeNull()
+      expect(inlineMath?.querySelector('.katex-error')).toBeNull()
+
+      // Verify the content is rendered, not raw text
+      const katexHtml = inlineMath?.querySelector('.katex-html')
+      expect(katexHtml).not.toBeNull()
+    })
+
+    it('should render $$\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$$ as KaTeX (block math)', () => {
+      const { container } = render(
+        <ChatMessageContent content="$$\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$$" />,
+      )
+
+      // Should have block KaTeX element
+      const blockMath = container.querySelector('.isolate.block[dir="ltr"]')
+      expect(blockMath).not.toBeNull()
+      expect(blockMath?.querySelector('.katex-display')).not.toBeNull()
+      expect(blockMath?.querySelector('.katex-error')).toBeNull()
+
+      // Verify the quadratic formula content is present
+      const katexHtml = blockMath?.querySelector('.katex-html')
+      expect(katexHtml).not.toBeNull()
+    })
+
+    it('should render mixed content with both inline and block math', () => {
+      const { container } = render(
+        <ChatMessageContent content="The equation $E=mc^2$ is famous. $$\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$$" />,
+      )
+
+      // Should have both inline and block math
+      const inlineMaths = container.querySelectorAll('.isolate.inline-block[dir="ltr"]')
+      const blockMaths = container.querySelectorAll('.isolate.block[dir="ltr"]')
+
+      expect(inlineMaths.length).toBe(1)
+      expect(blockMaths.length).toBe(1)
+
+      // Both should render without errors
+      expect(inlineMaths[0]?.querySelector('.katex-error')).toBeNull()
+      expect(blockMaths[0]?.querySelector('.katex-error')).toBeNull()
+    })
+  })
 })

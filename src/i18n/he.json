@@ -295,6 +295,8 @@
     "chatFileTooLarge": "הקובץ גדול מדי (מקסימום 10MB)",
     "chatMaxFiles": "מותר עד 5 קבצים",
     "chatUploadFailed": "העלאת הקובץ נכשלה",
+    "chatImageCorrupted": "לא ניתן לעבד את התמונה. ייתכן שהיא פגומה או בפורמט שאינו נתמך. נסה להעלות תמונה אחרת או לשמור אותה בפורמט אחר.",
+    "chatImageInvalidFormat": "פורמט התמונה אינו נתמך. נא להעלות תמונה בפורמט JPEG, PNG, WebP או GIF.",
     "chatQuotaCounter": "{used}/{max} שאלות נוצלו",
     "chatQuotaResetIn": "מתאפס בעוד {time}",
     "chatQuotaExhausted": "הגעת למגבלת השאלות שלך. נסה שוב בעוד {time}",
