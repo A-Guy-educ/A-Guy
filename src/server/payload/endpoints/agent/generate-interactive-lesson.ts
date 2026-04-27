@@ -44,6 +44,17 @@ export async function agentGenerateInteractiveLesson(
     if (!mediaId) {
       return Response.json({ success: false, error: 'mediaId is required' }, { status: 400 })
     }
+    // Validate locale at the boundary. Without this, an arbitrary string
+    // flows into the cache write (Payload's enum validation rejects it,
+    // the persist .catch swallows as "failed to persist", lesson works
+    // but the cache is silently never populated and the user re-pays
+    // Gemini on every reload), the prompt builder, and synthesizeSpeech.
+    if (locale !== 'he' && locale !== 'en') {
+      return Response.json(
+        { success: false, error: 'locale must be "he" or "en"' },
+        { status: 400 },
+      )
+    }
 
     reqLogger.info({ mediaId, locale, userId: req.user.id }, 'Generating interactive lesson')
 
@@ -196,7 +207,7 @@ async function persistLesson(
  * Mongo's duplicate-key error code is 11000. Payload wraps the driver error,
  * but the original surfaces on `err.code` or in the message string.
  */
-function isDuplicateKeyError(err: unknown): boolean {
+export function isDuplicateKeyError(err: unknown): boolean {
   if (!err || typeof err !== 'object') return false
   const e = err as { code?: number; message?: string; name?: string }
   if (e.code === 11000) return true
@@ -216,7 +227,10 @@ function isDuplicateKeyError(err: unknown): boolean {
  *      DB was so admins could iterate on it; without invalidation, every
  *      pre-edit cache row would keep serving stale output forever.
  */
-async function evictionReason(payload: Payload, cached: CachedLessonDoc): Promise<string | null> {
+export async function evictionReason(
+  payload: Payload,
+  cached: CachedLessonDoc,
+): Promise<string | null> {
   // Cache shape version must match the running build. Catches schema drift
   // (a converter-breaking change to InteractiveLesson / steps[i] shape)
   // without depending on a structural ad-hoc check that would have to be
@@ -253,7 +267,7 @@ async function evictionReason(payload: Payload, cached: CachedLessonDoc): Promis
   return null
 }
 
-function isWellFormedLesson(lesson: unknown): boolean {
+export function isWellFormedLesson(lesson: unknown): boolean {
   if (!lesson || typeof lesson !== 'object') return false
   const l = lesson as { title?: unknown; steps?: unknown; geometry?: unknown }
   if (typeof l.title !== 'string') return false

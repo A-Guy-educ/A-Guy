@@ -163,7 +163,7 @@ function playCloudAudio(base64: string, rate: number): SpeechHandle {
   let cancelled = false
 
   // Single resolver, idempotent — driven by whichever happens first:
-  // the audio ending naturally, an error event, an autoplay rejection
+  // the audio ending naturally, an error event, a real autoplay rejection
   // from the initial play() call, or an explicit cancel(). Without this
   // the runStep loop can hang forever if play() rejects (autoplay
   // blocked, decode failure that fires neither onended nor onerror).
@@ -180,11 +180,20 @@ function playCloudAudio(base64: string, rate: number): SpeechHandle {
   audio.onended = settle
   audio.onerror = settle
 
-  audio.play().catch(() => {
-    // Autoplay rejection / decode failure that bypasses error events —
-    // resolve so the step sequence can advance instead of hanging.
+  /**
+   * Calling audio.pause() while a play() promise is still in-flight rejects
+   * that promise with AbortError. That is NOT a real failure — the caller
+   * is mid-pause, the audio is paused, and we want to keep the handle live
+   * so a later play() resumes from the same position. Filtering AbortError
+   * here keeps a Pause-during-fetch from prematurely settling and silently
+   * skipping the current step.
+   */
+  const onPlayRejected = (err: unknown) => {
+    if ((err as { name?: string } | null | undefined)?.name === 'AbortError') return
     settle()
-  })
+  }
+
+  audio.play().catch(onPlayRejected)
 
   return {
     finished,
@@ -192,7 +201,7 @@ function playCloudAudio(base64: string, rate: number): SpeechHandle {
       if (!cancelled && !audio.paused) audio.pause()
     },
     play: () => {
-      if (!cancelled && audio.paused) audio.play().catch(() => settle())
+      if (!cancelled && audio.paused) audio.play().catch(onPlayRejected)
     },
     cancel: () => {
       cancelled = true

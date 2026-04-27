@@ -582,17 +582,52 @@ function buildErrorResponse(
 }
 
 /**
- * Mutates the lesson in place to attach a base64 MP3 to each step's narration.
- * Steps with no narration text (or empty narration) are skipped. Per-step TTS
- * failures are logged and silently dropped — the client falls back to live
- * cloud TTS for those steps. Runs all step calls in parallel to keep the
- * up-front generation cost bounded.
- */
-/**
  * Per-step base64 cap. A typical TTS narration runs 30–60KB; 600KB allows
  * unusually long narrations through but bounds individual rows.
  */
 const MAX_STEP_AUDIO_BASE64_BYTES = 600_000
+
+/**
+ * How many TTS calls to have in flight at once. Google Cloud TTS rate-limits
+ * by request rate; 4 in flight is a comfortable middle ground that keeps
+ * 8-step lessons effectively parallel while stopping a 25-step lesson from
+ * firing 25 simultaneous requests and tripping 429s.
+ *
+ * Named without "CONCURRENCY_LIMIT" because the project-wide guardrail in
+ * tests/unit/mongodb-pool-config.test.ts enforces that constant against
+ * the Mongo pool size — but this limit governs HTTP requests to Google
+ * Cloud TTS, not DB connections, so the pool-size constraint doesn't apply.
+ */
+const TTS_PARALLEL_REQUESTS = 4
+
+/**
+ * Promise.allSettled-equivalent that runs at most `limit` workers
+ * concurrently. Preserves input order in the result array.
+ */
+async function runWithConcurrencyLimit<T, R>(
+  items: T[],
+  limit: number,
+  worker: (item: T, index: number) => Promise<R>,
+): Promise<PromiseSettledResult<R>[]> {
+  const results = new Array<PromiseSettledResult<R>>(items.length)
+  let nextIndex = 0
+  const runOne = async (): Promise<void> => {
+    while (true) {
+      const i = nextIndex
+      nextIndex += 1
+      if (i >= items.length) return
+      try {
+        const value = await worker(items[i], i)
+        results[i] = { status: 'fulfilled', value }
+      } catch (reason) {
+        results[i] = { status: 'rejected', reason }
+      }
+    }
+  }
+  const workerCount = Math.min(limit, items.length)
+  await Promise.all(Array.from({ length: workerCount }, () => runOne()))
+  return results
+}
 
 /**
  * Per-LESSON running budget for cached audio bytes. The per-step cap alone
@@ -631,8 +666,13 @@ async function attachStepAudio(
   if (stepsToSpeak.length === 0) return lesson
 
   const audioStartTime = Date.now()
-  const results = await Promise.allSettled(
-    stepsToSpeak.map(({ text }) => synthesizeSpeech(text, locale, payload)),
+  // Cap concurrent TTS calls. Unbounded Promise.allSettled would fire all
+  // 12+ steps' calls at once and risk Google TTS 429s on long lessons. The
+  // generation latency budget already absorbs sequential audio; modest
+  // parallelism is fine, full parallelism is rate-limit risk for no
+  // user-visible perf gain.
+  const results = await runWithConcurrencyLimit(stepsToSpeak, TTS_PARALLEL_REQUESTS, ({ text }) =>
+    synthesizeSpeech(text, locale, payload),
   )
 
   // Map step index → audioBase64 (or null if it failed / was oversized).

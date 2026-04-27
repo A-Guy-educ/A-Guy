@@ -721,7 +721,7 @@ function hasNumberLineContent(
   return !!numberLine && (numberLine.intervals.length > 0 || numberLine.marks.length > 0)
 }
 
-type SceneKind = 'graph' | 'numberLine' | 'geometry' | 'equation'
+export type SceneKind = 'graph' | 'numberLine' | 'geometry' | 'equation'
 
 /**
  * Pick which scene the player should render. Order: graph > numberLine >
@@ -732,7 +732,7 @@ type SceneKind = 'graph' | 'numberLine' | 'geometry' | 'equation'
  * server-side; the prompt instructs the model to populate exactly one, and
  * a hit here means it didn't follow that instruction.
  */
-function pickSceneKind(lesson: InteractiveLesson): SceneKind {
+export function pickSceneKind(lesson: InteractiveLesson): SceneKind {
   const haveGraph = hasGraphContent(lesson.graph)
   const haveNumberLine = hasNumberLineContent(lesson.numberLine)
   const haveGeometry = hasGeometricFigure(lesson.geometry)
