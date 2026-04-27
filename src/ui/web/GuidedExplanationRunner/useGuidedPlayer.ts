@@ -120,10 +120,11 @@ export function useGuidedPlayer({
   }, [])
 
   /**
-   * Toggle audio on/off. Cancels the in-flight speech handle so the new mode
-   * (sound or muted-with-captions) takes effect at the *next* step rather
-   * than mid-utterance — switching mid-narration would either cut audio off
-   * abruptly or jolt the timer.
+   * Toggle audio on/off. Flips soundOnRef synchronously so the next step's
+   * startSpeech() call sees the new mode; the in-flight step's audio (or
+   * muted timer) is left alone and finishes naturally. Switching mid-step
+   * would cut audio off abruptly or jolt the muted-timer duration, so the
+   * "takes effect on the next step" semantics is the deliberate behavior.
    */
   const toggleSound = useCallback(() => {
     soundOnRef.current = !soundOnRef.current
