@@ -41,8 +41,11 @@ export async function agentGenerateInteractiveLesson(
     const body = await req.json()
     const { mediaId, locale = 'he' } = body
 
-    if (!mediaId) {
-      return Response.json({ success: false, error: 'mediaId is required' }, { status: 400 })
+    if (!mediaId || typeof mediaId !== 'string') {
+      return Response.json(
+        { success: false, error: 'mediaId must be a non-empty string' },
+        { status: 400 },
+      )
     }
     // Validate locale at the boundary. Without this, an arbitrary string
     // flows into the cache write (Payload's enum validation rejects it,
