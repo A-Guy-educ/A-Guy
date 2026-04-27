@@ -5,22 +5,16 @@ import type {
   GuidedExplanationStep,
   GuidedExplanationV1,
 } from '@/infra/contracts/guided-explanation/v1'
+import {
+  ASK_STEP_CONTEXT_EVENT,
+  type AskStepContextEvent,
+} from '@/app/(frontend)/ask/_components/ask-types'
 import { runAction, resetScene, type PausableAnimation } from './sceneActions'
 import { cancelSpeech, primeSpeechVoices, startSpeech, stripNiqqud } from './speech'
 
-/** Fired to the window so sibling UI (e.g. chat panel) knows the active step. */
-const STEP_CONTEXT_EVENT = 'ask-step-context'
-
-interface StepContextDetail {
-  currentStepId: number
-  totalSteps: number
-  stepTitle: string
-  stepNarration: string
-}
-
-function emitStepContext(detail: StepContextDetail | null): void {
+function emitStepContext(detail: AskStepContextEvent | null): void {
   if (typeof window === 'undefined') return
-  window.dispatchEvent(new CustomEvent(STEP_CONTEXT_EVENT, { detail }))
+  window.dispatchEvent(new CustomEvent(ASK_STEP_CONTEXT_EVENT, { detail }))
 }
 
 interface UseGuidedPlayerArgs {
@@ -74,6 +68,12 @@ export function useGuidedPlayer({
   const sequenceRef = useRef(0)
   const speedRef = useRef(1)
   const soundOnRef = useRef(true)
+  // Mirror of `isPlaying` for synchronous reads. The replay path (reset →
+  // play in the same tick) needs an immediate value; the React state is
+  // still queued and the play() closure would read the stale "true" from
+  // before reset, no-op'ing the guard. The ref is updated wherever
+  // isPlaying state is updated.
+  const isPlayingRef = useRef(false)
 
   // Pause primitives — resolver is replaced with a new pending promise on pause,
   // and called/cleared on resume so awaiting ops continue.
@@ -133,6 +133,7 @@ export function useGuidedPlayer({
     activeAnimationRef.current?.cancel?.()
     activeAnimationRef.current = null
     cancelSpeech()
+    isPlayingRef.current = false
     setIsPlaying(false)
     setIsPaused(false)
     setIsComplete(false)
@@ -143,11 +144,11 @@ export function useGuidedPlayer({
   }, [payload.narrationBox.placeholder, containerRef])
 
   const pause = useCallback(() => {
-    if (!isPlaying || pausedRef.current) return
+    if (!isPlayingRef.current || pausedRef.current) return
     pausedRef.current = true
     setIsPaused(true)
     activeAnimationRef.current?.pause()
-  }, [isPlaying])
+  }, [])
 
   const resume = useCallback(() => {
     if (!pausedRef.current) return
@@ -161,7 +162,10 @@ export function useGuidedPlayer({
   }, [])
 
   const play = useCallback(() => {
-    if (isPlaying) return
+    // Read from the ref so a synchronous reset()→play() (the Replay path)
+    // sees the just-cleared value, not the stale "true" from a closure
+    // bound to the previous render.
+    if (isPlayingRef.current) return
     const root = containerRef.current
     if (!root) return
 
@@ -169,6 +173,7 @@ export function useGuidedPlayer({
     const mySequence = sequenceRef.current
     const shouldCancel = () => sequenceRef.current !== mySequence
 
+    isPlayingRef.current = true
     setIsPlaying(true)
     setIsPaused(false)
     setIsComplete(false)
@@ -201,6 +206,7 @@ export function useGuidedPlayer({
         }
       } finally {
         if (!shouldCancel()) {
+          isPlayingRef.current = false
           setIsPlaying(false)
           setIsPaused(false)
           setIsComplete(true)
@@ -210,7 +216,6 @@ export function useGuidedPlayer({
       }
     })()
   }, [
-    isPlaying,
     payload.steps,
     payload.locale,
     totalSteps,

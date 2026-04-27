@@ -65,11 +65,11 @@ export function GuidedExplanationRunner({ payload }: GuidedExplanationRunnerProp
   const currentStepTitle = currentStep > 0 ? (payload.steps[currentStep - 1]?.title ?? null) : null
 
   const handleReplay = useCallback(() => {
+    // reset() clears isPlayingRef synchronously; play() reads the ref
+    // (not the React state), so we can call them back-to-back without
+    // waiting for the render cycle. No setTimeout needed.
     reset()
-    // Let reset's state updates flush before the next play kicks off, so
-    // play() reads a clean isPlaying/currentStep closure instead of the
-    // stale "just finished" one.
-    setTimeout(() => play(), 0)
+    play()
   }, [reset, play])
 
   // Sanitize SVG at render time (strips <script>, event handlers,
