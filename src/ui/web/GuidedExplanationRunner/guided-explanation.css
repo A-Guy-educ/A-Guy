@@ -45,61 +45,265 @@
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
-  background: hsl(var(--muted) / 0.3);
-  border: 1px solid hsl(var(--border));
-  border-radius: 0.75rem;
+  /* Soft radial gradient + inner hairline — feels lit rather than flat. */
+  background:
+    radial-gradient(ellipse at center, hsl(var(--background)) 0%, hsl(var(--muted) / 0.35) 100%),
+    hsl(var(--muted) / 0.3);
+  border: 1px solid hsl(var(--border) / 0.7);
+  border-radius: 1rem;
   overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 hsl(var(--background) / 0.8),
+    0 8px 24px -8px hsl(var(--foreground) / 0.08),
+    0 2px 6px -2px hsl(var(--foreground) / 0.05);
+}
+
+.ge-scene-inner {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.ge-scene svg {
+.ge-scene-inner svg {
   width: 100%;
   height: 100%;
   max-width: 450px;
 }
 
+/* Play overlay — shown before the student has started playback. */
+.ge-play-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: hsl(var(--background) / 0.35);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  border: 0;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    transform 0.15s ease;
+  z-index: 2;
+}
+
+.ge-play-overlay:hover {
+  background: hsl(var(--background) / 0.5);
+}
+
+.ge-play-overlay-icon {
+  width: 64px;
+  height: 64px;
+  padding: 18px;
+  padding-inline-start: 22px; /* visual centering for triangular Play glyph */
+  color: hsl(var(--primary-foreground));
+  background: hsl(var(--primary));
+  border-radius: 9999px;
+  box-shadow:
+    0 6px 20px hsl(var(--primary) / 0.35),
+    0 2px 6px hsl(var(--primary) / 0.2);
+  transition: transform 0.15s ease;
+}
+
+.ge-play-overlay:hover .ge-play-overlay-icon {
+  transform: scale(1.06);
+}
+
+.ge-play-overlay:active .ge-play-overlay-icon {
+  transform: scale(0.96);
+}
+
+/* Step card — small chapter-title overlay while a step is playing. */
+.ge-step-card {
+  position: absolute;
+  top: 0.75rem;
+  inset-inline-start: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  background: hsl(var(--background) / 0.85);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid hsl(var(--border) / 0.6);
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  box-shadow: 0 2px 8px hsl(var(--foreground) / 0.06);
+  animation: ge-step-card-in 0.4s ease both;
+  z-index: 1;
+  max-width: calc(100% - 1.5rem);
+}
+
+@keyframes ge-step-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ge-step-card-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: hsl(var(--primary-foreground));
+  background: hsl(var(--primary));
+  border-radius: 9999px;
+}
+
+.ge-step-card-title {
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ge-step-card-total {
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+  font-weight: 500;
+}
+
+/* Completion card — shown after the last step finishes. */
+.ge-completion-card {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 2rem;
+  text-align: center;
+  background: hsl(var(--background) / 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: ge-completion-in 0.5s ease both;
+  z-index: 2;
+}
+
+@keyframes ge-completion-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.ge-completion-checkmark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: hsl(var(--primary-foreground));
+  background: hsl(var(--primary));
+  border-radius: 9999px;
+  box-shadow: 0 6px 20px hsl(var(--primary) / 0.3);
+  animation: ge-completion-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes ge-completion-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.ge-completion-title {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: hsl(var(--foreground));
+  margin: 0;
+}
+
+.ge-completion-subtitle {
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  margin: 0;
+  max-width: 32ch;
+}
+
+.ge-completion-replay {
+  margin-top: 0.5rem;
+}
+
+/* Progress bar ---------------------------------------------------------- */
+
+.ge-progress {
+  display: flex;
+  gap: 0.25rem;
+  height: 4px;
+  padding: 0;
+  margin-top: -0.75rem; /* snug to scene, still in gap */
+}
+
+.ge-progress-step {
+  flex: 1;
+  background: hsl(var(--muted) / 0.6);
+  border-radius: 9999px;
+  transition:
+    background-color 0.3s ease,
+    transform 0.25s ease;
+}
+
+.ge-progress-step-done {
+  background: hsl(var(--primary));
+}
+
+.ge-progress-step-active {
+  background: hsl(var(--primary));
+  transform: scaleY(1.5);
+}
+
 /* Animation primitives --------------------------------------------------- */
+/* Initial hidden states only — Anime.js drives the transitions via inline  */
+/* styles (stroke-dasharray/offset for draw, opacity for fade).             */
 
-.ge-scene .ge-draw-path {
-  stroke-dasharray: 1000;
-  stroke-dashoffset: 1000;
-  transition: stroke-dashoffset 1.5s ease-in-out;
-}
-
-.ge-scene .ge-draw-path.ge-drawn {
-  stroke-dashoffset: 0;
-}
-
+.ge-scene .ge-draw-path,
 .ge-scene .ge-draw-path-fast {
-  stroke-dasharray: 1000;
-  stroke-dashoffset: 1000;
-  transition: stroke-dashoffset 0.8s ease-in-out;
-}
-
-.ge-scene .ge-draw-path-fast.ge-drawn {
-  stroke-dashoffset: 0;
+  /* Start with the full path length hidden — Anime sets the real length    */
+  /* (from getTotalLength) before animating stroke-dashoffset to 0.         */
+  stroke-dasharray: 9999;
+  stroke-dashoffset: 9999;
 }
 
 .ge-scene .ge-fade-element {
   opacity: 0;
-  transition: opacity 0.5s ease-in-out;
 }
 
-.ge-scene .ge-fade-element.ge-visible {
-  opacity: 1;
+/* Hollow markers / open-endpoint interval dots / marker halos pull from the
+   theme background so light/dark modes both look right. The SVG generator
+   emits these classes in place of hardcoded fill="white" / stroke="white". */
+.ge-scene .ge-bg-fill {
+  fill: hsl(var(--background));
+}
+.ge-scene .ge-bg-stroke {
+  stroke: hsl(var(--background));
 }
 
 .ge-scene .ge-highlight-poly {
   opacity: 0;
-  transition:
-    opacity 1s ease-in-out,
-    fill 1s ease-in-out;
-}
-
-.ge-scene .ge-highlight-poly.ge-visible {
-  opacity: 1;
   fill: hsl(var(--primary) / 0.2);
 }
 
@@ -107,8 +311,75 @@
 
 .ge-controls {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
+  align-items: center;
   gap: 1rem;
+}
+
+.ge-sound-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  background: hsl(var(--muted) / 0.5);
+  color: hsl(var(--foreground));
+  border: 0;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.ge-sound-btn:hover {
+  background: hsl(var(--muted) / 0.8);
+}
+
+.ge-sound-btn-off {
+  background: hsl(var(--muted) / 0.4);
+  color: hsl(var(--muted-foreground));
+}
+
+.ge-sound-btn-off:hover {
+  color: hsl(var(--foreground));
+}
+
+.ge-speed-group {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  background: hsl(var(--muted) / 0.5);
+  border-radius: 9999px;
+}
+
+.ge-speed-btn {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+  background: transparent;
+  border: 0;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.ge-speed-btn:hover {
+  color: hsl(var(--foreground));
+}
+
+.ge-speed-btn-active {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.ge-speed-btn-active:hover {
+  color: hsl(var(--primary-foreground));
 }
 
 .ge-btn {
