@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "rev": 13,
-  "cursor": "fix-ci-1384-1383-1381-1379-1377-1376-1375-1374-1369-1366-1364-1355-1285-1272-1266-1227",
+  "rev": 14,
+  "cursor": "fix-ci-1227-stuck",
   "data": {
     "perPr": {
       "1227": {
         "lastSha": "01da2421b50b6bc8f82bd907b22fd2a524314b40",
         "attempts": 2,
-        "stuck": false
+        "stuck": true
       },
       "1266": {
         "lastSha": "7f64a26f993738887c6d6cd9d660c9b736a9de65",
