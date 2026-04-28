@@ -1,46 +1,26 @@
 {
   "version": 1,
-  "rev": 11,
-  "cursor": "fix-ci-1384-1383-1381-1379-1377-1376-1375-1374-1369-1366-1364-1355-1285-1272-1266-1227-1217",
+  "rev": 15,
+  "cursor": "fix-ci-1285-actioned",
   "data": {
     "perPr": {
       "1227": {
         "lastSha": "01da2421b50b6bc8f82bd907b22fd2a524314b40",
-        "attempts": 1,
-        "stuck": false
+        "attempts": 2,
+        "stuck": true
       },
       "1266": {
         "lastSha": "7f64a26f993738887c6d6cd9d660c9b736a9de65",
-        "attempts": 1,
-        "stuck": false
-      },
-      "1272": {
-        "lastSha": "d5e445db960af5ed3ad1700a420356eb134915c4",
-        "attempts": 0,
+        "attempts": 2,
         "stuck": false
       },
       "1285": {
-        "lastSha": "d1e69b1c5444a0ce10b104476a390a278d37e72c",
-        "attempts": 1,
-        "stuck": false
-      },
-      "1355": {
-        "lastSha": "bdfefe4cbbd316279febbee0974b696da6472422",
-        "attempts": 0,
-        "stuck": false
-      },
-      "1364": {
-        "lastSha": "d5b4e884573341b193c962115f0062bd97b6d538",
-        "attempts": 0,
-        "stuck": false
-      },
-      "1374": {
-        "lastSha": "0e5710f6effc6a42e96db03dd9c74c48140e5886",
-        "attempts": 0,
+        "lastSha": "fbeef6e2fefba35a8dc112cd47cf7ad570d6005b",
+        "attempts": 2,
         "stuck": false
       },
       "1375": {
-        "lastSha": "9c4a785993dd67f4d7deebb313429e55ebe52aa3",
+        "lastSha": "de8c4027c84cd2828e6bdd1d472425e0fe634db5",
         "attempts": 0,
         "stuck": false
       }
