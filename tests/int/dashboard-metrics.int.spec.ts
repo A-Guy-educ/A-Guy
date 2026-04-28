@@ -169,7 +169,9 @@ describe.skipIf(!hasDatabaseUrl)('GET /api/admin/dashboard-metrics — course en
     const body = (await res.json()) as {
       engagement: { courseEnrollments: Array<{ courseTitle: string; count: number }> }
     }
-    const titleToCount = new Map(body.engagement.courseEnrollments.map((e) => [e.courseTitle, e.count]))
+    const titleToCount = new Map(
+      body.engagement.courseEnrollments.map((e) => [e.courseTitle, e.count]),
+    )
 
     expect(titleToCount.get(`Test Course 1 ${ts}`)).toBe(3)
     expect(titleToCount.get(`Test Course 2 ${ts}`)).toBe(2)
