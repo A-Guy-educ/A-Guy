@@ -1,16 +1,26 @@
 {
   "version": 1,
-  "rev": 8,
-  "cursor": "fix-ci-1375-1374-1364-1355-1272-1227",
+  "rev": 9,
+  "cursor": "fix-ci-1384-1383-1381-1379-1377-1376-1375-1374-1369-1366-1364-1355-1285-1272-1266-1227-1217",
   "data": {
     "perPr": {
       "1227": {
-        "lastSha": "d5e445db960af5ed3ad1700a420356eb134915c4",
+        "lastSha": "01da2421b50b6bc8f82bd907b22fd2a524314b40",
+        "attempts": 1,
+        "stuck": false
+      },
+      "1266": {
+        "lastSha": "7f64a26f993738887c6d6cd9d660c9b736a9de65",
         "attempts": 0,
         "stuck": false
       },
       "1272": {
         "lastSha": "d5e445db960af5ed3ad1700a420356eb134915c4",
+        "attempts": 0,
+        "stuck": false
+      },
+      "1285": {
+        "lastSha": "d1e69b1c5444a0ce10b104476a390a278d37e72c",
         "attempts": 0,
         "stuck": false
       },
@@ -31,7 +41,7 @@
       },
       "1375": {
         "lastSha": "9c4a785993dd67f4d7deebb313429e55ebe52aa3",
-        "attempts": 1,
+        "attempts": 0,
         "stuck": false
       }
     }
