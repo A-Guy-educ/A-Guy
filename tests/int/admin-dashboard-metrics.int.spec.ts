@@ -44,14 +44,22 @@ beforeAll(async () => {
   const studentEmail = `student-shape-${ts}@test.local`
   const password = 'test-password-1234'
 
+  // Admin user — create as default user, then promote via update.
+  // The Users beforeChange hook strips role=Admin on create; only
+  // payload.update with overrideAccess can set it.
+  // See tests/int/access-codes.int.spec.ts for the canonical pattern.
   const admin = await payload.create({
     collection: 'users',
     data: {
       email: adminEmail,
       password,
       name: 'Shape Admin',
-      role: AccountRole.Admin,
     } as any,
+  })
+  await payload.update({
+    collection: 'users',
+    id: admin.id,
+    data: { role: AccountRole.Admin } as any,
     overrideAccess: true,
   })
   adminUserId = admin.id
