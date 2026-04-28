@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "rev": 2,
+  "rev": 4,
   "cursor": "done",
   "data": {
     "perPr": {
@@ -35,10 +35,10 @@
         "lastActionAt": null
       },
       "1375": {
-        "lastSha": "9c4a785993dd67f4d7deebb313429e55ebe52aa3",
-        "attempts": 0,
+        "lastSha": "f9455df781b96f37ae82208a41a23ba2537f05fa",
+        "attempts": 1,
         "stuck": false,
-        "lastActionAt": null
+        "lastActionAt": "2026-04-28T00:00:00Z"
       },
       "1376": {
         "lastSha": "7cd3d17f03f807f80a69c95b41298520ec9b36db",
@@ -57,6 +57,12 @@
         "attempts": 0,
         "stuck": false,
         "lastActionAt": null
+      },
+      "1383": {
+        "lastSha": "765d4e4ada66b9f3b1aea6223aab6940e335a97e",
+        "attempts": 1,
+        "stuck": false,
+        "lastActionAt": "2026-04-28T17:12:22Z"
       }
     }
   },
