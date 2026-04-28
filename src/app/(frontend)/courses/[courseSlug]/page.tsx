@@ -81,8 +81,13 @@ export default async function CoursePage({ params }: CoursePageProps) {
     queryLessonsByCourse({ courseId: course.id }),
   ])
 
-  // Fetch lesson progress: exercises completed / total exercises per lesson
-  const lessonProgressMap = await buildLessonProgressMap(lessons.map((l) => l.id))
+  // Fetch lesson progress: exercises completed / total exercises per lesson.
+  // Scoped to the course's grade label so users with progress under multiple
+  // grade buckets (one user-progress doc per grade) read the right one.
+  const lessonProgressMap = await buildLessonProgressMap(
+    lessons.map((l) => l.id),
+    course.courseLabel,
+  )
 
   return (
     <AccessGateProvider
@@ -108,6 +113,7 @@ export default async function CoursePage({ params }: CoursePageProps) {
  */
 async function buildLessonProgressMap(
   lessonIds: string[],
+  gradeLevel: string,
 ): Promise<Record<string, { completed: number; total: number; percent: number }>> {
   if (lessonIds.length === 0) return {}
 
@@ -159,10 +165,14 @@ async function buildLessonProgressMap(
     return result
   }
 
-  // Fetch user progress
+  // Fetch user progress for THIS grade bucket only. Users have one user-progress
+  // doc per gradeLevel; reading without this filter would pick an arbitrary doc
+  // and render 0% for every lesson on this course page.
   const userProgressResult = await payload.find({
     collection: 'user-progress',
-    where: { user: { equals: userId } },
+    where: {
+      and: [{ user: { equals: userId } }, { gradeLevel: { equals: gradeLevel } }],
+    },
     limit: 1,
     overrideAccess: true,
   })

@@ -305,6 +305,7 @@
     "chatPause": "Pause",
     "chatResume": "Resume",
     "chatSpeed": "Speed",
+    "chatStepContextBadge": "Step {current} of {total}",
     "uploadFile": "Upload File",
     "sendMessage": "Send",
     "switchToChat": "Switch to chat view",
@@ -391,6 +392,10 @@
       "uploadFailed": "Failed to upload image. Please try again.",
       "generateLesson": "Generate Explanation",
       "generatingLesson": "Generating interactive explanation...",
+      "generationFailedTitle": "Couldn't build a visual lesson",
+      "generationFailedFallback": "You can still ask questions about this image in the chat — your tutor sees the same picture.",
+      "tryAgain": "Try again",
+      "askInChatHint": "Or just ask in chat",
       "backToUpload": "Back to exercise",
       "resumeLesson": "Resume video",
       "startOver": "Start over",
@@ -401,7 +406,13 @@
         "playing": "Playing...",
         "resetButton": "Reset",
         "claim": "Claim",
-        "reason": "Reason"
+        "reason": "Reason",
+        "speed": "Speed",
+        "soundOn": "Sound on (click to mute)",
+        "soundOff": "Sound off (click to enable)",
+        "complete": "Solved ✓",
+        "replay": "Replay",
+        "playAria": "Start explanation"
       }
     }
   },
@@ -447,9 +458,9 @@
   },
   "coursePage": {
     "tabs": {
-      "learn": "Learn",
+      "learn": "Study",
       "practice": "Practice",
-      "ask": "Ask",
+      "ask": "Questions",
       "exams": "Exams"
     },
     "grade": "Grade",
@@ -481,7 +492,6 @@
     "statsAndPerformance": "Statistics & Performance",
     "statsTip": "Track your progress and see how you're improving",
     "upcomingExam": "Upcoming Exam",
-    "bagrutTransition": "Bagrut Transition",
     "lessonCompleted": "Completed all tasks",
     "lessonsRemaining": "{count} exercises remaining",
     "notStarted": "Not started yet",

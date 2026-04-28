@@ -1,4 +1,5 @@
 import { notFound, redirect } from 'next/navigation'
+import type { FormulaSheet } from '@/payload-types'
 import { getSystemLocale } from '@/i18n/server-locale'
 import { isValidContentLocale } from '@/server/payload/fields/contentLocale'
 import { queryCourseBySlug } from '@/server/repos/queries/courses'
@@ -9,6 +10,7 @@ import {
   queryExercisesByLesson,
 } from '@/server/repos/queries/exercises'
 import { queryMediaByIds } from '@/server/repos/queries/media'
+import { resolveFormulaSheet } from '@/server/repos/queries/formula-sheets'
 import { extractAllMediaIds } from '@/ui/web/exerciserenderer/utils/extractMediaIds'
 import { ExercisesPager } from '../../_components/ExercisesPager'
 
@@ -100,6 +102,27 @@ export default async function ExercisePage({ params }: ExercisePageProps) {
 
   const backUrl = '/study'
 
+  // Determine if chat should be shown (lesson has exercises or lesson context)
+  const hasLessonContext = Boolean(lesson.lessonContextText?.trim())
+  const hasExercises = exercises.length > 0
+  const showChat = hasExercises || hasLessonContext
+
+  // Resolve formula sheet for chat (with course fallback)
+  // JSON.parse(JSON.stringify()) strips non-serializable data for Next.js server→client props
+  let formulaSheet: FormulaSheet | null = null
+  if (contentLocale && lessonCourseId) {
+    try {
+      const result = await resolveFormulaSheet({
+        lessonId: lesson.id,
+        courseId: lessonCourseId,
+        locale: contentLocale,
+      })
+      formulaSheet = result?.sheet ? JSON.parse(JSON.stringify(result.sheet)) : null
+    } catch {
+      // Formula sheet resolution failed — continue without it
+    }
+  }
+
   const mediaMap = await queryMediaByIds(extractAllMediaIds(exercises))
 
   return (
@@ -113,6 +136,8 @@ export default async function ExercisePage({ params }: ExercisePageProps) {
       lessonId={lesson.id}
       gradeLevel={course.courseLabel}
       mediaMap={mediaMap}
+      showChat={showChat}
+      formulaSheet={formulaSheet}
     />
   )
 }

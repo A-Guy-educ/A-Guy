@@ -5,7 +5,7 @@ import { SystemLink } from '@/infra/loading/components/SystemLink'
 import type { Chapter, Course, Lesson } from '@/payload-types'
 import type { LessonProgress } from '../types'
 import { useTranslations } from '@/ui/web/providers/I18n'
-import { BarChart3, GraduationCap, Sparkles } from 'lucide-react'
+import { BarChart3, GraduationCap } from 'lucide-react'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { AskTab } from '../AskTab'
@@ -97,7 +97,7 @@ export function CoursePageContent({
 
         {/* Footer actions with divider */}
         <div className="mt-16 pt-8 border-t border-border">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-content-gap">
+          <div className="flex flex-wrap justify-center items-center gap-content-gap">
             <SystemLink
               href={`/stats?courseId=${course.id}`}
               className="flex items-center justify-center gap-content-gap-xs text-body-sm font-bold text-foreground bg-card border border-border px-6 py-3 rounded-full hover:bg-muted/50 transition-all duration-normal"
@@ -112,10 +112,6 @@ export function CoursePageContent({
               <GraduationCap className="w-4 h-4" />
               {t('upcomingExam')}
             </SystemLink>
-            <button className="flex items-center justify-center gap-content-gap-xs text-body-sm font-bold text-foreground bg-card border border-border px-6 py-3 rounded-full hover:bg-muted/50 transition-all duration-normal">
-              <Sparkles className="w-4 h-4" />
-              {t('bagrutTransition')}
-            </button>
           </div>
         </div>
       </main>
