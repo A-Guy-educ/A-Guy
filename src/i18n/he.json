@@ -305,6 +305,7 @@
     "chatPause": "השהיה",
     "chatResume": "המשך",
     "chatSpeed": "מהירות",
+    "chatStepContextBadge": "שלב {current} מתוך {total}",
     "uploadFile": "העלאת קובץ",
     "sendMessage": "שליחה",
     "switchToChat": "עבור לתצוגת צ'אט",
@@ -391,6 +392,10 @@
       "uploadFailed": "העלאת התמונה נכשלה. נסה שוב.",
       "generateLesson": "צור הסבר אינטראקטיבי",
       "generatingLesson": "יוצר הסבר אינטראקטיבי...",
+      "generationFailedTitle": "לא הצלחנו לבנות הסבר חזותי",
+      "generationFailedFallback": "אפשר עדיין לשאול על התמונה הזו בצ׳אט — המורה רואה את אותה תמונה.",
+      "tryAgain": "נסה שוב",
+      "askInChatHint": "או פשוט שאל בצ׳אט",
       "backToUpload": "חזרה לתרגיל",
       "resumeLesson": "המשך סרטון",
       "startOver": "התחל מחדש",
@@ -401,7 +406,13 @@
         "playing": "מופעל...",
         "resetButton": "איפוס",
         "claim": "טענה",
-        "reason": "נימוק"
+        "reason": "נימוק",
+        "speed": "מהירות",
+        "soundOn": "סאונד דלוק (לחץ להשתקה)",
+        "soundOff": "סאונד מושתק (לחץ להפעלה)",
+        "complete": "הכל טוב! ✓",
+        "replay": "חזרה מהתחלה",
+        "playAria": "התחל הסבר"
       }
     }
   },
