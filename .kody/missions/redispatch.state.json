@@ -1,7 +1,60 @@
 {
   "version": 1,
-  "rev": 1,
-  "cursor": "seed",
-  "data": {},
+  "rev": 2,
+  "cursor": "scanned",
+  "data": {
+    "perIssue": {
+      "1351": {
+        "lastResumedAt": null,
+        "lastResumedHistoryTimestamp": null,
+        "attemptsToday": 0,
+        "stuck": false
+      },
+      "1360": {
+        "lastResumedAt": null,
+        "lastResumedHistoryTimestamp": null,
+        "attemptsToday": 0,
+        "stuck": false
+      },
+      "1363": {
+        "lastResumedAt": null,
+        "lastResumedHistoryTimestamp": null,
+        "attemptsToday": 0,
+        "stuck": false
+      },
+      "1382": {
+        "lastResumedAt": null,
+        "lastResumedHistoryTimestamp": null,
+        "attemptsToday": 0,
+        "stuck": false
+      }
+    },
+    "dryRunLog": [
+      {
+        "issueNumber": 1382,
+        "action": "resume",
+        "reason": "status=running, lastOutcome timestamp 2026-04-28T14:45:08Z (8+ hours ago), no recent kody comments, human-created PR #1383 linked (not kody-authored), no in-flight workflow runs",
+        "plannedAt": "2026-04-28T23:04:40Z"
+      },
+      {
+        "issueNumber": 1363,
+        "action": "resume",
+        "reason": "status=running, lastOutcome timestamp 2026-04-27T09:49:12Z (37+ hours ago), no recent kody comments, human-created PR #1364 linked (not kody-authored), no in-flight workflow runs",
+        "plannedAt": "2026-04-28T23:04:40Z"
+      },
+      {
+        "issueNumber": 1360,
+        "action": "resume",
+        "reason": "status=running, lastOutcome timestamp 2026-04-27T09:58:29Z (37+ hours ago), no recent kody comments, human-created PR #1366 linked (not kody-authored), no in-flight workflow runs",
+        "plannedAt": "2026-04-28T23:04:40Z"
+      },
+      {
+        "issueNumber": 1351,
+        "action": "resume",
+        "reason": "status=running, lastOutcome timestamp 2026-04-27T20:30:49Z (26+ hours ago), no recent kody comments, human-created PR #1375 linked (not kody-authored), no in-flight workflow runs",
+        "plannedAt": "2026-04-28T23:04:40Z"
+      }
+    ]
+  },
   "done": false
 }
