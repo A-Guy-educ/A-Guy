@@ -1,14 +1,9 @@
 {
   "version": 1,
-  "rev": 7,
-  "cursor": "fix-ci-stuck-1217-fix-ci-1266-fix-ci-1285",
+  "rev": 17,
+  "cursor": "fix-ci-1285-actioned",
   "data": {
     "perPr": {
-      "1217": {
-        "lastSha": "9c35bf328a4d09646fe7ac777cafff1b4d4cbfeb",
-        "attempts": 2,
-        "stuck": true
-      },
       "1227": {
         "lastSha": "01da2421b50b6bc8f82bd907b22fd2a524314b40",
         "attempts": 2,
@@ -20,7 +15,7 @@
         "stuck": true
       },
       "1285": {
-        "lastSha": "d002cbea79d82dbe7e21228b868d456540aedbfb",
+        "lastSha": "422e9b090ef3d6ab85c9bd7bbc00b845d5acf33c",
         "attempts": 1,
         "stuck": false
       }
