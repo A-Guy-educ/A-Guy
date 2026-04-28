@@ -15,6 +15,7 @@ An issue enters this mission's scope when it has a kody state block (`<!-- kody:
 ## Restrictions
 
 - **Dry-run mode is currently ENABLED.** While dry-run is on: do NOT post the `@kody resume` comment, do NOT post the stuck comment, and do NOT add the `kody:stuck` label. Instead, for every issue that *would* have been actioned, append an entry to `data.dryRunLog` (max 50 most recent entries) with `{ issueNumber, action: "resume" | "mark-stuck", reason, plannedAt: ISO }`. To disable dry-run, remove this bullet entirely.
+- **Live-test scope gate is currently ENABLED.** When dry-run is OFF, only act (post `@kody resume`, post the stuck comment, add `kody:stuck`) on issues that carry the label `kody:test-redispatch`. While dry-run is ON, this gate is ignored — continue logging all candidates to `data.dryRunLog` so the gate's effect on live behavior can be previewed. To go full live (act on every stuck issue, opt-out via `kody:no-redispatch`), remove this bullet entirely.
 - Only act when ALL of the following are true for the issue:
   - `core.status === "running"` in the most recent kody state block.
   - The most recent `history[*].timestamp` (or `core.lastOutcome.timestamp` if history is empty) is older than **40 minutes**.
