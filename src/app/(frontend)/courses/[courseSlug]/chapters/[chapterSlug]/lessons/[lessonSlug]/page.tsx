@@ -17,7 +17,6 @@ import { checkPaidAccess } from '@/server/utils/check-paid-access'
 import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
 import { ChatInterface } from '@/ui/web/chat'
 import { extractAllMediaIds } from '@/ui/web/exerciserenderer/utils/extractMediaIds'
-import { consolidateLatexBlocks } from '@/ui/web/shared/LatexDocumentViewer/consolidate-latex-blocks'
 import { stripHtml } from '@/utils/strip-html'
 import { notFound } from 'next/navigation'
 import { DualModeLessonView } from './_components/DualModeLessonView'
@@ -55,7 +54,8 @@ function renderDualMode(args: {
   gradeLevel: string
   analyticsContentType: 'blocks' | 'exercises'
   backUrl: string
-  consolidatedLatex: string
+  /** Exercises whose blocks feed both PDF and Interactive tabs. */
+  exercises: React.ComponentProps<typeof DualModeLessonView>['exercises']
   interactive: React.ComponentProps<typeof DualModeLessonView>['interactive']
   mediaMap?: Record<string, Media>
   chatLessonId: string
@@ -83,7 +83,7 @@ function renderDualMode(args: {
         chapterSlug={args.chapterSlug}
         lessonSlug={args.lessonSlug}
         gradeLevel={args.gradeLevel}
-        consolidatedLatex={args.consolidatedLatex}
+        exercises={args.exercises}
         interactive={args.interactive}
         mediaMap={args.mediaMap}
         chatLessonId={args.chatLessonId}
@@ -92,6 +92,13 @@ function renderDualMode(args: {
       />
     </AccessGateProvider>
   )
+}
+
+/** True when an exercise carries any structured content block we can render. */
+function hasRenderableBlocks(exercise: import('@/payload-types').Exercise): boolean {
+  const content = exercise.content as { blocks?: unknown } | null | undefined
+  if (!content || !Array.isArray(content.blocks)) return false
+  return content.blocks.length > 0
 }
 
 export default async function LessonPage({ params }: LessonPageProps) {
@@ -218,11 +225,12 @@ export default async function LessonPage({ params }: LessonPageProps) {
       }
     }
 
-    // Dual-mode view: when no media is attached AND the lesson's exercises carry any
-    // LaTeX blocks, offer a PDF / Interactive tab toggle (V1-272).
-    const consolidated = consolidateLatexBlocks(blockExercises)
+    // Dual-mode view: when no media is attached AND the lesson has at least one
+    // exercise carrying renderable content blocks, offer a PDF / Interactive
+    // tab toggle. Both tabs read from the same `exercise.content.blocks`.
+    const dualModeExercises = blockExercises.filter(hasRenderableBlocks)
     const hasAttachedMedia = validFiles.length > 0
-    if (!hasAttachedMedia && consolidated.hasContent) {
+    if (!hasAttachedMedia && dualModeExercises.length > 0) {
       return renderDualMode({
         accessType: effectiveAccessType,
         courseSlug,
@@ -235,7 +243,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
         gradeLevel: course.courseLabel,
         analyticsContentType: 'blocks',
         backUrl: '/study',
-        consolidatedLatex: consolidated.latex,
+        exercises: dualModeExercises,
         interactive: { kind: 'blocks', blocks: resolvedBlocks, contentPageBodies, validFiles },
         mediaMap,
         chatLessonId: lesson.id,
@@ -290,11 +298,12 @@ export default async function LessonPage({ params }: LessonPageProps) {
   // Batch-fetch all media referenced inside exercise content blocks
   const mediaMap = hasExercises ? await queryMediaByIds(extractAllMediaIds(exercises)) : {}
 
-  // Dual-mode view: when no media is attached AND any exercise has LaTeX blocks (V1-272).
-  // Media-attached lessons still route to PdfLessonPager below (media trumps).
+  // Dual-mode view: when no media is attached AND any exercise has renderable
+  // content blocks. Media-attached lessons still route to PdfLessonPager
+  // below (media trumps).
   if (hasExercises && !hasContent) {
-    const consolidated = consolidateLatexBlocks(exercises)
-    if (consolidated.hasContent) {
+    const dualModeExercises = exercises.filter(hasRenderableBlocks)
+    if (dualModeExercises.length > 0) {
       return renderDualMode({
         accessType: effectiveAccessType,
         courseSlug,
@@ -307,7 +316,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
         gradeLevel: course.courseLabel,
         analyticsContentType: 'exercises',
         backUrl,
-        consolidatedLatex: consolidated.latex,
+        exercises: dualModeExercises,
         interactive: { kind: 'exercises', exercises },
         mediaMap,
         chatLessonId,
