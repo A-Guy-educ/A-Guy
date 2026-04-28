@@ -1,5 +1,7 @@
 import type { CSSProperties } from 'react'
 
+import { ACCENT } from './colors'
+
 export const widgetContainerStyle: CSSProperties = {
   marginBottom: 24,
 }
@@ -107,4 +109,92 @@ export const errorStyle: CSSProperties = {
   color: 'var(--theme-error)',
   borderRadius: 8,
   fontSize: 13,
+}
+
+// Registration card styles for redesigned user metrics card
+export const registeredCardContainerStyle: CSSProperties = {
+  padding: 24,
+  backgroundColor: 'var(--theme-elevation-50)',
+  border: '1px solid var(--theme-elevation-200)',
+  borderRadius: 12,
+  position: 'relative',
+  overflow: 'hidden',
+  boxShadow: '0 4px 16px 0 rgb(0 0 0 / 0.1)',
+}
+
+export const registeredCardStripStyle: CSSProperties = {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  height: 4,
+  background: ACCENT.blue,
+}
+
+export const registeredCardTopStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'flex-start',
+  paddingTop: 8,
+}
+
+export const registeredCardIconStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: 44,
+  height: 44,
+  borderRadius: 10,
+  marginBottom: 12,
+  backgroundColor: 'var(--theme-elevation-100)',
+  color: ACCENT.blue,
+}
+
+export const registeredCardTotalStyle: CSSProperties = {
+  fontSize: 42,
+  fontWeight: 700,
+  color: 'var(--theme-elevation-1000)',
+  lineHeight: 1.1,
+  marginBottom: 4,
+}
+
+export const registeredCardSubheadingStyle: CSSProperties = {
+  fontSize: 13,
+  fontWeight: 500,
+  color: 'var(--theme-elevation-500)',
+}
+
+export const registeredCardDetailBoxStyle: CSSProperties = {
+  marginTop: 16,
+  padding: 12,
+  backgroundColor: 'var(--theme-elevation-100)',
+  borderRadius: 8,
+}
+
+export const registeredCardRowStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: '8px 0',
+  borderBottom: '1px solid var(--theme-elevation-200)',
+}
+
+export const registeredCardRowLabelStyle: CSSProperties = {
+  fontSize: 13,
+  fontWeight: 500,
+  color: 'var(--theme-elevation-500)',
+}
+
+export const registeredCardRowRightStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+}
+
+export const registeredCardRowValueStyle: CSSProperties = {
+  fontSize: 15,
+  fontWeight: 700,
+  color: 'var(--theme-elevation-1000)',
+  minWidth: 40,
+  textAlign: 'right',
 }
