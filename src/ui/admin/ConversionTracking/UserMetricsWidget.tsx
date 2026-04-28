@@ -22,6 +22,7 @@ import {
   registeredCardSubheadingStyle,
   registeredCardTopStyle,
   registeredCardTotalStyle,
+  registeredTrendBadgeStyle,
   widgetContainerStyle,
   widgetTitleStyle,
 } from './styles'
@@ -103,21 +104,7 @@ const RegisteredUsersCard: React.FC<RegisteredUsersCardProps> = ({
             <div style={registeredCardRowRightStyle}>
               <span style={registeredCardRowValueStyle}>{row.value.toLocaleString()}</span>
               {row.trend && isFinite(row.trend.value) && (
-                <div
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 2,
-                    padding: '2px 6px',
-                    borderRadius: 10,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    backgroundColor: row.trend.isPositive
-                      ? 'var(--theme-success-100)'
-                      : 'rgba(239, 68, 68, 0.12)',
-                    color: row.trend.isPositive ? 'var(--theme-success)' : 'var(--theme-error)',
-                  }}
-                >
+                <div style={registeredTrendBadgeStyle(row.trend.isPositive)}>
                   <span>{row.trend.isPositive ? '▲' : '▼'}</span>
                   <span>
                     {row.trend.isPositive ? '+' : ''}

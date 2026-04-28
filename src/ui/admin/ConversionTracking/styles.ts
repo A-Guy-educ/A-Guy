@@ -119,7 +119,7 @@ export const registeredCardContainerStyle: CSSProperties = {
   borderRadius: 12,
   position: 'relative',
   overflow: 'hidden',
-  boxShadow: '0 4px 16px 0 rgb(0 0 0 / 0.1)',
+  boxShadow: '0 4px 16px 0 rgb(0 0 0 / 0.10), 0 2px 6px -1px rgb(0 0 0 / 0.07)',
 }
 
 export const registeredCardStripStyle: CSSProperties = {
@@ -198,3 +198,16 @@ export const registeredCardRowValueStyle: CSSProperties = {
   minWidth: 40,
   textAlign: 'right',
 }
+
+// Trend badge for the registered users card — smaller variant (no marginTop, tighter padding)
+export const registeredTrendBadgeStyle = (isPositive: boolean): CSSProperties => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 2,
+  padding: '2px 6px',
+  borderRadius: 10,
+  fontSize: 11,
+  fontWeight: 600,
+  backgroundColor: isPositive ? 'var(--theme-success-100)' : 'rgba(239, 68, 68, 0.12)',
+  color: isPositive ? 'var(--theme-success)' : 'var(--theme-error)',
+})
