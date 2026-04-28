@@ -13,6 +13,7 @@ import {
   Lightbulb,
   Loader2,
   MessageSquare,
+  Play,
   Plus,
   RefreshCw,
   RotateCcw,
@@ -492,6 +493,25 @@ export function ChatInterface({
                         </span>
                       </div>
                     ))}
+                  </div>
+                )}
+                {msg.stepContext && (
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    <div
+                      className={cn(
+                        'inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-body-xs',
+                        msg.role === ChatMessageRole.User ? 'bg-primary-foreground/20' : 'bg-muted',
+                      )}
+                      title={msg.stepContext.stepTitle || undefined}
+                    >
+                      <Play className="w-3 h-3" />
+                      <span className="max-w-[200px] truncate">
+                        {tCourses('chatStepContextBadge')
+                          .replace('{current}', String(msg.stepContext.currentStepId))
+                          .replace('{total}', String(msg.stepContext.totalSteps))}
+                        {msg.stepContext.stepTitle ? `: ${msg.stepContext.stepTitle}` : ''}
+                      </span>
+                    </div>
                   </div>
                 )}
                 <ChatMessageContent content={msg.content} />

@@ -106,7 +106,7 @@ describe('Page Queries', () => {
       expect(result).toEqual(mockPages)
       expect(mockPayload.find).toHaveBeenCalledWith({
         collection: 'pages',
-        where: { status: { equals: 'published' } },
+        where: { _status: { equals: 'published' } },
         sort: 'publishedAt',
         limit: 1000,
         pagination: false,
@@ -192,7 +192,7 @@ describe('Page Queries', () => {
       expect(result).toEqual(mockPages)
       expect(mockPayload.find).toHaveBeenCalledWith({
         collection: 'pages',
-        where: { status: { equals: 'published' } },
+        where: { _status: { equals: 'published' } },
         select: { slug: true, updatedAt: true },
         limit: 1000,
         pagination: false,

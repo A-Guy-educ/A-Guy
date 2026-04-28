@@ -176,16 +176,27 @@ describe('MongoDB Connection Pool Guardrail', () => {
       }
     })
 
-    it('connection timeout settings are configured for serverless', () => {
+    it('serverSelectionTimeoutMS and waitQueueTimeoutMS must NOT be set', () => {
+      // These were added in dbb3f648 (2026-04-19) and removed on 2026-04-27.
+      // With maxPoolSize=3 they converted ordinary cold-start contention into
+      // MongoWaitQueueTimeoutError, crashing the root layout and rendering
+      // global-error.tsx. Driver defaults (wait indefinitely / 30 s server
+      // selection) make cold starts slow but not user-visible failures.
+      // This guardrail prevents anyone from re-introducing the regression.
       const configPath = resolve(__dirname, '../../src/payload.config.ts')
       const configSource = readFileSync(configPath, 'utf-8')
 
-      expect(configSource, 'serverSelectionTimeoutMS must be set to fail fast').toContain(
-        'serverSelectionTimeoutMS',
-      )
-      expect(configSource, 'waitQueueTimeoutMS must be set to prevent pile-up').toContain(
-        'waitQueueTimeoutMS',
-      )
+      // Strip block-comments so the explanatory NOTE doesn't trigger the match.
+      const codeOnly = configSource.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '')
+
+      expect(
+        codeOnly,
+        'serverSelectionTimeoutMS must NOT be set — see history note in payload.config.ts',
+      ).not.toContain('serverSelectionTimeoutMS')
+      expect(
+        codeOnly,
+        'waitQueueTimeoutMS must NOT be set — see history note in payload.config.ts',
+      ).not.toContain('waitQueueTimeoutMS')
     })
   })
 })
