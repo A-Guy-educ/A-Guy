@@ -2,9 +2,11 @@
  * @fileType component
  * @domain lessons
  * @pattern dual-view
- * @ai-summary Two-tab lesson view that lets the student toggle between the consolidated
- *             PDF-like LaTeX document and the existing interactive exercise pager.
- *             Tab choice is persisted per lesson in localStorage.
+ * @ai-summary Two-tab lesson view that lets the student toggle between a paper-style
+ *             "PDF" document built from the same exercise blocks the Interactive tab
+ *             renders, and the interactive exercise pager. Tab choice is persisted
+ *             per lesson in localStorage. Both tabs read from `exercise.content.blocks`
+ *             so admin edits flow to both.
  */
 
 'use client'
@@ -14,7 +16,7 @@ import type { Exercise, FormulaSheet, Media as MediaType } from '@/payload-types
 import type { ResolvedLessonBlock } from '@/server/repos/queries/lesson-blocks'
 import { ChatInterface } from '@/ui/web/chat'
 import { useTranslations } from '@/ui/web/providers/I18n'
-import { ConsolidatedLatexLessonView } from '../ConsolidatedLatexLessonView'
+import { BlocksDocumentLessonView } from '../BlocksDocumentLessonView'
 import { ExercisesPager } from '../ExercisesPager'
 import { LessonPager } from '../LessonPager'
 import { TabButton } from './TabButton'
@@ -39,7 +41,8 @@ interface DualModeLessonViewProps {
   lessonSlug: string
   /** Grade bucket for progress storage — must be the lesson's course label, not the user's profile grade. */
   gradeLevel: string
-  consolidatedLatex: string
+  /** Exercises whose blocks feed both the PDF document and the Interactive pager. */
+  exercises: Exercise[]
   interactive: InteractiveSource
   mediaMap?: Record<string, MediaType>
   chatLessonId?: string
@@ -56,7 +59,7 @@ export function DualModeLessonView(props: DualModeLessonViewProps) {
     chapterSlug,
     lessonSlug,
     gradeLevel,
-    consolidatedLatex,
+    exercises,
     interactive,
     mediaMap,
     chatLessonId,
@@ -103,10 +106,11 @@ export function DualModeLessonView(props: DualModeLessonViewProps) {
   if (mode === 'pdf') {
     return (
       <section role="tabpanel" id={tabIds.pdfPanel} aria-labelledby={tabIds.pdfTab}>
-        <ConsolidatedLatexLessonView
+        <BlocksDocumentLessonView
           lessonTitle={lessonTitle}
           backUrl={backUrl}
-          consolidatedLatex={consolidatedLatex}
+          exercises={exercises}
+          mediaMap={mediaMap}
           headerSlot={tabBar}
           chatContent={
             showChat ? (
