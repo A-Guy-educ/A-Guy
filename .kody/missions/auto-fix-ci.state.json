@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "rev": 14,
-  "cursor": "fix-ci-1227-stuck",
+  "rev": 18,
+  "cursor": "fix-ci-1285-actioned",
   "data": {
     "perPr": {
       "1227": {
@@ -12,36 +12,11 @@
       "1266": {
         "lastSha": "7f64a26f993738887c6d6cd9d660c9b736a9de65",
         "attempts": 2,
-        "stuck": false
-      },
-      "1272": {
-        "lastSha": "d5e445db960af5ed3ad1700a420356eb134915c4",
-        "attempts": 0,
-        "stuck": false
+        "stuck": true
       },
       "1285": {
-        "lastSha": "fbeef6e2fefba35a8dc112cd47cf7ad570d6005b",
+        "lastSha": "a1bc68840f012207e904a2e021ce8d1de69dea3e",
         "attempts": 1,
-        "stuck": false
-      },
-      "1355": {
-        "lastSha": "bdfefe4cbbd316279febbee0974b696da6472422",
-        "attempts": 0,
-        "stuck": false
-      },
-      "1364": {
-        "lastSha": "d5b4e884573341b193c962115f0062bd97b6d538",
-        "attempts": 0,
-        "stuck": false
-      },
-      "1374": {
-        "lastSha": "0e5710f6effc6a42e96db03dd9c74c48140e5886",
-        "attempts": 0,
-        "stuck": false
-      },
-      "1375": {
-        "lastSha": "9c4a785993dd67f4d7deebb313429e55ebe52aa3",
-        "attempts": 0,
         "stuck": false
       }
     }
