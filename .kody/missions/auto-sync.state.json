@@ -1,9 +1,16 @@
 {
   "version": 1,
-  "rev": 5,
+  "rev": 6,
   "cursor": "done",
   "data": {
-    "perPr": {}
+    "perPr": {
+      "1379": {
+        "lastSha": "f6fabaff485897a3af62fb75f8bd07e18d9139a5",
+        "attempts": 1,
+        "stuck": false,
+        "lastActionAt": "2026-04-28T19:09:31Z"
+      }
+    }
   },
   "done": false
 }
