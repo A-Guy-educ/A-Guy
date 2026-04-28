@@ -7,6 +7,7 @@
  * @ai-summary Issue Payload auth sessions using payload.login() for OAuth users
  */
 
+import crypto from 'crypto'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { SignJWT } from 'jose'
@@ -23,23 +24,34 @@ async function generateJWTToken({
   userId,
   email,
   role,
+  sid,
   secret,
 }: {
   userId: string
   email: string
   role: string
+  sid?: string
   secret: string
 }): Promise<string> {
-  const secretKey = new TextEncoder().encode(secret)
+  // Payload derives the JWT signing key from config.secret this way
+  // (see payload/dist/index.js: this.secret = sha256(config.secret).hex.slice(0, 32)).
+  // We must mirror that derivation so tokens pass payload.auth() verification.
+  const derivedSecret = crypto.createHash('sha256').update(secret).digest('hex').slice(0, 32)
+  const secretKey = new TextEncoder().encode(derivedSecret)
   const issuedAt = Math.floor(Date.now() / 1000)
   const exp = issuedAt + TOKEN_EXPIRATION
 
-  const token = await new SignJWT({
+  const claims: Record<string, unknown> = {
     id: userId,
     collection: 'users',
     email,
     role,
-  })
+  }
+  if (sid) {
+    claims.sid = sid
+  }
+
+  const token = await new SignJWT(claims)
     .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
     .setIssuedAt(issuedAt)
     .setExpirationTime(exp)
@@ -150,12 +162,35 @@ export async function issueSessionForLinkedAccount(userId: string): Promise<Sess
     throw new Error('PAYLOAD_SECRET environment variable is required')
   }
 
+  // Payload's users collection has useSessions: true (the default in v3).
+  // The JWT strategy rejects tokens whose `sid` does not match an existing
+  // session record on the user, so we must add one and include its id in the
+  // token claims. Mirrors payload/dist/auth/sessions.js#addSessionToUser.
+  const usersCollection = payload.collections?.users
+  const useSessions = usersCollection?.config?.auth?.useSessions === true
+  let sid: string | undefined
+  if (useSessions) {
+    const { randomUUID } = await import('crypto')
+    sid = randomUUID()
+    const now = new Date()
+    const expiresAt = new Date(now.getTime() + TOKEN_EXPIRATION * 1000)
+    await db.collections.users.updateOne(
+      { _id: new ObjectId(userId) },
+      {
+        $push: {
+          sessions: { id: sid, createdAt: now, expiresAt },
+        },
+      },
+    )
+  }
+
   // Generate JWT directly - no password swap needed
   // This is safe for concurrent requests and serverless environments
   const token = await generateJWTToken({
     userId,
     email,
     role: role || 'student',
+    sid,
     secret,
   })
 

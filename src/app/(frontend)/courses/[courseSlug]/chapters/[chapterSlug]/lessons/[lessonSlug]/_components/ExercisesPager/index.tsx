@@ -40,11 +40,19 @@ interface ExercisesPagerProps {
   chapterSlug: string
   lessonSlug: string
   lessonId: string
+  /** Grade bucket for progress storage — must be the lesson's course label, not the user's profile grade. */
+  gradeLevel: string
   mediaMap?: Record<string, MediaType>
   /** Whether to show the chat panel (true when lesson has exercises or context text) */
   showChat?: boolean
   /** Formula sheet data (passed to ChatInterface) */
   formulaSheet?: import('@/payload-types').FormulaSheet | null
+  /** Optional element rendered at the top of the primary pane (e.g. a dual-mode tab bar). */
+  headerSlot?: React.ReactNode
+  /** When true, forwards to ExerciseRenderer so `type: 'latex'` blocks are not rendered
+   * inside individual exercises (used by the dual-mode lesson view where LaTeX lives
+   * at the lesson level). */
+  hideLatexBlocks?: boolean
 }
 
 export function ExercisesPager({
@@ -55,9 +63,12 @@ export function ExercisesPager({
   chapterSlug,
   lessonSlug,
   lessonId,
+  gradeLevel,
   mediaMap,
   showChat,
   formulaSheet,
+  headerSlot,
+  hideLatexBlocks,
 }: ExercisesPagerProps) {
   const t = useTranslations('courses')
   const {
@@ -71,7 +82,7 @@ export function ExercisesPager({
     handleStart,
     getExerciseOrdinal,
     totalExercises,
-  } = useExercisesPager({ exercises, courseSlug, chapterSlug, lessonSlug, lessonId })
+  } = useExercisesPager({ exercises, courseSlug, chapterSlug, lessonSlug, lessonId, gradeLevel })
 
   const [showConfetti, setShowConfetti] = useState(false)
 
@@ -204,6 +215,7 @@ export function ExercisesPager({
         backUrl={backUrl}
         primaryContent={
           <div className="h-full flex flex-col">
+            {headerSlot}
             {/* Top progress line */}
             <Progress value={progressPercent} className="h-0.5 rounded-none" />
 
@@ -255,6 +267,7 @@ export function ExercisesPager({
                         exerciseId={currentExercise.id}
                         showExerciseNumber={currentExercise.showQuestionNumbering ?? false}
                         onResultsChange={handleExerciseResultsChange}
+                        hideLatexBlocks={hideLatexBlocks}
                       />
                     </div>
                   </motion.div>
@@ -341,6 +354,7 @@ export function ExercisesPager({
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {headerSlot}
       <Confetti active={showConfetti} />
       <Progress value={progressPercent} className="h-0.5 rounded-none" />
 

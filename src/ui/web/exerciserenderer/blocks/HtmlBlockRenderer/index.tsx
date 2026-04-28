@@ -4,6 +4,7 @@ import DOMPurify from 'dompurify'
 import { useEffect, useMemo, useState } from 'react'
 import { GuidedExplanationV1Schema } from '@/infra/contracts/guided-explanation/v1'
 import type { HtmlBlock } from '@/server/payload/collections/Exercises/types'
+import { registerPurifyHook, unregisterPurifyHook } from '@/ui/web/shared/DOMPurifyHooks'
 import { GuidedExplanationRunner } from '@/ui/web/GuidedExplanationRunner'
 
 interface HtmlBlockRendererProps {
@@ -84,19 +85,10 @@ function StaticHtmlRenderer({ html }: { html: string }) {
   const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
-    DOMPurify.addHook('afterSanitizeAttributes', (node) => {
-      if (node.tagName === 'A' && node.getAttribute('target')) {
-        node.setAttribute('rel', 'noopener noreferrer')
-      }
-      // Force every <button> to type="button" so author content cannot
-      // submit a surrounding form (e.g. the Payload admin editor).
-      if (node.tagName === 'BUTTON') {
-        node.setAttribute('type', 'button')
-      }
-    })
+    registerPurifyHook()
     setIsMounted(true)
     return () => {
-      DOMPurify.removeAllHooks()
+      unregisterPurifyHook()
     }
   }, [])
 

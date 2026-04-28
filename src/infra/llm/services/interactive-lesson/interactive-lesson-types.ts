@@ -52,6 +52,81 @@ export interface GeometryData {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Graph data — coordinate plane with plotted functions and marked points
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** A function plotted as a polyline of pre-sampled (x, y) pairs. */
+export interface GraphPlot {
+  /** Unique id targeted by step actions (e.g. "plot-f"). */
+  id: string
+  /** Sampled points in data space, ordered by x. */
+  points: Array<[number, number]>
+  color?: 'blue' | 'red' | 'green' | 'orange' | 'purple'
+  style?: 'solid' | 'dashed'
+  /** Optional label rendered near the end of the curve (e.g. "f(x) = x²"). */
+  label?: string
+}
+
+/** A single labeled point on the coordinate plane (root, extremum, intersection). */
+export interface GraphMarker {
+  id: string
+  x: number
+  y: number
+  label?: string
+  color?: 'blue' | 'red' | 'green' | 'orange' | 'purple'
+}
+
+/** Coordinate plane scene: axes + plotted curves + marked points. */
+export interface GraphData {
+  xRange: [number, number]
+  yRange: [number, number]
+  /** Tick spacing on the x-axis; default 1. */
+  xStep?: number
+  /** Tick spacing on the y-axis; default 1. */
+  yStep?: number
+  plots: GraphPlot[]
+  markers: GraphMarker[]
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Number-line data — inequalities, intervals, set operations
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** A single value marked on the number line (e.g. a boundary value, an answer). */
+export interface NumberLineMark {
+  id: string
+  value: number
+  label?: string
+  /** 'closed' (filled dot, value included) or 'open' (hollow dot, excluded). */
+  inclusion?: 'open' | 'closed'
+  color?: 'blue' | 'red' | 'green' | 'orange' | 'purple'
+}
+
+/**
+ * A contiguous interval drawn on the number line. Use `'unbounded'` on an
+ * inclusion side to draw an arrow (→ / ←) instead of an endpoint dot; the
+ * corresponding `from` / `to` is then the visible extent of the range.
+ */
+export interface NumberLineInterval {
+  id: string
+  from: number
+  to: number
+  fromInclusion: 'open' | 'closed' | 'unbounded'
+  toInclusion: 'open' | 'closed' | 'unbounded'
+  color?: 'blue' | 'red' | 'green' | 'orange' | 'purple'
+  label?: string
+}
+
+/** Horizontal number-line scene for inequalities / intervals / set ops. */
+export interface NumberLineData {
+  range: [number, number]
+  /** Tick spacing; default 1. */
+  step?: number
+  marks: NumberLineMark[]
+  intervals: NumberLineInterval[]
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Steps & Lesson
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -71,10 +146,25 @@ export interface InteractiveLessonStep {
   explanation: string
   /** Estimated duration in seconds for this step's narration */
   durationSeconds: number
-  /** Segments to highlight: array of [from, to] label pairs */
+  /** Segments to highlight: array of [from, to] label pairs (geometry). */
   highlightSegments?: string[][]
-  /** Points to highlight during this step */
+  /** Points to highlight during this step (geometry). */
   highlightPoints?: string[]
+  /** Plot ids to draw during this step (graph scene). */
+  highlightPlots?: string[]
+  /** Marker ids to reveal during this step (graph scene). */
+  highlightMarkers?: string[]
+  /** Mark ids to reveal during this step (number-line scene). */
+  highlightMarks?: string[]
+  /** Interval ids to draw during this step (number-line scene). */
+  highlightIntervals?: string[]
+  /**
+   * Pre-generated narration MP3 (base64) baked in by the server at lesson
+   * generation. Persisted in the lesson cache, so subsequent plays don't
+   * re-call Google TTS. Optional — falls through to live cloud TTS when
+   * absent (older cached lessons or per-step TTS failures).
+   */
+  audioBase64?: string
 }
 
 /** Full interactive lesson generated from an image */
@@ -87,6 +177,24 @@ export interface InteractiveLesson {
   steps: InteractiveLessonStep[]
   /** Structured geometry data for deterministic SVG rendering */
   geometry: GeometryData
+  /**
+   * Optional coordinate-plane scene for function-analysis problems. Takes
+   * rendering precedence over `geometry` when present and non-empty.
+   */
+  graph?: GraphData
+  /**
+   * Optional number-line scene for inequalities / intervals / set operations.
+   * Rendered when `graph` is empty but number line has marks or intervals.
+   */
+  numberLine?: NumberLineData
+}
+
+/** Provenance of the source admin Prompts row used to generate the lesson. */
+export interface InteractiveLessonPromptSource {
+  /** Source Prompts collection row id. */
+  id: string
+  /** updatedAt of the row at generation time, ISO string. */
+  updatedAt: string
 }
 
 /** Response from the generation pipeline */
@@ -99,6 +207,12 @@ export interface InteractiveLessonResponse {
     processingTimeMs: number
     imageSizeBytes: number
   }
+  /**
+   * Identity of the admin Prompts row used. Persisted on the cache row so
+   * a later prompt edit invalidates the cache automatically. Absent on
+   * error responses where no prompt lookup happened.
+   */
+  promptSource?: InteractiveLessonPromptSource
 }
 
 /** Input for the generation pipeline */
@@ -106,16 +220,4 @@ export interface InteractiveLessonInput {
   imageBuffer: Buffer
   mimeType: string
   locale: 'he' | 'en'
-}
-
-/** Playback state shared between player and chat */
-export interface PlayerStepContext {
-  /** Current step being viewed (1-based) */
-  currentStepId: number
-  /** Total number of steps */
-  totalSteps: number
-  /** Title of current step */
-  stepTitle: string
-  /** Narration text of current step */
-  stepNarration: string
 }

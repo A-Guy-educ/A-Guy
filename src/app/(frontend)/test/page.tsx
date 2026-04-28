@@ -11,7 +11,7 @@ export default async function TestPage() {
   const locale = await getSystemLocale()
   const contentLocale = isValidContentLocale(locale) ? locale : undefined
 
-  const prefetchedData = grade ? await prefetchStudyData(grade, contentLocale) : null
+  const prefetchedData = grade ? await prefetchStudyData(grade, contentLocale, 'exam') : null
 
   return (
     <div>

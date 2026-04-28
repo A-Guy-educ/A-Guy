@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "rev": 2,
+  "cursor": "checked",
+  "data": {
+    "perPr": {
+      "1217": {
+        "lastSha": "9c35bf328a4d09646fe7ac777cafff1b4d4cbfeb",
+        "attempts": 0,
+        "stuck": false
+      },
+      "1227": {
+        "lastSha": "01da2421b50b6bc8f82bd907b22fd2a524314b40",
+        "attempts": 0,
+        "stuck": false
+      },
+      "1266": {
+        "lastSha": "7f64a26f993738887c6d6cd9d660c9b736a9de65",
+        "attempts": 0,
+        "stuck": false
+      },
+      "1285": {
+        "lastSha": "6e1e21108fbb033681567ffad3408d288d5c976c",
+        "attempts": 1,
+        "stuck": false
+      }
+    }
+  },
+  "done": false
+}
