@@ -3,7 +3,14 @@
 import { interactiveLessonToGuidedExplanation } from '@/infra/llm/services/interactive-lesson/lesson-to-guided-explanation'
 import { GuidedExplanationRunner } from '@/ui/web/GuidedExplanationRunner'
 import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
-import { ArrowRight, Loader2, PlusCircle } from 'lucide-react'
+import {
+  AlertCircle,
+  ArrowRight,
+  Loader2,
+  MessageSquare,
+  PlusCircle,
+  RotateCcw,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import type { AskMediaAttachEvent, AskMediaRestoreEvent, ExerciseFile } from '../ask-types'
@@ -195,8 +202,33 @@ export function AskPrimaryContent() {
           </div>
         )}
         {status === 'error' && error && (
-          <div className="px-5 py-3 mb-4 rounded-xl bg-error/5 border border-error/20">
-            <p className="text-body-sm text-error">{error}</p>
+          <div className="px-5 py-section-xs mb-4 rounded-xl bg-error/5 border border-error/20">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-error flex-shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-body-sm font-semibold text-error">
+                  {t('generationFailedTitle')}
+                </p>
+                <p className="text-body-sm text-error/80 mt-1">{error}</p>
+                <p className="text-body-sm text-muted-foreground mt-2">
+                  {t('generationFailedFallback')}
+                </p>
+                <div className="flex flex-wrap gap-content-gap-xs mt-3">
+                  <button
+                    onClick={handleGenerate}
+                    disabled={!currentFile?.mediaId}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-body-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    {t('tryAgain')}
+                  </button>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted text-foreground/80 text-body-sm">
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    {t('askInChatHint')}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
