@@ -54,9 +54,15 @@ function isOwnEnrollment(user: unknown, data: { student?: string | { id: string 
 }
 
 /** Field-level read access — admins see all, students see only their own */
-function fieldReadAccess(user: unknown, data: { student?: string | { id: string } }): boolean {
+function fieldReadAccess(
+  user: unknown,
+  data: { student?: string | { id: string } } | undefined,
+): boolean {
   if (!user) return false
   if (isAdmin(user)) return true
+  // data is undefined during auth operations (populateFieldPermissions / getEntityPermissions).
+  // Deny access when we can't determine ownership.
+  if (!data) return false
   return isOwnEnrollment(user, data)
 }
 
