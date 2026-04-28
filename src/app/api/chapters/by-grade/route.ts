@@ -7,7 +7,8 @@ import configPromise from '@payload-config'
 import type { Lesson } from '@/payload-types'
 import { DEFAULT_ACCESS_TYPE, DEFAULT_PAGE_ACCESS_TYPE } from '@/server/constants/access-types'
 import { SystemParams } from '@/infra/config/system-params'
-import { isValidContentLocale } from '@/server/payload/fields/contentLocale'
+import { isValidContentLocale, localeWhereClause } from '@/server/payload/fields/contentLocale'
+import type { ContentLocale } from '@/server/payload/fields/contentLocale'
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -18,7 +19,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Grade parameter is required' }, { status: 400 })
   }
 
-  const locale = localeParam && isValidContentLocale(localeParam) ? localeParam : undefined
+  const locale =
+    localeParam && isValidContentLocale(localeParam) ? (localeParam as ContentLocale) : undefined
+
+  const lessonTypeParam = searchParams.get('lessonType')
+  const VALID_LESSON_TYPES = ['learning', 'practice', 'exam'] as const
+  const lessonType =
+    lessonTypeParam &&
+    VALID_LESSON_TYPES.includes(lessonTypeParam as (typeof VALID_LESSON_TYPES)[number])
+      ? (lessonTypeParam as 'learning' | 'practice' | 'exam')
+      : 'practice'
 
   try {
     // Fetch chapters and system params in parallel — they're independent
@@ -68,6 +78,12 @@ export async function GET(request: NextRequest) {
                 equals: true,
               },
             },
+            {
+              type: {
+                equals: lessonType,
+              },
+            },
+            ...(locale ? [localeWhereClause(locale)] : []),
           ],
         },
         sort: 'order',

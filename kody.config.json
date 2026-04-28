@@ -3,9 +3,8 @@
   "quality": {
     "typecheck": "pnpm typecheck",
     "lint": "pnpm lint",
-    "lintFix": "pnpm lint:fix",
-    "formatFix": "pnpm format",
-    "testUnit": "pnpm test:unit"
+    "format": "pnpm format",
+    "testUnit": "pnpm test:unit:coverage"
   },
   "git": {
     "defaultBranch": "dev"
@@ -15,21 +14,7 @@
     "repo": "A-Guy"
   },
   "agent": {
-    "model": "minimax/MiniMax-M2.7-highspeed",
-    "modelMap": {
-      "cheap": "minimax/MiniMax-M2.7-highspeed",
-      "mid": "minimax/MiniMax-M2.7-highspeed",
-      "strong": "minimax/MiniMax-M2.7-highspeed"
-    },
-    "budgets": {
-      "taskify": { "maxTurns": 900, "maxBudgetUsd": 45.0 },
-      "plan": { "maxTurns": 900, "maxBudgetUsd": 30.0 },
-      "build": { "maxTurns": 3000, "maxBudgetUsd": 150.0 },
-      "verify": { "maxTurns": 600, "maxBudgetUsd": 15.0 },
-      "review": { "maxTurns": 900, "maxBudgetUsd": 30.0 },
-      "review-fix": { "maxTurns": 1800, "maxBudgetUsd": 90.0 },
-      "ship": { "maxTurns": 600, "maxBudgetUsd": 15.0 }
-    }
+    "model": "minimax/MiniMax-M2.7-highspeed"
   },
   "release": {
     "releaseBranch": "main",
@@ -37,43 +22,5 @@
     "notifyCommand": "NOTIFY_RESULT=always NOTIFY_VERSION=$VERSION pnpm tsx scripts/kody/notify.ts --agent release-publisher --channels slack --when always --color good --title \"🚀 A-Guy v$VERSION released\" --body \"Release $VERSION finalized — https://github.com/A-Guy-educ/A-Guy/releases/tag/v$VERSION\"",
     "e2eCommand": "npx tsx scripts/release-e2e-gate.ts",
     "timeoutMs": 1800000
-  },
-  "watch": {
-    "enabled": true,
-    "model": "minimax/MiniMax-M2.7-highspeed"
-  },
-  "timeouts": {
-    "taskify": 18000,
-    "plan": 18000,
-    "build": 72000,
-    "verify": 9000,
-    "review": 18000,
-    "review-fix": 36000,
-    "ship": 7200
-  },
-  "devServer": {
-    "command": "pnpm dev",
-    "url": "http://localhost:3000",
-    "readyPattern": "Ready in|compiled|started server|Local:|localhost:|\u2713 Ready",
-    "readyTimeout": 180,
-    "env": [
-      "AI_BASE_URL",
-      "AI_KEY",
-      "AI_MODEL",
-      "BLOB_READ_WRITE_TOKEN",
-      "BRAIN_AUTH_KEY",
-      "CRON_SECRET",
-      "DATABASE_URL",
-      "DATABASE_URL_ATLAS",
-      "FIGMA_API_KEY",
-      "GEMINI_API_KEY",
-      "GROQ_API_KEY",
-      "MINIMAX_API_KEY",
-      "NEXT_PUBLIC_SERVER_URL",
-      "OPENAI_API_KEY",
-      "PAYLOAD_SECRET",
-      "SLACK_WEBHOOK_URL",
-      "SLACK_WEBHOOK_URL_DEV"
-    ]
   }
 }

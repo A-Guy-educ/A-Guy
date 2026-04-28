@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "rev": 1,
+  "cursor": "posted-fix-ci",
+  "data": {
+    "perPr": {
+      "1217": {
+        "lastSha": "9c35bf328a4d09646fe7ac777cafff1b4d4cbfeb",
+        "attempts": 1,
+        "stuck": false
+      },
+      "1227": {
+        "lastSha": "01da2421b50b6bc8f82bd907b22fd2a524314b40",
+        "attempts": 1,
+        "stuck": false
+      },
+      "1266": {
+        "lastSha": "7f64a26f993738887c6d6cd9d660c9b736a9de65",
+        "attempts": 1,
+        "stuck": false
+      },
+      "1272": {
+        "lastSha": "14d4770b948ff3906e6416b572cc5aad75b36823",
+        "attempts": 1,
+        "stuck": false
+      }
+    }
+  },
+  "done": false
+}
