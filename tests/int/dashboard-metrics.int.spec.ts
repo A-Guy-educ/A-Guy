@@ -75,7 +75,10 @@ beforeAll(async () => {
   }
   const [course1Id, course2Id, course3Id] = createdCourseIds
 
-  // Admin user used for auth
+  // Admin user used for auth — create as default user, then promote.
+  // The Users collection has a beforeChange hook that prevents setting
+  // role=Admin on initial create; only update with overrideAccess can.
+  // See tests/int/access-codes.int.spec.ts for the canonical pattern.
   const adminEmail = `admin-metrics-${ts}@test.local`
   const adminPassword = 'test-password-1234'
   const adminUser = await payload.create({
@@ -84,8 +87,12 @@ beforeAll(async () => {
       email: adminEmail,
       password: adminPassword,
       name: 'Metrics Admin',
-      role: AccountRole.Admin,
     } as any,
+  })
+  await payload.update({
+    collection: 'users',
+    id: adminUser.id,
+    data: { role: AccountRole.Admin } as any,
     overrideAccess: true,
   })
   createdUserIds.push(adminUser.id)
