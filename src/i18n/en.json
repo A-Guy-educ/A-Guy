@@ -422,7 +422,7 @@
       "chatInputPlaceholder": "Ask a question...",
       "chatAuthRequired": "Please log in to access admin chat"
     },
-    "chatLink": "Chat"
+    "chatLink": "Chat with AI"
   },
   "accessControl": {
     "mandatoryTitle": "Sign in Required",
