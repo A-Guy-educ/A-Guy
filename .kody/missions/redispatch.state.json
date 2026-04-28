@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "rev": 2,
+  "rev": 3,
   "cursor": "scanned",
   "data": {
     "perIssue": {
@@ -33,26 +33,26 @@
       {
         "issueNumber": 1382,
         "action": "resume",
-        "reason": "status=running, lastOutcome timestamp 2026-04-28T14:45:08Z (8+ hours ago), no recent kody comments, human-created PR #1383 linked (not kody-authored), no in-flight workflow runs",
-        "plannedAt": "2026-04-28T23:04:40Z"
+        "reason": "status=running, lastOutcome timestamp 2026-04-28T14:45:08Z (8+ hours ago), last kody comment 2026-04-28T14:48:08Z (>40 min ago), human-created PR #1383 linked (not kody-authored), no in-flight workflow runs",
+        "plannedAt": "2026-04-28T23:08:00Z"
       },
       {
         "issueNumber": 1363,
         "action": "resume",
-        "reason": "status=running, lastOutcome timestamp 2026-04-27T09:49:12Z (37+ hours ago), no recent kody comments, human-created PR #1364 linked (not kody-authored), no in-flight workflow runs",
-        "plannedAt": "2026-04-28T23:04:40Z"
+        "reason": "status=running, lastOutcome timestamp 2026-04-27T09:49:12Z (37+ hours ago), last kody comment 2026-04-27T09:51:39Z (>40 min ago), human-created PR #1364 linked (not kody-authored), no in-flight workflow runs",
+        "plannedAt": "2026-04-28T23:08:00Z"
       },
       {
         "issueNumber": 1360,
         "action": "resume",
-        "reason": "status=running, lastOutcome timestamp 2026-04-27T09:58:29Z (37+ hours ago), no recent kody comments, human-created PR #1366 linked (not kody-authored), no in-flight workflow runs",
-        "plannedAt": "2026-04-28T23:04:40Z"
+        "reason": "status=running, lastOutcome timestamp 2026-04-27T09:58:29Z (37+ hours ago), last kody comment 2026-04-27T10:00:55Z (>40 min ago), human-created PR #1366 linked (not kody-authored), no in-flight workflow runs",
+        "plannedAt": "2026-04-28T23:08:00Z"
       },
       {
         "issueNumber": 1351,
         "action": "resume",
-        "reason": "status=running, lastOutcome timestamp 2026-04-27T20:30:49Z (26+ hours ago), no recent kody comments, human-created PR #1375 linked (not kody-authored), no in-flight workflow runs",
-        "plannedAt": "2026-04-28T23:04:40Z"
+        "reason": "status=running, lastOutcome timestamp 2026-04-27T20:30:49Z (26+ hours ago), last kody comment 2026-04-27T20:33:24Z (>40 min ago), human-created PR #1375 linked (not kody-authored), no in-flight workflow runs",
+        "plannedAt": "2026-04-28T23:08:00Z"
       }
     ]
   },
