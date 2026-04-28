@@ -54,7 +54,7 @@
     },
     {
       "action": "see",
-      "input": { "text": "ללמוד" }
+      "input": { "text": "למידה" }
     }
   ],
   "teardown": "auto"

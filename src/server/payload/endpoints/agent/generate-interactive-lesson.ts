@@ -1,11 +1,26 @@
 /**
  * Payload endpoint handler for interactive lesson generation.
- * Takes an uploaded image and generates structured step-by-step
- * HTML animation data using the LLM pipeline.
+ *
+ * Takes an uploaded image, returns structured step-by-step animation data.
+ *
+ * Caching: a successful generation is persisted to the `interactive_lessons`
+ * collection keyed on `(user, media, locale)`. Re-requests for the same image
+ * in the same locale return the cached payload instead of re-hitting Gemini.
  */
-import type { PayloadRequest } from 'payload'
+import type { Payload, PayloadRequest } from 'payload'
+import type { InteractiveLesson as CachedLessonDoc } from '@/payload-types'
 import { logger } from '@/infra/utils/logger/logger'
 import { generateInteractiveLesson } from '@/infra/llm/services/interactive-lesson/interactive-lesson-generation-service'
+import type {
+  InteractiveLesson,
+  InteractiveLessonPromptSource,
+  InteractiveLessonResponse,
+} from '@/infra/llm/services/interactive-lesson/interactive-lesson-types'
+import {
+  getPublishedInteractiveLessonPrompt,
+  normalizeIsoDate,
+} from '@/infra/llm/services/interactive-lesson/published-prompt-cache'
+import { INTERACTIVE_LESSON_CACHE_SCHEMA_VERSION } from '@/infra/llm/services/interactive-lesson/cache-schema-version'
 
 interface GenerateRequestBody {
   mediaId: string
@@ -26,11 +41,57 @@ export async function agentGenerateInteractiveLesson(
     const body = await req.json()
     const { mediaId, locale = 'he' } = body
 
-    if (!mediaId) {
-      return Response.json({ success: false, error: 'mediaId is required' }, { status: 400 })
+    if (!mediaId || typeof mediaId !== 'string') {
+      return Response.json(
+        { success: false, error: 'mediaId must be a non-empty string' },
+        { status: 400 },
+      )
+    }
+    // Validate locale at the boundary. Without this, an arbitrary string
+    // flows into the cache write (Payload's enum validation rejects it,
+    // the persist .catch swallows as "failed to persist", lesson works
+    // but the cache is silently never populated and the user re-pays
+    // Gemini on every reload), the prompt builder, and synthesizeSpeech.
+    if (locale !== 'he' && locale !== 'en') {
+      return Response.json(
+        { success: false, error: 'locale must be "he" or "en"' },
+        { status: 400 },
+      )
     }
 
     reqLogger.info({ mediaId, locale, userId: req.user.id }, 'Generating interactive lesson')
+
+    // Cache hit? Return immediately without regenerating.
+    const cached = await findCachedLesson(req.payload, {
+      userId: req.user.id,
+      mediaId,
+      locale,
+    })
+    if (cached) {
+      const evictReason = await evictionReason(req.payload, cached)
+      if (!evictReason) {
+        reqLogger.info({ cacheId: cached.id, mediaId }, 'Returning cached interactive lesson')
+        return Response.json({
+          success: true,
+          data: cached.lesson as unknown as InteractiveLesson,
+          metadata: (cached.generationMetadata ?? {
+            model: 'cache',
+            processingTimeMs: 0,
+            imageSizeBytes: 0,
+          }) as InteractiveLessonResponse['metadata'],
+          fromCache: true,
+        })
+      }
+      reqLogger.warn(
+        { cacheId: cached.id, mediaId, reason: evictReason },
+        'Evicting cached interactive lesson and regenerating',
+      )
+      await req.payload
+        .delete({ collection: 'interactive_lessons', id: cached.id, overrideAccess: true })
+        .catch((err) => {
+          reqLogger.warn({ err, cacheId: cached.id }, 'Failed to evict cache row')
+        })
+    }
 
     // Fetch the uploaded media file
     const { imageBuffer, mimeType } = await fetchMediaImage(req, mediaId)
@@ -42,8 +103,19 @@ export async function agentGenerateInteractiveLesson(
       return Response.json(result, { status: 422 })
     }
 
-    // TTS skipped — GuidedExplanationRunner uses browser speechSynthesis
-    // for narration; OpenAI TTS output was never consumed by the client.
+    // Persist the primitive payload. Failure to cache is non-fatal — the
+    // client still gets a working lesson; we just pay the Gemini cost again
+    // next time.
+    await persistLesson(req.payload, {
+      userId: req.user.id,
+      mediaId,
+      locale,
+      lesson: result.data!,
+      metadata: result.metadata,
+      promptSource: result.promptSource,
+    }).catch((err) => {
+      reqLogger.warn({ err, mediaId }, 'Failed to persist interactive lesson cache')
+    })
 
     reqLogger.info(
       {
@@ -67,6 +139,144 @@ export async function agentGenerateInteractiveLesson(
       { status: 500 },
     )
   }
+}
+
+interface CacheLookupArgs {
+  userId: string | number
+  mediaId: string
+  locale: 'he' | 'en'
+}
+
+async function findCachedLesson(
+  payload: Payload,
+  { userId, mediaId, locale }: CacheLookupArgs,
+): Promise<CachedLessonDoc | null> {
+  const result = await payload.find({
+    collection: 'interactive_lessons',
+    where: {
+      and: [
+        { user: { equals: userId } },
+        { media: { equals: mediaId } },
+        { locale: { equals: locale } },
+      ],
+    },
+    limit: 1,
+    overrideAccess: true,
+  })
+  return result.docs[0] ?? null
+}
+
+interface PersistArgs {
+  userId: string | number
+  mediaId: string
+  locale: 'he' | 'en'
+  lesson: InteractiveLesson
+  metadata: InteractiveLessonResponse['metadata']
+  promptSource?: InteractiveLessonPromptSource
+}
+
+async function persistLesson(
+  payload: Payload,
+  { userId, mediaId, locale, lesson, metadata, promptSource }: PersistArgs,
+): Promise<void> {
+  try {
+    await payload.create({
+      collection: 'interactive_lessons',
+      data: {
+        user: userId as CachedLessonDoc['user'],
+        media: mediaId as unknown as CachedLessonDoc['media'],
+        locale,
+        lesson: lesson as unknown as CachedLessonDoc['lesson'],
+        generationMetadata: metadata as unknown as CachedLessonDoc['generationMetadata'],
+        promptId: promptSource?.id,
+        promptUpdatedAt: promptSource?.updatedAt,
+        cacheSchemaVersion: INTERACTIVE_LESSON_CACHE_SCHEMA_VERSION,
+      },
+      overrideAccess: true,
+    })
+  } catch (err) {
+    // Two concurrent generations for the same (user, media, locale) can both
+    // miss the cache, both call Gemini, and both try to insert — the unique
+    // index on the collection ensures only one wins. The loser hits a
+    // duplicate-key error here, which we silently absorb: the winner's row
+    // is already in place, and the next read for either request will be a
+    // cache hit. Other errors (e.g. validation) still surface.
+    if (isDuplicateKeyError(err)) return
+    throw err
+  }
+}
+
+/**
+ * Mongo's duplicate-key error code is 11000. Payload wraps the driver error,
+ * but the original surfaces on `err.code` or in the message string.
+ */
+export function isDuplicateKeyError(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false
+  const e = err as { code?: number; message?: string; name?: string }
+  if (e.code === 11000) return true
+  return /E11000|duplicate key/i.test(e.message ?? '')
+}
+
+/**
+ * Decide whether a cached row should be evicted before serving. Returns a
+ * short reason string if eviction is required, or null if the row is still
+ * valid. Two reasons trigger eviction:
+ *
+ *   1. The cached payload's shape has drifted (e.g. a schema change made
+ *      `steps` required when older rows didn't have it). Avoids crashing
+ *      the client.
+ *   2. The admin-managed Prompts row used to generate this lesson has been
+ *      edited or replaced since. The point of moving the prompt into the
+ *      DB was so admins could iterate on it; without invalidation, every
+ *      pre-edit cache row would keep serving stale output forever.
+ */
+export async function evictionReason(
+  payload: Payload,
+  cached: CachedLessonDoc,
+): Promise<string | null> {
+  // Cache shape version must match the running build. Catches schema drift
+  // (a converter-breaking change to InteractiveLesson / steps[i] shape)
+  // without depending on a structural ad-hoc check that would have to be
+  // updated every time. Bump the constant when the cached shape changes.
+  if (cached.cacheSchemaVersion !== INTERACTIVE_LESSON_CACHE_SCHEMA_VERSION) {
+    return 'cache-schema-version-mismatch'
+  }
+
+  if (!isWellFormedLesson(cached.lesson)) return 'malformed-lesson-shape'
+
+  // No prompt provenance was recorded — pre-this-feature row, can't tell
+  // if it's stale. Treat as evict so the next read regenerates against
+  // the current published prompt; the user pays Gemini once and from then
+  // on the row carries the source provenance.
+  if (!cached.promptId) return 'missing-prompt-provenance'
+
+  // Routes through the memoized prompt cache (30s TTL, eagerly invalidated
+  // by Prompts afterChange/afterDelete hooks). Without this, every cache
+  // hit costs a fresh prompts.find — defeating the point of the cache.
+  const current = await getPublishedInteractiveLessonPrompt(payload)
+  if (!current) {
+    // No published prompt at all anymore. The next generation attempt
+    // will surface InteractiveLessonPromptMissingError, but for the
+    // cached row we just keep serving — no fresher option exists.
+    return null
+  }
+
+  if (current.id !== cached.promptId) return 'prompt-id-changed'
+  // Compare normalized ISO strings so a Date-vs-string drift between two
+  // Payload reads doesn't false-positive into "evict on every read".
+  if (current.updatedAt !== normalizeIsoDate(cached.promptUpdatedAt)) {
+    return 'prompt-updated'
+  }
+  return null
+}
+
+export function isWellFormedLesson(lesson: unknown): boolean {
+  if (!lesson || typeof lesson !== 'object') return false
+  const l = lesson as { title?: unknown; steps?: unknown; geometry?: unknown }
+  if (typeof l.title !== 'string') return false
+  if (!Array.isArray(l.steps) || l.steps.length === 0) return false
+  if (!l.geometry || typeof l.geometry !== 'object') return false
+  return true
 }
 
 /**
