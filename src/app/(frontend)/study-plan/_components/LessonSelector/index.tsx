@@ -71,7 +71,7 @@ export function LessonSelector({ gradeLevel, onAddLessons }: LessonSelectorProps
         setError(null)
 
         const response = await fetch(
-          `/api/chapters/by-grade?grade=${encodeURIComponent(gradeLevel)}`,
+          `/api/chapters/by-grade?grade=${encodeURIComponent(gradeLevel)}&lessonType=practice`,
           {
             signal: controller.signal,
           },

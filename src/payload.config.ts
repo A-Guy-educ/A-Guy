@@ -22,6 +22,7 @@ import { Exercises } from '@/server/payload/collections/Exercises'
 import { ExtractionLogs } from '@/server/payload/collections/ExtractionLogs'
 import { FormulaSheets } from '@/server/payload/collections/FormulaSheets'
 import { GuestSessions } from '@/server/payload/collections/GuestSessions'
+import { InteractiveLessons } from '@/server/payload/collections/InteractiveLessons'
 import { Lessons } from '@/server/payload/collections/Lessons'
 import { MCPAuditLogs } from '@/server/payload/collections/MCPAuditLogs'
 import { Media } from '@/server/payload/collections/Media'
@@ -153,14 +154,17 @@ export default buildConfig({
       maxIdleTimeMS: 10000,
       // Fail fast if MongoDB is unreachable — don't hang serverless functions
       connectTimeoutMS: 5000,
-      // Fail fast when all pool connections are in use — return error instead of
-      // queuing indefinitely, which would cause cascading timeouts in serverless
-      serverSelectionTimeoutMS: 5000,
-      // Wait at most 3s for a connection from the pool before failing.
-      // Prevents requests from piling up when the pool is saturated.
-      waitQueueTimeoutMS: 3000,
       // Socket timeout for long-running operations
       socketTimeoutMS: 30000,
+      // NOTE: serverSelectionTimeoutMS and waitQueueTimeoutMS were removed
+      // (2026-04-27). Set together with maxPoolSize=3 they converted ordinary
+      // cold-start contention (4+ concurrent layout DB calls vs 3 pool slots
+      // racing connection-pool warmup) into MongoWaitQueueTimeoutError, which
+      // crashed the root layout and rendered global-error.tsx ("Something went
+      // wrong!"). Driver defaults — wait indefinitely on the queue, 30 s for
+      // server selection — make cold starts slow but not user-visible
+      // failures. Pool exhaustion is still bounded by maxPoolSize at the
+      // Atlas connection level.
     },
     afterOpenConnection: async () => {
       const maxPoolSize = process.env.MONGODB_MAX_POOL_SIZE ?? (process.env.VITEST ? '5' : '3')
@@ -185,6 +189,7 @@ export default buildConfig({
     Exercises,
     ExtractionLogs,
     FormulaSheets,
+    InteractiveLessons,
     Prompts,
     TeacherProfiles,
     UserSettings,

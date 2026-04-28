@@ -34,15 +34,10 @@ function VersionDisplay({ version }: { version: string }) {
 }
 
 export async function Footer() {
-  const footerData = await getCachedGlobal('footer', 1)()
+  const footerData: Footer = await getCachedGlobal('footer', 1)()
   const version = await getVersion()
   const systemLocale = await getSystemLocale()
-
-  // If the global fetch transiently fails (cold-start / pool timeout),
-  // render nothing rather than crashing the whole layout.
-  if (!footerData) return null
-
-  const navItems = getNavItemsForLocale(footerData as Footer, systemLocale)
+  const navItems = getNavItemsForLocale(footerData, systemLocale)
 
   return (
     <footer className="mt-auto border-t border-border bg-footer text-card-foreground relative z-0">
