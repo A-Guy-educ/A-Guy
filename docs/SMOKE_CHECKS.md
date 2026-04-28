@@ -40,3 +40,4 @@ After any migration stage, verify these critical paths:
 # Individual checks
 curl -s http://localhost:3000/api/health
 ```
+
