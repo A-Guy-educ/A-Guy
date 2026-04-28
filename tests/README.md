@@ -150,37 +150,106 @@ describe('Feature Name', () => {
 
 ### Testing API Endpoints
 
+Integration tests do **not** run a Next server. Do not call `fetch()` against
+`http://localhost:3000/...` or relative paths — both will fail. Instead,
+import the route handler directly and invoke it with a `Request` object.
+Mongo is provided by the global int setup; do not start your own
+testcontainer.
+
+#### Pattern: authenticated route (regular user)
+
+Reference: [tests/int/teacher-profiles-api.int.spec.ts](int/teacher-profiles-api.int.spec.ts)
+
 ```typescript
-import { describe, test, expect } from 'vitest'
+import { GET } from '@/app/api/teacher-profiles/route'
+import config from '@payload-config'
+import { getPayload } from 'payload'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
-describe('POST /api/check-answer', () => {
-  test('validates correct answer', async () => {
-    const response = await fetch('http://localhost:3000/api/check-answer', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        lessonId: 'lesson-1',
-        exerciseId: 'ex-1',
-        answer: { type: 'mcq', selectedIds: ['correct-option'] },
-      }),
-    })
+const hasDatabaseUrl = !!process.env.DATABASE_URL
+let payload, authToken
 
-    const data = await response.json()
-    expect(response.status).toBe(200)
-    expect(data.isCorrect).toBe(true)
+beforeAll(async () => {
+  if (!hasDatabaseUrl) return
+  payload = await getPayload({ config })
+
+  const user = await payload.create({
+    collection: 'users',
+    data: { email: `test-${Date.now()}@example.com`, password: 'test123456' },
+  })
+  const login = await payload.login({
+    collection: 'users',
+    data: { email: user.email, password: 'test123456' },
+  })
+  authToken = login.token
+})
+
+describe.skipIf(!hasDatabaseUrl)('GET /api/teacher-profiles', () => {
+  it('returns 401 without auth', async () => {
+    const res = await GET(new Request('http://localhost:3000/api/teacher-profiles'))
+    expect(res.status).toBe(401)
   })
 
-  test('returns 400 for invalid input', async () => {
-    const response = await fetch('http://localhost:3000/api/check-answer', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ invalid: 'data' }),
-    })
-
-    expect(response.status).toBe(400)
+  it('returns profiles with auth', async () => {
+    const res = await GET(
+      new Request('http://localhost:3000/api/teacher-profiles', {
+        headers: { Authorization: `JWT ${authToken}` },
+      }),
+    )
+    expect(res.status).toBe(200)
   })
 })
 ```
+
+#### Pattern: admin-only route
+
+The Users collection has a `beforeChange` hook that strips `role: 'admin'`
+on initial create (even with `overrideAccess: true`) to prevent privilege
+escalation. To get an admin user in tests, **create as default user, then
+update**:
+
+Reference: [tests/int/access-codes.int.spec.ts](int/access-codes.int.spec.ts)
+
+```typescript
+import { AccountRole } from '@/server/payload/collections/Users/roles'
+
+const admin = await payload.create({
+  collection: 'users',
+  data: { email: `admin-${Date.now()}@example.com`, password: 'test123456' },
+})
+await payload.update({
+  collection: 'users',
+  id: admin.id,
+  data: { role: AccountRole.Admin },
+  overrideAccess: true, // required to set role=Admin
+})
+
+const login = await payload.login({
+  collection: 'users',
+  data: { email: admin.email, password: 'test123456' },
+})
+const adminToken = login.token
+
+const res = await GET(
+  new Request('http://localhost:3000/api/admin/some-route', {
+    headers: { Authorization: `JWT ${adminToken}` },
+  }),
+)
+expect(res.status).toBe(200)
+```
+
+> **Common mistake:** setting `role: AccountRole.Admin` on the initial
+> `payload.create` call does not work — the user lands as Student, login
+> succeeds, but admin-gated routes return 403. Always use the two-step
+> create+update pattern.
+
+#### What NOT to do
+
+- ❌ `fetch('/api/...')` — Node's undici fetch rejects relative URLs
+- ❌ `fetch('http://localhost:3000/...')` — no Next server is running
+- ❌ `Cookie: payload-token=<jwt>` — use `Authorization: JWT <jwt>` instead
+- ❌ `startMongoContainer()` per file — global setup already provides Mongo
+- ❌ Creating an admin in one step with `role: Admin` — see above
 
 ### Testing with Contracts (Zod Schemas)
 
