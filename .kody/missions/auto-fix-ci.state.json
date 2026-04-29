@@ -1,28 +1,18 @@
 {
   "version": 1,
-  "rev": 2,
-  "cursor": "posted-fix-ci",
+  "rev": 24,
+  "cursor": "fix-ci-no-actions-1227-1266-stuck",
   "data": {
     "perPr": {
-      "1217": {
-        "lastSha": "9c35bf328a4d09646fe7ac777cafff1b4d4cbfeb",
-        "attempts": 1,
-        "stuck": false
-      },
       "1227": {
         "lastSha": "01da2421b50b6bc8f82bd907b22fd2a524314b40",
-        "attempts": 1,
-        "stuck": false
+        "attempts": 2,
+        "stuck": true
       },
       "1266": {
         "lastSha": "7f64a26f993738887c6d6cd9d660c9b736a9de65",
-        "attempts": 1,
-        "stuck": false
-      },
-      "1272": {
-        "lastSha": "cf21c67b80abe625e3ba851cc16a7c0e2948b862",
-        "attempts": 1,
-        "stuck": false
+        "attempts": 2,
+        "stuck": true
       }
     }
   },
