@@ -8,6 +8,11 @@
         "lastSha": "5c016fa8cf147cfe8e913add5d7dd304e363f290",
         "attempts": 2,
         "stuck": false
+      },
+      "1375": {
+        "lastSha": "239540a5b3bfeebd65fa686cdd4b88fea2489707",
+        "attempts": 0,
+        "stuck": false
       }
     }
   },
