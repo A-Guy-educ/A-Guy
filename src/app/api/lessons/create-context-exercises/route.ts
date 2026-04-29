@@ -2,8 +2,10 @@
  * Create Exercises from Context API
  *
  * POST /api/lessons/create-context-exercises
- * Reads the latest ContextExtraction for the lesson, parses its LaTeX text
- * into individual exercises, and creates Exercise documents with LaTeX blocks.
+ * Reads the latest ContextExtraction for the lesson and creates Exercise
+ * documents with LaTeX blocks. Prefers the structured `exercises` array
+ * produced by schema-mode extraction; falls back to regex-parsing the
+ * `text` field for legacy extractions that have no structured payload.
  *
  * Idempotent: deletes previous context_extraction exercises before creating new ones,
  * and reconciles lesson.blocks (drops stale refs, appends new exerciseRef entries).
@@ -19,6 +21,49 @@ const createContextExercisesSchema = z.object({
 })
 
 type CreateContextExercisesBody = z.infer<typeof createContextExercisesSchema>
+
+interface CreatableExercise {
+  number: number
+  title?: string
+  latexContent: string
+  solution: string | null
+}
+
+function isStructuredExercise(value: unknown): value is {
+  number: number
+  latex: string
+  solution?: string | null
+} {
+  if (!value || typeof value !== 'object') return false
+  const v = value as Record<string, unknown>
+  if (typeof v.number !== 'number') return false
+  if (typeof v.latex !== 'string') return false
+  return true
+}
+
+interface StructuredReadResult {
+  exercises: CreatableExercise[]
+  skipped: number
+}
+
+function readStructuredExercises(extraction: unknown): StructuredReadResult | null {
+  const value = (extraction as { exercises?: unknown })?.exercises
+  if (!Array.isArray(value)) return null
+  const valid: CreatableExercise[] = []
+  let skipped = 0
+  for (const entry of value) {
+    if (!isStructuredExercise(entry) || !entry.latex.trim()) {
+      skipped++
+      continue
+    }
+    valid.push({
+      number: entry.number,
+      latexContent: entry.latex,
+      solution: typeof entry.solution === 'string' && entry.solution.trim() ? entry.solution : null,
+    })
+  }
+  return valid.length > 0 ? { exercises: valid, skipped } : null
+}
 
 type LessonBlock = {
   id: string
@@ -55,7 +100,7 @@ export const POST = withApiHandler<CreateContextExercisesBody, unknown>(
     auth: 'admin',
     bodySchema: createContextExercisesSchema,
   },
-  async ({ payload, body }) => {
+  async ({ payload, body, user }) => {
     const { lessonId } = body
 
     // Fetch the latest context extraction for this lesson
@@ -75,22 +120,51 @@ export const POST = withApiHandler<CreateContextExercisesBody, unknown>(
       )
     }
 
-    const extractionText = (extractionResult.docs[0] as unknown as { text: string }).text
+    const extractionDoc = extractionResult.docs[0] as unknown as {
+      text: string
+      exercises?: unknown
+    }
 
-    if (!extractionText?.trim()) {
-      return apiError(
-        'VALIDATION_ERROR',
-        'Context extraction is empty. Run "Convert Context" again.',
-        400,
+    // Prefer the structured exercises array from schema-mode extraction.
+    // Fall back to regex-parsing the rendered text for legacy extractions.
+    const structured = readStructuredExercises(extractionDoc)
+    let allExercises: CreatableExercise[] | null = structured?.exercises ?? null
+    let source: 'structured' | 'legacy_text' = 'structured'
+    const warnings: string[] = []
+
+    if (structured && structured.skipped > 0) {
+      // Surface partial corruption so admins don't silently lose exercises
+      // when Gemini occasionally emits malformed entries inside an otherwise-
+      // valid response.
+      warnings.push(
+        `Skipped ${structured.skipped} malformed entr${structured.skipped === 1 ? 'y' : 'ies'} in structured exercises — review the extraction in the viewer before publishing.`,
       )
     }
 
-    // Parse into exercises
-    const segments = parseContextText(extractionText)
-    const allExercises = segments.flatMap((seg) => seg.exercises)
+    if (!allExercises) {
+      source = 'legacy_text'
+      const extractionText = extractionDoc.text
+      if (!extractionText?.trim()) {
+        return apiError(
+          'VALIDATION_ERROR',
+          'Context extraction is empty. Run "Convert Context" again.',
+          400,
+        )
+      }
 
-    if (allExercises.length === 0) {
-      return apiError('VALIDATION_ERROR', 'No exercises found in context text', 400)
+      const segments = parseContextText(extractionText)
+      const legacy = segments.flatMap((seg) =>
+        seg.exercises.map((ex) => ({
+          number: ex.number,
+          title: ex.title,
+          latexContent: ex.latexContent,
+          solution: ex.solution,
+        })),
+      )
+      if (legacy.length === 0) {
+        return apiError('VALIDATION_ERROR', 'No exercises found in context text', 400)
+      }
+      allExercises = legacy
     }
 
     // Capture IDs of existing context_extraction exercises so we can drop their
@@ -125,7 +199,6 @@ export const POST = withApiHandler<CreateContextExercisesBody, unknown>(
 
     // Create exercises with LaTeX blocks
     const createdIds: string[] = []
-    const warnings: string[] = []
 
     for (let i = 0; i < allExercises.length; i++) {
       const exercise = allExercises[i]
@@ -188,7 +261,8 @@ export const POST = withApiHandler<CreateContextExercisesBody, unknown>(
           collection: 'lessons',
           id: lessonId,
           data: { blocks: JSON.stringify(nextBlocks) } as Record<string, unknown>,
-          overrideAccess: true,
+          user: user!,
+          overrideAccess: false,
         })
         lessonBlocksUpdated = true
       } catch (err) {
@@ -200,6 +274,7 @@ export const POST = withApiHandler<CreateContextExercisesBody, unknown>(
     return apiSuccess({
       exerciseIds: createdIds,
       exerciseCount: createdIds.length,
+      source,
       lessonBlocksUpdated,
       warnings: warnings.length > 0 ? warnings : undefined,
     })
