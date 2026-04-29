@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "rev": 24,
-  "cursor": "fix-ci-no-actions-1227-1266-stuck",
+  "rev": 29,
+  "cursor": "fix-ci-action-taken-2026-04-29",
   "data": {
     "perPr": {
       "1227": {
@@ -11,8 +11,8 @@
       },
       "1266": {
         "lastSha": "7f64a26f993738887c6d6cd9d660c9b736a9de65",
-        "attempts": 2,
-        "stuck": true
+        "attempts": 1,
+        "stuck": false
       }
     }
   },
