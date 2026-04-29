@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "rev": 20,
-  "cursor": "fix-ci-1285-marked-stuck",
+  "rev": 21,
+  "cursor": "fix-ci-3-stuck-prs-skipping",
   "data": {
     "perPr": {
       "1227": {
