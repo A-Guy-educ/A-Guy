@@ -60,6 +60,33 @@ describe('parseContextText — secondary detection always runs', () => {
     expect(ex1!.header).not.toContain('\\setcounter')
   })
 
+  it('keeps secondary-detected exercises without solutions when primary matches have them', () => {
+    // Phantom-filter is scoped to primary matches: secondary-detected
+    // continuations are real, even when they lack a \section*{פתרון תרגיל N}
+    // header. Before the scoping fix, removing the gate caused them to be
+    // silently dropped any time a primary match in the same run carried a
+    // solution.
+    const text = `\\begin{document}
+
+\\textbf{תרגיל 1}
+תוכן 1
+
+\\begin{enumerate}
+\\setcounter{enumi}{1}
+\\item תוכן 2 — אין פתרון בקובץ המקור
+\\end{enumerate}
+
+\\section*{פתרון תרגיל 1}
+פתרון 1
+
+\\end{document}`
+
+    const exercises = parseContextText(text).flatMap((s) => s.exercises)
+    expect(exercises.map((e) => e.number).sort()).toEqual([1, 2])
+    const ex2 = exercises.find((e) => e.number === 2)
+    expect(ex2?.solution).toBeNull()
+  })
+
   it('keeps an exercise found via setCounter when its solution is present', () => {
     // Phantom-filter: with usedPrimaryPattern=true and any matched solution,
     // exercises lacking one are dropped. setCounter-found ones must carry a
