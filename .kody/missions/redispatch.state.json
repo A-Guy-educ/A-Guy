@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "rev": 9,
+  "rev": 11,
   "cursor": "done-no-candidates",
   "data": {
     "perIssue": {},
@@ -8,146 +8,26 @@
       {
         "issueNumber": 1382,
         "action": "resume",
-        "reason": "core.status='running' in kody state block (reviewing phase), lastOutcome.timestamp 2026-04-28T14:45:08Z (~9.3h ago, >40 min threshold). Has kody:done label but state still running — likely state-machine stall. No kody comment from kody in last 40 min (last kody activity by aguyaharonyair at 2026-04-28T14:48:08Z). No in-flight workflow run referencing #1382 (kody scheduled run 25096040466 has no issue reference in title/branch). No open kody PR (PR #1383 is closed). Not in perIssue, attemptsToday=0.",
-        "plannedAt": "2026-04-29T08:30:00Z"
+        "reason": "Dry-run: would post @kody resume on #1382. Status=running in kody state block (phase=reviewing, lastOutcome=2026-04-28T14:45:08Z, ~17.5h ago). However: issue now carries 'kody:done' label and last comment says '✅ kody flow chore finished'. Flow completed successfully - state block is stale. Not stuck. Skipped.",
+        "plannedAt": "2026-04-29T12:15:00Z"
       },
       {
         "issueNumber": 1363,
         "action": "resume",
-        "reason": "core.status='running' in kody state block (reviewing phase), lastOutcome.timestamp 2026-04-27T09:49:12Z (~38.5h ago, >40 min threshold). Has kody:done label but state still running — likely state-machine stall. No kody comment in last 40 min (last activity at 2026-04-27T09:51:39Z). No in-flight run referencing #1363. No open kody PR (PR #1364 is closed). Not in perIssue, attemptsToday=0.",
-        "plannedAt": "2026-04-29T08:30:00Z"
+        "reason": "Dry-run: would post @kody resume on #1363. Status=running in kody state block (phase=reviewing, lastOutcome=2026-04-27T09:49:12Z, ~38.8h ago). However: issue now carries 'kody:done' label. Flow completed successfully - state block is stale. Not stuck. Skipped.",
+        "plannedAt": "2026-04-29T12:15:00Z"
       },
       {
         "issueNumber": 1360,
         "action": "resume",
-        "reason": "core.status='running' in kody state block (reviewing phase), lastOutcome.timestamp 2026-04-27T09:58:29Z (~38.4h ago, >40 min threshold). Has kody:done label but state still running — likely state-machine stall. No kody comment in last 40 min (last activity at 2026-04-27T10:00:55Z). No in-flight run referencing #1360. No open kody PR (PR #1366 is closed). Not in perIssue, attemptsToday=0.",
-        "plannedAt": "2026-04-29T08:30:00Z"
+        "reason": "Dry-run: would post @kody resume on #1360. Status=running in kody state block (phase=reviewing, lastOutcome=2026-04-27T09:58:29Z, ~38.5h ago). However: issue now carries 'kody:done' label. Flow completed successfully - state block is stale. Not stuck. Skipped.",
+        "plannedAt": "2026-04-29T12:15:00Z"
       },
       {
         "issueNumber": 1351,
         "action": "resume",
-        "reason": "core.status='running' in kody state block (in comment, reviewing phase), lastOutcome.timestamp 2026-04-27T20:30:49Z (~27.9h ago, >40 min threshold). Has kody:done label but state still running — likely state-machine stall. No kody comment in last 40 min (last activity at 2026-04-27T20:33:24Z). No in-flight run referencing #1351. No open kody PR (PR #1375 is closed). Not in perIssue, attemptsToday=0.",
-        "plannedAt": "2026-04-29T08:30:00Z"
-      },
-      {
-        "issueNumber": 1382,
-        "action": "resume",
-        "reason": "status=running in kody state block (comment), lastOutcome 2026-04-28T14:45:08Z (~9h ago), last comment 2026-04-28T14:48:08Z (~9h ago, >40 min), has kody:done label but state still running — likely state-machine stall. No in-flight runs, no kody PR, no kody comment in last 40 min. Not in perIssue, attemptsToday=0.",
-        "plannedAt": "2026-04-29T00:00:00Z"
-      },
-      {
-        "issueNumber": 1363,
-        "action": "resume",
-        "reason": "status=running in kody state block (comment), lastOutcome 2026-04-27T09:49:12Z (~38h ago), last comment 2026-04-27T09:51:39Z (~38h ago, >40 min), has kody:done label but state still running — likely state-machine stall. No in-flight runs, no kody PR, no kody comment in last 40 min. Not in perIssue, attemptsToday=0.",
-        "plannedAt": "2026-04-29T00:00:00Z"
-      },
-      {
-        "issueNumber": 1360,
-        "action": "resume",
-        "reason": "status=running in kody state block (comment), lastOutcome 2026-04-27T09:58:29Z (~38h ago), last comment 2026-04-27T10:00:55Z (~38h ago, >40 min), has kody:done label but state still running — likely state-machine stall. No in-flight runs, no kody PR, no kody comment in last 40 min. Not in perIssue, attemptsToday=0.",
-        "plannedAt": "2026-04-29T00:00:00Z"
-      },
-      {
-        "issueNumber": 1351,
-        "action": "resume",
-        "reason": "status=running in kody state block (comment), lastOutcome 2026-04-27T20:30:49Z (~27h ago), last comment 2026-04-27T20:33:24Z (~27h ago, >40 min), has kody:done label but state still running — likely state-machine stall. No in-flight runs, no kody PR, no kody comment in last 40 min. Not in perIssue, attemptsToday=0.",
-        "plannedAt": "2026-04-29T00:00:00Z"
-      },
-      {
-        "issueNumber": 1382,
-        "action": "resume",
-        "reason": "status=running, lastOutcome 2026-04-28T14:45:08Z (~8.3h ago), last kody comment 2026-04-28T14:48:08Z (~8.3h ago, >40 min), last resumed at 2026-04-28T23:08:00Z (prior tick) — NOTE: at this tick 1382 now has kody:done label and no visible state block",
-        "plannedAt": "2026-04-28T23:08:00Z"
-      },
-      {
-        "issueNumber": 1363,
-        "action": "resume",
-        "reason": "status=running, lastOutcome 2026-04-27T09:49:12Z (~37h ago), last kody comment 2026-04-27T09:51:39Z (~37h ago), last resumed at 2026-04-28T23:08:00Z (prior tick) — NOTE: at this tick 1363 now has kody:done label and no visible state block",
-        "plannedAt": "2026-04-28T23:08:00Z"
-      },
-      {
-        "issueNumber": 1360,
-        "action": "resume",
-        "reason": "status=running, lastOutcome 2026-04-27T09:58:29Z (~37h ago), last kody comment 2026-04-27T10:00:55Z (~37h ago), last resumed at 2026-04-28T23:08:00Z (prior tick) — NOTE: at this tick 1360 now has kody:done label and no visible state block",
-        "plannedAt": "2026-04-28T23:08:00Z"
-      },
-      {
-        "issueNumber": 1351,
-        "action": "resume",
-        "reason": "status=running, lastOutcome 2026-04-27T20:30:49Z (~26h ago), last kody comment 2026-04-27T20:33:24Z (~26h ago), last resumed at 2026-04-28T23:08:00Z (prior tick) — NOTE: at this tick 1351 now has kody:done label and no visible state block",
-        "plannedAt": "2026-04-28T23:08:00Z"
-      },
-      {
-        "issueNumber": 1382,
-        "action": "resume",
-        "reason": "status=running, lastOutcome timestamp 2026-04-28T14:45:08Z (8+ hours ago), last kody comment 2026-04-28T14:48:08Z (>40 min ago), human-created PR #1383 linked (not kody-authored), no in-flight workflow runs — prior tick dry-run log entry",
-        "plannedAt": "2026-04-28T23:08:00Z"
-      },
-      {
-        "issueNumber": 1363,
-        "action": "resume",
-        "reason": "status=running, lastOutcome timestamp 2026-04-27T09:49:12Z (37+ hours ago), last kody comment 2026-04-27T09:51:39Z (>40 min ago), human-created PR #1364 linked (not kody-authored), no in-flight workflow runs — prior tick dry-run log entry",
-        "plannedAt": "2026-04-28T23:08:00Z"
-      },
-      {
-        "issueNumber": 1360,
-        "action": "resume",
-        "reason": "status=running, lastOutcome timestamp 2026-04-27T09:58:29Z (37+ hours ago), last kody comment 2026-04-27T10:00:55Z (>40 min ago), human-created PR #1366 linked (not kody-authored), no in-flight workflow runs — prior tick dry-run log entry",
-        "plannedAt": "2026-04-28T23:08:00Z"
-      },
-      {
-        "issueNumber": 1351,
-        "action": "resume",
-        "reason": "status=running, lastOutcome timestamp 2026-04-27T20:30:49Z (26+ hours ago), last kody comment 2026-04-27T20:33:24Z (>40 min ago), human-created PR #1375 linked (not kody-authored), no in-flight workflow runs — prior tick dry-run log entry",
-        "plannedAt": "2026-04-28T23:08:00Z"
-      },
-      {
-        "issueNumber": 1380,
-        "action": "resume",
-        "reason": "status=running (phase: reviewing) in kody state block, lastOutcome.timestamp 2026-04-28T15:41:13Z (~8.5h ago) — exceeds 40 min threshold. Last kody-engine comment by korenguy123 at 2026-04-28T11:38:02Z (>40 min ago). Has kody:done label but state still running. Active run 25092200111 references #1380 but is in-progress (not fresh). No kody comment from kody-engine in last 40 min. Not in perIssue, attemptsToday=0.",
-        "plannedAt": "2026-04-29T00:08:00Z"
-      },
-      {
-        "issueNumber": 1363,
-        "action": "resume",
-        "reason": "status=running (phase: reviewing) in kody state block, lastOutcome.timestamp 2026-04-27T09:49:12Z (~38h ago). Last kody comment by korenguy123 at 2026-04-27T08:34:30Z (>40 min ago). Has kody:done label but state still running. No in-flight runs referencing 1363, no open kody PR, no kody comment in last 40 min. Not in perIssue, attemptsToday=0.",
-        "plannedAt": "2026-04-29T00:08:00Z"
-      },
-      {
-        "issueNumber": 1360,
-        "action": "resume",
-        "reason": "status=running (phase: reviewing) in kody state block, lastOutcome.timestamp 2026-04-27T09:58:29Z (~38h ago). Last kody comment by korenguy123 at 2026-04-27T08:16:36Z (>40 min ago). Has kody:done label but state still running. No in-flight runs referencing 1360, no open kody PR, no kody comment in last 40 min. Not in perIssue, attemptsToday=0.",
-        "plannedAt": "2026-04-29T00:08:00Z"
-      },
-      {
-        "issueNumber": 1351,
-        "action": "resume",
-        "reason": "status=running (phase: reviewing) in kody state block, lastOutcome.timestamp 2026-04-27T20:30:49Z (~27h ago). Last kody comment by korenguy123 at 2026-04-27T19:21:59Z (>40 min ago). Has kody:done label but state still running. No in-flight runs referencing 1351, no open kody PR, no kody comment in last 40 min. Not in perIssue, attemptsToday=0.",
-        "plannedAt": "2026-04-29T00:08:00Z"
-      },
-      {
-        "issueNumber": 1380,
-        "action": "resume",
-        "reason": "At this tick (2026-04-29T06:25:23Z): state block shows core.status='pending', NOT 'running' — filter not met. No action taken. Prior tick log entry superseded.",
-        "plannedAt": "2026-04-29T06:25:23Z"
-      },
-      {
-        "issueNumber": 1363,
-        "action": "resume",
-        "reason": "At this tick (2026-04-29T06:25:23Z): state block shows core.status='pending', NOT 'running' — filter not met. No action taken. Prior tick log entry superseded.",
-        "plannedAt": "2026-04-29T06:25:23Z"
-      },
-      {
-        "issueNumber": 1360,
-        "action": "resume",
-        "reason": "At this tick (2026-04-29T06:25:23Z): state block shows core.status='pending', NOT 'running' — filter not met. No action taken. Prior tick log entry superseded.",
-        "plannedAt": "2026-04-29T06:25:23Z"
-      },
-      {
-        "issueNumber": 1351,
-        "action": "resume",
-        "reason": "At this tick (2026-04-29T06:25:23Z): state block shows core.status='pending', NOT 'running' — filter not met. No action taken. Prior tick log entry superseded.",
-        "plannedAt": "2026-04-29T06:25:23Z"
+        "reason": "Dry-run: would post @kody resume on #1351. Status=running in kody state block (phase=reviewing, lastOutcome=2026-04-27T20:30:49Z, ~27.9h ago). However: issue now carries 'kody:done' label. Flow completed successfully - state block is stale. Not stuck. Skipped.",
+        "plannedAt": "2026-04-29T12:15:00Z"
       }
     ]
   },
