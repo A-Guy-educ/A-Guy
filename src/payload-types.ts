@@ -1855,9 +1855,21 @@ export interface ContextExtraction {
    */
   sourceMedia: string | Media;
   /**
-   * Raw LaTeX text extracted from the source media
+   * LaTeX rendering of the structured exercises. Generated for the viewer; the structured `exercises` field is the source of truth.
    */
   text: string;
+  /**
+   * Structured exercises returned by schema-mode extraction: [{ number, latex, solution }]. Stage 2 (create-context-exercises) reads this directly when present.
+   */
+  exercises?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -3425,6 +3437,7 @@ export interface ContextExtractionsSelect<T extends boolean = true> {
   lesson?: T;
   sourceMedia?: T;
   text?: T;
+  exercises?: T;
   updatedAt?: T;
   createdAt?: T;
 }
