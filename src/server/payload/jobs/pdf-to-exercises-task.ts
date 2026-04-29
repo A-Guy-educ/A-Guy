@@ -56,6 +56,10 @@ export const pdfToExercisesTask = {
       segments: [] as unknown[],
     }
 
+    // Collect every exercise id we touch (create + upsert) so we can
+    // reconcile the lesson.blocks playlist once all segments finish.
+    const upsertedExerciseIds = new Set<string>()
+
     try {
       // Fetch media document to get URL for multimodal mapper
       const media = await payload.findByID({
@@ -205,11 +209,12 @@ export const pdfToExercisesTask = {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 req: req as any,
               })
+              upsertedExerciseIds.add(String(existingDoc.id))
               deduped++
             } else {
               // New exercise - create with enriched content
               try {
-                await payload.create({
+                const createdDoc = await payload.create({
                   collection: 'exercises',
                   data: {
                     title: exercise.title,
@@ -236,6 +241,7 @@ export const pdfToExercisesTask = {
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   req: req as any,
                 })
+                upsertedExerciseIds.add(String(createdDoc.id))
                 created++
               } catch (createError: unknown) {
                 // Handle duplicate key error (concurrency scenario - race condition)
@@ -276,6 +282,7 @@ export const pdfToExercisesTask = {
                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       req: req as any,
                     })
+                    upsertedExerciseIds.add(String(retryFind.docs[0].id))
                     deduped++
                   } else {
                     // Index exists but document not found - rethrow
@@ -329,6 +336,75 @@ export const pdfToExercisesTask = {
             exercisesCreated: 0,
           })
           throw segmentError
+        }
+      }
+
+      // Reconcile lesson.blocks: ensure every upserted exercise appears as an
+      // exerciseRef in the lesson playlist. Existing entries are preserved;
+      // we only append refs that are missing. Failure here is logged but does
+      // not fail the job — exercises are still queryable via exercise.lesson.
+      if (upsertedExerciseIds.size > 0) {
+        try {
+          const lesson = await payload.findByID({
+            collection: 'lessons',
+            id: lessonId,
+            depth: 0,
+            overrideAccess: true,
+          })
+
+          const rawBlocks = (lesson as { blocks?: unknown }).blocks
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          let existingBlocks: any[] = []
+          if (Array.isArray(rawBlocks)) {
+            existingBlocks = rawBlocks
+          } else if (typeof rawBlocks === 'string' && rawBlocks.trim()) {
+            try {
+              const parsed = JSON.parse(rawBlocks)
+              if (Array.isArray(parsed)) existingBlocks = parsed
+            } catch {
+              // ignore, treat as empty
+            }
+          }
+
+          const referencedIds = new Set<string>()
+          for (const block of existingBlocks) {
+            if (block?.blockType === 'exerciseRef') {
+              const ref = block.exercise
+              if (typeof ref === 'string') referencedIds.add(ref)
+              else if (ref && typeof ref === 'object' && 'id' in ref)
+                referencedIds.add(String(ref.id))
+            }
+          }
+
+          const missing = Array.from(upsertedExerciseIds).filter(
+            (exerciseId) => !referencedIds.has(exerciseId),
+          )
+
+          if (missing.length > 0) {
+            const appended = missing.map((exerciseId) => ({
+              id: Math.random().toString(36).slice(2, 14),
+              blockType: 'exerciseRef',
+              exercise: exerciseId,
+            }))
+
+            await payload.update({
+              collection: 'lessons',
+              id: lessonId,
+              data: { blocks: JSON.stringify([...existingBlocks, ...appended]) } as Record<
+                string,
+                unknown
+              >,
+              overrideAccess: true,
+            })
+            console.log(
+              `[PDF→Exercises] Lesson ${lessonId}: appended ${missing.length} exerciseRef block(s) to playlist`,
+            )
+          }
+        } catch (blocksError) {
+          console.error(
+            `[PDF→Exercises] Failed to reconcile lesson.blocks for ${lessonId}:`,
+            blocksError,
+          )
         }
       }
 
