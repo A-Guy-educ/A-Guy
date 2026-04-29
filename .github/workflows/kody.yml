@@ -1,3 +1,23 @@
+# Drop this file at .github/workflows/kody.yml in your repo.
+#
+# Triggers forward every relevant event to `kody`; the engine decides what
+# (if anything) to do. The job runs `npx kody` — no shell branching, no
+# routing logic in YAML. All orchestration lives in the kody npm package;
+# future capabilities ship via `npm publish`, not by editing this file.
+#
+# Required repo secrets: at least one model provider key (e.g. MINIMAX_API_KEY,
+# ANTHROPIC_API_KEY). kody reads any *_API_KEY secret automatically via
+# toJSON(secrets) — no need to list them here.
+#
+# Recommended: KODY_TOKEN secret — a fine-grained PAT or GitHub App token
+# with `repo` + `read:org` + `workflow` scopes. Without it, kody's
+# commits/PR-creation still work via github.token, but three things degrade:
+#   1. PR body updates fail with "token lacks read:org scope" (cosmetic).
+#   2. Pushes from kody won't trigger downstream workflows.
+#   3. Any commit that modifies `.github/workflows/*` is REJECTED by
+#      GitHub — the default GITHUB_TOKEN can't touch workflow files.
+# Set KODY_TOKEN in repo Settings → Secrets → Actions.
+
 name: kody
 
 on:
@@ -36,9 +56,16 @@ on:
 
   issue_comment:
     types: [created]
-
   pull_request:
     types: [closed]
+  schedule:
+    # Wakes every 30 minutes; kody fans out to whichever scheduled executables
+    # (mission-scheduler, memorize, watch-stale-prs, …) match this tick.
+    #
+    # `memorize` writes to `.kody/vault/` and opens a daily PR. If your
+    # `.gitignore` ignores `.kody/*`, add `!.kody/vault/` and `!.kody/vault/**`
+    # so memorize's pages are tracked.
+    - cron: '*/30 * * * *'
 
   pull_request_review:
     types: [submitted]
@@ -52,7 +79,7 @@ on:
     paths: ['src/**', 'kody.config.json', 'package.json']
 
 concurrency:
-  group: kody-${{ github.event.inputs.task_id || github.event.issue.number || github.event.pull_request.number || github.event.workflow_run.id || github.sha }}
+  group: kody-${{ github.event.inputs.task_id || github.event.issue_number || github.event.pull_request.number || github.event.workflow_run.id || github.sha }}
   cancel-in-progress: false
 
 permissions:

@@ -21,7 +21,7 @@ import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
 import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 // ContentStatusBadge import removed - not currently used
 import { PageTransition } from '@/ui/web/components/page-transition'
-import { BarChart3, BookOpen, GraduationCap, PlayCircle, Sparkles } from 'lucide-react'
+import { BarChart3, BookOpen, GraduationCap, PlayCircle } from 'lucide-react'
 import { Button } from '@/ui/web/components/button'
 import { Progress } from '@/ui/web/components/progress'
 import { motion } from 'framer-motion'
@@ -423,7 +423,7 @@ export function StudyContent({
 
           {/* Footer actions */}
           <div className="mt-16 pt-8 border-t border-border/40 bg-gradient-to-b from-muted/10 to-transparent rounded-2xl p-content-gap-lg -mx-4 px-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-content-gap">
+            <div className="flex flex-wrap justify-center items-center gap-content-gap">
               <SystemLink
                 href="/stats"
                 className="flex items-center justify-center gap-2 text-body-sm font-bold text-foreground bg-card border border-border px-6 py-3 rounded-full hover:bg-muted/50 transition-all"
@@ -438,10 +438,6 @@ export function StudyContent({
                 <GraduationCap className="w-4 h-4" />
                 {t('upcomingExam')}
               </SystemLink>
-              <button className="flex items-center justify-center gap-2 text-body-sm font-bold text-foreground bg-card border border-border px-6 py-3 rounded-full hover:bg-muted/50 transition-all">
-                <Sparkles className="w-4 h-4" />
-                {t('bagrutTransition')}
-              </button>
             </div>
           </div>
         </main>

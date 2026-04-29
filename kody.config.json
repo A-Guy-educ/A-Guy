@@ -3,9 +3,8 @@
   "quality": {
     "typecheck": "pnpm typecheck",
     "lint": "pnpm lint",
-    "lintFix": "pnpm lint:fix",
-    "formatFix": "pnpm format",
-    "testUnit": "pnpm test:unit"
+    "format": "pnpm format",
+    "testUnit": "pnpm test:unit:coverage"
   },
   "git": {
     "defaultBranch": "dev"

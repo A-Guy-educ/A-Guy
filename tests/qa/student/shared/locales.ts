@@ -24,9 +24,9 @@ export const LABELS = {
     ask: 'שאל',
     test: 'מבחן',
     learn: 'למידה',
-    learnTab: 'ללמוד',
-    practiceTab: 'לתרגל',
-    askTab: 'לשאול',
+    learnTab: 'למידה',
+    practiceTab: 'תרגול',
+    askTab: 'שאלות',
     examsTab: 'בחינות',
     exams: 'מבחנים',
 
