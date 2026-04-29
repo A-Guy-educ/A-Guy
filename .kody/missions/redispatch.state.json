@@ -1,10 +1,34 @@
 {
   "version": 1,
-  "rev": 5,
+  "rev": 6,
   "cursor": "gc",
   "data": {
     "perIssue": {},
     "dryRunLog": [
+      {
+        "issueNumber": 1382,
+        "action": "resume",
+        "reason": "status=running in kody state block (comment), lastOutcome 2026-04-28T14:45:08Z (~9h ago), last comment 2026-04-28T14:48:08Z (~9h ago, >40 min), has kody:done label but state still running — likely state-machine stall. No in-flight runs, no kody PR, no kody comment in last 40 min. Not in perIssue, attemptsToday=0.",
+        "plannedAt": "2026-04-29T00:00:00Z"
+      },
+      {
+        "issueNumber": 1363,
+        "action": "resume",
+        "reason": "status=running in kody state block (comment), lastOutcome 2026-04-27T09:49:12Z (~38h ago), last comment 2026-04-27T09:51:39Z (~38h ago, >40 min), has kody:done label but state still running — likely state-machine stall. No in-flight runs, no kody PR, no kody comment in last 40 min. Not in perIssue, attemptsToday=0.",
+        "plannedAt": "2026-04-29T00:00:00Z"
+      },
+      {
+        "issueNumber": 1360,
+        "action": "resume",
+        "reason": "status=running in kody state block (comment), lastOutcome 2026-04-27T09:58:29Z (~38h ago), last comment 2026-04-27T10:00:55Z (~38h ago, >40 min), has kody:done label but state still running — likely state-machine stall. No in-flight runs, no kody PR, no kody comment in last 40 min. Not in perIssue, attemptsToday=0.",
+        "plannedAt": "2026-04-29T00:00:00Z"
+      },
+      {
+        "issueNumber": 1351,
+        "action": "resume",
+        "reason": "status=running in kody state block (comment), lastOutcome 2026-04-27T20:30:49Z (~27h ago), last comment 2026-04-27T20:33:24Z (~27h ago, >40 min), has kody:done label but state still running — likely state-machine stall. No in-flight runs, no kody PR, no kody comment in last 40 min. Not in perIssue, attemptsToday=0.",
+        "plannedAt": "2026-04-29T00:00:00Z"
+      },
       {
         "issueNumber": 1382,
         "action": "resume",
