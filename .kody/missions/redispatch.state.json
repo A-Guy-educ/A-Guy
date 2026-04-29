@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "rev": 11,
+  "rev": 13,
   "cursor": "done-no-candidates",
   "data": {
     "perIssue": {},
@@ -8,26 +8,38 @@
       {
         "issueNumber": 1382,
         "action": "resume",
-        "reason": "Dry-run: would post @kody resume on #1382. Status=running in kody state block (phase=reviewing, lastOutcome=2026-04-28T14:45:08Z, ~17.5h ago). However: issue now carries 'kody:done' label and last comment says '✅ kody flow chore finished'. Flow completed successfully - state block is stale. Not stuck. Skipped.",
+        "reason": "Dry-run: would post @kody resume on #1382. Status=running in kody state block (phase=reviewing, lastOutcome=2026-04-28T14:45:08Z, ~21.5h ago). However: issue carries 'kody:done' label and last comment says '✅ kody flow chore finished — review-passed'. Flow completed successfully — state block is stale. Not stuck. Skipped.",
         "plannedAt": "2026-04-29T12:15:00Z"
       },
       {
         "issueNumber": 1363,
         "action": "resume",
-        "reason": "Dry-run: would post @kody resume on #1363. Status=running in kody state block (phase=reviewing, lastOutcome=2026-04-27T09:49:12Z, ~38.8h ago). However: issue now carries 'kody:done' label. Flow completed successfully - state block is stale. Not stuck. Skipped.",
+        "reason": "Dry-run: would post @kody resume on #1363. Status=running in kody state block (phase=reviewing, lastOutcome=2026-04-27T09:49:12Z, ~38.8h ago). However: issue carries 'kody:done' label and last comment says '✅ kody flow bug finished — review-passed'. Flow completed successfully — state block is stale. Not stuck. Skipped.",
         "plannedAt": "2026-04-29T12:15:00Z"
       },
       {
         "issueNumber": 1360,
         "action": "resume",
-        "reason": "Dry-run: would post @kody resume on #1360. Status=running in kody state block (phase=reviewing, lastOutcome=2026-04-27T09:58:29Z, ~38.5h ago). However: issue now carries 'kody:done' label. Flow completed successfully - state block is stale. Not stuck. Skipped.",
+        "reason": "Dry-run: would post @kody resume on #1360. Status=running in kody state block (phase=reviewing, lastOutcome=2026-04-27T09:58:29Z, ~38.5h ago). However: issue carries 'kody:done' label and last comment says '✅ kody flow bug finished — review-passed'. Flow completed successfully — state block is stale. Not stuck. Skipped.",
         "plannedAt": "2026-04-29T12:15:00Z"
       },
       {
         "issueNumber": 1351,
         "action": "resume",
-        "reason": "Dry-run: would post @kody resume on #1351. Status=running in kody state block (phase=reviewing, lastOutcome=2026-04-27T20:30:49Z, ~27.9h ago). However: issue now carries 'kody:done' label. Flow completed successfully - state block is stale. Not stuck. Skipped.",
+        "reason": "Dry-run: would post @kody resume on #1351. Status=running in kody state block (phase=reviewing, lastOutcome=2026-04-27T20:30:49Z, ~27.9h ago). However: issue carries 'kody:done' label and last comment says '✅ kody flow bug finished — review-passed'. Flow completed successfully — state block is stale. Not stuck. Skipped.",
         "plannedAt": "2026-04-29T12:15:00Z"
+      },
+      {
+        "issueNumber": 1380,
+        "action": "resume",
+        "reason": "Dry-run: would post @kody resume on #1380. Status=running in kody state block (phase=reviewing, lastOutcome=2026-04-28T15:41:13Z, ~20.5h ago). However: issue carries 'kody:done' label and last comment says '✅ kody flow bug finished — review-passed'. Flow completed successfully — state block is stale. Not stuck. Skipped. Also checked: no in-progress workflow runs reference this issue.",
+        "plannedAt": "2026-04-29T12:15:00Z"
+      },
+      {
+        "issueNumber": 0,
+        "action": "resume",
+        "reason": "Dry-run: scanned all 83 open issues. Zero candidates for redispatch. No open issues contain kody state blocks. The 5 previously-logged issues (1382, 1363, 1360, 1351, 1380) all carry 'kody:done' labels and their state blocks have been removed from bodies — flows completed successfully, not stuck.",
+        "plannedAt": "2026-04-29T17:45:00Z"
       }
     ]
   },
