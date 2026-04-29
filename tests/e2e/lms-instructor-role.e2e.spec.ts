@@ -426,8 +426,7 @@ test.describe('Admin Dashboard - Course Oversight View', () => {
 
     // At least one course should have instructors
     const courseWithInstructors = data.data.courses.find(
-      (c: { instructors?: Array<{ role: string }> }) =>
-        c.instructors && c.instructors.length > 0,
+      (c: { instructors?: Array<{ role: string }> }) => c.instructors && c.instructors.length > 0,
     )
     expect(courseWithInstructors).toBeDefined()
     expect(courseWithInstructors.instructors[0]).toHaveProperty('role')

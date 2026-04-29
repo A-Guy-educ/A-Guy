@@ -184,12 +184,11 @@ export function InstructorDashboardContent({
                           </div>
                         )}
                         {/* Instructor view: show empty state badge */}
-                        {isAdmin &&
-                          (!course.instructors || course.instructors.length === 0) && (
-                            <span className="mt-2 inline-flex items-center rounded-full border border-dashed border-text-secondary/30 bg-muted px-2 py-0.5 text-body-xs text-text-secondary">
-                              {t('noInstructorsAssigned')}
-                            </span>
-                          )}
+                        {isAdmin && (!course.instructors || course.instructors.length === 0) && (
+                          <span className="mt-2 inline-flex items-center rounded-full border border-dashed border-text-secondary/30 bg-muted px-2 py-0.5 text-body-xs text-text-secondary">
+                            {t('noInstructorsAssigned')}
+                          </span>
+                        )}
                       </div>
                       <div className="ml-4 text-accent">→</div>
                     </div>
