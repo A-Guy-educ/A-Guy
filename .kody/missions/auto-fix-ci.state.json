@@ -1,23 +1,13 @@
 {
   "version": 1,
-  "rev": 16,
-  "cursor": "fix-ci-1285-1266-actioned",
+  "rev": 28,
+  "cursor": "fix-ci-no-failing-candidates-2026-04-29",
   "data": {
     "perPr": {
       "1227": {
         "lastSha": "01da2421b50b6bc8f82bd907b22fd2a524314b40",
         "attempts": 2,
         "stuck": true
-      },
-      "1266": {
-        "lastSha": "7f64a26f993738887c6d6cd9d660c9b736a9de65",
-        "attempts": 2,
-        "stuck": true
-      },
-      "1285": {
-        "lastSha": "961daee0b0ec08e5bcb3581b80582c00c7d89f25",
-        "attempts": 1,
-        "stuck": false
       }
     }
   },

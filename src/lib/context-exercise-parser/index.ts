@@ -114,185 +114,185 @@ export function parseContextText(contextText: string): ParsedSegment[] {
       })
     }
 
-    // Track whether matches came from the primary \textbf/\section pattern,
-    // so we know to apply phantom-exercise filtering (only safe for that path).
+    // Track which exercise numbers came from the primary \textbf/\section
+    // pattern, so we know to apply phantom-exercise filtering (only safe for
+    // that path — secondary-detected exercises without solutions are real,
+    // not phantoms).
     const usedPrimaryPattern = exerciseMatches.length > 0
+    const primaryNumbers = new Set(exerciseMatches.map((e) => e.number))
 
-    // Also detect \setcounter{enumi}{N} + \item style exercises
-    // (runs even if primary pattern found some matches — handles mixed formats)
-    if (exerciseMatches.length === 0) {
-      // Pass 1: Find all \setcounter{enumi}{N}\item anchors
-      while ((match = setCounterPattern.exec(runText)) !== null) {
-        if (match.index >= exerciseEndIndex) continue
+    // Also detect \setcounter{enumi}{N} + \item style exercises.
+    // Runs even when primary pattern matched, because LLM page-by-page extraction
+    // commonly emits a single \textbf{תרגיל 1} on page 1 and continues with
+    // \setcounter{enumi}{N} / \item-style continuations for exercises 2..N.
+    // De-dup by exercise number happens within each pass below.
+    // Pass 1: Find all \setcounter{enumi}{N}\item anchors
+    while ((match = setCounterPattern.exec(runText)) !== null) {
+      if (match.index >= exerciseEndIndex) continue
 
-        const enumi = parseInt(match[1], 10)
-        const number = enumi + 1 // \setcounter{enumi}{0} means exercise 1
+      const enumi = parseInt(match[1], 10)
+      const number = enumi + 1 // \setcounter{enumi}{0} means exercise 1
 
-        const existingIdx = exerciseMatches.findIndex((e) => e.number === number)
-        if (existingIdx !== -1) {
-          exerciseMatches[existingIdx] = {
-            index: match.index,
-            title: `תרגיל ${number}`,
-            number,
-            fullMatch: match[0],
-          }
-          continue
-        }
+      // Skip if the primary \textbf/\section pattern already matched this
+      // number — its descriptive title and document position must be
+      // preserved so reconstructContextText can write back faithfully.
+      // Replacing it with a setCounter token would destroy the original
+      // header on save.
+      if (exerciseMatches.some((e) => e.number === number)) continue
 
-        exerciseMatches.push({
-          index: match.index,
-          title: `תרגיל ${number}`,
-          number,
-          fullMatch: match[0],
-        })
-      }
-
-      // Pass 1b: Find \item[N.] bracket-numbered exercises
-      const itemBracketPattern = /\\item\[(\d+)\.\]/g
-      while ((match = itemBracketPattern.exec(runText)) !== null) {
-        if (match.index >= exerciseEndIndex) continue
-        const number = parseInt(match[1], 10)
-        if (exerciseMatches.some((e) => e.number === number)) continue
-        exerciseMatches.push({
-          index: match.index,
-          title: `תרגיל ${number}`,
-          number,
-          fullMatch: match[0],
-        })
-      }
-
-      // Pass 1c: Find \item N. inline-numbered exercises (e.g., "\item 42. content")
-      const itemInlinePattern = /\\item\s+(\d+)\.\s/g
-      while ((match = itemInlinePattern.exec(runText)) !== null) {
-        if (match.index >= exerciseEndIndex) continue
-        const number = parseInt(match[1], 10)
-        if (exerciseMatches.some((e) => e.number === number)) continue
-        exerciseMatches.push({
-          index: match.index,
-          title: `תרגיל ${number}`,
-          number,
-          fullMatch: match[0].trimEnd(),
-        })
-      }
-
-      // Pass 2: Find continuation exercises (plain \item after a known exercise)
-      // Scan ALL detected exercises, not just those missing the next number
-      const foundNumbers = new Set(exerciseMatches.map((e) => e.number))
-      const continuations: typeof exerciseMatches = []
-      for (const ex of exerciseMatches) {
-        if (foundNumbers.has(ex.number + 1)) continue
-
-        const searchStart = ex.index + ex.fullMatch.length
-        const region = runText.slice(searchStart, exerciseEndIndex)
-
-        let level = 0
-        let exerciseNum = ex.number
-        const tokenPattern =
-          /\\begin\{enumerate\}(\[[^\]]*\])?|\\end\{enumerate\}|\\setcounter\{enumi\}\{\d+\}|\\item\b/g
-        let tokenMatch
-        while ((tokenMatch = tokenPattern.exec(region)) !== null) {
-          if (tokenMatch[0].startsWith('\\begin{enumerate}')) {
-            level++
-            // Sub-enumerate blocks with [label=...] are sub-items, not exercises
-            if (level === 1 && tokenMatch[1]) {
-              // Skip the entire sub-block
-              let subLevel = 1
-              while (subLevel > 0 && (tokenMatch = tokenPattern.exec(region)) !== null) {
-                if (tokenMatch[0].startsWith('\\begin{enumerate}')) subLevel++
-                else if (tokenMatch[0] === '\\end{enumerate}') subLevel--
-              }
-              level--
-              continue
-            }
-          } else if (tokenMatch[0] === '\\end{enumerate}') {
-            level--
-            if (level < 0) break // Exited the containing enumerate block
-          } else if (tokenMatch[0].startsWith('\\setcounter')) {
-            // A setcounter means the next item has an explicit number — stop continuation
-            break
-          } else if (tokenMatch[0] === '\\item' && level === 0) {
-            exerciseNum++
-            const absIndex = searchStart + tokenMatch.index
-            if (
-              absIndex >= exerciseEndIndex ||
-              foundNumbers.has(exerciseNum) ||
-              continuations.some((e) => e.number === exerciseNum)
-            ) {
-              continue
-            }
-            continuations.push({
-              index: absIndex,
-              title: `תרגיל ${exerciseNum}`,
-              number: exerciseNum,
-              fullMatch: tokenMatch[0],
-            })
-            foundNumbers.add(exerciseNum)
-            // Don't break — continue finding more continuations
-          }
-        }
-      }
-      exerciseMatches.push(...continuations)
-
-      // Pass 3: Fill remaining gaps with orphan enumerate blocks
-      const allFound = new Set(exerciseMatches.map((e) => e.number))
-      if (exerciseMatches.length > 0) {
-        const maxNum = Math.max(...exerciseMatches.map((e) => e.number))
-        const byPos = [...exerciseMatches].sort((a, b) => a.index - b.index)
-
-        for (let gapStart = 1; gapStart <= maxNum; gapStart++) {
-          if (allFound.has(gapStart)) continue
-          let gapEnd = gapStart
-          while (gapEnd + 1 <= maxNum && !allFound.has(gapEnd + 1)) gapEnd++
-          const gapCount = gapEnd - gapStart + 1
-
-          const prevEx = byPos.filter((e) => e.number < gapStart).pop()
-          const nextEx = byPos.find((e) => e.number > gapEnd)
-          const regionStart = prevEx ? prevEx.index + prevEx.fullMatch.length : 0
-          const regionEnd = nextEx ? nextEx.index : exerciseEndIndex
-          const region = runText.slice(regionStart, regionEnd)
-
-          const orphanItems: number[] = []
-          let level = 0
-          let inOrphan = false
-          const tokPat =
-            /\\begin\{enumerate\}(\[[^\]]*\])?|\\end\{enumerate\}|\\setcounter\{enumi\}|\\item\b/g
-          let tok
-          while ((tok = tokPat.exec(region)) !== null) {
-            if (tok[0].startsWith('\\begin{enumerate}')) {
-              level++
-              if (level === 1) {
-                inOrphan = !tok[1]
-              }
-            } else if (tok[0] === '\\end{enumerate}') {
-              if (level === 1) inOrphan = false
-              level--
-              if (level < 0) level = 0
-            } else if (tok[0].startsWith('\\setcounter')) {
-              if (level === 1) inOrphan = false
-            } else if (tok[0] === '\\item' && level === 1 && inOrphan) {
-              orphanItems.push(regionStart + tok.index)
-            }
-          }
-
-          const toAssign = Math.min(orphanItems.length, gapCount)
-          for (let i = 0; i < toAssign; i++) {
-            const num = gapStart + i
-            exerciseMatches.push({
-              index: orphanItems[i],
-              title: `תרגיל ${num}`,
-              number: num,
-              fullMatch: '\\item',
-            })
-            allFound.add(num)
-          }
-
-          gapStart = gapEnd
-        }
-      }
-
-      // Sort by exercise number for consistent display order
-      exerciseMatches.sort((a, b) => a.number - b.number)
+      exerciseMatches.push({
+        index: match.index,
+        title: `תרגיל ${number}`,
+        number,
+        fullMatch: match[0],
+      })
     }
+
+    // Pass 1b: Find \item[N.] bracket-numbered exercises
+    const itemBracketPattern = /\\item\[(\d+)\.\]/g
+    while ((match = itemBracketPattern.exec(runText)) !== null) {
+      if (match.index >= exerciseEndIndex) continue
+      const number = parseInt(match[1], 10)
+      if (exerciseMatches.some((e) => e.number === number)) continue
+      exerciseMatches.push({
+        index: match.index,
+        title: `תרגיל ${number}`,
+        number,
+        fullMatch: match[0],
+      })
+    }
+
+    // Pass 1c: Find \item N. inline-numbered exercises (e.g., "\item 42. content")
+    const itemInlinePattern = /\\item\s+(\d+)\.\s/g
+    while ((match = itemInlinePattern.exec(runText)) !== null) {
+      if (match.index >= exerciseEndIndex) continue
+      const number = parseInt(match[1], 10)
+      if (exerciseMatches.some((e) => e.number === number)) continue
+      exerciseMatches.push({
+        index: match.index,
+        title: `תרגיל ${number}`,
+        number,
+        fullMatch: match[0].trimEnd(),
+      })
+    }
+
+    // Pass 2: Find continuation exercises (plain \item after a known exercise)
+    // Scan ALL detected exercises, not just those missing the next number
+    const foundNumbers = new Set(exerciseMatches.map((e) => e.number))
+    const continuations: typeof exerciseMatches = []
+    for (const ex of exerciseMatches) {
+      if (foundNumbers.has(ex.number + 1)) continue
+
+      const searchStart = ex.index + ex.fullMatch.length
+      const region = runText.slice(searchStart, exerciseEndIndex)
+
+      let level = 0
+      let exerciseNum = ex.number
+      const tokenPattern =
+        /\\begin\{enumerate\}(\[[^\]]*\])?|\\end\{enumerate\}|\\setcounter\{enumi\}\{\d+\}|\\item\b/g
+      let tokenMatch
+      while ((tokenMatch = tokenPattern.exec(region)) !== null) {
+        if (tokenMatch[0].startsWith('\\begin{enumerate}')) {
+          level++
+          // Sub-enumerate blocks with [label=...] are sub-items, not exercises
+          if (level === 1 && tokenMatch[1]) {
+            // Skip the entire sub-block
+            let subLevel = 1
+            while (subLevel > 0 && (tokenMatch = tokenPattern.exec(region)) !== null) {
+              if (tokenMatch[0].startsWith('\\begin{enumerate}')) subLevel++
+              else if (tokenMatch[0] === '\\end{enumerate}') subLevel--
+            }
+            level--
+            continue
+          }
+        } else if (tokenMatch[0] === '\\end{enumerate}') {
+          level--
+          if (level < 0) break // Exited the containing enumerate block
+        } else if (tokenMatch[0].startsWith('\\setcounter')) {
+          // A setcounter means the next item has an explicit number — stop continuation
+          break
+        } else if (tokenMatch[0] === '\\item' && level === 0) {
+          exerciseNum++
+          const absIndex = searchStart + tokenMatch.index
+          if (
+            absIndex >= exerciseEndIndex ||
+            foundNumbers.has(exerciseNum) ||
+            continuations.some((e) => e.number === exerciseNum)
+          ) {
+            continue
+          }
+          continuations.push({
+            index: absIndex,
+            title: `תרגיל ${exerciseNum}`,
+            number: exerciseNum,
+            fullMatch: tokenMatch[0],
+          })
+          foundNumbers.add(exerciseNum)
+          // Don't break — continue finding more continuations
+        }
+      }
+    }
+    exerciseMatches.push(...continuations)
+
+    // Pass 3: Fill remaining gaps with orphan enumerate blocks
+    const allFound = new Set(exerciseMatches.map((e) => e.number))
+    if (exerciseMatches.length > 0) {
+      const maxNum = Math.max(...exerciseMatches.map((e) => e.number))
+      const byPos = [...exerciseMatches].sort((a, b) => a.index - b.index)
+
+      for (let gapStart = 1; gapStart <= maxNum; gapStart++) {
+        if (allFound.has(gapStart)) continue
+        let gapEnd = gapStart
+        while (gapEnd + 1 <= maxNum && !allFound.has(gapEnd + 1)) gapEnd++
+        const gapCount = gapEnd - gapStart + 1
+
+        const prevEx = byPos.filter((e) => e.number < gapStart).pop()
+        const nextEx = byPos.find((e) => e.number > gapEnd)
+        const regionStart = prevEx ? prevEx.index + prevEx.fullMatch.length : 0
+        const regionEnd = nextEx ? nextEx.index : exerciseEndIndex
+        const region = runText.slice(regionStart, regionEnd)
+
+        const orphanItems: number[] = []
+        let level = 0
+        let inOrphan = false
+        const tokPat =
+          /\\begin\{enumerate\}(\[[^\]]*\])?|\\end\{enumerate\}|\\setcounter\{enumi\}|\\item\b/g
+        let tok
+        while ((tok = tokPat.exec(region)) !== null) {
+          if (tok[0].startsWith('\\begin{enumerate}')) {
+            level++
+            if (level === 1) {
+              inOrphan = !tok[1]
+            }
+          } else if (tok[0] === '\\end{enumerate}') {
+            if (level === 1) inOrphan = false
+            level--
+            if (level < 0) level = 0
+          } else if (tok[0].startsWith('\\setcounter')) {
+            if (level === 1) inOrphan = false
+          } else if (tok[0] === '\\item' && level === 1 && inOrphan) {
+            orphanItems.push(regionStart + tok.index)
+          }
+        }
+
+        const toAssign = Math.min(orphanItems.length, gapCount)
+        for (let i = 0; i < toAssign; i++) {
+          const num = gapStart + i
+          exerciseMatches.push({
+            index: orphanItems[i],
+            title: `תרגיל ${num}`,
+            number: num,
+            fullMatch: '\\item',
+          })
+          allFound.add(num)
+        }
+
+        gapStart = gapEnd
+      }
+    }
+
+    // Sort by exercise number for consistent display order
+    exerciseMatches.sort((a, b) => a.number - b.number)
 
     if (exerciseMatches.length === 0) {
       // No exercises found — treat entire text as one exercise
@@ -356,10 +356,13 @@ export function parseContextText(contextText: string): ParsedSegment[] {
 
     // For the primary \textbf{תרגיל N} pattern only: dedup by exercise number
     // (keeping the longest content variant), then if any exercise in this run
-    // has a matched solution, drop phantom matches that lack one. Why: the
-    // page-by-page LLM extraction occasionally emits stray \textbf{תרגיל N}
+    // has a matched solution, drop phantom PRIMARY matches that lack one. Why:
+    // the page-by-page LLM extraction occasionally emits stray \textbf{תרגיל N}
     // headers over answer-summary fragments or sub-item labels (ה. ו.) that
-    // never get a corresponding \section*{פתרון תרגיל N}.
+    // never get a corresponding \section*{פתרון תרגיל N}. Secondary-detected
+    // exercises (setCounter / continuation / orphan-fill) are NOT subject to
+    // this filter — they're real continuations of a numbered list and may
+    // legitimately lack their own solution header in the source.
     let finalExercises = exercises
     if (usedPrimaryPattern) {
       const byNumber = new Map<number, ParsedExercise>()
@@ -371,7 +374,13 @@ export function parseContextText(contextText: string): ParsedSegment[] {
       }
       const dedup = Array.from(byNumber.values())
       const anyHasSolution = dedup.some((ex) => ex.solution !== null)
-      finalExercises = anyHasSolution ? dedup.filter((ex) => ex.solution !== null) : dedup
+      if (anyHasSolution) {
+        finalExercises = dedup.filter(
+          (ex) => ex.solution !== null || !primaryNumbers.has(ex.number),
+        )
+      } else {
+        finalExercises = dedup
+      }
     }
 
     segments.push({
