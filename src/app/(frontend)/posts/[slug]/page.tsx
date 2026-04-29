@@ -19,10 +19,9 @@ export async function generateStaticParams() {
   try {
     const params = await queryAllPostSlugs()
     return params
-  } catch (error) {
+  } catch {
     // Gracefully handle MongoDB connection failures during build
     // Return empty array to allow build to continue
-    console.warn('Failed to generate static params for posts:', error)
     return []
   }
 }

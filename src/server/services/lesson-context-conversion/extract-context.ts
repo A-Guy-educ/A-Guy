@@ -2,7 +2,7 @@
  * Lesson Context Extraction Service
  *
  * Extracts context text from lesson content files (PDF/images) using AI prompts.
- * The extracted text is stored in the lesson's lessonContextText field.
+ * The extracted text is stored in the ContextExtractions collection.
  *
  * PDFs are processed page-by-page: each page is split into a single-page PDF,
  * sent to the LLM independently, validated, then stitched into one LaTeX document.
@@ -41,7 +41,7 @@ export interface ExtractContextResult {
 }
 
 /**
- * Extract context text from a lesson content file and store in lessonContextText.
+ * Extract context text from a lesson content file and store in ContextExtractions.
  *
  * For PDFs: splits into individual pages, processes each page independently,
  * validates LaTeX output, then stitches results into one document.
@@ -260,7 +260,7 @@ export async function extractLessonContext(
       // Add size warning if needed
       if (extractedText.length > LATEX_SIZE_WARNING_THRESHOLD) {
         warnings.push(
-          `Combined LaTeX is ${extractedText.length} chars (threshold: ${LATEX_SIZE_WARNING_THRESHOLD}). May approach lessonContextText limit.`,
+          `Combined LaTeX is ${extractedText.length} chars (threshold: ${LATEX_SIZE_WARNING_THRESHOLD}). May approach size limit.`,
         )
       }
     } else {

@@ -13,11 +13,30 @@
  * - Cookies are HttpOnly, Secure (prod), SameSite=Lax (S2)
  */
 
+import { ObjectId, type Collection, type Document } from 'mongodb'
 import type { Payload } from 'payload'
 import type { GuestSession } from '@/payload-types'
 import crypto from 'crypto'
 import { logger } from '@/infra/utils/logger'
 import { getGuestChatConfig } from '@/server/config/guest-chat-config'
+
+function getGuestSessionsCollection(payload: Payload): Collection<Document> | null {
+  const db = payload.db as unknown as {
+    connection?: { collection?: (name: string) => unknown }
+    collections?: Record<string, unknown>
+    collection?: (name: string) => unknown
+  }
+
+  const collection =
+    db.connection?.collection?.('guest-sessions') ||
+    db.collections?.['guest-sessions'] ||
+    db.collections?.['guestSessions'] ||
+    (db.collections as Record<string, unknown>)?.['guest-sessions'] ||
+    db.collection?.('guest-sessions') ||
+    null
+
+  return (collection as Collection<Document>) ?? null
+}
 
 export const GUEST_SESSION_COOKIE_NAME = 'guest_session'
 
@@ -250,6 +269,7 @@ export async function checkAndIncrementGuestMessageCount(
 ): Promise<GuestMessageLimitResult> {
   const guestConfig = await getGuestChatConfig()
 
+  // Guards: existence and claiming status must be checked separately (cannot be atomic with increment)
   const session = await payload.findByID({
     collection: 'guest-sessions',
     id: guestSessionId,
@@ -270,29 +290,70 @@ export async function checkAndIncrementGuestMessageCount(
     }
   }
 
-  const currentCount = session.messageCount ?? 0
+  const collection = getGuestSessionsCollection(payload)
 
-  if (currentCount >= guestConfig.max_messages) {
+  // Fallback to non-atomic path if collection is unavailable
+  if (!collection) {
+    const currentCount = session.messageCount ?? 0
+    if (currentCount >= guestConfig.max_messages) {
+      return {
+        allowed: false,
+        remaining: 0,
+        current: currentCount,
+        max: guestConfig.max_messages,
+      }
+    }
+    await payload.update({
+      collection: 'guest-sessions',
+      id: guestSessionId,
+      data: { messageCount: currentCount + 1 },
+    })
     return {
-      allowed: false,
-      remaining: 0,
-      current: currentCount,
+      allowed: true,
+      remaining: guestConfig.max_messages - currentCount - 1,
+      current: currentCount + 1,
       max: guestConfig.max_messages,
     }
   }
 
-  await payload.update({
-    collection: 'guest-sessions',
-    id: guestSessionId,
-    data: {
-      messageCount: currentCount + 1,
+  // Atomic increment: only succeeds if messageCount < max_messages
+  const result = await collection.findOneAndUpdate(
+    {
+      _id: new ObjectId(guestSessionId),
+      status: 'active',
+      messageCount: { $lt: guestConfig.max_messages },
     },
-  })
+    { $inc: { messageCount: 1 } },
+    { returnDocument: 'after' },
+  )
+
+  // Atomic update failed — session either reached limit or status changed
+  if (!result) {
+    const fresh = await payload.findByID({
+      collection: 'guest-sessions',
+      id: guestSessionId,
+    })
+    if (!fresh || fresh.status !== 'active') {
+      return {
+        allowed: false,
+        remaining: 0,
+        current: fresh?.messageCount ?? 0,
+        max: guestConfig.max_messages,
+      }
+    }
+    // Already at message limit
+    return {
+      allowed: false,
+      remaining: 0,
+      current: fresh.messageCount ?? 0,
+      max: guestConfig.max_messages,
+    }
+  }
 
   return {
     allowed: true,
-    remaining: guestConfig.max_messages - currentCount - 1,
-    current: currentCount + 1,
+    remaining: guestConfig.max_messages - result.messageCount,
+    current: result.messageCount,
     max: guestConfig.max_messages,
   }
 }

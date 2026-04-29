@@ -19,11 +19,11 @@ interface PdfLessonPagerProps {
   chapterSlug: string
   lessonSlug: string
   lessonId: string
+  /** Grade bucket for progress storage — must be the lesson's course label, not the user's profile grade. */
+  gradeLevel: string
   chatLessonId: string
-  /** Whether the lesson has context text (controls chat visibility) */
-  hasLessonContext?: boolean
-  /** Whether the lesson has exercises (controls chat visibility) */
-  hasExercises?: boolean
+  /** Whether to show the chat panel (true when lesson has exercises or context text) */
+  showChat?: boolean
   /** Formula sheet data (passed to ChatInterface) */
   formulaSheet?: import('@/payload-types').FormulaSheet | null
 }
@@ -36,9 +36,9 @@ export function PdfLessonPager({
   chapterSlug,
   lessonSlug,
   lessonId,
+  gradeLevel,
   chatLessonId,
-  hasLessonContext,
-  hasExercises,
+  showChat,
   formulaSheet,
 }: PdfLessonPagerProps) {
   const t = useTranslations('courses')
@@ -58,6 +58,7 @@ export function PdfLessonPager({
     chapterSlug,
     lessonSlug,
     lessonId,
+    gradeLevel,
   })
 
   if (pageState.type === 'pdf') {
@@ -119,7 +120,7 @@ export function PdfLessonPager({
           </div>
         }
         chatContent={
-          hasLessonContext || hasExercises ? (
+          showChat ? (
             <ChatInterface
               lessonId={chatLessonId}
               translationNamespace="courses"

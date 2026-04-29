@@ -53,47 +53,54 @@ export class MCPClient {
   ): Promise<T> {
     const id = crypto.randomUUID()
     const endpoint = new URL(DEFAULT_MCP_PATH, this.baseUrl)
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 30_000)
 
-    const response = await fetch(endpoint.toString(), {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        Accept: 'application/json, text/event-stream',
-        'MCP-Protocol-Version': MCP_PROTOCOL_VERSION,
-        ...(headers || {}),
-      },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id,
-        method,
-        params,
-      }),
-    })
+    try {
+      const response = await fetch(endpoint.toString(), {
+        signal: controller.signal,
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          Accept: 'application/json, text/event-stream',
+          'MCP-Protocol-Version': MCP_PROTOCOL_VERSION,
+          ...(headers || {}),
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id,
+          method,
+          params,
+        }),
+      })
 
-    if (!response.ok) {
-      const text = await response.text()
-      logger.error({ status: response.status, body: text }, '[MCPClient] MCP request failed')
-      throw new Error(`MCP request failed with status ${response.status}`)
+      if (!response.ok) {
+        const text = await response.text()
+        logger.error({ status: response.status, body: text }, '[MCPClient] MCP request failed')
+        throw new Error(`MCP request failed with status ${response.status}`)
+      }
+
+      const contentType = response.headers.get('content-type') || ''
+      let json: MCPJsonRpcResponse<T>
+
+      if (contentType.includes('text/event-stream')) {
+        const text = await response.text()
+        json = parseEventStream(text) as MCPJsonRpcResponse<T>
+      } else {
+        json = (await response.json()) as MCPJsonRpcResponse<T>
+      }
+      if (json.error) {
+        throw new Error(json.error.message || 'MCP error response')
+      }
+
+      if (!json.result) {
+        throw new Error('MCP response missing result')
+      }
+
+      return json.result
+    } finally {
+      clearTimeout(timeoutId)
     }
-
-    const contentType = response.headers.get('content-type') || ''
-    let json: MCPJsonRpcResponse<T>
-
-    if (contentType.includes('text/event-stream')) {
-      const text = await response.text()
-      json = parseEventStream(text) as MCPJsonRpcResponse<T>
-    } else {
-      json = (await response.json()) as MCPJsonRpcResponse<T>
-    }
-    if (json.error) {
-      throw new Error(json.error.message || 'MCP error response')
-    }
-
-    if (!json.result) {
-      throw new Error('MCP response missing result')
-    }
-
-    return json.result
   }
 }
 

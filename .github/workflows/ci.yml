@@ -72,11 +72,10 @@ jobs:
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
-        if: failure()
         with:
-          name: coverage-report
+          name: coverage-unit
           path: coverage/
-          retention-days: 1
+          retention-days: 3
 
       - name: Check for TODO/FIXME in production code
         run: |
@@ -129,9 +128,16 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run integration tests
-        run: pnpm test:int
+        run: pnpm test:int:coverage
         env:
           USE_MONGO_SERVICE: 'true'
+
+      - name: Upload integration coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-int
+          path: coverage/
+          retention-days: 3
 
   build:
     name: Build
@@ -191,7 +197,7 @@ jobs:
     name: E2E Gate (PR → main)
     runs-on: ubuntu-latest
     needs: [build]
-    if: github.event_name == 'pull_request' && github.base_ref != 'dev' && needs.build.result == 'success'
+    if: github.event_name == 'pull_request' && github.event.pull_request.base.ref != 'dev' && needs.build.result == 'success'
     timeout-minutes: 20
     env:
       DATABASE_URL: mongodb://localhost:27017/test
@@ -263,7 +269,7 @@ jobs:
         run: pnpm exec playwright install-deps chromium
 
       - name: Run E2E tests (E2E gate)
-        run: pnpm test:e2e
+        run: pnpm exec playwright test --config=playwright.e2e-gate.config.ts
         env:
           USE_MONGO_SERVICE: 'true'
           SKIP_BUILD: 'true'

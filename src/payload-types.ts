@@ -85,6 +85,7 @@ export interface Config {
     exercises: Exercise;
     'extraction-logs': ExtractionLog;
     'formula-sheets': FormulaSheet;
+    interactive_lessons: InteractiveLesson;
     prompts: Prompt;
     teacher_profiles: TeacherProfile;
     user_settings: UserSetting;
@@ -129,6 +130,7 @@ export interface Config {
     exercises: ExercisesSelect<false> | ExercisesSelect<true>;
     'extraction-logs': ExtractionLogsSelect<false> | ExtractionLogsSelect<true>;
     'formula-sheets': FormulaSheetsSelect<false> | FormulaSheetsSelect<true>;
+    interactive_lessons: InteractiveLessonsSelect<false> | InteractiveLessonsSelect<true>;
     prompts: PromptsSelect<false> | PromptsSelect<true>;
     teacher_profiles: TeacherProfilesSelect<false> | TeacherProfilesSelect<true>;
     user_settings: UserSettingsSelect<false> | UserSettingsSelect<true>;
@@ -1577,6 +1579,10 @@ export interface Exercise {
    */
   sourceDoc?: (string | null) | Media;
   /**
+   * Raw LaTeX chunk this exercise was derived from (for LaTeX imports)
+   */
+  sourceLatex?: string | null;
+  /**
    * Payload job ID that created this exercise
    */
   conversionJobId?: string | null;
@@ -1925,6 +1931,63 @@ export interface ExtractionLog {
    * LLM model name used
    */
   model?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "interactive_lessons".
+ */
+export interface InteractiveLesson {
+  id: string;
+  /**
+   * User who triggered the generation.
+   */
+  user: string | User;
+  /**
+   * The uploaded image this lesson was generated from.
+   */
+  media: string | Media;
+  /**
+   * Locale the lesson was generated in.
+   */
+  locale: 'he' | 'en';
+  /**
+   * Structured InteractiveLesson payload (geometry + steps).
+   */
+  lesson:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Model, processing time, input size at generation.
+   */
+  generationMetadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Source admin Prompts row id at generation.
+   */
+  promptId?: string | null;
+  /**
+   * Source prompt updatedAt at generation (ISO string).
+   */
+  promptUpdatedAt?: string | null;
+  /**
+   * Cached lesson shape version (bumped on schema change).
+   */
+  cacheSchemaVersion?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -2765,6 +2828,10 @@ export interface PayloadLockedDocument {
         value: string | FormulaSheet;
       } | null)
     | ({
+        relationTo: 'interactive_lessons';
+        value: string | InteractiveLesson;
+      } | null)
+    | ({
         relationTo: 'prompts';
         value: string | Prompt;
       } | null)
@@ -3380,6 +3447,7 @@ export interface ExercisesSelect<T extends boolean = true> {
   createdBy?: T;
   origin?: T;
   sourceDoc?: T;
+  sourceLatex?: T;
   conversionJobId?: T;
   sourcePageStart?: T;
   sourcePageEnd?: T;
@@ -3438,6 +3506,22 @@ export interface FormulaSheetsSelect<T extends boolean = true> {
   status?: T;
   publishedAt?: T;
   createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "interactive_lessons_select".
+ */
+export interface InteractiveLessonsSelect<T extends boolean = true> {
+  user?: T;
+  media?: T;
+  locale?: T;
+  lesson?: T;
+  generationMetadata?: T;
+  promptId?: T;
+  promptUpdatedAt?: T;
+  cacheSchemaVersion?: T;
   updatedAt?: T;
   createdAt?: T;
 }

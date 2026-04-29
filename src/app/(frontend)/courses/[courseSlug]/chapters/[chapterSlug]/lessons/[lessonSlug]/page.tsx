@@ -2,14 +2,13 @@ import '@/infra/config/server-init'
 
 import { getSystemLocale } from '@/i18n/server-locale'
 import { SystemParams } from '@/infra/config/system-params'
-import type { Media } from '@/payload-types'
+import type { FormulaSheet, Media } from '@/payload-types'
 import { resolveAccessType } from '@/server/constants/access-types'
 import { RenderBlocks } from '@/server/payload/blocks/RenderBlocks'
 import { isValidContentLocale } from '@/server/payload/fields/contentLocale'
 import { queryCourseBySlug } from '@/server/repos/queries/courses'
 import { queryExercisesByLesson } from '@/server/repos/queries/exercises'
 import { resolveFormulaSheet } from '@/server/repos/queries/formula-sheets'
-import type { FormulaSheet } from '@/payload-types'
 import { queryLessonBlocks } from '@/server/repos/queries/lesson-blocks'
 import { queryLessonBySlug } from '@/server/repos/queries/lessons'
 import { queryMediaByIds } from '@/server/repos/queries/media'
@@ -18,8 +17,10 @@ import { checkPaidAccess } from '@/server/utils/check-paid-access'
 import { AccessGateProvider } from '@/ui/web/auth/AccessGateProvider'
 import { ChatInterface } from '@/ui/web/chat'
 import { extractAllMediaIds } from '@/ui/web/exerciserenderer/utils/extractMediaIds'
+import { consolidateLatexBlocks } from '@/ui/web/shared/LatexDocumentViewer/consolidate-latex-blocks'
 import { stripHtml } from '@/utils/strip-html'
 import { notFound } from 'next/navigation'
+import { DualModeLessonView } from './_components/DualModeLessonView'
 import { EmptyLessonPlaceholder } from './_components/EmptyLessonPlaceholder'
 import { ExercisesPager } from './_components/ExercisesPager'
 import { LessonAnalytics } from './_components/LessonAnalytics'
@@ -33,6 +34,64 @@ interface LessonPageProps {
     chapterSlug: string
     lessonSlug: string
   }>
+}
+
+/**
+ * Render the dual-mode (PDF / Interactive) lesson view wrapped in the access
+ * gate + analytics. Called from both the new-arch blocks path and the legacy
+ * exercises path — the only differences are the analytics contentType and the
+ * shape of the Interactive tab source.
+ */
+function renderDualMode(args: {
+  accessType: ReturnType<typeof resolveAccessType>
+  courseSlug: string
+  chapterSlug: string
+  lessonSlug: string
+  gatedDelayMs: number
+  gatedWarningMs: number
+  lesson: { id: string; title: string }
+  courseId: string
+  /** Course label that drives the progress storage bucket for this lesson. */
+  gradeLevel: string
+  analyticsContentType: 'blocks' | 'exercises'
+  backUrl: string
+  consolidatedLatex: string
+  interactive: React.ComponentProps<typeof DualModeLessonView>['interactive']
+  mediaMap?: Record<string, Media>
+  chatLessonId: string
+  showChat: boolean
+  formulaSheet: FormulaSheet | null
+}) {
+  return (
+    <AccessGateProvider
+      accessType={args.accessType}
+      courseSlug={args.courseSlug}
+      gatedDelayMs={args.gatedDelayMs}
+      gatedWarningMs={args.gatedWarningMs}
+    >
+      <LessonAnalytics
+        lessonId={args.lesson.id}
+        courseId={args.courseId}
+        lessonTitle={args.lesson.title}
+        contentType={args.analyticsContentType}
+      />
+      <DualModeLessonView
+        lessonId={args.lesson.id}
+        lessonTitle={args.lesson.title}
+        backUrl={args.backUrl}
+        courseSlug={args.courseSlug}
+        chapterSlug={args.chapterSlug}
+        lessonSlug={args.lessonSlug}
+        gradeLevel={args.gradeLevel}
+        consolidatedLatex={args.consolidatedLatex}
+        interactive={args.interactive}
+        mediaMap={args.mediaMap}
+        chatLessonId={args.chatLessonId}
+        showChat={args.showChat}
+        formulaSheet={args.formulaSheet}
+      />
+    </AccessGateProvider>
+  )
 }
 
 export default async function LessonPage({ params }: LessonPageProps) {
@@ -142,6 +201,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
     const mediaMap =
       blockExercises.length > 0 ? await queryMediaByIds(extractAllMediaIds(blockExercises)) : {}
     const hasExercises = blockExercises.length > 0
+    const showChat = hasExercises || hasLessonContext
 
     // Pre-render content page bodies server-side
     const contentPageBodies: Record<string, React.ReactNode> = {}
@@ -156,6 +216,32 @@ export default async function LessonPage({ params }: LessonPageProps) {
           <RenderBlocks blocks={block.data.body} defaultSpacing={block.data.defaultBlockSpacing} />
         )
       }
+    }
+
+    // Dual-mode view: when no media is attached AND the lesson's exercises carry any
+    // LaTeX blocks, offer a PDF / Interactive tab toggle (V1-272).
+    const consolidated = consolidateLatexBlocks(blockExercises)
+    const hasAttachedMedia = validFiles.length > 0
+    if (!hasAttachedMedia && consolidated.hasContent) {
+      return renderDualMode({
+        accessType: effectiveAccessType,
+        courseSlug,
+        chapterSlug,
+        lessonSlug,
+        gatedDelayMs,
+        gatedWarningMs,
+        lesson: { id: lesson.id, title: lesson.title },
+        courseId: course.id,
+        gradeLevel: course.courseLabel,
+        analyticsContentType: 'blocks',
+        backUrl: '/study',
+        consolidatedLatex: consolidated.latex,
+        interactive: { kind: 'blocks', blocks: resolvedBlocks, contentPageBodies, validFiles },
+        mediaMap,
+        chatLessonId: lesson.id,
+        showChat,
+        formulaSheet,
+      })
     }
 
     return (
@@ -183,8 +269,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
           contentPageBodies={contentPageBodies}
           validFiles={validFiles}
           chatLessonId={lesson.id}
-          hasLessonContext={hasLessonContext}
-          hasExercises={hasExercises}
+          showChat={showChat}
           formulaSheet={formulaSheet}
         />
       </AccessGateProvider>
@@ -200,9 +285,37 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
   const hasContent = validFiles.length > 0
   const hasExercises = exercises.length > 0
+  const showChat = hasExercises || hasLessonContext
 
   // Batch-fetch all media referenced inside exercise content blocks
   const mediaMap = hasExercises ? await queryMediaByIds(extractAllMediaIds(exercises)) : {}
+
+  // Dual-mode view: when no media is attached AND any exercise has LaTeX blocks (V1-272).
+  // Media-attached lessons still route to PdfLessonPager below (media trumps).
+  if (hasExercises && !hasContent) {
+    const consolidated = consolidateLatexBlocks(exercises)
+    if (consolidated.hasContent) {
+      return renderDualMode({
+        accessType: effectiveAccessType,
+        courseSlug,
+        chapterSlug,
+        lessonSlug,
+        gatedDelayMs,
+        gatedWarningMs,
+        lesson: { id: lesson.id, title: lesson.title },
+        courseId: course.id,
+        gradeLevel: course.courseLabel,
+        analyticsContentType: 'exercises',
+        backUrl,
+        consolidatedLatex: consolidated.latex,
+        interactive: { kind: 'exercises', exercises },
+        mediaMap,
+        chatLessonId,
+        showChat,
+        formulaSheet,
+      })
+    }
+  }
 
   // V3-converted exercises: if any exercise was generated from the attached document,
   // show the interactive exercises instead of the PDF viewer.
@@ -233,9 +346,9 @@ export default async function LessonPage({ params }: LessonPageProps) {
             chapterSlug={chapterSlug}
             lessonSlug={lessonSlug}
             lessonId={lesson.id}
+            gradeLevel={course.courseLabel}
             mediaMap={mediaMap}
-            hasLessonContext={hasLessonContext}
-            hasExercises={hasExercises}
+            showChat={showChat}
             formulaSheet={formulaSheet}
           />
         ) : (
@@ -246,7 +359,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
               backUrl={backUrl}
               primaryContent={<EmptyLessonPlaceholder />}
               chatContent={
-                hasLessonContext ? (
+                showChat ? (
                   <ChatInterface
                     lessonId={chatLessonId}
                     translationNamespace="courses"
@@ -284,9 +397,9 @@ export default async function LessonPage({ params }: LessonPageProps) {
         chapterSlug={chapterSlug}
         lessonSlug={lessonSlug}
         lessonId={lesson.id}
+        gradeLevel={course.courseLabel}
         chatLessonId={chatLessonId}
-        hasLessonContext={hasLessonContext}
-        hasExercises={hasExercises}
+        showChat={showChat}
         formulaSheet={formulaSheet}
       />
     </AccessGateProvider>

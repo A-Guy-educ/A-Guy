@@ -5,7 +5,6 @@
  * @domain chat
  * @pattern server-only
  */
-import { buildLessonContextPrompt } from './lesson-context'
 
 export const SYSTEM_PROMPT_SEPARATOR = '\n\n---\n\n'
 
@@ -67,7 +66,7 @@ When a student uploads an image, you MUST check ALL of the following conditions 
 IMPORTANT:
 - Always respond in the SAME LANGUAGE the student used. If the student writes in Hebrew, you MUST respond in Hebrew. If in English, respond in English.
 - Always explain what is wrong with the image AND how to take a better one.
-- When rejecting an image for ANY of the reasons above (rules 1-9), you MUST include the exact tag [IMAGE_REJECTED] at the very end of your response. This tag is used by the system to automatically clear the rejected image so the student can upload a new one. Do NOT include this tag when the image is acceptable and you are helping with the exercise.`
+- When rejecting an image for ANY of the reasons above (rules 1-9), you MUST include the exact tag [IMAGE_REJECTED] at the very end of your response. This tag is a rejection signal used by the system; the tag itself is stripped from what the student sees. Do NOT include this tag when the image is acceptable and you are helping with the exercise.`
 
 /**
  * Composes final system instructions for AI chat.
@@ -78,18 +77,15 @@ IMPORTANT:
  * 3. Lesson-specific resolved prompt
  * 4. Mandatory math formatting instructions
  * 5. Mandatory image handling instructions
- * 6. Lesson context text injection (via buildLessonContextPrompt)
  *
  * @param systemPrompts - Array of system prompt templates (can be empty)
  * @param lessonPromptTemplate - Resolved lesson prompt template
- * @param lessonContextText - Optional lesson context to inject
  * @param teacherProfileBlock - Optional teacher profile block to inject
  * @returns Final composed system instructions string
  */
 export function composeSystemInstructions(
   systemPrompts: string[],
   lessonPromptTemplate: string,
-  lessonContextText?: string,
   teacherProfileBlock?: string,
 ): string {
   // Step 1: Join system prompts (if any)
@@ -110,8 +106,5 @@ export function composeSystemInstructions(
   const withMathFormatting = withLessonPrompt + '\n\n' + MATH_FORMATTING_INSTRUCTIONS
 
   // Step 5: Append mandatory image handling instructions
-  const withImageHandling = withMathFormatting + '\n\n' + IMAGE_HANDLING_INSTRUCTIONS
-
-  // Step 6: Inject lesson context (reuse existing function)
-  return buildLessonContextPrompt(withImageHandling, lessonContextText)
+  return withMathFormatting + '\n\n' + IMAGE_HANDLING_INSTRUCTIONS
 }

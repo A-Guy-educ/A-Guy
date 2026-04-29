@@ -327,15 +327,36 @@ describe('ConversationService (instance methods)', () => {
       expect(result).toBe(true)
     })
 
-    it('should allow student access (placeholder implementation)', async () => {
+    it('should allow student access to free courses', async () => {
+      // Mock a free course - no entitlement required
+      mockPayload.findByID = vi.fn().mockResolvedValue({
+        id: 'course-123',
+        accessType: 'free',
+      })
+
       const service = new ConversationService(mockPayload)
       const result = await service.validateContextAccess('user-123', AccountRole.Student, {
         relationTo: 'courses',
         value: 'course-123',
       })
 
-      // Currently returns true (placeholder for enrollment check)
       expect(result).toBe(true)
+    })
+
+    it('should deny student access to paid courses without entitlement', async () => {
+      // Mock a paid course - entitlement required but user has none
+      mockPayload.findByID = vi.fn().mockResolvedValue({
+        id: 'course-123',
+        accessType: 'paid',
+      })
+
+      const service = new ConversationService(mockPayload)
+      const result = await service.validateContextAccess('user-123', AccountRole.Student, {
+        relationTo: 'courses',
+        value: 'course-123',
+      })
+
+      expect(result).toBe(false)
     })
   })
 

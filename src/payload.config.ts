@@ -5,6 +5,7 @@ import sharp from 'sharp'
 import { fileURLToPath } from 'url'
 
 import { getServerSideURL } from '@/infra/utils/getURL'
+import { logger } from '@/infra/utils/logger'
 import { AccessCodes } from '@/server/payload/collections/AccessCodes'
 import { Categories } from '@/server/payload/collections/Categories'
 import { Chapters } from '@/server/payload/collections/Chapters'
@@ -21,6 +22,7 @@ import { Exercises } from '@/server/payload/collections/Exercises'
 import { ExtractionLogs } from '@/server/payload/collections/ExtractionLogs'
 import { FormulaSheets } from '@/server/payload/collections/FormulaSheets'
 import { GuestSessions } from '@/server/payload/collections/GuestSessions'
+import { InteractiveLessons } from '@/server/payload/collections/InteractiveLessons'
 import { Lessons } from '@/server/payload/collections/Lessons'
 import { MCPAuditLogs } from '@/server/payload/collections/MCPAuditLogs'
 import { Media } from '@/server/payload/collections/Media'
@@ -98,7 +100,7 @@ export default buildConfig({
       // The `BeforeDashboard` component renders the 'welcome' block that you see after logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below.
       beforeDashboard: [
-        '@/ui/admin/BeforeDashboard',
+        '@/ui/admin/ConversionTracking/DashboardWidgets',
         '@/ui/admin/AdminChat/DashboardWidget',
         '@/ui/admin/VersionInfo',
       ],
@@ -137,13 +139,13 @@ export default buildConfig({
   db: mongooseAdapter({
     url: databaseUrl,
     connectOptions: {
-      // Hardened connection pool configuration to prevent Atlas connection exhaustion
-      // Tests: maxPoolSize=5 (default)
-      // Production: maxPoolSize=10 (configurable via MONGODB_MAX_POOL_SIZE)
-      // Rationale: Atlas M10+ supports 500 connections. At 10/instance, this allows
-      // 50 concurrent serverless instances before hitting limits.
+      // ⚠️ CONNECTION POOL GUARDRAIL — DO NOT increase without updating the guardrail test
+      // Atlas limit: 500 connections. At maxPoolSize=N, max safe instances = 500/N.
+      // Default: 3 (production), 5 (tests). Override via MONGODB_MAX_POOL_SIZE env var.
+      // History: =100 caused outage, =10 caused Atlas alert, =3 is safe (166 instances).
+      // Guardrail test: tests/unit/mongodb-pool-config.test.ts
       maxPoolSize: parseInt(
-        process.env.MONGODB_MAX_POOL_SIZE ?? (process.env.VITEST ? '5' : '10'),
+        process.env.MONGODB_MAX_POOL_SIZE ?? (process.env.VITEST ? '5' : '3'),
         10,
       ),
       // Allow pool to fully drain when idle
@@ -154,6 +156,19 @@ export default buildConfig({
       connectTimeoutMS: 5000,
       // Socket timeout for long-running operations
       socketTimeoutMS: 30000,
+      // NOTE: serverSelectionTimeoutMS and waitQueueTimeoutMS were removed
+      // (2026-04-27). Set together with maxPoolSize=3 they converted ordinary
+      // cold-start contention (4+ concurrent layout DB calls vs 3 pool slots
+      // racing connection-pool warmup) into MongoWaitQueueTimeoutError, which
+      // crashed the root layout and rendered global-error.tsx ("Something went
+      // wrong!"). Driver defaults — wait indefinitely on the queue, 30 s for
+      // server selection — make cold starts slow but not user-visible
+      // failures. Pool exhaustion is still bounded by maxPoolSize at the
+      // Atlas connection level.
+    },
+    afterOpenConnection: async () => {
+      const maxPoolSize = process.env.MONGODB_MAX_POOL_SIZE ?? (process.env.VITEST ? '5' : '3')
+      logger.info({ maxPoolSize: parseInt(maxPoolSize, 10) }, '[MongoDB] Connection pool opened')
     },
   }),
   collections: [
@@ -174,6 +189,7 @@ export default buildConfig({
     Exercises,
     ExtractionLogs,
     FormulaSheets,
+    InteractiveLessons,
     Prompts,
     TeacherProfiles,
     UserSettings,

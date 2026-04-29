@@ -19,6 +19,7 @@
         "src/app/(frontend)/ask/_components/AskExerciseCard/index.tsx",
         "src/app/(frontend)/ask/_components/AskPageClient/index.tsx",
         "src/app/(frontend)/ask/_components/AskPrimaryContent/index.tsx",
+        "src/app/(frontend)/ask/_components/InteractivePlayer/useGenerateLesson.ts",
         "src/app/(frontend)/courses/[courseSlug]/_components/AddExamDialog/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/_components/AskTab/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/_components/ConversationCard/index.tsx",
@@ -202,6 +203,7 @@
         "src/ui/admin/exercise-conversion/ConvertContextButton/index.tsx",
         "src/ui/admin/exercise-conversion/ConvertContextModal/index.tsx",
         "src/ui/admin/exercise-conversion/ConvertForm/index.tsx",
+        "src/ui/admin/exercise-conversion/ConvertLatexBlockButton/index.tsx",
         "src/ui/admin/exercise-conversion/ConvertV2Button/index.tsx",
         "src/ui/admin/exercise-conversion/ConvertV3Button/index.tsx",
         "src/ui/admin/exercise-conversion/DraftExercisesList/index.tsx",
@@ -575,6 +577,7 @@
         "src/app/api/agent/chat/route.ts",
         "src/app/api/agent/chat/stream/route.ts",
         "src/app/api/agent/conversation/route.ts",
+        "src/app/api/agent/generate-interactive-lesson/route.ts",
         "src/app/api/agent/message/persist/route.ts",
         "src/app/api/agent/reset-chat/route.ts",
         "src/app/api/blob/upload-token/route.ts",
@@ -584,6 +587,7 @@
         "src/app/api/entitlements/check/route.ts",
         "src/app/api/entitlements/redeem/route.ts",
         "src/app/api/exercises/[id]/blocks/[blockId]/route.ts",
+        "src/app/api/exercises/convert-latex-block/route.ts",
         "src/app/api/exercises/convert/queue-v2/route.ts",
         "src/app/api/exercises/convert/queue/route.ts",
         "src/app/api/exercises/generate-support/route.ts",
@@ -631,6 +635,7 @@
         "src/app/api/agent/chat/route.ts",
         "src/app/api/agent/chat/stream/route.ts",
         "src/app/api/agent/conversation/route.ts",
+        "src/app/api/agent/generate-interactive-lesson/route.ts",
         "src/app/api/agent/message/persist/route.ts",
         "src/app/api/agent/reset-chat/route.ts",
         "src/app/api/chapters/by-grade/route.ts",
@@ -641,6 +646,7 @@
         "src/app/api/entitlements/redeem/route.ts",
         "src/app/api/example/route.ts",
         "src/app/api/exercises/[id]/blocks/[blockId]/route.ts",
+        "src/app/api/exercises/convert-latex-block/route.ts",
         "src/app/api/exercises/convert/queue-v2/route.ts",
         "src/app/api/exercises/convert/queue/route.ts",
         "src/app/api/exercises/convert/runner/route.ts",
@@ -657,6 +663,7 @@
         "src/app/api/study-plan/route.ts",
         "src/infra/auth/oauth_cookies.ts",
         "src/infra/auth/oauth_state.ts",
+        "src/middleware.ts",
         "src/server/api/responses.ts",
         "src/server/api/with-api-handler.ts"
       ]
@@ -822,6 +829,16 @@
       "description": "No description available",
       "files": ["src/infra/config/system-params.ts"]
     },
+    "connection-pool": {
+      "pattern": "connection-pool",
+      "description": "No description available",
+      "files": ["src/infra/db/pool-stats.ts"]
+    },
+    "health-check": {
+      "pattern": "health-check",
+      "description": "No description available",
+      "files": ["src/infra/db/pool-stats.ts"]
+    },
     "genkit": {
       "pattern": "genkit",
       "description": "No description available",
@@ -871,16 +888,6 @@
       "pattern": "mcp-integration",
       "description": "No description available",
       "files": ["src/infra/llm/genkit/tools/genkit-tools.ts"]
-    },
-    "single-responsibility": {
-      "pattern": "single-responsibility",
-      "description": "No description available",
-      "files": ["src/infra/llm/lesson-context.ts"]
-    },
-    "runtime-injection": {
-      "pattern": "runtime-injection",
-      "description": "No description available",
-      "files": ["src/infra/llm/lesson-context.ts"]
     },
     "server-only": {
       "pattern": "server-only",
@@ -1098,6 +1105,7 @@
         "src/server/payload/collections/ConfigSecrets.ts",
         "src/server/payload/collections/ConfigValues.ts",
         "src/server/payload/collections/ContentPages.ts",
+        "src/server/payload/collections/ContextExtractions.ts",
         "src/server/payload/collections/Conversations.ts",
         "src/server/payload/collections/Courses.ts",
         "src/server/payload/collections/ExerciseAssets.ts",
@@ -1160,6 +1168,11 @@
       "pattern": "json-storage",
       "description": "No description available",
       "files": ["src/server/payload/collections/ConfigValues.ts"]
+    },
+    "hidden-storage": {
+      "pattern": "hidden-storage",
+      "description": "No description available",
+      "files": ["src/server/payload/collections/ContextExtractions.ts"]
     },
     "user-owned": {
       "pattern": "user-owned",
@@ -1634,7 +1647,7 @@
       "domain": "general",
       "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "next/navigation", "lucide-react"]
+      "dependencies": ["react", "next/navigation", "lucide-react", "sonner"]
     },
     "src/app/(frontend)/ask/_components/AskDrawingCanvas/index.tsx": {
       "path": "src/app/(frontend)/ask/_components/AskDrawingCanvas/index.tsx",
@@ -1667,6 +1680,14 @@
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
       "dependencies": ["lucide-react", "react", "sonner"]
+    },
+    "src/app/(frontend)/ask/_components/InteractivePlayer/useGenerateLesson.ts": {
+      "path": "src/app/(frontend)/ask/_components/InteractivePlayer/useGenerateLesson.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
     },
     "src/app/(frontend)/courses/[courseSlug]/_components/AddExamDialog/index.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/_components/AddExamDialog/index.tsx",
@@ -2306,6 +2327,14 @@
       "aiSummary": "",
       "dependencies": ["next/server", "payload", "@payload-config", "zod"]
     },
+    "src/app/api/agent/generate-interactive-lesson/route.ts": {
+      "path": "src/app/api/agent/generate-interactive-lesson/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["api-endpoint", "authenticated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["@payload-config", "next/server", "payload"]
+    },
     "src/app/api/agent/message/persist/route.ts": {
       "path": "src/app/api/agent/message/persist/route.ts",
       "type": "unknown",
@@ -2465,6 +2494,14 @@
       "patterns": ["endpoint"],
       "aiSummary": "",
       "dependencies": ["next/server", "zod"]
+    },
+    "src/app/api/exercises/convert-latex-block/route.ts": {
+      "path": "src/app/api/exercises/convert-latex-block/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["api-endpoint", "authenticated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["next/server", "payload", "@payload-config"]
     },
     "src/app/api/exercises/generate-support/route.ts": {
       "path": "src/app/api/exercises/generate-support/route.ts",
@@ -2930,6 +2967,14 @@
       "aiSummary": "Type-safe accessors for system parameters stored in ConfigValues",
       "dependencies": []
     },
+    "src/infra/db/pool-stats.ts": {
+      "path": "src/infra/db/pool-stats.ts",
+      "type": "utility",
+      "domain": "database",
+      "patterns": ["connection-pool", "health-check"],
+      "aiSummary": "",
+      "dependencies": ["@payloadcms/db-mongodb"]
+    },
     "src/infra/llm/genkit/adapters/error-adapter.ts": {
       "path": "src/infra/llm/genkit/adapters/error-adapter.ts",
       "type": "adapter",
@@ -2977,14 +3022,6 @@
       "patterns": ["genkit-tools", "tool-calling", "mcp-integration"],
       "aiSummary": "",
       "dependencies": ["genkit"]
-    },
-    "src/infra/llm/lesson-context.ts": {
-      "path": "src/infra/llm/lesson-context.ts",
-      "type": "ai-utility",
-      "domain": "chat",
-      "patterns": ["single-responsibility", "runtime-injection"],
-      "aiSummary": "",
-      "dependencies": []
     },
     "src/infra/llm/prompt-composer.server.ts": {
       "path": "src/infra/llm/prompt-composer.server.ts",
@@ -3282,6 +3319,14 @@
       "aiSummary": "",
       "dependencies": ["react", "next/navigation"]
     },
+    "src/middleware.ts": {
+      "path": "src/middleware.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["api-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["next/server"]
+    },
     "src/server/api/responses.ts": {
       "path": "src/server/api/responses.ts",
       "type": "unknown",
@@ -3462,6 +3507,14 @@
       "domain": "general",
       "patterns": ["access-control", "payload-hooks"],
       "aiSummary": "",
+      "dependencies": ["payload"]
+    },
+    "src/server/payload/collections/ContextExtractions.ts": {
+      "path": "src/server/payload/collections/ContextExtractions.ts",
+      "type": "collection-config",
+      "domain": "content-pipeline",
+      "patterns": ["hidden-storage", "access-control"],
+      "aiSummary": "Hidden storage for PDF-to-LaTeX extraction output, decoupled from lessonContextText",
       "dependencies": ["payload"]
     },
     "src/server/payload/collections/Conversations.ts": {
@@ -4464,7 +4517,7 @@
       "domain": "general",
       "patterns": ["client-component"],
       "aiSummary": "",
-      "dependencies": ["@payloadcms/ui", "lucide-react", "react"]
+      "dependencies": ["@payloadcms/ui", "lucide-react", "react", "next/dynamic"]
     },
     "src/ui/admin/ExercisePreview/index.tsx": {
       "path": "src/ui/admin/ExercisePreview/index.tsx",
@@ -4719,7 +4772,7 @@
       "type": "component",
       "domain": "admin|exercises",
       "patterns": ["context-exercise-viewer", "client-component"],
-      "aiSummary": "Displays and allows editing of parsed exercises from lessonContextText LaTeX content",
+      "aiSummary": "Displays and allows editing of parsed exercises from ContextExtractions collection",
       "dependencies": ["@payloadcms/ui", "react", "lucide-react"]
     },
     "src/ui/admin/exercise-conversion/ConversionStatusPanel/index.tsx": {
@@ -4744,7 +4797,7 @@
       "domain": "general",
       "patterns": ["client-component"],
       "aiSummary": "",
-      "dependencies": ["@payloadcms/ui", "react"]
+      "dependencies": ["react"]
     },
     "src/ui/admin/exercise-conversion/ConvertForm/index.tsx": {
       "path": "src/ui/admin/exercise-conversion/ConvertForm/index.tsx",
@@ -4753,6 +4806,14 @@
       "patterns": ["client-component"],
       "aiSummary": "",
       "dependencies": ["react"]
+    },
+    "src/ui/admin/exercise-conversion/ConvertLatexBlockButton/index.tsx": {
+      "path": "src/ui/admin/exercise-conversion/ConvertLatexBlockButton/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["@payloadcms/ui", "next/navigation", "react"]
     },
     "src/ui/admin/exercise-conversion/ConvertV2Button/index.tsx": {
       "path": "src/ui/admin/exercise-conversion/ConvertV2Button/index.tsx",
@@ -6105,8 +6166,8 @@
     }
   },
   "metadata": {
-    "generatedAt": "2026-04-15T09:50:58.208Z",
-    "totalFiles": 563,
-    "totalPatterns": 139
+    "generatedAt": "2026-04-21T07:56:18.855Z",
+    "totalFiles": 569,
+    "totalPatterns": 140
   }
 }

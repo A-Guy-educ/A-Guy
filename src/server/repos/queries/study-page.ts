@@ -5,6 +5,7 @@ import type { Chapter, Lesson } from '@/payload-types'
 import { DEFAULT_ACCESS_TYPE, DEFAULT_PAGE_ACCESS_TYPE } from '@/server/constants/access-types'
 import { SystemParams } from '@/infra/config/system-params'
 import type { ContentLocale } from '@/server/payload/fields/contentLocale'
+import { localeWhereClause } from '@/server/payload/fields/contentLocale'
 import { queryChaptersByGrade } from './chapters'
 
 export interface PrefetchedStudyData {
@@ -24,7 +25,11 @@ export interface PrefetchedStudyData {
  * Mirrors /api/chapters/by-grade but runs as direct DB access (no HTTP round-trip).
  */
 export const prefetchStudyData = cache(
-  async (gradeLevel: string, locale?: ContentLocale): Promise<PrefetchedStudyData | null> => {
+  async (
+    gradeLevel: string,
+    locale?: ContentLocale,
+    lessonType: 'learning' | 'practice' | 'exam' = 'practice',
+  ): Promise<PrefetchedStudyData | null> => {
     try {
       const [chapters, [gatedDelayMs, gatedWarningMs]] = await Promise.all([
         queryChaptersByGrade({ gradeLevel, locale }),
@@ -59,6 +64,8 @@ export const prefetchStudyData = cache(
               { chapter: { in: chapterIds } },
               { status: { equals: 'published' } },
               { isActive: { equals: true } },
+              { type: { equals: lessonType } },
+              ...(locale ? [localeWhereClause(locale)] : []),
             ],
           },
           sort: 'order',

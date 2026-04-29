@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import type { Exercise } from '@/payload-types'
-import { getUserProfile } from '@/client/state/localStorage/userProfile'
 import { getExerciseUrlParam } from './getExerciseUrlParam'
 
 type PageType = 'intro' | 'about' | 'exercise' | 'outro'
@@ -17,24 +16,28 @@ interface UseExercisesPagerProps {
   chapterSlug: string
   lessonSlug: string
   lessonId: string
+  /** Grade bucket to store progress under — must be the lesson's course label, not the user's onboarding grade. */
+  gradeLevel: string
   hasAboutPage?: boolean
 }
 
 /** Fire-and-forget progress save (silently ignores errors / unauthenticated users) */
-function saveProgress(params: {
-  recordType: 'lesson' | 'exercise' | 'chapter'
-  recordId: string
-  completionPercentage: number
-  status: 'not_started' | 'in_progress' | 'completed'
-  score?: number
-}) {
-  const profile = getUserProfile()
-  if (!profile?.gradeLevel) return
+function saveProgress(
+  gradeLevel: string,
+  params: {
+    recordType: 'lesson' | 'exercise' | 'chapter'
+    recordId: string
+    completionPercentage: number
+    status: 'not_started' | 'in_progress' | 'completed'
+    score?: number
+  },
+) {
+  if (!gradeLevel) return
   fetch('/api/progress', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ ...params, gradeLevel: profile.gradeLevel }),
+    body: JSON.stringify({ ...params, gradeLevel }),
   }).catch(() => {
     /* silent – user may be anonymous */
   })
@@ -46,6 +49,7 @@ export function useExercisesPager({
   chapterSlug,
   lessonSlug,
   lessonId,
+  gradeLevel,
   hasAboutPage = false,
 }: UseExercisesPagerProps) {
   // When hasAboutPage, pages are: intro(0) → about(1) → exercises(2..n+1) → outro(n+2)
@@ -167,7 +171,7 @@ export function useExercisesPager({
       visitedExercisesRef.current.add(prevState.exerciseIndex)
 
       // Save exercise-level record
-      saveProgress({
+      saveProgress(gradeLevel, {
         recordType: 'exercise',
         recordId: exercise.id,
         completionPercentage: 100,
@@ -179,7 +183,7 @@ export function useExercisesPager({
       const totalExercises = exercises.length
       if (totalExercises > 0 && !completionSavedRef.current) {
         const pct = Math.round((visitedCount / totalExercises) * 100)
-        saveProgress({
+        saveProgress(gradeLevel, {
           recordType: 'lesson',
           recordId: lessonId,
           completionPercentage: Math.min(pct, 99), // cap at 99 until outro
@@ -187,7 +191,7 @@ export function useExercisesPager({
         })
       }
     },
-    [exercises, lessonId],
+    [exercises, lessonId, gradeLevel],
   )
 
   const handleNext = useCallback(() => {
@@ -210,7 +214,7 @@ export function useExercisesPager({
 
         // Fire 100% save after exercise progress to ensure correct final state
         if (nextState.type === 'outro') {
-          saveProgress({
+          saveProgress(gradeLevel, {
             recordType: 'lesson',
             recordId: lessonId,
             completionPercentage: 100,
@@ -221,7 +225,7 @@ export function useExercisesPager({
         return nextState
       })
     })
-  }, [totalPages, pageToState, startTransition, lessonId, saveExerciseProgress])
+  }, [totalPages, pageToState, startTransition, lessonId, gradeLevel, saveExerciseProgress])
 
   const handlePrev = useCallback(() => {
     startTransition(() => {
@@ -247,14 +251,14 @@ export function useExercisesPager({
       return
     }
     // Mark lesson as in_progress when starting exercises
-    saveProgress({
+    saveProgress(gradeLevel, {
       recordType: 'lesson',
       recordId: lessonId,
       completionPercentage: 0,
       status: 'in_progress',
     })
     setPageState({ type: 'exercise', pageNumber: firstExercisePage, exerciseIndex: 0 })
-  }, [hasAboutPage, exercises.length, totalPages, firstExercisePage, lessonId])
+  }, [hasAboutPage, exercises.length, totalPages, firstExercisePage, lessonId, gradeLevel])
 
   const handleStartExercises = useCallback(() => {
     if (exercises.length === 0) {
@@ -262,14 +266,14 @@ export function useExercisesPager({
       return
     }
     // Mark lesson as in_progress when starting exercises
-    saveProgress({
+    saveProgress(gradeLevel, {
       recordType: 'lesson',
       recordId: lessonId,
       completionPercentage: 0,
       status: 'in_progress',
     })
     setPageState({ type: 'exercise', pageNumber: firstExercisePage, exerciseIndex: 0 })
-  }, [exercises.length, totalPages, firstExercisePage, lessonId])
+  }, [exercises.length, totalPages, firstExercisePage, lessonId, gradeLevel])
 
   useEffect(() => {
     syncUrl(pageState)

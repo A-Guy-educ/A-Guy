@@ -122,7 +122,7 @@ export const PROVIDER_MODEL_NAMES: Record<LLMProviderType, Record<AIModelKey, st
   [LLMProviderType.GEMINI]: {
     IMAGE_TO_EXERCISE: 'gemini-3.1-pro',
     EXERCISE_CHAT: 'gemini-3.1-flash-lite-preview',
-    PDF_TO_EXERCISE: 'gemini-3.1-pro',
+    PDF_TO_EXERCISE: 'gemini-2.5-flash',
     ANSWER_VALIDATION: 'gemini-3.1-pro',
     SUPPORT_GENERATION: 'gemini-3.1-pro',
     CONTENT_TRANSLATION: 'gemini-3.1-pro',

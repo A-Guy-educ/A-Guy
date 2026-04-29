@@ -14,10 +14,9 @@ export async function generateStaticParams() {
   try {
     const pages = await queryAllPageSlugs()
     return pages
-  } catch (error) {
+  } catch {
     // Gracefully handle MongoDB connection failures during build
     // Return empty array to allow build to continue
-    console.warn('Failed to generate static params for pages:', error)
     return []
   }
 }

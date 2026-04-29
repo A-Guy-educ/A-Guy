@@ -11,7 +11,7 @@
  * - Holds the raw LaTeX extraction that was previously stored in Lesson.lessonContextText
  * - The ContextExerciseViewer reads from this collection to display/edit parsed exercises
  * - The create-context-exercises API reads from this to create Exercise documents
- * - Lesson.lessonContextText remains independent for chat context injection
+ * - Lesson.lessonContextText was previously used for chat context injection (now removed)
  *
  * Access:
  * - Admin-only read/write (extraction is triggered from admin panel)

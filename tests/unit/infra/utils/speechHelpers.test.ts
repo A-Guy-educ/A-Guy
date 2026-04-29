@@ -8,11 +8,22 @@ describe('stripMarkdown', () => {
   it('removes inline code', () => {
     expect(stripMarkdown('Use `console.log` to debug')).toBe('Use  to debug')
   })
-  it('removes LaTeX block math', () => {
-    expect(stripMarkdown('Formula: $$x^2 + y^2 = z^2$$ end')).toBe('Formula:  end')
+  it('verbalizes LaTeX block math (English)', () => {
+    // Note: extra spaces around verbalized math are cosmetic - core conversion works
+    expect(stripMarkdown('Formula: $$x^2 + y^2 = z^2$$ end', 'en')).toBe(
+      'Formula:  x squared plus y squared equals z squared  end',
+    )
   })
-  it('removes LaTeX inline math', () => {
-    expect(stripMarkdown('The value $x = 5$ is correct')).toBe('The value  is correct')
+  it('verbalizes LaTeX inline math (English)', () => {
+    expect(stripMarkdown('The value $x = 5$ is correct', 'en')).toBe(
+      'The value  x equals 5  is correct',
+    )
+  })
+  it('verbalizes LaTeX block math (Hebrew)', () => {
+    // Hebrew: all ^2 -> beribu'a, = -> shav le-
+    expect(stripMarkdown('Formula: $$x^2 + y^2 = z^2$$ end', 'he')).toBe(
+      "Formula:  x beribu'a plus y beribu'a shav le- z beribu'a  end",
+    )
   })
   it('removes markdown headings', () => {
     expect(stripMarkdown('## Title\nContent')).toBe('Title\nContent')

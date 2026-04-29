@@ -1,0 +1,13 @@
+{
+  "id": "ep_stage_diary_002",
+  "runId": "2",
+  "source": "stage_diary",
+  "taskId": "2",
+  "createdAt": "2026-04-19T15:55:04.904Z",
+  "rawContent": "{\"stage\":\"review\",\"insights\":[{\"kind\":\"gotcha\",\"text\":\"When reorganizing roles (e.g., moving them to a new module), update all backward-compat re-export files too — it's easy to forget them.\",\"scope\":\"src/server/payload/collections/Users/roles.ts\"},{\"kind\":\"gotcha\",\"text\":\"Backend-integration layers that import roles from shared infra need their import paths updated when roles are reorganized.\",\"scope\":\"src/server/payload/backend-integration\"},{\"kind\":\"lesson\",\"text\":\"Always confirm the implementation branch is up to date with origin before reviewing, to avoid flagging issues that were already fixed.\",\"scope\":\"code-review workflow\"},{\"kind\":\"convention\",\"text\":\"Quality gates (typecheck + lint + unit tests) must all pass before a PR review is marked verified.\",\"scope\":\"PR review workflow\"}]}",
+  "extractedNodeIds": [],
+  "linkedFiles": [],
+  "metadata": {
+    "stage": "review"
+  }
+}

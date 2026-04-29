@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "rev": 30,
+  "cursor": "fix-ci-action-taken-2026-04-29",
+  "data": {
+    "perPr": {
+      "1227": {
+        "lastSha": "01da2421b50b6bc8f82bd907b22fd2a524314b40",
+        "attempts": 2,
+        "stuck": true
+      },
+      "1266": {
+        "lastSha": "7f64a26f993738887c6d6cd9d660c9b736a9de65",
+        "attempts": 2,
+        "stuck": false
+      }
+    }
+  },
+  "done": false
+}

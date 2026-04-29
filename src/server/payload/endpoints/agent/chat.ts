@@ -83,16 +83,27 @@ interface ConversationMessage {
   role: 'user' | 'assistant'
   content: string
   timestamp: string
+  hidden?: boolean
   media?: Array<{ mediaId: string }>
+  chatAssets?: Array<{ chatAssetId: string }>
 }
 
 function trimMessagesForUpdate(messages: Message[]): ConversationMessage[] {
-  return messages.slice(-MAX_MESSAGES_BEFORE_ASSISTANT).map((m) => ({
-    role: m.role,
-    content: m.content,
-    timestamp: typeof m.timestamp === 'string' ? m.timestamp : m.timestamp.toISOString(),
-    media: (m as unknown as { media?: Array<{ mediaId: string }> })?.media,
-  }))
+  return messages.slice(-MAX_MESSAGES_BEFORE_ASSISTANT).map((m) => {
+    const extras = m as unknown as {
+      hidden?: boolean
+      media?: Array<{ mediaId: string }>
+      chatAssets?: Array<{ chatAssetId: string }>
+    }
+    return {
+      role: m.role,
+      content: m.content,
+      timestamp: typeof m.timestamp === 'string' ? m.timestamp : m.timestamp.toISOString(),
+      hidden: extras?.hidden === true,
+      media: extras?.media,
+      chatAssets: extras?.chatAssets,
+    }
+  })
 }
 
 export async function agentChat(req: PayloadRequest & { json?: () => Promise<unknown> }) {
@@ -708,19 +719,12 @@ async function handleContextScopedChat(
     composedInstructions = await composeFullSystemInstructions(
       req.payload,
       lessonContext.lessonPrompt,
-      lessonContext.lessonContextText,
       logger as Logger,
       lessonContext.coursePrompt,
       lessonContext.courseContextText,
       userId,
     )
   } catch (error) {
-    if (error instanceof Error && error.message.includes('exceeds maximum')) {
-      return jsonWithCookie(
-        { error: 'Lesson context exceeds maximum allowed size' },
-        { status: 400, cookieHeader: guestCookieHeader },
-      )
-    }
     throw error
   }
 

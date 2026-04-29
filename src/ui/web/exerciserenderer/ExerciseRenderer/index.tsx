@@ -134,6 +134,7 @@ export function ExerciseRenderer({
   lessonId = '',
   exerciseId = '',
   onResultsChange,
+  hideLatexBlocks = false,
 }: ExerciseRendererProps) {
   const t = useTranslations('courses')
   const locale = useLocale()
@@ -535,8 +536,11 @@ export function ExerciseRenderer({
                 )
               }
 
-              // LaTeX block - render math via KaTeX
+              // LaTeX blocks: by default render inline via KaTeX. The dual-mode
+              // lesson view passes `hideLatexBlocks` so the Interactive tab
+              // doesn't duplicate what its PDF tab already shows at lesson level.
               if (block.type === 'latex') {
+                if (hideLatexBlocks) return null
                 return (
                   <FadeIn key={block.id}>
                     <div className="prose prose-slate dark:prose-invert max-w-none text-foreground leading-relaxed">
