@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "rev": 33,
-  "cursor": "fix-ci-action-taken-1379-stuck-2026-04-29",
+  "rev": 34,
+  "cursor": "fix-ci-action-taken-1266-attempt2-2026-04-29",
   "data": {
     "perPr": {
       "1266": {
         "lastSha": "3af3fc065666487b272d3eae5510845c4329b2c1",
-        "attempts": 1,
+        "attempts": 2,
         "stuck": false
       },
       "1272": {
@@ -35,8 +35,8 @@
         "stuck": false
       },
       "1379": {
-        "lastSha": "add45ac681fb90aaec095679a7d2e8f411546c08",
-        "attempts": 2,
+        "lastSha": "f882a8dcb14645db8b30aa3ebffcd751b1b9d391",
+        "attempts": 1,
         "stuck": true
       }
     }
