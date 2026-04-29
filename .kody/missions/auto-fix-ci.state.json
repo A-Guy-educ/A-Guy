@@ -1,23 +1,13 @@
 {
   "version": 1,
-  "rev": 23,
-  "cursor": "fix-ci-pr-1285-reset",
+  "rev": 25,
+  "cursor": "fix-ci-skipped-stuck-1227-dropped-1266",
   "data": {
     "perPr": {
       "1227": {
         "lastSha": "01da2421b50b6bc8f82bd907b22fd2a524314b40",
         "attempts": 2,
         "stuck": true
-      },
-      "1266": {
-        "lastSha": "7f64a26f993738887c6d6cd9d660c9b736a9de65",
-        "attempts": 2,
-        "stuck": true
-      },
-      "1285": {
-        "lastSha": "6de22377b7bebf6132f2ca13672b1db55a4920a3",
-        "attempts": 1,
-        "stuck": false
       }
     }
   },
