@@ -1,57 +1,15 @@
 {
   "version": 1,
-  "rev": 16,
+  "rev": 17,
   "cursor": "done-no-candidates",
   "data": {
     "perIssue": {},
     "dryRunLog": [
       {
-        "issueNumber": 1382,
-        "action": "resume",
-        "reason": "Dry-run: would post @kody resume on #1382. Status=running in kody state block (phase=reviewing, lastOutcome=2026-04-28T14:45:08Z, ~21.5h ago). However: issue carries 'kody:done' label and last comment says '✅ kody flow chore finished — review-passed'. Flow completed successfully — state block is stale. Not stuck. Skipped.",
-        "plannedAt": "2026-04-29T12:15:00Z"
-      },
-      {
-        "issueNumber": 1363,
-        "action": "resume",
-        "reason": "Dry-run: would post @kody resume on #1363. Status=running in kody state block (phase=reviewing, lastOutcome=2026-04-27T09:49:12Z, ~38.8h ago). However: issue carries 'kody:done' label and last comment says '✅ kody flow bug finished — review-passed'. Flow completed successfully — state block is stale. Not stuck. Skipped.",
-        "plannedAt": "2026-04-29T12:15:00Z"
-      },
-      {
-        "issueNumber": 1360,
-        "action": "resume",
-        "reason": "Dry-run: would post @kody resume on #1360. Status=running in kody state block (phase=reviewing, lastOutcome=2026-04-27T09:58:29Z, ~38.5h ago). However: issue carries 'kody:done' label and last comment says '✅ kody flow bug finished — review-passed'. Flow completed successfully — state block is stale. Not stuck. Skipped.",
-        "plannedAt": "2026-04-29T12:15:00Z"
-      },
-      {
-        "issueNumber": 1351,
-        "action": "resume",
-        "reason": "Dry-run: would post @kody resume on #1351. Status=running in kody state block (phase=reviewing, lastOutcome=2026-04-27T20:30:49Z, ~27.9h ago). However: issue carries 'kody:done' label and last comment says '✅ kody flow bug finished — review-passed'. Flow completed successfully — state block is stale. Not stuck. Skipped.",
-        "plannedAt": "2026-04-29T12:15:00Z"
-      },
-      {
-        "issueNumber": 1380,
-        "action": "resume",
-        "reason": "Dry-run: would post @kody resume on #1380. Status=running in kody state block (phase=reviewing, lastOutcome=2026-04-28T15:41:13Z, ~20.5h ago). However: issue carries 'kody:done' label and last comment says '✅ kody flow bug finished — review-passed'. Flow completed successfully — state block is stale. Not stuck. Skipped. Also checked: no in-progress workflow runs reference this issue.",
-        "plannedAt": "2026-04-29T12:15:00Z"
-      },
-      {
         "issueNumber": 0,
         "action": "resume",
-        "reason": "Dry-run: scanned all 83 open issues. Zero candidates for redispatch. No open issues contain kody state blocks (verified both bodies and comments via gh issue list + gh api). The 5 previously-logged issues (1382, 1363, 1360, 1351, 1380) all carry 'kody:done' labels and their state blocks have been removed — flows completed successfully, not stuck. In-progress workflow runs (4 total, all on dev branch) reference no specific issue numbers. No stale-state issues to redispatch.",
-        "plannedAt": "2026-04-29T21:30:00Z"
-      },
-      {
-        "issueNumber": 0,
-        "action": "resume",
-        "reason": "Dry-run tick re-scan: scanned all 68 open issues (down from 83, likely closed during previous session). Zero contain kody state blocks in body or comments. Re-verified all 5 previously-logged issues (1382, 1363, 1360, 1351, 1380) — all confirmed with 'kody:done' label, no state blocks remaining. In-progress workflow runs (3 total, on dev/feat branches) reference no specific issue numbers. No candidates for redispatch.",
-        "plannedAt": "2026-04-29T23:30:00Z"
-      },
-      {
-        "issueNumber": 0,
-        "action": "resume",
-        "reason": "Dry-run tick scan: scanned all 65 open issues (down from 68). Zero contain kody state blocks in body or comments. Verified via gh issue list + gh api + gh search. Re-confirmed all 5 previously-logged issues (1382, 1363, 1360, 1351, 1380) still carry 'kody:done' label with no state blocks. In-progress workflow runs (3 total: PR for feature branch 1244, PR on dev, issue_comment on dev) reference no specific issue numbers. No candidates for redispatch.",
-        "plannedAt": "2026-04-30T01:00:00Z"
+        "reason": "Dry-run tick scan: scanned all ~70 open issues. Found 3 issues with kody state blocks (1357, 1380, 1382). Issue 1357: status=succeeded, not running — does not qualify. Issue 1380: status=running but has kody:done label and last comment '✅ kody flow bug finished — review-passed' — flow completed, state block stale but not stuck. Issue 1382: status=running but has kody:done label and last comment '✅ kody flow chore finished — review-passed' — flow completed, state block stale but not stuck. No issues qualify for redispatch. In-progress workflow runs (3 total: PR for feature branch 1244, PR on dev, issue_comment on dev) reference no specific issue numbers.",
+        "plannedAt": "2026-04-30T02:00:00Z"
       }
     ]
   },
