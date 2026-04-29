@@ -118,9 +118,12 @@ export function parseContextText(contextText: string): ParsedSegment[] {
     // so we know to apply phantom-exercise filtering (only safe for that path).
     const usedPrimaryPattern = exerciseMatches.length > 0
 
-    // Also detect \setcounter{enumi}{N} + \item style exercises
-    // (runs even if primary pattern found some matches — handles mixed formats)
-    if (exerciseMatches.length === 0) {
+    // Also detect \setcounter{enumi}{N} + \item style exercises.
+    // Runs even when primary pattern matched, because LLM page-by-page extraction
+    // commonly emits a single \textbf{תרגיל 1} on page 1 and continues with
+    // \setcounter{enumi}{N} / \item-style continuations for exercises 2..N.
+    // De-dup by exercise number happens within each pass below.
+    {
       // Pass 1: Find all \setcounter{enumi}{N}\item anchors
       while ((match = setCounterPattern.exec(runText)) !== null) {
         if (match.index >= exerciseEndIndex) continue
