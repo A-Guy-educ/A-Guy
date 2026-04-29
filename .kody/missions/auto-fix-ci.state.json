@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "rev": 17,
-  "cursor": "fix-ci-1285-actioned",
+  "rev": 22,
+  "cursor": "fix-ci-no-failing-prs",
   "data": {
     "perPr": {
       "1227": {
@@ -15,9 +15,9 @@
         "stuck": true
       },
       "1285": {
-        "lastSha": "422e9b090ef3d6ab85c9bd7bbc00b845d5acf33c",
-        "attempts": 1,
-        "stuck": false
+        "lastSha": "a1bc68840f012207e904a2e021ce8d1de69dea3e",
+        "attempts": 2,
+        "stuck": true
       }
     }
   },
