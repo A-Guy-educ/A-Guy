@@ -22,6 +22,7 @@ import { Exercises } from '@/server/payload/collections/Exercises'
 import { ExtractionLogs } from '@/server/payload/collections/ExtractionLogs'
 import { FormulaSheets } from '@/server/payload/collections/FormulaSheets'
 import { GuestSessions } from '@/server/payload/collections/GuestSessions'
+import { InteractiveLessons } from '@/server/payload/collections/InteractiveLessons'
 import { Lessons } from '@/server/payload/collections/Lessons'
 import { MCPAuditLogs } from '@/server/payload/collections/MCPAuditLogs'
 import { Media } from '@/server/payload/collections/Media'
@@ -188,6 +189,7 @@ export default buildConfig({
     Exercises,
     ExtractionLogs,
     FormulaSheets,
+    InteractiveLessons,
     Prompts,
     TeacherProfiles,
     UserSettings,
