@@ -1,27 +1,12 @@
 {
   "version": 1,
-  "rev": 6,
+  "rev": 7,
   "cursor": "checked",
   "data": {
     "perPr": {
-      "1227": {
-        "lastSha": "01da2421b50b6bc8f82bd907b22fd2a524314b40",
-        "attempts": 1,
-        "stuck": false
-      },
-      "1266": {
-        "lastSha": "7f64a26f993738887c6d6cd9d660c9b736a9de65",
-        "attempts": 1,
-        "stuck": false
-      },
       "1285": {
         "lastSha": "5c016fa8cf147cfe8e913add5d7dd304e363f290",
-        "attempts": 1,
-        "stuck": false
-      },
-      "1386": {
-        "lastSha": "39df47f912c9a771b64413100e564b5b0e861f0d",
-        "attempts": 1,
+        "attempts": 2,
         "stuck": false
       }
     }
