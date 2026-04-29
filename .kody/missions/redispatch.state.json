@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "rev": 12,
+  "rev": 15,
   "cursor": "done-no-candidates",
   "data": {
     "perIssue": {},
@@ -34,6 +34,18 @@
         "action": "resume",
         "reason": "Dry-run: would post @kody resume on #1380. Status=running in kody state block (phase=reviewing, lastOutcome=2026-04-28T15:41:13Z, ~20.5h ago). However: issue carries 'kody:done' label and last comment says '✅ kody flow bug finished — review-passed'. Flow completed successfully — state block is stale. Not stuck. Skipped. Also checked: no in-progress workflow runs reference this issue.",
         "plannedAt": "2026-04-29T12:15:00Z"
+      },
+      {
+        "issueNumber": 0,
+        "action": "resume",
+        "reason": "Dry-run: scanned all 83 open issues. Zero candidates for redispatch. No open issues contain kody state blocks (verified both bodies and comments via gh issue list + gh api). The 5 previously-logged issues (1382, 1363, 1360, 1351, 1380) all carry 'kody:done' labels and their state blocks have been removed — flows completed successfully, not stuck. In-progress workflow runs (4 total, all on dev branch) reference no specific issue numbers. No stale-state issues to redispatch.",
+        "plannedAt": "2026-04-29T21:30:00Z"
+      },
+      {
+        "issueNumber": 0,
+        "action": "resume",
+        "reason": "Dry-run tick re-scan: scanned all 68 open issues (down from 83, likely closed during previous session). Zero contain kody state blocks in body or comments. Re-verified all 5 previously-logged issues (1382, 1363, 1360, 1351, 1380) — all confirmed with 'kody:done' label, no state blocks remaining. In-progress workflow runs (3 total, on dev/feat branches) reference no specific issue numbers. No candidates for redispatch.",
+        "plannedAt": "2026-04-29T23:30:00Z"
       }
     ]
   },
