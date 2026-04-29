@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "rev": 15,
+  "rev": 16,
   "cursor": "done-no-candidates",
   "data": {
     "perIssue": {},
@@ -46,6 +46,12 @@
         "action": "resume",
         "reason": "Dry-run tick re-scan: scanned all 68 open issues (down from 83, likely closed during previous session). Zero contain kody state blocks in body or comments. Re-verified all 5 previously-logged issues (1382, 1363, 1360, 1351, 1380) — all confirmed with 'kody:done' label, no state blocks remaining. In-progress workflow runs (3 total, on dev/feat branches) reference no specific issue numbers. No candidates for redispatch.",
         "plannedAt": "2026-04-29T23:30:00Z"
+      },
+      {
+        "issueNumber": 0,
+        "action": "resume",
+        "reason": "Dry-run tick scan: scanned all 65 open issues (down from 68). Zero contain kody state blocks in body or comments. Verified via gh issue list + gh api + gh search. Re-confirmed all 5 previously-logged issues (1382, 1363, 1360, 1351, 1380) still carry 'kody:done' label with no state blocks. In-progress workflow runs (3 total: PR for feature branch 1244, PR on dev, issue_comment on dev) reference no specific issue numbers. No candidates for redispatch.",
+        "plannedAt": "2026-04-30T01:00:00Z"
       }
     ]
   },
