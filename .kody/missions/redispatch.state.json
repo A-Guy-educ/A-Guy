@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "rev": 7,
-  "cursor": "gc",
+  "rev": 8,
+  "cursor": "done-no-candidates",
   "data": {
     "perIssue": {},
     "dryRunLog": [
@@ -100,6 +100,30 @@
         "action": "resume",
         "reason": "status=running (phase: reviewing) in kody state block, lastOutcome.timestamp 2026-04-27T20:30:49Z (~27h ago). Last kody comment by korenguy123 at 2026-04-27T19:21:59Z (>40 min ago). Has kody:done label but state still running. No in-flight runs referencing 1351, no open kody PR, no kody comment in last 40 min. Not in perIssue, attemptsToday=0.",
         "plannedAt": "2026-04-29T00:08:00Z"
+      },
+      {
+        "issueNumber": 1380,
+        "action": "resume",
+        "reason": "At this tick (2026-04-29T06:25:23Z): state block shows core.status='pending', NOT 'running' — filter not met. No action taken. Prior tick log entry superseded.",
+        "plannedAt": "2026-04-29T06:25:23Z"
+      },
+      {
+        "issueNumber": 1363,
+        "action": "resume",
+        "reason": "At this tick (2026-04-29T06:25:23Z): state block shows core.status='pending', NOT 'running' — filter not met. No action taken. Prior tick log entry superseded.",
+        "plannedAt": "2026-04-29T06:25:23Z"
+      },
+      {
+        "issueNumber": 1360,
+        "action": "resume",
+        "reason": "At this tick (2026-04-29T06:25:23Z): state block shows core.status='pending', NOT 'running' — filter not met. No action taken. Prior tick log entry superseded.",
+        "plannedAt": "2026-04-29T06:25:23Z"
+      },
+      {
+        "issueNumber": 1351,
+        "action": "resume",
+        "reason": "At this tick (2026-04-29T06:25:23Z): state block shows core.status='pending', NOT 'running' — filter not met. No action taken. Prior tick log entry superseded.",
+        "plannedAt": "2026-04-29T06:25:23Z"
       }
     ]
   },
