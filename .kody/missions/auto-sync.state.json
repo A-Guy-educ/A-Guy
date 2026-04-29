@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "rev": 26,
+  "rev": 27,
   "cursor": "tick",
   "data": {
     "perPr": {
@@ -83,22 +83,16 @@
         "lastActionAt": null
       },
       "1383": {
-        "lastSha": "335351c6b7fe07dd0d08c630121218acea7bf7d1",
+        "lastSha": "6c992436b5211d03da405c1fcaf95e5c9d16df19",
         "attempts": 2,
         "stuck": false,
         "lastActionAt": "2026-04-29T21:34:46Z"
       },
       "1384": {
         "lastSha": "31f1ee29c3f70a36fae36d324bd15249aa76e10a",
-        "attempts": 1,
+        "attempts": 2,
         "stuck": false,
-        "lastActionAt": "2026-04-29T08:22:53Z"
-      },
-      "1386": {
-        "lastSha": "39df47f912c9a771b64413100e564b5b0e861f0d",
-        "attempts": 0,
-        "stuck": false,
-        "lastActionAt": null
+        "lastActionAt": "2026-04-29T22:02:18Z"
       }
     }
   },
