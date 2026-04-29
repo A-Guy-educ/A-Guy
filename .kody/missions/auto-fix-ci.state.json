@@ -1,17 +1,22 @@
 {
   "version": 1,
-  "rev": 35,
+  "rev": 36,
   "cursor": "fix-ci-action-taken-2026-04-29",
   "data": {
     "perPr": {
-      "1369": {
-        "lastSha": "eedd1b1a74312c78ab06bdafaaa1717ed0d678e4",
+      "1266": {
+        "lastSha": "0778d37ed2dad68c6c7597403dfa2e89117824a0",
         "attempts": 1,
         "stuck": false
       },
+      "1369": {
+        "lastSha": "fe8db202e7a72409bdf5a6a53af39ca562ace52b",
+        "attempts": 0,
+        "stuck": false
+      },
       "1386": {
-        "lastSha": "ad9a5541b298689d8d34e9a1aa7d589e744741dc",
-        "attempts": 1,
+        "lastSha": "862bd5685115048c7ab94e2f58c002ee50c91523",
+        "attempts": 0,
         "stuck": false
       }
     }
