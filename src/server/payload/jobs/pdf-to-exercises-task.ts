@@ -401,10 +401,20 @@ export const pdfToExercisesTask = {
             )
           }
         } catch (blocksError) {
+          const message = blocksError instanceof Error ? blocksError.message : 'Unknown error'
           console.error(
             `[PDF→Exercises] Failed to reconcile lesson.blocks for ${lessonId}:`,
             blocksError,
           )
+          // Surface in output.errors so the conversion panel doesn't show a
+          // green "completed" status while the playlist is silently stale.
+          ;(output.errors as unknown[]).push({
+            stage: 'POST_LESSON_BLOCKS_RECONCILE',
+            code: 'LESSON_BLOCKS_RECONCILE_FAILED',
+            message,
+            lessonId,
+            retryable: true,
+          })
         }
       }
 

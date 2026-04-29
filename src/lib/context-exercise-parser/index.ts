@@ -131,16 +131,12 @@ export function parseContextText(contextText: string): ParsedSegment[] {
         const enumi = parseInt(match[1], 10)
         const number = enumi + 1 // \setcounter{enumi}{0} means exercise 1
 
-        const existingIdx = exerciseMatches.findIndex((e) => e.number === number)
-        if (existingIdx !== -1) {
-          exerciseMatches[existingIdx] = {
-            index: match.index,
-            title: `תרגיל ${number}`,
-            number,
-            fullMatch: match[0],
-          }
-          continue
-        }
+        // Skip if the primary \textbf/\section pattern already matched this
+        // number — its descriptive title and document position must be
+        // preserved so reconstructContextText can write back faithfully.
+        // Replacing it with a setCounter token would destroy the original
+        // header on save.
+        if (exerciseMatches.some((e) => e.number === number)) continue
 
         exerciseMatches.push({
           index: match.index,
