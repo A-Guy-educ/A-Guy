@@ -97,4 +97,59 @@ describe('parseContextText — secondary detection always runs', () => {
     expect(parseContextText('')).toEqual([])
     expect(parseContextText('   \n\n  ')).toEqual([])
   })
+
+  it('runs Pass 2 continuation when primary pattern already matched', () => {
+    // Removing the gate must let Pass 2 (continuation \item scan) reach a
+    // mixed-format input where ex. 1 carries a \textbf header inside its
+    // \item and ex. 2-3 are plain \item siblings in the same enumerate.
+    // Pre-fix, Pass 2 was skipped entirely once primary matched anything.
+    const text = `\\begin{document}
+\\begin{enumerate}
+\\item \\textbf{תרגיל 1} תוכן ראשון
+\\item תוכן שני
+\\item תוכן שלישי
+\\end{enumerate}
+
+\\section*{פתרון תרגיל 1}
+פתרון 1
+\\section*{פתרון תרגיל 2}
+פתרון 2
+\\section*{פתרון תרגיל 3}
+פתרון 3
+
+\\end{document}`
+
+    const exercises = parseContextText(text).flatMap((s) => s.exercises)
+    expect(exercises.map((e) => e.number).sort()).toEqual([1, 2, 3])
+  })
+
+  it('runs Pass 3 orphan-gap fill when primary pattern leaves a numbered gap', () => {
+    // Pass 3 fills missing numbers between the lowest and highest detected
+    // exercises by attributing orphan \item entries inside an unlabeled
+    // enumerate. After the gate removal, this should run alongside primary
+    // matches without producing false positives on labelled sub-blocks.
+    const text = `\\begin{document}
+
+\\textbf{תרגיל 1}
+תוכן 1
+
+\\begin{enumerate}
+\\item תוכן 2
+\\end{enumerate}
+
+\\textbf{תרגיל 3}
+תוכן 3
+
+\\section*{פתרון תרגיל 1}
+פתרון 1
+\\section*{פתרון תרגיל 2}
+פתרון 2
+\\section*{פתרון תרגיל 3}
+פתרון 3
+
+\\end{document}`
+
+    const exercises = parseContextText(text).flatMap((s) => s.exercises)
+    expect(exercises.map((e) => e.number).sort()).toEqual([1, 2, 3])
+  })
 })
