@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "rev": 23,
-  "cursor": "dry-run-logged-v2",
+  "rev": 24,
+  "cursor": "dry-run-confirmed-v3",
   "data": {
     "perIssue": {},
     "dryRunLog": [
@@ -28,6 +28,12 @@
         "action": "resume",
         "reason": "Dry-run tick scan 2026-04-30T12:37:00Z: scanned 80 open issues, found kody task state blocks in #1382/#1363/#1351 (confirmed via gh issue view). All 3 have core.status=running, history timestamps 47-74h stale, open PRs by aguyaharonyair (not kody), no in-flight runs referencing them, no fresh kody comments, no blocking labels. Live-test gate (kody:test-redispatch) ignored per dry-run mode. All 3 qualify.",
         "plannedAt": "2026-04-30T12:37:00Z"
+      },
+      {
+        "issueNumber": 0,
+        "action": "resume",
+        "reason": "Dry-run tick scan 2026-04-30T13:05:00Z: all 3 prior candidates (#1382/#1363/#1351) now carry kody:done label — core.status no longer 'running', all 3 left scope. Scanned ~90 remaining open issues for fresh kody state blocks — none found. No issues with blocking labels. No new candidates. perIssue remains {} (never actioned).",
+        "plannedAt": "2026-04-30T13:05:00Z"
       }
     ]
   },
