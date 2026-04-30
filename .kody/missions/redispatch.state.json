@@ -1,21 +1,33 @@
 {
   "version": 1,
-  "rev": 19,
-  "cursor": "done-no-candidates",
+  "rev": 23,
+  "cursor": "dry-run-logged-v2",
   "data": {
     "perIssue": {},
     "dryRunLog": [
       {
-        "issueNumber": 0,
+        "issueNumber": 1382,
         "action": "resume",
-        "reason": "Dry-run tick scan: scanned 68 open issues. 0 issues with kody:running label. 0 issues with core.status=running in body. 8 kody-flow issues all have kody:done. 40 kody:backlog issues have no state blocks. 14 kody:watch issues have no running state. No candidates qualify.",
-        "plannedAt": "2026-04-30T01:00:00Z"
+        "reason": "core.status=running, last history 2026-04-28T14:45:08Z (~47h stale), PR #1383 open (author aguyaharonyair, not kody), no in-flight runs referencing #1382, latest comment at 2026-04-28T14:48:08Z by aguyaharonyair (>40m old), no blocking labels. Dry-run: would post @kody resume.",
+        "plannedAt": "2026-04-30T12:37:00Z"
+      },
+      {
+        "issueNumber": 1363,
+        "action": "resume",
+        "reason": "core.status=running, last history 2026-04-27T09:49:12Z (~74h stale), PR #1364 open (author aguyaharonyair, not kody), no in-flight runs referencing #1363, no fresh kody comments, no blocking labels. Dry-run: would post @kody resume.",
+        "plannedAt": "2026-04-30T12:37:00Z"
+      },
+      {
+        "issueNumber": 1351,
+        "action": "resume",
+        "reason": "core.status=running, last history 2026-04-27T20:30:49Z (~63h stale), PR #1375 open (author aguyaharonyair, not kody), no in-flight runs referencing #1351, no fresh kody comments, no blocking labels. Dry-run: would post @kody resume.",
+        "plannedAt": "2026-04-30T12:37:00Z"
       },
       {
         "issueNumber": 0,
         "action": "resume",
-        "reason": "Dry-run tick scan: scanned ~85 open issues. Found 3 issues with kody state blocks (1357, 1380, 1382). Issue 1357: status=succeeded, not running — does not qualify. Issue 1380: status=running but has kody:done label — filtered out. Issue 1382: status=running but has kody:done label — filtered out. No other issues have state blocks (kody:backlog issues not yet started). No in-flight runs reference stuck issues. No candidates qualify.",
-        "plannedAt": "2026-04-30T00:00:00Z"
+        "reason": "Dry-run tick scan 2026-04-30T12:37:00Z: scanned 80 open issues, found kody task state blocks in #1382/#1363/#1351 (confirmed via gh issue view). All 3 have core.status=running, history timestamps 47-74h stale, open PRs by aguyaharonyair (not kody), no in-flight runs referencing them, no fresh kody comments, no blocking labels. Live-test gate (kody:test-redispatch) ignored per dry-run mode. All 3 qualify.",
+        "plannedAt": "2026-04-30T12:37:00Z"
       }
     ]
   },
