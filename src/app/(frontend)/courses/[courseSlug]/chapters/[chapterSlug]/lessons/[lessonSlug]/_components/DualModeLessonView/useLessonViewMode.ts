@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 
-export type LessonMode = 'pdf' | 'interactive'
+export type LessonMode = 'media' | 'pdf' | 'interactive'
 
 const STORAGE_PREFIX = 'lesson-view-mode:'
 
@@ -10,7 +10,7 @@ function readStoredMode(lessonId: string): LessonMode | null {
   if (typeof window === 'undefined') return null
   try {
     const raw = window.localStorage.getItem(`${STORAGE_PREFIX}${lessonId}`)
-    return raw === 'pdf' || raw === 'interactive' ? raw : null
+    return raw === 'media' || raw === 'pdf' || raw === 'interactive' ? raw : null
   } catch {
     return null
   }

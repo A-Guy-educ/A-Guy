@@ -134,7 +134,7 @@ export function ExerciseRenderer({
   lessonId = '',
   exerciseId = '',
   onResultsChange,
-  hideLatexBlocks = false,
+  hideLatexBlocks = true,
 }: ExerciseRendererProps) {
   const t = useTranslations('courses')
   const locale = useLocale()
@@ -536,9 +536,12 @@ export function ExerciseRenderer({
                 )
               }
 
-              // LaTeX blocks: by default render inline via KaTeX. The dual-mode
-              // lesson view passes `hideLatexBlocks` so the Interactive tab
-              // doesn't duplicate what its PDF tab already shows at lesson level.
+              // LaTeX blocks: hidden by default in the viewer. They are kept in
+              // exercise content as a source-of-truth reference (the script
+              // converter inserts parsed structured blocks alongside them) but
+              // students see only the parsed output. Callers that need to show
+              // the raw LaTeX (admin previews, etc.) can pass
+              // `hideLatexBlocks={false}`.
               if (block.type === 'latex') {
                 if (hideLatexBlocks) return null
                 return (

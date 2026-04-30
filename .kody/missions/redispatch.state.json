@@ -1,15 +1,39 @@
 {
   "version": 1,
-  "rev": 18,
+  "rev": 21,
   "cursor": "done-no-candidates",
   "data": {
     "perIssue": {},
     "dryRunLog": [
       {
+        "issueNumber": 1382,
+        "action": "resume",
+        "reason": "core.status=running in kody task state comment, last history 2026-04-28T14:45:08Z (~47h ago), PR #1383 merged/closed, no in-flight run, no open kody PR, no fresh kody comment (<40m), no blocking labels. Would post @kody resume.",
+        "plannedAt": "2026-04-30T10:24:09Z"
+      },
+      {
+        "issueNumber": 1363,
+        "action": "resume",
+        "reason": "core.status=running in kody task state comment, last history 2026-04-27T09:49:12Z (~72h ago), PR #1364 merged/closed, no in-flight run, no open kody PR, no fresh kody comment, no blocking labels. Would post @kody resume.",
+        "plannedAt": "2026-04-30T10:24:09Z"
+      },
+      {
+        "issueNumber": 1360,
+        "action": "resume",
+        "reason": "core.status=running in kody task state comment, last history 2026-04-27T09:58:29Z (~72h ago), PR #1366 merged/closed, no in-flight run, no open kody PR, no fresh kody comment, no blocking labels. Would post @kody resume.",
+        "plannedAt": "2026-04-30T10:24:09Z"
+      },
+      {
+        "issueNumber": 1351,
+        "action": "resume",
+        "reason": "core.status=running in kody task state comment, last history 2026-04-27T20:30:49Z (~60h ago), PR #1375 merged/closed, no in-flight run, no open kody PR, no fresh kody comment, no blocking labels. Would post @kody resume.",
+        "plannedAt": "2026-04-30T10:24:09Z"
+      },
+      {
         "issueNumber": 0,
         "action": "resume",
-        "reason": "Dry-run tick scan: scanned ~85 open issues. Found 3 issues with kody state blocks (1357, 1380, 1382). Issue 1357: status=succeeded, not running — does not qualify. Issue 1380: status=running but has kody:done label — filtered out. Issue 1382: status=running but has kody:done label — filtered out. No other issues have state blocks (kody:backlog issues not yet started). No in-flight runs reference stuck issues. No candidates qualify.",
-        "plannedAt": "2026-04-30T00:00:00Z"
+        "reason": "Dry-run tick scan 2026-04-30T10:24:09Z: scanned 68 open issues. Found kody task state comments in 1382, 1363, 1360, 1351 (all in kody:done issues). All show Phase=reviewing, Status=running, last action=REVIEW_PASS with timestamps 47-72h old. PRs all merged/closed, no in-flight runs reference these issues, no fresh kody comments. All 4 qualify as resume candidates in live mode.",
+        "plannedAt": "2026-04-30T10:24:09Z"
       }
     ]
   },
