@@ -207,7 +207,7 @@ async function seedExtraction(
       // text is required by the collection schema even when the structured
       // exercises array is the source of truth; pass a placeholder if the
       // caller only cares about the structured field.
-      text: data.text ?? '% structured-only',
+      text: data.text && data.text.trim() ? data.text : '% structured-only',
       exercises: data.exercises,
     } as any,
     overrideAccess: true,
