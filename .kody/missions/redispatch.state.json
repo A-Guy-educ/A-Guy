@@ -1,10 +1,16 @@
 {
   "version": 1,
-  "rev": 18,
+  "rev": 19,
   "cursor": "done-no-candidates",
   "data": {
     "perIssue": {},
     "dryRunLog": [
+      {
+        "issueNumber": 0,
+        "action": "resume",
+        "reason": "Dry-run tick scan: scanned 68 open issues. 0 issues with kody:running label. 0 issues with core.status=running in body. 8 kody-flow issues all have kody:done. 40 kody:backlog issues have no state blocks. 14 kody:watch issues have no running state. No candidates qualify.",
+        "plannedAt": "2026-04-30T01:00:00Z"
+      },
       {
         "issueNumber": 0,
         "action": "resume",
