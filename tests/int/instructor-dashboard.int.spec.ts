@@ -63,14 +63,9 @@ describe.skipIf(isAtlasUrl)('GET /api/instructor/dashboard', () => {
     canMessageStudents: true,
   }
 
-  let mockPayload: ReturnType<typeof vi.fn>
-
   beforeAll(() => {
-    // Build a minimal mock payload that satisfies what the route needs
-    mockPayload = vi.fn(() => ({
-      auth: vi.fn().mockResolvedValue({ user: null }),
-      find: vi.fn().mockResolvedValue({ docs: [], totalDocs: 0 }),
-    })) as ReturnType<typeof vi.fn>
+    // Mock payload setup happens in each test via vi.doMock
+    // No global mock needed since we test different auth scenarios
   })
 
   describe('Authentication', () => {
@@ -83,9 +78,13 @@ describe.skipIf(isAtlasUrl)('GET /api/instructor/dashboard', () => {
         find: vi.fn(),
       })) as unknown as ReturnType<typeof vi.fn>
 
-      vi.doMock('payload', () => ({
-        getPayload: mockAuthPayload,
-      }))
+      vi.doMock('payload', async (importOriginal) => {
+        const actual = await importOriginal<typeof import('payload')>()
+        return {
+          ...actual,
+          getPayload: () => mockAuthPayload,
+        }
+      })
 
       const request = new NextRequest('http://localhost/api/instructor/dashboard')
       const response = await GET(request)
@@ -104,9 +103,13 @@ describe.skipIf(isAtlasUrl)('GET /api/instructor/dashboard', () => {
         find: vi.fn(),
       })) as unknown as ReturnType<typeof vi.fn>
 
-      vi.doMock('payload', () => ({
-        getPayload: mockStudentPayload,
-      }))
+      vi.doMock('payload', async (importOriginal) => {
+        const actual = await importOriginal<typeof import('payload')>()
+        return {
+          ...actual,
+          getPayload: () => mockStudentPayload,
+        }
+      })
 
       // Re-import to pick up the new mock
       vi.resetModules()
@@ -141,9 +144,13 @@ describe.skipIf(isAtlasUrl)('GET /api/instructor/dashboard', () => {
           }),
       })) as unknown as ReturnType<typeof vi.fn>
 
-      vi.doMock('payload', () => ({
-        getPayload: mockAdminPayload,
-      }))
+      vi.doMock('payload', async (importOriginal) => {
+        const actual = await importOriginal<typeof import('payload')>()
+        return {
+          ...actual,
+          getPayload: () => mockAdminPayload,
+        }
+      })
 
       const { GET } = await import('@/app/api/instructor/dashboard/route')
 
@@ -192,9 +199,13 @@ describe.skipIf(isAtlasUrl)('GET /api/instructor/dashboard', () => {
           }),
       })) as unknown as ReturnType<typeof vi.fn>
 
-      vi.doMock('payload', () => ({
-        getPayload: mockAdminPayload,
-      }))
+      vi.doMock('payload', async (importOriginal) => {
+        const actual = await importOriginal<typeof import('payload')>()
+        return {
+          ...actual,
+          getPayload: () => mockAdminPayload,
+        }
+      })
 
       const { GET } = await import('@/app/api/instructor/dashboard/route')
 
@@ -238,9 +249,13 @@ describe.skipIf(isAtlasUrl)('GET /api/instructor/dashboard', () => {
           }),
       })) as unknown as ReturnType<typeof vi.fn>
 
-      vi.doMock('payload', () => ({
-        getPayload: mockInstructorPayload,
-      }))
+      vi.doMock('payload', async (importOriginal) => {
+        const actual = await importOriginal<typeof import('payload')>()
+        return {
+          ...actual,
+          getPayload: () => mockInstructorPayload,
+        }
+      })
 
       const { GET } = await import('@/app/api/instructor/dashboard/route')
 
@@ -273,9 +288,13 @@ describe.skipIf(isAtlasUrl)('GET /api/instructor/dashboard', () => {
         }),
       })) as unknown as ReturnType<typeof vi.fn>
 
-      vi.doMock('payload', () => ({
-        getPayload: mockInstructorPayload,
-      }))
+      vi.doMock('payload', async (importOriginal) => {
+        const actual = await importOriginal<typeof import('payload')>()
+        return {
+          ...actual,
+          getPayload: () => mockInstructorPayload,
+        }
+      })
 
       const { GET } = await import('@/app/api/instructor/dashboard/route')
 
@@ -316,9 +335,13 @@ describe.skipIf(isAtlasUrl)('GET /api/instructor/dashboard', () => {
           }),
       })) as unknown as ReturnType<typeof vi.fn>
 
-      vi.doMock('payload', () => ({
-        getPayload: mockAdminPayload,
-      }))
+      vi.doMock('payload', async (importOriginal) => {
+        const actual = await importOriginal<typeof import('payload')>()
+        return {
+          ...actual,
+          getPayload: () => mockAdminPayload,
+        }
+      })
 
       const { GET } = await import('@/app/api/instructor/dashboard/route')
 
