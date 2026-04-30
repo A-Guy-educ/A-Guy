@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "rev": 26,
-  "cursor": "dry-run-scan-v5",
+  "rev": 27,
+  "cursor": "dry-run-scan-v6",
   "data": {
     "perIssue": {},
     "dryRunLog": [
@@ -10,6 +10,12 @@
         "action": "resume",
         "reason": "Dry-run tick scan 2026-04-30T15:30:00Z: scanned ~80 open issues for kody:state:v1 blocks in bodies and comments — zero found. Confirmed prior candidates #1382/#1363/#1351 all carry kody:done (state blocks gone). No issues with kody:stuck/stalled/no-redispatch labels. 5 in-flight runs present but none reference specific issue numbers. perIssue remains {} (never actioned). No candidates qualify.",
         "plannedAt": "2026-04-30T15:30:00Z"
+      },
+      {
+        "issueNumber": 0,
+        "action": "resume",
+        "reason": "Dry-run tick 2026-04-30T16:30:00Z: Scanned 70 open issues for kody state blocks. Found 4 issues with core.status=running (#1382, #1380, #1363, #1360), but ALL carry kody:done label + 'finished' comment — flows completed 2-3 days ago, state blocks not updated. Also checked for running issues without kody:done: zero found. No candidates qualify for resume.",
+        "plannedAt": "2026-04-30T16:30:00Z"
       }
     ]
   },
