@@ -48,6 +48,10 @@ async function convertLatexBlocksOnExercises(
   user: User,
   exerciseIds: string[],
   warnings: string[],
+  /** Real request — required so Stage 3's AI fallback can derive a working
+   *  origin for its internal /api/exercises/import-latex-ai fetch and forward
+   *  the admin's auth cookie. Without these, every fallback call fails. */
+  request: { url: string; headers: Headers },
 ): Promise<{ converted: number; failed: number }> {
   let converted = 0
   let failed = 0
@@ -57,8 +61,8 @@ async function convertLatexBlocksOnExercises(
       const fakeReq = {
         payload,
         user,
-        url: 'http://internal/full-pipeline',
-        headers: new Headers(),
+        url: request.url,
+        headers: request.headers,
         routeParams: {},
         context: {},
       } as unknown as PayloadRequest
@@ -91,10 +95,13 @@ export interface RunFullMediaInput {
   lessonId: string
   mediaId: string
   promptId: string
+  /** Original NextRequest. Required so Stage 3's AI fallback inherits the
+   *  admin's auth cookie and a reachable origin for its internal HTTP call. */
+  request: { url: string; headers: Headers }
 }
 
 export async function runFullMediaPipeline(input: RunFullMediaInput): Promise<FullPipelineResult> {
-  const { payload, user, lessonId, mediaId, promptId } = input
+  const { payload, user, lessonId, mediaId, promptId, request } = input
   const warnings: string[] = []
 
   // Stage 1 — schema-mode Gemini extraction.
@@ -135,7 +142,13 @@ export async function runFullMediaPipeline(input: RunFullMediaInput): Promise<Fu
   warnings.push(...stage2.warnings)
 
   // Stage 3 — convert LaTeX block on each created exercise.
-  const stage3 = await convertLatexBlocksOnExercises(payload, user, stage2.exerciseIds, warnings)
+  const stage3 = await convertLatexBlocksOnExercises(
+    payload,
+    user,
+    stage2.exerciseIds,
+    warnings,
+    request,
+  )
 
   return {
     success: true,
@@ -152,6 +165,9 @@ export interface RunFullLatexInput {
   user: User
   lessonId: string
   mediaId: string
+  /** Original NextRequest. Required so Stage 3's AI fallback inherits the
+   *  admin's auth cookie and a reachable origin for its internal HTTP call. */
+  request: { url: string; headers: Headers }
 }
 
 /**
@@ -197,7 +213,7 @@ async function readLatexFileContent(
 }
 
 export async function runFullLatexPipeline(input: RunFullLatexInput): Promise<FullPipelineResult> {
-  const { payload, user, lessonId, mediaId } = input
+  const { payload, user, lessonId, mediaId, request } = input
   const warnings: string[] = []
 
   // Read the .tex file content.
@@ -315,7 +331,13 @@ export async function runFullLatexPipeline(input: RunFullLatexInput): Promise<Fu
   warnings.push(...stage2.warnings)
 
   // Stage 3 — convert LaTeX block on each created exercise.
-  const stage3 = await convertLatexBlocksOnExercises(payload, user, stage2.exerciseIds, warnings)
+  const stage3 = await convertLatexBlocksOnExercises(
+    payload,
+    user,
+    stage2.exerciseIds,
+    warnings,
+    request,
+  )
 
   return {
     success: true,

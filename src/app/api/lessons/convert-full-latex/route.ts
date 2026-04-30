@@ -24,12 +24,13 @@ export const POST = withApiHandler<Body, unknown>(
     auth: 'admin',
     bodySchema,
   },
-  async ({ payload, body, user }) => {
+  async ({ payload, body, user, request }) => {
     const result = await runFullLatexPipeline({
       payload,
       user: user!,
       lessonId: body.lessonId,
       mediaId: body.mediaId,
+      request,
     })
 
     if (!result.success) {

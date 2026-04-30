@@ -24,13 +24,14 @@ export const POST = withApiHandler<Body, unknown>(
     auth: 'admin',
     bodySchema,
   },
-  async ({ payload, body, user }) => {
+  async ({ payload, body, user, request }) => {
     const result = await runFullMediaPipeline({
       payload,
       user: user!,
       lessonId: body.lessonId,
       mediaId: body.mediaId,
       promptId: body.promptId,
+      request,
     })
 
     if (!result.success) {
