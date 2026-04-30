@@ -1,14 +1,8 @@
 'use client'
 
 import { useDocumentInfo, useFormFields } from '@payloadcms/ui'
-import { Suspense, useEffect, useState } from 'react'
-import { ConversionStatusPanel } from '../ConversionStatusPanel'
+import { useEffect, useState } from 'react'
 import { ConvertContextButton } from '../ConvertContextButton'
-import { ConvertForm } from '../ConvertForm'
-import { ConvertV2Button } from '../ConvertV2Button'
-import { ConvertV3Button } from '../ConvertV3Button'
-import { DraftExercisesList } from '../DraftExercisesList'
-import { V2StatusPanel } from '../V2StatusPanel'
 
 interface MediaItem {
   id: string
@@ -24,8 +18,6 @@ export const LessonConversionPanel = () => {
 
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [activeForm, setActiveForm] = useState<string | null>(null)
-  const [expandedPdf, setExpandedPdf] = useState<string | null>(null)
   const [needsSaveNotice, setNeedsSaveNotice] = useState(false)
 
   // Resolve media from persisted lesson data so conversion options always
@@ -108,7 +100,7 @@ export const LessonConversionPanel = () => {
     resolveMedia()
   }, [contentFilesValue, lessonId, lastUpdateTime])
 
-  // Filter for PDFs and images (V3 supports both)
+  // PDFs and images are the only types Convert Context handles today.
   const supportedFiles = mediaItems.filter(
     (m) => m.mimeType === 'application/pdf' || m.mimeType?.startsWith('image/'),
   )
@@ -213,29 +205,6 @@ export const LessonConversionPanel = () => {
               {file.filename || file.id}
             </span>
             <div style={{ display: 'flex', gap: 4 }}>
-              <button
-                onClick={() => setActiveForm(activeForm === file.id ? null : file.id)}
-                style={{
-                  padding: '4px 12px',
-                  fontSize: 11,
-                  fontWeight: 500,
-                  border: activeForm === file.id ? '1px solid var(--theme-elevation-200)' : 'none',
-                  borderRadius: 3,
-                  backgroundColor:
-                    activeForm === file.id
-                      ? 'var(--theme-elevation-100)'
-                      : 'var(--theme-elevation-900)',
-                  color:
-                    activeForm === file.id
-                      ? 'var(--theme-elevation-700)'
-                      : 'var(--theme-elevation-0)',
-                  cursor: 'pointer',
-                }}
-              >
-                {activeForm === file.id ? 'Cancel' : 'Convert (V1)'}
-              </button>
-              <ConvertV2Button lessonId={String(lessonId)} mediaId={file.id} />
-              <ConvertV3Button lessonId={String(lessonId)} mediaId={file.id} />
               <ConvertContextButton
                 lessonId={String(lessonId)}
                 mediaId={file.id}
@@ -243,45 +212,6 @@ export const LessonConversionPanel = () => {
               />
             </div>
           </div>
-
-          {/* Status Panel */}
-          <div style={{ marginTop: 4 }}>
-            <ConversionStatusPanel
-              lessonId={String(lessonId)}
-              mediaId={file.id}
-              onViewExercises={() => setExpandedPdf(expandedPdf === file.id ? null : file.id)}
-            />
-          </div>
-
-          {/* V2 Status Panel */}
-          <div style={{ marginTop: 4 }}>
-            <V2StatusPanel lessonId={String(lessonId)} mediaId={file.id} />
-          </div>
-
-          {/* Inline Convert Form */}
-          {activeForm === file.id && (
-            <Suspense
-              fallback={
-                <div style={{ marginTop: 8, fontSize: 11, color: 'var(--theme-elevation-500)' }}>
-                  Loading...
-                </div>
-              }
-            >
-              <ConvertForm
-                lessonId={String(lessonId)}
-                mediaId={file.id}
-                filename={String(file.filename || file.id)}
-                onClose={() => setActiveForm(null)}
-              />
-            </Suspense>
-          )}
-
-          {/* Draft Exercises */}
-          {expandedPdf === file.id && (
-            <div style={{ marginTop: 4 }}>
-              <DraftExercisesList lessonId={String(lessonId)} sourceDocId={file.id} />
-            </div>
-          )}
         </div>
       ))}
     </div>
