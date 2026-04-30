@@ -1,16 +1,9 @@
 {
   "version": 1,
-  "rev": 44,
-  "cursor": "tick-44",
+  "rev": 45,
+  "cursor": "tick-45",
   "data": {
-    "perPr": {
-      "1369": {
-        "lastSha": "cd2c06bb43ed46569d35b73d8eda654f2192e39d",
-        "attempts": 0,
-        "stuck": false,
-        "lastActionAt": null
-      }
-    }
+    "perPr": {}
   },
   "done": false
 }
