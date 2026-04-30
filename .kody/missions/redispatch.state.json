@@ -1,39 +1,27 @@
 {
   "version": 1,
-  "rev": 21,
-  "cursor": "done-no-candidates",
+  "rev": 28,
+  "cursor": "dry-run-scan-v7",
   "data": {
     "perIssue": {},
     "dryRunLog": [
       {
-        "issueNumber": 1382,
+        "issueNumber": 0,
         "action": "resume",
-        "reason": "core.status=running in kody task state comment, last history 2026-04-28T14:45:08Z (~47h ago), PR #1383 merged/closed, no in-flight run, no open kody PR, no fresh kody comment (<40m), no blocking labels. Would post @kody resume.",
-        "plannedAt": "2026-04-30T10:24:09Z"
-      },
-      {
-        "issueNumber": 1363,
-        "action": "resume",
-        "reason": "core.status=running in kody task state comment, last history 2026-04-27T09:49:12Z (~72h ago), PR #1364 merged/closed, no in-flight run, no open kody PR, no fresh kody comment, no blocking labels. Would post @kody resume.",
-        "plannedAt": "2026-04-30T10:24:09Z"
-      },
-      {
-        "issueNumber": 1360,
-        "action": "resume",
-        "reason": "core.status=running in kody task state comment, last history 2026-04-27T09:58:29Z (~72h ago), PR #1366 merged/closed, no in-flight run, no open kody PR, no fresh kody comment, no blocking labels. Would post @kody resume.",
-        "plannedAt": "2026-04-30T10:24:09Z"
-      },
-      {
-        "issueNumber": 1351,
-        "action": "resume",
-        "reason": "core.status=running in kody task state comment, last history 2026-04-27T20:30:49Z (~60h ago), PR #1375 merged/closed, no in-flight run, no open kody PR, no fresh kody comment, no blocking labels. Would post @kody resume.",
-        "plannedAt": "2026-04-30T10:24:09Z"
+        "reason": "Dry-run tick 2026-04-30T17:30:00Z: Scanned ~80 open issues for kody:state:v1 blocks. Found 9 issues with state blocks in comments (#1382, #1380, #1378, #1373, #1372, #1363, #1360, #1357, #1351) — all carry kody:done label or are release tracking. #1380 has core.status=pending (not running). Zero issues with core.status=running. Zero issues with kody:stuck/no-redispatch/stalled labels. 3 in-flight runs present (#25181170644, #25181107521, #25180994170) but none reference specific issue numbers in title/branch. perIssue remains {} (never actioned). No candidates qualify.",
+        "plannedAt": "2026-04-30T17:30:00Z"
       },
       {
         "issueNumber": 0,
         "action": "resume",
-        "reason": "Dry-run tick scan 2026-04-30T10:24:09Z: scanned 68 open issues. Found kody task state comments in 1382, 1363, 1360, 1351 (all in kody:done issues). All show Phase=reviewing, Status=running, last action=REVIEW_PASS with timestamps 47-72h old. PRs all merged/closed, no in-flight runs reference these issues, no fresh kody comments. All 4 qualify as resume candidates in live mode.",
-        "plannedAt": "2026-04-30T10:24:09Z"
+        "reason": "Dry-run tick scan 2026-04-30T15:30:00Z: scanned ~80 open issues for kody:state:v1 blocks in bodies and comments — zero found. Confirmed prior candidates #1382/#1363/#1351 all carry kody:done (state blocks gone). No issues with kody:stuck/stalled/no-redispatch labels. 5 in-flight runs present but none reference specific issue numbers. perIssue remains {} (never actioned). No candidates qualify.",
+        "plannedAt": "2026-04-30T15:30:00Z"
+      },
+      {
+        "issueNumber": 0,
+        "action": "resume",
+        "reason": "Dry-run tick 2026-04-30T16:30:00Z: Scanned 70 open issues for kody state blocks. Found 4 issues with core.status=running (#1382, #1380, #1363, #1360), but ALL carry kody:done label + 'finished' comment — flows completed 2-3 days ago, state blocks not updated. Also checked for running issues without kody:done: zero found. No candidates qualify for resume.",
+        "plannedAt": "2026-04-30T16:30:00Z"
       }
     ]
   },
