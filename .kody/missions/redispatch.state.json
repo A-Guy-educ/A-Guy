@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "rev": 24,
-  "cursor": "dry-run-confirmed-v3",
+  "rev": 25,
+  "cursor": "dry-run-scan-v4",
   "data": {
     "perIssue": {},
     "dryRunLog": [
@@ -34,6 +34,12 @@
         "action": "resume",
         "reason": "Dry-run tick scan 2026-04-30T13:05:00Z: all 3 prior candidates (#1382/#1363/#1351) now carry kody:done label — core.status no longer 'running', all 3 left scope. Scanned ~90 remaining open issues for fresh kody state blocks — none found. No issues with blocking labels. No new candidates. perIssue remains {} (never actioned).",
         "plannedAt": "2026-04-30T13:05:00Z"
+      },
+      {
+        "issueNumber": 0,
+        "action": "resume",
+        "reason": "Dry-run tick scan 2026-04-30T14:44:00Z: confirmed #1382/#1363/#1351 kody state blocks have been removed from bodies (consistent with kody:done). Scanned all 70 open issues — zero kody state blocks found anywhere. No issues with core.status=running. perIssue remains {} (never actioned). No candidates for @kody resume.",
+        "plannedAt": "2026-04-30T14:44:00Z"
       }
     ]
   },
