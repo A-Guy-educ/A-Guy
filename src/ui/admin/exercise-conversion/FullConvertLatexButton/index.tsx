@@ -71,7 +71,7 @@ export function FullConvertLatexButton({
           fontWeight: 500,
           border: 'none',
           borderRadius: 3,
-          backgroundColor: isRunning ? 'var(--theme-elevation-400)' : 'var(--theme-success)',
+          backgroundColor: isRunning ? 'var(--theme-elevation-400)' : 'var(--theme-elevation-900)',
           color: 'var(--theme-elevation-0)',
           cursor: isRunning ? 'not-allowed' : 'pointer',
         }}

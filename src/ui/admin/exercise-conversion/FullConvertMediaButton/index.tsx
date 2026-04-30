@@ -102,7 +102,7 @@ export function FullConvertMediaButton({
           fontWeight: 500,
           border: 'none',
           borderRadius: 3,
-          backgroundColor: 'var(--theme-success)',
+          backgroundColor: 'var(--theme-elevation-900)',
           color: 'var(--theme-elevation-0)',
           cursor: 'pointer',
         }}
