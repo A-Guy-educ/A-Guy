@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 /**
- * Tests the new hideLatexBlocks prop on ExerciseRenderer (V1-272). When true,
- * `type: 'latex'` blocks are skipped so the Interactive tab of the dual-mode
- * lesson view doesn't duplicate LaTeX content already shown in the PDF tab.
- * When false (default) LaTeX blocks render inline via LatexBlockRenderer —
- * preserving the pre-existing behavior for standalone exercise pages.
+ * Tests the hideLatexBlocks prop on ExerciseRenderer. Defaults to true so the
+ * exercise viewer never renders raw LaTeX blocks — the script converter keeps
+ * them in stored content as a source-of-truth reference, with parsed
+ * structured blocks inserted alongside. Admin/preview contexts can pass
+ * `hideLatexBlocks={false}` to display the raw LaTeX.
  */
 
 import '@testing-library/jest-dom'
@@ -62,15 +62,15 @@ describe('ExerciseRenderer — hideLatexBlocks prop', () => {
     cleanup()
   })
 
-  it('renders latex blocks by default (hideLatexBlocks not set)', () => {
+  it('hides latex blocks by default (hideLatexBlocks not set) and keeps other blocks intact', () => {
     renderWithI18n(<ExerciseRenderer content={buildContent()} />)
     expect(screen.getByTestId('rich-text')).toHaveTextContent('Plain prose block')
-    expect(screen.getByTestId('latex-block')).toHaveTextContent('E = mc^2')
+    expect(screen.queryByTestId('latex-block')).not.toBeInTheDocument()
   })
 
   it('renders latex blocks when hideLatexBlocks is explicitly false', () => {
     renderWithI18n(<ExerciseRenderer content={buildContent()} hideLatexBlocks={false} />)
-    expect(screen.getByTestId('latex-block')).toBeInTheDocument()
+    expect(screen.getByTestId('latex-block')).toHaveTextContent('E = mc^2')
   })
 
   it('skips latex blocks when hideLatexBlocks is true but keeps other blocks intact', () => {

@@ -62,10 +62,14 @@ export const PUT = withApiHandler<PutBody>(
   async ({ payload, body, user }) => {
     const { extractionId, text } = body
 
+    // Invalidate the structured `exercises` snapshot so Stage 2
+    // (create-context-exercises) falls back to re-parsing the edited text.
+    // Without this, schema-mode extractions would silently ignore inline
+    // viewer edits because Stage 2 prefers the unchanged exercises array.
     await payload.update({
       collection: 'context-extractions',
       id: extractionId,
-      data: { text },
+      data: { text, exercises: null },
       user: user!,
       overrideAccess: false,
     })
