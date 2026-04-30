@@ -13,7 +13,7 @@ import React from 'react'
 import { ExerciseWorksheet } from '@/ui/web/exerciserenderer/ExerciseWorksheet'
 import { useLocale } from '@/ui/web/providers/I18n'
 import type { Exercise, Media as MediaType } from '@/payload-types'
-import { ExerciseWorkspace } from '../../exercises/[exerciseSlug]/_components/ExerciseWorkspace'
+import { ExerciseWorkspace } from '@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseWorkspace'
 
 type WorksheetBlocks = React.ComponentProps<typeof ExerciseWorksheet>['blocks']
 
