@@ -1,92 +1,86 @@
 {
   "version": 1,
-  "rev": 28,
-  "cursor": "tick-33",
+  "rev": 39,
+  "cursor": "tick",
   "data": {
     "perPr": {
       "1217": {
-        "lastSha": "f627ab3cb85febca0468d4b2fa83875feff36662",
-        "attempts": 1,
-        "stuck": false,
-        "lastActionAt": "2026-04-29T21:30:00Z"
-      },
-      "1272": {
-        "lastSha": "57b5ea91fbed0df2ffce670a516900935e7b8846",
-        "attempts": 1,
-        "stuck": false,
-        "lastActionAt": "2026-04-29T21:30:00Z"
-      },
-      "1355": {
-        "lastSha": "176f76c6a360d894aaeab797b20c9bc00a9295b6",
-        "attempts": 1,
-        "stuck": false,
-        "lastActionAt": "2026-04-29T21:30:00Z"
-      },
-      "1364": {
-        "lastSha": "93c28e5ee13906a1afd1f4b007c475c4cadbec90",
-        "attempts": 1,
-        "stuck": false,
-        "lastActionAt": "2026-04-29T21:30:00Z"
-      },
-      "1366": {
-        "lastSha": "85dce98025a968e3204c892e3b64602c259039f0",
-        "attempts": 1,
-        "stuck": false,
-        "lastActionAt": "2026-04-29T21:30:00Z"
-      },
-      "1374": {
-        "lastSha": "7c8422f58d6605ff0d882b9d705d4ea77f49f675",
-        "attempts": 1,
-        "stuck": false,
-        "lastActionAt": "2026-04-29T21:30:00Z"
-      },
-      "1375": {
-        "lastSha": "f31284efc564a7ec9e0b5de6d83bccbaa7eb7dd2",
-        "attempts": 1,
-        "stuck": false,
-        "lastActionAt": "2026-04-29T21:30:00Z"
-      },
-      "1376": {
-        "lastSha": "5727ebf5112a8b3d68e4823748985dee5c061d97",
-        "attempts": 1,
-        "stuck": false,
-        "lastActionAt": "2026-04-29T21:30:00Z"
-      },
-      "1377": {
-        "lastSha": "b8152a75f4cf55c82efbe1296c6ab553186e0271",
-        "attempts": 1,
-        "stuck": false,
-        "lastActionAt": "2026-04-29T21:30:00Z"
-      },
-      "1379": {
-        "lastSha": "6c190cad4b09f989532f56680eb5f4a2db22f129",
-        "attempts": 1,
-        "stuck": false,
-        "lastActionAt": "2026-04-29T21:30:00Z"
-      },
-      "1381": {
-        "lastSha": "29340900adf97845af2ac56f5db9424f14e86941",
-        "attempts": 1,
-        "stuck": false,
-        "lastActionAt": "2026-04-29T21:30:00Z"
-      },
-      "1383": {
-        "lastSha": "142ca9b6217ecbe90fa351d2f2838bed11105035",
-        "attempts": 1,
-        "stuck": false,
-        "lastActionAt": "2026-04-29T21:30:00Z"
-      },
-      "1384": {
-        "lastSha": "999d8dc94d847d34db7b6232e779a8a05c293d62",
-        "attempts": 1,
-        "stuck": false,
-        "lastActionAt": "2026-04-29T21:30:00Z"
-      },
-      "1386": {
-        "lastSha": "4daab6e836ae0a5a8e760c1c6f4d46f3e8a20f41",
+        "lastSha": "c718e01f0ddefae1bfbc2a0c4f920095223e9c7e",
         "attempts": 2,
         "stuck": false,
-        "lastActionAt": "2026-04-29T21:30:00Z"
+        "lastActionAt": "2026-04-30T11:14:12Z"
+      },
+      "1227": {
+        "lastSha": "93067019a83e4b4bb9e39a704adbba626ecd3a85",
+        "attempts": 0,
+        "stuck": false,
+        "lastActionAt": null
+      },
+      "1272": {
+        "lastSha": "f8675996997aa3519d2f1b4d7607c07a3a175f75",
+        "attempts": 0,
+        "stuck": false,
+        "lastActionAt": null
+      },
+      "1364": {
+        "lastSha": "ce7da3379f6dfc5982c2a20a5205fcede61cf03d",
+        "attempts": 0,
+        "stuck": false,
+        "lastActionAt": null
+      },
+      "1366": {
+        "lastSha": "94caf103fdca6f7973f7a3021567362fee7ffd33",
+        "attempts": 1,
+        "stuck": false,
+        "lastActionAt": "2026-04-30T11:14:12Z"
+      },
+      "1369": {
+        "lastSha": "cb88793bab25146ed019316f01525babae589eef",
+        "attempts": 0,
+        "stuck": false,
+        "lastActionAt": null
+      },
+      "1374": {
+        "lastSha": "cc66d29dfc26d825e4cb1db66a46cefccfd6949b",
+        "attempts": 0,
+        "stuck": false,
+        "lastActionAt": null
+      },
+      "1375": {
+        "lastSha": "239540a5b3bfeebd65fa686cdd4b88fea2489707",
+        "attempts": 0,
+        "stuck": false,
+        "lastActionAt": null
+      },
+      "1376": {
+        "lastSha": "afbe2bbdc844f09dd98605e16423dde7396eef55",
+        "attempts": 1,
+        "stuck": false,
+        "lastActionAt": "2026-04-30T11:14:12Z"
+      },
+      "1377": {
+        "lastSha": "cdaeda80e970bf567f905dfd2dab602b66ec686e",
+        "attempts": 0,
+        "stuck": false,
+        "lastActionAt": null
+      },
+      "1381": {
+        "lastSha": "29cac82cf5d339d5ee7d5e1b94f9d0e63e0bf50d",
+        "attempts": 1,
+        "stuck": false,
+        "lastActionAt": "2026-04-30T11:14:12Z"
+      },
+      "1384": {
+        "lastSha": "7c350b558a01999242c6eb81e898336f35552f67",
+        "attempts": 2,
+        "stuck": false,
+        "lastActionAt": "2026-04-30T11:14:12Z"
+      },
+      "1390": {
+        "lastSha": "39412a015a2f3f41a22e845bff2f0d045d032a4d",
+        "attempts": 0,
+        "stuck": false,
+        "lastActionAt": null
       }
     }
   },

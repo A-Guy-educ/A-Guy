@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "rev": 13,
+  "rev": 21,
   "cursor": "done-no-candidates",
   "data": {
     "perIssue": {},
@@ -8,38 +8,32 @@
       {
         "issueNumber": 1382,
         "action": "resume",
-        "reason": "Dry-run: would post @kody resume on #1382. Status=running in kody state block (phase=reviewing, lastOutcome=2026-04-28T14:45:08Z, ~21.5h ago). However: issue carries 'kody:done' label and last comment says '✅ kody flow chore finished — review-passed'. Flow completed successfully — state block is stale. Not stuck. Skipped.",
-        "plannedAt": "2026-04-29T12:15:00Z"
+        "reason": "core.status=running in kody task state comment, last history 2026-04-28T14:45:08Z (~47h ago), PR #1383 merged/closed, no in-flight run, no open kody PR, no fresh kody comment (<40m), no blocking labels. Would post @kody resume.",
+        "plannedAt": "2026-04-30T10:24:09Z"
       },
       {
         "issueNumber": 1363,
         "action": "resume",
-        "reason": "Dry-run: would post @kody resume on #1363. Status=running in kody state block (phase=reviewing, lastOutcome=2026-04-27T09:49:12Z, ~38.8h ago). However: issue carries 'kody:done' label and last comment says '✅ kody flow bug finished — review-passed'. Flow completed successfully — state block is stale. Not stuck. Skipped.",
-        "plannedAt": "2026-04-29T12:15:00Z"
+        "reason": "core.status=running in kody task state comment, last history 2026-04-27T09:49:12Z (~72h ago), PR #1364 merged/closed, no in-flight run, no open kody PR, no fresh kody comment, no blocking labels. Would post @kody resume.",
+        "plannedAt": "2026-04-30T10:24:09Z"
       },
       {
         "issueNumber": 1360,
         "action": "resume",
-        "reason": "Dry-run: would post @kody resume on #1360. Status=running in kody state block (phase=reviewing, lastOutcome=2026-04-27T09:58:29Z, ~38.5h ago). However: issue carries 'kody:done' label and last comment says '✅ kody flow bug finished — review-passed'. Flow completed successfully — state block is stale. Not stuck. Skipped.",
-        "plannedAt": "2026-04-29T12:15:00Z"
+        "reason": "core.status=running in kody task state comment, last history 2026-04-27T09:58:29Z (~72h ago), PR #1366 merged/closed, no in-flight run, no open kody PR, no fresh kody comment, no blocking labels. Would post @kody resume.",
+        "plannedAt": "2026-04-30T10:24:09Z"
       },
       {
         "issueNumber": 1351,
         "action": "resume",
-        "reason": "Dry-run: would post @kody resume on #1351. Status=running in kody state block (phase=reviewing, lastOutcome=2026-04-27T20:30:49Z, ~27.9h ago). However: issue carries 'kody:done' label and last comment says '✅ kody flow bug finished — review-passed'. Flow completed successfully — state block is stale. Not stuck. Skipped.",
-        "plannedAt": "2026-04-29T12:15:00Z"
-      },
-      {
-        "issueNumber": 1380,
-        "action": "resume",
-        "reason": "Dry-run: would post @kody resume on #1380. Status=running in kody state block (phase=reviewing, lastOutcome=2026-04-28T15:41:13Z, ~20.5h ago). However: issue carries 'kody:done' label and last comment says '✅ kody flow bug finished — review-passed'. Flow completed successfully — state block is stale. Not stuck. Skipped. Also checked: no in-progress workflow runs reference this issue.",
-        "plannedAt": "2026-04-29T12:15:00Z"
+        "reason": "core.status=running in kody task state comment, last history 2026-04-27T20:30:49Z (~60h ago), PR #1375 merged/closed, no in-flight run, no open kody PR, no fresh kody comment, no blocking labels. Would post @kody resume.",
+        "plannedAt": "2026-04-30T10:24:09Z"
       },
       {
         "issueNumber": 0,
         "action": "resume",
-        "reason": "Dry-run: scanned all 83 open issues. Zero candidates for redispatch. No open issues contain kody state blocks. The 5 previously-logged issues (1382, 1363, 1360, 1351, 1380) all carry 'kody:done' labels and their state blocks have been removed from bodies — flows completed successfully, not stuck.",
-        "plannedAt": "2026-04-29T17:45:00Z"
+        "reason": "Dry-run tick scan 2026-04-30T10:24:09Z: scanned 68 open issues. Found kody task state comments in 1382, 1363, 1360, 1351 (all in kody:done issues). All show Phase=reviewing, Status=running, last action=REVIEW_PASS with timestamps 47-72h old. PRs all merged/closed, no in-flight runs reference these issues, no fresh kody comments. All 4 qualify as resume candidates in live mode.",
+        "plannedAt": "2026-04-30T10:24:09Z"
       }
     ]
   },
