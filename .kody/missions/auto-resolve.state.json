@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "rev": 11,
+  "rev": 12,
   "cursor": "checked",
   "data": {
     "perPr": {
       "1285": {
-        "lastSha": "df01076520820ab09b15e5c8bcffd3ec7276046f",
-        "attempts": 1,
+        "lastSha": "ef639ed348b6b969a873f88aedb5dd8ce0874c58",
+        "attempts": 0,
         "stuck": false
       }
     }
