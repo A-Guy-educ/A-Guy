@@ -2,7 +2,7 @@ import '@/infra/config/server-init'
 
 import { getSystemLocale } from '@/i18n/server-locale'
 import { SystemParams } from '@/infra/config/system-params'
-import type { FormulaSheet, Media } from '@/payload-types'
+import type { Exercise, FormulaSheet, Media } from '@/payload-types'
 import { resolveAccessType } from '@/server/constants/access-types'
 import { RenderBlocks } from '@/server/payload/blocks/RenderBlocks'
 import { isValidContentLocale } from '@/server/payload/fields/contentLocale'
@@ -95,7 +95,7 @@ function renderDualMode(args: {
 }
 
 /** True when an exercise carries any structured content block we can render. */
-function hasRenderableBlocks(exercise: import('@/payload-types').Exercise): boolean {
+function hasRenderableBlocks(exercise: Exercise): boolean {
   const content = exercise.content as { blocks?: unknown } | null | undefined
   if (!content || !Array.isArray(content.blocks)) return false
   return content.blocks.length > 0

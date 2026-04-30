@@ -81,9 +81,9 @@ export function ExerciseWorksheet({
   return (
     <MediaMapProvider value={mediaMap}>
       <div className={cn('flex flex-col gap-content-gap-lg', className)}>
-        {blocks.map((block) => (
+        {blocks.map((block, i) => (
           <WorksheetBlock
-            key={getBlockKey(block)}
+            key={getBlockKey(block, i)}
             block={block}
             mediaMap={mediaMap}
             sideBySideLayout={sideBySideLayout}
@@ -94,8 +94,8 @@ export function ExerciseWorksheet({
   )
 }
 
-function getBlockKey(block: ContentBlock): string {
-  return 'id' in block && block.id ? block.id : Math.random().toString(36)
+function getBlockKey(block: ContentBlock, index: number): string {
+  return 'id' in block && block.id ? block.id : `block_${index}`
 }
 
 interface WorksheetBlockProps {
@@ -283,9 +283,15 @@ function WorksheetFreeResponse({ block }: { block: QuestionFreeResponseBlock }) 
   )
 }
 
+const ALIGN_CLASS: Record<'left' | 'center' | 'right', string> = {
+  left: 'text-left',
+  center: 'text-center',
+  right: 'text-right',
+}
+
 function WorksheetTable({ block }: { block: QuestionTableBlock }) {
   const { headers, rowsData, showBorders, showHeader, columnAlignment } = block.table
-  const align = (i: number) => columnAlignment?.[i] ?? 'left'
+  const alignClass = (i: number) => ALIGN_CLASS[columnAlignment?.[i] ?? 'left']
   const cellBase = showBorders ? 'border border-foreground/40 px-3 py-2' : 'px-3 py-2'
   return (
     <div className="flex flex-col gap-content-gap-xs">
@@ -295,11 +301,7 @@ function WorksheetTable({ block }: { block: QuestionTableBlock }) {
           <thead>
             <tr>
               {headers.map((h, i) => (
-                <th
-                  key={i}
-                  className={cn(cellBase, 'bg-muted font-semibold')}
-                  style={{ textAlign: align(i) }}
-                >
+                <th key={i} className={cn(cellBase, 'bg-muted font-semibold', alignClass(i))}>
                   {h}
                 </th>
               ))}
@@ -310,7 +312,7 @@ function WorksheetTable({ block }: { block: QuestionTableBlock }) {
           {rowsData.map((row, ri) => (
             <tr key={ri}>
               {row.map((cell, ci) => (
-                <td key={ci} className={cellBase} style={{ textAlign: align(ci) }}>
+                <td key={ci} className={cn(cellBase, alignClass(ci))}>
                   {cell || ' '}
                 </td>
               ))}
