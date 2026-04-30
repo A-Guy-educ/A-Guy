@@ -57,6 +57,8 @@ function renderDualMode(args: {
   /** Exercises whose blocks feed both PDF and Interactive tabs. */
   exercises: React.ComponentProps<typeof DualModeLessonView>['exercises']
   interactive: React.ComponentProps<typeof DualModeLessonView>['interactive']
+  /** Attached media files — when present, a Media tab is shown. */
+  validFiles?: Media[]
   mediaMap?: Record<string, Media>
   chatLessonId: string
   showChat: boolean
@@ -85,6 +87,7 @@ function renderDualMode(args: {
         gradeLevel={args.gradeLevel}
         exercises={args.exercises}
         interactive={args.interactive}
+        validFiles={args.validFiles}
         mediaMap={args.mediaMap}
         chatLessonId={args.chatLessonId}
         showChat={args.showChat}
@@ -225,12 +228,11 @@ export default async function LessonPage({ params }: LessonPageProps) {
       }
     }
 
-    // Dual-mode view: when no media is attached AND the lesson has at least one
-    // exercise carrying renderable content blocks, offer a PDF / Interactive
-    // tab toggle. Both tabs read from the same `exercise.content.blocks`.
+    // Multi-tab view: show up to 3 tabs (Media / PDF / Interactive) whenever
+    // the lesson has at least one exercise with renderable blocks. Media tab
+    // only appears when validFiles is non-empty.
     const dualModeExercises = blockExercises.filter(hasRenderableBlocks)
-    const hasAttachedMedia = validFiles.length > 0
-    if (!hasAttachedMedia && dualModeExercises.length > 0) {
+    if (dualModeExercises.length > 0) {
       return renderDualMode({
         accessType: effectiveAccessType,
         courseSlug,
@@ -245,6 +247,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
         backUrl: '/study',
         exercises: dualModeExercises,
         interactive: { kind: 'blocks', blocks: resolvedBlocks, contentPageBodies, validFiles },
+        validFiles,
         mediaMap,
         chatLessonId: lesson.id,
         showChat,
@@ -298,10 +301,9 @@ export default async function LessonPage({ params }: LessonPageProps) {
   // Batch-fetch all media referenced inside exercise content blocks
   const mediaMap = hasExercises ? await queryMediaByIds(extractAllMediaIds(exercises)) : {}
 
-  // Dual-mode view: when no media is attached AND any exercise has renderable
-  // content blocks. Media-attached lessons still route to PdfLessonPager
-  // below (media trumps).
-  if (hasExercises && !hasContent) {
+  // Multi-tab view: show up to 3 tabs (Media / PDF / Interactive) whenever
+  // the lesson has at least one exercise with renderable blocks.
+  if (hasExercises) {
     const dualModeExercises = exercises.filter(hasRenderableBlocks)
     if (dualModeExercises.length > 0) {
       return renderDualMode({
@@ -318,6 +320,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
         backUrl,
         exercises: dualModeExercises,
         interactive: { kind: 'exercises', exercises },
+        validFiles,
         mediaMap,
         chatLessonId,
         showChat,
