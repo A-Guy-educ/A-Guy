@@ -1,16 +1,11 @@
 {
   "version": 1,
-  "rev": 33,
-  "cursor": "fix-ci-action-taken-2026-04-29",
+  "rev": 40,
+  "cursor": "fix-ci-found-failing-1266",
   "data": {
     "perPr": {
-      "1227": {
-        "lastSha": "742776244b41def217bcf4a99351aaa8cd5bde71",
-        "attempts": 0,
-        "stuck": false
-      },
       "1266": {
-        "lastSha": "034bfeefa557a42588924413b48b83ea53df4cd2",
+        "lastSha": "b1865453485c3605736cf20a464dbdd7a7c46b56",
         "attempts": 1,
         "stuck": false
       }

@@ -67,7 +67,16 @@ export const ContextExtractions: CollectionConfig = {
       required: true,
       maxLength: 200_000,
       admin: {
-        description: 'Raw LaTeX text extracted from the source media',
+        description:
+          'LaTeX rendering of the structured exercises. Generated for the viewer; the structured `exercises` field is the source of truth.',
+      },
+    },
+    {
+      name: 'exercises',
+      type: 'json',
+      admin: {
+        description:
+          'Structured exercises returned by schema-mode extraction: [{ number, latex, solution }]. Stage 2 (create-context-exercises) reads this directly when present.',
       },
     },
   ],
