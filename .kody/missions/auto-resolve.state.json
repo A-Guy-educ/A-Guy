@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "rev": 7,
+  "rev": 8,
   "cursor": "checked",
   "data": {
     "perPr": {
       "1285": {
         "lastSha": "5c016fa8cf147cfe8e913add5d7dd304e363f290",
         "attempts": 2,
-        "stuck": false
+        "stuck": true
       }
     }
   },
