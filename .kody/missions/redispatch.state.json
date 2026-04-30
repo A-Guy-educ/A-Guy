@@ -1,10 +1,16 @@
 {
   "version": 1,
-  "rev": 30,
-  "cursor": "dry-run-scan-v9",
+  "rev": 31,
+  "cursor": "dry-run-scan-v10",
   "data": {
     "perIssue": {},
     "dryRunLog": [
+      {
+        "issueNumber": 0,
+        "action": "resume",
+        "reason": "Dry-run tick 2026-04-30T20:30:00Z: Scanned ~80 open issues. Found 5 issues with core.status=running in state blocks (#1382, #1380, #1363, #1360, #1351) — ALL carry kody:done label (terminal). History timestamps 2-3 days old (>>40min). No kody:stuck/no-redispatch/stalled labels. 4 in-flight runs present but none reference specific issue numbers. perIssue remains {} (never actioned). No candidates qualify for resume.",
+        "plannedAt": "2026-04-30T20:30:00Z"
+      },
       {
         "issueNumber": 0,
         "action": "resume",
