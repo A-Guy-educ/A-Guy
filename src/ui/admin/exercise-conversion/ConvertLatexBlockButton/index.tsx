@@ -26,7 +26,7 @@ interface ContentValue {
 
 interface ConvertSuccess {
   exerciseId: string
-  replacedBlockIds: string[]
+  convertedBlockIds: string[]
   addedBlockCount: number
   totalBlocks: number
   warnings?: { line: number; message: string; rawLatex: string }[]
@@ -113,8 +113,8 @@ export const ConvertLatexBlockButton = () => {
       <p style={{ fontSize: 11, color: 'var(--theme-elevation-600)', marginBottom: 8 }}>
         This exercise has {latexBlocks.length} LaTeX block
         {latexBlocks.length === 1 ? '' : 's'}. Converting parses the LaTeX into structured blocks
-        (questions, diagrams, rich text) and replaces the LaTeX block in place. The exercise stays
-        as one unit.
+        (questions, diagrams, rich text) and inserts them right after the LaTeX block. The original
+        LaTeX is preserved as a source-of-truth reference and is hidden from the exercise viewer.
       </p>
 
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -181,14 +181,15 @@ export const ConvertLatexBlockButton = () => {
 
       {result && (
         <p style={{ color: 'var(--theme-success-500)', marginTop: 8, fontSize: 12 }}>
-          Converted {result.replacedBlockIds.length} LaTeX block
-          {result.replacedBlockIds.length === 1 ? '' : 's'} into {result.addedBlockCount} structured
-          block{result.addedBlockCount === 1 ? '' : 's'}
+          Converted {result.convertedBlockIds.length} LaTeX block
+          {result.convertedBlockIds.length === 1 ? '' : 's'} into {result.addedBlockCount}{' '}
+          structured block{result.addedBlockCount === 1 ? '' : 's'}
           {method === 'ai_fallback' ? ' via AI fallback' : ''}
           {result.warnings && result.warnings.length > 0
             ? ` (${result.warnings.length} warning${result.warnings.length === 1 ? '' : 's'})`
             : ''}
-          .
+          . The original LaTeX block remains in the editor for reference and is hidden in the
+          viewer.
         </p>
       )}
     </div>
