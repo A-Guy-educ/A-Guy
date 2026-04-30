@@ -180,7 +180,7 @@ async function createLesson(): Promise<string> {
 
 async function seedExtraction(
   lessonId: string,
-  data: { text: string; exercises?: unknown },
+  data: { text?: string; exercises?: unknown },
 ): Promise<void> {
   // sourceMedia is required, so create a tiny media row to point at.
   const media = await payload.create({
@@ -204,7 +204,11 @@ async function seedExtraction(
     data: {
       lesson: lessonId,
       sourceMedia: media.id,
-      ...data,
+      // text is required by the collection schema even when the structured
+      // exercises array is the source of truth; pass a placeholder if the
+      // caller only cares about the structured field.
+      text: data.text ?? '% structured-only',
+      exercises: data.exercises,
     } as any,
     overrideAccess: true,
   })
@@ -290,17 +294,21 @@ describe('createExercisesFromExtraction', () => {
       const lessonId = await createLesson()
 
       // Pre-existing playlist with one unrelated exerciseRef + one
-      // contentPageRef. Both should survive the reconcile.
+      // contentPageRef. Both should survive the reconcile. Exercise.content
+      // requires at least one block, so seed with a trivial LaTeX block.
       const unrelatedExercise = await payload.create({
         collection: 'exercises',
         data: {
           lesson: lessonId,
           title: 'Unrelated',
-          content: { blocks: [] },
+          content: {
+            blocks: [{ id: 'unrel0', type: 'latex', latex: '$1$' }],
+          },
           origin: 'manual',
           order: 0,
         } as any,
         draft: true,
+        context: { _skipBlockSync: true } as any,
         overrideAccess: true,
       })
       createdExerciseIds.push(unrelatedExercise.id)
