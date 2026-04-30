@@ -10,6 +10,12 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 
+// Mock @payload-config BEFORE importing the route
+// The route imports configPromise at the top level, which validates DATABASE_URL
+vi.mock('@payload-config', () => ({
+  default: {},
+}))
+
 // Check if DATABASE_URL is set to Atlas (testcontainers don't work with Atlas)
 const dbUrl = process.env.DATABASE_URL || ''
 const isAtlasUrl = dbUrl.includes('mongodb+srv://') || dbUrl.includes('.mongodb.net')
@@ -70,9 +76,7 @@ describe.skipIf(isAtlasUrl)('GET /api/instructor/dashboard', () => {
 
   describe('Authentication', () => {
     it('returns 401 when no user is authenticated', async () => {
-      const { GET } = await import('@/app/api/instructor/dashboard/route')
-
-      // Mock auth to return null user
+      // Set up mock BEFORE importing the route
       const mockAuthPayload = vi.fn(() => ({
         auth: vi.fn().mockResolvedValue({ user: null }),
         find: vi.fn(),
@@ -82,9 +86,14 @@ describe.skipIf(isAtlasUrl)('GET /api/instructor/dashboard', () => {
         const actual = await importOriginal<typeof import('payload')>()
         return {
           ...actual,
-          getPayload: () => mockAuthPayload,
+          // Return the payload mock directly (not wrapped in a function)
+          getPayload: mockAuthPayload,
         }
       })
+
+      // Reset modules and re-import to pick up the mock
+      vi.resetModules()
+      const { GET } = await import('@/app/api/instructor/dashboard/route')
 
       const request = new NextRequest('http://localhost/api/instructor/dashboard')
       const response = await GET(request)
@@ -107,7 +116,8 @@ describe.skipIf(isAtlasUrl)('GET /api/instructor/dashboard', () => {
         const actual = await importOriginal<typeof import('payload')>()
         return {
           ...actual,
-          getPayload: () => mockStudentPayload,
+          // Return the payload mock directly (not wrapped in a function)
+          getPayload: mockStudentPayload,
         }
       })
 
@@ -148,7 +158,9 @@ describe.skipIf(isAtlasUrl)('GET /api/instructor/dashboard', () => {
         const actual = await importOriginal<typeof import('payload')>()
         return {
           ...actual,
-          getPayload: () => mockAdminPayload,
+          // Return the payload mock directly (not wrapped in a function)
+          // so getPayload() returns the payload instance, not a function
+          getPayload: mockAdminPayload,
         }
       })
 
@@ -203,7 +215,9 @@ describe.skipIf(isAtlasUrl)('GET /api/instructor/dashboard', () => {
         const actual = await importOriginal<typeof import('payload')>()
         return {
           ...actual,
-          getPayload: () => mockAdminPayload,
+          // Return the payload mock directly (not wrapped in a function)
+          // so getPayload() returns the payload instance, not a function
+          getPayload: mockAdminPayload,
         }
       })
 
@@ -253,7 +267,8 @@ describe.skipIf(isAtlasUrl)('GET /api/instructor/dashboard', () => {
         const actual = await importOriginal<typeof import('payload')>()
         return {
           ...actual,
-          getPayload: () => mockInstructorPayload,
+          // Return the payload mock directly (not wrapped in a function)
+          getPayload: mockInstructorPayload,
         }
       })
 
@@ -292,7 +307,8 @@ describe.skipIf(isAtlasUrl)('GET /api/instructor/dashboard', () => {
         const actual = await importOriginal<typeof import('payload')>()
         return {
           ...actual,
-          getPayload: () => mockInstructorPayload,
+          // Return the payload mock directly (not wrapped in a function)
+          getPayload: mockInstructorPayload,
         }
       })
 
@@ -339,7 +355,9 @@ describe.skipIf(isAtlasUrl)('GET /api/instructor/dashboard', () => {
         const actual = await importOriginal<typeof import('payload')>()
         return {
           ...actual,
-          getPayload: () => mockAdminPayload,
+          // Return the payload mock directly (not wrapped in a function)
+          // so getPayload() returns the payload instance, not a function
+          getPayload: mockAdminPayload,
         }
       })
 
