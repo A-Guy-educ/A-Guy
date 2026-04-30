@@ -1,10 +1,16 @@
 {
   "version": 1,
-  "rev": 28,
-  "cursor": "dry-run-scan-v7",
+  "rev": 29,
+  "cursor": "dry-run-scan-v8",
   "data": {
     "perIssue": {},
     "dryRunLog": [
+      {
+        "issueNumber": 0,
+        "action": "resume",
+        "reason": "Dry-run tick 2026-04-30T18:30:00Z: Scanned ~80 open issues for kody:state:v1 blocks in bodies and comments. Found 3 issues with state blocks (#1382, #1380, #1378) — ALL carry kody:done label (terminal). State blocks show core.status=running (#1382: reviewing, #1380: reviewing) and core.status=succeeded (#1378: idle), but kody:done takes precedence. #1236 (kody:failed/shipping) and #1143 (kody:waiting) have no state blocks. Zero issues with kody:stuck/no-redispatch/stalled labels. 5 in-flight runs present but none reference specific issue numbers in title/branch. Most recent kody comment ~2 days old. perIssue remains {} (never actioned). No candidates qualify.",
+        "plannedAt": "2026-04-30T18:30:00Z"
+      },
       {
         "issueNumber": 0,
         "action": "resume",
