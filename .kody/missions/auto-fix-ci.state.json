@@ -1,22 +1,12 @@
 {
   "version": 1,
-  "rev": 38,
-  "cursor": "fix-ci-action-taken-1355-1364-1374-attempt2-2026-04-30",
+  "rev": 64,
+  "cursor": "fix-ci-no-failing-cis",
   "data": {
     "perPr": {
-      "1355": {
-        "lastSha": "969f3e256728230bc2e97b8a6ed3ce1713b45a39",
-        "attempts": 2,
-        "stuck": false
-      },
-      "1364": {
-        "lastSha": "422c42c2a348f07771490d1b791422377511387d",
-        "attempts": 2,
-        "stuck": false
-      },
-      "1374": {
-        "lastSha": "1acbc8d06ff5753fe7179db4e066c81478aa3b89",
-        "attempts": 2,
+      "1285": {
+        "lastSha": "4f56d86ef7eab8670b83f97443af10a3364a153e",
+        "attempts": 1,
         "stuck": false
       }
     }
