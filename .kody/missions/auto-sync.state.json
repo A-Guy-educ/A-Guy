@@ -1,14 +1,14 @@
 {
   "version": 1,
-  "rev": 68,
-  "cursor": "tick-68",
+  "rev": 70,
+  "cursor": "tick-70",
   "data": {
     "perPr": {
       "1217": {
-        "lastSha": "b2b631a370f65e742f928f4f72dc38d8da6a11dc",
-        "attempts": 1,
+        "lastSha": "857cae59647231a01f01f16eb916600f8ff27938",
+        "attempts": 0,
         "stuck": false,
-        "lastActionAt": "2026-05-01T13:55:00Z"
+        "lastActionAt": null
       },
       "1227": {
         "lastSha": "37719014e5a0de3601d0770425e378c06473d305",
@@ -29,7 +29,7 @@
         "lastActionAt": "2026-05-01T13:00:00Z"
       },
       "1285": {
-        "lastSha": "57f712fb44b80a84af0909cb820dd791ca8303b4",
+        "lastSha": "63ba8ebf8f90ec8ab920361463a5569af54fba1e",
         "attempts": 0,
         "stuck": false,
         "lastActionAt": null
@@ -48,9 +48,9 @@
       },
       "1374": {
         "lastSha": "01952b4d94d7874392d5a6b40265c4c778096bd3",
-        "attempts": 1,
+        "attempts": 2,
         "stuck": false,
-        "lastActionAt": "2026-05-01T11:36:01Z"
+        "lastActionAt": "2026-05-01T19:06:00Z"
       },
       "1375": {
         "lastSha": "f7f300662de07ff76c85160cb57c53b3826a610d",
@@ -83,10 +83,10 @@
         "lastActionAt": "2026-05-01T11:36:01Z"
       },
       "1384": {
-        "lastSha": "d04ec24f832cb1748866059a4cdf1150ecce5558",
-        "attempts": 0,
+        "lastSha": "274a07ce321b03f032e0fb6bd26380120858dd3a",
+        "attempts": 1,
         "stuck": false,
-        "lastActionAt": null
+        "lastActionAt": "2026-05-01T14:55:00Z"
       }
     }
   },
