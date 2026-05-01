@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "rev": 45,
-  "cursor": "dry-run-scan-v24",
+  "rev": 46,
+  "cursor": "dry-run-scan-v25",
   "data": {
     "perIssue": {},
     "dryRunLog": [
@@ -10,6 +10,36 @@
         "action": "resume",
         "reason": "Dry-run tick 2026-05-01T15:20:00Z: Comprehensive scan of A-Guy-educ/A-Guy repo. Checked ~60 open issues. Prior tick candidates #1351/#1360/#1363/#1380/#1382 now all carry kody:done labels (closed out of scope). Open issues with kody state blocks: #1357 (status=succeeded), #1236 (kody:failed label), #1143 (status=waiting). None have core.status=running. Remaining ~55 open issues (bug reports, kody:backlog, kody:watch, kody:goals) have no kody state blocks. No workflow runs reference any running issue. No candidates qualify for resume.",
         "plannedAt": "2026-05-01T15:20:00Z"
+      },
+      {
+        "issueNumber": 1382,
+        "action": "resume",
+        "reason": "Dry-run tick 2026-05-01: Issue #1382 has status=running but timestamp is 4313 mins old (2026-04-28T14:45:08Z). Has kody:done label suggesting workflow completed but state not finalized. No recent kody comments, no kody PRs, no workflow runs. Would post @kody resume.",
+        "plannedAt": "2026-05-01T16:00:00Z"
+      },
+      {
+        "issueNumber": 1363,
+        "action": "resume",
+        "reason": "Dry-run tick 2026-05-01: Issue #1363 has status=running but timestamp is 6049 mins old (2026-04-27T09:49:12Z). Has kody:done label suggesting workflow completed but state not finalized. No recent kody comments, no kody PRs, no workflow runs. Would post @kody resume.",
+        "plannedAt": "2026-05-01T16:00:00Z"
+      },
+      {
+        "issueNumber": 1360,
+        "action": "resume",
+        "reason": "Dry-run tick 2026-05-01: Issue #1360 has status=running but timestamp is 6040 mins old (2026-04-27T09:58:29Z). Has kody:done label suggesting workflow completed but state not finalized. No recent kody comments, no kody PRs, no workflow runs. Would post @kody resume.",
+        "plannedAt": "2026-05-01T16:00:00Z"
+      },
+      {
+        "issueNumber": 1351,
+        "action": "resume",
+        "reason": "Dry-run tick 2026-05-01: Issue #1351 has status=running but timestamp is 5408 mins old (2026-04-27T20:30:49Z). Has kody:done label suggesting workflow completed but state not finalized. No recent kody comments, no kody PRs, no workflow runs. Would post @kody resume.",
+        "plannedAt": "2026-05-01T16:00:00Z"
+      },
+      {
+        "issueNumber": 1380,
+        "action": "mark-stuck",
+        "reason": "Dry-run tick 2026-05-01: Issue #1380 has corrupted kody state block (no valid JSON). All 58 state block markers found but none contain valid JSON. Cannot determine status. Should be marked stuck for human review.",
+        "plannedAt": "2026-05-01T16:00:00Z"
       }
     ]
   },
