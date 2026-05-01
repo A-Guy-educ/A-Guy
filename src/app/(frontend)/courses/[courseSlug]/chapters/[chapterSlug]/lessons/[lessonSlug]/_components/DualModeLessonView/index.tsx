@@ -2,9 +2,12 @@
  * @fileType component
  * @domain lessons
  * @pattern dual-view
- * @ai-summary Two-tab lesson view that lets the student toggle between the consolidated
- *             PDF-like LaTeX document and the existing interactive exercise pager.
- *             Tab choice is persisted per lesson in localStorage.
+ * @ai-summary Tab-based lesson view supporting up to three tabs: Media (attached
+ *             files), PDF (worksheet from exercise blocks), and Interactive (exercise
+ *             pager with answer UI). Media tab only appears when the lesson has
+ *             attached files. Tab choice is persisted per lesson in localStorage.
+ *             Both PDF and Interactive tabs read from `exercise.content.blocks` so
+ *             admin edits flow to both.
  */
 
 'use client'
@@ -14,9 +17,10 @@ import type { Exercise, FormulaSheet, Media as MediaType } from '@/payload-types
 import type { ResolvedLessonBlock } from '@/server/repos/queries/lesson-blocks'
 import { ChatInterface } from '@/ui/web/chat'
 import { useTranslations } from '@/ui/web/providers/I18n'
-import { ConsolidatedLatexLessonView } from '../ConsolidatedLatexLessonView'
+import { BlocksDocumentLessonView } from '../BlocksDocumentLessonView'
 import { ExercisesPager } from '../ExercisesPager'
 import { LessonPager } from '../LessonPager'
+import { MediaTabContent } from '../MediaTabContent'
 import { TabButton } from './TabButton'
 import { useLessonViewMode } from './useLessonViewMode'
 
@@ -39,8 +43,11 @@ interface DualModeLessonViewProps {
   lessonSlug: string
   /** Grade bucket for progress storage — must be the lesson's course label, not the user's profile grade. */
   gradeLevel: string
-  consolidatedLatex: string
+  /** Exercises whose blocks feed both the PDF document and the Interactive pager. */
+  exercises: Exercise[]
   interactive: InteractiveSource
+  /** Attached media files — when present, a "Media" tab is shown as the first tab. */
+  validFiles?: MediaType[]
   mediaMap?: Record<string, MediaType>
   chatLessonId?: string
   showChat?: boolean
@@ -56,8 +63,9 @@ export function DualModeLessonView(props: DualModeLessonViewProps) {
     chapterSlug,
     lessonSlug,
     gradeLevel,
-    consolidatedLatex,
+    exercises,
     interactive,
+    validFiles = [],
     mediaMap,
     chatLessonId,
     showChat,
@@ -65,14 +73,17 @@ export function DualModeLessonView(props: DualModeLessonViewProps) {
   } = props
 
   const t = useTranslations('courses')
+  const hasMedia = validFiles.length > 0
   const [mode, select] = useLessonViewMode(lessonId)
 
-  // Stable ids per lesson so tabs and panels can be wired with aria-controls /
-  // aria-labelledby without risk of collision when multiple DualModeLessonView
-  // instances coexist on a page.
+  // If stored mode is 'media' but this lesson has no files, fall back to 'pdf'.
+  const activeMode = mode === 'media' && !hasMedia ? 'pdf' : mode
+
   const tabIds = {
+    mediaTab: `lesson-${lessonId}-tab-media`,
     pdfTab: `lesson-${lessonId}-tab-pdf`,
     interactiveTab: `lesson-${lessonId}-tab-interactive`,
+    mediaPanel: `lesson-${lessonId}-panel-media`,
     pdfPanel: `lesson-${lessonId}-panel-pdf`,
     interactivePanel: `lesson-${lessonId}-panel-interactive`,
   }
@@ -83,30 +94,58 @@ export function DualModeLessonView(props: DualModeLessonViewProps) {
       aria-label={t('lessonViewMode')}
       className="flex items-center gap-1 border-b border-border bg-card px-4 py-2 print:hidden"
     >
+      {hasMedia && (
+        <TabButton
+          id={tabIds.mediaTab}
+          controlsId={tabIds.mediaPanel}
+          label={t('lessonViewModeMedia')}
+          active={activeMode === 'media'}
+          onClick={() => select('media')}
+        />
+      )}
       <TabButton
         id={tabIds.pdfTab}
         controlsId={tabIds.pdfPanel}
         label={t('lessonViewModePdf')}
-        active={mode === 'pdf'}
+        active={activeMode === 'pdf'}
         onClick={() => select('pdf')}
       />
       <TabButton
         id={tabIds.interactiveTab}
         controlsId={tabIds.interactivePanel}
         label={t('lessonViewModeInteractive')}
-        active={mode === 'interactive'}
+        active={activeMode === 'interactive'}
         onClick={() => select('interactive')}
       />
     </div>
   )
 
-  if (mode === 'pdf') {
+  if (activeMode === 'media' && hasMedia) {
     return (
-      <section role="tabpanel" id={tabIds.pdfPanel} aria-labelledby={tabIds.pdfTab}>
-        <ConsolidatedLatexLessonView
+      <section role="tabpanel" id={tabIds.mediaPanel} aria-labelledby={tabIds.mediaTab}>
+        <MediaTabContent
           lessonTitle={lessonTitle}
           backUrl={backUrl}
-          consolidatedLatex={consolidatedLatex}
+          lessonId={lessonId}
+          validFiles={validFiles}
+          courseSlug={courseSlug}
+          headerSlot={tabBar}
+          showChat={showChat}
+          chatLessonId={chatLessonId}
+          formulaSheet={formulaSheet}
+        />
+      </section>
+    )
+  }
+
+  if (activeMode === 'pdf') {
+    return (
+      <section role="tabpanel" id={tabIds.pdfPanel} aria-labelledby={tabIds.pdfTab}>
+        <BlocksDocumentLessonView
+          lessonTitle={lessonTitle}
+          backUrl={backUrl}
+          exercises={exercises}
+          mediaMap={mediaMap}
           headerSlot={tabBar}
           chatContent={
             showChat ? (
@@ -136,7 +175,10 @@ export function DualModeLessonView(props: DualModeLessonViewProps) {
           lessonId={lessonId}
           mediaMap={mediaMap}
           contentPageBodies={interactive.contentPageBodies}
-          validFiles={interactive.validFiles}
+          /* Don't pass validFiles here — when running inside the multi-tab
+             view, the dedicated Media tab handles attached files. Forwarding
+             them would also insert a PDF page into LessonPager's internal
+             flow, making the Interactive tab open on the PDF. */
           chatLessonId={chatLessonId}
           showChat={showChat}
           formulaSheet={formulaSheet}

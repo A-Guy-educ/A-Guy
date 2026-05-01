@@ -1,15 +1,21 @@
 {
   "version": 1,
-  "rev": 17,
-  "cursor": "done-no-candidates",
+  "rev": 36,
+  "cursor": "dry-run-scan-v15",
   "data": {
     "perIssue": {},
     "dryRunLog": [
       {
         "issueNumber": 0,
         "action": "resume",
-        "reason": "Dry-run tick scan: scanned all ~70 open issues. Found 3 issues with kody state blocks (1357, 1380, 1382). Issue 1357: status=succeeded, not running — does not qualify. Issue 1380: status=running but has kody:done label and last comment '✅ kody flow bug finished — review-passed' — flow completed, state block stale but not stuck. Issue 1382: status=running but has kody:done label and last comment '✅ kody flow chore finished — review-passed' — flow completed, state block stale but not stuck. No issues qualify for redispatch. In-progress workflow runs (3 total: PR for feature branch 1244, PR on dev, issue_comment on dev) reference no specific issue numbers.",
-        "plannedAt": "2026-04-30T02:00:00Z"
+        "reason": "Dry-run tick 2026-05-01T02:29:04Z: Comprehensive scan of A-Guy/A-Guy repo. Checked open issues for kody:state:v1 blocks. Body scan: zero state blocks found. Comment scan via GitHub API: no kody:state blocks in any issue comments. Active kody labels: kody:done (11 issues - terminal state), kody:backlog (40+ issues - not started). No issues with kody:stuck/kody:no-redispatch/kody:stalled labels. Active workflow runs present (#1378 and fix/context-extraction-prompt-solution-separation) but none reference stuck open issues. perIssue remains {} (never actioned). No candidates qualify for resume.",
+        "plannedAt": "2026-05-01T02:29:04Z"
+      },
+      {
+        "issueNumber": 0,
+        "action": "resume",
+        "reason": "Dry-run tick 2026-04-30T23:00:00Z: Comprehensive scan of A-Guy/A-Guy repo. Checked 59 open issues for kody:state:v1 blocks. Body scan: zero state blocks found (verified 1393, 1392, 1346, 1236, 1357). Comment scan: API unavailable, issue-by-issue checks show no state comment blocks. Active kody labels: kody:done (6 issues - terminal), kody:backlog (20+ issues - not started), kody:failed/shipping (1 issue #1236 - terminal/failure). No issues with core.status=running found. No kody:stuck/no-redispatch/stalled labels present. Active workflow runs on dev branch but none reference open issues by number. perIssue remains {} (never actioned). No candidates qualify for resume.",
+        "plannedAt": "2026-04-30T23:00:00Z"
       }
     ]
   },
