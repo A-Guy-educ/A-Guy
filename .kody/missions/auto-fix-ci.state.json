@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "rev": 46,
+  "rev": 64,
   "cursor": "fix-ci-no-failing-cis",
   "data": {
     "perPr": {
-      "1390": {
-        "lastSha": "ca2bb82b72efbe20e471cd2009e48ae5027e80f9",
+      "1285": {
+        "lastSha": "4f56d86ef7eab8670b83f97443af10a3364a153e",
         "attempts": 1,
         "stuck": false
       }
