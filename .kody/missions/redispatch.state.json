@@ -1,14 +1,20 @@
 {
   "version": 1,
-  "rev": 55,
-  "cursor": "dry-run-scan-v34",
+  "rev": 56,
+  "cursor": "dry-run-scan-v35",
   "data": {
     "perIssue": {},
     "dryRunLog": [
       {
         "issueNumber": 0,
         "action": "resume",
-        "reason": "Dry-run tick 2026-05-01T17:50:00Z: Scanned 70 open issues. Found 0 with kody state v1 blocks in bodies or comments. Found 0 issues with kody:running label. 0 issues with kody:test-redispatch label. 1 issue (#1236) has kody:failed label but no state block. 4 in-progress workflow runs (none reference a running issue). No issues qualify for @kody resume this tick.",
+        "reason": "Dry-run tick 2026-05-01T17:50:00Z: Scanned ~200 open issues. Found 2 with kody:state:v1 blocks — #1357 (core.status=succeeded, not running) and #1382 (core.status=running, kody:done label, last history 2026-04-28T14:45:08Z ~3d old). Issue #1382 also has '✅ kody flow chore finished — review-passed' comment confirming the flow completed; PR #1383 is merged. No kody:running or kody:test-redispatch labels found. 2 in-progress workflow runs (both on dev, unrelated). 0 open kody PRs. No issues qualify for @kody resume this tick.",
+        "plannedAt": "2026-05-01T17:50:00Z"
+      },
+      {
+        "issueNumber": 0,
+        "action": "resume",
+        "reason": "Dry-run tick 2026-05-01T17:50:00Z: Scanned 70 open issues. Found 0 with kody state v1 blocks in bodies or comments. Found 0 issues with kody:running label. Found 0 issues with kody:test-redispatch label. 1 issue (#1236) has kody:failed label but no state block. 4 in-progress workflow runs (none reference a running issue). No issues qualify for @kody resume this tick.",
         "plannedAt": "2026-05-01T17:50:00Z"
       },
       {
