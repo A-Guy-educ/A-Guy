@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "rev": 48,
-  "cursor": "dry-run-scan-v27",
+  "rev": 49,
+  "cursor": "dry-run-scan-v28",
   "data": {
     "perIssue": {},
     "dryRunLog": [
@@ -10,6 +10,12 @@
         "action": "resume",
         "reason": "Dry-run tick 2026-05-01T16:01:00Z: Scanned 200 open issues, found 8 with kody state blocks. Issues #1382, #1363, #1360, #1351, #1380 have status=running but ALL have open PRs (flow still active). Issues #1378, #1373, #1372 have status=succeeded (not running). No issues qualify for @kody resume this tick. No exclusion labels present.",
         "plannedAt": "2026-05-01T16:01:00Z"
+      },
+      {
+        "issueNumber": 0,
+        "action": "resume",
+        "reason": "Dry-run tick 2026-05-01T16:11:00Z: Scanned 200 open issues. All previously running issues (#1382, #1363, #1360, #1351, #1380, #1378, #1373, #1372) are now marked kody:done. Found 0 issues with kody state blocks. Found 0 issues with core.status=running. No issues qualify for @kody resume this tick.",
+        "plannedAt": "2026-05-01T16:11:00Z"
       }
     ]
   },
