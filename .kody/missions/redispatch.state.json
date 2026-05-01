@@ -1,87 +1,45 @@
 {
   "version": 1,
-  "rev": 42,
-  "cursor": "dry-run-scan-v21",
+  "rev": 44,
+  "cursor": "dry-run-scan-v23",
   "data": {
     "perIssue": {},
     "dryRunLog": [
       {
         "issueNumber": 0,
         "action": "resume",
-        "reason": "Dry-run tick 2026-05-01T14:00:00Z: Comprehensive scan of A-Guy/A-Guy repo. Checked ~74 open issues for kody:state:v1 blocks. Same 3 running issues as prior tick: #1351, #1360, #1363 — all have kody:done label (terminal) + core.status=running + stale history (>40 min). BUT each has an open kody-authored PR: #1351→#1375 (OPEN), #1360→#1366 (OPEN), #1363→#1364 (OPEN) — all dropped by 'no open kody PR' filter. Remaining issues all have terminal labels (kody:done, kody:failed, kody:shipping, kody:release, kody:watch:*) or kody:backlog (not started) with no running state block. Active in-progress workflow runs: #1380 check (references closed kody:done issue) and missions/state-sync (no issue ref). perIssue remains {} (never actioned). No candidates qualify for resume.",
-        "plannedAt": "2026-05-01T14:00:00Z"
-      },
-      {
-        "issueNumber": 0,
-        "action": "resume",
-        "reason": "Dry-run tick 2026-05-01T13:15:00Z: Comprehensive scan of A-Guy/A-Guy repo. Checked 74 open issues for kody:state:v1 blocks in bodies and comments. Found 3 running issues with state blocks: #1351 (phase: reviewing, last history 2026-04-27T20:30:49Z), #1360 (phase: reviewing, last history 2026-04-27T09:58:29Z), #1363 (phase: reviewing, last history 2026-04-27T09:49:12Z). All 3 are >40 min stale. BUT each has an open kody PR: #1351->#1375 (OPEN), #1360->#1366 (OPEN), #1363->#1364 (OPEN) — all dropped by 'no open kody PR' filter. Workflow runs referencing #1351/#1363 are now completed (but PR filter already blocks). perIssue remains {} (never actioned). No candidates qualify for resume.",
-        "plannedAt": "2026-05-01T13:15:00Z"
+        "reason": "Dry-run tick 2026-05-01T15:30:00Z: Comprehensive scan of A-Guy-educ/A-Guy repo. Checked 70 open issues. Found 5 running issues with kody state blocks: #1351, #1360, #1363, #1380, #1382. All >40 min stale (timestamps from 2026-04-27 and 2026-04-28). All 5 have open kody-authored PRs (aguyaharonyair): #1351→#1375(OPEN), #1360→#1366(OPEN), #1363→#1364(OPEN), #1380→#1384(OPEN), #1382→#1383(OPEN) — all dropped by 'no open kody PR' filter. #1351 also has in-progress workflow run referencing it (double-drop). 1378/1373/1372 are terminal (status=succeeded). No kody:stuck/no-redispatch/stalled labels. No kody comments on candidates within 40 min. perIssue remains {} (never actioned). No candidates qualify for resume.",
+        "plannedAt": "2026-05-01T15:30:00Z"
       },
       {
         "issueNumber": 1351,
         "action": "resume",
-        "reason": "Dry-run tick 2026-05-01T12:35:00Z: Issue #1351 has core.status=running (phase: reviewing), last history 2026-04-27T20:30:49Z (>40 min stale). Would resume. BUT: open kody-authored PR #1375 is linked → dropped by 'no open kody PR' filter.",
-        "plannedAt": "2026-05-01T12:35:00Z"
+        "reason": "Dry-run tick 2026-05-01T15:30:00Z: Issue #1351 has core.status=running (phase: reviewing), last history 2026-04-27T20:30:49Z (>40 min stale). Would resume. BUT: open kody-authored PR #1375 is linked (OPEN) → dropped by 'no open kody PR' filter. Also has in-progress workflow run referencing it.",
+        "plannedAt": "2026-05-01T15:30:00Z"
       },
       {
         "issueNumber": 1360,
         "action": "resume",
-        "reason": "Dry-run tick 2026-05-01T12:35:00Z: Issue #1360 has core.status=running (phase: reviewing), last history 2026-04-27T09:58:29Z (>40 min stale). Would resume. BUT: open kody-authored PR #1366 is linked → dropped by 'no open kody PR' filter.",
-        "plannedAt": "2026-05-01T12:35:00Z"
+        "reason": "Dry-run tick 2026-05-01T15:30:00Z: Issue #1360 has core.status=running (phase: reviewing), last history 2026-04-27T09:58:29Z (>40 min stale). Would resume. BUT: open kody-authored PR #1366 is linked (OPEN) → dropped by 'no open kody PR' filter.",
+        "plannedAt": "2026-05-01T15:30:00Z"
       },
       {
         "issueNumber": 1363,
         "action": "resume",
-        "reason": "Dry-run tick 2026-05-01T12:35:00Z: Issue #1363 has core.status=running (phase: reviewing), last history 2026-04-27T09:49:12Z (>40 min stale). Would resume. BUT: open kody-authored PR #1364 is linked → dropped by 'no open kody PR' filter.",
-        "plannedAt": "2026-05-01T12:35:00Z"
+        "reason": "Dry-run tick 2026-05-01T15:30:00Z: Issue #1363 has core.status=running (phase: reviewing), last history 2026-04-27T09:49:12Z (>40 min stale). Would resume. BUT: open kody-authored PR #1364 is linked (OPEN) → dropped by 'no open kody PR' filter.",
+        "plannedAt": "2026-05-01T15:30:00Z"
       },
       {
-        "issueNumber": 0,
+        "issueNumber": 1380,
         "action": "resume",
-        "reason": "Dry-run tick 2026-05-01T12:35:00Z: Comprehensive scan of A-Guy/A-Guy repo. Checked 74 open issues for kody:state:v1 blocks. Found 6 issues with state blocks: #1351, #1360, #1363, #1380, #1382, #1378. #1380/#1382/#1378 have kody:done (terminal) — dropped. #1351/#1360/#1363 have core.status=running (>40 min stale) but each has an open kody PR: #1351→#1375, #1360→#1366, #1363→#1364 (all OPEN) — dropped by 'no open kody PR' filter. In-progress workflow runs (kody on dev, fix/conversion on dev) don't reference any candidate by number. No kody comments on any candidate in the last 40 min. perIssue remains {} (never actioned). No candidates qualify for resume.",
-        "plannedAt": "2026-05-01T12:35:00Z"
+        "reason": "Dry-run tick 2026-05-01T15:30:00Z: Issue #1380 has core.status=running (phase: reviewing), last history 2026-04-28T15:41:13Z (>40 min stale). Would resume. BUT: open kody-authored PR #1384 is linked (OPEN) → dropped by 'no open kody PR' filter.",
+        "plannedAt": "2026-05-01T15:30:00Z"
       },
       {
-        "issueNumber": 1351,
+        "issueNumber": 1382,
         "action": "resume",
-        "reason": "Dry-run tick 2026-05-01T08:45:00Z: Issue #1351 has core.status=running (phase: reviewing), last history 2026-04-27T20:30:49Z (>40 min stale). Would resume. BUT: open kody-authored PR #1375 is linked → dropped by 'no open kody PR' filter.",
-        "plannedAt": "2026-05-01T08:45:00Z"
-      },
-      {
-        "issueNumber": 1360,
-        "action": "resume",
-        "reason": "Dry-run tick 2026-05-01T08:45:00Z: Issue #1360 has core.status=running (phase: reviewing), last history 2026-04-27T09:58:29Z (>40 min stale). Would resume. BUT: open kody-authored PR #1366 is linked → dropped by 'no open kody PR' filter.",
-        "plannedAt": "2026-05-01T08:45:00Z"
-      },
-      {
-        "issueNumber": 1363,
-        "action": "resume",
-        "reason": "Dry-run tick 2026-05-01T08:45:00Z: Issue #1363 has core.status=running (phase: reviewing), last history 2026-04-27T09:49:12Z (>40 min stale). Would resume. BUT: open kody-authored PR #1364 is linked → dropped by 'no open kody PR' filter.",
-        "plannedAt": "2026-05-01T08:45:00Z"
-      },
-      {
-        "issueNumber": 0,
-        "action": "resume",
-        "reason": "Dry-run tick 2026-05-01T06:35:00Z: Comprehensive scan of A-Guy/A-Guy repo. Checked 71 open issues for kody:state:v1 blocks. Found 5 issues with state blocks: #1351, #1360, #1363, #1380, #1382, #1378. #1380/#1382/#1378 have kody:done (terminal) - dropped. #1351/#1360/#1363 all have core.status=running and stale timestamps (>40 min, all from 2026-04-27), BUT each has an open kody PR: #1351→#1375, #1360→#1366, #1363→#1364 (all OPEN) - dropped by 'no open kody PR' filter. Active workflow runs (3) don't reference candidate issues. perIssue remains {} (never actioned). No candidates qualify for resume.",
-        "plannedAt": "2026-05-01T06:35:00Z"
-      },
-      {
-        "issueNumber": 0,
-        "action": "resume",
-        "reason": "Dry-run tick 2026-05-01T02:45:00Z: Comprehensive scan of A-Guy/A-Guy repo. Found 9 open issues with kody:state:v1 blocks (all in comments). 5 have core.status=running: #1351, #1360, #1363, #1380, #1382 — all >40 min stale. #1351/#1360/#1363 each have in-progress workflow runs referencing them AND open kody PRs. #1380/#1382 have open kody PRs #1384/#1383 respectively. All 5 running issues dropped by 'no open kody PR' filter. 4 remaining issues have core.status=succeeded (terminal). perIssue remains {} (never actioned). No candidates qualify for resume.",
-        "plannedAt": "2026-05-01T02:45:00Z"
-      },
-      {
-        "issueNumber": 0,
-        "action": "resume",
-        "reason": "Dry-run tick 2026-05-01T02:29:04Z: Comprehensive scan of A-Guy/A-Guy repo. Checked open issues for kody:state:v1 blocks. Body scan: zero state blocks found. Comment scan via GitHub API: no kody:state blocks in any issue comments. Active kody labels: kody:done (11 issues - terminal state), kody:backlog (40+ issues - not started). No issues with kody:stuck/kody:no-redispatch/kody:stalled labels. Active workflow runs present (#1378 and fix/context-extraction-prompt-solution-separation) but none reference stuck open issues. perIssue remains {} (never actioned). No candidates qualify for resume.",
-        "plannedAt": "2026-05-01T02:29:04Z"
-      },
-      {
-        "issueNumber": 0,
-        "action": "resume",
-        "reason": "Dry-run tick 2026-04-30T23:00:00Z: Comprehensive scan of A-Guy/A-Guy repo. Checked 59 open issues for kody:state:v1 blocks. Body scan: zero state blocks found. Comment scan: API unavailable, issue-by-issue checks show no state comment blocks. Active kody labels: kody:done (6 issues - terminal), kody:backlog (20+ issues - not started), kody:failed/shipping (1 issue #1236 - terminal/failure). No issues with core.status=running found. No kody:stuck/no-redispatch/stalled labels present. Active workflow runs on dev branch but none reference open issues by number. perIssue remains {} (never actioned). No candidates qualify for resume.",
-        "plannedAt": "2026-04-30T23:00:00Z"
+        "reason": "Dry-run tick 2026-05-01T15:30:00Z: Issue #1382 has core.status=running (phase: reviewing), last history 2026-04-28T14:45:08Z (>40 min stale). Would resume. BUT: open kody-authored PR #1383 is linked (OPEN) → dropped by 'no open kody PR' filter.",
+        "plannedAt": "2026-05-01T15:30:00Z"
       }
     ]
   },
