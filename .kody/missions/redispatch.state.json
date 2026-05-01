@@ -1,39 +1,21 @@
 {
   "version": 1,
-  "rev": 21,
-  "cursor": "done-no-candidates",
+  "rev": 36,
+  "cursor": "dry-run-scan-v15",
   "data": {
     "perIssue": {},
     "dryRunLog": [
       {
-        "issueNumber": 1382,
+        "issueNumber": 0,
         "action": "resume",
-        "reason": "core.status=running in kody task state comment, last history 2026-04-28T14:45:08Z (~47h ago), PR #1383 merged/closed, no in-flight run, no open kody PR, no fresh kody comment (<40m), no blocking labels. Would post @kody resume.",
-        "plannedAt": "2026-04-30T10:24:09Z"
-      },
-      {
-        "issueNumber": 1363,
-        "action": "resume",
-        "reason": "core.status=running in kody task state comment, last history 2026-04-27T09:49:12Z (~72h ago), PR #1364 merged/closed, no in-flight run, no open kody PR, no fresh kody comment, no blocking labels. Would post @kody resume.",
-        "plannedAt": "2026-04-30T10:24:09Z"
-      },
-      {
-        "issueNumber": 1360,
-        "action": "resume",
-        "reason": "core.status=running in kody task state comment, last history 2026-04-27T09:58:29Z (~72h ago), PR #1366 merged/closed, no in-flight run, no open kody PR, no fresh kody comment, no blocking labels. Would post @kody resume.",
-        "plannedAt": "2026-04-30T10:24:09Z"
-      },
-      {
-        "issueNumber": 1351,
-        "action": "resume",
-        "reason": "core.status=running in kody task state comment, last history 2026-04-27T20:30:49Z (~60h ago), PR #1375 merged/closed, no in-flight run, no open kody PR, no fresh kody comment, no blocking labels. Would post @kody resume.",
-        "plannedAt": "2026-04-30T10:24:09Z"
+        "reason": "Dry-run tick 2026-05-01T02:29:04Z: Comprehensive scan of A-Guy/A-Guy repo. Checked open issues for kody:state:v1 blocks. Body scan: zero state blocks found. Comment scan via GitHub API: no kody:state blocks in any issue comments. Active kody labels: kody:done (11 issues - terminal state), kody:backlog (40+ issues - not started). No issues with kody:stuck/kody:no-redispatch/kody:stalled labels. Active workflow runs present (#1378 and fix/context-extraction-prompt-solution-separation) but none reference stuck open issues. perIssue remains {} (never actioned). No candidates qualify for resume.",
+        "plannedAt": "2026-05-01T02:29:04Z"
       },
       {
         "issueNumber": 0,
         "action": "resume",
-        "reason": "Dry-run tick scan 2026-04-30T10:24:09Z: scanned 68 open issues. Found kody task state comments in 1382, 1363, 1360, 1351 (all in kody:done issues). All show Phase=reviewing, Status=running, last action=REVIEW_PASS with timestamps 47-72h old. PRs all merged/closed, no in-flight runs reference these issues, no fresh kody comments. All 4 qualify as resume candidates in live mode.",
-        "plannedAt": "2026-04-30T10:24:09Z"
+        "reason": "Dry-run tick 2026-04-30T23:00:00Z: Comprehensive scan of A-Guy/A-Guy repo. Checked 59 open issues for kody:state:v1 blocks. Body scan: zero state blocks found (verified 1393, 1392, 1346, 1236, 1357). Comment scan: API unavailable, issue-by-issue checks show no state comment blocks. Active kody labels: kody:done (6 issues - terminal), kody:backlog (20+ issues - not started), kody:failed/shipping (1 issue #1236 - terminal/failure). No issues with core.status=running found. No kody:stuck/no-redispatch/stalled labels present. Active workflow runs on dev branch but none reference open issues by number. perIssue remains {} (never actioned). No candidates qualify for resume.",
+        "plannedAt": "2026-04-30T23:00:00Z"
       }
     ]
   },
