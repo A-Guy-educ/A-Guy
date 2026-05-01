@@ -7,22 +7,17 @@
  * @pattern session-actions
  */
 import type { ActionHandler } from './types'
-import { LABELS } from '../shared/locales'
 
 export const logout: ActionHandler = async (ctx) => {
-  const { page, locale } = ctx
-  const labels = LABELS[locale]
+  const { page } = ctx
 
-  // Click user dropdown to find logout option
-  const userButton = page
-    .locator('button')
-    .filter({ hasText: /[\u0590-\u05FF\w]/ })
-    .first()
-  await userButton.click()
+  // Click user dropdown trigger to open the menu
+  const userDropdown = page.getByTestId('user-dropdown')
+  await userDropdown.click()
 
-  // Find and click logout button
-  const logoutButton = page.getByRole('button', { name: labels.logout })
-  await logoutButton.click()
+  // Find and click logout menu item (contains LogOut icon)
+  const logoutItem = page.getByRole('menuitem').filter({ has: page.locator('svg.lucide-log-out') })
+  await logoutItem.click()
 
   // Clear auth cookie
   await page.context().clearCookies()

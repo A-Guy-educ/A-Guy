@@ -1,10 +1,16 @@
 {
   "version": 1,
-  "rev": 35,
-  "cursor": "dry-run-scan-v14",
+  "rev": 36,
+  "cursor": "dry-run-scan-v15",
   "data": {
     "perIssue": {},
     "dryRunLog": [
+      {
+        "issueNumber": 0,
+        "action": "resume",
+        "reason": "Dry-run tick 2026-05-01T02:29:04Z: Comprehensive scan of A-Guy/A-Guy repo. Checked open issues for kody:state:v1 blocks. Body scan: zero state blocks found. Comment scan via GitHub API: no kody:state blocks in any issue comments. Active kody labels: kody:done (11 issues - terminal state), kody:backlog (40+ issues - not started). No issues with kody:stuck/kody:no-redispatch/kody:stalled labels. Active workflow runs present (#1378 and fix/context-extraction-prompt-solution-separation) but none reference stuck open issues. perIssue remains {} (never actioned). No candidates qualify for resume.",
+        "plannedAt": "2026-05-01T02:29:04Z"
+      },
       {
         "issueNumber": 0,
         "action": "resume",
