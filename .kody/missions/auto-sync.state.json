@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "rev": 74,
-  "cursor": "tick-74",
+  "rev": 75,
+  "cursor": "tick-75",
   "data": {
     "perPr": {
       "1217": {
@@ -48,9 +48,9 @@
       },
       "1374": {
         "lastSha": "6efa1569ff89b08ba6e78ff567bdebc5c1c7163f",
-        "attempts": 0,
+        "attempts": 1,
         "stuck": false,
-        "lastActionAt": null
+        "lastActionAt": "2026-05-01T18:36:32Z"
       },
       "1375": {
         "lastSha": "585c6f74347032aec7913b3d49cca9e85274bd2b",
