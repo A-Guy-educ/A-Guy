@@ -7,6 +7,8 @@ interface ConvertContextButtonProps {
   lessonId: string
   mediaId: string
   filename: string
+  /** Override the button label. Defaults to "Convert Context". */
+  label?: string
 }
 
 /**
@@ -15,7 +17,12 @@ interface ConvertContextButtonProps {
  * Triggers the context extraction modal for a specific content file.
  * Shows a button styled identically to existing V1/V2/V3 conversion buttons.
  */
-export function ConvertContextButton({ lessonId, mediaId, filename }: ConvertContextButtonProps) {
+export function ConvertContextButton({
+  lessonId,
+  mediaId,
+  filename,
+  label = 'Convert Context',
+}: ConvertContextButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   return (
@@ -33,7 +40,7 @@ export function ConvertContextButton({ lessonId, mediaId, filename }: ConvertCon
           cursor: 'pointer',
         }}
       >
-        Convert Context
+        {label}
       </button>
 
       <Suspense

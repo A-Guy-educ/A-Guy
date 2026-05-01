@@ -1,15 +1,9 @@
 {
   "version": 1,
-  "rev": 8,
+  "rev": 23,
   "cursor": "checked",
   "data": {
-    "perPr": {
-      "1285": {
-        "lastSha": "5c016fa8cf147cfe8e913add5d7dd304e363f290",
-        "attempts": 2,
-        "stuck": true
-      }
-    }
+    "perPr": {}
   },
   "done": false
 }
