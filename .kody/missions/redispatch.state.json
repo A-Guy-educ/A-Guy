@@ -1,10 +1,16 @@
 {
   "version": 1,
-  "rev": 42,
-  "cursor": "dry-run-scan-v21",
+  "rev": 43,
+  "cursor": "dry-run-scan-v22",
   "data": {
     "perIssue": {},
     "dryRunLog": [
+      {
+        "issueNumber": 0,
+        "action": "resume",
+        "reason": "Dry-run tick 2026-05-01T15:15:00Z: Comprehensive scan of A-Guy/A-Guy repo. Checked 73 open issues for kody:state blocks (body scan + targeted comment scan). Found 4 issues with state blocks: #1351, #1360, #1363, #1357. #1357 (release) has core.status=succeeded (terminal) — dropped. #1351/#1360/#1363 all have core.status=running (>40 min stale, all from 2026-04-27) AND each has an open kody-authored PR: #1351→#1375 (OPEN, aguyaharonyair), #1360→#1366 (OPEN, aguyaharonyair), #1363→#1364 (OPEN, aguyaharonyair) — all dropped by 'no open kody PR' filter. Active workflow runs (missions/state-sync, fix/conversion, watch/functional) don't reference any candidate by number. No kody comments on candidates within 40 min. perIssue remains {} (never actioned). No candidates qualify for resume.",
+        "plannedAt": "2026-05-01T15:15:00Z"
+      },
       {
         "issueNumber": 0,
         "action": "resume",
@@ -14,7 +20,7 @@
       {
         "issueNumber": 0,
         "action": "resume",
-        "reason": "Dry-run tick 2026-05-01T13:15:00Z: Comprehensive scan of A-Guy/A-Guy repo. Checked 74 open issues for kody:state:v1 blocks in bodies and comments. Found 3 running issues with state blocks: #1351 (phase: reviewing, last history 2026-04-27T20:30:49Z), #1360 (phase: reviewing, last history 2026-04-27T09:58:29Z), #1363 (phase: reviewing, last history 2026-04-27T09:49:12Z). All 3 are >40 min stale. BUT each has an open kody PR: #1351->#1375 (OPEN), #1360->#1366 (OPEN), #1363->#1364 (OPEN) — all dropped by 'no open kody PR' filter. Workflow runs referencing #1351/#1363 are now completed (but PR filter already blocks). perIssue remains {} (never actioned). No candidates qualify for resume.",
+        "reason": "Dry-run tick 2026-05-01T13:15:00Z: Comprehensive scan of A-Guy/A-Guy repo. Checked 74 open issues for kody:state:v1 blocks in bodies and comments. Found 3 running issues with state blocks: #1351 (phase: reviewing, last history 2026-04-27T20:30:49Z), #1360 (phase: reviewing, last history 2026-04-27T09:58:29Z), #1363 (phase: reviewing, last history 2026-04-27T09:49:12Z). All 3 are >40 min stale. BUT each has an open kody-authored PR: #1351->#1375 (OPEN), #1360->#1366 (OPEN), #1363->#1364 (OPEN) — all dropped by 'no open kody PR' filter. Workflow runs referencing #1351/#1363 are now completed (but PR filter already blocks). perIssue remains {} (never actioned). No candidates qualify for resume.",
         "plannedAt": "2026-05-01T13:15:00Z"
       },
       {
