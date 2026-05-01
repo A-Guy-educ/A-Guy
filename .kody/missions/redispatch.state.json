@@ -1,10 +1,28 @@
 {
   "version": 1,
-  "rev": 54,
-  "cursor": "dry-run-scan-v33",
+  "rev": 57,
+  "cursor": "dry-run-scan-v36",
   "data": {
     "perIssue": {},
     "dryRunLog": [
+      {
+        "issueNumber": 0,
+        "action": "resume",
+        "reason": "Dry-run tick 2026-05-01T18:05:00Z: Scanned 70 open issues. No issues carry kody:state:v1 blocks in bodies (checked #1337, #1236 — none). No issues have kody:running or kody:test-redispatch labels. 2 in-progress workflow runs: state-sync run (rev 82, on dev, unrelated) and #1378 run (on dev, issue is kody:done, not running). 0 issues qualify for @kody resume this tick.",
+        "plannedAt": "2026-05-01T18:05:00Z"
+      },
+      {
+        "issueNumber": 0,
+        "action": "resume",
+        "reason": "Dry-run tick 2026-05-01T17:50:00Z: Scanned ~200 open issues. Found 2 with kody:state:v1 blocks — #1357 (core.status=succeeded, not running) and #1382 (core.status=running, kody:done label, last history 2026-04-28T14:45:08Z ~3d old). Issue #1382 also has '✅ kody flow chore finished — review-passed' comment confirming the flow completed; PR #1383 is merged. No kody:running or kody:test-redispatch labels found. 2 in-progress workflow runs (both on dev, unrelated). 0 open kody PRs. No issues qualify for @kody resume this tick.",
+        "plannedAt": "2026-05-01T17:50:00Z"
+      },
+      {
+        "issueNumber": 0,
+        "action": "resume",
+        "reason": "Dry-run tick 2026-05-01T17:50:00Z: Scanned 70 open issues. Found 0 with kody state v1 blocks in bodies or comments. Found 0 issues with kody:running label. Found 0 issues with kody:test-redispatch label. 1 issue (#1236) has kody:failed label but no state block. 4 in-progress workflow runs (none reference a running issue). No issues qualify for @kody resume this tick.",
+        "plannedAt": "2026-05-01T17:50:00Z"
+      },
       {
         "issueNumber": 0,
         "action": "resume",
@@ -20,6 +38,12 @@
       {
         "issueNumber": 0,
         "action": "resume",
+        "reason": "Dry-run tick 2026-05-01T17:05:00Z: Scanned 70 open issues. Issue #1340 has kody:goals-manifest label (goals manifest block, not state v1 block). All kody:done issues (#1382, #1363, #1360, #1351, #1380, #1378, #1373, #1372, #1244, #1243, #1192) have no state v1 block. 2 in-progress workflow runs (neither references a running issue). 0 open kody PRs. No issues qualify for @kody resume this tick.",
+        "plannedAt": "2026-05-01T17:05:00Z"
+      },
+      {
+        "issueNumber": 0,
+        "action": "resume",
         "reason": "Dry-run tick 2026-05-01T16:35:00Z: Scanned 70 open issues. Found 0 with kody state v1 blocks. Found 0 issues with core.status=running. No issues qualify for @kody resume this tick.",
         "plannedAt": "2026-05-01T16:35:00Z"
       },
@@ -28,18 +52,6 @@
         "action": "resume",
         "reason": "Dry-run tick 2026-05-01T16:21:00Z: Scanned 200 open issues, found 0 with kody state v1 blocks. Previously-running issues #1382, #1363, #1360, #1351, #1380 are all marked kody:done (flows completed). Issues #1378, #1373, #1372 show fix-applied. Remaining kody:done issues (#1244, #1243, #1192) have core.status != running. No issues qualify for @kody resume this tick.",
         "plannedAt": "2026-05-01T16:21:00Z"
-      },
-      {
-        "issueNumber": 0,
-        "action": "resume",
-        "reason": "Dry-run tick 2026-05-01T16:11:00Z: Scanned 200 open issues. All previously running issues (#1382, #1363, #1360, #1351, #1380, #1378, #1373, #1372) are now marked kody:done. Found 0 issues with kody state blocks. Found 0 issues with core.status=running. No issues qualify for @kody resume this tick.",
-        "plannedAt": "2026-05-01T16:11:00Z"
-      },
-      {
-        "issueNumber": 0,
-        "action": "resume",
-        "reason": "Dry-run tick 2026-05-01T17:05:00Z: Scanned 70 open issues. Issue #1340 has kody:goals-manifest label (goals manifest block, not state v1 block). All kody:done issues (#1382, #1363, #1360, #1351, #1380, #1378, #1373, #1372, #1244, #1243, #1192) have no state v1 block. 2 in-progress workflow runs (neither references a running issue). 0 open kody PRs. No issues qualify for @kody resume this tick.",
-        "plannedAt": "2026-05-01T17:05:00Z"
       }
     ]
   },
