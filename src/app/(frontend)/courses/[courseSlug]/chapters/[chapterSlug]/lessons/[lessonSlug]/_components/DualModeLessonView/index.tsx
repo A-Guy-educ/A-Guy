@@ -175,7 +175,10 @@ export function DualModeLessonView(props: DualModeLessonViewProps) {
           lessonId={lessonId}
           mediaMap={mediaMap}
           contentPageBodies={interactive.contentPageBodies}
-          validFiles={interactive.validFiles}
+          /* Don't pass validFiles here — when running inside the multi-tab
+             view, the dedicated Media tab handles attached files. Forwarding
+             them would also insert a PDF page into LessonPager's internal
+             flow, making the Interactive tab open on the PDF. */
           chatLessonId={chatLessonId}
           showChat={showChat}
           formulaSheet={formulaSheet}
