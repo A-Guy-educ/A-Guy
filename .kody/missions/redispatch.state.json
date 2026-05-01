@@ -1,15 +1,21 @@
 {
   "version": 1,
-  "rev": 45,
-  "cursor": "dry-run-scan-v24",
+  "rev": 49,
+  "cursor": "dry-run-scan-v28",
   "data": {
     "perIssue": {},
     "dryRunLog": [
       {
         "issueNumber": 0,
         "action": "resume",
-        "reason": "Dry-run tick 2026-05-01T15:20:00Z: Comprehensive scan of A-Guy-educ/A-Guy repo. Checked ~60 open issues. Prior tick candidates #1351/#1360/#1363/#1380/#1382 now all carry kody:done labels (closed out of scope). Open issues with kody state blocks: #1357 (status=succeeded), #1236 (kody:failed label), #1143 (status=waiting). None have core.status=running. Remaining ~55 open issues (bug reports, kody:backlog, kody:watch, kody:goals) have no kody state blocks. No workflow runs reference any running issue. No candidates qualify for resume.",
-        "plannedAt": "2026-05-01T15:20:00Z"
+        "reason": "Dry-run tick 2026-05-01T16:01:00Z: Scanned 200 open issues, found 8 with kody state blocks. Issues #1382, #1363, #1360, #1351, #1380 have status=running but ALL have open PRs (flow still active). Issues #1378, #1373, #1372 have status=succeeded (not running). No issues qualify for @kody resume this tick. No exclusion labels present.",
+        "plannedAt": "2026-05-01T16:01:00Z"
+      },
+      {
+        "issueNumber": 0,
+        "action": "resume",
+        "reason": "Dry-run tick 2026-05-01T16:11:00Z: Scanned 200 open issues. All previously running issues (#1382, #1363, #1360, #1351, #1380, #1378, #1373, #1372) are now marked kody:done. Found 0 issues with kody state blocks. Found 0 issues with core.status=running. No issues qualify for @kody resume this tick.",
+        "plannedAt": "2026-05-01T16:11:00Z"
       }
     ]
   },
