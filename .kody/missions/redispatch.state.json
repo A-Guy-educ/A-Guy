@@ -1,10 +1,16 @@
 {
   "version": 1,
-  "rev": 37,
-  "cursor": "dry-run-scan-v16",
+  "rev": 38,
+  "cursor": "dry-run-scan-v17",
   "data": {
     "perIssue": {},
     "dryRunLog": [
+      {
+        "issueNumber": 0,
+        "action": "resume",
+        "reason": "Dry-run tick 2026-05-01T06:35:00Z: Comprehensive scan of A-Guy/A-Guy repo. Checked 71 open issues for kody:state:v1 blocks. Found 5 issues with state blocks: #1351, #1360, #1363, #1380, #1382, #1378. #1380/#1382/#1378 have kody:done (terminal) - dropped. #1351/#1360/#1363 all have core.status=running and stale timestamps (>40 min, all from 2026-04-27), BUT each has an open kody PR: #1351→#1375, #1360→#1366, #1363→#1364 (all OPEN) - dropped by 'no open kody PR' filter. Active workflow runs (3) don't reference candidate issues. perIssue remains {} (never actioned). No candidates qualify for resume.",
+        "plannedAt": "2026-05-01T06:35:00Z"
+      },
       {
         "issueNumber": 0,
         "action": "resume",
