@@ -1,10 +1,16 @@
 {
   "version": 1,
-  "rev": 50,
-  "cursor": "dry-run-scan-v29",
+  "rev": 51,
+  "cursor": "dry-run-scan-v30",
   "data": {
     "perIssue": {},
     "dryRunLog": [
+      {
+        "issueNumber": 0,
+        "action": "resume",
+        "reason": "Dry-run tick 2026-05-01T16:35:00Z: Scanned 70 open issues. Found 0 with kody state v1 blocks. Found 0 issues with core.status=running. No issues qualify for @kody resume this tick.",
+        "plannedAt": "2026-05-01T16:35:00Z"
+      },
       {
         "issueNumber": 0,
         "action": "resume",
