@@ -1,10 +1,28 @@
 {
   "version": 1,
-  "rev": 38,
-  "cursor": "dry-run-scan-v17",
+  "rev": 39,
+  "cursor": "dry-run-scan-v18",
   "data": {
     "perIssue": {},
     "dryRunLog": [
+      {
+        "issueNumber": 1351,
+        "action": "resume",
+        "reason": "Dry-run tick 2026-05-01T08:45:00Z: Issue #1351 has core.status=running (phase: reviewing), last history 2026-04-27T20:30:49Z (>40 min stale). Would resume. BUT: open kody-authored PR #1375 is linked → dropped by 'no open kody PR' filter.",
+        "plannedAt": "2026-05-01T08:45:00Z"
+      },
+      {
+        "issueNumber": 1360,
+        "action": "resume",
+        "reason": "Dry-run tick 2026-05-01T08:45:00Z: Issue #1360 has core.status=running (phase: reviewing), last history 2026-04-27T09:58:29Z (>40 min stale). Would resume. BUT: open kody-authored PR #1366 is linked → dropped by 'no open kody PR' filter.",
+        "plannedAt": "2026-05-01T08:45:00Z"
+      },
+      {
+        "issueNumber": 1363,
+        "action": "resume",
+        "reason": "Dry-run tick 2026-05-01T08:45:00Z: Issue #1363 has core.status=running (phase: reviewing), last history 2026-04-27T09:49:12Z (>40 min stale). Would resume. BUT: open kody-authored PR #1364 is linked → dropped by 'no open kody PR' filter.",
+        "plannedAt": "2026-05-01T08:45:00Z"
+      },
       {
         "issueNumber": 0,
         "action": "resume",
