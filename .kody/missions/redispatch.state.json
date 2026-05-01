@@ -1,10 +1,16 @@
 {
   "version": 1,
-  "rev": 52,
-  "cursor": "dry-run-scan-v31",
+  "rev": 53,
+  "cursor": "dry-run-scan-v32",
   "data": {
     "perIssue": {},
     "dryRunLog": [
+      {
+        "issueNumber": 0,
+        "action": "resume",
+        "reason": "Dry-run tick 2026-05-01T17:20:00Z: Scanned ~75 open issues. No issues have kody state v1 blocks. All kody:done issues have no state blocks. 0 issues with core.status=running. 4 in-progress workflow runs (none reference running issues). 1 open kody PR (linked to #1382, kody:done). No issues qualify for @kody resume this tick.",
+        "plannedAt": "2026-05-01T17:20:00Z"
+      },
       {
         "issueNumber": 0,
         "action": "resume",
