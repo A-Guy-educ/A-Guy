@@ -1,10 +1,16 @@
 {
   "version": 1,
-  "rev": 41,
-  "cursor": "dry-run-scan-v20",
+  "rev": 42,
+  "cursor": "dry-run-scan-v21",
   "data": {
     "perIssue": {},
     "dryRunLog": [
+      {
+        "issueNumber": 0,
+        "action": "resume",
+        "reason": "Dry-run tick 2026-05-01T14:00:00Z: Comprehensive scan of A-Guy/A-Guy repo. Checked ~74 open issues for kody:state:v1 blocks. Same 3 running issues as prior tick: #1351, #1360, #1363 — all have kody:done label (terminal) + core.status=running + stale history (>40 min). BUT each has an open kody-authored PR: #1351→#1375 (OPEN), #1360→#1366 (OPEN), #1363→#1364 (OPEN) — all dropped by 'no open kody PR' filter. Remaining issues all have terminal labels (kody:done, kody:failed, kody:shipping, kody:release, kody:watch:*) or kody:backlog (not started) with no running state block. Active in-progress workflow runs: #1380 check (references closed kody:done issue) and missions/state-sync (no issue ref). perIssue remains {} (never actioned). No candidates qualify for resume.",
+        "plannedAt": "2026-05-01T14:00:00Z"
+      },
       {
         "issueNumber": 0,
         "action": "resume",
@@ -74,7 +80,7 @@
       {
         "issueNumber": 0,
         "action": "resume",
-        "reason": "Dry-run tick 2026-04-30T23:00:00Z: Comprehensive scan of A-Guy/A-Guy repo. Checked 59 open issues for kody:state:v1 blocks. Body scan: zero state blocks found (verified 1393, 1392, 1346, 1236, 1357). Comment scan: API unavailable, issue-by-issue checks show no state comment blocks. Active kody labels: kody:done (6 issues - terminal), kody:backlog (20+ issues - not started), kody:failed/shipping (1 issue #1236 - terminal/failure). No issues with core.status=running found. No kody:stuck/no-redispatch/stalled labels present. Active workflow runs on dev branch but none reference open issues by number. perIssue remains {} (never actioned). No candidates qualify for resume.",
+        "reason": "Dry-run tick 2026-04-30T23:00:00Z: Comprehensive scan of A-Guy/A-Guy repo. Checked 59 open issues for kody:state:v1 blocks. Body scan: zero state blocks found. Comment scan: API unavailable, issue-by-issue checks show no state comment blocks. Active kody labels: kody:done (6 issues - terminal), kody:backlog (20+ issues - not started), kody:failed/shipping (1 issue #1236 - terminal/failure). No issues with core.status=running found. No kody:stuck/no-redispatch/stalled labels present. Active workflow runs on dev branch but none reference open issues by number. perIssue remains {} (never actioned). No candidates qualify for resume.",
         "plannedAt": "2026-04-30T23:00:00Z"
       }
     ]
