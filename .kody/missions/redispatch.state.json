@@ -1,10 +1,16 @@
 {
   "version": 1,
-  "rev": 36,
-  "cursor": "dry-run-scan-v15",
+  "rev": 37,
+  "cursor": "dry-run-scan-v16",
   "data": {
     "perIssue": {},
     "dryRunLog": [
+      {
+        "issueNumber": 0,
+        "action": "resume",
+        "reason": "Dry-run tick 2026-05-01T02:45:00Z: Comprehensive scan of A-Guy/A-Guy repo. Found 9 open issues with kody:state:v1 blocks (all in comments). 5 have core.status=running: #1351, #1360, #1363, #1380, #1382 — all >40 min stale. #1351/#1360/#1363 each have in-progress workflow runs referencing them AND open kody PRs. #1380/#1382 have open kody PRs #1384/#1383 respectively. All 5 running issues dropped by 'no open kody PR' filter. 4 remaining issues have core.status=succeeded (terminal). perIssue remains {} (never actioned). No candidates qualify for resume.",
+        "plannedAt": "2026-05-01T02:45:00Z"
+      },
       {
         "issueNumber": 0,
         "action": "resume",
