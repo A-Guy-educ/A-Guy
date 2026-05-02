@@ -1,10 +1,53 @@
 {
   "version": 1,
-  "rev": 68,
-  "cursor": "dry-run-scan-v47",
+  "rev": 71,
+  "cursor": "dry-run-scan-v50",
   "data": {
     "perIssue": {},
-    "dryRunLog": []
+    "dryRunLog": [
+      {
+        "issueNumber": 1382,
+        "action": "resume",
+        "reason": "core.status=running, lastOutcome timestamp 2026-04-28T14:45:08Z is > 40 min old",
+        "plannedAt": "2026-05-02T13:42:52Z"
+      },
+      {
+        "issueNumber": 1380,
+        "action": "resume",
+        "reason": "core.status=running, lastOutcome timestamp 2026-04-28T15:41:13Z is > 40 min old",
+        "plannedAt": "2026-05-02T13:42:52Z"
+      },
+      {
+        "issueNumber": 1363,
+        "action": "resume",
+        "reason": "core.status=running, lastOutcome timestamp 2026-04-27T09:49:12Z is > 40 min old",
+        "plannedAt": "2026-05-02T13:42:52Z"
+      },
+      {
+        "issueNumber": 1360,
+        "action": "resume",
+        "reason": "core.status=running, lastOutcome timestamp 2026-04-27T09:58:29Z is > 40 min old",
+        "plannedAt": "2026-05-02T13:42:52Z"
+      },
+      {
+        "issueNumber": 1351,
+        "action": "resume",
+        "reason": "core.status=running, lastOutcome timestamp 2026-04-27T20:30:49Z is > 40 min old",
+        "plannedAt": "2026-05-02T13:42:52Z"
+      },
+      {
+        "issueNumber": null,
+        "action": "resume",
+        "reason": "No candidates found — prior candidates (1382,1380,1363,1360,1351) now have kody:done label / no running state block",
+        "plannedAt": "2026-05-02T14:23:00Z"
+      },
+      {
+        "issueNumber": null,
+        "action": "resume",
+        "reason": "No candidates found — scanned all open issues (1393,1392,1357,1346,1340,1192-1191,1190,1184-1182,1179,1176-1173,1149,1143,1244-1236,1294,1292,1270,1264-1245). All have terminal kody labels or no kody state block. Active run on #1380 is on a kody:done issue.",
+        "plannedAt": "2026-05-02T14:43:00Z"
+      }
+    ]
   },
   "done": false
 }
