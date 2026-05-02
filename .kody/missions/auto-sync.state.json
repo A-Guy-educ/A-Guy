@@ -1,50 +1,20 @@
 {
   "version": 1,
-  "rev": 96,
-  "cursor": "tick-95-sync-1217-1374-1375-1383-1384",
+  "rev": 101,
+  "cursor": "tick-1217-sync-next",
   "data": {
     "perPr": {
       "1217": {
-        "lastSha": "6f353fa6248f44d5bd40602b0b19405c777e8b3e",
+        "lastSha": "3cbab316bce947abaff32e6d94e37c961cdde29d",
         "attempts": 1,
         "stuck": false,
-        "lastActionAt": "2026-05-02T11:20:00Z"
-      },
-      "1374": {
-        "lastSha": "366666f0bae41459e8c4dff514f88f4c4fd92cc0",
-        "attempts": 2,
-        "stuck": false,
-        "lastActionAt": "2026-05-02T11:20:00Z"
+        "lastActionAt": "2026-05-02T13:40:14Z"
       },
       "1375": {
-        "lastSha": "738adbd83bf9efa6ce4e6ead96d839890197174d",
-        "attempts": 1,
-        "stuck": false,
-        "lastActionAt": "2026-05-02T11:20:00Z"
-      },
-      "1376": {
-        "lastSha": "23aeadb3ee9efe600ee72a57233ce1ff4e50b056",
-        "attempts": 0,
-        "stuck": false,
-        "lastActionAt": null
-      },
-      "1381": {
-        "lastSha": "83e9b93e56a48236689164aad9162611096b5e49",
-        "attempts": 0,
-        "stuck": false,
-        "lastActionAt": null
-      },
-      "1383": {
-        "lastSha": "6d80f72bef4942248ac6e8a08aa43a1cfac60c68",
+        "lastSha": "d7accdf8546de5ecfea242fe8bef1d1b4880e519",
         "attempts": 2,
         "stuck": false,
-        "lastActionAt": "2026-05-02T11:20:00Z"
-      },
-      "1384": {
-        "lastSha": "144c380a0803b8bd6e17b2fbc57059699853c5fc",
-        "attempts": 1,
-        "stuck": false,
-        "lastActionAt": "2026-05-02T11:20:00Z"
+        "lastActionAt": "2026-05-02T14:29:01Z"
       }
     }
   },
