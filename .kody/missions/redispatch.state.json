@@ -1,10 +1,16 @@
 {
   "version": 1,
-  "rev": 84,
-  "cursor": "dry-run-scan-v63",
+  "rev": 85,
+  "cursor": "dry-run-scan-v64",
   "data": {
     "perIssue": {},
     "dryRunLog": [
+      {
+        "issueNumber": null,
+        "action": "scan",
+        "reason": "Scanned all 70 open issues. Found 9 issues with kody state blocks in comments (1382/1380/1378/1373/1372/1363/1360/1357/1351). All carry kody:done label (terminal). 1351 has in-progress workflow run. 1382/1380/1378/1373/1372/1363/1360 have open kody-authored PRs. 1357 has kody:done with no active run. Per kody:done = terminal, all filtered. No candidates pass eligibility criteria.",
+        "plannedAt": "2026-05-02T23:58:00Z"
+      },
       {
         "issueNumber": null,
         "action": "scan",
