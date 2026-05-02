@@ -1,15 +1,15 @@
 {
   "version": 1,
-  "rev": 79,
-  "cursor": "dry-run-scan-v58",
+  "rev": 80,
+  "cursor": "dry-run-scan-v59",
   "data": {
     "perIssue": {},
     "dryRunLog": [
       {
         "issueNumber": null,
         "action": "scan",
-        "reason": "Scanned all 70 open issues. No issues contain kody state blocks. No kody:stuck, kody:no-redispatch, or kody:stalled labels present. Active workflow run references issue #1378 but it has kody:done label with no state block. perIssue remains empty.",
-        "plannedAt": "2026-05-02T20:15:00Z"
+        "reason": "Scanned all open issues. No issues contain kody state blocks. No kody:stuck, kody:no-redispatch, or kody:stalled labels present. perIssue remains empty. No action taken.",
+        "plannedAt": "2026-05-02T20:45:00Z"
       },
       {
         "issueNumber": null,
