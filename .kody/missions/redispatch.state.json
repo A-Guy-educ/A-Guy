@@ -1,10 +1,41 @@
 {
   "version": 1,
-  "rev": 68,
-  "cursor": "dry-run-scan-v47",
+  "rev": 69,
+  "cursor": "dry-run-scan-v48",
   "data": {
     "perIssue": {},
-    "dryRunLog": []
+    "dryRunLog": [
+      {
+        "issueNumber": 1382,
+        "action": "resume",
+        "reason": "core.status=running, lastOutcome timestamp 2026-04-28T14:45:08Z is > 40 min old",
+        "plannedAt": "2026-05-02T13:42:52Z"
+      },
+      {
+        "issueNumber": 1380,
+        "action": "resume",
+        "reason": "core.status=running, lastOutcome timestamp 2026-04-28T15:41:13Z is > 40 min old",
+        "plannedAt": "2026-05-02T13:42:52Z"
+      },
+      {
+        "issueNumber": 1363,
+        "action": "resume",
+        "reason": "core.status=running, lastOutcome timestamp 2026-04-27T09:49:12Z is > 40 min old",
+        "plannedAt": "2026-05-02T13:42:52Z"
+      },
+      {
+        "issueNumber": 1360,
+        "action": "resume",
+        "reason": "core.status=running, lastOutcome timestamp 2026-04-27T09:58:29Z is > 40 min old",
+        "plannedAt": "2026-05-02T13:42:52Z"
+      },
+      {
+        "issueNumber": 1351,
+        "action": "resume",
+        "reason": "core.status=running, lastOutcome timestamp 2026-04-27T20:30:49Z is > 40 min old",
+        "plannedAt": "2026-05-02T13:42:52Z"
+      }
+    ]
   },
   "done": false
 }
