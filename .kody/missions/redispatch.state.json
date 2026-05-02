@@ -1,72 +1,10 @@
 {
   "version": 1,
-  "rev": 67,
-  "cursor": "dry-run-scan-v46",
+  "rev": 68,
+  "cursor": "dry-run-scan-v47",
   "data": {
-    "perIssue": {
-      "1351": {
-        "lastResumedAt": "2026-05-02T08:31:00Z",
-        "lastResumedHistoryTimestamp": "2026-04-27T20:30:49.170Z",
-        "attemptsToday": 1,
-        "stuck": false
-      },
-      "1360": {
-        "lastResumedAt": "2026-05-02T08:31:00Z",
-        "lastResumedHistoryTimestamp": "2026-04-27T09:58:29.549Z",
-        "attemptsToday": 1,
-        "stuck": false
-      },
-      "1363": {
-        "lastResumedAt": "2026-05-02T08:31:00Z",
-        "lastResumedHistoryTimestamp": "2026-04-27T09:49:12.100Z",
-        "attemptsToday": 1,
-        "stuck": false
-      },
-      "1380": {
-        "lastResumedAt": "2026-05-02T08:31:00Z",
-        "lastResumedHistoryTimestamp": "2026-04-28T15:41:13.098Z",
-        "attemptsToday": 1,
-        "stuck": false
-      },
-      "1382": {
-        "lastResumedAt": "2026-05-02T08:31:00Z",
-        "lastResumedHistoryTimestamp": "2026-04-28T14:45:08.322Z",
-        "attemptsToday": 1,
-        "stuck": false
-      }
-    },
-    "dryRunLog": [
-      {
-        "issueNumber": 1351,
-        "action": "resume",
-        "reason": "Dry-run tick v46: core.status=running (Phase: reviewing), history 2026-04-27T20:30:49.170Z (~5 days old, >>40 min), no kody:stuck/no-redispatch/stalled labels, no kody comment in last 40 min (most recent kody comment: 2026-04-27T20:33:24Z), no active workflow run. Open kody-authored PR #1375 (open, unmerged, review-passed verdict). perIssue is empty — attemptsToday=0, stuck=false. Dry-run: would post @kody resume.",
-        "plannedAt": "2026-05-02T08:31:00Z"
-      },
-      {
-        "issueNumber": 1360,
-        "action": "resume",
-        "reason": "Dry-run tick v46: core.status=running (Phase: reviewing), history 2026-04-27T09:58:29.549Z (~5 days old, >>40 min), no kody:stuck/no-redispatch/stalled labels, no kody comment in last 40 min (most recent kody comment: 2026-04-27T10:00:55Z), no active workflow run. Open kody-authored PR #1366 (open, unmerged, review-passed verdict). perIssue is empty — attemptsToday=0, stuck=false. Dry-run: would post @kody resume.",
-        "plannedAt": "2026-05-02T08:31:00Z"
-      },
-      {
-        "issueNumber": 1363,
-        "action": "resume",
-        "reason": "Dry-run tick v46: core.status=running (Phase: reviewing), history 2026-04-27T09:49:12.100Z (~5 days old, >>40 min), no kody:stuck/no-redispatch/stalled labels, no kody comment in last 40 min (most recent kody comment: 2026-04-27T09:51:39Z), no active workflow run. Open kody-authored PR #1364 (open, unmerged, review-passed verdict). perIssue is empty — attemptsToday=0, stuck=false. Dry-run: would post @kody resume.",
-        "plannedAt": "2026-05-02T08:31:00Z"
-      },
-      {
-        "issueNumber": 1380,
-        "action": "resume",
-        "reason": "Dry-run tick v46: core.status=running (Phase: reviewing), history 2026-04-28T15:41:13.098Z (~4 days old, >>40 min), no kody:stuck/no-redispatch/stalled labels, no kody comment in last 40 min (most recent kody comment: 2026-04-28T15:43:46Z), no active workflow run. Open kody-authored PR #1384 (open, unmerged, review-passed verdict). perIssue is empty — attemptsToday=0, stuck=false. Dry-run: would post @kody resume.",
-        "plannedAt": "2026-05-02T08:31:00Z"
-      },
-      {
-        "issueNumber": 1382,
-        "action": "resume",
-        "reason": "Dry-run tick v46: core.status=running (Phase: reviewing), history 2026-04-28T14:45:08.322Z (~4 days old, >>40 min), no kody:stuck/no-redispatch/stalled labels, no kody comment in last 40 min (most recent kody comment: 2026-04-28T14:48:08Z), no active workflow run. Open kody-authored PR #1383 (open, unmerged, review-passed verdict). perIssue is empty — attemptsToday=0, stuck=false. Dry-run: would post @kody resume.",
-        "plannedAt": "2026-05-02T08:31:00Z"
-      }
-    ]
+    "perIssue": {},
+    "dryRunLog": []
   },
   "done": false
 }
