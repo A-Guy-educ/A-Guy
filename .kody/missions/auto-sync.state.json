@@ -1,11 +1,17 @@
 {
   "version": 1,
-  "rev": 105,
-  "cursor": "tick-1221-no-mergeable-candidates",
+  "rev": 107,
+  "cursor": "tick-1223-sync-pr1217",
   "data": {
     "perPr": {
+      "1217": {
+        "lastSha": "01bc3f1b6e652c3358b23dcbd322b5cb4df7256f",
+        "attempts": 1,
+        "stuck": false,
+        "lastActionAt": "2026-05-02T17:00:00Z"
+      },
       "1285": {
-        "lastSha": "7b71c6b6fc80495085b29d3cad2d354b0cfb68c8",
+        "lastSha": "59f2a9758d868697386f9b8c34bc72f06853dd59",
         "attempts": 0,
         "stuck": false,
         "lastActionAt": null
@@ -17,7 +23,7 @@
         "lastActionAt": "2026-05-02T15:25:00Z"
       },
       "1375": {
-        "lastSha": "c45b7df0cd7974271de456ae001710e11c975f52",
+        "lastSha": "2d0e5dbc5e1269fcc077942cc7483b85a73c4158",
         "attempts": 0,
         "stuck": false,
         "lastActionAt": null

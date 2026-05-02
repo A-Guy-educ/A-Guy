@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "rev": 25,
-  "cursor": "checked-unknown-mergeable",
+  "rev": 26,
+  "cursor": "checked-mergeable-state-none-conflicting",
   "data": {
     "perPr": {}
   },
