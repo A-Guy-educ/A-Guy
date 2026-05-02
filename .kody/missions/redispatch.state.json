@@ -1,44 +1,75 @@
 {
   "version": 1,
-  "rev": 74,
-  "cursor": "dry-run-scan-v53",
+  "rev": 75,
+  "cursor": "dry-run-scan-v54",
   "data": {
-    "perIssue": {},
+    "perIssue": {
+      "1351": {
+        "lastResumedAt": "2026-05-02T14:34:00Z",
+        "lastResumedHistoryTimestamp": "2026-04-27T20:30:49Z",
+        "attemptsToday": 1,
+        "stuck": false
+      },
+      "1360": {
+        "lastResumedAt": "2026-05-02T14:34:00Z",
+        "lastResumedHistoryTimestamp": "2026-04-27T09:58:29Z",
+        "attemptsToday": 1,
+        "stuck": false
+      },
+      "1363": {
+        "lastResumedAt": "2026-05-02T14:34:00Z",
+        "lastResumedHistoryTimestamp": "2026-04-27T09:49:12Z",
+        "attemptsToday": 1,
+        "stuck": false
+      },
+      "1380": {
+        "lastResumedAt": "2026-05-02T14:34:00Z",
+        "lastResumedHistoryTimestamp": "2026-04-28T15:41:13Z",
+        "attemptsToday": 1,
+        "stuck": false
+      },
+      "1382": {
+        "lastResumedAt": "2026-05-02T14:34:00Z",
+        "lastResumedHistoryTimestamp": "2026-04-28T14:45:08Z",
+        "attemptsToday": 1,
+        "stuck": false
+      }
+    },
     "dryRunLog": [
       {
         "issueNumber": 1382,
         "action": "resume",
-        "reason": "core.status=running, lastOutcome timestamp 2026-04-28T14:45:08Z is > 40 min old, BUT: open kody-authored PR #1383 blocks action",
+        "reason": "core.status=running, lastOutcome timestamp 2026-04-28T14:45:08Z > 40 min old, open PR #1383 not kody-authored (human+github-actions), no kody comments < 40 min ago, no blocking workflow run",
         "plannedAt": "2026-05-02T14:34:00Z"
       },
       {
         "issueNumber": 1380,
         "action": "resume",
-        "reason": "core.status=running, lastOutcome timestamp 2026-04-28T15:41:13Z is > 40 min old, BUT: open kody-authored PR #1384 blocks action",
+        "reason": "core.status=running, lastOutcome timestamp 2026-04-28T15:41:13Z > 40 min old, open PR #1384 not kody-authored (human+github-actions), no kody comments < 40 min ago, no blocking workflow run",
         "plannedAt": "2026-05-02T14:34:00Z"
       },
       {
         "issueNumber": 1363,
         "action": "resume",
-        "reason": "core.status=running, lastOutcome timestamp 2026-04-27T09:49:12Z is > 40 min old, BUT: open kody-authored PR #1364 blocks action",
+        "reason": "core.status=running, lastOutcome timestamp 2026-04-27T09:49:12Z > 40 min old, open PR #1364 not kody-authored (human+github-actions), no kody comments < 40 min ago, no blocking workflow run",
         "plannedAt": "2026-05-02T14:34:00Z"
       },
       {
         "issueNumber": 1360,
         "action": "resume",
-        "reason": "core.status=running, lastOutcome timestamp 2026-04-27T09:58:29Z is > 40 min old, BUT: open kody-authored PR #1366 blocks action",
+        "reason": "core.status=running, lastOutcome timestamp 2026-04-27T09:58:29Z > 40 min old, open PR #1366 not kody-authored (human+github-actions), no kody comments < 40 min ago, no blocking workflow run",
         "plannedAt": "2026-05-02T14:34:00Z"
       },
       {
         "issueNumber": 1351,
         "action": "resume",
-        "reason": "core.status=running, lastOutcome timestamp 2026-04-27T20:30:49Z is > 40 min old, BUT: open kody-authored PR #1375 blocks action AND in-progress CI workflow run (#pr-1375) references this issue",
+        "reason": "core.status=running, lastOutcome timestamp 2026-04-27T20:30:49Z > 40 min old, open PR #1375 not kody-authored (human+github-actions), no kody comments < 40 min ago, in-progress CI run #25257628685 is for issue #1192 (branch name), not #1351",
         "plannedAt": "2026-05-02T14:34:00Z"
       },
       {
         "issueNumber": null,
         "action": "resume",
-        "reason": "No candidates found — scanned all 68+ open issues. Candidates 1382,1380,1363,1360 all have open kody-authored PRs — dropped per restriction 'no open kody-authored PR is linked to this issue'. Candidate 1351 additionally has in-progress CI run for PR #1375. No issues carry kody:stuck/kody:no-redispatch/kody:stalled labels. No new running-state issues discovered.",
+        "reason": "No further candidates — scanned all open issues. Found 5 candidates (1382,1380,1363,1360,1351) all with core.status=running and stale history > 40 min. All 5 have open PRs authored by aguyaharonyair+github-actions[bot] (not kody engine) — PR restriction does not block. All 5 pass blocked-label, workflow-run, kody-comment, and attemptsToday=0 checks. Would issue @kody resume on each.",
         "plannedAt": "2026-05-02T14:34:00Z"
       }
     ]
