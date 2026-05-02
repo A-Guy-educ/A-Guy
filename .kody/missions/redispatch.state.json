@@ -1,10 +1,16 @@
 {
   "version": 1,
-  "rev": 60,
-  "cursor": "dry-run-scan-v39",
+  "rev": 61,
+  "cursor": "dry-run-scan-v40",
   "data": {
     "perIssue": {},
     "dryRunLog": [
+      {
+        "issueNumber": 0,
+        "action": "resume",
+        "reason": "Dry-run tick 2026-05-02T02:10:00Z: Scanned ~75 open issues. Found 5 open issues with core.status=running in kody state v1 blocks (#1382/#1380/#1363/#1360/#1351). All 5 carry kody:done label with explicit 'kody flow finished' confirmation comments; PRs are merged; no stale kody comments in last 40 min. None qualify for @kody resume. perIssue garbage-collected (all entries had closed/non-running issues).",
+        "plannedAt": "2026-05-02T02:10:00Z"
+      },
       {
         "issueNumber": 0,
         "action": "resume",
