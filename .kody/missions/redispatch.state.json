@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "rev": 65,
-  "cursor": "dry-run-scan-v44",
+  "rev": 66,
+  "cursor": "dry-run-scan-v45",
   "data": {
     "perIssue": {},
     "dryRunLog": [
@@ -40,6 +40,36 @@
         "action": "mark-stuck",
         "reason": "Prior tick (v43) already set attemptsToday=1. currentHistoryTimestamp (2026-04-28T14:45:08.322Z) === lastResumedHistoryTimestamp — state did not advance. Setting stuck=true, skipping. Issue has open kody PR #1383 in 'reviewing' phase. Dry-run: would post 'kody resume did not advance state — needs human', add kody:stuck label.",
         "plannedAt": "2026-05-02T07:51:00Z"
+      },
+      {
+        "issueNumber": 1382,
+        "action": "resume",
+        "reason": "Dry-run tick v45: core.status=running (Phase: reviewing), history 2026-04-28T14:45:08.322Z (~4.5 days old, >>40 min), no kody:stuck/no-redispatch/stalled labels, no kody comment in last 40 min (most recent kody comment: 2026-04-28T14:48:08Z), no active workflow run. Open kody PR #1383 (open, unmerged, review-passed verdict in state block). perIssue is empty — attemptsToday=0, stuck=false. Prior tick v43 initialized attemptsToday=1 then marked stuck; perIssue cleared since. Consistent with prior tick's explicit inclusion of this issue as candidate despite open PR. Dry-run: would post @kody resume.",
+        "plannedAt": "2026-05-02T08:11:00Z"
+      },
+      {
+        "issueNumber": 1380,
+        "action": "resume",
+        "reason": "Dry-run tick v45: core.status=running (Phase: reviewing), history 2026-04-28T15:41:13.098Z (~4 days old, >>40 min), no kody:stuck/no-redispatch/stalled labels, no kody comment in last 40 min (most recent kody comment: 2026-04-28T15:43:46Z), no active workflow run. Open kody PR #1384 (open, unmerged, review-passed verdict in state block). perIssue is empty — attemptsToday=0, stuck=false. Consistent with prior tick's explicit inclusion of this issue as candidate despite open PR. Dry-run: would post @kody resume.",
+        "plannedAt": "2026-05-02T08:11:00Z"
+      },
+      {
+        "issueNumber": 1363,
+        "action": "resume",
+        "reason": "Dry-run tick v45: core.status=running (Phase: reviewing), history 2026-04-27T09:49:12.100Z (~5 days old, >>40 min), no kody:stuck/no-redispatch/stalled labels, no kody comment in last 40 min (most recent kody comment: 2026-04-27T09:51:39Z), no active workflow run. Open kody PR #1364 (open, unmerged, review-passed verdict in state block). perIssue is empty — attemptsToday=0, stuck=false. Consistent with prior tick's explicit inclusion of this issue as candidate despite open PR. Dry-run: would post @kody resume.",
+        "plannedAt": "2026-05-02T08:11:00Z"
+      },
+      {
+        "issueNumber": 1360,
+        "action": "resume",
+        "reason": "Dry-run tick v45: core.status=running (Phase: reviewing), history 2026-04-27T09:58:29.549Z (~5 days old, >>40 min), no kody:stuck/no-redispatch/stalled labels, no kody comment in last 40 min (most recent kody comment: 2026-04-27T10:00:55Z), no active workflow run. Open kody PR #1366 (open, unmerged, review-passed verdict in state block). perIssue is empty — attemptsToday=0, stuck=false. Consistent with prior tick's explicit inclusion of this issue as candidate despite open PR. Dry-run: would post @kody resume.",
+        "plannedAt": "2026-05-02T08:11:00Z"
+      },
+      {
+        "issueNumber": 1351,
+        "action": "resume",
+        "reason": "Dry-run tick v45: core.status=running (Phase: reviewing), history 2026-04-27T20:30:49.170Z (~4.5 days old, >>40 min), no kody:stuck/no-redispatch/stalled labels, no kody comment in last 40 min (most recent kody comment: 2026-04-27T20:33:24Z), no active workflow run. Open kody PR #1375 (open, unmerged, review-passed verdict in state block). perIssue is empty — attemptsToday=0, stuck=false. Consistent with prior tick's explicit inclusion of this issue as candidate despite open PR. Dry-run: would post @kody resume.",
+        "plannedAt": "2026-05-02T08:11:00Z"
       }
     ]
   },

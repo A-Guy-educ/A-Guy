@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "rev": 96,
-  "cursor": "tick-95-sync-1217-1374-1375-1383-1384",
+  "rev": 97,
+  "cursor": "tick-96-sync-1381-1376",
   "data": {
     "perPr": {
       "1217": {
@@ -9,6 +9,42 @@
         "attempts": 1,
         "stuck": false,
         "lastActionAt": "2026-05-02T11:20:00Z"
+      },
+      "1227": {
+        "lastSha": "37719014e5a0de3601d0770425e378c06473d305",
+        "attempts": 0,
+        "stuck": true,
+        "lastActionAt": null
+      },
+      "1266": {
+        "lastSha": "57b2556598b43fd4d0b922f5fd0fbdf373e03bdb",
+        "attempts": 0,
+        "stuck": true,
+        "lastActionAt": null
+      },
+      "1272": {
+        "lastSha": "d607b2920f6d9368f4e274cfe93ec37a7f1831b5",
+        "attempts": 0,
+        "stuck": true,
+        "lastActionAt": null
+      },
+      "1285": {
+        "lastSha": "7830e966333551b84eed6befddc9ac075a5be48a",
+        "attempts": 0,
+        "stuck": false,
+        "lastActionAt": null
+      },
+      "1364": {
+        "lastSha": "dc659c9dd9eeab3be01687bc22461f48a9976f75",
+        "attempts": 0,
+        "stuck": true,
+        "lastActionAt": null
+      },
+      "1366": {
+        "lastSha": "35e97738e331d3e083dae44b070d5551679f6472",
+        "attempts": 0,
+        "stuck": true,
+        "lastActionAt": null
       },
       "1374": {
         "lastSha": "366666f0bae41459e8c4dff514f88f4c4fd92cc0",
@@ -24,15 +60,21 @@
       },
       "1376": {
         "lastSha": "23aeadb3ee9efe600ee72a57233ce1ff4e50b056",
-        "attempts": 0,
+        "attempts": 1,
         "stuck": false,
+        "lastActionAt": "2026-05-02T11:52:26Z"
+      },
+      "1377": {
+        "lastSha": "8a4d2b450860335fa6be91566f0de647794f739d",
+        "attempts": 0,
+        "stuck": true,
         "lastActionAt": null
       },
       "1381": {
         "lastSha": "83e9b93e56a48236689164aad9162611096b5e49",
-        "attempts": 0,
+        "attempts": 1,
         "stuck": false,
-        "lastActionAt": null
+        "lastActionAt": "2026-05-02T11:52:26Z"
       },
       "1383": {
         "lastSha": "6d80f72bef4942248ac6e8a08aa43a1cfac60c68",
