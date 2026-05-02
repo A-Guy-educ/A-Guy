@@ -1,14 +1,26 @@
 {
   "version": 1,
-  "rev": 82,
-  "cursor": "dry-run-scan-v61",
+  "rev": 84,
+  "cursor": "dry-run-scan-v63",
   "data": {
     "perIssue": {},
     "dryRunLog": [
       {
         "issueNumber": null,
         "action": "scan",
-        "reason": "Scanned all 70 open issues. No issues contain kody state blocks. All kody-labeled issues are in non-running states (kody:done, kody:backlog, kody:watch, kody:failed, kody:goals-manifest, kody:release, kody:waiting). No kody:stuck, kody:no-redispatch, or kody:stalled labels present. perIssue remains empty. No candidates found.",
+        "reason": "Scanned all 70 open issues. No issues contain kody:state:v1 blocks. No issues carry kody:stuck, kody:stalled, kody:running, or kody:test-redispatch labels. All kody-labeled issues are in terminal/non-running states (kody:done, kody:backlog, kody:watch, kody:failed, kody:goals-manifest, kody:release, kody:waiting). perIssue remains empty. No candidates found.",
+        "plannedAt": "2026-05-02T23:45:00Z"
+      },
+      {
+        "issueNumber": null,
+        "action": "scan",
+        "reason": "Scanned all open issues. No issues contain kody state blocks. All kody-labeled issues are in terminal/non-running states: kody:done, kody:backlog, kody:watch, kody:failed, kody:goals-manifest, kody:release. No kody:stuck, kody:no-redispatch, or kody:stalled labels present. perIssue remains empty. No candidates found.",
+        "plannedAt": "2026-05-02T23:00:00Z"
+      },
+      {
+        "issueNumber": null,
+        "action": "scan",
+        "reason": "Scanned all 70 open issues. No issues contain kody state blocks. All kody-labeled issues are in non-running states (kody:done, kody:backlog, kody:watch, kody:failed, kody:goals-manifest, kody:release). No kody:stuck, kody:no-redispatch, or kody:stalled labels present. perIssue remains empty. No candidates found.",
         "plannedAt": "2026-05-02T22:15:00Z"
       },
       {
