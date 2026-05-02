@@ -1,10 +1,16 @@
 {
   "version": 1,
-  "rev": 80,
-  "cursor": "dry-run-scan-v59",
+  "rev": 81,
+  "cursor": "dry-run-scan-v60",
   "data": {
     "perIssue": {},
     "dryRunLog": [
+      {
+        "issueNumber": null,
+        "action": "scan",
+        "reason": "Scanned all 70 open issues. No issues contain kody state blocks. All kody-labeled issues are in kody:backlog, kody:done, kody:watch, or other non-running states. No kody:stuck, kody:no-redispatch, or kody:stalled labels present. perIssue remains empty. No candidates found.",
+        "plannedAt": "2026-05-02T21:30:00Z"
+      },
       {
         "issueNumber": null,
         "action": "scan",
