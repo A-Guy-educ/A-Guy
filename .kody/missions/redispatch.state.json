@@ -1,10 +1,16 @@
 {
   "version": 1,
-  "rev": 62,
-  "cursor": "dry-run-scan-v41",
+  "rev": 63,
+  "cursor": "dry-run-scan-v42",
   "data": {
     "perIssue": {},
     "dryRunLog": [
+      {
+        "issueNumber": 0,
+        "action": "resume",
+        "reason": "Dry-run tick 2026-05-02T07:24:44Z: Scanned ~61 open issues. No issues have kody:state:v1 blocks in bodies or comments (full body+comment scan). No issues have kody:state:v1, kody:running, or kody:test-redispatch labels. No issues have core.status=running. 2 in-progress runs (#25247144134 state-sync rev 91 unrelated; #25247137103 tied to #1351 which is kody:done). 14 open kody PRs (#1384/1383/1381/1377/1376/1375/1374/1366/1364/1285/1272/1266/1227/1217) all linked to kody:done issues. perIssue garbage-collected (was empty). No issues qualify for @kody resume this tick.",
+        "plannedAt": "2026-05-02T07:24:44Z"
+      },
       {
         "issueNumber": 0,
         "action": "resume",
