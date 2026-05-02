@@ -1,51 +1,15 @@
 {
   "version": 1,
-  "rev": 77,
-  "cursor": "dry-run-scan-v56",
+  "rev": 78,
+  "cursor": "dry-run-scan-v57",
   "data": {
     "perIssue": {},
     "dryRunLog": [
       {
-        "issueNumber": 1351,
-        "action": "mark-stuck",
-        "reason": "attemptsToday=1 from prior tick (2026-05-02T14:34:00Z, same UTC day), currentHistoryTimestamp 2026-04-27T20:30:49Z matches lastResumedHistoryTimestamp, resume did NOT advance state. Would post 'kody resume did not advance state — needs human' and add kody:stuck label.",
-        "plannedAt": "2026-05-02T15:00:00Z"
-      },
-      {
-        "issueNumber": 1360,
-        "action": "mark-stuck",
-        "reason": "attemptsToday=1 from prior tick (same UTC day), currentHistoryTimestamp 2026-04-27T09:58:29Z matches lastResumedHistoryTimestamp, resume did NOT advance state. Would post 'kody resume did not advance state — needs human' and add kody:stuck label.",
-        "plannedAt": "2026-05-02T15:00:00Z"
-      },
-      {
-        "issueNumber": 1363,
-        "action": "mark-stuck",
-        "reason": "attemptsToday=1 from prior tick (same UTC day), currentHistoryTimestamp 2026-04-27T09:49:12Z matches lastResumedHistoryTimestamp, resume did NOT advance state. Would post 'kody resume did not advance state — needs human' and add kody:stuck label.",
-        "plannedAt": "2026-05-02T15:00:00Z"
-      },
-      {
-        "issueNumber": 1380,
-        "action": "mark-stuck",
-        "reason": "attemptsToday=1 from prior tick (same UTC day), currentHistoryTimestamp 2026-04-28T15:41:13Z matches lastResumedHistoryTimestamp, resume did NOT advance state. Most recent state comment (2026-04-28T15:20:04Z) is truncated due to size regression (this is what issue #1382 tests). Would post 'kody resume did not advance state — needs human' and add kody:stuck label.",
-        "plannedAt": "2026-05-02T15:00:00Z"
-      },
-      {
-        "issueNumber": 1382,
-        "action": "mark-stuck",
-        "reason": "attemptsToday=1 from prior tick (same UTC day), currentHistoryTimestamp 2026-04-28T14:45:08Z matches lastResumedHistoryTimestamp, resume did NOT advance state. Issue has kody:done label but core.status still 'running' — engine completed flow but did not update state block. Would post 'kody resume did not advance state — needs human' and add kody:stuck label.",
-        "plannedAt": "2026-05-02T15:00:00Z"
-      },
-      {
-        "issueNumber": null,
-        "action": "mark-stuck",
-        "reason": "No further candidates — scanned all ~80 open issues. Found 5 candidates from prior state, all now stuck (resume did not advance history). Issues 1351/1380/1382 have kody:done label but stale core.status=running. Issue 1380 has truncated state comment (size regression). All 5 had attemptsToday=1 from prior tick same UTC day, history timestamp unchanged after resume → mark-stuck. No new candidates found.",
-        "plannedAt": "2026-05-02T15:00:00Z"
-      },
-      {
         "issueNumber": null,
         "action": "scan",
-        "reason": "Scanned all 70 open issues. The 5 previously stuck issues (1351/1360/1363/1380/1382) are all now kody:done with no kody state blocks anywhere (neither in body nor comments) — all garbage collected from perIssue. No other open issue carries a kody state block with core.status=running. Active workflow runs do not reference specific issue numbers. No new candidates found.",
-        "plannedAt": "2026-05-02T18:34:29Z"
+        "reason": "Scanned all 70 open issues. No issues contain kody state blocks. Previously stuck issues (1351/1360/1363/1380/1382) all have kody:done label with no state blocks remaining — garbage collected. No kody:stuck, kody:no-redispatch, or kody:stalled labels present. Active workflow run references issue #1378 (no state block). perIssue cleared (all prior entries for issues without state blocks). No candidates found.",
+        "plannedAt": "2026-05-02T19:45:00Z"
       }
     ]
   },
