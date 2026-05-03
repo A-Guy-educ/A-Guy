@@ -1,10 +1,16 @@
 {
   "version": 1,
-  "rev": 96,
-  "cursor": "dry-run-scan-v75",
+  "rev": 97,
+  "cursor": "dry-run-scan-v76",
   "data": {
     "perIssue": {},
     "dryRunLog": [
+      {
+        "issueNumber": null,
+        "action": "scan",
+        "reason": "Scanned all 70 open issues. Found 9 with kody state blocks in comments (#1382/#1380/#1378/#1373/#1372/#1363/#1360/#1357/#1351). All carry kody:done label indicating completed workflow. 4 issues have core.status=running but all are marked done. 0 candidates with active running state. perIssue map remains empty. Dry-run: no resume/mark-stuck actions taken.",
+        "plannedAt": "2026-05-03T11:27:18Z"
+      },
       {
         "issueNumber": null,
         "action": "scan",
