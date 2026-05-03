@@ -1,10 +1,16 @@
 {
   "version": 1,
-  "rev": 95,
-  "cursor": "dry-run-scan-v74",
+  "rev": 96,
+  "cursor": "dry-run-scan-v75",
   "data": {
     "perIssue": {},
     "dryRunLog": [
+      {
+        "issueNumber": null,
+        "action": "scan",
+        "reason": "Scanned all 70 open issues for kody state blocks. Found 0 candidates with core.status=running and stale history. No issues carry any kody state block. In-flight workflow runs reference issues 1378/1382/1363/etc - all have kody:done labels and no active state. perIssue map remains empty. Dry-run: no resume/mark-stuck actions taken.",
+        "plannedAt": "2026-05-03T10:35:09Z"
+      },
       {
         "issueNumber": null,
         "action": "scan",
