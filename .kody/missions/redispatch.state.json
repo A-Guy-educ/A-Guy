@@ -1,51 +1,15 @@
 {
   "version": 1,
-  "rev": 103,
-  "cursor": "dry-run-scan-v82",
+  "rev": 104,
+  "cursor": "dry-run-scan-v83",
   "data": {
     "perIssue": {},
     "dryRunLog": [
       {
-        "issueNumber": 1382,
-        "action": "resume",
-        "reason": "core.status=running, phase=reviewing, last timestamp 2026-04-28T14:45:08Z (>40min stale), NO kody:stuck/no-redispatch/stalled labels. EXCLUDED this tick: has in-flight workflow run 25282389371 ('#1382: [test] kody v0.3.50 smoke — state-comment size regression'). Linked PR #1383 by aguyaharonyair (not kody). No recent kody comments.",
-        "plannedAt": "2026-05-03T14:37:00Z"
-      },
-      {
-        "issueNumber": 1380,
-        "action": "resume",
-        "reason": "core.status=running, phase=reviewing, last timestamp 2026-04-28T15:41:13Z (>40min stale), no in-flight runs, no kody comments on issue (<40min), linked PR #1384 by aguyaharonyair (not kody), no exclude labels (kody:stuck/kody:no-redispatch/kody:stalled).",
-        "plannedAt": "2026-05-03T14:37:00Z"
-      },
-      {
-        "issueNumber": 1363,
-        "action": "resume",
-        "reason": "core.status=running, phase=reviewing, last timestamp 2026-04-27T09:49:12Z (>40min stale), no in-flight runs, no kody comments on issue (<40min), linked PR #1364 by aguyaharonyair (not kody), no exclude labels (kody:stuck/kody:no-redispatch/kody:stalled).",
-        "plannedAt": "2026-05-03T14:37:00Z"
-      },
-      {
-        "issueNumber": 1360,
-        "action": "resume",
-        "reason": "core.status=running, phase=reviewing, last timestamp 2026-04-27T09:58:29Z (>40min stale), no in-flight runs, no kody comments on issue (<40min), linked PR #1366 by aguyaharonyair (not kody), no exclude labels (kody:stuck/kody:no-redispatch/kody:stalled).",
-        "plannedAt": "2026-05-03T14:37:00Z"
-      },
-      {
-        "issueNumber": 1351,
-        "action": "resume",
-        "reason": "core.status=running, phase=reviewing, last timestamp 2026-04-27T20:30:49Z (>40min stale), no in-flight runs, no kody comments on issue (<40min), linked PR #1375 by aguyaharonyair (not kody), no exclude labels (kody:stuck/kody:no-redispatch/kody:stalled).",
-        "plannedAt": "2026-05-03T14:37:00Z"
-      },
-      {
         "issueNumber": null,
         "action": "scan",
-        "reason": "Scanned 70 open issues for kody state blocks with core.status=running and stale history (>40min). Found 5 running candidates: 1382/1380/1363/1360/1351. 1382 excluded due to in-flight run 25282389371 referencing it. 1380/1363/1360/1351 all in phase=reviewing, timestamps from Apr 27–28 (5–6 days stale). Linked PRs all by aguyaharonyair, not kody. No kody:stuck/kody:no-redispatch/kody:stalled labels. No recent kody comments. Dry-run: would resume 4 issues, 0 stuck.",
-        "plannedAt": "2026-05-03T14:37:00Z"
-      },
-      {
-        "issueNumber": null,
-        "action": "scan",
-        "reason": "Rescan of all 70 open issues this tick. ALL 5 previously-seen candidates (1382/1380/1363/1360/1351) now carry the kody:done label — they are excluded. Checked additional candidates: 1393/1392/1346/1236/1340/1357/1143/1244/1243 — none have kody state blocks. Conclusion: 0 open issues with core.status=running found. Dry-run: 0 issues would be actioned.",
-        "plannedAt": "2026-05-03T18:02:00Z"
+        "reason": "Full scan of all ~70 open issues. Zero kody state blocks found anywhere. All 5 previously-seen running candidates (1382/1380/1363/1360/1351) carry kody:done — terminal. Checked non-kody-label issues (1393/1392/1357/1346/1149) — no state blocks. Checked kody-tagged issues (1236/1192/1143/1340/1337) — no state blocks. No open issue has core.status=running. Dry-run: 0 issues would be actioned.",
+        "plannedAt": "2026-05-03T18:25:00Z"
       }
     ]
   },
