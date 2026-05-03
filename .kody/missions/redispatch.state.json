@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "rev": 102,
-  "cursor": "dry-run-scan-v81",
+  "rev": 103,
+  "cursor": "dry-run-scan-v82",
   "data": {
     "perIssue": {},
     "dryRunLog": [
@@ -40,6 +40,12 @@
         "action": "scan",
         "reason": "Scanned 70 open issues for kody state blocks with core.status=running and stale history (>40min). Found 5 running candidates: 1382/1380/1363/1360/1351. 1382 excluded due to in-flight run 25282389371 referencing it. 1380/1363/1360/1351 all in phase=reviewing, timestamps from Apr 27–28 (5–6 days stale). Linked PRs all by aguyaharonyair, not kody. No kody:stuck/kody:no-redispatch/kody:stalled labels. No recent kody comments. Dry-run: would resume 4 issues, 0 stuck.",
         "plannedAt": "2026-05-03T14:37:00Z"
+      },
+      {
+        "issueNumber": null,
+        "action": "scan",
+        "reason": "Rescan of all 70 open issues this tick. ALL 5 previously-seen candidates (1382/1380/1363/1360/1351) now carry the kody:done label — they are excluded. Checked additional candidates: 1393/1392/1346/1236/1340/1357/1143/1244/1243 — none have kody state blocks. Conclusion: 0 open issues with core.status=running found. Dry-run: 0 issues would be actioned.",
+        "plannedAt": "2026-05-03T18:02:00Z"
       }
     ]
   },
