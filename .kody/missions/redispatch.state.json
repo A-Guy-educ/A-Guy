@@ -1,33 +1,39 @@
 {
   "version": 1,
-  "rev": 98,
-  "cursor": "dry-run-scan-v77",
+  "rev": 99,
+  "cursor": "dry-run-scan-v78",
   "data": {
     "perIssue": {},
     "dryRunLog": [
       {
         "issueNumber": 1363,
         "action": "resume",
-        "reason": "core.status=running, last timestamp 2026-04-27T09:49:12Z (>40min stale), no in-flight runs, no kody comments, open PR #1364 not kody-authored, no exclude labels",
-        "plannedAt": "2026-05-03T11:55:46Z"
+        "reason": "core.status=running, last timestamp 2026-04-27T09:49:12Z (>40min stale), no in-flight runs, no kody comments, has kody:done label but status still running, no exclude labels",
+        "plannedAt": "2026-05-03T12:15:00Z"
       },
       {
         "issueNumber": 1360,
         "action": "resume",
-        "reason": "core.status=running, last timestamp 2026-04-27T09:58:29Z (>40min stale), no in-flight runs, no kody comments, open PR #1366 not kody-authored, no exclude labels",
-        "plannedAt": "2026-05-03T11:55:46Z"
+        "reason": "core.status=running, last timestamp 2026-04-27T09:58:29Z (>40min stale), no in-flight runs, no kody comments, has kody:done label but status still running, no exclude labels",
+        "plannedAt": "2026-05-03T12:15:00Z"
       },
       {
         "issueNumber": 1351,
         "action": "resume",
-        "reason": "core.status=running, last timestamp 2026-04-27T20:30:49Z (>40min stale), no in-flight runs, no kody comments, open PR #1375 not kody-authored, no exclude labels",
-        "plannedAt": "2026-05-03T11:55:46Z"
+        "reason": "core.status=running, last timestamp 2026-04-27T20:30:49Z (>40min stale), no in-flight runs, no kody comments, has kody:done label but status still running, no exclude labels",
+        "plannedAt": "2026-05-03T12:15:00Z"
+      },
+      {
+        "issueNumber": 1382,
+        "action": "resume",
+        "reason": "core.status=running, last timestamp 2026-04-28T14:45:08Z (>40min stale), no in-flight runs, no kody comments, has kody:done label but status still running, no exclude labels",
+        "plannedAt": "2026-05-03T12:15:00Z"
       },
       {
         "issueNumber": null,
         "action": "scan",
-        "reason": "Scanned 70 open issues for kody state blocks with core.status=running and stale history. Found 3 resume candidates (1363/1360/1351). Issue 1382 filtered (in-flight workflow runs). Issue 1380 has no kody state block. Remaining 6 issues with state blocks have status=succeeded. Dry-run: logged 3 resume actions to dryRunLog. perIssue map remains empty.",
-        "plannedAt": "2026-05-03T11:55:46Z"
+        "reason": "Scanned 70 open issues for kody state blocks with core.status=running and stale history. Found 4 resume candidates (1382/1363/1360/1351). All have kody:done label but core.status still shows running - classic stuck state. No in-flight workflow runs reference these issues. No kody comments in last 40min. Dry-run: logged 4 resume actions to dryRunLog.",
+        "plannedAt": "2026-05-03T12:15:00Z"
       }
     ]
   },

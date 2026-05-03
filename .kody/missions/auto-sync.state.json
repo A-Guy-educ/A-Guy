@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "rev": 134,
-  "cursor": "tick-1250-sync",
+  "rev": 136,
+  "cursor": "tick-1252-sync",
   "data": {
     "perPr": {
       "1217": {
-        "lastSha": "c5ca65314b8e0f831c886df1aab219ab7fba35f3",
+        "lastSha": "a63895e90ecaa1da8be1c31d7c7dee053c82f612",
         "attempts": 0,
-        "stuck": true,
+        "stuck": false,
         "lastActionAt": null
       },
       "1227": {
@@ -29,7 +29,7 @@
         "lastActionAt": null
       },
       "1285": {
-        "lastSha": "678149ffaaa6bc84ee9df108aa826374d3da4fd8",
+        "lastSha": "3f5d99a1a23997c8402ee9b5e5d2bbb9a9b2e503",
         "attempts": 0,
         "stuck": false,
         "lastActionAt": null
@@ -72,15 +72,15 @@
       },
       "1381": {
         "lastSha": "897b8e95bad31bbf2ae0022d348431a3c2d59f96",
-        "attempts": 1,
+        "attempts": 0,
         "stuck": false,
-        "lastActionAt": "2026-05-03T10:37:00Z"
+        "lastActionAt": null
       },
       "1383": {
         "lastSha": "4be3fffb92b49aeff3df8db4b9c428b38b5a2acd",
-        "attempts": 1,
+        "attempts": 0,
         "stuck": false,
-        "lastActionAt": "2026-05-03T11:16:08Z"
+        "lastActionAt": null
       },
       "1384": {
         "lastSha": "f99c667cd5446925449e37d6f866bc8ab4177d8a",
