@@ -1,21 +1,27 @@
 {
   "version": 1,
-  "rev": 93,
-  "cursor": "dry-run-scan-v72",
+  "rev": 94,
+  "cursor": "dry-run-scan-v73",
   "data": {
     "perIssue": {},
     "dryRunLog": [
       {
         "issueNumber": null,
         "action": "scan",
-        "reason": "Scanned all open issues for kody state blocks with core.status=running and stale history (>40 min). Found 0 candidates. Previously tracked issues 1351/1360/1363/1380/1382 all have kody:done status (no active state block). All perIssue entries garbage collected. No workflow runs, kody PRs, or recent kody comments detected. Dry-run: no resume/mark-stuck actions taken.",
-        "plannedAt": "2026-05-03T04:25:00Z"
+        "reason": "Scanned all open issues for kody state blocks with core.status=running and stale history (>40 min). Found 0 candidates. #1351 has state block with core.status=running (history from 2026-04-27T20:30:49Z), but is excluded: open kody PR #1375 is linked. Issues 1360/1363/1380/1382 all have kody:done label (no active state block). No in-flight workflow runs reference any of these issues. No recent kody comments (<40 min) on any candidate. perIssue map is empty. Dry-run: no resume/mark-stuck actions taken.",
+        "plannedAt": "2026-05-03T04:38:00Z"
       },
       {
         "issueNumber": null,
         "action": "scan",
         "reason": "Scanned open issues. Found 5 issues with core.status=running in kody state (1351/1360/1363/1380/1382). All have stale history (5-7 days). #1351 has a kody comment from 11 min ago (2026-05-03T03:53:50Z) — within 40 min, filtered by 'no kody comment newer than 40 min'. Issues 1360/1363/1380/1382 have no recent kody comments, but all 4 have open kody PRs (#1366/#1364/#1384/#1383) — filtered by 'open kody PR' filter. #1382 was also re-confirmed in comments. No in-flight workflow runs reference any of the 5 issues. All 5 already stuck=true, all skipped. No new candidates found. 5 stuck entries retained (no status change, no blocking label acquisition, no state advance detected since prior scan).",
         "plannedAt": "2026-05-03T04:06:00Z"
+      },
+      {
+        "issueNumber": null,
+        "action": "scan",
+        "reason": "Scanned all open issues for kody state blocks with core.status=running and stale history (>40 min). Found 0 candidates. Previously tracked issues 1351/1360/1363/1380/1382 all have kody:done status (no active state block). All perIssue entries garbage collected. No workflow runs, kody PRs, or recent kody comments detected. Dry-run: no resume/mark-stuck actions taken.",
+        "plannedAt": "2026-05-03T04:25:00Z"
       }
     ]
   },
