@@ -1,45 +1,21 @@
 {
   "version": 1,
-  "rev": 87,
-  "cursor": "dry-run-scan-v66",
+  "rev": 93,
+  "cursor": "dry-run-scan-v72",
   "data": {
     "perIssue": {},
     "dryRunLog": [
       {
         "issueNumber": null,
         "action": "scan",
-        "reason": "Scanned all 70 open issues. Found 9 issues with kody state blocks in comments (1382/1380/1378/1373/1372/1363/1360/1357/1351). All carry kody:done label (terminal state). 5 issues show core.status=running in state block (1382/1380/1363/1360/1351) but kody:done label takes precedence — all excluded. Remaining 4 show core.status=succeeded (1378/1373/1372/1357). No kody:stuck, kody:no-redispatch, or kody:stalled labels. In-progress workflow runs reference issues 1382 only. No candidates found. perIssue remains empty.",
-        "plannedAt": "2026-05-02T23:59:00Z"
+        "reason": "Scanned all open issues for kody state blocks with core.status=running and stale history (>40 min). Found 0 candidates. Previously tracked issues 1351/1360/1363/1380/1382 all have kody:done status (no active state block). All perIssue entries garbage collected. No workflow runs, kody PRs, or recent kody comments detected. Dry-run: no resume/mark-stuck actions taken.",
+        "plannedAt": "2026-05-03T04:25:00Z"
       },
       {
-        "issueNumber": 1382,
-        "action": "resume",
-        "reason": "core.status=running, history stale (5+ days), no kody:stuck/no-redispatch/stalled label. Note: carries kody:done label (semantic completion), linked PR #1383 open.",
-        "plannedAt": "2026-05-03T01:08:26Z"
-      },
-      {
-        "issueNumber": 1380,
-        "action": "resume",
-        "reason": "core.status=running, history stale (5+ days), no kody:stuck/no-redispatch/stalled label. Note: carries kody:done label (semantic completion), linked PR #1384 open.",
-        "plannedAt": "2026-05-03T01:08:26Z"
-      },
-      {
-        "issueNumber": 1363,
-        "action": "resume",
-        "reason": "core.status=running, history stale (6+ days), no kody:stuck/no-redispatch/stalled label. Note: carries kody:done label (semantic completion), linked PR #1364 open.",
-        "plannedAt": "2026-05-03T01:08:26Z"
-      },
-      {
-        "issueNumber": 1360,
-        "action": "resume",
-        "reason": "core.status=running, history stale (6+ days), no kody:stuck/no-redispatch/stalled label. Note: carries kody:done label (semantic completion), linked PR #1366 open.",
-        "plannedAt": "2026-05-03T01:08:26Z"
-      },
-      {
-        "issueNumber": 1351,
-        "action": "resume",
-        "reason": "core.status=running, history stale (5+ days), no kody:stuck/no-redispatch/stalled label. Note: carries kody:done label (semantic completion), linked PR #1375 open.",
-        "plannedAt": "2026-05-03T01:08:26Z"
+        "issueNumber": null,
+        "action": "scan",
+        "reason": "Scanned open issues. Found 5 issues with core.status=running in kody state (1351/1360/1363/1380/1382). All have stale history (5-7 days). #1351 has a kody comment from 11 min ago (2026-05-03T03:53:50Z) — within 40 min, filtered by 'no kody comment newer than 40 min'. Issues 1360/1363/1380/1382 have no recent kody comments, but all 4 have open kody PRs (#1366/#1364/#1384/#1383) — filtered by 'open kody PR' filter. #1382 was also re-confirmed in comments. No in-flight workflow runs reference any of the 5 issues. All 5 already stuck=true, all skipped. No new candidates found. 5 stuck entries retained (no status change, no blocking label acquisition, no state advance detected since prior scan).",
+        "plannedAt": "2026-05-03T04:06:00Z"
       }
     ]
   },
