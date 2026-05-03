@@ -1,41 +1,16 @@
 {
   "version": 1,
-  "rev": 92,
-  "cursor": "dry-run-scan-v71",
+  "rev": 93,
+  "cursor": "dry-run-scan-v72",
   "data": {
-    "perIssue": {
-      "1351": {
-        "lastResumedAt": "2026-05-03T00:00:00Z",
-        "lastResumedHistoryTimestamp": "2026-04-27T20:30:49.170Z",
-        "attemptsToday": 1,
-        "stuck": true
-      },
-      "1360": {
-        "lastResumedAt": "2026-05-03T00:00:00Z",
-        "lastResumedHistoryTimestamp": "2026-04-27T09:58:29.549Z",
-        "attemptsToday": 1,
-        "stuck": true
-      },
-      "1363": {
-        "lastResumedAt": "2026-05-03T00:00:00Z",
-        "lastResumedHistoryTimestamp": "2026-04-27T09:49:12.100Z",
-        "attemptsToday": 1,
-        "stuck": true
-      },
-      "1380": {
-        "lastResumedAt": "2026-05-03T00:00:00Z",
-        "lastResumedHistoryTimestamp": "2026-04-28T14:45:08.322Z",
-        "attemptsToday": 1,
-        "stuck": true
-      },
-      "1382": {
-        "lastResumedAt": "2026-05-03T00:00:00Z",
-        "lastResumedHistoryTimestamp": "2026-04-28T14:45:08.322Z",
-        "attemptsToday": 1,
-        "stuck": true
-      }
-    },
+    "perIssue": {},
     "dryRunLog": [
+      {
+        "issueNumber": null,
+        "action": "scan",
+        "reason": "Scanned all open issues for kody state blocks with core.status=running and stale history (>40 min). Found 0 candidates. Previously tracked issues 1351/1360/1363/1380/1382 all have kody:done status (no active state block). All perIssue entries garbage collected. No workflow runs, kody PRs, or recent kody comments detected. Dry-run: no resume/mark-stuck actions taken.",
+        "plannedAt": "2026-05-03T04:25:00Z"
+      },
       {
         "issueNumber": null,
         "action": "scan",
