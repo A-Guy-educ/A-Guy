@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "rev": 114,
-  "cursor": "dry-run-scan-v93",
+  "rev": 115,
+  "cursor": "dry-run-scan-v94",
   "data": {
     "perIssue": {
       "1351": {
@@ -30,6 +30,24 @@
       }
     },
     "dryRunLog": [
+      {
+        "issueNumber": 1363,
+        "action": "resume",
+        "reason": "core.status=running, history_ts=2026-04-27T09:49:12Z (6d stale), no kody comment <40min, no active runs, no exclusion labels. NOTE: kody comment shows 'flow finished' but state block was not updated - stale state block.",
+        "plannedAt": "2026-05-03T22:45:00Z"
+      },
+      {
+        "issueNumber": 1360,
+        "action": "resume",
+        "reason": "core.status=running, history_ts=2026-04-27T09:58:29Z (6d stale), no kody comment <40min, no active runs, no exclusion labels. NOTE: kody comment shows 'flow finished' but state block was not updated - stale state block.",
+        "plannedAt": "2026-05-03T22:45:00Z"
+      },
+      {
+        "issueNumber": null,
+        "action": "scan",
+        "reason": "Full scan of ~65 open issues. Re-examined prior candidates: #1351, #1382 excluded (kody:done label, in-progress runs referencing them, flows finished). #1372, #1373, #1378, #1380 excluded (kody:done label, flows finished with fix-applied/review-passed, in-progress runs). #1357 has no kody state block. #1363 and #1360 are candidates with stale state blocks (core.status=running but flow finished per kody comments). 2 resume candidates logged (dry-run).",
+        "plannedAt": "2026-05-03T22:45:00Z"
+      },
       {
         "issueNumber": 1382,
         "action": "resume",
