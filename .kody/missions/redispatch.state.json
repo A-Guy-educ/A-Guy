@@ -1,10 +1,16 @@
 {
   "version": 1,
-  "rev": 109,
-  "cursor": "dry-run-scan-v88",
+  "rev": 110,
+  "cursor": "dry-run-scan-v89",
   "data": {
     "perIssue": {},
     "dryRunLog": [
+      {
+        "issueNumber": null,
+        "action": "scan",
+        "reason": "Full scan of ~75 open issues. Found 9 open issues with kody state v1 blocks: #1357, #1382, #1380, #1351, #1373, #1378, #1363, #1360, #1372. ALL carry kody:done label — kody has finished on each, excluded. Last state-comment timestamps range from Apr 27–28 (days stale). In-progress workflow run #25289874656 references #1380 in title but is comment-triggered on dev branch (not the issue itself). One unrelated kody scheduled run (25289766792, no issue ref) is running. Zero candidates for @kody resume.",
+        "plannedAt": "2026-05-03T20:25:00Z"
+      },
       {
         "issueNumber": null,
         "action": "scan",
