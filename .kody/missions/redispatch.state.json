@@ -1,10 +1,16 @@
 {
   "version": 1,
-  "rev": 106,
-  "cursor": "dry-run-scan-v85",
+  "rev": 107,
+  "cursor": "dry-run-scan-v86",
   "data": {
     "perIssue": {},
     "dryRunLog": [
+      {
+        "issueNumber": null,
+        "action": "scan",
+        "reason": "Full scan of ~70 open issues. Zero kody state blocks found with core.status==running. Found 9 issues with state blocks in comments: 8 already have kody:done label, 1 (#1357) has core.status==succeeded. Zero in-progress workflow runs linked to state-block issues. No candidates for @kody resume.",
+        "plannedAt": "2026-05-03T19:50:00Z"
+      },
       {
         "issueNumber": null,
         "action": "scan",
