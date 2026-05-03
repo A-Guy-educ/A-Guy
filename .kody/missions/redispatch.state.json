@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "rev": 88,
-  "cursor": "dry-run-scan-v67",
+  "rev": 89,
+  "cursor": "dry-run-scan-v68",
   "data": {
     "perIssue": {
       "1351": {
@@ -14,62 +14,98 @@
         "lastResumedAt": "2026-05-03T00:00:00Z",
         "lastResumedHistoryTimestamp": "2026-04-27T09:58:29.549Z",
         "attemptsToday": 1,
-        "stuck": false
+        "stuck": true
       },
       "1363": {
         "lastResumedAt": "2026-05-03T00:00:00Z",
         "lastResumedHistoryTimestamp": "2026-04-27T09:49:12.100Z",
         "attemptsToday": 1,
-        "stuck": false
+        "stuck": true
       },
       "1380": {
         "lastResumedAt": "2026-05-03T00:00:00Z",
         "lastResumedHistoryTimestamp": "2026-04-28T14:45:08.322Z",
         "attemptsToday": 1,
-        "stuck": false
+        "stuck": true
       },
       "1382": {
         "lastResumedAt": "2026-05-03T00:00:00Z",
         "lastResumedHistoryTimestamp": "2026-04-28T14:45:08.322Z",
         "attemptsToday": 1,
-        "stuck": false
+        "stuck": true
       }
     },
     "dryRunLog": [
       {
         "issueNumber": null,
         "action": "scan",
-        "reason": "Scanned 70 open issues. Found 5 issues with core.status=running in kody state comment (1382/1380/1363/1360/1351). All have stale history (5-6 days). None carry kody:stuck/kody:no-redispatch/kody:stalled labels. None have in-progress runs referencing them. No kody comments in last 40 min. All have open linked PRs. All carry kody:done label (semantic completion; state not updated post-review). Candidates.",
-        "plannedAt": "2026-05-03T00:00:00Z"
-      },
-      {
-        "issueNumber": 1382,
-        "action": "resume",
-        "reason": "core.status=running, history stale (5+ days), no blocked labels, no recent kody comment, open PR #1383. kody:done label present (semantic completion).",
-        "plannedAt": "2026-05-03T00:00:00Z"
-      },
-      {
-        "issueNumber": 1380,
-        "action": "resume",
-        "reason": "core.status=running, history stale (5+ days), no blocked labels, no recent kody comment, open PR #1384. kody:done label present (semantic completion).",
-        "plannedAt": "2026-05-03T00:00:00Z"
-      },
-      {
-        "issueNumber": 1363,
-        "action": "resume",
-        "reason": "core.status=running, history stale (6+ days), no blocked labels, no recent kody comment, open PR #1364. kody:done label present (semantic completion).",
-        "plannedAt": "2026-05-03T00:00:00Z"
-      },
-      {
-        "issueNumber": 1360,
-        "action": "resume",
-        "reason": "core.status=running, history stale (6+ days), no blocked labels, no recent kody comment, open PR #1366. kody:done label present (semantic completion).",
+        "reason": "Scanned 70 open issues. Found 5 issues with core.status=running in kody state comment (1382/1380/1363/1360/1351). All have stale history (5-6 days). None carry kody:stuck/kody:no-redispatch/kody:stalled labels. No kody comments in last 40 min on any. Run 25269230024 (issue 1351) was in_progress at scan time — 1351 dropped. Issues 1360/1363/1380/1382: attemptsToday=1 from prior tick, currentHistoryTimestamp === lastResumedHistoryTimestamp (state did not advance after prior resume). All 4 should be marked stuck.",
         "plannedAt": "2026-05-03T00:00:00Z"
       },
       {
         "issueNumber": 1351,
         "action": "resume",
-        "reason": "core.status=running, history stale (5+ days), no blocked labels, no recent kody comment, open PR #1375. kody:done label present (semantic completion).",
+        "reason": "core.status=running, history stale (5+ days), no blocked labels, no recent kody comment, open PR #1375, kody:done label. BUT: run 25269230024 (issue 1351) was in_progress at scan time — issue dropped per in-flight run gate.",
+        "plannedAt": "2026-05-03T00:00:00Z"
+      },
+      {
+        "issueNumber": 1382,
+        "action": "resume",
+        "reason": "core.status=running, history stale (5+ days), no blocked labels, no recent kody comment, open PR #1383, kody:done label. attemptsToday=1 from prior tick (dry-run plan), currentHistoryTimestamp === lastResumedHistoryTimestamp.",
+        "plannedAt": "2026-05-03T00:00:00Z"
+      },
+      {
+        "issueNumber": 1380,
+        "action": "resume",
+        "reason": "core.status=running, history stale (5+ days), no blocked labels, no recent kody comment, open PR #1384, kody:done label. attemptsToday=1 from prior tick (dry-run plan), currentHistoryTimestamp === lastResumedHistoryTimestamp.",
+        "plannedAt": "2026-05-03T00:00:00Z"
+      },
+      {
+        "issueNumber": 1363,
+        "action": "resume",
+        "reason": "core.status=running, history stale (6+ days), no blocked labels, no recent kody comment, open PR #1364, kody:done label. attemptsToday=1 from prior tick (dry-run plan), currentHistoryTimestamp === lastResumedHistoryTimestamp.",
+        "plannedAt": "2026-05-03T00:00:00Z"
+      },
+      {
+        "issueNumber": 1360,
+        "action": "resume",
+        "reason": "core.status=running, history stale (6+ days), no blocked labels, no recent kody comment, open PR #1366, kody:done label. attemptsToday=1 from prior tick (dry-run plan), currentHistoryTimestamp === lastResumedHistoryTimestamp.",
+        "plannedAt": "2026-05-03T00:00:00Z"
+      },
+      {
+        "issueNumber": null,
+        "action": "scan",
+        "reason": "Tick 2 (v68). Rescanned 70 open issues. Same 5 issues with core.status=running. No new candidates found. No kody state blocks found on other kody:done issues (1378/1373/1372). All labels still valid.",
+        "plannedAt": "2026-05-03T00:00:00Z"
+      },
+      {
+        "issueNumber": 1351,
+        "action": "mark-stuck",
+        "reason": "Dropped: run 25269230024 was in_progress for issue 1351 at scan time. attemptsToday=1 from prior tick (dry-run plan, no actual resume), state did not advance. kept stuck=false this tick (will be re-evaluated next tick after run completes).",
+        "plannedAt": "2026-05-03T00:00:00Z"
+      },
+      {
+        "issueNumber": 1382,
+        "action": "mark-stuck",
+        "reason": "attemptsToday=1 from prior tick (dry-run plan, no actual resume), currentHistoryTimestamp (2026-04-28T14:45:08.322Z) === lastResumedHistoryTimestamp — state did not advance. mark-stuck planned.",
+        "plannedAt": "2026-05-03T00:00:00Z"
+      },
+      {
+        "issueNumber": 1380,
+        "action": "mark-stuck",
+        "reason": "attemptsToday=1 from prior tick (dry-run plan, no actual resume), currentHistoryTimestamp (2026-04-28T14:45:08.322Z) === lastResumedHistoryTimestamp — state did not advance. mark-stuck planned.",
+        "plannedAt": "2026-05-03T00:00:00Z"
+      },
+      {
+        "issueNumber": 1363,
+        "action": "mark-stuck",
+        "reason": "attemptsToday=1 from prior tick (dry-run plan, no actual resume), currentHistoryTimestamp (2026-04-27T09:49:12.100Z) === lastResumedHistoryTimestamp — state did not advance. mark-stuck planned.",
+        "plannedAt": "2026-05-03T00:00:00Z"
+      },
+      {
+        "issueNumber": 1360,
+        "action": "mark-stuck",
+        "reason": "attemptsToday=1 from prior tick (dry-run plan, no actual resume), currentHistoryTimestamp (2026-04-27T09:58:29.549Z) === lastResumedHistoryTimestamp — state did not advance. mark-stuck planned.",
         "plannedAt": "2026-05-03T00:00:00Z"
       }
     ]
