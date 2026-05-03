@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "rev": 155,
-  "cursor": "tick-1271-sync",
+  "rev": 156,
+  "cursor": "tick-1272-sync",
   "data": {
     "perPr": {
       "1217": {
@@ -29,7 +29,7 @@
         "lastActionAt": "2026-05-03T21:26:02Z"
       },
       "1285": {
-        "lastSha": "eb42acfa057dddc95eda5c23bb8a985304f05070",
+        "lastSha": "50a24cc334755051c48cfc6a58edac462b39d14d",
         "attempts": 0,
         "stuck": false,
         "lastActionAt": null
