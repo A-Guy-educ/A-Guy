@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "rev": 28,
-  "cursor": "all-mergeable-unknown",
+  "rev": 29,
+  "cursor": "waiting-mergeable-computation",
   "data": {
     "perPr": {}
   },
