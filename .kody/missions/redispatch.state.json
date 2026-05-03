@@ -1,10 +1,16 @@
 {
   "version": 1,
-  "rev": 108,
-  "cursor": "dry-run-scan-v87",
+  "rev": 109,
+  "cursor": "dry-run-scan-v88",
   "data": {
     "perIssue": {},
     "dryRunLog": [
+      {
+        "issueNumber": null,
+        "action": "scan",
+        "reason": "Full scan of ~70 open issues. Found 9 issues with kody state blocks in comments: #1382, #1380, #1378, #1373, #1372, #1363, #1360, #1357, #1351. Of these, 5 have core.status==running but ALL have kody:done label (excluded). #1357 has core.status==succeeded. Zero candidates for @kody resume.",
+        "plannedAt": "2026-05-03T20:00:25Z"
+      },
       {
         "issueNumber": null,
         "action": "scan",
