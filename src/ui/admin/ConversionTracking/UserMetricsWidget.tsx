@@ -2,41 +2,133 @@
 
 import { useTranslation } from '@payloadcms/ui'
 import { Activity, Eye, RefreshCw, UserPlus } from 'lucide-react'
-import React, { useState } from 'react'
-import type { CSSProperties } from 'react'
+import React from 'react'
 
-import { ACCENT, tint } from './colors'
+import { ACCENT } from './colors'
 import { MetricCard } from './MetricCard'
 import { useMetricsContext } from './MetricsProvider'
 import { getStrings } from './strings'
-import { errorStyle, loadingStyle, widgetContainerStyle, widgetTitleStyle } from './styles'
+import {
+  errorStyle,
+  loadingStyle,
+  registeredCardContainerStyle,
+  registeredCardDetailBoxStyle,
+  registeredCardIconStyle,
+  registeredCardRowLabelStyle,
+  registeredCardRowRightStyle,
+  registeredCardRowStyle,
+  registeredCardRowValueStyle,
+  registeredCardStripStyle,
+  registeredCardSubheadingStyle,
+  registeredCardTopStyle,
+  registeredCardTotalStyle,
+  registeredTrendBadgeStyle,
+  widgetContainerStyle,
+  widgetTitleStyle,
+} from './styles'
 
-type RegFilter = 'yesterday' | 'week' | 'month' | 'total'
-
-const pillContainerStyle: CSSProperties = {
-  display: 'flex',
-  gap: 3,
-  backgroundColor: 'var(--theme-elevation-100)',
-  borderRadius: 6,
-  padding: 2,
+interface RegisteredUsersCardProps {
+  totalUsers: number
+  registeredYesterday: number
+  registeredThisWeek: number
+  registeredLastWeek: number
+  registeredThisMonth: number
+  registeredLastMonth: number
+  s: ReturnType<typeof getStrings>
 }
 
-const pillBtnStyle: CSSProperties = {
-  padding: '4px 10px',
-  fontSize: 11,
-  fontWeight: 500,
-  border: 'none',
-  borderRadius: 4,
-  cursor: 'pointer',
+function calcTrend(
+  current: number,
+  previous: number,
+): { value: number; isPositive: boolean } | null {
+  if (previous === 0) return current > 0 ? { value: 100, isPositive: true } : null
+  const value = ((current - previous) / previous) * 100
+  return { value, isPositive: value >= 0 }
+}
+
+const RegisteredUsersCard: React.FC<RegisteredUsersCardProps> = ({
+  totalUsers,
+  registeredYesterday,
+  registeredThisWeek,
+  registeredLastWeek,
+  registeredThisMonth,
+  registeredLastMonth,
+  s,
+}) => {
+  const weekTrend = calcTrend(registeredThisWeek, registeredLastWeek)
+  const monthTrend = calcTrend(registeredThisMonth, registeredLastMonth)
+
+  const rows: Array<{
+    label: string
+    value: number
+    trend: { value: number; isPositive: boolean } | null
+  }> = [
+    { label: s.registrationYesterday, value: registeredYesterday, trend: null },
+    { label: s.registeredLastWeek, value: registeredThisWeek, trend: weekTrend },
+    { label: s.registeredLastMonth, value: registeredThisMonth, trend: monthTrend },
+  ]
+
+  return (
+    <div style={registeredCardContainerStyle}>
+      {/* Top decorative strip */}
+      <div style={registeredCardStripStyle} />
+
+      {/* Central data area */}
+      <div style={registeredCardTopStyle}>
+        {/* Icon container */}
+        <div style={registeredCardIconStyle}>
+          <UserPlus size={22} />
+        </div>
+
+        {/* Large total number */}
+        <div style={registeredCardTotalStyle}>{totalUsers.toLocaleString()}</div>
+
+        {/* Subheading */}
+        <div style={registeredCardSubheadingStyle}>{s.registered}</div>
+      </div>
+
+      {/* Detail area with breakdown */}
+      <div style={registeredCardDetailBoxStyle}>
+        {rows.map((row, idx) => (
+          <div
+            key={row.label}
+            style={{
+              ...registeredCardRowStyle,
+              borderBottom: idx < rows.length - 1 ? '1px solid var(--theme-elevation-200)' : 'none',
+            }}
+          >
+            {/* Time description */}
+            <span style={registeredCardRowLabelStyle}>{row.label}</span>
+
+            {/* Number + trend badge */}
+            <div style={registeredCardRowRightStyle}>
+              <span style={registeredCardRowValueStyle}>{row.value.toLocaleString()}</span>
+              {row.trend && isFinite(row.trend.value) && (
+                <div style={registeredTrendBadgeStyle(row.trend.isPositive)}>
+                  <span>{row.trend.isPositive ? '▲' : '▼'}</span>
+                  <span>
+                    {row.trend.isPositive ? '+' : ''}
+                    {row.trend.value.toFixed(0)}%
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 const UserMetricsWidget: React.FC = () => {
   const { data, loading, error, period } = useMetricsContext()
   const { i18n } = useTranslation()
   const s = getStrings(i18n.language)
-  const [regFilter, setRegFilter] = useState<RegFilter>('month')
 
-  function calcTrend(current: number, previous: number): { value: number; label: string } | null {
+  function calcActiveTrend(
+    current: number,
+    previous: number,
+  ): { value: number; label: string } | null {
     if (previous === 0) return current > 0 ? { value: 100, label: s.vsPrior } : null
     return { value: ((current - previous) / previous) * 100, label: s.vsPrior }
   }
@@ -69,7 +161,10 @@ const UserMetricsWidget: React.FC = () => {
   }
 
   const { userMetrics } = data
-  const activeTrend = calcTrend(userMetrics.activeUsersToday, userMetrics.activeUsersYesterday)
+  const activeTrend = calcActiveTrend(
+    userMetrics.activeUsersToday,
+    userMetrics.activeUsersYesterday,
+  )
 
   const conversionRate =
     userMetrics.totalGuestSessions > 0
@@ -80,28 +175,6 @@ const UserMetricsWidget: React.FC = () => {
     userMetrics.returningUsersTotal > 0
       ? ((userMetrics.returningUsers / userMetrics.returningUsersTotal) * 100).toFixed(1)
       : '0'
-
-  const regOptions: { value: RegFilter; label: string }[] = [
-    { value: 'yesterday', label: s.registrationYesterday },
-    { value: 'week', label: s.registrationWeek },
-    { value: 'month', label: s.registrationMonth },
-    { value: 'total', label: s.registrationTotal },
-  ]
-
-  const regMap: Record<RegFilter, { value: number; trend: ReturnType<typeof calcTrend> }> = {
-    yesterday: { value: userMetrics.registeredYesterday, trend: null },
-    week: {
-      value: userMetrics.registeredThisWeek,
-      trend: calcTrend(userMetrics.registeredThisWeek, userMetrics.registeredLastWeek),
-    },
-    month: {
-      value: userMetrics.registeredThisMonth,
-      trend: calcTrend(userMetrics.registeredThisMonth, userMetrics.registeredLastMonth),
-    },
-    total: { value: userMetrics.totalUsers, trend: null },
-  }
-
-  const regData = regMap[regFilter]
 
   return (
     <div style={widgetContainerStyle}>
@@ -117,108 +190,15 @@ const UserMetricsWidget: React.FC = () => {
           large
         />
 
-        {/* Registration card with inline filter */}
-        <div
-          style={{
-            padding: 24,
-            backgroundColor: 'var(--theme-elevation-50)',
-            border: '1px solid var(--theme-elevation-200)',
-            borderRadius: 8,
-            position: 'relative',
-            overflow: 'hidden',
-          }}
-        >
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 3,
-              background: ACCENT.blue,
-            }}
-          />
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 40,
-              height: 40,
-              borderRadius: 8,
-              marginBottom: 12,
-              backgroundColor: tint(ACCENT.blue),
-              color: ACCENT.blue,
-            }}
-          >
-            <UserPlus size={20} />
-          </div>
-          <div style={pillContainerStyle}>
-            {regOptions.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => setRegFilter(opt.value)}
-                style={{
-                  ...pillBtnStyle,
-                  backgroundColor:
-                    regFilter === opt.value ? 'var(--theme-elevation-0)' : 'transparent',
-                  color:
-                    regFilter === opt.value
-                      ? 'var(--theme-elevation-1000)'
-                      : 'var(--theme-elevation-500)',
-                  boxShadow: regFilter === opt.value ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
-                }}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-          <div
-            style={{
-              fontSize: 32,
-              fontWeight: 700,
-              color: 'var(--theme-elevation-1000)',
-              lineHeight: 1.2,
-              marginTop: 8,
-            }}
-          >
-            {regData.value.toLocaleString()}
-          </div>
-          <span
-            style={{
-              display: 'block',
-              fontSize: 13,
-              fontWeight: 500,
-              color: 'var(--theme-elevation-500)',
-              marginTop: 4,
-            }}
-          >
-            {s.registered}
-          </span>
-          {regData.trend && isFinite(regData.trend.value) && (
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
-                marginTop: 6,
-                padding: '2px 8px',
-                borderRadius: 12,
-                fontSize: 12,
-                fontWeight: 600,
-                backgroundColor:
-                  regData.trend.value >= 0 ? 'var(--theme-success-100)' : 'var(--theme-error-100)',
-                color: regData.trend.value >= 0 ? 'var(--theme-success)' : 'var(--theme-error)',
-              }}
-            >
-              <span>{regData.trend.value >= 0 ? '▲' : '▼'}</span>
-              <span>
-                {regData.trend.value >= 0 ? '+' : ''}
-                {regData.trend.value.toFixed(0)}% {s.vsPrior}
-              </span>
-            </div>
-          )}
-        </div>
+        <RegisteredUsersCard
+          totalUsers={userMetrics.totalUsers}
+          registeredYesterday={userMetrics.registeredYesterday}
+          registeredThisWeek={userMetrics.registeredThisWeek}
+          registeredLastWeek={userMetrics.registeredLastWeek}
+          registeredThisMonth={userMetrics.registeredThisMonth}
+          registeredLastMonth={userMetrics.registeredLastMonth}
+          s={s}
+        />
 
         <MetricCard
           label={s.anonymousVisitors}
