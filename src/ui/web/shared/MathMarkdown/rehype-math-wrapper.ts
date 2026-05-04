@@ -23,13 +23,10 @@ import { visit } from 'unist-util-visit'
  *
  * WINE-RED MATH:
  * The LaTeX parser emits [wine-red-math]...[/wine-red-math] markers for
- * {\color{winered}...} expressions. The remarkWineRedMath plugin creates
- * a wineRedMath custom node. This rehype plugin intercepts math rendering
- * (via the `handlers` option passed to remark-rehype) and applies the
- * wine-red class to the KaTeX wrapper when the node has data.wineRed=true.
- *
- * Note: Wine-red is applied in MathMarkdown/index.tsx via a custom
- * remark-rehype handlers option, NOT here. This plugin handles RTL only.
+ * {\color{winered}...} expressions. The wine-red class is applied directly
+ * to the KaTeX <span> by preprocessWineRedMath in MathMarkdown/index.tsx
+ * before remarkMath sees the content. This plugin (rehypeMathWrapper) handles
+ * RTL wrapping only — it does not apply the wine-red color.
  */
 export function rehypeMathWrapper() {
   return (tree: Root) => {

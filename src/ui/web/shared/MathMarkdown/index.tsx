@@ -15,6 +15,7 @@ import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import { rehypeMathWrapper } from './rehype-math-wrapper'
 import { remarkColorSyntax } from './remark-color-syntax'
+import katex from 'katex'
 
 export interface MathMarkdownProps {
   /** The markdown string to render. Supports $...$ (inline) and $$...$$ (block) math. */
@@ -100,8 +101,7 @@ function preprocessWineRedMath(content: string): string {
  */
 function renderWineRedMath(mathExpr: string): string {
   try {
-    // katex is available client-side (loaded via rehype-katex dependency)
-    const katex = require('katex')
+    // katex is a direct dependency — use ES module import
     const html = katex.renderToString(mathExpr, {
       throwOnError: false,
       displayMode: false,

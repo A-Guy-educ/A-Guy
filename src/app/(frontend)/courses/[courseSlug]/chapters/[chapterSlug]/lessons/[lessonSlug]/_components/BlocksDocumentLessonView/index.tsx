@@ -23,6 +23,7 @@ import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import type { Exercise, Media as MediaType } from '@/payload-types'
 import type { QuestionBlock, InlineRichText, RichTextBlock } from '@/ui/web/exerciserenderer/types'
 import { ExerciseWorkspace } from '@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseWorkspace'
+import { HEBREW_LETTERS } from '@/ui/web/exerciserenderer/constants'
 
 type WorksheetBlocks = React.ComponentProps<typeof ExerciseWorksheet>['blocks']
 
@@ -41,32 +42,6 @@ function getBlocks(exercise: Exercise): WorksheetBlocks {
   if (!content || !Array.isArray(content.blocks)) return []
   return content.blocks as WorksheetBlocks
 }
-
-/** Hebrew letters for solution numbering */
-const HEBREW_LETTERS = [
-  'א',
-  'ב',
-  'ג',
-  'ד',
-  'ה',
-  'ו',
-  'ז',
-  'ח',
-  'ט',
-  'י',
-  'כ',
-  'ל',
-  'מ',
-  'נ',
-  'ס',
-  'ע',
-  'פ',
-  'צ',
-  'ק',
-  'ר',
-  'ש',
-  'ת',
-]
 
 type SolutionEntry = {
   blockId: string
@@ -219,22 +194,20 @@ export function BlocksDocumentLessonView({
                 </tr>
               </tbody>
 
-              {/* Print-only footer: repeats on every printed page via @page rules */}
-              <tfoot className="print:table-footer-group hidden print:!table-footer-group">
-                <tr>
-                  <td className="border-t border-border/60 px-12 py-2 text-center text-body-xs text-muted-foreground/70">
-                    כל הזכויות שמורות לגיא קורן, אין להעתיק, לצלם, לפרסם את המסמכים או חלקם ללא
-                    אישור בכתב מגיא קורן
-                  </td>
-                </tr>
-              </tfoot>
-
-              {/* Screen-only footer */}
-              <tfoot className="print:hidden">
-                <tr>
+              {/* Single <tfoot> — screen footer row hidden in print, print copyright row hidden on screen */}
+              <tfoot>
+                {/* Screen-only footer row */}
+                <tr className="print:hidden">
                   <td className="flex items-center justify-between border-t border-border/60 bg-card px-12 py-2 text-body-xs text-muted-foreground/70">
                     <span className="truncate">{lessonTitle}</span>
                     <span className="font-mono tracking-[0.3em]">· · ·</span>
+                  </td>
+                </tr>
+                {/* Print-only copyright row: repeats on every printed page via @page rules */}
+                <tr className="hidden print:table-row">
+                  <td className="border-t border-border/60 px-12 py-2 text-center text-body-xs text-muted-foreground/70">
+                    כל הזכויות שמורות לגיא קורן, אין להעתיק, לצלם, לפרסם את המסמכים או חלקם ללא
+                    אישור בכתב מגיא קורן
                   </td>
                 </tr>
               </tfoot>

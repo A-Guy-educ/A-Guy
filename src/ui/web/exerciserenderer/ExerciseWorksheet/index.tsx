@@ -37,6 +37,7 @@ import { AxisRenderer } from '../blocks/AxisRenderer'
 import { GraphWithPrompt } from '../blocks/GraphWithPrompt'
 import { MultiAxisRenderer } from '../blocks/MultiAxisRenderer'
 import { getMediaUrl } from '@/infra/utils/getMediaUrl'
+import { HEBREW_LETTERS } from '../constants'
 import type { Media } from '@/payload-types'
 import type {
   ContentBlock,
@@ -54,32 +55,6 @@ import type {
   RichTextBlock,
   SvgBlock,
 } from '@/server/payload/collections/Exercises/types'
-
-/** Hebrew letters for question numbering (א., ב., ג., ...) */
-const HEBREW_LETTERS = [
-  'א',
-  'ב',
-  'ג',
-  'ד',
-  'ה',
-  'ו',
-  'ז',
-  'ח',
-  'ט',
-  'י',
-  'כ',
-  'ל',
-  'מ',
-  'נ',
-  'ס',
-  'ע',
-  'פ',
-  'צ',
-  'ק',
-  'ר',
-  'ש',
-  'ת',
-]
 
 interface ExerciseWorksheetProps {
   blocks: ContentBlock[]
