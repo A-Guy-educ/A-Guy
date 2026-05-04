@@ -1,6 +1,7 @@
 'use client'
 
 import { useTranslation } from '@payloadcms/ui'
+import Link from 'next/link'
 import React from 'react'
 import type { CSSProperties } from 'react'
 
@@ -56,7 +57,20 @@ const DashboardHeader: React.FC = () => {
 
   return (
     <div style={headerStyle}>
-      <h2 style={titleStyle}>{s.dashboard}</h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <h2 style={titleStyle}>{s.dashboard}</h2>
+        <Link
+          href="/admin/chat"
+          style={{
+            fontSize: 13,
+            fontWeight: 500,
+            color: 'var(--theme-elevation-600)',
+            textDecoration: 'none',
+          }}
+        >
+          Chat with AI
+        </Link>
+      </div>
       <div style={filterContainerStyle}>
         {periods.map((p) => (
           <button
