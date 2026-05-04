@@ -121,52 +121,54 @@ export function parseContextText(contextText: string): ParsedSegment[] {
     const usedPrimaryPattern = exerciseMatches.length > 0
     const primaryNumbers = new Set(exerciseMatches.map((e) => e.number))
 
-    // Track short-answer blocks: when we see a duplicate \renewcommand*sync@tokenlogo@style[1]{sync@tokenlogo@style@standalone#1}\item
+    // Track short-answer blocks: when we see a duplicate \@sync@tokenlogo@style[1]{\@sync@tokenlogo@style@standalone#1}\item
     // (same exercise number as one already seen), the second occurrence is typically
-    // a "short answer" block that contains the brief answers to the first exercise's
-    // sub-questions (e.g. "M-WM-*M-WM-^P. $S = 80$, M-WM-^Q. M-WM-^\M-WM-*M-WM-^P...").
+    // a 'short answer' block that contains the brief answers to the first exercise's
+    // sub-questions (e.g. "M-WM-*M-WM-^P. $S = 80$, M-WM-^Q. ...").
     //
-    // Map: exercise number M-bM-^FM-^R start index of the short-answer block.
+    // Map: exercise number → start index of the short-answer block.
     // We use this later to bound the exercise content and extract the short answers
     // as a solution when no full solution section exists.
     const shortAnswerBlocks = new Map<number, { index: number; fullMatch: string }>()
 
-    // Also detect \renewcommand*sync@tokenlogo@style[1]{sync@tokenlogo@style@standalone#1} + \item style exercises
-    // (runs even if primary pattern found some matches M-bM-^@M-^T handles mixed formats)
-    if (exerciseMatches.length === 0) {
-      // Pass 1: Find all \renewcommand*sync@tokenlogo@style[1]{sync@tokenlogo@style@standalone#1}\item anchors
-      while ((match = setCounterPattern.exec(runText)) !== null) {
-        if (match.index >= exerciseEndIndex) continue
-        const enumi = parseInt(match[1], 10)
-        const number = enumi + 1 // \renewcommand*sync@tokenlogo@style[1]{sync@tokenlogo@style@standalone#1}
+    // Also detect \setcounter{enumi}{N} + \item style exercises.
+    // Runs even when primary pattern matched, because LLM page-by-page extraction
+    // commonly emits a single \textbf{תרגיל 1} on page 1 and continues with
+    // \setcounter{enumi}{N} / \item-style continuations for exercises 2..N.
+    // De-dup by exercise number happens within each pass below.
+    // Pass 1: Find all \setcounter{enumi}{N}\item anchors
+    while ((match = setCounterPattern.exec(runText)) !== null) {
+      if (match.index >= exerciseEndIndex) continue
 
-        const existingIdx = exerciseMatches.findIndex((e) => e.number === number)
-        if (existingIdx !== -1) {
-          // Duplicate exercise number: treat the second occurrence as a short-answer
-          // block for the first exercise. Record it so we can bound the first
-          // exercise's content at this point and extract short answers as a solution.
-          // Only record the FIRST duplicate (ignore triple+ occurrences).
-          if (!shortAnswerBlocks.has(number)) {
-            shortAnswerBlocks.set(number, {
-              index: match.index,
-              fullMatch: match[0],
-            })
-          }
-          continue
-        }
+      const enumi = parseInt(match[1], 10)
+      const number = enumi + 1 // \setcounter{enumi}{0} means exercise 1
 
-        // Skip creating an exercise if this \stepcounter was just marked as a
-        // short-answer block (duplicate number). The short-answer block is NOT
-        // a new exercise M-bM-^@M-^T it provides the solution for the earlier exercise.
+      // Skip if the primary \textbf/\section pattern already matched this
+      // number — its descriptive title and document position must be
+      // preserved so reconstructContextText can write back faithfully.
+      // Replacing it with a setCounter token would destroy the original
+      // header on save.
+      const existingIdx = exerciseMatches.findIndex((e) => e.number === number)
+      if (existingIdx !== -1) {
+        // Duplicate exercise number: treat the second occurrence as a short-answer
+        // block for the first exercise. Record it so we can bound the first
+        // exercise's content at this point and extract short answers as a solution.
+        // Only record the FIRST duplicate (ignore triple+ occurrences).
         if (!shortAnswerBlocks.has(number)) {
-          exerciseMatches.push({
+          shortAnswerBlocks.set(number, {
             index: match.index,
-            title: `M-WM-*M-WM-(M-WM-^RM-WM-^YM-WM-\ ${number}`,
-            number,
             fullMatch: match[0],
           })
         }
+        continue
       }
+
+      exerciseMatches.push({
+        index: match.index,
+        title: `תרגיל ${number}`,
+        number,
+        fullMatch: match[0],
+      })
     }
 
     // Pass 1b: Find \item[N.] bracket-numbered exercises
@@ -341,7 +343,7 @@ export function parseContextText(contextText: string): ParsedSegment[] {
 
         // Content starts after the exercise header
         const contentStart = current.index + current.fullMatch.length
-
+        // Content ends at the next exercise boundary (by position), solutions section, or end of text
         // Content ends at the EARLIEST of:
         //   - a short-answer block for this exercise number
         //   - the next exercise boundary (by position)
