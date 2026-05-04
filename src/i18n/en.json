@@ -218,6 +218,8 @@
     "noLessons": "No lessons available for this chapter.",
     "noExercises": "No exercises available for this lesson.",
     "noPDF": "PDF content is not available for this lesson.",
+    "visibleRenderersLabel": "Visible Renderers",
+    "visibleRenderersDescription": "Choose which tabs (Media, PDF, Interactive) are visible to students for this lesson. Media tab only appears when the lesson has attached files.",
     "lessonViewMode": "Lesson view mode",
     "lessonViewModeMedia": "Media",
     "lessonViewModePdf": "PDF",
