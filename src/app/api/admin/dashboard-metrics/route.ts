@@ -12,6 +12,47 @@ import config from '@payload-config'
 
 export type Period = 'week' | 'month' | 'year'
 
+/**
+ * Extract a course ID from various possible formats:
+ * - String ID (e.g., "abc123")
+ * - Plain object with id property (e.g., { id: "abc123" })
+ * - MongoDB ObjectId instance (has toString() but no .id property)
+ *
+ * Returns null if the course cannot be extracted or is falsy.
+ */
+export function extractCourseId(course: unknown): string | null {
+  if (course === undefined || course === null) return null
+
+  // String ID
+  if (typeof course === 'string') return course
+
+  // Plain object with id property (e.g., { id: "abc123" })
+  if (typeof course === 'object' && 'id' in course) {
+    const obj = course as { id: unknown }
+    if (typeof obj.id === 'string') return obj.id
+    // Handle case where id might be a number or other serializable value
+    return String(obj.id) || null
+  }
+
+  // MongoDB ObjectId instance (has toString() but no .id property)
+  if (
+    typeof course === 'object' &&
+    typeof (course as { toString?: () => string }).toString === 'function'
+  ) {
+    const result = String(course)
+    // ObjectId.toString() returns something like "ObjectId('abc123')"
+    // We need to extract just the ID part
+    const match = result.match(/ObjectId\(['"]?([^'")]+)['"]?\)/)
+    if (match) return match[1]
+    // Fallback: if toString doesn't match ObjectId pattern, use it directly
+    if (result && result !== '[object Object]') return result
+  }
+
+  // Fallback: try to stringify
+  const str = String(course)
+  return str && str !== '[object Object]' ? str : null
+}
+
 interface UserMetrics {
   activeUsersToday: number
   activeUsersYesterday: number
@@ -385,9 +426,7 @@ export async function GET(req: Request) {
   const enrollmentCounts = new Map<string, number>()
   for (const u of usersWithEntitlements) {
     for (const ent of u.courseEntitlements || []) {
-      if (!ent.course) continue
-      const courseId =
-        typeof ent.course === 'object' ? String(ent.course.id || '') : String(ent.course)
+      const courseId = extractCourseId(ent.course)
       if (!courseId) continue
       enrollmentCounts.set(courseId, (enrollmentCounts.get(courseId) || 0) + 1)
     }
