@@ -169,7 +169,6 @@ export function parseContextText(contextText: string): ParsedSegment[] {
       }
     }
 
-
     // Pass 1b: Find \item[N.] bracket-numbered exercises
     const itemBracketPattern = /\\item\[(\d+)\.\]/g
     while ((match = itemBracketPattern.exec(runText)) !== null) {
