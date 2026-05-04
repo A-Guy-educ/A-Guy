@@ -44,7 +44,7 @@ const filterBtnBase: CSSProperties = {
 
 const DashboardHeader: React.FC = () => {
   const { period, setPeriod, error } = useMetricsContext()
-  const { i18n, t } = useTranslation()
+  const { i18n } = useTranslation()
   const s = getStrings(i18n.language)
 
   const periods: { value: Period; label: string }[] = [
@@ -68,8 +68,7 @@ const DashboardHeader: React.FC = () => {
             textDecoration: 'none',
           }}
         >
-          {/* Custom translation key - type assertion needed for custom i18n keys */}
-          {(t as (key: string) => string)('admin:chatLink')}
+          Chat with AI
         </Link>
       </div>
       <div style={filterContainerStyle}>
