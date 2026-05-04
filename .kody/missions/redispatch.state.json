@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "rev": 116,
-  "cursor": "dry-run-scan-v94",
+  "rev": 117,
+  "cursor": "dry-run-scan-v95",
   "data": {
     "perIssue": {
       "1351": {
@@ -13,19 +13,19 @@
       "1360": {
         "lastResumedAt": "2026-05-03T22:25:00Z",
         "lastResumedHistoryTimestamp": "2026-04-27T09:58:29.549Z",
-        "attemptsToday": 1,
+        "attemptsToday": 0,
         "stuck": true
       },
       "1363": {
         "lastResumedAt": "2026-05-03T22:25:00Z",
         "lastResumedHistoryTimestamp": "2026-04-27T09:49:12.100Z",
-        "attemptsToday": 1,
+        "attemptsToday": 0,
         "stuck": true
       },
       "1382": {
         "lastResumedAt": "2026-05-03T22:25:00Z",
         "lastResumedHistoryTimestamp": "2026-04-28T14:45:08.322Z",
-        "attemptsToday": 1,
+        "attemptsToday": 0,
         "stuck": true
       }
     },
