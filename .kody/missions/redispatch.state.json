@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "rev": 117,
-  "cursor": "dry-run-scan-v95",
+  "rev": 118,
+  "cursor": "dry-run-scan-v96",
   "data": {
     "perIssue": {
       "1351": {
-        "lastResumedAt": "2026-05-03T22:25:00Z",
+        "lastResumedAt": "2026-05-04T10:00:00Z",
         "lastResumedHistoryTimestamp": "2026-04-27T20:30:49.170Z",
-        "attemptsToday": 0,
+        "attemptsToday": 1,
         "stuck": false
       },
       "1360": {
@@ -30,6 +30,36 @@
       }
     },
     "dryRunLog": [
+      {
+        "issueNumber": 1363,
+        "action": "mark-stuck",
+        "reason": "perIssue[1363].stuck=true from prior tick (attemptsToday was 1, history unchanged). attemptsToday reset to 0 (new UTC day). stuck=true → skip, log mark-stuck. State block: core.status=running, history_ts=2026-04-27T09:49:12Z (7d stale), last kody comment 2026-04-27T09:51:39Z (stale), no active runs, no open kody PRs, no exclusion labels.",
+        "plannedAt": "2026-05-04T10:00:00Z"
+      },
+      {
+        "issueNumber": 1360,
+        "action": "mark-stuck",
+        "reason": "perIssue[1360].stuck=true from prior tick (attemptsToday was 1, history unchanged). attemptsToday reset to 0 (new UTC day). stuck=true → skip, log mark-stuck. State block: core.status=running, history_ts=2026-04-27T09:58:29Z (7d stale), last kody comment 2026-04-27T10:00:55Z (stale), no active runs, no open kody PRs, no exclusion labels.",
+        "plannedAt": "2026-05-04T10:00:00Z"
+      },
+      {
+        "issueNumber": 1382,
+        "action": "mark-stuck",
+        "reason": "perIssue[1382].stuck=true from prior tick (attemptsToday was 1, history unchanged). attemptsToday reset to 0 (new UTC day). stuck=true → skip, log mark-stuck. State block: core.status=running, history_ts=2026-04-28T14:45:08Z (6d stale), last kody comment 2026-04-28T14:48:08Z (stale), no active runs, no open kody PRs, no exclusion labels.",
+        "plannedAt": "2026-05-04T10:00:00Z"
+      },
+      {
+        "issueNumber": 1351,
+        "action": "resume",
+        "reason": "core.status=running, history_ts=2026-04-27T20:30:49Z (7d stale), no kody comment <40min (last kody comment 2026-05-03T03:53:50Z is ~30h old — stale), no active runs, no open kody PRs, no exclusion labels. perIssue[1351].stuck=false, attemptsToday=0 (reset on new UTC day). Resume candidate. NOTE: kody flow finished per comment at 2026-05-03T03:53:50Z but state block still shows core.status=running — stale state block, qualifies for resume.",
+        "plannedAt": "2026-05-04T10:00:00Z"
+      },
+      {
+        "issueNumber": null,
+        "action": "scan",
+        "reason": "Full scan of ~65 open issues. Candidates with kody state v1 blocks: #1351 (core.status=running, 7d stale), #1360 (core.status=running, 7d stale, stuck=true), #1363 (core.status=running, 7d stale, stuck=true), #1382 (core.status=running, 6d stale, stuck=true). #1378/#1373/#1372/#1357 have core.status=succeeded — excluded. #1380 has empty core.status — excluded. No issues carry kody:stuck/kody:no-redispatch/kody:stalled labels. No in-progress workflow runs reference these issues. #1382 has closed PR #1383 (merged). No open kody-authored PRs. No kody comments <40min old on any candidate. All 4 qualify as candidates. 1 resume + 3 mark-stuck logged (dry-run).",
+        "plannedAt": "2026-05-04T10:00:00Z"
+      },
       {
         "issueNumber": 1363,
         "action": "mark-stuck",
