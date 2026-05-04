@@ -76,5 +76,8 @@
       "SLACK_WEBHOOK_URL",
       "SLACK_WEBHOOK_URL_DEV"
     ]
+  },
+  "missions": {
+    "stateBackend": "local-file"
   }
 }
