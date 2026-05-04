@@ -454,6 +454,10 @@ export function ExerciseRenderer({
                 prompt?: unknown
               }
               if (b.type === ('question_geometry' as string)) {
+                const geometryBlock = b as ContentBlock & {
+                  geometry?: GeometrySpecV1
+                  labelSize?: 'default' | 'small'
+                }
                 return (
                   <GraphWithPrompt
                     key={b.id}
@@ -468,7 +472,11 @@ export function ExerciseRenderer({
                         | undefined
                     }
                   >
-                    <GeometryRenderer blockId={b.id} spec={b.geometry as GeometrySpecV1} />
+                    <GeometryRenderer
+                      blockId={b.id}
+                      spec={geometryBlock.geometry as GeometrySpecV1}
+                      labelSize={geometryBlock.labelSize}
+                    />
                   </GraphWithPrompt>
                 )
               }
@@ -476,6 +484,7 @@ export function ExerciseRenderer({
                 const axisBlock = b as ContentBlock & {
                   axis?: AxisSpecV1
                   displaySize?: DisplaySize
+                  labelSize?: 'default' | 'small'
                 }
                 return (
                   <GraphWithPrompt
@@ -495,6 +504,7 @@ export function ExerciseRenderer({
                       blockId={b.id}
                       spec={axisBlock.axis as AxisSpecV1}
                       displaySize={axisBlock.displaySize}
+                      labelSize={axisBlock.labelSize}
                     />
                   </GraphWithPrompt>
                 )

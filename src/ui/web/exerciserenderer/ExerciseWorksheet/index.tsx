@@ -142,7 +142,7 @@ function WorksheetBlock({ block, mediaMap, sideBySideLayout }: WorksheetBlockPro
     const layout = pickGraphLayout(b.layout, sideBySideLayout)
     return (
       <GraphWithPrompt blockId={b.id} layout={layout} prompt={b.prompt}>
-        <GeometryRenderer blockId={b.id} spec={b.geometry} />
+        <GeometryRenderer blockId={b.id} spec={b.geometry} labelSize={b.labelSize} />
       </GraphWithPrompt>
     )
   }
@@ -152,7 +152,12 @@ function WorksheetBlock({ block, mediaMap, sideBySideLayout }: WorksheetBlockPro
     const layout = pickGraphLayout(b.layout, sideBySideLayout)
     return (
       <GraphWithPrompt blockId={b.id} layout={layout} prompt={b.prompt}>
-        <AxisRenderer blockId={b.id} spec={b.axis} displaySize={b.displaySize} />
+        <AxisRenderer
+          blockId={b.id}
+          spec={b.axis}
+          displaySize={b.displaySize}
+          labelSize={b.labelSize}
+        />
       </GraphWithPrompt>
     )
   }

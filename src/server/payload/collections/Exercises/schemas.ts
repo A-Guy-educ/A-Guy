@@ -404,6 +404,11 @@ const GraphLayoutSchema = z
   .default('textRight')
 
 // ---------------------------------
+// Zod: Label Size Enum (for label font size control)
+// ---------------------------------
+const LabelSizeSchema = z.enum(['default', 'small']).default('default').optional()
+
+// ---------------------------------
 // Zod: Question Geometry Block Schema
 // ---------------------------------
 export const QuestionGeometryBlockSchema = z
@@ -413,6 +418,7 @@ export const QuestionGeometryBlockSchema = z
     prompt: InlineRichTextSchema,
     layout: GraphLayoutSchema,
     geometry: GeometrySpecV1Schema,
+    labelSize: LabelSizeSchema,
     answer: QuestionAnswerSchema.optional(),
     hint: InlineRichTextSchema.optional(),
     solution: InlineRichTextSchema.optional(),
@@ -436,6 +442,7 @@ export const QuestionAxisBlockSchema = z
     layout: GraphLayoutSchema,
     axis: AxisSpecV1Schema,
     displaySize: DisplaySizeSchema,
+    labelSize: LabelSizeSchema,
     answer: QuestionAnswerSchema.optional(),
     hint: InlineRichTextSchema.optional(),
     solution: InlineRichTextSchema.optional(),

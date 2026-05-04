@@ -707,5 +707,10 @@
       "practice": "Practice",
       "exam": "Exam"
     }
+  },
+  "geometryEditor": {
+    "labelSize": "Label Size",
+    "labelSizeDefault": "Default",
+    "labelSizeSmall": "Small"
   }
 }

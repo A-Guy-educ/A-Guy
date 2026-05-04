@@ -1,7 +1,11 @@
 'use client'
 
 import React, { useCallback } from 'react'
-import type { QuestionAxisBlock, GraphLayout } from '@/server/payload/collections/Exercises/types'
+import type {
+  QuestionAxisBlock,
+  GraphLayout,
+  LabelSize,
+} from '@/server/payload/collections/Exercises/types'
 import type { AxisSpecV1 } from '@/infra/contracts/graphics/axis.v1'
 import { InlineRichTextEditor } from './InlineRichTextEditor'
 import { AxisCanvas } from '../components/axis/AxisCanvas'
@@ -64,6 +68,22 @@ export const AxisEditor: React.FC<AxisEditorProps> = ({ block, onChange }) => {
               <option value="medium">Medium (50%)</option>
               <option value="large">Large (75%)</option>
               <option value="full">Full Width (100%)</option>
+            </select>
+          </div>
+          <div className="panel-field">
+            <span className="panel-field-label">Label Size</span>
+            <select
+              className="panel-field-select"
+              value={block.labelSize || 'default'}
+              onChange={(e) =>
+                onChange({
+                  ...block,
+                  labelSize: e.target.value as LabelSize,
+                })
+              }
+            >
+              <option value="default">Default</option>
+              <option value="small">Small</option>
             </select>
           </div>
         </div>

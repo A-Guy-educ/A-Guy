@@ -210,6 +210,11 @@ export type QuestionAnswer =
 export type GraphLayout = 'textAbove' | 'textBelow' | 'textLeft' | 'textRight'
 
 // ---------------------------------
+// Label Size Enum
+// ---------------------------------
+export type LabelSize = 'default' | 'small'
+
+// ---------------------------------
 // Question Geometry Block
 // ---------------------------------
 export interface QuestionGeometryBlock {
@@ -218,6 +223,7 @@ export interface QuestionGeometryBlock {
   prompt: InlineRichText
   layout?: GraphLayout
   geometry: GeometrySpecV1
+  labelSize?: LabelSize
   answer?: QuestionAnswer
   hint?: InlineRichText
   solution?: InlineRichText
@@ -234,6 +240,7 @@ export interface QuestionAxisBlock {
   layout?: GraphLayout
   axis: AxisSpecV1
   displaySize?: 'small' | 'medium' | 'large' | 'full'
+  labelSize?: LabelSize
   answer?: QuestionAnswer
   hint?: InlineRichText
   solution?: InlineRichText

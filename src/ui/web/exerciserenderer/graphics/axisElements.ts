@@ -1,4 +1,5 @@
 import type { AxisSpecV1 } from '@/infra/contracts'
+import { getDefaultTextColor } from '@/infra/contracts/graphics/textColors'
 import { parseMathExpression } from '../utils/safeMathEval'
 
 type GraphSpec = AxisSpecV1['elements']['graphs'][number]
@@ -27,13 +28,14 @@ function renderGraphs(
   }
 }
 
-function renderAxisPoints(board: JXG.Board, points: PointSpec[]) {
+function renderAxisPoints(board: JXG.Board, points: PointSpec[], labelSize?: 'default' | 'small') {
   for (const p of points) {
     if (p.type === 'floating_text') {
       board.create('text', [p.x, p.y, p.label || ''], {
-        fontSize: 14,
+        fontSize: labelSize === 'small' ? 11 : 14,
         anchorX: 'middle',
         anchorY: 'middle',
+        fontFamily: 'Times New Roman',
       })
     } else {
       const attrs: Record<string, unknown> = {
@@ -46,7 +48,7 @@ function renderAxisPoints(board: JXG.Board, points: PointSpec[]) {
         attrs.strokeColor = p.color
         attrs.fillColor = p.type === 'hole' ? '#ffffff' : p.color
       } else {
-        attrs.fillColor = p.type === 'hole' ? '#ffffff' : undefined
+        attrs.fillColor = p.type === 'hole' ? '#ffffff' : getDefaultTextColor()
       }
       if (p.type === 'hole') {
         attrs.strokeWidth = 2
@@ -123,9 +125,13 @@ function renderLineBetweenPoints(
 /**
  * Render all axis elements from an AxisSpecV1 onto a JSXGraph board.
  */
-export function renderAxisSpec(board: JXG.Board, spec: AxisSpecV1): void {
+export function renderAxisSpec(
+  board: JXG.Board,
+  spec: AxisSpecV1,
+  labelSize?: 'default' | 'small',
+): void {
   renderGraphs(board, spec.elements.graphs, spec.viewport)
-  renderAxisPoints(board, spec.elements.points)
+  renderAxisPoints(board, spec.elements.points, labelSize)
 
   if (spec.elements.asymptotesVertical?.length) {
     renderVerticalAsymptotes(board, spec.elements.asymptotesVertical)

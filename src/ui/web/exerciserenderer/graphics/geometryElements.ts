@@ -23,10 +23,15 @@ function mapLabelOffset(pos?: string): [number, number] {
   return map[pos || 'r'] || [d, 0]
 }
 
-function renderPoints(board: JXG.Board, points: PointSpec[]): Map<string, any> {
+function renderPoints(
+  board: JXG.Board,
+  points: PointSpec[],
+  labelSize?: 'default' | 'small',
+): Map<string, any> {
   const pointMap = new Map<string, any>()
   for (const p of points) {
     const pointColor = p.color ?? getDefaultTextColor()
+    const effectiveLabelSize = labelSize === 'small' ? 'small' : 'default'
     const pt = board.create('point', [p.x, p.y], {
       name: p.name,
       fixed: true,
@@ -34,7 +39,11 @@ function renderPoints(board: JXG.Board, points: PointSpec[]): Map<string, any> {
       fillColor: pointColor,
       strokeColor: pointColor,
       size: p.size ?? 4,
-      label: { offset: mapLabelOffset(p.position), fontSize: p.fontSize ?? 14 },
+      label: {
+        offset: mapLabelOffset(p.position),
+        fontSize: p.fontSize ?? (effectiveLabelSize === 'small' ? 10 : 12),
+        fontFamily: 'Times New Roman',
+      },
     })
     pointMap.set(p.name, pt)
   }
@@ -46,6 +55,7 @@ function renderLines(
   lines: LineSpec[],
   pointMap: Map<string, any>,
   canvasHeight: number,
+  labelSize?: 'default' | 'small',
 ) {
   for (const line of lines) {
     const from = pointMap.get(line.from)
@@ -75,11 +85,12 @@ function renderLines(
       if (deg > 90) deg -= 180
       if (deg < -90) deg += 180
       board.create('text', [midX, midY, line.label.value], {
-        fontSize: line.label.fontSize ?? 12,
+        fontSize: line.label.fontSize ?? (labelSize === 'small' ? 8 : 10),
         anchorX: 'middle',
         anchorY: 'middle',
         display: 'internal',
         rotate: deg,
+        fontFamily: 'Times New Roman',
       })
     }
   }
@@ -105,7 +116,12 @@ function renderCircles(board: JXG.Board, circles: CircleSpec[], pointMap: Map<st
   }
 }
 
-function renderAngles(board: JXG.Board, angles: AngleSpec[], pointMap: Map<string, any>) {
+function renderAngles(
+  board: JXG.Board,
+  angles: AngleSpec[],
+  pointMap: Map<string, any>,
+  labelSize?: 'default' | 'small',
+) {
   for (const a of angles) {
     const center = pointMap.get(a.center)
     const ray1 = pointMap.get(a.ray1)
@@ -120,7 +136,10 @@ function renderAngles(board: JXG.Board, angles: AngleSpec[], pointMap: Map<strin
     if (a.label?.value) {
       attrs.name = a.label.value
       attrs.withLabel = true
-      attrs.label = { fontSize: a.label.fontSize ?? 12 }
+      attrs.label = {
+        fontSize: a.label.fontSize ?? (labelSize === 'small' ? 8 : 10),
+        fontFamily: 'Times New Roman',
+      }
     }
 
     board.create('angle', [ray1, center, ray2], attrs)
@@ -130,11 +149,15 @@ function renderAngles(board: JXG.Board, angles: AngleSpec[], pointMap: Map<strin
 /**
  * Render all geometry elements from a GeometrySpecV1 onto a JSXGraph board.
  */
-export function renderGeometrySpec(board: JXG.Board, spec: GeometrySpecV1): void {
-  const pointMap = renderPoints(board, spec.elements.points)
-  renderLines(board, spec.elements.lines, pointMap, spec.canvas.height)
+export function renderGeometrySpec(
+  board: JXG.Board,
+  spec: GeometrySpecV1,
+  labelSize?: 'default' | 'small',
+): void {
+  const pointMap = renderPoints(board, spec.elements.points, labelSize)
+  renderLines(board, spec.elements.lines, pointMap, spec.canvas.height, labelSize)
   renderCircles(board, spec.elements.circles, pointMap)
-  renderAngles(board, spec.elements.angles, pointMap)
+  renderAngles(board, spec.elements.angles, pointMap, labelSize)
 
   if (spec.elements.vectors) {
     for (const v of spec.elements.vectors) {

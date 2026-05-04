@@ -301,6 +301,7 @@ export const ExerciseBlockDefaults: Record<string, () => ContentBlock> = {
     type: 'question_geometry',
     prompt: DEFAULT_HINT_SOLUTION(),
     layout: 'textRight' as const,
+    labelSize: 'default' as const,
     geometry: {
       kind: 'euclidean',
       canvas: { width: 600, height: 400, background: '#ffffff', grid: true },
@@ -345,6 +346,7 @@ export const ExerciseBlockDefaults: Record<string, () => ContentBlock> = {
       elements: { points: [], graphs: [] },
     },
     displaySize: 'full',
+    labelSize: 'default' as const,
     hint: DEFAULT_HINT_SOLUTION(),
     solution: DEFAULT_HINT_SOLUTION(),
     fullSolution: DEFAULT_HINT_SOLUTION(),
