@@ -160,8 +160,9 @@ function WorksheetBlock({ block, mediaMap, sideBySideLayout }: WorksheetBlockPro
 
   if (block.type === 'question_axis') {
     const b = block as QuestionAxisBlock
-    // AxisRenderer always renders a 2:3 (width:height) board → aspect = 1.5 > 0.6
-    // → always triggers the 3/5 wrap → always stacked in worksheet
+    // AxisRenderer renders an approximately square/landscape board. Aspect 1.5
+    // is below the 5/3 wrap threshold so the axis stays side-by-side, matching
+    // geometry's default 600×400 canvas behavior.
     const axisAspectRatio = 1.5
     const layout = pickGraphLayout(b.layout, sideBySideLayout, axisAspectRatio)
     return (
@@ -211,6 +212,14 @@ function WorksheetBlock({ block, mediaMap, sideBySideLayout }: WorksheetBlockPro
   return null
 }
 
+/**
+ * 3/5 wrap rule: side content stacks below the prompt only when it is
+ * wider than 5:3 (aspect ratio > 5/3 ≈ 1.667). Square or portrait content
+ * stays side-by-side. The default 600×400 canvas (1.5) is intentionally
+ * below the threshold so the common case is side-by-side.
+ */
+const WRAP_ASPECT_THRESHOLD = 5 / 3
+
 function pickGraphLayout(
   stored: GraphLayout | undefined,
   fallback: GraphLayout,
@@ -219,8 +228,7 @@ function pickGraphLayout(
   // Honour the author's explicit vertical choice as-is.
   if (stored === 'textAbove' || stored === 'textBelow') return stored
 
-  // 3/5 wrap rule: if side-by-side and aspect ratio > 0.6, switch to stacked.
-  const shouldWrap = aspectRatio !== undefined && aspectRatio > 0.6
+  const shouldWrap = aspectRatio !== undefined && aspectRatio > WRAP_ASPECT_THRESHOLD
 
   if (stored === 'textLeft') {
     return shouldWrap ? 'textBelow' : 'textLeft'
@@ -229,8 +237,8 @@ function pickGraphLayout(
     return shouldWrap ? 'textAbove' : 'textRight'
   }
 
-  // No stored layout — use locale fallback, applying 3/5 wrap
-  if (aspectRatio !== undefined && aspectRatio > 0.6) {
+  // No stored layout — use locale fallback, applying the wrap rule
+  if (shouldWrap) {
     return fallback === 'textLeft' ? 'textBelow' : 'textAbove'
   }
   return fallback

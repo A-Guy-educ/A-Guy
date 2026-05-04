@@ -277,13 +277,13 @@ describe('GraphWithPrompt Component', () => {
   })
 
   describe('worksheet mode: 3/5 wrap rule', () => {
-    it('triggers wrap (stacked flex-col) when aspect ratio > 0.6 for textLeft', () => {
+    it('triggers wrap (stacked flex-col) when aspect ratio > 5/3 for textLeft', () => {
       const { container } = render(
         <GraphWithPrompt
           blockId="test-block"
           layout="textLeft"
           prompt={mockPrompt}
-          worksheetLayout={{ sideContentAspectRatio: 1.5 }}
+          worksheetLayout={{ sideContentAspectRatio: 2.5 }}
         >
           <div data-testid="graph-child">Graph Content</div>
         </GraphWithPrompt>,
@@ -295,13 +295,13 @@ describe('GraphWithPrompt Component', () => {
       expect(wrapper.className).not.toContain('flex-row')
     })
 
-    it('triggers wrap (stacked flex-col) when aspect ratio > 0.6 for textRight', () => {
+    it('triggers wrap (stacked flex-col) when aspect ratio > 5/3 for textRight', () => {
       const { container } = render(
         <GraphWithPrompt
           blockId="test-block"
           layout="textRight"
           prompt={mockPrompt}
-          worksheetLayout={{ sideContentAspectRatio: 1.5 }}
+          worksheetLayout={{ sideContentAspectRatio: 2.5 }}
         >
           <div data-testid="graph-child">Graph Content</div>
         </GraphWithPrompt>,
@@ -312,13 +312,13 @@ describe('GraphWithPrompt Component', () => {
       expect(wrapper.className).not.toContain('flex-row')
     })
 
-    it('keeps side-by-side (flex-row) when aspect ratio <= 0.6', () => {
+    it('keeps side-by-side (flex-row) when aspect ratio <= 5/3', () => {
       const { container } = render(
         <GraphWithPrompt
           blockId="test-block"
           layout="textLeft"
           prompt={mockPrompt}
-          worksheetLayout={{ sideContentAspectRatio: 0.4 }}
+          worksheetLayout={{ sideContentAspectRatio: 1.5 }}
         >
           <div data-testid="graph-child">Graph Content</div>
         </GraphWithPrompt>,

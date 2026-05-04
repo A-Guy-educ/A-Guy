@@ -30,9 +30,9 @@ interface WorksheetLayoutOptions {
   maxWidthCap?: string
   /**
    * Aspect ratio (width / height) of the side content.
-   * When > 0.6, side-by-side switches to stacked layout (wrap rule).
+   * When > 5/3 (≈ 1.667), side-by-side switches to stacked layout (3/5 wrap rule
+   * — content wider than 5:3 stacks; square or portrait stays side-by-side).
    * Geometry blocks: compute from geometry.canvas.width / geometry.canvas.height.
-   * Axis blocks: fixed 2:3 ratio → 1.5 > 0.6 → always stacked.
    */
   sideContentAspectRatio?: number
 }
@@ -66,7 +66,7 @@ function getLayoutClasses(layout: GraphLayout, worksheetLayout?: WorksheetLayout
   // Worksheet mode: apply 3/5 wrap rule
   if (isSideBySide && worksheetLayout) {
     const { sideContentAspectRatio } = worksheetLayout
-    const shouldWrap = sideContentAspectRatio !== undefined && sideContentAspectRatio > 0.6
+    const shouldWrap = sideContentAspectRatio !== undefined && sideContentAspectRatio > 5 / 3
     if (shouldWrap) {
       // Wrap: switch to stacked (textBelow/textAbove already handles correct DOM order)
       return 'flex flex-col'
@@ -121,7 +121,7 @@ export function GraphWithPrompt({
 
   // 3/5 wrap: if wrapping, use stacked min-height for both children
   const { sideContentAspectRatio } = worksheetLayout ?? {}
-  const shouldWrap = sideContentAspectRatio !== undefined && sideContentAspectRatio > 0.6
+  const shouldWrap = sideContentAspectRatio !== undefined && sideContentAspectRatio > 5 / 3
 
   // Proportions: 60/40 vs 50/50
   const is60x40 = worksheetLayout?.proportions !== '50-50'

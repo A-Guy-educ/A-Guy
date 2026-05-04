@@ -160,12 +160,33 @@ describe('ExerciseWorksheet', () => {
     expect(screen.getByText('Graph it')).toBeInTheDocument()
   })
 
-  it('geometry block with landscape canvas (aspect 1.5 > 0.6) renders GeometryRenderer', () => {
+  it('geometry block with very-wide canvas (aspect > 5/3) renders GeometryRenderer (wrapped below)', () => {
     const blocks = [
       {
         id: 'geo1',
         type: 'question_geometry',
-        prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Landscape geo', mediaIds: [] },
+        prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Wide geo', mediaIds: [] },
+        geometry: {
+          kind: 'euclidean',
+          canvas: { width: 800, height: 300, background: undefined, grid: false, axis: false },
+          elements: {},
+          interactionSpec: {},
+        },
+      },
+    ] as unknown as ContentBlock[]
+
+    renderWith('en', blocks)
+    // aspect 800/300 ≈ 2.67 > 5/3 → 3/5 wrap rule → stacked
+    expect(screen.getByTestId('geometry')).toBeInTheDocument()
+    expect(screen.getByText('Wide geo')).toBeInTheDocument()
+  })
+
+  it('geometry block with default 600×400 canvas (aspect 1.5 < 5/3) renders GeometryRenderer (side-by-side)', () => {
+    const blocks = [
+      {
+        id: 'geo2',
+        type: 'question_geometry',
+        prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Default geo', mediaIds: [] },
         geometry: {
           kind: 'euclidean',
           canvas: { width: 600, height: 400, background: undefined, grid: false, axis: false },
@@ -176,32 +197,11 @@ describe('ExerciseWorksheet', () => {
     ] as unknown as ContentBlock[]
 
     renderWith('en', blocks)
-    // GeometryRenderer should be rendered (aspect 1.5 → 3/5 wrap → stacked)
     expect(screen.getByTestId('geometry')).toBeInTheDocument()
-    expect(screen.getByText('Landscape geo')).toBeInTheDocument()
+    expect(screen.getByText('Default geo')).toBeInTheDocument()
   })
 
-  it('geometry block with portrait canvas (aspect 0.5 < 0.6) renders GeometryRenderer', () => {
-    const blocks = [
-      {
-        id: 'geo2',
-        type: 'question_geometry',
-        prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Portrait geo', mediaIds: [] },
-        geometry: {
-          kind: 'euclidean',
-          canvas: { width: 200, height: 400, background: undefined, grid: false, axis: false },
-          elements: {},
-          interactionSpec: {},
-        },
-      },
-    ] as unknown as ContentBlock[]
-
-    renderWith('en', blocks)
-    expect(screen.getByTestId('geometry')).toBeInTheDocument()
-    expect(screen.getByText('Portrait geo')).toBeInTheDocument()
-  })
-
-  it('axis block renders AxisRenderer (always stacked: fixed aspect 1.5 > 0.6)', () => {
+  it('axis block renders AxisRenderer (aspect 1.5 < 5/3 → side-by-side)', () => {
     const blocks = [
       {
         id: 'axis1',
