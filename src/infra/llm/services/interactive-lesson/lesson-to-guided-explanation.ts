@@ -11,6 +11,7 @@
  *    step actions fade the previous claim out and the next one in, so the
  *    scene pane stays visually active instead of sitting empty.
  */
+import { logger } from '@/infra/utils/logger'
 import type {
   GuidedExplanationV1,
   GuidedExplanationAction,
@@ -523,12 +524,10 @@ function intervalLane(
   // back to lane 0 — those intervals will visually stack on top of each
   // other. Typical lessons have 1–3 intervals so this should never hit;
   // if it does, the scene has more than the renderer is designed for.
-  if (typeof console !== 'undefined') {
-    console.warn(
-      '[interactive-lesson] Number-line interval lanes exhausted; collapsing onto lane 0',
-      { intervalIndex, totalIntervals: spans.length },
-    )
-  }
+  logger.warn(
+    { intervalIndex, totalIntervals: spans.length },
+    '[interactive-lesson] Number-line interval lanes exhausted; collapsing onto lane 0',
+  )
   return 0
 }
 
@@ -743,11 +742,11 @@ export function pickSceneKind(lesson: InteractiveLesson): SceneKind {
     haveGeometry && 'geometry',
   ].filter(Boolean) as SceneKind[]
 
-  if (populated.length > 1 && typeof console !== 'undefined') {
-    console.warn('[interactive-lesson] Multiple scene kinds populated; rendering only the first.', {
-      populated,
-      title: lesson.title,
-    })
+  if (populated.length > 1) {
+    logger.warn(
+      { populated, title: lesson.title },
+      '[interactive-lesson] Multiple scene kinds populated; rendering only the first.',
+    )
   }
 
   if (haveGraph) return 'graph'

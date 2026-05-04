@@ -4,6 +4,7 @@
  * Generates and manages persistent anonymous IDs for tracking users before authentication
  */
 
+import { logger } from '@/infra/utils/logger'
 import { getCookie, setCookie, deleteCookie } from './cookies'
 
 export const ANONYMOUS_ID_COOKIE_NAME = 'mp_anon_id'
@@ -47,7 +48,7 @@ export function getOrCreateAnonymousId(): string {
     }
   } catch (error) {
     // Gracefully handle cookie read errors
-    console.warn('[Analytics] Failed to read anonymous ID cookie:', error)
+    logger.warn({ err: error }, '[Analytics] Failed to read anonymous ID cookie')
   }
 
   // Generate new ID and store in cookie

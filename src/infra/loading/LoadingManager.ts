@@ -1,4 +1,6 @@
 // Types
+import { logger } from '@/infra/utils/logger'
+
 export type LoadingType = 'route' | 'screen' | 'inline' | 'action'
 
 export interface LoadingOperation {
@@ -45,11 +47,10 @@ export function createLoadingManager() {
           if (operations.has(key)) {
             operations.delete(key)
             notify()
-            if (process.env.NODE_ENV === 'development') {
-              console.warn(
-                `[LoadingManager] Route transition "${key}" timed out after ${ROUTE_SAFETY_TIMEOUT_MS}ms`,
-              )
-            }
+            logger.warn(
+              { key, timeoutMs: ROUTE_SAFETY_TIMEOUT_MS },
+              `[LoadingManager] Route transition timed out`,
+            )
           }
         }, ROUTE_SAFETY_TIMEOUT_MS)
       }

@@ -18,6 +18,7 @@
  * - Lazy loading: can auto-load via setPayloadGetterForLazyLoading()
  */
 
+import { logger } from '@/infra/utils/logger'
 import type { ConfigDomain } from '@/infra/config/config-constants'
 import type { ConfigValue } from '@/payload-types'
 import type { Payload, Where } from 'payload'
@@ -67,9 +68,7 @@ async function tryLazyLoad(): Promise<boolean> {
       await loadConfigValues(payload)
       return true
     } catch (error) {
-      if (typeof console !== 'undefined' && console?.warn) {
-        console.warn('Failed to lazily load config values:', error)
-      }
+      logger.warn({ err: error }, 'Failed to lazily load config values')
       return false
     } finally {
       lazyLoadingPromise = null

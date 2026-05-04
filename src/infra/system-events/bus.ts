@@ -5,6 +5,7 @@
  * Exports only `systemEventBus` - use this singleton for all event operations.
  */
 
+import { logger } from '@/infra/utils/logger'
 import { eventSchemas } from './schemas'
 import type {
   AnySystemEventHandler,
@@ -98,7 +99,7 @@ function validatePayload<E extends SystemEventName>(
     if (process.env.NODE_ENV === 'development') {
       throw new Error(`[SystemEvents] Invalid payload for ${event}: ${result.error.message}`)
     } else {
-      console.warn(`[SystemEvents] Invalid payload for ${event}`, result.error.issues)
+      logger.warn({ event, issues: result.error.issues }, '[SystemEvents] Invalid payload')
     }
   }
 }
@@ -115,7 +116,7 @@ function deliverToHandlers(envelope: SystemEventEnvelope<unknown>): void {
       try {
         handler(envelope)
       } catch (error) {
-        console.error(`[SystemEvents] Handler error for ${envelope.name}:`, error)
+        logger.error({ err: error, event: envelope.name }, '[SystemEvents] Handler error')
       }
     }
   }
@@ -125,7 +126,7 @@ function deliverToHandlers(envelope: SystemEventEnvelope<unknown>): void {
     try {
       handler(envelope)
     } catch (error) {
-      console.error(`[SystemEvents] AnyHandler error:`, error)
+      logger.error({ err: error, event: envelope.name }, '[SystemEvents] AnyHandler error')
     }
   }
 }

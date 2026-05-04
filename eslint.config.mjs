@@ -101,20 +101,30 @@ const eslintConfig = [
   // =============================================================================
   // Console Rules
   // =============================================================================
-  // no-console — warn in staging, error after cleanup (blocked by --max-warnings=0 in lint-staged)
+  // no-console — error level for server and infra (production code)
   {
-    files: ['src/**/*.ts', 'src/**/*.tsx'],
+    name: 'no-console-server',
+    files: ['src/server/**/*.{ts,tsx}', 'src/infra/**/*.{ts,tsx}'],
     ignores: [
+      'src/server/payload/blocks/**', // Payload admin blocks with 'use client'
+      'src/infra/analytics/**', // Client-side analytics with own debugMode
       'src/infra/qa/**', // QA dev tools - console expected
       'src/infra/utils/test/**', // Test utilities
-      'src/infra/analytics/**', // Client-side analytics with own debugMode
-      'src/infra/system-events/**', // Client-side event bus
-      'src/ui/**', // Client-side React components
-      'src/app/(frontend)/**', // Client-side Next.js pages
-      'src/client/**', // Client-side hooks/state
+      'src/infra/pdfjs/**', // Browser-only PDF renderer
     ],
     rules: {
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'no-console': ['error', { allow: ['warn', 'error'] }],
+    },
+  },
+  // no-console — error level for app API routes
+  {
+    name: 'no-console-app-routes',
+    files: ['src/app/api/**/*.{ts,tsx}', 'src/app/(frontend)/**/*-action.ts'],
+    ignores: [
+      'src/app/(frontend)/**', // Client-side Next.js pages (all frontend files)
+    ],
+    rules: {
+      'no-console': ['error', { allow: ['warn', 'error'] }],
     },
   },
 

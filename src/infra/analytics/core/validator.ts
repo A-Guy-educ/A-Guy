@@ -5,6 +5,7 @@
  * Enforces strict contracts and prevents invalid data
  */
 
+import { logger } from '@/infra/utils/logger'
 import { ZodError, type ZodIssue } from 'zod'
 import { isValidEvent, type ProductEvent } from '../contracts/events'
 import { eventSchemas } from '../contracts/schemas'
@@ -33,7 +34,7 @@ export function validateEvent(
 
     // In production: log warning and continue best-effort with raw data
     if (process.env.NODE_ENV === 'production') {
-      console.warn('[Analytics] Invalid event (production mode - continuing):', errorMsg)
+      logger.warn({ event }, '[Analytics] Invalid event (production mode - continuing)')
       return {
         success: true,
         data: rawData,
@@ -70,10 +71,10 @@ export function validateEvent(
 
       // In production: log warning and continue best-effort with raw data
       if (process.env.NODE_ENV === 'production') {
-        console.warn('[Analytics] Validation failed (production mode - continuing):', {
-          event,
-          issues: errorDetails,
-        })
+        logger.warn(
+          { event, issues: errorDetails },
+          '[Analytics] Validation failed (production mode - continuing)',
+        )
         return {
           success: true,
           data: rawData,
