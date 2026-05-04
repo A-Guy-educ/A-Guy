@@ -22,7 +22,7 @@ type EventHandler<E extends SystemEventName> = (
  *
  * function MyComponent() {
  *   useSystemEvent(SYSTEM_EVENTS.LESSON_STARTED, (envelope) => {
- *     console.log('Lesson started:', envelope.payload.lesson_id)
+ *     // e.g., console.log('Lesson started:', envelope.payload.lesson_id)
  *   })
  * }
  * ```
@@ -55,7 +55,7 @@ export function useSystemEvent<E extends SystemEventName>(
  *
  * function MyComponent() {
  *   useSystemEventAny((envelope) => {
- *     console.log('Event received:', envelope.name)
+ *     // e.g., console.log('Event received:', envelope.name)
  *   })
  * }
  * ```

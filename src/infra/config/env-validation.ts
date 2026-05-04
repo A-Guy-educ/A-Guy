@@ -1,3 +1,4 @@
+import { logger } from '@/infra/utils/logger'
 import { z } from 'zod'
 
 /**
@@ -41,7 +42,7 @@ export function validateEnv(): void {
   const optionalVars = ['SENTRY_DSN', 'OPENAI_API_KEY', 'GEMINI_API_KEY', 'GITHUB_TOKEN']
   for (const varName of optionalVars) {
     if (!process.env[varName]) {
-      console.warn(`[Env] Optional variable ${varName} is not set. Some features may be limited.`)
+      logger.warn(`[Env] Optional variable ${varName} is not set. Some features may be limited.`)
     }
   }
 
@@ -49,7 +50,7 @@ export function validateEnv(): void {
   const publicVars = ['NEXT_PUBLIC_SERVER_URL', 'NEXT_PUBLIC_SENTRY_DSN']
   for (const varName of publicVars) {
     if (!process.env[varName]) {
-      console.warn(`[Env] Public variable ${varName} is not set. Some features may be limited.`)
+      logger.warn(`[Env] Public variable ${varName} is not set. Some features may be limited.`)
     }
   }
 }

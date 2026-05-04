@@ -12,6 +12,7 @@
  * @pattern job-handler, pipeline-orchestration
  */
 
+import { logger } from '@/infra/utils/logger'
 import { PDF_MAX_BYTES, TASK_SLUGS } from '@/server/config/constants'
 import { getPdfBufferFromBlob } from '@/server/services/pdf-fetcher'
 import config from '@payload-config'
@@ -102,10 +103,10 @@ export const pdfToExercisesV2Task = {
         throw { stage: 'PASS0_EXTRACT', code: 'PDF_TOO_LARGE', message: 'PDF too large' }
       }
 
-      console.log('[V2] Loading and rendering all pages...')
+      logger.info('[V2] Loading and rendering all pages...')
       const pageDataList = await loadAndRenderAllPages(pdfBuffer)
       output.pagesTotal = pageDataList.length
-      console.log(`[V2] Rendered ${pageDataList.length} pages`)
+      logger.info(`[V2] Rendered ${pageDataList.length} pages`)
 
       // Extract text lines from all pages (needed for header/footer detection + text-based detection)
       const pdfPages = pageDataList.map((pd) => pd.pdfPage)
@@ -129,13 +130,20 @@ export const pdfToExercisesV2Task = {
 
           if (textFoundExercises) {
             // Text detection found exercises — use it (deterministic, reliable)
-            console.log(
-              `[V2] Page ${i + 1}/${pageDataList.length} [TEXT]: ${textDetection.exercises.length} exercise(s), continues=${textDetection.continuesFromPrevious}`,
+            logger.debug(
+              {
+                page: i + 1,
+                totalPages: pageDataList.length,
+                exerciseCount: textDetection.exercises.length,
+                continues: textDetection.continuesFromPrevious,
+              },
+              `[V2] Page ${i + 1}/${pageDataList.length} [TEXT]: ${textDetection.exercises.length} exercise(s)`,
             )
             detections.push(textDetection)
           } else if (!pageHasText) {
             // Scanned page — fall back to OCR (Tesseract)
-            console.log(
+            logger.debug(
+              { page: i + 1, totalPages: pageDataList.length },
               `[V2] Page ${i + 1}/${pageDataList.length}: no text found, using OCR detection`,
             )
             const ocrDetection = await detectExerciseStartsFromOCR(
@@ -144,13 +152,20 @@ export const pdfToExercisesV2Task = {
               pageDataList[i].image.width,
               pageDataList[i].image.height,
             )
-            console.log(
-              `[V2] Page ${i + 1}/${pageDataList.length} [OCR]: ${ocrDetection.exercises.length} exercise(s), continues=${ocrDetection.continuesFromPrevious}`,
+            logger.debug(
+              {
+                page: i + 1,
+                totalPages: pageDataList.length,
+                exerciseCount: ocrDetection.exercises.length,
+                continues: ocrDetection.continuesFromPrevious,
+              },
+              `[V2] Page ${i + 1}/${pageDataList.length} [OCR]: ${ocrDetection.exercises.length} exercise(s)`,
             )
             detections.push(ocrDetection)
           } else {
             // Has text but regex didn't match — use Vision LLM + snap to text lines
-            console.log(
+            logger.debug(
+              { page: i + 1, totalPages: pageDataList.length },
               `[V2] Page ${i + 1}/${pageDataList.length} [TEXT]: text found but no pattern match, trying Vision+Snap combo`,
             )
             const comboDetection = await detectExercisesVisionCombo(
@@ -161,8 +176,14 @@ export const pdfToExercisesV2Task = {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               payload as any,
             )
-            console.log(
-              `[V2] Page ${i + 1}/${pageDataList.length} [COMBO]: ${comboDetection.exercises.length} exercise(s), continues=${comboDetection.continuesFromPrevious}`,
+            logger.debug(
+              {
+                page: i + 1,
+                totalPages: pageDataList.length,
+                exerciseCount: comboDetection.exercises.length,
+                continues: comboDetection.continuesFromPrevious,
+              },
+              `[V2] Page ${i + 1}/${pageDataList.length} [COMBO]: ${comboDetection.exercises.length} exercise(s)`,
             )
             detections.push(comboDetection)
           }
@@ -171,7 +192,7 @@ export const pdfToExercisesV2Task = {
         } catch (pageError: unknown) {
           const pageErrorMessage =
             pageError instanceof Error ? pageError.message : 'Detection failed'
-          console.error(`[V2] Failed to detect on page ${i}:`, pageErrorMessage)
+          logger.error({ page: i, error: pageErrorMessage }, '[V2] Failed to detect on page')
           detections.push({
             contentStartY: 0,
             contentEndY: 1,
@@ -188,7 +209,7 @@ export const pdfToExercisesV2Task = {
       // PASS 2: Build exercise strips from detections
       const pages = pageDataList.map((pd) => pd.image)
       const strips = await buildExerciseStrips(pages, detections)
-      console.log(`[V2] Built ${strips.length} exercise strips`)
+      logger.info(`[V2] Built ${strips.length} exercise strips`)
 
       // PASS 3: Upload images and create exercises
       for (let i = 0; i < strips.length; i++) {
@@ -251,7 +272,10 @@ export const pdfToExercisesV2Task = {
         } catch (uploadError: unknown) {
           const uploadErrorMessage =
             uploadError instanceof Error ? uploadError.message : 'Upload/create failed'
-          console.warn(`[V2] Failed to create exercise ${strip.label}:`, uploadErrorMessage)
+          logger.warn(
+            { stripLabel: strip.label, error: uploadErrorMessage },
+            '[V2] Failed to create exercise',
+          )
           output.errors.push({
             pageIndex: strip.sourcePageIndex,
             reason: uploadErrorMessage,
@@ -274,7 +298,7 @@ export const pdfToExercisesV2Task = {
       return output
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      console.error(`[V2] Job ${job.id} failed:`, error)
+      logger.error({ err: error, jobId: job.id }, '[V2] Job failed')
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await updateJobStatus(payload as any, job.id, 'failed', {
         ...output,
@@ -385,7 +409,7 @@ async function updateJobStatus(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const coll = db?.connection?.collection?.('payload-jobs') as any
   if (!coll) {
-    console.warn('[V2] Cannot update job status - jobs collection not accessible')
+    logger.warn('[V2] Cannot update job status - jobs collection not accessible')
     return
   }
 
@@ -402,6 +426,6 @@ async function updateJobStatus(
   try {
     await coll.updateOne({ _id: new ObjectId(jobId) }, { $set: update })
   } catch (err) {
-    console.error(`[V2] Failed to update job status:`, err)
+    logger.error({ err }, '[V2] Failed to update job status')
   }
 }

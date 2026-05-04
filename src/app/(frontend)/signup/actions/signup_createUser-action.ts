@@ -159,7 +159,7 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
       }
     }
   } catch (error) {
-    console.error('Signup error:', error)
+    logger.error({ err: error }, 'Signup error')
     return {
       success: false,
       message: 'An unexpected error occurred. Please try again.',

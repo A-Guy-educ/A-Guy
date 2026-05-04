@@ -1,3 +1,4 @@
+import { logger } from '@/infra/utils/logger'
 import { nanoid } from 'nanoid'
 import type { Tenant } from '@/payload-types'
 import type { ContentBlock } from '@/server/payload/collections/Exercises/types'
@@ -152,11 +153,14 @@ export function parseExtractorResponseText(responseText: string): unknown[] {
           try {
             return JSON.parse(fixed)
           } catch (finalError) {
-            console.error('[parseExtractorResponseText] Failed to parse:', {
-              originalLength: responseText.length,
-              snippet: responseText.substring(0, 200),
-              jsonMatchLength: jsonStr.length,
-            })
+            logger.error(
+              {
+                originalLength: responseText.length,
+                snippet: responseText.substring(0, 200),
+                jsonMatchLength: jsonStr.length,
+              },
+              '[parseExtractorResponseText] Failed to parse',
+            )
             throw {
               code: 'PARSE_EXTRACTOR_RESPONSE_FAILED',
               message: `Failed to parse extractor response: ${finalError}`,
@@ -204,10 +208,13 @@ export function parseVerifierResponseText(responseText: string): {
         try {
           return JSON.parse(trimmed)
         } catch (finalError) {
-          console.error('[parseVerifierResponseText] Failed to parse:', {
-            originalLength: responseText.length,
-            snippet: responseText.substring(0, 200),
-          })
+          logger.error(
+            {
+              originalLength: responseText.length,
+              snippet: responseText.substring(0, 200),
+            },
+            '[parseVerifierResponseText] Failed to parse',
+          )
           throw {
             code: 'PARSE_VERIFIER_RESPONSE_FAILED',
             message: `Failed to parse verifier response: ${finalError}`,

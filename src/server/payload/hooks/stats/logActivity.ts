@@ -4,6 +4,7 @@
  * Helper to log user activities to UserStats collection
  */
 
+import { logger } from '@/infra/utils/logger'
 import type { Payload } from 'payload'
 
 interface ActivityEntry {
@@ -81,6 +82,6 @@ export async function logActivity({
       })
     }
   } catch (error) {
-    console.error('Failed to log activity:', error)
+    logger.error({ err: error }, 'Failed to log activity')
   }
 }

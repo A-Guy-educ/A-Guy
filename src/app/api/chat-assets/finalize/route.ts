@@ -3,6 +3,7 @@
  * Creates a chat-assets document after successful blob upload
  */
 
+import { logger } from '@/infra/utils/logger'
 import { getPayload } from 'payload'
 import { z } from 'zod'
 
@@ -288,7 +289,8 @@ export async function POST(request: Request): Promise<Response> {
           )
         }
         // For network errors, allow the upload to proceed (blob exists, client validated)
-        console.warn(
+        logger.warn(
+          { resolvedBlobUrl },
           `[chat-assets/finalize] Image metadata fetch failed for ${resolvedBlobUrl}, proceeding with upload`,
         )
       } else {

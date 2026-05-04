@@ -10,6 +10,7 @@
  * @pattern vision-detection, pdf-processing
  */
 
+import { logger } from '@/infra/utils/logger'
 import type { Payload } from 'payload'
 import {
   getLLMProvider,
@@ -143,7 +144,7 @@ function parseDetectionResponse(response: string): PageDetectionResult {
 
     // Guard: if LLM over-detected (likely counting sub-questions), keep only the first few
     if (exercises.length > MAX_EXERCISES_PER_PAGE) {
-      console.warn(
+      logger.warn(
         `[V2 Vision] LLM returned ${exercises.length} exercises (max ${MAX_EXERCISES_PER_PAGE}), likely over-detecting. Truncating.`,
       )
       exercises.length = MAX_EXERCISES_PER_PAGE
@@ -151,8 +152,8 @@ function parseDetectionResponse(response: string): PageDetectionResult {
 
     return { contentStartY, contentEndY, continuesFromPrevious, exercises }
   } catch (error) {
-    console.error('[V2 Vision] Failed to parse detection response:', error)
-    console.debug('[V2 Vision] Raw response:', response)
+    logger.error({ err: error }, '[V2 Vision] Failed to parse detection response')
+    logger.debug({ response }, '[V2 Vision] Raw response')
     return fallback
   }
 }

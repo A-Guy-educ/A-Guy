@@ -9,6 +9,7 @@
  *   const results = search.query("How do I create a published collection?")
  */
 
+import { logger } from '@/infra/utils/logger'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -47,7 +48,8 @@ export class DocSearch {
         const data = JSON.parse(fileContent) as DocChunks
         this.chunks = data.chunks
       } catch (_error) {
-        console.error(
+        logger.error(
+          _error,
           'Failed to load doc-chunks.json. Run: pnpm tsx scripts/generate-doc-chunks.ts',
         )
         this.chunks = []

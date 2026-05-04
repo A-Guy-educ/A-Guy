@@ -5,6 +5,7 @@
  * of media files. Works in both Next.js server context and standalone worker context.
  */
 
+import { logger } from '@/infra/utils/logger'
 import { del, list, put } from '@vercel/blob'
 
 // Environment variable names
@@ -177,7 +178,7 @@ export class VercelBlobAdapter {
       await del(url, { token: this.token })
       return true
     } catch (error) {
-      console.error(`[VercelBlob] Failed to delete blob: ${url}`, error)
+      logger.error({ err: error, url }, '[VercelBlob] Failed to delete blob')
       return false
     }
   }

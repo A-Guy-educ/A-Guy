@@ -7,6 +7,8 @@
  * @pattern retry
  */
 
+import { logger } from '@/infra/utils/logger'
+
 export interface RetryOptions<E extends Error> {
   /** Maximum number of retry attempts */
   maxRetries?: number
@@ -88,7 +90,8 @@ export async function withRetry<T, E extends Error>(
         onRetry(castError, attempt)
       }
 
-      console.debug(
+      logger.debug(
+        { attempt, maxRetries, retryDelayMs: retryDelay, errorMessage: castError.message },
         `${logPrefix} Retry attempt ${attempt}/${maxRetries} after ${retryDelay}ms: ${castError.message}`,
       )
 

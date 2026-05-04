@@ -5,6 +5,7 @@
  * This is the ONLY place where analytics.track() is called outside of tests.
  */
 
+import { logger } from '@/infra/utils/logger'
 import type { SystemEventEnvelope, SystemEventName, Unsubscribe } from '@/infra/system-events'
 import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 import { PRODUCT_EVENTS } from './contracts/events'
@@ -23,7 +24,7 @@ let cleanupFns: Unsubscribe[] = []
 export function initAnalyticsSubscriber(): () => void {
   // Idempotent: only initialize once
   if (initialized) {
-    console.warn('[Analytics] Subscriber already initialized, skipping')
+    logger.warn('[Analytics] Subscriber already initialized, skipping')
     return () => cleanup()
   }
   initialized = true
@@ -37,14 +38,14 @@ export function initAnalyticsSubscriber(): () => void {
       try {
         handler(envelope)
       } catch (error) {
-        console.error(`[Analytics] Error handling ${event}:`, error)
+        logger.error({ err: error, event }, '[Analytics] Error handling event')
         // Never throw - fail-safe
       }
     })
   }
 
   // Subscribe to all system events (10 core + 9 exercise)
-  console.log('[Analytics] 🔄 Initializing system events subscriber...')
+  logger.info('[Analytics] 🔄 Initializing system events subscriber...')
   cleanupFns = [
     // Page & Session
     safeSubscribe(SYSTEM_EVENTS.PAGE_VIEWED, (envelope) => {
@@ -169,7 +170,6 @@ export function initAnalyticsSubscriber(): () => void {
         message_length?: number
         user_id?: string
       }
-      console.log(`[Analytics] 📥 RECEIVED: CHAT_MESSAGE_SUBMITTED`, payload)
       analytics.track(PRODUCT_EVENTS.CHAT_MESSAGE_SENT, {
         conversation_id: payload.conversation_id,
         message_type: payload.message_type,
@@ -626,10 +626,9 @@ export function initAnalyticsSubscriber(): () => void {
     }),
   ]
 
-  console.log(
-    '[Analytics] ✅ System events subscriber initialized with',
-    cleanupFns.length,
-    'handlers',
+  logger.info(
+    { handlerCount: cleanupFns.length },
+    '[Analytics] ✅ System events subscriber initialized',
   )
 
   return () => cleanup()

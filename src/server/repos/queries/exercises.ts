@@ -1,3 +1,4 @@
+import { logger } from '@/infra/utils/logger'
 import { cache } from 'react'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
@@ -34,7 +35,7 @@ export const queryExerciseById = cache(async ({ id }: { id: string }) => {
 
     return exercise
   } catch (error) {
-    console.error('Failed to query exercise by ID:', error)
+    logger.error({ err: error }, 'Failed to query exercise by ID')
     return null
   }
 })

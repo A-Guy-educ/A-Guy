@@ -1,3 +1,4 @@
+import { logger } from '@/infra/utils/logger'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { cache } from 'react'
@@ -60,7 +61,7 @@ export const queryAllPageSlugs = cache(async () => {
       .map(({ slug }) => ({ slug }))
   } catch (error) {
     // During build, MongoDB may not be connected - return empty array
-    console.warn('Failed to fetch page slugs, returning empty array:', error)
+    logger.warn({ err: error }, 'Failed to fetch page slugs, returning empty array')
     return []
   }
 })

@@ -1,3 +1,4 @@
+import { logger } from '@/infra/utils/logger'
 import { ENV, HEARTBEAT_INTERVAL_MS, LOCK_TIMEOUT_MS } from '@/server/config/constants'
 import config from '@payload-config'
 import { ObjectId, type Collection, type Document } from 'mongodb'
@@ -49,7 +50,7 @@ function heartbeatLoop(coll: Collection<JobDocument>, mongoId: ObjectId): () => 
       const result = await coll.updateOne({ _id: mongoId }, { $set: { lockExpiresAt: expiresAt } })
       if (result.matchedCount === 0) clearInterval(intervalId)
     } catch (error) {
-      console.error('[Heartbeat] Failed:', error)
+      logger.error({ err: error }, '[Heartbeat] Failed')
     }
   }, HEARTBEAT_INTERVAL_MS)
 

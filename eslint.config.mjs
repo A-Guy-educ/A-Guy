@@ -99,6 +99,26 @@ const eslintConfig = [
   },
 
   // =============================================================================
+  // Console Rules
+  // =============================================================================
+  // no-console — warn in staging, error after cleanup (blocked by --max-warnings=0 in lint-staged)
+  {
+    files: ['src/**/*.ts', 'src/**/*.tsx'],
+    ignores: [
+      'src/infra/qa/**', // QA dev tools - console expected
+      'src/infra/utils/test/**', // Test utilities
+      'src/infra/analytics/**', // Client-side analytics with own debugMode
+      'src/infra/system-events/**', // Client-side event bus
+      'src/ui/**', // Client-side React components
+      'src/app/(frontend)/**', // Client-side Next.js pages
+      'src/client/**', // Client-side hooks/state
+    ],
+    rules: {
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
+    },
+  },
+
+  // =============================================================================
   // Layer Boundary Rules
   // =============================================================================
   // UI layer - block server/services and server/repos imports (payload/ allowed)

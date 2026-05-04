@@ -9,6 +9,7 @@
  * - Optimistic concurrency support
  */
 
+import { logger } from '@/infra/utils/logger'
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import { z } from 'zod'
@@ -182,13 +183,15 @@ export async function PATCH(
     })) as ExerciseWithOwner
 
     // 12. Log successful edit (audit)
-    console.info('[exercise-block-patch] Block updated', {
-      userId: user.id,
-      exerciseId,
-      blockId,
-      blockType: (sanitizedBlock as { type?: string })?.type,
-      timestamp: new Date().toISOString(),
-    })
+    logger.info(
+      {
+        userId: user.id,
+        exerciseId,
+        blockId,
+        blockType: (sanitizedBlock as { type?: string })?.type,
+      },
+      '[exercise-block-patch] Block updated',
+    )
 
     // 13. Return updated block
     const updatedContent = updatedExercise.content as { blocks?: unknown[] } | undefined
@@ -201,7 +204,7 @@ export async function PATCH(
       data: updatedBlock,
     })
   } catch (error) {
-    console.error('[exercise-block-patch] Error:', error)
+    logger.error({ err: error }, '[exercise-block-patch] Error')
 
     return NextResponse.json(
       {

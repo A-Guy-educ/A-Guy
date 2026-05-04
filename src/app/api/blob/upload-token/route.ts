@@ -3,6 +3,7 @@
  * Vercel Blob client calls this to get a client token for direct uploads
  */
 
+import { logger } from '@/infra/utils/logger'
 import { handleUpload } from '@vercel/blob/client'
 import { getPayload } from 'payload'
 import { z } from 'zod'
@@ -127,7 +128,7 @@ export async function POST(request: Request): Promise<Response> {
           const { uploadSessionId } = payloadData
 
           if (!uploadSessionId) {
-            console.error('[handleUpload] Missing uploadSessionId in tokenPayload')
+            logger.error('[handleUpload] Missing uploadSessionId in tokenPayload')
             return
           }
 
@@ -142,9 +143,9 @@ export async function POST(request: Request): Promise<Response> {
             overrideAccess: true,
           })
 
-          console.log(`[handleUpload] Upload completed for session ${uploadSessionId}`)
+          logger.debug({ uploadSessionId }, '[handleUpload] Upload completed')
         } catch (error) {
-          console.error('[handleUpload] Error in onUploadCompleted:', error)
+          logger.error({ err: error }, '[handleUpload] Error in onUploadCompleted')
         }
       },
     })

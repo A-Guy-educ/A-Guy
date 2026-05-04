@@ -12,7 +12,7 @@
  *
  * // Subscribe to an event
  * useSystemEvent(SYSTEM_EVENTS.LESSON_STARTED, (envelope) => {
- *   console.log('Lesson started:', envelope.payload.lesson_id)
+ *   // e.g., console.log('Lesson started:', envelope.payload.lesson_id)
  * })
  * ```
  */

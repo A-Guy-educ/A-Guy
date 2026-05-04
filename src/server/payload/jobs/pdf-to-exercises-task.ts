@@ -2,6 +2,7 @@ import {
   getPdfConversionMaxExercisesPerSegment,
   getPdfConversionMaxSegmentPages,
 } from '@/infra/config/system-params'
+import { logger } from '@/infra/utils/logger'
 import { PDF_MAX_BYTES } from '@/server/config/constants'
 import { getPdfBufferFromBlob } from '@/server/services/pdf-fetcher'
 import { computeContentHash } from '@/server/utils/hash'
@@ -140,8 +141,9 @@ export const pdfToExercisesTask = {
 
           // Log dedup metrics
           if (dedupResult.droppedCount > 0) {
-            console.log(
-              `[PDF→Exercises] Segment ${i}: in-memory dedup dropped ${dedupResult.droppedCount} duplicate exercises`,
+            logger.debug(
+              { segmentIndex: i, droppedCount: dedupResult.droppedCount },
+              '[PDF→Exercises] Segment: in-memory dedup dropped duplicate exercises',
             )
           }
 
@@ -159,8 +161,14 @@ export const pdfToExercisesTask = {
             // Log idempotency key with content hash for correlation (observability)
             const normalizedInput = normalizeExerciseInput(exercise)
             const contentHash = computeContentHash(normalizedInput)
-            console.log(
-              `[PDF→Exercises] Exercise idempotencyKey=${idempotencyKey}, contentHash=${contentHash}, title="${exercise.title}", orderInSegment=${exercise.orderInSegment}`,
+            logger.debug(
+              {
+                idempotencyKey,
+                contentHash,
+                title: exercise.title,
+                orderInSegment: exercise.orderInSegment,
+              },
+              '[PDF→Exercises] Exercise idempotencyKey and contentHash for observability',
             )
 
             // Stage 4: Upsert by idempotencyKey (Last Wins Semantics)
@@ -344,7 +352,7 @@ export const pdfToExercisesTask = {
         cause?: { message?: string }
         name?: string
       }
-      console.error(`[PDF→Exercises] Job ${job.id} failed:`, error)
+      logger.error({ err: error, jobId: job.id }, '[PDF→Exercises] Job failed')
       await updateJobStatus(payload as unknown as { db: unknown }, job.id, 'failed', {
         ...output,
         error: err.message,
@@ -373,7 +381,7 @@ async function updateJobStatus(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const coll = db?.connection?.collection?.('payload-jobs') as any
   if (!coll) {
-    console.warn('[PDF→Exercises] Cannot update job status - jobs collection not accessible')
+    logger.warn('[PDF→Exercises] Cannot update job status - jobs collection not accessible')
     return
   }
 
@@ -390,7 +398,7 @@ async function updateJobStatus(
   try {
     await coll.updateOne({ _id: new ObjectId(jobId) }, { $set: update })
   } catch (err) {
-    console.error(`[PDF→Exercises] Failed to update job status:`, err)
+    logger.error({ err }, '[PDF→Exercises] Failed to update job status')
   }
 }
 
@@ -473,9 +481,14 @@ Return a JSON array of exercises with this schema:
   const minExpectedPerPage = 1 // At least 1 exercise per page on average
   const minExpected = Math.max(1, segment.pageEnd - segment.pageStart + 1) * minExpectedPerPage
   if (Array.isArray(rawExtracted) && rawExtracted.length < minExpected) {
-    console.warn(
-      `[PDF→Exercises] Segment pages ${segment.pageStart}-${segment.pageEnd}: ` +
-        `extracted only ${rawExtracted.length} exercises (expected ≥${minExpected}), retrying...`,
+    logger.warn(
+      {
+        pageStart: segment.pageStart,
+        pageEnd: segment.pageEnd,
+        extractedCount: rawExtracted.length,
+        minExpected,
+      },
+      `[PDF→Exercises] Segment pages ${segment.pageStart}-${segment.pageEnd}: extracted only ${rawExtracted.length} exercises (expected ≥${minExpected}), retrying...`,
     )
     const retryResult = await provider.generateMultimodalCompletion(
       {
@@ -529,8 +542,9 @@ Return JSON: { "valid": boolean, "reason": "..." }`
 
     // Skip invalid exercises instead of failing the job
     if (!verification.valid) {
-      console.warn(
-        `[PDF→Exercises] Skipping exercise "${exercise.title}" after retry: ${verification.reason}`,
+      logger.warn(
+        { exerciseTitle: exercise.title, reason: verification.reason },
+        '[PDF→Exercises] Skipping exercise after retry',
       )
       output.errors.push({
         stage: 'PASS2_VERIFY',
@@ -636,7 +650,10 @@ function validateExtractedExercises(
       skippedCount++
 
       // Log the validation error
-      console.warn(`[PDF→Exercises] Skipping invalid exercise ${i + 1}: ${result.error.message}`)
+      logger.warn(
+        { exerciseIndex: i + 1, error: result.error.message },
+        '[PDF→Exercises] Skipping invalid exercise',
+      )
 
       // Track in output.errors if output object is provided (mirrors verifier pattern)
       if (output?.errors) {
@@ -658,15 +675,23 @@ function validateExtractedExercises(
 
   // Log summary of validation failures instead of throwing
   if (validationErrors.length > 0) {
-    console.warn(
+    logger.warn(
+      {
+        pageStart: segment.pageStart,
+        pageEnd: segment.pageEnd,
+        failedCount: validationErrors.length,
+        totalCount: raw.length,
+        validCount: validated.length,
+      },
       `[PDF→Exercises] Segment ${segment.pageStart}-${segment.pageEnd}: ${validationErrors.length}/${raw.length} exercises failed validation, proceeding with ${validated.length} valid exercises`,
     )
   }
 
   // Enforce max exercises per segment limit
   if (validated.length > maxExercisesPerSegment) {
-    console.warn(
-      `[PDF→Exercises] Truncated exercises from ${validated.length} to ${maxExercisesPerSegment}`,
+    logger.warn(
+      { fromCount: validated.length, toCount: maxExercisesPerSegment },
+      '[PDF→Exercises] Truncated exercises',
     )
     validated.length = maxExercisesPerSegment
   }
@@ -710,7 +735,7 @@ async function convertMediaToAttachments(
         })
       }
     } catch (fetchError) {
-      console.warn(
+      logger.warn(
         { err: fetchError, mediaId: mediaPart.mediaId },
         '[PDF→Exercises] Failed to fetch media',
       )

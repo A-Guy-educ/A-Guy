@@ -1,3 +1,4 @@
+import { logger } from '@/infra/utils/logger'
 import { LOCK_TIMEOUT_MS } from '@/server/payload/jobs/constants'
 import { ObjectId, type Collection, type Document } from 'mongodb'
 import type { Payload } from 'payload'
@@ -24,9 +25,9 @@ export class JobService {
       null
 
     if (!collection) {
-      console.warn(
-        '[JobService] Could not access jobs collection. Available db keys:',
-        Object.keys(db || {}),
+      logger.warn(
+        { dbKeys: Object.keys(db || {}) },
+        '[JobService] Could not access jobs collection. Available db keys',
       )
     }
 
@@ -89,7 +90,7 @@ export class JobService {
     overrideTaskSlug?: string,
   ): Promise<JobWithStatus[]> {
     if (!this.collection) {
-      console.warn('[JobService.findByContext] No collection available')
+      logger.warn('[JobService.findByContext] No collection available')
       return []
     }
     const query: Record<string, unknown> = { taskSlug }

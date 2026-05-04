@@ -1,3 +1,4 @@
+import { logger } from '@/infra/utils/logger'
 import type { CollectionAfterChangeHook, CollectionAfterDeleteHook } from 'payload'
 
 import type { Post } from '@/payload-types'
@@ -10,7 +11,7 @@ async function revalidatePostPath(path: string, tag: string) {
     revalidateTag(tag)
   } catch (error) {
     // Silently fail if next/cache is not available (e.g., in non-Next.js contexts)
-    console.warn('Failed to revalidate:', error)
+    logger.warn({ err: error }, 'Failed to revalidate')
   }
 }
 

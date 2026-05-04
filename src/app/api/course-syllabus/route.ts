@@ -4,6 +4,7 @@
  * @pattern course-syllabus
  * @ai-summary Returns full syllabus (chapters + lessons) for a course
  */
+import { logger } from '@/infra/utils/logger'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
@@ -73,7 +74,7 @@ export async function GET(request: NextRequest) {
       },
     )
   } catch (error) {
-    console.error('[/api/course-syllabus]', error)
+    logger.error({ err: error }, '[/api/course-syllabus]')
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 })
   }
 }

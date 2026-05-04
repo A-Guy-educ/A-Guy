@@ -1,3 +1,4 @@
+import { logger } from '@/infra/utils/logger'
 import type { Access, CollectionConfig } from 'payload'
 
 import { AccountRole, isAdvancedContentEditor } from '@/infra/auth/roles'
@@ -321,10 +322,7 @@ export const Exercises: CollectionConfig = {
             const result = ContentSchema.safeParse(value)
             if (result.success) return true
             // Log full error for server-side debugging
-            console.error(
-              '[Exercise content validation]',
-              JSON.stringify(result.error.issues, null, 2),
-            )
+            logger.error({ validationIssues: result.error.issues }, '[Exercise content validation]')
             const issues = result.error.issues
               .map((i) => `[${i.path.join('.')}] ${i.message}`)
               .join('; ')

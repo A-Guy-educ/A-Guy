@@ -337,7 +337,8 @@ export async function extractLessonContext(
       warnings: warnings.length > 0 ? warnings : undefined,
     }
   } catch (error) {
-    console.error('[extractLessonContext] Error:', error)
+    const { logger } = await import('@/infra/utils/logger')
+    logger.error({ err: error }, '[extractLessonContext] Error')
 
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
 
