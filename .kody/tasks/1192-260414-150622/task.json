@@ -1,0 +1,39 @@
+Based on my thorough analysis, I've identified the likely root cause of the issue. Here's my assessment:
+
+## Summary
+
+The test `navigate-lesson-direct` seeds a lesson with `title: "Direct Lesson"` but **no blocks, exercises, or content files**. When the lesson page renders:
+
+1. `hasBlocks = false` (no blocks in `queryLessonBlocks`)
+2. Goes to legacy path where `hasExercises = false` and `hasContent = false`
+3. Renders `ExerciseWorkspace` with `EmptyLessonPlaceholder`
+4. The `ExerciseHeader` should display `exerciseTitle={lesson.title}` ("Direct Lesson")
+
+## Most Likely Root Cause
+
+**`queryLessonBySlug` is returning `null`**, causing `notFound()` to be called and showing a 404 page instead of the lesson content.
+
+This would explain why:
+- `beAt` passes (URL contains `/lessons/` - both lesson URLs and 404 pages have this path)
+- `see` fails ("Direct Lesson" isn't on a 404 page)
+
+The `queryLessonBySlug` function validates the lesson's chapter and course hierarchy. If the chapter or course fails validation (e.g., `status !== 'published'` or `isActive !== true`), it returns `null`.
+
+## Key Finding: Related Bug in Git History
+
+There's an integration test at `tests/int/lesson-query-hierarchy-safety.int.spec.ts` that documents a previous bug where `queryLessonBySlug` would **throw** instead of returning `null` when parent hierarchy was invalid. The fix added `disableErrors: true` to the `findByID` calls.
+
+However, this suggests there may still be edge cases where the query returns `null` unexpectedly.
+
+## Recommended Fix
+
+The test seeds a lesson with no content, which renders an empty state. The issue is that `queryLessonBySlug` may be failing to find the seeded lesson due to:
+
+1. A slug mismatch between what's stored and what's queried
+2. The chapter/course hierarchy validation failing
+3. The `contentStatus` query condition filtering out the lesson
+
+**Suggested investigation:**
+- Add debug logging to `queryLessonBySlug` to see what's being queried and what results
+- Verify the seeded lesson's data in the database matches expectations
+- Consider whether the test should seed a lesson **with** content (exercises or blocks) so it renders properly via `LessonPager` or `ExercisesPager` instead of the empty `ExerciseWorkspace`

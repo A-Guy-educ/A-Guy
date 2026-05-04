@@ -1,0 +1,25 @@
+The fix is complete. Here's a summary of the changes:
+
+## Summary
+
+**Problem:** The `navigate-lesson-direct` test seeds a lesson with no blocks and no exercises. When the lesson page renders, it uses the `ExerciseWorkspace` with `EmptyLessonPlaceholder`, which previously did not display the lesson title prominently.
+
+**Fix:** Updated `EmptyLessonPlaceholder` to accept a `lessonTitle` prop and display it prominently.
+
+### Changes Made:
+
+1. **`src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/EmptyLessonPlaceholder/index.tsx`**
+   - Added `lessonTitle: string` prop
+   - Now displays the lesson title in an `h2` tag with prominent styling (`text-heading-lg font-bold`)
+   - Uses design system tokens (`gap-content-gap-lg`, `p-card-padding-lg`)
+
+2. **`src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/page.tsx`**
+   - Passes `lessonTitle={lesson.title}` to `EmptyLessonPlaceholder`
+
+### Verification:
+- TypeScript: ✓ passes
+- Lint: ✓ passes (only pre-existing warnings in unrelated files)
+- Format: ✓ passes
+- Integration tests: ✓ pass (`lesson-query-hierarchy-safety.int.spec.ts`)
+
+The test `navigate-lesson-direct` will now find "Direct Lesson" visible on the page when the lesson has no content.
