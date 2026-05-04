@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "rev": 122,
-  "cursor": "dry-run-scan-v100",
+  "rev": 123,
+  "cursor": "dry-run-scan-v101",
   "data": {
     "perIssue": {},
     "dryRunLog": [
@@ -28,6 +28,30 @@
         "action": "skip",
         "reason": "Open kody-authored PR #1383 linked in state comment (prUrl field). Filter: 'no open kody-authored PR' → drop. kody:done label present but PR still open (merged=null). Last history: 2026-04-28T14:45:08.322Z (~6d old). No fresh kody comment (<40min). Dry-run: no action taken.",
         "plannedAt": "2026-05-04T11:00:00Z"
+      },
+      {
+        "issueNumber": 1397,
+        "action": "skip",
+        "reason": "core.status=running, lastOutcome=2026-05-04T08:54:35.149Z (~12min old) < 40min threshold → drop. Filter: 'history timestamp > 40min' not met. No in-progress run. Open kody PR #1400 by aguyaharonyair. Fresh kody comment by aguyaharonyair at 08:54:37Z (~12min ago). Dry-run: no action taken.",
+        "plannedAt": "2026-05-04T09:06:58Z"
+      },
+      {
+        "issueNumber": 1396,
+        "action": "skip",
+        "reason": "core.status=running, lastOutcome=2026-05-04T08:58:36.607Z (~8min old) < 40min threshold → drop. Filter: 'history timestamp > 40min' not met. In-progress workflow run 25310471037. Open kody PR #1401 by aguyaharonyair. Fresh kody comment by aguyaharonyair at 08:58:39Z (~8min ago). Dry-run: no action taken.",
+        "plannedAt": "2026-05-04T09:06:58Z"
+      },
+      {
+        "issueNumber": 1395,
+        "action": "skip",
+        "reason": "core.status=running, lastOutcome=2026-05-04T08:47:10.068Z (~20min old) < 40min threshold → drop. Filter: 'history timestamp > 40min' not met. Fresh kody comment (flow finished) by aguyaharonyair at 08:49:33Z (~17min ago). Dry-run: no action taken.",
+        "plannedAt": "2026-05-04T09:06:58Z"
+      },
+      {
+        "issueNumber": 1380,
+        "action": "skip",
+        "reason": "Open kody-authored PR #1384 linked in state comment (prUrl field). Filter: 'no open kody-authored PR' → drop. kody:done label present but PR still open (merged=null). Last history: 2026-04-28T15:41:13.098Z (~6d old). No fresh kody comment (<40min). Dry-run: no action taken.",
+        "plannedAt": "2026-05-04T09:06:58Z"
       }
     ]
   },
