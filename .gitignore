@@ -82,3 +82,8 @@ latex_examples/
 .kody/graph/*.tmp.*
 .kody/graph/episodes/*.bak
 .kody/graph/episodes/*.tmp.*
+
+# kody mission state — durable across runs via the local-file backend's
+# Actions cache snapshot (see kody.config.json missions.stateBackend).
+# Tracked-file commits would re-introduce the churn this design eliminates.
+.kody/missions/*.state.json
