@@ -17,6 +17,8 @@ interface Strings {
   registrationWeek: string
   registrationMonth: string
   registrationTotal: string
+  registeredLastWeek: string
+  registeredLastMonth: string
   vsPrior: string
 
   anonymousVisitors: string
@@ -68,6 +70,8 @@ const EN: Strings = {
   registrationWeek: 'This week',
   registrationMonth: 'This month',
   registrationTotal: 'Total',
+  registeredLastWeek: 'Last Week',
+  registeredLastMonth: 'Last Month',
   vsPrior: 'vs prior',
 
   anonymousVisitors: 'Anonymous visitors',
@@ -122,6 +126,8 @@ const HE: Strings = {
   registrationWeek: 'השבוע',
   registrationMonth: 'החודש',
   registrationTotal: 'סה״כ',
+  registeredLastWeek: 'שבוע קודם',
+  registeredLastMonth: 'חודש קודם',
   vsPrior: 'לעומת התקופה הקודמת',
 
   anonymousVisitors: 'מבקרים אנונימיים',

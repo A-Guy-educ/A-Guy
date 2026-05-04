@@ -99,12 +99,8 @@ export default buildConfig({
       beforeLogin: ['@/ui/admin/BeforeLogin'],
       // The `BeforeDashboard` component renders the 'welcome' block that you see after logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below.
-      beforeDashboard: [
-        '@/ui/admin/ConversionTracking/DashboardWidgets',
-        '@/ui/admin/AdminChat/DashboardWidget',
-        '@/ui/admin/VersionInfo',
-      ],
-      beforeNavLinks: ['@/ui/admin/AdminChat/SidebarLink', '@/ui/admin/PdfConversion/SidebarLink'],
+      beforeDashboard: ['@/ui/admin/ConversionTracking/DashboardWidgets', '@/ui/admin/VersionInfo'],
+      beforeNavLinks: ['@/ui/admin/PdfConversion/SidebarLink'],
       afterNavLinks: ['@/ui/admin/UserEmail'],
     },
     importMap: {
