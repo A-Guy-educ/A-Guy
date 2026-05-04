@@ -443,7 +443,8 @@
       "chatWelcome": "Hi! I'm your admin AI assistant. Ask me about courses, chapters, lessons, exercises, or media in your system.",
       "chatInputPlaceholder": "Ask a question...",
       "chatAuthRequired": "Please log in to access admin chat"
-    }
+    },
+    "chatLink": "Chat with AI"
   },
   "accessControl": {
     "mandatoryTitle": "Sign in Required",
