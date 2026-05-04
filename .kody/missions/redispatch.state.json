@@ -1,14 +1,14 @@
 {
   "version": 1,
-  "rev": 118,
-  "cursor": "dry-run-scan-v96",
+  "rev": 119,
+  "cursor": "dry-run-scan-v97",
   "data": {
     "perIssue": {
       "1351": {
         "lastResumedAt": "2026-05-04T10:00:00Z",
         "lastResumedHistoryTimestamp": "2026-04-27T20:30:49.170Z",
         "attemptsToday": 1,
-        "stuck": false
+        "stuck": true
       },
       "1360": {
         "lastResumedAt": "2026-05-03T22:25:00Z",
@@ -30,6 +30,18 @@
       }
     },
     "dryRunLog": [
+      {
+        "issueNumber": 1351,
+        "action": "mark-stuck",
+        "reason": "perIssue[1351].stuck=false, attemptsToday=1 (same UTC day as lastResumedAt, no reset). currentHistoryTs=2026-04-27T20:30:49Z === lastResumedHistoryTs. State did not advance after prior resume. No fresh kody comment (<40min). Marking stuck (dry-run).",
+        "plannedAt": "2026-05-04T03:54:12Z"
+      },
+      {
+        "issueNumber": null,
+        "action": "scan",
+        "reason": "Full scan of open issues. Candidates with kody state v1 blocks: #1351 (core.status=running, stuck=false, attemptsToday=1, 7d stale), #1360 (core.status=running, stuck=true, attemptsToday=0 reset), #1363 (core.status=running, stuck=true, attemptsToday=0 reset), #1382 (core.status=running, stuck=true, attemptsToday=0 reset). #1351: attemptsToday>=1, history unchanged → mark-stuck (dry-run). #1360/#1363/#1382: stuck=true → skip. No exclusion labels present. No kody comments <40min. No active workflow runs. 1 mark-stuck logged (dry-run).",
+        "plannedAt": "2026-05-04T03:54:12Z"
+      },
       {
         "issueNumber": 1363,
         "action": "mark-stuck",
