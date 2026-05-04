@@ -369,7 +369,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
             <ExerciseWorkspace
               exerciseTitle={lesson.title}
               backUrl={backUrl}
-              primaryContent={<EmptyLessonPlaceholder />}
+              primaryContent={<EmptyLessonPlaceholder lessonTitle={lesson.title} />}
               chatContent={
                 showChat ? (
                   <ChatInterface
