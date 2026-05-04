@@ -347,6 +347,117 @@ describe.skipIf(!hasDatabaseUrl)('Genkit adapter message structure', () => {
     })
   })
 
+  describe('generateChatCompletionWithTools', () => {
+    it('passes structured messages instead of concatenated string', async () => {
+      resetMocks()
+      const adapter = await createGenkitUnifiedAdapter(payload)
+      const conversationHistory = [
+        { role: 'user' as const, content: 'First question' },
+        { role: 'assistant' as const, content: 'First answer' },
+      ]
+
+      await adapter.generateChatCompletionWithTools(
+        {
+          system: 'You are a helpful assistant.',
+          messages: conversationHistory,
+          model: createTestModel(),
+          acknowledgment: 'ack',
+          tools: [],
+          toolExecutor: vi.fn() as never,
+        },
+        payload,
+      )
+
+      expect(mockGenerate).toHaveBeenCalled()
+      const callArgs = mockGenerate.mock.calls[0][0]
+
+      // CRITICAL: messages should be an array, NOT a string
+      expect(callArgs.messages).toBeDefined()
+      expect(Array.isArray(callArgs.messages)).toBe(true)
+      expect(callArgs.prompt).toBeUndefined()
+    })
+
+    it('maps assistant role to model role for tool-calling', async () => {
+      resetMocks()
+      const adapter = await createGenkitUnifiedAdapter(payload)
+      const conversationHistory = [
+        { role: 'user' as const, content: 'Hello' },
+        { role: 'assistant' as const, content: 'Hi there!' },
+      ]
+
+      await adapter.generateChatCompletionWithTools(
+        {
+          system: 'Test system prompt',
+          messages: conversationHistory,
+          model: createTestModel(),
+          acknowledgment: 'ack',
+          tools: [],
+          toolExecutor: vi.fn() as never,
+        },
+        payload,
+      )
+
+      const callArgs = mockGenerate.mock.calls[0][0]
+      const modelMessages = callArgs.messages.filter((m: { role: string }) => m.role === 'model')
+      expect(modelMessages.length).toBeGreaterThan(0)
+    })
+
+    it('preserves system message as first message', async () => {
+      resetMocks()
+      const adapter = await createGenkitUnifiedAdapter(payload)
+      const systemPrompt = 'You are a math tutor with tools.'
+
+      await adapter.generateChatCompletionWithTools(
+        {
+          system: systemPrompt,
+          messages: [{ role: 'user' as const, content: 'Hello' }],
+          model: createTestModel(),
+          acknowledgment: 'ack',
+          tools: [],
+          toolExecutor: vi.fn() as never,
+        },
+        payload,
+      )
+
+      const callArgs = mockGenerate.mock.calls[0][0]
+      expect(callArgs.messages[0].role).toBe('system')
+      expect(callArgs.messages[0].content[0].text).toBe(systemPrompt)
+    })
+
+    it('includes conversation history in correct order', async () => {
+      resetMocks()
+      const adapter = await createGenkitUnifiedAdapter(payload)
+      const conversationHistory = [
+        { role: 'user' as const, content: 'Question 1' },
+        { role: 'assistant' as const, content: 'Answer 1' },
+        { role: 'user' as const, content: 'Question 2' },
+        { role: 'assistant' as const, content: 'Answer 2' },
+      ]
+
+      await adapter.generateChatCompletionWithTools(
+        {
+          system: 'System prompt',
+          messages: conversationHistory,
+          model: createTestModel(),
+          acknowledgment: 'ack',
+          tools: [],
+          toolExecutor: vi.fn() as never,
+        },
+        payload,
+      )
+
+      const callArgs = mockGenerate.mock.calls[0][0]
+      const allText = callArgs.messages
+        .map((m: { content: Array<{ text: string }> }) => m.content[0]?.text)
+        .join(' ')
+
+      expect(allText).toContain('Question 1')
+      expect(allText).toContain('Answer 1')
+      expect(allText).toContain('Question 2')
+      expect(allText).toContain('Answer 2')
+    })
+  })
+
   describe('role mapping', () => {
     it('maps user role correctly', async () => {
       resetMocks()
