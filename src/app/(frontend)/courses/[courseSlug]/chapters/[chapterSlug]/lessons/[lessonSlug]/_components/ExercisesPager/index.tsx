@@ -300,6 +300,7 @@ export function ExercisesPager({
                   <span className="text-[10px] text-muted-foreground/50 hidden sm:block">← →</span>
                 </div>
                 <Button
+                  variant="default"
                   onClick={handleNext}
                   disabled={!canGoNext || isNavigating}
                   aria-label="Next page"
