@@ -12,28 +12,31 @@ A PR enters this mission's scope as soon as it becomes ready for review (non-dra
 
 ## Restrictions
 
-- Only act when the PR's CI status is `failure`. Do not act on PRs that are passing, pending, draft, merged, or closed.
+- Only act when the PR's CI rollup is failing — at least one check is `FAILURE`/`TIMED_OUT` and no checks are still `IN_PROGRESS`/`QUEUED`. Skip passing, pending, draft, merged, closed.
 - Do not modify the issue, the PR body, the PR title, labels (except as instructed below), or any code.
 - Do not re-issue `@kody fix-ci` on the same head SHA more than 2 times.
-- After 2 failed attempts on a SHA: post the comment `kody fix-ci stuck — needs human` on the PR, add the label `kody:stuck-ci`, and skip the PR until its head SHA changes or the label is removed.
-- One action per tick per PR. Do not loop within a single tick.
+- After 2 failed attempts on a SHA: post `kody fix-ci stuck — needs human` and add label `kody:stuck-ci`; skip until SHA changes or label is removed.
 
-## State
+## Tick procedure — REQUIRED
+
+This tick is **fully scripted**. The script [auto-fix-ci-tick.sh](.kody/scripts/auto-fix-ci-tick.sh) is the **single source of truth** for which PRs are candidates, what state mutations to make, and which comments to post.
+
+Other missions in this repo silently dropped candidates or hallucinated PR state when driven by prose iteration alone. The script removes that failure mode entirely.
+
+You **MUST**:
+
+1. Run exactly: `bash .kody/scripts/auto-fix-ci-tick.sh`
+2. Emit the script's stdout verbatim — including the markdown summary table and the `kody-mission-next-state` fenced block at the end.
+
+You **MUST NOT**:
+
+- Call `gh pr list` yourself.
+- Filter, decide actions, post comments, or mutate state outside the script.
+- Use any prior knowledge of PR numbers in this repo. The script's output is your only data source for this tick.
+- Re-run the script (it has side effects). One invocation per tick.
+
+If the script exits non-zero, surface its stderr and emit a state block with the prior `perPr` unchanged so progress isn't lost.
+
+## State shape
 
 `data.perPr` is a map of PR number → `{ lastSha: string, attempts: number, stuck: boolean }`.
-
-On tick start:
-1. Read `data.perPr` from prior state (default `{}`).
-2. List candidate PRs: `gh pr list --state open --json number,isDraft,headRefOid,mergeable,statusCheckRollup`.
-3. Filter to non-draft PRs whose latest commit status rollup is `FAILURE`.
-
-For each candidate PR `n` with current head SHA `currentSha`:
-- If `perPr[n]?.lastSha !== currentSha`: reset `perPr[n] = { lastSha: currentSha, attempts: 0, stuck: false }`.
-- If `perPr[n].stuck === true`: skip.
-- If `perPr[n].attempts >= 2`: set `perPr[n].stuck = true`, post stuck comment, add `kody:stuck-ci` label, skip.
-- Otherwise: comment `@kody fix-ci` on the PR, set `perPr[n].lastSha = currentSha`, increment `perPr[n].attempts`.
-
-Garbage collection:
-- Drop entries from `data.perPr` whose PR is no longer in the open, non-draft candidate set (merged, closed, or returned to draft).
-
-On tick end: emit the updated `data.perPr` inside the next state block.
