@@ -1,9 +1,40 @@
 {
   "version": 1,
-  "rev": 173,
-  "cursor": "auto-fix-ci-2026-05-05T10:14:50Z",
+  "rev": 174,
+  "cursor": "auto-fix-ci-2026-05-05T11:05:21Z",
   "data": {
-    "perPr": {}
+    "perPr": {
+      "1285": {
+        "lastSha": "dd22d24bf433e7e0fe3802646f5cdeff8c47a093",
+        "attempts": 1,
+        "stuck": false
+      },
+      "1364": {
+        "lastSha": "2dab46f8f71dd2d250dc5a5248bc487a6de67a9f",
+        "attempts": 1,
+        "stuck": false
+      },
+      "1366": {
+        "lastSha": "a9effd7c4e1fe31f25583a1e5eb5d38c866d3424",
+        "attempts": 1,
+        "stuck": false
+      },
+      "1400": {
+        "lastSha": "423f410932c7545dcea8d4988c237a6456d11e05",
+        "attempts": 1,
+        "stuck": false
+      },
+      "1401": {
+        "lastSha": "21beba5423f2d85d43c57476125f1def440c7d88",
+        "attempts": 1,
+        "stuck": false
+      },
+      "1404": {
+        "lastSha": "00c805cb7ac59a13e03f037d19f8ec9529e01899",
+        "attempts": 1,
+        "stuck": false
+      }
+    }
   },
   "done": false
 }
