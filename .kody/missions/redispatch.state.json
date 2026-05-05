@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "rev": 123,
-  "cursor": "dry-run-scan-v101",
+  "rev": 124,
+  "cursor": "dry-run-scan-v102",
   "data": {
     "perIssue": {},
     "dryRunLog": [
