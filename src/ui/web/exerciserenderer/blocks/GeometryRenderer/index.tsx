@@ -16,15 +16,14 @@ const JSXGraphBoard = dynamic(
 interface GeometryRendererProps {
   blockId: string
   spec: GeometrySpecV1
-  labelSize?: 'default' | 'small'
 }
 
-export function GeometryRenderer({ blockId, spec, labelSize }: GeometryRendererProps) {
+export function GeometryRenderer({ blockId, spec }: GeometryRendererProps) {
   const handleBoardReady = useCallback(
     (board: JXG.Board) => {
-      renderGeometrySpec(board, spec, labelSize)
+      renderGeometrySpec(board, spec)
     },
-    [spec, labelSize],
+    [spec],
   )
 
   const { canvas } = spec

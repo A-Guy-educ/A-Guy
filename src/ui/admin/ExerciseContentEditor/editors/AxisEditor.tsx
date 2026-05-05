@@ -1,12 +1,7 @@
 'use client'
 
 import React, { useCallback } from 'react'
-import { useTranslation } from '@payloadcms/ui'
-import type {
-  QuestionAxisBlock,
-  GraphLayout,
-  LabelSize,
-} from '@/server/payload/collections/Exercises/types'
+import type { QuestionAxisBlock, GraphLayout } from '@/server/payload/collections/Exercises/types'
 import type { AxisSpecV1 } from '@/infra/contracts/graphics/axis.v1'
 import { InlineRichTextEditor } from './InlineRichTextEditor'
 import { AxisCanvas } from '../components/axis/AxisCanvas'
@@ -18,7 +13,6 @@ import { LineBetweenPointsPanel } from '../components/axis/LineBetweenPointsPane
 import { PaintPanel } from '../components/axis/PaintPanel'
 import { LociPanel } from '../components/axis/LociPanel'
 import { CollapsibleSection } from '@/ui/admin/shared/CollapsibleSection'
-import { getEditorStrings } from '../strings'
 
 interface AxisEditorProps {
   block: QuestionAxisBlock
@@ -26,8 +20,6 @@ interface AxisEditorProps {
 }
 
 export const AxisEditor: React.FC<AxisEditorProps> = ({ block, onChange }) => {
-  const { i18n } = useTranslation()
-  const s = getEditorStrings(i18n.language)
   const spec = block.axis
 
   const updateAxis = useCallback(
@@ -72,22 +64,6 @@ export const AxisEditor: React.FC<AxisEditorProps> = ({ block, onChange }) => {
               <option value="medium">Medium (50%)</option>
               <option value="large">Large (75%)</option>
               <option value="full">Full Width (100%)</option>
-            </select>
-          </div>
-          <div className="panel-field">
-            <span className="panel-field-label">{s.labelSize}</span>
-            <select
-              className="panel-field-select"
-              value={block.labelSize || 'default'}
-              onChange={(e) =>
-                onChange({
-                  ...block,
-                  labelSize: e.target.value as LabelSize,
-                })
-              }
-            >
-              <option value="default">{s.labelSizeDefault}</option>
-              <option value="small">{s.labelSizeSmall}</option>
             </select>
           </div>
         </div>

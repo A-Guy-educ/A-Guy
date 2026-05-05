@@ -28,20 +28,14 @@ interface AxisRendererProps {
   blockId: string
   spec: AxisSpecV1
   displaySize?: DisplaySize
-  labelSize?: 'default' | 'small'
 }
 
-export function AxisRenderer({
-  blockId,
-  spec,
-  displaySize = 'full',
-  labelSize,
-}: AxisRendererProps) {
+export function AxisRenderer({ blockId, spec, displaySize = 'full' }: AxisRendererProps) {
   const handleBoardReady = useCallback(
     (board: JXG.Board) => {
-      renderAxisSpec(board, spec, labelSize)
+      renderAxisSpec(board, spec)
     },
-    [spec, labelSize],
+    [spec],
   )
 
   const boundingBox = useMemo<[number, number, number, number]>(() => {

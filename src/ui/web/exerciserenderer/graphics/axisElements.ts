@@ -28,11 +28,11 @@ function renderGraphs(
   }
 }
 
-function renderAxisPoints(board: JXG.Board, points: PointSpec[], labelSize?: 'default' | 'small') {
+function renderAxisPoints(board: JXG.Board, points: PointSpec[]) {
   for (const p of points) {
     if (p.type === 'floating_text') {
       board.create('text', [p.x, p.y, p.label || ''], {
-        fontSize: labelSize === 'small' ? 11 : 14,
+        fontSize: 14,
         anchorX: 'middle',
         anchorY: 'middle',
         fontFamily: 'Times New Roman',
@@ -125,13 +125,9 @@ function renderLineBetweenPoints(
 /**
  * Render all axis elements from an AxisSpecV1 onto a JSXGraph board.
  */
-export function renderAxisSpec(
-  board: JXG.Board,
-  spec: AxisSpecV1,
-  labelSize?: 'default' | 'small',
-): void {
+export function renderAxisSpec(board: JXG.Board, spec: AxisSpecV1): void {
   renderGraphs(board, spec.elements.graphs, spec.viewport)
-  renderAxisPoints(board, spec.elements.points, labelSize)
+  renderAxisPoints(board, spec.elements.points)
 
   if (spec.elements.asymptotesVertical?.length) {
     renderVerticalAsymptotes(board, spec.elements.asymptotesVertical)

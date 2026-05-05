@@ -1,11 +1,9 @@
 'use client'
 
 import React, { useCallback } from 'react'
-import { useTranslation } from '@payloadcms/ui'
 import type {
   QuestionGeometryBlock,
   GraphLayout,
-  LabelSize,
 } from '@/server/payload/collections/Exercises/types'
 import type { GeometrySpecV1 } from '@/infra/contracts/graphics/geometry.v1'
 import { CollapsibleSection } from '@/ui/admin/shared/CollapsibleSection'
@@ -19,7 +17,6 @@ import { ShapesPanel } from '../components/geometry/ShapesPanel'
 import { TextsPanel } from '../components/geometry/TextsPanel'
 import { VectorsPanel } from '../components/geometry/VectorsPanel'
 import { InlineRichTextEditor } from './InlineRichTextEditor'
-import { getEditorStrings } from '../strings'
 
 interface GeometryEditorProps {
   block: QuestionGeometryBlock
@@ -27,8 +24,6 @@ interface GeometryEditorProps {
 }
 
 export const GeometryEditor: React.FC<GeometryEditorProps> = ({ block, onChange }) => {
-  const { i18n } = useTranslation()
-  const s = getEditorStrings(i18n.language)
   const geo = block.geometry
 
   const updateGeo = useCallback(
@@ -126,18 +121,6 @@ export const GeometryEditor: React.FC<GeometryEditorProps> = ({ block, onChange 
           <option value="textBelow">Text Below, Graph Above</option>
           <option value="textLeft">Text Left, Graph Right</option>
           <option value="textRight">Text Right, Graph Left</option>
-        </select>
-      </div>
-
-      <div className="question-editor-section">
-        <label className="question-editor-label">{s.labelSize}</label>
-        <select
-          className="w-full p-2 border border-input rounded-md bg-background text-foreground"
-          value={block.labelSize || 'default'}
-          onChange={(e) => onChange({ ...block, labelSize: e.target.value as LabelSize })}
-        >
-          <option value="default">{s.labelSizeDefault}</option>
-          <option value="small">{s.labelSizeSmall}</option>
         </select>
       </div>
 
