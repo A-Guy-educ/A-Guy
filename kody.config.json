@@ -19,7 +19,7 @@
   "release": {
     "releaseBranch": "main",
     "versionFiles": ["package.json"],
-    "notifyCommand": "NOTIFY_RESULT=always NOTIFY_VERSION=$VERSION pnpm tsx scripts/kody/notify.ts --agent release-publisher --channels slack --when always --color good --title \"🚀 A-Guy v$VERSION released\" --body \"Release $VERSION finalized — https://github.com/A-Guy-educ/A-Guy/releases/tag/v$VERSION\"",
+    "notifyCommand": "NOTIFY_RESULT=always NOTIFY_VERSION=$VERSION pnpm tsx scripts/kody/notify.ts --agent release-publisher --channels slack --when always --color good --title \"🚀 A-Guy v$VERSION released\" --body \"$(gh pr view $DEPLOY_PR_URL --json body --jq .body 2>/dev/null || echo \"Release $VERSION finalized — $DEPLOY_PR_URL\")\"",
     "e2eCommand": "npx tsx scripts/release-e2e-gate.ts",
     "timeoutMs": 1800000
   },
