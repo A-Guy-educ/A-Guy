@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "rev": 123,
-  "cursor": "dry-run-scan-v101",
+  "rev": 126,
+  "cursor": "redispatch-2026-05-05T09:34:53Z",
   "data": {
     "perIssue": {},
     "dryRunLog": [
@@ -14,13 +14,13 @@
       {
         "issueNumber": 1360,
         "action": "skip",
-        "reason": "Open kody-authored PR #1366 linked in state comment (prUrl field). Filter: 'no open kody-authored PR' → drop. kody:done label present but PR still open (merged=null). Last history: 2026-04-27T09:58:29.549Z (~7d old). No fresh kody comment (<40min). Dry-run: no action taken.",
+        "reason": "Open kody-authored PR #1366 linked in state comment (prUrl field). Filter: 'no open kody-authored PR' → drop. kody:done label present but PR still open (merged=null). Last history: 2026-04-27T09:58:29.549Z (~8d old). No fresh kody comment (<40min). Dry-run: no action taken.",
         "plannedAt": "2026-05-04T11:00:00Z"
       },
       {
         "issueNumber": 1363,
         "action": "skip",
-        "reason": "Open kody-authored PR #1364 linked in state comment (prUrl field). Filter: 'no open kody-authored PR' → drop. kody:done label present but PR still open (merged=null). Last history: 2026-04-27T09:49:12.100Z (~7d old). No fresh kody comment (<40min). Dry-run: no action taken.",
+        "reason": "Open kody-authored PR #1364 linked in state comment (prUrl field). Filter: 'no open kody-authored PR' → drop. kody:done label present but PR still open (merged=null). Last history: 2026-04-27T09:49:12.100Z (~8d old). No fresh kody comment (<40min). Dry-run: no action taken.",
         "plannedAt": "2026-05-04T11:00:00Z"
       },
       {
@@ -32,26 +32,44 @@
       {
         "issueNumber": 1397,
         "action": "skip",
-        "reason": "core.status=running, lastOutcome=2026-05-04T08:54:35.149Z (~12min old) < 40min threshold → drop. Filter: 'history timestamp > 40min' not met. No in-progress run. Open kody PR #1400 by aguyaharonyair. Fresh kody comment by aguyaharonyair at 08:54:37Z (~12min ago). Dry-run: no action taken.",
+        "reason": "core.status=succeeded → not running. Filter: 'core.status === running' not met. Last history: 2026-05-04T09:16:24.638Z. kody:done label present. Dry-run: no action taken.",
         "plannedAt": "2026-05-04T09:06:58Z"
       },
       {
         "issueNumber": 1396,
         "action": "skip",
-        "reason": "core.status=running, lastOutcome=2026-05-04T08:58:36.607Z (~8min old) < 40min threshold → drop. Filter: 'history timestamp > 40min' not met. In-progress workflow run 25310471037. Open kody PR #1401 by aguyaharonyair. Fresh kody comment by aguyaharonyair at 08:58:39Z (~8min ago). Dry-run: no action taken.",
+        "reason": "core.status=succeeded → not running. Filter: 'core.status === running' not met. Last history: 2026-05-04T09:09:20.936Z. kody:done label present. Dry-run: no action taken.",
         "plannedAt": "2026-05-04T09:06:58Z"
       },
       {
         "issueNumber": 1395,
         "action": "skip",
-        "reason": "core.status=running, lastOutcome=2026-05-04T08:47:10.068Z (~20min old) < 40min threshold → drop. Filter: 'history timestamp > 40min' not met. Fresh kody comment (flow finished) by aguyaharonyair at 08:49:33Z (~17min ago). Dry-run: no action taken.",
-        "plannedAt": "2026-05-04T09:06:58Z"
+        "reason": "core.status=running, lastOutcome=2026-05-04T08:47:10.068Z (~24h old) > 40min threshold. No in-progress run. Open kody PR #1399 by aguyaharonyair. No fresh kody comment (<40min). Filter: 'no open kody-authored PR' → drop. Dry-run: no action taken.",
+        "plannedAt": "2026-05-05T09:06:58Z"
       },
       {
         "issueNumber": 1380,
         "action": "skip",
-        "reason": "Open kody-authored PR #1384 linked in state comment (prUrl field). Filter: 'no open kody-authored PR' → drop. kody:done label present but PR still open (merged=null). Last history: 2026-04-28T15:41:13.098Z (~6d old). No fresh kody comment (<40min). Dry-run: no action taken.",
+        "reason": "Issue #1380 is CLOSED (2026-05-04T11:23:37Z). Per-issue entry garbage collected from perIssue. Dry-run: no action taken.",
         "plannedAt": "2026-05-04T09:06:58Z"
+      },
+      {
+        "issueNumber": 1363,
+        "action": "skip",
+        "reason": "core.status=running, lastOutcome=2026-04-27T09:49:12.100Z (~8d old) > 40min threshold. No in-progress run. Open kody PR #1364 by aguyaharonyair. No fresh kody comment (<40min). Filter: 'no open kody-authored PR' → drop. Dry-run: no action taken.",
+        "plannedAt": "2026-05-05T09:06:58Z"
+      },
+      {
+        "issueNumber": 1360,
+        "action": "skip",
+        "reason": "core.status=running, lastOutcome=2026-04-27T09:58:29.549Z (~8d old) > 40min threshold. No in-progress run. Open kody PR #1366 by aguyaharonyair. No fresh kody comment (<40min). Filter: 'no open kody-authored PR' → drop. Dry-run: no action taken.",
+        "plannedAt": "2026-05-05T09:06:58Z"
+      },
+      {
+        "issueNumber": 1382,
+        "action": "skip",
+        "reason": "Issue #1382 is CLOSED (2026-05-04T11:21:53Z). Per-issue entry garbage collected from perIssue. Dry-run: no action taken.",
+        "plannedAt": "2026-05-05T09:06:58Z"
       }
     ]
   },
