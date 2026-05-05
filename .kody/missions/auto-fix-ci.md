@@ -17,17 +17,23 @@ A PR enters this mission's scope as soon as it becomes ready for review (non-dra
 - Do not re-issue `@kody fix-ci` on the same head SHA more than 2 times.
 - After 2 failed attempts on a SHA: post `kody fix-ci stuck — needs human` and add label `kody:stuck-ci`; skip until SHA changes or label is removed.
 
-## Tick procedure
+## Tick procedure — REQUIRED
 
-The tick is fully scripted to remove LLM judgment from the enumeration path (other missions in this repo silently dropped candidates or hallucinated state when driven by prose alone). All filtering, posting, and state mutation lives in [auto-fix-ci-tick.sh](.kody/scripts/auto-fix-ci-tick.sh).
+This tick is **fully scripted**. The script [auto-fix-ci-tick.sh](.kody/scripts/auto-fix-ci-tick.sh) is the **single source of truth** for which PRs are candidates, what state mutations to make, and which comments to post.
 
-**Step 1 — Run the tick script:**
+Other missions in this repo silently dropped candidates or hallucinated PR state when driven by prose iteration alone. The script removes that failure mode entirely.
 
-```
-bash .kody/scripts/auto-fix-ci-tick.sh
-```
+You **MUST**:
 
-**Step 2 — Emit the script's stdout verbatim**, including the markdown summary table and the `kody-mission-next-state` fenced block. Do not paraphrase, edit, reorder, or compute anything yourself.
+1. Run exactly: `bash .kody/scripts/auto-fix-ci-tick.sh`
+2. Emit the script's stdout verbatim — including the markdown summary table and the `kody-mission-next-state` fenced block at the end.
+
+You **MUST NOT**:
+
+- Call `gh pr list` yourself.
+- Filter, decide actions, post comments, or mutate state outside the script.
+- Use any prior knowledge of PR numbers in this repo. The script's output is your only data source for this tick.
+- Re-run the script (it has side effects). One invocation per tick.
 
 If the script exits non-zero, surface its stderr and emit a state block with the prior `perPr` unchanged so progress isn't lost.
 
