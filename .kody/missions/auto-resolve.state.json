@@ -1,20 +1,9 @@
 {
   "version": 1,
-  "rev": 33,
-  "cursor": "checked-conflicts-found",
+  "rev": 34,
+  "cursor": "checked-no-conflicts",
   "data": {
-    "perPr": {
-      "122": {
-        "lastSha": "a5e3c8d2b1f9e4a7c3d6e8f0h2i4j6k8l0m2n4p6",
-        "attempts": 0,
-        "stuck": false
-      },
-      "124": {
-        "lastSha": "c9h7e1b5d4f8a6g2j0k4m6o8q0r2s4t6u8",
-        "attempts": 0,
-        "stuck": false
-      }
-    }
+    "perPr": {}
   },
   "done": false
 }
