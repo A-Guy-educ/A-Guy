@@ -19,6 +19,8 @@ export interface ParsedExercise {
   /** Character offsets within the extraction run text for reconstruction */
   startIndex: number
   endIndex: number
+  /** 'primary' = matched by \textbf/\section pattern; 'secondary' = found by setCounter/continuation/orphan-fill */
+  source: 'primary' | 'secondary'
 }
 
 export interface ParsedSegment {
@@ -96,12 +98,15 @@ export function parseContextText(contextText: string): ParsedSegment[] {
     }
 
     // Find all exercise boundaries
-    const exerciseMatches: Array<{
+    type ExerciseMatch = {
       index: number
       title: string
       number: number
       fullMatch: string
-    }> = []
+      /** 'primary' = matched by \textbf/\section pattern; 'secondary' = found by setCounter/continuation/orphan-fill */
+      source: 'primary' | 'secondary'
+    }
+    const exerciseMatches: ExerciseMatch[] = []
 
     while ((match = exercisePattern.exec(runText)) !== null) {
       const title = match[1] || match[3] || match[5]
@@ -111,15 +116,15 @@ export function parseContextText(contextText: string): ParsedSegment[] {
         title,
         number,
         fullMatch: match[0],
+        source: 'primary',
       })
     }
 
-    // Track which exercise numbers came from the primary \textbf/\section
-    // pattern, so we know to apply phantom-exercise filtering (only safe for
-    // that path — secondary-detected exercises without solutions are real,
-    // not phantoms).
-    const usedPrimaryPattern = exerciseMatches.length > 0
-    const primaryNumbers = new Set(exerciseMatches.map((e) => e.number))
+    // Track whether any primary \textbf/\section exercises were found.
+    // Secondary-detected exercises (setCounter / continuation / orphan-fill)
+    // are NOT subject to phantom-exercise filtering — they may legitimately lack
+    // a \section*{פתרון תרגיל N} header in the source.
+    const usedPrimaryPattern = exerciseMatches.some((e) => e.source === 'primary')
 
     // Track short-answer blocks: when we see a duplicate \@sync@tokenlogo@style[1]{\@sync@tokenlogo@style@standalone#1}\item
     // (same exercise number as one already seen), the second occurrence is typically
@@ -168,6 +173,7 @@ export function parseContextText(contextText: string): ParsedSegment[] {
         title: `תרגיל ${number}`,
         number,
         fullMatch: match[0],
+        source: 'secondary',
       })
     }
 
@@ -182,6 +188,7 @@ export function parseContextText(contextText: string): ParsedSegment[] {
         title: `תרגיל ${number}`,
         number,
         fullMatch: match[0],
+        source: 'secondary',
       })
     }
 
@@ -196,6 +203,7 @@ export function parseContextText(contextText: string): ParsedSegment[] {
         title: `תרגיל ${number}`,
         number,
         fullMatch: match[0].trimEnd(),
+        source: 'secondary',
       })
     }
 
@@ -249,6 +257,7 @@ export function parseContextText(contextText: string): ParsedSegment[] {
             title: `תרגיל ${exerciseNum}`,
             number: exerciseNum,
             fullMatch: tokenMatch[0],
+            source: 'secondary',
           })
           foundNumbers.add(exerciseNum)
           // Don't break — continue finding more continuations
@@ -306,6 +315,7 @@ export function parseContextText(contextText: string): ParsedSegment[] {
             title: `תרגיל ${num}`,
             number: num,
             fullMatch: '\\item',
+            source: 'secondary',
           })
           allFound.add(num)
         }
@@ -318,7 +328,8 @@ export function parseContextText(contextText: string): ParsedSegment[] {
     exerciseMatches.sort((a, b) => a.number - b.number)
 
     if (exerciseMatches.length === 0) {
-      // No exercises found — treat entire text as one exercise
+      // No exercises found — treat entire text as one exercise.
+      // This is a fallback for legacy free-form output, not from any pattern.
       exercises.push({
         number: 1,
         title: 'תרגיל 1',
@@ -329,6 +340,7 @@ export function parseContextText(contextText: string): ParsedSegment[] {
         hasDiagram: hasDiagramCheck(runText),
         startIndex: 0,
         endIndex: runText.length,
+        source: 'secondary',
       })
     } else {
       // Sort by text position for correct content boundary slicing
@@ -403,6 +415,7 @@ export function parseContextText(contextText: string): ParsedSegment[] {
           hasDiagram: hasDiagramCheck(latexContent),
           startIndex: current.index,
           endIndex: contentEnd,
+          source: current.source,
         })
       }
     }
@@ -421,16 +434,20 @@ export function parseContextText(contextText: string): ParsedSegment[] {
       const byNumber = new Map<number, ParsedExercise>()
       for (const ex of exercises) {
         const existing = byNumber.get(ex.number)
-        if (!existing || ex.latexContent.length > existing.latexContent.length) {
+        // Prefer primary-source exercise when content lengths are close
+        if (
+          !existing ||
+          ex.latexContent.length > existing.latexContent.length ||
+          (ex.latexContent.length === existing.latexContent.length && ex.source === 'primary')
+        ) {
           byNumber.set(ex.number, ex)
         }
       }
       const dedup = Array.from(byNumber.values())
       const anyHasSolution = dedup.some((ex) => ex.solution !== null)
       if (anyHasSolution) {
-        finalExercises = dedup.filter(
-          (ex) => ex.solution !== null || !primaryNumbers.has(ex.number),
-        )
+        // Keep: secondary exercises (always), OR primary exercises that have a solution
+        finalExercises = dedup.filter((ex) => ex.source === 'secondary' || ex.solution !== null)
       } else {
         finalExercises = dedup
       }
