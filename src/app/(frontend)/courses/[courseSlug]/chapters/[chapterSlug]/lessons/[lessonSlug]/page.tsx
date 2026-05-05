@@ -20,6 +20,7 @@ import { extractAllMediaIds } from '@/ui/web/exerciserenderer/utils/extractMedia
 import { stripHtml } from '@/utils/strip-html'
 import { notFound } from 'next/navigation'
 import { DualModeLessonView } from './_components/DualModeLessonView'
+import type { LessonMode } from './_components/DualModeLessonView/useLessonViewMode'
 import { EmptyLessonPlaceholder } from './_components/EmptyLessonPlaceholder'
 import { ExercisesPager } from './_components/ExercisesPager'
 import { LessonAnalytics } from './_components/LessonAnalytics'
@@ -48,7 +49,7 @@ function renderDualMode(args: {
   lessonSlug: string
   gatedDelayMs: number
   gatedWarningMs: number
-  lesson: { id: string; title: string }
+  lesson: { id: string; title: string; visibleRenderers?: string[] | null }
   courseId: string
   /** Course label that drives the progress storage bucket for this lesson. */
   gradeLevel: string
@@ -92,6 +93,7 @@ function renderDualMode(args: {
         chatLessonId={args.chatLessonId}
         showChat={args.showChat}
         formulaSheet={args.formulaSheet}
+        visibleRenderers={(args.lesson.visibleRenderers ?? undefined) as LessonMode[] | undefined}
       />
     </AccessGateProvider>
   )
@@ -240,7 +242,11 @@ export default async function LessonPage({ params }: LessonPageProps) {
         lessonSlug,
         gatedDelayMs,
         gatedWarningMs,
-        lesson: { id: lesson.id, title: lesson.title },
+        lesson: {
+          id: lesson.id,
+          title: lesson.title,
+          visibleRenderers: lesson.visibleRenderers ?? undefined,
+        },
         courseId: course.id,
         gradeLevel: course.courseLabel,
         analyticsContentType: 'blocks',
@@ -313,7 +319,11 @@ export default async function LessonPage({ params }: LessonPageProps) {
         lessonSlug,
         gatedDelayMs,
         gatedWarningMs,
-        lesson: { id: lesson.id, title: lesson.title },
+        lesson: {
+          id: lesson.id,
+          title: lesson.title,
+          visibleRenderers: lesson.visibleRenderers ?? undefined,
+        },
         courseId: course.id,
         gradeLevel: course.courseLabel,
         analyticsContentType: 'exercises',
