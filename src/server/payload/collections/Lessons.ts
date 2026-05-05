@@ -1,4 +1,4 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionBeforeChangeHook, CollectionConfig } from 'payload'
 
 import { DEFAULT_LESSON_ACCESS_TYPE } from '@/server/constants/access-types'
 import { tenantField } from '@/server/payload/fields/tenant'
@@ -9,6 +9,32 @@ import { contentStatusFields } from '../fields/contentStatus'
 import { createdByField } from '../fields/createdBy'
 import { formatSlugAsync } from '../fields/formatSlug'
 import { translatedFromField } from '../fields/translatedFrom'
+
+// Type for visibleRenderers field data
+type VisibleRenderersData = {
+  visibleRenderers?: string[] | null
+}
+
+const VALID_RENDERERS = ['media', 'pdf', 'interactive'] as const
+
+/**
+ * Validates `visibleRenderers` when present. Treats missing/undefined as
+ * "legacy lesson — all renderers enabled" so updates to lessons created
+ * before this field existed don't fail. Explicit empty array still throws.
+ */
+const validateVisibleRenderers: CollectionBeforeChangeHook = async ({ data, operation }) => {
+  if (operation !== 'create' && operation !== 'update') return data
+  const renderers = (data as VisibleRenderersData | null)?.visibleRenderers
+  // Backward compat: missing/undefined means legacy lesson — treat as all enabled.
+  if (renderers === undefined || renderers === null) return data
+  if (!Array.isArray(renderers) || renderers.length === 0) {
+    throw new Error('At least one renderer must be visible to students.')
+  }
+  if (!renderers.every((r) => (VALID_RENDERERS as readonly string[]).includes(r))) {
+    throw new Error('visibleRenderers contains an invalid value.')
+  }
+  return data
+}
 
 export const Lessons: CollectionConfig = {
   slug: 'lessons',
@@ -92,6 +118,7 @@ export const Lessons: CollectionConfig = {
         }
         return data
       },
+      validateVisibleRenderers,
     ],
     afterRead: [
       // Lazy backfill: when a lesson is read and its denormalized course field is
@@ -292,6 +319,22 @@ export const Lessons: CollectionConfig = {
         position: 'sidebar',
         description:
           'Access control for this lesson. "Inherit" uses the parent course setting. "Gated" is a client-side nudge, not hard enforcement.',
+      },
+    },
+    {
+      name: 'visibleRenderers',
+      type: 'select',
+      hasMany: true,
+      defaultValue: ['media', 'pdf', 'interactive'],
+      options: [
+        { label: 'Media (attached files)', value: 'media' },
+        { label: 'PDF (worksheet view)', value: 'pdf' },
+        { label: 'Interactive (exercise pager)', value: 'interactive' },
+      ],
+      admin: {
+        position: 'sidebar',
+        description:
+          'Which renderers are visible to students. At least one must be selected. Note: Media tab only appears when the lesson has attached files regardless of this toggle.',
       },
     },
     // --- Lesson Blocks (ordered playlist) ---
