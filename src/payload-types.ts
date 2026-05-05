@@ -1465,6 +1465,10 @@ export interface Lesson {
    */
   accessType: 'inherit' | 'free' | 'mandatory' | 'gated' | 'paid';
   /**
+   * Which renderers are visible to students. At least one must be selected. Note: Media tab only appears when the lesson has attached files regardless of this toggle.
+   */
+  visibleRenderers?: ('media' | 'pdf' | 'interactive')[] | null;
+  /**
    * Ordered playlist of exercises and content pages. Defines the lesson flow.
    */
   blocks?: string | null;
@@ -3345,6 +3349,7 @@ export interface LessonsSelect<T extends boolean = true> {
   status?: T;
   isActive?: T;
   accessType?: T;
+  visibleRenderers?: T;
   blocks?: T;
   contentFiles?: T;
   lessonContextText?: T;

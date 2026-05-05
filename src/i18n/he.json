@@ -218,6 +218,8 @@
     "noLessons": "אין שיעורים זמינים לפרק זה.",
     "noExercises": "אין תרגילים זמינים לשיעור זה.",
     "noPDF": "תוכן PDF אינו זמין לשיעור זה.",
+    "visibleRenderersLabel": "רנדררים גלויים",
+    "visibleRenderersDescription": "בחר אילו כרטיסיות (מדיה, PDF, אינטראקטיבי) יוצגו לתלמידים בשיעור זה. כרטיסיית מדיה מופיעה רק כאשר לשיעור יש קבצים מצורפים.",
     "lessonViewMode": "מצב תצוגת שיעור",
     "lessonViewModeMedia": "מדיה",
     "lessonViewModePdf": "PDF",
