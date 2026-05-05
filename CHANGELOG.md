@@ -5997,6 +5997,9 @@ Note: Database values unchanged, backward compatibility exports added
 
 # Changelog
 
+## v0.25.4 — 2026-05-05
+
+_No notable commits since the last release._
 ## v0.25.3 — 2026-04-26
 
 _No notable commits since the last release._
