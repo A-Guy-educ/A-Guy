@@ -94,6 +94,8 @@ jobs:
       # own GitHub Actions step, outside kody's internal per-step timeout,
       # so the gate starts with the image already in the local Docker cache.
       - name: Warm Docker image cache for release e2e gate
+        timeout-minutes: 2
+        continue-on-error: true
         run: docker pull mongo:6
 
       - env:

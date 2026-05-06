@@ -253,7 +253,11 @@ function syncPoints(
         strokeColor: pointColor,
         visible: point.visible !== false,
         withLabel: true,
-        label: { offset: labelOffset, fontSize: point.fontSize || 14 },
+        label: {
+          offset: labelOffset,
+          fontSize: point.fontSize || 12,
+          fontFamily: 'Times New Roman',
+        } as Record<string, unknown>,
       })
       el.on('drag', () => {
         if (isSyncingRef.current) return
@@ -368,10 +372,11 @@ function syncLineLabels(
         line.label.value,
       ],
       {
-        fontSize: line.label.fontSize || 12,
+        fontSize: line.label.fontSize || 10,
         anchorX: 'middle',
         anchorY: 'middle',
         display: 'internal',
+        fontFamily: 'Times New Roman',
         rotate: () => {
           const dx = t.X() - f.X()
           const dy = t.Y() - f.Y()
@@ -458,7 +463,12 @@ function syncAngles(
       fixed: true,
       withLabel: !!angle.label?.value,
       name: angle.label?.value || '',
-      label: angle.label ? { fontSize: angle.label.fontSize || 12 } : undefined,
+      label: angle.label
+        ? ({ fontSize: angle.label.fontSize || 10, fontFamily: 'Times New Roman' } as Record<
+            string,
+            unknown
+          >)
+        : undefined,
     })
     elementsRef.current.set(elemId, el)
   }
