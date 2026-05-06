@@ -1,4 +1,5 @@
 import type { AxisSpecV1 } from '@/infra/contracts'
+import { getDefaultTextColor } from '@/infra/contracts/graphics/textColors'
 import { parseMathExpression } from '../utils/safeMathEval'
 
 type GraphSpec = AxisSpecV1['elements']['graphs'][number]
@@ -34,6 +35,7 @@ function renderAxisPoints(board: JXG.Board, points: PointSpec[]) {
         fontSize: 14,
         anchorX: 'middle',
         anchorY: 'middle',
+        fontFamily: 'Times New Roman',
       })
     } else {
       const attrs: Record<string, unknown> = {
@@ -46,7 +48,7 @@ function renderAxisPoints(board: JXG.Board, points: PointSpec[]) {
         attrs.strokeColor = p.color
         attrs.fillColor = p.type === 'hole' ? '#ffffff' : p.color
       } else {
-        attrs.fillColor = p.type === 'hole' ? '#ffffff' : undefined
+        attrs.fillColor = p.type === 'hole' ? '#ffffff' : getDefaultTextColor()
       }
       if (p.type === 'hole') {
         attrs.strokeWidth = 2

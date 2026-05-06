@@ -102,6 +102,7 @@ export function PdfLessonPager({
                   {t('exercisesPagerPrev')}
                 </Button>
                 <Button
+                  variant="default"
                   onClick={handleNext}
                   disabled={!canGoNext || isNavigating}
                   className="px-6 py-2 rounded-xl text-body-sm cursor-pointer"

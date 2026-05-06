@@ -10,14 +10,14 @@
  *   - rich_text                  -> paragraph
  *   - latex                      -> hidden (matches the viewer default)
  *   - svg / media                -> figure
- *   - question_geometry          -> prompt + diagram side-by-side via GraphWithPrompt
- *   - question_axis              -> prompt + diagram side-by-side via GraphWithPrompt
+ *   - question_geometry          -> Hebrew label + prompt + diagram side-by-side via GraphWithPrompt
+ *   - question_axis              -> Hebrew label + prompt + diagram side-by-side via GraphWithPrompt
  *   - question_multi_axis        -> prompt above/below grid of diagrams
- *   - question_select(true_false)-> prompt + bulleted choice list (empty checkboxes)
- *   - question_select(mcq)       -> prompt + bulleted choice list (empty radios)
- *   - question_free_response     -> prompt + blank answer line
- *   - question_table             -> prompt + empty table grid
- *   - question_matching          -> prompt + two columns of items
+ *   - question_select(true_false)-> Hebrew label + prompt + bulleted choice list (empty checkboxes)
+ *   - question_select(mcq)       -> Hebrew label + prompt + bulleted choice list (empty radios)
+ *   - question_free_response     -> Hebrew label + prompt (no answer lines — per issue #1396)
+ *   - question_table             -> Hebrew label + prompt + empty table grid
+ *   - question_matching          -> Hebrew label + prompt + two columns of items
  *
  * Side-by-side diagrams flip based on locale direction: text starts on the
  * reading side (left in LTR, right in RTL) and the diagram sits opposite.
@@ -37,6 +37,7 @@ import { AxisRenderer } from '../blocks/AxisRenderer'
 import { GraphWithPrompt } from '../blocks/GraphWithPrompt'
 import { MultiAxisRenderer } from '../blocks/MultiAxisRenderer'
 import { getMediaUrl } from '@/infra/utils/getMediaUrl'
+import { HEBREW_LETTERS } from '../constants'
 import type { Media } from '@/payload-types'
 import type {
   ContentBlock,
@@ -78,17 +79,23 @@ export function ExerciseWorksheet({
   // container so 'textLeft' / 'textRight' always describe physical position.
   const sideBySideLayout: GraphLayout = isRtl ? 'textRight' : 'textLeft'
 
+  // Track question index for Hebrew letter labels (RTL only)
+  let questionIndex = 0
+
   return (
     <MediaMapProvider value={mediaMap}>
       <div className={cn('flex flex-col gap-content-gap-lg', className)}>
-        {blocks.map((block, i) => (
-          <WorksheetBlock
-            key={getBlockKey(block, i)}
-            block={block}
-            mediaMap={mediaMap}
-            sideBySideLayout={sideBySideLayout}
-          />
-        ))}
+        {blocks.map((block, i) => {
+          const { block: renderedBlock, incremented } = renderBlockWithLabel({
+            block,
+            mediaMap,
+            sideBySideLayout,
+            isRtl,
+            questionIndex,
+          })
+          if (incremented) questionIndex++
+          return <React.Fragment key={getBlockKey(block, i)}>{renderedBlock}</React.Fragment>
+        })}
       </div>
     </MediaMapProvider>
   )
@@ -98,13 +105,66 @@ function getBlockKey(block: ContentBlock, index: number): string {
   return 'id' in block && block.id ? block.id : `block_${index}`
 }
 
-interface WorksheetBlockProps {
+/** Question types that receive Hebrew letter labels */
+const LABELLED_QUESTION_TYPES = new Set([
+  'question_select',
+  'question_free_response',
+  'question_table',
+  'question_matching',
+  'question_geometry',
+  'question_axis',
+])
+
+interface RenderBlockParams {
   block: ContentBlock
   mediaMap: Record<string, Media>
   sideBySideLayout: GraphLayout
+  isRtl: boolean
+  questionIndex: number
 }
 
-function WorksheetBlock({ block, mediaMap, sideBySideLayout }: WorksheetBlockProps) {
+/**
+ * Renders a block and returns it with a Hebrew question label if applicable.
+ * Returns { block: ReactNode, incremented: boolean } where incremented indicates
+ * whether the question index was used (so the caller can increment the counter).
+ */
+function renderBlockWithLabel({
+  block,
+  mediaMap,
+  sideBySideLayout,
+  isRtl,
+  questionIndex,
+}: RenderBlockParams): { block: React.ReactNode; incremented: boolean } {
+  const isLabelledQuestion = LABELLED_QUESTION_TYPES.has(block.type)
+
+  if (isLabelledQuestion) {
+    const label = isRtl
+      ? `${HEBREW_LETTERS[questionIndex] || String(questionIndex + 1)}.`
+      : `${questionIndex + 1}.`
+    const inner = renderBlockContent({ block, mediaMap, sideBySideLayout })
+    return {
+      block: (
+        <>
+          <WorksheetQuestionLabel label={label} dir={isRtl ? 'rtl' : 'ltr'} />
+          {inner}
+        </>
+      ),
+      incremented: true,
+    }
+  }
+
+  return {
+    block: renderBlockContent({ block, mediaMap, sideBySideLayout }),
+    incremented: false,
+  }
+}
+
+/** Renders the content of a single block (no label) */
+function renderBlockContent({
+  block,
+  mediaMap,
+  sideBySideLayout,
+}: Omit<RenderBlockParams, 'isRtl' | 'questionIndex'>): React.ReactNode {
   // LaTeX blocks: hidden, parsed structured blocks beside them already cover
   // the content. Matches ExerciseRenderer's default.
   if (block.type === 'latex') return null
@@ -210,6 +270,28 @@ function WorksheetBlock({ block, mediaMap, sideBySideLayout }: WorksheetBlockPro
   }
 
   return null
+}
+
+interface WorksheetQuestionLabelProps {
+  label: string
+  dir: 'ltr' | 'rtl'
+}
+
+function WorksheetQuestionLabel({ label, dir }: WorksheetQuestionLabelProps) {
+  return (
+    <div
+      className={cn(
+        'w-full flex items-center mb-3',
+        dir === 'rtl'
+          ? 'justify-end text-right flex-row-reverse gap-content-gap-xs'
+          : 'justify-start text-left gap-content-gap-xs',
+      )}
+    >
+      <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-primary/10 border border-primary/20">
+        <span className="font-extrabold text-body-sm text-primary">{label}</span>
+      </div>
+    </div>
+  )
 }
 
 /**
@@ -321,8 +403,7 @@ function WorksheetFreeResponse({ block }: { block: QuestionFreeResponseBlock }) 
   return (
     <div className="flex flex-col gap-3">
       <PromptText prompt={block.prompt} />
-      <div className="border-b border-foreground/40 h-7" aria-hidden />
-      <div className="border-b border-foreground/40 h-7" aria-hidden />
+      {/* Answer lines removed per issue #1396 — solutions appear in a collected section at the end of the document */}
     </div>
   )
 }
