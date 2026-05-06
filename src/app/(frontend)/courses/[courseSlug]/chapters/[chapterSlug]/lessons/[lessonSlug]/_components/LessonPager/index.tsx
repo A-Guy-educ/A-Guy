@@ -238,6 +238,7 @@ export function LessonPager({
                   </span>
                 </div>
                 <Button
+                  variant="default"
                   onClick={handleNext}
                   disabled={!canGoNext || isNavigating}
                   aria-label="Next page"
@@ -377,6 +378,7 @@ export function LessonPager({
               {ordinal !== null ? `${ordinal} / ${totalBlocks}` : ''}
             </span>
             <Button
+              variant="default"
               onClick={handleNext}
               disabled={!canGoNext || isNavigating}
               aria-label="Next page"
@@ -445,6 +447,7 @@ export function LessonPager({
                 </Button>
                 <span className="text-body-xs text-muted-foreground">{t('exercise')}</span>
                 <Button
+                  variant="default"
                   onClick={handleNext}
                   disabled={!canGoNext || isNavigating}
                   aria-label="Next page"
