@@ -48,6 +48,7 @@
 
     /* Border: warm stone — premium stationery feel */
     --border: 30, 8%, 82%; /* hsl(30,8%,82%) — warm light gray, not blue */
+
     --input: 210 14% 97%; /* #f8f9fa */
 
     /* Focus ring follows primary */
@@ -621,5 +622,19 @@ body.landing-page footer {
   body {
     font-size: 12pt;
     line-height: 1.5;
+  }
+}
+
+/* Print page layout for lesson documents */
+@page {
+  size: A4;
+  margin: 2cm 2cm 3cm 2cm;
+}
+
+@page lesson-page {
+  @bottom-center {
+    content: "כל הזכויות שמורות לגיא קורן, אין להעתיק, לצלם, לפרסם את המסמכים או חלקם ללא אישור בכתב מגיא קורן";
+    font-size: 8pt;
+    color: #666;
   }
 }

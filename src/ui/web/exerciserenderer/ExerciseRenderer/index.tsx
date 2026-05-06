@@ -454,6 +454,7 @@ export function ExerciseRenderer({
                 prompt?: unknown
               }
               if (b.type === ('question_geometry' as string)) {
+                const geometryBlock = b as ContentBlock & { geometry?: GeometrySpecV1 }
                 return (
                   <GraphWithPrompt
                     key={b.id}
@@ -468,7 +469,10 @@ export function ExerciseRenderer({
                         | undefined
                     }
                   >
-                    <GeometryRenderer blockId={b.id} spec={b.geometry as GeometrySpecV1} />
+                    <GeometryRenderer
+                      blockId={b.id}
+                      spec={geometryBlock.geometry as GeometrySpecV1}
+                    />
                   </GraphWithPrompt>
                 )
               }

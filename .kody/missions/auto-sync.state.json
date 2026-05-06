@@ -1,9 +1,52 @@
 {
   "version": 1,
-  "rev": 172,
-  "cursor": "auto-sync-2026-05-05T10:15:16Z",
+  "rev": 195,
+  "cursor": "auto-sync-2026-05-06T11:18:50Z",
   "data": {
-    "perPr": {}
+    "perPr": {
+      "1285": {
+        "lastSha": "49bcdd6daf02253d57fe0915b14dc94e1d2e936b",
+        "attempts": 1,
+        "stuck": false,
+        "lastActionAt": "2026-05-06T11:18:50Z"
+      },
+      "1364": {
+        "lastSha": "3618bf4903f3d354ec9bf19904f90ace89abb7b4",
+        "attempts": 1,
+        "stuck": false,
+        "lastActionAt": "2026-05-06T11:18:50Z"
+      },
+      "1366": {
+        "lastSha": "aa912350eb03be23567407007cfa2946659fc68a",
+        "attempts": 1,
+        "stuck": false,
+        "lastActionAt": "2026-05-06T11:18:50Z"
+      },
+      "1377": {
+        "lastSha": "7806cbd2a9f9ca76139f112a2ec5513a6b72e990",
+        "attempts": 1,
+        "stuck": false,
+        "lastActionAt": "2026-05-06T11:18:50Z"
+      },
+      "1404": {
+        "lastSha": "94d7f425f11d5b5ce2d214d9b90cd4476db42afb",
+        "attempts": 1,
+        "stuck": false,
+        "lastActionAt": "2026-05-06T11:18:50Z"
+      },
+      "1405": {
+        "lastSha": "14d2080b900873b088abf16c9c79ef9def3c2963",
+        "attempts": 1,
+        "stuck": false,
+        "lastActionAt": "2026-05-06T11:18:50Z"
+      },
+      "1406": {
+        "lastSha": "d0b88f2d670ac136948c5d255b07f42dfeb26383",
+        "attempts": 1,
+        "stuck": false,
+        "lastActionAt": "2026-05-06T11:18:50Z"
+      }
+    }
   },
   "done": false
 }
