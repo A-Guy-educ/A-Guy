@@ -5997,6 +5997,112 @@ Note: Database values unchanged, backward compatibility exports added
 
 # Changelog
 
+## v0.25.7 — 2026-05-06
+
+### Features
+- Color all math expressions wine-red via scoped CSS (877618e4)
+- Support \textcolor{winered}{...} as wine-red-math token (657002f6)
+- PDF tab HTML content fixes — Hebrew question labels, wine-red math, solutions section, print footer (8bfaa4cd)
+
+### Fixes
+- add explicit variant="default" to lesson pager Next buttons (#1413) (68ccc5f6)
+- Nuclear wine-red — hex, multiple selectors, -webkit-text-fill-color (e4b0a110)
+- Move pdf-tab-content class out of <table> to outer <div> (76c21667)
+- Force wine-red on all KaTeX glyphs with !important + descendant selector (b194a1c0)
+- Strip math-mode $...$ around wine-red markers (6199706a)
+- Number solutions per exercise, group sub-questions (441cf74a)
+- clean up dead code, fix require() call, deduplicate constants, fix HTML validity (8d219e9a)
+
+### Chores
+- update state for redispatch (rev 151) (02971043)
+- update state for auto-sync (rev 194) (8c65779b)
+- update state for auto-resolve (rev 57) (6af7b5e2)
+- update state for auto-fix-ci (rev 195) (bae48a09)
+- update state for redispatch (rev 150) (436c3dd0)
+- update state for auto-sync (rev 193) (0a6136fb)
+- update state for auto-resolve (rev 56) (8b9faf50)
+- update state for auto-fix-ci (rev 194) (322f1053)
+
+### Other
+- Remove wine-red math support (c56fd5ce)
+- Remove edge-case lone-$ test that depends on broader pipeline (4cd73d01)
+## v0.25.6 — 2026-05-06
+
+### Fixes
+- Cap docker pull warmup so it cannot hang the workflow (9b419c2e)
+
+### Chores
+- update state for redispatch (rev 149) (2578534e)
+- update state for auto-sync (rev 192) (919b2555)
+- update state for auto-resolve (rev 55) (6cd2d8da)
+- update state for auto-fix-ci (rev 193) (42ef3d6b)
+- update state for redispatch (rev 148) (c646e2ff)
+- update state for auto-sync (rev 191) (495785db)
+- update state for auto-resolve (rev 54) (a000630d)
+- update state for auto-fix-ci (rev 192) (86f8922f)
+- update state for redispatch (rev 147) (becc7e72)
+- update state for auto-sync (rev 190) (04ddf73c)
+- update state for auto-resolve (rev 53) (c1338a96)
+- update state for auto-fix-ci (rev 191) (16455645)
+- update state for redispatch (rev 146) (36e7e6f2)
+- update state for auto-sync (rev 189) (be973fcd)
+- update state for auto-resolve (rev 52) (1d97f5d3)
+- update state for auto-fix-ci (rev 190) (3ed9e630)
+- update state for redispatch (rev 145) (8d2362e6)
+- update state for auto-sync (rev 188) (6a0e4d44)
+- update state for auto-resolve (rev 51) (47a571bd)
+- update state for auto-fix-ci (rev 189) (a7364849)
+- update state for redispatch (rev 144) (3d2ba4fa)
+- update state for auto-sync (rev 187) (c3dcbc33)
+- update state for auto-resolve (rev 50) (85d8e280)
+- update state for auto-fix-ci (rev 188) (11835e38)
+- update state for redispatch (rev 143) (683288fa)
+- update state for auto-sync (rev 186) (4375e276)
+- update state for auto-resolve (rev 49) (57ccb4f7)
+- update state for auto-fix-ci (rev 187) (38a017c5)
+- update state for redispatch (rev 142) (64d926d4)
+- update state for auto-sync (rev 185) (e71431df)
+- update state for auto-resolve (rev 48) (62f8ec62)
+- update state for auto-fix-ci (rev 186) (ff2e540a)
+- update state for redispatch (rev 141) (af821301)
+- update state for auto-sync (rev 184) (77e212b4)
+- update state for auto-resolve (rev 47) (53bb8934)
+- update state for auto-fix-ci (rev 185) (138e2792)
+- update state for redispatch (rev 140) (8811b76c)
+- update state for auto-sync (rev 183) (78843f94)
+- update state for auto-resolve (rev 46) (148d85bc)
+- update state for auto-fix-ci (rev 184) (e7129d49)
+- update state for redispatch (rev 139) (4a6659a5)
+- update state for auto-sync (rev 182) (67be36b4)
+- update state for auto-resolve (rev 45) (3695a112)
+- update state for auto-fix-ci (rev 183) (5048252a)
+- update state for redispatch (rev 138) (566506c8)
+- update state for auto-sync (rev 181) (0ccbd260)
+- update state for auto-resolve (rev 44) (1ca6ced6)
+- update state for auto-fix-ci (rev 182) (6e45def7)
+- update state for redispatch (rev 137) (a373d65e)
+- update state for auto-sync (rev 180) (1a4aafff)
+- update state for auto-resolve (rev 43) (a26e73dd)
+- update state for auto-fix-ci (rev 181) (dd5a4b15)
+- update state for redispatch (rev 136) (0b76d613)
+- update state for auto-sync (rev 179) (fddd9fce)
+- update state for auto-resolve (rev 42) (1a0f7341)
+- update state for auto-fix-ci (rev 180) (287fb9e7)
+- update state for redispatch (rev 135) (c0f5ba1c)
+- update state for auto-sync (rev 178) (5efadd00)
+- update state for auto-resolve (rev 41) (9df82545)
+- update state for auto-fix-ci (rev 179) (82680f4d)
+- update state for redispatch (rev 134) (d00d46ab)
+- update state for auto-sync (rev 177) (7662e94c)
+- update state for auto-resolve (rev 40) (56136a0b)
+- update state for auto-fix-ci (rev 178) (665cd62c)
+- update state for redispatch (rev 133) (a8aa793b)
+- update state for auto-sync (rev 176) (b84388f6)
+- update state for auto-resolve (rev 39) (fe4d8a3b)
+- update state for auto-fix-ci (rev 177) (4b61c320)
+## v0.25.5 — 2026-05-05
+
+_No notable commits since the last release._
 ## v0.25.4 — 2026-05-05
 
 _No notable commits since the last release._

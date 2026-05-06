@@ -48,18 +48,6 @@ export interface MathMarkdownProps {
  * 4. Wraps KaTeX output with dir="ltr" for RTL language support (rehypeMathWrapper)
  * 5. Renders the result as React elements
  *
- * PLUGIN WIRING:
- * This component serves as the SINGLE SOURCE for both RichTextRenderer and ChatMessageContent.
- * By wiring remarkColorSyntax here, we ensure color syntax works in:
- * - Exercise rich text blocks (via RichTextRenderer)
- * - AI chat responses (via ChatMessageContent)
- * - Any other markdown content that uses this base component
- *
- * WHAT IT DOES NOT DO (on purpose):
- * - LaTeX delimiter normalization (\[...\] -> $$...$$) — that's chat-specific
- * - Custom markdown element styling — pass `components` prop if needed
- * - Import katex CSS — already in globals.css (frontend) and custom.scss (admin)
- *
  * @example Basic usage (exercise content)
  * <MathMarkdown content="Solve $x^2 = 4$" className="rich-text-content" />
  *
