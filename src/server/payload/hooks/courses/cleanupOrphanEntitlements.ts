@@ -9,10 +9,14 @@ export const cleanupOrphanEntitlements: CollectionAfterDeleteHook = async ({ id,
   if (!id) return
 
   const PAGE_SIZE = 500
-  let page = 1
   let removedCount = 0
   let usersModified = 0
 
+  // Phase 1 — collect all affected user IDs before mutating any document.
+  // This prevents the cursor-invalidation bug where advancing `page` after
+  // updating page-1 users would skip the next batch when the result set shrinks.
+  const collectedIds: string[] = []
+  let page = 1
   while (true) {
     const usersWithEntitlement = await req.payload.find({
       collection: 'users',
@@ -25,32 +29,47 @@ export const cleanupOrphanEntitlements: CollectionAfterDeleteHook = async ({ id,
     })
 
     for (const user of usersWithEntitlement.docs) {
-      const u = user as unknown as {
-        id: string
-        courseEntitlements?: Array<{ course?: string | { id?: string } }>
-      }
-      const original = u.courseEntitlements || []
-      const filtered = original.filter((ent) => {
-        const courseId = typeof ent.course === 'object' ? ent.course?.id : ent.course
-        return String(courseId) !== String(id)
-      })
-
-      if (filtered.length === original.length) continue
-
-      await req.payload.update({
-        collection: 'users',
-        id: u.id,
-        data: { courseEntitlements: filtered },
-        overrideAccess: true,
-        req,
-      })
-
-      removedCount += original.length - filtered.length
-      usersModified++
+      collectedIds.push(user.id)
     }
 
     if (!usersWithEntitlement.hasNextPage) break
     page++
+  }
+
+  // Phase 2 — remove the orphan entitlement from each collected user.
+  // No mutations happen in phase 1, so the cursor is stable throughout.
+  for (const userId of collectedIds) {
+    const user = (await req.payload.findByID({
+      collection: 'users',
+      id: userId,
+      overrideAccess: true,
+      depth: 0,
+      req,
+    })) as unknown as {
+      id: string
+      courseEntitlements?: Array<{ course?: string | { id?: string } }>
+    } | null
+
+    if (!user) continue
+
+    const original = user.courseEntitlements || []
+    const filtered = original.filter((ent) => {
+      const courseId = typeof ent.course === 'object' ? ent.course?.id : ent.course
+      return String(courseId) !== String(id)
+    })
+
+    if (filtered.length === original.length) continue
+
+    await req.payload.update({
+      collection: 'users',
+      id: userId,
+      data: { courseEntitlements: filtered },
+      overrideAccess: true,
+      req,
+    })
+
+    removedCount += original.length - filtered.length
+    usersModified++
   }
 
   if (removedCount > 0) {

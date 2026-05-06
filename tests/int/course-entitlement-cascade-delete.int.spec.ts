@@ -170,4 +170,29 @@ describe('Course delete cascade → orphan entitlement cleanup', () => {
       payload.delete({ collection: 'courses', id: course.id, overrideAccess: true }),
     ).resolves.toBeDefined()
   })
+
+  it('cleans up all orphan entitlements when > PAGE_SIZE users are affected', async () => {
+    const course = await createCourse('D5', 'Popular Course')
+    // PAGE_SIZE = 500 in the hook — create enough users to span at least 2 pages
+    const COUNT = 550
+    const userIds = await Promise.all(
+      Array.from({ length: COUNT }, (_, i) =>
+        createUserWithEntitlements(`user-d5-${i}-${Date.now()}@test.local`, [course.id]),
+      ),
+    )
+
+    // sanity: every user has the entitlement before deletion
+    for (const userId of userIds) {
+      const courseIds = await getEntitlementCourseIds(userId)
+      expect(courseIds).toContain(course.id)
+    }
+
+    await payload.delete({ collection: 'courses', id: course.id, overrideAccess: true })
+
+    // after delete: zero users retain the orphan entitlement
+    for (const userId of userIds) {
+      const courseIds = await getEntitlementCourseIds(userId)
+      expect(courseIds).not.toContain(course.id)
+    }
+  }, 120_000)
 })
