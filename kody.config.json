@@ -24,6 +24,6 @@
     "timeoutMs": 1800000
   },
   "missions": {
-    "stateBackend": "contents-api"
+    "stateBackend": "local-file"
   }
 }
