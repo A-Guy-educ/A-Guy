@@ -5997,6 +5997,20 @@ Note: Database values unchanged, backward compatibility exports added
 
 # Changelog
 
+## v0.25.8 — 2026-05-06
+
+### Fixes
+- Unmask login errors and add admin password-recovery path (02853530)
+
+### Chores
+- Switch mission state backend to local-file (c7459bc5)
+- update state for redispatch (rev 152) (ec655ac5)
+- update state for auto-sync (rev 195) (93e27d86)
+- update state for auto-resolve (rev 58) (a83ede81)
+- update state for auto-fix-ci (rev 196) (5767085d)
+
+### Other
+- Apply prettier formatting to globals.css (bf4450c6)
 ## v0.25.7 — 2026-05-06
 
 ### Features
