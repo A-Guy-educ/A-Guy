@@ -122,7 +122,23 @@ export async function loginAction(formData: FormData, cookieStore?: CookieStore)
     }
 
     return { success: false, error: 'invalidCredentials' }
-  } catch {
+  } catch (error) {
+    // AuthenticationError (wrong password / unknown user) is expected on a
+    // typical login mistake — don't spam logs with it. Anything else (DB
+    // unreachable, Payload misconfigured, hash/salt corrupted from the
+    // historical OAuth password-swap bug) must be logged so operators can
+    // tell genuine outages apart from bad credentials. The user-facing
+    // response stays generic to avoid leaking server state.
+    const isAuthError =
+      error !== null &&
+      typeof error === 'object' &&
+      'name' in error &&
+      (error as { name?: string }).name === 'AuthenticationError'
+
+    if (!isAuthError) {
+      logger.error({ err: error }, 'Login action failed unexpectedly')
+    }
+
     return { success: false, error: 'invalidCredentials' }
   }
 }
