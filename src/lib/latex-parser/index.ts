@@ -146,20 +146,38 @@ function findMatchingBrace(text: string, openPos: number): number {
 /**
  * Strip {\color{name} content} and {\Large\color{name} content} groups,
  * using proper brace counting to handle nested braces like \frac{1}{...}.
- *
- * Handles: ${\color{winered} g(x) = \frac{1}{f(x) + b} }$ → $g(x) = \frac{1}{f(x) + b}$
+ * Also strips \textcolor{name}{content}, keeping only the content.
  */
 function stripColorAndSizing(text: string): string {
-  let result = text
+  // Strip \textcolor{name}{content} → content (brace-counted so nested {} works)
+  let result = ''
+  let i = 0
+  while (i < text.length) {
+    if (text[i] === '\\' && text.slice(i, i + 10) === '\\textcolor') {
+      const headerMatch = /^\\textcolor\{[^}]+\}\{/.exec(text.slice(i))
+      if (headerMatch) {
+        const openContentBrace = i + headerMatch[0].length - 1
+        const closingBrace = findMatchingBrace(text, openContentBrace)
+        if (closingBrace > openContentBrace) {
+          result += text.slice(openContentBrace + 1, closingBrace)
+          i = closingBrace + 1
+          continue
+        }
+      }
+    }
+    result += text[i]
+    i++
+  }
 
   // Process {\color{name} ...} and {\Large\color{name} ...} groups with brace counting
   // We scan for { followed by \color or \Large\color, find the matching }, and remove the wrapper
-  let i = 0
+  i = 0
   let output = ''
   while (i < result.length) {
     if (result[i] === '{') {
       // Check if this opens a color/sizing group
       const after = result.slice(i + 1)
+
       const cmdMatch =
         /^\\(?:Large|large|huge|Huge)\s*\\color\{[^}]*\}\s*/.exec(after) ||
         /^\\color\{[^}]*\}\s*/.exec(after) ||

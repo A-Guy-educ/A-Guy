@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "rev": 131,
-  "cursor": "redispatch-2026-05-05T11:57:03Z",
+  "rev": 152,
+  "cursor": "redispatch-2026-05-06T11:19:28Z",
   "data": {
     "perIssue": {},
     "dryRunLog": [
@@ -15,19 +15,19 @@
         "issueNumber": 1360,
         "action": "skip",
         "reason": "Open kody-authored PR #1366 linked in state comment (prUrl field). Filter: 'no open kody-authored PR' → drop. kody:done label present but PR still open (merged=null). Last history: 2026-04-27T09:58:29.549Z (~8d old). No fresh kody comment (<40min). Dry-run: no action taken.",
-        "plannedAt": "2026-05-04T11:00:00Z"
+        "plannedAt": "2026-04-11T00:00:00Z"
       },
       {
         "issueNumber": 1363,
         "action": "skip",
         "reason": "Open kody-authored PR #1364 linked in state comment (prUrl field). Filter: 'no open kody-authored PR' → drop. kody:done label present but PR still open (merged=null). Last history: 2026-04-27T09:49:12.100Z (~8d old). No fresh kody comment (<40min). Dry-run: no action taken.",
-        "plannedAt": "2026-05-04T11:00:00Z"
+        "plannedAt": "2026-04-11T00:00:00Z"
       },
       {
         "issueNumber": 1382,
         "action": "skip",
         "reason": "Open kody-authored PR #1383 linked in state comment (prUrl field). Filter: 'no open kody-authored PR' → drop. kody:done label present but PR still open (merged=null). Last history: 2026-04-28T14:45:08.322Z (~6d old). No fresh kody comment (<40min). Dry-run: no action taken.",
-        "plannedAt": "2026-05-04T11:00:00Z"
+        "plannedAt": "2026-04-11T00:00:00Z"
       },
       {
         "issueNumber": 1397,
