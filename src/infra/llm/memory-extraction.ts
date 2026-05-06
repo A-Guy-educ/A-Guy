@@ -11,6 +11,7 @@
  */
 
 import { logger } from '@/infra/utils/logger'
+import { withConcurrencyLimit } from '@/infra/utils/concurrency'
 import { readFileSync } from 'fs'
 import { OpenAI } from 'openai'
 import { dirname, join } from 'path'
@@ -24,6 +25,12 @@ import { findSimilarMemoryItem, type MemoryItem } from './vector-search'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
+
+// Concurrency limit for vector-search calls.
+// Kept at or below maxPoolSize (3) to avoid exhausting the MongoDB connection pool.
+// This runs in the background after the chat response is already sent, so
+// slightly slower extraction has zero impact on user-facing latency.
+const CONCURRENCY_LIMIT = 2
 
 // Lazy initialization to avoid errors at module load time
 let openai: OpenAI | null = null
@@ -219,45 +226,36 @@ export async function persistMemoryItems(
     const texts = candidates.map((c) => c.text)
     const embeddingResults = await generateEmbeddings(texts) // Single API call
 
-    // Prepare similarity checks in parallel (with concurrency limit)
-    // If vector search fails, we'll still create the memory items (graceful degradation)
-    const similarityChecks = embeddingResults.map((result, idx) =>
-      findSimilarMemoryItem(db, userId, result.embedding, 0.9)
-        .then((similar) => ({
-          candidate: candidates[idx],
-          embedding: result.embedding,
-          similar,
-        }))
-        .catch((error) => {
-          // If vector search fails, log but continue (will create new item)
-          logger.debug(
-            { err: error, text: candidates[idx].text.slice(0, 50) },
-            '[MemoryExtraction] Similarity check failed, will create new item',
-          )
-          return {
-            candidate: candidates[idx],
-            embedding: result.embedding,
-            similar: null, // Treat as no similar item found
-          }
-        }),
-    )
-
-    // Execute similarity checks with concurrency limit
-    // Keep at or below maxPoolSize (3) to avoid exhausting the connection pool.
-    // This runs in the background after the chat response is already sent, so
-    // slightly slower extraction has zero impact on user-facing latency.
-    const CONCURRENCY_LIMIT = 2
+    // Run similarity checks with bounded concurrency.
+    // Unlike a naive "batch then Promise.all" approach, withConcurrencyLimit
+    // defers findSimilarMemoryItem invocation until a slot is free, so the
+    // pool connection limit is genuinely respected from the first call.
+    // If vector search fails, we still create the memory items (graceful degradation).
     const results: Array<{
       candidate: MemoryCandidate
       embedding: number[]
       similar: MemoryItem | null
-    }> = []
-
-    for (let i = 0; i < similarityChecks.length; i += CONCURRENCY_LIMIT) {
-      const batch = similarityChecks.slice(i, i + CONCURRENCY_LIMIT)
-      const batchResults = await Promise.all(batch)
-      results.push(...batchResults)
-    }
+    }> = await withConcurrencyLimit(embeddingResults, CONCURRENCY_LIMIT, async (result, idx) => {
+      try {
+        const similar = await findSimilarMemoryItem(db, userId, result.embedding, 0.9)
+        return {
+          candidate: candidates[idx],
+          embedding: result.embedding,
+          similar,
+        }
+      } catch (error) {
+        // If vector search fails, log but continue (will create new item)
+        logger.debug(
+          { err: error, text: candidates[idx].text.slice(0, 50) },
+          '[MemoryExtraction] Similarity check failed, will create new item',
+        )
+        return {
+          candidate: candidates[idx],
+          embedding: result.embedding,
+          similar: null, // Treat as no similar item found
+        }
+      }
+    })
 
     // Process results (create/update)
     let persisted = 0
