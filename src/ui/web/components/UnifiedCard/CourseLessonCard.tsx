@@ -5,6 +5,7 @@ import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 import type { Lesson } from '@/payload-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { UnifiedCard } from '@/ui/web/components/UnifiedCard'
+import type { LessonType } from '@/server/constants/lesson-types'
 import { toast } from 'sonner'
 
 interface CourseLessonCardProps {
@@ -14,6 +15,8 @@ interface CourseLessonCardProps {
   chapterSlug: string
   tabColor?: { text: string; stroke: string }
   progress?: number
+  /** Lesson type — 'exam' switches label from "Lesson" to "Exam" with larger font */
+  lessonType?: LessonType
 }
 
 export function CourseLessonCard({
@@ -23,9 +26,14 @@ export function CourseLessonCard({
   chapterSlug,
   tabColor,
   progress = 0,
+  lessonType,
 }: CourseLessonCardProps) {
   const tc = useTranslations('courses')
   const t = useTranslations('coursePage')
+
+  const isExam = lessonType === 'exam'
+  const label = `${isExam ? tc('exam') : tc('lesson')} ${index}`
+  const labelBadgeClassName = isExam ? 'text-[11.5px]' : undefined
 
   const href = `/courses/${courseSlug}/chapters/${chapterSlug}/lessons/${lesson.slug}`
   const isSoon = lesson.contentStatus === 'soon'
@@ -53,7 +61,8 @@ export function CourseLessonCard({
     <UnifiedCard
       variant="lesson"
       title={lesson.title}
-      label={`${tc('lesson')} ${index}`}
+      label={label}
+      labelBadgeClassName={labelBadgeClassName}
       accentColor={accentColor}
       contentStatus={lesson.contentStatus}
       contentStatusExpiresAt={lesson.contentStatusExpiresAt ?? undefined}

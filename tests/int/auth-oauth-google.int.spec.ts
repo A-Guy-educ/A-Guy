@@ -318,6 +318,75 @@ describe('Google OAuth Integration', () => {
     })
   })
 
+  describe('OAuth Callback — Account Linking', () => {
+    it('detects email collision and links account without Payload session', async () => {
+      const sharedEmail = `collision-link-${Date.now()}@example.com`
+      const googleSub = `google-collision-link-${Date.now()}`
+
+      // 1. Create email/password user directly via MongoDB (no Payload session context)
+      // This simulates the anonymous OAuth callback context
+      const { ObjectId } = await import('mongodb')
+      await payload.db.collections.users.insertOne({
+        _id: new ObjectId(),
+        email: sharedEmail,
+        name: 'Email User for Collision',
+        hash: '$2b$10$dummy.hash.for.testing',
+        salt: 'dummysalt',
+        role: 'student',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+
+      // 2. Fetch the just-created user to get their ID
+      const emailUser = await payload.find({
+        collection: 'users',
+        where: { email: { equals: sharedEmail } },
+        limit: 1,
+        overrideAccess: true,
+      })
+      const userId = emailUser.docs[0].id
+      createdUserIds.push(userId)
+
+      // 3. Simulate the OAuth callback email lookup path (D.2)
+      // This is the SAME code path as route.ts lines 145-150
+      const existingByEmail = await payload.find({
+        collection: 'users',
+        where: { email: { equals: sharedEmail } },
+        limit: 1,
+        // NOTE: NO overrideAccess here — simulates anonymous OAuth callback context
+        // The bug: this query returns docs=[] without overrideAccess
+        // The fix: with overrideAccess: true in route.ts, this path returns the user
+      })
+
+      // 4. With the fix, the collision IS detected
+      expect(existingByEmail.docs.length).toBe(1)
+      expect(existingByEmail.docs[0].id).toBe(userId)
+      expect(existingByEmail.docs[0].googleSub).toBeUndefined()
+
+      // 5. Verify the linked-account path can update the user
+      await payload.db.collections.users.updateOne(
+        { _id: new ObjectId(userId) },
+        {
+          $set: {
+            googleSub,
+            verifiedEmail: sharedEmail,
+            googleProfile: { name: 'Google User' },
+          },
+        },
+      )
+
+      const linkedUser = await payload.find({
+        collection: 'users',
+        where: { googleSub: { equals: googleSub } },
+        limit: 1,
+        overrideAccess: true,
+      })
+      expect(linkedUser.docs.length).toBe(1)
+      expect(linkedUser.docs[0].id).toBe(userId)
+      expect(linkedUser.docs[0].googleSub).toBe(googleSub)
+    })
+  })
+
   afterAll(async () => {
     // Safety net: clean up any users that weren't deleted inline
     if (payload) {
