@@ -1,0 +1,2 @@
+{"event":"chat.ready","payload":{"sessionId":"live-1778149397247-m4aa1p","startedAt":"2026-05-07T10:24:45.191Z","idleExitMs":300000,"hardCapMs":1800000,"runId":"25490130784","runUrl":"https://github.com/A-Guy-educ/A-Guy/actions/runs/25490130784"},"runId":"chat-live-1778149397247-m4aa1p-ready","emittedAt":"2026-05-07T10:24:45.191Z"}
+{"event":"chat.exit","payload":{"sessionId":"live-1778149397247-m4aa1p","reason":"idle-timeout","turnsCompleted":0,"endedAt":"2026-05-07T10:29:47.244Z"},"runId":"chat-live-1778149397247-m4aa1p-exit","emittedAt":"2026-05-07T10:29:47.244Z"}
