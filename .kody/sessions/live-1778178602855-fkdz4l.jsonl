@@ -1,2 +1,3 @@
 {"type":"meta","mode":"interactive","createdAt":"2026-05-07T18:30:03.942Z","idleExitMs":300000,"hardCapMs":1800000}
 {"role":"user","content":"Which model are you","timestamp":"2026-05-07T18:31:41.859Z","toolCalls":[]}
+{"role":"assistant","content":"I'm powered by **MiniMax-M2.7-highspeed**.","timestamp":"2026-05-07T18:31:50.138Z","toolCalls":[]}
