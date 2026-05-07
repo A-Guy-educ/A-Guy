@@ -484,13 +484,36 @@ Examples of when to answer directly (NO tools needed):
     })
   }
 
-  // Fallback: No tools available, use regular chat
+  // Fallback: No tools available, use regular chat.
+  // Build a composedPrompt so chatWithExerciseHelper receives the conversation history
+  // and a meaningful system prompt — otherwise the LLM gets a generic fallback prompt
+  // with no context, causing it to ignore prior conversation turns.
+  // Use conversationHistory (already trimmed to 95) without the new user message so we
+  // can append it explicitly without duplicating what getRecentWindow already includes.
+  const fallbackHistoryMessages = getRecentWindow(
+    trimMessagesForUpdate(conversationHistory) as Message[],
+  ).map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }))
+
+  const fallbackComposedPrompt = {
+    messages: [
+      { role: 'system' as const, content: systemPrompt },
+      ...fallbackHistoryMessages,
+      { role: 'user' as const, content: validated.message },
+    ],
+    metadata: {
+      policyVersion: 'v1',
+      summaryLength: 0,
+      memoryCount: 0,
+      messageCount: fallbackHistoryMessages.length + 1,
+    },
+  }
+
   const modelCallStart = Date.now()
   const result = await chatWithExerciseHelper(
     {
       message: validated.message,
       acknowledgment: validated.acknowledgment || '',
-      composedPrompt: undefined,
+      composedPrompt: fallbackComposedPrompt,
       req: {
         headers: {
           authorization:
@@ -714,6 +737,11 @@ async function handleContextScopedChat(
     validated.courseId,
   )
 
+  // Only inject IMAGE_HANDLING_INSTRUCTIONS when the request actually
+  // carries an image. See pipeline.ts for the same logic.
+  const hasImageAttached =
+    (validated.mediaIds?.length ?? 0) > 0 || (validated.chatAssetIds?.length ?? 0) > 0
+
   let composedInstructions
   try {
     composedInstructions = await composeFullSystemInstructions(
@@ -724,6 +752,9 @@ async function handleContextScopedChat(
       lessonContext.courseContextText,
       userId,
       lessonContext.lessonContextBlock,
+      lessonContext.lessonContextText,
+      lessonContext.exercises,
+      hasImageAttached,
     )
   } catch (error) {
     throw error
