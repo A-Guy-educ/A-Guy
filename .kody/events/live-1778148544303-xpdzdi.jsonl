@@ -1,1 +1,3 @@
 {"event":"chat.ready","payload":{"sessionId":"live-1778148544303-xpdzdi","startedAt":"2026-05-07T10:10:37.537Z","idleExitMs":300000,"hardCapMs":1800000,"runId":"25489500419","runUrl":"https://github.com/A-Guy-educ/A-Guy/actions/runs/25489500419"},"runId":"chat-live-1778148544303-xpdzdi-ready","emittedAt":"2026-05-07T10:10:37.538Z"}
+{"event":"chat.message","payload":{"sessionId":"live-1778148544303-xpdzdi","role":"assistant","content":"Hi! How can I help you today?","timestamp":"2026-05-07T10:11:44.984Z"},"runId":"chat-live-1778148544303-xpdzdi-message","emittedAt":"2026-05-07T10:11:44.984Z"}
+{"event":"chat.done","payload":{"sessionId":"live-1778148544303-xpdzdi"},"runId":"chat-live-1778148544303-xpdzdi-done","emittedAt":"2026-05-07T10:11:44.984Z"}
