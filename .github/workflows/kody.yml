@@ -80,6 +80,13 @@ jobs:
         with:
           node-version: 22
 
+      # Install pnpm 10 BEFORE kody runs, so kody's own
+      # `pnpm not on PATH — installing via npm install -g pnpm` step
+      # is skipped. Otherwise it pulls latest pnpm (currently 11), which
+      # the existing pnpm-lock.yaml format doesn't accept.
+      - name: Install pnpm 10
+        run: npm install -g pnpm@10
+
       - name: Write pip cache key for LiteLLM
         run: echo "litellm[proxy]" > .kody-pip-requirements.txt
 

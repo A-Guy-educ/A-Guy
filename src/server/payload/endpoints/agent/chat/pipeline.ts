@@ -241,6 +241,7 @@ export async function runChatPipeline(
       lessonContext.coursePrompt,
       lessonContext.courseContextText,
       req.user?.id,
+      lessonContext.lessonContextBlock,
     )
   } catch (error) {
     throw error

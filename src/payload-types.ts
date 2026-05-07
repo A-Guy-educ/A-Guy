@@ -80,6 +80,7 @@ export interface Config {
     courses: Course;
     chapters: Chapter;
     lessons: Lesson;
+    'lesson-duplications': LessonDuplication;
     'content-pages': ContentPage;
     'context-extractions': ContextExtraction;
     exercises: Exercise;
@@ -125,6 +126,7 @@ export interface Config {
     courses: CoursesSelect<false> | CoursesSelect<true>;
     chapters: ChaptersSelect<false> | ChaptersSelect<true>;
     lessons: LessonsSelect<false> | LessonsSelect<true>;
+    'lesson-duplications': LessonDuplicationsSelect<false> | LessonDuplicationsSelect<true>;
     'content-pages': ContentPagesSelect<false> | ContentPagesSelect<true>;
     'context-extractions': ContextExtractionsSelect<false> | ContextExtractionsSelect<true>;
     exercises: ExercisesSelect<false> | ExercisesSelect<true>;
@@ -1772,6 +1774,50 @@ export interface MemoryItem {
   createdAt: string;
 }
 /**
+ * Lesson duplication job records, one per duplicate request.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lesson-duplications".
+ */
+export interface LessonDuplication {
+  id: string;
+  /**
+   * Lesson being duplicated.
+   */
+  sourceLesson: string | Lesson;
+  /**
+   * Variation level applied to the duplicate.
+   */
+  level: 'none' | 'light' | 'medium' | 'deep';
+  /**
+   * Job status. `none` finishes inline; others go through the queue.
+   */
+  status: 'pending' | 'running' | 'succeeded' | 'failed' | 'needs_review';
+  /**
+   * The newly created lesson (set when status=succeeded).
+   */
+  outputLesson?: (string | null) | Lesson;
+  /**
+   * Per-exercise validation failures (populated by later tasks).
+   */
+  failures?:
+    | {
+        exerciseRef?: string | null;
+        sectionIndex?: number | null;
+        code: string;
+        message: string;
+        suggestedAction?: ('skip' | 'regenerate' | 'keep') | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "content-pages".
  */
@@ -2824,6 +2870,10 @@ export interface PayloadLockedDocument {
         value: string | Lesson;
       } | null)
     | ({
+        relationTo: 'lesson-duplications';
+        value: string | LessonDuplication;
+      } | null)
+    | ({
         relationTo: 'content-pages';
         value: string | ContentPage;
       } | null)
@@ -3360,6 +3410,29 @@ export interface LessonsSelect<T extends boolean = true> {
   contentStatusExpiresAt?: T;
   contentStatusLabel?: T;
   formulaSheet?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lesson-duplications_select".
+ */
+export interface LessonDuplicationsSelect<T extends boolean = true> {
+  sourceLesson?: T;
+  level?: T;
+  status?: T;
+  outputLesson?: T;
+  failures?:
+    | T
+    | {
+        exerciseRef?: T;
+        sectionIndex?: T;
+        code?: T;
+        message?: T;
+        suggestedAction?: T;
+        id?: T;
+      };
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
