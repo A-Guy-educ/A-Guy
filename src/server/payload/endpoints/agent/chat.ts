@@ -737,6 +737,11 @@ async function handleContextScopedChat(
     validated.courseId,
   )
 
+  // Only inject IMAGE_HANDLING_INSTRUCTIONS when the request actually
+  // carries an image. See pipeline.ts for the same logic.
+  const hasImageAttached =
+    (validated.mediaIds?.length ?? 0) > 0 || (validated.chatAssetIds?.length ?? 0) > 0
+
   let composedInstructions
   try {
     composedInstructions = await composeFullSystemInstructions(
@@ -749,6 +754,7 @@ async function handleContextScopedChat(
       lessonContext.lessonContextBlock,
       lessonContext.lessonContextText,
       lessonContext.exercises,
+      hasImageAttached,
     )
   } catch (error) {
     throw error
