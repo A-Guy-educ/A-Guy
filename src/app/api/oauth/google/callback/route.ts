@@ -146,6 +146,7 @@ async function handleUserLookupAndSession(
     collection: 'users',
     where: { email: { equals: email } },
     limit: 1,
+    overrideAccess: true,
   })
 
   if (existingByEmail.docs.length > 0) {
