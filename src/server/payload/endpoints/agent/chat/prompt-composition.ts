@@ -175,6 +175,101 @@ function buildLessonContextBlock(
 }
 
 /**
+ * Walk a lesson's `blocks[]` (textarea-stored JSON) and return the
+ * exercises in author-curated order. Replaces the previous reverse
+ * `Exercise.lesson` lookup which produced arbitrary order and pulled in
+ * any orphan / draft exercise tagged with the lesson id (audit F2 / F3).
+ *
+ * Notes:
+ *  - Only `exerciseRef` blocks are followed; `contentPage` blocks are
+ *    out of scope for the chat prompt's exercises section.
+ *  - The lesson page itself uses `blocks[]` as its source of truth, so
+ *    matching that ordering keeps the model's view in sync with what
+ *    the student sees.
+ *  - Filters by `status: 'published'` to suppress drafts. Lessons that
+ *    don't store status on exercises will simply not match the filter
+ *    and we fall back to the full set.
+ */
+async function fetchExercisesFromLessonBlocks(
+  payload: Payload,
+  lessonId: string,
+  reqLogger: Logger,
+): Promise<Array<{ id: string; title?: string; content: unknown }> | undefined> {
+  try {
+    const lesson = (await payload.findByID({
+      collection: 'lessons',
+      id: lessonId,
+      depth: 0,
+      select: { blocks: true },
+      overrideAccess: true,
+    })) as unknown as { blocks?: string | unknown[] }
+
+    const rawBlocks = lesson.blocks
+    let parsed: unknown[] = []
+    if (Array.isArray(rawBlocks)) {
+      parsed = rawBlocks
+    } else if (typeof rawBlocks === 'string' && rawBlocks.trim().length > 0) {
+      try {
+        const j = JSON.parse(rawBlocks)
+        if (Array.isArray(j)) parsed = j
+      } catch (err) {
+        reqLogger.warn({ err, lessonId }, 'Failed to parse lesson.blocks as JSON')
+      }
+    }
+    if (parsed.length === 0) return []
+
+    // Collect ordered exerciseRef IDs
+    const orderedIds: string[] = []
+    for (const block of parsed) {
+      if (!block || typeof block !== 'object') continue
+      const b = block as { blockType?: string; exercise?: string | { id?: string } }
+      if (b.blockType !== 'exerciseRef') continue
+      const id = typeof b.exercise === 'string' ? b.exercise : b.exercise?.id
+      if (id) orderedIds.push(id)
+    }
+    if (orderedIds.length === 0) return []
+
+    // Bulk fetch — Mongo $in does not preserve order so we reorder client-side
+    const result = await payload.find({
+      collection: 'exercises',
+      where: { id: { in: orderedIds } },
+      depth: 0,
+      select: { id: true, title: true, content: true, _status: true },
+      limit: 200,
+      overrideAccess: true,
+    })
+
+    const byId = new Map<string, { id: string; title?: string; content: unknown }>()
+    for (const doc of result.docs) {
+      const e = doc as { id: string; title?: string; content?: unknown; _status?: string }
+      // Drop drafts when status is set; documents without _status pass through.
+      if (e._status && e._status !== 'published') continue
+      byId.set(e.id, { id: e.id, title: e.title, content: e.content })
+    }
+    const ordered = orderedIds
+      .map((id) => byId.get(id))
+      .filter((v): v is { id: string; title?: string; content: unknown } => v !== undefined)
+
+    reqLogger.info(
+      {
+        lessonId,
+        blocksCount: parsed.length,
+        exerciseRefCount: orderedIds.length,
+        publishedCount: ordered.length,
+      },
+      'Fetched exercises from lesson blocks',
+    )
+    return ordered
+  } catch (error) {
+    reqLogger.warn(
+      { err: error, lessonId },
+      'Failed to fetch exercises from lesson blocks; falling back to none',
+    )
+    return undefined
+  }
+}
+
+/**
  * Resolve a relationship field that may be a string id or a populated doc.
  */
 async function resolveRel(
@@ -429,34 +524,10 @@ export async function fetchLessonContextForContext(
 
   if (context.relationTo === 'lessons') {
     lessonContext = await fetchLessonContext(payload, context.value, user, reqLogger)
-    // Fetch all exercises for the lesson to inject into context
-    try {
-      const exercisesResult = await payload.find({
-        collection: 'exercises',
-        where: { lesson: { equals: context.value } },
-        depth: 0,
-        select: { id: true, title: true, content: true },
-        limit: 100,
-        overrideAccess: true, // Exercises are public-readable but limit fields
-      })
-      exercises = exercisesResult.docs.map((e) => ({
-        id: e.id as string,
-        title: (e as { title?: string }).title,
-        content: (e as { content: unknown }).content,
-      }))
-      reqLogger.info(
-        { lessonId: context.value, exerciseCount: exercises.length },
-        'Fetched exercises for lesson context',
-      )
-    } catch (error) {
-      reqLogger.warn(
-        { err: error, lessonId: context.value },
-        'Failed to fetch exercises for lesson',
-      )
-    }
+    exercises = await fetchExercisesFromLessonBlocks(payload, context.value, reqLogger)
   } else if (context.relationTo === 'exercises') {
     lessonContext = await fetchExerciseLessonContext(payload, context.value, user, reqLogger)
-    // Also fetch exercises for the parent lesson
+    // Resolve the parent lesson and pull its curated blocks list
     try {
       const exercise = await payload.findByID({
         collection: 'exercises',
@@ -469,23 +540,7 @@ export async function fetchLessonContextForContext(
           ? (exercise as { lesson: string }).lesson
           : (exercise as { lesson: { id: string } }).lesson?.id
       if (lessonId) {
-        const exercisesResult = await payload.find({
-          collection: 'exercises',
-          where: { lesson: { equals: lessonId } },
-          depth: 0,
-          select: { id: true, title: true, content: true },
-          limit: 100,
-          overrideAccess: true,
-        })
-        exercises = exercisesResult.docs.map((e) => ({
-          id: e.id as string,
-          title: (e as { title?: string }).title,
-          content: (e as { content: unknown }).content,
-        }))
-        reqLogger.info(
-          { lessonId, exerciseCount: exercises.length },
-          'Fetched exercises for parent lesson (exercise context)',
-        )
+        exercises = await fetchExercisesFromLessonBlocks(payload, lessonId, reqLogger)
       }
     } catch (error) {
       reqLogger.warn(
