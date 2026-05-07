@@ -224,12 +224,14 @@ async function fetchExerciseLessonContext(
   user: { id: string },
   reqLogger: Logger,
 ): Promise<LessonContext> {
+  // overrideAccess: true — pipeline already verified access via validateContextExists,
+  // and we need fields like `content` regardless of role-level access config drift.
   const exercise = (await payload.findByID({
     collection: 'exercises',
     id: exerciseId,
     depth: 0,
     user,
-    overrideAccess: false,
+    overrideAccess: true,
   })) as unknown as Record<string, unknown>
 
   if (!exercise.lesson) {
@@ -374,18 +376,26 @@ export async function fetchLessonContextForContext(
   // Fetch course prompt if no lesson prompt and courseId is provided
   if (!lessonContext.lessonPrompt && courseId) {
     const courseContext = await fetchCourseContext(payload, courseId, user, reqLogger)
-    return {
-      ...lessonContext,
+    Object.assign(lessonContext, {
       courseContextText: courseContext.courseContextText,
       coursePrompt: courseContext.coursePrompt,
-    }
+    })
   }
 
-  return {
-    ...lessonContext,
-    courseContextText: undefined,
-    coursePrompt: null,
-  }
+  // Diagnostic: surface whether the auto-context block was produced and a
+  // short preview of it. Helps catch silent extraction failures in prod.
+  reqLogger.info(
+    {
+      relationTo: context.relationTo,
+      hasLessonPrompt: !!lessonContext.lessonPrompt,
+      hasLessonContextBlock: !!lessonContext.lessonContextBlock,
+      lessonContextBlockPreview: lessonContext.lessonContextBlock?.slice(0, 300),
+      lessonContextBlockLength: lessonContext.lessonContextBlock?.length ?? 0,
+    },
+    'Resolved lesson context for chat',
+  )
+
+  return lessonContext
 }
 
 /**
