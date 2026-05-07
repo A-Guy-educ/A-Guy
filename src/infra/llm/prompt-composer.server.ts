@@ -80,7 +80,10 @@ IMPORTANT:
  * 6. Lesson context text (AI-injected lesson content, if provided)
  * 7. Lesson exercises (structured content blocks, if provided)
  * 8. Mandatory math formatting instructions
- * 9. Mandatory image handling instructions
+ * 9. Image handling instructions — INJECTED ONLY when an image is attached
+ *    (see hasImageAttached). When no image is in the request these rules
+ *    confuse the model into refusing text-only chat with "please upload
+ *    an image" responses, so we skip them.
  *
  * @param systemPrompts - Array of system prompt templates (can be empty)
  * @param lessonPromptTemplate - Resolved lesson prompt template
@@ -89,6 +92,7 @@ IMPORTANT:
  * @param lessonContextText - Optional AI context text for the lesson (lessonContextText or description)
  * @param courseContextText - Optional AI context text for the course
  * @param exercises - Optional exercises associated with the lesson
+ * @param hasImageAttached - When true, append IMAGE_HANDLING_INSTRUCTIONS. Defaults to true for back-compat with callers that don't (yet) plumb this through.
  * @returns Final composed system instructions string
  */
 export function composeSystemInstructions(
@@ -99,6 +103,7 @@ export function composeSystemInstructions(
   lessonContextText?: string,
   courseContextText?: string,
   exercises?: Array<{ id: string; title?: string; content: unknown }>,
+  hasImageAttached: boolean = true,
 ): string {
   // Step 1: Join system prompts (if any)
   const systemPart =
@@ -149,8 +154,12 @@ export function composeSystemInstructions(
   // Step 8: Append mandatory math formatting instructions
   const withMathFormatting = withExercises + '\n\n' + MATH_FORMATTING_INSTRUCTIONS
 
-  // Step 9: Append mandatory image handling instructions
-  return withMathFormatting + '\n\n' + IMAGE_HANDLING_INSTRUCTIONS
+  // Step 9: Append image handling instructions ONLY when an image is attached.
+  // Otherwise these rules dominate the prompt and Gemini falls back to
+  // "please upload an image" even on text-only chats with full lesson context.
+  return hasImageAttached
+    ? withMathFormatting + '\n\n' + IMAGE_HANDLING_INSTRUCTIONS
+    : withMathFormatting
 }
 
 /**
