@@ -518,6 +518,7 @@ export async function fetchLessonContextForContext(
   user: { id: string },
   reqLogger: Logger,
   courseId?: string,
+  activeExerciseId?: string,
 ): Promise<LessonContext> {
   let lessonContext: LessonContext
   let exercises: LessonContext['exercises'] = undefined
@@ -525,6 +526,50 @@ export async function fetchLessonContextForContext(
   if (context.relationTo === 'lessons') {
     lessonContext = await fetchLessonContext(payload, context.value, user, reqLogger)
     exercises = await fetchExercisesFromLessonBlocks(payload, context.value, reqLogger)
+
+    // The lesson page sends BOTH lessonId and exerciseId — extractContextCandidate
+    // picks the lesson, so the conversation stays lesson-scoped (one conversation
+    // per lesson, exercises share it). But we still need to tell the model which
+    // exercise the student is *currently* viewing or it anchors on the most-recent
+    // hidden injection (often the previous exercise). Augment the lessonContextBlock
+    // with a "Currently active exercise" section.
+    if (activeExerciseId) {
+      try {
+        const activeExercise = (await payload.findByID({
+          collection: 'exercises',
+          id: activeExerciseId,
+          depth: 0,
+          overrideAccess: true,
+        })) as unknown as Record<string, unknown>
+        const activeBlock = buildLessonContextBlock(null, null, null, activeExercise)
+        if (activeBlock && lessonContext.lessonContextBlock) {
+          // Replace the helper's intro line with a more directive header so the model
+          // treats this as authoritative even when the conversation history mentions
+          // earlier exercises.
+          const cleaned = activeBlock
+            .replace(
+              /^.*do not refuse to discuss it\.\n+/,
+              '## Currently Active Exercise (authoritative — ignore earlier exercise context in chat history)\n',
+            )
+            .replace(/^## Current Exercise/m, '### Active Exercise Details')
+          lessonContext = {
+            ...lessonContext,
+            lessonContextBlock: lessonContext.lessonContextBlock + '\n\n' + cleaned,
+          }
+        } else if (activeBlock) {
+          lessonContext = { ...lessonContext, lessonContextBlock: activeBlock }
+        }
+        reqLogger.info(
+          { activeExerciseId, hasActiveBlock: !!activeBlock },
+          'Augmented lesson context with active exercise marker',
+        )
+      } catch (error) {
+        reqLogger.warn(
+          { err: error, activeExerciseId },
+          'Failed to fetch active exercise; lesson context block left unchanged',
+        )
+      }
+    }
   } else if (context.relationTo === 'exercises') {
     lessonContext = await fetchExerciseLessonContext(payload, context.value, user, reqLogger)
     // Resolve the parent lesson and pull its curated blocks list
