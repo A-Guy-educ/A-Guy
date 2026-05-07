@@ -135,20 +135,15 @@ export function composeSystemInstructions(
       ? withCourseContext + '\n\n## Lesson Content\n' + lessonContextText.trim()
       : withCourseContext
 
-  // Step 7: Append lesson exercises (if provided)
+  // Step 7: Append lesson exercises (if provided), with size budget.
+  // Audit F4: previously emitted full content of every exercise — for a
+  // 31-exercise lesson that produced a ~14 KB system prompt that diluted
+  // the model's attention. Now: per-exercise content is truncated to
+  // EXERCISE_CONTENT_BUDGET, and the section as a whole stops after
+  // EXERCISES_SECTION_BUDGET with a tail noting how many exercises remain.
   let withExercises = withLessonContext
   if (exercises && exercises.length > 0) {
-    const exercisesSection =
-      '\n\n## Lesson Exercises\nThe following exercises are available in this lesson. You can answer questions about them:\n\n' +
-      exercises
-        .map((exercise, idx) => {
-          const title = exercise.title ? `**${exercise.title}**` : `Exercise ${idx + 1}`
-          const content = formatExerciseContent(exercise.content)
-          return `${idx + 1}. ${title}\n${content}`
-        })
-        .join('\n\n')
-
-    withExercises = withLessonContext + exercisesSection
+    withExercises = withLessonContext + buildExercisesSection(exercises)
   }
 
   // Step 8: Append mandatory math formatting instructions
@@ -160,6 +155,70 @@ export function composeSystemInstructions(
   return hasImageAttached
     ? withMathFormatting + '\n\n' + IMAGE_HANDLING_INSTRUCTIONS
     : withMathFormatting
+}
+
+/**
+ * Per-exercise body is truncated to this many characters to keep the
+ * "## Lesson Exercises" section bounded for lessons with many exercises
+ * or long bodies. Title is always shown — only the body is truncated.
+ */
+const EXERCISE_CONTENT_BUDGET = 400
+
+/**
+ * Total budget for the exercises section. Once exceeded, remaining
+ * exercises are listed by title only and a "...and N more" tail is added.
+ */
+const EXERCISES_SECTION_BUDGET = 4000
+
+/**
+ * Build the exercises section of the system prompt with size budgeting.
+ * Title is always included; per-exercise body is truncated to
+ * EXERCISE_CONTENT_BUDGET; total emitted text is capped at
+ * EXERCISES_SECTION_BUDGET with a tail noting how many remain.
+ */
+function buildExercisesSection(
+  exercises: Array<{ id: string; title?: string; content: unknown }>,
+): string {
+  const header =
+    '\n\n## Lesson Exercises\nThe following exercises are available in this lesson. You can answer questions about them:\n\n'
+
+  const lines: string[] = []
+  let used = 0
+  let remaining = exercises.length
+
+  for (let idx = 0; idx < exercises.length; idx++) {
+    const exercise = exercises[idx]
+    const title = exercise.title ? `**${exercise.title}**` : `Exercise ${idx + 1}`
+    const fullContent = formatExerciseContent(exercise.content)
+    const truncatedContent =
+      fullContent.length > EXERCISE_CONTENT_BUDGET
+        ? fullContent.slice(0, EXERCISE_CONTENT_BUDGET) + '…(truncated)'
+        : fullContent
+
+    const candidate = `${idx + 1}. ${title}\n${truncatedContent}`
+
+    // If adding this entry would blow the budget, switch to title-only mode
+    // for the rest and break.
+    if (used + candidate.length > EXERCISES_SECTION_BUDGET) {
+      const remainingTitles = exercises.slice(idx).map((e, i) => {
+        const t = e.title ? `**${e.title}**` : `Exercise ${idx + i + 1}`
+        return `${idx + i + 1}. ${t}`
+      })
+      lines.push(...remainingTitles)
+      remaining = 0
+      break
+    }
+
+    lines.push(candidate)
+    used += candidate.length + 2 // +2 for the joining \n\n
+    remaining--
+  }
+
+  let body = lines.join('\n\n')
+  if (remaining > 0) {
+    body += `\n\n…and ${remaining} more exercise${remaining === 1 ? '' : 's'} in this lesson (titles only above to fit the prompt budget).`
+  }
+  return header + body
 }
 
 /**
