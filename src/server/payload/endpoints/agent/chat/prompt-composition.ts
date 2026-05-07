@@ -557,6 +557,7 @@ export async function composeFullSystemInstructions(
   lessonContextBlock?: string,
   lessonContextText?: string,
   exercises?: LessonContext['exercises'],
+  hasImageAttached: boolean = false,
 ): Promise<ComposedSystemInstructions> {
   // Fetch published system prompts (always included)
   const systemPromptsResult = await fetchPublishedSystemPrompts(payload)
@@ -615,6 +616,7 @@ export async function composeFullSystemInstructions(
     lessonContextText,
     courseContextText,
     exercises,
+    hasImageAttached,
   )
 
   return {

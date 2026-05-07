@@ -232,6 +232,12 @@ export async function runChatPipeline(
     validated.courseId,
   )
 
+  // Only inject IMAGE_HANDLING_INSTRUCTIONS when the request actually
+  // carries an image. Otherwise the model anchors on those rules and
+  // refuses text-only chat with "please upload an image" responses.
+  const hasImageAttached =
+    (validated.mediaIds?.length ?? 0) > 0 || (validated.chatAssetIds?.length ?? 0) > 0
+
   let composedInstructions
   try {
     composedInstructions = await composeFullSystemInstructions(
@@ -242,6 +248,9 @@ export async function runChatPipeline(
       lessonContext.courseContextText,
       req.user?.id,
       lessonContext.lessonContextBlock,
+      undefined,
+      undefined,
+      hasImageAttached,
     )
   } catch (error) {
     throw error
