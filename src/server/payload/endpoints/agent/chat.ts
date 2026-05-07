@@ -729,12 +729,14 @@ async function handleContextScopedChat(
   )
 
   // Fetch lesson context and compose system instructions
+  // (see pipeline.ts for the activeExerciseId rationale)
   const lessonContext = await fetchLessonContextForContext(
     req.payload,
     context,
     { id: ownerId },
     logger as Logger,
     validated.courseId,
+    validated.exerciseId,
   )
 
   // Only inject IMAGE_HANDLING_INSTRUCTIONS when the request actually

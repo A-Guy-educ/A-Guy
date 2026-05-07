@@ -223,13 +223,18 @@ export async function runChatPipeline(
     reqLogger as Logger,
   )
 
-  // Fetch lesson context and compose system instructions
+  // Fetch lesson context and compose system instructions.
+  // Pass exerciseId as activeExerciseId so the model gets a clear
+  // "currently active exercise" marker even when the conversation is
+  // lesson-scoped (which is the case any time the page sends both
+  // lessonId and exerciseId — extractContextCandidate prefers lesson).
   const lessonContext = await fetchLessonContextForContext(
     req.payload,
     context,
     { id: ownerId },
     reqLogger as Logger,
     validated.courseId,
+    validated.exerciseId,
   )
 
   // Only inject IMAGE_HANDLING_INSTRUCTIONS when the request actually
