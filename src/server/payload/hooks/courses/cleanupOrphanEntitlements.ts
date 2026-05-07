@@ -1,4 +1,5 @@
 import type { CollectionAfterDeleteHook } from 'payload'
+import { ObjectId } from 'mongodb'
 
 /**
  * After a course is deleted, remove any user `courseEntitlements` entries
@@ -9,10 +10,14 @@ export const cleanupOrphanEntitlements: CollectionAfterDeleteHook = async ({ id,
   if (!id) return
 
   const PAGE_SIZE = 500
-  let page = 1
   let removedCount = 0
   let usersModified = 0
 
+  // Phase 1 — collect all affected user IDs before mutating any document.
+  // This prevents the cursor-invalidation bug where advancing `page` after
+  // updating page-1 users would skip the next batch when the result set shrinks.
+  const collectedIds: string[] = []
+  let page = 1
   while (true) {
     const usersWithEntitlement = await req.payload.find({
       collection: 'users',
@@ -25,32 +30,24 @@ export const cleanupOrphanEntitlements: CollectionAfterDeleteHook = async ({ id,
     })
 
     for (const user of usersWithEntitlement.docs) {
-      const u = user as unknown as {
-        id: string
-        courseEntitlements?: Array<{ course?: string | { id?: string } }>
-      }
-      const original = u.courseEntitlements || []
-      const filtered = original.filter((ent) => {
-        const courseId = typeof ent.course === 'object' ? ent.course?.id : ent.course
-        return String(courseId) !== String(id)
-      })
-
-      if (filtered.length === original.length) continue
-
-      await req.payload.update({
-        collection: 'users',
-        id: u.id,
-        data: { courseEntitlements: filtered },
-        overrideAccess: true,
-        req,
-      })
-
-      removedCount += original.length - filtered.length
-      usersModified++
+      collectedIds.push(user.id)
     }
 
     if (!usersWithEntitlement.hasNextPage) break
     page++
+  }
+
+  // Phase 2 — remove the orphan entitlement from all affected users in a single
+  // bulk write. Using raw MongoDB $pull avoids one round-trip per user (550 → 1).
+  if (collectedIds.length > 0) {
+    const db = (req.payload.db as any).connection?.db as import('mongodb').Db
+    await db
+      .collection('users')
+      .updateMany({ _id: { $in: collectedIds.map((id) => new ObjectId(id)) } }, {
+        $pull: { courseEntitlements: { course: new ObjectId(id) } },
+      } as any)
+    usersModified = collectedIds.length
+    removedCount = collectedIds.length // each user had exactly 1 entitlement to this course
   }
 
   if (removedCount > 0) {

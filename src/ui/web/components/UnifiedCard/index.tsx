@@ -48,6 +48,8 @@ export interface UnifiedCardProps {
   cardHref?: string
   /** Fires on card click when cardHref is set */
   cardOnClick?: (e: React.MouseEvent) => void
+  /** Additional className for the label badge (e.g. 'text-[11.5px]' for 15% larger exam label) */
+  labelBadgeClassName?: string
 }
 
 export function UnifiedCard({
@@ -72,6 +74,7 @@ export function UnifiedCard({
   className,
   cardHref,
   cardOnClick,
+  labelBadgeClassName,
 }: UnifiedCardProps) {
   const isSoon = contentStatus === 'soon'
   const color = accentColor ?? 'hsl(var(--primary))'
@@ -118,7 +121,12 @@ export function UnifiedCard({
               </span>
             )}
             {label && (
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
+              <span
+                className={cn(
+                  'text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted px-2.5 py-1 rounded-full',
+                  labelBadgeClassName,
+                )}
+              >
                 {label}
               </span>
             )}
