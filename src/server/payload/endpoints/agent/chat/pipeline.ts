@@ -74,12 +74,6 @@ export interface ChatPipelineResult {
     messages?: Message[]
   }
   mediaPartsWithPath: MediaPartWithPath[]
-  /**
-   * TEMP diagnostic for #1403 verification — length of the auto lesson
-   * context block. Surfaced via SSE `done` event so we can confirm the
-   * fix reaches the deployed bundle.
-   */
-  _debugLessonContextLength?: number
 }
 
 /**
@@ -319,7 +313,6 @@ export async function runChatPipeline(
         messages: conversation.messages,
       },
       mediaPartsWithPath: allMediaParts,
-      _debugLessonContextLength: lessonContext.lessonContextBlock?.length ?? 0,
     },
   }
 }

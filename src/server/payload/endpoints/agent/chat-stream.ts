@@ -223,14 +223,8 @@ export async function agentChatStream(
     }
 
     const { result: pipelineData } = pipelineResult
-    const {
-      conversationId,
-      context,
-      allMessages,
-      composedPrompt,
-      mediaPartsWithPath,
-      _debugLessonContextLength,
-    } = pipelineData
+    const { conversationId, context, allMessages, composedPrompt, mediaPartsWithPath } =
+      pipelineData
 
     reqLogger.info({ conversationId, contextKey: context.contextKey }, 'Starting streaming chat')
 
@@ -324,12 +318,7 @@ export async function agentChatStream(
 
           // Enqueue done event with guest mode status
           controller.enqueue(
-            formatDoneEvent({
-              conversationId,
-              contextKey: context.contextKey,
-              isGuestMode,
-              _debugLessonContextLength,
-            }),
+            formatDoneEvent({ conversationId, contextKey: context.contextKey, isGuestMode }),
           )
           controller.close()
         } catch (error) {
