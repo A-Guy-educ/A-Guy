@@ -54,7 +54,7 @@ on:
     # `memorize` writes to `.kody/vault/` and opens a daily PR. If your
     # `.gitignore` ignores `.kody/*`, add `!.kody/vault/` and `!.kody/vault/**`
     # so memorize's pages are tracked.
-    - cron: '*/30 * * * *'
+    - cron: '*/15 * * * *'
 
 jobs:
   run:

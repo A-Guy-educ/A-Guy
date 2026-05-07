@@ -57,6 +57,7 @@ async function main() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     logger as any,
     undefined,
+    exerciseId,
   )
 
   const composed = await composeFullSystemInstructions(

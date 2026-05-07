@@ -95,6 +95,7 @@ export async function agentChatDebugPrompt(
     { id: ownerId },
     reqLogger as Logger,
     validated.courseId,
+    validated.exerciseId,
   )
 
   // 5) Compose the full system instructions exactly as the chat pipeline does
