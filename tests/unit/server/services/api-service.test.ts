@@ -81,4 +81,69 @@ describe('apiService', () => {
       expect(result).toEqual({ success: false, error: 'Network error' })
     })
   })
+
+  describe('chatStream SSE parsing', () => {
+    function makeSSEResponse(payload: string): Response {
+      const encoder = new TextEncoder()
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(encoder.encode(payload))
+          controller.close()
+        },
+      })
+      return new Response(stream, {
+        status: 200,
+        headers: { 'Content-Type': 'text/event-stream' },
+      })
+    }
+
+    async function collectChunks(generator: ReturnType<typeof apiService.chatStream>) {
+      const events: Array<{ type: string; text?: string }> = []
+      for await (const evt of generator) {
+        events.push(evt)
+      }
+      return events
+    }
+
+    it('emits every chunk when multiple chunk events arrive in one buffer flush', async () => {
+      // Regression for #1452: lines.indexOf(line) returned the FIRST 'event: chunk'
+      // index for every chunk in the same flush, so all chunks yielded the first
+      // chunk's text. Symptom: user saw only the first token repeated (e.g. "אאא…").
+      const payload =
+        'event: chunk\ndata: {"text":"אני "}\n\n' +
+        'event: chunk\ndata: {"text":"כאן "}\n\n' +
+        'event: chunk\ndata: {"text":"כדי "}\n\n' +
+        'event: done\ndata: {"conversationId":"c1","contextKey":"k1"}\n\n'
+
+      vi.mocked(fetch).mockResolvedValue(makeSSEResponse(payload))
+
+      const events = await collectChunks(apiService.chatStream('hi', 'ack', { exerciseId: 'ex-1' }))
+
+      const chunkTexts = events.filter((e) => e.type === 'chunk').map((e) => e.text)
+      expect(chunkTexts).toEqual(['אני ', 'כאן ', 'כדי '])
+      expect(events.some((e) => e.type === 'done')).toBe(true)
+    })
+
+    it('handles SSE messages split across reads (event line and data line in different flushes)', async () => {
+      const encoder = new TextEncoder()
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(encoder.encode('event: chunk\n'))
+          controller.enqueue(encoder.encode('data: {"text":"hello"}\n\n'))
+          controller.enqueue(
+            encoder.encode('event: done\ndata: {"conversationId":"c1","contextKey":"k1"}\n\n'),
+          )
+          controller.close()
+        },
+      })
+      vi.mocked(fetch).mockResolvedValue(
+        new Response(stream, { status: 200, headers: { 'Content-Type': 'text/event-stream' } }),
+      )
+
+      const events = await collectChunks(apiService.chatStream('hi', 'ack', { exerciseId: 'ex-1' }))
+
+      const chunkTexts = events.filter((e) => e.type === 'chunk').map((e) => e.text)
+      expect(chunkTexts).toEqual(['hello'])
+    })
+  })
 })
