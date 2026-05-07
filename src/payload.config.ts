@@ -23,6 +23,7 @@ import { ExtractionLogs } from '@/server/payload/collections/ExtractionLogs'
 import { FormulaSheets } from '@/server/payload/collections/FormulaSheets'
 import { GuestSessions } from '@/server/payload/collections/GuestSessions'
 import { InteractiveLessons } from '@/server/payload/collections/InteractiveLessons'
+import { LessonDuplications } from '@/server/payload/collections/LessonDuplications'
 import { Lessons } from '@/server/payload/collections/Lessons'
 import { MCPAuditLogs } from '@/server/payload/collections/MCPAuditLogs'
 import { Media } from '@/server/payload/collections/Media'
@@ -44,6 +45,7 @@ import { importExerciseFromLatex } from '@/server/payload/endpoints/exercises/im
 import { importExerciseFromLesson } from '@/server/payload/endpoints/exercises/import-from-lesson'
 import { translateContentEndpoint } from '@/server/payload/endpoints/translation/translate-content'
 import { cascadeDeleteEndpoint } from '@/server/payload/endpoints/cascade-delete'
+import { duplicateLessonEndpoint } from '@/server/payload/endpoints/lessons/duplicate'
 import { defaultLexical } from '@/server/payload/fields/defaultLexical'
 import { pdfToExercisesTask } from '@/server/payload/jobs/pdf-to-exercises-task'
 import { pdfToExercisesV2Task } from '@/server/payload/jobs/pdf-to-exercises-v2-task'
@@ -180,6 +182,7 @@ export default buildConfig({
     Courses,
     Chapters,
     Lessons,
+    LessonDuplications,
     ContentPages,
     ContextExtractions,
     Exercises,
@@ -245,6 +248,11 @@ export default buildConfig({
       path: '/cascade-delete',
       method: 'delete',
       handler: (req: PayloadRequest) => cascadeDeleteEndpoint(req),
+    },
+    {
+      path: '/lessons/:id/duplicate',
+      method: 'post',
+      handler: (req: PayloadRequest) => duplicateLessonEndpoint(req),
     },
   ],
   jobs: {
