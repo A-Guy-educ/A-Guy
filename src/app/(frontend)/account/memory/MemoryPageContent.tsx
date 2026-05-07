@@ -11,6 +11,7 @@ interface MemoryPageContentProps {
   user: User
 }
 
+// user prop is a placeholder for future memory content personalization
 export function MemoryPageContent({ user: _user }: MemoryPageContentProps) {
   const t = useTranslations('auth.account')
 
