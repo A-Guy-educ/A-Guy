@@ -39,6 +39,12 @@ export interface SSEDoneEventData {
   conversationId: string
   contextKey: string
   isGuestMode?: boolean
+  /**
+   * TEMP — diagnostic only. Length of the auto lesson context block injected
+   * into the system prompt. Confirms #1403 fix reaches preview deploys.
+   * Remove after verification.
+   */
+  _debugLessonContextLength?: number
 }
 
 export function formatDoneEvent(data: SSEDoneEventData): Uint8Array {
