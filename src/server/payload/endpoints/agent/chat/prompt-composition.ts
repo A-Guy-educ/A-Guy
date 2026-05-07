@@ -22,6 +22,39 @@ interface LessonContext {
 }
 
 /**
+ * Pull readable text out of an exercise's `content.blocks[]` shape.
+ * Currently emits the `value` of `rich_text` blocks; other block types
+ * are stringified compactly so the model still sees something.
+ *
+ * Truncated to 4 KB to keep the system prompt bounded — full exercises with
+ * lots of media would otherwise blow out the prompt budget.
+ */
+function extractExerciseBody(content: unknown): string | undefined {
+  if (!content || typeof content !== 'object') return undefined
+  const blocks = (content as { blocks?: unknown[] }).blocks
+  if (!Array.isArray(blocks) || blocks.length === 0) return undefined
+
+  const parts: string[] = []
+  for (const block of blocks) {
+    if (!block || typeof block !== 'object') continue
+    const b = block as Record<string, unknown>
+    const type = b.type as string | undefined
+    if (type === 'rich_text' && typeof b.value === 'string') {
+      parts.push(b.value)
+    } else if (typeof b.value === 'string') {
+      parts.push(b.value)
+    } else if (type) {
+      parts.push(`[${type}]`)
+    }
+  }
+  if (parts.length === 0) return undefined
+  const joined = parts.join('\n').trim()
+  if (!joined) return undefined
+  const MAX = 4000
+  return joined.length > MAX ? joined.slice(0, MAX) + '\n…(truncated)' : joined
+}
+
+/**
  * Build a markdown block describing the current lesson and (optionally) exercise
  * so the model always knows what the student is working on, even when no admin
  * Prompt is linked to the lesson.
@@ -51,14 +84,24 @@ function buildLessonContextBlock(
 
   if (exercise) {
     const exTitle = exercise.title as string | undefined
-    const exPrompt = exercise.prompt as string | undefined
-    const exHint = exercise.hint as string | undefined
-    if (exTitle || exPrompt || exHint) {
+    // V1 schema (legacy): top-level prompt/hint
+    const exPromptLegacy = exercise.prompt as string | undefined
+    const exHintLegacy = exercise.hint as string | undefined
+    // Current schema: rich-text blocks under exercise.content.blocks[]
+    const exBody = extractExerciseBody(exercise.content)
+
+    if (exTitle || exPromptLegacy || exHintLegacy || exBody) {
       if (lines.length > 0) lines.push('')
       lines.push('## Current Exercise')
       if (exTitle) lines.push(`Title: ${exTitle}`)
-      if (exPrompt) lines.push(`Prompt: ${exPrompt}`)
-      if (exHint) lines.push(`Hint (do not reveal directly; use for guidance): ${exHint}`)
+      if (exPromptLegacy) lines.push(`Prompt: ${exPromptLegacy}`)
+      if (exHintLegacy) {
+        lines.push(`Hint (do not reveal directly; use for guidance): ${exHintLegacy}`)
+      }
+      if (exBody) {
+        lines.push('Body:')
+        lines.push(exBody)
+      }
     }
   }
 

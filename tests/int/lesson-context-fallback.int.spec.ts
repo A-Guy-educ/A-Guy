@@ -50,7 +50,7 @@ describe('buildLessonContextBlock (unit)', () => {
     expect(block).toMatch(/do not refuse/i)
   })
 
-  it('appends exercise prompt and hint when an exercise is provided', () => {
+  it('appends exercise prompt and hint when an exercise is provided (legacy schema)', () => {
     const block = _buildLessonContextBlock({ title: 'Triangles' } as any, null, null, {
       title: 'Exercise 14',
       prompt: 'Find the missing angle',
@@ -63,6 +63,40 @@ describe('buildLessonContextBlock (unit)', () => {
     expect(block).toContain('Use angle sum')
     // Hint should be guarded so the model doesn't blurt it out
     expect(block).toMatch(/do not reveal directly/i)
+  })
+
+  it('extracts the exercise body from content.blocks[] (current schema)', () => {
+    const exercise = {
+      title: 'תרגיל 14',
+      content: {
+        blocks: [
+          { id: 'a', type: 'rich_text', value: 'בכל סעיף נתונים משולשים דומים — מצאו את' },
+          { id: 'b', type: 'rich_text', value: 'אורך הצלע החסרה.' },
+        ],
+      },
+    }
+    const block = _buildLessonContextBlock(
+      { title: 'דימיון משולשים' } as any,
+      null,
+      null,
+      exercise as any,
+    )
+    expect(block).toBeDefined()
+    expect(block).toContain('## Current Exercise')
+    expect(block).toContain('תרגיל 14')
+    expect(block).toContain('בכל סעיף')
+    expect(block).toContain('אורך הצלע החסרה')
+  })
+
+  it('truncates very large exercise bodies', () => {
+    const huge = 'x'.repeat(10000)
+    const block = _buildLessonContextBlock(null, null, null, {
+      title: 'Big',
+      content: { blocks: [{ id: '1', type: 'rich_text', value: huge }] },
+    } as any)
+    expect(block).toBeDefined()
+    expect(block).toContain('truncated')
+    expect((block || '').length).toBeLessThan(huge.length)
   })
 
   it('returns undefined when nothing is known', () => {
