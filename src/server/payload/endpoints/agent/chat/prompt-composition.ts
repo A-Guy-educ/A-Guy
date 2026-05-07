@@ -211,11 +211,22 @@ async function fetchLessonContext(
   user: { id: string },
   reqLogger: Logger,
 ): Promise<LessonContext> {
+  // The select clause must include title, type, and chapter — without them
+  // buildLessonContextBlock returns undefined and the chat loses any
+  // grounding context (audit F1). Keep the lessonContextText/description/
+  // prompt fields too since they're consumed below.
   const lesson = (await payload.findByID({
     collection: 'lessons',
     id: lessonId,
     depth: 0,
-    select: { lessonContextText: true, description: true, prompt: true },
+    select: {
+      title: true,
+      type: true,
+      chapter: true,
+      lessonContextText: true,
+      description: true,
+      prompt: true,
+    },
     user,
     overrideAccess: false,
   })) as unknown as Record<string, unknown>
