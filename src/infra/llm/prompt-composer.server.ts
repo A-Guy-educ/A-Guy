@@ -75,18 +75,21 @@ IMPORTANT:
  * 1. All published system prompts (joined with separator)
  * 2. Teacher profile block (injected into system role, NOT stored in conversation)
  * 3. Lesson-specific resolved prompt
- * 4. Mandatory math formatting instructions
- * 5. Mandatory image handling instructions
+ * 4. Lesson/exercise context block (fallback metadata about what the student is on)
+ * 5. Mandatory math formatting instructions
+ * 6. Mandatory image handling instructions
  *
  * @param systemPrompts - Array of system prompt templates (can be empty)
  * @param lessonPromptTemplate - Resolved lesson prompt template
  * @param teacherProfileBlock - Optional teacher profile block to inject
+ * @param lessonContextBlock - Optional fallback metadata about the current lesson/exercise
  * @returns Final composed system instructions string
  */
 export function composeSystemInstructions(
   systemPrompts: string[],
   lessonPromptTemplate: string,
   teacherProfileBlock?: string,
+  lessonContextBlock?: string,
 ): string {
   // Step 1: Join system prompts (if any)
   const systemPart =
@@ -102,9 +105,14 @@ export function composeSystemInstructions(
   // Step 3: Append lesson prompt
   const withLessonPrompt = withTeacherProfile + lessonPromptTemplate
 
-  // Step 4: Append mandatory math formatting instructions
-  const withMathFormatting = withLessonPrompt + '\n\n' + MATH_FORMATTING_INSTRUCTIONS
+  // Step 4: Append lesson/exercise context block (always fresh, even when an admin Prompt exists)
+  const withLessonContext = lessonContextBlock
+    ? withLessonPrompt + '\n\n' + lessonContextBlock
+    : withLessonPrompt
 
-  // Step 5: Append mandatory image handling instructions
+  // Step 5: Append mandatory math formatting instructions
+  const withMathFormatting = withLessonContext + '\n\n' + MATH_FORMATTING_INSTRUCTIONS
+
+  // Step 6: Append mandatory image handling instructions
   return withMathFormatting + '\n\n' + IMAGE_HANDLING_INSTRUCTIONS
 }

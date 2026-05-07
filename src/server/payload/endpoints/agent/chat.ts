@@ -723,6 +723,7 @@ async function handleContextScopedChat(
       lessonContext.coursePrompt,
       lessonContext.courseContextText,
       userId,
+      lessonContext.lessonContextBlock,
     )
   } catch (error) {
     throw error

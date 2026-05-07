@@ -18,6 +18,191 @@ interface LessonContext {
   lessonPrompt: Prompt | null
   courseContextText?: string
   coursePrompt: Prompt | null
+  lessonContextBlock?: string
+}
+
+/**
+ * Pull readable text out of an exercise's `content.blocks[]` shape.
+ * Handles two block flavours seen in the schema:
+ *  - `rich_text` blocks: text under `.value`
+ *  - `question_*` blocks (e.g. `question_geometry`): `.prompt` / `.hint` on the
+ *    block itself, no `.value`. Without this branch, multi-part exercises
+ *    surface only their intro paragraph and the model has no specific
+ *    sub-question to ground answers in.
+ *
+ * Truncated to 4 KB to keep the system prompt bounded.
+ */
+/**
+ * Coerce a field that the schema models as InlineRichTextSchema (an object
+ * `{type:'rich_text', value: string, ...}`) but might also appear as a raw
+ * string in older or inline data, into a plain string suitable for the
+ * system prompt. Returns undefined when no usable text is found.
+ */
+function richTextToString(value: unknown): string | undefined {
+  if (!value) return undefined
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    return trimmed.length > 0 ? trimmed : undefined
+  }
+  if (typeof value === 'object') {
+    const v = (value as { value?: unknown }).value
+    if (typeof v === 'string') {
+      const trimmed = v.trim()
+      return trimmed.length > 0 ? trimmed : undefined
+    }
+  }
+  return undefined
+}
+
+/**
+ * Pull readable text out of an exercise's `content.blocks[]` shape.
+ * Handles two block flavours seen in the schema:
+ *  - `rich_text` blocks: text under `.value`
+ *  - `question_*` blocks (e.g. `question_geometry`): `.prompt` / `.hint` on the
+ *    block itself. In production these are InlineRichText objects (not plain
+ *    strings) — the helper above unwraps them. Without this branch,
+ *    multi-part exercises surface only their intro paragraph and the model
+ *    has no specific sub-question to ground answers in.
+ *
+ * Truncated to 4 KB to keep the system prompt bounded.
+ */
+function extractExerciseBody(content: unknown): string | undefined {
+  if (!content) return undefined
+  // Some setups store content as a JSON-encoded string
+  let normalized: unknown = content
+  if (typeof normalized === 'string') {
+    try {
+      normalized = JSON.parse(normalized)
+    } catch {
+      return undefined
+    }
+  }
+  if (typeof normalized !== 'object' || normalized === null) return undefined
+  const blocks = (normalized as { blocks?: unknown[] }).blocks
+  if (!Array.isArray(blocks) || blocks.length === 0) return undefined
+
+  const parts: string[] = []
+  blocks.forEach((block, idx) => {
+    if (!block || typeof block !== 'object') return
+    const b = block as Record<string, unknown>
+    const type = (b.type as string | undefined) ?? 'block'
+
+    // 1) Rich-text intro / explanation block (standalone rich_text)
+    if (type === 'rich_text') {
+      const text = richTextToString(b)
+      if (text) {
+        parts.push(text)
+        return
+      }
+    }
+
+    // 2) Question-style blocks carry prompt/hint as InlineRichText fields
+    const prompt = richTextToString(b.prompt)
+    const hint = richTextToString(b.hint)
+    if (prompt || hint) {
+      const sub: string[] = [`### Sub-question ${idx + 1} (${type})`]
+      if (prompt) sub.push(`Prompt: ${prompt}`)
+      if (hint) sub.push(`Hint (do not reveal directly; use for guidance): ${hint}`)
+      parts.push(sub.join('\n'))
+      return
+    }
+
+    // 3) Unknown / opaque block — leave a marker so the model knows something is there
+    parts.push(`[${type} block]`)
+  })
+
+  if (parts.length === 0) return undefined
+  const joined = parts.join('\n\n').trim()
+  if (!joined) return undefined
+  const MAX = 4000
+  return joined.length > MAX ? joined.slice(0, MAX) + '\n…(truncated)' : joined
+}
+
+/**
+ * Build a markdown block describing the current lesson and (optionally) exercise
+ * so the model always knows what the student is working on, even when no admin
+ * Prompt is linked to the lesson.
+ *
+ * Fields are looked up tolerantly — missing values are simply skipped.
+ */
+function buildLessonContextBlock(
+  lesson?: Record<string, unknown> | null,
+  chapter?: Record<string, unknown> | null,
+  course?: Record<string, unknown> | null,
+  exercise?: Record<string, unknown> | null,
+): string | undefined {
+  const lines: string[] = []
+
+  const lessonTitle = lesson?.title as string | undefined
+  const lessonType = lesson?.type as string | undefined
+  const chapterTitle = chapter?.title as string | undefined
+  const courseTitle = course?.title as string | undefined
+
+  if (lessonTitle || chapterTitle || courseTitle) {
+    lines.push('## Current Lesson')
+    if (courseTitle) lines.push(`Course: ${courseTitle}`)
+    if (chapterTitle) lines.push(`Chapter: ${chapterTitle}`)
+    if (lessonTitle) lines.push(`Lesson: ${lessonTitle}`)
+    if (lessonType) lines.push(`Type: ${lessonType}`)
+  }
+
+  if (exercise) {
+    const exTitle = exercise.title as string | undefined
+    // V1 schema (legacy): top-level prompt/hint
+    const exPromptLegacy = exercise.prompt as string | undefined
+    const exHintLegacy = exercise.hint as string | undefined
+    // Current schema: rich-text blocks under exercise.content.blocks[]
+    const exBody = extractExerciseBody(exercise.content)
+
+    if (exTitle || exPromptLegacy || exHintLegacy || exBody) {
+      if (lines.length > 0) lines.push('')
+      lines.push('## Current Exercise')
+      if (exTitle) lines.push(`Title: ${exTitle}`)
+      if (exPromptLegacy) lines.push(`Prompt: ${exPromptLegacy}`)
+      if (exHintLegacy) {
+        lines.push(`Hint (do not reveal directly; use for guidance): ${exHintLegacy}`)
+      }
+      if (exBody) {
+        lines.push('Body:')
+        lines.push(exBody)
+      }
+    }
+  }
+
+  if (lines.length === 0) return undefined
+  return [
+    'The following describes what the student is currently working on. Use it to ground your responses; do not refuse to discuss it.',
+    '',
+    ...lines,
+  ].join('\n')
+}
+
+/**
+ * Resolve a relationship field that may be a string id or a populated doc.
+ */
+async function resolveRel(
+  payload: Payload,
+  collection: 'lessons' | 'chapters' | 'courses' | 'exercises',
+  rel: unknown,
+): Promise<Record<string, unknown> | null> {
+  if (!rel) return null
+  if (typeof rel === 'object' && rel !== null && 'id' in rel) {
+    return rel as unknown as Record<string, unknown>
+  }
+  if (typeof rel === 'string') {
+    try {
+      const doc = await payload.findByID({
+        collection,
+        id: rel,
+        depth: 0,
+        overrideAccess: true,
+      })
+      return doc as unknown as Record<string, unknown>
+    } catch {
+      return null
+    }
+  }
+  return null
 }
 
 /**
@@ -29,22 +214,20 @@ async function fetchLessonContext(
   user: { id: string },
   reqLogger: Logger,
 ): Promise<LessonContext> {
-  const lesson = await payload.findByID({
+  const lesson = (await payload.findByID({
     collection: 'lessons',
     id: lessonId,
     depth: 0,
     user,
     overrideAccess: false,
-  })
+  })) as unknown as Record<string, unknown>
 
   let lessonPrompt: Prompt | null = null
 
   // Fetch prompt separately if lesson has one (admin-only, requires override)
-  if ((lesson as { prompt?: unknown }).prompt) {
+  if (lesson.prompt) {
     const promptId =
-      typeof (lesson as { prompt: unknown }).prompt === 'string'
-        ? (lesson as { prompt: string }).prompt
-        : (lesson as { prompt: { id: string } }).prompt.id
+      typeof lesson.prompt === 'string' ? lesson.prompt : (lesson.prompt as { id: string }).id
 
     try {
       lessonPrompt = (await payload.findByID({
@@ -58,7 +241,13 @@ async function fetchLessonContext(
     }
   }
 
-  return { lessonPrompt, courseContextText: undefined, coursePrompt: null }
+  // Build a context block from the lesson hierarchy (lesson → chapter → course)
+  const chapter = await resolveRel(payload, 'chapters', lesson.chapter)
+  const course = chapter ? await resolveRel(payload, 'courses', chapter.course) : null
+
+  const lessonContextBlock = buildLessonContextBlock(lesson, chapter, course)
+
+  return { lessonPrompt, courseContextText: undefined, coursePrompt: null, lessonContextBlock }
 }
 
 /**
@@ -70,44 +259,44 @@ async function fetchExerciseLessonContext(
   user: { id: string },
   reqLogger: Logger,
 ): Promise<LessonContext> {
-  const exercise = await payload.findByID({
+  // overrideAccess: true — pipeline already verified access via validateContextExists,
+  // and we need fields like `content` regardless of role-level access config drift.
+  const exercise = (await payload.findByID({
     collection: 'exercises',
     id: exerciseId,
     depth: 0,
     user,
-    overrideAccess: false,
-  })
+    overrideAccess: true,
+  })) as unknown as Record<string, unknown>
 
-  if (!(exercise as { lesson?: unknown }).lesson) {
+  if (!exercise.lesson) {
+    // Even with no parent lesson, surface what we know about the exercise itself
     return {
       lessonPrompt: null,
       courseContextText: undefined,
       coursePrompt: null,
+      lessonContextBlock: buildLessonContextBlock(null, null, null, exercise),
     }
   }
 
   const lessonId =
-    typeof (exercise as { lesson: unknown }).lesson === 'string'
-      ? (exercise as { lesson: string }).lesson
-      : (exercise as { lesson: { id: string } }).lesson.id
+    typeof exercise.lesson === 'string' ? exercise.lesson : (exercise.lesson as { id: string }).id
 
   try {
-    const lesson = await payload.findByID({
+    const lesson = (await payload.findByID({
       collection: 'lessons',
       id: lessonId,
       depth: 0,
       user,
       overrideAccess: true, // Use overrideAccess since student role may not have lesson read access
-    })
+    })) as unknown as Record<string, unknown>
 
     let lessonPrompt: Prompt | null = null
 
     // Fetch prompt separately if lesson has one
-    if ((lesson as { prompt?: unknown }).prompt) {
+    if (lesson.prompt) {
       const promptId =
-        typeof (lesson as { prompt: unknown }).prompt === 'string'
-          ? (lesson as { prompt: string }).prompt
-          : (lesson as { prompt: { id: string } }).prompt.id
+        typeof lesson.prompt === 'string' ? lesson.prompt : (lesson.prompt as { id: string }).id
 
       try {
         lessonPrompt = (await payload.findByID({
@@ -121,7 +310,12 @@ async function fetchExerciseLessonContext(
       }
     }
 
-    return { lessonPrompt, courseContextText: undefined, coursePrompt: null }
+    const chapter = await resolveRel(payload, 'chapters', lesson.chapter)
+    const course = chapter ? await resolveRel(payload, 'courses', chapter.course) : null
+
+    const lessonContextBlock = buildLessonContextBlock(lesson, chapter, course, exercise)
+
+    return { lessonPrompt, courseContextText: undefined, coursePrompt: null, lessonContextBlock }
   } catch (error) {
     reqLogger.warn(
       { err: error, lessonId, exerciseId },
@@ -131,6 +325,7 @@ async function fetchExerciseLessonContext(
       lessonPrompt: null,
       courseContextText: undefined,
       coursePrompt: null,
+      lessonContextBlock: buildLessonContextBlock(null, null, null, exercise),
     }
   }
 }
@@ -216,19 +411,32 @@ export async function fetchLessonContextForContext(
   // Fetch course prompt if no lesson prompt and courseId is provided
   if (!lessonContext.lessonPrompt && courseId) {
     const courseContext = await fetchCourseContext(payload, courseId, user, reqLogger)
-    return {
-      ...lessonContext,
+    Object.assign(lessonContext, {
       courseContextText: courseContext.courseContextText,
       coursePrompt: courseContext.coursePrompt,
-    }
+    })
   }
 
-  return {
-    ...lessonContext,
-    courseContextText: undefined,
-    coursePrompt: null,
-  }
+  // Diagnostic: surface whether the auto-context block was produced and a
+  // short preview of it. Helps catch silent extraction failures in prod.
+  reqLogger.info(
+    {
+      relationTo: context.relationTo,
+      hasLessonPrompt: !!lessonContext.lessonPrompt,
+      hasLessonContextBlock: !!lessonContext.lessonContextBlock,
+      lessonContextBlockPreview: lessonContext.lessonContextBlock?.slice(0, 300),
+      lessonContextBlockLength: lessonContext.lessonContextBlock?.length ?? 0,
+    },
+    'Resolved lesson context for chat',
+  )
+
+  return lessonContext
 }
+
+/**
+ * Re-export for tests/diagnostics. Keeps the helper isolated and unit-testable.
+ */
+export { buildLessonContextBlock as _buildLessonContextBlock }
 
 export interface ComposedSystemInstructions {
   instructions: string
@@ -254,6 +462,7 @@ export async function composeFullSystemInstructions(
   coursePrompt?: Prompt | null,
   courseContextText?: string,
   userId?: string,
+  lessonContextBlock?: string,
 ): Promise<ComposedSystemInstructions> {
   // Fetch published system prompts (always included)
   const systemPromptsResult = await fetchPublishedSystemPrompts(payload)
@@ -301,11 +510,12 @@ export async function composeFullSystemInstructions(
     'Resolved teacher profile',
   )
 
-  // Compose final system instructions: system prompts + teacher profile + lesson/course prompt + course context
+  // Compose final system instructions: system prompts + teacher profile + lesson/course prompt + lesson context block
   const instructions = composeSystemInstructions(
     systemPromptsResult.templates,
     promptResolution.template,
     teacherProfileBlock,
+    lessonContextBlock,
   )
 
   return {
