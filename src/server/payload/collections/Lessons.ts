@@ -169,6 +169,7 @@ export const Lessons: CollectionConfig = {
         beforeDocumentControls: [
           '@/ui/admin/TranslationButton#TranslateLessonAction',
           '@/ui/admin/CascadeDeleteButton#LessonCascadeDelete',
+          '@/ui/admin/LessonDuplicateButton/LessonDuplicateButton#LessonDuplicateAction',
         ],
       },
     },

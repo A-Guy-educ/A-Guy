@@ -6,6 +6,7 @@
  */
 import { ChatRole } from '@/infra/llm/chat-message-role'
 import { logger } from '@/infra/utils/logger'
+import { parseSSEData } from '@/server/payload/endpoints/agent/chat/sse-helpers'
 
 export interface ChatApiResponse {
   success: boolean
@@ -324,30 +325,30 @@ export const apiService = {
         if (done) break
 
         buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() || ''
 
-        for (const line of lines) {
-          const trimmedLine = line.trim()
-          if (trimmedLine.startsWith('event: ')) {
-            const eventType = trimmedLine.slice(7).trim() as 'chunk' | 'done' | 'error'
+        // SSE messages are terminated by a blank line ("\n\n"). Split off all
+        // completed messages and keep any trailing partial in the buffer so
+        // events whose event/data pair straddles two reads are still parsed.
+        const lastBoundary = buffer.lastIndexOf('\n\n')
+        if (lastBoundary === -1) continue
 
-            // Find the corresponding data line (next line that starts with 'data: ')
-            const dataIndex = lines.indexOf(line) + 1
-            if (dataIndex < lines.length && lines[dataIndex].trim().startsWith('data: ')) {
-              try {
-                const eventData = JSON.parse(lines[dataIndex].trim().slice(6))
-                yield {
-                  type: eventType,
-                  ...(eventData.text !== undefined && { text: eventData.text }),
-                  ...(eventData.conversationId && { conversationId: eventData.conversationId }),
-                  ...(eventData.contextKey && { contextKey: eventData.contextKey }),
-                  ...(eventData.error && { error: eventData.error }),
-                }
-              } catch {
-                // Ignore JSON parse errors
-              }
-            }
+        const completed = buffer.slice(0, lastBoundary + 2)
+        buffer = buffer.slice(lastBoundary + 2)
+
+        for (const parsed of parseSSEData(completed)) {
+          if (!parsed.event) continue
+          const eventData = (parsed.data ?? {}) as {
+            text?: string
+            conversationId?: string
+            contextKey?: string
+            error?: string
+          }
+          yield {
+            type: parsed.event,
+            ...(eventData.text !== undefined && { text: eventData.text }),
+            ...(eventData.conversationId && { conversationId: eventData.conversationId }),
+            ...(eventData.contextKey && { contextKey: eventData.contextKey }),
+            ...(eventData.error && { error: eventData.error }),
           }
         }
       }
