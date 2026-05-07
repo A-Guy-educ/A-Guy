@@ -248,8 +248,8 @@ export async function runChatPipeline(
       lessonContext.courseContextText,
       req.user?.id,
       lessonContext.lessonContextBlock,
-      undefined,
-      undefined,
+      lessonContext.lessonContextText,
+      lessonContext.exercises,
       hasImageAttached,
     )
   } catch (error) {
