@@ -93,6 +93,43 @@ interface ToolCallingInput {
 }
 
 /**
+ * Build structured messages array for Genkit from input system prompt and messages.
+ * Ensures conversation history is passed correctly with proper role mapping.
+ *
+ * @param system - The system prompt
+ * @param messages - The conversation messages with roles (user/assistant/system)
+ * @returns Structured messages array suitable for Genkit's messages parameter
+ */
+function buildGenkitMessages(
+  system: string,
+  messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>,
+): Array<{ role: 'system' | 'user' | 'model'; content: Array<{ text: string }> }> {
+  const systemMessage = { role: 'system' as const, content: [{ text: system }] }
+  type MappedMessage = {
+    role: 'system' | 'user' | 'model'
+    content: Array<{ text: string }>
+  }
+  const userAssistantMessages: MappedMessage[] = messages.map((m) => ({
+    role: m.role === 'assistant' ? 'model' : m.role === 'system' ? 'system' : 'user',
+    content: [{ text: m.content }],
+  }))
+
+  // Ensure first non-system message is 'user' (Genkit requirement)
+  let result: MappedMessage[] = []
+  if (userAssistantMessages.length > 0 && userAssistantMessages[0].role !== 'user') {
+    result = [
+      systemMessage,
+      { role: 'user' as const, content: [{ text: 'Please continue.' }] },
+      ...userAssistantMessages,
+    ]
+  } else {
+    result = [systemMessage, ...userAssistantMessages]
+  }
+
+  return result
+}
+
+/**
  * Create a Genkit-backed UnifiedLLMProvider
  */
 export async function createGenkitUnifiedAdapter(
@@ -119,14 +156,12 @@ export async function createGenkitUnifiedAdapter(
         withRetry(
           async () => {
             try {
-              const prompt =
-                input.system +
-                '\n\n' +
-                input.messages.map((m) => `${m.role}: ${m.content}`).join('\n')
+              // Build structured messages to preserve conversation history
+              const messages = buildGenkitMessages(input.system, input.messages)
 
               const result = await ai.generate({
                 model: config.model,
-                prompt,
+                messages,
                 config: { temperature: config.temperature },
               })
 
@@ -164,9 +199,8 @@ export async function createGenkitUnifiedAdapter(
 
       const ai = await getGenkitInstance(payloadInstance, tenantId)
 
-      // Build prompt
-      const prompt =
-        input.system + '\n\n' + input.messages.map((m) => `${m.role}: ${m.content}`).join('\n')
+      // Build structured messages to preserve conversation history
+      const messages = buildGenkitMessages(input.system, input.messages)
 
       // Get streaming response with timeout protection
       // A hung stream could block a serverless function until execution time limit
@@ -175,7 +209,7 @@ export async function createGenkitUnifiedAdapter(
         async () =>
           ai.generateStream({
             model: config.model,
-            prompt,
+            messages,
             config: { temperature: config.temperature },
           }),
         { timeoutMs: streamTimeoutMs, message: 'Stream initialization timed out' },
@@ -312,29 +346,7 @@ export async function createGenkitUnifiedAdapter(
                 ),
               )
 
-              // Build messages ensuring first non-system message is 'user'
-              const systemMessage = { role: 'system' as const, content: [{ text: input.system }] }
-              type MappedMessage = {
-                role: 'system' | 'user' | 'model'
-                content: Array<{ text: string }>
-              }
-              const userAssistantMessages: MappedMessage[] = input.messages.map((m) => ({
-                role: m.role === 'assistant' ? 'model' : m.role === 'system' ? 'system' : 'user',
-                content: [{ text: m.content }],
-              }))
-
-              // Ensure first non-system message is 'user'
-
-              let messages: MappedMessage[] = []
-              if (userAssistantMessages.length > 0 && userAssistantMessages[0].role !== 'user') {
-                messages = [
-                  systemMessage,
-                  { role: 'user' as const, content: [{ text: 'Please continue.' }] },
-                  ...userAssistantMessages,
-                ]
-              } else {
-                messages = [systemMessage, ...userAssistantMessages]
-              }
+              const messages = buildGenkitMessages(input.system, input.messages)
 
               const result = await ai.generate({
                 model: config.model,
