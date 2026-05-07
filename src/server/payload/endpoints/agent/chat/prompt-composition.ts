@@ -16,22 +16,19 @@ import type { ResolvedContext } from './context-resolution'
 
 interface LessonContext {
   lessonPrompt: Prompt | null
+  lessonContextText?: string
   courseContextText?: string
   coursePrompt: Prompt | null
+  /** Exercises for the lesson, fetched for context injection */
+  exercises?: Array<{
+    id: string
+    title?: string
+    content: unknown
+  }>
+  /** Fallback metadata block built from lesson/chapter/course hierarchy */
   lessonContextBlock?: string
 }
 
-/**
- * Pull readable text out of an exercise's `content.blocks[]` shape.
- * Handles two block flavours seen in the schema:
- *  - `rich_text` blocks: text under `.value`
- *  - `question_*` blocks (e.g. `question_geometry`): `.prompt` / `.hint` on the
- *    block itself, no `.value`. Without this branch, multi-part exercises
- *    surface only their intro paragraph and the model has no specific
- *    sub-question to ground answers in.
- *
- * Truncated to 4 KB to keep the system prompt bounded.
- */
 /**
  * Coerce a field that the schema models as InlineRichTextSchema (an object
  * `{type:'rich_text', value: string, ...}`) but might also appear as a raw
@@ -218,9 +215,13 @@ async function fetchLessonContext(
     collection: 'lessons',
     id: lessonId,
     depth: 0,
+    select: { lessonContextText: true, description: true, prompt: true },
     user,
     overrideAccess: false,
   })) as unknown as Record<string, unknown>
+
+  const lessonContextText = (lesson as { lessonContextText?: string }).lessonContextText
+  const lessonDescription = (lesson as { description?: string }).description
 
   let lessonPrompt: Prompt | null = null
 
@@ -247,7 +248,13 @@ async function fetchLessonContext(
 
   const lessonContextBlock = buildLessonContextBlock(lesson, chapter, course)
 
-  return { lessonPrompt, courseContextText: undefined, coursePrompt: null, lessonContextBlock }
+  return {
+    lessonPrompt,
+    lessonContextText: lessonContextText || lessonDescription, // Fallback to description if no explicit context text
+    courseContextText: undefined,
+    coursePrompt: null,
+    lessonContextBlock,
+  }
 }
 
 /**
@@ -273,6 +280,7 @@ async function fetchExerciseLessonContext(
     // Even with no parent lesson, surface what we know about the exercise itself
     return {
       lessonPrompt: null,
+      lessonContextText: undefined,
       courseContextText: undefined,
       coursePrompt: null,
       lessonContextBlock: buildLessonContextBlock(null, null, null, exercise),
@@ -287,9 +295,13 @@ async function fetchExerciseLessonContext(
       collection: 'lessons',
       id: lessonId,
       depth: 0,
+      select: { lessonContextText: true, description: true, prompt: true },
       user,
       overrideAccess: true, // Use overrideAccess since student role may not have lesson read access
     })) as unknown as Record<string, unknown>
+
+    const lessonContextText = (lesson as { lessonContextText?: string }).lessonContextText
+    const lessonDescription = (lesson as { description?: string }).description
 
     let lessonPrompt: Prompt | null = null
 
@@ -315,7 +327,13 @@ async function fetchExerciseLessonContext(
 
     const lessonContextBlock = buildLessonContextBlock(lesson, chapter, course, exercise)
 
-    return { lessonPrompt, courseContextText: undefined, coursePrompt: null, lessonContextBlock }
+    return {
+      lessonPrompt,
+      lessonContextText: lessonContextText || lessonDescription,
+      courseContextText: undefined,
+      coursePrompt: null,
+      lessonContextBlock,
+    }
   } catch (error) {
     reqLogger.warn(
       { err: error, lessonId, exerciseId },
@@ -323,6 +341,7 @@ async function fetchExerciseLessonContext(
     )
     return {
       lessonPrompt: null,
+      lessonContextText: undefined,
       courseContextText: undefined,
       coursePrompt: null,
       lessonContextBlock: buildLessonContextBlock(null, null, null, exercise),
@@ -395,14 +414,78 @@ export async function fetchLessonContextForContext(
   courseId?: string,
 ): Promise<LessonContext> {
   let lessonContext: LessonContext
+  let exercises: LessonContext['exercises'] = undefined
 
   if (context.relationTo === 'lessons') {
     lessonContext = await fetchLessonContext(payload, context.value, user, reqLogger)
+    // Fetch all exercises for the lesson to inject into context
+    try {
+      const exercisesResult = await payload.find({
+        collection: 'exercises',
+        where: { lesson: { equals: context.value } },
+        depth: 0,
+        select: { id: true, title: true, content: true },
+        limit: 100,
+        overrideAccess: true, // Exercises are public-readable but limit fields
+      })
+      exercises = exercisesResult.docs.map((e) => ({
+        id: e.id as string,
+        title: (e as { title?: string }).title,
+        content: (e as { content: unknown }).content,
+      }))
+      reqLogger.info(
+        { lessonId: context.value, exerciseCount: exercises.length },
+        'Fetched exercises for lesson context',
+      )
+    } catch (error) {
+      reqLogger.warn(
+        { err: error, lessonId: context.value },
+        'Failed to fetch exercises for lesson',
+      )
+    }
   } else if (context.relationTo === 'exercises') {
     lessonContext = await fetchExerciseLessonContext(payload, context.value, user, reqLogger)
+    // Also fetch exercises for the parent lesson
+    try {
+      const exercise = await payload.findByID({
+        collection: 'exercises',
+        id: context.value,
+        depth: 0,
+        select: { lesson: true },
+      })
+      const lessonId =
+        typeof (exercise as { lesson?: unknown }).lesson === 'string'
+          ? (exercise as { lesson: string }).lesson
+          : (exercise as { lesson: { id: string } }).lesson?.id
+      if (lessonId) {
+        const exercisesResult = await payload.find({
+          collection: 'exercises',
+          where: { lesson: { equals: lessonId } },
+          depth: 0,
+          select: { id: true, title: true, content: true },
+          limit: 100,
+          overrideAccess: true,
+        })
+        exercises = exercisesResult.docs.map((e) => ({
+          id: e.id as string,
+          title: (e as { title?: string }).title,
+          content: (e as { content: unknown }).content,
+        }))
+        reqLogger.info(
+          { lessonId, exerciseCount: exercises.length },
+          'Fetched exercises for parent lesson (exercise context)',
+        )
+      }
+    } catch (error) {
+      reqLogger.warn(
+        { err: error, exerciseId: context.value },
+        'Failed to fetch exercises for parent lesson',
+      )
+    }
   } else {
     lessonContext = {
       lessonPrompt: null,
+      lessonContextText: undefined,
       courseContextText: undefined,
       coursePrompt: null,
     }
@@ -411,10 +494,19 @@ export async function fetchLessonContextForContext(
   // Fetch course prompt if no lesson prompt and courseId is provided
   if (!lessonContext.lessonPrompt && courseId) {
     const courseContext = await fetchCourseContext(payload, courseId, user, reqLogger)
-    Object.assign(lessonContext, {
+    lessonContext = {
+      ...lessonContext,
+      exercises,
       courseContextText: courseContext.courseContextText,
       coursePrompt: courseContext.coursePrompt,
-    })
+    }
+  } else {
+    lessonContext = {
+      ...lessonContext,
+      exercises,
+      courseContextText: undefined,
+      coursePrompt: null,
+    }
   }
 
   // Diagnostic: surface whether the auto-context block was produced and a
@@ -463,6 +555,8 @@ export async function composeFullSystemInstructions(
   courseContextText?: string,
   userId?: string,
   lessonContextBlock?: string,
+  lessonContextText?: string,
+  exercises?: LessonContext['exercises'],
 ): Promise<ComposedSystemInstructions> {
   // Fetch published system prompts (always included)
   const systemPromptsResult = await fetchPublishedSystemPrompts(payload)
@@ -510,12 +604,17 @@ export async function composeFullSystemInstructions(
     'Resolved teacher profile',
   )
 
-  // Compose final system instructions: system prompts + teacher profile + lesson/course prompt + lesson context block
+  // Compose final system instructions:
+  // system prompts + teacher profile + lesson/course prompt +
+  // lesson context block (fallback metadata) + course/lesson context + exercises
   const instructions = composeSystemInstructions(
     systemPromptsResult.templates,
     promptResolution.template,
     teacherProfileBlock,
     lessonContextBlock,
+    lessonContextText,
+    courseContextText,
+    exercises,
   )
 
   return {
