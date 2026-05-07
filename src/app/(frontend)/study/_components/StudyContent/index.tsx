@@ -399,6 +399,7 @@ export function StudyContent({
                             chapterSlug={lesson._chapterSlug}
                             tabColor={tabColor}
                             progress={progressMap[lesson.id] ?? 0}
+                            lessonType={lessonType}
                           />
                         </motion.div>
                       ))}
