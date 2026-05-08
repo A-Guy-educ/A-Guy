@@ -11,6 +11,7 @@ import { GET } from '@/app/api/account/memory/route'
 import { DELETE as deleteById } from '@/app/api/account/memory/[id]/route'
 import { DELETE as clearAll } from '@/app/api/account/memory/clear/route'
 import { createTestUser } from '../factories/user.factory'
+import { createMemoryItem as createMemoryItemForTest } from '../factories/memory-item.factory'
 import config from '@payload-config'
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
@@ -23,28 +24,6 @@ let authToken: string
 let testUserId: string
 let otherUserId: string
 let otherUserToken: string
-let testMemoryItemId: string
-
-// Helper to create a test memory item with admin access
-async function createTestMemoryItem(userId: string, overrides: Record<string, unknown> = {}) {
-  return await payload.create({
-    collection: 'memory_items',
-    data: {
-      userId,
-      text: `Test memory item ${Date.now()}`,
-      type: 'fact',
-      importance: 3,
-      status: 'active',
-      embedding: Array.from({ length: 1536 }, () => Math.random() * 2 - 1),
-      source: {
-        sourceMessageTimestamp: new Date().toISOString(),
-        sourceMessageRole: 'user',
-      },
-      ...overrides,
-    } as any,
-    overrideAccess: true,
-  })
-}
 
 beforeAll(async () => {
   if (!hasDatabaseUrl) return
@@ -133,10 +112,13 @@ describe.skipIf(!hasDatabaseUrl)('GET /api/account/memory', () => {
 
   it('returns only items belonging to the authenticated user', async () => {
     // Create memory for test user
-    const ownMemory = await createTestMemoryItem(testUserId, { text: 'My memory' })
+    const ownMemory = await createMemoryItemForTest(payload, {
+      userId: testUserId,
+      text: 'My memory',
+    })
 
     // Create memory for other user
-    await createTestMemoryItem(otherUserId, { text: 'Other user memory' })
+    await createMemoryItemForTest(payload, { userId: otherUserId, text: 'Other user memory' })
 
     try {
       const request = new Request('http://localhost:3000/api/account/memory', {
@@ -188,7 +170,10 @@ describe.skipIf(!hasDatabaseUrl)('DELETE /api/account/memory/[id]', () => {
 
   it('returns 403 when item belongs to another user', async () => {
     // Create memory for other user
-    const otherMemory = await createTestMemoryItem(otherUserId, { text: 'Other user memory' })
+    const otherMemory = await createMemoryItemForTest(payload, {
+      userId: otherUserId,
+      text: 'Other user memory',
+    })
 
     try {
       const request = new Request(`http://localhost:3000/api/account/memory/${otherMemory.id}`, {
@@ -209,8 +194,10 @@ describe.skipIf(!hasDatabaseUrl)('DELETE /api/account/memory/[id]', () => {
 
   it('successfully deletes own memory item and returns 200', async () => {
     // Create memory for test user
-    const memory = await createTestMemoryItem(testUserId, { text: 'My memory to delete' })
-    testMemoryItemId = memory.id
+    const memory = await createMemoryItemForTest(payload, {
+      userId: testUserId,
+      text: 'My memory to delete',
+    })
 
     const request = new Request(`http://localhost:3000/api/account/memory/${memory.id}`, {
       method: 'DELETE',
@@ -250,11 +237,14 @@ describe.skipIf(!hasDatabaseUrl)('DELETE /api/account/memory/clear', () => {
 
   it('deletes all of the user items and returns count', async () => {
     // Create multiple memories for test user
-    const memory1 = await createTestMemoryItem(testUserId, { text: 'Memory 1' })
-    const memory2 = await createTestMemoryItem(testUserId, { text: 'Memory 2' })
+    const memory1 = await createMemoryItemForTest(payload, { userId: testUserId, text: 'Memory 1' })
+    const memory2 = await createMemoryItemForTest(payload, { userId: testUserId, text: 'Memory 2' })
 
     // Create memory for other user (should NOT be deleted)
-    const otherMemory = await createTestMemoryItem(otherUserId, { text: 'Other user memory' })
+    const otherMemory = await createMemoryItemForTest(payload, {
+      userId: otherUserId,
+      text: 'Other user memory',
+    })
 
     try {
       const request = new Request('http://localhost:3000/api/account/memory/clear', {

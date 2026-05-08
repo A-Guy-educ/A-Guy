@@ -27,7 +27,7 @@ export async function DELETE(req: Request) {
     where: {
       userId: { equals: userId },
     },
-    limit: 0, // Get all
+    limit: 0, // limit: 0 with pagination: false auto-disabled by Payload when limit === 0; fetches all matching docs
     depth: 0, // No relationships needed
     overrideAccess: true,
   })
