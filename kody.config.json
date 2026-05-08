@@ -24,5 +24,8 @@
   },
   "missions": {
     "stateBackend": "local-file"
+  },
+  "jobs": {
+    "stateBackend": "local-file"
   }
 }
