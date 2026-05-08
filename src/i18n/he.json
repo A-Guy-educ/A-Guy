@@ -185,7 +185,17 @@
         "noProfiles": "אין פרופילי מורה זמינים"
       },
       "failedToLoadCourse": "טעינת הקורס נכשלה",
-      "tryAgain": "נסה שוב"
+      "tryAgain": "נסה שוב",
+      "memoryTitle": "הזיכרונות שלי",
+      "memoryDescription": "הזיכרונות המאוחסנים שלך עוזרים למורה הבינה מלאכותית להבין אותך טוב יותר. השתמש בחיפוש כדי למצוא זיכרונות רלוונטיים.",
+      "searchPlaceholder": "חיפוש זיכרונות...",
+      "noMemories": "אין זיכרונות מאוחסנים עדיין. זיכרונות נוצרים באופן אוטומטי בזמן הצ'אט.",
+      "noMemoriesFound": "לא נמצאו זיכרונות",
+      "memoryItemType": "סוג",
+      "memoryItemImportance": "חשיבות",
+      "memoryItemDate": "תאריך",
+      "memoryLoading": "טוען זיכרונות...",
+      "memoryError": "טעינת הזיכרונות נכשלה"
     }
   },
   "roles": {

@@ -162,7 +162,17 @@
         "noProfiles": "No teacher profiles available"
       },
       "failedToLoadCourse": "Failed to load course",
-      "tryAgain": "Try Again"
+      "tryAgain": "Try Again",
+      "memoryTitle": "My Memories",
+      "memoryDescription": "Your stored memories help the AI teacher understand you better. Use the search to find relevant memories.",
+      "searchPlaceholder": "Search memories...",
+      "noMemories": "No memories stored yet. Memories are created automatically as you chat.",
+      "noMemoriesFound": "No memories found",
+      "memoryItemType": "Type",
+      "memoryItemImportance": "Importance",
+      "memoryItemDate": "Date",
+      "memoryLoading": "Loading memories...",
+      "memoryError": "Failed to load memories"
     },
     "signup": {
       "title": "Create Account",
