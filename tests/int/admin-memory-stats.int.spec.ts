@@ -25,6 +25,7 @@ let adminToken: string
 let adminUserId: string
 let studentUserId: string
 let studentToken: string
+let memoryItemIds: string[] = []
 
 const ts = Date.now()
 
@@ -78,7 +79,7 @@ beforeAll(async () => {
   studentToken = studentLogin.token!
 
   // Create 2 memory items for admin user (active)
-  await payload.create({
+  const adminPrefItem = await payload.create({
     collection: 'memory_items',
     data: {
       ...buildMemoryItemData({
@@ -90,7 +91,8 @@ beforeAll(async () => {
     },
     overrideAccess: true,
   })
-  await payload.create({
+  memoryItemIds.push(adminPrefItem.id)
+  const adminFactItem = await payload.create({
     collection: 'memory_items',
     data: {
       ...buildMemoryItemData({
@@ -102,9 +104,10 @@ beforeAll(async () => {
     },
     overrideAccess: true,
   })
+  memoryItemIds.push(adminFactItem.id)
 
   // Create 2 memory items for student user (active)
-  await payload.create({
+  const studentPrefItem = await payload.create({
     collection: 'memory_items',
     data: {
       ...buildMemoryItemData({
@@ -116,7 +119,8 @@ beforeAll(async () => {
     },
     overrideAccess: true,
   })
-  await payload.create({
+  memoryItemIds.push(studentPrefItem.id)
+  const studentDecisionItem = await payload.create({
     collection: 'memory_items',
     data: {
       ...buildMemoryItemData({
@@ -128,9 +132,10 @@ beforeAll(async () => {
     },
     overrideAccess: true,
   })
+  memoryItemIds.push(studentDecisionItem.id)
 
   // Create 1 deprecated memory item for admin (should be excluded from stats)
-  await payload.create({
+  const deprecatedFactItem = await payload.create({
     collection: 'memory_items',
     data: {
       ...buildMemoryItemData({
@@ -142,10 +147,20 @@ beforeAll(async () => {
     },
     overrideAccess: true,
   })
+  memoryItemIds.push(deprecatedFactItem.id)
 }, 60_000)
 
 afterAll(async () => {
   if (!hasDatabaseUrl || !payload) return
+
+  for (const id of memoryItemIds) {
+    if (!id) continue
+    try {
+      await payload.delete({ collection: 'memory_items', id, overrideAccess: true })
+    } catch {
+      /* already deleted */
+    }
+  }
 
   for (const id of [adminUserId, studentUserId]) {
     if (!id) continue
@@ -235,6 +250,11 @@ describe.skipIf(!hasDatabaseUrl)('GET /api/admin/memory-stats', () => {
     const adminEntry = body.byUser.find((u: { userId: string }) => u.userId === adminUserId)
     expect(adminEntry).toBeDefined()
     expect(adminEntry.count).toBeGreaterThanOrEqual(2)
+
+    // Type distribution: exactly 1 active fact — if the deprecated fact (also type='fact')
+    // leaked in, byType.fact would be 2.  This is a stronger regression signal than the
+    // importance-range check alone.
+    expect(body.byType.fact).toBeGreaterThanOrEqual(1)
 
     // Average importance must be in valid range (deprecated item with importance=1 is excluded)
     expect(body.averageImportance).toBeGreaterThanOrEqual(1)
