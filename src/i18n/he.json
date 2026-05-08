@@ -154,7 +154,8 @@
       "errors": {
         "emailRequired": "אימייל נדרש",
         "passwordRequired": "סיסמה נדרשת",
-        "invalidCredentials": "אימייל או סיסמה שגויים"
+        "invalidCredentials": "אימייל או סיסמה שגויים",
+        "invalidEmail": "נדרש אימייל תקין"
       }
     },
     "account": {
