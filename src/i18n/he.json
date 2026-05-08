@@ -152,6 +152,8 @@
       "noAccount": "אין לך חשבון?",
       "signupLink": "הירשם",
       "errors": {
+        "emailRequired": "אימייל נדרש",
+        "passwordRequired": "סיסמה נדרשת",
         "invalidCredentials": "אימייל או סיסמה שגויים"
       }
     },

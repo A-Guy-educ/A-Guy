@@ -129,6 +129,8 @@
       "noAccount": "Don't have an account?",
       "signupLink": "Sign up",
       "errors": {
+        "emailRequired": "Email is required",
+        "passwordRequired": "Password is required",
         "invalidCredentials": "Invalid email or password"
       }
     },
