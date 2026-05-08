@@ -16,6 +16,9 @@
   "agent": {
     "model": "minimax/MiniMax-M2.7-highspeed"
   },
+  "qa": {
+    "fallbackUrl": "https://dev.aguy.co.il"
+  },
   "release": {
     "releaseBranch": "main",
     "versionFiles": ["package.json"],
@@ -23,6 +26,9 @@
     "timeoutMs": 1800000
   },
   "missions": {
+    "stateBackend": "local-file"
+  },
+  "jobs": {
     "stateBackend": "local-file"
   }
 }
