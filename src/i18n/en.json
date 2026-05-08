@@ -162,7 +162,23 @@
         "noProfiles": "No teacher profiles available"
       },
       "failedToLoadCourse": "Failed to load course",
-      "tryAgain": "Try Again"
+      "tryAgain": "Try Again",
+      "sectionMemory": "Memory",
+      "memory": {
+        "description": "Manage your AI memory. These are facts and preferences the AI has learned about you.",
+        "loading": "Loading memories...",
+        "empty": "No memories yet. The AI will start remembering things about you as you learn.",
+        "deleteConfirm": "Delete this memory item?",
+        "deleteSuccess": "Memory item deleted",
+        "deleteFailed": "Failed to delete memory item",
+        "deleteItemAria": "Delete memory item",
+        "forgetEverything": "Forget everything",
+        "clearAllConfirm": "Are you sure? This will permanently delete all your memories. This cannot be undone.",
+        "clearAllSuccess": "All memories deleted",
+        "clearAllFailed": "Failed to delete memories",
+        "clearingAll": "Deleting...",
+        "loadFailed": "Failed to load memories"
+      }
     },
     "signup": {
       "title": "Create Account",
