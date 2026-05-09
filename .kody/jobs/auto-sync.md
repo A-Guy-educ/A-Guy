@@ -1,10 +1,10 @@
 # auto sync
 
-## Mission
+## Job
 
 For every open, non-draft pull request that is not yet merged: if its branch is sufficiently behind its base branch, post the comment `@kody sync` on the PR to update it. Otherwise do nothing.
 
-A PR enters this mission's scope as soon as it becomes ready for review (non-draft, open). It leaves scope when it is merged, closed, or labeled `kody:no-sync`.
+A PR enters this job's scope as soon as it becomes ready for review (non-draft, open). It leaves scope when it is merged, closed, or labeled `kody:no-sync`.
 
 ## Allowed Commands
 
@@ -74,7 +74,7 @@ Capture this once and use it verbatim as `now`. Do not round, snap to half-hour,
 **Step 7 — Emit the next state block:**
 
 ```
-\`\`\`kody-mission-next-state
+\`\`\`kody-job-next-state
 {
   "cursor": "auto-sync-<now>",
   "data": { "perPr": <new perPr> },

@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-Deterministic tick for the redispatch mission.
+Deterministic tick for the redispatch job.
 
 Replaces the prior LLM-driven enumeration that crashed with `error_max_turns`
 on most ticks (the agent was scanning ~30 open issues, fetching each one's
 comment history, parsing kody state blocks, and deciding actions in a single
 turn-bounded session). All of those are deterministic operations — this script
-does the whole tick and emits the kody-mission-next-state block on stdout.
+does the whole tick and emits the kody-job-next-state block on stdout.
 
-The mission's agent runs `python3 .kody/scripts/redispatch-tick.py` and
+The job's agent runs `python3 .kody/scripts/redispatch-tick.py` and
 emits the script's stdout verbatim. Agent budget: a few turns.
 
 Honors the redispatch.md flags:
@@ -17,7 +17,7 @@ Honors the redispatch.md flags:
 - LIVE_TEST_LABEL gate: when DRY_RUN is False, only act on issues that carry
   the gate label. The flag still records all candidates while DRY_RUN is on.
 
-Reads/writes `.kody/missions/redispatch.state.json` (read only here — the
+Reads/writes `.kody/jobs/redispatch.state.json` (read only here — the
 engine's contents-API state backend persists the emitted next-state block).
 """
 
@@ -36,7 +36,7 @@ LIVE_TEST_LABEL = "kody:test-redispatch"
 EXCLUDE_LABELS = {"kody:stuck", "kody:no-redispatch", "kody:stalled"}
 
 # --- constants ---
-STATE_FILE = ".kody/missions/redispatch.state.json"
+STATE_FILE = ".kody/jobs/redispatch.state.json"
 DRYRUN_LOG_CAP = 50
 FORTY_MIN_SECS = 40 * 60
 
@@ -356,7 +356,7 @@ def main() -> int:
         verb = "logged (dry-run)" if DRY_RUN else "executed"
         print(f"  - #{a['issue']} {a['action']} — {verb}")
 
-    # --- emit kody-mission-next-state block ---
+    # --- emit kody-job-next-state block ---
     next_state = {
         "cursor": f"redispatch-{NOW_ISO}",
         "data": {
@@ -366,7 +366,7 @@ def main() -> int:
         "done": False,
     }
     print()
-    print("```kody-mission-next-state")
+    print("```kody-job-next-state")
     print(json.dumps(next_state, indent=2))
     print("```")
     return 0
