@@ -50,4 +50,5 @@ Daily check that test coverage on `dev` (and `main`) hasn't fallen below the flo
 - `data.lastRunISO`: ISO timestamp of last tick that took action
 - `data.lastCoverage`: `{ stmts, branches, runId, capturedISO }` from prior tick (for trend detection)
 - `data.lastBreach`: `{ stmts, branches, runId, openedISO, issue }` or null
+- `data.nextEligibleISO`: UTC ISO timestamp this job will next be eligible to act, computed from the cadence guard above. **Always emit this, every tick.** For this job: `data.lastRunISO + 20h`. Surfaced as "next run" on the dashboard.
 - `done`: always `false`

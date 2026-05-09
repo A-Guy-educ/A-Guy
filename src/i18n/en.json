@@ -162,7 +162,13 @@
         "noProfiles": "No teacher profiles available"
       },
       "failedToLoadCourse": "Failed to load course",
-      "tryAgain": "Try Again"
+      "tryAgain": "Try Again",
+      "sectionMemory": "Memory",
+      "memoryPage": {
+        "title": "Your Memory",
+        "description": "Memories help the AI tutor remember your preferences, goals, and past conversations so it can give you more personalized help over time.",
+        "privacyLink": "Privacy Policy"
+      }
     },
     "signup": {
       "title": "Create Account",
