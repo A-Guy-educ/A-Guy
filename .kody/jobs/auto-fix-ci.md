@@ -1,10 +1,10 @@
 # auto fix-ci
 
-## Mission
+## Job
 
 For every open, non-draft pull request that is not yet merged: if its CI is failing, post the comment `@kody fix-ci` on the PR. Otherwise do nothing.
 
-A PR enters this mission's scope as soon as it becomes ready for review (non-draft, open). It leaves scope when it is merged or closed.
+A PR enters this job's scope as soon as it becomes ready for review (non-draft, open). It leaves scope when it is merged or closed.
 
 ## Allowed Commands
 
@@ -21,12 +21,12 @@ A PR enters this mission's scope as soon as it becomes ready for review (non-dra
 
 This tick is **fully scripted**. The script [auto-fix-ci-tick.sh](.kody/scripts/auto-fix-ci-tick.sh) is the **single source of truth** for which PRs are candidates, what state mutations to make, and which comments to post.
 
-Other missions in this repo silently dropped candidates or hallucinated PR state when driven by prose iteration alone. The script removes that failure mode entirely.
+Other jobs in this repo silently dropped candidates or hallucinated PR state when driven by prose iteration alone. The script removes that failure mode entirely.
 
 You **MUST**:
 
 1. Run exactly: `bash .kody/scripts/auto-fix-ci-tick.sh`
-2. Emit the script's stdout verbatim — including the markdown summary table and the `kody-mission-next-state` fenced block at the end.
+2. Emit the script's stdout verbatim — including the markdown summary table and the `kody-job-next-state` fenced block at the end.
 
 You **MUST NOT**:
 
