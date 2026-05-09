@@ -1,10 +1,10 @@
 # auto resolve
 
-## Mission
+## Job
 
 For every open, non-draft pull request that is not yet merged: if it has a merge conflict, post the comment `@kody resolve` on the PR. Otherwise do nothing.
 
-A PR enters this mission's scope as soon as it becomes ready for review (non-draft, open). It leaves scope when it is merged or closed.
+A PR enters this job's scope as soon as it becomes ready for review (non-draft, open). It leaves scope when it is merged or closed.
 
 ## Allowed Commands
 
@@ -21,12 +21,12 @@ A PR enters this mission's scope as soon as it becomes ready for review (non-dra
 
 This tick is **fully scripted**. The script [auto-resolve-tick.sh](.kody/scripts/auto-resolve-tick.sh) is the **single source of truth** for which PRs are candidates, what state mutations to make, and which comments to post.
 
-A previous iteration of this mission used prose enumeration and **hallucinated** PRs #122 and #124 as conflicting (both are long-closed) — then posted a real `@kody resolve` comment on closed PR #122. Do not repeat that.
+A previous iteration of this job used prose enumeration and **hallucinated** PRs #122 and #124 as conflicting (both are long-closed) — then posted a real `@kody resolve` comment on closed PR #122. Do not repeat that.
 
 You **MUST**:
 
 1. Run exactly: `bash .kody/scripts/auto-resolve-tick.sh`
-2. Emit the script's stdout verbatim — including the markdown summary table and the `kody-mission-next-state` fenced block at the end.
+2. Emit the script's stdout verbatim — including the markdown summary table and the `kody-job-next-state` fenced block at the end.
 
 You **MUST NOT**:
 

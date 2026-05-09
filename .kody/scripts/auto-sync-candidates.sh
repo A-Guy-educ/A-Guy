@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # .kody/scripts/auto-sync-candidates.sh
 #
-# Deterministic candidate enumerator for the auto-sync mission. The mission
+# Deterministic candidate enumerator for the auto-sync job. The job
 # agent must call this and use its output verbatim — do NOT compute candidates
 # or behind-counts in the prompt. Past iterations of the agent silently dropped
 # candidates and mis-paired parallel `gh api compare` outputs; this script
@@ -25,7 +25,7 @@
 
 set -euo pipefail
 
-STATE_FILE=".kody/missions/auto-sync.state.json"
+STATE_FILE=".kody/jobs/auto-sync.state.json"
 OWNER_REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
 
 if [ -f "$STATE_FILE" ]; then
