@@ -1,0 +1,10 @@
+allowBuilds:
+  '@firebase/util': set this to true or false
+  '@sentry/cli': set this to true or false
+  cpu-features: set this to true or false
+  esbuild: set this to true or false
+  protobufjs: set this to true or false
+  sharp: set this to true or false
+  ssh2: set this to true or false
+  tesseract.js: set this to true or false
+  unrs-resolver: set this to true or false

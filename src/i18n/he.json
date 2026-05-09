@@ -195,7 +195,13 @@
       "memoryItemImportance": "חשיבות",
       "memoryItemDate": "תאריך",
       "memoryLoading": "טוען זיכרונות...",
-      "memoryError": "טעינת הזיכרונות נכשלה"
+      "memoryError": "טעינת הזיכרונות נכשלה",
+      "sectionMemory": "זיכרון",
+      "memoryPage": {
+        "title": "הזיכרון שלך",
+        "description": "זיכרונות עוזרים למורה הבינה מלאכותית לזכור את ההעדפות, המטרות והשיחות הקודמות שלך, כדי לספק עזרה מותאמת אישית יותר לאורך זמן.",
+        "privacyLink": "מדיניות פרטיות"
+      }
     }
   },
   "roles": {
