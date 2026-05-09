@@ -80,13 +80,6 @@ jobs:
         with:
           node-version: 22
 
-      # Install pnpm 10 BEFORE kody runs, so kody's own
-      # `pnpm not on PATH — installing via npm install -g pnpm` step
-      # is skipped. Otherwise it pulls latest pnpm (currently 11), which
-      # the existing pnpm-lock.yaml format doesn't accept.
-      - name: Install pnpm 10
-        run: npm install -g pnpm@10
-
       - name: Write pip cache key for LiteLLM
         run: echo "litellm[proxy]" > .kody-pip-requirements.txt
 
@@ -95,15 +88,6 @@ jobs:
           python-version: '3.12'
           cache: 'pip'
           cache-dependency-path: .kody-pip-requirements.txt
-
-      # Pre-pull the MongoDB image used by scripts/release-e2e-gate.ts
-      # (invoked during `@kody release --finalize`). The pull happens in its
-      # own GitHub Actions step, outside kody's internal per-step timeout,
-      # so the gate starts with the image already in the local Docker cache.
-      - name: Warm Docker image cache for release e2e gate
-        timeout-minutes: 2
-        continue-on-error: true
-        run: docker pull mongo:6
 
       - env:
           ALL_SECRETS: ${{ toJSON(secrets) }}

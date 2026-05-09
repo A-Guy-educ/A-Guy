@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # .kody/scripts/auto-resolve-tick.sh
 #
-# Deterministic full tick for the auto-resolve mission.
+# Deterministic full tick for the auto-resolve job.
 # Reads state, enumerates open non-draft CONFLICTING PRs, applies the
 # attempts/stuck rules, posts comments, and emits the
-# kody-mission-next-state block on stdout. Mission agent's only job:
+# kody-job-next-state block on stdout. Job agent's only job:
 # run this script and emit its stdout verbatim.
 #
 # Replaces a prose iteration that hallucinated PR numbers and SHAs and
@@ -12,7 +12,7 @@
 
 set -euo pipefail
 
-STATE_FILE=".kody/missions/auto-resolve.state.json"
+STATE_FILE=".kody/jobs/auto-resolve.state.json"
 OWNER_REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
 NOW_ISO=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
@@ -92,7 +92,7 @@ for a in "${ACTIONS_TAKEN[@]}"; do echo "  - $a"; done
 
 cat <<EOF
 
-\`\`\`kody-mission-next-state
+\`\`\`kody-job-next-state
 {
   "cursor": "auto-resolve-$NOW_ISO",
   "data": { "perPr": $NEW_PERPR },
