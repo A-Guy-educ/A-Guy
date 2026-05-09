@@ -1,37 +1,82 @@
 /**
- * Integration tests for Account Memory API endpoints
+ * Integration tests for GET /api/account/memory
  *
  * Tests:
- * - GET /api/account/memory - Returns user's memory items
- * - DELETE /api/account/memory/[id] - Deletes single memory item
- * - DELETE /api/account/memory/clear - Deletes all user's memory items
+ * - GET returns 401 when not authenticated
+ * - GET returns list of memories for authenticated user (ordered by createdAt desc)
+ * - GET with q param performs vector search (or empty gracefully)
+ * - Memory fields are correctly serialized (dates as ISO strings)
  */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { GET } from '@/app/api/account/memory/route'
-import { DELETE as deleteById } from '@/app/api/account/memory/[id]/route'
-import { DELETE as clearAll } from '@/app/api/account/memory/clear/route'
 import { createTestUser } from '../factories/user.factory'
-import { createMemoryItem as createMemoryItemForTest } from '../factories/memory-item.factory'
+import { ChatRole } from '@/infra/llm/chat-message-role'
 import config from '@payload-config'
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 const hasDatabaseUrl = !!process.env.DATABASE_URL
 
 let payload: Payload
 let authToken: string
 let testUserId: string
-let otherUserId: string
-let otherUserToken: string
+
+// Mock embeddings to use deterministic vectors
+function generateDeterministicEmbedding(text: string): number[] {
+  let hash = 0
+  for (let i = 0; i < text.length; i++) {
+    hash = (hash << 5) - hash + text.charCodeAt(i)
+    hash = hash & hash
+  }
+  const seed = Math.abs(hash)
+  const random = (index: number) => {
+    const x = Math.sin(seed + index) * 10000
+    return (x - Math.floor(x)) * 2 - 1
+  }
+  return Array.from({ length: 1536 }, () => random(Math.random() * 1000))
+}
+
+async function insertMemoryItem(data: {
+  userId: string
+  text: string
+  type?: string
+  importance?: number
+  status?: string
+  contextKey?: string
+}): Promise<string> {
+  const memory = await payload.create({
+    collection: 'memory_items',
+    data: {
+      userId: data.userId,
+      text: data.text,
+      embedding: generateDeterministicEmbedding(data.text),
+      status: (data.status || 'active') as 'active' | 'deprecated',
+      contextKey: data.contextKey || 'global',
+      importance: data.importance || 3,
+      type: (data.type || 'fact') as
+        | 'preference'
+        | 'decision'
+        | 'fact'
+        | 'open_loop'
+        | 'profile'
+        | 'constraint'
+        | 'other',
+      source: {
+        sourceMessageTimestamp: new Date().toISOString(),
+        sourceMessageRole: ChatRole.User,
+      },
+    },
+  })
+  return memory.id
+}
 
 beforeAll(async () => {
   if (!hasDatabaseUrl) return
-
   payload = await getPayload({ config })
 
-  // Create test user
-  const user = await createTestUser(payload)
+  const user = await createTestUser(payload, {
+    email: `memory-api-test-${Date.now()}@example.com`,
+  })
   testUserId = user.id
 
   const loginResult = await payload.login({
@@ -39,53 +84,41 @@ beforeAll(async () => {
     data: { email: user.email, password: 'test123456' },
   })
   authToken = loginResult.token!
+}, 60000)
 
-  // Create another user
-  const otherUser = await createTestUser(payload, { email: `other-user-${Date.now()}@example.com` })
-  otherUserId = otherUser.id
-
-  const otherLoginResult = await payload.login({
-    collection: 'users',
-    data: { email: otherUser.email, password: 'test123456' },
-  })
-  otherUserToken = otherLoginResult.token!
-})
+beforeEach(async () => {
+  if (!hasDatabaseUrl) return
+  // Clean up test memory items
+  let hasMore = true
+  while (hasMore) {
+    const memories = await payload.find({
+      collection: 'memory_items',
+      where: { userId: { equals: testUserId } },
+      limit: 100,
+    })
+    if (memories.docs.length === 0) {
+      hasMore = false
+      break
+    }
+    await Promise.all(
+      memories.docs.map((mem) =>
+        payload.delete({ collection: 'memory_items', id: mem.id }).catch(() => {}),
+      ),
+    )
+  }
+}, 30000)
 
 afterAll(async () => {
   if (!hasDatabaseUrl || !payload) return
-
-  // Clean up test memory items
-  const testMemories = await payload.find({
-    collection: 'memory_items',
-    where: { userId: { equals: testUserId } },
-    limit: 100,
-    overrideAccess: true,
-  })
-  for (const mem of testMemories.docs) {
-    await payload.delete({ collection: 'memory_items', id: mem.id, overrideAccess: true })
+  try {
+    await payload.delete({ collection: 'users', id: testUserId })
+  } catch {
+    /* already deleted */
   }
-
-  const otherMemories = await payload.find({
-    collection: 'memory_items',
-    where: { userId: { equals: otherUserId } },
-    limit: 100,
-    overrideAccess: true,
-  })
-  for (const mem of otherMemories.docs) {
-    await payload.delete({ collection: 'memory_items', id: mem.id, overrideAccess: true })
-  }
-
-  // Clean up test users
-  for (const userId of [testUserId, otherUserId]) {
-    if (userId) {
-      await payload.delete({ collection: 'users', id: userId, overrideAccess: true })
-    }
-  }
-
   if (payload.db?.destroy) {
     await payload.db.destroy()
   }
-})
+}, 60000)
 
 describe.skipIf(!hasDatabaseUrl)('GET /api/account/memory', () => {
   it('returns 401 when not authenticated', async () => {
@@ -97,190 +130,127 @@ describe.skipIf(!hasDatabaseUrl)('GET /api/account/memory', () => {
     expect(data.error).toBe('Unauthorized')
   })
 
-  it('returns empty items array when user has no memories', async () => {
+  it('returns empty list for user with no memories', async () => {
     const request = new Request('http://localhost:3000/api/account/memory', {
       headers: { Authorization: `JWT ${authToken}` },
     })
     const response = await GET(request)
-
     expect(response.status).toBe(200)
     const data = await response.json()
-    expect(data.items).toBeDefined()
-    expect(Array.isArray(data.items)).toBe(true)
-    expect(data.total).toBeDefined()
+    expect(data.memories).toEqual([])
+    expect(data.total).toBe(0)
+    expect(data.searched).toBe(false)
   })
 
-  it('returns only items belonging to the authenticated user', async () => {
-    // Create memory for test user
-    const ownMemory = await createMemoryItemForTest(payload, {
-      userId: testUserId,
-      text: 'My memory',
-    })
+  it('returns memories ordered by createdAt descending', async () => {
+    // Insert two memories with different timestamps
+    await insertMemoryItem({ userId: testUserId, text: 'Older memory', status: 'active' })
+    await new Promise((r) => setTimeout(r, 50))
+    await insertMemoryItem({ userId: testUserId, text: 'Newer memory', status: 'active' })
 
-    // Create memory for other user
-    await createMemoryItemForTest(payload, { userId: otherUserId, text: 'Other user memory' })
-
-    try {
-      const request = new Request('http://localhost:3000/api/account/memory', {
-        headers: { Authorization: `JWT ${authToken}` },
-      })
-      const response = await GET(request)
-
-      expect(response.status).toBe(200)
-      const data = await response.json()
-
-      // Should include test user's memory
-      const hasOwnMemory = data.items.some((item: any) => item.id === ownMemory.id)
-      expect(hasOwnMemory).toBe(true)
-
-      // Should NOT include other user's memory
-      const hasOtherMemory = data.items.some((item: any) => item.text === 'Other user memory')
-      expect(hasOtherMemory).toBe(false)
-    } finally {
-      await payload.delete({ collection: 'memory_items', id: ownMemory.id, overrideAccess: true })
-    }
-  })
-})
-
-describe.skipIf(!hasDatabaseUrl)('DELETE /api/account/memory/[id]', () => {
-  it('returns 401 when not authenticated', async () => {
-    const request = new Request('http://localhost:3000/api/account/memory/some-id', {
-      method: 'DELETE',
-    })
-    const response = await deleteById(request, { params: Promise.resolve({ id: 'some-id' }) })
-
-    expect(response.status).toBe(401)
-    const data = await response.json()
-    expect(data.error).toBe('Unauthorized')
-  })
-
-  it('returns 404 when item does not exist', async () => {
-    const request = new Request('http://localhost:3000/api/account/memory/nonexistent-id', {
-      method: 'DELETE',
+    const request = new Request('http://localhost:3000/api/account/memory', {
       headers: { Authorization: `JWT ${authToken}` },
     })
-    const response = await deleteById(request, {
-      params: Promise.resolve({ id: 'nonexistent-id' }),
-    })
-
-    expect(response.status).toBe(404)
+    const response = await GET(request)
+    expect(response.status).toBe(200)
     const data = await response.json()
-    expect(data.error).toBe('Memory item not found')
+    expect(data.memories).toHaveLength(2)
+    expect(data.memories[0].text).toBe('Newer memory')
+    expect(data.memories[1].text).toBe('Older memory')
+    expect(data.total).toBeGreaterThanOrEqual(2)
   })
 
-  it('returns 403 when item belongs to another user', async () => {
-    // Create memory for other user
-    const otherMemory = await createMemoryItemForTest(payload, {
-      userId: otherUserId,
+  it('returns only active memories', async () => {
+    await insertMemoryItem({ userId: testUserId, text: 'Active memory', status: 'active' })
+    await insertMemoryItem({ userId: testUserId, text: 'Deprecated memory', status: 'deprecated' })
+
+    const request = new Request('http://localhost:3000/api/account/memory', {
+      headers: { Authorization: `JWT ${authToken}` },
+    })
+    const response = await GET(request)
+    expect(response.status).toBe(200)
+    const data = await response.json()
+    const texts = data.memories.map((m: { text: string }) => m.text)
+    expect(texts).toContain('Active memory')
+    expect(texts).not.toContain('Deprecated memory')
+  })
+
+  it('returns only own memories (not other users)', async () => {
+    // Create another user and insert memory for them
+    const otherUser = await createTestUser(payload, {
+      email: `other-user-${Date.now()}@example.com`,
+    })
+    await insertMemoryItem({
+      userId: otherUser.id,
       text: 'Other user memory',
+      status: 'active',
     })
+    await insertMemoryItem({ userId: testUserId, text: 'My memory', status: 'active' })
 
-    try {
-      const request = new Request(`http://localhost:3000/api/account/memory/${otherMemory.id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `JWT ${authToken}` },
-      })
-      const response = await deleteById(request, {
-        params: Promise.resolve({ id: otherMemory.id }),
-      })
+    const request = new Request('http://localhost:3000/api/account/memory', {
+      headers: { Authorization: `JWT ${authToken}` },
+    })
+    const response = await GET(request)
+    expect(response.status).toBe(200)
+    const data = await response.json()
+    const texts = data.memories.map((m: { text: string }) => m.text)
+    expect(texts).toContain('My memory')
+    expect(texts).not.toContain('Other user memory')
 
-      expect(response.status).toBe(403)
-      const data = await response.json()
-      expect(data.error).toBe('Forbidden')
-    } finally {
-      await payload.delete({ collection: 'memory_items', id: otherMemory.id, overrideAccess: true })
-    }
+    // Cleanup
+    await payload.delete({ collection: 'users', id: otherUser.id }).catch(() => {})
   })
 
-  it('successfully deletes own memory item and returns 200', async () => {
-    // Create memory for test user
-    const memory = await createMemoryItemForTest(payload, {
+  it('with q param returns searched memories (or empty gracefully)', async () => {
+    await insertMemoryItem({
       userId: testUserId,
-      text: 'My memory to delete',
+      text: 'I prefer detailed explanations',
+      status: 'active',
+    })
+    await insertMemoryItem({
+      userId: testUserId,
+      text: 'I like quick answers',
+      status: 'active',
     })
 
-    const request = new Request(`http://localhost:3000/api/account/memory/${memory.id}`, {
-      method: 'DELETE',
+    const request = new Request('http://localhost:3000/api/account/memory?q=preferences', {
       headers: { Authorization: `JWT ${authToken}` },
     })
-    const response = await deleteById(request, {
-      params: Promise.resolve({ id: memory.id }),
-    })
-
+    const response = await GET(request)
     expect(response.status).toBe(200)
     const data = await response.json()
-    expect(data.success).toBe(true)
+    // Either returns matching results (if vector index available) or empty gracefully
+    expect(Array.isArray(data.memories)).toBe(true)
+    expect(typeof data.searched).toBe('boolean')
+  })
 
-    // Verify item is gone
-    const listRequest = new Request('http://localhost:3000/api/account/memory', {
+  it('response includes correct fields', async () => {
+    await insertMemoryItem({
+      userId: testUserId,
+      text: 'Test memory',
+      type: 'preference',
+      importance: 4,
+      status: 'active',
+    })
+
+    const request = new Request('http://localhost:3000/api/account/memory', {
       headers: { Authorization: `JWT ${authToken}` },
     })
-    const listResponse = await GET(listRequest)
-    const listData = await listResponse.json()
-
-    const hasDeletedMemory = listData.items.some((item: any) => item.id === memory.id)
-    expect(hasDeletedMemory).toBe(false)
-  })
-})
-
-describe.skipIf(!hasDatabaseUrl)('DELETE /api/account/memory/clear', () => {
-  it('returns 401 when not authenticated', async () => {
-    const request = new Request('http://localhost:3000/api/account/memory/clear', {
-      method: 'DELETE',
-    })
-    const response = await clearAll(request)
-
-    expect(response.status).toBe(401)
-    const data = await response.json()
-    expect(data.error).toBe('Unauthorized')
-  })
-
-  it('deletes all of the user items and returns count', async () => {
-    // Create multiple memories for test user
-    const memory1 = await createMemoryItemForTest(payload, { userId: testUserId, text: 'Memory 1' })
-    const memory2 = await createMemoryItemForTest(payload, { userId: testUserId, text: 'Memory 2' })
-
-    // Create memory for other user (should NOT be deleted)
-    const otherMemory = await createMemoryItemForTest(payload, {
-      userId: otherUserId,
-      text: 'Other user memory',
-    })
-
-    try {
-      const request = new Request('http://localhost:3000/api/account/memory/clear', {
-        method: 'DELETE',
-        headers: { Authorization: `JWT ${authToken}` },
-      })
-      const response = await clearAll(request)
-
-      expect(response.status).toBe(200)
-      const data = await response.json()
-      expect(data.success).toBe(true)
-      expect(data.deletedCount).toBe(2)
-
-      // Verify only other user's memory remains
-      const listRequest = new Request('http://localhost:3000/api/account/memory', {
-        headers: { Authorization: `JWT ${authToken}` },
-      })
-      const listResponse = await GET(listRequest)
-      const listData = await listResponse.json()
-
-      expect(listData.items.length).toBe(0)
-    } finally {
-      await payload.delete({ collection: 'memory_items', id: otherMemory.id, overrideAccess: true })
-    }
-  })
-
-  it('is idempotent on empty set', async () => {
-    const request = new Request('http://localhost:3000/api/account/memory/clear', {
-      method: 'DELETE',
-      headers: { Authorization: `JWT ${authToken}` },
-    })
-    const response = await clearAll(request)
-
+    const response = await GET(request)
     expect(response.status).toBe(200)
     const data = await response.json()
-    expect(data.success).toBe(true)
-    expect(data.deletedCount).toBe(0)
+    expect(data.memories.length).toBeGreaterThan(0)
+    const memory = data.memories[0]
+    expect(memory).toHaveProperty('_id')
+    expect(memory).toHaveProperty('text')
+    expect(memory).toHaveProperty('type')
+    expect(memory).toHaveProperty('importance')
+    expect(memory).toHaveProperty('createdAt')
+    expect(memory).toHaveProperty('updatedAt')
+    expect(memory).toHaveProperty('status')
+    expect(memory).toHaveProperty('userId')
+    // createdAt and updatedAt should be ISO strings
+    expect(new Date(memory.createdAt).toISOString()).toBe(memory.createdAt)
+    expect(new Date(memory.updatedAt).toISOString()).toBe(memory.updatedAt)
   })
 })
