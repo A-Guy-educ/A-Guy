@@ -12,7 +12,10 @@ import { MemoryPageContent } from './MemoryPageContent'
 export const metadata = { title: 'My Memories' }
 
 export default async function MemoryPage() {
-  const { user } = await getMeUser()
+  // Auth gate - redirect to login if not authenticated
+  const { user } = await getMeUser({
+    nullUserRedirect: '/login',
+  })
 
   if (!user) {
     redirect('/login')
