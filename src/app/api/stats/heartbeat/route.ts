@@ -18,10 +18,13 @@ const heartbeatSchema = z.object({
 export async function POST(req: Request) {
   const payload = await getPayload({ config })
 
-  // Auth check - return 401 if not authenticated
+  // Auth check - skip tracking if not authenticated (return 200, not 401)
   const authResult = await payload.auth({ headers: req.headers })
   if (!authResult.user) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    return Response.json(
+      { success: true, skipped: true, reason: 'not_authenticated' },
+      { status: 200 },
+    )
   }
 
   const userId = authResult.user.id
