@@ -1,6 +1,5 @@
 # Kody Health Check
-
-_Last run: 2026-05-09T11:36:29Z_  _Threshold: 6h_
+_Last run: 2026-05-09T12:05:47Z_  _Threshold: 6h_
 
 ## kody:failed
-- [#1236](https://github.com/A-Guy-educ/A-Guy/issues/1236) — fix: Release-publisher agent timeout mismatch with CI polling — 336h since last update
+- [#1236](https://github.com/A-Guy-educ/A-Guy/issues/1236) — fix: Release-publisher agent timeout mismatch with CI polling — ~336h since last update
