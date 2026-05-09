@@ -28,6 +28,7 @@ src/app/(payload)/admin/importMap.js
 .opencode/**
 .agents/**
 .kody/**
+.playwright-mcp/**
 docs/ai/indexes/*.json
 public/sitemap*.xml
 mixpanelstuff/**
