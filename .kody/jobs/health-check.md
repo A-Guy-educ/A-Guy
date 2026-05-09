@@ -15,8 +15,10 @@ Daily digest of **tasks already assigned to Kody** — any open issue carrying a
    Labels to scan:
    - `kody:queued`, `kody:running`, `kody:fixing`, `kody:resolving`, `kody:reviewing`, `kody:syncing`, `kody:needs-fix`, `kody:failed`
 
-2. Build the report markdown. Lead with an `# Kody Health Check` H1, then a stamp line (`_Last run: <ISO>_  _Threshold: 6h_`), then sections grouped by phase. Each line:
+2. Build the report markdown. Lead with an `# Kody Health Check` H1, then a `_Threshold: 6h_` line (no timestamp — `lastRunISO` lives in state, not in the file body, so unchanged scans produce a byte-identical report). Then sections grouped by phase. Each line:
    `- [#<n>](<url>) — <title> — <hoursStale>h since last update`
+
+   `<hoursStale>` must be rounded to a **whole integer** (e.g. `338h`, not `338.8h`) so minor drift between ticks doesn't churn the file.
 
    If every phase reports zero stuck issues, the body after the H1 is one line: `All Kody-assigned tasks were updated within the last 6h. ✨`. Skip empty phases — keep the report short.
 
