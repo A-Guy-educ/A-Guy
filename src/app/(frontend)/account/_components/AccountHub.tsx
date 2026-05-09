@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
 import type { User } from '@/payload-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
-import { BarChart3 } from 'lucide-react'
+import { BarChart3, Brain } from 'lucide-react'
 import {
   Accordion,
   AccordionContent,
@@ -63,6 +63,14 @@ export function AccountHub({ user, initialSection }: AccountHubProps) {
       >
         <BarChart3 className="w-4 h-4" />
         {t('myProgressAndStats')}
+      </SystemLink>
+
+      <SystemLink
+        href="/account/memory"
+        className="flex items-center gap-2 text-body-sm font-bold text-primary px-4 py-2 hover:bg-muted/50 rounded-lg transition-all duration-normal w-full"
+      >
+        <Brain className="w-4 h-4" />
+        {t('sectionMemory')}
       </SystemLink>
 
       <Accordion

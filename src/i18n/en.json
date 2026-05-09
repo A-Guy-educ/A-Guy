@@ -178,6 +178,11 @@
         "clearAllFailed": "Failed to delete memories",
         "clearingAll": "Deleting...",
         "loadFailed": "Failed to load memories"
+      },
+      "memoryPage": {
+        "title": "Your Memory",
+        "description": "Memories help the AI tutor remember your preferences, goals, and past conversations so it can give you more personalized help over time.",
+        "privacyLink": "Privacy Policy"
       }
     },
     "signup": {
