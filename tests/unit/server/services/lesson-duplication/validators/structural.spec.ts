@@ -78,6 +78,49 @@ function makeHtml(id: string, html: string): ContentBlock {
   } as any as ContentBlock
 }
 
+/** MCQ block with an optional prompt (used to test MISSING_QUESTION). */
+function makeMcqNoPrompt(
+  id: string,
+  options: Array<{ id: string; content: { value: string } }>,
+  correctOptionIds: string[],
+  hasPrompt = true,
+  hasHint = false,
+  hasSolution = false,
+  hasFullSolution = false,
+): ContentBlock {
+  return {
+    id,
+    type: 'question_select',
+    variant: 'mcq',
+    selectionMode: 'single',
+    prompt: hasPrompt
+      ? { type: 'rich_text', format: 'md-math-v1', value: 'What is 2+2?', mediaIds: [] }
+      : undefined,
+    answer: {
+      multiSelect: false,
+      options: options.map((o) => ({
+        id: o.id,
+        content: {
+          type: 'rich_text',
+          format: 'md-math-v1',
+          value: o.content.value,
+          mediaIds: [] as string[],
+        },
+      })),
+      correctOptionIds,
+    },
+    hint: hasHint
+      ? { type: 'rich_text', format: 'md-math-v1', value: 'Hint', mediaIds: [] }
+      : undefined,
+    solution: hasSolution
+      ? { type: 'rich_text', format: 'md-math-v1', value: 'Solution', mediaIds: [] }
+      : undefined,
+    fullSolution: hasFullSolution
+      ? { type: 'rich_text', format: 'md-math-v1', value: 'Full solution', mediaIds: [] }
+      : undefined,
+  } as ContentBlock
+}
+
 describe('validateExerciseStructural', () => {
   describe('TOO_MANY_SECTIONS', () => {
     it('passes for 5 blocks', () => {
@@ -176,6 +219,89 @@ describe('validateExerciseStructural', () => {
       const blocks: ContentBlock[] = [makeSvg('svg-1', '<div>not svg</div>')]
       const failures = validateExerciseStructural(blocks)
       expect(failures.some((f) => f.code === FAILURE_CODES.INVALID_SVG)).toBe(true)
+    })
+  })
+
+  describe('MISSING_QUESTION', () => {
+    it('passes when MCQ has prompt', () => {
+      const blocks: ContentBlock[] = [
+        makeMcqNoPrompt(
+          'mcq-1',
+          [
+            { id: 'a', content: { value: 'A' } },
+            { id: 'b', content: { value: 'B' } },
+          ],
+          ['a'],
+          true, // hasPrompt
+          true, // hasHint
+          true, // hasSolution
+          true, // hasFullSolution
+        ),
+      ]
+      expect(validateExerciseStructural(blocks)).toHaveLength(0)
+    })
+
+    it('fails when MCQ is missing prompt', () => {
+      const blocks: ContentBlock[] = [
+        makeMcqNoPrompt(
+          'mcq-1',
+          [
+            { id: 'a', content: { value: 'A' } },
+            { id: 'b', content: { value: 'B' } },
+          ],
+          ['a'],
+          false, // hasPrompt = false → missing
+          true, // hasHint
+          true, // hasSolution
+          true, // hasFullSolution
+        ),
+      ]
+      const failures = validateExerciseStructural(blocks)
+      expect(failures.some((f) => f.code === FAILURE_CODES.MISSING_QUESTION)).toBe(true)
+    })
+
+    it('fails when question_free_response is missing prompt', () => {
+      const blocks: ContentBlock[] = [
+        {
+          id: 'fr-1',
+          type: 'question_free_response',
+          prompt: undefined,
+          answer: { acceptedAnswers: ['Because'] },
+          hint: { type: 'rich_text', format: 'md-math-v1', value: 'Hint', mediaIds: [] },
+          solution: { type: 'rich_text', format: 'md-math-v1', value: 'Solution', mediaIds: [] },
+          fullSolution: {
+            type: 'rich_text',
+            format: 'md-math-v1',
+            value: 'Full solution',
+            mediaIds: [],
+          },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any as ContentBlock,
+      ]
+      const failures = validateExerciseStructural(blocks)
+      expect(failures.some((f) => f.code === FAILURE_CODES.MISSING_QUESTION)).toBe(true)
+    })
+
+    it('fails when question_free_response has empty prompt value', () => {
+      const blocks: ContentBlock[] = [
+        {
+          id: 'fr-1',
+          type: 'question_free_response',
+          prompt: { type: 'rich_text', format: 'md-math-v1', value: '', mediaIds: [] },
+          answer: { acceptedAnswers: ['Because'] },
+          hint: { type: 'rich_text', format: 'md-math-v1', value: 'Hint', mediaIds: [] },
+          solution: { type: 'rich_text', format: 'md-math-v1', value: 'Solution', mediaIds: [] },
+          fullSolution: {
+            type: 'rich_text',
+            format: 'md-math-v1',
+            value: 'Full solution',
+            mediaIds: [],
+          },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any as ContentBlock,
+      ]
+      const failures = validateExerciseStructural(blocks)
+      expect(failures.some((f) => f.code === FAILURE_CODES.MISSING_QUESTION)).toBe(true)
     })
   })
 

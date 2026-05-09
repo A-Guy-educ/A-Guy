@@ -39,19 +39,19 @@ describe('validateExerciseSemantic', () => {
     it('skips for level=none (deep clone)', async () => {
       const blocks: ContentBlock[] = [makeRichText('block-1', 'content')]
       const result = await validateExerciseSemantic(blocks, 'none', 'ai', mockPayload)
-      expect(result).toEqual({ ok: true })
+      expect(result).toEqual({ ok: true, reasons: [] })
     })
 
     it('skips for strategy=script', async () => {
       const blocks: ContentBlock[] = [makeRichText('block-1', 'content')]
       const result = await validateExerciseSemantic(blocks, 'medium', 'script', mockPayload)
-      expect(result).toEqual({ ok: true })
+      expect(result).toEqual({ ok: true, reasons: [] })
     })
 
     it('skips for strategy=script even with level=deep', async () => {
       const blocks: ContentBlock[] = [makeRichText('block-1', 'content')]
       const result = await validateExerciseSemantic(blocks, 'deep', 'script', mockPayload)
-      expect(result).toEqual({ ok: true })
+      expect(result).toEqual({ ok: true, reasons: [] })
     })
   })
 
@@ -68,7 +68,7 @@ describe('validateExerciseSemantic', () => {
 
       const blocks: ContentBlock[] = [makeRichText('block-1', 'content')]
       const result = await validateExerciseSemantic(blocks, 'medium', 'ai', mockPayload)
-      expect(result).toEqual({ ok: true })
+      expect(result).toEqual({ ok: true, reasons: [] })
       expect(mockProvider.generateChatCompletion).toHaveBeenCalledTimes(1)
     })
 
@@ -105,7 +105,7 @@ describe('validateExerciseSemantic', () => {
 
       const blocks: ContentBlock[] = [makeRichText('block-1', 'content')]
       const result = await validateExerciseSemantic(blocks, 'medium', 'ai', mockPayload)
-      expect(result).toEqual({ ok: true })
+      expect(result).toEqual({ ok: true, reasons: [] })
     })
 
     it('returns failure on non-JSON LLM response', async () => {

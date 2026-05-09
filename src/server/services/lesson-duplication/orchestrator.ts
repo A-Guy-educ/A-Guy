@@ -3,7 +3,7 @@
  *
  * Drives the duplication pipeline for a single LessonDuplications record:
  *  1. K2: Select up to 20 exercises from source lesson (via selectExercisesScaled)
- *  2. For each exercise, concurrently (max 4):
+ *  2. For each exercise, concurrently (max 3):
  *     a. Route to strategy (script or AI) → generates new exercise content
  *     b. Run structural validator on the generated content
  *     c. If structural passes AND strategy != 'script', run semantic validator
@@ -71,6 +71,7 @@ export async function runStrategy(
 /** Suggested action for a failure, based on failure code. */
 function suggestAction(code: string): 'skip' | 'regenerate' | 'keep' {
   switch (code) {
+    case 'MISSING_QUESTION':
     case 'MISSING_HINT':
     case 'MISSING_SOLUTION':
     case 'MISSING_FULL_SOLUTION':

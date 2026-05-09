@@ -19,6 +19,7 @@ export const FAILURE_CODES = {
   TOO_MANY_SECTIONS: 'TOO_MANY_SECTIONS',
   PNG_FORBIDDEN: 'PNG_FORBIDDEN',
   INVALID_SVG: 'INVALID_SVG',
+  MISSING_QUESTION: 'MISSING_QUESTION',
   MISSING_HINT: 'MISSING_HINT',
   MISSING_SOLUTION: 'MISSING_SOLUTION',
   MISSING_FULL_SOLUTION: 'MISSING_FULL_SOLUTION',
@@ -109,7 +110,7 @@ function validateBlock(block: ContentBlock, blockIndex: number): StructuralFailu
     const prompt = (block as { prompt?: { value?: string } }).prompt
     if (!prompt?.value?.trim()) {
       failures.push({
-        code: 'MISSING_QUESTION' as FailureCode,
+        code: FAILURE_CODES.MISSING_QUESTION,
         message: `Question block at index ${blockIndex} missing prompt`,
         blockIndex,
       })

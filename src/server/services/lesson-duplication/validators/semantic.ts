@@ -20,7 +20,9 @@ import type { ContentBlock } from '@/server/payload/collections/Exercises/schema
 
 export const SEMANTIC_FAILURE_CODE = 'SEMANTIC_MISMATCH' as const
 
-export type SemanticValidationResult = { ok: true } | { ok: false; reasons: string[] }
+export type SemanticValidationResult =
+  | { ok: true; reasons?: string[] }
+  | { ok: false; reasons: string[] }
 
 const SEMANTIC_PROMPT = `You are a strict exercise quality reviewer.
 
@@ -67,12 +69,12 @@ export async function validateExerciseSemantic(
 ): Promise<SemanticValidationResult> {
   // Skip for level=none (deep clone, no AI involved)
   if (level === 'none') {
-    return { ok: true }
+    return { ok: true, reasons: [] }
   }
 
   // Skip for script strategy (deterministic, no AI hallucination risk)
   if (strategy === 'script') {
-    return { ok: true }
+    return { ok: true, reasons: [] }
   }
 
   const provider = await getLLMProvider(payload)
@@ -107,7 +109,7 @@ export async function validateExerciseSemantic(
     const parsed = JSON.parse(jsonText) as { ok: boolean; reasons?: string[] }
 
     if (parsed.ok === true) {
-      return { ok: true }
+      return { ok: true, reasons: [] }
     }
     return {
       ok: false,
