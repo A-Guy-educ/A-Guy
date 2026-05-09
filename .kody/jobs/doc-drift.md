@@ -64,4 +64,5 @@ See [.kody/reports/doc-drift.md](.kody/reports/doc-drift.md) for the full scanne
 - `data.lastReportGeneratedAt`: ISO timestamp of the last report this job processed (set to `report.generatedAt` after a successful pass)
 - `data.lastEscalatedFindings`: `[<findingId>, ...]` — list of finding ids escalated against the most-recent report (informational; the dedup truth is the open-issue list, not this field)
 - `data.lastRunISO`: ISO timestamp of the last tick that took action
+- `data.nextEligibleISO`: this job is **report-driven, not time-driven** — eligibility depends on whether the report's `generatedAt` differs from `data.lastReportGeneratedAt`. **Always emit this**, but set it to `null` (the dashboard renders "next run unknown" for null).
 - `done`: always `false`
