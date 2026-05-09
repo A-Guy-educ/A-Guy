@@ -87,3 +87,11 @@ latex_examples/
 # Actions cache snapshot (see kody.config.json missions.stateBackend).
 # Tracked-file commits would re-introduce the churn this design eliminates.
 .kody/missions/*.state.json
+
+# kody job state — same rationale as missions, see kody.config.json jobs.stateBackend.
+.kody/jobs/*.state.json
+
+# kody qa-engineer artifacts — ad-hoc screenshots, snapshots, console logs.
+# The Playwright MCP server writes its own working dir at the repo root.
+.kody/qa-reports/
+.playwright-mcp/

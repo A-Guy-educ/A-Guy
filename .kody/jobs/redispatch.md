@@ -1,12 +1,12 @@
 # redispatch
 
-## Mission
+## Job
 
 For every open issue that kody is actively working on but appears stuck: post the comment `@kody resume` on the issue so the engine re-dispatches from its last persisted state. Otherwise do nothing.
 
-This mission is a safety net, not a fix. It catches issues where the state machine ended a phase (e.g. `CLASSIFIED_AS_BUG`) but never advanced to the next executable. It does not diagnose why the stall happened — that is for the engine team to debug from the resume log.
+This job is a safety net, not a fix. It catches issues where the state machine ended a phase (e.g. `CLASSIFIED_AS_BUG`) but never advanced to the next executable. It does not diagnose why the stall happened — that is for the engine team to debug from the resume log.
 
-An issue enters this mission's scope when it has a kody state block (`<!-- kody:state:v1:begin -->` … `<!-- kody:state:v1:end -->`), is open, and the persisted `core.status` is `running`. It leaves scope when it is closed, when `core.status` is no longer `running`, or when its most recent history entry is fresh.
+An issue enters this job's scope when it has a kody state block (`<!-- kody:state:v1:begin -->` … `<!-- kody:state:v1:end -->`), is open, and the persisted `core.status` is `running`. It leaves scope when it is closed, when `core.status` is no longer `running`, or when its most recent history entry is fresh.
 
 ## Allowed Commands
 
@@ -29,7 +29,7 @@ An issue enters this mission's scope when it has a kody state block (`<!-- kody:
 
 ## Tick procedure
 
-The tick is fully scripted. Past iterations of this mission used a prose iteration that scanned ~30 open issues, fetched comment history per issue, and crashed with `error_max_turns` on most ticks. The deterministic operations now live in `.kody/scripts/redispatch-tick.py`.
+The tick is fully scripted. Past iterations of this job used a prose iteration that scanned ~30 open issues, fetched comment history per issue, and crashed with `error_max_turns` on most ticks. The deterministic operations now live in `.kody/scripts/redispatch-tick.py`.
 
 **Step 1 — Run the tick script:**
 
@@ -37,7 +37,7 @@ The tick is fully scripted. Past iterations of this mission used a prose iterati
 python3 .kody/scripts/redispatch-tick.py
 ```
 
-**Step 2 — Emit the script's stdout verbatim**, including the markdown summary table and the `kody-mission-next-state` fenced block at the end. Do not paraphrase, edit, reorder, or compute anything yourself. The script's output is the entire tick result.
+**Step 2 — Emit the script's stdout verbatim**, including the markdown summary table and the `kody-job-next-state` fenced block at the end. Do not paraphrase, edit, reorder, or compute anything yourself. The script's output is the entire tick result.
 
 If the script exits non-zero, surface its stderr and emit a state block with `cursor: "redispatch-error-<now>"` and the prior state unchanged so the engine doesn't lose progress.
 
