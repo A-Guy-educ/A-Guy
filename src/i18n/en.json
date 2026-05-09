@@ -131,7 +131,8 @@
       "errors": {
         "emailRequired": "Email is required",
         "passwordRequired": "Password is required",
-        "invalidCredentials": "Invalid email or password"
+        "invalidCredentials": "Invalid email or password",
+        "invalidEmail": "Valid email is required"
       }
     },
     "account": {

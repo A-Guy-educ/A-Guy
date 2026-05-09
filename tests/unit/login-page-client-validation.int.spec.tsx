@@ -126,4 +126,52 @@ describe('Login Form Client-Side Validation - Issue #1497', () => {
       expect(screen.getByText(/password.*required/i)).toBeInTheDocument()
     })
   })
+
+  describe('Invalid email format validation - Issue #1498', () => {
+    it('shows error message when email format is invalid (no @ symbol)', async () => {
+      renderWithPasswordEnabled(<LoginForm />)
+
+      // Fill in an invalid email format (no @ symbol, no domain)
+      const emailInput = screen.getByRole('textbox', { name: /email/i })
+      fireEvent.change(emailInput, { target: { value: 'notanemail' } })
+
+      // Fill in password
+      const passwordInput = screen.getByLabelText(/password/i)
+      fireEvent.change(passwordInput, { target: { value: 'anypassword123' } })
+
+      // Submit the form
+      const submitButton = screen.getByRole('button', { name: /log in/i })
+      fireEvent.click(submitButton)
+
+      await waitFor(() => {})
+
+      // The form should show a validation error for invalid email format
+      // Expected: "Valid email is required" or similar validation message
+      // This will FAIL because the current implementation does NOT validate email format
+      const emailError = screen.getByText(/valid.*email/i)
+      expect(emailError).toBeInTheDocument()
+    })
+
+    it('shows error message when email has no domain (missing @domain.com)', async () => {
+      renderWithPasswordEnabled(<LoginForm />)
+
+      // Fill in an invalid email format (has @ but no domain)
+      const emailInput = screen.getByRole('textbox', { name: /email/i })
+      fireEvent.change(emailInput, { target: { value: 'user@' } })
+
+      // Fill in password
+      const passwordInput = screen.getByLabelText(/password/i)
+      fireEvent.change(passwordInput, { target: { value: 'anypassword123' } })
+
+      // Submit the form
+      const submitButton = screen.getByRole('button', { name: /log in/i })
+      fireEvent.click(submitButton)
+
+      await waitFor(() => {})
+
+      // The form should show a validation error for invalid email format
+      const emailError = screen.getByText(/valid.*email/i)
+      expect(emailError).toBeInTheDocument()
+    })
+  })
 })

@@ -15,6 +15,7 @@ import { usePasswordLogin } from '@/ui/web/providers/PasswordLoginProvider'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { sanitizeReturnTo } from '@/infra/auth/oauth_sanitize'
 import { loginAction } from './login_authenticate-action'
+import { safeValidate, emailSchema } from '@/infra/utils/validation'
 import telescopeSvg from '@/ui/web/TelescopeLogo/telescope.svg'
 
 function LoginFormContent() {
@@ -35,7 +36,11 @@ function LoginFormContent() {
     const email = (e.currentTarget.elements.namedItem('email') as HTMLInputElement)?.value
     const password = (e.currentTarget.elements.namedItem('password') as HTMLInputElement)?.value
     const errors: Record<string, string> = {}
-    if (!email?.trim()) errors.email = t('errors.emailRequired')
+    if (!email?.trim()) {
+      errors.email = t('errors.emailRequired')
+    } else if (email?.trim() && safeValidate(emailSchema, email).success === false) {
+      errors.email = t('errors.invalidEmail')
+    }
     if (!password?.trim()) errors.password = t('errors.passwordRequired')
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors)
@@ -62,7 +67,11 @@ function LoginFormContent() {
     const email = (form.elements.namedItem('email') as HTMLInputElement)?.value
     const password = (form.elements.namedItem('password') as HTMLInputElement)?.value
     const errors: Record<string, string> = {}
-    if (!email?.trim()) errors.email = t('errors.emailRequired')
+    if (!email?.trim()) {
+      errors.email = t('errors.emailRequired')
+    } else if (email?.trim() && safeValidate(emailSchema, email).success === false) {
+      errors.email = t('errors.invalidEmail')
+    }
     if (!password?.trim()) errors.password = t('errors.passwordRequired')
     if (Object.keys(errors).length > 0) {
       e.preventDefault()
