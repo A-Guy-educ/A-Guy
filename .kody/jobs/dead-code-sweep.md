@@ -42,4 +42,5 @@ Monthly cleanup of unused exports, files, and dependencies. Runs `knip` / `ts-pr
 - `data.lastRunISO`: ISO timestamp of last tick that opened or nudged an issue
 - `data.openIssue`: number of currently-open monthly issue (or null)
 - `data.openedISO`: ISO timestamp the current issue was opened (for stall detection)
+- `data.nextEligibleISO`: UTC ISO timestamp this job will next be eligible to act, computed from the cadence guard above. **Always emit this, every tick.** For this job: the **next 1st-of-month 00:00 UTC** at or after `data.lastRunISO + 25d`. Surfaced as "next run" on the dashboard.
 - `done`: always `false`
