@@ -45,4 +45,5 @@ If no candidates cross the threshold this tick, just narrate briefly (no comment
 - `cursor`: `idle` | `tracking` | `awaiting-quarantine`
 - `data.lastRunISO`: ISO timestamp of last full pass
 - `data.candidates`: `{ [testId]: { flips, lastSeenSha, lastSeenISO, escalated, issue } }`
+- `data.nextEligibleISO`: UTC ISO timestamp this job will next be eligible to act, computed from the cadence guard above. **Always emit this, every tick.** For this job: `data.lastRunISO + 20h`. Surfaced as "next run" on the dashboard.
 - `done`: always `false` (evergreen)

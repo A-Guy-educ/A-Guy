@@ -43,4 +43,5 @@ Weekly tracking of stale production dependencies. One bump PR in flight at a tim
 - `data.lastRunISO`: ISO timestamp of last tick that opened or nudged an issue
 - `data.openIssue`: number of currently-open tracking issue (or null)
 - `data.history`: rolling list `[{ pkg, attemptedISO, outcome }]`
+- `data.nextEligibleISO`: UTC ISO timestamp this job will next be eligible to act, computed from the cadence guard above. **Always emit this, every tick.** For this job: the **next Monday 00:00 UTC** at or after `data.lastRunISO + 6d`. Surfaced as "next run" on the dashboard.
 - `done`: always `false`
