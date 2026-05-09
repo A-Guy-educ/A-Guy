@@ -1,10 +1,15 @@
-/** Memory Page — /account/memory */
+/**
+ * Account Memory Page
+ *
+ * /account/memory — Display and search user's memory items
+ */
 
 import { redirect } from 'next/navigation'
+
 import { getMeUser } from '@/infra/utils/getMeUser'
 import { MemoryPageContent } from './MemoryPageContent'
 
-export const metadata = { title: 'Memory' }
+export const metadata = { title: 'My Memories' }
 
 export default async function MemoryPage() {
   // Auth gate - redirect to login if not authenticated
@@ -16,5 +21,5 @@ export default async function MemoryPage() {
     redirect('/login')
   }
 
-  return <MemoryPageContent user={user} />
+  return <MemoryPageContent userId={user.id} />
 }
