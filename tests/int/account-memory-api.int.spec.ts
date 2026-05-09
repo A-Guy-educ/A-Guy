@@ -124,6 +124,7 @@ describe.skipIf(!hasDatabaseUrl)('GET /api/account/memory', () => {
   it('returns 401 when not authenticated', async () => {
     const request = new Request('http://localhost:3000/api/account/memory')
     const response = await GET(request)
+
     expect(response.status).toBe(401)
     const data = await response.json()
     expect(data.error).toBe('Unauthorized')
