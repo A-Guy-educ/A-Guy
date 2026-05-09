@@ -8,8 +8,8 @@
  */
 import { expect, test } from '@playwright/test'
 
-// Hardcoded to avoid BOM character in NEXT_PUBLIC_SERVER_URL environment variable
-const BASE_URL = 'http://localhost:3000'
+// Derive BASE_URL from env var (BOM sanitized), matching playwright.config.ts baseURL fallback
+const BASE_URL = (process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000').replace(/^﻿/, '')
 
 test.describe('Signup Route (Issue #1499)', () => {
   test('navigating to /signup should render signup page, not redirect to /login', async ({
