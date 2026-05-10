@@ -2,6 +2,6 @@
 
 _Threshold: 6h_
 
-### kody:failed
+## kody:needs-fix
 
-- [#1236](https://github.com/A-Guy-educ/A-Guy/issues/1236) — fix: Release-publisher agent timeout mismatch with CI polling — 362h since last update
+- [#1236](https://github.com/A-Guy-educ/A-Guy/issues/1236) — fix: Release-publisher agent timeout mismatch with CI polling — 363h since last update
