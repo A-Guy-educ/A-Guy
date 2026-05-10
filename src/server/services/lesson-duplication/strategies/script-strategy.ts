@@ -151,9 +151,11 @@ function collectNumbers(text: string): number[] {
  */
 function replaceNumber(text: string, originalStr: string, newStr: string): string {
   if (originalStr === newStr) return text
-  // Use word-boundary-aware replacement to avoid partial matches
+  // Escape special regex chars in originalStr so we match it literally.
+  // No \b anchors — \b fails when a number is adjacent to Unicode operators
+  // (×, ÷) because those are \w characters, leaving no word boundary.
   const escaped = originalStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const re = new RegExp(`\\b${escaped}\\b`, 'g')
+  const re = new RegExp(escaped, 'g')
   return text.replace(re, newStr)
 }
 
