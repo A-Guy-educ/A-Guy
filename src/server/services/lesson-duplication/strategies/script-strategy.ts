@@ -111,6 +111,7 @@ function getPrecision(str: string): number {
 /**
  * Generate a replacement value for a numeric literal.
  * Applies a factor in [0.7, 1.3] (i.e., ±30%) using a seeded PRNG.
+ * Falls back to ±1 for integers when the factor would round back to the original.
  */
 function generateReplacement(originalStr: string, seed: number): string {
   const originalValue = parseFloat(originalStr)
@@ -125,7 +126,14 @@ function generateReplacement(originalStr: string, seed: number): string {
 
   // If original was an integer, round to integer
   if (looksLikeInteger(originalStr)) {
-    return String(Math.round(rounded))
+    const roundedInt = Math.round(rounded)
+    // Guard: PRNG factor may round back to the original (e.g. 5 * 1.01 → 5).
+    // In that case, perturb by ±1 in the appropriate direction.
+    if (roundedInt === originalValue) {
+      const direction = nextFloat(state) > 0.5 ? 1 : -1
+      return String(originalValue + direction)
+    }
+    return String(roundedInt)
   }
   return String(rounded)
 }
