@@ -129,6 +129,21 @@ const resolvedBannerStyle: React.CSSProperties = {
   border: '1px solid var(--theme-success)',
 }
 
+const FAILURE_CODE_LABELS: Record<string, string> = {
+  TOO_MANY_SECTIONS: 'Too many sections (max 5)',
+  PNG_FORBIDDEN: 'Embedded PNG data found',
+  INVALID_SVG: 'SVG content is malformed',
+  MISSING_QUESTION: 'Missing question prompt',
+  MISSING_HINT: 'Missing hint',
+  MISSING_SOLUTION: 'Missing solution',
+  MISSING_FULL_SOLUTION: 'Missing full solution',
+  MISSING_CORRECT_OPTION: 'MCQ missing correct option',
+  MISSING_WRONG_OPTIONS: 'MCQ missing wrong options',
+  INVALID_GEOMETRY_SPEC: 'Invalid geometry specification',
+  INVALID_AXIS_SPEC: 'Invalid axis specification',
+  INVALID_GUIDED_EXPLANATION: 'Invalid guided explanation',
+}
+
 // --- Component ---
 export function LessonDuplicationReview({ duplicationId }: { duplicationId: string }) {
   const [record, setRecord] = useState<DuplicationRecord | null>(null)
@@ -325,7 +340,9 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
 
                 return (
                   <div key={`${failure.code}-${failure.sectionIndex}`} style={failureRowStyle}>
-                    <span style={codeStyle}>{failure.code}</span>
+                    <span style={codeStyle}>
+                      {FAILURE_CODE_LABELS[failure.code] ?? failure.code}
+                    </span>
                     <span style={messageStyle}>{failure.message}</span>
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                       <button
