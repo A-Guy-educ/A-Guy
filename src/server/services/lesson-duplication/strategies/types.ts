@@ -8,7 +8,10 @@
  */
 
 import type { Exercise } from '@/payload-types'
-import type { DuplicationLevel } from '@/server/payload/collections/LessonDuplications'
+import type {
+  DuplicationLevel,
+  DuplicationSubject,
+} from '@/server/payload/collections/LessonDuplications'
 
 /**
  * Return type for all variation strategies.
@@ -26,5 +29,9 @@ export interface VariationResult {
  * The orchestrator calls only this interface — concrete impls are private.
  */
 export interface VariationStrategy {
-  apply(exercise: Exercise, level: DuplicationLevel): Promise<VariationResult>
+  apply(
+    exercise: Exercise,
+    level: DuplicationLevel,
+    subject?: DuplicationSubject,
+  ): Promise<VariationResult>
 }

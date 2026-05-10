@@ -1766,6 +1766,10 @@ export interface LessonDuplication {
    */
   level: 'none' | 'light' | 'medium' | 'deep';
   /**
+   * Subject area for variation prompts.
+   */
+  subject?: ('algebra' | 'geometry' | 'calculus' | 'mixed' | 'other') | null;
+  /**
    * Job status. `none` finishes inline; others go through the queue.
    */
   status: 'pending' | 'running' | 'succeeded' | 'failed' | 'needs_review';
@@ -3315,6 +3319,7 @@ export interface LessonsSelect<T extends boolean = true> {
 export interface LessonDuplicationsSelect<T extends boolean = true> {
   sourceLesson?: T;
   level?: T;
+  subject?: T;
   status?: T;
   outputLesson?: T;
   failures?:
