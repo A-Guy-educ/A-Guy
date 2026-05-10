@@ -55,7 +55,6 @@ describe('POST /api/lessons/:id/generate-exercises', () => {
   let courseId: string
   let chapterId: string
   let lessonId: string
-  const cleanupExerciseIds: string[] = []
   let lessonCreated = false
 
   beforeAll(async () => {
@@ -320,7 +319,6 @@ describe('POST /api/lessons/:id/generate-exercises', () => {
       expect(body.data).toHaveProperty('createdExerciseIds')
       expect(body.data).toHaveProperty('totalCreated')
       expect(Array.isArray(body.data.createdExerciseIds)).toBe(true)
-      cleanupExerciseIds.push(...body.data.createdExerciseIds)
     }
   }, 60000)
 
@@ -357,19 +355,24 @@ describe('POST /api/lessons/:id/generate-exercises', () => {
     })
 
     const blocksRaw = lesson.blocks
-    if (!blocksRaw) return
+    if (!blocksRaw) {
+      throw new Error(
+        'lesson.blocks is undefined — exercise creation or block-sync may have failed. ' +
+          'Ensure the LLM call in the preceding test succeeded.',
+      )
+    }
 
     let blocks: unknown[]
     if (typeof blocksRaw === 'string') {
       try {
         blocks = JSON.parse(blocksRaw) as unknown[]
       } catch {
-        blocks = []
+        throw new Error('lesson.blocks is a string but could not be parsed as JSON')
       }
     } else if (Array.isArray(blocksRaw)) {
       blocks = blocksRaw
     } else {
-      blocks = []
+      throw new Error('lesson.blocks has an unexpected type — expected string or array')
     }
 
     const exerciseRefBlocks = blocks.filter(

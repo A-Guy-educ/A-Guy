@@ -10,6 +10,7 @@
  */
 import React, { useState } from 'react'
 import { useDocumentInfo } from '@payloadcms/ui'
+import { cn } from '@/infra/utils/ui'
 
 type Status = 'idle' | 'submitting' | 'success' | 'error'
 
@@ -68,53 +69,43 @@ export const LessonGenerateExercisesAction: React.FC = () => {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 6,
-          padding: '6px 12px',
-          fontSize: 13,
-          fontWeight: 500,
-          border: '1px solid var(--theme-elevation-200)',
-          borderRadius: 4,
-          backgroundColor: 'var(--theme-elevation-0)',
-          color: 'var(--theme-elevation-1000)',
-          cursor: 'pointer',
-        }}
+        className={cn(
+          'inline-flex items-center gap-1.5 px-3 py-1.5',
+          'text-[13px] font-medium font-[var(--theme-elevation-1000)]',
+          'border border-[var(--theme-elevation-200)] rounded',
+          'bg-[var(--theme-elevation-0)] text-[var(--theme-elevation-1000)]',
+          'cursor-pointer transition-all duration-normal',
+          'hover:shadow-elevation-1',
+        )}
         title="Generate exercises for this lesson using AI"
       >
         Generate Exercises
       </button>
 
       {open && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            zIndex: 1000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-          onClick={close}
-        >
+        <>
+          {/* Overlay */}
           <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              backgroundColor: 'var(--theme-elevation-0)',
-              border: '1px solid var(--theme-elevation-200)',
-              borderRadius: 6,
-              padding: 24,
-              width: 520,
-              maxWidth: '90vw',
-              color: 'var(--theme-elevation-1000)',
-            }}
+            role="presentation"
+            onClick={close}
+            className="fixed inset-0 z-[1000] bg-black/50 flex items-center justify-center"
+          />
+          {/* Modal */}
+          <div
+            role="dialog"
+            aria-modal="true"
+            className={cn(
+              'fixed left-1/2 top-1/2 z-[1001] -translate-x-1/2 -translate-y-1/2',
+              'bg-[var(--theme-elevation-0)] border border-[var(--theme-elevation-200)]',
+              'rounded-md p-6 w-[520px] max-w-[90vw]',
+              'text-[var(--theme-elevation-1000)]',
+              'shadow-card',
+            )}
           >
-            <h3 style={{ marginTop: 0 }}>Generate Exercises</h3>
-            <p style={{ fontSize: 13, color: 'var(--theme-elevation-600)' }}>
+            <h3 className="mt-0 mb-2 text-body-lg font-semibold text-[var(--theme-elevation-1000)]">
+              Generate Exercises
+            </h3>
+            <p className="text-[13px] text-[var(--theme-elevation-600)] mb-3 leading-relaxed">
               Describe what kind of exercises you want to generate. The AI will create 10 exercises
               with questions, hints, guiding solutions, and full solutions.
             </p>
@@ -124,40 +115,24 @@ export const LessonGenerateExercisesAction: React.FC = () => {
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="For example: 'Generate 10 exercises about quadratic equations, covering factoring, completing the square, and the quadratic formula. Include varying difficulty levels.'"
               rows={6}
-              style={{
-                width: '100%',
-                marginTop: 12,
-                marginBottom: 8,
-                padding: 8,
-                fontSize: 13,
-                border: '1px solid var(--theme-elevation-200)',
-                borderRadius: 4,
-                resize: 'vertical',
-                fontFamily: 'inherit',
-                boxSizing: 'border-box',
-              }}
               disabled={status === 'submitting' || status === 'success'}
+              className={cn(
+                'w-full mt-3 mb-2 p-2 text-[13px]',
+                'border border-[var(--theme-elevation-200)] rounded',
+                'resize-y font-[inherit] box-border',
+                'bg-[var(--theme-elevation-0)] text-[var(--theme-elevation-1000)]',
+                'focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary',
+                'placeholder:text-[var(--theme-elevation-400)]',
+                'disabled:opacity-50 disabled:cursor-not-allowed',
+                'transition-colors duration-fast',
+              )}
             />
 
             {status === 'error' && error && (
-              <div
-                style={{
-                  color: 'var(--theme-error-500)',
-                  fontSize: 13,
-                  marginBottom: 8,
-                }}
-              >
-                {error}
-              </div>
+              <p className="text-[13px] mb-2 text-error font-medium">{error}</p>
             )}
             {status === 'success' && result && (
-              <div
-                style={{
-                  color: 'var(--theme-success-500)',
-                  fontSize: 13,
-                  marginBottom: 8,
-                }}
-              >
+              <p className="text-[13px] mb-2 text-success font-medium">
                 {result.createdCount ?? 0} exercises created successfully.
                 {result.ids && result.ids.length > 0 && (
                   <>
@@ -166,11 +141,21 @@ export const LessonGenerateExercisesAction: React.FC = () => {
                     {result.ids.length > 3 ? '…' : ''}
                   </>
                 )}
-              </div>
+              </p>
             )}
 
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button type="button" onClick={close}>
+            <div className="flex gap-2 justify-end mt-4">
+              <button
+                type="button"
+                onClick={close}
+                className={cn(
+                  'px-3 py-1.5 text-[13px] font-medium rounded',
+                  'border border-[var(--theme-elevation-200)]',
+                  'bg-[var(--theme-elevation-0)] text-[var(--theme-elevation-800)]',
+                  'cursor-pointer transition-all duration-normal',
+                  'hover:bg-[var(--theme-elevation-100)]',
+                )}
+              >
                 {status === 'success' ? 'Close' : 'Cancel'}
               </button>
               {status !== 'success' && (
@@ -178,25 +163,20 @@ export const LessonGenerateExercisesAction: React.FC = () => {
                   type="button"
                   onClick={submit}
                   disabled={prompt.trim().length < 10 || status === 'submitting'}
-                  style={{
-                    backgroundColor: 'var(--theme-success-500)',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: 4,
-                    padding: '6px 14px',
-                    cursor:
-                      prompt.trim().length < 10 || status === 'submitting'
-                        ? 'not-allowed'
-                        : 'pointer',
-                    opacity: prompt.trim().length < 10 || status === 'submitting' ? 0.6 : 1,
-                  }}
+                  className={cn(
+                    'px-3 py-1.5 text-[13px] font-medium rounded',
+                    'bg-success text-white border-none',
+                    'transition-all duration-normal',
+                    'disabled:cursor-not-allowed disabled:opacity-60',
+                    'hover:opacity-90 hover:shadow-elevation-1',
+                  )}
                 >
                   {status === 'submitting' ? 'Generating…' : 'Generate 10 Exercises'}
                 </button>
               )}
             </div>
           </div>
-        </div>
+        </>
       )}
     </>
   )
