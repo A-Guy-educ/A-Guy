@@ -712,5 +712,21 @@
       "practice": "Practice",
       "exam": "Exam"
     }
+  },
+  "admin": {
+    "lessonActions": {
+      "generateExercises": {
+        "button": "Generate Exercises",
+        "modalTitle": "Generate Exercises",
+        "modalDescription": "Describe what kind of exercises you want to generate. The AI will create 10 exercises with questions, hints, guiding solutions, and full solutions.",
+        "promptPlaceholder": "For example: 'Generate 10 exercises about quadratic equations, covering factoring, completing the square, and the quadratic formula. Include varying difficulty levels.'",
+        "submitButton": "Generate 10 Exercises",
+        "submitting": "Generating…",
+        "cancel": "Cancel",
+        "close": "Close",
+        "success": "{count} exercises created successfully.",
+        "errorPrefix": "Error: "
+      }
+    }
   }
 }
