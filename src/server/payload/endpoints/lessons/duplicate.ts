@@ -19,15 +19,21 @@ import type { PayloadRequest } from 'payload'
 
 import {
   DUPLICATION_LEVELS,
+  DUPLICATION_SUBJECTS,
   type DuplicationLevel,
+  type DuplicationSubject,
 } from '@/server/payload/collections/LessonDuplications'
 
 interface DuplicateBody {
   level?: unknown
+  subject?: unknown
 }
 
 const isLevel = (v: unknown): v is DuplicationLevel =>
   typeof v === 'string' && (DUPLICATION_LEVELS as readonly string[]).includes(v)
+
+const isSubject = (v: unknown): v is DuplicationSubject =>
+  typeof v === 'string' && (DUPLICATION_SUBJECTS as readonly string[]).includes(v)
 
 /** Strip Payload-managed fields from a doc so it can be passed to `create`. */
 function stripManagedFields<T extends Record<string, unknown>>(
@@ -138,7 +144,19 @@ export async function duplicateLessonEndpoint(req: PayloadRequest): Promise<Resp
   }
   const level: DuplicationLevel = body.level
 
-  // 4) Verify source lesson exists
+  // 4) Validate subject (required for level != none)
+  let subject: DuplicationSubject | undefined
+  if (level !== 'none') {
+    if (!isSubject(body.subject)) {
+      return Response.json(
+        { error: `subject must be one of: ${DUPLICATION_SUBJECTS.join(', ')}` },
+        { status: 400 },
+      )
+    }
+    subject = body.subject
+  }
+
+  // 5) Verify source lesson exists
   try {
     await req.payload.findByID({
       collection: 'lessons',
@@ -157,13 +175,14 @@ export async function duplicateLessonEndpoint(req: PayloadRequest): Promise<Resp
     data: {
       sourceLesson: lessonId,
       level,
+      subject,
       status: 'pending',
     } as never,
     overrideAccess: true,
     req,
   })
 
-  // 6) For level=none, deep-clone immediately
+  // 7) For level=none, deep-clone immediately
   if (level === 'none') {
     try {
       const outputLessonId = await deepCloneLesson(req, lessonId)
@@ -191,6 +210,6 @@ export async function duplicateLessonEndpoint(req: PayloadRequest): Promise<Resp
     }
   }
 
-  // 7) For light/medium/deep, leave pending — return immediately
+  // 8) For light/medium/deep, leave pending — return immediately
   return Response.json({ id: record.id, status: 'pending' })
 }
