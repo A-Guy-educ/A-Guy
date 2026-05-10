@@ -2,5 +2,6 @@
 
 _Threshold: 6h_
 
-## Failed
-- [#1236](https://github.com/A-Guy-educ/A-Guy/issues/1236) — fix: Release-publisher agent timeout mismatch with CI polling — 357h since last update
+## Stuck Issues
+
+- [#1236](https://github.com/A-Guy-educ/A-Guy/issues/1236) — fix: Release-publisher agent timeout mismatch with CI polling — 358h since last update
