@@ -80,20 +80,20 @@ Each example below demonstrates the input exercise JSON and the expected output 
         "prompt": {
           "type": "rich_text",
           "format": "md-math-v1",
-          "value": "Solve: $2x + 6 = 14$",
+          "value": "Solve: $4x + 9 = 21$",
           "mediaIds": []
         },
-        "answer": { "type": "free_response", "rubric": "x = 4", "acceptedPatterns": [] },
+        "answer": { "type": "free_response", "rubric": "x = 3", "acceptedPatterns": [] },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",
-          "value": "x = 4",
+          "value": "x = 3",
           "mediaIds": []
         },
         "fullSolution": {
           "type": "rich_text",
           "format": "md-math-v1",
-          "value": "Step 1: 2x + 6 = 14\\nStep 2: 2x = 14 - 6 = 8\\nStep 3: x = 8 / 2 = 4",
+          "value": "Step 1: 4x + 9 = 21\\nStep 2: 4x = 21 - 9 = 12\\nStep 3: x = 12 / 4 = 3",
           "mediaIds": []
         }
       }
@@ -162,7 +162,7 @@ Each example below demonstrates the input exercise JSON and the expected output 
         "prompt": {
           "type": "rich_text",
           "format": "md-math-v1",
-          "value": "The sum of angles in a triangle is 180 degrees.",
+          "value": "The sum of interior angles in a triangle equals 180 degrees.",
           "mediaIds": []
         },
         "options": [
@@ -314,7 +314,7 @@ Each example below demonstrates the input exercise JSON and the expected output 
               "content": {
                 "type": "rich_text",
                 "format": "md-math-v1",
-                "value": "2",
+                "value": "4",
                 "mediaIds": []
               }
             },
@@ -323,7 +323,7 @@ Each example below demonstrates the input exercise JSON and the expected output 
               "content": {
                 "type": "rich_text",
                 "format": "md-math-v1",
-                "value": "3",
+                "value": "5",
                 "mediaIds": []
               }
             }
@@ -337,7 +337,7 @@ Each example below demonstrates the input exercise JSON and the expected output 
                   "content": {
                     "type": "rich_text",
                     "format": "md-math-v1",
-                    "value": "1",
+                    "value": "2",
                     "mediaIds": []
                   },
                   "editable": true
@@ -347,7 +347,7 @@ Each example below demonstrates the input exercise JSON and the expected output 
                   "content": {
                     "type": "rich_text",
                     "format": "md-math-v1",
-                    "value": "2",
+                    "value": "8",
                     "mediaIds": []
                   },
                   "editable": true
@@ -357,7 +357,7 @@ Each example below demonstrates the input exercise JSON and the expected output 
                   "content": {
                     "type": "rich_text",
                     "format": "md-math-v1",
-                    "value": "3",
+                    "value": "10",
                     "mediaIds": []
                   },
                   "editable": true

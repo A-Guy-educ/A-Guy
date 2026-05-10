@@ -250,6 +250,4 @@ Each example below demonstrates the input exercise JSON and the expected output 
 }
 ```
 
-z
-
 Return ONLY the JSON. No markdown fences, no explanation.

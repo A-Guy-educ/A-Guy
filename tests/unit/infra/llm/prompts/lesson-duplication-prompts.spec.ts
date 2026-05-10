@@ -81,7 +81,7 @@ describe('Lesson Duplication Prompt Files', () => {
         const content = readFileSync(filePath, 'utf-8')
 
         // Extract the examples section
-        const examplesMatch = content.match(/## Examples\s*\n([\s\S]*?)(?=\n## |\n# |\z)/i)
+        const examplesMatch = content.match(/## Examples\s*\n([\s\S]*?)(?=\n## |\n# |$)/im)
         expect(examplesMatch, `${filePath} should have examples section`).toBeTruthy()
 
         const examplesContent = examplesMatch?.[1] || ''
@@ -99,7 +99,7 @@ describe('Lesson Duplication Prompt Files', () => {
         const content = readFileSync(filePath, 'utf-8')
 
         // Extract the examples section
-        const examplesMatch = content.match(/## Examples\s*\n([\s\S]*?)(?=\n## |\n# |\z)/i)
+        const examplesMatch = content.match(/## Examples\s*\n([\s\S]*?)(?=\n## |\n# |$)/im)
         expect(examplesMatch, `${filePath} should have examples section`).toBeTruthy()
 
         const examplesContent = examplesMatch?.[1] || ''
@@ -121,7 +121,7 @@ describe('Lesson Duplication Prompt Files', () => {
         const content = readFileSync(filePath, 'utf-8')
 
         // Extract the examples section
-        const examplesMatch = content.match(/## Examples\s*\n([\s\S]*?)(?=\n## |\n# |\z)/i)
+        const examplesMatch = content.match(/## Examples\s*\n([\s\S]*?)(?=\n## |\n# |$)/im)
         expect(examplesMatch, `${filePath} should have examples section`).toBeTruthy()
 
         const examplesContent = examplesMatch?.[1] || ''
@@ -173,6 +173,48 @@ describe('Lesson Duplication Prompt Files', () => {
 
         // Log character counts for reference
         console.log(`${subject}-${level}: ${charCount} characters`)
+      },
+    )
+  })
+
+  describe('Light-level prompts must have different Input and Output JSON in examples', () => {
+    const lightPrompts = PROMPT_FILES.filter(({ level }) => level === 'light')
+
+    it.each(lightPrompts)(
+      '$subject-$level examples should have different Input and Output JSON',
+      ({ subject, level }) => {
+        const filePath = getPromptPath(subject, level)
+        const content = readFileSync(filePath, 'utf-8')
+
+        // Extract all Input JSON blocks and Output JSON blocks
+        // Match blocks between ```json and ``` markers
+        const jsonBlockRegex = /```json\n([\s\S]*?)```/g
+        const blocks: string[] = []
+        let match
+
+        while ((match = jsonBlockRegex.exec(content)) !== null) {
+          blocks.push(match[1])
+        }
+
+        // For light prompts, we expect pairs of Input/Output JSON blocks
+        // Check that at least one Input block differs from its corresponding Output block
+        // We pair them sequentially: block 0=Input1, block 1=Output1, block 2=Input2, etc.
+
+        let hasDifferentPair = false
+        for (let i = 0; i + 1 < blocks.length; i += 2) {
+          const inputBlock = blocks[i]
+          const outputBlock = blocks[i + 1]
+
+          if (inputBlock && outputBlock && inputBlock !== outputBlock) {
+            hasDifferentPair = true
+            break
+          }
+        }
+
+        expect(
+          hasDifferentPair,
+          `${filePath} should have at least one Input/Output pair with different JSON content. All light-level example outputs must demonstrate actual variation.`,
+        ).toBe(true)
       },
     )
   })

@@ -94,7 +94,7 @@ Each example below demonstrates the input exercise JSON and the expected output 
         "prompt": {
           "type": "rich_text",
           "format": "md-math-v1",
-          "value": "Water boils at 100 degrees Celsius at sea level.",
+          "value": "At sea level, the boiling point of water is 100 degrees Celsius.",
           "mediaIds": []
         },
         "options": [
@@ -186,7 +186,7 @@ Each example below demonstrates the input exercise JSON and the expected output 
         "prompt": {
           "type": "rich_text",
           "format": "md-math-v1",
-          "value": "The sun rises in the east.",
+          "value": "The sun rises in the eastern sky.",
           "mediaIds": []
         },
         "options": [
@@ -278,7 +278,7 @@ Each example below demonstrates the input exercise JSON and the expected output 
         "prompt": {
           "type": "rich_text",
           "format": "md-math-v1",
-          "value": "Plants need sunlight to perform photosynthesis.",
+          "value": "Sunlight is required for photosynthesis in plants.",
           "mediaIds": []
         },
         "options": [

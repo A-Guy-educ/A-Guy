@@ -86,26 +86,26 @@ Each example below demonstrates the input exercise JSON and the expected output 
         "prompt": {
           "type": "rich_text",
           "format": "md-math-v1",
-          "value": "Solve for x: $2x + 3 = 7$",
+          "value": "Solve for x: $3x + 8 = 17$",
           "mediaIds": []
         },
-        "answer": { "type": "free_response", "rubric": "x = 2", "acceptedPatterns": [] },
+        "answer": { "type": "free_response", "rubric": "x = 3", "acceptedPatterns": [] },
         "hint": {
           "type": "rich_text",
           "format": "md-math-v1",
-          "value": "Subtract 3 from both sides",
+          "value": "Subtract 8 from both sides",
           "mediaIds": []
         },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",
-          "value": "x = 2",
+          "value": "x = 3",
           "mediaIds": []
         },
         "fullSolution": {
           "type": "rich_text",
           "format": "md-math-v1",
-          "value": "Step 1: 2x + 3 = 7\\nStep 2: 2x = 7 - 3 = 4\\nStep 3: x = 4 / 2 = 2",
+          "value": "Step 1: 3x + 8 = 17\\nStep 2: 3x = 17 - 8 = 9\\nStep 3: x = 9 / 3 = 3",
           "mediaIds": []
         }
       }
@@ -160,20 +160,20 @@ Each example below demonstrates the input exercise JSON and the expected output 
         "prompt": {
           "type": "rich_text",
           "format": "md-math-v1",
-          "value": "Simplify: $3x^2 \\cdot 2x$",
+          "value": "Simplify: $4x^3 \\cdot 3x$",
           "mediaIds": []
         },
-        "answer": { "type": "free_response", "rubric": "6x^3", "acceptedPatterns": [] },
+        "answer": { "type": "free_response", "rubric": "12x^4", "acceptedPatterns": [] },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",
-          "value": "6x^3",
+          "value": "12x^4",
           "mediaIds": []
         },
         "fullSolution": {
           "type": "rich_text",
           "format": "md-math-v1",
-          "value": "Step 1: 3x^2 \\cdot 2x\\nStep 2: (3 \\cdot 2) \\cdot x^{2+1}\\nStep 3: 6x^3",
+          "value": "Step 1: 4x^3 \\cdot 3x\\nStep 2: (4 \\cdot 3) \\cdot x^{3+1}\\nStep 3: 12x^4",
           "mediaIds": []
         }
       }
@@ -228,20 +228,20 @@ Each example below demonstrates the input exercise JSON and the expected output 
         "prompt": {
           "type": "rich_text",
           "format": "md-math-v1",
-          "value": "Factor: $x^2 - 9$",
+          "value": "Factor: $x^2 - 16$",
           "mediaIds": []
         },
-        "answer": { "type": "free_response", "rubric": "(x+3)(x-3)", "acceptedPatterns": [] },
+        "answer": { "type": "free_response", "rubric": "(x+4)(x-4)", "acceptedPatterns": [] },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",
-          "value": "(x+3)(x-3)",
+          "value": "(x+4)(x-4)",
           "mediaIds": []
         },
         "fullSolution": {
           "type": "rich_text",
           "format": "md-math-v1",
-          "value": "Step 1: x^2 - 9 is a difference of squares\\nStep 2: a^2 - b^2 = (a+b)(a-b)\\nStep 3: x^2 - 9 = (x+3)(x-3)",
+          "value": "Step 1: x^2 - 16 is a difference of squares\\nStep 2: a^2 - b^2 = (a+b)(a-b)\\nStep 3: x^2 - 16 = (x+4)(x-4)",
           "mediaIds": []
         }
       }

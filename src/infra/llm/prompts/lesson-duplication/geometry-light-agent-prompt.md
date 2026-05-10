@@ -109,7 +109,7 @@ Each example below demonstrates the input exercise JSON and the expected output 
         "prompt": {
           "type": "rich_text",
           "format": "md-math-v1",
-          "value": "In triangle ABC, AB = 4 cm, BC = 5 cm, and angle B = 60°. Find the length of AC.",
+          "value": "In triangle ABC, AB = 6 cm, BC = 8 cm, and angle B = 60°. Find the length of AC.",
           "mediaIds": []
         },
         "layout": { "displaySize": "medium" },
@@ -138,11 +138,11 @@ Each example below demonstrates the input exercise JSON and the expected output 
             ]
           }
         },
-        "answer": { "type": "numeric", "value": 4.36, "tolerance": 0.1 },
+        "answer": { "type": "numeric", "value": 7, "tolerance": 0.1 },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",
-          "value": "Using law of cosines: AC² = 4² + 5² - 2(4)(5)cos(60°) = 19, so AC ≈ 4.36 cm",
+          "value": "Using law of cosines: AC² = 6² + 8² - 2(6)(8)cos(60°) = 36 + 64 - 48 = 52, so AC ≈ 7.21 cm",
           "mediaIds": []
         }
       }
@@ -201,7 +201,7 @@ Each example below demonstrates the input exercise JSON and the expected output 
         "prompt": {
           "type": "rich_text",
           "format": "md-math-v1",
-          "value": "Find the area of a circle with radius 7 cm.",
+          "value": "Find the area of a circle with radius 5 cm.",
           "mediaIds": []
         },
         "layout": { "displaySize": "medium" },
@@ -210,15 +210,15 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "canvas": { "width": 300, "height": 300 },
           "elements": {
             "points": [{ "name": "O", "x": 150, "y": 150 }],
-            "circles": [{ "center": "O", "radius": 70, "style": "solid" }],
-            "texts": [{ "value": "r = 7", "place": { "x": 220, "y": 150 }, "fontSize": 14 }]
+            "circles": [{ "center": "O", "radius": 50, "style": "solid" }],
+            "texts": [{ "value": "r = 5", "place": { "x": 200, "y": 150 }, "fontSize": 14 }]
           }
         },
-        "answer": { "type": "numeric", "value": 153.94, "tolerance": 0.1 },
+        "answer": { "type": "numeric", "value": 78.54, "tolerance": 0.1 },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",
-          "value": "Area = πr² = π(7)² = 49π ≈ 153.94 cm²",
+          "value": "Area = πr² = π(5)² = 25π ≈ 78.54 cm²",
           "mediaIds": []
         }
       }
@@ -301,7 +301,7 @@ Each example below demonstrates the input exercise JSON and the expected output 
         "prompt": {
           "type": "rich_text",
           "format": "md-math-v1",
-          "value": "Two parallel lines are cut by a transversal. If one corresponding angle measures 65°, find all other angles.",
+          "value": "Two parallel lines are cut by a transversal. If one corresponding angle measures 45°, find all other angles.",
           "mediaIds": []
         },
         "layout": { "displaySize": "medium" },
@@ -329,20 +329,20 @@ Each example below demonstrates the input exercise JSON and the expected output 
                 "ray1": "F",
                 "ray2": "D",
                 "arcRadius": 25,
-                "label": { "value": "65°", "position": "outside" }
+                "label": { "value": "45°", "position": "outside" }
               }
             ]
           }
         },
         "answer": {
           "type": "free_response",
-          "rubric": "65°, 115°, 65°, 115°",
+          "rubric": "45°, 135°, 45°, 135°",
           "acceptedPatterns": []
         },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",
-          "value": "Corresponding angles are equal: 65°. Interior angles on same side are supplementary: 180° - 65° = 115°.",
+          "value": "Corresponding angles are equal: 45°. Interior angles on same side are supplementary: 180° - 45° = 135°.",
           "mediaIds": []
         }
       }
