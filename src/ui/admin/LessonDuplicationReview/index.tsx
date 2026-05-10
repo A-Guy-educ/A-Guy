@@ -210,7 +210,6 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
   const failuresByExercise: Record<string, FailureEntry[]> = {}
   for (const f of record.failures) {
     if (!f.resolved) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       ;(failuresByExercise[f.exerciseRef] ??= []).push(f)
     }
   }
