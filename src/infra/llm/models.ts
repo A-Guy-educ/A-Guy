@@ -63,6 +63,7 @@ export type AIModelKey =
   | 'ANSWER_VALIDATION'
   | 'SUPPORT_GENERATION'
   | 'CONTENT_TRANSLATION'
+  | 'LESSON_DUPLICATION_VARIATION'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Model Registry - Single Source of Truth
@@ -109,6 +110,11 @@ export const MODEL_REGISTRY: Record<AIModelKey, Omit<AIModel, 'name'>> = {
     maxOutputTokens: 8192,
     capabilities: ['chat', 'translation'],
   },
+  LESSON_DUPLICATION_VARIATION: {
+    temperature: 0.3,
+    maxOutputTokens: 8192,
+    capabilities: ['chat', 'generation'],
+  },
 } as const
 
 /**
@@ -126,6 +132,7 @@ export const PROVIDER_MODEL_NAMES: Record<LLMProviderType, Record<AIModelKey, st
     ANSWER_VALIDATION: 'gemini-3.1-pro',
     SUPPORT_GENERATION: 'gemini-3.1-pro',
     CONTENT_TRANSLATION: 'gemini-3.1-pro',
+    LESSON_DUPLICATION_VARIATION: 'gemini-3.1-pro',
   },
   [LLMProviderType.OPENAI_COMPATIBLE]: {
     IMAGE_TO_EXERCISE: 'MiniMax-M2.1',
@@ -134,6 +141,7 @@ export const PROVIDER_MODEL_NAMES: Record<LLMProviderType, Record<AIModelKey, st
     ANSWER_VALIDATION: 'MiniMax-M2.1',
     SUPPORT_GENERATION: 'MiniMax-M2.1',
     CONTENT_TRANSLATION: 'MiniMax-M2.1',
+    LESSON_DUPLICATION_VARIATION: 'MiniMax-M2.1',
   },
 } as const
 
@@ -208,6 +216,11 @@ export const AI_MODELS: Record<AIModelKey, AIModel> = {
     ...MODEL_REGISTRY.CONTENT_TRANSLATION,
     name: PROVIDER_MODEL_NAMES[LLMProviderType.GEMINI].CONTENT_TRANSLATION,
     modelKey: 'CONTENT_TRANSLATION',
+  },
+  LESSON_DUPLICATION_VARIATION: {
+    ...MODEL_REGISTRY.LESSON_DUPLICATION_VARIATION,
+    name: PROVIDER_MODEL_NAMES[LLMProviderType.GEMINI].LESSON_DUPLICATION_VARIATION,
+    modelKey: 'LESSON_DUPLICATION_VARIATION',
   },
 } as const
 
