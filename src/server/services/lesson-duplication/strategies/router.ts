@@ -1,43 +1,53 @@
 /**
- * Lesson Duplication Router Strategy
+ * Lesson Duplication Router
  *
- * Routes each exercise to the appropriate variation generation strategy.
- * The orchestrator calls this per-exercise in a concurrency-limited loop.
- *
- * Current implementation delegates to the LLM-based variation service.
- * Future: For purely-algebraic exercises at light level, prefer script-strategy.
+ * @fileType utility
+ * @domain lesson-duplication
+ * @pattern variation-router
+ * @ai-summary Routes exercises to the appropriate variation strategy (script or AI).
  */
-import type { Payload } from 'payload'
+
 import type { Exercise } from '@/payload-types'
 import type { DuplicationLevel } from '@/server/payload/collections/LessonDuplications'
+import type { VariationStrategy, VariationResult } from './types'
+import { ScriptVariationStrategy } from './script-strategy'
 
-import { generateVariation } from '@/infra/llm/services/lesson-duplication-variation-service'
+/** AI placeholder strategy — throws until K4 is implemented. */
+class AiVariationStrategy implements VariationStrategy {
+  async apply(exercise: Exercise, level: DuplicationLevel): Promise<VariationResult> {
+    if (level === 'none') return { exercise }
+    // K4: implement AI variation
+    throw new Error('AiVariationStrategy is not yet implemented (K4)')
+  }
+}
 
 /**
- * Route an exercise to the appropriate variation strategy and return the variation.
+ * RouterStrategy — single entry point used by the orchestrator.
  *
- * @param exercise - The source exercise to generate a variation for
- * @param level - The transformation level (none, light, medium, deep)
- * @param payload - Payload instance for LLM service calls
- * @returns The variation result (or original exercise for level=none)
- * @throws VariationGenerationError - When variation generation fails after retry
+ * Routing rules:
+ *  - level=none: return exercise unchanged
+ *  - light + purely-algebraic: ScriptVariationStrategy (fast, no AI)
+ *  - light + not algebraic OR medium/deep: AiVariationStrategy (throws until K4)
  */
-export async function routeVariation(
-  exercise: Exercise,
-  level: DuplicationLevel,
-  payload: Payload,
-): Promise<{ exercise: Exercise }> {
-  if (level === 'none') {
-    // No variation requested — return exercise as-is
-    return { exercise }
+export class RouterStrategy implements VariationStrategy {
+  private readonly scriptStrategy = new ScriptVariationStrategy()
+  private readonly aiStrategy = new AiVariationStrategy()
+
+  async apply(exercise: Exercise, level: DuplicationLevel): Promise<VariationResult> {
+    if (level === 'none') {
+      return { exercise }
+    }
+
+    // Try script strategy for light + purely-algebraic
+    if (level === 'light') {
+      const result = await this.scriptStrategy.apply(exercise, level)
+      if (!result.needsAiFallback) {
+        return result
+      }
+      // Fall through to AI if script returned needsAiFallback
+    }
+
+    // K4: medium/deep, or light with needsAiFallback → AI
+    return this.aiStrategy.apply(exercise, level)
   }
-
-  // TODO: For purely-algebraic exercises + light level, prefer script-strategy
-  // before falling back to LLM:
-  // if (level === 'light' && isPurelyAlgebraic(exercise)) {
-  //   return generateScriptVariation(exercise)
-  // }
-
-  // Delegate to LLM-based variation service for light/medium/deep
-  return generateVariation({ exercise, level }, payload)
 }
