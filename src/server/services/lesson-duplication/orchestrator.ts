@@ -15,6 +15,7 @@
  */
 
 import type { Payload } from 'payload'
+import type { Exercise } from '@/payload-types'
 import type { ContentBlock } from '@/server/payload/collections/Exercises/schemas'
 import { logger } from '@/infra/utils/logger'
 import { withConcurrencyLimit } from '@/infra/utils/concurrency'
@@ -27,6 +28,7 @@ import {
   validateExerciseSemantic,
   SEMANTIC_FAILURE_CODE,
 } from '@/server/services/lesson-duplication/validators/semantic'
+import { RouterStrategy } from '@/server/services/lesson-duplication/strategies/router'
 
 export const CONCURRENCY_LIMIT = 3
 
@@ -44,28 +46,28 @@ export interface StrategyResult {
 /**
  * Generate a new exercise via the appropriate strategy.
  *
- * STUB: This function is the K3/K4 plug-in point.
- * Currently throws unless overridden by tests via vi.mock.
+ * K3: ScriptVariationStrategy for purely-algebraic exercises at light level.
+ * K4: AiVariationStrategy for all other cases (throws until AI is wired up).
  *
- * @param sourceExerciseId  ID of the source exercise to vary
- * @param level             Duplication level (light/medium/deep)
- * @param _payload          Payload instance (available for future use)
- * @returns                 StrategyResult with generated blocks and strategy used
- *
- * TODO: Replace with actual K3/K4 implementation
+ * @param exercise    Source exercise to vary
+ * @param level       Duplication level (none/light/medium/deep)
+ * @param _payload    Payload instance (available for future AI strategy use)
+ * @returns           StrategyResult with generated blocks and strategy used
  */
 export async function runStrategy(
-  sourceExerciseId: string,
+  exercise: ExerciseDoc,
   level: 'none' | 'light' | 'medium' | 'deep',
   _payload: Payload,
 ): Promise<StrategyResult> {
-  // STUB: In production, this would call the actual script or AI strategy.
-  // For now, throw to indicate this must be implemented before use.
-  throw new Error(
-    `runStrategy is a K3/K4 stub — sourceExerciseId=${sourceExerciseId}, level=${level}. ` +
-      'K3 (script strategy) and K4 (AI strategy) are not yet implemented. ' +
-      'Until then, every non-none duplication will produce GENERATION_FAILED.',
-  )
+  const router = new RouterStrategy()
+  const result = await router.apply(exercise as unknown as Exercise, level)
+
+  const content = result.exercise.content as unknown as { blocks: ContentBlock[] }
+  return {
+    exerciseId: exercise.id,
+    strategy: result.needsAiFallback ? 'ai' : 'script',
+    blocks: content.blocks ?? [],
+  }
 }
 
 /** Suggested action for a failure, based on failure code. */
@@ -156,7 +158,7 @@ async function processExercise(
   // Step 1: Run strategy
   let strategyResult: StrategyResult
   try {
-    strategyResult = await runStrategy(exercise.id, level, payload)
+    strategyResult = await runStrategy(exercise, level, payload)
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown strategy error'
     logger.error({ exerciseRef, level, err }, 'Strategy generation failed')
