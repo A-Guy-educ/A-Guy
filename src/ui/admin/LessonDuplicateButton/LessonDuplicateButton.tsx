@@ -30,12 +30,45 @@ const LEVELS: { value: 'none' | 'light' | 'medium' | 'deep'; label: string; hint
   },
 ]
 
+const SUBJECTS: {
+  value: 'algebra' | 'geometry' | 'calculus' | 'mixed' | 'other'
+  label: string
+  hint: string
+}[] = [
+  {
+    value: 'algebra',
+    label: 'Algebra',
+    hint: 'Algebraic expressions, equations, word problems.',
+  },
+  {
+    value: 'geometry',
+    label: 'Geometry',
+    hint: 'Shapes, coordinates, angles, area, perimeter.',
+  },
+  {
+    value: 'calculus',
+    label: 'Calculus',
+    hint: 'Derivatives, integrals, limits, series.',
+  },
+  {
+    value: 'mixed',
+    label: 'Mixed / General',
+    hint: 'General prompts for mixed or unknown subjects.',
+  },
+  {
+    value: 'other',
+    label: 'Other',
+    hint: 'Non-math or specialized subject matter.',
+  },
+]
+
 type Status = 'idle' | 'submitting' | 'success' | 'error'
 
 export const LessonDuplicateAction: React.FC = () => {
   const { id } = useDocumentInfo()
   const [open, setOpen] = useState(false)
   const [level, setLevel] = useState<(typeof LEVELS)[number]['value'] | ''>('')
+  const [subject, setSubject] = useState<(typeof SUBJECTS)[number]['value']>('mixed')
   const [status, setStatus] = useState<Status>('idle')
   const [error, setError] = useState<string | null>(null)
   const [resultId, setResultId] = useState<string | null>(null)
@@ -44,6 +77,7 @@ export const LessonDuplicateAction: React.FC = () => {
 
   const reset = () => {
     setLevel('')
+    setSubject('mixed')
     setStatus('idle')
     setError(null)
     setResultId(null)
@@ -63,7 +97,7 @@ export const LessonDuplicateAction: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ level }),
+        body: JSON.stringify({ level, subject }),
       })
       const data = (await res.json()) as { id?: string; error?: string }
       if (!res.ok) {
@@ -157,6 +191,44 @@ export const LessonDuplicateAction: React.FC = () => {
                     value={opt.value}
                     checked={level === opt.value}
                     onChange={() => setLevel(opt.value)}
+                  />
+                  <span>
+                    <strong>{opt.label}</strong>
+                    <br />
+                    <span style={{ fontSize: 12, color: 'var(--theme-elevation-600)' }}>
+                      {opt.hint}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            <p style={{ fontSize: 13, color: 'var(--theme-elevation-600)', marginTop: 16 }}>
+              Subject area
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+              {SUBJECTS.map((opt) => (
+                <label
+                  key={opt.value}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 8,
+                    padding: 8,
+                    border:
+                      subject === opt.value
+                        ? '1px solid var(--theme-success-500)'
+                        : '1px solid var(--theme-elevation-200)',
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="dup-subject"
+                    value={opt.value}
+                    checked={subject === opt.value}
+                    onChange={() => setSubject(opt.value)}
                   />
                   <span>
                     <strong>{opt.label}</strong>
