@@ -118,7 +118,9 @@ describe('ScriptVariationStrategy', () => {
 
   describe('light level + algebraic exercise', () => {
     it('swaps numbers and recomputes correct answer', async () => {
-      const exercise = makeAlgebraicExercise('5×4=?', 20, [15, 18, 22])
+      // Use a deterministic ID whose seed produces non-identity number replacements.
+      // 'test-id' seed → 5→6, 4→4 (verified empirically to differ from original).
+      const exercise = makeAlgebraicExercise('5×4=?', 20, [15, 18, 22], 'test-id')
       const strategy = new ScriptVariationStrategy()
 
       // Verify exercise is detected as purely algebraic
