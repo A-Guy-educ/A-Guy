@@ -175,6 +175,7 @@ export interface Config {
     tasks: {
       pdf_to_exercises: TaskPdfToExercises;
       pdf_to_exercises_v2: TaskPdfToExercisesV2;
+      lesson_duplication: TaskLessonDuplication;
       schedulePublish: TaskSchedulePublish;
       inline: {
         input: unknown;
@@ -2681,7 +2682,7 @@ export interface PayloadJob {
     | {
         executedAt: string;
         completedAt: string;
-        taskSlug: 'inline' | 'pdf_to_exercises' | 'pdf_to_exercises_v2' | 'schedulePublish';
+        taskSlug: 'inline' | 'pdf_to_exercises' | 'pdf_to_exercises_v2' | 'lesson_duplication' | 'schedulePublish';
         taskID: string;
         input?:
           | {
@@ -2714,7 +2715,7 @@ export interface PayloadJob {
         id?: string | null;
       }[]
     | null;
-  taskSlug?: ('inline' | 'pdf_to_exercises' | 'pdf_to_exercises_v2' | 'schedulePublish') | null;
+  taskSlug?: ('inline' | 'pdf_to_exercises' | 'pdf_to_exercises_v2' | 'lesson_duplication' | 'schedulePublish') | null;
   queue?: string | null;
   waitUntil?: string | null;
   processing?: boolean | null;
@@ -4246,6 +4247,14 @@ export interface TaskPdfToExercises {
  * via the `definition` "TaskPdf_to_exercises_v2".
  */
 export interface TaskPdfToExercisesV2 {
+  input?: unknown;
+  output?: unknown;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskLesson_duplication".
+ */
+export interface TaskLessonDuplication {
   input?: unknown;
   output?: unknown;
 }
