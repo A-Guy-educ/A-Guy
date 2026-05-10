@@ -16,6 +16,7 @@ import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
 // Mock runStrategy to inject one forced failure on the 3rd exercise
+// Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
 vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@/server/services/lesson-duplication/orchestrator')>()
@@ -29,9 +30,10 @@ vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOrigin
           if (exercise.id.includes('-3')) {
             throw new Error('Forced failure for test')
           }
+          // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
           return {
             exerciseId: exercise.id,
-            strategy: 'ai' as const,
+            strategy: 'script' as const,
             blocks: [
               {
                 id: 'q-1',
@@ -242,6 +244,10 @@ describe('Lesson duplication orchestrator — integration', () => {
     status: string
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     failures: any[]
+
+    outputLesson?: string | null
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    outputExercises?: any[]
   }> {
     let record = await payload.findByID({
       collection: 'lesson-duplications',
@@ -294,6 +300,12 @@ describe('Lesson duplication orchestrator — integration', () => {
     expect(finalRecord.failures.length).toBeGreaterThanOrEqual(1)
     expect(finalRecord.failures[0].code).toBe('GENERATION_FAILED')
     expect(finalRecord.failures[0].suggestedAction).toBe('skip')
+
+    // After orchestrator runs, outputLesson should be created
+    // Note: outputExercises remain empty in this test because the runStrategy mock
+    // bypasses processExercise (which calls createOutputExercise). Exercise creation
+    // is verified in lesson-duplication-review-resolve.int.spec.ts instead.
+    expect(finalRecord.outputLesson).toBeTruthy()
   }, 60000)
 
   it('orchestrator does not abort when one exercise fails — remaining exercises are processed', async () => {
@@ -324,5 +336,8 @@ describe('Lesson duplication orchestrator — integration', () => {
     expect(finalRecord.failures).toBeDefined()
     expect(finalRecord.failures.length).toBeGreaterThanOrEqual(1)
     expect(finalRecord.failures[0].code).toBe('GENERATION_FAILED')
+
+    // outputLesson should be created even when some exercises fail
+    expect(finalRecord.outputLesson).toBeTruthy()
   }, 60000)
 })
