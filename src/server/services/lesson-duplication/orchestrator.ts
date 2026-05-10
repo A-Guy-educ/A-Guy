@@ -17,6 +17,7 @@
 import type { Payload } from 'payload'
 import type { Exercise } from '@/payload-types'
 import type { ContentBlock } from '@/server/payload/collections/Exercises/schemas'
+import type { DuplicationSubject } from '@/server/payload/collections/LessonDuplications'
 import { logger } from '@/infra/utils/logger'
 import { withConcurrencyLimit } from '@/infra/utils/concurrency'
 import { selectExercisesScaled } from '@/server/services/lesson-duplication/selectors'
@@ -57,10 +58,11 @@ export interface StrategyResult {
 export async function runStrategy(
   exercise: ExerciseDoc,
   level: 'none' | 'light' | 'medium' | 'deep',
-  _payload: Payload,
+  subject: DuplicationSubject,
+  payload: Payload,
 ): Promise<StrategyResult> {
-  const router = new RouterStrategy()
-  const result = await router.apply(exercise as unknown as Exercise, level)
+  const router = new RouterStrategy(payload)
+  const result = await router.apply(exercise as unknown as Exercise, level, subject)
 
   const content = result.exercise.content as unknown as { blocks: ContentBlock[] }
   return {
@@ -151,6 +153,7 @@ async function processExercise(
   exercise: ExerciseDoc,
   duplicationId: string,
   level: 'none' | 'light' | 'medium' | 'deep',
+  subject: DuplicationSubject,
   payload: Payload,
 ): Promise<StrategyResult | null> {
   const exerciseRef = exercise.id
@@ -158,7 +161,7 @@ async function processExercise(
   // Step 1: Run strategy
   let strategyResult: StrategyResult
   try {
-    strategyResult = await runStrategy(exercise, level, payload)
+    strategyResult = await runStrategy(exercise, level, subject, payload)
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown strategy error'
     logger.error({ exerciseRef, level, err }, 'Strategy generation failed')
@@ -269,14 +272,13 @@ export async function runDuplicationOrchestrator(
 
     const selectedExercises = selectExercisesScaled(allExercises.docs as ExerciseDoc[], 20)
 
+    const duplicationLevel = duplication.level as 'none' | 'light' | 'medium' | 'deep'
+    const duplicationSubject =
+      (duplication.subject as DuplicationSubject | null | undefined) ?? 'mixed'
+
     // Process all exercises with concurrency limit
     const results = await withConcurrencyLimit(selectedExercises, CONCURRENCY_LIMIT, (exercise) =>
-      processExercise(
-        exercise,
-        duplicationId,
-        duplication.level as 'none' | 'light' | 'medium' | 'deep',
-        payload,
-      ),
+      processExercise(exercise, duplicationId, duplicationLevel, duplicationSubject, payload),
     )
 
     const succeeded = results.filter((r) => r !== null).length
