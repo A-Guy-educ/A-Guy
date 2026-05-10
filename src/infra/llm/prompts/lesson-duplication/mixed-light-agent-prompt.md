@@ -30,4 +30,346 @@ Return a JSON object with the exercise content. The structure must match the inp
 }
 ```
 
+## Examples
+
+Each example below demonstrates the input exercise JSON and the expected output variation JSON showing mixed-subject transformations.
+
+**Example 1 — Input:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Solve: $2x + 6 = 14$",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "x = 4", "acceptedPatterns": [] },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "x = 4",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: 2x + 6 = 14\\nStep 2: 2x = 14 - 6 = 8\\nStep 3: x = 8 / 2 = 4",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 1 — Output:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Solve: $2x + 6 = 14$",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "x = 4", "acceptedPatterns": [] },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "x = 4",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: 2x + 6 = 14\\nStep 2: 2x = 14 - 6 = 8\\nStep 3: x = 8 / 2 = 4",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 2 — Input:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_select",
+        "variant": "true_false",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "The sum of angles in a triangle is 180 degrees.",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "true",
+            "value": true,
+            "label": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "True",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "false",
+            "value": false,
+            "label": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "False",
+              "mediaIds": []
+            }
+          }
+        ],
+        "answer": { "selected": ["true"] }
+      }
+    ]
+  }
+}
+```
+
+**Example 2 — Output:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_select",
+        "variant": "true_false",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "The sum of angles in a triangle is 180 degrees.",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "true",
+            "value": true,
+            "label": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "True",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "false",
+            "value": false,
+            "label": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "False",
+              "mediaIds": []
+            }
+          }
+        ],
+        "answer": { "selected": ["true"] }
+      }
+    ]
+  }
+}
+```
+
+**Example 3 — Input:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_table",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Complete the multiplication table:",
+          "mediaIds": []
+        },
+        "table": {
+          "header": [
+            {
+              "id": "h1",
+              "content": {
+                "type": "rich_text",
+                "format": "md-math-v1",
+                "value": "x",
+                "mediaIds": []
+              }
+            },
+            {
+              "id": "h2",
+              "content": {
+                "type": "rich_text",
+                "format": "md-math-v1",
+                "value": "2",
+                "mediaIds": []
+              }
+            },
+            {
+              "id": "h3",
+              "content": {
+                "type": "rich_text",
+                "format": "md-math-v1",
+                "value": "3",
+                "mediaIds": []
+              }
+            }
+          ],
+          "rows": [
+            {
+              "id": "r1",
+              "cells": [
+                {
+                  "id": "c1",
+                  "content": {
+                    "type": "rich_text",
+                    "format": "md-math-v1",
+                    "value": "1",
+                    "mediaIds": []
+                  },
+                  "editable": true
+                },
+                {
+                  "id": "c2",
+                  "content": {
+                    "type": "rich_text",
+                    "format": "md-math-v1",
+                    "value": "2",
+                    "mediaIds": []
+                  },
+                  "editable": true
+                },
+                {
+                  "id": "c3",
+                  "content": {
+                    "type": "rich_text",
+                    "format": "md-math-v1",
+                    "value": "3",
+                    "mediaIds": []
+                  },
+                  "editable": true
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 3 — Output:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_table",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Complete the multiplication table:",
+          "mediaIds": []
+        },
+        "table": {
+          "header": [
+            {
+              "id": "h1",
+              "content": {
+                "type": "rich_text",
+                "format": "md-math-v1",
+                "value": "x",
+                "mediaIds": []
+              }
+            },
+            {
+              "id": "h2",
+              "content": {
+                "type": "rich_text",
+                "format": "md-math-v1",
+                "value": "2",
+                "mediaIds": []
+              }
+            },
+            {
+              "id": "h3",
+              "content": {
+                "type": "rich_text",
+                "format": "md-math-v1",
+                "value": "3",
+                "mediaIds": []
+              }
+            }
+          ],
+          "rows": [
+            {
+              "id": "r1",
+              "cells": [
+                {
+                  "id": "c1",
+                  "content": {
+                    "type": "rich_text",
+                    "format": "md-math-v1",
+                    "value": "1",
+                    "mediaIds": []
+                  },
+                  "editable": true
+                },
+                {
+                  "id": "c2",
+                  "content": {
+                    "type": "rich_text",
+                    "format": "md-math-v1",
+                    "value": "2",
+                    "mediaIds": []
+                  },
+                  "editable": true
+                },
+                {
+                  "id": "c3",
+                  "content": {
+                    "type": "rich_text",
+                    "format": "md-math-v1",
+                    "value": "3",
+                    "mediaIds": []
+                  },
+                  "editable": true
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
+```
+
 Return ONLY the JSON. No markdown fences, no explanation.

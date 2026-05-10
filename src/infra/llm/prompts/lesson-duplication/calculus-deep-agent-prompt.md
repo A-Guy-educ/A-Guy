@@ -34,4 +34,222 @@ Return a JSON object with the exercise content. The structure should match the i
 }
 ```
 
+## Examples
+
+Each example below demonstrates the input exercise JSON and the expected output variation JSON. The calculus solution must include a `full_solution` field with step-by-step derivation showing each rule applied.
+
+**Example 1 — Input:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Find $\\frac{d}{dx}[e^{x^2}]$",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "2xe^(x²)", "acceptedPatterns": [] },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "2xe^(x²)",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Identify nested composite function: outer = e^u, middle = x², inner = x\\nStep 2: Apply chain rule twice: d/dx[e^(x²)] = e^(x²) · d/dx(x²)\\nStep 3: d/dx(x²) = 2x (power rule)\\nStep 4: Combine: d/dx[e^(x²)] = e^(x²) · 2x\\nStep 5: Final answer: 2xe^(x²)",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 1 — Output:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Calculate the derivative of $f(x) = e^{3x^2 + 2x}$",
+          "mediaIds": []
+        },
+        "answer": {
+          "type": "free_response",
+          "rubric": "(6x + 2)e^(3x² + 2x)",
+          "acceptedPatterns": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "(6x + 2)e^(3x² + 2x)",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Identify composite: outer = e^u, inner = 3x² + 2x\\nStep 2: Chain rule: d/dx(e^u) = e^u · u'\\nStep 3: Find u' = d/dx(3x² + 2x) = 6x + 2\\nStep 4: Apply chain rule: f'(x) = e^(3x² + 2x) · (6x + 2)\\nStep 5: Final answer: (6x + 2)e^(3x² + 2x)",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 2 — Input:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Find $\\frac{d}{dx}[\\ln(x^2 + 1)]$",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "2x/(x² + 1)", "acceptedPatterns": [] },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "2x/(x² + 1)",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Identify composite: outer = ln(u), inner = x² + 1\\nStep 2: Chain rule for ln: d/dx[ln(u)] = u'/u\\nStep 3: Find u' = d/dx(x² + 1) = 2x\\nStep 4: Apply: (2x)/(x² + 1)\\nStep 5: Final answer: 2x/(x² + 1)",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 2 — Output:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Differentiate $g(x) = \\ln(5x^3 + 2x)$",
+          "mediaIds": []
+        },
+        "answer": {
+          "type": "free_response",
+          "rubric": "(15x² + 2)/(5x³ + 2x)",
+          "acceptedPatterns": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "(15x² + 2)/(5x³ + 2x)",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Identify composite: outer = ln(u), inner = 5x³ + 2x\\nStep 2: Chain rule for ln: d/dx[ln(u)] = u'/u\\nStep 3: Find u' = d/dx(5x³ + 2x) = 15x² + 2\\nStep 4: Apply: (15x² + 2)/(5x³ + 2x)\\nStep 5: Final answer: (15x² + 2)/(5x³ + 2x)",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 3 — Input:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Find the derivative using implicit differentiation: $x^2 + y^2 = 25$",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "dy/dx = -x/y", "acceptedPatterns": [] },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "dy/dx = -x/y",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Differentiate both sides with respect to x\\nStep 2: d/dx(x²) + d/dx(y²) = d/dx(25)\\nStep 3: 2x + 2y(dy/dx) = 0 (chain rule on y²)\\nStep 4: Isolate dy/dx: 2y(dy/dx) = -2x\\nStep 5: Divide by 2y: dy/dx = -x/y\\nStep 6: Final answer: dy/dx = -x/y",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 3 — Output:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Use implicit differentiation to find dy/dx: $x^3 + y^3 = 8$",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "dy/dx = -x²/y²", "acceptedPatterns": [] },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "dy/dx = -x²/y²",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Differentiate both sides with respect to x\\nStep 2: d/dx(x³) + d/dx(y³) = d/dx(8)\\nStep 3: 3x² + 3y²(dy/dx) = 0 (chain rule on y³)\\nStep 4: Isolate dy/dx: 3y²(dy/dx) = -3x²\\nStep 5: Divide by 3y²: dy/dx = -x²/y²\\nStep 6: Final answer: dy/dx = -x²/y²",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+z
+
 Return ONLY the JSON. No markdown fences, no explanation.

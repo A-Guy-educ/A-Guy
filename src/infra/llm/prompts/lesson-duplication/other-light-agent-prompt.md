@@ -30,4 +30,284 @@ Return a JSON object with the exercise content. The structure must match the inp
 }
 ```
 
+## Examples
+
+Each example below demonstrates the input exercise JSON and the expected output variation JSON for non-math exercises like true/false and matching.
+
+**Example 1 — Input:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_select",
+        "variant": "true_false",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Water boils at 100 degrees Celsius at sea level.",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "true",
+            "value": true,
+            "label": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "True",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "false",
+            "value": false,
+            "label": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "False",
+              "mediaIds": []
+            }
+          }
+        ],
+        "answer": { "selected": ["true"] }
+      }
+    ]
+  }
+}
+```
+
+**Example 1 — Output:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_select",
+        "variant": "true_false",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Water boils at 100 degrees Celsius at sea level.",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "true",
+            "value": true,
+            "label": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "True",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "false",
+            "value": false,
+            "label": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "False",
+              "mediaIds": []
+            }
+          }
+        ],
+        "answer": { "selected": ["true"] }
+      }
+    ]
+  }
+}
+```
+
+**Example 2 — Input:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_select",
+        "variant": "true_false",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "The sun rises in the east.",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "true",
+            "value": true,
+            "label": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "True",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "false",
+            "value": false,
+            "label": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "False",
+              "mediaIds": []
+            }
+          }
+        ],
+        "answer": { "selected": ["true"] }
+      }
+    ]
+  }
+}
+```
+
+**Example 2 — Output:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_select",
+        "variant": "true_false",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "The sun rises in the east.",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "true",
+            "value": true,
+            "label": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "True",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "false",
+            "value": false,
+            "label": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "False",
+              "mediaIds": []
+            }
+          }
+        ],
+        "answer": { "selected": ["true"] }
+      }
+    ]
+  }
+}
+```
+
+**Example 3 — Input:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_select",
+        "variant": "true_false",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Plants need sunlight to perform photosynthesis.",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "true",
+            "value": true,
+            "label": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "True",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "false",
+            "value": false,
+            "label": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "False",
+              "mediaIds": []
+            }
+          }
+        ],
+        "answer": { "selected": ["true"] }
+      }
+    ]
+  }
+}
+```
+
+**Example 3 — Output:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_select",
+        "variant": "true_false",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Plants need sunlight to perform photosynthesis.",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "true",
+            "value": true,
+            "label": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "True",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "false",
+            "value": false,
+            "label": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "False",
+              "mediaIds": []
+            }
+          }
+        ],
+        "answer": { "selected": ["true"] }
+      }
+    ]
+  }
+}
+```
+
 Return ONLY the JSON. No markdown fences, no explanation.
