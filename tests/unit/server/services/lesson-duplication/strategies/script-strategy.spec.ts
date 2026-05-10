@@ -118,7 +118,7 @@ describe('ScriptVariationStrategy', () => {
 
   describe('light level + algebraic exercise', () => {
     it('swaps numbers and recomputes correct answer', async () => {
-      const exercise = makeAlgebraicExercise('5×4=?', 20, [15, 18, 22])
+      const exercise = makeAlgebraicExercise('5×4=?', 20, [15, 18, 22], 'ex-test-swaps')
       const strategy = new ScriptVariationStrategy()
 
       // Verify exercise is detected as purely algebraic
