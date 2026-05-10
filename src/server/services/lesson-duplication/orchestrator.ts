@@ -139,6 +139,71 @@ type ExerciseDoc = {
   content?: { blocks?: ContentBlock[] }
 }
 
+/** Mapping entry from source exercise to generated output exercise. */
+interface OutputExerciseMapping {
+  sourceExerciseId: string
+  outputExerciseId: string
+  strategy: DuplicationStrategy
+}
+
+/**
+ * Create the output lesson (draft) linked to the same chapter/course as the source.
+ */
+async function createOutputLesson(
+  payload: Payload,
+  sourceLessonId: string,
+  level: string,
+): Promise<string> {
+  const source = await payload.findByID({
+    collection: 'lessons',
+    id: sourceLessonId,
+    depth: 0,
+    overrideAccess: true,
+  })
+  const src = source as unknown as Record<string, unknown>
+  const base = (src.title as string) ?? 'Lesson'
+  const newLesson = await payload.create({
+    collection: 'lessons',
+    data: {
+      title: `${base} - Variation (${level})`,
+      slug: undefined,
+      status: 'draft',
+      chapter: src.chapter,
+      course: src.course,
+      tenant: src.tenant,
+      locale: src.locale ?? 'he',
+    } as never,
+    overrideAccess: true,
+  })
+  return newLesson.id
+}
+
+/**
+ * Create a draft exercise in the output lesson with the generated blocks.
+ * Returns the mapping entry for tracking.
+ */
+async function createOutputExercise(
+  payload: Payload,
+  result: StrategyResult,
+  outputLessonId: string,
+): Promise<OutputExerciseMapping> {
+  const ex = await payload.create({
+    collection: 'exercises',
+    data: {
+      title: `Variation of ${result.exerciseId}`,
+      lesson: outputLessonId,
+      content: { blocks: result.blocks },
+      status: 'draft',
+    } as never,
+    overrideAccess: true,
+  })
+  return {
+    sourceExerciseId: result.exerciseId,
+    outputExerciseId: ex.id,
+    strategy: result.strategy,
+  }
+}
+
 /**
  * Process a single exercise through the duplication pipeline.
  *
@@ -262,6 +327,13 @@ export async function runDuplicationOrchestrator(
       throw new Error('sourceLesson relationship is missing or invalid')
     }
 
+    // Create the output lesson before processing exercises
+    const outputLessonId = await createOutputLesson(
+      payload,
+      sourceLessonId,
+      duplication.level ?? 'light',
+    )
+
     const allExercises = await payload.find({
       collection: 'exercises',
       where: { lesson: { equals: sourceLessonId } },
@@ -277,12 +349,32 @@ export async function runDuplicationOrchestrator(
       (duplication.subject as DuplicationSubject | null | undefined) ?? 'mixed'
 
     // Process all exercises with concurrency limit
-    const results = await withConcurrencyLimit(selectedExercises, CONCURRENCY_LIMIT, (exercise) =>
-      processExercise(exercise, duplicationId, duplicationLevel, duplicationSubject, payload),
+    const results = await withConcurrencyLimit(
+      selectedExercises,
+      CONCURRENCY_LIMIT,
+      async (exercise) => {
+        const result = await processExercise(
+          exercise,
+          duplicationId,
+          duplicationLevel,
+          duplicationSubject,
+          payload,
+        )
+        // If exercise succeeded, persist it to the DB
+        if (result !== null) {
+          const mapping = await createOutputExercise(payload, result, outputLessonId)
+          return mapping
+        }
+        return null
+      },
     )
 
-    const succeeded = results.filter((r) => r !== null).length
+    // Separate successful exercise mappings from null results (failures)
+    const outputExerciseMappings: OutputExerciseMapping[] = results.filter(
+      (r): r is OutputExerciseMapping => r !== null,
+    )
     const failed = results.filter((r) => r === null).length
+    const succeeded = outputExerciseMappings.length
 
     logger.info(
       { duplicationId, total: selectedExercises.length, succeeded, failed },
@@ -294,7 +386,11 @@ export async function runDuplicationOrchestrator(
     await payload.update({
       collection: 'lesson-duplications',
       id: duplicationId,
-      data: { status: finalStatus },
+      data: {
+        status: finalStatus,
+        outputLesson: outputLessonId,
+        outputExercises: outputExerciseMappings,
+      } as never,
       overrideAccess: true,
     })
   } catch (err) {
