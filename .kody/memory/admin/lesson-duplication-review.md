@@ -1,45 +1,31 @@
 ---
-title: Lesson Duplication Admin Review
+title: Lesson Duplication Admin Review Screen
 type: runbook
 updated: 2026-05-10
 sources:
   - https://github.com/A-Guy-educ/A-Guy/pull/1548
 ---
 
-Admin review interface for resolving lesson duplication failures. Accessible at `/admin/lesson-duplications/:id` and the list view at `/admin/lesson-duplications`.
+When the lesson duplication orchestrator finishes with failures, the `LessonDuplications` record enters `needs_review` status. Admins resolve failures via the review screen.
 
-## Purpose
+## Routes
 
-When the lesson duplication orchestrator completes with failures, the record enters `needs_review` status. Admins review each failure and decide how to handle it.
+- `GET /admin/lesson-duplications` — list all duplication records (Payload admin)
+- `GET /admin/lesson-duplications/:id` — review screen for a specific record
+- `POST /api/lesson-duplications/:id/resolve` — marks a failure as resolved (`resolved: true`)
+- `POST /api/lesson-duplications/:id/record` — records a failure against a duplication record
 
-## Resolution Actions
+## Review Screen
 
-Each failed exercise supports three actions:
-- **Skip**: Mark as resolved, exclude from output lesson
-- **Regenerate**: Re-run variation at specified level (light/medium/deep)
-- **Keep**: Include the output as-is despite the failure
+The `LessonDuplicationReview` component (`src/ui/admin/LessonDuplicationReview/`) shows each failed exercise with its error details and a resolve action. The sidebar shows a `SidebarLink` for navigation from the main list.
 
-## Resolution API
+## Resolution Flow
 
-`POST /api/lesson-duplications/:id/resolve` accepts:
-```json
-{
-  "exerciseRef": "section_2:ex_1",
-  "action": "skip" | "regenerate" | "keep",
-  "regenLevel": "light" | "medium" | "deep"
-}
-```
-
-## Data Model
-
-`LessonDuplications.failures[]` stores:
-- `exerciseRef`: section index + exercise ID (e.g., `"2:ex_1"`)
-- `code`: failure type (e.g., `MISSING_QUESTION`, `VALIDATION_FAILED`)
-- `message`: human-readable description
-- `suggestedAction`: recommended resolution (`regenerate`, `skip`)
-- `resolved`: boolean flag
+1. Admin inspects a failure in the review screen
+2. Optionally fixes the output lesson manually
+3. Calls `POST /api/lesson-duplications/:id/resolve` with the failure ID
+4. When all failures are resolved, the record status clears `needs_review`
 
 ## Related
 
-- [lesson-duplication](../lesson-duplication.md) — Orchestrator behavior and failure tracking
-- [design-system](../design-system.md) — UI patterns for admin components
+- [Lesson Duplication Service](../architecture/lesson-duplication.md)
