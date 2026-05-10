@@ -8,7 +8,10 @@
  */
 
 import type { Exercise } from '@/payload-types'
-import type { DuplicationLevel } from '@/server/payload/collections/LessonDuplications'
+import type {
+  DuplicationLevel,
+  DuplicationSubject,
+} from '@/server/payload/collections/LessonDuplications'
 import type { ContentBlock, InlineRichText } from '@/server/payload/collections/Exercises/types'
 import type { VariationResult, VariationStrategy } from './types'
 import { isPurelyAlgebraic } from './algebraic-detector'
@@ -385,7 +388,11 @@ export function applyScriptLightVariation(exercise: Exercise, seed: number): Var
  * Falls through to AI for all other cases (non-algebraic, medium/deep, etc.).
  */
 export class ScriptVariationStrategy implements VariationStrategy {
-  async apply(exercise: Exercise, level: DuplicationLevel): Promise<VariationResult> {
+  async apply(
+    exercise: Exercise,
+    level: DuplicationLevel,
+    _subject?: DuplicationSubject,
+  ): Promise<VariationResult> {
     if (level === 'none') return { exercise }
 
     if (level !== 'light') {
