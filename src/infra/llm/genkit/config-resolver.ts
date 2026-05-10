@@ -44,6 +44,11 @@ interface ChatConfig {
     answerValidation: { gemini: string; openaiCompatible: string; maxOutputTokens: number }
     supportGeneration: { gemini: string; openaiCompatible: string; maxOutputTokens: number }
     contentTranslation: { gemini: string; openaiCompatible: string; maxOutputTokens: number }
+    lessonDuplicationVariation: {
+      gemini: string
+      openaiCompatible: string
+      maxOutputTokens: number
+    }
   }
 }
 
@@ -132,6 +137,7 @@ function mapModelKeyToConfigKey(modelKey: AIModelKey): keyof ChatConfig['models'
     ANSWER_VALIDATION: 'answerValidation',
     SUPPORT_GENERATION: 'supportGeneration',
     CONTENT_TRANSLATION: 'contentTranslation',
+    LESSON_DUPLICATION_VARIATION: 'lessonDuplicationVariation',
   }
   return mapping[modelKey]
 }
