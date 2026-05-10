@@ -24,57 +24,70 @@ vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOrigin
     ...actual,
     runStrategy: vi
       .fn()
-      .mockImplementation(async (exercise: { id: string }, _level: string, _payload: unknown) => {
-        // Force failure on the 3rd exercise (index-based)
-        if (exercise.id.includes('-3')) {
-          throw new Error('Forced failure for test')
-        }
-        return {
-          exerciseId: exercise.id,
-          strategy: 'script' as const,
-          blocks: [
-            {
-              id: 'q-1',
-              type: 'question_select',
-              variant: 'mcq',
-              selectionMode: 'single',
-              prompt: {
-                type: 'rich_text',
-                format: 'md-math-v1',
-                value: 'What is 2+2?',
-                mediaIds: [],
+      .mockImplementation(
+        async (exercise: { id: string }, _level: string, _subject: unknown, _payload: unknown) => {
+          // Force failure on the 3rd exercise (index-based)
+          if (exercise.id.includes('-3')) {
+            throw new Error('Forced failure for test')
+          }
+          // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
+          return {
+            exerciseId: exercise.id,
+            strategy: 'script' as const,
+            blocks: [
+              {
+                id: 'q-1',
+                type: 'question_select',
+                variant: 'mcq',
+                selectionMode: 'single',
+                prompt: {
+                  type: 'rich_text',
+                  format: 'md-math-v1',
+                  value: 'What is 2+2?',
+                  mediaIds: [],
+                },
+                answer: {
+                  multiSelect: false,
+                  options: [
+                    {
+                      id: 'a',
+                      content: {
+                        type: 'rich_text',
+                        format: 'md-math-v1',
+                        value: '3',
+                        mediaIds: [],
+                      },
+                    },
+                    {
+                      id: 'b',
+                      content: {
+                        type: 'rich_text',
+                        format: 'md-math-v1',
+                        value: '4',
+                        mediaIds: [],
+                      },
+                    },
+                  ],
+                  correctOptionIds: ['b'],
+                },
+                hint: {
+                  type: 'rich_text',
+                  format: 'md-math-v1',
+                  value: 'Think arithmetic',
+                  mediaIds: [],
+                },
+                solution: { type: 'rich_text', format: 'md-math-v1', value: '2+2=4', mediaIds: [] },
+                fullSolution: {
+                  type: 'rich_text',
+                  format: 'md-math-v1',
+                  value: 'Basic addition',
+                  mediaIds: [],
+                },
               },
-              answer: {
-                multiSelect: false,
-                options: [
-                  {
-                    id: 'a',
-                    content: { type: 'rich_text', format: 'md-math-v1', value: '3', mediaIds: [] },
-                  },
-                  {
-                    id: 'b',
-                    content: { type: 'rich_text', format: 'md-math-v1', value: '4', mediaIds: [] },
-                  },
-                ],
-                correctOptionIds: ['b'],
-              },
-              hint: {
-                type: 'rich_text',
-                format: 'md-math-v1',
-                value: 'Think arithmetic',
-                mediaIds: [],
-              },
-              solution: { type: 'rich_text', format: 'md-math-v1', value: '2+2=4', mediaIds: [] },
-              fullSolution: {
-                type: 'rich_text',
-                format: 'md-math-v1',
-                value: 'Basic addition',
-                mediaIds: [],
-              },
-            },
-          ],
-        }
-      }),
+            ],
+          }
+        },
+      ),
   }
 })
 
@@ -231,7 +244,7 @@ describe('Lesson duplication orchestrator — integration', () => {
     status: string
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     failures: any[]
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     outputLesson?: string | null
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     outputExercises?: any[]

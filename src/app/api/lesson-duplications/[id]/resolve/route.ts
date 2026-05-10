@@ -14,7 +14,10 @@ import { apiSuccess, ApiErrors } from '@/server/api/responses'
 import { z } from 'zod'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
-import type { DuplicationLevel } from '@/server/payload/collections/LessonDuplications'
+import type {
+  DuplicationLevel,
+  DuplicationSubject,
+} from '@/server/payload/collections/LessonDuplications'
 import { validateExerciseStructural } from '@/server/services/lesson-duplication/validators/structural'
 import { validateExerciseSemantic } from '@/server/services/lesson-duplication/validators/semantic'
 import { generateVariation } from '@/infra/llm/services/lesson-duplication-variation-service'
@@ -117,10 +120,11 @@ export const POST = withApiHandler<ResolveBody, unknown>(
           return ApiErrors.internal(`Source exercise ${failure.exerciseRef} not found`)
         }
         const resolvedLevel = (level ?? record.level) as Exclude<DuplicationLevel, 'none'>
+        const resolvedSubject = (record.subject as DuplicationSubject | null | undefined) ?? 'mixed'
         let blocks: ContentBlock[]
         try {
           const variation = await generateVariation(
-            { exercise: source as Exercise, level: resolvedLevel },
+            { exercise: source as Exercise, level: resolvedLevel, subject: resolvedSubject },
             payload,
           )
           blocks = (variation.exercise.content as { blocks: ContentBlock[] }).blocks
