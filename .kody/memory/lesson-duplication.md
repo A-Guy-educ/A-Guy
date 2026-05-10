@@ -20,6 +20,16 @@ The lesson duplication service generates variations of exercises for practice. I
 | Medium | Semantic rewrite via LLM; two-pass: falls back to light if LLM fails | llm-variation-service |
 | Deep | Full agentic rewrite with reasoning | llm-variation-service (deep model) |
 
+### Two-Pass LLM Strategy
+
+For AI-assisted levels (medium/deep), the variation service uses a two-pass temperature approach:
+
+1. **Creative pass** (temp 0.7) — generates new question phrasing, hint, and content blocks
+2. **Deterministic pass** (temp 0.0) — re-derives the solution/hint from first principles
+3. `mergePassOutputs()` merges question/hint from Pass 1 with solution fields from Pass 2
+
+This prevents the LLM from changing a question but leaving its solution inconsistent — a common failure mode. Model keys `LESSON_DUPLICATION_VARIATION_CREATIVE` (0.7) and `LESSON_DUPLICATION_VARIATION_DETERMINISTIC` (0.0) are registered in the model registry alongside the base variation key.
+
 ## Subject Selection
 
 Users choose a subject when initiating duplication. Valid subjects: `mixed`, `algebra`, `geometry`, `calculus`, `other`. Each subject has its own set of LLM prompts (`prompts/lesson-duplication/<subject>-<level>-agent-prompt.md`). Using the wrong subject prompt leads to poor-quality variations.
@@ -31,6 +41,10 @@ Users choose a subject when initiating duplication. Valid subjects: `mixed`, `al
 - **Orchestrator**: `orchestrator.ts` — coordinates concurrent duplication; pre-creates output lesson; tracks source→output exercise mappings; max 3 parallel workers
 - **Validators**: `validators/semantic.ts` (LLM-based), `validators/structural.ts` (schema-based)
 - **Variation Service**: `infra/llm/services/lesson-duplication-variation-service.ts` — loads per-subject prompts, handles retry and two-pass fallback
+
+## Duplicate Endpoint
+
+`POST /api/lessons/:id/duplicate` accepts `{ subject, level }` in the request body, creates a `LessonDuplications` record, and returns the new lesson ID. The `subject` field is stored on the `LessonDuplications` collection and threaded through to the strategy layer so the correct subject-specific prompt file is loaded.
 
 ## Orchestrator Output Tracking
 
@@ -44,7 +58,8 @@ When the orchestrator runs, it:
 - Algebraic-only exercises skip LLM calls via the algebraic-detector; script-strategy handles them
 - Retry logic: one retry on JSON/structure errors before throwing VariationGenerationError
 - Prompt fallbacks: inline defaults if prompt files fail to load (serverless safety)
-- Two-pass variation: medium level tries LLM first; if it fails structurally, falls back to light/script
+- Two-pass variation: medium level tries LLM first; if it fails structurally, falls back to light/script; for AI-assisted levels, the two passes (creative → deterministic) ensure question and solution remain consistent
+- Subject is stored on `LessonDuplications` and passed to the variation service, which loads the matching subject×level prompt file
 
 ## Validation
 
@@ -56,6 +71,10 @@ When the orchestrator runs, it:
 ## Admin Review Screen
 
 When the orchestrator finishes with failures, the record enters `needs_review` status. Admins use the review screen (`/admin/lesson-duplications/:id`) to inspect and resolve failures. See [admin/lesson-duplication-review](./admin/lesson-duplication-review.md).
+
+## UI Components
+
+- **LessonDuplicateButton** (`ui/admin/LessonDuplicateButton/`) — trigger button in the lesson view that opens the duplicate modal and submits `POST /api/lessons/:id/duplicate`
 
 ## Related
 
