@@ -1787,6 +1787,18 @@ export interface LessonDuplication {
         code: string;
         message: string;
         suggestedAction?: ('skip' | 'regenerate' | 'keep') | null;
+        resolved?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Maps source exercise IDs to their generated output exercise IDs.
+   */
+  outputExercises?:
+    | {
+        sourceExerciseId: string;
+        outputExerciseId: string;
+        strategy: 'script' | 'ai';
         id?: string | null;
       }[]
     | null;
@@ -3330,6 +3342,15 @@ export interface LessonDuplicationsSelect<T extends boolean = true> {
         code?: T;
         message?: T;
         suggestedAction?: T;
+        resolved?: T;
+        id?: T;
+      };
+  outputExercises?:
+    | T
+    | {
+        sourceExerciseId?: T;
+        outputExerciseId?: T;
+        strategy?: T;
         id?: T;
       };
   createdBy?: T;

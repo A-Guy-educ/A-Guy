@@ -101,6 +101,25 @@ export const LessonDuplications: CollectionConfig = {
             { label: 'keep', value: 'keep' },
           ],
         },
+        { name: 'resolved', type: 'checkbox', defaultValue: false },
+      ],
+    },
+    {
+      name: 'outputExercises',
+      type: 'array',
+      admin: { description: 'Maps source exercise IDs to their generated output exercise IDs.' },
+      fields: [
+        { name: 'sourceExerciseId', type: 'text', required: true },
+        { name: 'outputExerciseId', type: 'text', required: true },
+        {
+          name: 'strategy',
+          type: 'select',
+          options: [
+            { label: 'script', value: 'script' },
+            { label: 'ai', value: 'ai' },
+          ],
+          required: true,
+        },
       ],
     },
     createdByField,
