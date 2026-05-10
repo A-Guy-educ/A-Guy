@@ -1,3 +1,8 @@
+---
+every: 1h
+tickScript: .kody/scripts/auto-resolve-tick.sh
+---
+
 # auto resolve
 
 ## Job
