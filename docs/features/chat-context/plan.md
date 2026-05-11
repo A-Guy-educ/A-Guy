@@ -11,25 +11,25 @@ This plan addresses critical correctness issues in the chat context system that 
 ## Critical Issues Summary
 
 ### 1. **Prompt Pollution** (Highest Priority)
-- **Problem**: [chat.ts:145-169](src/endpoints/agent/chat.ts#L145-L169) injects fake user/assistant message pairs for summary and memories
+- **Problem**: [chat.ts:145-169](src/server/payload/endpoints/agent/chat.ts#L145-L169) injects fake user/assistant message pairs for summary and memories
 - **Impact**: Non-deterministic prompts, token waste, potential confusion for the model
 - **Fix**: Use `composePrompt()` which appends summary/memories to system message instead
 
 ### 2. **Wrong Field Name** (Data Access Bug)
-- **Problem**: [chat.ts:159](src/endpoints/agent/chat.ts#L159) uses `m.content` but MemoryItem schema defines `text`
+- **Problem**: [chat.ts:159](src/server/payload/endpoints/agent/chat.ts#L159) uses `m.content` but MemoryItem schema defines `text`
 - **Impact**: Runtime undefined access, memories not shown to model
 - **Fix**: Change `m.content` → `m.text`
 
 ### 3. **composePrompt() Not Used** (Architectural Gap)
-- **Problem**: [chat.ts:140-177](src/endpoints/agent/chat.ts#L140-L177) manually builds context instead of using designed function
+- **Problem**: [chat.ts:140-177](src/server/payload/endpoints/agent/chat.ts#L140-L177) manually builds context instead of using designed function
 - **Impact**: No deterministic ordering, missing metadata, policy violations
 - **Fix**: Replace manual construction with `composePrompt()` call
 
 ### 4. **Message Duplication Risk** (Correctness Issue)
 - **Problem**: User message handling is split:
-  - Passed as `message` parameter [chat.ts:197](src/endpoints/agent/chat.ts#L197)
-  - Added to conversationHistory [chat.ts:186-193](src/endpoints/agent/chat.ts#L186-L193)
-  - Then sent again via `chat.sendMessage()` [exercise-chat-service.ts:78](src/lib/ai/services/exercise-chat-service.ts#L78)
+  - Passed as `message` parameter [chat.ts:197](src/server/payload/endpoints/agent/chat.ts#L197)
+  - Added to conversationHistory [chat.ts:186-193](src/server/payload/endpoints/agent/chat.ts#L186-L193)
+  - Then sent again via `chat.sendMessage()` [exercise-chat-service.ts:78](src/infra/llm/services/exercise-chat-service.ts#L78)
 - **Impact**: Potential duplication of latest user message in model context
 - **Fix**: Ensure latest user message is in recentMessages, not passed separately
 
@@ -40,21 +40,21 @@ This plan addresses critical correctness issues in the chat context system that 
 ### Phase 1: Fix Core Data Issues
 
 #### 1.1 Fix Memory Field Access
-**File**: [src/endpoints/agent/chat.ts](../../src/endpoints/agent/chat.ts)
+**File**: [src/server/payload/endpoints/agent/chat.ts](../../src/server/payload/endpoints/agent/chat.ts)
 
 Change line 159: `m.content` → `m.text`
 
 ### Phase 2: Integrate composePrompt()
 
 #### 2.1 Update Chat Endpoint
-**File**: [src/endpoints/agent/chat.ts](../../src/endpoints/agent/chat.ts)
+**File**: [src/server/payload/endpoints/agent/chat.ts](../../src/server/payload/endpoints/agent/chat.ts)
 
 - Import `composePrompt` from context-policy
 - Replace manual context building with `composePrompt()` call
 - Use metadata from composed prompt for observability
 
 #### 2.2 Refactor Chat Service Interface
-**File**: [src/lib/ai/services/exercise-chat-service.ts](../../src/lib/ai/services/exercise-chat-service.ts)
+**File**: [src/infra/llm/services/exercise-chat-service.ts](../../src/infra/llm/services/exercise-chat-service.ts)
 
 - Add `composedPrompt?: ComposedPrompt` to ExerciseChatInput interface
 - Update chatWithExerciseHelper() to use composedPrompt when provided
@@ -62,7 +62,7 @@ Change line 159: `m.content` → `m.text`
 - Fix logger import to use consistent path
 
 #### 2.3 Fix Message Flow Order
-**File**: [src/endpoints/agent/chat.ts](../../src/endpoints/agent/chat.ts)
+**File**: [src/server/payload/endpoints/agent/chat.ts](../../src/server/payload/endpoints/agent/chat.ts)
 
 New flow:
 1. Save user message to DB FIRST
@@ -90,7 +90,7 @@ Add `logPromptSnapshot()` calls in development mode.
 
 ### Phase 4: Fix Logger Import Consistency
 
-Standardize all logger imports to `@/utilities/logger` across `src/lib/ai/` directory.
+Standardize all logger imports to `@/infra/utils/logger` across `src/infra/llm/` directory.
 
 ---
 
@@ -113,16 +113,16 @@ Create minimal documentation in this directory:
 ### Files to Modify
 | File | Changes |
 |------|---------|
-| [src/endpoints/agent/chat.ts](../../src/endpoints/agent/chat.ts) | Use composePrompt(), fix field access, fix message flow |
-| [src/lib/ai/observability.ts](../../src/lib/ai/observability.ts) | Align context logging keys and metadata |
-| [src/lib/ai/services/exercise-chat-service.ts](../../src/lib/ai/services/exercise-chat-service.ts) | Export getSystemPrompt, accept ComposedPrompt, fix logger import |
+| [src/server/payload/endpoints/agent/chat.ts](../../src/server/payload/endpoints/agent/chat.ts) | Use composePrompt(), fix field access, fix message flow |
+| [src/infra/llm/observability.ts](../../src/infra/llm/observability.ts) | Align context logging keys and metadata |
+| [src/infra/llm/services/exercise-chat-service.ts](../../src/infra/llm/services/exercise-chat-service.ts) | Export getSystemPrompt, accept ComposedPrompt, fix logger import |
 | [tests/int/memory-system.int.spec.ts](../../tests/int/memory-system.int.spec.ts) | Verify memory items use 'text' field |
 
 ### Reference Files (No Changes)
-- [src/lib/ai/context-policy.ts](../../src/lib/ai/context-policy.ts) - Policy implementation ✓
-- [src/lib/ai/vector-search.ts](../../src/lib/ai/vector-search.ts) - Vector retrieval ✓
-- [src/lib/ai/maintenance.ts](../../src/lib/ai/maintenance.ts) - Summary maintenance ✓
-- [src/lib/ai/memory-extraction.ts](../../src/lib/ai/memory-extraction.ts) - Memory extraction ✓
+- [src/infra/llm/context-policy.ts](../../src/infra/llm/context-policy.ts) - Policy implementation ✓
+- [src/infra/llm/vector-search.ts](../../src/infra/llm/vector-search.ts) - Vector retrieval ✓
+- [src/infra/llm/maintenance.ts](../../src/infra/llm/maintenance.ts) - Summary maintenance ✓
+- [src/infra/llm/memory-extraction.ts](../../src/infra/llm/memory-extraction.ts) - Memory extraction ✓
 
 ---
 
@@ -181,5 +181,5 @@ Ensure the vector index is ready before deploying; memory features run by defaul
 
 For complete implementation code and detailed step-by-step instructions, see:
 - Full plan with code examples in Claude plans directory
-- Code comments in [src/lib/ai/context-policy.ts](../../src/lib/ai/context-policy.ts)
+- Code comments in [src/infra/llm/context-policy.ts](../../src/infra/llm/context-policy.ts)
 - Integration tests in [tests/int/memory-system.int.spec.ts](../../tests/int/memory-system.int.spec.ts)

@@ -117,24 +117,44 @@ All memory features (summarization, extraction, retrieval) are enabled by defaul
 
 ### Core Services
 
-Located in `src/lib/ai/`:
+Located in `src/infra/llm/`:
 
 - **`embeddings.ts`** - Generate vector embeddings (OpenAI)
 - **`vector-search.ts`** - Query MongoDB Atlas vector search
-- **`vector-index-check.ts`** - Runtime index verification
 - **`memory-extraction.ts`** - Extract memories from conversations
-- **`summary.ts`** - Generate conversation summaries
 - **`maintenance.ts`** - Automatic summary maintenance
 - **`context-policy.ts`** - Compose prompts with context
+- **`observability.ts`** - Context usage logging and metrics
 
 ### Endpoints
 
 - **`POST /api/agent/chat`** - Main chat endpoint with full context system
 
+### Cron Endpoints
+
+Background cleanup jobs for ephemeral resources:
+
+Located in `src/server/payload/endpoints/cron/`:
+
+- **`chat-asset-expiry.ts`** - Deletes expired ephemeral chat assets and their blobs
+- **`media-expiry.ts`** - Deletes expired ephemeral media files and records
+- **`upload-session-cleanup.ts`** - Deletes orphaned upload sessions and their blobs
+- **`guest-sessions-cleanup.ts`** - Deletes expired guest sessions and orphaned conversations
+- **`cron-middleware.ts`** - Shared authentication and error handling middleware
+
+All cron endpoints require `CRON_SECRET` bearer token authentication. Routes exposed at:
+
+- `POST /api/cron/chat-asset-expiry`
+- `POST /api/cron/media-expiry`
+- `POST /api/cron/upload-session-cleanup`
+- `POST /api/cron/guest-sessions-cleanup`
+
 ### Collections
 
-- **`src/collections/MemoryItems.ts`** - Memory items collection
-- **`src/collections/Conversations.ts`** - Conversations collection
+- **`memory_items`** - Vector-embedded long-term memory storage
+- **`conversations`** - Chat history with running summaries
+- **`chat-assets`** - Ephemeral media attachments with expiry
+- **`guest-sessions`** - Anonymous chat sessions with configurable expiration
 
 ## Testing
 

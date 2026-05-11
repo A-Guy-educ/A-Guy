@@ -14,30 +14,58 @@ The chat context system provides intelligent context management for long-running
 
 ### Core Components
 
-1. **Context Policy** ([src/lib/ai/context-policy.ts](../../src/lib/ai/context-policy.ts))
+1. **Context Policy** ([src/infra/llm/context-policy.ts](../../src/infra/llm/context-policy.ts))
    - Defines Context Policy V1 contract
    - Provides `composePrompt()` for deterministic prompt composition
    - Helper functions: `getRecentWindow()`, `buildRetrievalQuery()`, `needsSummaryMaintenance()`
 
-2. **Summary Maintenance** ([src/lib/ai/maintenance.ts](../../src/lib/ai/maintenance.ts))
+2. **Summary Maintenance** ([src/infra/llm/maintenance.ts](../../src/infra/llm/maintenance.ts))
    - Compresses old messages into running summary
    - Triggers at threshold (40 messages)
    - Trims conversation to last 20 messages
 
-3. **Memory Extraction** ([src/lib/ai/memory-extraction.ts](../../src/lib/ai/memory-extraction.ts))
+3. **Memory Extraction** ([src/infra/llm/memory-extraction.ts](../../src/infra/llm/memory-extraction.ts))
    - Extracts important facts, preferences, decisions from conversations
    - Creates memory_items with embeddings
    - Deduplicates similar memories
 
-4. **Memory Retrieval** ([src/lib/ai/vector-search.ts](../../src/lib/ai/vector-search.ts))
+4. **Memory Retrieval** ([src/infra/llm/vector-search.ts](../../src/infra/llm/vector-search.ts))
    - Vector search using MongoDB Atlas Search
    - Retrieves relevant local + global memories
    - Respects Top-K limits per Context Policy V1
 
-5. **Observability** ([src/lib/ai/observability.ts](../../src/lib/ai/observability.ts))
+5. **Observability** ([src/infra/llm/observability.ts](../../src/infra/llm/observability.ts))
    - Structured logging of context usage
    - Performance metrics (retrieval latency, token counts)
    - Prompt snapshots in development mode
+
+### Cron Endpoints
+
+Background cleanup jobs for ephemeral resources:
+
+Located in `src/server/payload/endpoints/cron/`:
+
+1. **Chat Asset Expiry** ([src/server/payload/endpoints/cron/chat-asset-expiry.ts](../../src/server/payload/endpoints/cron/chat-asset-expiry.ts))
+   - Deletes expired ephemeral chat assets
+   - Cleans up associated Vercel Blob storage
+   - Runs via `POST /api/cron/chat-asset-expiry`
+
+2. **Media Expiry** ([src/server/payload/endpoints/cron/media-expiry.ts](../../src/server/payload/endpoints/cron/media-expiry.ts))
+   - Deletes expired ephemeral media files
+   - Cleans up both filesystem and database records
+   - Runs via `POST /api/cron/media-expiry`
+
+3. **Upload Session Cleanup** ([src/server/payload/endpoints/cron/upload-session-cleanup.ts](../../src/server/payload/endpoints/cron/upload-session-cleanup.ts))
+   - Deletes orphaned upload sessions
+   - Cleans up associated blob storage
+   - Runs via `POST /api/cron/upload-session-cleanup`
+
+4. **Guest Sessions Cleanup** ([src/server/payload/endpoints/cron/guest-sessions-cleanup.ts](../../src/server/payload/endpoints/cron/guest-sessions-cleanup.ts))
+   - Deletes expired guest sessions
+   - Cleans up orphaned conversations
+   - Runs via `POST /api/cron/guest-sessions-cleanup`
+
+All cron endpoints use `withCronMiddleware()` for authentication (CRON_SECRET bearer token) and error handling.
 
 ---
 
@@ -341,6 +369,7 @@ See [tests/int/memory-system.int.spec.ts](../../tests/int/memory-system.int.spec
 
 ## References
 
-- Implementation: [src/lib/ai/](../../src/lib/ai/)
+- Core Services: [src/infra/llm/](../../src/infra/llm/)
+- Cron Endpoints: [src/server/payload/endpoints/cron/](../../src/server/payload/endpoints/cron/)
 - Tests: [tests/int/memory-system.int.spec.ts](../../tests/int/memory-system.int.spec.ts)
 - Plan: [plan.md](./plan.md)

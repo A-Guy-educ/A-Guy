@@ -104,8 +104,8 @@ export const Chapter: CollectionConfig = {
 ### Gemini AI Integration
 
 ```typescript
-import { getGeminiClient } from '@/lib/ai/gemini-ai-provider.server'
-import { AI_MODELS } from '@/lib/ai/models'
+import { getGeminiClient } from '@/infra/llm/providers/gemini/client'
+import { AI_MODELS } from '@/infra/llm/models'
 
 // ✅ Use singleton pattern
 const client = getGeminiClient()
@@ -122,7 +122,7 @@ const client1 = new GoogleGenerativeAI(apiKey) // Wrong!
 ### Image Optimization
 
 ```typescript
-import { optimizeImageForAI } from '@/lib/ai/services/image-optimizer-service'
+import { optimizeImageForAI } from '@/infra/llm/services/image-optimizer-service'
 
 // ✅ Always optimize before AI processing
 const optimized = await optimizeImageForAI(buffer, 2048)
@@ -135,7 +135,7 @@ const result = await extractFromImage({
 ### Structured Output Extraction
 
 ```typescript
-import { extractFromImage } from '@/lib/ai/services/data-extractor-service'
+import { extractFromImage } from '@/infra/llm/services/data-extractor-service'
 
 const result = await extractFromImage({ imageBuffer, mimeType })
 
