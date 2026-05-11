@@ -20,6 +20,9 @@ import { createdByField } from '../fields/createdBy'
 export const DUPLICATION_LEVELS = ['none', 'light', 'medium', 'deep'] as const
 export type DuplicationLevel = (typeof DUPLICATION_LEVELS)[number]
 
+export const DUPLICATION_SUBJECTS = ['algebra', 'geometry', 'calculus', 'mixed', 'other'] as const
+export type DuplicationSubject = (typeof DUPLICATION_SUBJECTS)[number]
+
 export const DUPLICATION_STATUSES = [
   'pending',
   'running',
@@ -33,7 +36,7 @@ export const LessonDuplications: CollectionConfig = {
   slug: 'lesson-duplications',
   admin: {
     useAsTitle: 'id',
-    defaultColumns: ['sourceLesson', 'level', 'status', 'outputLesson', 'createdAt'],
+    defaultColumns: ['sourceLesson', 'level', 'subject', 'status', 'outputLesson', 'createdAt'],
     group: 'System',
     description: 'Lesson duplication job records, one per duplicate request.',
   },
@@ -58,6 +61,12 @@ export const LessonDuplications: CollectionConfig = {
       required: true,
       options: DUPLICATION_LEVELS.map((v) => ({ label: v, value: v })),
       admin: { description: 'Variation level applied to the duplicate.' },
+    },
+    {
+      name: 'subject',
+      type: 'select',
+      options: DUPLICATION_SUBJECTS.map((v) => ({ label: v, value: v })),
+      admin: { description: 'Subject area for variation prompts.' },
     },
     {
       name: 'status',
@@ -91,6 +100,25 @@ export const LessonDuplications: CollectionConfig = {
             { label: 'regenerate', value: 'regenerate' },
             { label: 'keep', value: 'keep' },
           ],
+        },
+        { name: 'resolved', type: 'checkbox', defaultValue: false },
+      ],
+    },
+    {
+      name: 'outputExercises',
+      type: 'array',
+      admin: { description: 'Maps source exercise IDs to their generated output exercise IDs.' },
+      fields: [
+        { name: 'sourceExerciseId', type: 'text', required: true },
+        { name: 'outputExerciseId', type: 'text', required: true },
+        {
+          name: 'strategy',
+          type: 'select',
+          options: [
+            { label: 'script', value: 'script' },
+            { label: 'ai', value: 'ai' },
+          ],
+          required: true,
         },
       ],
     },

@@ -41,4 +41,5 @@ Daily check for known CVEs in production dependencies via `pnpm audit`. Job itse
 - `cursor`: `idle` | `awaiting-result` | `stalled`
 - `data.lastRunISO`: ISO timestamp of last tick that took action
 - `data.openIssue`: number of the currently-open tracking issue (or null)
+- `data.nextEligibleISO`: UTC ISO timestamp this job will next be eligible to act, computed from the cadence guard above. **Always emit this, every tick.** For this job: `data.lastRunISO + 20h`. Surfaced as "next run" on the dashboard.
 - `done`: always `false`

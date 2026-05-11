@@ -1,7 +1,10 @@
 {
   "version": 1,
-  "state": "active",
+  "state": "done",
   "startedAt": "2026-05-07T15:25:27.611Z",
-  "updatedAt": "2026-05-08T14:11:05.299334Z",
-  "lastDispatchedIssue": 1471
+  "updatedAt": "2026-05-09T16:19:01.738916Z",
+  "lastDispatchedIssue": 1471,
+  "goalIssueNumber": 1508,
+  "goalPrUrl": "https://github.com/A-Guy-educ/A-Guy/pull/1524",
+  "completedAt": "2026-05-09T16:19:01.738916Z"
 }

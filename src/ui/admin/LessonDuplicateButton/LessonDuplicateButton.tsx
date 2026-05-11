@@ -8,7 +8,7 @@
  * @pattern admin-action-modal
  * @ai-summary Opens a modal to pick a variation level, then POSTs to /api/lessons/:id/duplicate.
  */
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useDocumentInfo } from '@payloadcms/ui'
 
 const LEVELS: { value: 'none' | 'light' | 'medium' | 'deep'; label: string; hint: string }[] = [
@@ -30,20 +30,84 @@ const LEVELS: { value: 'none' | 'light' | 'medium' | 'deep'; label: string; hint
   },
 ]
 
+const SUBJECTS: {
+  value: 'algebra' | 'geometry' | 'calculus' | 'mixed' | 'other'
+  label: string
+  hint: string
+}[] = [
+  {
+    value: 'algebra',
+    label: 'Algebra',
+    hint: 'Algebraic expressions, equations, word problems.',
+  },
+  {
+    value: 'geometry',
+    label: 'Geometry',
+    hint: 'Shapes, coordinates, angles, area, perimeter.',
+  },
+  {
+    value: 'calculus',
+    label: 'Calculus',
+    hint: 'Derivatives, integrals, limits, series.',
+  },
+  {
+    value: 'mixed',
+    label: 'Mixed / General',
+    hint: 'General prompts for mixed or unknown subjects.',
+  },
+  {
+    value: 'other',
+    label: 'Other',
+    hint: 'Non-math or specialized subject matter.',
+  },
+]
+
 type Status = 'idle' | 'submitting' | 'success' | 'error'
 
 export const LessonDuplicateAction: React.FC = () => {
   const { id } = useDocumentInfo()
   const [open, setOpen] = useState(false)
   const [level, setLevel] = useState<(typeof LEVELS)[number]['value'] | ''>('')
+  const [subject, setSubject] = useState<(typeof SUBJECTS)[number]['value']>('mixed')
+  const [subjectAutoDetected, setSubjectAutoDetected] = useState(false)
   const [status, setStatus] = useState<Status>('idle')
   const [error, setError] = useState<string | null>(null)
   const [resultId, setResultId] = useState<string | null>(null)
+
+  // When the modal opens, ask the server to suggest a subject based on the
+  // lesson's exercise blocks (geometry / axis / both / none → mixed/geo/calc/algebra).
+  // Admin can still override the radio selection.
+  useEffect(() => {
+    if (!open || !id) return
+    let cancelled = false
+    void (async () => {
+      try {
+        const res = await fetch(`/api/lessons/${id}/suggested-subject`, {
+          credentials: 'include',
+        })
+        if (!res.ok) return
+        const data = (await res.json()) as {
+          data?: { subject?: (typeof SUBJECTS)[number]['value'] }
+        }
+        const suggested = data.data?.subject
+        if (cancelled || !suggested) return
+        setSubject(suggested)
+        setSubjectAutoDetected(true)
+      } catch {
+        // Soft-fail: keep the default ('mixed').
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [open, id])
 
   if (!id) return null
 
   const reset = () => {
     setLevel('')
+    setSubject('mixed')
+    setSubjectAutoDetected(false)
     setStatus('idle')
     setError(null)
     setResultId(null)
@@ -63,7 +127,7 @@ export const LessonDuplicateAction: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ level }),
+        body: JSON.stringify({ level, subject }),
       })
       const data = (await res.json()) as { id?: string; error?: string }
       if (!res.ok) {
@@ -157,6 +221,56 @@ export const LessonDuplicateAction: React.FC = () => {
                     value={opt.value}
                     checked={level === opt.value}
                     onChange={() => setLevel(opt.value)}
+                  />
+                  <span>
+                    <strong>{opt.label}</strong>
+                    <br />
+                    <span style={{ fontSize: 12, color: 'var(--theme-elevation-600)' }}>
+                      {opt.hint}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            <p style={{ fontSize: 13, color: 'var(--theme-elevation-600)', marginTop: 16 }}>
+              Subject area
+              {subjectAutoDetected && (
+                <span
+                  style={{
+                    marginLeft: 8,
+                    fontSize: 11,
+                    color: 'var(--theme-success-500)',
+                    fontWeight: 500,
+                  }}
+                >
+                  · auto-detected (override below if wrong)
+                </span>
+              )}
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+              {SUBJECTS.map((opt) => (
+                <label
+                  key={opt.value}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 8,
+                    padding: 8,
+                    border:
+                      subject === opt.value
+                        ? '1px solid var(--theme-success-500)'
+                        : '1px solid var(--theme-elevation-200)',
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="dup-subject"
+                    value={opt.value}
+                    checked={subject === opt.value}
+                    onChange={() => setSubject(opt.value)}
                   />
                   <span>
                     <strong>{opt.label}</strong>

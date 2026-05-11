@@ -182,6 +182,7 @@ export interface Config {
     tasks: {
       pdf_to_exercises: TaskPdfToExercises;
       pdf_to_exercises_v2: TaskPdfToExercisesV2;
+      lesson_duplication: TaskLessonDuplication;
       schedulePublish: TaskSchedulePublish;
       inline: {
         input: unknown;
@@ -1790,6 +1791,10 @@ export interface LessonDuplication {
    */
   level: 'none' | 'light' | 'medium' | 'deep';
   /**
+   * Subject area for variation prompts.
+   */
+  subject?: ('algebra' | 'geometry' | 'calculus' | 'mixed' | 'other') | null;
+  /**
    * Job status. `none` finishes inline; others go through the queue.
    */
   status: 'pending' | 'running' | 'succeeded' | 'failed' | 'needs_review';
@@ -1807,6 +1812,18 @@ export interface LessonDuplication {
         code: string;
         message: string;
         suggestedAction?: ('skip' | 'regenerate' | 'keep') | null;
+        resolved?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Maps source exercise IDs to their generated output exercise IDs.
+   */
+  outputExercises?:
+    | {
+        sourceExerciseId: string;
+        outputExerciseId: string;
+        strategy: 'script' | 'ai';
         id?: string | null;
       }[]
     | null;
@@ -2774,7 +2791,7 @@ export interface PayloadJob {
     | {
         executedAt: string;
         completedAt: string;
-        taskSlug: 'inline' | 'pdf_to_exercises' | 'pdf_to_exercises_v2' | 'schedulePublish';
+        taskSlug: 'inline' | 'pdf_to_exercises' | 'pdf_to_exercises_v2' | 'lesson_duplication' | 'schedulePublish';
         taskID: string;
         input?:
           | {
@@ -2807,7 +2824,7 @@ export interface PayloadJob {
         id?: string | null;
       }[]
     | null;
-  taskSlug?: ('inline' | 'pdf_to_exercises' | 'pdf_to_exercises_v2' | 'schedulePublish') | null;
+  taskSlug?: ('inline' | 'pdf_to_exercises' | 'pdf_to_exercises_v2' | 'lesson_duplication' | 'schedulePublish') | null;
   queue?: string | null;
   waitUntil?: string | null;
   processing?: boolean | null;
@@ -3421,6 +3438,7 @@ export interface LessonsSelect<T extends boolean = true> {
 export interface LessonDuplicationsSelect<T extends boolean = true> {
   sourceLesson?: T;
   level?: T;
+  subject?: T;
   status?: T;
   outputLesson?: T;
   failures?:
@@ -3431,6 +3449,15 @@ export interface LessonDuplicationsSelect<T extends boolean = true> {
         code?: T;
         message?: T;
         suggestedAction?: T;
+        resolved?: T;
+        id?: T;
+      };
+  outputExercises?:
+    | T
+    | {
+        sourceExerciseId?: T;
+        outputExerciseId?: T;
+        strategy?: T;
         id?: T;
       };
   createdBy?: T;
@@ -4395,6 +4422,14 @@ export interface TaskPdfToExercises {
  * via the `definition` "TaskPdf_to_exercises_v2".
  */
 export interface TaskPdfToExercisesV2 {
+  input?: unknown;
+  output?: unknown;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskLesson_duplication".
+ */
+export interface TaskLessonDuplication {
   input?: unknown;
   output?: unknown;
 }

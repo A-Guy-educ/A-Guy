@@ -47,6 +47,7 @@ import { translateContentEndpoint } from '@/server/payload/endpoints/translation
 import { cascadeDeleteEndpoint } from '@/server/payload/endpoints/cascade-delete'
 import { duplicateLessonEndpoint } from '@/server/payload/endpoints/lessons/duplicate'
 import { defaultLexical } from '@/server/payload/fields/defaultLexical'
+import { lessonDuplicationTask } from '@/server/payload/jobs/lesson-duplication-task'
 import { pdfToExercisesTask } from '@/server/payload/jobs/pdf-to-exercises-task'
 import { pdfToExercisesV2Task } from '@/server/payload/jobs/pdf-to-exercises-v2-task'
 import type { JobDocument } from '@/server/payload/jobs/types'
@@ -102,7 +103,10 @@ export default buildConfig({
       // The `BeforeDashboard` component renders the 'welcome' block that you see after logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below.
       beforeDashboard: ['@/ui/admin/ConversionTracking/DashboardWidgets', '@/ui/admin/VersionInfo'],
-      beforeNavLinks: ['@/ui/admin/PdfConversion/SidebarLink'],
+      beforeNavLinks: [
+        '@/ui/admin/PdfConversion/SidebarLink',
+        '@/ui/admin/LessonDuplicationReview/SidebarLink',
+      ],
       afterNavLinks: ['@/ui/admin/UserEmail'],
     },
     importMap: {
@@ -268,7 +272,7 @@ export default buildConfig({
         return authHeader === `Bearer ${process.env.CRON_SECRET}`
       },
     },
-    tasks: [pdfToExercisesTask, pdfToExercisesV2Task],
+    tasks: [pdfToExercisesTask, pdfToExercisesV2Task, lessonDuplicationTask],
     // Expose jobs collection in admin panel for monitoring conversion jobs
     jobsCollectionOverrides: ({ defaultJobsCollection }) => ({
       ...defaultJobsCollection,

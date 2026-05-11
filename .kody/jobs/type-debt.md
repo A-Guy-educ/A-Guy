@@ -45,4 +45,5 @@ Weekly tracking of TypeScript escape hatches: occurrences of `any`, `@ts-ignore`
 - `data.lastRunISO`: ISO timestamp of last tick that took action
 - `data.openIssue`: number of currently-open weekly issue (or null)
 - `data.lastCount`: `{ any, "ts-ignore", "ts-expect-error", "ts-nocheck", total, capturedISO }` from the last closed issue's count comment
+- `data.nextEligibleISO`: UTC ISO timestamp this job will next be eligible to act, computed from the cadence guard above. **Always emit this, every tick.** For this job: the **next Wednesday 00:00 UTC** at or after `data.lastRunISO + 6d`. Surfaced as "next run" on the dashboard.
 - `done`: always `false`

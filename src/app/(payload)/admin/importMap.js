@@ -49,6 +49,7 @@ import { default as default_651b6549ba90964af4bff3f3f8153ba6 } from '@/ui/admin/
 import { default as default_759821dbe781e78024abfaf95f6442c4 } from '@/ui/admin/VersionInfo'
 import { default as default_e8db4fbd97550d4d717940b5cf0234f3 } from '@/ui/admin/BeforeLogin'
 import { default as default_7545204935b55fcf02b3be70dde90fc1 } from '@/ui/admin/PdfConversion/SidebarLink'
+import { default as default_1b2cd3c8450eece915504fde397ab5c7 } from '@/ui/admin/LessonDuplicationReview/SidebarLink'
 import { VercelBlobClientUploadHandler as VercelBlobClientUploadHandler_16c82c5e25f430251a3e3ba57219ff4e } from '@payloadcms/storage-vercel-blob/client'
 import { CollectionCards as CollectionCards_ab83ff7e88da8d3530831f296ec4756a } from '@payloadcms/ui/rsc'
 
@@ -104,6 +105,7 @@ export const importMap = {
   "@/ui/admin/VersionInfo#default": default_759821dbe781e78024abfaf95f6442c4,
   "@/ui/admin/BeforeLogin#default": default_e8db4fbd97550d4d717940b5cf0234f3,
   "@/ui/admin/PdfConversion/SidebarLink#default": default_7545204935b55fcf02b3be70dde90fc1,
+  "@/ui/admin/LessonDuplicationReview/SidebarLink#default": default_1b2cd3c8450eece915504fde397ab5c7,
   "@payloadcms/storage-vercel-blob/client#VercelBlobClientUploadHandler": VercelBlobClientUploadHandler_16c82c5e25f430251a3e3ba57219ff4e,
   "@payloadcms/ui/rsc#CollectionCards": CollectionCards_ab83ff7e88da8d3530831f296ec4756a
 }
