@@ -7,7 +7,7 @@ import { adminOnly } from '../access/adminOnly'
 import { publishedAndActive } from '../access/publishedAndActive'
 import { contentStatusFields } from '../fields/contentStatus'
 import { createdByField } from '../fields/createdBy'
-import { formatSlug, formatSlugAsync } from '../fields/formatSlug'
+import { formatSlugAsync } from '../fields/formatSlug'
 import { translatedFromField } from '../fields/translatedFrom'
 
 // Type for visibleRenderers field data
@@ -60,15 +60,6 @@ export const Lessons: CollectionConfig = {
           data.slug = await formatSlugAsync(title)
         } else if (data.slug) {
           data.slug = data.slug.trim()
-        }
-
-        // Defense in depth: whatever path produced data.slug (Payload's built-in
-        // duplicate, an admin typo, a copy-suffixed string with spaces, etc.),
-        // re-run the formatter so the saved value is always URL-safe.
-        // Without this, Payload's default duplicate action would persist slugs
-        // like "power - copy" with spaces, which break URL handling downstream.
-        if (typeof data.slug === 'string' && data.slug.length > 0) {
-          data.slug = formatSlug(data.slug)
         }
 
         // On create, always ensure uniqueness (handles duplication & conflicts)
