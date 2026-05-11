@@ -39,4 +39,390 @@ Return a JSON object with the exercise content. The structure must match the inp
 }
 ```
 
+## Examples
+
+Each example below demonstrates the input exercise JSON and the expected output variation JSON. The geometry specification must use the `GeometrySpecV1` format for the `geometry` field within `question_geometry` blocks.
+
+**Example 1 — Input:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_geometry",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Calculate the perimeter of the trapezoid shown below.",
+          "mediaIds": []
+        },
+        "layout": { "displaySize": "medium" },
+        "geometry": {
+          "kind": "euclidean",
+          "canvas": { "width": 400, "height": 280 },
+          "elements": {
+            "points": [
+              { "name": "A", "x": 80, "y": 200 },
+              { "name": "B", "x": 320, "y": 200 },
+              { "name": "C", "x": 260, "y": 80 },
+              { "name": "D", "x": 140, "y": 80 }
+            ],
+            "lines": [
+              {
+                "from": "A",
+                "to": "B",
+                "style": "solid",
+                "label": { "value": "12 cm", "position": "b" }
+              },
+              {
+                "from": "B",
+                "to": "C",
+                "style": "solid",
+                "label": { "value": "5 cm", "position": "m" }
+              },
+              {
+                "from": "C",
+                "to": "D",
+                "style": "solid",
+                "label": { "value": "8 cm", "position": "t" }
+              },
+              {
+                "from": "D",
+                "to": "A",
+                "style": "solid",
+                "label": { "value": "7 cm", "position": "m" }
+              }
+            ],
+            "equalSegments": [[{ "from": "D", "to": "A" }]]
+          }
+        },
+        "answer": { "type": "numeric", "value": 32, "tolerance": 0.1 },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Perimeter = 12 + 5 + 8 + 7 = 32 cm",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 1 — Output:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_geometry",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Determine the total distance around this quadrilateral.",
+          "mediaIds": []
+        },
+        "layout": { "displaySize": "medium" },
+        "geometry": {
+          "kind": "euclidean",
+          "canvas": { "width": 400, "height": 280 },
+          "elements": {
+            "points": [
+              { "name": "A", "x": 80, "y": 200 },
+              { "name": "B", "x": 320, "y": 200 },
+              { "name": "C", "x": 260, "y": 80 },
+              { "name": "D", "x": 140, "y": 80 }
+            ],
+            "lines": [
+              {
+                "from": "A",
+                "to": "B",
+                "style": "solid",
+                "label": { "value": "12 cm", "position": "b" }
+              },
+              {
+                "from": "B",
+                "to": "C",
+                "style": "solid",
+                "label": { "value": "5 cm", "position": "m" }
+              },
+              {
+                "from": "C",
+                "to": "D",
+                "style": "solid",
+                "label": { "value": "8 cm", "position": "t" }
+              },
+              {
+                "from": "D",
+                "to": "A",
+                "style": "solid",
+                "label": { "value": "7 cm", "position": "m" }
+              }
+            ],
+            "equalSegments": [[{ "from": "D", "to": "A" }]]
+          }
+        },
+        "answer": { "type": "numeric", "value": 32, "tolerance": 0.1 },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Perimeter = 12 + 5 + 8 + 7 = 32 cm",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 2 — Input:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_geometry",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Find the measure of angle C in the triangle.",
+          "mediaIds": []
+        },
+        "layout": { "displaySize": "medium" },
+        "geometry": {
+          "kind": "euclidean",
+          "canvas": { "width": 350, "height": 280 },
+          "elements": {
+            "points": [
+              { "name": "A", "x": 60, "y": 220 },
+              { "name": "B", "x": 290, "y": 220 },
+              { "name": "C", "x": 175, "y": 60 }
+            ],
+            "lines": [
+              { "from": "A", "to": "B", "style": "solid" },
+              { "from": "B", "to": "C", "style": "solid" },
+              { "from": "C", "to": "A", "style": "solid" }
+            ],
+            "angles": [
+              {
+                "center": "A",
+                "ray1": "B",
+                "ray2": "C",
+                "arcRadius": 30,
+                "label": { "value": "40°", "position": "inside" }
+              },
+              {
+                "center": "B",
+                "ray1": "A",
+                "ray2": "C",
+                "arcRadius": 30,
+                "label": { "value": "70°", "position": "inside" }
+              }
+            ]
+          }
+        },
+        "answer": { "type": "numeric", "value": 70, "tolerance": 1 },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Angle C = 180° - 40° - 70° = 70° (angle sum of triangle)",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 2 — Output:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_geometry",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "What is the value of angle ACB in this triangle?",
+          "mediaIds": []
+        },
+        "layout": { "displaySize": "medium" },
+        "geometry": {
+          "kind": "euclidean",
+          "canvas": { "width": 350, "height": 280 },
+          "elements": {
+            "points": [
+              { "name": "A", "x": 60, "y": 220 },
+              { "name": "B", "x": 290, "y": 220 },
+              { "name": "C", "x": 175, "y": 60 }
+            ],
+            "lines": [
+              { "from": "A", "to": "B", "style": "solid" },
+              { "from": "B", "to": "C", "style": "solid" },
+              { "from": "C", "to": "A", "style": "solid" }
+            ],
+            "angles": [
+              {
+                "center": "A",
+                "ray1": "B",
+                "ray2": "C",
+                "arcRadius": 30,
+                "label": { "value": "40°", "position": "inside" }
+              },
+              {
+                "center": "B",
+                "ray1": "A",
+                "ray2": "C",
+                "arcRadius": 30,
+                "label": { "value": "70°", "position": "inside" }
+              }
+            ]
+          }
+        },
+        "answer": { "type": "numeric", "value": 70, "tolerance": 1 },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Angle C = 180° - 40° - 70° = 70° (angle sum of triangle)",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 3 — Input:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_geometry",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "In the diagram, find the length of the hypotenuse.",
+          "mediaIds": []
+        },
+        "layout": { "displaySize": "medium" },
+        "geometry": {
+          "kind": "euclidean",
+          "canvas": { "width": 350, "height": 280 },
+          "elements": {
+            "points": [
+              { "name": "A", "x": 50, "y": 230 },
+              { "name": "B", "x": 300, "y": 230 },
+              { "name": "C", "x": 50, "y": 80 }
+            ],
+            "lines": [
+              {
+                "from": "A",
+                "to": "B",
+                "style": "solid",
+                "label": { "value": "5", "position": "b" }
+              },
+              {
+                "from": "A",
+                "to": "C",
+                "style": "solid",
+                "label": { "value": "12", "position": "m" }
+              },
+              { "from": "B", "to": "C", "style": "solid" }
+            ],
+            "rectangles": [{ "points": ["A", "B", "B+C-A", "C"], "style": "solid" }]
+          }
+        },
+        "answer": { "type": "numeric", "value": 13, "tolerance": 0.1 },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Using Pythagorean theorem: c² = 5² + 12² = 169, so c = 13",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Identify right triangle with legs 5 and 12\\nStep 2: Apply Pythagorean theorem: a² + b² = c²\\nStep 3: c² = 5² + 12² = 25 + 144 = 169\\nStep 4: c = √169 = 13",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 3 — Output:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_geometry",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Using the given dimensions, what is the distance from point A to point B?",
+          "mediaIds": []
+        },
+        "layout": { "displaySize": "medium" },
+        "geometry": {
+          "kind": "euclidean",
+          "canvas": { "width": 350, "height": 280 },
+          "elements": {
+            "points": [
+              { "name": "A", "x": 50, "y": 230 },
+              { "name": "B", "x": 300, "y": 230 },
+              { "name": "C", "x": 50, "y": 80 }
+            ],
+            "lines": [
+              {
+                "from": "A",
+                "to": "B",
+                "style": "solid",
+                "label": { "value": "5", "position": "b" }
+              },
+              {
+                "from": "A",
+                "to": "C",
+                "style": "solid",
+                "label": { "value": "12", "position": "m" }
+              },
+              { "from": "B", "to": "C", "style": "solid" }
+            ],
+            "rectangles": [{ "points": ["A", "B", "B+C-A", "C"], "style": "solid" }]
+          }
+        },
+        "answer": { "type": "numeric", "value": 13, "tolerance": 0.1 },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Using Pythagorean theorem: c² = 5² + 12² = 169, so c = 13",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Identify right triangle with legs 5 and 12\\nStep 2: Apply Pythagorean theorem: a² + b² = c²\\nStep 3: c² = 5² + 12² = 25 + 144 = 169\\nStep 4: c = √169 = 13",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
 Return ONLY the JSON. No markdown fences, no explanation.
