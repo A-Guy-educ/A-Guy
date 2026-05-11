@@ -84,6 +84,9 @@ function suggestAction(code: string): 'skip' | 'regenerate' | 'keep' {
     case 'INVALID_SVG':
     case 'PNG_FORBIDDEN':
     case 'TOO_MANY_SECTIONS':
+    case 'INVALID_GEOMETRY_SPEC':
+    case 'INVALID_AXIS_SPEC':
+    case 'INVALID_GUIDED_EXPLANATION':
       return 'regenerate'
     case 'SEMANTIC_MISMATCH':
       return 'regenerate'
