@@ -263,7 +263,11 @@ describe('ChatInterface keyboard shortcuts', () => {
     expect(mockChat.handleSubmit).toHaveBeenCalledTimes(1)
   })
 
-  it('Plain Enter does NOT submit the form', () => {
+  it('Plain Enter does NOT trigger handleSubmit via onKeyDown', () => {
+    // Note: The form element's native onSubmit still fires on plain Enter in browsers.
+    // This test only verifies that the onKeyDown handler does NOT call handleSubmit —
+    // i.e., plain Enter is not a shortcut for submission. The empty-input guard is
+    // handled upstream in sendMessage, not in this handler.
     const mockChat = createMockNotebookChat({ inputValue: 'Hello world' })
     const { container } = renderChat(mockChat)
     const input = container.querySelector('input[type="text"]') as HTMLInputElement
