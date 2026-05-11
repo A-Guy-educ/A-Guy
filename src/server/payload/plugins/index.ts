@@ -38,8 +38,12 @@ if (process.env.PAYLOAD_GENERATE_TYPES !== 'true') {
   const blobToken = process.env.BLOB_READ_WRITE_TOKEN
 
   // In test mode, skip the plugin if no valid token is provided
-  // Valid tokens start with 'vercel_blob_rw_'
-  const isValidToken = blobToken && blobToken.startsWith('vercel_blob_rw_')
+  // Valid tokens start with 'vercel_blob_rw_' and are 60+ chars
+  const isValidToken =
+    blobToken &&
+    typeof blobToken === 'string' &&
+    blobToken.startsWith('vercel_blob_rw_') &&
+    blobToken.length > 50
   const isTestMode = process.env.NODE_ENV === 'test'
 
   if (!blobToken && !isTestMode) {
@@ -51,8 +55,8 @@ if (process.env.PAYLOAD_GENERATE_TYPES !== 'true') {
   }
 
   // Only initialize the plugin if we have a valid token
-  // In test mode with mock token, skip the plugin entirely
-  if (isValidToken || (!isTestMode && blobToken)) {
+  // In test mode with mock/invalid token, skip the plugin entirely
+  if (isValidToken && (!isTestMode || (isTestMode && blobToken.length > 50))) {
     vercelBlobPlugin = vercelBlobStorage({
       addRandomSuffix: true,
       cacheControlMaxAge: 60 * 60 * 24 * 30, // 30 days — safe because addRandomSuffix guarantees unique filenames
