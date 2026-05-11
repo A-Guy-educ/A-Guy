@@ -121,7 +121,9 @@ Located in `src/infra/llm/`:
 
 - **`embeddings.ts`** - Generate vector embeddings (OpenAI)
 - **`vector-search.ts`** - Query MongoDB Atlas vector search
+- **`vector-index-check.ts`** - Runtime index verification
 - **`memory-extraction.ts`** - Extract memories from conversations
+- **`summary.ts`** - Generate conversation summaries
 - **`maintenance.ts`** - Automatic summary maintenance
 - **`context-policy.ts`** - Compose prompts with context
 - **`observability.ts`** - Context usage logging and metrics
@@ -174,7 +176,7 @@ pnpm test:int tests/int/memory-system.int.spec.ts
 pnpm verify:vector-index
 
 # Test embeddings generation
-pnpm tsx -e "import { generateEmbedding } from './src/lib/ai/embeddings.js'; console.log((await generateEmbedding('test')).embedding.length)"
+pnpm tsx -e "import { generateEmbedding } from './src/infra/llm/embeddings.js'; console.log((await generateEmbedding('test')).embedding.length)"
 ```
 
 ## Monitoring
@@ -192,7 +194,7 @@ The system logs key operations:
 
 ### Observability
 
-Context usage is logged via `src/lib/ai/observability.ts`:
+Context usage is logged via `src/infra/llm/observability.ts`:
 - Summary presence and length
 - Memory retrieval counts (local vs global)
 - Message window size

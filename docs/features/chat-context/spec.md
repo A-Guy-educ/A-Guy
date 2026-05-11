@@ -99,7 +99,7 @@ CONTEXT_POLICY_V1 = {
 Use `composePrompt()` to build prompts:
 
 ```typescript
-import { composePrompt } from '@/lib/ai/context-policy'
+import { composePrompt } from '@/infra/llm/context-policy'
 
 const composedPrompt = composePrompt(systemInstructions, {
   systemMessage: systemInstructions,
