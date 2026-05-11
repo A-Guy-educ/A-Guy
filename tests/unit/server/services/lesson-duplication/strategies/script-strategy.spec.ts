@@ -118,7 +118,10 @@ describe('ScriptVariationStrategy', () => {
 
   describe('light level + algebraic exercise', () => {
     it('swaps numbers and recomputes correct answer', async () => {
-      const exercise = makeAlgebraicExercise('5×4=?', 20, [15, 18, 22], 'ex-test-swaps')
+      // Use a fixed exercise ID so the seed is deterministic (not Math.random()).
+      // Random IDs can produce PRNG factors near 1.0, causing numeric replacements
+      // to round back to the original values and the prompt to stay unchanged.
+      const exercise = makeAlgebraicExercise('5×4=?', 20, [15, 18, 22], 'ex-2')
       const strategy = new ScriptVariationStrategy()
 
       // Verify exercise is detected as purely algebraic

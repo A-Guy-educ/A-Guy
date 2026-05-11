@@ -30,4 +30,420 @@ Return a JSON object with the exercise content. The structure must match the inp
 }
 ```
 
+## Examples
+
+Each example below demonstrates the input exercise JSON and the expected output variation JSON for non-math exercises with reworded phrasing.
+
+**Example 1 — Input:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_matching",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Match each country with its capital city:",
+          "mediaIds": []
+        },
+        "leftColumn": [
+          {
+            "id": "l1",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "France",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "l2",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Japan",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "l3",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Brazil",
+              "mediaIds": []
+            }
+          }
+        ],
+        "rightColumn": [
+          {
+            "id": "r1",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Paris",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "r2",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Tokyo",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "r3",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Brasilia",
+              "mediaIds": []
+            }
+          }
+        ],
+        "correctPairs": [
+          { "leftId": "l1", "rightId": "r1" },
+          { "leftId": "l2", "rightId": "r2" },
+          { "leftId": "l3", "rightId": "r3" }
+        ],
+        "shuffleRightColumn": true
+      }
+    ]
+  }
+}
+```
+
+**Example 1 — Output:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_matching",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Connect each nation with its administrative center:",
+          "mediaIds": []
+        },
+        "leftColumn": [
+          {
+            "id": "l1",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "France",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "l2",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Japan",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "l3",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Brazil",
+              "mediaIds": []
+            }
+          }
+        ],
+        "rightColumn": [
+          {
+            "id": "r1",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Paris",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "r2",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Tokyo",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "r3",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Brasilia",
+              "mediaIds": []
+            }
+          }
+        ],
+        "correctPairs": [
+          { "leftId": "l1", "rightId": "r1" },
+          { "leftId": "l2", "rightId": "r2" },
+          { "leftId": "l3", "rightId": "r3" }
+        ],
+        "shuffleRightColumn": true
+      }
+    ]
+  }
+}
+```
+
+**Example 2 — Input:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_select",
+        "variant": "true_false",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "The human body has 206 bones.",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "true",
+            "value": true,
+            "label": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "True",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "false",
+            "value": false,
+            "label": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "False",
+              "mediaIds": []
+            }
+          }
+        ],
+        "answer": { "selected": ["true"] }
+      }
+    ]
+  }
+}
+```
+
+**Example 2 — Output:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_select",
+        "variant": "true_false",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "An adult human skeleton consists of 206 bones.",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "true",
+            "value": true,
+            "label": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "True",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "false",
+            "value": false,
+            "label": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "False",
+              "mediaIds": []
+            }
+          }
+        ],
+        "answer": { "selected": ["true"] }
+      }
+    ]
+  }
+}
+```
+
+**Example 3 — Input:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_matching",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Match each element with its chemical symbol:",
+          "mediaIds": []
+        },
+        "leftColumn": [
+          {
+            "id": "l1",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Oxygen",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "l2",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Carbon",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "l3",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Gold",
+              "mediaIds": []
+            }
+          }
+        ],
+        "rightColumn": [
+          {
+            "id": "r1",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "O", "mediaIds": [] }
+          },
+          {
+            "id": "r2",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "C", "mediaIds": [] }
+          },
+          {
+            "id": "r3",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Au",
+              "mediaIds": []
+            }
+          }
+        ],
+        "correctPairs": [
+          { "leftId": "l1", "rightId": "r1" },
+          { "leftId": "l2", "rightId": "r2" },
+          { "leftId": "l3", "rightId": "r3" }
+        ],
+        "shuffleRightColumn": true
+      }
+    ]
+  }
+}
+```
+
+**Example 3 — Output:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_matching",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Link each chemical element to its proper symbol:",
+          "mediaIds": []
+        },
+        "leftColumn": [
+          {
+            "id": "l1",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Oxygen",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "l2",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Carbon",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "l3",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Gold",
+              "mediaIds": []
+            }
+          }
+        ],
+        "rightColumn": [
+          {
+            "id": "r1",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "O", "mediaIds": [] }
+          },
+          {
+            "id": "r2",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "C", "mediaIds": [] }
+          },
+          {
+            "id": "r3",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Au",
+              "mediaIds": []
+            }
+          }
+        ],
+        "correctPairs": [
+          { "leftId": "l1", "rightId": "r1" },
+          { "leftId": "l2", "rightId": "r2" },
+          { "leftId": "l3", "rightId": "r3" }
+        ],
+        "shuffleRightColumn": true
+      }
+    ]
+  }
+}
+```
+
 Return ONLY the JSON. No markdown fences, no explanation.
