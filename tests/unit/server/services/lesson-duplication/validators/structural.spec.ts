@@ -78,6 +78,87 @@ function makeHtml(id: string, html: string): ContentBlock {
   } as any as ContentBlock
 }
 
+function makeQuestionGeometry(
+  id: string,
+  geometry: Record<string, unknown>,
+  hasPrompt = false,
+  hasHint = false,
+  hasSolution = false,
+  hasFullSolution = false,
+): ContentBlock {
+  return {
+    id,
+    type: 'question_geometry',
+    layout: 'textRight',
+    geometry,
+    prompt: hasPrompt
+      ? { type: 'rich_text', format: 'md-math-v1', value: 'What shape?', mediaIds: [] }
+      : undefined,
+    hint: hasHint
+      ? { type: 'rich_text', format: 'md-math-v1', value: 'Hint', mediaIds: [] }
+      : undefined,
+    solution: hasSolution
+      ? { type: 'rich_text', format: 'md-math-v1', value: 'Solution', mediaIds: [] }
+      : undefined,
+    fullSolution: hasFullSolution
+      ? { type: 'rich_text', format: 'md-math-v1', value: 'Full solution', mediaIds: [] }
+      : undefined,
+  } as unknown as ContentBlock
+}
+
+function makeQuestionAxis(
+  id: string,
+  axis: Record<string, unknown>,
+  hasPrompt = false,
+  hasHint = false,
+  hasSolution = false,
+  hasFullSolution = false,
+): ContentBlock {
+  return {
+    id,
+    type: 'question_axis',
+    layout: 'textRight',
+    axis,
+    prompt: hasPrompt
+      ? { type: 'rich_text', format: 'md-math-v1', value: 'What graph?', mediaIds: [] }
+      : undefined,
+    hint: hasHint
+      ? { type: 'rich_text', format: 'md-math-v1', value: 'Hint', mediaIds: [] }
+      : undefined,
+    solution: hasSolution
+      ? { type: 'rich_text', format: 'md-math-v1', value: 'Solution', mediaIds: [] }
+      : undefined,
+    fullSolution: hasFullSolution
+      ? { type: 'rich_text', format: 'md-math-v1', value: 'Full solution', mediaIds: [] }
+      : undefined,
+  } as unknown as ContentBlock
+}
+
+function makeQuestionMultiAxis(
+  id: string,
+  graphs: Array<{ id: string; label: string; axis: Record<string, unknown> }>,
+): ContentBlock {
+  return {
+    id,
+    type: 'question_multi_axis',
+    textPosition: 'above',
+    graphs: graphs.map((g, i) => ({ ...g, order: i })),
+  } as unknown as ContentBlock
+}
+
+function makeHtmlWithGuidedExplanation(
+  id: string,
+  html: string,
+  guidedExplanation: Record<string, unknown> | undefined,
+): ContentBlock {
+  return {
+    id,
+    type: 'html',
+    html,
+    guidedExplanation,
+  } as unknown as ContentBlock
+}
+
 /** MCQ block with an optional prompt (used to test MISSING_QUESTION). */
 function makeMcqNoPrompt(
   id: string,
@@ -586,6 +667,255 @@ describe('validateExerciseStructural', () => {
       expect(failures.some((f) => f.code === FAILURE_CODES.MISSING_HINT)).toBe(true)
       expect(failures.some((f) => f.code === FAILURE_CODES.MISSING_SOLUTION)).toBe(true)
       expect(failures.some((f) => f.code === FAILURE_CODES.MISSING_FULL_SOLUTION)).toBe(true)
+    })
+  })
+
+  describe('INVALID_GEOMETRY_SPEC', () => {
+    it('fails when geometry point x is not a number', () => {
+      const blocks: ContentBlock[] = [
+        makeQuestionGeometry(
+          'qg-1',
+          {
+            kind: 'euclidean',
+            canvas: { width: 400, height: 300 },
+            elements: {
+              points: [{ name: 'A', x: 'not-a-number', y: 0 }],
+              lines: [],
+              circles: [],
+              angles: [],
+            },
+          },
+          true,
+          true,
+          true,
+          true,
+        ),
+      ]
+      const failures = validateExerciseStructural(blocks)
+      expect(failures.some((f) => f.code === FAILURE_CODES.INVALID_GEOMETRY_SPEC)).toBe(true)
+    })
+
+    it('fails when geometry canvas is missing required width', () => {
+      const blocks: ContentBlock[] = [
+        makeQuestionGeometry(
+          'qg-1',
+          {
+            kind: 'euclidean',
+            canvas: { height: 300 },
+            elements: {
+              points: [],
+              lines: [],
+              circles: [],
+              angles: [],
+            },
+          },
+          true,
+          true,
+          true,
+          true,
+        ),
+      ]
+      const failures = validateExerciseStructural(blocks)
+      expect(failures.some((f) => f.code === FAILURE_CODES.INVALID_GEOMETRY_SPEC)).toBe(true)
+    })
+
+    it('passes when geometry spec is fully valid', () => {
+      const blocks: ContentBlock[] = [
+        makeQuestionGeometry(
+          'qg-1',
+          {
+            kind: 'euclidean',
+            canvas: { width: 400, height: 300 },
+            elements: {
+              points: [{ name: 'A', x: 0, y: 0 }],
+              lines: [],
+              circles: [],
+              angles: [],
+            },
+          },
+          true,
+          true,
+          true,
+          true,
+        ),
+      ]
+      expect(validateExerciseStructural(blocks)).toHaveLength(0)
+    })
+  })
+
+  describe('INVALID_AXIS_SPEC', () => {
+    it('fails when question_axis has negative units', () => {
+      const blocks: ContentBlock[] = [
+        makeQuestionAxis(
+          'qa-1',
+          {
+            kind: 'cartesian',
+            units: -5,
+            grid: { enabled: false },
+            axes: {
+              showNumbers: false,
+              showLabels: false,
+              ticks: 0,
+              labels: { x: 'x', y: 'y' },
+              origin: { x: 0, y: 0 },
+            },
+            viewportMode: 'auto',
+            viewport: {},
+            elements: {
+              points: [],
+              graphs: [],
+            },
+          },
+          true,
+          true,
+          true,
+          true,
+        ),
+      ]
+      const failures = validateExerciseStructural(blocks)
+      expect(failures.some((f) => f.code === FAILURE_CODES.INVALID_AXIS_SPEC)).toBe(true)
+    })
+
+    it('fails when question_axis axis is empty object', () => {
+      const blocks: ContentBlock[] = [makeQuestionAxis('qa-1', {}, true, true, true, true)]
+      const failures = validateExerciseStructural(blocks)
+      expect(failures.some((f) => f.code === FAILURE_CODES.INVALID_AXIS_SPEC)).toBe(true)
+    })
+
+    it('passes when axis spec is fully valid', () => {
+      const blocks: ContentBlock[] = [
+        makeQuestionAxis(
+          'qa-1',
+          {
+            kind: 'cartesian',
+            units: 1,
+            grid: { enabled: false },
+            axes: {
+              showNumbers: false,
+              showLabels: false,
+              ticks: 0,
+              labels: { x: 'x', y: 'y' },
+              origin: { x: 0, y: 0 },
+            },
+            viewportMode: 'auto',
+            viewport: {},
+            elements: {
+              points: [],
+              graphs: [],
+            },
+          },
+          true,
+          true,
+          true,
+          true,
+        ),
+      ]
+      expect(validateExerciseStructural(blocks)).toHaveLength(0)
+    })
+  })
+
+  describe('INVALID_GUIDED_EXPLANATION', () => {
+    it('fails when guidedExplanation title is empty', () => {
+      const blocks: ContentBlock[] = [
+        makeHtmlWithGuidedExplanation('html-1', '<p>Hello</p>', {
+          version: 'guided-explanation/v1',
+          title: '',
+          direction: 'rtl',
+          locale: 'he',
+          scene: { svg: '<svg/>', viewBox: '0 0 100 100' },
+          narrationBox: { placeholder: 'x' },
+          controls: { playLabel: '▶', resetLabel: '↺' },
+          steps: [],
+        }),
+      ]
+      const failures = validateExerciseStructural(blocks)
+      expect(failures.some((f) => f.code === FAILURE_CODES.INVALID_GUIDED_EXPLANATION)).toBe(true)
+    })
+
+    it('fails when guidedExplanation is missing required fields', () => {
+      const blocks: ContentBlock[] = [
+        makeHtmlWithGuidedExplanation('html-1', '<p>Hello</p>', {
+          title: 'Test',
+        }),
+      ]
+      const failures = validateExerciseStructural(blocks)
+      expect(failures.some((f) => f.code === FAILURE_CODES.INVALID_GUIDED_EXPLANATION)).toBe(true)
+    })
+
+    it('passes when guidedExplanation is fully valid', () => {
+      const blocks: ContentBlock[] = [
+        makeHtmlWithGuidedExplanation('html-1', '<p>Hello</p>', {
+          version: 'guided-explanation/v1',
+          title: 'Step-by-step',
+          direction: 'rtl',
+          locale: 'he',
+          scene: { svg: '<svg/>', viewBox: '0 0 100 100' },
+          narrationBox: { placeholder: 'Explain…' },
+          controls: { playLabel: '▶', resetLabel: '↺' },
+          steps: [{ id: 's1', narrate: { display: 'First step' }, wait: 1000, actions: [] }],
+        }),
+      ]
+      expect(validateExerciseStructural(blocks)).toHaveLength(0)
+    })
+  })
+
+  describe('question_multi_axis axis validation', () => {
+    it('fails when one graph has invalid axis', () => {
+      const blocks: ContentBlock[] = [
+        makeQuestionMultiAxis('qma-1', [
+          {
+            id: 'g1',
+            label: 'Graph 1',
+            axis: {},
+          },
+          {
+            id: 'g2',
+            label: 'Graph 2',
+            axis: {
+              kind: 'cartesian',
+              units: 1,
+              grid: { enabled: false },
+              axes: {
+                showNumbers: false,
+                showLabels: false,
+                ticks: 0,
+                labels: { x: 'x', y: 'y' },
+                origin: { x: 0, y: 0 },
+              },
+              viewportMode: 'auto',
+              viewport: {},
+              elements: { points: [], graphs: [] },
+            },
+          },
+        ]),
+      ]
+      const failures = validateExerciseStructural(blocks)
+      expect(failures.some((f) => f.code === FAILURE_CODES.INVALID_AXIS_SPEC)).toBe(true)
+    })
+
+    it('passes when all graphs have valid axis specs', () => {
+      const validAxis = {
+        kind: 'cartesian',
+        units: 1,
+        grid: { enabled: false },
+        axes: {
+          showNumbers: false,
+          showLabels: false,
+          ticks: 0,
+          labels: { x: 'x', y: 'y' },
+          origin: { x: 0, y: 0 },
+        },
+        viewportMode: 'auto',
+        viewport: {},
+        elements: { points: [], graphs: [] },
+      }
+      const blocks: ContentBlock[] = [
+        makeQuestionMultiAxis('qma-1', [
+          { id: 'g1', label: 'Graph 1', axis: validAxis },
+          { id: 'g2', label: 'Graph 2', axis: validAxis },
+        ]),
+      ]
+      expect(validateExerciseStructural(blocks)).toHaveLength(0)
     })
   })
 })
