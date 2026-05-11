@@ -6,10 +6,16 @@
  * @pattern review-list
  * @ai-summary Admin review UI for lesson duplication failures. Lets admin skip, regenerate, or keep each failed exercise.
  */
+// smoke-test: prOutcome + flake-retry exercise (v0.4.38)
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { DiffPreview } from './DiffPreview'
+import type { ContentBlock } from '@/server/payload/collections/Exercises/types'
+
+type Action = 'skip' | 'regenerate' | 'keep' | 'looks_right'
+type RegenLevel = 'light' | 'medium' | 'deep'
 
 interface FailureEntry {
   exerciseRef: string
@@ -26,6 +32,14 @@ interface OutputExerciseEntry {
   strategy: string
 }
 
+interface ExercisePairData {
+  sourceExerciseId: string
+  outputExerciseId: string
+  strategy: string
+  sourceContent: { blocks: ContentBlock[] }
+  outputContent: { blocks: ContentBlock[] }
+}
+
 interface DuplicationRecord {
   id: string
   level: string
@@ -34,10 +48,8 @@ interface DuplicationRecord {
   outputLesson: { id: string } | string | null
   outputExercises: OutputExerciseEntry[]
   failures: FailureEntry[]
+  exercisePairs?: ExercisePairData[]
 }
-
-type Action = 'skip' | 'regenerate' | 'keep'
-type RegenLevel = 'light' | 'medium' | 'deep'
 
 // --- Styles (inline CSS-in-JS, matching Payload theme) ---
 const pageStyle: React.CSSProperties = { padding: '24px', maxWidth: 960 }
@@ -155,6 +167,8 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [allResolved, setAllResolved] = useState(false)
+  const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set())
+  const diffPreviewRef = useRef<HTMLDivElement>(null)
 
   const fetchRecord = useCallback(async () => {
     setIsLoading(true)
@@ -165,9 +179,20 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json()
-      const r = data.data ?? data
+      const r = (data.data ?? data) as DuplicationRecord
       setRecord(r)
       setAllResolved(r.status === 'succeeded')
+
+      // Pre-populate reviewedIds from existing resolved failures
+      const reviewed = new Set<string>()
+      for (const f of r.failures) {
+        if (f.resolved) {
+          // Find the output exercise for this exerciseRef
+          const pair = r.exercisePairs?.find((p) => p.sourceExerciseId === f.exerciseRef)
+          if (pair) reviewed.add(pair.outputExerciseId)
+        }
+      }
+      setReviewedIds(reviewed)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load record')
     } finally {
@@ -180,7 +205,7 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
   }, [fetchRecord])
 
   const unresolvedCount = record?.failures.filter((f) => !f.resolved).length ?? 0
-  const resolvedCount = record?.failures.filter((f) => f.resolved).length ?? 0
+  const totalExercises = record?.exercisePairs?.length ?? record?.outputExercises?.length ?? 0
 
   async function handleSubmit() {
     if (pendingActions.size === 0) return
@@ -215,6 +240,81 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
       next.set(index, { action, level })
       return next
     })
+  }
+
+  function jumpToExercise(outputExerciseId: string) {
+    document
+      .getElementById(outputExerciseId)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+
+  // Handle looks_right from DiffPreview — resolves all failures for this exercise
+  function handleLooksRight(outputExerciseId: string) {
+    if (!record) return
+    const pair = record.exercisePairs?.find((p) => p.outputExerciseId === outputExerciseId)
+    if (!pair) return
+
+    // Find the failure indices for this exercise
+    const failureIndices: number[] = []
+    for (let i = 0; i < record.failures.length; i++) {
+      if (
+        record.failures[i].exerciseRef === pair.sourceExerciseId &&
+        !record.failures[i].resolved
+      ) {
+        failureIndices.push(i)
+      }
+    }
+
+    // Set actions for all failure indices
+    setPendingActions((prev) => {
+      const next = new Map(prev)
+      for (const idx of failureIndices) {
+        next.set(idx, { action: 'looks_right' })
+      }
+      return next
+    })
+
+    setReviewedIds((prev) => {
+      const next = new Set(prev)
+      next.add(outputExerciseId)
+      return next
+    })
+  }
+
+  // Handle regenerate from DiffPreview
+  function handleRegenerate(outputExerciseId: string, level: RegenLevel) {
+    if (!record) return
+    const pair = record.exercisePairs?.find((p) => p.outputExerciseId === outputExerciseId)
+    if (!pair) return
+
+    const failureIdx = record.failures.findIndex(
+      (f) => f.exerciseRef === pair.sourceExerciseId && !f.resolved,
+    )
+    if (failureIdx >= 0) {
+      setPendingActions((prev) => {
+        const next = new Map(prev)
+        next.set(failureIdx, { action: 'regenerate', level })
+        return next
+      })
+    }
+  }
+
+  // Handle skip from DiffPreview
+  function handleSkip(outputExerciseId: string) {
+    if (!record) return
+    const pair = record.exercisePairs?.find((p) => p.outputExerciseId === outputExerciseId)
+    if (!pair) return
+
+    const failureIdx = record.failures.findIndex(
+      (f) => f.exerciseRef === pair.sourceExerciseId && !f.resolved,
+    )
+    if (failureIdx >= 0) {
+      setPendingActions((prev) => {
+        const next = new Map(prev)
+        next.set(failureIdx, { action: 'skip' })
+        return next
+      })
+    }
   }
 
   if (isLoading) return <div style={loadingStyle}>Loading…</div>
@@ -268,8 +368,16 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
       {/* Sticky summary bar */}
       <div style={stickyBarStyle}>
         <span style={summaryStyle}>
-          {unresolvedCount} failure{unresolvedCount !== 1 ? 's' : ''} remaining
-          {resolvedCount > 0 ? ` · ${resolvedCount} resolved` : ''}
+          {reviewedIds.size} of {totalExercises} exercises reviewed
+          {unresolvedCount > 0 ? (
+            <span className="text-destructive" style={{ marginLeft: 8 }}>
+              · {unresolvedCount} failure{unresolvedCount !== 1 ? 's' : ''} remaining
+            </span>
+          ) : (
+            <span className="text-[var(--theme-success)]" style={{ marginLeft: 8 }}>
+              · all reviewed
+            </span>
+          )}
         </span>
         <div style={{ flex: 1 }} />
         {pendingActions.size > 0 && (
@@ -296,6 +404,21 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
       {submitError && (
         <div style={{ color: 'var(--theme-error)', fontSize: 13, marginBottom: 12 }}>
           {submitError}
+        </div>
+      )}
+
+      {/* Diff Preview — above failures list */}
+      {record.exercisePairs && record.exercisePairs.length > 0 && (
+        <div ref={diffPreviewRef} style={{ marginBottom: 24 }}>
+          <DiffPreview
+            exercisePairs={record.exercisePairs}
+            failures={record.failures}
+            reviewedIds={reviewedIds}
+            onLooksRight={handleLooksRight}
+            onRegenerate={handleRegenerate}
+            onSkip={handleSkip}
+            onJumpToExercise={jumpToExercise}
+          />
         </div>
       )}
 
@@ -327,6 +450,29 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
                 >
                   View source
                 </a>
+                {record.exercisePairs && (
+                  <>
+                    {' · '}
+                    <button
+                      onClick={() => {
+                        const pair = record.exercisePairs?.find(
+                          (p) => p.sourceExerciseId === exerciseRef,
+                        )
+                        if (pair) jumpToExercise(pair.outputExerciseId)
+                      }}
+                      style={{
+                        color: 'var(--theme-primary)',
+                        fontSize: 12,
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: 0,
+                      }}
+                    >
+                      Jump to exercise
+                    </button>
+                  </>
+                )}
               </div>
               {failures.map((failure) => {
                 const idx = record.failures.findIndex(
