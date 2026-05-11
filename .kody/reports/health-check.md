@@ -2,7 +2,5 @@
 
 _Threshold: 6h_
 
-### failed
-
-- [#1550](https://github.com/A-Guy-educ/A-Guy/issues/1550) — Pre-fill subject selector based on lesson metadata — 16h since last update
-- [#1236](https://github.com/A-Guy-educ/A-Guy/issues/1236) — fix: Release-publisher agent timeout mismatch with CI polling — 379h since last update
+## kody:failed
+- [#1236](https://github.com/A-Guy-educ/A-Guy/issues/1236) — fix: Release-publisher agent timeout mismatch with CI polling — 382h since last update
