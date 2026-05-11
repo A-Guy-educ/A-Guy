@@ -30,4 +30,300 @@ Return a JSON object with the exercise content. The structure must match the inp
 }
 ```
 
+## Examples
+
+Each example below demonstrates the input exercise JSON and the expected output variation JSON showing mixed-subject transformations with reworded phrasing.
+
+**Example 1 — Input:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_select",
+        "variant": "mcq",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Which of the following is a prime number?",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "a",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "4", "mediaIds": [] }
+          },
+          {
+            "id": "b",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "6", "mediaIds": [] }
+          },
+          {
+            "id": "c",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "7", "mediaIds": [] }
+          },
+          {
+            "id": "d",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "9", "mediaIds": [] }
+          }
+        ],
+        "answer": { "selected": ["c"] }
+      }
+    ]
+  }
+}
+```
+
+**Example 1 — Output:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_select",
+        "variant": "mcq",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Which number listed below is prime?",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "a",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "4", "mediaIds": [] }
+          },
+          {
+            "id": "b",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "6", "mediaIds": [] }
+          },
+          {
+            "id": "c",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "7", "mediaIds": [] }
+          },
+          {
+            "id": "d",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "9", "mediaIds": [] }
+          }
+        ],
+        "answer": { "selected": ["c"] }
+      }
+    ]
+  }
+}
+```
+
+**Example 2 — Input:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Calculate the area of a rectangle with length 8 cm and width 5 cm.",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "40 cm²", "acceptedPatterns": [] },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "40 cm²",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Formula for rectangle area = length × width\\nStep 2: A = 8 cm × 5 cm\\nStep 3: A = 40 cm²",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 2 — Output:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "What is the surface area when the length measures 12 meters and the width measures 7 meters?",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "84 m²", "acceptedPatterns": [] },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "84 m²",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Formula for rectangle area = length × width\\nStep 2: A = 12 m × 7 m\\nStep 3: A = 84 m²",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 3 — Input:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_matching",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Match each shape with its number of sides:",
+          "mediaIds": []
+        },
+        "leftColumn": [
+          {
+            "id": "l1",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Triangle",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "l2",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Square",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "l3",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Pentagon",
+              "mediaIds": []
+            }
+          }
+        ],
+        "rightColumn": [
+          {
+            "id": "r1",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "3", "mediaIds": [] }
+          },
+          {
+            "id": "r2",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "4", "mediaIds": [] }
+          },
+          {
+            "id": "r3",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "5", "mediaIds": [] }
+          }
+        ],
+        "correctPairs": [
+          { "leftId": "l1", "rightId": "r1" },
+          { "leftId": "l2", "rightId": "r2" },
+          { "leftId": "l3", "rightId": "r3" }
+        ],
+        "shuffleRightColumn": true
+      }
+    ]
+  }
+}
+```
+
+**Example 3 — Output:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_matching",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Match each polygon type with its corresponding number of edges:",
+          "mediaIds": []
+        },
+        "leftColumn": [
+          {
+            "id": "l1",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Triangle",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "l2",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Square",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "l3",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Pentagon",
+              "mediaIds": []
+            }
+          }
+        ],
+        "rightColumn": [
+          {
+            "id": "r1",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "3", "mediaIds": [] }
+          },
+          {
+            "id": "r2",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "4", "mediaIds": [] }
+          },
+          {
+            "id": "r3",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "5", "mediaIds": [] }
+          }
+        ],
+        "correctPairs": [
+          { "leftId": "l1", "rightId": "r1" },
+          { "leftId": "l2", "rightId": "r2" },
+          { "leftId": "l3", "rightId": "r3" }
+        ],
+        "shuffleRightColumn": true
+      }
+    ]
+  }
+}
+```
+
 Return ONLY the JSON. No markdown fences, no explanation.

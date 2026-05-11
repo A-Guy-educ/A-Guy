@@ -30,7 +30,7 @@ const ResolveBodySchema = z.object({
     .array(
       z.object({
         failureIndex: z.number().int().min(0),
-        action: z.enum(['skip', 'regenerate', 'keep']),
+        action: z.enum(['skip', 'regenerate', 'keep', 'looks_right']),
         level: z.enum(['light', 'medium', 'deep']).optional(),
       }),
     )
@@ -165,6 +165,9 @@ export const POST = withApiHandler<ResolveBody, unknown>(
         }
         failure.resolved = true
       } else if (action === 'keep') {
+        failure.resolved = true
+      } else if (action === 'looks_right') {
+        // looks_right marks the failure as resolved without modifying exercise content
         failure.resolved = true
       }
     }

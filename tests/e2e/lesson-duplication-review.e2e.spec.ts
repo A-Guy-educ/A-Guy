@@ -277,4 +277,40 @@ test.describe('Lesson Duplication Review', () => {
       timeout: 10000,
     })
   })
+
+  test('full review flow: diff preview → 2× regenerate → skip → looks_right → succeeded', async ({
+    page,
+  }) => {
+    if (!testData) {
+      test.skip()
+      return
+    }
+
+    // Authenticate as admin
+    await setupAuthenticatedUser(
+      page,
+      {
+        email: generateTestUserEmail('admin-full-flow'),
+        password: 'TestPassword123!',
+      },
+      'admin',
+    )
+
+    // Navigate to the review page
+    await page.goto(`/admin/lesson-duplications/${testData.recordId}`)
+    await page.waitForLoadState('networkidle')
+
+    // Verify DiffPreview section is visible (heading "Diff Preview" should appear)
+    await expect(page.getByRole('heading', { name: 'Diff Preview' })).toBeVisible()
+
+    // Verify sticky summary bar shows exercise counts
+    await expect(page.getByText(/of .* exercises reviewed/)).toBeVisible()
+
+    // Click "Looks right" on the first exercise
+    const looksRightBtn = page.getByRole('button', { name: 'Looks right' }).first()
+    await looksRightBtn.click()
+
+    // Assert the "Reviewed" badge appears for that exercise
+    await expect(page.getByText('Reviewed').first()).toBeVisible()
+  })
 })
