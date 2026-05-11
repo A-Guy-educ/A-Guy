@@ -199,16 +199,11 @@ export function useNotebookChat({
         return
       }
 
-      // Ensure loading indicator shows for minimum duration to avoid race conditions
-      const minLoadingTime = Promise.all([new Promise((resolve) => setTimeout(resolve, 100))])
-
       try {
         const retryDelayMs = 500
         const maxRetries = 10
         let attempt = 0
-        let result = (
-          await Promise.all([apiService.getConversation(contextKey), minLoadingTime])
-        )[0]
+        let result = await apiService.getConversation(contextKey)
 
         while (attempt <= maxRetries) {
           if (result.authRequired) {
