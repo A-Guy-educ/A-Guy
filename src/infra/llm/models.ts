@@ -63,6 +63,7 @@ export type AIModelKey =
   | 'ANSWER_VALIDATION'
   | 'SUPPORT_GENERATION'
   | 'CONTENT_TRANSLATION'
+  /** @deprecated Use LESSON_DUPLICATION_VARIATION_CREATIVE or LESSON_DUPLICATION_VARIATION_DETERMINISTIC */
   | 'LESSON_DUPLICATION_VARIATION'
   | 'LESSON_DUPLICATION_VARIATION_CREATIVE'
   | 'LESSON_DUPLICATION_VARIATION_DETERMINISTIC'
@@ -120,11 +121,13 @@ export const MODEL_REGISTRY: Record<AIModelKey, Omit<AIModel, 'name'>> = {
   LESSON_DUPLICATION_VARIATION_CREATIVE: {
     temperature: 0.7,
     maxOutputTokens: 8192,
+    thinkingBudget: 4000,
     capabilities: ['chat', 'generation'],
   },
   LESSON_DUPLICATION_VARIATION_DETERMINISTIC: {
     temperature: 0.0,
     maxOutputTokens: 8192,
+    thinkingBudget: 6000,
     capabilities: ['chat', 'generation'],
   },
 } as const
