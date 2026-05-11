@@ -8,7 +8,7 @@
  * @pattern admin-action-modal
  * @ai-summary Opens a modal to pick a variation level, then POSTs to /api/lessons/:id/duplicate.
  */
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useDocumentInfo } from '@payloadcms/ui'
 
 const LEVELS: { value: 'none' | 'light' | 'medium' | 'deep'; label: string; hint: string }[] = [
@@ -69,15 +69,45 @@ export const LessonDuplicateAction: React.FC = () => {
   const [open, setOpen] = useState(false)
   const [level, setLevel] = useState<(typeof LEVELS)[number]['value'] | ''>('')
   const [subject, setSubject] = useState<(typeof SUBJECTS)[number]['value']>('mixed')
+  const [subjectAutoDetected, setSubjectAutoDetected] = useState(false)
   const [status, setStatus] = useState<Status>('idle')
   const [error, setError] = useState<string | null>(null)
   const [resultId, setResultId] = useState<string | null>(null)
+
+  // When the modal opens, ask the server to suggest a subject based on the
+  // lesson's exercise blocks (geometry / axis / both / none → mixed/geo/calc/algebra).
+  // Admin can still override the radio selection.
+  useEffect(() => {
+    if (!open || !id) return
+    let cancelled = false
+    void (async () => {
+      try {
+        const res = await fetch(`/api/lessons/${id}/suggested-subject`, {
+          credentials: 'include',
+        })
+        if (!res.ok) return
+        const data = (await res.json()) as {
+          data?: { subject?: (typeof SUBJECTS)[number]['value'] }
+        }
+        const suggested = data.data?.subject
+        if (cancelled || !suggested) return
+        setSubject(suggested)
+        setSubjectAutoDetected(true)
+      } catch {
+        // Soft-fail: keep the default ('mixed').
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [open, id])
 
   if (!id) return null
 
   const reset = () => {
     setLevel('')
     setSubject('mixed')
+    setSubjectAutoDetected(false)
     setStatus('idle')
     setError(null)
     setResultId(null)
@@ -205,6 +235,18 @@ export const LessonDuplicateAction: React.FC = () => {
 
             <p style={{ fontSize: 13, color: 'var(--theme-elevation-600)', marginTop: 16 }}>
               Subject area
+              {subjectAutoDetected && (
+                <span
+                  style={{
+                    marginLeft: 8,
+                    fontSize: 11,
+                    color: 'var(--theme-success-500)',
+                    fontWeight: 500,
+                  }}
+                >
+                  · auto-detected (override below if wrong)
+                </span>
+              )}
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
               {SUBJECTS.map((opt) => (
