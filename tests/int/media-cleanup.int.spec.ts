@@ -220,8 +220,12 @@ describe('Media Cleanup Endpoint', () => {
     })
   })
 
-  // Skip file upload tests if Vercel Blob is not configured
-  const cleanupTests = process.env.BLOB_READ_WRITE_TOKEN ? describe : describe.skip
+  // Skip file upload tests if Vercel Blob is not properly configured
+  // Real Vercel tokens start with 'vercel_blob_rw_' and are 60+ chars
+  const blobToken = process.env.BLOB_READ_WRITE_TOKEN
+  const hasValidBlobToken =
+    blobToken && blobToken.length > 60 && blobToken.startsWith('vercel_blob_rw_')
+  const cleanupTests = hasValidBlobToken ? describe : describe.skip
 
   cleanupTests('Cleanup Logic', () => {
     it('deletes expired ephemeral media', async () => {

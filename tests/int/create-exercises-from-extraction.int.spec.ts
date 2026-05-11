@@ -17,6 +17,9 @@ import { getPayload } from 'payload'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 const hasDatabaseUrl = !!process.env.DATABASE_URL
+// Real Vercel tokens start with 'vercel_blob_rw_' and are 60+ chars
+const blobToken = process.env.BLOB_READ_WRITE_TOKEN
+const hasBlobToken = blobToken && blobToken.length > 60 && blobToken.startsWith('vercel_blob_rw_')
 
 let payload: Payload
 let adminUser: User
@@ -215,7 +218,7 @@ async function seedExtraction(
   createdExtractionIds.push(extraction.id)
 }
 
-describe('createExercisesFromExtraction', () => {
+describe.skipIf(!hasBlobToken)('createExercisesFromExtraction', () => {
   it.skipIf(!hasDatabaseUrl)(
     'returns NO_EXTRACTION when the lesson has no extraction yet',
     async () => {

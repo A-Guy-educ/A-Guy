@@ -23,10 +23,9 @@ let payload: Payload
 let originalDatabaseUrl: string | undefined
 
 // Check if we have the required blob token
-const hasBlobToken =
-  process.env.BLOB_READ_WRITE_TOKEN &&
-  process.env.BLOB_READ_WRITE_TOKEN !== '' &&
-  process.env.BLOB_READ_WRITE_TOKEN !== 'mock-token-for-testing'
+// Real Vercel tokens start with 'vercel_blob_rw_' and are 60+ chars
+const blobToken = process.env.BLOB_READ_WRITE_TOKEN
+const hasBlobToken = blobToken && blobToken.length > 60 && blobToken.startsWith('vercel_blob_rw_')
 
 describe.skipIf(!hasBlobToken)('V2 Task Handler', () => {
   beforeAll(async () => {
