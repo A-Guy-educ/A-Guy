@@ -11,7 +11,13 @@ import { startMongoContainer, stopMongoContainer } from '@/infra/utils/test/mong
 import { ObjectId } from 'mongodb'
 import { getPayload, Payload } from 'payload'
 
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+
+// Mock Vercel Blob so tests run without real credentials
+vi.mock('@vercel/blob', () => ({
+  put: vi.fn().mockResolvedValue({ url: 'https://example.com/test.pdf', pathname: 'test.pdf' }),
+  del: vi.fn().mockResolvedValue(undefined),
+}))
 
 let payload: Payload
 let originalDatabaseUrl: string | undefined

@@ -14,7 +14,13 @@ import { createExercisesFromExtraction } from '@/server/services/lesson-context-
 import config from '@payload-config'
 import type { Payload, User } from 'payload'
 import { getPayload } from 'payload'
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+
+// Mock Vercel Blob so tests run without real credentials
+vi.mock('@vercel/blob', () => ({
+  put: vi.fn().mockResolvedValue({ url: 'https://example.com/test.tex', pathname: 'test.tex' }),
+  del: vi.fn().mockResolvedValue(undefined),
+}))
 
 const hasDatabaseUrl = !!process.env.DATABASE_URL
 
