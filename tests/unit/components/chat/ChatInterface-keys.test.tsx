@@ -1,9 +1,52 @@
 // @vitest-environment jsdom
 import { ChatMessage } from '@/ui/web/chat/hooks/useNotebookChat'
 import { ChatRole } from '@/infra/llm/chat-message-role'
-import { describe, expect, it } from 'vitest'
+import { I18nProvider } from '@/ui/web/providers/I18n'
+import enMessages from '../../../../src/i18n/en.json'
+import { ChatInterface } from '@/ui/web/chat/ChatInterface'
+import { render, fireEvent } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { toast } from 'sonner'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
+
+// Mock sonner toast
+vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }))
+
+// Mock useCurrentUser
+vi.mock('@/client/hooks/useCurrentUser', () => ({
+  useCurrentUser: () => ({ user: null }),
+}))
+
+// Mock useTeacherProfileLabel
+vi.mock('@/ui/web/chat/hooks/useTeacherProfileLabel', () => ({
+  useTeacherProfileLabel: () => ({ label: null }),
+}))
+
+// Mock useTTS
+vi.mock('@/ui/web/chat/hooks/useTTS', () => ({
+  useTTS: () => ({
+    speak: vi.fn(),
+    playingMessageId: null,
+    pause: vi.fn(),
+    resume: vi.fn(),
+    setRate: vi.fn(),
+    isPaused: false,
+    currentRate: 1,
+  }),
+}))
+
+// Mock useChatQuota — isLimitReached=false so Send button is not disabled by quota
+vi.mock('@/ui/web/chat/hooks/useChatQuota', () => ({
+  useChatQuota: () => ({
+    questionsUsed: 0,
+    maxQuestions: 15,
+    resetAt: null,
+    isLimitReached: false,
+    isLoaded: true,
+    refreshQuota: vi.fn(),
+  }),
+}))
 
 describe('ChatMessage ID validation', () => {
   describe('Test 1: Verify ChatMessage has a non-empty id string property', () => {
@@ -141,5 +184,99 @@ describe('CollectionArchive static analysis - React keys', () => {
         expect(sourceCode).not.toMatch(pattern)
       }
     })
+  })
+})
+
+// Import useNotebookChat for mocking — must be after mocks above
+vi.mock('@/ui/web/chat/hooks/useNotebookChat', () => ({
+  useNotebookChat: vi.fn(),
+}))
+
+import { useNotebookChat } from '@/ui/web/chat/hooks/useNotebookChat'
+
+describe('ChatInterface keyboard shortcuts', () => {
+  // Shared mock return for useNotebookChat — reset state between tests
+  const createMockNotebookChat = (overrides = {}) => ({
+    messages: [],
+    inputValue: '',
+    isLoading: false,
+    isLoadingHistory: false,
+    messagesContainerRef: { current: null },
+    messagesEndRef: { current: null },
+    inputRef: { current: null },
+    fileInputRef: { current: null },
+    contextKey: 'test-context',
+    setInputValue: vi.fn(),
+    handleSubmit: vi.fn(),
+    handleQuickAction: vi.fn(),
+    handleReset: vi.fn(),
+    directUploads: [],
+    addDirectUploads: vi.fn(),
+    removeDirectUpload: vi.fn(),
+    retryDirectUpload: vi.fn(),
+    isDirectUploading: false,
+    completedChatAssetIds: [],
+    openFilePicker: vi.fn(),
+    chatError: null,
+    dismissError: vi.fn(),
+    addExternalMedia: vi.fn(),
+    askMedia: null,
+    clearAskMedia: vi.fn(),
+    addAssistantMessage: vi.fn(),
+    injectExerciseContext: vi.fn(),
+    sendContextualHelp: vi.fn(),
+    sendVisibleHelp: vi.fn(),
+    sendContextualHelpWithMedia: vi.fn(),
+    sendContextualHelpWithMediaId: vi.fn(),
+    ...overrides,
+  })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  const renderChat = (mockChat = createMockNotebookChat()) => {
+    ;(useNotebookChat as ReturnType<typeof vi.fn>).mockReturnValue(mockChat as never)
+    return render(
+      <I18nProvider locale="en" messages={enMessages}>
+        <ChatInterface />
+      </I18nProvider>,
+    )
+  }
+
+  it('Cmd+Enter submits the form when input is non-empty (macOS)', () => {
+    const mockChat = createMockNotebookChat({ inputValue: 'Hello world' })
+    const { container } = renderChat(mockChat)
+    const input = container.querySelector('input[type="text"]') as HTMLInputElement
+    fireEvent.keyDown(input, { key: 'Enter', metaKey: true })
+    expect(mockChat.handleSubmit).toHaveBeenCalledTimes(1)
+  })
+
+  it('Ctrl+Enter submits the form when input is non-empty (Windows/Linux)', () => {
+    const mockChat = createMockNotebookChat({ inputValue: 'Hello world' })
+    const { container } = renderChat(mockChat)
+    const input = container.querySelector('input[type="text"]') as HTMLInputElement
+    fireEvent.keyDown(input, { key: 'Enter', ctrlKey: true })
+    expect(mockChat.handleSubmit).toHaveBeenCalledTimes(1)
+  })
+
+  it('Plain Enter does NOT submit the form', () => {
+    const mockChat = createMockNotebookChat({ inputValue: 'Hello world' })
+    const { container } = renderChat(mockChat)
+    const input = container.querySelector('input[type="text"]') as HTMLInputElement
+    fireEvent.keyDown(input, { key: 'Enter' })
+    expect(mockChat.handleSubmit).not.toHaveBeenCalled()
+  })
+
+  it('Cmd+Enter calls handleSubmit when input is empty (guard is in sendMessage)', () => {
+    const mockChat = createMockNotebookChat({ inputValue: '' })
+    const { container } = renderChat(mockChat)
+    const input = container.querySelector('input[type="text"]') as HTMLInputElement
+    fireEvent.keyDown(input, { key: 'Enter', metaKey: true })
+    // handleSubmit is called — empty-input guard lives in sendMessage
+    expect(mockChat.handleSubmit).toHaveBeenCalledTimes(1)
   })
 })

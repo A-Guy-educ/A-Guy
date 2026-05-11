@@ -725,7 +725,7 @@ export function ChatInterface({
               onFocus={() => setIsChatInputFocused(true)}
               onBlur={handleChatInputBlur}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
+                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
                   e.preventDefault()
                   handleFormSubmit(e as unknown as React.FormEvent)
                 }
