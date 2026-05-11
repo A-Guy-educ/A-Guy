@@ -14,6 +14,9 @@
  */
 
 import type { ContentBlock } from '@/server/payload/collections/Exercises/schemas'
+import { GeometrySpecV1Schema } from '@/infra/contracts/graphics/geometry.v1'
+import { AxisSpecV1Schema } from '@/infra/contracts/graphics/axis.v1'
+import { GuidedExplanationV1Schema } from '@/infra/contracts/guided-explanation/v1'
 
 export const FAILURE_CODES = {
   TOO_MANY_SECTIONS: 'TOO_MANY_SECTIONS',
@@ -25,6 +28,9 @@ export const FAILURE_CODES = {
   MISSING_FULL_SOLUTION: 'MISSING_FULL_SOLUTION',
   MISSING_CORRECT_OPTION: 'MISSING_CORRECT_OPTION',
   MISSING_WRONG_OPTIONS: 'MISSING_WRONG_OPTIONS',
+  INVALID_GEOMETRY_SPEC: 'INVALID_GEOMETRY_SPEC',
+  INVALID_AXIS_SPEC: 'INVALID_AXIS_SPEC',
+  INVALID_GUIDED_EXPLANATION: 'INVALID_GUIDED_EXPLANATION',
 } as const
 
 export type FailureCode = (typeof FAILURE_CODES)[keyof typeof FAILURE_CODES]
@@ -162,6 +168,70 @@ function validateBlock(block: ContentBlock, blockIndex: number): StructuralFailu
         failures.push({
           code: FAILURE_CODES.MISSING_WRONG_OPTIONS,
           message: `MCQ block at index ${blockIndex} must have at least 2 wrong options`,
+          blockIndex,
+        })
+      }
+    }
+  }
+
+  // Schema-level validation for spec blocks
+
+  // question_geometry: validate geometry field against GeometrySpecV1Schema
+  if (block.type === 'question_geometry') {
+    const geometry = (block as { geometry?: unknown }).geometry
+    if (geometry !== undefined) {
+      const result = GeometrySpecV1Schema.safeParse(geometry)
+      if (!result.success) {
+        failures.push({
+          code: FAILURE_CODES.INVALID_GEOMETRY_SPEC,
+          message: `question_geometry block at index ${blockIndex}: ${result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')}`,
+          blockIndex,
+        })
+      }
+    }
+  }
+
+  // question_axis: validate axis field against AxisSpecV1Schema
+  if (block.type === 'question_axis') {
+    const axis = (block as { axis?: unknown }).axis
+    if (axis !== undefined) {
+      const result = AxisSpecV1Schema.safeParse(axis)
+      if (!result.success) {
+        failures.push({
+          code: FAILURE_CODES.INVALID_AXIS_SPEC,
+          message: `question_axis block at index ${blockIndex}: ${result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')}`,
+          blockIndex,
+        })
+      }
+    }
+  }
+
+  // question_multi_axis: validate each graph's axis field against AxisSpecV1Schema
+  if (block.type === 'question_multi_axis') {
+    const graphs = (block as { graphs?: Array<{ id?: string; axis?: unknown }> }).graphs ?? []
+    for (const graph of graphs) {
+      if (graph.axis !== undefined) {
+        const result = AxisSpecV1Schema.safeParse(graph.axis)
+        if (!result.success) {
+          failures.push({
+            code: FAILURE_CODES.INVALID_AXIS_SPEC,
+            message: `question_multi_axis block at index ${blockIndex}, graph "${graph.id ?? '?'}": ${result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')}`,
+            blockIndex,
+          })
+        }
+      }
+    }
+  }
+
+  // html blocks: validate guidedExplanation against GuidedExplanationV1Schema (when present)
+  if (block.type === 'html') {
+    const guidedExplanation = (block as { guidedExplanation?: unknown }).guidedExplanation
+    if (guidedExplanation !== undefined) {
+      const result = GuidedExplanationV1Schema.safeParse(guidedExplanation)
+      if (!result.success) {
+        failures.push({
+          code: FAILURE_CODES.INVALID_GUIDED_EXPLANATION,
+          message: `HTML block at index ${blockIndex} guidedExplanation: ${result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')}`,
           blockIndex,
         })
       }
