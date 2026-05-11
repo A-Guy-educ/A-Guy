@@ -161,6 +161,11 @@ export const Lessons: CollectionConfig = {
       },
     ],
   },
+  // Hide Payload's built-in Duplicate action so admins can only use our
+  // custom modal button. The built-in does a dumb field-copy that bypasses
+  // the variation pipeline (so users were getting instant 44-exercise clones
+  // and thinking the AI flow was broken).
+  disableDuplicate: true,
   admin: {
     useAsTitle: 'title',
     listSearchableFields: ['chapter.course.courseLabel', 'chapter.course.title'],
