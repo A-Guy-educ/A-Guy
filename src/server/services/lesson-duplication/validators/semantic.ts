@@ -18,6 +18,31 @@ import {
 } from '@/infra/llm/providers/factory'
 import type { ContentBlock } from '@/server/payload/collections/Exercises/schemas'
 
+/** Match the variation service's per-call timeout so a stuck LLM can't pin a duplication record in `running`. */
+const SEMANTIC_LLM_TIMEOUT_MS = 60_000
+
+function withTimeout<T>(promise: Promise<T>, stage: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(
+      () =>
+        reject(
+          new Error(`Semantic validator ${stage} timed out after ${SEMANTIC_LLM_TIMEOUT_MS}ms`),
+        ),
+      SEMANTIC_LLM_TIMEOUT_MS,
+    )
+    promise.then(
+      (v) => {
+        clearTimeout(timer)
+        resolve(v)
+      },
+      (e) => {
+        clearTimeout(timer)
+        reject(e)
+      },
+    )
+  })
+}
+
 export const SEMANTIC_FAILURE_CODE = 'SEMANTIC_MISMATCH' as const
 
 export type SemanticValidationResult =
@@ -77,27 +102,44 @@ export async function validateExerciseSemantic(
     return { ok: true, reasons: [] }
   }
 
+  // Use the deterministic variation model (temp 0, gemini-3.1-pro) for the
+  // semantic review pass. Previously this used EXERCISE_CHAT (flash-lite) which
+  // gave a cheaper but weaker reviewer judging a much stronger generator.
   const provider = await getLLMProvider(payload)
   const providerType = await getProviderTypeFromEnv(payload)
-  const modelConfig = getProviderModelConfig(providerType, 'EXERCISE_CHAT')
+  const modelConfig = getProviderModelConfig(
+    providerType,
+    'LESSON_DUPLICATION_VARIATION_DETERMINISTIC',
+  )
 
   const contentJson = serializeBlocksForPrompt(blocks)
 
-  const result = await provider.generateChatCompletion(
-    {
-      system:
-        'You are a strict exercise quality reviewer. Return ONLY valid JSON matching the specified schema.',
-      messages: [
+  let result: { text: string }
+  try {
+    result = await withTimeout(
+      provider.generateChatCompletion(
         {
-          role: 'user',
-          content: `${SEMANTIC_PROMPT}${contentJson}`,
+          system:
+            'You are a strict exercise quality reviewer. Return ONLY valid JSON matching the specified schema.',
+          messages: [
+            {
+              role: 'user',
+              content: `${SEMANTIC_PROMPT}${contentJson}`,
+            },
+          ],
+          model: modelConfig,
+          acknowledgment: 'I will return only valid JSON.',
         },
-      ],
-      model: modelConfig,
-      acknowledgment: 'I will return only valid JSON.',
-    },
-    payload,
-  )
+        payload,
+      ),
+      'review',
+    )
+  } catch (err) {
+    return {
+      ok: false,
+      reasons: [err instanceof Error ? err.message : 'Semantic validator LLM call failed'],
+    }
+  }
 
   try {
     // Try to extract JSON from the response text (may be wrapped in markdown code fences)

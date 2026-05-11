@@ -40,132 +40,61 @@ export interface GenerateVariationInput {
   subject: DuplicationSubject
 }
 
+/**
+ * Per-LLM-call timeout. A stuck Gemini call would otherwise leave the
+ * duplication record in `running` indefinitely. 60s comfortably exceeds the
+ * p95 for Gemini 3.1 Pro with thinking budget at this prompt size.
+ */
+export const LLM_CALL_TIMEOUT_MS = 60_000
+
+class LlmCallTimeoutError extends Error {
+  readonly code = 'LLM_CALL_TIMEOUT'
+  constructor(stage: string) {
+    super(`LLM call timed out after ${LLM_CALL_TIMEOUT_MS}ms in ${stage}`)
+  }
+}
+
+/** Race a promise against a timer; throws LlmCallTimeoutError if the timer wins. */
+function withTimeout<T>(
+  promise: Promise<T>,
+  stage: string,
+  timeoutMs = LLM_CALL_TIMEOUT_MS,
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new LlmCallTimeoutError(stage)), timeoutMs)
+    promise.then(
+      (value) => {
+        clearTimeout(timer)
+        resolve(value)
+      },
+      (err) => {
+        clearTimeout(timer)
+        reject(err)
+      },
+    )
+  })
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Prompt Loading
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Inline fallbacks mirroring the content of the prompt markdown files.
-// Used when the external prompt files cannot be loaded (e.g., in serverless environments).
-const PROMPT_FALLBACKS: Record<Exclude<DuplicationLevel, 'none'>, string> = {
-  light: `# Lesson Duplication — Light Variation Agent
-
-You are an expert educational content variation generator specializing in light-level transformations.
-
-## Task
-
-Generate a light variation of the provided exercise. Light variation means: **numeric values only are changed**, while all phrasing, structure, sections, and SVG content are preserved exactly.
-
-## Rules
-
-1. **Same topic**: The exercise must cover the same mathematical or scientific concept.
-2. **Same difficulty**: Maintain the same complexity level and skill requirements.
-3. **Numeric values changed**: Replace all numeric values (numbers, coefficients, constants, parameters) with different values. The new values should be reasonable for the same problem context.
-4. **Phrasing preserved**: Keep all text, wording, and sentences exactly as-is.
-5. **Structure preserved**: Keep all blocks, sections, and layout exactly as-is.
-6. **SVG preserved**: Keep all SVG markup exactly as-is. Do not modify or regenerate SVG.
-7. **No unsolvable problems**: Ensure the variation still has a valid, correct answer.
-8. **No contradictions**: Question, hint, solution, and full_solution must all be consistent with each other.
-9. **NO PNG output**: Never produce or include any PNG image data. Only text and SVG are allowed.
-
-## Output Format
-
-Return a JSON object with the exercise content. The structure must match the input exercise shape — preserve all \`id\` fields, block order, and field names.
-
-\`\`\`json
-{
-  "content": {
-    "blocks": [ ... variation blocks ... ]
-  }
-}
-\`\`\`
-
-Return ONLY the JSON. No markdown fences, no explanation.`,
-  medium: `# Lesson Duplication — Medium Variation Agent
-
-You are an expert educational content variation generator specializing in medium-level transformations.
-
-## Task
-
-Generate a medium variation of the provided exercise. Medium variation means: **numeric values are changed AND phrasing is reworded** (synonyms, sentence restructuring), while structure and SVG content are preserved exactly.
-
-## Rules
-
-1. **Same topic**: The exercise must cover the same mathematical or scientific concept.
-2. **Same difficulty**: Maintain the same complexity level and skill requirements.
-3. **Numeric values changed**: Replace all numeric values (numbers, coefficients, constants, parameters) with different values. The new values should be reasonable for the same problem context.
-4. **Phrasing reworded**: Rewrite text using synonyms, different sentence structures, and alternative phrasings while preserving the exact meaning.
-5. **Structure preserved**: Keep all blocks, sections, and layout exactly as-is.
-6. **SVG preserved**: Keep all SVG markup exactly as-is. Do not modify or regenerate SVG.
-7. **No unsolvable problems**: Ensure the variation still has a valid, correct answer.
-8. **No contradictions**: Question, hint, solution, and full_solution must all be consistent with each other.
-9. **NO PNG output**: Never produce or include any PNG image data. Only text and SVG are allowed.
-
-## Output Format
-
-Return a JSON object with the exercise content. The structure must match the input exercise shape — preserve all \`id\` fields, block order, and field names.
-
-\`\`\`json
-{
-  "content": {
-    "blocks": [ ... variation blocks ... ]
-  }
-}
-\`\`\`
-
-Return ONLY the JSON. No markdown fences, no explanation.`,
-  deep: `# Lesson Duplication — Deep Variation Agent
-
-You are an expert educational content variation generator specializing in deep-level transformations.
-
-## Task
-
-Generate a deep variation of the provided exercise. Deep variation means: **numeric values, functions/expressions, and sections may be changed, added, or removed**. SVG may be regenerated as SVG (never produce PNG).
-
-## Rules
-
-1. **Same topic**: The exercise must cover the same mathematical or scientific concept.
-2. **Same difficulty**: Maintain the same complexity level and skill requirements.
-3. **Values changed**: Replace all numeric values (numbers, coefficients, constants, parameters) with different values. The new values should be reasonable for the same problem context.
-4. **Functions/expressions changed**: You may modify mathematical functions, expressions, and formulas while maintaining the same underlying concept.
-5. **Sections changed**: You may add, remove, or modify sections and blocks as needed to create a meaningful variation.
-6. **SVG may be regenerated as SVG**: If you modify or regenerate SVG, it must remain SVG (vector) format. Never produce PNG image data.
-7. **No unsolvable problems**: Ensure the variation still has a valid, correct answer.
-8. **No contradictions**: Question, hint, solution, and full_solution must all be consistent with each other.
-9. **NO PNG output**: Never produce or include any PNG image data. Only text and SVG are allowed.
-
-## Output Format
-
-Return a JSON object with the exercise content. The structure should match the input exercise shape — preserve all \`id\` fields where applicable, maintain block order where possible.
-
-\`\`\`json
-{
-  "content": {
-    "blocks": [ ... variation blocks ... ]
-  }
-}
-\`\`\`
-
-Return ONLY the JSON. No markdown fences, no explanation.`,
-}
-
-// Subject-specific clauses appended to base level prompts
-const SUBJECT_CLAUSES: Partial<Record<DuplicationSubject, string>> = {
-  geometry: `
-
-## Subject-specific rules: Geometry
-
-If the exercise contains question_geometry or question_axis blocks, you are generating a geometric exercise. Adhere to these rules:
-- For question_geometry blocks: treat the geometry specification as valid GeometrySpecV1 JSON with kind="euclidean", a canvas { width, height, background?, grid?, axis?, boundingBox? }, and an elements object containing: points, lines, circles, angles, vectors, areas, rectangles, triangles, texts, equalSegments, tangents.
-- For question_axis blocks: treat the axis/graph specification as valid AxisSpecV1 JSON.
-- Preserve shape relationships and topology. Only numeric coordinates, lengths, and angle values may be changed. Do not reorder, add, or remove named points, lines, or shapes.
-- All JSON output for geometry/axis blocks must be structurally valid: objects with the field names above. Do not truncate required array fields.`,
-  calculus: `
-
-## Subject-specific rules: Calculus
-
-For calculus exercises, you MUST re-derive the complete solution from first principles in full_solution. Show every step explicitly: identify the rule used (power rule, chain rule, product rule, quotient rule, u-substitution, integration by parts, L'Hôpital's rule, etc.), write each algebraic simplification step, and state the final answer. The full_solution must contain the full step-by-step derivation, not just the final answer. The solution and correct_option must match the newly derived answer, not the original.`,
-}
-
+// NOTE: a previous version of this file kept ~400 lines of inline prompt
+// fallbacks, used when the on-disk prompt files couldn't be read. That path
+// silently degraded output because the fallbacks pre-dated K7 (subject-aware)
+// and K12 (few-shot examples). We now fail loudly: if the file can't be read,
+// `loadSubjectPrompt` throws and the orchestrator records a per-exercise
+// failure (instead of producing a quietly weaker variation).
+//
+// Why this is safe: a missing prompt file is a deployment bug, not a runtime
+// condition we want to paper over. One failed exercise lands on the K6 review
+// screen with a clear "GENERATION_FAILED" code; the rest of the run is fine.
+/**
+ * Read the subject + level prompt from disk.
+ * Throws when the file is missing — better to fail one exercise with a clear
+ * code than to silently fall back to a stale generic prompt and degrade output
+ * quality across the entire duplication run.
+ */
 function loadSubjectPrompt(
   subject: DuplicationSubject,
   level: Exclude<DuplicationLevel, 'none'>,
@@ -180,25 +109,12 @@ function loadSubjectPrompt(
   try {
     return readFileSync(filePath, 'utf-8')
   } catch (error: unknown) {
-    logger.warn(
-      { err: error, path: filePath },
-      `[LessonDuplicationVariation] Failed to load subject prompt file for ${subject}-${level}, using inline fallback`,
+    logger.error(
+      { err: error, path: filePath, subject, level },
+      '[LessonDuplicationVariation] Prompt file missing — refusing to use stale fallback',
     )
-    return PROMPT_FALLBACKS[level] + (SUBJECT_CLAUSES[subject] ?? '')
+    throw new Error(`Missing prompt file for subject=${subject} level=${level} at ${filePath}`)
   }
-}
-
-function getPromptForSubject(
-  subject: DuplicationSubject,
-  level: Exclude<DuplicationLevel, 'none'>,
-): string {
-  const basePrompt = loadSubjectPrompt(subject, level)
-  // If the loaded prompt already contains subject-specific content, don't append again
-  if (basePrompt !== PROMPT_FALLBACKS[level]) {
-    return basePrompt
-  }
-  // Append subject clause to inline fallback
-  return basePrompt + (SUBJECT_CLAUSES[subject] ?? '')
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -225,7 +141,7 @@ export async function generateVariation(
   const startTime = Date.now()
 
   // Pass 1 — Creative (question + hint + phrasing)
-  const creativePrompt = getPromptForSubject(subject, level)
+  const creativePrompt = loadSubjectPrompt(subject, level)
   const creativeUserPrompt = buildUserPrompt(exercise)
 
   let creativeRetryCount = 0
@@ -237,14 +153,17 @@ export async function generateVariation(
       const adapter = await createGenkitUnifiedAdapter(payload)
       const creativeConfig = resolveModelConfig('LESSON_DUPLICATION_VARIATION_CREATIVE')
 
-      const result = await adapter.generateChatCompletion(
-        {
-          system: creativePrompt,
-          messages: [{ role: 'user', content: creativeUserPrompt }],
-          model: creativeConfig,
-          acknowledgment: `Generating ${level} variation for exercise`,
-        },
-        payload,
+      const result = await withTimeout(
+        adapter.generateChatCompletion(
+          {
+            system: creativePrompt,
+            messages: [{ role: 'user', content: creativeUserPrompt }],
+            model: creativeConfig,
+            acknowledgment: `Generating ${level} variation for exercise`,
+          },
+          payload,
+        ),
+        'pass-1-creative',
       )
 
       pass1Output = parseVariationResponse(result.text)
@@ -292,14 +211,17 @@ export async function generateVariation(
       const adapter = await createGenkitUnifiedAdapter(payload)
       const deterministicConfig = resolveModelConfig('LESSON_DUPLICATION_VARIATION_DETERMINISTIC')
 
-      const result = await adapter.generateChatCompletion(
-        {
-          system: derivationPrompt,
-          messages: [{ role: 'user', content: '' }],
-          model: deterministicConfig,
-          acknowledgment: 'Deriving solution for exercise variation',
-        },
-        payload,
+      const result = await withTimeout(
+        adapter.generateChatCompletion(
+          {
+            system: derivationPrompt,
+            messages: [{ role: 'user', content: '' }],
+            model: deterministicConfig,
+            acknowledgment: 'Deriving solution for exercise variation',
+          },
+          payload,
+        ),
+        'pass-2-deterministic',
       )
 
       pass2Patch = parseSolutionDerivationResponse(result.text)
@@ -417,12 +339,20 @@ function parseSolutionDerivationResponse(text: string): Pass2Patch {
 function mergePassOutputs(pass1Output: Partial<Exercise>, pass2Patch: Pass2Patch): unknown[] {
   const pass1Blocks = (pass1Output.content as { blocks: unknown[] } | undefined)?.blocks ?? []
 
-  // For each block in pass1Output, overlay pass2 solution fields
+  // Only question blocks own the solution/answer fields. Applying pass-2's
+  // solution/fullSolution to non-question blocks (rich_text, svg, latex, …)
+  // would attach fields the block schemas don't allow, breaking Zod strict
+  // mode and confusing downstream renderers.
+  const isQuestionBlock = (type: unknown): boolean =>
+    typeof type === 'string' && type.startsWith('question_')
+
   return pass1Blocks.map((block: unknown) => {
     const b = block as Record<string, unknown>
-    const result: Record<string, unknown> = { ...b }
+    if (!isQuestionBlock(b.type)) {
+      return b
+    }
 
-    // Pass-2 overwrites solution fields if provided
+    const result: Record<string, unknown> = { ...b }
     if (pass2Patch.solution !== undefined) {
       result.solution = pass2Patch.solution
     }
@@ -430,11 +360,12 @@ function mergePassOutputs(pass1Output: Partial<Exercise>, pass2Patch: Pass2Patch
       result.fullSolution = pass2Patch.fullSolution
     }
     if (pass2Patch.answer?.correctOptionIds !== undefined) {
-      if (!result.answer) result.answer = {}
-      ;(result.answer as Record<string, unknown>).correctOptionIds =
-        pass2Patch.answer.correctOptionIds
+      const existingAnswer = (result.answer as Record<string, unknown> | undefined) ?? {}
+      result.answer = {
+        ...existingAnswer,
+        correctOptionIds: pass2Patch.answer.correctOptionIds,
+      }
     }
-
     return result
   })
 }

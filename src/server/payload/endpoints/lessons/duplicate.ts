@@ -210,6 +210,27 @@ export async function duplicateLessonEndpoint(req: PayloadRequest): Promise<Resp
     }
   }
 
-  // 8) For light/medium/deep, leave pending — return immediately
+  // 8) For light/medium/deep, enqueue the orchestrator job and return immediately.
+  //    Without this, the record sits in `pending` forever.
+  try {
+    await req.payload.jobs.queue({
+      task: 'lesson_duplication',
+      input: { duplicationId: record.id },
+      req,
+    })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    await req.payload.update({
+      collection: 'lesson-duplications',
+      id: record.id,
+      data: { status: 'failed' } as never,
+      overrideAccess: true,
+      req,
+    })
+    return Response.json(
+      { error: `Failed to enqueue duplication job: ${message}`, id: record.id },
+      { status: 500 },
+    )
+  }
   return Response.json({ id: record.id, status: 'pending' })
 }

@@ -150,7 +150,14 @@ interface OutputExerciseMapping {
 }
 
 /**
- * Create the output lesson (draft) linked to the same chapter/course as the source.
+ * Create the output lesson (draft) by deep-copying every source-lesson field.
+ *
+ * Earlier versions only copied title/slug/status/chapter/course/tenant/locale,
+ * which dropped fields like accessType, visibleRenderers, blocks, contentStatus,
+ * and any custom flags the source lesson had. This caused variation outputs to
+ * be thinner than what the `none` endpoint produces. We now mirror the
+ * deep-clone behaviour of the `none` path so both routes produce equivalent
+ * lessons modulo the title suffix and a forced `draft` status.
  */
 async function createOutputLesson(
   payload: Payload,
@@ -163,18 +170,29 @@ async function createOutputLesson(
     depth: 0,
     overrideAccess: true,
   })
-  const src = source as unknown as Record<string, unknown>
-  const base = (src.title as string) ?? 'Lesson'
+  const sourceData = source as unknown as Record<string, unknown>
+  // Drop Payload-managed fields; the rest carries over.
+  const {
+    id: _id,
+    createdAt: _c,
+    updatedAt: _u,
+    ...rest
+  } = sourceData as Record<string, unknown> & {
+    id?: unknown
+    createdAt?: unknown
+    updatedAt?: unknown
+  }
+  void _id
+  void _c
+  void _u
+  const base = (rest.title as string) ?? 'Lesson'
   const newLesson = await payload.create({
     collection: 'lessons',
     data: {
+      ...rest,
       title: `${base} - Variation (${level})`,
-      slug: undefined,
-      status: 'draft',
-      chapter: src.chapter,
-      course: src.course,
-      tenant: src.tenant,
-      locale: src.locale ?? 'he',
+      slug: undefined, // let the Lessons beforeChange hook regenerate a unique slug
+      status: 'draft', // never publish a duplicate by default
     } as never,
     overrideAccess: true,
   })
