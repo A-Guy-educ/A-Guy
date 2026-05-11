@@ -401,6 +401,7 @@ export async function GET(req: Request) {
   }
   for (const stat of statsWithTime) {
     for (const entry of stat.activityLog || []) {
+      if (!entry || typeof entry !== 'object') continue
       switch (entry.actionType) {
         case 'question_asked':
           featureUsage.questionsAsked++
