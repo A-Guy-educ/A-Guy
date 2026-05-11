@@ -6,6 +6,7 @@
  * @pattern review-list
  * @ai-summary Admin review UI for lesson duplication failures. Lets admin skip, regenerate, or keep each failed exercise.
  */
+// smoke-test: prOutcome + flake-retry exercise (v0.4.38)
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
