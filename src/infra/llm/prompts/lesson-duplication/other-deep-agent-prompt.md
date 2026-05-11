@@ -30,4 +30,406 @@ Return a JSON object with the exercise content. The structure should match the i
 }
 ```
 
+## Examples
+
+Each example below demonstrates the input exercise JSON and the expected output variation JSON for deep non-math exercise transformations.
+
+**Example 1 — Input:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_select",
+        "variant": "mcq",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Which planet is known as the Red Planet?",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "a",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Venus",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "b",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Mars",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "c",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Jupiter",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "d",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Saturn",
+              "mediaIds": []
+            }
+          }
+        ],
+        "answer": { "selected": ["b"] }
+      }
+    ]
+  }
+}
+```
+
+**Example 1 — Output:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_select",
+        "variant": "mcq",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Which celestial body in our solar system is distinguished by its reddish appearance?",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "a",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Venus",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "b",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Mars",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "c",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Jupiter",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "d",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Saturn",
+              "mediaIds": []
+            }
+          }
+        ],
+        "answer": { "selected": ["b"] }
+      }
+    ]
+  }
+}
+```
+
+**Example 2 — Input:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_matching",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Match each scientific discovery with its discoverer:",
+          "mediaIds": []
+        },
+        "leftColumn": [
+          {
+            "id": "l1",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Theory of Relativity",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "l2",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Gravity",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "l3",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Penicillin",
+              "mediaIds": []
+            }
+          }
+        ],
+        "rightColumn": [
+          {
+            "id": "r1",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Einstein",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "r2",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Newton",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "r3",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Fleming",
+              "mediaIds": []
+            }
+          }
+        ],
+        "correctPairs": [
+          { "leftId": "l1", "rightId": "r1" },
+          { "leftId": "l2", "rightId": "r2" },
+          { "leftId": "l3", "rightId": "r3" }
+        ],
+        "shuffleRightColumn": true
+      }
+    ]
+  }
+}
+```
+
+**Example 2 — Output:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_matching",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Link each groundbreaking scientific breakthrough to its originator:",
+          "mediaIds": []
+        },
+        "leftColumn": [
+          {
+            "id": "l1",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Theory of Relativity",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "l2",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Gravity",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "l3",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Penicillin",
+              "mediaIds": []
+            }
+          }
+        ],
+        "rightColumn": [
+          {
+            "id": "r1",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Einstein",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "r2",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Newton",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "r3",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Fleming",
+              "mediaIds": []
+            }
+          }
+        ],
+        "correctPairs": [
+          { "leftId": "l1", "rightId": "r1" },
+          { "leftId": "l2", "rightId": "r2" },
+          { "leftId": "l3", "rightId": "r3" }
+        ],
+        "shuffleRightColumn": true
+      }
+    ]
+  }
+}
+```
+
+**Example 3 — Input:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_select",
+        "variant": "true_false",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "The Amazon River is the longest river in the world.",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "true",
+            "value": true,
+            "label": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "True",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "false",
+            "value": false,
+            "label": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "False",
+              "mediaIds": []
+            }
+          }
+        ],
+        "answer": { "selected": ["false"] },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "False. The Nile River is generally considered the longest at approximately 6,650 km.",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 3 — Output:**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_select",
+        "variant": "true_false",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "The Amazon holds the record as the world's longest waterway.",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "true",
+            "value": true,
+            "label": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "True",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "false",
+            "value": false,
+            "label": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "False",
+              "mediaIds": []
+            }
+          }
+        ],
+        "answer": { "selected": ["false"] },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "False. The Nile River is generally considered the longest at approximately 6,650 km.",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
 Return ONLY the JSON. No markdown fences, no explanation.
