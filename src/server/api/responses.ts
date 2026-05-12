@@ -10,6 +10,9 @@ export type ApiErrorCode =
   // Validation errors
   | 'VALIDATION_ERROR'
   | 'MISSING_REQUIRED_FIELD'
+  | 'BAD_REQUEST'
+  | 'CONFLICT'
+  | 'UNPROCESSABLE_ENTITY'
   // Resource errors
   | 'NOT_FOUND'
   | 'LESSON_NOT_FOUND'
@@ -69,6 +72,10 @@ export const ApiErrors = {
   unauthorized: (message = 'Authentication required') => apiError('UNAUTHORIZED', message, 401),
   forbidden: (message = 'Access denied') => apiError('FORBIDDEN', message, 403),
   notFound: (resource: string) => apiError('NOT_FOUND', `${resource} not found`, 404),
+  badRequest: (message = 'Bad request') => apiError('BAD_REQUEST', message, 400),
+  conflict: (message = 'Conflict') => apiError('CONFLICT', message, 409),
+  unprocessable: (message = 'Unprocessable entity') =>
+    apiError('UNPROCESSABLE_ENTITY', message, 422),
   internal: (message = 'Internal server error') => apiError('INTERNAL_ERROR', message, 500),
   rateLimited: (retryAfter?: string) => {
     const response = apiError('RATE_LIMITED', 'Rate limit exceeded. Please try again later.', 429)

@@ -1,13 +1,36 @@
 import react from '@vitejs/plugin-react'
 import { config as loadEnv } from 'dotenv'
+import { readFileSync } from 'node:fs'
+import type { Plugin } from 'vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import { defineConfig } from 'vitest/config'
 
 loadEnv({ path: '.env' })
 loadEnv({ path: '.env.test', override: true })
 
+/**
+ * Match the Next.js webpack rule `{ test: /\.md$/, type: 'asset/source' }`
+ * (see next.config.js) so source files that `import x from './foo.md'` work
+ * the same way in integration tests as they do in production.
+ */
+function rawMarkdownPlugin(): Plugin {
+  return {
+    name: 'raw-markdown',
+    enforce: 'pre',
+    transform(_code, id) {
+      if (!id.endsWith('.md')) return null
+      const cleanPath = id.split('?')[0]
+      const raw = readFileSync(cleanPath, 'utf-8')
+      return {
+        code: `export default ${JSON.stringify(raw)};`,
+        map: null,
+      }
+    },
+  }
+}
+
 export default defineConfig({
-  plugins: [tsconfigPaths(), react()],
+  plugins: [tsconfigPaths(), react(), rawMarkdownPlugin()],
   test: {
     fileParallelism: false, // Run test files sequentially to avoid exhausting MongoDB connection pool
     pool: 'forks', // Use forks pool for better isolation
