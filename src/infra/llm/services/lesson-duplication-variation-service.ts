@@ -13,30 +13,12 @@
  * One bad exercise must not sink the whole duplication run — invalid JSON gets one retry,
  * then the exercise is marked failed and the loop continues.
  */
+import { readFileSync } from 'fs'
+import { join } from 'path'
 import type { Payload } from 'payload'
 import type { Exercise } from '@/payload-types'
 import type { DuplicationLevel } from '@/server/payload/collections/LessonDuplications'
 import type { AIModel, AIModelKey } from '../models'
-
-// Inline the per-subject/level prompt markdown at build time via Next.js's
-// `asset/source` webpack loader (configured in next.config.js). This avoids
-// the readFileSync + __dirname dance that broke on Vercel — Next.js doesn't
-// reliably preserve relative paths in serverless bundles.
-import algebraLight from '../prompts/lesson-duplication/algebra-light-agent-prompt.md'
-import algebraMedium from '../prompts/lesson-duplication/algebra-medium-agent-prompt.md'
-import algebraDeep from '../prompts/lesson-duplication/algebra-deep-agent-prompt.md'
-import geometryLight from '../prompts/lesson-duplication/geometry-light-agent-prompt.md'
-import geometryMedium from '../prompts/lesson-duplication/geometry-medium-agent-prompt.md'
-import geometryDeep from '../prompts/lesson-duplication/geometry-deep-agent-prompt.md'
-import calculusLight from '../prompts/lesson-duplication/calculus-light-agent-prompt.md'
-import calculusMedium from '../prompts/lesson-duplication/calculus-medium-agent-prompt.md'
-import calculusDeep from '../prompts/lesson-duplication/calculus-deep-agent-prompt.md'
-import mixedLight from '../prompts/lesson-duplication/mixed-light-agent-prompt.md'
-import mixedMedium from '../prompts/lesson-duplication/mixed-medium-agent-prompt.md'
-import mixedDeep from '../prompts/lesson-duplication/mixed-deep-agent-prompt.md'
-import otherLight from '../prompts/lesson-duplication/other-light-agent-prompt.md'
-import otherMedium from '../prompts/lesson-duplication/other-medium-agent-prompt.md'
-import otherDeep from '../prompts/lesson-duplication/other-deep-agent-prompt.md'
 
 import { getModelRegistryEntry, getProviderModelName } from '../models'
 import { LLMProviderType } from '../providers/types'
@@ -59,10 +41,11 @@ export interface GenerateVariationInput {
 
 /**
  * Per-LLM-call timeout. A stuck Gemini call would otherwise leave the
- * duplication record in `running` indefinitely. 60s comfortably exceeds the
- * p95 for Gemini 3.1 Pro with thinking budget at this prompt size.
+ * duplication record in `running` indefinitely. 180s leaves headroom for
+ * gemini-2.5-pro with thinking budget at this prompt size — early runs at
+ * 60s timed out on complex calculus exercises before the model returned.
  */
-export const LLM_CALL_TIMEOUT_MS = 60_000
+export const LLM_CALL_TIMEOUT_MS = 180_000
 
 class LlmCallTimeoutError extends Error {
   readonly code = 'LLM_CALL_TIMEOUT'
@@ -107,35 +90,38 @@ function withTimeout<T>(
 // condition we want to paper over. One failed exercise lands on the K6 review
 // screen with a clear "GENERATION_FAILED" code; the rest of the run is fine.
 /**
- * Lookup table of build-time-inlined prompts. Adding a new subject or level
- * requires adding the import above + an entry here.
- */
-const PROMPTS: Record<DuplicationSubject, Record<Exclude<DuplicationLevel, 'none'>, string>> = {
-  algebra: { light: algebraLight, medium: algebraMedium, deep: algebraDeep },
-  geometry: { light: geometryLight, medium: geometryMedium, deep: geometryDeep },
-  calculus: { light: calculusLight, medium: calculusMedium, deep: calculusDeep },
-  mixed: { light: mixedLight, medium: mixedMedium, deep: mixedDeep },
-  other: { light: otherLight, medium: otherMedium, deep: otherDeep },
-}
-
-/**
- * Return the inlined prompt for the requested subject + level. Throws if the
- * import resolved to something falsy (would only happen if a prompt .md file
- * is missing from the repo at build time — caught by typecheck).
+ * Read the subject+level prompt from disk. Path is resolved relative to
+ * `process.cwd()` (= project root locally, `/var/task` on Vercel).
+ *
+ * For Vercel: `next.config.js` declares `outputFileTracingIncludes` for the
+ * routes that may invoke this service, so the .md files ship next to the
+ * serverless function bundle. Earlier `__dirname/..` resolution broke on
+ * Vercel because chunks land in `.next/server/chunks/` rather than next to
+ * the source folder; `process.cwd()` is stable across both environments.
  */
 function loadSubjectPrompt(
   subject: DuplicationSubject,
   level: Exclude<DuplicationLevel, 'none'>,
 ): string {
-  const prompt = PROMPTS[subject]?.[level]
-  if (!prompt || prompt.trim().length === 0) {
-    logger.error(
-      { subject, level },
-      '[LessonDuplicationVariation] Prompt missing from inlined table',
-    )
-    throw new Error(`Missing prompt for subject=${subject} level=${level}`)
+  const filename = `${subject}-${level}-agent-prompt.md`
+  const candidates = [
+    join(process.cwd(), 'src/infra/llm/prompts/lesson-duplication', filename),
+    // Vercel may unpack into /var/task root rather than under src/
+    join(process.cwd(), 'infra/llm/prompts/lesson-duplication', filename),
+  ]
+  for (const candidate of candidates) {
+    try {
+      const text = readFileSync(candidate, 'utf-8')
+      if (text.trim().length > 0) return text
+    } catch {
+      // try next candidate
+    }
   }
-  return prompt
+  logger.error(
+    { subject, level, candidates },
+    '[LessonDuplicationVariation] Prompt file not found in any candidate path',
+  )
+  throw new Error(`Missing prompt for subject=${subject} level=${level}`)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

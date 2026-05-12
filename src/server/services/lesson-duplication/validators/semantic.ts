@@ -19,7 +19,7 @@ import {
 import type { ContentBlock } from '@/server/payload/collections/Exercises/schemas'
 
 /** Match the variation service's per-call timeout so a stuck LLM can't pin a duplication record in `running`. */
-const SEMANTIC_LLM_TIMEOUT_MS = 60_000
+const SEMANTIC_LLM_TIMEOUT_MS = 180_000
 
 function withTimeout<T>(promise: Promise<T>, stage: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {
