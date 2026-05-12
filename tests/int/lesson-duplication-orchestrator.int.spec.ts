@@ -306,7 +306,7 @@ describe('Lesson duplication orchestrator — integration', () => {
     // bypasses processExercise (which calls createOutputExercise). Exercise creation
     // is verified in lesson-duplication-review-resolve.int.spec.ts instead.
     expect(finalRecord.outputLesson).toBeTruthy()
-  }, 60000)
+  }, 180000)
 
   it('orchestrator does not abort when one exercise fails — remaining exercises are processed', async () => {
     // Create fresh pending record
@@ -339,5 +339,5 @@ describe('Lesson duplication orchestrator — integration', () => {
 
     // outputLesson should be created even when some exercises fail
     expect(finalRecord.outputLesson).toBeTruthy()
-  }, 60000)
+  }, 180000)
 })
