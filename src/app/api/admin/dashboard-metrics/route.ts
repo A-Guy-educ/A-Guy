@@ -56,6 +56,8 @@ export function extractCourseId(course: unknown): string | null {
 interface UserMetrics {
   activeUsersToday: number
   activeUsersYesterday: number
+  activeUsersLastWeek: number
+  activeUsersLastMonth: number
   registeredYesterday: number
   registeredThisWeek: number
   registeredLastWeek: number
@@ -63,7 +65,15 @@ interface UserMetrics {
   registeredLastMonth: number
   totalUsers: number
   totalGuestSessions: number
+  guestSessionsToday: number
+  guestSessionsLastWeek: number
+  guestSessionsLastMonth: number
   guestToRegisteredCount: number
+  guestToRegisteredPercentage: number
+  returnedOnceCount: number
+  returnedOncePercentage: number
+  returnedMultipleCount: number
+  returnedMultiplePercentage: number
   returningUsers: number
   returningUsersTotal: number
 }
@@ -212,6 +222,8 @@ export async function GET(req: Request) {
   const [
     activeToday,
     activeYesterday,
+    activeLastWeek,
+    activeLastMonth,
     registeredYesterday,
     registeredThisWeek,
     registeredLastWeek,
@@ -219,6 +231,9 @@ export async function GET(req: Request) {
     registeredLastMonth,
     totalUsersResult,
     totalGuestsResult,
+    guestsToday,
+    guestsLastWeek,
+    guestsLastMonth,
     guestClaimedResult,
     coursesCount,
     lessonsCount,
@@ -244,6 +259,30 @@ export async function GET(req: Request) {
     payload.find({
       collection: 'user-stats',
       where: { lastActiveDate: { equals: yesterdayStr } },
+      limit: 0,
+      overrideAccess: true,
+    }),
+    // Active users last week (within last 7 days, excluding today)
+    payload.find({
+      collection: 'user-stats',
+      where: {
+        lastActiveDate: {
+          greater_than_equal: lastWeekStart.toISOString().split('T')[0],
+          less_than: thisWeekStart.toISOString().split('T')[0],
+        },
+      },
+      limit: 0,
+      overrideAccess: true,
+    }),
+    // Active users last month (within last 30 days, excluding last week)
+    payload.find({
+      collection: 'user-stats',
+      where: {
+        lastActiveDate: {
+          greater_than_equal: lastMonthStart.toISOString().split('T')[0],
+          less_than: lastWeekStart.toISOString().split('T')[0],
+        },
+      },
       limit: 0,
       overrideAccess: true,
     }),
@@ -297,6 +336,39 @@ export async function GET(req: Request) {
     payload.find({ collection: 'users', limit: 0, overrideAccess: true }),
     // Total guest sessions
     payload.find({ collection: 'guest-sessions', limit: 0, overrideAccess: true }),
+    // Guest sessions today
+    payload.find({
+      collection: 'guest-sessions',
+      where: {
+        createdAt: { greater_than_equal: todayStart.toISOString() },
+      },
+      limit: 0,
+      overrideAccess: true,
+    }),
+    // Guest sessions last week
+    payload.find({
+      collection: 'guest-sessions',
+      where: {
+        createdAt: {
+          greater_than_equal: lastWeekStart.toISOString(),
+          less_than: thisWeekStart.toISOString(),
+        },
+      },
+      limit: 0,
+      overrideAccess: true,
+    }),
+    // Guest sessions last month
+    payload.find({
+      collection: 'guest-sessions',
+      where: {
+        createdAt: {
+          greater_than_equal: lastMonthStart.toISOString(),
+          less_than: lastWeekStart.toISOString(),
+        },
+      },
+      limit: 0,
+      overrideAccess: true,
+    }),
     // Guests that converted
     payload.find({
       collection: 'guest-sessions',
@@ -311,7 +383,14 @@ export async function GET(req: Request) {
     payload.find({ collection: 'formula-sheets', limit: 0, overrideAccess: true }),
     payload.find({ collection: 'prompts', limit: 0, overrideAccess: true }),
     // Engagement: user-stats with time data — paginated to avoid truncation
-    findAll<{ totalTimeSpentSeconds?: number; activityLog?: Array<{ actionType?: string }> }>(
+    // Also fetches createdAt (firstActiveDate proxy via Payload timestamps), lastActiveDate, returnCount for returned users calculation
+    findAll<{
+      totalTimeSpentSeconds?: number
+      activityLog?: Array<{ actionType?: string }>
+      createdAt?: string
+      lastActiveDate?: string
+      returnCount?: number
+    }>(
       (page) =>
         payload.find({
           collection: 'user-stats',
@@ -319,9 +398,21 @@ export async function GET(req: Request) {
           limit: 500,
           page,
           overrideAccess: true,
-          select: { totalTimeSpentSeconds: true, activityLog: true },
+          select: {
+            totalTimeSpentSeconds: true,
+            activityLog: true,
+            createdAt: true,
+            lastActiveDate: true,
+            returnCount: true,
+          },
         }) as Promise<{
-          docs: { totalTimeSpentSeconds?: number; activityLog?: Array<{ actionType?: string }> }[]
+          docs: {
+            totalTimeSpentSeconds?: number
+            activityLog?: Array<{ actionType?: string }>
+            createdAt?: string
+            lastActiveDate?: string
+            returnCount?: number
+          }[]
           hasNextPage: boolean
           totalPages: number
         }>,
@@ -390,6 +481,35 @@ export async function GET(req: Request) {
   const totalSeconds = statsWithTime.reduce((sum, s) => sum + (s.totalTimeSpentSeconds || 0), 0)
   const avgTimeMinutes =
     statsWithTime.length > 0 ? Math.round(totalSeconds / statsWithTime.length / 60) : 0
+
+  // Calculate guest → registered percentage (capped at 0-100)
+  const guestToRegisteredPercentage = Math.min(
+    100,
+    Math.max(
+      0,
+      totalGuestsResult.totalDocs > 0
+        ? (guestClaimedResult.totalDocs / totalGuestsResult.totalDocs) * 100
+        : 0,
+    ),
+  )
+
+  // Calculate returned users metrics
+  // ReturnedOnceCount: users who returned at least once (createdAt < lastActiveDate)
+  // ReturnedMultipleCount: users who returned more than twice (returnCount > 2)
+  // Uses allUserStats which includes createdAt (firstActiveDate proxy), lastActiveDate, returnCount
+  const returnedOnceCount = allUserStats.filter(
+    (s) => s.createdAt && s.lastActiveDate && s.createdAt < s.lastActiveDate,
+  ).length
+  const returnedMultipleCount = allUserStats.filter((s) => (s.returnCount || 0) > 2).length
+  const totalUsers = totalUsersResult.totalDocs
+  const returnedOncePercentage = Math.min(
+    100,
+    Math.max(0, totalUsers > 0 ? (returnedOnceCount / totalUsers) * 100 : 0),
+  )
+  const returnedMultiplePercentage = Math.min(
+    100,
+    Math.max(0, totalUsers > 0 ? (returnedMultipleCount / totalUsers) * 100 : 0),
+  )
 
   // Aggregate feature usage from activityLog
   const featureUsage = {
@@ -488,6 +608,8 @@ export async function GET(req: Request) {
     userMetrics: {
       activeUsersToday: activeToday.totalDocs,
       activeUsersYesterday: activeYesterday.totalDocs,
+      activeUsersLastWeek: activeLastWeek.totalDocs,
+      activeUsersLastMonth: activeLastMonth.totalDocs,
       registeredYesterday: registeredYesterday.totalDocs,
       registeredThisWeek: registeredThisWeek.totalDocs,
       registeredLastWeek: registeredLastWeek.totalDocs,
@@ -495,7 +617,15 @@ export async function GET(req: Request) {
       registeredLastMonth: registeredLastMonth.totalDocs,
       totalUsers: totalUsersResult.totalDocs,
       totalGuestSessions: totalGuestsResult.totalDocs,
+      guestSessionsToday: guestsToday.totalDocs,
+      guestSessionsLastWeek: guestsLastWeek.totalDocs,
+      guestSessionsLastMonth: guestsLastMonth.totalDocs,
       guestToRegisteredCount: guestClaimedResult.totalDocs,
+      guestToRegisteredPercentage: Math.round(guestToRegisteredPercentage * 10) / 10,
+      returnedOnceCount,
+      returnedOncePercentage: Math.round(returnedOncePercentage * 10) / 10,
+      returnedMultipleCount,
+      returnedMultiplePercentage: Math.round(returnedMultiplePercentage * 10) / 10,
       returningUsers: returningUsersResult.totalDocs,
       returningUsersTotal: totalUsersInPeriod.totalDocs,
     },
