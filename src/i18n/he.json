@@ -712,5 +712,51 @@
       "practice": "תרגול",
       "exam": "בחינה"
     }
+  },
+  "payment": {
+    "checkout": {
+      "title": "השלם רכישה",
+      "description": "אתה עומד לרכוש גישה לקורס זה.",
+      "button": "המשך לתשלום"
+    },
+    "success": {
+      "title": "התשלום הושלם!",
+      "message": "תודה על הרכישה. הגישה שלך הופעלה.",
+      "orderId": "מספר הזמנה"
+    },
+    "failure": {
+      "title": "התשלום נכשל",
+      "message": "התשלום לא הושלם. אנא נסה שוב או פנה לתמיכה."
+    },
+    "cancel": {
+      "title": "התשלום בוטל",
+      "message": "התשלום בוטל ולא חויבת."
+    },
+    "admin": {
+      "dashboard": {
+        "title": "תשלומים"
+      },
+      "stats": {
+        "completedTransactions": "הושלמו",
+        "failedTransactions": "נכשלו",
+        "refundedTransactions": "מוחזרים",
+        "activeSubscriptions": "מנויים פעילים"
+      },
+      "revenue": {
+        "title": "הכנסות",
+        "subtitle": "סה״כ הכנסות"
+      },
+      "subscriptions": {
+        "active": "פעילים",
+        "churnRate": "שיעור נטישה"
+      },
+      "transactions": {
+        "recent": "עסקאות אחרונות",
+        "customer": "לקוח",
+        "amount": "סכום",
+        "status": "סטטוס",
+        "date": "תאריך"
+      }
+    }
   }
 }

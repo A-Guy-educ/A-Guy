@@ -49,6 +49,10 @@ export const PricingPlans: CollectionConfig = {
           value: 'stripe',
         },
         {
+          label: 'Tranzila',
+          value: 'tranzila',
+        },
+        {
           label: 'Manual',
           value: 'manual',
         },
@@ -70,6 +74,43 @@ export const PricingPlans: CollectionConfig = {
           return 'Provider plan ID is required for PayPal and Stripe'
         }
         return true
+      },
+    },
+    {
+      name: 'tranzilaProductId',
+      type: 'text',
+      admin: {
+        description: "Tranzila's product identifier for hosted payment",
+        condition: (data) => data?.provider === 'tranzila',
+      },
+    },
+    // Quota fields
+    {
+      name: 'quotaChatMessages',
+      type: 'number',
+      admin: {
+        description: 'Max chat messages per billing period (null = unlimited)',
+      },
+    },
+    {
+      name: 'quotaVideoGenerations',
+      type: 'number',
+      admin: {
+        description: 'Max video generations per billing period (null = unlimited)',
+      },
+    },
+    {
+      name: 'quotaExamCreations',
+      type: 'number',
+      admin: {
+        description: 'Max exam creations per billing period (null = unlimited)',
+      },
+    },
+    {
+      name: 'entitlementDurationDays',
+      type: 'number',
+      admin: {
+        description: 'For one-time purchases: days until entitlement expires (null = never)',
       },
     },
     {

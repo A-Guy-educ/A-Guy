@@ -150,6 +150,14 @@ export const Users: CollectionConfig = {
           defaultValue: () => new Date().toISOString(),
           admin: { readOnly: true },
         },
+        {
+          name: 'expiresAt',
+          type: 'date',
+          admin: {
+            readOnly: true,
+            description: 'When this entitlement expires (null = never)',
+          },
+        },
       ],
     },
     // Chat quota fields (rolling window)
@@ -168,6 +176,76 @@ export const Users: CollectionConfig = {
       admin: {
         position: 'sidebar',
         description: 'When the current chat quota window started',
+      },
+    },
+    // Subscription fields
+    {
+      name: 'subscriptionStatus',
+      type: 'select',
+      options: [
+        { label: 'None', value: 'none' },
+        { label: 'Active', value: 'active' },
+        { label: 'Expired', value: 'expired' },
+        { label: 'Cancelled', value: 'cancelled' },
+        { label: 'Failed', value: 'failed' },
+      ],
+      defaultValue: 'none',
+      admin: {
+        position: 'sidebar',
+        description: 'Current subscription status',
+      },
+    },
+    {
+      name: 'currentPeriodEnd',
+      type: 'date',
+      admin: {
+        position: 'sidebar',
+        description: 'When current billing period ends',
+      },
+    },
+    {
+      name: 'cancelAtPeriodEnd',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        position: 'sidebar',
+        description: 'User chose to cancel; access continues until period end',
+      },
+    },
+    // Video generations quota (rolling window)
+    {
+      name: 'videoGenerationsUsed',
+      type: 'number',
+      defaultValue: 0,
+      admin: {
+        position: 'sidebar',
+        description: 'Video generations used in current window',
+      },
+    },
+    {
+      name: 'videoGenerationsWindowStart',
+      type: 'date',
+      admin: {
+        position: 'sidebar',
+        description: 'When the current video quota window started',
+      },
+    },
+    // Exam creations quota (rolling window)
+    {
+      name: 'examCreationsUsed',
+      type: 'number',
+      defaultValue: 0,
+      admin: {
+        position: 'sidebar',
+        description: 'Exam creations used in current window',
+      },
+    },
+    {
+      name: 'examCreationsWindowStart',
+      type: 'date',
+      admin: {
+        position: 'sidebar',
+        description: 'When the current exam quota window started',
       },
     },
     {

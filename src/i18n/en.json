@@ -712,5 +712,51 @@
       "practice": "Practice",
       "exam": "Exam"
     }
+  },
+  "payment": {
+    "checkout": {
+      "title": "Complete Purchase",
+      "description": "You are about to purchase access to this course.",
+      "button": "Continue to Payment"
+    },
+    "success": {
+      "title": "Payment Successful!",
+      "message": "Thank you for your purchase. Your access has been activated.",
+      "orderId": "Order ID"
+    },
+    "failure": {
+      "title": "Payment Failed",
+      "message": "Your payment could not be processed. Please try again or contact support."
+    },
+    "cancel": {
+      "title": "Payment Cancelled",
+      "message": "Your payment was cancelled and you have not been charged."
+    },
+    "admin": {
+      "dashboard": {
+        "title": "Payments"
+      },
+      "stats": {
+        "completedTransactions": "Completed",
+        "failedTransactions": "Failed",
+        "refundedTransactions": "Refunded",
+        "activeSubscriptions": "Active Subscriptions"
+      },
+      "revenue": {
+        "title": "Revenue",
+        "subtitle": "Total Revenue"
+      },
+      "subscriptions": {
+        "active": "Active",
+        "churnRate": "Churn Rate"
+      },
+      "transactions": {
+        "recent": "Recent Transactions",
+        "customer": "Customer",
+        "amount": "Amount",
+        "status": "Status",
+        "date": "Date"
+      }
+    }
   }
 }

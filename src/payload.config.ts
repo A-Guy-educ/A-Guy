@@ -32,8 +32,10 @@ import { Pages } from '@/server/payload/collections/Pages'
 import { Posts } from '@/server/payload/collections/Posts'
 import { PricingPlans } from '@/server/payload/collections/PricingPlans'
 import { Prompts } from '@/server/payload/collections/Prompts'
+import { Subscriptions } from '@/server/payload/collections/Subscriptions'
 import { TeacherProfiles } from '@/server/payload/collections/TeacherProfiles'
 import { Tenants } from '@/server/payload/collections/Tenants'
+import { Transactions } from '@/server/payload/collections/Transactions'
 import { UploadSessions } from '@/server/payload/collections/UploadSessions'
 import { UserProgress } from '@/server/payload/collections/UserProgress'
 import { Users } from '@/server/payload/collections/Users'
@@ -46,6 +48,8 @@ import { importExerciseFromLesson } from '@/server/payload/endpoints/exercises/i
 import { translateContentEndpoint } from '@/server/payload/endpoints/translation/translate-content'
 import { cascadeDeleteEndpoint } from '@/server/payload/endpoints/cascade-delete'
 import { duplicateLessonEndpoint } from '@/server/payload/endpoints/lessons/duplicate'
+import { subscriptionExpiryEndpoint } from '@/server/payload/endpoints/cron/subscription-expiry'
+import { subscriptionRenewalEndpoint } from '@/server/payload/endpoints/cron/subscription-renewal'
 import { defaultLexical } from '@/server/payload/fields/defaultLexical'
 import { lessonDuplicationTask } from '@/server/payload/jobs/lesson-duplication-task'
 import { pdfToExercisesTask } from '@/server/payload/jobs/pdf-to-exercises-task'
@@ -102,7 +106,11 @@ export default buildConfig({
       beforeLogin: ['@/ui/admin/BeforeLogin'],
       // The `BeforeDashboard` component renders the 'welcome' block that you see after logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below.
-      beforeDashboard: ['@/ui/admin/ConversionTracking/DashboardWidgets', '@/ui/admin/VersionInfo'],
+      beforeDashboard: [
+        '@/ui/admin/ConversionTracking/DashboardWidgets',
+        '@/ui/admin/Payments/DashboardWidgets',
+        '@/ui/admin/VersionInfo',
+      ],
       beforeNavLinks: [
         '@/ui/admin/PdfConversion/SidebarLink',
         '@/ui/admin/LessonDuplicationReview/SidebarLink',
@@ -206,6 +214,8 @@ export default buildConfig({
     Posts,
     PricingPlans,
     AccessCodes,
+    Transactions,
+    Subscriptions,
     MCPAuditLogs,
   ],
   cors: [getServerSideURL()].filter(Boolean),
@@ -257,6 +267,16 @@ export default buildConfig({
       path: '/lessons/:id/duplicate',
       method: 'post',
       handler: (req: PayloadRequest) => duplicateLessonEndpoint(req),
+    },
+    {
+      path: '/cron/subscription-expiry',
+      method: 'post',
+      handler: (req: PayloadRequest) => subscriptionExpiryEndpoint.handler(req),
+    },
+    {
+      path: '/cron/subscription-renewal',
+      method: 'post',
+      handler: (req: PayloadRequest) => subscriptionRenewalEndpoint.handler(req),
     },
   ],
   jobs: {
