@@ -1775,7 +1775,7 @@ export interface MemoryItem {
   createdAt: string;
 }
 /**
- * Lesson duplication job records, one per duplicate request.
+ * Job records for the lesson-duplication pipeline. Use the review screen at /admin/lesson-duplications/<id> to skip / regenerate / keep individual exercise failures.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "lesson-duplications".
@@ -1795,7 +1795,7 @@ export interface LessonDuplication {
    */
   subject?: ('algebra' | 'geometry' | 'calculus' | 'mixed' | 'other') | null;
   /**
-   * Job status. `none` finishes inline; others go through the queue.
+   * Job status managed by the pipeline. `none` finishes inline; others go through the queue.
    */
   status: 'pending' | 'running' | 'succeeded' | 'failed' | 'needs_review';
   /**
@@ -1803,7 +1803,7 @@ export interface LessonDuplication {
    */
   outputLesson?: (string | null) | Lesson;
   /**
-   * Per-exercise validation failures (populated by later tasks).
+   * Blocking failures — these exercises were dropped from the output lesson and need manual handling.
    */
   failures?:
     | {
@@ -1811,7 +1811,33 @@ export interface LessonDuplication {
         sectionIndex?: number | null;
         code: string;
         message: string;
+        /**
+         * Pipeline-suggested default action. Actual action is chosen by the admin in the review screen at /admin/lesson-duplications/<id>.
+         */
         suggestedAction?: ('skip' | 'regenerate' | 'keep') | null;
+        /**
+         * Set automatically by the review screen when the admin completes an action.
+         */
+        resolved?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Non-blocking warnings — the exercise was kept with placeholder text for the missing field(s). Admin can polish from the review screen.
+   */
+  warnings?:
+    | {
+        exerciseRef?: string | null;
+        sectionIndex?: number | null;
+        code: string;
+        message: string;
+        /**
+         * Pipeline-suggested default action. Actual action is chosen by the admin in the review screen at /admin/lesson-duplications/<id>.
+         */
+        suggestedAction?: ('skip' | 'regenerate' | 'keep') | null;
+        /**
+         * Set automatically by the review screen when the admin completes an action.
+         */
         resolved?: boolean | null;
         id?: string | null;
       }[]
@@ -3446,6 +3472,17 @@ export interface LessonDuplicationsSelect<T extends boolean = true> {
   status?: T;
   outputLesson?: T;
   failures?:
+    | T
+    | {
+        exerciseRef?: T;
+        sectionIndex?: T;
+        code?: T;
+        message?: T;
+        suggestedAction?: T;
+        resolved?: T;
+        id?: T;
+      };
+  warnings?:
     | T
     | {
         exerciseRef?: T;
