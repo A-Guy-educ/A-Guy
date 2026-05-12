@@ -274,3 +274,9 @@ className={cn('base-classes', condition && 'conditional-class', className)}
 // WRONG
 className={`base-classes ${condition ? 'conditional-class' : ''}`}
 ```
+
+## Progress Indicators
+
+When a task or lesson is 100% complete, the progress circle should show green (`success`) color — the checkmark 'V' icon is omitted. This signals completion without redundant confirmation affordance.
+
+See `src/ui/web/components/UnifiedCard/index.tsx` — `ProgressCircle` receives `strokeColor` from the parent; pass `color="success"` when `percentage === 100`.

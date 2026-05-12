@@ -1,7 +1,7 @@
 ---
 title: Lesson Duplication Service
 type: architecture
-updated: 2026-05-11
+updated: 2026-05-12
 sources:
   - https://github.com/A-Guy-educ/A-Guy/pull/1517
   - https://github.com/A-Guy-educ/A-Guy/pull/1467
@@ -12,6 +12,7 @@ sources:
   - https://github.com/A-Guy-educ/A-Guy/pull/1556
   - https://github.com/A-Guy-educ/A-Guy/pull/1557
   - https://github.com/A-Guy-educ/A-Guy/pull/1560
+  - https://github.com/A-Guy-educ/A-Guy/pull/1565
 ---
 
 The lesson duplication service generates variations of exercises for practice. It uses a strategy pattern with three variation levels and supports subject-specific prompts. Failed exercises surface in an admin review screen for manual resolution.
@@ -92,3 +93,24 @@ When the orchestrator finishes with failures, the record enters needs_review sta
 - admin/lesson-duplication-review.md — Admin review screen pattern
 - design-system.md — UI patterns for lesson views
 - conventions.md — TypeScript patterns used
+
+## Next.js Route Tracing for Prompt Files (PR #1565)
+
+Prompt files (`src/infra/llm/prompts/**`) are loaded at runtime via `readFileSync`. For serverless deployment, Next.js must be told to include these files in each route's bundle via `outputFileTracingIncludes` in `next.config.js`. Any new lesson-duplication route or route that calls the variation service (e.g., the jobs runner) must add its path to this list:
+
+```js
+outputFileTracingIncludes: {
+  '/api/lessons/[id]/duplicate-variation': ['./src/infra/llm/prompts/**/*'],
+  '/api/jobs/run-immediate': ['./src/infra/llm/prompts/**/*'],
+  '/api/lesson-duplications/[id]/resolve': ['./src/infra/llm/prompts/**/*'],
+}
+```
+
+## Test Scripts (PR #1565)
+
+- `scripts/list-lessons.ts` — prints recent lessons with exercise counts from MongoDB. Usage: `pnpm tsx scripts/list-lessons.ts`
+- `scripts/test-duplication-live.ts` — runs the full duplication pipeline end-to-end against real Mongo + Gemini (bypasses the queue runner). Usage: `pnpm tsx scripts/test-duplication-live.ts <lessonId> [level] [subject]`
+
+## Script Strategy Numeric Replacement Fix (PR #1565)
+
+`generateReplacement` in `script-strategy.ts` generates a replacement value using a [0.7, 1.3] factor from a seeded PRNG. Small integers (e.g., 4, 5) could round back to themselves — the factor was deterministic and unvalidated. Fix: try up to 8 candidate factors; pick the first that differs from the original; fall back to `originalValue ± 1` on the rare edge case.
