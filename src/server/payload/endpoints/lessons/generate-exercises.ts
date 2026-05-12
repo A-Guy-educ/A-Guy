@@ -139,7 +139,6 @@ export function transformToContentBlock(generated: GeneratedExercise): ContentBl
     type: 'question_select',
     variant: 'mcq',
     selectionMode: 'single',
-    options: mcqAnswer.options,
     answer: mcqAnswer,
   } as QuestionSelectMcqBlock
 }
