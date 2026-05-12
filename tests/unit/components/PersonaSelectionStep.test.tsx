@@ -61,7 +61,7 @@ describe('PersonaSelectionStep - Loading Behavior (#1592)', () => {
         resolveFetch = (value: unknown) => resolve(value)
       })
     })
-    global.fetch = fetchMock
+    global.fetch = fetchMock as unknown as typeof global.fetch
   })
 
   afterEach(() => {
@@ -206,11 +206,11 @@ describe('PersonaSelectionStep - Loading Behavior (#1592)', () => {
 
     // Create a fetch mock that never resolves (simulates hanging request)
     const hangingFetch = vi.fn(() => {
-      return new Promise(() => {
+      return new Promise<Response>(() => {
         // Never resolves - simulates a hanging request
       })
     })
-    global.fetch = hangingFetch
+    global.fetch = hangingFetch as unknown as typeof global.fetch
 
     renderWithI18n()
 
