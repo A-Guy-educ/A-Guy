@@ -152,14 +152,23 @@ async function createTestCourse(
 
 async function createAdminUser(payload: Payload) {
   const ts = Date.now()
-  return payload.create({
+  // ensureRoleOnSignup hook strips role='admin' on create, so create without role
+  // and update separately (same pattern as lesson-duplication-review-resolve tests).
+  const user = await payload.create({
     collection: 'users',
     data: {
       email: `admin-${ts}@test.local`,
-      role: 'admin',
-    },
+      password: 'TestPassword123!',
+    } as never,
     overrideAccess: true,
   })
+  await payload.update({
+    collection: 'users',
+    id: user.id,
+    data: { role: 'admin' } as never,
+    overrideAccess: true,
+  })
+  return { id: user.id }
 }
 
 describe('Generate exercises endpoint', () => {
@@ -213,6 +222,11 @@ describe('Generate exercises endpoint', () => {
     } catch {
       // ignore
     }
+    try {
+      await payload.delete({ collection: 'users', id: adminUser.id, overrideAccess: true })
+    } catch {
+      // ignore
+    }
     await payload.db?.destroy?.()
   })
 
@@ -234,7 +248,11 @@ describe('Generate exercises endpoint', () => {
   it('returns 403 when user is not admin', async () => {
     const nonAdminUser = await payload.create({
       collection: 'users',
-      data: { email: `student-${Date.now()}@test.local`, role: 'student' },
+      data: {
+        email: `student-${Date.now()}@test.local`,
+        password: 'TestPassword123!',
+        role: 'student',
+      } as never,
       overrideAccess: true,
     })
 
