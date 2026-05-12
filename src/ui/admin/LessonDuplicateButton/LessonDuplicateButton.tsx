@@ -123,7 +123,10 @@ export const LessonDuplicateAction: React.FC = () => {
     setStatus('submitting')
     setError(null)
     try {
-      const res = await fetch(`/api/lessons/${id}/duplicate`, {
+      // Note: path is /duplicate-variation (NOT /duplicate). Payload's
+      // built-in collection duplicate handler claims /api/lessons/:id/duplicate
+      // and silently runs a dumb field-copy if we POST there.
+      const res = await fetch(`/api/lessons/${id}/duplicate-variation`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -190,6 +193,8 @@ export const LessonDuplicateAction: React.FC = () => {
               padding: 24,
               width: 480,
               maxWidth: '90vw',
+              maxHeight: '85vh',
+              overflowY: 'auto',
               color: 'var(--theme-elevation-1000)',
             }}
           >

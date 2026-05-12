@@ -41,6 +41,110 @@ export interface StructuralFailure {
   blockIndex?: number
 }
 
+/**
+ * Failure codes that are NON-BLOCKING. The exercise still ships in the output
+ * lesson with a `_TODO:_` placeholder for the missing field; the admin
+ * polishes from the review screen.
+ *
+ * This is intentionally an allowlist of warnings (not a denylist of blockers)
+ * so that ANY future failure code added to FAILURE_CODES defaults to blocking
+ * until someone explicitly decides it's safe to ship with a placeholder. The
+ * exhaustive check in `isBlocking` (assertNever) makes that decision a
+ * compile-time gate.
+ */
+const WARNING_FAILURE_CODES = new Set<FailureCode>([
+  FAILURE_CODES.MISSING_HINT,
+  FAILURE_CODES.MISSING_SOLUTION,
+  FAILURE_CODES.MISSING_FULL_SOLUTION,
+])
+
+/**
+ * True when the given failure code should drop the exercise from the output
+ * lesson (renderer would crash, no safe placeholder can be synthesized, or
+ * save would fail anyway). Exhaustive: TypeScript will fail to compile if a
+ * new FailureCode is added without classifying it here.
+ *
+ * MISSING_CORRECT_OPTION / MISSING_WRONG_OPTIONS are blocking: we can't
+ * invent plausible MCQ options, and McqAnswerSchema's min(2) constraint would
+ * reject the save anyway.
+ */
+export function isBlockingFailureCode(code: FailureCode): boolean {
+  switch (code) {
+    case FAILURE_CODES.PNG_FORBIDDEN:
+    case FAILURE_CODES.INVALID_SVG:
+    case FAILURE_CODES.INVALID_GEOMETRY_SPEC:
+    case FAILURE_CODES.INVALID_AXIS_SPEC:
+    case FAILURE_CODES.INVALID_GUIDED_EXPLANATION:
+    case FAILURE_CODES.TOO_MANY_SECTIONS:
+    case FAILURE_CODES.MISSING_QUESTION:
+    case FAILURE_CODES.MISSING_CORRECT_OPTION:
+    case FAILURE_CODES.MISSING_WRONG_OPTIONS:
+      return true
+    case FAILURE_CODES.MISSING_HINT:
+    case FAILURE_CODES.MISSING_SOLUTION:
+    case FAILURE_CODES.MISSING_FULL_SOLUTION:
+      return false
+    default: {
+      // Exhaustive check: adding a new FailureCode without a case here
+      // will fail to compile.
+      const _exhaustive: never = code
+      void _exhaustive
+      // Fail-safe at runtime: treat unknown codes as blocking.
+      return true
+    }
+  }
+}
+
+/**
+ * @deprecated Use `isBlockingFailureCode(code)` for new code. Kept for
+ * existing call sites that import the Set directly.
+ */
+export const BLOCKING_FAILURE_CODES: ReadonlySet<FailureCode> = new Set(
+  (Object.values(FAILURE_CODES) as FailureCode[]).filter(
+    (code) => !WARNING_FAILURE_CODES.has(code),
+  ),
+)
+
+/**
+ * Return a NEW array of new block objects with missing hint / solution /
+ * fullSolution fields filled with TODO placeholders. Used after structural
+ * validation when only warning-level failures remain.
+ *
+ * Pure: does not mutate `blocks` or any block it contains.
+ */
+export function fillMissingFieldsWithPlaceholders(blocks: ContentBlock[]): ContentBlock[] {
+  const placeholder = (label: string) =>
+    ({
+      type: 'rich_text' as const,
+      format: 'md-math-v1' as const,
+      value: `_TODO: ${label} not provided by AI — please fill in_`,
+      mediaIds: [] as string[],
+    }) satisfies Record<string, unknown>
+
+  const QUESTION_TYPES = new Set([
+    'question_select',
+    'question_free_response',
+    'question_table',
+    'question_matching',
+    'question_geometry',
+    'question_axis',
+  ])
+
+  return blocks.map((block) => {
+    if (!QUESTION_TYPES.has(block.type)) return block
+    const b = block as Record<string, unknown> & {
+      hint?: { value?: string }
+      solution?: { value?: string }
+      fullSolution?: { value?: string }
+    }
+    const next: Record<string, unknown> = { ...b }
+    if (!b.hint?.value?.trim()) next.hint = placeholder('hint')
+    if (!b.solution?.value?.trim()) next.solution = placeholder('solution')
+    if (!b.fullSolution?.value?.trim()) next.fullSolution = placeholder('full solution')
+    return next as ContentBlock
+  })
+}
+
 /** Returns true if the string contains embedded PNG data (data URI or .png reference). */
 function containsPngData(value: string): boolean {
   // data:image/png;base64,... or data:image/png,...
