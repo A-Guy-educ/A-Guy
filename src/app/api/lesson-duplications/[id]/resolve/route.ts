@@ -75,7 +75,9 @@ export const POST = withApiHandler<ResolveBody, unknown>(
     })
     if (!record) return ApiErrors.notFound('LessonDuplications record')
     if (record.status !== 'needs_review') {
-      return ApiErrors.internal('Can only resolve records in needs_review status')
+      return ApiErrors.conflict(
+        `Can only resolve records in needs_review status (current: ${record.status})`,
+      )
     }
 
     const failures = [...((record.failures as unknown[]) ?? [])] as FailureEntry[]
@@ -117,7 +119,7 @@ export const POST = withApiHandler<ResolveBody, unknown>(
           overrideAccess: true,
         })
         if (!source) {
-          return ApiErrors.internal(`Source exercise ${failure.exerciseRef} not found`)
+          return ApiErrors.notFound(`Source exercise ${failure.exerciseRef}`)
         }
         const resolvedLevel = (level ?? record.level) as Exclude<DuplicationLevel, 'none'>
         const resolvedSubject = (record.subject as DuplicationSubject | null | undefined) ?? 'mixed'
@@ -130,7 +132,7 @@ export const POST = withApiHandler<ResolveBody, unknown>(
           blocks = (variation.exercise.content as { blocks: ContentBlock[] }).blocks
         } catch (err) {
           if (err instanceof VariationGenerationError) {
-            return ApiErrors.internal(`Variation generation failed: ${err.reason}`)
+            return ApiErrors.unprocessable(`Variation generation failed: ${err.reason}`)
           }
           return ApiErrors.internal(
             err instanceof Error ? err.message : 'Variation generation failed',
@@ -139,7 +141,7 @@ export const POST = withApiHandler<ResolveBody, unknown>(
         // Structural validation
         const structFailures = validateExerciseStructural(blocks)
         if (structFailures.length > 0) {
-          return ApiErrors.internal(
+          return ApiErrors.unprocessable(
             `Regenerated exercise failed structural validation: ${structFailures[0].message}`,
           )
         }
@@ -149,7 +151,7 @@ export const POST = withApiHandler<ResolveBody, unknown>(
         if (isAi) {
           const semResult = await validateExerciseSemantic(blocks, resolvedLevel, 'ai', payload)
           if (!semResult.ok) {
-            return ApiErrors.internal(
+            return ApiErrors.unprocessable(
               `Regenerated exercise failed semantic validation: ${semResult.reasons.join('; ')}`,
             )
           }

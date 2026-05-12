@@ -48,6 +48,12 @@ interface DuplicationRecord {
   outputLesson: { id: string } | string | null
   outputExercises: OutputExerciseEntry[]
   failures: FailureEntry[]
+  /**
+   * Non-blocking issues — exercise was kept in the output with TODO
+   * placeholders. Surfaced separately so admins know what to polish in
+   * the lesson editor, distinct from failures that dropped the exercise.
+   */
+  warnings?: FailureEntry[]
   exercisePairs?: ExercisePairData[]
 }
 
@@ -325,7 +331,6 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
   const failuresByExercise: Record<string, FailureEntry[]> = {}
   for (const f of record.failures) {
     if (!f.resolved) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       ;(failuresByExercise[f.exerciseRef] ??= []).push(f)
     }
   }
@@ -545,6 +550,67 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
             </div>
           )
         })
+      )}
+
+      {/* Warnings — non-blocking, exercise was kept with TODO placeholders */}
+      {record.warnings && record.warnings.length > 0 && (
+        <div style={{ marginTop: 32 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>
+            Warnings ({record.warnings.length})
+          </h2>
+          <p style={{ fontSize: 13, color: 'var(--theme-elevation-600)', marginBottom: 12 }}>
+            These fields were missing in the AI output. The exercise was saved with{' '}
+            <code>_TODO:_</code> placeholders — open the output exercise and replace them with real
+            content.
+          </p>
+          {(() => {
+            const warningsByExercise: Record<string, FailureEntry[]> = {}
+            for (const w of record.warnings) {
+              ;(warningsByExercise[w.exerciseRef] ??= []).push(w)
+            }
+            return Object.entries(warningsByExercise).map(([exerciseRef, items]) => {
+              const mapping = record.outputExercises.find((m) => m.sourceExerciseId === exerciseRef)
+              const outputHref = mapping
+                ? `/admin/collections/exercises/${mapping.outputExerciseId}`
+                : null
+              return (
+                <div
+                  key={exerciseRef}
+                  style={{
+                    ...failureCardStyle,
+                    borderColor: 'var(--theme-warning)',
+                    backgroundColor: 'rgba(234, 179, 8, 0.04)',
+                  }}
+                >
+                  <div style={exerciseRefStyle}>
+                    Source: <code>{exerciseRef.slice(0, 12)}…</code>
+                    {' · '}
+                    {outputHref ? (
+                      <a
+                        href={outputHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: 'var(--theme-elevation-700)', fontSize: 12 }}
+                      >
+                        Open output exercise →
+                      </a>
+                    ) : (
+                      <span style={{ color: 'var(--theme-elevation-500)', fontSize: 12 }}>
+                        (no output exercise mapped)
+                      </span>
+                    )}
+                  </div>
+                  {items.map((w, i) => (
+                    <div key={`${w.code}-${w.sectionIndex}-${i}`} style={failureRowStyle}>
+                      <span style={codeStyle}>{w.code}</span>
+                      <span style={messageStyle}>{w.message}</span>
+                    </div>
+                  ))}
+                </div>
+              )
+            })
+          })()}
+        </div>
       )}
     </div>
   )

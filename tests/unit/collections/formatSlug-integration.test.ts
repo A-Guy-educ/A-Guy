@@ -153,9 +153,12 @@ describe('formatSlug integration with collections', () => {
       expect(mockPayloadFind).not.toHaveBeenCalled()
     })
 
-    it('should keep " - Copy" slug from duplication as-is', async () => {
+    it('should normalize slug with spaces to URL-safe hyphenated form', async () => {
       mockPayloadFind.mockResolvedValue({ docs: [] })
 
+      // Title "First Lesson" with a space-containing slug: the title doesn't
+      // match the slug pattern (slugified title ≠ slug), so no regeneration.
+      // Defense-in-depth catches the space and normalizes to URL-safe form.
       const mockData = { title: 'First Lesson', slug: 'first-lesson - Copy' }
       // @ts-expect-error - Hook has complex signature
       const result = await beforeChangeHook({
@@ -164,9 +167,7 @@ describe('formatSlug integration with collections', () => {
         req: mockReq,
       })
 
-      // Title matches (duplication copies title too), so no regeneration
-      // Slug kept as-is, uniqueness checked
-      expect(result.slug).toBe('first-lesson - Copy')
+      expect(result.slug).toBe('first-lesson-copy')
     })
 
     it('should add numeric suffix when slug already exists', async () => {
