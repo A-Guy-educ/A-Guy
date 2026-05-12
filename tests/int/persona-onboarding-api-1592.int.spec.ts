@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Integration test for #1592 - Persona onboarding hangs on loading spinner
  *
@@ -59,7 +60,7 @@ beforeAll(async () => {
     data: {
       title: `test-prompt-1592-${Date.now()}`,
       template: 'Test prompt body for persona onboarding test',
-    },
+    } as any,
     overrideAccess: true,
   })
   promptId = prompt.id
@@ -75,7 +76,7 @@ beforeAll(async () => {
       systemPrompt: promptId,
       isEnabled: true,
       // Note: NOT setting locale field to simulate legacy document
-    },
+    } as any,
     overrideAccess: true,
   })
   legacyProfileId = legacyProfile.id
@@ -90,7 +91,7 @@ beforeAll(async () => {
       systemPrompt: promptId,
       isEnabled: true,
       locale: 'en',
-    },
+    } as any,
     overrideAccess: true,
   })
   localeProfileId = localeProfile.id
@@ -100,19 +101,41 @@ afterAll(async () => {
   if (!hasDatabaseUrl || !payload) return
 
   // Cleanup test data
-  const cleanupIds = [legacyProfileId, localeProfileId, promptId, testUserId]
-  const collections = ['teacher_profiles', 'teacher_profiles', 'prompts', 'users']
-
-  for (let i = 0; i < cleanupIds.length; i++) {
-    try {
-      await payload.delete({
-        collection: collections[i],
-        id: cleanupIds[i],
-        overrideAccess: true,
-      })
-    } catch {
-      /* already deleted or doesn't exist */
-    }
+  try {
+    await payload.delete({
+      collection: 'teacher_profiles',
+      id: legacyProfileId,
+      overrideAccess: true,
+    })
+  } catch {
+    /* already deleted or doesn't exist */
+  }
+  try {
+    await payload.delete({
+      collection: 'teacher_profiles',
+      id: localeProfileId,
+      overrideAccess: true,
+    })
+  } catch {
+    /* already deleted or doesn't exist */
+  }
+  try {
+    await payload.delete({
+      collection: 'prompts',
+      id: promptId,
+      overrideAccess: true,
+    })
+  } catch {
+    /* already deleted or doesn't exist */
+  }
+  try {
+    await payload.delete({
+      collection: 'users',
+      id: testUserId,
+      overrideAccess: true,
+    })
+  } catch {
+    /* already deleted or doesn't exist */
   }
 
   if (payload.db?.destroy) {
