@@ -42,8 +42,9 @@ export interface QuotaResult {
 }
 
 // Default quotas (free tier)
-const DEFAULT_VIDEO_QUOTA = 0
-const DEFAULT_EXAM_QUOTA = 0
+// TODO: In production, read from the user's active pricing plan via courseEntitlements
+const DEFAULT_VIDEO_QUOTA = 5
+const DEFAULT_EXAM_QUOTA = 5
 
 function getUsersCollection(payload: Payload): Collection<Document> | null {
   const db = payload.db as unknown as {

@@ -180,7 +180,8 @@ export async function grantEntitlementAfterPurchase({
 }
 
 /**
- * Revoke entitlements when subscription is cancelled
+ * Revoke entitlements when subscription is cancelled or refunded.
+ * Removes payment-type entitlements from courseEntitlements.
  */
 export async function revokeEntitlementsOnCancellation({
   payload,
@@ -189,12 +190,32 @@ export async function revokeEntitlementsOnCancellation({
   payload: Payload
   userId: string
 }): Promise<void> {
+  // Fetch user's current entitlements
+  const user = (await payload.findByID({
+    collection: 'users',
+    id: userId,
+    depth: 0,
+    overrideAccess: true,
+    select: { courseEntitlements: true },
+  })) as (User & { courseEntitlements?: CourseEntitlementItem[] }) | null
+
+  if (!user) {
+    return
+  }
+
+  // Filter out payment-type entitlements (keep admin and code grants)
+  const existingEntitlements: CourseEntitlementItem[] =
+    (user.courseEntitlements as CourseEntitlementItem[]) || []
+
+  const remainingEntitlements = existingEntitlements.filter((e) => e.grantMethod !== 'payment')
+
   await payload.update({
     collection: 'users',
     id: userId,
     data: {
       subscriptionStatus: 'cancelled',
       cancelAtPeriodEnd: true,
+      courseEntitlements: remainingEntitlements,
     },
     overrideAccess: true,
   })

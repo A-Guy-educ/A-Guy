@@ -132,7 +132,9 @@ export async function POST(req: Request): Promise<Response> {
     const errorMsg = error instanceof Error ? error.message : String(error)
     payload.logger.error({ error: errorMsg }, '[tranzila-webhook] Handler error')
 
-    // Return OK to prevent Tranzila from retrying non-idempotent failures
-    return new Response('OK', { status: 200 })
+    // Return 500 so Tranzila will retry. This ensures we don't silently lose
+    // payment confirmations. The idempotency check at lines 59-66 ensures
+    // already-processed transactions are safely skipped on retry.
+    return new Response('Internal server error', { status: 500 })
   }
 }

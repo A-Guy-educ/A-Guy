@@ -11,8 +11,6 @@ import type { PayloadRequest } from 'payload'
 import { logger } from '@/infra/utils/logger'
 import { withCronMiddleware, type CronResult } from './cron-middleware'
 
-import type { User } from '@/payload-types'
-
 interface RenewalResult {
   processed: number
   renewed: number
@@ -80,94 +78,14 @@ async function processRenewals({
             newPeriodEnd.setFullYear(newPeriodEnd.getFullYear() + 1)
           }
 
-          // In a real implementation, this would call Tranzila's recurring charge API
-          // For now, we'll simulate a successful renewal
-          const renewalSuccess = true
-
-          if (renewalSuccess) {
-            // Update subscription with new period
-            await payload.update({
-              collection: 'subscriptions',
-              id: subscription.id,
-              data: {
-                currentPeriodEnd: newPeriodEnd.toISOString(),
-              },
-              overrideAccess: true,
-            })
-
-            // Update user period end
-            await payload.update({
-              collection: 'users',
-              id: userId,
-              data: {
-                currentPeriodEnd: newPeriodEnd.toISOString(),
-              },
-              overrideAccess: true,
-            })
-
-            // Extend entitlement expiresAt
-            const user = (await payload.findByID({
-              collection: 'users',
-              id: userId,
-              depth: 0,
-              overrideAccess: true,
-              select: { courseEntitlements: true },
-            })) as User | null
-
-            if (user?.courseEntitlements) {
-              const updatedEntitlements = user.courseEntitlements.map((e) => {
-                if (e.grantMethod !== 'payment') return e
-                if (!e.expiresAt) return e
-                // Only extend if expiresAt is at the old period end
-                const oldExpiry = new Date(e.expiresAt)
-                if (oldExpiry.getTime() <= currentEnd.getTime()) {
-                  return { ...e, expiresAt: newPeriodEnd.toISOString() }
-                }
-                return e
-              })
-
-              await payload.update({
-                collection: 'users',
-                id: userId,
-                data: {
-                  courseEntitlements: updatedEntitlements,
-                },
-                overrideAccess: true,
-              })
-            }
-
-            result.renewed++
-            reqLogger.info(
-              { subscriptionId: subscription.id, userId, newPeriodEnd: newPeriodEnd.toISOString() },
-              '[subscription-renewal] Subscription renewed',
-            )
-          } else {
-            // Renewal failed
-            await payload.update({
-              collection: 'subscriptions',
-              id: subscription.id,
-              data: {
-                status: 'failed',
-              },
-              overrideAccess: true,
-            })
-
-            await payload.update({
-              collection: 'users',
-              id: userId,
-              data: {
-                subscriptionStatus: 'failed',
-              },
-              overrideAccess: true,
-            })
-
-            result.failed++
-            reqLogger.warn(
-              { subscriptionId: subscription.id, userId },
-              '[subscription-renewal] Renewal failed',
-            )
-          }
-
+          // Tranzila does not have a simple recurring charge API for automatic renewal.
+          // Real implementation would need Tranzila's "Recurring" feature setup.
+          // For now, fail the renewal so subscribers aren't silently granted free access.
+          reqLogger.warn(
+            { subscriptionId: subscription.id, userId },
+            '[subscription-renewal] Renewal not implemented - Tranzila recurring API not available',
+          )
+          result.failed++
           result.processed++
         } catch (subError) {
           const errorMsg = subError instanceof Error ? subError.message : String(subError)
