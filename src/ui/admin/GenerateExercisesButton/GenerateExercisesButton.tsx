@@ -92,7 +92,6 @@ export const GenerateExercisesAction: React.FC = () => {
       }
       setStatus('success')
       setResultCount(data.count ?? null)
-      // Auto-close after 3 seconds on success
       setTimeout(() => {
         close()
       }, 3000)
@@ -107,19 +106,7 @@ export const GenerateExercisesAction: React.FC = () => {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 6,
-          padding: '6px 12px',
-          fontSize: 13,
-          fontWeight: 500,
-          border: '1px solid var(--theme-elevation-200)',
-          borderRadius: 4,
-          backgroundColor: 'var(--theme-elevation-0)',
-          color: 'var(--theme-elevation-1000)',
-          cursor: 'pointer',
-        }}
+        className="inline-flex items-center gap-1.5 rounded border border-[var(--theme-elevation-200)] bg-[var(--theme-elevation-0)] px-3 py-1.5 text-[13px] font-medium text-[var(--theme-elevation-1000)] hover:bg-[var(--theme-elevation-50)] cursor-pointer transition-all duration-normal"
         title="Generate AI-powered exercises for this lesson"
       >
         ייצר תרגילים
@@ -129,39 +116,20 @@ export const GenerateExercisesAction: React.FC = () => {
         <div
           role="dialog"
           aria-modal="true"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            zIndex: 1000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+          className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50"
           onClick={close}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{
-              backgroundColor: 'var(--theme-elevation-0)',
-              border: '1px solid var(--theme-elevation-200)',
-              borderRadius: 6,
-              padding: 24,
-              width: 520,
-              maxWidth: '90vw',
-              color: 'var(--theme-elevation-1000)',
-            }}
+            className="w-[520px] max-w-[90vw] rounded-lg border border-[var(--theme-elevation-200)] bg-[var(--theme-elevation-0)] p-6 text-[var(--theme-elevation-1000)] shadow-modal"
           >
-            <h3 style={{ marginTop: 0 }}>ייצר תרגילים לשיעור</h3>
-            <p style={{ fontSize: 13, color: 'var(--theme-elevation-600)' }}>
+            <h3 className="mt-0 mb-2 text-body-md font-bold">ייצר תרגילים לשיעור</h3>
+            <p className="mb-5 text-[13px] leading-relaxed text-[var(--theme-elevation-600)]">
               הזן הוראות ליצירת תרגילים. המערכת תייצר 10 תרגילים חכמים בעברית.
             </p>
 
-            <div style={{ marginBottom: 16 }}>
-              <label
-                htmlFor="exercise-prompt"
-                style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 6 }}
-              >
+            <div className="mb-4">
+              <label htmlFor="exercise-prompt" className="mb-1.5 block text-[13px] font-medium">
                 פרומפט לתרגילים
               </label>
               <textarea
@@ -170,43 +138,24 @@ export const GenerateExercisesAction: React.FC = () => {
                 onChange={(e) => setPrompt(e.target.value)}
                 placeholder="לדוגמה: צור תרגילים על משוואות קוויות ברמת קושי בינונית, מתאימים לכיתה ז'"
                 rows={4}
-                style={{
-                  width: '100%',
-                  padding: 10,
-                  fontSize: 13,
-                  border: '1px solid var(--theme-elevation-200)',
-                  borderRadius: 4,
-                  resize: 'vertical',
-                  fontFamily: 'inherit',
-                  color: 'var(--theme-elevation-1000)',
-                  backgroundColor: 'var(--theme-elevation-0)',
-                }}
+                className="w-full rounded border border-[var(--theme-elevation-200)] bg-[var(--theme-elevation-0)] p-2.5 text-[13px] text-[var(--theme-elevation-1000)] placeholder:text-[var(--theme-elevation-400)] resize-y font-inherit"
               />
-              <p style={{ fontSize: 11, color: 'var(--theme-elevation-600)', marginTop: 4 }}>
+              <p className="mt-1 text-[11px] text-[var(--theme-elevation-600)]">
                 מקסימום 2000 תווים
               </p>
             </div>
 
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 8 }}>
-                סוג התרגילים
-              </label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div className="mb-4">
+              <span className="mb-2 block text-[13px] font-medium">סוג התרגילים</span>
+              <div className="flex flex-col gap-2">
                 {EXERCISE_TYPES.map((opt) => (
                   <label
                     key={opt.value}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: 8,
-                      padding: 10,
-                      border:
-                        exerciseType === opt.value
-                          ? '1px solid var(--theme-success-500)'
-                          : '1px solid var(--theme-elevation-200)',
-                      borderRadius: 4,
-                      cursor: 'pointer',
-                    }}
+                    className={`flex cursor-pointer items-start gap-2 rounded border p-2.5 transition-all duration-fast ${
+                      exerciseType === opt.value
+                        ? 'border border-[var(--theme-success-500)] bg-[var(--theme-success-500)]/5'
+                        : 'border-[var(--theme-elevation-200)] hover:border-[var(--theme-elevation-300)]'
+                    }`}
                   >
                     <input
                       type="radio"
@@ -214,11 +163,11 @@ export const GenerateExercisesAction: React.FC = () => {
                       value={opt.value}
                       checked={exerciseType === opt.value}
                       onChange={() => setExerciseType(opt.value)}
+                      className="mt-0.5"
                     />
-                    <span>
-                      <strong>{opt.label}</strong>
-                      <br />
-                      <span style={{ fontSize: 12, color: 'var(--theme-elevation-600)' }}>
+                    <span className="text-[13px]">
+                      <strong className="block">{opt.label}</strong>
+                      <span className="mt-0.5 block text-[12px] text-[var(--theme-elevation-600)]">
                         {opt.hint}
                       </span>
                     </span>
@@ -228,18 +177,22 @@ export const GenerateExercisesAction: React.FC = () => {
             </div>
 
             {status === 'error' && error && (
-              <div style={{ color: 'var(--theme-error-500)', fontSize: 13, marginBottom: 8 }}>
+              <p className="mb-2 rounded bg-error/10 px-3 py-2 text-[13px] font-medium text-error">
                 {error}
-              </div>
+              </p>
             )}
             {status === 'success' && (
-              <div style={{ color: 'var(--theme-success-500)', fontSize: 13, marginBottom: 8 }}>
+              <p className="mb-2 rounded bg-success/10 px-3 py-2 text-[13px] font-medium text-success">
                 נוצרו {resultCount ?? 10} תרגילים בהצלחה!
-              </div>
+              </p>
             )}
 
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button type="button" onClick={close}>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={close}
+                className="cursor-pointer rounded border border-[var(--theme-elevation-300)] bg-transparent px-4 py-2 text-[13px] font-medium text-[var(--theme-elevation-800)] hover:bg-[var(--theme-elevation-100)] transition-all duration-normal"
+              >
                 {status === 'success' ? 'סגור' : 'ביטול'}
               </button>
               {status !== 'success' && (
@@ -247,15 +200,7 @@ export const GenerateExercisesAction: React.FC = () => {
                   type="button"
                   onClick={submit}
                   disabled={!prompt.trim() || status === 'submitting'}
-                  style={{
-                    backgroundColor: 'var(--theme-success-500)',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: 4,
-                    padding: '6px 14px',
-                    cursor: !prompt.trim() || status === 'submitting' ? 'not-allowed' : 'pointer',
-                    opacity: !prompt.trim() || status === 'submitting' ? 0.6 : 1,
-                  }}
+                  className="cursor-pointer rounded border-none bg-success px-3.5 py-2 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60 transition-all duration-normal"
                 >
                   {status === 'submitting' ? 'מייצר...' : 'צור תרגילים'}
                 </button>

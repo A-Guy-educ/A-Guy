@@ -65,7 +65,7 @@ type ContentBlockResult =
   | QuestionFreeResponseBlock
   | QuestionTableBlock
 
-function transformToContentBlock(generated: GeneratedExercise): ContentBlockResult {
+export function transformToContentBlock(generated: GeneratedExercise): ContentBlockResult {
   const base = {
     id: generateId(),
     prompt: makeInlineRichText(generated.prompt),

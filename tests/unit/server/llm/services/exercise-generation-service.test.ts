@@ -33,8 +33,14 @@ vi.mock('@/infra/llm/models', () => ({
   getProviderModelName: vi.fn().mockReturnValue('gemini-pro'),
 }))
 
+// Mock generateId for transformToContentBlock tests
+vi.mock('@/server/payload/collections/Exercises/defaults', () => ({
+  generateId: vi.fn(() => 'test-generated-id'),
+}))
+
 import { generateExercises } from '@/infra/llm/services/exercise-generation-service'
 import type { ExerciseType } from '@/infra/llm/services/exercise-generation-service'
+import { transformToContentBlock } from '@/server/payload/endpoints/lessons/generate-exercises'
 
 const mockPayload = {} as never
 
@@ -218,5 +224,193 @@ describe('generateExercises', () => {
     expect(result.success).toBe(true)
     expect(result.data?.[0].type).toBe('question_table')
     expect(result.data?.[0].table?.headers).toEqual(['x', 'x+2'])
+  })
+})
+
+describe('transformToContentBlock', () => {
+  const baseExercise = {
+    prompt: 'Test prompt',
+    hint: 'Test hint',
+    solution: 'Test solution',
+    fullSolution: 'Test full solution',
+  }
+
+  describe('MCQ fallback behavior', () => {
+    it('falls back to option id "a" when no correct option is provided', () => {
+      const mcqNoCorrect = {
+        ...baseExercise,
+        type: 'question_select' as const,
+        options: [
+          { id: 'a', label: 'Option A', correct: false },
+          { id: 'b', label: 'Option B', correct: false },
+          { id: 'c', label: 'Option C', correct: false },
+          { id: 'd', label: 'Option D', correct: false },
+        ],
+      }
+
+      const result = transformToContentBlock(mcqNoCorrect)
+
+      expect(result.type).toBe('question_select')
+      expect(
+        (result as { answer: { correctOptionIds: string[] } }).answer.correctOptionIds,
+      ).toEqual(['a'])
+    })
+
+    it('uses provided correct option id when available', () => {
+      const mcqWithCorrect = {
+        ...baseExercise,
+        type: 'question_select' as const,
+        options: [
+          { id: 'a', label: 'Option A', correct: false },
+          { id: 'b', label: 'Option B', correct: true },
+          { id: 'c', label: 'Option C', correct: false },
+          { id: 'd', label: 'Option D', correct: false },
+        ],
+      }
+
+      const result = transformToContentBlock(mcqWithCorrect)
+
+      expect(result.type).toBe('question_select')
+      expect(
+        (result as { answer: { correctOptionIds: string[] } }).answer.correctOptionIds,
+      ).toEqual(['b'])
+    })
+  })
+
+  describe('true/false fallback behavior', () => {
+    it('falls back to "true" when no correct option is provided', () => {
+      const tfNoCorrect = {
+        ...baseExercise,
+        type: 'question_select' as const,
+        options: [
+          { id: 'true', label: 'נכון', correct: false },
+          { id: 'false', label: 'לא נכון', correct: false },
+        ],
+      }
+
+      const result = transformToContentBlock(tfNoCorrect)
+
+      expect(result.type).toBe('question_select')
+      expect((result as { variant: string; answer: { correctOptionId: string } }).variant).toBe(
+        'true_false',
+      )
+      expect((result as { answer: { correctOptionId: string } }).answer.correctOptionId).toBe(
+        'true',
+      )
+    })
+
+    it('uses provided correct option id when available', () => {
+      const tfWithCorrect = {
+        ...baseExercise,
+        type: 'question_select' as const,
+        options: [
+          { id: 'true', label: 'נכון', correct: false },
+          { id: 'false', label: 'לא נכון', correct: true },
+        ],
+      }
+
+      const result = transformToContentBlock(tfWithCorrect)
+
+      expect(result.type).toBe('question_select')
+      expect((result as { answer: { correctOptionId: string } }).answer.correctOptionId).toBe(
+        'false',
+      )
+    })
+  })
+
+  describe('table fallback behavior', () => {
+    it('uses fallback table values when table field is missing', () => {
+      const tableNoData = {
+        ...baseExercise,
+        type: 'question_table' as const,
+        table: undefined,
+      }
+
+      const result = transformToContentBlock(tableNoData)
+
+      expect(result.type).toBe('question_table')
+      const tableResult = result as {
+        table: { headers: string[]; rowsData: string[][]; answers: Record<string, string> }
+      }
+      expect(tableResult.table.headers).toEqual(['Column 1', 'Column 2'])
+      expect(tableResult.table.rowsData).toEqual([['', '']])
+      expect(tableResult.table.answers).toEqual({})
+    })
+
+    it('uses provided table data when available', () => {
+      const tableWithData = {
+        ...baseExercise,
+        type: 'question_table' as const,
+        table: {
+          headers: ['x', 'x+2'],
+          rowsData: [
+            ['1', ''],
+            ['2', ''],
+          ],
+          answers: { '0-1': '3', '1-1': '4' },
+        },
+      }
+
+      const result = transformToContentBlock(tableWithData)
+
+      expect(result.type).toBe('question_table')
+      const tableResult = result as {
+        table: { headers: string[]; rowsData: string[][]; answers: Record<string, string> }
+      }
+      expect(tableResult.table.headers).toEqual(['x', 'x+2'])
+      expect(tableResult.table.rowsData).toEqual([
+        ['1', ''],
+        ['2', ''],
+      ])
+      expect(tableResult.table.answers).toEqual({ '0-1': '3', '1-1': '4' })
+    })
+  })
+
+  describe('free_response handling', () => {
+    it('wraps string answer in array', () => {
+      const frString = {
+        ...baseExercise,
+        type: 'question_free_response' as const,
+        answer: '42',
+      }
+
+      const result = transformToContentBlock(frString)
+
+      expect(result.type).toBe('question_free_response')
+      expect((result as { answer: { acceptedAnswers: string[] } }).answer.acceptedAnswers).toEqual([
+        '42',
+      ])
+    })
+
+    it('keeps array answer as-is', () => {
+      const frArray = {
+        ...baseExercise,
+        type: 'question_free_response' as const,
+        answer: ['4', '-4'],
+      }
+
+      const result = transformToContentBlock(frArray)
+
+      expect(result.type).toBe('question_free_response')
+      expect((result as { answer: { acceptedAnswers: string[] } }).answer.acceptedAnswers).toEqual([
+        '4',
+        '-4',
+      ])
+    })
+
+    it('uses empty array when answer is missing', () => {
+      const frNoAnswer = {
+        ...baseExercise,
+        type: 'question_free_response' as const,
+        answer: undefined,
+      }
+
+      const result = transformToContentBlock(frNoAnswer)
+
+      expect(result.type).toBe('question_free_response')
+      expect((result as { answer: { acceptedAnswers: string[] } }).answer.acceptedAnswers).toEqual(
+        [],
+      )
+    })
   })
 })

@@ -8,10 +8,11 @@
  * on data behavior.
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
-import { getPayload, type Payload } from 'payload'
+import { getPayload, type Payload, type PayloadRequest } from 'payload'
 import config from '@payload-config'
 
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
+import { generateExercisesEndpoint } from '@/server/payload/endpoints/lessons/generate-exercises'
 
 // Mock the exercise generation service to avoid LLM calls
 vi.mock('@/infra/llm/services/exercise-generation-service', () => ({
@@ -46,6 +47,15 @@ vi.mock('@/infra/llm/services/exercise-generation-service', () => ({
       },
     ],
   }),
+}))
+
+vi.mock('@/infra/utils/logger', () => ({
+  logger: {
+    info: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+    child: vi.fn().mockReturnThis(),
+  },
 }))
 
 async function ensureDefaultTenant(payload: Payload): Promise<string> {
@@ -206,9 +216,137 @@ describe('Generate exercises endpoint', () => {
     await payload.db?.destroy?.()
   })
 
-  it('is a placeholder test - real tests require HTTP integration', () => {
-    // This test exists to ensure the test file is picked up.
-    // Real endpoint testing requires HTTP integration with mocked LLM.
-    expect(true).toBe(true)
+  it('returns 401 when no user is authenticated', async () => {
+    const req = {
+      payload,
+      user: null,
+      url: `http://localhost/api/lessons/${lessonId}/generate-exercises`,
+      headers: new Headers(),
+      json: async () => ({ prompt: 'Create exercises' }),
+    } as unknown as PayloadRequest
+
+    const res = await generateExercisesEndpoint(req)
+    expect(res.status).toBe(401)
+    const body = await res.json()
+    expect(body.error).toBe('Authentication required')
+  })
+
+  it('returns 403 when user is not admin', async () => {
+    const nonAdminUser = await payload.create({
+      collection: 'users',
+      data: { email: `student-${Date.now()}@test.local`, role: 'student' },
+      overrideAccess: true,
+    })
+
+    const req = {
+      payload,
+      user: { id: nonAdminUser.id, role: 'student' } as PayloadRequest['user'],
+      url: `http://localhost/api/lessons/${lessonId}/generate-exercises`,
+      headers: new Headers(),
+      json: async () => ({ prompt: 'Create exercises' }),
+    } as unknown as PayloadRequest
+
+    const res = await generateExercisesEndpoint(req)
+    expect(res.status).toBe(403)
+    const body = await res.json()
+    expect(body.error).toBe('Admin access required')
+
+    await payload.delete({ collection: 'users', id: nonAdminUser.id, overrideAccess: true })
+  })
+
+  it('returns 400 when prompt is missing', async () => {
+    const req = {
+      payload,
+      user: { id: adminUser.id, role: 'admin' } as PayloadRequest['user'],
+      url: `http://localhost/api/lessons/${lessonId}/generate-exercises`,
+      headers: new Headers(),
+      json: async () => ({}),
+    } as unknown as PayloadRequest
+
+    const res = await generateExercisesEndpoint(req)
+    expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body.error).toBe('prompt is required and must be non-empty')
+  })
+
+  it('returns 400 when prompt is empty string', async () => {
+    const req = {
+      payload,
+      user: { id: adminUser.id, role: 'admin' } as PayloadRequest['user'],
+      url: `http://localhost/api/lessons/${lessonId}/generate-exercises`,
+      headers: new Headers(),
+      json: async () => ({ prompt: '   ' }),
+    } as unknown as PayloadRequest
+
+    const res = await generateExercisesEndpoint(req)
+    expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body.error).toBe('prompt is required and must be non-empty')
+  })
+
+  it('returns 400 when prompt exceeds 2000 characters', async () => {
+    const req = {
+      payload,
+      user: { id: adminUser.id, role: 'admin' } as PayloadRequest['user'],
+      url: `http://localhost/api/lessons/${lessonId}/generate-exercises`,
+      headers: new Headers(),
+      json: async () => ({ prompt: 'a'.repeat(2001) }),
+    } as unknown as PayloadRequest
+
+    const res = await generateExercisesEndpoint(req)
+    expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body.error).toBe('prompt must be 2000 characters or less')
+  })
+
+  it('returns 400 when lesson id is missing from path', async () => {
+    const req = {
+      payload,
+      user: { id: adminUser.id, role: 'admin' } as PayloadRequest['user'],
+      url: 'http://localhost/api/lessons//generate-exercises',
+      headers: new Headers(),
+      json: async () => ({ prompt: 'Create exercises' }),
+    } as unknown as PayloadRequest
+
+    const res = await generateExercisesEndpoint(req)
+    expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body.error).toBe('Lesson id missing from path')
+  })
+
+  it('returns 404 when lesson does not exist', async () => {
+    const fakeLessonId = '000000000000000000000000'
+    const req = {
+      payload,
+      user: { id: adminUser.id, role: 'admin' } as PayloadRequest['user'],
+      url: `http://localhost/api/lessons/${fakeLessonId}/generate-exercises`,
+      headers: new Headers(),
+      json: async () => ({ prompt: 'Create exercises' }),
+    } as unknown as PayloadRequest
+
+    const res = await generateExercisesEndpoint(req)
+    expect(res.status).toBe(404)
+  })
+
+  it('returns 200 with exercise IDs on successful generation', async () => {
+    const req = {
+      payload,
+      user: { id: adminUser.id, role: 'admin' } as PayloadRequest['user'],
+      url: `http://localhost/api/lessons/${lessonId}/generate-exercises`,
+      headers: new Headers(),
+      json: async () => ({ prompt: 'Create some exercises', exerciseType: 'mcq' }),
+    } as unknown as PayloadRequest
+
+    const res = await generateExercisesEndpoint(req)
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.success).toBe(true)
+    expect(body.count).toBe(2)
+    expect(body.exerciseIds).toHaveLength(2)
+
+    // Cleanup created exercises
+    for (const exerciseId of body.exerciseIds) {
+      await payload.delete({ collection: 'exercises', id: exerciseId, overrideAccess: true })
+    }
   })
 })
