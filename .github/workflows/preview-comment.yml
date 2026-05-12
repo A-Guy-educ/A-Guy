@@ -18,6 +18,7 @@ jobs:
         id: get-pr
         uses: actions/github-script@v8
         with:
+          retries: 3
           script: |
             const deployment = await github.rest.repos.getDeployment({
               owner: context.repo.owner,
@@ -70,6 +71,7 @@ jobs:
         if: steps.get-pr.outputs.result != 'null'
         uses: actions/github-script@v8
         with:
+          retries: 3
           script: |
             const prNumber = ${{ steps.get-pr.outputs.result }};
             const url = '${{ github.event.deployment_status.target_url }}';
