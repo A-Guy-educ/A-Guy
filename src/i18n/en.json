@@ -425,7 +425,9 @@
     "chat": {
       "chatWelcome": "Hi! I'm your admin AI assistant. Ask me about courses, chapters, lessons, exercises, or media in your system.",
       "chatInputPlaceholder": "Ask a question...",
-      "chatAuthRequired": "Please log in to access admin chat"
+      "chatAuthRequired": "Please log in to access admin chat",
+      "openChat": "Open AI Chat",
+      "modalTitle": "Admin AI Assistant"
     },
     "chatLink": "Chat with AI"
   },
