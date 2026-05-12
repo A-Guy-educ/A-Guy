@@ -39,6 +39,8 @@ export interface GenerateVariationInput {
   subject: DuplicationSubject
 }
 
+import { withTimeout as withSharedTimeout } from '@/infra/utils/with-timeout'
+
 /**
  * Per-LLM-call timeout. A stuck Gemini call would otherwise leave the
  * duplication record in `running` indefinitely. 180s leaves headroom for
@@ -47,32 +49,9 @@ export interface GenerateVariationInput {
  */
 export const LLM_CALL_TIMEOUT_MS = 180_000
 
-class LlmCallTimeoutError extends Error {
-  readonly code = 'LLM_CALL_TIMEOUT'
-  constructor(stage: string) {
-    super(`LLM call timed out after ${LLM_CALL_TIMEOUT_MS}ms in ${stage}`)
-  }
-}
-
-/** Race a promise against a timer; throws LlmCallTimeoutError if the timer wins. */
-function withTimeout<T>(
-  promise: Promise<T>,
-  stage: string,
-  timeoutMs = LLM_CALL_TIMEOUT_MS,
-): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new LlmCallTimeoutError(stage)), timeoutMs)
-    promise.then(
-      (value) => {
-        clearTimeout(timer)
-        resolve(value)
-      },
-      (err) => {
-        clearTimeout(timer)
-        reject(err)
-      },
-    )
-  })
+/** Convenience wrapper that pins the default timeout to LLM_CALL_TIMEOUT_MS. */
+function withTimeout<T>(promise: Promise<T>, stage: string): Promise<T> {
+  return withSharedTimeout(promise, stage, LLM_CALL_TIMEOUT_MS)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -470,14 +449,22 @@ function isJsonParseError(error: unknown): boolean {
  */
 function isRateLimitError(error: unknown): boolean {
   if (!(error instanceof Error)) return false
+  // Prefer typed signals when the underlying provider exposes them. The
+  // genkit error adapter wraps Gemini rate-limit errors as LLMError with
+  // code 'RATE_LIMIT_ERROR' — match that first so we don't have to guess
+  // from the human-readable message.
+  const code = (error as { code?: string }).code
+  if (code === 'RATE_LIMIT_ERROR') return true
+
+  // Fallback: regex anchored on substrings that genuinely indicate a quota
+  // signal, not arbitrary appearances of "429" inside a URL or nested cause.
   const msg = error.message.toLowerCase()
   return (
-    msg.includes('rate limit') ||
-    msg.includes('rate_limit') ||
-    msg.includes('quota') ||
-    msg.includes('resource_exhausted') ||
-    msg.includes('429') ||
-    msg.includes('too many requests')
+    /\brate[\s_-]?limit(?:\s+exceeded)?\b/.test(msg) ||
+    /\bresource[\s_-]?exhausted\b/.test(msg) ||
+    /\bquota\s+exceeded\b/.test(msg) ||
+    /\btoo\s+many\s+requests\b/.test(msg) ||
+    /\b(?:status|code|http)\s*[:=]?\s*429\b/.test(msg)
   )
 }
 

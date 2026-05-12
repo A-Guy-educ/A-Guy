@@ -18,30 +18,13 @@ import {
 } from '@/infra/llm/providers/factory'
 import type { ContentBlock } from '@/server/payload/collections/Exercises/schemas'
 
+import { withTimeout as withSharedTimeout } from '@/infra/utils/with-timeout'
+
 /** Match the variation service's per-call timeout so a stuck LLM can't pin a duplication record in `running`. */
 const SEMANTIC_LLM_TIMEOUT_MS = 180_000
 
-function withTimeout<T>(promise: Promise<T>, stage: string): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(
-      () =>
-        reject(
-          new Error(`Semantic validator ${stage} timed out after ${SEMANTIC_LLM_TIMEOUT_MS}ms`),
-        ),
-      SEMANTIC_LLM_TIMEOUT_MS,
-    )
-    promise.then(
-      (v) => {
-        clearTimeout(timer)
-        resolve(v)
-      },
-      (e) => {
-        clearTimeout(timer)
-        reject(e)
-      },
-    )
-  })
-}
+const withTimeout = <T>(promise: Promise<T>, stage: string): Promise<T> =>
+  withSharedTimeout(promise, stage, SEMANTIC_LLM_TIMEOUT_MS)
 
 export const SEMANTIC_FAILURE_CODE = 'SEMANTIC_MISMATCH' as const
 

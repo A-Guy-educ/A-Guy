@@ -43,11 +43,16 @@ export interface StructuralFailure {
 
 /**
  * Failure codes that DROP the exercise from the output lesson — these usually
- * mean the renderer will crash or the exercise is unsalvageable without a
- * second AI pass. The rest are recorded as failures but the exercise still
- * lands in the output with placeholder text for the missing field, so the
- * admin can fix it from the K6 review screen instead of having an empty
- * `outputExercises` array.
+ * mean the renderer will crash, the exercise is unsalvageable without a
+ * second AI pass, or we can't synthesize a sane placeholder for the missing
+ * data. The rest are recorded as warnings and the exercise lands in the
+ * output with placeholder text for the missing field.
+ *
+ * MISSING_CORRECT_OPTION / MISSING_WRONG_OPTIONS are blocking because we
+ * can't invent plausible MCQ options without knowing the subject matter —
+ * a "_TODO_" option set would make the exercise unanswerable, and would
+ * then fail McqAnswerSchema's min(2) requirement at save time anyway,
+ * producing a duplicate GENERATION_FAILED on top of the warning.
  */
 export const BLOCKING_FAILURE_CODES = new Set<FailureCode>([
   FAILURE_CODES.PNG_FORBIDDEN,
@@ -57,15 +62,18 @@ export const BLOCKING_FAILURE_CODES = new Set<FailureCode>([
   FAILURE_CODES.INVALID_GUIDED_EXPLANATION,
   FAILURE_CODES.TOO_MANY_SECTIONS,
   FAILURE_CODES.MISSING_QUESTION,
+  FAILURE_CODES.MISSING_CORRECT_OPTION,
+  FAILURE_CODES.MISSING_WRONG_OPTIONS,
 ])
 
 /**
- * In-place fill of missing hint / solution / fullSolution fields on question
- * blocks. Used after structural validation when only warning-level failures
- * remain — gives the admin a renderable exercise with explicit TODO markers
- * instead of dropping the exercise entirely.
+ * Return a NEW array of new block objects with missing hint / solution /
+ * fullSolution fields filled with TODO placeholders. Used after structural
+ * validation when only warning-level failures remain.
+ *
+ * Pure: does not mutate `blocks` or any block it contains.
  */
-export function fillMissingFieldsWithPlaceholders(blocks: ContentBlock[]): void {
+export function fillMissingFieldsWithPlaceholders(blocks: ContentBlock[]): ContentBlock[] {
   const placeholder = (label: string) =>
     ({
       type: 'rich_text' as const,
@@ -83,23 +91,19 @@ export function fillMissingFieldsWithPlaceholders(blocks: ContentBlock[]): void 
     'question_axis',
   ])
 
-  for (const block of blocks) {
-    if (!QUESTION_TYPES.has(block.type)) continue
+  return blocks.map((block) => {
+    if (!QUESTION_TYPES.has(block.type)) return block
     const b = block as Record<string, unknown> & {
       hint?: { value?: string }
       solution?: { value?: string }
       fullSolution?: { value?: string }
     }
-    if (!b.hint?.value?.trim()) {
-      b.hint = placeholder('hint')
-    }
-    if (!b.solution?.value?.trim()) {
-      b.solution = placeholder('solution')
-    }
-    if (!b.fullSolution?.value?.trim()) {
-      b.fullSolution = placeholder('full solution')
-    }
-  }
+    const next: Record<string, unknown> = { ...b }
+    if (!b.hint?.value?.trim()) next.hint = placeholder('hint')
+    if (!b.solution?.value?.trim()) next.solution = placeholder('solution')
+    if (!b.fullSolution?.value?.trim()) next.fullSolution = placeholder('full solution')
+    return next as ContentBlock
+  })
 }
 
 /** Returns true if the string contains embedded PNG data (data URI or .png reference). */

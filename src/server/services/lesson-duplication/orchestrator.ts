@@ -105,6 +105,15 @@ function suggestAction(code: string): 'skip' | 'regenerate' | 'keep' {
   }
 }
 
+// Compile-time guard: this whole module assumes CONCURRENCY_LIMIT === 1.
+// appendEntry below uses a non-atomic read-then-update on the failures/warnings
+// arrays — at concurrency >1 two parallel appends would race and lose entries.
+// If you raise CONCURRENCY_LIMIT, replace appendEntry with a Mongo $push update
+// before deleting this assert.
+type _AssertConcurrencyOne = typeof CONCURRENCY_LIMIT extends 1 ? true : never
+const _concurrencyAssert: _AssertConcurrencyOne = true
+void _concurrencyAssert
+
 /**
  * Append a single failure/warning entry to the LessonDuplications record.
  *
@@ -112,10 +121,6 @@ function suggestAction(code: string): 'skip' | 'regenerate' | 'keep' {
  *  - 'failures' = blocking; the exercise was dropped from the output lesson.
  *  - 'warnings' = non-blocking; the exercise was kept with TODO placeholders
  *    for the missing field. Admin polishes via the review screen.
- *
- * Reads-then-writes the array, so concurrent appends on the same record could
- * race. Today CONCURRENCY_LIMIT=1 makes this safe; if we ever raise it, this
- * needs to move to a $push update.
  */
 async function appendEntry(
   bucket: 'failures' | 'warnings',
@@ -348,10 +353,13 @@ async function processExercise(
     return null
   }
 
-  // Warning-only path: fill placeholders so the exercise renders. Failures are
+  // Warning-only path: fill placeholders so the exercise renders. Warnings are
   // already recorded so the admin can find the TODOs in the review screen.
   if (warningFailures.length > 0) {
-    fillMissingFieldsWithPlaceholders(strategyResult.blocks)
+    strategyResult = {
+      ...strategyResult,
+      blocks: fillMissingFieldsWithPlaceholders(strategyResult.blocks),
+    }
   }
 
   // Step 3: Semantic validation (skip for script strategy and level=none)
