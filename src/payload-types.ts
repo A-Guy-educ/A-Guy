@@ -2275,6 +2275,10 @@ export interface UserStat {
    */
   lastHeartbeatAt?: string | null;
   /**
+   * Number of times the user returned after their first active day
+   */
+  returnCount?: number | null;
+  /**
    * Recent user activity timeline (max 50 entries)
    */
   activityLog?:
@@ -3707,6 +3711,7 @@ export interface UserStatsSelect<T extends boolean = true> {
   longestStreak?: T;
   lastActiveDate?: T;
   lastHeartbeatAt?: T;
+  returnCount?: T;
   activityLog?:
     | T
     | {
