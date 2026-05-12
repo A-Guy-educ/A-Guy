@@ -178,16 +178,24 @@ describe.skipIf(!hasDatabaseUrl)(
 
       const body = (await res.json()) as {
         engagement: {
-          courseEnrollments: Array<{ courseTitle: string; count: number; percentage?: number }>
+          courseEnrollments: Array<{
+            courseTitle: string
+            count: number
+            percentage?: number
+            locale?: string
+          }>
         }
       }
 
-      // Each course enrollment entry should have a percentage field
+      // Each course enrollment entry should have a percentage and locale field
       for (const enrollment of body.engagement.courseEnrollments) {
         expect(enrollment).toHaveProperty('percentage')
         expect(typeof enrollment.percentage).toBe('number')
         expect(enrollment.percentage).toBeGreaterThanOrEqual(0)
         expect(enrollment.percentage).toBeLessThanOrEqual(100)
+        expect(enrollment).toHaveProperty('locale')
+        expect(typeof enrollment.locale).toBe('string')
+        expect(['en', 'he']).toContain(enrollment.locale)
       }
     })
 
@@ -200,7 +208,12 @@ describe.skipIf(!hasDatabaseUrl)(
 
       const body = (await res.json()) as {
         engagement: {
-          courseEnrollments: Array<{ courseTitle: string; count: number; percentage?: number }>
+          courseEnrollments: Array<{
+            courseTitle: string
+            count: number
+            percentage?: number
+            locale?: string
+          }>
         }
       }
 
@@ -212,6 +225,13 @@ describe.skipIf(!hasDatabaseUrl)(
       // Percentages should sum to 100 (allowing for rounding)
       expect(totalPercentage).toBeGreaterThan(99)
       expect(totalPercentage).toBeLessThan(101)
+
+      // Courses should be grouped by locale (all should have locale field)
+      const enCourses = body.engagement.courseEnrollments.filter((e) => e.locale === 'en')
+      const heCourses = body.engagement.courseEnrollments.filter((e) => e.locale === 'he')
+      // All courses in this test have default 'he' locale
+      expect(heCourses.length).toBeGreaterThan(0)
+      expect(enCourses.length).toBe(0)
     })
 
     it('top 5 courses should be correctly identified by enrollment count', async () => {
@@ -274,5 +294,24 @@ describe('Course Enrollments Strings — tooltip (#1515)', () => {
     expect(tooltip.length).toBeGreaterThan(0)
     // Should contain Hebrew characters for unique user description
     expect(/[֐-׿]/.test(tooltip)).toBe(true)
+  })
+
+  it('strings should have englishCourses and hebrewCourses for locale grouping', () => {
+    const enStrings = getStrings('en')
+    const heStrings = getStrings('he')
+
+    expect(enStrings).toHaveProperty('englishCourses')
+    expect(typeof (enStrings as any).englishCourses).toBe('string')
+    expect((enStrings as any).englishCourses.length).toBeGreaterThan(0)
+
+    expect(enStrings).toHaveProperty('hebrewCourses')
+    expect(typeof (enStrings as any).hebrewCourses).toBe('string')
+    expect((enStrings as any).hebrewCourses.length).toBeGreaterThan(0)
+
+    expect(heStrings).toHaveProperty('englishCourses')
+    expect(typeof (heStrings as any).englishCourses).toBe('string')
+
+    expect(heStrings).toHaveProperty('hebrewCourses')
+    expect(typeof (heStrings as any).hebrewCourses).toBe('string')
   })
 })

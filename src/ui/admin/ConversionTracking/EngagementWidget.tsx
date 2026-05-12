@@ -21,6 +21,7 @@ import { useMetricsContext } from './MetricsProvider'
 import { getStrings } from './strings'
 import {
   errorStyle,
+  languageSectionHeaderStyle,
   loadingStyle,
   modalContentStyle,
   modalHeaderStyle,
@@ -340,34 +341,85 @@ const EngagementWidget: React.FC = () => {
                 <X size={20} color="var(--theme-elevation-600)" />
               </button>
             </div>
-            {engagement.courseEnrollments.map((course, i) => {
-              const displayTitle = course.courseTitle.startsWith('__DELETED__:')
-                ? `${s.deletedCourse} (${course.courseTitle.slice(12)})`
-                : course.courseTitle
+            {(() => {
+              const enCourses = engagement.courseEnrollments
+                .filter((c) => c.locale === 'en')
+                .sort((a, b) => b.count - a.count)
+              const heCourses = engagement.courseEnrollments
+                .filter((c) => c.locale === 'he')
+                .sort((a, b) => b.count - a.count)
+
               return (
-                <div key={course.courseTitle} style={enrollmentRowStyle}>
-                  <div style={enrollmentLabelStyle}>
-                    <span>{displayTitle}</span>
-                    <span style={{ fontWeight: 600 }}>
-                      {course.count}{' '}
-                      <span style={{ fontWeight: 400, fontSize: 11, opacity: 0.6 }}>
-                        ({course.percentage}%)
-                      </span>
-                    </span>
-                  </div>
-                  <div style={barContainerStyle}>
-                    <div
-                      style={{
-                        height: '100%',
-                        width: `${(course.count / maxEnrollment) * 100}%`,
-                        backgroundColor: COLORS[i % COLORS.length],
-                        borderRadius: 3,
-                      }}
-                    />
-                  </div>
-                </div>
+                <>
+                  {enCourses.length > 0 && (
+                    <>
+                      <div style={languageSectionHeaderStyle}>{s.englishCourses}</div>
+                      {enCourses.map((course, i) => {
+                        const displayTitle = course.courseTitle.startsWith('__DELETED__:')
+                          ? `${s.deletedCourse} (${course.courseTitle.slice(12)})`
+                          : course.courseTitle
+                        return (
+                          <div key={course.courseTitle} style={enrollmentRowStyle}>
+                            <div style={enrollmentLabelStyle}>
+                              <span>{displayTitle}</span>
+                              <span style={{ fontWeight: 600 }}>
+                                {course.count}{' '}
+                                <span style={{ fontWeight: 400, fontSize: 11, opacity: 0.6 }}>
+                                  ({course.percentage}%)
+                                </span>
+                              </span>
+                            </div>
+                            <div style={barContainerStyle}>
+                              <div
+                                style={{
+                                  height: '100%',
+                                  width: `${(course.count / maxEnrollment) * 100}%`,
+                                  backgroundColor: COLORS[i % COLORS.length],
+                                  borderRadius: 3,
+                                }}
+                              />
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </>
+                  )}
+                  {heCourses.length > 0 && (
+                    <>
+                      <div style={languageSectionHeaderStyle}>{s.hebrewCourses}</div>
+                      {heCourses.map((course, i) => {
+                        const displayTitle = course.courseTitle.startsWith('__DELETED__:')
+                          ? `${s.deletedCourse} (${course.courseTitle.slice(12)})`
+                          : course.courseTitle
+                        return (
+                          <div key={course.courseTitle} style={enrollmentRowStyle}>
+                            <div style={enrollmentLabelStyle}>
+                              <span>{displayTitle}</span>
+                              <span style={{ fontWeight: 600 }}>
+                                {course.count}{' '}
+                                <span style={{ fontWeight: 400, fontSize: 11, opacity: 0.6 }}>
+                                  ({course.percentage}%)
+                                </span>
+                              </span>
+                            </div>
+                            <div style={barContainerStyle}>
+                              <div
+                                style={{
+                                  height: '100%',
+                                  width: `${(course.count / maxEnrollment) * 100}%`,
+                                  backgroundColor: COLORS[i % COLORS.length],
+                                  borderRadius: 3,
+                                }}
+                              />
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </>
+                  )}
+                </>
               )
-            })}
+            })()}
           </div>
         </div>
       )}

@@ -70,6 +70,7 @@ interface UserMetrics {
 
 interface CourseEnrollment {
   courseTitle: string
+  locale: string
   count: number
   percentage: number
 }
@@ -433,9 +434,10 @@ export async function GET(req: Request) {
     }
   }
 
-  // Explicitly fetch courses by the collected IDs to get their titles
+  // Explicitly fetch courses by the collected IDs to get their titles and locales
   const uniqueCourseIds = Array.from(enrollmentCounts.keys())
   const courseIdToTitle = new Map<string, string>()
+  const courseIdToLocale = new Map<string, string>()
   const resolveTitle = (c: {
     id: string
     title?: string
@@ -457,8 +459,10 @@ export async function GET(req: Request) {
         title?: string
         courseLabel?: string
         slug?: string
+        locale?: string
       }
       courseIdToTitle.set(String(c.id), resolveTitle(c))
+      if (c.locale) courseIdToLocale.set(String(c.id), c.locale)
     }
   }
   // Populate map from the all-courses query for any IDs missed by the targeted query
@@ -468,10 +472,12 @@ export async function GET(req: Request) {
       title?: string
       courseLabel?: string
       slug?: string
+      locale?: string
     }
     const id = String(c.id)
     if (!courseIdToTitle.has(id)) {
       courseIdToTitle.set(id, resolveTitle(c))
+      if (c.locale) courseIdToLocale.set(id, c.locale)
     }
   }
 
@@ -480,6 +486,7 @@ export async function GET(req: Request) {
     .map(([id, count]) => ({
       // Client localizes "Deleted course" via the __DELETED__ marker
       courseTitle: courseIdToTitle.get(id) || `__DELETED__:${id.slice(-6)}`,
+      locale: courseIdToLocale.get(id) || 'he',
       count,
       percentage: totalEnrollments > 0 ? Math.round((count / totalEnrollments) * 1000) / 10 : 0,
     }))

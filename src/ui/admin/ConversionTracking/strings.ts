@@ -42,6 +42,8 @@ interface Strings {
   courseEnrollments: string
   courseEnrollmentTooltip: string
   noEnrollments: string
+  englishCourses: string
+  hebrewCourses: string
   featureUsage: string
   avgTimeSpent: string
   minutes: string
@@ -100,6 +102,8 @@ const EN: Strings = {
   courseEnrollmentTooltip:
     'The number of unique users who registered or started a course. Each user is counted only once per course.',
   noEnrollments: 'No enrollments yet',
+  englishCourses: 'English Courses',
+  hebrewCourses: 'Hebrew Courses',
   featureUsage: 'Feature Usage',
   avgTimeSpent: 'Avg time spent',
   minutes: 'min',
@@ -157,6 +161,8 @@ const HE: Strings = {
   courseEnrollmentTooltip:
     'מספר המשתמשים הייחודיים שנרשמו או התחילו קורס במערכת. כל משתמש נספר פעם אחת בלבד לכל קורס.',
   noEnrollments: 'אין הרשמות עדיין',
+  englishCourses: 'קורסים באנגלית',
+  hebrewCourses: 'קורסים בעברית',
   featureUsage: 'שימוש בפיצ׳רים',
   avgTimeSpent: 'זמן ממוצע במערכת',
   minutes: 'דק׳',

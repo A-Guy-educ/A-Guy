@@ -257,3 +257,15 @@ export const viewAllBtnStyle: CSSProperties = {
   alignItems: 'center',
   gap: 6,
 }
+
+export const languageSectionHeaderStyle: CSSProperties = {
+  fontSize: 12,
+  fontWeight: 600,
+  color: 'var(--theme-elevation-500)',
+  textTransform: 'uppercase',
+  letterSpacing: '0.05em',
+  marginTop: 16,
+  marginBottom: 8,
+  paddingBottom: 4,
+  borderBottom: '1px solid var(--theme-elevation-100)',
+}
