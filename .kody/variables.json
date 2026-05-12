@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "variables": {
+    "LLM_MODELS": {
+      "value": "[{\"id\":\"google/gemini-2.5-flash\",\"label\":\"gemini-2.5-flash\",\"provider\":\"google\",\"protocol\":\"openai\",\"baseURL\":\"https://generativelanguage.googleapis.com/v1beta/openai\",\"modelName\":\"gemini-2.5-flash\",\"apiKeySecret\":\"GEMINI_API_KEY\",\"enabled\":true,\"speech\":true}]",
+      "updatedAt": "2026-05-12T18:16:20.592Z",
+      "updatedBy": "aguyaharonyair"
+    }
+  }
+}
