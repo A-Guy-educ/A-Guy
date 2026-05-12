@@ -23,11 +23,15 @@ describe('Admin Dashboard CSP Configuration (#1593)', () => {
    */
   function extractAdminCSP(configContent: string): string | null {
     // Find the admin route headers section
-    const adminRouteMatch = configContent.match(/source:\s*['"]\/admin\/:path\*['"][\s\S]*?headers:\s*\[[\s\S]*?\{[\s\S]*?value:\s*`([^`]+)`/)
+    const adminRouteMatch = configContent.match(
+      /source:\s*['"]\/admin\/:path\*['"][\s\S]*?headers:\s*\[[\s\S]*?\{[\s\S]*?value:\s*`([^`]+)`/,
+    )
 
     if (!adminRouteMatch) {
       // Try alternative pattern
-      const altMatch = configContent.match(/admin\/:path\*[\s\S]*?Content-Security-Policy[\s\S]*?value:\s*\n?\s*"([^"]+)"/)
+      const altMatch = configContent.match(
+        /admin\/:path\*[\s\S]*?Content-Security-Policy[\s\S]*?value:\s*\n?\s*"([^"]+)"/,
+      )
       if (altMatch) {
         return altMatch[1]
       }
