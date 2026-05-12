@@ -21,6 +21,7 @@ import type {
 } from '@/infra/llm/services/exercise-generation-service'
 import { generateExercises } from '@/infra/llm/services/exercise-generation-service'
 import { logger } from '@/infra/utils/logger'
+import { APIError } from 'payload'
 import { generateId } from '@/server/payload/collections/Exercises/defaults'
 import type {
   InlineRichText,
@@ -224,6 +225,10 @@ export async function generateExercisesEndpoint(req: PayloadRequest): Promise<Re
       '[Generate Exercises] Fetched lesson context',
     )
   } catch (error) {
+    const isNotFoundError = error instanceof APIError && error.status === 404
+    if (isNotFoundError) {
+      return Response.json({ error: `Lesson "${lessonId}" not found` }, { status: 404 })
+    }
     reqLogger.error({ error }, '[Generate Exercises] Failed to fetch lesson')
     return Response.json({ error: 'Failed to fetch lesson' }, { status: 500 })
   }
