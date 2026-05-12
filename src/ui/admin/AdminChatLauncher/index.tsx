@@ -47,10 +47,7 @@ export function AdminChatLauncher({ translationNamespace = 'admin.chat' }: Admin
     <button
       onClick={() => setIsOpen(true)}
       aria-label={String(t('openChat')) || 'Open AI Chat'}
-      className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:scale-105 hover:shadow-xl transition-all duration-normal cursor-pointer z-[9999]"
-      style={{
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.25)',
-      }}
+      className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-card-hover flex items-center justify-center hover:scale-105 transition-all duration-normal cursor-pointer z-fixed"
     >
       <MessageSquare size={24} />
     </button>
@@ -61,22 +58,17 @@ export function AdminChatLauncher({ translationNamespace = 'admin.chat' }: Admin
       onClick={(e) => {
         if (e.target === e.currentTarget) setIsOpen(false)
       }}
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-[10000]"
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-modal"
     >
-      <div
-        className="w-[90%] max-w-lg h-[70vh] max-h-[600px] bg-[var(--theme-elevation-0)] rounded-xl flex flex-col overflow-hidden"
-        style={{
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-        }}
-      >
+      <div className="w-[90%] max-w-lg h-[70vh] max-h-[600px] bg-card rounded-xl flex flex-col overflow-hidden shadow-modal">
         {/* Modal Header */}
-        <div className="flex justify-between items-center px-4 py-3 border-b border-[var(--theme-elevation-100)]">
-          <h3 className="m-0 text-body-md font-semibold text-[var(--theme-elevation-1000)]">
+        <div className="flex justify-between items-center px-4 py-3 border-b border-border">
+          <h3 className="m-0 text-body-md font-semibold text-foreground">
             {String(t('modalTitle')) || 'Admin AI Assistant'}
           </h3>
           <button
             onClick={() => setIsOpen(false)}
-            className="bg-none border-none cursor-pointer p-1 flex items-center justify-center text-[var(--theme-elevation-500)] hover:text-[var(--theme-elevation-1000)] transition-colors"
+            className="bg-none border-none cursor-pointer p-1 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
           >
             <X size={20} />
           </button>
