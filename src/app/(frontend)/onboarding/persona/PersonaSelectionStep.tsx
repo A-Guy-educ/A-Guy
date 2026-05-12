@@ -48,6 +48,13 @@ export function PersonaSelectionStep({ returnTo }: PersonaSelectionStepProps) {
 
   // Fetch profiles on mount
   useEffect(() => {
+    const FETCH_TIMEOUT_MS = 4_000
+
+    // Safety timeout: if fetch hangs, resolve loading after timeout so UI is not blocked
+    const safetyTimer = setTimeout(() => {
+      setLoading(false)
+    }, FETCH_TIMEOUT_MS)
+
     async function fetchProfiles() {
       try {
         const res = await fetch('/api/teacher-profiles')
@@ -60,6 +67,7 @@ export function PersonaSelectionStep({ returnTo }: PersonaSelectionStepProps) {
       } catch {
         // profiles remain empty, skip/continue buttons still work
       } finally {
+        clearTimeout(safetyTimer)
         setLoading(false)
       }
     }
