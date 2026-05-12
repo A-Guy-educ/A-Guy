@@ -68,7 +68,7 @@ export function AdminChatLauncher({ translationNamespace = 'admin.chat' }: Admin
           </h3>
           <button
             onClick={() => setIsOpen(false)}
-            className="bg-none border-none cursor-pointer p-1 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+            className="bg-none border-none cursor-pointer p-1 flex items-center justify-center text-muted-foreground hover:text-foreground transition-all duration-normal"
           >
             <X size={20} />
           </button>
