@@ -51,8 +51,9 @@ if (process.env.PAYLOAD_GENERATE_TYPES !== 'true') {
   }
 
   // Only initialize the plugin if we have a valid token
-  // In test mode with mock token, skip the plugin entirely
-  if (isValidToken || (!isTestMode && blobToken)) {
+  // Skip initialization if token is missing, empty, or invalid
+  // This ensures CI environments with empty/invalid tokens don't try to use blob
+  if (isValidToken) {
     vercelBlobPlugin = vercelBlobStorage({
       addRandomSuffix: true,
       cacheControlMaxAge: 60 * 60 * 24 * 30, // 30 days — safe because addRandomSuffix guarantees unique filenames
