@@ -383,11 +383,11 @@ export async function GET(req: Request) {
     payload.find({ collection: 'formula-sheets', limit: 0, overrideAccess: true }),
     payload.find({ collection: 'prompts', limit: 0, overrideAccess: true }),
     // Engagement: user-stats with time data — paginated to avoid truncation
-    // Also fetches firstActiveDate, lastActiveDate, returnCount for returned users calculation
+    // Also fetches createdAt (firstActiveDate proxy via Payload timestamps), lastActiveDate, returnCount for returned users calculation
     findAll<{
       totalTimeSpentSeconds?: number
       activityLog?: Array<{ actionType?: string }>
-      firstActiveDate?: string
+      createdAt?: string
       lastActiveDate?: string
       returnCount?: number
     }>(
@@ -401,7 +401,7 @@ export async function GET(req: Request) {
           select: {
             totalTimeSpentSeconds: true,
             activityLog: true,
-            firstActiveDate: true,
+            createdAt: true,
             lastActiveDate: true,
             returnCount: true,
           },
@@ -409,7 +409,7 @@ export async function GET(req: Request) {
           docs: {
             totalTimeSpentSeconds?: number
             activityLog?: Array<{ actionType?: string }>
-            firstActiveDate?: string
+            createdAt?: string
             lastActiveDate?: string
             returnCount?: number
           }[]
@@ -494,11 +494,11 @@ export async function GET(req: Request) {
   )
 
   // Calculate returned users metrics
-  // ReturnedOnceCount: users who returned at least once (firstActiveDate < lastActiveDate)
+  // ReturnedOnceCount: users who returned at least once (createdAt < lastActiveDate)
   // ReturnedMultipleCount: users who returned more than twice (returnCount > 2)
-  // Uses allUserStats which includes firstActiveDate, lastActiveDate, returnCount
+  // Uses allUserStats which includes createdAt (firstActiveDate proxy), lastActiveDate, returnCount
   const returnedOnceCount = allUserStats.filter(
-    (s) => s.firstActiveDate && s.lastActiveDate && s.firstActiveDate < s.lastActiveDate,
+    (s) => s.createdAt && s.lastActiveDate && s.createdAt < s.lastActiveDate,
   ).length
   const returnedMultipleCount = allUserStats.filter((s) => (s.returnCount || 0) > 2).length
   const totalUsers = totalUsersResult.totalDocs
