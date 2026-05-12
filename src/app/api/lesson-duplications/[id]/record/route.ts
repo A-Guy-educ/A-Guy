@@ -41,6 +41,7 @@ interface ExtendedRecord {
   status: string
   outputExercises: OutputExerciseEntry[]
   failures: unknown[]
+  warnings: unknown[]
   // Embedded exercise pairs for diff preview
   exercisePairs: ExercisePair[]
 }
@@ -113,7 +114,8 @@ export const GET = withApiHandler<unknown, unknown>({ auth: 'admin' }, async ({ 
     level: record.level as string,
     status: record.status as string,
     outputExercises,
-    failures: record.failures as unknown[],
+    failures: (record.failures as unknown[]) ?? [],
+    warnings: ((record as unknown as Record<string, unknown>).warnings as unknown[]) ?? [],
     exercisePairs,
   }
 
