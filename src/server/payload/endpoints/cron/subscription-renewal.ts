@@ -11,7 +11,7 @@ import type { PayloadRequest } from 'payload'
 import { logger } from '@/infra/utils/logger'
 import { withCronMiddleware, type CronResult } from './cron-middleware'
 
-import type { Subscription, User } from '@/payload-types'
+import type { User } from '@/payload-types'
 
 interface RenewalResult {
   processed: number
@@ -67,7 +67,11 @@ async function processRenewals({
 
           // Calculate new period end
           const currentEnd = new Date(subscription.currentPeriodEnd)
-          const interval = subscription.pricingPlan?.interval || 'month'
+          const pricingPlanObj = subscription.pricingPlan
+          const interval =
+            typeof pricingPlanObj === 'object' && pricingPlanObj !== null
+              ? pricingPlanObj.interval || 'month'
+              : 'month'
 
           const newPeriodEnd = new Date(currentEnd)
           if (interval === 'month') {

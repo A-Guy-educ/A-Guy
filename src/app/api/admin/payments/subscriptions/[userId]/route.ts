@@ -11,7 +11,7 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { revokeEntitlementsOnCancellation } from '@/server/services/payment/grants'
 
-import type { Subscription, Transaction, User } from '@/payload-types'
+import type { Subscription, User } from '@/payload-types'
 
 export async function GET(
   req: Request,

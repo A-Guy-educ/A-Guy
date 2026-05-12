@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import Link from 'next/link'
 
 import type { Transaction } from '@/payload-types'
 
@@ -76,8 +77,8 @@ export default function PaymentSuccessClient({ transaction, orderId }: PaymentSu
                 Thank you for your purchase. Your access has been activated.
               </p>
 
-              <div className="bg-muted rounded-md p-4 text-left">
-                <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="bg-muted rounded-md p-card-padding-sm text-left">
+                <div className="grid grid-cols-2 gap-2 text-body-sm">
                   <span className="text-muted-foreground">Order ID:</span>
                   <span className="font-mono">{transaction.tranzilaOrderId}</span>
                   <span className="text-muted-foreground">Amount:</span>
@@ -89,13 +90,13 @@ export default function PaymentSuccessClient({ transaction, orderId }: PaymentSu
                 </div>
               </div>
 
-              <div className="mt-6 flex gap-4 justify-center">
-                <a
+              <div className="mt-6 flex gap-content-gap justify-center">
+                <Link
                   href="/courses"
-                  className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90"
+                  className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-2 text-body-sm font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90"
                 >
                   Browse Courses
-                </a>
+                </Link>
               </div>
             </div>
           )}
@@ -146,19 +147,19 @@ export default function PaymentSuccessClient({ transaction, orderId }: PaymentSu
               <p className="text-muted-foreground">
                 {transaction.failureReason || 'Your payment could not be processed.'}
               </p>
-              <div className="mt-6 flex gap-4 justify-center">
-                <a
+              <div className="mt-6 flex gap-content-gap justify-center">
+                <Link
                   href="/shop"
-                  className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90"
+                  className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-2 text-body-sm font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90"
                 >
                   Try Again
-                </a>
-                <a
+                </Link>
+                <Link
                   href="/contact"
-                  className="inline-flex items-center justify-center rounded-md border border-input bg-background px-6 py-2 text-sm font-medium shadow-sm transition-all hover:bg-muted"
+                  className="inline-flex items-center justify-center rounded-md border border-input bg-background px-6 py-2 text-body-sm font-medium shadow-sm transition-all hover:bg-muted"
                 >
                   Contact Support
-                </a>
+                </Link>
               </div>
             </div>
           )}

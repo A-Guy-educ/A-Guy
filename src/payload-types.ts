@@ -100,6 +100,8 @@ export interface Config {
     posts: Post;
     'pricing-plans': PricingPlan;
     'access-codes': AccessCode;
+    transactions: Transaction;
+    subscriptions: Subscription;
     'mcp-audit-logs': McpAuditLog;
     redirects: Redirect;
     forms: Form;
@@ -146,6 +148,8 @@ export interface Config {
     posts: PostsSelect<false> | PostsSelect<true>;
     'pricing-plans': PricingPlansSelect<false> | PricingPlansSelect<true>;
     'access-codes': AccessCodesSelect<false> | AccessCodesSelect<true>;
+    transactions: TransactionsSelect<false> | TransactionsSelect<true>;
+    subscriptions: SubscriptionsSelect<false> | SubscriptionsSelect<true>;
     'mcp-audit-logs': McpAuditLogsSelect<false> | McpAuditLogsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
@@ -488,6 +492,10 @@ export interface User {
         course: string | Course;
         grantMethod: 'admin' | 'payment' | 'code';
         grantedAt?: string | null;
+        /**
+         * When this entitlement expires (null = never)
+         */
+        expiresAt?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -499,6 +507,34 @@ export interface User {
    * When the current chat quota window started
    */
   chatWindowStart?: string | null;
+  /**
+   * Current subscription status
+   */
+  subscriptionStatus?: ('none' | 'active' | 'expired' | 'cancelled' | 'failed') | null;
+  /**
+   * When current billing period ends
+   */
+  currentPeriodEnd?: string | null;
+  /**
+   * User chose to cancel; access continues until period end
+   */
+  cancelAtPeriodEnd?: boolean | null;
+  /**
+   * Video generations used in current window
+   */
+  videoGenerationsUsed?: number | null;
+  /**
+   * When the current video quota window started
+   */
+  videoGenerationsWindowStart?: string | null;
+  /**
+   * Exam creations used in current window
+   */
+  examCreationsUsed?: number | null;
+  /**
+   * When the current exam quota window started
+   */
+  examCreationsWindowStart?: string | null;
   oauthLoginSecretEnc?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -2455,11 +2491,31 @@ export interface PricingPlan {
   /**
    * Payment provider for this plan
    */
-  provider: 'paypal' | 'stripe' | 'manual';
+  provider: 'paypal' | 'stripe' | 'tranzila' | 'manual';
   /**
    * Provider-specific plan ID (required for PayPal and Stripe)
    */
   providerPlanId?: string | null;
+  /**
+   * Tranzila's product identifier for hosted payment
+   */
+  tranzilaProductId?: string | null;
+  /**
+   * Max chat messages per billing period (null = unlimited)
+   */
+  quotaChatMessages?: number | null;
+  /**
+   * Max video generations per billing period (null = unlimited)
+   */
+  quotaVideoGenerations?: number | null;
+  /**
+   * Max exam creations per billing period (null = unlimited)
+   */
+  quotaExamCreations?: number | null;
+  /**
+   * For one-time purchases: days until entitlement expires (null = never)
+   */
+  entitlementDurationDays?: number | null;
   /**
    * Type of billing
    */
@@ -2523,6 +2579,132 @@ export interface AccessCode {
    * Optional expiration date (leave empty for no expiry)
    */
   expiresAt?: string | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Payment transaction records
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "transactions".
+ */
+export interface Transaction {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * User who made the payment
+   */
+  user: string | User;
+  /**
+   * Pricing plan purchased
+   */
+  pricingPlan: string | PricingPlan;
+  /**
+   * Tranzila's TXnID
+   */
+  tranzilaTransactionId?: string | null;
+  /**
+   * Tranzila's order reference
+   */
+  tranzilaOrderId: string;
+  /**
+   * Payment amount
+   */
+  amount: number;
+  /**
+   * Currency code
+   */
+  currency: 'ILS' | 'USD' | 'EUR';
+  /**
+   * Transaction status
+   */
+  status: 'pending' | 'completed' | 'failed' | 'refunded';
+  /**
+   * Payment method used
+   */
+  paymentMethod?: ('credit_card' | 'apple_pay' | 'other') | null;
+  /**
+   * Raw Tranzila callback data
+   */
+  tranzilaResponse?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Reason for failure (if applicable)
+   */
+  failureReason?: string | null;
+  /**
+   * When the refund was processed
+   */
+  refundedAt?: string | null;
+  /**
+   * Admin who processed the refund
+   */
+  refundedBy?: (string | null) | User;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Subscription lifecycle records
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscriptions".
+ */
+export interface Subscription {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * Subscriber
+   */
+  user: string | User;
+  /**
+   * Subscription plan
+   */
+  pricingPlan: string | PricingPlan;
+  /**
+   * Subscription status
+   */
+  status: 'active' | 'expired' | 'cancelled' | 'failed';
+  /**
+   * Start of current billing period
+   */
+  currentPeriodStart: string;
+  /**
+   * End of current billing period
+   */
+  currentPeriodEnd: string;
+  /**
+   * User chose to cancel; access continues until period end
+   */
+  cancelAtPeriodEnd?: boolean | null;
+  /**
+   * When the subscription was cancelled
+   */
+  cancelledAt?: string | null;
+  /**
+   * Recurring profile ID from Tranzila
+   */
+  tranzilaSubscriptionId?: string | null;
   /**
    * User who created this document
    */
@@ -2965,6 +3147,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'access-codes';
         value: string | AccessCode;
+      } | null)
+    | ({
+        relationTo: 'transactions';
+        value: string | Transaction;
+      } | null)
+    | ({
+        relationTo: 'subscriptions';
+        value: string | Subscription;
       } | null)
     | ({
         relationTo: 'mcp-audit-logs';
@@ -3727,10 +3917,18 @@ export interface UsersSelect<T extends boolean = true> {
         course?: T;
         grantMethod?: T;
         grantedAt?: T;
+        expiresAt?: T;
         id?: T;
       };
   chatQuestionsUsed?: T;
   chatWindowStart?: T;
+  subscriptionStatus?: T;
+  currentPeriodEnd?: T;
+  cancelAtPeriodEnd?: T;
+  videoGenerationsUsed?: T;
+  videoGenerationsWindowStart?: T;
+  examCreationsUsed?: T;
+  examCreationsWindowStart?: T;
   oauthLoginSecretEnc?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -3935,6 +4133,11 @@ export interface PricingPlansSelect<T extends boolean = true> {
   lesson?: T;
   provider?: T;
   providerPlanId?: T;
+  tranzilaProductId?: T;
+  quotaChatMessages?: T;
+  quotaVideoGenerations?: T;
+  quotaExamCreations?: T;
+  entitlementDurationDays?: T;
   billingType?: T;
   interval?: T;
   price?: T;
@@ -3956,6 +4159,46 @@ export interface AccessCodesSelect<T extends boolean = true> {
   currentUses?: T;
   isActive?: T;
   expiresAt?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "transactions_select".
+ */
+export interface TransactionsSelect<T extends boolean = true> {
+  tenant?: T;
+  user?: T;
+  pricingPlan?: T;
+  tranzilaTransactionId?: T;
+  tranzilaOrderId?: T;
+  amount?: T;
+  currency?: T;
+  status?: T;
+  paymentMethod?: T;
+  tranzilaResponse?: T;
+  failureReason?: T;
+  refundedAt?: T;
+  refundedBy?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscriptions_select".
+ */
+export interface SubscriptionsSelect<T extends boolean = true> {
+  tenant?: T;
+  user?: T;
+  pricingPlan?: T;
+  status?: T;
+  currentPeriodStart?: T;
+  currentPeriodEnd?: T;
+  cancelAtPeriodEnd?: T;
+  cancelledAt?: T;
+  tranzilaSubscriptionId?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;

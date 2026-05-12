@@ -11,12 +11,11 @@ import { ObjectId, type Collection, type Document } from 'mongodb'
 import { hoursToMs } from '@/infra/utils/time'
 import type { Payload } from 'payload'
 
-import type { User } from '@/payload-types'
-
 export type QuotaType = 'chat' | 'video' | 'exam'
 
-// Extended user type with payment fields (before types are regenerated)
-interface UserWithPaymentFields extends User {
+// User type with payment fields for quota service
+interface UserWithPaymentFields {
+  id: string
   videoGenerationsUsed?: number
   videoGenerationsWindowStart?: string
   examCreationsUsed?: number
@@ -61,20 +60,6 @@ function getUsersCollection(payload: Payload): Collection<Document> | null {
     null
 
   return (collection as Collection<Document>) ?? null
-}
-
-/**
- * Check if user's subscription allows access
- */
-function isSubscriptionActive(user: UserWithPaymentFields): boolean {
-  if (user.subscriptionStatus === 'active') {
-    // Check if period has ended
-    if (user.currentPeriodEnd) {
-      return new Date(user.currentPeriodEnd) > new Date()
-    }
-    return true
-  }
-  return false
 }
 
 /**

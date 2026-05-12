@@ -8,7 +8,7 @@
 
 import type { Payload } from 'payload'
 
-import type { PricingPlan } from '@/payload-types'
+import { getDefaultTenantId } from '@/server/services/tenant/get-default-tenant'
 import type { User } from '@/payload-types'
 
 // Interface for course entitlement item with expiresAt
@@ -31,13 +31,18 @@ export interface GrantEntitlementResult {
   expiresAt?: string
 }
 
-interface PricingPlanWithLesson extends PricingPlan {
+// Extended pricing plan type with lesson populated (when fetched with depth)
+interface PricingPlanWithLesson {
+  id: string
   lesson?: {
     id: string
     course?: {
       id: string
     }
   }
+  billingType?: 'one_time' | 'subscription'
+  interval?: 'month' | 'year'
+  entitlementDurationDays?: number | null
 }
 
 /**
@@ -47,7 +52,7 @@ export async function grantEntitlementAfterPurchase({
   payload,
   userId,
   pricingPlanId,
-  transactionId,
+  transactionId: _transactionId,
 }: GrantEntitlementParams): Promise<GrantEntitlementResult> {
   // Fetch pricing plan with lesson info
   const plan = (await payload.findByID({
@@ -83,10 +88,14 @@ export async function grantEntitlementAfterPurchase({
 
     expiresAt = periodEnd.toISOString()
 
+    // Get default tenant ID
+    const tenantId = await getDefaultTenantId(payload)
+
     // Create subscription record
     await payload.create({
       collection: 'subscriptions',
       data: {
+        tenant: tenantId,
         user: userId,
         pricingPlan: pricingPlanId,
         status: 'active',
@@ -94,6 +103,7 @@ export async function grantEntitlementAfterPurchase({
         currentPeriodEnd: expiresAt,
         cancelAtPeriodEnd: false,
       },
+      draft: false,
       overrideAccess: true,
     })
 

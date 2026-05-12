@@ -9,7 +9,6 @@
 import { getPayload } from 'payload'
 
 import config from '@payload-config'
-import type { Period } from '@/app/api/admin/dashboard-metrics/route'
 
 export type PaymentPeriod = 'week' | 'month' | 'year'
 

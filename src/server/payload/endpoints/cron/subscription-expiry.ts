@@ -11,7 +11,7 @@ import type { PayloadRequest } from 'payload'
 import { logger } from '@/infra/utils/logger'
 import { withCronMiddleware, type CronResult } from './cron-middleware'
 
-import type { Subscription, User } from '@/payload-types'
+import type { User } from '@/payload-types'
 
 interface ExpiryResult {
   processed: number
@@ -40,7 +40,7 @@ async function processExpiredSubscriptions({
   let hasMore = true
   while (hasMore) {
     try {
-      const { docs: expiredSubscriptions, totalPages } = await payload.find({
+      const { docs: expiredSubscriptions } = await payload.find({
         collection: 'subscriptions',
         where: {
           and: [{ status: { equals: 'active' } }, { currentPeriodEnd: { less_than_equal: now } }],

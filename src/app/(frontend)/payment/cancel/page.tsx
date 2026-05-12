@@ -6,6 +6,8 @@
  * @ai-summary Cancel page when user cancels at Tranzila
  */
 
+import Link from 'next/link'
+
 interface PageProps {
   searchParams: Promise<{ orderId?: string }>
 }
@@ -37,14 +39,16 @@ export default async function PaymentCancelPage({ searchParams }: PageProps) {
           <p className="text-muted-foreground mb-4">
             Your payment was cancelled and you have not been charged.
           </p>
-          {orderId && <p className="text-sm text-muted-foreground mb-4">Order ID: {orderId}</p>}
-          <div className="flex gap-4 justify-center">
-            <a
+          {orderId && (
+            <p className="text-body-sm text-muted-foreground mb-4">Order ID: {orderId}</p>
+          )}
+          <div className="flex gap-content-gap justify-center">
+            <Link
               href="/shop"
-              className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90"
+              className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-2 text-body-sm font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90"
             >
               Return to Shop
-            </a>
+            </Link>
           </div>
         </div>
       </div>

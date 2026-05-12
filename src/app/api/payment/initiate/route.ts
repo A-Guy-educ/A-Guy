@@ -9,6 +9,7 @@
 import { getPayload } from 'payload'
 
 import config from '@payload-config'
+import { getDefaultTenantId } from '@/server/services/tenant/get-default-tenant'
 import { buildPaymentUrl, getRedirectUrls } from '@/server/services/payment/tranzila'
 
 import type { PricingPlan } from '@/payload-types'
@@ -62,12 +63,20 @@ export async function POST(req: Request): Promise<Response> {
     const orderId = generateOrderId()
 
     // Get lesson title for product name
-    const productName = plan.lesson?.title || 'Course Purchase'
+    const lessonTitle =
+      typeof plan.lesson === 'object' && plan.lesson !== null
+        ? plan.lesson.title
+        : 'Course Purchase'
+    const productName = lessonTitle || 'Course Purchase'
+
+    // Get default tenant ID
+    const tenantId = await getDefaultTenantId(payload)
 
     // Create pending transaction
     const transaction = await payload.create({
       collection: 'transactions',
       data: {
+        tenant: tenantId,
         user: userId,
         pricingPlan: pricingPlanId,
         tranzilaOrderId: orderId,
@@ -75,6 +84,7 @@ export async function POST(req: Request): Promise<Response> {
         currency: plan.currency,
         status: 'pending',
       },
+      draft: false,
       overrideAccess: true,
     })
 

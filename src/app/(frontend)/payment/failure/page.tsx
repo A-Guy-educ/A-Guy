@@ -6,6 +6,8 @@
  * @ai-summary Failure page when Tranzila payment fails
  */
 
+import Link from 'next/link'
+
 interface PageProps {
   searchParams: Promise<{ orderId?: string }>
 }
@@ -37,20 +39,22 @@ export default async function PaymentFailurePage({ searchParams }: PageProps) {
           <p className="text-muted-foreground mb-4">
             Your payment could not be processed. Please try again or contact support.
           </p>
-          {orderId && <p className="text-sm text-muted-foreground mb-4">Order ID: {orderId}</p>}
-          <div className="flex gap-4 justify-center">
-            <a
+          {orderId && (
+            <p className="text-body-sm text-muted-foreground mb-4">Order ID: {orderId}</p>
+          )}
+          <div className="flex gap-content-gap justify-center">
+            <Link
               href="/shop"
-              className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90"
+              className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-2 text-body-sm font-medium text-primary-foreground shadow-sm transition-all hover:bg-primary/90"
             >
               Try Again
-            </a>
-            <a
+            </Link>
+            <Link
               href="/contact"
-              className="inline-flex items-center justify-center rounded-md border border-input bg-background px-6 py-2 text-sm font-medium shadow-sm transition-all hover:bg-muted"
+              className="inline-flex items-center justify-center rounded-md border border-input bg-background px-6 py-2 text-body-sm font-medium shadow-sm transition-all hover:bg-muted"
             >
               Contact Support
-            </a>
+            </Link>
           </div>
         </div>
       </div>
