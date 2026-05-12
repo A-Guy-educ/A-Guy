@@ -11,6 +11,11 @@ import type { Payload } from 'payload'
 
 import { logger as rootLogger } from '@/infra/utils/logger'
 import type { UserSetting } from '@/payload-types'
+import {
+  isValidContentLocale,
+  localeWhereClause,
+  type ContentLocale,
+} from '@/server/payload/fields/contentLocale'
 
 /**
  * Default teacher profile slug - hardcoded for v1.1
@@ -171,9 +176,14 @@ async function resolveTier2DefaultProfile(
       isEnabled: { equals: true },
     }
 
+    const resolvedLocale =
+      locale && isValidContentLocale(locale) ? (locale as ContentLocale) : undefined
+
     const result = await payload.find({
       collection: 'teacher_profiles',
-      where: locale ? { and: [baseWhere, { locale: { equals: locale } }] } : baseWhere,
+      where: {
+        and: [baseWhere, ...(resolvedLocale ? [localeWhereClause(resolvedLocale)] : [])],
+      },
       depth: 1, // Populate systemPrompt one level
       limit: 1,
       overrideAccess: true, // Server-side read, collection is adminOnly
@@ -213,10 +223,14 @@ async function resolveTier3FirstActive(
 ): Promise<ResolvedTeacherProfile | null> {
   try {
     const baseWhere = { isEnabled: { equals: true } }
+    const resolvedLocale =
+      locale && isValidContentLocale(locale) ? (locale as ContentLocale) : undefined
 
     const result = await payload.find({
       collection: 'teacher_profiles',
-      where: locale ? { and: [baseWhere, { locale: { equals: locale } }] } : baseWhere,
+      where: {
+        and: [baseWhere, ...(resolvedLocale ? [localeWhereClause(resolvedLocale)] : [])],
+      },
       depth: 1,
       limit: 1,
       sort: 'createdAt',

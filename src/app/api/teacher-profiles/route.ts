@@ -9,6 +9,7 @@ import { getPayload } from 'payload'
 
 import config from '@payload-config'
 import { cookieName, defaultLocale, type Locale, locales } from '@/i18n/config'
+import { isValidContentLocale, localeWhereClause } from '@/server/payload/fields/contentLocale'
 
 function getLocaleFromRequest(req: Request): Locale {
   const cookieHeader = req.headers.get('cookie') ?? ''
@@ -26,13 +27,14 @@ export async function GET(req: Request) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const locale = getLocaleFromRequest(req)
+  const rawLocale = getLocaleFromRequest(req)
+  const locale = isValidContentLocale(rawLocale) ? rawLocale : undefined
 
-  // Fetch active teacher profiles for the user's locale
+  // Fetch active teacher profiles for the user's locale (with backwards-compat fallback)
   const profiles = await payload.find({
     collection: 'teacher_profiles',
     where: {
-      and: [{ isEnabled: { equals: true } }, { locale: { equals: locale } }],
+      and: [{ isEnabled: { equals: true } }, ...(locale ? [localeWhereClause(locale)] : [])],
     },
     sort: 'label',
     overrideAccess: true, // Collection is adminOnly, but we're authenticated
