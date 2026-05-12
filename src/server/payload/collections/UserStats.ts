@@ -92,6 +92,15 @@ export const UserStats: CollectionConfig = {
       },
     },
     {
+      name: 'returnCount',
+      type: 'number',
+      min: 0,
+      defaultValue: 0,
+      admin: {
+        description: 'Number of times the user returned after their first active day',
+      },
+    },
+    {
       name: 'activityLog',
       type: 'array',
       maxRows: 50,
