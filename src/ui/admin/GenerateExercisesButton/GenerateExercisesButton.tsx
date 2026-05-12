@@ -18,28 +18,28 @@ const EXERCISE_TYPES: {
 }[] = [
   {
     value: 'mixed',
-    label: 'מעורב (מגוון סוגים)',
-    hint: 'שילוב של סוגי תרגילים שונים',
+    label: 'Mixed (variety of types)',
+    hint: 'Combination of different exercise types',
   },
   {
     value: 'mcq',
-    label: 'בחירה מרובה',
-    hint: '4 אפשרויות, אחת נכונה',
+    label: 'Multiple choice',
+    hint: '4 options, one correct',
   },
   {
     value: 'true_false',
-    label: 'נכון / לא נכון',
-    hint: 'שני מצבים בלבד',
+    label: 'True / False',
+    hint: 'Two options only',
   },
   {
     value: 'free_response',
-    label: 'תשובה חופשית',
-    hint: 'התלמיד כותב תשובה משלו',
+    label: 'Free response',
+    hint: 'Student writes their own answer',
   },
   {
     value: 'table',
-    label: 'טבלה',
-    hint: 'השלמת טבלה עם נתונים',
+    label: 'Table',
+    hint: 'Fill in a table with data',
   },
 ]
 
@@ -109,7 +109,7 @@ export const GenerateExercisesAction: React.FC = () => {
         className="inline-flex items-center gap-1.5 rounded border border-[var(--theme-elevation-200)] bg-[var(--theme-elevation-0)] px-3 py-1.5 text-[13px] font-medium text-[var(--theme-elevation-1000)] hover:bg-[var(--theme-elevation-50)] cursor-pointer transition-all duration-normal"
         title="Generate AI-powered exercises for this lesson"
       >
-        ייצר תרגילים
+        Generate Exercises
       </button>
 
       {open && (
@@ -123,30 +123,31 @@ export const GenerateExercisesAction: React.FC = () => {
             onClick={(e) => e.stopPropagation()}
             className="w-[520px] max-w-[90vw] rounded-lg border border-[var(--theme-elevation-200)] bg-[var(--theme-elevation-0)] p-6 text-[var(--theme-elevation-1000)] shadow-modal"
           >
-            <h3 className="mt-0 mb-2 text-body-md font-bold">ייצר תרגילים לשיעור</h3>
+            <h3 className="mt-0 mb-2 text-body-md font-bold">Generate Exercises for Lesson</h3>
             <p className="mb-5 text-[13px] leading-relaxed text-[var(--theme-elevation-600)]">
-              הזן הוראות ליצירת תרגילים. המערכת תייצר 10 תרגילים חכמים בעברית.
+              Enter instructions for generating exercises. The system will create 10 smart exercises
+              in Hebrew.
             </p>
 
             <div className="mb-4">
               <label htmlFor="exercise-prompt" className="mb-1.5 block text-[13px] font-medium">
-                פרומפט לתרגילים
+                Exercise Prompt
               </label>
               <textarea
                 id="exercise-prompt"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder="לדוגמה: צור תרגילים על משוואות קוויות ברמת קושי בינונית, מתאימים לכיתה ז'"
+                placeholder="For example: Create exercises about linear equations at medium difficulty, suitable for grade 7"
                 rows={4}
                 className="w-full rounded border border-[var(--theme-elevation-200)] bg-[var(--theme-elevation-0)] p-2.5 text-[13px] text-[var(--theme-elevation-1000)] placeholder:text-[var(--theme-elevation-400)] resize-y font-inherit"
               />
               <p className="mt-1 text-[11px] text-[var(--theme-elevation-600)]">
-                מקסימום 2000 תווים
+                Maximum 2000 characters
               </p>
             </div>
 
             <div className="mb-4">
-              <span className="mb-2 block text-[13px] font-medium">סוג התרגילים</span>
+              <span className="mb-2 block text-[13px] font-medium">Exercise Type</span>
               <div className="flex flex-col gap-2">
                 {EXERCISE_TYPES.map((opt) => (
                   <label
@@ -183,7 +184,7 @@ export const GenerateExercisesAction: React.FC = () => {
             )}
             {status === 'success' && (
               <p className="mb-2 rounded bg-success/10 px-3 py-2 text-[13px] font-medium text-success">
-                נוצרו {resultCount ?? 10} תרגילים בהצלחה!
+                {resultCount ?? 10} exercises created successfully!
               </p>
             )}
 
@@ -193,7 +194,7 @@ export const GenerateExercisesAction: React.FC = () => {
                 onClick={close}
                 className="cursor-pointer rounded border border-[var(--theme-elevation-300)] bg-transparent px-4 py-2 text-[13px] font-medium text-[var(--theme-elevation-800)] hover:bg-[var(--theme-elevation-100)] transition-all duration-normal"
               >
-                {status === 'success' ? 'סגור' : 'ביטול'}
+                {status === 'success' ? 'Close' : 'Cancel'}
               </button>
               {status !== 'success' && (
                 <button
@@ -202,7 +203,7 @@ export const GenerateExercisesAction: React.FC = () => {
                   disabled={!prompt.trim() || status === 'submitting'}
                   className="cursor-pointer rounded border-none bg-success px-3.5 py-2 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60 transition-all duration-normal"
                 >
-                  {status === 'submitting' ? 'מייצר...' : 'צור תרגילים'}
+                  {status === 'submitting' ? 'Generating...' : 'Generate Exercises'}
                 </button>
               )}
             </div>

@@ -269,7 +269,7 @@ export async function generateExercisesEndpoint(req: PayloadRequest): Promise<Re
         collection: 'exercises',
         data: {
           lesson: lessonId,
-          title: `תרגיל ${exerciseNumber}`,
+          title: `Exercise ${exerciseNumber}`,
           content: {
             blocks: [contentBlock],
           },
