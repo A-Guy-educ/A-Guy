@@ -20,9 +20,14 @@ vi.mock('lucide-react', async () => {
 })
 
 describe('UnifiedCard completion state', () => {
-  it('renders CheckCircle when progress is 100', () => {
+  it('does not render CheckCircle overlay when progress is 100', () => {
     render(<UnifiedCard title="Test Lesson" progress={100} />)
-    expect(screen.getByTestId('check-circle')).toBeTruthy()
+    expect(screen.queryByTestId('check-circle')).toBeNull()
+  })
+
+  it('renders 100% text when progress is 100', () => {
+    render(<UnifiedCard title="Test Lesson" progress={100} />)
+    expect(screen.getByText('100%')).toBeTruthy()
   })
 
   it('does not render CheckCircle when progress is less than 100', () => {
