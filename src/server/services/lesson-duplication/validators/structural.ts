@@ -41,6 +41,67 @@ export interface StructuralFailure {
   blockIndex?: number
 }
 
+/**
+ * Failure codes that DROP the exercise from the output lesson — these usually
+ * mean the renderer will crash or the exercise is unsalvageable without a
+ * second AI pass. The rest are recorded as failures but the exercise still
+ * lands in the output with placeholder text for the missing field, so the
+ * admin can fix it from the K6 review screen instead of having an empty
+ * `outputExercises` array.
+ */
+export const BLOCKING_FAILURE_CODES = new Set<FailureCode>([
+  FAILURE_CODES.PNG_FORBIDDEN,
+  FAILURE_CODES.INVALID_SVG,
+  FAILURE_CODES.INVALID_GEOMETRY_SPEC,
+  FAILURE_CODES.INVALID_AXIS_SPEC,
+  FAILURE_CODES.INVALID_GUIDED_EXPLANATION,
+  FAILURE_CODES.TOO_MANY_SECTIONS,
+  FAILURE_CODES.MISSING_QUESTION,
+])
+
+/**
+ * In-place fill of missing hint / solution / fullSolution fields on question
+ * blocks. Used after structural validation when only warning-level failures
+ * remain — gives the admin a renderable exercise with explicit TODO markers
+ * instead of dropping the exercise entirely.
+ */
+export function fillMissingFieldsWithPlaceholders(blocks: ContentBlock[]): void {
+  const placeholder = (label: string) =>
+    ({
+      type: 'rich_text' as const,
+      format: 'md-math-v1' as const,
+      value: `_TODO: ${label} not provided by AI — please fill in_`,
+      mediaIds: [] as string[],
+    }) satisfies Record<string, unknown>
+
+  const QUESTION_TYPES = new Set([
+    'question_select',
+    'question_free_response',
+    'question_table',
+    'question_matching',
+    'question_geometry',
+    'question_axis',
+  ])
+
+  for (const block of blocks) {
+    if (!QUESTION_TYPES.has(block.type)) continue
+    const b = block as Record<string, unknown> & {
+      hint?: { value?: string }
+      solution?: { value?: string }
+      fullSolution?: { value?: string }
+    }
+    if (!b.hint?.value?.trim()) {
+      b.hint = placeholder('hint')
+    }
+    if (!b.solution?.value?.trim()) {
+      b.solution = placeholder('solution')
+    }
+    if (!b.fullSolution?.value?.trim()) {
+      b.fullSolution = placeholder('full solution')
+    }
+  }
+}
+
 /** Returns true if the string contains embedded PNG data (data URI or .png reference). */
 function containsPngData(value: string): boolean {
   // data:image/png;base64,... or data:image/png,...

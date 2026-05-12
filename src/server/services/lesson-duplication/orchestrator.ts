@@ -23,6 +23,8 @@ import { withConcurrencyLimit } from '@/infra/utils/concurrency'
 import { selectExercisesScaled } from '@/server/services/lesson-duplication/selectors'
 import {
   validateExerciseStructural,
+  fillMissingFieldsWithPlaceholders,
+  BLOCKING_FAILURE_CODES,
   type StructuralFailure,
 } from '@/server/services/lesson-duplication/validators/structural'
 import {
@@ -269,20 +271,34 @@ async function processExercise(
     return null
   }
 
-  // Step 2: Structural validation
+  // Step 2: Structural validation. Split failures into blocking (drop the
+  // exercise — renderer would crash) and warnings (admin fills from review
+  // screen). Warning-only exercises still ship, with TODO placeholders filled
+  // in for missing hint/solution/fullSolution so the lesson stays renderable.
   const structuralFailures: StructuralFailure[] = validateExerciseStructural(strategyResult.blocks)
-  if (structuralFailures.length > 0) {
-    for (const failure of structuralFailures) {
-      await appendFailure(
-        payload,
-        duplicationId,
-        exerciseRef,
-        failure.blockIndex ?? 0,
-        failure.code,
-        failure.message,
-      )
-    }
+  const blockingFailures = structuralFailures.filter((f) => BLOCKING_FAILURE_CODES.has(f.code))
+  const warningFailures = structuralFailures.filter((f) => !BLOCKING_FAILURE_CODES.has(f.code))
+
+  // Record every failure (blocking + warning) so the admin sees them in K6.
+  for (const failure of [...blockingFailures, ...warningFailures]) {
+    await appendFailure(
+      payload,
+      duplicationId,
+      exerciseRef,
+      failure.blockIndex ?? 0,
+      failure.code,
+      failure.message,
+    )
+  }
+
+  if (blockingFailures.length > 0) {
     return null
+  }
+
+  // Warning-only path: fill placeholders so the exercise renders. Failures are
+  // already recorded so the admin can find the TODOs in the review screen.
+  if (warningFailures.length > 0) {
+    fillMissingFieldsWithPlaceholders(strategyResult.blocks)
   }
 
   // Step 3: Semantic validation (skip for script strategy and level=none)
