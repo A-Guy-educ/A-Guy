@@ -105,8 +105,20 @@ function suggestAction(code: string): 'skip' | 'regenerate' | 'keep' {
   }
 }
 
-/** Append a single failure to the LessonDuplications record (live streaming). */
-async function appendFailure(
+/**
+ * Append a single failure/warning entry to the LessonDuplications record.
+ *
+ * The bucket name is chosen by the caller:
+ *  - 'failures' = blocking; the exercise was dropped from the output lesson.
+ *  - 'warnings' = non-blocking; the exercise was kept with TODO placeholders
+ *    for the missing field. Admin polishes via the review screen.
+ *
+ * Reads-then-writes the array, so concurrent appends on the same record could
+ * race. Today CONCURRENCY_LIMIT=1 makes this safe; if we ever raise it, this
+ * needs to move to a $push update.
+ */
+async function appendEntry(
+  bucket: 'failures' | 'warnings',
   payload: Payload,
   duplicationId: string,
   exerciseRef: string,
@@ -116,7 +128,6 @@ async function appendFailure(
 ): Promise<void> {
   const action = suggestAction(code)
   try {
-    // Read current failures and append
     const current = await payload.findByID({
       collection: 'lesson-duplications',
       id: duplicationId,
@@ -127,21 +138,52 @@ async function appendFailure(
       collection: 'lesson-duplications',
       id: duplicationId,
       data: {
-        failures: [
+        [bucket]: [
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ...((current.failures as any[]) ?? []),
-          { exerciseRef, sectionIndex, code, message, suggestedAction: action },
+          ...(((current as any)[bucket] as any[]) ?? []),
+          {
+            exerciseRef,
+            sectionIndex,
+            code,
+            message,
+            suggestedAction: action,
+            resolved: false,
+          },
         ],
       } as never,
       overrideAccess: true,
     })
   } catch (err) {
     logger.error(
-      { err, duplicationId, exerciseRef, code },
-      'Failed to append failure to LessonDuplications',
+      { err, duplicationId, exerciseRef, code, bucket },
+      `Failed to append ${bucket} entry to LessonDuplications`,
     )
-    // Don't rethrow — failure streaming failure should not abort the run
+    // Don't rethrow — streaming failure should not abort the run
   }
+}
+
+/** Append a blocking failure (exercise dropped from output lesson). */
+async function appendFailure(
+  payload: Payload,
+  duplicationId: string,
+  exerciseRef: string,
+  sectionIndex: number,
+  code: string,
+  message: string,
+): Promise<void> {
+  return appendEntry('failures', payload, duplicationId, exerciseRef, sectionIndex, code, message)
+}
+
+/** Append a non-blocking warning (exercise kept with placeholder). */
+async function appendWarning(
+  payload: Payload,
+  duplicationId: string,
+  exerciseRef: string,
+  sectionIndex: number,
+  code: string,
+  message: string,
+): Promise<void> {
+  return appendEntry('warnings', payload, duplicationId, exerciseRef, sectionIndex, code, message)
 }
 
 /** Shape of an exercise from the exercises collection. */
@@ -279,8 +321,9 @@ async function processExercise(
   const blockingFailures = structuralFailures.filter((f) => BLOCKING_FAILURE_CODES.has(f.code))
   const warningFailures = structuralFailures.filter((f) => !BLOCKING_FAILURE_CODES.has(f.code))
 
-  // Record every failure (blocking + warning) so the admin sees them in K6.
-  for (const failure of [...blockingFailures, ...warningFailures]) {
+  // Record blocking failures and non-blocking warnings into separate buckets
+  // so the review UI can show them under different headings.
+  for (const failure of blockingFailures) {
     await appendFailure(
       payload,
       duplicationId,
@@ -288,6 +331,16 @@ async function processExercise(
       failure.blockIndex ?? 0,
       failure.code,
       failure.message,
+    )
+  }
+  for (const warning of warningFailures) {
+    await appendWarning(
+      payload,
+      duplicationId,
+      exerciseRef,
+      warning.blockIndex ?? 0,
+      warning.code,
+      warning.message,
     )
   }
 
