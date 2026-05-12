@@ -147,9 +147,14 @@ export const PROVIDER_MODEL_NAMES: Record<LLMProviderType, Record<AIModelKey, st
     ANSWER_VALIDATION: 'gemini-3.1-pro',
     SUPPORT_GENERATION: 'gemini-3.1-pro',
     CONTENT_TRANSLATION: 'gemini-3.1-pro',
-    LESSON_DUPLICATION_VARIATION: 'gemini-3.1-pro',
-    LESSON_DUPLICATION_VARIATION_CREATIVE: 'gemini-3.1-pro',
-    LESSON_DUPLICATION_VARIATION_DETERMINISTIC: 'gemini-3.1-pro',
+    // 'gemini-3.1-pro' returns 404 on the v1beta generativelanguage API
+    // (the model isn't published there, or our keys lack access). The error
+    // adapter mis-classifies the 404 as RATE_LIMIT_ERROR which made the
+    // earlier rate-limit / circuit-breaker symptoms look unrelated. Using
+    // gemini-2.5-pro which the PDF flow already uses successfully.
+    LESSON_DUPLICATION_VARIATION: 'gemini-2.5-pro',
+    LESSON_DUPLICATION_VARIATION_CREATIVE: 'gemini-2.5-pro',
+    LESSON_DUPLICATION_VARIATION_DETERMINISTIC: 'gemini-2.5-pro',
   },
   [LLMProviderType.OPENAI_COMPATIBLE]: {
     IMAGE_TO_EXERCISE: 'MiniMax-M2.1',

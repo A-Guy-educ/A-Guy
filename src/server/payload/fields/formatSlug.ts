@@ -61,6 +61,13 @@ function toSlug(input: string, fallback?: string): string {
     strict: true,
     remove: /[*#@]/g,
   })
+    // Defensive: collapse any residual whitespace or repeated hyphens. slugify
+    // with strict mode should already do this, but lesson titles like
+    // "Original - Copy" have produced slugs containing spaces in the past,
+    // which break URL handling downstream.
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
 
   if (!slug && fallback) {
     return fallback

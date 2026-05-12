@@ -264,7 +264,7 @@ export default buildConfig({
       handler: (req: PayloadRequest) => cascadeDeleteEndpoint(req),
     },
     {
-      path: '/lessons/:id/duplicate',
+      path: '/lessons/:id/duplicate-variation',
       method: 'post',
       handler: (req: PayloadRequest) => duplicateLessonEndpoint(req),
     },
