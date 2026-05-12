@@ -114,31 +114,35 @@ function getPrecision(str: string): number {
 /**
  * Generate a replacement value for a numeric literal.
  * Applies a factor in [0.7, 1.3] (i.e., ±30%) using a seeded PRNG.
- * Falls back to ±1 for integers when the factor would round back to the original.
+ * Always produces a value that differs from the original.
  */
 function generateReplacement(originalStr: string, seed: number): string {
   const originalValue = parseFloat(originalStr)
   if (isNaN(originalValue)) return originalStr
 
-  const state: [number] = [(seed ^ Math.round(originalValue * 1000)) >>> 0]
-  const factor = 0.7 + nextFloat(state) * 0.6 // 0.7 to 1.3
-  const newValue = originalValue * factor
-
   const precision = getPrecision(originalStr)
-  const rounded = Math.round(newValue * Math.pow(10, precision)) / Math.pow(10, precision)
 
-  // If original was an integer, round to integer
-  if (looksLikeInteger(originalStr)) {
-    const roundedInt = Math.round(rounded)
-    // Guard: PRNG factor may round back to the original (e.g. 5 * 1.01 → 5).
-    // In that case, perturb by ±1 in the appropriate direction.
-    if (roundedInt === originalValue) {
-      const direction = nextFloat(state) > 0.5 ? 1 : -1
-      return String(originalValue + direction)
+  // Try multiple candidate factors; pick the first one that differs from the original.
+  const candidates: number[] = []
+  const state: [number] = [(seed ^ Math.round(originalValue * 1000)) >>> 0]
+
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const factor = 0.7 + nextFloat(state) * 0.6 // 0.7 to 1.3
+    const newValue = originalValue * factor
+    const rounded = Math.round(newValue * Math.pow(10, precision)) / Math.pow(10, precision)
+    const candidate = looksLikeInteger(originalStr) ? Math.round(rounded) : rounded
+    if (candidate !== originalValue) {
+      candidates.push(candidate)
+      break
     }
-    return String(roundedInt)
+    candidates.push(candidate) // store anyway for fallback
   }
-  return String(rounded)
+
+  // Pick the first candidate that differs, otherwise fall back to ±1
+  const different = candidates.find((c) => c !== originalValue)
+  const replacement = different ?? (originalValue >= 1 ? originalValue - 1 : originalValue + 1)
+
+  return String(replacement)
 }
 
 /**
