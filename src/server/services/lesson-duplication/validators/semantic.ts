@@ -18,6 +18,14 @@ import {
 } from '@/infra/llm/providers/factory'
 import type { ContentBlock } from '@/server/payload/collections/Exercises/schemas'
 
+import { withTimeout as withSharedTimeout } from '@/infra/utils/with-timeout'
+
+/** Match the variation service's per-call timeout so a stuck LLM can't pin a duplication record in `running`. */
+const SEMANTIC_LLM_TIMEOUT_MS = 180_000
+
+const withTimeout = <T>(promise: Promise<T>, stage: string): Promise<T> =>
+  withSharedTimeout(promise, stage, SEMANTIC_LLM_TIMEOUT_MS)
+
 export const SEMANTIC_FAILURE_CODE = 'SEMANTIC_MISMATCH' as const
 
 export type SemanticValidationResult =
@@ -77,27 +85,50 @@ export async function validateExerciseSemantic(
     return { ok: true, reasons: [] }
   }
 
+  // Use the deterministic variation model (temp 0, currently gemini-2.5-pro)
+  // for the semantic review pass. Trade-off: we lose reviewer-vs-generator
+  // independence — a model judging output produced by the SAME model is more
+  // likely to rubber-stamp subtle issues than a different family would. We're
+  // accepting that for now because (a) capability matters more than independence
+  // for math correctness checks, (b) we don't currently have another provider
+  // wired through Genkit at the right tier. If review quality becomes the
+  // bottleneck, swap to a Claude/OpenAI reviewer here without changing the
+  // generator config.
   const provider = await getLLMProvider(payload)
   const providerType = await getProviderTypeFromEnv(payload)
-  const modelConfig = getProviderModelConfig(providerType, 'EXERCISE_CHAT')
+  const modelConfig = getProviderModelConfig(
+    providerType,
+    'LESSON_DUPLICATION_VARIATION_DETERMINISTIC',
+  )
 
   const contentJson = serializeBlocksForPrompt(blocks)
 
-  const result = await provider.generateChatCompletion(
-    {
-      system:
-        'You are a strict exercise quality reviewer. Return ONLY valid JSON matching the specified schema.',
-      messages: [
+  let result: { text: string }
+  try {
+    result = await withTimeout(
+      provider.generateChatCompletion(
         {
-          role: 'user',
-          content: `${SEMANTIC_PROMPT}${contentJson}`,
+          system:
+            'You are a strict exercise quality reviewer. Return ONLY valid JSON matching the specified schema.',
+          messages: [
+            {
+              role: 'user',
+              content: `${SEMANTIC_PROMPT}${contentJson}`,
+            },
+          ],
+          model: modelConfig,
+          acknowledgment: 'I will return only valid JSON.',
         },
-      ],
-      model: modelConfig,
-      acknowledgment: 'I will return only valid JSON.',
-    },
-    payload,
-  )
+        payload,
+      ),
+      'review',
+    )
+  } catch (err) {
+    return {
+      ok: false,
+      reasons: [err instanceof Error ? err.message : 'Semantic validator LLM call failed'],
+    }
+  }
 
   try {
     // Try to extract JSON from the response text (may be wrapped in markdown code fences)
