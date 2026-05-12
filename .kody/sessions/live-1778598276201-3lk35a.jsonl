@@ -1,2 +1,3 @@
 {"type":"meta","mode":"interactive","createdAt":"2026-05-12T15:04:36.563Z","idleExitMs":300000,"hardCapMs":1800000}
 {"role":"user","content":"Are the changes still uncommitted?","timestamp":"2026-05-12T15:07:15.054Z","toolCalls":[]}
+{"role":"assistant","content":"Yes, there's one uncommitted change:\n\n- **`.kody/last-run.jsonl`** — a Kody/agent runtime file (not user code)","timestamp":"2026-05-12T15:07:28.881Z","toolCalls":[]}
