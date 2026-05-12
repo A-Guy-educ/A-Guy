@@ -31,7 +31,13 @@ import {
 } from '@/server/services/lesson-duplication/validators/semantic'
 import { RouterStrategy } from '@/server/services/lesson-duplication/strategies/router'
 
-export const CONCURRENCY_LIMIT = 3
+// Concurrency of 1 = process exercises sequentially. Each exercise hits the
+// LLM twice (creative + deterministic). Gemini 3.1 Pro's per-minute quota is
+// easily exceeded at higher concurrency, which triggered "rate limit exceeded"
+// failures on every exercise in early multi-exercise runs. The variation
+// service has rate-limit backoff as a safety net, but serializing is the
+// primary control. Bump this back up only after we've sized the quota.
+export const CONCURRENCY_LIMIT = 1
 
 export const GENERATION_FAILURE_CODE = 'GENERATION_FAILED' as const
 

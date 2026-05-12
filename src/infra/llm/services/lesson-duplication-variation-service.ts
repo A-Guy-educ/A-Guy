@@ -165,10 +165,16 @@ export async function generateVariation(
   const creativePrompt = loadSubjectPrompt(subject, level)
   const creativeUserPrompt = buildUserPrompt(exercise)
 
-  let creativeRetryCount = 0
+  let creativeJsonRetried = false
+  let creativeRateLimitRetries = 0
   let pass1Output: Partial<Exercise> | null = null
 
-  for (let attempt = 0; attempt < 2; attempt++) {
+  // Retry envelope: 1 JSON-parse retry + up to RATE_LIMIT_MAX_ATTEMPTS-1
+  // rate-limit retries with backoff. Concurrency=3 with two passes per
+  // exercise can briefly exceed Gemini's per-minute quota; backoff lets the
+  // window reopen instead of failing every exercise in the lesson.
+  const maxAttempts = 1 + 1 + (RATE_LIMIT_MAX_ATTEMPTS - 1) // initial + 1 json + N-1 rate-limit
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
       const { createGenkitUnifiedAdapter } = await import('../genkit/adapters/unified-adapter')
       const adapter = await createGenkitUnifiedAdapter(payload)
@@ -190,25 +196,24 @@ export async function generateVariation(
       pass1Output = parseVariationResponse(result.text)
       break
     } catch (error) {
-      if (isJsonParseError(error)) {
-        if (creativeRetryCount > 0) {
-          const latencyMs = Date.now() - startTime
-          logger.error(
-            { latencyMs, level, subject, exerciseId, creativeRetryCount, err: error },
-            '[LessonDuplicationVariation] Pass 1 retry exhausted',
-          )
-          throw new VariationGenerationError(
-            exerciseId,
-            error instanceof Error ? error.message : 'Invalid JSON from LLM after retry',
-          )
-        }
-        creativeRetryCount++
+      if (isRateLimitError(error) && creativeRateLimitRetries < RATE_LIMIT_MAX_ATTEMPTS - 1) {
+        const backoff = RATE_LIMIT_BACKOFFS_MS[creativeRateLimitRetries] ?? 12_000
+        logger.warn(
+          { level, subject, exerciseId, attempt: creativeRateLimitRetries + 1, backoff },
+          '[LessonDuplicationVariation] Pass 1 rate-limited, backing off',
+        )
+        creativeRateLimitRetries++
+        await sleep(backoff)
+        continue
+      }
+      if (isJsonParseError(error) && !creativeJsonRetried) {
+        creativeJsonRetried = true
         continue
       }
       const latencyMs = Date.now() - startTime
       logger.error(
         { latencyMs, level, subject, exerciseId, err: error },
-        '[LessonDuplicationVariation] Pass 1 non-retryable error',
+        '[LessonDuplicationVariation] Pass 1 failed (non-retryable or retries exhausted)',
       )
       throw new VariationGenerationError(
         exerciseId,
@@ -223,10 +228,13 @@ export async function generateVariation(
 
   // Pass 2 — Deterministic (solution derivation)
   const derivationPrompt = buildSolutionDerivationPrompt(exercise, pass1Output)
-  let pass2RetryCount = 0
   let pass2Patch: Pass2Patch | null = null
 
-  for (let attempt = 0; attempt < 2; attempt++) {
+  let pass2JsonRetried = false
+  let pass2RateLimitRetries = 0
+  const maxPass2Attempts = 1 + 1 + (RATE_LIMIT_MAX_ATTEMPTS - 1)
+
+  for (let attempt = 0; attempt < maxPass2Attempts; attempt++) {
     try {
       const { createGenkitUnifiedAdapter } = await import('../genkit/adapters/unified-adapter')
       const adapter = await createGenkitUnifiedAdapter(payload)
@@ -248,25 +256,24 @@ export async function generateVariation(
       pass2Patch = parseSolutionDerivationResponse(result.text)
       break
     } catch (error) {
-      if (isJsonParseError(error)) {
-        if (pass2RetryCount > 0) {
-          const latencyMs = Date.now() - startTime
-          logger.error(
-            { latencyMs, level, subject, exerciseId, pass2RetryCount, err: error },
-            '[LessonDuplicationVariation] Pass 2 retry exhausted',
-          )
-          throw new VariationGenerationError(
-            exerciseId,
-            error instanceof Error ? error.message : 'Invalid JSON from LLM after retry',
-          )
-        }
-        pass2RetryCount++
+      if (isRateLimitError(error) && pass2RateLimitRetries < RATE_LIMIT_MAX_ATTEMPTS - 1) {
+        const backoff = RATE_LIMIT_BACKOFFS_MS[pass2RateLimitRetries] ?? 12_000
+        logger.warn(
+          { level, subject, exerciseId, attempt: pass2RateLimitRetries + 1, backoff },
+          '[LessonDuplicationVariation] Pass 2 rate-limited, backing off',
+        )
+        pass2RateLimitRetries++
+        await sleep(backoff)
+        continue
+      }
+      if (isJsonParseError(error) && !pass2JsonRetried) {
+        pass2JsonRetried = true
         continue
       }
       const latencyMs = Date.now() - startTime
       logger.error(
         { latencyMs, level, subject, exerciseId, err: error },
-        '[LessonDuplicationVariation] Pass 2 non-retryable error',
+        '[LessonDuplicationVariation] Pass 2 failed (non-retryable or retries exhausted)',
       )
       throw new VariationGenerationError(
         exerciseId,
@@ -403,3 +410,32 @@ function resolveModelConfig(modelKey: AIModelKey): AIModel {
 function isJsonParseError(error: unknown): boolean {
   return error instanceof SyntaxError || (error instanceof Error && error.message.includes('JSON'))
 }
+
+/**
+ * True for Gemini / Vertex rate-limit and quota-exhausted errors. We treat
+ * these as retryable with exponential backoff — concurrency=3 plus 2 passes
+ * per exercise can momentarily exceed the per-minute quota for Gemini 3.1 Pro.
+ */
+function isRateLimitError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false
+  const msg = error.message.toLowerCase()
+  return (
+    msg.includes('rate limit') ||
+    msg.includes('rate_limit') ||
+    msg.includes('quota') ||
+    msg.includes('resource_exhausted') ||
+    msg.includes('429') ||
+    msg.includes('too many requests')
+  )
+}
+
+/** Sleep helper for retry backoff. */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+/** Max attempts when the LLM returns a rate-limit error. Total attempts. */
+const RATE_LIMIT_MAX_ATTEMPTS = 4
+
+/** Backoff schedule (ms) between rate-limit retries — 2s, 5s, 12s. */
+const RATE_LIMIT_BACKOFFS_MS = [2_000, 5_000, 12_000]
