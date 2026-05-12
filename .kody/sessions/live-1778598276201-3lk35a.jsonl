@@ -2,3 +2,4 @@
 {"role":"user","content":"Are the changes still uncommitted?","timestamp":"2026-05-12T15:07:15.054Z","toolCalls":[]}
 {"role":"assistant","content":"Yes, there's one uncommitted change:\n\n- **`.kody/last-run.jsonl`** — a Kody/agent runtime file (not user code)","timestamp":"2026-05-12T15:07:28.881Z","toolCalls":[]}
 {"role":"user","content":"?","timestamp":"2026-05-12T15:08:41.971Z","toolCalls":[]}
+{"role":"assistant","content":"It's a **runtime log file** from the Claude Code harness — not your application code. It tracks session metadata (tools used, agents invoked, etc.) and gets updated on each run.\n\nIt's already in `.gitignore` for most cases, but was staged/modied somehow. You can discard it with:\n\n```bash\ngit checkout -- .kody/last-run.jsonl\n```\n\nOr just ignore it — it has no impact on your project code.","timestamp":"2026-05-12T15:08:56.076Z","toolCalls":[]}
