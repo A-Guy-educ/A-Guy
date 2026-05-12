@@ -211,3 +211,49 @@ export const registeredTrendBadgeStyle = (isPositive: boolean): CSSProperties =>
   backgroundColor: isPositive ? 'var(--theme-success-100)' : 'rgba(239, 68, 68, 0.12)',
   color: isPositive ? 'var(--theme-success)' : 'var(--theme-error)',
 })
+
+export const modalOverlayStyle: CSSProperties = {
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(0,0,0,0.5)',
+  zIndex: 999,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+}
+
+export const modalContentStyle: CSSProperties = {
+  backgroundColor: 'var(--theme-elevation-0)',
+  borderRadius: 12,
+  padding: 24,
+  maxWidth: 600,
+  width: '90%',
+  maxHeight: '80vh',
+  overflowY: 'auto',
+  boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+}
+
+export const modalHeaderStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  marginBottom: 20,
+}
+
+export const viewAllBtnStyle: CSSProperties = {
+  marginTop: 12,
+  padding: '8px 16px',
+  fontSize: 13,
+  fontWeight: 500,
+  color: 'var(--theme-elevation-700)',
+  backgroundColor: 'var(--theme-elevation-100)',
+  border: '1px solid var(--theme-elevation-200)',
+  borderRadius: 6,
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 6,
+}

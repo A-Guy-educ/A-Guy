@@ -7,17 +7,28 @@ import {
   Clock,
   FlaskConical,
   GraduationCap,
+  Info,
   MessageCircle,
   PenTool,
   Timer,
+  X,
 } from 'lucide-react'
-import React from 'react'
+import React, { useState } from 'react'
 import type { CSSProperties } from 'react'
 
 import { ACCENT, CHART_PALETTE } from './colors'
 import { useMetricsContext } from './MetricsProvider'
 import { getStrings } from './strings'
-import { errorStyle, loadingStyle, widgetContainerStyle, widgetTitleStyle } from './styles'
+import {
+  errorStyle,
+  loadingStyle,
+  modalContentStyle,
+  modalHeaderStyle,
+  modalOverlayStyle,
+  viewAllBtnStyle,
+  widgetContainerStyle,
+  widgetTitleStyle,
+} from './styles'
 
 const sectionStyle: CSSProperties = {
   display: 'grid',
@@ -92,6 +103,8 @@ const EngagementWidget: React.FC = () => {
   const { data, loading, error } = useMetricsContext()
   const { i18n } = useTranslation()
   const s = getStrings(i18n.language)
+  const [showHint, setShowHint] = useState(false)
+  const [showAll, setShowAll] = useState(false)
 
   if (error === 'admin-only') return null
 
@@ -128,36 +141,77 @@ const EngagementWidget: React.FC = () => {
         <div style={panelStyle}>
           <div style={panelTitleStyle}>
             <GraduationCap size={16} color={ACCENT.indigo} />
-            {s.courseEnrollments}
+            <span>{s.courseEnrollments}</span>
+            <div
+              style={{ position: 'relative', display: 'inline-flex', cursor: 'help' }}
+              onMouseEnter={() => setShowHint(true)}
+              onMouseLeave={() => setShowHint(false)}
+            >
+              <Info size={13} color="var(--theme-elevation-400)" style={{ flexShrink: 0 }} />
+              {showHint && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: 'calc(100% + 6px)',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    backgroundColor: 'var(--theme-elevation-1000)',
+                    color: 'var(--theme-elevation-0)',
+                    padding: '8px 10px',
+                    borderRadius: 6,
+                    fontSize: 11,
+                    lineHeight: 1.4,
+                    width: 220,
+                    zIndex: 1000,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                    pointerEvents: 'none',
+                  }}
+                >
+                  {s.courseEnrollmentTooltip}
+                </div>
+              )}
+            </div>
           </div>
           {engagement.courseEnrollments.length === 0 ? (
             <div style={{ fontSize: 13, color: 'var(--theme-elevation-400)' }}>
               {s.noEnrollments}
             </div>
           ) : (
-            engagement.courseEnrollments.slice(0, 8).map((course, i) => {
-              const displayTitle = course.courseTitle.startsWith('__DELETED__:')
-                ? `${s.deletedCourse} (${course.courseTitle.slice(12)})`
-                : course.courseTitle
-              return (
-                <div key={course.courseTitle} style={enrollmentRowStyle}>
-                  <div style={enrollmentLabelStyle}>
-                    <span>{displayTitle}</span>
-                    <span style={{ fontWeight: 600 }}>{course.count}</span>
+            <>
+              {engagement.courseEnrollments.slice(0, 5).map((course, i) => {
+                const displayTitle = course.courseTitle.startsWith('__DELETED__:')
+                  ? `${s.deletedCourse} (${course.courseTitle.slice(12)})`
+                  : course.courseTitle
+                return (
+                  <div key={course.courseTitle} style={enrollmentRowStyle}>
+                    <div style={enrollmentLabelStyle}>
+                      <span>{displayTitle}</span>
+                      <span style={{ fontWeight: 600 }}>
+                        {course.count}{' '}
+                        <span style={{ fontWeight: 400, fontSize: 11, opacity: 0.6 }}>
+                          ({course.percentage}%)
+                        </span>
+                      </span>
+                    </div>
+                    <div style={barContainerStyle}>
+                      <div
+                        style={{
+                          height: '100%',
+                          width: `${(course.count / maxEnrollment) * 100}%`,
+                          backgroundColor: COLORS[i % COLORS.length],
+                          borderRadius: 3,
+                        }}
+                      />
+                    </div>
                   </div>
-                  <div style={barContainerStyle}>
-                    <div
-                      style={{
-                        height: '100%',
-                        width: `${(course.count / maxEnrollment) * 100}%`,
-                        backgroundColor: COLORS[i % COLORS.length],
-                        borderRadius: 3,
-                      }}
-                    />
-                  </div>
-                </div>
-              )
-            })
+                )
+              })}
+              {engagement.courseEnrollments.length > 5 && (
+                <button style={viewAllBtnStyle} onClick={() => setShowAll(true)}>
+                  View All ({engagement.courseEnrollments.length})
+                </button>
+              )}
+            </>
           )}
         </div>
 
@@ -266,6 +320,57 @@ const EngagementWidget: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {showAll && (
+        <div style={modalOverlayStyle} onClick={() => setShowAll(false)}>
+          <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
+            <div style={modalHeaderStyle}>
+              <h3 style={{ ...widgetTitleStyle, marginBottom: 0 }}>{s.courseEnrollments}</h3>
+              <button
+                onClick={() => setShowAll(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 4,
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                <X size={20} color="var(--theme-elevation-600)" />
+              </button>
+            </div>
+            {engagement.courseEnrollments.map((course, i) => {
+              const displayTitle = course.courseTitle.startsWith('__DELETED__:')
+                ? `${s.deletedCourse} (${course.courseTitle.slice(12)})`
+                : course.courseTitle
+              return (
+                <div key={course.courseTitle} style={enrollmentRowStyle}>
+                  <div style={enrollmentLabelStyle}>
+                    <span>{displayTitle}</span>
+                    <span style={{ fontWeight: 600 }}>
+                      {course.count}{' '}
+                      <span style={{ fontWeight: 400, fontSize: 11, opacity: 0.6 }}>
+                        ({course.percentage}%)
+                      </span>
+                    </span>
+                  </div>
+                  <div style={barContainerStyle}>
+                    <div
+                      style={{
+                        height: '100%',
+                        width: `${(course.count / maxEnrollment) * 100}%`,
+                        backgroundColor: COLORS[i % COLORS.length],
+                        borderRadius: 3,
+                      }}
+                    />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

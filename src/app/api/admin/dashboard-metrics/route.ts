@@ -71,6 +71,7 @@ interface UserMetrics {
 interface CourseEnrollment {
   courseTitle: string
   count: number
+  percentage: number
 }
 
 interface EngagementMetrics {
@@ -474,11 +475,13 @@ export async function GET(req: Request) {
     }
   }
 
+  const totalEnrollments = Array.from(enrollmentCounts.values()).reduce((sum, c) => sum + c, 0)
   const courseEnrollments: CourseEnrollment[] = Array.from(enrollmentCounts.entries())
     .map(([id, count]) => ({
       // Client localizes "Deleted course" via the __DELETED__ marker
       courseTitle: courseIdToTitle.get(id) || `__DELETED__:${id.slice(-6)}`,
       count,
+      percentage: totalEnrollments > 0 ? Math.round((count / totalEnrollments) * 1000) / 10 : 0,
     }))
     .sort((a, b) => b.count - a.count)
 
