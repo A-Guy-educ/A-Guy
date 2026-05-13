@@ -49,7 +49,7 @@ describe('withConcurrencyLimit', () => {
     expect(results).toEqual([3, 6, 9, 12, 15])
   })
 
-  it('propagates errors correctly', async () => {
+  it('collects null results for failed items without rejecting', async () => {
     const factory = vi.fn(async (item: number) => {
       if (item === 3) {
         throw new Error('boom')
@@ -58,11 +58,11 @@ describe('withConcurrencyLimit', () => {
     })
 
     const promise = withConcurrencyLimit([1, 2, 3, 4, 5], 2, factory)
-    // Advance timers past all task delays so rejection callbacks run, then run
-    // all pending microtasks so the rejection propagates synchronously before the
-    // assertion checks it.
+    // Advance timers past all task delays so rejection callbacks run
     vi.runAllTimers()
-    await expect(promise).rejects.toThrow('boom')
+    const results = await promise
+    // The function resolves (never rejects); failed items return null
+    expect(results).toEqual([1, 2, null, 4, 5])
   })
 
   it('returns empty array for empty input', async () => {

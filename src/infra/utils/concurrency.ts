@@ -82,5 +82,9 @@ export async function withConcurrencyLimit<T, R>(
   // Start the first `limit` items immediately
   processNext()
 
-  return Promise.all(enqueuePromises)
+  // Use allSettled so that one exercise failing does not abort the run —
+  // all items always complete (succeeded or failed) before returning.
+  // Results are normalized back to (R | null)[] so callers keep the same type.
+  const settled = await Promise.allSettled(enqueuePromises)
+  return settled.map((r) => (r.status === 'fulfilled' ? r.value : (null as R)))
 }
