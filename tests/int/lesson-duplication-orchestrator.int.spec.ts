@@ -8,86 +8,42 @@
  *  4. Final status is succeeded only when failures array is empty, else needs_review
  *  5. 5-exercise lesson with one forced failure → needs_review with 4 succeeded + 1 failure entry
  */
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getPayload, type Payload } from 'payload'
 import config from '@payload-config'
 
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
-// Mock runStrategy to inject one forced failure on the 3rd exercise
-// Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
-vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@/server/services/lesson-duplication/orchestrator')>()
+// Tracks how many times RouterStrategy.apply has been called — used to reliably
+// force a failure on the 3rd exercise (call-order based).
+// Reset in beforeEach so each test starts with a clean counter.
+let routerApplyCallCount = 0
+
+// Mock RouterStrategy to inject one forced failure on the 3rd apply call.
+// The mock returns a minimal script result to bypass AI calls.
+vi.mock('@/server/services/lesson-duplication/strategies/router', () => {
   return {
-    ...actual,
-    runStrategy: vi
-      .fn()
-      .mockImplementation(
-        async (exercise: { id: string }, _level: string, _subject: unknown, _payload: unknown) => {
-          // Force failure on the 3rd exercise (index-based)
-          if (exercise.id.includes('-3')) {
-            throw new Error('Forced failure for test')
-          }
-          // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
-          return {
-            exerciseId: exercise.id,
-            strategy: 'script' as const,
-            blocks: [
-              {
-                id: 'q-1',
-                type: 'question_select',
-                variant: 'mcq',
-                selectionMode: 'single',
-                prompt: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'What is 2+2?',
-                  mediaIds: [],
-                },
-                answer: {
-                  multiSelect: false,
-                  options: [
-                    {
-                      id: 'a',
-                      content: {
-                        type: 'rich_text',
-                        format: 'md-math-v1',
-                        value: '3',
-                        mediaIds: [],
-                      },
-                    },
-                    {
-                      id: 'b',
-                      content: {
-                        type: 'rich_text',
-                        format: 'md-math-v1',
-                        value: '4',
-                        mediaIds: [],
-                      },
-                    },
-                  ],
-                  correctOptionIds: ['b'],
-                },
-                hint: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'Think arithmetic',
-                  mediaIds: [],
-                },
-                solution: { type: 'rich_text', format: 'md-math-v1', value: '2+2=4', mediaIds: [] },
-                fullSolution: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'Basic addition',
-                  mediaIds: [],
-                },
-              },
-            ],
-          }
-        },
-      ),
+    RouterStrategy: class MockRouterStrategy {
+      constructor(private readonly _payload: unknown) {}
+
+      async apply(
+        _exercise: { id: string; content?: { blocks?: unknown[] } },
+        _level: string,
+        _subject?: unknown,
+      ) {
+        routerApplyCallCount++
+        if (routerApplyCallCount === 3) {
+          throw new Error('Forced failure for test')
+        }
+        return {
+          needsAiFallback: false,
+          exercise: {
+            content: { blocks: [] },
+          },
+        }
+      }
+    },
   }
 })
 
@@ -118,6 +74,10 @@ describe('Lesson duplication orchestrator — integration', () => {
   const cleanupLessonIds: string[] = []
   const cleanupExerciseIds: string[] = []
   const cleanupDuplicationIds: string[] = []
+
+  beforeEach(() => {
+    routerApplyCallCount = 0
+  })
 
   beforeAll(async () => {
     payload = await getPayload({ config })
