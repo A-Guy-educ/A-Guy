@@ -15,84 +15,83 @@ import config from '@payload-config'
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
-// Mock runStrategy to inject one forced failure on the 3rd exercise
-// Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
-vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@/server/services/lesson-duplication/orchestrator')>()
-  // Call counter to force failure on the 3rd exercise (index 2, 0-based)
-  let callCount = 0
-  return {
-    ...actual,
-    runStrategy: vi
-      .fn()
-      .mockImplementation(
-        async (exercise: { id: string }, _level: string, _subject: unknown, _payload: unknown) => {
-          callCount++
-          // Force failure on the 3rd exercise
-          if (callCount === 3) {
-            throw new Error('Forced failure for test')
-          }
-          // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
-          return {
-            exerciseId: exercise.id,
-            strategy: 'script' as const,
-            blocks: [
-              {
-                id: 'q-1',
-                type: 'question_select',
-                variant: 'mcq',
-                selectionMode: 'single',
-                prompt: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'What is 2+2?',
-                  mediaIds: [],
-                },
-                answer: {
-                  multiSelect: false,
-                  options: [
-                    {
-                      id: 'a',
-                      content: {
-                        type: 'rich_text',
-                        format: 'md-math-v1',
-                        value: '3',
-                        mediaIds: [],
-                      },
-                    },
-                    {
-                      id: 'b',
-                      content: {
-                        type: 'rich_text',
-                        format: 'md-math-v1',
-                        value: '4',
-                        mediaIds: [],
-                      },
-                    },
-                  ],
-                  correctOptionIds: ['b'],
-                },
-                hint: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'Think arithmetic',
-                  mediaIds: [],
-                },
-                solution: { type: 'rich_text', format: 'md-math-v1', value: '2+2=4', mediaIds: [] },
-                fullSolution: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'Basic addition',
-                  mediaIds: [],
-                },
+// Call counter that persists across the module lifetime
+let generateVariationCallCount = 0
+
+// Mock the variation service to count calls and optionally throw on the 3rd exercise
+vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
+  generateVariation: vi.fn().mockImplementation(async (params: { exercise: { id: string } }) => {
+    generateVariationCallCount++
+    // Force failure on the 3rd call
+    if (generateVariationCallCount === 3) {
+      throw new Error('Forced failure for test')
+    }
+    // Return a valid exercise
+    return {
+      exercise: {
+        id: params.exercise.id,
+        content: {
+          blocks: [
+            {
+              id: 'q-1',
+              type: 'question_select',
+              variant: 'mcq',
+              selectionMode: 'single',
+              prompt: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: 'What is 2+2?',
+                mediaIds: [],
               },
-            ],
-          }
+              answer: {
+                multiSelect: false,
+                options: [
+                  {
+                    id: 'a',
+                    content: {
+                      type: 'rich_text',
+                      format: 'md-math-v1',
+                      value: '3',
+                      mediaIds: [],
+                    },
+                  },
+                  {
+                    id: 'b',
+                    content: {
+                      type: 'rich_text',
+                      format: 'md-math-v1',
+                      value: '4',
+                      mediaIds: [],
+                    },
+                  },
+                ],
+                correctOptionIds: ['b'],
+              },
+              hint: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: 'Think arithmetic',
+                mediaIds: [],
+              },
+              solution: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: '2+2=4',
+                mediaIds: [],
+              },
+              fullSolution: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: 'Basic addition',
+                mediaIds: [],
+              },
+            },
+          ],
         },
-      ),
-  }
-})
+      },
+    }
+  }),
+}))
 
 async function ensureDefaultTenant(payload: Payload): Promise<string> {
   const slug = getDefaultTenantSlug()
@@ -123,6 +122,8 @@ describe('Lesson duplication orchestrator — integration', () => {
   const cleanupDuplicationIds: string[] = []
 
   beforeAll(async () => {
+    // Reset counter before test suite runs
+    generateVariationCallCount = 0
     payload = await getPayload({ config })
     tenantId = await ensureDefaultTenant(payload)
     const ts = Date.now()
@@ -272,7 +273,10 @@ describe('Lesson duplication orchestrator — integration', () => {
     return record as any
   }
 
-  it('5-exercise lesson with one forced failure ends in needs_review with failures recorded', async () => {
+  it('5-exercise lesson with one forced failure — orchestrator does not abort and ends in needs_review', async () => {
+    // Reset call count so this test starts fresh
+    generateVariationCallCount = 0
+
     // Create pending duplication record
     const record = await payload.create({
       collection: 'lesson-duplications',
@@ -283,12 +287,11 @@ describe('Lesson duplication orchestrator — integration', () => {
 
     expect(record.status).toBe('pending')
 
-    // Run orchestrator (mocked runStrategy forces failure on exercise containing '-3')
+    // Run orchestrator (mocked generateVariation forces failure on the 3rd exercise)
     try {
       await runDuplicationOrchestrator(record.id, payload)
     } catch {
-      // Orchestrator may throw if the mock is not properly applied;
-      // we still verify the DB record state below
+      // Orchestrator may throw; we still verify the DB record state below
     }
 
     // Poll until done
@@ -297,21 +300,20 @@ describe('Lesson duplication orchestrator — integration', () => {
     // Final status must be needs_review (not succeeded, not failed)
     expect(finalRecord.status).toBe('needs_review')
 
-    // At least one failure entry expected (exercise containing '-3' threw in runStrategy)
-    // Note: the exact count depends on exercise ID strings; we check ≥1 to be robust
+    // At least one failure entry expected (the 3rd exercise threw in generateVariation)
     expect(finalRecord.failures).toBeDefined()
     expect(finalRecord.failures.length).toBeGreaterThanOrEqual(1)
     expect(finalRecord.failures[0].code).toBe('GENERATION_FAILED')
     expect(finalRecord.failures[0].suggestedAction).toBe('skip')
 
     // After orchestrator runs, outputLesson should be created
-    // Note: outputExercises remain empty in this test because the runStrategy mock
-    // bypasses processExercise (which calls createOutputExercise). Exercise creation
-    // is verified in lesson-duplication-review-resolve.int.spec.ts instead.
     expect(finalRecord.outputLesson).toBeTruthy()
   }, 180000)
 
   it('orchestrator does not abort when one exercise fails — remaining exercises are processed', async () => {
+    // Reset call count so this test starts fresh
+    generateVariationCallCount = 0
+
     // Create fresh pending record
     const record = await payload.create({
       collection: 'lesson-duplications',
@@ -320,7 +322,7 @@ describe('Lesson duplication orchestrator — integration', () => {
     })
     cleanupDuplicationIds.push(record.id)
 
-    // Run orchestrator; it may throw if the mock isn't applied (that's ok for this test)
+    // Run orchestrator; it may throw (that's ok for this test)
     try {
       await runDuplicationOrchestrator(record.id, payload)
     } catch {
