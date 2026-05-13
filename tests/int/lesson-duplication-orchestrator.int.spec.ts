@@ -15,22 +15,29 @@ import config from '@payload-config'
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
-// Mock runStrategy to inject one forced failure on the 3rd exercise
-// Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
+// Mock runStrategy to inject one forced failure on the first exercise.
+// The mock uses a call counter so only the first exercise fails; the rest succeed.
+// This verifies that: (a) failures are recorded, (b) the orchestrator continues
+// processing remaining exercises, (c) outputLesson is still created.
+// MongoDB ObjectIds don't contain '-3', so the original index-based check never
+// triggered, causing the real AiVariationStrategy to be called (LLM timeout ~180s
+// per exercise in CI → test hung for 400+ seconds).
 vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@/server/services/lesson-duplication/orchestrator')>()
+  let callCount = 0
   return {
     ...actual,
     runStrategy: vi
       .fn()
       .mockImplementation(
         async (exercise: { id: string }, _level: string, _subject: unknown, _payload: unknown) => {
-          // Force failure on the 3rd exercise (index-based)
-          if (exercise.id.includes('-3')) {
+          callCount++
+          // Fail only the first call — remaining exercises succeed so the orchestrator
+          // proves it does NOT abort on first failure.
+          if (callCount === 1) {
             throw new Error('Forced failure for test')
           }
-          // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
           return {
             exerciseId: exercise.id,
             strategy: 'script' as const,
@@ -280,7 +287,7 @@ describe('Lesson duplication orchestrator — integration', () => {
 
     expect(record.status).toBe('pending')
 
-    // Run orchestrator (mocked runStrategy forces failure on exercise containing '-3')
+    // Run orchestrator (mocked runStrategy forces failure on first exercise)
     try {
       await runDuplicationOrchestrator(record.id, payload)
     } catch {
@@ -294,7 +301,7 @@ describe('Lesson duplication orchestrator — integration', () => {
     // Final status must be needs_review (not succeeded, not failed)
     expect(finalRecord.status).toBe('needs_review')
 
-    // At least one failure entry expected (exercise containing '-3' threw in runStrategy)
+    // At least one failure entry expected (first exercise threw in runStrategy mock)
     // Note: the exact count depends on exercise ID strings; we check ≥1 to be robust
     expect(finalRecord.failures).toBeDefined()
     expect(finalRecord.failures.length).toBeGreaterThanOrEqual(1)
