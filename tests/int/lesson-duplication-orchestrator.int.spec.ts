@@ -15,25 +15,22 @@ import config from '@payload-config'
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
-// Mock runStrategy to inject one forced failure on the 3rd exercise
-// Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
-vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@/server/services/lesson-duplication/orchestrator')>()
-  return {
-    ...actual,
-    runStrategy: vi
-      .fn()
-      .mockImplementation(
-        async (exercise: { id: string }, _level: string, _subject: unknown, _payload: unknown) => {
-          // Force failure on the 3rd exercise (index-based)
-          if (exercise.id.includes('-3')) {
-            throw new Error('Forced failure for test')
-          }
-          // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
-          return {
-            exerciseId: exercise.id,
-            strategy: 'script' as const,
+// Mock generateVariation to inject one forced failure on exercises with slug containing '-3'.
+// The variation service is called deep in the call chain (RouterStrategy -> AiVariationStrategy ->
+// generateVariation), so we mock it at the source to properly inject failures.
+vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
+  generateVariation: vi
+    .fn()
+    .mockImplementation(async (params: { exercise: { id: string; slug?: string } }) => {
+      // Force failure on the exercise with slug containing '-3'
+      if (params.exercise.slug?.includes('-3')) {
+        throw new Error('Forced failure for test')
+      }
+      // Return a valid exercise result
+      return {
+        exercise: {
+          ...params.exercise,
+          content: {
             blocks: [
               {
                 id: 'q-1',
@@ -85,11 +82,11 @@ vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOrigin
                 },
               },
             ],
-          }
+          },
         },
-      ),
-  }
-})
+      }
+    }),
+}))
 
 async function ensureDefaultTenant(payload: Payload): Promise<string> {
   const slug = getDefaultTenantSlug()
@@ -186,10 +183,16 @@ describe('Lesson duplication orchestrator — integration', () => {
     cleanupLessonIds.push(sourceLessonId)
 
     // Create exactly 5 exercises on the source lesson
+    // Exercise 3 (index 2) must have an ID containing '-3' so the mock throws for it
     for (let i = 0; i < 5; i++) {
       const ex = await payload.create({
         collection: 'exercises',
-        data: { title: `Orch Exercise ${i} ${ts}`, lesson: sourceLessonId },
+        data: {
+          title: `Orch Exercise ${i} ${ts}`,
+          // Slug includes '-3' for index 2 so mock runStrategy throws on 3rd exercise
+          slug: i === 2 ? `orch-exercise-${ts}-3` : `orch-exercise-${ts}-${i}`,
+          lesson: sourceLessonId,
+        },
         draft: true,
       })
       cleanupExerciseIds.push(ex.id)
