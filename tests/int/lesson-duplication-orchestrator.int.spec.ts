@@ -312,7 +312,7 @@ describe('Lesson duplication orchestrator — integration', () => {
     // Create fresh pending record
     const record = await payload.create({
       collection: 'lesson-duplications',
-      data: { sourceLesson: sourceLessonId, level: 'medium', status: 'pending' },
+      data: { sourceLesson: sourceLessonId, level: 'light', status: 'pending' },
       overrideAccess: true,
     })
     cleanupDuplicationIds.push(record.id)
