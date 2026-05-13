@@ -15,8 +15,11 @@ import config from '@payload-config'
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
-// Mock runStrategy to inject one forced failure on the 3rd exercise
-// Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
+// Mock runStrategy to inject one forced failure on the last exercise.
+// We track call count via a module-level counter since we can't close over
+// the per-exercise index in a cross-module mock. The orchestrator processes
+// exercises sequentially (CONCURRENCY_LIMIT=1), so call order is deterministic.
+let runStrategyCallCount = 0
 vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@/server/services/lesson-duplication/orchestrator')>()
@@ -26,8 +29,9 @@ vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOrigin
       .fn()
       .mockImplementation(
         async (exercise: { id: string }, _level: string, _subject: unknown, _payload: unknown) => {
-          // Force failure on the 3rd exercise (index-based)
-          if (exercise.id.includes('-3')) {
+          runStrategyCallCount++
+          // Force failure on the last of the 5 exercises (index 5, after 4 succeed)
+          if (runStrategyCallCount >= 5) {
             throw new Error('Forced failure for test')
           }
           // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
