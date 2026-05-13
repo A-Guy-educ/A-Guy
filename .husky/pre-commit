@@ -56,8 +56,12 @@ if [ -n "$GITHUB_ACTIONS" ] || [ "$branch" = "dev" ]; then
   echo "ℹ️  CI environment detected. Skipping branch naming convention check."
   echo ""
 else
-  # Allowed patterns: feat/, fix/, chore/, docs/, refactor/, test/, security/
-  if ! echo "$branch" | grep -qE '^(feat|fix|chore|docs|refactor|test|security)/[a-z0-9-]+$'; then
+  # Allowed patterns:
+  #   - Conventional: feat|fix|chore|docs|refactor|test|security/<description>
+  #   - Legacy issue-number: <number>-<description> (e.g. 1552-track-ai-tokens)
+  #     Some in-flight branches predate the conventional scheme and are tied to
+  #     GitHub issue numbers; keep them passing so their PRs aren't blocked.
+  if ! echo "$branch" | grep -qE '^((feat|fix|chore|docs|refactor|test|security)/[a-z0-9-]+|[0-9]+-[a-z0-9-]+)$'; then
     echo ""
     echo "❌ ERROR: Invalid branch name: '$branch'"
     echo ""
