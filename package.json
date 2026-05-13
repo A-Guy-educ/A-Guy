@@ -234,7 +234,7 @@
       "unrs-resolver"
     ],
     "overrides": {
-      "@modelcontextprotocol/sdk": ">=1.25.2"
+      "@modelcontextprotocol/sdk": "^1.27.1"
     }
   }
 }
