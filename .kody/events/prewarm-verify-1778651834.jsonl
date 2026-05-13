@@ -1,1 +1,2 @@
 {"event":"chat.ready","payload":{"sessionId":"prewarm-verify-1778651834","startedAt":"2026-05-13T05:58:31.389Z","idleExitMs":300000,"hardCapMs":1800000},"runId":"chat-prewarm-verify-1778651834-ready","emittedAt":"2026-05-13T05:58:31.398Z"}
+{"event":"chat.exit","payload":{"sessionId":"prewarm-verify-1778651834","reason":"idle-timeout","turnsCompleted":0,"endedAt":"2026-05-13T06:03:33.266Z"},"runId":"chat-prewarm-verify-1778651834-exit","emittedAt":"2026-05-13T06:03:33.266Z"}
