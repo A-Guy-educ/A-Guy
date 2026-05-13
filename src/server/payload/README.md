@@ -1,5 +1,5 @@
-# Payload
+# payload
 
-- [Blocks](blocks/)
-- [Collections](collections/)
-- [Endpoints](endpoints/)
+- [ulocks](blocks/)
+- [collections](collections/)
+- [endpoints](endpoints/)

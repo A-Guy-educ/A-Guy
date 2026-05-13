@@ -1,4 +1,4 @@
-# Nightly Docs Agent
+# nightly docs agent
 
 - [Nightly Docs Agent Behavior](BEHAVIOR)
 - [Nightly Docs Agent Configuration](CONFIG)

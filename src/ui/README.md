@@ -1,4 +1,4 @@
-# Ui
+# ui
 
-- [Admin](admin/)
-- [Web](web/)
+- [admin](admin/)
+- [web](web/)

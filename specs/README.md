@@ -1,4 +1,4 @@
-# Specs
+# specs
 
 - [Commit Guide – Passing Pre-Commit Hooks](COMMIT_GUIDE)
 - [ENGINEERING CONSTRAINTS](CONSTRAINTS)

@@ -1,7 +1,7 @@
-# Src
+# src
 
-- [App](app/)
-- [Client](client/)
-- [Infra](infra/)
-- [Server](server/)
-- [Ui](ui/)
+- [app](app/)
+- [client](client/)
+- [infra](infra/)
+- [server](server/)
+- [ui](ui/)

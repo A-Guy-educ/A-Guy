@@ -1,4 +1,4 @@
-# Plans
+# plans
 
 - [TTS "Read Out Loud" Implementation Plan](2026-02-19-tts-read-aloud-design)
 - [Plan: Codebase Readability Improvement (Revised)](codebase-readability-improvement)
@@ -9,4 +9,4 @@
 - [Hardening Plan: Overwrite Agent Workflow](overwrite-agent-hardening)
 - [Playwright WebServer Timeout Fix - Implementation Plan](playwright-timeout-fix)
 - [Plan: Store User Details (Name & Email) to Analytics](store-user-details-to-analytics)
-- [Code Quality Boundaries](code-quality-boundaries/)
+- [code quality uoundaries](code-quality-boundaries/)
