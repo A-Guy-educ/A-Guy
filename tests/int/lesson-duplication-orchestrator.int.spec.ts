@@ -14,9 +14,15 @@ import config from '@payload-config'
 
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
-import type { VariationStrategy, VariationResult } from '@/server/services/lesson-duplication/strategies/router'
+import type {
+  VariationStrategy,
+  VariationResult,
+} from '@/server/services/lesson-duplication/strategies/router'
 import type { Exercise } from '@/payload-types'
-import type { DuplicationLevel, DuplicationSubject } from '@/server/payload/collections/LessonDuplications'
+import type {
+  DuplicationLevel,
+  DuplicationSubject,
+} from '@/server/payload/collections/LessonDuplications'
 
 /**
  * Mock AI variation strategy — throws immediately to simulate LLM failure.
