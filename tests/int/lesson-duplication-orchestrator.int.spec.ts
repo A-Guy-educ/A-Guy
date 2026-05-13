@@ -119,6 +119,21 @@ describe('Lesson duplication orchestrator — integration', () => {
   const cleanupExerciseIds: string[] = []
   const cleanupDuplicationIds: string[] = []
 
+  // Also mock the variation service — this is the actual LLM call site.
+  // Even if the runStrategy mock fails to apply (e.g. module cache issue in the
+  // forks pool), this ensures the LLM is never actually called, preventing
+  // 180-second timeouts that cause CI flakiness.
+  beforeAll(() => {
+    vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
+      generateVariation: vi.fn().mockResolvedValue({
+        exercise: {
+          id: 'mock-exercise',
+          content: { blocks: [] },
+        },
+      }),
+    }))
+  })
+
   beforeAll(async () => {
     payload = await getPayload({ config })
     tenantId = await ensureDefaultTenant(payload)
