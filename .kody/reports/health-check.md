@@ -1,10 +1,9 @@
 # Kody Health Check
-
 _Threshold: 6h_
 
-### kody:running
-- [#1583](https://github.com/A-Guy-educ/A-Guy/issues/1583) — feat: add 'Copy message' button to admin chat messages — 50h since last update
+## Running
+- [#1583](https://github.com/A-Guy-educ/A-Guy/issues/1583) — feat: add 'Copy message' button to admin chat messages — 52h since last update
 
-### kody:needs-fix
-- [#1562](https://github.com/A-Guy-educ/A-Guy/issues/1562) — bug: admin chat Send button reports [disabled] in accessibility tree when functionally enabled — 61h since last update
-- [#1236](https://github.com/A-Guy-educ/A-Guy/issues/1236) — fix: Release-publisher agent timeout mismatch with CI polling — 421h since last update
+## Failed
+- [#1562](https://github.com/A-Guy-educ/A-Guy/issues/1562) — bug: admin chat Send button reports [disabled] in accessibility tree when functionally enabled — 63h since last update
+- [#1236](https://github.com/A-Guy-educ/A-Guy/issues/1236) — fix: Release-publisher agent timeout mismatch with CI polling — 444h since last update
