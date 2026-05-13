@@ -3,6 +3,7 @@ title: Lesson Duplication Service
 type: architecture
 updated: 2026-05-13
 sources:
+  - https://github.com/A-Guy-educ/A-Guy/pull/1565
   - https://github.com/A-Guy-educ/A-Guy/pull/1517
   - https://github.com/A-Guy-educ/A-Guy/pull/1467
   - https://github.com/A-Guy-educ/A-Guy/pull/1540
