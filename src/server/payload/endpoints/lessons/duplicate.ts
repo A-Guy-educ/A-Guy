@@ -135,14 +135,33 @@ async function deepCloneLesson(req: PayloadRequest, sourceLessonId: string): Pro
     await import('@/server/services/lesson-duplication/source-exercises')
   const exerciseDocs = await getSourceExercisesForLesson(req.payload, sourceLessonId)
 
+  // Per-exercise isolation: if any single exercise fails create (e.g. Zod
+  // strict mode trips on a legacy field like `labelSize` no longer in the
+  // block schema), don't kill the whole copy. Log it, count it, move on.
+  // Without this guard, a 44-exercise lesson with one bad exercise produces
+  // zero cloned exercises and a top-level 'Content > Content' error.
+  const cloneFailures: Array<{ id: string; reason: string }> = []
   for (const exercise of exerciseDocs) {
-    const exData = stripManagedFields(exercise as unknown as Record<string, unknown>)
-    await req.payload.create({
-      collection: 'exercises',
-      data: { ...exData, lesson: newLesson.id } as never,
-      overrideAccess: true,
-      req,
-    })
+    try {
+      const exData = stripManagedFields(exercise as unknown as Record<string, unknown>)
+      await req.payload.create({
+        collection: 'exercises',
+        data: { ...exData, lesson: newLesson.id } as never,
+        overrideAccess: true,
+        req,
+      })
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : 'unknown'
+      cloneFailures.push({ id: exercise.id, reason })
+      req.payload.logger.warn(
+        `[deepCloneLesson] skipped exercise ${exercise.id} during deep clone: ${reason}`,
+      )
+    }
+  }
+  if (cloneFailures.length > 0) {
+    req.payload.logger.warn(
+      `[deepCloneLesson] ${cloneFailures.length} of ${exerciseDocs.length} exercises failed to clone for lesson ${sourceLessonId}`,
+    )
   }
 
   return newLesson.id
