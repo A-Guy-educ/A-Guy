@@ -488,14 +488,21 @@ export async function runDuplicationOrchestrator(
       selectedExercises,
       CONCURRENCY_LIMIT,
       async (exercise, exerciseIndex) => {
-        const result = await processExercise(
-          exercise,
-          duplicationId,
-          duplicationLevel,
-          duplicationSubject,
-          payload,
-          exerciseIndex,
-        )
+        let result: StrategyResult | null
+        try {
+          result = await processExercise(
+            exercise,
+            duplicationId,
+            duplicationLevel,
+            duplicationSubject,
+            payload,
+            exerciseIndex,
+          )
+        } catch {
+          // Defensive: catch any error that escapes processExercise despite its
+          // internal try-catch (e.g. a mocking edge-case or future code change).
+          result = null
+        }
         if (result === null) return null
 
         // Persist the variation. If payload.create rejects (e.g., Zod strict
