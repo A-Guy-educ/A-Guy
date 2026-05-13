@@ -310,9 +310,13 @@ describe('Lesson duplication orchestrator — integration', () => {
 
   it('orchestrator does not abort when one exercise fails — remaining exercises are processed', async () => {
     // Create fresh pending record
+    // Use level='none' to ensure RouterStrategy.apply() returns early without calling
+    // AiVariationStrategy — avoiding any real AI calls that could hang in CI.
+    // The mock for runStrategy correctly injects failures regardless of level,
+    // so the orchestrator still reaches 'needs_review' with failures recorded.
     const record = await payload.create({
       collection: 'lesson-duplications',
-      data: { sourceLesson: sourceLessonId, level: 'medium', status: 'pending' },
+      data: { sourceLesson: sourceLessonId, level: 'none', status: 'pending' },
       overrideAccess: true,
     })
     cleanupDuplicationIds.push(record.id)
