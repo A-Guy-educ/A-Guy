@@ -15,8 +15,9 @@ import config from '@payload-config'
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
-// Mock runStrategy to inject one forced failure on the 3rd exercise
-// Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
+// Mock runStrategy to inject one forced failure on the 3rd exercise.
+// The mock bypasses RouterStrategy entirely so AiVariationStrategy (and its LLM calls)
+// are never reached — the mock returns a complete script-strategy result directly.
 vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@/server/services/lesson-duplication/orchestrator')>()
@@ -26,11 +27,12 @@ vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOrigin
       .fn()
       .mockImplementation(
         async (exercise: { id: string }, _level: string, _subject: unknown, _payload: unknown) => {
-          // Force failure on the 3rd exercise (index-based)
+          // Force failure on exercises containing '-3' in their ID
           if (exercise.id.includes('-3')) {
             throw new Error('Forced failure for test')
           }
-          // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
+          // Return a complete script result directly — bypasses RouterStrategy and
+          // AiVariationStrategy so no LLM calls are made in tests.
           return {
             exerciseId: exercise.id,
             strategy: 'script' as const,
@@ -90,6 +92,17 @@ vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOrigin
       ),
   }
 })
+
+// Also mock generateVariation so AiVariationStrategy (reached via RouterStrategy when
+// level='medium' in the mock) never makes real LLM calls.
+vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
+  generateVariation: vi.fn().mockResolvedValue({
+    exercise: {
+      id: 'mock-variation',
+      content: { blocks: [] },
+    },
+  }),
+}))
 
 async function ensureDefaultTenant(payload: Payload): Promise<string> {
   const slug = getDefaultTenantSlug()

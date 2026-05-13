@@ -121,7 +121,7 @@ export const GenerateExercisesAction: React.FC = () => {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-[520px] max-w-[90vw] rounded-lg border border-[var(--theme-elevation-200)] bg-[var(--theme-elevation-0)] p-6 text-[var(--theme-elevation-1000)] shadow-modal"
+            className="w-[520px] max-w-[90vw] rounded-lg border border-[var(--theme-elevation-200)] bg-[var(--theme-elevation-0)] p-card-padding text-[var(--theme-elevation-1000)] shadow-modal"
           >
             <h3 className="mt-0 mb-2 text-body-md font-bold">Generate Exercises for Lesson</h3>
             <p className="mb-5 text-[13px] leading-relaxed text-[var(--theme-elevation-600)]">
