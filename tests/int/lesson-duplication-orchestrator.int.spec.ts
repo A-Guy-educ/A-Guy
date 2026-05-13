@@ -19,6 +19,7 @@ import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication
 // We track call count via a module-level counter since we can't close over
 // the per-exercise index in a cross-module mock. The orchestrator processes
 // exercises sequentially (CONCURRENCY_LIMIT=1), so call order is deterministic.
+// RESET BEFORE EACH TEST to ensure each test starts with count=0.
 let runStrategyCallCount = 0
 vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
   const actual =
@@ -122,6 +123,11 @@ describe('Lesson duplication orchestrator — integration', () => {
   const cleanupLessonIds: string[] = []
   const cleanupExerciseIds: string[] = []
   const cleanupDuplicationIds: string[] = []
+
+  beforeEach(() => {
+    // Reset call count so each test starts fresh (count=0 before exercise #1)
+    runStrategyCallCount = 0
+  })
 
   beforeAll(async () => {
     payload = await getPayload({ config })
