@@ -24,6 +24,10 @@ import { getModelRegistryEntry, getProviderModelName } from '../models'
 import { LLMProviderType } from '../providers/types'
 import { logger } from '@/infra/utils/logger'
 import { VariationGenerationError } from '../errors'
+import {
+  LessonVariationOutputSchema,
+  SolutionDerivationOutputSchema,
+} from '../schemas/lesson-duplication-output'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -162,6 +166,11 @@ export async function generateVariation(
             messages: [{ role: 'user', content: creativeUserPrompt }],
             model: creativeConfig,
             acknowledgment: `Generating ${level} variation for exercise`,
+            // Constrain Gemini's output to the relaxed variation schema so
+            // whole-shape hallucinations (missing content.blocks, wrong root
+            // type, etc.) are caught at the provider boundary rather than at
+            // payload.create.
+            outputSchema: LessonVariationOutputSchema,
           },
           payload,
         ),
@@ -233,6 +242,11 @@ export async function generateVariation(
             messages: [{ role: 'user', content: '' }],
             model: deterministicConfig,
             acknowledgment: 'Deriving solution for exercise variation',
+            // Constrain pass-2 output to {solution, fullSolution, answer}.
+            // Pass 2 is small and well-bounded — the schema here is the
+            // strongest gate we have against the model returning prose,
+            // markdown, or an unexpected envelope.
+            outputSchema: SolutionDerivationOutputSchema,
           },
           payload,
         ),

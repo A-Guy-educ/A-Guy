@@ -672,6 +672,59 @@ describe('generateVariation', () => {
     expect(mockGenerateChatCompletion).toHaveBeenCalledTimes(1)
   })
 
+  // ── Schema-constrained output ────────────────────────────────────────────
+
+  it('passes outputSchema to the adapter on both passes', async () => {
+    const callSchemas: Array<unknown> = []
+
+    mockGenerateChatCompletion.mockImplementation(async (input: { outputSchema?: unknown }) => {
+      callSchemas.push(input.outputSchema)
+      const callCount = callSchemas.length
+
+      if (callCount === 1) {
+        return {
+          text: JSON.stringify({
+            content: {
+              blocks: [
+                {
+                  id: 'block-1',
+                  type: 'question_select',
+                  variant: 'mcq',
+                  prompt: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'What?',
+                    mediaIds: [],
+                  },
+                  answer: { options: [], correctOptionIds: ['a'] },
+                },
+              ],
+            },
+          }),
+        }
+      }
+      return {
+        text: JSON.stringify({
+          solution: { type: 'rich_text', format: 'md-math-v1', value: 's', mediaIds: [] },
+          fullSolution: { type: 'rich_text', format: 'md-math-v1', value: 'fs', mediaIds: [] },
+          answer: { correctOptionIds: ['a'] },
+        }),
+      }
+    })
+
+    await generateVariation(
+      { exercise: makeMockExercise('ex-schema'), level: 'medium', subject: 'algebra' },
+      mockPayload,
+    )
+
+    expect(callSchemas).toHaveLength(2)
+    // Both passes should receive a Zod schema (any truthy object with .parse).
+    for (const schema of callSchemas) {
+      expect(schema).toBeDefined()
+      expect(typeof (schema as { parse?: unknown }).parse).toBe('function')
+    }
+  })
+
   it('strips markdown code fences from LLM response', async () => {
     let callCount = 0
     mockGenerateChatCompletion.mockImplementation(async () => {

@@ -132,6 +132,13 @@ export interface UnifiedLLMProvider {
       model: { name: string; temperature: number; maxOutputTokens: number; modelKey?: AIModelKey }
       acknowledgment: string
       timeoutMs?: number
+      /**
+       * Optional Zod schema for constrained JSON output. When provided, the
+       * underlying provider is instructed to emit JSON conforming to the
+       * schema (Gemini responseSchema / JSON-mode). Callers can rely on
+       * `text` being valid JSON parsable into the schema's shape on success.
+       */
+      outputSchema?: import('zod').ZodTypeAny
     },
     payload: Payload,
   ) => Promise<{ text: string; raw?: unknown }>

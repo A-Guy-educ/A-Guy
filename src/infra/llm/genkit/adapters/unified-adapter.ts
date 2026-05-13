@@ -63,6 +63,12 @@ interface ChatCompletionInput {
   model: AIModel & { modelKey?: AIModelKey }
   acknowledgment: string
   timeoutMs?: number
+  /**
+   * Optional Zod schema for constrained JSON output. When provided, Genkit
+   * configures the underlying provider's JSON-mode (Gemini responseSchema)
+   * so the model refuses to emit non-conforming output.
+   */
+  outputSchema?: import('zod').ZodTypeAny
 }
 
 /**
@@ -159,11 +165,25 @@ export async function createGenkitUnifiedAdapter(
               // Build structured messages to preserve conversation history
               const messages = buildGenkitMessages(input.system, input.messages)
 
-              const result = await ai.generate({
+              // When the caller supplies a Zod schema, configure Genkit's
+              // structured output. Genkit converts the schema to JSON-Schema
+              // and sets Gemini's responseSchema / response MIME type, so the
+              // model refuses to emit non-conforming JSON. We still return
+              // `result.text` (Genkit serializes the structured value back to
+              // text), which keeps the caller-side JSON.parse contract intact.
+              const generateArgs: Parameters<typeof ai.generate>[0] = {
                 model: config.model,
                 messages,
                 config: { temperature: config.temperature },
-              })
+              }
+              if (input.outputSchema) {
+                ;(generateArgs as { output?: unknown }).output = {
+                  schema: input.outputSchema,
+                  format: 'json',
+                }
+              }
+
+              const result = await ai.generate(generateArgs)
 
               return {
                 text: result.text,
