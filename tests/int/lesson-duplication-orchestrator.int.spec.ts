@@ -15,84 +15,86 @@ import config from '@payload-config'
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
-// Mock runStrategy to inject one forced failure on the last exercise.
-// We track call count via a module-level counter since we can't close over
-// the per-exercise index in a cross-module mock. The orchestrator processes
-// exercises sequentially (CONCURRENCY_LIMIT=1), so call order is deterministic.
-// RESET BEFORE EACH TEST to ensure each test starts with count=0.
-let runStrategyCallCount = 0
-vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@/server/services/lesson-duplication/orchestrator')>()
+// Mock the LLM variation service to inject one forced failure per test.
+// AiVariationStrategy.apply does: const { generateVariation } = await import(...)
+// vi.mock intercepts this dynamic import, ensuring the mock is applied
+// regardless of same-module call limitations.
+let generateVariationCallCount = 0
+
+vi.mock('@/infra/llm/services/lesson-duplication-variation-service', async () => {
   return {
-    ...actual,
-    runStrategy: vi
-      .fn()
-      .mockImplementation(
-        async (exercise: { id: string }, _level: string, _subject: unknown, _payload: unknown) => {
-          runStrategyCallCount++
-          // Force failure on the last of the 5 exercises (index 5, after 4 succeed)
-          if (runStrategyCallCount >= 5) {
-            throw new Error('Forced failure for test')
-          }
-          // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
-          return {
-            exerciseId: exercise.id,
-            strategy: 'script' as const,
-            blocks: [
-              {
-                id: 'q-1',
-                type: 'question_select',
-                variant: 'mcq',
-                selectionMode: 'single',
-                prompt: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'What is 2+2?',
-                  mediaIds: [],
-                },
-                answer: {
-                  multiSelect: false,
-                  options: [
-                    {
-                      id: 'a',
-                      content: {
-                        type: 'rich_text',
-                        format: 'md-math-v1',
-                        value: '3',
-                        mediaIds: [],
+    generateVariation: vi.fn(
+      async (args: { exercise: unknown; level: string; subject: unknown }, _payload: unknown) => {
+        generateVariationCallCount++
+        // Throw on the 5th exercise call (after 4 succeed)
+        if (generateVariationCallCount >= 5) {
+          throw new Error('Forced failure for test')
+        }
+        // Return a valid exercise — script would generate MCQ content
+        return {
+          exercise: {
+            content: {
+              blocks: [
+                {
+                  id: 'q-1',
+                  type: 'question_select',
+                  variant: 'mcq',
+                  selectionMode: 'single',
+                  prompt: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'What is 2+2?',
+                    mediaIds: [],
+                  },
+                  answer: {
+                    multiSelect: false,
+                    options: [
+                      {
+                        id: 'a',
+                        content: {
+                          type: 'rich_text',
+                          format: 'md-math-v1',
+                          value: '3',
+                          mediaIds: [],
+                        },
                       },
-                    },
-                    {
-                      id: 'b',
-                      content: {
-                        type: 'rich_text',
-                        format: 'md-math-v1',
-                        value: '4',
-                        mediaIds: [],
+                      {
+                        id: 'b',
+                        content: {
+                          type: 'rich_text',
+                          format: 'md-math-v1',
+                          value: '4',
+                          mediaIds: [],
+                        },
                       },
-                    },
-                  ],
-                  correctOptionIds: ['b'],
+                    ],
+                    correctOptionIds: ['b'],
+                  },
+                  hint: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'Think arithmetic',
+                    mediaIds: [],
+                  },
+                  solution: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: '2+2=4',
+                    mediaIds: [],
+                  },
+                  fullSolution: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'Basic addition',
+                    mediaIds: [],
+                  },
                 },
-                hint: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'Think arithmetic',
-                  mediaIds: [],
-                },
-                solution: { type: 'rich_text', format: 'md-math-v1', value: '2+2=4', mediaIds: [] },
-                fullSolution: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'Basic addition',
-                  mediaIds: [],
-                },
-              },
-            ],
-          }
-        },
-      ),
+              ],
+            },
+          },
+        }
+      },
+    ),
   }
 })
 
@@ -125,8 +127,7 @@ describe('Lesson duplication orchestrator — integration', () => {
   const cleanupDuplicationIds: string[] = []
 
   beforeEach(() => {
-    // Reset call count so each test starts fresh (count=0 before exercise #1)
-    runStrategyCallCount = 0
+    generateVariationCallCount = 0
   })
 
   beforeAll(async () => {
