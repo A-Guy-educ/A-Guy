@@ -3,8 +3,8 @@
 _Threshold: 6h_
 
 ## Running
-- [#1583](https://github.com/A-Guy-educ/A-Guy/issues/1583) — feat: add 'Copy message' button to admin chat messages — 45h
+- [#1583](https://github.com/A-Guy-educ/A-Guy/issues/1583) — feat: add 'Copy message' button to admin chat messages — 46h since last update
 
-## Failed
-- [#1562](https://github.com/A-Guy-educ/A-Guy/issues/1562) — bug: admin chat Send button reports [disabled] in accessibility tree when functionally enabled — 56h
-- [#1236](https://github.com/A-Guy-educ/A-Guy/issues/1236) — fix: Release-publisher agent timeout mismatch with CI polling — 437h
+## Needs Fix
+- [#1562](https://github.com/A-Guy-educ/A-Guy/issues/1562) — bug: admin chat Send button reports [disabled] in accessibility tree when functionally enabled — 57h since last update
+- [#1236](https://github.com/A-Guy-educ/A-Guy/issues/1236) — fix: Release-publisher agent timeout mismatch with CI polling — 438h since last update
