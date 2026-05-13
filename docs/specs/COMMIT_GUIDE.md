@@ -33,8 +33,9 @@ Make commits that pass all pre-commit hooks in <15 seconds.
 ### Branch Naming
 
 ```
-Pattern: <type>/<description-in-kebab-case>
-Regex:   ^(feat|fix|chore|docs|refactor|test|security)/[a-z0-9-]+$
+Preferred: <type>/<description-in-kebab-case>
+Legacy:    <issue-number>-<description-in-kebab-case>
+Regex:     ^((feat|fix|chore|docs|refactor|test|security)/[a-z0-9-]+|[0-9]+-[a-z0-9-]+)$
 ```
 
 | Type | Use Case | Example |
@@ -46,6 +47,10 @@ Regex:   ^(feat|fix|chore|docs|refactor|test|security)/[a-z0-9-]+$
 | `refactor/` | Code restructuring | `refactor/auth-service` |
 | `test/` | Tests | `test/integration` |
 | `security/` | Security fixes | `fix/xss-vuln` |
+| `<num>-` | Legacy, tied to GitHub issue | `1552-track-ai-tokens` |
+
+> Use the conventional prefixes for new branches. The legacy issue-number form
+> is accepted to keep in-flight PRs that pre-date this rule from being blocked.
 
 **Rename:** `git branch -m feat/new-name`
 
