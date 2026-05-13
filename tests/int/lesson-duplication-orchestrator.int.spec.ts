@@ -15,8 +15,20 @@ import config from '@payload-config'
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
-// Mock runStrategy to inject one forced failure on the 3rd exercise
-// Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
+// Mock runStrategy to inject one forced failure on the 3rd exercise.
+// Also mock generateVariation at source so the AI path is fully intercepted even if
+// vi.mock of the orchestrator module is not applied (VI module-cache can return the
+// already-modified module from importOriginal, causing the unmocked AiVariationStrategy
+// path to run and hang on LLM calls without an API key).
+vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
+  generateVariation: vi.fn().mockResolvedValue({
+    exercise: {
+      id: 'mock-exercise',
+      content: { blocks: [] },
+    },
+  }),
+}))
+
 vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@/server/services/lesson-duplication/orchestrator')>()
