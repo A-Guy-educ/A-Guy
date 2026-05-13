@@ -106,7 +106,19 @@ export const GenerateExercisesAction: React.FC = () => {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 rounded border border-[var(--theme-elevation-200)] bg-[var(--theme-elevation-0)] px-3 py-1.5 text-[13px] font-medium text-[var(--theme-elevation-1000)] hover:bg-[var(--theme-elevation-50)] cursor-pointer transition-all duration-normal"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          padding: '6px 12px',
+          fontSize: 13,
+          fontWeight: 500,
+          border: '1px solid var(--theme-elevation-200)',
+          borderRadius: 4,
+          backgroundColor: 'var(--theme-elevation-0)',
+          color: 'var(--theme-elevation-1000)',
+          cursor: 'pointer',
+        }}
         title="Generate AI-powered exercises for this lesson"
       >
         Generate Exercises
@@ -116,21 +128,50 @@ export const GenerateExercisesAction: React.FC = () => {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
           onClick={close}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-[520px] max-w-[90vw] rounded-lg border border-[var(--theme-elevation-200)] bg-[var(--theme-elevation-0)] p-card-padding text-[var(--theme-elevation-1000)] shadow-modal"
+            style={{
+              backgroundColor: 'var(--theme-elevation-0)',
+              border: '1px solid var(--theme-elevation-200)',
+              borderRadius: 6,
+              padding: 24,
+              width: 520,
+              maxWidth: '90vw',
+              maxHeight: '85vh',
+              overflowY: 'auto',
+              color: 'var(--theme-elevation-1000)',
+            }}
           >
-            <h3 className="mt-0 mb-2 text-body-md font-bold">Generate Exercises for Lesson</h3>
-            <p className="mb-5 text-[13px] leading-relaxed text-[var(--theme-elevation-600)]">
+            <h3 style={{ marginTop: 0, marginBottom: 8, fontSize: 16, fontWeight: 600 }}>
+              Generate Exercises for Lesson
+            </h3>
+            <p style={{ fontSize: 13, color: 'var(--theme-elevation-600)', marginBottom: 20 }}>
               Enter instructions for generating exercises. The system will create 10 smart exercises
               in Hebrew.
             </p>
 
-            <div className="mb-4">
-              <label htmlFor="exercise-prompt" className="mb-1.5 block text-[13px] font-medium">
+            <div style={{ marginBottom: 16 }}>
+              <label
+                htmlFor="exercise-prompt"
+                style={{
+                  display: 'block',
+                  marginBottom: 6,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: 'var(--theme-elevation-800)',
+                }}
+              >
                 Exercise Prompt
               </label>
               <textarea
@@ -139,60 +180,128 @@ export const GenerateExercisesAction: React.FC = () => {
                 onChange={(e) => setPrompt(e.target.value)}
                 placeholder="For example: Create exercises about linear equations at medium difficulty, suitable for grade 7"
                 rows={4}
-                className="w-full rounded border border-[var(--theme-elevation-200)] bg-[var(--theme-elevation-0)] p-2.5 text-[13px] text-[var(--theme-elevation-1000)] placeholder:text-[var(--theme-elevation-400)] resize-y font-inherit"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  fontSize: 13,
+                  border: '1px solid var(--theme-elevation-200)',
+                  borderRadius: 4,
+                  backgroundColor: 'var(--theme-elevation-0)',
+                  color: 'var(--theme-elevation-1000)',
+                  resize: 'vertical',
+                  fontFamily: 'inherit',
+                }}
               />
-              <p className="mt-1 text-[11px] text-[var(--theme-elevation-600)]">
+              <p style={{ marginTop: 4, fontSize: 11, color: 'var(--theme-elevation-600)' }}>
                 Maximum 2000 characters
               </p>
             </div>
 
-            <div className="mb-4">
-              <span className="mb-2 block text-[13px] font-medium">Exercise Type</span>
-              <div className="flex flex-col gap-2">
-                {EXERCISE_TYPES.map((opt) => (
-                  <label
-                    key={opt.value}
-                    className={`flex cursor-pointer items-start gap-2 rounded border p-2.5 transition-all duration-fast ${
-                      exerciseType === opt.value
-                        ? 'border border-[var(--theme-success-500)] bg-[var(--theme-success-500)]/5'
-                        : 'border-[var(--theme-elevation-200)] hover:border-[var(--theme-elevation-300)]'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="exercise-type"
-                      value={opt.value}
-                      checked={exerciseType === opt.value}
-                      onChange={() => setExerciseType(opt.value)}
-                      className="mt-0.5"
-                    />
-                    <span className="text-[13px]">
-                      <strong className="block">{opt.label}</strong>
-                      <span className="mt-0.5 block text-[12px] text-[var(--theme-elevation-600)]">
-                        {opt.hint}
+            <div style={{ marginBottom: 16 }}>
+              <span
+                style={{
+                  display: 'block',
+                  marginBottom: 8,
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: 'var(--theme-elevation-800)',
+                }}
+              >
+                Exercise Type
+              </span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {EXERCISE_TYPES.map((opt) => {
+                  const isSelected = exerciseType === opt.value
+                  return (
+                    <label
+                      key={opt.value}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 8,
+                        padding: 10,
+                        border: isSelected
+                          ? '1px solid var(--theme-success-500)'
+                          : '1px solid var(--theme-elevation-200)',
+                        borderRadius: 4,
+                        cursor: 'pointer',
+                        backgroundColor: isSelected
+                          ? 'rgba(0, 168, 116, 0.05)'
+                          : 'var(--theme-elevation-0)',
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="exercise-type"
+                        value={opt.value}
+                        checked={exerciseType === opt.value}
+                        onChange={() => setExerciseType(opt.value)}
+                        style={{ marginTop: 2 }}
+                      />
+                      <span style={{ fontSize: 13 }}>
+                        <strong style={{ display: 'block' }}>{opt.label}</strong>
+                        <span
+                          style={{
+                            display: 'block',
+                            marginTop: 2,
+                            fontSize: 12,
+                            color: 'var(--theme-elevation-600)',
+                          }}
+                        >
+                          {opt.hint}
+                        </span>
                       </span>
-                    </span>
-                  </label>
-                ))}
+                    </label>
+                  )
+                })}
               </div>
             </div>
 
             {status === 'error' && error && (
-              <p className="mb-2 rounded bg-error/10 px-3 py-2 text-[13px] font-medium text-error">
+              <div
+                style={{
+                  marginBottom: 8,
+                  padding: '8px 12px',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: 'var(--theme-error-500)',
+                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  borderRadius: 4,
+                }}
+              >
                 {error}
-              </p>
+              </div>
             )}
             {status === 'success' && (
-              <p className="mb-2 rounded bg-success/10 px-3 py-2 text-[13px] font-medium text-success">
+              <div
+                style={{
+                  marginBottom: 8,
+                  padding: '8px 12px',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: 'var(--theme-success-500)',
+                  backgroundColor: 'rgba(0, 168, 116, 0.1)',
+                  borderRadius: 4,
+                }}
+              >
                 {resultCount ?? 10} exercises created successfully!
-              </p>
+              </div>
             )}
 
-            <div className="flex justify-end gap-2">
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button
                 type="button"
                 onClick={close}
-                className="cursor-pointer rounded border border-[var(--theme-elevation-300)] bg-transparent px-4 py-2 text-[13px] font-medium text-[var(--theme-elevation-800)] hover:bg-[var(--theme-elevation-100)] transition-all duration-normal"
+                style={{
+                  padding: '6px 16px',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  border: '1px solid var(--theme-elevation-300)',
+                  borderRadius: 4,
+                  backgroundColor: 'transparent',
+                  color: 'var(--theme-elevation-800)',
+                  cursor: 'pointer',
+                }}
               >
                 {status === 'success' ? 'Close' : 'Cancel'}
               </button>
@@ -201,9 +310,19 @@ export const GenerateExercisesAction: React.FC = () => {
                   type="button"
                   onClick={submit}
                   disabled={!prompt.trim() || status === 'submitting'}
-                  className="cursor-pointer rounded border-none bg-success px-3.5 py-2 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60 transition-all duration-normal"
+                  style={{
+                    padding: '6px 14px',
+                    fontSize: 13,
+                    fontWeight: 500,
+                    border: 'none',
+                    borderRadius: 4,
+                    backgroundColor: 'var(--theme-success-500)',
+                    color: '#fff',
+                    cursor: !prompt.trim() || status === 'submitting' ? 'not-allowed' : 'pointer',
+                    opacity: !prompt.trim() || status === 'submitting' ? 0.6 : 1,
+                  }}
                 >
-                  {status === 'submitting' ? 'Generating...' : 'Generate Exercises'}
+                  {status === 'submitting' ? 'Generating…' : 'Generate Exercises'}
                 </button>
               )}
             </div>
