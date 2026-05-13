@@ -8,15 +8,21 @@
  *  4. Final status is succeeded only when failures array is empty, else needs_review
  *  5. 5-exercise lesson with one forced failure → needs_review with 4 succeeded + 1 failure entry
  */
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getPayload, type Payload } from 'payload'
 import config from '@payload-config'
 
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
-// Mock runStrategy to inject one forced failure on the 3rd exercise
-// Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
+// Module-level counter for the runStrategy mock. The let binding is reset by
+// beforeEach before each test; the hoisted mock factory closure captures a
+// live reference to this binding so resets take effect.
+let runStrategyCallCount = 0
+
+// Mock runStrategy to inject one forced failure on the 3rd exercise (by call order).
+// Uses a module-level counter since exercise.id (MongoDB ObjectID) never contains '-3'.
+// Use strategy='script' to bypass semantic validation (avoids LLM calls in tests).
 vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@/server/services/lesson-duplication/orchestrator')>()
@@ -26,8 +32,9 @@ vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOrigin
       .fn()
       .mockImplementation(
         async (exercise: { id: string }, _level: string, _subject: unknown, _payload: unknown) => {
-          // Force failure on the 3rd exercise (index-based)
-          if (exercise.id.includes('-3')) {
+          runStrategyCallCount++
+          // Force failure on the 3rd exercise (by call order, not ID — ObjectIDs never contain '-3')
+          if (runStrategyCallCount === 3) {
             throw new Error('Forced failure for test')
           }
           // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
@@ -118,6 +125,11 @@ describe('Lesson duplication orchestrator — integration', () => {
   const cleanupLessonIds: string[] = []
   const cleanupExerciseIds: string[] = []
   const cleanupDuplicationIds: string[] = []
+
+  beforeEach(() => {
+    // Reset call counter so each test gets a clean slate
+    runStrategyCallCount = 0
+  })
 
   beforeAll(async () => {
     payload = await getPayload({ config })
