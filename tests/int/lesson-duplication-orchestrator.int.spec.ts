@@ -15,6 +15,17 @@ import config from '@payload-config'
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
+// Mock generateVariation to prevent actual LLM calls in tests.
+// This must be mocked at the service level because AiVariationStrategy.apply
+// dynamically imports it, bypassing module-level mocks on the orchestrator.
+vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
+  generateVariation: vi.fn().mockImplementation(async () => {
+    throw new Error(
+      'generateVariation should not be called in tests — use a script strategy instead',
+    )
+  }),
+}))
+
 // Mock runStrategy to inject one forced failure on the 3rd exercise
 // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
 vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
