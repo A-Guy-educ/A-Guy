@@ -30,13 +30,15 @@ export const contentLocaleField: Field = {
 
 /**
  * Build a Payload Where clause that matches documents with the given locale
- * OR documents that were created before the locale field existed (field missing).
+ * OR documents where locale is set to the default (backwards compatibility for
+ * legacy documents that were created before locale was explicitly set).
  *
  * This prevents queries from returning zero results when existing documents
- * haven't been backfilled with the locale field yet.
+ * have locale set to the default value instead of being truly missing,
+ * since Payload stores default values in MongoDB.
  */
 export function localeWhereClause(locale: ContentLocale): Where {
   return {
-    or: [{ locale: { equals: locale } }, { locale: { exists: false } }],
+    or: [{ locale: { equals: locale } }, { locale: { equals: DEFAULT_CONTENT_LOCALE } }],
   }
 }
