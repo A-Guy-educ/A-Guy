@@ -1,3 +1,4 @@
+
 # Conventions
 
 ## File Metadata
@@ -37,6 +38,12 @@ See [design-system.md](./design-system.md) for complete rules. Key points:
 - All interactive elements need `transition-all duration-normal`
 - Use `cn()` for className composition, never template literals
 
+## Package Manager
+
+- Pin pnpm version via `"packageManager": "pnpm@10.33.0"` in `package.json`
+- Prevents `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH` in CI/runners using pnpm 11+ (stricter overrides-config checks)
+- Runner images must be updated to clone the default branch so they pick up the pin
+
 ## Development
 
 - Run `pnpm generate:types` after collection/global changes
@@ -65,3 +72,4 @@ See [design-system.md](./design-system.md) for complete rules. Key points:
 ## Learned 2026-04-19 (task: 2)
 - Uses @/ path aliases for imports
 - Active directories: src/app/api/instructor/dashboard, src/app/(frontend)/instructor/_components, tests/int, tests/e2e
+
