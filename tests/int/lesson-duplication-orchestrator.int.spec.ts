@@ -17,9 +17,9 @@ import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication
 
 // Mock runStrategy to inject one forced failure on the 3rd exercise
 // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
-vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@/server/services/lesson-duplication/orchestrator')>()
+vi.mock('@/server/services/lesson-duplication/orchestrator', async () => {
+  // Import the actual module INSIDE the factory to ensure proper mock application
+  const actual = await import('@/server/services/lesson-duplication/orchestrator')
   return {
     ...actual,
     runStrategy: vi
