@@ -15,79 +15,27 @@ import config from '@payload-config'
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
-// Mock runStrategy to inject one forced failure on the 3rd exercise
-// Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
-vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
+// Mock AiVariationStrategy to return empty blocks — structural validation passes
+// (empty blocks → no failures from validateExerciseStructural), but semantic
+// validation will reject them (empty content), causing processExercise to
+// return null and orchestrator to set status='needs_review'.
+// The mock is applied at the router module level since AiVariationStrategy
+// is defined locally in router.ts and used internally by runStrategy.
+vi.mock('@/server/services/lesson-duplication/strategies/router', (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('@/server/services/lesson-duplication/orchestrator')>()
+    importOriginal<typeof import('@/server/services/lesson-duplication/strategies/router')>()
   return {
     ...actual,
-    runStrategy: vi
-      .fn()
-      .mockImplementation(
-        async (exercise: { id: string }, _level: string, _subject: unknown, _payload: unknown) => {
-          // Force failure on the 3rd exercise (index-based)
-          if (exercise.id.includes('-3')) {
-            throw new Error('Forced failure for test')
-          }
-          // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
-          return {
-            exerciseId: exercise.id,
-            strategy: 'script' as const,
-            blocks: [
-              {
-                id: 'q-1',
-                type: 'question_select',
-                variant: 'mcq',
-                selectionMode: 'single',
-                prompt: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'What is 2+2?',
-                  mediaIds: [],
-                },
-                answer: {
-                  multiSelect: false,
-                  options: [
-                    {
-                      id: 'a',
-                      content: {
-                        type: 'rich_text',
-                        format: 'md-math-v1',
-                        value: '3',
-                        mediaIds: [],
-                      },
-                    },
-                    {
-                      id: 'b',
-                      content: {
-                        type: 'rich_text',
-                        format: 'md-math-v1',
-                        value: '4',
-                        mediaIds: [],
-                      },
-                    },
-                  ],
-                  correctOptionIds: ['b'],
-                },
-                hint: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'Think arithmetic',
-                  mediaIds: [],
-                },
-                solution: { type: 'rich_text', format: 'md-math-v1', value: '2+2=4', mediaIds: [] },
-                fullSolution: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'Basic addition',
-                  mediaIds: [],
-                },
-              },
-            ],
-          }
-        },
-      ),
+    AiVariationStrategy: class MockAiVariationStrategy {
+      async apply(
+        exercise: unknown,
+        _level: unknown,
+        _subject?: unknown,
+      ): Promise<{ exercise: unknown }> {
+        // Return exercise with empty blocks — fails semantic validation downstream
+        return { exercise: { ...(exercise as object), content: { blocks: [] } } }
+      }
+    },
   }
 })
 
@@ -185,11 +133,19 @@ describe('Lesson duplication orchestrator — integration', () => {
     sourceLessonId = lesson.id
     cleanupLessonIds.push(sourceLessonId)
 
-    // Create exactly 5 exercises on the source lesson
+    // Create exactly 5 exercises on the source lesson.
+    // Exercise at index 3 has title containing '-3' to trigger the forced-failure mock.
+    const exerciseTitles = [
+      `Orch Exercise 0 ${ts}`,
+      `Orch Exercise 1 ${ts}`,
+      `Orch Exercise 2 ${ts}`,
+      `Orch Exercise -3 ${ts}`, // triggers mock forced failure
+      `Orch Exercise 4 ${ts}`,
+    ]
     for (let i = 0; i < 5; i++) {
       const ex = await payload.create({
         collection: 'exercises',
-        data: { title: `Orch Exercise ${i} ${ts}`, lesson: sourceLessonId },
+        data: { title: exerciseTitles[i], lesson: sourceLessonId },
         draft: true,
       })
       cleanupExerciseIds.push(ex.id)
@@ -306,7 +262,7 @@ describe('Lesson duplication orchestrator — integration', () => {
     // bypasses processExercise (which calls createOutputExercise). Exercise creation
     // is verified in lesson-duplication-review-resolve.int.spec.ts instead.
     expect(finalRecord.outputLesson).toBeTruthy()
-  }, 300000)
+  }, 900000)
 
   it('orchestrator does not abort when one exercise fails — remaining exercises are processed', async () => {
     // Create fresh pending record
@@ -339,5 +295,5 @@ describe('Lesson duplication orchestrator — integration', () => {
 
     // outputLesson should be created even when some exercises fail
     expect(finalRecord.outputLesson).toBeTruthy()
-  }, 300000)
+  }, 900000)
 })

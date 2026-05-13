@@ -197,6 +197,7 @@ async function appendWarning(
 /** Shape of an exercise from the exercises collection. */
 type ExerciseDoc = {
   id: string
+  title?: string
   content?: { blocks?: ContentBlock[] }
 }
 
