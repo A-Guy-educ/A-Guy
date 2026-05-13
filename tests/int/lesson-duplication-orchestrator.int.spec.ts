@@ -15,8 +15,12 @@ import config from '@payload-config'
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
-// Mock runStrategy to inject one forced failure on the 3rd exercise
-// Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
+// Mock runStrategy to inject one forced failure and bypass LLM calls.
+// The previous mock checked exercise.id.includes('-3') to force a failure on
+// the 3rd exercise, but database IDs never contain '-3', so the condition never
+// matched. We use a call counter instead for deterministic failure injection.
+// The async factory (vs sync) is required so importOriginal is injected by Vitest.
+let runStrategyCallCount = 0
 vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@/server/services/lesson-duplication/orchestrator')>()
@@ -26,8 +30,9 @@ vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOrigin
       .fn()
       .mockImplementation(
         async (exercise: { id: string }, _level: string, _subject: unknown, _payload: unknown) => {
-          // Force failure on the 3rd exercise (index-based)
-          if (exercise.id.includes('-3')) {
+          runStrategyCallCount++
+          // Force failure on the 3rd call (deterministic regardless of exercise ID)
+          if (runStrategyCallCount === 3) {
             throw new Error('Forced failure for test')
           }
           // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
@@ -118,6 +123,11 @@ describe('Lesson duplication orchestrator — integration', () => {
   const cleanupLessonIds: string[] = []
   const cleanupExerciseIds: string[] = []
   const cleanupDuplicationIds: string[] = []
+
+  beforeEach(() => {
+    // Reset the runStrategy call counter so each test gets a clean slate
+    runStrategyCallCount = 0
+  })
 
   beforeAll(async () => {
     payload = await getPayload({ config })
@@ -280,7 +290,7 @@ describe('Lesson duplication orchestrator — integration', () => {
 
     expect(record.status).toBe('pending')
 
-    // Run orchestrator (mocked runStrategy forces failure on exercise containing '-3')
+    // Run orchestrator (mocked runStrategy forces failure on 3rd call via counter)
     try {
       await runDuplicationOrchestrator(record.id, payload)
     } catch {
@@ -294,8 +304,9 @@ describe('Lesson duplication orchestrator — integration', () => {
     // Final status must be needs_review (not succeeded, not failed)
     expect(finalRecord.status).toBe('needs_review')
 
-    // At least one failure entry expected (exercise containing '-3' threw in runStrategy)
-    // Note: the exact count depends on exercise ID strings; we check ≥1 to be robust
+    // At least one failure entry expected (3rd runStrategy call throws in mock)
+    expect(finalRecord.failures).toBeDefined()
+    expect(finalRecord.failures.length).toBeGreaterThanOrEqual(1)
     expect(finalRecord.failures).toBeDefined()
     expect(finalRecord.failures.length).toBeGreaterThanOrEqual(1)
     expect(finalRecord.failures[0].code).toBe('GENERATION_FAILED')
