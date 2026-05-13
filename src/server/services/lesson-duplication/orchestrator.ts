@@ -71,6 +71,7 @@ export async function runStrategy(
   level: 'none' | 'light' | 'medium' | 'deep',
   subject: DuplicationSubject,
   payload: Payload,
+  _exerciseIndex?: number,
 ): Promise<StrategyResult> {
   const router = new RouterStrategy(payload)
   const result = await router.apply(exercise as unknown as Exercise, level, subject)
@@ -315,13 +316,14 @@ async function processExercise(
   level: 'none' | 'light' | 'medium' | 'deep',
   subject: DuplicationSubject,
   payload: Payload,
+  exerciseIndex: number,
 ): Promise<StrategyResult | null> {
   const exerciseRef = exercise.id
 
   // Step 1: Run strategy
   let strategyResult: StrategyResult
   try {
-    strategyResult = await runStrategy(exercise, level, subject, payload)
+    strategyResult = await runStrategy(exercise, level, subject, payload, exerciseIndex)
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown strategy error'
     logger.error({ exerciseRef, level, err }, 'Strategy generation failed')
@@ -485,13 +487,14 @@ export async function runDuplicationOrchestrator(
     const results = await withConcurrencyLimit(
       selectedExercises,
       CONCURRENCY_LIMIT,
-      async (exercise) => {
+      async (exercise, exerciseIndex) => {
         const result = await processExercise(
           exercise,
           duplicationId,
           duplicationLevel,
           duplicationSubject,
           payload,
+          exerciseIndex,
         )
         if (result === null) return null
 

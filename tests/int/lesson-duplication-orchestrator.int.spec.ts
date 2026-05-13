@@ -25,9 +25,15 @@ vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOrigin
     runStrategy: vi
       .fn()
       .mockImplementation(
-        async (exercise: { id: string }, _level: string, _subject: unknown, _payload: unknown) => {
-          // Force failure on the 3rd exercise (index-based)
-          if (exercise.id.includes('-3')) {
+        async (
+          exercise: { id: string },
+          _level: string,
+          _subject: unknown,
+          _payload: unknown,
+          exerciseIndex?: number,
+        ) => {
+          // Force failure on the 4th exercise (index 3, 0-based)
+          if (exerciseIndex === 3) {
             throw new Error('Forced failure for test')
           }
           // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
