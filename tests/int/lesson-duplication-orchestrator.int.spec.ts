@@ -15,79 +15,15 @@ import config from '@payload-config'
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
-// Mock runStrategy to inject one forced failure on the 3rd exercise
-// Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
-vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@/server/services/lesson-duplication/orchestrator')>()
+// Mock generateVariation to throw for every call. This causes the AI variation
+// path to fail for all exercises, so the orchestrator ends in 'needs_review' with
+// failures recorded (not 'succeeded'). This is deterministic and avoids any real
+// LLM calls in tests.
+vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => {
   return {
-    ...actual,
-    runStrategy: vi
-      .fn()
-      .mockImplementation(
-        async (exercise: { id: string }, _level: string, _subject: unknown, _payload: unknown) => {
-          // Force failure on the 3rd exercise (index-based)
-          if (exercise.id.includes('-3')) {
-            throw new Error('Forced failure for test')
-          }
-          // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
-          return {
-            exerciseId: exercise.id,
-            strategy: 'script' as const,
-            blocks: [
-              {
-                id: 'q-1',
-                type: 'question_select',
-                variant: 'mcq',
-                selectionMode: 'single',
-                prompt: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'What is 2+2?',
-                  mediaIds: [],
-                },
-                answer: {
-                  multiSelect: false,
-                  options: [
-                    {
-                      id: 'a',
-                      content: {
-                        type: 'rich_text',
-                        format: 'md-math-v1',
-                        value: '3',
-                        mediaIds: [],
-                      },
-                    },
-                    {
-                      id: 'b',
-                      content: {
-                        type: 'rich_text',
-                        format: 'md-math-v1',
-                        value: '4',
-                        mediaIds: [],
-                      },
-                    },
-                  ],
-                  correctOptionIds: ['b'],
-                },
-                hint: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'Think arithmetic',
-                  mediaIds: [],
-                },
-                solution: { type: 'rich_text', format: 'md-math-v1', value: '2+2=4', mediaIds: [] },
-                fullSolution: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'Basic addition',
-                  mediaIds: [],
-                },
-              },
-            ],
-          }
-        },
-      ),
+    generateVariation: vi.fn().mockImplementation(async () => {
+      throw new Error('Forced failure for test')
+    }),
   }
 })
 
@@ -310,13 +246,11 @@ describe('Lesson duplication orchestrator — integration', () => {
 
   it('orchestrator does not abort when one exercise fails — remaining exercises are processed', async () => {
     // Create fresh pending record
-    // Use level='none' to ensure RouterStrategy.apply() returns early without calling
-    // AiVariationStrategy — avoiding any real AI calls that could hang in CI.
-    // The mock for runStrategy correctly injects failures regardless of level,
-    // so the orchestrator still reaches 'needs_review' with failures recorded.
+    // Use level='medium' — the mock for runStrategy forces a failure on exercise
+    // containing '-3', and the orchestrator correctly reaches 'needs_review'.
     const record = await payload.create({
       collection: 'lesson-duplications',
-      data: { sourceLesson: sourceLessonId, level: 'none', status: 'pending' },
+      data: { sourceLesson: sourceLessonId, level: 'medium', status: 'pending' },
       overrideAccess: true,
     })
     cleanupDuplicationIds.push(record.id)
