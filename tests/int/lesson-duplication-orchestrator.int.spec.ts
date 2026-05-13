@@ -8,90 +8,59 @@
  *  4. Final status is succeeded only when failures array is empty, else needs_review
  *  5. 5-exercise lesson with one forced failure → needs_review with 4 succeeded + 1 failure entry
  */
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getPayload, type Payload } from 'payload'
 import config from '@payload-config'
 
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
-// Mock runStrategy to inject one forced failure on the last exercise.
-// We track call count via a module-level counter since we can't close over
-// the per-exercise index in a cross-module mock. The orchestrator processes
-// exercises sequentially (CONCURRENCY_LIMIT=1), so call order is deterministic.
+// Mock runStrategy to inject one forced failure on the 5th call.
+// Call count must be reset between tests for isolation — use beforeEach.
+// CONCURRENCY_LIMIT=1 ensures deterministic call ordering.
 let runStrategyCallCount = 0
+const MOCK_BLOCKS = [
+  {
+    id: 'q-1',
+    type: 'question_select',
+    variant: 'mcq',
+    selectionMode: 'single',
+    prompt: { type: 'rich_text', format: 'md-math-v1', value: 'What is 2+2?', mediaIds: [] },
+    answer: {
+      multiSelect: false,
+      options: [
+        { id: 'a', content: { type: 'rich_text', format: 'md-math-v1', value: '3', mediaIds: [] } },
+        { id: 'b', content: { type: 'rich_text', format: 'md-math-v1', value: '4', mediaIds: [] } },
+      ],
+      correctOptionIds: ['b'],
+    },
+    hint: { type: 'rich_text', format: 'md-math-v1', value: 'Think arithmetic', mediaIds: [] },
+    solution: { type: 'rich_text', format: 'md-math-v1', value: '2+2=4', mediaIds: [] },
+    fullSolution: {
+      type: 'rich_text',
+      format: 'md-math-v1',
+      value: 'Basic addition',
+      mediaIds: [],
+    },
+  },
+]
 vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@/server/services/lesson-duplication/orchestrator')>()
   return {
     ...actual,
-    runStrategy: vi
-      .fn()
-      .mockImplementation(
-        async (exercise: { id: string }, _level: string, _subject: unknown, _payload: unknown) => {
-          runStrategyCallCount++
-          // Force failure on the last of the 5 exercises (index 5, after 4 succeed)
-          if (runStrategyCallCount >= 5) {
-            throw new Error('Forced failure for test')
-          }
-          // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
-          return {
-            exerciseId: exercise.id,
-            strategy: 'script' as const,
-            blocks: [
-              {
-                id: 'q-1',
-                type: 'question_select',
-                variant: 'mcq',
-                selectionMode: 'single',
-                prompt: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'What is 2+2?',
-                  mediaIds: [],
-                },
-                answer: {
-                  multiSelect: false,
-                  options: [
-                    {
-                      id: 'a',
-                      content: {
-                        type: 'rich_text',
-                        format: 'md-math-v1',
-                        value: '3',
-                        mediaIds: [],
-                      },
-                    },
-                    {
-                      id: 'b',
-                      content: {
-                        type: 'rich_text',
-                        format: 'md-math-v1',
-                        value: '4',
-                        mediaIds: [],
-                      },
-                    },
-                  ],
-                  correctOptionIds: ['b'],
-                },
-                hint: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'Think arithmetic',
-                  mediaIds: [],
-                },
-                solution: { type: 'rich_text', format: 'md-math-v1', value: '2+2=4', mediaIds: [] },
-                fullSolution: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'Basic addition',
-                  mediaIds: [],
-                },
-              },
-            ],
-          }
-        },
-      ),
+    runStrategy: vi.fn().mockImplementation((exercise: { id: string }) => {
+      runStrategyCallCount++
+      // Force failure on the 5th call (4 succeed, then 1 fails)
+      if (runStrategyCallCount >= 5) {
+        throw new Error('Forced failure for test')
+      }
+      return {
+        exerciseId: exercise.id,
+        strategy: 'script' as const,
+        blocks: MOCK_BLOCKS,
+      }
+    }),
   }
 })
 
@@ -122,6 +91,10 @@ describe('Lesson duplication orchestrator — integration', () => {
   const cleanupLessonIds: string[] = []
   const cleanupExerciseIds: string[] = []
   const cleanupDuplicationIds: string[] = []
+
+  beforeEach(() => {
+    runStrategyCallCount = 0
+  })
 
   beforeAll(async () => {
     payload = await getPayload({ config })
