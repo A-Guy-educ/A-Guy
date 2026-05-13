@@ -174,7 +174,7 @@ const nextConfig = {
           {
             key: 'Content-Security-Policy',
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com https://cdn.mxpnl.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' *.blob.vercel-storage.com img.youtube.com avatars.githubusercontent.com github.com *.githubusercontent.com data: blob:; font-src 'self' data:; connect-src 'self' *.sentry.io https://blob.vercel-storage.com https://*.blob.vercel-storage.com https://api-js.mixpanel.com https://*.mxpnl.com; frame-src 'self' www.youtube.com vercel.live; frame-ancestors 'self' https://kody-dashboard-aguy.vercel.app; object-src 'none'; base-uri 'self'; form-action 'self'",
+              "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://www.googletagmanager.com https://cdn.mxpnl.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' *.blob.vercel-storage.com img.youtube.com avatars.githubusercontent.com github.com *.githubusercontent.com data: blob:; font-src 'self' data:; connect-src 'self' *.sentry.io https://vercel.live https://blob.vercel-storage.com https://*.blob.vercel-storage.com https://api-js.mixpanel.com https://*.mxpnl.com; frame-src 'self' www.youtube.com vercel.live; frame-ancestors 'self' https://kody-dashboard-aguy.vercel.app; object-src 'none'; base-uri 'self'; form-action 'self'",
           },
           { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
