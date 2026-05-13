@@ -71,9 +71,10 @@ export async function runStrategy(
   level: 'none' | 'light' | 'medium' | 'deep',
   subject: DuplicationSubject,
   payload: Payload,
+  router?: RouterStrategy,
 ): Promise<StrategyResult> {
-  const router = new RouterStrategy(payload)
-  const result = await router.apply(exercise as unknown as Exercise, level, subject)
+  const activeRouter = router ?? new RouterStrategy(payload)
+  const result = await activeRouter.apply(exercise as unknown as Exercise, level, subject)
 
   const content = result.exercise.content as unknown as { blocks: ContentBlock[] }
   return {
@@ -315,13 +316,14 @@ async function processExercise(
   level: 'none' | 'light' | 'medium' | 'deep',
   subject: DuplicationSubject,
   payload: Payload,
+  router?: RouterStrategy,
 ): Promise<StrategyResult | null> {
   const exerciseRef = exercise.id
 
   // Step 1: Run strategy
   let strategyResult: StrategyResult
   try {
-    strategyResult = await runStrategy(exercise, level, subject, payload)
+    strategyResult = await runStrategy(exercise, level, subject, payload, router)
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown strategy error'
     logger.error({ exerciseRef, level, err }, 'Strategy generation failed')
@@ -408,6 +410,7 @@ async function processExercise(
  *
  * @param duplicationId  ID of the LessonDuplications record to process
  * @param payload        Payload instance
+ * @param router         Optional injectable RouterStrategy for testing
  *
  * Pre-condition: duplication record has status='pending'
  * Post-condition: duplication record has status='succeeded' (0 failures) or 'needs_review' (>0 failures)
@@ -415,6 +418,7 @@ async function processExercise(
 export async function runDuplicationOrchestrator(
   duplicationId: string,
   payload: Payload,
+  router?: RouterStrategy,
 ): Promise<void> {
   // Load the duplication record
   const duplication = await payload.findByID({
@@ -492,6 +496,7 @@ export async function runDuplicationOrchestrator(
           duplicationLevel,
           duplicationSubject,
           payload,
+          router,
         )
         if (result === null) return null
 

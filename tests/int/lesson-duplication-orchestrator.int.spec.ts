@@ -8,95 +8,109 @@
  *  4. Final status is succeeded only when failures array is empty, else needs_review
  *  5. 5-exercise lesson with one forced failure → needs_review with 4 succeeded + 1 failure entry
  */
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { getPayload, type Payload } from 'payload'
 import config from '@payload-config'
 
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
+import { RouterStrategy } from '@/server/services/lesson-duplication/strategies/router'
+import type { VariationResult } from '@/server/services/lesson-duplication/strategies/types'
+import type { Exercise } from '@/payload-types'
+import type {
+  DuplicationLevel,
+  DuplicationSubject,
+} from '@/server/payload/collections/LessonDuplications'
 
-// Mock runStrategy to inject one forced failure on the first exercise.
-// The mock uses a call counter so only the first exercise fails; the rest succeed.
-// This verifies that: (a) failures are recorded, (b) the orchestrator continues
-// processing remaining exercises, (c) outputLesson is still created.
-// MongoDB ObjectIds don't contain '-3', so the original index-based check never
-// triggered, causing the real AiVariationStrategy to be called (LLM timeout ~180s
-// per exercise in CI → test hung for 400+ seconds).
-vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@/server/services/lesson-duplication/orchestrator')>()
-  let callCount = 0
-  return {
-    ...actual,
-    runStrategy: vi
-      .fn()
-      .mockImplementation(
-        async (exercise: { id: string }, _level: string, _subject: unknown, _payload: unknown) => {
-          callCount++
-          // Fail only the first call — remaining exercises succeed so the orchestrator
-          // proves it does NOT abort on first failure.
-          if (callCount === 1) {
-            throw new Error('Forced failure for test')
-          }
-          return {
-            exerciseId: exercise.id,
-            strategy: 'script' as const,
-            blocks: [
-              {
-                id: 'q-1',
-                type: 'question_select',
-                variant: 'mcq',
-                selectionMode: 'single',
-                prompt: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'What is 2+2?',
-                  mediaIds: [],
-                },
-                answer: {
-                  multiSelect: false,
-                  options: [
-                    {
-                      id: 'a',
-                      content: {
-                        type: 'rich_text',
-                        format: 'md-math-v1',
-                        value: '3',
-                        mediaIds: [],
+// Call-counting mock RouterStrategy — fails on the first exercise, succeeds on the rest.
+// This proves the orchestrator does NOT abort on first failure.
+let mockRouterCallCount = 0
+
+function createMockRouter(): RouterStrategy {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return new RouterStrategy(
+    {} as Payload,
+    {} as never,
+    {
+      apply: async (
+        _exercise: Exercise,
+        _level: DuplicationLevel,
+        _subject?: DuplicationSubject,
+      ): Promise<VariationResult> => {
+        mockRouterCallCount++
+        if (mockRouterCallCount === 1) {
+          throw new Error('Forced failure for test')
+        }
+        return {
+          exercise: {
+            id: 'mock-exercise-id',
+            title: 'Mock Exercise',
+            status: 'draft',
+            content: {
+              blocks: [
+                {
+                  id: 'q-1',
+                  type: 'question_select',
+                  variant: 'mcq',
+                  selectionMode: 'single',
+                  prompt: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'What is 2+2?',
+                    mediaIds: [],
+                  },
+                  answer: {
+                    multiSelect: false,
+                    options: [
+                      {
+                        id: 'a',
+                        content: {
+                          type: 'rich_text',
+                          format: 'md-math-v1',
+                          value: '3',
+                          mediaIds: [],
+                        },
                       },
-                    },
-                    {
-                      id: 'b',
-                      content: {
-                        type: 'rich_text',
-                        format: 'md-math-v1',
-                        value: '4',
-                        mediaIds: [],
+                      {
+                        id: 'b',
+                        content: {
+                          type: 'rich_text',
+                          format: 'md-math-v1',
+                          value: '4',
+                          mediaIds: [],
+                        },
                       },
-                    },
-                  ],
-                  correctOptionIds: ['b'],
+                    ],
+                    correctOptionIds: ['b'],
+                  },
+                  hint: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'Think arithmetic',
+                    mediaIds: [],
+                  },
+                  solution: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: '2+2=4',
+                    mediaIds: [],
+                  },
+                  fullSolution: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'Basic addition',
+                    mediaIds: [],
+                  },
                 },
-                hint: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'Think arithmetic',
-                  mediaIds: [],
-                },
-                solution: { type: 'rich_text', format: 'md-math-v1', value: '2+2=4', mediaIds: [] },
-                fullSolution: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'Basic addition',
-                  mediaIds: [],
-                },
-              },
-            ],
-          }
-        },
-      ),
-  }
-})
+              ],
+            },
+          } as unknown as Exercise,
+        }
+      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any,
+  )
+}
 
 async function ensureDefaultTenant(payload: Payload): Promise<string> {
   const slug = getDefaultTenantSlug()
@@ -287,9 +301,13 @@ describe('Lesson duplication orchestrator — integration', () => {
 
     expect(record.status).toBe('pending')
 
-    // Run orchestrator (mocked runStrategy forces failure on first exercise)
+    // Reset counter and create fresh mock router for this test
+    mockRouterCallCount = 0
+    const mockRouter = createMockRouter()
+
+    // Run orchestrator with injected mock router
     try {
-      await runDuplicationOrchestrator(record.id, payload)
+      await runDuplicationOrchestrator(record.id, payload, mockRouter)
     } catch {
       // Orchestrator may throw if the mock is not properly applied;
       // we still verify the DB record state below
@@ -301,7 +319,7 @@ describe('Lesson duplication orchestrator — integration', () => {
     // Final status must be needs_review (not succeeded, not failed)
     expect(finalRecord.status).toBe('needs_review')
 
-    // At least one failure entry expected (first exercise threw in runStrategy mock)
+    // At least one failure entry expected (first exercise threw in mock router)
     // Note: the exact count depends on exercise ID strings; we check ≥1 to be robust
     expect(finalRecord.failures).toBeDefined()
     expect(finalRecord.failures.length).toBeGreaterThanOrEqual(1)
@@ -309,7 +327,7 @@ describe('Lesson duplication orchestrator — integration', () => {
     expect(finalRecord.failures[0].suggestedAction).toBe('skip')
 
     // After orchestrator runs, outputLesson should be created
-    // Note: outputExercises remain empty in this test because the runStrategy mock
+    // Note: outputExercises remain empty in this test because the mock router
     // bypasses processExercise (which calls createOutputExercise). Exercise creation
     // is verified in lesson-duplication-review-resolve.int.spec.ts instead.
     expect(finalRecord.outputLesson).toBeTruthy()
@@ -324,9 +342,13 @@ describe('Lesson duplication orchestrator — integration', () => {
     })
     cleanupDuplicationIds.push(record.id)
 
-    // Run orchestrator; it may throw if the mock isn't applied (that's ok for this test)
+    // Reset counter and create fresh mock router for this test
+    mockRouterCallCount = 0
+    const mockRouter = createMockRouter()
+
+    // Run orchestrator with injected mock router
     try {
-      await runDuplicationOrchestrator(record.id, payload)
+      await runDuplicationOrchestrator(record.id, payload, mockRouter)
     } catch {
       // ignore
     }

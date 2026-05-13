@@ -57,6 +57,7 @@ export class RouterStrategy implements VariationStrategy {
   constructor(
     private readonly payload: Payload,
     private readonly scriptStrategy = new ScriptVariationStrategy(),
+    private readonly aiStrategy?: AiVariationStrategy,
   ) {}
 
   async apply(
@@ -78,7 +79,7 @@ export class RouterStrategy implements VariationStrategy {
     }
 
     // medium/deep, or light with needsAiFallback → AI
-    const aiStrategy = new AiVariationStrategy(this.payload)
+    const aiStrategy = this.aiStrategy ?? new AiVariationStrategy(this.payload)
     return aiStrategy.apply(exercise, level, subject)
   }
 }
