@@ -15,6 +15,85 @@ import config from '@payload-config'
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
+// ---------------------------------------------------------------------------
+// Safety-net mock: prevent real AI calls if the runStrategy mock fails to apply.
+// createGenkitUnifiedAdapter is the Genkit factory used by generateVariation.
+// Mocking it ensures AiVariationStrategy never makes real LLM calls.
+// ---------------------------------------------------------------------------
+vi.mock('@/infra/llm/genkit/adapters/unified-adapter', () => ({
+  createGenkitUnifiedAdapter: vi.fn().mockResolvedValue({
+    generateChatCompletion: vi.fn().mockResolvedValue({
+      content: [
+        {
+          role: 'model',
+          content: [
+            {
+              text: JSON.stringify({
+                blocks: [
+                  {
+                    id: 'q-1',
+                    type: 'question_select',
+                    variant: 'mcq',
+                    selectionMode: 'single',
+                    prompt: {
+                      type: 'rich_text',
+                      format: 'md-math-v1',
+                      value: 'What is 2+2?',
+                      mediaIds: [],
+                    },
+                    answer: {
+                      multiSelect: false,
+                      options: [
+                        {
+                          id: 'a',
+                          content: {
+                            type: 'rich_text',
+                            format: 'md-math-v1',
+                            value: '3',
+                            mediaIds: [],
+                          },
+                        },
+                        {
+                          id: 'b',
+                          content: {
+                            type: 'rich_text',
+                            format: 'md-math-v1',
+                            value: '4',
+                            mediaIds: [],
+                          },
+                        },
+                      ],
+                      correctOptionIds: ['b'],
+                    },
+                    hint: {
+                      type: 'rich_text',
+                      format: 'md-math-v1',
+                      value: 'Think arithmetic',
+                      mediaIds: [],
+                    },
+                    solution: {
+                      type: 'rich_text',
+                      format: 'md-math-v1',
+                      value: '2+2=4',
+                      mediaIds: [],
+                    },
+                    fullSolution: {
+                      type: 'rich_text',
+                      format: 'md-math-v1',
+                      value: 'Basic addition',
+                      mediaIds: [],
+                    },
+                  },
+                ],
+              }),
+            },
+          ],
+        },
+      ],
+    }),
+  }),
+}))
+
 // Mock runStrategy to inject one forced failure on the 3rd exercise
 // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
 vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
