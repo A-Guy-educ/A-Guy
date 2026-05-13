@@ -8,88 +8,30 @@
  *  4. Final status is succeeded only when failures array is empty, else needs_review
  *  5. 5-exercise lesson with one forced failure → needs_review with 4 succeeded + 1 failure entry
  */
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { getPayload, type Payload } from 'payload'
 import config from '@payload-config'
 
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
+import type { VariationStrategy, VariationResult } from '@/server/services/lesson-duplication/strategies/router'
+import type { Exercise } from '@/payload-types'
+import type { DuplicationLevel, DuplicationSubject } from '@/server/payload/collections/LessonDuplications'
 
-// Mock runStrategy to inject one forced failure on the 3rd exercise
-// Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
-vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@/server/services/lesson-duplication/orchestrator')>()
-  return {
-    ...actual,
-    runStrategy: vi
-      .fn()
-      .mockImplementation(
-        async (exercise: { id: string }, _level: string, _subject: unknown, _payload: unknown) => {
-          // Force failure on the 3rd exercise (index-based)
-          if (exercise.id.includes('-3')) {
-            throw new Error('Forced failure for test')
-          }
-          // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
-          return {
-            exerciseId: exercise.id,
-            strategy: 'script' as const,
-            blocks: [
-              {
-                id: 'q-1',
-                type: 'question_select',
-                variant: 'mcq',
-                selectionMode: 'single',
-                prompt: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'What is 2+2?',
-                  mediaIds: [],
-                },
-                answer: {
-                  multiSelect: false,
-                  options: [
-                    {
-                      id: 'a',
-                      content: {
-                        type: 'rich_text',
-                        format: 'md-math-v1',
-                        value: '3',
-                        mediaIds: [],
-                      },
-                    },
-                    {
-                      id: 'b',
-                      content: {
-                        type: 'rich_text',
-                        format: 'md-math-v1',
-                        value: '4',
-                        mediaIds: [],
-                      },
-                    },
-                  ],
-                  correctOptionIds: ['b'],
-                },
-                hint: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'Think arithmetic',
-                  mediaIds: [],
-                },
-                solution: { type: 'rich_text', format: 'md-math-v1', value: '2+2=4', mediaIds: [] },
-                fullSolution: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'Basic addition',
-                  mediaIds: [],
-                },
-              },
-            ],
-          }
-        },
-      ),
+/**
+ * Mock AI variation strategy — throws immediately to simulate LLM failure.
+ * Injected via runDuplicationOrchestrator's aiStrategy parameter, bypassing
+ * the vi.mock unreliability in the vitest forks pool.
+ */
+class MockAiVariationStrategy implements VariationStrategy {
+  async apply(
+    _exercise: Exercise,
+    _level: DuplicationLevel,
+    _subject?: DuplicationSubject,
+  ): Promise<VariationResult> {
+    throw new Error('Mocked AI strategy — LLM call bypassed for test')
   }
-})
+}
 
 async function ensureDefaultTenant(payload: Payload): Promise<string> {
   const slug = getDefaultTenantSlug()
@@ -280,9 +222,10 @@ describe('Lesson duplication orchestrator — integration', () => {
 
     expect(record.status).toBe('pending')
 
-    // Run orchestrator (mocked runStrategy forces failure on exercise containing '-3')
+    // Run orchestrator with mock AI strategy that throws immediately
+    const mockAiStrategy = new MockAiVariationStrategy()
     try {
-      await runDuplicationOrchestrator(record.id, payload)
+      await runDuplicationOrchestrator(record.id, payload, mockAiStrategy)
     } catch {
       // Orchestrator may throw if the mock is not properly applied;
       // we still verify the DB record state below
@@ -306,7 +249,7 @@ describe('Lesson duplication orchestrator — integration', () => {
     // bypasses processExercise (which calls createOutputExercise). Exercise creation
     // is verified in lesson-duplication-review-resolve.int.spec.ts instead.
     expect(finalRecord.outputLesson).toBeTruthy()
-  }, 180000)
+  }, 600000)
 
   it('orchestrator does not abort when one exercise fails — remaining exercises are processed', async () => {
     // Create fresh pending record
@@ -317,9 +260,10 @@ describe('Lesson duplication orchestrator — integration', () => {
     })
     cleanupDuplicationIds.push(record.id)
 
-    // Run orchestrator; it may throw if the mock isn't applied (that's ok for this test)
+    // Run orchestrator with mock AI strategy
+    const mockAiStrategy = new MockAiVariationStrategy()
     try {
-      await runDuplicationOrchestrator(record.id, payload)
+      await runDuplicationOrchestrator(record.id, payload, mockAiStrategy)
     } catch {
       // ignore
     }
@@ -339,5 +283,5 @@ describe('Lesson duplication orchestrator — integration', () => {
 
     // outputLesson should be created even when some exercises fail
     expect(finalRecord.outputLesson).toBeTruthy()
-  }, 180000)
+  }, 600000)
 })

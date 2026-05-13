@@ -31,7 +31,10 @@ import {
   validateExerciseSemantic,
   SEMANTIC_FAILURE_CODE,
 } from '@/server/services/lesson-duplication/validators/semantic'
-import { RouterStrategy } from '@/server/services/lesson-duplication/strategies/router'
+import {
+  RouterStrategy,
+  type VariationStrategy,
+} from '@/server/services/lesson-duplication/strategies/router'
 
 // Concurrency of 1 = process exercises sequentially. Each exercise hits the
 // LLM twice (creative + deterministic). Gemini's per-minute quota is easily
@@ -63,7 +66,9 @@ export interface StrategyResult {
  *
  * @param exercise    Source exercise to vary
  * @param level       Duplication level (none/light/medium/deep)
- * @param _payload    Payload instance (available for future AI strategy use)
+ * @param subject     Duplication subject
+ * @param payload     Payload CMS instance
+ * @param aiStrategy  Optional AI strategy override (for testing)
  * @returns           StrategyResult with generated blocks and strategy used
  */
 export async function runStrategy(
@@ -71,8 +76,9 @@ export async function runStrategy(
   level: 'none' | 'light' | 'medium' | 'deep',
   subject: DuplicationSubject,
   payload: Payload,
+  aiStrategy?: VariationStrategy,
 ): Promise<StrategyResult> {
-  const router = new RouterStrategy(payload)
+  const router = new RouterStrategy(payload, undefined, aiStrategy)
   const result = await router.apply(exercise as unknown as Exercise, level, subject)
 
   const content = result.exercise.content as unknown as { blocks: ContentBlock[] }
@@ -315,13 +321,14 @@ async function processExercise(
   level: 'none' | 'light' | 'medium' | 'deep',
   subject: DuplicationSubject,
   payload: Payload,
+  aiStrategy?: VariationStrategy,
 ): Promise<StrategyResult | null> {
   const exerciseRef = exercise.id
 
   // Step 1: Run strategy
   let strategyResult: StrategyResult
   try {
-    strategyResult = await runStrategy(exercise, level, subject, payload)
+    strategyResult = await runStrategy(exercise, level, subject, payload, aiStrategy)
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown strategy error'
     logger.error({ exerciseRef, level, err }, 'Strategy generation failed')
@@ -408,6 +415,7 @@ async function processExercise(
  *
  * @param duplicationId  ID of the LessonDuplications record to process
  * @param payload        Payload instance
+ * @param aiStrategy     Optional AI strategy override (for testing — inject a mock/stub)
  *
  * Pre-condition: duplication record has status='pending'
  * Post-condition: duplication record has status='succeeded' (0 failures) or 'needs_review' (>0 failures)
@@ -415,6 +423,7 @@ async function processExercise(
 export async function runDuplicationOrchestrator(
   duplicationId: string,
   payload: Payload,
+  aiStrategy?: VariationStrategy,
 ): Promise<void> {
   // Load the duplication record
   const duplication = await payload.findByID({
@@ -492,6 +501,7 @@ export async function runDuplicationOrchestrator(
           duplicationLevel,
           duplicationSubject,
           payload,
+          aiStrategy,
         )
         if (result === null) return null
 
