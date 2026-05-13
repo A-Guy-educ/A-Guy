@@ -15,10 +15,10 @@ import config from '@payload-config'
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
-// Mock runStrategy to inject one forced failure on the 5th call.
-// Call count must be reset between tests for isolation — use beforeEach.
-// CONCURRENCY_LIMIT=1 ensures deterministic call ordering.
-let runStrategyCallCount = 0
+// Mock generateVariation to inject failures without hitting the LLM.
+// Mocks at the LLM call site (generateVariation), intercepting before any
+// network call is made. CONCURRENCY_LIMIT=1 ensures deterministic ordering.
+let generateVariationCallCount = 0
 const MOCK_BLOCKS = [
   {
     id: 'q-1',
@@ -44,25 +44,21 @@ const MOCK_BLOCKS = [
     },
   },
 ]
-vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@/server/services/lesson-duplication/orchestrator')>()
-  return {
-    ...actual,
-    runStrategy: vi.fn().mockImplementation((exercise: { id: string }) => {
-      runStrategyCallCount++
-      // Force failure on the 5th call (4 succeed, then 1 fails)
-      if (runStrategyCallCount >= 5) {
-        throw new Error('Forced failure for test')
-      }
-      return {
-        exerciseId: exercise.id,
-        strategy: 'script' as const,
-        blocks: MOCK_BLOCKS,
-      }
-    }),
-  }
-})
+vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
+  generateVariation: vi.fn().mockImplementation(async (params: { exercise: { id: string } }) => {
+    generateVariationCallCount++
+    // Force failure on the 5th call (4 succeed, then 1 fails)
+    if (generateVariationCallCount >= 5) {
+      throw new Error('Forced failure for test')
+    }
+    return {
+      exercise: {
+        ...params.exercise,
+        content: { blocks: MOCK_BLOCKS },
+      },
+    }
+  }),
+}))
 
 async function ensureDefaultTenant(payload: Payload): Promise<string> {
   const slug = getDefaultTenantSlug()
@@ -93,7 +89,7 @@ describe('Lesson duplication orchestrator — integration', () => {
   const cleanupDuplicationIds: string[] = []
 
   beforeEach(() => {
-    runStrategyCallCount = 0
+    generateVariationCallCount = 0
   })
 
   beforeAll(async () => {
@@ -257,7 +253,7 @@ describe('Lesson duplication orchestrator — integration', () => {
 
     expect(record.status).toBe('pending')
 
-    // Run orchestrator (mocked runStrategy forces failure on 5th call)
+    // Run orchestrator (mocked generateVariation throws on 5th call)
     try {
       await runDuplicationOrchestrator(record.id, payload)
     } catch {
@@ -271,17 +267,16 @@ describe('Lesson duplication orchestrator — integration', () => {
     // Final status must be needs_review (not succeeded, not failed)
     expect(finalRecord.status).toBe('needs_review')
 
-    // At least one failure entry expected (5th exercise throws in runStrategy)
-    // Note: the exact count depends on exercise ID strings; we check ≥1 to be robust
+    // At least one failure entry expected (5th exercise throws in generateVariation)
     expect(finalRecord.failures).toBeDefined()
     expect(finalRecord.failures.length).toBeGreaterThanOrEqual(1)
     expect(finalRecord.failures[0].code).toBe('GENERATION_FAILED')
     expect(finalRecord.failures[0].suggestedAction).toBe('skip')
 
     // After orchestrator runs, outputLesson should be created
-    // Note: outputExercises remain empty in this test because the runStrategy mock
-    // bypasses processExercise (which calls createOutputExercise). Exercise creation
-    // is verified in lesson-duplication-review-resolve.int.spec.ts instead.
+    // Note: outputExercises remain empty because the mock bypasses
+    // createOutputExercise. Exercise creation is verified in
+    // lesson-duplication-review-resolve.int.spec.ts instead.
     expect(finalRecord.outputLesson).toBeTruthy()
   }, 300000)
 

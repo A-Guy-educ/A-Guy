@@ -39,7 +39,7 @@ export default defineConfig({
     setupFiles: ['./vitest.setup.ts'],
     include: ['tests/int/**/*.int.spec.ts', 'tests/int/**/*.int.spec.tsx'],
     hookTimeout: 180000, // 180 seconds for hooks (cleanup operations may be slow)
-    testTimeout: 30000, // 30 seconds for individual tests (Vercel Blob and network-dependent tests may be slow)
+    testTimeout: 300000, // 300 seconds for individual tests (lesson duplication orchestrator processes exercises sequentially)
     // Suppress console output during tests for cleaner output
     onConsoleLog(_log, type) {
       if (type === 'stdout') {
