@@ -17,6 +17,7 @@ import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication
 
 // Mock runStrategy to inject one forced failure on the 3rd exercise
 // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
+let runStrategyCallCount = 0
 vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@/server/services/lesson-duplication/orchestrator')>()
@@ -26,8 +27,10 @@ vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOrigin
       .fn()
       .mockImplementation(
         async (exercise: { id: string }, _level: string, _subject: unknown, _payload: unknown) => {
-          // Force failure on the 3rd exercise (index-based)
-          if (exercise.id.includes('-3')) {
+          // Force failure on the 3rd exercise (index 2) — track by call count, not ID substring
+          // (ObjectIds don't contain hyphens, so exercise.id.includes('-3') never matched)
+          runStrategyCallCount++
+          if (runStrategyCallCount === 3) {
             throw new Error('Forced failure for test')
           }
           // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
@@ -118,6 +121,11 @@ describe('Lesson duplication orchestrator — integration', () => {
   const cleanupLessonIds: string[] = []
   const cleanupExerciseIds: string[] = []
   const cleanupDuplicationIds: string[] = []
+
+  // Reset the runStrategy call counter before each test so the 3rd call always throws
+  beforeEach(() => {
+    runStrategyCallCount = 0
+  })
 
   beforeAll(async () => {
     payload = await getPayload({ config })
