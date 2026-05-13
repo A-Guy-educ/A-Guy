@@ -15,6 +15,17 @@ import config from '@payload-config'
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
+// Mock generateVariation to prevent any LLM calls in tests (safety net in case
+// the orchestrator mock below fails to apply due to ESM hoisting issues)
+vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
+  generateVariation: vi.fn().mockResolvedValue({
+    exercise: {
+      id: 'mocked-exercise',
+      content: { blocks: [] },
+    },
+  }),
+}))
+
 // Mock runStrategy to inject one forced failure on the 3rd exercise
 // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
 vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
