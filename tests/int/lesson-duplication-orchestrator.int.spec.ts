@@ -15,8 +15,9 @@ import config from '@payload-config'
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
-// Mock runStrategy to inject one forced failure on the 3rd exercise
-// Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
+// Mock runStrategy to inject one forced failure on the 3rd exercise.
+// Tracks by call count (not ID pattern) — Payload generates UUIDs for exercise IDs
+// which don't contain '-3', so the old ID-based condition never triggered.
 let runStrategyCallCount = 0
 vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
   const actual =
@@ -27,13 +28,11 @@ vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOrigin
       .fn()
       .mockImplementation(
         async (exercise: { id: string }, _level: string, _subject: unknown, _payload: unknown) => {
-          // Force failure on the 3rd exercise (index 2) — track by call count, not ID substring
-          // (ObjectIds don't contain hyphens, so exercise.id.includes('-3') never matched)
           runStrategyCallCount++
+          // Force failure on the 3rd exercise (index 2)
           if (runStrategyCallCount === 3) {
             throw new Error('Forced failure for test')
           }
-          // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
           return {
             exerciseId: exercise.id,
             strategy: 'script' as const,
@@ -79,7 +78,12 @@ vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOrigin
                   value: 'Think arithmetic',
                   mediaIds: [],
                 },
-                solution: { type: 'rich_text', format: 'md-math-v1', value: '2+2=4', mediaIds: [] },
+                solution: {
+                  type: 'rich_text',
+                  format: 'md-math-v1',
+                  value: '2+2=4',
+                  mediaIds: [],
+                },
                 fullSolution: {
                   type: 'rich_text',
                   format: 'md-math-v1',
