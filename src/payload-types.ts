@@ -98,7 +98,10 @@ export interface Config {
     'upload-sessions': UploadSession;
     posts: Post;
     'pricing-plans': PricingPlan;
+    'product-items': ProductItem;
+    products: Product;
     'access-codes': AccessCode;
+    transactions: Transaction;
     'mcp-audit-logs': McpAuditLog;
     redirects: Redirect;
     forms: Form;
@@ -143,7 +146,10 @@ export interface Config {
     'upload-sessions': UploadSessionsSelect<false> | UploadSessionsSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
     'pricing-plans': PricingPlansSelect<false> | PricingPlansSelect<true>;
+    'product-items': ProductItemsSelect<false> | ProductItemsSelect<true>;
+    products: ProductsSelect<false> | ProductsSelect<true>;
     'access-codes': AccessCodesSelect<false> | AccessCodesSelect<true>;
+    transactions: TransactionsSelect<false> | TransactionsSelect<true>;
     'mcp-audit-logs': McpAuditLogsSelect<false> | McpAuditLogsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
@@ -462,6 +468,18 @@ export interface User {
     | {
         course: string | Course;
         grantMethod: 'admin' | 'payment' | 'code';
+        grantedAt?: string | null;
+        transactionId: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Standalone feature access granted via payment
+   */
+  featureEntitlements?:
+    | {
+        key: string;
+        transactionId: string;
         grantedAt?: string | null;
         id?: string | null;
       }[]
@@ -2493,6 +2511,80 @@ export interface PricingPlan {
   createdAt: string;
 }
 /**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-items".
+ */
+export interface ProductItem {
+  id: string;
+  /**
+   * בחר את סוג הפריט: שיעור מהמערכת או תכונה מוגדרת
+   */
+  type: 'lesson' | 'feature';
+  /**
+   * בחר את השיעור להוספה למוצר
+   */
+  lesson?: (string | null) | Lesson;
+  /**
+   * מזהה התכונה (לדוגמה: certificate, live-sessions)
+   */
+  featureKey?: string | null;
+  /**
+   * סמן אם יש להדגיש פריט זה בממשק המשתמש
+   */
+  isHighlighted?: boolean | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products".
+ */
+export interface Product {
+  id: string;
+  /**
+   * שם המוצר (יוצג למשתמשים)
+   */
+  name: string;
+  /**
+   * מזהה ייחודי (URL-friendly, נוצר אוטומטית מהשם)
+   */
+  slug: string;
+  /**
+   * סוג החיוב: חד-פעמי או מנוי חוזר
+   */
+  billingType: 'one_time' | 'subscription';
+  /**
+   * מרווח החיוב (למנוי בלבד)
+   */
+  interval?: ('month' | 'year') | null;
+  /**
+   * מחיר המוצר
+   */
+  price: number;
+  /**
+   * מטבע התשלום
+   */
+  currency: 'ILS' | 'USD' | 'EUR';
+  /**
+   * בחר את פריטי המוצר (שיעורים ותכונות)
+   */
+  items?: (string | ProductItem)[] | null;
+  /**
+   * האם המוצר פעיל וזמין למכירה
+   */
+  isActive?: boolean | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Manage access codes that grant course entitlements
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2528,6 +2620,75 @@ export interface AccessCode {
    * Optional expiration date (leave empty for no expiry)
    */
   expiresAt?: string | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "transactions".
+ */
+export interface Transaction {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * User who initiated the payment
+   */
+  user: string | User;
+  /**
+   * Product being purchased
+   */
+  product: string | Product;
+  /**
+   * Payment provider used for this transaction
+   */
+  provider: 'stripe' | 'paypal';
+  /**
+   * Transaction ID from the payment provider
+   */
+  providerTransactionId: string;
+  /**
+   * Current status of the transaction
+   */
+  status: 'pending' | 'succeeded' | 'failed' | 'refunded';
+  /**
+   * Amount in agorot (1 ILS = 100 agorot)
+   */
+  amount: number;
+  /**
+   * Currency code (e.g., ILS, USD, EUR)
+   */
+  currency: string;
+  /**
+   * Additional metadata (item IDs, lesson IDs, etc.)
+   */
+  metadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Original success redirect URL
+   */
+  successUrl?: string | null;
+  /**
+   * Original cancel redirect URL
+   */
+  cancelUrl?: string | null;
+  /**
+   * Error message if transaction failed
+   */
+  errorMessage?: string | null;
   /**
    * User who created this document
    */
@@ -2900,8 +3061,20 @@ export interface PayloadLockedDocument {
         value: string | PricingPlan;
       } | null)
     | ({
+        relationTo: 'product-items';
+        value: string | ProductItem;
+      } | null)
+    | ({
+        relationTo: 'products';
+        value: string | Product;
+      } | null)
+    | ({
         relationTo: 'access-codes';
         value: string | AccessCode;
+      } | null)
+    | ({
+        relationTo: 'transactions';
+        value: string | Transaction;
       } | null)
     | ({
         relationTo: 'mcp-audit-logs';
@@ -3661,6 +3834,15 @@ export interface UsersSelect<T extends boolean = true> {
         course?: T;
         grantMethod?: T;
         grantedAt?: T;
+        transactionId?: T;
+        id?: T;
+      };
+  featureEntitlements?:
+    | T
+    | {
+        key?: T;
+        transactionId?: T;
+        grantedAt?: T;
         id?: T;
       };
   chatQuestionsUsed?: T;
@@ -3881,6 +4063,36 @@ export interface PricingPlansSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-items_select".
+ */
+export interface ProductItemsSelect<T extends boolean = true> {
+  type?: T;
+  lesson?: T;
+  featureKey?: T;
+  isHighlighted?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products_select".
+ */
+export interface ProductsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  billingType?: T;
+  interval?: T;
+  price?: T;
+  currency?: T;
+  items?: T;
+  isActive?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "access-codes_select".
  */
 export interface AccessCodesSelect<T extends boolean = true> {
@@ -3891,6 +4103,27 @@ export interface AccessCodesSelect<T extends boolean = true> {
   currentUses?: T;
   isActive?: T;
   expiresAt?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "transactions_select".
+ */
+export interface TransactionsSelect<T extends boolean = true> {
+  tenant?: T;
+  user?: T;
+  product?: T;
+  provider?: T;
+  providerTransactionId?: T;
+  status?: T;
+  amount?: T;
+  currency?: T;
+  metadata?: T;
+  successUrl?: T;
+  cancelUrl?: T;
+  errorMessage?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
