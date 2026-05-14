@@ -367,7 +367,16 @@ async function processExercise(
   // exercise — renderer would crash) and warnings (admin fills from review
   // screen). Warning-only exercises still ship, with TODO placeholders filled
   // in for missing hint/solution/fullSolution so the lesson stays renderable.
-  const structuralFailures: StructuralFailure[] = validateExerciseStructural(strategyResult.blocks)
+  //
+  // We pass the source exercise's blocks so the validator can suppress
+  // MISSING_QUESTION when the source itself had an empty prompt (e.g. legacy
+  // geometry exercises where the question is in the figure, not as text).
+  // Otherwise every such variation would falsely fail.
+  const sourceBlocks = (exercise.content?.blocks ?? []) as ContentBlock[]
+  const structuralFailures: StructuralFailure[] = validateExerciseStructural(
+    strategyResult.blocks,
+    sourceBlocks,
+  )
   const blockingFailures = structuralFailures.filter((f) => BLOCKING_FAILURE_CODES.has(f.code))
   const warningFailures = structuralFailures.filter((f) => !BLOCKING_FAILURE_CODES.has(f.code))
 
