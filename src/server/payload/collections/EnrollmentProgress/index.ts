@@ -11,8 +11,37 @@
 
 import type { CollectionConfig } from 'payload'
 
-import { adminOrSelf } from '@/server/payload/access/adminOrSelf'
+import { enrollmentProgressAccess } from '@/server/payload/access/enrollmentProgressAccess'
 import { authenticated } from '@/server/payload/access/authenticated'
+
+/**
+ * Populates the user field from the enrollment's user relationship.
+ * This enables row-level access control via enrollmentProgressAccess.
+ */
+const populateUserFromEnrollment = async ({
+  data,
+  req,
+}: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data: any
+  req: { payload: import('payload').Payload }
+}) => {
+  if (!data.enrollment) return data
+
+  // Fetch the enrollment to get its user
+  const enrollment = await req.payload.findByID({
+    collection: 'enrollments',
+    id: data.enrollment,
+    depth: 0,
+    overrideAccess: true,
+  })
+
+  if (enrollment?.user) {
+    data.user = typeof enrollment.user === 'string' ? enrollment.user : enrollment.user.id
+  }
+
+  return data
+}
 
 export const EnrollmentProgress: CollectionConfig = {
   slug: 'enrollment-progress',
@@ -22,11 +51,25 @@ export const EnrollmentProgress: CollectionConfig = {
   },
   access: {
     create: authenticated,
-    read: adminOrSelf,
-    update: adminOrSelf,
-    delete: adminOrSelf,
+    read: enrollmentProgressAccess,
+    update: enrollmentProgressAccess,
+    delete: enrollmentProgressAccess,
+  },
+  hooks: {
+    beforeChange: [populateUserFromEnrollment],
   },
   fields: [
+    {
+      name: 'user',
+      type: 'relationship',
+      relationTo: 'users',
+      required: true,
+      index: true,
+      admin: {
+        description: 'The user who owns this progress (populated from enrollment)',
+        readOnly: true,
+      },
+    },
     {
       name: 'enrollment',
       type: 'relationship',
@@ -80,5 +123,7 @@ export const EnrollmentProgress: CollectionConfig = {
     { fields: ['enrollment', 'lesson'], unique: true },
     // Recent access tracking
     { fields: ['enrollment', 'lastAccessedAt'] },
+    // Access control - user lookups
+    { fields: ['user', 'lesson'] },
   ],
 }

@@ -2205,6 +2205,10 @@ export interface ExerciseAsset {
 export interface EnrollmentProgress {
   id: string;
   /**
+   * The user who owns this progress (populated from enrollment)
+   */
+  user: string | User;
+  /**
    * The enrollment this progress belongs to
    */
   enrollment: string | Enrollment;
@@ -3847,6 +3851,7 @@ export interface ExerciseAssetsSelect<T extends boolean = true> {
  * via the `definition` "enrollment-progress_select".
  */
 export interface EnrollmentProgressSelect<T extends boolean = true> {
+  user?: T;
   enrollment?: T;
   lesson?: T;
   progress?: T;

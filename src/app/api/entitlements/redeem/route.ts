@@ -161,7 +161,12 @@ export async function POST(request: NextRequest) {
         overrideAccess: true,
       })
     } catch (createError) {
-      // Step 3 threw — roll back step 1
+      // Step 3 threw after Step 1 succeeded — counter drift may have occurred
+      // even though we rolled back the increment. Log explicitly for observability.
+      payload.logger.warn(
+        { accessCodeId: accessCode.id, userId: user.id, courseId, createError },
+        'Access code increment rolled back after enrollment creation failed — counter drift possible',
+      )
       await rollBackIncrement(accessCodesCollection, accessCode.id, payload, user.id, courseId)
       throw createError
     }

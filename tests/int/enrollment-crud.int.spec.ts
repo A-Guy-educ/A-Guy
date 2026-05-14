@@ -204,21 +204,23 @@ describe('Enrollments CRUD', () => {
   })
 
   it('should not allow duplicate enrollment for same user+course', async () => {
-    // Try to create a second enrollment - should work at DB level but we could add validation
-    // Note: The unique index on {user, course} would prevent this at DB level
-    const enrollment = await payload.create({
-      collection: 'enrollments',
-      data: {
-        user: studentUserId,
-        course: courseId,
-        status: 'inactive',
-        grantMethod: 'admin',
-        source: 'dashboard',
-      } as any,
-      overrideAccess: true,
-    })
+    // The unique index on {user, course} prevents duplicate enrollments at DB level
+    // The second create should throw a duplicate key error
+    await expect(
+      payload.create({
+        collection: 'enrollments',
+        data: {
+          user: studentUserId,
+          course: courseId,
+          status: 'inactive',
+          grantMethod: 'admin',
+          source: 'dashboard',
+        } as any,
+        overrideAccess: true,
+      }),
+    ).rejects.toThrow()
 
-    // Both exist but only one is active
+    // Verify only the original enrollment exists
     const enrollments = await payload.find({
       collection: 'enrollments',
       where: { user: { equals: studentUserId }, course: { equals: courseId } },
@@ -226,6 +228,6 @@ describe('Enrollments CRUD', () => {
       overrideAccess: true,
     })
 
-    expect(enrollments.docs.length).toBe(2)
+    expect(enrollments.docs.length).toBe(1)
   })
 })
