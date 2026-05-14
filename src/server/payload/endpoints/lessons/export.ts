@@ -29,21 +29,18 @@ import type { PayloadRequest } from 'payload'
 
 type BlockEntry = { id: string; blockType: string; exercise?: string; contentPage?: string }
 
-/** Strip Payload-managed fields from a doc */
+/** Strip Payload-managed fields from a doc (preserves id) */
 function stripManagedFields<T extends Record<string, unknown>>(
   doc: T,
-): Omit<T, 'id' | 'createdAt' | 'updatedAt'> {
+): Omit<T, 'createdAt' | 'updatedAt'> {
   const {
-    id: _id,
     createdAt: _c,
     updatedAt: _u,
     ...rest
   } = doc as T & {
-    id?: unknown
     createdAt?: unknown
     updatedAt?: unknown
   }
-  void _id
   void _c
   void _u
   return rest
@@ -127,14 +124,13 @@ export async function exportLessonEndpoint(req: PayloadRequest): Promise<Respons
   }
 
   // 6) Build response — strip managed fields from lesson
-  const { id: _lid, createdAt: _lca, updatedAt: _lua, blocks: _lb, ...lessonData } = lesson
-  void _lid
+  const { id, createdAt: _lca, updatedAt: _lua, blocks: _lb, ...lessonData } = lesson
   void _lca
   void _lua
   void _lb
 
   const responseBody = {
-    lesson: lessonData,
+    lesson: { id, ...lessonData },
     exercises,
     meta: {
       exerciseCount: exercises.length,
