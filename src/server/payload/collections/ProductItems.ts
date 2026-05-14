@@ -48,6 +48,10 @@ export const ProductItems: CollectionConfig = {
         description: 'The lesson this item grants access to',
         condition: (data) => data.type === 'lesson',
       },
+      validate: (value: unknown, { data }: { data: Record<string, unknown> }) => {
+        if (data?.type === 'lesson' && !value) return 'Lesson is required when type is lesson'
+        return true
+      },
     },
     {
       name: 'featureKey',

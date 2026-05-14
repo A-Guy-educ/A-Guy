@@ -531,6 +531,36 @@ describe.skipIf(!hasDatabaseUrl)('Products Collection', () => {
       expect(updated.isActive).toBe(false)
     })
 
+    it('should trim existing slug on update without name change', async () => {
+      const admin = await getAdminUser()
+
+      const created = await payload.create({
+        collection: 'products',
+        data: {
+          name: 'Slug Trim Test',
+          billingType: 'one_time',
+          price: 19,
+          currency: 'USD',
+        } as any,
+        user: admin as any,
+        overrideAccess: false,
+      })
+      trackProduct(created.id)
+
+      expect(created.slug).toBeDefined()
+
+      // Update without changing name — slug should be trimmed
+      const updated = await payload.update({
+        collection: 'products',
+        id: created.id,
+        data: { slug: '  ' + created.slug + '  ', price: 29 },
+        user: admin as any,
+        overrideAccess: false,
+      })
+
+      expect(updated.slug).toBe(created.slug.trim())
+    })
+
     it('should delete a product', async () => {
       const admin = await getAdminUser()
 
@@ -640,6 +670,40 @@ describe.skipIf(!hasDatabaseUrl)('Products Collection', () => {
             price: 99,
             currency: 'USD',
           } as any,
+          user: admin as any,
+          overrideAccess: false,
+        })
+      } catch (e) {
+        validationError = e as Error
+      }
+
+      expect(validationError).not.toBeNull()
+    })
+
+    it('should reject subscription without interval on update', async () => {
+      const admin = await getAdminUser()
+
+      // Create a valid one-time product first
+      const created = await payload.create({
+        collection: 'products',
+        data: {
+          name: 'Update Interval Test',
+          billingType: 'one_time',
+          price: 49,
+          currency: 'USD',
+        } as any,
+        user: admin as any,
+        overrideAccess: false,
+      })
+      trackProduct(created.id)
+
+      // Update to subscription without providing interval
+      let validationError: Error | null = null
+      try {
+        await payload.update({
+          collection: 'products',
+          id: created.id,
+          data: { billingType: 'subscription' },
           user: admin as any,
           overrideAccess: false,
         })

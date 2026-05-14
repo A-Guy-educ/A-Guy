@@ -101,7 +101,6 @@ export const Products: CollectionConfig = {
     {
       name: 'interval',
       type: 'select',
-      required: true,
       options: [
         { label: 'Month', value: 'month' },
         { label: 'Year', value: 'year' },
