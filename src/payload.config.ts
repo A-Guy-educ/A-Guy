@@ -18,6 +18,8 @@ import { ContextExtractions } from '@/server/payload/collections/ContextExtracti
 import { Conversations } from '@/server/payload/collections/Conversations'
 import { Courses } from '@/server/payload/collections/Courses'
 import { ExerciseAssets } from '@/server/payload/collections/ExerciseAssets'
+import { EnrollmentProgress } from '@/server/payload/collections/EnrollmentProgress'
+import { Enrollments } from '@/server/payload/collections/Enrollments'
 import { Exercises } from '@/server/payload/collections/Exercises'
 import { ExtractionLogs } from '@/server/payload/collections/ExtractionLogs'
 import { FormulaSheets } from '@/server/payload/collections/FormulaSheets'
@@ -197,6 +199,8 @@ export default buildConfig({
     TeacherProfiles,
     UserSettings,
     ExerciseAssets,
+    EnrollmentProgress,
+    Enrollments,
     Users,
     UserProgress,
     UserStats,

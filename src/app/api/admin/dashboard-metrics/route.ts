@@ -242,7 +242,7 @@ export async function GET(req: Request) {
     promptsCount,
     allUserStats,
     coursesWithTitles,
-    usersWithEntitlements,
+    activeEnrollments,
     learningLessons,
     practiceLessons,
     examLessons,
@@ -423,17 +423,30 @@ export async function GET(req: Request) {
       limit: 100,
       overrideAccess: true,
     }),
-    // Users with course entitlements — paginated to avoid truncation
-    findAll<{ courseEntitlements?: Array<{ course?: string | { id?: string } }> }>(
+    // Enrollments — query Enrollments collection directly for active enrollments
+    findAll<{
+      user?: string | { id?: string }
+      course?: string | { id?: string }
+      status?: string
+    }>(
       (page) =>
         payload.find({
-          collection: 'users',
-          where: { 'courseEntitlements.course': { exists: true } },
+          collection: 'enrollments',
+          where: { status: { equals: 'active' } },
           limit: 500,
           page,
           overrideAccess: true,
+          select: {
+            user: true,
+            course: true,
+            status: true,
+          },
         }) as Promise<{
-          docs: { courseEntitlements?: Array<{ course?: string | { id?: string } }> }[]
+          docs: {
+            user?: string | { id?: string }
+            course?: string | { id?: string }
+            status?: string
+          }[]
           hasNextPage: boolean
           totalPages: number
         }>,
@@ -541,15 +554,13 @@ export async function GET(req: Request) {
     }
   }
 
-  // Count enrollments per course ID (from entitlements)
-  // usersWithEntitlements is already a flat array from findAll
+  // Count enrollments per course ID (from Enrollments collection)
+  // activeEnrollments is already a flat array from findAll
   const enrollmentCounts = new Map<string, number>()
-  for (const u of usersWithEntitlements) {
-    for (const ent of u.courseEntitlements || []) {
-      const courseId = extractCourseId(ent.course)
-      if (!courseId) continue
-      enrollmentCounts.set(courseId, (enrollmentCounts.get(courseId) || 0) + 1)
-    }
+  for (const enrollment of activeEnrollments) {
+    const courseId = extractCourseId(enrollment.course)
+    if (!courseId) continue
+    enrollmentCounts.set(courseId, (enrollmentCounts.get(courseId) || 0) + 1)
   }
 
   // Explicitly fetch courses by the collected IDs to get their titles

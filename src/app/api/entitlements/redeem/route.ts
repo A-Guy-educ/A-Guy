@@ -73,7 +73,6 @@ export async function POST(request: NextRequest) {
   const courseId = typeof accessCode.course === 'string' ? accessCode.course : accessCode.course.id
 
   const accessCodesCollection = payload.db.collections['access-codes']
-  const usersCollection = payload.db.collections.users
 
   try {
     // --- Atomic Step 1: Increment access code usage ---
@@ -105,39 +104,66 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'code_unavailable' }, { status: 409 })
     }
 
-    // --- Atomic Step 2: Add entitlement only if user doesn't already have it ---
-    // Uses updateOne with a $ne filter on courseEntitlements.course combined with $push.
-    // If the user already has this course, modifiedCount will be 0.
-    const courseObjectId = new ObjectId(courseId)
+    // --- Step 2: Check for existing enrollment (in Enrollments or legacy courseEntitlements) ---
+    // First check Enrollments collection (new system)
+    const existingEnrollment = await payload.find({
+      collection: 'enrollments',
+      where: {
+        and: [{ user: { equals: user.id } }, { course: { equals: courseId } }],
+      },
+      limit: 1,
+      depth: 0,
+      overrideAccess: true,
+    })
 
-    let entitlementResult
-    try {
-      entitlementResult = await usersCollection.updateOne(
-        {
-          _id: new ObjectId(user.id),
-          'courseEntitlements.course': { $ne: courseObjectId },
-        },
-        {
-          $push: {
-            courseEntitlements: {
-              _id: new ObjectId(),
-              course: courseObjectId,
-              grantMethod: 'code',
-              grantedAt: new Date().toISOString(),
-            },
-          },
-        },
-      )
-    } catch (entitlementError) {
-      // Step 2 threw — roll back step 1
-      await rollBackIncrement(accessCodesCollection, accessCode.id, payload, user.id, courseId)
-      throw entitlementError
-    }
-
-    if (entitlementResult.modifiedCount === 0) {
-      // User already had this course entitlement — roll back the access code increment
+    if (existingEnrollment.docs.length > 0) {
+      // Already has an enrollment — roll back the access code increment
       await rollBackIncrement(accessCodesCollection, accessCode.id, payload, user.id, courseId)
       return NextResponse.json({ success: false, error: 'already_entitled' }, { status: 409 })
+    }
+
+    // Also check legacy courseEntitlements for backward compatibility
+    const userDoc = await payload.findByID({
+      collection: 'users',
+      id: user.id,
+      depth: 0,
+      overrideAccess: true,
+      select: { courseEntitlements: true },
+    })
+
+    const hasLegacyEntitlement =
+      userDoc.courseEntitlements?.some((e) => {
+        const entCourseId = typeof e.course === 'string' ? e.course : e.course?.id
+        return entCourseId === courseId
+      }) ?? false
+
+    if (hasLegacyEntitlement) {
+      // Already has legacy entitlement — roll back the access code increment
+      await rollBackIncrement(accessCodesCollection, accessCode.id, payload, user.id, courseId)
+      return NextResponse.json({ success: false, error: 'already_entitled' }, { status: 409 })
+    }
+
+    // --- Step 3: Create enrollment in Enrollments collection ---
+    try {
+      await payload.create({
+        collection: 'enrollments',
+        data: {
+          user: user.id,
+          course: courseId,
+          status: 'active',
+          grantMethod: 'code',
+          source: 'self',
+          enrolledAt: new Date().toISOString(),
+          metadata: {
+            accessCodeId: accessCode.id,
+          },
+        },
+        overrideAccess: true,
+      })
+    } catch (createError) {
+      // Step 3 threw — roll back step 1
+      await rollBackIncrement(accessCodesCollection, accessCode.id, payload, user.id, courseId)
+      throw createError
     }
 
     return NextResponse.json({ success: true, courseId })

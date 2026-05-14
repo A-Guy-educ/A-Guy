@@ -91,6 +91,8 @@ export interface Config {
     teacher_profiles: TeacherProfile;
     user_settings: UserSetting;
     'exercise-assets': ExerciseAsset;
+    'enrollment-progress': EnrollmentProgress;
+    enrollments: Enrollment;
     users: User;
     'user-progress': UserProgress;
     'user-stats': UserStat;
@@ -137,6 +139,8 @@ export interface Config {
     teacher_profiles: TeacherProfilesSelect<false> | TeacherProfilesSelect<true>;
     user_settings: UserSettingsSelect<false> | UserSettingsSelect<true>;
     'exercise-assets': ExerciseAssetsSelect<false> | ExerciseAssetsSelect<true>;
+    'enrollment-progress': EnrollmentProgressSelect<false> | EnrollmentProgressSelect<true>;
+    enrollments: EnrollmentsSelect<false> | EnrollmentsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'user-progress': UserProgressSelect<false> | UserProgressSelect<true>;
     'user-stats': UserStatsSelect<false> | UserStatsSelect<true>;
@@ -2196,6 +2200,90 @@ export interface ExerciseAsset {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enrollment-progress".
+ */
+export interface EnrollmentProgress {
+  id: string;
+  /**
+   * The enrollment this progress belongs to
+   */
+  enrollment: string | Enrollment;
+  /**
+   * The lesson this progress is for
+   */
+  lesson: string | Lesson;
+  /**
+   * Progress percentage (0-100)
+   */
+  progress?: number | null;
+  /**
+   * When the lesson was marked as completed
+   */
+  completedAt?: string | null;
+  /**
+   * When the lesson was last accessed
+   */
+  lastAccessedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enrollments".
+ */
+export interface Enrollment {
+  id: string;
+  /**
+   * The user who is enrolled
+   */
+  user: string | User;
+  /**
+   * The course the user is enrolled in
+   */
+  course: string | Course;
+  /**
+   * Current enrollment status
+   */
+  status: 'active' | 'inactive' | 'suspended' | 'cancelled' | 'expired';
+  /**
+   * How the enrollment was granted
+   */
+  grantMethod: 'admin' | 'payment' | 'code';
+  /**
+   * Origin of the enrollment
+   */
+  source: 'dashboard' | 'api' | 'self' | 'invite';
+  /**
+   * When the enrollment was created
+   */
+  enrolledAt: string;
+  /**
+   * When the enrollment was cancelled
+   */
+  cancelledAt?: string | null;
+  /**
+   * When the enrollment expires (for time-limited access)
+   */
+  expiresAt?: string | null;
+  metadata?: {
+    /**
+     * Access code used for enrollment (if applicable)
+     */
+    accessCodeId?: string | null;
+    /**
+     * Payment reference (for future payment integration)
+     */
+    paymentId?: string | null;
+    /**
+     * Admin user ID who granted the enrollment
+     */
+    grantedBy?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "user-progress".
  */
 export interface UserProgress {
@@ -2959,6 +3047,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'exercise-assets';
         value: string | ExerciseAsset;
+      } | null)
+    | ({
+        relationTo: 'enrollment-progress';
+        value: string | EnrollmentProgress;
+      } | null)
+    | ({
+        relationTo: 'enrollments';
+        value: string | Enrollment;
       } | null)
     | ({
         relationTo: 'users';
@@ -3745,6 +3841,42 @@ export interface ExerciseAssetsSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enrollment-progress_select".
+ */
+export interface EnrollmentProgressSelect<T extends boolean = true> {
+  enrollment?: T;
+  lesson?: T;
+  progress?: T;
+  completedAt?: T;
+  lastAccessedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enrollments_select".
+ */
+export interface EnrollmentsSelect<T extends boolean = true> {
+  user?: T;
+  course?: T;
+  status?: T;
+  grantMethod?: T;
+  source?: T;
+  enrolledAt?: T;
+  cancelledAt?: T;
+  expiresAt?: T;
+  metadata?:
+    | T
+    | {
+        accessCodeId?: T;
+        paymentId?: T;
+        grantedBy?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

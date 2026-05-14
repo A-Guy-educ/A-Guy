@@ -10,6 +10,8 @@ import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 import { PRODUCT_EVENTS } from './contracts/events'
 import { analytics } from './core/tracker'
 import { getOrCreateAnonymousId } from './utils/anonymous-id'
+import { getPayload } from 'payload'
+import config from '@payload-config'
 
 let initialized = false
 let cleanupFns: Unsubscribe[] = []
@@ -638,6 +640,7 @@ export function initAnalyticsSubscriber(): () => void {
 /**
  * Re-fetches user data and updates Mixpanel People profile with current course entitlements.
  * Called after ACCESS_GRANTED to ensure the user profile reflects the new entitlement immediately.
+ * Now reads from Enrollments collection (with fallback to courseEntitlements for backward compat).
  */
 async function refreshUserEntitlementsInMixpanel(): Promise<void> {
   try {
@@ -646,16 +649,47 @@ async function refreshUserEntitlementsInMixpanel(): Promise<void> {
 
     const data = await response.json()
     const user = data.user
-    if (!user?.id || !Array.isArray(user.courseEntitlements)) return
+    if (!user?.id) return
 
-    const entry = user.courseEntitlements[0] as {
-      course: string | { id: string }
+    let courseId: string | null = null
+
+    // First try Enrollments collection (new system)
+    try {
+      const payload = await getPayload({ config })
+      const enrollment = await payload.find({
+        collection: 'enrollments',
+        where: {
+          and: [{ user: { equals: user.id } }, { status: { equals: 'active' } }],
+        },
+        limit: 1,
+        depth: 0,
+        overrideAccess: true,
+      })
+
+      if (enrollment.docs.length > 0) {
+        const enrollmentCourse = enrollment.docs[0].course
+        courseId =
+          typeof enrollmentCourse === 'string'
+            ? enrollmentCourse
+            : ((enrollmentCourse as { id?: string })?.id ?? null)
+      }
+    } catch {
+      // Enrollments query failed, fall through to legacy
     }
-    const courseId = typeof entry.course === 'string' ? entry.course : entry.course.id
 
-    analytics.identify(user.id, {
-      enrolled_course: courseId,
-    })
+    // Fallback to legacy courseEntitlements for backward compatibility
+    if (!courseId && Array.isArray(user.courseEntitlements) && user.courseEntitlements.length > 0) {
+      const entry = user.courseEntitlements[0] as {
+        course: string | { id: string }
+      }
+      courseId = typeof entry.course === 'string' ? entry.course : entry.course.id
+    }
+
+    if (courseId) {
+      analytics.identify(user.id, {
+        enrolled_course: courseId,
+      })
+    }
   } catch {
     // Silently fail — analytics should never break the user flow
   }
