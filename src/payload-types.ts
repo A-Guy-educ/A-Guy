@@ -102,6 +102,7 @@ export interface Config {
     'product-items': ProductItem;
     products: Product;
     'access-codes': AccessCode;
+    transactions: Transaction;
     'mcp-audit-logs': McpAuditLog;
     redirects: Redirect;
     forms: Form;
@@ -150,6 +151,7 @@ export interface Config {
     'product-items': ProductItemsSelect<false> | ProductItemsSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
     'access-codes': AccessCodesSelect<false> | AccessCodesSelect<true>;
+    transactions: TransactionsSelect<false> | TransactionsSelect<true>;
     'mcp-audit-logs': McpAuditLogsSelect<false> | McpAuditLogsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
@@ -2640,6 +2642,75 @@ export interface AccessCode {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "transactions".
+ */
+export interface Transaction {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * User who initiated the payment
+   */
+  user: string | User;
+  /**
+   * Product being purchased
+   */
+  product: string | Product;
+  /**
+   * Payment provider used for this transaction
+   */
+  provider: 'stripe' | 'paypal';
+  /**
+   * Transaction ID from the payment provider
+   */
+  providerTransactionId: string;
+  /**
+   * Current status of the transaction
+   */
+  status: 'pending' | 'succeeded' | 'failed' | 'refunded';
+  /**
+   * Amount in agorot (1 ILS = 100 agorot)
+   */
+  amount: number;
+  /**
+   * Currency code (e.g., ILS, USD, EUR)
+   */
+  currency: string;
+  /**
+   * Additional metadata (item IDs, lesson IDs, etc.)
+   */
+  metadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Original success redirect URL
+   */
+  successUrl?: string | null;
+  /**
+   * Original cancel redirect URL
+   */
+  cancelUrl?: string | null;
+  /**
+   * Error message if transaction failed
+   */
+  errorMessage?: string | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "mcp-audit-logs".
  */
 export interface McpAuditLog {
@@ -3081,6 +3152,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'access-codes';
         value: string | AccessCode;
+      } | null)
+    | ({
+        relationTo: 'transactions';
+        value: string | Transaction;
       } | null)
     | ({
         relationTo: 'mcp-audit-logs';
@@ -4114,6 +4189,27 @@ export interface AccessCodesSelect<T extends boolean = true> {
   currentUses?: T;
   isActive?: T;
   expiresAt?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "transactions_select".
+ */
+export interface TransactionsSelect<T extends boolean = true> {
+  tenant?: T;
+  user?: T;
+  product?: T;
+  provider?: T;
+  providerTransactionId?: T;
+  status?: T;
+  amount?: T;
+  currency?: T;
+  metadata?: T;
+  successUrl?: T;
+  cancelUrl?: T;
+  errorMessage?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;

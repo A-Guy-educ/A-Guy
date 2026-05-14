@@ -36,6 +36,7 @@ import { Products } from '@/server/payload/collections/Products'
 import { Prompts } from '@/server/payload/collections/Prompts'
 import { TeacherProfiles } from '@/server/payload/collections/TeacherProfiles'
 import { Tenants } from '@/server/payload/collections/Tenants'
+import { Transactions } from '@/server/payload/collections/Transactions'
 import { UploadSessions } from '@/server/payload/collections/UploadSessions'
 import { UserProgress } from '@/server/payload/collections/UserProgress'
 import { Users } from '@/server/payload/collections/Users'
@@ -210,6 +211,7 @@ export default buildConfig({
     ProductItems,
     Products,
     AccessCodes,
+    Transactions,
     MCPAuditLogs,
   ],
   cors: [getServerSideURL()].filter(Boolean),
