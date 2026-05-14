@@ -320,5 +320,37 @@ describe('PayPal Payment Service', () => {
       expect(body.amount).toBeDefined()
       expect(body.amount.value).toBe('5.00')
     })
+
+    it('should use ILS currency when specified', async () => {
+      process.env.PAYPAL_CLIENT_ID = 'test_client_id'
+      process.env.PAYPAL_CLIENT_SECRET = 'test_secret'
+
+      let capturedBody: string | undefined
+
+      globalThis.fetch = vi.fn().mockImplementation((url: string, options?: RequestInit) => {
+        if (url.includes('/v1/oauth2/token')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(mockTokenResponse),
+          }) as unknown as Response
+        }
+        if (url.includes('/v2/payments/captures/')) {
+          capturedBody = options?.body as string
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({}),
+          }) as unknown as Response
+        }
+        return Promise.reject(new Error('Unexpected URL'))
+      })
+
+      const { refundPayPal } = await import('@/lib/payment/paypal')
+      await refundPayPal('CAPTURE123', 500, 'ILS')
+
+      expect(capturedBody).toBeDefined()
+      const body = JSON.parse(capturedBody!)
+      expect(body.amount).toBeDefined()
+      expect(body.amount.currency_code).toBe('ILS')
+    })
   })
 })
