@@ -498,7 +498,7 @@ export interface User {
         course: string | Course;
         grantMethod: 'admin' | 'payment' | 'code';
         grantedAt?: string | null;
-        transactionId: string;
+        transactionId?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -508,7 +508,7 @@ export interface User {
   featureEntitlements?:
     | {
         key: string;
-        transactionId: string;
+        transactionId?: string | null;
         grantedAt?: string | null;
         id?: string | null;
       }[]
