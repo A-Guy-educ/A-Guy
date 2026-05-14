@@ -19,7 +19,7 @@ All payment secrets are documented in `.env.example` and managed via the [Config
 
 | Key | Required | Description |
 |-----|----------|-------------|
-| `PAYPAL_CLIENT_ID` | No | Client ID של PayPal (מנהל התשלומים) |
+| `PAYPAL_CLIENT_ID` | Yes | Client ID של PayPal (מנהל התשלומים) |
 | `PAYPAL_CLIENT_SECRET` | Yes | סוד הלקוח של PayPal (מנהל התשלומים) |
 | `PAYPAL_WEBHOOK_ID` | No | Webhook ID של PayPal (מהדשבורד של PayPal) |
 | `PAYPAL_SANDBOX` | No | האם להשתמש בסביבת Sandbox (בדיקה) |
