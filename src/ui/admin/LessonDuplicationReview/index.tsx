@@ -174,6 +174,9 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [allResolved, setAllResolved] = useState(false)
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set())
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [processError, setProcessError] = useState<string | null>(null)
+  const [processOutcome, setProcessOutcome] = useState<string | null>(null)
   const diffPreviewRef = useRef<HTMLDivElement>(null)
 
   const fetchRecord = useCallback(async () => {
@@ -246,6 +249,34 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
       next.set(index, { action, level })
       return next
     })
+  }
+
+  /**
+   * Manually kick the orchestrator for this record. Useful on dev (where
+   * Vercel cron doesn't fire on preview deploys) and for "run it now" in
+   * production. The request can take several minutes — same model as a cron
+   * tick: process as many exercises as fit in the function lifetime, then
+   * return. If work remains, status stays `running` and the next click (or
+   * cron tick) continues from there.
+   */
+  async function handleProcessNow() {
+    setIsProcessing(true)
+    setProcessError(null)
+    setProcessOutcome(null)
+    try {
+      const res = await fetch(`/api/lesson-duplications/${duplicationId}/process-now`, {
+        method: 'POST',
+        credentials: 'include',
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error?.message ?? data.error ?? `HTTP ${res.status}`)
+      setProcessOutcome(data.data?.outcome ?? 'unknown')
+      await fetchRecord()
+    } catch (e) {
+      setProcessError(e instanceof Error ? e.message : 'Process failed')
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   function jumpToExercise(outputExerciseId: string) {
@@ -355,6 +386,74 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
     )
   }
 
+  // Lets admins kick the orchestrator manually (essential on dev where Vercel
+  // cron doesn't fire on preview deploys; nice-to-have in prod for "do it
+  // now" overrides). Visible in both the empty-state panel and the sticky
+  // bar of the normal review view.
+  const canProcess = record.status === 'pending' || record.status === 'running'
+
+  // Pending/running with nothing to show yet — render a focused "Process Now"
+  // panel instead of the empty review UI.
+  const hasNoProgress =
+    (record.outputExercises?.length ?? 0) === 0 && (record.failures?.length ?? 0) === 0
+  if (canProcess && hasNoProgress) {
+    return (
+      <div style={pageStyle}>
+        <div style={headerStyle}>
+          <p style={breadcrumbStyle}>
+            <Link href="/admin">Dashboard</Link> /{' '}
+            <Link href="/admin/collections/lesson-duplications">Lesson Duplications</Link> / Review
+          </p>
+          <h1 style={titleStyle}>Lesson Duplication Review</h1>
+          <p style={metaStyle}>
+            Source: <strong>{sourceLessonTitle ?? record.sourceLesson}</strong> · Level:{' '}
+            <strong>{record.level}</strong> · Status: <strong>{record.status}</strong>
+          </p>
+        </div>
+        <div
+          style={{
+            padding: 24,
+            border: '1px solid var(--theme-elevation-200)',
+            borderRadius: 4,
+            backgroundColor: 'var(--theme-elevation-0)',
+          }}
+        >
+          <p style={{ fontSize: 14, marginBottom: 16 }}>
+            {record.status === 'pending'
+              ? 'This duplication is queued and hasn’t started yet. It will be picked up automatically by the cron worker within ~1 minute on production. Click below to start it immediately.'
+              : 'This duplication is running but no exercises have been recorded yet. The cron worker will continue it on its next tick. Click below to advance it right now.'}
+          </p>
+          <button
+            style={{
+              ...buttonStyle,
+              backgroundColor: 'var(--theme-success)',
+              color: '#fff',
+              border: 'none',
+              padding: '8px 16px',
+              fontSize: 14,
+            }}
+            onClick={handleProcessNow}
+            disabled={isProcessing}
+          >
+            {isProcessing ? 'Processing… (this can take several minutes)' : 'Process Now'}
+          </button>
+          {processOutcome && (
+            <div style={{ marginTop: 12, fontSize: 13, color: 'var(--theme-elevation-700)' }}>
+              Last run outcome: <strong>{processOutcome}</strong>
+              {processOutcome === 'in_progress' &&
+                ' — more work remains; click Process Now again or wait for the next cron tick.'}
+            </div>
+          )}
+          {processError && (
+            <div style={{ marginTop: 12, fontSize: 13, color: 'var(--theme-error)' }}>
+              {processError}
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={pageStyle}>
       {/* Header */}
@@ -385,6 +484,20 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
           )}
         </span>
         <div style={{ flex: 1 }} />
+        {canProcess && (
+          <button
+            style={{
+              ...buttonStyle,
+              backgroundColor: 'var(--theme-elevation-150)',
+              color: 'var(--theme-elevation-800)',
+            }}
+            onClick={handleProcessNow}
+            disabled={isProcessing}
+            title="Run the orchestrator immediately on this record. Useful on dev where Vercel cron doesn't auto-fire."
+          >
+            {isProcessing ? 'Processing…' : 'Process Now'}
+          </button>
+        )}
         {pendingActions.size > 0 && (
           <>
             <span style={{ fontSize: 13, color: 'var(--theme-elevation-600)' }}>
