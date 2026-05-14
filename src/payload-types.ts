@@ -494,6 +494,18 @@ export interface User {
         course: string | Course;
         grantMethod: 'admin' | 'payment' | 'code';
         grantedAt?: string | null;
+        transactionId?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Standalone feature access granted via payment
+   */
+  featureEntitlements?:
+    | {
+        key: string;
+        transactionId: string;
+        grantedAt?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -3928,6 +3940,15 @@ export interface UsersSelect<T extends boolean = true> {
     | {
         course?: T;
         grantMethod?: T;
+        grantedAt?: T;
+        transactionId?: T;
+        id?: T;
+      };
+  featureEntitlements?:
+    | T
+    | {
+        key?: T;
+        transactionId?: T;
         grantedAt?: T;
         id?: T;
       };

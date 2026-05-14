@@ -26,6 +26,7 @@ import { LessonConversionPanel as LessonConversionPanel_057daf3b86f654d90edf003b
 import { LessonNavigation as LessonNavigation_3633cb4a281c7c581bfc453746b3dc60 } from '@/ui/admin/ContentNavigation'
 import { TranslateLessonAction as TranslateLessonAction_5e03fe73ee4379dfd96d492849856d43 } from '@/ui/admin/TranslationButton'
 import { LessonCascadeDelete as LessonCascadeDelete_8b707dd02fbf8886630a64bffcae6998 } from '@/ui/admin/CascadeDeleteButton'
+import { LessonExportAction as LessonExportAction_936ab3a262b72776e8d4690482118058 } from '@/ui/admin/LessonExportButton/LessonExportButton'
 import { LessonDuplicateAction as LessonDuplicateAction_0631cedc78513227cbbacea1e7a29e6f } from '@/ui/admin/LessonDuplicateButton/LessonDuplicateButton'
 import { LessonDuplicationReviewLink as LessonDuplicationReviewLink_87ad8d4e757d2b21433ff9f7082ac534 } from '@/ui/admin/LessonDuplicationReview/ReviewLinkButton'
 import { IntroTableHeadersField as IntroTableHeadersField_7c6162afec623d7dc5ec436565e36ecb } from '@/ui/admin/IntroTableField'
@@ -86,6 +87,7 @@ export const importMap = {
   "@/ui/admin/ContentNavigation#LessonNavigation": LessonNavigation_3633cb4a281c7c581bfc453746b3dc60,
   "@/ui/admin/TranslationButton#TranslateLessonAction": TranslateLessonAction_5e03fe73ee4379dfd96d492849856d43,
   "@/ui/admin/CascadeDeleteButton#LessonCascadeDelete": LessonCascadeDelete_8b707dd02fbf8886630a64bffcae6998,
+  "@/ui/admin/LessonExportButton/LessonExportButton#LessonExportAction": LessonExportAction_936ab3a262b72776e8d4690482118058,
   "@/ui/admin/LessonDuplicateButton/LessonDuplicateButton#LessonDuplicateAction": LessonDuplicateAction_0631cedc78513227cbbacea1e7a29e6f,
   "@/ui/admin/LessonDuplicationReview/ReviewLinkButton#LessonDuplicationReviewLink": LessonDuplicationReviewLink_87ad8d4e757d2b21433ff9f7082ac534,
   "@/ui/admin/IntroTableField#IntroTableHeadersField": IntroTableHeadersField_7c6162afec623d7dc5ec436565e36ecb,
