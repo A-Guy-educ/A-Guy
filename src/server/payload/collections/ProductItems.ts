@@ -33,11 +33,14 @@ export const ProductItems: CollectionConfig = {
       type: 'select',
       required: true,
       options: [
-        { label: 'Lesson', value: 'lesson' },
-        { label: 'Feature', value: 'feature' },
+        { label: '📚 שיעור', value: 'lesson' },
+        { label: '⚙️ תכונה', value: 'feature' },
       ],
       admin: {
-        description: 'Whether this item grants access to a specific lesson or a named feature',
+        description: 'בחר את סוג הפריט: שיעור מהמערכת או תכונה מוגדרת',
+        components: {
+          Cell: '@/ui/admin/ProductItems/TypeBadgeCell#TypeBadgeCell',
+        },
       },
     },
     {
@@ -45,7 +48,7 @@ export const ProductItems: CollectionConfig = {
       type: 'relationship',
       relationTo: 'lessons',
       admin: {
-        description: 'The lesson this item grants access to',
+        description: 'בחר את השיעור להוספה למוצר',
         condition: (data) => data.type === 'lesson',
       },
       validate: (value: unknown, { data }: { data: Record<string, unknown> }) => {
@@ -58,7 +61,7 @@ export const ProductItems: CollectionConfig = {
       type: 'text',
       required: true,
       admin: {
-        description: 'Feature identifier (e.g., certificate, live-sessions)',
+        description: 'מזהה התכונה (לדוגמה: certificate, live-sessions)',
         condition: (data) => data.type === 'feature',
       },
       validate: (value: unknown, { data }: { data: Record<string, unknown> }) => {
@@ -76,7 +79,7 @@ export const ProductItems: CollectionConfig = {
       type: 'checkbox',
       defaultValue: false,
       admin: {
-        description: 'Mark this item as highlighted for UI display emphasis',
+        description: 'סמן אם יש להדגיש פריט זה בממשק המשתמש',
       },
     },
     // Created By

@@ -2528,19 +2528,19 @@ export interface PricingPlan {
 export interface ProductItem {
   id: string;
   /**
-   * Whether this item grants access to a specific lesson or a named feature
+   * בחר את סוג הפריט: שיעור מהמערכת או תכונה מוגדרת
    */
   type: 'lesson' | 'feature';
   /**
-   * The lesson this item grants access to
+   * בחר את השיעור להוספה למוצר
    */
   lesson?: (string | null) | Lesson;
   /**
-   * Feature identifier (e.g., certificate, live-sessions)
+   * מזהה התכונה (לדוגמה: certificate, live-sessions)
    */
   featureKey?: string | null;
   /**
-   * Mark this item as highlighted for UI display emphasis
+   * סמן אם יש להדגיש פריט זה בממשק המשתמש
    */
   isHighlighted?: boolean | null;
   /**
@@ -2557,35 +2557,35 @@ export interface ProductItem {
 export interface Product {
   id: string;
   /**
-   * Display name for this product
+   * שם המוצר (יוצג למשתמשים)
    */
   name: string;
   /**
-   * URL-friendly identifier (auto-generated from name if empty)
+   * מזהה ייחודי (URL-friendly, נוצר אוטומטית מהשם)
    */
   slug: string;
   /**
-   * Type of billing for this product
+   * סוג החיוב: חד-פעמי או מנוי חוזר
    */
   billingType: 'one_time' | 'subscription';
   /**
-   * Billing interval (required for subscription billing)
+   * מרווח החיוב (למנוי בלבד)
    */
   interval?: ('month' | 'year') | null;
   /**
-   * Price amount (0 = free)
+   * מחיר המוצר
    */
   price: number;
   /**
-   * Currency code
+   * מטבע התשלום
    */
   currency: 'ILS' | 'USD' | 'EUR';
   /**
-   * Lessons and features included in this product
+   * בחר את פריטי המוצר (שיעורים ותכונות)
    */
   items?: (string | ProductItem)[] | null;
   /**
-   * Whether this product is currently available for purchase
+   * האם המוצר פעיל וזמין למכירה
    */
   isActive?: boolean | null;
   /**

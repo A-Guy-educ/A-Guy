@@ -65,6 +65,18 @@ export const Products: CollectionConfig = {
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'billingType', 'interval', 'price', 'currency', 'isActive'],
+    components: {
+      views: {
+        edit: {
+          Default: {
+            Component: '@/ui/admin/Products/EditView#ProductsEditView',
+          },
+        },
+      },
+      edit: {
+        SaveButton: '@/ui/admin/Products/SaveButton#ProductsSaveButton',
+      },
+    },
   },
   fields: [
     {
@@ -72,7 +84,7 @@ export const Products: CollectionConfig = {
       type: 'text',
       required: true,
       admin: {
-        description: 'Display name for this product',
+        description: 'שם המוצר (יוצג למשתמשים)',
       },
     },
     {
@@ -82,7 +94,7 @@ export const Products: CollectionConfig = {
       unique: true,
       index: true,
       admin: {
-        description: 'URL-friendly identifier (auto-generated from name if empty)',
+        description: 'מזהה ייחודי (URL-friendly, נוצר אוטומטית מהשם)',
         position: 'sidebar',
       },
     },
@@ -91,27 +103,27 @@ export const Products: CollectionConfig = {
       type: 'select',
       required: true,
       options: [
-        { label: 'One-time', value: 'one_time' },
-        { label: 'Subscription', value: 'subscription' },
+        { label: 'חד-פעמי', value: 'one_time' },
+        { label: 'מנוי', value: 'subscription' },
       ],
       admin: {
-        description: 'Type of billing for this product',
+        description: 'סוג החיוב: חד-פעמי או מנוי חוזר',
       },
     },
     {
       name: 'interval',
       type: 'select',
       options: [
-        { label: 'Month', value: 'month' },
-        { label: 'Year', value: 'year' },
+        { label: 'חודש', value: 'month' },
+        { label: 'שנה', value: 'year' },
       ],
       admin: {
-        description: 'Billing interval (required for subscription billing)',
+        description: 'מרווח החיוב (למנוי בלבד)',
         condition: (data) => data.billingType === 'subscription',
       },
       validate: (value: unknown, { data }: { data: Record<string, unknown> }) => {
         if (data?.billingType === 'subscription' && !value) {
-          return 'Interval is required for subscription billing'
+          return 'מרווח החיוב נדרש עבור מנוי'
         }
         return true
       },
@@ -122,7 +134,7 @@ export const Products: CollectionConfig = {
       required: true,
       min: 0,
       admin: {
-        description: 'Price amount (0 = free)',
+        description: 'מחיר המוצר',
       },
     },
     {
@@ -131,12 +143,12 @@ export const Products: CollectionConfig = {
       required: true,
       defaultValue: 'ILS',
       options: [
-        { label: 'ILS (Israeli Shekel)', value: 'ILS' },
-        { label: 'USD (US Dollar)', value: 'USD' },
-        { label: 'EUR (Euro)', value: 'EUR' },
+        { label: 'ILS (שקל)', value: 'ILS' },
+        { label: 'USD (דולר)', value: 'USD' },
+        { label: 'EUR (אירו)', value: 'EUR' },
       ],
       admin: {
-        description: 'Currency code',
+        description: 'מטבע התשלום',
       },
     },
     {
@@ -145,7 +157,7 @@ export const Products: CollectionConfig = {
       relationTo: 'product-items',
       hasMany: true,
       admin: {
-        description: 'Lessons and features included in this product',
+        description: 'בחר את פריטי המוצר (שיעורים ותכונות)',
       },
     },
     {
@@ -153,7 +165,7 @@ export const Products: CollectionConfig = {
       type: 'checkbox',
       defaultValue: true,
       admin: {
-        description: 'Whether this product is currently available for purchase',
+        description: 'האם המוצר פעיל וזמין למכירה',
       },
     },
     // Created By
