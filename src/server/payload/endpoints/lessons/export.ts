@@ -137,7 +137,7 @@ export async function exportLessonEndpoint(req: PayloadRequest): Promise<Respons
   void _lb
 
   const responseBody = {
-    lesson: lessonData,
+    lesson: { ...lessonData, id: lesson.id as string },
     exercises,
     meta: {
       exerciseCount: exercises.length,
