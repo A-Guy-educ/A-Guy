@@ -182,6 +182,7 @@ export const Lessons: CollectionConfig = {
         beforeDocumentControls: [
           '@/ui/admin/TranslationButton#TranslateLessonAction',
           '@/ui/admin/CascadeDeleteButton#LessonCascadeDelete',
+          '@/ui/admin/LessonExportButton/LessonExportButton#LessonExportAction',
           '@/ui/admin/LessonDuplicateButton/LessonDuplicateButton#LessonDuplicateAction',
           '@/ui/admin/GenerateExercisesButton/GenerateExercisesButton#GenerateExercisesAction',
         ],
