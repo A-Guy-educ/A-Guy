@@ -8,89 +8,98 @@
  *  4. Final status is succeeded only when failures array is empty, else needs_review
  *  5. 5-exercise lesson with one forced failure → needs_review with 4 succeeded + 1 failure entry
  */
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getPayload, type Payload } from 'payload'
 import config from '@payload-config'
 
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
-// Call counter that persists across the module lifetime
-let generateVariationCallCount = 0
-
-// Mock the variation service to count calls and optionally throw on the 3rd exercise
+// Mock the variation service so AiVariationStrategy (used for medium/deep level)
+// does not make real LLM calls in the integration test environment.
+// The variation service is only called when level != 'none' &&
+// (level != 'light' || scriptStrategy.needsAiFallback).
+// Uses call-count tracking instead of ID pattern — Payload generates UUIDs for
+// exercise IDs which don't contain '-3', so the old ID-based condition never triggered.
+let _vgCallCount = 0
 vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
-  generateVariation: vi.fn().mockImplementation(async (params: { exercise: { id: string } }) => {
-    generateVariationCallCount++
-    // Force failure on the 3rd call
-    if (generateVariationCallCount === 3) {
-      throw new Error('Forced failure for test')
-    }
-    // Return a valid exercise
-    return {
-      exercise: {
-        id: params.exercise.id,
-        content: {
-          blocks: [
-            {
-              id: 'q-1',
-              type: 'question_select',
-              variant: 'mcq',
-              selectionMode: 'single',
-              prompt: {
-                type: 'rich_text',
-                format: 'md-math-v1',
-                value: 'What is 2+2?',
-                mediaIds: [],
-              },
-              answer: {
-                multiSelect: false,
-                options: [
-                  {
-                    id: 'a',
-                    content: {
-                      type: 'rich_text',
-                      format: 'md-math-v1',
-                      value: '3',
-                      mediaIds: [],
-                    },
+  generateVariation: vi
+    .fn()
+    .mockImplementation(
+      async (
+        input: { exercise: { id: string } },
+        _payload: unknown,
+      ): Promise<{ exercise: { id: string; content: { blocks: unknown[] } } }> => {
+        _vgCallCount++
+        // Force failure on the 3rd exercise (call count 3 = index 2)
+        if (_vgCallCount === 3) {
+          throw new Error('Forced failure for test')
+        }
+        return {
+          exercise: {
+            id: input.exercise.id,
+            content: {
+              blocks: [
+                {
+                  id: 'q-1',
+                  type: 'question_select',
+                  variant: 'mcq',
+                  selectionMode: 'single',
+                  prompt: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'What is 2+2?',
+                    mediaIds: [],
                   },
-                  {
-                    id: 'b',
-                    content: {
-                      type: 'rich_text',
-                      format: 'md-math-v1',
-                      value: '4',
-                      mediaIds: [],
-                    },
+                  answer: {
+                    multiSelect: false,
+                    options: [
+                      {
+                        id: 'a',
+                        content: {
+                          type: 'rich_text',
+                          format: 'md-math-v1',
+                          value: '3',
+                          mediaIds: [],
+                        },
+                      },
+                      {
+                        id: 'b',
+                        content: {
+                          type: 'rich_text',
+                          format: 'md-math-v1',
+                          value: '4',
+                          mediaIds: [],
+                        },
+                      },
+                    ],
+                    correctOptionIds: ['b'],
                   },
-                ],
-                correctOptionIds: ['b'],
-              },
-              hint: {
-                type: 'rich_text',
-                format: 'md-math-v1',
-                value: 'Think arithmetic',
-                mediaIds: [],
-              },
-              solution: {
-                type: 'rich_text',
-                format: 'md-math-v1',
-                value: '2+2=4',
-                mediaIds: [],
-              },
-              fullSolution: {
-                type: 'rich_text',
-                format: 'md-math-v1',
-                value: 'Basic addition',
-                mediaIds: [],
-              },
+                  hint: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'Think arithmetic',
+                    mediaIds: [],
+                  },
+                  solution: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: '2+2=4',
+                    mediaIds: [],
+                  },
+                  fullSolution: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'Basic addition',
+                    mediaIds: [],
+                  },
+                },
+              ],
             },
-          ],
-        },
+          },
+        }
       },
-    }
-  }),
+    ),
 }))
 
 async function ensureDefaultTenant(payload: Payload): Promise<string> {
@@ -121,9 +130,13 @@ describe('Lesson duplication orchestrator — integration', () => {
   const cleanupExerciseIds: string[] = []
   const cleanupDuplicationIds: string[] = []
 
+  beforeEach(() => {
+    _vgCallCount = 0
+  })
+
   beforeAll(async () => {
     // Reset counter before test suite runs
-    generateVariationCallCount = 0
+    _vgCallCount = 0
     payload = await getPayload({ config })
     tenantId = await ensureDefaultTenant(payload)
     const ts = Date.now()
@@ -275,7 +288,7 @@ describe('Lesson duplication orchestrator — integration', () => {
 
   it('5-exercise lesson with one forced failure — orchestrator does not abort and ends in needs_review', async () => {
     // Reset call count so this test starts fresh
-    generateVariationCallCount = 0
+    _vgCallCount = 0
 
     // Create pending duplication record
     const record = await payload.create({
@@ -312,7 +325,7 @@ describe('Lesson duplication orchestrator — integration', () => {
 
   it('orchestrator does not abort when one exercise fails — remaining exercises are processed', async () => {
     // Reset call count so this test starts fresh
-    generateVariationCallCount = 0
+    _vgCallCount = 0
 
     // Create fresh pending record
     const record = await payload.create({
