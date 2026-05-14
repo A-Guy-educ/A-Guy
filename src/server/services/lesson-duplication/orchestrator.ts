@@ -325,7 +325,9 @@ async function processExercise(
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown strategy error'
     logger.error({ exerciseRef, level, err }, 'Strategy generation failed')
-    await appendFailure(payload, duplicationId, exerciseRef, 0, GENERATION_FAILURE_CODE, message)
+    // Fire-and-forget: don't await — a slow DB write here would otherwise
+    // block the entire concurrency loop and cause test timeouts.
+    appendFailure(payload, duplicationId, exerciseRef, 0, GENERATION_FAILURE_CODE, message)
     return null
   }
 
@@ -339,8 +341,10 @@ async function processExercise(
 
   // Record blocking failures and non-blocking warnings into separate buckets
   // so the review UI can show them under different headings.
+  // Fire-and-forget: don't await — slow DB writes here would block the
+  // concurrency loop and cause timeouts when processing many exercises.
   for (const failure of blockingFailures) {
-    await appendFailure(
+    appendFailure(
       payload,
       duplicationId,
       exerciseRef,
@@ -350,7 +354,7 @@ async function processExercise(
     )
   }
   for (const warning of warningFailures) {
-    await appendWarning(
+    appendWarning(
       payload,
       duplicationId,
       exerciseRef,
@@ -388,7 +392,8 @@ async function processExercise(
       payload,
     )
     if (!semanticResult.ok) {
-      await appendFailure(
+      // Fire-and-forget: slow DB write must not block the concurrency loop.
+      appendFailure(
         payload,
         duplicationId,
         exerciseRef,

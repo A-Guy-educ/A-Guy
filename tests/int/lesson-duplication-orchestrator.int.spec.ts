@@ -307,8 +307,6 @@ describe('Lesson duplication orchestrator — integration', () => {
     // At least one failure entry expected (3rd runStrategy call throws in mock)
     expect(finalRecord.failures).toBeDefined()
     expect(finalRecord.failures.length).toBeGreaterThanOrEqual(1)
-    expect(finalRecord.failures).toBeDefined()
-    expect(finalRecord.failures.length).toBeGreaterThanOrEqual(1)
     expect(finalRecord.failures[0].code).toBe('GENERATION_FAILED')
     expect(finalRecord.failures[0].suggestedAction).toBe('skip')
 
