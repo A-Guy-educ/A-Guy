@@ -38,7 +38,9 @@ export const POST = withApiHandler<unknown, unknown>({ auth: 'admin' }, async ({
   const startedAt = Date.now()
   const deadlineMs = startedAt + (maxDuration * 1000 - HEADROOM_MS)
 
-  const outcome = await runDuplicationOrchestrator(duplicationId, payload, { deadlineMs })
+  const outcome = await runDuplicationOrchestrator(duplicationId, payload, undefined, {
+    deadlineMs,
+  })
 
   return apiSuccess({
     duplicationId,
