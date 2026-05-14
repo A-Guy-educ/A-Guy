@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 
 import config from '@payload-config'
+import type { Transaction } from '@/payload-types'
 import { refundStripe } from '@/lib/payment/stripe'
 import { refundPayPal } from '@/lib/payment/paypal'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
@@ -40,23 +41,31 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   }
 
   // 3. Fetch transaction
-  const transaction = await payload.findByID({
-    collection: 'transactions',
-    id,
-    depth: 0,
-    overrideAccess: true,
-  })
-
-  if (!transaction) {
-    return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
+  let transaction: unknown
+  try {
+    transaction = await payload.findByID({
+      collection: 'transactions',
+      id,
+      depth: 0,
+      overrideAccess: true,
+    })
+  } catch (err) {
+    if (
+      err instanceof Error &&
+      (err.message === 'Not found' || err.message.includes('Not Found'))
+    ) {
+      return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
+    }
+    throw err
   }
 
   // 4. Validate status — double-refund guard
-  if (transaction.status === 'refunded') {
+  const tx = transaction as Transaction
+  if (tx.status === 'refunded') {
     return NextResponse.json({ error: 'העסקה כבר הוחזרה' }, { status: 400 })
   }
 
-  if (transaction.status !== 'succeeded') {
+  if (tx.status !== 'succeeded') {
     return NextResponse.json(
       { error: 'Only succeeded transactions can be refunded' },
       { status: 400 },
@@ -64,7 +73,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   }
 
   // 5. Call provider refund
-  const { provider, providerTransactionId, amount } = transaction as {
+  const { provider, providerTransactionId, amount } = tx as {
     provider: 'stripe' | 'paypal'
     providerTransactionId: string
     amount: number
