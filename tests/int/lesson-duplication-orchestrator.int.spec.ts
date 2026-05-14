@@ -83,7 +83,12 @@ vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOrigin
                   value: 'Think arithmetic',
                   mediaIds: [],
                 },
-                solution: { type: 'rich_text', format: 'md-math-v1', value: '2+2=4', mediaIds: [] },
+                solution: {
+                  type: 'rich_text',
+                  format: 'md-math-v1',
+                  value: '2+2=4',
+                  mediaIds: [],
+                },
                 fullSolution: {
                   type: 'rich_text',
                   format: 'md-math-v1',
