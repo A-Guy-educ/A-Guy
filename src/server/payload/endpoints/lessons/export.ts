@@ -29,21 +29,23 @@ import type { PayloadRequest } from 'payload'
 
 type BlockEntry = { id: string; blockType: string; exercise?: string; contentPage?: string }
 
-/** Strip Payload-managed fields from a doc */
+/**
+ * Strip Payload-managed timestamp fields from a doc. The `id` is preserved —
+ * it's data (not a server-managed timestamp), and downstream consumers need
+ * it to round-trip the export back into the system. The endpoint's documented
+ * JSON shape and its integration test both require `id` to be present.
+ */
 function stripManagedFields<T extends Record<string, unknown>>(
   doc: T,
-): Omit<T, 'id' | 'createdAt' | 'updatedAt'> {
+): Omit<T, 'createdAt' | 'updatedAt'> {
   const {
-    id: _id,
     createdAt: _c,
     updatedAt: _u,
     ...rest
   } = doc as T & {
-    id?: unknown
     createdAt?: unknown
     updatedAt?: unknown
   }
-  void _id
   void _c
   void _u
   return rest
@@ -126,9 +128,10 @@ export async function exportLessonEndpoint(req: PayloadRequest): Promise<Respons
     }
   }
 
-  // 6) Build response — strip managed fields from lesson
-  const { id: _lid, createdAt: _lca, updatedAt: _lua, blocks: _lb, ...lessonData } = lesson
-  void _lid
+  // 6) Build response — strip managed timestamps + raw blocks (the lesson's
+  // `blocks` field is a serialized JSON string for storage; we expose the
+  // ordered exercises array via `exercises` instead). `id` is preserved.
+  const { createdAt: _lca, updatedAt: _lua, blocks: _lb, ...lessonData } = lesson
   void _lca
   void _lua
   void _lb
