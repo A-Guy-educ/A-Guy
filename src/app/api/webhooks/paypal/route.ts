@@ -161,7 +161,7 @@ async function handleEvent(
 
       const transaction = transactions.docs[0]
 
-      // Idempotency guard: only process if still pending
+      // Idempotency guard: only process if still pending (skip if already succeeded, refunded, or failed)
       if (transaction.status !== 'pending') {
         return
       }

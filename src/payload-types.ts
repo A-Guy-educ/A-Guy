@@ -494,7 +494,7 @@ export interface User {
         course: string | Course;
         grantMethod: 'admin' | 'payment' | 'code';
         grantedAt?: string | null;
-        transactionId?: string | null;
+        transactionId: string;
         id?: string | null;
       }[]
     | null;
