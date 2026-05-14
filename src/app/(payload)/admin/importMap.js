@@ -45,6 +45,8 @@ import { MetaImageComponent as MetaImageComponent_a8a977ebc872c5d5ea7ee689724c08
 import { TypeBadgeCell as TypeBadgeCell_13c62dfd4a04ae34ea0273393121f596 } from '@/ui/admin/ProductItems/TypeBadgeCell'
 import { ProductsSaveButton as ProductsSaveButton_bd850752e7866f72b743e2e0c1b129f0 } from '@/ui/admin/Products/SaveButton'
 import { ProductsEditView as ProductsEditView_ff3c2128c868d33a5de1972e5b7e8f8a } from '@/ui/admin/Products/EditView'
+import { TransactionStatusCell as TransactionStatusCell_6b7b08e7fddc3ba187c2fa7390e3cb99 } from '@/ui/admin/TransactionStatusCell'
+import { TransactionRefundAction as TransactionRefundAction_e5bfc69413b21cd5f23c10fce4cae960 } from '@/ui/admin/TransactionEditView'
 import { LinkToDoc as LinkToDoc_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloadcms/plugin-search/client'
 import { ReindexButton as ReindexButton_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloadcms/plugin-search/client'
 import { RowLabel as RowLabel_49a0f2da415e33c790acf24cb6dd5091 } from '@/ui/admin/Header'
@@ -106,6 +108,8 @@ export const importMap = {
   "@/ui/admin/ProductItems/TypeBadgeCell#TypeBadgeCell": TypeBadgeCell_13c62dfd4a04ae34ea0273393121f596,
   "@/ui/admin/Products/SaveButton#ProductsSaveButton": ProductsSaveButton_bd850752e7866f72b743e2e0c1b129f0,
   "@/ui/admin/Products/EditView#ProductsEditView": ProductsEditView_ff3c2128c868d33a5de1972e5b7e8f8a,
+  "@/ui/admin/TransactionStatusCell#TransactionStatusCell": TransactionStatusCell_6b7b08e7fddc3ba187c2fa7390e3cb99,
+  "@/ui/admin/TransactionEditView#TransactionRefundAction": TransactionRefundAction_e5bfc69413b21cd5f23c10fce4cae960,
   "@payloadcms/plugin-search/client#LinkToDoc": LinkToDoc_aead06e4cbf6b2620c5c51c9ab283634,
   "@payloadcms/plugin-search/client#ReindexButton": ReindexButton_aead06e4cbf6b2620c5c51c9ab283634,
   "@/ui/admin/Header#RowLabel": RowLabel_49a0f2da415e33c790acf24cb6dd5091,

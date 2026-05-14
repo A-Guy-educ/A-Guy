@@ -24,8 +24,14 @@ export const Transactions: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'createdAt',
-    defaultColumns: ['user', 'product', 'provider', 'status', 'amount', 'currency', 'createdAt'],
+    defaultColumns: ['createdAt', 'user', 'product', 'amount', 'currency', 'status', 'provider'],
+    listSearchableFields: ['providerTransactionId'],
     group: 'Payments',
+    components: {
+      edit: {
+        beforeDocumentControls: ['@/ui/admin/TransactionEditView#TransactionRefundAction'],
+      },
+    },
   },
   fields: [
     tenantField,
@@ -95,6 +101,9 @@ export const Transactions: CollectionConfig = {
       index: true,
       admin: {
         description: 'Current status of the transaction',
+        components: {
+          Cell: '@/ui/admin/TransactionStatusCell#TransactionStatusCell',
+        },
       },
     },
 
