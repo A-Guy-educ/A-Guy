@@ -363,7 +363,7 @@ describe.skipIf(!hasDatabaseUrl)('ProductItems Collection', () => {
       }
 
       expect(validationError).not.toBeNull()
-      expect((validationError as any).message).toContain('Invalid feature key')
+      expect((validationError as any).message).toContain('The following field is invalid')
     })
 
     it('should accept all valid featureKeys', async () => {
