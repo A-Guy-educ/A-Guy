@@ -16,8 +16,8 @@ import { getPayload } from 'payload'
 import { z } from 'zod'
 
 import config from '@payload-config'
-import { createPayPalOrder } from '@/lib/payment/paypal'
-import { createStripeCheckout } from '@/lib/payment/stripe'
+import { cancelPayPalOrder, createPayPalOrder } from '@/lib/payment/paypal'
+import { cancelStripeCheckout, createStripeCheckout } from '@/lib/payment/stripe'
 
 // Schema for checkout request body
 const checkoutSchema = z.object({
@@ -158,7 +158,6 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         successUrl,
         cancelUrl,
-        provider: 'stripe',
       })
     } else {
       providerResult = await createPayPalOrder({
@@ -169,7 +168,6 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         successUrl,
         cancelUrl,
-        provider: 'paypal',
       })
     }
   } catch (error) {
@@ -229,8 +227,25 @@ export async function POST(request: NextRequest) {
       },
       'Failed to create transaction record',
     )
-    // Transaction wasn't saved - but payment session was created
-    // Log error but return success since user is mid-checkout
+
+    // Attempt to cancel the provider checkout session to prevent orphaned sessions
+    try {
+      if (provider === 'stripe') {
+        await cancelStripeCheckout(providerResult.providerSessionId)
+      } else {
+        await cancelPayPalOrder(providerResult.providerSessionId)
+      }
+      payload.logger.info(
+        { providerTransactionId: providerResult.providerSessionId, provider },
+        'Cancelled orphaned provider checkout session',
+      )
+    } catch (cancelError) {
+      payload.logger.error(
+        { cancelError, providerTransactionId: providerResult.providerSessionId, provider },
+        'Failed to cancel orphaned provider checkout session — manual intervention may be required',
+      )
+    }
+
     return NextResponse.json(
       { success: false, error: 'transaction_record_failed' },
       { status: 500 },

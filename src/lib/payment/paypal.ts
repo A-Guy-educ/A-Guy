@@ -197,3 +197,27 @@ export async function refundPayPal(providerTransactionId: string, amount?: numbe
     throw new Error(`PayPal refund failed: ${response.status} ${error}`)
   }
 }
+
+/**
+ * Cancel/void a PayPal order
+ * Used when transaction record creation fails after order was created
+ */
+export async function cancelPayPalOrder(providerTransactionId: string): Promise<void> {
+  const token = await getPayPalAccessToken()
+
+  const response = await fetch(
+    `${PAYPAL_API_BASE}/v2/checkout/orders/${providerTransactionId}/void`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    },
+  )
+
+  if (!response.ok) {
+    const error = await response.text()
+    throw new Error(`PayPal order void failed: ${response.status} ${error}`)
+  }
+}

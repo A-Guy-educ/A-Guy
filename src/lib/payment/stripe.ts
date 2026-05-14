@@ -90,3 +90,12 @@ export async function refundStripe(providerTransactionId: string, amount?: numbe
   }
   await stripe.refunds.create(refundParams)
 }
+
+/**
+ * Cancel/expire a Stripe checkout session
+ * Used when transaction record creation fails after session was created
+ */
+export async function cancelStripeCheckout(providerSessionId: string): Promise<void> {
+  const stripe = getStripeClient()
+  await stripe.checkout.sessions.expire(providerSessionId)
+}

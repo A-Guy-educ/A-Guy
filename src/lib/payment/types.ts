@@ -17,7 +17,6 @@ export interface CreateCheckoutOptions {
   userId: string
   successUrl: string
   cancelUrl: string
-  provider: PaymentProvider
 }
 
 export interface CheckoutResult {

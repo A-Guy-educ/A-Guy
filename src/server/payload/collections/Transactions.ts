@@ -23,7 +23,7 @@ export const Transactions: CollectionConfig = {
     delete: adminOnly, // Only admins can delete
   },
   admin: {
-    useAsTitle: 'id',
+    useAsTitle: 'createdAt',
     defaultColumns: ['user', 'product', 'provider', 'status', 'amount', 'currency', 'createdAt'],
     group: 'Payments',
   },
