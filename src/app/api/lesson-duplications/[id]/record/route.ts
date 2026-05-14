@@ -57,11 +57,18 @@ export const GET = withApiHandler<unknown, unknown>({ auth: 'admin' }, async ({ 
     return ApiErrors.notFound('duplication id')
   }
 
+  // overrideAccess: true is safe — `withApiHandler({ auth: 'admin' })` above
+  // has already verified the caller is an admin. Without overrideAccess the
+  // Local API call has no `req.user` context, the `adminOnly` access function
+  // returns false, and Payload throws "You are not allowed to perform this
+  // action." — which withApiHandler's operational-error classifier doesn't
+  // recognise, so it surfaces as HTTP 500 to the review UI. Mirrors the
+  // resolve route's pattern.
   const record = await payload.findByID({
     collection: 'lesson-duplications',
     id: duplicationId,
     depth: 2, // resolve sourceLesson, outputLesson
-    overrideAccess: false,
+    overrideAccess: true,
   })
   if (!record) return ApiErrors.notFound('LessonDuplications record')
 

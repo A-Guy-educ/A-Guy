@@ -153,6 +153,10 @@ describe('Lesson duplication orchestrator — integration', () => {
   const cleanupExerciseIds: string[] = []
   const cleanupDuplicationIds: string[] = []
 
+  beforeEach(() => {
+    callsByLesson.clear()
+  })
+
   beforeAll(async () => {
     payload = await getPayload({ config })
     tenantId = await ensureDefaultTenant(payload)
