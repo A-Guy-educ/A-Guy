@@ -6387,6 +6387,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- feat(lesson-duplication): Process Now button for manual orchestrator trigger ([#1624](https://github.com/A-Guy-educ/A-Guy/pull/1624)) — @aguyshayb
+- #1621: Export lesson + ordered exercises as JSON from admin ([#1625](https://github.com/A-Guy-educ/A-Guy/pull/1625)) — @aguyaharonyair
 - feat(lesson-duplication): Constrain Gemini output with Zod schemas ([#1602](https://github.com/A-Guy-educ/A-Guy/pull/1602)) — @aguyshayb
 - chore: Pin pnpm to 10.33.0 via packageManager field ([#1609](https://github.com/A-Guy-educ/A-Guy/pull/1609)) — @aguyaharonyair
 - #1595: [P2] Vercel feedback script blocked by CSP script-src directive … ([#1604](https://github.com/A-Guy-educ/A-Guy/pull/1604)) — @aguyaharonyair
