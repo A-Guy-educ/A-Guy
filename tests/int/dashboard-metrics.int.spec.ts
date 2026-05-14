@@ -118,7 +118,11 @@ beforeAll(async () => {
         email: spec.email,
         password: adminPassword,
         name: spec.email,
-        courseEntitlements: spec.courses.map((c) => ({ course: c, grantMethod: 'admin' })),
+        courseEntitlements: spec.courses.map((c) => ({
+          course: c,
+          grantMethod: 'admin',
+          transactionId: 'test',
+        })),
       } as any,
       overrideAccess: true,
     })

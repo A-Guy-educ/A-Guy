@@ -9,7 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getPayload } from 'payload'
+import { getPayload, NotFound } from 'payload'
 
 import config from '@payload-config'
 import { refundStripe } from '@/lib/payment/stripe'
@@ -40,12 +40,20 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   }
 
   // 3. Fetch transaction
-  const transaction = await payload.findByID({
-    collection: 'transactions',
-    id,
-    depth: 0,
-    overrideAccess: true,
-  })
+  let transaction: Record<string, unknown> | null = null
+  try {
+    transaction = (await payload.findByID({
+      collection: 'transactions',
+      id,
+      depth: 0,
+      overrideAccess: true,
+    })) as unknown as Record<string, unknown> | null
+  } catch (err) {
+    if (err instanceof NotFound) {
+      return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
+    }
+    throw err
+  }
 
   if (!transaction) {
     return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
