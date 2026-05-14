@@ -40,12 +40,22 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   }
 
   // 3. Fetch transaction
-  const transaction = await payload.findByID({
-    collection: 'transactions',
-    id,
-    depth: 0,
-    overrideAccess: true,
-  })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let transaction: any
+  try {
+    transaction = await payload.findByID({
+      collection: 'transactions',
+      id,
+      depth: 0,
+      overrideAccess: true,
+    })
+  } catch (err) {
+    // payload.findByID throws NotFound when the document doesn't exist
+    if (err && typeof err === 'object' && (err as { name?: string }).name === 'NotFound') {
+      return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
+    }
+    throw err
+  }
 
   if (!transaction) {
     return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
