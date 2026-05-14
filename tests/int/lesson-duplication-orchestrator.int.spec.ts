@@ -8,7 +8,7 @@
  *  4. Final status is succeeded only when failures array is empty, else needs_review
  *  5. 5-exercise lesson with one forced failure → needs_review with 4 succeeded + 1 failure entry
  */
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getPayload, type Payload } from 'payload'
 import config from '@payload-config'
 
@@ -39,6 +39,8 @@ vi.mock('@/server/services/lesson-duplication/strategies/router', (importOrigina
   }
 })
 
+let _vgCallCount = 0
+
 async function ensureDefaultTenant(payload: Payload): Promise<string> {
   const slug = getDefaultTenantSlug()
   const existing = await payload.find({
@@ -66,6 +68,10 @@ describe('Lesson duplication orchestrator — integration', () => {
   const cleanupLessonIds: string[] = []
   const cleanupExerciseIds: string[] = []
   const cleanupDuplicationIds: string[] = []
+
+  beforeEach(() => {
+    _vgCallCount = 0
+  })
 
   beforeAll(async () => {
     payload = await getPayload({ config })
