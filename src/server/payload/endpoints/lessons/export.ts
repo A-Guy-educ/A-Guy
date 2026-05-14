@@ -29,7 +29,12 @@ import type { PayloadRequest } from 'payload'
 
 type BlockEntry = { id: string; blockType: string; exercise?: string; contentPage?: string }
 
-/** Strip Payload-managed fields from a doc (but keep id) */
+/**
+ * Strip Payload-managed timestamp fields from a doc. The `id` is preserved —
+ * it's data (not a server-managed timestamp), and downstream consumers need
+ * it to round-trip the export back into the system. The endpoint's documented
+ * JSON shape and its integration test both require `id` to be present.
+ */
 function stripManagedFields<T extends Record<string, unknown>>(
   doc: T,
 ): Omit<T, 'createdAt' | 'updatedAt'> {
