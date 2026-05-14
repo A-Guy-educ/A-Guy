@@ -15,6 +15,7 @@ import config from '@payload-config'
 import { refundStripe } from '@/lib/payment/stripe'
 import { refundPayPal } from '@/lib/payment/paypal'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
+import type { Transaction } from '@/payload-types'
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -40,12 +41,20 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   }
 
   // 3. Fetch transaction
-  const transaction = await payload.findByID({
-    collection: 'transactions',
-    id,
-    depth: 0,
-    overrideAccess: true,
-  })
+  let transaction: Transaction | null
+  try {
+    transaction = await payload.findByID({
+      collection: 'transactions',
+      id,
+      depth: 0,
+      overrideAccess: true,
+    })
+  } catch (err) {
+    if (err instanceof Error && err.name === 'NotFound') {
+      return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
+    }
+    throw err
+  }
 
   if (!transaction) {
     return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
