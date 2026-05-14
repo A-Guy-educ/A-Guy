@@ -384,6 +384,56 @@ describe('validateExerciseStructural', () => {
       const failures = validateExerciseStructural(blocks)
       expect(failures.some((f) => f.code === FAILURE_CODES.MISSING_QUESTION)).toBe(true)
     })
+
+    it('passes-through empty prompt when source block was also empty (geometry-in-figure)', () => {
+      // Real-world case: legacy geometry exercises pose the question via the
+      // figure, not separate prompt text. Source has empty prompt; the
+      // variation faithfully preserves that. Validator must not fail.
+      const generatedBlock = makeMcqNoPrompt(
+        'mcq-1',
+        [
+          { id: 'a', content: { value: 'A' } },
+          { id: 'b', content: { value: 'B' } },
+        ],
+        ['a'],
+        false, // hasPrompt = false on the generated block
+      )
+      const sourceBlock = makeMcqNoPrompt(
+        'mcq-1',
+        [
+          { id: 'a', content: { value: 'A' } },
+          { id: 'b', content: { value: 'B' } },
+        ],
+        ['a'],
+        false, // hasPrompt = false on the SOURCE too
+      )
+      const failures = validateExerciseStructural([generatedBlock], [sourceBlock])
+      expect(failures.some((f) => f.code === FAILURE_CODES.MISSING_QUESTION)).toBe(false)
+    })
+
+    it('still fails MISSING_QUESTION when source had a prompt but generated does not', () => {
+      // The variation pipeline dropped the prompt — real regression.
+      const generatedBlock = makeMcqNoPrompt(
+        'mcq-1',
+        [
+          { id: 'a', content: { value: 'A' } },
+          { id: 'b', content: { value: 'B' } },
+        ],
+        ['a'],
+        false, // hasPrompt = false on generated
+      )
+      const sourceBlock = makeMcqNoPrompt(
+        'mcq-1',
+        [
+          { id: 'a', content: { value: 'A' } },
+          { id: 'b', content: { value: 'B' } },
+        ],
+        ['a'],
+        true, // hasPrompt = true on source — prompt was dropped by the LLM
+      )
+      const failures = validateExerciseStructural([generatedBlock], [sourceBlock])
+      expect(failures.some((f) => f.code === FAILURE_CODES.MISSING_QUESTION)).toBe(true)
+    })
   })
 
   describe('MISSING_HINT', () => {
