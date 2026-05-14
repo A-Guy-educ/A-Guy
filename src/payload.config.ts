@@ -31,6 +31,8 @@ import { MemoryItems } from '@/server/payload/collections/MemoryItems'
 import { Pages } from '@/server/payload/collections/Pages'
 import { Posts } from '@/server/payload/collections/Posts'
 import { PricingPlans } from '@/server/payload/collections/PricingPlans'
+import { ProductItems } from '@/server/payload/collections/ProductItems'
+import { Products } from '@/server/payload/collections/Products'
 import { Prompts } from '@/server/payload/collections/Prompts'
 import { TeacherProfiles } from '@/server/payload/collections/TeacherProfiles'
 import { Tenants } from '@/server/payload/collections/Tenants'
@@ -205,6 +207,8 @@ export default buildConfig({
     UploadSessions,
     Posts,
     PricingPlans,
+    ProductItems,
+    Products,
     AccessCodes,
     MCPAuditLogs,
   ],

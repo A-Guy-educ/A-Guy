@@ -99,6 +99,8 @@ export interface Config {
     'upload-sessions': UploadSession;
     posts: Post;
     'pricing-plans': PricingPlan;
+    'product-items': ProductItem;
+    products: Product;
     'access-codes': AccessCode;
     'mcp-audit-logs': McpAuditLog;
     redirects: Redirect;
@@ -145,6 +147,8 @@ export interface Config {
     'upload-sessions': UploadSessionsSelect<false> | UploadSessionsSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
     'pricing-plans': PricingPlansSelect<false> | PricingPlansSelect<true>;
+    'product-items': ProductItemsSelect<false> | ProductItemsSelect<true>;
+    products: ProductsSelect<false> | ProductsSelect<true>;
     'access-codes': AccessCodesSelect<false> | AccessCodesSelect<true>;
     'mcp-audit-logs': McpAuditLogsSelect<false> | McpAuditLogsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
@@ -2518,6 +2522,80 @@ export interface PricingPlan {
   createdAt: string;
 }
 /**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-items".
+ */
+export interface ProductItem {
+  id: string;
+  /**
+   * Whether this item grants access to a specific lesson or a named feature
+   */
+  type: 'lesson' | 'feature';
+  /**
+   * The lesson this item grants access to
+   */
+  lesson?: (string | null) | Lesson;
+  /**
+   * Feature identifier (e.g., certificate, live-sessions)
+   */
+  featureKey?: string | null;
+  /**
+   * Mark this item as highlighted for UI display emphasis
+   */
+  isHighlighted?: boolean | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products".
+ */
+export interface Product {
+  id: string;
+  /**
+   * Display name for this product
+   */
+  name: string;
+  /**
+   * URL-friendly identifier (auto-generated from name if empty)
+   */
+  slug: string;
+  /**
+   * Type of billing for this product
+   */
+  billingType: 'one_time' | 'subscription';
+  /**
+   * Billing interval (required for subscription billing)
+   */
+  interval?: ('month' | 'year') | null;
+  /**
+   * Price amount (0 = free)
+   */
+  price: number;
+  /**
+   * Currency code
+   */
+  currency: 'ILS' | 'USD' | 'EUR';
+  /**
+   * Lessons and features included in this product
+   */
+  items?: (string | ProductItem)[] | null;
+  /**
+   * Whether this product is currently available for purchase
+   */
+  isActive?: boolean | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Manage access codes that grant course entitlements
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2991,6 +3069,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'pricing-plans';
         value: string | PricingPlan;
+      } | null)
+    | ({
+        relationTo: 'product-items';
+        value: string | ProductItem;
+      } | null)
+    | ({
+        relationTo: 'products';
+        value: string | Product;
       } | null)
     | ({
         relationTo: 'access-codes';
@@ -3981,6 +4067,36 @@ export interface PricingPlansSelect<T extends boolean = true> {
   interval?: T;
   price?: T;
   currency?: T;
+  isActive?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-items_select".
+ */
+export interface ProductItemsSelect<T extends boolean = true> {
+  type?: T;
+  lesson?: T;
+  featureKey?: T;
+  isHighlighted?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products_select".
+ */
+export interface ProductsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  billingType?: T;
+  interval?: T;
+  price?: T;
+  currency?: T;
+  items?: T;
   isActive?: T;
   createdBy?: T;
   updatedAt?: T;
