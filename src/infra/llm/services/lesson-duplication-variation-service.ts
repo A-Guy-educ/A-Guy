@@ -24,6 +24,21 @@ import { getModelRegistryEntry, getProviderModelName } from '../models'
 import { LLMProviderType } from '../providers/types'
 import { logger } from '@/infra/utils/logger'
 import { VariationGenerationError } from '../errors'
+import {
+  buildPass1JsonSchemaForExercise,
+  SolutionDerivationOutputSchema,
+} from '../schemas/lesson-duplication-output'
+
+/**
+ * Model used for both passes. Pinned to gemini-3.1-pro-preview because:
+ *  - Pass 1: schema-constrained output on this codebase's `content.blocks`
+ *    shape is only reliable on 3.x — 2.5-pro silently collapses the structured
+ *    response to `{ "content": "blocks" }` literals.
+ *  - Pass 2: 2.5-pro times out (>180s) on complex calculus/axis derivations
+ *    even with a small schema; 3.x is faster and still schema-compliant.
+ * Verified live 2026-05-13.
+ */
+const VARIATION_MODEL_VERSION = 'gemini-3.1-pro-preview'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -43,11 +58,14 @@ import { withTimeout as withSharedTimeout } from '@/infra/utils/with-timeout'
 
 /**
  * Per-LLM-call timeout. A stuck Gemini call would otherwise leave the
- * duplication record in `running` indefinitely. 180s leaves headroom for
- * gemini-2.5-pro with thinking budget at this prompt size — early runs at
- * 60s timed out on complex calculus exercises before the model returned.
+ * duplication record in `running` indefinitely. 300s observed empirically on
+ * gemini-3.1-pro-preview for a complex calculus/axis exercise: schema-
+ * constrained pass 1 around 120-180s, pass-2 re-derivation in the 150-200s
+ * range, with bursts above 180s on the heaviest exercises. The Vercel Pro
+ * function ceiling is 900s, so we still have headroom for the surrounding
+ * orchestrator work.
  */
-export const LLM_CALL_TIMEOUT_MS = 180_000
+export const LLM_CALL_TIMEOUT_MS = 300_000
 
 /** Convenience wrapper that pins the default timeout to LLM_CALL_TIMEOUT_MS. */
 function withTimeout<T>(promise: Promise<T>, stage: string): Promise<T> {
@@ -162,13 +180,23 @@ export async function generateVariation(
             messages: [{ role: 'user', content: creativeUserPrompt }],
             model: creativeConfig,
             acknowledgment: `Generating ${level} variation for exercise`,
+            // Schema is derived per-exercise from the input's own shape:
+            // walk the source `content.blocks` JSON, produce a Gemini-dialect
+            // responseSchema that mirrors it. Forces the variation to keep
+            // the same block layout (same types, same nested fields) — no
+            // hallucinated `answer.kind`, no missing variants, no extra
+            // properties. The schema is delivered fresh on every call.
+            outputJsonSchema: buildPass1JsonSchemaForExercise(exercise),
+            // Pinned to gemini-3.1-pro-preview — 2.5-pro mangles complex
+            // schemas (see VARIATION_MODEL_VERSION rationale above).
+            modelVersion: VARIATION_MODEL_VERSION,
           },
           payload,
         ),
         'pass-1-creative',
       )
 
-      pass1Output = parseVariationResponse(result.text)
+      pass1Output = extractPass1Output(result)
       break
     } catch (error) {
       const breakerCooldown = getCircuitBreakerCooldownMs(error)
@@ -233,13 +261,19 @@ export async function generateVariation(
             messages: [{ role: 'user', content: '' }],
             model: deterministicConfig,
             acknowledgment: 'Deriving solution for exercise variation',
+            // Constrain pass-2 output to {solution, fullSolution, answer}.
+            // Pass 2 is small and well-bounded — the schema here is the
+            // strongest gate we have against the model returning prose,
+            // markdown, or an unexpected envelope.
+            outputSchema: SolutionDerivationOutputSchema,
+            modelVersion: VARIATION_MODEL_VERSION,
           },
           payload,
         ),
         'pass-2-deterministic',
       )
 
-      pass2Patch = parseSolutionDerivationResponse(result.text)
+      pass2Patch = extractPass2Patch(result)
       break
     } catch (error) {
       const breakerCooldown = getCircuitBreakerCooldownMs(error)
@@ -378,13 +412,49 @@ interface Pass2Patch {
   answer?: { correctOptionIds: string[] }
 }
 
-function parseVariationResponse(text: string): Partial<Exercise> {
-  const cleaned = text
-    .replace(/^```json\s*/i, '')
-    .replace(/^```\s*/, '')
-    .replace(/```\s*$/, '')
-    .trim()
+/**
+ * Adapter response from `generateChatCompletion`. `output` is set when the
+ * call was made with an `outputSchema` (Genkit's parsed structured value).
+ */
+interface AdapterResult {
+  text: string
+  output?: unknown
+}
 
+/**
+ * Pull pass-1's content envelope out of the adapter result. Prefers Genkit's
+ * parsed `output` (already schema-validated). Falls back to parsing `text`,
+ * which keeps the path alive if the provider returns JSON-as-text without
+ * also populating `output` (e.g. when output schema was rejected and the
+ * model fell back to free text).
+ */
+function extractPass1Output(result: AdapterResult): Partial<Exercise> {
+  // Schema-constrained path: Genkit parsed Gemini's structured output for us.
+  if (result.output && typeof result.output === 'object') {
+    const candidate = result.output as { content?: { blocks?: unknown } }
+    if (candidate.content && Array.isArray(candidate.content.blocks)) {
+      return candidate as Partial<Exercise>
+    }
+  }
+  // Fallback for the rare case Gemini delivered the payload as text instead
+  // of a structured data part. Lets the pipeline survive a transient quirk
+  // without dropping the exercise.
+  return parseVariationResponseFromText(result.text)
+}
+
+/**
+ * Pull pass-2's solution patch out of the adapter result. Same precedence:
+ * structured output first, text fallback.
+ */
+function extractPass2Patch(result: AdapterResult): Pass2Patch {
+  if (result.output && typeof result.output === 'object') {
+    return result.output as Pass2Patch
+  }
+  return parseSolutionDerivationResponseFromText(result.text)
+}
+
+function parseVariationResponseFromText(text: string): Partial<Exercise> {
+  const cleaned = stripCodeFences(text)
   const parsed = JSON.parse(cleaned)
 
   if (!parsed.content || !Array.isArray(parsed.content.blocks)) {
@@ -394,14 +464,17 @@ function parseVariationResponse(text: string): Partial<Exercise> {
   return parsed as Partial<Exercise>
 }
 
-function parseSolutionDerivationResponse(text: string): Pass2Patch {
-  const cleaned = text
+function parseSolutionDerivationResponseFromText(text: string): Pass2Patch {
+  const cleaned = stripCodeFences(text)
+  return JSON.parse(cleaned) as Pass2Patch
+}
+
+function stripCodeFences(text: string): string {
+  return text
     .replace(/^```json\s*/i, '')
     .replace(/^```\s*/, '')
     .replace(/```\s*$/, '')
     .trim()
-
-  return JSON.parse(cleaned) as Pass2Patch
 }
 
 function mergePassOutputs(pass1Output: Partial<Exercise>, pass2Patch: Pass2Patch): unknown[] {
