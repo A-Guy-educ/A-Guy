@@ -24,10 +24,3 @@ export interface CheckoutResult {
   checkoutUrl: string
   providerSessionId: string // stripe session ID or paypal order ID
 }
-
-export interface WebhookVerifyOptions {
-  rawBody: Buffer
-  signature: string // stripe-signature header or paypal transmission sig
-  webhookSecret: string
-  provider: PaymentProvider
-}

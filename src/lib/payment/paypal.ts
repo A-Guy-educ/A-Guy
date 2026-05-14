@@ -169,14 +169,18 @@ export async function verifyPayPalWebhook(body: object, headers: object): Promis
 /**
  * Refund a PayPal capture
  */
-export async function refundPayPal(providerTransactionId: string, amount?: number): Promise<void> {
+export async function refundPayPal(
+  providerTransactionId: string,
+  amount?: number,
+  currency: 'ILS' | 'USD' | 'EUR' = 'USD',
+): Promise<void> {
   const token = await getPayPalAccessToken()
 
   const refundBody: Record<string, unknown> = {}
   if (amount !== undefined) {
     refundBody.amount = {
       value: (amount / 100).toFixed(2),
-      currency_code: 'USD', // Default; caller should use correct currency
+      currency_code: currency,
     }
   }
 

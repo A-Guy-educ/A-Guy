@@ -23,7 +23,10 @@ const mockEvent = {
   data: { object: mockSession },
 }
 
-// Mock the stripe module with a proper constructor function
+// Module-level reference to the refunds.create mock for test assertions
+const refundsCreateMock = vi.fn().mockResolvedValue(mockRefund) as ReturnType<typeof vi.fn>
+
+// Mock the stripe module
 vi.mock('stripe', () => {
   class MockStripe {
     checkout = {
@@ -31,13 +34,18 @@ vi.mock('stripe', () => {
         create: vi.fn().mockResolvedValue(mockSession),
       },
     }
-    refunds = {
-      create: vi.fn().mockResolvedValue(mockRefund),
-    }
     webhooks = {
       constructEvent: vi.fn().mockReturnValue(mockEvent),
     }
   }
+
+  // Use getter so all instances share the same mock
+  Object.defineProperty(MockStripe.prototype, 'refunds', {
+    get() {
+      return { create: refundsCreateMock }
+    },
+  })
+
   return { default: MockStripe }
 })
 
@@ -119,8 +127,9 @@ describe('Stripe Payment Service', () => {
 
       await refundStripe('pi_test_transaction_id')
 
-      // Just verify no error is thrown
-      expect(true).toBe(true)
+      expect(refundsCreateMock).toHaveBeenCalledWith({
+        payment_intent: 'pi_test_transaction_id',
+      })
     })
 
     it('should create refund with amount when provided', async () => {
@@ -128,7 +137,10 @@ describe('Stripe Payment Service', () => {
 
       await refundStripe('pi_test_transaction_id', 500)
 
-      expect(true).toBe(true)
+      expect(refundsCreateMock).toHaveBeenCalledWith({
+        payment_intent: 'pi_test_transaction_id',
+        amount: 500,
+      })
     })
   })
 })
