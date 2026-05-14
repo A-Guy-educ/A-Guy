@@ -32,6 +32,7 @@ import {
   SEMANTIC_FAILURE_CODE,
 } from '@/server/services/lesson-duplication/validators/semantic'
 import { RouterStrategy } from '@/server/services/lesson-duplication/strategies/router'
+import { withTimeout as withSharedTimeout } from '@/infra/utils/with-timeout'
 
 // Concurrency of 1 = process exercises sequentially. Each exercise hits the
 // LLM twice (creative + deterministic). Gemini's per-minute quota is easily
@@ -45,6 +46,9 @@ import { RouterStrategy } from '@/server/services/lesson-duplication/strategies/
 export const CONCURRENCY_LIMIT = 1 as const
 
 export const GENERATION_FAILURE_CODE = 'GENERATION_FAILED' as const
+
+/** Timeout for appendEntry DB operations (find + update). Prevents a slow DB from pinning the orchestrator. */
+const APPEND_ENTRY_TIMEOUT_MS = 30_000
 
 export type DuplicationStrategy = 'script' | 'ai'
 
@@ -136,31 +140,39 @@ async function appendEntry(
 ): Promise<void> {
   const action = suggestAction(code)
   try {
-    const current = await payload.findByID({
-      collection: 'lesson-duplications',
-      id: duplicationId,
-      depth: 0,
-      overrideAccess: true,
-    })
-    await payload.update({
-      collection: 'lesson-duplications',
-      id: duplicationId,
-      data: {
-        [bucket]: [
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ...(((current as any)[bucket] as any[]) ?? []),
-          {
-            exerciseRef,
-            sectionIndex,
-            code,
-            message,
-            suggestedAction: action,
-            resolved: false,
-          },
-        ],
-      } as never,
-      overrideAccess: true,
-    })
+    const current = await withSharedTimeout(
+      payload.findByID({
+        collection: 'lesson-duplications',
+        id: duplicationId,
+        depth: 0,
+        overrideAccess: true,
+      }),
+      `appendEntry.find(${bucket})`,
+      APPEND_ENTRY_TIMEOUT_MS,
+    )
+    await withSharedTimeout(
+      payload.update({
+        collection: 'lesson-duplications',
+        id: duplicationId,
+        data: {
+          [bucket]: [
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ...(((current as any)[bucket] as any[]) ?? []),
+            {
+              exerciseRef,
+              sectionIndex,
+              code,
+              message,
+              suggestedAction: action,
+              resolved: false,
+            },
+          ],
+        } as never,
+        overrideAccess: true,
+      }),
+      `appendEntry.update(${bucket})`,
+      APPEND_ENTRY_TIMEOUT_MS,
+    )
   } catch (err) {
     logger.error(
       { err, duplicationId, exerciseRef, code, bucket },
