@@ -8,94 +8,116 @@
  *  4. Final status is succeeded only when failures array is empty, else needs_review
  *  5. 5-exercise lesson with one forced failure → needs_review with 4 succeeded + 1 failure entry
  */
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getPayload, type Payload } from 'payload'
 import config from '@payload-config'
 
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
-// Mock runStrategy to inject one forced failure on the 3rd exercise
-// Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
-vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@/server/services/lesson-duplication/orchestrator')>()
-  return {
-    ...actual,
-    runStrategy: vi
-      .fn()
-      .mockImplementation(
-        async (
-          exercise: { id: string },
-          _level: string,
-          _subject: unknown,
-          _payload: unknown,
-          exerciseIndex?: number,
-        ) => {
-          // Force failure on the 4th exercise (index 3, 0-based)
-          if (exerciseIndex === 3) {
-            throw new Error('Forced failure for test')
-          }
-          // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
-          return {
-            exerciseId: exercise.id,
-            strategy: 'script' as const,
-            blocks: [
-              {
-                id: 'q-1',
-                type: 'question_select',
-                variant: 'mcq',
-                selectionMode: 'single',
-                prompt: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'What is 2+2?',
-                  mediaIds: [],
-                },
-                answer: {
-                  multiSelect: false,
-                  options: [
-                    {
-                      id: 'a',
-                      content: {
-                        type: 'rich_text',
-                        format: 'md-math-v1',
-                        value: '3',
-                        mediaIds: [],
+// Mock RouterStrategy so that the real runStrategy (called by processExercise via
+// local closure) hits the mock instead of AiVariationStrategy → Genkit LLM.
+// Without this, the real RouterStrategy is invoked and the LLM adapter hangs.
+//
+// Use a per-sourceLesson call counter to force failure on the 4th exercise
+// (index 3). The exercise object passed to RouterStrategy.apply has a `lesson`
+// field set by the orchestrator's exercise query.
+const callsByLesson = new Map<string, number>()
+
+vi.mock('@/server/services/lesson-duplication/strategies/router', () => ({
+  RouterStrategy: vi.fn().mockImplementation(function () {
+    return {
+      apply: vi.fn().mockImplementation(async function (
+        exercise: { id: string; lesson?: string | { id?: string } | null },
+        _level: 'none' | 'light' | 'medium' | 'deep',
+      ): Promise<{
+        exercise: { id: string; content: { blocks: unknown[] }; lesson?: unknown }
+        needsAiFallback: boolean
+      }> {
+        // Determine source lesson ID for per-lesson call tracking
+        const sourceLessonId =
+          typeof exercise.lesson === 'string'
+            ? exercise.lesson
+            : exercise.lesson && typeof exercise.lesson === 'object' && 'id' in exercise.lesson
+              ? (exercise.lesson as { id: string }).id
+              : 'unknown'
+
+        const count = callsByLesson.get(sourceLessonId) ?? 0
+        callsByLesson.set(sourceLessonId, count + 1)
+
+        // Force failure on the 4th exercise (index 3, 0-based)
+        if (count === 3) {
+          throw new Error('Forced failure for test')
+        }
+
+        return {
+          exercise: {
+            ...exercise,
+            content: {
+              blocks: [
+                {
+                  id: 'q-1',
+                  type: 'question_select',
+                  variant: 'mcq',
+                  selectionMode: 'single',
+                  prompt: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'What is 2+2?',
+                    mediaIds: [],
+                  },
+                  answer: {
+                    multiSelect: false,
+                    options: [
+                      {
+                        id: 'a',
+                        content: {
+                          type: 'rich_text',
+                          format: 'md-math-v1',
+                          value: '3',
+                          mediaIds: [],
+                        },
                       },
-                    },
-                    {
-                      id: 'b',
-                      content: {
-                        type: 'rich_text',
-                        format: 'md-math-v1',
-                        value: '4',
-                        mediaIds: [],
+                      {
+                        id: 'b',
+                        content: {
+                          type: 'rich_text',
+                          format: 'md-math-v1',
+                          value: '4',
+                          mediaIds: [],
+                        },
                       },
-                    },
-                  ],
-                  correctOptionIds: ['b'],
+                    ],
+                    correctOptionIds: ['b'],
+                  },
+                  hint: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'Think arithmetic',
+                    mediaIds: [],
+                  },
+                  solution: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: '2+2=4',
+                    mediaIds: [],
+                  },
+                  fullSolution: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'Basic addition',
+                    mediaIds: [],
+                  },
                 },
-                hint: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'Think arithmetic',
-                  mediaIds: [],
-                },
-                solution: { type: 'rich_text', format: 'md-math-v1', value: '2+2=4', mediaIds: [] },
-                fullSolution: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'Basic addition',
-                  mediaIds: [],
-                },
-              },
-            ],
-          }
-        },
-      ),
-  }
-})
+              ],
+            },
+          },
+          needsAiFallback: false,
+        }
+      }),
+    }
+  }),
+}))
 
 async function ensureDefaultTenant(payload: Payload): Promise<string> {
   const slug = getDefaultTenantSlug()
@@ -115,6 +137,12 @@ async function ensureDefaultTenant(payload: Payload): Promise<string> {
 }
 
 describe('Lesson duplication orchestrator — integration', () => {
+  // Reset the RouterStrategy call counter before each test so that forced-failure
+  // exercise detection is isolated per test.
+  beforeEach(() => {
+    callsByLesson.clear()
+  })
+
   let payload: Payload
   let categoryId: string
   let courseId: string
