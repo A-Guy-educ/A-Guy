@@ -2,9 +2,10 @@
  * PayPal Payment Service
  *
  * Provides order creation, webhook verification, and refund operations.
- * Requires PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET environment variables.
+ * Uses getPaymentEnv() for environment variable access.
  */
 
+import { getPaymentEnv } from './env'
 import type { CreateCheckoutOptions, CheckoutResult } from './types'
 
 const PAYPAL_API_BASE = 'https://api-m.sandbox.paypal.com'
@@ -35,14 +36,9 @@ async function getPayPalAccessToken(): Promise<string> {
     return _cachedToken.token
   }
 
-  const clientId = process.env.PAYPAL_CLIENT_ID
-  const clientSecret = process.env.PAYPAL_CLIENT_SECRET
+  const { paypalClientId, paypalClientSecret } = getPaymentEnv()
 
-  if (!clientId || !clientSecret) {
-    throw new Error('Missing PAYPAL_CLIENT_ID or PAYPAL_CLIENT_SECRET environment variable')
-  }
-
-  const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64')
+  const credentials = Buffer.from(`${paypalClientId}:${paypalClientSecret}`).toString('base64')
 
   const response = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
     method: 'POST',
@@ -122,9 +118,9 @@ export async function createPayPalOrder(options: CreateCheckoutOptions): Promise
  * Uses PayPal's verify-webhook-signature API
  */
 export async function verifyPayPalWebhook(body: object, headers: object): Promise<boolean> {
-  const webhookSecret = process.env.PAYPAL_WEBHOOK_SECRET
-  if (!webhookSecret) {
-    throw new Error('Missing PAYPAL_WEBHOOK_SECRET environment variable')
+  const { paypalWebhookId } = getPaymentEnv()
+  if (!paypalWebhookId) {
+    throw new Error('Missing PAYPAL_WEBHOOK_ID environment variable')
   }
 
   // Extract required headers first (fail fast)
@@ -152,7 +148,7 @@ export async function verifyPayPalWebhook(body: object, headers: object): Promis
       transmission_id: transmissionId,
       transmission_sig: transmissionSig,
       transmission_time: transmissionTime,
-      webhook_id: webhookSecret,
+      webhook_id: paypalWebhookId,
       webhook_event: body,
     }),
   })

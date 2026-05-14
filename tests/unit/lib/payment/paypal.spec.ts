@@ -7,6 +7,7 @@
  * - refundPayPal: processes refunds
  */
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
+import { resetPaymentEnvCache } from '@/lib/payment/env'
 
 // Store original fetch
 const originalFetch = globalThis.fetch
@@ -41,6 +42,10 @@ describe('PayPal Payment Service', () => {
   beforeEach(() => {
     // Reset modules to clear token cache
     vi.resetModules()
+    // Reset env cache
+    resetPaymentEnvCache()
+    // Set all required payment env vars
+    process.env.STRIPE_SECRET_KEY = 'sk_test_xxx'
   })
 
   afterEach(() => {
@@ -52,22 +57,24 @@ describe('PayPal Payment Service', () => {
     it('should throw error when PAYPAL_CLIENT_ID is missing', async () => {
       delete process.env.PAYPAL_CLIENT_ID
       process.env.PAYPAL_CLIENT_SECRET = 'test_secret'
+      resetPaymentEnvCache()
 
       const { createPayPalOrder } = await import('@/lib/payment/paypal')
 
       await expect(createPayPalOrder(mockOptions)).rejects.toThrow(
-        'Missing PAYPAL_CLIENT_ID or PAYPAL_CLIENT_SECRET environment variable',
+        'Missing required payment environment variables: PAYPAL_CLIENT_ID',
       )
     })
 
     it('should throw error when PAYPAL_CLIENT_SECRET is missing', async () => {
       process.env.PAYPAL_CLIENT_ID = 'test_client_id'
       delete process.env.PAYPAL_CLIENT_SECRET
+      resetPaymentEnvCache()
 
       const { createPayPalOrder } = await import('@/lib/payment/paypal')
 
       await expect(createPayPalOrder(mockOptions)).rejects.toThrow(
-        'Missing PAYPAL_CLIENT_ID or PAYPAL_CLIENT_SECRET environment variable',
+        'Missing required payment environment variables: PAYPAL_CLIENT_SECRET',
       )
     })
 
@@ -204,20 +211,22 @@ describe('PayPal Payment Service', () => {
       'paypal-transmission-sig': 'test_signature',
     }
 
-    it('should throw error when PAYPAL_WEBHOOK_SECRET is missing', async () => {
-      delete process.env.PAYPAL_WEBHOOK_SECRET
+    it('should throw error when PAYPAL_WEBHOOK_ID is missing', async () => {
+      delete process.env.PAYPAL_WEBHOOK_ID
+      resetPaymentEnvCache()
 
       const { verifyPayPalWebhook } = await import('@/lib/payment/paypal')
 
       await expect(verifyPayPalWebhook({ type: 'test' }, mockHeaders)).rejects.toThrow(
-        'Missing PAYPAL_WEBHOOK_SECRET environment variable',
+        'Missing PAYPAL_WEBHOOK_ID environment variable',
       )
     })
 
     it('should throw error with missing headers', async () => {
-      process.env.PAYPAL_WEBHOOK_SECRET = 'webhook_id'
+      process.env.PAYPAL_WEBHOOK_ID = 'webhook_id'
       process.env.PAYPAL_CLIENT_ID = 'test_client_id'
       process.env.PAYPAL_CLIENT_SECRET = 'test_secret'
+      resetPaymentEnvCache()
 
       const incompleteHeaders = {
         'paypal-transmission-id': 'trans_id',
@@ -232,9 +241,10 @@ describe('PayPal Payment Service', () => {
     })
 
     it('should return true on SUCCESS verification', async () => {
-      process.env.PAYPAL_WEBHOOK_SECRET = 'webhook_id'
+      process.env.PAYPAL_WEBHOOK_ID = 'webhook_id'
       process.env.PAYPAL_CLIENT_ID = 'test_client_id'
       process.env.PAYPAL_CLIENT_SECRET = 'test_secret'
+      resetPaymentEnvCache()
 
       globalThis.fetch = vi.fn().mockImplementation((url: string) => {
         if (url.includes('/v1/oauth2/token')) {
@@ -263,6 +273,7 @@ describe('PayPal Payment Service', () => {
     it('should POST to capture refund endpoint', async () => {
       process.env.PAYPAL_CLIENT_ID = 'test_client_id'
       process.env.PAYPAL_CLIENT_SECRET = 'test_secret'
+      resetPaymentEnvCache()
 
       let capturedUrl: string | undefined
 
@@ -292,6 +303,7 @@ describe('PayPal Payment Service', () => {
     it('should include amount when provided', async () => {
       process.env.PAYPAL_CLIENT_ID = 'test_client_id'
       process.env.PAYPAL_CLIENT_SECRET = 'test_secret'
+      resetPaymentEnvCache()
 
       let capturedBody: string | undefined
 
@@ -324,6 +336,7 @@ describe('PayPal Payment Service', () => {
     it('should use ILS currency when specified', async () => {
       process.env.PAYPAL_CLIENT_ID = 'test_client_id'
       process.env.PAYPAL_CLIENT_SECRET = 'test_secret'
+      resetPaymentEnvCache()
 
       let capturedBody: string | undefined
 

@@ -7,6 +7,7 @@
  * - refundStripe: processes refunds
  */
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
+import { resetPaymentEnvCache } from '@/lib/payment/env'
 
 // Mock data
 const mockSession = {
@@ -63,10 +64,14 @@ describe('Stripe Payment Service', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    // Reset env
+    // Reset env cache
+    resetPaymentEnvCache()
+    // Set all required payment env vars
     process.env.STRIPE_SECRET_KEY = 'sk_test_xxx'
     process.env.STRIPE_WEBHOOK_SECRET = 'whsec_xxx'
-    // Reset module to clear singleton
+    process.env.PAYPAL_CLIENT_ID = 'paypal_client_id_xxx'
+    process.env.PAYPAL_CLIENT_SECRET = 'paypal_secret_xxx'
+    // Reset module to clear singletons
     vi.resetModules()
   })
 
@@ -77,13 +82,14 @@ describe('Stripe Payment Service', () => {
   describe('createStripeCheckout', () => {
     it('should throw error when STRIPE_SECRET_KEY is missing', async () => {
       delete process.env.STRIPE_SECRET_KEY
+      resetPaymentEnvCache()
 
       // Need fresh import after env change
       vi.resetModules()
       const { createStripeCheckout } = await import('@/lib/payment/stripe')
 
       await expect(createStripeCheckout(mockOptions)).rejects.toThrow(
-        'Missing STRIPE_SECRET_KEY environment variable',
+        'Missing required payment environment variables: STRIPE_SECRET_KEY',
       )
     })
 
@@ -100,6 +106,7 @@ describe('Stripe Payment Service', () => {
   describe('verifyStripeWebhook', () => {
     it('should throw error when STRIPE_WEBHOOK_SECRET is missing', async () => {
       delete process.env.STRIPE_WEBHOOK_SECRET
+      resetPaymentEnvCache()
 
       vi.resetModules()
       const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
