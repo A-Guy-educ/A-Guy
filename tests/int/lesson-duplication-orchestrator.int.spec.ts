@@ -20,19 +20,21 @@ import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication
 // vi.mock intercepts this dynamic import, ensuring the mock is applied
 // regardless of same-module call limitations.
 let generateVariationCallCount = 0
-
 vi.mock('@/infra/llm/services/lesson-duplication-variation-service', async () => {
   return {
     generateVariation: vi.fn(
-      async (args: { exercise: unknown; level: string; subject: unknown }, _payload: unknown) => {
+      async (
+        input: { exercise: { id: string } },
+        _payload: unknown,
+      ): Promise<{ exercise: { id: string; content: { blocks: unknown[] } } }> => {
         generateVariationCallCount++
-        // Throw on the 5th exercise call (after 4 succeed)
-        if (generateVariationCallCount >= 5) {
+        // Throw on the 3rd exercise call (1-2 succeed, 3rd fails)
+        if (generateVariationCallCount === 3) {
           throw new Error('Forced failure for test')
         }
-        // Return a valid exercise — script would generate MCQ content
         return {
           exercise: {
+            id: input.exercise.id,
             content: {
               blocks: [
                 {
