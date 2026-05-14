@@ -67,7 +67,10 @@ export async function withConcurrencyLimit<T, R>(
           results[entry.index] = null as R
           running--
           processNext()
-          entry.reject(error)
+          // Settle the enqueue promise so Promise.allSettled can complete.
+          // This is safe: if .then() ran first, .catch() won't fire for this promise.
+          entry.resolve(null as R)
+          void error
         })
     }
   }
