@@ -64,6 +64,7 @@ export async function withConcurrencyLimit<T, R>(
           entry.resolve(value)
         })
         .catch((error) => {
+          results[entry.index] = null as R
           running--
           processNext()
           entry.reject(error)
