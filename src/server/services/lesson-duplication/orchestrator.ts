@@ -337,7 +337,11 @@ async function processExercise(
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown strategy error'
     logger.error({ exerciseRef, level, err }, 'Strategy generation failed')
-    await appendFailure(payload, duplicationId, exerciseRef, 0, GENERATION_FAILURE_CODE, message)
+    try {
+      await appendFailure(payload, duplicationId, exerciseRef, 0, GENERATION_FAILURE_CODE, message)
+    } catch {
+      // appendEntry errors are non-fatal; stream failure should not abort the run
+    }
     return null
   }
 
