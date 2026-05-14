@@ -15,6 +15,30 @@ import type { CollectionConfig } from 'payload'
 import { adminOrSelf } from '@/server/payload/access/adminOrSelf'
 import { authenticated } from '@/server/payload/access/authenticated'
 
+/**
+ * Normalizes relationship fields to return only IDs (not full objects).
+ * Relationship fields default to depth=2 (populated) in Payload; this hook
+ * ensures user/course fields are returned as ID strings for API consistency.
+ */
+const normalizeRelationshipFields = async ({ doc }: { doc: Record<string, unknown> }) => {
+  if (doc.user && typeof doc.user === 'object' && 'id' in doc.user) {
+    doc.user = (doc.user as { id: string }).id
+  }
+  if (doc.course && typeof doc.course === 'object' && 'id' in doc.course) {
+    doc.course = (doc.course as { id: string }).id
+  }
+  return doc
+}
+
+/**
+ * Hooks — extracted and cast so TypeScript infers the full
+ * CollectionConfig['hooks'] type rather than a narrow partial when
+ * only one hook key is present.
+ */
+const enrollmentHooks = {
+  afterRead: [normalizeRelationshipFields],
+} as CollectionConfig['hooks']
+
 export const Enrollments: CollectionConfig = {
   slug: 'enrollments',
   admin: {
@@ -27,6 +51,7 @@ export const Enrollments: CollectionConfig = {
     update: adminOrSelf,
     delete: adminOrSelf,
   },
+  hooks: enrollmentHooks,
   fields: [
     {
       name: 'user',

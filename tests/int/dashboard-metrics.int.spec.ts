@@ -123,6 +123,21 @@ beforeAll(async () => {
       overrideAccess: true,
     })
     createdUserIds.push(u.id)
+
+    // Create enrollment records in the Enrollments collection (new system)
+    for (const courseId of spec.courses) {
+      await payload.create({
+        collection: 'enrollments',
+        data: {
+          user: u.id,
+          course: courseId,
+          status: 'active',
+          grantMethod: 'admin',
+          source: 'dashboard',
+        } as any,
+        overrideAccess: true,
+      })
+    }
   }
 }, 60_000)
 
