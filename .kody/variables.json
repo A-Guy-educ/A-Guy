@@ -2,8 +2,8 @@
   "version": 1,
   "variables": {
     "LLM_MODELS": {
-      "value": "[{\"id\":\"google/gemini-2.5-flash\",\"label\":\"gemini-2.5-flash\",\"provider\":\"google\",\"protocol\":\"openai\",\"baseURL\":\"https://generativelanguage.googleapis.com/v1beta/openai\",\"modelName\":\"gemini-2.5-flash\",\"apiKeySecret\":\"GEMINI_API_KEY\",\"enabled\":true,\"speech\":true},{\"id\":\"minimax/MiniMax-M2.7-highspeed\",\"label\":\"MiniMax\",\"provider\":\"custom\",\"protocol\":\"openai\",\"baseURL\":\"https://api.minimax.io/v1\",\"modelName\":\"MiniMax-M2.7-highspeed\",\"apiKeySecret\":\"MINIMAX_API_KEY\",\"enabled\":true,\"speech\":false}]",
-      "updatedAt": "2026-05-14T08:09:02.692Z",
+      "value": "[{\"id\":\"google/gemini-2.5-flash\",\"label\":\"gemini-2.5-flash\",\"provider\":\"google\",\"protocol\":\"openai\",\"baseURL\":\"https://generativelanguage.googleapis.com/v1beta/openai\",\"modelName\":\"gemini-2.5-flash\",\"apiKeySecret\":\"GEMINI_API_KEY\",\"enabled\":true,\"speech\":true,\"default\":false},{\"id\":\"minimax/MiniMax-M2.7-highspeed\",\"label\":\"MiniMax\",\"provider\":\"custom\",\"protocol\":\"openai\",\"baseURL\":\"https://api.minimax.io/v1\",\"modelName\":\"MiniMax-M2.7-highspeed\",\"apiKeySecret\":\"MINIMAX_API_KEY\",\"enabled\":true,\"speech\":false,\"default\":true}]",
+      "updatedAt": "2026-05-14T09:51:40.124Z",
       "updatedBy": "aguyaharonyair"
     }
   }
