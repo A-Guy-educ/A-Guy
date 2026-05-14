@@ -6,6 +6,7 @@
   "packageManager": "pnpm@10.33.0",
   "type": "module",
   "scripts": {
+    "kody": "npx @kody-ade/kody-engine serve",
     "build": "pnpm generate && cross-env NODE_OPTIONS='--no-deprecation --max-old-space-size=6144' next build",
     "postbuild": "next-sitemap --config next-sitemap.config.cjs",
     "build:analyze": "cross-env ANALYZE=true pnpm build",
