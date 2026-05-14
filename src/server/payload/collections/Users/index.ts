@@ -153,7 +153,6 @@ export const Users: CollectionConfig = {
         {
           name: 'transactionId',
           type: 'text',
-          required: true,
           admin: { readOnly: true },
         },
       ],
@@ -179,7 +178,6 @@ export const Users: CollectionConfig = {
         {
           name: 'transactionId',
           type: 'text',
-          required: true,
           admin: { readOnly: true },
         },
         {
