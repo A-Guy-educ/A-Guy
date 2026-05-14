@@ -15,100 +15,15 @@ import config from '@payload-config'
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
-// Module-level counter for the runStrategy mock. The let binding is reset by
+// Module-level counter for generateVariation mock. The let binding is reset by
 // beforeEach before each test; the hoisted mock factory closure captures a
 // live reference to this binding so resets take effect.
-let runStrategyCallCount = 0
-
-// Mock runStrategy to inject one forced failure on the 3rd exercise (by call order).
-// Uses a module-level counter since exercise.id (MongoDB ObjectID) never contains '-3'.
-// Use strategy='script' to bypass semantic validation (avoids LLM calls in tests).
-vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@/server/services/lesson-duplication/orchestrator')>()
-  return {
-    ...actual,
-    runStrategy: vi
-      .fn()
-      .mockImplementation(
-        async (exercise: { id: string }, _level: string, _subject: unknown, _payload: unknown) => {
-          runStrategyCallCount++
-          // Force failure on the 3rd exercise (by call order, not ID — ObjectIDs never contain '-3')
-          if (runStrategyCallCount === 3) {
-            throw new Error('Forced failure for test')
-          }
-          // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
-          return {
-            exerciseId: exercise.id,
-            strategy: 'script' as const,
-            blocks: [
-              {
-                id: 'q-1',
-                type: 'question_select',
-                variant: 'mcq',
-                selectionMode: 'single',
-                prompt: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'What is 2+2?',
-                  mediaIds: [],
-                },
-                answer: {
-                  multiSelect: false,
-                  options: [
-                    {
-                      id: 'a',
-                      content: {
-                        type: 'rich_text',
-                        format: 'md-math-v1',
-                        value: '3',
-                        mediaIds: [],
-                      },
-                    },
-                    {
-                      id: 'b',
-                      content: {
-                        type: 'rich_text',
-                        format: 'md-math-v1',
-                        value: '4',
-                        mediaIds: [],
-                      },
-                    },
-                  ],
-                  correctOptionIds: ['b'],
-                },
-                hint: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'Think arithmetic',
-                  mediaIds: [],
-                },
-                solution: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: '2+2=4',
-                  mediaIds: [],
-                },
-                fullSolution: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'Basic addition',
-                  mediaIds: [],
-                },
-              },
-            ],
-          }
-        },
-      ),
-  }
-})
+let generateVariationCallCount = 0
 
 // Mock the variation service so AiVariationStrategy (used for medium/deep level)
 // does not make real LLM calls in the integration test environment.
-// The variation service is called from AiVariationStrategy.apply after runStrategy
-// routes to it for non-'none' levels. This mock runs alongside the runStrategy
-// mock above — runStrategy controls error timing (throw on 3rd call) while
-// generateVariation provides the return value for non-error calls.
+// The error propagates through: generateVariation -> AiVariationStrategy.apply()
+// -> RouterStrategy.apply() -> runStrategy() -> processExercise() (catches).
 vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
   generateVariation: vi
     .fn()
@@ -117,8 +32,9 @@ vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
         input: { exercise: { id: string } },
         _payload: unknown,
       ): Promise<{ exercise: { id: string; content: { blocks: unknown[] } } }> => {
-        // Mirrors runStrategyCallCount — force failure on the 3rd exercise (same call order)
-        if (runStrategyCallCount === 3) {
+        generateVariationCallCount++
+        // Force failure on the 3rd exercise (by call order)
+        if (generateVariationCallCount === 3) {
           throw new Error('Forced failure for test')
         }
         return {
@@ -218,7 +134,7 @@ describe('Lesson duplication orchestrator — integration', () => {
 
   beforeEach(() => {
     // Reset call counter so each test gets a clean slate
-    runStrategyCallCount = 0
+    generateVariationCallCount = 0
   })
 
   beforeAll(async () => {
