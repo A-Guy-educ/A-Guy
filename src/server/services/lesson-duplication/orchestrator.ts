@@ -19,7 +19,10 @@ import type { Exercise } from '@/payload-types'
 import type { ContentBlock } from '@/server/payload/collections/Exercises/schemas'
 import type { DuplicationSubject } from '@/server/payload/collections/LessonDuplications'
 import { logger } from '@/infra/utils/logger'
-import { selectExercisesScaled } from '@/server/services/lesson-duplication/selectors'
+import {
+  selectExercisesScaled,
+  selectSectionsScaled,
+} from '@/server/services/lesson-duplication/selectors'
 import { getSourceExercisesForLesson } from '@/server/services/lesson-duplication/source-exercises'
 import {
   validateExerciseStructural,
@@ -82,6 +85,35 @@ export async function runStrategy(
     strategy: result.needsAiFallback ? 'ai' : 'script',
     blocks: content.blocks ?? [],
     tokensUsed: result.tokensUsed ?? { inputTokens: 0, outputTokens: 0 },
+  }
+}
+
+/**
+ * Cap source-exercise block count to match the structural validator's
+ * `TOO_MANY_SECTIONS` ceiling (5). Pure: returns a NEW exercise object with
+ * a trimmed `content.blocks` array when needed, otherwise the original.
+ *
+ * Picks 5 representative blocks from the source via `selectSectionsScaled` —
+ * the same scaling-random bucketing the lesson-level selector uses. Preserves
+ * source order, so the variation reads like a natural shorter version of the
+ * original rather than a random shuffle.
+ *
+ * Rationale: without this, a 10-block source always failed validation
+ * (TOO_MANY_SECTIONS is a blocking failure → exercise dropped from output).
+ * Admins doing deep variations on real lessons would silently lose any
+ * exercise that exceeded the block cap.
+ */
+function trimSourceBlocksIfNeeded(exercise: ExerciseDoc): ExerciseDoc {
+  const blocks = exercise.content?.blocks
+  if (!Array.isArray(blocks) || blocks.length <= 5) return exercise
+  const picked = selectSectionsScaled(blocks, 5)
+  logger.info(
+    { exerciseId: exercise.id, originalCount: blocks.length, trimmedTo: picked.length },
+    'Source exercise has more than 5 blocks — trimming via scaling-random selector',
+  )
+  return {
+    ...exercise,
+    content: { ...exercise.content, blocks: picked },
   }
 }
 
@@ -357,6 +389,15 @@ async function processExercise(
 }> {
   const exerciseRef = exercise.id
 
+  // Pre-trim source blocks. The structural validator caps exercises at 5
+  // blocks (TOO_MANY_SECTIONS — renderer / UX limit). Source exercises with
+  // 9-10 blocks would always fail variation. We sub-sample to 5 using the
+  // same scaling-random selector that picks exercises from a lesson: pick 1
+  // block per evenly-spaced bucket across the source, seeded for
+  // reproducibility. Preserves source order, so the variation feels like a
+  // natural truncation of the original.
+  const trimmedExercise = trimSourceBlocksIfNeeded(exercise)
+
   // Step 1: Run strategy
   let strategyResult: StrategyResult
   let tokensUsed = { inputTokens: 0, outputTokens: 0 }
@@ -375,7 +416,16 @@ async function processExercise(
   // exercise — renderer would crash) and warnings (admin fills from review
   // screen). Warning-only exercises still ship, with TODO placeholders filled
   // in for missing hint/solution/fullSolution so the lesson stays renderable.
-  const structuralFailures: StructuralFailure[] = validateExerciseStructural(strategyResult.blocks)
+  //
+  // We pass the source exercise's blocks (post-trim) so the validator can
+  // suppress MISSING_QUESTION when the source itself had an empty prompt
+  // (e.g. legacy geometry exercises where the question is in the figure, not
+  // as text). Otherwise every such variation would falsely fail.
+  const sourceBlocks = (trimmedExercise.content?.blocks ?? []) as ContentBlock[]
+  const structuralFailures: StructuralFailure[] = validateExerciseStructural(
+    strategyResult.blocks,
+    sourceBlocks,
+  )
   const blockingFailures = structuralFailures.filter((f) => BLOCKING_FAILURE_CODES.has(f.code))
   const warningFailures = structuralFailures.filter((f) => !BLOCKING_FAILURE_CODES.has(f.code))
 
