@@ -132,9 +132,40 @@ export interface UnifiedLLMProvider {
       model: { name: string; temperature: number; maxOutputTokens: number; modelKey?: AIModelKey }
       acknowledgment: string
       timeoutMs?: number
+      /**
+       * Optional Zod schema for constrained JSON output. When provided, the
+       * underlying provider is instructed to emit JSON conforming to the
+       * schema (Gemini responseSchema / JSON-mode). Callers can rely on
+       * `text` being valid JSON parsable into the schema's shape on success.
+       */
+      outputSchema?: import('zod').ZodTypeAny
+      /**
+       * Raw JSON Schema (Gemini's responseSchema dialect — uppercase types,
+       * no `additionalProperties`). Use when the schema is generated at
+       * runtime, e.g. derived from an input document. Mutually exclusive
+       * with `outputSchema`.
+       */
+      outputJsonSchema?: unknown
+      /**
+       * Optional model-version override. When set, the adapter resolves the
+       * model via the provider's `model(version)` helper rather than the
+       * pre-registered allowlist, so versions newer than the installed plugin
+       * (e.g. `gemini-3.1-pro-preview` on @genkit-ai/googleai@1.28) work.
+       */
+      modelVersion?: string
     },
     payload: Payload,
-  ) => Promise<{ text: string; raw?: unknown }>
+  ) => Promise<{
+    text: string
+    raw?: unknown
+    /**
+     * Genkit's parsed structured output when `outputSchema` was supplied.
+     * When set, callers should prefer this over re-parsing `text` — Genkit
+     * already validated it against the schema and the provider may emit the
+     * structured payload in a form that `text` doesn't faithfully serialize.
+     */
+    output?: unknown
+  }>
 
   // Streaming chat (optional - falls back to generateChatCompletion if not implemented)
   generateStreamingChatCompletion?: (

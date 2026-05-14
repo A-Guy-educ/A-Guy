@@ -8,167 +8,99 @@
  *  4. Final status is succeeded only when failures array is empty, else needs_review
  *  5. 5-exercise lesson with one forced failure → needs_review with 4 succeeded + 1 failure entry
  */
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getPayload, type Payload } from 'payload'
 import config from '@payload-config'
 
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
-// ---------------------------------------------------------------------------
-// Safety-net mock: prevent real AI calls if the runStrategy mock fails to apply.
-// createGenkitUnifiedAdapter is the Genkit factory used by generateVariation.
-// Mocking it ensures AiVariationStrategy never makes real LLM calls.
-// ---------------------------------------------------------------------------
-vi.mock('@/infra/llm/genkit/adapters/unified-adapter', () => ({
-  createGenkitUnifiedAdapter: vi.fn().mockResolvedValue({
-    generateChatCompletion: vi.fn().mockResolvedValue({
-      content: [
-        {
-          role: 'model',
-          content: [
-            {
-              text: JSON.stringify({
-                blocks: [
-                  {
-                    id: 'q-1',
-                    type: 'question_select',
-                    variant: 'mcq',
-                    selectionMode: 'single',
-                    prompt: {
-                      type: 'rich_text',
-                      format: 'md-math-v1',
-                      value: 'What is 2+2?',
-                      mediaIds: [],
-                    },
-                    answer: {
-                      multiSelect: false,
-                      options: [
-                        {
-                          id: 'a',
-                          content: {
-                            type: 'rich_text',
-                            format: 'md-math-v1',
-                            value: '3',
-                            mediaIds: [],
-                          },
-                        },
-                        {
-                          id: 'b',
-                          content: {
-                            type: 'rich_text',
-                            format: 'md-math-v1',
-                            value: '4',
-                            mediaIds: [],
-                          },
-                        },
-                      ],
-                      correctOptionIds: ['b'],
-                    },
-                    hint: {
-                      type: 'rich_text',
-                      format: 'md-math-v1',
-                      value: 'Think arithmetic',
-                      mediaIds: [],
-                    },
-                    solution: {
-                      type: 'rich_text',
-                      format: 'md-math-v1',
-                      value: '2+2=4',
-                      mediaIds: [],
-                    },
-                    fullSolution: {
-                      type: 'rich_text',
-                      format: 'md-math-v1',
-                      value: 'Basic addition',
-                      mediaIds: [],
-                    },
+// Mock the variation service so AiVariationStrategy (used for medium/deep level)
+// does not make real LLM calls in the integration test environment.
+// The variation service is only called when level != 'none' &&
+// (level != 'light' || scriptStrategy.needsAiFallback).
+// Uses call-count tracking instead of ID pattern — Payload generates UUIDs for
+// exercise IDs which don't contain '-3', so the old ID-based condition never triggered.
+let _vgCallCount = 0
+vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
+  generateVariation: vi
+    .fn()
+    .mockImplementation(
+      async (
+        input: { exercise: { id: string } },
+        _payload: unknown,
+      ): Promise<{ exercise: { id: string; content: { blocks: unknown[] } } }> => {
+        _vgCallCount++
+        // Force failure on the 3rd exercise (call count 3 = index 2)
+        if (_vgCallCount === 3) {
+          throw new Error('Forced failure for test')
+        }
+        return {
+          exercise: {
+            id: input.exercise.id,
+            content: {
+              blocks: [
+                {
+                  id: 'q-1',
+                  type: 'question_select',
+                  variant: 'mcq',
+                  selectionMode: 'single',
+                  prompt: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'What is 2+2?',
+                    mediaIds: [],
                   },
-                ],
-              }),
+                  answer: {
+                    multiSelect: false,
+                    options: [
+                      {
+                        id: 'a',
+                        content: {
+                          type: 'rich_text',
+                          format: 'md-math-v1',
+                          value: '3',
+                          mediaIds: [],
+                        },
+                      },
+                      {
+                        id: 'b',
+                        content: {
+                          type: 'rich_text',
+                          format: 'md-math-v1',
+                          value: '4',
+                          mediaIds: [],
+                        },
+                      },
+                    ],
+                    correctOptionIds: ['b'],
+                  },
+                  hint: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'Think arithmetic',
+                    mediaIds: [],
+                  },
+                  solution: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: '2+2=4',
+                    mediaIds: [],
+                  },
+                  fullSolution: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'Basic addition',
+                    mediaIds: [],
+                  },
+                },
+              ],
             },
-          ],
-        },
-      ],
-    }),
-  }),
+          },
+        }
+      },
+    ),
 }))
-
-// Mock runStrategy to inject one forced failure on the 3rd exercise
-// Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
-vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@/server/services/lesson-duplication/orchestrator')>()
-  return {
-    ...actual,
-    runStrategy: vi
-      .fn()
-      .mockImplementation(
-        async (exercise: { id: string }, _level: string, _subject: unknown, _payload: unknown) => {
-          // Force failure on the 3rd exercise (index-based)
-          if (exercise.id.includes('-3')) {
-            throw new Error('Forced failure for test')
-          }
-          // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
-          return {
-            exerciseId: exercise.id,
-            strategy: 'script' as const,
-            blocks: [
-              {
-                id: 'q-1',
-                type: 'question_select',
-                variant: 'mcq',
-                selectionMode: 'single',
-                prompt: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'What is 2+2?',
-                  mediaIds: [],
-                },
-                answer: {
-                  multiSelect: false,
-                  options: [
-                    {
-                      id: 'a',
-                      content: {
-                        type: 'rich_text',
-                        format: 'md-math-v1',
-                        value: '3',
-                        mediaIds: [],
-                      },
-                    },
-                    {
-                      id: 'b',
-                      content: {
-                        type: 'rich_text',
-                        format: 'md-math-v1',
-                        value: '4',
-                        mediaIds: [],
-                      },
-                    },
-                  ],
-                  correctOptionIds: ['b'],
-                },
-                hint: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'Think arithmetic',
-                  mediaIds: [],
-                },
-                solution: { type: 'rich_text', format: 'md-math-v1', value: '2+2=4', mediaIds: [] },
-                fullSolution: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'Basic addition',
-                  mediaIds: [],
-                },
-              },
-            ],
-          }
-        },
-      ),
-  }
-})
 
 async function ensureDefaultTenant(payload: Payload): Promise<string> {
   const slug = getDefaultTenantSlug()
@@ -197,6 +129,10 @@ describe('Lesson duplication orchestrator — integration', () => {
   const cleanupLessonIds: string[] = []
   const cleanupExerciseIds: string[] = []
   const cleanupDuplicationIds: string[] = []
+
+  beforeEach(() => {
+    _vgCallCount = 0
+  })
 
   beforeAll(async () => {
     payload = await getPayload({ config })
@@ -359,7 +295,7 @@ describe('Lesson duplication orchestrator — integration', () => {
 
     expect(record.status).toBe('pending')
 
-    // Run orchestrator (mocked runStrategy forces failure on exercise containing '-3')
+    // Run orchestrator (mocked generateVariation forces failure on 3rd exercise)
     try {
       await runDuplicationOrchestrator(record.id, payload)
     } catch {
@@ -373,17 +309,13 @@ describe('Lesson duplication orchestrator — integration', () => {
     // Final status must be needs_review (not succeeded, not failed)
     expect(finalRecord.status).toBe('needs_review')
 
-    // At least one failure entry expected (exercise containing '-3' threw in runStrategy)
-    // Note: the exact count depends on exercise ID strings; we check ≥1 to be robust
+    // At least one failure entry expected (3rd exercise threw in generateVariation)
     expect(finalRecord.failures).toBeDefined()
     expect(finalRecord.failures.length).toBeGreaterThanOrEqual(1)
     expect(finalRecord.failures[0].code).toBe('GENERATION_FAILED')
     expect(finalRecord.failures[0].suggestedAction).toBe('skip')
 
     // After orchestrator runs, outputLesson should be created
-    // Note: outputExercises remain empty in this test because the runStrategy mock
-    // bypasses processExercise (which calls createOutputExercise). Exercise creation
-    // is verified in lesson-duplication-review-resolve.int.spec.ts instead.
     expect(finalRecord.outputLesson).toBeTruthy()
   }, 180000)
 
