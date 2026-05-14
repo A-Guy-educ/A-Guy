@@ -126,9 +126,8 @@ export async function exportLessonEndpoint(req: PayloadRequest): Promise<Respons
     }
   }
 
-  // 6) Build response — strip managed fields from lesson
-  const { id: _lid, createdAt: _lca, updatedAt: _lua, blocks: _lb, ...lessonData } = lesson
-  void _lid
+  // 6) Build response — strip managed fields from lesson (keep id)
+  const { createdAt: _lca, updatedAt: _lua, blocks: _lb, ...lessonData } = lesson
   void _lca
   void _lua
   void _lb
