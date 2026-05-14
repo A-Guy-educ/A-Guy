@@ -103,6 +103,91 @@ vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOrigin
   }
 })
 
+// Mock the variation service so AiVariationStrategy (used for medium/deep level)
+// does not make real LLM calls in the integration test environment.
+// The variation service is called from AiVariationStrategy.apply after runStrategy
+// routes to it for non-'none' levels. This mock runs alongside the runStrategy
+// mock above — runStrategy controls error timing (throw on 3rd call) while
+// generateVariation provides the return value for non-error calls.
+vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
+  generateVariation: vi
+    .fn()
+    .mockImplementation(
+      async (
+        input: { exercise: { id: string } },
+        _payload: unknown,
+      ): Promise<{ exercise: { id: string; content: { blocks: unknown[] } } }> => {
+        // Mirrors runStrategyCallCount — force failure on the 3rd exercise (same call order)
+        if (runStrategyCallCount === 3) {
+          throw new Error('Forced failure for test')
+        }
+        return {
+          exercise: {
+            id: input.exercise.id,
+            content: {
+              blocks: [
+                {
+                  id: 'q-1',
+                  type: 'question_select',
+                  variant: 'mcq',
+                  selectionMode: 'single',
+                  prompt: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'What is 2+2?',
+                    mediaIds: [],
+                  },
+                  answer: {
+                    multiSelect: false,
+                    options: [
+                      {
+                        id: 'a',
+                        content: {
+                          type: 'rich_text',
+                          format: 'md-math-v1',
+                          value: '3',
+                          mediaIds: [],
+                        },
+                      },
+                      {
+                        id: 'b',
+                        content: {
+                          type: 'rich_text',
+                          format: 'md-math-v1',
+                          value: '4',
+                          mediaIds: [],
+                        },
+                      },
+                    ],
+                    correctOptionIds: ['b'],
+                  },
+                  hint: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'Think arithmetic',
+                    mediaIds: [],
+                  },
+                  solution: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: '2+2=4',
+                    mediaIds: [],
+                  },
+                  fullSolution: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'Basic addition',
+                    mediaIds: [],
+                  },
+                },
+              ],
+            },
+          },
+        }
+      },
+    ),
+}))
+
 async function ensureDefaultTenant(payload: Payload): Promise<string> {
   const slug = getDefaultTenantSlug()
   const existing = await payload.find({
