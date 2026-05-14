@@ -17,35 +17,12 @@
  */
 import type { PayloadRequest } from 'payload'
 
-import { logger } from '@/infra/utils/logger'
 import {
   DUPLICATION_LEVELS,
   DUPLICATION_SUBJECTS,
   type DuplicationLevel,
   type DuplicationSubject,
 } from '@/server/payload/collections/LessonDuplications'
-
-/**
- * Resolve the public origin for fire-and-forget callbacks (run-immediate ping).
- * Behind Vercel's proxy `req.url` is often the internal URL, not the public
- * one — so prefer explicit env vars, fall back to req.url, and last resort
- * localhost (dev). If all three are wrong, the fire-and-forget POST goes to
- * the void and the admin has to manually trigger the job from the jobs page.
- */
-function resolvePublicOrigin(req: PayloadRequest): string {
-  if (process.env.NEXT_PUBLIC_SERVER_URL) {
-    return process.env.NEXT_PUBLIC_SERVER_URL.replace(/\/$/, '')
-  }
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`
-  }
-  try {
-    const url = new URL(req.url || 'http://localhost:3000')
-    return `${url.protocol}//${url.host}`
-  } catch {
-    return 'http://localhost:3000'
-  }
-}
 
 interface DuplicateBody {
   level?: unknown
@@ -127,24 +104,41 @@ async function deepCloneLesson(req: PayloadRequest, sourceLessonId: string): Pro
     req,
   })
 
-  // Clone all exercises that point at the source lesson.
-  const exercises = await req.payload.find({
-    collection: 'exercises',
-    where: { lesson: { equals: sourceLessonId } },
-    limit: 0,
-    depth: 0,
-    overrideAccess: true,
-    req,
-  })
+  // Clone all exercises that belong to the source lesson. We prefer
+  // `lesson.blocks[].exercise` ids (authoritative) and fall back to the FK
+  // reverse query. The previous FK-only path silently cloned 0 exercises for
+  // lessons whose blocks reference exercises owned by a different lesson.
+  const { getSourceExercisesForLesson } =
+    await import('@/server/services/lesson-duplication/source-exercises')
+  const exerciseDocs = await getSourceExercisesForLesson(req.payload, sourceLessonId)
 
-  for (const exercise of exercises.docs) {
-    const exData = stripManagedFields(exercise as unknown as Record<string, unknown>)
-    await req.payload.create({
-      collection: 'exercises',
-      data: { ...exData, lesson: newLesson.id } as never,
-      overrideAccess: true,
-      req,
-    })
+  // Per-exercise isolation: if any single exercise fails create (e.g. Zod
+  // strict mode trips on a legacy field like `labelSize` no longer in the
+  // block schema), don't kill the whole copy. Log it, count it, move on.
+  // Without this guard, a 44-exercise lesson with one bad exercise produces
+  // zero cloned exercises and a top-level 'Content > Content' error.
+  const cloneFailures: Array<{ id: string; reason: string }> = []
+  for (const exercise of exerciseDocs) {
+    try {
+      const exData = stripManagedFields(exercise as unknown as Record<string, unknown>)
+      await req.payload.create({
+        collection: 'exercises',
+        data: { ...exData, lesson: newLesson.id } as never,
+        overrideAccess: true,
+        req,
+      })
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : 'unknown'
+      cloneFailures.push({ id: exercise.id, reason })
+      req.payload.logger.warn(
+        `[deepCloneLesson] skipped exercise ${exercise.id} during deep clone: ${reason}`,
+      )
+    }
+  }
+  if (cloneFailures.length > 0) {
+    req.payload.logger.warn(
+      `[deepCloneLesson] ${cloneFailures.length} of ${exerciseDocs.length} exercises failed to clone for lesson ${sourceLessonId}`,
+    )
   }
 
   return newLesson.id
@@ -255,58 +249,12 @@ export async function duplicateLessonEndpoint(req: PayloadRequest): Promise<Resp
     }
   }
 
-  // 8) For light/medium/deep, enqueue the orchestrator job AND trigger it.
-  //    Payload's job queue is just a DB insert — nothing executes pending jobs
-  //    on Vercel unless we explicitly ping /api/jobs/run-immediate. Without
-  //    this two-step, records sat in `pending` forever and the entire AI
-  //    pipeline was unreachable.
-  let queuedJobId: string | number | null = null
-  try {
-    const queued = await req.payload.jobs.queue({
-      task: 'lesson_duplication',
-      input: { duplicationId: record.id },
-      req,
-    })
-    queuedJobId = (queued as { id?: string | number }).id ?? null
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error'
-    await req.payload.update({
-      collection: 'lesson-duplications',
-      id: record.id,
-      data: { status: 'failed' } as never,
-      overrideAccess: true,
-      req,
-    })
-    return Response.json(
-      { error: `Failed to enqueue duplication job: ${message}`, id: record.id },
-      { status: 500 },
-    )
-  }
-
-  // Fire-and-forget the run-immediate ping. We do NOT await — the user shouldn't
-  // wait for AI generation in the HTTP response. The runner endpoint is best-
-  // effort: if it can't reach the job before the platform kills this function,
-  // an admin can re-trigger via the jobs admin page.
-  if (queuedJobId !== null) {
-    const origin = resolvePublicOrigin(req)
-    const cookieHeader = req.headers.get('cookie')
-    void fetch(`${origin}/api/jobs/run-immediate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(cookieHeader ? { cookie: cookieHeader } : {}),
-      },
-      body: JSON.stringify({ jobId: String(queuedJobId) }),
-      keepalive: true,
-    }).catch((err) => {
-      // Fire-and-forget — log so we can spot mis-routed runners in production.
-      // The job is still queued and an admin can re-trigger from the jobs UI.
-      logger.warn(
-        { err, origin, jobId: queuedJobId, duplicationId: record.id },
-        'Run-immediate ping failed; job remains queued',
-      )
-    })
-  }
-
-  return Response.json({ id: record.id, status: 'pending', jobId: queuedJobId })
+  // 8) For light/medium/deep, just leave the record in `pending`. The
+  //    cron worker at /api/cron/process-duplications polls every minute and
+  //    runs the orchestrator with a wall-clock budget. The orchestrator is
+  //    resumable: each completed exercise is streamed to the record, so a
+  //    Vercel function timeout mid-run leaves clean partial state and the
+  //    next cron tick continues. No fire-and-forget HTTP, no Payload
+  //    job-queue indirection — the cron is the single trigger path.
+  return Response.json({ id: record.id, status: 'pending' })
 }
