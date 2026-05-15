@@ -12,6 +12,8 @@ import { Chapters } from '@/server/payload/collections/Chapters'
 import { ChatAssets } from '@/server/payload/collections/ChatAssets'
 import { ConfigAuditLogs } from '@/server/payload/collections/ConfigAuditLogs'
 import { ConfigSecrets } from '@/server/payload/collections/ConfigSecrets'
+import { CouponUsages } from '@/server/payload/collections/CouponUsages'
+import { Coupons } from '@/server/payload/collections/Coupons'
 import { ConfigValues } from '@/server/payload/collections/ConfigValues'
 import { ContentPages } from '@/server/payload/collections/ContentPages'
 import { ContextExtractions } from '@/server/payload/collections/ContextExtractions'
@@ -185,6 +187,8 @@ export default buildConfig({
     ConfigValues,
     ConfigAuditLogs,
     Conversations,
+    CouponUsages,
+    Coupons,
     GuestSessions,
     MemoryItems,
     Tenants,
