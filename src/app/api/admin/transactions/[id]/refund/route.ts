@@ -40,15 +40,20 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   }
 
   // 3. Fetch transaction
-  const transaction = await payload.findByID({
-    collection: 'transactions',
-    id,
-    depth: 0,
-    overrideAccess: true,
-  })
-
-  if (!transaction) {
-    return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
+  let transaction
+  try {
+    transaction = await payload.findByID({
+      collection: 'transactions',
+      id,
+      depth: 0,
+      overrideAccess: true,
+    })
+  } catch (err) {
+    // Payload throws NotFound when the record doesn't exist
+    if (err instanceof Error && err.name === 'NotFound') {
+      return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
+    }
+    throw err
   }
 
   // 4. Validate status — double-refund guard
