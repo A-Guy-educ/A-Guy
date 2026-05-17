@@ -3,7 +3,7 @@
 _Threshold: 6h_
 
 ## running
-- [#1583](https://github.com/A-Guy-educ/A-Guy/issues/1583) — feat: add 'Copy message' button to admin chat messages — 134h since last update
+- [#1583](https://github.com/A-Guy-educ/A-Guy/issues/1583) — feat: add 'Copy message' button to admin chat messages — 135h since last update
 
 ## failed
 - [#1562](https://github.com/A-Guy-educ/A-Guy/issues/1562) — bug: admin chat Send button reports [disabled] in accessibility tree when functionally enabled — 145h since last update
