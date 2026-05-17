@@ -17,10 +17,9 @@ import {
   type ExerciseType,
 } from '@/infra/llm/services/exercise-generation-service'
 
-const LIVE =
-  process.env.RUN_LIVE_LLM === '1' &&
-  !!process.env.OPENAI_COMPATIBLE_API_KEY &&
-  !!process.env.OPENAI_COMPATIBLE_BASE_URL
+// Exercise generation runs on Gemini, so the live path needs GEMINI_API_KEY
+// (not the OpenAI-compatible creds).
+const LIVE = process.env.RUN_LIVE_LLM === '1' && !!process.env.GEMINI_API_KEY
 
 describe.skipIf(!LIVE)('generate-exercises (LIVE MiniMax smoke)', () => {
   let payload: Payload
