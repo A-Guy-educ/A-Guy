@@ -29,6 +29,7 @@ import {
   fillMissingFieldsWithPlaceholders,
   BLOCKING_FAILURE_CODES,
   type StructuralFailure,
+  type FailureCode,
 } from '@/server/services/lesson-duplication/validators/structural'
 import {
   validateExerciseSemantic,
@@ -264,16 +265,26 @@ async function appendOutputExercise(
 }
 
 /** Shape of an exercise from the exercises collection. */
-type ExerciseDoc = {
+export type ExerciseDoc = {
   id: string
   content?: { blocks?: ContentBlock[] }
 }
 
 /** Mapping entry from source exercise to generated output exercise. */
-interface OutputExerciseMapping {
+export interface OutputExerciseMapping {
   sourceExerciseId: string
   outputExerciseId: string
   strategy: DuplicationStrategy
+}
+
+/** Failure entry stored on the LessonDuplications record. */
+export interface FailureEntry {
+  exerciseRef: string
+  sectionIndex: number
+  code: FailureCode | string
+  message: string
+  suggestedAction: 'skip' | 'regenerate' | 'keep'
+  resolved: boolean
 }
 
 /**
@@ -346,7 +357,7 @@ async function createOutputLesson(
  * Create a draft exercise in the output lesson with the generated blocks.
  * Returns the mapping entry for tracking.
  */
-async function createOutputExercise(
+export async function createOutputExercise(
   payload: Payload,
   result: StrategyResult,
   outputLessonId: string,
@@ -375,10 +386,15 @@ async function createOutputExercise(
  *  1. Run strategy → get new exercise content
  *  2. Structural validation → collect failures
  *  3. If structural passes AND strategy != 'script' → semantic validation
- *  4. On any failure: stream failure to DB, return null
- *  5. On all pass: return StrategyResult for the orchestrator to use
+ *  4. On any failure: return null with newFailures populated
+ *  5. On all pass: return StrategyResult with empty newFailures
+ *
+ * Unlike runDuplicationOrchestrator which calls appendFailure/appendWarning to
+ * stream failures to the DB, this function returns all failures in newFailures[]
+ * so callers (e.g. retry-exercise endpoint) can control when failures are
+ * written to the DB.
  */
-async function processExercise(
+export async function processExercise(
   exercise: ExerciseDoc,
   duplicationId: string,
   level: 'none' | 'light' | 'medium' | 'deep',
@@ -387,8 +403,22 @@ async function processExercise(
 ): Promise<{
   result: StrategyResult | null
   tokensUsed: { inputTokens: number; outputTokens: number }
+  newFailures: FailureEntry[]
 }> {
   const exerciseRef = exercise.id
+  const newFailures: FailureEntry[] = []
+
+  // Helper to push a failure instead of writing to DB directly
+  const pushFailure = (code: string, message: string, sectionIndex: number) => {
+    newFailures.push({
+      exerciseRef,
+      sectionIndex,
+      code,
+      message,
+      suggestedAction: suggestAction(code),
+      resolved: false,
+    })
+  }
 
   // Pre-trim source blocks. The structural validator caps exercises at 5
   // blocks (TOO_MANY_SECTIONS — renderer / UX limit). Source exercises with
@@ -409,8 +439,8 @@ async function processExercise(
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown strategy error'
     logger.error({ exerciseRef, level, err }, 'Strategy generation failed')
-    await appendFailure(payload, duplicationId, exerciseRef, 0, GENERATION_FAILURE_CODE, message)
-    return { result: null, tokensUsed }
+    pushFailure(GENERATION_FAILURE_CODE, message, 0)
+    return { result: null, tokensUsed, newFailures }
   }
 
   // Step 2: Structural validation. Split failures into blocking (drop the
@@ -430,35 +460,19 @@ async function processExercise(
   const blockingFailures = structuralFailures.filter((f) => BLOCKING_FAILURE_CODES.has(f.code))
   const warningFailures = structuralFailures.filter((f) => !BLOCKING_FAILURE_CODES.has(f.code))
 
-  // Record blocking failures and non-blocking warnings into separate buckets
-  // so the review UI can show them under different headings.
+  // Collect all failures in newFailures — caller decides when to write to DB
   for (const failure of blockingFailures) {
-    await appendFailure(
-      payload,
-      duplicationId,
-      exerciseRef,
-      failure.blockIndex ?? 0,
-      failure.code,
-      failure.message,
-    )
+    pushFailure(failure.code, failure.message, failure.blockIndex ?? 0)
   }
   for (const warning of warningFailures) {
-    await appendWarning(
-      payload,
-      duplicationId,
-      exerciseRef,
-      warning.blockIndex ?? 0,
-      warning.code,
-      warning.message,
-    )
+    pushFailure(warning.code, warning.message, warning.blockIndex ?? 0)
   }
 
   if (blockingFailures.length > 0) {
-    return { result: null, tokensUsed }
+    return { result: null, tokensUsed, newFailures }
   }
 
-  // Warning-only path: fill placeholders so the exercise renders. Warnings are
-  // already recorded so the admin can find the TODOs in the review screen.
+  // Warning-only path: fill placeholders so the exercise renders.
   if (warningFailures.length > 0) {
     strategyResult = {
       ...strategyResult,
@@ -481,19 +495,16 @@ async function processExercise(
       payload,
     )
     if (!semanticResult.ok) {
-      await appendFailure(
-        payload,
-        duplicationId,
-        exerciseRef,
-        0,
+      pushFailure(
         SEMANTIC_FAILURE_CODE,
         `Semantic mismatch: ${semanticResult.reasons.join('; ')}`,
+        0,
       )
-      return { result: null, tokensUsed }
+      return { result: null, tokensUsed, newFailures }
     }
   }
 
-  return { result: strategyResult, tokensUsed }
+  return { result: strategyResult, tokensUsed, newFailures }
 }
 
 /**
@@ -752,7 +763,7 @@ export async function runDuplicationOrchestrator(
         }
       }
 
-      const { result, tokensUsed } = await processExercise(
+      const { result, tokensUsed, newFailures } = await processExercise(
         exercise,
         duplicationId,
         duplicationLevel,
@@ -762,7 +773,31 @@ export async function runDuplicationOrchestrator(
       // Accumulate token usage across all exercises (issue #1552)
       totalAiTokensInput += tokensUsed.inputTokens
       totalAiTokensOutput += tokensUsed.outputTokens
-      if (result === null) continue // failure already recorded by processExercise
+
+      // Write failures to DB — split blocking from warnings into respective buckets
+      for (const f of newFailures) {
+        if (BLOCKING_FAILURE_CODES.has(f.code as FailureCode)) {
+          await appendFailure(
+            payload,
+            duplicationId,
+            f.exerciseRef,
+            f.sectionIndex,
+            f.code,
+            f.message,
+          )
+        } else {
+          await appendWarning(
+            payload,
+            duplicationId,
+            f.exerciseRef,
+            f.sectionIndex,
+            f.code,
+            f.message,
+          )
+        }
+      }
+
+      if (result === null) continue
 
       try {
         const mapping = await createOutputExercise(payload, result, outputLessonId)

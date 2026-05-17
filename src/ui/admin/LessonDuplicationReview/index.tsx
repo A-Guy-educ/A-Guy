@@ -161,6 +161,7 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
   const [isProcessing, setIsProcessing] = useState(false)
   const [processError, setProcessError] = useState<string | null>(null)
   const [processOutcome, setProcessOutcome] = useState<string | null>(null)
+  const [retryingSourceIds, setRetryingSourceIds] = useState<Set<string>>(new Set())
   const diffPreviewRef = useRef<HTMLDivElement>(null)
 
   const fetchRecord = useCallback(async () => {
@@ -340,6 +341,28 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
       setPendingActions((prev) => {
         const next = new Map(prev)
         next.set(failureIdx, { action: 'skip' })
+        return next
+      })
+    }
+  }
+
+  // Handle per-exercise retry from DiffPreview
+  async function handleRetry(sourceExerciseId: string) {
+    setRetryingSourceIds((prev) => new Set(prev).add(sourceExerciseId))
+    try {
+      const res = await fetch(`/api/lesson-duplications/${duplicationId}/retry-exercise`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ sourceExerciseId }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error?.message ?? `HTTP ${res.status}`)
+      await fetchRecord()
+    } finally {
+      setRetryingSourceIds((prev) => {
+        const next = new Set(prev)
+        next.delete(sourceExerciseId)
         return next
       })
     }
@@ -540,7 +563,9 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
             onLooksRight={handleLooksRight}
             onRegenerate={handleRegenerate}
             onSkip={handleSkip}
+            onRetry={handleRetry}
             onJumpToExercise={jumpToExercise}
+            retryingSourceIds={retryingSourceIds}
           />
         </div>
       )}
@@ -661,7 +686,59 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
                       >
                         Keep
                       </button>
+                      <button
+                        style={{
+                          ...buttonStyle,
+                          backgroundColor: 'var(--theme-success)',
+                          color: '#fff',
+                          border: 'none',
+                          ...(retryingSourceIds.has(exerciseRef)
+                            ? { opacity: 0.6, cursor: 'not-allowed' }
+                            : {}),
+                        }}
+                        onClick={() => handleRetry(exerciseRef)}
+                        disabled={retryingSourceIds.has(exerciseRef)}
+                      >
+                        {retryingSourceIds.has(exerciseRef) ? 'Retrying…' : 'Retry just this one'}
+                      </button>
                     </div>
+                    {/* Expandable failure detail */}
+                    <details
+                      style={{
+                        marginTop: 8,
+                        paddingTop: 8,
+                        borderTop: '1px solid var(--theme-elevation-100)',
+                      }}
+                    >
+                      <summary
+                        style={{
+                          fontSize: 12,
+                          color: 'var(--theme-elevation-500)',
+                          cursor: 'pointer',
+                          userSelect: 'none',
+                        }}
+                      >
+                        Details
+                      </summary>
+                      <pre
+                        style={{
+                          marginTop: 6,
+                          padding: 8,
+                          backgroundColor: 'var(--theme-elevation-100)',
+                          borderRadius: 3,
+                          fontSize: 11,
+                          wordBreak: 'break-all',
+                          whiteSpace: 'pre-wrap',
+                        }}
+                      >
+                        {failure.message}
+                      </pre>
+                      <p
+                        style={{ fontSize: 12, color: 'var(--theme-elevation-500)', marginTop: 4 }}
+                      >
+                        {FAILURE_CODE_LABELS[failure.code] ?? failure.code}
+                      </p>
+                    </details>
                   </div>
                 )
               })}
