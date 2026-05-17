@@ -1,5 +1,6 @@
 {
   "version": 1,
   "defaultPreviewUrl": "https://www.dev.aguy.co.il/",
-  "defaultChatEntryKey": "brain-fly"
+  "defaultChatEntryKey": "brain-fly",
+  "brainFlyChatEnabled": true
 }
