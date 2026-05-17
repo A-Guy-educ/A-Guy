@@ -81,6 +81,12 @@ const chatConfigData = {
       maxOutputTokens: 4096,
       capabilities: ['chat', 'generation'],
     },
+    exerciseGeneration: {
+      gemini: 'gemini-2.5-pro',
+      openaiCompatible: 'MiniMax-M2.1',
+      maxOutputTokens: 8192,
+      capabilities: ['chat', 'generation'],
+    },
     contentTranslation: {
       gemini: 'gemini-3.1-pro',
       openaiCompatible: 'MiniMax-M2.1',

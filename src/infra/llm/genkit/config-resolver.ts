@@ -43,6 +43,7 @@ interface ChatConfig {
     pdfToExercise: { gemini: string; openaiCompatible: string; maxOutputTokens: number }
     answerValidation: { gemini: string; openaiCompatible: string; maxOutputTokens: number }
     supportGeneration: { gemini: string; openaiCompatible: string; maxOutputTokens: number }
+    exerciseGeneration: { gemini: string; openaiCompatible: string; maxOutputTokens: number }
     contentTranslation: { gemini: string; openaiCompatible: string; maxOutputTokens: number }
     lessonDuplicationVariation: {
       gemini: string
@@ -146,6 +147,7 @@ function mapModelKeyToConfigKey(modelKey: AIModelKey): keyof ChatConfig['models'
     PDF_TO_EXERCISE: 'pdfToExercise',
     ANSWER_VALIDATION: 'answerValidation',
     SUPPORT_GENERATION: 'supportGeneration',
+    EXERCISE_GENERATION: 'exerciseGeneration',
     CONTENT_TRANSLATION: 'contentTranslation',
     LESSON_DUPLICATION_VARIATION: 'lessonDuplicationVariation',
     LESSON_DUPLICATION_VARIATION_CREATIVE: 'lessonDuplicationVariationCreative',

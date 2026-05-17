@@ -49,6 +49,7 @@ import { importExerciseFromLesson } from '@/server/payload/endpoints/exercises/i
 import { translateContentEndpoint } from '@/server/payload/endpoints/translation/translate-content'
 import { cascadeDeleteEndpoint } from '@/server/payload/endpoints/cascade-delete'
 import { duplicateLessonEndpoint } from '@/server/payload/endpoints/lessons/duplicate'
+import { generateExercisesEndpoint } from '@/server/payload/endpoints/lessons/generate-exercises'
 import { exportLessonEndpoint } from '@/server/payload/endpoints/lessons/export'
 import { defaultLexical } from '@/server/payload/fields/defaultLexical'
 import { lessonDuplicationTask } from '@/server/payload/jobs/lesson-duplication-task'
@@ -269,6 +270,11 @@ export default buildConfig({
       path: '/lessons/:id/export',
       method: 'get',
       handler: (req: PayloadRequest) => exportLessonEndpoint(req),
+    },
+    {
+      path: '/lessons/:id/generate-exercises',
+      method: 'post',
+      handler: (req: PayloadRequest) => generateExercisesEndpoint(req),
     },
   ],
   jobs: {

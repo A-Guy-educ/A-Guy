@@ -62,6 +62,7 @@ export type AIModelKey =
   | 'PDF_TO_EXERCISE'
   | 'ANSWER_VALIDATION'
   | 'SUPPORT_GENERATION'
+  | 'EXERCISE_GENERATION'
   | 'CONTENT_TRANSLATION'
   /** @deprecated Use LESSON_DUPLICATION_VARIATION_CREATIVE or LESSON_DUPLICATION_VARIATION_DETERMINISTIC */
   | 'LESSON_DUPLICATION_VARIATION'
@@ -108,6 +109,11 @@ export const MODEL_REGISTRY: Record<AIModelKey, Omit<AIModel, 'name'>> = {
     maxOutputTokens: 4096,
     capabilities: ['chat', 'generation'],
   },
+  EXERCISE_GENERATION: {
+    temperature: 0.5,
+    maxOutputTokens: 8192,
+    capabilities: ['chat', 'generation'],
+  },
   CONTENT_TRANSLATION: {
     temperature: 0.3,
     maxOutputTokens: 8192,
@@ -146,6 +152,7 @@ export const PROVIDER_MODEL_NAMES: Record<LLMProviderType, Record<AIModelKey, st
     PDF_TO_EXERCISE: 'gemini-2.5-flash',
     ANSWER_VALIDATION: 'gemini-3.1-pro',
     SUPPORT_GENERATION: 'gemini-3.1-pro',
+    EXERCISE_GENERATION: 'gemini-2.5-pro',
     CONTENT_TRANSLATION: 'gemini-3.1-pro',
     // 'gemini-3.1-pro' returns 404 on the v1beta generativelanguage API
     // (the model isn't published there, or our keys lack access). The error
@@ -162,6 +169,7 @@ export const PROVIDER_MODEL_NAMES: Record<LLMProviderType, Record<AIModelKey, st
     PDF_TO_EXERCISE: 'MiniMax-M2.1',
     ANSWER_VALIDATION: 'MiniMax-M2.1',
     SUPPORT_GENERATION: 'MiniMax-M2.1',
+    EXERCISE_GENERATION: 'MiniMax-M2.1',
     CONTENT_TRANSLATION: 'MiniMax-M2.1',
     LESSON_DUPLICATION_VARIATION: 'MiniMax-M2.1',
     LESSON_DUPLICATION_VARIATION_CREATIVE: 'MiniMax-M2.1',
@@ -235,6 +243,11 @@ export const AI_MODELS: Record<AIModelKey, AIModel> = {
     ...MODEL_REGISTRY.SUPPORT_GENERATION,
     name: PROVIDER_MODEL_NAMES[LLMProviderType.GEMINI].SUPPORT_GENERATION,
     modelKey: 'SUPPORT_GENERATION',
+  },
+  EXERCISE_GENERATION: {
+    ...MODEL_REGISTRY.EXERCISE_GENERATION,
+    name: PROVIDER_MODEL_NAMES[LLMProviderType.GEMINI].EXERCISE_GENERATION,
+    modelKey: 'EXERCISE_GENERATION',
   },
   CONTENT_TRANSLATION: {
     ...MODEL_REGISTRY.CONTENT_TRANSLATION,
