@@ -22,6 +22,13 @@ export const Coupons: CollectionConfig = {
     defaultColumns: ['code', 'discountType', 'discountValue', 'isActive', 'usesCount', 'maxUses'],
     group: 'Payments',
     description: 'Manage discount coupons that can be applied at checkout',
+    components: {
+      views: {
+        list: {
+          Component: '@/ui/admin/Coupons/ListView#CouponsListView',
+        },
+      },
+    },
   },
   access: {
     create: adminOnly,
