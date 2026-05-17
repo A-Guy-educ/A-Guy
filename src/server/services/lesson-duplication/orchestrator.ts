@@ -91,7 +91,7 @@ export async function runStrategy(
  * `TOO_MANY_SECTIONS` ceiling (5). Pure: returns a NEW exercise object with
  * a trimmed `content.blocks` array when needed, otherwise the original.
  *
- * Picks 5 representative blocks from the source via `selectSectionsScaled` —
+ * Picks 5 representative blocks from the source via `selectSectionsForVariation` —
  * the same scaling-random bucketing the lesson-level selector uses. Preserves
  * source order, so the variation reads like a natural shorter version of the
  * original rather than a random shuffle.
