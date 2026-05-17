@@ -10,9 +10,28 @@
 import type { NextRequest } from 'next/server'
 import { logger } from '@/infra/utils/logger/logger'
 
+// Forwarded headers become comma-separated lists when a request passes
+// through more than one proxy (CDN -> LB -> app). The client-facing value
+// is always the first entry; using the raw header yields a malformed
+// redirect_uri that won't match Google's registered URI.
+function firstForwardedValue(header: string | null): string | null {
+  if (!header) return null
+  const first = header.split(',')[0]?.trim()
+  return first ? first : null
+}
+
 export function getPublicBaseUrl(req: NextRequest): string {
-  const forwardedProto = req.headers.get('x-forwarded-proto')
-  const forwardedHost = req.headers.get('x-forwarded-host')
+  // When a canonical public URL is configured, it is authoritative: the
+  // OAuth redirect_uri must be deterministic and match what is registered
+  // in Google. Trusting client-supplied forwarded headers here would be an
+  // open-redirect / phishing vector.
+  const configured = process.env.NEXT_PUBLIC_SERVER_URL?.trim()
+  if (configured) {
+    return configured.replace(/\/+$/, '')
+  }
+
+  const forwardedProto = firstForwardedValue(req.headers.get('x-forwarded-proto'))
+  const forwardedHost = firstForwardedValue(req.headers.get('x-forwarded-host'))
 
   let baseUrl: string
 
