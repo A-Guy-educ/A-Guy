@@ -49,6 +49,7 @@ import { getModelCost } from '@/infra/llm/pricing'
 export const CONCURRENCY_LIMIT = 1 as const
 
 export const GENERATION_FAILURE_CODE = 'GENERATION_FAILED' as const
+export const STUCK_FAILURE_CODE = 'STUCK_AFTER_MAX_ATTEMPTS' as const
 
 export type DuplicationStrategy = 'script' | 'ai'
 

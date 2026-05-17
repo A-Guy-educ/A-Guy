@@ -1888,6 +1888,10 @@ export interface LessonDuplication {
    */
   runDurationMs?: number | null;
   /**
+   * Number of consecutive cron ticks that claimed this record without producing any new output exercises. Reset to 0 when outputExercises grows. Auto-fails at ≥ 5.
+   */
+  claimAttempts?: number | null;
+  /**
    * User who created this document
    */
   createdBy?: (string | null) | User;
@@ -3694,6 +3698,7 @@ export interface LessonDuplicationsSelect<T extends boolean = true> {
   aiTokensOutput?: T;
   aiCostUsd?: T;
   runDurationMs?: T;
+  claimAttempts?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
