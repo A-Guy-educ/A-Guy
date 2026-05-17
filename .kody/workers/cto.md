@@ -2,6 +2,8 @@
 every: 15m
 ---
 
+# CTO
+
 # cto
 
 > Standing engineering triage. Every 15 minutes the CTO reads the open
