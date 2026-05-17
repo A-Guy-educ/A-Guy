@@ -26,12 +26,21 @@ const instances = new Map<LLMProviderType, Genkit>()
  *
  * @param payload - Payload instance for config access
  * @param tenantId - Optional tenant ID for scoped configuration
+ * @param providerOverride - Force a specific provider for this call instead
+ *   of the global `LLM_PROVIDER`. Used by features pinned to one provider
+ *   (e.g. exercise generation → MiniMax) regardless of the app-wide setting.
+ *   Instances are cached per provider type, so the override instance
+ *   coexists with the default one.
  * @returns Configured Genkit instance
  */
-export async function getGenkitInstance(payload: Payload, tenantId?: string): Promise<Genkit> {
+export async function getGenkitInstance(
+  payload: Payload,
+  tenantId?: string,
+  providerOverride?: LLMProviderType,
+): Promise<Genkit> {
   // Import dynamically to avoid circular dependency
   const { getProviderTypeFromEnv } = await import('../providers/factory')
-  const providerType = await getProviderTypeFromEnv(payload)
+  const providerType = providerOverride ?? (await getProviderTypeFromEnv(payload))
 
   // Return cached instance if available
   if (instances.has(providerType)) {

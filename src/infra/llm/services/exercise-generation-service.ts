@@ -104,6 +104,9 @@ export async function generateExercises(
         messages: [{ role: 'user', content: userPrompt }],
         model: modelConfig,
         acknowledgment: 'Generating exercises',
+        // Exercise generation is pinned to MiniMax (OpenAI-compatible),
+        // independent of the app-wide LLM_PROVIDER setting.
+        providerOverride: LLMProviderType.OPENAI_COMPATIBLE,
       },
       payload,
     )
@@ -180,8 +183,11 @@ function parseLLMResponse(text: string): GeneratedExercise[] {
 
 function resolveModelConfig(modelKey: AIModelKey): AIModel {
   const entry = getModelRegistryEntry(modelKey)
+  // Exercise generation runs on MiniMax (OpenAI-compatible). The adapter
+  // re-resolves the real model via resolveGenkitConfig from this modelKey +
+  // providerOverride, so `name` is informational — keep it consistent.
   return {
-    name: getProviderModelName(LLMProviderType.GEMINI, modelKey),
+    name: getProviderModelName(LLMProviderType.OPENAI_COMPATIBLE, modelKey),
     ...entry,
     modelKey,
   }
