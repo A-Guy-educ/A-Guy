@@ -9,17 +9,21 @@
  */
 
 import React, { useState, useCallback } from 'react'
+import { revalidatePath } from 'next/cache'
 import type { ListViewClientProps } from 'payload'
-import { DefaultListView } from '@payloadcms/ui'
+import { DefaultListView, useTranslation } from '@payloadcms/ui'
 
 import { CreateCouponModal } from '../CreateCouponModal'
+import { getCouponStrings } from '../strings'
 
 export const CouponsListView: React.FC<ListViewClientProps> = (props) => {
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const { i18n } = useTranslation()
+  const s = getCouponStrings(i18n.language)
 
   const handleCouponCreated = useCallback(() => {
     setShowCreateModal(false)
-    window.location.reload()
+    revalidatePath('/admin/collections/coupons')
   }, [])
 
   return (
@@ -52,7 +56,7 @@ export const CouponsListView: React.FC<ListViewClientProps> = (props) => {
             }}
           >
             <span>+</span>
-            <span>הוסף קופון</span>
+            <span>{s.addCoupon}</span>
           </button>
         </div>
 
@@ -62,6 +66,7 @@ export const CouponsListView: React.FC<ListViewClientProps> = (props) => {
       {/* Create Modal */}
       {showCreateModal && (
         <CreateCouponModal
+          key="create-coupon-modal"
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
           onSuccess={handleCouponCreated}

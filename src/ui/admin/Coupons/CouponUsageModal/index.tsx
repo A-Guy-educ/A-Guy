@@ -8,6 +8,9 @@
  */
 
 import React, { useState, useEffect } from 'react'
+import { useTranslation } from '@payloadcms/ui'
+
+import { getCouponStrings } from '../strings'
 
 interface CouponUsageUser {
   id: string
@@ -24,7 +27,6 @@ interface CouponUsage {
   coupon: string
   transaction: CouponUsageTransaction | string
   user: CouponUsageUser | string
-  usedAt: string
   createdAt: string
 }
 
@@ -74,6 +76,8 @@ export const CouponUsageModal: React.FC<CouponUsageModalProps> = ({ coupon, isOp
   const [usages, setUsages] = useState<CouponUsage[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { i18n } = useTranslation()
+  const s = getCouponStrings(i18n.language)
 
   // Fetch usages when modal opens
   useEffect(() => {
@@ -108,7 +112,7 @@ export const CouponUsageModal: React.FC<CouponUsageModalProps> = ({ coupon, isOp
   // Compute stats
   const totalUses = usages.length
   const dates = usages
-    .map((u) => u.usedAt || u.createdAt)
+    .map((u) => u.createdAt)
     .filter((d) => d)
     .map((d) => new Date(d).getTime())
     .filter((d) => !isNaN(d))
@@ -155,7 +159,7 @@ export const CouponUsageModal: React.FC<CouponUsageModalProps> = ({ coupon, isOp
               color: 'var(--theme-elevation-1000)',
             }}
           >
-            שימושי קופון: {coupon.code}
+            {s.couponUsages}: {coupon.code}
           </h2>
         </div>
 
@@ -180,7 +184,7 @@ export const CouponUsageModal: React.FC<CouponUsageModalProps> = ({ coupon, isOp
                   marginBottom: 4,
                 }}
               >
-                סה&quot;כ שימושים
+                {s.totalUsages}
               </div>
               <div style={{ fontSize: 24, fontWeight: 700 }}>{totalUses}</div>
             </div>
@@ -192,7 +196,7 @@ export const CouponUsageModal: React.FC<CouponUsageModalProps> = ({ coupon, isOp
                   marginBottom: 4,
                 }}
               >
-                שימוש ראשון
+                {s.firstUse}
               </div>
               <div style={{ fontSize: 14 }}>
                 {firstUse ? formatDate(firstUse.toISOString()) : '—'}
@@ -206,7 +210,7 @@ export const CouponUsageModal: React.FC<CouponUsageModalProps> = ({ coupon, isOp
                   marginBottom: 4,
                 }}
               >
-                שימוש אחרון
+                {s.lastUse}
               </div>
               <div style={{ fontSize: 14 }}>
                 {lastUse ? formatDate(lastUse.toISOString()) : '—'}
@@ -224,7 +228,7 @@ export const CouponUsageModal: React.FC<CouponUsageModalProps> = ({ coupon, isOp
               color: 'var(--theme-elevation-500)',
             }}
           >
-            טוען...
+            {s.loading}
           </div>
         )}
 
@@ -252,7 +256,7 @@ export const CouponUsageModal: React.FC<CouponUsageModalProps> = ({ coupon, isOp
               color: 'var(--theme-elevation-500)',
             }}
           >
-            אין שימושים עדיין
+            {s.noUsages}
           </div>
         )}
 
@@ -271,7 +275,7 @@ export const CouponUsageModal: React.FC<CouponUsageModalProps> = ({ coupon, isOp
                       color: 'var(--theme-elevation-600)',
                     }}
                   >
-                    משתמש
+                    {s.user}
                   </th>
                   <th
                     style={{
@@ -282,7 +286,7 @@ export const CouponUsageModal: React.FC<CouponUsageModalProps> = ({ coupon, isOp
                       color: 'var(--theme-elevation-600)',
                     }}
                   >
-                    טרנזקציה
+                    {s.transaction}
                   </th>
                   <th
                     style={{
@@ -293,7 +297,7 @@ export const CouponUsageModal: React.FC<CouponUsageModalProps> = ({ coupon, isOp
                       color: 'var(--theme-elevation-600)',
                     }}
                   >
-                    תאריך
+                    {s.date}
                   </th>
                 </tr>
               </thead>
@@ -301,7 +305,7 @@ export const CouponUsageModal: React.FC<CouponUsageModalProps> = ({ coupon, isOp
                 {usages.map((usage) => {
                   const userEmail = getUserEmail(usage.user)
                   const transactionId = getTransactionId(usage.transaction)
-                  const dateStr = usage.usedAt || usage.createdAt
+                  const dateStr = usage.createdAt
 
                   return (
                     <tr
@@ -352,7 +356,7 @@ export const CouponUsageModal: React.FC<CouponUsageModalProps> = ({ coupon, isOp
               cursor: 'pointer',
             }}
           >
-            סגור
+            {s.close}
           </button>
         </div>
       </div>

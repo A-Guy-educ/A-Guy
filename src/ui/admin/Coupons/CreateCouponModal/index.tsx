@@ -8,6 +8,9 @@
  */
 
 import React, { useState, useEffect } from 'react'
+import { useTranslation } from '@payloadcms/ui'
+
+import { getCouponStrings } from '../strings'
 
 interface CreateCouponModalProps {
   isOpen: boolean
@@ -44,6 +47,8 @@ export const CreateCouponModal: React.FC<CreateCouponModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const { i18n } = useTranslation()
+  const s = getCouponStrings(i18n.language)
 
   // Reset form when modal closes
   useEffect(() => {
@@ -59,29 +64,29 @@ export const CreateCouponModal: React.FC<CreateCouponModalProps> = ({
     const errors: Record<string, string> = {}
 
     if (!form.code.trim()) {
-      errors.code = 'קוד הקופון נדרש'
+      errors.code = s.couponCodeRequired
     } else if (form.code.trim().length < 3) {
-      errors.code = 'קוד הקופון חייב להכיל לפחות 3 תווים'
+      errors.code = s.couponCodeMinLength
     }
 
     const value = parseFloat(form.discountValue)
     if (isNaN(value) || value < 0) {
-      errors.discountValue = 'ערך ההנחה חייב להיות מספר חיובי'
+      errors.discountValue = s.discountValueRequired
     }
 
     if (form.discountType === 'percentage' && value > 100) {
-      errors.discountValue = 'הנחה באחוזים לא יכולה לעלות על 100%'
+      errors.discountValue = s.discountPercentageMax
     }
 
     if (form.validFrom && form.validUntil) {
       if (new Date(form.validFrom) > new Date(form.validUntil)) {
-        errors.validUntil = 'תאריך סיום חייב להיות אחרי תאריך התחלה'
+        errors.validUntil = s.validUntilAfterStart
       }
     }
 
     const maxUsesNum = parseInt(form.maxUses)
     if (isNaN(maxUsesNum) || maxUsesNum < 0) {
-      errors.maxUses = 'מספר שימושים חייב להיות מספר אי-שלילי'
+      errors.maxUses = s.maxUsesInvalid
     }
 
     setFieldErrors(errors)
@@ -123,15 +128,15 @@ export const CreateCouponModal: React.FC<CreateCouponModalProps> = ({
               e.field === 'code' || (e.message && e.message.toLowerCase().includes('duplicate')),
           )
         ) {
-          setFieldErrors((prev) => ({ ...prev, code: 'קוד קופון זה כבר קיים' }))
+          setFieldErrors((prev) => ({ ...prev, code: s.couponCodeExists }))
           return
         }
-        throw new Error(data.message || data.error || 'Failed to create coupon')
+        throw new Error(data.message || data.error || s.errorCreatingCoupon)
       }
 
       onSuccess()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'שגיאה ביצירת הקופון')
+      setError(err instanceof Error ? err.message : s.errorCreatingCoupon)
     } finally {
       setIsSubmitting(false)
     }
@@ -194,13 +199,13 @@ export const CreateCouponModal: React.FC<CreateCouponModalProps> = ({
             color: 'var(--theme-elevation-1000)',
           }}
         >
-          צור קופון חדש
+          {s.createNewCoupon}
         </h2>
 
         <form onSubmit={handleSubmit}>
           {/* Code */}
           <div style={{ marginBottom: 16 }}>
-            <label style={labelStyle}>קוד קופון *</label>
+            <label style={labelStyle}>{s.couponCode}</label>
             <input
               type="text"
               value={form.code}
@@ -227,7 +232,7 @@ export const CreateCouponModal: React.FC<CreateCouponModalProps> = ({
             style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}
           >
             <div>
-              <label style={labelStyle}>סוג הנחה</label>
+              <label style={labelStyle}>{s.discountType}</label>
               <select
                 value={form.discountType}
                 onChange={(e) =>
@@ -238,12 +243,12 @@ export const CreateCouponModal: React.FC<CreateCouponModalProps> = ({
                 }
                 style={inputStyle()}
               >
-                <option value="percentage">אחוז</option>
-                <option value="fixed">סכום קבוע</option>
+                <option value="percentage">{s.percentageOption}</option>
+                <option value="fixed">{s.fixedAmountOption}</option>
               </select>
             </div>
             <div>
-              <label style={labelStyle}>ערך הנחה *</label>
+              <label style={labelStyle}>{s.discountValue}</label>
               <input
                 type="number"
                 value={form.discountValue}
@@ -271,7 +276,7 @@ export const CreateCouponModal: React.FC<CreateCouponModalProps> = ({
 
           {/* Max Uses */}
           <div style={{ marginBottom: 16 }}>
-            <label style={labelStyle}>מקסימום שימושים (0 = ללא הגבלה)</label>
+            <label style={labelStyle}>{s.maxUsesUnlimited}</label>
             <input
               type="number"
               value={form.maxUses}
@@ -298,7 +303,7 @@ export const CreateCouponModal: React.FC<CreateCouponModalProps> = ({
             style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}
           >
             <div>
-              <label style={labelStyle}>תוקף מ</label>
+              <label style={labelStyle}>{s.validFrom}</label>
               <input
                 type="date"
                 value={form.validFrom}
@@ -307,7 +312,7 @@ export const CreateCouponModal: React.FC<CreateCouponModalProps> = ({
               />
             </div>
             <div>
-              <label style={labelStyle}>תוקף עד</label>
+              <label style={labelStyle}>{s.validUntil}</label>
               <input
                 type="date"
                 value={form.validUntil}
@@ -364,7 +369,7 @@ export const CreateCouponModal: React.FC<CreateCouponModalProps> = ({
                 opacity: isSubmitting ? 0.6 : 1,
               }}
             >
-              ביטול
+              {s.cancel}
             </button>
             <button
               type="submit"
@@ -381,7 +386,7 @@ export const CreateCouponModal: React.FC<CreateCouponModalProps> = ({
                 opacity: isSubmitting ? 0.6 : 1,
               }}
             >
-              {isSubmitting ? 'יוצר...' : 'צור קופון'}
+              {isSubmitting ? s.creating : s.createCoupon}
             </button>
           </div>
         </form>
