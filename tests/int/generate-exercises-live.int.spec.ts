@@ -35,43 +35,39 @@ describe.skipIf(!LIVE)('generate-exercises (LIVE MiniMax smoke)', () => {
   const types: ExerciseType[] = ['mcq', 'true_false', 'free_response', 'table', 'mixed']
 
   for (const exerciseType of types) {
-    it(
-      `produces a valid batch for type "${exerciseType}"`,
-      async () => {
-        const res = await generateExercises(
-          {
-            lessonTitle: 'משוואות ממעלה ראשונה',
-            chapterTitle: 'אלגברה',
-            courseTitle: 'מתמטיקה כיתה ז׳',
-            adminPrompt: 'צור תרגילים על פתרון משוואות פשוטות',
-            exerciseType,
-            count: 3,
-          },
-          payload,
-        )
+    it(`produces a valid batch for type "${exerciseType}"`, async () => {
+      const res = await generateExercises(
+        {
+          lessonTitle: 'משוואות ממעלה ראשונה',
+          chapterTitle: 'אלגברה',
+          courseTitle: 'מתמטיקה כיתה ז׳',
+          adminPrompt: 'צור תרגילים על פתרון משוואות פשוטות',
+          exerciseType,
+          count: 3,
+        },
+        payload,
+      )
 
-        expect(res.success, res.error).toBe(true)
-        expect(Array.isArray(res.data)).toBe(true)
-        expect(res.data!.length).toBeGreaterThan(0)
+      expect(res.success, res.error).toBe(true)
+      expect(Array.isArray(res.data)).toBe(true)
+      expect(res.data!.length).toBeGreaterThan(0)
 
-        for (const ex of res.data!) {
-          // Required-field invariant — mirrors parseLLMResponse contract
-          expect(ex.prompt?.trim().length).toBeGreaterThan(0)
-          expect(ex.hint?.trim().length).toBeGreaterThan(0)
-          expect(ex.solution?.trim().length).toBeGreaterThan(0)
-          expect(ex.fullSolution?.trim().length).toBeGreaterThan(0)
-          expect(['question_select', 'question_free_response', 'question_table']).toContain(ex.type)
+      for (const ex of res.data!) {
+        // Required-field invariant — mirrors parseLLMResponse contract
+        expect(ex.prompt?.trim().length).toBeGreaterThan(0)
+        expect(ex.hint?.trim().length).toBeGreaterThan(0)
+        expect(ex.solution?.trim().length).toBeGreaterThan(0)
+        expect(ex.fullSolution?.trim().length).toBeGreaterThan(0)
+        expect(['question_select', 'question_free_response', 'question_table']).toContain(ex.type)
 
-          if (ex.type === 'question_select') {
-            expect(ex.options?.length).toBeGreaterThanOrEqual(2)
-            expect(ex.options!.some((o) => o.correct)).toBe(true)
-          }
-          if (ex.type === 'question_table') {
-            expect(ex.table?.headers?.length).toBeGreaterThan(0)
-          }
+        if (ex.type === 'question_select') {
+          expect(ex.options?.length).toBeGreaterThanOrEqual(2)
+          expect(ex.options!.some((o) => o.correct)).toBe(true)
         }
-      },
-      90_000, // real network call — generous per-test timeout
-    )
+        if (ex.type === 'question_table') {
+          expect(ex.table?.headers?.length).toBeGreaterThan(0)
+        }
+      }
+    }, 90_000) // real network call — generous per-test timeout
   }
 })
