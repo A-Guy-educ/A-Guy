@@ -1,7 +1,7 @@
 ---
 title: Lesson Duplication Service
 type: architecture
-updated: 2026-05-11
+updated: 2026-05-17
 sources:
   - https://github.com/A-Guy-educ/A-Guy/pull/1517
   - https://github.com/A-Guy-educ/A-Guy/pull/1467
@@ -12,6 +12,7 @@ sources:
   - https://github.com/A-Guy-educ/A-Guy/pull/1556
   - https://github.com/A-Guy-educ/A-Guy/pull/1557
   - https://github.com/A-Guy-educ/A-Guy/pull/1560
+  - https://github.com/A-Guy-educ/A-Guy/pull/1561
 ---
 
 The lesson duplication service generates variations of exercises for practice. It uses a strategy pattern with three variation levels and supports subject-specific prompts. Failed exercises surface in an admin review screen for manual resolution.
@@ -29,6 +30,7 @@ The lesson duplication service generates variations of exercises for practice. I
 Users can choose a subject when initiating duplication, or the system auto-detects it. Valid subjects: mixed, algebra, geometry, calculus, other. Each subject has its own set of LLM prompts (prompts/lesson-duplication/<subject>-<level>-agent-prompt.md). Using the wrong subject prompt leads to poor-quality variations.
 
 ### Subject Auto-Detection (#1560)
+  - https://github.com/A-Guy-educ/A-Guy/pull/1561
 
 When duplicating, the LessonDuplicateButton modal calls GET /api/lessons/:id/suggested-subject (admin-only) to auto-detect the subject based on exercise block types:
 
@@ -92,3 +94,24 @@ When the orchestrator finishes with failures, the record enters needs_review sta
 - admin/lesson-duplication-review.md — Admin review screen pattern
 - design-system.md — UI patterns for lesson views
 - conventions.md — TypeScript patterns used
+
+## AI Telemetry (#1552)
+
+The orchestrator tracks LLM usage and cost per duplication run via four fields on the LessonDuplications record:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `aiTokensInput` | number | Total input tokens across all LLM calls |
+| `aiTokensOutput` | number | Total output tokens across all LLM calls |
+| `aiCostUsd` | number | Estimated USD cost using `getModelCost()` |
+| `runDurationMs` | number | Wall-clock duration of the run in ms |
+
+Token usage accumulates across exercises during a tick via `tokensUsed: { inputTokens, outputTokens }` returned by each `runStrategy()` call. Cost is computed at run completion using `getModelCost()` from `src/infra/llm/pricing.ts`.
+
+### Pricing Module (src/infra/llm/pricing.ts)
+
+Centralized price table: `MODEL_PRICING_USD_PER_1M_TOKENS`. Currently supports:
+- `gemini-3.1-pro`: input $1.25/1M, output $5.00/1M
+- `MiniMax-M2.1`: input $0.20/1M, output $0.40/1M
+
+Throws `UnknownModelPricingError` if an unmapped model is used. Use `getModelCost(modelName, inputTokens, outputTokens)` to compute cost.
