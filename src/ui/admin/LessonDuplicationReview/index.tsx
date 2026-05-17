@@ -12,6 +12,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { DiffPreview } from './DiffPreview'
+import { cn } from '@/infra/utils/ui'
+import { computeExerciseStates, countByState, type ExerciseReviewState } from './lib/exerciseState'
 import type { ContentBlock } from '@/server/payload/collections/Exercises/types'
 
 type Action = 'skip' | 'regenerate' | 'keep' | 'looks_right'
@@ -73,23 +75,6 @@ const titleStyle: React.CSSProperties = {
 const metaStyle: React.CSSProperties = {
   fontSize: 13,
   color: 'var(--theme-elevation-600)',
-}
-const stickyBarStyle: React.CSSProperties = {
-  position: 'sticky',
-  top: 0,
-  zIndex: 10,
-  backgroundColor: 'var(--theme-elevation-100)',
-  borderBottom: '1px solid var(--theme-elevation-200)',
-  padding: '12px 16px',
-  borderRadius: 4,
-  marginBottom: 16,
-  display: 'flex',
-  gap: 16,
-  alignItems: 'center',
-}
-const summaryStyle: React.CSSProperties = {
-  fontSize: 14,
-  fontWeight: 500,
 }
 const failureCardStyle: React.CSSProperties = {
   border: '1px solid var(--theme-elevation-200)',
@@ -177,6 +162,7 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
   const [isProcessing, setIsProcessing] = useState(false)
   const [processError, setProcessError] = useState<string | null>(null)
   const [processOutcome, setProcessOutcome] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'all' | ExerciseReviewState>('all')
   const diffPreviewRef = useRef<HTMLDivElement>(null)
 
   const fetchRecord = useCallback(async () => {
@@ -213,8 +199,15 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
     fetchRecord()
   }, [fetchRecord])
 
-  const unresolvedCount = record?.failures.filter((f) => !f.resolved).length ?? 0
-  const totalExercises = record?.exercisePairs?.length ?? record?.outputExercises?.length ?? 0
+  // Auto-refresh every 30 seconds for running records
+  useEffect(() => {
+    if (record?.status === 'running') {
+      const interval = setInterval(() => {
+        fetchRecord()
+      }, 30000)
+      return () => clearInterval(interval)
+    }
+  }, [record?.status, fetchRecord])
 
   async function handleSubmit() {
     if (pendingActions.size === 0) return
@@ -454,6 +447,14 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
     )
   }
 
+  // Compute per-exercise states for the new tabbed UI
+  const exerciseStates = computeExerciseStates(
+    record.outputExercises ?? [],
+    record.failures ?? [],
+    reviewedIds,
+  )
+  const counts = countByState(exerciseStates)
+
   return (
     <div style={pageStyle}>
       {/* Header */}
@@ -469,40 +470,26 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
         </p>
       </div>
 
-      {/* Sticky summary bar */}
-      <div style={stickyBarStyle}>
-        <span style={summaryStyle}>
-          {reviewedIds.size} of {totalExercises} exercises reviewed
-          {unresolvedCount > 0 ? (
-            <span className="text-destructive" style={{ marginLeft: 8 }}>
-              · {unresolvedCount} failure{unresolvedCount !== 1 ? 's' : ''} remaining
-            </span>
-          ) : (
-            <span className="text-[var(--theme-success)]" style={{ marginLeft: 8 }}>
-              · all reviewed
-            </span>
-          )}
-        </span>
-        <div style={{ flex: 1 }} />
-        {canProcess && (
+      {/* Status banner */}
+      <div
+        className="status-banner bg-[var(--theme-elevation-100)] border border-[var(--theme-elevation-200)] rounded-lg p-card-padding mb-6"
+        data-status-banner="needs_review"
+      >
+        <div className="flex items-center gap-content-gap text-body-sm flex-wrap">
+          <span className="font-semibold text-foreground">{counts.succeeded} succeeded</span>
+          <span className="text-[hsl(var(--warning))] font-medium">
+            · {counts.needs_review + ' needs_review'}
+          </span>
+          <span className="text-[hsl(var(--error))] font-medium">· {counts.failed} failed</span>
+          <div className="flex-1" />
+          {/* Manual refresh button */}
           <button
-            style={{
-              ...buttonStyle,
-              backgroundColor: 'var(--theme-elevation-150)',
-              color: 'var(--theme-elevation-800)',
-            }}
-            onClick={handleProcessNow}
-            disabled={isProcessing}
-            title="Run the orchestrator immediately on this record. Useful on dev where Vercel cron doesn't auto-fire."
+            onClick={fetchRecord}
+            className="transition-all duration-normal px-3 py-1.5 rounded-lg text-label font-semibold border border-border hover:bg-muted"
           >
-            {isProcessing ? 'Processing…' : 'Process Now'}
+            Refresh
           </button>
-        )}
-        {pendingActions.size > 0 && (
-          <>
-            <span style={{ fontSize: 13, color: 'var(--theme-elevation-600)' }}>
-              {pendingActions.size} action{pendingActions.size !== 1 ? 's' : ''} pending
-            </span>
+          {canProcess && (
             <button
               style={{
                 ...buttonStyle,
@@ -510,13 +497,82 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
                 color: '#fff',
                 border: 'none',
               }}
-              onClick={handleSubmit}
-              disabled={isSubmitting}
+              onClick={handleProcessNow}
+              disabled={isProcessing}
+              title="Run the orchestrator immediately on this record. Useful on dev where Vercel cron doesn't auto-fire."
             >
-              {isSubmitting ? 'Applying…' : 'Apply Actions'}
+              {isProcessing ? 'Processing…' : 'Process Now'}
             </button>
-          </>
-        )}
+          )}
+          {pendingActions.size > 0 && (
+            <>
+              <span style={{ fontSize: 13, color: 'var(--theme-elevation-600)' }}>
+                {pendingActions.size} action{pendingActions.size !== 1 ? 's' : ''} pending
+              </span>
+              <button
+                style={{
+                  ...buttonStyle,
+                  backgroundColor: 'var(--theme-success)',
+                  color: '#fff',
+                  border: 'none',
+                }}
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Applying…' : 'Apply Actions'}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Tab navigation */}
+      <div className="flex items-center gap-1 mb-6 border-b border-border">
+        {(['all', 'succeeded', 'needs_review', 'failed', 'pending'] as const).map((tab) => {
+          const tabCount =
+            tab === 'all'
+              ? counts.total
+              : tab === 'succeeded'
+                ? counts.succeeded
+                : tab === 'needs_review'
+                  ? counts.needs_review
+                  : tab === 'pending'
+                    ? counts.pending
+                    : 0
+          const isActive = activeTab === tab
+          return (
+            <button
+              key={tab}
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => setActiveTab(tab)}
+              className={cn(
+                'px-4 py-2 text-label font-medium border-b-2 -mb-px transition-all duration-normal',
+                isActive
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border',
+              )}
+            >
+              {tab === 'all'
+                ? 'All'
+                : tab === 'needs_review'
+                  ? 'Needs Review'
+                  : tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tabCount > 0 && (
+                <span
+                  className={cn(
+                    'ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold',
+                    isActive
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-[var(--theme-elevation-200)] text-muted-foreground',
+                  )}
+                >
+                  {tabCount}
+                </span>
+              )}
+            </button>
+          )
+        })}
       </div>
 
       {submitError && (

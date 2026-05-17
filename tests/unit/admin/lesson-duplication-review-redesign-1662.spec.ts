@@ -22,10 +22,16 @@ const projectRoot = process.cwd()
 const componentPath = resolve(projectRoot, 'src/ui/admin/LessonDuplicationReview/index.tsx')
 const componentSource = readFileSync(componentPath, 'utf-8')
 
-const diffPreviewPath = resolve(projectRoot, 'src/ui/admin/LessonDuplicationReview/DiffPreview/index.tsx')
+const diffPreviewPath = resolve(
+  projectRoot,
+  'src/ui/admin/LessonDuplicationReview/DiffPreview/index.tsx',
+)
 const diffPreviewSource = readFileSync(diffPreviewPath, 'utf-8')
 
-const exercisePairPath = resolve(projectRoot, 'src/ui/admin/LessonDuplicationReview/DiffPreview/ExercisePair.tsx')
+const exercisePairPath = resolve(
+  projectRoot,
+  'src/ui/admin/LessonDuplicationReview/DiffPreview/ExercisePair.tsx',
+)
 const exercisePairSource = readFileSync(exercisePairPath, 'utf-8')
 
 describe('Issue #1662: Lesson Duplication Review Redesign - Component Verification', () => {
@@ -39,7 +45,9 @@ describe('Issue #1662: Lesson Duplication Review Redesign - Component Verificati
     it('should have status banner text showing succeeded count', () => {
       // The redesigned component should display "succeeded" count
       // Pattern: something like "X succeeded" or "succeeded: X" or count with succeeded label
-      const hasSucceededCount = /succeeded\s+\d|status-banner.*succeeded|count.*succeeded/i.test(componentSource)
+      const hasSucceededCount = /succeeded\s+\d|status-banner.*succeeded|count.*succeeded/i.test(
+        componentSource,
+      )
 
       expect(hasSucceededCount).toBe(true)
     })
@@ -47,7 +55,9 @@ describe('Issue #1662: Lesson Duplication Review Redesign - Component Verificati
     it('should have status banner text showing needs-review count', () => {
       // The redesigned component should display "needs_review" or "needs review" count
       // Pattern: something like "X needs review" or "needs-review: X" or count with needs-review label
-      const hasNeedsReviewCount = /needs[_-]?review\s+\d|status-banner.*needs[_-]?review/i.test(componentSource)
+      const hasNeedsReviewCount = /needs[_-]?review\s+\d|status-banner.*needs[_-]?review/i.test(
+        componentSource,
+      )
 
       expect(hasNeedsReviewCount).toBe(true)
     })
@@ -55,7 +65,9 @@ describe('Issue #1662: Lesson Duplication Review Redesign - Component Verificati
     it('should have status banner text showing failed count', () => {
       // The redesigned component should display "failed" count
       // Pattern: something like "X failed" or "failed: X" or count with failed label
-      const hasFailedCount = /failed\s+\d|status-banner.*failed|count.*failed/i.test(componentSource)
+      const hasFailedCount = /failed\s+\d|status-banner.*failed|count.*failed/i.test(
+        componentSource,
+      )
 
       expect(hasFailedCount).toBe(true)
     })
@@ -71,7 +83,8 @@ describe('Issue #1662: Lesson Duplication Review Redesign - Component Verificati
     it('should have tab components for grouping exercises by state', () => {
       // The redesigned component should have tab elements
       // Pattern: role="tab" or className containing "tab" for each state
-      const hasTabElements = /role=["']tab["']|className.*\btab\b|tabList|tabGroup/i.test(componentSource) ||
+      const hasTabElements =
+        /role=["']tab["']|className.*\btab\b|tabList|tabGroup/i.test(componentSource) ||
         /role=["']tab["']|className.*\btab\b|tabList|tabGroup/i.test(diffPreviewSource)
 
       expect(hasTabElements).toBe(true)
@@ -79,7 +92,8 @@ describe('Issue #1662: Lesson Duplication Review Redesign - Component Verificati
 
     it('should have tab for "succeeded" exercises', () => {
       // The redesigned component should have a tab for succeeded exercises
-      const hasSucceededTab = /tab.*succeeded|succeeded.*tab/i.test(componentSource) ||
+      const hasSucceededTab =
+        /tab.*succeeded|succeeded.*tab/i.test(componentSource) ||
         /tab.*succeeded|succeeded.*tab/i.test(diffPreviewSource)
 
       expect(hasSucceededTab).toBe(true)
@@ -87,7 +101,8 @@ describe('Issue #1662: Lesson Duplication Review Redesign - Component Verificati
 
     it('should have tab for "needs review" exercises', () => {
       // The redesigned component should have a tab for needs-review exercises
-      const hasNeedsReviewTab = /tab.*needs[_-]?review|needs[_-]?review.*tab/i.test(componentSource) ||
+      const hasNeedsReviewTab =
+        /tab.*needs[_-]?review|needs[_-]?review.*tab/i.test(componentSource) ||
         /tab.*needs[_-]?review|needs[_-]?review.*tab/i.test(diffPreviewSource)
 
       expect(hasNeedsReviewTab).toBe(true)
@@ -95,7 +110,8 @@ describe('Issue #1662: Lesson Duplication Review Redesign - Component Verificati
 
     it('should have tab for "failed" exercises', () => {
       // The redesigned component should have a tab for failed exercises
-      const hasFailedTab = /tab.*failed|failed.*tab/i.test(componentSource) ||
+      const hasFailedTab =
+        /tab.*failed|failed.*tab/i.test(componentSource) ||
         /tab.*failed|failed.*tab/i.test(diffPreviewSource)
 
       expect(hasFailedTab).toBe(true)
@@ -103,7 +119,8 @@ describe('Issue #1662: Lesson Duplication Review Redesign - Component Verificati
 
     it('should have tab for "pending" exercises', () => {
       // The redesigned component should have a tab for pending exercises
-      const hasPendingTab = /tab.*pending|pending.*tab/i.test(componentSource) ||
+      const hasPendingTab =
+        /tab.*pending|pending.*tab/i.test(componentSource) ||
         /tab.*pending|pending.*tab/i.test(diffPreviewSource)
 
       expect(hasPendingTab).toBe(true)
@@ -120,7 +137,9 @@ describe('Issue #1662: Lesson Duplication Review Redesign - Component Verificati
     it('should have auto-refresh logic for running records', () => {
       // The redesigned component should have setInterval for polling
       // Pattern: useEffect with setInterval for auto-refresh
-      const hasAutoRefresh = /setInterval.*\d{3}0\d{3}|auto.*refresh|polling|refreshInterval/i.test(componentSource)
+      const hasAutoRefresh = /setInterval.*\d{3}0\d{3}|auto.*refresh|polling|refreshInterval/i.test(
+        componentSource,
+      )
 
       expect(hasAutoRefresh).toBe(true)
     })
@@ -149,7 +168,8 @@ describe('Issue #1662: Lesson Duplication Review Redesign - Component Verificati
   describe('Diff Preview Labels', () => {
     it('should have clear "Source" label in diff preview', () => {
       // The component should have Source label
-      const hasSourceLabel = /\bSource\b/.test(componentSource) ||
+      const hasSourceLabel =
+        /\bSource\b/.test(componentSource) ||
         /\bSource\b/.test(diffPreviewSource) ||
         /\bSource\b/.test(exercisePairSource)
 
@@ -158,7 +178,8 @@ describe('Issue #1662: Lesson Duplication Review Redesign - Component Verificati
 
     it('should have clear "Variation" label in diff preview', () => {
       // The component should have Variation label
-      const hasVariationLabel = /\bVariation\b/.test(componentSource) ||
+      const hasVariationLabel =
+        /\bVariation\b/.test(componentSource) ||
         /\bVariation\b/.test(diffPreviewSource) ||
         /\bVariation\b/.test(exercisePairSource)
 
