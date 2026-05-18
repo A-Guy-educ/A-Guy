@@ -195,11 +195,11 @@ export function useLessonPager({
     if (pageState.type === 'outro') return 100
     if (pageState.type === 'pdf') {
       // PDF is the last content page before outro
-      const contentSteps = blocks.length + pdfOffset
+      const contentSteps = blocks.length + introContentOffset + pdfOffset
       return (contentSteps / contentSteps) * 100 * 0.95 // near-complete
     }
     if (pageState.type === 'block' && pageState.blockIndex !== undefined) {
-      const contentSteps = blocks.length + pdfOffset
+      const contentSteps = blocks.length + introContentOffset + pdfOffset
       if (contentSteps === 0) return 0
       return ((pageState.blockIndex + 1) / contentSteps) * 100
     }
