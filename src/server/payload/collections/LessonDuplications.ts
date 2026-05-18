@@ -172,6 +172,52 @@ export const LessonDuplications: CollectionConfig = {
         },
       ],
     },
+    // ── AI Telemetry (issue #1552) ─────────────────────────────────────────────
+    // Token counts from LLM calls across all exercises (two passes per exercise)
+    {
+      name: 'aiTokensInput',
+      type: 'number',
+      defaultValue: 0,
+      admin: {
+        description: 'Total input tokens consumed across all LLM calls for this duplication run.',
+      },
+    },
+    {
+      name: 'aiTokensOutput',
+      type: 'number',
+      defaultValue: 0,
+      admin: {
+        description: 'Total output tokens generated across all LLM calls for this duplication run.',
+      },
+    },
+    {
+      name: 'aiCostUsd',
+      type: 'number',
+      defaultValue: 0,
+      admin: {
+        description:
+          'Estimated USD cost of all LLM calls for this duplication run, based on Gemini 3.1 Pro pricing.',
+      },
+    },
+    {
+      name: 'runDurationMs',
+      type: 'number',
+      defaultValue: 0,
+      admin: {
+        description: 'Wall-clock duration of the duplication run in milliseconds.',
+      },
+    },
+    // ── Stuck Record Detection (issue #1664) ────────────────────────────────────
+    {
+      name: 'claimAttempts',
+      type: 'number',
+      defaultValue: 0,
+      admin: {
+        description:
+          'Number of consecutive cron ticks that claimed this record without producing any new output exercises. Reset to 0 when outputExercises grows. Auto-fails at ≥ 5.',
+        readOnly: true,
+      },
+    },
     createdByField,
   ],
 }

@@ -222,7 +222,11 @@ export function BlocksDocumentLessonView({
                               {exercise.title}
                             </h2>
                           )}
-                          <ExerciseWorksheet blocks={blocks} mediaMap={mediaMap} />
+                          <ExerciseWorksheet
+                            blocks={blocks}
+                            mediaMap={mediaMap}
+                            hideLatexBlocks={false}
+                          />
                         </section>
                       ))}
                     </div>
