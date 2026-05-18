@@ -1,5 +1,6 @@
 import { ENV, HEARTBEAT_INTERVAL_MS, LOCK_TIMEOUT_MS } from '@/server/config/constants'
 import config from '@payload-config'
+import type { MongooseAdapter } from '@payloadcms/db-mongodb'
 import { ObjectId, type Collection, type Document } from 'mongodb'
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload, type Payload } from 'payload'
@@ -20,10 +21,16 @@ interface JobDocument extends Document {
   startedAt?: Date
 }
 
+// Payload's built-in jobs queue lives in the `payload-jobs` Mongo collection.
+// Access it through the Mongoose connection (the proven pattern used across
+// this codebase) rather than db.collections, which does not expose it.
 function getJobCollection(payload: Payload): Collection<JobDocument> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = payload.db as any
-  const coll = db.collections?.jobs || db.collection?.('jobs')
+  const adapter = payload.db as MongooseAdapter
+  const mongoDb = adapter.connection?.db
+  const coll =
+    mongoDb?.collection('payload-jobs') ??
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (payload.db as any).collections?.['payload-jobs']
   if (!coll) throw new Error(`Cannot access Jobs collection`)
   return coll as Collection<JobDocument>
 }
