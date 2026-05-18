@@ -1,4 +1,5 @@
 import { ENV, HEARTBEAT_INTERVAL_MS, LOCK_TIMEOUT_MS } from '@/server/config/constants'
+import { JOBS_COLLECTION } from '@/server/payload/jobs/constants'
 import config from '@payload-config'
 import { ObjectId, type Collection, type Document } from 'mongodb'
 import { NextRequest, NextResponse } from 'next/server'
@@ -20,10 +21,21 @@ interface JobDocument extends Document {
   startedAt?: Date
 }
 
+// Payload's built-in jobs queue lives in the `payload-jobs` Mongo collection.
+// Use the same proven access chain as JobService.fromPayload: the raw
+// connection.collection() path works in deployed runtime; db.collections
+// does not expose the jobs collection.
 function getJobCollection(payload: Payload): Collection<JobDocument> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = payload.db as any
-  const coll = db.collections?.jobs || db.collection?.('jobs')
+  const db = payload.db as unknown as {
+    connection?: { collection?: (name: string) => unknown }
+    collections?: Record<string, unknown>
+    collection?: (name: string) => unknown
+  }
+  const coll =
+    db.connection?.collection?.(JOBS_COLLECTION) ||
+    db.collections?.['payload-jobs'] ||
+    db.collections?.jobs ||
+    db.collection?.(JOBS_COLLECTION)
   if (!coll) throw new Error(`Cannot access Jobs collection`)
   return coll as Collection<JobDocument>
 }
