@@ -165,6 +165,7 @@ export interface UnifiedLLMProvider {
      * structured payload in a form that `text` doesn't faithfully serialize.
      */
     output?: unknown
+    usage?: { inputTokens: number; outputTokens: number }
   }>
 
   // Streaming chat (optional - falls back to generateChatCompletion if not implemented)
@@ -197,7 +198,11 @@ export interface UnifiedLLMProvider {
       timeoutMs?: number
     },
     payload: Payload,
-  ) => Promise<{ text: string; raw?: unknown }>
+  ) => Promise<{
+    text: string
+    raw?: unknown
+    usage?: { inputTokens: number; outputTokens: number }
+  }>
 
   // Tool calling
   generateChatCompletionWithTools: (
@@ -219,6 +224,7 @@ export interface UnifiedLLMProvider {
     text: string
     raw?: unknown
     toolCalls?: Array<{ name: string; args: Record<string, unknown> }>
+    usage?: { inputTokens: number; outputTokens: number }
   }>
 
   // Config check
