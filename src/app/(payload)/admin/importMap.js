@@ -47,6 +47,7 @@ import { ProductsSaveButton as ProductsSaveButton_bd850752e7866f72b743e2e0c1b129
 import { ProductsEditView as ProductsEditView_ff3c2128c868d33a5de1972e5b7e8f8a } from '@/ui/admin/Products/EditView'
 import { TransactionStatusCell as TransactionStatusCell_6b7b08e7fddc3ba187c2fa7390e3cb99 } from '@/ui/admin/TransactionStatusCell'
 import { TransactionRefundAction as TransactionRefundAction_e5bfc69413b21cd5f23c10fce4cae960 } from '@/ui/admin/TransactionEditView'
+import { CouponsListView as CouponsListView_4c2bd615af163e22ea57e98b586263d9 } from '@/ui/admin/Coupons/ListView'
 import { LinkToDoc as LinkToDoc_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloadcms/plugin-search/client'
 import { ReindexButton as ReindexButton_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloadcms/plugin-search/client'
 import { RowLabel as RowLabel_49a0f2da415e33c790acf24cb6dd5091 } from '@/ui/admin/Header'
@@ -110,6 +111,7 @@ export const importMap = {
   "@/ui/admin/Products/EditView#ProductsEditView": ProductsEditView_ff3c2128c868d33a5de1972e5b7e8f8a,
   "@/ui/admin/TransactionStatusCell#TransactionStatusCell": TransactionStatusCell_6b7b08e7fddc3ba187c2fa7390e3cb99,
   "@/ui/admin/TransactionEditView#TransactionRefundAction": TransactionRefundAction_e5bfc69413b21cd5f23c10fce4cae960,
+  "@/ui/admin/Coupons/ListView#CouponsListView": CouponsListView_4c2bd615af163e22ea57e98b586263d9,
   "@payloadcms/plugin-search/client#LinkToDoc": LinkToDoc_aead06e4cbf6b2620c5c51c9ab283634,
   "@payloadcms/plugin-search/client#ReindexButton": ReindexButton_aead06e4cbf6b2620c5c51c9ab283634,
   "@/ui/admin/Header#RowLabel": RowLabel_49a0f2da415e33c790acf24cb6dd5091,

@@ -30,7 +30,13 @@ export const chatRequestSchema = z.object({
 
 export type ChatRequest = z.infer<typeof chatRequestSchema>
 
-export type ContextRelation = 'exercises' | 'lessons' | 'chapters' | 'courses' | 'categories'
+export type ContextRelation =
+  | 'exercises'
+  | 'lessons'
+  | 'chapters'
+  | 'courses'
+  | 'categories'
+  | 'users'
 
 export interface ContextCandidate {
   relationTo: ContextRelation
