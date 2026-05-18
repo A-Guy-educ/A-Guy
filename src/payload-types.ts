@@ -103,6 +103,8 @@ export interface Config {
     products: Product;
     'access-codes': AccessCode;
     transactions: Transaction;
+    coupons: Coupon;
+    'coupon-usages': CouponUsage;
     'mcp-audit-logs': McpAuditLog;
     redirects: Redirect;
     forms: Form;
@@ -152,6 +154,8 @@ export interface Config {
     products: ProductsSelect<false> | ProductsSelect<true>;
     'access-codes': AccessCodesSelect<false> | AccessCodesSelect<true>;
     transactions: TransactionsSelect<false> | TransactionsSelect<true>;
+    coupons: CouponsSelect<false> | CouponsSelect<true>;
+    'coupon-usages': CouponUsagesSelect<false> | CouponUsagesSelect<true>;
     'mcp-audit-logs': McpAuditLogsSelect<false> | McpAuditLogsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
@@ -2742,6 +2746,92 @@ export interface Transaction {
   createdAt: string;
 }
 /**
+ * Manage discount coupons that can be applied at checkout
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupons".
+ */
+export interface Coupon {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * The coupon code (case-insensitive, stored uppercase)
+   */
+  code: string;
+  /**
+   * Percentage: discountValue is a percent (0-100). Fixed: discountValue is in agorot.
+   */
+  discountType: 'percentage' | 'fixed';
+  /**
+   * Percentage (0-100) or fixed amount in agorot
+   */
+  discountValue: number;
+  /**
+   * Whether this coupon can be used
+   */
+  isActive?: boolean | null;
+  /**
+   * Leave empty for no start restriction
+   */
+  validFrom?: string | null;
+  /**
+   * Leave empty for no expiration
+   */
+  validUntil?: string | null;
+  /**
+   * Maximum number of uses (0 = unlimited)
+   */
+  maxUses?: number | null;
+  /**
+   * Number of times this coupon has been used
+   */
+  usesCount?: number | null;
+  /**
+   * Leave empty to apply to all products
+   */
+  applicableProducts?: (string | Product)[] | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Tracks coupon usage per transaction
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupon-usages".
+ */
+export interface CouponUsage {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * The coupon that was used
+   */
+  coupon: string | Coupon;
+  /**
+   * The checkout transaction where the coupon was applied
+   */
+  transaction: string | Transaction;
+  /**
+   * The user who used the coupon
+   */
+  user: string | User;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "mcp-audit-logs".
  */
@@ -3188,6 +3278,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'transactions';
         value: string | Transaction;
+      } | null)
+    | ({
+        relationTo: 'coupons';
+        value: string | Coupon;
+      } | null)
+    | ({
+        relationTo: 'coupon-usages';
+        value: string | CouponUsage;
       } | null)
     | ({
         relationTo: 'mcp-audit-logs';
@@ -4256,6 +4354,38 @@ export interface TransactionsSelect<T extends boolean = true> {
   successUrl?: T;
   cancelUrl?: T;
   errorMessage?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupons_select".
+ */
+export interface CouponsSelect<T extends boolean = true> {
+  tenant?: T;
+  code?: T;
+  discountType?: T;
+  discountValue?: T;
+  isActive?: T;
+  validFrom?: T;
+  validUntil?: T;
+  maxUses?: T;
+  usesCount?: T;
+  applicableProducts?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupon-usages_select".
+ */
+export interface CouponUsagesSelect<T extends boolean = true> {
+  tenant?: T;
+  coupon?: T;
+  transaction?: T;
+  user?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;

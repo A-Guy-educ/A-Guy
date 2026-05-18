@@ -6387,6 +6387,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- #1647: Add admin coupon management UI ([#1676](https://github.com/A-Guy-educ/A-Guy/pull/1676)) — @aguyaharonyair
 - #1664: Auto-fail stuck duplication records to unblock the cron queue ([#1670](https://github.com/A-Guy-educ/A-Guy/pull/1670)) — @aguyaharonyair
 - #1665: Smarter section selector for variations ([#1666](https://github.com/A-Guy-educ/A-Guy/pull/1666)) — @aguyaharonyair
 - #1662: Redesign lesson duplication review page ([#1667](https://github.com/A-Guy-educ/A-Guy/pull/1667)) — @aguyaharonyair
