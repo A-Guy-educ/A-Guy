@@ -87,7 +87,17 @@ describe('createEmptyExercises', () => {
       data: {
         title: 'תרגיל 1',
         lesson: 'lesson-abc',
-        content: { blocks: [] },
+        content: {
+          blocks: [
+            {
+              id: expect.any(String),
+              type: 'rich_text',
+              format: 'md-math-v1',
+              value: '',
+              mediaIds: [],
+            },
+          ],
+        },
         status: 'draft',
       },
       overrideAccess: true,

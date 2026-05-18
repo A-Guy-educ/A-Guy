@@ -23,7 +23,7 @@ import {
 import { LLMProviderType } from '../providers/types'
 import { logger } from '@/infra/utils/logger'
 import type { ContentBlock } from '@/server/payload/collections/Exercises/schemas'
-import { generateId } from '@/server/payload/collections/Exercises/defaults'
+import { DEFAULT_CONTENT, generateId } from '@/server/payload/collections/Exercises/defaults'
 
 export interface ExerciseGenerationInput {
   prompt: string
@@ -109,7 +109,7 @@ export async function createEmptyExercises(
       data: {
         title: `תרגיל ${i + 1}`,
         lesson: lessonId,
-        content: { blocks: [] },
+        content: DEFAULT_CONTENT(),
         status: 'draft',
       } as never,
       overrideAccess: true,
