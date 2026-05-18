@@ -74,6 +74,8 @@ export interface Config {
     config_values: ConfigValue;
     config_audit_logs: ConfigAuditLog;
     conversations: Conversation;
+    'coupon-usages': CouponUsage;
+    coupons: Coupon;
     'guest-sessions': GuestSession;
     memory_items: MemoryItem;
     tenants: Tenant;
@@ -103,6 +105,7 @@ export interface Config {
     products: Product;
     'access-codes': AccessCode;
     transactions: Transaction;
+    payment_stats: PaymentStat;
     'mcp-audit-logs': McpAuditLog;
     redirects: Redirect;
     forms: Form;
@@ -123,6 +126,8 @@ export interface Config {
     config_values: ConfigValuesSelect<false> | ConfigValuesSelect<true>;
     config_audit_logs: ConfigAuditLogsSelect<false> | ConfigAuditLogsSelect<true>;
     conversations: ConversationsSelect<false> | ConversationsSelect<true>;
+    'coupon-usages': CouponUsagesSelect<false> | CouponUsagesSelect<true>;
+    coupons: CouponsSelect<false> | CouponsSelect<true>;
     'guest-sessions': GuestSessionsSelect<false> | GuestSessionsSelect<true>;
     memory_items: MemoryItemsSelect<false> | MemoryItemsSelect<true>;
     tenants: TenantsSelect<false> | TenantsSelect<true>;
@@ -152,6 +157,7 @@ export interface Config {
     products: ProductsSelect<false> | ProductsSelect<true>;
     'access-codes': AccessCodesSelect<false> | AccessCodesSelect<true>;
     transactions: TransactionsSelect<false> | TransactionsSelect<true>;
+    payment_stats: PaymentStatsSelect<false> | PaymentStatsSelect<true>;
     'mcp-audit-logs': McpAuditLogsSelect<false> | McpAuditLogsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
@@ -1713,6 +1719,225 @@ export interface ChatAsset {
   createdAt: string;
 }
 /**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupon-usages".
+ */
+export interface CouponUsage {
+  id: string;
+  /**
+   * The coupon that was used
+   */
+  coupon: string | Coupon;
+  /**
+   * The transaction where the coupon was applied
+   */
+  transaction: string | Transaction;
+  /**
+   * The user who redeemed the coupon
+   */
+  user: string | User;
+  /**
+   * When the coupon was redeemed
+   */
+  usedAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupons".
+ */
+export interface Coupon {
+  id: string;
+  /**
+   * Coupon code (stored uppercase, case-insensitive in app logic)
+   */
+  code: string;
+  discountType: 'percentage' | 'fixed';
+  /**
+   * Percentage (0–100) or agorot amount depending on discountType
+   */
+  discountValue: number;
+  /**
+   * Currency for fixed discount
+   */
+  currency: 'ILS' | 'USD' | 'EUR';
+  /**
+   * Maximum uses (0 = unlimited)
+   */
+  maxUses: number;
+  /**
+   * How many times this coupon has been used
+   */
+  usesCount: number;
+  /**
+   * מתחילת תוקף (אם לא מוגדר — תקף מעכשיו)
+   */
+  validFrom?: string | null;
+  /**
+   * סוף תוקף (אם לא מוגדר — ללא הגבלה)
+   */
+  validUntil?: string | null;
+  isActive: boolean;
+  /**
+   * אם ריק — חל על כל המוצרים
+   */
+  applicableProducts?: (string | Product)[] | null;
+  /**
+   * מקסימום שימושים למשתמש
+   */
+  maxUsesPerUser?: number | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products".
+ */
+export interface Product {
+  id: string;
+  /**
+   * שם המוצר (יוצג למשתמשים)
+   */
+  name: string;
+  /**
+   * מזהה ייחודי (URL-friendly, נוצר אוטומטית מהשם)
+   */
+  slug: string;
+  /**
+   * סוג החיוב: חד-פעמי או מנוי חוזר
+   */
+  billingType: 'one_time' | 'subscription';
+  /**
+   * מרווח החיוב (למנוי בלבד)
+   */
+  interval?: ('month' | 'year') | null;
+  /**
+   * מחיר המוצר
+   */
+  price: number;
+  /**
+   * מטבע התשלום
+   */
+  currency: 'ILS' | 'USD' | 'EUR';
+  /**
+   * בחר את פריטי המוצר (שיעורים ותכונות)
+   */
+  items?: (string | ProductItem)[] | null;
+  /**
+   * האם המוצר פעיל וזמין למכירה
+   */
+  isActive?: boolean | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-items".
+ */
+export interface ProductItem {
+  id: string;
+  /**
+   * בחר את סוג הפריט: שיעור מהמערכת או תכונה מוגדרת
+   */
+  type: 'lesson' | 'feature';
+  /**
+   * בחר את השיעור להוספה למוצר
+   */
+  lesson?: (string | null) | Lesson;
+  /**
+   * מזהה התכונה (לדוגמה: certificate, live-sessions)
+   */
+  featureKey?: string | null;
+  /**
+   * סמן אם יש להדגיש פריט זה בממשק המשתמש
+   */
+  isHighlighted?: boolean | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "transactions".
+ */
+export interface Transaction {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * User who initiated the payment
+   */
+  user: string | User;
+  /**
+   * Product being purchased
+   */
+  product: string | Product;
+  /**
+   * Payment provider used for this transaction
+   */
+  provider: 'stripe' | 'paypal';
+  /**
+   * Transaction ID from the payment provider
+   */
+  providerTransactionId: string;
+  /**
+   * Current status of the transaction
+   */
+  status: 'pending' | 'succeeded' | 'failed' | 'refunded';
+  /**
+   * Amount in agorot (1 ILS = 100 agorot)
+   */
+  amount: number;
+  /**
+   * Currency code (e.g., ILS, USD, EUR)
+   */
+  currency: string;
+  /**
+   * Additional metadata (item IDs, lesson IDs, etc.)
+   */
+  metadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Original success redirect URL
+   */
+  successUrl?: string | null;
+  /**
+   * Original cancel redirect URL
+   */
+  cancelUrl?: string | null;
+  /**
+   * Error message if transaction failed
+   */
+  errorMessage?: string | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Long-term memory items for AI chat context
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2556,80 +2781,6 @@ export interface PricingPlan {
   createdAt: string;
 }
 /**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "product-items".
- */
-export interface ProductItem {
-  id: string;
-  /**
-   * בחר את סוג הפריט: שיעור מהמערכת או תכונה מוגדרת
-   */
-  type: 'lesson' | 'feature';
-  /**
-   * בחר את השיעור להוספה למוצר
-   */
-  lesson?: (string | null) | Lesson;
-  /**
-   * מזהה התכונה (לדוגמה: certificate, live-sessions)
-   */
-  featureKey?: string | null;
-  /**
-   * סמן אם יש להדגיש פריט זה בממשק המשתמש
-   */
-  isHighlighted?: boolean | null;
-  /**
-   * User who created this document
-   */
-  createdBy?: (string | null) | User;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "products".
- */
-export interface Product {
-  id: string;
-  /**
-   * שם המוצר (יוצג למשתמשים)
-   */
-  name: string;
-  /**
-   * מזהה ייחודי (URL-friendly, נוצר אוטומטית מהשם)
-   */
-  slug: string;
-  /**
-   * סוג החיוב: חד-פעמי או מנוי חוזר
-   */
-  billingType: 'one_time' | 'subscription';
-  /**
-   * מרווח החיוב (למנוי בלבד)
-   */
-  interval?: ('month' | 'year') | null;
-  /**
-   * מחיר המוצר
-   */
-  price: number;
-  /**
-   * מטבע התשלום
-   */
-  currency: 'ILS' | 'USD' | 'EUR';
-  /**
-   * בחר את פריטי המוצר (שיעורים ותכונות)
-   */
-  items?: (string | ProductItem)[] | null;
-  /**
-   * האם המוצר פעיל וזמין למכירה
-   */
-  isActive?: boolean | null;
-  /**
-   * User who created this document
-   */
-  createdBy?: (string | null) | User;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
  * Manage access codes that grant course entitlements
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2674,70 +2825,41 @@ export interface AccessCode {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "transactions".
+ * via the `definition` "payment_stats".
  */
-export interface Transaction {
+export interface PaymentStat {
   id: string;
   /**
-   * Tenant scope for this document
+   * Calendar date in YYYY-MM-DD format (UTC)
    */
-  tenant: string | Tenant;
+  date: string;
   /**
-   * User who initiated the payment
+   * Currency for all amounts on this date
    */
-  user: string | User;
+  currency: 'ILS' | 'USD' | 'EUR';
   /**
-   * Product being purchased
+   * Sum of succeeded transaction amounts in agorot
    */
-  product: string | Product;
+  totalRevenueAgorot: number;
   /**
-   * Payment provider used for this transaction
+   * Sum of refunded amounts in agorot
    */
-  provider: 'stripe' | 'paypal';
+  refundedAgorot: number;
   /**
-   * Transaction ID from the payment provider
+   * Sum of failed amounts in agorot
    */
-  providerTransactionId: string;
+  failedAgorot: number;
   /**
-   * Current status of the transaction
+   * Total number of transactions on this date (all statuses)
    */
-  status: 'pending' | 'succeeded' | 'failed' | 'refunded';
+  transactionCount: number;
+  succeededCount: number;
+  refundedCount: number;
+  failedCount: number;
   /**
-   * Amount in agorot (1 ILS = 100 agorot)
+   * Approximate count of newly-counted succeeded transactions per day — may overcount repeat users on the same date due to simplified deduplication logic
    */
-  amount: number;
-  /**
-   * Currency code (e.g., ILS, USD, EUR)
-   */
-  currency: string;
-  /**
-   * Additional metadata (item IDs, lesson IDs, etc.)
-   */
-  metadata?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  /**
-   * Original success redirect URL
-   */
-  successUrl?: string | null;
-  /**
-   * Original cancel redirect URL
-   */
-  cancelUrl?: string | null;
-  /**
-   * Error message if transaction failed
-   */
-  errorMessage?: string | null;
-  /**
-   * User who created this document
-   */
-  createdBy?: (string | null) | User;
+  newCustomersCount: number;
   updatedAt: string;
   createdAt: string;
 }
@@ -3074,6 +3196,14 @@ export interface PayloadLockedDocument {
         value: string | Conversation;
       } | null)
     | ({
+        relationTo: 'coupon-usages';
+        value: string | CouponUsage;
+      } | null)
+    | ({
+        relationTo: 'coupons';
+        value: string | Coupon;
+      } | null)
+    | ({
         relationTo: 'guest-sessions';
         value: string | GuestSession;
       } | null)
@@ -3188,6 +3318,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'transactions';
         value: string | Transaction;
+      } | null)
+    | ({
+        relationTo: 'payment_stats';
+        value: string | PaymentStat;
       } | null)
     | ({
         relationTo: 'mcp-audit-logs';
@@ -3505,6 +3639,38 @@ export interface ConversationsSelect<T extends boolean = true> {
   contextPolicyVersion?: T;
   lastMessageAt?: T;
   archivedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupon-usages_select".
+ */
+export interface CouponUsagesSelect<T extends boolean = true> {
+  coupon?: T;
+  transaction?: T;
+  user?: T;
+  usedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupons_select".
+ */
+export interface CouponsSelect<T extends boolean = true> {
+  code?: T;
+  discountType?: T;
+  discountValue?: T;
+  currency?: T;
+  maxUses?: T;
+  usesCount?: T;
+  validFrom?: T;
+  validUntil?: T;
+  isActive?: T;
+  applicableProducts?: T;
+  maxUsesPerUser?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -4257,6 +4423,24 @@ export interface TransactionsSelect<T extends boolean = true> {
   cancelUrl?: T;
   errorMessage?: T;
   createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payment_stats_select".
+ */
+export interface PaymentStatsSelect<T extends boolean = true> {
+  date?: T;
+  currency?: T;
+  totalRevenueAgorot?: T;
+  refundedAgorot?: T;
+  failedAgorot?: T;
+  transactionCount?: T;
+  succeededCount?: T;
+  refundedCount?: T;
+  failedCount?: T;
+  newCustomersCount?: T;
   updatedAt?: T;
   createdAt?: T;
 }

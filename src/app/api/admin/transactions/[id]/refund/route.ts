@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 
 import config from '@payload-config'
+import type { Transaction } from '@/payload-types'
 import { refundStripe } from '@/lib/payment/stripe'
 import { refundPayPal } from '@/lib/payment/paypal'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
@@ -40,16 +41,17 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   }
 
   // 3. Fetch transaction
-  let transaction: Record<string, unknown> | null = null
+  let transaction: Transaction | undefined
   try {
     transaction = (await payload.findByID({
       collection: 'transactions',
       id,
       depth: 0,
       overrideAccess: true,
-    })) as unknown as Record<string, unknown> | null
-  } catch (err) {
-    if (err instanceof Error && (err.name === 'NotFound' || err.message.includes('Not Found'))) {
+    })) as Transaction
+  } catch (err: unknown) {
+    const error = err as { status?: number; isOperational?: boolean }
+    if (error?.status === 404 || error?.isOperational) {
       return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
     }
     throw err
