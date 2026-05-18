@@ -277,6 +277,19 @@ export const Courses: CollectionConfig = {
       },
     },
 
+    // Recommended next courses (shown when finishing a course's last lesson)
+    {
+      name: 'recommendedNextCourses',
+      type: 'relationship',
+      relationTo: 'courses',
+      hasMany: true,
+      maxDepth: 0,
+      admin: {
+        position: 'sidebar',
+        description: 'Recommended courses to show after completing this course',
+      },
+    },
+
     // Created By
     createdByField,
   ],

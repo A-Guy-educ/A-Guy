@@ -5,7 +5,7 @@ import { SystemLink } from '@/infra/loading/components/SystemLink'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { Button } from '@/ui/web/components/button'
 import { Progress } from '@/ui/web/components/progress'
-import { Sparkles, Trophy } from 'lucide-react'
+import { Sparkles, Trophy, ArrowRight } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Confetti } from '@/ui/web/components/confetti'
 
@@ -14,9 +14,21 @@ interface CompleteContentProps {
   lessonId: string
   /** Grade bucket for progress storage — must be the lesson's course label, not the user's profile grade. */
   gradeLevel: string
+  nextLesson?: { id: string; title: string; href: string }
+  recommendedCourses?: Array<{ id: string; title: string; href: string }>
+  isLastLesson: boolean
+  courseChapterUrl: string
 }
 
-export function CompleteContent({ backUrl, lessonId, gradeLevel }: CompleteContentProps) {
+export function CompleteContent({
+  backUrl,
+  lessonId,
+  gradeLevel,
+  nextLesson,
+  recommendedCourses,
+  isLastLesson,
+  courseChapterUrl,
+}: CompleteContentProps) {
   const t = useTranslations('courses')
   const savedRef = useRef(false)
 
@@ -89,32 +101,94 @@ export function CompleteContent({ backUrl, lessonId, gradeLevel }: CompleteConte
                   {t('exercisesPagerCompletedDescription')}
                 </p>
 
-                <Button
-                  asChild
-                  size="lg"
-                  variant="secondary"
-                  className="w-full py-section-sm rounded-2xl text-body-lg shadow-card shadow-secondary/20 hover:shadow-card-hover hover:shadow-secondary/30 transition-all duration-slow"
-                >
-                  <SystemLink href={backUrl}>
-                    <Sparkles className="w-5 h-5 me-2" />
-                    {t('exercisesPagerComplete')}
-                  </SystemLink>
-                </Button>
+                {isLastLesson && recommendedCourses && recommendedCourses.length > 0 ? (
+                  <div className="space-y-4">
+                    <p className="text-body-md font-medium text-foreground">
+                      {t('recommendedCoursesTitle')}
+                    </p>
+                    <div className="flex flex-col gap-3">
+                      {recommendedCourses.map((course) => (
+                        <Button
+                          key={course.id}
+                          asChild
+                          size="lg"
+                          variant="secondary"
+                          className="w-full py-section-sm rounded-2xl text-body-lg shadow-card shadow-secondary/20 hover:shadow-card-hover hover:shadow-secondary/30 transition-all duration-slow"
+                        >
+                          <SystemLink href={course.href}>
+                            <Sparkles className="w-5 h-5 me-2" />
+                            {course.title}
+                          </SystemLink>
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                ) : nextLesson ? (
+                  <div className="space-y-4">
+                    <Button
+                      asChild
+                      size="lg"
+                      variant="secondary"
+                      className="w-full py-section-sm rounded-2xl text-body-lg shadow-card shadow-secondary/20 hover:shadow-card-hover hover:shadow-secondary/30 transition-all duration-slow"
+                    >
+                      <SystemLink href={nextLesson.href}>
+                        <ArrowRight className="w-5 h-5 me-2" />
+                        {t('nextLessonButton')}
+                      </SystemLink>
+                    </Button>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      <Button
+                        asChild
+                        variant="ghost"
+                        className="text-muted-foreground text-body-sm hover:text-foreground transition-colors duration-slow gap-content-gap-xs"
+                      >
+                        <SystemLink href={backUrl}>
+                          <Sparkles className="w-4 h-4 me-2" />
+                          {t('exercisesPagerBackToLesson')}
+                        </SystemLink>
+                      </Button>
+                      <Button
+                        asChild
+                        variant="ghost"
+                        className="text-muted-foreground text-body-sm hover:text-foreground transition-colors duration-slow gap-content-gap-xs"
+                      >
+                        <SystemLink href={courseChapterUrl}>
+                          <Sparkles className="w-4 h-4 me-2" />
+                          {t('backToCourseButton')}
+                        </SystemLink>
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    asChild
+                    size="lg"
+                    variant="secondary"
+                    className="w-full py-section-sm rounded-2xl text-body-lg shadow-card shadow-secondary/20 hover:shadow-card-hover hover:shadow-secondary/30 transition-all duration-slow"
+                  >
+                    <SystemLink href={backUrl}>
+                      <Sparkles className="w-5 h-5 me-2" />
+                      {t('exercisesPagerComplete')}
+                    </SystemLink>
+                  </Button>
+                )}
               </div>
             </div>
 
-            <div className="flex justify-center pt-4">
-              <Button
-                asChild
-                variant="ghost"
-                className="text-muted-foreground text-body-sm hover:text-foreground transition-colors duration-slow gap-content-gap-xs"
-              >
-                <SystemLink href={backUrl}>
-                  <Sparkles className="w-4 h-4 me-2" />
-                  {t('exercisesPagerBackToLesson')}
-                </SystemLink>
-              </Button>
-            </div>
+            {!isLastLesson && !nextLesson && (
+              <div className="flex justify-center pt-4">
+                <Button
+                  asChild
+                  variant="ghost"
+                  className="text-muted-foreground text-body-sm hover:text-foreground transition-colors duration-slow gap-content-gap-xs"
+                >
+                  <SystemLink href={backUrl}>
+                    <Sparkles className="w-4 h-4 me-2" />
+                    {t('exercisesPagerBackToLesson')}
+                  </SystemLink>
+                </Button>
+              </div>
+            )}
           </motion.div>
         </div>
       </main>

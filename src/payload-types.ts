@@ -632,6 +632,10 @@ export interface Course {
    */
   formulaSheet?: (string | null) | FormulaSheet;
   /**
+   * Recommended courses to show after completing this course
+   */
+  recommendedNextCourses?: (string | Course)[] | null;
+  /**
    * User who created this document
    */
   createdBy?: (string | null) | User;
@@ -1537,6 +1541,14 @@ export interface Lesson {
    * Rich intro content page shown between lesson opening and exercises
    */
   introContentPage?: (string | null) | ContentPage;
+  /**
+   * Mark if this is the last lesson in the course. Shows recommended courses instead of next lesson.
+   */
+  isLastLessonInCourse?: boolean | null;
+  /**
+   * Override automatic next lesson recommendation. For practice/exam lessons, leave empty to set manually.
+   */
+  recommendedNextLesson?: (string | null) | Lesson;
   /**
    * User who created this document
    */
@@ -3698,6 +3710,7 @@ export interface CoursesSelect<T extends boolean = true> {
   contentStatusExpiresAt?: T;
   contentStatusLabel?: T;
   formulaSheet?: T;
+  recommendedNextCourses?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -3753,6 +3766,8 @@ export interface LessonsSelect<T extends boolean = true> {
   contentStatusLabel?: T;
   formulaSheet?: T;
   introContentPage?: T;
+  isLastLessonInCourse?: T;
+  recommendedNextLesson?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;

@@ -519,6 +519,29 @@ export const Lessons: CollectionConfig = {
       },
     },
 
+    // Next lesson recommendation
+    {
+      name: 'isLastLessonInCourse',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        position: 'sidebar',
+        description:
+          'Mark if this is the last lesson in the course. Shows recommended courses instead of next lesson.',
+      },
+    },
+    {
+      name: 'recommendedNextLesson',
+      type: 'relationship',
+      relationTo: 'lessons',
+      maxDepth: 0,
+      admin: {
+        position: 'sidebar',
+        description:
+          'Override automatic next lesson recommendation. For practice/exam lessons, leave empty to set manually.',
+      },
+    },
+
     // Created By
     createdByField,
   ],
