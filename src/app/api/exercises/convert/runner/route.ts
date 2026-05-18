@@ -36,25 +36,7 @@ function getJobCollection(payload: Payload): Collection<JobDocument> {
     db.collections?.['payload-jobs'] ||
     db.collections?.jobs ||
     db.collection?.(JOBS_COLLECTION)
-  if (!coll) {
-    // DIAG-v4: surface the real deployed adapter shape so we stop guessing.
-    const anyDb = db as unknown as Record<string, unknown>
-    const conn = anyDb.connection as Record<string, unknown> | undefined
-    const diag = {
-      marker: 'DIAG-v4',
-      dbKeys: Object.keys(anyDb || {}),
-      connType: typeof anyDb.connection,
-      connKeys: conn ? Object.keys(conn).slice(0, 25) : null,
-      connCollectionType: typeof conn?.collection,
-      connDbType: typeof (conn?.db as Record<string, unknown> | undefined),
-      collectionsType: typeof anyDb.collections,
-      collectionsKeys: anyDb.collections
-        ? Object.keys(anyDb.collections as object).slice(0, 40)
-        : null,
-      dbCollectionFnType: typeof anyDb.collection,
-    }
-    throw new Error(`Cannot access Jobs collection :: ${JSON.stringify(diag)}`)
-  }
+  if (!coll) throw new Error(`Cannot access Jobs collection`)
   return coll as Collection<JobDocument>
 }
 
