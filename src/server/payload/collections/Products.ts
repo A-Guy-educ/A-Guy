@@ -64,6 +64,7 @@ export const Products: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'name',
+    group: 'product & subscription management',
     defaultColumns: ['name', 'billingType', 'interval', 'price', 'currency', 'isActive'],
     components: {
       views: {

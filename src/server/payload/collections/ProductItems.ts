@@ -25,6 +25,7 @@ export const ProductItems: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'id',
+    group: 'product & subscription management',
     defaultColumns: ['type', 'lesson', 'featureKey', 'isHighlighted'],
   },
   fields: [

@@ -18,7 +18,7 @@ export const AccessCodes: CollectionConfig = {
   admin: {
     useAsTitle: 'code',
     defaultColumns: ['code', 'course', 'maxUses', 'currentUses', 'isActive', 'expiresAt'],
-    group: 'Access Control',
+    group: 'product & subscription management',
     description: 'Manage access codes that grant course entitlements',
   },
   access: {
