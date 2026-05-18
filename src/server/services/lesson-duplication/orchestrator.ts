@@ -21,7 +21,7 @@ import type { DuplicationSubject } from '@/server/payload/collections/LessonDupl
 import { logger } from '@/infra/utils/logger'
 import {
   selectExercisesScaled,
-  selectSectionsScaled,
+  selectSectionsForVariation,
 } from '@/server/services/lesson-duplication/selectors'
 import { getSourceExercisesForLesson } from '@/server/services/lesson-duplication/source-exercises'
 import {
@@ -35,6 +35,7 @@ import {
   SEMANTIC_FAILURE_CODE,
 } from '@/server/services/lesson-duplication/validators/semantic'
 import { RouterStrategy } from '@/server/services/lesson-duplication/strategies/router'
+import { getModelCost } from '@/infra/llm/pricing'
 
 // Concurrency of 1 = process exercises sequentially. Each exercise hits the
 // LLM twice (creative + deterministic). Gemini's per-minute quota is easily
@@ -48,6 +49,7 @@ import { RouterStrategy } from '@/server/services/lesson-duplication/strategies/
 export const CONCURRENCY_LIMIT = 1 as const
 
 export const GENERATION_FAILURE_CODE = 'GENERATION_FAILED' as const
+export const STUCK_FAILURE_CODE = 'STUCK_AFTER_MAX_ATTEMPTS' as const
 
 export type DuplicationStrategy = 'script' | 'ai'
 
@@ -74,7 +76,7 @@ export async function runStrategy(
   level: 'none' | 'light' | 'medium' | 'deep',
   subject: DuplicationSubject,
   payload: Payload,
-): Promise<StrategyResult> {
+): Promise<StrategyResult & { tokensUsed: { inputTokens: number; outputTokens: number } }> {
   const router = new RouterStrategy(payload)
   const result = await router.apply(exercise as unknown as Exercise, level, subject)
 
@@ -83,6 +85,7 @@ export async function runStrategy(
     exerciseId: exercise.id,
     strategy: result.needsAiFallback ? 'ai' : 'script',
     blocks: content.blocks ?? [],
+    tokensUsed: result.tokensUsed ?? { inputTokens: 0, outputTokens: 0 },
   }
 }
 
@@ -104,10 +107,10 @@ export async function runStrategy(
 function trimSourceBlocksIfNeeded(exercise: ExerciseDoc): ExerciseDoc {
   const blocks = exercise.content?.blocks
   if (!Array.isArray(blocks) || blocks.length <= 5) return exercise
-  const picked = selectSectionsScaled(blocks, 5)
+  const picked = selectSectionsForVariation(blocks, 5)
   logger.info(
     { exerciseId: exercise.id, originalCount: blocks.length, trimmedTo: picked.length },
-    'Source exercise has more than 5 blocks — trimming via scaling-random selector',
+    'Source exercise has more than 5 blocks — trimming via variation-aware selector',
   )
   return {
     ...exercise,
@@ -381,7 +384,10 @@ async function processExercise(
   level: 'none' | 'light' | 'medium' | 'deep',
   subject: DuplicationSubject,
   payload: Payload,
-): Promise<StrategyResult | null> {
+): Promise<{
+  result: StrategyResult | null
+  tokensUsed: { inputTokens: number; outputTokens: number }
+}> {
   const exerciseRef = exercise.id
 
   // Pre-trim source blocks. The structural validator caps exercises at 5
@@ -395,13 +401,16 @@ async function processExercise(
 
   // Step 1: Run strategy
   let strategyResult: StrategyResult
+  let tokensUsed = { inputTokens: 0, outputTokens: 0 }
   try {
-    strategyResult = await runStrategy(trimmedExercise, level, subject, payload)
+    const strategyResponse = await runStrategy(exercise, level, subject, payload)
+    strategyResult = strategyResponse
+    tokensUsed = strategyResponse.tokensUsed
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown strategy error'
     logger.error({ exerciseRef, level, err }, 'Strategy generation failed')
     await appendFailure(payload, duplicationId, exerciseRef, 0, GENERATION_FAILURE_CODE, message)
-    return null
+    return { result: null, tokensUsed }
   }
 
   // Step 2: Structural validation. Split failures into blocking (drop the
@@ -445,7 +454,7 @@ async function processExercise(
   }
 
   if (blockingFailures.length > 0) {
-    return null
+    return { result: null, tokensUsed }
   }
 
   // Warning-only path: fill placeholders so the exercise renders. Warnings are
@@ -480,11 +489,11 @@ async function processExercise(
         SEMANTIC_FAILURE_CODE,
         `Semantic mismatch: ${semanticResult.reasons.join('; ')}`,
       )
-      return null
+      return { result: null, tokensUsed }
     }
   }
 
-  return strategyResult
+  return { result: strategyResult, tokensUsed }
 }
 
 /**
@@ -573,6 +582,11 @@ export async function runDuplicationOrchestrator(
     )
     return 'failed'
   }
+
+  // Token accumulators and timing for AI telemetry (issue #1552)
+  const runStartTime = Date.now()
+  let totalAiTokensInput = 0
+  let totalAiTokensOutput = 0
 
   try {
     const sourceLessonId =
@@ -738,13 +752,16 @@ export async function runDuplicationOrchestrator(
         }
       }
 
-      const result = await processExercise(
+      const { result, tokensUsed } = await processExercise(
         exercise,
         duplicationId,
         duplicationLevel,
         duplicationSubject,
         payload,
       )
+      // Accumulate token usage across all exercises (issue #1552)
+      totalAiTokensInput += tokensUsed.inputTokens
+      totalAiTokensOutput += tokensUsed.outputTokens
       if (result === null) continue // failure already recorded by processExercise
 
       try {
@@ -796,10 +813,19 @@ export async function runDuplicationOrchestrator(
       'Duplication orchestrator completed',
     )
 
+    const runDurationMs = Date.now() - runStartTime
+    // Compute cost using gemini-3.1-pro as the representative model (issue #1552)
+    const aiCostUsd = getModelCost('gemini-3.1-pro', totalAiTokensInput, totalAiTokensOutput)
     await payload.update({
       collection: 'lesson-duplications',
       id: duplicationId,
-      data: { status: finalStatus } as never,
+      data: {
+        status: finalStatus,
+        aiTokensInput: totalAiTokensInput,
+        aiTokensOutput: totalAiTokensOutput,
+        aiCostUsd,
+        runDurationMs,
+      } as never,
       overrideAccess: true,
     })
     return finalStatus

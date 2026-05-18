@@ -7067,6 +7067,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- #1647: Add admin coupon management UI ([#1676](https://github.com/A-Guy-educ/A-Guy/pull/1676)) — @aguyaharonyair
+- #1664: Auto-fail stuck duplication records to unblock the cron queue ([#1670](https://github.com/A-Guy-educ/A-Guy/pull/1670)) — @aguyaharonyair
+- #1665: Smarter section selector for variations ([#1666](https://github.com/A-Guy-educ/A-Guy/pull/1666)) — @aguyaharonyair
+- #1662: Redesign lesson duplication review page ([#1667](https://github.com/A-Guy-educ/A-Guy/pull/1667)) — @aguyaharonyair
+- #1552: Track AI tokens, cost, and run duration on each LessonDuplicatio… ([#1561](https://github.com/A-Guy-educ/A-Guy/pull/1561)) — @aguyaharonyair
 - #1619: Secrets vault — payment provider keys ([#1639](https://github.com/A-Guy-educ/A-Guy/pull/1639)) — @aguyaharonyair
 - feat(lesson-duplication): Process Now button for manual orchestrator trigger ([#1624](https://github.com/A-Guy-educ/A-Guy/pull/1624)) — @aguyshayb
 - #1621: Export lesson + ordered exercises as JSON from admin ([#1625](https://github.com/A-Guy-educ/A-Guy/pull/1625)) — @aguyaharonyair
