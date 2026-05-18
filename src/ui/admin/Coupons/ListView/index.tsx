@@ -9,7 +9,7 @@
  */
 
 import React, { useState, useCallback } from 'react'
-import { revalidatePath } from 'next/cache'
+import { useRouter } from 'next/navigation'
 import type { ListViewClientProps } from 'payload'
 import { DefaultListView, useTranslation } from '@payloadcms/ui'
 
@@ -19,12 +19,15 @@ import { getCouponStrings } from '../strings'
 export const CouponsListView: React.FC<ListViewClientProps> = (props) => {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const { i18n } = useTranslation()
+  const router = useRouter()
   const s = getCouponStrings(i18n.language)
 
   const handleCouponCreated = useCallback(() => {
     setShowCreateModal(false)
-    revalidatePath('/admin/collections/coupons')
-  }, [])
+    // revalidatePath is server-only; refresh the route from the client
+    // to re-fetch the coupons list after creation.
+    router.refresh()
+  }, [router])
 
   return (
     <>
