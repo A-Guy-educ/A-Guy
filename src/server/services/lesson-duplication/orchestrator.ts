@@ -29,13 +29,13 @@ import {
   fillMissingFieldsWithPlaceholders,
   BLOCKING_FAILURE_CODES,
   type StructuralFailure,
+  type FailureCode,
 } from '@/server/services/lesson-duplication/validators/structural'
 import {
   validateExerciseSemantic,
   SEMANTIC_FAILURE_CODE,
 } from '@/server/services/lesson-duplication/validators/semantic'
 import { RouterStrategy } from '@/server/services/lesson-duplication/strategies/router'
-import { getModelCost } from '@/infra/llm/pricing'
 
 // Concurrency of 1 = process exercises sequentially. Each exercise hits the
 // LLM twice (creative + deterministic). Gemini's per-minute quota is easily
@@ -104,7 +104,7 @@ export async function runStrategy(
  * Admins doing deep variations on real lessons would silently lose any
  * exercise that exceeded the block cap.
  */
-function trimSourceBlocksIfNeeded(exercise: ExerciseDoc): ExerciseDoc {
+export function trimSourceBlocksIfNeeded(exercise: ExerciseDoc): ExerciseDoc {
   const blocks = exercise.content?.blocks
   if (!Array.isArray(blocks) || blocks.length <= 5) return exercise
   const picked = selectSectionsForVariation(blocks, 5)
@@ -206,7 +206,7 @@ async function appendEntry(
 }
 
 /** Append a blocking failure (exercise dropped from output lesson). */
-async function appendFailure(
+export async function appendFailure(
   payload: Payload,
   duplicationId: string,
   exerciseRef: string,
@@ -218,7 +218,7 @@ async function appendFailure(
 }
 
 /** Append a non-blocking warning (exercise kept with placeholder). */
-async function appendWarning(
+export async function appendWarning(
   payload: Payload,
   duplicationId: string,
   exerciseRef: string,
@@ -264,16 +264,26 @@ async function appendOutputExercise(
 }
 
 /** Shape of an exercise from the exercises collection. */
-type ExerciseDoc = {
+export type ExerciseDoc = {
   id: string
   content?: { blocks?: ContentBlock[] }
 }
 
 /** Mapping entry from source exercise to generated output exercise. */
-interface OutputExerciseMapping {
+export interface OutputExerciseMapping {
   sourceExerciseId: string
   outputExerciseId: string
   strategy: DuplicationStrategy
+}
+
+/** Failure entry stored on the LessonDuplications record. */
+export interface FailureEntry {
+  exerciseRef: string
+  sectionIndex: number
+  code: FailureCode | string
+  message: string
+  suggestedAction: 'skip' | 'regenerate' | 'keep'
+  resolved: boolean
 }
 
 /**
@@ -346,7 +356,7 @@ async function createOutputLesson(
  * Create a draft exercise in the output lesson with the generated blocks.
  * Returns the mapping entry for tracking.
  */
-async function createOutputExercise(
+export async function createOutputExercise(
   payload: Payload,
   result: StrategyResult,
   outputLessonId: string,
@@ -403,7 +413,7 @@ async function processExercise(
   let strategyResult: StrategyResult
   let tokensUsed = { inputTokens: 0, outputTokens: 0 }
   try {
-    const strategyResponse = await runStrategy(exercise, level, subject, payload)
+    const strategyResponse = await runStrategy(trimmedExercise, level, subject, payload)
     strategyResult = strategyResponse
     tokensUsed = strategyResponse.tokensUsed
   } catch (err) {
@@ -583,11 +593,6 @@ export async function runDuplicationOrchestrator(
     return 'failed'
   }
 
-  // Token accumulators and timing for AI telemetry (issue #1552)
-  const runStartTime = Date.now()
-  let totalAiTokensInput = 0
-  let totalAiTokensOutput = 0
-
   try {
     const sourceLessonId =
       typeof duplication.sourceLesson === 'string'
@@ -752,17 +757,15 @@ export async function runDuplicationOrchestrator(
         }
       }
 
-      const { result, tokensUsed } = await processExercise(
+      const { result } = await processExercise(
         exercise,
         duplicationId,
         duplicationLevel,
         duplicationSubject,
         payload,
       )
-      // Accumulate token usage across all exercises (issue #1552)
-      totalAiTokensInput += tokensUsed.inputTokens
-      totalAiTokensOutput += tokensUsed.outputTokens
-      if (result === null) continue // failure already recorded by processExercise
+
+      if (result === null) continue
 
       try {
         const mapping = await createOutputExercise(payload, result, outputLessonId)
@@ -813,18 +816,11 @@ export async function runDuplicationOrchestrator(
       'Duplication orchestrator completed',
     )
 
-    const runDurationMs = Date.now() - runStartTime
-    // Compute cost using gemini-3.1-pro as the representative model (issue #1552)
-    const aiCostUsd = getModelCost('gemini-3.1-pro', totalAiTokensInput, totalAiTokensOutput)
     await payload.update({
       collection: 'lesson-duplications',
       id: duplicationId,
       data: {
         status: finalStatus,
-        aiTokensInput: totalAiTokensInput,
-        aiTokensOutput: totalAiTokensOutput,
-        aiCostUsd,
-        runDurationMs,
       } as never,
       overrideAccess: true,
     })
