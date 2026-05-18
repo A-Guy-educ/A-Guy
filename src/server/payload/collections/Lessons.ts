@@ -1,4 +1,8 @@
-import type { CollectionBeforeChangeHook, CollectionConfig } from 'payload'
+import type {
+  CollectionAfterChangeHook,
+  CollectionBeforeChangeHook,
+  CollectionConfig,
+} from 'payload'
 
 import { DEFAULT_LESSON_ACCESS_TYPE } from '@/server/constants/access-types'
 import { tenantField } from '@/server/payload/fields/tenant'
@@ -34,6 +38,54 @@ const validateVisibleRenderers: CollectionBeforeChangeHook = async ({ data, oper
     throw new Error('visibleRenderers contains an invalid value.')
   }
   return data
+}
+
+/**
+ * Auto-creates an empty intro ContentPage when a new lesson is created.
+ * The intro page is a rich content screen shown between the lesson opening
+ * and the exercise blocks. Skips if already set or if triggered by migration.
+ */
+const createIntroContentPage: CollectionAfterChangeHook = async ({ doc, operation, req }) => {
+  // Guard: skip updates, skip if already set, skip if triggered by migration
+  if (operation !== 'create') return doc
+  if (req.context._skipIntroCreation) return doc
+  if (doc.introContentPage) return doc
+
+  // Create intro ContentPage
+  const tenantId =
+    doc.tenant && typeof doc.tenant === 'object' && 'id' in doc.tenant
+      ? (doc.tenant as { id: string }).id
+      : (doc.tenant as string | null)
+
+  const title = `הקדמה ל-${doc.title}`
+  const timestamp = Date.now().toString(36)
+
+  const newPage = await req.payload.create({
+    collection: 'content-pages',
+    data: {
+      lesson: doc.id,
+      title,
+      slug: `hagdima-le-${doc.slug || doc.id}-${timestamp}`,
+      body: [] as never[],
+      status: 'published',
+      isActive: true,
+      tenant: tenantId ?? undefined,
+    } as never,
+    req,
+    context: { _skipIntroCreation: true, _skipBlockSync: true },
+    overrideAccess: true,
+  })
+
+  // Link the new page to the lesson
+  await req.payload.update({
+    collection: 'lessons',
+    id: doc.id,
+    data: { introContentPage: newPage.id },
+    context: { _skipIntroCreation: true },
+    overrideAccess: true,
+  })
+
+  return doc
 }
 
 export const Lessons: CollectionConfig = {
@@ -168,6 +220,7 @@ export const Lessons: CollectionConfig = {
         return doc
       },
     ],
+    afterChange: [createIntroContentPage],
   },
   // Hide Payload's built-in Duplicate action so admins can only use our
   // custom modal button. The built-in does a dumb field-copy that bypasses
@@ -438,6 +491,19 @@ export const Lessons: CollectionConfig = {
       admin: {
         position: 'sidebar',
         description: 'Lesson-specific formula sheet (overrides course default)',
+      },
+    },
+
+    // Intro Content Page (auto-created, rich intro shown between opening and exercises)
+    {
+      name: 'introContentPage',
+      type: 'relationship',
+      relationTo: 'content-pages',
+      maxDepth: 0,
+      index: true,
+      admin: {
+        position: 'sidebar',
+        description: 'Rich intro content page shown between lesson opening and exercises',
       },
     },
 

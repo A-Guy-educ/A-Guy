@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import type { ResolvedLessonBlock } from '@/server/repos/queries/lesson-blocks'
 import type { Exercise, ContentPage } from '@/payload-types'
 
-type PageType = 'intro' | 'block' | 'pdf' | 'outro'
+type PageType = 'intro' | 'introContent' | 'block' | 'pdf' | 'outro'
 
 interface PageState {
   type: PageType
@@ -18,6 +18,7 @@ interface UseLessonPagerProps {
   chapterSlug: string
   lessonSlug: string
   hasPdfFiles?: boolean
+  hasIntroContent?: boolean
 }
 
 function getExerciseSlug(exercise: Exercise): string {
@@ -34,10 +35,12 @@ export function useLessonPager({
   chapterSlug,
   lessonSlug,
   hasPdfFiles = false,
+  hasIntroContent = false,
 }: UseLessonPagerProps) {
-  // Pages: intro(0) → blocks(1..n) → [pdf(n+1)] → outro
+  // Pages: intro(0) → [introContent(1)] → blocks(1..n) → [pdf(n+1)] → outro
+  const introContentOffset = hasIntroContent ? 1 : 0
   const pdfOffset = hasPdfFiles ? 1 : 0
-  const totalPages = blocks.length + 2 + pdfOffset
+  const totalPages = blocks.length + 2 + introContentOffset + pdfOffset
 
   const [pageState, setPageState] = useState<PageState>({
     type: 'intro',
@@ -95,7 +98,7 @@ export function useLessonPager({
       if (typeof window === 'undefined') return
 
       let newUrl: string
-      if (state.type === 'intro') {
+      if (state.type === 'intro' || state.type === 'introContent') {
         newUrl = introUrl
       } else if (state.type === 'block' && state.blockIndex !== undefined) {
         newUrl = getBlockUrl(state.blockIndex)
@@ -118,15 +121,16 @@ export function useLessonPager({
   const pageToState = useCallback(
     (page: number): PageState => {
       if (page === 0) return { type: 'intro', pageNumber: 0 }
+      if (hasIntroContent && page === 1) return { type: 'introContent', pageNumber: page }
       if (page === totalPages - 1) return { type: 'outro', pageNumber: page }
       // PDF page sits after all blocks
-      if (hasPdfFiles && page === blocks.length + 1) {
+      if (hasPdfFiles && page === blocks.length + 1 + introContentOffset) {
         return { type: 'pdf', pageNumber: page }
       }
-      const blockIndex = page - 1
+      const blockIndex = page - introContentOffset - 1
       return { type: 'block', pageNumber: page, blockIndex }
     },
-    [totalPages, hasPdfFiles, blocks.length],
+    [totalPages, hasPdfFiles, hasIntroContent, blocks.length, introContentOffset],
   )
 
   const [isPending, startTransition] = useTransition()
@@ -166,6 +170,10 @@ export function useLessonPager({
   }, [pageToState, startTransition])
 
   const handleStart = useCallback(() => {
+    if (hasIntroContent) {
+      setPageState({ type: 'introContent', pageNumber: 1 })
+      return
+    }
     if (blocks.length === 0 && hasPdfFiles) {
       setPageState({ type: 'pdf', pageNumber: 1 })
       return
@@ -174,8 +182,8 @@ export function useLessonPager({
       setPageState({ type: 'outro', pageNumber: totalPages - 1 })
       return
     }
-    setPageState({ type: 'block', pageNumber: 1, blockIndex: 0 })
-  }, [blocks.length, totalPages, hasPdfFiles])
+    setPageState({ type: 'block', pageNumber: 1 + introContentOffset, blockIndex: 0 })
+  }, [blocks.length, totalPages, hasPdfFiles, hasIntroContent, introContentOffset])
 
   useEffect(() => {
     syncUrl(pageState)
@@ -183,6 +191,7 @@ export function useLessonPager({
 
   const progressPercent = (() => {
     if (pageState.type === 'intro') return 0
+    if (pageState.type === 'introContent') return 5
     if (pageState.type === 'outro') return 100
     if (pageState.type === 'pdf') {
       // PDF is the last content page before outro
