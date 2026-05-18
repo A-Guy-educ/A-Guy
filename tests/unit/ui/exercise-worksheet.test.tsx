@@ -43,10 +43,10 @@ vi.mock('@/ui/web/exerciserenderer/blocks/LatexBlockRenderer', () => ({
   ),
 }))
 
-function renderWith(locale: 'en' | 'he', blocks: ContentBlock[]) {
+function renderWith(locale: 'en' | 'he', blocks: ContentBlock[], hideLatexBlocks?: boolean) {
   return render(
     <I18nProvider locale={locale} messages={locale === 'en' ? enMessages : heMessages}>
-      <ExerciseWorksheet blocks={blocks} />
+      <ExerciseWorksheet blocks={blocks} hideLatexBlocks={hideLatexBlocks} />
     </I18nProvider>,
   )
 }
@@ -59,7 +59,13 @@ describe('ExerciseWorksheet', () => {
   it('renders latex blocks for mobile exercise viewing (issue #1519)', () => {
     const blocks = [
       { id: 'lx-1', type: 'latex' as const, latex: 'E = mc^2', renderMode: 'block' as const },
-      { id: 'rt-1', type: 'rich_text' as const, format: 'md-math-v1' as const, value: 'Formula:', mediaIds: [] },
+      {
+        id: 'rt-1',
+        type: 'rich_text' as const,
+        format: 'md-math-v1' as const,
+        value: 'Formula:',
+        mediaIds: [],
+      },
     ] as unknown as ContentBlock[]
 
     renderWith('en', blocks)
@@ -80,7 +86,7 @@ describe('ExerciseWorksheet', () => {
       { id: 'lx-1', type: 'latex', latex: 'E = mc^2', renderMode: 'block' },
     ] as unknown as ContentBlock[]
 
-    renderWith('en', blocks)
+    renderWith('en', blocks, true) // hideLatexBlocks={true} to test backward-compatible hiding
     expect(screen.getByTestId('rich')).toHaveTextContent('Visible prose')
     expect(screen.queryByText('E = mc^2')).not.toBeInTheDocument()
   })
