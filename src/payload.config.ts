@@ -112,6 +112,7 @@ export default buildConfig({
       beforeNavLinks: [
         '@/ui/admin/PdfConversion/SidebarLink',
         '@/ui/admin/LessonDuplicationReview/SidebarLink',
+        '@/ui/admin/ProductSubscriptionManagement/SidebarLink',
       ],
       afterNavLinks: ['@/ui/admin/UserEmail'],
     },

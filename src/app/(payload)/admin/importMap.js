@@ -47,6 +47,7 @@ import { ProductsSaveButton as ProductsSaveButton_bd850752e7866f72b743e2e0c1b129
 import { ProductsEditView as ProductsEditView_ff3c2128c868d33a5de1972e5b7e8f8a } from '@/ui/admin/Products/EditView'
 import { TransactionStatusCell as TransactionStatusCell_6b7b08e7fddc3ba187c2fa7390e3cb99 } from '@/ui/admin/TransactionStatusCell'
 import { TransactionRefundAction as TransactionRefundAction_e5bfc69413b21cd5f23c10fce4cae960 } from '@/ui/admin/TransactionEditView'
+import { CouponsListView as CouponsListView_4c2bd615af163e22ea57e98b586263d9 } from '@/ui/admin/Coupons/ListView'
 import { LinkToDoc as LinkToDoc_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloadcms/plugin-search/client'
 import { ReindexButton as ReindexButton_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloadcms/plugin-search/client'
 import { RowLabel as RowLabel_49a0f2da415e33c790acf24cb6dd5091 } from '@/ui/admin/Header'
@@ -57,6 +58,7 @@ import { default as default_759821dbe781e78024abfaf95f6442c4 } from '@/ui/admin/
 import { default as default_e8db4fbd97550d4d717940b5cf0234f3 } from '@/ui/admin/BeforeLogin'
 import { default as default_7545204935b55fcf02b3be70dde90fc1 } from '@/ui/admin/PdfConversion/SidebarLink'
 import { default as default_1b2cd3c8450eece915504fde397ab5c7 } from '@/ui/admin/LessonDuplicationReview/SidebarLink'
+import { default as default_414606d957a81531193ec41412b64d70 } from '@/ui/admin/ProductSubscriptionManagement/SidebarLink'
 import { VercelBlobClientUploadHandler as VercelBlobClientUploadHandler_16c82c5e25f430251a3e3ba57219ff4e } from '@payloadcms/storage-vercel-blob/client'
 import { CollectionCards as CollectionCards_ab83ff7e88da8d3530831f296ec4756a } from '@payloadcms/ui/rsc'
 
@@ -110,6 +112,7 @@ export const importMap = {
   "@/ui/admin/Products/EditView#ProductsEditView": ProductsEditView_ff3c2128c868d33a5de1972e5b7e8f8a,
   "@/ui/admin/TransactionStatusCell#TransactionStatusCell": TransactionStatusCell_6b7b08e7fddc3ba187c2fa7390e3cb99,
   "@/ui/admin/TransactionEditView#TransactionRefundAction": TransactionRefundAction_e5bfc69413b21cd5f23c10fce4cae960,
+  "@/ui/admin/Coupons/ListView#CouponsListView": CouponsListView_4c2bd615af163e22ea57e98b586263d9,
   "@payloadcms/plugin-search/client#LinkToDoc": LinkToDoc_aead06e4cbf6b2620c5c51c9ab283634,
   "@payloadcms/plugin-search/client#ReindexButton": ReindexButton_aead06e4cbf6b2620c5c51c9ab283634,
   "@/ui/admin/Header#RowLabel": RowLabel_49a0f2da415e33c790acf24cb6dd5091,
@@ -120,6 +123,7 @@ export const importMap = {
   "@/ui/admin/BeforeLogin#default": default_e8db4fbd97550d4d717940b5cf0234f3,
   "@/ui/admin/PdfConversion/SidebarLink#default": default_7545204935b55fcf02b3be70dde90fc1,
   "@/ui/admin/LessonDuplicationReview/SidebarLink#default": default_1b2cd3c8450eece915504fde397ab5c7,
+  "@/ui/admin/ProductSubscriptionManagement/SidebarLink#default": default_414606d957a81531193ec41412b64d70,
   "@payloadcms/storage-vercel-blob/client#VercelBlobClientUploadHandler": VercelBlobClientUploadHandler_16c82c5e25f430251a3e3ba57219ff4e,
   "@payloadcms/ui/rsc#CollectionCards": CollectionCards_ab83ff7e88da8d3530831f296ec4756a
 }
