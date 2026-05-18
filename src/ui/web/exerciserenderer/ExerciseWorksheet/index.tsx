@@ -8,7 +8,7 @@
  *
  * Behavior per block type:
  *   - rich_text                  -> paragraph
- *   - latex                      -> hidden (matches the viewer default)
+ *   - latex                      -> rendered via LatexBlockRenderer (hideLatexBlocks prop controls visibility)
  *   - svg / media                -> figure
  *   - question_geometry          -> Hebrew label + prompt + diagram side-by-side via GraphWithPrompt
  *   - question_axis              -> Hebrew label + prompt + diagram side-by-side via GraphWithPrompt
