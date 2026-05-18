@@ -24,7 +24,10 @@ import { NextRequest } from 'next/server'
 
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { GET as processDuplicationsGET } from '@/app/api/cron/process-duplications/route'
-import { STUCK_FAILURE_CODE } from '@/server/services/lesson-duplication/orchestrator'
+import {
+  runDuplicationOrchestrator,
+  STUCK_FAILURE_CODE,
+} from '@/server/services/lesson-duplication/orchestrator'
 
 // Mock orchestrator to always return 'in_progress' (simulates a record that
 // never makes progress — e.g. source lesson with no exercises)
@@ -258,6 +261,40 @@ describe('process-duplications stuck record auto-fail — integration', { concur
     await payload.db?.destroy?.()
   })
 
+  /**
+   * Per-test cleanup: the cron's claim query picks the oldest `pending` or
+   * `running` record by `createdAt`. Without wiping leftover records between
+   * tests, the cron would claim a record from a *previous* test instead of
+   * the one the current test just created — every assertion about
+   * "the record I just created" would fail because the cron operated on a
+   * different one.
+   *
+   * We delete only pending/running records (not terminal `failed`/`succeeded`),
+   * which is exactly the slice the cron's filter looks at.
+   */
+  beforeEach(async () => {
+    const stale = await payload.find({
+      collection: 'lesson-duplications',
+      where: {
+        or: [{ status: { equals: 'pending' } }, { status: { equals: 'running' } }],
+      },
+      limit: 0,
+      depth: 0,
+      overrideAccess: true,
+    })
+    for (const doc of stale.docs) {
+      try {
+        await payload.delete({
+          collection: 'lesson-duplications',
+          id: doc.id,
+          overrideAccess: true,
+        })
+      } catch {
+        // ignore — another test may have already cleaned it up
+      }
+    }
+  })
+
   it('claimAttempts field exists and defaults to 0 on new records', async () => {
     const record = await payload.create({
       collection: 'lesson-duplications',
@@ -351,7 +388,12 @@ describe('process-duplications stuck record auto-fail — integration', { concur
       overrideAccess: true,
     })
 
-    // record2 should now be claimed instead (record1 is stuck/excluded)
+    // record2 should now be claimed instead (record1 is stuck/excluded).
+    // record2 starts with claimAttempts=0, so the cron increments it to 1
+    // — well below the auto-fail threshold — and runs the orchestrator
+    // normally (mocked to return 'in_progress'). The body2 outcome reflects
+    // that, NOT 'failed'. Auto-fail behaviour is tested separately in the
+    // next case.
     const resp2 = await makeCronRequest()
     expect(resp2.status).toBe(200)
     const body2 = (await resp2.json()) as { duplicationId?: string; outcome?: string }
@@ -360,6 +402,15 @@ describe('process-duplications stuck record auto-fail — integration', { concur
     // so 'in_progress' is expected (not 'failed') after only 1 tick.
     expect(body2.outcome).toBe('in_progress')
     expect((body2 as { reason?: string }).reason).toBeUndefined()
+
+    // Verify the original (excluded) record was auto-failed during tick 1.
+    const finalRecord1 = await payload.findByID({
+      collection: 'lesson-duplications',
+      id: record1.id,
+      depth: 0,
+      overrideAccess: true,
+    })
+    expect(finalRecord1.status).toBe('failed')
   })
 
   it('cron auto-fails record with claimAttempts >= 5 — status=failed + STUCK_AFTER_MAX_ATTEMPTS entry', async () => {
@@ -424,9 +475,32 @@ describe('process-duplications stuck record auto-fail — integration', { concur
       overrideAccess: true,
     })
 
-    // Tick: orchestrator should process the 1 exercise → outputExercises grows → claimAttempts resets
-    // However, the mock returns 'in_progress' without processing exercises, so outputExercises
-    // does NOT grow and claimAttempts is NOT reset. Instead it increments by 1.
+    // Override the global mock for this tick: simulate the orchestrator
+    // actually doing work — append one outputExercise mapping to the record
+    // mid-run. The cron's "progress detected" branch reads outputExercises
+    // pre/post and only resets claimAttempts when the count grows. The global
+    // mock returns 'in_progress' without touching the record, so without
+    // this override the reset branch never fires.
+    vi.mocked(runDuplicationOrchestrator).mockImplementationOnce(async (id) => {
+      await payload.update({
+        collection: 'lesson-duplications',
+        id,
+        data: {
+          outputExercises: [
+            {
+              sourceExerciseId: 'simulated-src',
+              outputExerciseId: 'simulated-out',
+              strategy: 'script',
+            },
+          ],
+        } as never,
+        overrideAccess: true,
+      })
+      return 'in_progress'
+    })
+
+    // Tick: orchestrator (mocked) writes one outputExercise → cron sees
+    // growth → resets claimAttempts to 0.
     const resp = await makeCronRequest()
     expect(resp.status).toBe(200)
 
