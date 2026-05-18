@@ -35,7 +35,7 @@ export function CourseLessonCard({
   const label = `${isExam ? tc('exam') : tc('lesson')} ${index}`
   const labelBadgeClassName = isExam ? 'text-[11.5px]' : undefined
 
-  const href = `/courses/${courseSlug}/chapters/${chapterSlug}/lessons/${lesson.slug}`
+  const href = `/courses/${courseSlug}/chapters/${chapterSlug}/lessons/${lesson.slug}/enter`
   const isSoon = lesson.contentStatus === 'soon'
   const accentColor = isSoon ? 'hsl(var(--border))' : (tabColor?.stroke ?? 'hsl(var(--primary))')
 

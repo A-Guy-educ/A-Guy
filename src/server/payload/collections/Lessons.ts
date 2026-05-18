@@ -352,6 +352,33 @@ export const Lessons: CollectionConfig = {
           'Which renderers are visible to students. At least one must be selected. Note: Media tab only appears when the lesson has attached files regardless of this toggle.',
       },
     },
+    {
+      name: 'estimatedTime',
+      type: 'number',
+      min: 1,
+      max: 180,
+      defaultValue: 30,
+      admin: {
+        position: 'sidebar',
+        description: 'Estimated time to complete the lesson (in minutes). Default: 30.',
+      },
+    },
+    {
+      name: 'availableDisplayModes',
+      type: 'select',
+      hasMany: true,
+      defaultValue: ['interactive'],
+      options: [
+        { label: 'Interactive (exercise pager)', value: 'interactive' },
+        { label: 'Scroll (content pages)', value: 'scroll' },
+        { label: 'PDF (worksheet view)', value: 'pdf' },
+      ],
+      admin: {
+        position: 'sidebar',
+        description:
+          'Which display modes are available for students. At least one must be selected.',
+      },
+    },
     // --- Lesson Blocks (ordered playlist) ---
     {
       name: 'blocks',

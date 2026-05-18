@@ -51,15 +51,28 @@ function resolveEffectiveMode(
  * @param allowedModes - Optional list of modes the admin has enabled. When
  *                      provided, the stored preference is promoted to the first
  *                      allowed mode if the stored mode is now disabled.
+ * @param initialMode - Optional mode from query param (entry page) that takes
+ *                     precedence on first mount.
  */
-export function useLessonViewMode(lessonId: string, allowedModes?: LessonMode[]) {
+export function useLessonViewMode(
+  lessonId: string,
+  allowedModes?: LessonMode[],
+  initialMode?: LessonMode,
+) {
   const [mode, setMode] = useState<LessonMode>('pdf')
 
   useEffect(() => {
+    // initialMode from query param takes precedence on first mount
+    if (initialMode && (allowedModes === undefined || allowedModes.includes(initialMode))) {
+      setMode(initialMode)
+      // Persist it so localStorage stays in sync
+      writeStoredMode(lessonId, initialMode)
+      return
+    }
     const stored = readStoredMode(lessonId)
     const resolved = resolveEffectiveMode(stored, allowedModes)
     setMode(resolved)
-  }, [lessonId, allowedModes])
+  }, [lessonId, allowedModes, initialMode])
 
   const select = useCallback(
     (next: LessonMode) => {

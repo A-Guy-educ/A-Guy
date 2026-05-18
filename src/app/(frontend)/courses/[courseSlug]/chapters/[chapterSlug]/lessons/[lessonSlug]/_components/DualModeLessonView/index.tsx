@@ -54,6 +54,8 @@ interface DualModeLessonViewProps {
   formulaSheet?: FormulaSheet | null
   /** Renderer modes enabled by the admin for this lesson. Defaults to all three. */
   visibleRenderers?: LessonMode[]
+  /** Initial mode from entry page query param — takes precedence on first mount. */
+  initialMode?: LessonMode
 }
 
 /**
@@ -95,12 +97,13 @@ export function DualModeLessonView(props: DualModeLessonViewProps) {
     showChat,
     formulaSheet,
     visibleRenderers,
+    initialMode,
   } = props
 
   const t = useTranslations('courses')
   const hasMedia = validFiles.length > 0
   const visibleTabs = getVisibleTabs(visibleRenderers, hasMedia)
-  const [mode, select] = useLessonViewMode(lessonId, visibleRenderers)
+  const [mode, select] = useLessonViewMode(lessonId, visibleRenderers, initialMode)
 
   // Resolve the active tab, falling back when the stored mode is no longer allowed.
   const effectiveMode = (() => {

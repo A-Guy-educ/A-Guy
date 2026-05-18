@@ -212,7 +212,9 @@
     "lessonsSection": "Lessons",
     "chapter": "Chapter",
     "lesson": "Lesson",
+    "learning": "Learning",
     "exam": "Exam",
+    "practice": "Practice",
     "exercise": "Exercise",
     "noCourses": "No courses available at this time.",
     "noChapters": "No chapters available for this course.",
@@ -344,11 +346,27 @@
     "pdfLessonPagerCompletedDescription": "You've reviewed all documents for this lesson.",
     "exercisesPagerBackToLesson": "Back to Lesson",
     "startLesson": "Start Lesson",
+    "startPractice": "Start Practice",
+    "startExam": "Start Exam",
     "soonBadge": "Soon",
     "justAddedBadge": "New",
     "contentLocked": "This content is being prepared and will be available soon.",
     "formulaSheetTitle": "Formula Sheet",
-    "formulaSheetEmpty": "No content available"
+    "formulaSheetEmpty": "No content available",
+    "estimatedTime": "Estimated time: ~{minutes} minutes",
+    "displayModeLabel": "Display mode",
+    "displayMode": {
+      "interactive": "Interactive",
+      "scroll": "Scroll",
+      "pdf": "PDF"
+    },
+    "continueLesson": "Continue from where you left off",
+    "restartLesson": "Start over",
+    "continuePractice": "Continue Practice",
+    "restartPractice": "Restart Practice",
+    "continueExam": "Return to Exam",
+    "restartExam": "Restart Exam",
+    "completionPercent": "You completed {percent}% of this lesson"
   },
   "homepage": {
     "nav": {
