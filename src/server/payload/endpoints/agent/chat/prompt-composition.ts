@@ -669,6 +669,8 @@ export async function composeFullSystemInstructions(
   lessonContextText?: string,
   exercises?: LessonContext['exercises'],
   hasImageAttached: boolean = false,
+  agentBehaviorBlock?: string,
+  userContextBlock?: string,
 ): Promise<ComposedSystemInstructions> {
   // Fetch published system prompts (always included)
   const systemPromptsResult = await fetchPublishedSystemPrompts(payload)
@@ -717,16 +719,18 @@ export async function composeFullSystemInstructions(
   )
 
   // Compose final system instructions:
-  // system prompts + teacher profile + lesson/course prompt +
-  // lesson context block (fallback metadata) + course/lesson context + exercises
+  // system prompts + teacher profile + agent behavior + lesson/course prompt +
+  // lesson context block (fallback metadata) + course/lesson context + exercises + user context
   const instructions = composeSystemInstructions(
     systemPromptsResult.templates,
     promptResolution.template,
     teacherProfileBlock,
+    agentBehaviorBlock,
     lessonContextBlock,
     lessonContextText,
     courseContextText,
     exercises,
+    userContextBlock,
     hasImageAttached,
   )
 
