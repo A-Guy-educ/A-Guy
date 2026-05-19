@@ -42,11 +42,11 @@ export function getPaymentEnv(): PaymentEnv {
   const vars: PaymentEnvValidation[] = [
     { name: 'STRIPE_SECRET_KEY', required: true, value: process.env.STRIPE_SECRET_KEY },
     { name: 'STRIPE_PUBLISHABLE_KEY', required: false, value: process.env.STRIPE_PUBLISHABLE_KEY },
-    { name: 'STRIPE_WEBHOOK_SECRET', required: false, value: process.env.STRIPE_WEBHOOK_SECRET },
+    { name: 'STRIPE_WEBHOOK_SECRET', required: true, value: process.env.STRIPE_WEBHOOK_SECRET },
     { name: 'STRIPE_CURRENCY', required: false, value: process.env.STRIPE_CURRENCY },
     { name: 'PAYPAL_CLIENT_ID', required: true, value: process.env.PAYPAL_CLIENT_ID },
     { name: 'PAYPAL_CLIENT_SECRET', required: true, value: process.env.PAYPAL_CLIENT_SECRET },
-    { name: 'PAYPAL_WEBHOOK_ID', required: false, value: process.env.PAYPAL_WEBHOOK_ID },
+    { name: 'PAYPAL_WEBHOOK_ID', required: true, value: process.env.PAYPAL_WEBHOOK_ID },
     { name: 'PAYPAL_SANDBOX', required: false, value: process.env.PAYPAL_SANDBOX },
   ]
 
@@ -65,7 +65,7 @@ export function getPaymentEnv(): PaymentEnv {
     paypalClientId: process.env.PAYPAL_CLIENT_ID ?? '',
     paypalClientSecret: process.env.PAYPAL_CLIENT_SECRET ?? '',
     paypalWebhookId: process.env.PAYPAL_WEBHOOK_ID ?? '',
-    paypalSandbox: process.env.PAYPAL_SANDBOX === 'true',
+    paypalSandbox: process.env.PAYPAL_SANDBOX !== 'false',
   }
 
   return validatedEnv

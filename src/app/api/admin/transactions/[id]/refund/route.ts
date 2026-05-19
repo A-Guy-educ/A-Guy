@@ -84,7 +84,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
   try {
     // Tranzila refund — implementation depends on Tranzila API integration
-    await refundStripe(refundId, amount)
+    await refundStripe(id, refundId, amount)
   } catch (err) {
     payload.logger.error({ error: err, transactionId: id }, 'Refund operation failed')
     return NextResponse.json({ error: 'Refund operation failed' }, { status: 500 })

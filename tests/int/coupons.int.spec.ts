@@ -832,11 +832,11 @@ describe.skipIf(!hasDatabaseUrl)('Coupons Collection', () => {
   })
 
   // -------------------------------------------------------------------------
-  // Public read access
+  // Access control — unauthenticated denied
   // -------------------------------------------------------------------------
 
-  describe('Public read access', () => {
-    it('should allow unauthenticated user to read coupons', async () => {
+  describe('Access control — unauthenticated denied', () => {
+    it('should deny unauthenticated user from reading coupons', async () => {
       const admin = await getAdminUser()
 
       const coupon = await payload.create({
@@ -855,15 +855,56 @@ describe.skipIf(!hasDatabaseUrl)('Coupons Collection', () => {
       })
       trackCoupon(coupon.id)
 
-      // Read without user (public access)
-      const read = await payload.findByID({
+      // Read without user (unauthenticated) — should be denied
+      let error: Error | null = null
+      try {
+        await payload.findByID({
+          collection: 'coupons',
+          id: coupon.id,
+          overrideAccess: false,
+        })
+      } catch (e) {
+        error = e as Error
+      }
+
+      expect(error).not.toBeNull()
+      expect((error as any).status).toBeGreaterThanOrEqual(400)
+    })
+
+    it('should deny student from reading coupons', async () => {
+      const admin = await getAdminUser()
+      const student = await getStudentUser()
+
+      const coupon = await payload.create({
         collection: 'coupons',
-        id: coupon.id,
+        data: {
+          code: `STUDENT-READ-${Date.now()}`,
+          discountType: 'percentage',
+          discountValue: 10,
+          currency: 'ILS',
+          maxUses: 0,
+          usesCount: 0,
+          isActive: true,
+        },
+        user: admin as any,
         overrideAccess: false,
       })
+      trackCoupon(coupon.id)
 
-      expect(read).toBeDefined()
-      expect(read.id).toBe(coupon.id)
+      let error: Error | null = null
+      try {
+        await payload.findByID({
+          collection: 'coupons',
+          id: coupon.id,
+          user: student as any,
+          overrideAccess: false,
+        })
+      } catch (e) {
+        error = e as Error
+      }
+
+      expect(error).not.toBeNull()
+      expect((error as any).status).toBeGreaterThanOrEqual(400)
     })
   })
 

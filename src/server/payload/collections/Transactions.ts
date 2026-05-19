@@ -11,6 +11,8 @@ import type { CollectionConfig } from 'payload'
 import { adminOnly } from '../access/adminOnly'
 import { createdByField } from '../fields/createdBy'
 import { tenantField } from '../fields/tenant'
+import { statusTransitionGuard } from './Transactions/hooks/statusTransitionGuard-hook'
+import { syncPaymentStats } from './Transactions/hooks/syncPaymentStats-hook'
 
 export const Transactions: CollectionConfig = {
   slug: 'transactions',
@@ -24,6 +26,10 @@ export const Transactions: CollectionConfig = {
     update: adminOnly,
     delete: adminOnly,
     read: adminOnly,
+  },
+  hooks: {
+    beforeChange: [statusTransitionGuard],
+    afterChange: [syncPaymentStats],
   },
   fields: [
     tenantField,
