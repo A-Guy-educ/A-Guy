@@ -4,8 +4,9 @@
  * POST /api/webhooks/stripe
  *
  * Verifies Stripe webhook signature, updates Transaction status, and grants
- * entitlements on successful payment. Always returns 200 to satisfy Stripe's
- * requirement for fast acknowledgment.
+ * entitlements on successful payment. Returns 400 for bad signatures (no retry),
+ * 500 for transient errors (provider will retry), and 200 for downstream
+ * processing errors that should not be retried.
  *
  * @fileType api-route
  * @domain payments
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
   const signature = request.headers.get('stripe-signature')
   if (!signature) {
     payload.logger.error('Missing stripe-signature header')
-    return NextResponse.json({ received: true }, { status: 200 })
+    return NextResponse.json({ error: 'Missing signature header' }, { status: 400 })
   }
 
   // 3. Verify webhook signature
@@ -41,8 +42,28 @@ export async function POST(request: NextRequest) {
   try {
     event = await verifyStripeWebhook(rawBody, signature)
   } catch (err) {
-    payload.logger.error({ error: err }, 'Stripe webhook signature verification failed')
-    return NextResponse.json({ received: true }, { status: 200 })
+    const sourceIp =
+      request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+    const bodySnippet = rawBody.toString('utf8').slice(0, 100)
+
+    const isSignatureError =
+      err instanceof Stripe.errors.StripeSignatureVerificationError ||
+      (err instanceof Stripe.errors.StripeError && err.type === 'StripeSignatureVerificationError')
+
+    if (isSignatureError) {
+      payload.logger.warn(
+        { error: err, sourceIp, bodySnippet },
+        'Stripe webhook signature verification failed — returning 400',
+      )
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
+    }
+
+    // Transient error (network issue, missing config, etc.) — provider should retry
+    payload.logger.error(
+      { error: err, sourceIp, bodySnippet },
+      'Stripe webhook signature verification threw transient error — returning 500',
+    )
+    return NextResponse.json({ error: 'Verification failed' }, { status: 500 })
   }
 
   // 4. Route event by type

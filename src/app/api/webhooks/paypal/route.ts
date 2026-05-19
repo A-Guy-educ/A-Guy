@@ -4,8 +4,9 @@
  * POST /api/webhooks/paypal
  *
  * Verifies PayPal webhook signature, updates Transaction status, and grants
- * entitlements on successful payment. Always returns 200 to satisfy PayPal's
- * requirement for fast acknowledgment.
+ * entitlements on successful payment. Returns 400 for bad signatures (no retry),
+ * 500 for transient errors (provider will retry), and 200 for downstream
+ * processing errors that should not be retried.
  *
  * @fileType api-route
  * @domain payments
@@ -60,12 +61,40 @@ export async function POST(request: NextRequest) {
   try {
     const isValid = await verifyPayPalWebhook(body, headers)
     if (!isValid) {
-      payload.logger.error('PayPal webhook signature verification failed')
-      return NextResponse.json({ received: true }, { status: 200 })
+      const sourceIp =
+        request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+      const bodySnippet = JSON.stringify(body).slice(0, 100)
+      payload.logger.warn(
+        { sourceIp, bodySnippet },
+        'PayPal webhook signature verification failed — returning 400',
+      )
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
     }
   } catch (err) {
-    payload.logger.error({ error: err }, 'PayPal webhook signature verification error')
-    return NextResponse.json({ received: true }, { status: 200 })
+    const sourceIp =
+      request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+    const bodySnippet = JSON.stringify(body).slice(0, 100)
+
+    const errorMessage = err instanceof Error ? err.message : String(err)
+
+    // Permanent errors (bad config or malformed headers) → 400, PayPal will not retry
+    if (
+      errorMessage.includes('Missing PAYPAL_WEBHOOK_ID') ||
+      errorMessage.includes('Missing required PayPal webhook headers')
+    ) {
+      payload.logger.error(
+        { error: err, sourceIp, bodySnippet },
+        'PayPal webhook misconfiguration — returning 400',
+      )
+      return NextResponse.json({ error: 'Invalid webhook configuration' }, { status: 400 })
+    }
+
+    // Transient error (network issue calling PayPal verify API) → 500, PayPal will retry
+    payload.logger.error(
+      { error: err, sourceIp, bodySnippet },
+      'PayPal webhook signature verification threw transient error — returning 500',
+    )
+    return NextResponse.json({ error: 'Verification failed' }, { status: 500 })
   }
 
   // 4. Route event by type
