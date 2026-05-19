@@ -9,7 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getPayload, NotFound } from 'payload'
+import { getPayload } from 'payload'
 
 import config from '@payload-config'
 import { refundStripe } from '@/lib/payment/stripe'
@@ -40,17 +40,16 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   }
 
   // 3. Fetch transaction
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let transaction: any = null
+  let transaction: Record<string, unknown> | null = null
   try {
-    transaction = await payload.findByID({
+    transaction = (await payload.findByID({
       collection: 'transactions',
       id,
       depth: 0,
       overrideAccess: true,
-    })
-  } catch (err: unknown) {
-    if (err instanceof NotFound) {
+    })) as unknown as Record<string, unknown> | null
+  } catch (err) {
+    if (err instanceof Error && (err.name === 'NotFound' || err.message.includes('Not Found'))) {
       return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
     }
     throw err
