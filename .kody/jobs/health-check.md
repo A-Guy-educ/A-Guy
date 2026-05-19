@@ -1,3 +1,7 @@
+---
+disabled: true
+---
+
 # Kody Health Check
 
 ## Job 
