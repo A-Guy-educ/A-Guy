@@ -1,5 +1,6 @@
 ---
 disabled: true
+worker: kody
 ---
 
 # auto sync
