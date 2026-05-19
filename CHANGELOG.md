@@ -6387,6 +6387,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- #1641: Add revenue metrics to admin dashboard API ([#1649](https://github.com/A-Guy-educ/A-Guy/pull/1649)) — @aguyaharonyair
 - #1519: Improve Mobile Lesson Viewing Experience ([#1683](https://github.com/A-Guy-educ/A-Guy/pull/1683)) — @aguyaharonyair
 - #1518: User Learning Agent Task ([#1686](https://github.com/A-Guy-educ/A-Guy/pull/1686)) — @aguyaharonyair
 - #1663: Per-exercise retry from review page ([#1673](https://github.com/A-Guy-educ/A-Guy/pull/1673)) — @aguyaharonyair
