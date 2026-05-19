@@ -21,7 +21,7 @@ import type { DuplicationSubject } from '@/server/payload/collections/LessonDupl
 import { logger } from '@/infra/utils/logger'
 import {
   selectExercisesScaled,
-  selectSectionsScaled,
+  selectSectionsForVariation,
 } from '@/server/services/lesson-duplication/selectors'
 import { getSourceExercisesForLesson } from '@/server/services/lesson-duplication/source-exercises'
 import {
@@ -29,6 +29,7 @@ import {
   fillMissingFieldsWithPlaceholders,
   BLOCKING_FAILURE_CODES,
   type StructuralFailure,
+  type FailureCode,
 } from '@/server/services/lesson-duplication/validators/structural'
 import {
   validateExerciseSemantic,
@@ -49,6 +50,7 @@ import { withTimeout as withSharedTimeout } from '@/infra/utils/with-timeout'
 export const CONCURRENCY_LIMIT = 1 as const
 
 export const GENERATION_FAILURE_CODE = 'GENERATION_FAILED' as const
+export const STUCK_FAILURE_CODE = 'STUCK_AFTER_MAX_ATTEMPTS' as const
 
 /** Timeout for appendEntry DB operations (find + update). Prevents a slow DB from pinning the orchestrator. */
 const APPEND_ENTRY_TIMEOUT_MS = 30_000
@@ -78,7 +80,7 @@ export async function runStrategy(
   level: 'none' | 'light' | 'medium' | 'deep',
   subject: DuplicationSubject,
   payload: Payload,
-): Promise<StrategyResult> {
+): Promise<StrategyResult & { tokensUsed: { inputTokens: number; outputTokens: number } }> {
   const router = new RouterStrategy(payload)
   const result = await router.apply(exercise as unknown as Exercise, level, subject)
 
@@ -87,6 +89,7 @@ export async function runStrategy(
     exerciseId: exercise.id,
     strategy: result.needsAiFallback ? 'ai' : 'script',
     blocks: content.blocks ?? [],
+    tokensUsed: result.tokensUsed ?? { inputTokens: 0, outputTokens: 0 },
   }
 }
 
@@ -105,13 +108,13 @@ export async function runStrategy(
  * Admins doing deep variations on real lessons would silently lose any
  * exercise that exceeded the block cap.
  */
-function trimSourceBlocksIfNeeded(exercise: ExerciseDoc): ExerciseDoc {
+export function trimSourceBlocksIfNeeded(exercise: ExerciseDoc): ExerciseDoc {
   const blocks = exercise.content?.blocks
   if (!Array.isArray(blocks) || blocks.length <= 5) return exercise
-  const picked = selectSectionsScaled(blocks, 5)
+  const picked = selectSectionsForVariation(blocks, 5)
   logger.info(
     { exerciseId: exercise.id, originalCount: blocks.length, trimmedTo: picked.length },
-    'Source exercise has more than 5 blocks — trimming via scaling-random selector',
+    'Source exercise has more than 5 blocks — trimming via variation-aware selector',
   )
   return {
     ...exercise,
@@ -215,7 +218,7 @@ async function appendEntry(
 }
 
 /** Append a blocking failure (exercise dropped from output lesson). */
-async function appendFailure(
+export async function appendFailure(
   payload: Payload,
   duplicationId: string,
   exerciseRef: string,
@@ -227,7 +230,7 @@ async function appendFailure(
 }
 
 /** Append a non-blocking warning (exercise kept with placeholder). */
-async function appendWarning(
+export async function appendWarning(
   payload: Payload,
   duplicationId: string,
   exerciseRef: string,
@@ -273,16 +276,26 @@ async function appendOutputExercise(
 }
 
 /** Shape of an exercise from the exercises collection. */
-type ExerciseDoc = {
+export type ExerciseDoc = {
   id: string
   content?: { blocks?: ContentBlock[] }
 }
 
 /** Mapping entry from source exercise to generated output exercise. */
-interface OutputExerciseMapping {
+export interface OutputExerciseMapping {
   sourceExerciseId: string
   outputExerciseId: string
   strategy: DuplicationStrategy
+}
+
+/** Failure entry stored on the LessonDuplications record. */
+export interface FailureEntry {
+  exerciseRef: string
+  sectionIndex: number
+  code: FailureCode | string
+  message: string
+  suggestedAction: 'skip' | 'regenerate' | 'keep'
+  resolved: boolean
 }
 
 /**
@@ -355,7 +368,7 @@ async function createOutputLesson(
  * Create a draft exercise in the output lesson with the generated blocks.
  * Returns the mapping entry for tracking.
  */
-async function createOutputExercise(
+export async function createOutputExercise(
   payload: Payload,
   result: StrategyResult,
   outputLessonId: string,
@@ -393,7 +406,10 @@ async function processExercise(
   level: 'none' | 'light' | 'medium' | 'deep',
   subject: DuplicationSubject,
   payload: Payload,
-): Promise<StrategyResult | null> {
+): Promise<{
+  result: StrategyResult | null
+  tokensUsed: { inputTokens: number; outputTokens: number }
+}> {
   const exerciseRef = exercise.id
 
   // Pre-trim source blocks. The structural validator caps exercises at 5
@@ -407,17 +423,16 @@ async function processExercise(
 
   // Step 1: Run strategy
   let strategyResult: StrategyResult
+  let tokensUsed = { inputTokens: 0, outputTokens: 0 }
   try {
-    strategyResult = await runStrategy(trimmedExercise, level, subject, payload)
+    const strategyResponse = await runStrategy(trimmedExercise, level, subject, payload)
+    strategyResult = strategyResponse
+    tokensUsed = strategyResponse.tokensUsed
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown strategy error'
     logger.error({ exerciseRef, level, err }, 'Strategy generation failed')
-    try {
-      await appendFailure(payload, duplicationId, exerciseRef, 0, GENERATION_FAILURE_CODE, message)
-    } catch {
-      // appendEntry errors are non-fatal; stream failure should not abort the run
-    }
-    return null
+    await appendFailure(payload, duplicationId, exerciseRef, 0, GENERATION_FAILURE_CODE, message)
+    return { result: null, tokensUsed }
   }
 
   // Step 2: Structural validation. Split failures into blocking (drop the
@@ -461,7 +476,7 @@ async function processExercise(
   }
 
   if (blockingFailures.length > 0) {
-    return null
+    return { result: null, tokensUsed }
   }
 
   // Warning-only path: fill placeholders so the exercise renders. Warnings are
@@ -496,11 +511,11 @@ async function processExercise(
         SEMANTIC_FAILURE_CODE,
         `Semantic mismatch: ${semanticResult.reasons.join('; ')}`,
       )
-      return null
+      return { result: null, tokensUsed }
     }
   }
 
-  return strategyResult
+  return { result: strategyResult, tokensUsed }
 }
 
 /**
@@ -754,14 +769,15 @@ export async function runDuplicationOrchestrator(
         }
       }
 
-      const result = await processExercise(
+      const { result } = await processExercise(
         exercise,
         duplicationId,
         duplicationLevel,
         duplicationSubject,
         payload,
       )
-      if (result === null) continue // failure already recorded by processExercise
+
+      if (result === null) continue
 
       try {
         const mapping = await createOutputExercise(payload, result, outputLessonId)
@@ -815,7 +831,9 @@ export async function runDuplicationOrchestrator(
     await payload.update({
       collection: 'lesson-duplications',
       id: duplicationId,
-      data: { status: finalStatus } as never,
+      data: {
+        status: finalStatus,
+      } as never,
       overrideAccess: true,
     })
     return finalStatus

@@ -74,13 +74,15 @@ IMPORTANT:
  * Order (deterministic):
  * 1. All published system prompts (joined with separator)
  * 2. Teacher profile block (injected into system role, NOT stored in conversation)
- * 3. Lesson-specific resolved prompt
- * 4. Lesson/exercise context block (fallback metadata about what the student is on)
- * 5. Course context text (if provided)
- * 6. Lesson context text (AI-injected lesson content, if provided)
- * 7. Lesson exercises (structured content blocks, if provided)
- * 8. Mandatory math formatting instructions
- * 9. Image handling instructions — INJECTED ONLY when an image is attached
+ * 3. Agent behavior block (defines communication style, recommendations, tone)
+ * 4. Lesson-specific resolved prompt
+ * 5. Lesson/exercise context block (fallback metadata about what the student is on)
+ * 6. Course context text (if provided)
+ * 7. Lesson context text (AI-injected lesson content, if provided)
+ * 8. Lesson exercises (structured content blocks, if provided)
+ * 9. User context block (user learning progress, study plan, streak)
+ * 10. Mandatory math formatting instructions
+ * 11. Image handling instructions — INJECTED ONLY when an image is attached
  *    (see hasImageAttached). When no image is in the request these rules
  *    confuse the model into refusing text-only chat with "please upload
  *    an image" responses, so we skip them.
@@ -88,10 +90,12 @@ IMPORTANT:
  * @param systemPrompts - Array of system prompt templates (can be empty)
  * @param lessonPromptTemplate - Resolved lesson prompt template
  * @param teacherProfileBlock - Optional teacher profile block to inject
+ * @param agentBehaviorBlock - Optional agent behavior block to inject
  * @param lessonContextBlock - Optional fallback metadata about the current lesson/exercise (from origin/dev buildLessonContextBlock)
  * @param lessonContextText - Optional AI context text for the lesson (lessonContextText or description)
  * @param courseContextText - Optional AI context text for the course
  * @param exercises - Optional exercises associated with the lesson
+ * @param userContextBlock - Optional user learning context block
  * @param hasImageAttached - When true, append IMAGE_HANDLING_INSTRUCTIONS. Defaults to true for back-compat with callers that don't (yet) plumb this through.
  * @returns Final composed system instructions string
  */
@@ -99,10 +103,12 @@ export function composeSystemInstructions(
   systemPrompts: string[],
   lessonPromptTemplate: string,
   teacherProfileBlock?: string,
+  agentBehaviorBlock?: string,
   lessonContextBlock?: string,
   lessonContextText?: string,
   courseContextText?: string,
   exercises?: Array<{ id: string; title?: string; content: unknown }>,
+  userContextBlock?: string,
   hasImageAttached: boolean = true,
 ): string {
   // Step 1: Join system prompts (if any)
@@ -116,26 +122,31 @@ export function composeSystemInstructions(
     ? systemPart + teacherProfileBlock + '\n\n'
     : systemPart
 
-  // Step 3: Append lesson prompt
-  const withLessonPrompt = withTeacherProfile + lessonPromptTemplate
+  // Step 3: Append agent behavior block (if provided)
+  const withAgentBehavior = agentBehaviorBlock
+    ? withTeacherProfile + agentBehaviorBlock + '\n\n'
+    : withTeacherProfile
 
-  // Step 4: Append lesson/exercise context block (from buildLessonContextBlock — fallback metadata)
+  // Step 4: Append lesson prompt
+  const withLessonPrompt = withAgentBehavior + lessonPromptTemplate
+
+  // Step 5: Append lesson/exercise context block (from buildLessonContextBlock — fallback metadata)
   const withLessonContextBlock = lessonContextBlock
     ? withLessonPrompt + '\n\n' + lessonContextBlock
     : withLessonPrompt
 
-  // Step 5: Append course context text (if provided)
+  // Step 6: Append course context text (if provided)
   const withCourseContext = courseContextText
     ? withLessonContextBlock + '\n\n## Course Context\n' + courseContextText
     : withLessonContextBlock
 
-  // Step 6: Append lesson context text (if provided)
+  // Step 7: Append lesson context text (if provided)
   const withLessonContext =
     lessonContextText && lessonContextText.trim().length > 0
       ? withCourseContext + '\n\n## Lesson Content\n' + lessonContextText.trim()
       : withCourseContext
 
-  // Step 7: Append lesson exercises (if provided), with size budget.
+  // Step 8: Append lesson exercises (if provided), with size budget.
   // Audit F4: previously emitted full content of every exercise — for a
   // 31-exercise lesson that produced a ~14 KB system prompt that diluted
   // the model's attention. Now: per-exercise content is truncated to
@@ -146,10 +157,15 @@ export function composeSystemInstructions(
     withExercises = withLessonContext + buildExercisesSection(exercises)
   }
 
-  // Step 8: Append mandatory math formatting instructions
-  const withMathFormatting = withExercises + '\n\n' + MATH_FORMATTING_INSTRUCTIONS
+  // Step 9: Append user context block (if provided)
+  const withUserContext = userContextBlock
+    ? withExercises + '\n\n' + userContextBlock
+    : withExercises
 
-  // Step 9: Append image handling instructions ONLY when an image is attached.
+  // Step 10: Append mandatory math formatting instructions
+  const withMathFormatting = withUserContext + '\n\n' + MATH_FORMATTING_INSTRUCTIONS
+
+  // Step 11: Append image handling instructions ONLY when an image is attached.
   // Otherwise these rules dominate the prompt and Gemini falls back to
   // "please upload an image" even on text-only chats with full lesson context.
   return hasImageAttached

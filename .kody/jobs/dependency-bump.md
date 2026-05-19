@@ -1,3 +1,7 @@
+---
+disabled: true
+---
+
 # Dependency Bump
 
 ## Job
