@@ -1949,6 +1949,18 @@ export interface Transaction {
    */
   entitlementsGrantedAt?: string | null;
   /**
+   * Amount refunded in agorot (smallest currency unit)
+   */
+  refundedAmount?: number | null;
+  /**
+   * Admin who processed the refund
+   */
+  refundedBy?: (string | null) | User;
+  /**
+   * When the refund was processed
+   */
+  refundedAt?: string | null;
+  /**
    * User who created this document
    */
   createdBy?: (string | null) | User;
@@ -4442,6 +4454,9 @@ export interface TransactionsSelect<T extends boolean = true> {
   cancelUrl?: T;
   errorMessage?: T;
   entitlementsGrantedAt?: T;
+  refundedAmount?: T;
+  refundedBy?: T;
+  refundedAt?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
