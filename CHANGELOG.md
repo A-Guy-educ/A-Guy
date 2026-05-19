@@ -6387,6 +6387,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- #1711: Record refundedAmount, refundedBy, refundedAt on refund ([#1713](https://github.com/A-Guy-educ/A-Guy/pull/1713)) — @aguyaharonyair
+- #1699: Atomic coupon usage increment + move consumption to webhook succ… ([#1709](https://github.com/A-Guy-educ/A-Guy/pull/1709)) — @aguyaharonyair
+- #1695: Restrict Coupons read access to admins ([#1705](https://github.com/A-Guy-educ/A-Guy/pull/1705)) — @aguyaharonyair
+- #1697: Return 400/500 on webhook signature verification failure instead… ([#1704](https://github.com/A-Guy-educ/A-Guy/pull/1704)) — @aguyaharonyair
+- #1694: Switch PayPal API base on env flag + require webhook secrets at … ([#1703](https://github.com/A-Guy-educ/A-Guy/pull/1703)) — @aguyaharonyair
+- #1698: Prevent invalid Transaction status transitions via beforeChange … ([#1702](https://github.com/A-Guy-educ/A-Guy/pull/1702)) — @aguyaharonyair
+- #1696: Pass idempotencyKey to stripe.refunds.create ([#1701](https://github.com/A-Guy-educ/A-Guy/pull/1701)) — @aguyaharonyair
+- #1691: Render geometry / axis blocks to SVG strings in lesson export ([#1693](https://github.com/A-Guy-educ/A-Guy/pull/1693)) — @aguyaharonyair
+- fix(admin): Regenerate importMap for TransactionPaymentDetail ([#1700](https://github.com/A-Guy-educ/A-Guy/pull/1700)) — @aguyshayb
+- #1645: Build admin payment detail view ([#1674](https://github.com/A-Guy-educ/A-Guy/pull/1674)) — @aguyaharonyair
+- #1644: Add revenue and transaction widgets to admin dashboard UI ([#1653](https://github.com/A-Guy-educ/A-Guy/pull/1653)) — @aguyaharonyair
+- #1642: Create PaymentStats Payload collection ([#1651](https://github.com/A-Guy-educ/A-Guy/pull/1651)) — @aguyaharonyair
+- #1641: Add revenue metrics to admin dashboard API ([#1649](https://github.com/A-Guy-educ/A-Guy/pull/1649)) — @aguyaharonyair
 - #1519: Improve Mobile Lesson Viewing Experience ([#1683](https://github.com/A-Guy-educ/A-Guy/pull/1683)) — @aguyaharonyair
 - #1518: User Learning Agent Task ([#1686](https://github.com/A-Guy-educ/A-Guy/pull/1686)) — @aguyaharonyair
 - #1663: Per-exercise retry from review page ([#1673](https://github.com/A-Guy-educ/A-Guy/pull/1673)) — @aguyaharonyair

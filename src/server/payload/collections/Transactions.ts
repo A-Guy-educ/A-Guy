@@ -13,6 +13,8 @@ import { adminOnly } from '../access/adminOnly'
 import { authenticated } from '../access/authenticated'
 import { createdByField } from '../fields/createdBy'
 import { tenantField } from '../fields/tenant'
+import { statusTransitionGuard } from './Transactions/hooks/statusTransitionGuard-hook'
+import { syncPaymentStats } from './Transactions/hooks/syncPaymentStats-hook'
 
 export const Transactions: CollectionConfig = {
   slug: 'transactions',
@@ -29,9 +31,16 @@ export const Transactions: CollectionConfig = {
     group: 'Payments',
     components: {
       edit: {
-        beforeDocumentControls: ['@/ui/admin/TransactionEditView#TransactionRefundAction'],
+        beforeDocumentControls: [
+          '@/ui/admin/TransactionEditView#TransactionRefundAction',
+          '@/ui/admin/TransactionEditView#TransactionPaymentDetail',
+        ],
       },
     },
+  },
+  hooks: {
+    beforeChange: [statusTransitionGuard],
+    afterChange: [syncPaymentStats],
   },
   fields: [
     tenantField,
@@ -160,6 +169,33 @@ export const Transactions: CollectionConfig = {
       type: 'text',
       admin: {
         description: 'Error message if transaction failed',
+      },
+    },
+
+    // Refund audit fields (set when transaction is refunded)
+    {
+      name: 'refundedAmount',
+      type: 'number',
+      admin: {
+        description: 'Amount refunded in agorot (smallest currency unit)',
+        readOnly: true,
+      },
+    },
+    {
+      name: 'refundedBy',
+      type: 'relationship',
+      relationTo: 'users',
+      admin: {
+        description: 'Admin who processed the refund',
+        readOnly: true,
+      },
+    },
+    {
+      name: 'refundedAt',
+      type: 'date',
+      admin: {
+        description: 'When the refund was processed',
+        readOnly: true,
       },
     },
 

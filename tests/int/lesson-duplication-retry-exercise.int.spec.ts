@@ -325,7 +325,7 @@ describe('Lesson duplication — retry-exercise endpoint', () => {
     const response = await retryPOST(request as never)
 
     expect(response.status).toBe(200)
-    const data = (await response.json()) as { data?: { duplicationId: string; success: boolean } }
+    const _data = (await response.json()) as { data?: { duplicationId: string; success: boolean } }
 
     // Verify old failure for this source is gone from the record
     const updated = await payload.findByID({
