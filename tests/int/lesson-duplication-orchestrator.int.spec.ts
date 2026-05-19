@@ -40,7 +40,10 @@ vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
       async (
         input: { exercise: { id: string } },
         _payload: unknown,
-      ): Promise<{ exercise: { id: string; content: { blocks: unknown[] } } }> => {
+      ): Promise<{
+        exercise: { id: string; content: { blocks: unknown[] } }
+        tokensUsed: { inputTokens: number; outputTokens: number }
+      }> => {
         // Capture once — `mockState.next` is a getter that increments on
         // every read, so re-reading it inside the check would skip past 3.
         const callNumber = mockState.next
@@ -110,6 +113,7 @@ vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
               ],
             },
           },
+          tokensUsed: { inputTokens: 0, outputTokens: 0 },
         }
       },
     ),
