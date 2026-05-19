@@ -17,7 +17,13 @@ import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication
 
 // Mock the variation service so AiVariationStrategy (used for medium/deep level)
 // does not make real LLM calls in the integration test environment.
-// Uses hoisted state for reliable module-level tracking across test runs.
+//
+// Uses call-count tracking instead of ID pattern — Payload generates UUIDs for
+// exercise IDs which don't contain '-3', so the old ID-based condition never triggered.
+// Must be vi.hoisted: the vi.mock factory below runs hoisted above imports,
+// so it may only close over hoisted refs. A plain `let` here makes the
+// factory throw at runtime, silently falling back to the REAL variation
+// service → real LLM call → flaky 180s timeout.
 const { mockState } = vi.hoisted(() => {
   let callCount = 0
   return {
@@ -149,10 +155,6 @@ describe('Lesson duplication orchestrator — integration', () => {
   const cleanupLessonIds: string[] = []
   const cleanupExerciseIds: string[] = []
   const cleanupDuplicationIds: string[] = []
-
-  beforeEach(() => {
-    mockState.reset()
-  })
 
   beforeAll(async () => {
     payload = await getPayload({ config })
