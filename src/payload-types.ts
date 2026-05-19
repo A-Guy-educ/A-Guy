@@ -74,6 +74,8 @@ export interface Config {
     config_values: ConfigValue;
     config_audit_logs: ConfigAuditLog;
     conversations: Conversation;
+    'coupon-usages': CouponUsage;
+    coupons: Coupon;
     'guest-sessions': GuestSession;
     memory_items: MemoryItem;
     tenants: Tenant;
@@ -104,8 +106,6 @@ export interface Config {
     'access-codes': AccessCode;
     transactions: Transaction;
     payment_stats: PaymentStat;
-    coupons: Coupon;
-    'coupon-usages': CouponUsage;
     'mcp-audit-logs': McpAuditLog;
     redirects: Redirect;
     forms: Form;
@@ -126,6 +126,8 @@ export interface Config {
     config_values: ConfigValuesSelect<false> | ConfigValuesSelect<true>;
     config_audit_logs: ConfigAuditLogsSelect<false> | ConfigAuditLogsSelect<true>;
     conversations: ConversationsSelect<false> | ConversationsSelect<true>;
+    'coupon-usages': CouponUsagesSelect<false> | CouponUsagesSelect<true>;
+    coupons: CouponsSelect<false> | CouponsSelect<true>;
     'guest-sessions': GuestSessionsSelect<false> | GuestSessionsSelect<true>;
     memory_items: MemoryItemsSelect<false> | MemoryItemsSelect<true>;
     tenants: TenantsSelect<false> | TenantsSelect<true>;
@@ -156,8 +158,6 @@ export interface Config {
     'access-codes': AccessCodesSelect<false> | AccessCodesSelect<true>;
     transactions: TransactionsSelect<false> | TransactionsSelect<true>;
     payment_stats: PaymentStatsSelect<false> | PaymentStatsSelect<true>;
-    coupons: CouponsSelect<false> | CouponsSelect<true>;
-    'coupon-usages': CouponUsagesSelect<false> | CouponUsagesSelect<true>;
     'mcp-audit-logs': McpAuditLogsSelect<false> | McpAuditLogsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
@@ -1727,6 +1727,251 @@ export interface ChatAsset {
   createdAt: string;
 }
 /**
+ * Tracks coupon usage per transaction
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupon-usages".
+ */
+export interface CouponUsage {
+  id: string;
+  /**
+   * The coupon that was used
+   */
+  coupon: string | Coupon;
+  /**
+   * The checkout transaction where the coupon was applied
+   */
+  transaction: string | Transaction;
+  /**
+   * The user who used the coupon
+   */
+  user: string | User;
+  /**
+   * When the coupon was redeemed (distinct from createdAt for delayed redemptions)
+   */
+  usedAt?: string | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Manage discount coupons that can be applied at checkout
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupons".
+ */
+export interface Coupon {
+  id: string;
+  /**
+   * Coupon code (stored uppercase, case-insensitive in app logic)
+   */
+  code: string;
+  /**
+   * Percentage: discountValue is a percent (0-100). Fixed: discountValue is in agorot.
+   */
+  discountType: 'percentage' | 'fixed';
+  /**
+   * Percentage (0-100) or fixed amount in agorot, depending on discountType
+   */
+  discountValue: number;
+  /**
+   * Currency for fixed-amount discounts
+   */
+  currency: 'ILS' | 'USD' | 'EUR';
+  /**
+   * Whether this coupon can be used
+   */
+  isActive: boolean;
+  /**
+   * מתחילת תוקף (אם לא מוגדר — תקף מעכשיו)
+   */
+  validFrom?: string | null;
+  /**
+   * סוף תוקף (אם לא מוגדר — ללא הגבלה)
+   */
+  validUntil?: string | null;
+  /**
+   * Maximum number of uses (0 = unlimited)
+   */
+  maxUses: number;
+  /**
+   * Number of times this coupon has been used
+   */
+  usesCount: number;
+  /**
+   * מקסימום שימושים למשתמש
+   */
+  maxUsesPerUser?: number | null;
+  /**
+   * אם ריק — חל על כל המוצרים
+   */
+  applicableProducts?: (string | Product)[] | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products".
+ */
+export interface Product {
+  id: string;
+  /**
+   * שם המוצר (יוצג למשתמשים)
+   */
+  name: string;
+  /**
+   * מזהה ייחודי (URL-friendly, נוצר אוטומטית מהשם)
+   */
+  slug: string;
+  /**
+   * סוג החיוב: חד-פעמי או מנוי חוזר
+   */
+  billingType: 'one_time' | 'subscription';
+  /**
+   * מרווח החיוב (למנוי בלבד)
+   */
+  interval?: ('month' | 'year') | null;
+  /**
+   * מחיר המוצר
+   */
+  price: number;
+  /**
+   * מטבע התשלום
+   */
+  currency: 'ILS' | 'USD' | 'EUR';
+  /**
+   * בחר את פריטי המוצר (שיעורים ותכונות)
+   */
+  items?: (string | ProductItem)[] | null;
+  /**
+   * האם המוצר פעיל וזמין למכירה
+   */
+  isActive?: boolean | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-items".
+ */
+export interface ProductItem {
+  id: string;
+  /**
+   * בחר את סוג הפריט: שיעור מהמערכת או תכונה מוגדרת
+   */
+  type: 'lesson' | 'feature';
+  /**
+   * בחר את השיעור להוספה למוצר
+   */
+  lesson?: (string | null) | Lesson;
+  /**
+   * מזהה התכונה (לדוגמה: certificate, live-sessions)
+   */
+  featureKey?: string | null;
+  /**
+   * סמן אם יש להדגיש פריט זה בממשק המשתמש
+   */
+  isHighlighted?: boolean | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "transactions".
+ */
+export interface Transaction {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * User who initiated the payment
+   */
+  user: string | User;
+  /**
+   * Product being purchased
+   */
+  product: string | Product;
+  /**
+   * Payment provider used for this transaction
+   */
+  provider: 'stripe' | 'paypal';
+  /**
+   * Transaction ID from the payment provider
+   */
+  providerTransactionId: string;
+  /**
+   * Current status of the transaction
+   */
+  status: 'pending' | 'succeeded' | 'failed' | 'refunded';
+  /**
+   * Amount in agorot (1 ILS = 100 agorot)
+   */
+  amount: number;
+  /**
+   * Currency code (e.g., ILS, USD, EUR)
+   */
+  currency: string;
+  /**
+   * Additional metadata (item IDs, lesson IDs, etc.)
+   */
+  metadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Original success redirect URL
+   */
+  successUrl?: string | null;
+  /**
+   * Original cancel redirect URL
+   */
+  cancelUrl?: string | null;
+  /**
+   * Error message if transaction failed
+   */
+  errorMessage?: string | null;
+  /**
+   * Amount refunded in agorot (smallest currency unit)
+   */
+  refundedAmount?: number | null;
+  /**
+   * Admin who processed the refund
+   */
+  refundedBy?: (string | null) | User;
+  /**
+   * When the refund was processed
+   */
+  refundedAt?: string | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Long-term memory items for AI chat context
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2570,80 +2815,6 @@ export interface PricingPlan {
   createdAt: string;
 }
 /**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "product-items".
- */
-export interface ProductItem {
-  id: string;
-  /**
-   * בחר את סוג הפריט: שיעור מהמערכת או תכונה מוגדרת
-   */
-  type: 'lesson' | 'feature';
-  /**
-   * בחר את השיעור להוספה למוצר
-   */
-  lesson?: (string | null) | Lesson;
-  /**
-   * מזהה התכונה (לדוגמה: certificate, live-sessions)
-   */
-  featureKey?: string | null;
-  /**
-   * סמן אם יש להדגיש פריט זה בממשק המשתמש
-   */
-  isHighlighted?: boolean | null;
-  /**
-   * User who created this document
-   */
-  createdBy?: (string | null) | User;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "products".
- */
-export interface Product {
-  id: string;
-  /**
-   * שם המוצר (יוצג למשתמשים)
-   */
-  name: string;
-  /**
-   * מזהה ייחודי (URL-friendly, נוצר אוטומטית מהשם)
-   */
-  slug: string;
-  /**
-   * סוג החיוב: חד-פעמי או מנוי חוזר
-   */
-  billingType: 'one_time' | 'subscription';
-  /**
-   * מרווח החיוב (למנוי בלבד)
-   */
-  interval?: ('month' | 'year') | null;
-  /**
-   * מחיר המוצר
-   */
-  price: number;
-  /**
-   * מטבע התשלום
-   */
-  currency: 'ILS' | 'USD' | 'EUR';
-  /**
-   * בחר את פריטי המוצר (שיעורים ותכונות)
-   */
-  items?: (string | ProductItem)[] | null;
-  /**
-   * האם המוצר פעיל וזמין למכירה
-   */
-  isActive?: boolean | null;
-  /**
-   * User who created this document
-   */
-  createdBy?: (string | null) | User;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
  * Manage access codes that grant course entitlements
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2688,75 +2859,6 @@ export interface AccessCode {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "transactions".
- */
-export interface Transaction {
-  id: string;
-  /**
-   * Tenant scope for this document
-   */
-  tenant: string | Tenant;
-  /**
-   * User who initiated the payment
-   */
-  user: string | User;
-  /**
-   * Product being purchased
-   */
-  product: string | Product;
-  /**
-   * Payment provider used for this transaction
-   */
-  provider: 'stripe' | 'paypal';
-  /**
-   * Transaction ID from the payment provider
-   */
-  providerTransactionId: string;
-  /**
-   * Current status of the transaction
-   */
-  status: 'pending' | 'succeeded' | 'failed' | 'refunded';
-  /**
-   * Amount in agorot (1 ILS = 100 agorot)
-   */
-  amount: number;
-  /**
-   * Currency code (e.g., ILS, USD, EUR)
-   */
-  currency: string;
-  /**
-   * Additional metadata (item IDs, lesson IDs, etc.)
-   */
-  metadata?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  /**
-   * Original success redirect URL
-   */
-  successUrl?: string | null;
-  /**
-   * Original cancel redirect URL
-   */
-  cancelUrl?: string | null;
-  /**
-   * Error message if transaction failed
-   */
-  errorMessage?: string | null;
-  /**
-   * User who created this document
-   */
-  createdBy?: (string | null) | User;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payment_stats".
  */
 export interface PaymentStat {
@@ -2792,92 +2894,6 @@ export interface PaymentStat {
    * Approximate count of newly-counted succeeded transactions per day — may overcount repeat users on the same date due to simplified deduplication logic
    */
   newCustomersCount: number;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Manage discount coupons that can be applied at checkout
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "coupons".
- */
-export interface Coupon {
-  id: string;
-  /**
-   * Tenant scope for this document
-   */
-  tenant: string | Tenant;
-  /**
-   * The coupon code (case-insensitive, stored uppercase)
-   */
-  code: string;
-  /**
-   * Percentage: discountValue is a percent (0-100). Fixed: discountValue is in agorot.
-   */
-  discountType: 'percentage' | 'fixed';
-  /**
-   * Percentage (0-100) or fixed amount in agorot
-   */
-  discountValue: number;
-  /**
-   * Whether this coupon can be used
-   */
-  isActive?: boolean | null;
-  /**
-   * Leave empty for no start restriction
-   */
-  validFrom?: string | null;
-  /**
-   * Leave empty for no expiration
-   */
-  validUntil?: string | null;
-  /**
-   * Maximum number of uses (0 = unlimited)
-   */
-  maxUses?: number | null;
-  /**
-   * Number of times this coupon has been used
-   */
-  usesCount?: number | null;
-  /**
-   * Leave empty to apply to all products
-   */
-  applicableProducts?: (string | Product)[] | null;
-  /**
-   * User who created this document
-   */
-  createdBy?: (string | null) | User;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Tracks coupon usage per transaction
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "coupon-usages".
- */
-export interface CouponUsage {
-  id: string;
-  /**
-   * Tenant scope for this document
-   */
-  tenant: string | Tenant;
-  /**
-   * The coupon that was used
-   */
-  coupon: string | Coupon;
-  /**
-   * The checkout transaction where the coupon was applied
-   */
-  transaction: string | Transaction;
-  /**
-   * The user who used the coupon
-   */
-  user: string | User;
-  /**
-   * User who created this document
-   */
-  createdBy?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
 }
@@ -3214,6 +3230,14 @@ export interface PayloadLockedDocument {
         value: string | Conversation;
       } | null)
     | ({
+        relationTo: 'coupon-usages';
+        value: string | CouponUsage;
+      } | null)
+    | ({
+        relationTo: 'coupons';
+        value: string | Coupon;
+      } | null)
+    | ({
         relationTo: 'guest-sessions';
         value: string | GuestSession;
       } | null)
@@ -3332,14 +3356,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'payment_stats';
         value: string | PaymentStat;
-      } | null)
-    | ({
-        relationTo: 'coupons';
-        value: string | Coupon;
-      } | null)
-    | ({
-        relationTo: 'coupon-usages';
-        value: string | CouponUsage;
       } | null)
     | ({
         relationTo: 'mcp-audit-logs';
@@ -3657,6 +3673,39 @@ export interface ConversationsSelect<T extends boolean = true> {
   contextPolicyVersion?: T;
   lastMessageAt?: T;
   archivedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupon-usages_select".
+ */
+export interface CouponUsagesSelect<T extends boolean = true> {
+  coupon?: T;
+  transaction?: T;
+  user?: T;
+  usedAt?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupons_select".
+ */
+export interface CouponsSelect<T extends boolean = true> {
+  code?: T;
+  discountType?: T;
+  discountValue?: T;
+  currency?: T;
+  isActive?: T;
+  validFrom?: T;
+  validUntil?: T;
+  maxUses?: T;
+  usesCount?: T;
+  maxUsesPerUser?: T;
+  applicableProducts?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -4410,6 +4459,9 @@ export interface TransactionsSelect<T extends boolean = true> {
   successUrl?: T;
   cancelUrl?: T;
   errorMessage?: T;
+  refundedAmount?: T;
+  refundedBy?: T;
+  refundedAt?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -4429,38 +4481,6 @@ export interface PaymentStatsSelect<T extends boolean = true> {
   refundedCount?: T;
   failedCount?: T;
   newCustomersCount?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "coupons_select".
- */
-export interface CouponsSelect<T extends boolean = true> {
-  tenant?: T;
-  code?: T;
-  discountType?: T;
-  discountValue?: T;
-  isActive?: T;
-  validFrom?: T;
-  validUntil?: T;
-  maxUses?: T;
-  usesCount?: T;
-  applicableProducts?: T;
-  createdBy?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "coupon-usages_select".
- */
-export interface CouponUsagesSelect<T extends boolean = true> {
-  tenant?: T;
-  coupon?: T;
-  transaction?: T;
-  user?: T;
-  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }
