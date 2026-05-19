@@ -37,7 +37,26 @@ interface DiffPreviewProps {
   onLooksRight: (outputExerciseId: string) => void
   onRegenerate: (outputExerciseId: string, level: RegenLevel) => void
   onSkip: (outputExerciseId: string) => void
+  onRetry?: (sourceExerciseId: string) => Promise<void>
   onJumpToExercise: (outputExerciseId: string) => void
+  retryingSourceIds?: Set<string>
+}
+
+const FAILURE_CODE_LABELS: Record<string, string> = {
+  TOO_MANY_SECTIONS: 'Too many sections (max 5)',
+  PNG_FORBIDDEN: 'Embedded PNG data found',
+  INVALID_SVG: 'SVG content is malformed',
+  MISSING_QUESTION: 'Missing question prompt',
+  MISSING_HINT: 'Missing hint',
+  MISSING_SOLUTION: 'Missing solution',
+  MISSING_FULL_SOLUTION: 'Missing full solution',
+  MISSING_CORRECT_OPTION: 'MCQ missing correct option',
+  MISSING_WRONG_OPTIONS: 'MCQ missing wrong options',
+  INVALID_GEOMETRY_SPEC: 'Invalid geometry specification',
+  INVALID_AXIS_SPEC: 'Invalid axis specification',
+  INVALID_GUIDED_EXPLANATION: 'Invalid guided explanation',
+  GENERATION_FAILED: 'Generation failed',
+  SEMANTIC_MISMATCH: 'Semantic mismatch',
 }
 
 interface ShortcutHintProps {
@@ -75,7 +94,9 @@ export function DiffPreview({
   onLooksRight,
   onRegenerate,
   onSkip,
+  onRetry,
   onJumpToExercise,
+  retryingSourceIds = new Set(),
 }: DiffPreviewProps) {
   const [focusedIndex, setFocusedIndex] = useState(0)
   const [shortcutsVisible, setShortcutsVisible] = useState(false)
@@ -222,25 +243,42 @@ export function DiffPreview({
 
       {/* Exercise pairs */}
       <div className="flex flex-col gap-4">
-        {exercisePairs.map((pair, idx) => (
-          <ExercisePair
-            key={pair.outputExerciseId}
-            sourceExercise={{
-              id: pair.sourceExerciseId,
-              content: pair.sourceContent as { blocks: ContentBlock[] },
-            }}
-            outputExercise={{
-              id: pair.outputExerciseId,
-              content: pair.outputContent as { blocks: ContentBlock[] },
-            }}
-            exerciseIndex={idx}
-            onLooksRight={onLooksRight}
-            onRegenerate={onRegenerate}
-            onSkip={onSkip}
-            isReviewed={reviewedIds.has(pair.outputExerciseId)}
-            isFocused={idx === focusedIndex}
-          />
-        ))}
+        {exercisePairs.map((pair, idx) => {
+          const pairFailures = failures.filter(
+            (f) => f.exerciseRef === pair.sourceExerciseId && !f.resolved,
+          )
+          const failureInfo =
+            pairFailures.length > 0
+              ? {
+                  code: pairFailures[0].code,
+                  message: pairFailures[0].message,
+                  label: FAILURE_CODE_LABELS[pairFailures[0].code] ?? pairFailures[0].code,
+                }
+              : null
+
+          return (
+            <ExercisePair
+              key={pair.outputExerciseId}
+              sourceExercise={{
+                id: pair.sourceExerciseId,
+                content: pair.sourceContent as { blocks: ContentBlock[] },
+              }}
+              outputExercise={{
+                id: pair.outputExerciseId,
+                content: pair.outputContent as { blocks: ContentBlock[] },
+              }}
+              exerciseIndex={idx}
+              onLooksRight={onLooksRight}
+              onRegenerate={onRegenerate}
+              onSkip={onSkip}
+              onRetry={onRetry}
+              failureInfo={failureInfo}
+              isRetrying={retryingSourceIds.has(pair.sourceExerciseId)}
+              isReviewed={reviewedIds.has(pair.outputExerciseId)}
+              isFocused={idx === focusedIndex}
+            />
+          )
+        })}
       </div>
     </div>
   )
