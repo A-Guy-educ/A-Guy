@@ -510,9 +510,9 @@ describe('process-duplications stuck record auto-fail — integration', { concur
       depth: 0,
       overrideAccess: true,
     })
-    // Mock returns 'in_progress' without growing outputExercises, so claimAttempts increments (1 -> 2)
+    // Mock writes outputExercises inside orchestrator call → cron detects growth → resets claimAttempts to 0
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect((after as any).claimAttempts).toBe(2)
+    expect((after as any).claimAttempts).toBe(0)
   })
 
   it('in_progress with no output growth does NOT reset claimAttempts', async () => {
