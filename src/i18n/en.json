@@ -743,5 +743,15 @@
       "practice": "Practice",
       "exam": "Exam"
     }
+  },
+  "learningAgent": {
+    "title": "Learning Assistant",
+    "subtitle": "Your personal AI guide",
+    "welcomeMessage": "Hi! I'm your personal learning assistant. I can help you with your courses, suggest what to learn next, and track your progress. How can I help you today?",
+    "inputPlaceholder": "Ask me anything...",
+    "error": {
+      "authRequired": "Please log in to use the learning assistant",
+      "sendFailed": "Failed to send message. Please try again."
+    }
   }
 }
