@@ -41,7 +41,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   }
 
   // 3. Fetch transaction
-  let transaction: Transaction | undefined
+  let transaction: Transaction | null = null
   try {
     transaction = (await payload.findByID({
       collection: 'transactions',
@@ -49,20 +49,24 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       depth: 0,
       overrideAccess: true,
     })) as Transaction
-  } catch (err: unknown) {
-    const error = err as { status?: number; isOperational?: boolean }
-    if (error?.status === 404 || error?.isOperational) {
+  } catch (err) {
+    // Handle both operational errors and not-found errors
+    if (err instanceof Error && (err.name === 'NotFound' || err.message.includes('Not Found'))) {
       return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
     }
     throw err
   }
 
+  if (!transaction) {
+    return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
+  }
+
   // 4. Validate status — double-refund guard
-  if (transaction!.status === 'refunded') {
+  if (transaction.status === 'refunded') {
     return NextResponse.json({ error: 'העסקה כבר הוחזרה' }, { status: 400 })
   }
 
-  if (transaction!.status !== 'succeeded') {
+  if (transaction.status !== 'succeeded') {
     return NextResponse.json(
       { error: 'Only succeeded transactions can be refunded' },
       { status: 400 },

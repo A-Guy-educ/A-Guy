@@ -1,3 +1,7 @@
+---
+disabled: true
+---
+
 # auto resolve
 
 ## Job

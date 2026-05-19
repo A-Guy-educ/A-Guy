@@ -1,3 +1,7 @@
+---
+disabled: true
+---
+
 # Memorize
 
 ## Job
