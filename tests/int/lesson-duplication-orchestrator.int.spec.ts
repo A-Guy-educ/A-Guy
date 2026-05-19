@@ -15,108 +15,93 @@ import config from '@payload-config'
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
-// Mock RouterStrategy so that the real runStrategy (called by processExercise via
-// local closure) hits the mock instead of AiVariationStrategy → Genkit LLM.
-// Without this, the real RouterStrategy is invoked and the LLM adapter hangs.
-//
-// Use a per-sourceLesson call counter to force failure on the 4th exercise
-// (index 3). The exercise object passed to RouterStrategy.apply has a `lesson`
-// field set by the orchestrator's exercise query.
-const callsByLesson = new Map<string, number>()
-
-vi.mock('@/server/services/lesson-duplication/strategies/router', () => ({
-  RouterStrategy: vi.fn().mockImplementation(function () {
-    return {
-      apply: vi.fn().mockImplementation(async function (
-        exercise: { id: string; lesson?: string | { id?: string } | null },
-        _level: 'none' | 'light' | 'medium' | 'deep',
-      ): Promise<{
-        exercise: { id: string; content: { blocks: unknown[] }; lesson?: unknown }
-        needsAiFallback: boolean
-      }> {
-        // Determine source lesson ID for per-lesson call tracking
-        const sourceLessonId =
-          typeof exercise.lesson === 'string'
-            ? exercise.lesson
-            : exercise.lesson && typeof exercise.lesson === 'object' && 'id' in exercise.lesson
-              ? (exercise.lesson as { id: string }).id
-              : 'unknown'
-
-        const count = callsByLesson.get(sourceLessonId) ?? 0
-        callsByLesson.set(sourceLessonId, count + 1)
-
-        // Force failure on the 4th exercise (index 3, 0-based)
-        if (count === 3) {
-          throw new Error('Forced failure for test')
-        }
-
-        return {
-          exercise: {
-            ...exercise,
-            content: {
-              blocks: [
-                {
-                  id: 'q-1',
-                  type: 'question_select',
-                  variant: 'mcq',
-                  selectionMode: 'single',
-                  prompt: {
-                    type: 'rich_text',
-                    format: 'md-math-v1',
-                    value: 'What is 2+2?',
-                    mediaIds: [],
-                  },
-                  answer: {
-                    multiSelect: false,
-                    options: [
-                      {
-                        id: 'a',
-                        content: {
-                          type: 'rich_text',
-                          format: 'md-math-v1',
-                          value: '3',
-                          mediaIds: [],
-                        },
-                      },
-                      {
-                        id: 'b',
-                        content: {
-                          type: 'rich_text',
-                          format: 'md-math-v1',
-                          value: '4',
-                          mediaIds: [],
-                        },
-                      },
-                    ],
-                    correctOptionIds: ['b'],
-                  },
-                  hint: {
-                    type: 'rich_text',
-                    format: 'md-math-v1',
-                    value: 'Think arithmetic',
-                    mediaIds: [],
-                  },
-                  solution: {
-                    type: 'rich_text',
-                    format: 'md-math-v1',
-                    value: '2+2=4',
-                    mediaIds: [],
-                  },
-                  fullSolution: {
-                    type: 'rich_text',
-                    format: 'md-math-v1',
-                    value: 'Basic addition',
-                    mediaIds: [],
-                  },
+// Mock the variation service so AiVariationStrategy (used for medium/deep level)
+// does not make real LLM calls in the integration test environment.
+// The variation service is only called when level != 'none' &&
+// (level != 'light' || scriptStrategy.needsAiFallback).
+// Uses call-count tracking instead of ID pattern — Payload generates UUIDs for
+// exercise IDs which don't contain '-3', so the old ID-based condition never triggered.
+let _vgCallCount = 0
+vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
+  generateVariation: vi.fn().mockImplementation(
+    async (
+      input: { exercise: { id: string } },
+      _payload: unknown,
+    ): Promise<{
+      exercise: { id: string; content: { blocks: unknown[] } }
+      tokensUsed: { inputTokens: number; outputTokens: number }
+    }> => {
+      _vgCallCount++
+      // Force failure on the 3rd exercise (call count 3 = index 2)
+      if (_vgCallCount === 3) {
+        throw new Error('Forced failure for test')
+      }
+      return {
+        exercise: {
+          id: input.exercise.id,
+          content: {
+            blocks: [
+              {
+                id: 'q-1',
+                type: 'question_select',
+                variant: 'mcq',
+                selectionMode: 'single',
+                prompt: {
+                  type: 'rich_text',
+                  format: 'md-math-v1',
+                  value: 'What is 2+2?',
+                  mediaIds: [],
                 },
-              ],
-            },
+                answer: {
+                  multiSelect: false,
+                  options: [
+                    {
+                      id: 'a',
+                      content: {
+                        type: 'rich_text',
+                        format: 'md-math-v1',
+                        value: '3',
+                        mediaIds: [],
+                      },
+                    },
+                    {
+                      id: 'b',
+                      content: {
+                        type: 'rich_text',
+                        format: 'md-math-v1',
+                        value: '4',
+                        mediaIds: [],
+                      },
+                    },
+                  ],
+                  correctOptionIds: ['b'],
+                },
+                hint: {
+                  type: 'rich_text',
+                  format: 'md-math-v1',
+                  value: 'Think arithmetic',
+                  mediaIds: [],
+                },
+                solution: {
+                  type: 'rich_text',
+                  format: 'md-math-v1',
+                  value: '2+2=4',
+                  mediaIds: [],
+                },
+                fullSolution: {
+                  type: 'rich_text',
+                  format: 'md-math-v1',
+                  value: 'Basic addition',
+                  mediaIds: [],
+                },
+              },
+            ],
           },
-          needsAiFallback: false,
-        }
-      }),
-    }
-  }),
+        },
+        tokensUsed: { inputTokens: 0, outputTokens: 0 },
+      }
+    },
+  ),
 }))
 
 async function ensureDefaultTenant(payload: Payload): Promise<string> {
@@ -137,10 +122,10 @@ async function ensureDefaultTenant(payload: Payload): Promise<string> {
 }
 
 describe('Lesson duplication orchestrator — integration', () => {
-  // Reset the RouterStrategy call counter before each test so that forced-failure
+  // Reset the variation service call counter before each test so that forced-failure
   // exercise detection is isolated per test.
   beforeEach(() => {
-    callsByLesson.clear()
+    _vgCallCount = 0
   })
 
   let payload: Payload
@@ -154,7 +139,7 @@ describe('Lesson duplication orchestrator — integration', () => {
   const cleanupDuplicationIds: string[] = []
 
   beforeEach(() => {
-    callsByLesson.clear()
+    _vgCallCount = 0
   })
 
   beforeAll(async () => {
@@ -318,7 +303,7 @@ describe('Lesson duplication orchestrator — integration', () => {
 
     expect(record.status).toBe('pending')
 
-    // Run orchestrator (mocked runStrategy forces failure on exercise containing '-3')
+    // Run orchestrator (mocked generateVariation forces failure on 3rd exercise)
     try {
       await runDuplicationOrchestrator(record.id, payload)
     } catch {

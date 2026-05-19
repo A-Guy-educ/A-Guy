@@ -221,10 +221,20 @@ export async function createGenkitUnifiedAdapter(
                   ? (result as { output?: unknown }).output
                   : undefined
 
+              // Extract usage data for cost tracking (issue #1552)
+              const usage: { inputTokens: number; outputTokens: number } | undefined =
+                result.usage?.inputTokens !== undefined || result.usage?.outputTokens !== undefined
+                  ? {
+                      inputTokens: result.usage?.inputTokens ?? 0,
+                      outputTokens: result.usage?.outputTokens ?? 0,
+                    }
+                  : undefined
+
               return {
                 text: result.text,
                 raw: result,
                 output: structuredOutput,
+                usage,
               }
             } catch (error) {
               const llmError = errorAdapter.wrapError(
@@ -356,9 +366,19 @@ export async function createGenkitUnifiedAdapter(
                 },
               })
 
+              // Extract usage data for cost tracking (issue #1552)
+              const usage: { inputTokens: number; outputTokens: number } | undefined =
+                result.usage?.inputTokens !== undefined || result.usage?.outputTokens !== undefined
+                  ? {
+                      inputTokens: result.usage?.inputTokens ?? 0,
+                      outputTokens: result.usage?.outputTokens ?? 0,
+                    }
+                  : undefined
+
               return {
                 text: result.text,
                 raw: result,
+                usage,
               }
             } catch (error) {
               const llmError = errorAdapter.wrapError(
@@ -413,10 +433,20 @@ export async function createGenkitUnifiedAdapter(
                 maxTurns: 5,
               })
 
+              // Extract usage data for cost tracking (issue #1552)
+              const usage: { inputTokens: number; outputTokens: number } | undefined =
+                result.usage?.inputTokens !== undefined || result.usage?.outputTokens !== undefined
+                  ? {
+                      inputTokens: result.usage?.inputTokens ?? 0,
+                      outputTokens: result.usage?.outputTokens ?? 0,
+                    }
+                  : undefined
+
               return {
                 text: result.text,
                 raw: result,
                 toolCalls: [],
+                usage,
               }
             } catch (error) {
               const llmError = errorAdapter.wrapError(

@@ -7,7 +7,7 @@
  */
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { cn } from '@/infra/utils/ui'
 import { DiffBadge } from './DiffBadge'
 import { AdminBlockRenderer } from './AdminBlockRenderer'
@@ -16,6 +16,12 @@ import type { ContentBlock } from '@/server/payload/collections/Exercises/types'
 
 type RegenLevel = 'light' | 'medium' | 'deep'
 
+interface FailureInfo {
+  code: string
+  message: string
+  label: string
+}
+
 interface ExercisePairProps {
   sourceExercise: { id: string; content: { blocks: ContentBlock[] } }
   outputExercise: { id: string; content: { blocks: ContentBlock[] } }
@@ -23,6 +29,9 @@ interface ExercisePairProps {
   onLooksRight: (outputExerciseId: string) => void
   onRegenerate: (outputExerciseId: string, level: RegenLevel) => void
   onSkip: (outputExerciseId: string) => void
+  onRetry?: (sourceExerciseId: string) => Promise<void>
+  failureInfo?: FailureInfo | null
+  isRetrying?: boolean
   isReviewed: boolean
   isFocused: boolean
 }
@@ -34,13 +43,29 @@ export function ExercisePair({
   onLooksRight,
   onRegenerate,
   onSkip,
+  onRetry,
+  failureInfo,
+  isRetrying = false,
   isReviewed,
   isFocused,
 }: ExercisePairProps) {
+  const [detailsOpen, setDetailsOpen] = useState(false)
+  const [retryError, setRetryError] = useState<string | null>(null)
+
   const sourceBlocks = sourceExercise.content.blocks as ContentBlock[]
   const outputBlocks = outputExercise.content.blocks as ContentBlock[]
 
   const diffCategory = classifyDiff(sourceBlocks, outputBlocks)
+
+  const handleRetry = async () => {
+    if (!onRetry) return
+    setRetryError(null)
+    try {
+      await onRetry(sourceExercise.id)
+    } catch (e) {
+      setRetryError(e instanceof Error ? e.message : 'Retry failed')
+    }
+  }
 
   return (
     <div
@@ -127,7 +152,50 @@ export function ExercisePair({
         >
           Skip from output
         </button>
+
+        {/* Retry — only shown when this exercise has a failure */}
+        {failureInfo && (
+          <button
+            onClick={handleRetry}
+            disabled={isRetrying}
+            className={cn(
+              'transition-all duration-normal px-3 py-1.5 rounded-lg text-label font-semibold border',
+              isRetrying
+                ? 'bg-muted text-muted-foreground border-border cursor-not-allowed'
+                : 'bg-success/10 text-success border-success/30 hover:bg-success/20',
+            )}
+          >
+            {isRetrying ? 'Retrying…' : 'Retry just this one'}
+          </button>
+        )}
       </div>
+
+      {/* Expandable failure detail panel */}
+      {failureInfo && (
+        <details
+          open={detailsOpen}
+          onToggle={(e) => setDetailsOpen((e.target as HTMLDetailsElement).open)}
+          className="mt-3 pt-3 border-t border-border"
+        >
+          <summary className="flex items-center gap-2 cursor-pointer text-label text-muted-foreground hover:text-foreground transition-colors duration-normal select-none">
+            <span
+              className="font-mono text-xs bg-[var(--theme-elevation-100)] px-1.5 py-0.5 rounded"
+              style={{ fontFamily: 'monospace', fontSize: 11 }}
+            >
+              {failureInfo.code}
+            </span>
+            <span className="text-body-xs">Details</span>
+          </summary>
+          <pre
+            className="mt-2 p-2 bg-[var(--theme-elevation-100)] rounded text-body-xs overflow-x-auto"
+            style={{ wordBreak: 'break-all', fontSize: 12 }}
+          >
+            {failureInfo.message}
+          </pre>
+          <p className="mt-1 text-body-xs text-muted-foreground">{failureInfo.label}</p>
+          {retryError && <p className="mt-1 text-body-xs text-destructive">{retryError}</p>}
+        </details>
+      )}
     </div>
   )
 }

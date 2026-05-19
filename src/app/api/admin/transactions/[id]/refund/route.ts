@@ -39,7 +39,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  // 3. Fetch transaction (depth:0 throws NotFound instead of returning null)
+  // 3. Fetch transaction
   let transaction: Record<string, unknown> | null = null
   try {
     transaction = (await payload.findByID({
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       overrideAccess: true,
     })) as unknown as Record<string, unknown> | null
   } catch (err) {
-    if ((err as { name?: string }).name === 'NotFound') {
+    if (err instanceof Error && (err.name === 'NotFound' || err.message.includes('Not Found'))) {
       return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
     }
     throw err
