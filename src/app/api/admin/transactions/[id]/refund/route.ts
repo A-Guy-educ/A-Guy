@@ -50,7 +50,12 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     })) as unknown as Record<string, unknown> | null
   } catch (err) {
     // payload.findByID throws NotFound when the document doesn't exist
-    if (err instanceof Error && (err.name === 'NotFound' || err.message.includes('NotFound'))) {
+    if (
+      err instanceof Error &&
+      (err.name === 'NotFound' ||
+        err.message.includes('NotFound') ||
+        err.message.includes('Not Found'))
+    ) {
       return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
     }
     throw err

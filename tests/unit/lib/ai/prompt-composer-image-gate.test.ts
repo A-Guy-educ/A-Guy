@@ -14,12 +14,14 @@ describe('composeSystemInstructions — IMAGE_HANDLING gate', () => {
     const out = composeSystemInstructions(
       [],
       'You are a tutor.',
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      false,
+      undefined, // teacherProfileBlock
+      undefined, // agentBehaviorBlock
+      undefined, // lessonContextBlock
+      undefined, // lessonContextText
+      undefined, // courseContextText
+      undefined, // exercises
+      undefined, // userContextBlock
+      false, // hasImageAttached
     )
     expect(out).not.toContain(IMAGE_MARKER)
     // Math formatting is always present
@@ -30,12 +32,14 @@ describe('composeSystemInstructions — IMAGE_HANDLING gate', () => {
     const out = composeSystemInstructions(
       [],
       'You are a tutor.',
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      true,
+      undefined, // teacherProfileBlock
+      undefined, // agentBehaviorBlock
+      undefined, // lessonContextBlock
+      undefined, // lessonContextText
+      undefined, // courseContextText
+      undefined, // exercises
+      undefined, // userContextBlock
+      true, // hasImageAttached
     )
     expect(out).toContain(IMAGE_MARKER)
   })

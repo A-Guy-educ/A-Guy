@@ -9,9 +9,14 @@
 
 import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
 import { restoreAccent } from '@/ui/web/components/accent-picker'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+
+import { FloatingAgentButton } from '@/ui/web/learning-agent/FloatingAgentButton'
+import { AgentChatWindow } from '@/ui/web/learning-agent/AgentChatWindow'
 
 export function LayoutClient() {
+  const [isAgentChatOpen, setIsAgentChatOpen] = useState(false)
+
   // Emit SITE_INIT once on mount
   // Other services (like analytics) subscribe to this event
   useEffect(() => {
@@ -32,5 +37,10 @@ export function LayoutClient() {
     }
   }, [])
 
-  return null
+  return (
+    <>
+      <FloatingAgentButton onClick={() => setIsAgentChatOpen(true)} />
+      <AgentChatWindow isOpen={isAgentChatOpen} onClose={() => setIsAgentChatOpen(false)} />
+    </>
+  )
 }
