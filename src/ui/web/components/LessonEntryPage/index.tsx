@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import DOMPurify from 'dompurify'
 import { Clock, Play, RotateCcw } from 'lucide-react'
 import { Button } from '@/ui/web/components/button'
 import { Progress } from '@/ui/web/components/progress'
@@ -132,7 +133,10 @@ export function LessonEntryPage(props: LessonEntryPageProps) {
           {/* Description */}
           {props.lesson.description && (
             <p className="text-body-lg text-foreground leading-relaxed">
-              {props.lesson.description.replace(/<[^>]*>/g, '')}
+              {DOMPurify.sanitize(props.lesson.description, {
+                ALLOWED_TAGS: [],
+                ALLOWED_ATTR: [],
+              })}
             </p>
           )}
 
