@@ -9,10 +9,47 @@
  * @ai-summary Records coupon usage for auditing
  */
 
-import type { CollectionConfig } from 'payload'
+import type { CollectionAfterChangeHook, CollectionConfig } from 'payload'
 
 import { adminOnly } from '../access/adminOnly'
 import { createdByField } from '../fields/createdBy'
+
+// afterChange: bump the parent coupon's usesCount on each new usage row.
+// checkout/route.ts opts out via context.skipUsesCountHook because it computes
+// the increment itself (it needs to read the latest value to detect maxUses
+// overflow before recording the usage).
+const incrementCouponUsesCount: CollectionAfterChangeHook = async ({ doc, operation, req }) => {
+  if (operation !== 'create') return doc
+  if ((req.context as Record<string, unknown>)?.skipUsesCountHook) return doc
+
+  const couponId =
+    typeof doc.coupon === 'string' ? doc.coupon : (doc.coupon as { id?: string } | undefined)?.id
+  if (!couponId) return doc
+
+  try {
+    const current = await req.payload.findByID({
+      collection: 'coupons',
+      id: couponId,
+      depth: 0,
+      overrideAccess: true,
+    })
+    await req.payload.update({
+      collection: 'coupons',
+      id: couponId,
+      data: { usesCount: ((current?.usesCount as number) ?? 0) + 1 },
+      context: { skipUsesCountHook: true },
+      overrideAccess: true,
+      req,
+    })
+  } catch (error) {
+    req.payload.logger.error(
+      { err: error, couponUsageId: doc.id, couponId },
+      'Failed to increment coupon usesCount from CouponUsages afterChange',
+    )
+  }
+
+  return doc
+}
 
 export const CouponUsages: CollectionConfig = {
   slug: 'coupon-usages',
@@ -23,10 +60,13 @@ export const CouponUsages: CollectionConfig = {
     description: 'Tracks coupon usage per transaction',
   },
   access: {
-    create: () => true, // Public create for recording usage during checkout
+    create: adminOnly,
     read: adminOnly,
-    update: () => false, // No updates allowed
+    update: adminOnly,
     delete: adminOnly,
+  },
+  hooks: {
+    afterChange: [incrementCouponUsesCount],
   },
   fields: [
     {
