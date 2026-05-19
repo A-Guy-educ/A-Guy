@@ -19,80 +19,52 @@ import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication
 // The previous mock checked exercise.id.includes('-3') to force a failure on
 // the 3rd exercise, but database IDs never contain '-3', so the condition never
 // matched. We use a call counter instead for deterministic failure injection.
-// The async factory (vs sync) is required so importOriginal is injected by Vitest.
-let runStrategyCallCount = 0
+// Must be vi.hoisted: the vi.mock factory below runs hoisted above imports,
+// so it may only close over hoisted refs.
+const h = vi.hoisted(() => ({ callCount: 0 }))
 vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@/server/services/lesson-duplication/orchestrator')>()
   return {
     ...actual,
-    runStrategy: vi
-      .fn()
-      .mockImplementation(
-        async (exercise: { id: string }, _level: string, _subject: unknown, _payload: unknown) => {
-          runStrategyCallCount++
-          // Force failure on the 3rd call (deterministic regardless of exercise ID)
-          if (runStrategyCallCount === 3) {
-            throw new Error('Forced failure for test')
-          }
-          // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
-          return {
-            exerciseId: exercise.id,
-            strategy: 'script' as const,
-            blocks: [
-              {
-                id: 'q-1',
-                type: 'question_select',
-                variant: 'mcq',
-                selectionMode: 'single',
-                prompt: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'What is 2+2?',
-                  mediaIds: [],
-                },
-                answer: {
-                  multiSelect: false,
-                  options: [
-                    {
-                      id: 'a',
-                      content: {
-                        type: 'rich_text',
-                        format: 'md-math-v1',
-                        value: '3',
-                        mediaIds: [],
-                      },
-                    },
-                    {
-                      id: 'b',
-                      content: {
-                        type: 'rich_text',
-                        format: 'md-math-v1',
-                        value: '4',
-                        mediaIds: [],
-                      },
-                    },
-                  ],
-                  correctOptionIds: ['b'],
-                },
-                hint: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'Think arithmetic',
-                  mediaIds: [],
-                },
-                solution: { type: 'rich_text', format: 'md-math-v1', value: '2+2=4', mediaIds: [] },
-                fullSolution: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: 'Basic addition',
-                  mediaIds: [],
-                },
+    runStrategy: vi.fn().mockImplementation(
+      async (exercise: { id: string }, _level: string, _subject: unknown, _payload: unknown) => {
+        h.callCount++
+        if (h.callCount === 3) {
+          throw new Error('Forced failure for test')
+        }
+        return {
+          exerciseId: exercise.id,
+          strategy: 'script' as const,
+          blocks: [
+            {
+              id: 'q-1',
+              type: 'question_select',
+              variant: 'mcq',
+              selectionMode: 'single',
+              prompt: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: 'What is 2+2?',
+                mediaIds: [],
               },
-            ],
-          }
-        },
-      ),
+              answer: {
+                multiSelect: false,
+                options: [
+                  { id: 'a', content: { type: 'rich_text', format: 'md-math-v1', value: '3', mediaIds: [] } },
+                  { id: 'b', content: { type: 'rich_text', format: 'md-math-v1', value: '4', mediaIds: [] } },
+                ],
+                correctOptionIds: ['b'],
+              },
+              hint: { type: 'rich_text', format: 'md-math-v1', value: 'Think arithmetic', mediaIds: [] },
+              solution: { type: 'rich_text', format: 'md-math-v1', value: '2+2=4', mediaIds: [] },
+              fullSolution: { type: 'rich_text', format: 'md-math-v1', value: 'Basic addition', mediaIds: [] },
+            },
+          ],
+          tokensUsed: { inputTokens: 10, outputTokens: 20 },
+        }
+      },
+    ),
   }
 })
 
@@ -126,7 +98,7 @@ describe('Lesson duplication orchestrator — integration', () => {
 
   beforeEach(() => {
     // Reset the runStrategy call counter so each test gets a clean slate
-    runStrategyCallCount = 0
+    h.callCount = 0
   })
 
   beforeAll(async () => {
