@@ -23,7 +23,10 @@ import type { Payload } from 'payload'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 import { logger } from '@/infra/utils/logger'
-import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
+import {
+  runDuplicationOrchestrator,
+  STUCK_FAILURE_CODE,
+} from '@/server/services/lesson-duplication/orchestrator'
 
 // Vercel cron functions inherit the same maxDuration ceiling as regular
 // serverless functions. 800s on Pro lets one tick process roughly 3-5
@@ -47,6 +50,8 @@ interface DuplicationRecord {
   status?: string
   workerLockExpiresAt?: Date
   workerLockedAt?: Date
+  claimAttempts?: number
+  outputExercises?: unknown[]
 }
 
 /**
@@ -77,9 +82,12 @@ async function claimNextRecord(payload: Payload): Promise<string | null> {
     {
       // FIFO by createdAt — oldest pending/running record first.
       status: { $in: ['pending', 'running'] },
+      // Skip records flagged as permanently stuck (≥5 attempts, no progress)
+      $nor: [{ claimAttempts: { $gte: 5 } }],
       $or: [{ workerLockExpiresAt: { $exists: false } }, { workerLockExpiresAt: { $lt: now } }],
     },
     {
+      $inc: { claimAttempts: 1 },
       $set: {
         workerLockExpiresAt: lockUntil,
         workerLockedAt: now,
@@ -115,6 +123,55 @@ async function releaseLock(payload: Payload, duplicationId: string): Promise<voi
     )
   } catch (err) {
     logger.error({ err, duplicationId }, '[cron/process-duplications] Failed to release lock')
+  }
+}
+
+/**
+ * Mark a record as permanently stuck: set status=failed and append a
+ * STUCK_AFTER_MAX_ATTEMPTS failure entry so the admin knows why.
+ */
+async function markStuckAndFailed(payload: Payload, duplicationId: string): Promise<void> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const coll = (payload.db as any).collections?.['lesson-duplications']
+    if (!coll) return
+    await coll.updateOne({ _id: new ObjectId(duplicationId) }, {
+      $set: { status: 'failed' },
+      $push: {
+        failures: {
+          exerciseRef: '',
+          sectionIndex: 0,
+          code: STUCK_FAILURE_CODE,
+          message:
+            'Record was auto-failed after 5 consecutive cron ticks produced no new output exercises. Check source lesson data, exercise structure, and orchestrator logs.',
+          suggestedAction: 'skip',
+          resolved: false,
+        },
+      },
+    } as never)
+    logger.warn(
+      { duplicationId },
+      '[cron/process-duplications] Auto-failed stuck record after max attempts',
+    )
+  } catch (err) {
+    logger.error(
+      { err, duplicationId },
+      '[cron/process-duplications] Failed to mark record as stuck/failed',
+    )
+    // Fallback: try to at least set status=failed without the failure entry
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const coll = (payload.db as any).collections?.['lesson-duplications']
+      if (!coll) return
+      await coll.updateOne({ _id: new ObjectId(duplicationId) }, {
+        $set: { status: 'failed' },
+      } as never)
+    } catch (fallbackErr) {
+      logger.error(
+        { err: fallbackErr, duplicationId },
+        '[cron/process-duplications] Fallback status=failed also failed',
+      )
+    }
   }
 }
 
@@ -164,6 +221,32 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ processed: 0, message: 'no records pending' })
   }
 
+  // Re-read the claimed record to capture pre-orchestrator outputExercises.length
+  // (needed to detect whether this tick produced progress)
+  const claimedRecord = await payload.findByID({
+    collection: 'lesson-duplications',
+    id: duplicationId,
+    depth: 0,
+    overrideAccess: true,
+  })
+  const preTickOutputCount =
+    (claimedRecord as unknown as { outputExercises?: unknown[] }).outputExercises?.length ?? 0
+
+  // Auto-fail if we've now hit the threshold (claimAttempts was incremented to 5
+  // in the atomic claim, so 5 means THIS tick was the 5th attempt).
+  const currentAttempts =
+    (claimedRecord as unknown as { claimAttempts?: number }).claimAttempts ?? 1
+  if (currentAttempts >= 5) {
+    await markStuckAndFailed(payload, duplicationId)
+    await releaseLock(payload, duplicationId)
+    return NextResponse.json({
+      duplicationId,
+      outcome: 'failed',
+      reason: STUCK_FAILURE_CODE,
+      elapsedMs: Date.now() - startedAt,
+    })
+  }
+
   logger.info({ duplicationId }, '[cron/process-duplications] claimed record')
 
   let outcome: string = 'in_progress'
@@ -174,6 +257,32 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     outcome = 'failed'
   } finally {
     await releaseLock(payload, duplicationId)
+  }
+
+  // Reset claimAttempts on any progress — if outputExercises grew during this tick,
+  // reset the counter so a legitimately long-running record (e.g. 50-exercise lesson)
+  // is never incorrectly auto-failed.
+  if (outcome !== 'failed') {
+    const afterRecord = await payload.findByID({
+      collection: 'lesson-duplications',
+      id: duplicationId,
+      depth: 0,
+      overrideAccess: true,
+    })
+    const postTickOutputCount =
+      (afterRecord as unknown as { outputExercises?: unknown[] }).outputExercises?.length ?? 0
+    if (postTickOutputCount > preTickOutputCount) {
+      await payload.update({
+        collection: 'lesson-duplications',
+        id: duplicationId,
+        data: { claimAttempts: 0 } as never,
+        overrideAccess: true,
+      })
+      logger.info(
+        { duplicationId, preTickOutputCount, postTickOutputCount },
+        '[cron/process-duplications] Reset claimAttempts — progress detected',
+      )
+    }
   }
 
   return NextResponse.json({

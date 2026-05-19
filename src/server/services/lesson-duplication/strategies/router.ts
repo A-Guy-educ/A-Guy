@@ -28,7 +28,7 @@ class AiVariationStrategy implements VariationStrategy {
     exercise: Exercise,
     level: DuplicationLevel,
     subject?: DuplicationSubject,
-  ): Promise<VariationResult> {
+  ): Promise<VariationResult & { tokensUsed?: { inputTokens: number; outputTokens: number } }> {
     void subject // subject parameter required by VariationStrategy interface
     if (level === 'none') return { exercise }
 
@@ -43,7 +43,7 @@ class AiVariationStrategy implements VariationStrategy {
       },
       this.payload,
     )
-    return { exercise: result.exercise }
+    return { exercise: result.exercise, tokensUsed: result.tokensUsed }
   }
 }
 
@@ -71,7 +71,7 @@ export class RouterStrategy implements VariationStrategy {
     exercise: Exercise,
     level: DuplicationLevel,
     subject?: DuplicationSubject,
-  ): Promise<VariationResult> {
+  ): Promise<VariationResult & { tokensUsed?: { inputTokens: number; outputTokens: number } }> {
     if (level === 'none') {
       return { exercise }
     }
@@ -80,7 +80,7 @@ export class RouterStrategy implements VariationStrategy {
     if (level === 'light') {
       const result = await this.scriptStrategy.apply(exercise, level, subject)
       if (!result.needsAiFallback) {
-        return result
+        return { ...result, tokensUsed: { inputTokens: 0, outputTokens: 0 } }
       }
       // Fall through to AI if script returned needsAiFallback
     }
