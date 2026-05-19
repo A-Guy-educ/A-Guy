@@ -27,44 +27,72 @@ vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOrigin
     await importOriginal<typeof import('@/server/services/lesson-duplication/orchestrator')>()
   return {
     ...actual,
-    runStrategy: vi.fn().mockImplementation(
-      async (exercise: { id: string }, _level: string, _subject: unknown, _payload: unknown) => {
-        h.callCount++
-        if (h.callCount === 3) {
-          throw new Error('Forced failure for test')
-        }
-        return {
-          exerciseId: exercise.id,
-          strategy: 'script' as const,
-          blocks: [
-            {
-              id: 'q-1',
-              type: 'question_select',
-              variant: 'mcq',
-              selectionMode: 'single',
-              prompt: {
-                type: 'rich_text',
-                format: 'md-math-v1',
-                value: 'What is 2+2?',
-                mediaIds: [],
+    runStrategy: vi
+      .fn()
+      .mockImplementation(
+        async (exercise: { id: string }, _level: string, _subject: unknown, _payload: unknown) => {
+          h.callCount++
+          if (h.callCount === 3) {
+            throw new Error('Forced failure for test')
+          }
+          return {
+            exerciseId: exercise.id,
+            strategy: 'script' as const,
+            blocks: [
+              {
+                id: 'q-1',
+                type: 'question_select',
+                variant: 'mcq',
+                selectionMode: 'single',
+                prompt: {
+                  type: 'rich_text',
+                  format: 'md-math-v1',
+                  value: 'What is 2+2?',
+                  mediaIds: [],
+                },
+                answer: {
+                  multiSelect: false,
+                  options: [
+                    {
+                      id: 'a',
+                      content: {
+                        type: 'rich_text',
+                        format: 'md-math-v1',
+                        value: '3',
+                        mediaIds: [],
+                      },
+                    },
+                    {
+                      id: 'b',
+                      content: {
+                        type: 'rich_text',
+                        format: 'md-math-v1',
+                        value: '4',
+                        mediaIds: [],
+                      },
+                    },
+                  ],
+                  correctOptionIds: ['b'],
+                },
+                hint: {
+                  type: 'rich_text',
+                  format: 'md-math-v1',
+                  value: 'Think arithmetic',
+                  mediaIds: [],
+                },
+                solution: { type: 'rich_text', format: 'md-math-v1', value: '2+2=4', mediaIds: [] },
+                fullSolution: {
+                  type: 'rich_text',
+                  format: 'md-math-v1',
+                  value: 'Basic addition',
+                  mediaIds: [],
+                },
               },
-              answer: {
-                multiSelect: false,
-                options: [
-                  { id: 'a', content: { type: 'rich_text', format: 'md-math-v1', value: '3', mediaIds: [] } },
-                  { id: 'b', content: { type: 'rich_text', format: 'md-math-v1', value: '4', mediaIds: [] } },
-                ],
-                correctOptionIds: ['b'],
-              },
-              hint: { type: 'rich_text', format: 'md-math-v1', value: 'Think arithmetic', mediaIds: [] },
-              solution: { type: 'rich_text', format: 'md-math-v1', value: '2+2=4', mediaIds: [] },
-              fullSolution: { type: 'rich_text', format: 'md-math-v1', value: 'Basic addition', mediaIds: [] },
-            },
-          ],
-          tokensUsed: { inputTokens: 10, outputTokens: 20 },
-        }
-      },
-    ),
+            ],
+            tokensUsed: { inputTokens: 10, outputTokens: 20 },
+          }
+        },
+      ),
   }
 })
 
