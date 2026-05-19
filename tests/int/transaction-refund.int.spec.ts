@@ -41,6 +41,7 @@ let adminUserId: string
 let studentUserId: string
 let stripeTransactionId: string
 let paypalTransactionId: string
+let refundedFieldsTransactionId: string
 let refundedTransactionId: string
 let pendingTransactionId: string
 let failedTransactionId: string
@@ -151,6 +152,23 @@ beforeAll(async () => {
     overrideAccess: true,
   })
   paypalTransactionId = paypalTx.id
+
+  // Create succeeded stripe transaction for testing refund fields
+  const refundFieldsTx = await payload.create({
+    collection: 'transactions',
+    data: {
+      user: adminUserId,
+      product: product.id,
+      provider: 'stripe',
+      providerTransactionId: `cs_refund_fields_test_${Date.now()}`,
+      status: 'succeeded',
+      amount: 2500,
+      currency: 'ILS',
+      tenant: tenantId,
+    } as any,
+    overrideAccess: true,
+  })
+  refundedFieldsTransactionId = refundFieldsTx.id
 
   // Create already-refunded transaction
   const refundedTx = await payload.create({
@@ -373,6 +391,36 @@ describe('POST /api/admin/transactions/{id}/refund', () => {
       overrideAccess: true,
     })
     expect(updated.status).toBe('refunded')
+  })
+
+  it('successfully refunds and sets refundedAmount, refundedBy, refundedAt fields', async () => {
+    const req = new NextRequest(
+      `http://localhost:3000/api/admin/transactions/${refundedFieldsTransactionId}/refund`,
+      {
+        method: 'POST',
+        headers: { Authorization: `JWT ${adminToken}` },
+      },
+    )
+    const res = await transactionRefundHandler(req, {
+      params: Promise.resolve({ id: refundedFieldsTransactionId }),
+    })
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.success).toBe(true)
+
+    // Verify transaction status and refund audit fields were updated
+    const updated = await payload.findByID({
+      collection: 'transactions',
+      id: refundedFieldsTransactionId,
+      overrideAccess: true,
+    })
+    expect(updated.status).toBe('refunded')
+
+    // Verify refund audit fields are set
+    expect((updated as any).refundedAmount).toBe(2500)
+    expect((updated as any).refundedBy?.id).toBe(adminUserId)
+    expect((updated as any).refundedAt).toBeDefined()
+    expect(new Date((updated as any).refundedAt).getTime()).toBeCloseTo(Date.now(), -3) // within ~1 second
   })
 
   it('double-refund attempt returns 400 with Hebrew message', async () => {

@@ -8,6 +8,7 @@
  */
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { resetPaymentEnvCache } from '@/lib/payment/env'
+import { resetPayPalTokenCache } from '@/lib/payment/paypal'
 
 // Store original fetch
 const originalFetch = globalThis.fetch
@@ -46,11 +47,15 @@ describe('PayPal Payment Service', () => {
     resetPaymentEnvCache()
     // Set all required payment env vars
     process.env.STRIPE_SECRET_KEY = 'sk_test_xxx'
+    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test_xxx'
+    process.env.PAYPAL_WEBHOOK_ID = 'webhook_test_xxx'
   })
 
   afterEach(() => {
     // Restore original fetch
     globalThis.fetch = originalFetch
+    // Reset modules after each test to ensure clean state
+    vi.resetModules()
   })
 
   describe('createPayPalOrder', () => {
@@ -146,6 +151,8 @@ describe('PayPal Payment Service', () => {
     it('should return checkoutUrl and providerSessionId', async () => {
       process.env.PAYPAL_CLIENT_ID = 'test_client_id'
       process.env.PAYPAL_CLIENT_SECRET = 'test_secret'
+      process.env.PAYPAL_WEBHOOK_ID = 'webhook_id_xxx'
+      process.env.STRIPE_WEBHOOK_SECRET = 'whsec_xxx'
 
       globalThis.fetch = vi.fn().mockImplementation((url: string) => {
         if (url.includes('/v1/oauth2/token')) {
@@ -168,6 +175,82 @@ describe('PayPal Payment Service', () => {
 
       expect(result.checkoutUrl).toBe('https://paypal.com/approve')
       expect(result.providerSessionId).toBe('ORDER123')
+    })
+
+    it('should use production API URL when PAYPAL_SANDBOX=false', async () => {
+      process.env.PAYPAL_CLIENT_ID = 'test_client_id'
+      process.env.PAYPAL_CLIENT_SECRET = 'test_secret'
+      process.env.PAYPAL_WEBHOOK_ID = 'webhook_id_xxx'
+      process.env.STRIPE_WEBHOOK_SECRET = 'whsec_xxx'
+      process.env.PAYPAL_SANDBOX = 'false'
+      resetPaymentEnvCache()
+
+      const capturedUrls: string[] = []
+
+      globalThis.fetch = vi.fn().mockImplementation((url: string) => {
+        capturedUrls.push(url)
+        if (url.includes('/v1/oauth2/token')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(mockTokenResponse),
+          }) as unknown as Response
+        }
+        if (url.includes('/v2/checkout/orders')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(mockOrderResponse),
+          }) as unknown as Response
+        }
+        return Promise.reject(new Error('Unexpected URL'))
+      })
+
+      const { createPayPalOrder, resetPayPalTokenCache } = await import('@/lib/payment/paypal')
+      resetPayPalTokenCache()
+      await createPayPalOrder(mockOptions)
+
+      // Verify production URL is used when PAYPAL_SANDBOX=false
+      // First URL should be token, second should be checkout
+      expect(capturedUrls[0]).toMatch(/^https:\/\/api-m\.paypal\.com\/v1\/oauth2\/token$/)
+      expect(capturedUrls[1]).toMatch(/^https:\/\/api-m\.paypal\.com\/v2\/checkout\/orders$/)
+    })
+
+    it('should use sandbox API URL when PAYPAL_SANDBOX=true', async () => {
+      process.env.PAYPAL_CLIENT_ID = 'test_client_id'
+      process.env.PAYPAL_CLIENT_SECRET = 'test_secret'
+      process.env.PAYPAL_WEBHOOK_ID = 'webhook_id_xxx'
+      process.env.STRIPE_WEBHOOK_SECRET = 'whsec_xxx'
+      process.env.PAYPAL_SANDBOX = 'true'
+      resetPaymentEnvCache()
+
+      const capturedUrls: string[] = []
+
+      globalThis.fetch = vi.fn().mockImplementation((url: string) => {
+        capturedUrls.push(url)
+        if (url.includes('/v1/oauth2/token')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(mockTokenResponse),
+          }) as unknown as Response
+        }
+        if (url.includes('/v2/checkout/orders')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(mockOrderResponse),
+          }) as unknown as Response
+        }
+        return Promise.reject(new Error('Unexpected URL'))
+      })
+
+      const { createPayPalOrder, resetPayPalTokenCache } = await import('@/lib/payment/paypal')
+      resetPayPalTokenCache()
+      await createPayPalOrder(mockOptions)
+
+      // Verify sandbox URL is used when PAYPAL_SANDBOX=true
+      // First URL should be token, second should be checkout
+      expect(capturedUrls[0]).toMatch(/^https:\/\/api-m\.sandbox\.paypal\.com\/v1\/oauth2\/token$/)
+      expect(capturedUrls[1]).toMatch(
+        /^https:\/\/api-m\.sandbox\.paypal\.com\/v2\/checkout\/orders$/,
+      )
     })
 
     it('should convert amount from smallest unit', async () => {
@@ -214,11 +297,12 @@ describe('PayPal Payment Service', () => {
     it('should throw error when PAYPAL_WEBHOOK_ID is missing', async () => {
       delete process.env.PAYPAL_WEBHOOK_ID
       resetPaymentEnvCache()
+      vi.resetModules()
 
       const { verifyPayPalWebhook } = await import('@/lib/payment/paypal')
 
       await expect(verifyPayPalWebhook({ type: 'test' }, mockHeaders)).rejects.toThrow(
-        'Missing PAYPAL_WEBHOOK_ID environment variable',
+        'Missing required payment environment variables: PAYPAL_WEBHOOK_ID',
       )
     })
 
