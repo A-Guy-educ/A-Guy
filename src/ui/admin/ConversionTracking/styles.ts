@@ -211,3 +211,66 @@ export const registeredTrendBadgeStyle = (isPositive: boolean): CSSProperties =>
   backgroundColor: isPositive ? 'var(--theme-success-100)' : 'rgba(239, 68, 68, 0.12)',
   color: isPositive ? 'var(--theme-success)' : 'var(--theme-error)',
 })
+
+// Revenue card styles
+export const revenueCardStyle: CSSProperties = {
+  padding: 20,
+  backgroundColor: 'var(--theme-elevation-50)',
+  border: '1px solid var(--theme-elevation-200)',
+  borderRadius: 8,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 8,
+}
+
+export const revenueValueStyle: CSSProperties = {
+  fontSize: 28,
+  fontWeight: 700,
+  color: 'var(--theme-elevation-1000)',
+  lineHeight: 1.2,
+}
+
+export const revenueLabelStyle: CSSProperties = {
+  fontSize: 12,
+  fontWeight: 500,
+  color: 'var(--theme-elevation-500)',
+}
+
+// Transaction row styles
+export const transactionRowStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: '10px 0',
+  borderBottom: '1px solid var(--theme-elevation-100)',
+  gap: 12,
+}
+
+export const transactionRowLinkStyle: CSSProperties = {
+  textDecoration: 'none',
+  color: 'inherit',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  flex: 1,
+  gap: 12,
+}
+
+// Status badge colors (inline style approach to match existing admin widget pattern)
+export const statusSuccessStyle: CSSProperties = {
+  backgroundColor: 'hsl(var(--theme-success) / 0.12)',
+  color: 'var(--theme-success)',
+  border: '1px solid hsl(var(--theme-success) / 0.25)',
+}
+
+export const statusErrorStyle: CSSProperties = {
+  backgroundColor: 'hsl(var(--theme-error) / 0.12)',
+  color: 'var(--theme-error)',
+  border: '1px solid hsl(var(--theme-error) / 0.25)',
+}
+
+export const statusWarningStyle: CSSProperties = {
+  backgroundColor: 'hsl(var(--theme-warning) / 0.12)',
+  color: 'var(--theme-warning)',
+  border: '1px solid hsl(var(--theme-warning) / 0.25)',
+}

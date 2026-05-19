@@ -41,14 +41,16 @@ describe('Payment Environment Helper', () => {
       expect(env.paypalSandbox).toBe(true)
     })
 
-    it('should return PAYPAL_SANDBOX as false when not set', () => {
+    it('should return PAYPAL_SANDBOX as true when not set (defaults to sandbox)', () => {
       process.env.STRIPE_SECRET_KEY = 'sk_test_xxx'
+      process.env.STRIPE_WEBHOOK_SECRET = 'whsec_xxx'
       process.env.PAYPAL_CLIENT_SECRET = 'client_secret_xxx'
+      process.env.PAYPAL_WEBHOOK_ID = 'webhook_id_xxx'
       delete process.env.PAYPAL_SANDBOX
 
       const env = getPaymentEnv()
 
-      expect(env.paypalSandbox).toBe(false)
+      expect(env.paypalSandbox).toBe(true)
     })
 
     it('should return PAYPAL_SANDBOX as true when set to "true"', () => {
@@ -73,7 +75,9 @@ describe('Payment Environment Helper', () => {
 
     it('should throw when STRIPE_SECRET_KEY is missing', () => {
       delete process.env.STRIPE_SECRET_KEY
+      process.env.STRIPE_WEBHOOK_SECRET = 'whsec_xxx'
       process.env.PAYPAL_CLIENT_SECRET = 'client_secret_xxx'
+      process.env.PAYPAL_WEBHOOK_ID = 'webhook_id_xxx'
 
       expect(() => getPaymentEnv()).toThrow(
         'Missing required payment environment variables: STRIPE_SECRET_KEY',
@@ -82,6 +86,8 @@ describe('Payment Environment Helper', () => {
 
     it('should throw when PAYPAL_CLIENT_SECRET is missing', () => {
       process.env.STRIPE_SECRET_KEY = 'sk_test_xxx'
+      process.env.STRIPE_WEBHOOK_SECRET = 'whsec_xxx'
+      process.env.PAYPAL_WEBHOOK_ID = 'webhook_id_xxx'
       delete process.env.PAYPAL_CLIENT_SECRET
 
       expect(() => getPaymentEnv()).toThrow(
@@ -90,6 +96,8 @@ describe('Payment Environment Helper', () => {
     })
 
     it('should throw when both required keys are missing', () => {
+      process.env.STRIPE_WEBHOOK_SECRET = 'whsec_xxx'
+      process.env.PAYPAL_WEBHOOK_ID = 'webhook_id_xxx'
       delete process.env.STRIPE_SECRET_KEY
       delete process.env.PAYPAL_CLIENT_SECRET
 
@@ -100,7 +108,9 @@ describe('Payment Environment Helper', () => {
 
     it('should cache result on subsequent calls', () => {
       process.env.STRIPE_SECRET_KEY = 'sk_test_xxx'
+      process.env.STRIPE_WEBHOOK_SECRET = 'whsec_xxx'
       process.env.PAYPAL_CLIENT_SECRET = 'client_secret_xxx'
+      process.env.PAYPAL_WEBHOOK_ID = 'webhook_id_xxx'
 
       const env1 = getPaymentEnv()
       const env2 = getPaymentEnv()
@@ -110,26 +120,50 @@ describe('Payment Environment Helper', () => {
 
     it('should return empty string for optional vars when not set', () => {
       process.env.STRIPE_SECRET_KEY = 'sk_test_xxx'
+      process.env.STRIPE_WEBHOOK_SECRET = 'whsec_xxx'
       process.env.PAYPAL_CLIENT_ID = 'client_id_xxx'
       process.env.PAYPAL_CLIENT_SECRET = 'client_secret_xxx'
+      process.env.PAYPAL_WEBHOOK_ID = 'webhook_id_xxx'
       delete process.env.STRIPE_PUBLISHABLE_KEY
-      delete process.env.STRIPE_WEBHOOK_SECRET
-      delete process.env.PAYPAL_WEBHOOK_ID
+      delete process.env.STRIPE_CURRENCY
 
       const env = getPaymentEnv()
 
       expect(env.stripePublishableKey).toBe('')
-      expect(env.stripeWebhookSecret).toBe('')
+      expect(env.stripeCurrency).toBe('ILS')
       expect(env.paypalClientId).toBe('client_id_xxx')
-      expect(env.paypalWebhookId).toBe('')
+    })
+
+    it('should throw when STRIPE_WEBHOOK_SECRET is missing', () => {
+      process.env.STRIPE_SECRET_KEY = 'sk_test_xxx'
+      delete process.env.STRIPE_WEBHOOK_SECRET
+      process.env.PAYPAL_CLIENT_SECRET = 'client_secret_xxx'
+      process.env.PAYPAL_WEBHOOK_ID = 'webhook_id_xxx'
+
+      expect(() => getPaymentEnv()).toThrow(
+        'Missing required payment environment variables: STRIPE_WEBHOOK_SECRET',
+      )
+    })
+
+    it('should throw when PAYPAL_WEBHOOK_ID is missing', () => {
+      process.env.STRIPE_SECRET_KEY = 'sk_test_xxx'
+      process.env.STRIPE_WEBHOOK_SECRET = 'whsec_xxx'
+      process.env.PAYPAL_CLIENT_SECRET = 'client_secret_xxx'
+      delete process.env.PAYPAL_WEBHOOK_ID
+
+      expect(() => getPaymentEnv()).toThrow(
+        'Missing required payment environment variables: PAYPAL_WEBHOOK_ID',
+      )
     })
   })
 
   describe('resetPaymentEnvCache', () => {
     it('should clear cached env and return new values', () => {
       process.env.STRIPE_SECRET_KEY = 'sk_test_xxx'
+      process.env.STRIPE_WEBHOOK_SECRET = 'whsec_xxx'
       process.env.PAYPAL_CLIENT_ID = 'client_id_xxx'
       process.env.PAYPAL_CLIENT_SECRET = 'client_secret_xxx'
+      process.env.PAYPAL_WEBHOOK_ID = 'webhook_id_xxx'
 
       const env1 = getPaymentEnv()
       expect(env1.stripeSecretKey).toBe('sk_test_xxx')
