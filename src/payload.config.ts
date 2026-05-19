@@ -7,13 +7,13 @@ import { fileURLToPath } from 'url'
 import { getServerSideURL } from '@/infra/utils/getURL'
 import { logger } from '@/infra/utils/logger'
 import { AccessCodes } from '@/server/payload/collections/AccessCodes'
-import { Coupons } from '@/server/payload/collections/Coupons'
-import { CouponUsages } from '@/server/payload/collections/CouponUsages'
 import { Categories } from '@/server/payload/collections/Categories'
 import { Chapters } from '@/server/payload/collections/Chapters'
 import { ChatAssets } from '@/server/payload/collections/ChatAssets'
 import { ConfigAuditLogs } from '@/server/payload/collections/ConfigAuditLogs'
 import { ConfigSecrets } from '@/server/payload/collections/ConfigSecrets'
+import { Coupons } from '@/server/payload/collections/Coupons'
+import { CouponUsages } from '@/server/payload/collections/CouponUsages'
 import { ConfigValues } from '@/server/payload/collections/ConfigValues'
 import { ContentPages } from '@/server/payload/collections/ContentPages'
 import { ContextExtractions } from '@/server/payload/collections/ContextExtractions'
@@ -41,6 +41,7 @@ import { Prompts } from '@/server/payload/collections/Prompts'
 import { TeacherProfiles } from '@/server/payload/collections/TeacherProfiles'
 import { Tenants } from '@/server/payload/collections/Tenants'
 import { Transactions } from '@/server/payload/collections/Transactions'
+import { PaymentStats } from '@/server/payload/collections/PaymentStats'
 import { UploadSessions } from '@/server/payload/collections/UploadSessions'
 import { UserProgress } from '@/server/payload/collections/UserProgress'
 import { Users } from '@/server/payload/collections/Users'
@@ -188,6 +189,8 @@ export default buildConfig({
     ConfigValues,
     ConfigAuditLogs,
     Conversations,
+    CouponUsages,
+    Coupons,
     GuestSessions,
     MemoryItems,
     Tenants,
@@ -219,8 +222,7 @@ export default buildConfig({
     Products,
     AccessCodes,
     Transactions,
-    Coupons,
-    CouponUsages,
+    PaymentStats,
     MCPAuditLogs,
   ],
   cors: [getServerSideURL()].filter(Boolean),
