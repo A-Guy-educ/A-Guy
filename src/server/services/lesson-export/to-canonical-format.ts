@@ -31,6 +31,12 @@ import type {
   InlineRichText,
   QuestionAnswer,
 } from '@/server/payload/collections/Exercises/types'
+import {
+  geometrySpecToSvg,
+  axisSpecToSvg,
+} from '@/server/services/lesson-duplication/graphics-to-svg'
+import { GeometrySpecV1Schema } from '@/infra/contracts/graphics/geometry.v1'
+import { AxisSpecV1Schema } from '@/infra/contracts/graphics/axis.v1'
 
 // -------------------------------------------
 // Types for canonical format
@@ -70,6 +76,10 @@ export interface CanonicalLessonExport {
   lesson_number: string
   topic: string
   exercises: CanonicalExercise[]
+  meta: {
+    renderedSvgCount: number
+    renderFailures: Array<{ blockIndex: number; blockType: string; issues: string[] }>
+  }
 }
 
 // -------------------------------------------
@@ -129,292 +139,6 @@ function wrapTextContent(
 }
 
 // -------------------------------------------
-// Geometry/Axis SVG serialization
-// -------------------------------------------
-
-/**
- * Serialize a GeometrySpecV1 to an SVG string representation.
- * This creates a simplified SVG visualization of the geometry specification.
- */
-function serializeGeometrySpecToSvg(
-  spec: import('@/infra/contracts/graphics/geometry.v1').GeometrySpecV1,
-): string {
-  const { canvas, elements } = spec
-  const { width, height } = canvas
-  const parts: string[] = []
-
-  parts.push(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
-  )
-
-  // Background
-  if (canvas.background) {
-    parts.push(`<rect width="100%" height="100%" fill="${canvas.background}"/>`)
-  }
-
-  // Grid
-  if (canvas.grid) {
-    parts.push(
-      `<defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e0e0e0" stroke-width="0.5"/></pattern></defs>`,
-    )
-    parts.push(`<rect width="100%" height="100%" fill="url(#grid)"/>`)
-  }
-
-  // Axis
-  if (canvas.axis) {
-    parts.push(
-      `<line x1="0" y1="${height / 2}" x2="${width}" y2="${height / 2}" stroke="black" stroke-width="1"/>`,
-    )
-    parts.push(
-      `<line x1="${width / 2}" y1="0" x2="${width / 2}" y2="${height}" stroke="black" stroke-width="1"/>`,
-    )
-  }
-
-  // Points
-  for (const point of elements.points || []) {
-    const cx = point.x
-    const cy = height - point.y // Flip Y coordinate
-    const color = point.color || '#000000'
-    const size = point.size || 4
-    parts.push(`<circle cx="${cx}" cy="${cy}" r="${size}" fill="${color}" stroke="${color}"/>`)
-    if (point.name) {
-      parts.push(
-        `<text x="${cx + 8}" y="${cy - 8}" font-size="12" fill="${color}">${escapeXml(point.name)}</text>`,
-      )
-    }
-  }
-
-  // Lines
-  for (const line of elements.lines || []) {
-    const fromPt = elements.points.find((p) => p.name === line.from)
-    const toPt = elements.points.find((p) => p.name === line.to)
-    if (fromPt && toPt) {
-      const x1 = fromPt.x
-      const y1 = height - fromPt.y
-      const x2 = toPt.x
-      const y2 = height - toPt.y
-      const color = line.color || '#000000'
-      const dash = line.style === 'dashed' ? 'stroke-dasharray="5,5"' : ''
-      parts.push(
-        `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${line.thickness || 2}" ${dash}/>`,
-      )
-      if (line.label?.value) {
-        const midX = (x1 + x2) / 2
-        const midY = (y1 + y2) / 2
-        parts.push(
-          `<text x="${midX}" y="${midY - 5}" font-size="${line.label.fontSize || 10}" fill="${color}" text-anchor="middle">${escapeXml(line.label.value)}</text>`,
-        )
-      }
-    }
-  }
-
-  // Circles
-  for (const circle of elements.circles || []) {
-    const center = elements.points.find((p) => p.name === circle.center)
-    if (center) {
-      const cx = center.x
-      const cy = height - center.y
-      const color = circle.color || '#000000'
-      if (circle.through) {
-        const through = elements.points.find((p) => p.name === circle.through)
-        if (through) {
-          const radius = Math.sqrt(
-            Math.pow(through.x - center.x, 2) + Math.pow(through.y - center.y, 2),
-          )
-          const dash = circle.style === 'dashed' ? 'stroke-dasharray="5,5"' : ''
-          parts.push(
-            `<circle cx="${cx}" cy="${cy}" r="${radius}" fill="none" stroke="${color}" stroke-width="2" ${dash}/>`,
-          )
-        }
-      } else if (circle.radius) {
-        const dash = circle.style === 'dashed' ? 'stroke-dasharray="5,5"' : ''
-        parts.push(
-          `<circle cx="${cx}" cy="${cy}" r="${circle.radius}" fill="none" stroke="${color}" stroke-width="2" ${dash}/>`,
-        )
-      }
-    }
-  }
-
-  // Texts
-  for (const text of elements.texts || []) {
-    let x = text.place?.x ?? 0
-    let y = height - (text.place?.y ?? 0)
-    if (text.on?.from && text.on?.to) {
-      const from = elements.points.find((p) => p.name === text.on?.from)
-      const to = elements.points.find((p) => p.name === text.on?.to)
-      if (from && to) {
-        x = (from.x + to.x) / 2
-        y = height - (from.y + to.y) / 2
-      }
-    }
-    const color = text.color || '#000000'
-    const fontSize = text.sizeScale ? text.sizeScale * 2 : text.fontSize || 14
-    parts.push(
-      `<text x="${x}" y="${y}" font-size="${fontSize}" fill="${color}" text-anchor="middle">${escapeXml(text.value)}</text>`,
-    )
-  }
-
-  parts.push('</svg>')
-  return parts.join('\n')
-}
-
-/**
- * Serialize an AxisSpecV1 to an SVG string representation.
- */
-function serializeAxisSpecToSvg(
-  spec: import('@/infra/contracts/graphics/axis.v1').AxisSpecV1,
-): string {
-  const viewport = spec.viewport || {}
-  const xMin = viewport.xMin ?? -10
-  const xMax = viewport.xMax ?? 10
-  const yMin = viewport.yMin ?? -10
-  const yMax = viewport.yMax ?? 10
-
-  const width = 600
-  const height = 400
-
-  // Scale functions
-  const scaleX = (x: number) => ((x - xMin) / (xMax - xMin)) * width
-  const scaleY = (y: number) => height - ((y - yMin) / (yMax - yMin)) * height
-
-  const parts: string[] = []
-  parts.push(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
-  )
-
-  // Background
-  if (spec.grid.enabled) {
-    const gridColor = spec.grid.color || '#e0e0e0'
-    for (let x = 0; x <= width; x += 20) {
-      parts.push(
-        `<line x1="${x}" y1="0" x2="${x}" y2="${height}" stroke="${gridColor}" stroke-width="0.5"/>`,
-      )
-    }
-    for (let y = 0; y <= height; y += 20) {
-      parts.push(
-        `<line x1="0" y1="${y}" x2="${width}" y2="${y}" stroke="${gridColor}" stroke-width="0.5"/>`,
-      )
-    }
-  }
-
-  // Axes
-  const originX = scaleX(spec.axes.origin?.x ?? 0)
-  const originY = scaleY(spec.axes.origin?.y ?? 0)
-  parts.push(
-    `<line x1="0" y1="${originY}" x2="${width}" y2="${originY}" stroke="black" stroke-width="1"/>`,
-  )
-  parts.push(
-    `<line x1="${originX}" y1="0" x2="${originX}" y2="${height}" stroke="black" stroke-width="1"/>`,
-  )
-
-  // Arrows
-  parts.push(
-    `<polygon points="${width - 5},${originY - 3} ${width},${originY} ${width - 5},${originY + 3}" fill="black"/>`,
-  )
-  parts.push(`<polygon points="${originX - 3},5 ${originX},0 ${originX + 3},5" fill="black"/>`)
-
-  // Graphs
-  for (const graph of spec.elements.graphs || []) {
-    const color = graph.color || '#0066cc'
-    const strokeWidth = graph.thickness || 2
-    const dash = graph.style === 'dashed' ? 'stroke-dasharray="5,5"' : ''
-    // Simple polyline approximation - in a real implementation, we'd evaluate the function
-    const points: string[] = []
-    const steps = 100
-    const rangeFrom = graph.range?.fromX ?? xMin
-    const rangeTo = graph.range?.toX ?? xMax
-    for (let i = 0; i <= steps; i++) {
-      const x = rangeFrom + (i / steps) * (rangeTo - rangeFrom)
-      // Simple linear approximation for demo - real impl would parse the function
-      const y = evalSimpleGraph(graph.fn, x)
-      if (y !== null && y >= yMin && y <= yMax) {
-        points.push(`${scaleX(x)},${scaleY(y)}`)
-      }
-    }
-    if (points.length > 0) {
-      parts.push(
-        `<polyline points="${points.join(' ')}" fill="none" stroke="${color}" stroke-width="${strokeWidth}" ${dash}/>`,
-      )
-    }
-  }
-
-  // Points
-  for (const point of spec.elements.points || []) {
-    const cx = scaleX(point.x)
-    const cy = scaleY(point.y)
-    const color = point.color || '#000000'
-    if (point.type === 'floating_text') {
-      parts.push(
-        `<text x="${cx}" y="${cy}" font-size="14" fill="${color}" text-anchor="middle">${escapeXml(point.label || '')}</text>`,
-      )
-    } else {
-      const fillColor = point.type === 'hole' ? '#ffffff' : color
-      parts.push(
-        `<circle cx="${cx}" cy="${cy}" r="4" fill="${fillColor}" stroke="${color}" stroke-width="2"/>`,
-      )
-      if (point.label) {
-        parts.push(
-          `<text x="${cx + 8}" y="${cy - 8}" font-size="12" fill="${color}">${escapeXml(point.label)}</text>`,
-        )
-      }
-    }
-  }
-
-  // Axis numbers
-  if (spec.axes.showNumbers) {
-    const step = spec.axes.ticks || 1
-    for (let x = Math.ceil(xMin / step) * step; x <= xMax; x += step) {
-      if (x === 0) continue
-      const sx = scaleX(x)
-      parts.push(
-        `<text x="${sx}" y="${originY + 15}" font-size="10" fill="#666" text-anchor="middle">${x}</text>`,
-      )
-    }
-    for (let y = Math.ceil(yMin / step) * step; y <= yMax; y += step) {
-      if (y === 0) continue
-      const sy = scaleY(y)
-      parts.push(
-        `<text x="${originX + 5}" y="${sy}" font-size="10" fill="#666" text-anchor="start">${y}</text>`,
-      )
-    }
-  }
-
-  parts.push('</svg>')
-  return parts.join('\n')
-}
-
-/**
- * Very simple graph evaluator for common functions.
- * Handles basic polynomial forms. For complex functions, returns null.
- */
-function evalSimpleGraph(fn: string, x: number): number | null {
-  try {
-    // Only handle safe, simple expressions
-    const safeFn = fn.replace(/[^0-9+\-*/.x()^]/g, '')
-    if (!safeFn.includes('x')) {
-      // Constant
-      return Number(safeFn)
-    }
-    // Replace ^ with ** for exponentiation, then evaluate
-    const expr = safeFn.replace(/\^/g, '**')
-    // Simple polynomial evaluation
-    const result = new Function('x', `return ${expr}`)(x)
-    return typeof result === 'number' && isFinite(result) ? result : null
-  } catch {
-    return null
-  }
-}
-
-function escapeXml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;')
-}
-
-// -------------------------------------------
 // Block type detection
 // -------------------------------------------
 
@@ -464,9 +188,8 @@ interface QuestionContent {
   solution?: InlineRichText
   fullSolution?: InlineRichText
   answer?: AnyAnswer
-  // For geometry/axis - the spec is serialized to SVG
-  geometrySpec?: import('@/infra/contracts/graphics/geometry.v1').GeometrySpecV1
-  axisSpec?: import('@/infra/contracts/graphics/axis.v1').AxisSpecV1
+  geometrySpec?: unknown
+  axisSpec?: unknown
 }
 
 function extractQuestionContent(block: ContentBlock): QuestionContent | null {
@@ -493,7 +216,7 @@ function extractQuestionContent(block: ContentBlock): QuestionContent | null {
         hint: block.hint,
         solution: block.solution,
         fullSolution: block.fullSolution,
-        answer: undefined, // Table answers are embedded in the table
+        answer: undefined,
       }
     case 'question_matching':
       return {
@@ -501,7 +224,7 @@ function extractQuestionContent(block: ContentBlock): QuestionContent | null {
         hint: block.hint,
         solution: block.solution,
         fullSolution: block.fullSolution,
-        answer: undefined, // Matching answers are in correctPairs
+        answer: undefined,
       }
     case 'question_geometry':
       return {
@@ -547,7 +270,6 @@ function splitMcqOptions(
     }
   }
 
-  // If no correct option found (shouldn't happen with valid data), use first as correct
   if (correctOptions.length === 0 && answer.options.length > 0) {
     correctOptions.push(answer.options[0])
     wrongOptions.push(...answer.options.slice(1))
@@ -560,6 +282,12 @@ function splitMcqOptions(
 // Main conversion function
 // -------------------------------------------
 
+export interface ExerciseToCanonicalResult {
+  exercise: CanonicalExercise
+  renderedSvgCount: number
+  renderFailures: Array<{ blockIndex: number; blockType: string; issues: string[] }>
+}
+
 /**
  * Convert a single exercise document to canonical format.
  *
@@ -569,62 +297,97 @@ function splitMcqOptions(
 export function exerciseToCanonical(
   exerciseDoc: Record<string, unknown>,
   exerciseIndex: number,
-): CanonicalExercise {
+): ExerciseToCanonicalResult {
   const content = exerciseDoc.content as ContentData | undefined
   const blocks = content?.blocks || []
 
-  // Collect data (non-question blocks)
   const dataParts: CanonicalTextContent[] = []
   const sections: CanonicalSection[] = []
+  let renderedSvgCount = 0
+  const renderFailures: Array<{ blockIndex: number; blockType: string; issues: string[] }> = []
 
   let sectionIndex = 0
 
-  for (const block of blocks) {
+  for (let blockIndex = 0; blockIndex < blocks.length; blockIndex++) {
+    const block = blocks[blockIndex]
     if (isRichTextBlock(block)) {
       dataParts.push(wrapTextContent(block))
     } else if (isLatexBlock(block)) {
-      // LaTeX content goes into text as the latex string
       dataParts.push({ text: block.latex, table: null, PNG: '', svg: '' })
     } else if (isSvgBlock(block)) {
       dataParts.push({ text: '', table: null, PNG: '', svg: block.value })
     } else if (isQuestionGeometryBlock(block)) {
-      // Geometry spec serialized to SVG
       const qc = extractQuestionContent(block)
-      if (qc) {
-        const sectionDataSvg = qc.geometrySpec ? serializeGeometrySpecToSvg(qc.geometrySpec) : ''
-        const section: CanonicalSection = {
-          section_data: { text: '', table: null, PNG: '', svg: sectionDataSvg },
-          question_number: toHebrewOrdinal(sectionIndex + 1),
-          question: wrapTextContent(qc.prompt),
-          hint: wrapTextContent(qc.hint),
-          solution: wrapTextContent(qc.solution),
-          full_solution: wrapTextContent(qc.fullSolution),
-          correct_option: { text: '', table: null, PNG: '', svg: '' },
-          wrong_options: [],
+      if (qc?.geometrySpec) {
+        // Validate before rendering
+        const parsed = GeometrySpecV1Schema.safeParse(qc.geometrySpec)
+        if (!parsed.success) {
+          renderFailures.push({
+            blockIndex,
+            blockType: 'question_geometry',
+            issues: parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`),
+          })
+        } else {
+          const sectionDataSvg = geometrySpecToSvg(qc.geometrySpec)
+          if (sectionDataSvg) {
+            renderedSvgCount++
+            const section: CanonicalSection = {
+              section_data: { text: '', table: null, PNG: '', svg: sectionDataSvg },
+              question_number: toHebrewOrdinal(sectionIndex + 1),
+              question: wrapTextContent(qc.prompt),
+              hint: wrapTextContent(qc.hint),
+              solution: wrapTextContent(qc.solution),
+              full_solution: wrapTextContent(qc.fullSolution),
+              correct_option: { text: '', table: null, PNG: '', svg: '' },
+              wrong_options: [],
+            }
+            sections.push(section)
+            sectionIndex++
+          } else {
+            renderFailures.push({
+              blockIndex,
+              blockType: 'question_geometry',
+              issues: ['Rendering returned empty SVG'],
+            })
+          }
         }
-        sections.push(section)
-        sectionIndex++
       }
     } else if (isQuestionAxisBlock(block)) {
-      // Axis spec serialized to SVG
       const qc = extractQuestionContent(block)
-      if (qc) {
-        const sectionDataSvg = qc.axisSpec ? serializeAxisSpecToSvg(qc.axisSpec) : ''
-        const section: CanonicalSection = {
-          section_data: { text: '', table: null, PNG: '', svg: sectionDataSvg },
-          question_number: toHebrewOrdinal(sectionIndex + 1),
-          question: wrapTextContent(qc.prompt),
-          hint: wrapTextContent(qc.hint),
-          solution: wrapTextContent(qc.solution),
-          full_solution: wrapTextContent(qc.fullSolution),
-          correct_option: { text: '', table: null, PNG: '', svg: '' },
-          wrong_options: [],
+      if (qc?.axisSpec) {
+        const parsed = AxisSpecV1Schema.safeParse(qc.axisSpec)
+        if (!parsed.success) {
+          renderFailures.push({
+            blockIndex,
+            blockType: 'question_axis',
+            issues: parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`),
+          })
+        } else {
+          const sectionDataSvg = axisSpecToSvg(qc.axisSpec)
+          if (sectionDataSvg) {
+            renderedSvgCount++
+            const section: CanonicalSection = {
+              section_data: { text: '', table: null, PNG: '', svg: sectionDataSvg },
+              question_number: toHebrewOrdinal(sectionIndex + 1),
+              question: wrapTextContent(qc.prompt),
+              hint: wrapTextContent(qc.hint),
+              solution: wrapTextContent(qc.solution),
+              full_solution: wrapTextContent(qc.fullSolution),
+              correct_option: { text: '', table: null, PNG: '', svg: '' },
+              wrong_options: [],
+            }
+            sections.push(section)
+            sectionIndex++
+          } else {
+            renderFailures.push({
+              blockIndex,
+              blockType: 'question_axis',
+              issues: ['Rendering returned empty SVG'],
+            })
+          }
         }
-        sections.push(section)
-        sectionIndex++
       }
     } else {
-      // Other question types (question_select, question_free_response, question_table, question_matching)
       const qc = extractQuestionContent(block)
       if (qc) {
         const section: CanonicalSection = {
@@ -638,7 +401,6 @@ export function exerciseToCanonical(
           wrong_options: [],
         }
 
-        // Handle MCQ answer (question_select with mcq variant)
         if (
           block.type === 'question_select' &&
           block.variant === 'mcq' &&
@@ -658,7 +420,6 @@ export function exerciseToCanonical(
     }
   }
 
-  // Merge data parts into single data object
   const mergedData: CanonicalTextContent = {
     text: dataParts
       .map((d) => d.text)
@@ -672,16 +433,23 @@ export function exerciseToCanonical(
       .join('\n'),
   }
 
-  // If there are no question sections, we still need an empty sections array
   return {
-    exercise_number: String(exerciseIndex + 1),
-    level: '1', // Default level - there's no level field in exercises
-    exercise_content: {
-      data: mergedData,
-      sections,
+    exercise: {
+      exercise_number: String(exerciseIndex + 1),
+      level: '1',
+      exercise_content: {
+        data: mergedData,
+        sections,
+      },
     },
+    renderedSvgCount,
+    renderFailures,
   }
 }
+
+// -------------------------------------------
+// Build canonical lesson export
+// -------------------------------------------
 
 /**
  * Build the complete canonical lesson export structure.
@@ -698,12 +466,25 @@ export function buildCanonicalLessonExport(
   const lessonNumber = String((lessonDoc.order as number) || 1)
   const topic = (lessonDoc.title as string) || ''
 
-  const exercises = exerciseDocs.map((ex, idx) => exerciseToCanonical(ex, idx))
+  let totalRenderedSvgCount = 0
+  const allRenderFailures: Array<{ blockIndex: number; blockType: string; issues: string[] }> = []
+
+  const exercises: CanonicalExercise[] = []
+  for (let i = 0; i < exerciseDocs.length; i++) {
+    const result = exerciseToCanonical(exerciseDocs[i], i)
+    exercises.push(result.exercise)
+    totalRenderedSvgCount += result.renderedSvgCount
+    allRenderFailures.push(...result.renderFailures)
+  }
 
   return {
     class: className,
     lesson_number: lessonNumber,
     topic,
     exercises,
+    meta: {
+      renderedSvgCount: totalRenderedSvgCount,
+      renderFailures: allRenderFailures,
+    },
   }
 }

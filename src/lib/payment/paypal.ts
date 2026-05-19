@@ -8,7 +8,13 @@
 import { getPaymentEnv } from './env'
 import type { CreateCheckoutOptions, CheckoutResult } from './types'
 
-const PAYPAL_API_BASE = 'https://api-m.sandbox.paypal.com'
+const PAYPAL_SANDBOX_BASE = 'https://api-m.sandbox.paypal.com'
+const PAYPAL_PRODUCTION_BASE = 'https://api-m.paypal.com'
+
+function getPayPalApiBase(): string {
+  const { paypalSandbox } = getPaymentEnv()
+  return paypalSandbox ? PAYPAL_SANDBOX_BASE : PAYPAL_PRODUCTION_BASE
+}
 
 interface PayPalTokenResponse {
   access_token: string
@@ -26,6 +32,13 @@ interface PayPalOrderResponse {
 let _cachedToken: { token: string; expiresAt: number } | null = null
 
 /**
+ * Reset the token cache (useful for testing)
+ */
+export function resetPayPalTokenCache(): void {
+  _cachedToken = null
+}
+
+/**
  * Get or refresh PayPal access token
  */
 async function getPayPalAccessToken(): Promise<string> {
@@ -40,7 +53,7 @@ async function getPayPalAccessToken(): Promise<string> {
 
   const credentials = Buffer.from(`${paypalClientId}:${paypalClientSecret}`).toString('base64')
 
-  const response = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
+  const response = await fetch(`${getPayPalApiBase()}/v1/oauth2/token`, {
     method: 'POST',
     headers: {
       Authorization: `Basic ${credentials}`,
@@ -70,7 +83,7 @@ export async function createPayPalOrder(options: CreateCheckoutOptions): Promise
   const { productId, productName, amount, currency, userId, successUrl, cancelUrl } = options
   const token = await getPayPalAccessToken()
 
-  const response = await fetch(`${PAYPAL_API_BASE}/v2/checkout/orders`, {
+  const response = await fetch(`${getPayPalApiBase()}/v2/checkout/orders`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -136,7 +149,7 @@ export async function verifyPayPalWebhook(body: object, headers: object): Promis
 
   const token = await getPayPalAccessToken()
 
-  const response = await fetch(`${PAYPAL_API_BASE}/v1/notifications/verify-webhook-signature`, {
+  const response = await fetch(`${getPayPalApiBase()}/v1/notifications/verify-webhook-signature`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -181,7 +194,7 @@ export async function refundPayPal(
   }
 
   const response = await fetch(
-    `${PAYPAL_API_BASE}/v2/payments/captures/${providerTransactionId}/refund`,
+    `${getPayPalApiBase()}/v2/payments/captures/${providerTransactionId}/refund`,
     {
       method: 'POST',
       headers: {
@@ -206,7 +219,7 @@ export async function cancelPayPalOrder(providerTransactionId: string): Promise<
   const token = await getPayPalAccessToken()
 
   const response = await fetch(
-    `${PAYPAL_API_BASE}/v2/checkout/orders/${providerTransactionId}/void`,
+    `${getPayPalApiBase()}/v2/checkout/orders/${providerTransactionId}/void`,
     {
       method: 'POST',
       headers: {
