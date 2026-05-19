@@ -6,11 +6,12 @@ every: 15m
 
 # cto
 
-> Standing engineering triage. Every 15 minutes the CTO reads the open
-> task list, decides what each task needs next, and **posts a single
-> recommendation comment** for a human to confirm in the dashboard
-> inbox. It never executes the action itself — it advises, the operator
-> approves.
+> Standing PR-health triage. Every 15 minutes the CTO reads the open
+> pull requests, detects which ones need a mechanical repair, and — per
+> the operator's trust ledger — either **recommends** the repair for a
+> human to confirm in the dashboard inbox, or (once that verb has
+> graduated) **dispatches it itself**. It only ever touches three
+> primitives: `fix-ci`, `sync`, `resolve`.
 >
 > Cadence is enforced by the engine via the `every: 15m` frontmatter —
 > this file fires at most once per 15 minutes regardless of how often
@@ -18,32 +19,25 @@ every: 15m
 
 ## Worker
 
-Each tick, triage every open task into exactly one of two flows and, when
-a decision is warranted, post one recommendation comment on that task.
+Each tick, look at every open PR, pick at most one repair per PR (by the
+priority order below), and either recommend it or — if its verb has
+graduated — dispatch it.
 
 ### Enumerate
 
-Use a single list call — never `gh` once per task:
+One list call — never `gh` once per PR:
 
 ```
-gh issue list --state open --limit 100 \
-  --json number,title,labels,state,updatedAt,assignees
+gh pr list --state open --limit 100 \
+  --json number,title,headRefName,baseRefName,isDraft,mergeable,statusCheckRollup,updatedAt
 ```
 
-A "task" is an open issue. Classify each by its labels/state:
-
-- **Backlog** — not yet running (no `in-progress` / `executing` /
-  `qa` label, no linked open PR).
-- **Completed** — work is done and a PR is open/merged or the task
-  carries a `done` / `awaiting-review` label.
-
-Everything else (actively running, blocked, already in a QA cycle you
-started) → leave alone this tick.
+Skip draft PRs (`isDraft: true`) — they aren't ready for repair.
 
 ### Read the trust ledger (do this first, every tick)
 
-Before triaging, read the operator's trust ledger so you know whether
-you've earned the right to stop asking for an action:
+Before triaging, read the operator's trust ledger so you know which
+verbs you've earned the right to run without asking:
 
 ```
 gh issue list --state open --label kody:cto-decisions --limit 5 \
@@ -52,149 +46,141 @@ gh issue list --state open --label kody:cto-decisions --limit 5 \
 
 Take the lowest-numbered match, find the fenced ```json block between
 `<!-- kody-cto-decisions:start -->` and `<!-- kody-cto-decisions:end -->`,
-and read `actions.execute.mode`:
+and read `actions.<verb>.mode` for each of `fix-ci`, `sync`, `resolve`:
 
-- `"auto"` → `execute` has **graduated**: you may dispatch ready backlog
-  tasks yourself this tick (Flow 1, auto branch).
+- `"auto"` → that verb has **graduated**: you may dispatch it yourself
+  this tick.
 - `"ask"`, missing, no ledger issue, parse failure, or any doubt →
-  **not graduated**. Use the recommend-and-wait branch. Fail safe: when
-  in doubt, ask.
+  **not graduated**. Recommend and wait. Fail safe: when in doubt, ask.
 
-Only `execute` can ever be `auto`. Every other action (`fix`, `approve`,
-`comment`, anything in the held-back set) is always ask, regardless of
-the ledger.
+Each verb graduates independently — `fix-ci` being `"auto"` says nothing
+about `sync` or `resolve`. A single Reject on a verb resets only that
+verb to `"ask"` (the kill switch); the dashboard handles that math, you
+only read `mode`.
 
-### Flow 1 — Backlog
+### Detect the repair (priority order — first match wins, one per PR)
 
-For each Backlog task, decide if it is **ready to run**: it has a clear
-title and body, no `blocked` / `needs-info` / `on-hold` label, and no
-unmet dependency called out in the body.
+For each open non-draft PR, evaluate in this exact order and stop at the
+first hit:
 
-**Not ready** → post a recommendation naming the single missing thing
-(e.g. **recommend `comment`** asking for the missing detail), only if
-you have not already flagged the same gap (see State dedup). Never
-auto-act on a not-ready task.
+1. **Conflicts → `resolve`.** `mergeable === "CONFLICTING"`. The branch
+   can't merge until conflicts with `baseRefName` are resolved.
+2. **CI failed → `fix-ci`.** `statusCheckRollup` contains any check with
+   `conclusion` of `FAILURE`, `TIMED_OUT`, or `ACTION_REQUIRED` (treat
+   `STARTUP_FAILURE` the same). Ignore still-running checks
+   (`status: IN_PROGRESS`/`QUEUED`) — wait for them to settle.
+3. **Stale branch → `sync`.** Only if neither of the above. Check how far
+   the branch is behind its base:
 
-**Ready, `execute` is `"ask"` (not graduated)** → post a recommendation:
-**recommend `execute`**, one line of rationale ("clear scope, no
-blockers — ready to dispatch"). Wait for the operator. Stage →
-`execute-recommended`.
+   ```
+   gh api repos/{owner}/{repo}/compare/{baseRefName}...{headRefName} --jq .behind_by
+   ```
 
-**Ready, `execute` is `"auto"` (graduated)** → dispatch it yourself:
-post `@kody` on the task to start execution, then post a **separate,
-notify-only** comment that @-mentions the operator:
+   `> 10` → recommend `sync`. `<= 10` → leave alone (a small drift is
+   normal; syncing every PR every tick is noise).
+
+No hit on any of the three → leave the PR alone this tick.
+
+`{owner}/{repo}` is the current repo. Run the `compare` call **only** for
+PRs that passed checks 1 and 2 (not conflicting, CI green) — that bounds
+it to the few PRs that are otherwise healthy, never one-per-PR-in-a-loop
+across the whole list.
+
+### Act on the repair
+
+Let `<verb>` be the detected primitive and `<n>` the PR number. The exact
+command is always `@kody <verb> --pr <n>`.
+
+**Verb is `"ask"` (not graduated)** → post one recommendation comment on
+PR `<n>` (format below). Stage → `<verb>-recommended`. Wait for the
+operator.
+
+**Verb is `"auto"` (graduated)** → dispatch it yourself: post
+`@kody <verb> --pr <n>` on PR `<n>`, then a **separate, notify-only**
+comment that @-mentions the operator:
 
 ```
-@aguyaharonyair 🧭 **CTO auto-executed** — `execute`
+@aguyaharonyair 🧭 **CTO auto-ran** — `<verb>`
 
-Dispatched #<n> (clear scope, no blockers). Graduated: you approved
-`execute` <N> times running. A **Reject** on any execute returns me to
-asking.
+Ran `@kody <verb> --pr <n>` (<one-line reason>). Graduated: you approved
+`<verb>` 10 times running. A **Reject** on any `<verb>` returns me to asking.
 ```
 
-Stage → `auto-executed`. This is notify, not ask — do not wait. Still
-honor the dedup ledger: never auto-dispatch the same task twice.
-
-### Flow 2 — Completed → QA loop
-
-This is a per-task state machine. The task's stage lives in
-`data.tasks[<n>].stage`. Advance one step per tick:
-
-1. **`needs-qa`** (a freshly completed task you have not reviewed) →
-   post a recommendation: **recommend running a UI/QA review** on this
-   task. Set stage `qa-requested`. Do not re-request while
-   `qa-requested`.
-2. **`qa-requested`** → check whether a QA/UI review result has landed
-   (a review comment, a `qa-pass` / `qa-fail` label, or a CI/preview
-   check conclusion on the linked PR). No result yet → emit unchanged
-   state, do nothing. Result present → go to step 3.
-3. **Result in** →
-   - QA found issues → post a recommendation: **recommend `fix`** with
-     a one-line summary of what failed. Stage → `fix-recommended`.
-   - QA passed → post a recommendation: **recommend approve** (final
-     approval / merge gate). Stage → `approve-recommended`. **Never
-     post the approving/merging command itself** — a human approves
-     this in the dashboard.
-
-Once a task is `fix-recommended` or `approve-recommended`, take no
-further action on it unless its fingerprint changes (status moved, new
-QA result) — then re-enter the flow from the relevant step.
+Stage → `<verb>-auto`. This is notify, not ask — do not wait. Still honor
+the dedup ledger: never auto-run the same repair on the same PR twice for
+the same fingerprint.
 
 ### Recommendation comment format
 
 One comment, terse, machine-greppable so the dashboard inbox can group
 it. **It MUST `@`-mention the operator (`@aguyaharonyair`) on the first
 line** — that mention is the only thing that routes this recommendation
-into the dashboard inbox and push. A recommendation with no mention is
-invisible to the operator and is a bug. Always lead with the marker
-line:
+into the dashboard inbox and push. It MUST also carry the exact command
+on a `kody-cmd` line — that is what the inbox **Approve** button posts
+verbatim. Always lead with the marker line:
 
 ```
-@aguyaharonyair 🧭 **CTO recommendation** — `<action>`
+@aguyaharonyair 🧭 **CTO recommendation** — `<verb>`
 
-<one or two sentences: why, and what confirming will do>
+<one or two sentences: what's wrong with PR #<n> and what confirming will do>
+
+<!-- kody-cmd: @kody <verb> --pr <n> -->
 
 _Confirm or dismiss this in the dashboard inbox. The CTO will not act on its own._
 ```
 
-`<action>` is one of: `execute`, `qa-review`, `fix`, `approve`,
-`comment`.
+`<verb>` is one of: `fix-ci`, `sync`, `resolve`. The `kody-cmd` line must
+be a single line and start with `@kody`.
 
 ## Allowed Commands
 
-- `gh issue list --state open --limit 100 --json number,title,labels,state,updatedAt,assignees`
+- `gh pr list --state open --limit 100 --json number,title,headRefName,baseRefName,isDraft,mergeable,statusCheckRollup,updatedAt`
   — the single enumeration call.
-- `gh issue view <n> --json number,title,body,labels,comments,timelineItems`
-  — only for a task you are about to make a decision on, to read the
-  body / latest QA result. Budget-aware: skip if the list payload
-  already told you enough.
-- `gh pr view <n> --json mergeable,statusCheckRollup,reviewDecision,headRefOid`
-  — only to read a completed task's linked-PR QA/check state.
+- `gh api repos/{owner}/{repo}/compare/{base}...{head} --jq .behind_by`
+  — only for non-conflicting, CI-green PRs, to measure staleness for `sync`.
 - `gh issue list --state open --label kody:cto-decisions --limit 5 --json number,body`
-  — read the trust ledger once per tick to learn `actions.execute.mode`.
-- `gh issue comment <n> --body "..."` — the only permitted write path,
-  for: (a) a recommendation comment, or (b) **only when `execute` has
-  graduated to `"auto"` in the ledger**, the `@kody` dispatch + its
-  notify-only follow-up on a ready backlog task.
+  — read the trust ledger once per tick to learn each verb's mode.
+- `gh pr comment <n> --body "..."` — the only permitted write path, for:
+  (a) a recommendation comment, or (b) **only when that verb has
+  graduated to `"auto"`**, the `@kody <verb> --pr <n>` dispatch + its
+  notify-only follow-up.
 
 ## Restrictions
 
-- **Advisory by default; auto only for graduated `execute`.** The only
-  action you may ever take without asking is dispatching a ready backlog
-  task with `@kody` — and only when the ledger says
-  `actions.execute.mode === "auto"`. For everything else (merge,
-  approve, close, reopen, reject, assign, label, `fix`, `qa-review`, and
-  `execute` while still `"ask"`) you have no authority to act: post a
-  recommendation and let the operator confirm in the dashboard.
+- **Advisory by default; auto only per graduated verb.** The only actions
+  you may ever take without asking are `@kody fix-ci|sync|resolve --pr
+  <n>`, and only for the specific verb the ledger marks `"auto"`. You
+  have no authority to merge, approve, close, reopen, reject, assign,
+  label, or run any other command.
+- Only ever recommend or run `fix-ci`, `sync`, `resolve`. No `merge`,
+  `approve`, `execute`, `qa-review`, `close`, `revert`, `abort` — those
+  are out of scope for this worker entirely.
 - Never edit, create, or delete any file in the working tree. Never
   `git commit`, `git push`, or open a PR.
-- One comment per task per tick, and only when the decision is **new**
+- One comment per PR per tick, and only when the repair is **new**
   (fingerprint changed — see State). Re-posting the same recommendation
   every 15 minutes is the primary failure mode; the dedup ledger exists
   to prevent it.
-- Never call `gh` once per task in a loop — one `issue list` drives the
-  tick; per-task `view` only for the few tasks you are deciding on.
-- Hold the high-stakes vocabulary out of v1: no `merge`,
-  `approve-review`, `close`, `close-pr`, `reject`, `abort`, `reset`,
-  goal reordering. Only ever recommend `execute`, `qa-review`, `fix`,
-  `approve`, `comment`.
+- Never call `gh` once per PR in a loop — one `pr list` drives the tick;
+  the per-PR `compare` call runs only for the healthy subset.
 
 ## State
 
-`cursor`: always `"idle"` — phases are per-task, not global.
+`cursor`: always `"idle"` — phases are per-PR, not global.
 
 `data`:
 
-- `tasks` (object) — keyed by issue number. Each value:
-  - `fp` (string) — fingerprint = `"<status-label>|<stage>"`. The
-    dedup key: only post a new recommendation when `fp` changes.
-  - `stage` (string) — one of: `backlog-flagged`,
-    `execute-recommended`, `auto-executed`, `needs-qa`, `qa-requested`,
-    `fix-recommended`, `approve-recommended`, `dismissed`.
-  - `lastRecAt` (ISO string) — when the last recommendation was posted.
+- `prs` (object) — keyed by PR number. Each value:
+  - `fp` (string) — fingerprint = `"<verb>|<updatedAt>"`. The dedup key:
+    only post a new comment when `fp` changes (a fresh failure, new
+    conflict, or further drift moves `updatedAt`).
+  - `stage` (string) — one of: `fix-ci-recommended`, `sync-recommended`,
+    `resolve-recommended`, `fix-ci-auto`, `sync-auto`, `resolve-auto`,
+    `dismissed`.
+  - `lastActAt` (ISO string) — when the last comment was posted.
     Diagnostic only.
-- Prune entries for issues no longer in the open list so `data` does
-  not grow unbounded.
+- Prune entries for PRs no longer in the open list so `data` does not
+  grow unbounded.
 
 (Engine-managed fields like `lastFiredAt` live under `data`
 automatically; do not write or rely on them from the prompt.)
