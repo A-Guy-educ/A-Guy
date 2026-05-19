@@ -1,25 +1,33 @@
 /**
  * Coupons Collection
  *
- * Stores discount coupons that can be applied at checkout.
+ * Stores discount coupons (percentage or fixed amount) that can be applied at
+ * checkout. Codes are stored uppercase; comparison is case-insensitive.
  *
  * @fileType collection-config
  * @domain payments
- * @pattern coupon
- * @ai-summary Stores discount coupons for checkout
+ * @pattern discount-code
+ * @ai-summary Stores discount coupon codes for checkout (percentage or fixed amount)
  */
 
 import type { CollectionConfig } from 'payload'
 
 import { adminOnly } from '../access/adminOnly'
 import { createdByField } from '../fields/createdBy'
-import { tenantField } from '../fields/tenant'
 
 export const Coupons: CollectionConfig = {
   slug: 'coupons',
   admin: {
     useAsTitle: 'code',
-    defaultColumns: ['code', 'discountType', 'discountValue', 'isActive', 'usesCount', 'maxUses'],
+    defaultColumns: [
+      'code',
+      'discountType',
+      'discountValue',
+      'usesCount',
+      'maxUses',
+      'validUntil',
+      'isActive',
+    ],
     group: 'Payments',
     description: 'Manage discount coupons that can be applied at checkout',
     components: {
@@ -34,10 +42,32 @@ export const Coupons: CollectionConfig = {
     create: adminOnly,
     update: adminOnly,
     delete: adminOnly,
-    read: () => true, // Public read for coupon validation
+    read: () => true, // Public read for coupon validation at checkout
+  },
+  hooks: {
+    beforeChange: [
+      ({ data }) => {
+        if (!data) return data
+
+        if (typeof data.code === 'string') {
+          data.code = data.code.trim().toUpperCase()
+        }
+
+        if (data.discountType === 'percentage' && (data.discountValue ?? 0) > 100) {
+          throw new Error('Percentage discount cannot exceed 100%')
+        }
+
+        if (data.validFrom && data.validUntil) {
+          if (new Date(data.validFrom) > new Date(data.validUntil)) {
+            throw new Error('validFrom must be before validUntil')
+          }
+        }
+
+        return data
+      },
+    ],
   },
   fields: [
-    tenantField,
     {
       name: 'code',
       type: 'text',
@@ -45,7 +75,7 @@ export const Coupons: CollectionConfig = {
       unique: true,
       index: true,
       admin: {
-        description: 'The coupon code (case-insensitive, stored uppercase)',
+        description: 'Coupon code (stored uppercase, case-insensitive in app logic)',
       },
     },
     {
@@ -53,8 +83,8 @@ export const Coupons: CollectionConfig = {
       type: 'select',
       required: true,
       options: [
-        { label: 'Percentage', value: 'percentage' },
-        { label: 'Fixed', value: 'fixed' },
+        { label: 'אחוז', value: 'percentage' },
+        { label: 'סכום קבוע', value: 'fixed' },
       ],
       admin: {
         description:
@@ -67,12 +97,27 @@ export const Coupons: CollectionConfig = {
       required: true,
       min: 0,
       admin: {
-        description: 'Percentage (0-100) or fixed amount in agorot',
+        description: 'Percentage (0-100) or fixed amount in agorot, depending on discountType',
+      },
+    },
+    {
+      name: 'currency',
+      type: 'select',
+      required: true,
+      defaultValue: 'ILS',
+      options: [
+        { label: 'ILS', value: 'ILS' },
+        { label: 'USD', value: 'USD' },
+        { label: 'EUR', value: 'EUR' },
+      ],
+      admin: {
+        description: 'Currency for fixed-amount discounts',
       },
     },
     {
       name: 'isActive',
       type: 'checkbox',
+      required: true,
       defaultValue: true,
       index: true,
       admin: {
@@ -83,19 +128,20 @@ export const Coupons: CollectionConfig = {
       name: 'validFrom',
       type: 'date',
       admin: {
-        description: 'Leave empty for no start restriction',
+        description: 'מתחילת תוקף (אם לא מוגדר — תקף מעכשיו)',
       },
     },
     {
       name: 'validUntil',
       type: 'date',
       admin: {
-        description: 'Leave empty for no expiration',
+        description: 'סוף תוקף (אם לא מוגדר — ללא הגבלה)',
       },
     },
     {
       name: 'maxUses',
       type: 'number',
+      required: true,
       defaultValue: 0,
       admin: {
         description: 'Maximum number of uses (0 = unlimited)',
@@ -104,10 +150,19 @@ export const Coupons: CollectionConfig = {
     {
       name: 'usesCount',
       type: 'number',
+      required: true,
       defaultValue: 0,
       admin: {
         description: 'Number of times this coupon has been used',
         readOnly: true,
+      },
+    },
+    {
+      name: 'maxUsesPerUser',
+      type: 'number',
+      defaultValue: 1,
+      admin: {
+        description: 'מקסימום שימושים למשתמש',
       },
     },
     {
@@ -116,7 +171,7 @@ export const Coupons: CollectionConfig = {
       relationTo: 'products',
       hasMany: true,
       admin: {
-        description: 'Leave empty to apply to all products',
+        description: 'אם ריק — חל על כל המוצרים',
       },
     },
     createdByField,
