@@ -125,81 +125,89 @@ export async function generateExercisesEndpoint(
     )
   }
 
-  // ─────────────────────────────────────────────────────────────────
-  // Phase 2: Generate content for each exercise (AI, one at a time)
-  // ─────────────────────────────────────────────────────────────────
-  const results: ExerciseResult[] = exerciseIds.map((id) => ({ exerciseId: id, status: 'pending' }))
-  let generatedCount = 0
-
-  for (let i = 0; i < exerciseIds.length; i++) {
-    const exerciseId = exerciseIds[i]
-    reqLogger.info(
-      { exerciseIndex: i + 1, total: exerciseIds.length, exerciseId },
-      '[Generate Exercises] Generating content',
-    )
-
-    const genResult = await generateExerciseContent(
-      {
-        prompt,
-        lessonId,
-        exerciseIndex: i + 1,
-        difficultyLevel,
-      },
-      req.payload,
-    )
-
-    if (!genResult.success || !genResult.data) {
-      const errorMsg = genResult.error || 'Generation failed'
-      results[i] = { exerciseId, status: 'failed', error: errorMsg }
-      reqLogger.warn(
-        { exerciseId, error: errorMsg },
-        '[Generate Exercises] Failed to generate content — stopping',
-      )
-      // Stop on first failure (likely rate limit) — already-created exercises are safe
-      break
-    }
-
-    const updateResult = await updateExerciseWithContent(
-      exerciseId,
-      genResult.data.blocks,
-      req.payload,
-    )
-
-    if (!updateResult.success) {
-      results[i] = { exerciseId, status: 'failed', error: updateResult.error }
-      reqLogger.warn(
-        { exerciseId, error: updateResult.error },
-        '[Generate Exercises] Failed to save content — stopping',
-      )
-      break
-    }
-
-    results[i] = { exerciseId, status: 'generated' }
-    generatedCount++
-    reqLogger.info(
-      { exerciseIndex: i + 1, total: exerciseIds.length, exerciseId },
-      '[Generate Exercises] Content generated successfully',
-    )
-  }
-
-  const response: GenerateExercisesResult = {
+  // Return immediately after Phase 1 — AI generation runs in background
+  const immediateResponse: GenerateExercisesResult = {
     success: true,
     lessonId,
     requestedCount: count,
     createdCount: exerciseIds.length,
-    generatedCount,
+    generatedCount: 0,
     exerciseIds,
-    results,
+    results: exerciseIds.map((id) => ({ exerciseId: id, status: 'pending' })),
   }
 
   reqLogger.info(
-    {
-      lessonId,
-      createdCount: exerciseIds.length,
-      generatedCount,
-    },
-    '[Generate Exercises] Completed',
+    { lessonId, createdCount: exerciseIds.length },
+    '[Generate Exercises] Phase 1 complete, returning immediately',
   )
 
-  return Response.json(response)
+  // Fire-and-forget: continue AI generation in background
+  setImmediate(async () => {
+    const results: ExerciseResult[] = exerciseIds.map((id) => ({
+      exerciseId: id,
+      status: 'pending' as const,
+    }))
+    let generatedCount = 0
+
+    for (let i = 0; i < exerciseIds.length; i++) {
+      const exerciseId = exerciseIds[i]
+      reqLogger.info(
+        { exerciseIndex: i + 1, total: exerciseIds.length, exerciseId },
+        '[Generate Exercises] Generating content (background)',
+      )
+
+      const genResult = await generateExerciseContent(
+        {
+          prompt,
+          lessonId,
+          exerciseIndex: i + 1,
+          difficultyLevel,
+        },
+        req.payload,
+      )
+
+      if (!genResult.success || !genResult.data) {
+        const errorMsg = genResult.error || 'Generation failed'
+        results[i] = { exerciseId, status: 'failed', error: errorMsg }
+        reqLogger.warn(
+          { exerciseId, error: errorMsg },
+          '[Generate Exercises] Failed to generate content — stopping',
+        )
+        break
+      }
+
+      const updateResult = await updateExerciseWithContent(
+        exerciseId,
+        genResult.data.blocks,
+        req.payload,
+      )
+
+      if (!updateResult.success) {
+        results[i] = { exerciseId, status: 'failed', error: updateResult.error }
+        reqLogger.warn(
+          { exerciseId, error: updateResult.error },
+          '[Generate Exercises] Failed to save content — stopping',
+        )
+        break
+      }
+
+      results[i] = { exerciseId, status: 'generated' }
+      generatedCount++
+      reqLogger.info(
+        { exerciseIndex: i + 1, total: exerciseIds.length, exerciseId },
+        '[Generate Exercises] Content generated successfully',
+      )
+    }
+
+    reqLogger.info(
+      {
+        lessonId,
+        createdCount: exerciseIds.length,
+        generatedCount,
+      },
+      '[Generate Exercises] Background phase completed',
+    )
+  })
+
+  return Response.json(immediateResponse)
 }

@@ -80,12 +80,15 @@ export const GenerateExercisesAction: React.FC = () => {
       }
 
       setGeneratedCount(data.generatedCount)
+      setRequestedCount(data.requestedCount)
 
       if (data.generatedCount === data.requestedCount) {
         setStatus('success')
       } else {
         setStatus('partial')
       }
+
+      setTimeout(() => close(), 2000)
     } catch (e) {
       setStatus('error')
       setError(e instanceof Error ? e.message : 'Network error')
@@ -250,10 +253,10 @@ export const GenerateExercisesAction: React.FC = () => {
                     fontWeight: 500,
                   }}
                 >
-                  Successfully generated {generatedCount} exercises!
+                  Created {generatedCount} exercises — preparing content...
                 </div>
                 <p style={{ fontSize: 13, color: 'var(--theme-elevation-600)', marginBottom: 16 }}>
-                  The exercises have been added to this lesson and are ready for review.
+                  The exercises have been added to this lesson. Content will be generated shortly.
                 </p>
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                   <button type="button" onClick={close}>
@@ -271,11 +274,12 @@ export const GenerateExercisesAction: React.FC = () => {
                     fontWeight: 500,
                   }}
                 >
-                  Partially generated: {generatedCount} of {requestedCount} exercises
+                  Created {generatedCount} of {requestedCount} exercises — preparing remaining
+                  content...
                 </div>
                 <p style={{ fontSize: 13, color: 'var(--theme-elevation-600)', marginBottom: 16 }}>
-                  Some exercises could not be generated due to a rate limit. The exercises that were
-                  successfully created are saved. You can try again later for the remaining ones.
+                  Content generation is still in progress. The exercises that were successfully
+                  created will be ready shortly.
                 </p>
                 <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                   <button type="button" onClick={close}>
