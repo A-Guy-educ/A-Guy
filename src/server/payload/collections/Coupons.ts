@@ -42,7 +42,7 @@ export const Coupons: CollectionConfig = {
     create: adminOnly,
     update: adminOnly,
     delete: adminOnly,
-    read: () => true, // Public read for coupon validation at checkout
+    read: adminOnly,
   },
   hooks: {
     beforeChange: [
