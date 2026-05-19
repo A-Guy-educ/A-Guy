@@ -142,7 +142,7 @@ describe('Lesson duplication orchestrator — integration', () => {
 
   beforeAll(async () => {
     // Reset counter before test suite runs
-    _vgCallCount = 0
+    h.vgCallCount = 0
     payload = await getPayload({ config })
     tenantId = await ensureDefaultTenant(payload)
     const ts = Date.now()
@@ -294,7 +294,7 @@ describe('Lesson duplication orchestrator — integration', () => {
 
   it('5-exercise lesson with one forced failure — orchestrator does not abort and ends in needs_review', async () => {
     // Reset call count so this test starts fresh
-    _vgCallCount = 0
+    h.vgCallCount = 0
 
     // Create pending duplication record
     const record = await payload.create({
@@ -331,7 +331,7 @@ describe('Lesson duplication orchestrator — integration', () => {
 
   it('orchestrator does not abort when one exercise fails — remaining exercises are processed', async () => {
     // Reset call count so this test starts fresh
-    _vgCallCount = 0
+    h.vgCallCount = 0
 
     // Create fresh pending record
     const record = await payload.create({
