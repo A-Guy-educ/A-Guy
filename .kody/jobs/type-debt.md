@@ -1,3 +1,7 @@
+---
+disabled: true
+---
+
 # Type Debt Tracker
 
 ## Job

@@ -1,55 +1,53 @@
 /**
  * GET /api/lessons/:id/export
  *
- * Exports a lesson and all its ordered exercises as a JSON file.
+ * Exports a lesson and all its ordered exercises as a JSON file in canonical format.
  *
  * Access: admin only (401 unauthenticated, 403 non-admin).
  *
  * Response: Content-Type: application/json, Content-Disposition: attachment; filename="<slug>.json"
  *
- * JSON shape:
+ * Canonical JSON shape:
  * {
- *   lesson: { id, title, slug, description, type, status, order, accessType, visibleRenderers, ... },
- *   exercises: [ { id, title, slug, content, origin, ... }, ... ],  // ordered by blocks array
- *   meta: {
- *     exerciseCount: number,
- *     missingExerciseRefs: string[],      // IDs in blocks but not in DB
- *     skippedNonExerciseBlocks: number,  // contentPageRef etc.
- *   }
+ *   class: "<grade level from course>",
+ *   lesson_number: "<lesson.order>",
+ *   topic: "<lesson.title>",
+ *   exercises: [
+ *     {
+ *       exercise_number: "<1-indexed position>",
+ *       level: "1",
+ *       exercise_content: {
+ *         data: { text, table, PNG, svg },
+ *         sections: [
+ *           {
+ *             section_data: { text, table, PNG, svg },
+ *             question_number: "א/ב/ג/...",
+ *             question: { text, table, PNG, svg },
+ *             hint: { text, table, PNG, svg },
+ *             solution: { text, table, PNG, svg },
+ *             full_solution: { text, table, PNG, svg },
+ *             correct_option: { text, table, PNG, svg },
+ *             wrong_options: [{ text, table, PNG, svg }, ...]
+ *           }
+ *         ]
+ *       }
+ *     }
+ *   ]
  * }
  *
- * Excluded from exercise payload: createdAt, updatedAt, internal _id, __v
+ * No internal fields (id, _id, __v, slug, origin, createdBy, tenant, locale,
+ * chapter, course, pipelineVersion, etc.) appear in the output.
  *
  * @fileType api-route
  * @domain lessons
  * @pattern lesson-export
- * @ai-summary Exports a lesson and its ordered exercises as a JSON file for backup or offline review.
+ * @ai-summary Exports a lesson and its ordered exercises as canonical JSON for admin review or sharing.
  */
 import type { PayloadRequest } from 'payload'
 
-type BlockEntry = { id: string; blockType: string; exercise?: string; contentPage?: string }
+import { buildCanonicalLessonExport } from '@/server/services/lesson-export/to-canonical-format'
 
-/**
- * Strip Payload-managed timestamp fields from a doc. The `id` is preserved —
- * it's data (not a server-managed timestamp), and downstream consumers need
- * it to round-trip the export back into the system. The endpoint's documented
- * JSON shape and its integration test both require `id` to be present.
- */
-function stripManagedFields<T extends Record<string, unknown>>(
-  doc: T,
-): Omit<T, 'createdAt' | 'updatedAt'> {
-  const {
-    createdAt: _c,
-    updatedAt: _u,
-    ...rest
-  } = doc as T & {
-    createdAt?: unknown
-    updatedAt?: unknown
-  }
-  void _c
-  void _u
-  return rest
-}
+type BlockEntry = { id: string; blockType: string; exercise?: string; contentPage?: string }
 
 /** Parse blocks from JSON string or array */
 function parseBlocks(raw: unknown): BlockEntry[] {
@@ -63,6 +61,67 @@ function parseBlocks(raw: unknown): BlockEntry[] {
     }
   }
   return []
+}
+
+/**
+ * Fetch the grade/class label (courseLabel) for a lesson by traversing:
+ * lesson -> chapter -> course
+ */
+async function fetchClassLabel(
+  req: PayloadRequest,
+  lesson: Record<string, unknown>,
+): Promise<string> {
+  // Try to get chapter from lesson
+  const chapterRel = lesson.chapter
+  let chapterId: string | null = null
+
+  if (chapterRel) {
+    if (typeof chapterRel === 'string') {
+      chapterId = chapterRel
+    } else if (typeof chapterRel === 'object' && chapterRel !== null) {
+      chapterId = (chapterRel as { id?: string }).id || null
+    }
+  }
+
+  if (!chapterId) return ''
+
+  // Fetch chapter to get course
+  try {
+    const chapter = (await req.payload.findByID({
+      collection: 'chapters',
+      id: chapterId,
+      depth: 0,
+      select: { course: true },
+      overrideAccess: true,
+      req,
+    })) as { course?: string | { id?: string } } | null
+
+    if (!chapter?.course) return ''
+
+    let courseId: string | null = null
+    const courseRel = chapter.course
+    if (typeof courseRel === 'string') {
+      courseId = courseRel
+    } else if (typeof courseRel === 'object' && courseRel !== null) {
+      courseId = (courseRel as { id?: string }).id || null
+    }
+
+    if (!courseId) return ''
+
+    // Fetch course to get courseLabel
+    const course = (await req.payload.findByID({
+      collection: 'courses',
+      id: courseId,
+      depth: 0,
+      select: { courseLabel: true },
+      overrideAccess: true,
+      req,
+    })) as { courseLabel?: string } | null
+
+    return course?.courseLabel || ''
+  } catch {
+    return ''
+  }
 }
 
 export async function exportLessonEndpoint(req: PayloadRequest): Promise<Response> {
@@ -100,19 +159,15 @@ export async function exportLessonEndpoint(req: PayloadRequest): Promise<Respons
   // 4) Parse blocks, extract ordered exercise IDs (exerciseRef only)
   const blocks = parseBlocks(lesson.blocks)
   const exerciseIds: string[] = []
-  let skippedNonExerciseBlocks = 0
-  const missingIds: string[] = []
 
   for (const block of blocks) {
     if (block.blockType === 'exerciseRef' && block.exercise) {
       exerciseIds.push(block.exercise)
-    } else {
-      skippedNonExerciseBlocks++
     }
   }
 
-  // 5) Fetch exercises in order, track missing ones
-  const exercises: unknown[] = []
+  // 5) Fetch exercises in order
+  const exerciseDocs: Record<string, unknown>[] = []
   for (const exId of exerciseIds) {
     try {
       const ex = (await req.payload.findByID({
@@ -122,34 +177,22 @@ export async function exportLessonEndpoint(req: PayloadRequest): Promise<Respons
         overrideAccess: true,
         req,
       })) as unknown as Record<string, unknown>
-      exercises.push(stripManagedFields(ex))
+      exerciseDocs.push(ex)
     } catch {
-      missingIds.push(exId)
+      // Skip missing exercises
     }
   }
 
-  // 6) Build response — strip managed timestamps + raw blocks (the lesson's
-  // `blocks` field is a serialized JSON string for storage; we expose the
-  // ordered exercises array via `exercises` instead). `id` is preserved.
-  const { createdAt: _lca, updatedAt: _lua, blocks: _lb, ...lessonData } = lesson
-  void _lca
-  void _lua
-  void _lb
+  // 6) Fetch class label (courseLabel) from chapter -> course hierarchy
+  const classLabel = await fetchClassLabel(req, lesson)
 
-  const responseBody = {
-    lesson: { ...lessonData },
-    exercises,
-    meta: {
-      exerciseCount: exercises.length,
-      missingExerciseRefs: missingIds,
-      skippedNonExerciseBlocks,
-    },
-  }
+  // 7) Build canonical export format
+  const canonicalExport = buildCanonicalLessonExport(lesson, exerciseDocs, classLabel)
 
   const slug = (lesson.slug as string) || lessonId
   const filename = `${slug}.json`
 
-  return new Response(JSON.stringify(responseBody, null, 2), {
+  return new Response(JSON.stringify(canonicalExport, null, 2), {
     headers: {
       'Content-Type': 'application/json',
       'Content-Disposition': `attachment; filename="${filename}"`,

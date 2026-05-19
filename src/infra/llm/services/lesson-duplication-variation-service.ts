@@ -46,6 +46,12 @@ const VARIATION_MODEL_VERSION = 'gemini-3.1-pro-preview'
 
 export type DuplicationSubject = 'algebra' | 'geometry' | 'calculus' | 'mixed' | 'other'
 
+/** Token usage from LLM calls — accumulated across the two passes. */
+export interface TokensUsed {
+  inputTokens: number
+  outputTokens: number
+}
+
 export const DUPLICATION_SUBJECTS = ['algebra', 'geometry', 'calculus', 'mixed', 'other'] as const
 
 export interface GenerateVariationInput {
@@ -139,10 +145,14 @@ function loadSubjectPrompt(
 export async function generateVariation(
   input: GenerateVariationInput,
   payload: Payload,
-): Promise<{ exercise: Exercise }> {
+): Promise<{ exercise: Exercise; tokensUsed: TokensUsed }> {
   const { exercise, level, subject } = input
   const exerciseId = typeof exercise.id === 'string' ? exercise.id : String(exercise.id)
   const startTime = Date.now()
+
+  // Accumulate token usage across the two passes (issue #1552)
+  let totalInputTokens = 0
+  let totalOutputTokens = 0
 
   // Pass 1 — Creative (question + hint + phrasing)
   const creativePrompt = loadSubjectPrompt(subject, level)
@@ -197,6 +207,13 @@ export async function generateVariation(
       )
 
       pass1Output = extractPass1Output(result)
+
+      // Accumulate token usage from pass 1 (issue #1552)
+      if (result.usage) {
+        totalInputTokens += result.usage.inputTokens
+        totalOutputTokens += result.usage.outputTokens
+      }
+
       break
     } catch (error) {
       const breakerCooldown = getCircuitBreakerCooldownMs(error)
@@ -274,6 +291,13 @@ export async function generateVariation(
       )
 
       pass2Patch = extractPass2Patch(result)
+
+      // Accumulate token usage from pass 2 (issue #1552)
+      if (result.usage) {
+        totalInputTokens += result.usage.inputTokens
+        totalOutputTokens += result.usage.outputTokens
+      }
+
       break
     } catch (error) {
       const breakerCooldown = getCircuitBreakerCooldownMs(error)
@@ -332,7 +356,10 @@ export async function generateVariation(
     '[LessonDuplicationVariation] Two-pass complete',
   )
 
-  return { exercise: { ...exercise, content: { blocks: cleanedBlocks } } }
+  return {
+    exercise: { ...exercise, content: { blocks: cleanedBlocks } },
+    tokensUsed: { inputTokens: totalInputTokens, outputTokens: totalOutputTokens },
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -37,17 +37,42 @@ vi.mock('@/ui/web/exerciserenderer/blocks/AxisRenderer', () => ({
 vi.mock('@/ui/web/exerciserenderer/blocks/MultiAxisRenderer', () => ({
   MultiAxisRenderer: () => <div data-testid="multi-axis" />,
 }))
+vi.mock('@/ui/web/exerciserenderer/blocks/LatexBlockRenderer', () => ({
+  LatexBlockRenderer: ({ block }: { block: { latex: string } }) => (
+    <div data-testid="latex">{block.latex}</div>
+  ),
+}))
 
-function renderWith(locale: 'en' | 'he', blocks: ContentBlock[]) {
+function renderWith(locale: 'en' | 'he', blocks: ContentBlock[], hideLatexBlocks?: boolean) {
   return render(
     <I18nProvider locale={locale} messages={locale === 'en' ? enMessages : heMessages}>
-      <ExerciseWorksheet blocks={blocks} />
+      <ExerciseWorksheet blocks={blocks} hideLatexBlocks={hideLatexBlocks} />
     </I18nProvider>,
   )
 }
 
 describe('ExerciseWorksheet', () => {
   afterEach(() => cleanup())
+
+  // Issue #1519: LaTeX blocks must be rendered to display mathematical expressions on mobile
+  // The previous behavior of hiding LaTeX blocks broke mobile exercise viewing experience
+  it('renders latex blocks for mobile exercise viewing (issue #1519)', () => {
+    const blocks = [
+      { id: 'lx-1', type: 'latex' as const, latex: 'E = mc^2', renderMode: 'block' as const },
+      {
+        id: 'rt-1',
+        type: 'rich_text' as const,
+        format: 'md-math-v1' as const,
+        value: 'Formula:',
+        mediaIds: [],
+      },
+    ] as unknown as ContentBlock[]
+
+    renderWith('en', blocks)
+    // LaTeX content should be rendered so students can see mathematical expressions on mobile
+    expect(screen.getByTestId('latex')).toHaveTextContent('E = mc^2')
+    expect(screen.getByTestId('rich')).toHaveTextContent('Formula:')
+  })
 
   it('hides latex blocks but renders rich_text alongside', () => {
     const blocks = [
@@ -61,7 +86,7 @@ describe('ExerciseWorksheet', () => {
       { id: 'lx-1', type: 'latex', latex: 'E = mc^2', renderMode: 'block' },
     ] as unknown as ContentBlock[]
 
-    renderWith('en', blocks)
+    renderWith('en', blocks, true) // hideLatexBlocks={true} to test backward-compatible hiding
     expect(screen.getByTestId('rich')).toHaveTextContent('Visible prose')
     expect(screen.queryByText('E = mc^2')).not.toBeInTheDocument()
   })
