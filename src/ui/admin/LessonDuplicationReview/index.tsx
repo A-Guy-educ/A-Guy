@@ -12,6 +12,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { DiffPreview } from './DiffPreview'
+import { computeExerciseStates, countByState } from './lib/exerciseState'
 import type { ContentBlock } from '@/server/payload/collections/Exercises/types'
 
 type Action = 'skip' | 'regenerate' | 'keep' | 'looks_right'
@@ -73,23 +74,6 @@ const titleStyle: React.CSSProperties = {
 const metaStyle: React.CSSProperties = {
   fontSize: 13,
   color: 'var(--theme-elevation-600)',
-}
-const stickyBarStyle: React.CSSProperties = {
-  position: 'sticky',
-  top: 0,
-  zIndex: 10,
-  backgroundColor: 'var(--theme-elevation-100)',
-  borderBottom: '1px solid var(--theme-elevation-200)',
-  padding: '12px 16px',
-  borderRadius: 4,
-  marginBottom: 16,
-  display: 'flex',
-  gap: 16,
-  alignItems: 'center',
-}
-const summaryStyle: React.CSSProperties = {
-  fontSize: 14,
-  fontWeight: 500,
 }
 const failureCardStyle: React.CSSProperties = {
   border: '1px solid var(--theme-elevation-200)',
@@ -174,6 +158,10 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [allResolved, setAllResolved] = useState(false)
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set())
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [processError, setProcessError] = useState<string | null>(null)
+  const [processOutcome, setProcessOutcome] = useState<string | null>(null)
+  const [retryingSourceIds, setRetryingSourceIds] = useState<Set<string>>(new Set())
   const diffPreviewRef = useRef<HTMLDivElement>(null)
 
   const fetchRecord = useCallback(async () => {
@@ -210,8 +198,15 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
     fetchRecord()
   }, [fetchRecord])
 
-  const unresolvedCount = record?.failures.filter((f) => !f.resolved).length ?? 0
-  const totalExercises = record?.exercisePairs?.length ?? record?.outputExercises?.length ?? 0
+  // Auto-refresh every 30 seconds for running records
+  useEffect(() => {
+    if (record?.status === 'running') {
+      const interval = setInterval(() => {
+        fetchRecord()
+      }, 30000)
+      return () => clearInterval(interval)
+    }
+  }, [record?.status, fetchRecord])
 
   async function handleSubmit() {
     if (pendingActions.size === 0) return
@@ -246,6 +241,34 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
       next.set(index, { action, level })
       return next
     })
+  }
+
+  /**
+   * Manually kick the orchestrator for this record. Useful on dev (where
+   * Vercel cron doesn't fire on preview deploys) and for "run it now" in
+   * production. The request can take several minutes — same model as a cron
+   * tick: process as many exercises as fit in the function lifetime, then
+   * return. If work remains, status stays `running` and the next click (or
+   * cron tick) continues from there.
+   */
+  async function handleProcessNow() {
+    setIsProcessing(true)
+    setProcessError(null)
+    setProcessOutcome(null)
+    try {
+      const res = await fetch(`/api/lesson-duplications/${duplicationId}/process-now`, {
+        method: 'POST',
+        credentials: 'include',
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error?.message ?? data.error ?? `HTTP ${res.status}`)
+      setProcessOutcome(data.data?.outcome ?? 'unknown')
+      await fetchRecord()
+    } catch (e) {
+      setProcessError(e instanceof Error ? e.message : 'Process failed')
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   function jumpToExercise(outputExerciseId: string) {
@@ -323,6 +346,28 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
     }
   }
 
+  // Handle per-exercise retry from DiffPreview
+  async function handleRetry(sourceExerciseId: string) {
+    setRetryingSourceIds((prev) => new Set(prev).add(sourceExerciseId))
+    try {
+      const res = await fetch(`/api/lesson-duplications/${duplicationId}/retry-exercise`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ sourceExerciseId }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error?.message ?? `HTTP ${res.status}`)
+      await fetchRecord()
+    } finally {
+      setRetryingSourceIds((prev) => {
+        const next = new Set(prev)
+        next.delete(sourceExerciseId)
+        return next
+      })
+    }
+  }
+
   if (isLoading) return <div style={loadingStyle}>Loading…</div>
   if (error) return <div style={{ ...loadingStyle, color: 'var(--theme-error)' }}>{error}</div>
   if (!record) return null
@@ -355,6 +400,82 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
     )
   }
 
+  // Lets admins kick the orchestrator manually (essential on dev where Vercel
+  // cron doesn't fire on preview deploys; nice-to-have in prod for "do it
+  // now" overrides). Visible in both the empty-state panel and the sticky
+  // bar of the normal review view.
+  const canProcess = record.status === 'pending' || record.status === 'running'
+
+  // Pending/running with nothing to show yet — render a focused "Process Now"
+  // panel instead of the empty review UI.
+  const hasNoProgress =
+    (record.outputExercises?.length ?? 0) === 0 && (record.failures?.length ?? 0) === 0
+  if (canProcess && hasNoProgress) {
+    return (
+      <div style={pageStyle}>
+        <div style={headerStyle}>
+          <p style={breadcrumbStyle}>
+            <Link href="/admin">Dashboard</Link> /{' '}
+            <Link href="/admin/collections/lesson-duplications">Lesson Duplications</Link> / Review
+          </p>
+          <h1 style={titleStyle}>Lesson Duplication Review</h1>
+          <p style={metaStyle}>
+            Source: <strong>{sourceLessonTitle ?? record.sourceLesson}</strong> · Level:{' '}
+            <strong>{record.level}</strong> · Status: <strong>{record.status}</strong>
+          </p>
+        </div>
+        <div
+          style={{
+            padding: 24,
+            border: '1px solid var(--theme-elevation-200)',
+            borderRadius: 4,
+            backgroundColor: 'var(--theme-elevation-0)',
+          }}
+        >
+          <p style={{ fontSize: 14, marginBottom: 16 }}>
+            {record.status === 'pending'
+              ? 'This duplication is queued and hasn’t started yet. It will be picked up automatically by the cron worker within ~1 minute on production. Click below to start it immediately.'
+              : 'This duplication is running but no exercises have been recorded yet. The cron worker will continue it on its next tick. Click below to advance it right now.'}
+          </p>
+          <button
+            style={{
+              ...buttonStyle,
+              backgroundColor: 'var(--theme-success)',
+              color: '#fff',
+              border: 'none',
+              padding: '8px 16px',
+              fontSize: 14,
+            }}
+            onClick={handleProcessNow}
+            disabled={isProcessing}
+          >
+            {isProcessing ? 'Processing… (this can take several minutes)' : 'Process Now'}
+          </button>
+          {processOutcome && (
+            <div style={{ marginTop: 12, fontSize: 13, color: 'var(--theme-elevation-700)' }}>
+              Last run outcome: <strong>{processOutcome}</strong>
+              {processOutcome === 'in_progress' &&
+                ' — more work remains; click Process Now again or wait for the next cron tick.'}
+            </div>
+          )}
+          {processError && (
+            <div style={{ marginTop: 12, fontSize: 13, color: 'var(--theme-error)' }}>
+              {processError}
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Compute per-exercise states for the new tabbed UI
+  const exerciseStates = computeExerciseStates(
+    record.outputExercises ?? [],
+    record.failures ?? [],
+    reviewedIds,
+  )
+  const counts = countByState(exerciseStates)
+
   return (
     <div style={pageStyle}>
       {/* Header */}
@@ -370,26 +491,26 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
         </p>
       </div>
 
-      {/* Sticky summary bar */}
-      <div style={stickyBarStyle}>
-        <span style={summaryStyle}>
-          {reviewedIds.size} of {totalExercises} exercises reviewed
-          {unresolvedCount > 0 ? (
-            <span className="text-destructive" style={{ marginLeft: 8 }}>
-              · {unresolvedCount} failure{unresolvedCount !== 1 ? 's' : ''} remaining
-            </span>
-          ) : (
-            <span className="text-[var(--theme-success)]" style={{ marginLeft: 8 }}>
-              · all reviewed
-            </span>
-          )}
-        </span>
-        <div style={{ flex: 1 }} />
-        {pendingActions.size > 0 && (
-          <>
-            <span style={{ fontSize: 13, color: 'var(--theme-elevation-600)' }}>
-              {pendingActions.size} action{pendingActions.size !== 1 ? 's' : ''} pending
-            </span>
+      {/* Status banner */}
+      <div
+        className="status-banner bg-[var(--theme-elevation-100)] border border-[var(--theme-elevation-200)] rounded-lg p-card-padding mb-6"
+        data-status-banner="needs_review"
+      >
+        <div className="flex items-center gap-content-gap text-body-sm flex-wrap">
+          <span className="font-semibold text-foreground">{counts.succeeded} succeeded</span>
+          <span className="text-[hsl(var(--warning))] font-medium">
+            · {counts.needs_review} needs_review
+          </span>
+          <span className="text-[hsl(var(--error))] font-medium">· {counts.failed} failed</span>
+          <div className="flex-1" />
+          {/* Manual refresh button */}
+          <button
+            onClick={fetchRecord}
+            className="transition-all duration-normal px-3 py-1.5 rounded-lg text-label font-semibold border border-border hover:bg-muted"
+          >
+            Refresh
+          </button>
+          {canProcess && (
             <button
               style={{
                 ...buttonStyle,
@@ -397,13 +518,33 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
                 color: '#fff',
                 border: 'none',
               }}
-              onClick={handleSubmit}
-              disabled={isSubmitting}
+              onClick={handleProcessNow}
+              disabled={isProcessing}
+              title="Run the orchestrator immediately on this record. Useful on dev where Vercel cron doesn't auto-fire."
             >
-              {isSubmitting ? 'Applying…' : 'Apply Actions'}
+              {isProcessing ? 'Processing…' : 'Process Now'}
             </button>
-          </>
-        )}
+          )}
+          {pendingActions.size > 0 && (
+            <>
+              <span style={{ fontSize: 13, color: 'var(--theme-elevation-600)' }}>
+                {pendingActions.size} action{pendingActions.size !== 1 ? 's' : ''} pending
+              </span>
+              <button
+                style={{
+                  ...buttonStyle,
+                  backgroundColor: 'var(--theme-success)',
+                  color: '#fff',
+                  border: 'none',
+                }}
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Applying…' : 'Apply Actions'}
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {submitError && (
@@ -422,7 +563,9 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
             onLooksRight={handleLooksRight}
             onRegenerate={handleRegenerate}
             onSkip={handleSkip}
+            onRetry={handleRetry}
             onJumpToExercise={jumpToExercise}
+            retryingSourceIds={retryingSourceIds}
           />
         </div>
       )}
@@ -543,7 +686,59 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
                       >
                         Keep
                       </button>
+                      <button
+                        style={{
+                          ...buttonStyle,
+                          backgroundColor: 'var(--theme-success)',
+                          color: '#fff',
+                          border: 'none',
+                          ...(retryingSourceIds.has(exerciseRef)
+                            ? { opacity: 0.6, cursor: 'not-allowed' }
+                            : {}),
+                        }}
+                        onClick={() => handleRetry(exerciseRef)}
+                        disabled={retryingSourceIds.has(exerciseRef)}
+                      >
+                        {retryingSourceIds.has(exerciseRef) ? 'Retrying…' : 'Retry just this one'}
+                      </button>
                     </div>
+                    {/* Expandable failure detail */}
+                    <details
+                      style={{
+                        marginTop: 8,
+                        paddingTop: 8,
+                        borderTop: '1px solid var(--theme-elevation-100)',
+                      }}
+                    >
+                      <summary
+                        style={{
+                          fontSize: 12,
+                          color: 'var(--theme-elevation-500)',
+                          cursor: 'pointer',
+                          userSelect: 'none',
+                        }}
+                      >
+                        Details
+                      </summary>
+                      <pre
+                        style={{
+                          marginTop: 6,
+                          padding: 8,
+                          backgroundColor: 'var(--theme-elevation-100)',
+                          borderRadius: 3,
+                          fontSize: 11,
+                          wordBreak: 'break-all',
+                          whiteSpace: 'pre-wrap',
+                        }}
+                      >
+                        {failure.message}
+                      </pre>
+                      <p
+                        style={{ fontSize: 12, color: 'var(--theme-elevation-500)', marginTop: 4 }}
+                      >
+                        {FAILURE_CODE_LABELS[failure.code] ?? failure.code}
+                      </p>
+                    </details>
                   </div>
                 )
               })}

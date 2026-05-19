@@ -2,6 +2,9 @@
 
 import React from 'react'
 
+import RevenueWidget from '@/ui/admin/RevenueWidget'
+import RecentTransactionsWidget from '@/ui/admin/RecentTransactionsWidget'
+import TopProductsWidget from '@/ui/admin/TopProductsWidget'
 import ContentCountsWidget from './ContentCountsWidget'
 import DashboardHeader from './DashboardHeader'
 import EngagementWidget from './EngagementWidget'
@@ -12,6 +15,9 @@ const DashboardWidgets: React.FC = () => {
   return (
     <MetricsProvider>
       <DashboardHeader />
+      <RevenueWidget />
+      <TopProductsWidget />
+      <RecentTransactionsWidget />
       <UserMetricsWidget />
       <ContentCountsWidget />
       <EngagementWidget />

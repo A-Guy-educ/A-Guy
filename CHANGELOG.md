@@ -6387,6 +6387,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- #1645: Build admin payment detail view ([#1674](https://github.com/A-Guy-educ/A-Guy/pull/1674)) — @aguyaharonyair
+- #1644: Add revenue and transaction widgets to admin dashboard UI ([#1653](https://github.com/A-Guy-educ/A-Guy/pull/1653)) — @aguyaharonyair
+- #1642: Create PaymentStats Payload collection ([#1651](https://github.com/A-Guy-educ/A-Guy/pull/1651)) — @aguyaharonyair
+- #1641: Add revenue metrics to admin dashboard API ([#1649](https://github.com/A-Guy-educ/A-Guy/pull/1649)) — @aguyaharonyair
+- #1519: Improve Mobile Lesson Viewing Experience ([#1683](https://github.com/A-Guy-educ/A-Guy/pull/1683)) — @aguyaharonyair
+- #1518: User Learning Agent Task ([#1686](https://github.com/A-Guy-educ/A-Guy/pull/1686)) — @aguyaharonyair
+- #1663: Per-exercise retry from review page ([#1673](https://github.com/A-Guy-educ/A-Guy/pull/1673)) — @aguyaharonyair
+- #1672: Export lessons in canonical content format ([#1680](https://github.com/A-Guy-educ/A-Guy/pull/1680)) — @aguyaharonyair
+- fix(tests): Unblock stuck-record tests (6 failing on dev) ([#1682](https://github.com/A-Guy-educ/A-Guy/pull/1682)) — @aguyshayb
+- #1647: Add admin coupon management UI ([#1676](https://github.com/A-Guy-educ/A-Guy/pull/1676)) — @aguyaharonyair
+- #1664: Auto-fail stuck duplication records to unblock the cron queue ([#1670](https://github.com/A-Guy-educ/A-Guy/pull/1670)) — @aguyaharonyair
+- #1665: Smarter section selector for variations ([#1666](https://github.com/A-Guy-educ/A-Guy/pull/1666)) — @aguyaharonyair
+- #1662: Redesign lesson duplication review page ([#1667](https://github.com/A-Guy-educ/A-Guy/pull/1667)) — @aguyaharonyair
+- #1552: Track AI tokens, cost, and run duration on each LessonDuplicatio… ([#1561](https://github.com/A-Guy-educ/A-Guy/pull/1561)) — @aguyaharonyair
+- #1619: Secrets vault — payment provider keys ([#1639](https://github.com/A-Guy-educ/A-Guy/pull/1639)) — @aguyaharonyair
+- feat(lesson-duplication): Process Now button for manual orchestrator trigger ([#1624](https://github.com/A-Guy-educ/A-Guy/pull/1624)) — @aguyshayb
+- #1621: Export lesson + ordered exercises as JSON from admin ([#1625](https://github.com/A-Guy-educ/A-Guy/pull/1625)) — @aguyaharonyair
+- feat(lesson-duplication): Constrain Gemini output with Zod schemas ([#1602](https://github.com/A-Guy-educ/A-Guy/pull/1602)) — @aguyshayb
 - chore: Pin pnpm to 10.33.0 via packageManager field ([#1609](https://github.com/A-Guy-educ/A-Guy/pull/1609)) — @aguyaharonyair
 - #1595: [P2] Vercel feedback script blocked by CSP script-src directive … ([#1604](https://github.com/A-Guy-educ/A-Guy/pull/1604)) — @aguyaharonyair
 <!-- semantic-release will automatically update this file with each release -->

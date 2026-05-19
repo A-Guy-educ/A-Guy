@@ -110,7 +110,13 @@ describe('Lesson duplication endpoint — queues orchestrator job for non-none l
     await payload.db?.destroy?.()
   })
 
-  it('enqueues a lesson_duplication job when called with level=deep', async () => {
+  it('creates a pending lesson-duplications record when called with level=deep', async () => {
+    // The endpoint no longer queues a Payload job or fires a run-immediate
+    // HTTP ping. The cron worker at /api/cron/process-duplications polls the
+    // lesson-duplications collection directly and runs the orchestrator on
+    // any pending/running record. So the endpoint's only job is to create
+    // the record in `pending` status — the cron does the rest.
+
     // Real admin user (createdByField requires a valid ObjectId).
     const created = await payload.create({
       collection: 'users',
@@ -132,20 +138,15 @@ describe('Lesson duplication endpoint — queues orchestrator job for non-none l
       json: async () => ({ level: 'deep', subject: 'algebra' }),
     } as unknown as Parameters<typeof duplicateLessonEndpoint>[0]
 
-    // Snapshot job count before
-    const jobsCountBefore = await payload.db?.connection
-      ?.collection?.('payload-jobs')
-      .countDocuments({ taskSlug: 'lesson_duplication' })
-
     const response = await duplicateLessonEndpoint(req)
-    const body = (await response.json()) as { id?: string; status?: string; jobId?: string }
+    const body = (await response.json()) as { id?: string; status?: string }
 
     expect(response.status).toBe(200)
     expect(body.status).toBe('pending')
     expect(body.id).toBeTruthy()
-    expect(body.jobId).toBeTruthy()
 
-    // The duplication record was created in pending status
+    // The duplication record was created in pending status, ready for the
+    // cron worker to claim on its next tick.
     const record = await payload.findByID({
       collection: 'lesson-duplications',
       id: body.id!,
@@ -155,13 +156,5 @@ describe('Lesson duplication endpoint — queues orchestrator job for non-none l
     expect(record.level).toBe('deep')
     expect(record.subject).toBe('algebra')
     expect(record.outputLesson).toBeFalsy()
-
-    // A lesson_duplication job was inserted into payload-jobs
-    const jobsCountAfter = await payload.db?.connection
-      ?.collection?.('payload-jobs')
-      .countDocuments({ taskSlug: 'lesson_duplication' })
-    if (typeof jobsCountBefore === 'number' && typeof jobsCountAfter === 'number') {
-      expect(jobsCountAfter).toBeGreaterThan(jobsCountBefore)
-    }
   })
 })

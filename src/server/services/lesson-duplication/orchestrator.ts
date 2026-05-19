@@ -19,13 +19,17 @@ import type { Exercise } from '@/payload-types'
 import type { ContentBlock } from '@/server/payload/collections/Exercises/schemas'
 import type { DuplicationSubject } from '@/server/payload/collections/LessonDuplications'
 import { logger } from '@/infra/utils/logger'
-import { withConcurrencyLimit } from '@/infra/utils/concurrency'
-import { selectExercisesScaled } from '@/server/services/lesson-duplication/selectors'
+import {
+  selectExercisesScaled,
+  selectSectionsForVariation,
+} from '@/server/services/lesson-duplication/selectors'
+import { getSourceExercisesForLesson } from '@/server/services/lesson-duplication/source-exercises'
 import {
   validateExerciseStructural,
   fillMissingFieldsWithPlaceholders,
   BLOCKING_FAILURE_CODES,
   type StructuralFailure,
+  type FailureCode,
 } from '@/server/services/lesson-duplication/validators/structural'
 import {
   validateExerciseSemantic,
@@ -45,6 +49,7 @@ import { RouterStrategy } from '@/server/services/lesson-duplication/strategies/
 export const CONCURRENCY_LIMIT = 1 as const
 
 export const GENERATION_FAILURE_CODE = 'GENERATION_FAILED' as const
+export const STUCK_FAILURE_CODE = 'STUCK_AFTER_MAX_ATTEMPTS' as const
 
 export type DuplicationStrategy = 'script' | 'ai'
 
@@ -71,7 +76,7 @@ export async function runStrategy(
   level: 'none' | 'light' | 'medium' | 'deep',
   subject: DuplicationSubject,
   payload: Payload,
-): Promise<StrategyResult> {
+): Promise<StrategyResult & { tokensUsed: { inputTokens: number; outputTokens: number } }> {
   const router = new RouterStrategy(payload)
   const result = await router.apply(exercise as unknown as Exercise, level, subject)
 
@@ -80,6 +85,36 @@ export async function runStrategy(
     exerciseId: exercise.id,
     strategy: result.needsAiFallback ? 'ai' : 'script',
     blocks: content.blocks ?? [],
+    tokensUsed: result.tokensUsed ?? { inputTokens: 0, outputTokens: 0 },
+  }
+}
+
+/**
+ * Cap source-exercise block count to match the structural validator's
+ * `TOO_MANY_SECTIONS` ceiling (5). Pure: returns a NEW exercise object with
+ * a trimmed `content.blocks` array when needed, otherwise the original.
+ *
+ * Picks 5 representative blocks from the source via `selectSectionsScaled` —
+ * the same scaling-random bucketing the lesson-level selector uses. Preserves
+ * source order, so the variation reads like a natural shorter version of the
+ * original rather than a random shuffle.
+ *
+ * Rationale: without this, a 10-block source always failed validation
+ * (TOO_MANY_SECTIONS is a blocking failure → exercise dropped from output).
+ * Admins doing deep variations on real lessons would silently lose any
+ * exercise that exceeded the block cap.
+ */
+export function trimSourceBlocksIfNeeded(exercise: ExerciseDoc): ExerciseDoc {
+  const blocks = exercise.content?.blocks
+  if (!Array.isArray(blocks) || blocks.length <= 5) return exercise
+  const picked = selectSectionsForVariation(blocks, 5)
+  logger.info(
+    { exerciseId: exercise.id, originalCount: blocks.length, trimmedTo: picked.length },
+    'Source exercise has more than 5 blocks — trimming via variation-aware selector',
+  )
+  return {
+    ...exercise,
+    content: { ...exercise.content, blocks: picked },
   }
 }
 
@@ -171,7 +206,7 @@ async function appendEntry(
 }
 
 /** Append a blocking failure (exercise dropped from output lesson). */
-async function appendFailure(
+export async function appendFailure(
   payload: Payload,
   duplicationId: string,
   exerciseRef: string,
@@ -183,7 +218,7 @@ async function appendFailure(
 }
 
 /** Append a non-blocking warning (exercise kept with placeholder). */
-async function appendWarning(
+export async function appendWarning(
   payload: Payload,
   duplicationId: string,
   exerciseRef: string,
@@ -194,17 +229,61 @@ async function appendWarning(
   return appendEntry('warnings', payload, duplicationId, exerciseRef, sectionIndex, code, message)
 }
 
+/**
+ * Append a successful output-exercise mapping to the LessonDuplications
+ * record. Used to stream progress so a Vercel function timeout doesn't lose
+ * work that's already in the DB. Read-modify-write on the record's
+ * `outputExercises` array — safe under CONCURRENCY_LIMIT = 1.
+ */
+async function appendOutputExercise(
+  payload: Payload,
+  duplicationId: string,
+  mapping: OutputExerciseMapping,
+): Promise<void> {
+  try {
+    const current = await payload.findByID({
+      collection: 'lesson-duplications',
+      id: duplicationId,
+      depth: 0,
+      overrideAccess: true,
+    })
+    const existing =
+      (current as unknown as { outputExercises?: OutputExerciseMapping[] }).outputExercises ?? []
+    await payload.update({
+      collection: 'lesson-duplications',
+      id: duplicationId,
+      data: { outputExercises: [...existing, mapping] } as never,
+      overrideAccess: true,
+    })
+  } catch (err) {
+    logger.error(
+      { err, duplicationId, exerciseRef: mapping.sourceExerciseId },
+      'Failed to append output exercise mapping',
+    )
+  }
+}
+
 /** Shape of an exercise from the exercises collection. */
-type ExerciseDoc = {
+export type ExerciseDoc = {
   id: string
   content?: { blocks?: ContentBlock[] }
 }
 
 /** Mapping entry from source exercise to generated output exercise. */
-interface OutputExerciseMapping {
+export interface OutputExerciseMapping {
   sourceExerciseId: string
   outputExerciseId: string
   strategy: DuplicationStrategy
+}
+
+/** Failure entry stored on the LessonDuplications record. */
+export interface FailureEntry {
+  exerciseRef: string
+  sectionIndex: number
+  code: FailureCode | string
+  message: string
+  suggestedAction: 'skip' | 'regenerate' | 'keep'
+  resolved: boolean
 }
 
 /**
@@ -277,7 +356,7 @@ async function createOutputLesson(
  * Create a draft exercise in the output lesson with the generated blocks.
  * Returns the mapping entry for tracking.
  */
-async function createOutputExercise(
+export async function createOutputExercise(
   payload: Payload,
   result: StrategyResult,
   outputLessonId: string,
@@ -315,25 +394,49 @@ async function processExercise(
   level: 'none' | 'light' | 'medium' | 'deep',
   subject: DuplicationSubject,
   payload: Payload,
-): Promise<StrategyResult | null> {
+): Promise<{
+  result: StrategyResult | null
+  tokensUsed: { inputTokens: number; outputTokens: number }
+}> {
   const exerciseRef = exercise.id
+
+  // Pre-trim source blocks. The structural validator caps exercises at 5
+  // blocks (TOO_MANY_SECTIONS — renderer / UX limit). Source exercises with
+  // 9-10 blocks would always fail variation. We sub-sample to 5 using the
+  // same scaling-random selector that picks exercises from a lesson: pick 1
+  // block per evenly-spaced bucket across the source, seeded for
+  // reproducibility. Preserves source order, so the variation feels like a
+  // natural truncation of the original.
+  const trimmedExercise = trimSourceBlocksIfNeeded(exercise)
 
   // Step 1: Run strategy
   let strategyResult: StrategyResult
+  let tokensUsed = { inputTokens: 0, outputTokens: 0 }
   try {
-    strategyResult = await runStrategy(exercise, level, subject, payload)
+    const strategyResponse = await runStrategy(trimmedExercise, level, subject, payload)
+    strategyResult = strategyResponse
+    tokensUsed = strategyResponse.tokensUsed
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown strategy error'
     logger.error({ exerciseRef, level, err }, 'Strategy generation failed')
     await appendFailure(payload, duplicationId, exerciseRef, 0, GENERATION_FAILURE_CODE, message)
-    return null
+    return { result: null, tokensUsed }
   }
 
   // Step 2: Structural validation. Split failures into blocking (drop the
   // exercise — renderer would crash) and warnings (admin fills from review
   // screen). Warning-only exercises still ship, with TODO placeholders filled
   // in for missing hint/solution/fullSolution so the lesson stays renderable.
-  const structuralFailures: StructuralFailure[] = validateExerciseStructural(strategyResult.blocks)
+  //
+  // We pass the source exercise's blocks (post-trim) so the validator can
+  // suppress MISSING_QUESTION when the source itself had an empty prompt
+  // (e.g. legacy geometry exercises where the question is in the figure, not
+  // as text). Otherwise every such variation would falsely fail.
+  const sourceBlocks = (trimmedExercise.content?.blocks ?? []) as ContentBlock[]
+  const structuralFailures: StructuralFailure[] = validateExerciseStructural(
+    strategyResult.blocks,
+    sourceBlocks,
+  )
   const blockingFailures = structuralFailures.filter((f) => BLOCKING_FAILURE_CODES.has(f.code))
   const warningFailures = structuralFailures.filter((f) => !BLOCKING_FAILURE_CODES.has(f.code))
 
@@ -361,7 +464,7 @@ async function processExercise(
   }
 
   if (blockingFailures.length > 0) {
-    return null
+    return { result: null, tokensUsed }
   }
 
   // Warning-only path: fill placeholders so the exercise renders. Warnings are
@@ -396,26 +499,64 @@ async function processExercise(
         SEMANTIC_FAILURE_CODE,
         `Semantic mismatch: ${semanticResult.reasons.join('; ')}`,
       )
-      return null
+      return { result: null, tokensUsed }
     }
   }
 
-  return strategyResult
+  return { result: strategyResult, tokensUsed }
 }
 
 /**
- * Orchestrate the full duplication pipeline for a single LessonDuplications record.
+ * Reserve at least this much wall time (ms) at the end of a tick so the
+ * orchestrator can write its final state to the DB before the platform
+ * (Vercel) yanks the function. 30s covers a slow Mongo round-trip plus
+ * Vercel's teardown grace.
+ */
+const FINALIZE_BUDGET_MS = 30_000
+
+/**
+ * Default assumed worst-case time for one exercise (pass-1 + pass-2 +
+ * validators on gemini-3.1-pro-preview). Used to decide whether the next
+ * exercise can fit before the deadline. Conservative — if the run is
+ * faster, we just process more per tick.
+ */
+const ASSUMED_EXERCISE_DURATION_MS = 300_000
+
+export type RunOutcome = 'succeeded' | 'needs_review' | 'failed' | 'in_progress'
+
+export interface RunOptions {
+  /**
+   * Absolute wall-clock deadline (Date.now() ms). The orchestrator returns
+   * `in_progress` as soon as the remaining time is too short to fit another
+   * exercise — leaving the record in `running` so the next cron tick picks
+   * up where this one left off. Default: no deadline (process all).
+   */
+  deadlineMs?: number
+}
+
+/**
+ * Orchestrate the duplication pipeline for a single LessonDuplications record.
+ * Resumable: skips exercises already processed in previous ticks and streams
+ * each new output mapping to the DB as it completes. A Vercel function
+ * timeout mid-run leaves a clean partial state — the next cron tick continues
+ * from there.
  *
  * @param duplicationId  ID of the LessonDuplications record to process
  * @param payload        Payload instance
+ * @param options.deadlineMs  Absolute timestamp by which to stop processing
  *
- * Pre-condition: duplication record has status='pending'
- * Post-condition: duplication record has status='succeeded' (0 failures) or 'needs_review' (>0 failures)
+ * Pre-condition: record has status `pending` (fresh) or `running` (resuming).
+ * Post-condition (returned outcome):
+ *  - 'succeeded'   — all picked exercises produced an output, 0 failures
+ *  - 'needs_review'— all picked exercises terminal, ≥1 failure
+ *  - 'in_progress' — deadline hit, more work to do, status left as 'running'
+ *  - 'failed'      — fatal error before any exercises processed
  */
 export async function runDuplicationOrchestrator(
   duplicationId: string,
   payload: Payload,
-): Promise<void> {
+  options: RunOptions = {},
+): Promise<RunOutcome> {
   // Load the duplication record
   const duplication = await payload.findByID({
     collection: 'lesson-duplications',
@@ -426,27 +567,33 @@ export async function runDuplicationOrchestrator(
 
   if (!duplication) {
     logger.error({ duplicationId }, 'LessonDuplications record not found')
-    return
+    return 'failed'
   }
 
-  if (duplication.status !== 'pending') {
+  // Already terminal — nothing to do.
+  if (
+    duplication.status === 'succeeded' ||
+    duplication.status === 'needs_review' ||
+    duplication.status === 'failed'
+  ) {
     logger.warn(
       { duplicationId, status: duplication.status },
-      'LessonDuplications record not in pending status, skipping',
+      'LessonDuplications record already terminal, skipping',
     )
-    return
+    return duplication.status as RunOutcome
   }
 
-  // Set status=running
-  await payload.update({
-    collection: 'lesson-duplications',
-    id: duplicationId,
-    data: { status: 'running' },
-    overrideAccess: true,
-  })
+  // Accept both 'pending' (first tick) and 'running' (resuming) — anything
+  // else is unexpected.
+  if (duplication.status !== 'pending' && duplication.status !== 'running') {
+    logger.warn(
+      { duplicationId, status: duplication.status },
+      'LessonDuplications record in unexpected status, skipping',
+    )
+    return 'failed'
+  }
 
   try {
-    // K2: Get source exercises
     const sourceLessonId =
       typeof duplication.sourceLesson === 'string'
         ? duplication.sourceLesson
@@ -456,95 +603,228 @@ export async function runDuplicationOrchestrator(
       throw new Error('sourceLesson relationship is missing or invalid')
     }
 
-    // Create the output lesson before processing exercises
-    const outputLessonId = await createOutputLesson(
-      payload,
-      sourceLessonId,
-      duplication.level ?? 'light',
+    // First tick: create output lesson, flip to running. Resuming tick:
+    // reuse the existing output lesson recorded on the record.
+    let outputLessonId: string
+    const existingOutputLessonRef = duplication.outputLesson as
+      | string
+      | { id?: string }
+      | null
+      | undefined
+    const existingOutputLessonId =
+      typeof existingOutputLessonRef === 'string'
+        ? existingOutputLessonRef
+        : existingOutputLessonRef?.id
+
+    if (duplication.status === 'pending') {
+      outputLessonId = await createOutputLesson(
+        payload,
+        sourceLessonId,
+        duplication.level ?? 'light',
+      )
+      await payload.update({
+        collection: 'lesson-duplications',
+        id: duplicationId,
+        data: { status: 'running', outputLesson: outputLessonId } as never,
+        overrideAccess: true,
+      })
+    } else {
+      // resuming
+      if (!existingOutputLessonId) {
+        // Shouldn't happen — running record without an outputLesson means a
+        // previous tick crashed before the initial write. Treat as fresh.
+        outputLessonId = await createOutputLesson(
+          payload,
+          sourceLessonId,
+          duplication.level ?? 'light',
+        )
+        await payload.update({
+          collection: 'lesson-duplications',
+          id: duplicationId,
+          data: { outputLesson: outputLessonId } as never,
+          overrideAccess: true,
+        })
+      } else {
+        outputLessonId = existingOutputLessonId
+      }
+    }
+
+    const allExercises = await getSourceExercisesForLesson(payload, sourceLessonId)
+
+    // No artificial cap — resumability handles long runs across multiple
+    // cron ticks. selectExercisesScaled still bounds at 20 per the original
+    // product spec (admin scaling-random across the whole lesson).
+    const PER_RUN_EXERCISE_CAP = 20
+    const selectedExercises = selectExercisesScaled(
+      allExercises as ExerciseDoc[],
+      PER_RUN_EXERCISE_CAP,
     )
 
-    const allExercises = await payload.find({
+    // Filter out exercises already processed on prior ticks. Sources of truth:
+    //  1. The record's `outputExercises` — explicitly recorded successes.
+    //  2. The record's `failures` — terminal per-exercise failures.
+    //  3. Output exercises already present in the output lesson itself, even
+    //     if their mapping never made it back into `outputExercises`. This
+    //     closes the crash-window between createOutputExercise (writes the
+    //     exercise to Mongo) and appendOutputExercise (records the mapping):
+    //     if the function dies between those two calls, the exercise is
+    //     durably saved but the record doesn't know about it; without this
+    //     check the next tick would re-process the source and create a
+    //     duplicate. We identify the source by the deterministic title
+    //     `Variation of <sourceExerciseId>` set in createOutputExercise.
+    const existingOutputExercises = await payload.find({
       collection: 'exercises',
-      where: { lesson: { equals: sourceLessonId } },
+      where: { lesson: { equals: outputLessonId } },
       limit: 0,
       depth: 0,
       overrideAccess: true,
     })
+    const titleSourceIds = new Set<string>()
+    const orphanMappings: OutputExerciseMapping[] = []
+    const knownMappingSources = new Set(
+      ((duplication.outputExercises as unknown as OutputExerciseMapping[]) ?? []).map(
+        (m) => m.sourceExerciseId,
+      ),
+    )
+    for (const ex of existingOutputExercises.docs as Array<{
+      id: string
+      title?: string
+    }>) {
+      const match = typeof ex.title === 'string' ? /^Variation of (\S+)/.exec(ex.title) : null
+      if (match) {
+        titleSourceIds.add(match[1])
+        // Recover the mapping for any orphan exercise (created but never
+        // recorded). Next tick start, we'll reconcile by appending these
+        // mappings so the record matches reality going forward.
+        if (!knownMappingSources.has(match[1])) {
+          orphanMappings.push({
+            sourceExerciseId: match[1],
+            outputExerciseId: ex.id,
+            strategy: 'ai',
+          })
+        }
+      }
+    }
 
-    const selectedExercises = selectExercisesScaled(allExercises.docs as ExerciseDoc[], 20)
+    // Reconcile orphan mappings recovered from the output lesson so the
+    // duplications record reflects reality before this tick continues.
+    for (const orphan of orphanMappings) {
+      await appendOutputExercise(payload, duplicationId, orphan)
+      logger.warn(
+        { duplicationId, sourceExerciseId: orphan.sourceExerciseId },
+        '[orchestrator] Recovered orphan output exercise (crash-window mapping)',
+      )
+    }
+
+    const processedIds = new Set<string>([
+      ...((duplication.outputExercises as unknown as OutputExerciseMapping[]) ?? []).map(
+        (m) => m.sourceExerciseId,
+      ),
+      ...((duplication.failures as unknown as Array<{ exerciseRef: string }>) ?? []).map(
+        (f) => f.exerciseRef,
+      ),
+      ...titleSourceIds,
+    ])
+    const remaining = selectedExercises.filter((ex) => !processedIds.has(ex.id))
+
+    logger.info(
+      {
+        duplicationId,
+        totalPicked: selectedExercises.length,
+        alreadyProcessed: selectedExercises.length - remaining.length,
+        remaining: remaining.length,
+      },
+      'Orchestrator tick start',
+    )
 
     const duplicationLevel = duplication.level as 'none' | 'light' | 'medium' | 'deep'
     const duplicationSubject =
       (duplication.subject as DuplicationSubject | null | undefined) ?? 'mixed'
 
-    // Process all exercises with concurrency limit. We isolate ALL per-exercise
-    // failures (strategy errors AND createOutputExercise schema rejections)
-    // inside this callback — letting one throw out of the factory would cause
-    // withConcurrencyLimit's Promise.all to reject, aborting the whole run and
-    // dropping every exercise that hadn't finished yet.
-    const results = await withConcurrencyLimit(
-      selectedExercises,
-      CONCURRENCY_LIMIT,
-      async (exercise) => {
-        const result = await processExercise(
-          exercise,
-          duplicationId,
-          duplicationLevel,
-          duplicationSubject,
-          payload,
-        )
-        if (result === null) return null
-
-        // Persist the variation. If payload.create rejects (e.g., Zod strict
-        // mode trips on a malformed AI-generated block or our placeholder
-        // shape), record it as a per-exercise failure and continue — don't
-        // kill the rest of the run.
-        try {
-          const mapping = await createOutputExercise(payload, result, outputLessonId)
-          return mapping
-        } catch (err) {
-          const message = err instanceof Error ? err.message : 'Unknown create error'
-          logger.error(
-            { exerciseRef: exercise.id, err },
-            'createOutputExercise failed — exercise dropped from output lesson',
+    // Process exercises one at a time (CONCURRENCY_LIMIT = 1 — appendEntry's
+    // read-modify-write isn't safe under parallel writes; see compile-time
+    // guard). Check deadline between exercises and bail out if the next one
+    // can't fit, returning `in_progress` so the next tick continues.
+    for (const exercise of remaining) {
+      if (options.deadlineMs !== undefined) {
+        const remainingMs = options.deadlineMs - Date.now()
+        if (remainingMs < FINALIZE_BUDGET_MS + ASSUMED_EXERCISE_DURATION_MS) {
+          logger.info(
+            { duplicationId, remainingMs, remainingExercises: remaining.length },
+            'Orchestrator tick yielding before deadline — leaving record running',
           )
-          await appendFailure(
-            payload,
-            duplicationId,
-            exercise.id,
-            0,
-            GENERATION_FAILURE_CODE,
-            `Failed to save variation: ${message}`,
-          )
-          return null
+          return 'in_progress'
         }
-      },
-    )
+      }
 
-    // Separate successful exercise mappings from null results (failures)
-    const outputExerciseMappings: OutputExerciseMapping[] = results.filter(
-      (r): r is OutputExerciseMapping => r !== null,
-    )
-    const failed = results.filter((r) => r === null).length
-    const succeeded = outputExerciseMappings.length
+      const { result } = await processExercise(
+        exercise,
+        duplicationId,
+        duplicationLevel,
+        duplicationSubject,
+        payload,
+      )
+
+      if (result === null) continue
+
+      try {
+        const mapping = await createOutputExercise(payload, result, outputLessonId)
+        // Stream the success immediately so a function timeout doesn't lose
+        // this exercise — the actual exercise doc is already in MongoDB
+        // (createOutputExercise just created it), this just keeps the
+        // duplications record in sync.
+        await appendOutputExercise(payload, duplicationId, mapping)
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unknown create error'
+        logger.error(
+          { exerciseRef: exercise.id, err },
+          'createOutputExercise failed — exercise dropped from output lesson',
+        )
+        await appendFailure(
+          payload,
+          duplicationId,
+          exercise.id,
+          0,
+          GENERATION_FAILURE_CODE,
+          `Failed to save variation: ${message}`,
+        )
+      }
+    }
+
+    // All selected exercises terminal: finalize status. Re-read failures
+    // count from the record since we streamed entries during the run.
+    const finalRecord = await payload.findByID({
+      collection: 'lesson-duplications',
+      id: duplicationId,
+      depth: 0,
+      overrideAccess: true,
+    })
+    const finalFailures = (finalRecord.failures as unknown as unknown[] | undefined)?.length ?? 0
+    const finalOutputs =
+      (finalRecord.outputExercises as unknown as unknown[] | undefined)?.length ?? 0
+    const finalStatus: 'succeeded' | 'needs_review' =
+      finalFailures === 0 ? 'succeeded' : 'needs_review'
 
     logger.info(
-      { duplicationId, total: selectedExercises.length, succeeded, failed },
+      {
+        duplicationId,
+        total: selectedExercises.length,
+        succeeded: finalOutputs,
+        failed: finalFailures,
+        finalStatus,
+      },
       'Duplication orchestrator completed',
     )
 
-    // Determine final status
-    const finalStatus = failed === 0 ? 'succeeded' : 'needs_review'
     await payload.update({
       collection: 'lesson-duplications',
       id: duplicationId,
       data: {
         status: finalStatus,
-        outputLesson: outputLessonId,
-        outputExercises: outputExerciseMappings,
       } as never,
       overrideAccess: true,
     })
+    return finalStatus
   } catch (err) {
     logger.error({ duplicationId, err }, 'Orchestrator run failed')
     await payload.update({

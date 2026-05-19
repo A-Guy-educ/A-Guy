@@ -1,3 +1,8 @@
+---
+disabled: true
+worker: kody
+---
+
 # redispatch
 
 ## Job

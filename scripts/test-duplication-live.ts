@@ -13,6 +13,27 @@
 import { config as loadEnv } from 'dotenv'
 loadEnv({ path: '.env' })
 
+// Safety guard: this script creates real database records AND bills real
+// Gemini calls. Refuse to run against anything that looks like a production
+// Mongo URI unless the operator explicitly opts in.
+function assertSafeEnvironment(): void {
+  if (process.env.ALLOW_LIVE === '1') return
+  const uri = process.env.DATABASE_URI ?? process.env.MONGODB_URI ?? ''
+  const isLocal =
+    uri.includes('localhost') ||
+    uri.includes('127.0.0.1') ||
+    uri.includes('mongo:') /* docker-compose service */
+  if (!isLocal) {
+    console.error(
+      '[live-test] Refusing to run against non-local Mongo. ' +
+        'DATABASE_URI does not point at localhost. ' +
+        'Set ALLOW_LIVE=1 to override (you are about to mutate prod data and bill Gemini).',
+    )
+    process.exit(1)
+  }
+}
+assertSafeEnvironment()
+
 import { getPayload } from 'payload'
 import config from '@payload-config'
 

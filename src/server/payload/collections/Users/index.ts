@@ -160,6 +160,37 @@ export const Users: CollectionConfig = {
         },
       ],
     },
+    {
+      name: 'featureEntitlements',
+      type: 'array',
+      label: 'Feature Entitlements',
+      admin: {
+        description: 'Standalone feature access granted via payment',
+      },
+      access: {
+        update: ({ req: { user } }) =>
+          isUsersCollectionUser(user) && user.role === AccountRole.Admin,
+      },
+      fields: [
+        {
+          name: 'key',
+          type: 'text',
+          required: true,
+          admin: { readOnly: true },
+        },
+        {
+          name: 'transactionId',
+          type: 'text',
+          admin: { readOnly: true },
+        },
+        {
+          name: 'grantedAt',
+          type: 'date',
+          defaultValue: () => new Date().toISOString(),
+          admin: { readOnly: true },
+        },
+      ],
+    },
     // Chat quota fields (rolling window)
     {
       name: 'chatQuestionsUsed',

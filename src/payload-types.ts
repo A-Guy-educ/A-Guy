@@ -74,6 +74,8 @@ export interface Config {
     config_values: ConfigValue;
     config_audit_logs: ConfigAuditLog;
     conversations: Conversation;
+    'coupon-usages': CouponUsage;
+    coupons: Coupon;
     'guest-sessions': GuestSession;
     memory_items: MemoryItem;
     tenants: Tenant;
@@ -99,9 +101,12 @@ export interface Config {
     'upload-sessions': UploadSession;
     posts: Post;
     'pricing-plans': PricingPlan;
+    'product-items': ProductItem;
+    products: Product;
     'access-codes': AccessCode;
     transactions: Transaction;
     subscriptions: Subscription;
+    payment_stats: PaymentStat;
     'mcp-audit-logs': McpAuditLog;
     redirects: Redirect;
     forms: Form;
@@ -122,6 +127,8 @@ export interface Config {
     config_values: ConfigValuesSelect<false> | ConfigValuesSelect<true>;
     config_audit_logs: ConfigAuditLogsSelect<false> | ConfigAuditLogsSelect<true>;
     conversations: ConversationsSelect<false> | ConversationsSelect<true>;
+    'coupon-usages': CouponUsagesSelect<false> | CouponUsagesSelect<true>;
+    coupons: CouponsSelect<false> | CouponsSelect<true>;
     'guest-sessions': GuestSessionsSelect<false> | GuestSessionsSelect<true>;
     memory_items: MemoryItemsSelect<false> | MemoryItemsSelect<true>;
     tenants: TenantsSelect<false> | TenantsSelect<true>;
@@ -147,9 +154,12 @@ export interface Config {
     'upload-sessions': UploadSessionsSelect<false> | UploadSessionsSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
     'pricing-plans': PricingPlansSelect<false> | PricingPlansSelect<true>;
+    'product-items': ProductItemsSelect<false> | ProductItemsSelect<true>;
+    products: ProductsSelect<false> | ProductsSelect<true>;
     'access-codes': AccessCodesSelect<false> | AccessCodesSelect<true>;
     transactions: TransactionsSelect<false> | TransactionsSelect<true>;
     subscriptions: SubscriptionsSelect<false> | SubscriptionsSelect<true>;
+    payment_stats: PaymentStatsSelect<false> | PaymentStatsSelect<true>;
     'mcp-audit-logs': McpAuditLogsSelect<false> | McpAuditLogsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
@@ -496,6 +506,17 @@ export interface User {
          * When this entitlement expires (null = never)
          */
         expiresAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Standalone feature access granted via payment
+   */
+  featureEntitlements?:
+    | {
+        key: string;
+        transactionId?: string | null;
+        grantedAt?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -1731,6 +1752,310 @@ export interface ChatAsset {
   createdAt: string;
 }
 /**
+ * Tracks coupon usage per transaction
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupon-usages".
+ */
+export interface CouponUsage {
+  id: string;
+  /**
+   * The coupon that was used
+   */
+  coupon: string | Coupon;
+  /**
+   * The checkout transaction where the coupon was applied
+   */
+  transaction: string | Transaction;
+  /**
+   * The user who used the coupon
+   */
+  user: string | User;
+  /**
+   * When the coupon was redeemed (distinct from createdAt for delayed redemptions)
+   */
+  usedAt?: string | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Manage discount coupons that can be applied at checkout
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupons".
+ */
+export interface Coupon {
+  id: string;
+  /**
+   * Coupon code (stored uppercase, case-insensitive in app logic)
+   */
+  code: string;
+  /**
+   * Percentage: discountValue is a percent (0-100). Fixed: discountValue is in agorot.
+   */
+  discountType: 'percentage' | 'fixed';
+  /**
+   * Percentage (0-100) or fixed amount in agorot, depending on discountType
+   */
+  discountValue: number;
+  /**
+   * Currency for fixed-amount discounts
+   */
+  currency: 'ILS' | 'USD' | 'EUR';
+  /**
+   * Whether this coupon can be used
+   */
+  isActive: boolean;
+  /**
+   * מתחילת תוקף (אם לא מוגדר — תקף מעכשיו)
+   */
+  validFrom?: string | null;
+  /**
+   * סוף תוקף (אם לא מוגדר — ללא הגבלה)
+   */
+  validUntil?: string | null;
+  /**
+   * Maximum number of uses (0 = unlimited)
+   */
+  maxUses: number;
+  /**
+   * Number of times this coupon has been used
+   */
+  usesCount: number;
+  /**
+   * מקסימום שימושים למשתמש
+   */
+  maxUsesPerUser?: number | null;
+  /**
+   * אם ריק — חל על כל המוצרים
+   */
+  applicableProducts?: (string | Product)[] | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products".
+ */
+export interface Product {
+  id: string;
+  /**
+   * שם המוצר (יוצג למשתמשים)
+   */
+  name: string;
+  /**
+   * מזהה ייחודי (URL-friendly, נוצר אוטומטית מהשם)
+   */
+  slug: string;
+  /**
+   * סוג החיוב: חד-פעמי או מנוי חוזר
+   */
+  billingType: 'one_time' | 'subscription';
+  /**
+   * מרווח החיוב (למנוי בלבד)
+   */
+  interval?: ('month' | 'year') | null;
+  /**
+   * מחיר המוצר
+   */
+  price: number;
+  /**
+   * מטבע התשלום
+   */
+  currency: 'ILS' | 'USD' | 'EUR';
+  /**
+   * בחר את פריטי המוצר (שיעורים ותכונות)
+   */
+  items?: (string | ProductItem)[] | null;
+  /**
+   * האם המוצר פעיל וזמין למכירה
+   */
+  isActive?: boolean | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-items".
+ */
+export interface ProductItem {
+  id: string;
+  /**
+   * בחר את סוג הפריט: שיעור מהמערכת או תכונה מוגדרת
+   */
+  type: 'lesson' | 'feature';
+  /**
+   * בחר את השיעור להוספה למוצר
+   */
+  lesson?: (string | null) | Lesson;
+  /**
+   * מזהה התכונה (לדוגמה: certificate, live-sessions)
+   */
+  featureKey?: string | null;
+  /**
+   * סמן אם יש להדגיש פריט זה בממשק המשתמש
+   */
+  isHighlighted?: boolean | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Payment transaction records
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "transactions".
+ */
+export interface Transaction {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * User who made the payment
+   */
+  user: string | User;
+  /**
+   * Pricing plan purchased
+   */
+  pricingPlan: string | PricingPlan;
+  /**
+   * Tranzila's TXnID
+   */
+  tranzilaTransactionId?: string | null;
+  /**
+   * Tranzila's order reference
+   */
+  tranzilaOrderId: string;
+  /**
+   * Payment amount
+   */
+  amount: number;
+  /**
+   * Currency code
+   */
+  currency: 'ILS' | 'USD' | 'EUR';
+  /**
+   * Transaction status
+   */
+  status: 'pending' | 'completed' | 'failed' | 'refunded';
+  /**
+   * Payment method used
+   */
+  paymentMethod?: ('credit_card' | 'apple_pay' | 'other') | null;
+  /**
+   * Raw Tranzila callback data
+   */
+  tranzilaResponse?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Reason for failure (if applicable)
+   */
+  failureReason?: string | null;
+  /**
+   * When the refund was processed
+   */
+  refundedAt?: string | null;
+  /**
+   * Admin who processed the refund
+   */
+  refundedBy?: (string | null) | User;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pricing-plans".
+ */
+export interface PricingPlan {
+  id: string;
+  /**
+   * The lesson this pricing plan applies to
+   */
+  lesson: string | Lesson;
+  /**
+   * Payment provider for this plan
+   */
+  provider: 'paypal' | 'stripe' | 'tranzila' | 'manual';
+  /**
+   * Provider-specific plan ID (required for PayPal and Stripe)
+   */
+  providerPlanId?: string | null;
+  /**
+   * Tranzila's product identifier for hosted payment
+   */
+  tranzilaProductId?: string | null;
+  /**
+   * Max chat messages per billing period (null = unlimited)
+   */
+  quotaChatMessages?: number | null;
+  /**
+   * Max video generations per billing period (null = unlimited)
+   */
+  quotaVideoGenerations?: number | null;
+  /**
+   * Max exam creations per billing period (null = unlimited)
+   */
+  quotaExamCreations?: number | null;
+  /**
+   * For one-time purchases: days until entitlement expires (null = never)
+   */
+  entitlementDurationDays?: number | null;
+  /**
+   * Type of billing
+   */
+  billingType: 'one_time' | 'subscription';
+  /**
+   * Billing interval (required for subscription billing)
+   */
+  interval?: ('month' | 'year') | null;
+  /**
+   * Price amount
+   */
+  price: number;
+  /**
+   * Currency code
+   */
+  currency: 'ILS' | 'USD' | 'EUR';
+  /**
+   * Whether this pricing plan is currently active
+   */
+  isActive?: boolean | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Long-term memory items for AI chat context
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1889,6 +2214,26 @@ export interface LessonDuplication {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Total input tokens consumed across all LLM calls for this duplication run.
+   */
+  aiTokensInput?: number | null;
+  /**
+   * Total output tokens generated across all LLM calls for this duplication run.
+   */
+  aiTokensOutput?: number | null;
+  /**
+   * Estimated USD cost of all LLM calls for this duplication run, based on Gemini 3.1 Pro pricing.
+   */
+  aiCostUsd?: number | null;
+  /**
+   * Wall-clock duration of the duplication run in milliseconds.
+   */
+  runDurationMs?: number | null;
+  /**
+   * Number of consecutive cron ticks that claimed this record without producing any new output exercises. Reset to 0 when outputExercises grows. Auto-fails at ≥ 5.
+   */
+  claimAttempts?: number | null;
   /**
    * User who created this document
    */
@@ -2509,71 +2854,6 @@ export interface Post {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "pricing-plans".
- */
-export interface PricingPlan {
-  id: string;
-  /**
-   * The lesson this pricing plan applies to
-   */
-  lesson: string | Lesson;
-  /**
-   * Payment provider for this plan
-   */
-  provider: 'paypal' | 'stripe' | 'tranzila' | 'manual';
-  /**
-   * Provider-specific plan ID (required for PayPal and Stripe)
-   */
-  providerPlanId?: string | null;
-  /**
-   * Tranzila's product identifier for hosted payment
-   */
-  tranzilaProductId?: string | null;
-  /**
-   * Max chat messages per billing period (null = unlimited)
-   */
-  quotaChatMessages?: number | null;
-  /**
-   * Max video generations per billing period (null = unlimited)
-   */
-  quotaVideoGenerations?: number | null;
-  /**
-   * Max exam creations per billing period (null = unlimited)
-   */
-  quotaExamCreations?: number | null;
-  /**
-   * For one-time purchases: days until entitlement expires (null = never)
-   */
-  entitlementDurationDays?: number | null;
-  /**
-   * Type of billing
-   */
-  billingType: 'one_time' | 'subscription';
-  /**
-   * Billing interval (required for subscription billing)
-   */
-  interval?: ('month' | 'year') | null;
-  /**
-   * Price amount
-   */
-  price: number;
-  /**
-   * Currency code
-   */
-  currency: 'ILS' | 'USD' | 'EUR';
-  /**
-   * Whether this pricing plan is currently active
-   */
-  isActive?: boolean | null;
-  /**
-   * User who created this document
-   */
-  createdBy?: (string | null) | User;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
  * Manage access codes that grant course entitlements
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2609,81 +2889,6 @@ export interface AccessCode {
    * Optional expiration date (leave empty for no expiry)
    */
   expiresAt?: string | null;
-  /**
-   * User who created this document
-   */
-  createdBy?: (string | null) | User;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Payment transaction records
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "transactions".
- */
-export interface Transaction {
-  id: string;
-  /**
-   * Tenant scope for this document
-   */
-  tenant: string | Tenant;
-  /**
-   * User who made the payment
-   */
-  user: string | User;
-  /**
-   * Pricing plan purchased
-   */
-  pricingPlan: string | PricingPlan;
-  /**
-   * Tranzila's TXnID
-   */
-  tranzilaTransactionId?: string | null;
-  /**
-   * Tranzila's order reference
-   */
-  tranzilaOrderId: string;
-  /**
-   * Payment amount
-   */
-  amount: number;
-  /**
-   * Currency code
-   */
-  currency: 'ILS' | 'USD' | 'EUR';
-  /**
-   * Transaction status
-   */
-  status: 'pending' | 'completed' | 'failed' | 'refunded';
-  /**
-   * Payment method used
-   */
-  paymentMethod?: ('credit_card' | 'apple_pay' | 'other') | null;
-  /**
-   * Raw Tranzila callback data
-   */
-  tranzilaResponse?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  /**
-   * Reason for failure (if applicable)
-   */
-  failureReason?: string | null;
-  /**
-   * When the refund was processed
-   */
-  refundedAt?: string | null;
-  /**
-   * Admin who processed the refund
-   */
-  refundedBy?: (string | null) | User;
   /**
    * User who created this document
    */
@@ -2739,6 +2944,46 @@ export interface Subscription {
    * User who created this document
    */
   createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payment_stats".
+ */
+export interface PaymentStat {
+  id: string;
+  /**
+   * Calendar date in YYYY-MM-DD format (UTC)
+   */
+  date: string;
+  /**
+   * Currency for all amounts on this date
+   */
+  currency: 'ILS' | 'USD' | 'EUR';
+  /**
+   * Sum of succeeded transaction amounts in agorot
+   */
+  totalRevenueAgorot: number;
+  /**
+   * Sum of refunded amounts in agorot
+   */
+  refundedAgorot: number;
+  /**
+   * Sum of failed amounts in agorot
+   */
+  failedAgorot: number;
+  /**
+   * Total number of transactions on this date (all statuses)
+   */
+  transactionCount: number;
+  succeededCount: number;
+  refundedCount: number;
+  failedCount: number;
+  /**
+   * Approximate count of newly-counted succeeded transactions per day — may overcount repeat users on the same date due to simplified deduplication logic
+   */
+  newCustomersCount: number;
   updatedAt: string;
   createdAt: string;
 }
@@ -3075,6 +3320,14 @@ export interface PayloadLockedDocument {
         value: string | Conversation;
       } | null)
     | ({
+        relationTo: 'coupon-usages';
+        value: string | CouponUsage;
+      } | null)
+    | ({
+        relationTo: 'coupons';
+        value: string | Coupon;
+      } | null)
+    | ({
         relationTo: 'guest-sessions';
         value: string | GuestSession;
       } | null)
@@ -3175,6 +3428,14 @@ export interface PayloadLockedDocument {
         value: string | PricingPlan;
       } | null)
     | ({
+        relationTo: 'product-items';
+        value: string | ProductItem;
+      } | null)
+    | ({
+        relationTo: 'products';
+        value: string | Product;
+      } | null)
+    | ({
         relationTo: 'access-codes';
         value: string | AccessCode;
       } | null)
@@ -3185,6 +3446,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'subscriptions';
         value: string | Subscription;
+      } | null)
+    | ({
+        relationTo: 'payment_stats';
+        value: string | PaymentStat;
       } | null)
     | ({
         relationTo: 'mcp-audit-logs';
@@ -3507,6 +3772,39 @@ export interface ConversationsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupon-usages_select".
+ */
+export interface CouponUsagesSelect<T extends boolean = true> {
+  coupon?: T;
+  transaction?: T;
+  user?: T;
+  usedAt?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coupons_select".
+ */
+export interface CouponsSelect<T extends boolean = true> {
+  code?: T;
+  discountType?: T;
+  discountValue?: T;
+  currency?: T;
+  isActive?: T;
+  validFrom?: T;
+  validUntil?: T;
+  maxUses?: T;
+  usesCount?: T;
+  maxUsesPerUser?: T;
+  applicableProducts?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "guest-sessions_select".
  */
 export interface GuestSessionsSelect<T extends boolean = true> {
@@ -3691,6 +3989,11 @@ export interface LessonDuplicationsSelect<T extends boolean = true> {
         strategy?: T;
         id?: T;
       };
+  aiTokensInput?: T;
+  aiTokensOutput?: T;
+  aiCostUsd?: T;
+  runDurationMs?: T;
+  claimAttempts?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -3961,6 +4264,14 @@ export interface UsersSelect<T extends boolean = true> {
         expiresAt?: T;
         id?: T;
       };
+  featureEntitlements?:
+    | T
+    | {
+        key?: T;
+        transactionId?: T;
+        grantedAt?: T;
+        id?: T;
+      };
   chatQuestionsUsed?: T;
   chatWindowStart?: T;
   subscriptionStatus?: T;
@@ -4191,6 +4502,36 @@ export interface PricingPlansSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-items_select".
+ */
+export interface ProductItemsSelect<T extends boolean = true> {
+  type?: T;
+  lesson?: T;
+  featureKey?: T;
+  isHighlighted?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products_select".
+ */
+export interface ProductsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  billingType?: T;
+  interval?: T;
+  price?: T;
+  currency?: T;
+  items?: T;
+  isActive?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "access-codes_select".
  */
 export interface AccessCodesSelect<T extends boolean = true> {
@@ -4242,6 +4583,24 @@ export interface SubscriptionsSelect<T extends boolean = true> {
   cancelledAt?: T;
   tranzilaSubscriptionId?: T;
   createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payment_stats_select".
+ */
+export interface PaymentStatsSelect<T extends boolean = true> {
+  date?: T;
+  currency?: T;
+  totalRevenueAgorot?: T;
+  refundedAgorot?: T;
+  failedAgorot?: T;
+  transactionCount?: T;
+  succeededCount?: T;
+  refundedCount?: T;
+  failedCount?: T;
+  newCustomersCount?: T;
   updatedAt?: T;
   createdAt?: T;
 }

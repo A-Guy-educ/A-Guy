@@ -8,43 +8,38 @@
  *  4. Final status is succeeded only when failures array is empty, else needs_review
  *  5. 5-exercise lesson with one forced failure → needs_review with 4 succeeded + 1 failure entry
  */
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getPayload, type Payload } from 'payload'
 import config from '@payload-config'
 
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
-// Mock generateVariation to prevent any LLM calls in tests (safety net in case
-// the orchestrator mock below fails to apply due to ESM hoisting issues)
+// Mock the variation service so AiVariationStrategy (used for medium/deep level)
+// does not make real LLM calls in the integration test environment.
+// The variation service is only called when level != 'none' &&
+// (level != 'light' || scriptStrategy.needsAiFallback).
+// Uses call-count tracking instead of ID pattern — Payload generates UUIDs for
+// exercise IDs which don't contain '-3', so the old ID-based condition never triggered.
+let _vgCallCount = 0
 vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
-  generateVariation: vi.fn().mockResolvedValue({
-    exercise: {
-      id: 'mocked-exercise',
-      content: { blocks: [] },
-    },
-  }),
-}))
-
-// Mock runStrategy to inject one forced failure on the 3rd exercise
-// Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
-vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import('@/server/services/lesson-duplication/orchestrator')>()
-  return {
-    ...actual,
-    runStrategy: vi
-      .fn()
-      .mockImplementation(
-        async (exercise: { id: string }, _level: string, _subject: unknown, _payload: unknown) => {
-          // Force failure on the 3rd exercise (index-based)
-          if (exercise.id.includes('-3')) {
-            throw new Error('Forced failure for test')
-          }
-          // Use strategy='script' to bypass semantic validation (avoids LLM calls in tests)
-          return {
-            exerciseId: exercise.id,
-            strategy: 'script' as const,
+  generateVariation: vi.fn().mockImplementation(
+    async (
+      input: { exercise: { id: string } },
+      _payload: unknown,
+    ): Promise<{
+      exercise: { id: string; content: { blocks: unknown[] } }
+      tokensUsed: { inputTokens: number; outputTokens: number }
+    }> => {
+      _vgCallCount++
+      // Force failure on the 3rd exercise (call count 3 = index 2)
+      if (_vgCallCount === 3) {
+        throw new Error('Forced failure for test')
+      }
+      return {
+        exercise: {
+          id: input.exercise.id,
+          content: {
             blocks: [
               {
                 id: 'q-1',
@@ -87,7 +82,12 @@ vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOrigin
                   value: 'Think arithmetic',
                   mediaIds: [],
                 },
-                solution: { type: 'rich_text', format: 'md-math-v1', value: '2+2=4', mediaIds: [] },
+                solution: {
+                  type: 'rich_text',
+                  format: 'md-math-v1',
+                  value: '2+2=4',
+                  mediaIds: [],
+                },
                 fullSolution: {
                   type: 'rich_text',
                   format: 'md-math-v1',
@@ -96,11 +96,13 @@ vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOrigin
                 },
               },
             ],
-          }
+          },
         },
-      ),
-  }
-})
+        tokensUsed: { inputTokens: 0, outputTokens: 0 },
+      }
+    },
+  ),
+}))
 
 async function ensureDefaultTenant(payload: Payload): Promise<string> {
   const slug = getDefaultTenantSlug()
@@ -129,6 +131,10 @@ describe('Lesson duplication orchestrator — integration', () => {
   const cleanupLessonIds: string[] = []
   const cleanupExerciseIds: string[] = []
   const cleanupDuplicationIds: string[] = []
+
+  beforeEach(() => {
+    _vgCallCount = 0
+  })
 
   beforeAll(async () => {
     payload = await getPayload({ config })

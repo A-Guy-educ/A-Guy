@@ -672,6 +672,184 @@ describe('generateVariation', () => {
     expect(mockGenerateChatCompletion).toHaveBeenCalledTimes(1)
   })
 
+  // ── Schema-constrained output ────────────────────────────────────────────
+
+  it('uses adapter `output` when present, even with empty `text` (Gemini responseSchema path)', async () => {
+    // Simulates the production failure path: Genkit's structured-output mode
+    // populates `result.output` but `result.text` comes back empty / non-JSON.
+    // Before the fix, parseVariationResponseFromText would throw "Response
+    // missing required content.blocks field" on the empty text.
+    mockGenerateChatCompletion.mockImplementation(async () => {
+      const callCount = mockGenerateChatCompletion.mock.calls.length
+      if (callCount === 1) {
+        return {
+          text: '',
+          output: {
+            content: {
+              blocks: [
+                {
+                  id: 'block-1',
+                  type: 'question_select',
+                  variant: 'mcq',
+                  prompt: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'What is $4+4$?',
+                    mediaIds: [],
+                  },
+                  answer: { options: [], correctOptionIds: ['a'] },
+                },
+              ],
+            },
+          },
+        }
+      }
+      return {
+        text: '',
+        output: {
+          solution: { type: 'rich_text', format: 'md-math-v1', value: '4+4=8', mediaIds: [] },
+          fullSolution: { type: 'rich_text', format: 'md-math-v1', value: '4+4=8', mediaIds: [] },
+          answer: { correctOptionIds: ['a'] },
+        },
+      }
+    })
+
+    const result = await generateVariation(
+      { exercise: makeMockExercise('ex-output-path'), level: 'medium', subject: 'algebra' },
+      mockPayload,
+    )
+
+    const block = (result.exercise.content as { blocks: unknown[] }).blocks[0] as {
+      prompt: { value: string }
+      answer: { correctOptionIds: string[] }
+    }
+    expect(block.prompt.value).toBe('What is $4+4$?')
+    expect(block.answer.correctOptionIds).toEqual(['a'])
+  })
+
+  it('falls back to `text` parsing when `output` is missing (free-text fallback path)', async () => {
+    // Adapter didn't populate `output` (e.g. outputSchema was rejected or
+    // provider returned free text). Service should JSON.parse `text` instead.
+    mockGenerateChatCompletion.mockImplementation(async () => {
+      const callCount = mockGenerateChatCompletion.mock.calls.length
+      if (callCount === 1) {
+        return {
+          text: JSON.stringify({
+            content: {
+              blocks: [
+                {
+                  id: 'block-1',
+                  type: 'question_select',
+                  variant: 'mcq',
+                  prompt: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'Fallback?',
+                    mediaIds: [],
+                  },
+                  answer: { options: [], correctOptionIds: ['a'] },
+                },
+              ],
+            },
+          }),
+        }
+      }
+      return {
+        text: JSON.stringify({
+          solution: { type: 'rich_text', format: 'md-math-v1', value: 's', mediaIds: [] },
+          fullSolution: { type: 'rich_text', format: 'md-math-v1', value: 'fs', mediaIds: [] },
+          answer: { correctOptionIds: ['a'] },
+        }),
+      }
+    })
+
+    const result = await generateVariation(
+      { exercise: makeMockExercise('ex-text-fallback'), level: 'light', subject: 'algebra' },
+      mockPayload,
+    )
+
+    const block = (result.exercise.content as { blocks: unknown[] }).blocks[0] as {
+      prompt: { value: string }
+    }
+    expect(block.prompt.value).toBe('Fallback?')
+  })
+
+  it('passes a per-exercise input-derived schema to pass 1 and a Zod schema to pass 2', async () => {
+    const callInputs: Array<{
+      outputSchema?: unknown
+      outputJsonSchema?: unknown
+      modelVersion?: unknown
+    }> = []
+
+    mockGenerateChatCompletion.mockImplementation(
+      async (input: {
+        outputSchema?: unknown
+        outputJsonSchema?: unknown
+        modelVersion?: unknown
+      }) => {
+        callInputs.push({
+          outputSchema: input.outputSchema,
+          outputJsonSchema: input.outputJsonSchema,
+          modelVersion: input.modelVersion,
+        })
+        const callCount = callInputs.length
+
+        if (callCount === 1) {
+          return {
+            text: JSON.stringify({
+              content: {
+                blocks: [
+                  {
+                    id: 'block-1',
+                    type: 'question_select',
+                    variant: 'mcq',
+                    prompt: {
+                      type: 'rich_text',
+                      format: 'md-math-v1',
+                      value: 'What?',
+                      mediaIds: [],
+                    },
+                    answer: { options: [], correctOptionIds: ['a'] },
+                  },
+                ],
+              },
+            }),
+          }
+        }
+        return {
+          text: JSON.stringify({
+            solution: { type: 'rich_text', format: 'md-math-v1', value: 's', mediaIds: [] },
+            fullSolution: { type: 'rich_text', format: 'md-math-v1', value: 'fs', mediaIds: [] },
+            answer: { correctOptionIds: ['a'] },
+          }),
+        }
+      },
+    )
+
+    await generateVariation(
+      { exercise: makeMockExercise('ex-schema'), level: 'medium', subject: 'algebra' },
+      mockPayload,
+    )
+
+    expect(callInputs).toHaveLength(2)
+    // Pass 1: raw JSON schema derived from the input exercise.
+    expect(callInputs[0].outputSchema).toBeUndefined()
+    expect(callInputs[0].outputJsonSchema).toBeDefined()
+    const pass1Schema = callInputs[0].outputJsonSchema as {
+      type: string
+      properties?: { content?: { properties?: { blocks?: unknown } } }
+    }
+    expect(pass1Schema.type).toBe('object')
+    expect(pass1Schema.properties?.content?.properties?.blocks).toBeDefined()
+    // Pass 2: Zod schema for the small derivation envelope.
+    expect(callInputs[1].outputJsonSchema).toBeUndefined()
+    expect(callInputs[1].outputSchema).toBeDefined()
+    expect(typeof (callInputs[1].outputSchema as { parse?: unknown }).parse).toBe('function')
+    // Both passes pin gemini-3.1-pro-preview.
+    expect(callInputs[0].modelVersion).toBe('gemini-3.1-pro-preview')
+    expect(callInputs[1].modelVersion).toBe('gemini-3.1-pro-preview')
+  })
+
   it('strips markdown code fences from LLM response', async () => {
     let callCount = 0
     mockGenerateChatCompletion.mockImplementation(async () => {

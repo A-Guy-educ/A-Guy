@@ -161,10 +161,32 @@ function isInvalidSvg(block: { value: string }): boolean {
   return !v.startsWith('<svg')
 }
 
+/**
+ * True if a question block's `prompt.value` is missing or whitespace-only.
+ * Used to compare source vs. generated: if both are empty, the variation is
+ * faithfully preserving an intentionally-empty prompt (e.g. geometry/axis
+ * exercises where the question is conveyed by the figure itself) and we
+ * should not fire MISSING_QUESTION.
+ */
+function hasEmptyPrompt(block: ContentBlock): boolean {
+  const prompt = (block as { prompt?: { value?: string } }).prompt
+  return !prompt?.value?.trim()
+}
+
 /** Check a single block for structural failures.
  *  Returns array of failures (empty = pass).
+ *
+ *  `sourceBlock` is the corresponding block from the input exercise (matched
+ *  by index). When provided, MISSING_QUESTION is suppressed if the source
+ *  block also had an empty prompt — that's a passthrough, not a generation
+ *  failure. Without it, legacy exercises where the prompt was intentionally
+ *  empty (geometry/axis question-in-figure) would always fail the variation.
  */
-function validateBlock(block: ContentBlock, blockIndex: number): StructuralFailure[] {
+function validateBlock(
+  block: ContentBlock,
+  blockIndex: number,
+  sourceBlock?: ContentBlock,
+): StructuralFailure[] {
   const failures: StructuralFailure[] = []
 
   // SVG block: value must be empty or start with <svg
@@ -216,14 +238,19 @@ function validateBlock(block: ContentBlock, blockIndex: number): StructuralFailu
     block.type === 'question_geometry' ||
     block.type === 'question_axis'
   ) {
-    // prompt check — always required
+    // prompt check — required unless the source block was also empty
+    // (faithfully preserved passthrough, e.g. geometry-in-figure questions).
     const prompt = (block as { prompt?: { value?: string } }).prompt
     if (!prompt?.value?.trim()) {
-      failures.push({
-        code: FAILURE_CODES.MISSING_QUESTION,
-        message: `Question block at index ${blockIndex} missing prompt`,
-        blockIndex,
-      })
+      const sourceWasAlsoEmpty =
+        sourceBlock !== undefined && sourceBlock.type === block.type && hasEmptyPrompt(sourceBlock)
+      if (!sourceWasAlsoEmpty) {
+        failures.push({
+          code: FAILURE_CODES.MISSING_QUESTION,
+          message: `Question block at index ${blockIndex} missing prompt`,
+          blockIndex,
+        })
+      }
     }
 
     // hint check
@@ -348,8 +375,18 @@ function validateBlock(block: ContentBlock, blockIndex: number): StructuralFailu
 /**
  * Validate a single exercise's content blocks for structural correctness.
  * Returns an array of failures (empty = valid).
+ *
+ * `sourceBlocks` is the input exercise's blocks (matched by index). When
+ * provided, the validator suppresses MISSING_QUESTION for blocks whose source
+ * counterpart also had an empty prompt — this is the variation faithfully
+ * preserving an intentionally-empty prompt (most common case: geometry/axis
+ * exercises that pose the question through the figure itself). Without this,
+ * legacy exercises with no prompt text always failed structural validation.
  */
-export function validateExerciseStructural(blocks: ContentBlock[]): StructuralFailure[] {
+export function validateExerciseStructural(
+  blocks: ContentBlock[],
+  sourceBlocks?: ContentBlock[],
+): StructuralFailure[] {
   const failures: StructuralFailure[] = []
 
   // 1. Block count check
@@ -362,7 +399,7 @@ export function validateExerciseStructural(blocks: ContentBlock[]): StructuralFa
 
   // 2. Per-block validation
   for (let i = 0; i < blocks.length; i++) {
-    failures.push(...validateBlock(blocks[i], i))
+    failures.push(...validateBlock(blocks[i], i, sourceBlocks?.[i]))
   }
 
   return failures

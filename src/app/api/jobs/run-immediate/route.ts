@@ -7,6 +7,22 @@ import type { Payload, User } from 'payload'
 import { getPayload } from 'payload'
 import { logger } from '@/infra/utils/logger'
 
+/**
+ * Vercel function execution time limit. The default for a serverless function
+ * on Pro is 60s, far below what the lesson-duplication orchestrator needs:
+ * pass-1 + pass-2 LLM calls on gemini-3.1-pro-preview run 120-300s per
+ * exercise. Without this override Vercel kills the function mid-run and the
+ * LessonDuplications record is stranded in `running` forever.
+ *
+ * 800s sits just under the Pro ceiling (900s) and leaves headroom for
+ * Vercel's own teardown. Combined with the 5-exercise selector cap (see
+ * orchestrator.ts), this fits a deep variation in one function invocation.
+ * For lessons that need >5 variations the admin can re-run the duplication
+ * to pick another scaling-random sample; the proper fix is an external
+ * worker (Inngest / Trigger.dev — handoff item #2).
+ */
+export const maxDuration = 800
+
 interface JobDocument extends Document {
   _id: ObjectId
   taskSlug?: string
