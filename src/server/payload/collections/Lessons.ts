@@ -66,7 +66,7 @@ const createIntroContentPage: CollectionAfterChangeHook = async ({ doc, operatio
       lesson: doc.id,
       title,
       slug: `hagdima-le-${doc.slug || doc.id}-${timestamp}`,
-      body: [] as never[],
+      body: [{ blockType: 'html', html: '<p></p>' }] as never[],
       status: 'published',
       isActive: true,
       tenant: tenantId ?? undefined,
