@@ -8,7 +8,7 @@
  *
  * Behavior per block type:
  *   - rich_text                  -> paragraph
- *   - latex                      -> hidden (matches the viewer default)
+ *   - latex                      -> rendered via LatexBlockRenderer (hideLatexBlocks prop controls visibility)
  *   - svg / media                -> figure
  *   - question_geometry          -> Hebrew label + prompt + diagram side-by-side via GraphWithPrompt
  *   - question_axis              -> Hebrew label + prompt + diagram side-by-side via GraphWithPrompt
@@ -36,6 +36,7 @@ import { GeometryRenderer } from '../blocks/GeometryRenderer'
 import { AxisRenderer } from '../blocks/AxisRenderer'
 import { GraphWithPrompt } from '../blocks/GraphWithPrompt'
 import { MultiAxisRenderer } from '../blocks/MultiAxisRenderer'
+import { LatexBlockRenderer } from '../blocks/LatexBlockRenderer'
 import { getMediaUrl } from '@/infra/utils/getMediaUrl'
 import { HEBREW_LETTERS } from '../constants'
 import type { Media } from '@/payload-types'
@@ -61,6 +62,12 @@ interface ExerciseWorksheetProps {
   /** Pre-resolved media map keyed by ID. */
   mediaMap?: Record<string, Media>
   className?: string
+  /**
+   * When true, LaTeX blocks are hidden (returns null).
+   * When false (default), LaTeX blocks are rendered via LatexBlockRenderer.
+   * Set to true for backward compatibility with ExerciseRenderer which hides LaTeX.
+   */
+  hideLatexBlocks?: boolean
 }
 
 const EMPTY_MEDIA_MAP: Record<string, Media> = {}
@@ -69,6 +76,7 @@ export function ExerciseWorksheet({
   blocks,
   mediaMap = EMPTY_MEDIA_MAP,
   className,
+  hideLatexBlocks = false,
 }: ExerciseWorksheetProps) {
   const locale = useLocale()
   const isRtl = locale?.toLowerCase().startsWith('he') ?? false
@@ -92,6 +100,7 @@ export function ExerciseWorksheet({
             sideBySideLayout,
             isRtl,
             questionIndex,
+            hideLatexBlocks,
           })
           if (incremented) questionIndex++
           return <React.Fragment key={getBlockKey(block, i)}>{renderedBlock}</React.Fragment>
@@ -121,6 +130,7 @@ interface RenderBlockParams {
   sideBySideLayout: GraphLayout
   isRtl: boolean
   questionIndex: number
+  hideLatexBlocks: boolean
 }
 
 /**
@@ -134,6 +144,7 @@ function renderBlockWithLabel({
   sideBySideLayout,
   isRtl,
   questionIndex,
+  hideLatexBlocks,
 }: RenderBlockParams): { block: React.ReactNode; incremented: boolean } {
   const isLabelledQuestion = LABELLED_QUESTION_TYPES.has(block.type)
 
@@ -141,7 +152,7 @@ function renderBlockWithLabel({
     const label = isRtl
       ? `${HEBREW_LETTERS[questionIndex] || String(questionIndex + 1)}.`
       : `${questionIndex + 1}.`
-    const inner = renderBlockContent({ block, mediaMap, sideBySideLayout })
+    const inner = renderBlockContent({ block, mediaMap, sideBySideLayout, hideLatexBlocks })
     return {
       block: (
         <>
@@ -154,7 +165,7 @@ function renderBlockWithLabel({
   }
 
   return {
-    block: renderBlockContent({ block, mediaMap, sideBySideLayout }),
+    block: renderBlockContent({ block, mediaMap, sideBySideLayout, hideLatexBlocks }),
     incremented: false,
   }
 }
@@ -164,10 +175,16 @@ function renderBlockContent({
   block,
   mediaMap,
   sideBySideLayout,
+  hideLatexBlocks,
 }: Omit<RenderBlockParams, 'isRtl' | 'questionIndex'>): React.ReactNode {
-  // LaTeX blocks: hidden, parsed structured blocks beside them already cover
-  // the content. Matches ExerciseRenderer's default.
-  if (block.type === 'latex') return null
+  if (block.type === 'latex') {
+    if (hideLatexBlocks) return null
+    return (
+      <LatexBlockRenderer
+        block={block as import('@/server/payload/collections/Exercises/types').LatexBlock}
+      />
+    )
+  }
 
   if (block.type === 'rich_text') {
     return (
