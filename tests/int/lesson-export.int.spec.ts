@@ -1,11 +1,11 @@
 /**
- * Integration test: lesson export endpoint.
+ * Integration test: lesson export endpoint (canonical format).
  *
  * Verifies:
- * 1. Lesson + ordered exercises are exported as JSON
- * 2. Exercises appear in the same order as the blocks array
- * 3. Missing exercise references are listed in meta.missingExerciseRefs
- * 4. Non-exercise blocks are counted in meta.skippedNonExerciseBlocks
+ * 1. Lesson is exported in canonical format with class, lesson_number, topic
+ * 2. Exercises appear in canonical format with exercise_number, level, exercise_content
+ * 3. Exercise content has data and sections matching the block structure
+ * 4. No internal fields (id, _id, __v, slug, origin, createdBy, tenant, etc.) in output
  * 5. 401 for unauthenticated, 403 for non-admin, 404 for missing lesson
  * 6. Empty exercises[] for lesson with no exercises
  *
@@ -172,7 +172,7 @@ describe('Lesson export endpoint', () => {
     await payload.db?.destroy?.()
   })
 
-  it('exports lesson with exercises in blocks order, skipping missing and non-exercise blocks', async () => {
+  it('exports lesson in canonical format with class, lesson_number, topic, exercises', async () => {
     const mockReq = {
       user: { id: 'admin', role: 'admin' },
       payload,
@@ -183,19 +183,41 @@ describe('Lesson export endpoint', () => {
     expect(res.status).toBe(200)
 
     const body = await (res as Response).json()
-    expect(body.lesson.id).toBe(lessonId)
-    expect(body.exercises).toHaveLength(3)
-    expect(body.exercises[0].id).toBe(exerciseIds[0])
-    expect(body.exercises[1].id).toBe(exerciseIds[1])
-    expect(body.exercises[2].id).toBe(exerciseIds[2])
-    expect(body.meta.missingExerciseRefs).toContain('non-existent-exercise-id')
-    expect(body.meta.skippedNonExerciseBlocks).toBe(1)
-    expect(body.meta.exerciseCount).toBe(3)
 
-    // No managed fields on exercises
+    // Canonical top-level structure
+    expect(body).toHaveProperty('class')
+    expect(body).toHaveProperty('lesson_number')
+    expect(body).toHaveProperty('topic')
+    expect(body).toHaveProperty('exercises')
+
+    // Lesson metadata
+    expect(body.lesson_number).toBe('1')
+    expect(body.topic).toMatch(/^Export Lesson \d+$/)
+
+    // Exercises in canonical format
+    expect(body.exercises).toHaveLength(3)
+    const firstExercise = body.exercises[0]
+    expect(firstExercise).toHaveProperty('exercise_number')
+    expect(firstExercise.exercise_number).toBe('1')
+    expect(firstExercise).toHaveProperty('level')
+    expect(firstExercise).toHaveProperty('exercise_content')
+    expect(firstExercise.exercise_content).toHaveProperty('data')
+    expect(firstExercise.exercise_content).toHaveProperty('sections')
+
+    // Data has the canonical wrapper format
+    const data = firstExercise.exercise_content.data
+    expect(data).toHaveProperty('text')
+    expect(data).toHaveProperty('table')
+    expect(data).toHaveProperty('PNG')
+    expect(data).toHaveProperty('svg')
+
+    // No internal fields in the canonical export
+    // (The canonical format doesn't include id, _id, __v, slug, origin, etc.)
+    expect(body).not.toHaveProperty('lesson')
+    expect(body).not.toHaveProperty('meta')
+    expect(body.exercises[0]).not.toHaveProperty('id')
     expect(body.exercises[0]).not.toHaveProperty('createdAt')
     expect(body.exercises[0]).not.toHaveProperty('updatedAt')
-    expect(body.exercises[0]).not.toHaveProperty('_id')
   })
 
   it('returns 404 for non-existent lesson', async () => {
@@ -231,7 +253,7 @@ describe('Lesson export endpoint', () => {
     expect(res.status).toBe(403)
   })
 
-  it('exports lesson with zero exercises cleanly', async () => {
+  it('exports lesson with zero exercises cleanly in canonical format', async () => {
     const emptyLesson = await payload.create({
       collection: 'lessons',
       data: {
@@ -263,8 +285,9 @@ describe('Lesson export endpoint', () => {
     expect(res.status).toBe(200)
     const body = await (res as Response).json()
     expect(body.exercises).toHaveLength(0)
-    expect(body.meta.exerciseCount).toBe(0)
-    expect(body.meta.missingExerciseRefs).toHaveLength(0)
-    expect(body.meta.skippedNonExerciseBlocks).toBe(0)
+    expect(body.lesson_number).toBe('99')
+    // No meta or lesson properties in canonical format
+    expect(body).not.toHaveProperty('meta')
+    expect(body).not.toHaveProperty('lesson')
   })
 })

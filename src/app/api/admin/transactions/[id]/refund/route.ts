@@ -40,18 +40,16 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   }
 
   // 3. Fetch transaction
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let transaction: any
+  let transaction: Record<string, unknown> | null = null
   try {
-    transaction = await payload.findByID({
+    transaction = (await payload.findByID({
       collection: 'transactions',
       id,
       depth: 0,
       overrideAccess: true,
-    })
+    })) as unknown as Record<string, unknown> | null
   } catch (err) {
-    // payload.findByID throws NotFound when the document doesn't exist
-    if (err && typeof err === 'object' && (err as { name?: string }).name === 'NotFound') {
+    if (err instanceof Error && (err.name === 'NotFound' || err.message.includes('Not Found'))) {
       return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
     }
     throw err
