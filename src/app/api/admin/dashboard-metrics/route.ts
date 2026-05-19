@@ -53,6 +53,34 @@ export function extractCourseId(course: unknown): string | null {
   return str && str !== '[object Object]' ? str : null
 }
 
+/**
+ * Extract a product ID from various possible formats:
+ * - String ID (e.g., "abc123")
+ * - Plain object with id property (e.g., { id: "abc123" })
+ * - MongoDB ObjectId instance (has toString() but no .id property)
+ *
+ * Returns null if the product cannot be extracted or is falsy.
+ */
+export function extractProductId(product: unknown): string | null {
+  if (product === undefined || product === null) return null
+  if (typeof product === 'string') return product
+  if (typeof product === 'object' && 'id' in product) {
+    const obj = product as { id: unknown }
+    return typeof obj.id === 'string' ? obj.id : String(obj.id) || null
+  }
+  if (
+    typeof product === 'object' &&
+    typeof (product as { toString?: () => string }).toString === 'function'
+  ) {
+    const result = String(product)
+    const match = result.match(/ObjectId\(['"]?([^'")]+)['"]?\)/)
+    if (match) return match[1]
+    return result && result !== '[object Object]' ? result : null
+  }
+  const str = String(product)
+  return str && str !== '[object Object]' ? str : null
+}
+
 interface UserMetrics {
   activeUsersToday: number
   activeUsersYesterday: number
@@ -108,11 +136,30 @@ interface ContentCounts {
   prompts: number
 }
 
+interface CurrencyRevenue {
+  [currencyCode: string]: number
+}
+
+interface TopProduct {
+  productName: string
+  agorot: number
+}
+
+interface RevenueMetrics {
+  totalRevenueAgorot: CurrencyRevenue
+  refundedAgorot: number
+  failedAgorot: number
+  transactionCount: number
+  successRate: number
+  topProducts: TopProduct[]
+}
+
 export interface DashboardMetricsResponse {
   period: Period
   userMetrics: UserMetrics
   contentCounts: ContentCounts
   engagement: EngagementMetrics
+  revenueMetrics: RevenueMetrics
 }
 
 function startOfDay(date: Date): Date {
@@ -248,6 +295,7 @@ export async function GET(req: Request) {
     examLessons,
     returningUsersResult,
     totalUsersInPeriod,
+    allTransactions,
   ] = await Promise.all([
     // Active users today/yesterday
     payload.find({
@@ -487,6 +535,34 @@ export async function GET(req: Request) {
       limit: 0,
       overrideAccess: true,
     }),
+    // Revenue metrics: fetch all transactions in period using findAll
+    findAll<{
+      status?: string
+      amount?: number
+      currency?: string
+      product?: unknown
+    }>(
+      (page) =>
+        payload.find({
+          collection: 'transactions',
+          where: {
+            createdAt: { greater_than_equal: periodStart.toISOString() },
+          },
+          limit: 500,
+          page,
+          overrideAccess: true,
+          select: {
+            status: true,
+            amount: true,
+            currency: true,
+            product: true,
+          },
+        }) as Promise<{
+          docs: { status?: string; amount?: number; currency?: string; product?: unknown }[]
+          hasNextPage: boolean
+          totalPages: number
+        }>,
+    ),
   ])
 
   // Calculate avg time spent (allUserStats is already a flat array from findAll)
@@ -553,6 +629,68 @@ export async function GET(req: Request) {
       }
     }
   }
+
+  // Revenue metrics aggregation
+  // allTransactions is already a flat array from findAll
+  const totalRevenueByCurrency: CurrencyRevenue = { ILS: 0, USD: 0, EUR: 0 }
+  let refundedTotal = 0
+  let failedTotal = 0
+  let succeededCount = 0
+  let nonPendingCount = 0
+  const productRevenueMap = new Map<string, number>()
+
+  for (const tx of allTransactions) {
+    const amount = tx.amount || 0
+    const currency = tx.currency || 'ILS'
+
+    if (tx.status === 'succeeded') {
+      totalRevenueByCurrency[currency] = (totalRevenueByCurrency[currency] || 0) + amount
+      succeededCount++
+      nonPendingCount++
+      // Aggregate by product
+      const productId = extractProductId(tx.product)
+      if (productId) {
+        productRevenueMap.set(productId, (productRevenueMap.get(productId) || 0) + amount)
+      }
+    } else if (tx.status === 'refunded') {
+      refundedTotal += amount
+      nonPendingCount++
+    } else if (tx.status === 'failed') {
+      failedTotal += amount
+      nonPendingCount++
+    }
+  }
+
+  const revenueTransactionCount = allTransactions.length
+  const successRate =
+    nonPendingCount > 0 ? Math.round((succeededCount / nonPendingCount) * 1000) / 10 : 0
+
+  // Resolve top 5 products by revenue
+  const uniqueProductIds = Array.from(productRevenueMap.keys())
+  const productIdToName = new Map<string, string>()
+  if (uniqueProductIds.length > 0) {
+    const products = await payload.find({
+      collection: 'products',
+      where: { id: { in: uniqueProductIds } },
+      limit: uniqueProductIds.length,
+      overrideAccess: true,
+    })
+    for (const p of products.docs) {
+      const prod = p as unknown as { id: string; name?: string; slug?: string }
+      productIdToName.set(
+        String(prod.id),
+        prod.name || prod.slug || `Product ${String(prod.id).slice(-6)}`,
+      )
+    }
+  }
+
+  const topProducts: TopProduct[] = Array.from(productRevenueMap.entries())
+    .map(([id, agorot]) => ({
+      productName: productIdToName.get(id) || `__DELETED__:${id.slice(-6)}`,
+      agorot,
+    }))
+    .sort((a, b) => b.agorot - a.agorot)
+    .slice(0, 5)
 
   // Count enrollments per course ID (from Enrollments collection)
   // activeEnrollments is already a flat array from findAll
@@ -655,6 +793,14 @@ export async function GET(req: Request) {
         practice: practiceLessons.totalDocs,
         exam: examLessons.totalDocs,
       },
+    },
+    revenueMetrics: {
+      totalRevenueAgorot: totalRevenueByCurrency,
+      refundedAgorot: refundedTotal,
+      failedAgorot: failedTotal,
+      transactionCount: revenueTransactionCount,
+      successRate,
+      topProducts,
     },
   }
 
