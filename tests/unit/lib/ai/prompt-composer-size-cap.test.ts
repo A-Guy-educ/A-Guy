@@ -24,12 +24,14 @@ describe('composeSystemInstructions — exercises section size cap (audit F4)', 
     const out = composeSystemInstructions(
       [],
       'You are a tutor.',
-      undefined,
-      undefined,
-      undefined,
-      undefined,
+      undefined, // teacherProfileBlock
+      undefined, // agentBehaviorBlock
+      undefined, // lessonContextBlock
+      undefined, // lessonContextText
+      undefined, // courseContextText
       exercises,
-      false,
+      undefined, // userContextBlock
+      false, // hasImageAttached
     )
     // Content was 2000 chars, cap is 400 → must contain truncation marker
     expect(out).toContain('…(truncated)')
@@ -43,12 +45,14 @@ describe('composeSystemInstructions — exercises section size cap (audit F4)', 
     const out = composeSystemInstructions(
       [],
       'You are a tutor.',
-      undefined,
-      undefined,
-      undefined,
-      undefined,
+      undefined, // teacherProfileBlock
+      undefined, // agentBehaviorBlock
+      undefined, // lessonContextBlock
+      undefined, // lessonContextText
+      undefined, // courseContextText
       exercises,
-      false,
+      undefined, // userContextBlock
+      false, // hasImageAttached
     )
 
     // Every title should still appear (titles-only mode for the tail)
@@ -69,12 +73,14 @@ describe('composeSystemInstructions — exercises section size cap (audit F4)', 
     const out = composeSystemInstructions(
       [],
       'You are a tutor.',
-      undefined,
-      undefined,
-      undefined,
-      undefined,
+      undefined, // teacherProfileBlock
+      undefined, // agentBehaviorBlock
+      undefined, // lessonContextBlock
+      undefined, // lessonContextText
+      undefined, // courseContextText
       exercises,
-      false,
+      undefined, // userContextBlock
+      false, // hasImageAttached
     )
     // Both bodies fit inside the budget, no truncation
     expect(out).not.toContain('…(truncated)')
