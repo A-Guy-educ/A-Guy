@@ -82,7 +82,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
   try {
     if (provider === 'stripe') {
-      await refundStripe(providerTransactionId, amount)
+      await refundStripe(id, providerTransactionId, amount)
     } else if (provider === 'paypal') {
       await refundPayPal(providerTransactionId, amount)
     } else {

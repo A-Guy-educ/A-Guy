@@ -15,15 +15,17 @@ import config from '@payload-config'
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
-// Module-level counter for generateVariation mock. The let binding is reset by
-// beforeEach before each test; the hoisted mock factory closure captures a
-// live reference to this binding so resets take effect.
-let generateVariationCallCount = 0
-
 // Mock the variation service so AiVariationStrategy (used for medium/deep level)
 // does not make real LLM calls in the integration test environment.
-// The error propagates through: generateVariation -> AiVariationStrategy.apply()
-// -> RouterStrategy.apply() -> runStrategy() -> processExercise() (catches).
+// The variation service is only called when level != 'none' &&
+// (level != 'light' || scriptStrategy.needsAiFallback).
+// Uses call-count tracking instead of ID pattern — Payload generates UUIDs for
+// exercise IDs which don't contain '-3', so the old ID-based condition never triggered.
+// Must be vi.hoisted: the vi.mock factory below runs hoisted above imports,
+// so it may only close over hoisted refs. A plain `let` here makes the
+// factory throw at runtime, silently falling back to the REAL variation
+// service → real LLM call → flaky 180s timeout.
+const h = vi.hoisted(() => ({ vgCallCount: 0 }))
 vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
   generateVariation: vi.fn().mockImplementation(
     async (
@@ -33,9 +35,9 @@ vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
       exercise: { id: string; content: { blocks: unknown[] } }
       tokensUsed: { inputTokens: number; outputTokens: number }
     }> => {
-      generateVariationCallCount++
-      // Force failure on the 3rd exercise (by call order)
-      if (generateVariationCallCount === 3) {
+      h.vgCallCount++
+      // Force failure on the 3rd exercise (call count 3 = index 2)
+      if (h.vgCallCount === 3) {
         throw new Error('Forced failure for test')
       }
       return {
@@ -135,8 +137,7 @@ describe('Lesson duplication orchestrator — integration', () => {
   const cleanupDuplicationIds: string[] = []
 
   beforeEach(() => {
-    // Reset call counter so each test gets a clean slate
-    generateVariationCallCount = 0
+    h.vgCallCount = 0
   })
 
   beforeAll(async () => {

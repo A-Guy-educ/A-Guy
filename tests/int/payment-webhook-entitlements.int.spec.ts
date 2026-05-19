@@ -834,3 +834,127 @@ describe('PayPal webhook handler', () => {
       .catch(() => {})
   })
 })
+
+// ─── Stripe webhook signature failure tests ───────────────────────────────────
+
+describe('Stripe webhook signature failure responses', () => {
+  it('should return 400 when stripe-signature header is missing', async () => {
+    const req = new NextRequest('http://localhost/api/webhooks/stripe', {
+      method: 'POST',
+      // No stripe-signature header
+    })
+
+    const res = await stripeWebhookHandler(req)
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 400 when Stripe signature verification fails (StripeSignatureVerificationError)', async () => {
+    const { Stripe } = await import('stripe')
+    const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
+
+    // StripeSignatureVerificationError constructor signature differs from TypeScript types;
+    // cast through `any` to satisfy the type checker while passing correct runtime args.
+    const SignatureVerificationError = Stripe.errors
+      .StripeSignatureVerificationError as unknown as new (
+      header: string,
+      payload: string,
+      raw: Record<string, unknown>,
+    ) => Error
+
+    vi.mocked(verifyStripeWebhook).mockRejectedValue(
+      new SignatureVerificationError('some-header', 'some-payload', { signature: 'sig_test' }),
+    )
+
+    const req = new NextRequest('http://localhost/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig_test' },
+    })
+
+    const res = await stripeWebhookHandler(req)
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 500 when Stripe verification throws a transient error (network/config)', async () => {
+    const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
+
+    vi.mocked(verifyStripeWebhook).mockRejectedValue(new Error('Network timeout'))
+
+    const req = new NextRequest('http://localhost/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig_test' },
+    })
+
+    const res = await stripeWebhookHandler(req)
+    expect(res.status).toBe(500)
+  })
+})
+
+// ─── PayPal webhook signature failure tests ────────────────────────────────────
+
+describe('PayPal webhook signature failure responses', () => {
+  it('should return 400 when verifyPayPalWebhook returns false (signature mismatch)', async () => {
+    const { verifyPayPalWebhook } = await import('@/lib/payment/paypal')
+    vi.mocked(verifyPayPalWebhook).mockResolvedValueOnce(false)
+
+    const req = new NextRequest('http://localhost/api/webhooks/paypal', {
+      method: 'POST',
+      headers: {
+        'paypal-transmission-id': 'test-tx-id',
+        'paypal-transmission-time': new Date().toISOString(),
+        'paypal-transmission-sig': 'bad-sig',
+        'paypal-cert-url': 'https://cert.url',
+        'paypal-auth-algo': 'SHA256withRSA',
+      },
+      body: JSON.stringify({
+        event_type: 'CHECKOUT.ORDER.APPROVED',
+        resource: { id: 'order_123' },
+      }),
+    })
+
+    const res = await paypalWebhookHandler(req)
+    expect(res.status).toBe(400)
+  })
+
+  it('should return 500 when verifyPayPalWebhook throws a transient error (network error)', async () => {
+    const { verifyPayPalWebhook } = await import('@/lib/payment/paypal')
+    vi.mocked(verifyPayPalWebhook).mockRejectedValueOnce(new Error('PayPal API network timeout'))
+
+    const req = new NextRequest('http://localhost/api/webhooks/paypal', {
+      method: 'POST',
+      headers: {
+        'paypal-transmission-id': 'test-tx-id',
+        'paypal-transmission-time': new Date().toISOString(),
+        'paypal-transmission-sig': 'test-sig',
+        'paypal-cert-url': 'https://cert.url',
+        'paypal-auth-algo': 'SHA256withRSA',
+      },
+      body: JSON.stringify({
+        event_type: 'CHECKOUT.ORDER.APPROVED',
+        resource: { id: 'order_123' },
+      }),
+    })
+
+    const res = await paypalWebhookHandler(req)
+    expect(res.status).toBe(500)
+  })
+
+  it('should return 400 when PayPal webhook is missing required headers', async () => {
+    const { verifyPayPalWebhook } = await import('@/lib/payment/paypal')
+    // Simulate the header validation error (thrown before env var check in the real function)
+    vi.mocked(verifyPayPalWebhook).mockRejectedValueOnce(
+      new Error('Missing required PayPal webhook headers'),
+    )
+
+    const req = new NextRequest('http://localhost/api/webhooks/paypal', {
+      method: 'POST',
+      headers: {}, // Missing all PayPal headers
+      body: JSON.stringify({
+        event_type: 'CHECKOUT.ORDER.APPROVED',
+        resource: { id: 'order_123' },
+      }),
+    })
+
+    const res = await paypalWebhookHandler(req)
+    expect(res.status).toBe(400)
+  })
+})
