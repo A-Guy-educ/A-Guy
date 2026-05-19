@@ -4,8 +4,8 @@
  *
  * Tests the beforeChange hook on Transactions collection that enforces
  * the status transition table:
- * - pending → succeeded, failed, refunded (all allowed)
- * - succeeded → refunded (only this is allowed)
+ * - pending → completed, failed, refunded (all allowed)
+ * - completed → refunded (only this is allowed)
  * - failed → terminal (no transitions allowed)
  * - refunded → terminal (no transitions allowed)
  * - Creating a transaction with any starting status is allowed
@@ -132,7 +132,7 @@ beforeAll(async () => {
       product: productId,
       provider: 'stripe',
       providerTransactionId: `cs_succeeded_${Date.now()}`,
-      status: 'succeeded',
+      status: 'completed',
       amount: 1000,
       currency: 'ILS',
       tenant: tenantId,
@@ -217,14 +217,14 @@ describe('Transaction Status Transition Validation', () => {
           product: productId,
           provider: 'stripe',
           providerTransactionId: `cs_create_succeeded_${Date.now()}`,
-          status: 'succeeded',
+          status: 'completed',
           amount: 1000,
           currency: 'ILS',
           tenant: tenantId,
         } as any,
         overrideAccess: true,
       })
-      expect(tx.status).toBe('succeeded')
+      expect(tx.status).toBe('completed')
     })
 
     it('allows creating a transaction with failed status', async () => {
@@ -270,10 +270,10 @@ describe('Transaction Status Transition Validation', () => {
       const updated = await payload.update({
         collection: 'transactions',
         id: pendingTransactionId,
-        data: { status: 'succeeded' },
+        data: { status: 'completed' },
         overrideAccess: true,
       })
-      expect(updated.status).toBe('succeeded')
+      expect(updated.status).toBe('completed')
     })
 
     it('allows pending → failed', async () => {
@@ -348,7 +348,7 @@ describe('Transaction Status Transition Validation', () => {
           product: productId,
           provider: 'stripe',
           providerTransactionId: `cs_succeeded_to_pending_${Date.now()}`,
-          status: 'succeeded',
+          status: 'completed',
           amount: 1000,
           currency: 'ILS',
           tenant: tenantId,
@@ -374,7 +374,7 @@ describe('Transaction Status Transition Validation', () => {
           product: productId,
           provider: 'stripe',
           providerTransactionId: `cs_succeeded_to_failed_${Date.now()}`,
-          status: 'succeeded',
+          status: 'completed',
           amount: 1000,
           currency: 'ILS',
           tenant: tenantId,
@@ -425,7 +425,7 @@ describe('Transaction Status Transition Validation', () => {
         payload.update({
           collection: 'transactions',
           id: tx.id,
-          data: { status: 'succeeded' },
+          data: { status: 'completed' },
           overrideAccess: true,
         }),
       ).rejects.toThrow()
@@ -491,7 +491,7 @@ describe('Transaction Status Transition Validation', () => {
         payload.update({
           collection: 'transactions',
           id: tx.id,
-          data: { status: 'succeeded' },
+          data: { status: 'completed' },
           overrideAccess: true,
         }),
       ).rejects.toThrow()
@@ -534,7 +534,7 @@ describe('Transaction Status Transition Validation', () => {
           product: productId,
           provider: 'stripe',
           providerTransactionId: `cs_bypass_${Date.now()}`,
-          status: 'succeeded',
+          status: 'completed',
           amount: 1000,
           currency: 'ILS',
           tenant: tenantId,

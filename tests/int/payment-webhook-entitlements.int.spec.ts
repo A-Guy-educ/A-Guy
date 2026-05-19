@@ -395,7 +395,7 @@ describe('Stripe webhook handler', () => {
       depth: 0,
       overrideAccess: true,
     })
-    expect(updated.status).toBe('succeeded')
+    expect(updated.status).toBe('completed')
 
     // Verify entitlements were granted
     const user = await payload.findByID({
@@ -431,7 +431,7 @@ describe('Stripe webhook handler', () => {
         product: productId,
         provider: 'stripe',
         providerTransactionId: sessionId,
-        status: 'succeeded', // Already succeeded
+        status: 'completed', // Already succeeded
         amount: 1000,
         currency: 'ILS',
         tenant: tenantId,
@@ -532,7 +532,7 @@ describe('Stripe webhook handler', () => {
         product: productId,
         provider: 'stripe',
         providerTransactionId: paymentIntentId,
-        status: 'succeeded',
+        status: 'completed',
         amount: 1000,
         currency: 'ILS',
         tenant: tenantId,
@@ -609,7 +609,7 @@ describe('PayPal webhook handler', () => {
       depth: 0,
       overrideAccess: true,
     })
-    expect(updated.status).toBe('succeeded')
+    expect(updated.status).toBe('completed')
 
     // Verify entitlements were granted
     const user = await payload.findByID({
@@ -641,7 +641,7 @@ describe('PayPal webhook handler', () => {
         product: productId,
         provider: 'paypal',
         providerTransactionId: orderId,
-        status: 'succeeded', // Already succeeded
+        status: 'completed', // Already succeeded
         amount: 1000,
         currency: 'ILS',
         tenant: tenantId,
@@ -740,7 +740,7 @@ describe('PayPal webhook handler', () => {
       depth: 0,
       overrideAccess: true,
     })
-    expect(updated.status).toBe('succeeded')
+    expect(updated.status).toBe('completed')
 
     await payload
       .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
@@ -815,7 +815,7 @@ describe('PayPal webhook handler', () => {
         product: productId,
         provider: 'paypal',
         providerTransactionId: captureId,
-        status: 'succeeded',
+        status: 'completed',
         amount: 1000,
         currency: 'ILS',
         tenant: tenantId,
@@ -1017,12 +1017,12 @@ describe('Coupon consumption on webhook payment completion', () => {
       })
 
       // CRITICAL ASSERTION: Both payments have already succeeded via Stripe/PayPal,
-      // so both transactions should be 'succeeded'. The atomic $inc ensures only ONE
+      // so both transactions should be 'completed'. The atomic $inc ensures only ONE
       // coupon is consumed even when two concurrent webhooks fire.
       // With the buggy code (consumption at checkout), usesCount would be 2.
       // With the fix, usesCount is exactly 1.
       const successCount = [tx1Final.status, tx2Final.status].filter(
-        (s) => s === 'succeeded',
+        (s) => s === 'completed',
       ).length
       expect(successCount).toBe(2) // Both payments already succeeded
       expect(couponFinal.usesCount).toBe(1) // Coupon used exactly once (atomic increment)

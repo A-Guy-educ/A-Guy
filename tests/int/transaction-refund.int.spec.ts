@@ -105,12 +105,58 @@ beforeAll(async () => {
   })
   studentUserId = student.id
 
-  // Create product
-  const product = await payload.create({
-    collection: 'products',
+  // Create category, course, chapter, and lesson for pricing plan
+  const category = await payload.create({
+    collection: 'categories',
     data: {
-      name: `Refund Test Product ${Date.now()}`,
-      slug: `refund-test-product-${Date.now()}`,
+      title: `Refund Test Category ${Date.now()}`,
+      slug: `refund-cat-${Date.now()}`,
+      locale: 'he',
+    } as any,
+    overrideAccess: true,
+  })
+
+  const course = await payload.create({
+    collection: 'courses',
+    data: {
+      courseLabel: 'R1',
+      title: `Refund Test Course ${Date.now()}`,
+      categories: [category.id],
+      tenant: tenantId,
+    } as any,
+    overrideAccess: true,
+  })
+
+  const chapter = await payload.create({
+    collection: 'chapters',
+    data: {
+      title: `Refund Test Chapter ${Date.now()}`,
+      slug: `refund-chapter-${Date.now()}`,
+      course: course.id,
+      tenant: tenantId,
+    } as any,
+    overrideAccess: true,
+  })
+
+  const lesson = await payload.create({
+    collection: 'lessons',
+    data: {
+      title: `Refund Test Lesson ${Date.now()}`,
+      slug: `refund-lesson-${Date.now()}`,
+      type: 'practice',
+      chapter: chapter.id,
+      tenant: tenantId,
+      status: 'published',
+    } as any,
+    overrideAccess: true,
+  })
+
+  // Create pricing plan
+  const pricingPlan = await payload.create({
+    collection: 'pricing-plans',
+    data: {
+      lesson: lesson.id,
+      provider: 'tranzila',
       billingType: 'one_time',
       price: 1000,
       currency: 'ILS',
@@ -119,15 +165,15 @@ beforeAll(async () => {
     overrideAccess: true,
   })
 
-  // Create succeeded stripe transaction
+  // Create completed stripe transaction
   const stripeTx = await payload.create({
     collection: 'transactions',
     data: {
       user: adminUserId,
-      product: product.id,
-      provider: 'stripe',
-      providerTransactionId: `cs_refund_test_${Date.now()}`,
-      status: 'succeeded',
+      pricingPlan: pricingPlan.id,
+      tranzilaTransactionId: `cs_refund_test_${Date.now()}`,
+      tranzilaOrderId: `order_refund_test_${Date.now()}`,
+      status: 'completed',
       amount: 1000,
       currency: 'ILS',
       tenant: tenantId,
@@ -136,15 +182,15 @@ beforeAll(async () => {
   })
   stripeTransactionId = stripeTx.id
 
-  // Create succeeded paypal transaction
+  // Create completed paypal transaction
   const paypalTx = await payload.create({
     collection: 'transactions',
     data: {
       user: adminUserId,
-      product: product.id,
-      provider: 'paypal',
-      providerTransactionId: `PP_refund_test_${Date.now()}`,
-      status: 'succeeded',
+      pricingPlan: pricingPlan.id,
+      tranzilaTransactionId: `PP_refund_test_${Date.now()}`,
+      tranzilaOrderId: `order_paypal_test_${Date.now()}`,
+      status: 'completed',
       amount: 1000,
       currency: 'ILS',
       tenant: tenantId,
@@ -153,15 +199,15 @@ beforeAll(async () => {
   })
   paypalTransactionId = paypalTx.id
 
-  // Create succeeded stripe transaction for testing refund fields
+  // Create completed stripe transaction for testing refund fields
   const refundFieldsTx = await payload.create({
     collection: 'transactions',
     data: {
       user: adminUserId,
-      product: product.id,
-      provider: 'stripe',
-      providerTransactionId: `cs_refund_fields_test_${Date.now()}`,
-      status: 'succeeded',
+      pricingPlan: pricingPlan.id,
+      tranzilaTransactionId: `cs_refund_fields_test_${Date.now()}`,
+      tranzilaOrderId: `order_fields_test_${Date.now()}`,
+      status: 'completed',
       amount: 2500,
       currency: 'ILS',
       tenant: tenantId,
@@ -175,9 +221,9 @@ beforeAll(async () => {
     collection: 'transactions',
     data: {
       user: adminUserId,
-      product: product.id,
-      provider: 'stripe',
-      providerTransactionId: `cs_refunded_test_${Date.now()}`,
+      pricingPlan: pricingPlan.id,
+      tranzilaTransactionId: `cs_refunded_test_${Date.now()}`,
+      tranzilaOrderId: `order_refunded_test_${Date.now()}`,
       status: 'refunded',
       amount: 1000,
       currency: 'ILS',
@@ -192,9 +238,9 @@ beforeAll(async () => {
     collection: 'transactions',
     data: {
       user: adminUserId,
-      product: product.id,
-      provider: 'stripe',
-      providerTransactionId: `cs_pending_test_${Date.now()}`,
+      pricingPlan: pricingPlan.id,
+      tranzilaTransactionId: `cs_pending_test_${Date.now()}`,
+      tranzilaOrderId: `order_pending_test_${Date.now()}`,
       status: 'pending',
       amount: 1000,
       currency: 'ILS',
@@ -209,14 +255,14 @@ beforeAll(async () => {
     collection: 'transactions',
     data: {
       user: adminUserId,
-      product: product.id,
-      provider: 'stripe',
-      providerTransactionId: `cs_failed_test_${Date.now()}`,
+      pricingPlan: pricingPlan.id,
+      tranzilaTransactionId: `cs_failed_test_${Date.now()}`,
+      tranzilaOrderId: `order_failed_test_${Date.now()}`,
       status: 'failed',
       amount: 1000,
       currency: 'ILS',
       tenant: tenantId,
-      errorMessage: 'Card declined',
+      failureReason: 'Card declined',
     } as any,
     overrideAccess: true,
   })

@@ -1980,6 +1980,10 @@ export interface Transaction {
    */
   refundedAt?: string | null;
   /**
+   * Amount refunded
+   */
+  refundedAmount?: number | null;
+  /**
    * Admin who processed the refund
    */
   refundedBy?: (string | null) | User;
@@ -4563,6 +4567,7 @@ export interface TransactionsSelect<T extends boolean = true> {
   tranzilaResponse?: T;
   failureReason?: T;
   refundedAt?: T;
+  refundedAmount?: T;
   refundedBy?: T;
   createdBy?: T;
   updatedAt?: T;

@@ -142,6 +142,13 @@ export const Transactions: CollectionConfig = {
       },
     },
     {
+      name: 'refundedAmount',
+      type: 'number',
+      admin: {
+        description: 'Amount refunded',
+      },
+    },
+    {
       name: 'refundedBy',
       type: 'relationship',
       relationTo: 'users',

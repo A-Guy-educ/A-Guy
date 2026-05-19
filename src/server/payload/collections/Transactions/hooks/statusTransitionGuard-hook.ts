@@ -2,8 +2,8 @@
  * Status Transition Guard Hook
  *
  * beforeChange hook on Transactions that enforces the status transition table:
- * - pending → succeeded, failed, refunded (all allowed)
- * - succeeded → refunded (only this is allowed)
+ * - pending → completed, failed, refunded (all allowed)
+ * - completed → refunded (only this is allowed)
  * - failed → terminal (no transitions allowed)
  * - refunded → terminal (no transitions allowed)
  *
@@ -18,12 +18,12 @@
 import type { CollectionBeforeChangeHook } from 'payload'
 import { APIError } from 'payload'
 
-type TransactionStatus = 'pending' | 'succeeded' | 'failed' | 'refunded'
+type TransactionStatus = 'pending' | 'completed' | 'failed' | 'refunded'
 
 // Define allowed transitions as a map: fromStatus → Set of allowed toStatuses
 const ALLOWED_TRANSITIONS: Record<TransactionStatus, readonly TransactionStatus[]> = {
-  pending: ['succeeded', 'failed', 'refunded'],
-  succeeded: ['refunded'],
+  pending: ['completed', 'failed', 'refunded'],
+  completed: ['refunded'],
   failed: [],
   refunded: [],
 } as const
