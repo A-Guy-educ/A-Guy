@@ -369,6 +369,9 @@ export async function POST(request: NextRequest) {
           tenant: (product as any).tenant ?? null,
         } as any,
         overrideAccess: true,
+        // checkout does its own usesCount update below; opt the collection's
+        // afterChange hook out to avoid double-incrementing.
+        context: { skipUsesCountHook: true },
       })
 
       // Increment usesCount on the coupon
