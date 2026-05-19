@@ -78,8 +78,15 @@ export async function verifyStripeWebhook(
 
 /**
  * Create a Stripe refund
+ * @param transactionId - Payload transaction document ID (used for idempotency key)
+ * @param providerTransactionId - Stripe payment intent ID
+ * @param amount - Optional refund amount in smallest currency unit
  */
-export async function refundStripe(providerTransactionId: string, amount?: number): Promise<void> {
+export async function refundStripe(
+  transactionId: string,
+  providerTransactionId: string,
+  amount?: number,
+): Promise<void> {
   const stripe = getStripeClient()
   const refundParams: Stripe.RefundCreateParams = {
     payment_intent: providerTransactionId,
@@ -87,7 +94,9 @@ export async function refundStripe(providerTransactionId: string, amount?: numbe
   if (amount !== undefined) {
     refundParams.amount = amount // in smallest currency unit
   }
-  await stripe.refunds.create(refundParams)
+  await stripe.refunds.create(refundParams, {
+    idempotencyKey: `refund-${transactionId}`,
+  })
 }
 
 /**
