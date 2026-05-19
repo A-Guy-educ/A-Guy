@@ -13,6 +13,7 @@ import { adminOnly } from '../access/adminOnly'
 import { authenticated } from '../access/authenticated'
 import { createdByField } from '../fields/createdBy'
 import { tenantField } from '../fields/tenant'
+import { syncPaymentStats } from './Transactions/hooks/syncPaymentStats-hook'
 
 export const Transactions: CollectionConfig = {
   slug: 'transactions',
@@ -32,6 +33,9 @@ export const Transactions: CollectionConfig = {
         beforeDocumentControls: ['@/ui/admin/TransactionEditView#TransactionRefundAction'],
       },
     },
+  },
+  hooks: {
+    afterChange: [syncPaymentStats],
   },
   fields: [
     tenantField,
