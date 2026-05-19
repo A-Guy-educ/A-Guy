@@ -21,7 +21,11 @@ import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication
 // (level != 'light' || scriptStrategy.needsAiFallback).
 // Uses call-count tracking instead of ID pattern — Payload generates UUIDs for
 // exercise IDs which don't contain '-3', so the old ID-based condition never triggered.
-let _vgCallCount = 0
+// Must be vi.hoisted: the vi.mock factory below runs hoisted above imports,
+// so it may only close over hoisted refs. A plain `let` here makes the
+// factory throw at runtime, silently falling back to the REAL variation
+// service → real LLM call → flaky 180s timeout.
+const h = vi.hoisted(() => ({ vgCallCount: 0 }))
 vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
   generateVariation: vi.fn().mockImplementation(
     async (
@@ -31,9 +35,9 @@ vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
       exercise: { id: string; content: { blocks: unknown[] } }
       tokensUsed: { inputTokens: number; outputTokens: number }
     }> => {
-      _vgCallCount++
+      h.vgCallCount++
       // Force failure on the 3rd exercise (call count 3 = index 2)
-      if (_vgCallCount === 3) {
+      if (h.vgCallCount === 3) {
         throw new Error('Forced failure for test')
       }
       return {
@@ -144,7 +148,7 @@ describe('Lesson duplication orchestrator — integration', () => {
   const cleanupDuplicationIds: string[] = []
 
   beforeEach(() => {
-    _vgCallCount = 0
+    h.vgCallCount = 0
   })
 
   beforeAll(async () => {
