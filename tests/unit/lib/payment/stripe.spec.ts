@@ -71,6 +71,7 @@ describe('Stripe Payment Service', () => {
     process.env.STRIPE_WEBHOOK_SECRET = 'whsec_xxx'
     process.env.PAYPAL_CLIENT_ID = 'paypal_client_id_xxx'
     process.env.PAYPAL_CLIENT_SECRET = 'paypal_secret_xxx'
+    process.env.PAYPAL_WEBHOOK_ID = 'paypal_webhook_id_xxx'
     // Reset module to clear singletons
     vi.resetModules()
   })
@@ -113,7 +114,7 @@ describe('Stripe Payment Service', () => {
 
       await expect(
         verifyStripeWebhook(Buffer.from('test payload'), 'test_signature'),
-      ).rejects.toThrow('Missing STRIPE_WEBHOOK_SECRET environment variable')
+      ).rejects.toThrow('Missing required payment environment variables: STRIPE_WEBHOOK_SECRET')
     })
 
     it('should verify webhook payload and signature', async () => {
