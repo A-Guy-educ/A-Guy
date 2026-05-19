@@ -48,13 +48,8 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       depth: 0,
       overrideAccess: true,
     })) as unknown as Record<string, unknown> | null
-  } catch (err: unknown) {
-    if (
-      err &&
-      typeof err === 'object' &&
-      'name' in err &&
-      (err as { name: string }).name === 'NotFound'
-    ) {
+  } catch (err) {
+    if (err instanceof Error && (err.name === 'NotFound' || err.message.includes('Not Found'))) {
       return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
     }
     throw err
