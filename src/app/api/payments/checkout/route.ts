@@ -23,6 +23,7 @@ import { cancelStripeCheckout, createStripeCheckout } from '@/lib/payment/stripe
 const checkoutSchema = z.object({
   productId: z.string().min(1, 'productId_required'),
   provider: z.enum(['stripe', 'paypal']).optional(),
+  couponCode: z.string().max(50).optional(),
 })
 
 export async function POST(request: NextRequest) {
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const { productId, provider: requestedProvider } = parsed.data
+  const { productId, provider: requestedProvider, couponCode } = parsed.data
 
   // 3. Fetch product by ID
   const product = await payload
@@ -140,6 +141,99 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // 8a. Validate coupon if provided
+  let discountedAmount: number | null = null
+  let validatedCoupon: {
+    id: string
+    code: string
+    discountType: 'percentage' | 'fixed'
+    discountValue: number
+  } | null = null
+
+  if (couponCode) {
+    const normalizedCode = couponCode.trim().toUpperCase()
+    const now = new Date()
+
+    // Query coupon by uppercase code (case-insensitive)
+    const coupons = await payload.find({
+      collection: 'coupons',
+      where: {
+        code: { equals: normalizedCode },
+        isActive: { equals: true },
+      },
+      limit: 1,
+      depth: 0,
+      overrideAccess: true,
+    })
+
+    if (coupons.totalDocs === 0) {
+      return NextResponse.json({ success: false, error: 'invalid_coupon' }, { status: 400 })
+    }
+
+    const coupon = coupons.docs[0] as {
+      id: string
+      code: string
+      discountType: 'percentage' | 'fixed'
+      discountValue: number
+      validFrom?: string | null
+      validUntil?: string | null
+      maxUses?: number
+      usesCount?: number
+      applicableProducts?: { id: string }[] | string[]
+    }
+
+    // Check validFrom
+    if (coupon.validFrom && new Date(coupon.validFrom) > now) {
+      return NextResponse.json({ success: false, error: 'invalid_coupon' }, { status: 400 })
+    }
+
+    // Check validUntil
+    if (coupon.validUntil && new Date(coupon.validUntil) < now) {
+      return NextResponse.json({ success: false, error: 'invalid_coupon' }, { status: 400 })
+    }
+
+    // Check maxUses (0 = unlimited)
+    if ((coupon.maxUses ?? 0) > 0 && (coupon.usesCount ?? 0) >= (coupon.maxUses ?? 0)) {
+      return NextResponse.json({ success: false, error: 'invalid_coupon' }, { status: 400 })
+    }
+
+    // Check applicableProducts
+    const applicableProducts = coupon.applicableProducts ?? []
+    const productIds = applicableProducts.map((p) => (typeof p === 'string' ? p : p.id))
+    if (productIds.length > 0 && !productIds.includes(productId)) {
+      return NextResponse.json({ success: false, error: 'invalid_coupon' }, { status: 400 })
+    }
+
+    // Calculate discounted amount
+    const originalAmount = amountInAgorot
+    if (coupon.discountType === 'percentage') {
+      discountedAmount = Math.round(originalAmount * (1 - coupon.discountValue / 100))
+    } else {
+      // fixed: subtract discountValue (already in agorot)
+      discountedAmount = Math.max(0, originalAmount - coupon.discountValue)
+    }
+    // Enforce minimum of 1 agorot
+    discountedAmount = Math.max(1, discountedAmount)
+
+    payload.logger.info(
+      {
+        couponCode: normalizedCode,
+        originalAmount,
+        discountedAmount,
+        discountType: coupon.discountType,
+        discountValue: coupon.discountValue,
+      },
+      'Coupon applied: discount calculated',
+    )
+
+    validatedCoupon = {
+      id: coupon.id,
+      code: normalizedCode,
+      discountType: coupon.discountType,
+      discountValue: coupon.discountValue,
+    }
+  }
+
   // 9. Build URLs for payment provider redirect
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   const successUrl = `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`
@@ -153,7 +247,7 @@ export async function POST(request: NextRequest) {
       providerResult = await createStripeCheckout({
         productId,
         productName,
-        amount: amountInAgorot,
+        amount: discountedAmount ?? amountInAgorot,
         currency: productCurrency as 'ILS' | 'USD' | 'EUR',
         userId: user.id,
         successUrl,
@@ -163,7 +257,7 @@ export async function POST(request: NextRequest) {
       providerResult = await createPayPalOrder({
         productId,
         productName,
-        amount: amountInAgorot,
+        amount: discountedAmount ?? amountInAgorot,
         currency: productCurrency as 'ILS' | 'USD' | 'EUR',
         userId: user.id,
         successUrl,
@@ -193,6 +287,7 @@ export async function POST(request: NextRequest) {
 
   // 11. Create Transaction record with status 'pending'
   let transactionId: string
+  const finalAmount = discountedAmount ?? amountInAgorot
   try {
     const transaction = await payload.create({
       collection: 'transactions',
@@ -202,11 +297,21 @@ export async function POST(request: NextRequest) {
         provider,
         providerTransactionId: providerResult.providerSessionId,
         status: 'pending',
-        amount: amountInAgorot,
+        amount: finalAmount,
         currency: productCurrency.toUpperCase(),
         metadata: {
           itemIds,
           featureKeys,
+          ...(validatedCoupon &&
+            discountedAmount !== null && {
+              appliedCoupon: {
+                code: validatedCoupon.code,
+                discountType: validatedCoupon.discountType,
+                discountValue: validatedCoupon.discountValue,
+                originalAmount: amountInAgorot,
+                discountedAmount,
+              },
+            }),
         },
         successUrl,
         cancelUrl,
@@ -252,10 +357,57 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  // 12a. Record coupon usage if applied
+  if (validatedCoupon) {
+    try {
+      await payload.create({
+        collection: 'coupon-usages',
+        data: {
+          coupon: validatedCoupon.id,
+          transaction: transactionId,
+          user: user.id,
+          tenant: (product as any).tenant ?? null,
+        } as any,
+        overrideAccess: true,
+      })
+
+      // Increment usesCount on the coupon
+      const currentCoupon = await payload.findByID({
+        collection: 'coupons',
+        id: validatedCoupon.id,
+        depth: 0,
+        overrideAccess: true,
+      })
+      await payload.update({
+        collection: 'coupons',
+        id: validatedCoupon.id,
+        data: {
+          usesCount: (currentCoupon?.usesCount ?? 0) + 1,
+        } as any,
+        overrideAccess: true,
+      })
+    } catch (usageError) {
+      // Non-fatal: log but don't fail the checkout
+      payload.logger.error(
+        { usageError, couponId: validatedCoupon.id, transactionId, userId: user.id },
+        'Failed to record coupon usage — checkout still valid',
+      )
+    }
+  }
+
   // 12. Return checkout URL and transaction ID
   return NextResponse.json({
     success: true,
     checkoutUrl: providerResult.checkoutUrl,
     transactionId,
+    ...(validatedCoupon &&
+      discountedAmount !== null && {
+        appliedCoupon: {
+          code: validatedCoupon.code,
+          discountType: validatedCoupon.discountType,
+          discountValue: validatedCoupon.discountValue,
+          discountedAmount,
+        },
+      }),
   })
 }

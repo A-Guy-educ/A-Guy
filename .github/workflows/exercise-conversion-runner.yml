@@ -26,14 +26,17 @@ jobs:
     timeout-minutes: 15
 
     env:
-      NEXT_PUBLIC_SERVER_URL: ${{ vars.NEXT_PUBLIC_SERVER_URL }}
+      # Use the deployed app URL (PREVIEW_URL), not NEXT_PUBLIC_SERVER_URL
+      # which is localhost and unreachable from GitHub runners.
+      NEXT_PUBLIC_SERVER_URL: ${{ vars.PREVIEW_URL }}
       CRON_SECRET: ${{ secrets.CRON_SECRET }}
 
     steps:
       - name: Call runner endpoint
         id: runner
         run: |
-          RESPONSE=$(curl -s -X POST "$NEXT_PUBLIC_SERVER_URL/api/exercises/convert/runner" \
+          BASE_URL="${NEXT_PUBLIC_SERVER_URL%/}"
+          RESPONSE=$(curl -s -X POST "$BASE_URL/api/exercises/convert/runner" \
             -H "Authorization: Bearer $CRON_SECRET" \
             -H "Content-Type: application/json" \
             -w "\n%{http_code}")

@@ -1,3 +1,7 @@
+---
+disabled: true
+---
+
 # Flaky Test Quarantine
 
 ## Job
