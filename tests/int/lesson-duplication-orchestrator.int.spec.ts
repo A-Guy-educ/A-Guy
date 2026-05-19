@@ -126,12 +126,6 @@ async function ensureDefaultTenant(payload: Payload): Promise<string> {
 }
 
 describe('Lesson duplication orchestrator — integration', () => {
-  // Reset the variation service call counter before each test so that forced-failure
-  // exercise detection is isolated per test.
-  beforeEach(() => {
-    _vgCallCount = 0
-  })
-
   let payload: Payload
   let categoryId: string
   let courseId: string
