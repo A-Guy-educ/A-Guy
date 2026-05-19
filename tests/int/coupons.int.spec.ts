@@ -142,11 +142,12 @@ describe.skipIf(!hasDatabaseUrl)('Coupons Collection', () => {
   describe('CRUD operations as admin', () => {
     it('should create a coupon with all fields', async () => {
       const admin = await getAdminUser()
+      const code = `TEST-COUPON-${Date.now()}`
 
       const coupon = await payload.create({
         collection: 'coupons',
         data: {
-          code: `TEST-COUPON-${Date.now()}`,
+          code,
           discountType: 'percentage',
           discountValue: 20,
           currency: 'ILS',
@@ -163,7 +164,7 @@ describe.skipIf(!hasDatabaseUrl)('Coupons Collection', () => {
 
       expect(coupon).toBeDefined()
       expect(coupon.id).toBeDefined()
-      expect(coupon.code).toBe(`TEST-COUPON-${Date.now()}`)
+      expect(coupon.code).toBe(code)
       expect(coupon.discountType).toBe('percentage')
       expect(coupon.discountValue).toBe(20)
       expect(coupon.maxUses).toBe(100)
@@ -173,11 +174,12 @@ describe.skipIf(!hasDatabaseUrl)('Coupons Collection', () => {
 
     it('should create a coupon with minimal required fields', async () => {
       const admin = await getAdminUser()
+      const code = `MINIMAL-${Date.now()}`
 
       const coupon = await payload.create({
         collection: 'coupons',
         data: {
-          code: `MINIMAL-${Date.now()}`,
+          code,
           discountType: 'fixed',
           discountValue: 5000,
           currency: 'ILS',
@@ -193,16 +195,17 @@ describe.skipIf(!hasDatabaseUrl)('Coupons Collection', () => {
 
       expect(coupon).toBeDefined()
       expect(coupon.id).toBeDefined()
-      expect(coupon.code).toBe(`MINIMAL-${Date.now()}`)
+      expect(coupon.code).toBe(code)
     })
 
     it('should read a coupon by ID', async () => {
       const admin = await getAdminUser()
+      const code = `READ-TEST-${Date.now()}`
 
       const created = await payload.create({
         collection: 'coupons',
         data: {
-          code: `READ-TEST-${Date.now()}`,
+          code,
           discountType: 'percentage',
           discountValue: 15,
           currency: 'USD',
@@ -223,7 +226,7 @@ describe.skipIf(!hasDatabaseUrl)('Coupons Collection', () => {
       })
 
       expect(read.id).toBe(created.id)
-      expect(read.code).toBe(`READ-TEST-${Date.now()}`)
+      expect(read.code).toBe(code)
       expect(read.discountValue).toBe(15)
     })
 
@@ -687,6 +690,9 @@ describe.skipIf(!hasDatabaseUrl)('Coupons Collection', () => {
             slug: `test-product-coupon-${Date.now()}`,
             category: categoryId,
             status: 'active',
+            billingType: 'one_time',
+            price: 10000,
+            currency: 'ILS',
           } as any,
           overrideAccess: true,
         })
