@@ -211,10 +211,15 @@ describe('Lesson export endpoint', () => {
     expect(data).toHaveProperty('PNG')
     expect(data).toHaveProperty('svg')
 
-    // No internal fields in the canonical export
+    // No internal lesson fields in the canonical export
     // (The canonical format doesn't include id, _id, __v, slug, origin, etc.)
     expect(body).not.toHaveProperty('lesson')
-    expect(body).not.toHaveProperty('meta')
+    // `meta` carries SVG-render diagnostics for the export (rendered count +
+    // per-block failures) — part of the contract since geometry/axis blocks
+    // are rendered to SVG on export.
+    expect(body).toHaveProperty('meta')
+    expect(typeof body.meta.renderedSvgCount).toBe('number')
+    expect(Array.isArray(body.meta.renderFailures)).toBe(true)
     expect(body.exercises[0]).not.toHaveProperty('id')
     expect(body.exercises[0]).not.toHaveProperty('createdAt')
     expect(body.exercises[0]).not.toHaveProperty('updatedAt')
@@ -286,8 +291,9 @@ describe('Lesson export endpoint', () => {
     const body = await (res as Response).json()
     expect(body.exercises).toHaveLength(0)
     expect(body.lesson_number).toBe('99')
-    // No meta or lesson properties in canonical format
-    expect(body).not.toHaveProperty('meta')
+    // No internal `lesson` wrapper; `meta` (SVG-render diagnostics) is part
+    // of the canonical export contract, present even with zero exercises.
     expect(body).not.toHaveProperty('lesson')
+    expect(body).toHaveProperty('meta')
   })
 })
