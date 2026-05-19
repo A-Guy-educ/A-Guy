@@ -7,13 +7,13 @@ import { fileURLToPath } from 'url'
 import { getServerSideURL } from '@/infra/utils/getURL'
 import { logger } from '@/infra/utils/logger'
 import { AccessCodes } from '@/server/payload/collections/AccessCodes'
-import { Coupons } from '@/server/payload/collections/Coupons'
-import { CouponUsages } from '@/server/payload/collections/CouponUsages'
 import { Categories } from '@/server/payload/collections/Categories'
 import { Chapters } from '@/server/payload/collections/Chapters'
 import { ChatAssets } from '@/server/payload/collections/ChatAssets'
 import { ConfigAuditLogs } from '@/server/payload/collections/ConfigAuditLogs'
 import { ConfigSecrets } from '@/server/payload/collections/ConfigSecrets'
+import { Coupons } from '@/server/payload/collections/Coupons'
+import { CouponUsages } from '@/server/payload/collections/CouponUsages'
 import { ConfigValues } from '@/server/payload/collections/ConfigValues'
 import { ContentPages } from '@/server/payload/collections/ContentPages'
 import { ContextExtractions } from '@/server/payload/collections/ContextExtractions'
@@ -187,6 +187,8 @@ export default buildConfig({
     ConfigValues,
     ConfigAuditLogs,
     Conversations,
+    CouponUsages,
+    Coupons,
     GuestSessions,
     MemoryItems,
     Tenants,
@@ -217,8 +219,6 @@ export default buildConfig({
     AccessCodes,
     Transactions,
     PaymentStats,
-    Coupons,
-    CouponUsages,
     MCPAuditLogs,
   ],
   cors: [getServerSideURL()].filter(Boolean),
