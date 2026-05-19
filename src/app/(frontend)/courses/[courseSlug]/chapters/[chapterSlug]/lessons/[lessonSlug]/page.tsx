@@ -230,6 +230,22 @@ export default async function LessonPage({ params }: LessonPageProps) {
       }
     }
 
+    // Render linked content page body (shown after intro, before exercises)
+    type BlockLike = { blockType: string; spacingAfter?: string | null }
+    const linkedContentPageObj =
+      lesson.contentPage && typeof lesson.contentPage === 'object'
+        ? (lesson.contentPage as import('@/payload-types').ContentPage)
+        : null
+    const linkedContentPageBody =
+      linkedContentPageObj?.body &&
+      Array.isArray(linkedContentPageObj.body) &&
+      linkedContentPageObj.body.length > 0 ? (
+        <RenderBlocks
+          blocks={linkedContentPageObj.body as BlockLike[]}
+          defaultSpacing={linkedContentPageObj.defaultBlockSpacing}
+        />
+      ) : null
+
     // Multi-tab view: show up to 3 tabs (Media / PDF / Interactive) whenever
     // the lesson has at least one exercise with renderable blocks. Media tab
     // only appears when validFiles is non-empty.
@@ -288,6 +304,8 @@ export default async function LessonPage({ params }: LessonPageProps) {
           chatLessonId={lesson.id}
           showChat={showChat}
           formulaSheet={formulaSheet}
+          linkedContentPage={linkedContentPageObj ?? undefined}
+          linkedContentPageBody={linkedContentPageBody}
         />
       </AccessGateProvider>
     )

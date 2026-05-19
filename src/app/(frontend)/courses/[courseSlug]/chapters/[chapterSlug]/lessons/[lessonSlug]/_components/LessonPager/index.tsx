@@ -1,6 +1,6 @@
 'use client'
 
-import type { Exercise, Media as MediaType } from '@/payload-types'
+import type { ContentPage, Exercise, Media as MediaType } from '@/payload-types'
 import type { ResolvedLessonBlock } from '@/server/repos/queries/lesson-blocks'
 import { Button } from '@/ui/web/components/button'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
@@ -60,6 +60,10 @@ interface LessonPagerProps {
    * inside individual exercises (used by the dual-mode lesson view where LaTeX lives
    * at the lesson level). */
   hideLatexBlocks?: boolean
+  /** Content page linked to the lesson — shown after intro, before exercises */
+  linkedContentPage?: ContentPage
+  /** Pre-rendered body for linkedContentPage */
+  linkedContentPageBody?: React.ReactNode
 }
 
 export function LessonPager({
@@ -78,6 +82,8 @@ export function LessonPager({
   formulaSheet,
   headerSlot,
   hideLatexBlocks,
+  linkedContentPage,
+  linkedContentPageBody,
 }: LessonPagerProps) {
   const t = useTranslations('courses')
   const {
@@ -500,6 +506,17 @@ export function LessonPager({
                 <div className="w-12 h-0.5 bg-primary mx-auto rounded-full" />
               </header>
 
+              {linkedContentPage && linkedContentPageBody ? (
+                <div className="bg-card rounded-3xl p-card-padding-lg md:p-10 border border-border/60 shadow-card-hover shadow-muted/50">
+                  <h2 className="text-heading-lg font-medium text-foreground mb-4 text-center">
+                    {linkedContentPage.title}
+                  </h2>
+                  <div className="prose prose-lg max-w-none dark:prose-invert leading-relaxed">
+                    {linkedContentPageBody}
+                  </div>
+                </div>
+              ) : null}
+
               <div className="bg-card rounded-2xl p-card-padding md:p-card-padding-lg border border-border/40 text-center max-w-lg mx-auto">
                 <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-5">
                   <BookOpen className="w-7 h-7 text-primary" />
@@ -532,7 +549,7 @@ export function LessonPager({
                 </div>
 
                 <Button onClick={handleStart} size="lg" className="px-10 rounded-xl cursor-pointer">
-                  {t('exercisesPagerStart')}{' '}
+                  {linkedContentPage ? t('exercisesPagerNext') : t('exercisesPagerStart')}
                   <ChevronLeft className="w-5 h-5 ms-2 rtl:rotate-0 ltr:rotate-180" />
                 </Button>
               </div>

@@ -441,6 +441,19 @@ export const Lessons: CollectionConfig = {
       },
     },
 
+    // Content Page (optional — shown to student after intro, before exercises)
+    {
+      name: 'contentPage',
+      type: 'relationship',
+      relationTo: 'content-pages',
+      maxDepth: 1,
+      index: true,
+      admin: {
+        position: 'sidebar',
+        description: 'Optional content page shown to students after the intro screen',
+      },
+    },
+
     // Content hierarchy navigation (sidebar)
     {
       name: 'contentNavigation',

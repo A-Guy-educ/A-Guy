@@ -1534,11 +1534,85 @@ export interface Lesson {
    */
   formulaSheet?: (string | null) | FormulaSheet;
   /**
+   * Optional content page shown to students after the intro screen
+   */
+  contentPage?: (string | null) | ContentPage;
+  /**
    * User who created this document
    */
   createdBy?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "content-pages".
+ */
+export interface ContentPage {
+  id: string;
+  /**
+   * Tenant scope for this document
+   */
+  tenant: string | Tenant;
+  /**
+   * Content page title
+   */
+  title: string;
+  /**
+   * URL-friendly identifier (auto-generated from title if empty)
+   */
+  slug?: string | null;
+  /**
+   * Page content. Supports rich text, HTML/SVG, media, tables, geometry, and graphs.
+   */
+  body: (ContentBlock | HtmlBlock | MediaBlock | TableBlock | GeometryBlock | GraphBlock)[];
+  /**
+   * Publication status
+   */
+  status: 'draft' | 'published' | 'archived';
+  /**
+   * Whether this content page is currently active
+   */
+  isActive: boolean;
+  /**
+   * Default vertical spacing between layout blocks
+   */
+  defaultBlockSpacing?: ('none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "GeometryBlock".
+ */
+export interface GeometryBlock {
+  spec: string;
+  /**
+   * Override the page default spacing after this block
+   */
+  spacingAfter?: ('inherit' | 'none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'geometryBlock';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "GraphBlock".
+ */
+export interface GraphBlock {
+  spec: string;
+  displaySize?: ('small' | 'medium' | 'large' | 'full') | null;
+  /**
+   * Override the page default spacing after this block
+   */
+  spacingAfter?: ('inherit' | 'none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'graphBlock';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1901,80 +1975,6 @@ export interface LessonDuplication {
   createdBy?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "content-pages".
- */
-export interface ContentPage {
-  id: string;
-  /**
-   * Tenant scope for this document
-   */
-  tenant: string | Tenant;
-  /**
-   * The lesson this content page belongs to
-   */
-  lesson: string | Lesson;
-  /**
-   * Content page title
-   */
-  title: string;
-  /**
-   * URL-friendly identifier (auto-generated from title if empty)
-   */
-  slug?: string | null;
-  /**
-   * Page content. Supports rich text, HTML/SVG, media, tables, geometry, and graphs.
-   */
-  body: (ContentBlock | HtmlBlock | MediaBlock | TableBlock | GeometryBlock | GraphBlock)[];
-  /**
-   * Publication status
-   */
-  status: 'draft' | 'published' | 'archived';
-  /**
-   * Whether this content page is currently active
-   */
-  isActive: boolean;
-  /**
-   * Default vertical spacing between layout blocks
-   */
-  defaultBlockSpacing?: ('none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
-  /**
-   * User who created this document
-   */
-  createdBy?: (string | null) | User;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "GeometryBlock".
- */
-export interface GeometryBlock {
-  spec: string;
-  /**
-   * Override the page default spacing after this block
-   */
-  spacingAfter?: ('inherit' | 'none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'geometryBlock';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "GraphBlock".
- */
-export interface GraphBlock {
-  spec: string;
-  displaySize?: ('small' | 'medium' | 'large' | 'full') | null;
-  /**
-   * Override the page default spacing after this block
-   */
-  spacingAfter?: ('inherit' | 'none' | 'small' | 'medium' | 'large' | 'xlarge') | null;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'graphBlock';
 }
 /**
  * Raw LaTeX extractions from PDFs for exercise creation
@@ -3748,6 +3748,7 @@ export interface LessonsSelect<T extends boolean = true> {
   contentStatusExpiresAt?: T;
   contentStatusLabel?: T;
   formulaSheet?: T;
+  contentPage?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -3807,7 +3808,6 @@ export interface LessonDuplicationsSelect<T extends boolean = true> {
  */
 export interface ContentPagesSelect<T extends boolean = true> {
   tenant?: T;
-  lesson?: T;
   title?: T;
   slug?: T;
   body?:

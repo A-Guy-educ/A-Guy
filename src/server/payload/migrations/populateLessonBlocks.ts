@@ -83,7 +83,9 @@ export async function populateLessonBlocks(
       overrideAccess: true,
       sort: 'createdAt',
     })
-    for (const cp of result.docs) {
+    for (const cp of result.docs as ((typeof result.docs)[0] & {
+      lesson?: string | { id?: string }
+    })[]) {
       const lessonId =
         typeof cp.lesson === 'string' ? cp.lesson : (cp.lesson as { id?: string })?.id
       if (!lessonId) continue
