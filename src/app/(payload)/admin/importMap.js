@@ -15,6 +15,7 @@ import { MetaTitleComponent as MetaTitleComponent_a8a977ebc872c5d5ea7ee689724c08
 import { MetaDescriptionComponent as MetaDescriptionComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
 import { PreviewComponent as PreviewComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
 import { SlugField as SlugField_3817bf644402e67bfe6577f60ef982de } from '@payloadcms/ui'
+import { CouponsListView as CouponsListView_4c2bd615af163e22ea57e98b586263d9 } from '@/ui/admin/Coupons/ListView'
 import { CourseLessonsSorter as CourseLessonsSorter_219effcec2d3303f5f77bc687e0138e9 } from '@/ui/admin/CourseLessonsSorter'
 import { TranslateCourseAction as TranslateCourseAction_5e03fe73ee4379dfd96d492849856d43 } from '@/ui/admin/TranslationButton'
 import { CourseCascadeDelete as CourseCascadeDelete_8b707dd02fbf8886630a64bffcae6998 } from '@/ui/admin/CascadeDeleteButton'
@@ -47,7 +48,7 @@ import { ProductsSaveButton as ProductsSaveButton_bd850752e7866f72b743e2e0c1b129
 import { ProductsEditView as ProductsEditView_ff3c2128c868d33a5de1972e5b7e8f8a } from '@/ui/admin/Products/EditView'
 import { TransactionStatusCell as TransactionStatusCell_6b7b08e7fddc3ba187c2fa7390e3cb99 } from '@/ui/admin/TransactionStatusCell'
 import { TransactionRefundAction as TransactionRefundAction_e5bfc69413b21cd5f23c10fce4cae960 } from '@/ui/admin/TransactionEditView'
-import { CouponsListView as CouponsListView_4c2bd615af163e22ea57e98b586263d9 } from '@/ui/admin/Coupons/ListView'
+import { TransactionPaymentDetail as TransactionPaymentDetail_e5bfc69413b21cd5f23c10fce4cae960 } from '@/ui/admin/TransactionEditView'
 import { LinkToDoc as LinkToDoc_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloadcms/plugin-search/client'
 import { ReindexButton as ReindexButton_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloadcms/plugin-search/client'
 import { RowLabel as RowLabel_49a0f2da415e33c790acf24cb6dd5091 } from '@/ui/admin/Header'
@@ -79,6 +80,7 @@ export const importMap = {
   "@payloadcms/plugin-seo/client#MetaDescriptionComponent": MetaDescriptionComponent_a8a977ebc872c5d5ea7ee689724c0860,
   "@payloadcms/plugin-seo/client#PreviewComponent": PreviewComponent_a8a977ebc872c5d5ea7ee689724c0860,
   "@payloadcms/ui#SlugField": SlugField_3817bf644402e67bfe6577f60ef982de,
+  "@/ui/admin/Coupons/ListView#CouponsListView": CouponsListView_4c2bd615af163e22ea57e98b586263d9,
   "@/ui/admin/CourseLessonsSorter#CourseLessonsSorter": CourseLessonsSorter_219effcec2d3303f5f77bc687e0138e9,
   "@/ui/admin/TranslationButton#TranslateCourseAction": TranslateCourseAction_5e03fe73ee4379dfd96d492849856d43,
   "@/ui/admin/CascadeDeleteButton#CourseCascadeDelete": CourseCascadeDelete_8b707dd02fbf8886630a64bffcae6998,
@@ -111,7 +113,7 @@ export const importMap = {
   "@/ui/admin/Products/EditView#ProductsEditView": ProductsEditView_ff3c2128c868d33a5de1972e5b7e8f8a,
   "@/ui/admin/TransactionStatusCell#TransactionStatusCell": TransactionStatusCell_6b7b08e7fddc3ba187c2fa7390e3cb99,
   "@/ui/admin/TransactionEditView#TransactionRefundAction": TransactionRefundAction_e5bfc69413b21cd5f23c10fce4cae960,
-  "@/ui/admin/Coupons/ListView#CouponsListView": CouponsListView_4c2bd615af163e22ea57e98b586263d9,
+  "@/ui/admin/TransactionEditView#TransactionPaymentDetail": TransactionPaymentDetail_e5bfc69413b21cd5f23c10fce4cae960,
   "@payloadcms/plugin-search/client#LinkToDoc": LinkToDoc_aead06e4cbf6b2620c5c51c9ab283634,
   "@payloadcms/plugin-search/client#ReindexButton": ReindexButton_aead06e4cbf6b2620c5c51c9ab283634,
   "@/ui/admin/Header#RowLabel": RowLabel_49a0f2da415e33c790acf24cb6dd5091,
