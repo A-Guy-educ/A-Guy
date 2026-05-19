@@ -4,8 +4,9 @@
  * POST /api/webhooks/paypal
  *
  * Verifies PayPal webhook signature, updates Transaction status, and grants
- * entitlements on successful payment. Always returns 200 to satisfy PayPal's
- * requirement for fast acknowledgment.
+ * entitlements on successful payment. Returns 400 for bad signatures (no retry),
+ * 500 for transient errors (provider will retry), and 200 for downstream
+ * processing errors that should not be retried.
  *
  * @fileType api-route
  * @domain payments
@@ -14,6 +15,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { ObjectId } from 'mongodb'
 
 import { getPayload } from 'payload'
 import config from '@payload-config'
@@ -60,12 +62,40 @@ export async function POST(request: NextRequest) {
   try {
     const isValid = await verifyPayPalWebhook(body, headers)
     if (!isValid) {
-      payload.logger.error('PayPal webhook signature verification failed')
-      return NextResponse.json({ received: true }, { status: 200 })
+      const sourceIp =
+        request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+      const bodySnippet = JSON.stringify(body).slice(0, 100)
+      payload.logger.warn(
+        { sourceIp, bodySnippet },
+        'PayPal webhook signature verification failed — returning 400',
+      )
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
     }
   } catch (err) {
-    payload.logger.error({ error: err }, 'PayPal webhook signature verification error')
-    return NextResponse.json({ received: true }, { status: 200 })
+    const sourceIp =
+      request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+    const bodySnippet = JSON.stringify(body).slice(0, 100)
+
+    const errorMessage = err instanceof Error ? err.message : String(err)
+
+    // Permanent errors (bad config or malformed headers) → 400, PayPal will not retry
+    if (
+      errorMessage.includes('Missing PAYPAL_WEBHOOK_ID') ||
+      errorMessage.includes('Missing required PayPal webhook headers')
+    ) {
+      payload.logger.error(
+        { error: err, sourceIp, bodySnippet },
+        'PayPal webhook misconfiguration — returning 400',
+      )
+      return NextResponse.json({ error: 'Invalid webhook configuration' }, { status: 400 })
+    }
+
+    // Transient error (network issue calling PayPal verify API) → 500, PayPal will retry
+    payload.logger.error(
+      { error: err, sourceIp, bodySnippet },
+      'PayPal webhook signature verification threw transient error — returning 500',
+    )
+    return NextResponse.json({ error: 'Verification failed' }, { status: 500 })
   }
 
   // 4. Route event by type
@@ -80,6 +110,102 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ received: true }, { status: 200 })
+}
+
+/**
+ * Consumes a coupon atomically on successful payment.
+ *
+ * Uses MongoDB atomic $inc with a conditional filter to prevent race conditions
+ * when multiple concurrent checkouts compete for the same limited-use coupon.
+ *
+ * The coupon-usages row is created only if the atomic increment succeeds,
+ * and the afterChange hook is skipped via context to avoid double-incrementing.
+ *
+ * @param payload - Payload instance
+ * @param transaction - The succeeded transaction with appliedCoupon in metadata
+ */
+async function consumeCouponOnPayment(
+  payload: Awaited<ReturnType<typeof getPayload>>,
+  transaction: {
+    id: string
+    metadata?: {
+      appliedCoupon?: {
+        code: string
+        discountType: string
+        discountValue: number
+        originalAmount?: number
+        discountedAmount?: number
+      }
+    } | null
+    user?: string | { id: string }
+    product?: string | { id: string }
+  },
+): Promise<void> {
+  const appliedCoupon = transaction.metadata?.appliedCoupon
+  if (!appliedCoupon) return
+
+  // Find the coupon by code
+  const coupons = await payload.find({
+    collection: 'coupons',
+    where: { code: { equals: appliedCoupon.code } },
+    limit: 1,
+    depth: 0,
+    overrideAccess: true,
+  })
+
+  if (coupons.totalDocs === 0) {
+    payload.logger.warn({ code: appliedCoupon.code }, 'Coupon not found for consumption')
+    return
+  }
+
+  const coupon = coupons.docs[0] as {
+    id: string
+    maxUses?: number
+    usesCount?: number
+    tenant?: string | { id: string } | null
+  }
+
+  const userId = typeof transaction.user === 'object' ? transaction.user.id : transaction.user
+
+  // Atomic increment: use $inc with $expr filter to check usesCount < maxUses
+  // This prevents race conditions where two concurrent payments could both pass the check
+  const couponsCollection = payload.db.collections['coupons']
+  const filter: Record<string, unknown> = { _id: new ObjectId(coupon.id) }
+
+  // Only add maxUses filter if maxUses > 0 (0 means unlimited)
+  if ((coupon.maxUses ?? 0) > 0) {
+    filter.$expr = { $lt: ['$usesCount', '$maxUses'] }
+  }
+
+  const result = await couponsCollection.updateOne(filter, { $inc: { usesCount: 1 } })
+
+  if (result.modifiedCount === 0) {
+    // Coupon is exhausted (usesCount >= maxUses or doesn't exist)
+    payload.logger.warn(
+      { couponId: coupon.id, code: appliedCoupon.code },
+      'Coupon exhausted — payment succeeded but coupon not consumed',
+    )
+    return
+  }
+
+  // Create coupon-usages row (skip the afterChange hook since we did the increment manually)
+  await payload.create({
+    collection: 'coupon-usages',
+    data: {
+      coupon: coupon.id,
+      transaction: transaction.id,
+      user: userId,
+      tenant: coupon.tenant ?? null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any,
+    context: { skipUsesCountHook: true },
+    overrideAccess: true,
+  })
+
+  payload.logger.info(
+    { couponId: coupon.id, code: appliedCoupon.code, transactionId: transaction.id },
+    'Coupon consumed atomically on payment success',
+  )
 }
 
 async function handleEvent(
@@ -133,6 +259,17 @@ async function handleEvent(
           'Failed to grant product entitlements',
         )
       }
+
+      // Consume coupon atomically (if applied)
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await consumeCouponOnPayment(payload, transaction as any)
+      } catch (err) {
+        payload.logger.error(
+          { error: err, transactionId: transaction.id },
+          'Failed to consume coupon',
+        )
+      }
       break
     }
 
@@ -172,6 +309,17 @@ async function handleEvent(
         data: { status: 'succeeded' },
         overrideAccess: true,
       })
+
+      // Consume coupon atomically (if applied)
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await consumeCouponOnPayment(payload, transaction as any)
+      } catch (err) {
+        payload.logger.error(
+          { error: err, transactionId: transaction.id },
+          'Failed to consume coupon',
+        )
+      }
       break
     }
 

@@ -16,9 +16,34 @@ worker: cto
 
 Each tick, look at every open PR, pick at most one repair per PR (by the
 priority order below), and either recommend it or — if its verb has
-graduated in the trust ledger — dispatch it. All authority, scope limits,
-and comment formats are defined by your worker persona; this job defines
-only the per-tick procedure and state.
+graduated in the trust ledger — dispatch it. The CTO persona defines only
+*who* runs this; all authority, scope limits, and comment formats below
+belong to **this job**.
+
+## Authority — the trust ledger
+
+This job is **advisory by default**. Authority over each verb is governed
+by the operator's trust ledger (the `kody:cto-decisions` issue):
+
+- A verb marked `"auto"` has **graduated** — you may dispatch it yourself
+  this tick.
+- `"ask"`, missing, no ledger, parse failure, or any doubt → **not
+  graduated**: recommend and wait. Fail safe — when in doubt, ask.
+- Each verb graduates independently (`fix-ci` being `"auto"` says nothing
+  about `sync`/`resolve`). A single Reject on a verb resets only that
+  verb to `"ask"`. You only ever *read* `mode`; the dashboard owns the
+  graduation math.
+
+## Scope (hard limits)
+
+- The only actions this job may ever take are `@kody fix-ci|sync|resolve
+  --pr <n>`, and auto only for the specific verb the ledger marks
+  `"auto"`.
+- No `merge`, `approve`, `execute`, `qa-review`, `close`, `revert`,
+  `abort`, assign, or label — entirely out of scope here.
+- Never edit, create, or delete any file in the working tree. Never
+  `git commit`, `git push`, or open a PR. The only write path is a
+  `gh pr comment`.
 
 ### Enumerate
 
@@ -41,8 +66,8 @@ gh issue list --state open --label kody:cto-decisions --limit 5 \
 Take the lowest-numbered match, find the fenced ```json block between
 `<!-- kody-cto-decisions:start -->` and `<!-- kody-cto-decisions:end -->`,
 and read `actions.<verb>.mode` for each of `fix-ci`, `sync`, `resolve`.
-Interpret `mode` exactly as your persona's "Authority — the trust ledger"
-section dictates (auto → may self-dispatch; anything else → recommend).
+Interpret `mode` exactly as the **Authority — the trust ledger** section
+above dictates (auto → may self-dispatch; anything else → recommend).
 
 ### Detect the repair (priority order — first match wins, one per PR)
 
@@ -71,11 +96,43 @@ Let `<verb>` be the detected primitive and `<n>` the PR number; the command
 is always `@kody <verb> --pr <n>`.
 
 - **Verb not graduated** → post one recommendation comment on PR `<n>`
-  (use your persona's recommendation format). Stage → `<verb>-recommended`.
-- **Verb graduated** → dispatch it (use your persona's auto-run format).
+  (use the recommendation format below). Stage → `<verb>-recommended`.
+- **Verb graduated** → dispatch it (use the auto-run format below).
   Stage → `<verb>-auto`. Notify, not ask — do not wait. Still honour the
   dedup ledger: never auto-run the same repair on the same PR twice for
   the same fingerprint.
+
+## Comment formats
+
+**Recommendation** (verb not graduated). One terse, machine-greppable
+comment. It MUST `@`-mention the operator on the first line (that mention
+is what routes it into the dashboard inbox + push) and carry the exact
+command on a single `kody-cmd` line (that is what the inbox **Approve**
+button posts verbatim):
+
+```
+@aguyaharonyair 🧭 **CTO recommendation** — `<verb>`
+
+<one or two sentences: what's wrong with PR #<n> and what confirming will do>
+
+<!-- kody-cmd: @kody <verb> --pr <n> -->
+
+_Confirm or dismiss this in the dashboard inbox. The CTO will not act on its own._
+```
+
+**Auto-run** (verb graduated). Post `@kody <verb> --pr <n>` on the PR,
+then a **separate, notify-only** comment that @-mentions the operator:
+
+```
+@aguyaharonyair 🧭 **CTO auto-ran** — `<verb>`
+
+Ran `@kody <verb> --pr <n>` (<one-line reason>). Graduated: you approved
+`<verb>` 10 times running. A **Reject** on any `<verb>` returns me to asking.
+```
+
+This is notify, not ask — do not wait. `<verb>` is always one of
+`fix-ci`, `sync`, `resolve`; the `kody-cmd` / dispatch line is a single
+line starting with `@kody`.
 
 ## Allowed Commands
 
@@ -91,8 +148,8 @@ is always `@kody <verb> --pr <n>`.
 
 ## Restrictions
 
-Your worker persona's scope/hard-limit rules apply in full and win over
-anything here. In addition, per-tick:
+The **Scope (hard limits)** section above applies in full. In addition,
+per-tick:
 
 - One comment per PR per tick, and only when the repair is **new**
   (fingerprint changed — see State). Re-posting every 15 minutes is the
