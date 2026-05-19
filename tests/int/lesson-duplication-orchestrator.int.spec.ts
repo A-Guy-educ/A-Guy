@@ -15,31 +15,17 @@ import config from '@payload-config'
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
-// Mock AiVariationStrategy to return empty blocks — structural validation passes
-// (empty blocks → no failures from validateExerciseStructural), but semantic
-// validation will reject them (empty content), causing processExercise to
-// return null and orchestrator to set status='needs_review'.
-// The mock is applied at the router module level since AiVariationStrategy
-// is defined locally in router.ts and used internally by runStrategy.
-vi.mock('@/server/services/lesson-duplication/strategies/router', (importOriginal) => {
-  const actual =
-    importOriginal<typeof import('@/server/services/lesson-duplication/strategies/router')>()
-  return {
-    ...actual,
-    AiVariationStrategy: class MockAiVariationStrategy {
-      async apply(
-        exercise: unknown,
-        _level: unknown,
-        _subject?: unknown,
-      ): Promise<{ exercise: unknown }> {
-        // Return exercise with empty blocks — fails semantic validation downstream
-        return { exercise: { ...(exercise as object), content: { blocks: [] } } }
-      }
-    },
-  }
-})
-
-let _vgCallCount = 0
+// Mock the variation service so AiVariationStrategy (used for medium/deep level)
+// does not make real LLM calls in the integration test environment.
+// The variation service is only called when level != 'none' &&
+// (level != 'light' || scriptStrategy.needsAiFallback).
+// Uses call-count tracking instead of ID pattern — Payload generates UUIDs for
+// exercise IDs which don't contain '-3', so the old ID-based condition never triggered.
+// Must be vi.hoisted: the vi.mock factory below runs hoisted above imports,
+// so it may only close over hoisted refs. A plain `let` here makes the
+// factory throw at runtime, silently falling back to the REAL variation
+// service → real LLM call → flaky 180s timeout.
+const h = vi.hoisted(() => ({ vgCallCount: 0 }))
 vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
   generateVariation: vi.fn().mockImplementation(
     async (
@@ -49,9 +35,9 @@ vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
       exercise: { id: string; content: { blocks: unknown[] } }
       tokensUsed: { inputTokens: number; outputTokens: number }
     }> => {
-      _vgCallCount++
+      h.vgCallCount++
       // Force failure on the 3rd exercise (call count 3 = index 2)
-      if (_vgCallCount === 3) {
+      if (h.vgCallCount === 3) {
         throw new Error('Forced failure for test')
       }
       return {
@@ -151,7 +137,7 @@ describe('Lesson duplication orchestrator — integration', () => {
   const cleanupDuplicationIds: string[] = []
 
   beforeEach(() => {
-    _vgCallCount = 0
+    h.vgCallCount = 0
   })
 
   beforeAll(async () => {
