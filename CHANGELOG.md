@@ -6387,6 +6387,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- #1698: Prevent invalid Transaction status transitions via beforeChange … ([#1702](https://github.com/A-Guy-educ/A-Guy/pull/1702)) — @aguyaharonyair
 - #1696: Pass idempotencyKey to stripe.refunds.create ([#1701](https://github.com/A-Guy-educ/A-Guy/pull/1701)) — @aguyaharonyair
 - #1691: Render geometry / axis blocks to SVG strings in lesson export ([#1693](https://github.com/A-Guy-educ/A-Guy/pull/1693)) — @aguyaharonyair
 - fix(admin): Regenerate importMap for TransactionPaymentDetail ([#1700](https://github.com/A-Guy-educ/A-Guy/pull/1700)) — @aguyshayb
