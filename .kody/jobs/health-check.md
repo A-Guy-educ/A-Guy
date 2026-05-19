@@ -1,5 +1,6 @@
 ---
 disabled: true
+worker: kody
 ---
 
 # Kody Health Check
