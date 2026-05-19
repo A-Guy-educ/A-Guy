@@ -94,12 +94,14 @@ describe('composeSystemInstructions — no solution/answer leak (audit F5)', () 
     const out = composeSystemInstructions(
       [],
       'You are a tutor.',
-      undefined,
-      undefined,
-      undefined,
-      undefined,
+      undefined, // teacherProfileBlock
+      undefined, // agentBehaviorBlock
+      undefined, // lessonContextBlock
+      undefined, // lessonContextText
+      undefined, // courseContextText
       exercises,
-      false,
+      undefined, // userContextBlock
+      false, // hasImageAttached
     )
 
     // Visible content reaches the prompt
