@@ -6387,6 +6387,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- fix(admin): Regenerate importMap for TransactionPaymentDetail ([#1700](https://github.com/A-Guy-educ/A-Guy/pull/1700)) — @aguyshayb
 - #1645: Build admin payment detail view ([#1674](https://github.com/A-Guy-educ/A-Guy/pull/1674)) — @aguyaharonyair
 - #1644: Add revenue and transaction widgets to admin dashboard UI ([#1653](https://github.com/A-Guy-educ/A-Guy/pull/1653)) — @aguyaharonyair
 - #1642: Create PaymentStats Payload collection ([#1651](https://github.com/A-Guy-educ/A-Guy/pull/1651)) — @aguyaharonyair
