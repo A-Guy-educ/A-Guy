@@ -189,7 +189,7 @@ function isContextBlock(block: { type: string }): boolean {
  * @param seed    Optional seed for reproducibility; defaults to 137 (the same
  *                default used by selectSectionsScaled)
  */
- 
+
 export function selectSectionsForVariation<T extends { type: string }>(
   blocks: T[],
   max = 5,
