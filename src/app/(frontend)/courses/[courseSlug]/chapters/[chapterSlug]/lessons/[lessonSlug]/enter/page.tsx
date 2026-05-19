@@ -3,6 +3,7 @@ import '@/infra/config/server-init'
 import { getSystemLocale } from '@/i18n/server-locale'
 import { isValidContentLocale } from '@/server/payload/fields/contentLocale'
 import { queryCourseBySlug } from '@/server/repos/queries/courses'
+import { queryLessonBlocks } from '@/server/repos/queries/lesson-blocks'
 import { queryLessonBySlug } from '@/server/repos/queries/lessons'
 import { queryUserProgressByGrade } from '@/server/repos/queries/userProgress'
 import { getAuthenticatedUserServer } from '@/server/utils/access-gate-server'
@@ -73,6 +74,10 @@ export default async function LessonEnterPage({ params }: LessonEnterPageProps) 
     notFound()
   }
 
+  // Fetch lesson blocks to count exercises for progress display
+  const lessonBlocks = await queryLessonBlocks({ lessonId: lesson.id })
+  const totalExercises = lessonBlocks.filter((b) => b.type === 'exercise').length
+
   const lessonChapter = typeof lesson.chapter === 'string' ? null : lesson.chapter
   const lessonCourseId = lessonChapter
     ? typeof lessonChapter.course === 'string'
@@ -114,14 +119,27 @@ export default async function LessonEnterPage({ params }: LessonEnterPageProps) 
     }
   }
 
-  // Resolve display modes
+  // Resolve display modes — intersect availableDisplayModes with visibleRenderers
+  // so only modes that are actually enabled for this lesson appear in the toggle.
   const availableModesRaw = lesson.availableDisplayModes
+  const visibleRenderersRaw = lesson.visibleRenderers
   const availableModes: DisplayMode[] =
     Array.isArray(availableModesRaw) && availableModesRaw.length > 0
       ? (availableModesRaw as DisplayMode[])
       : ['interactive']
 
-  const defaultMode: DisplayMode = availableModes[0]
+  // Intersect with visibleRenderers (e.g., if admin disabled 'pdf', exclude it)
+  const effectiveModes = availableModes.filter(
+    (m) =>
+      !visibleRenderersRaw ||
+      (Array.isArray(visibleRenderersRaw) &&
+        visibleRenderersRaw.includes(m as 'media' | 'pdf' | 'interactive')),
+  ) as DisplayMode[]
+
+  const effectiveModesNonEmpty: DisplayMode[] =
+    effectiveModes.length > 0 ? effectiveModes : ['interactive']
+  const defaultMode: DisplayMode =
+    effectiveModesNonEmpty.length > 0 ? effectiveModesNonEmpty[0] : 'interactive'
 
   // Resolve creator info
   const createdBy = lesson.createdBy
@@ -138,7 +156,7 @@ export default async function LessonEnterPage({ params }: LessonEnterPageProps) 
         type: lesson.type,
         description: lesson.description ?? null,
         estimatedTime: lesson.estimatedTime ?? 30,
-        availableDisplayModes: availableModes,
+        availableDisplayModes: effectiveModesNonEmpty,
         createdBy: createdBy,
       }}
       courseSlug={courseSlug}
@@ -146,7 +164,8 @@ export default async function LessonEnterPage({ params }: LessonEnterPageProps) 
       lessonSlug={lessonSlug}
       isNewUser={isNewUser}
       progressPercent={progressPercent}
-      availableModes={availableModes}
+      totalExercises={totalExercises}
+      availableModes={effectiveModesNonEmpty}
       defaultMode={defaultMode}
       gradeLevel={course.courseLabel}
     />

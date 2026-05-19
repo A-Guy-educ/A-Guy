@@ -26,6 +26,8 @@ interface LessonEntryPageProps {
   lessonSlug: string
   isNewUser: boolean
   progressPercent: number
+  /** Total number of exercises in the lesson (0 if not yet fetched). */
+  totalExercises: number
   availableModes: DisplayMode[]
   defaultMode: DisplayMode
   gradeLevel: string
@@ -143,12 +145,26 @@ export function LessonEntryPage(props: LessonEntryPageProps) {
           </div>
 
           {/* Progress Bar (Returning User) */}
-          {!props.isNewUser && (
+          {!props.isNewUser && props.totalExercises > 0 && (
             <div className="flex flex-col gap-2">
               <Progress value={props.progressPercent} />
               <p className="text-body-sm text-muted-foreground">
-                {tc('completionPercent').replace('{percent}', String(props.progressPercent))}
+                {Math.round((props.totalExercises * props.progressPercent) / 100)} /{' '}
+                {props.totalExercises} {tc('exercises')}
               </p>
+              {props.totalExercises -
+                Math.round((props.totalExercises * props.progressPercent) / 100) >
+                0 && (
+                <p className="text-body-sm text-muted-foreground">
+                  {tc('remainingExercises').replace(
+                    '{count}',
+                    String(
+                      props.totalExercises -
+                        Math.round((props.totalExercises * props.progressPercent) / 100),
+                    ),
+                  )}
+                </p>
+              )}
             </div>
           )}
 

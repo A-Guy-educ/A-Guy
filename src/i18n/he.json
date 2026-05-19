@@ -366,7 +366,8 @@
     "restartPractice": "התחל תרגול מחדש",
     "continueExam": "חזור לבחינה",
     "restartExam": "התחל בחינה מחדש",
-    "completionPercent": "השלמת {percent}% מהשיעור"
+    "completionPercent": "השלמת {percent}% מהשיעור",
+    "remainingExercises": "נשארו עוד {count} תרגילים"
   },
   "homepage": {
     "nav": {

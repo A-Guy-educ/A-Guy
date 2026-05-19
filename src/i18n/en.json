@@ -366,7 +366,8 @@
     "restartPractice": "Restart Practice",
     "continueExam": "Return to Exam",
     "restartExam": "Restart Exam",
-    "completionPercent": "You completed {percent}% of this lesson"
+    "completionPercent": "You completed {percent}% of this lesson",
+    "remainingExercises": "{count} more exercises remaining"
   },
   "homepage": {
     "nav": {
