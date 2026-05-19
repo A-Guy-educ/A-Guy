@@ -90,11 +90,17 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: 'Refund operation failed' }, { status: 500 })
   }
 
-  // 6. Update status to refunded
+  // 6. Update status to refunded with audit fields
   await payload.update({
     collection: 'transactions',
     id,
-    data: { status: 'refunded' },
+    data: {
+      status: 'refunded',
+      refundedAmount: amount,
+      refundedBy: authResult.user.id,
+      refundedAt: new Date().toISOString(),
+    },
+    context: { skipTransitionGuard: false },
     overrideAccess: true,
   })
 
