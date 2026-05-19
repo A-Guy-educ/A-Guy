@@ -56,6 +56,24 @@ interface Strings {
   deletedCourse: string
   loading: (what: string) => string
   failedToLoad: (what: string) => string
+
+  // Revenue & transactions
+  revenueAndTransactions: string
+  totalRevenue: string
+  refunds: string
+  failedPayments: string
+  successRate: string
+  topProducts: string
+  noTransactionsYet: string
+  recentTransactions: string
+  transaction: string
+  amount: string
+  status: string
+  user: string
+  product: string
+  date: string
+  viewAll: string
+  refundRate: string
 }
 
 const EN: Strings = {
@@ -112,6 +130,24 @@ const EN: Strings = {
   deletedCourse: 'Deleted course',
   loading: (what) => `Loading ${what}...`,
   failedToLoad: (what) => `Failed to load ${what}`,
+
+  // Revenue & transactions
+  revenueAndTransactions: 'Revenue & Transactions',
+  totalRevenue: 'Total Revenue',
+  refunds: 'Refunds',
+  failedPayments: 'Failed Payments',
+  successRate: 'Success Rate',
+  topProducts: 'Top Products',
+  noTransactionsYet: 'No transactions yet',
+  recentTransactions: 'Recent Transactions',
+  transaction: 'Transaction',
+  amount: 'Amount',
+  status: 'Status',
+  user: 'User',
+  product: 'Product',
+  date: 'Date',
+  viewAll: 'View all',
+  refundRate: 'Refund Rate',
 }
 
 const HE: Strings = {
@@ -167,6 +203,24 @@ const HE: Strings = {
   deletedCourse: 'קורס שנמחק',
   loading: (what) => `טוען ${what}...`,
   failedToLoad: (what) => `טעינת ${what} נכשלה`,
+
+  // Revenue & transactions
+  revenueAndTransactions: 'הכנסות ועסקאות',
+  totalRevenue: 'סך הכנסות',
+  refunds: 'החזרים',
+  failedPayments: 'תשלומים שנכשלו',
+  successRate: 'שיעור הצלחה',
+  topProducts: 'מוצרים מובילים',
+  noTransactionsYet: 'אין עסקאות עדיין',
+  recentTransactions: 'עסקאות אחרונות',
+  transaction: 'עסקה',
+  amount: 'סכום',
+  status: 'סטטוס',
+  user: 'משתמש',
+  product: 'מוצר',
+  date: 'תאריך',
+  viewAll: 'הצג הכל',
+  refundRate: 'שיעור החזר',
 }
 
 export function getStrings(lang: string): Strings {

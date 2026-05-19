@@ -357,44 +357,6 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // 12a. Record coupon usage if applied
-  if (validatedCoupon) {
-    try {
-      await payload.create({
-        collection: 'coupon-usages',
-        data: {
-          coupon: validatedCoupon.id,
-          transaction: transactionId,
-          user: user.id,
-          tenant: (product as any).tenant ?? null,
-        } as any,
-        overrideAccess: true,
-      })
-
-      // Increment usesCount on the coupon
-      const currentCoupon = await payload.findByID({
-        collection: 'coupons',
-        id: validatedCoupon.id,
-        depth: 0,
-        overrideAccess: true,
-      })
-      await payload.update({
-        collection: 'coupons',
-        id: validatedCoupon.id,
-        data: {
-          usesCount: (currentCoupon?.usesCount ?? 0) + 1,
-        } as any,
-        overrideAccess: true,
-      })
-    } catch (usageError) {
-      // Non-fatal: log but don't fail the checkout
-      payload.logger.error(
-        { usageError, couponId: validatedCoupon.id, transactionId, userId: user.id },
-        'Failed to record coupon usage — checkout still valid',
-      )
-    }
-  }
-
   // 12. Return checkout URL and transaction ID
   return NextResponse.json({
     success: true,
