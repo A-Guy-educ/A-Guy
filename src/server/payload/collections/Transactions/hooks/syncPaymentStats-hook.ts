@@ -37,17 +37,9 @@ export const syncPaymentStats: CollectionAfterChangeHook = async ({
   const currentStatus = doc.status as string | undefined
   const prevStatus = previousDoc?.status as string | undefined
 
-  req.payload.logger.info(
-    { docId: doc.id, operation, prevStatus, currentStatus },
-    '[syncPaymentStats] hook fired',
-  )
-
-  // Guard: no status change since the previous version of this doc — prevents
-  // double-counting on update operations where the status hasn't changed AND
-  // covers the case where Payload fires afterChange more than once for a single
-  // create (the 2nd fire reports previousDoc.status == doc.status, which a pure
-  // operation==='create' first fire never does, because previousDoc is undefined).
-  if (prevStatus != null && prevStatus === currentStatus) {
+  // Guard: no status change (already counted) — prevents double-counting on
+  // update operations where the status hasn't actually changed
+  if (operation !== 'create' && prevStatus === currentStatus) {
     return doc
   }
 

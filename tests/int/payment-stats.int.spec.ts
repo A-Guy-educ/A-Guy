@@ -1,4 +1,5 @@
 // @vitest-environment node
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Integration tests: PaymentStats collection and syncPaymentStats hook
  *
@@ -21,7 +22,7 @@
 
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 import { startMongoContainer, stopMongoContainer } from '@/infra/utils/test/mongodb-container'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
@@ -84,6 +85,41 @@ afterAll(async () => {
 })
 
 describe('PaymentStats syncPaymentStats hook', () => {
+  // Bulk clean payment_stats AND transactions before each test. The mongo
+  // container is shared across test files (db name "test"), so prior files
+  // can leave residue. afterEach alone leaves the FIRST test in this file
+  // exposed to that pollution.
+  const wipeState = async () => {
+    try {
+      const psDocs = await payload.find({
+        collection: 'payment_stats',
+        depth: 0,
+        overrideAccess: true,
+        limit: 1000,
+      })
+      for (const doc of psDocs.docs) {
+        await payload.delete({ collection: 'payment_stats', id: doc.id, overrideAccess: true })
+      }
+    } catch {
+      /* ignore */
+    }
+    try {
+      const txDocs = await payload.find({
+        collection: 'transactions',
+        depth: 0,
+        overrideAccess: true,
+        limit: 1000,
+      })
+      for (const doc of txDocs.docs) {
+        await payload.delete({ collection: 'transactions', id: doc.id, overrideAccess: true })
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  beforeEach(wipeState)
+
   afterEach(async () => {
     // Clean up transactions and payment_stats after each test
     try {
@@ -228,7 +264,7 @@ describe('PaymentStats syncPaymentStats hook', () => {
     })
 
     // Same date+currency, second tx
-    const tx2 = await payload.create({
+    const _tx2 = await payload.create({
       collection: 'transactions',
       data: {
         user: userId,
