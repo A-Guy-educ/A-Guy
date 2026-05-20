@@ -239,32 +239,8 @@ async function handleEvent(
         return
       }
 
-      // Grant entitlements BEFORE flipping status to succeeded — fail-safe:
-      // if grant throws we do NOT set status=succeeded so the provider retries.
-      await grantProductEntitlements(
-        transaction.user as string,
-        transaction.product as string,
-        transaction.id,
-      )
-
-      // Grant succeeded — atomically flip status and record the grant timestamp
-      await payload.update({
-        collection: 'transactions',
-        id: transaction.id,
-        data: { status: 'succeeded', entitlementsGrantedAt: new Date().toISOString() },
-        overrideAccess: true,
-      })
-
-      // Consume coupon atomically (if applied)
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await consumeCouponOnPayment(payload, transaction as any)
-      } catch (err) {
-        payload.logger.error(
-          { error: err, transactionId: transaction.id },
-          'Failed to consume coupon',
-        )
-      }
+      // Entitlements are granted only on PAYMENT.CAPTURE.COMPLETED (when funds are actually captured).
+      // CHECKOUT.ORDER.APPROVED only validates the order exists and returns success.
       break
     }
 
@@ -293,15 +269,24 @@ async function handleEvent(
 
       const transaction = transactions.docs[0]
 
-      // Idempotency guard: only process if still pending (skip if already succeeded, refunded, or failed)
-      if (transaction.status !== 'pending') {
+      // Idempotency: skip if entitlements already granted (replayed webhook)
+      if (transaction.entitlementsGrantedAt) {
         return
       }
 
+      // Grant entitlements BEFORE flipping status to succeeded — fail-safe:
+      // if grant throws we do NOT set status=succeeded so the provider retries.
+      await grantProductEntitlements(
+        transaction.user as string,
+        transaction.product as string,
+        transaction.id,
+      )
+
+      // Grant succeeded — atomically flip status and record the grant timestamp
       await payload.update({
         collection: 'transactions',
         id: transaction.id,
-        data: { status: 'succeeded' },
+        data: { status: 'succeeded', entitlementsGrantedAt: new Date().toISOString() },
         overrideAccess: true,
       })
 
