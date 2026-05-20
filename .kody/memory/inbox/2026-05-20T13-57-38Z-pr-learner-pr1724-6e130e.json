@@ -1,0 +1,10 @@
+{
+  "type": "decision",
+  "name": "pr-1724",
+  "title": "PR #1724: fix(prompts): Add missing hint/solution/fullSolution to example outputs",
+  "hook": "fix(prompts): Add missing hint/solution/fullSolution to example outputs \u2014 merged 2026-05-20 by @aguyshayb",
+  "body": "**PR:** [https://github.com/A-Guy-educ/A-Guy/pull/1724](https://github.com/A-Guy-educ/A-Guy/pull/1724)\n**Author:** @aguyshayb\n**Merged:** 2026-05-20T10:04:59Z\n\n## Title\nfix(prompts): Add missing hint/solution/fullSolution to example outputs\n\n## Summary (first section of PR body)\nTargets #1722 \u2014 adds 8 missing fields across 6 example output blocks that Kody's PR left out.\n",
+  "source": "job:pr-learner",
+  "ts": "2026-05-20T13:57:38Z",
+  "links": []
+}

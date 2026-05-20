@@ -1,0 +1,10 @@
+{
+  "type": "decision",
+  "name": "pr-1705",
+  "title": "PR #1705: #1695: Restrict Coupons read access to admins",
+  "hook": "#1695: Restrict Coupons read access to admins \u2014 merged 2026-05-19 by @aguyaharonyair",
+  "body": "**PR:** [https://github.com/A-Guy-educ/A-Guy/pull/1705](https://github.com/A-Guy-educ/A-Guy/pull/1705)\n**Author:** @aguyaharonyair\n**Merged:** 2026-05-19T11:29:19Z\n\n## Title\n#1695: Restrict Coupons read access to admins\n\n## Summary (first section of PR body)\n## Summary\n",
+  "source": "job:pr-learner",
+  "ts": "2026-05-20T13:57:38Z",
+  "links": []
+}

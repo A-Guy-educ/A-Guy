@@ -1,0 +1,10 @@
+{
+  "type": "decision",
+  "name": "pr-1713",
+  "title": "PR #1713: #1711: Record refundedAmount, refundedBy, refundedAt on refund",
+  "hook": "#1711: Record refundedAmount, refundedBy, refundedAt on refund \u2014 merged 2026-05-19 by @aguyaharonyair",
+  "body": "**PR:** [https://github.com/A-Guy-educ/A-Guy/pull/1713](https://github.com/A-Guy-educ/A-Guy/pull/1713)\n**Author:** @aguyaharonyair\n**Merged:** 2026-05-19T14:18:06Z\n\n## Title\n#1711: Record refundedAmount, refundedBy, refundedAt on refund\n\n## Summary (first section of PR body)\n## Summary\n",
+  "source": "job:pr-learner",
+  "ts": "2026-05-20T13:57:38Z",
+  "links": []
+}

@@ -1,0 +1,10 @@
+{
+  "type": "decision",
+  "name": "pr-1714",
+  "title": "PR #1714: #1710: Grant entitlements before flipping Transaction to succeeded",
+  "hook": "#1710: Grant entitlements before flipping Transaction to succeeded \u2014 merged 2026-05-20 by @aguyaharonyair",
+  "body": "**PR:** [https://github.com/A-Guy-educ/A-Guy/pull/1714](https://github.com/A-Guy-educ/A-Guy/pull/1714)\n**Author:** @aguyaharonyair\n**Merged:** 2026-05-20T08:31:58Z\n\n## Title\n#1710: Grant entitlements before flipping Transaction to succeeded\n\n## Summary (first section of PR body)\n## Summary\n",
+  "source": "job:pr-learner",
+  "ts": "2026-05-20T13:57:38Z",
+  "links": []
+}
