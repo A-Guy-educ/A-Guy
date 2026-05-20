@@ -266,6 +266,8 @@ async function handleEvent(
 
     case 'charge.refunded': {
       const paymentIntentId = event.data.object.payment_intent as string
+      const chargeAmount = event.data.object.amount as number | undefined
+      const amountRefunded = event.data.object.amount_refunded as number | undefined
 
       const transactions = await payload.find({
         collection: 'transactions',
@@ -285,12 +287,48 @@ async function handleEvent(
         return
       }
 
-      await payload.update({
-        collection: 'transactions',
-        id: transactions.docs[0].id,
-        data: { status: 'refunded' },
-        overrideAccess: true,
-      })
+      const transaction = transactions.docs[0]
+      const existingRefundedAmount = (transaction.refundedAmount as number) || 0
+
+      // Compute the delta: how much new refund this event introduces
+      // Stripe events are cumulative, so delta = event amount_refunded - existing amount
+      const delta = amountRefunded !== undefined ? amountRefunded - existingRefundedAmount : 0
+
+      // If delta is 0 or negative, this event is already accounted for (idempotency)
+      if (delta <= 0) {
+        return
+      }
+
+      const newRefundedAmount = existingRefundedAmount + delta
+      const isFullRefund =
+        chargeAmount !== undefined && amountRefunded !== undefined && amountRefunded >= chargeAmount
+
+      if (isFullRefund) {
+        // Full refund: flip to refunded, set audit fields
+        await payload.update({
+          collection: 'transactions',
+          id: transaction.id,
+          data: {
+            status: 'refunded',
+            refundedAmount: chargeAmount,
+            refundedAt: new Date(event.created * 1000).toISOString(),
+            refundedBy: null,
+          },
+          overrideAccess: true,
+        })
+      } else {
+        // Partial refund: keep status as succeeded, update refundedAmount and audit timestamp
+        await payload.update({
+          collection: 'transactions',
+          id: transaction.id,
+          data: {
+            refundedAmount: newRefundedAmount,
+            refundedAt: new Date(event.created * 1000).toISOString(),
+            refundedBy: null,
+          },
+          overrideAccess: true,
+        })
+      }
       break
     }
 
