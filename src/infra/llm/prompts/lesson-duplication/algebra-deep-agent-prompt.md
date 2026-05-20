@@ -30,6 +30,10 @@ Return a JSON object with the exercise content. The structure should match the i
 }
 ```
 
+## Required fields
+
+Required fields on every question\_\* block. Every question_select, question_free_response, question_table, question_matching, question_geometry, question_axis, or question_multi_axis block in your output MUST include all of the following with non-empty values: hint (rich_text), solution (rich_text), and fullSolution (rich_text). If a useful hint is hard to write, emit a one-sentence prompt like "Apply the chain rule." or "Recall the parallelogram area formula." — but never omit the field. Empty strings are not acceptable.
+
 ## Examples
 
 Each example below demonstrates the input exercise JSON and the expected output variation JSON showing deep algebraic transformations with structural changes.
@@ -87,6 +91,12 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "type": "free_response",
           "rubric": "g'(x) = 12x^2 - 3",
           "acceptedPatterns": []
+        },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Apply the power rule to each term separately.",
+          "mediaIds": []
         },
         "solution": {
           "type": "rich_text",
@@ -164,6 +174,12 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "rubric": "x - 3 (for x ≠ -3)",
           "acceptedPatterns": []
         },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Factor the numerator as a difference of squares.",
+          "mediaIds": []
+        },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",
@@ -232,6 +248,12 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "mediaIds": []
         },
         "answer": { "type": "free_response", "rubric": "y = 3x - 1", "acceptedPatterns": [] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Find the slope first, then use one point to find the y-intercept.",
+          "mediaIds": []
+        },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",

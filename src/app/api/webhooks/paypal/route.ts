@@ -107,6 +107,7 @@ export async function POST(request: NextRequest) {
       { error: err, eventType: event.event_type },
       'PayPal webhook handler error',
     )
+    return NextResponse.json({ error: 'Handler error' }, { status: 500 })
   }
 
   return NextResponse.json({ received: true }, { status: 200 })
@@ -233,32 +234,26 @@ async function handleEvent(
 
       const transaction = transactions.docs[0]
 
-      // Idempotency: skip if already succeeded
-      if (transaction.status === 'succeeded') {
+      // Idempotency: skip if entitlements already granted (replayed webhook)
+      if (transaction.entitlementsGrantedAt) {
         return
       }
 
-      // Update status to succeeded
+      // Grant entitlements BEFORE flipping status to succeeded — fail-safe:
+      // if grant throws we do NOT set status=succeeded so the provider retries.
+      await grantProductEntitlements(
+        transaction.user as string,
+        transaction.product as string,
+        transaction.id,
+      )
+
+      // Grant succeeded — atomically flip status and record the grant timestamp
       await payload.update({
         collection: 'transactions',
         id: transaction.id,
-        data: { status: 'succeeded' },
+        data: { status: 'succeeded', entitlementsGrantedAt: new Date().toISOString() },
         overrideAccess: true,
       })
-
-      // Grant entitlements
-      try {
-        await grantProductEntitlements(
-          transaction.user as string,
-          transaction.product as string,
-          transaction.id,
-        )
-      } catch (err) {
-        payload.logger.error(
-          { error: err, transactionId: transaction.id },
-          'Failed to grant product entitlements',
-        )
-      }
 
       // Consume coupon atomically (if applied)
       try {
