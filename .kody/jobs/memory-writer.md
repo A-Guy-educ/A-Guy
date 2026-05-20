@@ -1,6 +1,6 @@
 ---
 every: 15m
-worker: kody
+worker: coo
 ---
 
 # memory-writer
