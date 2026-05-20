@@ -1,0 +1,14 @@
+{
+  "taskId": "1745",
+  "taskType": "issue",
+  "target": "1745",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Contract-verification smoke test: wrote all four per-task artifact files to .kody/tasks/1745/ per the AGENTS.md protocol",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [],
+  "sessionLog": null,
+  "startedAt": "2026-05-20T21:07:00.000Z",
+  "finishedAt": "2026-05-20T21:09:00.000Z"
+}
