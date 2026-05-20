@@ -9,23 +9,22 @@ worker: coo
 
 Scan `.kody/tasks/*/memory-recs.json` files (written by executors at
 task end per the AGENTS.md memory protocol). For each unprocessed
-recommendation, decide whether it becomes a real memory:
+recommendation:
 
-- `confidence: high` → drop a sticky note in `.kody/memory/inbox/` so
-  the memory-writer files it.
-- `confidence: medium` → leave attached to the task for later inspection;
-  do not promote to memory.
+- `confidence: high` → **write directly** to `.kody/memory/<name>.md`
+  with frontmatter and update `INDEX.md`. No inbox, no middleman.
+- `confidence: medium` → leave attached to the task; do not promote.
 - `confidence: low` → ignore.
 
-The recommendation stays in the task's `memory-recs.json` either way —
-this job only decides what becomes a real memory file; it never edits
-the task artifacts.
+The recommendation stays in the task's `memory-recs.json` either way;
+this job only decides what becomes a permanent memory file.
 
 ## Tick procedure — REQUIRED
 
 This tick is **fully scripted**. The script
 [task-memory-extractor-tick.py](.kody/scripts/task-memory-extractor-tick.py)
-is the **single source of truth** for the filter, dedup, and sticky shape.
+is the **single source of truth** for filtering, file writing, INDEX
+maintenance, and the per-task `.extracted` marker.
 
 Run the script:
 
@@ -36,23 +35,25 @@ python3 .kody/scripts/task-memory-extractor-tick.py
 The script:
 
 1. Globs `.kody/tasks/*/memory-recs.json`.
-2. For each task's recommendations:
-   - Skip the entire file if the matching task has already been
-     processed (marker: `.kody/tasks/<id>/.extracted` exists).
-   - Otherwise, iterate the array, drop sticky notes only for
-     `confidence: high` items that aren't already filed
-     (`.kody/memory/<name>.md` or matching inbox sticky).
-3. After processing a task, touch `.kody/tasks/<id>/.extracted`.
-4. Logs counts and exits 0.
+2. For each task without a `.extracted` marker:
+   - Validates each rec (`type`, `name`, at least one of
+     body/why/how_to_apply; rejects reserved names like `index`).
+   - Writes `.kody/memory/<name>.md` with frontmatter
+     (name, title, type, source, recorded_at) and body composed from
+     body + why + how_to_apply + source-task link.
+   - Updates `INDEX.md` (replaces existing line for the name, or
+     appends a new one).
+3. After processing a task, touches `.kody/tasks/<id>/.extracted`.
+4. Commits and pushes if anything was written. Suppress with
+   `TASK_MEMORY_EXTRACTOR_NO_COMMIT=1` for dry runs.
 
 ## Restrictions
 
 - Never edit `.kody/tasks/*/memory-recs.json` — that's the task's
-  artifact. Promoting a rec to memory is a separate signal (the inbox
-  sticky note); the task record is the source of truth.
-- Never write to `.kody/memory/*.md` directly — only drop sticky notes.
-- The marker file `.extracted` is the dedup record; deleting it
-  forces re-processing of that task.
+  artifact. The task record is the source of truth.
+- The marker file `.extracted` is the dedup record; deleting it forces
+  re-processing of that task.
+- Reserved memory filenames (`index`, `readme`) are blocked.
 
 ## Scope
 
