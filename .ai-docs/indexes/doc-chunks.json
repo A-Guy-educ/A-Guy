@@ -1336,7 +1336,29 @@
       "category": "patterns",
       "sourceFile": "AGENTS.md",
       "startLine": 1307,
-      "endLine": 1313,
+      "endLine": 1314,
+      "priority": 7
+    },
+    {
+      "id": "AGENTS-per-task-memory-artifacts-required-at-task-end-",
+      "title": "Per-task memory artifacts (REQUIRED at task end)",
+      "content": "Before you finish a task (issue mode, chat session, or scheduled job\ntick), write two small files into `.kody/tasks/<task-id>/`:\n\n- `<task-id>` is the issue number (issue mode), the sessionId (chat),\n  or the job slug (scheduled job).\n- `context.json` — task metadata: `taskId`, `taskType`, `outcome`\n  (`completed | failed | partial`), `filesTouched` (array, paths only),\n  `startedAt`, `finishedAt` (UTC ISO).\n- `memory-recs.json` — array of memory recommendations you saw while\n  doing the task. Each entry has:\n\n  ```json\n  {\n    \"type\": \"preference | decision | lesson\",\n    \"name\": \"kebab-case-slug\",\n    \"title\": \"...\",\n    \"hook\": \"one-line\",\n    \"body\": \"...\",\n    \"why\": \"why is this load-bearing (one line)\",\n    \"how_to_apply\": \"when does this rule kick in (one line)\",\n    \"confidence\": \"high | medium | low\"\n  }\n  ```\n\n  - Output `[]` if there's nothing worth remembering. **Most tasks are\n    routine** — `[]` is the common case, not a failure.\n  - High-confidence means: surprising, load-bearing, stable for 6+\n    months, and not already captured in code/git/memory.\n  - **You write the recommendations only.** A separate\n    `task-memory-extractor` job decides which ones become real\n    memories (it dedupes against existing memory, drops sticky notes\n    for high-confidence picks, archives the rest).\n\nCommit both files alongside your task's normal commits. Do not also\ndrop sticky notes for the same content — that would double-file.",
+      "keywords": [
+        "task",
+        "memory",
+        "issue",
+        "json",
+        "mode",
+        "chat",
+        "scheduled",
+        "write",
+        "files",
+        "tasks"
+      ],
+      "category": "patterns",
+      "sourceFile": "AGENTS.md",
+      "startLine": 1314,
+      "endLine": 1351,
       "priority": 7
     },
     {
@@ -5373,8 +5395,8 @@
     }
   ],
   "metadata": {
-    "generatedAt": "2026-05-20T12:26:15.269Z",
-    "totalChunks": 272,
+    "generatedAt": "2026-05-20T19:27:02.146Z",
+    "totalChunks": 273,
     "sourceFiles": [
       "AGENTS.md",
       "DESIGN_SYSTEM.md",
