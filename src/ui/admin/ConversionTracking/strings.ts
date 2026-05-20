@@ -56,6 +56,8 @@ interface Strings {
   deletedCourse: string
   loading: (what: string) => string
   failedToLoad: (what: string) => string
+  topCourses: string
+  showLess: string
 
   // Revenue & transactions
   revenueAndTransactions: string
@@ -130,6 +132,8 @@ const EN: Strings = {
   deletedCourse: 'Deleted course',
   loading: (what) => `Loading ${what}...`,
   failedToLoad: (what) => `Failed to load ${what}`,
+  topCourses: 'Top Courses',
+  showLess: 'Show less',
 
   // Revenue & transactions
   revenueAndTransactions: 'Revenue & Transactions',
@@ -203,6 +207,8 @@ const HE: Strings = {
   deletedCourse: 'קורס שנמחק',
   loading: (what) => `טוען ${what}...`,
   failedToLoad: (what) => `טעינת ${what} נכשלה`,
+  topCourses: 'קורסים מובילים',
+  showLess: 'הצג פחות',
 
   // Revenue & transactions
   revenueAndTransactions: 'הכנסות ועסקאות',
