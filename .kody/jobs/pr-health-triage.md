@@ -190,3 +190,27 @@ per-tick:
 do not write or rely on them from the prompt.)
 
 `done`: always `false` — PR-health triage is evergreen.
+
+## Tick output (MANDATORY)
+
+End every tick with the fenced block below. **This is how the dedup
+ledger persists** — without it, `data.prs` evaporates between ticks and
+every recommendation re-fires on the next wake. Carry forward the prior
+tick's `data.prs` entries, mutate the ones you acted on this tick, and
+prune entries for PRs no longer in the open list.
+
+```kody-job-next-state
+{
+  "cursor": "idle",
+  "data": {
+    "prs": {
+      "<pr-number>": {
+        "fp": "<verb>|<updatedAt>",
+        "stage": "<verb>-recommended|<verb>-auto|dismissed",
+        "lastActAt": "<iso>"
+      }
+    }
+  },
+  "done": false
+}
+```
