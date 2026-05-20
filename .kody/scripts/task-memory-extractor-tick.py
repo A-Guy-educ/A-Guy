@@ -44,20 +44,32 @@ def already_filed(rec_name: str) -> bool:
 
 
 def build_sticky(rec: dict, task_id: str, ts: datetime) -> dict:
-    body_parts = [rec.get("body", "").rstrip()]
+    body_lines: list[str] = []
+    explicit_body = (rec.get("body") or "").rstrip()
+    if explicit_body:
+        body_lines.append(explicit_body)
     why = rec.get("why")
     how = rec.get("how_to_apply")
     if why:
-        body_parts.append(f"\n**Why:** {why}")
+        body_lines.append(f"\n**Why:** {why}")
     if how:
-        body_parts.append(f"\n**How to apply:** {how}")
-    body_parts.append(f"\n**Source task:** `{task_id}`")
+        body_lines.append(f"**How to apply:** {how}")
+    body_lines.append(f"\n**Source task:** `{task_id}`")
+    body = "\n".join(body_lines).strip() + "\n"
+
+    # Hook defaults to the title's first line, or the why if no title.
+    hook = (
+        rec.get("hook")
+        or (rec.get("title") or "").split("\n", 1)[0]
+        or (rec.get("why") or "")[:100]
+        or "(no hook provided)"
+    )
     return {
         "type": rec["type"],
         "name": rec["name"],
         "title": rec.get("title", rec["name"].replace("-", " ").title()),
-        "hook": rec.get("hook", "(no hook provided)"),
-        "body": "\n".join(body_parts).strip() + "\n",
+        "hook": hook,
+        "body": body,
         "source": f"job:task-memory-extractor:from-{task_id}",
         "ts": ts.replace(microsecond=0).isoformat().replace("+00:00", "Z"),
         "links": rec.get("links", []),
@@ -65,9 +77,14 @@ def build_sticky(rec: dict, task_id: str, ts: datetime) -> dict:
 
 
 def is_valid(rec: dict) -> str | None:
-    for key in ("type", "name", "body"):
+    for key in ("type", "name"):
         if key not in rec or not rec[key]:
             return f"missing field {key!r}"
+    # body is preferred but optional — we can compose one from why +
+    # how_to_apply when the executor LLM only emits those shorter fields.
+    has_text = bool(rec.get("body")) or bool(rec.get("why")) or bool(rec.get("how_to_apply"))
+    if not has_text:
+        return "missing body / why / how_to_apply (no source text)"
     if rec["type"] not in VALID_TYPES:
         return f"invalid type {rec['type']!r}"
     conf = rec.get("confidence", "").lower()
