@@ -17,6 +17,7 @@ Generate a deep variation of the provided exercise. Deep variation means: **nume
 7. **No unsolvable problems**: Ensure the variation still has a valid, correct answer.
 8. **No contradictions**: Question, hint, solution, and full_solution must all be consistent with each other.
 9. **NO PNG output**: Never produce or include any PNG image data. Only text and SVG are allowed.
+10. **When a deep variation produces multiple question blocks within one exercise, every block must independently carry a non-empty hint. (solution and fullSolution are re-derived in pass 2.)**
 
 ## Output Format
 
@@ -264,6 +265,236 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "type": "rich_text",
           "format": "md-math-v1",
           "value": "Step 1: slope m = (11 - 5) / (4 - 2) = 6 / 2 = 3\\nStep 2: Use point-slope: y - 5 = 3(x - 2)\\nStep 3: y - 5 = 3x - 6\\nStep 4: y = 3x - 1",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 4 — Input (multi-block):**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Simplify: $2x + 3x$",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "5x", "acceptedPatterns": [] },
+        "solution": { "type": "rich_text", "format": "md-math-v1", "value": "5x", "mediaIds": [] },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Combine like terms: 2x + 3x = (2+3)x = 5x",
+          "mediaIds": []
+        }
+      },
+      {
+        "id": "q2",
+        "type": "question_select",
+        "variant": "mcq",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Which expression is equivalent to $4(x + 2)$?",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "a",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "4x + 2",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "b",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "4x + 8",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "c",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "x + 8",
+              "mediaIds": []
+            }
+          }
+        ],
+        "answer": { "selected": ["b"] },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "4x + 8",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Apply distributive property: 4(x+2) = 4x + 4·2 = 4x + 8",
+          "mediaIds": []
+        }
+      },
+      {
+        "id": "q3",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Factor completely: $x^2 - 9$",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "(x+3)(x-3)", "acceptedPatterns": [] },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "(x+3)(x-3)",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Recognize as difference of squares: x² - 9 = x² - 3² = (x+3)(x-3)",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 4 — Output (multi-block with independent hints):**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Simplify: $7y + 2y$",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "9y", "acceptedPatterns": [] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Combine coefficients of like terms.",
+          "mediaIds": []
+        },
+        "solution": { "type": "rich_text", "format": "md-math-v1", "value": "9y", "mediaIds": [] },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Combine like terms: 7y + 2y = (7+2)y = 9y",
+          "mediaIds": []
+        }
+      },
+      {
+        "id": "q2",
+        "type": "question_select",
+        "variant": "mcq",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Which expression is equivalent to $5(a - 3)$?",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "a",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "5a - 3",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "b",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "5a - 15",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "c",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "a - 15",
+              "mediaIds": []
+            }
+          }
+        ],
+        "answer": { "selected": ["b"] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Use the distributive property: multiply each term inside the parentheses.",
+          "mediaIds": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "5a - 15",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Apply distributive property: 5(a-3) = 5a - 5·3 = 5a - 15",
+          "mediaIds": []
+        }
+      },
+      {
+        "id": "q3",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Factor completely: $x^2 - 16$",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "(x+4)(x-4)", "acceptedPatterns": [] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Recognize this as a difference of two squares.",
+          "mediaIds": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "(x+4)(x-4)",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Recognize as difference of squares: x² - 16 = x² - 4² = (x+4)(x-4)",
           "mediaIds": []
         }
       }

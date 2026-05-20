@@ -17,6 +17,7 @@ Generate a deep variation of the provided exercise. Deep variation means: **nume
 7. **No unsolvable problems**: Ensure the variation still has a valid, correct answer.
 8. **No contradictions**: Question, hint, solution, and full_solution must all be consistent with each other.
 9. **NO PNG output**: Never produce or include any PNG image data. Only text and SVG are allowed.
+10. **When a deep variation produces multiple question blocks within one exercise, every block must independently carry a non-empty hint. (solution and fullSolution are re-derived in pass 2.)**
 
 ## Subject-specific rules: Geometry
 
@@ -417,6 +418,266 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "type": "rich_text",
           "format": "md-math-v1",
           "value": "Step 1: Let O1 and O2 be centers, r1=7, r2=4, d=13\\nStep 2: Draw right triangle with tangent segment and difference of radii\\nStep 3: Length = √(d² - (r1-r2)²)\\nStep 4: = √(169 - 9) = √160 = 4√10 ≈ 12.6 cm",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 4 — Input (multi-block):**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_geometry",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Find the area of a rectangle with length 8 cm and width 5 cm.",
+          "mediaIds": []
+        },
+        "layout": { "displaySize": "medium" },
+        "geometry": {
+          "kind": "euclidean",
+          "canvas": { "width": 400, "height": 300 },
+          "elements": {
+            "points": [
+              { "name": "A", "x": 50, "y": 250 },
+              { "name": "B", "x": 350, "y": 250 },
+              { "name": "C", "x": 350, "y": 100 },
+              { "name": "D", "x": 50, "y": 100 }
+            ],
+            "lines": [
+              {
+                "from": "A",
+                "to": "B",
+                "style": "solid",
+                "label": { "value": "8 cm", "position": "b" }
+              },
+              {
+                "from": "B",
+                "to": "C",
+                "style": "solid",
+                "label": { "value": "5 cm", "position": "r" }
+              },
+              { "from": "C", "to": "D", "style": "solid" },
+              { "from": "D", "to": "A", "style": "solid" }
+            ],
+            "areas": [{ "polygon": ["A", "B", "C", "D"], "style": "hatch", "color": "#cccccc" }]
+          }
+        },
+        "answer": { "type": "free_response", "rubric": "40 cm²", "acceptedPatterns": [] },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Area = 8 × 5 = 40 cm²",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Area of rectangle = length × width = 8 × 5 = 40 cm²",
+          "mediaIds": []
+        }
+      },
+      {
+        "id": "q2",
+        "type": "question_select",
+        "variant": "mcq",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "How many sides does a hexagon have?",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "a",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "5", "mediaIds": [] }
+          },
+          {
+            "id": "b",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "6", "mediaIds": [] }
+          },
+          {
+            "id": "c",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "7", "mediaIds": [] }
+          }
+        ],
+        "answer": { "selected": ["b"] },
+        "solution": { "type": "rich_text", "format": "md-math-v1", "value": "6", "mediaIds": [] },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "A hexagon has 6 sides (hex = 6)",
+          "mediaIds": []
+        }
+      },
+      {
+        "id": "q3",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Find the circumference of a circle with radius 7 cm (use π ≈ 22/7).",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "44 cm", "acceptedPatterns": [] },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "44 cm",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "C = 2πr = 2 × (22/7) × 7 = 44 cm",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 4 — Output (multi-block with independent hints):**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_geometry",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Find the area of a rectangle with length 12 cm and width 6 cm.",
+          "mediaIds": []
+        },
+        "layout": { "displaySize": "medium" },
+        "geometry": {
+          "kind": "euclidean",
+          "canvas": { "width": 400, "height": 300 },
+          "elements": {
+            "points": [
+              { "name": "A", "x": 50, "y": 250 },
+              { "name": "B", "x": 350, "y": 250 },
+              { "name": "C", "x": 350, "y": 100 },
+              { "name": "D", "x": 50, "y": 100 }
+            ],
+            "lines": [
+              {
+                "from": "A",
+                "to": "B",
+                "style": "solid",
+                "label": { "value": "12 cm", "position": "b" }
+              },
+              {
+                "from": "B",
+                "to": "C",
+                "style": "solid",
+                "label": { "value": "6 cm", "position": "r" }
+              },
+              { "from": "C", "to": "D", "style": "solid" },
+              { "from": "D", "to": "A", "style": "solid" }
+            ],
+            "areas": [{ "polygon": ["A", "B", "C", "D"], "style": "hatch", "color": "#cccccc" }]
+          }
+        },
+        "answer": { "type": "free_response", "rubric": "72 cm²", "acceptedPatterns": [] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Multiply length by width to find the area.",
+          "mediaIds": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Area = 12 × 6 = 72 cm²",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Area of rectangle = length × width = 12 × 6 = 72 cm²",
+          "mediaIds": []
+        }
+      },
+      {
+        "id": "q2",
+        "type": "question_select",
+        "variant": "mcq",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "How many angles does a pentagon have?",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "a",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "4", "mediaIds": [] }
+          },
+          {
+            "id": "b",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "5", "mediaIds": [] }
+          },
+          {
+            "id": "c",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "6", "mediaIds": [] }
+          }
+        ],
+        "answer": { "selected": ["b"] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "A pentagon has the same number of angles as sides.",
+          "mediaIds": []
+        },
+        "solution": { "type": "rich_text", "format": "md-math-v1", "value": "5", "mediaIds": [] },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "A pentagon has 5 sides and therefore 5 angles (pent = 5)",
+          "mediaIds": []
+        }
+      },
+      {
+        "id": "q3",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Find the circumference of a circle with radius 10 cm (use π ≈ 3.14).",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "62.8 cm", "acceptedPatterns": [] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Use the formula C = 2πr.",
+          "mediaIds": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "62.8 cm",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "C = 2πr = 2 × 3.14 × 10 = 62.8 cm",
           "mediaIds": []
         }
       }
