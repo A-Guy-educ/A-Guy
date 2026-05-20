@@ -691,8 +691,8 @@ export async function GET(req: Request) {
     }
   }
 
-  // Explicitly fetch courses by the collected IDs to get their titles
-  const uniqueCourseIds = Array.from(enrollmentCounts.keys())
+  // Build courseIdToTitle map from ALL courses (not just enrolled ones)
+  // This ensures courses with 0 enrollments are included
   const courseIdToTitle = new Map<string, string>()
   const resolveTitle = (c: {
     id: string
@@ -702,24 +702,6 @@ export async function GET(req: Request) {
   }): string => {
     return c.title || c.courseLabel || c.slug || `Course ${String(c.id).slice(-6)}`
   }
-  if (uniqueCourseIds.length > 0) {
-    const enrolledCourses = await payload.find({
-      collection: 'courses',
-      where: { id: { in: uniqueCourseIds } },
-      limit: uniqueCourseIds.length,
-      overrideAccess: true,
-    })
-    for (const course of enrolledCourses.docs) {
-      const c = course as unknown as {
-        id: string
-        title?: string
-        courseLabel?: string
-        slug?: string
-      }
-      courseIdToTitle.set(String(c.id), resolveTitle(c))
-    }
-  }
-  // Populate map from the all-courses query for any IDs missed by the targeted query
   for (const course of coursesWithTitles.docs) {
     const c = course as unknown as {
       id: string
@@ -727,18 +709,19 @@ export async function GET(req: Request) {
       courseLabel?: string
       slug?: string
     }
-    const id = String(c.id)
-    if (!courseIdToTitle.has(id)) {
-      courseIdToTitle.set(id, resolveTitle(c))
-    }
+    courseIdToTitle.set(String(c.id), resolveTitle(c))
   }
 
-  const courseEnrollments: CourseEnrollment[] = Array.from(enrollmentCounts.entries())
-    .map(([id, count]) => ({
-      // Client localizes "Deleted course" via the __DELETED__ marker
-      courseTitle: courseIdToTitle.get(id) || `__DELETED__:${id.slice(-6)}`,
-      count,
-    }))
+  // Build courseEnrollments from ALL courses, with 0 for courses without entitlements
+  const courseEnrollments: CourseEnrollment[] = coursesWithTitles.docs
+    .map((course) => {
+      const c = course as unknown as { id: string }
+      const id = String(c.id)
+      return {
+        courseTitle: courseIdToTitle.get(id) || `__DELETED__:${id.slice(-6)}`,
+        count: enrollmentCounts.get(id) || 0,
+      }
+    })
     .sort((a, b) => b.count - a.count)
 
   const response: DashboardMetricsResponse = {
