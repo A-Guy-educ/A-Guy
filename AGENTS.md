@@ -1249,3 +1249,64 @@ See [docs/ai/README.md](./docs/ai/README.md) for full guide and [BOOTSTRAP.md](.
 - GitHub: https://github.com/payloadcms/payload
 - Examples: https://github.com/payloadcms/payload/tree/main/examples
 - Templates: https://github.com/payloadcms/payload/tree/main/templates
+
+---
+
+## Kody memory protocol
+
+You have a persistent memory at `.kody/memory/`. `INDEX.md` is the cheap
+table of contents; read it at the start of any session and read individual
+memory files only when they look relevant. Never edit memory files
+directly — they are owned by the `memory-writer` job.
+
+### When to record a memory
+
+- **Preference** — you learn how the operator wants kody to behave.
+- **Decision** — a non-obvious choice was made (and especially _why_).
+- **Lesson** — you tried something that broke or surprised you; future
+  sessions should not repeat it.
+- **Verdict** — an inbox approve / reject / dismiss happened (dashboard
+  writes these; you only do it from a chat where the operator gave a
+  verdict in words).
+
+If the thing is already in the code, the commit history, or current
+session context, don't bother — memory is for things that would
+otherwise evaporate.
+
+### How to record a memory
+
+Drop a single JSON sticky note in `.kody/memory/inbox/`. The
+`memory-writer` job picks it up on its next tick (every 15m) and files
+it under `.kody/memory/<name>.md` with frontmatter, updating
+`INDEX.md`.
+
+Sticky note shape (see `.kody/memory/inbox/README.md` for the full
+contract):
+
+```json
+{
+  "type": "preference | decision | lesson | verdict | architecture",
+  "name": "kebab-case-slug",
+  "title": "Human-readable title for INDEX.md",
+  "hook": "One-line hook for INDEX.md",
+  "body": "Full markdown content — no frontmatter.",
+  "source": "chat | executor:<name> | job:<slug> | dashboard:<action>",
+  "ts": "<UTC ISO timestamp>",
+  "links": ["other-memory-slug"]
+}
+```
+
+Filename: `<utc-iso>-<source>-<short-uuid>.json` — must be unique so
+parallel writers never collide.
+
+Commit the sticky note (and only the sticky note) when you record. Do
+**not** also write `.kody/memory/<name>.md` yourself — that is the
+writer job's territory and editing both at once will cause merge
+conflicts on the next tick.
+
+### What not to record
+
+- The current shape of the code (it's in the code).
+- A summary of what you just committed (it's in `git log`).
+- Ephemeral task state (already in `*.state.json`).
+- Information already documented in `AGENTS.md` or `CLAUDE.md`.

@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "rev": 0,
+  "cursor": "reported",
+  "data": {
+    "lastRunISO": "2026-05-20T11:46:55Z",
+    "violationCount": 3,
+    "nextEligibleISO": "2026-05-20T12:16:55Z"
+  },
+  "done": false
+}

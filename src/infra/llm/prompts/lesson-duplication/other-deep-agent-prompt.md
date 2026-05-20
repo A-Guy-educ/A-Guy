@@ -17,6 +17,7 @@ Generate a deep variation of the provided exercise. Deep variation means: **nume
 7. **No unsolvable problems**: Ensure the variation still has a valid, correct answer.
 8. **No contradictions**: Question, hint, solution, and full_solution must all be consistent with each other.
 9. **NO PNG output**: Never produce or include any PNG image data. Only text and SVG are allowed.
+10. **When a deep variation produces multiple question blocks within one exercise, every block must independently carry a non-empty hint. (solution and fullSolution are re-derived in pass 2.)**
 
 ## Output Format
 
@@ -476,6 +477,298 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "type": "rich_text",
           "format": "md-math-v1",
           "value": "Step 1: Evaluate the claim about the Amazon River.\nStep 2: The Amazon is the largest river by discharge volume.\nStep 3: However, the Nile River is generally recognized as the longest at approximately 6,650 km.\nStep 4: The Amazon is about 6,400 km, making it slightly shorter than the Nile.\nStep 5: The statement is therefore false.\nStep 6: Final answer: False",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 4 — Input (multi-block):**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_select",
+        "variant": "mcq",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Which planet is known as the Red Planet?",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "a",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Venus",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "b",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Mars",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "c",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Jupiter",
+              "mediaIds": []
+            }
+          }
+        ],
+        "answer": { "selected": ["b"] },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Mars",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Mars is called the Red Planet due to iron oxide (rust) on its surface.",
+          "mediaIds": []
+        }
+      },
+      {
+        "id": "q2",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "What is the chemical symbol for gold?",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "Au", "acceptedPatterns": [] },
+        "solution": { "type": "rich_text", "format": "md-math-v1", "value": "Au", "mediaIds": [] },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Au comes from the Latin word 'aurum', meaning gold.",
+          "mediaIds": []
+        }
+      },
+      {
+        "id": "q3",
+        "type": "question_select",
+        "variant": "mcq",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "What is the capital of Japan?",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "a",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Osaka",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "b",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Kyoto",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "c",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Tokyo",
+              "mediaIds": []
+            }
+          }
+        ],
+        "answer": { "selected": ["c"] },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Tokyo",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Tokyo has been the capital of Japan since 1868, when the Emperor moved there from Kyoto.",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 4 — Output (multi-block with independent hints):**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_select",
+        "variant": "mcq",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Which planet is known as the Blue Planet?",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "a",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Earth",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "b",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Neptune",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "c",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Uranus",
+              "mediaIds": []
+            }
+          }
+        ],
+        "answer": { "selected": ["a"] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "This planet is the only one known to support life.",
+          "mediaIds": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Earth",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Earth is called the Blue Planet due to the abundance of water on its surface.",
+          "mediaIds": []
+        }
+      },
+      {
+        "id": "q2",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "What is the chemical symbol for silver?",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "Ag", "acceptedPatterns": [] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "The symbol comes from the Latin name for silver.",
+          "mediaIds": []
+        },
+        "solution": { "type": "rich_text", "format": "md-math-v1", "value": "Ag", "mediaIds": [] },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Ag comes from the Latin word 'argentum', meaning silver.",
+          "mediaIds": []
+        }
+      },
+      {
+        "id": "q3",
+        "type": "question_select",
+        "variant": "mcq",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "What is the capital of Australia?",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "a",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Sydney",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "b",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Canberra",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "c",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "Melbourne",
+              "mediaIds": []
+            }
+          }
+        ],
+        "answer": { "selected": ["b"] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "It is not the largest city in the country.",
+          "mediaIds": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Canberra",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Canberra was selected as the capital in 1908 as a compromise between Sydney and Melbourne.",
           "mediaIds": []
         }
       }
