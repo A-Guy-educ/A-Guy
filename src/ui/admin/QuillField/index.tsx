@@ -36,7 +36,8 @@ const QUILL_FORMATS = [
 ]
 
 // Admin-only — XSS not a risk since only admins input HTML content
-const SANITIZE_CONFIG = {}
+// ALLOWED_TAGS=[] allows all HTML including SVG, <style>, <script>, etc.
+const SANITIZE_CONFIG = { ALLOWED_TAGS: [] as string[] }
 
 export const QuillField: React.FC<{ path: string }> = ({ path }) => {
   const { value, setValue } = useField<string>({ path })
@@ -55,7 +56,7 @@ export const QuillField: React.FC<{ path: string }> = ({ path }) => {
 
   const handleToggleSource = () => {
     if (showSource && value) {
-      const sanitized = DOMPurify.sanitize(value, SANITIZE_CONFIG)
+      const sanitized = DOMPurify.sanitize(value, SANITIZE_CONFIG) as string
       if (sanitized !== value) {
         setValue(sanitized)
       }

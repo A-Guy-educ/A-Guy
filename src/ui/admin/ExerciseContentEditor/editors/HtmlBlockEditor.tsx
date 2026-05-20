@@ -37,7 +37,8 @@ const QUILL_FORMATS = [
 ]
 
 // Admin-only — XSS not a risk since only admins input HTML content
-const SANITIZE_CONFIG = {}
+// ALLOWED_TAGS=[] allows all HTML including SVG, <style>, <script>, etc.
+const SANITIZE_CONFIG = { ALLOWED_TAGS: [] as string[] }
 
 interface HtmlBlockEditorProps {
   block: HtmlBlock
@@ -62,7 +63,7 @@ export const HtmlBlockEditor: React.FC<HtmlBlockEditorProps> = ({ block, onChang
 
   const handleToggleSource = () => {
     if (showSource && block.html) {
-      const sanitized = DOMPurify.sanitize(block.html, SANITIZE_CONFIG)
+      const sanitized = DOMPurify.sanitize(block.html, SANITIZE_CONFIG) as string
       if (sanitized !== block.html) {
         onChange({ ...block, html: sanitized })
       }
@@ -81,7 +82,7 @@ export const HtmlBlockEditor: React.FC<HtmlBlockEditorProps> = ({ block, onChang
         onChange({ ...block, guidedExplanation: payload })
       } else {
         // Not a guided explanation — treat as static HTML, sanitize it
-        const sanitized = DOMPurify.sanitize(html, SANITIZE_CONFIG)
+        const sanitized = DOMPurify.sanitize(html, SANITIZE_CONFIG) as string
         onChange({ ...block, html: sanitized, guidedExplanation: undefined })
       }
     }
