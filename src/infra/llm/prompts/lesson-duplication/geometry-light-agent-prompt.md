@@ -39,6 +39,10 @@ Return a JSON object with the exercise content. The structure must match the inp
 }
 ```
 
+## Required fields
+
+Required fields on every question\_\* block. Every question_select, question_free_response, question_table, question_matching, question_geometry, question_axis, or question_multi_axis block in your output MUST include all of the following with non-empty values: hint (rich_text), solution (rich_text), and fullSolution (rich_text). If a useful hint is hard to write, emit a one-sentence prompt like "Apply the chain rule." or "Recall the parallelogram area formula." — but never omit the field. Empty strings are not acceptable.
+
 ## Examples
 
 Each example below demonstrates the input exercise JSON and the expected output variation JSON. The geometry specification must use the `GeometrySpecV1` format for the `geometry` field within `question_geometry` blocks.
@@ -139,10 +143,22 @@ Each example below demonstrates the input exercise JSON and the expected output 
           }
         },
         "answer": { "type": "numeric", "value": 7, "tolerance": 0.1 },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Apply the law of cosines using the two given sides and the included angle.",
+          "mediaIds": []
+        },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",
           "value": "Using law of cosines: AC² = 6² + 8² - 2(6)(8)cos(60°) = 36 + 64 - 48 = 52, so AC ≈ 7.21 cm",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Identify the two sides and the included angle\\nStep 2: Apply law of cosines: c² = a² + b² - 2ab·cos(C)\\nStep 3: AC² = 6² + 8² - 2(6)(8)cos(60°)\\nStep 4: AC² = 36 + 64 - 48 = 52\\nStep 5: AC = √52 ≈ 7.21 cm",
           "mediaIds": []
         }
       }
@@ -215,10 +231,22 @@ Each example below demonstrates the input exercise JSON and the expected output 
           }
         },
         "answer": { "type": "numeric", "value": 78.54, "tolerance": 0.1 },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Recall the formula for the area of a circle.",
+          "mediaIds": []
+        },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",
           "value": "Area = πr² = π(5)² = 25π ≈ 78.54 cm²",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Identify the radius r = 5 cm\\nStep 2: Apply area formula: A = πr²\\nStep 3: A = π × 5² = π × 25\\nStep 4: A = 25π ≈ 78.54 cm²",
           "mediaIds": []
         }
       }
@@ -339,10 +367,22 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "rubric": "45°, 135°, 45°, 135°",
           "acceptedPatterns": []
         },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Corresponding angles are equal; interior angles on the same side are supplementary.",
+          "mediaIds": []
+        },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",
           "value": "Corresponding angles are equal: 45°. Interior angles on same side are supplementary: 180° - 45° = 135°.",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Identify the given corresponding angle: 45°\\nStep 2: Corresponding angles on parallel lines are equal: 45°\\nStep 3: Interior angles on the same side sum to 180°\\nStep 4: 180° - 45° = 135°\\nStep 5: Angles are 45°, 135°, 45°, 135°",
           "mediaIds": []
         }
       }
