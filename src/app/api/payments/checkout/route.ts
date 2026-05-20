@@ -19,9 +19,12 @@ import config from '@payload-config'
 import { cancelPayPalOrder, createPayPalOrder } from '@/lib/payment/paypal'
 import { cancelStripeCheckout, createStripeCheckout } from '@/lib/payment/stripe'
 
+// MongoDB ObjectId: 24 hex characters
+const objectIdRegex = /^[0-9a-fA-F]{24}$/
+
 // Schema for checkout request body
 const checkoutSchema = z.object({
-  productId: z.string().min(1, 'productId_required'),
+  productId: z.string().regex(objectIdRegex, 'invalid_product_id'),
   provider: z.enum(['stripe', 'paypal']).optional(),
   couponCode: z.string().max(50).optional(),
 })
@@ -45,6 +48,12 @@ export async function POST(request: NextRequest) {
 
   const parsed = checkoutSchema.safeParse(body)
   if (!parsed.success) {
+    const productIdIssue = parsed.error.issues.find(
+      (issue) => issue.path[0] === 'productId' && issue.message === 'invalid_product_id',
+    )
+    if (productIdIssue) {
+      return NextResponse.json({ success: false, error: 'invalid_product_id' }, { status: 400 })
+    }
     return NextResponse.json(
       { success: false, error: 'invalid_request', details: parsed.error.flatten() },
       { status: 400 },
@@ -237,7 +246,8 @@ export async function POST(request: NextRequest) {
   // 9. Build URLs for payment provider redirect
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   const successUrl = `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`
-  const cancelUrl = `${baseUrl}/checkout/cancel?product_id=${productId}`
+  const cancelParams = new URLSearchParams({ product_id: productId })
+  const cancelUrl = `${baseUrl}/checkout/cancel?${cancelParams.toString()}`
 
   // 10. Call payment provider to create checkout session
   let providerResult: { checkoutUrl: string; providerSessionId: string } | null = null
