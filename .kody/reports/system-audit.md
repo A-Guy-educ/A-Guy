@@ -2,6 +2,9 @@
 
 _Cadence: 30m_
 
-## Missing state
+## Orphan worker
+- `kody` → no enabled job references it (all referencing jobs are disabled)
 
-- `pr-health-triage` → enabled job with cadence (15m) has no state.json — will re-fire on every wake
+## Missing state
+- `pr-health-triage` → enabled with every: 15m, but no state file exists
+- `system-audit` → enabled with every: 30m, but no state file exists
