@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
     await handleEvent(payload, event)
   } catch (err) {
     payload.logger.error({ error: err, eventType: event.type }, 'Stripe webhook handler error')
+    return NextResponse.json({ error: 'Handler error' }, { status: 500 })
   }
 
   return NextResponse.json({ received: true }, { status: 200 })
@@ -181,11 +182,11 @@ async function handleEvent(
     case 'checkout.session.completed': {
       const sessionId = event.data.object.id
 
-      // Find the transaction by tranzilaTransactionId (Stripe session ID)
+      // Find the transaction by providerTransactionId (Stripe session ID)
       const transactions = await payload.find({
         collection: 'transactions',
         where: {
-          tranzilaTransactionId: { equals: sessionId },
+          providerTransactionId: { equals: sessionId },
         },
         limit: 1,
         depth: 0,
@@ -199,33 +200,26 @@ async function handleEvent(
 
       const transaction = transactions.docs[0]
 
-      // Idempotency: skip if already completed
-      if (transaction.status === 'completed') {
+      // Idempotency: skip if entitlements already granted (replayed webhook)
+      if (transaction.entitlementsGrantedAt) {
         return
       }
 
-      // Update status to completed
+      // Grant entitlements BEFORE flipping status to completed — fail-safe:
+      // if grant throws we do NOT set status=completed so the provider retries.
+      await grantProductEntitlements(
+        transaction.user as string,
+        transaction.pricingPlan as string,
+        transaction.id,
+      )
+
+      // Grant succeeded — atomically flip status and record the grant timestamp
       await payload.update({
         collection: 'transactions',
         id: transaction.id,
-        data: { status: 'completed' },
+        data: { status: 'completed', entitlementsGrantedAt: new Date().toISOString() },
         overrideAccess: true,
       })
-
-      // Grant entitlements
-      try {
-        await grantProductEntitlements(
-          transaction.user as string,
-          transaction.pricingPlan as string,
-          transaction.id,
-        )
-      } catch (err) {
-        payload.logger.error(
-          { error: err, transactionId: transaction.id },
-          'Failed to grant product entitlements',
-        )
-      }
-
       // Consume coupon atomically (if applied)
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

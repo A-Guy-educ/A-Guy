@@ -1980,6 +1980,10 @@ export interface Transaction {
    */
   refundedAt?: string | null;
   /**
+   * Timestamp when product entitlements were granted to the user
+   */
+  entitlementsGrantedAt?: string | null;
+  /**
    * Amount refunded
    */
   refundedAmount?: number | null;
@@ -4567,6 +4571,7 @@ export interface TransactionsSelect<T extends boolean = true> {
   tranzilaResponse?: T;
   failureReason?: T;
   refundedAt?: T;
+  entitlementsGrantedAt?: T;
   refundedAmount?: T;
   refundedBy?: T;
   createdBy?: T;
