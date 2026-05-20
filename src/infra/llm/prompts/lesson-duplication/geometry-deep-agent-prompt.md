@@ -39,6 +39,10 @@ Return a JSON object with the exercise content. The structure should match the i
 }
 ```
 
+## Required fields
+
+Required fields on every question\_\* block. Every question_select, question_free_response, question_table, question_matching, question_geometry, question_axis, or question_multi_axis block in your output MUST include all of the following with non-empty values: hint (rich_text), solution (rich_text), and fullSolution (rich_text). If a useful hint is hard to write, emit a one-sentence prompt like "Apply the chain rule." or "Recall the parallelogram area formula." — but never omit the field. Empty strings are not acceptable.
+
 ## Examples
 
 Each example below demonstrates the input exercise JSON and the expected output variation JSON. The geometry specification must use the `GeometrySpecV1` format for the `geometry` field within `question_geometry` blocks.
@@ -159,10 +163,22 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "rubric": "Yes, by Pythagorean theorem: 9² + 12² = 81 + 144 = 225 = 15²",
           "acceptedPatterns": []
         },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Check if the Pythagorean theorem holds for these three side lengths.",
+          "mediaIds": []
+        },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",
           "value": "Checking: 9² + 12² = 81 + 144 = 225 = 15². Yes, it is a right triangle.",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Identify the three side lengths: 9 cm, 12 cm, 15 cm\\nStep 2: Check Pythagorean theorem: 9² + 12² = 15²?\\nStep 3: 9² + 12² = 81 + 144 = 225\\nStep 4: 15² = 225\\nStep 5: Since 9² + 12² = 15², the triangle is a right triangle.",
           "mediaIds": []
         }
       }
@@ -265,10 +281,22 @@ Each example below demonstrates the input exercise JSON and the expected output 
           }
         },
         "answer": { "type": "numeric", "value": 112, "tolerance": 0.1 },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Apply the formula for the area of a parallelogram.",
+          "mediaIds": []
+        },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",
           "value": "Area = base × height = 14 × 8 = 112 cm²",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Identify base = 14 cm and height = 8 cm\\nStep 2: Apply area formula for parallelogram: A = base × height\\nStep 3: A = 14 × 8 = 112 cm²",
           "mediaIds": []
         }
       }
@@ -373,6 +401,12 @@ Each example below demonstrates the input exercise JSON and the expected output 
           }
         },
         "answer": { "type": "free_response", "rubric": "12 cm", "acceptedPatterns": [] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Use the formula for the length of a direct common tangent between two circles.",
+          "mediaIds": []
+        },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",

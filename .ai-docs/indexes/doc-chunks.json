@@ -1232,7 +1232,7 @@
     {
       "id": "AGENTS-resources",
       "title": "Resources",
-      "content": "- Docs: https://payloadcms.com/docs\n- LLM Context: https://payloadcms.com/llms-full.txt\n- GitHub: https://github.com/payloadcms/payload\n- Examples: https://github.com/payloadcms/payload/tree/main/examples\n- Templates: https://github.com/payloadcms/payload/tree/main/templates",
+      "content": "- Docs: https://payloadcms.com/docs\n- LLM Context: https://payloadcms.com/llms-full.txt\n- GitHub: https://github.com/payloadcms/payload\n- Examples: https://github.com/payloadcms/payload/tree/main/examples\n- Templates: https://github.com/payloadcms/payload/tree/main/templates\n\n---",
       "keywords": [
         "https",
         "payloadcms",
@@ -1248,8 +1248,96 @@
       "category": "patterns",
       "sourceFile": "AGENTS.md",
       "startLine": 1245,
-      "endLine": 1252,
+      "endLine": 1255,
       "priority": 8
+    },
+    {
+      "id": "AGENTS-kody-memory-protocol",
+      "title": "Kody memory protocol",
+      "content": "You have a persistent memory at `.kody/memory/`. `INDEX.md` is the cheap\ntable of contents; read it at the start of any session and read individual\nmemory files only when they look relevant. Never edit memory files\ndirectly — they are owned by the `memory-writer` job.",
+      "keywords": [
+        "memory",
+        "kody",
+        "read",
+        "files",
+        "they",
+        "protocol",
+        "have",
+        "persistent",
+        "index",
+        "cheap"
+      ],
+      "category": "patterns",
+      "sourceFile": "AGENTS.md",
+      "startLine": 1255,
+      "endLine": 1262,
+      "priority": 8
+    },
+    {
+      "id": "AGENTS-when-to-record-a-memory",
+      "title": "When to record a memory",
+      "content": "- **Preference** — you learn how the operator wants kody to behave.\n- **Decision** — a non-obvious choice was made (and especially _why_).\n- **Lesson** — you tried something that broke or surprised you; future\n  sessions should not repeat it.\n- **Verdict** — an inbox approve / reject / dismiss happened (dashboard\n  writes these; you only do it from a chat where the operator gave a\n  verdict in words).\n\nIf the thing is already in the code, the commit history, or current\nsession context, don't bother — memory is for things that would\notherwise evaporate.",
+      "keywords": [
+        "memory",
+        "operator",
+        "verdict",
+        "record",
+        "preference",
+        "learn",
+        "wants",
+        "kody",
+        "behave",
+        "decision"
+      ],
+      "category": "patterns",
+      "sourceFile": "AGENTS.md",
+      "startLine": 1262,
+      "endLine": 1276,
+      "priority": 7
+    },
+    {
+      "id": "AGENTS-how-to-record-a-memory",
+      "title": "How to record a memory",
+      "content": "Drop a single JSON sticky note in `.kody/memory/inbox/`. The\n`memory-writer` job picks it up on its next tick (every 15m) and files\nit under `.kody/memory/<name>.md` with frontmatter, updating\n`INDEX.md`.\n\nSticky note shape (see `.kody/memory/inbox/README.md` for the full\ncontract):\n\n```json\n{\n  \"type\": \"preference | decision | lesson | verdict | architecture\",\n  \"name\": \"kebab-case-slug\",\n  \"title\": \"Human-readable title for INDEX.md\",\n  \"hook\": \"One-line hook for INDEX.md\",\n  \"body\": \"Full markdown content — no frontmatter.\",\n  \"source\": \"chat | executor:<name> | job:<slug> | dashboard:<action>\",\n  \"ts\": \"<UTC ISO timestamp>\",\n  \"links\": [\"other-memory-slug\"]\n}\n```\n\nFilename: `<utc-iso>-<source>-<short-uuid>.json` — must be unique so\nparallel writers never collide.\n\nCommit the sticky note (and only the sticky note) when you record. Do\n**not** also write `.kody/memory/<name>.md` yourself — that is the\nwriter job's territory and editing both at once will cause merge\nconflicts on the next tick.",
+      "keywords": [
+        "memory",
+        "sticky",
+        "note",
+        "kody",
+        "name",
+        "json",
+        "index",
+        "record",
+        "inbox",
+        "next"
+      ],
+      "category": "patterns",
+      "sourceFile": "AGENTS.md",
+      "startLine": 1276,
+      "endLine": 1307,
+      "priority": 7
+    },
+    {
+      "id": "AGENTS-what-not-to-record",
+      "title": "What not to record",
+      "content": "- The current shape of the code (it's in the code).\n- A summary of what you just committed (it's in `git log`).\n- Ephemeral task state (already in `*.state.json`).\n- Information already documented in `AGENTS.md` or `CLAUDE.md`.",
+      "keywords": [
+        "code",
+        "state",
+        "already",
+        "record",
+        "current",
+        "shape",
+        "summary",
+        "just",
+        "committed",
+        "ephemeral"
+      ],
+      "category": "patterns",
+      "sourceFile": "AGENTS.md",
+      "startLine": 1307,
+      "endLine": 1313,
+      "priority": 7
     },
     {
       "id": "DESIGN_SYSTEM-design-system-documentation",
@@ -5285,8 +5373,8 @@
     }
   ],
   "metadata": {
-    "generatedAt": "2026-04-15T09:50:57.697Z",
-    "totalChunks": 268,
+    "generatedAt": "2026-05-20T12:26:15.269Z",
+    "totalChunks": 272,
     "sourceFiles": [
       "AGENTS.md",
       "DESIGN_SYSTEM.md",
