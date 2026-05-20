@@ -90,9 +90,7 @@
       "id": "AGENTS-configuration",
       "title": "Configuration",
       "content": "",
-      "keywords": [
-        "configuration"
-      ],
+      "keywords": ["configuration"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
       "startLine": 50,
@@ -125,9 +123,7 @@
       "id": "AGENTS-collections",
       "title": "Collections",
       "content": "",
-      "keywords": [
-        "collections"
-      ],
+      "keywords": ["collections"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
       "startLine": 83,
@@ -182,9 +178,7 @@
       "id": "AGENTS-fields",
       "title": "Fields",
       "content": "",
-      "keywords": [
-        "fields"
-      ],
+      "keywords": ["fields"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
       "startLine": 129,
@@ -217,11 +211,7 @@
       "id": "AGENTS-critical-security-patterns",
       "title": "CRITICAL SECURITY PATTERNS",
       "content": "",
-      "keywords": [
-        "critical",
-        "security",
-        "patterns"
-      ],
+      "keywords": ["critical", "security", "patterns"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
       "startLine": 167,
@@ -298,10 +288,7 @@
       "id": "AGENTS-access-control",
       "title": "Access Control",
       "content": "",
-      "keywords": [
-        "access",
-        "control"
-      ],
+      "keywords": ["access", "control"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
       "startLine": 261,
@@ -378,12 +365,7 @@
       "id": "AGENTS-advanced-access-control-patterns",
       "title": "Advanced Access Control Patterns",
       "content": "",
-      "keywords": [
-        "advanced",
-        "access",
-        "control",
-        "patterns"
-      ],
+      "keywords": ["advanced", "access", "control", "patterns"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
       "startLine": 347,
@@ -482,9 +464,7 @@
       "id": "AGENTS-hooks",
       "title": "Hooks",
       "content": "",
-      "keywords": [
-        "hooks"
-      ],
+      "keywords": ["hooks"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
       "startLine": 460,
@@ -517,9 +497,7 @@
       "id": "AGENTS-queries",
       "title": "Queries",
       "content": "",
-      "keywords": [
-        "queries"
-      ],
+      "keywords": ["queries"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
       "startLine": 525,
@@ -969,9 +947,7 @@
       "id": "AGENTS-plugins",
       "title": "Plugins",
       "content": "",
-      "keywords": [
-        "plugins"
-      ],
+      "keywords": ["plugins"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
       "startLine": 1090,
@@ -1026,10 +1002,7 @@
       "id": "AGENTS-best-practices",
       "title": "Best Practices",
       "content": "",
-      "keywords": [
-        "best",
-        "practices"
-      ],
+      "keywords": ["best", "practices"],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
       "startLine": 1136,
@@ -1502,10 +1475,7 @@
       "id": "DESIGN_SYSTEM-design-principles",
       "title": "Design Principles",
       "content": "",
-      "keywords": [
-        "design",
-        "principles"
-      ],
+      "keywords": ["design", "principles"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
       "startLine": 67,
@@ -1842,10 +1812,7 @@
       "id": "DESIGN_SYSTEM-color-system",
       "title": "Color System",
       "content": "",
-      "keywords": [
-        "color",
-        "system"
-      ],
+      "keywords": ["color", "system"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
       "startLine": 230,
@@ -1856,16 +1823,7 @@
       "id": "DESIGN_SYSTEM-color-tokens",
       "title": "Color Tokens",
       "content": "Colors are defined using HSL CSS variables for easy theming:",
-      "keywords": [
-        "color",
-        "tokens",
-        "colors",
-        "defined",
-        "using",
-        "variables",
-        "easy",
-        "theming"
-      ],
+      "keywords": ["color", "tokens", "colors", "defined", "using", "variables", "easy", "theming"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
       "startLine": 232,
@@ -1964,9 +1922,7 @@
       "id": "DESIGN_SYSTEM-typography",
       "title": "Typography",
       "content": "",
-      "keywords": [
-        "typography"
-      ],
+      "keywords": ["typography"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
       "startLine": 272,
@@ -2065,10 +2021,7 @@
       "id": "DESIGN_SYSTEM-spacing-layout",
       "title": "Spacing & Layout",
       "content": "",
-      "keywords": [
-        "spacing",
-        "layout"
-      ],
+      "keywords": ["spacing", "layout"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
       "startLine": 319,
@@ -2232,15 +2185,7 @@
       "id": "DESIGN_SYSTEM-z-index-scale",
       "title": "Z-Index Scale",
       "content": "Consistent stacking order prevents z-index conflicts.",
-      "keywords": [
-        "z-index",
-        "scale",
-        "consistent",
-        "stacking",
-        "order",
-        "prevents",
-        "conflicts"
-      ],
+      "keywords": ["z-index", "scale", "consistent", "stacking", "order", "prevents", "conflicts"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
       "startLine": 414,
@@ -2316,9 +2261,7 @@
       "id": "DESIGN_SYSTEM-components",
       "title": "Components",
       "content": "",
-      "keywords": [
-        "components"
-      ],
+      "keywords": ["components"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
       "startLine": 468,
@@ -2351,11 +2294,7 @@
       "id": "DESIGN_SYSTEM-component-usage-examples",
       "title": "Component Usage Examples",
       "content": "",
-      "keywords": [
-        "component",
-        "usage",
-        "examples"
-      ],
+      "keywords": ["component", "usage", "examples"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
       "startLine": 485,
@@ -2540,10 +2479,7 @@
       "id": "DESIGN_SYSTEM-dark-mode",
       "title": "Dark Mode",
       "content": "",
-      "keywords": [
-        "dark",
-        "mode"
-      ],
+      "keywords": ["dark", "mode"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
       "startLine": 665,
@@ -2642,9 +2578,7 @@
       "id": "DESIGN_SYSTEM-accessibility",
       "title": "Accessibility",
       "content": "",
-      "keywords": [
-        "accessibility"
-      ],
+      "keywords": ["accessibility"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
       "startLine": 712,
@@ -2743,10 +2677,7 @@
       "id": "DESIGN_SYSTEM-styling-guidelines",
       "title": "Styling Guidelines",
       "content": "",
-      "keywords": [
-        "styling",
-        "guidelines"
-      ],
+      "keywords": ["styling", "guidelines"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
       "startLine": 747,
@@ -2779,11 +2710,7 @@
       "id": "DESIGN_SYSTEM-how-to-handle-complex-cases",
       "title": "How to Handle Complex Cases",
       "content": "",
-      "keywords": [
-        "handle",
-        "complex",
-        "cases"
-      ],
+      "keywords": ["handle", "complex", "cases"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
       "startLine": 760,
@@ -2948,14 +2875,7 @@
       "id": "DESIGN_SYSTEM-migration-checklist",
       "title": "Migration Checklist",
       "content": "Use this checklist when migrating a component from SCSS to Tailwind:",
-      "keywords": [
-        "checklist",
-        "migration",
-        "migrating",
-        "component",
-        "scss",
-        "tailwind"
-      ],
+      "keywords": ["checklist", "migration", "migrating", "component", "scss", "tailwind"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
       "startLine": 912,
@@ -3032,10 +2952,7 @@
       "id": "DESIGN_SYSTEM-best-practices",
       "title": "Best Practices",
       "content": "",
-      "keywords": [
-        "best",
-        "practices"
-      ],
+      "keywords": ["best", "practices"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
       "startLine": 946,
@@ -3134,12 +3051,7 @@
       "id": "DESIGN_SYSTEM-adding-new-components",
       "title": "Adding New Components",
       "content": "When adding shadcn/ui components:\n\n```bash",
-      "keywords": [
-        "adding",
-        "components",
-        "shadcn",
-        "bash"
-      ],
+      "keywords": ["adding", "components", "shadcn", "bash"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
       "startLine": 1026,
@@ -3150,12 +3062,7 @@
       "id": "DESIGN_SYSTEM-use-npx-to-add-components",
       "title": "Use npx to add components",
       "content": "npx shadcn@latest add <component-name>",
-      "keywords": [
-        "components",
-        "shadcn",
-        "latest",
-        "component-name"
-      ],
+      "keywords": ["components", "shadcn", "latest", "component-name"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
       "startLine": 1031,
@@ -3210,10 +3117,7 @@
       "id": "DESIGN_SYSTEM-utility-classes",
       "title": "Utility Classes",
       "content": "",
-      "keywords": [
-        "utility",
-        "classes"
-      ],
+      "keywords": ["utility", "classes"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
       "startLine": 1062,
@@ -3246,12 +3150,7 @@
       "id": "DESIGN_SYSTEM-smooth-scrolling",
       "title": "Smooth Scrolling",
       "content": "```css\nhtml {\n  scroll-behavior: smooth;\n}\n```",
-      "keywords": [
-        "smooth",
-        "scrolling",
-        "html",
-        "scroll-behavior"
-      ],
+      "keywords": ["smooth", "scrolling", "html", "scroll-behavior"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
       "startLine": 1081,
@@ -3369,14 +3268,7 @@
       "id": "DESIGN_SYSTEM-dry-run-see-what-would-change",
       "title": "Dry run - see what would change",
       "content": "pnpm design:tokens:codemod:dry",
-      "keywords": [
-        "would",
-        "change",
-        "pnpm",
-        "design",
-        "tokens",
-        "codemod"
-      ],
+      "keywords": ["would", "change", "pnpm", "design", "tokens", "codemod"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
       "startLine": 1126,
@@ -3387,14 +3279,7 @@
       "id": "DESIGN_SYSTEM-apply-changes",
       "title": "Apply changes",
       "content": "pnpm design:tokens:codemod",
-      "keywords": [
-        "apply",
-        "changes",
-        "pnpm",
-        "design",
-        "tokens",
-        "codemod"
-      ],
+      "keywords": ["apply", "changes", "pnpm", "design", "tokens", "codemod"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
       "startLine": 1129,
@@ -3405,15 +3290,7 @@
       "id": "DESIGN_SYSTEM-audit-check-for-remaining-issues",
       "title": "Audit - check for remaining issues",
       "content": "pnpm design:tokens:audit",
-      "keywords": [
-        "audit",
-        "check",
-        "remaining",
-        "issues",
-        "pnpm",
-        "design",
-        "tokens"
-      ],
+      "keywords": ["audit", "check", "remaining", "issues", "pnpm", "design", "tokens"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
       "startLine": 1132,
@@ -3424,15 +3301,7 @@
       "id": "DESIGN_SYSTEM-audit-with-full-details",
       "title": "Audit with full details",
       "content": "pnpm design:tokens:audit --verbose",
-      "keywords": [
-        "audit",
-        "full",
-        "details",
-        "pnpm",
-        "design",
-        "tokens",
-        "--verbose"
-      ],
+      "keywords": ["audit", "full", "details", "pnpm", "design", "tokens", "--verbose"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
       "startLine": 1135,
@@ -3553,13 +3422,7 @@
       "id": "DESIGN_SYSTEM-storybook",
       "title": "Storybook",
       "content": "Storybook is set up for visual documentation and testing of components.",
-      "keywords": [
-        "storybook",
-        "visual",
-        "documentation",
-        "testing",
-        "components"
-      ],
+      "keywords": ["storybook", "visual", "documentation", "testing", "components"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
       "startLine": 1220,
@@ -3570,10 +3433,7 @@
       "id": "DESIGN_SYSTEM-setup",
       "title": "Setup",
       "content": "```bash",
-      "keywords": [
-        "setup",
-        "bash"
-      ],
+      "keywords": ["setup", "bash"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
       "startLine": 1224,
@@ -3604,12 +3464,7 @@
       "id": "DESIGN_SYSTEM-start-storybook-dev-server",
       "title": "Start Storybook dev server",
       "content": "pnpm storybook\n```",
-      "keywords": [
-        "storybook",
-        "start",
-        "server",
-        "pnpm"
-      ],
+      "keywords": ["storybook", "start", "server", "pnpm"],
       "category": "styling",
       "sourceFile": "DESIGN_SYSTEM.md",
       "startLine": 1230,
@@ -4057,11 +3912,7 @@
       "id": "STYLING-GUIDE-styling-system-guide",
       "title": "Styling System Guide",
       "content": "",
-      "keywords": [
-        "styling",
-        "system",
-        "guide"
-      ],
+      "keywords": ["styling", "system", "guide"],
       "category": "styling",
       "sourceFile": "STYLING-GUIDE.md",
       "startLine": 1,
@@ -4094,12 +3945,7 @@
       "id": "STYLING-GUIDE-architecture-layers",
       "title": "Architecture Layers",
       "content": "The system has three layers:",
-      "keywords": [
-        "layers",
-        "architecture",
-        "system",
-        "three"
-      ],
+      "keywords": ["layers", "architecture", "system", "three"],
       "category": "styling",
       "sourceFile": "STYLING-GUIDE.md",
       "startLine": 7,
@@ -4176,10 +4022,7 @@
       "id": "STYLING-GUIDE--good-practices",
       "title": "✅ Good Practices",
       "content": "",
-      "keywords": [
-        "good",
-        "practices"
-      ],
+      "keywords": ["good", "practices"],
       "category": "styling",
       "sourceFile": "STYLING-GUIDE.md",
       "startLine": 48,
@@ -4256,11 +4099,7 @@
       "id": "STYLING-GUIDE-available-semantic-tokens",
       "title": "Available Semantic Tokens",
       "content": "",
-      "keywords": [
-        "available",
-        "semantic",
-        "tokens"
-      ],
+      "keywords": ["available", "semantic", "tokens"],
       "category": "styling",
       "sourceFile": "STYLING-GUIDE.md",
       "startLine": 84,
@@ -4425,10 +4264,7 @@
       "id": "STYLING-GUIDE-component-patterns",
       "title": "Component Patterns",
       "content": "",
-      "keywords": [
-        "component",
-        "patterns"
-      ],
+      "keywords": ["component", "patterns"],
       "category": "styling",
       "sourceFile": "STYLING-GUIDE.md",
       "startLine": 152,
@@ -4549,10 +4385,7 @@
       "id": "STYLING-GUIDE-migration-guide",
       "title": "Migration Guide",
       "content": "",
-      "keywords": [
-        "migration",
-        "guide"
-      ],
+      "keywords": ["migration", "guide"],
       "category": "styling",
       "sourceFile": "STYLING-GUIDE.md",
       "startLine": 232,
@@ -4563,11 +4396,7 @@
       "id": "STYLING-GUIDE-replacing-hardcoded-colors",
       "title": "Replacing Hardcoded Colors",
       "content": "",
-      "keywords": [
-        "replacing",
-        "hardcoded",
-        "colors"
-      ],
+      "keywords": ["replacing", "hardcoded", "colors"],
       "category": "styling",
       "sourceFile": "STYLING-GUIDE.md",
       "startLine": 234,
@@ -4688,10 +4517,7 @@
       "id": "CHEAT-SHEET--collection-patterns",
       "title": "🏗️ Collection Patterns",
       "content": "",
-      "keywords": [
-        "collection",
-        "patterns"
-      ],
+      "keywords": ["collection", "patterns"],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
       "startLine": 9,
@@ -4768,10 +4594,7 @@
       "id": "CHEAT-SHEET--ai-services-patterns",
       "title": "🤖 AI Services Patterns",
       "content": "",
-      "keywords": [
-        "services",
-        "patterns"
-      ],
+      "keywords": ["services", "patterns"],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
       "startLine": 63,
@@ -4848,11 +4671,7 @@
       "id": "CHEAT-SHEET--course-hierarchy-patterns",
       "title": "🌳 Course Hierarchy Patterns",
       "content": "",
-      "keywords": [
-        "course",
-        "hierarchy",
-        "patterns"
-      ],
+      "keywords": ["course", "hierarchy", "patterns"],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
       "startLine": 110,
@@ -4951,11 +4770,7 @@
       "id": "CHEAT-SHEET--block-rendering-patterns",
       "title": "🧱 Block Rendering Patterns",
       "content": "",
-      "keywords": [
-        "block",
-        "rendering",
-        "patterns"
-      ],
+      "keywords": ["block", "rendering", "patterns"],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
       "startLine": 173,
@@ -5054,10 +4869,7 @@
       "id": "CHEAT-SHEET--component-patterns",
       "title": "🎨 Component Patterns",
       "content": "",
-      "keywords": [
-        "component",
-        "patterns"
-      ],
+      "keywords": ["component", "patterns"],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
       "startLine": 257,
@@ -5112,10 +4924,7 @@
       "id": "CHEAT-SHEET--api-endpoint-pattern",
       "title": "🔌 API Endpoint Pattern",
       "content": "",
-      "keywords": [
-        "endpoint",
-        "pattern"
-      ],
+      "keywords": ["endpoint", "pattern"],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
       "startLine": 309,
@@ -5148,10 +4957,7 @@
       "id": "CHEAT-SHEET--testing-patterns",
       "title": "🧪 Testing Patterns",
       "content": "",
-      "keywords": [
-        "testing",
-        "patterns"
-      ],
+      "keywords": ["testing", "patterns"],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
       "startLine": 361,
@@ -5228,12 +5034,7 @@
       "id": "CHEAT-SHEET--common-tasks-decision-tree",
       "title": "🎯 Common Tasks Decision Tree",
       "content": "",
-      "keywords": [
-        "common",
-        "tasks",
-        "decision",
-        "tree"
-      ],
+      "keywords": ["common", "tasks", "decision", "tree"],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
       "startLine": 442,
@@ -5310,10 +5111,7 @@
       "id": "CHEAT-SHEET--anti-patterns-never-do-this-",
       "title": "🚫 Anti-Patterns (NEVER DO THIS)",
       "content": "",
-      "keywords": [
-        "anti-patterns",
-        "never"
-      ],
+      "keywords": ["anti-patterns", "never"],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
       "startLine": 492,
@@ -5434,11 +5232,7 @@
       "id": "CHEAT-SHEET--common-commands",
       "title": "🏃 Common Commands",
       "content": "```bash",
-      "keywords": [
-        "common",
-        "commands",
-        "bash"
-      ],
+      "keywords": ["common", "commands", "bash"],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
       "startLine": 568,
@@ -5471,14 +5265,7 @@
       "id": "CHEAT-SHEET-database",
       "title": "Database",
       "content": "docker-compose up -d            # Start MongoDB\ndocker-compose down             # Stop MongoDB",
-      "keywords": [
-        "docker-compose",
-        "mongodb",
-        "database",
-        "start",
-        "down",
-        "stop"
-      ],
+      "keywords": ["docker-compose", "mongodb", "database", "start", "down", "stop"],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
       "startLine": 576,
@@ -5511,13 +5298,7 @@
       "id": "CHEAT-SHEET-testing",
       "title": "Testing",
       "content": "pnpm test:int                  # Integration tests\npnpm test:e2e                  # E2E tests\n```\n\n---",
-      "keywords": [
-        "pnpm",
-        "test",
-        "tests",
-        "testing",
-        "integration"
-      ],
+      "keywords": ["pnpm", "test", "tests", "testing", "integration"],
       "category": "quick-reference",
       "sourceFile": "CHEAT-SHEET.md",
       "startLine": 587,
