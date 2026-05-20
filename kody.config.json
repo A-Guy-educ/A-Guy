@@ -11,7 +11,8 @@
   },
   "github": {
     "owner": "A-Guy-educ",
-    "repo": "A-Guy"
+    "repo": "A-Guy",
+    "operator": "aguyaharonyair"
   },
   "agent": {
     "model": "minimax/MiniMax-M2.7-highspeed"
