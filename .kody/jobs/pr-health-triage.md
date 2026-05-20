@@ -104,6 +104,12 @@ is always `@kody <verb> --pr <n>`.
 
 ## Comment formats
 
+**Operator handle.** Before posting the first recommendation comment of
+the tick, read `github.operator` from `kody.config.json`
+(`jq -r .github.operator kody.config.json`) — that GitHub login is the
+operator. Substitute it for `<operator>` below. The operator handle is
+never hardcoded in this job; future operators only change the config.
+
 **Recommendation** (verb not graduated). One terse, machine-greppable
 comment. It MUST `@`-mention the operator on the first line (that mention
 is what routes it into the dashboard inbox + push) and carry the exact
@@ -111,7 +117,7 @@ command on a single `kody-cmd` line (that is what the inbox **Approve**
 button posts verbatim):
 
 ```
-@aguyaharonyair 🧭 **CTO recommendation** — `<verb>`
+@<operator> 🧭 **CTO recommendation** — `<verb>`
 
 <one or two sentences: what's wrong with PR #<n> and what confirming will do>
 
@@ -123,7 +129,7 @@ _Confirm or dismiss this in the dashboard inbox. The CTO will not act on its own
 **Auto-run** (verb graduated). Post `@kody <verb> --pr <n>` on the PR,
 then a **separate, silent audit-trail** comment. It **MUST NOT
 `@`-mention the operator** — graduation means you've earned the right to
-act *without* interrupting them, and any `@aguyaharonyair` mention routes
+act *without* interrupting them, and any `@<operator>` mention routes
 straight to their inbox and push, defeating the point. Leave the mention
 out so the comment is a quiet record only:
 
@@ -184,3 +190,27 @@ per-tick:
 do not write or rely on them from the prompt.)
 
 `done`: always `false` — PR-health triage is evergreen.
+
+## Tick output (MANDATORY)
+
+End every tick with the fenced block below. **This is how the dedup
+ledger persists** — without it, `data.prs` evaporates between ticks and
+every recommendation re-fires on the next wake. Carry forward the prior
+tick's `data.prs` entries, mutate the ones you acted on this tick, and
+prune entries for PRs no longer in the open list.
+
+```kody-job-next-state
+{
+  "cursor": "idle",
+  "data": {
+    "prs": {
+      "<pr-number>": {
+        "fp": "<verb>|<updatedAt>",
+        "stage": "<verb>-recommended|<verb>-auto|dismissed",
+        "lastActAt": "<iso>"
+      }
+    }
+  },
+  "done": false
+}
+```
