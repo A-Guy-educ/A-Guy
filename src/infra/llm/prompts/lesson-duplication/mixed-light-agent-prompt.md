@@ -30,6 +30,10 @@ Return a JSON object with the exercise content. The structure must match the inp
 }
 ```
 
+## Required fields
+
+Required fields on every question\_\* block. Every question_select, question_free_response, question_table, question_matching, question_geometry, question_axis, or question_multi_axis block in your output MUST include all of the following with non-empty values: hint (rich_text), solution (rich_text), and fullSolution (rich_text). If a useful hint is hard to write, emit a one-sentence prompt like "Apply the chain rule." or "Recall the parallelogram area formula." — but never omit the field. Empty strings are not acceptable.
+
 ## Examples
 
 Each example below demonstrates the input exercise JSON and the expected output variation JSON showing mixed-subject transformations.
@@ -84,6 +88,12 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "mediaIds": []
         },
         "answer": { "type": "free_response", "rubric": "x = 3", "acceptedPatterns": [] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Isolate the variable on one side of the equation.",
+          "mediaIds": []
+        },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",
@@ -187,7 +197,25 @@ Each example below demonstrates the input exercise JSON and the expected output 
             }
           }
         ],
-        "answer": { "selected": ["true"] }
+        "answer": { "selected": ["true"] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Recall that the sum of interior angles in any triangle equals 180 degrees.",
+          "mediaIds": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "True",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: The triangle angle sum theorem states that the three interior angles of any triangle add up to 180°.\\nStep 2: This holds for every triangle in Euclidean geometry, so the statement is True.",
+          "mediaIds": []
+        }
       }
     ]
   }
@@ -365,6 +393,24 @@ Each example below demonstrates the input exercise JSON and the expected output 
               ]
             }
           ]
+        },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Multiply each column header by the row header to fill in the table cells.",
+          "mediaIds": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "2×4 = 8, 2×5 = 10",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Identify the operation indicated by the row header (×).\\nStep 2: For the column under 4, compute 2 × 4 = 8.\\nStep 3: For the column under 5, compute 2 × 5 = 10.",
+          "mediaIds": []
         }
       }
     ]
