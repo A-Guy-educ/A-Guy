@@ -30,6 +30,10 @@ Return a JSON object with the exercise content. The structure must match the inp
 }
 ```
 
+## Required fields
+
+Required fields on every question\_\* block. Every question_select, question_free_response, question_table, question_matching, question_geometry, question_axis, or question_multi_axis block in your output MUST include all of the following with non-empty values: hint (rich_text), solution (rich_text), and fullSolution (rich_text). If a useful hint is hard to write, emit a one-sentence prompt like "Apply the chain rule." or "Recall the parallelogram area formula." — but never omit the field. Empty strings are not acceptable.
+
 ## Examples
 
 Each example below demonstrates the input exercise JSON and the expected output variation JSON showing algebraic transformations.
@@ -164,6 +168,12 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "mediaIds": []
         },
         "answer": { "type": "free_response", "rubric": "12x^4", "acceptedPatterns": [] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Multiply coefficients and add the exponents.",
+          "mediaIds": []
+        },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",
@@ -232,6 +242,12 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "mediaIds": []
         },
         "answer": { "type": "free_response", "rubric": "(x+4)(x-4)", "acceptedPatterns": [] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Recognize this as a difference of squares.",
+          "mediaIds": []
+        },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",
