@@ -1949,6 +1949,10 @@ export interface Transaction {
    */
   errorMessage?: string | null;
   /**
+   * Timestamp when product entitlements were granted to the user
+   */
+  entitlementsGrantedAt?: string | null;
+  /**
    * Amount refunded in agorot (smallest currency unit)
    */
   refundedAmount?: number | null;
@@ -4586,6 +4590,7 @@ export interface TransactionsSelect<T extends boolean = true> {
   successUrl?: T;
   cancelUrl?: T;
   errorMessage?: T;
+  entitlementsGrantedAt?: T;
   refundedAmount?: T;
   refundedBy?: T;
   refundedAt?: T;
