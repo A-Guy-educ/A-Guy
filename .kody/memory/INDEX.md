@@ -6,7 +6,3 @@ To add a memory, drop a sticky note in [`inbox/`](inbox/README.md) and the job w
 Each entry: `- [Title](id.md) — one-line hook (type: <type>)`.
 - [User prefers concise answers](user-prefers-concise-answers.md) — The user explicitly stated a preference for short, simple answers in responses. (type: user)
 - [Kody does not address issues on goal branches directly](kody-does-not-address-issues-on-goal-branches-directly.md) — The Kody engine cannot directly address issues on goal branches; new work must be initiated from the default branch. (type: feedback)
-
-- [A-Guy memory system bootstrap smoke test](aguy-memory-bootstrap.md) — Verify A-Guy's memory-writer drains the inbox and files notes correctly. (type: lesson)
-
-- [First memory-writer execution via the engine in A-Guy](memory-writer-first-engine-run.md) — Proves the memory-writer job runs end-to-end under the kody engine in A-Guy. (type: lesson)
