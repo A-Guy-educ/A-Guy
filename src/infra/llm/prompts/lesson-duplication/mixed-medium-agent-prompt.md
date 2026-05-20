@@ -30,6 +30,10 @@ Return a JSON object with the exercise content. The structure must match the inp
 }
 ```
 
+## Required fields
+
+Required fields on every question\_\* block. Every question_select, question_free_response, question_table, question_matching, question_geometry, question_axis, or question_multi_axis block in your output MUST include all of the following with non-empty values: hint (rich_text), solution (rich_text), and fullSolution (rich_text). If a useful hint is hard to write, emit a one-sentence prompt like "Apply the chain rule." or "Recall the parallelogram area formula." — but never omit the field. Empty strings are not acceptable.
+
 ## Examples
 
 Each example below demonstrates the input exercise JSON and the expected output variation JSON showing mixed-subject transformations with reworded phrasing.
@@ -111,7 +115,25 @@ Each example below demonstrates the input exercise JSON and the expected output 
             "content": { "type": "rich_text", "format": "md-math-v1", "value": "9", "mediaIds": [] }
           }
         ],
-        "answer": { "selected": ["c"] }
+        "answer": { "selected": ["c"] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "A prime number has exactly two distinct positive divisors.",
+          "mediaIds": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "7",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Check divisibility of each option. 4 = 2×2 (composite). 6 = 2×3 (composite). 9 = 3×3 (composite).\\nStep 2: 7 has no positive divisors other than 1 and 7, so 7 is prime.\\nStep 3: The correct answer is 7.",
+          "mediaIds": []
+        }
       }
     ]
   }
@@ -168,6 +190,12 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "mediaIds": []
         },
         "answer": { "type": "free_response", "rubric": "84 m²", "acceptedPatterns": [] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Multiply the length by the width to find the area.",
+          "mediaIds": []
+        },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",
@@ -319,7 +347,25 @@ Each example below demonstrates the input exercise JSON and the expected output 
           { "leftId": "l2", "rightId": "r2" },
           { "leftId": "l3", "rightId": "r3" }
         ],
-        "shuffleRightColumn": true
+        "shuffleRightColumn": true,
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Count the number of sides on each polygon shape.",
+          "mediaIds": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Triangle → 3, Square → 4, Pentagon → 5",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Count edges for each polygon. A triangle has 3 edges; a square has 4 edges; a pentagon has 5 edges.\\nStep 2: Pair each polygon with its edge count: Triangle ↔ 3, Square ↔ 4, Pentagon ↔ 5.",
+          "mediaIds": []
+        }
       }
     ]
   }
