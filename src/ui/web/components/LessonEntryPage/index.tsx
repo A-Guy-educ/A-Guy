@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import DOMPurify from 'dompurify'
 import { Clock, Play, RotateCcw } from 'lucide-react'
 import { Button } from '@/ui/web/components/button'
@@ -65,11 +65,24 @@ function getSecondaryButtonText(isExam: boolean, t: (key: string) => string): st
 export function LessonEntryPage(props: LessonEntryPageProps) {
   const tc = useTranslations('courses')
   const [selectedMode, setSelectedMode] = useState<DisplayMode>(props.defaultMode)
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   const isExam = props.lesson.type === 'exam'
 
   const primaryButtonText = getPrimaryButtonText(props.isNewUser, isExam, tc)
   const secondaryButtonText = getSecondaryButtonText(isExam, tc)
+
+  const sanitizedDescription = useMemo(() => {
+    if (!isMounted || !props.lesson.description?.trim()) return ''
+    return DOMPurify.sanitize(props.lesson.description, {
+      ALLOWED_TAGS: [],
+      ALLOWED_ATTR: [],
+    })
+  }, [isMounted, props.lesson.description])
 
   const handleStart = () => {
     const href = `/courses/${props.courseSlug}/chapters/${props.chapterSlug}/lessons/${props.lessonSlug}?mode=${selectedMode}`
@@ -131,13 +144,8 @@ export function LessonEntryPage(props: LessonEntryPageProps) {
           )}
 
           {/* Description */}
-          {props.lesson.description && (
-            <p className="text-body-lg text-foreground leading-relaxed">
-              {DOMPurify.sanitize(props.lesson.description, {
-                ALLOWED_TAGS: [],
-                ALLOWED_ATTR: [],
-              })}
-            </p>
+          {props.lesson.description && sanitizedDescription && (
+            <p className="text-body-lg text-foreground leading-relaxed">{sanitizedDescription}</p>
           )}
 
           {/* Estimated Time */}
