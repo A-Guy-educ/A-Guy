@@ -17,6 +17,7 @@ Generate a deep variation of the provided exercise. Deep variation means: **nume
 7. **No unsolvable problems**: Ensure the variation still has a valid, correct answer.
 8. **No contradictions**: Question, hint, solution, and full_solution must all be consistent with each other.
 9. **NO PNG output**: Never produce or include any PNG image data. Only text and SVG are allowed.
+10. **When a deep variation produces multiple question blocks within one exercise, every block must independently carry a non-empty hint. (solution and fullSolution are re-derived in pass 2.)**
 
 ## Output Format
 
@@ -460,6 +461,206 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "type": "rich_text",
           "format": "md-math-v1",
           "value": "Step 1: Use the conversion formula F = C × 9/5 + 32.\\nStep 2: Substitute each Celsius value into the formula. Example: 100 × 9/5 + 32 = 180 + 32 = 212°F.\\nStep 3: Fill the editable cells with the computed Fahrenheit values to complete the table.",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 4 — Input (multi-block):**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Solve for x: $2x + 6 = 14$",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "x = 4", "acceptedPatterns": [] },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "x = 4",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "2x + 6 = 14 → 2x = 8 → x = 4",
+          "mediaIds": []
+        }
+      },
+      {
+        "id": "q2",
+        "type": "question_select",
+        "variant": "mcq",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Which of the following is a prime number?",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "a",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "4", "mediaIds": [] }
+          },
+          {
+            "id": "b",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "9", "mediaIds": [] }
+          },
+          {
+            "id": "c",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "7", "mediaIds": [] }
+          }
+        ],
+        "answer": { "selected": ["c"] },
+        "solution": { "type": "rich_text", "format": "md-math-v1", "value": "7", "mediaIds": [] },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "7 is prime (divisible only by 1 and itself). 4 = 2×2 and 9 = 3×3 are composite.",
+          "mediaIds": []
+        }
+      },
+      {
+        "id": "q3",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Find 25% of 80.",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "20", "acceptedPatterns": [] },
+        "solution": { "type": "rich_text", "format": "md-math-v1", "value": "20", "mediaIds": [] },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "25% = 25/100 = 1/4. So 25% of 80 = (1/4) × 80 = 20",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 4 — Output (multi-block with independent hints):**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Solve for x: $3x + 9 = 24$",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "x = 5", "acceptedPatterns": [] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Isolate the term with x on one side first.",
+          "mediaIds": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "x = 5",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "3x + 9 = 24 → 3x = 15 → x = 5",
+          "mediaIds": []
+        }
+      },
+      {
+        "id": "q2",
+        "type": "question_select",
+        "variant": "mcq",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Which of the following is a prime number?",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "a",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "6", "mediaIds": [] }
+          },
+          {
+            "id": "b",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "11",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "c",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "15",
+              "mediaIds": []
+            }
+          }
+        ],
+        "answer": { "selected": ["b"] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Check divisibility by primes less than the square root.",
+          "mediaIds": []
+        },
+        "solution": { "type": "rich_text", "format": "md-math-v1", "value": "11", "mediaIds": [] },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "11 is prime (not divisible by 2, 3, 5, or 7). 6 = 2×3, 15 = 3×5 are composite.",
+          "mediaIds": []
+        }
+      },
+      {
+        "id": "q3",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Find 40% of 65.",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "26", "acceptedPatterns": [] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Convert 40% to a fraction first.",
+          "mediaIds": []
+        },
+        "solution": { "type": "rich_text", "format": "md-math-v1", "value": "26", "mediaIds": [] },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "40% = 40/100 = 2/5. So 40% of 65 = (2/5) × 65 = 26",
           "mediaIds": []
         }
       }
