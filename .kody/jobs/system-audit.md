@@ -69,21 +69,25 @@ proceed and set `data.lastRunISO` to now (UTC ISO) before emitting state.
       No mechanical fix (root cause varies — could be the engine,
       could be webhook re-delivery).
 
-3. **Find or open the tracking issue.** Look for an open issue
-   titled exactly **`Kody system audit`**:
+3. **Pin the repo, then find or open the tracking issue.**
+   `gh` CLI's default repo is not guaranteed in this context. **Always
+   pass `--repo` explicitly** to every `gh issue` call below. Resolve
+   it once from the checked-out working tree:
    ```
-   issue_number=$(gh issue list --search "Kody system audit in:title" --state open --limit 1 --json number -q '.[0].number')
+   REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
+   ```
+   Then look for an open issue titled exactly **`Kody system audit`**
+   in that repo:
+   ```
+   issue_number=$(gh issue list --repo "$REPO" --search "Kody system audit in:title" --state open --limit 1 --json number -q '.[0].number')
    ```
    If empty, open it once with a stable body explaining its purpose
    (one-time setup; subsequent ticks just comment):
    ```
-   gh issue create \
+   gh issue create --repo "$REPO" \
      --title "Kody system audit" \
-     --body "Tracking issue for the system-audit job. Each tick that finds violations posts a comment here so the operator sees it in the inbox. Read-only — never close." \
-     --label "kody:system-audit"
+     --body "Tracking issue for the system-audit job. Each tick that finds violations posts a comment here so the operator sees it in the inbox. Read-only — never close."
    ```
-   (Skip the label flag if the label doesn't exist; the issue itself
-   is enough.)
 
 4. **Skip on clean.** If every check passes, **do not comment.** The
    inbox stays quiet on healthy ticks. Still emit fresh state in
@@ -103,7 +107,7 @@ proceed and set `data.lastRunISO` to now (UTC ISO) before emitting state.
 
    Post with:
    ```
-   gh issue comment "$issue_number" --body "$COMMENT_BODY"
+   gh issue comment "$issue_number" --repo "$REPO" --body "$COMMENT_BODY"
    ```
 
 6. **Emit closing state.** As the very last thing in your reply,
