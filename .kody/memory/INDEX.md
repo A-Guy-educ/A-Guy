@@ -29,3 +29,7 @@ git activity belongs in `git log`, not here.
 - [Verdict: approve on CTO sync for #1623](verdict-cto-1623-sync-approve.md) — Operator approveed the CTO sync recommendation on task #1623 (by @aguyaharonyair). (type: verdict)
 
 - [Verdict: approve on CTO sync for #1591](verdict-cto-1591-sync-approve.md) — Operator approveed the CTO sync recommendation on task #1591 (by @aguyaharonyair). (type: verdict)
+
+- [First chat-driven memory written by LLM session](writer1-chat-proof.md) — First LLM-authored sticky note following prose contract in AGENTS.md (type: lesson)
+
+- [Write context.json and memory-recs.json at end of every kody task](task-memory-protocol-bootstrap.md) — Write context.json and memory-recs.json at end of every kody task (type: lesson)
