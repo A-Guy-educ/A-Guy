@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- #1725: Move PayPal entitlement grant from CHECKOUT.ORDER.APPROVED to PA… ([#1728](https://github.com/A-Guy-educ/A-Guy/pull/1728)) — @aguyaharonyair
 
 - #1720: Fix lesson-duplication prompts that omit hint / fullSolution fro… ([#1722](https://github.com/A-Guy-educ/A-Guy/pull/1722)) — @aguyaharonyair
 - fix(prompts): Add missing hint/solution/fullSolution to example outputs ([#1724](https://github.com/A-Guy-educ/A-Guy/pull/1724)) — @aguyshayb

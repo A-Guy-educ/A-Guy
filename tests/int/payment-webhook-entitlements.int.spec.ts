@@ -723,7 +723,7 @@ describe('Stripe webhook handler', () => {
 // ─── PayPal webhook route tests ──────────────────────────────────────────────
 
 describe('PayPal webhook handler', () => {
-  it('CHECKOUT.ORDER.APPROVED should update transaction to succeeded and grant entitlements', async () => {
+  it('CHECKOUT.ORDER.APPROVED should NOT grant entitlements and keep status as pending', async () => {
     const orderId = `PP_order_approved_${Date.now()}`
     const { verifyPayPalWebhook } = await import('@/lib/payment/paypal')
     vi.mocked(verifyPayPalWebhook).mockResolvedValueOnce(true)
@@ -767,9 +767,10 @@ describe('PayPal webhook handler', () => {
       depth: 0,
       overrideAccess: true,
     })
-    expect(updated.status).toBe('succeeded')
+    // Status should remain pending (entitlements granted only on PAYMENT.CAPTURE.COMPLETED)
+    expect(updated.status).toBe('pending')
 
-    // Verify entitlements were granted
+    // Entitlements should NOT be granted yet
     const user = await payload.findByID({
       collection: 'users',
       id: userId,
@@ -780,7 +781,7 @@ describe('PayPal webhook handler', () => {
     const hasLessonEntitlement = courseEntitlements.some(
       (e: any) => e.course?.toString() === lessonId || e.course === lessonId,
     )
-    expect(hasLessonEntitlement).toBe(true)
+    expect(hasLessonEntitlement).toBe(false)
 
     await payload
       .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
@@ -832,7 +833,7 @@ describe('PayPal webhook handler', () => {
 
     await paypalWebhookHandler(req)
 
-    // Entitlements should NOT have been re-granted
+    // Entitlements should NOT have been re-granted (entitlementsGrantedAt already set)
     const user = await payload.findByID({
       collection: 'users',
       id: userId,
@@ -850,7 +851,7 @@ describe('PayPal webhook handler', () => {
       .catch(() => {})
   })
 
-  it('PAYMENT.CAPTURE.COMPLETED should update transaction to succeeded when pending', async () => {
+  it('PAYMENT.CAPTURE.COMPLETED should update transaction to succeeded and grant entitlements', async () => {
     const orderId = `PP_capture_completed_${Date.now()}`
     const { verifyPayPalWebhook } = await import('@/lib/payment/paypal')
     vi.mocked(verifyPayPalWebhook).mockResolvedValueOnce(true)
@@ -900,6 +901,20 @@ describe('PayPal webhook handler', () => {
       overrideAccess: true,
     })
     expect(updated.status).toBe('succeeded')
+    expect((updated as any).entitlementsGrantedAt).toBeDefined()
+
+    // Verify entitlements were granted
+    const user = await payload.findByID({
+      collection: 'users',
+      id: userId,
+      depth: 0,
+      overrideAccess: true,
+    })
+    const courseEntitlements = (user as any).courseEntitlements || []
+    const hasLessonEntitlement = courseEntitlements.some(
+      (e: any) => e.course?.toString() === lessonId || e.course === lessonId,
+    )
+    expect(hasLessonEntitlement).toBe(true)
 
     await payload
       .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
@@ -1013,8 +1028,8 @@ describe('PayPal webhook handler', () => {
       .catch(() => {})
   })
 
-  it('CHECKOUT.ORDER.APPROVED: grant throws → returns 500, transaction stays pending', async () => {
-    const orderId = `PP_order_grant_fail_${Date.now()}`
+  it('PAYMENT.CAPTURE.COMPLETED: grant throws → returns 500, transaction stays pending', async () => {
+    const orderId = `PP_capture_grant_fail_${Date.now()}`
     const { verifyPayPalWebhook } = await import('@/lib/payment/paypal')
     const { grantProductEntitlements } = await import('@/lib/payment/grant-entitlements')
     vi.mocked(verifyPayPalWebhook).mockResolvedValueOnce(true)
@@ -1045,8 +1060,13 @@ describe('PayPal webhook handler', () => {
         'paypal-auth-algo': 'SHA256withRSA',
       },
       body: JSON.stringify({
-        event_type: 'CHECKOUT.ORDER.APPROVED',
-        resource: { id: orderId },
+        event_type: 'PAYMENT.CAPTURE.COMPLETED',
+        resource: {
+          id: `${orderId}_capture`,
+          supplementary_data: {
+            related_ids: { order_id: orderId },
+          },
+        },
       }),
     })
 
@@ -1066,60 +1086,8 @@ describe('PayPal webhook handler', () => {
       .catch(() => {})
   })
 
-  it('CHECKOUT.ORDER.APPROVED: successful grant sets status=succeeded AND entitlementsGrantedAt', async () => {
-    const orderId = `PP_order_grant_ok_${Date.now()}`
-    const { verifyPayPalWebhook } = await import('@/lib/payment/paypal')
-    vi.mocked(verifyPayPalWebhook).mockResolvedValueOnce(true)
-
-    const tx = await payload.create({
-      collection: 'transactions',
-      data: {
-        user: userId,
-        product: productId,
-        provider: 'paypal',
-        providerTransactionId: orderId,
-        status: 'pending',
-        amount: 1000,
-        currency: 'ILS',
-        tenant: tenantId,
-      } as any,
-      overrideAccess: true,
-    })
-
-    const req = new NextRequest('http://localhost/api/webhooks/paypal', {
-      method: 'POST',
-      headers: {
-        'paypal-transmission-id': 'test-tx-id',
-        'paypal-transmission-time': new Date().toISOString(),
-        'paypal-transmission-sig': 'test-sig',
-        'paypal-cert-url': 'https://cert.url',
-        'paypal-auth-algo': 'SHA256withRSA',
-      },
-      body: JSON.stringify({
-        event_type: 'CHECKOUT.ORDER.APPROVED',
-        resource: { id: orderId },
-      }),
-    })
-
-    const res = await paypalWebhookHandler(req)
-    expect(res.status).toBe(200)
-
-    const updated = await payload.findByID({
-      collection: 'transactions',
-      id: tx.id,
-      depth: 0,
-      overrideAccess: true,
-    })
-    expect(updated.status).toBe('succeeded')
-    expect((updated as any).entitlementsGrantedAt).toBeDefined()
-
-    await payload
-      .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
-      .catch(() => {})
-  })
-
-  it('CHECKOUT.ORDER.APPROVED: replay with entitlementsGrantedAt set skips re-grant', async () => {
-    const orderId = `PP_order_replay_${Date.now()}`
+  it('PAYMENT.CAPTURE.COMPLETED: replay with entitlementsGrantedAt set skips re-grant (idempotency)', async () => {
+    const orderId = `PP_capture_replay_${Date.now()}`
     const { verifyPayPalWebhook } = await import('@/lib/payment/paypal')
     vi.mocked(verifyPayPalWebhook).mockResolvedValueOnce(true)
 
@@ -1156,8 +1124,13 @@ describe('PayPal webhook handler', () => {
         'paypal-auth-algo': 'SHA256withRSA',
       },
       body: JSON.stringify({
-        event_type: 'CHECKOUT.ORDER.APPROVED',
-        resource: { id: orderId },
+        event_type: 'PAYMENT.CAPTURE.COMPLETED',
+        resource: {
+          id: `${orderId}_capture`,
+          supplementary_data: {
+            related_ids: { order_id: orderId },
+          },
+        },
       }),
     })
 
@@ -1165,6 +1138,192 @@ describe('PayPal webhook handler', () => {
 
     // grantProductEntitlements should NOT have been called since entitlementsGrantedAt is set
     expect(vi.mocked(grantProductEntitlements)).not.toHaveBeenCalled()
+
+    await payload
+      .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+      .catch(() => {})
+  })
+
+  it('approve→capture full sequence: APPROVED keeps pending, CAPTURE.COMPLETED grants entitlements', async () => {
+    const orderId = `PP_full_sequence_${Date.now()}`
+    const { verifyPayPalWebhook } = await import('@/lib/payment/paypal')
+    vi.mocked(verifyPayPalWebhook).mockResolvedValue(true) // Will be called twice
+
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: userId,
+        product: productId,
+        provider: 'paypal',
+        providerTransactionId: orderId,
+        status: 'pending',
+        amount: 1000,
+        currency: 'ILS',
+        tenant: tenantId,
+      } as any,
+      overrideAccess: true,
+    })
+
+    // Step 1: CHECKOUT.ORDER.APPROVED fires first
+    vi.mocked(verifyPayPalWebhook).mockResolvedValueOnce(true)
+    const req1 = new NextRequest('http://localhost/api/webhooks/paypal', {
+      method: 'POST',
+      headers: {
+        'paypal-transmission-id': 'test-tx-id',
+        'paypal-transmission-time': new Date().toISOString(),
+        'paypal-transmission-sig': 'test-sig',
+        'paypal-cert-url': 'https://cert.url',
+        'paypal-auth-algo': 'SHA256withRSA',
+      },
+      body: JSON.stringify({
+        event_type: 'CHECKOUT.ORDER.APPROVED',
+        resource: { id: orderId },
+      }),
+    })
+
+    const res1 = await paypalWebhookHandler(req1)
+    expect(res1.status).toBe(200)
+
+    let updated = await payload.findByID({
+      collection: 'transactions',
+      id: tx.id,
+      depth: 0,
+      overrideAccess: true,
+    })
+    // Status should still be pending (entitlements granted only on capture)
+    expect(updated.status).toBe('pending')
+
+    // Entitlements should NOT be granted yet
+    let user = await payload.findByID({
+      collection: 'users',
+      id: userId,
+      depth: 0,
+      overrideAccess: true,
+    })
+    let courseEntitlements = (user as any).courseEntitlements || []
+    let hasLessonEntitlement = courseEntitlements.some(
+      (e: any) => e.course?.toString() === lessonId || e.course === lessonId,
+    )
+    expect(hasLessonEntitlement).toBe(false)
+
+    // Step 2: PAYMENT.CAPTURE.COMPLETED fires after successful capture
+    vi.mocked(verifyPayPalWebhook).mockResolvedValueOnce(true)
+    const req2 = new NextRequest('http://localhost/api/webhooks/paypal', {
+      method: 'POST',
+      headers: {
+        'paypal-transmission-id': 'test-tx-id-2',
+        'paypal-transmission-time': new Date().toISOString(),
+        'paypal-transmission-sig': 'test-sig-2',
+        'paypal-cert-url': 'https://cert.url',
+        'paypal-auth-algo': 'SHA256withRSA',
+      },
+      body: JSON.stringify({
+        event_type: 'PAYMENT.CAPTURE.COMPLETED',
+        resource: {
+          id: `${orderId}_capture`,
+          supplementary_data: {
+            related_ids: { order_id: orderId },
+          },
+        },
+      }),
+    })
+
+    const res2 = await paypalWebhookHandler(req2)
+    expect(res2.status).toBe(200)
+
+    updated = await payload.findByID({
+      collection: 'transactions',
+      id: tx.id,
+      depth: 0,
+      overrideAccess: true,
+    })
+    expect(updated.status).toBe('succeeded')
+    expect((updated as any).entitlementsGrantedAt).toBeDefined()
+
+    // Now entitlements SHOULD be granted
+    user = await payload.findByID({
+      collection: 'users',
+      id: userId,
+      depth: 0,
+      overrideAccess: true,
+    })
+    courseEntitlements = (user as any).courseEntitlements || []
+    hasLessonEntitlement = courseEntitlements.some(
+      (e: any) => e.course?.toString() === lessonId || e.course === lessonId,
+    )
+    expect(hasLessonEntitlement).toBe(true)
+
+    await payload
+      .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+      .catch(() => {})
+  })
+
+  it('capture-only (no preceding APPROVED) still grants entitlements', async () => {
+    const orderId = `PP_capture_only_${Date.now()}`
+    const { verifyPayPalWebhook } = await import('@/lib/payment/paypal')
+    vi.mocked(verifyPayPalWebhook).mockResolvedValueOnce(true)
+
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: userId,
+        product: productId,
+        provider: 'paypal',
+        providerTransactionId: orderId,
+        status: 'pending',
+        amount: 1000,
+        currency: 'ILS',
+        tenant: tenantId,
+      } as any,
+      overrideAccess: true,
+    })
+
+    // PAYMENT.CAPTURE.COMPLETED fires without a preceding CHECKOUT.ORDER.APPROVED
+    // (buyer skipped approval — this should still work)
+    const req = new NextRequest('http://localhost/api/webhooks/paypal', {
+      method: 'POST',
+      headers: {
+        'paypal-transmission-id': 'test-tx-id',
+        'paypal-transmission-time': new Date().toISOString(),
+        'paypal-transmission-sig': 'test-sig',
+        'paypal-cert-url': 'https://cert.url',
+        'paypal-auth-algo': 'SHA256withRSA',
+      },
+      body: JSON.stringify({
+        event_type: 'PAYMENT.CAPTURE.COMPLETED',
+        resource: {
+          id: `${orderId}_capture`,
+          supplementary_data: {
+            related_ids: { order_id: orderId },
+          },
+        },
+      }),
+    })
+
+    const res = await paypalWebhookHandler(req)
+    expect(res.status).toBe(200)
+
+    const updated = await payload.findByID({
+      collection: 'transactions',
+      id: tx.id,
+      depth: 0,
+      overrideAccess: true,
+    })
+    expect(updated.status).toBe('succeeded')
+    expect((updated as any).entitlementsGrantedAt).toBeDefined()
+
+    // Entitlements should be granted
+    const user = await payload.findByID({
+      collection: 'users',
+      id: userId,
+      depth: 0,
+      overrideAccess: true,
+    })
+    const courseEntitlements = (user as any).courseEntitlements || []
+    const hasLessonEntitlement = courseEntitlements.some(
+      (e: any) => e.course?.toString() === lessonId || e.course === lessonId,
+    )
+    expect(hasLessonEntitlement).toBe(true)
 
     await payload
       .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
