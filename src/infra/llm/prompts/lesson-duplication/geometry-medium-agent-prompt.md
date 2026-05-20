@@ -39,6 +39,10 @@ Return a JSON object with the exercise content. The structure must match the inp
 }
 ```
 
+## Required fields
+
+Required fields on every question\_\* block. Every question_select, question_free_response, question_table, question_matching, question_geometry, question_axis, or question_multi_axis block in your output MUST include all of the following with non-empty values: hint (rich_text), solution (rich_text), and fullSolution (rich_text). If a useful hint is hard to write, emit a one-sentence prompt like "Apply the chain rule." or "Recall the parallelogram area formula." — but never omit the field. Empty strings are not acceptable.
+
 ## Examples
 
 Each example below demonstrates the input exercise JSON and the expected output variation JSON. The geometry specification must use the `GeometrySpecV1` format for the `geometry` field within `question_geometry` blocks.
@@ -167,10 +171,22 @@ Each example below demonstrates the input exercise JSON and the expected output 
           }
         },
         "answer": { "type": "numeric", "value": 32, "tolerance": 0.1 },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Add all four side lengths together.",
+          "mediaIds": []
+        },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",
           "value": "Perimeter = 12 + 5 + 8 + 7 = 32 cm",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Identify all four side lengths: 12 cm, 5 cm, 8 cm, 7 cm\\nStep 2: Perimeter is the sum of all sides\\nStep 3: Perimeter = 12 + 5 + 8 + 7 = 32 cm",
           "mediaIds": []
         }
       }
@@ -289,10 +305,22 @@ Each example below demonstrates the input exercise JSON and the expected output 
           }
         },
         "answer": { "type": "numeric", "value": 70, "tolerance": 1 },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "The sum of angles in a triangle is 180 degrees.",
+          "mediaIds": []
+        },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",
           "value": "Angle C = 180° - 40° - 70° = 70° (angle sum of triangle)",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Identify the two known angles: 40° and 70°\\nStep 2: Apply the angle sum property of triangles\\nStep 3: Angle C = 180° - 40° - 70° = 70°",
           "mediaIds": []
         }
       }
@@ -407,6 +435,12 @@ Each example below demonstrates the input exercise JSON and the expected output 
           }
         },
         "answer": { "type": "numeric", "value": 13, "tolerance": 0.1 },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Identify the right triangle and apply the Pythagorean theorem.",
+          "mediaIds": []
+        },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",
