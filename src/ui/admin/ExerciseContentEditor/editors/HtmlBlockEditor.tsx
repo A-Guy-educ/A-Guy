@@ -2,7 +2,6 @@
 
 import type { HtmlBlock } from '@/server/payload/collections/Exercises/types'
 import { parseHtmlToGuidedExplanation } from '@/infra/contracts/guided-explanation/parseHtmlToGuidedExplanation'
-import DOMPurify from 'dompurify'
 import dynamic from 'next/dynamic'
 import React, { useMemo, useRef, useState } from 'react'
 import 'react-quill-new/dist/quill.snow.css'
@@ -36,62 +35,6 @@ const QUILL_FORMATS = [
   'direction',
 ]
 
-const SANITIZE_CONFIG = {
-  ALLOWED_TAGS: [
-    'p',
-    'br',
-    'hr',
-    'span',
-    'h1',
-    'h2',
-    'h3',
-    'h4',
-    'h5',
-    'h6',
-    'strong',
-    'b',
-    'em',
-    'i',
-    'u',
-    's',
-    'del',
-    'ins',
-    'mark',
-    'sub',
-    'sup',
-    'ul',
-    'ol',
-    'li',
-    'blockquote',
-    'pre',
-    'code',
-    'a',
-    'img',
-    'div',
-    'section',
-    'table',
-    'thead',
-    'tbody',
-    'tr',
-    'th',
-    'td',
-  ],
-  ALLOWED_ATTR: [
-    'href',
-    'src',
-    'alt',
-    'title',
-    'class',
-    'id',
-    'rel',
-    'width',
-    'height',
-    'colspan',
-    'rowspan',
-    'dir',
-  ],
-}
-
 interface HtmlBlockEditorProps {
   block: HtmlBlock
   onChange: (block: HtmlBlock) => void
@@ -114,12 +57,8 @@ export const HtmlBlockEditor: React.FC<HtmlBlockEditorProps> = ({ block, onChang
   }
 
   const handleToggleSource = () => {
-    if (showSource && block.html) {
-      const sanitized = DOMPurify.sanitize(block.html, SANITIZE_CONFIG)
-      if (sanitized !== block.html) {
-        onChange({ ...block, html: sanitized })
-      }
-    }
+    // No sanitization — admin content is trusted and DOMPurify restrictions
+    // would strip valid tags like style, svg, link, script
     setShowSource(!showSource)
   }
 
@@ -133,9 +72,9 @@ export const HtmlBlockEditor: React.FC<HtmlBlockEditorProps> = ({ block, onChang
       if (payload) {
         onChange({ ...block, guidedExplanation: payload })
       } else {
-        // Not a guided explanation — treat as static HTML, sanitize it
-        const sanitized = DOMPurify.sanitize(html, SANITIZE_CONFIG)
-        onChange({ ...block, html: sanitized, guidedExplanation: undefined })
+        // Not a guided explanation — store HTML as-is without DOMPurify sanitization.
+        // Admin content is trusted; restrictions would strip style, svg, link, script, etc.
+        onChange({ ...block, html, guidedExplanation: undefined })
       }
     }
     reader.readAsText(file)

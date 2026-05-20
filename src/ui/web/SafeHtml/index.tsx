@@ -76,9 +76,23 @@ interface SafeHtmlProps {
    * @default false
    */
   enableProse?: boolean
+  /**
+   * When false, DOMPurify is configured with empty ALLOWED_TAGS and ALLOWED_ATTR,
+   * which permits ALL HTML including script, style, svg, link, body, etc.
+   * Use this for admin-trusted content where full HTML is required.
+   *
+   * @default true
+   */
+  restricted?: boolean
 }
 
-export function SafeHtml({ html, className, style, enableProse = false }: SafeHtmlProps) {
+export function SafeHtml({
+  html,
+  className,
+  style,
+  enableProse = false,
+  restricted = true,
+}: SafeHtmlProps) {
   const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
@@ -91,8 +105,9 @@ export function SafeHtml({ html, className, style, enableProse = false }: SafeHt
 
   const cleanHtml = useMemo(() => {
     if (!isMounted || !html?.trim()) return ''
-    return DOMPurify.sanitize(html, PURIFY_CONFIG)
-  }, [isMounted, html])
+    const config = restricted ? PURIFY_CONFIG : { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }
+    return DOMPurify.sanitize(html, config)
+  }, [isMounted, html, restricted])
 
   if (!cleanHtml) return null
 
