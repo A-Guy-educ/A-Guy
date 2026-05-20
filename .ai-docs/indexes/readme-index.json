@@ -28,6 +28,22 @@
       "wordCount": 184
     },
     {
+      "path": ".kody/memory/inbox/README.md",
+      "title": "Memory sticky-note inbox",
+      "sections": ["File shape", "Rules"],
+      "relativeUrl": ".kody/memory/inbox/README.md",
+      "category": ".kody",
+      "wordCount": 138
+    },
+    {
+      "path": ".kody/README.md",
+      "title": "Untitled",
+      "sections": [],
+      "relativeUrl": ".kody/README.md",
+      "category": ".kody",
+      "wordCount": 5
+    },
+    {
       "path": "docs/a-guy/README.md",
       "title": "A-Guy Documentation",
       "sections": ["Files"],
@@ -656,11 +672,12 @@
     }
   ],
   "metadata": {
-    "generatedAt": "2026-04-15T09:51:04.365Z",
-    "totalReadmes": 40,
+    "generatedAt": "2026-05-20T12:22:56.494Z",
+    "totalReadmes": 42,
     "categories": {
       ".agents": 1,
       ".claude": 1,
+      ".kody": 2,
       "root": 1,
       "README.md": 1,
       "a-guy": 1,
