@@ -6387,6 +6387,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- #1710: Grant entitlements before flipping Transaction to succeeded ([#1714](https://github.com/A-Guy-educ/A-Guy/pull/1714)) — @aguyaharonyair
+- #1711: Record refundedAmount, refundedBy, refundedAt on refund ([#1713](https://github.com/A-Guy-educ/A-Guy/pull/1713)) — @aguyaharonyair
+- #1699: Atomic coupon usage increment + move consumption to webhook succ… ([#1709](https://github.com/A-Guy-educ/A-Guy/pull/1709)) — @aguyaharonyair
 - #1695: Restrict Coupons read access to admins ([#1705](https://github.com/A-Guy-educ/A-Guy/pull/1705)) — @aguyaharonyair
 - #1697: Return 400/500 on webhook signature verification failure instead… ([#1704](https://github.com/A-Guy-educ/A-Guy/pull/1704)) — @aguyaharonyair
 - #1694: Switch PayPal API base on env flag + require webhook secrets at … ([#1703](https://github.com/A-Guy-educ/A-Guy/pull/1703)) — @aguyaharonyair

@@ -40,6 +40,8 @@ let payload: Payload
 let originalDatabaseUrl: string | undefined
 
 // Test fixture IDs (populated in beforeAll)
+let adminUserId: string
+let _studentUserId: string
 let tenantId: string
 let userId: string
 let chapterId: string
@@ -47,8 +49,8 @@ let lessonId: string
 let productItemLessonId: string
 let productItemFeatureId: string
 let productId: string
-let stripeTransactionId: string
-let paypalTransactionId: string
+let _stripeTransactionId: string
+let _paypalTransactionId: string
 
 const FEATURE_KEY = 'certificate'
 
@@ -167,6 +169,24 @@ beforeAll(async () => {
   })
   productId = product.id
 
+  // Create admin user for coupon creation tests
+  const admin = await payload.create({
+    collection: 'users',
+    data: {
+      email: `webhook-admin-${Date.now()}@test.com`,
+      password: 'test-password-123!',
+      name: 'Webhook Admin User',
+    } as any,
+    overrideAccess: true,
+  })
+  await payload.update({
+    collection: 'users',
+    id: admin.id,
+    data: { role: AccountRole.Admin },
+    overrideAccess: true,
+  })
+  adminUserId = admin.id
+
   // Create test user
   const user = await payload.create({
     collection: 'users',
@@ -194,7 +214,7 @@ beforeAll(async () => {
     } as any,
     overrideAccess: true,
   })
-  stripeTransactionId = stripeTx.id
+  _stripeTransactionId = stripeTx.id
 
   // Create PayPal transaction
   const paypalTx = await payload.create({
@@ -211,7 +231,7 @@ beforeAll(async () => {
     } as any,
     overrideAccess: true,
   })
-  paypalTransactionId = paypalTx.id
+  _paypalTransactionId = paypalTx.id
 }, 120_000)
 
 afterAll(async () => {
@@ -242,6 +262,9 @@ async function cleanupUsers() {
 
 beforeEach(cleanupUsers)
 afterEach(cleanupUsers)
+afterEach(() => {
+  vi.mocked(grantProductEntitlements).mockClear()
+})
 
 // ─── Mock verify functions ────────────────────────────────────────────────────
 
@@ -256,6 +279,17 @@ vi.mock('@/lib/payment/stripe', () => ({
 vi.mock('@/lib/payment/paypal', () => ({
   verifyPayPalWebhook: vi.fn().mockResolvedValue(true),
 }))
+
+// Mock grant-entitlements so webhook handler tests can control grantProductEntitlements behavior.
+// Uses mockImplementation(realGrant) as the default so the direct grantProductEntitlements tests still work.
+vi.mock('@/lib/payment/grant-entitlements', async () => {
+  const { grantProductEntitlements: realGrant, ...rest } =
+    await import('@/lib/payment/grant-entitlements')
+  return {
+    ...rest,
+    grantProductEntitlements: vi.fn().mockImplementation(realGrant),
+  }
+})
 
 // ─── grantProductEntitlements tests ──────────────────────────────────────────
 
@@ -395,7 +429,7 @@ describe('Stripe webhook handler', () => {
       .catch(() => {})
   })
 
-  it('checkout.session.completed should be idempotent — skip if already succeeded', async () => {
+  it('checkout.session.completed should be idempotent — skip if entitlementsGrantedAt is set', async () => {
     const sessionId = `cs_stripe_idempotent_${Date.now()}`
     const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
     vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
@@ -411,7 +445,8 @@ describe('Stripe webhook handler', () => {
         product: productId,
         provider: 'stripe',
         providerTransactionId: sessionId,
-        status: 'succeeded', // Already succeeded
+        status: 'succeeded',
+        entitlementsGrantedAt: new Date().toISOString(), // Already granted — skip re-grant
         amount: 1000,
         currency: 'ILS',
         tenant: tenantId,
@@ -433,7 +468,7 @@ describe('Stripe webhook handler', () => {
 
     await stripeWebhookHandler(req)
 
-    // Entitlements should NOT have been re-granted (idempotency guard)
+    // Entitlements should NOT have been re-granted (idempotency guard: entitlementsGrantedAt set)
     const user = await payload.findByID({
       collection: 'users',
       id: userId,
@@ -540,6 +575,149 @@ describe('Stripe webhook handler', () => {
       .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
       .catch(() => {})
   })
+
+  it('checkout.session.completed: grant throws → returns 500, transaction stays pending', async () => {
+    const sessionId = `cs_stripe_grant_fail_${Date.now()}`
+    const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
+    const { grantProductEntitlements } = await import('@/lib/payment/grant-entitlements')
+    vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
+      id: 'evt_grant_fail',
+      type: 'checkout.session.completed',
+      data: { object: { id: sessionId } },
+    } as any)
+    vi.mocked(grantProductEntitlements).mockRejectedValueOnce(new Error('Grant failed'))
+
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: userId,
+        product: productId,
+        provider: 'stripe',
+        providerTransactionId: sessionId,
+        status: 'pending',
+        amount: 1000,
+        currency: 'ILS',
+        tenant: tenantId,
+      } as any,
+      overrideAccess: true,
+    })
+
+    const req = new NextRequest('http://localhost/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig_test' },
+    })
+
+    const res = await stripeWebhookHandler(req)
+    // Should return 500 so Stripe retries
+    expect(res.status).toBe(500)
+
+    const updated = await payload.findByID({
+      collection: 'transactions',
+      id: tx.id,
+      depth: 0,
+      overrideAccess: true,
+    })
+    // Transaction should NOT be set to succeeded when grant fails
+    expect(updated.status).toBe('pending')
+
+    await payload
+      .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+      .catch(() => {})
+  })
+
+  it('checkout.session.completed: successful grant sets status=succeeded AND entitlementsGrantedAt', async () => {
+    const sessionId = `cs_stripe_grant_ok_${Date.now()}`
+    const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
+    vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
+      id: 'evt_grant_ok',
+      type: 'checkout.session.completed',
+      data: { object: { id: sessionId } },
+    } as any)
+
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: userId,
+        product: productId,
+        provider: 'stripe',
+        providerTransactionId: sessionId,
+        status: 'pending',
+        amount: 1000,
+        currency: 'ILS',
+        tenant: tenantId,
+      } as any,
+      overrideAccess: true,
+    })
+
+    const req = new NextRequest('http://localhost/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig_test' },
+    })
+
+    const res = await stripeWebhookHandler(req)
+    expect(res.status).toBe(200)
+
+    const updated = await payload.findByID({
+      collection: 'transactions',
+      id: tx.id,
+      depth: 0,
+      overrideAccess: true,
+    })
+    expect(updated.status).toBe('succeeded')
+    expect((updated as any).entitlementsGrantedAt).toBeDefined()
+
+    await payload
+      .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+      .catch(() => {})
+  })
+
+  it('checkout.session.completed: replay with entitlementsGrantedAt set skips re-grant', async () => {
+    const sessionId = `cs_stripe_replay_${Date.now()}`
+    const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
+    const { grantProductEntitlements } = await import('@/lib/payment/grant-entitlements')
+    vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
+      id: 'evt_replay',
+      type: 'checkout.session.completed',
+      data: { object: { id: sessionId } },
+    } as any)
+
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: userId,
+        product: productId,
+        provider: 'stripe',
+        providerTransactionId: sessionId,
+        status: 'succeeded',
+        amount: 1000,
+        currency: 'ILS',
+        tenant: tenantId,
+        entitlementsGrantedAt: new Date().toISOString(),
+      } as any,
+      overrideAccess: true,
+    })
+
+    // Clear entitlements so we can verify re-grant was NOT called
+    const usersCollection = payload.db.collections['users']
+    await usersCollection.updateOne(
+      { _id: new ObjectId(userId) },
+      { $set: { courseEntitlements: [], featureEntitlements: [] } },
+    )
+
+    const req = new NextRequest('http://localhost/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig_test' },
+    })
+
+    await stripeWebhookHandler(req)
+
+    // grantProductEntitlements should NOT have been called since entitlementsGrantedAt is set
+    expect(vi.mocked(grantProductEntitlements)).not.toHaveBeenCalled()
+
+    await payload
+      .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+      .catch(() => {})
+  })
 })
 
 // ─── PayPal webhook route tests ──────────────────────────────────────────────
@@ -609,7 +787,7 @@ describe('PayPal webhook handler', () => {
       .catch(() => {})
   })
 
-  it('CHECKOUT.ORDER.APPROVED should be idempotent — skip if already succeeded', async () => {
+  it('CHECKOUT.ORDER.APPROVED should be idempotent — skip if entitlementsGrantedAt is set', async () => {
     const orderId = `PP_order_idempotent_${Date.now()}`
     const { verifyPayPalWebhook } = await import('@/lib/payment/paypal')
     vi.mocked(verifyPayPalWebhook).mockResolvedValueOnce(true)
@@ -621,7 +799,8 @@ describe('PayPal webhook handler', () => {
         product: productId,
         provider: 'paypal',
         providerTransactionId: orderId,
-        status: 'succeeded', // Already succeeded
+        status: 'succeeded',
+        entitlementsGrantedAt: new Date().toISOString(), // Already granted — skip re-grant
         amount: 1000,
         currency: 'ILS',
         tenant: tenantId,
@@ -832,6 +1011,529 @@ describe('PayPal webhook handler', () => {
     await payload
       .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
       .catch(() => {})
+  })
+
+  it('CHECKOUT.ORDER.APPROVED: grant throws → returns 500, transaction stays pending', async () => {
+    const orderId = `PP_order_grant_fail_${Date.now()}`
+    const { verifyPayPalWebhook } = await import('@/lib/payment/paypal')
+    const { grantProductEntitlements } = await import('@/lib/payment/grant-entitlements')
+    vi.mocked(verifyPayPalWebhook).mockResolvedValueOnce(true)
+    vi.mocked(grantProductEntitlements).mockRejectedValueOnce(new Error('Grant failed'))
+
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: userId,
+        product: productId,
+        provider: 'paypal',
+        providerTransactionId: orderId,
+        status: 'pending',
+        amount: 1000,
+        currency: 'ILS',
+        tenant: tenantId,
+      } as any,
+      overrideAccess: true,
+    })
+
+    const req = new NextRequest('http://localhost/api/webhooks/paypal', {
+      method: 'POST',
+      headers: {
+        'paypal-transmission-id': 'test-tx-id',
+        'paypal-transmission-time': new Date().toISOString(),
+        'paypal-transmission-sig': 'test-sig',
+        'paypal-cert-url': 'https://cert.url',
+        'paypal-auth-algo': 'SHA256withRSA',
+      },
+      body: JSON.stringify({
+        event_type: 'CHECKOUT.ORDER.APPROVED',
+        resource: { id: orderId },
+      }),
+    })
+
+    const res = await paypalWebhookHandler(req)
+    expect(res.status).toBe(500)
+
+    const updated = await payload.findByID({
+      collection: 'transactions',
+      id: tx.id,
+      depth: 0,
+      overrideAccess: true,
+    })
+    expect(updated.status).toBe('pending')
+
+    await payload
+      .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+      .catch(() => {})
+  })
+
+  it('CHECKOUT.ORDER.APPROVED: successful grant sets status=succeeded AND entitlementsGrantedAt', async () => {
+    const orderId = `PP_order_grant_ok_${Date.now()}`
+    const { verifyPayPalWebhook } = await import('@/lib/payment/paypal')
+    vi.mocked(verifyPayPalWebhook).mockResolvedValueOnce(true)
+
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: userId,
+        product: productId,
+        provider: 'paypal',
+        providerTransactionId: orderId,
+        status: 'pending',
+        amount: 1000,
+        currency: 'ILS',
+        tenant: tenantId,
+      } as any,
+      overrideAccess: true,
+    })
+
+    const req = new NextRequest('http://localhost/api/webhooks/paypal', {
+      method: 'POST',
+      headers: {
+        'paypal-transmission-id': 'test-tx-id',
+        'paypal-transmission-time': new Date().toISOString(),
+        'paypal-transmission-sig': 'test-sig',
+        'paypal-cert-url': 'https://cert.url',
+        'paypal-auth-algo': 'SHA256withRSA',
+      },
+      body: JSON.stringify({
+        event_type: 'CHECKOUT.ORDER.APPROVED',
+        resource: { id: orderId },
+      }),
+    })
+
+    const res = await paypalWebhookHandler(req)
+    expect(res.status).toBe(200)
+
+    const updated = await payload.findByID({
+      collection: 'transactions',
+      id: tx.id,
+      depth: 0,
+      overrideAccess: true,
+    })
+    expect(updated.status).toBe('succeeded')
+    expect((updated as any).entitlementsGrantedAt).toBeDefined()
+
+    await payload
+      .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+      .catch(() => {})
+  })
+
+  it('CHECKOUT.ORDER.APPROVED: replay with entitlementsGrantedAt set skips re-grant', async () => {
+    const orderId = `PP_order_replay_${Date.now()}`
+    const { verifyPayPalWebhook } = await import('@/lib/payment/paypal')
+    vi.mocked(verifyPayPalWebhook).mockResolvedValueOnce(true)
+
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: userId,
+        product: productId,
+        provider: 'paypal',
+        providerTransactionId: orderId,
+        status: 'succeeded',
+        amount: 1000,
+        currency: 'ILS',
+        tenant: tenantId,
+        entitlementsGrantedAt: new Date().toISOString(),
+      } as any,
+      overrideAccess: true,
+    })
+
+    // Clear entitlements so we can verify re-grant was NOT called
+    const usersCollection = payload.db.collections['users']
+    await usersCollection.updateOne(
+      { _id: new ObjectId(userId) },
+      { $set: { courseEntitlements: [], featureEntitlements: [] } },
+    )
+
+    const req = new NextRequest('http://localhost/api/webhooks/paypal', {
+      method: 'POST',
+      headers: {
+        'paypal-transmission-id': 'test-tx-id',
+        'paypal-transmission-time': new Date().toISOString(),
+        'paypal-transmission-sig': 'test-sig',
+        'paypal-cert-url': 'https://cert.url',
+        'paypal-auth-algo': 'SHA256withRSA',
+      },
+      body: JSON.stringify({
+        event_type: 'CHECKOUT.ORDER.APPROVED',
+        resource: { id: orderId },
+      }),
+    })
+
+    await paypalWebhookHandler(req)
+
+    // grantProductEntitlements should NOT have been called since entitlementsGrantedAt is set
+    expect(vi.mocked(grantProductEntitlements)).not.toHaveBeenCalled()
+
+    await payload
+      .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+      .catch(() => {})
+  })
+})
+
+// ─── Coupon consumption in webhook tests ──────────────────────────────────────
+
+describe('Coupon consumption on webhook payment completion', () => {
+  // These tests verify the fix for the race condition bug where:
+  // 1. Concurrent checkouts on maxUses=1 coupon could both succeed (non-atomic read-modify-write)
+  // 2. Coupon was consumed at checkout creation (pending), not at payment success
+  // The fix moves coupon consumption to the webhook success path with atomic $inc.
+
+  async function getAdminUser() {
+    return payload.findByID({ collection: 'users', id: adminUserId, overrideAccess: true })
+  }
+
+  async function createCoupon(maxUses: number, code: string) {
+    const admin = await getAdminUser()
+    return payload.create({
+      collection: 'coupons',
+      data: {
+        code,
+        discountType: 'percentage',
+        discountValue: 10,
+        currency: 'ILS',
+        maxUses,
+        usesCount: 0,
+        isActive: true,
+      },
+      user: admin as any,
+      overrideAccess: false,
+    })
+  }
+
+  async function cleanupCoupon(couponId: string) {
+    if (!payload || !couponId) return
+    const usages = await payload.find({
+      collection: 'coupon-usages',
+      where: { coupon: { equals: couponId } },
+      limit: 100,
+      overrideAccess: true,
+    })
+    for (const usage of usages.docs) {
+      await payload
+        .delete({ collection: 'coupon-usages', id: usage.id, overrideAccess: true })
+        .catch(() => {})
+    }
+    await payload
+      .delete({ collection: 'coupons', id: couponId, overrideAccess: true })
+      .catch(() => {})
+  }
+
+  it('should atomically consume coupon on webhook payment completion (only one succeeds on maxUses=1)', async () => {
+    // This test simulates what happens after the fix:
+    // - Checkout creates transaction with appliedCoupon in metadata (NO consumption at checkout)
+    // - Webhook completes payment and atomically consumes coupon
+    //
+    // With the BUG (consumption at checkout): both checkouts consume at checkout creation
+    // With the FIX (consumption at webhook): atomic $inc ensures only one succeeds
+
+    // Create a shared coupon for both transactions
+    const coupon = await createCoupon(1, `CONCURRENT-${Date.now()}`)
+    const couponId = coupon.id
+    const couponCode = coupon.code
+
+    try {
+      // Create first transaction (simulating checkout with coupon)
+      const tx1 = await payload.create({
+        collection: 'transactions',
+        data: {
+          user: userId,
+          product: productId,
+          provider: 'stripe',
+          providerTransactionId: `cs_concurrent_1_${Date.now()}`,
+          status: 'pending',
+          amount: 1000,
+          currency: 'ILS',
+          tenant: tenantId,
+          metadata: {
+            appliedCoupon: {
+              code: couponCode,
+              discountType: 'percentage',
+              discountValue: 10,
+              originalAmount: 1000,
+              discountedAmount: 900,
+            },
+          },
+        } as any,
+        overrideAccess: true,
+      })
+
+      // Create second transaction (simulating another concurrent checkout with same coupon)
+      const tx2 = await payload.create({
+        collection: 'transactions',
+        data: {
+          user: userId,
+          product: productId,
+          provider: 'stripe',
+          providerTransactionId: `cs_concurrent_2_${Date.now()}`,
+          status: 'pending',
+          amount: 1000,
+          currency: 'ILS',
+          tenant: tenantId,
+          metadata: {
+            appliedCoupon: {
+              code: couponCode,
+              discountType: 'percentage',
+              discountValue: 10,
+              originalAmount: 1000,
+              discountedAmount: 900,
+            },
+          },
+        } as any,
+        overrideAccess: true,
+      })
+
+      // Simulate webhook completing payment for tx1 first
+      const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
+      vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
+        id: 'evt_concurrent_1',
+        type: 'checkout.session.completed',
+        data: { object: { id: (tx1 as any).providerTransactionId } },
+      } as any)
+
+      const req1 = new NextRequest('http://localhost/api/webhooks/stripe', {
+        method: 'POST',
+        headers: { 'stripe-signature': 'sig_test' },
+      })
+      const res1 = await stripeWebhookHandler(req1)
+      expect(res1.status).toBe(200)
+
+      // Simulate webhook completing payment for tx2 second
+      vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
+        id: 'evt_concurrent_2',
+        type: 'checkout.session.completed',
+        data: { object: { id: (tx2 as any).providerTransactionId } },
+      } as any)
+
+      const req2 = new NextRequest('http://localhost/api/webhooks/stripe', {
+        method: 'POST',
+        headers: { 'stripe-signature': 'sig_test' },
+      })
+      const res2 = await stripeWebhookHandler(req2)
+      expect(res2.status).toBe(200)
+
+      // Read final state
+      const tx1Final = await payload.findByID({
+        collection: 'transactions',
+        id: tx1.id,
+        depth: 0,
+        overrideAccess: true,
+      })
+      const tx2Final = await payload.findByID({
+        collection: 'transactions',
+        id: tx2.id,
+        depth: 0,
+        overrideAccess: true,
+      })
+      const couponFinal = await payload.findByID({
+        collection: 'coupons',
+        id: couponId,
+        depth: 0,
+        overrideAccess: true,
+      })
+
+      // CRITICAL ASSERTION: Both payments have already succeeded via Stripe/PayPal,
+      // so both transactions should be 'succeeded'. The atomic $inc ensures only ONE
+      // coupon is consumed even when two concurrent webhooks fire.
+      // With the buggy code (consumption at checkout), usesCount would be 2.
+      // With the fix, usesCount is exactly 1.
+      const successCount = [tx1Final.status, tx2Final.status].filter(
+        (s) => s === 'succeeded',
+      ).length
+      expect(successCount).toBe(2) // Both payments already succeeded
+      expect(couponFinal.usesCount).toBe(1) // Coupon used exactly once (atomic increment)
+
+      // Verify only one coupon-usages row was created
+      const usages = await payload.find({
+        collection: 'coupon-usages',
+        where: { coupon: { equals: couponId } },
+        limit: 10,
+        overrideAccess: true,
+      })
+      expect(usages.totalDocs).toBe(1)
+
+      await payload
+        .delete({ collection: 'transactions', id: tx1.id, overrideAccess: true })
+        .catch(() => {})
+      await payload
+        .delete({ collection: 'transactions', id: tx2.id, overrideAccess: true })
+        .catch(() => {})
+    } finally {
+      await cleanupCoupon(couponId)
+    }
+  })
+
+  it('should NOT consume coupon when checkout session expires (no payment)', async () => {
+    // Create a coupon
+    const coupon = await createCoupon(1, `EXPIRED-${Date.now()}`)
+    const couponId = coupon.id
+    const couponCode = coupon.code
+
+    try {
+      // Create transaction with applied coupon
+      const tx = await payload.create({
+        collection: 'transactions',
+        data: {
+          user: userId,
+          product: productId,
+          provider: 'stripe',
+          providerTransactionId: `cs_expired_${Date.now()}`,
+          status: 'pending',
+          amount: 1000,
+          currency: 'ILS',
+          tenant: tenantId,
+          metadata: {
+            appliedCoupon: {
+              code: couponCode,
+              discountType: 'percentage',
+              discountValue: 10,
+            },
+          },
+        } as any,
+        overrideAccess: true,
+      })
+
+      // Simulate session expired (user abandoned checkout)
+      const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
+      vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
+        id: 'evt_expired',
+        type: 'checkout.session.expired',
+        data: { object: { id: (tx as any).providerTransactionId } },
+      } as any)
+
+      const req = new NextRequest('http://localhost/api/webhooks/stripe', {
+        method: 'POST',
+        headers: { 'stripe-signature': 'sig_test' },
+      })
+      const res = await stripeWebhookHandler(req)
+      expect(res.status).toBe(200)
+
+      // Verify coupon was NOT consumed
+      const coupon = await payload.findByID({
+        collection: 'coupons',
+        id: couponId,
+        depth: 0,
+        overrideAccess: true,
+      })
+      expect(coupon.usesCount).toBe(0)
+
+      // No coupon-usages row should exist
+      const usages = await payload.find({
+        collection: 'coupon-usages',
+        where: { coupon: { equals: couponId } },
+        limit: 10,
+        overrideAccess: true,
+      })
+      expect(usages.totalDocs).toBe(0)
+
+      await payload
+        .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+        .catch(() => {})
+    } finally {
+      await cleanupCoupon(couponId)
+    }
+  })
+
+  it('should be idempotent — replaying checkout.session.completed does not double-consume', async () => {
+    // Create a coupon
+    const coupon = await createCoupon(1, `IDEMPOTENT-${Date.now()}`)
+    const couponId = coupon.id
+    const couponCode = coupon.code
+
+    try {
+      // Create transaction with applied coupon
+      const tx = await payload.create({
+        collection: 'transactions',
+        data: {
+          user: userId,
+          product: productId,
+          provider: 'stripe',
+          providerTransactionId: `cs_idempotent_${Date.now()}`,
+          status: 'pending',
+          amount: 1000,
+          currency: 'ILS',
+          tenant: tenantId,
+          metadata: {
+            appliedCoupon: {
+              code: couponCode,
+              discountType: 'percentage',
+              discountValue: 10,
+            },
+          },
+        } as any,
+        overrideAccess: true,
+      })
+
+      // First webhook call - payment succeeds
+      const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
+      vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
+        id: 'evt_idem_1',
+        type: 'checkout.session.completed',
+        data: { object: { id: (tx as any).providerTransactionId } },
+      } as any)
+
+      const req1 = new NextRequest('http://localhost/api/webhooks/stripe', {
+        method: 'POST',
+        headers: { 'stripe-signature': 'sig_test' },
+      })
+      const res1 = await stripeWebhookHandler(req1)
+      expect(res1.status).toBe(200)
+
+      // Verify coupon was consumed after first call
+      let coupon = await payload.findByID({
+        collection: 'coupons',
+        id: couponId,
+        depth: 0,
+        overrideAccess: true,
+      })
+      expect(coupon.usesCount).toBe(1)
+
+      let usages = await payload.find({
+        collection: 'coupon-usages',
+        where: { coupon: { equals: couponId } },
+        limit: 10,
+        overrideAccess: true,
+      })
+      expect(usages.totalDocs).toBe(1)
+
+      // Second webhook call - replay of same event (idempotency)
+      vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
+        id: 'evt_idem_2',
+        type: 'checkout.session.completed',
+        data: { object: { id: (tx as any).providerTransactionId } },
+      } as any)
+
+      const req2 = new NextRequest('http://localhost/api/webhooks/stripe', {
+        method: 'POST',
+        headers: { 'stripe-signature': 'sig_test' },
+      })
+      const res2 = await stripeWebhookHandler(req2)
+      expect(res2.status).toBe(200)
+
+      // Verify coupon was NOT double-consumed
+      coupon = await payload.findByID({
+        collection: 'coupons',
+        id: couponId,
+        depth: 0,
+        overrideAccess: true,
+      })
+      expect(coupon.usesCount).toBe(1) // Still 1, not 2
+
+      usages = await payload.find({
+        collection: 'coupon-usages',
+        where: { coupon: { equals: couponId } },
+        limit: 10,
+        overrideAccess: true,
+      })
+      expect(usages.totalDocs).toBe(1) // Still 1 row
+
+      await payload
+        .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+        .catch(() => {})
+    } finally {
+      await cleanupCoupon(couponId)
+    }
   })
 })
 

@@ -172,6 +172,44 @@ export const Transactions: CollectionConfig = {
       },
     },
 
+    // Timestamp when entitlements were granted (set by webhook handlers on successful grant).
+    // Used for observability and idempotency — replayed webhooks skip re-grant if set.
+    {
+      name: 'entitlementsGrantedAt',
+      type: 'date',
+      admin: {
+        readOnly: true,
+        description: 'Timestamp when product entitlements were granted to the user',
+      },
+    },
+
+    // Refund audit fields (set when transaction is refunded)
+    {
+      name: 'refundedAmount',
+      type: 'number',
+      admin: {
+        description: 'Amount refunded in agorot (smallest currency unit)',
+        readOnly: true,
+      },
+    },
+    {
+      name: 'refundedBy',
+      type: 'relationship',
+      relationTo: 'users',
+      admin: {
+        description: 'Admin who processed the refund',
+        readOnly: true,
+      },
+    },
+    {
+      name: 'refundedAt',
+      type: 'date',
+      admin: {
+        description: 'When the refund was processed',
+        readOnly: true,
+      },
+    },
+
     createdByField,
   ],
   timestamps: true,
