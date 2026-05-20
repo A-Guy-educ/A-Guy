@@ -34,6 +34,10 @@ Return a JSON object with the exercise content. The structure should match the i
 }
 ```
 
+## Required fields
+
+Required fields on every question\_\* block. Every question_select, question_free_response, question_table, question_matching, question_geometry, question_axis, or question_multi_axis block in your output MUST include all of the following with non-empty values: hint (rich_text), solution (rich_text), and fullSolution (rich_text). If a useful hint is hard to write, emit a one-sentence prompt like "Apply the chain rule." or "Recall the parallelogram area formula." — but never omit the field. Empty strings are not acceptable.
+
 ## Examples
 
 Each example below demonstrates the input exercise JSON and the expected output variation JSON. The calculus solution must include a `full_solution` field with step-by-step derivation showing each rule applied.
@@ -91,6 +95,12 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "type": "free_response",
           "rubric": "(6x + 2)e^(3x² + 2x)",
           "acceptedPatterns": []
+        },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Treat the exponent as a composite function and apply the chain rule.",
+          "mediaIds": []
         },
         "solution": {
           "type": "rich_text",
@@ -164,6 +174,12 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "rubric": "(15x² + 2)/(5x³ + 2x)",
           "acceptedPatterns": []
         },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Use the chain rule with the natural logarithm.",
+          "mediaIds": []
+        },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",
@@ -232,6 +248,12 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "mediaIds": []
         },
         "answer": { "type": "free_response", "rubric": "dy/dx = -x²/y²", "acceptedPatterns": [] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Differentiate both sides with respect to x, treating y as a function of x.",
+          "mediaIds": []
+        },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",
