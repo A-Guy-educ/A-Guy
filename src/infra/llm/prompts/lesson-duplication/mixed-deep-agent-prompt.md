@@ -173,6 +173,12 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "format": "md-math-v1",
           "value": "C = πd (circumference equals pi times diameter)",
           "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Recall that the circumference of a circle is the distance around its boundary.\\nStep 2: Two equivalent formulas are C = πd (where d is the diameter) and C = 2πr (where r is the radius).\\nStep 3: Option (b) C = πd matches this definition, so it is the correct formula.",
+          "mediaIds": []
         }
       }
     ]
@@ -442,6 +448,18 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "type": "rich_text",
           "format": "md-math-v1",
           "value": "Use the conversion formula F = C × 9/5 + 32 for each temperature.",
+          "mediaIds": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Missing Fahrenheit values follow from F = C × 9/5 + 32 (e.g. 100°C → 212°F).",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Use the conversion formula F = C × 9/5 + 32.\\nStep 2: Substitute each Celsius value into the formula. Example: 100 × 9/5 + 32 = 180 + 32 = 212°F.\\nStep 3: Fill the editable cells with the computed Fahrenheit values to complete the table.",
           "mediaIds": []
         }
       }

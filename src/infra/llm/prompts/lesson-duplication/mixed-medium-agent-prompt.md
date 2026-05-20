@@ -121,6 +121,18 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "format": "md-math-v1",
           "value": "A prime number has exactly two distinct positive divisors.",
           "mediaIds": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "7",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Check divisibility of each option. 4 = 2×2 (composite). 6 = 2×3 (composite). 9 = 3×3 (composite).\\nStep 2: 7 has no positive divisors other than 1 and 7, so 7 is prime.\\nStep 3: The correct answer is 7.",
+          "mediaIds": []
         }
       }
     ]
@@ -340,6 +352,18 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "type": "rich_text",
           "format": "md-math-v1",
           "value": "Count the number of sides on each polygon shape.",
+          "mediaIds": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Triangle → 3, Square → 4, Pentagon → 5",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Count edges for each polygon. A triangle has 3 edges; a square has 4 edges; a pentagon has 5 edges.\\nStep 2: Pair each polygon with its edge count: Triangle ↔ 3, Square ↔ 4, Pentagon ↔ 5.",
           "mediaIds": []
         }
       }

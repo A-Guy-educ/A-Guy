@@ -203,6 +203,18 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "format": "md-math-v1",
           "value": "Recall that the sum of interior angles in any triangle equals 180 degrees.",
           "mediaIds": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "True",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: The triangle angle sum theorem states that the three interior angles of any triangle add up to 180°.\\nStep 2: This holds for every triangle in Euclidean geometry, so the statement is True.",
+          "mediaIds": []
         }
       }
     ]
@@ -386,6 +398,18 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "type": "rich_text",
           "format": "md-math-v1",
           "value": "Multiply each column header by the row header to fill in the table cells.",
+          "mediaIds": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "2×4 = 8, 2×5 = 10",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Identify the operation indicated by the row header (×).\\nStep 2: For the column under 4, compute 2 × 4 = 8.\\nStep 3: For the column under 5, compute 2 × 5 = 10.",
           "mediaIds": []
         }
       }
