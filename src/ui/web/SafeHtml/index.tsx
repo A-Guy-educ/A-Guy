@@ -77,9 +77,11 @@ interface SafeHtmlProps {
    */
   enableProse?: boolean
   /**
-   * When false, DOMPurify is configured with empty ALLOWED_TAGS and ALLOWED_ATTR,
-   * which permits ALL HTML including script, style, svg, link, body, etc.
-   * Use this for admin-trusted content where full HTML is required.
+   * When false, skips DOMPurify sanitization entirely so the full HTML document
+   * (including <!doctype html>, <html>, <head>, <style>, <script>, <svg>, <link>, etc.)
+   * is rendered exactly as stored. Use for admin-trusted content where complete HTML
+   * fidelity is required — an empty DOMPurify config is NOT equivalent because
+   * DOMPurify still strips structural elements like <head> and <body>.
    *
    * @default true
    */
@@ -105,8 +107,8 @@ export function SafeHtml({
 
   const cleanHtml = useMemo(() => {
     if (!isMounted || !html?.trim()) return ''
-    const config = restricted ? PURIFY_CONFIG : { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }
-    return DOMPurify.sanitize(html, config)
+    if (!restricted) return html
+    return DOMPurify.sanitize(html, PURIFY_CONFIG)
   }, [isMounted, html, restricted])
 
   if (!cleanHtml) return null
