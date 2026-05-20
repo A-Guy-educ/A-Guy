@@ -408,8 +408,28 @@ function buildUserPrompt(exercise: Exercise): string {
 }
 
 function buildSolutionDerivationPrompt(exercise: Exercise, pass1Output: Partial<Exercise>): string {
+  // Collect all question blocks from pass 1 output with their ids.
+  const pass1Blocks = (pass1Output.content as { blocks: unknown[] } | undefined)?.blocks ?? []
+  const questionBlocks = pass1Blocks.filter(
+    (b: unknown) =>
+      typeof (b as Record<string, unknown>).type === 'string' &&
+      String((b as Record<string, unknown>).type).startsWith('question_'),
+  ) as Array<{ id: string; type: string }>
+
+  if (questionBlocks.length === 0) {
+    // No question blocks — return empty blocks array.
+    return `You are a strict mathematical derivation assistant.
+There are NO question blocks in this exercise. Return ONLY:
+{ "blocks": [] }
+
+Return ONLY the JSON. No markdown fences, no explanation.`
+  }
+
+  // Enumerate each question block by id so the model solves each independently.
+  const blockList = questionBlocks.map((b) => `  - id "${b.id}" (type: ${b.type})`).join('\n')
+
   return `You are a strict mathematical derivation assistant. Given a newly generated exercise question,
-re-derive the correct answer from first principles and return only the solution fields.
+re-derive the correct answer from first principles and return per-block solution patches.
 
 Input original exercise:
 ${JSON.stringify(exercise, null, 2)}
@@ -417,15 +437,22 @@ ${JSON.stringify(exercise, null, 2)}
 Pass 1 generated question/phrasing:
 ${JSON.stringify(pass1Output, null, 2)}
 
+Question blocks found in pass 1 output:
+${blockList}
+
 Task:
-1. Solve the new question independently (do not trust any answer provided in pass 1 output).
+For EACH question block listed above:
+1. Solve that question independently (do not trust any answer provided in pass 1 output).
 2. Write the complete step-by-step solution in fullSolution (show every step).
 3. Write a brief solution in solution.
-4. Return ONLY these fields (do not include any other fields):
+4. For MCQ/select blocks, include answer with correctOptionIds.
+
+Return ONLY this JSON structure (an array with one entry per question block):
 {
-  "solution": <rich_text object>,
-  "fullSolution": <rich_text object>,
-  "answer": { "correctOptionIds": [<correct option id>] }
+  "blocks": [
+    { "id": "<block id>", "solution": <rich_text object>, "fullSolution": <rich_text object>, "answer": { "correctOptionIds": [<id>] } },
+    ...
+  ]
 }
 
 rich_text object format: { "type": "rich_text", "format": "md-math-v1", "value": "...", "mediaIds": [] }
@@ -433,10 +460,15 @@ rich_text object format: { "type": "rich_text", "format": "md-math-v1", "value":
 Return ONLY the JSON. No markdown fences, no explanation.`
 }
 
-interface Pass2Patch {
+interface Pass2PatchBlock {
+  id: string
   solution?: unknown
   fullSolution?: unknown
   answer?: { correctOptionIds: string[] }
+}
+
+interface Pass2Patch {
+  blocks: Pass2PatchBlock[]
 }
 
 /**
@@ -472,12 +504,41 @@ function extractPass1Output(result: AdapterResult): Partial<Exercise> {
 /**
  * Pull pass-2's solution patch out of the adapter result. Same precedence:
  * structured output first, text fallback.
+ *
+ * Normalizes legacy flat format (pass-2 returned one solution for all blocks)
+ * to the current per-block format for backward compatibility with older
+ * responses or malformed output.
  */
 function extractPass2Patch(result: AdapterResult): Pass2Patch {
   if (result.output && typeof result.output === 'object') {
-    return result.output as Pass2Patch
+    return normalizePass2Patch(result.output as Record<string, unknown>)
   }
   return parseSolutionDerivationResponseFromText(result.text)
+}
+
+/**
+ * Normalize a raw pass-2 response to the current per-block format.
+ * Handles the legacy flat format { solution, fullSolution, answer } where
+ * a single solution was smeared across all question blocks (deprecated),
+ * the current per-block format { blocks: [...] }, and edge cases where
+ * the blocks array is missing/empty.
+ */
+function normalizePass2Patch(raw: Record<string, unknown>): Pass2Patch {
+  // Current per-block format: already has blocks array.
+  if (Array.isArray(raw.blocks)) {
+    return raw as unknown as Pass2Patch
+  }
+
+  // Legacy flat format: single solution broadcast to all question blocks.
+  // We still emit the { blocks: [] } shape so mergePassOutputs can handle
+  // it (it will find no patches and leave blocks untouched — the correct
+  // behavior for a malformed/broadcast response).
+  if (raw.solution !== undefined || raw.fullSolution !== undefined || raw.answer !== undefined) {
+    return { blocks: [] }
+  }
+
+  // Unknown shape — return empty blocks rather than crashing.
+  return { blocks: [] }
 }
 
 function parseVariationResponseFromText(text: string): Partial<Exercise> {
@@ -507,6 +568,12 @@ function stripCodeFences(text: string): string {
 function mergePassOutputs(pass1Output: Partial<Exercise>, pass2Patch: Pass2Patch): unknown[] {
   const pass1Blocks = (pass1Output.content as { blocks: unknown[] } | undefined)?.blocks ?? []
 
+  // Build a map of block id -> patch for fast lookup.
+  const patchById = new Map<string, Pass2PatchBlock>()
+  for (const blockPatch of pass2Patch.blocks) {
+    patchById.set(blockPatch.id, blockPatch)
+  }
+
   // Only question blocks own the solution/answer fields. Applying pass-2's
   // solution/fullSolution to non-question blocks (rich_text, svg, latex, …)
   // would attach fields the block schemas don't allow, breaking Zod strict
@@ -520,18 +587,27 @@ function mergePassOutputs(pass1Output: Partial<Exercise>, pass2Patch: Pass2Patch
       return b
     }
 
+    const blockId = typeof b.id === 'string' ? b.id : String(b.id ?? '')
+    const patch = patchById.get(blockId)
+
     const result: Record<string, unknown> = { ...b }
-    if (pass2Patch.solution !== undefined) {
-      result.solution = pass2Patch.solution
+
+    // If no patch for this block id (unmatched), leave block as-is.
+    if (!patch) {
+      return result
     }
-    if (pass2Patch.fullSolution !== undefined) {
-      result.fullSolution = pass2Patch.fullSolution
+
+    if (patch.solution !== undefined) {
+      result.solution = patch.solution
     }
-    if (pass2Patch.answer?.correctOptionIds !== undefined) {
+    if (patch.fullSolution !== undefined) {
+      result.fullSolution = patch.fullSolution
+    }
+    if (patch.answer?.correctOptionIds !== undefined) {
       const existingAnswer = (result.answer as Record<string, unknown> | undefined) ?? {}
       result.answer = {
         ...existingAnswer,
-        correctOptionIds: pass2Patch.answer.correctOptionIds,
+        correctOptionIds: patch.answer.correctOptionIds,
       }
     }
     return result
