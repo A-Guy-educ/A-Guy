@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "task-memory-protocol-bootstrap",
+    "title": "Write context.json and memory-recs.json at end of every kody task",
+    "why": "The per-task memory artifacts are REQUIRED at task end per AGENTS.md — the protocol enables cross-task memory persistence and must be bootstrapped on day one, not retrofitted.",
+    "how_to_apply": "At task end, always write .kody/tasks/<taskId>/context.json and .kody/tasks/<taskId>/memory-recs.json before concluding.",
+    "confidence": "high"
+  }
+]
