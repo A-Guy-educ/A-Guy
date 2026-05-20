@@ -212,16 +212,11 @@ export function buildPass1JsonSchemaForExercise(exercise: unknown): GeminiJsonSc
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Schema for pass 2's output. The model independently re-solves the new
- * question and returns just the solution/fullSolution/answer fields — these
- * overwrite whatever pass 1 wrote for the same fields (pass 1 cannot be
- * trusted to solve correctly at temp 0.7).
- *
- * `answer.correctOptionIds` is optional: not every question type carries it
- * (e.g. free-response, geometry, axis). The merge step in the variation
- * service only applies it when present.
+ * Per-block patch entry — one entry per question block, keyed by block id.
+ * Only the fields that need to be updated are required; others are optional.
  */
-export const SolutionDerivationOutputSchema = z.object({
+const SolutionDerivationBlockSchema = z.object({
+  id: z.string(),
   solution: InlineRichTextSchema.optional(),
   fullSolution: InlineRichTextSchema.optional(),
   answer: z
@@ -229,6 +224,23 @@ export const SolutionDerivationOutputSchema = z.object({
       correctOptionIds: z.array(z.string()).optional(),
     })
     .optional(),
+})
+
+/**
+ * Schema for pass 2's output. The model independently re-solves each
+ * question block (identified by id) and returns an array of per-block patches.
+ * These overwrite whatever pass 1 wrote for the same fields (pass 1 cannot be
+ * trusted to solve correctly at temp 0.7).
+ *
+ * Blocks that have no patch entry are left untouched (validator emits a
+ * warning, which is correct). Non-question blocks are never included in the
+ * blocks array.
+ *
+ * Empty blocks array is valid — an exercise with zero question blocks
+ * (all rich_text / svg) produces no patches.
+ */
+export const SolutionDerivationOutputSchema = z.object({
+  blocks: z.array(SolutionDerivationBlockSchema),
 })
 
 export type SolutionDerivationOutput = z.infer<typeof SolutionDerivationOutputSchema>
