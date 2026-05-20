@@ -1,0 +1,10 @@
+{
+  "type": "decision",
+  "name": "pr-1719",
+  "title": "PR #1719: #1712: URL-encode cancelUrl params and validate productId as ObjectId",
+  "hook": "#1712: URL-encode cancelUrl params and validate productId as ObjectId \u2014 merged 2026-05-20 by @aguyshayb",
+  "body": "**PR:** [https://github.com/A-Guy-educ/A-Guy/pull/1719](https://github.com/A-Guy-educ/A-Guy/pull/1719)\n**Author:** @aguyshayb\n**Merged:** 2026-05-20T09:53:50Z\n\n## Title\n#1712: URL-encode cancelUrl params and validate productId as ObjectId\n\n## Summary (first section of PR body)\n## Summary\n",
+  "source": "job:pr-learner",
+  "ts": "2026-05-20T13:57:38Z",
+  "links": []
+}
