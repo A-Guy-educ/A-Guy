@@ -58,32 +58,56 @@ describe('LessonVariationOutputSchema', () => {
 })
 
 describe('SolutionDerivationOutputSchema', () => {
-  it('accepts the full canonical pass-2 shape', () => {
+  it('accepts the full canonical pass-2 per-block shape', () => {
     const result = SolutionDerivationOutputSchema.safeParse({
-      solution: { type: 'rich_text', format: 'md-math-v1', value: 's', mediaIds: [] },
-      fullSolution: { type: 'rich_text', format: 'md-math-v1', value: 'fs', mediaIds: [] },
-      answer: { correctOptionIds: ['a'] },
+      blocks: [
+        {
+          id: 'q1',
+          solution: { type: 'rich_text', format: 'md-math-v1', value: 's', mediaIds: [] },
+          fullSolution: { type: 'rich_text', format: 'md-math-v1', value: 'fs', mediaIds: [] },
+          answer: { correctOptionIds: ['a'] },
+        },
+      ],
     })
     expect(result.success).toBe(true)
   })
 
-  it('accepts empty object (every field is optional for non-MCQ blocks)', () => {
-    expect(SolutionDerivationOutputSchema.safeParse({}).success).toBe(true)
+  it('accepts empty blocks array (exercise with no question blocks)', () => {
+    expect(SolutionDerivationOutputSchema.safeParse({ blocks: [] }).success).toBe(true)
   })
 
-  it('rejects non-rich_text solution', () => {
-    expect(SolutionDerivationOutputSchema.safeParse({ solution: 'plain string' }).success).toBe(
-      false,
-    )
+  it('accepts block with only solution (no answer needed for free_response)', () => {
+    const result = SolutionDerivationOutputSchema.safeParse({
+      blocks: [
+        {
+          id: 'q1',
+          solution: { type: 'rich_text', format: 'md-math-v1', value: 's', mediaIds: [] },
+        },
+      ],
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects non-rich_text solution in a block', () => {
+    expect(
+      SolutionDerivationOutputSchema.safeParse({
+        blocks: [{ id: 'q1', solution: 'plain string' }],
+      }).success,
+    ).toBe(false)
   })
 
   it('strips extra answer fields without failing', () => {
     // Zod's default is to strip unknown keys silently, so the parse succeeds
     // and returns only the schema-declared fields.
     const result = SolutionDerivationOutputSchema.parse({
-      answer: { correctOptionIds: ['a'], extra: 'ignored-not-rejected' },
-    }) as { answer: Record<string, unknown> }
-    expect(result.answer.correctOptionIds).toEqual(['a'])
+      blocks: [
+        {
+          id: 'q1',
+          answer: { correctOptionIds: ['a'], extra: 'ignored-not-rejected' },
+        },
+      ],
+    }) as { blocks: Array<{ id: string; answer: Record<string, unknown> }> }
+    expect(result.blocks[0].answer.correctOptionIds).toEqual(['a'])
   })
 })
 

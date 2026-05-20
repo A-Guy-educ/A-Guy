@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- #1733: Make pass-2 solution derivation per-block in lesson duplication ([#1735](https://github.com/A-Guy-educ/A-Guy/pull/1735)) — @aguyaharonyair
+- #1726: Stripe charge.refunded partial-refund — do not flip whole transa… ([#1732](https://github.com/A-Guy-educ/A-Guy/pull/1732)) — @aguyaharonyair
 - #1725: Move PayPal entitlement grant from CHECKOUT.ORDER.APPROVED to PA… ([#1728](https://github.com/A-Guy-educ/A-Guy/pull/1728)) — @aguyaharonyair
 
 - #1720: Fix lesson-duplication prompts that omit hint / fullSolution fro… ([#1722](https://github.com/A-Guy-educ/A-Guy/pull/1722)) — @aguyaharonyair
