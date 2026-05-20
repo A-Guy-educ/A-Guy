@@ -1,5 +1,5 @@
 ---
-every: 168h
+every: 24h
 worker: ceo
 ---
 
@@ -7,7 +7,7 @@ worker: ceo
 
 ## Job
 
-Once a week, propose **one** new high-ROI job the system does not yet
+Once a day, propose **one** new high-ROI job the system does not yet
 have. Read `.kody/memory/` first to honour prior verdicts — never
 re-propose something the operator already dismissed or rejected, and
 never propose something already in `.kody/jobs/`.

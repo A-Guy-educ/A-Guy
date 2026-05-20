@@ -31,7 +31,7 @@ MEMORY_DIR = REPO_ROOT / ".kody" / "memory"
 STATE_PATH = JOBS_DIR / "job-gap-scan.state.json"
 
 PROPOSAL_LABEL = "kody:ceo-proposal"
-CADENCE_DAYS = 6
+CADENCE_DAYS = 0  # Engine schedules via every: 24h in the job markdown.
 DISMISS_COOLOFF_DAYS = 30
 
 VERDICT_FILE_RE = re.compile(r"^verdict-ceo-proposal-(?P<slug>[a-z0-9-]+)\.md$")
@@ -214,6 +214,8 @@ def save_state(state: dict[str, Any]) -> None:
 def cadence_skip(state: dict[str, Any]) -> bool:
     if os.environ.get("JOB_GAP_SCAN_FORCE") == "1":
         return False
+    if CADENCE_DAYS <= 0:
+        return False  # Engine handles cadence via every: <interval> in job markdown.
     last = parse_iso(state.get("lastRunISO"))
     if last is None:
         return False
