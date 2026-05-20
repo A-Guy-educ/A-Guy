@@ -17,6 +17,7 @@ Generate a deep variation of the provided exercise. Deep variation means: **nume
 7. **No unsolvable problems**: Ensure the variation still has a valid, correct answer.
 8. **No contradictions**: Question, hint, solution, and full_solution must all be consistent with each other.
 9. **NO PNG output**: Never produce or include any PNG image data. Only text and SVG are allowed.
+10. **When a deep variation produces multiple question blocks within one exercise, every block must independently carry a non-empty hint. (solution and fullSolution are re-derived in pass 2.)**
 
 ## Subject-specific rules: Calculus
 
@@ -33,6 +34,10 @@ Return a JSON object with the exercise content. The structure should match the i
   }
 }
 ```
+
+## Required fields
+
+Required fields on every question\_\* block. Every question_select, question_free_response, question_table, question_matching, question_geometry, question_axis, or question_multi_axis block in your output MUST include all of the following with non-empty values: hint (rich_text), solution (rich_text), and fullSolution (rich_text). If a useful hint is hard to write, emit a one-sentence prompt like "Apply the chain rule." or "Recall the parallelogram area formula." — but never omit the field. Empty strings are not acceptable.
 
 ## Examples
 
@@ -91,6 +96,12 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "type": "free_response",
           "rubric": "(6x + 2)e^(3x² + 2x)",
           "acceptedPatterns": []
+        },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Treat the exponent as a composite function and apply the chain rule.",
+          "mediaIds": []
         },
         "solution": {
           "type": "rich_text",
@@ -164,6 +175,12 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "rubric": "(15x² + 2)/(5x³ + 2x)",
           "acceptedPatterns": []
         },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Use the chain rule with the natural logarithm.",
+          "mediaIds": []
+        },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",
@@ -232,6 +249,12 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "mediaIds": []
         },
         "answer": { "type": "free_response", "rubric": "dy/dx = -x²/y²", "acceptedPatterns": [] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Differentiate both sides with respect to x, treating y as a function of x.",
+          "mediaIds": []
+        },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",
@@ -242,6 +265,236 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "type": "rich_text",
           "format": "md-math-v1",
           "value": "Step 1: Differentiate both sides with respect to x\\nStep 2: d/dx(x³) + d/dx(y³) = d/dx(8)\\nStep 3: 3x² + 3y²(dy/dx) = 0 (chain rule on y³)\\nStep 4: Isolate dy/dx: 3y²(dy/dx) = -3x²\\nStep 5: Divide by 3y²: dy/dx = -x²/y²\\nStep 6: Final answer: dy/dx = -x²/y²",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 4 — Input (multi-block):**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Find $\\frac{d}{dx}[x^3]$",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "3x²", "acceptedPatterns": [] },
+        "solution": { "type": "rich_text", "format": "md-math-v1", "value": "3x²", "mediaIds": [] },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Apply power rule: d/dx(xⁿ) = nxⁿ⁻¹ → 3x²",
+          "mediaIds": []
+        }
+      },
+      {
+        "id": "q2",
+        "type": "question_select",
+        "variant": "mcq",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "What is the derivative of $e^{2x}$?",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "a",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "e^{2x}",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "b",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "2e^{2x}",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "c",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "2xe^{2x}",
+              "mediaIds": []
+            }
+          }
+        ],
+        "answer": { "selected": ["b"] },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "2e^{2x}",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Chain rule: d/dx(e^{u}) = e^{u}·u'. Here u=2x so u'=2. Result: 2e^{2x}",
+          "mediaIds": []
+        }
+      },
+      {
+        "id": "q3",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Find $\\frac{d}{dx}[\\ln(x^2 + 1)]$",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "2x/(x²+1)", "acceptedPatterns": [] },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "2x/(x²+1)",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Chain rule: d/dx[ln(u)] = u'/u. Here u=x²+1 so u'=2x. Result: 2x/(x²+1)",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 4 — Output (multi-block with independent hints):**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Find $\\frac{d}{dx}[x^5]$",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "5x⁴", "acceptedPatterns": [] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Apply the power rule to each term.",
+          "mediaIds": []
+        },
+        "solution": { "type": "rich_text", "format": "md-math-v1", "value": "5x⁴", "mediaIds": [] },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Apply power rule: d/dx(xⁿ) = nxⁿ⁻¹ → 5x⁴",
+          "mediaIds": []
+        }
+      },
+      {
+        "id": "q2",
+        "type": "question_select",
+        "variant": "mcq",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "What is the derivative of $e^{3x}$?",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "a",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "e^{3x}",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "b",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "3e^{3x}",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "c",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "3xe^{3x}",
+              "mediaIds": []
+            }
+          }
+        ],
+        "answer": { "selected": ["b"] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Remember the chain rule for exponential functions.",
+          "mediaIds": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "3e^{3x}",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Chain rule: d/dx(e^{u}) = e^{u}·u'. Here u=3x so u'=3. Result: 3e^{3x}",
+          "mediaIds": []
+        }
+      },
+      {
+        "id": "q3",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Find $\\frac{d}{dx}[\\ln(5x^2 + 3)]$",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "10x/(5x²+3)", "acceptedPatterns": [] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Use the chain rule with the natural logarithm.",
+          "mediaIds": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "10x/(5x²+3)",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Chain rule: d/dx[ln(u)] = u'/u. Here u=5x²+3 so u'=10x. Result: 10x/(5x²+3)",
           "mediaIds": []
         }
       }

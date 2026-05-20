@@ -17,6 +17,7 @@ Generate a deep variation of the provided exercise. Deep variation means: **nume
 7. **No unsolvable problems**: Ensure the variation still has a valid, correct answer.
 8. **No contradictions**: Question, hint, solution, and full_solution must all be consistent with each other.
 9. **NO PNG output**: Never produce or include any PNG image data. Only text and SVG are allowed.
+10. **When a deep variation produces multiple question blocks within one exercise, every block must independently carry a non-empty hint. (solution and fullSolution are re-derived in pass 2.)**
 
 ## Output Format
 
@@ -29,6 +30,10 @@ Return a JSON object with the exercise content. The structure should match the i
   }
 }
 ```
+
+## Required fields
+
+Required fields on every question\_\* block. Every question_select, question_free_response, question_table, question_matching, question_geometry, question_axis, or question_multi_axis block in your output MUST include all of the following with non-empty values: hint (rich_text), solution (rich_text), and fullSolution (rich_text). If a useful hint is hard to write, emit a one-sentence prompt like "Apply the chain rule." or "Recall the parallelogram area formula." — but never omit the field. Empty strings are not acceptable.
 
 ## Examples
 
@@ -158,10 +163,22 @@ Each example below demonstrates the input exercise JSON and the expected output 
           }
         ],
         "answer": { "selected": ["b"] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Circumference is the perimeter of a circle.",
+          "mediaIds": []
+        },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",
           "value": "C = πd (circumference equals pi times diameter)",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Recall that the circumference of a circle is the distance around its boundary.\\nStep 2: Two equivalent formulas are C = πd (where d is the diameter) and C = 2πr (where r is the radius).\\nStep 3: Option (b) C = πd matches this definition, so it is the correct formula.",
           "mediaIds": []
         }
       }
@@ -220,6 +237,12 @@ Each example below demonstrates the input exercise JSON and the expected output 
           "mediaIds": []
         },
         "answer": { "type": "free_response", "rubric": "5.6% per year", "acceptedPatterns": [] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Calculate the total percentage growth first, then divide by the number of years.",
+          "mediaIds": []
+        },
         "solution": {
           "type": "rich_text",
           "format": "md-math-v1",
@@ -421,6 +444,224 @@ Each example below demonstrates the input exercise JSON and the expected output 
               ]
             }
           ]
+        },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Use the conversion formula F = C × 9/5 + 32 for each temperature.",
+          "mediaIds": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Missing Fahrenheit values follow from F = C × 9/5 + 32 (e.g. 100°C → 212°F).",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Use the conversion formula F = C × 9/5 + 32.\\nStep 2: Substitute each Celsius value into the formula. Example: 100 × 9/5 + 32 = 180 + 32 = 212°F.\\nStep 3: Fill the editable cells with the computed Fahrenheit values to complete the table.",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 4 — Input (multi-block):**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Solve for x: $2x + 6 = 14$",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "x = 4", "acceptedPatterns": [] },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "x = 4",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "2x + 6 = 14 → 2x = 8 → x = 4",
+          "mediaIds": []
+        }
+      },
+      {
+        "id": "q2",
+        "type": "question_select",
+        "variant": "mcq",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Which of the following is a prime number?",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "a",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "4", "mediaIds": [] }
+          },
+          {
+            "id": "b",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "9", "mediaIds": [] }
+          },
+          {
+            "id": "c",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "7", "mediaIds": [] }
+          }
+        ],
+        "answer": { "selected": ["c"] },
+        "solution": { "type": "rich_text", "format": "md-math-v1", "value": "7", "mediaIds": [] },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "7 is prime (divisible only by 1 and itself). 4 = 2×2 and 9 = 3×3 are composite.",
+          "mediaIds": []
+        }
+      },
+      {
+        "id": "q3",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Find 25% of 80.",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "20", "acceptedPatterns": [] },
+        "solution": { "type": "rich_text", "format": "md-math-v1", "value": "20", "mediaIds": [] },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "25% = 25/100 = 1/4. So 25% of 80 = (1/4) × 80 = 20",
+          "mediaIds": []
+        }
+      }
+    ]
+  }
+}
+```
+
+**Example 4 — Output (multi-block with independent hints):**
+
+```json
+{
+  "content": {
+    "blocks": [
+      {
+        "id": "q1",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Solve for x: $3x + 9 = 24$",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "x = 5", "acceptedPatterns": [] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Isolate the term with x on one side first.",
+          "mediaIds": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "x = 5",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "3x + 9 = 24 → 3x = 15 → x = 5",
+          "mediaIds": []
+        }
+      },
+      {
+        "id": "q2",
+        "type": "question_select",
+        "variant": "mcq",
+        "selectionMode": "single",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Which of the following is a prime number?",
+          "mediaIds": []
+        },
+        "options": [
+          {
+            "id": "a",
+            "content": { "type": "rich_text", "format": "md-math-v1", "value": "6", "mediaIds": [] }
+          },
+          {
+            "id": "b",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "11",
+              "mediaIds": []
+            }
+          },
+          {
+            "id": "c",
+            "content": {
+              "type": "rich_text",
+              "format": "md-math-v1",
+              "value": "15",
+              "mediaIds": []
+            }
+          }
+        ],
+        "answer": { "selected": ["b"] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Check divisibility by primes less than the square root.",
+          "mediaIds": []
+        },
+        "solution": { "type": "rich_text", "format": "md-math-v1", "value": "11", "mediaIds": [] },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "11 is prime (not divisible by 2, 3, 5, or 7). 6 = 2×3, 15 = 3×5 are composite.",
+          "mediaIds": []
+        }
+      },
+      {
+        "id": "q3",
+        "type": "question_free_response",
+        "prompt": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Find 40% of 65.",
+          "mediaIds": []
+        },
+        "answer": { "type": "free_response", "rubric": "26", "acceptedPatterns": [] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Convert 40% to a fraction first.",
+          "mediaIds": []
+        },
+        "solution": { "type": "rich_text", "format": "md-math-v1", "value": "26", "mediaIds": [] },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "40% = 40/100 = 2/5. So 40% of 65 = (2/5) × 65 = 26",
+          "mediaIds": []
         }
       }
     ]
