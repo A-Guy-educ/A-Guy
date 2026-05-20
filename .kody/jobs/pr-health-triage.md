@@ -121,18 +121,24 @@ _Confirm or dismiss this in the dashboard inbox. The CTO will not act on its own
 ```
 
 **Auto-run** (verb graduated). Post `@kody <verb> --pr <n>` on the PR,
-then a **separate, notify-only** comment that @-mentions the operator:
+then a **separate, silent audit-trail** comment. It **MUST NOT
+`@`-mention the operator** — graduation means you've earned the right to
+act *without* interrupting them, and any `@aguyaharonyair` mention routes
+straight to their inbox and push, defeating the point. Leave the mention
+out so the comment is a quiet record only:
 
 ```
-@aguyaharonyair 🧭 **CTO auto-ran** — `<verb>`
+🧭 **CTO auto-ran** — `<verb>`
 
-Ran `@kody <verb> --pr <n>` (<one-line reason>). Graduated: you approved
-`<verb>` 10 times running. A **Reject** on any `<verb>` returns me to asking.
+Ran `@kody <verb> --pr <n>` (<one-line reason>). Graduated: operator
+approved `<verb>` 10 times running. A **Reject** on any `<verb>` returns
+me to asking.
 ```
 
-This is notify, not ask — do not wait. `<verb>` is always one of
-`fix-ci`, `sync`, `resolve`; the `kody-cmd` / dispatch line is a single
-line starting with `@kody`.
+This is a silent record, not a notification and not an ask — do not
+@-mention, do not wait. `<verb>` is always one of `fix-ci`, `sync`,
+`resolve`; the `kody-cmd` / dispatch line is a single line starting with
+`@kody`.
 
 ## Allowed Commands
 
