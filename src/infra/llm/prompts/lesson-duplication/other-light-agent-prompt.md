@@ -30,6 +30,10 @@ Return a JSON object with the exercise content. The structure must match the inp
 }
 ```
 
+## Required fields
+
+Required fields on every question\_\* block. Every question_select, question_free_response, question_table, question_matching, question_geometry, question_axis, or question_multi_axis block in your output MUST include all of the following with non-empty values: hint (rich_text), solution (rich_text), and fullSolution (rich_text). If a useful hint is hard to write, emit a one-sentence prompt like "Apply the chain rule." or "Recall the parallelogram area formula." — but never omit the field. Empty strings are not acceptable.
+
 ## Examples
 
 Each example below demonstrates the input exercise JSON and the expected output variation JSON for non-math exercises like true/false and matching.
@@ -119,7 +123,25 @@ Each example below demonstrates the input exercise JSON and the expected output 
             }
           }
         ],
-        "answer": { "selected": ["true"] }
+        "answer": { "selected": ["true"] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Recall the standard boiling point of water under normal atmospheric pressure.",
+          "mediaIds": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "True — water boils at 100°C at sea level.",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Identify the factual claim — water's boiling point at sea level.\nStep 2: Recall standard chemistry reference: water boils at 100 degrees Celsius under 1 atmosphere of pressure.\nStep 3: The statement is factually correct.\nStep 4: Final answer: True",
+          "mediaIds": []
+        }
       }
     ]
   }
@@ -211,7 +233,25 @@ Each example below demonstrates the input exercise JSON and the expected output 
             }
           }
         ],
-        "answer": { "selected": ["true"] }
+        "answer": { "selected": ["true"] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Remember the direction from which the sun appears in the sky each morning.",
+          "mediaIds": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "True — the sun rises in the east due to Earth's rotation.",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Identify the claim about solar direction.\nStep 2: Recall Earth's rotation direction — west to east.\nStep 3: From Earth's surface, the sun appears to rise in the east.\nStep 4: The statement is factually correct.\nStep 5: Final answer: True",
+          "mediaIds": []
+        }
       }
     ]
   }
@@ -303,7 +343,25 @@ Each example below demonstrates the input exercise JSON and the expected output 
             }
           }
         ],
-        "answer": { "selected": ["true"] }
+        "answer": { "selected": ["true"] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Think about what process allows plants to convert light energy into chemical energy.",
+          "mediaIds": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "True — photosynthesis requires sunlight as an energy source.",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Identify the claim about plant biology.\nStep 2: Recall the process of photosynthesis: light + water + CO₂ → glucose + oxygen.\nStep 3: Sunlight provides the energy needed for this chemical process.\nStep 4: Without sunlight, photosynthesis cannot occur.\nStep 5: The statement is factually correct.\nStep 6: Final answer: True",
+          "mediaIds": []
+        }
       }
     ]
   }
