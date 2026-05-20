@@ -30,6 +30,10 @@ Return a JSON object with the exercise content. The structure must match the inp
 }
 ```
 
+## Required fields
+
+Required fields on every question\_\* block. Every question_select, question_free_response, question_table, question_matching, question_geometry, question_axis, or question_multi_axis block in your output MUST include all of the following with non-empty values: hint (rich_text), solution (rich_text), and fullSolution (rich_text). If a useful hint is hard to write, emit a one-sentence prompt like "Apply the chain rule." or "Recall the parallelogram area formula." — but never omit the field. Empty strings are not acceptable.
+
 ## Examples
 
 Each example below demonstrates the input exercise JSON and the expected output variation JSON for non-math exercises with reworded phrasing.
@@ -197,7 +201,25 @@ Each example below demonstrates the input exercise JSON and the expected output 
           { "leftId": "l2", "rightId": "r2" },
           { "leftId": "l3", "rightId": "r3" }
         ],
-        "shuffleRightColumn": true
+        "shuffleRightColumn": true,
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Recall the administrative centers and capital cities of France, Japan, and Brazil.",
+          "mediaIds": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "France → Paris, Japan → Tokyo, Brazil → Brasilia",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Review each country in the left column.\nStep 2: Recall the capital city of France — Paris.\nStep 3: Recall the capital city of Japan — Tokyo.\nStep 4: Recall the capital city of Brazil — Brasilia.\nStep 5: Match each left item to its correct right item.\nStep 6: Final answer: France→Paris, Japan→Tokyo, Brazil→Brasilia",
+          "mediaIds": []
+        }
       }
     ]
   }
@@ -289,7 +311,25 @@ Each example below demonstrates the input exercise JSON and the expected output 
             }
           }
         ],
-        "answer": { "selected": ["true"] }
+        "answer": { "selected": ["true"] },
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Count the number of bones in an adult human skeletal system.",
+          "mediaIds": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "True — an adult human body contains 206 bones.",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Identify the factual claim about human anatomy.\nStep 2: Recall standard anatomy: an adult human skeleton has 206 bones.\nStep 3: Babies are born with ~270 bones, some of which fuse as the body matures.\nStep 4: The statement is factually correct.\nStep 5: Final answer: True",
+          "mediaIds": []
+        }
       }
     ]
   }
@@ -439,7 +479,25 @@ Each example below demonstrates the input exercise JSON and the expected output 
           { "leftId": "l2", "rightId": "r2" },
           { "leftId": "l3", "rightId": "r3" }
         ],
-        "shuffleRightColumn": true
+        "shuffleRightColumn": true,
+        "hint": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Remember the chemical symbols for oxygen, carbon, and gold from the periodic table.",
+          "mediaIds": []
+        },
+        "solution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Oxygen → O, Carbon → C, Gold → Au",
+          "mediaIds": []
+        },
+        "fullSolution": {
+          "type": "rich_text",
+          "format": "md-math-v1",
+          "value": "Step 1: Review each element in the left column.\nStep 2: Recall the periodic table symbol for oxygen — O.\nStep 3: Recall the periodic table symbol for carbon — C.\nStep 4: Recall the periodic table symbol for gold — Au (from Latin 'aurum').\nStep 5: Match each left item to its correct right item.\nStep 6: Final answer: Oxygen→O, Carbon→C, Gold→Au",
+          "mediaIds": []
+        }
       }
     ]
   }
