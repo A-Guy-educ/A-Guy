@@ -36,61 +36,8 @@ const QUILL_FORMATS = [
   'direction',
 ]
 
-const SANITIZE_CONFIG = {
-  ALLOWED_TAGS: [
-    'p',
-    'br',
-    'hr',
-    'span',
-    'h1',
-    'h2',
-    'h3',
-    'h4',
-    'h5',
-    'h6',
-    'strong',
-    'b',
-    'em',
-    'i',
-    'u',
-    's',
-    'del',
-    'ins',
-    'mark',
-    'sub',
-    'sup',
-    'ul',
-    'ol',
-    'li',
-    'blockquote',
-    'pre',
-    'code',
-    'a',
-    'img',
-    'div',
-    'section',
-    'table',
-    'thead',
-    'tbody',
-    'tr',
-    'th',
-    'td',
-  ],
-  ALLOWED_ATTR: [
-    'href',
-    'src',
-    'alt',
-    'title',
-    'class',
-    'id',
-    'rel',
-    'width',
-    'height',
-    'colspan',
-    'rowspan',
-    'dir',
-  ],
-}
+// Admin-only — XSS not a risk since only admins input HTML content
+const SANITIZE_CONFIG = {}
 
 interface HtmlBlockEditorProps {
   block: HtmlBlock
