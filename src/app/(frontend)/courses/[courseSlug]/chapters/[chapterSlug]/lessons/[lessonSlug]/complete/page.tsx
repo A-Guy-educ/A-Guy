@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation'
 import { getSystemLocale } from '@/i18n/server-locale'
 import { isValidContentLocale } from '@/server/payload/fields/contentLocale'
+import { getPayload } from 'payload'
+import configPromise from '@payload-config'
 import { queryCourseBySlug } from '@/server/repos/queries/courses'
 import { queryLessonBySlug, queryLessonsByCourse } from '@/server/repos/queries/lessons'
 import type { Metadata } from 'next'
@@ -96,9 +98,13 @@ export default async function CompletePage({ params }: CompletePageProps) {
         ? lesson.recommendedNextLesson.id
         : lesson.recommendedNextLesson
 
-    // Fetch the recommended next lesson to get its details
-    const recommendedNextLessonData = await queryLessonBySlug({
-      slug: nextLessonId as unknown as string,
+    // Fetch the recommended next lesson by ID (not slug — maxDepth:0 only gives us the ID)
+    const payload = await getPayload({ config: configPromise })
+    const recommendedNextLessonData = await payload.findByID({
+      collection: 'lessons',
+      id: nextLessonId as string,
+      depth: 1,
+      overrideAccess: false,
     })
     if (recommendedNextLessonData) {
       const nextChapter =
