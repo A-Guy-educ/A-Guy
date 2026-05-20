@@ -531,13 +531,14 @@ describe('Stripe webhook handler', () => {
       .catch(() => {})
   })
 
-  it('charge.refunded should update transaction to refunded', async () => {
+  it('charge.refunded with full refund (amount_refunded === amount) should update transaction to refunded', async () => {
     const paymentIntentId = `pi_stripe_refund_${Date.now()}`
     const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
     vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
       id: 'evt_refund',
       type: 'charge.refunded',
-      data: { object: { payment_intent: paymentIntentId } },
+      created: Math.floor(Date.now() / 1000),
+      data: { object: { payment_intent: paymentIntentId, amount: 1000, amount_refunded: 1000 } },
     } as any)
 
     const tx = await payload.create({
@@ -570,6 +571,201 @@ describe('Stripe webhook handler', () => {
       overrideAccess: true,
     })
     expect(updated.status).toBe('refunded')
+    expect((updated as any).refundedAmount).toBe(1000)
+    expect((updated as any).refundedAt).toBeDefined()
+
+    await payload
+      .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+      .catch(() => {})
+  })
+
+  it('charge.refunded with partial refund (amount_refunded < amount) should keep status succeeded and update refundedAmount', async () => {
+    const paymentIntentId = `pi_stripe_partial_${Date.now()}`
+    const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
+    vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
+      id: 'evt_partial',
+      type: 'charge.refunded',
+      created: Math.floor(Date.now() / 1000),
+      data: { object: { payment_intent: paymentIntentId, amount: 1000, amount_refunded: 300 } },
+    } as any)
+
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: userId,
+        product: productId,
+        provider: 'stripe',
+        providerTransactionId: paymentIntentId,
+        status: 'succeeded',
+        amount: 1000,
+        currency: 'ILS',
+        tenant: tenantId,
+      } as any,
+      overrideAccess: true,
+    })
+
+    const req = new NextRequest('http://localhost/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig_test' },
+    })
+
+    const res = await stripeWebhookHandler(req)
+    expect(res.status).toBe(200)
+
+    const updated = await payload.findByID({
+      collection: 'transactions',
+      id: tx.id,
+      depth: 0,
+      overrideAccess: true,
+    })
+    // Partial refund keeps status as succeeded
+    expect(updated.status).toBe('succeeded')
+    expect((updated as any).refundedAmount).toBe(300)
+    expect((updated as any).refundedAt).toBeDefined()
+
+    await payload
+      .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+      .catch(() => {})
+  })
+
+  it('charge.refunded: two successive partial refunds that together equal the charge should flip to refunded on second event', async () => {
+    const paymentIntentId = `pi_stripe_partial2_${Date.now()}`
+    const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
+
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: userId,
+        product: productId,
+        provider: 'stripe',
+        providerTransactionId: paymentIntentId,
+        status: 'succeeded',
+        amount: 1000,
+        currency: 'ILS',
+        tenant: tenantId,
+      } as any,
+      overrideAccess: true,
+    })
+
+    // First partial refund (300 of 1000)
+    vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
+      id: 'evt_partial1',
+      type: 'charge.refunded',
+      created: Math.floor(Date.now() / 1000),
+      data: { object: { payment_intent: paymentIntentId, amount: 1000, amount_refunded: 300 } },
+    } as any)
+
+    const req1 = new NextRequest('http://localhost/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig_test' },
+    })
+    const res1 = await stripeWebhookHandler(req1)
+    expect(res1.status).toBe(200)
+
+    let updated = await payload.findByID({
+      collection: 'transactions',
+      id: tx.id,
+      depth: 0,
+      overrideAccess: true,
+    })
+    expect(updated.status).toBe('succeeded')
+    expect((updated as any).refundedAmount).toBe(300)
+
+    // Second partial refund that brings total to full amount (700 more = 1000 total)
+    vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
+      id: 'evt_partial2',
+      type: 'charge.refunded',
+      created: Math.floor(Date.now() / 1000),
+      data: { object: { payment_intent: paymentIntentId, amount: 1000, amount_refunded: 1000 } },
+    } as any)
+
+    const req2 = new NextRequest('http://localhost/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig_test' },
+    })
+    const res2 = await stripeWebhookHandler(req2)
+    expect(res2.status).toBe(200)
+
+    updated = await payload.findByID({
+      collection: 'transactions',
+      id: tx.id,
+      depth: 0,
+      overrideAccess: true,
+    })
+    // Second partial completes the full amount — status should flip to refunded
+    expect(updated.status).toBe('refunded')
+    expect((updated as any).refundedAmount).toBe(1000)
+
+    await payload
+      .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+      .catch(() => {})
+  })
+
+  it('charge.refunded: replayed partial refund event should be idempotent (no double-counting)', async () => {
+    const paymentIntentId = `pi_stripe_replay_${Date.now()}`
+    const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
+
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: userId,
+        product: productId,
+        provider: 'stripe',
+        providerTransactionId: paymentIntentId,
+        status: 'succeeded',
+        amount: 1000,
+        currency: 'ILS',
+        tenant: tenantId,
+      } as any,
+      overrideAccess: true,
+    })
+
+    // First partial refund event (300 of 1000)
+    vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
+      id: 'evt_replay1',
+      type: 'charge.refunded',
+      created: Math.floor(Date.now() / 1000),
+      data: { object: { payment_intent: paymentIntentId, amount: 1000, amount_refunded: 300 } },
+    } as any)
+
+    const req1 = new NextRequest('http://localhost/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig_test' },
+    })
+    const res1 = await stripeWebhookHandler(req1)
+    expect(res1.status).toBe(200)
+
+    let updated = await payload.findByID({
+      collection: 'transactions',
+      id: tx.id,
+      depth: 0,
+      overrideAccess: true,
+    })
+    expect((updated as any).refundedAmount).toBe(300)
+
+    // Replay the same event — amount_refunded is still 300 (same cumulative total)
+    vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
+      id: 'evt_replay1', // same event ID
+      type: 'charge.refunded',
+      created: Math.floor(Date.now() / 1000),
+      data: { object: { payment_intent: paymentIntentId, amount: 1000, amount_refunded: 300 } },
+    } as any)
+
+    const req2 = new NextRequest('http://localhost/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig_test' },
+    })
+    const res2 = await stripeWebhookHandler(req2)
+    expect(res2.status).toBe(200)
+
+    // Replayed event should not double-count — refundedAmount should still be 300
+    updated = await payload.findByID({
+      collection: 'transactions',
+      id: tx.id,
+      depth: 0,
+      overrideAccess: true,
+    })
+    expect((updated as any).refundedAmount).toBe(300)
 
     await payload
       .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
